@@ -6,26 +6,26 @@
 <meta name="slaf-build" content="2026-09-20 01:28Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="shared/errlog.js"></script>
-<title>Your card — Dungeons &amp; Dividends</title>
-<meta name="description" content="A share card for your Dungeons &amp; Dividends character — class, level, ability scores, alignment and what hunts you, as an image you can save."/>
+<title>Your card, Dungeons &amp; Dividends</title>
+<meta name="description" content="A share card for your Dungeons &amp; Dividends character, class, level, ability scores, alignment and what hunts you, as an image you can save."/>
 <meta property="og:type" content="website"/>
 <meta property="og:site_name" content="Dungeons &amp; Dividends"/>
-<meta property="og:title" content="My character — Dungeons &amp; Dividends"/>
-<meta property="og:description" content="A D&amp;D-style character sheet for your money. Roll your own — free, no sign-up."/>
+<meta property="og:title" content="My character, Dungeons &amp; Dividends"/>
+<meta property="og:description" content="A D&amp;D-style character sheet for your money. Roll your own, free, no sign-up."/>
 <meta property="og:url" content="https://sapphirestoneage.github.io/Personalfinance/dnd/card.html"/>
 <meta property="og:image" content="https://sapphirestoneage.github.io/Personalfinance/dnd/og.png"/>
 <meta property="og:image:width" content="1200"/>
 <meta property="og:image:height" content="630"/>
 <meta name="twitter:card" content="summary_large_image"/>
-<meta name="twitter:title" content="My character — Dungeons &amp; Dividends"/>
-<meta name="twitter:description" content="A D&amp;D-style character sheet for your money. Roll your own — free, no sign-up."/>
+<meta name="twitter:title" content="My character, Dungeons &amp; Dividends"/>
+<meta name="twitter:description" content="A D&amp;D-style character sheet for your money. Roll your own, free, no sign-up."/>
 <meta name="twitter:image" content="https://sapphirestoneage.github.io/Personalfinance/dnd/og.png"/>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="shared/fonts.css"/>
 <link rel="stylesheet" href="shared/theme.css"/>
 <link rel="stylesheet" href="shared/skin.css"/>
 <!--
-  THE SHARE CARD — BRIEF §9.2.
+  THE SHARE CARD, BRIEF §9.2.
 
   This tool is a lead magnet. What actually travels is not the page, it is the
   thing someone pastes into a group chat, so the card is the product and gets
@@ -48,7 +48,7 @@
 <style>
   /* Dungeons & Dividends keeps the characterful faces the shared theme gave
      up in D-154. A game wants a display serif; a financial statement does
-     not. theme.css stays byte-identical to the SPARKS copy — this override
+     not. theme.css stays byte-identical to the SPARKS copy, this override
      lives here, in the pages that want it. */
   :root {
     --font-display: 'Fraunces', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
@@ -148,7 +148,7 @@
   }
 
   /* Everything the card can say, and nothing it cannot. Each field is either a
-     real value or absent — never a dash, never a zero standing in for a blank. */
+     real value or absent, never a dash, never a zero standing in for a blank. */
   function cardData() {
     var h = Store.household();
     var s = Char.sheet(h, TABLES);
@@ -174,7 +174,7 @@
     /* A CARD WITH NO CLASS ON IT IS NOT WORTH SENDING TO ANYBODY.
        The measured class needs money; someone who has only answered the five
        questions and bought their abilities has none, and the card was reading
-       "Unnamed" with no class line at all. The quiz class fills that gap —
+       "Unnamed" with no class line at all. The quiz class fills that gap, 
        marked as instinct, never dressed up as a measurement. DD-026. */
     var quizClass = null, quizLever = null;
     if (DND.Journey && TABLES.dndQuiz5) {
@@ -183,7 +183,7 @@
     }
 
     /* The sheet-shaped card wants the same things a 5e sheet has: saving
-       throws with proficiency marked, and the class's own flavour — its sign,
+       throws with proficiency marked, and the class's own flavour, its sign,
        its alignment line, its one-line headline. All derived, none typed. */
     var saves = s.klass || stats.length
       ? Char.savingThrows(s.stats, s.klass, s.proficiencyBonus, TABLES, s.grants)
@@ -197,7 +197,7 @@
       sign: prof ? prof.sign : null,
       dndAlignment: prof ? prof.alignment : null,
       headline: prof ? prof.headline : null,
-      /* A shared card built on a pregen must say so on the card itself —
+      /* A shared card built on a pregen must say so on the card itself. 
          it is the one artefact that travels away from the tool. */
       pregenName: (p.pregen && p.pregen.name) || null,
       name: p.characterName || null,
@@ -258,7 +258,7 @@
      alignment to left sent the number sliding out under the next box. */
   /* The address printed on the sheet. The sheet leaves the browser, so it
      carries the published address from the page's own og:url tag rather
-     than wherever it happened to be rendered — a local server, a file. */
+     than wherever it happened to be rendered, a local server, a file. */
   function siteAddress() {
     var og = document.querySelector('meta[property="og:url"]');
     var url = og && og.getAttribute('content') ? og.getAttribute('content') : location.href;
@@ -464,9 +464,9 @@
     var feat = [];
     if (d.headline) feat.push({ k: 'How you play', v: '“' + d.headline + '”', italic: true });
     if (d.lever) feat.push({ k: 'Your lever', v: d.lever });
-    if (d.exhaustion) feat.push({ k: 'Condition', v: d.exhaustion + ' — every save is harder', warn: true });
+    if (d.exhaustion) feat.push({ k: 'Condition', v: d.exhaustion + ', every save is harder', warn: true });
     if (d.hunted.length) {
-      feat.push({ k: d.weakest.length ? 'Thinnest on ' + d.weakest.join(' & ') + ' — hunted by' : 'Hunted by',
+      feat.push({ k: d.weakest.length ? 'Thinnest on ' + d.weakest.join(' & ') + ', hunted by' : 'Hunted by',
                   v: d.hunted.join(' · ') });
     }
     /* measure first, so the box fits its text */
@@ -502,7 +502,7 @@
     /* footer */
     ctx.fillStyle = sk.dim; ctx.font = '22px ' + BODY;
     ctx.textAlign = 'center';
-    ctx.fillText('Roll your own character — free, no sign-up, nothing leaves your browser', W / 2, H - M - 40);
+    ctx.fillText('Roll your own character, free, no sign-up, nothing leaves your browser', W / 2, H - M - 40);
     ctx.fillStyle = sk.accent; ctx.font = '600 26px ' + BODY;
     ctx.fillText(siteAddress(), W / 2, H - M - 4);
     ctx.textAlign = 'left';
@@ -512,7 +512,7 @@
   function shareText() {
     var d = cardData();
     if (!d) return 'Dungeons & Dividends';
-    var out = ['Dungeons & Dividends — ' + (d.name ? d.name + ', ' : '')
+    var out = ['Dungeons & Dividends, ' + (d.name ? d.name + ', ' : '')
       + (d.klass || 'no class yet') + (d.level !== null ? ' level ' + d.level : '')
       + (d.alignment ? ' · ' + d.alignment.emoji + ' ' + d.alignment.name : '')];
     if (d.stats.length) {
@@ -584,7 +584,7 @@
     var n = el('load-notice');
     n.hidden = false;
     n.textContent = 'Couldn’t load the game data (' + err.message + '). If you opened this file '
-      + 'directly it needs to be served over http — try the published link instead.';
+      + 'directly it needs to be served over http, try the published link instead.';
   });
 })();
 </script>

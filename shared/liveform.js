@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/liveform.js — never rebuild a form under the user's finger.
+   shared/liveform.js, never rebuild a form under the user's finger.
    --------------------------------------------------------------------------
    THE BUG THIS EXISTS TO PREVENT (found on a real phone, invisible on a
    desktop browser):
@@ -13,11 +13,11 @@
 
      1. You tap the next field. The browser blurs the field you were in.
      2. The blur handler writes the value, which triggers a re-render.
-     3. The re-render replaces every node in the list — INCLUDING the node
+     3. The re-render replaces every node in the list, INCLUDING the node
         you just tapped, before the tap has finished resolving into focus.
      4. The room notices focus was lost and calls .focus() on the fresh
         replacement node. But a PROGRAMMATIC focus does not raise the soft
-        keyboard on Android or iOS — only a real user gesture does.
+        keyboard on Android or iOS, only a real user gesture does.
 
    The keyboard closes, the caret is somewhere you cannot see, and what you
    type next goes nowhere. Which is exactly what it looks like from the
@@ -27,13 +27,13 @@
 
        A container of live inputs is NEVER re-rendered while the user is
        working inside it. Renders requested during that time are held and
-       run once — after focus has genuinely left and no tap is in flight.
+       run once, after focus has genuinely left and no tap is in flight.
 
    The outputs of a room are not affected: they keep updating live, because
    they hold no inputs. Only the container handed to guard() is deferred.
 
-   Structural changes the user explicitly asked for — adding a row, removing
-   one — call force(), because there the rebuild IS the response to the
+   Structural changes the user explicitly asked for, adding a row, removing
+   one, call force(), because there the rebuild IS the response to the
    gesture and the focus that follows is part of the same gesture.
    ========================================================================== */
 (function (root, factory) {
@@ -47,12 +47,12 @@
    * The scheduling rule on its own, with no DOM in it, so test/run.js can
    * check the logic outside a browser.
    *
-   *   opts.isBusy  — () => true while the user is working in the form
-   *   opts.render  — () => void, the actual re-render
+   *   opts.isBusy, () => true while the user is working in the form
+   *   opts.render, () => void, the actual re-render
    *
    * request() renders now if idle, otherwise remembers that a render is owed.
    * flush()   runs an owed render, but only if the form is idle again.
-   * force()   renders regardless — for a rebuild the user just asked for.
+   * force()   renders regardless, for a rebuild the user just asked for.
    */
   function createScheduler(opts) {
     var o = opts || {};
@@ -92,8 +92,8 @@
    *   form.force();     // after add/remove, where the rebuild IS the answer
    *
    * "Busy" is deliberately wider than "has focus". A tap on a phone spans
-   * three events — pointerdown on the new field, focusout on the old one,
-   * then the click that finally moves focus — and a rebuild anywhere in that
+   * three events, pointerdown on the new field, focusout on the old one,
+   * then the click that finally moves focus, and a rebuild anywhere in that
    * window destroys the node the tap was headed for. So a pointer press
    * inside the container keeps the form busy until the press ends, and the
    * flush after it is deferred a task so focus has somewhere to land.

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/partner.js — two incomes, one shared month.
+   engines/partner.js, two incomes, one shared month.
    DECISIONS.md D-099.
    --------------------------------------------------------------------------
    Two adults share a month of costs. This file works out, under the mode
@@ -21,7 +21,7 @@
    Nothing is re-derived: a person's take-home comes from
    Tier0.takeHomeMonthlyCents run on a household holding only that person's
    income at the household's filing status (an approximation, and said as
-   one — a joint return taxes the combined income, not each pay), and the
+   one, a joint return taxes the combined income, not each pay), and the
    share of income that is one paycheque is the incomeConcentration ratio
    from engines/ratios.js.
 
@@ -84,13 +84,13 @@
    * split(household, tables) → Result
    *   value          the primary's share (equal, proportional) or the shared
    *                  month (pooled), in cents
-   *   mode           'equal' | 'proportional' | 'pooled' — the one applied
+   *   mode           'equal' | 'proportional' | 'pooled', the one applied
    *   modeChosen     the stored choice, or null when the default was used
    *   modeFallback   why a chosen mode could not be applied (proportional
    *                  without both incomes falls back to equal), or null
    *   sharedCents    the shared month
    *   sharedSource   'typed' | 'household'
-   *   people         [you, them] — see personFigures, with shareCents,
+   *   people         [you, them], see personFigures, with shareCents,
    *                  keepsCents and burden (share ÷ take-home) filled in
    *   totalGrossCents, totalTakeHomeCents   sums when both are known, else null
    *   poolInCents, poolLeftCents            pooled only: what comes in a month
@@ -113,7 +113,7 @@
     var T = tables || {};
     var adults = Schema.adults(h);
     if (adults.length < 2) {
-      var solo = Money.incomplete('Just you — this room is for two adults. Add the other of you in Start Here.', ['partner']);
+      var solo = Money.incomplete('Just you, this room is for two adults. Add the other of you in Start Here.', ['partner']);
       solo.justYou = true;
       return solo;
     }
@@ -140,7 +140,7 @@
     if (mode === 'proportional') {
       if (!bothGross) {
         applied = 'equal';
-        fallback = (them.grossAnnualCents === null ? 'Their pay' : 'Your pay') + ' is not entered, so this is halves until it is — add it in Start Here.';
+        fallback = (them.grossAnnualCents === null ? 'Their pay' : 'Your pay') + ' is not entered, so this is halves until it is, add it in Start Here.';
       } else if (totalGross <= 0) {
         applied = 'equal';
         fallback = 'Neither of you has pay entered above zero, so this is halves.';

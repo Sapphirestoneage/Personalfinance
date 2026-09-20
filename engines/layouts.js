@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/layouts.js — the same rooms, arranged twenty different ways.
+   engines/layouts.js, the same rooms, arranged twenty different ways.
    --------------------------------------------------------------------------
    The app has sixty-four rooms and exactly one order to walk them in. That
    order is the registry's, it is a real opinion, and it is not the only one
@@ -18,11 +18,11 @@
    1. A LAYOUT IS A VIEW, NEVER A FACT. Nothing here may change a number,
       gate a room, or decide what a room needs. `test/run.js` holds that: no
       engine other than this one may read the layouts table, and this one
-      returns rooms and labels — never money. Which shelf a room sits on is
+      returns rooms and labels, never money. Which shelf a room sits on is
       an editorial opinion; what a room needs is in the registry.
 
    2. FILTERING IS THE GATE'S JOB, NOT THE LAYOUT'S. A room is dropped from
-      a bay only when `Registry.applies` says it is not for this household —
+      a bay only when `Registry.applies` says it is not for this household, 
       the same call the map, the walk and the situation sweep all make
       (D-142). A layout has no opinion about who you are. That is why the
       same bay is nine rooms for one person and four for another, and why a
@@ -57,7 +57,7 @@
     return (t && t.layouts) ? t : null;
   }
 
-  /** Every layout, in set order, without their room lists — for a picker. */
+  /** Every layout, in set order, without their room lists, for a picker. */
   function list(tables) {
     var t = table(tables);
     if (!t) return [];
@@ -95,7 +95,7 @@
    *   { id, name, mode, premise, by, volume, groups: [...], coverage: {...} }
    *
    * Each group carries `rooms` as full registry rows (id, title, blurb, href,
-   * kind) so a page never has to look them up again, plus `droppedCount` —
+   * kind) so a page never has to look them up again, plus `droppedCount`, 
    * how many of its rooms the gate removed, which is worth saying out loud
    * rather than silently showing a shorter bay.
    */
@@ -115,7 +115,7 @@
         });
       });
       /* A bay the gate emptied is not shown. An empty shelf with a heading
-         reads as "nothing here for you", which is not what happened — what
+         reads as "nothing here for you", which is not what happened, what
          happened is that none of it was ever yours. */
       if (!rows.length) return;
       var parent = null, name = g.name;
@@ -128,7 +128,7 @@
       });
     });
     /* SAFETY NET. A room added to the registry after data/layouts.json was
-       written is on no shelf in any arrangement — which is how a room
+       written is on no shelf in any arrangement, which is how a room
        silently becomes unreachable. Rather than lose it, every layout gets a
        final, plainly-labelled bay for whatever it has no opinion about. The
        coverage figure still counts it as missing, so the gap gets fixed in
@@ -149,7 +149,7 @@
           name: 'Not shelved in this arrangement',
           parent: null, fullName: 'Not shelved in this arrangement',
           note: 'This layout has no opinion about ' + (strays.length === 1 ? 'this room' : 'these rooms')
-            + ' — it was written before ' + (strays.length === 1 ? 'it' : 'they') + ' existed. '
+            + '. It was written before ' + (strays.length === 1 ? 'it' : 'they') + ' existed. '
             + 'Listed here so nothing is unreachable.',
           warn: true, overlay: false, hub: null, rooms: strays, droppedCount: 0
         });
@@ -168,7 +168,7 @@
    * Does this arrangement reach every room this household has?
    *   { placed, total, missing: [ids], doubled: [ids] }
    *
-   * `total` is the rooms that apply to THIS household, not all 64 — a
+   * `total` is the rooms that apply to THIS household, not all 64, a
    * retiree's layout is complete when it reaches a retiree's rooms.
    */
   function coverage(household, tables, id) {

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/expr.js — the one expression language reference data is written in.
+   shared/expr.js, the one expression language reference data is written in.
    --------------------------------------------------------------------------
    Event templates (engines/events.js, D-086) and block expansion tables
    (shared/blocks.js, D-178) both describe money moves as small JSON

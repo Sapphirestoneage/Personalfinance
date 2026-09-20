@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/hourly.js — Real Hourly Wage / Life Energy.
+   engines/hourly.js, Real Hourly Wage / Life Energy.
    --------------------------------------------------------------------------
    SPEC.md §9 item 7: built BEFORE the Prospective Worth and Side Hustle
    calcs, both of which consume it. §13: "nets true income (after
@@ -13,7 +13,7 @@
        nominal = gross / (contracted hours × weeks)
        real    = (gross − tax − work costs) / (all hours given × weeks)
 
-   Tax comes from the same effective-rate lookup Tier 0 uses (SPEC.md §8) —
+   Tax comes from the same effective-rate lookup Tier 0 uses (SPEC.md §8). 
    there is no second tax calculation anywhere in this app.
 
    Cents per hour, as integers, like every other money figure here.
@@ -41,8 +41,8 @@
 
   var MONTHS_PER_YEAR = 12;
 
-  /* The unpaid hours a job takes. Each is optional — someone who works from
-     home has no commute, and that is a zero, not a missing answer — so an
+  /* The unpaid hours a job takes. Each is optional, someone who works from
+     home has no commute, and that is a zero, not a missing answer, so an
      absent one contributes nothing rather than blocking the calculation. */
   var UNPAID_HOURS = [
     ['unpaidOvertimeHoursPerWeek', 'unpaid overtime'],
@@ -52,7 +52,7 @@
   ];
 
   /**
-   * hoursBreakdown(work) — paid, unpaid and total hours per week.
+   * hoursBreakdown(work), paid, unpaid and total hours per week.
    * Incomplete only when the contracted hours are missing, since nothing can
    * be divided without them.
    */
@@ -95,7 +95,7 @@
     var weeks = Money.isEntered(work.weeksPerYear) ? work.weeksPerYear : Schema.WORK_DEFAULTS.weeksPerYear;
     if (weeks <= 0) return Money.incomplete('Weeks worked needs to be more than zero.', ['weeksPerYear']);
 
-    /* This person's own income, not the household's — a real hourly wage is
+    /* This person's own income, not the household's, a real hourly wage is
        inherently per-person (SPEC.md §3, per-person views). */
     var gross = 0, counted = 0;
     (person.incomeSources || []).forEach(function (src) {
@@ -104,14 +104,14 @@
     if (counted === 0) return Money.incomplete('Add your income to see this.', ['grossAnnualIncome']);
 
     /* Not earning. This is a real answer, not a missing one, so it must not
-       be met with "add your income" — and a real hourly wage is not a
+       be met with "add your income", and a real hourly wage is not a
        concept that applies to it. There is no rate to divide, and dividing
        work costs by hours would produce a negative "wage" that reads as a
        finding when it is really just an absence. DECISIONS.md D-048. */
     if (gross === 0) {
       return Money.incomplete(
         'You have said you are not earning, so there is no hourly rate to work out. '
-          + 'What your time is worth is a different question when nothing is coming in — '
+          + 'What your time is worth is a different question when nothing is coming in, '
           + 'how long the money lasts is the one to ask.',
         ['grossAnnualIncome']);
     }
@@ -145,7 +145,7 @@
          sign is easy to misread as a bug, so it is flagged rather than left
          for the reader to notice. */
       costsMoreThanItPays: real < 0,
-      /* Paid hours so low that the headline rate stops meaning anything —
+      /* Paid hours so low that the headline rate stops meaning anything, 
          one paid hour a week makes any salary look like a fortune an hour.
          The arithmetic is right; the flag lets a room say so. */
       implausibleHours: hours.paidHoursPerWeek < 5,

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/daybyday.js — the month, day by day (D-253)
+   shared/daybyday.js, the month, day by day (D-253)
 
    One picture in three parts, drawn from the one month engines/calendar.js
    runs: the balance line with every turn marked (in green, out red), the

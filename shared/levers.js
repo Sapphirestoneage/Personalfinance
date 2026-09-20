@@ -1,10 +1,10 @@
 /* ==========================================================================
-   shared/levers.js — the lever library: get, applies, apply. Nothing more.
+   shared/levers.js, the lever library: get, applies, apply. Nothing more.
    --------------------------------------------------------------------------
    A lever is one line in data/levers.json: what it moves, by how much, the
    hours it costs, whether it keeps paying through a job loss, one
    flexibility tag, and when it applies. This file reads that table and
-   offers three things — plus the implied hourly wage of any lever, since
+   offers three things, plus the implied hourly wage of any lever, since
    every room that offers one should show it. No categories, no weights,
    no plugin system. DECISIONS.md D-174.
 
@@ -20,7 +20,7 @@
                                     when money comes in or spending goes out
      impliedHourlyCents(id, h)      Result: monthly gain ÷ (hoursPerWeek × 4.33)
 
-   `appliesWhen` is one of a few fixed phrases, read by hand — never eval'd.
+   `appliesWhen` is one of a few fixed phrases, read by hand, never eval'd.
    ========================================================================== */
 (function (root, factory) {
   var deps;
@@ -170,7 +170,7 @@
     return Money.ok(Math.round(monthlyGainCents / hoursPerMonth), { monthlyGainCents: monthlyGainCents, hoursPerMonth: hoursPerMonth, hoursPerWeek: hoursPerWeek });
   }
   /** opts.monthlyGainCents / opts.hoursPerWeek override the lever's own
-      figures — the adventure's steppers move them (D-176). */
+      figures, the adventure's steppers move them (D-176). */
   function impliedHourlyCents(id, household, opts) {
     var L = get(id);
     if (!L) return Money.incomplete('No such lever.', ['lever']);

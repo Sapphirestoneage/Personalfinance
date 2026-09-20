@@ -1,15 +1,15 @@
 /* ==========================================================================
-   engines/careermove.js — Career Move: an offer against the job you have.
+   engines/careermove.js, Career Move: an offer against the job you have.
    DECISIONS.md D-099 (the second wave of tranche rooms).
    --------------------------------------------------------------------------
    Nothing here is a formula of its own. The offer is priced by the SAME
-   function that prices the current job — engines/hourly.js realHourlyWage —
+   function that prices the current job, engines/hourly.js realHourlyWage, 
    with the offer's hours, commute and costs handed in as `opts.work`, and
    the offer's pay handed in as the only pay of the job it replaces (a copy
    of the household; nothing is written). Take-home is engines/tier0.js
    takeHomeMonthlyCents on the same two households; the FI move is the
    projection engine's years-to-target with the real return, the FI number
-   and this year's savings, the way shared/lens.js reads it — spending
+   and this year's savings, the way shared/lens.js reads it, spending
    unchanged, the sign-on landing in investments in the offer's year.
 
      difference an hour = offer.real − now.real         (cents per hour)
@@ -18,7 +18,7 @@
 
    What is NOT carried from the current job: paid hours, commute, costs of
    working (each is the offer's own, or its stated stand-in). What IS
-   carried: unpaid overtime, getting ready, decompressing, weeks a year —
+   carried: unpaid overtime, getting ready, decompressing, weeks a year. 
    the person is the same person, and the room says so in its drawer.
    ========================================================================== */
 (function (root, factory) {
@@ -46,7 +46,7 @@
 
   /* The job the offer replaces: the primary person's first W-2 source, or
      failing that their first source of any kind. Every other source stays
-     on both sides — a mixed household's own work is not what is moving. */
+     on both sides, a mixed household's own work is not what is moving. */
   function jobIndex(person) {
     var sources = (person && person.incomeSources) || [];
     for (var i = 0; i < sources.length; i++) if (sources[i].type === 'w2') return i;
@@ -54,7 +54,7 @@
   }
 
   /**
-   * offerHousehold(h, offer) — a deep copy of the household in which the
+   * offerHousehold(h, offer), a deep copy of the household in which the
    * primary person's current job pays the offer instead. Nothing is written;
    * the copy is what the shared engines are pointed at.
    */
@@ -73,10 +73,10 @@
   }
 
   /**
-   * offerWork(h, offer) — the work overrides the offer brings, and where
+   * offerWork(h, offer), the work overrides the offer brings, and where
    * each came from. Only entered keys are handed over, so an unentered
    * commute or costs carries the current job's figure through Hourly's
-   * merge rather than being nulled out — and a typed 0 stays 0.
+   * merge rather than being nulled out, and a typed 0 stays 0.
    */
   function offerWork(household, offer) {
     var current = Schema.workProfile(Schema.primaryPerson(household));
@@ -93,8 +93,8 @@
 
   /* The FI arithmetic the lens uses, on one household: the FI number, the
      investments, this year's savings and the real return. The employer
-     match is left out on BOTH sides — the offer's match is a benefit, and
-     benefits are out of this room's scope — so the two sides are read on
+     match is left out on BOTH sides, the offer's match is a benefit, and
+     benefits are out of this room's scope, so the two sides are read on
      the same basis. */
   function fiInputs(household, tables) {
     var fire = Tier0.fireNumber(household);
@@ -141,7 +141,7 @@
     var h = household || {};
     var offer = offerOf(h);
     if (!Money.isEntered(offer.grossAnnualCents)) {
-      return Money.incomplete('Add the offer — what it pays a year — to compare it with the job you have.', ['offer.grossAnnualCents']);
+      return Money.incomplete('Add the offer, what it pays a year, to compare it with the job you have.', ['offer.grossAnnualCents']);
     }
     if (offer.grossAnnualCents <= 0) {
       return Money.incomplete('An offer has to pay something to be compared.', ['offer.grossAnnualCents']);

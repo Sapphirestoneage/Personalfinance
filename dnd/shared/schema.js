@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/schema.js — THE canonical household data model.
+   shared/schema.js, THE canonical household data model.
    --------------------------------------------------------------------------
    SPEC.md §3, §4. Read this before writing any tool. Do not invent field
    names; do not assume flat keys. Everything a room reads or writes lives
@@ -14,8 +14,8 @@
 
    Ownership: every shared item carries `ownerIds` (an array). One id = owned
    individually. Two or more = jointly owned. There is no "individual" vs
-   "joint" bucket. Income is the exception — a paycheck has exactly one
-   earner — so an income source carries `personId`, not `ownerIds`.
+   "joint" bucket. Income is the exception. A paycheck has exactly one
+   earner, so an income source carries `personId`, not `ownerIds`.
 
    Units, locked (SPEC.md §4):
      • every …Cents field is INTEGER CENTS
@@ -46,7 +46,7 @@
   var BUILD = '2026-09-20 01:28Z';
 
   /* ======================================================================
-     System assumption defaults — SPEC.md §12.2 (RESOLVED: 7% return, 4% SWR)
+     System assumption defaults, SPEC.md §12.2 (RESOLVED: 7% return, 4% SWR)
      Assumption-class fields. Never inline these numbers in a formula; read
      them off the household so one setting is globally tunable.
      ====================================================================== */
@@ -71,23 +71,23 @@
     /* Where the return bands come from. Engines never carry their own. */
     returnBands: 'return_bands.json',
     swrRate: 0.04,             // safe withdrawal rate, decimal fraction
-    /* Real discount rate for human capital — the present value of the pay
+    /* Real discount rate for human capital, the present value of the pay
        still to come before the stop age. A planning assumption, overridable
        like the others. BRIEF §4.1, DECISIONS.md D-079. */
     humanCapitalDiscountRate: 0.02,
     /* What a home's equity is worth when you would have to sell in a hurry
-       — the shadow runway counts it at this fraction. BRIEF §4.3, D-081. */
+, the shadow runway counts it at this fraction. BRIEF §4.3, D-081. */
     homeEquityHaircut: 0.8,
     /* Deliberately NULL. A marginal rate depends on bracket, state and
        filing status, and this app has an EFFECTIVE-rate table, not a
-       marginal one — deriving one from the other would be a fabricated
+       marginal one, deriving one from the other would be a fabricated
        number people act on (D-036). It is asked for once, in Where It Goes,
        and every room that needs it reads that answer. DECISIONS.md D-052. */
     marginalRate: null
   };
 
   /* ======================================================================
-     Field dictionary — SPEC.md §4.
+     Field dictionary, SPEC.md §4.
      One entry per field used by more than one tool. `class` is the data
      class from SPEC.md §3. This exists so a second tool cannot quietly
      invent `grossIncome` when the first already wrote `grossAnnualIncome`.
@@ -117,7 +117,7 @@
     'household.career.offer.grossAnnualCents':   { class: 'raw',        unit: 'cents',   note: 'an offer being weighed: with hoursPerWeek, commuteHoursPerWeek, workCostsMonthlyCents, signOnCents. Owned by Career Move. D-099' },
     'household.partner.splitMode':               { class: 'raw',        unit: 'enum',    values: ['equal', 'proportional', 'pooled'], note: 'how shared costs are split; sharedMonthlyCents is the shared month. Owned by Partner. D-099' },
     'household.kids.tuitionTargetCents':         { class: 'raw',        unit: 'cents',   note: 'a tuition target per child; tuitionSavedCents so far, tuitionMonthlyCents going in. Owned by Kids and Tuition. D-099' },
-    'household.housing.priceCents':              { class: 'raw',        unit: 'cents',   note: 'a place being weighed: with rentMonthlyCents (a place you would rent INSTEAD — the rent you pay is Cash Flow\'s housing line, read through Schema.rentMonthlyCents, D-130), downPct (0–1), rate (mortgage, decimal). Owned by Housing Decision. D-099' },
+    'household.housing.priceCents':              { class: 'raw',        unit: 'cents',   note: 'a place being weighed: with rentMonthlyCents (a place you would rent INSTEAD, the rent you pay is Cash Flow\'s housing line, read through Schema.rentMonthlyCents, D-130), downPct (0–1), rate (mortgage, decimal). Owned by Housing Decision. D-099' },
     'household.purchase.priceCents':             { class: 'raw',        unit: 'cents',   note: 'a big purchase: with monthsAway, financeRate (decimal, null = cash), label. Owned by Big Purchase. D-099' },
     'household.variableIncome.bufferMonths':     { class: 'raw',        unit: 'months',  note: 'months of the low-to-average gap held as a buffer. Owned by Variable Income. D-099' },
     'household.variableIncome.windowMonths':     { class: 'raw',        unit: 'months',  values: [3, 6, 12], note: 'the rolling window the room averages the ledger\'s variable months over. Owned by Variable Income. D-128' },
@@ -184,14 +184,14 @@
     'asset.tier':                                { class: 'raw',        unit: 'enum',    values: ['cash', 'taxable', 'retirement', 'property', 'other'], note: 'which pile it sits in for a runway. null = derived by Schema.tierOf from the tax character, else the category; a stored value is the override the Statement writes. 15.8, D-181' },
     'asset.confidence':                          { class: 'raw',        unit: 'enum',    values: [1, 2, 3, 4], note: '1 guaranteed · 2 85%+ · 3 real but do not count on it · 4 probably zero. null = not rated and excluded from the weighted total. D-066' },
     'asset.costBasisCents':                      { class: 'raw',        unit: 'cents',   note: 'optional; what was paid in. For Roth it is the part reachable before 59½' },
-    'asset.hassle':                              { class: 'raw',        unit: 'enum',    values: [1, 2, 3], note: '1 easy · 2 moderate · 3 annoying — for anything income-producing' },
+    'asset.hassle':                              { class: 'raw',        unit: 'enum',    values: [1, 2, 3], note: '1 easy · 2 moderate · 3 annoying, for anything income-producing' },
     'asset.cashFlowMonthlyCents':                { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'net monthly cash the asset throws off; null for one that does not' },
     'asset.accessAgeOverride':                   { class: 'raw',        unit: 'years',   note: 'overrides the access age derived from access_rules (e.g. a rule-of-55 plan). null = derived' },
     'asset.institution':                         { class: 'raw',        unit: 'text',    note: 'the bank, broker or plan that holds it, as the person names it. null = not typed. D-251' },
     'asset.accountType':                         { class: 'raw',        unit: 'enum',    values: ['checking', 'savings', 'hysa', 'money_market', 'cd', 'brokerage', 'stock_plan', 'crypto', '401k', 'roth_401k', '403b', '457b', 'tsp', 'old_401k', 'pension', 'traditional_ira', 'roth_ira', 'sep_ira', 'simple_ira', 'hsa', '529', 'daf', 'mixed', 'other'], note: 'the account type on its statement (Schema.ACCOUNT_TYPES). Choosing one sets taxCharacter and, where the category is still other, the category, through Schema.applyAccountType; the character stays editable. null = not asked. D-251' },
     'futureIncome.monthlyCents':                 { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'a pension, Social Security, an annuity, an inheritance you would rather not count. Owned by the Statement' },
     'futureIncome.confidence':                   { class: 'raw',        unit: 'enum',    values: [1, 2, 3, 4] },
-    'property.rentMonthlyCents':                 { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'gross rent. The value itself lives on the linked real_estate asset — one number, one owner' },
+    'property.rentMonthlyCents':                 { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'gross rent. The value itself lives on the linked real_estate asset, one number, one owner' },
     'property.vacancyRate':                      { class: 'assumption', unit: 'rate',    default: 0.08, note: 'PROPOSED at 8%, a landlord convention; overridable per property' },
     'insurance.oopMaxCents':                     { class: 'raw',        unit: 'cents',   note: 'health out-of-pocket maximum. Owned by Sleep At Night' },
     'insurance.termLifeCents':                   { class: 'raw',        unit: 'cents',   note: 'term life cover in force' },
@@ -235,14 +235,14 @@
     'expenses.entries[].everyCents':             { class: 'raw',        unit: 'cents',   note: 'the amount as typed, per `every`, read back by Expenses so $120 a year shows as $120 a year and not $10 a month. D-196' },
     'expenses.entries[].source':                 { class: 'raw',        unit: 'enum',    values: ['manual', 'imported', 'rerank', 'log'], note: 'SPEC.md §12.5; rerank = a custom cost line typed on The Rerank, D-085; log = a dated occurrence logged in the Expenses section, counted by the budget as an actual and never as the typical month, D-128' },
     'expenses.entries[].linkedIncomeId':         { class: 'raw',        unit: 'id',      note: 'the ledger income entry this expense produces; null = personal. D-128' },
-    'expenses.entries[].deductible':             { class: 'raw',        unit: 'bool',    note: 'true only when linkedIncomeId is set — enforced by createExpenseEntry, so a personal expense can never reduce taxable income. D-128' },
+    'expenses.entries[].deductible':             { class: 'raw',        unit: 'bool',    note: 'true only when linkedIncomeId is set, enforced by createExpenseEntry, so a personal expense can never reduce taxable income. D-128' },
     'expenses.entries[].hidden':                 { class: 'raw',        unit: 'bool',    note: 'off the default list, still counted. D-128' },
     'expenses.entries[].active':                 { class: 'raw',        unit: 'bool',    note: 'false = archived: stops counting toward new estimates and actuals; closed months are untouched. D-128' },
     'expenses.entries[].forDate':                { class: 'raw',        unit: 'iso-date', note: 'the day the money was FOR when that is not the day it left: bought ahead, or paid late. Null = the same day. Read by the slope in Expenses only; every month total keeps counting the day it left. D-306' },
     'expenses.rules[].key':                      { class: 'raw',        unit: 'text',    note: 'a merchant, as engines/merchants.js keys it (the finder’s key): which lines the rule files. Owned by Expenses. D-306' },
     'expenses.rules[].categoryId':               { class: 'raw',        unit: 'enum',    note: 'an id from data/expense_categories.json: where every line from that merchant files, past and future. D-306' },
     'household.ledger.income[].kind':            { class: 'raw',        unit: 'enum',    values: ['w2', 'se', 'bonus', 'gift', 'side', 'dividend', 'rental', 'other'], note: 'a dated income entry: amountCents, frequency (once, weekly, fortnightly, monthly, annual), receivedOn, taxable, taxMethod (w2, se, none), costs[] for se/side/rental, hidden, active. Owned by Income. D-128' },
-    'household.ledger.income[].dateKind':        { class: 'raw',        unit: 'enum',    values: ['exact', 'estimated', 'potential'], note: 'how sure the date is — the same three as an expense: potential income (a bonus that may not come) is drawn, never counted. D-130' },
+    'household.ledger.income[].dateKind':        { class: 'raw',        unit: 'enum',    values: ['exact', 'estimated', 'potential'], note: 'how sure the date is, the same three as an expense: potential income (a bonus that may not come) is drawn, never counted. D-130' },
     'household.ledger.income[].taxMethod':       { class: 'raw',        unit: 'enum',    values: ['w2', 'se', 'unemployment', 'none'], note: 'taxed how: withheld at the source; owed with self-employment tax on the net of costs; owed as ordinary income with no SE tax (unemployment); or not taxable. Four, no catch-all. D-128, D-129' },
     'expenses.entries[].dateKind':               { class: 'raw',        unit: 'enum',    values: ['exact', 'estimated', 'potential'], note: 'how sure the date is: exact (it happened / it is due), estimated (about then), potential (might not happen at all). Actual counts exact and estimated; potential is drawn on the calendar and reported apart, never counted. D-130' },
     'expenses.entries[].produced':               { class: 'raw',        unit: 'enum',    values: ['personal', 'linked', 'reimbursable'], note: 'what the expense produced: nothing (personal, never deductible); an income entry (linkedIncomeId, the only deductible path); or a repayment expected from someone (reimbursable: never deductible, counts in full while pending, a credit in the month received). D-129' },
@@ -256,7 +256,7 @@
     'household.budget.estimated':                { class: 'raw',        unit: 'object',  note: 'YYYY-MM → bucket → cents: an open month\'s estimate set by hand (the Estimated-vs-Actual room\'s one write). Absent = last closed month\'s actual, else the onboarding figures. Owned by Budget. D-128' },
     'household.subscriptions':                   { class: 'raw',        unit: 'list',    note: 'the subscription finder’s decisions: { key, status confirmed | dismissed | cancel, label, yearlyCents, at }; a cancel is a reminder, never an action. Owned by Subscriptions. D-215' },
     'household.notApplicable':                   { class: 'raw',        unit: 'object',  note: 'key → true: a structural option the household marked Not applicable (a preset id such as max401k or maxIra, or an ownership field id). Excluded from every live figure; ownership rows read it as not applicable, never as missing. Still reachable in the Budget room\'s Hypothetical mode, which never writes. Owned by Budget. D-129' },
-    'household.budget.presets':                  { class: 'raw',        unit: 'object',  note: 'YYYY-MM → bucket → [preset id]: the Savings / Investments presets stacked into that month\'s Estimated (ruleOfFive, emergencyFund, maxIra, max401k — engines/presets.js). They stack on a hand-set figure and replace the fallback ones. Owned by Budget. D-129' },
+    'household.budget.presets':                  { class: 'raw',        unit: 'object',  note: 'YYYY-MM → bucket → [preset id]: the Savings / Investments presets stacked into that month\'s Estimated (ruleOfFive, emergencyFund, maxIra, max401k, engines/presets.js). They stack on a hand-set figure and replace the fallback ones. Owned by Budget. D-129' },
     'rerank.rows[].id':                          { class: 'raw',        unit: 'id',      note: 'a categoryId, or an expense entry id for a custom line. D-085' },
     'rerank.rows[].miss':                        { class: 'raw',        unit: 'enum',    values: ['yes', 'some', 'no'], note: 'would you miss it? null = not asked' },
     'rerank.rows[].who':                         { class: 'raw',        unit: 'enum',    values: ['me', 'both', 'show'], note: 'who is it really for: me, both of us, or for show' },
@@ -265,7 +265,7 @@
     'skills[id].kind':                           { class: 'raw',        unit: 'enum',    values: ['once', 'habit', 'periodic'], note: 'copied from the catalogue when equipped, so the state can be read without it' },
     'skills[id].log[]':                          { class: 'raw',        unit: 'date',    note: 'ISO days the habit was done; misses[] the days it was explicitly not. A day in neither is unanswered' },
     'skills[id].valuePerDayCents':               { class: 'computed',   unit: 'cents',   note: 'the annual effect ÷ 365 at the last log, kept so the ledger row is reproducible' },
-    'skills[id].automated':                      { class: 'raw',        unit: 'bool',    note: 'runs without you — the automation ratio counts these. D-090' },
+    'skills[id].automated':                      { class: 'raw',        unit: 'bool',    note: 'runs without you, the automation ratio counts these. D-090' },
     'skills[id].dueOn':                          { class: 'raw',        unit: 'date',    note: 'periodic skills: lastDone + everyDays' },
     'skills[id].verifiedBy':                     { class: 'raw',        unit: 'enum',    values: ['household', 'self'], note: 'household = marked done from a fact the model already holds, and un-marked if the fact stops holding' },
     'skillTree.state[id].state':                 { class: 'raw',        unit: 'enum',    values: ['done'], note: 'the Skill Tree\'s standing per skill: only done is stored, with `on` (ISO day) and `by` (proof | self); open, locked, bypassed, fogged and not-yours are derived by engines/skilltree.js every time and never written. Owned by the Skill Tree. D-131' },
@@ -281,11 +281,11 @@
     'swan.basis':                                { class: 'raw',        unit: 'enum',    values: ['amount', 'months'], note: 'which of the two below the person actually named' },
     'swan.targetCents':                          { class: 'raw',        unit: 'cents',   note: 'SWAN Number as a flat cash figure. SPEC.md §13 Tier 1.5' },
     'swan.targetMonths':                         { class: 'raw',        unit: 'months',  note: 'SWAN Number expressed as months of expenses' },
-    'swan.note':                                 { class: 'raw',        unit: 'text',    note: 'why that number — the feeling the figure stands for' },
+    'swan.note':                                 { class: 'raw',        unit: 'text',    note: 'why that number, the feeling the figure stands for' },
     'computed.swanTargetCents':                  { class: 'computed',   unit: 'cents',   note: 'the resolved target, whichever basis was used' },
-    'valuesProfile.stated[]':                    { class: 'raw',        unit: 'enum',    note: 'value ids from data/values.json, in the order named — index 0 is the top one' },
+    'valuesProfile.stated[]':                    { class: 'raw',        unit: 'enum',    note: 'value ids from data/values.json, in the order named, index 0 is the top one' },
     'valuesProfile.assignments':                 { class: 'raw',        unit: 'map',     note: 'expenseCategoryId -> value id, or null for deliberately unclaimed' },
-    'ratings.<scope>.<itemId>':                  { class: 'raw',        unit: 'rating',  note: 'integer 1-10, or absent for not rated. One store for every 1-10 rating in the app — SPEC.md §13 Tier 1.5' },
+    'ratings.<scope>.<itemId>':                  { class: 'raw',        unit: 'rating',  note: 'integer 1-10, or absent for not rated. One store for every 1-10 rating in the app, SPEC.md §13 Tier 1.5' },
     'worthChecks[].costCents':                   { class: 'raw',        unit: 'cents' },
     'worthChecks[].hoursSpent':                  { class: 'raw',        unit: 'hours' },
     'worthChecks[].predictedRating':             { class: 'raw',        unit: 'rating',  note: 'what you thought it would be worth, 1-10, before' },
@@ -297,13 +297,13 @@
     'assumptions.humanCapitalDiscountRate':      { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.humanCapitalDiscountRate, note: 'real discount on pay still to come, for human capital. D-079' },
     'assumptions.homeEquityHaircut':             { class: 'assumption', unit: 'rate',    default: ASSUMPTION_DEFAULTS.homeEquityHaircut, note: 'the fraction of home equity the shadow runway counts. D-081' },
 
-    /* Computed — never stored on the household, never user-editable.
+    /* Computed, never stored on the household, never user-editable.
        Recomputed from raw inputs on every read. Listed here so a tool can
        check that it is not about to write to one. */
     'computed.netWorthCents':                    { class: 'computed', unit: 'cents' },
     'computed.totalAssetsCents':                 { class: 'computed', unit: 'cents' },
     'computed.totalDebtCents':                   { class: 'computed', unit: 'cents' },
-    'computed.savingsRateExcludingMatch':        { class: 'computed', unit: 'rate', note: 'SPEC.md §12.1 — both variants always available' },
+    'computed.savingsRateExcludingMatch':        { class: 'computed', unit: 'rate', note: 'SPEC.md §12.1, both variants always available' },
     'computed.savingsRateIncludingMatch':        { class: 'computed', unit: 'rate' },
     'computed.emergencyFundMonths':              { class: 'computed', unit: 'months' },
     'computed.debtToIncomeRatio':                { class: 'computed', unit: 'rate' },
@@ -314,14 +314,14 @@
     'computed.fooPlacement':                     { class: 'computed', unit: 'step' }
   };
 
-  /** True if a field path is Computed — i.e. writing to it is a bug.
+  /** True if a field path is Computed, i.e. writing to it is a bug.
    *  SPEC.md §11 q2: tools write raw inputs only. */
   function isComputedField(path) {
     return !!FIELDS[path] && FIELDS[path].class === 'computed';
   }
 
   /* ======================================================================
-     Constructors. Every field starts null — "not entered" — never 0.
+     Constructors. Every field starts null, "not entered", never 0.
      SPEC.md §5 rule 1.
      ====================================================================== */
 
@@ -375,7 +375,7 @@
       institution: f.institution || null,
       grossAnnualIncomeCents: f.grossAnnualIncomeCents === undefined ? null : f.grossAnnualIncomeCents,
       /* How this person is ACTUALLY paid. engines/income.js turns the pair
-         of (frequency, rateCents) into the annual figure above — which
+         of (frequency, rateCents) into the annual figure above, which
          stays the canonical stored number, so every other room is
          unaffected. A source with no rateCents falls back to whatever
          grossAnnualIncomeCents already says, which is how every household
@@ -414,7 +414,7 @@
 
   /**
    * What a job actually costs in time and money, beyond the paycheque.
-   * Lives on the person because it is a fact about them, not about a room —
+   * Lives on the person because it is a fact about them, not about a room, 
    * SPEC.md §9 item 7 makes the Real Hourly Wage engine a prerequisite for
    * the Side Hustle and Prospective Worth calcs, and all three read this.
    * Hours are per week; costs are monthly cents.
@@ -458,11 +458,11 @@
     { id: 'both',         label: 'Both \u2014 a job and my own work',
       short: 'Both',          earning: true,  hasEmployer: true },
     /* Between jobs is its own answer, not a shade of "not working": it
-       has a sequence of its own — benefits, severance, a runway against a
-       search — and the income question stops being the gate. D-092. */
+       has a sequence of its own, benefits, severance, a runway against a
+       search, and the income question stops being the gate. D-092. */
     { id: 'unemployed',   label: 'Unemployed \u2014 looking for work',
       short: 'Unemployed',    earning: false, hasEmployer: false, seeking: true },
-    /* On disability: not working, and the benefit is income — it goes on
+    /* On disability: not working, and the benefit is income. It goes on
        the income card like a pension does. D-092. */
     { id: 'disabled',     label: 'On disability',
       short: 'On disability', earning: false, hasEmployer: false, benefits: true },
@@ -506,7 +506,7 @@
   /**
    * The benefit as a monthly figure while it lasts: weekly × 52 ÷ 12, with
    * the months it runs. Only while receiving or applied, and only with an
-   * amount typed — "haven't applied" is an answer worth nothing a month.
+   * amount typed, "haven't applied" is an answer worth nothing a month.
    */
   function benefitMonthlyCents(household) {
     if (!isUnemployed(household)) return Money.incomplete('Not between jobs.', ['employmentStatus']);
@@ -599,7 +599,7 @@
    *
    * Yes whenever a match COULD exist and is not known to be zero. It used
    * to appear only once a non-zero match had been typed, which made the
-   * intake's count grow from 9 to 10 halfway through — "1 of 9" on the
+   * intake's count grow from 9 to 10 halfway through, "1 of 9" on the
    * first screen, "all 10 answered" on the last. A count that only ever
    * shrinks as you answer is one people can trust. BRIEF §1.1 item 3.
    */
@@ -614,7 +614,7 @@
   }
 
   /**
-   * capturingFullMatchDerived(h) — is the person contributing at least the
+   * capturingFullMatchDerived(h), is the person contributing at least the
    * match cap? A FACT that follows from two others (contributionPercent and
    * the cap), so once both are known it is never asked. Returns a Result:
    * ok(true/false) when both are known, incomplete otherwise. The stored
@@ -646,7 +646,7 @@
   /**
    * Between jobs (D-092). Every field is null until answered; a benefit
    * status of 'notApplied' or 'ineligible' is an answer with no amount.
-   *   since              'YYYY-MM-01' — the month the job ended
+   *   since              'YYYY-MM-01', the month the job ended
    *   benefitStatus      'receiving' | 'applied' | 'notApplied' | 'ineligible'
    *   benefitWeeklyCents what the state pays a week (yours to look up; the
    *                      state cap is proposed, never assumed)
@@ -721,7 +721,7 @@
       /* Whether there is a job at all, and what kind. This is not derivable
          from the income sources: "no rate entered" means the question was
          skipped, "not earning" is a pay basis, and neither of them tells you
-         whether there is an EMPLOYER — which is the only thing that makes an
+         whether there is an EMPLOYER, which is the only thing that makes an
          employer match a real question. null means not asked yet, and that
          is deliberately different from every answer below.
          See EMPLOYMENT_STATUSES and DECISIONS.md D-055. */
@@ -763,7 +763,7 @@
       ownerIds: ownerIdsFrom(f),   /* `owner: personId | 'joint'` is accepted (15.7) */
       /* How the money is taxed on the way out. Asked in three boxes by
          Start Here (pre-tax / Roth / taxable); a lump typed as one total is
-         'unknown', which is an answer — null is "never asked". D-061. */
+         'unknown', which is an answer, null is "never asked". D-061. */
       taxCharacter: f.taxCharacter === undefined ? null : f.taxCharacter,
       /* Where it sits (D-251): the bank or broker, and the account type on
          its statement. Both null until typed; the type is one of
@@ -771,7 +771,7 @@
       institution: f.institution === undefined ? null : f.institution,
       accountType: f.accountType === undefined ? null : f.accountType,
       /* The 10x Statement's per-asset facts (D-066). Every one starts null:
-         liquidity and confidence are rated, not guessed — the access_rules
+         liquidity and confidence are rated, not guessed, the access_rules
          default is proposed in the box, never written. */
       liquidity: f.liquidity === undefined ? null : f.liquidity,
       confidence: f.confidence === undefined ? null : f.confidence,
@@ -842,7 +842,7 @@
   }
 
   /**
-   * assetRule(asset, rules) — the access_rules row for an asset: by its
+   * assetRule(asset, rules), the access_rules row for an asset: by its
    * taxCharacter, else by its category. Always returns a row, so a caller
    * never has to guess a bucket.
    */
@@ -861,7 +861,7 @@
     return assetRule(asset, rules).accessAge;
   }
 
-  /** Effective liquidity 1-4: the rating if given, else the rule's default —
+  /** Effective liquidity 1-4: the rating if given, else the rule's default, 
    *  and says which. */
   function assetLiquidity(asset, rules) {
     if (asset && Money.isEntered(asset.liquidity)) return { value: asset.liquidity, rated: true };
@@ -873,9 +873,9 @@
      property, other. The pile is READ from the tax character the Statement
      asks for (a lump entered as one total is retirement money until split),
      else from the category, and an owner can override it on the asset
-     (`asset.tier`). A runway draws the piles in order — cash, then taxable
+     (`asset.tier`). A runway draws the piles in order, cash, then taxable
      (net of the gains tax on the unrealized gain), then retirement (net of
-     the withdrawal tax and the early penalty below the access age) — and
+     the withdrawal tax and the early penalty below the access age), and
      never property. Runway, Between Jobs, the Long Way Round job loss and
      the Dungeons & Dividends HP all read runwayMonths(); the Statement's
      ladder is a view of the same piles. */
@@ -913,7 +913,7 @@
   }
 
   /**
-   * drawOf(asset, tier, ctx) — what one asset puts into a runway: its gross
+   * drawOf(asset, tier, ctx), what one asset puts into a runway: its gross
    * value, the tax and penalty on the way out, and the net.
    *   ctx.rates  { withdrawalRate, capitalGainsRate } or null: with no rates
    *              the draw is before tax and says so (taxApplied false)
@@ -967,7 +967,7 @@
   }
 
   /**
-   * tierDraws(household, drawOrder, opts) — the piles a runway may draw, in
+   * tierDraws(household, drawOrder, opts), the piles a runway may draw, in
    * order, each with gross, tax, penalty and net, plus the piles it never
    * touches. opts: rates, rules, age, asOf. Does not need the spending.
    */
@@ -1045,7 +1045,7 @@
   }
 
   /* Kinds of future period. `other` is the default so every row written
-     before D-152 keeps exactly the meaning it had — a kind was not asked
+     before D-152 keeps exactly the meaning it had. A kind was not asked
      for, so none is asserted. The kind changes nothing arithmetically; it
      only lets the timeline colour and group what it draws. */
   var FUTURE_KINDS = ['job', 'benefit', 'other'];
@@ -1063,7 +1063,7 @@
       endsOn: f.endsOn === undefined ? null : f.endsOn,
       /* The mirror of startsAtAge: "until I turn 67". Absent means the
          period runs to the horizon, which is a real answer and is labelled
-         as one — it is never quietly turned into an end date. D-152. */
+         as one. It is never quietly turned into an end date. D-152. */
       endsAtAge: f.endsAtAge === undefined ? null : f.endsAtAge,
       confidence: f.confidence === undefined ? null : f.confidence,
       inflationAdjusted: f.inflationAdjusted === undefined ? null : !!f.inflationAdjusted,
@@ -1288,7 +1288,7 @@
       /* The rolling window the room smooths the ledger's months over: 3, 6 or 12. D-128. */
       windowMonths: [3, 6, 12].indexOf(f.windowMonths) >= 0 ? f.windowMonths : null };
   }
-  /* The third wave (D-101 scaffolding): the LATER.md rooms — the T8
+  /* The third wave (D-101 scaffolding): the LATER.md rooms, the T8
      shapes (D-093 draft, now built), the loan decision, the calendar,
      History's compare-to. */
   function createEnough(fields) {
@@ -1392,7 +1392,7 @@
     };
   }
 
-  /* A one-off in or out — a bonus, a tax bill, a car — that the one-pager
+  /* A one-off in or out, a bonus, a tax bill, a car, that the one-pager
      takes in one line so the dashboard and Runway can see it coming. D-094. */
   function createOneOff(fields) {
     var f = fields || {};
@@ -1514,7 +1514,7 @@
       rate: f.rate === undefined ? null : f.rate,
       minPaymentCents: f.minPaymentCents === undefined ? null : f.minPaymentCents,
       type: f.type || 'other',
-      /* Only meaningful on revolving debt — a mortgage has no limit to be a
+      /* Only meaningful on revolving debt. A mortgage has no limit to be a
          share of. Absent means "not entered", never "no limit", which is
          why credit utilisation stays unavailable rather than assuming one.
          DECISIONS.md D-045. */
@@ -1857,7 +1857,7 @@
    *   imported transaction  { categoryId, amountCents, period: 'once',
    *                           date, descriptor, source: 'imported' }
    * The roll-up in engines/cashflow.js normalises both to a monthly figure,
-   * so adding import later changes no aggregation code — SPEC.md §12.5.
+   * so adding import later changes no aggregation code, SPEC.md §12.5.
    */
   var PRODUCED = ['personal', 'linked', 'reimbursable'];
   /* How often a named line repeats, as it was known (D-196). The stored
@@ -1907,7 +1907,7 @@
       fixed: f.fixed === undefined ? null : f.fixed,
       /* The ledger (D-128). An expense either is personal, or it produces
          one income entry; only the second kind can ever be deductible,
-         and that is decided HERE, not in a form — a personal expense
+         and that is decided HERE, not in a form, a personal expense
          handed deductible: true is stored as false. */
       produced: produced,
       linkedIncomeId: linked,
@@ -1927,13 +1927,13 @@
   }
 
   /* ---- The ledger: dated money in, and the months closed on it (D-128) ----
-     An income ENTRY is a dated event — this paycheque, this invoice paid,
-     this gift — which is a different thing from an income SOURCE (the
+     An income ENTRY is a dated event, this paycheque, this invoice paid,
+     this gift, which is a different thing from an income SOURCE (the
      description of a job, annualised, that every ratio reads). The two
      coexist: the source is the profile, the entry is the record. */
   var INCOME_KINDS = ['w2', 'se', 'bonus', 'gift', 'side', 'dividend', 'rental', 'unemployment', 'other'];
   var INCOME_FREQUENCIES = ['once', 'weekly', 'fortnightly', 'monthly', 'annual'];
-  /* Taxed how — exactly four, no catch-all (D-129):
+  /* Taxed how, exactly four, no catch-all (D-129):
        w2            withheld at the source
        se            owed, not withheld, and subject to self-employment tax
        unemployment  owed, not withheld, ordinary income, NO self-employment tax
@@ -2091,12 +2091,12 @@
       targetDate: f.targetDate === undefined ? null : f.targetDate,   // ISO 'YYYY-MM-DD'
       savedCents: f.savedCents === undefined ? null : f.savedCents,
       monthlyContributionCents: f.monthlyContributionCents === undefined ? null : f.monthlyContributionCents,
-      /* Either itemise it or name one lump figure — never both silently. */
+      /* Either itemise it or name one lump figure, never both silently. */
       lineItems: f.lineItems || [],
       lumpTargetCents: f.lumpTargetCents === undefined ? null : f.lumpTargetCents,
       /* Can it be undone (D-283). Reversibility was a room that asked this
          of ONE decision; it is two fields on every block now. Both default
-         to null, which is "not asked", never "free" or "instant" — a block
+         to null, which is "not asked", never "free" or "instant", a block
          with no answer says the question is open rather than that the door
          swings. `decisionId` records that the figures were started from a
          named decision in data/reversibility_decisions.json, so the room
@@ -2116,7 +2116,7 @@
       amountCents: f.amountCents === undefined ? null : f.amountCents,
       /* A line that is priced PER UNIT rather than as one figure: so many
          guests at so much each, so many nights at so much a night. The
-         amount is still the only thing that is summed — the two fields
+         amount is still the only thing that is summed, the two fields
          below MAKE it (engines/goals.js itemAmountCents), they do not sit
          beside it. `unitLabel` is what one of them is called, and
          `unitsPerGroup` how many come at a time, because nobody invites
@@ -2125,7 +2125,7 @@
       units: f.units === undefined ? null : f.units,
       unitLabel: f.unitLabel === undefined ? null : f.unitLabel,
       unitsPerGroup: f.unitsPerGroup === undefined ? null : f.unitsPerGroup,
-      /* A line that PAYS you — rent a lodger pays, the thing you sell — is
+      /* A line that PAYS you, rent a lodger pays, the thing you sell, is
          typed as a positive figure and carries this flag; the sign is applied
          where the line is summed (engines/goals.js itemAmountCents), never
          in a box. A block whose lines net negative pays, and answers the five
@@ -2135,14 +2135,14 @@
   }
 
   /**
-   * The SWAN Number — SPEC.md §13, Tier 1.5. A self-reported "sleep well at
+   * The SWAN Number, SPEC.md §13, Tier 1.5. A self-reported "sleep well at
    * night" liquid-savings target, stored STANDALONE and never conflated with
    * computed Emergency Fund Coverage: one is a feeling, the other is
    * arithmetic, and the room shows both side by side.
    *
    * Two ways to name it, one authoritative at a time:
-   *   basis 'amount' — a flat cash figure, in targetCents
-   *   basis 'months' — a multiple of monthly expenses, in targetMonths
+   *   basis 'amount', a flat cash figure, in targetCents
+   *   basis 'months', a multiple of monthly expenses, in targetMonths
    * Whichever the person used is the one stored in `basis`; the other stays
    * null rather than being back-filled, so re-reading it never silently
    * pins a figure that was derived from an expense number that has since
@@ -2161,13 +2161,13 @@
 
   /**
    * What someone says matters, and which of their spending they say serves
-   * it. SPEC.md §13, Tier 2 — Values vs. Spending Audit.
+   * it. SPEC.md §13, Tier 2, Values vs. Spending Audit.
    *
    * `stated` is an ORDERED list of value ids: index 0 is what they put
    * first. Rank is position, not a stored number, so there is no way for the
    * two to disagree.
    *
-   * `assignments` maps an expense category id to ONE value id — at most one,
+   * `assignments` maps an expense category id to ONE value id, at most one,
    * because a category counted under two values would double-count the
    * money and the shares would stop adding up. An explicit null means "this
    * serves nothing I named", which is a real answer and different from a
@@ -2188,7 +2188,7 @@
    *
    * SPEC.md §13 Tier 1.5 is explicit that the 1-10 mechanism is shared
    * infrastructure across the Fulfillment Curve, the Category Tracker, the
-   * Dating Cost calc and Retroactive Worth — "build one reusable rating
+   * Dating Cost calc and Retroactive Worth, "build one reusable rating
    * component, not four". One store is the data half of that; the control
    * in shared/rating.js is the other half.
    *
@@ -2217,7 +2217,7 @@
    * "before/after pair", with "Prospective's prediction storable and later
    * compared against Retroactive's actual outcome if wired together with a
    * shared ID". So they are ONE record with two ratings, not two records
-   * that have to be matched up afterwards — a shared id you have to maintain
+   * that have to be matched up afterwards, a shared id you have to maintain
    * is a shared id that drifts.
    *
    * `predictedRating` is set before, `actualRating` after. Either may be
@@ -2337,7 +2337,7 @@
          attached ad hoc, so it survives a save/load round trip. */
       capturingFullMatch: f.capturingFullMatch === undefined ? null : f.capturingFullMatch,
       /* Does anyone depend on your income? null not asked, true, or a
-         deliberate false — which takes term life off the coverage checkup
+         deliberate false, which takes term life off the coverage checkup
          and off every list of needs. D-092. */
       dependents: createDependents(f.dependents),
       /* The household's community: a day school changes what tuition is. */
@@ -2350,7 +2350,7 @@
          only when a job changed mid-year. DECISIONS.md D-047. */
       incomeBasis: f.incomeBasis === 'runRate' ? 'runRate' : 'earned',
       /* Facts about your retirement setup. These used to be typed into the
-         FOO ladder and into Where It Goes separately, and kept by neither —
+         FOO ladder and into Where It Goes separately, and kept by neither, 
          so the same question was asked twice and forgotten twice.
          Owned by Where It Goes. DECISIONS.md D-052. */
       retirement: createRetirement(f.retirement),
@@ -2365,14 +2365,14 @@
       /* Stated values and what spending serves them. Owned by the What
          Matters room. SPEC.md §13 Tier 2. */
       valuesProfile: createValuesProfile(f.valuesProfile),
-      /* The SWAN Number — a standalone self-reported target, owned by the
+      /* The SWAN Number, a standalone self-reported target, owned by the
          Sleep At Night room. Never derived from, and never written by, the
          Emergency Fund Coverage calculation. SPEC.md §13 Tier 1.5. */
       swan: createSwanTarget(f.swan),
-      /* Goals — SPEC.md §9 item 6. Owned by the Goals room. */
+      /* Goals, SPEC.md §9 item 6. Owned by the Goals room. */
       goals: (f.goals || []).map(createGoal),
-      /* The 10x Statement's records (D-066). Money that is coming — a
-         pension, Social Security, an annuity — is not net worth and is not
+      /* The 10x Statement's records (D-066). Money that is coming, a
+         pension, Social Security, an annuity, is not net worth and is not
          income yet; it is its own list. */
       futureIncome: (f.futureIncome || []).map(createFutureIncome),
       /* What a rental does, linked to the asset that says what it is. */
@@ -2430,7 +2430,7 @@
       practiceLedger: (f.practiceLedger || []).map(createPracticeEntry).filter(function (e) { return e.on && e.skill; }),
       assumptions: normaliseAssumptions(f.assumptions),
       /* User overrides persist SEPARATELY from the defaults so "reset to
-         default" is always possible — SPEC.md §3, assumption class. */
+         default" is always possible, SPEC.md §3, assumption class. */
       assumptionOverrides: f.assumptionOverrides || {},
       meta: Object.assign({
         visitedRooms: [],
@@ -2441,15 +2441,15 @@
         visits: createVisits(f.meta && f.meta.visits),
         createdAt: null,
         updatedAt: null,
-        /* { fieldId: ISO } — when each owned field was last set or
+        /* { fieldId: ISO }, when each owned field was last set or
            re-confirmed. Absent for every field until it is next written,
            which is what "unknown" looks like. DECISIONS.md D-056. */
         confirmedAt: {},
-        /* { fieldId: { asOf, source, confidence, room } } — the three facts
+        /* { fieldId: { asOf, source, confidence, room } }, the three facts
            about every owned number (15.1, 15.10; D-181). Filled by the
            spine on every change, by the migration for anything older. */
         fields: {},
-        /* "Any debt?" — null not asked, true yes, false a deliberate no that
+        /* "Any debt?", null not asked, true yes, false a deliberate no that
            takes Debt Payoff off the path and its figures off every room's
            list of needs. D-061. */
         hasDebt: null,
@@ -2457,11 +2457,11 @@
            be undone and redone. Capped at 100 by the spine. D-094. */
         undoStack: [],
         redoStack: [],
-        /* { fieldId: true } — figures the one-pager filled in as guesses
+        /* { fieldId: true }, figures the one-pager filled in as guesses
            that were never typed over. Read as real numbers everywhere and
            shown as guesses everywhere, until replaced. D-094. */
         guessed: {},
-        /* { fieldId or fieldId:itemId: { at, expectedBy } } — rows the person
+        /* { fieldId or fieldId:itemId: { at, expectedBy } }, rows the person
            marked "Not sure yet", with the month they expect to know by
            (YYYY-MM) or null. Never a value: a row here is still blank in
            every formula, and it counts for more than blank and less than
@@ -2473,17 +2473,17 @@
            and the rows that change meaning have not been walked yet;
            null otherwise. Cleared by the sheet's Done. */
         reopen: null,
-        /* { fieldId: roomId } — the room that last changed the field, so
+        /* { fieldId: roomId }, the room that last changed the field, so
            the one-pager can show "from The Statement" beside a number it
            did not enter itself. D-095. */
         source: {},
-        /* The household's default lens — '$', 'hours', 'bought' or
-           'pushed' — used when the session has not chosen one. D-100. */
+        /* The household's default lens, '$', 'hours', 'bought' or
+           'pushed', used when the session has not chosen one. D-100. */
         displayUnit: null,
-        /* "I don't pay rent" — living with family, or a paid-off place;
+        /* "I don't pay rent", living with family, or a paid-off place;
            lowers the spending guess and nothing else. D-094. */
         noRent: null,
-        /* The Walk-Through's ledger — D-149. Which steps the person has
+        /* The Walk-Through's ledger, D-149. Which steps the person has
            said they are finished with, and which they have waved off.
            Deliberately NOT derived from visits or from how full a room is:
            a person deciding "I am done with this one" is a different fact
@@ -2491,7 +2491,7 @@
            { startedAt: ISO|null, finishedAt: ISO|null,
              done: { roomId: ISO }, skipped: { roomId: ISO } } */
         walk: null,
-        /* Which arrangement of the rooms this person chose to browse by —
+        /* Which arrangement of the rooms this person chose to browse by, 
            a layout id from data/layouts.json, or null for the order the app
            ships (D-153). A VIEW, never a fact: nothing may read this to
            decide what a room needs, what applies, or what anything is worth.
@@ -2500,7 +2500,7 @@
       }, f.meta || {}, {
         /* Normalised AFTER the spread, not inside the defaults: a raw
            `f.meta.walk` would otherwise win the Object.assign and land in
-           the household unchecked — which is how a shape from an old export
+           the household unchecked, which is how a shape from an old export
            gets in. Every other meta key is a scalar and does not have this
            problem. D-149. */
         walk: createWalk(f.meta && f.meta.walk)
@@ -2510,14 +2510,14 @@
 
   /**
    * A copy of the household with monthly spending moved by `deltaCents`
-   * (negative spends less). Used for "what if I saved more" — the point is
+   * (negative spends less). Used for "what if I saved more". The point is
    * that the SAME engines then run against it, so a hypothetical is never a
    * second copy of a formula with the number changed. SPEC.md §8, §12.2:
    * a what-if is local and is never written back.
    *
    * The delta lands on whichever figure `monthlyExpensesCents()` would
-   * actually read — tracked if a month has been categorised, the estimate
-   * otherwise — so the hypothetical answers the same question the real one
+   * actually read, tracked if a month has been categorised, the estimate
+   * otherwise, so the hypothetical answers the same question the real one
    * does. Spending cannot go below zero.
    */
   function withMonthlyExpensesDeltaCents(household, deltaCents) {
@@ -2544,7 +2544,7 @@
   /* ======================================================================
      Resolved assumptions: default, overridden by the user's stored override.
      A room testing a "what if" value passes it as a LOCAL override to the
-     calculator instead of writing it here — SPEC.md §12.2, §6.
+     calculator instead of writing it here, SPEC.md §12.2, §6.
      ====================================================================== */
 
   /* The stored assumptions: the defaults, with a save's own values over
@@ -2574,11 +2574,11 @@
   }
 
   /* ======================================================================
-     Aggregation — SPEC.md §3.
+     Aggregation, SPEC.md §3.
      • Household totals count every item EXACTLY ONCE regardless of how many
        ownerIds it carries. A jointly-owned asset is not double counted.
      • Items owned solely by someone with role 'child' are excluded by
-       default. An unowned item (empty ownerIds) still counts — Tier 0 lump
+       default. An unowned item (empty ownerIds) still counts, Tier 0 lump
        sums are entered before people are named.
      ====================================================================== */
 
@@ -2613,7 +2613,7 @@
     return false;                                   // owned only by children
   }
 
-  /** Items belonging to one specific person — for per-person views. */
+  /** Items belonging to one specific person, for per-person views. */
   function ownedBy(items, personId) {
     return (items || []).filter(function (it) {
       return ((it.ownerIds) || []).indexOf(personId) !== -1;
@@ -2668,7 +2668,7 @@
 
   /* The asset categories Start Here asks about, and everything else. The
      split matters because they have different owners under
-     shared/ownership.js — Start Here owns the first two, the Net Worth room
+     shared/ownership.js, Start Here owns the first two, the Net Worth room
      owns the rest. */
   var INTAKE_ASSET_CATEGORIES = ['cash', 'investment', 'retirement'];
   var ITEMISED_ASSET_CATEGORIES = ['real_estate', 'vehicle', 'other'];
@@ -2677,20 +2677,20 @@
     return sumAssetsByCategory(household, ITEMISED_ASSET_CATEGORIES);
   }
 
-  /** Cash only — Emergency Fund Coverage and Liquidity use cash, not cash +
+  /** Cash only, Emergency Fund Coverage and Liquidity use cash, not cash +
    *  investments. SPEC.md §13, Tier 0 input spec. */
   function cashCents(household) {
     return sumAssetsByCategory(household, ['cash']);
   }
 
-  /** Investments + retirement — the FIRE / retirement-benchmark numerator. */
+  /** Investments + retirement, the FIRE / retirement-benchmark numerator. */
   function investmentsCents(household) {
     return sumAssetsByCategory(household, ['investment', 'retirement']);
   }
 
   /* "No debt" (meta.hasDebt === false, D-061) is an answer: with nothing
      listed it reads as zero owed and zero a month, not as a blank. Left
-     unanswered, an empty list is still incomplete — empty is not zero. */
+     unanswered, an empty list is still incomplete, empty is not zero. */
   function saidNoDebt(household) {
     return !!(household && household.meta && household.meta.hasDebt === false);
   }
@@ -2727,7 +2727,7 @@
    * "50% up to 6% of salary" needs both numbers: the dollar value is
    *   salary × matchCapPercentOfSalary × matchPercent.
    * A source with no match configured contributes nothing but does not make
-   * the whole roll-up incomplete — "no match" is a real answer.
+   * the whole roll-up incomplete, "no match" is a real answer.
    */
   function employerMatchCents(household) {
     var sources = allIncomeSources(household);
@@ -2750,7 +2750,7 @@
 
   /** The figure any calculator should use as "monthly expenses" today. */
   /* The closed months' average (D-130, MONEY-MAP.md Q10): the expenses
-     bucket's actual over the last few closed months — truer than one
+     bucket's actual over the last few closed months, truer than one
      categorised month once a month has actually been closed. */
   var CLOSED_AVERAGE_MONTHS = 3;
   function closedAverageExpensesCents(household) {
@@ -2764,12 +2764,12 @@
   }
   /**
    * The rent a month, one number (D-130, MONEY-MAP.md Q11). Cash Flow's
-   * housing line — a monthly expense entry in the `housing` category, the
-   * typical-month line or a recurring one logged on its day — is the
+   * housing line, a monthly expense entry in the `housing` category, the
+   * typical-month line or a recurring one logged on its day, is the
    * fact; the Housing Decision room's
    * own field is only a place you would rent INSTEAD, read when there is
    * no line. Returns { cents, source: 'expenses' | 'housing' | 'none',
-   * entryId } — never a guess; the rooms that guess say so themselves.
+   * entryId }, never a guess; the rooms that guess say so themselves.
    */
   function rentMonthlyCents(household) {
     var h = household || {};
@@ -2958,8 +2958,8 @@
   /* ======================================================================
      Age.
      SPEC.md §13 says "derive age server-side, never trust client-calculated
-     age." There is no server in this build — it is a static, client-only
-     app — so age is derived here. It is centralised in ONE function so that
+     age." There is no server in this build. It is a static, client-only
+     app, so age is derived here. It is centralised in ONE function so that
      when a server exists this is the single call site to swap. Logged as
      assumption A-004 in DECISIONS.md.
      ====================================================================== */
@@ -2982,7 +2982,7 @@
 
   /**
    * Age, or null if the date is missing, unreadable or implausible. Callers
-   * that need to explain WHY it is null ask checkDob() instead — this one
+   * that need to explain WHY it is null ask checkDob() instead, this one
    * exists so no lookup table is ever handed an age of 151.
    */
   function ageFromDob(dob, asOf) {
@@ -2999,7 +2999,7 @@
    * Without this, a typo read as silence: a future date came back as null
    * from ageFromDob() and every age-based output went blank with no reason,
    * looking exactly like an unanswered question. And a year typo the other
-   * way was worse — 1875 produced an age of 151, which the percentile table
+   * way was worse, 1875 produced an age of 151, which the percentile table
    * and the retirement milestones accepted as a real number and answered
    * confidently.
    */
@@ -3017,13 +3017,13 @@
     if (age === null) return Money.incomplete('That date isn’t one we can read.', ['dob']);
     if (age > MAX_PLAUSIBLE_AGE) {
       return Money.incomplete(
-        'That works out to ' + age + ' years old — worth checking the year.', ['dob']);
+        'That works out to ' + age + ' years old, worth checking the year.', ['dob']);
     }
     return Money.ok(age);
   }
 
   /**
-   * Whole months from now until an ISO date. Positive only — a date that has
+   * Whole months from now until an ISO date. Positive only, a date that has
    * passed is not "minus three months", it is a date that has passed, and
    * every caller has something different to say about that.
    *
@@ -3051,7 +3051,7 @@
     return Money.ok(months);
   }
 
-  /** Age of the primary adult — the person Tier 0 benchmarks against. */
+  /** Age of the primary adult, the person Tier 0 benchmarks against. */
   function primaryAge(household, asOf) {
     var a = adults(household);
     if (!a.length) return null;

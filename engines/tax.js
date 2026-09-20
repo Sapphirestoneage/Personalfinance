@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/tax.js — a federal income tax in named steps, and what it means
+   engines/tax.js, a federal income tax in named steps, and what it means
    for the next dollar.
    --------------------------------------------------------------------------
    Until now the app had one tax number: the effective-rate LOOKUP in
@@ -16,7 +16,7 @@
                         taxed at 0 / 15 / 20 by where the stack lands
      fica               the employee's 7.65%, Social Security capped at the
                         wage base, plus additional Medicare over the threshold
-     selfEmploymentTax  engines/selfemployed.js — reused, never re-derived
+     selfEmploymentTax  engines/selfemployed.js, reused, never re-derived
      stateTax           none / flat / graduated, on federal taxable income as
                         a stated stand-in for state taxable income
      acaCliff           where MAGI sits against 400% of the poverty level
@@ -74,7 +74,7 @@
     /* With nothing taxable, no slice is cut. The fallback used to report the
        LOWEST bracket's rate, so a $12,000 earner whose standard deduction
        wipes out their taxable income was told their next dollar is taxed at
-       10% — and the Tax room then sized the room before the next bracket
+       10%, and the Tax room then sized the room before the next bracket
        from that wrong floor. The next dollar there is taxed at nothing until
        the deduction is used up, so the marginal rate is 0. */
     return { taxDollars: tax, slices: slices, marginalRate: slices.length ? slices[slices.length - 1].rate : 0 };
@@ -177,7 +177,7 @@
   /* ---- 5. The ACA cliff ------------------------------------------------------ */
 
   /**
-   * acaCliff(table, magiCents, householdSize) — where MAGI sits against the
+   * acaCliff(table, magiCents, householdSize), where MAGI sits against the
    * subsidy ceiling. Flags and distance only; it never prices a plan.
    */
   function acaCliff(table, magiCents, householdSize) {

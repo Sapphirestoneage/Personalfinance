@@ -79,7 +79,7 @@ module.exports = function (t) {
   const page = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
   checkTrue('the row asks both, side by side and separately', /data-field="emotionalTag"/.test(page) && /data-keep="/.test(page) && /Reasons to keep it/.test(page));
   checkTrue('the reasons are chips, one per tag plus None', /Debt\.keepReasonTags\(RULES\)/.test(page) && /data-reason=""/.test(page) && /None</.test(page));
-  checkTrue('a suggestion is shown dashed and stored only when confirmed', /is-suggested/.test(page) && /data-keep-confirm=/.test(page) && /data-keep-dismiss=/.test(page) && /nothing is saved until you say so/.test(page));
+  checkTrue('a suggestion is shown dashed and stored only when confirmed', /is-suggested/.test(page) && /data-keep-confirm=/.test(page) && /data-keep-dismiss=/.test(page) && /[Nn]othing is saved until you say so/.test(page));
   checkTrue('the hold-back is a checkbox the household ticks itself', /data-field="excludeFromAggressive"/.test(page) && /Exclude from aggressive payoff suggestions/.test(page));
   checkTrue('… and the row says plainly that reasons alone do nothing', /Reasons on their own change nothing about the payoff order/.test(page));
   checkTrue('the tags show inline in the payoff order, not on another screen', /class="tagline"/.test(page) && /Debt\.keepReasonLabels\(d, RULES\)/.test(page) && /held back on purpose/.test(page));

@@ -1,7 +1,7 @@
 {
   "id": "sabbatical",
   "title": "A sabbatical",
-  "blurb": "Months off, at home or away — what it costs, what it costs later, and how long the cash holds.",
+  "blurb": "Months off, at home or away, what it costs, what it costs later, and how long the cash holds.",
   "version": "1.0",
   "asOf": "2026-01-01",
   "source": "An invented what-if template (D-086): its questions and defaults are conventions chosen for this app, not measurements; every reference figure it draws on names its own data/ file and source.",
@@ -52,11 +52,11 @@
       "choices": [
         {
           "id": "leave",
-          "label": "Unpaid leave — the job waits"
+          "label": "Unpaid leave, the job waits"
         },
         {
           "id": "quit",
-          "label": "Quit — find the next one after"
+          "label": "Quit, find the next one after"
         }
       ],
       "default": "quit"

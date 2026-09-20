@@ -8,18 +8,18 @@
 <script src="../shared/errlog.js"></script>
 <script src="../shared/size.js"></script>
 <title>Income · SPARKS</title>
-<meta name="description" content="Everything coming in, logged as it lands and netted the way it is taxed — the salary to pay yourself when it is irregular, and what the job actually pays once every hour and cost is counted."/>
+<meta name="description" content="Everything coming in, logged as it lands and netted the way it is taxed, the salary to pay yourself when it is irregular, and what the job actually pays once every hour and cost is counted."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-097, D-101, D-277 (the merge),
+  ROOM SPEC, SPEC.md §11. DECISIONS.md D-097, D-101, D-277 (the merge),
   D-294, D-295. Registry: income.
 
   FIVE READINGS OF WHAT COMES IN: NOW, UNEVENLY, PER HOUR, AND LATER.
 
-    #what-lands       every payment logged as it arrives — a paycheque, a
-                      gig, a gift, a dividend, the rent — each netted the
+    #what-lands       every payment logged as it arrives, a paycheque, a
+                      gig, a gift, a dividend, the rent, each netted the
                       way it is actually taxed
     #when-it-varies   a low month, a high month, an average: the salary to
                       pay yourself, the buffer that smooths the gap, and
@@ -28,7 +28,7 @@
                       and everything it costs you to do it are counted
     #worth-the-hassle a money-saving chore priced per hour, against that
     #what-is-coming   every dated period that pays: jobs, benefits, a
-                      pension — laid end to end, with the gaps shown
+                      pension, laid end to end, with the gaps shown
 
   WHAT IS COMING OWNS futureIncome[] (D-295). The owner moved Statement →
   Timeline (D-152) → here: a dated period that pays you is income with a
@@ -438,12 +438,12 @@
 
   <!-- ===== WHAT LANDS (was rooms/income.html) ===== -->
   <section id="view-what-lands">
-  <p class="slaf-lede">Everything coming in, logged as it lands — a paycheque, a gig, a gift, a dividend, the rent — each netted the way it is actually taxed.</p>
+  <p class="slaf-lede">Everything coming in, logged as it lands, a paycheque, a gig, a gift, a dividend, the rent, each netted the way it is actually taxed.</p>
   <a class="return-chip" id="return-chip" href="budget.html#bucket-income" hidden>← Back to the budget</a>
 
   <section class="slaf-card" id="month">
     <span class="slaf-eyebrow" id="month-cap">This month</span>
-    <div class="month-figure" id="month-figure">—</div>
+    <div class="month-figure" id="month-figure">not yet</div>
     <p class="month-sub" id="month-sub"></p>
     <details class="month-how" id="month-how" hidden>
       <summary>How this was worked out</summary>
@@ -516,7 +516,7 @@
           <label class="slaf-field"><span class="slaf-label" id="f-date-label">Received on</span>
             <span class="slaf-input-shell"><input type="date" id="f-date" aria-label="Date received"/></span></label>
           <details class="form-more" id="form-more">
-            <summary>More <small>— whose, until when, how sure the date is, how it is taxed</small></summary>
+            <summary>More <small>, whose, until when, how sure the date is, how it is taxed</small></summary>
             <div class="form-grid">
               <label class="slaf-field wide" id="f-person-row" hidden><span class="slaf-label">Whose is it</span>
                 <span class="slaf-input-shell"><select id="f-person" aria-label="Whose income"></select></span></label>
@@ -525,14 +525,14 @@
               <p class="slaf-hint wide" id="f-ends-hint" hidden style="margin:0">Leave it empty if it runs on. A contract's end, a job's last pay: the picture stops drawing it there.</p>
               <label class="slaf-field wide"><span class="slaf-label">The date is</span>
                 <span class="slaf-input-shell"><select id="f-datekind" aria-label="How sure the date is">
-                  <option value="exact">Exact — it landed, or it is due</option><option value="estimated">Estimated — about then</option><option value="potential">Potential — it may not come at all</option>
+                  <option value="exact">Exact. It landed, or it is due</option><option value="estimated">Estimated, about then</option><option value="potential">Potential. It may not come at all</option>
                 </select></span></label>
               <label class="slaf-field wide" data-for="taxable"><span class="slaf-label">Taxed how</span>
                 <span class="slaf-input-shell"><select id="f-method" aria-label="Tax method">
-                  <option value="w2">W-2 — tax withheld before it arrives</option><option value="se">1099 — owed later, with self-employment tax</option><option value="unemployment">Unemployment — taxable, nothing withheld, no self-employment tax</option><option value="none">Not taxable</option>
+                  <option value="w2">W-2, tax withheld before it arrives</option><option value="se">1099, owed later, with self-employment tax</option><option value="unemployment">Unemployment, taxable, nothing withheld, no self-employment tax</option><option value="none">Not taxable</option>
                 </select></span></label>
               <label class="slaf-field wide" id="f-withheld-row" hidden><span class="slaf-label">Tax taken off it</span>
-                <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="f-withheld" placeholder="e.g. 480 — off the stub, if you have it" aria-label="Tax withheld"/></span></label>
+                <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="f-withheld" placeholder="e.g. 480, off the stub, if you have it" aria-label="Tax withheld"/></span></label>
               <p class="slaf-hint wide" id="f-withheld-hint" hidden style="margin:0">Empty means the year's blended rate stands in. Typed, it is what came off, and the picture uses it.</p>
             </div>
           </details>
@@ -638,7 +638,7 @@
 
   <section class="slaf-card" id="rhw-inputs" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">The hours the job takes</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Leave anything blank that doesn't apply — working from home means no commute, and blank is none rather than unanswered.</p>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Leave anything blank that doesn't apply, working from home means no commute, and blank is none rather than unanswered.</p>
     <div id="rhw-room-inputs"></div>
   </section>
 
@@ -664,7 +664,7 @@
 
   <!-- ===== WORTH THE HASSLE? (was rooms/hassle.html) ===== -->
   <section id="view-worth-the-hassle" hidden>
-  <p class="slaf-lede">What a money-saving chore actually pays per hour — against what an hour of your life already earns, and how much you hate doing it.</p>
+  <p class="slaf-lede">What a money-saving chore actually pays per hour, against what an hour of your life already earns, and how much you hate doing it.</p>
 
   <section class="slaf-card" id="chore">
     <span class="slaf-eyebrow">The chore</span>
@@ -691,8 +691,8 @@
       <span class="slaf-label">Do the hours come back too?</span>
       <span class="slaf-input-shell">
         <select id="in-hours-repeat" aria-label="Do the hours repeat">
-          <option value="no">No — one afternoon, then it just keeps saving</option>
-          <option value="yes">Yes — I have to do it again every month</option>
+          <option value="no">No, one afternoon, then it just keeps saving</option>
+          <option value="yes">Yes, I have to do it again every month</option>
         </select>
       </span>
     </label>
@@ -708,12 +708,12 @@
     <div class="rates">
       <div>
         <span class="cap">Plain</span>
-        <span class="big" id="r-plain">—</span>
+        <span class="big" id="r-plain">not yet</span>
         <span class="sub" id="r-plain-sub"></span>
       </div>
       <div>
         <span class="cap">Adjusted for how you feel about it</span>
-        <span class="big" id="r-adj">—</span>
+        <span class="big" id="r-adj">not yet</span>
         <span class="sub" id="r-adj-sub"></span>
       </div>
     </div>
@@ -724,7 +724,7 @@
   <section class="slaf-card" id="out-wage">
     <span class="slaf-eyebrow">Against an hour of your life</span>
     <h2 style="margin:var(--space-2) 0 var(--space-3)">Is it worth your time?</h2>
-    <div class="verdict" id="w-verdict">—</div>
+    <div class="verdict" id="w-verdict">not yet</div>
     <p class="why" id="w-why"></p>
     <div class="out-detail" id="w-detail"></div>
   </section>
@@ -734,7 +734,7 @@
     <h2 style="margin:var(--space-2) 0 0">Starting points</h2>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">
       Tap a name to load its hours into the calculator above. The hassle
-      scores are only a starting guess — change any of them and yours is
+      scores are only a starting guess, change any of them and yours is
       what gets used from then on.
     </p>
     <ul class="presets" id="preset-list"></ul>
@@ -748,7 +748,7 @@
 
   <!-- ===== WHAT IS COMING (was rooms/timeline.html) ===== -->
   <section id="view-what-is-coming" hidden>
-  <p class="slaf-lede">Jobs, benefits and anything else that pays, each as a period with a start and an end — laid end to end so you can see where they overlap, where the gaps are, and what any month between now and then actually adds up to.</p>
+  <p class="slaf-lede">Jobs, benefits and anything else that pays, each as a period with a start and an end, laid end to end so you can see where they overlap, where the gaps are, and what any month between now and then actually adds up to.</p>
 
   <section class="slaf-card" id="out-months">
     <span class="slaf-eyebrow">The months ahead</span>
@@ -759,7 +759,7 @@
     <span class="slaf-eyebrow">What you have listed</span>
     <h2 style="margin:var(--space-2) 0 var(--space-3)">Each one is a period, not a date</h2>
     <p class="slaf-hint" style="margin:0 0 var(--space-3)">A start, and an end if there is one. Leave the end blank
-      for something that carries on — that is a real answer and it is drawn as one. Everything here stays in this
+      for something that carries on. That is a real answer and it is drawn as one. Everything here stays in this
       browser.</p>
     <div id="period-list"></div>
     <button type="button" class="slaf-btn" id="btn-add" style="width:100%">+ Add a period</button>
@@ -822,7 +822,7 @@
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
    so its hat is ABSENT, not greyed, when the branch is not there (D-271).
-   The hash still reaches it — an old link must land somewhere honest — and
+   The hash still reaches it, an old link must land somewhere honest, and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
   'use strict';
@@ -844,8 +844,8 @@
     var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
     /* The default reading is the last row and matches everything, so there
        is always one. When the hash asks for a reading the gate has taken
-       away, fall back to the DEFAULT — the room's plainest reading, and the
-       one the person would have got with no hash at all — not to whichever
+       away, fall back to the DEFAULT, the room's plainest reading, and the
+       one the person would have got with no hash at all, not to whichever
        gated reading happens to sit first in this list. */
     var fallback = VIEWS[VIEWS.length - 1];
     var on = open(asked) ? asked
@@ -897,13 +897,13 @@
   var METHOD_WORDS = { w2: 'W-2, withheld', se: '1099, owed with SE tax', unemployment: 'unemployment, owed, no SE tax', none: 'not taxable' };
   var KIND_HINTS = {
     w2: 'A paycheque. Withheld at the year’s blended rate; the employer match and pre-tax deferral stay on Start Here.',
-    se: 'Contract or freelance pay, a 1099. Self-employment tax on what is left after the costs of earning it — add those below once it is saved.',
+    se: 'Contract or freelance pay, a 1099. Self-employment tax on what is left after the costs of earning it, add those below once it is saved.',
     bonus: 'A one-off from an employer. Withheld like wages.',
     gift: 'Money given to you. Not income to you, so nothing is taken off it.',
     side: 'Cash work with no 1099. Taxed as self-employment; its costs come off first.',
-    dividend: 'Dividends or interest. Withheld like wages here — a return treats qualified dividends more kindly.',
+    dividend: 'Dividends or interest. Withheld like wages here, a return treats qualified dividends more kindly.',
     rental: 'Rent from a place you own. Netted here as self-employment, as the spec asked; a return treats it as ordinary income with its own costs.',
-    unemployment: 'A benefit cheque. Taxed as income, but with no Social Security or Medicare on it, and nothing is withheld unless you asked — so some of it is owed at tax time.',
+    unemployment: 'A benefit cheque. Taxed as income, but with no Social Security or Medicare on it, and nothing is withheld unless you asked, so some of it is owed at tax time.',
     other: 'Anything else. Say whether it is taxed.'
   };
 
@@ -921,7 +921,7 @@
     var once = el('f-frequency').value === 'once';
     el('f-date-label').textContent = once ? 'Received on' : 'First received on';
     /* D-194: the three extra questions show only when they can mean
-       something — a last date for something recurring, a withheld figure
+       something, a last date for something recurring, a withheld figure
        for a withheld method, whose for a household of two. */
     el('f-ends-row').hidden = once; el('f-ends-hint').hidden = once;
     var withheldMethod = kind !== 'gift' && (el('f-method').value === 'w2' || el('f-method').value === 'unemployment');
@@ -965,7 +965,7 @@
     el('form-cap').textContent = e ? 'Editing ' + (e.label || KINDS[e.kind].label) : 'Add an entry';
     el('btn-save').textContent = e ? 'Save changes' : 'Save';
     /* The "More" fold opens by itself only when the entry holds something
-       other than the kind's own defaults — otherwise it would be hiding a
+       other than the kind's own defaults, otherwise it would be hiding a
        value the person chose. */
     var rule = e ? (KINDS[e.kind] || KINDS.other) : null;
     el('form-more').open = !!(e && ((e.dateKind && e.dateKind !== 'exact')
@@ -1022,7 +1022,7 @@
     var saved = Spine.upsertIncomeEntry(entry);
     var net = Ledger.netOf(saved, Spine.getProfile(), TABLES);
     say('form-say', (existing ? 'Saved. ' : 'Added. ') + (saved.label || KINDS[saved.kind].label) + ' ' + Money.formatCents(saved.amountCents) + ' ' + FREQ_WORDS[saved.frequency]
-      + (Money.isOk(net) ? ' nets ' + Money.formatCents(net.value) + ' after ' + Money.formatCents(net.taxCents) + ' of tax' + (net.pieces.typedWithholding ? ' off the stub' : '') + (net.owedCents > 0 ? (net.withheldCents > 0 ? ', ' + Money.formatCents(net.owedCents) + ' of it still owed — set it aside for tax time.' : ', none of it withheld — set it aside for tax time.') : '.') : '.')
+      + (Money.isOk(net) ? ' nets ' + Money.formatCents(net.value) + ' after ' + Money.formatCents(net.taxCents) + ' of tax' + (net.pieces.typedWithholding ? ' off the stub' : '') + (net.owedCents > 0 ? (net.withheldCents > 0 ? ', ' + Money.formatCents(net.owedCents) + ' of it still owed, set it aside for tax time.' : ', none of it withheld, set it aside for tax time.') : '.') : '.')
       + (Schema.costsAllowed(saved.kind) ? ' Add the costs of earning it below.' : ''), 'is-good');
     if (Schema.costsAllowed(saved.kind)) detailId = saved.id;
     fillForm(null);
@@ -1052,8 +1052,8 @@
       var costsLine = Schema.costsAllowed(e.kind) && Money.isEntered(netOfCosts) && netOfCosts !== e.amountCents ? Money.formatCents(netOfCosts) + ' after costs · ' : '';
       return '<li' + (e.id === editingId ? ' class="is-editing"' : '') + '>'
         + '<span><span class="e-name">' + esc(e.label || KINDS[e.kind].label) + '</span>'
-        + '<span class="e-kind">' + (Schema.personTag(h, e.personId) ? esc(Schema.personTag(h, e.personId)) + ' · ' : '') + esc(KINDS[e.kind].label) + ' · ' + esc(FREQ_WORDS[e.frequency]) + (e.receivedOn ? ' · ' + esc(e.receivedOn) + (e.dateKind === 'estimated' ? ' (about then)' : e.dateKind === 'potential' ? ' (potential — not counted)' : '') : '') + (e.endsOn ? ' · until ' + esc(e.endsOn) : '') + ' · ' + esc(METHOD_WORDS[e.taxable === false ? 'none' : e.taxMethod]) + (Money.isEntered(e.withheldCents) ? ' · ' + esc(Money.formatCents(e.withheldCents)) + ' off the stub' : '') + '</span></span>'
-        + '<span class="e-amt">' + (Money.isEntered(e.amountCents) ? esc(Money.formatCents(e.amountCents)) : '—')
+        + '<span class="e-kind">' + (Schema.personTag(h, e.personId) ? esc(Schema.personTag(h, e.personId)) + ' · ' : '') + esc(KINDS[e.kind].label) + ' · ' + esc(FREQ_WORDS[e.frequency]) + (e.receivedOn ? ' · ' + esc(e.receivedOn) + (e.dateKind === 'estimated' ? ' (about then)' : e.dateKind === 'potential' ? ' (potential, not counted)' : '') : '') + (e.endsOn ? ' · until ' + esc(e.endsOn) : '') + ' · ' + esc(METHOD_WORDS[e.taxable === false ? 'none' : e.taxMethod]) + (Money.isEntered(e.withheldCents) ? ' · ' + esc(Money.formatCents(e.withheldCents)) + ' off the stub' : '') + '</span></span>'
+        + '<span class="e-amt">' + (Money.isEntered(e.amountCents) ? esc(Money.formatCents(e.amountCents)) : 'not yet')
         + '<span class="e-net">' + costsLine + (Money.isOk(net) ? 'nets ' + esc(Money.formatCents(net.value)) + (net.owedCents > 0 ? ' · ' + esc(Money.formatCents(net.owedCents)) + ' owed at tax time' : '') : esc(net.reason || '')) + '</span></span>'
         + '<span class="e-acts">'
         + '<button type="button" class="pill" data-edit="' + e.id + '">Edit</button>'
@@ -1183,7 +1183,7 @@
        can count as come in, and a weekly amount is being averaged. No last
        date on a benefit: drawn as if it never ends, and it does. Ask. */
     el('pic-nudges').innerHTML = undated.map(function (e) {
-      return '<div class="pic-nudge"><span><b>' + esc(e.label || KINDS[e.kind].label) + '</b> has no first date, so none of it counts as come in yet, and ahead it is spread as a monthly average' + (e.frequency === 'weekly' || e.frequency === 'fortnightly' ? ' — dated, it lands on its real days, four or five a month' : '') + '.</span>'
+      return '<div class="pic-nudge"><span><b>' + esc(e.label || KINDS[e.kind].label) + '</b> has no first date, so none of it counts as come in yet, and ahead it is spread as a monthly average' + (e.frequency === 'weekly' || e.frequency === 'fortnightly' ? ', dated, it lands on its real days, four or five a month' : '') + '.</span>'
         + '<button type="button" class="pill" data-start="' + esc(e.id) + '">When did it start?</button></div>';
     }).concat(active.filter(function (e) { return e.frequency !== 'once' && !e.endsOn && e.kind === 'unemployment'; }).map(function (e) {
       return '<div class="pic-nudge"><span><b>' + esc(e.label || KINDS[e.kind].label) + '</b> has no last date, so it is drawn as if it keeps coming. Unemployment usually runs about 26 weeks.</span>'
@@ -1230,10 +1230,10 @@
   function renderMonth(h) {
     var m = Ledger.month(h, TABLES, Ledger.thisMonth());
     el('month-cap').textContent = m.label;
-    if (!m.count) { el('month-figure').textContent = '—'; el('month-sub').textContent = 'Nothing lands this month yet. A recurring entry lands on its days; a one-time one on its date.'; return; }
+    if (!m.count) { el('month-figure').textContent = 'not yet'; el('month-sub').textContent = 'Nothing lands this month yet. A recurring entry lands on its days; a one-time one on its date.'; return; }
     el('month-figure').textContent = Money.formatCents(m.netCents) + ' net';
-    /* D-195: say the tax the way it is felt — taken off before it arrived,
-       or owed at tax time — never "taken off" for money that arrived whole. */
+    /* D-195: say the tax the way it is felt, taken off before it arrived,
+       or owed at tax time, never "taken off" for money that arrived whole. */
     var taxWords = m.taxCents === 0 ? 'no tax on it'
       : (m.withheldCents ? Money.formatCents(m.withheldCents) + ' of tax taken off before it arrived' : '')
         + (m.withheldCents && m.owedCents ? ' and ' : '')
@@ -1245,8 +1245,8 @@
     el('month-how-list').innerHTML = m.rows.map(function (x) {
       var e = x.entry, n = x.net, count = x.occurrences.length;
       var averaged = e.frequency !== 'once' && !e.receivedOn;
-      var head = '<b>' + esc(e.label || KINDS[e.kind].label) + '</b> — ' + esc(Money.formatCents(x.grossCents)) + ' gross'
-        + (averaged ? ' (a monthly average of ' + esc(Money.formatCents(e.amountCents)) + ' ' + esc(FREQ_WORDS[e.frequency]) + ' — no first date, so not real landings)' : count > 1 ? ' (' + count + ' landings of ' + esc(Money.formatCents(e.amountCents)) + ')' : '');
+      var head = '<b>' + esc(e.label || KINDS[e.kind].label) + '</b>, ' + esc(Money.formatCents(x.grossCents)) + ' gross'
+        + (averaged ? ' (a monthly average of ' + esc(Money.formatCents(e.amountCents)) + ' ' + esc(FREQ_WORDS[e.frequency]) + ', no first date, so not real landings)' : count > 1 ? ' (' + count + ' landings of ' + esc(Money.formatCents(e.amountCents)) + ')' : '');
       if (!n) return '<li>' + head + '<small>' + esc(x.reason || '') + '</small></li>';
       var pc = function (r) { return (Math.round(r * 1000) / 10) + '%'; };
       var basis = n.pieces.basis === 'sources' ? 'the income in Start Here' : n.pieces.basis === 'ledger' ? 'the entries here, annualised' : 'this entry alone, annualised';
@@ -1276,7 +1276,7 @@
     el('costs-list').innerHTML = (e.costs || []).map(function (x) {
       return '<li><span>' + esc(x.label || x.category.replace('_', ' ')) + '<small>' + esc(x.category.replace('_', ' ')) + (x.date ? ' · ' + esc(x.date) : '') + (x.deductible === false ? ' · does not reduce the tax' : '') + '</small></span>'
         + '<span>' + esc(Money.formatCents(x.amountCents)) + ' <button type="button" class="pill danger" data-remove-cost="' + x.id + '">✕</button></span></li>';
-    }).join('') || '<li><span class="slaf-hint">No costs yet. Mileage, a home office, equipment, fees — each comes off before the tax.</span></li>';
+    }).join('') || '<li><span class="slaf-hint">No costs yet. Mileage, a home office, equipment, fees. Each comes off before the tax.</span></li>';
     var linked = Ledger.linkedExpenses(h, e.id);
     el('linked-list').innerHTML = linked.map(function (x) {
       return '<li><span>' + esc(x.descriptor || x.categoryId) + '<small>' + esc(x.date || '') + (x.deductible ? ' · reduces the tax' : ' · not deductible') + '</small></span><span>' + esc(Money.formatCents(x.amountCents)) + '</span></li>';
@@ -1350,7 +1350,7 @@
     render();
   }).catch(function (err) {
     var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error';
-    n.textContent = 'Couldn’t load the tax tables in data/ (' + err.message + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+    n.textContent = 'Couldn’t load the tax tables in data/ (' + err.message + '). Serve this over HTTP, python3 -m http.server, rather than opening the file directly.';
   });
 })();
 </script>
@@ -1407,15 +1407,15 @@
         sub += ' · buffer <strong>' + Money.formatCents(p.bufferNeededCents) + '</strong> for ' + months(p.bufferMonths) + ' of the gap';
         if (Money.isEntered(p.bufferHeldCents)) {
           sub += ', you hold <strong>' + Money.formatCents(p.bufferHeldCents) + '</strong>';
-          if (p.cushionCompetes) sub += ' — the ' + months(p.cushionMonths) + ' emergency cushion comes first and takes ' + (p.freeCashCents === 0 ? 'all of the cash' : 'most of it');
+          if (p.cushionCompetes) sub += ', the ' + months(p.cushionMonths) + ' emergency cushion comes first and takes ' + (p.freeCashCents === 0 ? 'all of the cash' : 'most of it');
         } else sub += ' (add your cash to see what you hold)';
       } else sub += ' · add a buffer in months to size it';
       if (!Money.isEntered(p.spendingCents)) sub += ' · spending is not in yet, so the low month stands as the salary';
       else if (p.shortfallCents > 0) {
         sub += ' · a low month is <strong>' + Money.formatCents(p.shortfallCents) + '</strong> short of spending, so spending is the salary; the cash covers '
-          + (Money.isEntered(p.lowMonthsCovered) ? '<strong>' + count(p.lowMonthsCovered, 'low month') + '</strong> in a row' : 'an unknown number of them — add your cash');
+          + (Money.isEntered(p.lowMonthsCovered) ? '<strong>' + count(p.lowMonthsCovered, 'low month') + '</strong> in a row' : 'an unknown number of them, add your cash');
       } else sub += ' · a low month clears spending; the cash covers every one';
-      if (p.lowAboveAverage) sub += ' · the low month is above the average, so there is no gap to buffer — check the two';
+      if (p.lowAboveAverage) sub += ' · the low month is above the average, so there is no gap to buffer, check the two';
       if (Money.isEntered(p.taxSetAsideMonthlyCents)) sub += ' · <strong>' + Money.formatCents(p.taxSetAsideMonthlyCents) + '</strong> a month comes off the top for the quarterly';
       return { label: 'The salary to pay yourself', value: Money.formatCents(p.salaryCents) + ' a month', sub: sub, zone: p.zone, result: p };
     },
@@ -1458,7 +1458,7 @@
         read: function (h) { return readSource(h, 'variableHighCents'); },
         write: function (v) { writeSource('variableHighCents', v); },
         propose: function (h, T) { var g = VI.propose(h, T); return Money.isEntered(g.highCents) ? { value: g.highCents, source: 'thirteen-tenths of your average (convention)' } : null; } },
-      { ctl: 'windowMonths', label: 'Smooth over', kind: 'select', options: [['', 'Three months'], ['3', 'Three months'], ['6', 'Six months'], ['12', 'Twelve months']], hint: 'The rolling average over the ledger’s variable months — 1099, side income, bonuses — logged in Income. Nothing is added here.',
+      { ctl: 'windowMonths', label: 'Smooth over', kind: 'select', options: [['', 'Three months'], ['3', 'Three months'], ['6', 'Six months'], ['12', 'Twelve months']], hint: 'The rolling average over the ledger’s variable months, 1099, side income, bonuses, logged in Income. Nothing is added here.',
         read: function (h) { return h.variableIncome && Money.isEntered(h.variableIncome.windowMonths) ? h.variableIncome.windowMonths : null; },
         write: function (v) { var n = Number(v); Spine.set('variableIncome.windowMonths', [3, 6, 12].indexOf(n) >= 0 ? n : null); } },
       { ctl: 'bufferMonths', label: 'Buffer, months of the gap', kind: 'number', placeholder: 'e.g. 3', affix: 'mo', hint: 'How many months of the low-to-average gap to hold. Three is the usual floor, six is full.',
@@ -1482,17 +1482,17 @@
       var c = T.variableIncomeConventions || {};
       var g = VI.propose(h, T);
       var se = T.seTax || {};
-      var conv = 'data/variable_income_conventions.json v' + c.version + ' — ' + c.confidence;
+      var conv = 'data/variable_income_conventions.json v' + c.version + ', ' + c.confidence;
       var rows = [
         { label: 'The salary', value: 'the low month', source: (c.payYourself && c.payYourself.rule) + ' ' + conv },
-        { label: 'Buffer', value: (c.buffer ? c.buffer.usualMonths + ' months usual, ' + c.buffer.fullMonths + ' full' : '3 usual, 6 full') + ' — of the low-to-average gap', source: conv },
+        { label: 'Buffer', value: (c.buffer ? c.buffer.usualMonths + ' months usual, ' + c.buffer.fullMonths + ' full' : '3 usual, 6 full') + ', of the low-to-average gap', source: conv },
         { label: 'Emergency cushion, first', value: count(Money.isEntered(c.emergencyCushionMonths) ? c.emergencyCushionMonths : 3, 'month') + ' of spending', source: 'cash beyond it is what is free for the buffer ' + conv },
         { label: 'The average month', value: Money.isOk(p) ? Money.formatCents(p.averageMonthCents) : 'not known yet', source: Money.isOk(p) && p.averageBasis === 'source' ? 'your own-work source, entered as a month on average (D-094)' : 'gross annual income ÷ 12 (Start Here)' },
-        { label: 'Low and high, proposed', value: Money.isEntered(g.lowCents) ? Money.formatCents(g.lowCents) + ' / ' + Money.formatCents(g.highCents) : 'need an average first', source: Math.round(g.lowShare * 100) + '% and ' + Math.round(g.highShare * 100) + '% of the average — only until yours replace them ' + conv }
+        { label: 'Low and high, proposed', value: Money.isEntered(g.lowCents) ? Money.formatCents(g.lowCents) + ' / ' + Money.formatCents(g.highCents) : 'need an average first', source: Math.round(g.lowShare * 100) + '% and ' + Math.round(g.highShare * 100) + '% of the average, only until yours replace them ' + conv }
       ];
       if (Money.isOk(p) && p.taxSetAside) {
         rows.push({ label: 'Tax set-aside, a month', value: Money.isOk(p.taxSetAside) ? Money.formatCents(p.taxSetAsideMonthlyCents) + ' (quarterly ' + Money.formatCents(p.taxSetAside.perQuarterCents) + ' ÷ 3)' : 'not estimated: ' + p.taxSetAside.reason,
-          source: 'the Self-Employed room’s quarterly estimate on ' + (Money.isOk(p.taxSetAside) ? Money.formatCents(p.taxSetAside.expectedNetProfitCents) + ' of ' + p.taxSetAside.profitBasis + ' read as profit (no expenses stored)' : 'your income') + ' — data/se_tax_2026.json v' + se.version + ' (' + se.confidence + '), data/effective_tax_rates_2026.json v' + (T.effectiveTaxRates || {}).version });
+          source: 'the Self-Employed room’s quarterly estimate on ' + (Money.isOk(p.taxSetAside) ? Money.formatCents(p.taxSetAside.expectedNetProfitCents) + ' of ' + p.taxSetAside.profitBasis + ' read as profit (no expenses stored)' : 'your income') + ', data/se_tax_2026.json v' + se.version + ' (' + se.confidence + '), data/effective_tax_rates_2026.json v' + (T.effectiveTaxRates || {}).version });
       }
       return rows;
     },
@@ -1556,7 +1556,7 @@
       if (!Money.isOk(w)) return { label: 'Actually, an hour', value: null, reason: w.reason + (/not earning/.test(w.reason || '') ? '' : '') };
       var sub = 'On paper <strong>' + perHour(w.nominalHourlyCents) + '</strong> · you keep <strong>' + Money.formatRate(w.retained, { decimals: 0 }) + '</strong> of it'
         + ' · ' + Money.formatCents(w.keptAnnualCents) + ' kept over ' + w.annualTotalHours.toLocaleString('en-US') + ' hours a year';
-      if (w.costsMoreThanItPays) sub += '. <strong>This job costs more than it pays</strong> — check the monthly costs; if they are right, that is the finding';
+      if (w.costsMoreThanItPays) sub += '. <strong>This job costs more than it pays</strong>, check the monthly costs; if they are right, that is the finding';
       if (w.implausibleHours) sub += '. ' + w.paidHoursPerWeek + ' paid hours a week makes this look enormous; the arithmetic is right, the comparison is not';
       if (!w.taxKnown) sub += '. Tax is not in yet: ' + (w.taxReason || '');
       return { label: 'Actually, an hour', value: perHour(w.realHourlyCents), sub: sub, zone: w.costsMoreThanItPays ? 'out' : (w.retained !== null && w.retained < 0.5 ? 'watch' : null), result: w };
@@ -1629,7 +1629,7 @@
       var tax = T.effectiveTaxRates;
       var work = readWork(h);
       return [
-        { label: 'Tax', value: Money.isOk(w) && w.taxKnown ? Money.formatRate(w.effectiveRate || (w.estimatedTaxCents / w.grossAnnualIncomeCents), { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/effective_tax_rates_2026.json v' + tax.version + ' — ' + tax.source + ' (' + tax.confidence + ')' },
+        { label: 'Tax', value: Money.isOk(w) && w.taxKnown ? Money.formatRate(w.effectiveRate || (w.estimatedTaxCents / w.grossAnnualIncomeCents), { decimals: 1 }) + ' effective' : 'not estimated yet', source: 'data/effective_tax_rates_2026.json v' + tax.version + ', ' + tax.source + ' (' + tax.confidence + ')' },
         { label: 'Weeks a year', value: String(Money.isEntered(work.weeksPerYear) ? work.weeksPerYear : Schema.WORK_DEFAULTS.weeksPerYear), source: Money.isEntered(work.weeksPerYear) && work.weeksPerYear !== Schema.WORK_DEFAULTS.weeksPerYear ? 'yours' : 'the default: 52 less four weeks of leave and holidays (convention)' },
         { label: 'Unpaid hours', value: 'count as work', source: 'Your Money or Your Life: an hour the job takes is an hour it costs, paid or not (convention)' },
         { label: 'Real return, for the lens', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094)' }
@@ -1638,7 +1638,7 @@
 
     why: function (h, T, situation) {
       return {
-        employed: 'Employed, the headline rate is the one on the offer letter. This one is the rate that decides whether the next thing — a raise, a move, an hour of overtime — is worth it.',
+        employed: 'Employed, the headline rate is the one on the offer letter. This one is the rate that decides whether the next thing, a raise, a move, an hour of overtime, is worth it.',
         selfEmployed: 'Self-employed, there is no headline rate, only this one: what is left after the tax you set aside and the hours the work really takes, including the ones nobody bills.',
         mixed: 'With a job and your own work, each has a real rate. This reads the job; put the own-work hours in as a second job in Start Here to compare them.',
         student: 'A part-time job at a student’s stage is priced against study hours, not against a career. If the real rate is low, the question is what the hours are taking from.',
@@ -1661,7 +1661,7 @@
   var ROOM_ID = 'income';   /* the room this reading lives in */
   var TABLES = null;
 
-  /* The chore on screen is a local scratchpad, not household data — you are
+  /* The chore on screen is a local scratchpad, not household data. You are
      weighing a decision, not recording a fact. Only the hassle SCORE of a
      named activity persists, because that is a fact about you. */
   var chore = {
@@ -1722,7 +1722,7 @@
     render();
   });
 
-  /* One change handler for every rating on the page — the one in the chore
+  /* One change handler for every rating on the page, the one in the chore
      card and the one on each preset row. */
   document.addEventListener('change', function (evt) {
     var read = Rating.readTarget(evt.target);
@@ -1783,7 +1783,7 @@
 
   /* Two containers on this page are rebuilt from markup and hold live
      controls: the chore's own rating select, and the rating on every preset
-     row. Both are guarded so neither is replaced under a finger — see
+     row. Both are guarded so neither is replaced under a finger, see
      shared/liveform.js. */
   var choreRating = SLAF.LiveForm.guard(el('hassle-slot'), function () {
     el('hassle-slot').innerHTML = Rating.controlHtml({
@@ -1812,8 +1812,8 @@
     var r = Hassle.returnOnHassle(opts(), TABLES.hassleDefaults);
     var plain = el('r-plain'), adj = el('r-adj');
     if (!Money.isOk(r)) {
-      plain.className = 'big'; plain.textContent = Money.EM_DASH;
-      adj.className = 'big'; adj.textContent = Money.EM_DASH;
+      plain.className = 'big'; plain.textContent = Money.NOT_YET;
+      adj.className = 'big'; adj.textContent = Money.NOT_YET;
       el('r-plain-sub').textContent = r.reason || '';
       el('r-adj-sub').textContent = '';
       el('rate-detail').innerHTML = '';
@@ -1835,7 +1835,7 @@
     el('r-adj-sub').textContent = r.hassleRated
       ? 'rated ' + r.hassleScore + '/10, so an hour of it counts as '
         + (Math.round(r.hassleWeight * 100) / 100) + ' hours'
-      : 'not rated yet — unrated means no adjustment, not a penalty';
+      : 'not rated yet, unrated means no adjustment, not a penalty';
 
     var rows = [
       ['Saved', Money.formatCents(r.savingCents) + (r.repeatsPerYear > 1 ? ' a month' : '')],
@@ -1854,7 +1854,7 @@
         + ', which is the wrong way to read a saving that repeats.'
       : r.hassleRated
         ? 'The adjustment is a stated convention: a 10-out-of-10 hour counts as two. '
-          + 'It is there so how you feel about the job can enter the arithmetic — '
+          + 'It is there so how you feel about the job can enter the arithmetic, '
           + 'the plain rate beside it is what the money actually did.'
         : 'Rate how much you hate it to see the adjusted figure move.';
     return r;
@@ -1865,7 +1865,7 @@
     var verdict = el('w-verdict');
     if (!Money.isOk(v)) {
       verdict.className = 'verdict is-incomplete';
-      verdict.textContent = v.reason || Money.EM_DASH;
+      verdict.textContent = v.reason || Money.NOT_YET;
       el('w-why').innerHTML = v.missing && v.missing.length
         ? '<a href="' + Ownership.linkTo('income', 'rhw-inputs') + '">Fill in Real Hourly Wage →</a>'
         : '';
@@ -1875,13 +1875,13 @@
     verdict.className = 'verdict';
     var r = v.hassle;
     verdict.textContent = v.beatsWage
-      ? 'Yes — it pays ' + Money.formatCents(v.differenceCents) + '/hr more than working'
+      ? 'Yes, it pays ' + Money.formatCents(v.differenceCents) + '/hr more than working'
       : 'It pays ' + Money.formatCents(-v.differenceCents) + '/hr less than working';
 
     el('w-why').textContent = v.beatsWage
       ? 'Against ' + perHour(v.realHourlyCents) + ', which is what an hour of your life '
         + 'actually earns after the costs and unpaid hours the job already takes.'
-      : 'That does not settle it — an hour of a chore is not an hour you could have '
+      : 'That does not settle it, an hour of a chore is not an hour you could have '
         + 'sold, and most people cannot take on another hour of work at will. It does '
         + 'mean the money is not the reason to do it.';
 
@@ -1921,7 +1921,7 @@
       + Ownership.linkTo('income', 'rhw-number') + '">'
       + '<span class="slaf-owned-label">Real hourly wage</span>'
       + '<span class="slaf-owned-value">'
-      + (Money.isOk(wage) ? perHour(wage.value) : Money.EM_DASH) + '</span>'
+      + (Money.isOk(wage) ? perHour(wage.value) : Money.NOT_YET) + '</span>'
       + '<span class="slaf-owned-from">'
       + (Money.isOk(wage) ? 'from Real Hourly Wage →' : 'work it out in Real Hourly Wage →')
       + '</span></a>'
@@ -1985,7 +1985,7 @@
   function monthsHtml(h) {
     var grid = Timeline.months(h, { years: 30 });
     if (!Money.isOk(grid)) {
-      return '<p class="headline">—</p><p class="headline-sub">' + esc(grid.reason)
+      return '<p class="headline">not yet</p><p class="headline-sub">' + esc(grid.reason)
         + ' Add a period below and this fills in.</p>';
     }
     var rows = grid.value;
@@ -1998,7 +1998,7 @@
     out.push('<p class="headline-sub">' + (today.count
         ? 'Right now, from ' + esc(plural(today.count, 'period', 'periods')) + ' you have listed.'
         : 'Nothing you have listed pays you this month. The first thing that does is below.')
-      + ' This counts only what is on this page — your current pay lives in '
+      + ' This counts only what is on this page, your current pay lives in '
       + '<a href="' + esc(Ownership.linkTo('income', 'sources')) + '">Income</a>.</p>');
 
     out.push(Charts.area({
@@ -2026,7 +2026,7 @@
           : 'Nothing you have listed starts or stops between now and then.') + '</div></div>');
       out.push('<div class="fact"><div class="k">The best month</div><div class="v">'
         + esc(money(f.peak.cents)) + '</div><div class="n">'
-        + (f.peak.cents === today.cents ? 'Which is this month — nothing later beats it.'
+        + (f.peak.cents === today.cents ? 'Which is this month, nothing later beats it.'
            : 'From ' + esc(pretty(f.peak.label)) + ', with ' + esc(plural(f.peak.count, 'period', 'periods')) + ' running at once.')
         + '</div></div>');
       out.push('</div>');
@@ -2074,11 +2074,11 @@
       : rows.length + ' of these are waiting on something';
     return '<div class="waiting"><h3>' + esc(heading) + '</h3><ul>'
       + rows.map(function (p) {
-          return '<li><strong>' + esc(p.label || KIND_LABELS[p.kind] || 'Unnamed') + '</strong> — '
+          return '<li><strong>' + esc(p.label || KIND_LABELS[p.kind] || 'Unnamed') + '</strong>, '
             + esc(p.why.join(' ')) + '</li>';
         }).join('')
       + '</ul><p class="slaf-hint" style="margin:var(--space-2) 0 0">These are not counted anywhere. '
-      + 'Nothing here is treated as zero or as starting today — it is left off until you say when and how much.</p></div>';
+      + 'Nothing here is treated as zero or as starting today. It is left off until you say when and how much.</p></div>';
   }
 
   /* ---- Gaps and overlaps --------------------------------------------------- */
@@ -2094,7 +2094,7 @@
         + 'exactly one thing is paying you at any moment you have described.</p>';
     }
     var out = ['<p class="slaf-hint" style="margin:var(--space-2) 0 0">A gap is a stretch where nothing you have '
-      + 'listed pays you. An overlap is a stretch where more than one does — which is where a plan usually has '
+      + 'listed pays you. An overlap is a stretch where more than one does, which is where a plan usually has '
       + 'its room to move.</p><ul class="runs">'];
     f.gaps.forEach(function (r) {
       out.push('<li><span class="tag is-gap">Gap</span> '
@@ -2106,14 +2106,14 @@
       out.push('<li><span class="tag is-over">Overlap</span> '
         + esc(plural(r.length, 'month', 'months')) + ' from ' + esc(pretty(r.from.label))
         + (r.length > 1 ? ' to ' + esc(pretty(r.to.label)) : '')
-        + ' with ' + esc(String(r.from.count)) + ' running at once — ' + esc(money(r.from.cents)) + ' a month.</li>');
+        + ' with ' + esc(String(r.from.count)) + ' running at once, ' + esc(money(r.from.cents)) + ' a month.</li>');
     });
     out.push('</ul>');
     return out.join('');
   }
 
   /* ---- The editor ----------------------------------------------------------
-     A container of live inputs, rebuilt when the data changes — so it is
+     A container of live inputs, rebuilt when the data changes, so it is
      guarded and every rebuild goes through request(). D-034. */
 
   function findRow(h, id) {
@@ -2139,8 +2139,8 @@
     var host = el('period-list');
     var rows = h.futureIncome || [];
     if (!rows.length) {
-      host.innerHTML = '<p class="slaf-reason">Nothing listed yet. Add the next thing you know about — a job '
-        + 'starting, a contract ending, a pension at 67 — and the months above fill in.</p>';
+      host.innerHTML = '<p class="slaf-reason">Nothing listed yet. Add the next thing you know about, a job '
+        + 'starting, a contract ending, a pension at 67, and the months above fill in.</p>';
       return;
     }
     host.innerHTML = rows.map(function (f) {
@@ -2241,7 +2241,7 @@
           var d = Ownership.describe('dob', h, 'timeline');
           if (!d) return '';
           return '<p class="slaf-hint">' + esc(d.label) + ': ' + (d.isSet ? esc(d.display) : 'not entered')
-            + ' — <a href="' + esc(d.href) + '">' + esc(d.ownerTitle) + '</a>. '
+            + ', <a href="' + esc(d.href) + '">' + esc(d.ownerTitle) + '</a>. '
             + 'Only needed to turn “from age 67” into a month.</p>';
         })();
   }

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/doors.js — the six doors: what each holds, its headline, how far
+   shared/doors.js, the six doors: what each holds, its headline, how far
    along it is, and which one to open next. DECISIONS.md D-206.
    --------------------------------------------------------------------------
    The Ledger's rows (data/ledger-rows.json) each carry a door (D, A, I, T,
@@ -12,9 +12,9 @@
      rows(h, tables, door)        the applicable rows behind a door, with
                                   status, in level order
      counts(h, tables, door, sug) { known, total, suggested, byLevel }
-     headline(h, tables, door)    { display, rough, result } — "not entered
+     headline(h, tables, door)    { display, rough, result }, "not entered
                                   yet" when blank, never $0
-     recommend(h, tables, sug)    { door, reason } — the most expensive
+     recommend(h, tables, sug)    { door, reason }, the most expensive
                                   unknown, in one sentence
      firstInsight(h, tables)      the one card after the first round: rough
                                   runway in months, from cash and spending,
@@ -235,7 +235,7 @@
   /* ---- The insight a level unlocks (Phase C2) --------------------------------
      Only where an engine backs it; otherwise null and the door shows what the
      level's rows unlock in words. Every one is a Result-shaped object:
-     { headline, line, rough, missing } — rough when an input is a guess or
+     { headline, line, rough, missing }, rough when an input is a guess or
      absent, and `missing` names it. Never a number from an assumed zero. */
   function engine(name) {
     if (typeof module === 'object' && module.exports) { try { return require('../engines/' + name + '.js'); } catch (e) { return null; } }

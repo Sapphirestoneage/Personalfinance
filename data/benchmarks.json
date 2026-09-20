@@ -1,0 +1,1289 @@
+{
+ "id": "benchmarks",
+ "version": "1.0",
+ "asOf": "2026-09-20",
+ "source": "The Solar System master prompt (docs/SOLAR-SYSTEM.md), Part 4 band notes and Part 5 section D18: the voices as selectable benchmark sources, and each ratio's bands by source.",
+ "confidence": "unverified",
+ "confidenceNote": "Every figure here is as quoted in the master prompt on 2026-09-20 and has NOT been checked against its primary source in this step: lastChecked names the transcription date and verified is false until someone checks the figure against the cited work. The prompt forbids shipping a quoted figure unchecked, so the shelf shows an unverified label on any band whose source is not verified (step 6 of the build).",
+ "note": "sources are the lenses; bands[key] carries a default band (inline, or a pointer to data/ratio_benchmarks.json where the same band already lives) and a lens per source. direction: lower is healthier, higher is healthier, range, or none (no verdict). A ratio outside its band reads \"above the usual range\" or \"below the usual range\", never red (C1).",
+ "sources": [
+  {
+   "id": "eli",
+   "name": "Eli's default",
+   "gives": "The app's own order and bands, shown when no lens is picked.",
+   "citation": "this repository: data/foo_rules.json, data/bands.json slafProposed, data/ratio_benchmarks.json",
+   "lastChecked": "2026-09-20",
+   "verified": false
+  },
+  {
+   "id": "moneyGuy",
+   "name": "The Money Guy Show",
+   "gives": "FOO, 25% of gross, 20/3/8, the wealth multiplier.",
+   "citation": "moneyguy.com: the Financial Order of Operations and the 20/3/8 car rule as published",
+   "lastChecked": "2026-09-20",
+   "verified": false
+  },
+  {
+   "id": "trench",
+   "name": "Scott Trench",
+   "gives": "Set for Life stages; income and housing first.",
+   "citation": "Set for Life (BiggerPockets Publishing, 2017)",
+   "lastChecked": "2026-09-20",
+   "verified": false
+  },
+  {
+   "id": "chooseFi",
+   "name": "ChooseFI",
+   "gives": "The gap; the aggregation of marginal gains.",
+   "citation": "choosefi.com, the pillars",
+   "lastChecked": "2026-09-20",
+   "verified": false
+  },
+  {
+   "id": "mmm",
+   "name": "Mr. Money Mustache",
+   "gives": "The savings-rate table; the 10-year rule (173 and 752).",
+   "citation": "mrmoneymustache.com, \"The Shockingly Simple Math Behind Early Retirement\" (2012)",
+   "lastChecked": "2026-09-20",
+   "verified": false
+  },
+  {
+   "id": "jlCollins",
+   "name": "JL Collins",
+   "gives": "The simple path; FU money.",
+   "citation": "The Simple Path to Wealth (2016)",
+   "lastChecked": "2026-09-20",
+   "verified": false
+  },
+  {
+   "id": "madFientist",
+   "name": "Mad Fientist",
+   "gives": "Tax strategies; the HSA as a stealth IRA.",
+   "citation": "madfientist.com",
+   "lastChecked": "2026-09-20",
+   "verified": false
+  },
+  {
+   "id": "bigErn",
+   "name": "Big ERN",
+   "gives": "Withdrawal rates for long retirements: 3.25 to 3.5%.",
+   "citation": "earlyretirementnow.com, the Safe Withdrawal Rate Series",
+   "lastChecked": "2026-09-20",
+   "verified": false
+  },
+  {
+   "id": "goCurryCracker",
+   "name": "Go Curry Cracker",
+   "gives": "The 0% long-term gains bracket; tax-gain harvesting.",
+   "citation": "gocurrycracker.com",
+   "lastChecked": "2026-09-20",
+   "verified": false
+  },
+  {
+   "id": "ymoyl",
+   "name": "Your Money or Your Life",
+   "gives": "The real hourly wage; the crossover point.",
+   "citation": "Your Money or Your Life (Dominguez and Robin, 1992; revised 2018)",
+   "lastChecked": "2026-09-20",
+   "verified": false
+  },
+  {
+   "id": "dieWithZero",
+   "name": "Die With Zero",
+   "gives": "Time buckets; spending down on purpose.",
+   "citation": "Die With Zero (Bill Perkins, 2020)",
+   "lastChecked": "2026-09-20",
+   "verified": false
+  },
+  {
+   "id": "sethi",
+   "name": "Ramit Sethi",
+   "gives": "Conscious spending: guilt-free 20 to 35%.",
+   "citation": "I Will Teach You to Be Rich (2009; revised 2019), the conscious spending plan",
+   "lastChecked": "2026-09-20",
+   "verified": false
+  },
+  {
+   "id": "bogleheads",
+   "name": "Bogleheads",
+   "gives": "Three-fund portfolio; low fees; VPW.",
+   "citation": "bogleheads.org wiki",
+   "lastChecked": "2026-09-20",
+   "verified": false
+  },
+  {
+   "id": "biggerPockets",
+   "name": "BiggerPockets",
+   "gives": "Real estate ratios; the middle-class trap.",
+   "citation": "biggerpockets.com; BiggerPockets Money podcast",
+   "lastChecked": "2026-09-20",
+   "verified": false
+  },
+  {
+   "id": "warren",
+   "name": "50/30/20",
+   "gives": "Needs 50, wants 30, saving 20.",
+   "citation": "All Your Worth (Elizabeth Warren and Amelia Warren Tyagi, 2005)",
+   "lastChecked": "2026-09-20",
+   "verified": false
+  },
+  {
+   "id": "stanley",
+   "name": "Millionaire Next Door",
+   "gives": "The PAW ratio: expected net worth = age x income / 10.",
+   "citation": "The Millionaire Next Door (Stanley and Danko, 1996)",
+   "lastChecked": "2026-09-20",
+   "verified": false
+  },
+  {
+   "id": "lenders",
+   "name": "Lender conventions",
+   "gives": "28/36 housing and back-end limits; 30% and 10% utilization.",
+   "citation": "Mortgage underwriting and credit bureau guidance as commonly cited; data/ratio_benchmarks.json",
+   "lastChecked": "2026-09-20",
+   "verified": false
+  }
+ ],
+ "bands": {
+  "savingsRate": {
+   "key": "savingsRate",
+   "default": {
+    "ratioBenchmarks": "savingsRate"
+   },
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "mmm",
+     "table": {
+      "0.10": 51,
+      "0.25": 32,
+      "0.50": 17,
+      "0.75": 7
+     },
+     "unit": "working years to FI at that savings rate",
+     "basis": "takeHome"
+    },
+    {
+     "source": "chooseFi",
+     "watch": [
+      0.2,
+      0.5,
+      0.7
+     ],
+     "basis": "takeHome",
+     "note": "the community's three marks"
+    },
+    {
+     "source": "moneyGuy",
+     "target": 0.25,
+     "basis": "gross"
+    },
+    {
+     "source": "warren",
+     "target": 0.2,
+     "basis": "takeHome"
+    },
+    {
+     "source": "eli",
+     "target": 0.15,
+     "basis": "gross",
+     "note": "traditional advice, the floor"
+    }
+   ],
+   "note": null
+  },
+  "savingsRateGross": {
+   "key": "savingsRateGross",
+   "default": {
+    "ratioBenchmarks": "savingsRate"
+   },
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "moneyGuy",
+     "target": 0.25,
+     "basis": "gross"
+    },
+    {
+     "source": "eli",
+     "target": 0.15,
+     "basis": "gross"
+    }
+   ],
+   "note": null
+  },
+  "leakRate": {
+   "key": "leakRate",
+   "default": {
+    "good": 0.05,
+    "warn": 0.1
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "eli",
+     "good": 0.05,
+     "warn": 0.1
+    }
+   ],
+   "note": null
+  },
+  "spendRate": {
+   "key": "spendRate",
+   "default": null,
+   "direction": "lower",
+   "lenses": [],
+   "note": "the mirror of the savings rate; no band of its own"
+  },
+  "freedomPerMonth": {
+   "key": "freedomPerMonth",
+   "default": null,
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "mmm",
+     "mark": 1.0,
+     "note": "a 50% savings rate: each month worked buys a month off"
+    }
+   ],
+   "note": null
+  },
+  "shelterRate": {
+   "key": "shelterRate",
+   "default": {
+    "ratioBenchmarks": "housingRatio"
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "lenders",
+     "good": 0.28,
+     "basis": "gross"
+    },
+    {
+     "source": "moneyGuy",
+     "target": 0.25,
+     "basis": "gross"
+    },
+    {
+     "source": "eli",
+     "good": 0.25,
+     "warn": 0.3,
+     "basis": "takeHome"
+    }
+   ],
+   "note": null
+  },
+  "frontEndDTI": {
+   "key": "frontEndDTI",
+   "default": {
+    "ratioBenchmarks": "housingRatio"
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "lenders",
+     "conventional": 0.28,
+     "fha": 0.31,
+     "note": "FHA allows higher; lender limits live in a dated table"
+    }
+   ],
+   "note": null
+  },
+  "backEndDTI": {
+   "key": "backEndDTI",
+   "default": {
+    "ratioBenchmarks": "debtToIncome"
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "lenders",
+     "conventional": 0.36,
+     "manyLenders": 0.43
+    }
+   ],
+   "note": null
+  },
+  "minimumsRate": {
+   "key": "minimumsRate",
+   "default": {
+    "good": 0.1,
+    "warn": 0.2
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "eli",
+     "good": 0.1,
+     "warn": 0.2
+    }
+   ],
+   "note": null
+  },
+  "mustPayRate": {
+   "key": "mustPayRate",
+   "default": {
+    "good": 0.5,
+    "warn": 0.6
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "warren",
+     "target": 0.5,
+     "note": "the 50 in 50/30/20, first pass"
+    }
+   ],
+   "note": null
+  },
+  "incomeVolatility": {
+   "key": "incomeVolatility",
+   "default": {
+    "good": 0.1,
+    "warn": 0.3
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "eli",
+     "good": 0.1,
+     "warn": 0.3
+    }
+   ],
+   "note": null
+  },
+  "impliedTaxRate": {
+   "key": "impliedTaxRate",
+   "default": null,
+   "direction": "none",
+   "lenses": [],
+   "note": "looks high until the stub is read"
+  },
+  "refundShare": {
+   "key": "refundShare",
+   "default": {
+    "good": 0.05,
+    "warn": 0.1
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "eli",
+     "warn": 0.1,
+     "note": "over 10% suggests a W-4 fix"
+    }
+   ],
+   "note": null
+  },
+  "debtToAssets": {
+   "key": "debtToAssets",
+   "default": {
+    "ratioBenchmarks": "debtToAsset"
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "eli",
+     "warn": 0.5,
+     "note": "fragile outside a mortgage"
+    }
+   ],
+   "note": null
+  },
+  "nwToIncome": {
+   "key": "nwToIncome",
+   "default": null,
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "eli",
+     "checkpoints": {
+      "30": 1,
+      "40": 3,
+      "50": 6
+     },
+     "note": "age checkpoints in the style of the common rule; FIRE needs far more, far sooner"
+    }
+   ],
+   "note": null
+  },
+  "pawRatio": {
+   "key": "pawRatio",
+   "default": {
+    "ratioBenchmarks": "netWorthToIncome"
+   },
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "stanley",
+     "prodigious": 2.0,
+     "under": 0.5
+    },
+    {
+     "source": "moneyGuy",
+     "note": "the wealth multiplier lens sits beside it for people in their 20s"
+    }
+   ],
+   "note": null
+  },
+  "investedShare": {
+   "key": "investedShare",
+   "default": {
+    "good": 0.8
+   },
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "eli",
+     "good": 0.8,
+     "note": "once the emergency fund is full"
+    }
+   ],
+   "note": null
+  },
+  "cashShare": {
+   "key": "cashShare",
+   "default": null,
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "eli",
+     "note": "target = emergency fund plus dated cash uses, no more"
+    }
+   ],
+   "note": null
+  },
+  "pctToFI": {
+   "key": "pctToFI",
+   "default": null,
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "eli",
+     "done": 1.0
+    }
+   ],
+   "note": null
+  },
+  "pctToCoast": {
+   "key": "pctToCoast",
+   "default": null,
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "eli",
+     "done": 1.0
+    }
+   ],
+   "note": null
+  },
+  "currentWR": {
+   "key": "currentWR",
+   "default": {
+    "good": 0.04
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "eli",
+     "classic": 0.04
+    },
+    {
+     "source": "bigErn",
+     "longRetirement": [
+      0.0325,
+      0.035
+     ]
+    }
+   ],
+   "note": null
+  },
+  "yearsSaved": {
+   "key": "yearsSaved",
+   "default": null,
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "jlCollins",
+     "marks": [
+      1,
+      5,
+      10,
+      25
+     ],
+     "note": "1 year is real breathing room; 25 is FI"
+    }
+   ],
+   "note": null
+  },
+  "highInterestShare": {
+   "key": "highInterestShare",
+   "default": {
+    "warn": 0.0
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "eli",
+     "note": "any amount gates the rewards, real estate and leverage moons"
+    }
+   ],
+   "note": null
+  },
+  "foodShare": {
+   "key": "foodShare",
+   "default": {
+    "good": 0.1,
+    "warn": 0.15
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "eli",
+     "good": 0.1,
+     "warn": 0.15,
+     "note": "one of the Big Three"
+    }
+   ],
+   "note": null
+  },
+  "matchCapture": {
+   "key": "matchCapture",
+   "default": {
+    "good": 1.0
+   },
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "moneyGuy",
+     "target": 1.0,
+     "note": "FOO step 2"
+    },
+    {
+     "source": "eli",
+     "target": 1.0
+    }
+   ],
+   "note": null
+  },
+  "homeShareNW": {
+   "key": "homeShareNW",
+   "default": {
+    "warn": 0.5
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "biggerPockets",
+     "warn": 0.5,
+     "note": "house-rich"
+    }
+   ],
+   "note": null
+  },
+  "trapRatio": {
+   "key": "trapRatio",
+   "default": {
+    "warn": 0.8
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "biggerPockets",
+     "warn": 0.8,
+     "note": "with an early target date, the bridge conversation"
+    }
+   ],
+   "note": null
+  },
+  "ltv": {
+   "key": "ltv",
+   "default": {
+    "good": 0.8
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "lenders",
+     "pmiDrops": 0.8
+    }
+   ],
+   "note": null
+  },
+  "priceToIncome": {
+   "key": "priceToIncome",
+   "default": {
+    "good": 2.5,
+    "warn": 4.0
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "eli",
+     "range": [
+      2.5,
+      4.0
+     ],
+     "note": "depending on the source"
+    }
+   ],
+   "note": null
+  },
+  "carToIncome": {
+   "key": "carToIncome",
+   "default": {
+    "warn": 0.5
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "eli",
+     "warn": 0.5,
+     "note": "a common FIRE rule of thumb, less is better"
+    }
+   ],
+   "note": null
+  },
+  "studentToIncome": {
+   "key": "studentToIncome",
+   "default": {
+    "warn": 1.0
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "eli",
+     "warn": 1.0,
+     "note": "borrow no more than the first-year salary"
+    }
+   ],
+   "note": null
+  },
+  "runwayMonths": {
+   "key": "runwayMonths",
+   "default": {
+    "ratioBenchmarks": "emergencyFundMonths"
+   },
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "eli",
+     "good": 3,
+     "better": 6,
+     "note": "more for variable income"
+    }
+   ],
+   "note": null
+  },
+  "efCoverage": {
+   "key": "efCoverage",
+   "default": {
+    "good": 1.0
+   },
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "eli",
+     "done": 1.0
+    }
+   ],
+   "note": null
+  },
+  "liquidityRate": {
+   "key": "liquidityRate",
+   "default": null,
+   "direction": "none",
+   "lenses": [
+    {
+     "source": "biggerPockets",
+     "note": "no universal band; read against years until 59.5"
+    }
+   ],
+   "note": null
+  },
+  "bridgeYears": {
+   "key": "bridgeYears",
+   "default": null,
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "eli",
+     "note": "needs to cover the target date to 59.5"
+    }
+   ],
+   "note": null
+  },
+  "extraPayRate": {
+   "key": "extraPayRate",
+   "default": null,
+   "direction": "none",
+   "lenses": [],
+   "note": null
+  },
+  "givingRate": {
+   "key": "givingRate",
+   "default": null,
+   "direction": "none",
+   "lenses": [
+    {
+     "source": "eli",
+     "note": "user-set target; no default band"
+    }
+   ],
+   "note": null
+  },
+  "needsShare": {
+   "key": "needsShare",
+   "default": {
+    "ratioBenchmarks": "needsToWants"
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "warren",
+     "target": 0.5
+    }
+   ],
+   "note": null
+  },
+  "wantsShare": {
+   "key": "wantsShare",
+   "default": {
+    "good": 0.3
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "warren",
+     "target": 0.3
+    },
+    {
+     "source": "sethi",
+     "range": [
+      0.2,
+      0.35
+     ],
+     "note": "guilt-free spending"
+    }
+   ],
+   "note": null
+  },
+  "transportRate": {
+   "key": "transportRate",
+   "default": {
+    "good": 0.1,
+    "warn": 0.15
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "eli",
+     "good": 0.1,
+     "warn": 0.15,
+     "note": "one of the Big Three"
+    }
+   ],
+   "note": null
+  },
+  "carPaymentRate": {
+   "key": "carPaymentRate",
+   "default": {
+    "good": 0.08
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "moneyGuy",
+     "target": 0.08,
+     "basis": "gross",
+     "rule": "20/3/8"
+    }
+   ],
+   "note": null
+  },
+  "recurringShare": {
+   "key": "recurringShare",
+   "default": null,
+   "direction": "none",
+   "lenses": [],
+   "note": null
+  },
+  "retContribRate": {
+   "key": "retContribRate",
+   "default": {
+    "good": 0.15
+   },
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "eli",
+     "target": 0.15,
+     "note": "traditional advice"
+    },
+    {
+     "source": "chooseFi",
+     "note": "to the limit"
+    }
+   ],
+   "note": null
+  },
+  "contribFill": {
+   "key": "contribFill",
+   "default": {
+    "good": 1.0
+   },
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "eli",
+     "done": 1.0
+    }
+   ],
+   "note": null
+  },
+  "sideShare": {
+   "key": "sideShare",
+   "default": null,
+   "direction": "none",
+   "lenses": [],
+   "note": null
+  },
+  "withholdAccuracy": {
+   "key": "withholdAccuracy",
+   "default": {
+    "good": [
+     0.95,
+     1.05
+    ]
+   },
+   "direction": "range",
+   "lenses": [
+    {
+     "source": "eli",
+     "range": [
+      0.95,
+      1.05
+     ]
+    }
+   ],
+   "note": null
+  },
+  "weightedDebtRate": {
+   "key": "weightedDebtRate",
+   "default": null,
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "eli",
+     "note": "compare to the flip rate at D17"
+    }
+   ],
+   "note": null
+  },
+  "interestToIncome": {
+   "key": "interestToIncome",
+   "default": {
+    "good": 0.0
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "eli",
+     "note": "every point is pure loss"
+    }
+   ],
+   "note": null
+  },
+  "fixedCostRate": {
+   "key": "fixedCostRate",
+   "default": {
+    "ratioBenchmarks": "needsToWants"
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "warren",
+     "target": 0.5
+    }
+   ],
+   "note": null
+  },
+  "insuranceRate": {
+   "key": "insuranceRate",
+   "default": null,
+   "direction": "none",
+   "lenses": [
+    {
+     "source": "eli",
+     "note": "flag if rising faster than income"
+    }
+   ],
+   "note": null
+  },
+  "rothShare": {
+   "key": "rothShare",
+   "default": null,
+   "direction": "none",
+   "lenses": [
+    {
+     "source": "eli",
+     "note": "depends on the bracket; read at T16"
+    }
+   ],
+   "note": null
+  },
+  "realWageRatio": {
+   "key": "realWageRatio",
+   "default": {
+    "good": 0.75,
+    "warn": 0.5
+   },
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "ymoyl",
+     "range": [
+      0.5,
+      0.75
+     ],
+     "note": "where most people land"
+    }
+   ],
+   "note": null
+  },
+  "bridgeCoverage": {
+   "key": "bridgeCoverage",
+   "default": {
+    "good": 1.0
+   },
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "eli",
+     "done": 1.0
+    }
+   ],
+   "note": null
+  },
+  "taxBucketMix": {
+   "key": "taxBucketMix",
+   "default": null,
+   "direction": "none",
+   "lenses": [
+    {
+     "source": "madFientist",
+     "note": "enough taxable and Roth basis to bridge"
+    }
+   ],
+   "note": null
+  },
+  "cashDragRate": {
+   "key": "cashDragRate",
+   "default": {
+    "warn": 0.01
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "eli",
+     "warn": 0.01,
+     "note": "any gap over a point on real cash is a quick win"
+    }
+   ],
+   "note": null
+  },
+  "variableShare": {
+   "key": "variableShare",
+   "default": {
+    "warn": 0.25
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "eli",
+     "warn": 0.25
+    }
+   ],
+   "note": null
+  },
+  "raiseCapture": {
+   "key": "raiseCapture",
+   "default": {
+    "good": 0.5
+   },
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "moneyGuy",
+     "target": 0.5,
+     "note": "save at least half of every raise"
+    }
+   ],
+   "note": null
+  },
+  "creepRate": {
+   "key": "creepRate",
+   "default": {
+    "good": 0.5
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "eli",
+     "good": 0.5
+    }
+   ],
+   "note": null
+  },
+  "stockShare": {
+   "key": "stockShare",
+   "default": null,
+   "direction": "none",
+   "lenses": [
+    {
+     "source": "bogleheads",
+     "note": "age and risk-comfort glide path at A17"
+    }
+   ],
+   "note": null
+  },
+  "requiredVsActual": {
+   "key": "requiredVsActual",
+   "default": {
+    "good": 1.0
+   },
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "eli",
+     "done": 1.0,
+     "note": "on route"
+    }
+   ],
+   "note": null
+  },
+  "effectiveRate": {
+   "key": "effectiveRate",
+   "default": null,
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "goCurryCracker",
+     "target": 0.1,
+     "note": "most FIRE-phase plans target under 10%"
+    }
+   ],
+   "note": null
+  },
+  "utilization": {
+   "key": "utilization",
+   "default": {
+    "ratioBenchmarks": "creditUtilization"
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "lenders",
+     "good": 0.3,
+     "best": 0.1
+    }
+   ],
+   "note": null
+  },
+  "payerConcentration": {
+   "key": "payerConcentration",
+   "default": null,
+   "direction": "none",
+   "lenses": [
+    {
+     "source": "eli",
+     "note": "over 80% from one payer is normal for W-2, and is the reason for the emergency fund"
+    }
+   ],
+   "note": null
+  },
+  "disabilityReplace": {
+   "key": "disabilityReplace",
+   "default": {
+    "good": 0.6
+   },
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "eli",
+     "common": 0.6,
+     "note": "the common group-plan level"
+    }
+   ],
+   "note": null
+  },
+  "employerStockShare": {
+   "key": "employerStockShare",
+   "default": {
+    "warn": 0.1
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "bogleheads",
+     "warn": 0.1
+    }
+   ],
+   "note": null
+  },
+  "jobLossRunway": {
+   "key": "jobLossRunway",
+   "default": null,
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "eli",
+     "note": "compare to the typical job-search time for the field"
+    }
+   ],
+   "note": null
+  },
+  "badYearCoverage": {
+   "key": "badYearCoverage",
+   "default": {
+    "good": 1.0
+   },
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "moneyGuy",
+     "done": 1.0,
+     "note": "FOO step 1: deductibles covered"
+    }
+   ],
+   "note": null
+  },
+  "marketGapRate": {
+   "key": "marketGapRate",
+   "default": {
+    "warn": 0.1
+   },
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "trench",
+     "warn": 0.1,
+     "note": "over 10% is a Career moon move"
+    }
+   ],
+   "note": null
+  },
+  "gainsRoomUse": {
+   "key": "gainsRoomUse",
+   "default": {
+    "good": 1.0
+   },
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "goCurryCracker",
+     "note": "fill it in low-income years"
+    }
+   ],
+   "note": null
+  },
+  "weightedER": {
+   "key": "weightedER",
+   "default": {
+    "good": 0.002,
+    "best": 0.0005
+   },
+   "direction": "lower",
+   "lenses": [
+    {
+     "source": "bogleheads",
+     "good": 0.002,
+     "indexFunds": 0.0005
+    }
+   ],
+   "note": null
+  },
+  "realFiCoverage": {
+   "key": "realFiCoverage",
+   "default": {
+    "good": 1.0
+   },
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "eli",
+     "done": 1.0
+    }
+   ],
+   "note": null
+  },
+  "ssCoverage": {
+   "key": "ssCoverage",
+   "default": null,
+   "direction": "higher",
+   "lenses": [],
+   "note": null
+  },
+  "baristaGap": {
+   "key": "baristaGap",
+   "default": null,
+   "direction": "lower",
+   "lenses": [],
+   "note": null
+  },
+  "capRate": {
+   "key": "capRate",
+   "default": null,
+   "direction": "none",
+   "lenses": [
+    {
+     "source": "biggerPockets",
+     "note": "compare to local cap rates, not a fixed band"
+    }
+   ],
+   "note": null
+  },
+  "cashOnCash": {
+   "key": "cashOnCash",
+   "default": null,
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "biggerPockets",
+     "note": "compare to the plan return assumption"
+    }
+   ],
+   "note": null
+  },
+  "rentToPrice": {
+   "key": "rentToPrice",
+   "default": {
+    "good": 0.01
+   },
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "biggerPockets",
+     "screen": 0.01,
+     "note": "the 1% rule: screen only, never a verdict"
+    }
+   ],
+   "note": null
+  },
+  "dscr": {
+   "key": "dscr",
+   "default": {
+    "good": 1.2
+   },
+   "direction": "higher",
+   "lenses": [
+    {
+     "source": "lenders",
+     "good": 1.2
+    }
+   ],
+   "note": null
+  }
+ }
+}

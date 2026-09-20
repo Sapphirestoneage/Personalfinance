@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/aftertax.js — net worth as listed, or after deferred tax (15.3).
+   shared/aftertax.js, net worth as listed, or after deferred tax (15.3).
    --------------------------------------------------------------------------
    A 401(k) dollar is not a whole dollar. When the switch `afterTaxNetWorth`
    (Settings, Accuracy group; default on) is on, the Statement, the front

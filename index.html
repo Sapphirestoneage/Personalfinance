@@ -13,12 +13,12 @@
 <link rel="stylesheet" href="shared/fonts.css"/>
 <link rel="stylesheet" href="shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11, §13 Tier 20 (Pilot's Dashboard). THE FRONT DOOR.
+  ROOM SPEC, SPEC.md §11, §13 Tier 20 (Pilot's Dashboard). THE FRONT DOOR.
 
-  ROUTER — BRIEF §1.2, DECISIONS.md D-058. This page is the Dashboard once
+  ROUTER, BRIEF §1.2, DECISIONS.md D-058. This page is the Dashboard once
   the household has what the panel needs, and the intake landing until
   then: one sentence, "Start Here →", and "See it with example numbers"
-  (explicit action, behind a confirm — demo data never loads by itself).
+  (explicit action, behind a confirm, demo data never loads by itself).
   rooms/dashboard.html redirects here so old links hold.
 
   1. READS   everything already entered. Nothing new is asked for.
@@ -34,15 +34,15 @@
   whose weighting SPEC.md §12.4 still marks [PENDING], and choosing weights
   here to make a prettier picture would be deciding it by accident.
 
-  ONE SCREEN, FOUR BLOCKS — the one-pager brief, D-096. (1) Where you
+  ONE SCREEN, FOUR BLOCKS, the one-pager brief, D-096. (1) Where you
   are: the instruments that exist for this situation (Gate.exists via
   shared/instruments.js), the situation's own number first; (2) the next
   thing money should do, from the money order of operations (FOO flags),
   the runway when between jobs, the withdrawal rate when retired; (3) the
   next thing to learn or unlearn, from the Advice Translator
   (engines/advice.js, data/advice_translator.json); (4) the date it points
-  to — the FI date, the day the cash runs out, or the age the money lasts
-  to — with the lens toggle (shared/lens.js). Undo and redo top right.
+  to, the FI date, the day the cash runs out, or the age the money lasts
+  to, with the lens toggle (shared/lens.js). Undo and redo top right.
   Nothing else on the screen: the radar, the ring and the climb, the
   weather, the flight plan, the goals and the data controls are folded
   under "The full panel" and "Your data".
@@ -104,7 +104,7 @@
   .radar .ring { fill: none; stroke: var(--color-border-active); stroke-width: .6; }
   /* The dashed ring is the healthy line and FURTHER OUT IS BETTER, so the
      inner disc is the below-range region. It used to be tinted green, under
-     a heading reading "Am I in the green everywhere?" — a shape sitting deep
+     a heading reading "Am I in the green everywhere?", a shape sitting deep
      inside the bad zone looked like a pass. No fill now: the ring is the
      line, the dots say which side they are on. D-143. */
   .radar .ring-good { fill: none; stroke: var(--color-positive); stroke-width: .8; stroke-dasharray: 2 2; }
@@ -170,7 +170,7 @@
   .inst .three-d span:last-child b { color: #e4b04a; }
   /* THE FIGURE STAYS NEUTRAL. Colouring the number itself put red, amber,
      green and blue in one six-tile grid, which reads as a game board rather
-     than a panel of readings — and it spends the loudest thing on the page
+     than a panel of readings, and it spends the loudest thing on the page
      (a big number) on a signal that a 3px rule carries perfectly well. The
      band now shows as a rule down the left edge of the tile, so the grid
      scans in one pass and the figures stay comparable. D-154. */
@@ -225,7 +225,7 @@
 
   /* Caveats fold behind an ⓘ. Built once; the toggle flips `hidden`. */
   .info-toggle { background: none; border: none; color: var(--color-text-faint); font: inherit; font-size: var(--text-xs); cursor: pointer; padding: 0; margin-top: var(--space-2); text-decoration: underline dotted; }
-  /* Measured 134 x 16.5 and 187 x 16.5 on a coarse pointer — under the 32px
+  /* Measured 134 x 16.5 and 187 x 16.5 on a coarse pointer, under the 32px
      floor D-136 set, on the only two controls that reach "why this is not a
      score" and the three blank risks. They are defined here rather than in
      theme.css, which is why that pass never saw them. D-144. */
@@ -307,7 +307,7 @@
   <section class="slaf-card landing" id="landing" hidden>
     <span class="slaf-eyebrow" id="landing-cap">SPARKS · Money rooms</span>
     <h2 id="landing-head">One set of numbers. Every tool reads it.</h2>
-    <p id="landing-say">Answer a short set of questions once — what you earn, spend, hold and owe — and every room opens already filled in, from your runway to your FI year. Nothing leaves this browser.</p>
+    <p id="landing-say">Answer a short set of questions once: what you earn, spend, hold and owe. Every room then opens already filled in, from your runway to your FI year. Nothing leaves this browser.</p>
     <!-- The lodge (D-319, ported from D-251): someone who has answered
          anything is not a stranger. The figure they earned, the meter every
          room shows, and when they were last here. Hidden until there is
@@ -323,7 +323,7 @@
       <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-example">See it with example numbers</button>
     </div>
     <p class="resume"><a href="rooms/start.html" id="btn-long-form">The older one-pager is still here.</a></p>
-    <p class="privacy">Educational tool, not financial advice. Your figures are stored only in this browser — there is no account and no server.
+    <p class="privacy">Educational tool, not financial advice. Your figures are stored only in this browser. There is no account and no server.
       Have a saved file or a share link? <a href="#your-data">Load it below.</a></p>
   </section>
 
@@ -343,7 +343,7 @@
        one. `dash` so it hides with the rest of the panel.
 
        A STRIP, NOT A BLOCK. The dashboard is four blocks and the test holds
-       it to exactly those four (D-096) — a guard worth more than the
+       it to exactly those four (D-096), a guard worth more than the
        convenience of adding a fifth card, because "one screen, four blocks"
        stops being true the first time something slips in beside them. This
        is navigation, not a reading, so it takes the same slim shape the
@@ -405,7 +405,7 @@
       <div id="lens-host"></div>
     </div>
     <div class="date">
-      <span class="big" id="date-big">—</span>
+      <span class="big" id="date-big">not yet</span>
       <p class="say" id="date-say"></p>
       <ul class="lensed" id="date-lensed"></ul>
       <!-- The FIRE tiers (D-234): Coast, Lean, FIRE, Chubby, Fat as rungs
@@ -439,7 +439,7 @@
     <h2 style="margin:var(--space-2) 0 0">Am I in the green everywhere?</h2>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">
       One spoke per number that has a healthy range behind it. Some are the
-      same arithmetic under the name people usually ask for — emergency fund,
+      same arithmetic under the name people usually ask for, emergency fund,
       runway and liquidity all divide the cash you can reach by a month of
       spending, so they read the same on purpose.
       <strong>Further out is better.</strong> The dashed circle is the line
@@ -455,7 +455,7 @@
     <div class="flag" id="why-no-score" hidden>
       <strong>This is a view, not a score.</strong> Each spoke stands on its own
       band, and nothing here adds them together. Adding them up is a different
-      question with a different answer — it needs weights, the weights depend on
+      question with a different answer. It needs weights, the weights depend on
       your age, and every one of them is a judgement call. That lives in
       <a href="rooms/financial-snapshot.html#the-score">The Score</a>, which shows its weighting rather than
       hiding it. Picking weights here to make a tidier shape would be answering
@@ -518,7 +518,7 @@
     <h2 style="margin:var(--space-2) 0 0">It lives in this browser. Take it with you.</h2>
     <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
       There is no account and no server. A file or a link is the only way this
-      household leaves here — and a share link keeps everything after the
+      household leaves here, and a share link keeps everything after the
       <code>#</code>, which a browser never sends to any site.
     </p>
     <div class="data-actions">
@@ -653,7 +653,7 @@
 
   /* ---- The radar ---------------------------------------------------------
      Hand-drawn SVG. Fourteen labels will not fit around a circle on a phone,
-     so the spokes are numbered and the numbers key into the list below —
+     so the spokes are numbered and the numbers key into the list below, 
      which also carries the actual figure, which a label alone would not. */
   function renderRadar(r) {
     var pts = r.points;
@@ -711,7 +711,7 @@
     ownersPay: function (r) { return 'after ' + Money.formatRate(r.effectiveRate, { decimals: 0 }) + ' set aside for tax'; },
     runwayDays: function (r) { return r.sustainable ? 'what comes in covers the month' : Money.formatMonths(r.months) + ' at this spending'; },
     loanTrajectory: function (r) { return Money.formatMonths(r.months) + ' at the minimums'; },
-    withdrawalRate: function (r) { return r.covered ? 'nothing drawn — income covers it' : Money.formatCents(r.annualDrawCents) + ' a year drawn'; }
+    withdrawalRate: function (r) { return r.covered ? 'nothing drawn, income covers it' : Money.formatCents(r.annualDrawCents) + ' a year drawn'; }
   };
 
   /* The 3D toggle: page-local, remembered for the session only. D-089. */
@@ -728,7 +728,7 @@
         if (unit === 'rate') return Money.formatRate(v, { decimals: 1 });
         return String(v);
       }
-      var text = Money.isOk(r) ? compact(row.unit, r.value) : '—';
+      var text = Money.isOk(r) ? compact(row.unit, r.value) : 'not yet';
       return '<span><b>' + esc(text) + '</b>' + esc(col.label.toLowerCase()) + '</span>';
     }).join('') + '</span>';
   }
@@ -784,7 +784,7 @@
            tile. D-145. */
         + '<span class="cap" title="' + esc(row.cap) + '">' + esc(row.label) + '</span>'
         + '<span class="big' + (ok ? '' : ' is-incomplete') + '">'
-        + esc(ok ? Instruments.format(row) : (row.result.reason || Money.EM_DASH)) + '</span>'
+        + esc(ok ? Instruments.format(row) : (row.result.reason || Money.NOT_YET)) + '</span>'
         + '<span class="delta' + dCls + '">' + esc(dText) + '</span>'
         + '<span class="sub">' + esc(ok && SUB[row.id] ? SUB[row.id](row.result, c) : '') + '</span>'
         + threeDCell(row, td)
@@ -828,7 +828,7 @@
         room: 'expenses', anchor: 'spending', go: 'Find the gap in Expenses →' };
     },
     housing_above_guideline: function (d) {
-      return { say: 'The roof takes <strong>' + Money.formatRate(d.share, { decimals: 0 }) + '</strong> of gross pay — '
+      return { say: 'The roof takes <strong>' + Money.formatRate(d.share, { decimals: 0 }) + '</strong> of gross pay, '
           + Money.formatCents(d.monthlyCents) + ' a month against a '
           + Money.formatRate(d.guideline, { decimals: 0 }) + ' guideline. It is the largest line in most budgets and the slowest to change, so it is worth knowing before the smaller ones.',
         room: 'housing', anchor: null, go: 'Weigh the place in Housing Decision →' };
@@ -872,7 +872,7 @@
     var r = row.result, zone = row.verdict ? row.verdict.zone : 'none';
     var room = Registry.byId('decumulation') ? 'decumulation' : 'fire';
     if (r.covered) return { say: 'What comes in covers what goes out: <strong>nothing</strong> is drawn from investments. The next thing is deciding what the reserve is for.', room: room, anchor: room === 'fire' ? 'targets' : null, go: 'Plan the drawdown →', critical: false };
-    return { say: 'You draw <strong>' + Money.formatRate(r.value, { decimals: 1 }) + '</strong> of your investments a year — ' + Money.formatCents(r.annualDrawCents) + ' — '
+    return { say: 'You draw <strong>' + Money.formatRate(r.value, { decimals: 1 }) + '</strong> of your investments a year, ' + Money.formatCents(r.annualDrawCents) + ', '
         + (zone === 'good' ? 'inside the 4% convention.' : zone === 'watch' ? 'between the 4% convention and the 5% where guidance starts to worry.' : 'above the 5% where guidance starts to worry. The next thing is closing that gap: spending, income, or a plan for the reserve to run down on purpose.'),
       room: room, anchor: room === 'fire' ? 'targets' : null, go: 'See the drawdown year by year →', critical: zone === 'out' };
   }
@@ -892,7 +892,7 @@
     var gap = Math.round(take.value / 12) - spend.value;
     if (gap >= 0) return null;
     return { say: 'What comes in is <strong>' + Money.formatCents(Math.abs(gap))
-        + ' short</strong> of what the month costs — ' + Money.formatCents(Math.round(take.value / 12))
+        + ' short</strong> of what the month costs, ' + Money.formatCents(Math.round(take.value / 12))
         + ' against ' + Money.formatCents(spend.value)
         + '. No step of the ladder answers that, and nothing here will tell you to save harder. What it can do is put the bills in the order that does least damage.',
       room: 'cant-pay', anchor: null, go: 'Work out what gets paid →', noStep: true };
@@ -912,7 +912,7 @@
     } else if (doesNotClose(h)) {
       /* The floor. Before this branch the five flags were the only answers,
          and every one of them is a category error for a household whose
-         month does not close — "raise your contribution to the cap" to
+         month does not close, "raise your contribution to the cap" to
          someone choosing which bill to skip. With no flag firing it said
          "Nothing is out of bounds." rooms/cant-pay.html was written for
          exactly this and was reachable from no screen a person starts on. */
@@ -961,7 +961,7 @@
   function renderLearn(h, action) {
     /* The thing to LEARN should not be the thing to DO, said twice. Once the
        next action is ordered by the ladder, the top flag and the top advice
-       item often point at the same place — the demo's dashboard showed
+       item often point at the same place, the demo's dashboard showed
        "raise your contribution to the cap" over "Always take the whole
        match", one above the other. If the advice lands on exactly the room
        and anchor the action already links to, take the next one instead;
@@ -1037,7 +1037,7 @@
        pace assumes. FIRE Number shows this household as 29 / 22 / 18 years
        from the one band table; the headline used to print the middle one on
        its own, in the largest type on the page, as though a single return
-       were a fact. And the pace is the RESIDUAL — everything not spent, which
+       were a fact. And the pace is the RESIDUAL, everything not spent, which
        D-080 defines as how much COULD be saved, not how much was. Both belong
        in the line under the date, not two rooms away. */
     var span = '';
@@ -1047,7 +1047,7 @@
         return Money.isOk(y) ? Math.round(y.value) : y;
       });
       if (band && typeof band.low === 'number' && typeof band.high === 'number' && band.low !== band.high) {
-        span = ' — ' + band.high + ' if returns run high, ' + band.low + ' if they run low';
+        span = ', ' + band.high + ' if returns run high, ' + band.low + ' if they run low';
       }
     }
     return { cap: 'The FI date', big: fi.result.alreadyThere ? 'Now' : String(fi.result.value),
@@ -1111,7 +1111,7 @@
         + (s.anyUnknown ? ' · <span>(a figure not dated was saved before this app kept dates)</span>' : '')
       : 'Nothing dated yet.';
     /* What freezing did. A snapshot is invisible until something moves, so
-       the line says how many there are and when the last one was taken —
+       the line says how many there are and when the last one was taken, 
        and, right after the tap, that it happened. Without this the button
        looked broken on a phone: a tap, and nothing on the screen changed. */
     var snaps = Spine.listSnapshots();
@@ -1137,13 +1137,13 @@
   function renderAltitude(h) {
     var Charts = SLAF.Charts;
     var nw = Tier0.netWorth(h);
-    /* The slice percentages are shares of assets PLUS debt — a total that
+    /* The slice percentages are shares of assets PLUS debt, a total that
        appeared nowhere, so three different figures sat in one 300px block
        and anyone who checked the arithmetic concluded the app was broken.
        Name the denominator, and say what to do with the red slice. D-145. */
     el('nw-why').textContent = Money.isOk(nw)
       ? 'The ring splits ' + Money.formatCents(nw.totalAssetsCents + nw.totalDebtCents)
-        + ' — everything you own (' + Money.formatCents(nw.totalAssetsCents) + ') plus everything you owe ('
+        + ', everything you own (' + Money.formatCents(nw.totalAssetsCents) + ') plus everything you owe ('
         + Money.formatCents(nw.totalDebtCents) + '). Take the red slice away from the rest and you get the '
         + Money.formatCents(nw.value) + ' in the middle.'
       : nw.reason || '';
@@ -1161,12 +1161,12 @@
     if (Money.isOk(nw) && nw.totalDebtCents > 0) slices.push({ label: 'owed', value: nw.totalDebtCents, color: Charts.COLORS.debt, note: 'debt, against the rest' });
     el('nw-donut').innerHTML = slices.length ? Charts.donut({
       title: 'What net worth is made of', slices: slices,
-      center: { big: Money.isOk(nw) ? Charts.shortMoney(nw.value) : '—', small: 'net worth' }
+      center: { big: Money.isOk(nw) ? Charts.shortMoney(nw.value) : 'not yet', small: 'net worth' }
     }) : '';
 
     /* The climb: what is invested, growing at the expected return with
        this year's savings added each month until the stop age, then
-       spending drawn out — against the FIRE number. Projection.pathCents
+       spending drawn out, against the FIRE number. Projection.pathCents
        is the loop; the FIRE room draws the same line with more knobs. */
     var host = el('nw-path'), why = el('nw-path-why');
     var age = Schema.primaryAge(h);
@@ -1207,7 +1207,7 @@
 
   /* ---- The router ------------------------------------------------------------
      Dashboard when the panel has what it needs; landing until then. Total
-     debt is the one need that does not gate it — "no debts entered" is
+     debt is the one need that does not gate it, "no debts entered" is
      incomplete rather than zero, and a debt-free household must still reach
      its panel. T2's hasDebt makes that explicit. D-058. */
   function panelReady(h) {
@@ -1543,7 +1543,7 @@
   });
 
   /* The Walk-Through's one line here (D-149). Three states and no more:
-     never offered, part-way, finished. It is an OFFER — the dashboard is
+     never offered, part-way, finished. It is an OFFER. The dashboard is
      complete without it, and nothing on this page waits on it. */
   function renderWalkCard(h) {
     var card = el('walk-card');
@@ -1591,7 +1591,7 @@
       return '<div class="inst" id="daite-' + t.id + '"><a href="' + esc(href) + '" title="Open ' + esc(fam.label) + '">'
         + '<span class="letter">' + fam.letter + '</span>'
         + '<span class="cap">' + esc(fam.label) + '</span>'
-        + '<span class="big' + (ok ? '' : ' is-incomplete') + '">' + esc(ok ? t.fmt(r.value) : Money.EM_DASH) + '</span>'
+        + '<span class="big' + (ok ? '' : ' is-incomplete') + '">' + esc(ok ? t.fmt(r.value) : Money.NOT_YET) + '</span>'
         + '<span class="status ' + cls + '">' + word + '</span>'
         + '<span class="sub">' + esc(ok ? t.sub : (r.reason || '')) + '</span>'
         + '</a></div>';
@@ -1618,7 +1618,7 @@
     /* radar */
     /* Ask the gate which of these mean anything for this household. A
        retiree was being shown their FI ratio in red and their savings rate
-       beside it — the two numbers that have stopped applying to them. The
+       beside it, the two numbers that have stopped applying to them. The
        engine stays pure; it takes the predicate. D-143. */
     var r = Ratios.radar(h, TABLES, {
       snapshots: Spine.listSnapshots(),
@@ -1631,7 +1631,7 @@
       var out = r.points.filter(function (p) { return p.zone === 'out'; });
       /* Three things were wrong with the sentence this replaces (D-143).
          It said "inside the comfortable edge" is good, while the hint above
-         the chart says inside is BELOW the usual range — and the hint was
+         the chart says inside is BELOW the usual range, and the hint was
          right. It counted only the red ones, so seven amber rows were
          reported as fine. And "every banded ratio" was a claim about all 22
          bands when only the ones that could be worked out are drawn. */
@@ -1647,7 +1647,7 @@
       var tail = '';
       if (r.notYet && r.notYet.length) {
         tail = ' <span class="dim">' + r.notYet.length + ' more ' + (r.notYet.length === 1 ? 'has a healthy range but is' : 'have a healthy range but are')
-          + ' waiting on something you have not entered — <a href="rooms/financial-snapshot.html#every-ratio">see which →</a></span>';
+          + ' waiting on something you have not entered, <a href="rooms/financial-snapshot.html#every-ratio">see which →</a></span>';
       }
       el('radar-desc').innerHTML = 'Of the <strong>' + drawn + '</strong> that could be worked out from what you have entered, '
         + parts.join('; ') + '.' + tail;
@@ -1693,7 +1693,7 @@
      Tier 20 puts goal funding and time-to-goal in the same panel as the FOO
      ladder, and it is the right pairing: the ladder says what to do next,
      the bars say what you have already committed to. Both read engines that
-     already exist — engines/goals.js does every calculation here. */
+     already exist, engines/goals.js does every calculation here. */
 
   function renderGoals(h) {
     var goals = (h && h.goals) || [];
@@ -1710,13 +1710,13 @@
       var total = Goals.goalTotalCents(goal);
       /* Empty is not zero. `savedCents` untouched means "you have not told
          us what you have put aside"; `0` means you told us it is nothing.
-         These used to render identically — "$0 of $30,000 · 0%" for both —
+         These used to render identically, "$0 of $30,000 · 0%" for both, 
          which is the first non-negotiable in CLAUDE.md, broken. D-143. */
       var savedKnown = Money.isEntered(goal.savedCents);
       var saved = savedKnown ? goal.savedCents : null;
       /* The funding ratio is what is already saved against what it costs.
-         It exists even when the plan does not — a goal with no date still
-         has a total and a balance — but not before the balance is known. */
+         It exists even when the plan does not, a goal with no date still
+         has a total and a balance, but not before the balance is known. */
       var share = (savedKnown && Money.isOk(total) && total.value > 0)
         ? saved / total.value : null;
 
@@ -1733,7 +1733,7 @@
             + 'at ' + Money.formatCents(p.contributingMonthlyCents)
             + ' it lands ' + p.monthsLate + ' month' + (p.monthsLate === 1 ? '' : 's') + ' late.';
         } else if (Money.isEntered(p.contributingMonthlyCents)) {
-          sub = 'On track — ' + Money.formatCents(p.requiredMonthlyCents)
+          sub = 'On track, ' + Money.formatCents(p.requiredMonthlyCents)
             + ' a month needed, ' + Money.formatCents(p.contributingMonthlyCents)
             + ' going in, ' + Money.formatMonths(p.monthsUntil.value) + ' to go.';
         } else {
@@ -1755,7 +1755,7 @@
         + '</span></div>'
         /* The bar used to floor at 1%, drawing a sliver of progress on a
            goal with nothing in it, and the percentage beside it was capped
-           at 100 while the two figures it sat between were not — so
+           at 100 while the two figures it sat between were not, so
            "$2,500 of $1,000 · 100%" was possible. Both now say the same
            thing as the numbers. D-143. */
         + '<div class="track"><div class="fill' + lateClass + '" style="width:'
@@ -1765,7 +1765,7 @@
     }).join('');
 
     /* `planned` counted every goal whose plan computed, including ones with
-       nothing going in — so a set of entirely unfunded goals was reported as
+       nothing going in, so a set of entirely unfunded goals was reported as
        "arrives on time". Count the funded ones separately and say which
        sentence is true. D-143. */
     why.textContent = late > 0
@@ -1860,15 +1860,15 @@
   }).catch(function (err) {
     /* This used to report every failure as "couldn't load the reference
        tables in data/", including exceptions thrown while RENDERING with the
-       tables loaded perfectly well — so one broken ratio blanked the whole
+       tables loaded perfectly well, so one broken ratio blanked the whole
        dashboard and blamed the wrong thing, on a page that otherwise had
        everything it needed. Say which of the two it was. D-143. */
     var notice = el('load-notice');
     notice.hidden = false;
     notice.className = 'notice is-error';
     notice.textContent = TABLES
-      ? 'Something went wrong drawing this page (' + err.message + '). Your numbers are safe — they are stored separately. Reloading usually clears it.'
-      : 'Couldn’t load the reference tables in data/ (' + err.message + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+      ? 'Something went wrong drawing this page (' + err.message + '). Your numbers are safe. They are stored separately. Reloading usually clears it.'
+      : 'Couldn’t load the reference tables in data/ (' + err.message + '). Serve this over HTTP, python3 -m http.server, rather than opening the file directly.';
   });
 })();
 </script>

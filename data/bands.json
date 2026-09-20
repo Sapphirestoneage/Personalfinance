@@ -40,7 +40,7 @@
         "fiftythirty": {
           "low": 0,
           "high": 0.2,
-          "note": "50/30/20 has no debt line: minimums sit inside the 50, extra payments inside the 20. 20% of take-home is the ceiling that leaves the rest of the 50 intact — a reading, not a rule from the book."
+          "note": "50/30/20 has no debt line: minimums sit inside the 50, extra payments inside the 20. 20% of take-home is the ceiling that leaves the rest of the 50 intact, a reading, not a rule from the book."
         }
       }
     },
@@ -177,7 +177,7 @@
           "low": 0,
           "high": 0.3,
           "basis": "gross",
-          "note": "Not a target — tax is what it is. Eli's default draws the line at 30% of gross so the row has a colour like the others; above it, the Tax room's levers are worth a look. A stated opinion."
+          "note": "Not a target, tax is what it is. Eli's default draws the line at 30% of gross so the row has a colour like the others; above it, the Tax room's levers are worth a look. A stated opinion."
         },
         "trench": {
           "low": 0,

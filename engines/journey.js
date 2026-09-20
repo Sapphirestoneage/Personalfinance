@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/journey.js — the map: the road, where you are on it, and the
+   engines/journey.js, the map: the road, where you are on it, and the
    routes from here to the finish. DECISIONS.md D-235.
    --------------------------------------------------------------------------
    One road, three stretches, drawn from readings that already exist:

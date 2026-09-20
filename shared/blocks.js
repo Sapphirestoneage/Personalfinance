@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/blocks.js — a block: a hypothetical laid on the real household.
+   shared/blocks.js, a block: a hypothetical laid on the real household.
    --------------------------------------------------------------------------
    A block (a home, a car, a kid, a job change, a sabbatical, a move, a side
    hustle, an inheritance, a marriage) is four answers at most and the DAITE

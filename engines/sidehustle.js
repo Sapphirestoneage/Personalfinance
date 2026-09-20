@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/sidehustle.js — Side Hustle calc. SPEC.md §13, Tier 2.
+   engines/sidehustle.js, Side Hustle calc. SPEC.md §13, Tier 2.
    --------------------------------------------------------------------------
    "Net profitability of side income after taxes, time cost, expenses. Shares
    the Real Hourly Wage engine. Use marginal (not effective) tax rate, since
@@ -10,7 +10,7 @@
      • MARGINAL, not effective. The first dollar of side income is taxed at
        the rate on your LAST dollar of salary, not at your average rate.
        Using the effective rate here understates the tax on a side hustle,
-       often by a lot. The rate is an input rather than a bracket lookup —
+       often by a lot. The rate is an input rather than a bracket lookup, 
        the same call as capital gains in D-027: inventing 2026 brackets
        would be worse than asking.
 
@@ -56,7 +56,7 @@
    * What a side hustle actually pays.
    *
    *   annualRevenueCents   what comes in, before anything
-   *   annualExpensesCents  what it costs to run — 0 is a real answer
+   *   annualExpensesCents  what it costs to run, 0 is a real answer
    *   annualHours          what it takes
    *   marginalRate         decimal fraction, YOUR top bracket, federal +
    *                        state, on the last dollar of your salary
@@ -88,11 +88,11 @@
         ['marginalRate']);
     }
 
-    /* Expenses left blank are NOT assumed to be zero — a hustle with no
+    /* Expenses left blank are NOT assumed to be zero, a hustle with no
        costs is a claim, and typing 0 is how you make it. */
     if (!Money.isEntered(o.annualExpensesCents)) {
       return Money.incomplete(
-        'Add what it costs to run — enter 0 if it genuinely costs nothing.',
+        'Add what it costs to run, enter 0 if it genuinely costs nothing.',
         ['annualExpensesCents']);
     }
 

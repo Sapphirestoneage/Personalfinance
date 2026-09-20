@@ -1,0 +1,293 @@
+{
+ "id": "defaults",
+ "version": "1.0",
+ "asOf": "2026-09-20",
+ "source": "The Solar System master prompt (docs/SOLAR-SYSTEM.md), Part 2 section A2: the global assumptions under every projection, each with the level that replaces it. The dated tables under tables are the repository's existing year-versioned files; nothing is copied.",
+ "confidence": "convention",
+ "confidenceNote": "A metric computed on any default is rough by definition. Every default carries its own source and as-of date.",
+ "note": "Read by the engine (step 2). value is the default; replacedBy names the levels whose arrival replaces it. tables maps each rule domain the prompt calls data/tax-tables.json and data/benefit-tables.json onto the existing file and its shared/reference.js key, so no limit, bracket or threshold is inlined twice.",
+ "defaults": {
+  "realReturn": {
+   "value": 0.05,
+   "unit": "rate, real (after inflation)",
+   "note": "One declared default, real not nominal: the likely band of data/return_bands.json, the same figure the opening plans on.",
+   "replacedBy": [
+    "A13",
+    "A20",
+    "Y16"
+   ],
+   "replacedByNote": "A13 allocation blend (expectedReturn), then A20 holdings, shaped by the Y16 Triple D pick.",
+   "source": "data/return_bands.json (planning bands), data/opening.json realReturns.likely",
+   "asOf": "2026-09-20"
+  },
+  "withdrawalRate": {
+   "value": 0.04,
+   "unit": "rate",
+   "note": "The 4% convention (Bengen 1994, the Trinity study) fitted to thirty-year windows. planHorizon past thirty years shows the Big ERN lens (3.25 to 3.5%) beside it; the opening screen plans on 3.5% for that reason (data/opening.json).",
+   "replacedBy": [
+    "Y28",
+    "A30"
+   ],
+   "replacedByNote": "Y28 plan horizon and A30 drawdown approach.",
+   "source": "SPEC.md section 12, item 2 (resolved: 4% SWR); data/opening.json for the long-horizon figure",
+   "asOf": "2026-09-20"
+  },
+  "inflation": {
+   "value": 0.0,
+   "unit": "rate",
+   "note": "Declared once: all math is in today's dollars, so the working inflation figure is zero and every return is real. The nominal view is a switch (data/features.json showNominal).",
+   "replacedBy": [
+    "E30"
+   ],
+   "replacedByNote": "E30 personal inflation, applied to the FI-phase spending only.",
+   "source": "Principle 0.3 item 8 and D1 \"Real vs. nominal returns\"",
+   "asOf": "2026-09-20"
+  },
+  "incomeGrowth": {
+   "value": {
+    "early": 0.03,
+    "mid": 0.02,
+    "late": 0.01
+   },
+   "unit": "rate a year, real, by career stage (Y12)",
+   "note": "A real raise pace by stage: three, two and one percent over inflation. The opening uses 2% for its save-half-of-every-raise lever (data/opening.json raiseRateReal).",
+   "replacedBy": [
+    "I13",
+    "I14"
+   ],
+   "replacedByNote": "I13 expected raise, I14 three-year history.",
+   "source": "Convention, in line with data/opening.json raiseRateReal; not a measurement",
+   "asOf": "2026-09-20"
+  },
+  "emergencyFundMonths": {
+   "value": {
+    "steady": 3,
+    "variable": 6
+   },
+   "unit": "months of the bare-bones month (E5)",
+   "note": "3 if I3 says steady, 6 if variable.",
+   "replacedBy": [
+    "I16",
+    "A18"
+   ],
+   "replacedByNote": "I16 stability read, A18 confirm.",
+   "source": "data/ratio_benchmarks.json emergency fund band (3 to 6 months)",
+   "asOf": "2026-09-20"
+  },
+  "accountDefaults": {
+   "value": {
+    "hysa": {
+     "taxType": "taxable",
+     "liquidity": "days",
+     "note": "reachable in days"
+    },
+    "checking": {
+     "taxType": "taxable",
+     "liquidity": "days",
+     "note": "reachable today"
+    },
+    "brokerage": {
+     "taxType": "taxable",
+     "liquidity": "days",
+     "note": "reachable in days, gains taxed"
+    },
+    "rothIra": {
+     "taxType": "roth",
+     "liquidity": "contributionsOnly",
+     "note": "contributions reachable any time, growth locked until 59.5"
+    },
+    "traditionalIra": {
+     "taxType": "pretax",
+     "liquidity": "locked",
+     "note": "locked until 59.5 outside the exceptions in data/early_access_rules_2026.json"
+    },
+    "401k": {
+     "taxType": "pretax",
+     "liquidity": "locked",
+     "note": "locked until 59.5; Rule of 55 in the early-access table"
+    },
+    "roth401k": {
+     "taxType": "roth",
+     "liquidity": "locked",
+     "note": "locked until 59.5"
+    },
+    "403b": {
+     "taxType": "pretax",
+     "liquidity": "locked",
+     "note": "as a 401k"
+    },
+    "457b": {
+     "taxType": "pretax",
+     "liquidity": "onSeparation",
+     "note": "penalty-free after leaving the employer, which matters for the bridge"
+    },
+    "tsp": {
+     "taxType": "pretax",
+     "liquidity": "locked",
+     "note": "as a 401k"
+    },
+    "hsa": {
+     "taxType": "hsa",
+     "liquidity": "medicalOnly",
+     "note": "medical only before 65, any use after"
+    },
+    "old_401k": {
+     "taxType": "pretax",
+     "liquidity": "locked",
+     "note": "a plan at a former employer"
+    },
+    "529": {
+     "taxType": "education",
+     "liquidity": "educationOnly",
+     "note": "education only, or the Roth rollover rules"
+    },
+    "homeEquity": {
+     "taxType": "taxable",
+     "liquidity": "locked",
+     "note": "locked: it does not pay for groceries"
+    },
+    "vehicle": {
+     "taxType": "taxable",
+     "liquidity": "weeks",
+     "note": "sellable in weeks, at a loss"
+    },
+    "crypto": {
+     "taxType": "taxable",
+     "liquidity": "days",
+     "note": "reachable in days, volatile"
+    },
+    "iBonds": {
+     "taxType": "taxable",
+     "liquidity": "afterFirstYear",
+     "note": "locked for a year, then reachable with a small penalty for five"
+    }
+   },
+   "unit": "per account type (A5)",
+   "note": "The liquidity tier and the tax type implied by the account type alone. This is how liquidity rate and bridge years are revealed at Tier 2 without a liquidity question (section 1.13). The keys match Schema.ACCOUNT_TYPES where a type exists there.",
+   "replacedBy": [
+    "A10",
+    "A11"
+   ],
+   "replacedByNote": "A10 tax type confirm, A11 liquidity tier confirm.",
+   "source": "Convention; the penalty and age rules are in data/early_access_rules_2026.json",
+   "asOf": "2026-09-20"
+  },
+  "taxRates": {
+   "value": null,
+   "unit": "bracket tables",
+   "note": "Read from the dated bracket tables by Y2 state and T4 filing status. Nothing is inlined here.",
+   "replacedBy": [
+    "T19"
+   ],
+   "replacedByNote": "T19 the actual return.",
+   "source": "data/federal_brackets_2026.json, data/state_brackets_2026.json, data/effective_tax_rates_2026.json",
+   "asOf": "2026-09-20"
+  },
+  "benefitDefaults": {
+   "value": null,
+   "unit": "current-year tables",
+   "note": "Match formulas, HSA limits and contribution limits are read from the dated tables; refreshed once a year.",
+   "replacedBy": [],
+   "replacedByNote": "The annual data refresh.",
+   "source": "data/match_defaults.json, data/irs_limits_2026.json, data/se_tax_2026.json, data/aca_2026.json, data/benefit_cliffs_2026.json, data/early_access_rules_2026.json, data/student_loan_conventions.json",
+   "asOf": "2026-09-20"
+  }
+ },
+ "tables": {
+  "federalBrackets": {
+   "file": "federal_brackets_2026.json",
+   "key": "federalBrackets",
+   "holds": "federal brackets, the standard deduction and the capital gains thresholds by filing status"
+  },
+  "stateBrackets": {
+   "file": "state_brackets_2026.json",
+   "key": null,
+   "holds": "state brackets"
+  },
+  "effectiveTaxRates": {
+   "file": "effective_tax_rates_2026.json",
+   "key": "effectiveTaxRates",
+   "holds": "rough effective rates by income and state, for the Sketch band"
+  },
+  "seTax": {
+   "file": "se_tax_2026.json",
+   "key": "seTax",
+   "holds": "self-employment tax rates, the wage base, the safe harbor and the quarterly dates"
+  },
+  "irsLimits": {
+   "file": "irs_limits_2026.json",
+   "key": "irsLimits",
+   "holds": "401k, IRA and HSA contribution limits"
+  },
+  "matchDefaults": {
+   "file": "match_defaults.json",
+   "key": "matchDefaults",
+   "holds": "the most common match formulas"
+  },
+  "aca": {
+   "file": "aca_2026.json",
+   "key": null,
+   "holds": "marketplace subsidy rules and the poverty line multiples"
+  },
+  "benefitCliffs": {
+   "file": "benefit_cliffs_2026.json",
+   "key": "benefitCliffs",
+   "holds": "the income levels where a benefit drops"
+  },
+  "earlyAccess": {
+   "file": "early_access_rules_2026.json",
+   "key": null,
+   "holds": "the 59.5 rule, the penalty, SEPP, the Rule of 55, the conversion seasoning years"
+  },
+  "studentLoans": {
+   "file": "student_loan_conventions.json",
+   "key": null,
+   "holds": "income-driven repayment shape, forgiveness years, the interest deduction band"
+  },
+  "mortgageRates": {
+   "file": "mortgage_rates.json",
+   "key": "mortgageRates",
+   "holds": "current market mortgage rates for the refinance check"
+  },
+  "ratioBenchmarks": {
+   "file": "ratio_benchmarks.json",
+   "key": "ratioBenchmarks",
+   "holds": "the default band per ratio (good and warn edges)"
+  },
+  "drafttBands": {
+   "file": "bands.json",
+   "key": "bands",
+   "holds": "the DRAFTT bands by source"
+  },
+  "wealthMultiplier": {
+   "file": "wealth_multiplier.json",
+   "key": "wealthMultiplier",
+   "holds": "the Money Guy wealth multiplier path"
+  },
+  "milestones": {
+   "file": "milestones.json",
+   "key": "milestones",
+   "holds": "the milestone ladder"
+  },
+  "fooRules": {
+   "file": "foo_rules.json",
+   "key": "fooRules",
+   "holds": "the order of operations thresholds and ladder"
+  },
+  "returnBands": {
+   "file": "return_bands.json",
+   "key": "returnBands",
+   "holds": "the planning return bands behind Triple D"
+  },
+  "liquidityBenchmarks": {
+   "file": "liquidity_benchmarks.json",
+   "key": "liquidityBenchmarks",
+   "holds": "the liquidity ladder bands"
+  },
+  "levers": {
+   "file": "levers.json",
+   "key": "levers",
+   "holds": "the single lever library the sun ranks"
+  }
+ }
+}

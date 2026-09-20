@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/rothaca.js — Roth conversions against the marketplace cliff.
+   engines/rothaca.js, Roth conversions against the marketplace cliff.
    DECISIONS.md D-216 (J8).
    --------------------------------------------------------------------------
    Between leaving work and Medicare at 65, health cover comes from the
@@ -129,7 +129,7 @@
    *   cliffOn, cliffOff                   each: taxCents, premiumCents, totalCents
    *   baseline                            the same with no conversion
    *   extraOnCents, extraOffCents         what converting adds under each rule
-   *   rows                                the year rows (cliff on) — see simulate
+   *   rows                                the year rows (cliff on), see simulate
    *   years, filingStatus, householdSize, growthRate, assumed[]
    *   fillToCliffCents                    the most that fits under the cliff in year one
    */

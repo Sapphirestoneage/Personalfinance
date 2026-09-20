@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/skilltree.js — the Skill Tree: household in, per-skill state and
+   engines/skilltree.js, the Skill Tree: household in, per-skill state and
    reason out. DECISIONS.md D-131.
    --------------------------------------------------------------------------
    Two parallel orders of operations. The FOO ladder says what the next
@@ -83,7 +83,7 @@
     });
   }
   /**
-   * events(h, opts) — every app event a boost can name, with its count or
+   * events(h, opts), every app event a boost can name, with its count or
    * truth: { monthClosed, log30, debtPaid, snapshot, exercise:<id>, fact:<field> }.
    */
   function events(h, opts) {
@@ -177,7 +177,7 @@
   }
 
   /**
-   * evaluate(household, tables, opts) — the whole tree, judged.
+   * evaluate(household, tables, opts), the whole tree, judged.
    *   opts.snapshots   how many snapshots the spine holds
    *   opts.roomTitle   fn(roomId) → title, for the unlock chips
    *   opts.reveal      keep fogged skills' names (tests only; the room never asks)
@@ -234,7 +234,7 @@
         }
         (s.requires || []).forEach(function (req) { var r = thresholdReason(ev, req); if (r) reasons.push(r); });
         /* Boosts: the events the skill names, plus every completed exercise
-           that advances it — an exercise is attached to one skill and
+           that advances it. An exercise is attached to one skill and
            completing it boosts that skill (never to done). */
         var boostIds = (s.boostedBy || []).slice();
         exercisesFor(s.id).forEach(function (exId) { if (boostIds.indexOf('exercise:' + exId) < 0) boostIds.push('exercise:' + exId); });

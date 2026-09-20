@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/advicerules.js — does the rule apply to you now? D-212 (H5).
+   engines/advicerules.js, does the rule apply to you now? D-212 (H5).
    --------------------------------------------------------------------------
    data/advice.json holds the popular rules with their sources and the
    conditions, written over existing rows, under which each APPLIES NOW,

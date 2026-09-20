@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/showmath.js — tap any number, see the math. DECISIONS.md D-211 (H1).
+   shared/showmath.js, tap any number, see the math. DECISIONS.md D-211 (H1).
    --------------------------------------------------------------------------
    Every computed row in data/ledger-rows.json names its formula: the one
    engine function behind it (fn), the formula in words, its terms, and the
@@ -22,7 +22,7 @@
    (shared/explain.js is the older ⓘ on a ratio; this is the math behind
    a computed row. Different attributes, so both can share a page.)
 
-   LIVE-FORM: built once — the sheet is one node, filled on open; it holds
+   LIVE-FORM: built once. The sheet is one node, filled on open; it holds
    no input. Nothing is rebuilt under a finger.
    ========================================================================== */
 (function (root, factory) {

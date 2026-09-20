@@ -1,12 +1,12 @@
 /* ==========================================================================
-   engines/income.js — how you are actually paid, turned into a year.
+   engines/income.js, how you are actually paid, turned into a year.
    --------------------------------------------------------------------------
    `shared/schema.js` has carried `incomeSource.frequency` since the model was
    written, with the comment "stored annual; converted at the edge". Nothing
    ever did the converting. This is the edge.
 
    Almost nobody knows their gross annual income to the dollar. They know
-   "$26 an hour", or "$4,200 a month", or "about two grand a fortnight" —
+   "$26 an hour", or "$4,200 a month", or "about two grand a fortnight", 
    and asking for a year forces a piece of mental arithmetic that this app
    exists to do. Worse, the arithmetic is the part people get wrong: hourly
    to annual is not "times 2080" for anyone part-time, and a fortnight is
@@ -17,10 +17,10 @@
    If you spent five months on one job and seven on another, there are two
    honest answers to "what do you earn":
 
-     • What you EARNED — the two stints blended by how long each lasted.
+     • What you EARNED, the two stints blended by how long each lasted.
        This is the right number for savings rate, debt-to-income, and
        anything asking what actually happened to your money this year.
-     • Your RUN RATE — what the job you hold now pays, annualised, as if
+     • Your RUN RATE, what the job you hold now pays, annualised, as if
        you had held it all year. This is the right number for projecting
        forward.
 
@@ -55,7 +55,7 @@
    * The ways people are actually paid.
    *
    * `periods` is how many times that pay lands in a year, and every one of
-   * them is exact arithmetic rather than a convention — except `hourly`,
+   * them is exact arithmetic rather than a convention, except `hourly`,
    * which cannot be, and says so.
    *
    * fortnightly and semimonthly are BOTH here and are deliberately not the
@@ -66,23 +66,23 @@
     { id: 'annual',      label: 'a year',      short: 'yr',  periods: 1 },
     { id: 'monthly',     label: 'a month',     short: 'mo',  periods: 12 },
     { id: 'semimonthly', label: 'twice a month', short: '½mo', periods: 24,
-      note: 'Twice a month — 24 payslips. Not the same as every two weeks.' },
+      note: 'Twice a month, 24 payslips. Not the same as every two weeks.' },
     { id: 'fortnightly', label: 'every 2 weeks', short: '2wk', periods: 26,
-      note: 'Every two weeks — 26 payslips, because a year is not 24 fortnights.' },
+      note: 'Every two weeks, 26 payslips, because a year is not 24 fortnights.' },
     { id: 'weekly',      label: 'a week',      short: 'wk',  periods: 52 },
-    /* Variable income — freelance, tips, commission — given as a month on
+    /* Variable income, freelance, tips, commission, given as a month on
        average. The arithmetic is monthly; the label says it varies. D-094. */
     { id: 'variable',    label: 'a month on average \u2014 it varies', short: 'avg', periods: 12,
       note: 'An average month. The runway and the rates read it as steady, which is the one thing it is not.' },
     { id: 'hourly',      label: 'an hour',     short: 'hr',  periods: null,
       needsHours: true,
-      note: 'Needs your hours a week — there is no honest hourly-to-yearly number without them.' },
+      note: 'Needs your hours a week. There is no honest hourly-to-yearly number without them.' },
     /* Not earning. This is a real answer and it is NOT the same as leaving
        the question blank: blank means "I have not told you", this means
        "the number is zero". Everything downstream depends on knowing which
-       — a savings rate cannot be computed from either, but only one of them
+, a savings rate cannot be computed from either, but only one of them
        should be met with "add your income". DECISIONS.md D-048. */
-    { id: 'none',        label: 'not earning right now', short: '—', periods: 0,
+    { id: 'none',        label: 'not earning right now', short: 'not yet', periods: 0,
       noPay: true,
       note: 'A deliberate zero. Different from skipping the question.' }
   ];
@@ -93,7 +93,7 @@
   }
 
   /**
-   * annualise(source, work) — one pay rate, as a year.
+   * annualise(source, work), one pay rate, as a year.
    *
    * `work` supplies weeksPerYear for the hourly case. It is the SAME work
    * profile engines/hourly.js reads, deliberately: the number of weeks you
@@ -115,7 +115,7 @@
 
     if (!Money.isEntered(s.rateCents)) {
       /* No rate entered. An annual figure typed straight in is still a
-         perfectly good answer — that is the simple path, and the path
+         perfectly good answer. That is the simple path, and the path
          every household stored before this feature is on. */
       if (Money.isEntered(s.grossAnnualIncomeCents)) {
         return Money.ok(s.grossAnnualIncomeCents, {
@@ -131,7 +131,7 @@
     if (basis.needsHours) {
       if (!Money.isEntered(s.hoursPerWeek)) {
         return Money.incomplete(
-          'An hourly rate needs the hours you work a week — without them there is no '
+          'An hourly rate needs the hours you work a week, without them there is no '
             + 'yearly figure, only a guess.', ['hoursPerWeek']);
       }
       if (s.hoursPerWeek <= 0) {
@@ -164,7 +164,7 @@
   }
 
   /**
-   * summarise(sources, work) — every stint, and the two annual figures.
+   * summarise(sources, work), every stint, and the two annual figures.
    *
    * The Result's value is the EARNED figure, because that is what the rest
    * of the app means by "gross annual income": what went through your hands
@@ -220,14 +220,14 @@
 
     /* Months are NOT validated to sum to twelve, on purpose. Over twelve
        means two jobs at once, which is a real life and a common one. Under
-       twelve means a gap — also real. Both are reported rather than
+       twelve means a gap, also real. Both are reported rather than
        corrected, because "correcting" either would be inventing income the
        person did not have or deleting a job they did. */
     var overlap = monthsCovered > MONTHS_PER_YEAR;
     var gap = monthsCovered < MONTHS_PER_YEAR;
 
     /* Every job ended, and none is ongoing. The run rate is not UNKNOWN
-       here — it is zero. Someone who stopped working in August earns
+       here. It is zero. Someone who stopped working in August earns
        nothing now, and reporting that as "we cannot say" would hide the
        single most important fact about their year. Only a household with
        nothing computable at all has an unknown run rate, and that case has
@@ -263,7 +263,7 @@
    * Which of the two figures feeds the household, given a stated preference.
    * 'earned' (the default) is what actually happened; 'runRate' is what the
    * current job pays annualised. An unknown preference falls back to earned
-   * rather than throwing — a bad stored value should not blank the app.
+   * rather than throwing, a bad stored value should not blank the app.
    */
   function chosenAnnualCents(summary, basisPreference) {
     if (!Money.isOk(summary)) return summary;

@@ -5,7 +5,7 @@
   "source": "Dungeons & Dividends rulebook, Draft v1, as supplied by the repo owner. Sections cited per entry. This file is a transcription of that document, not an interpretation of it.",
   "confidence": "convention",
   "confidenceNote": "A house game system, not a financial standard. Nothing here is advice; the mechanics are a lens on numbers computed elsewhere in the suite.",
-  "note": "Rulebook content, PLUS a bestiary extension written for this build. Every creature added here carries \"origin\": \"extension\" — anything without that field came from the rulebook as supplied. Every dollar-to-score threshold lives in dnd_scoring.json, not here.",
+  "note": "Rulebook content, PLUS a bestiary extension written for this build. Every creature added here carries \"origin\": \"extension\", anything without that field came from the rulebook as supplied. Every dollar-to-score threshold lives in dnd_scoring.json, not here.",
   "modifierBands": [
     {
       "min": 8,
@@ -41,13 +41,13 @@
       "min": 18,
       "max": 19,
       "modifier": 4,
-      "read": "Outlier — worth asking what was sacrificed"
+      "read": "Outlier, worth asking what was sacrificed"
     },
     {
       "min": 20,
       "max": 20,
       "modifier": 5,
-      "read": "Outlier — worth asking what was sacrificed"
+      "read": "Outlier, worth asking what was sacrificed"
     }
   ],
   "stats": [
@@ -55,15 +55,15 @@
       "id": "STR",
       "name": "Strength",
       "finance": "Earning power",
-      "measures": "Raw income, career capital, and your capacity to earn — nothing else",
+      "measures": "Raw income, career capital, and your capacity to earn, nothing else",
       "save": "A sudden need to out-earn a problem (income shock, needing a side hustle fast)"
     },
     {
       "id": "DEX",
       "name": "Dexterity",
       "finance": "Resilience / mobility",
-      "measures": "How easily you can move out of the way of a hit — job loss, needing to relocate, needing to unwind debt fast",
-      "save": "Getting stuck — job loss, forced relocation, needing to unwind a bad position quickly"
+      "measures": "How easily you can move out of the way of a hit, job loss, needing to relocate, needing to unwind debt fast",
+      "save": "Getting stuck, job loss, forced relocation, needing to unwind a bad position quickly"
     },
     {
       "id": "CON",
@@ -76,8 +76,8 @@
       "id": "INT",
       "name": "Intelligence",
       "finance": "Knowledge of the rules",
-      "measures": "Technical financial literacy — tax law, account types, market history, terminology",
-      "save": "A technical mistake — tax error, misunderstanding a contract, misreading a rule"
+      "measures": "Technical financial literacy, tax law, account types, market history, terminology",
+      "save": "A technical mistake, tax error, misunderstanding a contract, misreading a rule"
     },
     {
       "id": "WIS",
@@ -91,7 +91,7 @@
       "name": "Charisma",
       "finance": "Negotiation & network",
       "measures": "Ability to change your terms in the world, who you can call on, and how well you bring people along with you",
-      "save": "Social-pressure spending — keeping up with peers, guilt-driven lending"
+      "save": "Social-pressure spending, keeping up with peers, guilt-driven lending"
     }
   ],
   "subStats": [
@@ -110,7 +110,7 @@
       "id": "incomeTrajectory",
       "stat": "STR",
       "name": "Income Trajectory",
-      "measures": "Growth trend — raises, promotions, career capital compounding over time",
+      "measures": "Growth trend, raises, promotions, career capital compounding over time",
       "kind": "computed",
       "reads": {
         "kind": "percent",
@@ -143,7 +143,7 @@
       "id": "structuralMobility",
       "stat": "DEX",
       "name": "Structural Mobility",
-      "measures": "Housing and geographic flexibility — rent vs own, remote portability, willingness to move",
+      "measures": "Housing and geographic flexibility, rent vs own, remote portability, willingness to move",
       "kind": "computed",
       "reads": {
         "kind": "checklist",
@@ -187,7 +187,7 @@
       "id": "reserveDepth",
       "stat": "CON",
       "name": "Reserve Depth",
-      "measures": "Actual buffer size — emergency fund months, cushion beyond the bare minimum",
+      "measures": "Actual buffer size, emergency fund months, cushion beyond the bare minimum",
       "kind": "computed",
       "reads": {
         "kind": "months",
@@ -212,7 +212,7 @@
       "id": "instrumentLiteracy",
       "stat": "INT",
       "name": "Instrument Literacy",
-      "measures": "Understanding of specific vehicles — account types, insurance products, loan structures",
+      "measures": "Understanding of specific vehicles, account types, insurance products, loan structures",
       "kind": "declared"
     },
     {
@@ -240,7 +240,7 @@
       "id": "negotiation",
       "stat": "CHA",
       "name": "Negotiation",
-      "measures": "Ability to change terms in your favor — salary, rates, fee waivers, contracts",
+      "measures": "Ability to change terms in your favor, salary, rates, fee waivers, contracts",
       "kind": "declared"
     },
     {
@@ -376,13 +376,13 @@
     {
       "level": 0,
       "trigger": "No burden",
-      "effect": "—",
+      "effect": "not yet",
       "saveDisadvantage": []
     },
     {
       "level": 1,
       "trigger": "Minimum payments only",
-      "effect": "Disadvantage on CON saves against lifestyle inflation — little room to save aggressively while servicing debt",
+      "effect": "Disadvantage on CON saves against lifestyle inflation, little room to save aggressively while servicing debt",
       "saveDisadvantage": [
         "CON"
       ]
@@ -404,7 +404,7 @@
     {
       "level": 4,
       "trigger": "Missed payments or collections",
-      "effect": "Credit damage — AC further reduced; disadvantage on any check involving borrowing",
+      "effect": "Credit damage, AC further reduced; disadvantage on any check involving borrowing",
       "saveDisadvantage": [
         "DEX"
       ]
@@ -425,7 +425,7 @@
     {
       "id": "snowball",
       "name": "Snowball Triage",
-      "detail": "Target the smallest balance first. A smaller save bonus, but success grants temporary Inspiration — behavioral momentum modeled as a real mechanic."
+      "detail": "Target the smallest balance first. A smaller save bonus, but success grants temporary Inspiration, behavioral momentum modeled as a real mechanic."
     },
     {
       "id": "consolidation",
@@ -456,7 +456,7 @@
       "requires": "DEX floor + The Landholder access",
       "grants": {
         "acBonus": 1,
-        "why": "Housing cost hedged by a tenant — armour against the Rent Spike."
+        "why": "Housing cost hedged by a tenant, armour against the Rent Spike."
       }
     },
     {
@@ -506,7 +506,7 @@
     {
       "name": "Tough",
       "requires": null,
-      "detail": "+2 Max HP per level, retroactively — a deliberately built emergency fund, not a passive trait.",
+      "detail": "+2 Max HP per level, retroactively, a deliberately built emergency fund, not a passive trait.",
       "grants": {
         "maxHpPerLevel": 1,
         "why": "+1 week of runway per level, as 5e's Tough is +2 HP per level."
@@ -605,7 +605,7 @@
       "type": "Habit",
       "save": "CON",
       "damage": "1d4/month, chip damage",
-      "note": "Small, constant, everywhere — the 'just this once' purchase",
+      "note": "Small, constant, everywhere, the 'just this once' purchase",
       "saveAbility": "CON",
       "damageSpec": {
         "dice": "1d4",
@@ -640,7 +640,7 @@
       "saveAbility": "DEX",
       "damageSpec": {
         "dice": "2d6",
-        "note": "Then 1d4 a month until it is cleared — interest as poison."
+        "note": "Then 1d4 a month until it is cleared, interest as poison."
       },
       "attackType": "urgency",
       "tier": "I",
@@ -792,11 +792,11 @@
       "type": "Predator",
       "save": "WIS",
       "damage": "3d6, locks up capital",
-      "note": "Bypasses AC entirely — a Charm effect on judgment, not a physical hit",
+      "note": "Bypasses AC entirely, a Charm effect on judgment, not a physical hit",
       "saveAbility": "WIS",
       "damageSpec": {
         "dice": "3d6",
-        "note": "Locks up capital for years. Bypasses armour entirely — this is a charm on judgment, not a hit."
+        "note": "Locks up capital for years. Bypasses armour entirely. This is a charm on judgment, not a hit."
       },
       "attackType": "flattery",
       "tier": "II",
@@ -978,7 +978,7 @@
       "type": "Well-meaning-but-harmful",
       "save": "INT",
       "damage": "4d6, petrifies capital for years",
-      "note": "Sold with real concern for your family — still locks up liquidity you needed",
+      "note": "Sold with real concern for your family, still locks up liquidity you needed",
       "saveAbility": "INT",
       "damageSpec": {
         "dice": "4d6",
@@ -1193,7 +1193,7 @@
       "category": "Environmental",
       "cr": 6,
       "save": "CON",
-      "damage": "1d4/month, ongoing — chip damage that never stops on its own",
+      "damage": "1d4/month, ongoing, chip damage that never stops on its own",
       "note": "Ambient, not a single strike; the danger is treating a 'safe' allocation as immune",
       "saveAbility": "CON",
       "damageSpec": {
@@ -1229,7 +1229,7 @@
       "damageSpec": {
         "dice": "3d8",
         "per": "month",
-        "note": "Not a one-off hit — a permanent raise to the cost of existing."
+        "note": "Not a one-off hit, a permanent raise to the cost of existing."
       },
       "attackType": "urgency",
       "tier": "II",
@@ -1252,7 +1252,7 @@
       "cr": 12,
       "save": "All saves",
       "damage": "10d10, hits HP and Level simultaneously",
-      "note": "A true boss fight — attacks every stat at once",
+      "note": "A true boss fight, attacks every stat at once",
       "saveAbility": "ALL",
       "damageSpec": {
         "dice": "10d10",
@@ -1391,13 +1391,13 @@
       "cr": 18,
       "save": "WIS",
       "damage": "8d10 realised loss on a failed WIS save; nothing on a pass",
-      "note": "Not malicious — a weather event. The save is about your reaction, not the event",
+      "note": "Not malicious, a weather event. The save is about your reaction, not the event",
       "saveAbility": "WIS",
       "damageSpec": {
         "dice": "8d10",
         "note": "The crash itself is a paper loss and costs nothing. The DAMAGE is the panic-sell: a failed WIS save crystallises the loss, and 8d10 weeks is what selling at the bottom costs a tier-IV pile. Pass the save and the paper recovers.",
         "origin": "extension",
-        "rulebook": "The rulebook set these dice to 0 while saying damage happens only on a failed save — which meant a failed save did nothing. The dice are written here; the design is the rulebook's."
+        "rulebook": "The rulebook set these dice to 0 while saying damage happens only on a failed save, which meant a failed save did nothing. The dice are written here; the design is the rulebook's."
       },
       "attackType": "fear",
       "tier": "IV",
@@ -1482,7 +1482,7 @@
         "tier": 0,
         "rank": "The Ledger (a trap, not an NPC)",
         "analog": "Automated matching (AUR system)",
-        "cr": "—",
+        "cr": "not yet",
         "trigger": "Runs automatically on every filed return",
         "onFail": "Fires a Tier 1 encounter",
         "defense": "Accurate filing is the ward that keeps the trap from triggering at all"
@@ -1503,7 +1503,7 @@
         "cr": "2",
         "trigger": "A claimed deduction or credit needs paper backup",
         "onFail": "Deduction denied + back tax if you can't produce the document",
-        "defense": "Documentation — receipts, mileage logs, 1099s"
+        "defense": "Documentation, receipts, mileage logs, 1099s"
       },
       {
         "tier": 3,
@@ -1520,7 +1520,7 @@
         "analog": "Examination Division / group manager review",
         "cr": "10",
         "trigger": "Auditor's findings escalated for supervisor sign-off",
-        "onFail": "Formal Notice of Deficiency — real money now at stake",
+        "onFail": "Formal Notice of Deficiency, real money now at stake",
         "defense": "A tax attorney companion; your right to invoke Appeals"
       },
       {
@@ -1528,12 +1528,12 @@
         "rank": "Special Agent",
         "analog": "Criminal Investigation (CI)",
         "cr": "18–20",
-        "trigger": "Auditor suspects a willful, intentional pattern — not an honest mistake",
+        "trigger": "Auditor suspects a willful, intentional pattern, not an honest mistake",
         "onFail": "Boss-tier. A different game entirely (criminal, not civil)",
-        "defense": "Nothing here meaningfully saves you — the meta-strategy is never triggering it"
+        "defense": "Nothing here meaningfully saves you, the meta-strategy is never triggering it"
       }
     ],
-    "neutralGround": "Appeals and Tax Court aren't encounters — they're an arena you can invoke instead of accepting the Department's ruling. It costs resources (usually a companion) but resets the outcome to a fresh judgment.",
+    "neutralGround": "Appeals and Tax Court aren't encounters, they're an arena you can invoke instead of accepting the Department's ruling. It costs resources (usually a companion) but resets the outcome to a fresh judgment.",
     "standing": "Faction Standing is a separate meter from your six stats. Round-number deductions, home-office claims, a cash-heavy business, and aggressive Schedule C losses lower it. Clean multi-year history, consistent numbers, and e-filing raise it.",
     "allies": [
       {
@@ -1564,14 +1564,14 @@
       "name": "Disabled (Government Disability)",
       "trigger": "Qualifying disability determination",
       "grants": "A long-term recurring income stream; often bundled health coverage (an AC boost)",
-      "restricts": "A hard STR ceiling — earning above the program limit triggers reduction or loss; assets above a threshold can disqualify entirely",
+      "restricts": "A hard STR ceiling, earning above the program limit triggers reduction or loss; assets above a threshold can disqualify entirely",
       "duration": "Indefinite, subject to a periodic Continuing Disability Review"
     },
     {
       "id": "discharged",
       "name": "Discharged (Post-Bankruptcy)",
       "trigger": "Chapter 7 or 13 completed",
-      "grants": "Most prior debt wiped — a Restoration effect on HP",
+      "grants": "Most prior debt wiped, a Restoration effect on HP",
       "restricts": "AC penalty (damaged credit) lasting 7–10 years; long cooldown before reuse",
       "duration": "Long, fixed; fades as the credit-damage penalty tapers"
     },
@@ -1579,8 +1579,8 @@
       "id": "student",
       "name": "Full-Time Student",
       "trigger": "Enrolled at least half-time",
-      "grants": "Federal loan interest/payments paused — temporary immunity to Debt-class monster damage on those loans",
-      "restricts": "STR penalty — capped hours; XP toward The Earner slows",
+      "grants": "Federal loan interest/payments paused, temporary immunity to Debt-class monster damage on those loans",
+      "restricts": "STR penalty, capped hours; XP toward The Earner slows",
       "duration": "Ends at graduation or dropping below half-time"
     },
     {
@@ -1603,8 +1603,8 @@
       "id": "underwater",
       "name": "Underwater / Negative Equity",
       "trigger": "Mortgage balance exceeds home value",
-      "grants": "—",
-      "restricts": "Restrained on The Landholder — can't sell without bringing cash to closing; Structural Mobility treated as near-zero",
+      "grants": "not yet",
+      "restricts": "Restrained on The Landholder, can't sell without bringing cash to closing; Structural Mobility treated as near-zero",
       "duration": "Ends when equity turns positive"
     },
     {
@@ -1612,15 +1612,15 @@
       "name": "Means-Tested Benefit",
       "trigger": "Income/assets under a program threshold",
       "grants": "A real AC boost (low-cost healthcare)",
-      "restricts": "The Benefits Cliff — cross the line and the entire benefit can vanish at once",
+      "restricts": "The Benefits Cliff, cross the line and the entire benefit can vanish at once",
       "duration": "Ends when income/assets cross the threshold"
     }
   ],
-  "benefitsCliff": "Several statuses don't taper. Cross the income or asset line by even a small amount and the whole benefit can vanish — a small raise costing far more in lost benefits than it provides. It plays like a trap dealing damage proportional to the benefit lost, not the size of the trigger, and it is exactly what Scenario Foresight exists to see coming.",
+  "benefitsCliff": "Several statuses don't taper. Cross the income or asset line by even a small amount and the whole benefit can vanish, a small raise costing far more in lost benefits than it provides. It plays like a trap dealing damage proportional to the benefit lost, not the size of the trigger, and it is exactly what Scenario Foresight exists to see coming.",
   "deathSaves": {
-    "trigger": "0 HP — liquid runway fully exhausted",
+    "trigger": "0 HP, liquid runway fully exhausted",
     "outcomes": [
-      "3 successes → Stabilized. HP resets to 1. You found a way out — sold something, borrowed, cut spending hard.",
+      "3 successes → Stabilized. HP resets to 1. You found a way out, sold something, borrowed, cut spending hard.",
       "3 failures → Insolvency. Forced bankruptcy or default. Not game over, but it costs Level and leaves a lasting debuff.",
       "Natural 20 equivalent (an unexpected windfall while at 0) → instantly stabilize and regain 1 HP.",
       "Natural 1 equivalent (a second crisis while already down) → counts as two failures.",
@@ -1628,15 +1628,15 @@
     ],
     "massiveDamage": "If a single hit deals damage equal to or greater than your Max HP in one shot, you skip death saves entirely and go straight to Insolvency. This is why AC (insurance) matters more than raw HP against the biggest monsters.",
     "recovery": [
-      "Short Rest (a pay cycle) — regain HP equal to (income − expenses) for that cycle, if positive.",
-      "Long Rest (a strong, uninterrupted month or quarter) — regain HP up to max, contingent on a CON save.",
-      "Potion (a windfall) — heals a fixed amount immediately, no rest required."
+      "Short Rest (a pay cycle), regain HP equal to (income − expenses) for that cycle, if positive.",
+      "Long Rest (a strong, uninterrupted month or quarter), regain HP up to max, contingent on a CON save.",
+      "Potion (a windfall), heals a fixed amount immediately, no rest required."
     ],
     "temporaryHp": "A windfall sitting in checking that hasn't been moved into real reserves. Absorbs the next hit first, doesn't stack with itself, and evaporates at your next Long Rest if not converted into permanent HP."
   },
   "encounterRules": {
-    "note": "BRIEF §9.3. The rulebook's own §13 leaves save DCs unset, so they are derived from CR here rather than invented per monster — one ladder, visible, arguable. Damage is expressed in HP, and HP is weeks (DD-001), so every damage figure is already in weeks of runway.",
-    "source": "The ladder follows the shape of a CR-to-save-DC progression: harder monster, harder save. The numbers are a convention chosen here, not a measurement and not agreed elsewhere — argue with them by editing this array.",
+    "note": "BRIEF §9.3. The rulebook's own §13 leaves save DCs unset, so they are derived from CR here rather than invented per monster, one ladder, visible, arguable. Damage is expressed in HP, and HP is weeks (DD-001), so every damage figure is already in weeks of runway.",
+    "source": "The ladder follows the shape of a CR-to-save-DC progression: harder monster, harder save. The numbers are a convention chosen here, not a measurement and not agreed elsewhere, argue with them by editing this array.",
     "crToDc": [
       {
         "maxCr": 0.25,
@@ -1702,7 +1702,7 @@
         "about": "Stop the bleeding and build the first buffer. Nothing else on this list works while a balance is compounding faster than you can pay it.",
         "looksLike": "Every shock is a crisis, because there is nothing between you and it.",
         "endsWhen": "A month of expenses exists somewhere you can reach it, and no debt is growing faster than you can pay it down.",
-        "biggestRisk": "Small, constant, unnoticed damage — the creatures here do 1d4 and never announce themselves.",
+        "biggestRisk": "Small, constant, unnoticed damage, the creatures here do 1d4 and never announce themselves.",
         "origin": "extension"
       },
       {
@@ -1723,7 +1723,7 @@
         "name": "Protecting the pile",
         "about": "Stop losing it. The pile is now big enough that protecting it beats adding to it.",
         "looksLike": "A good year adds more than you earn. A bad one could take back several.",
-        "endsWhen": "A bad year is survivable without selling anything, and no single event — health, job, one holding — can take a third of it.",
+        "endsWhen": "A bad year is survivable without selling anything, and no single event, health, job, one holding, can take a third of it.",
         "biggestRisk": "Concentration and the things insurance exists for. The creatures here hit for 4d8 and up.",
         "origin": "extension"
       },
@@ -1742,7 +1742,7 @@
     "effects": {
       "negate": "The attack cannot land at all.",
       "halve": "Damage is halved.",
-      "advantage": "You roll the save twice and keep the better — worth about +3.7 on average, applied here as a flat bonus.",
+      "advantage": "You roll the save twice and keep the better, worth about +3.7 on average, applied here as a flat bonus.",
       "advantageBonus": 3.7
     },
     "attackTypes": [
@@ -1778,7 +1778,7 @@
       }
     ],
     "tierNote": "BRIEF §9.4. The four tiers are the rulebook's level bands read as stages of play: what this part of the game is about, what it feels like, and what ends it. The level ranges are the rulebook's; the prose is written for this build and marked origin: extension on each tier.",
-    "resolutionNote": "DD-019. Two ways to get hurt, as in 5e. resolution:'attack' — a bill, a lawsuit, a lost income stream — rolls d20 + a CR-based bonus against your Armour Class, so insurance does its real job. resolution:'save' — a pitch, a panic, a temptation — goes around armour and targets a saving throw, because no policy stops you buying a timeshare. Armour-layer blockers (health, disability, umbrella, emergency fund) are removed from attack creatures' blockedBy so they are never counted twice; a negate immunity is kept because immunity is not armour.",
+    "resolutionNote": "DD-019. Two ways to get hurt, as in 5e. resolution:'attack', a bill, a lawsuit, a lost income stream, rolls d20 + a CR-based bonus against your Armour Class, so insurance does its real job. resolution:'save', a pitch, a panic, a temptation, goes around armour and targets a saving throw, because no policy stops you buying a timeshare. Armour-layer blockers (health, disability, umbrella, emergency fund) are removed from attack creatures' blockedBy so they are never counted twice; a negate immunity is kept because immunity is not armour.",
     "crToAttackBonus": [
       {
         "maxCr": 3,
@@ -1904,7 +1904,7 @@
     }
   },
   "exhaustion": {
-    "note": "BRIEF §9.7. The rulebook names \"Exhausted\" once — as what the Unemployed status decays into — and never defines it. This ladder is written for this build to fill that gap, and is marked origin: extension. It is DERIVED from runway, never self-declared: exhaustion is not a mood, it is what a thin buffer costs you in decisions you can no longer afford to make well.",
+    "note": "BRIEF §9.7. The rulebook names \"Exhausted\" once, as what the Unemployed status decays into, and never defines it. This ladder is written for this build to fill that gap, and is marked origin: extension. It is DERIVED from runway, never self-declared: exhaustion is not a mood, it is what a thin buffer costs you in decisions you can no longer afford to make well.",
     "origin": "extension",
     "unit": "weeks of runway (HP)",
     "savePenaltyNote": "Each level subtracts from every saving throw. Being close to the edge really does make you easier to move: you cannot wait for a better offer, shop the policy, or walk away, and every creature in the bestiary is built to exploit exactly that.",
@@ -1970,14 +1970,14 @@
         "minWeeks": null,
         "label": "Down",
         "savePenalty": 6,
-        "effect": "At 0 HP. Death saves, not decisions — see the Death Saves rules.",
+        "effect": "At 0 HP. Death saves, not decisions, see the Death Saves rules.",
         "tell": "The runway is gone."
       }
     ]
   },
-  "statusNote": "BRIEF §9.7. Status effects are SELF-DECLARED, like alignment — they are facts about your situation that no number in the household can see. Nothing here is computed and nothing is inferred; if you have not said, the sheet says you have not said.",
+  "statusNote": "BRIEF §9.7. Status effects are SELF-DECLARED, like alignment. They are facts about your situation that no number in the household can see. Nothing here is computed and nothing is inferred; if you have not said, the sheet says you have not said.",
   "longRest": {
-    "note": "BRIEF §9.8. The rulebook says a Long Rest restores HP to max \"contingent on a CON save\" and never sets the DC. These two numbers are that DC, written for this build. The DC rises with exhaustion because the deeper the hole, the more months have to go uninterrupted for a full recovery to actually happen — a good quarter restores someone who is Watchful and barely dents someone who is Spent.",
+    "note": "BRIEF §9.8. The rulebook says a Long Rest restores HP to max \"contingent on a CON save\" and never sets the DC. These two numbers are that DC, written for this build. The DC rises with exhaustion because the deeper the hole, the more months have to go uninterrupted for a full recovery to actually happen, a good quarter restores someone who is Watchful and barely dents someone who is Spent.",
     "origin": "extension",
     "baseDc": 10,
     "dcPerExhaustionLevel": 2,
@@ -1985,5 +1985,5 @@
     "potionNote": "A windfall heals immediately and needs no rest. What it heals is its size divided by one week of expenses."
   },
   "debtBurdenNote": "Rulebook §3A. saveDisadvantage is the rulebook's own 'disadvantage on X saves' at each level, written as data so the encounter engine applies it (DD-019). Level 4's 'any check involving borrowing' has no check to attach to yet and keeps DEX from level 3.",
-  "generalFeatsNote": "DD-023. Each general feat GRANTS one mechanic the engine reads: acBonus, maxHpPerLevel, saveProficiency, saveBonus or blocker (counts as held). Written for this build — the rulebook names the feats and their prerequisites and gives them no mechanics. Class, subclass and debt feats stay flavour until they are given one; the sheet says so rather than implying a benefit."
+  "generalFeatsNote": "DD-023. Each general feat GRANTS one mechanic the engine reads: acBonus, maxHpPerLevel, saveProficiency, saveBonus or blocker (counts as held). Written for this build, the rulebook names the feats and their prerequisites and gives them no mechanics. Class, subclass and debt feats stay flavour until they are given one; the sheet says so rather than implying a benefit."
 }

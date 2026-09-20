@@ -87,8 +87,8 @@
   <section class="slaf-card" id="bridge">
     <span class="slaf-eyebrow">The bridge to 59½</span>
     <div class="pair" style="margin-top:var(--space-3)">
-      <div class="figure-cell"><span class="cap">Years to bridge</span><span class="big" id="bridge-years">—</span><span class="sub" id="bridge-years-sub"></span></div>
-      <div class="figure-cell"><span class="cap">Short by</span><span class="big" id="bridge-short">—</span><span class="sub" id="bridge-short-sub"></span></div>
+      <div class="figure-cell"><span class="cap">Years to bridge</span><span class="big" id="bridge-years">not yet</span><span class="sub" id="bridge-years-sub"></span></div>
+      <div class="figure-cell"><span class="cap">Short by</span><span class="big" id="bridge-short">not yet</span><span class="sub" id="bridge-short-sub"></span></div>
     </div>
     <p class="why" id="bridge-why"></p>
     <div id="bridge-lens" style="margin-top:var(--space-3)"></div>
@@ -180,7 +180,7 @@
     var b = Statement.bridgeGap(h, TABLES);
     if (!Money.isOk(b)) {
       setFig('bridge-years', 'bridge-years-sub', false, b.reason, fixLink(b));
-      setFig('bridge-short', 'bridge-short-sub', false, Money.EM_DASH, '');
+      setFig('bridge-short', 'bridge-short-sub', false, Money.NOT_YET, '');
       el('bridge-why').textContent = '';
       return b;
     }
@@ -225,7 +225,7 @@
     var rows = sources(h, b);
     el('source-list').innerHTML = rows.map(function (r) {
       var amt = r.kind === 'counted'
-        ? '<span class="amt">' + (Money.isEntered(r.cents) ? esc(fmt(r.cents)) : Money.EM_DASH) + '</span>'
+        ? '<span class="amt">' + (Money.isEntered(r.cents) ? esc(fmt(r.cents)) : Money.NOT_YET) + '</span>'
         : '<span class="amt is-word">explained</span>';
       return '<li class="is-' + r.kind + '"><span>' + esc(r.label) + '<span class="tag">' + (r.kind === 'counted' ? 'counted now' : 'not computed') + '</span></span>' + amt
         + '<span class="say">' + r.say + (r.href ? ' <a href="' + esc(r.href) + '">' + esc(r.hrefText) + ' →</a>' : '') + '</span></li>';

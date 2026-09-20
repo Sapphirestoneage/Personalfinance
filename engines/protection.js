@@ -1,24 +1,24 @@
 /* ==========================================================================
-   engines/protection.js — the Protection room's checkup.
+   engines/protection.js, the Protection room's checkup.
    DECISIONS.md D-098 (the tranche rooms on the template).
    --------------------------------------------------------------------------
    Four lines, each a need against what is held:
 
      badYear     what a bad health year costs (the out-of-pocket maximum,
-                 or the highest deductible standing in for it) — against cash
+                 or the highest deductible standing in for it), against cash
      disability  what you would need a month if you could not work (a share
-                 of gross pay, the convention's 60%) — against the disability
+                 of gross pay, the convention's 60%), against the disability
                  benefit in force. Not a line between jobs or retired: there
                  is no pay to replace.
      life        what someone who lives on this income would need if it
-                 stopped for good (the convention's 10x gross) — against term
+                 stopped for good (the convention's 10x gross), against term
                  life in force. Not a line when nobody depends on the income.
      cushion     the emergency cushion, three months of spending as the floor
-                 and six as the full cushion — against cash
+                 and six as the full cushion, against cash
 
    A line is { id, label, applies, reason, needCents, heldCents, gapCents,
    period }. `applies: false` says why in `reason`. A need or a held that is
-   not entered stays null with a reason — empty is not zero, so a gap is
+   not entered stays null with a reason, empty is not zero, so a gap is
    only computed when both sides are entered. The headline is the biggest
    known gap; a monthly gap is ranked by its yearly cost so a lump and a
    monthly figure can be compared.
@@ -144,7 +144,7 @@
    *   value        the biggest known gap in cents (0 when every line is covered)
    *   lines        the four lines, in order
    *   biggest      the line with the biggest gap, or null when none is short
-   *   zone         'good' | 'watch' | 'out' — no gap, one, two or more
+   *   zone         'good' | 'watch' | 'out', no gap, one, two or more
    *   short        the applying lines with a gap > 0
    *   unknown      the applying lines whose gap cannot be computed yet
    *   healthType   insurance.health.type

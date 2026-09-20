@@ -7,31 +7,31 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="shared/errlog.js"></script>
 <title>Dungeons &amp; Dividends</title>
-<meta name="description" content="A personal-finance RPG character sheet. Build a character five different ways — answer questions, spend points, roll dice, or just type your numbers. Everything runs in your browser."/>
+<meta name="description" content="A personal-finance RPG character sheet. Build a character five different ways, answer questions, spend points, roll dice, or just type your numbers. Everything runs in your browser."/>
 <meta property="og:type" content="website"/>
 <meta property="og:site_name" content="Dungeons &amp; Dividends"/>
 <meta property="og:title" content="Dungeons &amp; Dividends"/>
-<meta property="og:description" content="A D&amp;D character sheet for your actual money. Five questions, then a Level, HP in weeks, and a class — free, no sign-up, nothing leaves your browser."/>
+<meta property="og:description" content="A D&amp;D character sheet for your actual money. Five questions, then a Level, HP in weeks, and a class, free, no sign-up, nothing leaves your browser."/>
 <meta property="og:url" content="https://sapphirestoneage.github.io/Personalfinance/dnd/index.html"/>
 <meta property="og:image" content="https://sapphirestoneage.github.io/Personalfinance/dnd/og.png"/>
 <meta property="og:image:width" content="1200"/>
 <meta property="og:image:height" content="630"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:title" content="Dungeons &amp; Dividends"/>
-<meta name="twitter:description" content="A D&amp;D character sheet for your actual money. Five questions, then a Level, HP in weeks, and a class — free, no sign-up, nothing leaves your browser."/>
+<meta name="twitter:description" content="A D&amp;D character sheet for your actual money. Five questions, then a Level, HP in weeks, and a class, free, no sign-up, nothing leaves your browser."/>
 <meta name="twitter:image" content="https://sapphirestoneage.github.io/Personalfinance/dnd/og.png"/>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="shared/fonts.css"/>
 <link rel="stylesheet" href="shared/theme.css"/>
 <link rel="stylesheet" href="shared/skin.css"/>
 <!--
-  TIER 1 — the hook. Asks for no money at all, which is the entire point: this
+  TIER 1, the hook. Asks for no money at all, which is the entire point: this
   is the page you send to someone who has never thought about a savings rate.
 
   FIVE WAYS IN, and the chooser comes FIRST. The quiz used to be the only path,
   which quietly assumed everyone wants to be asked eighteen questions before
   they see anything. Plenty of people would rather build a character the way
-  they build one at a table — spend points, roll, take the standard array, or
+  they build one at a table, spend points, roll, take the standard array, or
   just type the numbers they already believe. All five land on the same 8-20
   scale, so nothing downstream knows or cares which was used.
 
@@ -45,7 +45,7 @@
 
   What this page can honestly produce with no dollars: three of the six ability
   scores (INT, WIS, CHA), the nine sub-stats under them, a class LEANING and an
-  alignment. Not Level, HP, AC or a real class assignment — those need money,
+  alignment. Not Level, HP, AC or a real class assignment, those need money,
   and the page says so rather than fabricating them. sheet.html is where they
   arrive.
 
@@ -57,7 +57,7 @@
 <style>
   /* Dungeons & Dividends keeps the characterful faces the shared theme gave
      up in D-154. A game wants a display serif; a financial statement does
-     not. theme.css stays byte-identical to the SPARKS copy — this override
+     not. theme.css stays byte-identical to the SPARKS copy, this override
      lives here, in the pages that want it. */
   :root {
     --font-display: 'Fraunces', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
@@ -81,7 +81,7 @@
   .method { display: grid; grid-template-columns: 34px 1fr; gap: var(--space-3); align-items: start; text-align: left; font-family: var(--font-body); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; }
   .method:hover { border-color: var(--color-border-active); }
   .method .ic { font-size: var(--text-xl); line-height: 1; }
-  /* Both must be block, or the name runs straight into the blurb — which is
+  /* Both must be block, or the name runs straight into the blurb, which is
      exactly how this shipped the first time. */
   .method .nm { display: block; font-size: var(--text-base); font-weight: 600; }
   .method .tag { display: inline-block; font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--color-accent-hover); margin-left: var(--space-2); }
@@ -197,10 +197,10 @@
     <div class="eyebrow">Dungeons &amp; Dividends</div>
     <h1>Every build has a weakness. Most people never see their own.</h1>
     <p>A character sheet for your actual money. No dollar amounts to start, no
-       sign-up, nothing to revise for — build it however you like, the same way
+       sign-up, nothing to revise for, build it however you like, the same way
        you'd roll one up at a table.</p>
     <p class="privacy">Runs entirely in your browser. Nothing you type is sent anywhere,
-       because there is nowhere for it to go — this is a static page with no server behind it.</p>
+       because there is nowhere for it to go. This is a static page with no server behind it.</p>
   </section>
 
   <!-- FOUR DOORS, AND THEY ARE GENUINELY DIFFERENT.
@@ -223,7 +223,7 @@
       <a class="door" href="campaign.html#pregen">
         <span class="dt">Play a ready-made character</span>
         <span class="db">Four finished people, complete with a Level, a runway and a class. Pick one and you
-           are playing immediately, with nothing of your own entered — clearly labelled as borrowed the
+           are playing immediately, with nothing of your own entered, clearly labelled as borrowed the
            whole time.</span>
         <span class="dw">No numbers at all · instant</span>
       </a>
@@ -249,8 +249,8 @@
 
   <section id="choose" hidden>
     <h2>How do you want to build?</h2>
-    <p class="note">Six ability scores, like any character sheet. Three of them — knowing the rules,
-       judgment, and dealing with people — have no dollar figure behind them, so they are always
+    <p class="note">Six ability scores, like any character sheet. Three of them, knowing the rules,
+       judgment, and dealing with people, have no dollar figure behind them, so they are always
        yours to decide. The other three are earning power, resilience and savings: you can buy
        those too, and they stand until your real numbers replace them. Every route lands on the
        same scale.</p>
@@ -298,7 +298,7 @@
 
     <h2>Your nine, ranked</h2>
     <p class="note">Every score as a percentage of the scale. A low one is exactly as
-       visible as a high one — that's deliberate.</p>
+       visible as a high one, that's deliberate.</p>
     <div class="spec" id="r-spectrum"></div>
 
     <h2 id="hunt-h">What hunts you</h2>
@@ -308,7 +308,7 @@
     <div class="predlist" id="r-preds"></div>
 
     <h2>Your alignment</h2>
-    <p class="note">Disposition, not skill — so you pick it, nothing measures it.
+    <p class="note">Disposition, not skill, so you pick it, nothing measures it.
        Down: how much you follow a system. Across: whose upside you're optimising for.</p>
     <div class="align-grid" id="align-grid"></div>
     <div id="align-detail" class="align-detail" hidden></div>
@@ -324,7 +324,7 @@
          HP is how many weeks you could go with no income. AC is what stops a hit landing at all.
          Your class may well change too, because a class here is a lever you actually pull,
          not a temperament.</p>
-      <p>It also fills in the three saves this page had to leave blank — and then you can
+      <p>It also fills in the three saves this page had to leave blank, and then you can
          actually <em>run</em> the things above. Not just which of them hunt you: whether they
          land, how hard, and how many weeks it costs you when they do.</p>
       <a class="btn" href="sheet.html">Build the full sheet →</a>
@@ -336,7 +336,7 @@
     </div>
 
     <p class="foot"><a href="card.html">Make a card out of this →</a></p>
-    <p class="foot"><a href="bestiary.html">The Bestiary — what you're up against →</a></p>
+    <p class="foot"><a href="bestiary.html">The Bestiary, what you're up against →</a></p>
   </section>
 
   <p class="foot" style="color:var(--color-text-faint);font-size:var(--text-xs)">An independent parody. Not affiliated with or endorsed by Wizards of the Coast. <a href="bestiary.html#attribution">Licence &amp; attribution</a>.</p>
@@ -398,7 +398,7 @@
   }
 
   /* Questions in the order the DATA asks for, not the order the sub-stats
-     happen to be declared in — so the two questions on a topic sit far apart
+     happen to be declared in, so the two questions on a topic sit far apart
      and the driest ones land last. */
   function buildQuestions() {
     var rules = TABLES.dndRules, quiz = TABLES.dndScoring.quiz;
@@ -449,7 +449,7 @@
   }
 
   /* ==== THE BUILDERS ====================================================
-     One row per ABILITY — six, like D&D Beyond — not one per sub-stat. You
+     One row per ABILITY, six, like D&D Beyond, not one per sub-stat. You
      buy Wisdom, not Threat Detection; the sub-stats under a bought ability all
      take its score. What sits in the right-hand cell depends on the method,
      but the rows themselves are built once and reused. DD-018. */
@@ -482,7 +482,7 @@
           + esc(a.id) + '" placeholder="8–20"/>';
       } else {
         var pool = poolFor(method);
-        cell.innerHTML = '<select id="v-' + esc(a.id) + '"><option value="">—</option>'
+        cell.innerHTML = '<select id="v-' + esc(a.id) + '"><option value="">not yet</option>'
           + pool.map(function (v, i) { return '<option value="' + i + '">' + v + '</option>'; }).join('')
           + '</select>';
       }
@@ -542,7 +542,7 @@
     box.hidden = false;
     box.className = 'pool' + (spent > pool ? ' over' : '');
     box.innerHTML = spent > pool
-      ? '<b>' + (spent - pool) + '</b> points over budget — you have ' + pool + ' to spend.'
+      ? '<b>' + (spent - pool) + '</b> points over budget. You have ' + pool + ' to spend.'
       : '<b>' + (pool - spent) + '</b> of ' + pool + ' points left.';
   }
 
@@ -644,7 +644,7 @@
      jumble: the ones that can reach you now, then the ones waiting further in.
      Nothing is filtered out by tier, because a tier needs a Level and this page
      has none. One sort, used by both the panel and the share text. */
-  /* "A and B", "A, B and C" — never "A and B and C", which is what a plain
+  /* "A and B", "A, B and C", never "A and B and C", which is what a plain
      join(' and ') gives you the moment a tie makes the list longer than two. */
   function listJoin(parts) {
     if (parts.length < 2) return parts.join('');
@@ -658,13 +658,13 @@
   }
 
   /**
-   * What hunts you — BRIEF §9.6, running §9.3's engine on the three saves this
+   * What hunts you, BRIEF §9.6, running §9.3's engine on the three saves this
    * page can honestly score.
    *
    * The care here is all in what it does NOT claim. Only INT, WIS and CHA are
    * scored without money, so "your two thinnest" means the two thinnest OF
    * THOSE THREE, and the page says exactly that. The other three saves are
-   * blanks, not zeroes, and a blank is not a weakness — listing them as
+   * blanks, not zeroes, and a blank is not a weakness, listing them as
    * unhunted would be a lie in the opposite direction, so they are named as
    * unknown. No tier is shown either: a tier needs a Level and this page has
    * none, so the creature list is not gated by one and does not pretend to be.
@@ -682,7 +682,7 @@
        one save would be exactly the over-claim this panel exists to avoid. */
     if (!p.ready) {
       el('hunt-note').textContent = 'Answer enough to score at least two of Intelligence, Wisdom '
-        + 'and Charisma and this fills in — it reads the same engine the encounter room uses.';
+        + 'and Charisma and this fills in. It reads the same engine the encounter room uses.';
       el('r-saves').innerHTML = '';
       el('r-moves').innerHTML = '';
       el('r-preds').innerHTML = '';
@@ -692,7 +692,7 @@
     var boughtSaves = scored.filter(function (x) { return stats[x.stat] && stats[x.stat].bought === true; });
     el('hunt-note').innerHTML = 'A save is how well you resist being moved. '
       + (blank.length
-          ? 'This page can score ' + esc(String(scored.length)) + ' of the 6 — the other '
+          ? 'This page can score ' + esc(String(scored.length)) + ' of the 6, the other '
             + esc(String(blank.length)) + ' (' + blank.map(function (x) { return esc(x.stat); }).join(', ')
             + ') need real numbers and are <b>blank, not bad</b>. '
           : 'All six are scored')
@@ -702,7 +702,7 @@
             + (boughtSaves.length === 1 ? 'that one' : 'those') + ' will move once your numbers are in. '
           : (blank.length ? '' : '. '))
       + (p.weakest.length >= scored.length
-          ? 'The ones scored are all level, so nothing stands out as your thin spot — which means everything below can reach you equally.'
+          ? 'The ones scored are all level, so nothing stands out as your thin spot, which means everything below can reach you equally.'
           : 'Of the ones scored, you are thinnest on '
             + listJoin(p.weakest.map(function (w) { return '<b>' + esc(w) + '</b>'; })) + '.')
       + ' These come for you, lowest threat first. Some are a long way off.';
@@ -745,7 +745,7 @@
       el('r-lever').textContent = cls.lever;
       el('r-motto').textContent = cls.mentor ? '“' + cls.mentor.motto + '”' : '';
     } else {
-      el('r-class').textContent = Money.EM_DASH;
+      el('r-class').textContent = Money.NOT_YET;
       el('r-lever').textContent = leaning.reason || '';
       el('r-motto').textContent = '';
     }
@@ -762,7 +762,7 @@
       if (!ok) blankIds.push(id);
       return '<div class="statcard' + (bought ? ' bought' : '') + (ok ? '' : ' blank') + '">'
         + '<div class="abbr">' + esc(id) + '</div>'
-        + '<div class="score">' + (ok ? r.value : Money.EM_DASH) + '</div>'
+        + '<div class="score">' + (ok ? r.value : Money.NOT_YET) + '</div>'
         + '<div class="mod">' + (ok ? esc(Char.formatModifier(Char.modifier(r.value))) : '') + '</div>'
         + '<div class="abbr" style="margin-top:6px">' + esc(def.finance) + '</div>'
         + (bought ? '<span class="tag">bought</span>' : (ok ? '' : '<span class="tag" style="color:var(--color-text-faint)">needs numbers</span>'))
@@ -771,11 +771,11 @@
     el('r-stats-note').innerHTML = boughtIds.length
       ? 'Intelligence, Wisdom and Charisma are always yours to set. '
         + listJoin(boughtIds.map(function (x) { return '<b>' + esc(x) + '</b>'; }))
-        + (boughtIds.length === 1 ? ' is' : ' are') + ' <b>bought, not measured</b> — '
+        + (boughtIds.length === 1 ? ' is' : ' are') + ' <b>bought, not measured</b>, '
         + (boughtIds.length === 1 ? 'it' : 'they') + ' stand until you add the numbers that '
         + 'actually set ' + (boughtIds.length === 1 ? 'it' : 'them') + ', and then the numbers win.'
       : blankIds.length
-        ? 'Strength, Dexterity and Constitution are earning power, resilience and savings — '
+        ? 'Strength, Dexterity and Constitution are earning power, resilience and savings, '
           + 'they need real numbers, so they stay blank until you add them.'
         : 'All six from your numbers.';
 
@@ -804,7 +804,7 @@
     /* This text is the product. It gets pasted into a group chat, so it has to
        read as a boast and a dare in five lines, and it must not claim the three
        scores this page cannot see. */
-    var head = ['Dungeons & Dividends — I lean ' + (cls ? cls.name : '?')
+    var head = ['Dungeons & Dividends, I lean ' + (cls ? cls.name : '?')
       + (al ? ' · ' + al.emoji + ' ' + al.name : '')];
     var scores = [];
     Char.STAT_IDS.forEach(function (id) {
@@ -819,7 +819,7 @@
       var nScored = Char.savingThrows(stats, null, 0, TABLES)
         .filter(function (x) { return x.ok; }).length;
       head.push(p.weakest.length >= nScored
-        ? 'All level so far — everything reaches me equally.'
+        ? 'All level so far, everything reaches me equally.'
         : 'Thinnest on ' + listJoin(p.weakest) + '.');
       var names = byCr(p.creatures).slice(0, 3).map(function (c) { return c.name; });
       if (names.length) head.push('Hunted by: ' + names.join(', ') + '.');
@@ -893,7 +893,7 @@
     var n = el('load-notice');
     n.hidden = false;
     n.textContent = 'Couldn’t load the game data (' + err.message + '). If you opened this file '
-      + 'directly it needs to be served over http — try the published link instead.';
+      + 'directly it needs to be served over http, try the published link instead.';
   });
 })();
 </script>

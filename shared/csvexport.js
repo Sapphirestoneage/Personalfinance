@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/csvexport.js — the spreadsheet export, and the same sheet back in.
+   shared/csvexport.js, the spreadsheet export, and the same sheet back in.
    DECISIONS.md D-210 (J1), D-220 (one CSV out and in), D-221 (made resilient).
    --------------------------------------------------------------------------
    Mint-proof: the app cannot be taken away. Beside the JSON backup, every
@@ -259,7 +259,7 @@
       return bad('yes or no');
     }
     if (u === 'enum') {
-      if (/^(-{1,3}|—|–|n\/?a|\?+|tbd|not sure|blank|empty|skip|leave)$/i.test(s)) return blank();
+      if (/^(-{1,3}|, |–|n\/?a|\?+|tbd|not sure|blank|empty|skip|leave)$/i.test(s)) return blank();
       var choices = enumChoices(row, tables);
       /* A choice list the app cannot see (no table loaded): take the text as it is. */
       if (!choices.length) { out.value = row.id === 'state' ? s.toUpperCase().slice(0, 2) : s; return out; }
@@ -674,7 +674,7 @@
     }).filter(function (s) { return s.rows.length; });
     sheets.push({
       name: 'How to use this',
-      columns: [{ header: 'Money Rooms — your numbers, on one sheet a door', width: 110 }],
+      columns: [{ header: 'Money Rooms, your numbers, on one sheet a door', width: 110 }],
       rows: readme(household, tables).split('\n').map(function (t) { return [t]; })
     });
     return Xlsx.build(sheets, { title: 'Money Rooms', day: Schema.localDay(), now: opts && opts.now });

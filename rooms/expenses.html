@@ -8,12 +8,12 @@
 <script src="../shared/errlog.js"></script>
 <script src="../shared/size.js"></script>
 <title>Expenses · SPARKS</title>
-<meta name="description" content="What a month costs you — food, accommodation, transportation, the lean month, and every line you name — plus the charges that come back on a rhythm."/>
+<meta name="description" content="What a month costs you, food, accommodation, transportation, the lean month, and every line you name, plus the charges that come back on a rhythm."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-172, D-197, D-198, D-215,
+  ROOM SPEC, SPEC.md §11. DECISIONS.md D-172, D-197, D-198, D-215,
   D-267 (the merge).
 
   THREE READINGS OF WHAT GOES OUT.
@@ -26,7 +26,7 @@
                      for (D-306)
 
   The Subscription Finder never held a figure of its own: it read the expense
-  log and pointed at the rows that repeat. Rule 3 of D-229 — a finder over a
+  log and pointed at the rows that repeat. Rule 3 of D-229, a finder over a
   log this room already owns is a reading of it, not a room beside it.
 
   1. READS   the expense log and the month this room owns.
@@ -405,7 +405,7 @@
 
   <section class="slaf-card" id="month" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">3 · Your month</span>
-    <div class="slaf-figure" id="month-total">—</div>
+    <div class="slaf-figure" id="month-total">not yet</div>
     <p class="month-how" id="month-how"></p>
   </section>
 
@@ -444,8 +444,8 @@
     <summary>Split the rest by category <small>Optional: what is left of each bucket once the lines above are named, for the chart, the floor and the Rerank.</small></summary>
     <details class="drawer bucket-note">
       <summary>How to fill this in <small>Any period, blank means blank, and what <em>fixed</em> means.</small></summary>
-      <p>Type each line in whatever you know it as — a week, every two weeks, a
-      year — and pick that beside it; it is stored as a month. Leave anything
+      <p>Type each line in whatever you know it as, a week, every two weeks, a
+      year, and pick that beside it; it is stored as a month. Leave anything
       blank that doesn't apply: blank is "not entered", never zero. Tick
       <em>fixed</em> on a line you could not cut next month. Debt minimums come
       from your actual debts, so tap that figure to change them there. A
@@ -466,7 +466,7 @@
     <div style="display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-3)">
       <span class="slaf-eyebrow">Monthly spending</span>
     </div>
-    <div class="slaf-figure" data-figure>—</div>
+    <div class="slaf-figure" data-figure>not yet</div>
     <p class="slaf-reason" data-reason></p>
     <div id="summary-charts"></div>
     <div data-detail></div>
@@ -484,7 +484,7 @@
 
   <section class="slaf-card" id="out-divergence">
     <span class="slaf-eyebrow">The lines vs F, A, T</span>
-    <div class="slaf-figure" data-figure>—</div>
+    <div class="slaf-figure" data-figure>not yet</div>
     <p class="slaf-reason" data-reason></p>
     <div data-detail></div>
     <div class="actions" id="track-actions" hidden>
@@ -498,7 +498,7 @@
 
   <!-- ===== WHAT REPEATS (was rooms/subscriptions.html) ===== -->
   <section id="view-subscriptions" hidden>
-  <p class="slaf-lede">Charges that come back on a rhythm at about the same amount. Each with what it costs a year, and in hours of your work. Marking one is a note to yourself — nothing here cancels anything.</p>
+  <p class="slaf-lede">Charges that come back on a rhythm at about the same amount. Each with what it costs a year, and in hours of your work. Marking one is a note to yourself, nothing here cancels anything.</p>
   <section class="slaf-card" id="leak">
     <span class="slaf-eyebrow">The leak line</span>
     <p class="leak" id="leak-line"></p>
@@ -538,10 +538,10 @@
     </div>
     <div id="slope-chart" style="margin-top:var(--space-3)"></div>
     <div class="slaf-slope-figs">
-      <div class="fig"><b id="sl-paid">—</b><span>left the account</span></div>
-      <div class="fig"><b id="sl-for">—</b><span>was for these days</span></div>
-      <div class="fig"><b id="sl-ahead">—</b><span id="sl-ahead-say">bought ahead, for later</span></div>
-      <div class="fig"><b id="sl-behind">—</b><span id="sl-behind-say">paid late, for earlier</span></div>
+      <div class="fig"><b id="sl-paid">not yet</b><span>left the account</span></div>
+      <div class="fig"><b id="sl-for">not yet</b><span>was for these days</span></div>
+      <div class="fig"><b id="sl-ahead">not yet</b><span id="sl-ahead-say">bought ahead, for later</span></div>
+      <div class="fig"><b id="sl-behind">not yet</b><span id="sl-behind-say">paid late, for earlier</span></div>
     </div>
     <p class="slaf-hint" id="slope-note" style="margin:var(--space-3) 0 0"></p>
   </section>
@@ -637,7 +637,7 @@
 
   /* This room shows one box per category, which represents the manual
      monthly total for that category. Look it up by CATEGORY, not by an id
-     this room minted — otherwise an entry written by anything else (the
+     this room minted, otherwise an entry written by anything else (the
      example household, or a future importer) is invisible here and cannot
      be edited or cleared. The id is only used when creating a new one. */
   function newEntryId(categoryId) { return 'cf_' + categoryId; }
@@ -656,10 +656,10 @@
 
   /* LIVE-FORM: built once.
      Every input on this page is created here, exactly once at boot, and
-     from then on only its .value is written — see paintInputs(), which also
+     from then on only its .value is written, see paintInputs(), which also
      skips whatever is focused. Nothing rebuilds #buckets.
 
-     That is the invariant. Breaking it — re-running this on every edit —
+     That is the invariant. Breaking it, re-running this on every edit, 
      destroys the input the user is typing in, and on a phone the soft
      keyboard closes and does not come back, because a programmatic .focus()
      cannot reopen it. If this ever does need to rebuild, guard the
@@ -674,7 +674,7 @@
                  dining_out: 1, entertainment: 1, subscriptions: 1, shopping: 1,
                  retirement: 1, emergency_savings: 1, extra_debt_payment: 1 };
   /* The "per" aid: the amount is typed as one of these and STORED as a
-     month, through the same bases engines/income.js annualises pay with —
+     month, through the same bases engines/income.js annualises pay with, 
      one table of periods, not two. */
   var PER = [['monthly', '/mo', 'a month'], ['weekly', '/wk', 'a week'], ['fortnightly', '/2wk', 'every two weeks'], ['annual', '/yr', 'a year']];
   function toMonthlyCents(cents, per) {
@@ -695,7 +695,7 @@
       section.className = 'bucket';
       section.innerHTML =
         '<div class="bucket-head"><span class="slaf-eyebrow">' + bucket.label + '</span>'
-        + '<span class="bucket-total" data-bucket-total="' + bucket.id + '">—</span></div>'
+        + '<span class="bucket-total" data-bucket-total="' + bucket.id + '">not yet</span></div>'
         + '<p class="bucket-note">' + bucket.note + '</p>';
       var more = document.createElement('details');
       more.className = 'more';
@@ -708,7 +708,7 @@
         row.className = 'cat-row';
         row.setAttribute('data-row', cat.id);
         /* A derived category is not typed in here. It shows the figure and
-           links to the room that owns it — see shared/ownership.js. */
+           links to the room that owns it, see shared/ownership.js. */
         var valueCell = cat.derivedFrom
           ? '<span class="cat-derived" data-derived="' + cat.derivedFrom + '"></span>'
           : '<span class="slaf-input-shell cat-amount"><span class="slaf-affix">$</span>'
@@ -716,7 +716,7 @@
             + '" placeholder="e.g. 120" aria-label="' + cat.label + '"/></span>'
             + '<span class="slaf-input-shell"><select data-per="' + cat.id + '" aria-label="' + cat.label + ', typed as">'
             + PER.map(function (p) { return '<option value="' + p[0] + '">' + p[1] + '</option>'; }).join('') + '</select></span>';
-        /* The third cell: is this line fixed — could it not be cut next
+        /* The third cell: is this line fixed, could it not be cut next
            month? A savings line is not spending, so it is not asked; a
            derived line (debt minimums) is fixed by nature. D-082. */
         var fixedCell = cat.derivedFrom
@@ -775,7 +775,7 @@
         }));
         if (hint) hint.textContent = per === 'monthly' ? '' : 'Typed as ' + Money.formatCents(typed) + ' ' + PER.filter(function (p) { return p[0] === per; })[0][2] + ' → ' + Money.formatCents(cents) + ' a month, which is what is kept.';
       } else if (existing) {
-        /* Clearing a field removes the record. It does not store a zero —
+        /* Clearing a field removes the record. It does not store a zero, 
            "I didn't enter this" and "I spend nothing here" stay different. */
         Spine.removeExpenseEntry(existing.id);
         if (hint) hint.textContent = '';
@@ -837,7 +837,7 @@
         + (Money.isOk(mins) && mins.value > 0 ? '. On top of that, <b>' + Money.formatCents(mins.value) + '</b> of debt minimums leave the account too, from <a href="' + esc(Ownership.linkTo('debt-payoff', 'debts', ROOM_ID)) + '">Debt Payoff</a>.' : '.')
         + ' Every other room reads this month.';
     } else {
-      monthNode.textContent = Money.EM_DASH;
+      monthNode.textContent = Money.NOT_YET;
       monthNode.classList.add('slaf-figure--incomplete');
       how.textContent = 'Type any of the three in step 1 and the month appears here.';
     }
@@ -1021,7 +1021,7 @@
     el('fat-donut').innerHTML = Charts.donut({
       title: 'The month, by bucket',
       slices: slices,
-      center: { big: Money.isOk(f.totalCents) ? Money.formatCents(f.totalCents.value) : '—', small: 'a month' },
+      center: { big: Money.isOk(f.totalCents) ? Money.formatCents(f.totalCents.value) : 'not yet', small: 'a month' },
       empty: 'Type F, A and T below and the month draws here.'
     });
 
@@ -1042,7 +1042,7 @@
         + (hasEst ? '<u style="left:0;width:' + pct(r.est) + '%;background:var(--color-text-muted)"></u>' : '')
         + (hasAct && r.act > 0 ? '<i style="left:0;width:' + pct(r.act) + '%;background:' + (state === 'over' ? 'var(--color-critical)' : 'var(--color-positive)') + '"></i>' : '')
         + (hasEst ? '<b style="left:' + pct(r.est) + '%" title="Estimated"></b>' : '')
-        + '</span><span class="val is-' + state + '">' + (hasAct ? Money.formatCents(r.act) : '—') + '<small>of ' + (hasEst ? Money.formatCents(r.est) : '—') + '</small></span></div>';
+        + '</span><span class="val is-' + state + '">' + (hasAct ? Money.formatCents(r.act) : 'not yet') + '<small>of ' + (hasEst ? Money.formatCents(r.est) : 'not yet') + '</small></span></div>';
     }).join('') + '</div>';
     var spend = Schema.monthlyExpensesCents(h);
     var day = new Date().getDate();
@@ -1143,7 +1143,7 @@
   /* ---------- a first month, proposed ---------------------------------------
      With take-home known, every empty line is offered a figure: the chosen
      template's bucket target spread across the bucket's categories by
-     typicalShareOfBucket (data/expense_categories.json — rough BLS CES
+     typicalShareOfBucket (data/expense_categories.json, rough BLS CES
      proportions, unverified, and the source line says so). Shown, never
      stored (D-060): a line feeds the tracked figure only once it is tapped
      or typed. "Use every proposed line" accepts them all at once. D-063. */
@@ -1213,7 +1213,7 @@
     var detail = section.querySelector('[data-detail]');
     var isOk = Money.isOk(result);
     if (figure) {
-      figure.textContent = isOk ? formatter(result.value) : Money.EM_DASH;
+      figure.textContent = isOk ? formatter(result.value) : Money.NOT_YET;
       figure.classList.toggle('slaf-figure--incomplete', !isOk);
       figure.classList.toggle('slaf-figure--negative', isOk && result.value < 0);
     }
@@ -1227,18 +1227,18 @@
     }).join('') + '</dl>';
   }
 
-  /* The floor: fixed lines plus debt minimums — next month if everything
+  /* The floor: fixed lines plus debt minimums, next month if everything
      cuttable were cut. Shown once at least one line has been answered. */
   function floorRows() {
     var f = CashFlow.minimumViableMonthCents(Spine.getProfile(), TABLES.expenseCategories);
     if (!Money.isOk(f)) return [];
     var c = CashFlow.cuttability(Spine.getProfile(), TABLES.expenseCategories);
-    return [['The floor — fixed lines only', Money.formatCents(f.value)],
-            ['Cuttable', Money.isOk(c) ? Money.formatRate(c.value, { decimals: 0 }) + ' of spending' : Money.EM_DASH]];
+    return [['The floor, fixed lines only', Money.formatCents(f.value)],
+            ['Cuttable', Money.isOk(c) ? Money.formatRate(c.value, { decimals: 0 }) + ' of spending' : Money.NOT_YET]];
   }
   function floorNote() {
     var f = CashFlow.minimumViableMonthCents(Spine.getProfile(), TABLES.expenseCategories);
-    if (!Money.isOk(f)) return '<p class="slaf-reason">Tick “fixed” on the lines you could not cut next month and the floor appears here — the month Runway can test against.</p>';
+    if (!Money.isOk(f)) return '<p class="slaf-reason">Tick “fixed” on the lines you could not cut next month and the floor appears here, the month Runway can test against.</p>';
     return '<p class="slaf-reason">' + (f.unaskedCount ? f.unaskedCount + ' line' + (f.unaskedCount === 1 ? '' : 's') + ' not yet marked either way. ' : '')
       + 'Runway can run <a href="runway.html#the-plan">at the floor →</a></p>';
   }
@@ -1246,11 +1246,11 @@
   /* Two pictures of the same month, from the engine's rows and nothing
      else: a donut of what leaves (savings is a destination, so it is not a
      slice), and one stacked bar per bucket showing the lines inside it.
-     Each category is given one colour — spending lines first, in the
-     engine's largest-first order, then the savings lines — so it is the
+     Each category is given one colour, spending lines first, in the
+     engine's largest-first order, then the savings lines, so it is the
      same colour in both. The palette has eight steps; a second lap through
      it is drawn translucent so no two legend chips match. A bucket with
-     nothing entered has no row — it is not a bucket of $0. */
+     nothing entered has no row. It is not a bucket of $0. */
   function summaryCharts(summary) {
     var colourOf = {}, palette = Charts.COLORS.series;
     summary.categories.filter(function (c) { return c.bucket !== 'savings'; })
@@ -1271,7 +1271,7 @@
       title: 'Spending by category',
       slices: spending.map(part),
       center: { big: Money.formatCents(summary.spendMonthlyCents), small: 'a month' },
-      empty: 'Nothing has left yet — every line entered is savings.'
+      empty: 'Nothing has left yet, every line entered is savings.'
     }) + Charts.stacked({ title: 'Each bucket, line by line', rows: rows });
   }
 
@@ -1283,7 +1283,7 @@
           ['Essential only', Money.formatCents(summary.essentialMonthlyCents)],
           ['Into savings', Money.formatCents(summary.savingsMonthlyCents)]
         ].concat(floorRows()))
-        + '<p class="slaf-reason">Savings isn’t counted as spending — that money hasn’t left.</p>'
+        + '<p class="slaf-reason">Savings isn’t counted as spending, that money hasn’t left.</p>'
         + floorNote();
 
       TABLES.expenseCategories.buckets.forEach(function (b) {
@@ -1294,7 +1294,7 @@
       el('summary-charts').innerHTML = '';
       TABLES.expenseCategories.buckets.forEach(function (b) {
         var node = document.querySelector('[data-bucket-total="' + b.id + '"]');
-        if (node) node.textContent = Money.EM_DASH;
+        if (node) node.textContent = Money.NOT_YET;
       });
     }
     setCard('out-summary', summary, function (v) { return Money.formatCents(v); }, detail);
@@ -1313,10 +1313,10 @@
       var loose = result.unassignedCents;
       body.innerHTML = '<p style="margin-top:0">' + result.template.blurb + '</p>'
         + '<div class="slaf-figure' + (result.balanced ? '' : ' slaf-figure--incomplete') + '">'
-        + (Money.isEntered(loose) ? Money.formatCents(loose) : Money.EM_DASH) + '</div>'
+        + (Money.isEntered(loose) ? Money.formatCents(loose) : Money.NOT_YET) + '</div>'
         + '<p class="slaf-reason">'
         + (result.balanced ? 'Every dollar has a job.'
-           : (loose > 0 ? 'Unassigned each month. Give it a job — savings, debt, or a named goal.'
+           : (loose > 0 ? 'Unassigned each month. Give it a job, savings, debt, or a named goal.'
                         : 'Assigned beyond your take-home pay.'))
         + '</p>';
       return;
@@ -1458,7 +1458,7 @@
     notice.hidden = false;
     notice.className = 'notice is-error';
     notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message
-      + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+      + '). Serve this over HTTP, python3 -m http.server, rather than opening the file directly.';
   });
 })();
 </script>
@@ -1589,11 +1589,11 @@
       empty: 'Nothing dated in this month yet. Bring a statement in, or log spending by date in Cash Flow.'
     });
     var none = !s.count && !s.forCents;
-    el('sl-paid').textContent = none ? '—' : Money.formatCents(s.paidCents);
-    el('sl-for').textContent = none ? '—' : Money.formatCents(s.forCents);
-    el('sl-ahead').textContent = s.aheadCount ? Money.formatCents(s.aheadCents) : '—';
+    el('sl-paid').textContent = none ? 'not yet' : Money.formatCents(s.paidCents);
+    el('sl-for').textContent = none ? 'not yet' : Money.formatCents(s.forCents);
+    el('sl-ahead').textContent = s.aheadCount ? Money.formatCents(s.aheadCents) : 'not yet';
     el('sl-ahead-say').textContent = s.aheadCount ? 'bought ahead, ' + s.aheadCount + (s.aheadCount === 1 ? ' line' : ' lines') + ' for later days' : 'bought ahead, for later';
-    el('sl-behind').textContent = s.behindCount ? Money.formatCents(s.behindCents) : '—';
+    el('sl-behind').textContent = s.behindCount ? Money.formatCents(s.behindCents) : 'not yet';
     el('sl-behind-say').textContent = s.behindCount ? 'paid late, ' + s.behindCount + (s.behindCount === 1 ? ' line' : ' lines') + ' for earlier days' : 'paid late, for earlier';
     el('slope-note').textContent = none ? ''
       : s.aheadCount || s.behindCount

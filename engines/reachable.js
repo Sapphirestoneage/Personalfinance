@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/reachable.js — the reachable money waterfall. DECISIONS.md D-212 (H4).
+   engines/reachable.js, the reachable money waterfall. DECISIONS.md D-212 (H4).
    --------------------------------------------------------------------------
    An amount and a "by when": the order to pull it and what each dollar
    costs on the way out.

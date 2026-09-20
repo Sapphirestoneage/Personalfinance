@@ -5,7 +5,7 @@
   "source": "The Unlearning ladder (BRIEF §8): the advice everyone hears, sorted by whether it applies at your FOO step and where your banded ratios sit. Steps from data/foo_rules.json; zones from data/ratio_benchmarks.json.",
   "confidence": "convention",
   "confidenceNote": "The mapping of advice to steps is a judgement, not a finding. It is here so it can be argued with line by line rather than baked into copy.",
-  "note": "rules: each line names the advice, who says it, and when it applies — by FOO step (steps: [min, max], 0–9) and/or by a ratio's zone (ratio: {id, zones}). Status is derived: applies / stop believing (you are past it) / not yet (you are before it) / unknown (nothing to judge by). No model call; every rule is a range. Optional amountCents (the dollar figure a rule is about) or months (of spending) let the lens price a rule; a rule with neither carries no amount. D-101.",
+  "note": "rules: each line names the advice, who says it, and when it applies, by FOO step (steps: [min, max], 0–9) and/or by a ratio's zone (ratio: {id, zones}). Status is derived: applies / stop believing (you are past it) / not yet (you are before it) / unknown (nothing to judge by). No model call; every rule is a range. Optional amountCents (the dollar figure a rule is about) or months (of spending) let the lens price a rule; a rule with neither carries no amount. D-101.",
   "rules": [
     {
       "id": "starter-fund-first",
@@ -58,7 +58,7 @@
     },
     {
       "id": "cut-the-lattes",
-      "advice": "Cut the small stuff — the lattes, the subscriptions.",
+      "advice": "Cut the small stuff, the lattes, the subscriptions.",
       "source": "every budgeting column",
       "ratio": {
         "id": "savingsRate",
@@ -80,7 +80,7 @@
     },
     {
       "id": "buy-dont-rent",
-      "advice": "Renting is throwing money away — buy.",
+      "advice": "Renting is throwing money away, buy.",
       "source": "received wisdom",
       "ratio": {
         "id": "housingRatio",
@@ -106,7 +106,7 @@
     },
     {
       "id": "hustle-harder",
-      "advice": "Get a second job — you can't save your way out.",
+      "advice": "Get a second job. You can't save your way out.",
       "source": "the side-hustle chorus",
       "ratio": {
         "id": "savingsRate",
@@ -114,7 +114,7 @@
           "out"
         ]
       },
-      "note": "Applies when the rate is out of band and the spending side has been looked at. Past it, hours have a price too — see Real Hourly Wage."
+      "note": "Applies when the rate is out of band and the spending side has been looked at. Past it, hours have a price too, see Real Hourly Wage."
     },
     {
       "id": "hyper-accumulate",

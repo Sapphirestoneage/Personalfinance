@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/reopen.js — a life change reopens only what it touches. D-209 (G2.6).
+   shared/reopen.js, a life change reopens only what it touches. D-209 (G2.6).
    --------------------------------------------------------------------------
    When the situation changes (between jobs → working, and back) the spine
    records it in meta.reopen and this shows one short sheet, on the next
@@ -13,7 +13,7 @@
      mount(host, opts)      the sheet, once per page; opts.force shows it
                             even after "Later"
 
-   LIVE-FORM: built once — the sheet and its boxes are created once on
+   LIVE-FORM: built once, the sheet and its boxes are created once on
    mount and only hidden after Done; nothing is rebuilt under a finger.
    ========================================================================== */
 (function (root, factory) {

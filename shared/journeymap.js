@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/journeymap.js — draws the map engines/journey.js reads. D-235.
+   shared/journeymap.js, draws the map engines/journey.js reads. D-235.
    --------------------------------------------------------------------------
    One renderer, so the FIRE room and the dashboard's flight plan show the
    same road the same way: the ten ladder steps, the tier rungs, the back

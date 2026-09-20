@@ -1,12 +1,12 @@
 /* ==========================================================================
-   engines/housing.js — the Housing Decision room's comparison.
+   engines/housing.js, the Housing Decision room's comparison.
    DECISIONS.md D-099 (the second wave of tranche rooms on the template).
    --------------------------------------------------------------------------
    Rent against buying, this place, this rate, a month:
 
      own          the level mortgage payment on price × (1 − down) at the
                   rate over the conventions' term (engines/projection.js's
-                  levelPaymentCents — the one amortisation formula in the
+                  levelPaymentCents, the one amortisation formula in the
                   repo, P·r(1+r)^n ÷ ((1+r)^n − 1) with r monthly), plus
                   property tax, insurance and maintenance from the
                   conventions, each a yearly share of price ÷ 12
@@ -19,12 +19,12 @@
                   bands (under the low edge buying is favoured, over the
                   high edge renting is; between, neutral)
      housingRatio own ÷ gross a month, read against the 28% front-end band
-                  in data/ratio_benchmarks.json through Ratios.verdict —
+                  in data/ratio_benchmarks.json through Ratios.verdict, 
                   the same band the Ratios room reads
      down         price × down share; closing = price × the closing share;
                   cash after closing = cash − down − closing, against the
                   conventions' emergency-fund floor (months of spending)
-     yearsToDown  (down − cash) ÷ a year of savings, linear — the savings
+     yearsToDown  (down − cash) ÷ a year of savings, linear. The savings
                   are the lens's basis (Tier0.savingsRate, including the
                   match when it is known). Cash in hand ≥ down → 0 years;
                   nothing saved → never at this pace, said rather than
@@ -32,7 +32,7 @@
 
    The number is own − rent a month. Every figure that is not the person's
    is read from the tables; a missing table is a reason, not a fallback.
-   The price is held still and the rent does not rise — the room says so.
+   The price is held still and the rent does not rise. The room says so.
    ========================================================================== */
 (function (root, factory) {
   var deps;
@@ -105,7 +105,7 @@
     var noRent = !!(h.meta && h.meta.noRent === true);
     /* One rent (D-130): the housing line in Cash Flow is what you pay; the
        room's own field is a place you would rent instead, used when typed
-       — it is this room's what-if — else when there is no line. */
+. It is this room's what-if, else when there is no line. */
     var rentRead = Schema.rentMonthlyCents(h);
     var ownRent = Money.isEntered(plan.rentMonthlyCents) && plan.rentMonthlyCents > 0 ? plan.rentMonthlyCents : null;
     var rent = ownRent !== null ? ownRent : rentRead.cents;

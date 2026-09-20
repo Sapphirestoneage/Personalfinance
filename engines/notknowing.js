@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/notknowing.js — the cost of not knowing. DECISIONS.md D-214 (I2).
+   engines/notknowing.js, the cost of not knowing. DECISIONS.md D-214 (I2).
    --------------------------------------------------------------------------
    For every blank or rough row that names what it unlocks, how much it
    could swing the insight it feeds: the dependent output at the low end

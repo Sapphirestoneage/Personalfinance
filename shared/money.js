@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/money.js — numeric primitives every calculator in SLAF calls.
+   shared/money.js, numeric primitives every calculator in SLAF calls.
    --------------------------------------------------------------------------
    Enforces three rules from SPEC.md that are easy to violate by accident:
 
@@ -46,7 +46,7 @@
 
   /**
    * Collect the names of any required inputs that were never entered.
-   * Pass { fieldName: value, … } — the shape a room already has to hand.
+   * Pass { fieldName: value, … }, the shape a room already has to hand.
    */
   function missingFrom(required) {
     var missing = [];
@@ -98,7 +98,7 @@
   }
 
   /** Sum a list of cent amounts. Entries that were never entered are skipped,
-   *  NOT coerced to zero — and the count of real entries is reported back so a
+   *  NOT coerced to zero, and the count of real entries is reported back so a
    *  caller can tell "nothing entered" from "entered as zero". */
   /* One period to another, in cents (G2.8, D-209): the only place a weekly,
      fortnightly, monthly or yearly figure is converted. A year is 12 months,
@@ -120,15 +120,15 @@
   }
 
   /* ---- Safe division ----------------------------------------------------
-     SPEC.md §6: any ratio with a zero or missing denominator is `—` plus a
+     SPEC.md §6: any ratio with a zero or missing denominator is `, ` plus a
      one-line reason. Never 0, NaN, or Infinity. Every ratio in the app goes
      through here so that rule cannot be forgotten in one calculator.       */
 
   /**
    * safeDivide(numerator, denominator, opts)
-   * opts.missingReason  — shown when either side was never entered
-   * opts.zeroReason     — shown when the denominator is an affirmative zero
-   * opts.numeratorName / opts.denominatorName — for the `missing` list
+   * opts.missingReason, shown when either side was never entered
+   * opts.zeroReason, shown when the denominator is an affirmative zero
+   * opts.numeratorName / opts.denominatorName, for the `missing` list
    */
   function safeDivide(numerator, denominator, opts) {
     var o = opts || {};
@@ -144,7 +144,7 @@
     }
     if (denominator === 0) {
       return incomplete(
-        o.zeroReason || 'Can’t divide by zero — this needs a non-zero value.',
+        o.zeroReason || 'Can’t divide by zero. This needs a non-zero value.',
         o.denominatorName ? [o.denominatorName] : []
       );
     }
@@ -154,7 +154,7 @@
   /* ---- Formatting -------------------------------------------------------
      Formatting happens at the edge, never inside a formula.               */
 
-  var EM_DASH = '—';
+  var NOT_YET = 'not yet';
 
   /** Integer cents -> "$1,234" (or "-$1,234"). Not-entered -> em dash. */
   /* 15.10: a screen built on rough inputs shows no more precision than
@@ -166,11 +166,11 @@
   function displayRounding() { return displayRoundingCents; }
   function formatCents(cents, opts) {
     var o = opts || {};
-    if (!isEntered(cents)) return o.placeholder || EM_DASH;
+    if (!isEntered(cents)) return o.placeholder || NOT_YET;
     var decimals = o.decimals === undefined ? 0 : o.decimals;
     var unit = o.roundTo !== undefined ? o.roundTo : displayRoundingCents;
     /* A figure asked for WITH decimals has declared itself a cents-precision
-       figure — an hourly rate, a per-unit cost. The room's rounding unit is
+       figure, an hourly rate, a per-unit cost. The room's rounding unit is
        for hundreds and thousands, and applying it here rounds every wage in
        the app to $0.00 (the default unit for an unmarked field is $1,000).
        `decimals: 0` is the ordinary case and still rounds. D-181, corrected. */
@@ -187,7 +187,7 @@
   /** Integer cents at a wage in cents an hour -> "45 min" / "12.5 h" / "1,240 h". */
   function formatAsTime(cents, wageCents, opts) {
     var o = opts || {};
-    if (!isEntered(cents) || !isEntered(wageCents) || wageCents <= 0) return o.placeholder || EM_DASH;
+    if (!isEntered(cents) || !isEntered(wageCents) || wageCents <= 0) return o.placeholder || NOT_YET;
     var hours = cents / wageCents;
     var abs = Math.abs(hours), sign = hours < 0 ? '-' : '';
     if (abs < 1) return sign + Math.round(abs * 60) + ' min';
@@ -198,7 +198,7 @@
   /** Decimal rate -> "7%" / "7.5%". Not-entered -> em dash. */
   function formatRate(rate, opts) {
     var o = opts || {};
-    if (!isEntered(rate)) return o.placeholder || EM_DASH;
+    if (!isEntered(rate)) return o.placeholder || NOT_YET;
     var decimals = o.decimals === undefined ? 0 : o.decimals;
     return (rate * 100).toFixed(decimals) + '%';
   }
@@ -206,7 +206,7 @@
   /** Months count -> "5.3 months" / "1 month". */
   function formatMonths(months, opts) {
     var o = opts || {};
-    if (!isEntered(months)) return o.placeholder || EM_DASH;
+    if (!isEntered(months)) return o.placeholder || NOT_YET;
     var rounded = Math.round(months * 10) / 10;
     return rounded + (rounded === 1 ? ' month' : ' months');
   }
@@ -214,13 +214,13 @@
   /** Ratio -> "3.2x". */
   function formatMultiple(x, opts) {
     var o = opts || {};
-    if (!isEntered(x)) return o.placeholder || EM_DASH;
+    if (!isEntered(x)) return o.placeholder || NOT_YET;
     return (Math.round(x * 10) / 10) + 'x';
   }
 
   /** The value that goes back INTO a box a person types in. Never
    *  display-rounded: D-181's rounding is for figures a room SHOWS, and a
-   *  text input is not a display — it is the person's own number, waiting
+   *  text input is not a display. It is the person's own number, waiting
    *  to be read back. A room that fills an input with a rounded figure and
    *  then parses it on the next blur silently replaces what was typed.
    *  That is how a rent of $2,400 became $2,000 (D-287). The "$" is left
@@ -235,14 +235,14 @@
   /** Render any Result for display: its value, or the em dash. The caller
    *  shows `result.reason` alongside when the status is incomplete. */
   function display(result, formatter) {
-    if (!isOk(result)) return EM_DASH;
+    if (!isOk(result)) return NOT_YET;
     return formatter(result.value);
   }
 
   return {
     setDisplayRounding: setDisplayRounding, displayRounding: displayRounding,
     forInput: forInput,
-    EM_DASH: EM_DASH,
+    NOT_YET: NOT_YET,
     isEntered: isEntered,
     ok: ok,
     incomplete: incomplete,

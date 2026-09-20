@@ -5,7 +5,7 @@
   "source": "Written for this build. The situations are ordinary ones; the ORDER they should be answered in is the Financial Order of Operations (data/foo_rules.json), which is what makes a 'should have' computable rather than an opinion.",
   "confidence": "convention",
   "confidenceNote": "Every money figure is a plausible instance, not a measurement. Scenarios are a teaching device: the point is the ORDER of the choices, not the size of the numbers.",
-  "note": "DD-024. A scenario is a situation with three options. Each option carries: `serves` — the FOO step it advances, or null; `lever` — which of the seven class levers it pulls, or null; `subStats` — what practising it trains; and `money` — the deltas, each expressed as `cents` (absolute), `months` (x monthly expenses) or `pctIncome` (x gross annual income) so a scenario fits any character. The 'should have done' is NOT authored here: the engine computes it from `serves` against your live FOO placement, so it moves as you move.",
+  "note": "DD-024. A scenario is a situation with three options. Each option carries: `serves`, the FOO step it advances, or null; `lever`, which of the seven class levers it pulls, or null; `subStats`, what practising it trains; and `money`, the deltas, each expressed as `cents` (absolute), `months` (x monthly expenses) or `pctIncome` (x gross annual income) so a scenario fits any character. The 'should have done' is NOT authored here: the engine computes it from `serves` against your live FOO placement, so it moves as you move.",
   "rules": {
     "boardSize": 6,
     "roundsPerChapter": 10,
@@ -23,7 +23,7 @@
       "incomeAnnual",
       "monthlyExpenses"
     ],
-    "note": "boardSize scenarios are offered each round and you resolve one — choosing what to face is itself a decision. roundsPerChapter rounds make a chapter, and a chapter ends in a review. stackWarnCount: that many of a chapter's choices on one lever raises the stacking warning. stackSubStatShare: one sub-stat taking that share of a chapter's training raises it too."
+    "note": "boardSize scenarios are offered each round and you resolve one, choosing what to face is itself a decision. roundsPerChapter rounds make a chapter, and a chapter ends in a review. stackWarnCount: that many of a chapter's choices on one lever raises the stacking warning. stackSubStatShare: one sub-stat taking that share of a chapter's training raises it too."
   },
   "scenarios": [
     {
@@ -252,7 +252,7 @@
           "lever": null,
           "subStats": {},
           "money": {},
-          "note": "The Overdraft Gremlin charges you for not having money — the problem you already had."
+          "note": "The Overdraft Gremlin charges you for not having money, the problem you already had."
         }
       ]
     },
@@ -488,7 +488,7 @@
         {
           "id": "transfer",
           "label": "Move it to a 0% deal",
-          "outcome": "Eighteen months of breathing room and a 3% fee. Genuinely useful — if you use the eighteen months.",
+          "outcome": "Eighteen months of breathing room and a 3% fee. Genuinely useful, if you use the eighteen months.",
           "serves": 3,
           "lever": "keeper",
           "subStats": {
@@ -661,7 +661,7 @@
         {
           "id": "cv",
           "label": "Update the CV and take two calls",
-          "outcome": "Not money, but Strength. The Layoff Reaper does not damage the balance — it removes the thing refilling it.",
+          "outcome": "Not money, but Strength. The Layoff Reaper does not damage the balance, it removes the thing refilling it.",
           "serves": null,
           "lever": "earner",
           "subStats": {
@@ -891,7 +891,7 @@
         },
         {
           "id": "partial",
-          "label": "What you can — two thousand",
+          "label": "What you can, two thousand",
           "outcome": "Two thousand of permanently tax-free space claimed. Five thousand of it expires quietly on the 15th.",
           "serves": 6,
           "lever": "compounder",
@@ -1133,7 +1133,7 @@
         {
           "id": "buy",
           "label": "Put five thousand in",
-          "outcome": "The Crypto Siren does not chase you — that is the whole trick. It sings the number you needed to hear.",
+          "outcome": "The Crypto Siren does not chase you. That is the whole trick. It sings the number you needed to hear.",
           "serves": null,
           "lever": "speculator",
           "subStats": {},
@@ -1547,7 +1547,7 @@
         {
           "id": "stay",
           "label": "Stay for the vest, obviously",
-          "outcome": "Eighteen more months. It may well be right — it is only a trap if you never did the sum.",
+          "outcome": "Eighteen more months. It may well be right. It is only a trap if you never did the sum.",
           "serves": null,
           "lever": null,
           "subStats": {},
@@ -1650,7 +1650,7 @@
         {
           "id": "take",
           "label": "Take the six months",
-          "outcome": "Your pile stops growing and starts justifying itself. This is what tier IV is for — working out what it was for.",
+          "outcome": "Your pile stops growing and starts justifying itself. This is what tier IV is for, working out what it was for.",
           "serves": 9,
           "lever": "anchor",
           "subStats": {
@@ -1830,7 +1830,7 @@
       "options": [
         {
           "id": "no-and-list",
-          "label": "No — write down what the £200 was actually for",
+          "label": "No, write down what the £200 was actually for",
           "outcome": "It was a car repair you knew about in March. The list is short and it is the same list every year, which means it can be saved for.",
           "serves": 1,
           "lever": "anchor",
@@ -1974,7 +1974,7 @@
         {
           "id": "card",
           "label": "Onto the credit card",
-          "outcome": "Right money, wrong rung — with no float, the next surprise puts it straight back on the card.",
+          "outcome": "Right money, wrong rung, with no float, the next surprise puts it straight back on the card.",
           "serves": 3,
           "lever": "keeper",
           "subStats": {
@@ -2062,7 +2062,7 @@
               "months": 0.35
             }
           },
-          "note": "This is the fixed-cost share of your spending rising — the number Constitution is built out of."
+          "note": "This is the fixed-cost share of your spending rising, the number Constitution is built out of."
         }
       ]
     },
@@ -2080,7 +2080,7 @@
       "options": [
         {
           "id": "run-the-numbers",
-          "label": "Price it properly — voids, repairs, management, tax — then decide",
+          "label": "Price it properly, voids, repairs, management, tax, then decide",
           "outcome": "The honest yield is well under the headline once a month of voids a year is in it. You may still buy, but not by accident.",
           "serves": 9,
           "lever": "landholder",
@@ -2112,7 +2112,7 @@
         },
         {
           "id": "buy-it",
-          "label": "Buy it — it is cheap and it will not be there next week",
+          "label": "Buy it. It is cheap and it will not be there next week",
           "outcome": "You are now a landlord with one tenant, which is a portfolio of one. When they leave, your income from it is zero.",
           "serves": null,
           "lever": "landholder",
@@ -2208,7 +2208,7 @@
         {
           "id": "sim-only",
           "label": "Keep the old handset, take a rolling SIM",
-          "outcome": "The handset was never free — it was a loan at a rate nobody had to print. You keep the difference every month, and you can leave any time.",
+          "outcome": "The handset was never free. It was a loan at a rate nobody had to print. You keep the difference every month, and you can leave any time.",
           "serves": 1,
           "lever": "keeper",
           "subStats": {
@@ -2240,7 +2240,7 @@
         },
         {
           "id": "sign",
-          "label": "Sign — it is only thirty-nine a month",
+          "label": "Sign. It is only thirty-nine a month",
           "outcome": "Two years at thirty-nine is nine hundred and thirty-six pounds, committed, for a phone. Small monthly numbers are how large annual ones get past you.",
           "serves": null,
           "lever": null,
@@ -2250,7 +2250,7 @@
               "cents": 1400
             }
           },
-          "note": "This is the fixed-cost share creeping up — the number Constitution is built out of."
+          "note": "This is the fixed-cost share creeping up, the number Constitution is built out of."
         }
       ]
     },
@@ -2349,7 +2349,7 @@
         {
           "id": "counter",
           "label": "Show your boss and ask them to match",
-          "outcome": "They match about half of it. You keep the team, and you are now the person who has one foot out — which cuts both ways for years.",
+          "outcome": "They match about half of it. You keep the team, and you are now the person who has one foot out, which cuts both ways for years.",
           "serves": 1,
           "lever": "earner",
           "subStats": {
@@ -2508,7 +2508,7 @@
       "options": [
         {
           "id": "name-it",
-          "label": "Call it what it is — a pay cut — and plan to fix it this year",
+          "label": "Call it what it is, a pay cut, and plan to fix it this year",
           "outcome": "Two below-inflation years in a row is a pay cut wearing a nice hat. Naming it is what makes it a problem you can act on.",
           "serves": 1,
           "lever": "earner",
@@ -2619,7 +2619,7 @@
       "options": [
         {
           "id": "high-then-quiet",
-          "label": "A number higher than feels comfortable — then say nothing",
+          "label": "A number higher than feels comfortable, then say nothing",
           "outcome": "The silence afterwards is the entire technique. Most people fill it and negotiate against themselves before the other side has spoken.",
           "serves": 2,
           "lever": "builder",
@@ -2637,7 +2637,7 @@
         {
           "id": "ask-budget",
           "label": "Ask what they had budgeted",
-          "outcome": "Sometimes a gift, sometimes an anchor dropped on your foot. Worth asking once — never worth accepting immediately.",
+          "outcome": "Sometimes a gift, sometimes an anchor dropped on your foot. Worth asking once, never worth accepting immediately.",
           "serves": 2,
           "lever": "builder",
           "subStats": {
@@ -3037,7 +3037,7 @@
         },
         {
           "id": "price-it",
-          "label": "Price the whole thing first — commute, time, what you'd lose",
+          "label": "Price the whole thing first, commute, time, what you'd lose",
           "outcome": "Forty minutes each way is roughly a working day a week. Sometimes the saving survives that and sometimes it does not.",
           "serves": 2,
           "lever": "keeper",
@@ -3051,7 +3051,7 @@
         {
           "id": "stay",
           "label": "Stay. There's more to life than the rent.",
-          "outcome": "Completely true, and worth being deliberate about rather than default about. You are buying something with that four hundred — make sure you know what.",
+          "outcome": "Completely true, and worth being deliberate about rather than default about. You are buying something with that four hundred, make sure you know what.",
           "serves": null,
           "lever": null,
           "subStats": {
@@ -3109,7 +3109,7 @@
         {
           "id": "yes",
           "label": "Say yes. Obviously yes.",
-          "outcome": "Fair enough — and every rise you ever get here is a percentage of this number. Starting low is the most quietly expensive thing on this page.",
+          "outcome": "Fair enough, and every rise you ever get here is a percentage of this number. Starting low is the most quietly expensive thing on this page.",
           "serves": null,
           "lever": null,
           "subStats": {},
@@ -3497,7 +3497,7 @@
         {
           "id": "price-it",
           "label": "Work out what it costs you to be stuck for six months",
-          "outcome": "One missed offer. That is the price, and it is not small — but at least you will have chosen it rather than skimmed past it.",
+          "outcome": "One missed offer. That is the price, and it is not small, but at least you will have chosen it rather than skimmed past it.",
           "serves": 1,
           "lever": "anchor",
           "subStats": {

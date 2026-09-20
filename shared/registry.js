@@ -1,12 +1,12 @@
 /* ==========================================================================
-   shared/registry.js — the rooms the Map shell knows about.
+   shared/registry.js, the rooms the Map shell knows about.
    --------------------------------------------------------------------------
    `tags` drive the Map shell's filter. SPEC.md §12.6 locks the filter set to
-   All / income / cashflow / debt — a room may carry other tags, but at least
+   All / income / cashflow / debt. A room may carry other tags, but at least
    one of those three is what makes it findable.
 
    `subsections` are deep-link targets. EVERY id listed here must exist as a
-   real element id in the room's HTML — test/run.js checks that and fails the
+   real element id in the room's HTML, test/run.js checks that and fails the
    build if one is missing.
    ========================================================================== */
 (function (root, factory) {
@@ -177,7 +177,7 @@
     },
     {
       /* The highest-stress money moment there is, and Between Jobs was the
-         nearest thing — which assumes job loss specifically (D-148). */
+         nearest thing, which assumes job loss specifically (D-148). */
       id: 'cant-pay',
       group: 'numbers', subgroup: 'debt', aliases: ['bills', 'triage', 'late', 'behind'],
       kind: 'explore',
@@ -506,7 +506,7 @@
       /* Home, not Upkeep, since D-230: three doors side by side under Home
          was what lost people (D-186), and there is now one door. The First
          Round, Express, Front Doors and the Walk-Through are its views. */
-      group: 'home', aliases: ['ledger', 'the ledger', 'rows', 'spheres', 'progress',
+      group: 'home', aliases: ['ledger', 'the ledger', 'rows', 'spheres', 'progress', 'planets', 'the planets', 'bands', 'levels', 'sky',
                                'first round', 'five questions', 'quick start', 'begin',
                                'express', 'whole form', 'all at once', 'everything',
                                'front doors', 'arrangements', 'ways in',
@@ -545,6 +545,7 @@
         { id: 'view-since',   label: 'Since last time' },
         { id: 'view-shelves', label: 'Arrangements' },
         { id: 'view-route',   label: 'The route' },
+        { id: 'view-sky',     label: 'Planets' },
         { id: 'spheres-fold', label: 'The nine spheres' },
         { id: 'backup',       label: 'Backup' }
       ]
@@ -729,25 +730,25 @@
     }
   ];
 
-  /* `kind` is the honest answer to "what is this room FOR?" — and the three
+  /* `kind` is the honest answer to "what is this room FOR?", and the three
      answers are genuinely different jobs, which the map had been hiding by
      presenting all twenty-five as one numbered path:
 
        core       the four rooms everything else is built from
-       read       it tells you what it already knows — no input at all
+       read       it tells you what it already knows, no input at all
        about-you  optional self-reports: what you WANT, not what you have
        explore    a what-if, kept out of your real figures
 
      `core` is deliberately only four rooms. An earlier pass put eleven in
      one bucket labelled "the ones that matter", including four rating
-     exercises — which is precisely the overwhelm this split exists to
+     exercises, which is precisely the overwhelm this split exists to
      undo. If everything matters, nothing does.
 
      A person who does not know which kind they are looking at cannot tell
      what is required from what is optional, which is most of why a suite
      this size feels like homework. See DECISIONS.md D-051.
 
-  /* Settings — every user-scope feature switch on one screen (D-180). */
+  /* Settings, every user-scope feature switch on one screen (D-180). */
   ROOMS.push({
     id: 'settings',
     group: 'upkeep', aliases: ['settings', 'switches', 'features', 'preferences', 'toggles', 'backup'],
@@ -772,7 +773,7 @@
     ]
   });
 
-  /* Protection — the tranche rooms on the template (D-098). */
+  /* Protection, the tranche rooms on the template (D-098). */
   ROOMS.push({
     id: 'protection',
     features: ['agingParents'],
@@ -804,7 +805,7 @@
       ]
   });
 
-  /* Decumulation — the tranche rooms on the template (D-098). */
+  /* Decumulation, the tranche rooms on the template (D-098). */
   ROOMS.push({
     id: 'decumulation',
     features: ['showNominal', 'showMilestones', 'sequenceRisk', 'preMedicare', 'incomeFloor', 'inheritanceRules'],
@@ -846,7 +847,7 @@
     daite: { reads: ['assets.invested', 'debt.items', 'expenses', 'expenses.needs.accommodation', 'income.grossAnnualCents', 'taxes.filingStatus', 'you.dob'], writes: ['plans.unlearning'] },
     subsections: [{ id: 'pick', label: 'Pick a debate' }, { id: 'answer', label: 'The answer' }, { id: 'sides', label: 'Both sides' }, { id: 'number', label: 'Rules that no longer apply' }, { id: 'rules', label: 'Does it apply to you now?' }, { id: 'quiz', label: 'The Unlearning Quiz' }, { id: 'inputs', label: 'Let go' }]
   });
-  /* Tax — the tranche rooms on the template (D-098). */
+  /* Tax, the tranche rooms on the template (D-098). */
   ROOMS.push({
     id: 'tax',
     features: ['equityComp', 'inheritanceRules', 'givingVehicles'],
@@ -872,7 +873,7 @@
       ]
   });
 
-  /* Career Move — the second wave of tranche rooms (D-099). */
+  /* Career Move, the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'career-move',
     features: ['matchVesting', 'studentLoanPaths'],
@@ -902,7 +903,7 @@
       ]
   });
 
-  /* Partner — the second wave of tranche rooms (D-099). */
+  /* Partner, the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'partner',
     group: 'decisions', subgroup: 'family', aliases: ['partner', 'marriage', 'combine', 'spouse', 'kids', 'children', 'childcare', 'tuition', '529', 'family'],
@@ -931,7 +932,7 @@
       ]
   });
 
-  /* Housing Decision — the second wave of tranche rooms (D-099). */
+  /* Housing Decision, the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'housing',
     features: ['homeDetail'],
@@ -960,7 +961,7 @@
       ]
   });
 
-  /* Big Purchase — the second wave of tranche rooms (D-099). */
+  /* Big Purchase, the second wave of tranche rooms (D-099). */
   ROOMS.push({
     id: 'big-purchase',
     group: 'decisions', subgroup: 'home', aliases: ['purchase', 'buy something', 'save up', 'dream', 'price the dream', 'dreamline'],
@@ -986,7 +987,7 @@
       ]
   });
 
-  /* Designed Week — the LATER.md rooms (D-101). */
+  /* Designed Week, the LATER.md rooms (D-101). */
   ROOMS.push({
     id: 'week',
     features: ['timeBudget'],
@@ -1014,8 +1015,8 @@
       ]
   });
 
-  /* Your Data: every way numbers get in or out of this browser — a file, a
-     share link, a pasted statement sorted into the right lists — in one
+  /* Your Data: every way numbers get in or out of this browser, a file, a
+     share link, a pasted statement sorted into the right lists, in one
      place. Writes through the same spine helpers the owner rooms use; owns
      no field (D-125). A utility, off the path like Refresh (D-057). */
   ROOMS.push({
@@ -1092,7 +1093,7 @@
   });
 
   /* `needs` lists the shared fields a room reads before it can show its main
-     output — the ids in shared/ownership.js, which know who owns each one and
+     output, the ids in shared/ownership.js, which know who owns each one and
      which question to land on. shared/progress.js turns that into "what is
      left, and where", and test/run.js checks every id is real. An empty list
      means the room stands on its own. See DECISIONS.md D-050. */
@@ -1136,7 +1137,7 @@
   };
   function groups() { return GROUPS.slice(); }
   function groupById(id) { return GROUPS.filter(function (g) { return g.id === id; })[0] || null; }
-  /** A room's appliesWhen, read against a situation id — a few fixed
+  /** A room's appliesWhen, read against a situation id, a few fixed
       phrases, never evaluated as code (the levers use the same idiom). */
   function appliesToSituation(room, situationId) {
     var w = room && room.appliesWhen;
@@ -1197,7 +1198,7 @@
     /* The Back Half holds four readings (D-284), and only ONE of them is
        about money already being drawn. What you can reach, Through the wall
        and The price of cover are questions a person asks while still
-       working — the trap test is only interesting to someone employed with
+       working, the trap test is only interesting to someone employed with
        the money behind the wall. They required nothing as rooms and they
        require nothing now, so the ROOM requires nothing; the draw carries
        the decumulation branch on the router, and its hat is absent until
@@ -1207,27 +1208,27 @@
        and hid three pre-retirement readings from everybody pre-retirement. */
     tax: ['income'],
     /* Work holds seven readings (D-281). The room keeps the situation rule
-       every one of them had — appliesWhen "situation != retired" — but not
+       every one of them had, appliesWhen "situation != retired", but not
        the career branch: Offers side by side, A degree and A break never
        required it. Each READING that did carries it on the router. */
     /* Family holds both readings (D-271), so it exists when EITHER does: a
        household with children and no partner is a household, and so is the
        reverse. The nested array is the gate's any-of form. Each READING
        keeps the branch its room had, declared on the router, so its hat is
-       absent when its own branch is not there — the merge does not widen
+       absent when its own branch is not there. The merge does not widen
        who sees what. */
     partner: [['partner', 'dependents']],
     /* Variable Income and the Real Hourly Wage became readings of Income
-       (D-277). Income requires nothing — what comes in is a question for
-       everybody — and each READING keeps the branch its room had, declared
+       (D-277). Income requires nothing, what comes in is a question for
+       everybody, and each READING keeps the branch its room had, declared
        on the router, so its hat is absent when the branch is not there. */
     /* Price the Dream became Big Purchase's whole-list reading (D-270). The
        hours branch was its requirement, not the room's: the one-thing
        reading applies to anyone, and the dream reading says it has no wage
        rather than vanishing. Same call as Between Jobs above. */
     /* The Student Loan Decision became Debt's loans reading (D-279). Debt
-       requires nothing and has not since D-061 — someone who answered "no
-       debt" is skipped past it, not shut out of it — and the READING keeps
+       requires nothing and has not since D-061, someone who answered "no
+       debt" is skipped past it, not shut out of it, and the READING keeps
        the debt branch on the router. */
   };
   function gate() {
@@ -1268,14 +1269,14 @@
     if (!G || !household) return true;
     /* Two things can make a room absent, and they have to agree: the
        branches it requires, and the situations it declares it is not for.
-       They always did agree while every room carried both — Career Move
-       required `career` AND said "not retired" — and D-281 pulled them
+       They always did agree while every room carried both, Career Move
+       required `career` AND said "not retired", and D-281 pulled them
        apart: Work requires nothing, because Offers side by side is for a
        person between jobs, and still is not for a retired one. So this
        reads both, as inGroup already did. */
     if (!appliesToSituation(room, G.situationOf ? G.situationOf(household) : null)) return false;
     /* A requirement is a branch key, or an array of keys meaning any one
-       will do — a merged room exists when any of its readings does (D-271). */
+       will do, a merged room exists when any of its readings does (D-271). */
     return requires(room.id).every(function (k) {
       return Array.isArray(k) ? k.some(function (x) { return G.exists(household, x); }) : G.exists(household, k);
     });
@@ -1287,7 +1288,7 @@
 
   /** The next room after this one that hasn't been visited yet. Pass the
    *  household and Debt Payoff is skipped for someone who answered "no
-   *  debt" (D-061) — there is nothing to list there. */
+   *  debt" (D-061). There is nothing to list there. */
   function nextAfter(roomId, visitedIds, household) {
     var noDebt = !!(household && household.meta && household.meta.hasDebt === false);
     var path = inOrder().filter(function (r) { return !(noDebt && r.id === 'debt-payoff') && !r.utility; });

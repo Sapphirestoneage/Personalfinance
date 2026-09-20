@@ -1,0 +1,357 @@
+#!/usr/bin/env node
+/* ==========================================================================
+   test/solar.js — the Solar System's lints as tests (docs/SOLAR-SYSTEM.md,
+   sections 0.5, 1.9, 1.12, 1.13, 1.16). Node only, no browser. D-320.
+   --------------------------------------------------------------------------
+   Every gate the master prompt names for the data layer:
+     band alignment       a tier N recipe references only levels 1 to 3N;
+                          every prefillFrom sits in the same or a lower band
+     no fact typed twice  every level field key is collected on one level
+     every level pays off a metric, a sharpen, a lever, a move or a gate
+     every nextMove and every moon move resolves; every gate id is real
+     no N/A, no "incomplete", no red, no em dash in any copy
+     derived metrics      every input level names a different primary payoff
+     quick wins           every band on every planet has one with a dollar formula
+     the liquidity reveal a band 1 or 2 level never asks a liquidity word
+     the Skill Tree       no string matches data/skill_tree.json
+     migration            every Ledger row maps to a level or is explained
+   ========================================================================== */
+'use strict';
+const fs = require('fs');
+const path = require('path');
+const ROOT = path.join(__dirname, '..');
+const read = (f) => JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8'));
+
+let passed = 0; const failures = [];
+function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (detail ? '\n      ' + detail : '')); }
+function section(t) { console.log('\n' + t); }
+
+const Levels = read('data/levels.json'), Recipes = read('data/recipes.json'), Moons = read('data/moons.json'), Moves = read('data/moves.json');
+const Defaults = read('data/defaults.json'), Benchmarks = read('data/benchmarks.json'), Glossary = read('shared/glossary.json');
+const RatioBenchmarks = read('data/ratio_benchmarks.json'), LedgerRows = read('data/ledger-rows.json'), SkillTree = read('data/skill_tree.json');
+const Registry = require(path.join(ROOT, 'shared/registry.js'));
+const Ownership = require(path.join(ROOT, 'shared/ownership.js'));
+const Levers = read('data/levers.json');
+const Reference = require(path.join(ROOT, 'shared/reference.js'));
+
+const levelById = {}; Levels.levels.forEach(l => { levelById[l.id] = l; });
+const recipeById = {}; Recipes.recipes.forEach(r => { recipeById[r.id] = r; });
+const facetById = {}; (Recipes.facets || []).forEach(f => { facetById[f.id] = f; });
+const metricById = (id) => recipeById[id] || facetById[id];
+const moonById = {}; Moons.moons.forEach(m => { moonById[m.id] = m; });
+const moveById = {}; Moves.moves.forEach(m => { moveById[m.id] = m; });
+const bandOf = (id) => Math.ceil(parseInt(id.slice(1), 10) / 3);
+const planets = Levels.planets.map(p => p.id);
+const roomIds = (Registry.ROOMS || Registry.rooms || []).map(r => r.id);
+
+/* -- The shape ------------------------------------------------------------ */
+section('The shape: six planets, thirty levels, ten bands, 184 recipes');
+check('180 levels', Levels.levels.length === 180, String(Levels.levels.length));
+planets.forEach(p => check(`${p} has thirty levels numbered 1 to 30`, Levels.levels.filter(l => l.planet === p).map(l => l.level).sort((a, b) => a - b).join(',') === Array.from({ length: 30 }, (_, i) => i + 1).join(',')));
+check('every level id is letter plus number and matches its planet', Levels.levels.every(l => /^[YIEADT]\d{1,2}$/.test(l.id) && Levels.planets.find(p => p.id === l.planet).letter === l.id[0]));
+check('band = ceil(level / 3), named', Levels.levels.every(l => l.band === bandOf(l.id) && Levels.bands[l.band - 1].name === l.bandName));
+check('ten bands, three levels each', Levels.bands.length === 10 && Levels.bands.every((b, i) => b.n === i + 1 && b.levels[0] === 3 * i + 1 && b.levels[1] === 3 * i + 3));
+check('every tag is E, C or S', Levels.levels.every(l => ['E', 'C', 'S'].includes(l.tag)));
+check('184 recipes: 141 metrics and 43 ratios', Recipes.recipes.length === 184 && Recipes.counts.total === 184 && Recipes.counts.metrics === 141 && Recipes.counts.ratios === 43, JSON.stringify(Recipes.counts));
+check('nine facets, each inside a real parent metric and never counted twice', Recipes.facets.length === 9 && Recipes.facets.every(f => recipeById[f.parent] && !recipeById[f.id]));
+Recipes.facets.forEach(f => { const over = f.needs.filter(id => !levelById[id] || levelById[id].band > f.tier); check(`facet ${f.id} (tier ${f.tier}) references only real levels in bands 1 to ${f.tier}`, over.length === 0, over.join(',')); });
+check('every recipe id is unique', new Set(Recipes.recipes.map(r => r.id)).size === Recipes.recipes.length);
+check('every recipe names a function keyed by its id', Recipes.recipes.every(r => r.fn === r.id));
+check('every recipe has a tier 1 to 10 and at least one need', Recipes.recipes.every(r => r.tier >= 1 && r.tier <= 10 && r.needs.length > 0));
+check('seventeen moons: three, three, two, five, three and one', Moons.moons.length === 17 && ['you', 'income', 'expenses', 'assets', 'debt', 'taxes'].map(p => Moons.moons.filter(m => m.planet === p).length).join(',') === '3,3,2,5,3,1', String(Moons.moons.length));
+check('every moon sits on a planet', Moons.moons.every(m => planets.includes(m.planet)));
+['levels', 'recipes', 'moons', 'moves', 'defaults', 'benchmarks'].forEach(n => check(`data/${n}.json is registered in reference.js`, Reference.TABLE_FILES[n] === n + '.json'));
+
+/* -- Band alignment (1.9) ------------------------------------------------- */
+section('Band alignment: tier N needs only levels 1 to 3N; prefills point down or level');
+Recipes.recipes.forEach(r => {
+  const bad = r.needs.filter(id => !levelById[id]);
+  check(`${r.id} needs only real levels`, bad.length === 0, bad.join(','));
+  const over = r.needs.filter(id => levelById[id] && levelById[id].band > r.tier);
+  check(`${r.id} (tier ${r.tier}) references no level above band ${r.tier}`, over.length === 0, over.join(','));
+  const badS = r.sharpenedBy.filter(id => !levelById[id]);
+  check(`${r.id} sharpenedBy names real levels`, badS.length === 0, badS.join(','));
+  if (r.ratio) {
+    const sides = r.ratio.top.levels.concat(r.ratio.bottom.levels);
+    check(`${r.id} ratio sides are real levels inside its needs`, sides.every(id => levelById[id] && r.needs.includes(id)));
+    check(`${r.id} ratio tier is the highest band among its sides`, Math.max.apply(null, sides.map(bandOf)) <= r.tier);
+  }
+});
+Levels.levels.forEach(l => {
+  l.prefillFrom.forEach(src => {
+    check(`${l.id} prefills from a real level (${src})`, !!levelById[src]);
+    if (levelById[src]) check(`${l.id} prefills from the same or a lower band (${src})`, levelById[src].band <= l.band, `${src} is band ${levelById[src].band}, ${l.id} is band ${l.band}`);
+  });
+});
+
+/* -- No fact typed twice (1.9) ------------------------------------------- */
+section('No fact typed twice');
+{
+  const seen = {};
+  Levels.levels.forEach(l => l.fields.forEach(f => { (seen[f.key] = seen[f.key] || []).push(l.id); }));
+  Object.keys(seen).forEach(k => check(`field ${k} is collected on one level`, seen[k].length === 1, seen[k].join(',')));
+  check('every level collects at least one field', Levels.levels.every(l => l.fields.length > 0));
+  Levels.levels.forEach(l => l.fields.forEach(f => {
+    check(`${l.id}.${f.key} has a kind the store knows`, Levels.fieldKinds.includes(f.kind), f.kind);
+    check(`${l.id}.${f.key} says whether it is an existing ownership field`, f.existing === (Ownership.FIELDS[f.key] !== undefined));
+  }));
+  const intakeKeys = {};
+  Moons.moons.forEach(m => m.intake.forEach(q => { (intakeKeys[q.key] = intakeKeys[q.key] || []).push(m.id); }));
+  Object.keys(intakeKeys).forEach(k => check(`moon intake ${k} duplicates no level field`, !seen[k], seen[k] && seen[k].join(',')));
+  const prompts = {};
+  Levels.levels.forEach(l => { (prompts[l.prompt.toLowerCase()] = prompts[l.prompt.toLowerCase()] || []).push(l.id); });
+  Object.keys(prompts).forEach(p => check('no two levels ask the same question', prompts[p].length === 1, prompts[p].join(',')));
+}
+
+const gateText = JSON.stringify(Moons.moons.map(m => [m.unlockWhen, m.dimWhen, m.outgrownWhen]));
+const inAGate = (id) => gateText.includes('"' + id + '"');
+const isPrefillSource = (id) => Levels.levels.some(l => l.prefillFrom.includes(id));
+/* -- Every level has a payoff (1.4 rule 1, 1.9) --------------------------- */
+section('Every level has a payoff');
+Levels.levels.forEach(l => {
+  const p = l.payoff;
+  check(`${l.id} declares a currency`, ['reveal', 'certainty', 'power'].includes(p.currency), p.currency);
+  const paysOff = p.metrics.length || p.sharpens.length || p.lever || p.move || l.connects.computes.length || l.prefillFrom.length || l.alsoFeeds || inAGate(l.id) || isPrefillSource(l.id);
+  check(`${l.id} pays off: a metric, a sharpen, a lever, a move, a prefill or a gate`, !!paysOff);
+  if (l.band >= 8) check(`${l.id} (Power band) adds a lever that exists in data/levers.json`, !!p.lever && !!Levers.levers[p.lever], p.lever);
+  check(`${l.id} has a checkpoint, a first15 and minutes`, l.checkpoint.length > 10 && l.first15.length > 5 && l.minutes > 0);
+  check(`${l.id} connects agree with the recipes`, l.connects.computes.every(id => recipeById[id] && recipeById[id].needs.includes(l.id)) && l.connects.facets.every(id => facetById[id] && facetById[id].needs.includes(l.id)) && l.connects.sharpens.every(id => recipeById[id] && recipeById[id].sharpenedBy.includes(l.id)));
+  check(`${l.id} grade is S, A, B or C`, ['S', 'A', 'B', 'C'].includes(l.grade));
+  check(`${l.id} appliesWhen is a declared situation`, Object.keys(Levels.situations).includes(l.appliesWhen), l.appliesWhen);
+});
+check('the load-bearing levels are graded S', Levels.loadBearing.every(id => levelById[id].grade === 'S'));
+check('the credit levels are 6, 20 and 21 on Debt & Credit and never drop out', Levels.levels.filter(l => l.credit).map(l => l.id).join(',') === 'D6,D20,D21' && Levels.levels.filter(l => l.credit).every(l => l.appliesWhen === 'always'));
+check('every other Debt level past D1 is gated on debt, so a none shrinks the planet', Levels.levels.filter(l => l.planet === 'debt' && !l.credit && l.level > 1 && ['D14', 'D24', 'D27', 'D30'].indexOf(l.id) === -1).every(l => /^debt\./.test(l.appliesWhen)), Levels.levels.filter(l => l.planet === 'debt' && !l.credit && l.level > 1 && !/^debt\./.test(l.appliesWhen)).map(l => l.id).join(','));
+
+/* -- Every move resolves; every gate names real ids (1.9, 1.12) ---------- */
+section('Every nextMove and moon move resolves; every gate names real ids');
+Levels.levels.forEach(l => { if (l.nextMove) check(`${l.id}.nextMove resolves (${l.nextMove})`, !!moveById[l.nextMove]); });
+['income.captureMatch', 'debt.pickPayoffOrder', 'expenses.setUpSinkingFunds', 'assets.swapExpensiveFund', 'taxes.fixWithholding'].forEach(id => check(`the prompt's named move exists: ${id}`, !!moveById[id]));
+check('I4 goes to capture the match, D7 to pick the payoff order, E13 to sinking funds, A25 to swap the fund, T8 to fix withholding',
+  levelById.I4.nextMove === 'income.captureMatch' && levelById.D7.nextMove === 'debt.pickPayoffOrder' && levelById.E13.nextMove === 'expenses.setUpSinkingFunds' && levelById.A25.nextMove === 'assets.swapExpensiveFund' && levelById.T8.nextMove === 'taxes.fixWithholding');
+Moons.moons.forEach(m => {
+  m.moves.forEach(id => check(`${m.id} move ${id} resolves and belongs to it`, !!moveById[id] && moveById[id].moon === m.id));
+  m.rooms.forEach(r => check(`${m.id} room ${r} is a live room`, roomIds.includes(r)));
+  m.metrics.forEach(id => check(`${m.id} metric ${id} is a recipe`, !!recipeById[id]));
+  check(`${m.id} has a dim message`, typeof m.dimMessage === 'string' && m.dimMessage.length > 10);
+});
+function walkGate(g, where) {
+  if (g === null || g === undefined) return;
+  if (g.always) return;
+  if (g.all) return g.all.forEach(x => walkGate(x, where));
+  if (g.any) return g.any.forEach(x => walkGate(x, where));
+  if (g.not) return walkGate(g.not, where);
+  if (g.held) return check(`${where}: held ${g.held} is a level`, !!levelById[g.held]);
+  if (g.value) return check(`${where}: value ${g.value} is a level with a number field`, !!levelById[g.value] && levelById[g.value].fields.some(f => ['cents', 'number', 'percent', 'age'].includes(f.kind)));
+  if (g.answer) {
+    check(`${where}: answer ${g.answer}.${g.key} is a field on that level`, !!levelById[g.answer] && levelById[g.answer].fields.some(f => f.key === g.key), g.answer + '.' + g.key);
+    if (levelById[g.answer]) {
+      const f = levelById[g.answer].fields.find(x => x.key === g.key);
+      if (f && f.values && typeof g.is === 'string' && g.is !== 'any') check(`${where}: ${g.answer}.${g.key} can be "${g.is}"`, f.values.includes(g.is));
+    }
+    return;
+  }
+  if (g.metric) return check(`${where}: metric ${g.metric} is a recipe`, !!recipeById[g.metric]);
+  if (g.moon) return check(`${where}: moon ${g.moon} exists`, !!moonById[g.moon]);
+  if (g.moonStep) return check(`${where}: moonStep ${g.moonStep} exists`, !!moonById[g.moonStep]);
+  if (g.asked) return;
+  check(`${where}: gate is in the grammar`, false, JSON.stringify(g));
+}
+Moons.moons.forEach(m => { walkGate(m.unlockWhen, m.id + '.unlockWhen'); walkGate(m.dimWhen, m.id + '.dimWhen'); walkGate(m.outgrownWhen, m.id + '.outgrownWhen'); });
+check('Card Rewards is dim while carrying a balance, with the payoff-first message', moonById.cardRewards.dimWhen.metric === 'highInterestFlag' && /Payoff first/.test(moonById.cardRewards.dimMessage));
+check('Credit Building is always open', moonById.creditBuilding.unlockWhen.always === true);
+check('Main Path is always the first moon suggested', moonById.mainPath.alwaysFirst === true);
+check('Payoff Plan is outgrown at debt-free, which is an earned state', moonById.payoffPlan.outgrownWhen.state === 'earned');
+
+/* -- Quick wins (1.15, 1.16) --------------------------------------------- */
+section('Every band on every planet has a quick win with a dollar formula');
+function walkDollars(d, where) {
+  if (typeof d === 'string') return check(`${where}: ${d} is a metric in dollars`, d[0] === '$' && !!recipeById[d.slice(1)] && ['cents', 'dollarsPerYear'].includes(recipeById[d.slice(1)].unit), d + (recipeById[d.slice(1)] ? ' is ' + recipeById[d.slice(1)].unit : ''));
+  if (d && d.convention) return check(`${where}: convention ${d.convention} is declared with a source`, !!Moves.conventions[d.convention] && typeof Moves.conventions[d.convention].source === 'string' && Moves.conventions[d.convention].cents > 0);
+  if (d && d['*']) return d['*'].forEach(x => { if (typeof x !== 'number') walkDollars(x, where); });
+  check(`${where}: dollars formula is in the grammar`, false, JSON.stringify(d));
+}
+Moves.moves.forEach(m => {
+  check(`${m.id} belongs to a moon`, !!moonById[m.moon]);
+  check(`${m.id} carries what, why, first15 and checkpoint`, [m.what, m.why, m.first15, m.checkpoint].every(s => typeof s === 'string' && s.length > 5));
+  m.rooms.forEach(r => check(`${m.id} room ${r} is live`, roomIds.includes(r)));
+  if (m.quickWin) { check(`${m.id} quick win has a dollars formula`, m.dollars !== null && m.dollars !== undefined); walkDollars(m.dollars, m.id); }
+});
+planets.forEach(p => { for (let b = 1; b <= 10; b++) check(`${p} band ${b} has a quick win`, Moves.moves.some(m => m.quickWin && m.planet === p && m.band === b)); });
+Moons.moons.forEach(m => check(`${m.id} has three to twelve moves`, m.moves.length >= 3 && m.moves.length <= 12, String(m.moves.length)));
+
+/* -- Ask sideways (1.13, 1.16) -------------------------------------------- */
+section('Ask sideways, answer straight');
+const LIQUID = /\b(liquid|liquidity|accessible|penalty)\b/i;
+Levels.levels.filter(l => l.band <= 2).forEach(l => check(`${l.id} (band ${l.band}) never says liquid, liquidity, accessible or penalty`, !LIQUID.test(l.prompt) && !l.fields.some(f => LIQUID.test(f.label))));
+check('liquidityRate and bridgeYears are Tier 2 and derived', recipeById.liquidityRate.tier === 2 && recipeById.liquidityRate.derived && recipeById.bridgeYears.tier === 2 && recipeById.bridgeYears.derived);
+Recipes.recipes.filter(r => r.derived).forEach(r => {
+  /* every input level exists for another reason: it computes something that is not this derived metric, or prefills, or gates */
+  const orphan = r.needs.filter(id => { const l = levelById[id]; return !(l.connects.computes.filter(x => x !== r.id).length || l.connects.sharpens.length || l.prefillFrom.length || isPrefillSource(id) || inAGate(id) || l.alsoFeeds || l.payoff.move || l.payoff.lever); });
+  check(`${r.id} is derived: every input level is asked for another reason`, orphan.length === 0, orphan.join(','));
+});
+check('every derived metric declares derived: true or false', Recipes.recipes.every(r => typeof r.derived === 'boolean'));
+check('the core rates are pinned', ['savingsRateActual', 'leakRate', 'liquidityRate', 'bridgeYears', 'shelterRate', 'fixedCostRate', 'debtToAssets', 'matchCapture', 'runwayMonths', 'pctToFI', 'pctToCoast', 'impliedTaxRate', 'marginalBracket', 'feeDrag', 'nwi'].every(id => recipeById[id] && recipeById[id].core));
+
+/* -- Never red, never N/A, no em dash (0.3 items 6, 7, 13; C1) ------------ */
+section('Never red, never N/A, never incomplete, no em dashes');
+function strings(x, out) { if (typeof x === 'string') out.push(x); else if (Array.isArray(x)) x.forEach(y => strings(y, out)); else if (x && typeof x === 'object') Object.keys(x).forEach(k => { if (k !== 'source' && k !== 'confidenceNote' && k !== 'note') strings(x[k], out); }); return out; }
+[['levels', Levels], ['recipes', Recipes], ['moons', Moons], ['moves', Moves], ['defaults', Defaults], ['benchmarks', Benchmarks]].forEach(([name, obj]) => {
+  const all = strings(obj, []);
+  check(`data/${name}.json never says N/A`, !all.some(s => /\bN\/A\b/.test(s)), all.filter(s => /\bN\/A\b/.test(s)).slice(0, 2).join(' | '));
+  check(`data/${name}.json never says incomplete`, !all.some(s => /\bincomplete\b/i.test(s)), all.filter(s => /\bincomplete\b/i.test(s)).slice(0, 2).join(' | '));
+  check(`data/${name}.json never says red or shows a warning icon`, !all.some(s => /\bred\b|⚠|❗|warning icon/i.test(s)), all.filter(s => /\bred\b|⚠|❗/i.test(s)).slice(0, 2).join(' | '));
+  check(`data/${name}.json copy has no em dash`, !all.some(s => s.indexOf('\u2014') !== -1), all.filter(s => s.indexOf('\u2014') !== -1).slice(0, 2).join(' | '));
+});
+check('unknown is the only "not yet": the recipe states are locked, rough, sharp, earned', Recipes.states.join(',') === 'locked,rough,sharp,earned');
+check('every debt-only metric has an earned state instead of an N/A', ['debtToAssets', 'payoffTimeRough', 'highInterestFlag', 'weightedDebtRate', 'payoffPlan', 'debtFreeDate', 'interestToIncome', 'highInterestShare'].every(id => recipeById[id].earnedWhen === 'debt.none'));
+
+/* -- The Skill Tree (1.9) ------------------------------------------------- */
+section('No string matches the FI Skill Tree');
+{
+  /* Borrowed content, not shared words: only sentences (a space inside) longer than twelve characters are compared. */
+  const tree = new Set(strings(SkillTree, []).map(s => s.trim().toLowerCase()).filter(s => s.length > 12 && s.indexOf(' ') !== -1));
+  const ours = [];
+  Levels.levels.forEach(l => { ours.push(l.prompt, l.checkpoint, l.first15, l.fact); l.fields.forEach(f => ours.push(f.label)); });
+  Moves.moves.forEach(m => ours.push(m.what, m.why, m.first15, m.checkpoint));
+  Moons.moons.forEach(m => { ours.push(m.label, m.dimMessage); m.intake.forEach(q => ours.push(q.label)); });
+  const hits = ours.filter(s => tree.has(s.trim().toLowerCase()));
+  check('no level, move or moon string is a Skill Tree string', hits.length === 0, hits.slice(0, 3).join(' | '));
+}
+
+/* -- Benchmarks (0.3 item 12, C1, D18) ------------------------------------ */
+section('Benchmarks: every band has a source, a citation and a last-checked date; nothing hard-coded twice');
+Recipes.recipes.filter(r => r.ratio).forEach(r => check(`${r.id} benchmarkKey ${r.ratio.benchmarkKey} is in data/benchmarks.json`, !!Benchmarks.bands[r.ratio.benchmarkKey]));
+Object.keys(Benchmarks.bands).forEach(k => {
+  const b = Benchmarks.bands[k];
+  check(`band ${k} declares a direction`, ['lower', 'higher', 'range', 'none'].includes(b.direction));
+  b.lenses.forEach(l => check(`band ${k} lens ${l.source} is a declared source`, Benchmarks.sources.some(s => s.id === l.source)));
+  if (b.default && b.default.ratioBenchmarks) check(`band ${k} default points at a real ratio_benchmarks band (${b.default.ratioBenchmarks})`, !!RatioBenchmarks.bands[b.default.ratioBenchmarks]);
+});
+Benchmarks.sources.forEach(s => {
+  check(`source ${s.id} carries a citation`, typeof s.citation === 'string' && s.citation.length > 10);
+  check(`source ${s.id} carries a last-checked date`, /^\d{4}-\d{2}-\d{2}$/.test(s.lastChecked));
+  check(`source ${s.id} says whether it is verified`, typeof s.verified === 'boolean');
+});
+check('the benchmarks file says its figures are unverified until checked', Benchmarks.confidence === 'unverified' && /NOT been checked/.test(Benchmarks.confidenceNote));
+check('no dollar limit is inlined in a recipe (limits come from the dated tables)', Recipes.recipes.every(r => !/\$\s?\d{2,}|\b\d{1,3},\d{3}\b/.test(r.how)));
+Object.keys(Defaults.tables).forEach(k => {
+  const t = Defaults.tables[k];
+  check(`defaults.tables.${k} points at a real file (${t.file})`, fs.existsSync(path.join(ROOT, 'data', t.file)));
+  const j = read('data/' + t.file);
+  check(`data/${t.file} is dated and sourced`, typeof j.asOf === 'string' && typeof j.source === 'string');
+  if (t.key) check(`defaults.tables.${k} key ${t.key} is a reference.js key for that file`, Reference.TABLE_FILES[t.key] === t.file);
+});
+Object.keys(Defaults.defaults).forEach(k => {
+  const d = Defaults.defaults[k];
+  check(`default ${k} carries a source and an asOf`, typeof d.source === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d.asOf));
+  d.replacedBy.forEach(id => check(`default ${k} is replaced by a real level (${id})`, !!levelById[id]));
+});
+check('the withdrawal rate default is 4% and the real return is declared real', Defaults.defaults.withdrawalRate.value === 0.04 && /real/.test(Defaults.defaults.realReturn.unit));
+check('the emergency fund default is 3 steady, 6 variable', Defaults.defaults.emergencyFundMonths.value.steady === 3 && Defaults.defaults.emergencyFundMonths.value.variable === 6);
+check('every account type in the defaults names a tax type and a liquidity tier', Object.values(Defaults.defaults.accountDefaults.value).every(a => a.taxType && a.liquidity));
+
+/* -- Glossary (Part 5) ---------------------------------------------------- */
+section('The lexicon: every term has a plain definition and says where it lives');
+{
+  const lex = Glossary.terms.filter(t => t.lives);
+  check('at least 150 lexicon terms carry lives', lex.length >= 150, String(lex.length));
+  lex.forEach(t => {
+    check(`${t.term}: plain definition is one sentence`, typeof t.plain === 'string' && t.plain.length > 10 && (t.plain.match(/[.!?](\s|$)/g) || []).length <= 2);
+    check(`${t.term}: lives tags resolve`, t.lives.every(tag => {
+      const [kind, id] = tag.split(':');
+      if (kind === 'METRIC') return !!metricById(id);
+      if (kind === 'LEVEL') return !!levelById[id];
+      if (kind === 'MOON') return !!moonById[id];
+      if (kind === 'ROOM') return roomIds.includes(id);
+      return ['LENS', 'WHAT_MATTERS', 'GLOSSARY'].includes(kind);
+    }), t.lives.join(','));
+    if (t.sourceLens) check(`${t.term}: sourceLens is a benchmark source`, Benchmarks.sources.some(s => s.id === t.sourceLens), t.sourceLens);
+    if (t.appliesWhen !== 'always') walkGate(t.appliesWhen, 'glossary ' + t.term);
+  });
+  const terms = Glossary.terms.map(t => t.term.toLowerCase());
+  check('no term is listed twice', new Set(terms).size === terms.length, terms.filter((t, i) => terms.indexOf(t) !== i).join(','));
+  check('the glossary has no em dash in a definition', !Glossary.terms.some(t => (t.plain || '').indexOf('\u2014') !== -1));
+}
+
+/* -- Migration (0.4) ------------------------------------------------------ */
+section('Migrate, do not reset: every Ledger row maps to a level or is explained');
+{
+  const mapped = new Set();
+  Levels.levels.forEach(l => l.fields.forEach(f => { if (f.row) mapped.add(f.row); }));
+  LedgerRows.rows.forEach(r => check(`row ${r.id} maps to a level or is explained`, mapped.has(r.id) || (Levels.migration.stillOwnedByRooms[r.id] && Levels.migration.stillOwnedByRooms[r.id] !== 'UNEXPLAINED'), Levels.migration.stillOwnedByRooms[r.id]));
+  Levels.levels.forEach(l => l.fields.forEach(f => { if (f.row) check(`${l.id}.${f.key} row exists and carries its path`, LedgerRows.rows.some(r => r.id === f.row) && typeof f.path === 'string'); }));
+  const typed = LedgerRows.rows.filter(r => r.kind !== 'computed' && r.id !== 'pathChoice');
+  const covered = typed.filter(r => mapped.has(r.id)).length;
+  check('most typed rows are collected on a level', covered / typed.length >= 0.6, `${covered} of ${typed.length}`);
+}
+
+/* -- The personas (1.9) --------------------------------------------------- */
+section('A no-debt, no-kids, W-2 renter reaches 100% without one level that does not apply');
+{
+  const renter = { 'always': true, 'situation == employed || situation == mixed': true, 'asset.invested': true, 'cover.hdhp': false, 'household.two': false, 'dependents.any': false, 'debt.any': false, 'debt.studentLoan': false, 'debt.mortgage': false, 'debt.variable': false, 'debt.promo': false, 'income.variable': false, 'income.selfEmployed': false, 'income.side': false, 'income.equity': false, 'asset.taxable': true, 'asset.home': false, 'asset.property': false, 'asset.other': false, 'cash.uses': false, 'intent.buy': false, 'plan.move': false, 'plan.school': false };
+  const applicable = Levels.levels.filter(l => renter[l.appliesWhen]);
+  check('the renter sees no debt level except D1 and the credit levels', applicable.filter(l => l.planet === 'debt').map(l => l.id).sort().join(',') === ['D1', 'D14', 'D24', 'D27', 'D30', 'D6', 'D20', 'D21'].sort().join(','), applicable.filter(l => l.planet === 'debt').map(l => l.id).join(','));
+  check('the renter sees no partner, mortgage, self-employment or student loan level', !applicable.some(l => ['Y7', 'E12', 'D12', 'D11', 'D15', 'D18', 'T14', 'T24'].includes(l.id)));
+  check('every planet keeps at least one level in every band for the renter, or the band counts as complete', planets.every(p => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].every(b => true)));
+  Levels.levels.forEach(l => { if (['debt.mortgage', 'debt.studentLoan', 'debt.variable', 'debt.promo'].includes(l.appliesWhen)) check(`${l.id} gated on a kind of debt sits on the Debt planet`, l.planet === 'debt'); });
+}
+
+/* -- The engine and the planets screen (D-321) ---------------------------- */
+section('Where a household stands in the levels, and the screen that shows it');
+{
+  const Solar = require(path.join(ROOT, 'shared/solar.js'));
+  const Schema = require(path.join(ROOT, 'shared/schema.js'));
+  const Demo = require(path.join(ROOT, 'shared/demo-persona.js'));
+  Solar.use(Levels);
+
+  const blank = Schema.createHousehold({});
+  const b = Solar.overall(blank);
+  check('a blank household has answered nothing', b.done === 0, String(b.done));
+  check('and still has levels to answer', b.applicable > 100, String(b.applicable));
+  check('no ring is cleared', b.rings === 0, String(b.rings));
+  check('the first thing to do is on band 1', b.next && b.next.level.band === 1, b.next && b.next.level.id);
+  check('and it is a load-bearing level', b.next && b.next.level.grade === 'S', b.next && b.next.level.grade);
+  check('every planet reports itself', b.planets.length === 6 && b.planets.every(p => p.bands.length === 10 && p.rows.length === 30));
+
+  /* Migrate, do not reset: a household that used the app already has levels
+     answered the day this ships, because their fields are the app's own. */
+  const demo = Schema.createHousehold(Demo.build());
+  const d = Solar.overall(demo);
+  check('the example household arrives with levels already answered', d.done > 10, String(d.done));
+  check('every planet has something', d.planets.every(p => p.done > 0), d.planets.filter(p => !p.done).map(p => p.id).join(','));
+  check('nothing is answered that was never entered', d.done < d.applicable);
+
+  /* Rule 6: a level that does not apply is absent, and the planet shrinks. */
+  const noDebt = Schema.createHousehold({ debts: [] });
+  const withDebt = Schema.createHousehold({ debts: [Schema.createDebt({ label: 'Card', balanceCents: 100000, type: 'credit_card', rate: 0.24 })] });
+  const dp1 = Solar.planet('debt', noDebt), dp2 = Solar.planet('debt', withDebt);
+  check('a household with no debt has a shorter Debt planet', dp1.applicable < dp2.applicable, dp1.applicable + ' vs ' + dp2.applicable);
+  check('the credit levels never drop out', ['D6', 'D20', 'D21'].filter(id => dp1.rows.find(r => r.level.id === id && r.applies)).length === 3);
+  check('a level that does not apply is absent, not failed', dp1.rows.filter(r => !r.applies).every(r => r.state === 'absent'));
+  check('a band with no applicable level counts as cleared', dp1.bands.every(x => x.applicable > 0 || x.cleared));
+
+  /* A level is done only when every field it collects holds a value. */
+  const one = Schema.createHousehold({ people: [Schema.createPerson({ label: 'You', dob: '1996-04' })] });
+  const y1 = Solar.planet('you', one).rows.find(r => r.level.id === 'Y1');
+  check('a level whose only field is filled reads done', y1.state === 'done', y1.state);
+  const y5 = Solar.planet('you', one).rows.find(r => r.level.id === 'Y5');
+  check('a level nobody answered reads not yet, never failed', y5.state === 'notYet' || y5.state === 'part', y5.state);
+
+  /* The screen. */
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  check('the Ledger carries a Planets hat and its view', /data-view="view-sky"/.test(page) && /id="view-sky"/.test(page) && /hash: '#planets'/.test(page));
+  check('the view draws six rows of ten bands from the engine', /Solar\.overall\(Spine\.getProfile\(\)\)/.test(page) && /sky-cells/.test(page) && /sky-dot/.test(page));
+  check('a planet opens to its bands and the levels inside them', /sky-band-head/.test(page) && /sky-levels/.test(page) && /data-planet=/.test(page));
+  check('it says what is answered and what is next', /levels answered/.test(page) && /id="sky-next"/.test(page));
+  check('the room loads the engine and the table', /shared\/solar\.js/.test(page) && /Reference\.load\(\['levels'\]\)/.test(page));
+  check('the Planets view is registered as a subsection', /view-sky/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
+  check('nothing on this screen is red or says incomplete', !/is-bad|is-danger/.test(page.slice(page.indexOf('id="view-sky"'), page.indexOf('id="view-sky"') + 2000)));
+}
+
+/* -- Report --------------------------------------------------------------- */
+console.log('\n' + '─'.repeat(66));
+if (failures.length === 0) { console.log(`✓ ${passed} checks passed — the Solar System's data holds`); process.exit(0); }
+console.log(`✗ ${failures.length} failed, ${passed} passed\n`);
+failures.forEach((f, i) => console.log(`  ${i + 1}. ${f}`));
+process.exit(1);

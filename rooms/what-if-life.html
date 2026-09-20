@@ -8,12 +8,12 @@
 <script src="../shared/errlog.js"></script>
 <script src="../shared/size.js"></script>
 <title>What If, Life · SPARKS</title>
-<meta name="description" content="A sabbatical, a move, a second income — one life event at a time, run three ways: dream, default, disaster."/>
+<meta name="description" content="A sabbatical, a move, a second income, one life event at a time, run three ways: dream, default, disaster."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. BRIEF §6.2. DECISIONS.md D-087, D-296 (the merge).
+  ROOM SPEC, SPEC.md §11. BRIEF §6.2. DECISIONS.md D-087, D-296 (the merge).
 
   TWO READINGS OF THE YEARS AHEAD.
 
@@ -26,15 +26,15 @@
   both to be. A block is one decision with a price and a date; each of
   these is a whole life running for five years, and the shell would have
   answered four of its five questions "not applicable". They ARE each
-  other, though — the same five figures projected the same way, one event
-  at a time or every path at once — so they are one room of two readings.
+  other, though, the same five figures projected the same way, one event
+  at a time or every path at once, so they are one room of two readings.
   Both project, so both mount the horizon line (D-131), once each.
 
   1. READS   income, take-home, spending, cash, investments, the captured
              401(k) match, the deductible and state (for the disaster
              column's worst plausible year), The Rerank's cut lines, and
              the household's return assumption.
-  2. WRITES  Only a saved scenario — scenarios[] — with the event, the
+  2. WRITES  Only a saved scenario, scenarios[], with the event, the
              answers and the disaster line, when you ask. Every answer on
              this page is otherwise a what-if and is not stored.
   3. SHOWS   pick an event → its questions (defaults proposed) → three
@@ -44,7 +44,7 @@
   5. DEMO    the household's own numbers; "Try with example numbers" on
              Start Here seeds them.
 
-  LIVE-FORM: guarded — the question form rebuilds only when the event
+  LIVE-FORM: guarded, the question form rebuilds only when the event
   changes, through shared/liveform.js; values are written on blur.
 -->
 <style>
@@ -254,7 +254,7 @@
 
   <!-- ===== FIVE YEARS, EVERY WAY (was rooms/adventure.html) ===== -->
   <section id="view-five-years" hidden>
-  <p class="slaf-lede">Every way through the next five years on one card each, measured against drifting — then one chart, the headwinds and tailwinds, and a link you can keep.</p>
+  <p class="slaf-lede">Every way through the next five years on one card each, measured against drifting, then one chart, the headwinds and tailwinds, and a link you can keep.</p>
 
   <p class="slaf-horizon" id="ad-horizon-line"></p>
   <div class="slaf-reason" id="blocked" hidden></div>
@@ -447,7 +447,7 @@
         + (given !== undefined && given !== null ? ' value="' + esc(display(q, given)) + '"' : '') + ' aria-label="' + esc(q.ask) + '"/>' + suffix + '</span>'
         + (q.hint ? '<span class="slaf-hint">' + esc(q.hint) + '</span>' : '') + '</label>';
     }).join('');
-    /* Defaults are proposed, never stored — D-060. */
+    /* Defaults are proposed, never stored, D-060. */
     t.questions.forEach(function (q) {
       if (q.choices) return;
       var node = list.querySelector('input[data-q="' + q.id + '"]');
@@ -543,8 +543,8 @@
         + '<span class="cap">vs doing nothing, net worth at ' + Math.round(r.horizonMonths / 12) + ' years</span>'
         + '<dl>'
         + '<dt>Net worth then</dt><dd>' + fmt(fut(r.netWorthAtEndCents, r.horizonMonths / 12)) + '</dd>'
-        + '<dt>FI date</dt><dd>' + (r.fiDateShiftMonths === null ? '—' : r.fiDateShiftMonths === 0 ? 'unchanged' : Math.abs(r.fiDateShiftMonths) + ' mo ' + (r.fiDateShiftMonths > 0 ? 'later' : 'sooner')) + '</dd>'
-        + '<dt>' + (cashOut ? 'Cash runs out' : 'Thinnest month') + '</dt><dd>' + (cashOut ? 'month ' + (cashOut.month + 1) : (r.runwayMinMonths === null ? '—' : r.runwayMinMonths + ' mo of runway')) + '</dd>'
+        + '<dt>FI date</dt><dd>' + (r.fiDateShiftMonths === null ? 'not yet' : r.fiDateShiftMonths === 0 ? 'unchanged' : Math.abs(r.fiDateShiftMonths) + ' mo ' + (r.fiDateShiftMonths > 0 ? 'later' : 'sooner')) + '</dd>'
+        + '<dt>' + (cashOut ? 'Cash runs out' : 'Thinnest month') + '</dt><dd>' + (cashOut ? 'month ' + (cashOut.month + 1) : (r.runwayMinMonths === null ? 'not yet' : r.runwayMinMonths + ' mo of runway')) + '</dd>'
         + (r.lostMatchCents ? '<dt>Match lost</dt><dd>' + fmt(r.lostMatchCents) + '</dd>' : '')
         + (r.gapMonths ? '<dt>Gap after</dt><dd>' + r.gapMonths + ' mo</dd>' : '')
         + (r.shockCents ? '<dt>Worst year on top</dt><dd>' + fmt(r.shockCents) + '</dd>' : '')
@@ -562,10 +562,10 @@
     return all;
   }
 
-  /* The template's own lines — figures beside the columns, from the
+  /* The template's own lines, figures beside the columns, from the
      default run (they do not depend on the bundle). */
   function lineText(l) {
-    if (l.value === null || l.value === undefined) return Money.EM_DASH;
+    if (l.value === null || l.value === undefined) return Money.NOT_YET;
     switch (l.unit) {
       case 'dollars': return fmt(l.value);
       case 'dollarsMonthly': return fmt(l.value) + '/mo';
@@ -634,7 +634,7 @@
       series: series('cashCents', true), hLines: cashLines, x: x
     });
     el('plot-why').textContent = 'Cash on hand, the same three ways.'
-      + (cashLines.length ? ' The amber line is the cushion floor — your sleep-at-night number when you have set one, else three months of spending; the question is whether any line dips under it.' : '')
+      + (cashLines.length ? ' The amber line is the cushion floor, your sleep-at-night number when you have set one, else three months of spending; the question is whether any line dips under it.' : '')
       + ' Below zero the cash is gone.';
   }
 
@@ -664,7 +664,7 @@
       startsOn = Schema.localDay(d);
     }
     Spine.upsertScenario(Schema.createScenario({
-      name: t.title + (summary(t, answers) ? ' — ' + summary(t, answers) : ''),
+      name: t.title + (summary(t, answers) ? ', ' + summary(t, answers) : ''),
       startsOn: startsOn,
       diff: { templateId: t.id, answers: answers, disasterLine: state.disasterLine || null, savedOn: Schema.localDay() }
     }));
@@ -679,7 +679,7 @@
       return '<div class="saved-row"><span>' + esc(s.name || 'Scenario') + '<small>' + (s.startsOn ? 'from ' + esc(s.startsOn) + ' · ' : '') + (d.disasterLine ? '“' + esc(d.disasterLine) + '”' : 'no disaster line') + '</small></span>'
         + '<button type="button" class="slaf-btn slaf-btn--quiet" data-load="' + esc(s.id) + '">Open</button>'
         + '<button type="button" class="slaf-btn slaf-btn--quiet" data-remove="' + esc(s.id) + '" aria-label="Remove">✕</button></div>';
-    }).join('') : '<p class="slaf-reason">Nothing saved yet. A saved scenario keeps the event, your answers and your disaster line — and nothing else changes.</p>';
+    }).join('') : '<p class="slaf-reason">Nothing saved yet. A saved scenario keeps the event, your answers and your disaster line, and nothing else changes.</p>';
   }
   el('saved-list').addEventListener('click', function (evt) {
     var rm = evt.target.closest('[data-remove]');
@@ -767,8 +767,8 @@
     var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
     /* The default reading is the last row and matches everything, so there
        is always one. When the hash asks for a reading the gate has taken
-       away, fall back to the DEFAULT — the room's plainest reading, and the
-       one the person would have got with no hash at all — not to whichever
+       away, fall back to the DEFAULT, the room's plainest reading, and the
+       one the person would have got with no hash at all, not to whichever
        gated reading happens to sit first in this list. */
     var fallback = VIEWS[VIEWS.length - 1];
     var on = open(asked) ? asked
@@ -928,13 +928,13 @@
         delta = '<span class="delta">' + esc(bits.join(' · ')) + '</span>';
       }
       return '<button type="button" class="pathcard' + (c.baseline ? ' is-baseline' : '') + '" data-path="' + esc(c.pathId) + '">'
-        + '<b>' + esc(c.label) + (c.baseline ? ' — the baseline' : '') + '</b>'
+        + '<b>' + esc(c.label) + (c.baseline ? ', the baseline' : '') + '</b>'
         + '<span class="line">' + esc(c.line) + '</span>'
         + '<span class="facts">'
         + '<span>After 5 years<b>' + esc(fmt(fut(c.potCents, 5))) + '</b></span>'
         + '<span>FI<b>' + esc(fi) + '</b></span>'
         + '<span>Costs<b>' + (c.hoursPerWeek > 0 ? esc(c.hoursPerWeek + ' h a week') : 'no extra hours') + '</b></span>'
-        + '<span>The extra, an hour<b>' + (c.impliedHourlyCents !== null ? esc(Money.formatCents(c.impliedHourlyCents, { decimals: 2 })) : (c.monthlyGainCents > 0 ? esc(fmt(c.monthlyGainCents)) + ' a month, no hours' : '—')) + '</b></span>'
+        + '<span>The extra, an hour<b>' + (c.impliedHourlyCents !== null ? esc(Money.formatCents(c.impliedHourlyCents, { decimals: 2 })) : (c.monthlyGainCents > 0 ? esc(fmt(c.monthlyGainCents)) + ' a month, no hours' : 'not yet')) + '</b></span>'
         + '</span>' + delta
         + '<span class="tag">' + esc(c.flex) + '</span></button>';
     }).join('');
@@ -1080,11 +1080,11 @@
     var driftPath = Adventure.baselinePath(TABLES);
     var drift = driftPath ? runWay(driftPath.id, []) : null;
     var v = chosen.value;
-    el('way-head').textContent = v.label + ' — five years';
+    el('way-head').textContent = v.label + ', five years';
     paintDelta(chosen, clean, drift && Money.isOk(drift) ? drift : null);
     paintChart(chosen);
     paintWinds();
-    el('rate-line').innerHTML = 'Savings rate on this way: <strong>' + (v.savingsRate === null ? '—' : Money.formatRate(v.savingsRate, { decimals: 0 })) + '</strong> of take-home in year five. '
+    el('rate-line').innerHTML = 'Savings rate on this way: <strong>' + (v.savingsRate === null ? 'not yet' : Money.formatRate(v.savingsRate, { decimals: 0 })) + '</strong> of take-home in year five. '
       + '<a href="financial-snapshot.html#lenses">Shockingly Simple Math →</a> says what that rate alone does to the date.';
     paintSteppers(v);
     el('way-assume').textContent = 'Assumes: ' + v.assumption + (v.accommodationNote ? ' (' + v.accommodationNote + ')' : '') + (v.routedToDebt ? ' Side income goes to high-interest debt first (the FOO gate above).' : '');
@@ -1184,7 +1184,7 @@
       + '<li>Below the FOO’s high-interest-debt step, side income pays that debt before it joins the pot.</li>'
       + '<li>Everything is in today’s money, so a dollar in year five means what it means now.</li></ul>'
       + paintLevers()
-      + (lensList.length ? '<p class="slaf-hint"><strong>Lenses that read these numbers</strong> (on the Snapshot): ' + lensList.map(function (l) { return esc(l.name) + ' — ' + esc(l.source); }).join(' · ') + '.</p>' : '');
+      + (lensList.length ? '<p class="slaf-hint"><strong>Lenses that read these numbers</strong> (on the Snapshot): ' + lensList.map(function (l) { return esc(l.name) + ', ' + esc(l.source); }).join(' · ') + '.</p>' : '');
   }
   /* The levers the ways pull, each with its figure (table or stepper), its
      hours and what that makes an hour worth for THIS household. D-174. */

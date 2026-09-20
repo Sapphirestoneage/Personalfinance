@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/microretirement.js — the Micro-Retirement Planner.
+   engines/microretirement.js, the Micro-Retirement Planner.
    DECISIONS.md D-219 (K5).
    --------------------------------------------------------------------------
    A planned break from work of 1 to 12 months, both sides on one screen:

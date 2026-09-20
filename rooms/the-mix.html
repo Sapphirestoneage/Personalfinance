@@ -75,9 +75,9 @@
     <span class="slaf-eyebrow">The mix you are aiming for</span>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">A target, not a reading of your accounts. Stocks, bonds and cash should add to 100; the band is how far a slice may drift before you rebalance it back. Entered in the Ledger, read here.</p>
     <div class="trio">
-      <div class="cell"><span class="cap">Stocks</span><span class="big" id="mix-stocks">—</span></div>
-      <div class="cell"><span class="cap">Bonds</span><span class="big" id="mix-bonds">—</span></div>
-      <div class="cell"><span class="cap">Cash</span><span class="big" id="mix-cash">—</span></div>
+      <div class="cell"><span class="cap">Stocks</span><span class="big" id="mix-stocks">not yet</span></div>
+      <div class="cell"><span class="cap">Bonds</span><span class="big" id="mix-bonds">not yet</span></div>
+      <div class="cell"><span class="cap">Cash</span><span class="big" id="mix-cash">not yet</span></div>
     </div>
     <div class="track" id="mix-track" hidden></div>
     <p class="why" id="alloc-read"></p>
@@ -87,9 +87,9 @@
     <span class="slaf-eyebrow">In dollars</span>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">The same mix on what you have invested today, and how far the stocks slice may wander before the band says rebalance.</p>
     <div class="trio">
-      <div class="cell"><span class="cap">Stocks</span><span class="big" id="usd-stocks">—</span></div>
-      <div class="cell"><span class="cap">Bonds</span><span class="big" id="usd-bonds">—</span></div>
-      <div class="cell"><span class="cap">Cash</span><span class="big" id="usd-cash">—</span></div>
+      <div class="cell"><span class="cap">Stocks</span><span class="big" id="usd-stocks">not yet</span></div>
+      <div class="cell"><span class="cap">Bonds</span><span class="big" id="usd-bonds">not yet</span></div>
+      <div class="cell"><span class="cap">Cash</span><span class="big" id="usd-cash">not yet</span></div>
     </div>
     <p class="why" id="usd-why"></p>
     <div id="mix-lens" style="margin-top:var(--space-3)"></div>
@@ -191,7 +191,7 @@
   function renderDollars(h) {
     var d = inDollars(h);
     if (!Money.isOk(d)) {
-      setBig('usd-stocks', false, d.reason); setBig('usd-bonds', false, '—'); setBig('usd-cash', false, '—');
+      setBig('usd-stocks', false, d.reason); setBig('usd-bonds', false, 'not yet'); setBig('usd-cash', false, 'not yet');
       el('usd-why').innerHTML = (d.missing || []).indexOf('investments') >= 0 || /invest/i.test(d.reason) ? ledgerLink('investments', 'Enter what is invested in the Ledger') : ledgerLink('allocationStocks', 'Set the mix in the Ledger');
       return;
     }

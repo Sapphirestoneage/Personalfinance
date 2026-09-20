@@ -6,18 +6,18 @@
 <meta name="slaf-build" content="2026-09-20 01:28Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="shared/errlog.js"></script>
-<title>One number — Dungeons &amp; Dividends</title>
+<title>One number, Dungeons &amp; Dividends</title>
 <meta name="description" content="Answer one question about your money and get one true sentence back. Then another. Nothing you type leaves this browser."/>
 <meta property="og:type" content="website"/>
 <meta property="og:site_name" content="Dungeons &amp; Dividends"/>
-<meta property="og:title" content="One number — Dungeons &amp; Dividends"/>
+<meta property="og:title" content="One number, Dungeons &amp; Dividends"/>
 <meta property="og:description" content="Answer one question about your money and get one true sentence back. Then another."/>
 <meta property="og:url" content="https://sapphirestoneage.github.io/Personalfinance/dnd/descent.html"/>
 <meta property="og:image" content="https://sapphirestoneage.github.io/Personalfinance/dnd/og.png"/>
 <meta property="og:image:width" content="1200"/>
 <meta property="og:image:height" content="630"/>
 <meta name="twitter:card" content="summary_large_image"/>
-<meta name="twitter:title" content="One number — Dungeons &amp; Dividends"/>
+<meta name="twitter:title" content="One number, Dungeons &amp; Dividends"/>
 <meta name="twitter:description" content="Answer one question about your money and get one true sentence back. Then another."/>
 <meta name="twitter:image" content="https://sapphirestoneage.github.io/Personalfinance/dnd/og.png"/>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
@@ -25,7 +25,7 @@
 <link rel="stylesheet" href="shared/theme.css"/>
 <link rel="stylesheet" href="shared/skin.css"/>
 <!--
-  THE DESCENT — DD-028.
+  THE DESCENT, DD-028.
 
   One question on screen. You answer it, and the answer pays immediately with
   something true about your actual life. Then the next rung appears underneath.
@@ -33,7 +33,7 @@
 
   LIVE-FORM: built once. This is the room where that rule matters most, because
   a one-question-at-a-time flow is exactly the shape that tempts you to re-render
-  the question each step — which on a phone kills the keyboard for good (D-034).
+  the question each step, which on a phone kills the keyboard for good (D-034).
   So: EVERY rung is built once at boot, all of them, hidden. Advancing only sets
   `hidden = false`. The payoff paragraph is a SIBLING of the input, never an
   ancestor, so re-rendering a payoff can never touch an input node. Editing an
@@ -45,7 +45,7 @@
 <style>
   /* Dungeons & Dividends keeps the characterful faces the shared theme gave
      up in D-154. A game wants a display serif; a financial statement does
-     not. theme.css stays byte-identical to the SPARKS copy — this override
+     not. theme.css stays byte-identical to the SPARKS copy, this override
      lives here, in the pages that want it. */
   :root {
     --font-display: 'Fraunces', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
@@ -97,7 +97,7 @@
   <div id="rungs"></div>
 
   <div class="esc">
-    <p class="note faint">Would rather not put real numbers in? That is completely fine — you can roll a
+    <p class="note faint">Would rather not put real numbers in? That is completely fine. You can roll a
        character or take a ready-made one instead, and play the whole game.</p>
     <div class="actions">
       <a class="btn ghost" href="campaign.html">Roll one instead →</a>
@@ -133,13 +133,13 @@
 
   /* ---- the rungs ---------------------------------------------------------
      Each one: an ask, the Store field it writes, and a payoff that reads an
-     engine. `pays` returns null when it genuinely cannot say anything yet —
+     engine. `pays` returns null when it genuinely cannot say anything yet, 
      never a guess, never a zero. */
   var RUNGS = [
     {
       id: 'spend', kind: 'money', field: 'monthlyExpensesCents',
       ask: 'What do you spend in a normal month?',
-      hint: 'Rent or mortgage, food, transport, bills. Roughly is fine — you can change it in a second.',
+      hint: 'Rent or mortgage, food, transport, bills. Roughly is fine. You can change it in a second.',
       placeholder: '2,500', unit: 'a month',
       pays: function (h) {
         var fire = Tier0.fireNumber(h, TABLES);
@@ -147,10 +147,10 @@
         var spend = Schema.monthlyExpensesCents(h);
         return {
           big: money(fire.value),
-          body: 'That is your number — what you would need invested to cover this month, repeated forever, '
+          body: 'That is your number, what you would need invested to cover this month, repeated forever, '
               + 'without working again. It is set by <b>what you spend</b>, not by what you earn. Which is why '
               + 'a raise moves it <i>up</i> rather than down, unless you keep the raise.',
-          why: 'From ' + money(spend.value) + ' a month at a 4% withdrawal rate — the standard assumption, '
+          why: 'From ' + money(spend.value) + ' a month at a 4% withdrawal rate, the standard assumption, '
              + 'and an assumption rather than a fact.'
         };
       }
@@ -172,11 +172,11 @@
         });
         return {
           big: weeks + (weeks === 1 ? ' week' : ' weeks'),
-          body: 'That is your hit points. In this game 1 HP is one week you could go with no income at all — '
+          body: 'That is your hit points. In this game 1 HP is one week you could go with no income at all, '
               + 'cash divided by a week of your spending.'
               + (band && band.level > 0
                   ? ' At ' + weeks + ', the rules here call you <b>' + esc(band.name || 'worn') + '</b>: every '
-                    + 'saving throw is worse, which is not a mood — it is what a thin buffer actually costs you '
+                    + 'saving throw is worse, which is not a mood. It is what a thin buffer actually costs you '
                     + 'in offers you cannot afford to turn down.'
                   : ' That is enough to say no to something, which is most of what a buffer is for.'),
           why: 'Cash ÷ (monthly spending ÷ 4.33).'
@@ -201,14 +201,14 @@
           big: 'Strength ' + ip.value,
           body: 'That is your earning power on this game’s scale, where <b>10 is roughly the median '
               + 'full-time worker</b>. It is one of three numbers under Strength, so it is not the whole '
-              + 'ability yet — but it is the one that moves it most.',
+              + 'ability yet, but it is the one that moves it most.',
           why: 'From ' + money(gross.value) + ' a year, placed on a published earnings ladder.'
         };
       }
     },
     {
       id: 'filing', kind: 'choice', field: 'filingStatus',
-      ask: 'Last one — how do you file your taxes?',
+      ask: 'Last one, how do you file your taxes?',
       hint: 'One tap. It is what turns everything above into a savings rate, and without it the tool will not guess.',
       choices: [['single', 'Single'], ['married_joint', 'Married, filing jointly'],
                 ['married_separate', 'Married, filing separately'], ['head_of_household', 'Head of household']],
@@ -221,7 +221,7 @@
         var pct = Math.round(r.value * 100);
         return {
           big: pct + '% saved',
-          body: 'That is the share of what you keep that you are not spending — and it is the single number '
+          body: 'That is the share of what you keep that you are not spending, and it is the single number '
               + 'that decides how long this takes. '
               + (Money.isOk(years)
                   ? 'At this rate you reach the number at the top in about <b>' + Math.round(years.value)
@@ -247,7 +247,7 @@
         + '<div class="hint">' + esc(r.hint) + '</div>'
         + '<div class="box">'
         + (r.kind === 'choice'
-            ? '<select id="in-' + r.id + '"><option value="">—</option>'
+            ? '<select id="in-' + r.id + '"><option value="">not yet</option>'
               + r.choices.map(function (c) {
                   return '<option value="' + esc(c[0]) + '">' + esc(c[1]) + '</option>'; }).join('')
               + '</select>'
@@ -342,7 +342,7 @@
     var n = el('load-notice');
     n.hidden = false;
     n.textContent = 'Couldn’t load the reference data (' + err.message + '). If you opened this file '
-      + 'directly it needs to be served over http — try the published link instead.';
+      + 'directly it needs to be served over http, try the published link instead.';
   });
 })();
 </script>

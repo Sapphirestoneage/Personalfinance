@@ -291,7 +291,7 @@
     return r && Money.isEntered(r.accessAge) ? r.accessAge : null;
   }
   function ageLabel(a) {
-    if (!Money.isEntered(a)) return Money.EM_DASH;
+    if (!Money.isEntered(a)) return Money.NOT_YET;
     if (a - Math.floor(a) === 0.5) return Math.floor(a) + '½';
     return String(a);
   }
@@ -344,7 +344,7 @@
 
   /* ---- What cashing out costs ----------------------------------------------
      The tax is NOT re-derived here. engines/tax.js owns the bracket ladder,
-     the state schedule and the payroll rules; this runs its estimate twice —
+     the state schedule and the payroll rules; this runs its estimate twice, 
      the year as it stands, and the same year with the distribution stacked on
      top as ordinary income with no payroll tax on it (the `otherOrdinaryCents`
      door, D-129), and takes the difference. That is what "at your marginal
@@ -376,7 +376,7 @@
 
     /* The two guards the Tax room makes, made here for the same reason: a
        withdrawal is taxed on top of the income you already have, so with no
-       income entered there is nothing to stack it on. Blank is not zero —
+       income entered there is nothing to stack it on. Blank is not zero, 
        treating an unanswered income box as $0 would put the whole withdrawal
        in the bottom bracket and understate the bill, which is exactly the
        believable wrong number this app refuses to print. */
@@ -486,7 +486,7 @@
     reads: ['age', 'grossAnnualIncome', 'filingStatus', 'state', 'retireAge'],
     /* No guesses. Every other room may fill an empty spine with the intake's
        estimates and say so; a guessed income here would produce a guessed
-       tax bracket and therefore a believable, wrong cost of cashing out —
+       tax bracket and therefore a believable, wrong cost of cashing out, 
        exactly the number someone might act on. Blank, with a reason. */
     standalone: false,
 
@@ -600,7 +600,7 @@
           source: 'engines/projection.js, the one compounding loop in the app. assumptions.returnReal (D-094) is a REAL return, so the figure is in today’s money. '
             + (Money.isOk(fv) && fv.fromYourTarget
                 ? 'The age is the one you set in FIRE Number.'
-                : 'No stop age is set, so this uses ' + ((fire && fire.defaults && fire.defaults.coastTargetAge) || '—')
+                : 'No stop age is set, so this uses ' + ((fire && fire.defaults && fire.defaults.coastTargetAge) || 'not yet')
                   + ' from data/fire_variants.json v' + (fire ? fire.version : '?') + ' (' + (fire ? fire.confidence : '?') + '). Set your own in FIRE Number and it follows that instead.') },
         { label: 'What this room stores',
           value: 'nothing',
@@ -681,7 +681,7 @@
       }
 
       if (!Money.isOk(c)) {
-        rows.push(row('The cost of cashing out', esc(Money.EM_DASH), 'is-blank',
+        rows.push(row('The cost of cashing out', esc(Money.NOT_YET), 'is-blank',
           esc(c.reason) + ' ' + fixLink(c)));
       } else {
         rows.push(row('Federal income tax', esc(Money.formatCents(c.federalCents)), 'is-out',
@@ -728,7 +728,7 @@
             + esc(Money.formatRate(fv.rate, { decimals: 0 })) + ' real return, in today’s money, so it is comparable to the figures above. '
             + 'It is still pre-tax: you would owe income tax as you drew it, and none of this is a promise about the market. '
             + 'This is the cost nobody feels on the day.')
-        : row('What it would have been at retirement, left alone', esc(Money.EM_DASH), 'is-blank',
+        : row('What it would have been at retirement, left alone', esc(Money.NOT_YET), 'is-blank',
             esc(fv.reason) + ' ' + fixLink(fv)));
 
       el('cost-rows').innerHTML = rows.join('');

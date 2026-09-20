@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-101, D-273 (the merge).
+  ROOM SPEC, SPEC.md §11. DECISIONS.md D-101, D-273 (the merge).
   Registry: values.
 
   FOUR READINGS OF THE SAME SPENDING.
@@ -28,7 +28,7 @@
                      FI, against the conventions
 
   All four read the same expense log and ask the same question of it: is the
-  money going where you say it should. Rule 1 and rule 3 of D-229 — the same
+  money going where you say it should. Rule 1 and rule 3 of D-229, the same
   fields at four framings, and a lens is a toggle rather than a room. Said
   against spent is first because it is the plainest and needs no rating.
 
@@ -370,7 +370,7 @@
     <span class="slaf-eyebrow">What matters to you</span>
     <h2 style="margin:var(--space-2) 0 var(--space-3)">Pick five, in order</h2>
     <p class="slaf-hint" style="margin:0">
-      Tap them in the order they matter — the first one you tap is your
+      Tap them in the order they matter, the first one you tap is your
       first. Tap again to take one back. Nothing here is graded, and there
       is no right list.
     </p>
@@ -384,7 +384,7 @@
     <span class="slaf-eyebrow">What the money serves</span>
     <h2 style="margin:var(--space-2) 0 var(--space-3)">Which of these does each go to?</h2>
     <p class="slaf-hint" style="margin:0">
-      These are already filled in with a sensible guess. Change any of them —
+      These are already filled in with a sensible guess. Change any of them, 
       whether groceries are about health or about home is a question about
       your life, not a fact, and your answer is the one that counts.
     </p>
@@ -398,7 +398,7 @@
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">
       Left is your order. Right is the same values ranked by what a month
       actually costs. They rarely match exactly, and a mismatch is not a
-      failing — some things that matter enormously are cheap.
+      failing, some things that matter enormously are cheap.
     </p>
     <div class="two" id="two-cols" hidden>
       <div><span class="cap">You said</span><ol class="list" id="col-said"></ol></div>
@@ -423,12 +423,12 @@
 
   <!-- ===== THE JOY CURVE (was rooms/fulfillment.html) ===== -->
   <section id="view-the-joy-curve" hidden>
-  <p class="slaf-lede">What each thing costs a month, against what it is actually worth to you — and the four places that lands.</p>
+  <p class="slaf-lede">What each thing costs a month, against what it is actually worth to you, and the four places that lands.</p>
   <section class="slaf-card" id="rate">
     <span class="slaf-eyebrow">Rate what you spend on</span>
     <h2 style="margin:var(--space-2) 0 var(--space-3)">How much does each one actually give you?</h2>
     <p class="slaf-hint" style="margin:0">
-      One to ten — one is <em>barely notice it</em>, ten is <em>would not give
+      One to ten. One is <em>barely notice it</em>, ten is <em>would not give
       it up</em>. Answer for last month, and skip anything you would rather not call.
     </p>
     <div id="rate-list" style="margin-top:var(--space-3)"></div>
@@ -457,7 +457,7 @@
     <h2 style="margin:var(--space-2) 0 0">The same money, ranked by what it returns</h2>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">
       Rating divided by what it costs, per $100 a month. It is not a verdict
-      — a mortgage will always sit at the bottom of a list like this, and
+. A mortgage will always sit at the bottom of a list like this, and
       that is arithmetic, not a mistake.
     </p>
     <ol class="ranked" id="ranked-list"></ol>
@@ -471,7 +471,7 @@
 
   <!-- ===== THE RERANK (was rooms/rerank.html) ===== -->
   <section id="view-the-rerank" hidden>
-  <p class="slaf-lede">Your costs in order of size, then in order of what they give you — and the lines where the two orders disagree.</p>
+  <p class="slaf-lede">Your costs in order of size, then in order of what they give you, and the lines where the two orders disagree.</p>
   <nav class="stages" aria-label="The four stages">
     <a href="#costs"><b>1</b>What it costs</a>
     <a href="#rr-rate"><b>2</b>What it gives</a>
@@ -522,8 +522,8 @@
     <span class="slaf-eyebrow">Stage 4 · The gap</span>
     <h2 style="margin:var(--space-2) 0 var(--space-3)">Where the two orders disagree</h2>
     <div class="pair">
-      <div class="figure-cell"><span class="cap">Flagged to cut, a year</span><span class="big" id="gap-annual">—</span><span class="sub" id="gap-annual-sub"></span></div>
-      <div class="figure-cell"><span class="cap">At 25×, what that is worth to FI</span><span class="big" id="gap-fi">—</span><span class="sub" id="gap-fi-sub"></span></div>
+      <div class="figure-cell"><span class="cap">Flagged to cut, a year</span><span class="big" id="gap-annual">not yet</span><span class="sub" id="gap-annual-sub"></span></div>
+      <div class="figure-cell"><span class="cap">At 25×, what that is worth to FI</span><span class="big" id="gap-fi">not yet</span><span class="sub" id="gap-fi-sub"></span></div>
     </div>
     <svg class="plot" id="rr-plot" viewBox="0 0 200 160" role="img" aria-label="Cost rank against value rank"></svg>
     <p class="why" id="plot-why"></p>
@@ -630,7 +630,7 @@
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
    so its hat is ABSENT, not greyed, when the branch is not there (D-271).
-   The hash still reaches it — an old link must land somewhere honest — and
+   The hash still reaches it, an old link must land somewhere honest, and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
   'use strict';
@@ -651,8 +651,8 @@
     var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
     /* The default reading is the last row and matches everything, so there
        is always one. When the hash asks for a reading the gate has taken
-       away, fall back to the DEFAULT — the room's plainest reading, and the
-       one the person would have got with no hash at all — not to whichever
+       away, fall back to the DEFAULT, the room's plainest reading, and the
+       one the person would have got with no hash at all, not to whichever
        gated reading happens to sit first in this list. */
     var fallback = VIEWS[VIEWS.length - 1];
     var on = open(asked) ? asked
@@ -709,7 +709,7 @@
     var at = stated.indexOf(id);
     if (at !== -1) {
       /* Taking one back re-ranks everything below it, which is what the
-         person means — not a hole where number three used to be. */
+         person means, not a hole where number three used to be. */
       stated = stated.slice(0, at).concat(stated.slice(at + 1));
     } else {
       if (stated.length >= Values.TOP_N) return;
@@ -857,7 +857,7 @@
     }).join('')
       + (a.unclaimedCents > 0
         ? '<div class="bar-row"><span>' + esc(TABLES.values.unassignedLabel) + '</span>'
-          + '<span class="said">—</span>'
+          + '<span class="said">not yet</span>'
           + '<span class="bar-track"><span class="bar-fill unclaimed" style="width:'
           + (a.unclaimedCents / max * 100) + '%"></span></span></div>'
         : '');
@@ -870,14 +870,14 @@
     note.hidden = false;
     if (a.unclaimedCents === 0) {
       note.innerHTML = '<strong>Every dollar is serving something on your list.</strong> '
-        + 'That is rare enough to be worth a second look — if literally everything '
+        + 'That is rare enough to be worth a second look, if literally everything '
         + 'maps to a top-five value, the list may be doing less work than it could.';
       el('unclaimed-list').innerHTML = '';
       return;
     }
-    note.innerHTML = '<strong>' + Money.formatCents(a.unclaimedCents) + ' a month — '
+    note.innerHTML = '<strong>' + Money.formatCents(a.unclaimedCents) + ' a month, '
       + Money.formatRate(a.unclaimedShare, { decimals: 0 })
-      + ' of everything — serves nothing on your list.</strong> '
+      + ' of everything, serves nothing on your list.</strong> '
       + 'Some of that is unavoidable and some of it matters more than the list admits. '
       + 'Housing usually lands here, and rarely because it does not matter.';
     el('unclaimed-list').innerHTML = a.unclaimedCategories.map(function (c, i) {
@@ -893,7 +893,7 @@
   /* ---- Render ----------------------------------------------------------- */
 
   /* The assignment rows are live selects. Rebuilding them while one is
-     open — or while a finger is on its way to the next one — loses the tap
+     open, or while a finger is on its way to the next one, loses the tap
      and, on a phone, the keyboard with it. See shared/liveform.js.
      The pick list above is buttons, not fields, and has to redraw its rank
      numbers the instant one is tapped, so it is not guarded. */
@@ -982,7 +982,7 @@
   });
 
   /* ---- The plot ----------------------------------------------------------
-     Hand-drawn SVG rather than a charting library — nothing here loads from
+     Hand-drawn SVG rather than a charting library, nothing here loads from
      a CDN, and eight points do not need one. Coordinates are in the
      viewBox's own units so the whole thing scales with the card. */
 
@@ -1001,7 +1001,7 @@
       + '" x2="' + (W - PAD_R) + '" y2="' + y(c.joyLine) + '"/>');
 
     /* Corner labels are dropped when their half is too narrow to hold them
-       — a label lying across the split line is worse than no label. */
+, a label lying across the split line is worse than no label. */
     var splitX = x(c.spendLineCents);
     var leftRoom = splitX - PAD_L, rightRoom = (W - PAD_R) - splitX;
     if (leftRoom > 34) {
@@ -1032,8 +1032,8 @@
 
     el('plot').innerHTML = parts.join('');
     el('plot-desc').textContent = 'Each dot is one category: what it costs a month along the '
-      + 'bottom, what it gives you up the side. The vertical line is the middle of your own spending — '
-      + Money.formatCents(c.spendLineCents) + ' a month — and the horizontal one is the middle '
+      + 'bottom, what it gives you up the side. The vertical line is the middle of your own spending, '
+      + Money.formatCents(c.spendLineCents) + ' a month, and the horizontal one is the middle '
       + 'of the scale. Half your categories sit either side of the vertical line by construction.';
   }
 
@@ -1064,11 +1064,11 @@
       ? '<strong>' + Money.formatCents(expensive.monthlyCents)
         + ' a month is going to things you rated below the middle.</strong> '
         + 'It is the corner where cutting costs you least, because you have already '
-        + 'said it is not doing much for you — everything else that costs this much, '
+        + 'said it is not doing much for you, everything else that costs this much, '
         + 'you rated as worth it.'
       : '<strong>Nothing landed in the expensive-habit corner.</strong> '
         + 'Everything you spend real money on, you rated above the middle. '
-        + 'Either the spending is well aimed, or the ratings are being kind — '
+        + 'Either the spending is well aimed, or the ratings are being kind, '
         + 'the honest test is whether you would pay it again today.';
   }
 
@@ -1084,7 +1084,7 @@
 
   /* ---- Render ----------------------------------------------------------- */
 
-  /* The rating rows are live selects — never rebuilt under a finger.
+  /* The rating rows are live selects, never rebuilt under a finger.
      See shared/liveform.js. */
   var rateForm = SLAF.LiveForm.guard(el('rate-list'), function () {
     renderRows(Spine.getProfile());
@@ -1109,7 +1109,7 @@
       el('curve-body').hidden = false;
       el('curve-why').textContent = c.unrated.length
         ? c.unrated.length + ' still unrated, worth '
-          + Money.formatCents(c.unratedMonthlyCents) + ' a month — they are left off the plot '
+          + Money.formatCents(c.unratedMonthlyCents) + ' a month. They are left off the plot '
           + 'rather than guessed at.'
         : '';
       renderPlot(c);
@@ -1206,7 +1206,7 @@
         + (line.custom && !isCommon ? '<button type="button" class="rm" data-remove="' + esc(line.entryId) + '" aria-label="Remove">✕</button>' : '')
         + '</div>';
     }).join('');
-    /* Proposals are shown, never stored — D-060. */
+    /* Proposals are shown, never stored, D-060. */
     l.lines.forEach(function (line) {
       if (line.source !== 'suggested') return;
       var node = list.querySelector('input[data-line="' + line.id + '"]');
@@ -1219,7 +1219,7 @@
     });
   }
 
-  /* A typed amount becomes an expense entry with source 'rerank' — for a
+  /* A typed amount becomes an expense entry with source 'rerank', for a
      common line under a stable id so it replaces its proposal, for a custom
      line under the entry's own id. */
   function writeLine(lineId, categoryId, label, cents) {
@@ -1320,8 +1320,8 @@
     if (!Money.isOk(a)) { list.innerHTML = '<p class="slaf-reason">' + esc(a.reason) + '</p>'; el('rate-why').textContent = ''; return; }
     list.innerHTML = a.rows.filter(function (r) { return r.costRank !== null; }).sort(function (x, y) { return x.costRank - y.costRank; }).map(function (r) {
       function sel(field, options, current) {
-        return '<label class="slaf-field" style="margin:0"><span class="slaf-label">' + esc(options[0][1]) + '</span><span class="slaf-input-shell"><select data-row="' + esc(r.id) + '" data-field="' + field + '" aria-label="' + esc(options[0][1] + ' — ' + r.label) + '">'
-          + options.map(function (o, i) { return i === 0 ? '<option value=""' + (current ? '' : ' selected') + '>—</option>' : '<option value="' + o[0] + '"' + (current === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('')
+        return '<label class="slaf-field" style="margin:0"><span class="slaf-label">' + esc(options[0][1]) + '</span><span class="slaf-input-shell"><select data-row="' + esc(r.id) + '" data-field="' + field + '" aria-label="' + esc(options[0][1] + ', ' + r.label) + '">'
+          + options.map(function (o, i) { return i === 0 ? '<option value=""' + (current ? '' : ' selected') + '>not yet</option>' : '<option value="' + o[0] + '"' + (current === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join('')
           + '</select></span></label>';
       }
       return '<div class="rate-row" data-row-id="' + esc(r.id) + '">'
@@ -1486,8 +1486,8 @@
   function renderGap(a) {
     var annual = el('gap-annual'), fi = el('gap-fi');
     if (!Money.isOk(a) || !a.ratedCount) {
-      annual.textContent = Money.EM_DASH; annual.classList.add('is-incomplete');
-      fi.textContent = Money.EM_DASH; fi.classList.add('is-incomplete');
+      annual.textContent = Money.NOT_YET; annual.classList.add('is-incomplete');
+      fi.textContent = Money.NOT_YET; fi.classList.add('is-incomplete');
       el('gap-annual-sub').textContent = Money.isOk(a) ? 'Rate some lines first.' : (a.reason || '');
       el('gap-fi-sub').textContent = '';
       el('flag-list').innerHTML = ''; el('gap-why').textContent = ''; el('rr-plot').innerHTML = ''; el('plot-why').textContent = '';
@@ -1496,14 +1496,14 @@
     annual.textContent = fmt(a.flaggedAnnualCents); annual.classList.remove('is-incomplete');
     fi.textContent = fmt(a.fiImpactCents); fi.classList.remove('is-incomplete');
     el('gap-annual-sub').textContent = a.cut.length + ' line' + (a.cut.length === 1 ? '' : 's') + ' flagged, ' + fmt(a.flaggedMonthlyCents) + ' a month. Top ' + a.threshold + ' by cost, trailing by more than ' + a.threshold + ' places in value.';
-    el('gap-fi-sub').textContent = 'Every dollar a year you no longer need is $' + a.fiMultiple + ' you no longer have to hold — the 4% rule, inverted.';
+    el('gap-fi-sub').textContent = 'Every dollar a year you no longer need is $' + a.fiMultiple + ' you no longer have to hold, the 4% rule, inverted.';
     renderPlot(a);
     var flagged = a.cut.concat(a.keep);
     el('flag-list').innerHTML = flagged.length ? flagged.map(function (r) {
       var copy;
       if (r.flag === 'cut') {
         copy = r.need
-          ? 'A need — it is not going anywhere. But it is #' + r.costRank + ' by cost and #' + r.valueRank + ' by what it gives you, which is a reason to shop it, renegotiate it, or shrink it rather than accept it.'
+          ? 'A need. It is not going anywhere. But it is #' + r.costRank + ' by cost and #' + r.valueRank + ' by what it gives you, which is a reason to shop it, renegotiate it, or shrink it rather than accept it.'
           : '#' + r.costRank + ' by cost, #' + r.valueRank + ' by what it gives you. ' + fmt(r.monthlyCents * 12) + ' a year' + (r.miss === 'no' ? ', and you said you would not miss it.' : r.who === 'show' ? ', and you said it is for show.' : '.');
       } else {
         copy = '#' + r.valueRank + ' by what it gives you, only #' + r.costRank + ' by cost. ' + fmt(r.monthlyCents) + ' a month well spent; protect it when cutting.';
@@ -1642,15 +1642,15 @@
         rows.push({ label: 'A month given', cents: p.monthlyCents, href: '#gv-inputs' });
       }
       var tithe = Giving.convention(T, 'tithe');
-      if (tithe && Money.isOk(gross)) rows.push({ label: 'The tithe, a year — ' + tithe.label + ' of ' + Money.formatCents(gross.value), cents: Math.round(gross.value * tithe.pct), href: Ownership.linkTo('start', 'q-income') });
+      if (tithe && Money.isOk(gross)) rows.push({ label: 'The tithe, a year, ' + tithe.label + ' of ' + Money.formatCents(gross.value), cents: Math.round(gross.value * tithe.pct), href: Ownership.linkTo('start', 'q-income') });
       return rows;
     },
 
     assumptions: function (h, T) {
       var t = T.givingConventions || {};
       var conv = Giving.conventions(null, T);
-      var shares = Money.isOk(conv) ? conv.rows.map(function (c) { return c.label; }).join(', ') : '—';
-      var source = 'data/giving_conventions.json v' + t.version + ' — ' + (t.confidence || 'unverified');
+      var shares = Money.isOk(conv) ? conv.rows.map(function (c) { return c.label; }).join(', ') : 'not yet';
+      var source = 'data/giving_conventions.json v' + t.version + ', ' + (t.confidence || 'unverified');
       return [
         { label: 'The conventions', value: shares + ' of gross', source: source + '. ' + (t.confidenceNote || '') },
         { label: 'Out of', value: 'gross income, not take-home', source: 'This room reads a share of gross; Expenses’ giving rate reads gifts over take-home, so the two shares differ (convention)' },
@@ -1661,11 +1661,11 @@
 
     why: function (h, T, situation) {
       return {
-        employed: 'Employed, giving is easiest to set as a share of a steady paycheque and then forget. This room prices that share in the two currencies a job hides: months of FI and hours of your life. Neither says stop — they say what it costs, so the number is chosen rather than drifted into.',
+        employed: 'Employed, giving is easiest to set as a share of a steady paycheque and then forget. This room prices that share in the two currencies a job hides: months of FI and hours of your life. Neither says stop, they say what it costs, so the number is chosen rather than drifted into.',
         selfEmployed: 'Self-employed, the months are irregular, so a share of income is a better promise than a fixed sum: a thin month gives less, a fat one more, and the year lands where the share says. Set the share here; the dollar figure is the year’s expectation, not a monthly bill.',
         mixed: 'With a job and your own work, the share applies to both incomes together. The job’s part is predictable; the own-work part rises and falls. A year’s target typed over the share turns it into one fixed promise if that is easier to keep.',
-        student: 'At a student’s stage, time may be the gift — hours given are not on this page, and a small share of a small income is still a share. The habit matters more than the dollars; the conventions here are for later.',
-        retired: 'Retired, giving comes out of income — the draw, the pension, Social Security — not out of the portfolio. A share of that income keeps it in step with what the money actually produces; the FI cost here reads as months of runway rather than months to a target.',
+        student: 'At a student’s stage, time may be the gift, hours given are not on this page, and a small share of a small income is still a share. The habit matters more than the dollars; the conventions here are for later.',
+        retired: 'Retired, giving comes out of income, the draw, the pension, Social Security, not out of the portfolio. A share of that income keeps it in step with what the money actually produces; the FI cost here reads as months of runway rather than months to a target.',
         betweenJobs: 'Between jobs, a pause is not a failure. With no income there is no share to apply, so this room takes a year’s figure in dollars if you want to keep giving through it, and nothing if you do not. The habit picks back up with the paycheque.'
       }[situation] || 'A share of income given, priced in dollars, months of FI and hours of your life, against the shares people name.';
     },

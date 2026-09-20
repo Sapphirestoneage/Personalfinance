@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/room.js — the one shape every room has.
+   shared/room.js, the one shape every room has.
    BRIEF step 4, DECISIONS.md D-097. FROZEN after Real Hourly Wage proved it.
    --------------------------------------------------------------------------
    A room is: one number, one chart (animated on change), the lens toggle,
@@ -239,7 +239,7 @@
       var n = spec.number(h, TABLES) || {};
       var ok = n.value !== null && n.value !== undefined && n.value !== '';
       host.innerHTML = '<span class="cap">' + esc(n.label || '') + '</span>'
-        + '<span class="big' + (ok ? (n.zone ? ' is-' + n.zone : '') : ' is-incomplete') + '">' + esc(ok ? n.value : (n.reason || Money.EM_DASH)) + '</span>'
+        + '<span class="big' + (ok ? (n.zone ? ' is-' + n.zone : '') : ' is-incomplete') + '">' + esc(ok ? n.value : (n.reason || Money.NOT_YET)) + '</span>'
         + (ok ? '' : goHtml(h))
         + (n.sub ? '<span class="sub">' + n.sub + '</span>' : '');
     }
@@ -315,8 +315,8 @@
       var h = household();
       /* Display rounding (D-181) is a page-global, and since the merges a
          page holds several readings. A PART mount rounds its own figures
-         and then puts the unit back, so the reading beside it — which
-         computes from its own typed boxes, all of them sure — is not
+         and then puts the unit back, so the reading beside it, which
+         computes from its own typed boxes, all of them sure, is not
          rounded to a precision that belongs to someone else's fields. The
          Deal showed a $714 cash flow as $1,000 and a $481 monthly loss as
          $0 that way, the moment it became a reading of Housing. D-288. */
@@ -339,7 +339,7 @@
 
     /* One undo entry per box, named for it: "Paid hours a week → 40". */
     function labelled(c, raw, fn) {
-      var shown = raw === null || raw === undefined ? '—' : (c.kind === 'money' ? Money.formatCents(raw, { exact: true }) : c.kind === 'pct' ? (Math.round(raw * 1000) / 10) + '%' : String(raw));
+      var shown = raw === null || raw === undefined ? 'not yet' : (c.kind === 'money' ? Money.formatCents(raw, { exact: true }) : c.kind === 'pct' ? (Math.round(raw * 1000) / 10) + '%' : String(raw));
       Spine.batch(c.label + ' → ' + shown, fn);
     }
 
@@ -410,7 +410,7 @@
       if (!notice) return;
       notice.hidden = false;
       notice.className = 'notice is-error';
-      notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+      notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + '). Serve this over HTTP, python3 -m http.server, rather than opening the file directly.';
     });
 
     return { render: render, household: household, tables: function () { return TABLES; } };

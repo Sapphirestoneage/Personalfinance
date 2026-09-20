@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/gap.js — the monthly gap, refined level by level. D-248.
+   engines/gap.js, the monthly gap, refined level by level. D-248.
    --------------------------------------------------------------------------
    The one number a household wants first is what is left of a month after
    spending and the debt minimums: the gap. This file reads it at four

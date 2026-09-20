@@ -1,7 +1,7 @@
 {
   "id": "debt-sprint",
   "title": "A debt sprint",
-  "blurb": "A few months with The Rerank's cut lines at zero and every freed dollar on the dearest debt — and the month it is gone.",
+  "blurb": "A few months with The Rerank's cut lines at zero and every freed dollar on the dearest debt, and the month it is gone.",
   "version": "1.0",
   "asOf": "2026-01-01",
   "source": "An invented what-if template (D-086): its questions and defaults are conventions chosen for this app, not measurements; every reference figure it draws on names its own data/ file and source.",
@@ -138,7 +138,7 @@
   ],
   "protect": [
     "The minimum on every debt, every month",
-    "The cushion — a sprint is paid from spending, not from cash"
+    "The cushion. A sprint is paid from spending, not from cash"
   ],
   "cut": [
     "rerank:cut"

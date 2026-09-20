@@ -8,12 +8,12 @@
 <script src="../shared/errlog.js"></script>
 <script src="../shared/size.js"></script>
 <title>Protection · SPARKS</title>
-<meta name="description" content="What a bad year would cost and what stands behind you — and the three estate facts that decide where it all goes if the worst happens."/>
+<meta name="description" content="What a bad year would cost and what stands behind you, and the three estate facts that decide where it all goes if the worst happens."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-098, D-266 (the merge).
+  ROOM SPEC, SPEC.md §11. DECISIONS.md D-098, D-266 (the merge).
 
   TWO READINGS OF WHAT STANDS BEHIND YOU.
 
@@ -74,7 +74,7 @@
 
   <!-- ===== COVER (was rooms/protection.html) ===== -->
   <section id="view-cover">
-  <p class="slaf-lede">What a bad year would cost and what stands behind you: health, disability, life, the cushion — each need against what is held.</p>
+  <p class="slaf-lede">What a bad year would cost and what stands behind you: health, disability, life, the cushion, each need against what is held.</p>
   <div class="room-standalone" id="room-standalone" hidden></div>
 
   <section class="slaf-card" id="number">
@@ -92,7 +92,7 @@
 
   <section class="slaf-card" id="inputs" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">Health cover</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">The kind of plan you are on and what it costs you a month. The cover you hold — term life, a disability benefit, the out-of-pocket maximum — is entered in Sleep At Night and read here.</p>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">The kind of plan you are on and what it costs you a month. The cover you hold, term life, a disability benefit, the out-of-pocket maximum, is entered in Sleep At Night and read here.</p>
     <div id="room-inputs"></div>
   </section>
 
@@ -118,7 +118,7 @@
 
   <!-- ===== WHERE IT GOES (was rooms/estate.html) ===== -->
   <section id="view-where-it-goes" hidden>
-  <p class="slaf-lede">Three facts — beneficiaries named, a will, a power of attorney — and what would pass without them.</p>
+  <p class="slaf-lede">Three facts, beneficiaries named, a will, a power of attorney, and what would pass without them.</p>
   <div class="room-standalone" id="es-room-standalone" hidden></div>
 
   <section class="slaf-card" id="es-number">
@@ -136,7 +136,7 @@
 
   <section class="slaf-card" id="es-inputs" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">The three facts</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Yes means signed and on file — a beneficiary form on each account, a will you could put your hands on, a power of attorney someone else knows about. Leave one unanswered rather than guessing.</p>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Yes means signed and on file, a beneficiary form on each account, a will you could put your hands on, a power of attorney someone else knows about. Leave one unanswered rather than guessing.</p>
     <div id="es-room-inputs"></div>
   </section>
 
@@ -244,8 +244,8 @@
   function amount(cents, line) { return Money.formatCents(cents) + per(line); }
   function shortBy(line) { return Money.formatCents(line.gapCents) + per(line) + ' short'; }
   function lineWords(line) {
-    if (line.gapCents === null) return '<strong>' + line.label + '</strong> — ' + line.reason;
-    return '<strong>' + line.label + '</strong> — need ' + amount(line.needCents, line) + ', ' + amount(line.heldCents, line) + ' held';
+    if (line.gapCents === null) return '<strong>' + line.label + '</strong>, ' + line.reason;
+    return '<strong>' + line.label + '</strong>, need ' + amount(line.needCents, line) + ', ' + amount(line.heldCents, line) + ' held';
   }
   function fixLink(line) {
     if (!line.fix) return '';
@@ -253,7 +253,7 @@
     return room ? ' <a href="' + Ownership.linkTo(line.fix.room, line.fix.anchor) + '">' + room.title + ' →</a>' : '';
   }
   function healthNote(r) {
-    if (r.healthFlag === 'none') return 'With no health cover, the deductible is the floor of a bad year, not the ceiling — the bad-year line is a minimum';
+    if (r.healthFlag === 'none') return 'With no health cover, the deductible is the floor of a bad year, not the ceiling, the bad-year line is a minimum';
     if (r.healthFlag === 'cobra') return 'COBRA keeps the old employer plan at its full price; between jobs a marketplace plan is usually the cheaper comparison';
     return '';
   }
@@ -281,8 +281,8 @@
         value = 'None';
         sentences.push('Every line is covered: ' + covered.map(lineWords).join('; ') + '.');
       }
-      if (r.unknown.length) sentences.push('Not entered yet: ' + r.unknown.map(function (l) { return l.label.toLowerCase() + ' — ' + l.reason + fixLink(l); }).join('; ') + '.');
-      if (skipped.length) sentences.push('Not a line for you: ' + skipped.map(function (l) { return l.label.toLowerCase() + ' — ' + l.reason; }).join(' '));
+      if (r.unknown.length) sentences.push('Not entered yet: ' + r.unknown.map(function (l) { return l.label.toLowerCase() + ', ' + l.reason + fixLink(l); }).join('; ') + '.');
+      if (skipped.length) sentences.push('Not a line for you: ' + skipped.map(function (l) { return l.label.toLowerCase() + ', ' + l.reason; }).join(' '));
       var hn = healthNote(r); if (hn) sentences.push(hn + '.');
       return { label: 'Your biggest gap', value: value, sub: sentences.join(' '), zone: r.zone, result: r };
     },
@@ -340,7 +340,7 @@
 
     assumptions: function (h, T) {
       var c = T.protectionConventions || {};
-      var src = 'data/protection_conventions.json v' + c.version + ' — ' + (c.confidence || 'unverified');
+      var src = 'data/protection_conventions.json v' + c.version + ', ' + (c.confidence || 'unverified');
       var ins = h.insurance || {};
       return [
         { label: 'If you could not work', value: Money.formatRate(c.disabilityReplacementShare, { decimals: 0 }) + ' of gross pay, a month', source: 'the share a long-term disability policy is sold to replace (' + src + ')' },
@@ -353,10 +353,10 @@
 
     why: function (h, T, situation) {
       return {
-        employed: 'Employed, some of this is already in place through work — a group life policy, a disability plan, the health plan — often without a number attached. This puts the number beside the need, and what work covers is entered in Sleep At Night.',
+        employed: 'Employed, some of this is already in place through work, a group life policy, a disability plan, the health plan, often without a number attached. This puts the number beside the need, and what work covers is entered in Sleep At Night.',
         selfEmployed: 'Self-employed, there is no employer behind any of these lines: no group life, no disability plan, no health plan but the one you buy. Every gap here is yours to close, which is why the disability line is usually the one to look at first.',
         mixed: 'With a job and your own work, the job’s cover reaches only the job’s pay. The need here is sized on all of your income; what the employer plan holds is entered in Sleep At Night, and the difference is the part your own work leaves uncovered.',
-        betweenJobs: 'Between jobs the disability line rests — there is no pay to replace yet — and health cover is the live question: COBRA keeps the old plan at its full price, a marketplace plan is the comparison, and the cushion is what pays for either.',
+        betweenJobs: 'Between jobs the disability line rests. There is no pay to replace yet, and health cover is the live question: COBRA keeps the old plan at its full price, a marketplace plan is the comparison, and the cushion is what pays for either.',
         retired: 'Retired, disability is off the list and life cover matters only if someone still lives on this income. The bad-year line is the one that stays: Medicare is not modelled here, so the out-of-pocket figure is whatever your plan says it is.',
         student: ''
       }[situation] || 'A bad year, a lost income, a death, an empty cushion: four things that can happen, each with a need and something held against it. This room puts them side by side.';
@@ -436,7 +436,7 @@
 
     assumptions: function (h, T) {
       var t = T.estateBasics;
-      var src = 'data/estate_basics.json v' + t.version + ' — ' + t.confidence + '; ' + t.source;
+      var src = 'data/estate_basics.json v' + t.version + ', ' + t.confidence + '; ' + t.source;
       var rows = (t.categories || []).map(function (c) {
         var route = (t.routes || []).filter(function (x) { return x.id === c.passesBy; })[0];
         return { label: c.label, value: route ? route.label.toLowerCase() : c.passesBy, source: c.note + ' (' + t.confidence + ')' };
@@ -454,9 +454,9 @@
     why: function (h, T, situation) {
       return {
         retired: 'Retired, the documents matter most now: what you built is mostly decided by beneficiary forms and a will, and a power of attorney is what lets someone act if you cannot.',
-        employed: 'Employed, the workplace plan’s beneficiary form overrides the will — the 401(k) goes to whoever is on that form, even a name from years ago. Check it before you check anything else.',
+        employed: 'Employed, the workplace plan’s beneficiary form overrides the will, the 401(k) goes to whoever is on that form, even a name from years ago. Check it before you check anything else.',
         selfEmployed: 'Self-employed, there is no plan administrator holding a form for you: every retirement account and every bank account carries its own beneficiary line, and the business itself passes by will unless you have said otherwise.',
-        student: 'At a student’s stage a power of attorney matters more than a will — there is little to pass, but someone may need to act for you. A beneficiary on any account you do have takes a minute.',
+        student: 'At a student’s stage a power of attorney matters more than a will. There is little to pass, but someone may need to act for you. A beneficiary on any account you do have takes a minute.',
         betweenJobs: 'Between jobs, the old employer’s plan still has a beneficiary form on file. If it is moving to an IRA, the new account starts with none until you name one.',
         mixed: 'With a job and your own work, there are two sets of accounts and two sets of forms; the workplace plan’s overrides the will, and your own accounts each carry their own.'
       }[situation] || 'Three documents decide where what you own goes and who can act for you. Without them, the state decides.';

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/debt.js — the Debt Calculator engine.
+   engines/debt.js, the Debt Calculator engine.
    --------------------------------------------------------------------------
    SPEC.md §9 item 5. This is the engine, not a room: the Credit Card calc is
    a FILTERED VIEW of it (see creditCardsOnly), the Convenience Method is one
@@ -7,7 +7,7 @@
    single-debt run through the same loop. None of those is a second build.
 
    SPEC.md §10: amortisation with extra payments is a month-by-month
-   simulation, not a closed form. It has to be — the snowball effect means a
+   simulation, not a closed form. It has to be, the snowball effect means a
    freed-up minimum rolls onto the next debt the month after a payoff, which
    no closed-form formula expresses.
 
@@ -52,7 +52,7 @@
     var rule = minimumRuleFor(debt.type, rules);
     if (!rule || rule.method === 'not_derivable') {
       return Money.incomplete(
-        'Enter the minimum payment for this one — an instalment loan’s payment depends on its original term.',
+        'Enter the minimum payment for this one, an instalment loan’s payment depends on its original term.',
         ['minPaymentCents']);
     }
     if (rule.method === 'percent_of_balance_or_floor') {
@@ -62,13 +62,13 @@
       return Money.ok(Math.min(debt.balanceCents, Math.max(pct, floor)),
         { derived: true, ruleId: rule.id });
     }
-    /* A family loan: no statement, no formula — a date it is due back. The
+    /* A family loan: no statement, no formula, a date it is due back. The
        minimum is the balance spread over the months left. D-124. */
     if (rule.method === 'balance_over_months_to_due') {
       var left = Schema.monthsUntil(debt.dueOn, undefined, {
         field: 'dueOn',
         missingReason: 'Add the date it is due back, or a monthly amount you have agreed.',
-        passedReason: 'That due date has passed — enter the monthly amount you are paying now.'
+        passedReason: 'That due date has passed, enter the monthly amount you are paying now.'
       });
       if (!Money.isOk(left)) return Money.incomplete(left.reason, ['minPaymentCents', 'dueOn']);
       return Money.ok(Math.min(debt.balanceCents, Math.ceil(debt.balanceCents / left.value)),
@@ -153,7 +153,7 @@
 
   /**
    * Where a debt stands in its promotional period.
-   * Returns null when there is no promo — the common case, and not a state
+   * Returns null when there is no promo, the common case, and not a state
    * worth a Result object.
    */
   /**
@@ -212,7 +212,7 @@
     var promo = promoStatus(debt, asOf);
     if (!promo) return debt.rate;
     if (promo.expired) {
-      /* The promo is over. The go-to rate applies from the first month —
+      /* The promo is over. The go-to rate applies from the first month, 
          and if nobody said what it is, the stated rate is all there is. */
       return promo.knowsAfter ? promo.postRate : debt.rate;
     }
@@ -221,7 +221,7 @@
   }
 
   /**
-   * What it takes to clear the balance before the promo ends — the only
+   * What it takes to clear the balance before the promo ends, the only
    * number that matters about a 0% card, and the one no payoff table shows.
    *
    * At 0% this is exact: balance over months. At a non-zero promo rate it is
@@ -306,7 +306,7 @@
     /* A debt the household is keeping on purpose goes last in every
        ordering, so the extra never aims at it while anything else is live.
        It still gets its minimum every month: excluded from the aggression,
-       not from the plan. Its keep reasons do not put it here — only the
+       not from the plan. Its keep reasons do not put it here, only the
        toggle does (D-132). */
     var keep = sorted.filter(function (d) { return !d.excludeFromAggressive; });
     var held = sorted.filter(function (d) { return d.excludeFromAggressive === true; });
@@ -317,8 +317,8 @@
      One month at a time:
        1. interest accrues on every live balance
        2. every debt gets its minimum
-       3. everything left over — the user's extra, plus the minimums freed up
-          by debts already cleared — goes at the strategy's target
+       3. everything left over, the user's extra, plus the minimums freed up
+          by debts already cleared, goes at the strategy's target
      Step 3 is why this cannot be a closed form.                            */
 
   function prepare(household, rules) {
@@ -395,7 +395,7 @@
 
     /* The total the household puts at debt each month stays constant: every
        minimum plus the extra. A cleared debt frees its minimum for the next
-       one — that is the snowball, and it applies to every strategy. */
+       one. That is the snowball, and it applies to every strategy. */
     var monthlyBudget = debts.reduce(function (s, d) { return s + d.minPaymentCents; }, 0) + extra;
 
     var totalInterest = 0, totalPaid = 0, month = 0;
@@ -444,7 +444,7 @@
         var stalled = debts.reduce(function (s, d) { return s + d.balanceCents; }, 0);
         if (stalled >= startingBalance) {
           return Money.incomplete(
-            'At this payment the balance grows faster than it shrinks — the interest alone outruns it.',
+            'At this payment the balance grows faster than it shrinks, the interest alone outruns it.',
             ['extraMonthlyCents']);
         }
       }
@@ -529,7 +529,7 @@
   }
 
   /**
-   * realCost(debt, opts) — what a debt really costs a year (D-247): its
+   * realCost(debt, opts), what a debt really costs a year (D-247): its
    * rate, then after the tax deduction (student loans: the federal
    * deduction up to a cap, phased out by income; nothing else here), then
    * after inflation, in one chain, with a pace verdict against the real
@@ -584,7 +584,7 @@
   }
 
   /**
-   * cascade(plan) — the plan read as phases (D-236): between one payoff and
+   * cascade(plan). The plan read as phases (D-236): between one payoff and
    * the next, what goes to each debt a month on average, which debt the
    * push is on, and at the end of the phase what the fallen debt frees and
    * where that money goes: onto the next target while the plan pushes, or
@@ -624,7 +624,7 @@
   }
 
   /**
-   * pushPhases(plan) — when the chosen order is in effect (D-252). The
+   * pushPhases(plan), when the chosen order is in effect (D-252). The
    * schedule read as stretches: each one names the debt the money beyond
    * the minimums went at, and how much, or says nothing was beyond the
    * minimums (the extra is nought, or the stop line has passed), in which
@@ -646,7 +646,7 @@
   }
 
   /**
-   * monthFlow(plan, month) — one month of the plan as a flow (D-236): the
+   * monthFlow(plan, month), one month of the plan as a flow (D-236): the
    * minimums and the extra in, each debt in the middle, interest and
    * balance paid down out. Every figure is the schedule's; the minimum
    * share of a payment is the smaller of the debt's minimum and what it
@@ -673,7 +673,7 @@
    * interest, and it is not always the one someone will stick to.
    */
   /**
-   * milestones(plan, household, rules, opts) — three finish lines read off
+   * milestones(plan, household, rules, opts), three finish lines read off
    * one simulation (D-188): the credit cards gone, everything above the
    * high-interest line gone (opts.highInterestRate, the FOO ladder's
    * figure; null when none is given), everything gone. A class with no
@@ -824,7 +824,7 @@
   }
 
   /**
-   * extraCapacity(household, tables, opts) — the extra the plan can count
+   * extraCapacity(household, tables, opts), the extra the plan can count
    * on when the box is blank, and where it came from.
    *   opts.estimateFrom  the household with guesses standing in for what is
    *                      missing (Gate.fillGuesses); defaults to household
@@ -864,7 +864,7 @@
     };
   }
 
-  /** What the current minimums alone would cost — the do-nothing baseline. */
+  /** What the current minimums alone would cost, the do-nothing baseline. */
   function minimumsOnly(household, rules) {
     return simulate(household, rules, { strategyId: 'avalanche', extraMonthlyCents: 0 });
   }

@@ -6,14 +6,14 @@
 <meta name="slaf-build" content="2026-09-20 01:28Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="shared/errlog.js"></script>
-<title>DM mode — Dungeons &amp; Dividends</title>
+<title>DM mode, Dungeons &amp; Dividends</title>
 <meta name="description" content="Build an encounter for someone else: choose a creature, set the target's saves, runway and defences, and share the scenario as a link."/>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="shared/fonts.css"/>
 <link rel="stylesheet" href="shared/theme.css"/>
 <link rel="stylesheet" href="shared/skin.css"/>
 <!--
-  DM MODE — BRIEF §9.9.
+  DM MODE, BRIEF §9.9.
 
   The encounter room answers "what does this do to ME". This answers "what would
   this do to SOMEONE LIKE THIS", which is a different and more interesting
@@ -26,7 +26,7 @@
   up is never confused with something that happened to you.
 
   THREE BLOCKER STATES, STILL. A DM setting a scene can say a target holds a
-  defence, lacks it, or that it has not been established — and "not established"
+  defence, lacks it, or that it has not been established, and "not established"
   applies nothing, exactly as it does on the player's side. Dropping to a
   boolean here would have made the DM page more confident than the sheet, which
   is precisely backwards.
@@ -40,7 +40,7 @@
 <style>
   /* Dungeons & Dividends keeps the characterful faces the shared theme gave
      up in D-154. A game wants a display serif; a financial statement does
-     not. theme.css stays byte-identical to the SPARKS copy — this override
+     not. theme.css stays byte-identical to the SPARKS copy, this override
      lives here, in the pages that want it. */
   :root {
     --font-display: 'Fraunces', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
@@ -90,7 +90,7 @@
 
   <h1>DM mode</h1>
   <p class="note">Build an encounter for <em>someone else</em>. Set what the target looks like, pick what
-     comes at them, and see what happens. Nothing here touches your own character — the whole
+     comes at them, and see what happens. Nothing here touches your own character, the whole
      scenario lives in the link, so sharing it is copying the address bar.</p>
 
   <div id="shared-note" class="shared" hidden></div>
@@ -114,14 +114,14 @@
     <label style="margin-top:var(--space-3)">Saving throws</label>
     <div class="saves" id="save-inputs"></div>
     <p class="note" style="margin-top:var(--space-2)">Leave one blank and it counts as unscored, exactly as
-       it would on a real sheet — the creature simply cannot target it.</p>
+       it would on a real sheet, the creature simply cannot target it.</p>
   </div>
 
   <h2>What comes at them</h2>
   <select id="pick" aria-label="Choose a creature"></select>
 
   <h2>What they have</h2>
-  <p class="note">Held, missing, or not established. <b>Not established applies nothing</b> — a DM who has
+  <p class="note">Held, missing, or not established. <b>Not established applies nothing</b>, a DM who has
      not decided is not the same as a target who lacks it.</p>
   <div class="panel"><div id="blockers"></div></div>
 
@@ -164,7 +164,7 @@
   /* ---- the scenario lives in the URL ------------------------------------
      Base64url of the JSON, so it survives being pasted into anything that
      mangles punctuation. Unreadable hashes are ignored rather than thrown at
-     the reader — a broken link should open an empty page, not an error. */
+     the reader, a broken link should open an empty page, not an error. */
   function encode(obj) {
     var json = JSON.stringify(obj);
     var b64 = btoa(unescape(encodeURIComponent(json)));
@@ -263,7 +263,7 @@
     /* Re-derive with the DM's held blockers in force, by handing the engine
        sub-scores that satisfy exactly those and a profile that answers the
        rest. Blockers the DM left unanswered get neither, so they stay unknown
-       — the engine's own three-state logic does the work. */
+, the engine's own three-state logic does the work. */
     var subScores = {};
     probe.blockedBy.forEach(function (b) {
       var cat = TABLES.dndRules.blockers[b.id] || {};
@@ -305,22 +305,22 @@
       ? who + ' cannot be touched by this.'
       : r.hitChance === null
         ? (r.resolution === 'attack'
-            ? 'Not enough about them to say — this one attacks Armour Class, and theirs is blank.'
-            : 'Not enough about them to say — give the save it targets a number.')
+            ? 'Not enough about them to say, this one attacks Armour Class, and theirs is blank.'
+            : 'Not enough about them to say, give the save it targets a number.')
         : r.massiveDamage
           ? 'Massive damage. Straight past death saves.'
           : 'It lands ' + pct(r.hitChance) + ' of the time.';
 
     var figs = (r.resolution === 'attack' ? [
       ['It attacks', '+' + (r.attackBonus === null ? '?' : r.attackBonus) + ' vs AC'],
-      ['Their AC', r.armorClass === null ? '—' : r.armorClass],
+      ['Their AC', r.armorClass === null ? 'not yet' : r.armorClass],
     ] : [
-      ['Target save', r.targetSave ? r.targetSave + ' ' + (r.modifier === null ? '—' : sign(r.modifier)) : '—'],
-      ['DC', r.dc === null ? '—' : r.dc],
+      ['Target save', r.targetSave ? r.targetSave + ' ' + (r.modifier === null ? 'not yet' : sign(r.modifier)) : 'not yet'],
+      ['DC', r.dc === null ? 'not yet' : r.dc],
     ]).concat([
-      ['Chance it lands', r.hitChance === null ? '—' : pct(r.hitChance)],
+      ['Chance it lands', r.hitChance === null ? 'not yet' : pct(r.hitChance)],
       ['Damage', r.damageWeeks + ' wk' + (r.perPeriod ? '/' + r.perPeriod : '')],
-      ['Runway after', r.hpAfter === null ? '—' : r.hpBefore + ' → ' + r.hpAfter]
+      ['Runway after', r.hpAfter === null ? 'not yet' : r.hpBefore + ' → ' + r.hpAfter]
     ]);
     if (r.exhaustionPenalty > 0) {
       figs.splice(1, 0, ['Exhaustion', r.exhaustionLabel + ' · −' + r.exhaustionPenalty]);
@@ -345,7 +345,7 @@
           ? '<p class="note" style="margin-top:var(--space-3)"><b>Where it hunts:</b> '
             + r.lair.map(esc).join(' · ') + '</p>'
           : '')
-      + '<p class="note faint">' + (r.mode === 'roll' ? 'One roll of the dice.' : 'Expected damage — the average, not a roll.') + '</p>'
+      + '<p class="note faint">' + (r.mode === 'roll' ? 'One roll of the dice.' : 'Expected damage, the average, not a roll.') + '</p>'
       + '</div>';
   }
 
@@ -354,14 +354,14 @@
 
     el('save-inputs').innerHTML = Char.STAT_IDS.map(function (id) {
       return '<div><label for="sv-' + id + '">' + id + '</label>'
-        + '<input type="number" id="sv-' + id + '" min="-5" max="12" step="1" placeholder="—"/></div>';
+        + '<input type="number" id="sv-' + id + '" min="-5" max="12" step="1" placeholder="not yet"/></div>';
     }).join('');
 
     CREATURES = Enc.allCreatures(TABLES).slice().sort(function (a, b) {
       return (Enc.crToNumber(a.cr) || 0) - (Enc.crToNumber(b.cr) || 0);
     });
     el('pick').innerHTML = CREATURES.map(function (c) {
-      return '<option value="' + esc(c.name) + '">' + esc(c.name) + ' — CR ' + esc(c.cr)
+      return '<option value="' + esc(c.name) + '">' + esc(c.name) + ', CR ' + esc(c.cr)
         + ' · ' + esc(c.attackType) + '</option>';
     }).join('');
 
@@ -379,10 +379,10 @@
 
   function paintExhaustion() {
     var v = el('f-runway').value;
-    if (v === '') { el('exh-note').textContent = 'Leave it blank and exhaustion does not apply — a runway nobody has stated is not a rested one.'; return; }
+    if (v === '') { el('exh-note').textContent = 'Leave it blank and exhaustion does not apply, a runway nobody has stated is not a rested one.'; return; }
     var e = Char.exhaustion(Money.ok(Number(v)), TABLES);
     el('exh-note').textContent = Money.isOk(e)
-      ? e.row.label + (e.value > 0 ? ' — every save is ' + e.savePenalty + ' worse. ' : ' — no penalty. ') + e.row.tell
+      ? e.row.label + (e.value > 0 ? ', every save is ' + e.savePenalty + ' worse. ' : ', no penalty. ') + e.row.tell
       : e.reason;
   }
 
@@ -438,7 +438,7 @@
       var box = el('shared-note');
       box.hidden = false;
       box.innerHTML = '<b>A scenario was shared with you.</b> Everything below is filled in from the '
-        + 'link — change anything you like, it is only ever in the address bar.';
+        + 'link, change anything you like, it is only ever in the address bar.';
       paintExhaustion();
       run('expected');
     } else {
@@ -448,7 +448,7 @@
     var n = el('load-notice');
     n.hidden = false;
     n.textContent = 'Couldn’t load the game data (' + err.message + '). If you opened this file '
-      + 'directly it needs to be served over http — try the published link instead.';
+      + 'directly it needs to be served over http, try the published link instead.';
   });
 })();
 </script>

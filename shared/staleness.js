@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/staleness.js — how old a figure is, and whether that matters.
+   shared/staleness.js, how old a figure is, and whether that matters.
    --------------------------------------------------------------------------
    Every number carries its own as-of date in meta.fields[fieldId].asOf
    (15.1, D-181), with the older meta.confirmedAt stamp (D-056) as the same
@@ -8,11 +8,11 @@
    age is past the review interval for that field.
 
    Three honest states, never collapsed:
-     known    — the field has a stamp; `days` is real.
-     unknown  — no stamp yet (every household saved before D-056). `days`
+     known. The field has a stamp; `days` is real.
+     unknown, no stamp yet (every household saved before D-056). `days`
                 falls back to the household's last save, and `perField` is
                 false so the caller can say "unknown per field".
-     never    — the field has no value at all; nothing to be stale.
+     never. The field has no value at all; nothing to be stale.
 
    Stale is a prompt to look, not a verdict: nothing here discounts, zeroes
    or hides a figure because it is old. DECISIONS.md D-057.
@@ -44,7 +44,7 @@
   }
 
   /**
-   * ageDays(household, fieldId, now?) — whole days since the field was last
+   * ageDays(household, fieldId, now?), whole days since the field was last
    * set or confirmed. Falls back to the household's last save when the
    * field has no stamp; null when there is nothing to date at all.
    */
@@ -64,7 +64,7 @@
    *   { fieldId, days, perField, confirmedAt, staleAfterDays, stale, label }
    *
    * `stale` is true/false when a review interval is known and an age can
-   * be computed, and null otherwise — a caller that colours on `stale`
+   * be computed, and null otherwise, a caller that colours on `stale`
    * therefore never colours on a guess.
    */
   function describe(household, fieldId, now) {
@@ -111,7 +111,7 @@
   }
 
   /**
-   * forFields(household, fieldIds, now?) — the age of one ROOM's numbers
+   * forFields(household, fieldIds, now?), the age of one ROOM's numbers
    * (D-319, ported from the D-251 audit branch). A room declares what it
    * reads (`needs` in shared/registry.js); this folds those fields into the
    * counts a header line needs: entered, dated, stale, and the oldest row.
@@ -132,7 +132,7 @@
     };
   }
   /**
-   * line(household, fieldIds, now?) — one sentence saying how old the
+   * line(household, fieldIds, now?), one sentence saying how old the
    * numbers on this screen are, or null when there is nothing to date.
    * { text, stale, oldestDays }. A prompt to look, never a verdict.
    */
@@ -155,7 +155,7 @@
   }
 
   /**
-   * summary(household, now?) — the oldest volatile figure and whether any
+   * summary(household, now?), the oldest volatile figure and whether any
    * is past its interval, for the dashboard's one staleness line.
    */
   function summary(household, now) {

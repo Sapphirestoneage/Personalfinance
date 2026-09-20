@@ -4,7 +4,7 @@
   "asOf": "2026-09-09",
   "type": "car",
   "label": "Car",
-  "source": "A car as the lines it adds: the price (or the down payment) leaves cash, a loan arrives as a debt with a five-year level payment, the car arrives as a vehicle, and running costs — insurance, fuel, upkeep, fees — join the getting-around line. Running costs as a share of price a year are a reading of the AAA 'Your Driving Costs' totals; the loan rate is a stated assumption.",
+  "source": "A car as the lines it adds: the price (or the down payment) leaves cash, a loan arrives as a debt with a five-year level payment, the car arrives as a vehicle, and running costs, insurance, fuel, upkeep, fees, join the getting-around line. Running costs as a share of price a year are a reading of the AAA 'Your Driving Costs' totals; the loan rate is a stated assumption.",
   "confidence": "convention",
   "confidenceNote": "Running costs vary more by driver, postcode and mileage than by car; the shares are averages.",
   "note": "Read by shared/blocks.js (D-178). `questions` are the block's four answers at most. Each `lines[]` entry is a DAITE delta: `path` must resolve under debt / assets / income / taxes / expenses; `delta` is an expression in the shared language (shared/expr.js): @answer, $household figure, {table} lookups. `when` (optional) is a condition that must hold for the line to exist. `source` is national unless `stateSource` resolves to a value for the answer's state, then state; `user` when the figure is the household's own. No expansion logic lives in a room.",

@@ -1,10 +1,10 @@
 /* ==========================================================================
-   shared/skin.css — the parchment alternative, and printing.
+   shared/skin.css, the parchment alternative, and printing.
    --------------------------------------------------------------------------
    Two looks for the same sheet:
 
      navy       the SPARKS palette, inherited from shared/theme.css. Default.
-     parchment  the printable one — ink on paper, the way a character sheet
+     parchment  the printable one, ink on paper, the way a character sheet
                 looks when it comes out of a printer.
 
    This works as a TOKEN OVERRIDE and nothing else. Every panel, border and
@@ -16,7 +16,7 @@
 
    PRINTING ALWAYS USES PARCHMENT. Printing the navy skin means a page of
    solid dark ink, so @media print applies the same overrides regardless of
-   what is selected on screen — you should never have to remember to switch
+   what is selected on screen. You should never have to remember to switch
    before hitting print.
    ========================================================================== */
 

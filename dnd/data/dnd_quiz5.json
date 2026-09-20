@@ -4,7 +4,7 @@
   "asOf": "2026-09",
   "source": "Authored for Dungeons & Dividends. DD-026.",
   "confidence": "low",
-  "confidenceNote": "This is a temperament read, not a measurement. It picks the lever you REACH FOR, which is a real and useful thing to know about yourself — but it is not where your money actually moves. That comes later, from your numbers, and the two disagreeing is the interesting part rather than an error.",
+  "confidenceNote": "This is a temperament read, not a measurement. It picks the lever you REACH FOR, which is a real and useful thing to know about yourself, but it is not where your money actually moves. That comes later, from your numbers, and the two disagreeing is the interesting part rather than an error.",
   "note": "Five questions, no maths, no jargon, and no answer that makes you look daft. Each option leans on one or more of the seven class levers; the highest total wins and the runner-up is shown, because almost nobody is one pure thing.",
   "questions": [
     {
@@ -103,7 +103,7 @@
         { "id": "crash", "label": "The market falling a third in the year I needed the money.",
           "says": "You already think in timing, not just returns. Most people learn that the hard way.",
           "weights": { "compounder": 2, "anchor": 2 } },
-        { "id": "stuck", "label": "Being stuck — a city, a lease, a role I can't get out of.",
+        { "id": "stuck", "label": "Being stuck, a city, a lease, a role I can't get out of.",
           "says": "You price freedom highly. Keep your fixed costs low and you'll always have it.",
           "weights": { "landholder": 2, "builder": 2 } },
         { "id": "overpaying", "label": "Finding out I've been quietly overpaying for years.",

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/undo.js — two buttons, top right, on every page.
+   shared/undo.js, two buttons, top right, on every page.
    BRIEF "Undo / Redo", DECISIONS.md D-094.
    --------------------------------------------------------------------------
    Include the script and the buttons appear. Each says what it will do
@@ -34,8 +34,8 @@
     /* With nothing to undo the bar is a floating shape on top of whatever it
        covers, and it covered a figure. It appears with the first change. */
     box.hidden = !u && !r;
-    undoBtn.title = u ? 'Undo: ' + u.label : 'Nothing to undo yet — every change you make lands here.';
-    redoBtn.title = r ? 'Redo: ' + r.label : 'Nothing to redo — undo something first.';
+    undoBtn.title = u ? 'Undo: ' + u.label : 'Nothing to undo yet, every change you make lands here.';
+    redoBtn.title = r ? 'Redo: ' + r.label : 'Nothing to redo, undo something first.';
     undoBtn.setAttribute('aria-label', undoBtn.title);
     redoBtn.setAttribute('aria-label', redoBtn.title);
   }

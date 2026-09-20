@@ -1,18 +1,18 @@
 /* ==========================================================================
-   engines/week.js — the Designed Week, priced.
+   engines/week.js, the Designed Week, priced.
    BRIEF §8, DECISIONS.md D-101.
    --------------------------------------------------------------------------
    Blocks of hours, each with what it costs a week. The week priced is a
    month priced (× 52 ÷ 12), the month is a FI number (through
-   Tier0.fireNumber — the one FIRE formula in the repo, fed the designed
-   month), and that month against the one you have names the gap — by
+   Tier0.fireNumber, the one FIRE formula in the repo, fed the designed
+   month), and that month against the one you have names the gap, by
    category, so it says which lines the week you designed differs on. At
    the real hourly wage the month is also a count of hours: the week costs
    N hours of itself.
 
    Nothing here invents a cost. A block's cost a week is the one stored on
    it (the room stores the proposal when it writes the hours), else the
-   tracked line for its category from Cash Flow, else nothing — and
+   tracked line for its category from Cash Flow, else nothing, and
    "nothing" is priced $0 and counted, never blank.
    ========================================================================== */
 (function (root, factory) {
@@ -44,7 +44,7 @@
     for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
     return null;
   }
-  /** The blocks with an hour placed — the ones that count. */
+  /** The blocks with an hour placed, the ones that count. */
   function placed(household) { return blocks(household).filter(function (b) { return Money.isEntered(b.hours); }); }
 
   /* ---- The two unit conversions, once ---------------------------------------- */
@@ -107,7 +107,7 @@
   }
 
   /**
-   * The FI number the designed month implies — Tier0.fireNumber, the one
+   * The FI number the designed month implies, Tier0.fireNumber, the one
    * FIRE formula, fed a household whose month is the designed one. The
    * withdrawal rate is the household's own assumption.
    */
@@ -155,7 +155,7 @@
     });
   }
 
-  /** The real hourly wage where the situation has one — Lens's rule, not a second one. */
+  /** The real hourly wage where the situation has one, Lens's rule, not a second one. */
   function wage(household, tables) {
     if (!Hourly || !Gate.exists(household, 'realHourlyWage')) return null;
     return Hourly.realHourlyWage(household, tables);

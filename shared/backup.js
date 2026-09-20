@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/backup.js — everything this browser holds, as one file.
+   shared/backup.js, everything this browser holds, as one file.
    --------------------------------------------------------------------------
    Every figure in the app lives in localStorage, which means it lives in
    ONE browser on ONE device and is one "clear browsing data" from gone.
@@ -10,7 +10,7 @@
    Your Data's file (shared/spine-v2.js exportJSON) carries the HOUSEHOLD,
    which is what a share link and a QR code carry too. This carries more:
    the household, the snapshots, the preferences, the pinned scenarios, the
-   Skill Tree's seen marks, and the Dungeons & Dividends character — every
+   Skill Tree's seen marks, and the Dungeons & Dividends character, every
    key under the prefixes below. A household file still loads here, so a
    phone that saved one from Your Data is not a dead end.
 
@@ -36,7 +36,7 @@
    ({ json: … }) and as text where it does not ({ text: … }), so a file is
    readable by a person and a plain-string key (the D&D skin) survives the
    round trip unchanged. Nothing is reshaped: the bytes that come back are
-   the bytes that went in. That is what makes "uniform" true — a new room's
+   the bytes that went in. That is what makes "uniform" true, a new room's
    key is carried the day it is written, with no wiring here.
 
    WHAT LOADING DOES. Storage under the prefixes is made to MATCH the file:

@@ -8,12 +8,12 @@
 <script src="../shared/errlog.js"></script>
 <script src="../shared/size.js"></script>
 <title>The Close · SPARKS</title>
-<meta name="description" content="Five buckets, what you expected against what happened, the month closed — then every closed month read back, and every snapshot you froze over time."/>
+<meta name="description" content="Five buckets, what you expected against what happened, the month closed, then every closed month read back, and every snapshot you froze over time."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-101, D-276 (the merge).
+  ROOM SPEC, SPEC.md §11. DECISIONS.md D-101, D-276 (the merge).
   Registry: budget.
 
   ONE RECORD AT THREE LENGTHS.
@@ -26,7 +26,7 @@
                   the log of what you changed
 
   Closing a month, reading the closed months, and watching the line they
-  make are one record at three lengths. Rule 2 of D-229 — before and after
+  make are one record at three lengths. Rule 2 of D-229, before and after
   of one thing is one room with a time axis. This month is first because it
   is the only one you can still act on.
 
@@ -70,7 +70,7 @@
   /* Five cards, one per bucket (D-129). Each carries one comparison bar
      in the Every Ratio room's bar language (.slaf-bars in theme.css):
      the faint zone is the estimate, the marker its edge, the fill what
-     actually landed — green within, red over; for income, green at or
+     actually landed, green within, red over; for income, green at or
      above, amber short. Tap the card to open its lines. */
   
   #view-this-month .cards { display: grid; gap: var(--space-3); margin-top: var(--space-4); }
@@ -178,7 +178,7 @@
   #view-this-month .bucket-card .c-plain { display: block; font-size: var(--text-xs); color: var(--color-text-muted); font-weight: 400; margin-top: 2px; }
   #view-this-month .bucket-card .c-plain.is-over { color: var(--color-critical); }
   #view-this-month .bucket-card .c-plain.is-short { color: var(--color-caution); }
-  /* Hypothetical — a what-if view of the same sheet. Visually its own
+  /* Hypothetical, a what-if view of the same sheet. Visually its own
      thing: dashed amber edge, amber banner, and nothing on it writes. */
   
   #view-this-month .hypo-bar { display: flex; justify-content: flex-end; margin-top: var(--space-2); }
@@ -297,11 +297,11 @@
   <section class="slaf-card" id="sheet">
     <div class="month-nav">
       <button type="button" class="nav-btn" id="btn-prev" aria-label="Earlier month">←</button>
-      <h2 id="month-title">—<span class="status" id="month-status"></span></h2>
+      <h2 id="month-title">not yet<span class="status" id="month-status"></span></h2>
       <button type="button" class="nav-btn" id="btn-next" aria-label="Later month">→</button>
     </div>
     <div class="hypo-bar"><button type="button" class="hypo-toggle" id="btn-hypo" aria-pressed="false">What if… (a view that saves nothing)</button></div>
-    <div class="hypo-banner" id="hypo-banner" role="status"><strong>Hypothetical</strong><span>A what-if view of this month. Options you marked not applicable are back, and anything you stack here is not saved — switch it off and the real budget is exactly as it was.</span></div>
+    <div class="hypo-banner" id="hypo-banner" role="status"><strong>Hypothetical</strong><span>A what-if view of this month. Options you marked not applicable are back, and anything you stack here is not saved, switch it off and the real budget is exactly as it was.</span></div>
     <!-- D-257: the month said plainly before the buckets. -->
     <div class="month-say" id="month-say"></div>
     <div class="cards" id="rows"></div>
@@ -325,7 +325,7 @@
 
   <!-- ===== EVERY MONTH (was rooms/variance.html) ===== -->
   <section id="view-every-month" hidden>
-  <p class="slaf-lede">Every closed month read back: what you expected against what happened, bucket by bucket — and whether the guesses are getting better.</p>
+  <p class="slaf-lede">Every closed month read back: what you expected against what happened, bucket by bucket, and whether the guesses are getting better.</p>
   <section class="slaf-card" id="month">
     <div style="display:flex;justify-content:space-between;align-items:baseline;gap:var(--space-3);flex-wrap:wrap">
       <span class="slaf-eyebrow">One month</span>
@@ -455,7 +455,7 @@
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
    so its hat is ABSENT, not greyed, when the branch is not there (D-271).
-   The hash still reaches it — an old link must land somewhere honest — and
+   The hash still reaches it, an old link must land somewhere honest, and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
   'use strict';
@@ -475,8 +475,8 @@
     var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
     /* The default reading is the last row and matches everything, so there
        is always one. When the hash asks for a reading the gate has taken
-       away, fall back to the DEFAULT — the room's plainest reading, and the
-       one the person would have got with no hash at all — not to whichever
+       away, fall back to the DEFAULT, the room's plainest reading, and the
+       one the person would have got with no hash at all, not to whichever
        gated reading happens to sit first in this list. */
     var fallback = VIEWS[VIEWS.length - 1];
     var on = open(asked) ? asked
@@ -569,12 +569,12 @@
     var pct = function (c) { return Math.max(0, Math.min(100, c / max * 100)); };
     var estRow = '<div class="row' + (hasEst ? '' : ' is-empty') + '"><span class="lbl">Estimated</span><span class="track">'
       + (hasEst ? '<u style="left:0;width:' + pct(est) + '%;background:var(--color-text-muted)"></u><b style="left:' + pct(est) + '%" title="Estimated"></b>' : '')
-      + '</span><span class="val">' + (hasEst ? esc(money(est)) : '—') + '</span></div>';
+      + '</span><span class="val">' + (hasEst ? esc(money(est)) : 'not yet') + '</span></div>';
     var actRow = '<div class="row' + (hasAct ? '' : ' is-empty') + '"><span class="lbl">Actual</span><span class="track">'
       + (hasEst ? '<u style="left:0;width:' + pct(est) + '%;background:var(--color-text-muted)"></u>' : '')
       + (hasAct && shown > 0 ? '<i style="left:0;width:' + pct(shown) + '%;background:' + color + '"></i>' : '')
       + (hasEst ? '<b style="left:' + pct(est) + '%" title="Estimated"></b>' : '')
-      + '</span><span class="val is-' + state + '">' + (hasAct ? esc(money(act)) : '—') + (Money.isEntered(r.revisedCents) ? '<small>revised ' + esc(money(r.revisedCents)) + '</small>' : '') + '</span></div>';
+      + '</span><span class="val is-' + state + '">' + (hasAct ? esc(money(act)) : 'not yet') + (Money.isEntered(r.revisedCents) ? '<small>revised ' + esc(money(r.revisedCents)) + '</small>' : '') + '</span></div>';
     return '<div class="slaf-chart slaf-bars">' + estRow + actRow + '</div>';
   }
   /* over: spent past the estimate. under: within it. short: income below
@@ -588,7 +588,7 @@
   }
   function diffCell(r) {
     var state = verdict(r), diff = r.differenceCents;
-    if (state === 'none') return '<span class="c-diff is-none">' + (Money.isEntered(r.actualCents) && !Money.isEntered(r.estimatedCents) ? esc(money(r.actualCents)) + '<small>no estimate</small>' : '—') + '</span>';
+    if (state === 'none') return '<span class="c-diff is-none">' + (Money.isEntered(r.actualCents) && !Money.isEntered(r.estimatedCents) ? esc(money(r.actualCents)) + '<small>no estimate</small>' : 'not yet') + '</span>';
     var word = state === 'on' ? 'on the estimate' : state === 'over' ? 'over' : state === 'short' ? 'short' : r.bucket === 'income' ? 'above' : 'under';
     return '<span class="c-diff is-' + state + '">' + (state === 'on' ? '±' : '') + esc(money(Math.abs(diff))) + '<small>' + esc(word) + '</small></span>';
   }
@@ -598,7 +598,7 @@
     el('btn-hypo').setAttribute('aria-pressed', String(hypo));
     el('btn-hypo').textContent = hypo ? 'Back to the real budget' : 'What if… (a view that saves nothing)';
     el('month-title').innerHTML = esc(sheet.label) + '<span class="status' + (sheet.status === 'closed' ? ' is-closed' : '') + '" id="month-status">'
-      + (sheet.status === 'closed' ? 'closed ' + esc(shortDate(sheet.closedAt)) : sheet.isFuture ? 'ahead — estimates only' : sheet.isCurrent ? 'open, this month' : 'open, not yet closed') + '</span>';
+      + (sheet.status === 'closed' ? 'closed ' + esc(shortDate(sheet.closedAt)) : sheet.isFuture ? 'ahead, estimates only' : sheet.isCurrent ? 'open, this month' : 'open, not yet closed') + '</span>';
     if (justAdded) openBucket = justAdded;
     /* The month said plainly (D-257): read off the sheet by the engine. */
     var sum = Budget.summary(sheet);
@@ -659,7 +659,7 @@
       closeBtn.hidden = true;
     } else {
       el('close-title').textContent = 'Close ' + sheet.label;
-      el('close-hint').textContent = 'Freezes the estimated and actual columns side by side as a record. Anything logged into this month afterwards shows as revised, never as a change to the record. ' + (sheet.isCurrent ? 'This month is still running — closing it now records what has landed so far.' : '');
+      el('close-hint').textContent = 'Freezes the estimated and actual columns side by side as a record. Anything logged into this month afterwards shows as revised, never as a change to the record. ' + (sheet.isCurrent ? 'This month is still running, closing it now records what has landed so far.' : '');
       closeBtn.hidden = false;
       closeBtn.textContent = 'Close ' + sheet.label;
     }
@@ -668,7 +668,7 @@
   /* ---- The presets (D-129): stacked into Savings and Investments --------
      Nothing typed. Each is read through the function that owns it; the
      button stacks it into this month's Estimated or takes it out. The Max
-     401(k) preset is absent until an employer 401(k) is indicated — asked
+     401(k) preset is absent until an employer 401(k) is indicated, asked
      once, here, with two buttons. */
   function renderPresets(h, sheet) {
     var all = Presets.available(h, TABLES, presetOpts(h));
@@ -682,24 +682,24 @@
       var html = list.map(function (p) {
         var on = (chosen[b] || []).indexOf(p.id) >= 0;
         var wasNa = hypo && liveNa[p.id] === true;
-        var naBtn = p.structural && !hypo ? '<button type="button" class="p-na" data-na="' + p.id + '" aria-pressed="false" title="Not applicable to me — drops it from every live figure">N/A</button>' : '';
+        var naBtn = p.structural && !hypo ? '<button type="button" class="p-na" data-na="' + p.id + '" aria-pressed="false" title="Not applicable to me, drops it from every live figure">N/A</button>' : '';
         if (!p.offered) {
-          return '<div class="preset is-unavailable"><span class="p-name">' + esc(p.label) + '<small>' + esc(p.reason || '') + (p.owner && p.owner.room !== 'budget' ? ' <a href="' + esc(p.owner.room) + '.html">' + esc(p.owner.label) + ' →</a>' : '') + '</small></span><span class="p-amt">—</span>' + naBtn + '</div>';
+          return '<div class="preset is-unavailable"><span class="p-name">' + esc(p.label) + '<small>' + esc(p.reason || '') + (p.owner && p.owner.room !== 'budget' ? ' <a href="' + esc(p.owner.room) + '.html">' + esc(p.owner.label) + ' →</a>' : '') + '</small></span><span class="p-amt">not yet</span>' + naBtn + '</div>';
         }
-        return '<div class="preset' + (on ? '' : ' is-off') + (wasNa ? ' is-na' : '') + '"><span class="p-name">' + esc(p.label) + '<small>' + (wasNa ? 'Marked not applicable — here as a what-if only. ' : '') + esc(p.result.why || p.short) + '</small></span>'
+        return '<div class="preset' + (on ? '' : ' is-off') + (wasNa ? ' is-na' : '') + '"><span class="p-name">' + esc(p.label) + '<small>' + (wasNa ? 'Marked not applicable, here as a what-if only. ' : '') + esc(p.result.why || p.short) + '</small></span>'
           + '<span class="p-amt">' + esc(money(p.monthlyCents)) + '/mo</span>'
           + naBtn
           + '<button type="button" class="p-btn" data-preset="' + p.id + '" data-bucket="' + b + '" aria-pressed="' + on + '">' + (on ? 'Stacked ✓' : 'Stack it') + '</button></div>';
       });
       if (hiddenNa.length) {
-        html.push('<p class="na-note">' + hiddenNa.map(function (p) { return esc(p.label); }).join(', ') + ' marked not applicable — out of every live figure. <button type="button" data-na-off="' + esc(hiddenNa.map(function (p) { return p.id; }).join(',')) + '">Applies after all</button> · <button type="button" data-hypo="on">Try it in What-if</button></p>');
+        html.push('<p class="na-note">' + hiddenNa.map(function (p) { return esc(p.label); }).join(', ') + ' marked not applicable, out of every live figure. <button type="button" data-na-off="' + esc(hiddenNa.map(function (p) { return p.id; }).join(',')) + '">Applies after all</button> · <button type="button" data-hypo="on">Try it in What-if</button></p>');
       }
       if (b === 'investments' && Presets.ask401k(h)) {
         html.push('<div class="ask"><span>Is there an employer 401(k) to contribute to?</span><button type="button" class="pill" data-has401k="yes">Yes</button><button type="button" class="pill is-quiet" data-has401k="no">No</button></div>');
       }
       var row = sheet.rows.filter(function (r) { return r.bucket === b; })[0];
       var stackedNote = row && row.estPresets && row.estPresets.length ? '<p class="p-cap">Estimated = ' + (Money.isEntered(row.setCents) ? esc(money(row.setCents)) + ' set by hand + ' : '') + row.estPresets.map(function (i) { return esc(i.label) + ' ' + esc(money(i.cents)); }).join(' + ') + '</p>' : '';
-      box.innerHTML = html.length ? '<div class="presets"><p class="p-cap">Presets — stack into this month’s estimate</p>' + html.join('') + stackedNote + '</div>' : '';
+      box.innerHTML = html.length ? '<div class="presets"><p class="p-cap">Presets, stack into this month’s estimate</p>' + html.join('') + stackedNote + '</div>' : '';
     });
   }
   function renderMonths(h) {
@@ -765,7 +765,7 @@
     var h = Spine.getProfile();
     var payload = Budget.recordPayload(h, TABLES, CAT(), month);
     if (!payload) return;
-    if (!window.confirm('Close ' + payload.label + '? Estimated and actual are kept side by side as they stand. This cannot be undone from here — a late entry shows as revised.')) return;
+    if (!window.confirm('Close ' + payload.label + '? Estimated and actual are kept side by side as they stand. This cannot be undone from here, a late entry shows as revised.')) return;
     var r = Spine.closeMonth(payload);
     var say = el('close-say');
     say.hidden = false;
@@ -811,7 +811,7 @@
     render();
   }).catch(function (err) {
     var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error';
-    n.textContent = 'Couldn’t load the tables in data/ (' + err.message + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+    n.textContent = 'Couldn’t load the tables in data/ (' + err.message + '). Serve this over HTTP, python3 -m http.server, rather than opening the file directly.';
   });
 })();
 </script>
@@ -848,12 +848,12 @@
       + s.rows.map(function (r) {
         var cls = r.differenceCents === null ? '' : r.hurts ? ' is-bad' : r.differenceCents === 0 ? '' : ' is-good';
         return '<div class="v-row"><span>' + esc(r.label) + (r.revised ? ' <small style="color:var(--color-caution)">revised</small>' : '') + '</span>'
-          + '<span class="n">' + (r.estimatedCents === null ? '—' : esc(money(r.estimatedCents))) + '</span>'
-          + '<span class="n">' + (r.actualCents === null ? '—' : esc(money(r.actualCents))) + '</span>'
-          + '<span class="n' + cls + '">' + (r.differenceCents === null ? '—' : esc(signed(r.differenceCents)) + (r.share !== null ? '<small>' + esc(pct(r.share)) + '</small>' : '')) + '</span></div>';
+          + '<span class="n">' + (r.estimatedCents === null ? 'not yet' : esc(money(r.estimatedCents))) + '</span>'
+          + '<span class="n">' + (r.actualCents === null ? 'not yet' : esc(money(r.actualCents))) + '</span>'
+          + '<span class="n' + cls + '">' + (r.differenceCents === null ? 'not yet' : esc(signed(r.differenceCents)) + (r.share !== null ? '<small>' + esc(pct(r.share)) + '</small>' : '')) + '</span></div>';
       }).join('');
     el('single-why').textContent = s.value === 0 ? 'Every bucket landed on or inside its estimate.'
-      : s.value + (s.value === 1 ? ' bucket missed' : ' buckets missed') + ' the way that hurts' + (s.worst ? ' — the biggest by share was ' + s.worst.label.toLowerCase() + ', ' + pct(s.worst.share) + '.' : '.')
+      : s.value + (s.value === 1 ? ' bucket missed' : ' buckets missed') + ' the way that hurts' + (s.worst ? ', the biggest by share was ' + s.worst.label.toLowerCase() + ', ' + pct(s.worst.share) + '.' : '.')
         + (s.hasRevised && !revised() ? ' Late entries exist; tick “count late entries” to read them in.' : '');
   }
   el('picker').addEventListener('click', function (evt) { var b = evt.target.closest('[data-pick]'); if (!b) return; picked = b.getAttribute('data-pick'); render(); });
@@ -878,7 +878,7 @@
     var last = misses[misses.length - 1], first = misses[0];
     el('trend-why').textContent = misses.length < 2 ? 'Two months with both columns are needed to say whether the guess is closing in.'
       : 'Across ' + t.value + ' months the ' + Variance.LABELS[trendBucket].toLowerCase() + ' miss went from ' + pct(first.share) + ' to ' + pct(last.share)
-        + (Math.abs(last.share) < Math.abs(first.share) ? ' — the guesses are getting closer.' : Math.abs(last.share) > Math.abs(first.share) ? ' — further off than at the start.' : ' — no closer, no further.');
+        + (Math.abs(last.share) < Math.abs(first.share) ? '. The guesses are getting closer.' : Math.abs(last.share) > Math.abs(first.share) ? ', further off than at the start.' : ', no closer, no further.');
   }
   el('trend-picker').addEventListener('click', function (evt) { var b = evt.target.closest('[data-bucket]'); if (!b) return; trendBucket = b.getAttribute('data-bucket'); render(); });
 
@@ -889,13 +889,13 @@
     el('per-bucket').innerHTML = p.rows.map(function (r) {
       var prop = Variance.proposal(h, r.bucket, 3, { revised: revised() });
       return '<div class="v-row"><span>' + esc(r.label) + '<small style="display:block;color:var(--color-text-faint);font-size:var(--text-xs)">' + r.months + (r.months === 1 ? ' month' : ' months') + '</small></span>'
-        + '<span class="n' + (r.averageShare !== null && ((r.bucket === 'income' && r.averageShare < 0) || (r.bucket !== 'income' && r.averageShare > 0)) ? ' is-bad' : '') + '">' + (r.averageCents === null ? '—' : esc(signed(r.averageCents)) + '<small>' + (r.averageShare !== null ? esc(pct(r.averageShare)) : '') + '</small>') + '</span>'
-        + '<span class="n"><small style="font-size:var(--text-sm);color:inherit">' + (r.sameWay ? esc(r.sameWay) + ' every month' : r.spread === null ? '—' : r.spread < 0.1 ? 'steady' : 'varies') + '</small></span>'
-        + '<span class="n">' + (r.lastActualCents === null ? '—' : esc(money(r.lastActualCents))) + '</span>'
+        + '<span class="n' + (r.averageShare !== null && ((r.bucket === 'income' && r.averageShare < 0) || (r.bucket !== 'income' && r.averageShare > 0)) ? ' is-bad' : '') + '">' + (r.averageCents === null ? 'not yet' : esc(signed(r.averageCents)) + '<small>' + (r.averageShare !== null ? esc(pct(r.averageShare)) : '') + '</small>') + '</span>'
+        + '<span class="n"><small style="font-size:var(--text-sm);color:inherit">' + (r.sameWay ? esc(r.sameWay) + ' every month' : r.spread === null ? 'not yet' : r.spread < 0.1 ? 'steady' : 'varies') + '</small></span>'
+        + '<span class="n">' + (r.lastActualCents === null ? 'not yet' : esc(money(r.lastActualCents))) + '</span>'
         + (Money.isOk(prop) ? '<span class="acts"><button type="button" class="pill act" data-use="' + r.bucket + '" data-cents="' + prop.value + '">Use ' + esc(money(prop.value)) + ' as ' + esc(Schema.monthLabel(next)) + '’s estimate <small>(' + prop.count + (prop.count === 1 ? ' month’s' : ' months’') + ' average)</small></button></span>' : '')
         + '</div>';
     }).join('');
-    el('bucket-why').textContent = p.value < 3 ? 'With ' + p.value + (p.value === 1 ? ' month' : ' months') + ' closed this is early; three make a pattern.' : 'A bucket off the same way three months running is not bad luck — it is the estimate.';
+    el('bucket-why').textContent = p.value < 3 ? 'With ' + p.value + (p.value === 1 ? ' month' : ' months') + ' closed this is early; three make a pattern.' : 'A bucket off the same way three months running is not bad luck. It is the estimate.';
   }
   el('per-bucket').addEventListener('click', function (evt) {
     var b = evt.target.closest('[data-use]');
@@ -945,7 +945,7 @@
     list.innerHTML = j.map(function (e) {
       var when = e.at ? new Date(e.at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
       var what = e.kind === 'close' ? 'Month closed (' + esc(e.month) + '): left each month was ' : 'Level ' + e.level + ' said: left each month is ';
-      var cents = Money.isEntered(e.cents) ? signed(e.cents) : Money.EM_DASH;
+      var cents = Money.isEntered(e.cents) ? signed(e.cents) : Money.NOT_YET;
       var diff = prev !== null && Money.isEntered(e.cents) ? ' <small>(' + (e.cents >= prev ? 'up ' : 'down ') + Money.formatCents(Math.abs(e.cents - prev)) + ' on the line before)</small>' : '';
       if (Money.isEntered(e.cents)) prev = e.cents;
       return '<li><b>' + esc(when) + '</b> · ' + what + '<b>' + esc(cents) + '</b> <small>(' + esc(e.basis || '') + ')</small>' + diff + '</li>';
@@ -998,7 +998,7 @@
 
     assumptions: function (h, T) {
       return [
-        { label: 'A snapshot holds', value: History.frozenNames().length + ' instruments and every owned field', source: History.frozenNames().join(', ') + ' — shared/instruments.js' },
+        { label: 'A snapshot holds', value: History.frozenNames().length + ' instruments and every owned field', source: History.frozenNames().join(', ') + ', shared/instruments.js' },
         { label: '“Now”', value: 'recomputed', source: 'from the household as it is, never a stored figure' },
         { label: 'The log', value: 'this browser’s', source: 'meta.undoStack, capped at 100; an export or share code leaves it behind (D-094)' },
         { label: 'Snapshots', value: 'this browser’s', source: 'kept beside the household; a share code carries them' }
@@ -1011,7 +1011,7 @@
         selfEmployed: 'Self-employed, the months are uneven; the snapshots even them out into a slope.',
         mixed: 'Two incomes, one line. The slope is what both are doing together.',
         student: 'A student’s line is mostly flat or mostly debt; the first snapshot after graduation is the one to keep.',
-        retired: 'Retired, the draw shows up here first — a line that slopes down is the withdrawal rate made visible.',
+        retired: 'Retired, the draw shows up here first, a line that slopes down is the withdrawal rate made visible.',
         betweenJobs: 'Between jobs, the runway’s slope is the line; freeze on the day the job ended so the drawdown is measured from there.'
       }[situation] || 'A number today is one point. A line needs two; this is where the second one comes from.';
     },

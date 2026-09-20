@@ -1,269 +1,4032 @@
 {
-  "id": "glossary",
-  "version": "1.0",
-  "asOf": "2026-09-10",
-  "source": "Every term the rooms and engines put on screen, in one plain sentence each, written for a reader who has never had a finance conversation. Lane 2, section 4 (DECISIONS.md L-4). The term list came from grepping rooms/*.html and engines/*.js for acronyms and capitalised phrases, plus the words a coaching client asks about.",
-  "confidence": "convention",
-  "confidenceNote": "Definitions, not figures. Where a term has a legal meaning (a tax term, a plan name) the sentence says what it means for the reader, not the statute; the data tables carry the numbers and the sources.",
-  "note": "Read by shared/glossary.js (SLAF.Glossary). `term` is the word as it appears on screen; `also` lists other spellings and the long form; `plain` is the sentence; `domain` groups them. No sentence uses its own term or any of its aliases (tests/glossary.test.js). Reading level: short sentences, common words, one idea each.",
-  "terms": [
-    { "term": "take-home pay", "also": ["take-home", "net pay"], "domain": "income", "plain": "What lands in your account after tax and other deductions come out of your paycheque." },
-    { "term": "gross income", "also": ["gross", "gross pay"], "domain": "income", "plain": "Everything you earn in a year before any tax or deduction is taken out." },
-    { "term": "net income", "also": ["net"], "domain": "income", "plain": "What is left of a sum after the costs or taxes tied to it are taken away." },
-    { "term": "budget", "also": [], "domain": "budgeting", "plain": "A plan for where each dollar of a month goes before the month starts." },
-    { "term": "cash flow", "also": ["cashflow"], "domain": "budgeting", "plain": "Money coming in during a month set against money going out in the same month." },
-    { "term": "surplus", "also": [], "domain": "budgeting", "plain": "What is left at the end of a month when less went out than came in." },
-    { "term": "deficit", "also": [], "domain": "budgeting", "plain": "The gap when more goes out in a month than comes in." },
-    { "term": "savings rate", "also": [], "domain": "income", "plain": "The share of what you earn that you keep instead of spend, shown as a percent." },
-    { "term": "emergency fund", "also": ["cushion"], "domain": "safety", "plain": "Cash set aside to pay for a surprise, like a car repair or a month without work, without borrowing." },
-    { "term": "runway", "also": [], "domain": "safety", "plain": "How many months your cash would cover your spending if the money coming in stopped today." },
-    { "term": "net worth", "also": [], "domain": "assets", "plain": "Everything you own added up, minus everything you owe." },
-    { "term": "asset", "also": ["assets"], "domain": "assets", "plain": "Anything you own that is worth money, like cash, a fund, a house or a car." },
-    { "term": "liability", "also": ["liabilities"], "domain": "debt", "plain": "Money you owe to someone else, whatever it is called on the statement." },
-    { "term": "debt", "also": ["debts"], "domain": "debt", "plain": "Money you have borrowed and still have to pay back, usually with interest." },
-    { "term": "liquid", "also": ["liquidity"], "domain": "assets", "plain": "How fast something you own can be turned into spendable cash without losing value or paying a penalty." },
-    { "term": "illiquid", "also": [], "domain": "assets", "plain": "Something you own that takes months to sell, or costs a penalty to reach, like a house or a retirement account before 59 and a half." },
-    { "term": "cash", "also": ["cash savings"], "domain": "assets", "plain": "Money in a checking or savings account that you can spend today." },
-    { "term": "investment", "also": ["investments", "invested"], "domain": "investing", "plain": "Money put into something, like a fund or a business, that you expect to grow over time." },
-    { "term": "equity", "also": [], "domain": "assets", "plain": "The part of a thing you truly own: its value minus any loan against it." },
-    { "term": "principal", "also": [], "domain": "debt", "plain": "The amount originally borrowed or invested, before any interest is added." },
-    { "term": "interest", "also": [], "domain": "debt", "plain": "The price of borrowing money, or the reward for lending it, paid as a percent of the balance." },
-    { "term": "APR", "also": ["annual percentage rate"], "domain": "debt", "plain": "The yearly cost of a loan as a percent of the balance, the number to compare loans by." },
-    { "term": "APY", "also": ["annual percentage yield"], "domain": "assets", "plain": "The yearly return on a savings account as a percent, with the compounding already counted." },
-    { "term": "compound interest", "also": ["compounding"], "domain": "investing", "plain": "Growth that earns growth: the return on last year's return is added to your balance too." },
-    { "term": "simple interest", "also": [], "domain": "debt", "plain": "Growth counted only on the original amount, never on the earlier growth." },
-    { "term": "rate", "also": [], "domain": "basics", "plain": "A percent applied to an amount, like the yearly percent charged on a loan or earned on savings." },
-    { "term": "effective rate", "also": ["effective tax rate"], "domain": "taxes", "plain": "The share of your whole income that actually goes to tax, all brackets averaged together." },
-    { "term": "marginal rate", "also": ["marginal", "marginal tax rate"], "domain": "taxes", "plain": "The tax taken from the next dollar you earn, which is higher than the average on all your dollars." },
-    { "term": "tax bracket", "also": ["bracket", "brackets"], "domain": "taxes", "plain": "A slice of income that is taxed at one percent; only the dollars inside that slice pay that percent." },
-    { "term": "taxable income", "also": [], "domain": "taxes", "plain": "The part of your income that tax is figured on, after the standard deduction and other subtractions." },
-    { "term": "standard deduction", "also": [], "domain": "taxes", "plain": "A fixed amount everyone can subtract from income before tax is figured, no receipts needed." },
-    { "term": "deduction", "also": ["deductions"], "domain": "taxes", "plain": "An amount subtracted from income before tax is figured, so it lowers the tax bill by your bracket's share of it." },
-    { "term": "tax credit", "also": ["credit"], "domain": "taxes", "plain": "An amount subtracted from the tax bill itself, so a dollar of it saves a full dollar." },
-    { "term": "withholding", "also": ["withheld"], "domain": "taxes", "plain": "Tax your employer sends to the government from each paycheque on your behalf before you see the money." },
-    { "term": "W-2", "also": ["W2"], "domain": "income", "plain": "A job where an employer pays you wages, takes out tax, and sends you the yearly form of that name." },
-    { "term": "1099", "also": ["contractor", "freelance"], "domain": "income", "plain": "Work paid without tax taken out, where you owe the tax yourself, named after the form the payer sends." },
-    { "term": "self-employment tax", "also": ["SE tax", "SE"], "domain": "taxes", "plain": "The Social Security and Medicare tax a person pays on their own business profit, both the worker's and the employer's halves." },
-    { "term": "FICA", "also": ["payroll tax"], "domain": "taxes", "plain": "The Social Security and Medicare tax taken from wages, about 7.65% for the worker with the employer matching it." },
-    { "term": "Social Security", "also": ["SS"], "domain": "retirement", "plain": "The government pension paid from age 62 on, sized by what you earned over your working years." },
-    { "term": "Medicare", "also": [], "domain": "health", "plain": "The government health insurance that starts at 65." },
-    { "term": "wage base", "also": ["taxable maximum"], "domain": "taxes", "plain": "The most wages in a year that Social Security tax is charged on; above it, that tax stops." },
-    { "term": "filing status", "also": [], "domain": "taxes", "plain": "The box on your tax return that says single, married together, married apart, or head of a household, which sets your brackets." },
-    { "term": "head of household", "also": [], "domain": "taxes", "plain": "The filing status for a single person who pays most of the costs of a home for a child or dependant." },
-    { "term": "married filing jointly", "also": ["married_joint", "joint"], "domain": "taxes", "plain": "One tax return for a married couple, with brackets twice as wide as a single person's." },
-    { "term": "married filing separately", "also": ["married_separate"], "domain": "taxes", "plain": "Two tax returns for a married couple, each on their own income, which usually costs more tax." },
-    { "term": "AGI", "also": ["adjusted gross income"], "domain": "taxes", "plain": "Your income after a few specific subtractions like retirement contributions, the figure many limits are based on." },
-    { "term": "MAGI", "also": ["modified adjusted gross income"], "domain": "taxes", "plain": "Your income as the government counts it for a particular limit, with a few items added back; each rule has its own version." },
-    { "term": "capital gains", "also": ["capital gain", "gains"], "domain": "taxes", "plain": "The profit when you sell something for more than you paid for it." },
-    { "term": "long-term capital gains", "also": ["long-term"], "domain": "taxes", "plain": "Profit on something held more than a year before selling, which is taxed at lower rates than wages." },
-    { "term": "cost basis", "also": ["basis"], "domain": "taxes", "plain": "What you paid for something, the starting point for working out your profit when you sell." },
-    { "term": "step-up in basis", "also": ["step-up"], "domain": "estate", "plain": "When someone dies, what they paid for an asset is reset to its value that day, so the heir owes no tax on the earlier gain." },
-    { "term": "dividend", "also": ["dividends"], "domain": "investing", "plain": "Cash a company or fund pays out to the people who own it, usually every few months." },
-    { "term": "yield", "also": [], "domain": "investing", "plain": "The cash an investment pays each year as a percent of its price." },
-    { "term": "real return", "also": ["real"], "domain": "investing", "plain": "Growth measured after inflation is taken out, so it shows what the money can actually buy." },
-    { "term": "nominal return", "also": ["nominal"], "domain": "investing", "plain": "Growth measured in plain dollars, before inflation is taken out." },
-    { "term": "inflation", "also": [], "domain": "basics", "plain": "Prices rising over time, so the same dollar buys a little less each year." },
-    { "term": "expected return", "also": ["expected return rate"], "domain": "investing", "plain": "The yearly growth a plan assumes for invested money, an assumption you can change, not a promise." },
-    { "term": "safe withdrawal rate", "also": ["SWR", "withdrawal rate"], "domain": "fi", "plain": "The share of a pot you can spend each year and expect it to last a lifetime, most often set at 4%." },
-    { "term": "4% rule", "also": ["four percent rule"], "domain": "fi", "plain": "A guideline that spending 4% of your investments in the first year, then adjusting for inflation, has lasted 30 years in the past." },
-    { "term": "financial independence", "also": ["FI"], "domain": "fi", "plain": "Having enough invested that its growth can pay your bills, so work becomes a choice." },
-    { "term": "FIRE", "also": [], "domain": "fi", "plain": "Saving hard enough to stop needing a paycheque years before the usual retirement age." },
-    { "term": "FI number", "also": ["FIRE number", "target"], "domain": "fi", "plain": "The pot you need so its growth covers your spending, usually 25 times a year of expenses." },
-    { "term": "FI date", "also": [], "domain": "fi", "plain": "The year your investments are projected to reach the pot that can pay your bills." },
-    { "term": "Coast FI", "also": ["coast"], "domain": "fi", "plain": "Having enough invested already that, with no more added, growth alone reaches the retirement pot by the usual age." },
-    { "term": "Barista FI", "also": ["barista"], "domain": "fi", "plain": "Working part time for health cover and some income while investments carry the rest." },
-    { "term": "Lean FIRE", "also": ["lean"], "domain": "fi", "plain": "Reaching independence on a smaller pot by planning to spend less than most people." },
-    { "term": "Fat FIRE", "also": ["fat", "chubby"], "domain": "fi", "plain": "Reaching independence with a larger pot that supports more spending than most people." },
-    { "term": "sequence of returns", "also": ["sequence risk"], "domain": "investing", "plain": "The order good and bad years arrive in; bad years early in retirement hurt more than the same years later." },
-    { "term": "bucket strategy", "also": ["buckets"], "domain": "investing", "plain": "Keeping a few years of spending in cash and bonds so stocks are never sold in a bad year." },
-    { "term": "glide path", "also": [], "domain": "investing", "plain": "Slowly moving money from stocks to bonds as a goal gets closer." },
-    { "term": "asset allocation", "also": ["allocation"], "domain": "investing", "plain": "The split of your investments between stocks, bonds and cash." },
-    { "term": "asset location", "also": [], "domain": "investing", "plain": "Which kind of account each investment sits in, chosen so the tax bill is smaller." },
-    { "term": "three-fund portfolio", "also": ["three fund"], "domain": "investing", "plain": "Owning just a US stock fund, an international stock fund and a bond fund." },
-    { "term": "index fund", "also": [], "domain": "investing", "plain": "A fund that owns every company in a list, like the 500 largest, instead of trying to pick winners." },
-    { "term": "ETF", "also": ["exchange-traded fund"], "domain": "investing", "plain": "A fund you buy and sell like a single stock during the day." },
-    { "term": "expense ratio", "also": [], "domain": "investing", "plain": "The yearly fee a fund takes, as a percent of what you hold in it." },
-    { "term": "brokerage account", "also": ["brokerage", "taxable account", "taxable"], "domain": "investing", "plain": "An ordinary investing account with no tax break, no limit and no age rule on taking money out." },
-    { "term": "pretax", "also": ["pre-tax", "traditional"], "domain": "retirement", "plain": "Money put into a retirement account before tax, so it lowers this year's tax bill and is taxed when taken out." },
-    { "term": "Roth", "also": [], "domain": "retirement", "plain": "Money put into a retirement account after tax, so it grows and comes out later with no tax at all." },
-    { "term": "traditional IRA", "also": [], "domain": "retirement", "plain": "A retirement account you open yourself where contributions can lower this year's tax and withdrawals are taxed." },
-    { "term": "Roth IRA", "also": [], "domain": "retirement", "plain": "A retirement account you open yourself, paid with taxed money, whose growth is never taxed again." },
-    { "term": "IRA", "also": ["individual retirement account"], "domain": "retirement", "plain": "A retirement account you open yourself, outside any job, with a yearly limit on what goes in." },
-    { "term": "401(k)", "also": ["401k"], "domain": "retirement", "plain": "A retirement account offered through a job, paid from your paycheque, often with money added by the employer." },
-    { "term": "403(b)", "also": ["403b"], "domain": "retirement", "plain": "The version of a workplace retirement account offered by schools, hospitals and non-profits." },
-    { "term": "457(b)", "also": ["457"], "domain": "retirement", "plain": "A workplace retirement account for government workers that can be tapped after leaving the job at any age without penalty." },
-    { "term": "SEP IRA", "also": ["SEP"], "domain": "retirement", "plain": "A retirement account for self-employed people that takes up to a fifth of business profit each year." },
-    { "term": "SIMPLE IRA", "also": ["SIMPLE"], "domain": "retirement", "plain": "A small-business retirement plan with a lower yearly limit than a 401(k) and a required employer contribution." },
-    { "term": "solo 401(k)", "also": ["solo 401k"], "domain": "retirement", "plain": "A workplace-style retirement account for a business with no employees, where you contribute as both worker and employer." },
-    { "term": "employer match", "also": ["match"], "domain": "retirement", "plain": "Money your employer adds to your retirement account when you put some in, up to a stated share of your pay." },
-    { "term": "vesting", "also": ["vested"], "domain": "retirement", "plain": "Earning the right to keep money or shares an employer gave you, which happens over a set number of years." },
-    { "term": "vesting schedule", "also": [], "domain": "retirement", "plain": "The timetable that says what share of an employer's grant is yours after each year." },
-    { "term": "cliff vesting", "also": ["cliff"], "domain": "retirement", "plain": "A grant that is all yours on one date and none of it before." },
-    { "term": "RSU", "also": ["restricted stock unit", "restricted stock units"], "domain": "income", "plain": "Company shares promised to you that become yours on set dates and are taxed as wages when they do." },
-    { "term": "ESPP", "also": ["employee stock purchase plan"], "domain": "income", "plain": "A workplace plan that lets you buy company shares from your paycheque at a discount." },
-    { "term": "stock options", "also": ["options"], "domain": "income", "plain": "The right to buy company shares later at a price fixed today, worth something only if the shares rise above it." },
-    { "term": "deferred", "also": ["tax-deferred", "deferral"], "domain": "retirement", "plain": "Put off until later: money or tax that is not due now but will be." },
-    { "term": "catch-up contribution", "also": ["catch-up"], "domain": "retirement", "plain": "Extra money people 50 and over may add to a retirement account above the usual yearly limit." },
-    { "term": "contribution limit", "also": ["limit"], "domain": "retirement", "plain": "The most the rules let you put into an account in one year." },
-    { "term": "phase-out", "also": ["phase out"], "domain": "taxes", "plain": "An income range where a tax break shrinks bit by bit until it is gone at the top of the range." },
-    { "term": "backdoor Roth", "also": ["backdoor"], "domain": "retirement", "plain": "Putting money into a traditional IRA and then moving it to the Roth kind, a route for people whose income is over the direct limit." },
-    { "term": "mega backdoor Roth", "also": ["mega backdoor"], "domain": "retirement", "plain": "Adding after-tax money to a workplace plan above the usual limit and moving it into the Roth side." },
-    { "term": "Roth conversion", "also": ["conversion"], "domain": "retirement", "plain": "Moving money from a pretax retirement account to the Roth kind and paying the tax on it now." },
-    { "term": "RMD", "also": ["required minimum distribution", "required minimum distributions"], "domain": "retirement", "plain": "The amount the rules make you take out of a pretax retirement account each year from your seventies on." },
-    { "term": "QCD", "also": ["qualified charitable distribution"], "domain": "giving", "plain": "A gift sent straight from a pretax retirement account to a charity after 70 and a half, which counts toward the yearly required withdrawal without being taxed." },
-    { "term": "DAF", "also": ["donor-advised fund", "donor advised fund"], "domain": "giving", "plain": "An account you put money into for charity, getting the tax break now and choosing the charities later." },
-    { "term": "HSA", "also": ["health savings account"], "domain": "health", "plain": "A savings account for medical costs that goes with a high-deductible health plan and is never taxed if used for care." },
-    { "term": "HDHP", "also": ["high-deductible health plan", "high deductible"], "domain": "health", "plain": "Health insurance where you pay more yourself before it starts paying, in return for a lower monthly price and the right to use a health savings account." },
-    { "term": "FSA", "also": ["flexible spending account"], "domain": "health", "plain": "A workplace account for medical or childcare costs paid with untaxed money, most of which must be used within the year." },
-    { "term": "deductible", "also": [], "domain": "insurance", "plain": "What you pay yourself on a claim before the insurance starts paying." },
-    { "term": "out-of-pocket maximum", "also": ["out-of-pocket max", "OOP max"], "domain": "insurance", "plain": "The most you can pay for covered care in a year; past it the plan pays everything." },
-    { "term": "premium", "also": ["premiums"], "domain": "insurance", "plain": "The monthly or yearly price of keeping an insurance policy." },
-    { "term": "copay", "also": ["copayment"], "domain": "insurance", "plain": "A fixed amount you pay at each visit or prescription." },
-    { "term": "coinsurance", "also": [], "domain": "insurance", "plain": "Your share of a medical bill as a percent after the deductible is met." },
-    { "term": "COBRA", "also": [], "domain": "health", "plain": "Keeping your old job's health plan after leaving, for up to 18 months, paying the whole price yourself." },
-    { "term": "marketplace", "also": ["ACA", "exchange", "Affordable Care Act"], "domain": "health", "plain": "The government website where people without job coverage buy health insurance, with help paying based on income." },
-    { "term": "benchmark plan", "also": ["benchmark premium", "second-lowest-cost silver"], "domain": "health", "plain": "The mid-level marketplace plan whose price sets how much help everyone in the area gets." },
-    { "term": "premium tax credit", "also": ["subsidy"], "domain": "health", "plain": "Government help with the monthly price of marketplace insurance, larger when income is lower." },
-    { "term": "federal poverty level", "also": ["FPL", "poverty line", "poverty guideline"], "domain": "health", "plain": "A yearly income figure the government publishes for each household size, used to set who qualifies for help." },
-    { "term": "subsidy cliff", "also": ["cliff"], "domain": "health", "plain": "The income line above which marketplace help disappears all at once instead of shrinking." },
-    { "term": "Medicaid", "also": [], "domain": "health", "plain": "Free or very low-cost government health cover for people with low income." },
-    { "term": "term life insurance", "also": ["term life"], "domain": "insurance", "plain": "Life insurance that pays a set amount if you die within a set number of years and nothing after." },
-    { "term": "disability insurance", "also": ["disability"], "domain": "insurance", "plain": "Insurance that replaces part of your pay if illness or injury stops you working." },
-    { "term": "umbrella policy", "also": ["umbrella"], "domain": "insurance", "plain": "Extra liability cover on top of your car and home policies for a large claim against you." },
-    { "term": "PMI", "also": ["private mortgage insurance", "mortgage insurance"], "domain": "housing", "plain": "A monthly charge added to a home loan when the down payment was under 20%, protecting the lender, not you." },
-    { "term": "HOA", "also": ["homeowners association"], "domain": "housing", "plain": "The monthly fee a condo or neighbourhood charges every owner for shared upkeep." },
-    { "term": "escrow", "also": [], "domain": "housing", "plain": "Money collected with each mortgage payment and held to pay the property tax and home insurance when they come due." },
-    { "term": "PITI", "also": [], "domain": "housing", "plain": "The full monthly cost of a home loan: principal, interest, property tax and insurance together." },
-    { "term": "mortgage", "also": [], "domain": "housing", "plain": "A loan to buy a home, paid back over many years, where the home is the lender's security." },
-    { "term": "amortization", "also": ["amortisation", "amortize"], "domain": "debt", "plain": "Paying a loan off in equal payments where early ones are mostly interest and later ones mostly principal." },
-    { "term": "refinance", "also": ["refi"], "domain": "housing", "plain": "Replacing a loan with a new one, usually to get a lower rate or a different term." },
-    { "term": "home equity", "also": [], "domain": "housing", "plain": "What your home is worth minus what you still owe on it." },
-    { "term": "HELOC", "also": ["home equity line of credit"], "domain": "debt", "plain": "A line of credit you can draw on that uses your home as the security." },
-    { "term": "LTV", "also": ["loan-to-value"], "domain": "housing", "plain": "The loan as a percent of the home's value; 80% or lower avoids mortgage insurance." },
-    { "term": "DTI", "also": ["debt-to-income"], "domain": "debt", "plain": "Your monthly debt payments as a share of your monthly gross income; lenders like it under 36%." },
-    { "term": "credit score", "also": ["FICO"], "domain": "debt", "plain": "A number from 300 to 850 that lenders use to guess how reliably you repay." },
-    { "term": "credit report", "also": [], "domain": "debt", "plain": "The record of your loans and cards, balances and payment history that the three credit bureaus keep." },
-    { "term": "credit utilization", "also": ["utilization", "revolving share"], "domain": "debt", "plain": "Your card balances as a share of your card limits; under 30% helps your score." },
-    { "term": "revolving debt", "also": ["revolving"], "domain": "debt", "plain": "Borrowing with no fixed end, like a credit card, where you can pay down and borrow again." },
-    { "term": "installment loan", "also": ["instalment"], "domain": "debt", "plain": "A loan with a fixed payment and a fixed end date, like a car loan or a mortgage." },
-    { "term": "minimum payment", "also": ["minimum", "minimums"], "domain": "debt", "plain": "The smallest amount a lender will accept each month without calling you late." },
-    { "term": "avalanche", "also": ["debt avalanche"], "domain": "debt", "plain": "Paying extra on the debt with the highest rate first, which costs the least interest overall." },
-    { "term": "snowball", "also": ["debt snowball"], "domain": "debt", "plain": "Paying extra on the smallest balance first for the quick wins, whatever its rate." },
-    { "term": "promotional rate", "also": ["promo rate", "promo", "0% offer"], "domain": "debt", "plain": "A low or zero rate on a card or loan that lasts a set number of months and then jumps." },
-    { "term": "balance transfer", "also": [], "domain": "debt", "plain": "Moving a card balance to another card with a low starting rate, usually for a fee of a few percent." },
-    { "term": "income-driven repayment", "also": ["IDR", "income driven"], "domain": "student loans", "plain": "A federal student loan plan where the monthly payment is a share of your income rather than of the balance." },
-    { "term": "PSLF", "also": ["Public Service Loan Forgiveness"], "domain": "student loans", "plain": "Federal student loans wiped out after 120 monthly payments while working for a government or non-profit employer." },
-    { "term": "standard plan", "also": ["standard repayment"], "domain": "student loans", "plain": "The default federal student loan plan: the same payment every month for ten years." },
-    { "term": "IBR", "also": ["Income-Based Repayment"], "domain": "student loans", "plain": "The long-running federal plan that sets student loan payments at 10% or 15% of income above a living allowance." },
-    { "term": "SAVE", "also": [], "domain": "student loans", "plain": "A federal student loan plan from 2023 that courts blocked and Congress ended in 2026." },
-    { "term": "RAP", "also": ["Repayment Assistance Plan"], "domain": "student loans", "plain": "The federal student loan plan from July 2026 that charges 1% to 10% of income and forgives what is left after 30 years." },
-    { "term": "forbearance", "also": [], "domain": "student loans", "plain": "A pause on loan payments the lender agrees to, while interest keeps adding up." },
-    { "term": "deferment", "also": ["deferred loans"], "domain": "student loans", "plain": "A pause on federal student loan payments, during school or hardship, where the government may pay the interest for you." },
-    { "term": "servicer", "also": ["loan servicer"], "domain": "student loans", "plain": "The company that sends your student loan bills and handles your payments for the lender." },
-    { "term": "discretionary income", "also": [], "domain": "student loans", "plain": "For student loan plans, your income above a set multiple of the poverty line; the payment is a share of this." },
-    { "term": "severance", "also": [], "domain": "safety", "plain": "A lump sum an employer pays when they let you go, often a few weeks of pay per year worked." },
-    { "term": "unemployment insurance", "also": ["UI", "unemployment benefit"], "domain": "safety", "plain": "Weekly money from the state while you look for work after losing a job, up to a cap and for a set number of weeks." },
-    { "term": "base period", "also": [], "domain": "safety", "plain": "The year of past wages a state looks at to set your unemployment benefit." },
-    { "term": "pension", "also": [], "domain": "retirement", "plain": "A monthly payment for life from a past employer, sized by your years there and your pay." },
-    { "term": "annuity", "also": [], "domain": "retirement", "plain": "A contract where you hand an insurer a lump sum and it pays you a set amount every month for life." },
-    { "term": "Social Security estimate", "also": ["SS estimate", "benefit estimate"], "domain": "retirement", "plain": "The monthly government pension the official website says you would get, at each starting age, based on your record so far." },
-    { "term": "full retirement age", "also": ["FRA"], "domain": "retirement", "plain": "The age, 66 to 67 depending on birth year, at which the government pension pays its full amount." },
-    { "term": "delayed retirement credits", "also": ["delayed credits"], "domain": "retirement", "plain": "The 8% a year the government pension grows for each year you wait past full retirement age, until 70." },
-    { "term": "PIA", "also": ["primary insurance amount"], "domain": "retirement", "plain": "The monthly government pension you would get at full retirement age, the figure every earlier or later amount is scaled from." },
-    { "term": "COLA", "also": ["cost-of-living adjustment"], "domain": "retirement", "plain": "The yearly raise to government pensions and tax limits that follows inflation." },
-    { "term": "rule of 55", "also": [], "domain": "retirement", "plain": "Leave a job in or after the year you turn 55 and that job's retirement plan can be tapped without the early penalty." },
-    { "term": "59 and a half", "also": ["59.5", "59½"], "domain": "retirement", "plain": "The age after which retirement accounts can be tapped without the 10% early penalty." },
-    { "term": "72(t)", "also": ["SEPP", "substantially equal periodic payments"], "domain": "retirement", "plain": "A rule that lets you take fixed yearly amounts from a retirement account before 59 and a half without the penalty, if you keep it up for at least five years." },
-    { "term": "early withdrawal penalty", "also": ["penalty", "10% penalty"], "domain": "retirement", "plain": "The extra 10% tax on money taken from a retirement account before 59 and a half, on top of ordinary tax." },
-    { "term": "529", "also": ["529 plan"], "domain": "kids", "plain": "A savings account for school and college costs whose growth is never taxed if spent on education." },
-    { "term": "gift tax annual exclusion", "also": ["annual exclusion", "gift limit"], "domain": "estate", "plain": "The amount one person can give another in a year, $19,000 in 2026, without filing a gift tax form." },
-    { "term": "estate", "also": [], "domain": "estate", "plain": "Everything a person owns and owes at the moment they die." },
-    { "term": "beneficiary", "also": ["beneficiaries"], "domain": "estate", "plain": "The person named on an account or policy to receive it when you die, ahead of anything a will says." },
-    { "term": "transfer on death", "also": ["TOD", "payable on death", "POD"], "domain": "estate", "plain": "A label on an account that hands it straight to a named person at death, skipping the court process." },
-    { "term": "probate", "also": [], "domain": "estate", "plain": "The court process that sorts out a dead person's property when no beneficiary or trust already says where it goes." },
-    { "term": "will", "also": [], "domain": "estate", "plain": "A signed document saying who gets what when you die and who looks after your children." },
-    { "term": "trust", "also": ["living trust"], "domain": "estate", "plain": "A legal container that holds property for someone, so it passes without the court process." },
-    { "term": "power of attorney", "also": ["POA"], "domain": "estate", "plain": "A document naming someone to handle your money or health decisions if you cannot." },
-    { "term": "DAITE", "also": [], "domain": "app", "plain": "The five families every number in this app belongs to: debt, assets, income, taxes, expenses." },
-    { "term": "FAT", "also": [], "domain": "app", "plain": "The three needs that make up most of a month: food, accommodation, transportation." },
-    { "term": "DRAFTT", "also": [], "domain": "app", "plain": "The seven shares of take-home this app scores you on: debt, retirement, accommodation, food, transportation, taxes, therapy." },
-    { "term": "FOO", "also": ["Financial Order of Operations"], "domain": "app", "plain": "The Money Guy Show's nine steps for where each spare dollar goes, from a starter cushion to paying off the house." },
-    { "term": "SLAF", "also": ["Save Like a Fox"], "domain": "app", "plain": "The name of this suite of money rooms." },
-    { "term": "SPARKS", "also": [], "domain": "app", "plain": "The family of small tools this app belongs to." },
-    { "term": "lens", "also": ["lenses"], "domain": "app", "plain": "A well-known rule of thumb read against your own numbers, one card with a verdict and who it is for." },
-    { "term": "block", "also": ["blocks"], "domain": "app", "plain": "A what-if laid on top of your real numbers for a date range, like a house or a kid, that never changes the real numbers." },
-    { "term": "scenario", "also": ["scenarios", "pinned"], "domain": "app", "plain": "A saved set of choices in a room that you can come back to, kept beside your numbers rather than in them." },
-    { "term": "sphere", "also": ["spheres"], "domain": "app", "plain": "One of nine depths of detail in the ledger; going deeper sharpens the numbers, and nothing is ever locked." },
-    { "term": "ledger", "also": [], "domain": "app", "plain": "The one place in this app where facts are typed in; every room reads from it." },
-    { "term": "confidence", "also": [], "domain": "app", "plain": "How sure you are of a number: sure, roughly, or unknown, which decides how precisely it is shown." },
-    { "term": "as of", "also": ["asOf"], "domain": "app", "plain": "The date a number was last true or last checked." },
-    { "term": "stale", "also": [], "domain": "app", "plain": "A number old enough that it should be checked again before it is trusted." },
-    { "term": "snapshot", "also": ["freeze"], "domain": "app", "plain": "A dated copy of all your numbers kept so later change can be measured against it." },
-    { "term": "hypothetical", "also": ["what-if"], "domain": "app", "plain": "A number tried out to see what would happen, which is never saved as a fact." },
-    { "term": "lever", "also": ["levers"], "domain": "app", "plain": "One change you can make, like a raise saved or a cheaper home, sized in dollars a month and hours a week." },
-    { "term": "headwind", "also": [], "domain": "app", "plain": "A bad turn added to a plan to see if it survives, like a market fall or months without pay." },
-    { "term": "tailwind", "also": [], "domain": "app", "plain": "A good turn added to a plan, like a raise you keep saving." },
-    { "term": "Real Hourly Wage", "also": ["real hourly", "RHW"], "domain": "income", "plain": "What a job pays per hour once commuting, unpaid overtime and work costs are counted against take-home." },
-    { "term": "Return on Hassle", "also": ["hassle"], "domain": "app", "plain": "The dollars a cheaper choice saves set against the hours of bother it costs, priced at your true hourly rate." },
-    { "term": "orientation", "also": [], "domain": "app", "plain": "Which way an account is taxed: before you put money in, when you take it out, or never." },
-    { "term": "tier", "also": ["tiers", "liquidity tier"], "domain": "assets", "plain": "How reachable a pot is, from cash today to a home you would have to sell." },
-    { "term": "cadence", "also": [], "domain": "app", "plain": "How often a number repeats: weekly, every two weeks, monthly or yearly." },
-    { "term": "PAW", "also": ["prodigious accumulator of wealth", "AAW"], "domain": "benchmarks", "plain": "A label from The Millionaire Next Door for someone whose net worth is at least twice their age times their income divided by ten." },
-    { "term": "wealth multiplier", "also": [], "domain": "benchmarks", "plain": "How many dollars a single dollar invested at your age becomes by 65 at an assumed return." },
-    { "term": "net worth percentile", "also": ["percentile"], "domain": "benchmarks", "plain": "The share of households your age with less than you, from the government's survey of finances." },
-    { "term": "SCF", "also": ["Survey of Consumer Finances"], "domain": "benchmarks", "plain": "The Federal Reserve's survey every three years of what American households own and owe." },
-    { "term": "SWAN", "also": ["sleep at night"], "domain": "safety", "plain": "The amount of cash that lets you stop worrying, chosen by you, not a formula." },
-    { "term": "worst plausible year", "also": ["worst year"], "domain": "safety", "plain": "What one bad year could cost you: the insurance deductibles and the months without pay, added up." },
-    { "term": "income concentration", "also": [], "domain": "safety", "plain": "The share of household income that comes from one job or one person." },
-    { "term": "high-interest debt", "also": ["high interest"], "domain": "debt", "plain": "Borrowing at a rate above what investing would likely earn, so paying it off is the better return." },
-    { "term": "opportunity cost", "also": [], "domain": "basics", "plain": "What the money could have earned somewhere else while it was doing this." },
-    { "term": "time value of money", "also": [], "domain": "basics", "plain": "A dollar today is worth more than a dollar next year, because today's can be invested." },
-    { "term": "future value", "also": [], "domain": "basics", "plain": "What an amount grows to by a later date at an assumed rate." },
-    { "term": "present value", "also": [], "domain": "basics", "plain": "What a later amount is worth today, once the growth between now and then is taken out." },
-    { "term": "dollar-cost averaging", "also": ["DCA"], "domain": "investing", "plain": "Investing a lump in equal slices over months instead of all at once." },
-    { "term": "lump sum", "also": ["lump"], "domain": "investing", "plain": "Putting a whole amount in at once." },
-    { "term": "windfall", "also": [], "domain": "income", "plain": "A large one-off amount that arrives, like an inheritance, a bonus or a payout." },
-    { "term": "inheritance", "also": ["inherited"], "domain": "estate", "plain": "Money or property you receive when someone dies." },
-    { "term": "inherited IRA", "also": [], "domain": "estate", "plain": "A retirement account passed to you at someone's death, which most heirs must empty within ten years." },
-    { "term": "house hack", "also": ["house hacking"], "domain": "housing", "plain": "Living in one part of a property and renting out the rest so the rent covers most of the mortgage." },
-    { "term": "rent-vs-buy", "also": ["rent versus buy", "breakeven"], "domain": "housing", "plain": "The number of years you would need to stay for buying to cost less than renting the same place." },
-    { "term": "price-to-rent ratio", "also": ["price to rent"], "domain": "housing", "plain": "A home's price divided by a year of rent for the same place; above 20 favours renting." },
-    { "term": "total cost of ownership", "also": ["TCO"], "domain": "transportation", "plain": "Everything a car costs a month: payment, fuel, insurance, upkeep and the value it loses." },
-    { "term": "depreciation", "also": [], "domain": "transportation", "plain": "The value a car or other thing loses each year just by getting older." },
-    { "term": "underwater", "also": ["negative equity"], "domain": "debt", "plain": "Owing more on a loan than the thing it bought is now worth." },
-    { "term": "20/3/8 rule", "also": ["20/3/8"], "domain": "transportation", "plain": "The Money Guy Show's car rule: 20% down, a loan of no more than three years, and a payment under 8% of gross." },
-    { "term": "50/30/20", "also": ["fifty thirty twenty"], "domain": "budgeting", "plain": "A budget where half of take-home goes to needs, 30% to wants and 20% to saving and paying down debt." },
-    { "term": "conscious spending", "also": [], "domain": "budgeting", "plain": "Ramit Sethi's approach: spend freely on the one or two things you love and cut hard on the rest." },
-    { "term": "Shockingly Simple Math", "also": [], "domain": "fi", "plain": "A chart by the blogger Mr Money Mustache showing that your savings rate alone sets how many years until work is optional." },
-    { "term": "Die With Zero", "also": [], "domain": "budgeting", "plain": "Bill Perkins's idea that money should be spent on experiences across life rather than left behind." },
-    { "term": "Your Money or Your Life", "also": ["YMOYL"], "domain": "budgeting", "plain": "The book by Vicki Robin and Joe Dominguez that prices every purchase in hours of your life." },
-    { "term": "Bogleheads", "also": [], "domain": "investing", "plain": "Investors who follow John Bogle's advice: low-cost index funds, held for decades, with a simple mix." },
-    { "term": "Money Guy Show", "also": ["Money Guy"], "domain": "app", "plain": "A personal finance show by Brian Preston and Bo Hanson whose rules several lenses in this app use." },
-    { "term": "Set for Life", "also": [], "domain": "app", "plain": "Scott Trench's book on saving half of take-home and house hacking, one of the sources for the DRAFTT bands." },
-    { "term": "IRS", "also": [], "domain": "taxes", "plain": "The US government agency that collects federal tax and sets the yearly limits on retirement accounts." },
-    { "term": "SSA", "also": ["Social Security Administration"], "domain": "retirement", "plain": "The US government agency that runs the government pension and keeps your earnings record." },
-    { "term": "HHS", "also": [], "domain": "health", "plain": "The US health department, which publishes the poverty guidelines each January." },
-    { "term": "DOL", "also": ["Department of Labor"], "domain": "safety", "plain": "The US labour department, which compiles each state's unemployment insurance rules." },
-    { "term": "KFF", "also": [], "domain": "health", "plain": "A non-profit that publishes health insurance prices by state, including marketplace benchmarks." },
-    { "term": "Tax Foundation", "also": [], "domain": "taxes", "plain": "A think tank that publishes every state's income tax brackets and property tax rates each year." },
-    { "term": "cost of living index", "also": ["COL index"], "domain": "basics", "plain": "A number showing how expensive a place is compared with the US average set at 100." },
-    { "term": "median", "also": [], "domain": "basics", "plain": "The middle value: half of the group is above it and half below." },
-    { "term": "percentile", "also": [], "domain": "basics", "plain": "The share of a group that sits below a value; the 75th means three quarters are below." },
-    { "term": "band", "also": ["healthy band"], "domain": "app", "plain": "The range a share is expected to sit in under a given rule, with under and over on either side." },
-    { "term": "share", "also": [], "domain": "basics", "plain": "One amount as a percent of another, like rent as a percent of take-home." },
-    { "term": "annualised", "also": ["annualized", "annualise"], "domain": "basics", "plain": "Turned into a yearly figure, like a monthly amount times twelve." },
-    { "term": "gross-up", "also": ["grossed up"], "domain": "taxes", "plain": "Working back from what you want to keep to the larger amount you would need before tax." },
-    { "term": "variable income", "also": ["lumpy income"], "domain": "income", "plain": "Pay that changes month to month, like freelance or commission work." },
-    { "term": "quarterly estimated tax", "also": ["estimated taxes", "quarterlies"], "domain": "taxes", "plain": "Tax that people without withholding pay in four instalments through the year to avoid a penalty." },
-    { "term": "sinking fund", "also": [], "domain": "budgeting", "plain": "Money set aside a little each month for a cost you know is coming, like a car or a holiday." },
-    { "term": "needs", "also": ["essentials"], "domain": "budgeting", "plain": "The lines you cannot skip for a month: food, a roof, getting around, and the bills tied to them." },
-    { "term": "wants", "also": ["everything else"], "domain": "budgeting", "plain": "Spending you choose rather than must do, from dinners out to subscriptions." },
-    { "term": "fixed cost", "also": ["fixed"], "domain": "budgeting", "plain": "A bill that is the same every month and cannot be cut quickly, like rent or a loan payment." },
-    { "term": "cuttability", "also": [], "domain": "budgeting", "plain": "The share of a month's spending you could drop within a month if you had to." },
-    { "term": "minimum viable month", "also": ["floor"], "domain": "safety", "plain": "The lowest a month could cost if you kept only the fixed bills." },
-    { "term": "closed month", "also": ["close the month"], "domain": "budgeting", "plain": "A month whose real totals have been entered, so its numbers stop being estimates." },
-    { "term": "estimated vs actual", "also": ["estimated", "actual"], "domain": "budgeting", "plain": "What you planned to spend set beside what you really spent, the gap being the useful part." },
-    { "term": "reimbursable", "also": ["reimbursement"], "domain": "budgeting", "plain": "Money you paid out that someone else will pay you back, so it is not really spending." },
-    { "term": "dependant", "also": ["dependent", "dependents"], "domain": "taxes", "plain": "A child or relative who relies on your income and whom you can claim on your tax return." }
-  ]
+ "id": "glossary",
+ "version": "1.1",
+ "asOf": "2026-09-20",
+ "source": "Every term the rooms and engines put on screen, in one plain sentence each, written for a reader who has never had a finance conversation. Lane 2, section 4 (DECISIONS.md L-4). The term list came from grepping rooms/*.html and engines/*.js for acronyms and capitalised phrases, plus the words a coaching client asks about.",
+ "confidence": "convention",
+ "confidenceNote": "Definitions, not figures. Where a term has a legal meaning (a tax term, a plan name) the sentence says what it means for the reader, not the statute; the data tables carry the numbers and the sources.",
+ "note": "Read by shared/glossary.js (SLAF.Glossary). `term` is the word as it appears on screen; `also` lists other spellings and the long form; `plain` is the sentence; `domain` groups them. No sentence uses its own term or any of its aliases (tests/glossary.test.js). Reading level: short sentences, common words, one idea each. The FIRE lexicon (docs/SOLAR-SYSTEM.md Part 5, D-320) adds to entries: spec (how the app computes or represents it), lives (METRIC:id, LEVEL:id, MOON:id, ROOM:id, LENS, WHAT_MATTERS, GLOSSARY), sourceLens (a data/benchmarks.json source) and appliesWhen (a moon gate, or always), which drives the Advice Translator tags: for you now, not yet, outgrown.",
+ "terms": [
+  {
+   "term": "take-home pay",
+   "also": [
+    "take-home",
+    "net pay"
+   ],
+   "domain": "income",
+   "plain": "What lands in your account after tax and other deductions come out of your paycheque."
+  },
+  {
+   "term": "gross income",
+   "also": [
+    "gross",
+    "gross pay"
+   ],
+   "domain": "income",
+   "plain": "Everything you earn in a year before any tax or deduction is taken out."
+  },
+  {
+   "term": "net income",
+   "also": [
+    "net"
+   ],
+   "domain": "income",
+   "plain": "What is left of a sum after the costs or taxes tied to it are taken away."
+  },
+  {
+   "term": "budget",
+   "also": [],
+   "domain": "budgeting",
+   "plain": "A plan for where each dollar of a month goes before the month starts."
+  },
+  {
+   "term": "cash flow",
+   "also": [
+    "cashflow"
+   ],
+   "domain": "budgeting",
+   "plain": "Money coming in during a month set against money going out in the same month."
+  },
+  {
+   "term": "surplus",
+   "also": [],
+   "domain": "budgeting",
+   "plain": "What is left at the end of a month when less went out than came in."
+  },
+  {
+   "term": "deficit",
+   "also": [],
+   "domain": "budgeting",
+   "plain": "The gap when more goes out in a month than comes in."
+  },
+  {
+   "term": "savings rate",
+   "also": [],
+   "domain": "income",
+   "plain": "The share of what you earn that you keep instead of spend, shown as a percent.",
+   "spec": "three declared versions: actual on take-home, on gross, true all-in",
+   "lives": [
+    "METRIC:savingsRateActual",
+    "METRIC:savingsRateGross",
+    "METRIC:trueSavingsRate"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "emergency fund",
+   "also": [
+    "cushion"
+   ],
+   "domain": "safety",
+   "plain": "Cash set aside to pay for a surprise, like a car repair or a month without work, without borrowing."
+  },
+  {
+   "term": "runway",
+   "also": [],
+   "domain": "safety",
+   "plain": "How many months your cash would cover your spending if the money coming in stopped today."
+  },
+  {
+   "term": "net worth",
+   "also": [],
+   "domain": "assets",
+   "plain": "Everything you own added up, minus everything you owe.",
+   "spec": "a setting says whether home equity and vehicles count; total and invested-only views",
+   "lives": [
+    "METRIC:netWorth",
+    "METRIC:nwStatement",
+    "METRIC:afterTaxNW"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "asset",
+   "also": [
+    "assets"
+   ],
+   "domain": "assets",
+   "plain": "Anything you own that is worth money, like cash, a fund, a house or a car."
+  },
+  {
+   "term": "liability",
+   "also": [
+    "liabilities"
+   ],
+   "domain": "debt",
+   "plain": "Money you owe to someone else, whatever it is called on the statement."
+  },
+  {
+   "term": "debt",
+   "also": [
+    "debts"
+   ],
+   "domain": "debt",
+   "plain": "Money you have borrowed and still have to pay back, usually with interest."
+  },
+  {
+   "term": "liquid",
+   "also": [
+    "liquidity"
+   ],
+   "domain": "assets",
+   "plain": "How fast something you own can be turned into spendable cash without losing value or paying a penalty."
+  },
+  {
+   "term": "illiquid",
+   "also": [],
+   "domain": "assets",
+   "plain": "Something you own that takes months to sell, or costs a penalty to reach, like a house or a retirement account before 59 and a half."
+  },
+  {
+   "term": "cash",
+   "also": [
+    "cash savings"
+   ],
+   "domain": "assets",
+   "plain": "Money in a checking or savings account that you can spend today."
+  },
+  {
+   "term": "investment",
+   "also": [
+    "investments",
+    "invested"
+   ],
+   "domain": "investing",
+   "plain": "Money put into something, like a fund or a business, that you expect to grow over time."
+  },
+  {
+   "term": "equity",
+   "also": [],
+   "domain": "assets",
+   "plain": "The part of a thing you truly own: its value minus any loan against it."
+  },
+  {
+   "term": "principal",
+   "also": [],
+   "domain": "debt",
+   "plain": "The amount originally borrowed or invested, before any interest is added."
+  },
+  {
+   "term": "interest",
+   "also": [],
+   "domain": "debt",
+   "plain": "The price of borrowing money, or the reward for lending it, paid as a percent of the balance."
+  },
+  {
+   "term": "APR",
+   "also": [
+    "annual percentage rate"
+   ],
+   "domain": "debt",
+   "plain": "The yearly cost of a loan as a percent of the balance, the number to compare loans by."
+  },
+  {
+   "term": "APY",
+   "also": [
+    "annual percentage yield"
+   ],
+   "domain": "assets",
+   "plain": "The yearly return on a savings account as a percent, with the compounding already counted."
+  },
+  {
+   "term": "compound interest",
+   "also": [
+    "compounding"
+   ],
+   "domain": "investing",
+   "plain": "Growth that earns growth: the return on last year's return is added to your balance too."
+  },
+  {
+   "term": "simple interest",
+   "also": [],
+   "domain": "debt",
+   "plain": "Growth counted only on the original amount, never on the earlier growth."
+  },
+  {
+   "term": "rate",
+   "also": [],
+   "domain": "basics",
+   "plain": "A percent applied to an amount, like the yearly percent charged on a loan or earned on savings."
+  },
+  {
+   "term": "effective rate",
+   "also": [
+    "effective tax rate"
+   ],
+   "domain": "taxes",
+   "plain": "The share of your whole income that actually goes to tax, all brackets averaged together."
+  },
+  {
+   "term": "marginal rate",
+   "also": [
+    "marginal",
+    "marginal tax rate"
+   ],
+   "domain": "taxes",
+   "plain": "The tax taken from the next dollar you earn, which is higher than the average on all your dollars."
+  },
+  {
+   "term": "tax bracket",
+   "also": [
+    "bracket",
+    "brackets"
+   ],
+   "domain": "taxes",
+   "plain": "A slice of income that is taxed at one percent; only the dollars inside that slice pay that percent."
+  },
+  {
+   "term": "taxable income",
+   "also": [],
+   "domain": "taxes",
+   "plain": "The part of your income that tax is figured on, after the standard deduction and other subtractions."
+  },
+  {
+   "term": "standard deduction",
+   "also": [],
+   "domain": "taxes",
+   "plain": "A fixed amount everyone can subtract from income before tax is figured, no receipts needed."
+  },
+  {
+   "term": "deduction",
+   "also": [
+    "deductions"
+   ],
+   "domain": "taxes",
+   "plain": "An amount subtracted from income before tax is figured, so it lowers the tax bill by your bracket's share of it."
+  },
+  {
+   "term": "tax credit",
+   "also": [
+    "credit"
+   ],
+   "domain": "taxes",
+   "plain": "An amount subtracted from the tax bill itself, so a dollar of it saves a full dollar."
+  },
+  {
+   "term": "withholding",
+   "also": [
+    "withheld"
+   ],
+   "domain": "taxes",
+   "plain": "Tax your employer sends to the government from each paycheque on your behalf before you see the money."
+  },
+  {
+   "term": "W-2",
+   "also": [
+    "W2"
+   ],
+   "domain": "income",
+   "plain": "A job where an employer pays you wages, takes out tax, and sends you the yearly form of that name."
+  },
+  {
+   "term": "1099",
+   "also": [
+    "contractor",
+    "freelance"
+   ],
+   "domain": "income",
+   "plain": "Work paid without tax taken out, where you owe the tax yourself, named after the form the payer sends."
+  },
+  {
+   "term": "self-employment tax",
+   "also": [
+    "SE tax",
+    "SE"
+   ],
+   "domain": "taxes",
+   "plain": "The Social Security and Medicare tax a person pays on their own business profit, both the worker's and the employer's halves."
+  },
+  {
+   "term": "FICA",
+   "also": [
+    "payroll tax"
+   ],
+   "domain": "taxes",
+   "plain": "The Social Security and Medicare tax taken from wages, about 7.65% for the worker with the employer matching it."
+  },
+  {
+   "term": "Social Security",
+   "also": [
+    "SS"
+   ],
+   "domain": "retirement",
+   "plain": "The government pension paid from age 62 on, sized by what you earned over your working years."
+  },
+  {
+   "term": "Medicare",
+   "also": [],
+   "domain": "health",
+   "plain": "The government health insurance that starts at 65."
+  },
+  {
+   "term": "wage base",
+   "also": [
+    "taxable maximum"
+   ],
+   "domain": "taxes",
+   "plain": "The most wages in a year that Social Security tax is charged on; above it, that tax stops."
+  },
+  {
+   "term": "filing status",
+   "also": [],
+   "domain": "taxes",
+   "plain": "The box on your tax return that says single, married together, married apart, or head of a household, which sets your brackets."
+  },
+  {
+   "term": "head of household",
+   "also": [],
+   "domain": "taxes",
+   "plain": "The filing status for a single person who pays most of the costs of a home for a child or dependant."
+  },
+  {
+   "term": "married filing jointly",
+   "also": [
+    "married_joint",
+    "joint"
+   ],
+   "domain": "taxes",
+   "plain": "One tax return for a married couple, with brackets twice as wide as a single person's."
+  },
+  {
+   "term": "married filing separately",
+   "also": [
+    "married_separate"
+   ],
+   "domain": "taxes",
+   "plain": "Two tax returns for a married couple, each on their own income, which usually costs more tax."
+  },
+  {
+   "term": "AGI",
+   "also": [
+    "adjusted gross income"
+   ],
+   "domain": "taxes",
+   "plain": "Your income after a few specific subtractions like retirement contributions, the figure many limits are based on."
+  },
+  {
+   "term": "MAGI",
+   "also": [
+    "modified adjusted gross income"
+   ],
+   "domain": "taxes",
+   "plain": "Your income as the government counts it for a particular limit, with a few items added back; each rule has its own version."
+  },
+  {
+   "term": "capital gains",
+   "also": [
+    "capital gain",
+    "gains"
+   ],
+   "domain": "taxes",
+   "plain": "The profit when you sell something for more than you paid for it."
+  },
+  {
+   "term": "long-term capital gains",
+   "also": [
+    "long-term"
+   ],
+   "domain": "taxes",
+   "plain": "Profit on something held more than a year before selling, which is taxed at lower rates than wages."
+  },
+  {
+   "term": "cost basis",
+   "also": [
+    "basis"
+   ],
+   "domain": "taxes",
+   "plain": "What you paid for something, the starting point for working out your profit when you sell."
+  },
+  {
+   "term": "step-up in basis",
+   "also": [
+    "step-up"
+   ],
+   "domain": "estate",
+   "plain": "When someone dies, what they paid for an asset is reset to its value that day, so the heir owes no tax on the earlier gain."
+  },
+  {
+   "term": "dividend",
+   "also": [
+    "dividends"
+   ],
+   "domain": "investing",
+   "plain": "Cash a company or fund pays out to the people who own it, usually every few months."
+  },
+  {
+   "term": "yield",
+   "also": [],
+   "domain": "investing",
+   "plain": "The cash an investment pays each year as a percent of its price."
+  },
+  {
+   "term": "real return",
+   "also": [
+    "real"
+   ],
+   "domain": "investing",
+   "plain": "Growth measured after inflation is taken out, so it shows what the money can actually buy."
+  },
+  {
+   "term": "nominal return",
+   "also": [
+    "nominal"
+   ],
+   "domain": "investing",
+   "plain": "Growth measured in plain dollars, before inflation is taken out."
+  },
+  {
+   "term": "inflation",
+   "also": [],
+   "domain": "basics",
+   "plain": "Prices rising over time, so the same dollar buys a little less each year."
+  },
+  {
+   "term": "expected return",
+   "also": [
+    "expected return rate"
+   ],
+   "domain": "investing",
+   "plain": "The yearly growth a plan assumes for invested money, an assumption you can change, not a promise."
+  },
+  {
+   "term": "safe withdrawal rate",
+   "also": [
+    "SWR",
+    "withdrawal rate"
+   ],
+   "domain": "fi",
+   "plain": "The share of a pot you can spend each year and expect it to last a lifetime, most often set at 4%."
+  },
+  {
+   "term": "4% rule",
+   "also": [
+    "four percent rule"
+   ],
+   "domain": "fi",
+   "plain": "A guideline that spending 4% of your investments in the first year, then adjusting for inflation, has lasted 30 years in the past."
+  },
+  {
+   "term": "financial independence",
+   "also": [
+    "FI"
+   ],
+   "domain": "fi",
+   "plain": "Having enough invested that its growth can pay your bills, so work becomes a choice."
+  },
+  {
+   "term": "FIRE",
+   "also": [],
+   "domain": "fi",
+   "plain": "Saving hard enough to stop needing a paycheque years before the usual retirement age."
+  },
+  {
+   "term": "FI number",
+   "also": [
+    "FIRE number",
+    "target",
+    "your number"
+   ],
+   "domain": "fi",
+   "plain": "The pot you need so its growth covers your spending, usually 25 times a year of expenses.",
+   "spec": "annual spending / withdrawal rate",
+   "lives": [
+    "METRIC:fiNumber",
+    "METRIC:realFiNumber"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "FI date",
+   "also": [],
+   "domain": "fi",
+   "plain": "The year your investments are projected to reach the pot that can pay your bills."
+  },
+  {
+   "term": "Coast FI",
+   "also": [
+    "coast",
+    "Coast FIRE"
+   ],
+   "domain": "fi",
+   "plain": "Having enough invested already that, with no more added, growth alone reaches the retirement pot by the usual age.",
+   "spec": "fiNumber / (1 + return)^(target age - age)",
+   "lives": [
+    "METRIC:coastTarget",
+    "METRIC:pctToCoast"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "Barista FI",
+   "also": [
+    "barista"
+   ],
+   "domain": "fi",
+   "plain": "Working part time for health cover and some income while investments carry the rest.",
+   "spec": "realFiNumber recomputed with part-time income",
+   "lives": [
+    "METRIC:baristaFi",
+    "METRIC:baristaGap",
+    "LEVEL:I29"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "Lean FIRE",
+   "also": [
+    "lean",
+    "lean FI"
+   ],
+   "domain": "fi",
+   "plain": "Reaching independence on a smaller pot by planning to spend less than most people.",
+   "spec": "fixed and essential lines x 12 / withdrawal rate",
+   "lives": [
+    "METRIC:leanFi"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "Fat FIRE",
+   "also": [
+    "fat",
+    "chubby",
+    "fat FI"
+   ],
+   "domain": "fi",
+   "plain": "Reaching independence with a larger pot that supports more spending than most people.",
+   "spec": "user-set FI-phase spending at E28",
+   "lives": [
+    "LENS"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "sequence of returns",
+   "also": [
+    "sequence risk"
+   ],
+   "domain": "investing",
+   "plain": "The order good and bad years arrive in; bad years early in retirement hurt more than the same years later."
+  },
+  {
+   "term": "bucket strategy",
+   "also": [
+    "buckets",
+    "cash cushion",
+    "years of cash"
+   ],
+   "domain": "investing",
+   "plain": "Keeping a few years of spending in cash and bonds so stocks are never sold in a bad year.",
+   "spec": "a Decumulation strategy option",
+   "lives": [
+    "ROOM:decumulation"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "glide path",
+   "also": [],
+   "domain": "investing",
+   "plain": "Slowly moving money from stocks to bonds as a goal gets closer."
+  },
+  {
+   "term": "asset allocation",
+   "also": [
+    "allocation",
+    "glide path"
+   ],
+   "domain": "investing",
+   "plain": "The split of your investments between stocks, bonds and cash.",
+   "spec": "stockShare and allocationRead",
+   "lives": [
+    "METRIC:stockShare",
+    "METRIC:allocationRead"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "asset location",
+   "also": [],
+   "domain": "investing",
+   "plain": "Which kind of account each investment sits in, chosen so the tax bill is smaller.",
+   "spec": "read inside allocationRead once A10 and A20 exist",
+   "lives": [
+    "METRIC:allocationRead"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "three-fund portfolio",
+   "also": [
+    "three fund",
+    "two-fund",
+    "target-date fund"
+   ],
+   "domain": "investing",
+   "plain": "Owning just a US stock fund, an international stock fund and a bond fund.",
+   "spec": "Portfolio Design templates; target-date funds flagged for fee via weightedER",
+   "lives": [
+    "MOON:portfolioDesign"
+   ],
+   "appliesWhen": "always",
+   "sourceLens": "bogleheads"
+  },
+  {
+   "term": "index fund",
+   "also": [],
+   "domain": "investing",
+   "plain": "A fund that owns every company in a list, like the 500 largest, instead of trying to pick winners."
+  },
+  {
+   "term": "ETF",
+   "also": [
+    "exchange-traded fund"
+   ],
+   "domain": "investing",
+   "plain": "A fund you buy and sell like a single stock during the day."
+  },
+  {
+   "term": "expense ratio",
+   "also": [
+    "fee drag"
+   ],
+   "domain": "investing",
+   "plain": "The yearly fee a fund takes, as a percent of what you hold in it.",
+   "spec": "weightedER and feeDrag",
+   "lives": [
+    "METRIC:weightedER",
+    "METRIC:feeDrag"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "brokerage account",
+   "also": [
+    "brokerage",
+    "taxable account",
+    "taxable"
+   ],
+   "domain": "investing",
+   "plain": "An ordinary investing account with no tax break, no limit and no age rule on taking money out."
+  },
+  {
+   "term": "pretax",
+   "also": [
+    "pre-tax",
+    "traditional"
+   ],
+   "domain": "retirement",
+   "plain": "Money put into a retirement account before tax, so it lowers this year's tax bill and is taxed when taken out."
+  },
+  {
+   "term": "Roth",
+   "also": [],
+   "domain": "retirement",
+   "plain": "Money put into a retirement account after tax, so it grows and comes out later with no tax at all."
+  },
+  {
+   "term": "traditional IRA",
+   "also": [],
+   "domain": "retirement",
+   "plain": "A retirement account you open yourself where contributions can lower this year's tax and withdrawals are taxed."
+  },
+  {
+   "term": "Roth IRA",
+   "also": [],
+   "domain": "retirement",
+   "plain": "A retirement account you open yourself, paid with taxed money, whose growth is never taxed again.",
+   "spec": "A27 tracks the basis; feeds the bridge",
+   "lives": [
+    "LEVEL:A27"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "IRA",
+   "also": [
+    "individual retirement account"
+   ],
+   "domain": "retirement",
+   "plain": "A retirement account you open yourself, outside any job, with a yearly limit on what goes in."
+  },
+  {
+   "term": "401(k)",
+   "also": [
+    "401k",
+    "403(b)",
+    "457(b)",
+    "TSP"
+   ],
+   "domain": "retirement",
+   "plain": "A retirement account offered through a job, paid from your paycheque, often with money added by the employer.",
+   "spec": "A5, A7, I9; 457(b) flagged penalty-free after separation",
+   "lives": [
+    "LEVEL:A5",
+    "LEVEL:A7"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "403(b)",
+   "also": [
+    "403b"
+   ],
+   "domain": "retirement",
+   "plain": "The version of a workplace retirement account offered by schools, hospitals and non-profits."
+  },
+  {
+   "term": "457(b)",
+   "also": [
+    "457"
+   ],
+   "domain": "retirement",
+   "plain": "A workplace retirement account for government workers that can be tapped after leaving the job at any age without penalty."
+  },
+  {
+   "term": "SEP IRA",
+   "also": [
+    "SEP"
+   ],
+   "domain": "retirement",
+   "plain": "A retirement account for self-employed people that takes up to a fifth of business profit each year."
+  },
+  {
+   "term": "SIMPLE IRA",
+   "also": [
+    "SIMPLE"
+   ],
+   "domain": "retirement",
+   "plain": "A small-business retirement plan with a lower yearly limit than a 401(k) and a required employer contribution."
+  },
+  {
+   "term": "solo 401(k)",
+   "also": [
+    "solo 401k",
+    "SEP IRA",
+    "SIMPLE IRA"
+   ],
+   "domain": "retirement",
+   "plain": "A workplace-style retirement account for a business with no employees, where you contribute as both worker and employer.",
+   "spec": "moves in the Entrepreneurship and Side Hustles moons",
+   "lives": [
+    "MOON:entrepreneurship"
+   ],
+   "appliesWhen": {
+    "answer": "T6",
+    "key": "selfEmployedIncome",
+    "is": true
+   }
+  },
+  {
+   "term": "employer match",
+   "also": [
+    "match",
+    "vesting"
+   ],
+   "domain": "retirement",
+   "plain": "Money your employer adds to your retirement account when you put some in, up to a stated share of your pay.",
+   "spec": "matchCapture and matchLeft",
+   "lives": [
+    "METRIC:matchCapture",
+    "METRIC:matchLeft"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "vesting",
+   "also": [
+    "vested"
+   ],
+   "domain": "retirement",
+   "plain": "Earning the right to keep money or shares an employer gave you, which happens over a set number of years."
+  },
+  {
+   "term": "vesting schedule",
+   "also": [],
+   "domain": "retirement",
+   "plain": "The timetable that says what share of an employer's grant is yours after each year."
+  },
+  {
+   "term": "cliff vesting",
+   "also": [
+    "cliff"
+   ],
+   "domain": "retirement",
+   "plain": "A grant that is all yours on one date and none of it before."
+  },
+  {
+   "term": "RSU",
+   "also": [
+    "restricted stock unit",
+    "restricted stock units"
+   ],
+   "domain": "income",
+   "plain": "Company shares promised to you that become yours on set dates and are taxed as wages when they do."
+  },
+  {
+   "term": "ESPP",
+   "also": [
+    "employee stock purchase plan"
+   ],
+   "domain": "income",
+   "plain": "A workplace plan that lets you buy company shares from your paycheque at a discount.",
+   "spec": "a quick win when a discount exists: take it, sell on a schedule",
+   "lives": [
+    "LEVEL:I6",
+    "LEVEL:I26"
+   ],
+   "appliesWhen": {
+    "answer": "I6",
+    "key": "benefitsOffered",
+    "is": "espp"
+   }
+  },
+  {
+   "term": "stock options",
+   "also": [
+    "options"
+   ],
+   "domain": "income",
+   "plain": "The right to buy company shares later at a price fixed today, worth something only if the shares rise above it."
+  },
+  {
+   "term": "deferred",
+   "also": [
+    "tax-deferred",
+    "deferral"
+   ],
+   "domain": "retirement",
+   "plain": "Put off until later: money or tax that is not due now but will be."
+  },
+  {
+   "term": "catch-up contribution",
+   "also": [
+    "catch-up"
+   ],
+   "domain": "retirement",
+   "plain": "Extra money people 50 and over may add to a retirement account above the usual yearly limit."
+  },
+  {
+   "term": "contribution limit",
+   "also": [
+    "limit"
+   ],
+   "domain": "retirement",
+   "plain": "The most the rules let you put into an account in one year."
+  },
+  {
+   "term": "phase-out",
+   "also": [
+    "phase out"
+   ],
+   "domain": "taxes",
+   "plain": "An income range where a tax break shrinks bit by bit until it is gone at the top of the range."
+  },
+  {
+   "term": "backdoor Roth",
+   "also": [
+    "backdoor"
+   ],
+   "domain": "retirement",
+   "plain": "Putting money into a traditional IRA and then moving it to the Roth kind, a route for people whose income is over the direct limit.",
+   "spec": "a Tax Strategy move; warns on the pro-rata rule when a pretax IRA balance exists",
+   "lives": [
+    "MOON:taxStrategy"
+   ],
+   "appliesWhen": {
+    "held": "T10"
+   }
+  },
+  {
+   "term": "mega backdoor Roth",
+   "also": [
+    "mega backdoor"
+   ],
+   "domain": "retirement",
+   "plain": "Adding after-tax money to a workplace plan above the usual limit and moving it into the Roth side.",
+   "spec": "a Tax Strategy move gated on the I6 intake",
+   "lives": [
+    "MOON:taxStrategy"
+   ],
+   "appliesWhen": {
+    "answer": "I6",
+    "key": "benefitsOffered",
+    "is": "megaBackdoor"
+   }
+  },
+  {
+   "term": "Roth conversion",
+   "also": [
+    "conversion"
+   ],
+   "domain": "retirement",
+   "plain": "Moving money from a pretax retirement account to the Roth kind and paying the tax on it now."
+  },
+  {
+   "term": "RMD",
+   "also": [
+    "required minimum distribution",
+    "required minimum distributions"
+   ],
+   "domain": "retirement",
+   "plain": "The amount the rules make you take out of a pretax retirement account each year from your seventies on."
+  },
+  {
+   "term": "QCD",
+   "also": [
+    "qualified charitable distribution"
+   ],
+   "domain": "giving",
+   "plain": "A gift sent straight from a pretax retirement account to a charity after 70 and a half, which counts toward the yearly required withdrawal without being taxed."
+  },
+  {
+   "term": "DAF",
+   "also": [
+    "donor-advised fund",
+    "donor advised fund",
+    "bunching",
+    "QCD"
+   ],
+   "domain": "giving",
+   "plain": "An account you put money into for charity, getting the tax break now and choosing the charities later.",
+   "spec": "Giving room, gated on T12 itemizing or a windfall year",
+   "lives": [
+    "ROOM:one-pager"
+   ],
+   "appliesWhen": {
+    "answer": "T12",
+    "key": "deductionChoice",
+    "is": "itemized"
+   }
+  },
+  {
+   "term": "HSA",
+   "also": [
+    "health savings account"
+   ],
+   "domain": "health",
+   "plain": "A savings account for medical costs that goes with a high-deductible health plan and is never taxed if used for care."
+  },
+  {
+   "term": "HDHP",
+   "also": [
+    "high-deductible health plan",
+    "high deductible",
+    "HSA-eligible"
+   ],
+   "domain": "health",
+   "plain": "Health insurance where you pay more yourself before it starts paying, in return for a lower monthly price and the right to use a health savings account.",
+   "spec": "hsaRead",
+   "lives": [
+    "METRIC:hsaRead"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "FSA",
+   "also": [
+    "flexible spending account"
+   ],
+   "domain": "health",
+   "plain": "A workplace account for medical or childcare costs paid with untaxed money, most of which must be used within the year."
+  },
+  {
+   "term": "deductible",
+   "also": [],
+   "domain": "insurance",
+   "plain": "What you pay yourself on a claim before the insurance starts paying."
+  },
+  {
+   "term": "out-of-pocket maximum",
+   "also": [
+    "out-of-pocket max",
+    "OOP max"
+   ],
+   "domain": "insurance",
+   "plain": "The most you can pay for covered care in a year; past it the plan pays everything.",
+   "spec": "badYear, badYearCoverage",
+   "lives": [
+    "METRIC:badYear",
+    "METRIC:badYearCoverage"
+   ],
+   "appliesWhen": "always",
+   "sourceLens": "moneyGuy"
+  },
+  {
+   "term": "premium",
+   "also": [
+    "premiums"
+   ],
+   "domain": "insurance",
+   "plain": "The monthly or yearly price of keeping an insurance policy."
+  },
+  {
+   "term": "copay",
+   "also": [
+    "copayment"
+   ],
+   "domain": "insurance",
+   "plain": "A fixed amount you pay at each visit or prescription."
+  },
+  {
+   "term": "coinsurance",
+   "also": [],
+   "domain": "insurance",
+   "plain": "Your share of a medical bill as a percent after the deductible is met."
+  },
+  {
+   "term": "COBRA",
+   "also": [],
+   "domain": "health",
+   "plain": "Keeping your old job's health plan after leaving, for up to 18 months, paying the whole price yourself.",
+   "spec": "E23 shock cost; Between Jobs room",
+   "lives": [
+    "LEVEL:E23"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "marketplace",
+   "also": [
+    "ACA",
+    "exchange",
+    "Affordable Care Act"
+   ],
+   "domain": "health",
+   "plain": "The government website where people without job coverage buy health insurance, with help paying based on income."
+  },
+  {
+   "term": "benchmark plan",
+   "also": [
+    "benchmark premium",
+    "second-lowest-cost silver"
+   ],
+   "domain": "health",
+   "plain": "The mid-level marketplace plan whose price sets how much help everyone in the area gets."
+  },
+  {
+   "term": "premium tax credit",
+   "also": [
+    "subsidy"
+   ],
+   "domain": "health",
+   "plain": "Government help with the monthly price of marketplace insurance, larger when income is lower."
+  },
+  {
+   "term": "federal poverty level",
+   "also": [
+    "FPL",
+    "poverty line",
+    "poverty guideline"
+   ],
+   "domain": "health",
+   "plain": "A yearly income figure the government publishes for each household size, used to set who qualifies for help."
+  },
+  {
+   "term": "subsidy cliff",
+   "also": [
+    "cliff"
+   ],
+   "domain": "health",
+   "plain": "The income line above which marketplace help disappears all at once instead of shrinking."
+  },
+  {
+   "term": "Medicaid",
+   "also": [],
+   "domain": "health",
+   "plain": "Free or very low-cost government health cover for people with low income."
+  },
+  {
+   "term": "term life insurance",
+   "also": [
+    "term life",
+    "why not whole life"
+   ],
+   "domain": "insurance",
+   "plain": "Life insurance that pays a set amount if you die within a set number of years and nothing after.",
+   "spec": "need shown only when Y23 shows dependents",
+   "lives": [
+    "GLOSSARY"
+   ],
+   "appliesWhen": {
+    "answer": "Y8",
+    "key": "dependents",
+    "is": true
+   }
+  },
+  {
+   "term": "disability insurance",
+   "also": [
+    "disability"
+   ],
+   "domain": "insurance",
+   "plain": "Insurance that replaces part of your pay if illness or injury stops you working."
+  },
+  {
+   "term": "umbrella policy",
+   "also": [
+    "umbrella",
+    "renters insurance",
+    "auto insurance"
+   ],
+   "domain": "insurance",
+   "plain": "Extra liability cover on top of your car and home policies for a large claim against you.",
+   "spec": "Y22, E11",
+   "lives": [
+    "LEVEL:Y22",
+    "LEVEL:E11"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "PMI",
+   "also": [
+    "private mortgage insurance",
+    "mortgage insurance"
+   ],
+   "domain": "housing",
+   "plain": "A monthly charge added to a home loan when the down payment was under 20%, protecting the lender, not you."
+  },
+  {
+   "term": "HOA",
+   "also": [
+    "homeowners association"
+   ],
+   "domain": "housing",
+   "plain": "The monthly fee a condo or neighbourhood charges every owner for shared upkeep."
+  },
+  {
+   "term": "escrow",
+   "also": [],
+   "domain": "housing",
+   "plain": "Money collected with each mortgage payment and held to pay the property tax and home insurance when they come due."
+  },
+  {
+   "term": "PITI",
+   "also": [],
+   "domain": "housing",
+   "plain": "The full monthly cost of a home loan: principal, interest, property tax and insurance together."
+  },
+  {
+   "term": "mortgage",
+   "also": [],
+   "domain": "housing",
+   "plain": "A loan to buy a home, paid back over many years, where the home is the lender's security."
+  },
+  {
+   "term": "amortization",
+   "also": [
+    "amortisation",
+    "amortize"
+   ],
+   "domain": "debt",
+   "plain": "Paying a loan off in equal payments where early ones are mostly interest and later ones mostly principal."
+  },
+  {
+   "term": "refinance",
+   "also": [
+    "refi"
+   ],
+   "domain": "housing",
+   "plain": "Replacing a loan with a new one, usually to get a lower rate or a different term."
+  },
+  {
+   "term": "home equity",
+   "also": [],
+   "domain": "housing",
+   "plain": "What your home is worth minus what you still owe on it."
+  },
+  {
+   "term": "HELOC",
+   "also": [
+    "home equity line of credit"
+   ],
+   "domain": "debt",
+   "plain": "A line of credit you can draw on that uses your home as the security."
+  },
+  {
+   "term": "LTV",
+   "also": [
+    "loan-to-value"
+   ],
+   "domain": "housing",
+   "plain": "The loan as a percent of the home's value; 80% or lower avoids mortgage insurance."
+  },
+  {
+   "term": "DTI",
+   "also": [
+    "debt-to-income"
+   ],
+   "domain": "debt",
+   "plain": "Your monthly debt payments as a share of your monthly gross income; lenders like it under 36%.",
+   "spec": "backEndDTI, D27",
+   "lives": [
+    "METRIC:backEndDTI",
+    "LEVEL:D27"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "credit score",
+   "also": [
+    "FICO"
+   ],
+   "domain": "debt",
+   "plain": "A number from 300 to 850 that lenders use to guess how reliably you repay."
+  },
+  {
+   "term": "credit report",
+   "also": [],
+   "domain": "debt",
+   "plain": "The record of your loans and cards, balances and payment history that the three credit bureaus keep."
+  },
+  {
+   "term": "credit utilization",
+   "also": [
+    "utilization",
+    "revolving share"
+   ],
+   "domain": "debt",
+   "plain": "Your card balances as a share of your card limits; under 30% helps your score."
+  },
+  {
+   "term": "revolving debt",
+   "also": [
+    "revolving"
+   ],
+   "domain": "debt",
+   "plain": "Borrowing with no fixed end, like a credit card, where you can pay down and borrow again."
+  },
+  {
+   "term": "installment loan",
+   "also": [
+    "instalment"
+   ],
+   "domain": "debt",
+   "plain": "A loan with a fixed payment and a fixed end date, like a car loan or a mortgage."
+  },
+  {
+   "term": "minimum payment",
+   "also": [
+    "minimum",
+    "minimums"
+   ],
+   "domain": "debt",
+   "plain": "The smallest amount a lender will accept each month without calling you late."
+  },
+  {
+   "term": "avalanche",
+   "also": [
+    "debt avalanche"
+   ],
+   "domain": "debt",
+   "plain": "Paying extra on the debt with the highest rate first, which costs the least interest overall."
+  },
+  {
+   "term": "snowball",
+   "also": [
+    "debt snowball"
+   ],
+   "domain": "debt",
+   "plain": "Paying extra on the smallest balance first for the quick wins, whatever its rate."
+  },
+  {
+   "term": "promotional rate",
+   "also": [
+    "promo rate",
+    "promo",
+    "0% offer"
+   ],
+   "domain": "debt",
+   "plain": "A low or zero rate on a card or loan that lasts a set number of months and then jumps."
+  },
+  {
+   "term": "balance transfer",
+   "also": [],
+   "domain": "debt",
+   "plain": "Moving a card balance to another card with a low starting rate, usually for a fee of a few percent."
+  },
+  {
+   "term": "income-driven repayment",
+   "also": [
+    "IDR",
+    "income driven",
+    "PSLF",
+    "student loan refinancing"
+   ],
+   "domain": "student loans",
+   "plain": "A federal student loan plan where the monthly payment is a share of your income rather than of the balance.",
+   "spec": "loanPath; rules in a dated table",
+   "lives": [
+    "METRIC:loanPath"
+   ],
+   "appliesWhen": {
+    "held": "D11"
+   }
+  },
+  {
+   "term": "PSLF",
+   "also": [
+    "Public Service Loan Forgiveness"
+   ],
+   "domain": "student loans",
+   "plain": "Federal student loans wiped out after 120 monthly payments while working for a government or non-profit employer."
+  },
+  {
+   "term": "standard plan",
+   "also": [
+    "standard repayment"
+   ],
+   "domain": "student loans",
+   "plain": "The default federal student loan plan: the same payment every month for ten years."
+  },
+  {
+   "term": "IBR",
+   "also": [
+    "Income-Based Repayment"
+   ],
+   "domain": "student loans",
+   "plain": "The long-running federal plan that sets student loan payments at 10% or 15% of income above a living allowance."
+  },
+  {
+   "term": "SAVE",
+   "also": [],
+   "domain": "student loans",
+   "plain": "A federal student loan plan from 2023 that courts blocked and Congress ended in 2026."
+  },
+  {
+   "term": "RAP",
+   "also": [
+    "Repayment Assistance Plan"
+   ],
+   "domain": "student loans",
+   "plain": "The federal student loan plan from July 2026 that charges 1% to 10% of income and forgives what is left after 30 years."
+  },
+  {
+   "term": "forbearance",
+   "also": [],
+   "domain": "student loans",
+   "plain": "A pause on loan payments the lender agrees to, while interest keeps adding up."
+  },
+  {
+   "term": "deferment",
+   "also": [
+    "deferred loans"
+   ],
+   "domain": "student loans",
+   "plain": "A pause on federal student loan payments, during school or hardship, where the government may pay the interest for you."
+  },
+  {
+   "term": "servicer",
+   "also": [
+    "loan servicer"
+   ],
+   "domain": "student loans",
+   "plain": "The company that sends your student loan bills and handles your payments for the lender."
+  },
+  {
+   "term": "discretionary income",
+   "also": [],
+   "domain": "student loans",
+   "plain": "For student loan plans, your income above a set multiple of the poverty line; the payment is a share of this."
+  },
+  {
+   "term": "severance",
+   "also": [],
+   "domain": "safety",
+   "plain": "A lump sum an employer pays when they let you go, often a few weeks of pay per year worked."
+  },
+  {
+   "term": "unemployment insurance",
+   "also": [
+    "UI",
+    "unemployment benefit"
+   ],
+   "domain": "safety",
+   "plain": "Weekly money from the state while you look for work after losing a job, up to a cap and for a set number of weeks."
+  },
+  {
+   "term": "base period",
+   "also": [],
+   "domain": "safety",
+   "plain": "The year of past wages a state looks at to set your unemployment benefit."
+  },
+  {
+   "term": "pension",
+   "also": [],
+   "domain": "retirement",
+   "plain": "A monthly payment for life from a past employer, sized by your years there and your pay."
+  },
+  {
+   "term": "annuity",
+   "also": [],
+   "domain": "retirement",
+   "plain": "A contract where you hand an insurer a lump sum and it pays you a set amount every month for life."
+  },
+  {
+   "term": "Social Security estimate",
+   "also": [
+    "SS estimate",
+    "benefit estimate"
+   ],
+   "domain": "retirement",
+   "plain": "The monthly government pension the official website says you would get, at each starting age, based on your record so far."
+  },
+  {
+   "term": "full retirement age",
+   "also": [
+    "FRA"
+   ],
+   "domain": "retirement",
+   "plain": "The age, 66 to 67 depending on birth year, at which the government pension pays its full amount."
+  },
+  {
+   "term": "delayed retirement credits",
+   "also": [
+    "delayed credits"
+   ],
+   "domain": "retirement",
+   "plain": "The 8% a year the government pension grows for each year you wait past full retirement age, until 70."
+  },
+  {
+   "term": "PIA",
+   "also": [
+    "primary insurance amount"
+   ],
+   "domain": "retirement",
+   "plain": "The monthly government pension you would get at full retirement age, the figure every earlier or later amount is scaled from."
+  },
+  {
+   "term": "COLA",
+   "also": [
+    "cost-of-living adjustment"
+   ],
+   "domain": "retirement",
+   "plain": "The yearly raise to government pensions and tax limits that follows inflation."
+  },
+  {
+   "term": "rule of 55",
+   "also": [],
+   "domain": "retirement",
+   "plain": "Leave a job in or after the year you turn 55 and that job's retirement plan can be tapped without the early penalty.",
+   "spec": "a Decumulation option gated on Y3 at 55 or later",
+   "lives": [
+    "ROOM:decumulation"
+   ],
+   "appliesWhen": {
+    "answer": "Y3",
+    "key": "retireAge",
+    "op": "gte",
+    "than": 55
+   }
+  },
+  {
+   "term": "59 and a half",
+   "also": [
+    "59.5",
+    "59½"
+   ],
+   "domain": "retirement",
+   "plain": "The age after which retirement accounts can be tapped without the 10% early penalty."
+  },
+  {
+   "term": "72(t)",
+   "also": [
+    "SEPP",
+    "substantially equal periodic payments"
+   ],
+   "domain": "retirement",
+   "plain": "A rule that lets you take fixed yearly amounts from a retirement account before 59 and a half without the penalty, if you keep it up for at least five years.",
+   "spec": "a Decumulation room option, flagged advanced",
+   "lives": [
+    "ROOM:decumulation"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "early withdrawal penalty",
+   "also": [
+    "penalty",
+    "10% penalty"
+   ],
+   "domain": "retirement",
+   "plain": "The extra 10% tax on money taken from a retirement account before 59 and a half, on top of ordinary tax."
+  },
+  {
+   "term": "529",
+   "also": [
+    "529 plan",
+    "529-to-Roth rollover"
+   ],
+   "domain": "kids",
+   "plain": "A savings account for school and college costs whose growth is never taxed if spent on education.",
+   "spec": "Family moon, Kids room",
+   "lives": [
+    "MOON:family"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "gift tax annual exclusion",
+   "also": [
+    "annual exclusion",
+    "gift limit"
+   ],
+   "domain": "estate",
+   "plain": "The amount one person can give another in a year, $19,000 in 2026, without filing a gift tax form."
+  },
+  {
+   "term": "estate",
+   "also": [],
+   "domain": "estate",
+   "plain": "Everything a person owns and owes at the moment they die."
+  },
+  {
+   "term": "beneficiary",
+   "also": [
+    "beneficiaries"
+   ],
+   "domain": "estate",
+   "plain": "The person named on an account or policy to receive it when you die, ahead of anything a will says."
+  },
+  {
+   "term": "transfer on death",
+   "also": [
+    "TOD",
+    "payable on death",
+    "POD"
+   ],
+   "domain": "estate",
+   "plain": "A label on an account that hands it straight to a named person at death, skipping the court process."
+  },
+  {
+   "term": "probate",
+   "also": [],
+   "domain": "estate",
+   "plain": "The court process that sorts out a dead person's property when no beneficiary or trust already says where it goes."
+  },
+  {
+   "term": "will",
+   "also": [],
+   "domain": "estate",
+   "plain": "A signed document saying who gets what when you die and who looks after your children."
+  },
+  {
+   "term": "trust",
+   "also": [
+    "living trust"
+   ],
+   "domain": "estate",
+   "plain": "A legal container that holds property for someone, so it passes without the court process."
+  },
+  {
+   "term": "power of attorney",
+   "also": [
+    "POA"
+   ],
+   "domain": "estate",
+   "plain": "A document naming someone to handle your money or health decisions if you cannot."
+  },
+  {
+   "term": "DAITE",
+   "also": [],
+   "domain": "app",
+   "plain": "The five families every number in this app belongs to: debt, assets, income, taxes, expenses."
+  },
+  {
+   "term": "FAT",
+   "also": [],
+   "domain": "app",
+   "plain": "The three needs that make up most of a month: food, accommodation, transportation."
+  },
+  {
+   "term": "DRAFTT",
+   "also": [],
+   "domain": "app",
+   "plain": "The seven shares of take-home this app scores you on: debt, retirement, accommodation, food, transportation, taxes, therapy."
+  },
+  {
+   "term": "FOO",
+   "also": [
+    "Financial Order of Operations"
+   ],
+   "domain": "app",
+   "plain": "The Money Guy Show's nine steps for where each spare dollar goes, from a starter cushion to paying off the house.",
+   "spec": "one slot engine rendered through the chosen source; step thresholds from the benchmark table",
+   "lives": [
+    "LENS",
+    "MOON:mainPath"
+   ],
+   "appliesWhen": "always",
+   "sourceLens": "moneyGuy"
+  },
+  {
+   "term": "SLAF",
+   "also": [
+    "Save Like a Fox"
+   ],
+   "domain": "app",
+   "plain": "The name of this suite of money rooms."
+  },
+  {
+   "term": "SPARKS",
+   "also": [],
+   "domain": "app",
+   "plain": "The family of small tools this app belongs to."
+  },
+  {
+   "term": "lens",
+   "also": [
+    "lenses"
+   ],
+   "domain": "app",
+   "plain": "A well-known rule of thumb read against your own numbers, one card with a verdict and who it is for."
+  },
+  {
+   "term": "block",
+   "also": [
+    "blocks"
+   ],
+   "domain": "app",
+   "plain": "A what-if laid on top of your real numbers for a date range, like a house or a kid, that never changes the real numbers."
+  },
+  {
+   "term": "scenario",
+   "also": [
+    "scenarios",
+    "pinned"
+   ],
+   "domain": "app",
+   "plain": "A saved set of choices in a room that you can come back to, kept beside your numbers rather than in them."
+  },
+  {
+   "term": "sphere",
+   "also": [
+    "spheres"
+   ],
+   "domain": "app",
+   "plain": "One of nine depths of detail in the ledger; going deeper sharpens the numbers, and nothing is ever locked."
+  },
+  {
+   "term": "ledger",
+   "also": [],
+   "domain": "app",
+   "plain": "The one place in this app where facts are typed in; every room reads from it."
+  },
+  {
+   "term": "confidence",
+   "also": [],
+   "domain": "app",
+   "plain": "How sure you are of a number: sure, roughly, or unknown, which decides how precisely it is shown."
+  },
+  {
+   "term": "as of",
+   "also": [
+    "asOf"
+   ],
+   "domain": "app",
+   "plain": "The date a number was last true or last checked."
+  },
+  {
+   "term": "stale",
+   "also": [],
+   "domain": "app",
+   "plain": "A number old enough that it should be checked again before it is trusted."
+  },
+  {
+   "term": "snapshot",
+   "also": [
+    "freeze"
+   ],
+   "domain": "app",
+   "plain": "A dated copy of all your numbers kept so later change can be measured against it."
+  },
+  {
+   "term": "hypothetical",
+   "also": [
+    "what-if"
+   ],
+   "domain": "app",
+   "plain": "A number tried out to see what would happen, which is never saved as a fact."
+  },
+  {
+   "term": "lever",
+   "also": [
+    "levers"
+   ],
+   "domain": "app",
+   "plain": "One change you can make, like a raise saved or a cheaper home, sized in dollars a month and hours a week."
+  },
+  {
+   "term": "headwind",
+   "also": [],
+   "domain": "app",
+   "plain": "A bad turn added to a plan to see if it survives, like a market fall or months without pay."
+  },
+  {
+   "term": "tailwind",
+   "also": [],
+   "domain": "app",
+   "plain": "A good turn added to a plan, like a raise you keep saving."
+  },
+  {
+   "term": "Real Hourly Wage",
+   "also": [
+    "real hourly",
+    "RHW",
+    "life energy"
+   ],
+   "domain": "income",
+   "plain": "What a job pays per hour once commuting, unpaid overtime and work costs are counted against take-home.",
+   "spec": "hourlyFirst, hourlyFinal, realWageRatio; the time toggle across rooms",
+   "lives": [
+    "METRIC:hourlyFinal",
+    "METRIC:realWageRatio"
+   ],
+   "appliesWhen": "always",
+   "sourceLens": "ymoyl"
+  },
+  {
+   "term": "Return on Hassle",
+   "also": [
+    "hassle"
+   ],
+   "domain": "app",
+   "plain": "The dollars a cheaper choice saves set against the hours of bother it costs, priced at your true hourly rate."
+  },
+  {
+   "term": "orientation",
+   "also": [],
+   "domain": "app",
+   "plain": "Which way an account is taxed: before you put money in, when you take it out, or never."
+  },
+  {
+   "term": "tier",
+   "also": [
+    "tiers",
+    "liquidity tier"
+   ],
+   "domain": "assets",
+   "plain": "How reachable a pot is, from cash today to a home you would have to sell."
+  },
+  {
+   "term": "cadence",
+   "also": [],
+   "domain": "app",
+   "plain": "How often a number repeats: weekly, every two weeks, monthly or yearly."
+  },
+  {
+   "term": "PAW",
+   "also": [
+    "prodigious accumulator of wealth",
+    "AAW"
+   ],
+   "domain": "benchmarks",
+   "plain": "A label from The Millionaire Next Door for someone whose net worth is at least twice their age times their income divided by ten."
+  },
+  {
+   "term": "wealth multiplier",
+   "also": [],
+   "domain": "benchmarks",
+   "plain": "How many dollars a single dollar invested at your age becomes by 65 at an assumed return.",
+   "spec": "(1 + return)^(65 - age), a table by age",
+   "lives": [
+    "LENS"
+   ],
+   "appliesWhen": "always",
+   "sourceLens": "moneyGuy"
+  },
+  {
+   "term": "net worth percentile",
+   "also": [
+    "percentile"
+   ],
+   "domain": "benchmarks",
+   "plain": "The share of households your age with less than you, from the government's survey of finances."
+  },
+  {
+   "term": "SCF",
+   "also": [
+    "Survey of Consumer Finances"
+   ],
+   "domain": "benchmarks",
+   "plain": "The Federal Reserve's survey every three years of what American households own and owe."
+  },
+  {
+   "term": "SWAN",
+   "also": [
+    "sleep at night"
+   ],
+   "domain": "safety",
+   "plain": "The amount of cash that lets you stop worrying, chosen by you, not a formula."
+  },
+  {
+   "term": "worst plausible year",
+   "also": [
+    "worst year"
+   ],
+   "domain": "safety",
+   "plain": "What one bad year could cost you: the insurance deductibles and the months without pay, added up."
+  },
+  {
+   "term": "income concentration",
+   "also": [],
+   "domain": "safety",
+   "plain": "The share of household income that comes from one job or one person."
+  },
+  {
+   "term": "high-interest debt",
+   "also": [
+    "high interest"
+   ],
+   "domain": "debt",
+   "plain": "Borrowing at a rate above what investing would likely earn, so paying it off is the better return."
+  },
+  {
+   "term": "opportunity cost",
+   "also": [],
+   "domain": "basics",
+   "plain": "What the money could have earned somewhere else while it was doing this."
+  },
+  {
+   "term": "time value of money",
+   "also": [],
+   "domain": "basics",
+   "plain": "A dollar today is worth more than a dollar next year, because today's can be invested."
+  },
+  {
+   "term": "future value",
+   "also": [],
+   "domain": "basics",
+   "plain": "What an amount grows to by a later date at an assumed rate."
+  },
+  {
+   "term": "present value",
+   "also": [],
+   "domain": "basics",
+   "plain": "What a later amount is worth today, once the growth between now and then is taken out."
+  },
+  {
+   "term": "dollar-cost averaging",
+   "also": [
+    "DCA",
+    "lump sum"
+   ],
+   "domain": "investing",
+   "plain": "Investing a lump in equal slices over months instead of all at once.",
+   "spec": "a Windfall room read",
+   "lives": [
+    "METRIC:windfallPlan"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "lump sum",
+   "also": [
+    "lump"
+   ],
+   "domain": "investing",
+   "plain": "Putting a whole amount in at once."
+  },
+  {
+   "term": "windfall",
+   "also": [],
+   "domain": "income",
+   "plain": "A large one-off amount that arrives, like an inheritance, a bonus or a payout."
+  },
+  {
+   "term": "inheritance",
+   "also": [
+    "inherited",
+    "stepped-up basis",
+    "inherited IRA"
+   ],
+   "domain": "estate",
+   "plain": "Money or property you receive when someone dies.",
+   "spec": "Y15, A29; Windfall room; rules in a dated table",
+   "lives": [
+    "LEVEL:Y15",
+    "METRIC:windfallPlan"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "inherited IRA",
+   "also": [],
+   "domain": "estate",
+   "plain": "A retirement account passed to you at someone's death, which most heirs must empty within ten years."
+  },
+  {
+   "term": "house hack",
+   "also": [
+    "house hacking"
+   ],
+   "domain": "housing",
+   "plain": "Living in one part of a property and renting out the rest so the rent covers most of the mortgage.",
+   "spec": "shelterRead shows the delta; FHA capacity from mortgageCapacity",
+   "lives": [
+    "MOON:realEstate",
+    "METRIC:shelterRead"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "rent-vs-buy",
+   "also": [
+    "rent versus buy",
+    "breakeven"
+   ],
+   "domain": "housing",
+   "plain": "The number of years you would need to stay for buying to cost less than renting the same place."
+  },
+  {
+   "term": "price-to-rent ratio",
+   "also": [
+    "price to rent"
+   ],
+   "domain": "housing",
+   "plain": "A home's price divided by a year of rent for the same place; above 20 favours renting."
+  },
+  {
+   "term": "total cost of ownership",
+   "also": [
+    "TCO"
+   ],
+   "domain": "transportation",
+   "plain": "Everything a car costs a month: payment, fuel, insurance, upkeep and the value it loses."
+  },
+  {
+   "term": "depreciation",
+   "also": [],
+   "domain": "transportation",
+   "plain": "The value a car or other thing loses each year just by getting older."
+  },
+  {
+   "term": "underwater",
+   "also": [
+    "negative equity"
+   ],
+   "domain": "debt",
+   "plain": "Owing more on a loan than the thing it bought is now worth."
+  },
+  {
+   "term": "20/3/8 rule",
+   "also": [
+    "20/3/8"
+   ],
+   "domain": "transportation",
+   "plain": "The Money Guy Show's car rule: 20% down, a loan of no more than three years, and a payment under 8% of gross."
+  },
+  {
+   "term": "50/30/20",
+   "also": [
+    "fifty thirty twenty"
+   ],
+   "domain": "budgeting",
+   "plain": "A budget where half of take-home goes to needs, 30% to wants and 20% to saving and paying down debt."
+  },
+  {
+   "term": "conscious spending",
+   "also": [
+    "money dials",
+    "value-based spending"
+   ],
+   "domain": "budgeting",
+   "plain": "Ramit Sethi's approach: spend freely on the one or two things you love and cut hard on the rest.",
+   "spec": "worthIt",
+   "lives": [
+    "METRIC:worthIt"
+   ],
+   "appliesWhen": "always",
+   "sourceLens": "sethi"
+  },
+  {
+   "term": "Shockingly Simple Math",
+   "also": [],
+   "domain": "fi",
+   "plain": "A chart by the blogger Mr Money Mustache showing that your savings rate alone sets how many years until work is optional."
+  },
+  {
+   "term": "Die With Zero",
+   "also": [
+    "memory dividends",
+    "time buckets"
+   ],
+   "domain": "budgeting",
+   "plain": "Bill Perkins's idea that money should be spent on experiences across life rather than left behind.",
+   "spec": "What Matters rooms; the Advice Translator says not yet while high-interest debt is on",
+   "lives": [
+    "WHAT_MATTERS"
+   ],
+   "appliesWhen": {
+    "metric": "highInterestFlag",
+    "state": "off"
+   },
+   "sourceLens": "dieWithZero"
+  },
+  {
+   "term": "Your Money or Your Life",
+   "also": [
+    "YMOYL"
+   ],
+   "domain": "budgeting",
+   "plain": "The book by Vicki Robin and Joe Dominguez that prices every purchase in hours of your life."
+  },
+  {
+   "term": "Bogleheads",
+   "also": [],
+   "domain": "investing",
+   "plain": "Investors who follow John Bogle's advice: low-cost index funds, held for decades, with a simple mix."
+  },
+  {
+   "term": "Money Guy Show",
+   "also": [
+    "Money Guy"
+   ],
+   "domain": "app",
+   "plain": "A personal finance show by Brian Preston and Bo Hanson whose rules several lenses in this app use."
+  },
+  {
+   "term": "Set for Life",
+   "also": [],
+   "domain": "app",
+   "plain": "Scott Trench's book on saving half of take-home and house hacking, one of the sources for the DRAFTT bands."
+  },
+  {
+   "term": "IRS",
+   "also": [],
+   "domain": "taxes",
+   "plain": "The US government agency that collects federal tax and sets the yearly limits on retirement accounts."
+  },
+  {
+   "term": "SSA",
+   "also": [
+    "Social Security Administration"
+   ],
+   "domain": "retirement",
+   "plain": "The US government agency that runs the government pension and keeps your earnings record."
+  },
+  {
+   "term": "HHS",
+   "also": [],
+   "domain": "health",
+   "plain": "The US health department, which publishes the poverty guidelines each January."
+  },
+  {
+   "term": "DOL",
+   "also": [
+    "Department of Labor"
+   ],
+   "domain": "safety",
+   "plain": "The US labour department, which compiles each state's unemployment insurance rules."
+  },
+  {
+   "term": "KFF",
+   "also": [],
+   "domain": "health",
+   "plain": "A non-profit that publishes health insurance prices by state, including marketplace benchmarks."
+  },
+  {
+   "term": "Tax Foundation",
+   "also": [],
+   "domain": "taxes",
+   "plain": "A think tank that publishes every state's income tax brackets and property tax rates each year."
+  },
+  {
+   "term": "cost of living index",
+   "also": [
+    "COL index"
+   ],
+   "domain": "basics",
+   "plain": "A number showing how expensive a place is compared with the US average set at 100."
+  },
+  {
+   "term": "median",
+   "also": [],
+   "domain": "basics",
+   "plain": "The middle value: half of the group is above it and half below."
+  },
+  {
+   "term": "percentile",
+   "also": [],
+   "domain": "basics",
+   "plain": "The share of a group that sits below a value; the 75th means three quarters are below."
+  },
+  {
+   "term": "band",
+   "also": [
+    "healthy band"
+   ],
+   "domain": "app",
+   "plain": "The range a share is expected to sit in under a given rule, with under and over on either side."
+  },
+  {
+   "term": "share",
+   "also": [],
+   "domain": "basics",
+   "plain": "One amount as a percent of another, like rent as a percent of take-home."
+  },
+  {
+   "term": "annualised",
+   "also": [
+    "annualized",
+    "annualise"
+   ],
+   "domain": "basics",
+   "plain": "Turned into a yearly figure, like a monthly amount times twelve."
+  },
+  {
+   "term": "gross-up",
+   "also": [
+    "grossed up"
+   ],
+   "domain": "taxes",
+   "plain": "Working back from what you want to keep to the larger amount you would need before tax."
+  },
+  {
+   "term": "variable income",
+   "also": [
+    "lumpy income"
+   ],
+   "domain": "income",
+   "plain": "Pay that changes month to month, like freelance or commission work."
+  },
+  {
+   "term": "quarterly estimated tax",
+   "also": [
+    "estimated taxes",
+    "quarterlies"
+   ],
+   "domain": "taxes",
+   "plain": "Tax that people without withholding pay in four instalments through the year to avoid a penalty."
+  },
+  {
+   "term": "sinking fund",
+   "also": [],
+   "domain": "budgeting",
+   "plain": "Money set aside a little each month for a cost you know is coming, like a car or a holiday.",
+   "spec": "each irregular cost / months until due",
+   "lives": [
+    "METRIC:sinkingTargets",
+    "LEVEL:E13"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "needs",
+   "also": [
+    "essentials"
+   ],
+   "domain": "budgeting",
+   "plain": "The lines you cannot skip for a month: food, a roof, getting around, and the bills tied to them."
+  },
+  {
+   "term": "wants",
+   "also": [
+    "everything else"
+   ],
+   "domain": "budgeting",
+   "plain": "Spending you choose rather than must do, from dinners out to subscriptions."
+  },
+  {
+   "term": "fixed cost",
+   "also": [
+    "fixed"
+   ],
+   "domain": "budgeting",
+   "plain": "A bill that is the same every month and cannot be cut quickly, like rent or a loan payment."
+  },
+  {
+   "term": "cuttability",
+   "also": [],
+   "domain": "budgeting",
+   "plain": "The share of a month's spending you could drop within a month if you had to."
+  },
+  {
+   "term": "minimum viable month",
+   "also": [
+    "floor"
+   ],
+   "domain": "safety",
+   "plain": "The lowest a month could cost if you kept only the fixed bills."
+  },
+  {
+   "term": "closed month",
+   "also": [
+    "close the month"
+   ],
+   "domain": "budgeting",
+   "plain": "A month whose real totals have been entered, so its numbers stop being estimates."
+  },
+  {
+   "term": "estimated vs actual",
+   "also": [
+    "estimated",
+    "actual"
+   ],
+   "domain": "budgeting",
+   "plain": "What you planned to spend set beside what you really spent, the gap being the useful part."
+  },
+  {
+   "term": "reimbursable",
+   "also": [
+    "reimbursement"
+   ],
+   "domain": "budgeting",
+   "plain": "Money you paid out that someone else will pay you back, so it is not really spending."
+  },
+  {
+   "term": "dependant",
+   "also": [
+    "dependent",
+    "dependents"
+   ],
+   "domain": "taxes",
+   "plain": "A child or relative who relies on your income and whom you can claim on your tax return."
+  },
+  {
+   "term": "the 4% rule",
+   "also": [
+    "safe withdrawal rate",
+    "SWR",
+    "Trinity study",
+    "Bengen"
+   ],
+   "domain": "fi",
+   "plain": "Take 4% of the starting pot the first year, adjust for inflation, and a 30-year retirement has historically survived.",
+   "spec": "withdrawal rate default 4%, editable, with a note that 30 years is the original horizon",
+   "lives": [
+    "LENS"
+   ],
+   "appliesWhen": "always",
+   "sourceLens": "bigErn"
+  },
+  {
+   "term": "25x rule",
+   "also": [
+    "33x",
+    "28x"
+   ],
+   "domain": "fi",
+   "plain": "The 4% rule turned around: 25 times a year of spending.",
+   "spec": "multiplier = 1 / withdrawal rate; 3% = 33x, 3.5% = 28.6x",
+   "lives": [
+    "LENS"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "the x300 rule",
+   "also": [
+    "times 300"
+   ],
+   "domain": "fi",
+   "plain": "Every dollar of monthly spending needs 300 dollars invested at 4%.",
+   "spec": "monthly cost x 12 / withdrawal rate",
+   "lives": [
+    "LENS"
+   ],
+   "appliesWhen": "always",
+   "sourceLens": "eli"
+  },
+  {
+   "term": "the 10-year rule",
+   "also": [
+    "173 rule",
+    "752 rule"
+   ],
+   "domain": "fi",
+   "plain": "A monthly cost times 173, or a weekly cost times 752, is what it becomes if invested for ten years at 7%.",
+   "spec": "lens on expense lines, labeled with its source",
+   "lives": [
+    "LENS"
+   ],
+   "appliesWhen": "always",
+   "sourceLens": "mmm"
+  },
+  {
+   "term": "the shockingly simple math",
+   "also": [
+    "MMM math"
+   ],
+   "domain": "fi",
+   "plain": "Years to FI depend almost only on your savings rate.",
+   "spec": "the table re-run on your own numbers with an assumption-by-assumption waterfall",
+   "lives": [
+    "ROOM:fire"
+   ],
+   "appliesWhen": "always",
+   "sourceLens": "mmm"
+  },
+  {
+   "term": "years to FI",
+   "also": [
+    "FI date"
+   ],
+   "domain": "fi",
+   "plain": "The year the invested pot reaches the FI number at the return you plan on.",
+   "spec": "projection from the pot and the monthly add",
+   "lives": [
+    "METRIC:fiDate",
+    "METRIC:fiDateProjected"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "the gap",
+   "also": [],
+   "domain": "fi",
+   "plain": "What you earn minus what you spend, each month.",
+   "spec": "I1 minus E1, cleaned at E3",
+   "lives": [
+    "METRIC:gap"
+   ],
+   "appliesWhen": "always",
+   "sourceLens": "chooseFi"
+  },
+  {
+   "term": "invested assets",
+   "also": [
+    "investable assets"
+   ],
+   "domain": "fi",
+   "plain": "The part of your net worth that can fund FI: not the house, not the car.",
+   "spec": "pctToFI uses invested assets only",
+   "lives": [
+    "METRIC:pctToFI",
+    "METRIC:investedShare",
+    "METRIC:homeShareNW"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "crossover point",
+   "also": [
+    "wall chart"
+   ],
+   "domain": "fi",
+   "plain": "The month investment income passes expenses.",
+   "spec": "invested x withdrawal rate / 12 against monthly spending; the same math as pctToFI = 100%",
+   "lives": [
+    "LENS"
+   ],
+   "appliesWhen": "always",
+   "sourceLens": "ymoyl"
+  },
+  {
+   "term": "Rule of 72",
+   "also": [],
+   "domain": "fi",
+   "plain": "Years to double your money is about 72 divided by the return.",
+   "spec": "a one-line helper wherever a return is shown",
+   "lives": [
+    "GLOSSARY"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "compound growth",
+   "also": [
+    "time in the market"
+   ],
+   "domain": "fi",
+   "plain": "Growth on the growth: the reason starting early beats starting big.",
+   "spec": "visualized on Home as what your money did while you slept",
+   "lives": [
+    "GLOSSARY"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "real vs. nominal",
+   "also": [
+    "today's dollars"
+   ],
+   "domain": "fi",
+   "plain": "A real number is stated in what money buys now; a nominal number carries inflation inside it.",
+   "spec": "all projections in today's dollars, declared once",
+   "lives": [
+    "GLOSSARY"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "current withdrawal rate",
+   "also": [],
+   "domain": "fi",
+   "plain": "What you would be pulling from the pot if you stopped today.",
+   "spec": "annual spending / invested assets, counting down toward 4%",
+   "lives": [
+    "METRIC:currentWR"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "years of expenses saved",
+   "also": [
+    "FU money"
+   ],
+   "domain": "fi",
+   "plain": "How many years your savings would cover at today's spending.",
+   "spec": "cash plus invested / annual spending; milestones at 1, 5, 10, 25",
+   "lives": [
+    "METRIC:yearsSaved"
+   ],
+   "appliesWhen": "always",
+   "sourceLens": "jlCollins"
+  },
+  {
+   "term": "human capital",
+   "also": [],
+   "domain": "fi",
+   "plain": "The value today of everything you will earn: the biggest asset of someone in their 20s.",
+   "spec": "gross pay projected by income growth to the target date, discounted",
+   "lives": [
+    "LENS",
+    "MOON:career"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "Chubby FIRE",
+   "also": [],
+   "domain": "fi",
+   "plain": "Between regular and Fat.",
+   "spec": "selectable flavor at Y9",
+   "lives": [
+    "GLOSSARY",
+    "LEVEL:Y9"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "Slow FI",
+   "also": [],
+   "domain": "fi",
+   "plain": "Use growing financial strength to improve life along the way instead of sprinting.",
+   "spec": "a flavor at Y9 that puts time levers before saving levers in the sun",
+   "lives": [
+    "WHAT_MATTERS",
+    "LEVEL:Y9"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "Flamingo FI",
+   "also": [],
+   "domain": "fi",
+   "plain": "Save half your FI number, then go semi-retired and let it double.",
+   "spec": "50% of fiNumber, plus a Coast check",
+   "lives": [
+    "LENS"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "mini-retirement",
+   "also": [
+    "sabbatical",
+    "semi-retirement"
+   ],
+   "domain": "fi",
+   "plain": "A planned break from work before FI.",
+   "spec": "scenario block type sabbatical: cost in dollars and FI-date days",
+   "lives": [
+    "ROOM:what-if-life"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "geo-arbitrage",
+   "also": [
+    "expat FI"
+   ],
+   "domain": "fi",
+   "plain": "Earn where pay is high, spend where costs are low.",
+   "spec": "the Geo-Arbitrage moon, the geo block and moveTax",
+   "lives": [
+    "MOON:geoArbitrage",
+    "METRIC:moveTax"
+   ],
+   "appliesWhen": {
+    "any": [
+     {
+      "answer": "Y27",
+      "key": "relocateOk",
+      "is": true
+     },
+     {
+      "answer": "Y27",
+      "key": "remoteOk",
+      "is": true
+     }
+    ]
+   }
+  },
+  {
+   "term": "milestone ladder",
+   "also": [
+    "FI milestones"
+   ],
+   "domain": "fi",
+   "plain": "The rungs on the way to FI: breakeven, the first 10k, the first 100k, half FI, Coast, Lean, Flamingo, FI, Fat.",
+   "spec": "Y18 shows the position and the next rung",
+   "lives": [
+    "METRIC:milestone"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "stages of financial freedom",
+   "also": [],
+   "domain": "fi",
+   "plain": "Dependence, solvency, stability, security, independence, abundance.",
+   "spec": "a lens on the milestone ladder with names as a toggle",
+   "lives": [
+    "LENS"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "debt-free scream",
+   "also": [],
+   "domain": "fi",
+   "plain": "The celebration when the last debt is gone.",
+   "spec": "an earned state on Debt & Credit",
+   "lives": [
+    "LEVEL:D1"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "One More Year syndrome",
+   "also": [
+    "OMY"
+   ],
+   "domain": "fi",
+   "plain": "Reaching the number and not stopping.",
+   "spec": "triggered when pctToFI is over 100% for twelve months",
+   "lives": [
+    "WHAT_MATTERS"
+   ],
+   "appliesWhen": {
+    "metric": "pctToFI",
+    "op": "gte",
+    "than": 1.0
+   }
+  },
+  {
+   "term": "the boring middle",
+   "also": [],
+   "domain": "fi",
+   "plain": "The long stretch between setup and FI where nothing changes but the balance.",
+   "spec": "the monthly since-last-time strip and percent-not-balance framing",
+   "lives": [
+    "WHAT_MATTERS"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "retire to, not from",
+   "also": [],
+   "domain": "fi",
+   "plain": "Have something to go toward, not just something to leave.",
+   "spec": "Y9 and Y29 feed it",
+   "lives": [
+    "WHAT_MATTERS",
+    "LEVEL:Y9",
+    "LEVEL:Y29"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "the prime directive",
+   "also": [
+    "r/personalfinance flowchart"
+   ],
+   "domain": "fi",
+   "plain": "Budget, small emergency fund, match, high-interest debt, full emergency fund, IRA, more retirement, other goals.",
+   "spec": "a lens over the slot engine",
+   "lives": [
+    "LENS"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "Baby Steps",
+   "also": [],
+   "domain": "fi",
+   "plain": "A seven-step debt-first order many people arrive with.",
+   "spec": "a lens; the Advice Translator marks where it diverges for FIRE",
+   "lives": [
+    "LENS"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "aggregation of marginal gains",
+   "also": [],
+   "domain": "fi",
+   "plain": "Many one-percent improvements add up.",
+   "spec": "the quick-wins ledger: won so far",
+   "lives": [
+    "LENS"
+   ],
+   "appliesWhen": "always",
+   "sourceLens": "chooseFi"
+  },
+  {
+   "term": "pay yourself first",
+   "also": [
+    "automation"
+   ],
+   "domain": "fi",
+   "plain": "Move the saving before you can spend it.",
+   "spec": "moves in the Main Path moon",
+   "lives": [
+    "MOON:mainPath"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "emergency fund tiers",
+   "also": [
+    "starter emergency fund"
+   ],
+   "domain": "fi",
+   "plain": "A starter cushion, then three months, then six, by how stable the income is.",
+   "spec": "efTarget and efCoverage; the Rule of 5 calculator",
+   "lives": [
+    "METRIC:efTarget",
+    "METRIC:efCoverage",
+    "MOON:safetyNet"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "traditional vs. Roth",
+   "also": [],
+   "domain": "fi",
+   "plain": "Traditional saves tax now and pays it later; Roth pays now and is free later.",
+   "spec": "rothCall at T16: high savers often favor traditional now and convert later",
+   "lives": [
+    "METRIC:rothCall"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "pro-rata rule",
+   "also": [],
+   "domain": "fi",
+   "plain": "A Roth conversion is taxed on the share of all your IRA money that was never taxed.",
+   "spec": "a warning on the backdoor Roth move",
+   "lives": [
+    "GLOSSARY"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "HSA as a stealth IRA",
+   "also": [
+    "triple tax advantage"
+   ],
+   "domain": "fi",
+   "plain": "Never taxed in, never taxed growing, never taxed out for medical costs; invest it and reimburse yourself later.",
+   "spec": "hsaRead at T18; the save-your-receipts move",
+   "lives": [
+    "METRIC:hsaRead",
+    "LEVEL:T18"
+   ],
+   "appliesWhen": {
+    "answer": "T18",
+    "key": "onHdhp",
+    "is": true
+   },
+   "sourceLens": "madFientist"
+  },
+  {
+   "term": "RSUs",
+   "also": [
+    "options",
+    "equity compensation"
+   ],
+   "domain": "fi",
+   "plain": "Company stock paid to you on a schedule.",
+   "spec": "I25; the concentration check at A22; income when vested",
+   "lives": [
+    "LEVEL:I25",
+    "METRIC:concentration"
+   ],
+   "appliesWhen": {
+    "held": "I25"
+   }
+  },
+  {
+   "term": "NUA",
+   "also": [
+    "net unrealized appreciation"
+   ],
+   "domain": "fi",
+   "plain": "A tax rule for employer stock inside a 401k.",
+   "spec": "surfaced only when A22 shows employer stock in a retirement account",
+   "lives": [
+    "GLOSSARY"
+   ],
+   "appliesWhen": {
+    "held": "A22"
+   }
+  },
+  {
+   "term": "tax-loss harvesting",
+   "also": [
+    "wash-sale rule"
+   ],
+   "domain": "fi",
+   "plain": "Selling a loser to bank the loss, without buying it back for 30 days.",
+   "spec": "harvestRoom in the Tax Strategy moon",
+   "lives": [
+    "METRIC:harvestRoom"
+   ],
+   "appliesWhen": {
+    "held": "A26"
+   }
+  },
+  {
+   "term": "tax-gain harvesting",
+   "also": [
+    "0% long-term gains"
+   ],
+   "domain": "fi",
+   "plain": "Selling and rebuying winners inside the 0% gains bracket to raise the cost basis for free.",
+   "spec": "gainsRoomUse",
+   "lives": [
+    "METRIC:gainsRoomUse"
+   ],
+   "appliesWhen": {
+    "held": "T25"
+   },
+   "sourceLens": "goCurryCracker"
+  },
+  {
+   "term": "tax diversification",
+   "also": [
+    "three buckets"
+   ],
+   "domain": "fi",
+   "plain": "Money in pretax, Roth and taxable buckets so you can choose what to tax later.",
+   "spec": "taxBucketMix",
+   "lives": [
+    "METRIC:taxBucketMix"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "tax drag",
+   "also": [],
+   "domain": "fi",
+   "plain": "The yearly tax cost of a taxable account.",
+   "spec": "a lens on feeDrag",
+   "lives": [
+    "LENS"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "marginal vs. effective rate",
+   "also": [],
+   "domain": "fi",
+   "plain": "Marginal is the tax on the next dollar; effective is the average on all of them.",
+   "spec": "marginalBracket and effectiveRate, explained wherever either appears",
+   "lives": [
+    "METRIC:marginalBracket",
+    "METRIC:effectiveRate"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "standard deduction as free conversion space",
+   "also": [],
+   "domain": "fi",
+   "plain": "Income under the standard deduction is taxed at zero, which is room for a Roth conversion.",
+   "spec": "read inside ladderPlan",
+   "lives": [
+    "METRIC:ladderPlan"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "saver's credit",
+   "also": [
+    "student loan interest deduction",
+    "education credits",
+    "EITC"
+   ],
+   "domain": "fi",
+   "plain": "Credits and deductions people miss.",
+   "spec": "missedCredits",
+   "lives": [
+    "METRIC:missedCredits"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "I-bonds",
+   "also": [
+    "T-bills",
+    "CDs",
+    "HYSA",
+    "money market"
+   ],
+   "domain": "fi",
+   "plain": "Places to hold cash that pay more than a checking account.",
+   "spec": "A7, A12, cashDragRate, the Safety Net moon",
+   "lives": [
+    "LEVEL:A12",
+    "METRIC:cashDragRate"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "bank account bonus",
+   "also": [],
+   "domain": "fi",
+   "plain": "A bank paying you to move money in.",
+   "spec": "Safety Net quick wins, kept apart from card rewards",
+   "lives": [
+    "MOON:safetyNet"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "the middle-class trap",
+   "also": [],
+   "domain": "fi",
+   "plain": "Wealth locked in retirement accounts and a home, with little you can reach.",
+   "spec": "trapRatio and liquidityRate, derived at Tier 2",
+   "lives": [
+    "METRIC:trapRatio",
+    "METRIC:liquidityRate"
+   ],
+   "appliesWhen": "always",
+   "sourceLens": "biggerPockets"
+  },
+  {
+   "term": "bridge account",
+   "also": [
+    "bridge number"
+   ],
+   "domain": "fi",
+   "plain": "Reachable money to cover the years between your target date and 59.5.",
+   "spec": "bridgeYears, bridgeNumber, bridgeCoverage, bridgeFinal",
+   "lives": [
+    "METRIC:bridgeYears",
+    "METRIC:bridgeNumber",
+    "METRIC:bridgeCoverage"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "Roth conversion ladder",
+   "also": [],
+   "domain": "fi",
+   "plain": "Convert traditional money to Roth each year, wait five years per conversion, then take it out penalty free.",
+   "spec": "ladderPlan; needs five years of other funding first",
+   "lives": [
+    "METRIC:ladderPlan"
+   ],
+   "appliesWhen": {
+    "held": "A27"
+   },
+   "sourceLens": "madFientist"
+  },
+  {
+   "term": "Roth five-year rules",
+   "also": [],
+   "domain": "fi",
+   "plain": "Two clocks: the account's age, and each conversion's age.",
+   "spec": "explicit handling in ladderPlan",
+   "lives": [
+    "GLOSSARY"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "Roth contribution withdrawals",
+   "also": [
+    "basis first"
+   ],
+   "domain": "fi",
+   "plain": "Contributions come out first and always without tax or penalty.",
+   "spec": "A27",
+   "lives": [
+    "LEVEL:A27"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "taxable brokerage first",
+   "also": [
+    "withdrawal order"
+   ],
+   "domain": "fi",
+   "plain": "Spend the taxable account first in the bridge, harvesting gains at 0%.",
+   "spec": "drawdownPlan; A30 confirms the computed best order",
+   "lives": [
+    "METRIC:drawdownPlan",
+    "LEVEL:A30"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "sequence of returns risk",
+   "also": [],
+   "domain": "fi",
+   "plain": "Bad early years hurt far more than bad late years.",
+   "spec": "sequenceRead at A24",
+   "lives": [
+    "METRIC:sequenceRead"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "safe withdrawal rate research",
+   "also": [],
+   "domain": "fi",
+   "plain": "Long retirements of 40 to 60 years point to 3.25 to 3.5%.",
+   "spec": "a lens on the withdrawal rate, driven by planHorizon",
+   "lives": [
+    "LENS"
+   ],
+   "appliesWhen": {
+    "metric": "planHorizon",
+    "op": "gt",
+    "than": 30
+   },
+   "sourceLens": "bigErn"
+  },
+  {
+   "term": "CAPE-based withdrawal",
+   "also": [],
+   "domain": "fi",
+   "plain": "A withdrawal rate that moves with how expensive the market is.",
+   "spec": "a Decumulation lens, advanced",
+   "lives": [
+    "ROOM:decumulation"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "guardrails",
+   "also": [
+    "Guyton-Klinger"
+   ],
+   "domain": "fi",
+   "plain": "Raise or cut spending when the withdrawal rate drifts past set bounds.",
+   "spec": "a Decumulation strategy option",
+   "lives": [
+    "ROOM:decumulation"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "variable percentage withdrawal",
+   "also": [
+    "VPW"
+   ],
+   "domain": "fi",
+   "plain": "Withdraw a percentage that rises with age from a table.",
+   "spec": "a Decumulation strategy option",
+   "lives": [
+    "ROOM:decumulation"
+   ],
+   "appliesWhen": "always",
+   "sourceLens": "bogleheads"
+  },
+  {
+   "term": "bond tent",
+   "also": [
+    "rising equity glide path"
+   ],
+   "domain": "fi",
+   "plain": "More bonds around the retirement date, then back toward stocks.",
+   "spec": "read inside allocationRead near the target date",
+   "lives": [
+    "METRIC:allocationRead"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "flexibility as a safety margin",
+   "also": [],
+   "domain": "fi",
+   "plain": "Cutting wants in a down year is a safety margin in itself.",
+   "spec": "the E10 flexible flags say how far spending can drop; shown beside sequenceRead",
+   "lives": [
+    "METRIC:sequenceRead"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "Social Security as a floor",
+   "also": [],
+   "domain": "fi",
+   "plain": "A benefit that lowers the pot's job after 62 to 70.",
+   "spec": "ssFloor, ssCoverage; claiming-age comparison in Decumulation",
+   "lives": [
+    "METRIC:ssFloor",
+    "METRIC:ssCoverage"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "pensions and annuities as floors",
+   "also": [],
+   "domain": "fi",
+   "plain": "Guaranteed income that lowers what the pot must cover.",
+   "spec": "I29, the same floor logic",
+   "lives": [
+    "LEVEL:I29"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "RMDs",
+   "also": [
+    "IRMAA",
+    "the widow's penalty",
+    "the tax torpedo"
+   ],
+   "domain": "fi",
+   "plain": "Late-life tax effects that show up after 70.",
+   "spec": "surfaced when planHorizon passes those ages",
+   "lives": [
+    "GLOSSARY"
+   ],
+   "appliesWhen": {
+    "metric": "planHorizon",
+    "state": "sharp"
+   }
+  },
+  {
+   "term": "giving while living",
+   "also": [
+    "legacy"
+   ],
+   "domain": "fi",
+   "plain": "Giving now instead of leaving it.",
+   "spec": "Family moon, Giving room, Estate Basics",
+   "lives": [
+    "MOON:family"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "index investing",
+   "also": [
+    "VTSAX and chill",
+    "the simple path"
+   ],
+   "domain": "fi",
+   "plain": "Own the whole market at the lowest fee and leave it alone.",
+   "spec": "the default lens for the Portfolio Design moon",
+   "lives": [
+    "MOON:portfolioDesign"
+   ],
+   "appliesWhen": "always",
+   "sourceLens": "jlCollins"
+  },
+  {
+   "term": "rebalancing",
+   "also": [],
+   "domain": "fi",
+   "plain": "Selling what grew and buying what shrank to get back to the target split.",
+   "spec": "a yearly move in Portfolio Design, tied to the level 30 review",
+   "lives": [
+    "MOON:portfolioDesign"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "staying the course",
+   "also": [
+    "market timing",
+    "the crash protocol"
+   ],
+   "domain": "fi",
+   "plain": "What to do in a crash: the plan, not the news.",
+   "spec": "triggered by a big drop in A19 updates; shows sequenceRead and the plan, no alarm styling",
+   "lives": [
+    "WHAT_MATTERS"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "factor tilts",
+   "also": [
+    "dividend investing",
+    "small-cap value"
+   ],
+   "domain": "fi",
+   "plain": "Ways to lean a portfolio away from the whole market.",
+   "spec": "an advanced Portfolio Design note; not a default path",
+   "lives": [
+    "GLOSSARY"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "alternatives",
+   "also": [
+    "crypto",
+    "gold",
+    "collectibles",
+    "angel investing"
+   ],
+   "domain": "fi",
+   "plain": "Things that are not stocks, bonds or cash.",
+   "spec": "A9; the Alternatives moon, dim until the Main Path is settled",
+   "lives": [
+    "LEVEL:A9",
+    "MOON:alternatives"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "employer stock concentration",
+   "also": [],
+   "domain": "fi",
+   "plain": "Too much of your money in the company that also pays you.",
+   "spec": "employerStockShare",
+   "lives": [
+    "METRIC:employerStockShare"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "AUM fee",
+   "also": [
+    "robo-advisor"
+   ],
+   "domain": "fi",
+   "plain": "A yearly fee on everything an adviser manages.",
+   "spec": "A25 accepts an advisory fee line; fee drag applies",
+   "lives": [
+    "LEVEL:A25"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "ACA subsidy",
+   "also": [
+    "premium tax credit",
+    "marketplace plan"
+   ],
+   "domain": "fi",
+   "plain": "Help with the premium on health cover bought through the exchange, sized by your income.",
+   "spec": "subsidyCliff; rules in the dated table",
+   "lives": [
+    "METRIC:subsidyCliff"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "MAGI management",
+   "also": [],
+   "domain": "fi",
+   "plain": "Choosing which bucket to draw from so income lands where the subsidy is best.",
+   "spec": "read inside drawdownPlan",
+   "lives": [
+    "METRIC:drawdownPlan"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "aging off a parent's plan",
+   "also": [
+    "age 26"
+   ],
+   "domain": "fi",
+   "plain": "Health coverage on a parent's plan ends at 26.",
+   "spec": "keyDates and coverageGapFirst",
+   "lives": [
+    "METRIC:keyDates",
+    "METRIC:coverageGapFirst"
+   ],
+   "appliesWhen": {
+    "answer": "Y11",
+    "key": "healthCover",
+    "is": "parent"
+   }
+  },
+  {
+   "term": "health sharing ministry",
+   "also": [],
+   "domain": "fi",
+   "plain": "A cost-sharing group that is not insurance and does not have to pay.",
+   "spec": "a glossary note only",
+   "lives": [
+    "GLOSSARY"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "Medicare at 65",
+   "also": [
+    "long-term care"
+   ],
+   "domain": "fi",
+   "plain": "Coverage at 65, and the cost of care late in life.",
+   "spec": "Horizon band, Health moon",
+   "lives": [
+    "MOON:health"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "FHA loan",
+   "also": [
+    "conventional",
+    "VA",
+    "down payment",
+    "PMI",
+    "LTV"
+   ],
+   "domain": "fi",
+   "plain": "The loan types, and the mortgage insurance that comes with putting little money in up front.",
+   "spec": "ltv, mortgageCapacity, frontEndDTI, backEndDTI; rules in a dated table",
+   "lives": [
+    "METRIC:ltv",
+    "METRIC:mortgageCapacity"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "rent vs. buy",
+   "also": [
+    "the 5% rule",
+    "price-to-rent"
+   ],
+   "domain": "fi",
+   "plain": "Compare rent to about 5% of the home price a year in unrecoverable costs.",
+   "spec": "Housing Decision room, with market inputs in its own intake",
+   "lives": [
+    "ROOM:housing"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "the 1% rule",
+   "also": [
+    "2% rule",
+    "50% rule"
+   ],
+   "domain": "fi",
+   "plain": "Screening rules of thumb for a rental.",
+   "spec": "rentToPrice; lens only",
+   "lives": [
+    "METRIC:rentToPrice"
+   ],
+   "appliesWhen": "always",
+   "sourceLens": "biggerPockets"
+  },
+  {
+   "term": "cap rate",
+   "also": [
+    "cash-on-cash",
+    "NOI",
+    "DSCR"
+   ],
+   "domain": "fi",
+   "plain": "The yield on a property, the cash return on the cash you put in, and whether the rent covers the loan.",
+   "spec": "capRate, cashOnCash, dscr",
+   "lives": [
+    "METRIC:capRate",
+    "METRIC:cashOnCash",
+    "METRIC:dscr"
+   ],
+   "appliesWhen": "always",
+   "sourceLens": "biggerPockets"
+  },
+  {
+   "term": "BRRRR",
+   "also": [],
+   "domain": "fi",
+   "plain": "Buy, rehab, rent, refinance, repeat.",
+   "spec": "a Real Estate moon track",
+   "lives": [
+    "MOON:realEstate"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "pay off the mortgage vs. invest",
+   "also": [],
+   "domain": "fi",
+   "plain": "One of the great FIRE arguments, shown with both sides.",
+   "spec": "flipRate at D17 plus a Triple D view",
+   "lives": [
+    "METRIC:flipRate"
+   ],
+   "appliesWhen": {
+    "held": "D12"
+   }
+  },
+  {
+   "term": "home equity in the FI number",
+   "also": [],
+   "domain": "fi",
+   "plain": "Whether the house counts toward FI, which by default it does not, with downsizing kept as a block.",
+   "spec": "a setting",
+   "lives": [
+    "GLOSSARY"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "REITs",
+   "also": [
+    "syndications",
+    "short-term rentals"
+   ],
+   "domain": "fi",
+   "plain": "Ways to own property without a landlord's Saturday.",
+   "spec": "A9 and the Alternatives moon",
+   "lives": [
+    "MOON:alternatives"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "live-in flip",
+   "also": [
+    "home sale gain exclusion"
+   ],
+   "domain": "fi",
+   "plain": "Living in a home two of five years so the gain is tax free when you sell.",
+   "spec": "Real Estate moon",
+   "lives": [
+    "MOON:realEstate"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "income as the bigger lever",
+   "also": [],
+   "domain": "fi",
+   "plain": "Past a point, earning more moves the date faster than cutting.",
+   "spec": "incomeLevers, marketGapRate; the Career moon",
+   "lives": [
+    "METRIC:incomeLevers",
+    "MOON:career"
+   ],
+   "appliesWhen": "always",
+   "sourceLens": "trench"
+  },
+  {
+   "term": "lifetime value of a raise",
+   "also": [
+    "negotiation",
+    "job hopping"
+   ],
+   "domain": "fi",
+   "plain": "A raise is not one year of money; invested, it compounds to the FI date.",
+   "spec": "raise x wealth multiplier",
+   "lives": [
+    "MOON:career"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "side hustle",
+   "also": [],
+   "domain": "fi",
+   "plain": "Income beyond the job.",
+   "spec": "the Side Hustles moon; hustleCapacity, sideNet",
+   "lives": [
+    "MOON:sideHustles",
+    "METRIC:hustleCapacity"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "talent stacking",
+   "also": [
+    "skills"
+   ],
+   "domain": "fi",
+   "plain": "Two or three things you can do that are worth more together than each alone.",
+   "spec": "Skill calculator room; Career moon",
+   "lives": [
+    "ROOM:skill-tree"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "passive income",
+   "also": [],
+   "domain": "fi",
+   "plain": "Income that does not need your hours, defined honestly.",
+   "spec": "I10 type, I29",
+   "lives": [
+    "LEVEL:I10",
+    "LEVEL:I29"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "total compensation",
+   "also": [],
+   "domain": "fi",
+   "plain": "Pay plus match plus benefits plus equity, a year.",
+   "spec": "totalComp",
+   "lives": [
+    "METRIC:totalComp"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "remote work",
+   "also": [
+    "location independence"
+   ],
+   "domain": "fi",
+   "plain": "Working from anywhere, which opens the geo levers.",
+   "spec": "Y27; the Geo moon",
+   "lives": [
+    "LEVEL:Y27",
+    "MOON:geoArbitrage"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "the Big Three",
+   "also": [
+    "FAT"
+   ],
+   "domain": "fi",
+   "plain": "Housing, transportation and food: the three lines that decide most budgets.",
+   "spec": "shelterRate, transportRate, foodShare; E18 checks these first",
+   "lives": [
+    "METRIC:shelterRate",
+    "METRIC:transportRate",
+    "METRIC:foodShare"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "latte factor",
+   "also": [],
+   "domain": "fi",
+   "plain": "Small recurring costs add up, and its critics say the Big Three matter more.",
+   "spec": "the x300 rule makes small costs visible; the Big Three note keeps them in proportion",
+   "lives": [
+    "LENS"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "lifestyle creep",
+   "also": [
+    "lifestyle inflation"
+   ],
+   "domain": "fi",
+   "plain": "Spending rising with income.",
+   "spec": "creepRate, raiseCapture",
+   "lives": [
+    "METRIC:creepRate",
+    "METRIC:raiseCapture"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "hedonic adaptation",
+   "also": [],
+   "domain": "fi",
+   "plain": "New things stop feeling new.",
+   "spec": "What Matters",
+   "lives": [
+    "WHAT_MATTERS"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "no-spend challenge",
+   "also": [
+    "minimalism",
+    "spending fast"
+   ],
+   "domain": "fi",
+   "plain": "A stretch with no optional spending.",
+   "spec": "optional Deals moves",
+   "lives": [
+    "MOON:deals"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "enough",
+   "also": [
+    "fulfillment curve"
+   ],
+   "domain": "fi",
+   "plain": "The point past which more spending adds nothing.",
+   "spec": "What Matters; the Dante Enough sphere",
+   "lives": [
+    "WHAT_MATTERS"
+   ],
+   "appliesWhen": "always",
+   "sourceLens": "ymoyl"
+  },
+  {
+   "term": "the car rules",
+   "also": [
+    "20/3/8",
+    "drive it ten years"
+   ],
+   "domain": "fi",
+   "plain": "Pay cash, or 20% down, a 3-year loan, a payment under 8% of gross.",
+   "spec": "carPaymentRate, carToIncome; Big Purchase room",
+   "lives": [
+    "METRIC:carPaymentRate",
+    "METRIC:carToIncome"
+   ],
+   "appliesWhen": "always",
+   "sourceLens": "moneyGuy"
+  },
+  {
+   "term": "budgeting methods",
+   "also": [
+    "zero-based",
+    "envelope",
+    "anti-budget",
+    "pay-yourself-first"
+   ],
+   "domain": "fi",
+   "plain": "Different ways to watch the same spending, from a line per category to watching only the savings rate.",
+   "spec": "the Budget room offers each as a view of the same data; anti-budget is the default",
+   "lives": [
+    "ROOM:budget"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "cost per use",
+   "also": [
+    "hours of life per purchase"
+   ],
+   "domain": "fi",
+   "plain": "What a thing costs each time you use it, and in hours of your life.",
+   "spec": "worthIt; the time toggle",
+   "lives": [
+    "METRIC:worthIt"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "travel rewards",
+   "also": [
+    "points and miles",
+    "churning"
+   ],
+   "domain": "fi",
+   "plain": "Card rewards on spending you already do.",
+   "spec": "the Card Rewards moon, gated on no high-interest balance, good credit and known spending",
+   "lives": [
+    "MOON:cardRewards"
+   ],
+   "appliesWhen": {
+    "metric": "highInterestFlag",
+    "state": "off"
+   }
+  },
+  {
+   "term": "sign-up bonus",
+   "also": [
+    "minimum spend",
+    "annual fee math"
+   ],
+   "domain": "fi",
+   "plain": "A bonus for opening a card and spending a set amount; worth it only against planned spending.",
+   "spec": "value = bonus minus fee, against spending already planned",
+   "lives": [
+    "MOON:cardRewards"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "5/24 rule",
+   "also": [
+    "issuer velocity rules"
+   ],
+   "domain": "fi",
+   "plain": "Some issuers decline you after five new cards in 24 months.",
+   "spec": "tracked from the moon intake; rules in a dated table",
+   "lives": [
+    "MOON:cardRewards"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "manufactured spending",
+   "also": [],
+   "domain": "fi",
+   "plain": "Generating card spend artificially, which is risky and against most card terms.",
+   "spec": "glossary only; no moves",
+   "lives": [
+    "GLOSSARY"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "credit score factors",
+   "also": [
+    "payment history",
+    "utilization",
+    "age of accounts",
+    "mix",
+    "inquiries"
+   ],
+   "domain": "fi",
+   "plain": "What moves a credit score.",
+   "spec": "creditBand, utilization, reportClean; the Credit Building moon",
+   "lives": [
+    "MOON:creditBuilding"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "authorized user",
+   "also": [
+    "secured card",
+    "credit freeze"
+   ],
+   "domain": "fi",
+   "plain": "Ways to start or protect a credit history.",
+   "spec": "Credit Building moves",
+   "lives": [
+    "MOON:creditBuilding"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "avalanche vs. snowball",
+   "also": [],
+   "domain": "fi",
+   "plain": "Highest rate first saves the most interest; smallest balance first wins the most months.",
+   "spec": "payoffPlan, payoffChosen; both always shown",
+   "lives": [
+    "METRIC:payoffPlan",
+    "METRIC:payoffChosen"
+   ],
+   "appliesWhen": {
+    "value": "D1",
+    "op": "gt",
+    "than": 0
+   }
+  },
+  {
+   "term": "good debt vs. bad debt",
+   "also": [
+    "the flip rate"
+   ],
+   "domain": "fi",
+   "plain": "Debt below the rate you could earn, and debt above it.",
+   "spec": "flipRate, highInterestShare",
+   "lives": [
+    "METRIC:flipRate",
+    "METRIC:highInterestShare"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "0% promo",
+   "also": [
+    "balance transfer"
+   ],
+   "domain": "fi",
+   "plain": "A temporary zero rate that ends on a date.",
+   "spec": "promoCliff; Payoff Plan moves",
+   "lives": [
+    "METRIC:promoCliff"
+   ],
+   "appliesWhen": {
+    "held": "D8"
+   }
+  },
+  {
+   "term": "buy now, pay later",
+   "also": [],
+   "domain": "fi",
+   "plain": "Installment debt taken on at the checkout, which counts as debt like any other.",
+   "spec": "counted at D3 and D4",
+   "lives": [
+    "LEVEL:D3"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "leverage",
+   "also": [],
+   "domain": "fi",
+   "plain": "Borrowing to own more than you could with cash.",
+   "spec": "the Leverage moon; D30",
+   "lives": [
+    "MOON:leverage",
+    "LEVEL:D30"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "own-occupation disability insurance",
+   "also": [],
+   "domain": "fi",
+   "plain": "Pays if you cannot do your own job; the most under-owned cover in your 20s.",
+   "spec": "disabilityReplace",
+   "lives": [
+    "METRIC:disabilityReplace"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "self-insuring",
+   "also": [],
+   "domain": "fi",
+   "plain": "Dropping small cover you can pay yourself once the cushion is big enough.",
+   "spec": "an Advice Translator outgrown example: low deductibles, extended warranties",
+   "lives": [
+    "GLOSSARY"
+   ],
+   "appliesWhen": {
+    "metric": "runwayMonths",
+    "op": "gte",
+    "than": 6
+   }
+  },
+  {
+   "term": "estate basics",
+   "also": [
+    "will",
+    "beneficiaries",
+    "POA",
+    "healthcare proxy",
+    "in-case-of-emergency binder"
+   ],
+   "domain": "fi",
+   "plain": "The four things that make your money findable and moveable if you cannot act.",
+   "spec": "estateReady; Y24, A23, T23",
+   "lives": [
+    "METRIC:estateReady"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "identity protection",
+   "also": [
+    "credit freeze",
+    "password manager"
+   ],
+   "domain": "fi",
+   "plain": "Freezing credit and keeping one strong password per account.",
+   "spec": "Financial Ops",
+   "lives": [
+    "WHAT_MATTERS"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "combining finances",
+   "also": [
+    "money dates",
+    "yours-mine-ours"
+   ],
+   "domain": "fi",
+   "plain": "How two people share or separate money.",
+   "spec": "Y5, E12; Partner room",
+   "lives": [
+    "LEVEL:Y5",
+    "ROOM:partner"
+   ],
+   "appliesWhen": {
+    "answer": "Y5",
+    "key": "partnerName",
+    "is": "any"
+   }
+  },
+  {
+   "term": "cost of kids",
+   "also": [
+    "childcare",
+    "one-income household"
+   ],
+   "domain": "fi",
+   "plain": "What a child costs, and what one income means for the plan.",
+   "spec": "the kid block; Kids room",
+   "lives": [
+    "MOON:family"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "custodial Roth",
+   "also": [
+    "financial literacy for kids"
+   ],
+   "domain": "fi",
+   "plain": "A Roth for a child with earned income.",
+   "spec": "Family moon",
+   "lives": [
+    "MOON:family"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "sandwich generation",
+   "also": [
+    "aging parents"
+   ],
+   "domain": "fi",
+   "plain": "Supporting parents and kids at once.",
+   "spec": "Y15; familyFlows",
+   "lives": [
+    "LEVEL:Y15",
+    "METRIC:familyFlows"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "marriage tax effects",
+   "also": [
+    "prenup"
+   ],
+   "domain": "fi",
+   "plain": "How marrying changes the brackets and the plan.",
+   "spec": "the marriage block; T15",
+   "lives": [
+    "LEVEL:T15"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "money scripts",
+   "also": [
+    "scarcity vs. abundance",
+    "money avoidance"
+   ],
+   "domain": "fi",
+   "plain": "The stories about money you learned before you could earn it.",
+   "spec": "Money Mirror, the personality quiz",
+   "lives": [
+    "WHAT_MATTERS"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "the Advice Translator",
+   "also": [],
+   "domain": "fi",
+   "plain": "What applies to you now, what does not yet, and what you have outgrown.",
+   "spec": "every moon and glossary term is tagged from your levels",
+   "lives": [
+    "GLOSSARY"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "identity after work",
+   "also": [
+    "purpose",
+    "the then-what problem"
+   ],
+   "domain": "fi",
+   "plain": "What you are when the job is gone.",
+   "spec": "Pre-Retirement Design",
+   "lives": [
+    "WHAT_MATTERS"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "time as the real currency",
+   "also": [
+    "168-hour audit",
+    "buying back hours"
+   ],
+   "domain": "fi",
+   "plain": "Hours are the thing money is for.",
+   "spec": "the hours-back calculator; Y26",
+   "lives": [
+    "WHAT_MATTERS",
+    "LEVEL:Y26"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "community and accountability",
+   "also": [
+    "money date",
+    "body doubling"
+   ],
+   "domain": "fi",
+   "plain": "Doing the boring parts with other people.",
+   "spec": "the monthly money date",
+   "lives": [
+    "WHAT_MATTERS"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "stealth wealth",
+   "also": [
+    "comparison"
+   ],
+   "domain": "fi",
+   "plain": "Not telling, and not comparing.",
+   "spec": "glossary only",
+   "lives": [
+    "GLOSSARY"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "burnout",
+   "also": [],
+   "domain": "fi",
+   "plain": "The reason many people find FIRE.",
+   "spec": "the Slow FI lens; the sabbatical block",
+   "lives": [
+    "WHAT_MATTERS"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "FI-losophy",
+   "also": [],
+   "domain": "fi",
+   "plain": "Math, then mental health, then philosophy: the app's own arc.",
+   "spec": "the Empyrean",
+   "lives": [
+    "WHAT_MATTERS"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "metrics unlocked",
+   "also": [],
+   "domain": "fi",
+   "plain": "Real numbers about you that appear as the facts behind them arrive.",
+   "spec": "four states: locked, rough, sharp, earned",
+   "lives": [
+    "GLOSSARY"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "rough",
+   "also": [
+    "give-or-take band"
+   ],
+   "domain": "fi",
+   "plain": "A number computed from a guess or a default, shown with its range.",
+   "spec": "every headline metric shows a give-or-take driven by input confidence",
+   "lives": [
+    "GLOSSARY"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "moon",
+   "also": [
+    "strategy track"
+   ],
+   "domain": "fi",
+   "plain": "A track of moves around one planet, open when the numbers say it applies to you.",
+   "spec": "five states: dim, open, active, settled, outgrown",
+   "lives": [
+    "GLOSSARY"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "the sun",
+   "also": [],
+   "domain": "fi",
+   "plain": "The decisions: are you on route, or what would you rather change?",
+   "spec": "reads the levers ranked by FI-date change; never edits a fact",
+   "lives": [
+    "GLOSSARY"
+   ],
+   "appliesWhen": "always"
+  },
+  {
+   "term": "quick win",
+   "also": [],
+   "domain": "fi",
+   "plain": "A move you can do in fifteen minutes with a dollar figure attached.",
+   "spec": "every band on every planet has one",
+   "lives": [
+    "GLOSSARY"
+   ],
+   "appliesWhen": "always"
+  }
+ ]
 }

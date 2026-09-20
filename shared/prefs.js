@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/prefs.js — per-user preferences, outside the household.
+   shared/prefs.js, per-user preferences, outside the household.
    --------------------------------------------------------------------------
    A preference is how THIS person wants things shown: which source a DRAFTT
    band reads, whether framework names appear on a lens card, which sidebar

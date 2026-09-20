@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/onepager.js — the One-Pager: one page for any conversation.
+   engines/onepager.js, the One-Pager: one page for any conversation.
    DECISIONS.md D-219 (K2).
    --------------------------------------------------------------------------
    The "one pager out" half of the suite's core goal. Two versions of the
@@ -85,7 +85,7 @@
     var debts = (h.debts || []).filter(function (d) { return Money.isEntered(d.balanceCents); });
     var out = {};
     out.story = [
-      row('Situation', 'text', sitLabel ? sitLabel.replace(/ —.*$/, '') : null),
+      row('Situation', 'text', sitLabel ? sitLabel.replace(/, .*$/, '') : null),
       row('Household', 'count', people || null, { note: adults.length >= 2 ? 'two adults' : 'one adult' }),
       row('Age', 'age', Money.isEntered(age) ? Math.floor(age) : null),
       row('State', 'text', h.state || null)

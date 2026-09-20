@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. On the frozen template (D-097), twice, which is
+  ROOM SPEC, SPEC.md §11. On the frozen template (D-097), twice, which is
   why the children reading carries a prefix and a root (D-265). DECISIONS.md
   D-216, D-271 (the merge). Registry: partner.
 
@@ -210,7 +210,7 @@
 
   <section class="slaf-card" id="kid-inputs" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">Tuition</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">One target for each child, one pot saved so far, one figure going in a month. Leave the target blank if tuition is not a plan yet — blank is not a $0 target.</p>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">One target for each child, one pot saved so far, one figure going in a month. Leave the target blank if tuition is not a plan yet, blank is not a $0 target.</p>
     <div id="kid-room-inputs"></div>
   </section>
 
@@ -276,7 +276,7 @@
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
    so its hat is ABSENT, not greyed, when the branch is not there (D-271).
-   The hash still reaches it — an old link must land somewhere honest — and
+   The hash still reaches it, an old link must land somewhere honest, and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
   'use strict';
@@ -295,8 +295,8 @@
     var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
     /* The default reading is the last row and matches everything, so there
        is always one. When the hash asks for a reading the gate has taken
-       away, fall back to the DEFAULT — the room's plainest reading, and the
-       one the person would have got with no hash at all — not to whichever
+       away, fall back to the DEFAULT, the room's plainest reading, and the
+       one the person would have got with no hash at all, not to whichever
        gated reading happens to sit first in this list. */
     var fallback = VIEWS[VIEWS.length - 1];
     var on = open(asked) ? asked
@@ -386,7 +386,7 @@
   function pct(rate) { return Money.formatRate(rate, { decimals: 0 }); }
   function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function theirs(p) { return p.label === 'You' ? 'your' : esc(p.label) + '’s'; }
-  function taxSource(T) { var t = T.effectiveTaxRates; return 'data/effective_tax_rates_2026.json v' + t.version + ' — ' + t.source + ' (' + t.confidence + ')'; }
+  function taxSource(T) { var t = T.effectiveTaxRates; return 'data/effective_tax_rates_2026.json v' + t.version + ', ' + t.source + ' (' + t.confidence + ')'; }
 
   var COLOUR = { share: Charts.COLORS.spend, keeps: Charts.COLORS.target, pool: Charts.COLORS.contributed };
 
@@ -410,7 +410,7 @@
         if (s.poolLeftCents !== null) {
           sub = s.poolLeftCents >= 0
             ? 'Left each month, together: <strong>' + Money.formatCents(s.poolLeftCents) + '</strong> after the shared ' + shared
-            : 'The shared month is <strong>' + Money.formatCents(-s.poolLeftCents) + '</strong> more than the two take-homes bring in — that comes out of savings';
+            : 'The shared month is <strong>' + Money.formatCents(-s.poolLeftCents) + '</strong> more than the two take-homes bring in. That comes out of savings';
         } else {
           sub = 'What comes in is not estimated yet: ' + esc(you.takeHomeReason || them.takeHomeReason || '');
         }
@@ -423,7 +423,7 @@
       else if (you.takeHomeReason || them.takeHomeReason) sub += '. Take-home is not estimated yet: ' + esc(you.takeHomeReason || them.takeHomeReason);
       if (s.modeFallback) sub += '. <strong>' + esc(s.modeFallback) + '</strong>';
       if (s.zeroEarner) sub += '. ' + esc(s.zeroEarner) + ' has no pay entered above zero, so in proportion to income their share is nothing';
-      if (s.outOfPocketCents !== null) sub += '. <strong>The shared month is ' + Money.formatCents(s.outOfPocketCents) + ' more than the two take-homes together</strong> — the rest is out of pocket, from savings';
+      if (s.outOfPocketCents !== null) sub += '. <strong>The shared month is ' + Money.formatCents(s.outOfPocketCents) + ' more than the two take-homes together</strong>. The rest is out of pocket, from savings';
       else if (s.heavy.length) sub += '. More than half of ' + (s.heavy.length === 2 ? 'both take-homes' : (s.heavy[0] === 'You' ? 'your take-home' : esc(s.heavy[0]) + '’s take-home')) + ' goes to the shared month';
       if (s.modeChosen === null) sub += '. Halves is the default until you choose a split';
       if (s.sharedSource === 'household') sub += '. The shared month is the household month until you type it';
@@ -498,16 +498,16 @@
       var row = Partner.convention(T, mode);
       var rows = [
         { label: 'How you split', value: Partner.modeLabel(mode) + (Money.isOk(s) && s.modeChosen === null ? ' (the default until you choose)' : Money.isOk(s) && s.modeFallback ? ' (fell back from ' + Partner.modeLabel(s.modeChosen).toLowerCase() + ')' : ''),
-          source: (row ? row.sentence + ' ' + row.whenChosen + ' — ' : '') + 'data/partner_conventions.json v' + conv.version + ' (' + conv.confidence + ')' },
+          source: (row ? row.sentence + ' ' + row.whenChosen + ', ' : '') + 'data/partner_conventions.json v' + conv.version + ' (' + conv.confidence + ')' },
         { label: 'The shared month', value: Money.isOk(s) ? Money.formatCents(s.sharedCents) : 'not known yet',
           source: Money.isOk(s) && s.sharedSource === 'typed' ? 'yours' : 'the household month from Start Here, until you type the shared costs' }
       ];
       if (Money.isOk(s)) {
         s.people.forEach(function (p) {
-          rows.push({ label: 'Tax, ' + (p.label === 'You' ? 'you' : p.label), value: p.effectiveRate !== null ? Money.formatRate(p.effectiveRate, { decimals: 1 }) + ' effective' : 'not estimated yet' + (p.takeHomeReason ? ' — ' + p.takeHomeReason : ''),
+          rows.push({ label: 'Tax, ' + (p.label === 'You' ? 'you' : p.label), value: p.effectiveRate !== null ? Money.formatRate(p.effectiveRate, { decimals: 1 }) + ' effective' : 'not estimated yet' + (p.takeHomeReason ? ', ' + p.takeHomeReason : ''),
             source: 'estimated one person at a time at the household filing status (' + (h.filingStatus || 'not chosen') + '). An approximation: a joint return taxes the combined income, not each pay on its own. ' + taxSource(T) });
         });
-        rows.push({ label: 'One paycheque', value: s.concentration !== null ? Money.formatRate(s.concentration, { decimals: 0 }) + ' of household income' : 'not known yet' + (s.concentrationReason ? ' — ' + s.concentrationReason : ''),
+        rows.push({ label: 'One paycheque', value: s.concentration !== null ? Money.formatRate(s.concentration, { decimals: 0 }) + ' of household income' : 'not known yet' + (s.concentrationReason ? ', ' + s.concentrationReason : ''),
           source: 'engines/ratios.js incomeConcentration: largest income ÷ household income' });
       }
       rows.push({ label: 'The watch line', value: Money.formatRate(Partner.HEAVY_SHARE, { decimals: 0 }) + ' of a take-home', source: 'a share above half of what one of you brings home is flagged (convention)' });
@@ -520,7 +520,7 @@
         selfEmployed: 'Own work pays unevenly, so a proportional split wobbles month to month with the income behind it. Split on a typical year of pay, not the last invoice, and let the pool absorb the lean months.',
         mixed: 'A job and your own work on one side, a paycheque on the other: the proportional split reads the year’s total, not the steady part of it, so check that the share still fits the months the own work is thin.',
         student: 'While one of you studies, the other’s pay carries more of the shared month than the split alone suggests. The proportional share says how much; the take-home percentage says whether it is heavy.',
-        retired: 'Two incomes from what was built — pensions, Social Security, a draw — split the same way pay did. The concentration figure says how much of the month rides on one of them.',
+        retired: 'Two incomes from what was built, pensions, Social Security, a draw, split the same way pay did. The concentration figure says how much of the month rides on one of them.',
         betweenJobs: 'Between jobs, a partner’s pay is the runway. The proportional split puts the shared month almost entirely on them for now; the take-home percentage says how long that is sustainable.'
       }[situation] || 'One household, two incomes: how the shared month is split decides what each of you keeps.';
     },
@@ -553,7 +553,7 @@
     var s = '';
     if (t.dueNowCount) s += plural(t.dueNowCount, 'tuition bill is', 'tuition bills are') + ' <strong>due now</strong>' + (t.neededMonthlyCents > 0 ? '; the rest needs ' : '');
     if (t.neededMonthlyCents > 0) s += (t.dueNowCount ? '' : 'tuition needs ') + '<strong>' + perMonth(t.neededMonthlyCents) + '</strong> to land by 18';
-    if (t.monthlyCents !== null) s += ', ' + money(t.monthlyCents) + ' going in' + (t.onTime === false ? ' — <strong>' + money(t.shortMonthlyCents) + ' a month short</strong>' : t.onTime ? ' — on time' : '');
+    if (t.monthlyCents !== null) s += ', ' + money(t.monthlyCents) + ' going in' + (t.onTime === false ? ', <strong>' + money(t.shortMonthlyCents) + ' a month short</strong>' : t.onTime ? ', on time' : '');
     else s += ', nothing entered as going in';
     return s;
   }
@@ -633,25 +633,25 @@
         careWords = Money.isEntered(cc.cents) ? perMonth(cc.cents) + (cc.source === 'state' ? ' in ' + h.state : ', the national figure' + (h.state ? '' : ' (no state entered)')) : (cc.reason || 'not priced');
       }
       var rows = [
-        { label: 'What a child costs', value: bandWords, source: cost ? 'data/child_cost.json v' + cost.version + ', as of ' + cost.asOf + ' — ' + cost.source + ' (' + cost.confidence + ': ' + cost.confidenceNote + ')' : 'data/child_cost.json' },
-        { label: 'Childcare while under five', value: careWords, source: care ? 'data/childcare_by_state.json v' + care.version + ', as of ' + care.asOf + ' — ' + care.source + ' (' + care.confidence + ')' : 'data/childcare_by_state.json' },
-        { label: 'Real return on tuition saving', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094) — a real rate, so the target is in today’s dollars' },
+        { label: 'What a child costs', value: bandWords, source: cost ? 'data/child_cost.json v' + cost.version + ', as of ' + cost.asOf + ', ' + cost.source + ' (' + cost.confidence + ': ' + cost.confidenceNote + ')' : 'data/child_cost.json' },
+        { label: 'Childcare while under five', value: careWords, source: care ? 'data/childcare_by_state.json v' + care.version + ', as of ' + care.asOf + ', ' + care.source + ' (' + care.confidence + ')' : 'data/childcare_by_state.json' },
+        { label: 'Real return on tuition saving', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094), a real rate, so the target is in today’s dollars' },
         { label: 'Saving stops at 18', value: 'each child’s target is due on their 18th birthday', source: 'a convention; the cost bands end there too' },
         { label: 'The target is per child', value: 'one pot saved, to the oldest first', source: 'one saved figure for the household lands on the first bill first (convention)' },
-        { label: 'College saving convention', value: cost && cost.college && cost.college.half ? money(cost.college.half.monthlyCents) + ' a month from birth for ' + cost.college.half.label.toLowerCase() : 'not loaded', source: 'data/child_cost.json — a planning convention, not a cost; it gives no lump sum, so no target is proposed' }
+        { label: 'College saving convention', value: cost && cost.college && cost.college.half ? money(cost.college.half.monthlyCents) + ' a month from birth for ' + cost.college.half.label.toLowerCase() : 'not loaded', source: 'data/child_cost.json, a planning convention, not a cost; it gives no lump sum, so no target is proposed' }
       ];
-      if (Money.isOk(p) && p.daySchool) rows.push({ label: 'Day school', value: Money.isEntered(cost.privateSchoolMonthlyCents) ? perMonth(cost.privateSchoolMonthlyCents) + ' per child from 5 to 17' : 'in the picture, not priced', source: 'data/child_cost.json privateSchoolMonthlyCents — an average private-school tuition, not a school’s price' });
+      if (Money.isOk(p) && p.daySchool) rows.push({ label: 'Day school', value: Money.isEntered(cost.privateSchoolMonthlyCents) ? perMonth(cost.privateSchoolMonthlyCents) + ' per child from 5 to 17' : 'in the picture, not priced', source: 'data/child_cost.json privateSchoolMonthlyCents, an average private-school tuition, not a school’s price' });
       return rows;
     },
 
     why: function (h, T, situation) {
       return {
         employed: 'Employed, the kids are a line that grows with them: each band costs more than the last, childcare falls away at five, and tuition is the one bill you can see coming eighteen years out. What goes in a month now is the whole difference.',
-        selfEmployed: 'Self-employed, the kids’ costs are the fixed line under a variable income. Knowing the month’s figure — and what tuition needs on top — is what sets the floor the lean months have to clear.',
+        selfEmployed: 'Self-employed, the kids’ costs are the fixed line under a variable income. Knowing the month’s figure, and what tuition needs on top, is what sets the floor the lean months have to clear.',
         mixed: 'With a job and your own work, the kids cost the same either way; what changes is which income the childcare and the tuition saving come out of. This is the figure both have to cover between them.',
         student: 'Studying with children, their cost sits beside your own tuition. Childcare while they are under five is usually the line that decides whether the hours add up; the tuition target can wait until the income does.',
-        retired: 'Retired, anyone entered here is depending on your income — grandchildren are not dependents unless you have said so in Start Here. If they are, their cost comes out of the draw, and a tuition target is a gift with a date on it.',
-        betweenJobs: 'Between jobs, childcare is the line that moves first — it is the cost of looking for work, and the cost of taking it. The tuition saving can pause; the runway cannot.'
+        retired: 'Retired, anyone entered here is depending on your income, grandchildren are not dependents unless you have said so in Start Here. If they are, their cost comes out of the draw, and a tuition target is a gift with a date on it.',
+        betweenJobs: 'Between jobs, childcare is the line that moves first. It is the cost of looking for work, and the cost of taking it. The tuition saving can pause; the runway cannot.'
       }[situation] || 'Each child costs more as they grow, and tuition is the one bill with a date on it. This room prices both at their ages now.';
     },
 

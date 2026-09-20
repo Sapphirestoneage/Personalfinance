@@ -8,12 +8,12 @@
 <script src="../shared/errlog.js"></script>
 <script src="../shared/size.js"></script>
 <title>The Life · SPARKS</title>
-<meta name="description" content="The week you would design, priced, and the decades you plan to spend — whether the life you want and the money for it line up in time."/>
+<meta name="description" content="The week you would design, priced, and the decades you plan to spend, whether the life you want and the money for it line up in time."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. On the frozen template (D-097), twice, which is
+  ROOM SPEC, SPEC.md §11. On the frozen template (D-097), twice, which is
   why the decades reading carries a prefix and a root (D-265). DECISIONS.md
   D-269 (the merge). Registry: week.
 
@@ -24,8 +24,8 @@
     #the-decades  what you plan to do in each decade, priced, and whether
                   the plan and the money land in the same years
 
-  Both rooms asked the same question — is the life you want the one you are
-  paying for — at a week and at a lifetime. Rule 1 of D-229: same fields,
+  Both rooms asked the same question, is the life you want the one you are
+  paying for, at a week and at a lifetime. Rule 1 of D-229: same fields,
   different framing is one room with a toggle. The week is first because it
   is the scale you can act on tomorrow.
 
@@ -140,7 +140,7 @@
 
   <section class="slaf-card" id="bk-inputs" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">Each decade</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">A price on what you want that decade to hold — the trips, the sabbatical, the thing. The proposals are typical experiences for the decade, not yours; type over them. Blank or zero is nothing planned there.</p>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">A price on what you want that decade to hold, the trips, the sabbatical, the thing. The proposals are typical experiences for the decade, not yours; type over them. Blank or zero is nothing planned there.</p>
     <div id="bk-room-inputs"></div>
   </section>
 
@@ -241,7 +241,7 @@
   var TABLES = null;
 
   /* The blocks, in the table's order (data/week_blocks.json). The ids and
-     labels are the table's — the table is loaded after the inputs are built,
+     labels are the table's. The table is loaded after the inputs are built,
      so they are named here and checked against it in test/rooms/week.js;
      the hours each proposes and the 168 come from the table at render. The
      first five are the inputs; the rest fold. */
@@ -268,7 +268,7 @@
     return null;
   }
   /* One write per box: the hours, and the block's cost a week stored beside
-     them — the one already stored, else the tracked line for its category.
+     them, the one already stored, else the tracked line for its category.
      Blank removes the block (not placed); a typed zero is a block of no
      hours. Negative hours are not hours. */
   function writeBlock(def, raw) {
@@ -294,7 +294,7 @@
       propose: function (h, T) {
         var t = Week.tableBlock(T, def.id);
         if (!t || !Money.isEntered(t.hours) || t.hours <= 0) return null;
-        return { value: t.hours, source: 'a typical week — data/week_blocks.json (' + (T.weekBlocks.confidence || 'convention') + ')' };
+        return { value: t.hours, source: 'a typical week, data/week_blocks.json (' + (T.weekBlocks.confidence || 'convention') + ')' };
       } };
   }
   function perHour(cents) { return Money.formatCents(cents, { decimals: 2 }) + '/h'; }
@@ -315,12 +315,12 @@
       var d = Week.design(h, T);
       if (!Money.isOk(d)) return { label: 'The designed week, a month', value: null, reason: d.reason };
       var parts = [];
-      parts.push('<strong>' + hoursText(d.hours) + ' of ' + d.hoursInWeek + '</strong> hours placed' + (d.overHours ? ' — <strong>more hours than the week has</strong>; ' + hoursText(d.hours - d.hoursInWeek) + ' over, so nothing is unplaced' : ''));
+      parts.push('<strong>' + hoursText(d.hours) + ' of ' + d.hoursInWeek + '</strong> hours placed' + (d.overHours ? ', <strong>more hours than the week has</strong>; ' + hoursText(d.hours - d.hoursInWeek) + ' over, so nothing is unplaced' : ''));
       parts.push(d.nowMonthlyCents !== null ? 'against <strong>' + Money.formatCents(d.nowMonthlyCents) + '</strong> now' : 'no month to compare it against yet');
       if (d.wageApplies && d.hoursOfItself !== null) parts.push('the week costs <strong>' + hoursText(d.hoursOfItself) + ' hours of itself</strong> at ' + perHour(d.realHourlyCents));
       if (d.fiCents !== null) parts.push('FI on this week <strong>' + Money.formatCents(d.fiCents) + '</strong>');
       var sub = parts.join(' · ');
-      if (d.unpricedCount > 0) sub += '. ' + d.unpricedCount + (d.unpricedCount === 1 ? ' block has' : ' blocks have') + ' hours and no cost — priced $0, not blank: ' + d.unpricedLabels.join(', ');
+      if (d.unpricedCount > 0) sub += '. ' + d.unpricedCount + (d.unpricedCount === 1 ? ' block has' : ' blocks have') + ' hours and no cost, priced $0, not blank: ' + d.unpricedLabels.join(', ');
       if (!d.tracked) sub += '. Costs come from a tracked month; without one only what is stored on a block counts';
       return { label: 'The designed week, a month', value: Money.formatCents(d.monthlyCents), sub: sub, zone: null, result: d };
     },
@@ -360,21 +360,21 @@
       var d = Week.design(h, T);
       var a = Schema.resolveAssumptions(h);
       return [
-        { label: 'The starter blocks', value: Week.tableBlocks(T).length + ' blocks, ' + Week.hoursInWeek(T) + ' hours', source: 'data/week_blocks.json v' + t.version + ' — ' + t.confidence + ': ' + t.confidenceNote },
+        { label: 'The starter blocks', value: Week.tableBlocks(T).length + ' blocks, ' + Week.hoursInWeek(T) + ' hours', source: 'data/week_blocks.json v' + t.version + ', ' + t.confidence + ': ' + t.confidenceNote },
         { label: 'Weeks in a month', value: Week.WEEKS + ' ÷ ' + Week.MONTHS + ' = ' + (Math.round(Week.WEEKS / Week.MONTHS * 1000) / 1000), source: 'a week priced × 52 ÷ 12 is a month (convention)' },
         { label: 'A block’s cost', value: Money.isOk(d) && d.tracked ? 'your tracked line' : 'none tracked yet', source: 'the tracked month for the block’s category (Cash Flow), stored on the block when the hours are written; the table proposes no cost, so a block without a line is priced $0 and said' },
         { label: 'Withdrawal rate, for the FI number', value: Money.formatRate(a.swrRate, { decimals: 1 }), source: 'assumptions.swrRate (D-094) through Tier0.fireNumber' },
-        { label: 'The hourly rate', value: Money.isOk(d) && d.realHourlyCents !== null ? perHour(d.realHourlyCents) : (Money.isOk(d) && !d.wageApplies ? 'none for this situation' : 'not known yet'), source: 'Real Hourly Wage — the real rate, not the headline' }
+        { label: 'The hourly rate', value: Money.isOk(d) && d.realHourlyCents !== null ? perHour(d.realHourlyCents) : (Money.isOk(d) && !d.wageApplies ? 'none for this situation' : 'not known yet'), source: 'Real Hourly Wage, the real rate, not the headline' }
       ];
     },
 
     why: function (h, T, situation) {
       return {
-        employed: 'Employed, the work block is the given: forty-odd hours arrive placed before you touch anything. The design is the other 128 — what they cost, what they are for, and whether the month they add up to is the one the job pays for.',
+        employed: 'Employed, the work block is the given: forty-odd hours arrive placed before you touch anything. The design is the other 128, what they cost, what they are for, and whether the month they add up to is the one the job pays for.',
         selfEmployed: 'Self-employed, the work block is yours to size. Fewer hours in it is a real design, and this room prices what the rest of the week would cost so the trade is a number, not a feeling.',
         mixed: 'With a job and your own work there are two work blocks and one week. Place both and see what the hours left cost; the gap against the month you have says whether the week you would design is already paid for.',
-        student: 'A student’s work block is the study block. Price the week around it — the roof, the food, the going out — and the month it adds up to is the one the loans and the part-time hours have to cover.',
-        retired: 'Retired, the week without a work block is the whole point. Design it, price it, and the FI number on this week is the one your portfolio is actually being asked for — often a different number from the one on the spreadsheet.',
+        student: 'A student’s work block is the study block. Price the week around it, the roof, the food, the going out, and the month it adds up to is the one the loans and the part-time hours have to cover.',
+        retired: 'Retired, the week without a work block is the whole point. Design it, price it, and the FI number on this week is the one your portfolio is actually being asked for, often a different number from the one on the spreadsheet.',
         betweenJobs: 'Between jobs, the search is a block. Place it, price the week around it, and the month it adds up to is the one the runway has to carry until the next work block appears.'
       }[situation] || 'Everyone has 168 hours. This room prices the week you would design against the one you have.';
     },
@@ -443,7 +443,7 @@
       if (Money.isOk(aff)) {
         if (!p.anyStrained) {
           var last = p.rows[p.rows.length - 1];
-          bits.push('the money outruns the plan in every decade — ' + Money.formatCents(last.projectedCents) + ' projected by your ' + last.label);
+          bits.push('the money outruns the plan in every decade, ' + Money.formatCents(last.projectedCents) + ' projected by your ' + last.label);
         } else {
           var s = p.rows.filter(function (r) { return r.decade === p.firstStrained; })[0];
           bits.push(s === p.rows[0]
@@ -498,11 +498,11 @@
       var a = Schema.resolveAssumptions(h);
       var aff = Buckets.affordability(h, T);
       return [
-        { label: 'The proposals', value: 'typical experiences, a decade at a time', source: 'data/bucket_ideas.json v' + (ideas.version || '?') + ' — ' + (ideas.source || '') + ' (' + (ideas.confidence || 'convention') + ')' },
+        { label: 'The proposals', value: 'typical experiences, a decade at a time', source: 'data/bucket_ideas.json v' + (ideas.version || '?') + ', ' + (ideas.source || '') + ' (' + (ideas.confidence || 'convention') + ')' },
         { label: 'Real return', value: Money.formatRate(a.returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094), the same figure the lens uses' },
-        { label: 'Saved a year', value: Money.isOk(aff) ? Money.formatCents(aff.annualSavingsCents) + (aff.savingsVariant === 'includingMatch' ? ', including the match' : '') : 'not projected yet', source: 'Tier 0’s savings rate from your income, spending and estimated tax — yours, read from Start Here' + (Money.isOk(aff) && aff.stopAge !== null ? '; contributions stop at ' + aff.stopAge + ', your stop age' : '') },
+        { label: 'Saved a year', value: Money.isOk(aff) ? Money.formatCents(aff.annualSavingsCents) + (aff.savingsVariant === 'includingMatch' ? ', including the match' : '') : 'not projected yet', source: 'Tier 0’s savings rate from your income, spending and estimated tax, yours, read from Start Here' + (Money.isOk(aff) && aff.stopAge !== null ? '; contributions stop at ' + aff.stopAge + ', your stop age' : '') },
         { label: 'When a decade is paid for', value: 'at its start', source: 'a decade’s plan is read as spent in its first year, against the balance projected there (convention)' },
-        { label: 'The last decade', value: 'the one before ' + Buckets.PLAN_AGE, source: 'PLAN_AGE in engines/buckets.js — a planning horizon, not a life expectancy (convention)' }
+        { label: 'The last decade', value: 'the one before ' + Buckets.PLAN_AGE, source: 'PLAN_AGE in engines/buckets.js, a planning horizon, not a life expectancy (convention)' }
       ];
     },
 
@@ -511,7 +511,7 @@
         employed: 'Employed, the money is set to arrive in one long climb and the plans stay vague. A price on each decade turns the climb into a schedule: which decade the paycheque has to have paid for by then, and whether it will have.',
         selfEmployed: 'Self-employed, good years and thin ones blur what any one decade can afford. Pricing the decades says what the good years are for, and which decade a thin one quietly costs.',
         mixed: 'With a job and your own work there are two climbs feeding one plan. This reads them as one pot against the decades; if the own-work side is the one that pays for the fifties, that is worth knowing now.',
-        student: 'At a student’s stage the twenties are the cheapest experiences there will ever be — a long trip on a shoestring costs a fraction of the same trip at fifty. The price on this decade is small; the point is to put one on it.',
+        student: 'At a student’s stage the twenties are the cheapest experiences there will ever be, a long trip on a shoestring costs a fraction of the same trip at fifty. The price on this decade is small; the point is to put one on it.',
         retired: 'Retired, the buckets that are left are the ones that matter, and health rather than money is the usual limit on them. Price the next decade first; the ones after it will not be cheaper to wait for.',
         betweenJobs: 'Between jobs, this is a plan to write, not to fund. Price the decades so the next job knows what it is for; the money to set against them is the runway’s question, not this room’s.'
       }[situation] || 'A decade has a price whether or not anyone puts one on it. This room puts one on each, and sets it against the money there will be.';

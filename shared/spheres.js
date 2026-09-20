@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/spheres.js — the nine spheres, read (19.1, D-184).
+   shared/spheres.js, the nine spheres, read (19.1, D-184).
    --------------------------------------------------------------------------
    data/spheres.json is the one file: nine entries in order, each with three
    faces. Depth (which Ledger rows you enter) is the only face that gates

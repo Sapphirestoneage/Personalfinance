@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/progress.js — what is finished, what is not, and where to go next.
+   shared/progress.js, what is finished, what is not, and where to go next.
    --------------------------------------------------------------------------
    Every room in this app is honest about a missing input: it shows an em
    dash and a reason. What it could not do was answer the question a person
@@ -15,7 +15,7 @@
    So this file adds one thing and derives the rest: each room declares the
    fields it NEEDS (`needs` in the registry). Completeness is then just
    "how many of those read back as set", and the missing list is a list of
-   links — never a list of scoldings.
+   links, never a list of scoldings.
 
    Nothing here judges. A room you have not filled in is not behind; it is
    a room whose inputs you have not given a reason to care about yet. The
@@ -54,7 +54,7 @@
    *   { roomId, title, href, needs, filled, missing, complete, share, started }
    *
    * `missing` entries carry everything a link needs: the field's label, the
-   * room that owns it, and the href that lands on the exact question —
+   * room that owns it, and the href that lands on the exact question, 
    * so a caller never has to know where anything lives.
    *
    * A room that needs nothing (Quick Math takes its own numbers) is
@@ -174,7 +174,7 @@
           fieldId: f.fieldId, label: f.label, href: f.href,
           ownerId: f.ownerId, ownerTitle: f.ownerTitle,
           /* Which rooms are waiting on it. One field unlocking five rooms
-             is worth saying — it turns a chore into a reason. */
+             is worth saying. It turns a chore into a reason. */
           blocks: [row.title]
         };
         seen[f.fieldId] = entry;
@@ -192,7 +192,7 @@
     for (var i = idx + 1; i < rows.length; i++) {
       if (!rows[i].complete && !rows[i].standalone) return rows[i];
     }
-    /* Nothing after this one — wrap, so the control never dead-ends. */
+    /* Nothing after this one, wrap, so the control never dead-ends. */
     for (var j = 0; j <= idx && j < rows.length; j++) {
       if (!rows[j].complete && !rows[j].standalone) return rows[j];
     }
@@ -250,7 +250,7 @@
   }
 
   /**
-   * stripHtml(roomId, household) — "what this room still needs", then the
+   * stripHtml(roomId, household), "what this room still needs", then the
    * back / skip-forward controls. Returns '' for a room that needs nothing
    * and has nowhere useful to point.
    */
@@ -266,7 +266,7 @@
        one short head and the list, without the room counts; when nothing
        is, nothing at all. Silence is the signal that a room is complete. */
     /* Nothing entered yet is not a shortfall, it is a start. The count and
-       the list are a nudge for someone part-way through — at zero they are a
+       the list are a nudge for someone part-way through, at zero they are a
        thirteen-item indictment of a person who has typed nothing, handed to
        them before they have done anything wrong, and the last item on Start
        Here is the word "Any debt". So at zero: one line and the first door,
@@ -335,7 +335,7 @@
 
   /**
    * The compact nav that sits where "← All rooms" used to: previous room,
-   * the map, next room. Plain PATH ORDER, deliberately — the bottom strip
+   * the map, next room. Plain PATH ORDER, deliberately, the bottom strip
    * offers the smart "next unfinished", and a top control that jumped
    * somewhere different every time you looked at it would stop being a
    * place you can navigate by. Predictable up here, guidance down there.
@@ -390,7 +390,7 @@
   /* ---- The menu ----------------------------------------------------------
      The header strip walks the path one room at a time and offers the map.
      That is fine for "what is next" and useless for "take me to the thing
-     I need now" — Your Data sits at order 98, so reaching an export meant
+     I need now", Your Data sits at order 98, so reaching an export meant
      opening the map and scrolling to the end of fifty-seven rooms. Upkeep
      is not a destination on a journey; it is a drawer you pull open from
      wherever you are (D-135).
@@ -401,7 +401,7 @@
 
   /* ---- The sidebar (D-177) ----------------------------------------------
      Grouped by purpose, not by kind: Home, Your Numbers, Scorecard,
-     Decisions, What Matters, Level Up, Upkeep — the groups and every room's
+     Decisions, What Matters, Level Up, Upkeep, the groups and every room's
      place in them are data in shared/registry.js, rendered here once for
      every page. Groups collapse; only the current room's group opens on
      load, and what a person opens or closes is remembered in prefs. A search
@@ -567,7 +567,7 @@
   }
 
   /**
-   * mountMenu(roomId) — the button, the drawer and the backdrop, appended to
+   * mountMenu(roomId), the button, the drawer and the backdrop, appended to
    * <body> so nothing clips it and so it is never inside a room's live-input
    * container (D-034). Returns the button.
    */
@@ -645,7 +645,7 @@
 
     /* Two modes from one drawer. Narrow: a panel you pull open over the
        page and dismiss. Wide: there is room for it to simply stay, so it
-       does — no button, no backdrop, no dismissing, and the page sits
+       does, no button, no backdrop, no dismissing, and the page sits
        beside it. Pinning is done here rather than in CSS because [hidden]
        is display:none !important in the theme, and a media query fighting
        that with more !important is worse than one matchMedia. */
@@ -697,13 +697,13 @@
   }
 
   /**
-   * mountHeader(roomId) — upgrade the room's single "← All rooms" link into
+   * mountHeader(roomId), upgrade the room's single "← All rooms" link into
    * that three-way nav, in place. Every room already has one, so this needs
    * no per-room markup.
    */
   /* ---- A room that does not apply says so, instead of asking -------------
      `Gate.exists` has always known which rooms belong to which situation,
-     and `Registry.applies` has always read it — but only the map and the
+     and `Registry.applies` has always read it, but only the map and the
      menu listened. A room reached from a link, a bookmark, the header hops
      or the menu drew its whole body regardless, so someone between jobs was
      asked for their commute, their contract rate, their 401(k) and their
@@ -715,7 +715,7 @@
      What it does NOT do: decide for you. The room is folded away with the
      reason said out loud and a way back to what does apply, and "Show it
      anyway" opens it. That choice is for this visit only and is never
-     stored — a view is not a fact about the household (D-052). D-142. */
+     stored. A view is not a fact about the household (D-052). D-142. */
   function situationNoticeHtml(roomId) {
     var g = (typeof self !== 'undefined') ? self : (typeof window !== 'undefined') ? window : null;
     var S = g && g.SLAF; if (!S || !S.Gate || !S.Spine || !S.Registry) return null;
@@ -724,8 +724,8 @@
     if (!sit) return null;                       /* situation unanswered: everything applies */
     var reason = S.Gate.why(h, S.Registry.requires(roomId));
     if (!reason) return null;                    /* it applies */
-    var label = String((S.Gate.byId(sit) || {}).label || sit).replace(/\s+[—-].*$/, '').toLowerCase();
-    /* The way out is a step forward, not just a door back — so point at the
+    var label = String((S.Gate.byId(sit) || {}).label || sit).replace(/\s+[, -].*$/, '').toLowerCase();
+    /* The way out is a step forward, not just a door back, so point at the
        rooms that DO apply and still want something from this household,
        most-wanted first. Falling back to path order only when everything
        that applies is already answered. */
@@ -741,7 +741,7 @@
       + '<span class="slaf-eyebrow">Not for you right now</span>'
       + '<h2>You said you are <strong>' + escapeHtml(label) + '</strong>.</h2>'
       + '<p>' + escapeHtml(reason) + '</p>'
-      + '<p class="slaf-hint">Nothing here is wrong — it just is not about you today. Change your situation in '
+      + '<p class="slaf-hint">Nothing here is wrong, it just is not about you today. Change your situation in '
       + '<a href="' + escapeHtml(href('rooms/start.html', roomId)) + '#q-employment">Start Here</a> and this opens on its own.</p>'
       + (onward ? '<div class="slaf-notapply-go">' + onward + '</div>' : '')
       + '<button type="button" class="slaf-btn slaf-btn--quiet" id="slaf-showanyway">Show it anyway</button>'
@@ -756,7 +756,7 @@
    * it once was wrong twice over: a household whose situation arrives after
    * the page does (a share link, a late table load, another tab) kept a fold
    * that no longer applied, and someone changing their situation had to
-   * reload to see the room open. The phone-tap suite caught it — it sets a
+   * reload to see the room open. The phone-tap suite caught it, it sets a
    * room's situation after navigating, and the stale fold hid the inputs.
    * D-142.
    */
@@ -775,7 +775,7 @@
         if (have) { have.parentNode.removeChild(have); host.classList.remove('slaf-folded'); }
         return null;
       }
-      if (have) {                     /* already folded — the reason may have changed */
+      if (have) {                     /* already folded. The reason may have changed */
         var fresh = document.createElement('div');
         fresh.innerHTML = want.html;
         have.parentNode.replaceChild(fresh.firstChild, have);
@@ -793,7 +793,7 @@
     /* Fold by putting a class on the container, not by hiding the children
        that happen to exist right now: a room built through `Room.mount`
        fills itself in AFTER the tables load, and a one-off pass over
-       `host.children` missed everything that arrived later — which showed up
+       `host.children` missed everything that arrived later, which showed up
        as one stray card sitting under the notice. The CSS rule keeps the
        header hops and the room's own title visible, so you always know
        which room you are looking at and how to leave it. */
@@ -811,7 +811,7 @@
         host.classList.remove('slaf-folded');
         open.remove();
         notice.insertAdjacentHTML('beforeend',
-          '<p class="slaf-hint">Shown anyway. Anything you type here still saves — it just may not mean much while you are '
+          '<p class="slaf-hint">Shown anyway. Anything you type here still saves, it just may not mean much while you are '
           + escapeHtml(notApply.label) + '.</p>');
       });
     }
@@ -822,7 +822,7 @@
   /* ---- The Walk-Through bar (D-149) --------------------------------------
      One strip under the header hops, on the rooms that are steps, once the
      walk has begun. It says where you are, gives you the two answers a step
-     can have — done, or not for me — and then points at the next one.
+     can have, done, or not for me, and then points at the next one.
 
      It is a container of BUTTONS, never inputs, so repainting it on every
      Spine change is outside the live-form rule entirely (D-034): there is no
@@ -879,7 +879,7 @@
       out.push('<button type="button" class="slaf-btn slaf-btn--quiet" data-walk="skipped">Not for me</button>');
     } else {
       out.push('<span class="slaf-walk-said">'
-        + (at.state === 'done' ? '✓ You marked this one done.' : 'Set aside — not for you.')
+        + (at.state === 'done' ? '✓ You marked this one done.' : 'Set aside, not for you.')
         + '</span>');
       out.push('<button type="button" class="slaf-btn slaf-btn--quiet" data-walk="open">Undo</button>');
     }
@@ -1227,7 +1227,7 @@
   /* ---- Progressive disclosure: the tail of a long room folds (D-170) -----
      A room is its first few sections; the rest sit behind one button that
      names what it holds. Folding is a class on <main> plus a class on each
-     folded section — nothing is detached and no input is rebuilt, so the
+     folded section. Nothing is detached and no input is rebuilt, so the
      live-form rule (D-034) holds and a deep link into a folded section still
      resolves: the fold opens itself when the hash points inside it, at load
      and on every hashchange. Rooms that fold on their own terms (Start
@@ -1238,7 +1238,7 @@
      children, not main's. Without this, main has exactly one visible
      section child, so `secs.length <= FOLD_KEEP` and `secs.length < 2` are
      both true and the fold (D-166) and the URL-follows-you sync (D-170)
-     silently do nothing — which is what all thirteen merged pages have
+     silently do nothing, which is what all thirteen merged pages have
      done since the merges. The Statement was 6,200px on a phone with no
      "Show the rest" on it. D-291. */
   function sectionHost(host) {
@@ -1381,7 +1381,7 @@
     return { sync: sync };
   }
 
-  /** The room this page is, from its path — for the header-first mount. */
+  /** The room this page is, from its path, for the header-first mount. */
   function roomIdFromLocation() {
     if (typeof location === 'undefined') return null;
     var file = (location.pathname.split('/').pop() || 'index.html');
@@ -1464,10 +1464,10 @@
   }
 
   /**
-   * mount(roomId) — put the strip at the end of the page and keep it live.
+   * mount(roomId), put the strip at the end of the page and keep it live.
    *
    * Creates its container once and only ever rewrites that container's
-   * innerHTML, which holds no inputs — so this can repaint freely without
+   * innerHTML, which holds no inputs, so this can repaint freely without
    * going anywhere near the live-form rule (D-034).
    */
   function mount(roomId, opts) {
@@ -1521,7 +1521,7 @@
     function paint() {
       box.innerHTML = stripHtml(roomId, Spine.getProfile()) + version + yearLine() + privacyLine();
       /* Every room gets its own export, from the one mount point every room
-         already reaches — the same lever the walk strip and the situation
+         already reaches, the same lever the walk strip and the situation
          notice use (D-142, D-149). No per-room wiring, so no room can be
          forgotten. D-155. */
       if (g.SLAF.RoomExport) g.SLAF.RoomExport.mount(roomId, box);
@@ -1559,7 +1559,7 @@
     /* A write during a tap (blur → save → change) used to repaint this
        strip synchronously. When an item drops off the list the document
        gets shorter; if the page is scrolled near the bottom the browser
-       clamps the scroll and everything above shifts under the finger — the
+       clamps the scroll and everything above shifts under the finger, the
        Next button moved 40px between touchend and click and the tap was
        lost. So: repaint after the tap has finished, coalesced, and hold the
        strip's height across the change so the document never shrinks
@@ -1577,8 +1577,8 @@
       }, 400);
     }
     Spine.onChange(repaintLater);
-    /* The header nav is static for a room — path order does not change with
-       the household — so it is built once and never repainted. */
+    /* The header nav is static for a room, path order does not change with
+       the household, so it is built once and never repainted. */
     mountHeader(roomId);
     return { repaint: paint, el: box };
   }

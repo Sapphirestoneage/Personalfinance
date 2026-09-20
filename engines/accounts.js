@@ -1,12 +1,12 @@
 /* ==========================================================================
-   engines/accounts.js — where the money should go, and how much fits.
+   engines/accounts.js, where the money should go, and how much fits.
    --------------------------------------------------------------------------
    Two tools from SPEC.md §13 Tier 2 that share their tax machinery:
 
-     Roth vs Traditional vs Brokerage — "after-tax outcomes given current vs
+     Roth vs Traditional vs Brokerage, "after-tax outcomes given current vs
        assumed future tax rates. Surface the tax-rate assumption prominently
-       — the whole comparison hinges on it."
-     Solo 401k (SEP / S-corp) — "contribution limits and tax treatment across
+, the whole comparison hinges on it."
+     Solo 401k (SEP / S-corp), "contribution limits and tax treatment across
        self-employed retirement structures. Store limits as versioned /
        year-tagged config."
 
@@ -23,7 +23,7 @@
                      capital-gains rate
 
    Which means Traditional beats Roth exactly when your future rate is lower
-   than your rate today — and the room says that out loud, because it is the
+   than your rate today, and the room says that out loud, because it is the
    entire answer and everything else is arithmetic around it.
    ========================================================================== */
 (function (root, factory) {
@@ -80,7 +80,7 @@
     var tradTax = tradGross * o.futureTaxRate;
     var traditional = Math.round(tradGross - tradTax);
 
-    /* Roth: tax is paid now, so less goes in — but nothing is taxed later. */
+    /* Roth: tax is paid now, so less goes in, but nothing is taxed later. */
     var rothIn = P * (1 - o.currentTaxRate);
     var roth = Math.round(rothIn * growth);
 

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/seed.js — an explore room opens with your real numbers proposed.
+   shared/seed.js, an explore room opens with your real numbers proposed.
    --------------------------------------------------------------------------
    The what-if rooms (runway, quick math, W2 vs 1099, side hustle, the
    credential) take their own local inputs and never write the household
@@ -7,15 +7,15 @@
    cash, your spending, your pay and your bracket, and asking for them again
    is the thing this app exists to stop.
 
-   So a room declares SEEDS — which of its boxes can be filled from which
-   household figure — and this mounts one toggle at the top of the room:
+   So a room declares SEEDS, which of its boxes can be filled from which
+   household figure, and this mounts one toggle at the top of the room:
 
        Start from my numbers  |  Start blank
 
    In "my numbers" every seed whose box is still empty shows the figure as a
    SUGGESTION (shared/suggest.js, D-060): muted, dashed, "Use this" with the
    source named. Tapping it calls the room's own apply(), which writes the
-   room's LOCAL state — never the spine. "Start blank" clears the proposals.
+   room's LOCAL state, never the spine. "Start blank" clears the proposals.
    Nothing is stored either way; the choice is remembered for the session.
 
    The toggle is built once. Rooms that repaint their inputs from state call
@@ -46,8 +46,8 @@
 
   /**
    * mount({ roomId, host, seeds })
-   *   host   — the element the toggle is built into, once
-   *   seeds  — () => [ { node, value, display, source, apply } ]
+   *   host, the element the toggle is built into, once
+   *   seeds, () => [ { node, value, display, source, apply } ]
    *            called on every refresh so it can read the live household;
    *            entries with value null/undefined are skipped
    * Returns { refresh, mode, setMode }.
@@ -83,7 +83,7 @@
       var note = host.querySelector('#slaf-seed-note');
       if (note) {
         note.textContent = count === 0
-          ? 'Nothing to propose yet — answer Start Here and this room opens filled in.'
+          ? 'Nothing to propose yet, answer Start Here and this room opens filled in.'
           : mode === 'mine'
             ? count + ' figure' + (count === 1 ? '' : 's') + ' proposed from what you have entered. Nothing here is written back.'
             : 'Proposals hidden. Nothing here is written back.';

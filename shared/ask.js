@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/ask.js — ask at the moment of need. DECISIONS.md D-207 (Phase D).
+   shared/ask.js, ask at the moment of need. DECISIONS.md D-207 (Phase D).
    --------------------------------------------------------------------------
    When a room opens and a row it asks for (askIn in data/ledger-rows.json)
    is blank, the room asks it right there, inline, one question, instead of
@@ -17,7 +17,7 @@
    carry them. A suggestion for the row shows as a chip beside the box
    ("Suggested $64 a month · use it"), never typed into it.
 
-   LIVE-FORM: built once — the card and its one control are created once
+   LIVE-FORM: built once, the card and its one control are created once
    on mount and only hidden after the answer; nothing is rebuilt while a
    finger is in the box.
    ========================================================================== */
@@ -156,7 +156,7 @@
       return '<option value="' + k + '"' + (k === p ? ' selected' : '') + '>' + esc(words[k]) + '</option>'; }).join('') + '</select></span>';
   }
   /** An amount typed in another period, converted to the row's own before
-      it saves (G2.8): { value, note } — note says what happened, or null. */
+      it saves (G2.8): { value, note }, note says what happened, or null. */
   function toRowPeriod(row, cents, typedPeriod, D) {
     var LR = (D || deps()).LedgerRows, M = (D || deps()).Money;
     var p = LR && LR.period ? LR.period(row) : null;

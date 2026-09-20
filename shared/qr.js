@@ -1,4 +1,4 @@
-/* shared/qr.js — a QR code, drawn here, no library (D-201).
+/* shared/qr.js, a QR code, drawn here, no library (D-201).
 
    Byte mode, error-correction level L, versions 1 to 40, the mask picked
    by the standard's four penalty rules. One entry point matters to a room:

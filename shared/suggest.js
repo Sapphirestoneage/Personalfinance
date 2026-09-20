@@ -1,14 +1,14 @@
 /* ==========================================================================
-   shared/suggest.js — a value the app proposes, shown but not taken.
+   shared/suggest.js, a value the app proposes, shown but not taken.
    --------------------------------------------------------------------------
    Three states for a box, never collapsed (DECISIONS.md D-060):
 
-     empty      — nothing shown but a format-only placeholder.
-     suggested  — a value the app derived or looked up, rendered muted with a
+     empty, nothing shown but a format-only placeholder.
+     suggested, a value the app derived or looked up, rendered muted with a
                   dashed underline and a "use this" chip that names where it
                   came from. THE HOUSEHOLD DOES NOT HAVE IT. Progress counts
                   it unanswered; no engine ever sees it.
-     entered    — the person typed it or tapped "use this"; the room wrote it
+     entered, the person typed it or tapped "use this"; the room wrote it
                   through its own path.
 
    This file never touches the spine. It paints and it reports; the room
@@ -16,7 +16,7 @@
    reads a suggested value" true by construction rather than by discipline:
    a suggested value exists only in a DOM node's display, and the moment
    the node is focused the display is cleared, so a blur handler that reads
-   node.value gets '' — exactly what it would get for an empty box.
+   node.value gets '', exactly what it would get for an empty box.
 
    Nothing is rebuilt. show() writes .value and classes on a node that is
    already in the page and adds one chip beside it, once, on first use.
@@ -44,7 +44,7 @@
   }
 
   /* The chip lives once per node, INSIDE the input shell as its last
-     flex item — beside the affix, never below the box — so a suggestion
+     flex item, beside the affix, never below the box, so a suggestion
      adds no height and a row of side-by-side boxes stays a row. (Below the
      box it made one grid cell 80px taller than its neighbour.) Without a
      shell it sits right after the node. The source sentence goes to the
@@ -82,7 +82,7 @@
         node.value = '';
         node.classList.remove(CLS_INPUT);
         /* From here on what is in the box is the person's, so it must read
-           as entered — otherwise a commit on the way out would drop it. */
+           as entered, otherwise a commit on the way out would drop it. */
         node.removeAttribute('data-suggested');
         var shell = shellOf(node); if (shell) shell.classList.remove(CLS_SHELL);
       }
@@ -117,15 +117,15 @@
     chip.setAttribute('title', s.source ? 'From: ' + s.source : 'Suggested');
     node._slafSource.classList.remove('is-off');
     node._slafSource.hidden = false;
-    node._slafSource.innerHTML = 'Suggested' + (s.source ? ' — ' + escapeHtml(s.source) : '') + '. Tap “Use”, or type your own.';
+    node._slafSource.innerHTML = 'Suggested' + (s.source ? ', ' + escapeHtml(s.source) : '') + '. Tap “Use”, or type your own.';
   }
 
   /**
    * show(node, { value, display, source, onUse, useLabel })
-   *   value    — what onUse receives (cents, a rate, a string)
-   *   display  — what the box shows (already formatted); defaults to value
-   *   source   — a short sentence naming where it came from
-   *   onUse    — the room's write, called with `value` on "use this"
+   *   value, what onUse receives (cents, a rate, a string)
+   *   display, what the box shows (already formatted); defaults to value
+   *   source, a short sentence naming where it came from
+   *   onUse, the room's write, called with `value` on "use this"
    * A node that already holds an ENTERED value is left alone: a suggestion
    * never overwrites an answer.
    */

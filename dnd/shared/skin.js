@@ -1,9 +1,9 @@
 /* ==========================================================================
-   shared/skin.js — which of the two looks this browser is showing.
+   shared/skin.js, which of the two looks this browser is showing.
    --------------------------------------------------------------------------
    Deliberately NOT stored in the character. A skin is a preference about this
    browser, not a fact about the person's money, so it lives under its own key
-   and never appears in the export — otherwise sending someone your character
+   and never appears in the export, otherwise sending someone your character
    would also send them your opinion about backgrounds.
 
    Applied to <body> as data-skin, which shared/skin.css keys off. Set before

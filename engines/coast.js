@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/coast.js — your coast date. DECISIONS.md D-213 (I4).
+   engines/coast.js, your coast date. DECISIONS.md D-213 (I4).
    --------------------------------------------------------------------------
    The earliest date you could stop saving for retirement and still reach
    the FI number by the target age, at the real return from the

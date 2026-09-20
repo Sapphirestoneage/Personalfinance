@@ -1,8 +1,8 @@
 /* ==========================================================================
-   engines/estate.js — Estate Basics.
+   engines/estate.js, Estate Basics.
    DECISIONS.md D-098 (the tranche rooms on the template).
    --------------------------------------------------------------------------
-   Three yes/no facts — beneficiaries named, a will, a power of attorney —
+   Three yes/no facts, beneficiaries named, a will, a power of attorney, 
    and what the household owns, read against data/estate_basics.json, which
    says which asset category usually passes by beneficiary designation,
    by title, or by will. From those, one number: how many of the three are
@@ -13,7 +13,7 @@
             + Σ assets that pass by beneficiary, when beneficiariesSet !== true
 
    Unanswered counts as not in place, but is SAID as "not answered", never
-   as "no" — empty ≠ zero, and null ≠ false.
+   as "no", empty ≠ zero, and null ≠ false.
 
    Nothing here is legal advice. Jointly held property is not modelled:
    assets carry no title flag, so nothing maps to the "title" route and the
@@ -82,9 +82,9 @@
    *   facts             [{ id, label, value, state, said }]
    *   unanswered        how many are null
    *   assets            Result: ok(total cents) or incomplete when nothing is entered
-   *   routes            { beneficiary, title, will, state } cents — where each
+   *   routes            { beneficiary, title, will, state } cents, where each
    *                     dollar would go given the facts as answered
-   *   passesBy          { beneficiary, title, will } cents — where each dollar
+   *   passesBy          { beneficiary, title, will } cents, where each dollar
    *                     goes by the table alone, before the facts
    *   atRiskCents       what would pass by the state's rules (routes.state)
    *   chosenCents       what passes the way the person chose
