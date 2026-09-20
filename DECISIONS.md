@@ -16570,7 +16570,75 @@ reading it would show the id as the label and derive nothing from it.
 **Verified.** `node test/run.js`; `node test/statement.js` (the tagged
 plan's balance is proposed and priced).
 
-## D-317 — Every screen says how old its numbers are; the example says so; the front page knows you
+## D-317 — The phone walk, round two: size, the dots, the ask, the gap, a line edited
+
+**Why.** Seven screenshots from the owner's phone in one sitting: everything
+too big; Convenience showing Avalanche's figure; "InterestClear in" and
+"Avalanchecheapest" run together; a dot in the menu nobody could read; a
+subscription that could only be deleted, not changed to yearly; a glance
+figure with nothing behind it; a question naming "this one"; and the same
+question back on every visit.
+
+**Decision.** Settings gains Size (Comfortable or Compact) and The one
+question (on or off). `shared/size.js` is the second script on every Money
+Rooms page (`tools/stamp-build.js` places it) and marks the root before the
+first paint; Compact is one theme rule, `html.is-compact { zoom: 0.86 }`, so
+44px targets stay above the 32px floor. The menu's dots carry a key and are
+buttons: a tap lists the room's blank rows, each a link. The ask names an item
+by where it sits (`Schema.whereItSits`), "Not now" rests it a fortnight,
+"Don't ask this again" retires it, both as prefs. `Schema.monthlyGapCents` is
+the one gap: Cash Flow's Left, Debt Payoff's estimate, and a Suggested chip on
+the extra box. Each Cash Flow tile opens to its parts, linked. Convenience
+says it is Avalanche until a debt is tagged. Expenses' add form edits a line.
+Two stylesheets the merge tool corrupted are repaired and a test now parses
+every room's CSS.
+
+**Replaces or removes.** Nothing on screen; two broken CSS blocks. No new
+room.
+
+**Stored shape.** No change to the household. Prefs gain `size`, `ask.off`,
+`ask.rested` (key → day) and `ask.never` (keys).
+
+**Verified.** `node test/run.js`, the fast suites, the tests/ lane, the eight
+browser gates, and at 390px: Compact set in Settings and honoured on arrival
+in Debt; the captions on their rails; the Convenience note; the gap row and
+its chip; a dot tapped listing three blank rows with links; the three tiles
+opening to their parts; Sapphire preferred edited from $95 a month to $95 a
+year; an ask naming "Investments + retirement", rested by Not now, retired by
+Don't ask again, absent with the switch off. Console clean.
+
+## D-318 — The calendar, the way a phone calendar is used
+
+**Why.** The owner: "make the calendar much more like Rocket Money, more
+enjoyable, more professional; this looks homemade." The dates reading was
+the calculator template with a 31-day text grid inside it.
+
+**Decision.** `shared/daybyday.js` draws the month the way a phone does:
+`monthView` is a header naming the month with an arrow either side, a strip
+(in, out, net, the low point on its date), a grid of the whole calendar
+month with a button a day (the day number, up to two pills for what lands,
+"+n" for the rest, the balance underneath, today ringed, the low point
+marked, a day under zero tinted, a day gone muted), the tapped day's sheet
+(each item with its kind, the balance after), and what is coming up in the
+next fourteen days. `rooms/cash-flow.html`'s dates reading owns two states,
+the month shown and the day tapped, runs `engines/calendar.js` once from
+today to the end of the month on screen (`opts.days`, never under the
+table's horizon), and shows a day already gone from the log through
+`CashFlow.logInMonth`. What moved keeps the same grid for its 31 days. The
+balance line folds under the calendar.
+
+**Replaces or removes.** The text grid and its long caption; the "Cash
+across the month" card is the calendar now.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js`, the fast suites, the browser gates, and at
+390px: September with thirty cells, today ringed, a logged day on the 3rd
+tapped ("already happened, Trader Joes −$64"), the payday on the 25th tapped
+("Payday +$2,243, balance after $11,113"), October a month on, August a
+month back, cells 46 by 64, arrows 44, nothing sideways, console clean.
+
+## D-319 — Every screen says how old its numbers are; the example says so; the front page knows you
 
 **Why.** Three audits (`docs/ux-audit-2026-09-11.md`, `docs/persona-audit-2026-09-12.md`,
 `docs/END-TO-END-AUDIT.md`, arrived as pull requests #4 and #15 against the

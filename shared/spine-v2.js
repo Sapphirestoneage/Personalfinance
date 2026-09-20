@@ -1454,7 +1454,7 @@
     return (h.meta.visitedRooms || []).slice();
   }
 
-  /* ---- Example numbers, and saying so (D-317) ---------------------------
+  /* ---- Example numbers, and saying so (D-319) ---------------------------
      The demo household is the path most people take first; until now it
      was indistinguishable from the person's own from the second screen on.
      Set when the demo is written, cleared only by a deliberate act (the
@@ -1468,7 +1468,7 @@
   }
   function isDemo() { var h = load(); return !!(h.meta && h.meta.isDemo === true); }
 
-  /* ---- Deliberate use (D-317) ------------------------------------------
+  /* ---- Deliberate use (D-319) ------------------------------------------
      One calendar day per entry, not one per page view: ten rooms opened in
      one sitting is one sitting. The day is the local day. count is the true
      total kept apart from the capped list. Saved, not notified, and skipped

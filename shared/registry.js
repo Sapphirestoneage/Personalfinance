@@ -245,7 +245,7 @@
         { id: 'flow',            label: 'Where it flows' },
         { id: 'out-net-flow',    label: 'What’s left' },
         { id: 'cal-number', label: 'The low point this month' },
-        { id: 'cal-chart', label: 'Cash across the month' },
+        { id: 'cal-chart', label: 'The calendar' },
         { id: 'cal-inputs', label: 'Paydays, bills, pay-later' }
       ]
     },
@@ -761,6 +761,8 @@
     tags: ['income', 'cashflow', 'debt'],
     daite: { reads: [], writes: ['prefs.features'] },
     subsections: [
+      { id: 'size',      label: 'Size' },
+      { id: 'ask',       label: 'The one question' },
       { id: 'accuracy',  label: 'Accuracy' },
       { id: 'household', label: 'Household' },
       { id: 'horizon',   label: 'Horizon' },

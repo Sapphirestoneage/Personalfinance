@@ -5,7 +5,7 @@ paths:
   - "engines/estate.js"
 ---
 # Protection (`protection`)
-File: rooms/protection.html · 470 lines
+File: rooms/protection.html · 471 lines
 Engines: projection, tier0, income, selfemployed, ledger, protection, hourly, estate
 Reference data: effective_tax_rates_2026.json, estate_basics.json, protection_conventions.json, se_tax_2026.json
 Owns: healthCover, healthMonthly, beneficiariesSet, willExists, poaExists

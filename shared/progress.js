@@ -429,6 +429,24 @@
     try { return Ownership.readings(S.getProfile()); } catch (e) { return null; }
   }
 
+  var DOT_WORD = { filled: 'every number this room owns is in', partly: 'some of its numbers are in', empty: 'nothing entered here yet' };
+  /* What a room still needs (D-317): its blank fields, each a link to the
+     box that takes it. The owner: "when I click on it say what needs to
+     be filled". */
+  function needHtml(roomId, readings) {
+    if (!Ownership || !Ownership.ownedBy || !readings) return '';
+    var fields = Ownership.ownedBy(roomId);
+    var blank = fields.filter(function (f) { return readings[f] === null || readings[f] === undefined; });
+    var done = fields.length - blank.length;
+    var items = blank.map(function (f) {
+      var d = Ownership.FIELDS[f];
+      var to = Ownership.linkTo ? Ownership.linkTo(roomId, d && d.anchor, null) : '#';
+      return '<li><a href="' + escapeHtml(to) + '">' + escapeHtml(d && d.label ? d.label : f) + '</a></li>';
+    });
+    if (!items.length) items.push('<li class="is-done">Everything this room asks for is in.</li>');
+    else if (done) items.push('<li class="is-done">' + done + ' of ' + fields.length + ' already in.</li>');
+    return '<ul class="slaf-menu-need" data-need-for="' + escapeHtml(roomId) + '" hidden>' + items.join('') + '</ul>';
+  }
   function menuLink(room, roomId, current, status) {
     var here = room.id === current;
     var search = (room.title + ' ' + (room.aliases || []).join(' ')).toLowerCase();
@@ -436,7 +454,7 @@
       + escapeHtml(href(room.href, roomId)) + '"' + (here ? ' aria-current="page"' : '')
       + ' data-room="' + escapeHtml(room.id) + '" data-search="' + escapeHtml(search) + '">'
       + escapeHtml(room.title)
-      + (status ? '<i class="slaf-dot is-' + status + '" title="' + status + '" aria-label="' + status + '"></i>' : '')
+      + (status ? '<button type="button" class="slaf-dot is-' + status + '" data-need="' + escapeHtml(room.id) + '" title="' + DOT_WORD[status] + ': tap to see what this room still needs" aria-label="' + DOT_WORD[status] + '; what this room still needs"></button>' : '')
       + '</a>';
   }
   function extraLink(l, roomId) {
@@ -487,7 +505,9 @@
           out.push('<p class="slaf-menu-sub" data-subgroup="' + escapeHtml(r.subgroup) + '">' + escapeHtml(sg ? sg.label : r.subgroup) + '</p>');
           lastSub = r.subgroup;
         }
-        out.push(menuLink(r, roomId, roomId, g.id === 'numbers' ? roomStatus(r.id, readings) : null));
+        var st = g.id === 'numbers' ? roomStatus(r.id, readings) : null;
+        out.push(menuLink(r, roomId, roomId, st));
+        if (st) out.push(needHtml(r.id, readings));
         (byAfter[r.id] || []).forEach(function (l) { out.push(extraLink(l, roomId)); });
       });
       (byAfter.__end || []).forEach(function (l) { out.push(extraLink(l, roomId)); });
@@ -511,6 +531,7 @@
       + '<button type="button" class="slaf-menu-x" data-menu-close aria-label="Close the menu">✕</button>'
       + '</div>'
       + '<div class="slaf-menu-search"><input type="search" id="slaf-menu-q" placeholder="Find a room" aria-label="Find a room" autocomplete="off"></div>'
+      + '<p class="slaf-menu-key"><span><i class="slaf-dot is-filled"></i>all in</span><span><i class="slaf-dot is-partly"></i>some in</span><span><i class="slaf-dot is-empty"></i>nothing yet</span><span>tap a dot for what is missing</span></p>'
       + '<nav class="slaf-menu-body" aria-label="All rooms">' + menuBodyHtml(roomId) + '</nav>';
   }
 
@@ -585,6 +606,15 @@
     }, true);
     var q = panel.querySelector('#slaf-menu-q');
     if (q) q.addEventListener('input', function () { applySearch(panel, q.value); });
+    /* A tap on a dot opens the room's missing list under its link and
+       does not follow the link; a second tap closes it. */
+    panel.addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('button[data-need]') : null;
+      if (!b) return;
+      e.preventDefault(); e.stopPropagation();
+      var list = panel.querySelector('.slaf-menu-need[data-need-for="' + b.getAttribute('data-need') + '"]');
+      if (list) list.hidden = !list.hidden;
+    });
 
     /* The situation and the dots can change under the page: rebuild the
        body only, never the search box (a live input, D-034). */
@@ -1028,7 +1058,7 @@
     return n;
   }
 
-  /* ---- How old is what I am looking at? (D-317, ported from D-251) --------
+  /* ---- How old is what I am looking at? (D-319, ported from D-251) --------
      Every owned number carries its own as-of date, and until now that date
      reached two screens. One quiet line under the room header: the oldest
      figure this room reads, when it was last touched, how many are past
@@ -1058,7 +1088,7 @@
     return '<p class="slaf-age' + (l.stale ? ' is-stale' : '') + '" id="slaf-age"><span class="slaf-age-dot" aria-hidden="true"></span>'
       + escapeHtml(l.text + guessText) + link + '</p>';
   }
-  /* "These are not your numbers" (D-317): the example household says so on
+  /* "These are not your numbers" (D-319): the example household says so on
      every room until the person clears it. */
   function demoLineHtml() {
     var g = globals();
@@ -1343,7 +1373,7 @@
      due mark is cleared by the Comeback's Done, or by a visit to it. */
   var COMEBACK_DAYS = 21;
   function noteVisit(g, roomId) {
-    /* The household's own visit log (D-317) is the person's history and
+    /* The household's own visit log (D-319) is the person's history and
        travels with an export; the Prefs stamp below is the Comeback's. */
     try { if (g.SLAF && g.SLAF.Spine && g.SLAF.Spine.noteVisit) g.SLAF.Spine.noteVisit(); } catch (e) { /* storage refused */ }
     var Prefs = g.SLAF && g.SLAF.Prefs;

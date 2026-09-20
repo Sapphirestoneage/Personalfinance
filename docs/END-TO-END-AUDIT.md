@@ -1,4 +1,4 @@
-> **Historical record.** This audit was walked on the 92-room app on 2026-09-19 and arrived as pull request #15. The 93-to-32 room cut landed after it, so the room names and counts below are of that app; the four properties it argued for (every number says how old it is, the lodge knows you, one meter, the depth switch) were ported onto the current app as D-317. Kept as written.
+> **Historical record.** This audit was walked on the 92-room app on 2026-09-19 and arrived as pull request #15. The 93-to-32 room cut landed after it, so the room names and counts below are of that app; the four properties it argued for (every number says how old it is, the lodge knows you, one meter, the depth switch) were ported onto the current app as D-319. Kept as written.
 
 # End-to-end audit — the green run and the black diamond
 

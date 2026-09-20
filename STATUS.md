@@ -6,21 +6,19 @@ Updated: 2026-09-20
 - **93 → 37 rooms**: the 32 of the merge programme with the Calendar back
   (D-308), plus the five readings the Statement gave up in D-313, each a room
   that reads the Ledger and writes nothing. `docs/room-map.json` is the cut list.
+- **The calendar, redrawn (D-318)**: a phone calendar, one grid for both
+  readings. **The phone walk, round two (D-317)**: Comfortable or Compact,
+  the menu's dots explained, the ask rests or retires, the gap as a chip.
 - **The five-input opening (D-312)**: `rooms/ledger.html#round-1` is one
-  screen, five inputs, the FI date as a band, a coast date, the savings rate
-  from take-home, three levers, a next card; four synthetic households reach
-  the answer in 6 to 10 taps and boxes (`test/opening.js`).
-- **Facts are entered in the Ledger only (D-313)**: every per-account fact,
-  the Roth and HSA contributions and switches, the marginal rate and the
-  target mix are Ledger rows with one owner. The Statement is four sections
-  and forwards every old anchor from its head; the stubs follow their readings.
-- **New rooms**: The Bridge, Which Account (every box a what-if), The Mix,
-  The Documents (tier 2), Left Behind (a plan tagged `old_401k` proposes its
-  balance, D-316). The worst plausible year is the Cushion's (D-314). The pay
-  still to come sits beside net worth, on a switch on by default under 40 (D-315).
+  screen, five inputs, the FI date as a band; 6 to 10 taps (`test/opening.js`).
+- **Facts are entered in the Ledger only (D-313)**: every per-account fact is
+  a Ledger row with one owner. The Statement is four sections.
+- **New rooms**: The Bridge, Which Account, The Mix, The Documents, Left
+  Behind (D-316). Worst plausible year is the Cushion's (D-314); pay still to
+  come beside net worth (D-315).
 - **From main**: a bank or card statement in (D-306); the Calendar with your
   own dates (D-308); all three intakes stay (D-309); plain words (D-310, D-311).
-- **The stranded audits ported (D-317)**: every room says how old its numbers
+- **The stranded audits ported (D-319)**: every room says how old its numbers
   are; the example household says so on every screen, with a clear button; the
   front page part-way through is a lodge. PRs #3, #4, #15 closed as superseded.
 - **Main is worked on directly by another lane**: merge it before every push.

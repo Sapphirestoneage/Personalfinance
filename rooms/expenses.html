@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-19 19:19Z"/>
+<meta name="slaf-build" content="2026-09-20 01:28Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
+<script src="../shared/size.js"></script>
 <title>Expenses · SPARKS</title>
 <meta name="description" content="What a month costs you — food, accommodation, transportation, the lean month, and every line you name — plus the charges that come back on a rhythm."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -117,6 +118,7 @@
   
   #view-the-month ul.line-list .ln-month { font-variant-numeric: tabular-nums; white-space: nowrap; }
   
+  #view-the-month ul.line-list .ln-acts { display: inline-flex; gap: var(--space-1); white-space: nowrap; }
   #view-the-month ul.line-list .ln-x { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); padding: 1px var(--space-2); cursor: pointer; min-height: 28px; }
   
   #view-the-month ul.line-list .ln-empty { grid-column: 1 / -1; color: var(--color-text-faint); font-size: var(--text-xs); }
@@ -918,7 +920,8 @@
     return '<li><span class="ln-name">' + esc(e.descriptor) + (sub ? '' : '<small>' + esc(LINE_BUCKET_WORD[bucket] || bucket) + '</small>') + '</span>'
       + '<span class="ln-every">' + esc(known) + '</span>'
       + '<span class="ln-month">' + Money.formatCents(e.amountCents) + '/mo</span>'
-      + '<button type="button" class="ln-x" data-line-remove="' + esc(e.id) + '" aria-label="Remove ' + esc(e.descriptor) + '">✕</button></li>';
+      + '<span class="ln-acts"><button type="button" class="ln-x" data-line-edit="' + esc(e.id) + '" aria-label="Edit ' + esc(e.descriptor) + '" title="Change the name, the amount or how often">Edit</button>'
+      + '<button type="button" class="ln-x" data-line-remove="' + esc(e.id) + '" aria-label="Remove ' + esc(e.descriptor) + '">✕</button></span></li>';
   }
   function paintLines(h) {
     var all = namedLines(h);
@@ -933,6 +936,32 @@
       : '<li><span class="ln-empty">Nothing else named yet. A pet, a parking spot, a habit: anything you want to watch on its own.</span></li>';
     el('named-sum').textContent = rest.length ? Money.formatCents(restTotal) + ' a month' : '';
   }
+  /* EDITING A LINE (D-317). The owner: "I need to be able to edit the
+     subscriptions, especially from monthly to yearly". The add form is the
+     editor: Edit loads the line into the four boxes, the button says Save,
+     and saving writes the same id back through the same path. One form,
+     built once, so nothing is rebuilt under a finger. */
+  var EDITING = null;
+  function bucketOfLine(e) { var b = Schema.fatBucketOf(e.categoryId); return e.categoryId === 'subscriptions' ? 'subscriptions' : (b === 'wants' ? 'wants' : b); }
+  function editLine(id) {
+    var e = namedLines(Spine.getProfile()).filter(function (x) { return x.id === id; })[0];
+    if (!e) return;
+    EDITING = id;
+    el('n-label').value = e.descriptor || '';
+    el('n-every').value = e.every || 'monthly';
+    var typed = Money.isEntered(e.everyCents) && e.every ? e.everyCents : e.amountCents;
+    el('n-amount').value = Money.forInput(typed).replace(/^\$/, '');
+    el('n-bucket').value = bucketOfLine(e);
+    el('btn-line-add').textContent = 'Save the line';
+    el('line-say').innerHTML = 'Editing <b>' + esc(e.descriptor) + '</b>. <button type="button" class="slaf-btn slaf-btn--small slaf-btn--quiet" id="btn-line-cancel">Cancel</button>';
+    el('line-form').scrollIntoView({ block: 'center', behavior: 'smooth' });
+    el('n-amount').focus();
+  }
+  function stopEditing() {
+    EDITING = null;
+    el('btn-line-add').textContent = 'Add the line';
+    el('n-label').value = ''; el('n-amount').value = ''; el('n-every').value = 'monthly'; el('n-bucket').value = 'subscriptions';
+  }
   function wireLines() {
     el('btn-line-add').addEventListener('click', function () {
       var amount = Money.parseMoney(el('n-amount').value);
@@ -942,21 +971,28 @@
       var every = el('n-every').value || 'monthly';
       var bucket = el('n-bucket').value || 'subscriptions';
       var monthly = toMonthlyCents(amount, every);
-      Spine.upsertExpenseEntry(Schema.createExpenseEntry({
-        id: 'ln_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      var was = EDITING ? namedLines(Spine.getProfile()).filter(function (x) { return x.id === EDITING; })[0] : null;
+      Spine.upsertExpenseEntry(Schema.createExpenseEntry(Object.assign({}, was || {}, {
+        id: EDITING || ('ln_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)),
         categoryId: LINE_CATEGORY[bucket] || 'other', amountCents: monthly, period: 'monthly', source: 'manual',
         descriptor: label, every: every, everyCents: amount
-      }));
-      el('line-say').textContent = 'Added ' + label + ', ' + Money.formatCents(monthly) + ' a month.';
-      el('n-label').value = ''; el('n-amount').value = ''; el('n-every').value = 'monthly'; el('n-bucket').value = 'subscriptions';
+      })));
+      el('line-say').textContent = (was ? 'Saved ' : 'Added ') + label + ', ' + Money.formatCents(monthly) + ' a month' + (every !== 'monthly' ? ' (' + Money.formatCents(amount) + ' ' + EVERY_WORD[every] + ')' : '') + '.';
+      stopEditing();
       render();
+    });
+    el('line-say').addEventListener('click', function (evt) {
+      if (evt.target.closest && evt.target.closest('#btn-line-cancel')) { stopEditing(); el('line-say').textContent = ''; }
     });
     el('line-form').addEventListener('keydown', function (evt) {
       if (evt.key === 'Enter' && evt.target.matches('input')) { evt.preventDefault(); el('btn-line-add').click(); }
     });
     ['subs-list', 'named-list'].forEach(function (id) {
       el(id).addEventListener('click', function (evt) {
+        var ed = evt.target.closest('[data-line-edit]');
+        if (ed) { editLine(ed.getAttribute('data-line-edit')); return; }
         var b = evt.target.closest('[data-line-remove]'); if (!b) return;
+        if (EDITING === b.getAttribute('data-line-remove')) stopEditing();
         Spine.removeExpenseEntry(b.getAttribute('data-line-remove'));
         render();
       });
@@ -1367,7 +1403,7 @@
     var income = Schema.grossAnnualIncomeCents(h);
     if (!Money.isOk(income)) {
       var demo = Demo.build();
-      if (Spine && Spine.markDemo) Spine.markDemo(true);   /* example numbers, said so on every room (D-317) */
+      if (Spine && Spine.markDemo) Spine.markDemo(true);   /* example numbers, said so on every room (D-319) */
       Spine.updateProfile({
         people: demo.people, filingStatus: demo.filingStatus, state: demo.state,
         assets: demo.assets, debts: demo.debts, expenses: demo.expenses,

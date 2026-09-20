@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-19 19:19Z"/>
+<meta name="slaf-build" content="2026-09-20 01:28Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="shared/errlog.js"></script>
+<script src="shared/size.js"></script>
 <title>SPARKS · Money rooms</title>
 <meta name="description" content="Every threshold ratio as one shape, plus altitude, fuel, engine load and thrust."/>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
@@ -307,7 +308,7 @@
     <span class="slaf-eyebrow" id="landing-cap">SPARKS · Money rooms</span>
     <h2 id="landing-head">One set of numbers. Every tool reads it.</h2>
     <p id="landing-say">Answer a short set of questions once — what you earn, spend, hold and owe — and every room opens already filled in, from your runway to your FI year. Nothing leaves this browser.</p>
-    <!-- The lodge (D-317, ported from D-251): someone who has answered
+    <!-- The lodge (D-319, ported from D-251): someone who has answered
          anything is not a stranger. The figure they earned, the meter every
          room shows, and when they were last here. Hidden until there is
          something in it. -->
@@ -550,7 +551,7 @@
 <script src="shared/ownership.js"></script>
 <script src="shared/guide.js"></script>
 <script src="shared/prefs.js"></script>
-<!-- D-317: the lodge reads Doors.firstInsight (the First Round's own insight) and Doors.understanding (the Ledger's meter); nothing is derived twice. -->
+<!-- D-319: the lodge reads Doors.firstInsight (the First Round's own insight) and Doors.understanding (the Ledger's meter); nothing is derived twice. -->
 <script src="shared/levers.js"></script>
 <script src="shared/ledger-rows.js"></script>
 <script src="shared/suggest.js"></script>
@@ -1275,7 +1276,7 @@
     return false;
   }
 
-  /* ---- The lodge (D-317): what you already earned, before you are asked for
+  /* ---- The lodge (D-319): what you already earned, before you are asked for
      more. The figure is Doors.firstInsight, the meter Doors.understanding,
      the days Spine.visitStats; none re-derived. Hidden until the tables land
      and something is entered. */
@@ -1559,7 +1560,7 @@
       : true;
     if (hasSomething && !window.confirm('Fill every answer with the example household, Robin Sparks? This replaces anything you have entered.')) return;
     var d = SLAF.DemoPersona.build();
-    if (Spine.markDemo) Spine.markDemo(true);   /* these are Robin's numbers, and every room says so (D-317) */
+    if (Spine.markDemo) Spine.markDemo(true);   /* these are Robin's numbers, and every room says so (D-319) */
     Spine.updateProfile({
       people: d.people, filingStatus: d.filingStatus, state: d.state,
       assets: d.assets, debts: d.debts, expenses: d.expenses,
@@ -1879,7 +1880,7 @@
   Reference.load().then(function (tables) {
     TABLES = tables;
     Staleness.use(tables.staleness);
-    if (SLAF.LedgerRows && tables.ledgerRows) SLAF.LedgerRows.use(tables.ledgerRows);   /* the lodge's meter reads the rows (D-317) */
+    if (SLAF.LedgerRows && tables.ledgerRows) SLAF.LedgerRows.use(tables.ledgerRows);   /* the lodge's meter reads the rows (D-319) */
     renderNow();
     jumpToHash();
   }).catch(function (err) {

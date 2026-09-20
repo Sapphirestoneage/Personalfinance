@@ -112,7 +112,7 @@
 
   /**
    * forFields(household, fieldIds, now?) — the age of one ROOM's numbers
-   * (D-317, ported from the D-251 audit branch). A room declares what it
+   * (D-319, ported from the D-251 audit branch). A room declares what it
    * reads (`needs` in shared/registry.js); this folds those fields into the
    * counts a header line needs: entered, dated, stale, and the oldest row.
    * Fields with no value are skipped: nothing never entered can be old, and
