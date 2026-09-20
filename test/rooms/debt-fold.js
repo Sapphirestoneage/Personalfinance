@@ -16,7 +16,7 @@ module.exports = function (t) {
   /* ---- What folds ------------------------------------------------------- */
   checkTrue('the feeling and the reasons fold together, under one caret', /drawer\(d, 'why', 'Why you’re keeping it'/.test(emitted)
     && /emotionalTag/.test(emitted) && /keepBlock\(d\)/.test(emitted));
-  checkTrue('the dates and the credit limit fold together', /drawer\(d, 'extras', 'Dates & limit'/.test(emitted)
+  checkTrue('the dates and the credit limit fold together', /drawer\(d, 'extras', 'Dates, limit \& fee'/.test(emitted)
     && /borrowedOn/.test(emitted) && /creditLimitCents/.test(emitted));
   checkTrue('a caret, not a button: native details/summary so it works with no JS', /<details class="fold/.test(emitted)
     && /summary>/.test(emitted) && /\.fold > summary::before \{ content: '▸'/.test(page));

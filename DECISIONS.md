@@ -16570,6 +16570,34 @@ reading it would show the id as the label and derive nothing from it.
 **Verified.** `node test/run.js`; `node test/statement.js` (the tagged
 plan's balance is proposed and priced).
 
+## D-317 — A card's annual fee and the day it posts; a dealt walk step folds to a line
+
+**Why.** The owner, on the phone: a card's annual fee is a fact the debt
+list could not hold, and the fee's date is the one date on a card a person
+can still act on. On the same phone, a walk step already marked done kept a
+full card of buttons above the room the person had come for.
+
+**Decision.** `Schema.createDebt` carries `annualFeeCents` and
+`annualFeeOn` (null until asked, never "no fee"). `Debt.annualFee(debt,
+asOf)` in `engines/debt.js` is the one reader: the fee, and the next day it
+posts (the stored month and day, this year if still ahead, else next), with
+`soon` inside a 45-day window. `rooms/debt-payoff.html` asks both in the
+card-only part of the "Dates, limit & fee" fold, says the fee and its date
+on the fold's summary line, and warns on the card while the window is open.
+`shared/progress.js`: a walk step that is done or set aside renders as a
+`details` folded to one line (the tick, the step, the way on) and opens on a
+tap for the bar, Undo and the hub; an open step is unchanged.
+
+**Replaces or removes.** Two thirds of the walk card's height on every
+room whose step is behind you. Nothing else.
+
+**Stored shape.** `debts[].annualFeeCents`, `debts[].annualFeeOn`, absent on
+older saves and read as not asked.
+
+**Verified.** `node test/run.js` (the fee's next date across the year
+boundary, today, a fee with no date); the features and forms gates on Debt
+Payoff; a phone walk of the folded step at 360px.
+
 ---
 
 # The Dungeons & Dividends entries

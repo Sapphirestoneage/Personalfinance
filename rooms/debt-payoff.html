@@ -940,7 +940,12 @@
       var derived = Debt.minimumPaymentCents(d, RULES);
       if (!Money.isOk(derived)) missing.push(d.type === 'family' ? 'a monthly amount, or the date it is due back' : 'a minimum payment');
     }
-    return missing.length ? 'Needs ' + missing.join(' and ') + ' before it can be planned.' : '';
+    if (missing.length) return 'Needs ' + missing.join(' and ') + ' before it can be planned.';
+    /* The fee is the one date on a card a person can still act on: said
+       while there is time to call, silent the rest of the year. */
+    var fee = Debt.annualFee(d);
+    if (fee && fee.soon) return 'The ' + Money.formatCents(fee.feeCents) + ' annual fee posts on ' + isoDay(fee.nextOn) + (fee.daysUntil <= 0 ? ', today' : ', in ' + fee.daysUntil + (fee.daysUntil === 1 ? ' day' : ' days')) + '. Decide before then whether the card earns its fee, and ask them to waive it if you keep it.';
+    return '';
   }
 
   /* The list's footer: what is owed and the minimums, added up. A debt
@@ -1017,7 +1022,7 @@
             + '</div>'
             + interestBlock(d)
             + drawer(d, 'why', 'Why you’re keeping it', whySummary(d), keepBlock(d))
-            + drawer(d, 'extras', 'Dates & limit', extrasSummary(d),
+            + drawer(d, 'extras', 'Dates, limit & fee', extrasSummary(d),
                 '<div class="debt-dates">'
                 + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Borrowed on</span>'
                 + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id + '" data-field="borrowedOn" value="' + (d.borrowedOn || '') + '" aria-label="Date borrowed"/></span></label>'
@@ -1029,7 +1034,13 @@
                 + field(d, 'creditLimitCents', 'Credit limit', '$', null, 'e.g. 10000')
                 + '<p class="debt-hint">Optional, and only used for credit utilisation — '
                 + 'balance against limit, where 30% is the usual ceiling. Blank means the '
-                + 'ratio stays unavailable rather than guessed.</p></div>')
+                + 'ratio stays unavailable rather than guessed.</p>'
+                + '<div class="debt-dates" style="margin-top:var(--space-3)">'
+                + field(d, 'annualFeeCents', 'Annual fee', '$', null, 'e.g. 95')
+                + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Charged on, each year</span>'
+                + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id + '" data-field="annualFeeOn" value="' + (d.annualFeeOn || '') + '" aria-label="Date the annual fee posts"/></span></label>'
+                + '</div>'
+                + '<p class="debt-hint">What the card costs to hold whether or not you use it. The month and day recur; the card says a few weeks before it posts, which is when a call can still waive it or close the card.</p></div>')
             + '<div class="debt-acts">'
             + '<button type="button" class="debt-archive" data-archive="' + d.id + '" title="Paid off or on hold — keep it, stop counting it">Set aside</button>'
             + '<button type="button" class="debt-remove" data-remove="' + d.id + '" aria-label="Remove">✕ Remove</button>'
@@ -1188,6 +1199,11 @@
   }
 
   /** An ISO day as a month a person reads, without a timezone shifting it. */
+  function isoDay(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+    if (!m) return 'that date';
+    return new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
   function isoMonth(iso) {
     var m = /^(\d{4})-(\d{2})/.exec(iso || '');
     if (!m) return 'that date';
@@ -1341,7 +1357,7 @@
     }
   });
 
-  var DATE_FIELDS = { promoEndsOn: true, borrowedOn: true, dueOn: true };
+  var DATE_FIELDS = { promoEndsOn: true, borrowedOn: true, dueOn: true, annualFeeOn: true };
 
   el('debt-list').addEventListener('change', function (evt) {
     var node = evt.target;
@@ -1453,6 +1469,8 @@
     if (d.borrowedOn) bits.push('borrowed ' + isoMonth(d.borrowedOn));
     if (d.dueOn) bits.push('due ' + isoMonth(d.dueOn));
     if (Money.isEntered(d.creditLimitCents)) bits.push('limit ' + Money.formatCents(d.creditLimitCents));
+    var fee = Debt.annualFee(d);
+    if (fee) bits.push(Money.formatCents(fee.feeCents) + ' fee' + (fee.nextOn ? ' on ' + isoDay(fee.nextOn) : ' a year'));
     return bits.length ? esc(bits.join(' · ')) : 'nothing set';
   }
 

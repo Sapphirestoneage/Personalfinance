@@ -6357,6 +6357,33 @@ section('Promotional rates');
     check('and months left is zero, never below', past.monthsLeft, 0);
   }
 
+  /* -- The annual fee, and when it next posts (D-317) --------------------- */
+  {
+    check('no fee entered is no fee, not a zero one', Debt.annualFee(card(), NOW), null);
+    const fee = Debt.annualFee(card({ annualFeeCents: 9500, annualFeeOn: '2025-03-12' }), NOW);
+    check('the fee is what was typed', fee.feeCents, 9500);
+    checkTrue('the next posting is the same month and day, in the next year that is still ahead', /-03-12$/.test(fee.nextOn) && fee.nextOn > Schema.localDay(NOW), fee.nextOn);
+    checkTrue('days until is a whole number of days ahead', Number.isInteger(fee.daysUntil) && fee.daysUntil > 0);
+    const dated = Debt.annualFee(card({ annualFeeCents: 9500, annualFeeOn: '2020-10-05' }), '2026-09-20T12:00:00');
+    check('this year when the day is still ahead', dated.nextOn, '2026-10-05');
+    check('… fifteen days out', dated.daysUntil, 15);
+    checkTrue('… and inside the window to call', dated.soon && Debt.FEE_SOON_DAYS >= 15);
+    const passed = Debt.annualFee(card({ annualFeeCents: 9500, annualFeeOn: '2020-09-19' }), '2026-09-20T12:00:00');
+    check('next year once the day has gone by', passed.nextOn, '2027-09-19');
+    checkTrue('… and not soon', !passed.soon);
+    const today = Debt.annualFee(card({ annualFeeCents: 9500, annualFeeOn: '2019-09-20' }), '2026-09-20T12:00:00');
+    check('today is today, not next year', today.daysUntil, 0);
+    const undated = Debt.annualFee(card({ annualFeeCents: 9500 }), NOW);
+    checkTrue('a fee with no date has a cost and no next date', undated.feeCents === 9500 && undated.nextOn === null && !undated.soon);
+    const shape = Schema.createDebt({});
+    checkTrue('the shape carries both, null until asked', shape.annualFeeCents === null && shape.annualFeeOn === null);
+    const room = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
+    checkTrue('the card fold asks both, on cards only, and the date commits on change', /field\(d, 'annualFeeCents', 'Annual fee'/.test(room) && /data-field="annualFeeOn"/.test(room) && /annualFeeOn: true/.test(room));
+    checkTrue('the warning says when the fee is about to post', /annual fee posts on/.test(room));
+    const walk = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+    checkTrue('a dealt walk step folds to one line the person can open (D-317)', /<details class="slaf-walk is-dealt"/.test(walk) && /slaf-walk-fold/.test(walk));
+  }
+
   /* -- The rate the simulation actually charges --------------------------- */
   {
     const c = card();
