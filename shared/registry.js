@@ -245,7 +245,7 @@
         { id: 'flow',            label: 'Where it flows' },
         { id: 'out-net-flow',    label: 'What’s left' },
         { id: 'cal-number', label: 'The low point this month' },
-        { id: 'cal-chart', label: 'Cash across the month' },
+        { id: 'cal-chart', label: 'The calendar' },
         { id: 'cal-inputs', label: 'Paydays, bills, pay-later' }
       ]
     },

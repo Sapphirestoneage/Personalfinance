@@ -9130,7 +9130,7 @@ section('What hits your account, and when: the month as turns, in Cash Flow and 
   /* The Money Calendar is The Month's dates reading since D-275: its slice of the page. */
   const calRoom = cf.slice(cf.indexOf('READING view-the-dates'));
   checkTrue('The Month shows it and recalculates on every render', /id="day-by-day"/.test(cf) && /engines\/calendar\.js/.test(cf) && /shared\/daybyday\.js/.test(cf) && /renderDayByDay\(h\)/.test(cf) && /DayByDay\.html\(r\)/.test(cf));
-  checkTrue('the dates reading draws the same, and holds no copy of the grid', /DayByDay\.html\(/.test(calRoom) && !/cal-grid/.test(calRoom));
+  checkTrue('the dates reading draws the same month view, and holds no copy of the grid (D-308)', /DayByDay\.monthView\(/.test(calRoom) && /DayByDay\.chart\(/.test(calRoom) && !/cal-grid/.test(calRoom));
   checkTrue('the registry names the section', Registry.byId('cash-flow').subsections.some(x => x.id === 'day-by-day'));
 })();
 
@@ -14523,6 +14523,44 @@ section('J4, J5: bank CSV import on-device, the subscription finder (D-215)');
   checkTrue('Money Wrapped gains the leak line only when something was found', Wrapped.year(Spine.getProfile(), [], T, {}).lines.some(l => l.id === 'leak') && !Wrapped.year(Demo.build(), [], T, {}).lines.some(l => l.id === 'leak'));
   /* The finder is a reading of Expenses since D-267. */
   checkTrue('the reading never cancels anything: it writes a decision and says so', (function () { const e = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8'); return /a reminder, never an action|a note to\n?\s*yourself/.test(e) && !/cancelSubscription|fetch\(/.test(e); })());
+})();
+
+/* ==========================================================================
+   D-308: the calendar, the way a phone calendar is used
+   ========================================================================== */
+section('The calendar (D-308)');
+(function () {
+  const Cal = require(path.join(ROOT, 'engines/calendar.js'));
+  const DayByDay = require(path.join(ROOT, 'shared/daybyday.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Ref.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } });
+  const h = Demo.build();
+  h.calendar = { cadence: 'fortnightly', nextPaydayDay: 25 };
+  const r = Cal.month(h, T, { days: 45 });
+  check('the engine takes a longer window when asked, never a shorter one', r.days.length + ':' + Cal.month(h, T, { days: 5 }).days.length, '45:31');
+  const ym = r.startDate.slice(0, 7);
+  const y = +ym.slice(0, 4), mo = +ym.slice(5, 7), dim = new Date(y, mo, 0).getDate();
+  const view = DayByDay.monthView(r, { month: ym, selected: r.startDate });
+  check('the month view is the whole calendar month, a button a day', (view.match(/<button type="button" class="cal-cell[^"]*" data-cal-day="/g) || []).length, dim);
+  checkTrue('with a header naming the month and arrows either side', /<div class="cal-nav"><button[^>]*data-cal-nav="-1"/.test(view) && /<h3>[A-Z][a-z]+ \d{4}<small>this month<\/small><\/h3>/.test(view) && /data-cal-nav="1"/.test(view));
+  checkTrue('today is ringed and selected, and the tapped day’s sheet names the day', /class="cal-cell is-today[^"]*is-selected/.test(view) && /<div class="cal-sheet-head"><b>[A-Z][a-z]{2}, [A-Z][a-z]{2} \d+<\/b>/.test(view));
+  checkTrue('a payday is a green pill on its cell and a line on its sheet', /<i class="cal-in"[^>]*>\+\$/.test(view));
+  checkTrue('the strip sums the month in and out, and names the low point on its date', /<p class="cal-sum"><span class="is-in">\+\$/.test(view) && /<span class="is-out">−\$/.test(view) && /cal-sum-net/.test(view) && (!/cal-sum-low/.test(view) || /low \$[\d,]+ on [A-Z][a-z]{2} \d+</.test(view)));
+  checkTrue('what is coming up is listed for this month only', /<details class="cal-up" open><summary>Coming up in the next 14 days/.test(view));
+  const next = DayByDay.monthView(r, { month: (function () { const d = new Date(y, mo, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })() });
+  checkTrue('a later month is the same projection carried on, says so, and lists nothing as coming up', /Balances run from today/.test(next) && !/cal-upcoming/.test(next) && !/this month/.test(next));
+  const past = DayByDay.monthView(r, { month: ym, selected: ym + '-03', past: [{ date: ym + '-03', label: 'Trader Joes', cents: 6420, kind: 'log' }] });
+  checkTrue('a day already gone shows what the log says went out, and its sheet says it already happened', /data-cal-day="[\d-]+03"[^>]*>[\s\S]*?<i class="cal-out"[^>]*>−\$64/.test(past) && /<span>already happened<\/span>/.test(past) && /<span class="ds-kind">Logged<\/span><span class="ds-what">Trader Joes<\/span>/.test(past));
+  const empty = DayByDay.monthView(Cal.month(Schema.createHousehold({}), T, {}), { month: ym, past: [] });
+  checkTrue('a month that cannot be drawn says why and still shows its days', /class="cal-why">How often are you paid/.test(empty) && (empty.match(/data-cal-day="/g) || []).length === dim);
+  const cf = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8');
+  checkTrue('the reading owns two states, the month shown and the day tapped, and re-renders through the room', /var VIEW = TODAY\.slice\(0, 7\), SEL = TODAY;/.test(cf) && /data-cal-nav/.test(cf) && /data-cal-day/.test(cf) && /mounted\.render\(\)/.test(cf));
+  checkTrue('it runs the engine from today to the end of the month on screen', /Cal\.month\(h, T, \{ days: Math\.max\(31, daysToEnd\(VIEW\)\) \}\)/.test(cf));
+  checkTrue('past days come from the log, through the one cash flow engine', /CashFlow\.logInMonth\(h, T\.expenseCategories, VIEW\)/.test(cf) && /r\.date < TODAY/.test(cf));
+  const theme = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  checkTrue('a day cell and an arrow are finger-sized', /\.cal-cell \{[^}]*min-height: 64px/.test(theme) && /\.cal-nav-btn \{[^}]*width: 44px; height: 44px/.test(theme));
+  checkTrue('the registry names the card', Registry.byId('cash-flow').subsections.some(x => x.id === 'cal-chart' && x.label === 'The calendar'));
 })();
 
 /* ==========================================================================

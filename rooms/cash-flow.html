@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-20 01:08Z"/>
+<meta name="slaf-build" content="2026-09-20 01:20Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <script src="../shared/size.js"></script>
@@ -245,7 +245,7 @@
 
   <!-- ===== THE DATES (was rooms/calendar.html) ===== -->
   <section id="view-the-dates" hidden>
-  <p class="slaf-lede">Paydays and bills across a month, pay-later instalments counted: the low point, and the day it lands.</p>
+  <p class="slaf-lede">The month as a calendar: paydays and bills on their days, the low point, and what is coming up.</p>
   <div class="room-standalone" id="cal-room-standalone" hidden></div>
 
   <section class="slaf-card" id="cal-number">
@@ -257,7 +257,8 @@
   </section>
 
   <section class="slaf-card" id="cal-chart" style="margin-top:var(--space-4)">
-    <span class="slaf-eyebrow">Cash across the month, and the month as a calendar</span>
+    <span class="slaf-eyebrow">The calendar</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Paydays, bills, pay-later and what you logged, each on its day. Tap a day for what lands on it; the arrows move a month.</p>
     <div id="cal-room-chart"></div>
   </section>
 
@@ -795,8 +796,39 @@
   function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function ordinal(n) { var s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
   function m(h, T) { return Cal.month(h, T, {}); }
+  /* THE CALENDAR (D-308). The owner: make it like a phone calendar, and
+     professional. Two states the reading owns: the month on screen and the
+     day tapped. The engine runs once from today to the end of the month on
+     screen (opts.days), so a later month's balances are the same projection
+     carried on; a month already gone shows what the log says went out. The
+     grid, the day sheet and the upcoming list are shared/daybyday.js, so
+     What moved and this reading draw the one calendar. */
+  var TODAY = Schema.localDay();
+  var VIEW = TODAY.slice(0, 7), SEL = TODAY;
+  var CAL_AHEAD = 3, CAL_BACK = 12;
+  function shiftYm(ym, n) { var d = new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + n, 1); var mo = d.getMonth() + 1; return d.getFullYear() + '-' + (mo < 10 ? '0' : '') + mo; }
+  function daysToEnd(ym) {
+    var y = +ym.slice(0, 4), mo = +ym.slice(5, 7);
+    var end = new Date(y, mo, 0), t = new Date(+TODAY.slice(0, 4), +TODAY.slice(5, 7) - 1, +TODAY.slice(8, 10));
+    return Math.round((end - t) / 86400000) + 1;
+  }
+  function mv(h, T) { return Cal.month(h, T, { days: Math.max(31, daysToEnd(VIEW)) }); }
+  function pastRows(h, T) {
+    if (!SLAF.CashFlow || !T.expenseCategories) return [];
+    var log = SLAF.CashFlow.logInMonth(h, T.expenseCategories, VIEW);
+    var cats = T.expenseCategories.categories || [];
+    return (log.rows || []).filter(function (r) { return r.date < TODAY && !r.hidden; }).map(function (r) {
+      var c = cats.filter(function (x) { return x.id === r.categoryId; })[0];
+      return { date: r.date, label: r.descriptor || (c ? c.label : r.categoryId), cents: r.credit ? -Math.abs(r.cents) : r.cents, kind: 'log' };
+    });
+  }
+  function calendarHtml(h, T) {
+    var r = mv(h, T);
+    return DayByDay.monthView(r, { month: VIEW, selected: SEL, past: pastRows(h, T), canBack: VIEW > shiftYm(TODAY.slice(0, 7), -CAL_BACK), canForward: VIEW < shiftYm(TODAY.slice(0, 7), CAL_AHEAD) })
+      + '<details class="cal-up cal-line"><summary>Cash across the days, as a line</summary>' + DayByDay.chart(r) + '</details>';
+  }
 
-  Room.mount({
+  var mounted = Room.mount({
     id: 'cash-flow',
     part: true,
     prefix: 'cal-',
@@ -825,7 +857,7 @@
        turn marked, the same days as a calendar, and the turns listed. All
        three are shared/daybyday.js, which the what-moved reading shows too;
        this reading holds no copy of the grid. */
-    chart: function (h, T) { return DayByDay.html(m(h, T)); },
+    chart: function (h, T) { return calendarHtml(h, T); },
 
     inputs: [
       { ctl: 'cadence', label: 'Paid', kind: 'select', options: [['', 'How often?'], ['weekly', 'Every week'], ['fortnightly', 'Every two weeks'], ['semimonthly', 'Twice a month'], ['monthly', 'Monthly']],
@@ -870,6 +902,20 @@
 
     scope: 'This room does not connect to a bank; it draws one month from what Income and the expense log hold, and from what you tell it here.'
   });
+  /* Moving through months and tapping days: two states, one re-render. */
+  var host = document.getElementById('cal-room-chart');
+  if (host && mounted && mounted.render) {
+    host.addEventListener('click', function (ev) {
+      var nav = ev.target.closest ? ev.target.closest('[data-cal-nav]') : null;
+      if (nav && !nav.disabled) {
+        VIEW = shiftYm(VIEW, +nav.getAttribute('data-cal-nav'));
+        SEL = VIEW === TODAY.slice(0, 7) ? TODAY : VIEW + '-01';
+        mounted.render(); return;
+      }
+      var cellBtn = ev.target.closest ? ev.target.closest('[data-cal-day]') : null;
+      if (cellBtn) { SEL = cellBtn.getAttribute('data-cal-day'); mounted.render(); }
+    });
+  }
 })();
 </script>
 </body>

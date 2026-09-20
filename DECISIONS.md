@@ -16333,6 +16333,37 @@ opening to their parts; Sapphire preferred edited from $95 a month to $95 a
 year; an ask naming "Investments + retirement", rested by Not now, retired by
 Don't ask again, absent with the switch off. Console clean.
 
+## D-308 — The calendar, the way a phone calendar is used
+
+**Why.** The owner: "make the calendar much more like Rocket Money, more
+enjoyable, more professional; this looks homemade." The dates reading was
+the calculator template with a 31-day text grid inside it.
+
+**Decision.** `shared/daybyday.js` draws the month the way a phone does:
+`monthView` is a header naming the month with an arrow either side, a strip
+(in, out, net, the low point on its date), a grid of the whole calendar
+month with a button a day (the day number, up to two pills for what lands,
+"+n" for the rest, the balance underneath, today ringed, the low point
+marked, a day under zero tinted, a day gone muted), the tapped day's sheet
+(each item with its kind, the balance after), and what is coming up in the
+next fourteen days. `rooms/cash-flow.html`'s dates reading owns two states,
+the month shown and the day tapped, runs `engines/calendar.js` once from
+today to the end of the month on screen (`opts.days`, never under the
+table's horizon), and shows a day already gone from the log through
+`CashFlow.logInMonth`. What moved keeps the same grid for its 31 days. The
+balance line folds under the calendar.
+
+**Replaces or removes.** The text grid and its long caption; the "Cash
+across the month" card is the calendar now.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js`, the fast suites, the browser gates, and at
+390px: September with thirty cells, today ringed, a logged day on the 3rd
+tapped ("already happened, Trader Joes −$64"), the payday on the 25th tapped
+("Payday +$2,243, balance after $11,113"), October a month on, August a
+month back, cells 46 by 64, arrows 44, nothing sideways, console clean.
+
 ---
 
 # The Dungeons & Dividends entries

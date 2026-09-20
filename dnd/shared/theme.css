@@ -1466,30 +1466,85 @@ html.has-math, html.has-math body { overflow: hidden; }
 .slaf-hint-body { display: block; margin-top: var(--space-2); }
 
 /* ---- The month, day by day (D-253; the grid was the Calendar room's, now shared) ---- */
-.cal-grid { margin-top: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
-.cal-head, .cal-row { display: grid; grid-template-columns: repeat(7, 1fr); }
-.cal-head span { font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); text-align: center; padding: var(--space-1) 0; border-bottom: 1px solid var(--color-border); }
-.cal-cell { min-height: 58px; padding: 4px 3px; border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); font-size: 10px; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.cal-cell:last-child { border-right: none; }
-.cal-row:last-child .cal-cell { border-bottom: none; }
-.cal-cell.is-blank { background: transparent; }
-.cal-cell b { font-weight: 600; color: var(--color-text-muted); font-size: 11px; white-space: nowrap; }
-.cal-cell.is-today b { color: var(--color-accent-hover); }
-.cal-cell small { margin-top: auto; font-variant-numeric: tabular-nums; color: var(--color-text); }
+/* ---- The calendar (D-253, redrawn D-308) ---------------------------------
+   A phone calendar: a header with arrows, a summary strip, seven columns
+   of tappable day cells with pills for what lands, the tapped day's sheet
+   and what is coming up. Drawn by shared/daybyday.js for both readings. */
+.cal-month { margin-top: var(--space-2); }
+.cal-nav { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.cal-nav h3 { margin: 0; font-family: var(--font-display); font-size: var(--text-lg); font-weight: 600; text-align: center; }
+.cal-nav h3 small { display: block; font-family: var(--font-body, inherit); font-size: var(--text-xs); font-weight: 400; color: var(--color-text-faint); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); }
+.cal-nav-btn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--color-border-strong); background: var(--color-surface-raised); color: var(--color-text); font: inherit; font-size: var(--text-xl); line-height: 1; cursor: pointer; flex: 0 0 auto; }
+.cal-nav-btn:hover:not(:disabled) { border-color: var(--color-border-active); background: var(--color-surface-active); }
+.cal-nav-btn:disabled { opacity: .3; cursor: default; }
+.cal-sum { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-3); margin: var(--space-2) 0 0; font-size: var(--text-sm); font-variant-numeric: tabular-nums; color: var(--color-text-muted); }
+.cal-sum .is-in { color: var(--color-positive); font-weight: 600; }
+.cal-sum .is-out { color: var(--color-critical); font-weight: 600; }
+.cal-sum .cal-sum-net { color: var(--color-text); }
+.cal-sum .cal-sum-low { color: var(--color-accent-hover); }
+.cal-sum .cal-sum-low.is-under { color: var(--color-critical); }
+.cal-why { margin: var(--space-2) 0 0; font-size: var(--text-sm); color: var(--color-caution); }
+.cal-grid { margin-top: var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; background: var(--color-surface); }
+.cal-head, .cal-row { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.cal-head { background: var(--color-surface-raised); border-bottom: 1px solid var(--color-border); }
+.cal-head span { padding: 6px 0; text-align: center; font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); }
+.cal-head span i { font-style: normal; }
+@media (max-width: 480px) { .cal-head span i { display: none; } }
+.cal-cell { display: flex; flex-direction: column; align-items: stretch; gap: 2px; min-height: 64px; padding: 5px 3px 4px; border: 0; border-right: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); background: transparent; color: var(--color-text); font: inherit; text-align: left; cursor: pointer; min-width: 0; -webkit-tap-highlight-color: transparent; }
+.cal-cell:nth-child(7n) { border-right: 0; }
+.cal-row:last-child .cal-cell { border-bottom: 0; }
+.cal-cell.is-blank { cursor: default; background: transparent; }
+.cal-cell:hover:not(.is-blank) { background: var(--color-surface-active); }
+.cal-cell b { align-self: flex-start; font-weight: 600; font-size: 12px; line-height: 20px; min-width: 20px; height: 20px; padding: 0 4px; border-radius: 10px; text-align: center; color: var(--color-text-muted); white-space: nowrap; }
+.cal-cell.is-today b { background: var(--color-accent); color: var(--color-accent-contrast); }
+.cal-cell.is-past { background: rgba(127,127,127,.06); }
+.cal-cell.is-past b { color: var(--color-text-faint); }
+.cal-cell.is-quiet .cal-marks { min-height: 0; }
+.cal-cell .cal-marks { display: flex; flex-direction: column; gap: 2px; min-height: 18px; }
+.cal-cell small { margin-top: auto; font-size: 10px; font-variant-numeric: tabular-nums; color: var(--color-text-faint); text-align: right; white-space: nowrap; }
+.cal-cell small.is-none { visibility: hidden; }
 .cal-cell.is-tight { background: rgba(232,184,75,.08); }
 .cal-cell.is-under { background: rgba(229,72,77,.12); }
-.cal-cell.is-under small { color: var(--color-critical); }
-.cal-cell.is-low { outline: 2px solid var(--color-accent); outline-offset: -2px; }
-.cal-in, .cal-out { font-style: normal; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 3px; padding: 0 2px; }
-.cal-in { color: var(--color-positive); background: rgba(48,164,108,.14); }
-.cal-out { color: var(--color-critical); background: rgba(229,72,77,.12); }
-.cal-out.is-pl { color: var(--color-caution); background: rgba(232,184,75,.14); }
-.cal-out.is-annual { color: var(--color-caution); background: rgba(232,184,75,.14); font-weight: 600; }
+.cal-cell.is-under small { color: var(--color-critical); font-weight: 600; }
+.cal-cell.is-low { box-shadow: inset 0 0 0 2px var(--color-accent); }
+.cal-cell.is-selected { background: var(--color-surface-active); box-shadow: inset 0 0 0 2px var(--color-border-active); }
+.cal-cell.is-selected.is-low { box-shadow: inset 0 0 0 2px var(--color-accent); }
+.cal-in, .cal-out, .cal-more { display: block; font-style: normal; font-size: 10px; line-height: 16px; padding: 0 4px; border-radius: 4px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-in { color: var(--color-positive); background: rgba(48,164,108,.16); }
+.cal-out { color: var(--color-critical); background: rgba(229,72,77,.14); }
+.cal-out.is-pl { color: var(--color-caution); background: rgba(232,184,75,.16); }
+.cal-out.is-annual { color: var(--color-caution); background: rgba(232,184,75,.16); font-weight: 600; }
 .cal-in.is-estimated, .cal-out.is-estimated { outline: 1px dashed currentColor; outline-offset: -1px; }
 .cal-in.is-potential, .cal-out.is-potential { opacity: .5; text-decoration: underline dotted; }
-.cal-key { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; }
-.cal-key .k-low { outline: 2px solid var(--color-accent); outline-offset: 1px; border-radius: 2px; padding: 0 3px; }
-.cal-key .k-under { background: rgba(229,72,77,.12); color: var(--color-critical); border-radius: 2px; padding: 0 3px; }
+.cal-more { color: var(--color-text-faint); background: var(--color-surface-raised); }
+.cal-key { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-3) 0 0; display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); align-items: center; }
+.cal-key .cal-in, .cal-key .cal-out { display: inline-block; }
+.cal-key .k-low { box-shadow: inset 0 0 0 2px var(--color-accent); border-radius: 4px; padding: 0 4px; }
+.cal-key .k-under { background: rgba(229,72,77,.12); color: var(--color-critical); border-radius: 4px; padding: 0 4px; }
+.cal-note { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; }
+.cal-sheet { margin-top: var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); }
+.cal-sheet-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-2); flex-wrap: wrap; }
+.cal-sheet-head b { font-family: var(--font-display); font-size: var(--text-md); }
+.cal-sheet-head span { font-size: var(--text-xs); color: var(--color-text-faint); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); }
+.cal-sheet-head span.is-low { color: var(--color-accent-hover); }
+.cal-sheet-list { list-style: none; margin: var(--space-2) 0 0; padding: 0; }
+.cal-sheet-list li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--space-2); align-items: baseline; padding: var(--space-2) 0; border-top: 1px solid var(--color-border); }
+.cal-sheet-list li:first-child { border-top: 0; }
+.cal-sheet-list li.is-potential { opacity: .6; }
+.cal-sheet-list .ds-kind { font-size: 10px; text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 1px 6px; white-space: nowrap; }
+.cal-sheet-list .ds-what { min-width: 0; overflow-wrap: anywhere; }
+.cal-sheet-list .ds-amt { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 600; }
+.cal-sheet-list .ds-amt.is-in { color: var(--color-positive); }
+.cal-sheet-list .ds-amt.is-out { color: var(--color-critical); }
+.cal-sheet-bal { margin: var(--space-2) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); display: flex; justify-content: space-between; gap: var(--space-2); }
+.cal-sheet-bal b { font-variant-numeric: tabular-nums; color: var(--color-text); }
+.cal-sheet-bal b.is-under { color: var(--color-critical); }
+.cal-sheet-empty { margin: var(--space-3) 0 0; font-size: var(--text-sm); color: var(--color-text-faint); }
+.cal-up { margin-top: var(--space-3); }
+.cal-up > summary { cursor: pointer; font-weight: 600; min-height: 44px; display: flex; align-items: center; }
+.cal-up-sum { display: flex; gap: var(--space-3); margin: var(--space-1) 0 0; font-size: var(--text-sm); font-variant-numeric: tabular-nums; }
+.cal-up-sum .is-in { color: var(--color-positive); }
+.cal-up-sum .is-out { color: var(--color-critical); }
 .turns { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
 .turns li { display: grid; grid-template-columns: 5.5ch minmax(0, 1fr) auto auto; gap: var(--space-2); align-items: baseline; padding: var(--space-1) 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
 .turns li:first-child { border-top: none; }

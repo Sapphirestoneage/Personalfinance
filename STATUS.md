@@ -38,6 +38,10 @@ Updated: 2026-09-19
   turns off; one gap for Cash Flow and Debt Payoff, offered as a chip;
   glance figures open to their linked parts; a named line can be edited;
   two merge-corrupted stylesheets repaired and every room's CSS now parsed.
+- **The calendar, redrawn (D-308).** A phone calendar: the month with arrows,
+  a strip, a button a day with pills for what lands, today ringed, the low
+  point marked, a tapped day's sheet, what is coming up; a month gone shows
+  the log. One grid for both readings.
 - **The reframe D-228 asks for has NOT shipped**; the FI target is still
   spending ÷ the withdrawal rate, and both rooms say so in their spec.
 - **Freeze ON, and honoured**: nothing this session added a screen.

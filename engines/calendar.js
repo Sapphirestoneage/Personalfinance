@@ -151,7 +151,11 @@
     if (!conv || !conv.cadences) return Money.incomplete('The calendar conventions table is not loaded.', ['calendarConventions']);
 
     var cal = h.calendar || {};
+    /* The window: the table's horizon, or the days a caller asks for (the
+       calendar view runs from today to the end of the month it shows,
+       D-308), never under the default. */
     var horizon = Money.isEntered(conv.horizonDays) && conv.horizonDays > 0 ? conv.horizonDays : HORIZON_DAYS;
+    if (Money.isEntered(o.days) && o.days > horizon) horizon = Math.min(Math.round(o.days), 124);
     var start = startOf(o.now);
     var dates = [], i;
     for (i = 0; i < horizon; i++) {
