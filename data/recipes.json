@@ -1,0 +1,6289 @@
+{
+ "id": "recipes",
+ "version": "1.0",
+ "asOf": "2026-09-20",
+ "source": "The Solar System master prompt (docs/SOLAR-SYSTEM.md): Part 2 section A4 (every metric by tier) and Part 4 section C3 (every ratio). Transcribed a row a recipe.",
+ "confidence": "convention",
+ "confidenceNote": "Formulas are declared here in words and computed by the function named in fn (engines/solar.js, step 2 of the build). No figure is stored here; a recipe is a rule for making one.",
+ "note": "facets are the nine shares Part 4 lists without NEW, each a view inside a Part 2 metric (parent), not counted in the 184. tier N needs only levels in bands 1 to N (lint). needs are the levels that must hold a value (a number, a none or a rough) before the metric can compute; while any is missing the metric is locked and names them. derived: true means the person was never asked for this; it falls out of facts collected for other reasons. sharpenedBy are later levels that tighten the band. earnedWhen names the situation that turns a metric into an earned badge instead of a number (debt.none: \"Debt free\"), never an N/A. ratio carries the two sides and the benchmark key into data/benchmarks.json. core marks the rates pinned at the top of the shelf (1.14). unit: cents, rate, months, years, date, flag, score, list, text, multiple, dollarsPerYear.",
+ "counts": {
+  "metrics": 141,
+  "ratios": 43,
+  "total": 184,
+  "facets": 9
+ },
+ "facets": [
+  {
+   "id": "investedShare",
+   "label": "Invested share of assets",
+   "parent": "pctToFI",
+   "tier": 1,
+   "how": "invested over total assets",
+   "needs": [
+    "A2",
+    "A1"
+   ],
+   "unit": "rate",
+   "ratio": {
+    "top": {
+     "what": "invested",
+     "levels": [
+      "A2"
+     ]
+    },
+    "bottom": {
+     "what": "total assets",
+     "levels": [
+      "A1"
+     ]
+    },
+    "communityName": "invested share",
+    "benchmarkKey": "investedShare",
+    "bandNotes": "Cash does not compound. Over 80% once the emergency fund is full.",
+    "lives": "percent to FI"
+   },
+   "fn": "investedShare"
+  },
+  {
+   "id": "cashShare",
+   "label": "Cash share",
+   "parent": "cashDrag",
+   "tier": 1,
+   "how": "cash over total assets",
+   "needs": [
+    "A2",
+    "A1"
+   ],
+   "unit": "rate",
+   "ratio": {
+    "top": {
+     "what": "cash",
+     "levels": [
+      "A2"
+     ]
+    },
+    "bottom": {
+     "what": "total assets",
+     "levels": [
+      "A1"
+     ]
+    },
+    "communityName": "cash share",
+    "benchmarkKey": "cashShare",
+    "bandNotes": "Target = emergency fund plus dated cash uses, no more.",
+    "lives": "cash drag"
+   },
+   "fn": "cashShare"
+  },
+  {
+   "id": "foodShare",
+   "label": "Food share",
+   "parent": "fatShares",
+   "tier": 2,
+   "how": "food bucket over take-home",
+   "needs": [
+    "E4",
+    "I1"
+   ],
+   "unit": "rate",
+   "ratio": {
+    "top": {
+     "what": "food bucket",
+     "levels": [
+      "E4"
+     ]
+    },
+    "bottom": {
+     "what": "take-home",
+     "levels": [
+      "I1"
+     ]
+    },
+    "communityName": "food share",
+    "benchmarkKey": "foodShare",
+    "bandNotes": "One of the Big Three. 10 to 15% typical.",
+    "lives": "Deals moon"
+   },
+   "fn": "foodShare"
+  },
+  {
+   "id": "needsShare",
+   "label": "Needs share",
+   "parent": "nwi",
+   "tier": 3,
+   "how": "needs lines over take-home",
+   "needs": [
+    "E2",
+    "E4",
+    "E7",
+    "E8",
+    "E9",
+    "I1"
+   ],
+   "unit": "rate",
+   "ratio": {
+    "top": {
+     "what": "needs lines",
+     "levels": [
+      "E2",
+      "E4",
+      "E7",
+      "E8",
+      "E9"
+     ]
+    },
+    "bottom": {
+     "what": "take-home",
+     "levels": [
+      "I1"
+     ]
+    },
+    "communityName": "needs share",
+    "benchmarkKey": "needsShare",
+    "bandNotes": "50/30/20: 50. DRAFTT bands by selected source.",
+    "lives": "E16"
+   },
+   "fn": "needsShare"
+  },
+  {
+   "id": "wantsShare",
+   "label": "Wants share",
+   "parent": "nwi",
+   "tier": 3,
+   "how": "wants lines over take-home",
+   "needs": [
+    "E9",
+    "I1"
+   ],
+   "unit": "rate",
+   "ratio": {
+    "top": {
+     "what": "wants lines",
+     "levels": [
+      "E9"
+     ]
+    },
+    "bottom": {
+     "what": "take-home",
+     "levels": [
+      "I1"
+     ]
+    },
+    "communityName": "guilt-free spending (Sethi)",
+    "benchmarkKey": "wantsShare",
+    "bandNotes": "50/30/20: 30. Sethi conscious spending: 20 to 35%.",
+    "lives": "E16"
+   },
+   "fn": "wantsShare"
+  },
+  {
+   "id": "cashDragRate",
+   "label": "Cash drag rate",
+   "parent": "cashDrag",
+   "tier": 4,
+   "how": "benchmark rate minus your rate over one",
+   "needs": [
+    "A12"
+   ],
+   "unit": "rate",
+   "ratio": {
+    "top": {
+     "what": "benchmark rate minus your rate",
+     "levels": [
+      "A12"
+     ]
+    },
+    "bottom": {
+     "what": "one",
+     "levels": []
+    },
+    "communityName": "cash drag rate",
+    "benchmarkKey": "cashDragRate",
+    "bandNotes": "Any gap over 1 point on real cash is a quick win.",
+    "lives": "Safety Net moon"
+   },
+   "fn": "cashDragRate"
+  },
+  {
+   "id": "payerConcentration",
+   "label": "Income concentration",
+   "parent": "concentration",
+   "tier": 8,
+   "how": "largest single payer over total income",
+   "needs": [
+    "I24",
+    "I7"
+   ],
+   "unit": "rate",
+   "ratio": {
+    "top": {
+     "what": "largest single payer",
+     "levels": [
+      "I24"
+     ]
+    },
+    "bottom": {
+     "what": "total income",
+     "levels": [
+      "I7"
+     ]
+    },
+    "communityName": "income concentration",
+    "benchmarkKey": "payerConcentration",
+    "bandNotes": "Over 80% from one payer is normal for W-2, and is the reason for the emergency fund.",
+    "lives": "Protect band"
+   },
+   "fn": "payerConcentration"
+  },
+  {
+   "id": "employerStockShare",
+   "label": "Employer stock share",
+   "parent": "concentration",
+   "tier": 8,
+   "how": "largest single position over total invested",
+   "needs": [
+    "A22",
+    "A7"
+   ],
+   "unit": "rate",
+   "ratio": {
+    "top": {
+     "what": "largest single position",
+     "levels": [
+      "A22"
+     ]
+    },
+    "bottom": {
+     "what": "total invested",
+     "levels": [
+      "A7"
+     ]
+    },
+    "communityName": "single-stock concentration",
+    "benchmarkKey": "employerStockShare",
+    "bandNotes": "Over 10% is a flag.",
+    "lives": "Protect band"
+   },
+   "fn": "employerStockShare"
+  },
+  {
+   "id": "weightedER",
+   "label": "Weighted expense ratio",
+   "parent": "feeDrag",
+   "tier": 9,
+   "how": "sum of balance times expense ratio over total invested",
+   "needs": [
+    "A7",
+    "A25"
+   ],
+   "unit": "rate",
+   "ratio": {
+    "top": {
+     "what": "sum of balance times expense ratio",
+     "levels": [
+      "A7",
+      "A25"
+     ]
+    },
+    "bottom": {
+     "what": "total invested",
+     "levels": [
+      "A7"
+     ]
+    },
+    "communityName": "fee rate",
+    "benchmarkKey": "weightedER",
+    "bandNotes": "Bogleheads lens: under 0.20%, index funds near 0.05%.",
+    "lives": "fee drag"
+   },
+   "fn": "weightedER"
+  }
+ ],
+ "states": [
+  "locked",
+  "rough",
+  "sharp",
+  "earned"
+ ],
+ "recipes": [
+  {
+   "id": "gap",
+   "label": "Gap (monthly)",
+   "tier": 1,
+   "kind": "metric",
+   "how": "I1 minus E1, after E3 strips out debt payments and saving",
+   "needs": [
+    "I1",
+    "E1",
+    "E3"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "E6",
+    "E19"
+   ],
+   "feeds": [
+    "savingsRatePotential",
+    "fiDate",
+    "payoffTimeRough",
+    "the sun"
+   ],
+   "unit": "cents",
+   "fn": "gap",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "savingsRatePotential",
+   "label": "Savings rate, potential",
+   "tier": 1,
+   "kind": "metric",
+   "how": "gap over I1",
+   "needs": [
+    "I1",
+    "E1",
+    "E3"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "E19",
+    "I20"
+   ],
+   "feeds": [
+    "Dashboard headline",
+    "draftt"
+   ],
+   "unit": "rate",
+   "fn": "savingsRatePotential",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "take-home minus clean spending",
+     "levels": [
+      "I1",
+      "E1",
+      "E3"
+     ]
+    },
+    "bottom": {
+     "what": "take-home",
+     "levels": [
+      "I1"
+     ]
+    },
+    "communityName": "the gap rate",
+    "benchmarkKey": "savingsRate",
+    "bandNotes": "Same bands as the actual rate. The distance between the two is the leak.",
+    "lives": "the sun"
+   },
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "savingsRateActual",
+   "label": "Savings rate, actual",
+   "tier": 1,
+   "kind": "metric",
+   "how": "A3 over I1",
+   "needs": [
+    "A3",
+    "I1"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "A8",
+    "I9"
+   ],
+   "feeds": [
+    "Dashboard headline",
+    "fiDate"
+   ],
+   "unit": "rate",
+   "fn": "savingsRateActual",
+   "core": true,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "what you add per month",
+     "levels": [
+      "A3"
+     ]
+    },
+    "bottom": {
+     "what": "take-home",
+     "levels": [
+      "I1"
+     ]
+    },
+    "communityName": "savings rate (net)",
+    "benchmarkKey": "savingsRate",
+    "bandNotes": "MMM table: 10% is about 51 working years, 25% about 32, 50% about 17, 75% about 7. The FIRE community watches 20 / 50 / 70.",
+    "lives": "Dashboard headline, DRAFTT"
+   },
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "leakRate",
+   "label": "Leak rate",
+   "tier": 1,
+   "kind": "metric",
+   "how": "(gap minus A3) over I1",
+   "needs": [
+    "I1",
+    "E1",
+    "E3",
+    "A3"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "E19",
+    "A8"
+   ],
+   "feeds": [
+    "expenseLevers",
+    "quick wins"
+   ],
+   "unit": "rate",
+   "fn": "leakRate",
+   "core": true,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "potential saving minus actual saving",
+     "levels": [
+      "I1",
+      "E1",
+      "E3",
+      "A3"
+     ]
+    },
+    "bottom": {
+     "what": "take-home",
+     "levels": [
+      "I1"
+     ]
+    },
+    "communityName": "the missing money",
+    "benchmarkKey": "leakRate",
+    "bandNotes": "Under 5% is tight. Over 10% means the spending estimate is low or money is drifting.",
+    "lives": "E18 levers, quick wins"
+   },
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "savingsRateGross",
+   "label": "Savings rate on gross",
+   "tier": 1,
+   "kind": "metric",
+   "how": "A3 over (I2 / 12)",
+   "needs": [
+    "A3",
+    "I2"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "I9",
+    "A8"
+   ],
+   "feeds": [
+    "benchmark lenses"
+   ],
+   "unit": "rate",
+   "fn": "savingsRateGross",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "what you add per month",
+     "levels": [
+      "A3"
+     ]
+    },
+    "bottom": {
+     "what": "gross monthly pay",
+     "levels": [
+      "I2"
+     ]
+    },
+    "communityName": "Money Guy savings rate",
+    "benchmarkKey": "savingsRateGross",
+    "bandNotes": "Money Guy lens: 25% of gross. Traditional advice: 15%.",
+    "lives": "benchmark lens toggle"
+   },
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "fiNumber",
+   "label": "FI number",
+   "tier": 1,
+   "kind": "metric",
+   "how": "(E1 x 12) over the withdrawal rate",
+   "needs": [
+    "E1",
+    "E3"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "E6",
+    "E19",
+    "E28",
+    "T30"
+   ],
+   "feeds": [
+    "pctToFI",
+    "fiDate",
+    "coastTarget"
+   ],
+   "unit": "cents",
+   "fn": "fiNumber",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "netWorth",
+   "label": "Net worth",
+   "tier": 1,
+   "kind": "metric",
+   "how": "A1 minus D1",
+   "needs": [
+    "A1",
+    "D1"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "A7",
+    "D7",
+    "A19",
+    "D19"
+   ],
+   "feeds": [
+    "nwStatement",
+    "debtToAssets"
+   ],
+   "unit": "cents",
+   "fn": "netWorth",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "debtToAssets",
+   "label": "Debt-to-assets",
+   "tier": 1,
+   "kind": "metric",
+   "how": "D1 over A1 (0% when debt is none)",
+   "needs": [
+    "A1",
+    "D1"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "A7",
+    "D7"
+   ],
+   "feeds": [
+    "Leverage moon",
+    "resilience"
+   ],
+   "unit": "rate",
+   "fn": "debtToAssets",
+   "core": true,
+   "earnedWhen": "debt.none",
+   "ratio": {
+    "top": {
+     "what": "total debt",
+     "levels": [
+      "D1"
+     ]
+    },
+    "bottom": {
+     "what": "total assets",
+     "levels": [
+      "A1"
+     ]
+    },
+    "communityName": "leverage ratio",
+    "benchmarkKey": "debtToAssets",
+    "bandNotes": "0% when debt is none. Over 50% is fragile outside a mortgage.",
+    "lives": "Leverage moon"
+   },
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "pctToFI",
+   "label": "Percent to FI",
+   "tier": 1,
+   "kind": "metric",
+   "how": "invested part of A2 over fiNumber",
+   "needs": [
+    "A1",
+    "A2",
+    "E1",
+    "E3"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "A7",
+    "E6"
+   ],
+   "feeds": [
+    "milestone",
+    "Y18"
+   ],
+   "unit": "rate",
+   "fn": "pctToFI",
+   "core": true,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "invested assets",
+     "levels": [
+      "A2"
+     ]
+    },
+    "bottom": {
+     "what": "FI number",
+     "levels": [
+      "E1",
+      "E3"
+     ]
+    },
+    "communityName": "FI ratio, crossover progress (YMOYL)",
+    "benchmarkKey": "pctToFI",
+    "bandNotes": "100% = FI at the chosen withdrawal rate.",
+    "lives": "milestone ladder"
+   },
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "fiDate",
+   "label": "FI date",
+   "tier": 1,
+   "kind": "metric",
+   "how": "years for invested A2 plus A3 per month to reach fiNumber at the default real return, added to Y1",
+   "needs": [
+    "Y1",
+    "A2",
+    "A3",
+    "E1",
+    "E3"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "A13",
+    "I13",
+    "A14",
+    "E14"
+   ],
+   "feeds": [
+    "everything: the number every lever moves"
+   ],
+   "unit": "date",
+   "fn": "fiDate",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "coastTarget",
+   "label": "Coast FI target",
+   "tier": 1,
+   "kind": "metric",
+   "how": "fiNumber over (1 + real return) to the power of (Y3 minus Y1)",
+   "needs": [
+    "Y1",
+    "Y3",
+    "E1",
+    "E3"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "A13",
+    "E28"
+   ],
+   "feeds": [
+    "pctToCoast",
+    "Y18"
+   ],
+   "unit": "cents",
+   "fn": "coastTarget",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "pctToCoast",
+   "label": "Percent to Coast FI",
+   "tier": 1,
+   "kind": "metric",
+   "how": "invested part of A2 over coastTarget",
+   "needs": [
+    "Y1",
+    "Y3",
+    "E1",
+    "E3",
+    "A2"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "A7"
+   ],
+   "feeds": [
+    "milestone"
+   ],
+   "unit": "rate",
+   "fn": "pctToCoast",
+   "core": true,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "invested assets",
+     "levels": [
+      "A2"
+     ]
+    },
+    "bottom": {
+     "what": "Coast FI target",
+     "levels": [
+      "Y1",
+      "Y3",
+      "E1",
+      "E3"
+     ]
+    },
+    "communityName": "Coast FI progress",
+    "benchmarkKey": "pctToCoast",
+    "bandNotes": "100% = you could stop contributing today.",
+    "lives": "milestone ladder"
+   },
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "targetDateGap",
+   "label": "On track for your date",
+   "tier": 1,
+   "kind": "metric",
+   "how": "fiDate against Y3, in years",
+   "needs": [
+    "Y1",
+    "Y3",
+    "A2",
+    "A3",
+    "E1",
+    "E3"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "I13",
+    "A14"
+   ],
+   "feeds": [
+    "Y17",
+    "the sun"
+   ],
+   "unit": "years",
+   "fn": "targetDateGap",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "payoffTimeRough",
+   "label": "Debt payoff time, rough",
+   "tier": 1,
+   "kind": "metric",
+   "how": "D1 paid down at D2 per month with a default blended rate",
+   "needs": [
+    "D1",
+    "D2"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "D5",
+    "D7",
+    "D13"
+   ],
+   "feeds": [
+    "Payoff Plan moon"
+   ],
+   "unit": "months",
+   "fn": "payoffTimeRough",
+   "core": false,
+   "earnedWhen": "debt.none",
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "highInterestFlag",
+   "label": "High-interest debt flag",
+   "tier": 1,
+   "kind": "metric",
+   "how": "D3 above zero",
+   "needs": [
+    "D3"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "D7"
+   ],
+   "feeds": [
+    "gates Card Rewards, Real Estate and Leverage moons",
+    "order of operations"
+   ],
+   "unit": "flag",
+   "fn": "highInterestFlag",
+   "core": false,
+   "earnedWhen": "debt.none",
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "minimumsRate",
+   "label": "Debt payment rate",
+   "tier": 1,
+   "kind": "metric",
+   "how": "D2 over I1",
+   "needs": [
+    "D2",
+    "I1"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "D7"
+   ],
+   "feeds": [
+    "fixedCostRate",
+    "backEndDTI"
+   ],
+   "unit": "rate",
+   "fn": "minimumsRate",
+   "core": false,
+   "earnedWhen": "debt.none",
+   "ratio": {
+    "top": {
+     "what": "total minimums",
+     "levels": [
+      "D2"
+     ]
+    },
+    "bottom": {
+     "what": "take-home",
+     "levels": [
+      "I1"
+     ]
+    },
+    "communityName": "debt service ratio",
+    "benchmarkKey": "minimumsRate",
+    "bandNotes": "Under 10% comfortable, over 20% is a drag on everything.",
+    "lives": "fixed-cost rate"
+   },
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "shelterRate",
+   "label": "Shelter rate",
+   "tier": 1,
+   "kind": "metric",
+   "how": "E2 over I1",
+   "needs": [
+    "E2",
+    "I1"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "D12",
+    "E19"
+   ],
+   "feeds": [
+    "shelterRead",
+    "Real Estate moon"
+   ],
+   "unit": "rate",
+   "fn": "shelterRate",
+   "core": true,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "shelter cost",
+     "levels": [
+      "E2"
+     ]
+    },
+    "bottom": {
+     "what": "take-home",
+     "levels": [
+      "I1"
+     ]
+    },
+    "communityName": "housing ratio",
+    "benchmarkKey": "shelterRate",
+    "bandNotes": "Common bands: under 25 to 30% of take-home. Money Guy lens: 25% of gross.",
+    "lives": "E17, Real Estate moon"
+   },
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "impliedTaxRate",
+   "label": "Implied tax rate",
+   "tier": 1,
+   "kind": "metric",
+   "how": "1 minus (I1 x 12 over I2)",
+   "needs": [
+    "I1",
+    "I2"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "I9",
+    "T19"
+   ],
+   "feeds": [
+    "after-tax versions of every metric"
+   ],
+   "unit": "rate",
+   "fn": "impliedTaxRate",
+   "core": true,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "gross minus annualized take-home",
+     "levels": [
+      "I1",
+      "I2"
+     ]
+    },
+    "bottom": {
+     "what": "gross",
+     "levels": [
+      "I2"
+     ]
+    },
+    "communityName": "implied tax rate",
+    "benchmarkKey": "impliedTaxRate",
+    "bandNotes": "Looks high until the stub is read, because pretax saving hides in it.",
+    "lives": "T2"
+   },
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "stateRateRough",
+   "label": "State tax rate, rough",
+   "tier": 1,
+   "kind": "metric",
+   "how": "lookup on Y2",
+   "needs": [
+    "Y2"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "T9",
+    "T10"
+   ],
+   "feeds": [
+    "T1"
+   ],
+   "unit": "rate",
+   "fn": "stateRateRough",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "incomeVolatility",
+   "label": "Income swing",
+   "tier": 1,
+   "kind": "metric",
+   "how": "(high minus low) over typical, from I3",
+   "needs": [
+    "I3"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "I12",
+    "I14"
+   ],
+   "feeds": [
+    "efTarget",
+    "stability"
+   ],
+   "unit": "rate",
+   "fn": "incomeVolatility",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "high month minus low month",
+     "levels": [
+      "I3"
+     ]
+    },
+    "bottom": {
+     "what": "typical month",
+     "levels": [
+      "I3"
+     ]
+    },
+    "communityName": "income swing",
+    "benchmarkKey": "incomeVolatility",
+    "bandNotes": "Under 10% steady. Over 30% needs a bigger cushion.",
+    "lives": "efTarget"
+   },
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "trueMonthlySpend",
+   "label": "True monthly spend",
+   "tier": 2,
+   "kind": "metric",
+   "how": "E1 plus E6 over 12",
+   "needs": [
+    "E1",
+    "E3",
+    "E6"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "E13",
+    "E19"
+   ],
+   "feeds": [
+    "replaces E1 inside fiNumber, fiDate, bridgeYears"
+   ],
+   "unit": "cents",
+   "fn": "trueMonthlySpend",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 2
+  },
+  {
+   "id": "runwayMonths",
+   "label": "Runway months",
+   "tier": 2,
+   "kind": "metric",
+   "how": "cash that counts (A4) over E5",
+   "needs": [
+    "A4",
+    "E5"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "A19",
+    "E24"
+   ],
+   "feeds": [
+    "Safety Net moon",
+    "jobLossRunway"
+   ],
+   "unit": "months",
+   "fn": "runwayMonths",
+   "core": true,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "cash that counts",
+     "levels": [
+      "A4"
+     ]
+    },
+    "bottom": {
+     "what": "bare-bones month",
+     "levels": [
+      "E5"
+     ]
+    },
+    "communityName": "emergency fund months",
+    "benchmarkKey": "runwayMonths",
+    "bandNotes": "3 to 6, more for variable income.",
+    "lives": "Safety Net moon"
+   },
+   "tables": [],
+   "maxNeedBand": 2
+  },
+  {
+   "id": "efTarget",
+   "label": "Emergency fund target",
+   "tier": 2,
+   "kind": "metric",
+   "how": "E5 x months, where months defaults from I3 (steady 3, variable 6)",
+   "needs": [
+    "E5",
+    "I3"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "I16",
+    "A18"
+   ],
+   "feeds": [
+    "Safety Net moon",
+    "order of operations"
+   ],
+   "unit": "cents",
+   "fn": "efTarget",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 2
+  },
+  {
+   "id": "matchCapture",
+   "label": "Match capture rate",
+   "tier": 2,
+   "kind": "metric",
+   "how": "percent of the available match you get (I4)",
+   "needs": [
+    "I4"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "I9",
+    "I26"
+   ],
+   "feeds": [
+    "order of operations step 1"
+   ],
+   "unit": "rate",
+   "fn": "matchCapture",
+   "core": true,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "match received",
+     "levels": [
+      "I4"
+     ]
+    },
+    "bottom": {
+     "what": "match available",
+     "levels": [
+      "I4"
+     ]
+    },
+    "communityName": "free money rate",
+    "benchmarkKey": "matchCapture",
+    "bandNotes": "100% or it is the first move.",
+    "lives": "Main Path step 1"
+   },
+   "tables": [],
+   "maxNeedBand": 2
+  },
+  {
+   "id": "matchLeft",
+   "label": "Match left on the table",
+   "tier": 2,
+   "kind": "metric",
+   "how": "I2 x the uncaptured match percent, dollars per year",
+   "needs": [
+    "I4",
+    "I2"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "I9"
+   ],
+   "feeds": [
+    "quick win",
+    "Main Path moon"
+   ],
+   "unit": "dollarsPerYear",
+   "fn": "matchLeft",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 2
+  },
+  {
+   "id": "liquidityRate",
+   "label": "Liquidity rate",
+   "tier": 2,
+   "kind": "metric",
+   "how": "assets reachable without penalty over total assets, using default tiers by account type",
+   "needs": [
+    "A1",
+    "A2",
+    "A5",
+    "A6"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "A10",
+    "A11",
+    "A27"
+   ],
+   "feeds": [
+    "bridgeYears",
+    "trapRatio"
+   ],
+   "unit": "rate",
+   "fn": "liquidityRate",
+   "core": true,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "assets reachable without penalty",
+     "levels": [
+      "A2",
+      "A5",
+      "A6"
+     ]
+    },
+    "bottom": {
+     "what": "total assets",
+     "levels": [
+      "A1"
+     ]
+    },
+    "communityName": "accessible share",
+    "benchmarkKey": "liquidityRate",
+    "bandNotes": "No universal band. Read against years until 59.5.",
+    "lives": "bridge"
+   },
+   "tables": [],
+   "maxNeedBand": 2
+  },
+  {
+   "id": "bridgeYears",
+   "label": "Bridge years",
+   "tier": 2,
+   "kind": "metric",
+   "how": "reachable assets over (trueMonthlySpend x 12)",
+   "needs": [
+    "A2",
+    "A5",
+    "A6",
+    "E1",
+    "E6"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "A11",
+    "E28"
+   ],
+   "feeds": [
+    "bridgeNumber",
+    "drawdownPlan"
+   ],
+   "unit": "years",
+   "fn": "bridgeYears",
+   "core": true,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "reachable assets",
+     "levels": [
+      "A2",
+      "A5",
+      "A6"
+     ]
+    },
+    "bottom": {
+     "what": "annual spending",
+     "levels": [
+      "E1",
+      "E6"
+     ]
+    },
+    "communityName": "bridge years",
+    "benchmarkKey": "bridgeYears",
+    "bandNotes": "Needs to cover the target date to 59.5.",
+    "lives": "bridge"
+   },
+   "tables": [],
+   "maxNeedBand": 2
+  },
+  {
+   "id": "mustPayRate",
+   "label": "Must-pay rate, rough",
+   "tier": 2,
+   "kind": "metric",
+   "how": "(E2 plus D2) over I1",
+   "needs": [
+    "E2",
+    "D2",
+    "I1"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "E7",
+    "E10"
+   ],
+   "feeds": [
+    "fixedCostRate"
+   ],
+   "unit": "rate",
+   "fn": "mustPayRate",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "shelter plus minimums",
+     "levels": [
+      "E2",
+      "D2"
+     ]
+    },
+    "bottom": {
+     "what": "take-home",
+     "levels": [
+      "I1"
+     ]
+    },
+    "communityName": "must-pay rate",
+    "benchmarkKey": "mustPayRate",
+    "bandNotes": "First pass of the 50 in 50/30/20.",
+    "lives": "resilience"
+   },
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "fatShares",
+   "label": "FAT and wants shares",
+   "tier": 2,
+   "kind": "metric",
+   "how": "each E4 bucket over I1",
+   "needs": [
+    "E4",
+    "I1"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "E9",
+    "E19"
+   ],
+   "feeds": [
+    "draftt"
+   ],
+   "unit": "list",
+   "fn": "fatShares",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 2
+  },
+  {
+   "id": "slotFirst",
+   "label": "Next slot for your money, first pass",
+   "tier": 2,
+   "kind": "metric",
+   "how": "walk the order of operations using D3, I4, A4 against efTarget, A5, I6, T5",
+   "needs": [
+    "D3",
+    "I4",
+    "A4",
+    "E5",
+    "A5",
+    "I6",
+    "T5"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "A8",
+    "A16"
+   ],
+   "feeds": [
+    "Main Path moon",
+    "next-3 card"
+   ],
+   "unit": "text",
+   "fn": "slotFirst",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 2
+  },
+  {
+   "id": "creditBand",
+   "label": "Credit band",
+   "tier": 2,
+   "kind": "metric",
+   "how": "D6",
+   "needs": [
+    "D6"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "D20",
+    "D21"
+   ],
+   "feeds": [
+    "Card Rewards, Credit Building and Real Estate moons",
+    "mortgageCapacity"
+   ],
+   "unit": "text",
+   "fn": "creditBand",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 2
+  },
+  {
+   "id": "accountsUsed",
+   "label": "Tax-advantaged accounts used",
+   "tier": 2,
+   "kind": "metric",
+   "how": "accounts held (A5) against accounts offered (I6)",
+   "needs": [
+    "A5",
+    "I6",
+    "T5"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "A8"
+   ],
+   "feeds": [
+    "Tax Strategy moon",
+    "slotFirst"
+   ],
+   "unit": "list",
+   "fn": "accountsUsed",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 2
+  },
+  {
+   "id": "payoffTimeExtra",
+   "label": "Debt payoff time with extra",
+   "tier": 2,
+   "kind": "metric",
+   "how": "payoffTimeRough re-run with D5",
+   "needs": [
+    "D1",
+    "D2",
+    "D5"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "D7",
+    "D13"
+   ],
+   "feeds": [
+    "Payoff Plan moon"
+   ],
+   "unit": "months",
+   "fn": "payoffTimeExtra",
+   "core": false,
+   "earnedWhen": "debt.none",
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 2
+  },
+  {
+   "id": "homeEquity",
+   "label": "Home equity, rough",
+   "tier": 2,
+   "kind": "metric",
+   "how": "A6 home value minus the mortgage balance in D4",
+   "needs": [
+    "A6",
+    "D4"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "A21",
+    "D12"
+   ],
+   "feeds": [
+    "liquidityRate",
+    "Real Estate moon"
+   ],
+   "unit": "cents",
+   "fn": "homeEquity",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 2
+  },
+  {
+   "id": "householdMode",
+   "label": "Household mode",
+   "tier": 2,
+   "kind": "metric",
+   "how": "Y5: solo, partnered shared, partnered separate",
+   "needs": [
+    "Y5"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "Y7",
+    "E12"
+   ],
+   "feeds": [
+    "which levels exist",
+    "per-person against combined metrics"
+   ],
+   "unit": "text",
+   "fn": "householdMode",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 2
+  },
+  {
+   "id": "nwi",
+   "label": "Needs / wants / investing",
+   "tier": 3,
+   "kind": "metric",
+   "how": "needs = E2 plus needs lines in E7, E8 and groceries in E9. Wants = the rest of E9. Investing = A3. Each over I1",
+   "needs": [
+    "E2",
+    "E4",
+    "E7",
+    "E8",
+    "E9",
+    "A3",
+    "I1"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "E10",
+    "E19",
+    "E20"
+   ],
+   "feeds": [
+    "E16",
+    "draftt"
+   ],
+   "unit": "list",
+   "fn": "nwi",
+   "core": true,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 3
+  },
+  {
+   "id": "draftt",
+   "label": "DRAFTT scorecard",
+   "tier": 3,
+   "kind": "metric",
+   "how": "each share of take-home against the selected benchmark band",
+   "needs": [
+    "E2",
+    "E4",
+    "E7",
+    "E8",
+    "E9",
+    "A3",
+    "D2",
+    "I1"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "E19"
+   ],
+   "feeds": [
+    "Dashboard",
+    "E16"
+   ],
+   "unit": "list",
+   "fn": "draftt",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 3
+  },
+  {
+   "id": "nwStatement",
+   "label": "Net worth statement",
+   "tier": 3,
+   "kind": "metric",
+   "how": "sum of A7 plus A9 plus A6 minus each debt in D7 and D9",
+   "needs": [
+    "A6",
+    "A7",
+    "A9",
+    "D7",
+    "D9"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "A19",
+    "D19",
+    "A21"
+   ],
+   "feeds": [
+    "replaces A1 and D1 everywhere"
+   ],
+   "unit": "cents",
+   "fn": "nwStatement",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 3
+  },
+  {
+   "id": "incomeBySource",
+   "label": "Income by source",
+   "tier": 3,
+   "kind": "metric",
+   "how": "each I7 and I8 line over the total",
+   "needs": [
+    "I7",
+    "I8"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "I19",
+    "I21"
+   ],
+   "feeds": [
+    "concentration",
+    "stability",
+    "Side Hustles moon"
+   ],
+   "unit": "list",
+   "fn": "incomeBySource",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 3
+  },
+  {
+   "id": "taxableIncome",
+   "label": "Taxable income",
+   "tier": 3,
+   "kind": "metric",
+   "how": "I2 minus pretax lines from I9 minus the standard deduction by T4",
+   "needs": [
+    "I2",
+    "I9",
+    "T4"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "T12",
+    "T19"
+   ],
+   "feeds": [
+    "marginalBracket",
+    "rothCall"
+   ],
+   "unit": "cents",
+   "fn": "taxableIncome",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 3
+  },
+  {
+   "id": "refundOwed",
+   "label": "Projected refund or owed",
+   "tier": 3,
+   "kind": "metric",
+   "how": "annualized withholding (I9) minus the estimated tax on taxableIncome, including T9",
+   "needs": [
+    "I2",
+    "I9",
+    "T4",
+    "T9",
+    "Y2"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "T19",
+    "T20"
+   ],
+   "feeds": [
+    "quick win: fix withholding"
+   ],
+   "unit": "cents",
+   "fn": "refundOwed",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 3
+  },
+  {
+   "id": "trueSavingsRate",
+   "label": "True savings rate",
+   "tier": 3,
+   "kind": "metric",
+   "how": "(A8 contributions plus pretax saving on I9 plus match from I4) over gross",
+   "needs": [
+    "A8",
+    "I9",
+    "I4",
+    "I2"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "A14"
+   ],
+   "feeds": [
+    "replaces savingsRateActual"
+   ],
+   "unit": "rate",
+   "fn": "trueSavingsRate",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "contributions by account plus pretax saving on the stub plus match",
+     "levels": [
+      "A8",
+      "I9",
+      "I4"
+     ]
+    },
+    "bottom": {
+     "what": "gross pay",
+     "levels": [
+      "I2"
+     ]
+    },
+    "communityName": "all-in savings rate",
+    "benchmarkKey": "savingsRateGross",
+    "bandNotes": "The version to compare against any published benchmark. Settings declare whether match and mortgage principal count.",
+    "lives": "replaces actual once available"
+   },
+   "tables": [],
+   "maxNeedBand": 3
+  },
+  {
+   "id": "weightedDebtRate",
+   "label": "Weighted debt rate",
+   "tier": 3,
+   "kind": "metric",
+   "how": "sum(balance x rate) over sum(balance) over D7",
+   "needs": [
+    "D7"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "D19"
+   ],
+   "feeds": [
+    "flipRate"
+   ],
+   "unit": "rate",
+   "fn": "weightedDebtRate",
+   "core": false,
+   "earnedWhen": "debt.none",
+   "ratio": {
+    "top": {
+     "what": "sum of balance times rate",
+     "levels": [
+      "D7"
+     ]
+    },
+    "bottom": {
+     "what": "total debt",
+     "levels": [
+      "D7"
+     ]
+    },
+    "communityName": "weighted debt rate",
+    "benchmarkKey": "weightedDebtRate",
+    "bandNotes": "Compare to the flip rate at D17.",
+    "lives": "slot"
+   },
+   "tables": [],
+   "maxNeedBand": 3
+  },
+  {
+   "id": "interestPerMonth",
+   "label": "Interest paid per month",
+   "tier": 3,
+   "kind": "metric",
+   "how": "sum(balance x rate over 12) over D7",
+   "needs": [
+    "D7",
+    "D8"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "D19"
+   ],
+   "feeds": [
+    "Payoff Plan moon",
+    "quick wins"
+   ],
+   "unit": "cents",
+   "fn": "interestPerMonth",
+   "core": false,
+   "earnedWhen": "debt.none",
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 3
+  },
+  {
+   "id": "retContribRate",
+   "label": "Retirement contribution rate",
+   "tier": 3,
+   "kind": "metric",
+   "how": "401k and similar lines on I9 over gross per check",
+   "needs": [
+    "I9"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "A14"
+   ],
+   "feeds": [
+    "matchCapture check",
+    "slot"
+   ],
+   "unit": "rate",
+   "fn": "retContribRate",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "401k and similar on the stub",
+     "levels": [
+      "I9"
+     ]
+    },
+    "bottom": {
+     "what": "gross per check",
+     "levels": [
+      "I9"
+     ]
+    },
+    "communityName": "deferral rate",
+    "benchmarkKey": "retContribRate",
+    "bandNotes": "Traditional advice 15%. FIRE community: to the limit.",
+    "lives": "slot"
+   },
+   "tables": [],
+   "maxNeedBand": 3
+  },
+  {
+   "id": "recurringTotal",
+   "label": "Recurring bills total",
+   "tier": 3,
+   "kind": "metric",
+   "how": "sum of E7",
+   "needs": [
+    "E7"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "E19"
+   ],
+   "feeds": [
+    "fixedCostRate",
+    "Deals moon"
+   ],
+   "unit": "cents",
+   "fn": "recurringTotal",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 3
+  },
+  {
+   "id": "transportRate",
+   "label": "Transportation rate",
+   "tier": 3,
+   "kind": "metric",
+   "how": "E8 over I1",
+   "needs": [
+    "E8",
+    "I1"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "E19"
+   ],
+   "feeds": [
+    "E18 levers"
+   ],
+   "unit": "rate",
+   "fn": "transportRate",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "full transportation cost",
+     "levels": [
+      "E8"
+     ]
+    },
+    "bottom": {
+     "what": "take-home",
+     "levels": [
+      "I1"
+     ]
+    },
+    "communityName": "transportation rate",
+    "benchmarkKey": "transportRate",
+    "bandNotes": "One of the Big Three. 10 to 15% typical.",
+    "lives": "E18"
+   },
+   "tables": [],
+   "maxNeedBand": 3
+  },
+  {
+   "id": "promoCliff",
+   "label": "Promo rate cliff",
+   "tier": 3,
+   "kind": "metric",
+   "how": "balance x the new rate after each D8 end date",
+   "needs": [
+    "D7",
+    "D8"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "D19"
+   ],
+   "feeds": [
+    "Payoff Plan moon alert"
+   ],
+   "unit": "cents",
+   "fn": "promoCliff",
+   "core": false,
+   "earnedWhen": "debt.none",
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 3
+  },
+  {
+   "id": "afterTaxNW",
+   "label": "After-tax net worth",
+   "tier": 4,
+   "kind": "metric",
+   "how": "each account in A7 haircut by its A10 tax type at T10, minus debts",
+   "needs": [
+    "A7",
+    "A10",
+    "T10",
+    "D7"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "A19",
+    "A26",
+    "T30"
+   ],
+   "feeds": [
+    "real FI progress"
+   ],
+   "unit": "cents",
+   "fn": "afterTaxNW",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 4
+  },
+  {
+   "id": "liquiditySharp",
+   "label": "Liquidity rate, confirmed",
+   "tier": 4,
+   "kind": "metric",
+   "how": "the same formula, with your A10 and A11 tags replacing the defaults",
+   "needs": [
+    "A7",
+    "A10",
+    "A11"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "A27"
+   ],
+   "feeds": [
+    "bridgeNumber"
+   ],
+   "unit": "rate",
+   "fn": "liquiditySharp",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 4
+  },
+  {
+   "id": "bridgeNumber",
+   "label": "Bridge number",
+   "tier": 4,
+   "kind": "metric",
+   "how": "trueMonthlySpend x 12 x (59.5 minus Y3), compared to reachable assets",
+   "needs": [
+    "Y3",
+    "E1",
+    "E6",
+    "A7",
+    "A11"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "E28",
+    "A27",
+    "T29"
+   ],
+   "feeds": [
+    "trapRatio flag",
+    "drawdownPlan"
+   ],
+   "unit": "cents",
+   "fn": "bridgeNumber",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 4
+  },
+  {
+   "id": "payoffPlan",
+   "label": "Payoff plan with dates",
+   "tier": 4,
+   "kind": "metric",
+   "how": "avalanche and snowball schedules over D7 with D5, honoring D8 and D10",
+   "needs": [
+    "D7",
+    "D8",
+    "D10",
+    "D5"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "D13",
+    "D19"
+   ],
+   "feeds": [
+    "D16",
+    "debtFreeDate"
+   ],
+   "unit": "list",
+   "fn": "payoffPlan",
+   "core": false,
+   "earnedWhen": "debt.none",
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 4
+  },
+  {
+   "id": "marginalBracket",
+   "label": "Marginal bracket",
+   "tier": 4,
+   "kind": "metric",
+   "how": "federal and state bracket on taxableIncome",
+   "needs": [
+    "I2",
+    "I9",
+    "T4",
+    "Y2",
+    "T9",
+    "T12"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "T19"
+   ],
+   "feeds": [
+    "rothCall",
+    "taxIfSold",
+    "harvestRoom"
+   ],
+   "unit": "rate",
+   "fn": "marginalBracket",
+   "core": true,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 4
+  },
+  {
+   "id": "leanFi",
+   "label": "Bare-bones and Lean FI number",
+   "tier": 4,
+   "kind": "metric",
+   "how": "fixed and essential lines (E10) x 12 over the withdrawal rate",
+   "needs": [
+    "E7",
+    "E8",
+    "E9",
+    "E10"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "E24",
+    "E19"
+   ],
+   "feeds": [
+    "milestone",
+    "efTarget check"
+   ],
+   "unit": "cents",
+   "fn": "leanFi",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 4
+  },
+  {
+   "id": "fixedCostRate",
+   "label": "Fixed-cost rate",
+   "tier": 4,
+   "kind": "metric",
+   "how": "all lines flagged fixed in E10 plus D2, over I1",
+   "needs": [
+    "E10",
+    "D2",
+    "I1"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "E19"
+   ],
+   "feeds": [
+    "resilience",
+    "jobLossRunway"
+   ],
+   "unit": "rate",
+   "fn": "fixedCostRate",
+   "core": true,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "every line flagged fixed plus minimums",
+     "levels": [
+      "E10",
+      "D2"
+     ]
+    },
+    "bottom": {
+     "what": "take-home",
+     "levels": [
+      "I1"
+     ]
+    },
+    "communityName": "needs share",
+    "benchmarkKey": "fixedCostRate",
+    "bandNotes": "50/30/20 lens: needs at or under 50%.",
+    "lives": "job-loss runway"
+   },
+   "tables": [],
+   "maxNeedBand": 4
+  },
+  {
+   "id": "cashDrag",
+   "label": "Cash drag",
+   "tier": 4,
+   "kind": "metric",
+   "how": "sum over cash accounts of balance x (benchmark rate minus A12)",
+   "needs": [
+    "A7",
+    "A12"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "A19"
+   ],
+   "feeds": [
+    "quick win: move the cash"
+   ],
+   "unit": "dollarsPerYear",
+   "fn": "cashDrag",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 4
+  },
+  {
+   "id": "hourlyFirst",
+   "label": "Real hourly wage, first pass",
+   "tier": 4,
+   "kind": "metric",
+   "how": "I1 over (hours plus commute from I11), net of work costs",
+   "needs": [
+    "I1",
+    "I11"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "I18"
+   ],
+   "feeds": [
+    "time toggle across rooms"
+   ],
+   "unit": "cents",
+   "fn": "hourlyFirst",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 4
+  },
+  {
+   "id": "seTaxFlag",
+   "label": "Self-employment tax exposure",
+   "tier": 4,
+   "kind": "metric",
+   "how": "1099 or business income in I10 x the SE rate",
+   "needs": [
+    "I7",
+    "I10"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "T14",
+    "T19"
+   ],
+   "feeds": [
+    "Entrepreneurship moon",
+    "quarterly estimates"
+   ],
+   "unit": "cents",
+   "fn": "seTaxFlag",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 4
+  },
+  {
+   "id": "insuranceRate",
+   "label": "Insurance cost rate",
+   "tier": 4,
+   "kind": "metric",
+   "how": "sum of E11 over I1",
+   "needs": [
+    "E11",
+    "I1"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "E22"
+   ],
+   "feeds": [
+    "Protection view"
+   ],
+   "unit": "rate",
+   "fn": "insuranceRate",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "all premiums",
+     "levels": [
+      "E11"
+     ]
+    },
+    "bottom": {
+     "what": "take-home",
+     "levels": [
+      "I1"
+     ]
+    },
+    "communityName": "insurance cost rate",
+    "benchmarkKey": "insuranceRate",
+    "bandNotes": "No fixed band. Flag if rising faster than income.",
+    "lives": "Protection view"
+   },
+   "tables": [],
+   "maxNeedBand": 4
+  },
+  {
+   "id": "coverageGapFirst",
+   "label": "Coverage gap, first pass",
+   "tier": 4,
+   "kind": "metric",
+   "how": "Y11 source against Y4 work situation (for example on a parent's plan, age from Y1)",
+   "needs": [
+    "Y1",
+    "Y4",
+    "Y11"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "Y20",
+    "Y21",
+    "Y22"
+   ],
+   "feeds": [
+    "Health moon"
+   ],
+   "unit": "list",
+   "fn": "coverageGapFirst",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 4
+  },
+  {
+   "id": "mortgageLoad",
+   "label": "Housing debt load",
+   "tier": 4,
+   "kind": "metric",
+   "how": "PITI plus PMI from D12 over I1",
+   "needs": [
+    "D12",
+    "I1"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "D19"
+   ],
+   "feeds": [
+    "shelterRead",
+    "refiSavings"
+   ],
+   "unit": "rate",
+   "fn": "mortgageLoad",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 4
+  },
+  {
+   "id": "rateRisk",
+   "label": "Variable-rate share",
+   "tier": 4,
+   "kind": "metric",
+   "how": "variable balances (D10) over total debt",
+   "needs": [
+    "D7",
+    "D10"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "D22"
+   ],
+   "feeds": [
+    "Protect band"
+   ],
+   "unit": "rate",
+   "fn": "rateRisk",
+   "core": false,
+   "earnedWhen": "debt.none",
+   "ratio": {
+    "top": {
+     "what": "variable balances",
+     "levels": [
+      "D10"
+     ]
+    },
+    "bottom": {
+     "what": "total debt",
+     "levels": [
+      "D7"
+     ]
+    },
+    "communityName": "variable-rate share",
+    "benchmarkKey": "variableShare",
+    "bandNotes": "Over 25% gets a rate-shock read.",
+    "lives": "Protect band"
+   },
+   "tables": [],
+   "maxNeedBand": 4
+  },
+  {
+   "id": "fiDateProjected",
+   "label": "FI date, projected",
+   "tier": 5,
+   "kind": "metric",
+   "how": "fiDate re-run with raises (I13), the contribution schedule (A14), the allocation-based return (A13), costs ending or starting (E14), planned cash uses (A15) and new debt (D14)",
+   "needs": [
+    "Y1",
+    "A7",
+    "A13",
+    "A14",
+    "A15",
+    "I13",
+    "E1",
+    "E6",
+    "E14",
+    "D14"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "E19",
+    "A19",
+    "Y16"
+   ],
+   "feeds": [
+    "the sun",
+    "scenario blocks"
+   ],
+   "unit": "date",
+   "fn": "fiDateProjected",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 5
+  },
+  {
+   "id": "sinkingTargets",
+   "label": "Sinking fund targets",
+   "tier": 5,
+   "kind": "metric",
+   "how": "each E13 item over the months until it is due",
+   "needs": [
+    "E13"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "E21"
+   ],
+   "feeds": [
+    "quick win: set up sinking funds"
+   ],
+   "unit": "list",
+   "fn": "sinkingTargets",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 5
+  },
+  {
+   "id": "fiByPhaseFirst",
+   "label": "FI number by phase, first pass",
+   "tier": 5,
+   "kind": "metric",
+   "how": "trueMonthlySpend adjusted for each E14 start or end date",
+   "needs": [
+    "E1",
+    "E6",
+    "E14"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "E28",
+    "E30"
+   ],
+   "feeds": [
+    "fiDateProjected"
+   ],
+   "unit": "list",
+   "fn": "fiByPhaseFirst",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 5
+  },
+  {
+   "id": "taxThisYear",
+   "label": "This year's projected tax",
+   "tier": 5,
+   "kind": "metric",
+   "how": "tax on taxableIncome including I8 irregular income and T14",
+   "needs": [
+    "I2",
+    "I8",
+    "I9",
+    "T4",
+    "T12",
+    "T14"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "T19",
+    "T20"
+   ],
+   "feeds": [
+    "withholdingCheck"
+   ],
+   "unit": "cents",
+   "fn": "taxThisYear",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 5
+  },
+  {
+   "id": "nextYearBracket",
+   "label": "Next year's bracket",
+   "tier": 5,
+   "kind": "metric",
+   "how": "marginalBracket re-run with Y13, I13 and I15 changes",
+   "needs": [
+    "T10",
+    "Y13",
+    "I13",
+    "I15"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "T19"
+   ],
+   "feeds": [
+    "rothCall"
+   ],
+   "unit": "rate",
+   "fn": "nextYearBracket",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 5
+  },
+  {
+   "id": "creepRate",
+   "label": "Lifestyle creep rate",
+   "tier": 5,
+   "kind": "metric",
+   "how": "E15 spending change against I14 income change",
+   "needs": [
+    "E15",
+    "I14"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "E21"
+   ],
+   "feeds": [
+    "expenseLevers",
+    "personal inflation"
+   ],
+   "unit": "rate",
+   "fn": "creepRate",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "spending change",
+     "levels": [
+      "E15"
+     ]
+    },
+    "bottom": {
+     "what": "income change",
+     "levels": [
+      "I14"
+     ]
+    },
+    "communityName": "lifestyle inflation",
+    "benchmarkKey": "creepRate",
+    "bandNotes": "Under 50% is healthy.",
+    "lives": "E18"
+   },
+   "tables": [],
+   "maxNeedBand": 5
+  },
+  {
+   "id": "incomeGrowth",
+   "label": "Income growth rate",
+   "tier": 5,
+   "kind": "metric",
+   "how": "the trend over I14, blended with the Y12 field default",
+   "needs": [
+    "I14",
+    "Y12"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "I19",
+    "I20"
+   ],
+   "feeds": [
+    "fiDateProjected",
+    "I30"
+   ],
+   "unit": "rate",
+   "fn": "incomeGrowth",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 5
+  },
+  {
+   "id": "expectedReturn",
+   "label": "Plan return assumption",
+   "tier": 5,
+   "kind": "metric",
+   "how": "a blend of the A13 allocation over the default asset-class returns",
+   "needs": [
+    "A13"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "A17",
+    "A20",
+    "Y16"
+   ],
+   "feeds": [
+    "replaces the default return in every projection"
+   ],
+   "unit": "rate",
+   "fn": "expectedReturn",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 5
+  },
+  {
+   "id": "debtFreeDate",
+   "label": "Debt-free date",
+   "tier": 5,
+   "kind": "metric",
+   "how": "payoffPlan re-run with D13",
+   "needs": [
+    "D7",
+    "D13",
+    "D14"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "D19",
+    "D29"
+   ],
+   "feeds": [
+    "milestone",
+    "D28"
+   ],
+   "unit": "date",
+   "fn": "debtFreeDate",
+   "core": false,
+   "earnedWhen": "debt.none",
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 5
+  },
+  {
+   "id": "eventBlocks",
+   "label": "Suggested scenario blocks",
+   "tier": 5,
+   "kind": "metric",
+   "how": "one block offered per Y13 event, Y14 move, A15 cash use and D14 new debt",
+   "needs": [
+    "Y13",
+    "Y14",
+    "A15",
+    "D14"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Scenario Planner"
+   ],
+   "unit": "list",
+   "fn": "eventBlocks",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 5
+  },
+  {
+   "id": "familyFlows",
+   "label": "Family money flows",
+   "tier": 5,
+   "kind": "metric",
+   "how": "Y15 expected inflows and outflows, dated",
+   "needs": [
+    "Y15"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "A29"
+   ],
+   "feeds": [
+    "windfallPlan",
+    "Family moon"
+   ],
+   "unit": "list",
+   "fn": "familyFlows",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 5
+  },
+  {
+   "id": "stability",
+   "label": "Income stability score",
+   "tier": 6,
+   "kind": "metric",
+   "how": "from the I3 swing, the I7 source count, the I10 types, I12 reliability and I14 history",
+   "needs": [
+    "I3",
+    "I7",
+    "I10",
+    "I12",
+    "I14"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "I19",
+    "I21"
+   ],
+   "feeds": [
+    "final efTarget months",
+    "Protect band"
+   ],
+   "unit": "score",
+   "fn": "stability",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 5
+  },
+  {
+   "id": "efFinal",
+   "label": "Emergency fund: target vs. actual",
+   "tier": 6,
+   "kind": "metric",
+   "how": "E5 x the months from stability, against A4",
+   "needs": [
+    "E5",
+    "A4",
+    "I16",
+    "A18"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "E24",
+    "A19"
+   ],
+   "feeds": [
+    "Safety Net moon settled state"
+   ],
+   "unit": "cents",
+   "fn": "efFinal",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 6
+  },
+  {
+   "id": "hourlyFinal",
+   "label": "Real hourly wage",
+   "tier": 6,
+   "kind": "metric",
+   "how": "hourlyFirst confirmed at I18 with work costs",
+   "needs": [
+    "I1",
+    "I11",
+    "I18"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "I20"
+   ],
+   "feeds": [
+    "time toggle",
+    "worthIt"
+   ],
+   "unit": "cents",
+   "fn": "hourlyFinal",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 6
+  },
+  {
+   "id": "incomeLevers",
+   "label": "Top income levers",
+   "tier": 6,
+   "kind": "metric",
+   "how": "I17, ranked by FI-date change",
+   "needs": [
+    "I17",
+    "Y12",
+    "I14"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "I27"
+   ],
+   "feeds": [
+    "the sun"
+   ],
+   "unit": "list",
+   "fn": "incomeLevers",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 6
+  },
+  {
+   "id": "expenseLevers",
+   "label": "Top expense levers",
+   "tier": 6,
+   "kind": "metric",
+   "how": "E18: the largest flexible lines (E10) ranked by FI-date change",
+   "needs": [
+    "E10",
+    "E16",
+    "E18"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "E19"
+   ],
+   "feeds": [
+    "the sun"
+   ],
+   "unit": "list",
+   "fn": "expenseLevers",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 6
+  },
+  {
+   "id": "shelterRead",
+   "label": "Shelter analysis",
+   "tier": 6,
+   "kind": "metric",
+   "how": "shelterRate against its band, with the roommate and house hack deltas",
+   "needs": [
+    "E2",
+    "I1",
+    "Y6",
+    "E17"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "D12"
+   ],
+   "feeds": [
+    "Real Estate moon",
+    "the sun"
+   ],
+   "unit": "list",
+   "fn": "shelterRead",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 6
+  },
+  {
+   "id": "slotFinal",
+   "label": "Next slot for your money",
+   "tier": 6,
+   "kind": "metric",
+   "how": "slotFirst re-walked with A8, D7 rates and the T10 bracket, confirmed at A16",
+   "needs": [
+    "D7",
+    "I4",
+    "A4",
+    "A8",
+    "T10",
+    "A16",
+    "E5"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "A14"
+   ],
+   "feeds": [
+    "Main Path moon",
+    "next-3 card"
+   ],
+   "unit": "text",
+   "fn": "slotFinal",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 6
+  },
+  {
+   "id": "allocationRead",
+   "label": "Allocation read",
+   "tier": 6,
+   "kind": "metric",
+   "how": "A13 against a glide path from Y1 and Y16",
+   "needs": [
+    "A13",
+    "Y1",
+    "Y16",
+    "A17"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "A20"
+   ],
+   "feeds": [
+    "Portfolio Design moon"
+   ],
+   "unit": "text",
+   "fn": "allocationRead",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 6
+  },
+  {
+   "id": "payoffChosen",
+   "label": "Payoff method chosen",
+   "tier": 6,
+   "kind": "metric",
+   "how": "the D16 pick, with interest and months saved against the other method",
+   "needs": [
+    "D7",
+    "D16"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "D19"
+   ],
+   "feeds": [
+    "Payoff Plan moon active"
+   ],
+   "unit": "text",
+   "fn": "payoffChosen",
+   "core": false,
+   "earnedWhen": "debt.none",
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 6
+  },
+  {
+   "id": "flipRate",
+   "label": "Invest vs. pay off line",
+   "tier": 6,
+   "kind": "metric",
+   "how": "the after-tax debt rate against expectedReturn, adjusted by Y16 risk comfort",
+   "needs": [
+    "D7",
+    "A13",
+    "Y16",
+    "T10",
+    "D17"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "D19"
+   ],
+   "feeds": [
+    "slotFinal",
+    "Leverage moon"
+   ],
+   "unit": "rate",
+   "fn": "flipRate",
+   "core": false,
+   "earnedWhen": "debt.none",
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 6
+  },
+  {
+   "id": "loanPath",
+   "label": "Student loan path",
+   "tier": 6,
+   "kind": "metric",
+   "how": "the IDR payment and the PSLF fit from D11, D15, I2, Y5 and Y4",
+   "needs": [
+    "D11",
+    "D15",
+    "I2",
+    "Y4",
+    "Y5",
+    "D18"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Student Loan Decision room"
+   ],
+   "unit": "text",
+   "fn": "loanPath",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 6
+  },
+  {
+   "id": "rothCall",
+   "label": "Roth vs. traditional call",
+   "tier": 6,
+   "kind": "metric",
+   "how": "marginalBracket now against nextYearBracket and the expected FI-phase rate",
+   "needs": [
+    "T10",
+    "T15",
+    "Y3",
+    "T16"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "T19",
+    "T30"
+   ],
+   "feeds": [
+    "Tax Strategy moon",
+    "slotFinal"
+   ],
+   "unit": "text",
+   "fn": "rothCall",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 6
+  },
+  {
+   "id": "missedCredits",
+   "label": "Credits you may be missing",
+   "tier": 6,
+   "kind": "metric",
+   "how": "rules over T4, I2, Y5, Y8, Y10, A8 and D7 student interest",
+   "needs": [
+    "T4",
+    "I2",
+    "Y5",
+    "Y8",
+    "Y10",
+    "A8",
+    "D7",
+    "T17"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "T19"
+   ],
+   "feeds": [
+    "quick wins"
+   ],
+   "unit": "list",
+   "fn": "missedCredits",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 6
+  },
+  {
+   "id": "hsaRead",
+   "label": "HSA read",
+   "tier": 6,
+   "kind": "metric",
+   "how": "eligibility from Y11 and I6, used-as-investment from A7",
+   "needs": [
+    "Y11",
+    "I6",
+    "A7",
+    "T18"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Tax Strategy moon",
+    "Health moon"
+   ],
+   "unit": "text",
+   "fn": "hsaRead",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 6
+  },
+  {
+   "id": "tripleD",
+   "label": "Triple D bands",
+   "tier": 6,
+   "kind": "metric",
+   "how": "best, likely and worst return and income paths, with your pick at Y16",
+   "needs": [
+    "Y16"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "A24"
+   ],
+   "feeds": [
+    "every projection's give-or-take band"
+   ],
+   "unit": "list",
+   "fn": "tripleD",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 6
+  },
+  {
+   "id": "requiredRate",
+   "label": "Required savings rate",
+   "tier": 6,
+   "kind": "metric",
+   "how": "the savings rate needed to hit Y3, confirmed or the date moved at Y17",
+   "needs": [
+    "Y1",
+    "Y3",
+    "A7",
+    "E1",
+    "E6",
+    "Y17"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "the sun"
+   ],
+   "unit": "rate",
+   "fn": "requiredRate",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 6
+  },
+  {
+   "id": "milestone",
+   "label": "Next milestone",
+   "tier": 6,
+   "kind": "metric",
+   "how": "position on the ladder: Lean, Coast, Barista, FI, Fat. The pick at Y18",
+   "needs": [
+    "Y18",
+    "A7",
+    "E10",
+    "Y9"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Dashboard",
+    "shareable milestone links"
+   ],
+   "unit": "text",
+   "fn": "milestone",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 6
+  },
+  {
+   "id": "estVsActual",
+   "label": "Estimate vs. actual",
+   "tier": 7,
+   "kind": "metric",
+   "how": "(E19 actual minus E1 estimate) over E1",
+   "needs": [
+    "E1",
+    "E19"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "E21"
+   ],
+   "feeds": [
+    "tightens gap, fiNumber and fiDate bands"
+   ],
+   "unit": "rate",
+   "fn": "estVsActual",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 7
+  },
+  {
+   "id": "certainty",
+   "label": "Certainty score",
+   "tier": 7,
+   "kind": "metric",
+   "how": "the share of Tier 1 inputs now verified: A19, D19, I19, I20, E19",
+   "needs": [
+    "A19",
+    "D19",
+    "I19",
+    "I20",
+    "E19"
+   ],
+   "derived": true,
+   "sharpenedBy": [
+    "E21",
+    "A20"
+   ],
+   "feeds": [
+    "give-or-take band on every headline metric"
+   ],
+   "unit": "score",
+   "fn": "certainty",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 7
+  },
+  {
+   "id": "withholdingCheck",
+   "label": "Withholding check",
+   "tier": 7,
+   "kind": "metric",
+   "how": "I20 year-to-date withholding annualized against the tax from the T19 pattern",
+   "needs": [
+    "I20",
+    "T19",
+    "T20"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "quick win: W-4"
+   ],
+   "unit": "cents",
+   "fn": "withholdingCheck",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 7
+  },
+  {
+   "id": "effectiveRate",
+   "label": "Effective tax rate, actual",
+   "tier": 7,
+   "kind": "metric",
+   "how": "total tax over AGI from T19",
+   "needs": [
+    "T19"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "replaces impliedTaxRate"
+   ],
+   "unit": "rate",
+   "fn": "effectiveRate",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "total tax",
+     "levels": [
+      "T19"
+     ]
+    },
+    "bottom": {
+     "what": "AGI",
+     "levels": [
+      "T19"
+     ]
+    },
+    "communityName": "effective tax rate",
+    "benchmarkKey": "effectiveRate",
+    "bandNotes": "The honest number. Most FIRE-phase plans target under 10%.",
+    "lives": "after-tax metrics"
+   },
+   "tables": [],
+   "maxNeedBand": 7
+  },
+  {
+   "id": "utilization",
+   "label": "Credit utilization",
+   "tier": 7,
+   "kind": "metric",
+   "how": "sum of balances over sum of limits from D21",
+   "needs": [
+    "D21"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Credit Building moon"
+   ],
+   "unit": "rate",
+   "fn": "utilization",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "card balances",
+     "levels": [
+      "D21"
+     ]
+    },
+    "bottom": {
+     "what": "card limits",
+     "levels": [
+      "D21"
+     ]
+    },
+    "communityName": "credit utilization",
+    "benchmarkKey": "utilization",
+    "bandNotes": "Under 30% fine, under 10% best for scoring.",
+    "lives": "Credit Building moon"
+   },
+   "tables": [],
+   "maxNeedBand": 7
+  },
+  {
+   "id": "reportClean",
+   "label": "Credit report check",
+   "tier": 7,
+   "kind": "metric",
+   "how": "accounts on D20 against debts in D7 and D9, errors flagged",
+   "needs": [
+    "D7",
+    "D9",
+    "D20"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Credit Building moon"
+   ],
+   "unit": "list",
+   "fn": "reportClean",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 7
+  },
+  {
+   "id": "seasonality",
+   "label": "Spending seasonality",
+   "tier": 7,
+   "kind": "metric",
+   "how": "the month-by-month shape of E21",
+   "needs": [
+    "E21"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "sinking funds",
+    "Money Calendar"
+   ],
+   "unit": "list",
+   "fn": "seasonality",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 7
+  },
+  {
+   "id": "tagBudgets",
+   "label": "Per-tag budgets vs. actuals",
+   "tier": 7,
+   "kind": "metric",
+   "how": "E20",
+   "needs": [
+    "E20"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "E21"
+   ],
+   "feeds": [
+    "Budget room"
+   ],
+   "unit": "list",
+   "fn": "tagBudgets",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 7
+  },
+  {
+   "id": "sideNet",
+   "label": "Side income, actual net",
+   "tier": 7,
+   "kind": "metric",
+   "how": "net and hours from I21",
+   "needs": [
+    "I21"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Side Hustles moon",
+    "hourly wage by source"
+   ],
+   "unit": "cents",
+   "fn": "sideNet",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 7
+  },
+  {
+   "id": "holdingsView",
+   "label": "Holdings look-through",
+   "tier": 7,
+   "kind": "metric",
+   "how": "the real allocation from A20 tickers",
+   "needs": [
+    "A20"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "A25"
+   ],
+   "feeds": [
+    "replaces A13 in expectedReturn"
+   ],
+   "unit": "list",
+   "fn": "holdingsView",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 7
+  },
+  {
+   "id": "keyDates",
+   "label": "Key dates timeline",
+   "tier": 7,
+   "kind": "metric",
+   "how": "inflection ages from Y1, Y11 and Y21",
+   "needs": [
+    "Y1",
+    "Y11",
+    "Y21"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "coverageGap",
+    "bridge",
+    "Horizon band"
+   ],
+   "unit": "list",
+   "fn": "keyDates",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 7
+  },
+  {
+   "id": "residency",
+   "label": "Residency check",
+   "tier": 7,
+   "kind": "metric",
+   "how": "T21",
+   "needs": [
+    "T21"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "state tax accuracy"
+   ],
+   "unit": "text",
+   "fn": "residency",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 7
+  },
+  {
+   "id": "jobLossRunway",
+   "label": "Job-loss runway",
+   "tier": 8,
+   "kind": "metric",
+   "how": "(A4 cash plus I22 cushion) over (E24 bare-bones plus D23 minimums-only)",
+   "needs": [
+    "A4",
+    "I22",
+    "E24",
+    "D23"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Between Jobs room",
+    "resilience"
+   ],
+   "unit": "months",
+   "fn": "jobLossRunway",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "cash that counts plus cushion",
+     "levels": [
+      "A4",
+      "I22"
+     ]
+    },
+    "bottom": {
+     "what": "bare-bones plus minimums-only",
+     "levels": [
+      "E24",
+      "D23"
+     ]
+    },
+    "communityName": "job-loss runway",
+    "benchmarkKey": "jobLossRunway",
+    "bandNotes": "Months. Compare to the typical job-search time for the field.",
+    "lives": "Between Jobs room"
+   },
+   "tables": [],
+   "maxNeedBand": 8
+  },
+  {
+   "id": "badYear",
+   "label": "Bad-year cost",
+   "tier": 8,
+   "kind": "metric",
+   "how": "E22 out-of-pocket max plus E23 shock costs",
+   "needs": [
+    "E22",
+    "E23"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "efFinal check",
+    "Health moon"
+   ],
+   "unit": "cents",
+   "fn": "badYear",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 8
+  },
+  {
+   "id": "sequenceRead",
+   "label": "What a 30% drop does",
+   "tier": 8,
+   "kind": "metric",
+   "how": "fiDateProjected re-run with a drop now and at the FI date (A24)",
+   "needs": [
+    "A7",
+    "A13",
+    "A24",
+    "Y16"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "tripleD",
+    "allocationRead"
+   ],
+   "unit": "list",
+   "fn": "sequenceRead",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 8
+  },
+  {
+   "id": "concentration",
+   "label": "Concentration flags",
+   "tier": 8,
+   "kind": "metric",
+   "how": "I24 income share from one payer; A22 share in one position",
+   "needs": [
+    "I24",
+    "A22"
+   ],
+   "derived": false,
+   "sharpenedBy": [
+    "A20"
+   ],
+   "feeds": [
+    "Protect view"
+   ],
+   "unit": "list",
+   "fn": "concentration",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 8
+  },
+  {
+   "id": "rateShock",
+   "label": "Rate-shock payment",
+   "tier": 8,
+   "kind": "metric",
+   "how": "D22: the payment on variable debt at plus 2 points",
+   "needs": [
+    "D10",
+    "D22"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Payoff Plan moon"
+   ],
+   "unit": "cents",
+   "fn": "rateShock",
+   "core": false,
+   "earnedWhen": "debt.none",
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 8
+  },
+  {
+   "id": "coverageGaps",
+   "label": "Coverage gaps",
+   "tier": 8,
+   "kind": "metric",
+   "how": "Y22 held against the needs implied by Y23 dependents, I23 disability and A7 assets",
+   "needs": [
+    "Y22",
+    "Y23",
+    "I23",
+    "A7"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Protection view",
+    "quick wins"
+   ],
+   "unit": "list",
+   "fn": "coverageGaps",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 8
+  },
+  {
+   "id": "estateReady",
+   "label": "Estate readiness",
+   "tier": 8,
+   "kind": "metric",
+   "how": "the Y24 yes/no list plus A23 beneficiaries",
+   "needs": [
+    "Y24",
+    "A23"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Estate Basics room"
+   ],
+   "unit": "score",
+   "fn": "estateReady",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 8
+  },
+  {
+   "id": "safeHarbor",
+   "label": "Underpayment safe harbor",
+   "tier": 8,
+   "kind": "metric",
+   "how": "T22 against taxThisYear",
+   "needs": [
+    "T13",
+    "T22"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "quarterly estimates"
+   ],
+   "unit": "flag",
+   "fn": "safeHarbor",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 8
+  },
+  {
+   "id": "jointExposure",
+   "label": "Joint and co-signer exposure",
+   "tier": 8,
+   "kind": "metric",
+   "how": "D24 balances not in your own total",
+   "needs": [
+    "D24"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Partner room"
+   ],
+   "unit": "cents",
+   "fn": "jointExposure",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 8
+  },
+  {
+   "id": "resilience",
+   "label": "Resilience score",
+   "tier": 8,
+   "kind": "metric",
+   "how": "a composite of jobLossRunway, badYear against cash, coverageGaps, concentration, rateShock and fixedCostRate",
+   "needs": [
+    "A4",
+    "I22",
+    "E24",
+    "D23",
+    "E22",
+    "E23",
+    "Y22",
+    "I24",
+    "A22",
+    "D22",
+    "E10"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Dashboard tile"
+   ],
+   "unit": "score",
+   "fn": "resilience",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 8
+  },
+  {
+   "id": "feeDrag",
+   "label": "Fee drag",
+   "tier": 9,
+   "kind": "metric",
+   "how": "sum(balance x expense ratio) per year, and the FI months lost",
+   "needs": [
+    "A7",
+    "A25"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "quick win: swap the fund",
+    "Portfolio Design moon"
+   ],
+   "unit": "dollarsPerYear",
+   "fn": "feeDrag",
+   "core": true,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 9
+  },
+  {
+   "id": "taxIfSold",
+   "label": "Tax if sold",
+   "tier": 9,
+   "kind": "metric",
+   "how": "(value minus A26 basis) x the T25 gains rate, per holding",
+   "needs": [
+    "A20",
+    "A26",
+    "T25"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "should-I-sell reads",
+    "Real Estate down payment"
+   ],
+   "unit": "cents",
+   "fn": "taxIfSold",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 9
+  },
+  {
+   "id": "harvestRoom",
+   "label": "Harvesting room",
+   "tier": 9,
+   "kind": "metric",
+   "how": "the 0% gains room from T25 and the losses available from A26",
+   "needs": [
+    "A26",
+    "T25",
+    "T26"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Tax Strategy moon"
+   ],
+   "unit": "cents",
+   "fn": "harvestRoom",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 9
+  },
+  {
+   "id": "mortgageCapacity",
+   "label": "Mortgage and FHA capacity",
+   "tier": 9,
+   "kind": "metric",
+   "how": "DTI (D27) from D7 minimums and I2, with the D6 band, Y25 status and the A15 down payment",
+   "needs": [
+    "D7",
+    "I2",
+    "D6",
+    "D27",
+    "Y25",
+    "A15"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Real Estate moon",
+    "Housing Decision room"
+   ],
+   "unit": "cents",
+   "fn": "mortgageCapacity",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 9
+  },
+  {
+   "id": "refiSavings",
+   "label": "Refinance savings",
+   "tier": 9,
+   "kind": "metric",
+   "how": "D25: the payment and interest delta at the current market rate for the D6 band",
+   "needs": [
+    "D7",
+    "D6",
+    "D25"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "quick win"
+   ],
+   "unit": "cents",
+   "fn": "refiSavings",
+   "core": false,
+   "earnedWhen": "debt.none",
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 9
+  },
+  {
+   "id": "deductInterest",
+   "label": "Deductible interest",
+   "tier": 9,
+   "kind": "metric",
+   "how": "D26 student and mortgage interest against T12",
+   "needs": [
+    "D26",
+    "T12"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "missedCredits"
+   ],
+   "unit": "cents",
+   "fn": "deductInterest",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 9
+  },
+  {
+   "id": "totalComp",
+   "label": "Total compensation",
+   "tier": 9,
+   "kind": "metric",
+   "how": "I2 plus match plus I26 benefit dollars plus I25 vesting per year",
+   "needs": [
+    "I2",
+    "I4",
+    "I25",
+    "I26"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Career moon",
+    "Career Move room"
+   ],
+   "unit": "cents",
+   "fn": "totalComp",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 9
+  },
+  {
+   "id": "marketGap",
+   "label": "Market pay gap",
+   "tier": 9,
+   "kind": "metric",
+   "how": "I27 market rate minus I2",
+   "needs": [
+    "I2",
+    "I27"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Career moon: lifetime value of a raise"
+   ],
+   "unit": "cents",
+   "fn": "marketGap",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 9
+  },
+  {
+   "id": "billSavings",
+   "label": "Bill-shopping savings",
+   "tier": 9,
+   "kind": "metric",
+   "how": "E25 candidates x typical savings",
+   "needs": [
+    "E25"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Deals moon quick wins"
+   ],
+   "unit": "dollarsPerYear",
+   "fn": "billSavings",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 9
+  },
+  {
+   "id": "rewardsValue",
+   "label": "Rewards value per year",
+   "tier": 9,
+   "kind": "metric",
+   "how": "E27 plus the Card Rewards moon intake",
+   "needs": [
+    "E27"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Card Rewards moon"
+   ],
+   "unit": "dollarsPerYear",
+   "fn": "rewardsValue",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 9
+  },
+  {
+   "id": "worthIt",
+   "label": "Worth-it read",
+   "tier": 9,
+   "kind": "metric",
+   "how": "top wants from E9: cost per use and hours of life (hourlyFinal)",
+   "needs": [
+    "E9",
+    "E26",
+    "I18"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Worth It room"
+   ],
+   "unit": "list",
+   "fn": "worthIt",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 9
+  },
+  {
+   "id": "ladderBasis",
+   "label": "Roth basis available",
+   "tier": 9,
+   "kind": "metric",
+   "how": "contributions from A27",
+   "needs": [
+    "A27"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "ladderPlan",
+    "bridgeFinal"
+   ],
+   "unit": "cents",
+   "fn": "ladderBasis",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 9
+  },
+  {
+   "id": "moveTax",
+   "label": "Tax effect of a move",
+   "tier": 9,
+   "kind": "metric",
+   "how": "T27: current against destination (Y14) on taxableIncome",
+   "needs": [
+    "Y14",
+    "T7",
+    "T27"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Geo-Arbitrage moon"
+   ],
+   "unit": "cents",
+   "fn": "moveTax",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 9
+  },
+  {
+   "id": "hustleCapacity",
+   "label": "Side income capacity",
+   "tier": 9,
+   "kind": "metric",
+   "how": "Y26 hours x hourlyFinal as a floor",
+   "needs": [
+    "Y26",
+    "I18"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Side Hustles moon"
+   ],
+   "unit": "cents",
+   "fn": "hustleCapacity",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 9
+  },
+  {
+   "id": "realFiNumber",
+   "label": "Real after-tax FI number",
+   "tier": 10,
+   "kind": "metric",
+   "how": "(E28 FI-phase spending plus E29 healthcare) x 12, inflated by E30, grossed up by the T30 withdrawal-phase rate, less the I29 and I28 income floors",
+   "needs": [
+    "E28",
+    "E29",
+    "E30",
+    "T30",
+    "I28",
+    "I29"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "replaces fiNumber everywhere"
+   ],
+   "unit": "cents",
+   "fn": "realFiNumber",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 10
+  },
+  {
+   "id": "bridgeFinal",
+   "label": "Bridge number, final",
+   "tier": 10,
+   "kind": "metric",
+   "how": "bridgeNumber using E28 spending, A27 basis, the T29 ladder and the A30 order",
+   "needs": [
+    "Y3",
+    "E28",
+    "A11",
+    "A27",
+    "T29",
+    "A30"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Decumulation room"
+   ],
+   "unit": "cents",
+   "fn": "bridgeFinal",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 10
+  },
+  {
+   "id": "drawdownPlan",
+   "label": "Drawdown plan",
+   "tier": 10,
+   "kind": "metric",
+   "how": "the A30 order by year with tax from T30",
+   "needs": [
+    "A30",
+    "T30"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Decumulation room"
+   ],
+   "unit": "list",
+   "fn": "drawdownPlan",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 10
+  },
+  {
+   "id": "ladderPlan",
+   "label": "Roth conversion ladder",
+   "tier": 10,
+   "kind": "metric",
+   "how": "T29: yearly conversion amounts filling the low brackets",
+   "needs": [
+    "A10",
+    "A27",
+    "T29"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Tax Strategy moon"
+   ],
+   "unit": "list",
+   "fn": "ladderPlan",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 10
+  },
+  {
+   "id": "subsidyCliff",
+   "label": "Subsidy cliff map",
+   "tier": 10,
+   "kind": "metric",
+   "how": "T28: MAGI targets against the E29 healthcare cost",
+   "needs": [
+    "E29",
+    "T28"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Health moon",
+    "drawdownPlan"
+   ],
+   "unit": "list",
+   "fn": "subsidyCliff",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 10
+  },
+  {
+   "id": "ssFloor",
+   "label": "Social Security floor",
+   "tier": 10,
+   "kind": "metric",
+   "how": "the Y19 record projected with the I30 earnings path, confirmed at I28",
+   "needs": [
+    "Y19",
+    "I28",
+    "I30"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "realFiNumber"
+   ],
+   "unit": "cents",
+   "fn": "ssFloor",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 10
+  },
+  {
+   "id": "baristaFi",
+   "label": "Barista FI number",
+   "tier": 10,
+   "kind": "metric",
+   "how": "realFiNumber recomputed with I29 part-time income",
+   "needs": [
+    "E28",
+    "I29"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "milestone"
+   ],
+   "unit": "cents",
+   "fn": "baristaFi",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 10
+  },
+  {
+   "id": "debtVsFi",
+   "label": "Debt-free vs. FI date",
+   "tier": 10,
+   "kind": "metric",
+   "how": "debtFreeDate against fiDateProjected, and what carries into FI (D28)",
+   "needs": [
+    "D28",
+    "D13"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "the sun"
+   ],
+   "unit": "text",
+   "fn": "debtVsFi",
+   "core": false,
+   "earnedWhen": "debt.none",
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 10
+  },
+  {
+   "id": "interestPerDollar",
+   "label": "Interest saved per extra dollar",
+   "tier": 10,
+   "kind": "metric",
+   "how": "the exact amortization from D29",
+   "needs": [
+    "D29"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Payoff Plan moon"
+   ],
+   "unit": "rate",
+   "fn": "interestPerDollar",
+   "core": false,
+   "earnedWhen": "debt.none",
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 10
+  },
+  {
+   "id": "leveragePolicy",
+   "label": "Leverage policy",
+   "tier": 10,
+   "kind": "metric",
+   "how": "D30: the rate and purpose rules you set for future debt",
+   "needs": [
+    "D30",
+    "D17"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Leverage moon",
+    "Big Purchase room"
+   ],
+   "unit": "text",
+   "fn": "leveragePolicy",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 10
+  },
+  {
+   "id": "rentalRead",
+   "label": "Rental analysis",
+   "tier": 10,
+   "kind": "metric",
+   "how": "A28: cap rate, cash-on-cash and the FI-date effect",
+   "needs": [
+    "A28"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Real Estate moon"
+   ],
+   "unit": "list",
+   "fn": "rentalRead",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 10
+  },
+  {
+   "id": "windfallPlan",
+   "label": "Windfall plan",
+   "tier": 10,
+   "kind": "metric",
+   "how": "the A29 allocation rules run through the order of operations",
+   "needs": [
+    "A29",
+    "Y15"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "Windfall room"
+   ],
+   "unit": "list",
+   "fn": "windfallPlan",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 10
+  },
+  {
+   "id": "planHorizon",
+   "label": "Plan horizon",
+   "tier": 10,
+   "kind": "metric",
+   "how": "Y28 end age minus the FI age: the years the money must last",
+   "needs": [
+    "Y28",
+    "Y3"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "drawdownPlan",
+    "withdrawal rate choice"
+   ],
+   "unit": "years",
+   "fn": "planHorizon",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 10
+  },
+  {
+   "id": "fiByPhaseFinal",
+   "label": "FI number by phase, final",
+   "tier": 10,
+   "kind": "metric",
+   "how": "E30",
+   "needs": [
+    "E28",
+    "E29",
+    "E30"
+   ],
+   "derived": false,
+   "sharpenedBy": [],
+   "feeds": [
+    "realFiNumber"
+   ],
+   "unit": "list",
+   "fn": "fiByPhaseFinal",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 10
+  },
+  {
+   "id": "refresh",
+   "label": "Refresh health",
+   "tier": 10,
+   "kind": "metric",
+   "how": "days since each planet's level 30 review, and the count of rough and stale numbers",
+   "needs": [
+    "Y30"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Dashboard nag line",
+    "Upkeep"
+   ],
+   "unit": "score",
+   "fn": "refresh",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": null,
+   "tables": [],
+   "maxNeedBand": 10
+  },
+  {
+   "id": "spendRate",
+   "label": "Spend rate",
+   "tier": 1,
+   "kind": "ratio",
+   "how": "clean monthly spending over take-home",
+   "needs": [
+    "E1",
+    "E3",
+    "I1"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Expenses planet"
+   ],
+   "unit": "rate",
+   "fn": "spendRate",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "clean monthly spending",
+     "levels": [
+      "E1",
+      "E3"
+     ]
+    },
+    "bottom": {
+     "what": "take-home",
+     "levels": [
+      "I1"
+     ]
+    },
+    "communityName": "burn rate",
+    "benchmarkKey": "spendRate",
+    "bandNotes": "The mirror of the savings rate. Shown only in the expenses lens.",
+    "lives": "Expenses planet"
+   },
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "freedomPerMonth",
+   "label": "Freedom bought per month",
+   "tier": 1,
+   "kind": "ratio",
+   "how": "what you add per month over monthly spending",
+   "needs": [
+    "A3",
+    "E1",
+    "E3"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "time toggle, share cards"
+   ],
+   "unit": "multiple",
+   "fn": "freedomPerMonth",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "what you add per month",
+     "levels": [
+      "A3"
+     ]
+    },
+    "bottom": {
+     "what": "monthly spending",
+     "levels": [
+      "E1",
+      "E3"
+     ]
+    },
+    "communityName": "months of freedom per month worked",
+    "benchmarkKey": "freedomPerMonth",
+    "bandNotes": "At a 50% savings rate this is 1.0: every month worked buys a month off.",
+    "lives": "time toggle, share cards"
+   },
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "frontEndDTI",
+   "label": "Front-end DTI",
+   "tier": 1,
+   "kind": "ratio",
+   "how": "housing payment over gross monthly pay",
+   "needs": [
+    "E2",
+    "I2"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Housing Decision room"
+   ],
+   "unit": "rate",
+   "fn": "frontEndDTI",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "housing payment",
+     "levels": [
+      "E2"
+     ]
+    },
+    "bottom": {
+     "what": "gross monthly pay",
+     "levels": [
+      "I2"
+     ]
+    },
+    "communityName": "housing ratio (lender)",
+    "benchmarkKey": "frontEndDTI",
+    "bandNotes": "Conventional guideline 28%. FHA allows higher. Lender limits live in a dated data table.",
+    "lives": "Housing Decision room"
+   },
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "backEndDTI",
+   "label": "Back-end DTI, rough",
+   "tier": 1,
+   "kind": "ratio",
+   "how": "housing payment plus debt minimums over gross monthly pay",
+   "needs": [
+    "E2",
+    "D2",
+    "I2"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "mortgage and FHA capacity"
+   ],
+   "unit": "rate",
+   "fn": "backEndDTI",
+   "core": false,
+   "earnedWhen": "debt.none",
+   "ratio": {
+    "top": {
+     "what": "housing payment plus debt minimums",
+     "levels": [
+      "E2",
+      "D2"
+     ]
+    },
+    "bottom": {
+     "what": "gross monthly pay",
+     "levels": [
+      "I2"
+     ]
+    },
+    "communityName": "debt-to-income",
+    "benchmarkKey": "backEndDTI",
+    "bandNotes": "Conventional guideline 36%, many lenders to 43% and above. The confirmed version is D27 at Tier 9.",
+    "lives": "mortgage and FHA capacity"
+   },
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "refundShare",
+   "label": "Refund share",
+   "tier": 1,
+   "kind": "ratio",
+   "how": "refund over rough total tax",
+   "needs": [
+    "T3",
+    "I1",
+    "I2"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "T3 sanity check"
+   ],
+   "unit": "rate",
+   "fn": "refundShare",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "refund",
+     "levels": [
+      "T3"
+     ]
+    },
+    "bottom": {
+     "what": "rough total tax",
+     "levels": [
+      "I1",
+      "I2"
+     ]
+    },
+    "communityName": "refund share",
+    "benchmarkKey": "refundShare",
+    "bandNotes": "Over 10% suggests a W-4 fix.",
+    "lives": "T3 sanity check"
+   },
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "nwToIncome",
+   "label": "Net worth to income",
+   "tier": 1,
+   "kind": "ratio",
+   "how": "net worth over gross annual pay",
+   "needs": [
+    "A1",
+    "D1",
+    "I2"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "milestones"
+   ],
+   "unit": "multiple",
+   "fn": "nwToIncome",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "net worth",
+     "levels": [
+      "A1",
+      "D1"
+     ]
+    },
+    "bottom": {
+     "what": "gross annual pay",
+     "levels": [
+      "I2"
+     ]
+    },
+    "communityName": "income multiple",
+    "benchmarkKey": "nwToIncome",
+    "bandNotes": "Age checkpoints (1x by 30, 3x by 40 style) live in the benchmark table. FIRE needs far more, far sooner.",
+    "lives": "milestones"
+   },
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "pawRatio",
+   "label": "Wealth accumulation ratio",
+   "tier": 1,
+   "kind": "ratio",
+   "how": "net worth over age x gross income over 10",
+   "needs": [
+    "A1",
+    "D1",
+    "Y1",
+    "I2"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "lens only"
+   ],
+   "unit": "multiple",
+   "fn": "pawRatio",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "net worth",
+     "levels": [
+      "A1",
+      "D1"
+     ]
+    },
+    "bottom": {
+     "what": "age x gross income over 10",
+     "levels": [
+      "Y1",
+      "I2"
+     ]
+    },
+    "communityName": "PAW / UAW, Millionaire Next Door",
+    "benchmarkKey": "pawRatio",
+    "bandNotes": "2.0 or more is a prodigious accumulator. Misfires for people in their 20s, so the app shows the Money Guy wealth-multiplier lens beside it.",
+    "lives": "lens only"
+   },
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "currentWR",
+   "label": "Current withdrawal rate",
+   "tier": 1,
+   "kind": "ratio",
+   "how": "annual spending over invested assets",
+   "needs": [
+    "E1",
+    "E3",
+    "A2"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Dashboard, decumulation"
+   ],
+   "unit": "rate",
+   "fn": "currentWR",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "annual spending",
+     "levels": [
+      "E1",
+      "E3"
+     ]
+    },
+    "bottom": {
+     "what": "invested assets",
+     "levels": [
+      "A2"
+     ]
+    },
+    "communityName": "what would I be pulling today",
+    "benchmarkKey": "currentWR",
+    "bandNotes": "FI when this falls to the chosen rate: 4% classic, 3.25 to 3.5% for very long retirements (Big ERN lens).",
+    "lives": "Dashboard, decumulation"
+   },
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "yearsSaved",
+   "label": "Years of expenses saved",
+   "tier": 1,
+   "kind": "ratio",
+   "how": "cash plus invested over annual spending",
+   "needs": [
+    "A1",
+    "E1",
+    "E3"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "milestones, shares"
+   ],
+   "unit": "years",
+   "fn": "yearsSaved",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "cash plus invested",
+     "levels": [
+      "A1"
+     ]
+    },
+    "bottom": {
+     "what": "annual spending",
+     "levels": [
+      "E1",
+      "E3"
+     ]
+    },
+    "communityName": "FU money",
+    "benchmarkKey": "yearsSaved",
+    "bandNotes": "1 year is real breathing room. 25 is FI.",
+    "lives": "milestones, shares"
+   },
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "highInterestShare",
+   "label": "High-interest share of debt",
+   "tier": 1,
+   "kind": "ratio",
+   "how": "debt above about 8% over total debt",
+   "needs": [
+    "D3",
+    "D1"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "order of operations"
+   ],
+   "unit": "rate",
+   "fn": "highInterestShare",
+   "core": false,
+   "earnedWhen": "debt.none",
+   "ratio": {
+    "top": {
+     "what": "debt above about 8%",
+     "levels": [
+      "D3"
+     ]
+    },
+    "bottom": {
+     "what": "total debt",
+     "levels": [
+      "D1"
+     ]
+    },
+    "communityName": "high-interest share",
+    "benchmarkKey": "highInterestShare",
+    "bandNotes": "Any amount gates the rewards, real estate and leverage moons.",
+    "lives": "order of operations"
+   },
+   "tables": [],
+   "maxNeedBand": 1
+  },
+  {
+   "id": "homeShareNW",
+   "label": "Home share of net worth",
+   "tier": 2,
+   "kind": "ratio",
+   "how": "home equity over net worth",
+   "needs": [
+    "A6",
+    "D4",
+    "A1",
+    "D1"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Real Estate moon"
+   ],
+   "unit": "rate",
+   "fn": "homeShareNW",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "home equity",
+     "levels": [
+      "A6",
+      "D4"
+     ]
+    },
+    "bottom": {
+     "what": "net worth",
+     "levels": [
+      "A1",
+      "D1"
+     ]
+    },
+    "communityName": "house-rich ratio",
+    "benchmarkKey": "homeShareNW",
+    "bandNotes": "Over 50% is house-rich. A factor in the middle-class trap.",
+    "lives": "Real Estate moon"
+   },
+   "tables": [],
+   "maxNeedBand": 2
+  },
+  {
+   "id": "trapRatio",
+   "label": "Locked share of net worth",
+   "tier": 2,
+   "kind": "ratio",
+   "how": "retirement accounts plus home equity over net worth",
+   "needs": [
+    "A5",
+    "A6",
+    "D4",
+    "A1",
+    "D1"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "bridge number"
+   ],
+   "unit": "rate",
+   "fn": "trapRatio",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "retirement accounts plus home equity",
+     "levels": [
+      "A5",
+      "A6",
+      "D4"
+     ]
+    },
+    "bottom": {
+     "what": "net worth",
+     "levels": [
+      "A1",
+      "D1"
+     ]
+    },
+    "communityName": "the middle-class trap (BiggerPockets Money)",
+    "benchmarkKey": "trapRatio",
+    "bandNotes": "Over 80% with an early target date triggers the bridge conversation.",
+    "lives": "bridge number"
+   },
+   "tables": [],
+   "maxNeedBand": 2
+  },
+  {
+   "id": "ltv",
+   "label": "Loan-to-value",
+   "tier": 2,
+   "kind": "ratio",
+   "how": "mortgage balance over home value",
+   "needs": [
+    "D4",
+    "A6"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "refinance check"
+   ],
+   "unit": "rate",
+   "fn": "ltv",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "mortgage balance",
+     "levels": [
+      "D4"
+     ]
+    },
+    "bottom": {
+     "what": "home value",
+     "levels": [
+      "A6"
+     ]
+    },
+    "communityName": "LTV",
+    "benchmarkKey": "ltv",
+    "bandNotes": "80% or under drops PMI on conventional loans.",
+    "lives": "refinance check"
+   },
+   "tables": [],
+   "maxNeedBand": 2
+  },
+  {
+   "id": "priceToIncome",
+   "label": "Home price to income",
+   "tier": 2,
+   "kind": "ratio",
+   "how": "home value over gross annual pay",
+   "needs": [
+    "A6",
+    "I2"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Housing Decision room"
+   ],
+   "unit": "multiple",
+   "fn": "priceToIncome",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "home value",
+     "levels": [
+      "A6"
+     ]
+    },
+    "bottom": {
+     "what": "gross annual pay",
+     "levels": [
+      "I2"
+     ]
+    },
+    "communityName": "price to income",
+    "benchmarkKey": "priceToIncome",
+    "bandNotes": "2.5x to 4x depending on the source.",
+    "lives": "Housing Decision room"
+   },
+   "tables": [],
+   "maxNeedBand": 2
+  },
+  {
+   "id": "carToIncome",
+   "label": "Vehicles to income",
+   "tier": 2,
+   "kind": "ratio",
+   "how": "vehicle value over gross annual pay",
+   "needs": [
+    "A6",
+    "I2"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Big Purchase room"
+   ],
+   "unit": "rate",
+   "fn": "carToIncome",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "vehicle value",
+     "levels": [
+      "A6"
+     ]
+    },
+    "bottom": {
+     "what": "gross annual pay",
+     "levels": [
+      "I2"
+     ]
+    },
+    "communityName": "vehicles to income",
+    "benchmarkKey": "carToIncome",
+    "bandNotes": "Common FIRE rule of thumb: keep total vehicle value under half of annual income, less is better.",
+    "lives": "Big Purchase room"
+   },
+   "tables": [],
+   "maxNeedBand": 2
+  },
+  {
+   "id": "studentToIncome",
+   "label": "Student debt to income",
+   "tier": 2,
+   "kind": "ratio",
+   "how": "student loan balance over gross annual pay",
+   "needs": [
+    "D4",
+    "I2"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Student Loan room"
+   ],
+   "unit": "rate",
+   "fn": "studentToIncome",
+   "core": false,
+   "earnedWhen": "debt.none",
+   "ratio": {
+    "top": {
+     "what": "student loan balance",
+     "levels": [
+      "D4"
+     ]
+    },
+    "bottom": {
+     "what": "gross annual pay",
+     "levels": [
+      "I2"
+     ]
+    },
+    "communityName": "student debt to income",
+    "benchmarkKey": "studentToIncome",
+    "bandNotes": "Rule of thumb: borrow no more than the first-year salary.",
+    "lives": "Student Loan room"
+   },
+   "tables": [],
+   "maxNeedBand": 2
+  },
+  {
+   "id": "efCoverage",
+   "label": "Emergency fund coverage",
+   "tier": 2,
+   "kind": "ratio",
+   "how": "cash that counts over emergency fund target",
+   "needs": [
+    "A4",
+    "E5",
+    "I3"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Main Path step"
+   ],
+   "unit": "rate",
+   "fn": "efCoverage",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "cash that counts",
+     "levels": [
+      "A4"
+     ]
+    },
+    "bottom": {
+     "what": "emergency fund target",
+     "levels": [
+      "E5",
+      "I3"
+     ]
+    },
+    "communityName": "emergency fund coverage",
+    "benchmarkKey": "efCoverage",
+    "bandNotes": "100% = funded.",
+    "lives": "Main Path step"
+   },
+   "tables": [],
+   "maxNeedBand": 2
+  },
+  {
+   "id": "extraPayRate",
+   "label": "Payoff acceleration",
+   "tier": 2,
+   "kind": "ratio",
+   "how": "extra paid per month over total minimums",
+   "needs": [
+    "D5",
+    "D2"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Payoff Plan moon"
+   ],
+   "unit": "rate",
+   "fn": "extraPayRate",
+   "core": false,
+   "earnedWhen": "debt.none",
+   "ratio": {
+    "top": {
+     "what": "extra paid per month",
+     "levels": [
+      "D5"
+     ]
+    },
+    "bottom": {
+     "what": "total minimums",
+     "levels": [
+      "D2"
+     ]
+    },
+    "communityName": "payoff acceleration",
+    "benchmarkKey": "extraPayRate",
+    "bandNotes": "No band. Shows how hard the payoff is being pushed.",
+    "lives": "Payoff Plan moon"
+   },
+   "tables": [],
+   "maxNeedBand": 2
+  },
+  {
+   "id": "givingRate",
+   "label": "Giving rate",
+   "tier": 3,
+   "kind": "ratio",
+   "how": "giving line over take-home",
+   "needs": [
+    "E9",
+    "I1"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Giving room"
+   ],
+   "unit": "rate",
+   "fn": "givingRate",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "giving line",
+     "levels": [
+      "E9"
+     ]
+    },
+    "bottom": {
+     "what": "take-home",
+     "levels": [
+      "I1"
+     ]
+    },
+    "communityName": "tithing, maaser, generosity rate",
+    "benchmarkKey": "givingRate",
+    "bandNotes": "User-set target. No default band.",
+    "lives": "Giving room"
+   },
+   "tables": [],
+   "maxNeedBand": 3
+  },
+  {
+   "id": "carPaymentRate",
+   "label": "Car payment rate",
+   "tier": 3,
+   "kind": "ratio",
+   "how": "car payment over gross monthly pay",
+   "needs": [
+    "E8",
+    "I2"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Big Purchase room"
+   ],
+   "unit": "rate",
+   "fn": "carPaymentRate",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "car payment",
+     "levels": [
+      "E8"
+     ]
+    },
+    "bottom": {
+     "what": "gross monthly pay",
+     "levels": [
+      "I2"
+     ]
+    },
+    "communityName": "the 8 in 20/3/8",
+    "benchmarkKey": "carPaymentRate",
+    "bandNotes": "Money Guy 20/3/8 lens: 20% down, 3-year loan, payment under 8% of gross.",
+    "lives": "Big Purchase room"
+   },
+   "tables": [],
+   "maxNeedBand": 3
+  },
+  {
+   "id": "recurringShare",
+   "label": "Subscriptions and bills share",
+   "tier": 3,
+   "kind": "ratio",
+   "how": "recurring bills over take-home",
+   "needs": [
+    "E7",
+    "I1"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Deals moon"
+   ],
+   "unit": "rate",
+   "fn": "recurringShare",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "recurring bills",
+     "levels": [
+      "E7"
+     ]
+    },
+    "bottom": {
+     "what": "take-home",
+     "levels": [
+      "I1"
+     ]
+    },
+    "communityName": "recurring share",
+    "benchmarkKey": "recurringShare",
+    "bandNotes": "No fixed band. Used for quick wins.",
+    "lives": "Deals moon"
+   },
+   "tables": [],
+   "maxNeedBand": 3
+  },
+  {
+   "id": "contribFill",
+   "label": "Contribution fill, per account",
+   "tier": 3,
+   "kind": "ratio",
+   "how": "annual contributions to the account over the annual limit for that account (dated table)",
+   "needs": [
+    "A8"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Main Path, Tax Strategy moon"
+   ],
+   "unit": "rate",
+   "fn": "contribFill",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "annual contributions to the account",
+     "levels": [
+      "A8"
+     ]
+    },
+    "bottom": {
+     "what": "the annual limit for that account (dated table)",
+     "levels": [
+      "A8"
+     ]
+    },
+    "communityName": "maxed out percent",
+    "benchmarkKey": "contribFill",
+    "bandNotes": "100% = maxed. Shown for 401k, IRA, HSA.",
+    "lives": "Main Path, Tax Strategy moon"
+   },
+   "tables": [
+    "irsLimits"
+   ],
+   "maxNeedBand": 3
+  },
+  {
+   "id": "sideShare",
+   "label": "Side income share",
+   "tier": 3,
+   "kind": "ratio",
+   "how": "side and irregular income over total income",
+   "needs": [
+    "I8",
+    "I7"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Side Hustles moon"
+   ],
+   "unit": "rate",
+   "fn": "sideShare",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "side and irregular income",
+     "levels": [
+      "I8"
+     ]
+    },
+    "bottom": {
+     "what": "total income",
+     "levels": [
+      "I7"
+     ]
+    },
+    "communityName": "side income share",
+    "benchmarkKey": "sideShare",
+    "bandNotes": "No band. Feeds concentration and stability.",
+    "lives": "Side Hustles moon"
+   },
+   "tables": [],
+   "maxNeedBand": 3
+  },
+  {
+   "id": "withholdAccuracy",
+   "label": "Withholding accuracy",
+   "tier": 3,
+   "kind": "ratio",
+   "how": "annualized withholding over projected tax",
+   "needs": [
+    "I9",
+    "I2",
+    "T4"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "quick win: W-4"
+   ],
+   "unit": "rate",
+   "fn": "withholdAccuracy",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "annualized withholding",
+     "levels": [
+      "I9"
+     ]
+    },
+    "bottom": {
+     "what": "projected tax",
+     "levels": [
+      "I2",
+      "I9",
+      "T4"
+     ]
+    },
+    "communityName": "withholding accuracy",
+    "benchmarkKey": "withholdAccuracy",
+    "bandNotes": "95 to 105% is the target. A big refund is an interest-free loan.",
+    "lives": "quick win: W-4"
+   },
+   "tables": [],
+   "maxNeedBand": 3
+  },
+  {
+   "id": "interestToIncome",
+   "label": "Interest-to-income",
+   "tier": 3,
+   "kind": "ratio",
+   "how": "interest paid per month over take-home",
+   "needs": [
+    "D7",
+    "D8",
+    "I1"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Payoff Plan moon"
+   ],
+   "unit": "rate",
+   "fn": "interestToIncome",
+   "core": false,
+   "earnedWhen": "debt.none",
+   "ratio": {
+    "top": {
+     "what": "interest paid per month",
+     "levels": [
+      "D7",
+      "D8"
+     ]
+    },
+    "bottom": {
+     "what": "take-home",
+     "levels": [
+      "I1"
+     ]
+    },
+    "communityName": "interest to income",
+    "benchmarkKey": "interestToIncome",
+    "bandNotes": "Every point here is pure loss. Quick-win fuel.",
+    "lives": "Payoff Plan moon"
+   },
+   "tables": [],
+   "maxNeedBand": 3
+  },
+  {
+   "id": "rothShare",
+   "label": "Roth share of contributions",
+   "tier": 4,
+   "kind": "ratio",
+   "how": "Roth contributions over all retirement contributions",
+   "needs": [
+    "A8",
+    "A10"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Tax Strategy moon"
+   ],
+   "unit": "rate",
+   "fn": "rothShare",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "Roth contributions",
+     "levels": [
+      "A8",
+      "A10"
+     ]
+    },
+    "bottom": {
+     "what": "all retirement contributions",
+     "levels": [
+      "A8"
+     ]
+    },
+    "communityName": "Roth share",
+    "benchmarkKey": "rothShare",
+    "bandNotes": "Depends on the bracket. Read at T16.",
+    "lives": "Tax Strategy moon"
+   },
+   "tables": [],
+   "maxNeedBand": 4
+  },
+  {
+   "id": "realWageRatio",
+   "label": "Real-to-nominal wage ratio",
+   "tier": 4,
+   "kind": "ratio",
+   "how": "real hourly wage (after commute, costs, extra hours) over nominal hourly wage",
+   "needs": [
+    "I1",
+    "I11",
+    "I2"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "time toggle"
+   ],
+   "unit": "rate",
+   "fn": "realWageRatio",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "real hourly wage (after commute, costs, extra hours)",
+     "levels": [
+      "I1",
+      "I11"
+     ]
+    },
+    "bottom": {
+     "what": "nominal hourly wage",
+     "levels": [
+      "I2",
+      "I11"
+     ]
+    },
+    "communityName": "YMOYL real hourly wage",
+    "benchmarkKey": "realWageRatio",
+    "bandNotes": "YMOYL lens. Most people land at 50 to 75% of nominal.",
+    "lives": "time toggle"
+   },
+   "tables": [],
+   "maxNeedBand": 4
+  },
+  {
+   "id": "bridgeCoverage",
+   "label": "Bridge coverage",
+   "tier": 4,
+   "kind": "ratio",
+   "how": "reachable assets over bridge number",
+   "needs": [
+    "A7",
+    "A11",
+    "Y3",
+    "E1",
+    "E6"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Decumulation room"
+   ],
+   "unit": "rate",
+   "fn": "bridgeCoverage",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "reachable assets",
+     "levels": [
+      "A7",
+      "A11"
+     ]
+    },
+    "bottom": {
+     "what": "bridge number",
+     "levels": [
+      "Y3",
+      "E1",
+      "E6"
+     ]
+    },
+    "communityName": "bridge coverage",
+    "benchmarkKey": "bridgeCoverage",
+    "bandNotes": "100% = the gap years are funded.",
+    "lives": "Decumulation room"
+   },
+   "tables": [],
+   "maxNeedBand": 4
+  },
+  {
+   "id": "taxBucketMix",
+   "label": "Tax bucket mix",
+   "tier": 4,
+   "kind": "ratio",
+   "how": "balance in each of pretax / Roth / taxable / HSA over total invested",
+   "needs": [
+    "A7",
+    "A10"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Tax Strategy moon"
+   ],
+   "unit": "list",
+   "fn": "taxBucketMix",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "balance in each of pretax / Roth / taxable / HSA",
+     "levels": [
+      "A7",
+      "A10"
+     ]
+    },
+    "bottom": {
+     "what": "total invested",
+     "levels": [
+      "A7"
+     ]
+    },
+    "communityName": "tax diversification",
+    "benchmarkKey": "taxBucketMix",
+    "bandNotes": "No single right mix. Early retirees need enough taxable and Roth basis to bridge.",
+    "lives": "Tax Strategy moon"
+   },
+   "tables": [],
+   "maxNeedBand": 4
+  },
+  {
+   "id": "raiseCapture",
+   "label": "Raise capture rate",
+   "tier": 5,
+   "kind": "ratio",
+   "how": "1 minus (spending change over income change) over one",
+   "needs": [
+    "E15",
+    "I14"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "E18, Career moon"
+   ],
+   "unit": "rate",
+   "fn": "raiseCapture",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "1 minus (spending change over income change)",
+     "levels": [
+      "E15",
+      "I14"
+     ]
+    },
+    "bottom": {
+     "what": "one",
+     "levels": []
+    },
+    "communityName": "anti-lifestyle-creep rate",
+    "benchmarkKey": "raiseCapture",
+    "bandNotes": "Money Guy lens and others: save at least half of every raise.",
+    "lives": "E18, Career moon"
+   },
+   "tables": [],
+   "maxNeedBand": 5
+  },
+  {
+   "id": "stockShare",
+   "label": "Stock share",
+   "tier": 5,
+   "kind": "ratio",
+   "how": "stocks over total invested",
+   "needs": [
+    "A13",
+    "A7"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Portfolio Design moon"
+   ],
+   "unit": "rate",
+   "fn": "stockShare",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "stocks",
+     "levels": [
+      "A13"
+     ]
+    },
+    "bottom": {
+     "what": "total invested",
+     "levels": [
+      "A7"
+     ]
+    },
+    "communityName": "equity allocation",
+    "benchmarkKey": "stockShare",
+    "bandNotes": "Age and risk-comfort glide path at A17.",
+    "lives": "Portfolio Design moon"
+   },
+   "tables": [],
+   "maxNeedBand": 5
+  },
+  {
+   "id": "requiredVsActual",
+   "label": "Savings rate vs. required",
+   "tier": 6,
+   "kind": "ratio",
+   "how": "actual savings rate over required savings rate for your date",
+   "needs": [
+    "A3",
+    "I1",
+    "Y1",
+    "Y3",
+    "A7",
+    "E1",
+    "E6",
+    "Y17"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "the sun"
+   ],
+   "unit": "rate",
+   "fn": "requiredVsActual",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "actual savings rate",
+     "levels": [
+      "A3",
+      "I1"
+     ]
+    },
+    "bottom": {
+     "what": "required savings rate for your date",
+     "levels": [
+      "Y1",
+      "Y3",
+      "A7",
+      "E1",
+      "E6",
+      "Y17"
+     ]
+    },
+    "communityName": "on-track ratio",
+    "benchmarkKey": "requiredVsActual",
+    "bandNotes": "100% = on route.",
+    "lives": "the sun"
+   },
+   "tables": [],
+   "maxNeedBand": 6
+  },
+  {
+   "id": "disabilityReplace",
+   "label": "Disability replacement rate",
+   "tier": 8,
+   "kind": "ratio",
+   "how": "covered monthly benefit over take-home",
+   "needs": [
+    "I23",
+    "I1"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Protection view"
+   ],
+   "unit": "rate",
+   "fn": "disabilityReplace",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "covered monthly benefit",
+     "levels": [
+      "I23"
+     ]
+    },
+    "bottom": {
+     "what": "take-home",
+     "levels": [
+      "I1"
+     ]
+    },
+    "communityName": "disability replacement rate",
+    "benchmarkKey": "disabilityReplace",
+    "bandNotes": "60% of pay is the common group-plan level.",
+    "lives": "Protection view"
+   },
+   "tables": [],
+   "maxNeedBand": 8
+  },
+  {
+   "id": "badYearCoverage",
+   "label": "Bad-year coverage",
+   "tier": 8,
+   "kind": "ratio",
+   "how": "cash that counts over out-of-pocket max plus shock costs",
+   "needs": [
+    "A4",
+    "E22",
+    "E23"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Protection view"
+   ],
+   "unit": "rate",
+   "fn": "badYearCoverage",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "cash that counts",
+     "levels": [
+      "A4"
+     ]
+    },
+    "bottom": {
+     "what": "out-of-pocket max plus shock costs",
+     "levels": [
+      "E22",
+      "E23"
+     ]
+    },
+    "communityName": "bad-year coverage",
+    "benchmarkKey": "badYearCoverage",
+    "bandNotes": "100% or more = a bad year does not touch investments.",
+    "lives": "Protection view"
+   },
+   "tables": [],
+   "maxNeedBand": 8
+  },
+  {
+   "id": "marketGapRate",
+   "label": "Market pay gap rate",
+   "tier": 9,
+   "kind": "ratio",
+   "how": "market rate minus your pay over your pay",
+   "needs": [
+    "I27",
+    "I2"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Career moon"
+   ],
+   "unit": "rate",
+   "fn": "marketGapRate",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "market rate minus your pay",
+     "levels": [
+      "I27",
+      "I2"
+     ]
+    },
+    "bottom": {
+     "what": "your pay",
+     "levels": [
+      "I2"
+     ]
+    },
+    "communityName": "market pay gap",
+    "benchmarkKey": "marketGapRate",
+    "bandNotes": "Over 10% is a Career moon move.",
+    "lives": "Career moon"
+   },
+   "tables": [],
+   "maxNeedBand": 9
+  },
+  {
+   "id": "gainsRoomUse",
+   "label": "0% gains room used",
+   "tier": 9,
+   "kind": "ratio",
+   "how": "realized long-term gains over room under the 0% threshold",
+   "needs": [
+    "T26",
+    "T25"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Tax Strategy moon"
+   ],
+   "unit": "rate",
+   "fn": "gainsRoomUse",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "realized long-term gains",
+     "levels": [
+      "T26"
+     ]
+    },
+    "bottom": {
+     "what": "room under the 0% threshold",
+     "levels": [
+      "T25"
+     ]
+    },
+    "communityName": "tax gain harvesting room",
+    "benchmarkKey": "gainsRoomUse",
+    "bandNotes": "Go Curry Cracker lens. Fill it in low-income years.",
+    "lives": "Tax Strategy moon"
+   },
+   "tables": [],
+   "maxNeedBand": 9
+  },
+  {
+   "id": "realFiCoverage",
+   "label": "Real FI coverage",
+   "tier": 10,
+   "kind": "ratio",
+   "how": "after-tax invested assets over real after-tax FI number",
+   "needs": [
+    "A7",
+    "A10",
+    "T30",
+    "E28",
+    "E29",
+    "E30",
+    "I28",
+    "I29"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Decumulation room"
+   ],
+   "unit": "rate",
+   "fn": "realFiCoverage",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "after-tax invested assets",
+     "levels": [
+      "A7",
+      "A10",
+      "T30"
+     ]
+    },
+    "bottom": {
+     "what": "real after-tax FI number",
+     "levels": [
+      "E28",
+      "E29",
+      "E30",
+      "T30",
+      "I28",
+      "I29"
+     ]
+    },
+    "communityName": "real FI coverage",
+    "benchmarkKey": "realFiCoverage",
+    "bandNotes": "The final, honest percent to FI.",
+    "lives": "Decumulation room"
+   },
+   "tables": [],
+   "maxNeedBand": 10
+  },
+  {
+   "id": "ssCoverage",
+   "label": "Social Security coverage",
+   "tier": 10,
+   "kind": "ratio",
+   "how": "projected Social Security over FI-phase spending",
+   "needs": [
+    "Y19",
+    "I28",
+    "E28"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "realFiNumber"
+   ],
+   "unit": "rate",
+   "fn": "ssCoverage",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "projected Social Security",
+     "levels": [
+      "Y19",
+      "I28"
+     ]
+    },
+    "bottom": {
+     "what": "FI-phase spending",
+     "levels": [
+      "E28"
+     ]
+    },
+    "communityName": "income floor share",
+    "benchmarkKey": "ssCoverage",
+    "bandNotes": "A floor that lowers the portfolio's job after 62 to 70.",
+    "lives": "realFiNumber"
+   },
+   "tables": [],
+   "maxNeedBand": 10
+  },
+  {
+   "id": "baristaGap",
+   "label": "Barista gap",
+   "tier": 10,
+   "kind": "ratio",
+   "how": "FI-phase spending minus part-time income over FI-phase spending",
+   "needs": [
+    "E28",
+    "I29"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Barista FI number"
+   ],
+   "unit": "rate",
+   "fn": "baristaGap",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "FI-phase spending minus part-time income",
+     "levels": [
+      "E28",
+      "I29"
+     ]
+    },
+    "bottom": {
+     "what": "FI-phase spending",
+     "levels": [
+      "E28"
+     ]
+    },
+    "communityName": "barista gap",
+    "benchmarkKey": "baristaGap",
+    "bandNotes": "The share the portfolio still has to cover.",
+    "lives": "Barista FI number"
+   },
+   "tables": [],
+   "maxNeedBand": 10
+  },
+  {
+   "id": "capRate",
+   "label": "Cap rate",
+   "tier": 10,
+   "kind": "ratio",
+   "how": "net operating income over property value",
+   "needs": [
+    "A28"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Real Estate moon"
+   ],
+   "unit": "rate",
+   "fn": "capRate",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "net operating income",
+     "levels": [
+      "A28"
+     ]
+    },
+    "bottom": {
+     "what": "property value",
+     "levels": [
+      "A28"
+     ]
+    },
+    "communityName": "cap rate",
+    "benchmarkKey": "capRate",
+    "bandNotes": "Market-dependent. Compare to local cap rates, not a fixed band.",
+    "lives": "Real Estate moon"
+   },
+   "tables": [],
+   "maxNeedBand": 10
+  },
+  {
+   "id": "cashOnCash",
+   "label": "Cash-on-cash return",
+   "tier": 10,
+   "kind": "ratio",
+   "how": "annual pre-tax cash flow over cash invested",
+   "needs": [
+    "A28"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Real Estate moon"
+   ],
+   "unit": "rate",
+   "fn": "cashOnCash",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "annual pre-tax cash flow",
+     "levels": [
+      "A28"
+     ]
+    },
+    "bottom": {
+     "what": "cash invested",
+     "levels": [
+      "A28"
+     ]
+    },
+    "communityName": "cash-on-cash",
+    "benchmarkKey": "cashOnCash",
+    "bandNotes": "BiggerPockets lens. Compare to the plan return assumption.",
+    "lives": "Real Estate moon"
+   },
+   "tables": [],
+   "maxNeedBand": 10
+  },
+  {
+   "id": "rentToPrice",
+   "label": "Rent-to-price",
+   "tier": 10,
+   "kind": "ratio",
+   "how": "monthly rent over purchase price",
+   "needs": [
+    "A28"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Real Estate moon"
+   ],
+   "unit": "rate",
+   "fn": "rentToPrice",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "monthly rent",
+     "levels": [
+      "A28"
+     ]
+    },
+    "bottom": {
+     "what": "purchase price",
+     "levels": [
+      "A28"
+     ]
+    },
+    "communityName": "the 1% rule",
+    "benchmarkKey": "rentToPrice",
+    "bandNotes": "1% is a screening rule of thumb, rarely met in expensive markets. Screen only, never a verdict.",
+    "lives": "Real Estate moon"
+   },
+   "tables": [],
+   "maxNeedBand": 10
+  },
+  {
+   "id": "dscr",
+   "label": "Debt service coverage",
+   "tier": 10,
+   "kind": "ratio",
+   "how": "net operating income over annual debt service",
+   "needs": [
+    "A28",
+    "D12"
+   ],
+   "derived": true,
+   "sharpenedBy": [],
+   "feeds": [
+    "Real Estate moon"
+   ],
+   "unit": "multiple",
+   "fn": "dscr",
+   "core": false,
+   "earnedWhen": null,
+   "ratio": {
+    "top": {
+     "what": "net operating income",
+     "levels": [
+      "A28"
+     ]
+    },
+    "bottom": {
+     "what": "annual debt service",
+     "levels": [
+      "A28",
+      "D12"
+     ]
+    },
+    "communityName": "DSCR",
+    "benchmarkKey": "dscr",
+    "bandNotes": "Lenders commonly want 1.2 or more.",
+    "lives": "Real Estate moon"
+   },
+   "tables": [],
+   "maxNeedBand": 10
+  }
+ ]
+}

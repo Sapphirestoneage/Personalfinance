@@ -1,0 +1,1731 @@
+{
+ "id": "moves",
+ "version": "1.0",
+ "asOf": "2026-09-20",
+ "source": "The Solar System master prompt (docs/SOLAR-SYSTEM.md), sections 1.8 (moves), 1.15 (quick wins) and the moon tracks of 1.10.",
+ "confidence": "unverified",
+ "confidenceNote": "The dollar figures behind quick wins are either a metric of the household (the honest case) or a stated convention from conventions, each an order of magnitude with its basis named, never a finding. A quick win priced on a convention says \"about\".",
+ "note": "A move belongs to one moon and, through it, one planet; band is the band whose quick-win coverage it provides (every band on every planet has at least one quickWin, lint). dollars is an expression evaluated to cents a year: \"$metricId\", {\"*\": [\"$metricId\", k]} or {\"convention\": key}. Every level's nextMove is a move id here (lint). No string here matches the FI Skill Tree (data/skill_tree.json), lint.",
+ "conventions": {
+  "missedEnrollmentMonth": {
+   "cents": 45000,
+   "what": "one month of a marketplace premium bought in a hurry",
+   "source": "Order of magnitude for a benchmark silver premium; the marketplace quote at Expenses 23 replaces it."
+  },
+  "hsaTaxSavingTypical": {
+   "cents": 90000,
+   "what": "a year of HSA contributions at a 22% marginal rate",
+   "source": "data/irs_limits_2026.json hsaSelfOnly times a mid bracket; the marginal bracket at Taxes 10 replaces the rate."
+  },
+  "acaSubsidyTypicalYear": {
+   "cents": 300000,
+   "what": "a year of marketplace subsidy at a modest FI income",
+   "source": "Order of magnitude; data/aca_2026.json and the quote at Expenses 29 replace it."
+  },
+  "tuitionBenefitTypical": {
+   "cents": 525000,
+   "what": "the tax-free employer education benefit a year",
+   "source": "The section 127 exclusion as commonly cited; verify against the current-year table before relying on it."
+  },
+  "oopMaxTypical": {
+   "cents": 900000,
+   "what": "an individual out-of-pocket maximum, order of magnitude",
+   "source": "The marketplace maximum as commonly cited; the plan summary at Expenses 22 replaces it."
+  },
+  "moneyDateDriftAvoided": {
+   "cents": 60000,
+   "what": "a year of small drift two people catch monthly",
+   "source": "A stated convention, not a measurement."
+  },
+  "hsaReceiptsTypical": {
+   "cents": 50000,
+   "what": "a year of medical receipts reimbursable tax free later",
+   "source": "A stated convention, not a measurement."
+  },
+  "esppDiscountTypical": {
+   "cents": 150000,
+   "what": "a 15% discount on a modest ESPP contribution, sold at purchase",
+   "source": "A stated convention; Income 26 replaces it with the plan's discount."
+  },
+  "seBookkeepingSaved": {
+   "cents": 40000,
+   "what": "a year of missed deductions found with separate books",
+   "source": "A stated convention, not a measurement."
+  },
+  "soloRetirementTaxSaved": {
+   "cents": 220000,
+   "what": "tax on a Solo 401(k) contribution at a mid bracket",
+   "source": "A stated convention; the bracket at Taxes 10 and the limit table replace it."
+  },
+  "shopOneBillTypical": {
+   "cents": 30000,
+   "what": "a year saved shopping one insurance, phone or internet bill",
+   "source": "A stated convention, not a measurement."
+  },
+  "cancelOneSubscriptionTypical": {
+   "cents": 18000,
+   "what": "a year of one forgotten subscription",
+   "source": "A stated convention, not a measurement."
+  },
+  "buyUsedTypical": {
+   "cents": 50000,
+   "what": "the gap between new and used on one purchase",
+   "source": "A stated convention, not a measurement."
+  },
+  "lateFeeAvoided": {
+   "cents": 12000,
+   "what": "a year of late fees and penalty interest avoided",
+   "source": "A stated convention, not a measurement."
+  },
+  "missingAccountTaxSaved": {
+   "cents": 150000,
+   "what": "tax saved on a year of contributions to an account not yet open",
+   "source": "A stated convention; the bracket and the limit table replace it."
+  },
+  "scoreBandLoanSaving": {
+   "cents": 60000,
+   "what": "a year of interest between two credit bands on a car loan",
+   "source": "A stated convention, not a measurement."
+  },
+  "reportErrorTypical": {
+   "cents": 30000,
+   "what": "a year of interest a corrected report error saves",
+   "source": "A stated convention, not a measurement."
+  },
+  "utilizationRateSaving": {
+   "cents": 20000,
+   "what": "a year of interest from a better rate at lower utilization",
+   "source": "A stated convention, not a measurement."
+  },
+  "underpaymentPenaltyTypical": {
+   "cents": 25000,
+   "what": "an underpayment penalty avoided",
+   "source": "A stated convention; data/se_tax_2026.json holds the safe harbor rules."
+  },
+  "geoShelterSavingTypical": {
+   "cents": 600000,
+   "what": "a fifth off a mid-range rent for a year",
+   "source": "A stated convention; the cost-of-living table (data/col_index.json) and the geo block replace it."
+  },
+  "flexLineTypical": {
+   "cents": 30000,
+   "what": "a year of one flexible line trimmed in a hard month",
+   "source": "A stated convention, not a measurement."
+  },
+  "sinkingFundOverdraftAvoided": {
+   "cents": 15000,
+   "what": "a year of overdraft and card interest a sinking fund avoids",
+   "source": "A stated convention, not a measurement."
+  },
+  "closeMonthLeakFound": {
+   "cents": 36000,
+   "what": "a year of leak found by closing one month against the estimate",
+   "source": "A stated convention; the leak rate times take-home replaces it once the engine runs."
+  },
+  "fiLinePricedTypical": {
+   "cents": 60000,
+   "what": "a year of FI spending corrected by pricing one line",
+   "source": "A stated convention, not a measurement."
+  },
+  "onePointOfPayTypical": {
+   "cents": 60000,
+   "what": "one point of a mid pay, a year",
+   "source": "A stated convention; one percent of I2 replaces it once the engine runs."
+  },
+  "automationLeakClosed": {
+   "cents": 60000,
+   "what": "a year of leak closed by an automatic transfer",
+   "source": "A stated convention, not a measurement."
+  },
+  "rentalAnalysisTypical": {
+   "cents": 240000,
+   "what": "a year of negative cash flow a bad rental would cost",
+   "source": "A stated convention, not a measurement."
+  },
+  "fiIncomeLineTypical": {
+   "cents": 120000,
+   "what": "a year of part-time income in FI, modest",
+   "source": "A stated convention, not a measurement."
+  },
+  "stateRateMisreadTypical": {
+   "cents": 40000,
+   "what": "a year of state tax misread by a default rate",
+   "source": "A stated convention, not a measurement."
+  },
+  "rothTradSwitchTypical": {
+   "cents": 80000,
+   "what": "a year of tax difference between Roth and traditional at a mid bracket",
+   "source": "A stated convention; the bracket at Taxes 10 replaces it."
+  },
+  "oneCreditTypical": {
+   "cents": 50000,
+   "what": "one commonly missed credit",
+   "source": "A stated convention, not a measurement."
+  },
+  "roundUpInterestSaved": {
+   "cents": 20000,
+   "what": "a year of interest saved by rounding a payment up",
+   "source": "A stated convention; the amortization at Debt 29 replaces it."
+  },
+  "recordsFoundSaving": {
+   "cents": 20000,
+   "what": "a preparer hour and a missed basis, found",
+   "source": "A stated convention, not a measurement."
+  }
+ },
+ "moves": [
+  {
+   "id": "health.markCoverageDate",
+   "moon": "health",
+   "band": 1,
+   "what": "Put the date your coverage changes on the calendar",
+   "why": "Missing open enrollment or the age-26 date means a month with no cover, or the wrong plan for a year.",
+   "first15": "Find the date on the benefits page or count to your 26th birthday. Add it to the Calendar room.",
+   "checkpoint": "The date is on the calendar with a reminder a month before.",
+   "rooms": [
+    "calendar"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "missedEnrollmentMonth"
+   },
+   "planet": "you"
+  },
+  {
+   "id": "health.checkHsaEligible",
+   "moon": "health",
+   "band": 2,
+   "what": "Check whether your plan is HSA-eligible",
+   "why": "An HSA is the one account that is never taxed. Only a high-deductible plan opens it.",
+   "first15": "Look for the words high-deductible or HSA on your plan card or summary.",
+   "checkpoint": "You know whether the HSA levels apply to you.",
+   "rooms": [
+    "tax"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "hsaTaxSavingTypical"
+   },
+   "planet": "you"
+  },
+  {
+   "id": "health.priceMarketplace",
+   "moon": "health",
+   "band": 3,
+   "what": "Price a marketplace plan at your income, once",
+   "why": "Knowing what cover costs without a job is the number every job-loss plan needs.",
+   "first15": "healthcare.gov, see plans, enter your ZIP and income. Note the cheapest silver.",
+   "checkpoint": "A monthly premium figure is in Expenses 23.",
+   "rooms": [
+    "runway"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "acaSubsidyTypicalYear"
+   },
+   "planet": "you"
+  },
+  {
+   "id": "health.compareOpenEnrollment",
+   "moon": "health",
+   "band": 4,
+   "what": "Compare the two plans at open enrollment: premium plus deductible against the HSA plan",
+   "why": "The cheaper plan on paper is often the dearer one in a bad year; the comparison takes ten minutes once a year.",
+   "first15": "Two plans, two figures each: the premium for the year and the deductible. Add them.",
+   "checkpoint": "You know which plan wins in a normal year and in a bad one.",
+   "rooms": [
+    "protection"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "hsaTaxSavingTypical"
+   },
+   "planet": "you"
+  },
+  {
+   "id": "career.checkTuitionBenefit",
+   "moon": "career",
+   "band": 4,
+   "what": "Check the tuition or certification benefit at work",
+   "why": "Many employers pay for a course or a degree and few people ask.",
+   "first15": "Search the benefits portal for tuition, education or learning.",
+   "checkpoint": "You know the yearly amount, or that there is none.",
+   "rooms": [
+    "skill-tree"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "tuitionBenefitTypical"
+   },
+   "planet": "income"
+  },
+  {
+   "id": "geo.priceALife",
+   "moon": "geoArbitrage",
+   "band": 5,
+   "what": "Price the same life in one cheaper place",
+   "why": "Shelter is the biggest line; the same life elsewhere can move the FI date by years.",
+   "first15": "Pick one place. Look up a rent for the same bedrooms. Put it in the geo block.",
+   "checkpoint": "A geo block shows the FI date in that place.",
+   "rooms": [
+    "what-if-life"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "geoShelterSavingTypical"
+   },
+   "planet": "you"
+  },
+  {
+   "id": "health.writeOopMax",
+   "moon": "health",
+   "band": 6,
+   "what": "Write down your out-of-pocket maximum",
+   "why": "It is the true worst-case medical bill for a year, and the first thing a cushion must cover.",
+   "first15": "The plan summary, page one. Copy the individual and family figures.",
+   "checkpoint": "Expenses 22 holds the number.",
+   "rooms": [
+    "protection"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "oopMaxTypical"
+   },
+   "planet": "you"
+  },
+  {
+   "id": "family.setMoneyDate",
+   "moon": "family",
+   "band": 7,
+   "what": "Set a monthly money date",
+   "why": "Twenty minutes a month keeps two people on one plan and catches drift early.",
+   "first15": "Pick a day. Put it on the calendar. Agenda: what moved, what is next.",
+   "checkpoint": "The date is on the calendar, repeating.",
+   "rooms": [
+    "partner",
+    "calendar"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "moneyDateDriftAvoided"
+   },
+   "planet": "you"
+  },
+  {
+   "id": "health.saveReceipts",
+   "moon": "health",
+   "band": 8,
+   "what": "Start saving medical receipts",
+   "why": "If the HSA is invested, receipts can be reimbursed years later, tax free.",
+   "first15": "Make one folder. Photograph the last receipt.",
+   "checkpoint": "A folder exists with one receipt in it.",
+   "rooms": [
+    "tax"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "hsaReceiptsTypical"
+   },
+   "planet": "you"
+  },
+  {
+   "id": "geo.priceFlexibility",
+   "moon": "geoArbitrage",
+   "band": 9,
+   "what": "Price what a roommate, a house hack or a remote move would save you",
+   "why": "Flexibility is worth a number, and the number is usually the biggest line.",
+   "first15": "Three figures: the rent with a roommate, with a rented room, in the cheaper place.",
+   "checkpoint": "The shelter analysis shows the three deltas.",
+   "rooms": [
+    "housing"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "geoShelterSavingTypical"
+   },
+   "planet": "you"
+  },
+  {
+   "id": "career.lifetimeValueOfRaise",
+   "moon": "career",
+   "band": 9,
+   "what": "See what one raise is worth over a career",
+   "why": "A raise is not a year of money. Invested, it compounds to the FI date.",
+   "first15": "Open the market pay gap. Multiply by the wealth multiplier for your age.",
+   "checkpoint": "You have the lifetime figure and a reason to ask.",
+   "rooms": [
+    "career-move"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "*": [
+     "$marketGap",
+     1
+    ]
+   },
+   "planet": "income"
+  },
+  {
+   "id": "health.quoteBeforeMedicare",
+   "moon": "health",
+   "band": 10,
+   "what": "Get a real quote for cover before 65",
+   "why": "Healthcare is the biggest unknown in early retirement in the US. One quote replaces a guess.",
+   "first15": "Marketplace quote at the income you plan to show in FI. Note the premium and the subsidy.",
+   "checkpoint": "Expenses 29 holds a quoted figure.",
+   "rooms": [
+    "decumulation"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "acaSubsidyTypicalYear"
+   },
+   "planet": "you"
+  },
+  {
+   "id": "health.closeOneGap",
+   "moon": "health",
+   "band": 8,
+   "what": "Close one coverage gap",
+   "why": "The cheapest cover is the one bought before it is needed.",
+   "first15": "Pick the first gap on the protection view. Get one quote.",
+   "checkpoint": "You 22 shows one more yes.",
+   "rooms": [
+    "protection"
+   ],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "you"
+  },
+  {
+   "id": "family.nameBeneficiaries",
+   "moon": "family",
+   "band": 8,
+   "what": "Name a beneficiary on every account",
+   "why": "A named beneficiary skips probate; an unnamed one goes to a court.",
+   "first15": "The profile page of each account, ten minutes for all of them.",
+   "checkpoint": "You 24 says beneficiaries named.",
+   "rooms": [
+    "protection"
+   ],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "you"
+  },
+  {
+   "id": "geo.checkRemotePolicy",
+   "moon": "geoArbitrage",
+   "band": 5,
+   "what": "Find out the remote-work policy in writing",
+   "why": "Location freedom is only real when it is in the handbook.",
+   "first15": "Search the handbook or ask HR.",
+   "checkpoint": "You 27 says remote yes or no from the policy, not a hope.",
+   "rooms": [],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "you"
+  },
+  {
+   "id": "geo.addGeoBlock",
+   "moon": "geoArbitrage",
+   "band": 5,
+   "what": "Add the move as a block",
+   "why": "A block shows the FI date with and without the move, side by side.",
+   "first15": "What-if Life, add a geo block, pick the place.",
+   "checkpoint": "The block is on the scenario list.",
+   "rooms": [
+    "what-if-life"
+   ],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "you"
+  },
+  {
+   "id": "geo.compareStateTax",
+   "moon": "geoArbitrage",
+   "band": 9,
+   "what": "Compare state tax at the destination",
+   "why": "A move can change take-home by a bracket.",
+   "first15": "Taxes 27 shows the delta once the destination is named.",
+   "checkpoint": "The tax effect of the move is on record.",
+   "rooms": [
+    "tax"
+   ],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "you"
+  },
+  {
+   "id": "family.addKidBlock",
+   "moon": "family",
+   "band": 5,
+   "what": "Add the kid as a block",
+   "why": "Childcare is a second rent for five years. Seeing it early moves the date honestly.",
+   "first15": "What-if Life, add a kid block, pick the year.",
+   "checkpoint": "The block is on the scenario list.",
+   "rooms": [
+    "what-if-life"
+   ],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "you"
+  },
+  {
+   "id": "family.open529",
+   "moon": "family",
+   "band": 5,
+   "what": "Open a 529 if college is the intent",
+   "why": "Some states give a deduction on the way in; growth is untaxed for school.",
+   "first15": "Your state's plan site. Ten minutes to open.",
+   "checkpoint": "An account exists with an automatic monthly amount.",
+   "rooms": [
+    "partner"
+   ],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "you"
+  },
+  {
+   "id": "family.nameGuardian",
+   "moon": "family",
+   "band": 8,
+   "what": "Name a guardian in a will",
+   "why": "The one estate step that matters most with kids.",
+   "first15": "A simple will service or a lawyer. Name the guardian first.",
+   "checkpoint": "You 24 says a will exists.",
+   "rooms": [
+    "protection"
+   ],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "you"
+  },
+  {
+   "id": "family.custodialRoth",
+   "moon": "family",
+   "band": 9,
+   "what": "Open a custodial Roth for a kid with earned income",
+   "why": "Decades of tax-free growth on a summer job.",
+   "first15": "The brokerage's custodial Roth page. Contributions up to what the kid earned.",
+   "checkpoint": "The account exists.",
+   "rooms": [],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "you"
+  },
+  {
+   "id": "income.captureMatch",
+   "moon": "career",
+   "band": 1,
+   "what": "Capture the whole match",
+   "why": "It is the only guaranteed 50 to 100% return anywhere.",
+   "first15": "Open the retirement plan portal. Set the contribution to the percent the match needs.",
+   "checkpoint": "Match capture rate reads 100%.",
+   "rooms": [
+    "foo-ladder"
+   ],
+   "quickWin": true,
+   "dollars": "$matchLeft",
+   "planet": "income"
+  },
+  {
+   "id": "income.takeEsppDiscount",
+   "moon": "career",
+   "band": 2,
+   "what": "Take the ESPP discount and sell on a schedule",
+   "why": "A 15% discount on stock you sell the day it lands is a 15% raise on that money.",
+   "first15": "Enroll in the ESPP at the max you can carry. Set a rule: sell at purchase.",
+   "checkpoint": "Enrollment is on, with a sell rule written down.",
+   "rooms": [],
+   "quickWin": true,
+   "dollars": {
+    "convention": "esppDiscountTypical"
+   },
+   "planet": "income"
+  },
+  {
+   "id": "hustle.priceOneHour",
+   "moon": "sideHustles",
+   "band": 3,
+   "what": "Price one hour of your skill",
+   "why": "Knowing what an hour sells for turns a vague idea into a number.",
+   "first15": "Find three people selling the same skill. Note their rate.",
+   "checkpoint": "A rate per hour is in the moon intake.",
+   "rooms": [],
+   "quickWin": true,
+   "dollars": {
+    "*": [
+     "$hustleCapacity",
+     1
+    ]
+   },
+   "planet": "income"
+  },
+  {
+   "id": "career.updateResume",
+   "moon": "career",
+   "band": 4,
+   "what": "Update the resume and one profile",
+   "why": "Being findable costs nothing and is how most raises arrive.",
+   "first15": "One page, current title, three results with numbers.",
+   "checkpoint": "The file is dated this month.",
+   "rooms": [
+    "career-move"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "*": [
+     "$marketGap",
+     0.5
+    ]
+   },
+   "planet": "income"
+  },
+  {
+   "id": "career.addJobChangeBlock",
+   "moon": "career",
+   "band": 5,
+   "what": "Add a job change as a block",
+   "why": "A 20% jump and its effect on the date, without doing anything yet.",
+   "first15": "What-if Life, job change block, the market rate.",
+   "checkpoint": "The block is on the list.",
+   "rooms": [
+    "what-if-life",
+    "career-move"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "*": [
+     "$marketGap",
+     1
+    ]
+   },
+   "planet": "income"
+  },
+  {
+   "id": "income.askForMarketRate",
+   "moon": "career",
+   "band": 6,
+   "what": "Ask for the market rate",
+   "why": "The market pay gap is the biggest single lever most people never pull.",
+   "first15": "Book the conversation. Bring the three postings.",
+   "checkpoint": "A date is set for the conversation.",
+   "rooms": [
+    "career-move"
+   ],
+   "quickWin": true,
+   "dollars": "$marketGap",
+   "planet": "income"
+  },
+  {
+   "id": "hustle.trackHustleNet",
+   "moon": "sideHustles",
+   "band": 7,
+   "what": "Track side income net of costs for one month",
+   "why": "Gross flatters. Net after costs and hours is the real wage.",
+   "first15": "One sheet: money in, money out, hours.",
+   "checkpoint": "Income 21 has a real month.",
+   "rooms": [],
+   "quickWin": true,
+   "dollars": "$sideNet",
+   "planet": "income"
+  },
+  {
+   "id": "biz.separateAccounts",
+   "moon": "entrepreneurship",
+   "band": 8,
+   "what": "Separate the business account",
+   "why": "One account per entity makes taxes and a bad year survivable.",
+   "first15": "Open a business checking account. Move the next payment there.",
+   "checkpoint": "Business money lands in its own account.",
+   "rooms": [],
+   "quickWin": true,
+   "dollars": {
+    "convention": "seBookkeepingSaved"
+   },
+   "planet": "income"
+  },
+  {
+   "id": "biz.openSoloRetirement",
+   "moon": "entrepreneurship",
+   "band": 9,
+   "what": "Open a Solo 401(k) or SEP IRA",
+   "why": "Self-employment income can shelter far more than an IRA alone.",
+   "first15": "The brokerage's small-business retirement page. The limit is in the dated table.",
+   "checkpoint": "The account exists with one contribution.",
+   "rooms": [
+    "which-account"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "soloRetirementTaxSaved"
+   },
+   "planet": "income"
+  },
+  {
+   "id": "career.planFiIncome",
+   "moon": "career",
+   "band": 10,
+   "what": "Plan income in FI: one line",
+   "why": "Part-time, rental or a pension changes the FI number more than most saving.",
+   "first15": "Income 29, one line, a rough monthly figure.",
+   "checkpoint": "Income 29 has a line.",
+   "rooms": [
+    "decumulation"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "fiIncomeLineTypical"
+   },
+   "planet": "income"
+  },
+  {
+   "id": "hustle.listOneOffer",
+   "moon": "sideHustles",
+   "band": 3,
+   "what": "List one offer somewhere",
+   "why": "The first dollar is the hard one.",
+   "first15": "One platform, one listing, one price.",
+   "checkpoint": "The listing is live.",
+   "rooms": [],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "income"
+  },
+  {
+   "id": "hustle.openSoloRetirement",
+   "moon": "sideHustles",
+   "band": 9,
+   "what": "Shelter the side income in a retirement account",
+   "why": "Side income can go into a Solo 401(k) or SEP.",
+   "first15": "Same page as the business version.",
+   "checkpoint": "An account exists.",
+   "rooms": [
+    "which-account"
+   ],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "income"
+  },
+  {
+   "id": "biz.setQuarterlyReminders",
+   "moon": "entrepreneurship",
+   "band": 5,
+   "what": "Set the four quarterly tax reminders",
+   "why": "The safe harbor keeps a penalty away; the reminders keep the safe harbor.",
+   "first15": "Calendar, four dates from the tax table.",
+   "checkpoint": "Four reminders exist.",
+   "rooms": [
+    "calendar",
+    "tax"
+   ],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "income"
+  },
+  {
+   "id": "biz.priceYourTime",
+   "moon": "entrepreneurship",
+   "band": 6,
+   "what": "Price your time as the business sees it",
+   "why": "A business that pays you less than a job is a hobby with paperwork.",
+   "first15": "Revenue minus costs, over hours.",
+   "checkpoint": "Income 18 shows the business hourly figure.",
+   "rooms": [],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "income"
+  },
+  {
+   "id": "expenses.shopOneBill",
+   "moon": "deals",
+   "band": 1,
+   "what": "Shop one bill",
+   "why": "Insurance, phone and internet drift up every year for people who do not call.",
+   "first15": "Pick the bill you have not shopped in two years. Get one competing quote.",
+   "checkpoint": "A quote is in hand, or the bill is lower.",
+   "rooms": [
+    "budget"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "shopOneBillTypical"
+   },
+   "planet": "expenses"
+  },
+  {
+   "id": "expenses.cancelOneSubscription",
+   "moon": "deals",
+   "band": 2,
+   "what": "Cancel one subscription",
+   "why": "A subscription you forgot costs 300 times its monthly price in FI number.",
+   "first15": "Scroll one statement for a name you do not recognize. Cancel it.",
+   "checkpoint": "One line is gone from Expenses 7.",
+   "rooms": [
+    "budget"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "cancelOneSubscriptionTypical"
+   },
+   "planet": "expenses"
+  },
+  {
+   "id": "deals.priceNextPurchase",
+   "moon": "deals",
+   "band": 3,
+   "what": "Price the next big purchase used",
+   "why": "The same thing used is usually half, and the difference compounds.",
+   "first15": "Look the item up second-hand. Note the gap.",
+   "checkpoint": "The gap is written on the purchase in Big Purchase.",
+   "rooms": [
+    "big-purchase"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "buyUsedTypical"
+   },
+   "planet": "expenses"
+  },
+  {
+   "id": "deals.flagFlexibleLines",
+   "moon": "deals",
+   "band": 4,
+   "what": "Flag which lines could flex",
+   "why": "Knowing what can drop in a bad month is what makes a cushion small enough to fund.",
+   "first15": "Expenses 10, one tap per line.",
+   "checkpoint": "Every line has a flag.",
+   "rooms": [],
+   "quickWin": true,
+   "dollars": {
+    "convention": "flexLineTypical"
+   },
+   "planet": "expenses"
+  },
+  {
+   "id": "expenses.setUpSinkingFunds",
+   "moon": "deals",
+   "band": 5,
+   "what": "Set up sinking funds",
+   "why": "Irregular costs stop being surprises when they are saved for monthly.",
+   "first15": "One savings bucket per irregular cost, or one with a note. Set the monthly amount from the targets.",
+   "checkpoint": "The sinking targets are automated.",
+   "rooms": [
+    "budget",
+    "calendar"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "sinkingFundOverdraftAvoided"
+   },
+   "planet": "expenses"
+  },
+  {
+   "id": "rewards.setAutopayFull",
+   "moon": "cardRewards",
+   "band": 6,
+   "what": "Set autopay to the full balance",
+   "why": "Rewards only count when no interest is paid. Autopay makes that automatic.",
+   "first15": "The card app, autopay, statement balance.",
+   "checkpoint": "Autopay is on, full balance.",
+   "rooms": [],
+   "quickWin": true,
+   "dollars": {
+    "convention": "lateFeeAvoided"
+   },
+   "planet": "expenses"
+  },
+  {
+   "id": "expenses.closeAMonth",
+   "moon": "deals",
+   "band": 7,
+   "what": "Close one month in the Budget room",
+   "why": "The estimate meets the actual, and the gap between them is the leak made visible.",
+   "first15": "Budget room, close the month, read the divergence.",
+   "checkpoint": "One month is closed.",
+   "rooms": [
+    "budget"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "closeMonthLeakFound"
+   },
+   "planet": "expenses"
+  },
+  {
+   "id": "deals.priceShockCosts",
+   "moon": "deals",
+   "band": 8,
+   "what": "Price the shock costs once",
+   "why": "COBRA, a move, a car: knowing the figures turns a fear into a line.",
+   "first15": "Expenses 23: the COBRA rate is on the benefits page; a move and a car are one search each.",
+   "checkpoint": "Three rough figures are in.",
+   "rooms": [
+    "runway"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "*": [
+     "$badYear",
+     1
+    ]
+   },
+   "planet": "expenses"
+  },
+  {
+   "id": "expenses.pointCardAtSpend",
+   "moon": "cardRewards",
+   "band": 9,
+   "what": "Point the right card at the spending you already do",
+   "why": "Two percent back on what you were buying anyway is free money with no new spending.",
+   "first15": "Check which card pays most on groceries and fuel. Use it there.",
+   "checkpoint": "Rewards value per year is up.",
+   "rooms": [
+    "budget"
+   ],
+   "quickWin": true,
+   "dollars": "$rewardsValue",
+   "planet": "expenses"
+  },
+  {
+   "id": "deals.priceFiSpending",
+   "moon": "deals",
+   "band": 10,
+   "what": "Price one line of FI spending",
+   "why": "What drops and what rises in FI decides the number more than any return assumption.",
+   "first15": "Expenses 28, fix one guessed line.",
+   "checkpoint": "One line in Expenses 28 is yours, not the app's guess.",
+   "rooms": [
+    "decumulation"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "fiLinePricedTypical"
+   },
+   "planet": "expenses"
+  },
+  {
+   "id": "rewards.checkFeeMath",
+   "moon": "cardRewards",
+   "band": 9,
+   "what": "Check the annual fee math",
+   "why": "A fee card that earns less than its fee is a subscription.",
+   "first15": "Rewards value on that card minus the fee.",
+   "checkpoint": "Every fee card has a verdict.",
+   "rooms": [],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "expenses"
+  },
+  {
+   "id": "rewards.oneSignupBonus",
+   "moon": "cardRewards",
+   "band": 9,
+   "what": "One sign-up bonus on spending already planned",
+   "why": "A bonus on spending you would do anyway is the biggest rewards move, once the balance is zero every month.",
+   "first15": "Match the minimum spend to a planned purchase.",
+   "checkpoint": "The bonus posted.",
+   "rooms": [],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "expenses"
+  },
+  {
+   "id": "path.captureMatch",
+   "moon": "mainPath",
+   "band": 1,
+   "what": "Capture the whole match, every paycheck",
+   "why": "Step one of every order of operations, because it is free money.",
+   "first15": "Retirement plan portal, set the contribution to the match percent.",
+   "checkpoint": "Match capture reads 100%.",
+   "rooms": [
+    "foo-ladder"
+   ],
+   "quickWin": true,
+   "dollars": "$matchLeft",
+   "planet": "assets"
+  },
+  {
+   "id": "assets.moveCashToRate",
+   "moon": "safetyNet",
+   "band": 2,
+   "what": "Move the cash to a higher rate",
+   "why": "Cash at 0.01% is money working for the bank. A high-yield account is fifteen minutes.",
+   "first15": "Open a high-yield savings account. Move the emergency fund.",
+   "checkpoint": "Cash drag reads near zero.",
+   "rooms": [
+    "runway"
+   ],
+   "quickWin": true,
+   "dollars": "$cashDrag",
+   "planet": "assets"
+  },
+  {
+   "id": "assets.openTheMissingAccount",
+   "moon": "mainPath",
+   "band": 3,
+   "what": "Open the missing account",
+   "why": "The next slot for your money usually needs an account that does not exist yet.",
+   "first15": "The next slot names it. The brokerage opens it in ten minutes.",
+   "checkpoint": "The account is in Assets 7.",
+   "rooms": [
+    "which-account"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "missingAccountTaxSaved"
+   },
+   "planet": "assets"
+  },
+  {
+   "id": "assets.raiseContributionOnePoint",
+   "moon": "mainPath",
+   "band": 4,
+   "what": "Raise the contribution by one point",
+   "why": "One point is invisible in a paycheck and years on the FI date.",
+   "first15": "Plan portal, contribution rate, plus one.",
+   "checkpoint": "Assets 8 shows the new figure.",
+   "rooms": [
+    "foo-ladder"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "onePointOfPayTypical"
+   },
+   "planet": "assets"
+  },
+  {
+   "id": "path.automateTheNextSlot",
+   "moon": "mainPath",
+   "band": 5,
+   "what": "Automate the next slot",
+   "why": "What is automatic happens. What is manual happens in January.",
+   "first15": "Set a monthly transfer to the account the next slot names.",
+   "checkpoint": "A recurring transfer exists.",
+   "rooms": [
+    "which-account"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "automationLeakClosed"
+   },
+   "planet": "assets"
+  },
+  {
+   "id": "safety.setEfTarget",
+   "moon": "safetyNet",
+   "band": 6,
+   "what": "Confirm the emergency fund target and stop overfilling",
+   "why": "Cash past the target is cash not compounding.",
+   "first15": "Assets 18, confirm the months. Move anything over it.",
+   "checkpoint": "Emergency fund reads at target.",
+   "rooms": [
+    "runway"
+   ],
+   "quickWin": true,
+   "dollars": "$cashDrag",
+   "planet": "assets"
+  },
+  {
+   "id": "portfolio.checkTargetDateFee",
+   "moon": "portfolioDesign",
+   "band": 7,
+   "what": "Check the fee on the target-date fund",
+   "why": "Some target-date funds cost ten times an index fund for the same mix.",
+   "first15": "The fund page, expense ratio.",
+   "checkpoint": "Assets 25 has the figure.",
+   "rooms": [
+    "the-mix"
+   ],
+   "quickWin": true,
+   "dollars": "$feeDrag",
+   "planet": "assets"
+  },
+  {
+   "id": "safety.splitTheCushion",
+   "moon": "safetyNet",
+   "band": 8,
+   "what": "Split the cushion: one month reachable today, the rest at the best rate",
+   "why": "A shock needs cash today; the rest can earn.",
+   "first15": "One month in checking, the rest in high-yield.",
+   "checkpoint": "The cushion is in two places.",
+   "rooms": [
+    "runway"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "*": [
+     "$cashDrag",
+     0.5
+    ]
+   },
+   "planet": "assets"
+  },
+  {
+   "id": "assets.swapExpensiveFund",
+   "moon": "portfolioDesign",
+   "band": 9,
+   "what": "Swap the expensive fund",
+   "why": "Fee drag compounds against you for decades. The swap takes ten minutes.",
+   "first15": "Find the fund with the highest expense ratio. Exchange it for the index equivalent in the same account.",
+   "checkpoint": "Fee drag falls.",
+   "rooms": [
+    "the-mix"
+   ],
+   "quickWin": true,
+   "dollars": "$feeDrag",
+   "planet": "assets"
+  },
+  {
+   "id": "re.priceOneRental",
+   "moon": "realEstate",
+   "band": 10,
+   "what": "Run the numbers on one rental",
+   "why": "Cap rate and cash-on-cash say in ten minutes whether a property is an investment or a hobby.",
+   "first15": "Assets 28, four numbers from one listing.",
+   "checkpoint": "The rental analysis shows.",
+   "rooms": [
+    "housing"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "rentalAnalysisTypical"
+   },
+   "planet": "assets"
+  },
+  {
+   "id": "path.fundStarterCushion",
+   "moon": "mainPath",
+   "band": 2,
+   "what": "Fund a starter cushion",
+   "why": "One month of bare-bones costs keeps a flat tire from becoming card debt.",
+   "first15": "A transfer to savings equal to one bare-bones month, or a monthly amount to get there.",
+   "checkpoint": "Runway months reads at least 1.",
+   "rooms": [
+    "runway"
+   ],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "assets"
+  },
+  {
+   "id": "path.clearHighInterest",
+   "moon": "mainPath",
+   "band": 3,
+   "what": "Clear the high-interest debt",
+   "why": "Nothing in the market beats paying off 24%.",
+   "first15": "Every spare dollar to the highest rate until it is gone.",
+   "checkpoint": "High-interest flag is off.",
+   "rooms": [
+    "debt-payoff"
+   ],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "assets"
+  },
+  {
+   "id": "safety.bankBonus",
+   "moon": "safetyNet",
+   "band": 3,
+   "what": "Collect one bank account bonus",
+   "why": "Banks pay to move money in. Kept separate from card rewards.",
+   "first15": "One bonus offer with a direct-deposit requirement you already meet.",
+   "checkpoint": "The bonus posted.",
+   "rooms": [],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "assets"
+  },
+  {
+   "id": "safety.ruleOfFive",
+   "moon": "safetyNet",
+   "band": 6,
+   "what": "Run the Rule of 5",
+   "why": "Five layers of cushion, from the deductible up to a job loss.",
+   "first15": "Runway room, Rule of 5.",
+   "checkpoint": "Each layer has a figure.",
+   "rooms": [
+    "runway"
+   ],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "assets"
+  },
+  {
+   "id": "portfolio.pickThreeFund",
+   "moon": "portfolioDesign",
+   "band": 5,
+   "what": "Pick a three-fund mix",
+   "why": "Total US, total international, total bond: the whole market at the lowest fee.",
+   "first15": "The Mix room, three-fund template.",
+   "checkpoint": "Assets 13 holds the target split.",
+   "rooms": [
+    "the-mix"
+   ],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "assets"
+  },
+  {
+   "id": "portfolio.setRebalanceDate",
+   "moon": "portfolioDesign",
+   "band": 10,
+   "what": "Set a yearly rebalance date",
+   "why": "Once a year is enough. It is on the annual review.",
+   "first15": "Calendar, one date.",
+   "checkpoint": "The date exists.",
+   "rooms": [
+    "calendar"
+   ],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "assets"
+  },
+  {
+   "id": "re.runHouseHack",
+   "moon": "realEstate",
+   "band": 6,
+   "what": "Run the house hack",
+   "why": "Renting out one room can cut shelter by a third.",
+   "first15": "Housing room, house hack, one rent figure.",
+   "checkpoint": "Shelter analysis shows the delta.",
+   "rooms": [
+    "housing"
+   ],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "assets"
+  },
+  {
+   "id": "estate.getPreapproval",
+   "moon": "realEstate",
+   "band": 9,
+   "what": "Get a preapproval figure",
+   "why": "The lender's number and the app's capacity should agree.",
+   "first15": "One lender, one preapproval.",
+   "checkpoint": "Mortgage capacity is confirmed.",
+   "rooms": [
+    "housing"
+   ],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "assets"
+  },
+  {
+   "id": "re.checkPmiDrop",
+   "moon": "realEstate",
+   "band": 2,
+   "what": "Check whether PMI can drop",
+   "why": "At 80% loan-to-value, conventional PMI can go.",
+   "first15": "Loan-to-value from Assets 6 and Debt 4. Call the servicer.",
+   "checkpoint": "PMI is off, or the date it can be.",
+   "rooms": [
+    "housing"
+   ],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "assets"
+  },
+  {
+   "id": "re.runRentVsBuy",
+   "moon": "realEstate",
+   "band": 9,
+   "what": "Run rent versus buy",
+   "why": "Five percent of the price a year is the unrecoverable cost to beat.",
+   "first15": "Housing room, rent versus buy.",
+   "checkpoint": "A verdict is on record.",
+   "rooms": [
+    "housing"
+   ],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "assets"
+  },
+  {
+   "id": "alt.capAlternatives",
+   "moon": "alternatives",
+   "band": 9,
+   "what": "Cap alternatives at a share",
+   "why": "A small share cannot sink the plan; a large one can.",
+   "first15": "Pick a cap. Write it in the leverage policy.",
+   "checkpoint": "A cap is written.",
+   "rooms": [
+    "the-mix"
+   ],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "assets"
+  },
+  {
+   "id": "alt.iBondCheck",
+   "moon": "alternatives",
+   "band": 3,
+   "what": "Check I-bonds for part of the cushion",
+   "why": "Inflation-linked, government-backed, after the first year.",
+   "first15": "treasurydirect.gov.",
+   "checkpoint": "A yes or no.",
+   "rooms": [],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "assets"
+  },
+  {
+   "id": "alt.listWhatYouHold",
+   "moon": "alternatives",
+   "band": 3,
+   "what": "List every alternative you hold",
+   "why": "Crypto and collectibles are net worth too, at the value you would get.",
+   "first15": "Assets 9, one line each.",
+   "checkpoint": "Assets 9 is in.",
+   "rooms": [],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "assets"
+  },
+  {
+   "id": "debt.checkScoreFree",
+   "moon": "creditBuilding",
+   "band": 1,
+   "what": "Check your score for free",
+   "why": "Most bank and card apps show it. Knowing the band opens the credit reads.",
+   "first15": "The bank app, credit score.",
+   "checkpoint": "Debt 6 has a band.",
+   "rooms": [
+    "debt-payoff"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "scoreBandLoanSaving"
+   },
+   "planet": "debt"
+  },
+  {
+   "id": "debt.setMinimumsAutopay",
+   "moon": "creditBuilding",
+   "band": 2,
+   "what": "Set every minimum to autopay",
+   "why": "One late payment costs more score than a year of good ones.",
+   "first15": "Each lender, autopay, at least the minimum.",
+   "checkpoint": "Every debt has autopay.",
+   "rooms": [
+    "debt-payoff"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "lateFeeAvoided"
+   },
+   "planet": "debt"
+  },
+  {
+   "id": "debt.pickPayoffOrder",
+   "moon": "payoffPlan",
+   "band": 3,
+   "what": "Pick your payoff order",
+   "why": "Avalanche saves the most interest; snowball wins the most months. Either beats no order.",
+   "first15": "Debt Payoff room. Read both columns. Tap one.",
+   "checkpoint": "Debt 16 has a method.",
+   "rooms": [
+    "debt-payoff"
+   ],
+   "quickWin": true,
+   "dollars": "$interestPerMonth",
+   "planet": "debt"
+  },
+  {
+   "id": "debt.callForLowerRate",
+   "moon": "payoffPlan",
+   "band": 4,
+   "what": "Call for a lower rate",
+   "why": "A ten-minute call often takes points off a card rate for a good payer.",
+   "first15": "Call the number on the card. Ask for a rate reduction. Mention a competing offer.",
+   "checkpoint": "Debt 7 has a lower rate, or a no.",
+   "rooms": [
+    "debt-payoff"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "*": [
+     "$interestPerMonth",
+     0.25
+    ]
+   },
+   "planet": "debt"
+  },
+  {
+   "id": "debt.automateExtra",
+   "moon": "payoffPlan",
+   "band": 5,
+   "what": "Automate the extra payment",
+   "why": "Extra that is automatic arrives every month. Extra that is manual arrives some months.",
+   "first15": "Set a recurring extra payment to the target debt.",
+   "checkpoint": "Debt 13 is automated.",
+   "rooms": [
+    "debt-payoff"
+   ],
+   "quickWin": true,
+   "dollars": "$interestPerMonth",
+   "planet": "debt"
+  },
+  {
+   "id": "debt.handlePromoEnd",
+   "moon": "payoffPlan",
+   "band": 6,
+   "what": "Handle the promo expiry before it lands",
+   "why": "A 0% balance at 27% the next day is the promo cliff.",
+   "first15": "Calendar the end date. Plan the balance to zero, or a transfer, before it.",
+   "checkpoint": "The promo cliff is on the calendar with a plan.",
+   "rooms": [
+    "debt-payoff",
+    "calendar"
+   ],
+   "quickWin": true,
+   "dollars": "$promoCliff",
+   "planet": "debt"
+  },
+  {
+   "id": "debt.pullFreeReport",
+   "moon": "creditBuilding",
+   "band": 7,
+   "what": "Pull the free credit report",
+   "why": "Errors are common and cost points. The pull is free and takes ten minutes.",
+   "first15": "annualcreditreport.com, all three.",
+   "checkpoint": "Debt 20 is in.",
+   "rooms": [],
+   "quickWin": true,
+   "dollars": {
+    "convention": "reportErrorTypical"
+   },
+   "planet": "debt"
+  },
+  {
+   "id": "debt.lowerUtilization",
+   "moon": "creditBuilding",
+   "band": 7,
+   "what": "Pay one card before the statement date",
+   "why": "Utilization is read on the statement date. Paying before it lowers the reported number.",
+   "first15": "Pick the card with the highest balance. Pay it a few days before the statement closes.",
+   "checkpoint": "Utilization is down.",
+   "rooms": [],
+   "quickWin": true,
+   "dollars": {
+    "convention": "utilizationRateSaving"
+   },
+   "planet": "debt"
+  },
+  {
+   "id": "debt.disputeOneError",
+   "moon": "creditBuilding",
+   "band": 8,
+   "what": "Dispute one error",
+   "why": "A disputed error is usually removed within a month.",
+   "first15": "The bureau's dispute page, one item.",
+   "checkpoint": "The dispute is filed.",
+   "rooms": [],
+   "quickWin": true,
+   "dollars": {
+    "convention": "reportErrorTypical"
+   },
+   "planet": "debt"
+  },
+  {
+   "id": "debt.getRefiQuote",
+   "moon": "payoffPlan",
+   "band": 9,
+   "what": "Get one refinance quote",
+   "why": "A better band since the loan was written is a lower rate waiting to be asked for.",
+   "first15": "One lender, one quote, for the largest loan.",
+   "checkpoint": "Debt 25 has a verdict.",
+   "rooms": [
+    "debt-payoff"
+   ],
+   "quickWin": true,
+   "dollars": "$refiSavings",
+   "planet": "debt"
+  },
+  {
+   "id": "debt.roundUpPayment",
+   "moon": "payoffPlan",
+   "band": 10,
+   "what": "Round the payment up",
+   "why": "A round number on top of a minimum saves interest for the life of the loan.",
+   "first15": "Change the autopay amount to the next round hundred.",
+   "checkpoint": "Interest saved per extra dollar shows.",
+   "rooms": [
+    "debt-payoff"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "roundUpInterestSaved"
+   },
+   "planet": "debt"
+  },
+  {
+   "id": "debt.freezeCredit",
+   "moon": "creditBuilding",
+   "band": 8,
+   "what": "Freeze your credit",
+   "why": "Free, reversible, and it stops identity theft cold.",
+   "first15": "Each bureau, freeze. Ten minutes for all three.",
+   "checkpoint": "Three freezes.",
+   "rooms": [],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "debt"
+  },
+  {
+   "id": "debt.securedCard",
+   "moon": "creditBuilding",
+   "band": 1,
+   "what": "Open a secured card if there is no history",
+   "why": "A history starts with one small line paid in full.",
+   "first15": "A secured card at your bank. One small charge a month, autopay in full.",
+   "checkpoint": "A card exists with autopay.",
+   "rooms": [],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "debt"
+  },
+  {
+   "id": "lev.writeLeveragePolicy",
+   "moon": "leverage",
+   "band": 10,
+   "what": "Write the leverage policy",
+   "why": "Decide the rate and the purpose before the offer, not during it.",
+   "first15": "Debt 30, two answers.",
+   "checkpoint": "Debt 30 is in.",
+   "rooms": [],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "debt"
+  },
+  {
+   "id": "lev.stressTestRate",
+   "moon": "leverage",
+   "band": 8,
+   "what": "Stress-test the rate",
+   "why": "A payment at plus two points is the number to be able to afford.",
+   "first15": "Debt 22.",
+   "checkpoint": "The rate shock is read.",
+   "rooms": [],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "debt"
+  },
+  {
+   "id": "lev.checkDti",
+   "moon": "leverage",
+   "band": 9,
+   "what": "Check debt-to-income before borrowing",
+   "why": "Lenders read it; so should you.",
+   "first15": "Debt 27.",
+   "checkpoint": "DTI is confirmed.",
+   "rooms": [],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "debt"
+  },
+  {
+   "id": "taxes.checkStateTax",
+   "moon": "taxStrategy",
+   "band": 1,
+   "what": "Check the state tax rate you are paying",
+   "why": "The rough rate from the state table is a default until you confirm it.",
+   "first15": "Taxes 1, one tap, or the stub's state line.",
+   "checkpoint": "Taxes 1 is confirmed.",
+   "rooms": [
+    "tax"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "stateRateMisreadTypical"
+   },
+   "planet": "taxes"
+  },
+  {
+   "id": "taxes.confirmAccounts",
+   "moon": "taxStrategy",
+   "band": 2,
+   "what": "Confirm the accounts you use are the tax-advantaged ones offered",
+   "why": "An offered account not in use is the next slot.",
+   "first15": "Taxes 5, one tap.",
+   "checkpoint": "Accounts used is confirmed.",
+   "rooms": [
+    "which-account"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "missingAccountTaxSaved"
+   },
+   "planet": "taxes"
+  },
+  {
+   "id": "taxes.fixWithholding",
+   "moon": "taxStrategy",
+   "band": 3,
+   "what": "Fix your withholding",
+   "why": "A big refund is an interest-free loan to the government. Owing a lot is a bill in April.",
+   "first15": "Payroll portal, W-4. Use the IRS estimator for the numbers.",
+   "checkpoint": "Projected refund or owed is near zero.",
+   "rooms": [
+    "tax"
+   ],
+   "quickWin": true,
+   "dollars": "$refundOwed",
+   "planet": "taxes"
+  },
+  {
+   "id": "taxes.switchContributionType",
+   "moon": "taxStrategy",
+   "band": 6,
+   "what": "Switch the contribution type if the call says so",
+   "why": "Roth or traditional is a bracket call, and the app made it.",
+   "first15": "Plan portal, contribution type.",
+   "checkpoint": "The contribution matches Taxes 16.",
+   "rooms": [
+    "which-account"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "rothTradSwitchTypical"
+   },
+   "planet": "taxes"
+  },
+  {
+   "id": "taxes.claimOneCredit",
+   "moon": "taxStrategy",
+   "band": 6,
+   "what": "Claim one credit you were missing",
+   "why": "The saver's credit and the student loan interest deduction go unclaimed every year.",
+   "first15": "Taxes 17, tick the first unclaimed one. Tell your software or preparer.",
+   "checkpoint": "One more credit is claimed.",
+   "rooms": [
+    "tax"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "oneCreditTypical"
+   },
+   "planet": "taxes"
+  },
+  {
+   "id": "taxes.investTheHsa",
+   "moon": "taxStrategy",
+   "band": 4,
+   "what": "Put the HSA into an index fund",
+   "why": "An HSA sitting in cash is the best account in the code used as a checking account.",
+   "first15": "HSA portal, investments, pick an index fund.",
+   "checkpoint": "Taxes 18 says invested.",
+   "rooms": [
+    "which-account"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "hsaTaxSavingTypical"
+   },
+   "planet": "taxes"
+  },
+  {
+   "id": "taxes.setQuarterlyReminders",
+   "moon": "taxStrategy",
+   "band": 5,
+   "what": "Set the quarterly estimate reminders",
+   "why": "Missing one is a penalty; the dates are in the table.",
+   "first15": "Calendar, four dates.",
+   "checkpoint": "Four reminders exist.",
+   "rooms": [
+    "calendar"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "underpaymentPenaltyTypical"
+   },
+   "planet": "taxes"
+  },
+  {
+   "id": "taxes.fileRecords",
+   "moon": "taxStrategy",
+   "band": 7,
+   "what": "File last year's return where someone can find it",
+   "why": "A found return is a checked bracket and a survivable audit.",
+   "first15": "One folder, one file, the location in Taxes 23.",
+   "checkpoint": "Taxes 23 is in.",
+   "rooms": [
+    "data"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "recordsFoundSaving"
+   },
+   "planet": "taxes"
+  },
+  {
+   "id": "taxes.harvestOnce",
+   "moon": "taxStrategy",
+   "band": 8,
+   "what": "Check the safe harbor",
+   "why": "Paying in 100% of last year's tax keeps the penalty away whatever this year does.",
+   "first15": "Taxes 22.",
+   "checkpoint": "Safe harbor is read.",
+   "rooms": [
+    "tax"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "underpaymentPenaltyTypical"
+   },
+   "planet": "taxes"
+  },
+  {
+   "id": "taxes.planOneConversion",
+   "moon": "taxStrategy",
+   "band": 9,
+   "what": "Harvest gains at 0% in a low-income year",
+   "why": "Selling and rebuying inside the 0% bracket raises the basis for free.",
+   "first15": "Taxes 25 shows the room. Sell and rebuy up to it.",
+   "checkpoint": "Gains room used is up.",
+   "rooms": [
+    "tax"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "*": [
+     "$harvestRoom",
+     1
+    ]
+   },
+   "planet": "taxes"
+  },
+  {
+   "id": "taxes.mapSubsidyIncome",
+   "moon": "taxStrategy",
+   "band": 10,
+   "what": "Map the income to show in early FI",
+   "why": "Landing MAGI under a cliff is worth thousands a year in subsidy.",
+   "first15": "Taxes 28, read the map. Note the target income.",
+   "checkpoint": "A target MAGI is written.",
+   "rooms": [
+    "decumulation"
+   ],
+   "quickWin": true,
+   "dollars": {
+    "convention": "acaSubsidyTypicalYear"
+   },
+   "planet": "taxes"
+  },
+  {
+   "id": "taxes.backdoorRoth",
+   "moon": "taxStrategy",
+   "band": 9,
+   "what": "Do a backdoor Roth if income is over the limit",
+   "why": "Above the limit the front door closes; the back door is the same account.",
+   "first15": "Contribute to a traditional IRA, convert. Watch the pro-rata rule if a pretax IRA exists.",
+   "checkpoint": "The conversion is done.",
+   "rooms": [
+    "which-account"
+   ],
+   "quickWin": false,
+   "dollars": null,
+   "planet": "taxes"
+  }
+ ]
+}

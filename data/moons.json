@@ -1,0 +1,993 @@
+{
+ "id": "moons",
+ "version": "1.0",
+ "asOf": "2026-09-20",
+ "source": "The Solar System master prompt (docs/SOLAR-SYSTEM.md), Part 1 section 1.10 and Part 2 section A8.",
+ "confidence": "convention",
+ "confidenceNote": "Strategy tracks, not facts. A moon reads levels and metrics and writes only through a level edit the person confirms or to the scenario block layer.",
+ "note": "unlockWhen, dimWhen and outgrownWhen are gates in the grammar described in gateGrammar, evaluated by the engine; every id they name must resolve (lint). intake questions are stored in the moon's own store and never duplicate a level field (lint). moves resolve in data/moves.json; rooms are registry ids. States: dim, open, active, settled, outgrown. A dim moon is never hidden and never blocks entry.",
+ "gateGrammar": {
+  "always": "{\"always\": true}",
+  "all": "{\"all\": [gate, ...]}",
+  "any": "{\"any\": [gate, ...]}",
+  "not": "{\"not\": gate}",
+  "held": "{\"held\": \"A4\"}: the level has a value (a number, a none or a rough; unknown does not count)",
+  "value": "{\"value\": \"D1\", \"op\": \"gt\"|\"gte\"|\"lt\"|\"lte\"|\"eq\", \"than\": n}: the level's primary number against a constant",
+  "answer": "{\"answer\": \"Y27\", \"key\": \"relocateOk\", \"is\": true|\"value\"|\"any\"} or with op/than: one field of a level's answer",
+  "metric": "{\"metric\": \"highInterestFlag\", \"state\": \"on\"|\"off\"|\"rough\"|\"sharp\"|\"earned\"|\"locked\"} or with op/than",
+  "moon": "{\"moon\": \"mainPath\", \"state\": \"settled\"}",
+  "moonStep": "{\"moonStep\": \"mainPath\", \"reached\": \"investing\"}",
+  "asked": "{\"asked\": true}: the person tapped the moon open"
+ },
+ "states": [
+  "dim",
+  "open",
+  "active",
+  "settled",
+  "outgrown"
+ ],
+ "moons": [
+  {
+   "id": "geoArbitrage",
+   "planet": "you",
+   "label": "Geo-Arbitrage",
+   "unlockWhen": {
+    "any": [
+     {
+      "answer": "Y14",
+      "key": "moveWhere",
+      "is": "any"
+     },
+     {
+      "answer": "Y27",
+      "key": "relocateOk",
+      "is": true
+     },
+     {
+      "answer": "Y27",
+      "key": "remoteOk",
+      "is": true
+     }
+    ]
+   },
+   "dimWhen": null,
+   "dimMessage": "Opens when you say you could move or work remotely (You 14 or You 27).",
+   "outgrownWhen": null,
+   "intake": [
+    {
+     "key": "candidatePlaces",
+     "kind": "list",
+     "label": "Places you would consider"
+    },
+    {
+     "key": "remoteStatus",
+     "kind": "enum",
+     "label": "Remote work status",
+     "values": [
+      "fullyRemote",
+      "hybrid",
+      "onSite",
+      "couldChange"
+     ]
+    },
+    {
+     "key": "mustComeAlong",
+     "kind": "text",
+     "label": "What must come with you"
+    }
+   ],
+   "moves": [
+    "geo.priceALife",
+    "geo.checkRemotePolicy",
+    "geo.addGeoBlock",
+    "geo.compareStateTax",
+    "geo.priceFlexibility"
+   ],
+   "rooms": [
+    "what-if-life",
+    "housing"
+   ],
+   "metrics": [
+    "moveTax",
+    "fiDateProjected"
+   ],
+   "note": null,
+   "alwaysFirst": false
+  },
+  {
+   "id": "family",
+   "planet": "you",
+   "label": "Family & Generational",
+   "unlockWhen": {
+    "any": [
+     {
+      "answer": "Y5",
+      "key": "partnerName",
+      "is": "any"
+     },
+     {
+      "answer": "Y5",
+      "key": "kidsNow",
+      "op": "gt",
+      "than": 0
+     },
+     {
+      "answer": "Y8",
+      "key": "dependents",
+      "is": true
+     },
+     {
+      "answer": "Y8",
+      "key": "kidsPlanned",
+      "op": "gt",
+      "than": 0
+     },
+     {
+      "held": "Y15"
+     }
+    ]
+   },
+   "dimWhen": null,
+   "dimMessage": "Opens when a partner, kids, dependents or family money shows up (You 5, 8 or 15).",
+   "outgrownWhen": null,
+   "intake": [
+    {
+     "key": "kidsTiming",
+     "kind": "list",
+     "label": "Kids' ages, or when they are planned"
+    },
+    {
+     "key": "collegeIntent",
+     "kind": "enum",
+     "label": "College intent",
+     "values": [
+      "payAll",
+      "paySome",
+      "none",
+      "undecided"
+     ]
+    },
+    {
+     "key": "parentsSituation",
+     "kind": "text",
+     "label": "Parents' situation"
+    }
+   ],
+   "moves": [
+    "family.addKidBlock",
+    "family.open529",
+    "family.setMoneyDate",
+    "family.nameGuardian",
+    "family.nameBeneficiaries",
+    "family.custodialRoth"
+   ],
+   "rooms": [
+    "partner",
+    "what-if-life"
+   ],
+   "metrics": [
+    "familyFlows",
+    "coverageGaps",
+    "estateReady"
+   ],
+   "note": null,
+   "alwaysFirst": false
+  },
+  {
+   "id": "health",
+   "planet": "you",
+   "label": "Health & Longevity",
+   "unlockWhen": {
+    "always": true
+   },
+   "dimWhen": null,
+   "dimMessage": "Always open.",
+   "outgrownWhen": null,
+   "intake": [
+    {
+     "key": "coverageGapsSeen",
+     "kind": "yesno",
+     "label": "Any gap in coverage you know of"
+    },
+    {
+     "key": "hsaStatus",
+     "kind": "enum",
+     "label": "HSA status",
+     "values": [
+      "none",
+      "open",
+      "invested"
+     ]
+    }
+   ],
+   "moves": [
+    "health.markCoverageDate",
+    "health.checkHsaEligible",
+    "health.priceMarketplace",
+    "health.compareOpenEnrollment",
+    "health.writeOopMax",
+    "health.saveReceipts",
+    "health.closeOneGap",
+    "health.quoteBeforeMedicare"
+   ],
+   "rooms": [
+    "protection",
+    "decumulation"
+   ],
+   "metrics": [
+    "coverageGapFirst",
+    "badYear",
+    "hsaRead",
+    "subsidyCliff"
+   ],
+   "note": null,
+   "alwaysFirst": false
+  },
+  {
+   "id": "career",
+   "planet": "income",
+   "label": "Career",
+   "unlockWhen": {
+    "all": [
+     {
+      "held": "I1"
+     },
+     {
+      "held": "I2"
+     },
+     {
+      "held": "I3"
+     }
+    ]
+   },
+   "dimWhen": null,
+   "dimMessage": "Opens once Income 1 to 3 are in.",
+   "outgrownWhen": null,
+   "intake": [
+    {
+     "key": "lastRaiseWhen",
+     "kind": "date",
+     "label": "Last raise"
+    },
+    {
+     "key": "lastNegotiation",
+     "kind": "enum",
+     "label": "Last time you negotiated pay",
+     "values": [
+      "never",
+      "overAYear",
+      "thisYear"
+     ]
+    },
+    {
+     "key": "skillsInDemand",
+     "kind": "list",
+     "label": "Skills in demand you hold"
+    }
+   ],
+   "moves": [
+    "income.captureMatch",
+    "income.takeEsppDiscount",
+    "income.askForMarketRate",
+    "career.lifetimeValueOfRaise",
+    "career.updateResume",
+    "career.checkTuitionBenefit",
+    "career.addJobChangeBlock",
+    "career.planFiIncome"
+   ],
+   "rooms": [
+    "career-move",
+    "skill-tree"
+   ],
+   "metrics": [
+    "incomeGrowth",
+    "marketGap",
+    "totalComp",
+    "incomeLevers"
+   ],
+   "note": null,
+   "alwaysFirst": false
+  },
+  {
+   "id": "sideHustles",
+   "planet": "income",
+   "label": "Side Hustles",
+   "unlockWhen": {
+    "all": [
+     {
+      "held": "I1"
+     },
+     {
+      "answer": "Y26",
+      "key": "hoursAvailable",
+      "op": "gt",
+      "than": 0
+     }
+    ]
+   },
+   "dimWhen": {
+    "not": {
+     "held": "E5"
+    }
+   },
+   "dimMessage": "Know your bare-bones number first: Expenses 5 tells this moon what a side income has to clear.",
+   "outgrownWhen": null,
+   "intake": [
+    {
+     "key": "skillsToSell",
+     "kind": "list",
+     "label": "Skills you could sell"
+    },
+    {
+     "key": "hoursForHustle",
+     "kind": "number",
+     "label": "Hours a week for it"
+    },
+    {
+     "key": "startupCash",
+     "kind": "cents",
+     "label": "Cash you could put in"
+    }
+   ],
+   "moves": [
+    "hustle.priceOneHour",
+    "hustle.listOneOffer",
+    "hustle.trackHustleNet",
+    "hustle.openSoloRetirement"
+   ],
+   "rooms": [
+    "what-if-life"
+   ],
+   "metrics": [
+    "hustleCapacity",
+    "hourlyFinal",
+    "sideNet"
+   ],
+   "note": null,
+   "alwaysFirst": false
+  },
+  {
+   "id": "entrepreneurship",
+   "planet": "income",
+   "label": "Entrepreneurship",
+   "unlockWhen": {
+    "any": [
+     {
+      "answer": "I10",
+      "key": "incomeType",
+      "is": "business"
+     },
+     {
+      "answer": "I10",
+      "key": "incomeType",
+      "is": "1099"
+     },
+     {
+      "asked": true
+     }
+    ]
+   },
+   "dimWhen": {
+    "metric": "runwayMonths",
+    "op": "lt",
+    "than": 3
+   },
+   "dimMessage": "Dim until the emergency fund covers three months: a business needs a cushion under it.",
+   "outgrownWhen": null,
+   "intake": [
+    {
+     "key": "businessType",
+     "kind": "enum",
+     "label": "Business type",
+     "values": [
+      "soleProprietor",
+      "llc",
+      "sCorp",
+      "other"
+     ]
+    },
+    {
+     "key": "revenueYear",
+     "kind": "cents",
+     "label": "Revenue a year"
+    },
+    {
+     "key": "howYouPayYourself",
+     "kind": "enum",
+     "label": "How you pay yourself",
+     "values": [
+      "draw",
+      "salary",
+      "both",
+      "notYet"
+     ]
+    }
+   ],
+   "moves": [
+    "biz.separateAccounts",
+    "biz.setQuarterlyReminders",
+    "biz.openSoloRetirement",
+    "biz.priceYourTime"
+   ],
+   "rooms": [
+    "what-if-life",
+    "tax"
+   ],
+   "metrics": [
+    "seTaxFlag",
+    "stability",
+    "safeHarbor"
+   ],
+   "note": null,
+   "alwaysFirst": false
+  },
+  {
+   "id": "deals",
+   "planet": "expenses",
+   "label": "Deals & Smart Buying",
+   "unlockWhen": {
+    "held": "E4"
+   },
+   "dimWhen": null,
+   "dimMessage": "Opens once the month is split four ways (Expenses 4).",
+   "outgrownWhen": null,
+   "intake": [
+    {
+     "key": "nextPurchases",
+     "kind": "list",
+     "label": "The next three big purchases"
+    }
+   ],
+   "moves": [
+    "expenses.shopOneBill",
+    "expenses.cancelOneSubscription",
+    "deals.priceNextPurchase",
+    "deals.flagFlexibleLines",
+    "expenses.setUpSinkingFunds",
+    "expenses.closeAMonth",
+    "deals.priceShockCosts",
+    "deals.priceFiSpending"
+   ],
+   "rooms": [
+    "big-purchase",
+    "budget"
+   ],
+   "metrics": [
+    "expenseLevers",
+    "billSavings",
+    "recurringTotal"
+   ],
+   "note": null,
+   "alwaysFirst": false
+  },
+  {
+   "id": "cardRewards",
+   "planet": "expenses",
+   "label": "Card Rewards",
+   "unlockWhen": {
+    "all": [
+     {
+      "metric": "highInterestFlag",
+      "state": "off"
+     },
+     {
+      "any": [
+       {
+        "answer": "D6",
+        "key": "creditBand",
+        "is": "good"
+       },
+       {
+        "answer": "D6",
+        "key": "creditBand",
+        "is": "veryGood"
+       },
+       {
+        "answer": "D6",
+        "key": "creditBand",
+        "is": "excellent"
+       }
+      ]
+     },
+     {
+      "held": "E4"
+     }
+    ]
+   },
+   "dimWhen": {
+    "metric": "highInterestFlag",
+    "state": "on"
+   },
+   "dimMessage": "Rewards pay about 2%. Your card costs about 24%. Payoff first; this opens the day the balance hits zero.",
+   "outgrownWhen": null,
+   "intake": [
+    {
+     "key": "cardsHeld",
+     "kind": "list",
+     "label": "Cards held"
+    },
+    {
+     "key": "annualFees",
+     "kind": "cents",
+     "label": "Annual fees a year"
+    },
+    {
+     "key": "accountsOpened24m",
+     "kind": "number",
+     "label": "Accounts opened in the last 24 months"
+    },
+    {
+     "key": "rewardPreference",
+     "kind": "enum",
+     "label": "Travel or cash",
+     "values": [
+      "travel",
+      "cash"
+     ]
+    }
+   ],
+   "moves": [
+    "expenses.pointCardAtSpend",
+    "rewards.checkFeeMath",
+    "rewards.oneSignupBonus",
+    "rewards.setAutopayFull"
+   ],
+   "rooms": [
+    "budget"
+   ],
+   "metrics": [
+    "rewardsValue",
+    "fatShares",
+    "utilization"
+   ],
+   "note": "On by default, because quick wins keep people going. The dim rule is the safety, not the switch.",
+   "alwaysFirst": false
+  },
+  {
+   "id": "mainPath",
+   "planet": "assets",
+   "label": "Main Path",
+   "unlockWhen": {
+    "all": [
+     {
+      "held": "A1"
+     },
+     {
+      "held": "A2"
+     },
+     {
+      "held": "A3"
+     },
+     {
+      "held": "I4"
+     }
+    ]
+   },
+   "dimWhen": null,
+   "dimMessage": "Opens once Assets 1 to 3 and the match are in.",
+   "outgrownWhen": null,
+   "intake": [],
+   "moves": [
+    "path.captureMatch",
+    "path.fundStarterCushion",
+    "path.clearHighInterest",
+    "assets.openTheMissingAccount",
+    "assets.raiseContributionOnePoint",
+    "path.automateTheNextSlot"
+   ],
+   "rooms": [
+    "foo-ladder",
+    "which-account"
+   ],
+   "metrics": [
+    "slotFirst",
+    "slotFinal",
+    "matchLeft",
+    "highInterestFlag",
+    "efTarget"
+   ],
+   "note": "Always the first moon suggested.",
+   "alwaysFirst": true
+  },
+  {
+   "id": "safetyNet",
+   "planet": "assets",
+   "label": "Safety Net",
+   "unlockWhen": {
+    "all": [
+     {
+      "held": "A4"
+     },
+     {
+      "held": "E5"
+     }
+    ]
+   },
+   "dimWhen": null,
+   "dimMessage": "Opens once the cash that counts and the bare-bones month are in.",
+   "outgrownWhen": null,
+   "intake": [
+    {
+     "key": "cashLivesWhere",
+     "kind": "list",
+     "label": "Where the cash lives"
+    },
+    {
+     "key": "emergencyMeans",
+     "kind": "text",
+     "label": "What counts as an emergency"
+    }
+   ],
+   "moves": [
+    "assets.moveCashToRate",
+    "safety.setEfTarget",
+    "safety.bankBonus",
+    "safety.ruleOfFive",
+    "safety.splitTheCushion"
+   ],
+   "rooms": [
+    "runway",
+    "cant-pay"
+   ],
+   "metrics": [
+    "runwayMonths",
+    "efTarget",
+    "cashDrag"
+   ],
+   "note": null,
+   "alwaysFirst": false
+  },
+  {
+   "id": "portfolioDesign",
+   "planet": "assets",
+   "label": "Portfolio Design",
+   "unlockWhen": {
+    "held": "A13"
+   },
+   "dimWhen": {
+    "not": {
+     "moonStep": "mainPath",
+     "reached": "investing"
+    }
+   },
+   "dimMessage": "Dim until the Main Path reaches the investing step.",
+   "outgrownWhen": null,
+   "intake": [
+    {
+     "key": "fundsIn401k",
+     "kind": "list",
+     "label": "Funds available in the 401k"
+    },
+    {
+     "key": "simplicityComfort",
+     "kind": "enum",
+     "label": "Comfort with a simple portfolio",
+     "values": [
+      "oneFund",
+      "threeFund",
+      "moreHands"
+     ]
+    }
+   ],
+   "moves": [
+    "assets.swapExpensiveFund",
+    "portfolio.pickThreeFund",
+    "portfolio.setRebalanceDate",
+    "portfolio.checkTargetDateFee"
+   ],
+   "rooms": [
+    "the-mix",
+    "which-account"
+   ],
+   "metrics": [
+    "allocationRead",
+    "feeDrag",
+    "holdingsView"
+   ],
+   "note": null,
+   "alwaysFirst": false
+  },
+  {
+   "id": "realEstate",
+   "planet": "assets",
+   "label": "Real Estate",
+   "unlockWhen": {
+    "any": [
+     {
+      "answer": "Y25",
+      "key": "buyIntent",
+      "is": "withinTwoYears"
+     },
+     {
+      "answer": "Y25",
+      "key": "buyIntent",
+      "is": "now"
+     },
+     {
+      "answer": "Y6",
+      "key": "housingStatus",
+      "is": "own"
+     }
+    ]
+   },
+   "dimWhen": {
+    "metric": "highInterestFlag",
+    "state": "on"
+   },
+   "dimMessage": "Dim while high-interest debt is on: a card at 24% beats any house math.",
+   "outgrownWhen": null,
+   "intake": [
+    {
+     "key": "market",
+     "kind": "text",
+     "label": "Market"
+    },
+    {
+     "key": "houseHackOpen",
+     "kind": "yesno",
+     "label": "Open to a house hack"
+    },
+    {
+     "key": "downPaymentSource",
+     "kind": "enum",
+     "label": "Down payment source",
+     "values": [
+      "savings",
+      "gift",
+      "sale",
+      "notYet"
+     ]
+    }
+   ],
+   "moves": [
+    "re.runHouseHack",
+    "estate.getPreapproval",
+    "re.checkPmiDrop",
+    "re.runRentVsBuy",
+    "re.priceOneRental"
+   ],
+   "rooms": [
+    "housing",
+    "big-purchase"
+   ],
+   "metrics": [
+    "shelterRead",
+    "mortgageCapacity",
+    "liquiditySharp",
+    "rentalRead"
+   ],
+   "note": null,
+   "alwaysFirst": false
+  },
+  {
+   "id": "alternatives",
+   "planet": "assets",
+   "label": "Alternatives",
+   "unlockWhen": {
+    "any": [
+     {
+      "held": "A9"
+     },
+     {
+      "moon": "mainPath",
+      "state": "settled"
+     }
+    ]
+   },
+   "dimWhen": null,
+   "dimMessage": "Nothing here beats finishing the Main Path.",
+   "outgrownWhen": null,
+   "intake": [
+    {
+     "key": "altInterest",
+     "kind": "list",
+     "label": "What interests you"
+    }
+   ],
+   "moves": [
+    "alt.capAlternatives",
+    "alt.iBondCheck",
+    "alt.listWhatYouHold"
+   ],
+   "rooms": [
+    "the-mix"
+   ],
+   "metrics": [
+    "concentration",
+    "pctToFI"
+   ],
+   "note": null,
+   "alwaysFirst": false
+  },
+  {
+   "id": "payoffPlan",
+   "planet": "debt",
+   "label": "Payoff Plan",
+   "unlockWhen": {
+    "value": "D1",
+    "op": "gt",
+    "than": 0
+   },
+   "dimWhen": null,
+   "dimMessage": "Opens the moment there is any debt.",
+   "outgrownWhen": {
+    "metric": "debtToAssets",
+    "state": "earned"
+   },
+   "intake": [],
+   "moves": [
+    "debt.pickPayoffOrder",
+    "debt.automateExtra",
+    "debt.handlePromoEnd",
+    "debt.callForLowerRate",
+    "debt.getRefiQuote",
+    "debt.roundUpPayment"
+   ],
+   "rooms": [
+    "debt-payoff"
+   ],
+   "metrics": [
+    "payoffPlan",
+    "interestPerMonth",
+    "promoCliff",
+    "flipRate"
+   ],
+   "note": "Fully active at Debt 7. Outgrown at debt-free, with a celebration.",
+   "alwaysFirst": false
+  },
+  {
+   "id": "creditBuilding",
+   "planet": "debt",
+   "label": "Credit Building",
+   "unlockWhen": {
+    "always": true
+   },
+   "dimWhen": null,
+   "dimMessage": "Always open: credit levels never drop out.",
+   "outgrownWhen": {
+    "all": [
+     {
+      "answer": "D6",
+      "key": "creditBand",
+      "is": "excellent"
+     },
+     {
+      "not": {
+       "held": "D14"
+      }
+     }
+    ]
+   },
+   "intake": [
+    {
+     "key": "anyCreditHistory",
+     "kind": "yesno",
+     "label": "Any credit history"
+    },
+    {
+     "key": "authorizedUserOption",
+     "kind": "yesno",
+     "label": "Someone could add you as an authorized user"
+    },
+    {
+     "key": "loanComing",
+     "kind": "enum",
+     "label": "A loan or lease coming",
+     "values": [
+      "none",
+      "withinAYear",
+      "later"
+     ]
+    }
+   ],
+   "moves": [
+    "debt.checkScoreFree",
+    "debt.setMinimumsAutopay",
+    "debt.pullFreeReport",
+    "debt.lowerUtilization",
+    "debt.disputeOneError",
+    "debt.freezeCredit",
+    "debt.securedCard"
+   ],
+   "rooms": [
+    "debt-payoff"
+   ],
+   "metrics": [
+    "creditBand",
+    "utilization",
+    "reportClean"
+   ],
+   "note": null,
+   "alwaysFirst": false
+  },
+  {
+   "id": "leverage",
+   "planet": "debt",
+   "label": "Leverage",
+   "unlockWhen": {
+    "all": [
+     {
+      "held": "D17"
+     },
+     {
+      "metric": "highInterestFlag",
+      "state": "off"
+     }
+    ]
+   },
+   "dimWhen": null,
+   "dimMessage": "Dim until the invest-vs-pay-off read is done and no high-interest debt remains.",
+   "outgrownWhen": null,
+   "intake": [
+    {
+     "key": "borrowingFor",
+     "kind": "enum",
+     "label": "What the borrowing is for",
+     "values": [
+      "home",
+      "business",
+      "education",
+      "investment",
+      "other"
+     ]
+    }
+   ],
+   "moves": [
+    "lev.writeLeveragePolicy",
+    "lev.stressTestRate",
+    "lev.checkDti"
+   ],
+   "rooms": [
+    "big-purchase",
+    "housing"
+   ],
+   "metrics": [
+    "flipRate",
+    "debtToAssets",
+    "rateShock"
+   ],
+   "note": "A risk flag sits on every move.",
+   "alwaysFirst": false
+  },
+  {
+   "id": "taxStrategy",
+   "planet": "taxes",
+   "label": "Tax Strategy",
+   "unlockWhen": {
+    "held": "T10"
+   },
+   "dimWhen": null,
+   "dimMessage": "Opens once the marginal bracket is confirmed (Taxes 10).",
+   "outgrownWhen": null,
+   "intake": [],
+   "moves": [
+    "taxes.checkStateTax",
+    "taxes.confirmAccounts",
+    "taxes.fixWithholding",
+    "taxes.investTheHsa",
+    "taxes.setQuarterlyReminders",
+    "taxes.switchContributionType",
+    "taxes.claimOneCredit",
+    "taxes.fileRecords",
+    "taxes.harvestOnce",
+    "taxes.planOneConversion",
+    "taxes.mapSubsidyIncome",
+    "taxes.backdoorRoth"
+   ],
+   "rooms": [
+    "tax",
+    "which-account"
+   ],
+   "metrics": [
+    "marginalBracket",
+    "rothCall",
+    "missedCredits",
+    "hsaRead",
+    "harvestRoom",
+    "ladderPlan"
+   ],
+   "note": null,
+   "alwaysFirst": false
+  }
+ ]
+}
