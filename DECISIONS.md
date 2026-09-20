@@ -16813,6 +16813,40 @@ answered question still leaves the figure intact when you type. New gate `test/a
 links in a phone-sized browser: 66 checks pass, 63 fields land near the top,
 7 are gated away for the example household. Clean console.
 
+## D-324 — A level is answered where it is asked
+
+**Why.** The Planets screen could tell you a level was not done and where the
+fact lived, and then sent you to another room to type it. Band 1 is meant to
+take under two minutes; three rooms and three trips back is not that.
+
+**Decision.** In `rooms/ledger.html`, the open level's panel puts a box beside
+every fact whose owner takes a plain written answer: 48 of the 274 facts the
+levels collect, 11 of band 1's 24. The box is `Ask.control` from
+`shared/ask.js`, so the unit, the period select, the percent-slip question and
+the parse are the ones the Ledger's own facts view uses; `Ask.typed` (new, the
+inverse of `Ask.parse`) fills it with what is already stored. The answer is
+written with `Ownership.write`, so it lands in the one place that fact lives
+and every room reads the same copy. A fact that needs a list picked first
+(which debt, which account) or a whole form keeps its link to the room that
+owns it, now reading "the whole room". `data/states.json` supplies the one
+enum the rows do not name themselves.
+
+**Replaces or removes.** The trip to another room for eleven of band 1's
+questions. Nothing is added to the household: no field, no screen, no store.
+
+**Stored shape.** No change. The nine band-1 facts that have no home yet
+(a rough total saved, what you add a month, the high-interest balance, last
+year's refund, whether pay is steady, whether the spending total includes debt
+or saving, and the two tax confirmations) still have none; they are the next
+step.
+
+**Verified.** `node test/run.js` (34,941), `node test/solar.js` (5,062) with
+nine new lints, `node test/forms.js` (701) with a new case that types into the
+panel, saves, and checks the box survives its own save, and the other suites
+and gates. LIVE-FORM: `#sky-open` is guarded with `shared/liveform.js`, and
+the room is now marked as two readings so the guard and the built-once views
+each hold where they belong.
+
 ---
 
 # The Dungeons & Dividends entries
