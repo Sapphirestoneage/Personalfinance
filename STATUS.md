@@ -16,9 +16,9 @@ Updated: 2026-09-20
   Behind (D-316). Worst plausible year is the Cushion's (D-314); the pay still
   to come sits beside net worth, on a switch on under 40 (D-315).
 - **This session**: a card's annual fee and the day it posts, warned 45 days
-  out, and a dealt walk step folded to one line (D-320); the radar is on the
-  Scorecard's Every ratio reading, one drawing (D-321); the menu is on every
-  page with the twenty arrangements in it (D-322).
+  out, and a dealt walk step folded to one line (D-322); the radar is on the
+  Scorecard's Every ratio reading, one drawing (D-323); the menu is on every
+  page with the twenty arrangements in it (D-324).
 - **From main**: the bank statement intake (D-306), the Calendar (D-308,
   D-318), all three intakes stay (D-309), plain words (D-310, D-311), the
   phone walk round two (D-317), every screen says how old its numbers are

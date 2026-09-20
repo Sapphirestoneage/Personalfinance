@@ -16671,7 +16671,7 @@ and absent on older saves, which read as not demo and no days recorded.
 `node test/features.js`; the Runway, FIRE and Expenses rooms and the front
 page at 390px with the example numbers, the clear button, and a part-way
 household; clean console.
-## D-320 — A card's annual fee and the day it posts; a dealt walk step folds to a line
+## D-322 — A card's annual fee and the day it posts; a dealt walk step folds to a line
 
 **Why.** The owner, on the phone: a card's annual fee is a fact the debt
 list could not hold, and the fee's date is the one date on a card a person
@@ -16699,7 +16699,7 @@ older saves and read as not asked.
 boundary, today, a fee with no date); the features and forms gates on Debt
 Payoff; a phone walk of the folded step at 360px.
 
-## D-321 — The radar is on the Scorecard too, drawn by one function
+## D-323 — The radar is on the Scorecard too, drawn by one function
 
 **Why.** The owner asked where the spider chart went. It was under the
 front page's "The full panel" fold since D-096, and a chart of every banded
@@ -16723,7 +16723,7 @@ the shared one.
 call the one function); the features gate on the Scorecard and the front
 page; render.
 
-## D-322 — The menu is on every page, and the arrangements are in it
+## D-324 — The menu is on every page, and the arrangements are in it
 
 **Why.** On the map page there was no way out: no menu, no rooms list, no
 route anywhere except the links in the body. The menu mounted by replacing

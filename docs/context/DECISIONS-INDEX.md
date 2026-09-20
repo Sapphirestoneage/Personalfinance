@@ -314,9 +314,9 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - D-317 — The phone walk, round two: size, the dots, the ask, the gap, a line edited [16573-16608]
 - D-318 — The calendar, the way a phone calendar is used [16610-16639] {cash-flow}
 - D-319 — Every screen says how old its numbers are; the example says so; the front page knows you [16641-16673] {expenses, debt-payoff, dashboard}
-- D-320 — A card's annual fee and the day it posts; a dealt walk step folds to a line [16674-16700] {debt-payoff}
-- D-321 — The radar is on the Scorecard too, drawn by one function [16702-16724] {financial-snapshot}
-- D-322 — The menu is on every page, and the arrangements are in it [16726-16756]
+- D-322 — A card's annual fee and the day it posts; a dealt walk step folds to a line [16674-16700] {debt-payoff}
+- D-323 — The radar is on the Scorecard too, drawn by one function [16702-16724] {financial-snapshot}
+- D-324 — The menu is on every page, and the arrangements are in it [16726-16756]
 
 ## Dungeons & Dividends (DD-) (30)
 

@@ -3211,7 +3211,7 @@ section('Ratios');
     radar.points.every(p => p.position >= 0 && p.position <= radar.ceiling));
   check('the comfortable ring sits at 1 by construction', radar.goodRing, 1);
 
-  /* One drawing (D-321): shared/charts.js draws it for the front page and the Scorecard. */
+  /* One drawing (D-323): shared/charts.js draws it for the front page and the Scorecard. */
   const Charts = require(path.join(ROOT, 'shared/charts.js'));
   const svg = Charts.radar(radar);
   check('the chart has three rings, a shape, and a dot and a number per spoke', (svg.match(/<polygon/g) || []).length + '/' + (svg.match(/<circle class="dot"/g) || []).length + '/' + (svg.match(/<text class="num"/g) || []).length, '4/' + radar.value + '/' + radar.value);
@@ -6364,7 +6364,7 @@ section('Promotional rates');
     check('and months left is zero, never below', past.monthsLeft, 0);
   }
 
-  /* -- The annual fee, and when it next posts (D-320) --------------------- */
+  /* -- The annual fee, and when it next posts (D-322) --------------------- */
   {
     check('no fee entered is no fee, not a zero one', Debt.annualFee(card(), NOW), null);
     const fee = Debt.annualFee(card({ annualFeeCents: 9500, annualFeeOn: '2025-03-12' }), NOW);
@@ -6388,7 +6388,7 @@ section('Promotional rates');
     checkTrue('the card fold asks both, on cards only, and the date commits on change', /field\(d, 'annualFeeCents', 'Annual fee'/.test(room) && /data-field="annualFeeOn"/.test(room) && /annualFeeOn: true/.test(room));
     checkTrue('the warning says when the fee is about to post', /annual fee posts on/.test(room));
     const walk = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
-    checkTrue('a dealt walk step folds to one line the person can open (D-320)', /<details class="slaf-walk is-dealt"/.test(walk) && /slaf-walk-fold/.test(walk));
+    checkTrue('a dealt walk step folds to one line the person can open (D-322)', /<details class="slaf-walk is-dealt"/.test(walk) && /slaf-walk-fold/.test(walk));
   }
 
   /* -- The rate the simulation actually charges --------------------------- */
@@ -15594,7 +15594,7 @@ section('The CSV round trip made resilient (D-221)');
    while it is still live in the registry — which is the failure that would
    otherwise let the map read as finished work that nobody did.
    ========================================================================== */
-section('The menu is on every page (D-322)');
+section('The menu is on every page (D-324)');
 
 (function () {
   const Prog = require(path.join(ROOT, 'shared/progress.js'));

@@ -10,7 +10,7 @@ Reference data: confidence_weights.json, credit_factors.json, debt_rules.json, e
 Owns: loanPlan, loanExtra, idrShare, forgivenessYears, totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), employmentStatus (start), hasDebt (start), marginalRate (ledger)
 Latest decisions:
-  - D-320 — A card's annual fee and the day it posts; a dealt walk step folds to a line
+  - D-322 — A card's annual fee and the day it posts; a dealt walk step folds to a line
   - D-319 — Every screen says how old its numbers are; the example says so; the front page knows you
   - D-279 — Debt: the order, the loans, the file
   - D-252 — Debt Payoff: the order is a preference, and the plan says when it is in effect

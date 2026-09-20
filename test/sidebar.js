@@ -63,7 +63,7 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
   check('...and The Month empty', await page.$eval('#slaf-menu [data-room="cash-flow"] .slaf-dot', d => d.classList.contains('is-empty')));
   check('the arrangements, DRAFTT and the map ride as links', (await page.$$eval('#slaf-menu .slaf-menu-link.is-extra', ls => ls.map(l => l.textContent).join('|'))) === 'Twenty ways to arrange these rooms|DRAFTT|Every room, on one page');
 
-  /* D-322: the menu is on every page of the app, not only the rooms. The map
+  /* D-324: the menu is on every page of the app, not only the rooms. The map
      has no back-link for the strip to stand in for, which is exactly why it
      had no way out; it takes the navigation and none of a room's furniture. */
   for (const page_ of [['/map.html', 'the map'], ['/index.html', 'the front page'], ['/rooms/statement.html', 'a room']]) {

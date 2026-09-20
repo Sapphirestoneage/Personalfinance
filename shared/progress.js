@@ -237,7 +237,7 @@
     var room = Registry.byId(roomId);
     if (room && room.href) return room.href.indexOf('rooms/') !== 0;
     /* A page that is no room at all (the map, a redirect stub) still carries
-       the menu since D-322, and its links have to climb out of rooms/ when
+       the menu since D-324, and its links have to climb out of rooms/ when
        that is where it sits. The registry cannot say; the path can. */
     if (typeof location !== 'undefined') return String(location.pathname || '').indexOf('/rooms/') === -1;
     return true;
@@ -351,7 +351,7 @@
        walk-through are the ways in from here. D-169. */
     if (roomId === 'dashboard') return '';
     /* A page that is no room has no neighbours to walk to, and inventing two
-       would read as instructions (the D-169 objection). One way home. D-322. */
+       would read as instructions (the D-169 objection). One way home. D-324. */
     if (!Registry.byId(roomId)) {
       return '<nav class="slaf-hops" aria-label="Where to next">'
         + '<a class="slaf-hop slaf-hop--prev" href="' + (atRoot(roomId) ? '' : '../') + 'index.html">\u2190 The Dashboard</a>'
@@ -846,7 +846,7 @@
     var dealt = at.state !== 'open';
     var out = [];
 
-    /* A step already dealt with folds to one line (D-320): the tick, the
+    /* A step already dealt with folds to one line (D-322): the tick, the
        step, and the way on. The person can open it for the bar, the
        stage, Undo and the hub; the room underneath is what they came for. */
     if (dealt) {
@@ -1196,7 +1196,7 @@
     else {
       /* No back-link to stand in for: the menu is navigation, and navigation
          is on every page of the app, so the strip goes at the top rather than
-         not at all. This is what kept the map page without a way out. D-322.
+         not at all. This is what kept the map page without a way out. D-324.
          ABOVE the page's own header, because a menu button below the title
          is a menu button nobody finds: the top left is where it is looked
          for on every other page. */
@@ -1211,7 +1211,7 @@
     mountMenu(roomId, nav);
     /* Everything below is a room's own furniture: the purpose line, the
        situation notice, the walk strip, the doors, the fold. A page that is
-       not a room takes the navigation and none of it. D-322. */
+       not a room takes the navigation and none of it. D-324. */
     if (!Registry.byId(roomId)) return nav;
     mountPurpose(roomId);
     mountSituation(roomId);
@@ -1589,7 +1589,7 @@
     document.addEventListener('DOMContentLoaded', function () {
       if (document.querySelector('.slaf-hops-host')) return;
       /* A redirect stub is a doorway, not a page: it is gone before a menu
-         would be read, and mounting one there flashes. D-322. */
+         would be read, and mounting one there flashes. D-324. */
       if (document.querySelector('meta[http-equiv="refresh"]')) return;
       mountHeader(roomIdFromLocation());
     });
