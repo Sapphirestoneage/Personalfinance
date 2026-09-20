@@ -5,7 +5,7 @@
  "source": "The Solar System master prompt (docs/SOLAR-SYSTEM.md), Part 1 section 1.7, turned into one record per level with the card fields of section 1.8. Cross-references (connects, payoff.metrics, grade) are computed from data/recipes.json by the build script, never typed.",
  "confidence": "convention",
  "confidenceNote": "A registry of questions, not a measurement. The minutes are rough costs to enter. The grade is a default priority (S: load-bearing per A5; A: feeds four or more metrics; B: one to three; C: none) that the engine re-ranks per household.",
- "note": "Six planets, thirty levels each, ten bands of three. tag: E enter, C confirm, S sharpen. fields[] are the facts a level collects: a key that is an ownership field id (existing: true) migrates from the Ledger row named in row; a key with existing: false has no home in the app yet (D-325 left only the two tax confirmations). appliesWhen is one of the situations phrases; a failing level is absent, never greyed, and the planet's maximum shrinks. prefillFrom names the levels a C level reads, each in the same or a lower band (lint). payoff.metrics are the recipes this level completes in its own band; payoff.lever (bands 8 to 10) is the data/levers.json lever the level adds to the sun. credit: true marks the Debt & Credit levels that never drop out. nextMove resolves in data/moves.json. No level exists to fill a slot (1.2).",
+ "note": "Six planets, thirty levels each, ten bands of three. tag: E enter, C confirm, S sharpen. fields[] are the facts a level collects: a key that is an ownership field id (existing: true) migrates from the Ledger row named in row; a field of kind confirm is not collected at all: it names the reading it confirms, and is answered by agreeing the figure looks right (D-328). appliesWhen is one of the situations phrases; a failing level is absent, never greyed, and the planet's maximum shrinks. prefillFrom names the levels a C level reads, each in the same or a lower band (lint). payoff.metrics are the recipes this level completes in its own band; payoff.lever (bands 8 to 10) is the data/levers.json lever the level adds to the sun. credit: true marks the Debt & Credit levels that never drop out. nextMove resolves in data/moves.json. No level exists to fill a slot (1.2).",
  "planets": [
   {
    "id": "you",
@@ -176,7 +176,8 @@
   "yesno",
   "text",
   "list",
-  "choice"
+  "choice",
+  "confirm"
  ],
  "situations": {
   "always": "every household",
@@ -8876,9 +8877,10 @@
    "fields": [
     {
      "key": "stateRateConfirmed",
-     "kind": "yesno",
-     "label": "State rate confirmed",
-     "existing": false
+     "kind": "confirm",
+     "label": "The rough state tax rate",
+     "existing": false,
+     "confirms": "stateRateRough"
     }
    ],
    "checkpoint": "The state rate is confirmed rather than a default.",
@@ -8917,9 +8919,10 @@
    "fields": [
     {
      "key": "impliedRateSeen",
-     "kind": "yesno",
-     "label": "Implied rate read",
-     "existing": false
+     "kind": "confirm",
+     "label": "The implied tax rate",
+     "existing": false,
+     "confirms": "impliedTaxRate"
     }
    ],
    "checkpoint": "The implied tax rate is confirmed as a rough figure.",

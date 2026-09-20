@@ -156,6 +156,13 @@
   /* The reading's own figure, once its levels are answered (D-327). */
   .u-val { font-variant-numeric: tabular-nums; color: var(--color-text); font-weight: 500; }
   .u-sharp { display: flex; flex-wrap: wrap; gap: 4px; align-items: baseline; color: var(--color-text-faint); font-size: var(--text-xs); }
+  /* What an answer just bought (D-328): named the moment it arrives, at most
+     three, and gone on its own. */
+  .sky-unlocked { border: 1px solid var(--color-accent); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); margin: 0 0 var(--space-3); background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
+  .sky-unlocked b { display: block; font-size: var(--text-sm); margin-bottom: 2px; }
+  .sky-unlocked ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .sky-unlocked li { font-size: var(--text-xs); display: flex; gap: var(--space-2); justify-content: space-between; }
+  .sky-unlocked .n { font-variant-numeric: tabular-nums; color: var(--color-text); }
   .sky-next { border: 1px solid var(--color-border-active); border-radius: var(--radius-md); padding: var(--space-3); margin: 0 0 var(--space-4); }
   .sky-next .eyebrow { font-size: var(--text-xs); letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-faint); }
   .sky-next b { display: block; margin: var(--space-1) 0; }
@@ -1019,6 +1026,7 @@
     <button type="button" data-tab="unlocks">What unlocks</button>
   </div>
   <div id="sky-planets">
+    <div class="sky-unlocked" id="sky-unlocked" role="status" hidden></div>
     <div class="sky-next" id="sky-next" hidden></div>
     <div class="sky-grid" id="sky-grid"></div>
     <p class="sky-key" id="sky-key"></p>
@@ -3345,7 +3353,7 @@
   var el = function (id) { return document.getElementById(id); };
   function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
   var ready = false, open = null, openLevel = null, only = 'all', RECIPES = {}, tab = 'planets', openTier = 1;
-  var PLANETS = [], ASKS = {};
+  var PLANETS = [], ASKS = {}, RECIPE_BY_ID = {}, RECIPE_META = {};
   /* The units a box on this screen can take. A repeat row (which debt, which
      account) needs the line picked first, and a formula row needs two figures,
      so both of those stay a link to the room that owns them. */
@@ -3437,6 +3445,18 @@
       + '<span class="d-said" data-sky-said role="status"></span></div>';
   }
 
+  /* The figure a C level asks you to agree with, in the reading's own unit. */
+  function readingFigure(id) {
+    if (!Recipes || !id) return '';
+    var rec = RECIPE_META[id];
+    var r = Recipes.value(id, Spine.getProfile(), TABLES);
+    if (!rec || !r || !Money.isOk(r)) return '';
+    var v = r.value;
+    return rec.unit === 'rate' ? Money.formatRate(v, { decimals: 1 })
+      : rec.unit === 'cents' ? Money.formatCents(v)
+      : rec.unit === 'multiple' ? Money.formatMultiple(v) : String(v);
+  }
+
   /* A field with a reader and no writer is worked out from others: this names
      them in the words the person will see on their own lines. */
   function addsUpFrom(key) {
@@ -3466,7 +3486,21 @@
       live.forEach(function (f) {
         var state = f.filled ? 'in' : 'not yet';
         var val = f.filled && f.display ? ' <span class="d-val">' + esc(f.display) + '</span>' : '';
-        var a = answerFor(defs[f.key]);
+        var def = defs[f.key] || {};
+        /* A C level shows the figure the app worked out and asks whether it
+           looks right. Nothing is collected, so there is no box (D-328). */
+        if (def.kind === 'confirm') {
+          var reading = RECIPE_BY_ID[def.confirms];
+          var said = readingFigure(def.confirms, r.level);
+          out.push('<li class="' + (f.filled ? 'is-in' : '') + '"><span class="d-name">' + esc(f.label) + '</span>'
+            + '<span class="d-state">' + esc(f.filled ? 'confirmed' : 'not yet') + (said ? ' <span class="d-val">' + esc(said) + '</span>' : '') + '</span>'
+            + '<div class="d-ask" data-sky-confirm="' + esc(r.level.id) + '">'
+            + (said ? '<button type="button" class="d-save" data-sky-agree>Yes, that looks right</button>'
+              : '<span class="d-none">' + esc(reading ? reading + ' is not worked out yet, so there is nothing to confirm.' : 'Nothing to confirm yet.') + '</span>')
+            + '<span class="d-said" data-sky-said role="status"></span></div></li>');
+          return;
+        }
+        var a = answerFor(def);
         if (a) ASKS[a.id] = a;
         /* A figure the app works out rather than asks for says what it adds
            up from, instead of offering a box that would be a second copy. */
@@ -3480,7 +3514,7 @@
       });
       out.push('</ul>');
     }
-    if (!live.some(function (f) { return f.href || answerFor(defs[f.key]); })) {
+    if (!live.some(function (f) { return f.href || answerFor(defs[f.key]) || (defs[f.key] || {}).kind === 'confirm'; })) {
       out.push('<p class="d-note">Nothing on this screen can take this answer yet. It is one of the new questions, and the screen that asks it is the next step.</p>');
     }
     return out.join('');
@@ -3656,8 +3690,10 @@
   function saveAnswer(node, value, note) {
     var a = ASKS[node.getAttribute('data-sky-ask')];
     if (!a) return;
+    var before = readable(Spine.getProfile());
     try {
       Ownership.write(a.id, value);
+      sayUnlocked(before);
       said(node, (note ? note + ' ' : '') + (value === null ? 'Cleared.' : 'Saved. Every room that reads it has it now.'));
       showAnswered(node, a);
     } catch (e) {
@@ -3692,6 +3728,56 @@
       item.classList.toggle('is-done', st.state === 'done');
     }
   }
+  /* ---- What that just bought (D-328) ---------------------------------------
+     A reading the app could not work out a moment ago and can now is the whole
+     point of answering. The set is the thirty engines/recipes.js knows, so the
+     comparison costs nothing worth measuring. */
+  function readable(h) {
+    var out = {};
+    if (!Recipes) return out;
+    Recipes.IMPLEMENTED.forEach(function (id) {
+      var r = Recipes.value(id, h, TABLES);
+      if (r && Money.isOk(r)) out[id] = true;
+    });
+    return out;
+  }
+  var UNLOCK_MS = 9000, unlockTimer = null;
+  function sayUnlocked(before) {
+    var box = el('sky-unlocked');
+    if (!box) return;
+    var now = readable(Spine.getProfile());
+    var fresh = Object.keys(now).filter(function (id) { return !before[id]; });
+    if (!fresh.length) return;
+    var lines = fresh.slice(0, 3).map(function (id) {
+      return '<li><span>' + esc(RECIPE_BY_ID[id] || id) + '</span><span class="n">' + esc(readingFigure(id)) + '</span></li>';
+    }).join('');
+    var more = fresh.length > 3 ? '<li><span>and ' + esc(fresh.length - 3) + ' more, on the unlocks tab</span><span class="n"></span></li>' : '';
+    box.innerHTML = '<b>That answer worked out ' + esc(fresh.length) + ' new reading' + (fresh.length === 1 ? '' : 's') + '</b><ul>' + lines + more + '</ul>';
+    box.hidden = false;
+    if (unlockTimer) clearTimeout(unlockTimer);
+    unlockTimer = setTimeout(function () { box.hidden = true; box.innerHTML = ''; }, UNLOCK_MS);
+  }
+
+  /* A C level just answered says so on its own line and on its level, without
+     the panel being rebuilt under the finger. */
+  function markConfirmed(node, levelId) {
+    var li = node.closest ? node.closest('li') : null;
+    if (li) {
+      li.className = 'is-in';
+      var state = li.querySelector('.d-state');
+      if (state) state.innerHTML = state.innerHTML.replace('not yet', 'confirmed');
+    }
+    var btn = document.querySelector('.sky-lv[data-level="' + levelId + '"]');
+    var mark = btn ? btn.querySelector('.mark') : null;
+    var lv = Solar.byId(levelId);
+    if (lv && mark) {
+      var st = Solar.levelState(lv, Spine.getProfile());
+      mark.textContent = st.state === 'done' ? 'answered' : st.state === 'part' ? st.filled + ' of ' + st.of : 'not yet';
+      mark.classList.toggle('is-done', st.state === 'done');
+      if (btn.parentNode && btn.parentNode.classList) btn.parentNode.classList.toggle('is-done', st.state === 'done');
+    }
+  }
+
   /* A typed box: the same parse, the same percent-slip question and the same
      period conversion the Ledger's own facts view uses. */
   function commitTyped(node) {
@@ -3779,6 +3865,19 @@
       }
       return;
     }
+    /* A C level is answered by agreeing: the spine stamps it as confirmed
+       today, and nothing about the figure changes (D-328). */
+    var yes = t.closest('[data-sky-confirm]');
+    if (yes) {
+      if (!t.closest('[data-sky-agree]')) return;
+      var levelId = yes.getAttribute('data-sky-confirm');
+      try {
+        Spine.confirm(levelId);
+        said(yes, 'Confirmed. It reads as yours rather than the app\u2019s guess.');
+        markConfirmed(yes, levelId);
+      } catch (e) { said(yes, 'Could not record that (' + e.message + ').'); }
+      return;
+    }
     if (t.closest('.d-fields a')) return;
     var f = t.closest('[data-only]');
     if (f) { only = f.getAttribute('data-only'); openLevel = null; paint(); skyForm.force(); return; }
@@ -3837,7 +3936,7 @@
     Solar.useRecipes(t.recipes);
     if (LedgerRows && t.ledgerRows) LedgerRows.use(t.ledgerRows);
     STATES = (t.states && t.states.states) || [];
-    (t.recipes && t.recipes.recipes || []).forEach(function (r) { RECIPES[r.id] = r.label; });
+    (t.recipes && t.recipes.recipes || []).forEach(function (r) { RECIPES[r.id] = r.label; RECIPE_BY_ID[r.id] = r.label; RECIPE_META[r.id] = r; });
     ready = true;
     paint();
     if (Spine.onChange) Spine.onChange(paint);
