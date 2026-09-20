@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/degree.js — the Degree Decision.
+   engines/degree.js, the Degree Decision.
    DECISIONS.md D-219 (K9).
    --------------------------------------------------------------------------
    A degree as a sum: tuition and fees less any employer help, the pay given

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/journey.js — the guided run through. DD-026.
+   engines/journey.js, the guided run through. DD-026.
    --------------------------------------------------------------------------
    Five questions, a character, a choice of how to build your six, then a
    focused go at whichever one is weakest.
@@ -8,7 +8,7 @@
 
    The five-question class is a READ OF TEMPERAMENT, not a measurement. It says
    which lever you reach for, which is a real and useful thing to know. It does
-   NOT say where your money actually moves — that is suggestClass() on your
+   NOT say where your money actually moves. That is suggestClass() on your
    numbers, and the two disagreeing is the most interesting screen in the whole
    tool rather than a bug to reconcile. Nothing here overwrites the measured
    class, and nothing here pretends the quiz measured anything.
@@ -41,7 +41,7 @@
    *
    * WITHOUT THIS THE QUIZ IS RIGGED. The options are written to sound like
    * real people rather than to balance a spreadsheet, so some levers appear in
-   * more answers than others — Anchor can reach 12 points across the five,
+   * more answers than others, Anchor can reach 12 points across the five,
    * Landholder only 6. Scoring on raw totals would hand nearly everyone the
    * same two classes. Each class is therefore scored as a SHARE of its own
    * ceiling, so leaning hard on a rarely-offered lever counts for as much as
@@ -63,7 +63,7 @@
   }
 
   /**
-   * scoreQuiz(answers, tables) — answers is { questionId: optionId }.
+   * scoreQuiz(answers, tables), answers is { questionId: optionId }.
    *
    * Returns every class ranked by share of its own ceiling, the winner, the
    * runner-up, and whether it was close. Incomplete until every question is
@@ -104,7 +104,7 @@
          not something rounder because the median gap between first and second
          is 0.12: at 0.15 the "you're also a bit of X" line fired on 56% of all
          2,000 possible answer sets, which makes it wallpaper. At 0.05 it fires
-         on 23% — often enough to be true, rare enough to mean something. */
+         on 23%, often enough to be true, rare enough to mean something. */
       close: !!second && (top.share - second.share) < 0.05,
       answers: said
     });
@@ -135,7 +135,7 @@
 
   /* ---- the focused game --------------------------------------------------
      Pick a stat, get the scenarios that actually train it. "Trains it" means
-     an option under that scenario moves one of its three sub-stats — read off
+     an option under that scenario moves one of its three sub-stats, read off
      the scenario bank, never a second hand-kept list.                       */
 
   function trainedBy(scenario) {

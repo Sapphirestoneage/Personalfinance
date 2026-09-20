@@ -1,10 +1,10 @@
 /* ==========================================================================
-   shared/xlsx.js — a real spreadsheet out, and a real spreadsheet back in.
+   shared/xlsx.js, a real spreadsheet out, and a real spreadsheet back in.
    DECISIONS.md D-222.
    --------------------------------------------------------------------------
    A CSV is a text file: tapped on a phone it opens as code, and the owner
    should never see code. An .xlsx opens in Excel, Numbers, Google Sheets and
-   the phone's own viewer as what it is — a sheet, with money as money, a
+   the phone's own viewer as what it is, a sheet, with money as money, a
    percent as a percent, a date as a date, a bold heading that stays put.
 
      Xlsx.build(sheets, opts)   → Uint8Array, a workbook

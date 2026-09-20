@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/skills.js — the Skill Stacker's engine: three skills at a time,
+   engines/skills.js, the Skill Stacker's engine: three skills at a time,
    did or didn't, what a day of practice is worth, and what the ledger
    becomes by 65.
    BRIEF §7, DECISIONS.md D-090.
@@ -9,10 +9,10 @@
    where each one stands; this file is every rule that moves one between
    the two. Nothing here is a score. A day logged is a row in the practice
    ledger with what that day's practice was worth in cents, and the only
-   totals are sums of those rows — feedback, not points (BRIEF §7 D-C).
+   totals are sums of those rows, feedback, not points (BRIEF §7 D-C).
 
    Value comes one way: `effect.cents` a year, or `effect.formula` in the
-   life-events expression language over Events.context — so "a third of
+   life-events expression language over Events.context, so "a third of
    the dining-out line" is the same figure whichever room asks. A `risk`
    effect is worth $0 a year on purpose: the Anchor stack is worth nothing
    in a normal year and everything in a bad one, and pretending otherwise
@@ -27,7 +27,7 @@
    goes unlogged decays: to practicing after its decayDays, to available
    after rules.lapseDays. A once-skill with a `verify` clause is marked
    done from the household's own facts on load, and un-marked if the fact
-   stops holding — the room never asks what the model already knows.
+   stops holding. The room never asks what the model already knows.
    ========================================================================== */
 (function (root, factory) {
   var deps;
@@ -56,8 +56,8 @@
   var MINUTES_PER_HOUR = 60;
   var OWNER = 'stacker';
 
-  /* Which stored states count as "doing it" — the ones a stack, the
-     automation ratio and a prerequisite read as satisfied — per kind. */
+  /* Which stored states count as "doing it", the ones a stack, the
+     automation ratio and a prerequisite read as satisfied, per kind. */
   var ACTIVE_BY_KIND = { once: ['done'], habit: ['practicing', 'habit'], periodic: ['done'] };
   var EQUIPPED = ['trial', 'practicing'];
   var SATISFIES_PREREQ = ['done', 'habit'];
@@ -65,7 +65,7 @@
   /* ---- 0. Days ------------------------------------------------------------ */
 
   function pad2(n) { return (n < 10 ? '0' : '') + n; }
-  /** A calendar day as YYYY-MM-DD. Undefined means today, in local time —
+  /** A calendar day as YYYY-MM-DD. Undefined means today, in local time, 
       the day the person taps is the day on their clock, not UTC's. A
       10-character string is taken as it is; anything else is a Date. */
   function dayISO(when) {
@@ -480,7 +480,7 @@
   /**
    * A stack's value a year, as a waterfall: each skill's base value while
    * active, its synergy multiplier when the partner is active too, the
-   * sum, then the cap — the stack's own cents, or twelve months of the
+   * sum, then the cap, the stack's own cents, or twelve months of the
    * line it acts on when that line is known and smaller. So The Kitchen
    * can never claim more than the food it buys.
    */
@@ -564,7 +564,7 @@
 
   /**
    * One suggestion: available, prerequisites met, at your FOO step or at
-   * none in particular, best return on effort — with a nudge toward the
+   * none in particular, best return on effort, with a nudge toward the
    * skill that trains your lowest sub-stat, when the sheet says which.
    */
   function nextSkill(household, tables, opts) {

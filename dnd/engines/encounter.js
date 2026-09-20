@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/encounter.js — running one monster at one character. BRIEF §9.3.
+   engines/encounter.js, running one monster at one character. BRIEF §9.3.
    --------------------------------------------------------------------------
    The point of the whole thing: a monster's danger is not a property of the
    monster. It is a property of the monster meeting THIS sheet. The same
@@ -15,8 +15,8 @@
    need to know rather than quietly assuming the worst. Same rule as everywhere
    else here: empty is not zero.
 
-   WHAT LIVES WHERE. Every threshold — the CR-to-DC ladder, the tier bands, the
-   advantage bonus, the 5%/95% clamp — is in data/dnd_rules.json under
+   WHAT LIVES WHERE. Every threshold, the CR-to-DC ladder, the tier bands, the
+   advantage bonus, the 5%/95% clamp, is in data/dnd_rules.json under
    `encounterRules`. This file holds only the arithmetic and the predicates
    that decide whether a blocker is actually held, which is logic, not data.
    ========================================================================== */
@@ -62,7 +62,7 @@
 
   function crToNumber(cr) {
     var s = String(cr).trim();
-    if (s === '—' || s === '') return null;
+    if (s === 'not yet' || s === '') return null;
     if (s.indexOf('/') !== -1) {
       var parts = s.split('/');
       return Number(parts[0]) / Number(parts[1]);
@@ -84,7 +84,7 @@
     return ladder[ladder.length - 1].dc;
   }
 
-  /** A creature's to-hit bonus from CR — the attack-roll twin of dcFor(). */
+  /** A creature's to-hit bonus from CR, the attack-roll twin of dcFor(). */
   function attackBonusFor(cr, tables) {
     var n = crToNumber(cr);
     if (n === null) return null;
@@ -104,12 +104,12 @@
   }
 
   /**
-   * Where you are in the arc — BRIEF §9.4.
+   * Where you are in the arc, BRIEF §9.4.
    *
    * Returns the tier you are in, the one after it, how far through this one you
    * are, and the creatures that come into range when you cross. It takes a
    * Result for the level rather than a number, because a character with no Level
-   * is not "tier I" — they are unplaced, and saying otherwise is the same
+   * is not "tier I". They are unplaced, and saying otherwise is the same
    * over-claim as calling an unscored save a weakness.
    */
   function tierProgress(levelResult, tables) {
@@ -145,13 +145,13 @@
   function blockerState(id, ctx) {
     var cat = ctx.tables.dndRules.blockers[id];
     if (!cat) return null;
-    /* A feat can grant a blocker outright — The Ask counts as negotiation
+    /* A feat can grant a blocker outright. The Ask counts as negotiation
        held whatever the score says. DD-023. */
     var granted = ctx.sheet && ctx.sheet.grants && ctx.sheet.grants.blockers;
     if (granted && granted.indexOf(id) !== -1) return true;
     if (cat.subStat) {
       /* No subScores at all is the same claim as an unscored one: we have not
-         been told. It must never throw — a caller holding a partial sheet is
+         been told. It must never throw, a caller holding a partial sheet is
          exactly who this three-state answer exists for. */
       var scores = ctx.sheet && ctx.sheet.subScores;
       var r = scores ? scores[cat.subStat] : null;
@@ -201,7 +201,7 @@
 
   /**
    * Which save this attack targets. A pair ("CON+DEX") uses whichever of the
-   * two is WORSE — the monster attacks where you are thinnest. "ALL" means
+   * two is WORSE, the monster attacks where you are thinnest. "ALL" means
    * every save at once, so the worst of the six.
    */
   function targetSave(monster, saves) {
@@ -225,7 +225,7 @@
   /* ---- the encounter ----------------------------------------------------- */
 
   /**
-   * run(sheet, monster, opts) — everything about this monster meeting this
+   * run(sheet, monster, opts), everything about this monster meeting this
    * character. `opts.mode` is 'expected' (default) or 'roll'.
    */
   function run(sheet, monster, opts) {
@@ -252,7 +252,7 @@
        does its real job. A SAVE goes around armour and targets judgment. */
     var isAttack = monster.resolution === 'attack';
 
-    /* Debt Burden's disadvantage — the rulebook's own rule, applied at last.
+    /* Debt Burden's disadvantage, the rulebook's own rule, applied at last.
        5e's cancel rule holds: advantage and disadvantage together are neither. */
     var burdenRow = Money.isOk(sheet.debtBurden) ? sheet.debtBurden.row : null;
     var burdenDis = burdenRow && Array.isArray(burdenRow.saveDisadvantage)
@@ -260,8 +260,8 @@
 
     /* Exhaustion (§9.7) subtracts from every save. This is the whole reason it
        is derived rather than decorative: being close to the edge really does
-       make you easier to move — you cannot wait for a better offer, shop the
-       policy or walk away — and every creature here is built for exactly that.
+       make you easier to move, you cannot wait for a better offer, shop the
+       policy or walk away, and every creature here is built for exactly that.
        An unmeasurable runway means no penalty, not a guessed one. */
     var exh = Character.exhaustion(sheet.currentHp, tables);
     var exhPenalty = Money.isOk(exh) ? exh.savePenalty : 0;
@@ -277,7 +277,7 @@
 
     /* Attack rolls: the creature's d20 + bonus must reach your AC. A blocker
        that would grant YOU advantage on a save instead hampers the attacker
-       — same value, applied to its roll. Exhaustion is a judgment penalty and
+, same value, applied to its roll. Exhaustion is a judgment penalty and
        does not lower your insurance, so it does not apply here. */
     var attackBonus = isAttack ? attackBonusFor(monster.cr, tables) : null;
     var ac = Money.isOk(sheet.armorClass) ? sheet.armorClass.value : null;
@@ -286,7 +286,7 @@
 
     /* Chance it lands. On a save: the save fails. On an attack: the roll
        reaches AC. A natural 1 always misses/fails and a 20 always hits/saves,
-       so it never reaches 0 or 1 — a 5% floor either way. */
+       so it never reaches 0 or 1, a 5% floor either way. */
     var hitChance = null;
     if (negated) hitChance = 0;
     else if (isAttack) {
@@ -311,11 +311,11 @@
 
     var cur = Money.isOk(sheet.currentHp) ? sheet.currentHp.value : null;
 
-    /* RECURRING damage — DD-021. "1d4 a month" was being subtracted once, as
+    /* RECURRING damage, DD-021. "1d4 a month" was being subtracted once, as
        if it were a single hit, which answered a question nobody asked. The
        honest figure for a creature that bleeds you per period is the NET: what
        it takes each period minus what a short rest gives back in the same
-       period — and from that, how long until the runway is gone. Healing is
+       period, and from that, how long until the runway is gone. Healing is
        read from the household, never re-derived here. Incident-shaped periods
        ("instalment", "incident") have no clock, so no healing offsets them. */
     var PERIOD_MONTHS = { month: 1, quarter: 3, year: 12 };
@@ -389,13 +389,13 @@
   }
 
   /**
-   * recognition(marks, tables) — what the creatures you picked have in common.
+   * recognition(marks, tables), what the creatures you picked have in common.
    *
    * A THIRD KIND OF KNOWING, AND IT IS THE WEAKEST ONE. Elsewhere this suite
    * distinguishes `measured` (your money says so) from `instinct` (five
    * questions say so). This is `recognised`: you looked at a list and said
    * "yes, that one". It is a self-report about events, which is better input
-   * than a self-rating — but it is still not a measurement, and it NEVER
+   * than a self-rating, but it is still not a measurement, and it NEVER
    * writes a score, a sub-stat or a class. Every caller must label it.
    *
    * It is also structurally biased and the room must say so: you cannot
@@ -419,7 +419,7 @@
     });
     var saves = Object.keys(saveCount).sort(function (a, b) { return saveCount[b] - saveCount[a]; });
 
-    /* What would have stopped them — read off each creature's own blockedBy,
+    /* What would have stopped them, read off each creature's own blockedBy,
        never a second list. */
     var blockCount = {};
     picked.forEach(function (c) {
@@ -454,7 +454,7 @@
   /**
    * The two saves you are thinnest on, and the creatures that hunt there at
    * your current tier. Unscored saves are excluded rather than treated as
-   * terrible — a blank is not a weakness, it is a blank.
+   * terrible. A blank is not a weakness, it is a blank.
    */
   function predators(sheet, tables, opts) {
     var o = opts || {};
@@ -463,7 +463,7 @@
     if (saves.length < 2) {
       return { ready: false, reason: 'Score more of your saves to see what hunts you.', weakest: [], creatures: [] };
     }
-    /* The two thinnest — PLUS anything tied with the second. Taking a flat
+    /* The two thinnest, PLUS anything tied with the second. Taking a flat
        slice of two marks one of three equal saves as safe and its identical
        twin as thin, which is a claim the numbers do not support. A tie is a
        tie, and the caller is told about all of it. */
@@ -481,7 +481,7 @@
     return { ready: true, weakest: weakest, tier: tier, creatures: creatures };
   }
 
-  /* ---- the type chart — T10 ---------------------------------------------
+  /* ---- the type chart, T10 ---------------------------------------------
      Six attack types, and what each of them actually is: not a label, but the
      set of saves the creatures using it target and the defences that stop
      them. All of it is DERIVED from the bestiary rather than written down
@@ -490,7 +490,7 @@
 
   /**
    * For every attack type: which saves it comes at, what blocks it, and how
-   * often — counted over the creatures that actually use it.
+   * often, counted over the creatures that actually use it.
    */
   function typeChart(tables) {
     var creatures = allCreatures(tables);
@@ -552,7 +552,7 @@
    * How THIS character stands against each type.
    *
    * The defence against a type is the worst of the saves it comes at, because
-   * that is the one a creature will pick — the same rule targetSave() uses,
+   * that is the one a creature will pick, the same rule targetSave() uses,
    * called rather than restated. A type whose saves are all unscored comes
    * back `known: false`: not resistant, not exposed, unmeasured.
    */
@@ -565,7 +565,7 @@
       /* The defence is measured against the saves this type CHARACTERISTICALLY
          comes at, not against every save it could ever touch. One creature in
          the type that targets everything would otherwise collapse the whole
-         row to your single worst save — and then Guilt, which is CHA in every
+         row to your single worst save, and then Guilt, which is CHA in every
          other respect, reports itself as a Dexterity problem. The ALL-targeting
          creatures are reported separately instead, so the page can say both
          things without either drowning the other. */
@@ -608,7 +608,7 @@
    *
    * Rows written before T10 carry no attackType, so the creature is looked up
    * by name and the type filled in. A row naming a creature that no longer
-   * exists is counted as unknown rather than dropped — it happened, and
+   * exists is counted as unknown rather than dropped, it happened, and
    * silently losing history is worse than an untidy total.
    */
   function typeHistory(encounters, tables) {
@@ -638,7 +638,7 @@
   }
 
   /**
-   * What gets through your armour — DD-019. The attack-roll creatures, each
+   * What gets through your armour, DD-019. The attack-roll creatures, each
    * with the chance its roll reaches your AC. This is the sentence the AC
    * panel could never say before: which bills your insurance actually stops.
    */

@@ -1,9 +1,9 @@
 /* ==========================================================================
-   engines/cashflow.js — categorised income minus expenses.
+   engines/cashflow.js, categorised income minus expenses.
    --------------------------------------------------------------------------
-   SPEC.md §9 item 4. Everything downstream of this — the Fulfillment Curve,
+   SPEC.md §9 item 4. Everything downstream of this, the Fulfillment Curve,
    Values vs. Spending Audit, Mutant Expenses, Personal Inflation, and the
-   real (rather than estimated) Savings Rate — needs spending in categorised
+   real (rather than estimated) Savings Rate, needs spending in categorised
    form, which is why it is built before any of them.
 
    SPEC.md §12.5: manual entry now, bank-linked import architected in. There
@@ -62,7 +62,7 @@
    * Unused by manual entry, where the user picks the category outright. It
    * exists now so the import path (SPEC.md §12.5) plugs into a categoriser
    * that already operates on a transaction, rather than one retrofitted onto
-   * hand-typed totals. Returns null rather than guessing 'other' — an
+   * hand-typed totals. Returns null rather than guessing 'other', an
    * uncategorised transaction is a real state the UI should surface, not
    * something to bury in a catch-all.
    */
@@ -83,8 +83,8 @@
 
   /* ---- Normalising a mixed store to monthly ----------------------------
      Monthly records count as themselves. Dated one-off records are summed
-     and divided by the number of DISTINCT months they span — not by a fixed
-     30 days, and not by the count of records — so three months of imported
+     and divided by the number of DISTINCT months they span, not by a fixed
+     30 days, and not by the count of records, so three months of imported
      transactions produce a monthly average rather than a quarterly total. */
 
   function monthKey(date) {
@@ -181,7 +181,7 @@
       var cat = categoryById(catalog, id);
       /* A derived category is handled below, from the household. Any entry
          someone managed to leave here is deliberately ignored rather than
-         added — otherwise the figure would be counted twice. */
+         added, otherwise the figure would be counted twice. */
       if (cat.derivedFrom) return;
       var n = normaliseToMonthly(byCategory[id]);
       /* Which of this category's dollars could not be cut next month, and
@@ -202,7 +202,7 @@
       if (!source) return;
       var value = source(household);
       if (!Money.isOk(value)) return;
-      /* A derived line — debt minimums — is fixed by nature. */
+      /* A derived line, debt minimums, is fixed by nature. */
       addRow(cat, value.value, { derived: true, derivedFrom: cat.derivedFrom, ownedBy: cat.ownedBy || null,
         fixedMonthlyCents: value.value, fixedAsked: true, fixed: true });
     });
@@ -214,7 +214,7 @@
     return Money.ok(spendCents, {
       categories: categories,
       byBucket: byBucket,
-      /* Money that leaves and does not come back. Savings is excluded — it
+      /* Money that leaves and does not come back. Savings is excluded. It
          is a destination, not an expense. */
       spendMonthlyCents: spendCents,
       savingsMonthlyCents: savingsCents,
@@ -231,7 +231,7 @@
 
   /**
    * Take-home pay minus what actually goes out.
-   * Uses NET income — the effective-tax lookup from Tier 0 rather than a
+   * Uses NET income, the effective-tax lookup from Tier 0 rather than a
    * second tax calculation, per SPEC.md §8.
    */
   function netMonthlyIncomeCents(household, tables) {
@@ -264,15 +264,15 @@
   }
 
   /**
-   * What is actually free each month — the one place anything asks that.
+   * What is actually free each month, the one place anything asks that.
    *
    * Two bases, in preference order, because a person who has only answered
    * intake has no categories yet and would otherwise see an em dash where
    * the useful number goes:
    *
-   *   'categorised'  — take-home minus every category actually entered.
+   *   'categorised', take-home minus every category actually entered.
    *                    Sharper, and the one to use once a month is tracked.
-   *   'monthlyTotal' — Tier 0's own annual savings figure over twelve.
+   *   'monthlyTotal', Tier 0's own annual savings figure over twelve.
    *                    Same arithmetic Tier 0 already does for the savings
    *                    rate, not a second definition of "left over", but it
    *                    measures against ESSENTIAL expenses only and so runs
@@ -312,7 +312,7 @@
   }
 
   /**
-   * templateTargets(household, templates, templateId, tables) — what each
+   * templateTargets(household, templates, templateId, tables), what each
    * bucket of the split comes to in dollars against this household's basis
    * income, with NO spending entered. The comparison below reads it; so
    * does the Cash Flow room when it proposes a first month (D-063). One
@@ -396,7 +396,7 @@
 
   /* ---- The contributed savings rate (BRIEF §4.2, D-080) --------------------
      Tier0.savingsRate is the RESIDUAL: what is left of gross after spending
-     and tax. This is the CONTRIBUTED rate: what actually went somewhere —
+     and tax. This is the CONTRIBUTED rate: what actually went somewhere, 
      the 401(k) percentage, Roth and HSA so far this year, and the tracked
      lines in the savings bucket. The gap between the two is money going
      somewhere nobody has named, and comes back as unallocatedMonthlyCents.
@@ -458,7 +458,7 @@
 
   /* ---- The floor (BRIEF §4.4, D-082) ------------------------------------
      minimumViableMonthCents: the spending lines marked fixed, plus the
-     derived debt minimums — what next month costs if everything cuttable
+     derived debt minimums, what next month costs if everything cuttable
      is cut. cuttability: 1 − floor ÷ spending. Both need at least one line
      answered; a line nobody has answered is neither fixed nor cuttable, and
      is counted and reported as unasked rather than assumed either way.
@@ -534,7 +534,7 @@
     return [stamp({ date: month + '-' + (day < 10 ? '0' : '') + day, cents: entry.amountCents })];
   }
   /**
-   * logInMonth(household, catalog, 'YYYY-MM') — every active logged
+   * logInMonth(household, catalog, 'YYYY-MM'), every active logged
    * occurrence in the month with its group, and the totals: by group, by
    * budget bucket, personal against income costs, deductible.
    */
@@ -582,7 +582,7 @@
         if (reimb && e.reimbursementStatus !== 'received') pendingReimb += o.cents;
       });
       /* A reimbursement received lands as a credit in the month it came,
-         against the bucket the expense sat in — never back in the month
+         against the bucket the expense sat in, never back in the month
          of the expense (D-129). The expense itself stayed in full above. */
       if (reimb && e.reimbursementStatus === 'received' && e.dateReceived && e.dateReceived.slice(0, 7) === month) {
         var back = Money.isEntered(e.receivedAmountCents) ? e.receivedAmountCents : (Money.isEntered(e.expectedAmountCents) ? e.expectedAmountCents : e.amountCents);

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/benchmarks.js — the numbers that place a household against a
+   engines/benchmarks.js, the numbers that place a household against a
    convention, rather than against itself. BRIEF §4.1, DECISIONS.md D-079.
    --------------------------------------------------------------------------
      wealthMultiplier   what a dollar at your age becomes by 65 on the
@@ -21,8 +21,8 @@
    Two growth models live here on purpose and are not the same thing:
    engines/projection.js is THE loop for "a balance at one rate with
    contributions" and this file calls it for the FI date and the at-65
-   balance. The wealth multiplier is a different model — a return that
-   falls with age, parameterised in data — so its curve is computed here
+   balance. The wealth multiplier is a different model, a return that
+   falls with age, parameterised in data, so its curve is computed here
    and nowhere else. Neither re-implements the other.
 
    Money is integer cents. Every missing input is a Result that says what
@@ -344,8 +344,8 @@
 
   /**
    * The SCF percentile, the retirement multiple and PAW answer three
-   * different questions — against peers of your age, against a milestone
-   * for your age and income, against age × income ÷ 10 — so they disagree
+   * different questions, against peers of your age, against a milestone
+   * for your age and income, against age × income ÷ 10, so they disagree
    * for most people, and the sentence says how. Each verdict is a word;
    * `agree` is true only when all three point the same way.
    */
@@ -373,7 +373,7 @@
     if (said.length < 2) {
       sentence = 'Fewer than two of the three can be worked out yet.';
     } else if (agree) {
-      sentence = 'All ' + (said.length === 3 ? 'three' : 'of them') + ' say ' + words[v[said[0]]] + ' — rare, and worth believing.';
+      sentence = 'All ' + (said.length === 3 ? 'three' : 'of them') + ' say ' + words[v[said[0]]] + ', rare, and worth believing.';
     } else {
       sentence = said.map(function (k, i) {
         var name = k === 'percentile' ? 'the percentile' : k === 'multiple' ? 'the retirement multiple' : 'PAW';

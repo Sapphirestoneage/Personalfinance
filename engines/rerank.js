@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/rerank.js — cost rank against value rank, and where they disagree.
+   engines/rerank.js, cost rank against value rank, and where they disagree.
    BRIEF §5, DECISIONS.md D-085.
    --------------------------------------------------------------------------
      lines(h, tables)     every cost line: the tracked categories and custom
@@ -9,13 +9,13 @@
      analyse(h, tables)   the lines with costRank, valueRank, joy, miss,
                           who, need, and a flag ∈ {cut, keep, ok}; plus what
                           the cut lines add up to a year and at 25×
-     threshold(n)         max(3, round(n × 0.25)) — how deep "top" goes
+     threshold(n)         max(3, round(n × 0.25)), how deep "top" goes
 
    A line is CUT when it is in the top k by cost and its value rank trails
    its cost rank by more than k; KEEP when it is in the top k by value and
    its cost rank trails its value rank by more than k. Everything else is
-   ok: the two orders roughly agree. A need can be flagged — the room words
-   it more gently — because "I spend a lot on this and it gives me little"
+   ok: the two orders roughly agree. A need can be flagged, the room words
+   it more gently, because "I spend a lot on this and it gives me little"
    is still worth knowing about a necessity.
 
    Value order: the hand-set valueRank when the person has reranked, else
@@ -74,7 +74,7 @@
    * Each: { id, label, categoryId, monthlyCents, need, source, custom, entryId }
    *   source 'entered'   a tracked category or a custom line in expenses
    *          'derived'   debt minimums, read from Debt Payoff
-   *          'suggested' a common-cost line, scaled — never stored
+   *          'suggested' a common-cost line, scaled, never stored
    * `scale` says what the suggestions were scaled by (null = unscaled).
    */
   function lines(household, tables) {
@@ -121,8 +121,8 @@
       out.scale = scale;
     }
 
-    /* A custom line with no amount yet is still a line — the room needs a
-       box to type into — but it has no cost rank until one is typed. */
+    /* A custom line with no amount yet is still a line. The room needs a
+       box to type into, but it has no cost rank until one is typed. */
     custom.forEach(function (e) {
       var cat = catById(catalog, e.categoryId);
       out.push({ id: e.id, label: e.descriptor, categoryId: e.categoryId || 'other',

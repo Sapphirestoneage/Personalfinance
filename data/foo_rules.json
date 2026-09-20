@@ -89,7 +89,7 @@
       "key": "dti_above_ceiling",
       "severity": "warning",
       "label": "Debt-to-income above 36%",
-      "guidance": "Above the range most lenders treat as comfortable. It does not mean anything is wrong today — it does narrow your options.",
+      "guidance": "Above the range most lenders treat as comfortable. It does not mean anything is wrong today. It does narrow your options.",
       "step": 3
     },
     {
@@ -111,7 +111,7 @@
       "severity": "warning",
       "step": 0,
       "label": "Housing above the 28% guideline",
-      "guidance": "The roof is the largest line in most budgets and the hardest to change in a hurry, which is why underwriters read it on its own. Above 28% of gross it crowds every step of the ladder below it — the ladder still runs, it just runs on less."
+      "guidance": "The roof is the largest line in most budgets and the hardest to change in a hurry, which is why underwriters read it on its own. Above 28% of gross it crowds every step of the ladder below it. The ladder still runs, it just runs on less."
     }
   ]
 }

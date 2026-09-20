@@ -8,12 +8,12 @@
 <script src="../shared/errlog.js"></script>
 <script src="../shared/size.js"></script>
 <title>The Skill Tree · SPARKS</title>
-<meta name="description" content="Every money skill in five bands, three of them to practise at a time, and every doable exercise in one place — what the next hour does."/>
+<meta name="description" content="Every money skill in five bands, three of them to practise at a time, and every doable exercise in one place, what the next hour does."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-101, D-274 (the merge).
+  ROOM SPEC, SPEC.md §11. DECISIONS.md D-101, D-274 (the merge).
   Registry: skill-tree.
 
   THREE READINGS OF THE SAME SKILLS.
@@ -162,7 +162,7 @@
      its box. The name owns the top of the card; the chips own the bottom
      left and the state badge the bottom right, so nothing overlaps the
      words. If the reference data ever grows longer names, widen COL_W and
-     the clamp together — test/alignment.js measures it. */
+     the clamp together, test/alignment.js measures it. */
   
   #view-the-tree .node { position: absolute; width: 184px; height: 72px; border-radius: 10px; box-sizing: border-box; padding: 7px 9px 22px 42px; font-family: var(--font-body); font-size: 12px; font-weight: 500; line-height: 1.25; color: var(--color-text); cursor: pointer; text-align: left; border: 1.5px solid; overflow: hidden; }
   
@@ -567,9 +567,9 @@
     <div id="today-list"></div>
     <p class="refused" id="today-note" aria-live="polite"></p>
     <div class="figures">
-      <div class="figure-cell"><span class="cap">Today was worth</span><span class="big" id="fig-today">—</span><span class="sub" id="fig-today-sub"></span></div>
-      <div class="figure-cell"><span class="cap">The ledger</span><span class="big" id="fig-ledger">—</span><span class="sub" id="fig-ledger-sub"></span></div>
-      <div class="figure-cell"><span class="cap">At 65</span><span class="big" id="fig-end">—</span><span class="sub" id="fig-end-sub"></span></div>
+      <div class="figure-cell"><span class="cap">Today was worth</span><span class="big" id="fig-today">not yet</span><span class="sub" id="fig-today-sub"></span></div>
+      <div class="figure-cell"><span class="cap">The ledger</span><span class="big" id="fig-ledger">not yet</span><span class="sub" id="fig-ledger-sub"></span></div>
+      <div class="figure-cell"><span class="cap">At 65</span><span class="big" id="fig-end">not yet</span><span class="sub" id="fig-end-sub"></span></div>
     </div>
     <div id="ledger-ring"></div>
     <div class="next" id="next-card" hidden>
@@ -601,7 +601,7 @@
     <h2 style="margin:var(--space-2) 0 var(--space-3)">Skills that compound on each other</h2>
     <p class="slaf-hint" style="margin:0 0 var(--space-3)">
       A stack is worth its skills' values, times the synergy between the ones
-      you are actually doing, up to a cap — The Kitchen can never claim more
+      you are actually doing, up to a cap. The Kitchen can never claim more
       than the food you buy.
     </p>
     <div id="stack-bars"></div>
@@ -626,7 +626,7 @@
 
   <!-- ===== THE DOING (was rooms/exercises.html) ===== -->
   <section id="view-the-doing" hidden>
-  <p class="slaf-lede">Every doable thing in one place, fifteen minutes or less by default — the first fifteen minutes of a skill, or a named exercise from the books.</p>
+  <p class="slaf-lede">Every doable thing in one place, fifteen minutes or less by default, the first fifteen minutes of a skill, or a named exercise from the books.</p>
   <section class="slaf-card" id="list">
     <span class="slaf-eyebrow">What applies to you</span>
     <h2 style="margin:var(--space-2) 0 0">Sorted from the band you are in</h2>
@@ -712,7 +712,7 @@
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
    so its hat is ABSENT, not greyed, when the branch is not there (D-271).
-   The hash still reaches it — an old link must land somewhere honest — and
+   The hash still reaches it, an old link must land somewhere honest, and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
   'use strict';
@@ -732,8 +732,8 @@
     var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
     /* The default reading is the last row and matches everything, so there
        is always one. When the hash asks for a reading the gate has taken
-       away, fall back to the DEFAULT — the room's plainest reading, and the
-       one the person would have got with no hash at all — not to whichever
+       away, fall back to the DEFAULT, the room's plainest reading, and the
+       one the person would have got with no hash at all, not to whichever
        gated reading happens to sit first in this list. */
     var fallback = VIEWS[VIEWS.length - 1];
     var on = open(asked) ? asked
@@ -841,13 +841,13 @@
     var chips = (s.unlocks || []).slice(0, CHIP_MAX).map(function (c) { return '<i title="' + esc(c.label) + '">' + esc(c.kind === 'room' ? c.label.slice(0, 2) : '#') + '</i>'; }).join('')
       + ((s.unlocks || []).length > CHIP_MAX ? '<i class="more">+' + ((s.unlocks || []).length - CHIP_MAX) + '</i>' : '');
     var right = s.state === 'done' ? '<span class="n-date">' + esc(s.doneOn || '') + '</span>' : s.state === 'locked' ? '<span class="n-lock" aria-hidden="true">🔒</span>' : s.state === 'bypassed' ? '<span class="n-tag">skipped</span>' : '';
-    var title = s.state === 'fogged' ? 'In the fog until you reach this band' : s.state === 'locked' ? s.reasons.map(function (x) { return x.text; }).join(' ') : stateWord(s.state) + (s.state === 'bypassed' ? ' — ' + s.warpLabel : '');
+    var title = s.state === 'fogged' ? 'In the fog until you reach this band' : s.state === 'locked' ? s.reasons.map(function (x) { return x.text; }).join(' ') : stateWord(s.state) + (s.state === 'bypassed' ? ', ' + s.warpLabel : '');
     var boost = s.boost && s.boost.fraction > 0 && s.state !== 'done' ? '<span class="n-boost" style="width:' + Math.round(s.boost.fraction * 100) + '%"></span>' : '';
     return '<button type="button" class="node is-' + s.state + (s.dim ? ' is-dim' : '') + (picked === s.id ? ' is-picked' : '') + (extraCls || '') + '" id="skill-' + esc(s.id) + '" data-skill="' + esc(s.id) + '" title="' + esc(title) + '"' + (s.state === 'fogged' ? ' disabled aria-label="A fogged skill"' : '') + '>'
       + '<span class="n-icon">' + icon(s) + '</span>' + (s.state === 'fogged' ? '' : '<span class="n-name">' + esc(s.name) + '</span>') + right
       + (s.state === 'fogged' || s.dim ? '' : '<span class="n-chips">' + chips + '</span>') + boost + '</button>';
   }
-  /* Where a skill sits. Row = its tree, column = its rung — level minus
+  /* Where a skill sits. Row = its tree, column = its rung, level minus
      one, for every tree. The five bands are five columns each, which is the
      curriculum's own rhythm, so a curriculum node always lands under its own
      band header.
@@ -857,7 +857,7 @@
      handover` an Endgame skill at rung 3. Their rungs are still drawn at
      their own numbers, so those rows read left to right like any other, and
      the band header above them is the curriculum's ruler rather than a claim
-     about them — each card states its own band, and a node's state, not its
+     about them, each card states its own band, and a node's state, not its
      x, decides whether it is in the fog. The alternative, widening a band to
      fit the one tree with eight Foundation skills, put three empty columns
      through all thirty-one rows. */
@@ -977,7 +977,7 @@
 
     el('board-hint').textContent = treeFilter === 'all'
       ? trees.length + ' trees, ' + totalCols + ' rungs wide. Scroll sideways; pick a tree to walk one line.'
-      : 'One tree, rung by rung. Dashed lines are shortcuts from other trees — pick All trees to see them.';
+      : 'One tree, rung by rung. Dashed lines are shortcuts from other trees, pick All trees to see them.';
   }
 
   /* ---- The phone: the serpentine ------------------------------------------ */
@@ -1005,7 +1005,7 @@
     /* What the curriculum actually says about this skill. Three lines, in
        the order they answer a reader's questions: what it is, what it buys
        you, where it sits relative to everything else. Absent lines are
-       dropped rather than printed empty — this app's own forty skills carry
+       dropped rather than printed empty, this app's own forty skills carry
        none of them and say so by not saying anything. D-141. */
     var detail = [['What it is', s.what], ['What it does for you', s.does], ['Where it fits', s.fits]]
       .filter(function (d) { return d[1]; })
@@ -1076,7 +1076,7 @@
   Reference.load().then(function (tables) {
     TABLES = tables;
     /* The rung a skill sits on is a property of the catalogue, not of a
-       household, so it comes from the table rather than through the engine —
+       household, so it comes from the table rather than through the engine, 
        the engine's job is what state a skill is in, not where it is drawn. */
     ((tables.skillTree || {}).skills || []).forEach(function (s) { SKILL_LEVEL[s.id] = s.level || 0; });
     ((tables.skillTree || {}).trees || []).forEach(function (t) { TREE_LABEL[t.id] = t.label || t.id; });
@@ -1093,7 +1093,7 @@
     if (treeFilter !== 'all') el('pick-tree').value = treeFilter;
   }).catch(function (err) {
     var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error';
-    n.textContent = 'Couldn’t load the tables in data/ (' + err.message + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+    n.textContent = 'Couldn’t load the tables in data/ (' + err.message + '). Serve this over HTTP, python3 -m http.server, rather than opening the file directly.';
   });
 })();
 </script>
@@ -1161,7 +1161,7 @@
       } else if (s.kind === 'once') {
         acts = '<button type="button" class="slaf-btn" data-done="' + esc(s.id) + '">Done</button>';
       } else {
-        acts = '<button type="button" class="slaf-btn' + (line.due ? ' slaf-btn--primary' : '') + '" data-done="' + esc(s.id) + '">' + (line.due ? 'Due — done' : 'Done today') + '</button>';
+        acts = '<button type="button" class="slaf-btn' + (line.due ? ' slaf-btn--primary' : '') + '" data-done="' + esc(s.id) + '">' + (line.due ? 'Due, done' : 'Done today') + '</button>';
       }
       acts += '<button type="button" class="slaf-btn slaf-btn--quiet" data-drop="' + esc(s.id) + '" aria-label="Put ' + esc(s.name) + ' down">Drop</button>';
       var meta = [];
@@ -1210,7 +1210,7 @@
 
   /* Every control in these lists is a button. A tap leaves focus on the
      button it landed on, which the guard would read as "someone is in
-     here" and hold the rebuild — so after a tap has been acted on, the
+     here" and hold the rebuild, so after a tap has been acted on, the
      lists are rebuilt at once. There is no typed input to protect. */
 
   el('today-list').addEventListener('click', function (evt) {
@@ -1244,7 +1244,7 @@
     if (st === 'available') acts += '<button type="button" class="slaf-btn" data-equip="' + esc(s.id) + '">Take on</button>';
     if (st === 'available' && s.kind !== 'habit') acts += '<button type="button" class="slaf-btn slaf-btn--quiet" data-done="' + esc(s.id) + '">Already done</button>';
     if (st === 'trial' || st === 'practicing' || st === 'habit') acts += '<button type="button" class="slaf-btn slaf-btn--quiet" data-drop="' + esc(s.id) + '">Drop</button>';
-    if (st === 'done' && s.kind === 'periodic' && Skills.due(hh, s, today())) acts += '<button type="button" class="slaf-btn" data-done="' + esc(s.id) + '">Due — done</button>';
+    if (st === 'done' && s.kind === 'periodic' && Skills.due(hh, s, today())) acts += '<button type="button" class="slaf-btn" data-done="' + esc(s.id) + '">Due, done</button>';
     if (st === 'done' && stored && stored.verifiedBy === 'self') acts += '<button type="button" class="slaf-btn slaf-btn--quiet" data-drop="' + esc(s.id) + '">Not done</button>';
     var need = st === 'locked' ? Skills.unmetPrereqs(hh, s).map(function (id) { var p = Skills.byId(TABLES, id); return p ? p.name : id; }) : [];
     var meta = ['<span>' + valueLine(s, v) + '</span>',
@@ -1315,7 +1315,7 @@
       var rows = r.rows.map(function (row) {
         return '<span class="' + (row.active ? '' : 'off') + '">' + esc(row.name) + (row.active ? '' : ' · ' + esc(row.state)) + '</span>'
           + '<span class="mult">' + (row.multiplier !== 1 ? '×' + row.multiplier : '') + '</span>'
-          + '<span class="amt' + (row.active ? '' : ' off') + '">' + (row.active ? (row.valued ? fmt(row.valueCents) : 'not priced') : '—') + '</span>'
+          + '<span class="amt' + (row.active ? '' : ' off') + '">' + (row.active ? (row.valued ? fmt(row.valueCents) : 'not priced') : 'not yet') + '</span>'
           + '<span class="bar"><i style="width:' + Math.round(100 * row.valueCents / maxRow) + '%"></i></span>';
       }).join('');
       var capLine = r.capCents === 0
@@ -1375,7 +1375,7 @@
         hLines: [{ y: total, label: 'logged ' + Charts.shortMoney(total), color: Charts.COLORS.contributed }],
         x: { label: 'age', format: function (v) { return String(Math.round(v)); } }
       });
-      el('curve-ledger-p').textContent = fmt(total) + ' logged so far becomes ' + fmt(fv.value) + ' at ' + fv.endAge + ' — the wealth multiplier at ' + fv.age + ', a convention, not a forecast.';
+      el('curve-ledger-p').textContent = fmt(total) + ' logged so far becomes ' + fmt(fv.value) + ' at ' + fv.endAge + ', the wealth multiplier at ' + fv.age + ', a convention, not a forecast.';
     } else {
       el('curve-ledger').innerHTML = Charts.area({ series: [], empty: total > 0 ? fv.reason : 'Nothing in the ledger yet. Log a day and this draws itself.' });
       el('curve-ledger-p').textContent = '';
@@ -1523,7 +1523,7 @@
   Spine.onChange(render);
   Reference.load().then(function (tables) { TABLES = tables; render(); }).catch(function (err) {
     var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error';
-    n.textContent = 'Couldn’t load the tables in data/ (' + err.message + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+    n.textContent = 'Couldn’t load the tables in data/ (' + err.message + '). Serve this over HTTP, python3 -m http.server, rather than opening the file directly.';
   });
 })();
 </script>

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/variableincome.js — a low month, a high month, an average.
+   engines/variableincome.js, a low month, a high month, an average.
    DECISIONS.md D-099 (the Variable Income room).
    --------------------------------------------------------------------------
    The person with uneven income wants one number: the salary to pay
@@ -11,15 +11,15 @@
    figure the room shows:
 
      averageMonthCents   the source's own average when it is entered as
-                         "a month on average — it varies" (frequency
+                         "a month on average, it varies" (frequency
                          'variable' with a rateCents), else gross ÷ 12
      lowCents/highCents  the person's, on the income source
-     salaryCents         the low month — or spending, when the low month
+     salaryCents         the low month, or spending, when the low month
                          is below it (salaryIsSpending)
      gapCents            average − low, floored at zero
      bufferNeededCents   gap × bufferMonths
      freeCashCents       cash less the emergency cushion (3 months of
-                         spending) — what is actually free for the buffer
+                         spending), what is actually free for the buffer
      bufferHeldCents     min(freeCash, bufferNeeded)
      cushionCompetes     true when the cushion eats what the buffer wanted
      shortfallCents      spending − low when low < spending, else 0
@@ -28,7 +28,7 @@
 
    Nothing is re-derived: gross, spending and cash come from the schema
    roll-ups, the quarterly from engines/selfemployed.js. A missing input
-   makes the part that needs it null with a reason — never a zero.
+   makes the part that needs it null with a reason, never a zero.
    ========================================================================== */
 (function (root, factory) {
   var deps;
@@ -46,8 +46,8 @@
   'use strict';
 
   /* ---- The ledger's variable months (D-128, build 9) ---------------------------
-     Variable Income is a filtered view over the Income room's entries — the
-     kinds that vary: 1099 (se), side income and bonuses — with a rolling
+     Variable Income is a filtered view over the Income room's entries, the
+     kinds that vary: 1099 (se), side income and bonuses, with a rolling
      average over the last 3, 6 or 12 months. Nothing is added from here.
      fromEntries(h, opts) → { months: [{ id, label, cents }], rolling: [...],
      lowCents, highCents, averageCents, window, count } or null when no
@@ -113,15 +113,15 @@
     };
   }
 
-  /* Is this source the own-work one — entered as variable, or a 1099? */
+  /* Is this source the own-work one, entered as variable, or a 1099? */
   function isOwnWork(source) {
     return !!source && (source.frequency === 'variable' || source.type === '1099');
   }
 
   /**
-   * averageMonth(h, source) — the average month this room measures against.
+   * averageMonth(h, source), the average month this room measures against.
    * The source's own average wins when it was entered as one ("a month on
-   * average — it varies", D-094); otherwise the household's gross ÷ 12,
+   * average, it varies", D-094); otherwise the household's gross ÷ 12,
    * which for a self-employed household with one source is the same thing.
    */
   function averageMonth(h, source) {
@@ -134,14 +134,14 @@
   }
 
   /**
-   * taxSetAside(h, T, source) — a month's share of the Self-Employed room's
+   * taxSetAside(h, T, source), a month's share of the Self-Employed room's
    * quarterly estimate. The expected net profit is the own-work source's
    * annual figure when there is one, else the household gross; there is no
    * stored expense figure, so profit is read as gross and said so.
    */
   function taxSetAside(h, T, source) {
     var sit = Gate ? Gate.situationOf(h) : null;
-    if (sit !== 'selfEmployed' && sit !== 'mixed') return Money.incomplete('Not self-employed — no quarterly to set aside.', []);
+    if (sit !== 'selfEmployed' && sit !== 'mixed') return Money.incomplete('Not self-employed, no quarterly to set aside.', []);
     if (!SelfEmployed) return Money.incomplete('The self-employed engine is not loaded.', []);
     var profit = null, basis = null;
     if (isOwnWork(source) && Money.isEntered(source.grossAnnualIncomeCents)) { profit = source.grossAnnualIncomeCents; basis = 'own-work source'; }
@@ -156,7 +156,7 @@
   }
 
   /**
-   * plan(h, T, opts) — the whole room in one Result. Its value is the
+   * plan(h, T, opts), the whole room in one Result. Its value is the
    * salary to pay yourself, in cents.
    */
   function plan(household, T, opts) {
@@ -252,7 +252,7 @@
   }
 
   /**
-   * propose(h, T) — the guesses the boxes show before anything is typed:
+   * propose(h, T), the guesses the boxes show before anything is typed:
    * seven-tenths and thirteen-tenths of the average month, and the table's
    * usual buffer. Each is null when the average is not known.
    */

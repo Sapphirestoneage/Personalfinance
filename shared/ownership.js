@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/ownership.js — every shared number has exactly ONE owning room.
+   shared/ownership.js, every shared number has exactly ONE owning room.
    --------------------------------------------------------------------------
    The problem this fixes: the same figure was editable in several places.
    Monthly debt payments could be typed into the Financial Snapshot as a lump
@@ -10,7 +10,7 @@
 
    The rule from here on:
 
-       A shared field is EDITABLE in exactly one room — its owner.
+       A shared field is EDITABLE in exactly one room, its owner.
        Everywhere else it renders READ-ONLY, showing the current value and
        linking to the room that owns it.
 
@@ -18,7 +18,7 @@
    link always lands on the question that produces it. Nothing is entered
    twice, and there is never a stale second copy to reconcile.
 
-   Adding a shared field means adding it to FIELDS here — that is the single
+   Adding a shared field means adding it to FIELDS here. That is the single
    place the ownership map lives.
    ========================================================================== */
 (function (root, factory) {
@@ -76,7 +76,7 @@
 
   /* ---- The one write path for a Tier 0 asset ------------------------------
      Start Here and the Refresh page both set cash and investments. They are
-     the SAME record either way — this is the single function that writes
+     the SAME record either way. This is the single function that writes
      it, so there is no second copy to drift. DECISIONS.md D-057. */
   var CASH_ID = 'tier0_cash';
   var INVEST_ID = 'tier0_investments';
@@ -105,10 +105,10 @@
   }
 
   /* ---- The ownership map -------------------------------------------------
-     owner   — the room id that may EDIT this field
-     anchor  — the section in that room to land on
-     read    — pull the current value out of the household, as a Result
-     format  — how to show it once read                                    */
+     owner, the room id that may EDIT this field
+     anchor, the section in that room to land on
+     read, pull the current value out of the household, as a Result
+     format, how to show it once read                                    */
 
   function allocationRow(slice, label) {
     return {
@@ -165,10 +165,10 @@
       format: money,
       /* Between jobs with nothing coming in, income is not a question the
          app should keep asking; the runway is the number now. Anything
-         entered — a partner's pay, a benefit typed as income — still
+         entered, a partner's pay, a benefit typed as income, still
          counts, and then the row applies as before. D-092. */
       applies: function (h) { return !(Schema.isUnemployed(h) && !Money.isOk(Schema.grossAnnualIncomeCents(h))); },
-      notApplicableBecause: 'Between jobs — the runway is the number that matters now.'
+      notApplicableBecause: 'Between jobs. The runway is the number that matters now.'
     },
     /* Take-home a month, typed as such in the opening (D-312). The Ledger
        owns it: it is the one room facts are entered in, and the opening is
@@ -266,7 +266,7 @@
     },
 
     /* Where It Goes owns your retirement setup. These were asked by the FOO
-       ladder AND by Where It Goes, and kept by neither — the same question
+       ladder AND by Where It Goes, and kept by neither, the same question
        twice, forgotten twice. DECISIONS.md D-052. */
     contributionPercent: {
       label: 'Workplace contribution', owner: 'start', anchor: 'q-plan',
@@ -298,7 +298,7 @@
           : Money.incomplete('Not answered yet.', ['hsaContributedCents']);
       },
       format: money,
-      /* Only a question on a high-deductible plan — there is no HSA to
+      /* Only a question on a high-deductible plan. There is no HSA to
          contribute to otherwise, so it must not count as unfinished. */
       applies: function (h) { return !!((h.retirement || {}).onHdhp); },
       notApplicableBecause: 'No HSA without a high-deductible plan.'
@@ -705,7 +705,7 @@
       /* Until a month is closed there is nothing to read back, and no path
          should wait on it: the reading room says so itself. */
       applies: function (h) { return ((h.ledger || {}).months || []).length > 0; },
-      notApplicableBecause: 'No month closed yet — close one on the Budget.'
+      notApplicableBecause: 'No month closed yet, close one on the Budget.'
     },
     historyCompareTo: {
       label: 'Comparing against', owner: 'budget', anchor: 'hi-inputs',
@@ -776,7 +776,7 @@
       format: money
     },
     /* The Statement's own facts (D-069). Confidence-weighted net worth is
-       derived — it lives here so the dashboard and the map can read it as
+       derived, it lives here so the dashboard and the map can read it as
        one figure with one owner. */
     confidenceWeightedNetWorth: {
       label: 'Confidence-weighted net worth', owner: 'statement', anchor: 'net-worth',
@@ -793,7 +793,7 @@
       format: money
     },
     /* Owner moved from The Statement to the Timeline in D-152. The Statement
-       still SHOWS the roll-up — it is part of the picture — but a dated
+       still SHOWS the roll-up. It is part of the picture, but a dated
        period is edited in the room that draws it on a grid, and nowhere
        else. One owner per shared number (D-017). */
     futureIncome: {
@@ -819,9 +819,9 @@
 
     /* Expenses owns spending (D-192; Cash Flow before it). The estimate can be seeded during intake, but
        once a month is categorised the tracked figure is what everything uses
-       — and that is only editable where the categories live. */
+, and that is only editable where the categories live. */
     /* The SWAN Number lives in exactly one room, like every other shared
-       figure. It is a self-report, so nothing else may write it — and the
+       figure. It is a self-report, so nothing else may write it, and the
        Snapshot, which shows computed Emergency Fund Coverage beside it,
        links here rather than offering a second place to type it. */
     swanTarget: {
@@ -1085,7 +1085,7 @@
   /* ---- Links -------------------------------------------------------------
      Registry hrefs are written relative to map.html, which sits at the repo
      root. A page inside rooms/ therefore needs one level up. Working this
-     out here — rather than in each room — is what stopped the last round of
+     out here, rather than in each room, is what stopped the last round of
      path bugs when the Map moved.                                        */
 
   function isInRoomsDir() {
@@ -1128,7 +1128,7 @@
       href: linkTo(f.owner, f.anchor, currentRoomId),
       result: result,
       isSet: isSet,
-      display: isSet ? f.format(result.value) : Money.EM_DASH,
+      display: isSet ? f.format(result.value) : Money.NOT_YET,
       isOwnHere: currentRoomId === f.owner,
       /* Filled in by the one-pager as a guess and never typed over:
          shown as one everywhere, until it is. D-094. */
@@ -1140,7 +1140,7 @@
       confidence: confidenceOf(household, fieldId, f.owner),
       sourceId: (household && household.meta && household.meta.source && household.meta.source[fieldId]) || null,
       /* Some fields stop being questions once you have answered another one.
-         An employer match is not missing when there is no employer — it is
+         An employer match is not missing when there is no employer. It is
          not applicable, which is a different thing and must never be counted
          as an outstanding task. Fields with no applies() always apply.
          DECISIONS.md D-055. */
@@ -1189,7 +1189,7 @@
   }
 
   /**
-   * write(fieldId, value) — set a field through its owner's own write path.
+   * write(fieldId, value), set a field through its owner's own write path.
    * Only fields that declare one; everything else is written by its room.
    */
   /* ---- DAITE (D-171): ownership is checked against the registry ----------
@@ -1288,11 +1288,11 @@
   function write(fieldId, value, ctx) {
     var f = field(fieldId);
     if (!f || typeof f.write !== 'function') {
-      throw new Error('No shared write path for ' + fieldId + ' — write it in its owner room');
+      throw new Error('No shared write path for ' + fieldId + ', write it in its owner room');
     }
     var o = ownerOf(fieldId);
     if (o && o.agrees === false) {
-      throw new Error('The registry does not list ' + f.owner + ' as a writer of ' + o.path + ' — fix shared/registry.js before writing ' + fieldId);
+      throw new Error('The registry does not list ' + f.owner + ' as a writer of ' + o.path + ', fix shared/registry.js before writing ' + fieldId);
     }
     var out = f.write(value, ctx || null);
     /* One line of a repeat row got a value: its "not sure yet" is over (D-209).
@@ -1322,7 +1322,7 @@
   function naButton(fieldId, household, words) {
     var on = userSaysNa(household, fieldId);
     var w = words || {};
-    return '<button type="button" class="slaf-na" data-na-field="' + escapeHtml(fieldId) + '" aria-pressed="' + on + '" title="' + (on ? 'Marked not applicable — tap to say it applies after all' : 'Not applicable to me — drops it from every live figure') + '">'
+    return '<button type="button" class="slaf-na" data-na-field="' + escapeHtml(fieldId) + '" aria-pressed="' + on + '" title="' + (on ? 'Marked not applicable, tap to say it applies after all' : 'Not applicable to me, drops it from every live figure') + '">'
       + escapeHtml(on ? (w.on || 'Not applicable ✓') : (w.off || 'N/A')) + '</button>';
   }
 
@@ -1352,7 +1352,7 @@
     }
     return '<a class="slaf-owned slaf-owned--empty" href="' + d.href + '">'
       + '<span class="slaf-owned-label">' + escapeHtml(d.label) + '</span>'
-      + '<span class="slaf-owned-value">' + Money.EM_DASH + '</span>'
+      + '<span class="slaf-owned-value">' + Money.NOT_YET + '</span>'
       + '<span class="slaf-owned-from">add it in ' + escapeHtml(d.ownerTitle) + ' →</span>'
       + '</a>';
   }
@@ -1367,9 +1367,9 @@
       + '<span class="slaf-owned-from">' + escapeHtml(d.ownerTitle) + ' →</span></a>';
   }
 
-  /** Which fields a given room owns — used by the intake to know its scope. */
+  /** Which fields a given room owns, used by the intake to know its scope. */
   /**
-   * readings(h) — every owned field's current value, by id; null when not
+   * readings(h), every owned field's current value, by id; null when not
    * set. This is what the spine diffs on each save to stamp confirmedAt,
    * and what a snapshot freezes as `fields`. The spine cannot depend on
    * this file (it loads first), so this file hands the reader to it.

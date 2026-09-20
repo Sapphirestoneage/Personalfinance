@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/ledger.js — the tax engine for dated income, and the month it adds
+   engines/ledger.js, the tax engine for dated income, and the month it adds
    up to. DECISIONS.md D-128.
    --------------------------------------------------------------------------
    An income ENTRY (shared/schema.js createIncomeEntry) is a dated event with
@@ -7,7 +7,7 @@
    place an entry becomes a net figure:
 
      none   a gift, or anything unticked as taxable: net = gross.
-     w2     withholding: gross × the household's effective rate — the same
+     w2     withholding: gross × the household's effective rate, the same
             blended federal-plus-FICA lookup Tier 0 uses for take-home
             (data/effective_tax_rates_2026.json), read at the household's
             annual gross so a $2,000 paycheque is withheld at the rate the
@@ -18,7 +18,7 @@
             engines/selfemployed.js (the wage base already used by W-2 pay
             counted), scaled back to the entry; income tax on profit less
             half the SE tax at the effective rate less the employee FICA
-            share — the same arithmetic quarterlyEstimated() does, so there
+            share, the same arithmetic quarterlyEstimated() does, so there
             is one of it.
 
    Three entries with the same gross come back three different ways, and
@@ -78,7 +78,7 @@
 
   /* ---- Costs ----------------------------------------------------------------
      The costs of producing an entry: its own sub-table, plus what was logged
-     against it in the Expenses section — deductible ones only count toward
+     against it in the Expenses section, deductible ones only count toward
      the tax base; all of them count toward "what it cost". */
   function costs(entry, household) {
     var own = ((entry && entry.costs) || []).filter(function (c) { return Money.isEntered(c.amountCents); });
@@ -124,12 +124,12 @@
   }
 
   /**
-   * netOf(entry, household, tables) — the entry netted by its method.
+   * netOf(entry, household, tables), the entry netted by its method.
    *   value              netCents: gross − costs − tax
    *   grossCents, costsCents (deductible), allCostsCents, taxableCents,
    *   taxCents, takeHomeCents (gross − tax), effectiveRate (tax ÷ gross),
    *   withheldCents (tax taken before the money arrived: w2, or typed
-   *                  off the stub on w2 and unemployment — D-194),
+   *                  off the stub on w2 and unemployment, D-194),
    *   owedCents (tax still to pay: se, unemployment),
    *   cashReceivedCents (what actually landed: gross − withheld),
    *   method, pieces { seTaxCents, incomeTaxCents, rate, basis }
@@ -149,7 +149,7 @@
     var allCosts = Schema.costsAllowed(entry.kind) ? c.allCents : 0;
     var method = entry.taxable === false ? 'none' : entry.taxMethod;
     /* Typed withholding (D-194): what the stub says came off. For W-2 pay
-       it IS the tax — the blended rate was only ever standing in for the
+       it IS the tax, the blended rate was only ever standing in for the
        stub. For unemployment it is what was held back at the person's
        request; the tax stays the estimate and the rest is owed. */
     var typed = Money.isEntered(entry.withheldCents) && (method === 'w2' || method === 'unemployment') ? entry.withheldCents : null;
@@ -216,7 +216,7 @@
   function parseYm(s) { var m = /^(\d{4})-(\d{2})$/.exec(s || ''); return m ? { y: +m[1], m: +m[2] - 1 } : null; }
 
   /**
-   * occurrences(entry, 'YYYY-MM') — the dates the entry lands in that
+   * occurrences(entry, 'YYYY-MM'), the dates the entry lands in that
    * month. A one-time entry: its date, if in the month. Weekly and
    * fortnightly: every 7 / 14 days from the received-on day, forward and
    * back, so a fortnightly cheque lands two or three times. Monthly: the
@@ -277,7 +277,7 @@
   }
 
   /**
-   * month(household, tables, 'YYYY-MM') — every active entry's landings in
+   * month(household, tables, 'YYYY-MM'), every active entry's landings in
    * the month, each netted: { grossCents, netCents, taxCents, withheldCents,
    * owedCents, costsCents, rows: [{ entry, occurrences, grossCents,
    * netCents, taxCents, net }] }.
@@ -301,7 +301,7 @@
       var g = occ.reduce(function (t, o) { return t + o.cents; }, 0);
       if (!Money.isOk(one)) { incomplete.push({ id: e.id, label: e.label, reason: one.reason }); rows.push({ entry: e, occurrences: occ, grossCents: g, netCents: null, taxCents: null, costsCents: null, reason: one.reason }); gross += g; return; }
       /* The tax scales with what landed: netOf is one landing of
-         amountCents, so the month's share is g ÷ amountCents — the count
+         amountCents, so the month's share is g ÷ amountCents, the count
          of landings when they are dated, the average's share when the
          entry is undated and lands as its monthly average (D-198; before
          this the average was the gross and one landing was the tax, so a
@@ -316,7 +316,7 @@
       gross += g; net += n; tax += t; costsTotal += one.allCostsCents; takeHome += th;
       withheld += w; owed += o;
     });
-    /* takeHomeCents is gross less tax — what the budget's Income bucket
+    /* takeHomeCents is gross less tax, what the budget's Income bucket
        counts; the costs of earning it are the expense side's business. */
     /* The tax split the way it is felt (D-195): taken off before it
        arrived, and owed at tax time. They sum to taxCents. */
@@ -324,7 +324,7 @@
       potentialRows: potentialRows, potentialCents: potential });
   }
 
-  /* ---- The year, by method — what the Tax room reads ------------------------
+  /* ---- The year, by method, what the Tax room reads ------------------------
      Recurring entries annualised and split the way Tax.estimate wants them:
      wages (w2), self-employment profit net of costs (se), unemployment
      (ordinary income with no payroll tax), and what is not taxed. One-time

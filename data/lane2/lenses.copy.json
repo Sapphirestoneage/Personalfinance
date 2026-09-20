@@ -206,7 +206,7 @@
       "id": "threefund",
       "domain": "investments",
       "name": "Three-fund check",
-      "plain": "Stocks, world stocks, bonds — and roughly how much bond",
+      "plain": "Stocks, world stocks, bonds, and roughly how much bond",
       "forWhom": "Anyone with a target mix in Where It Goes.",
       "notForWhom": "Money you need in under five years: it is not in stocks or bonds at all.",
       "source": {
@@ -504,7 +504,7 @@
       "id": "fourbuckets",
       "domain": "taxes",
       "name": "The four buckets",
-      "plain": "Pre-tax, Roth, taxable, HSA — which is empty",
+      "plain": "Pre-tax, Roth, taxable, HSA, which is empty",
       "forWhom": "Anyone whose accounts say how they are taxed.",
       "notForWhom": "No HSA eligibility: three buckets is the full set for you.",
       "source": {

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/guide.js — the Walk-Through: a finishable path through the suite.
+   shared/guide.js, the Walk-Through: a finishable path through the suite.
    --------------------------------------------------------------------------
    The suite has fifty-nine rooms. That is a library, not a plan, and a
    library is exactly what someone opening this for the first time cannot
@@ -10,7 +10,7 @@
      progress(h, T)    done / total across the whole walk
      nextStep(h, T)    the first step still open, or null when there are none
      stepOf(h, T, id)  where a room sits on the walk, if it is on it at all
-     isFinished(h, T)  every step dealt with — done or set aside
+     isFinished(h, T)  every step dealt with, done or set aside
 
    THREE RULES THIS FILE KEEPS
 
@@ -20,7 +20,7 @@
       are different facts, and only the second one is progress. So the state
       comes from meta.walk (D-149) and nowhere else.
 
-   2. It never invents a step. Membership is data — data/walk_stages.json —
+   2. It never invents a step. Membership is data, data/walk_stages.json, 
       and every step is filtered through Registry.applies, which is the same
       gate every other part of the app uses (D-142). A room that is not for
       your situation is not a step you skipped; it is not a step.
@@ -69,7 +69,7 @@
     };
   }
 
-  /** 'done' | 'skipped' | 'open' — for any room, on the walk or not. */
+  /** 'done' | 'skipped' | 'open', for any room, on the walk or not. */
   function stateOf(household, roomId) {
     var w = ledger(household);
     if (w.done[roomId]) return 'done';
@@ -80,7 +80,7 @@
   /**
    * The walk for this household: the stages in order, each holding only the
    * steps whose rooms apply. A stage every one of whose rooms is filtered
-   * out is dropped entirely rather than shown empty — an empty set with a
+   * out is dropped entirely rather than shown empty, an empty set with a
    * tick beside it reads as an achievement, and it is not one.
    */
   function stages(household, tables) {
@@ -153,7 +153,7 @@
       total: list.length,
       /* Dealt-with over total, so a set-aside step moves the bar. The bar
          measures how much of the walk is behind you, not how much of the
-         app you have filled in — those are different questions and the
+         app you have filled in. Those are different questions and the
          second one already has its own answer in shared/progress.js. */
       pct: list.length ? Math.round(((done + skipped) / list.length) * 100) : 0
     };
@@ -171,7 +171,7 @@
   /**
    * Where a room sits on the walk: { step, total, stage, state, prev, next }
    * or null if the room is not a step for this household. `next` is the
-   * next step in ORDER, not the next open one — this is the "and then"
+   * next step in ORDER, not the next open one. This is the "and then"
    * of the walk, and skipping ahead past something you left open would
    * quietly lose it.
    */
@@ -179,7 +179,7 @@
     /* One call to stages(), and the flat list derived from THAT array.
        Calling stages() and steps() separately builds the objects twice and
        the step in one is not the step in the other, so looking a step up by
-       identity finds nothing — which is exactly the bug this shape had the
+       identity finds nothing, which is exactly the bug this shape had the
        first time it ran. */
     var all = stages(household, tables);
     var list = [];

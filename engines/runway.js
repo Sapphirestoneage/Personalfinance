@@ -1,20 +1,20 @@
 /* ==========================================================================
-   engines/runway.js — how long the money lasts when the income stops.
+   engines/runway.js, how long the money lasts when the income stops.
    --------------------------------------------------------------------------
    Three tools in SPEC.md §13 Tier 2 are the same arithmetic:
 
-     • "Leave-Job calc — runway/risk of quitting: severance, COBRA,
+     • "Leave-Job calc, runway/risk of quitting: severance, COBRA,
         unemployment eligibility, emergency fund drawdown timeline. Shares
         math with Unemployment calc and Emergency Fund Coverage."
-     • "Unemployment calc — benefit amount/duration by state; runway until
+     • "Unemployment calc, benefit amount/duration by state; runway until
         benefits deplete."
-     • "Start-Business calc — runway/breakeven for launching a business.
+     • "Start-Business calc, runway/breakeven for launching a business.
         Needs a revenue-ramp curve (linear vs. hockey-stick) as a togglable
         model."
 
    One pile of money, some outflow every month, some inflow for a while, and
    the month it reaches zero. §8 forbids writing that three times, and the
-   spec says so itself — so this is one engine with three presets, the same
+   spec says so itself, so this is one engine with three presets, the same
    shape as engines/credential.js (D-039).
 
    WHAT THIS DOES NOT KNOW, and says so instead of guessing:
@@ -33,7 +33,7 @@
 
    WHAT IT DELIBERATELY LEAVES OUT: interest on the cushion. Over the months
    a runway usually covers it is small, and leaving it out errs short. For a
-   safety calculation that is the right direction to be wrong in — stated
+   safety calculation that is the right direction to be wrong in, stated
    here and on the page rather than quietly assumed.
 
    Money is integer cents. Months are whole months.
@@ -70,7 +70,7 @@
       benefit: false, ramp: false,
       cushionLabel: 'What you can actually spend',
       note: 'Resigning normally disqualifies you from unemployment. If yours is a '
-        + 'constructive dismissal or a negotiated exit, check — it can change the answer '
+        + 'constructive dismissal or a negotiated exit, check. It can change the answer '
         + 'by months.'
     },
     laid_off: {
@@ -78,7 +78,7 @@
       blurb: 'The job ends without you choosing it. Severance, then benefits, then nothing.',
       benefit: true, ramp: false,
       cushionLabel: 'What you can actually spend',
-      note: 'The benefit figure is yours to look up — it is set by your state, from your '
+      note: 'The benefit figure is yours to look up. It is set by your state, from your '
         + 'own earnings history, with a weekly cap. This app will not guess at it.'
     },
     business: {
@@ -87,7 +87,7 @@
       benefit: false, ramp: true,
       cushionLabel: 'What you can put behind it',
       note: 'The ramp is a shape you choose, not a forecast. Nothing here knows what your '
-        + 'revenue will do — pick the shape that matches how you think it goes and read '
+        + 'revenue will do, pick the shape that matches how you think it goes and read '
         + 'the answer as "if it goes like this".'
     }
   };
@@ -104,7 +104,7 @@
   /**
    * Revenue in month `m`, as a share of the target.
    *   linear: m / rampMonths, capped at 1.
-   *   hockey: that same fraction cubed — a third of the way through the
+   *   hockey: that same fraction cubed, a third of the way through the
    *           ramp you are at 4% of target, not 33%. This is a SHAPE the
    *           user picks, not a model of anything; the cube is chosen
    *           because it is the plainest curve that is flat early and steep
@@ -120,12 +120,12 @@
   function num(v, fallback) { return Money.isEntered(v) ? v : fallback; }
 
   /**
-   * project(household, tables, opts) — the whole drawdown, month by month.
+   * project(household, tables, opts), the whole drawdown, month by month.
    *
    * The Result's value is the runway in whole months: the number of months
    * you finish with the balance still at or above zero. When the money does
    * not run out inside the horizon, `sustainable` is true and the value is
-   * the horizon — read as "at least this", never as a precise figure.
+   * the horizon, read as "at least this", never as a precise figure.
    *
    * opts, all optional except where the household cannot supply them:
    *   preset                   'quit' | 'laid_off' | 'business'
@@ -252,7 +252,7 @@
       benefitMonthlyCents: benefitMonthly,
       benefitMonths: benefitMonths,
       /* The month the benefit stops, which is where a runway usually falls
-         off a cliff — worth naming rather than leaving in the chart. */
+         off a cliff, worth naming rather than leaving in the chart. */
       benefitEndsAfterMonth: benefitMonths > 0 ? benefitMonths : null,
       rampShape: shape,
       rampTargetMonthlyCents: rampTarget,
@@ -271,7 +271,7 @@
    * stays as it is. Two answers, because there are two levers and people
    * have different amounts of each.
    *
-   * Returns nulls for a lever that cannot get there — a target you cannot
+   * Returns nulls for a lever that cannot get there, a target you cannot
    * reach by cutting alone is a real answer, and printing a cut bigger than
    * the whole budget would not be.
    */
@@ -288,7 +288,7 @@
 
     /* Search rather than solve. The month-by-month path has a benefit
        cliff and a ramp in it, so there is no closed form that stays true
-       when either changes — and a bisection over an integer month count is
+       when either changes, and a bisection over an integer month count is
        cheap. Both searches are monotone: more cushion never shortens the
        runway, and neither does a bigger cut. */
     function reaches(patch) {

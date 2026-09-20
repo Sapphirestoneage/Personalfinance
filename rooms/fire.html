@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11, §12.2. DECISIONS.md D-217, D-228 (the reframe),
+  ROOM SPEC, SPEC.md §11, §12.2. DECISIONS.md D-217, D-228 (the reframe),
   D-285 (the merge). Registry: fire.
 
   FIVE READINGS OF ONE NUMBER.
@@ -34,14 +34,14 @@
   The Back Half, with the naive 25x beside it and one sentence on the gap.
   Today every reading here is built on spending x 25 through
   engines/tier0.js fireNumber. Changing that waits on the owner answer
-  recorded in D-228 and D-284 — whether the income floor is means-tested —
+  recorded in D-228 and D-284, whether the income floor is means-tested, 
   because it moves the number every other room shows.
 
   1. READS   what is invested, the month you spend, and the assumptions.
   2. WRITES  retireAge and coastAge, as before. The other four readings
              write nothing: the lab says so on the page, and means it.
   3. CALLS   engines/tier0.js, engines/fire.js, engines/coast.js and
-             engines/race.js — one each, unchanged. engines/journey.js draws
+             engines/race.js, one each, unchanged. engines/journey.js draws
              the map (D-235) and shared/journeymap.js renders it, here and
              on the dashboard alike.
   4. EMPTY   no pot is not a zero pot, and no spending is not a zero
@@ -164,7 +164,7 @@
   
   #view-the-lab .big-sub { color: var(--color-text-muted); font-size: var(--text-sm); margin-top: var(--space-2); }
 
-  /* Every figure on one rail with its meaning beside it — the pattern from
+  /* Every figure on one rail with its meaning beside it, the pattern from
      Debt Payoff (D-133), which is where numbers read best. */
   
   #view-the-lab .facts { display: grid; grid-template-columns: minmax(0, auto) 10ch 1fr; margin-top: var(--space-3); font-size: var(--text-sm); }
@@ -238,7 +238,7 @@
 
   <!-- ===== THE NUMBER (was rooms/fire.html) ===== -->
   <section id="view-the-number">
-  <p class="slaf-lede">What you'd need before work became optional — and the six different answers to that question.</p>
+  <p class="slaf-lede">What you'd need before work became optional, and the six different answers to that question.</p>
   <p class="slaf-horizon" id="horizon-line"></p>
 
   <section class="slaf-card" id="reading">
@@ -264,7 +264,7 @@
 
   <section class="slaf-card" id="out-target">
     <span class="slaf-eyebrow" id="target-label">Your number</span>
-    <div class="slaf-figure" data-figure>—</div>
+    <div class="slaf-figure" data-figure>not yet</div>
     <p class="slaf-reason" data-reason></p>
     <div id="nw-basis" hidden style="margin-top:var(--space-2)"></div>
     <div class="slaf-bar" style="margin-top:var(--space-3)"><span id="progress-bar" style="width:0"></span></div>
@@ -278,7 +278,7 @@
   <section class="slaf-card" id="variants">
     <span class="slaf-eyebrow">Six ways to ask it</span>
     <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
-      Same formula throughout — expenses divided by your withdrawal rate. Only
+      Same formula throughout, expenses divided by your withdrawal rate. Only
       the assumption about expenses changes.
     </p>
     <div class="variants" id="variant-list"></div>
@@ -306,7 +306,7 @@
   <section class="slaf-card" id="params">
     <span class="slaf-eyebrow">Try different assumptions</span>
     <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
-      These change what you see here and nothing else — your stored settings
+      These change what you see here and nothing else, your stored settings
       are left alone.
     </p>
     <div class="params">
@@ -329,7 +329,7 @@
 
   <!-- ===== ENOUGH (was rooms/enough.html) ===== -->
   <section id="view-enough" hidden>
-  <p class="slaf-lede">The monthly figure you would live on by choice — typed, or proposed from the joy curve — and the second FI number it makes, against the first.</p>
+  <p class="slaf-lede">The monthly figure you would live on by choice, typed, or proposed from the joy curve, and the second FI number it makes, against the first.</p>
   <div class="room-standalone" id="en-room-standalone" hidden></div>
 
   <section class="slaf-card" id="en-number">
@@ -347,7 +347,7 @@
 
   <section class="slaf-card" id="en-inputs" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">What enough is</span>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">The month you would choose, not the one you have. Leave it blank and the room proposes one — from your joy curve once a month is categorised and rated, and as 85% of spending until then — but a proposal is never yours until you type it.</p>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">The month you would choose, not the one you have. Leave it blank and the room proposes one, from your joy curve once a month is categorised and rated, and as 85% of spending until then, but a proposal is never yours until you type it.</p>
     <div id="en-room-inputs"></div>
   </section>
 
@@ -410,14 +410,14 @@
 
   <!-- ===== THE LAB (was rooms/fire-lab.html) ===== -->
   <section id="view-the-lab" hidden>
-  <p class="slaf-lede">Every FIRE calculation on one screen, drawn rather than listed. Nothing here is stored — move the withdrawal rate and watch all of it move.</p>
+  <p class="slaf-lede">Every FIRE calculation on one screen, drawn rather than listed. Nothing here is stored, move the withdrawal rate and watch all of it move.</p>
   <p class="slaf-horizon" id="lab-horizon-line"></p>
 
   <section class="slaf-card" id="number">
     <span class="slaf-eyebrow">The number, and how far along you are</span>
     <div class="headline" style="margin-top:var(--space-3)">
       <div>
-        <div class="big" id="fire-figure">—</div>
+        <div class="big" id="fire-figure">not yet</div>
         <p class="big-sub" id="fire-say"></p>
       </div>
       <div class="headline-ring" id="progress-ring"></div>
@@ -432,7 +432,7 @@
     <h2 style="margin:var(--space-2) 0 var(--space-3)">Withdrawal rate</h2>
     <div class="swr">
       <input type="range" id="swr-range" min="250" max="500" step="10" aria-label="Safe withdrawal rate"/>
-      <span class="swr-read" id="swr-read">—</span>
+      <span class="swr-read" id="swr-read">not yet</span>
     </div>
     <p class="slaf-hint" id="swr-say" style="margin-top:var(--space-2)"></p>
   </section>
@@ -470,7 +470,7 @@
     <h2 style="margin:var(--space-2) 0 0">The number at every rate and every lifestyle</h2>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">Down the side, the withdrawal rate. Across the top, a year of spending as a share of today's. Your square is lit.</p>
     <div class="grid-wrap" id="grid"></div>
-    <p class="grid-key">A lower withdrawal rate is a more cautious plan and a bigger number. There is no correct square — there is the one you can live with.</p>
+    <p class="grid-key">A lower withdrawal rate is a more cautious plan and a bigger number. There is no correct square. There is the one you can live with.</p>
   </section>
   </section>
 
@@ -526,7 +526,7 @@
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
    so its hat is ABSENT, not greyed, when the branch is not there (D-271).
-   The hash still reaches it — an old link must land somewhere honest — and
+   The hash still reaches it, an old link must land somewhere honest, and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
   'use strict';
@@ -548,8 +548,8 @@
     var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
     /* The default reading is the last row and matches everything, so there
        is always one. When the hash asks for a reading the gate has taken
-       away, fall back to the DEFAULT — the room's plainest reading, and the
-       one the person would have got with no hash at all — not to whichever
+       away, fall back to the DEFAULT, the room's plainest reading, and the
+       one the person would have got with no hash at all, not to whichever
        gated reading happens to sit first in this list. */
     var fallback = VIEWS[VIEWS.length - 1];
     var on = open(asked) ? asked
@@ -669,7 +669,7 @@
         var btn = list.querySelector('[data-variant="' + v.id + '"]');
         btn.setAttribute('aria-pressed', v.id === variantId);
         var fig = btn.querySelector('.variant-figure');
-        fig.textContent = ok ? Money.formatCents(fut(t.value, yrs(Money.isOk(prog) ? prog.yearsAway : null))) : Money.EM_DASH;
+        fig.textContent = ok ? Money.formatCents(fut(t.value, yrs(Money.isOk(prog) ? prog.yearsAway : null))) : Money.NOT_YET;
         fig.classList.toggle('is-incomplete', !ok);
         btn.querySelector('.variant-eta').textContent = variantEta(t, prog);
       });
@@ -683,7 +683,7 @@
         + 'aria-pressed="' + (v.id === variantId) + '">'
         + '<span class="variant-head"><span class="variant-name">' + v.label + '</span>'
         + '<span class="variant-figure' + (ok ? '' : ' is-incomplete') + '">'
-        + (ok ? Money.formatCents(fut(t.value, yrs(Money.isOk(prog) ? prog.yearsAway : null))) : Money.EM_DASH) + '</span></span>'
+        + (ok ? Money.formatCents(fut(t.value, yrs(Money.isOk(prog) ? prog.yearsAway : null))) : Money.NOT_YET) + '</span></span>'
         + '<p class="variant-blurb">' + v.blurb + '</p>'
         + '<p class="variant-eta">' + variantEta(t, prog) + '</p>'
         + '</button>';
@@ -723,7 +723,7 @@
     var prog = Fire.progressToward(h, TABLES, optsFor(variantId, h));
     var ok = Money.isOk(target);
 
-    figure.textContent = ok ? Money.formatCents(fut(target.value, yrs(Money.isOk(prog) ? prog.yearsAway : null))) : Money.EM_DASH;
+    figure.textContent = ok ? Money.formatCents(fut(target.value, yrs(Money.isOk(prog) ? prog.yearsAway : null))) : Money.NOT_YET;
     figure.classList.toggle('slaf-figure--incomplete', !ok);
     reason.textContent = ok ? '' : (target.reason || '');
     reason.hidden = ok;
@@ -752,7 +752,7 @@
       rows.push(['You have', Money.formatCents(prog.investmentsCents)]);
     }
     /* Under coast, "years away" is years to the coast number, not to
-       stopping — so the comparison is only made for the other five. */
+       stopping, so the comparison is only made for the other five. */
     renderPath(h, target, prog);
     var against = target.variant.mode === 'coast' ? null : againstTarget(h, prog);
     if (against) rows.push(['You want to stop at', against]);
@@ -761,7 +761,7 @@
       + '<p class="slaf-reason">' + (Money.isOk(prog) ? yearsLabel(prog.yearsAway) : prog.reason || '') + '</p>'
       + bandsLine(h)
       + (target.variant.mode === 'coast'
-          ? '<p class="slaf-reason">Coast doesn’t mean stop working — it means stop <em>saving</em>. You still cover your own costs until then.</p>'
+          ? '<p class="slaf-reason">Coast doesn’t mean stop working. It means stop <em>saving</em>. You still cover your own costs until then.</p>'
           : '')
       + (target.expenseSource === 'estimated'
           ? '<p class="slaf-reason">Based on your estimated spending. Split a month by category in Expenses and this sharpens up.</p>'
@@ -770,7 +770,7 @@
 
   /* The path: what is invested, growing at the expected return with this
      year's savings added each month until you stop, then your expenses drawn
-     out — against what you put in and the number to cross. The loop is
+     out, against what you put in and the number to cross. The loop is
      Projection.pathCents; nothing is computed here. */
   function renderPath(h, target, prog) {
     var host = el('out-path'), why = el('path-why');
@@ -821,7 +821,7 @@
       + ' A single fixed return, so a smooth curve; real years are not smooth.';
   }
 
-  /* "Stop at 55 — at this pace you get there at 51, 4 years early." Needs
+  /* "Stop at 55, at this pace you get there at 51, 4 years early." Needs
      the stored target, the age, and a finished progress Result. */
   function againstTarget(h, prog) {
     var want = h.targets && h.targets.retireAge;
@@ -835,7 +835,7 @@
          : ', ' + (-diff) + ' year' + (diff === -1 ? '' : 's') + ' late');
   }
 
-  /* LIVE-FORM: built once — the two target boxes are static markup; only
+  /* LIVE-FORM: built once, the two target boxes are static markup; only
      their .value is written, and never while one of them has focus. */
   function paintTargets(h) {
     var t = h.targets || {};
@@ -930,7 +930,7 @@
     notice.hidden = false;
     notice.className = 'notice is-error';
     notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message
-      + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+      + '). Serve this over HTTP, python3 -m http.server, rather than opening the file directly.';
   });
 })();
 </script>
@@ -958,7 +958,7 @@
   function years1(v) { return String(Math.round(v * 10) / 10); }
   function inYears(r) {
     if (!Money.isOk(r)) return '';
-    return r.alreadyThere ? ' — already there' : ' in ' + years1(r.value) + ' years';
+    return r.alreadyThere ? ', already there' : ' in ' + years1(r.value) + ' years';
   }
   function joyLink() { return '<a href="' + Ownership.linkTo('values', 'rate') + '">the joy curve →</a>'; }
 
@@ -977,19 +977,19 @@
       var parts = [];
       if (two.proposed) {
         parts.push(two.source === 'curve'
-          ? 'proposed from your joy curve — type your own to keep it'
-          : 'a stand-in: 85% of spending, a convention — type your own');
+          ? 'proposed from your joy curve, type your own to keep it'
+          : 'a stand-in: 85% of spending, a convention, type your own');
       }
       parts.push('spending ' + fmt(two.spendMonthlyCents));
       parts.push('FI on enough <strong>' + fmt(two.enoughFiCents) + '</strong>' + inYears(two.yearsToEnough));
       parts.push('FI on spending ' + fmt(two.spendFiCents) + inYears(two.yearsToSpend));
       if (two.enoughAboveSpending) {
-        parts.push('<strong>enough above spending</strong>: the gap runs the other way — ' + fmt(-two.gapCents) + ' more'
+        parts.push('<strong>enough above spending</strong>: the gap runs the other way, ' + fmt(-two.gapCents) + ' more'
           + (two.yearsGap !== null ? ' and ' + years1(-two.yearsGap) + ' years longer' : ''));
       } else if (two.gapCents === 0) {
         parts.push('enough equals spending: one number, not two');
       } else {
-        parts.push('the gap: <strong>' + fmt(two.gapCents) + '</strong>' + (two.yearsGap !== null ? ', ' + years1(two.yearsGap) + ' years' : '') + ' — the cost of not knowing your enough');
+        parts.push('the gap: <strong>' + fmt(two.gapCents) + '</strong>' + (two.yearsGap !== null ? ', ' + years1(two.yearsGap) + ' years' : '') + ', the cost of not knowing your enough');
       }
       if (two.yearsReason) parts.push(two.yearsReason);
       if (two.source !== 'curve') {
@@ -1026,12 +1026,12 @@
 
     inputs: [
       { ctl: 'monthlyCents', label: 'Enough, a month', kind: 'money', placeholder: 'e.g. 2,600',
-        hint: 'What you would live on by choice, a month — the life you would pick, priced.',
+        hint: 'What you would live on by choice, a month, the life you would pick, priced.',
         read: function (h) { return readEnough(h).monthlyCents; },
         write: function (v) { writeEnough(v === null || v < 0 ? null : v, 'entered'); },
         propose: function (h, T) { var p = Enough.propose(h, T); return Money.isOk(p) ? { value: p.value, source: p.source } : null; } },
       { ctl: 'source', label: 'Where it came from', kind: 'choice', options: [['curve', 'From the joy curve'], ['entered', 'Typed']],
-        hint: 'Typed is whatever is in the box. From the joy curve writes the curve’s figure — spending less the low-joy lines — once a month is categorised and rated; until then it writes nothing.',
+        hint: 'Typed is whatever is in the box. From the joy curve writes the curve’s figure, spending less the low-joy lines, once a month is categorised and rated; until then it writes nothing.',
         read: function (h) { return readEnough(h).source; },
         write: function (v) {
           if (v === 'curve') {
@@ -1060,11 +1060,11 @@
       var c = Enough.fromCurve(h, T);
       var Q = Fulfillment.QUADRANTS;
       var rows = [
-        { label: 'Withdrawal rate', value: Money.formatRate(a.swrRate, { decimals: 1 }), source: 'assumptions.swrRate — both FI numbers are a year of the month ÷ this rate, through Tier0.fireNumber (default 4%, a convention)' },
-        { label: 'Real return, for the years', value: Money.formatRate(a.returnReal, { decimals: 1 }), source: 'assumptions.returnReal (D-094) — the lens’s rate, so the years here and the months bought or pushed there agree' },
-        { label: 'This year’s savings', value: Money.isOk(two) && two.contribution ? fmt(two.contribution.annualSavingsCents) + ' a year' : 'not known yet', source: Money.isOk(two) && two.contribution ? 'Tier0.savingsRate, ' + (two.contribution.basis === 'includingMatch' ? 'with the employer match' : 'without a match') + ' — the same basis as the lens and the dashboard' : (Money.isOk(two) && two.yearsReason) || 'income, expenses and filing status' },
+        { label: 'Withdrawal rate', value: Money.formatRate(a.swrRate, { decimals: 1 }), source: 'assumptions.swrRate, both FI numbers are a year of the month ÷ this rate, through Tier0.fireNumber (default 4%, a convention)' },
+        { label: 'Real return, for the years', value: Money.formatRate(a.returnReal, { decimals: 1 }), source: 'assumptions.returnReal (D-094), the lens’s rate, so the years here and the months bought or pushed there agree' },
+        { label: 'This year’s savings', value: Money.isOk(two) && two.contribution ? fmt(two.contribution.annualSavingsCents) + ' a year' : 'not known yet', source: Money.isOk(two) && two.contribution ? 'Tier0.savingsRate, ' + (two.contribution.basis === 'includingMatch' ? 'with the employer match' : 'without a match') + ', the same basis as the lens and the dashboard' : (Money.isOk(two) && two.yearsReason) || 'income, expenses and filing status' },
         { label: 'The lines the curve drops', value: Q.expensive.label + ' and ' + Q.small_meh.label, source: 'the two low-joy quadrants of the joy curve (engines/fulfillment.js: below the 5.5 joy midpoint); never a line marked essential in data/expense_categories.json' },
-        { label: 'The stand-in', value: Money.formatRate(Enough.CONVENTION_SHARE, { decimals: 0 }) + ' of spending', source: 'most people’s enough sits under their spending — a convention, shown until the curve can speak and never written' }
+        { label: 'The stand-in', value: Money.formatRate(Enough.CONVENTION_SHARE, { decimals: 0 }) + ' of spending', source: 'most people’s enough sits under their spending, a convention, shown until the curve can speak and never written' }
       ];
       if (Money.isOk(c)) rows.push({ label: 'The curve’s thresholds', value: 'spend line ' + fmt(c.spendLineCents) + ', joy line ' + c.joyLine, source: 'the median monthly spend across the rated lines and the midpoint of the 1-10 scale; ' + c.ratedCount + ' rated, ' + fmt(c.droppedMonthlyCents) + ' a month dropped' });
       return rows;
@@ -1073,7 +1073,7 @@
     why: function (h, T, situation) {
       var bj = Registry.byId('between-jobs');
       return {
-        employed: 'Employed, the FI number everyone quotes is spending × 25. Enough makes a second one, and the years between them are the years a life you did not choose would cost — the number that decides how long the job has to last.',
+        employed: 'Employed, the FI number everyone quotes is spending × 25. Enough makes a second one, and the years between them are the years a life you did not choose would cost, the number that decides how long the job has to last.',
         selfEmployed: 'Self-employed, income moves and the FI number on spending moves with it; enough does not. It is the steadiest denominator you have, and the one a lean quarter is measured against.',
         mixed: 'With a job and your own work, the question is which one you could put down, and when. Enough is the month that decides it: the smaller the number, the sooner the choice is yours.',
         student: 'At a student’s stage enough is the number that survives graduation: the month you would live on by choice, set before a salary arrives to inflate it. Decide it now and the denominator is yours before the numerator is.',
@@ -1206,7 +1206,7 @@
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[c]; }); }
   function opts() { return swrPreview === null ? {} : { localOverrides: { swrRate: swrPreview } }; }
 
-  /* A figure, what it is worth, and what it means — the three-column rail. */
+  /* A figure, what it is worth, and what it means, the three-column rail. */
   function facts(rows) {
     return rows.map(function (r) {
       return '<dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd><span class="why">' + esc(r[2] || '') + '</span>';
@@ -1227,7 +1227,7 @@
   function yrs(x) { return x && Money.isOk(x) ? x.value : (Money.isEntered(x) && typeof x === 'number' ? x : 0); }
   function fut(c, y) { return SLAF.Horizon.display(Spine.getProfile(), c, y); }   /* 15.2: display-time only; the engines stay real (D-181) */
   function yearsLabel(y) {
-    if (!Money.isEntered(y)) return Money.EM_DASH;
+    if (!Money.isEntered(y)) return Money.NOT_YET;
     if (y <= 0) return 'now';
     var whole = Math.floor(y), months = Math.round((y - whole) * 12);
     if (whole === 0) return months + ' mo';
@@ -1243,7 +1243,7 @@
     var target = Fire.calculateFIRE(h, TABLES, opts());
     var prog = Fire.progressToward(h, TABLES, opts());
 
-    el('fire-figure').textContent = Money.isOk(target) ? Money.formatCents(fut(target.value, yrs(Money.isOk(prog) ? prog.yearsAway : null))) : Money.EM_DASH;
+    el('fire-figure').textContent = Money.isOk(target) ? Money.formatCents(fut(target.value, yrs(Money.isOk(prog) ? prog.yearsAway : null))) : Money.NOT_YET;
     el('fire-say').innerHTML = Money.isOk(target)
       ? 'A year of spending, divided by the withdrawal rate.'
       : waiting(target);
@@ -1289,7 +1289,7 @@
     if (!el('swr-range').matches(':active')) el('swr-range').value = Math.round(rate * 10000);
     el('swr-say').textContent = swrPreview === null
       ? 'Your stored assumption. Move it to see the whole page move; nothing is saved.'
-      : 'Previewing ' + Money.formatRate(rate, { decimals: 2 }) + '. Your stored assumption is untouched — reload to return to it.';
+      : 'Previewing ' + Money.formatRate(rate, { decimals: 2 }) + '. Your stored assumption is untouched, reload to return to it.';
 
     /* ---- The six flavours ------------------------------------------------ */
     var all = Fire.allVariants(h, TABLES, opts());
@@ -1457,7 +1457,7 @@
     var n = el('load-notice');
     n.hidden = false; n.className = 'notice is-error';
     n.textContent = 'Couldn’t load the reference tables in data/ (' + err.message
-      + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+      + '). Serve this over HTTP, python3 -m http.server, rather than opening the file directly.';
   });
 })();
 </script>

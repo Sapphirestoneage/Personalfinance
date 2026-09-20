@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/quitfund.js — the Quit Fund.
+   engines/quitfund.js, the Quit Fund.
    DECISIONS.md D-217 (K7).
    --------------------------------------------------------------------------
    Months of freedom: the money a person could reach at no cost (the free

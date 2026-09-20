@@ -1,16 +1,16 @@
 /* ==========================================================================
-   engines/betweenjobs.js — the runway against the search.
+   engines/betweenjobs.js, the runway against the search.
    --------------------------------------------------------------------------
    The one question a person between jobs has: does the money outlast the
    search? Everything here is that question put to engines that already
-   own the arithmetic —
+   own the arithmetic, 
 
      • engines/runway.js  Runway.project with the laid-off preset, fed the
        household's own facts (cash, spending, severance, the benefit and
        its weeks) exactly as the dashboard's "Days the money lasts" lead
        feeds it (shared/instruments.js runwayDays), plus a partner's
        take-home as the income that does not stop. Run twice: once at what
-       you spend now, once at the floor — the bare-minimum month.
+       you spend now, once at the floor, the bare-minimum month.
      • shared/schema.js   Schema.benefitMonthlyCents for the benefit as a
        month (weekly × 52 ÷ 12) and how many months it runs.
      • engines/tier0.js   Tier0.takeHomeMonthlyCents, on a view of the
@@ -20,7 +20,7 @@
 
    What is this room's own: the expected length of the search and the
    floor (person.unemployment.expectedSearchMonths / floorMonthlyCents),
-   the gap between the runway and the search, and the two dates — the
+   the gap between the runway and the search, and the two dates, the
    day the cash runs out, the day the benefit stops.
 
    WHAT IT DOES NOT GUESS: the benefit (yours to look up; Start Here asks),
@@ -52,7 +52,7 @@
   var DAYS_PER_MONTH = 365.25 / 12;
   var MS_PER_DAY = 86400000;
   /* The floor, when none has been typed: a bare-minimum month at 70% of
-     spending. A convention, not a benchmark — the drawer says so. */
+     spending. A convention, not a benchmark. The drawer says so. */
   var FLOOR_SHARE = 0.70;
 
   /* ---- Dates ---------------------------------------------------------------- */
@@ -146,7 +146,7 @@
    *
    * opts.now              ms, for the dates (tests pass a fixed one)
    * opts.asBetweenJobs    the caller vouches the household is between jobs
-   *                       even though no status says so — the template's
+   *                       even though no status says so, the template's
    *                       standalone render, where the person is a guess.
    */
   function plan(household, tables, opts) {
@@ -158,7 +158,7 @@
       var you = Schema.primaryPerson(h);
       var row = you && you.employmentStatus ? Schema.employmentStatus(you.employmentStatus) : null;
       return row
-        ? Money.incomplete('This room is for someone between jobs — Start Here says ' + row.short.toLowerCase() + '.', ['employmentStatus'])
+        ? Money.incomplete('This room is for someone between jobs, Start Here says ' + row.short.toLowerCase() + '.', ['employmentStatus'])
         : Money.incomplete('Say you are between jobs in Start Here to see the runway against the search.', ['employmentStatus']);
     }
 

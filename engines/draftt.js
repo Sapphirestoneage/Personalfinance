@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/draftt.js — the measuring stick: seven shares against seven bands.
+   engines/draftt.js, the measuring stick: seven shares against seven bands.
    --------------------------------------------------------------------------
    D · R · A · F · T · T · (T): debt payments, retirement saving, rent or
    mortgage, food, getting around, taxes, and therapy while it is tracked.

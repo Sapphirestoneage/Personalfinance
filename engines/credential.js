@@ -1,22 +1,22 @@
 /* ==========================================================================
-   engines/credential.js — one ROI engine for Career ROI and the Skills calc.
+   engines/credential.js, one ROI engine for Career ROI and the Skills calc.
    --------------------------------------------------------------------------
-   SPEC.md §13, Tier 2: "Career ROI calc — payback period and lifetime value
+   SPEC.md §13, Tier 2: "Career ROI calc, payback period and lifetime value
    of a career move. Overlaps with College Major ROI, Trade School vs. 4-Year
-   ROI, Skills Calculator — could share one 'credential ROI' engine with
+   ROI, Skills Calculator, could share one 'credential ROI' engine with
    different preset data per pathway. Discount future income delta to present
-   value." And separately: "Skills Calculator — ROI of learning a single
+   value." And separately: "Skills Calculator, ROI of learning a single
    skill; shares ROI math with Career ROI calc, narrower scope."
 
    So: one function, parameterised. A four-year degree and a weekend course
-   are the same arithmetic at different magnitudes — a cost, some time you
+   are the same arithmetic at different magnitudes, a cost, some time you
    are not earning, a raise afterwards, and a number of years it pays over.
    Building them separately would mean building this twice, which §8 forbids.
 
    Three things this gets right that back-of-envelope versions miss:
 
      • The raise is TAXED. A $10,000 raise is not $10,000. The marginal rate
-       is an input, not a bracket lookup — the same call as D-027.
+       is an input, not a bracket lookup, the same call as D-027.
      • The time costs money. Months not earning are part of the price, and
        for a career move they usually dwarf the tuition.
      • Money later is worth less than money now. The lifetime value is
@@ -36,11 +36,11 @@
   var MONTHS = 12;
 
   /* The two pathways this ships with. They differ only in defaults and
-     wording — the arithmetic below never branches on which one is in use. */
+     wording, the arithmetic below never branches on which one is in use. */
   var PRESETS = {
     career: {
       id: 'career', label: 'A career move',
-      blurb: 'A degree, a bootcamp, a qualification — something with a fee and time out.',
+      blurb: 'A degree, a bootcamp, a qualification, something with a fee and time out.',
       costLabel: 'What it costs', timeLabel: 'Months not earning',
       deltaLabel: 'The raise it should bring', yearsLabel: 'Years you will work after',
       defaultYears: 25
@@ -57,7 +57,7 @@
   /**
    * credentialROI(opts)
    *
-   *   costCents            the fee — 0 is a real answer
+   *   costCents            the fee, 0 is a real answer
    *   monthsOut            months earning nothing or less because of it
    *   forgoneMonthlyCents  what a month out costs you in income
    *   annualDeltaCents     the annual raise it should produce, gross
@@ -65,8 +65,8 @@
    *   yearsOfBenefit       how long it keeps paying
    *   discountRate         decimal fraction, for present value
    *
-   * `value` is the payback period in months — the number people ask for
-   * first — with everything else on the result.
+   * `value` is the payback period in months, the number people ask for
+   * first, with everything else on the result.
    */
   function credentialROI(opts) {
     var o = opts || {};
@@ -95,7 +95,7 @@
        is not zero: an unanswered question is not "it costs me nothing". */
     if (monthsOut > 0 && !Money.isEntered(o.forgoneMonthlyCents)) {
       return Money.incomplete(
-        'You said you would be out for ' + monthsOut + ' months — add what a month '
+        'You said you would be out for ' + monthsOut + ' months, add what a month '
           + 'of that costs you, or enter 0 if you keep earning throughout.',
         ['forgoneMonthlyCents']);
     }
@@ -140,7 +140,7 @@
       netPresentValueCents: pv - totalCost,
       worthIt: pv > totalCost,
       /* What the raise would have to be for this to break even over the
-         horizon — the useful answer when the honest one is "not worth it". */
+         horizon, the useful answer when the honest one is "not worth it". */
       breakEvenAnnualDeltaCents: pv > 0
         ? Math.round(o.annualDeltaCents * (totalCost / pv))
         : null,
@@ -154,7 +154,7 @@
 
   /**
    * The same move priced in hours of your life, when a real hourly wage is
-   * available. Not a second calculation — it divides the cost this engine
+   * available. Not a second calculation, it divides the cost this engine
    * already worked out.
    */
   function costInHours(result, realHourlyCents) {

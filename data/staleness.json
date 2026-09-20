@@ -5,7 +5,7 @@
   "source": "How fast each figure actually moves. Balances change every pay cycle and every purchase; income and spending change on the order of a job change or a lease renewal; a date of birth never does.",
   "confidence": "convention",
   "confidenceNote": "These are review intervals, not measurements. Past the interval a figure is shown in amber and offered for a quick re-confirm; it is never silently distrusted, discounted or zeroed.",
-  "note": "staleAfterDays is per ownership field id (shared/ownership.js). null means the figure does not go stale. `volatile` is the short list the Refresh page walks — the ones worth re-checking monthly, in the order they are asked.",
+  "note": "staleAfterDays is per ownership field id (shared/ownership.js). null means the figure does not go stale. `volatile` is the short list the Refresh page walks, the ones worth re-checking monthly, in the order they are asked.",
   "volatile": ["cashSavings", "investments", "totalDebt"],
   "staleAfterDays": {
     "cashSavings": 30,

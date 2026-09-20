@@ -1,11 +1,11 @@
 /* ==========================================================================
-   engines/fulfillment.js — the Fulfillment Curve. SPEC.md §13, Tier 1.5.
+   engines/fulfillment.js, the Fulfillment Curve. SPEC.md §13, Tier 1.5.
    --------------------------------------------------------------------------
    "Cross-references spend-per-category against a 1-10 joy rating. […] Needs
    Cash Flow calc's categorized data as a prerequisite."
 
-   Two numbers per category — what it costs a month, and what it is worth to
-   you — and the interesting part is where they disagree. The output is a
+   Two numbers per category, what it costs a month, and what it is worth to
+   you, and the interesting part is where they disagree. The output is a
    scatter and four quadrants, not a score: like the Values audit, a single
    figure here would be false precision on top of a self-report.
 
@@ -60,7 +60,7 @@
     worth_it:   { id: 'worth_it',   label: 'Worth it',
                   blurb: 'Costs a lot, and you would not give it up. Nothing to do here.' },
     expensive:  { id: 'expensive',  label: 'Expensive habit',
-                  blurb: 'The biggest gap in the picture — real money, and it barely registers.' },
+                  blurb: 'The biggest gap in the picture, real money, and it barely registers.' },
     cheap_joy:  { id: 'cheap_joy',  label: 'Cheap joy',
                   blurb: 'Small money, big return. The one quadrant worth spending MORE in.' },
     small_meh:  { id: 'small_meh',  label: 'Small and forgettable',
@@ -93,12 +93,12 @@
     var summary = CashFlow.summarise(household, catalog);
     if (!Money.isOk(summary)) {
       return Money.incomplete(
-        'Split a month by category in Expenses first — this needs to know what each '
+        'Split a month by category in Expenses first. This needs to know what each '
           + 'thing costs before you can say what it is worth.',
         ['expenseEntries']);
     }
     /* Savings and extra debt payments are left out. This tool asks what a
-       purchase gives you, and money you keep is not a purchase — rating
+       purchase gives you, and money you keep is not a purchase, rating
        your own retirement contribution for joy is a category error, and
        including it would drag the spend median right for no reason. The
        Values audit DOES count savings, because "what does this serve" is a
@@ -125,7 +125,7 @@
   }
 
   /**
-   * The reading. `value` is the count of rated categories — the thing that
+   * The reading. `value` is the count of rated categories, the thing that
    * decides whether there is a picture yet. Everything else rides along:
    *
    *   plotted[]     rated categories, each with its quadrant and joy-per-$100
@@ -147,7 +147,7 @@
 
     if (rated.length < MIN_RATED) {
       return Money.incomplete(
-        'Rate at least ' + MIN_RATED + ' of these to see where they fall — '
+        'Rate at least ' + MIN_RATED + ' of these to see where they fall, '
           + rated.length + ' so far.',
         ['ratings']);
     }

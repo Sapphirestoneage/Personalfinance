@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/intake.js — one look at a file says what it is.
+   shared/intake.js, one look at a file says what it is.
    DECISIONS.md D-305.
    --------------------------------------------------------------------------
    Your Data had three file pickers and the person had to know which door

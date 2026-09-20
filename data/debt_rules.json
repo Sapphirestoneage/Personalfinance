@@ -5,7 +5,7 @@
   "source": "Payoff-ordering strategies and minimum-payment conventions for the Debt Calculator.",
   "confidence": "convention",
   "confidenceNote": "Minimum-payment formulas vary by issuer; 2% or $25 is a common convention, not a universal rule.",
-  "note": "SPEC.md Section 13 — minimum payment formulas vary by issuer (typically 1-3% of balance, or a flat floor, whichever is greater) and must not be hardcoded to one formula. A user-entered statement minimum always wins over anything derived here. Strategy definitions live in this file so adding one is a data edit, not an engine change.",
+  "note": "SPEC.md Section 13, minimum payment formulas vary by issuer (typically 1-3% of balance, or a flat floor, whichever is greater) and must not be hardcoded to one formula. A user-entered statement minimum always wins over anything derived here. Strategy definitions live in this file so adding one is a data edit, not an engine change.",
   "minimumPayment": {
     "note": "Used only when the user has not entered their actual statement minimum. Revolving accounts can be derived; instalment loans cannot, because the payment depends on the original term, which we do not ask for.",
     "rules": [
@@ -17,7 +17,7 @@
         "method": "percent_of_balance_or_floor",
         "percentOfBalance": 0.02,
         "floorDollars": 25,
-        "note": "2% of the balance or $25, whichever is greater — a common issuer convention, not a universal rule."
+        "note": "2% of the balance or $25, whichever is greater, a common issuer convention, not a universal rule."
       },
       {
         "id": "instalment_not_derivable",
@@ -53,14 +53,14 @@
     {
       "id": "snowball",
       "label": "Snowball",
-      "blurb": "Smallest balance first. Costs more, but clears accounts sooner — which is what keeps people going.",
+      "blurb": "Smallest balance first. Costs more, but clears accounts sooner, which is what keeps people going.",
       "orderBy": "balance",
       "direction": "asc"
     },
     {
       "id": "convenience",
       "label": "Convenience",
-      "blurb": "Whatever you most want gone — money owed to family, a debt tied to someone you'd rather not owe. Tag them and they go first.",
+      "blurb": "Whatever you most want gone, money owed to family, a debt tied to someone you'd rather not owe. Tag them and they go first.",
       "orderBy": "emotionalPriority",
       "direction": "desc",
       "tieBreak": "rate"
@@ -161,9 +161,9 @@
       ],
       "headline": "Medical debt does not behave like the others",
       "points": [
-        "It is the most negotiable debt most people ever hold. Ask the billing office for an itemised bill first, then for financial assistance — non-profit hospitals are required to have a charity-care policy, and most do not mention it unless asked by name.",
+        "It is the most negotiable debt most people ever hold. Ask the billing office for an itemised bill first, then for financial assistance, non-profit hospitals are required to have a charity-care policy, and most do not mention it unless asked by name.",
         "It is frequently wrong. Duplicate lines, services never given, and charges an insurer should have paid are ordinary rather than rare. The itemised bill is how you find them.",
-        "Once paid, a medical collection comes off your credit report entirely — unlike every other kind. Unpaid medical collections under $500 are no longer reported at all.",
+        "Once paid, a medical collection comes off your credit report entirely, unlike every other kind. Unpaid medical collections under $500 are no longer reported at all.",
         "It almost never carries interest while it sits with the provider. Moving it onto a credit card to 'deal with it' turns the cheapest debt you have into one of the most expensive."
       ],
       "doNot": "Do not put a medical bill on a credit card to clear it. That converts a 0%, negotiable, report-free debt into an interest-bearing one that is none of those things."
@@ -175,7 +175,7 @@
       ],
       "headline": "Money from family is a relationship first",
       "points": [
-        "There is no statement, no rate and no collections process — which is why this app asks for a pay-back date instead of a minimum (D-124).",
+        "There is no statement, no rate and no collections process, which is why this app asks for a pay-back date instead of a minimum (D-124).",
         "The cost of paying it late is not measured in interest. It is worth saying out loud what the plan is, to the person, before the plan slips."
       ],
       "doNot": null
@@ -187,11 +187,11 @@
       ],
       "headline": "A federal student loan is the most flexible debt on this list",
       "points": [
-        "An income-driven repayment plan can legitimately set the payment at zero when income is low, and zero still counts as paid — a forbearance does not do the same thing.",
+        "An income-driven repayment plan can legitimately set the payment at zero when income is low, and zero still counts as paid. A forbearance does not do the same thing.",
         "It is the one debt where paying the minimum during a hard year is a plan rather than a failure.",
         "Private student loans are not the same and carry none of this. Check which you have before assuming."
       ],
-      "doNot": "Do not refinance a federal loan privately to shave the rate without first checking what protections you are giving up — they do not come back."
+      "doNot": "Do not refinance a federal loan privately to shave the rate without first checking what protections you are giving up. They do not come back."
     }
   ],
   "pace": {

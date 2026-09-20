@@ -1,11 +1,11 @@
 /* ==========================================================================
-   engines/variance.js — closed months read back: estimated against actual,
+   engines/variance.js, closed months read back: estimated against actual,
    month over month, bucket by bucket. DECISIONS.md D-128.
    --------------------------------------------------------------------------
    Reads MonthRecords only (household.ledger.months), never the live month.
    Every figure is arithmetic on frozen columns; the one thing that leaves
-   this module is a proposal — "use the last N months' actual as next
-   month's estimate" — which the room writes only when tapped.
+   this module is a proposal, "use the last N months' actual as next
+   month's estimate", which the room writes only when tapped.
    ========================================================================== */
 (function (root, factory) {
   var deps;
@@ -41,7 +41,7 @@
       var a = actualOf(record, b, useRevised);
       var diff = e !== null && a !== null ? a - e : null;
       /* Over for a spending bucket is spending more than estimated; over
-         for income is earning less — the sign that hurts is 'over'. */
+         for income is earning less, the sign that hurts is 'over'. */
       var hurts = diff === null ? null : b === 'income' ? diff < 0 : diff > 0;
       return { bucket: b, label: LABELS[b], estimatedCents: e, actualCents: a, revised: useRevised && record.actualRevised && record.actualRevised[b] !== record.actual[b],
         differenceCents: diff, share: diff !== null && e ? diff / Math.abs(e) : null, hurts: hurts };

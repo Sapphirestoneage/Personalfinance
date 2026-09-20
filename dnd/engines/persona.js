@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/persona.js — the long read. DD-027.
+   engines/persona.js. The long read. DD-027.
    --------------------------------------------------------------------------
    An Enneagram-shaped profile built on the class: what you want, what you are
    afraid of, who you work with, who winds you up, and what you are weak to.
@@ -20,7 +20,7 @@
    2. THE ORIGIN STORIES ARE OFFERED, NEVER ASSERTED. Nothing here knows
       anything about anybody's childhood, and a tool that announced what your
       parents were like would simply be lying. They are returned with the
-      warning text attached, and `originsWarning` is not optional — a room
+      warning text attached, and `originsWarning` is not optional, a room
       that prints the stories without it is misusing this file.
    ========================================================================== */
 (function (root, factory) {
@@ -67,7 +67,7 @@
   /**
    * persona(household, sheet, tables)
    *
-   * `sheet` is Character.sheet() — passed in rather than recomputed, because
+   * `sheet` is Character.sheet(), passed in rather than recomputed, because
    * the class it chose is the one the rest of the page is already showing and
    * two derivations of the same thing is how they drift apart.
    */
@@ -85,7 +85,7 @@
 
     var id = measuredId || instinctId;
     if (!id) {
-      return { ready: false, reason: 'No class yet — answer the five questions or add your numbers.' };
+      return { ready: false, reason: 'No class yet, answer the five questions or add your numbers.' };
     }
     var p = t.classes[id];
     if (!p) return { ready: false, reason: 'No profile written for ' + id + '.' };
@@ -151,14 +151,14 @@
         cr: mon ? mon.cr : null,
         save: mon ? (mon.save || mon.targetSave || null) : null,
         found: !!mon,
-        /* Not a creature — a kind of person, and a kind of afternoon. These
+        /* Not a creature, a kind of person, and a kind of afternoon. These
            are the two that actually get past people, and neither of them
            rolls initiative. */
         people: p.weakTo.people || [],
         circumstances: p.weakTo.circumstances || []
       },
 
-      /* Offered, never asserted — and the warning travels with them so it
+      /* Offered, never asserted, and the warning travels with them so it
          cannot be dropped by a room that only wanted the pretty part. */
       origins: p.origins,
       originsWarning: t.originsWarning
@@ -166,11 +166,11 @@
   }
 
   /**
-   * bigThree(household, sheet, tables) — first, second, third, and the shadow.
+   * bigThree(household, sheet, tables), first, second, third, and the shadow.
    *
    * ONE RANKING, SHOWN FOUR WAYS. This does not run a second derivation: it
-   * reads the same ordering the rest of the tool already uses — cents through
-   * each lever when there is money, the quiz's shares when there is not — so
+   * reads the same ordering the rest of the tool already uses, cents through
+   * each lever when there is money, the quiz's shares when there is not, so
    * the profile and the character screen can never disagree about which lever
    * is on top.
    *
@@ -178,7 +178,7 @@
    * lever carries weight then there is only one, and the room is told that
    * rather than being handed two levers of zero dressed up as a chart.
    *
-   * The shadow is the lever at the BOTTOM — the one never pulled. It is the
+   * The shadow is the lever at the BOTTOM. The one never pulled. It is the
    * useful one, and it is the only position that is read off weakness rather
    * than strength.
    */
@@ -228,7 +228,7 @@
       });
     }
 
-    /* The shadow is the last of the FULL ranking, weight or no weight —
+    /* The shadow is the last of the FULL ranking, weight or no weight, 
        a lever with nothing through it is exactly what a shadow is. */
     var last = ranked[ranked.length - 1];
     var shadow = last ? {

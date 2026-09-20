@@ -201,7 +201,7 @@ function strings(x, out) { if (typeof x === 'string') out.push(x); else if (Arra
   check(`data/${name}.json never says N/A`, !all.some(s => /\bN\/A\b/.test(s)), all.filter(s => /\bN\/A\b/.test(s)).slice(0, 2).join(' | '));
   check(`data/${name}.json never says incomplete`, !all.some(s => /\bincomplete\b/i.test(s)), all.filter(s => /\bincomplete\b/i.test(s)).slice(0, 2).join(' | '));
   check(`data/${name}.json never says red or shows a warning icon`, !all.some(s => /\bred\b|⚠|❗|warning icon/i.test(s)), all.filter(s => /\bred\b|⚠|❗/i.test(s)).slice(0, 2).join(' | '));
-  check(`data/${name}.json copy has no em dash`, !all.some(s => s.indexOf('—') !== -1), all.filter(s => s.indexOf('—') !== -1).slice(0, 2).join(' | '));
+  check(`data/${name}.json copy has no em dash`, !all.some(s => s.indexOf('\u2014') !== -1), all.filter(s => s.indexOf('\u2014') !== -1).slice(0, 2).join(' | '));
 });
 check('unknown is the only "not yet": the recipe states are locked, rough, sharp, earned', Recipes.states.join(',') === 'locked,rough,sharp,earned');
 check('every debt-only metric has an earned state instead of an N/A', ['debtToAssets', 'payoffTimeRough', 'highInterestFlag', 'weightedDebtRate', 'payoffPlan', 'debtFreeDate', 'interestToIncome', 'highInterestShare'].every(id => recipeById[id].earnedWhen === 'debt.none'));
@@ -271,7 +271,7 @@ section('The lexicon: every term has a plain definition and says where it lives'
   });
   const terms = Glossary.terms.map(t => t.term.toLowerCase());
   check('no term is listed twice', new Set(terms).size === terms.length, terms.filter((t, i) => terms.indexOf(t) !== i).join(','));
-  check('the glossary has no em dash in a definition', !Glossary.terms.some(t => (t.plain || '').indexOf('—') !== -1));
+  check('the glossary has no em dash in a definition', !Glossary.terms.some(t => (t.plain || '').indexOf('\u2014') !== -1));
 }
 
 /* -- Migration (0.4) ------------------------------------------------------ */
@@ -295,6 +295,58 @@ section('A no-debt, no-kids, W-2 renter reaches 100% without one level that does
   check('the renter sees no partner, mortgage, self-employment or student loan level', !applicable.some(l => ['Y7', 'E12', 'D12', 'D11', 'D15', 'D18', 'T14', 'T24'].includes(l.id)));
   check('every planet keeps at least one level in every band for the renter, or the band counts as complete', planets.every(p => [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].every(b => true)));
   Levels.levels.forEach(l => { if (['debt.mortgage', 'debt.studentLoan', 'debt.variable', 'debt.promo'].includes(l.appliesWhen)) check(`${l.id} gated on a kind of debt sits on the Debt planet`, l.planet === 'debt'); });
+}
+
+/* -- The engine and the planets screen (D-321) ---------------------------- */
+section('Where a household stands in the levels, and the screen that shows it');
+{
+  const Solar = require(path.join(ROOT, 'shared/solar.js'));
+  const Schema = require(path.join(ROOT, 'shared/schema.js'));
+  const Demo = require(path.join(ROOT, 'shared/demo-persona.js'));
+  Solar.use(Levels);
+
+  const blank = Schema.createHousehold({});
+  const b = Solar.overall(blank);
+  check('a blank household has answered nothing', b.done === 0, String(b.done));
+  check('and still has levels to answer', b.applicable > 100, String(b.applicable));
+  check('no ring is cleared', b.rings === 0, String(b.rings));
+  check('the first thing to do is on band 1', b.next && b.next.level.band === 1, b.next && b.next.level.id);
+  check('and it is a load-bearing level', b.next && b.next.level.grade === 'S', b.next && b.next.level.grade);
+  check('every planet reports itself', b.planets.length === 6 && b.planets.every(p => p.bands.length === 10 && p.rows.length === 30));
+
+  /* Migrate, do not reset: a household that used the app already has levels
+     answered the day this ships, because their fields are the app's own. */
+  const demo = Schema.createHousehold(Demo.build());
+  const d = Solar.overall(demo);
+  check('the example household arrives with levels already answered', d.done > 10, String(d.done));
+  check('every planet has something', d.planets.every(p => p.done > 0), d.planets.filter(p => !p.done).map(p => p.id).join(','));
+  check('nothing is answered that was never entered', d.done < d.applicable);
+
+  /* Rule 6: a level that does not apply is absent, and the planet shrinks. */
+  const noDebt = Schema.createHousehold({ debts: [] });
+  const withDebt = Schema.createHousehold({ debts: [Schema.createDebt({ label: 'Card', balanceCents: 100000, type: 'credit_card', rate: 0.24 })] });
+  const dp1 = Solar.planet('debt', noDebt), dp2 = Solar.planet('debt', withDebt);
+  check('a household with no debt has a shorter Debt planet', dp1.applicable < dp2.applicable, dp1.applicable + ' vs ' + dp2.applicable);
+  check('the credit levels never drop out', ['D6', 'D20', 'D21'].filter(id => dp1.rows.find(r => r.level.id === id && r.applies)).length === 3);
+  check('a level that does not apply is absent, not failed', dp1.rows.filter(r => !r.applies).every(r => r.state === 'absent'));
+  check('a band with no applicable level counts as cleared', dp1.bands.every(x => x.applicable > 0 || x.cleared));
+
+  /* A level is done only when every field it collects holds a value. */
+  const one = Schema.createHousehold({ people: [Schema.createPerson({ label: 'You', dob: '1996-04' })] });
+  const y1 = Solar.planet('you', one).rows.find(r => r.level.id === 'Y1');
+  check('a level whose only field is filled reads done', y1.state === 'done', y1.state);
+  const y5 = Solar.planet('you', one).rows.find(r => r.level.id === 'Y5');
+  check('a level nobody answered reads not yet, never failed', y5.state === 'notYet' || y5.state === 'part', y5.state);
+
+  /* The screen. */
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  check('the Ledger carries a Planets hat and its view', /data-view="view-sky"/.test(page) && /id="view-sky"/.test(page) && /hash: '#planets'/.test(page));
+  check('the view draws six rows of ten bands from the engine', /Solar\.overall\(Spine\.getProfile\(\)\)/.test(page) && /sky-cells/.test(page) && /sky-dot/.test(page));
+  check('a planet opens to its bands and the levels inside them', /sky-band-head/.test(page) && /sky-levels/.test(page) && /data-planet=/.test(page));
+  check('it says what is answered and what is next', /levels answered/.test(page) && /id="sky-next"/.test(page));
+  check('the room loads the engine and the table', /shared\/solar\.js/.test(page) && /Reference\.load\(\['levels'\]\)/.test(page));
+  check('the Planets view is registered as a subsection', /view-sky/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
+  check('nothing on this screen is red or says incomplete', !/is-bad|is-danger/.test(page.slice(page.indexOf('id="view-sky"'), page.indexOf('id="view-sky"') + 2000)));
 }
 
 /* -- Report --------------------------------------------------------------- */

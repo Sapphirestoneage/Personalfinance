@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/vpw.js — variable percentage withdrawal, year by year. D-088.
+   engines/vpw.js, variable percentage withdrawal, year by year. D-088.
    --------------------------------------------------------------------------
      percentageAt(table, age, stockShare)   the VPW share at an age
      plan(opts)                              the retirement, run to the plan
@@ -9,7 +9,7 @@
 
    opts: { portfolioCents, retireAge, planAge?, stockShare, realReturn,
            annualSpendCents, spendDeclineAfterAge?, spendDeclinePerYear?,
-           otherIncomeCents(age) — a function, e.g. Social Security from a
+           otherIncomeCents(age), a function, e.g. Social Security from a
            claim age; table }
 
    One loop, one year at a time: withdraw the VPW share of the portfolio at

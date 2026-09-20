@@ -1,13 +1,13 @@
 /* ==========================================================================
-   engines/history.js — History: every snapshot frozen, what moved between
+   engines/history.js, History: every snapshot frozen, what moved between
    them, and the command log.
    --------------------------------------------------------------------------
    A snapshot (shared/spine-v2.js appendSnapshot, taken through
    shared/instruments.js snapshot) freezes every owned field (`fields`, by
    field id) and every instrument's Result (`computedOutputs`, by
    instrument id) at that moment. This engine reads those back against the
-   household as it is NOW — the "now" side is Instruments.outputs on the
-   current household, never a stored figure — and says what changed since a
+   household as it is NOW, the "now" side is Instruments.outputs on the
+   current household, never a stored figure, and says what changed since a
    chosen baseline: the compare-to snapshot when it still exists, else the
    first one frozen.
 
@@ -187,7 +187,7 @@
     return Money.ok(delta, base);
   }
 
-  /** The instruments a snapshot freezes, by name — for the drawer. */
+  /** The instruments a snapshot freezes, by name, for the drawer. */
   function frozenNames() { return Instruments.INSTRUMENTS.map(function (s) { return s.label; }); }
 
   return {

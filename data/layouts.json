@@ -2,10 +2,10 @@
   "id": "layouts",
   "version": "1.0.3",
   "asOf": "2026-09-07",
-  "source": "Twenty arrangements of the same room set, drawn as a comparison set before any was built. Seventeen are editorial proposals — the grouping of rooms into bays is a judgement call, not a measurement. Three are not: \"path\" is the registry order the app already ships, \"situation\" is what shared/gate.js already computes, and \"depends\" is the dependency graph read out of shared/registry.js needs plus shared/ownership.js owners.",
+  "source": "Twenty arrangements of the same room set, drawn as a comparison set before any was built. Seventeen are editorial proposals, the grouping of rooms into bays is a judgement call, not a measurement. Three are not: \"path\" is the registry order the app already ships, \"situation\" is what shared/gate.js already computes, and \"depends\" is the dependency graph read out of shared/registry.js needs plus shared/ownership.js owners.",
   "confidence": "unverified",
-  "confidenceNote": "Every bay membership here is an opinion about where a room belongs, held by one author on one day. Nothing downstream may treat a layout as a fact about a room — a room’s real relationships live in the registry (needs, tags, order) and in shared/ownership.js. Changing a layout must never change a number.",
-  "note": "A layout NEVER filters on its own: rooms are dropped only by Registry.applies, the same gate every other part of the app uses (D-142). So a bay can come out shorter for one person than another, and a bay whose every room is gated away is not shown at all. Modes: bays (a flat set of groups), hub (each group has a landmark room), tree (group names carry a parent with a › separator), flow (groups are numbered turns in a conversation), search (surfaces rather than shelves — the overlay flag marks a group that deliberately repeats rooms listed elsewhere). A room added to the registry after this file was written will not be on any shelf here — engines/layouts.js catches that and puts it in a stated \"not shelved in this arrangement\" bay rather than losing it, and coverage() still reports it so the gap gets fixed rather than hidden.",
+  "confidenceNote": "Every bay membership here is an opinion about where a room belongs, held by one author on one day. Nothing downstream may treat a layout as a fact about a room, a room’s real relationships live in the registry (needs, tags, order) and in shared/ownership.js. Changing a layout must never change a number.",
+  "note": "A layout NEVER filters on its own: rooms are dropped only by Registry.applies, the same gate every other part of the app uses (D-142). So a bay can come out shorter for one person than another, and a bay whose every room is gated away is not shown at all. Modes: bays (a flat set of groups), hub (each group has a landmark room), tree (group names carry a parent with a › separator), flow (groups are numbered turns in a conversation), search (surfaces rather than shelves, the overlay flag marks a group that deliberately repeats rooms listed elsewhere). A room added to the registry after this file was written will not be on any shelf here, engines/layouts.js catches that and puts it in a stated \"not shelved in this arrangement\" bay rather than losing it, and coverage() still reports it so the gap gets fixed rather than hidden.",
   "layouts": [
     {
       "id": "path",
@@ -16,7 +16,7 @@
       "live": true,
       "mode": "bays",
       "premise": "One numbered sequence, first room to last, with a map drawer holding all 64. This is what is live today.",
-      "readsWell": "Order carries real information — you genuinely cannot do FIRE Number before Cash Flow. Nothing needs categorising, so nothing can be miscategorised.",
+      "readsWell": "Order carries real information, you genuinely cannot do FIRE Number before Cash Flow. Nothing needs categorising, so nothing can be miscategorised.",
       "costs": "A 60-item list is not browsable. Someone arriving with a question has to already know which number their question is, and the map drawer is where discovery goes to die.",
       "groups": [
         {
@@ -57,7 +57,7 @@
             "week",
             "debates"
           ],
-          "note": "Registry order 1–51 — the sequence a person is meant to walk."
+          "note": "Registry order 1–51, the sequence a person is meant to walk."
         },
         {
           "name": "Off the path",
@@ -67,7 +67,7 @@
             "one-pager",
             "settings"
           ],
-          "note": "Utilities at orders 29 and 97–99 — reachable any time, never a step."
+          "note": "Utilities at orders 29 and 97–99, reachable any time, never a step."
         }
       ]
     },
@@ -79,9 +79,9 @@
       "by": null,
       "live": true,
       "mode": "bays",
-      "premise": "Ask the one gate question first, then show only the rooms that exist for that answer. Partly live — shared/gate.js already does the filtering.",
-      "readsWell": "The first screen already earns its place — one tap and a retiree stops being shown savings-rate rooms. It is the only plan here that makes the app smaller rather than rearranging it.",
-      "costs": "It removes 8–19 rooms out of 64. The other 43 still need an order, so this cannot be the whole structure — it is a filter sitting on top of one.",
+      "premise": "Ask the one gate question first, then show only the rooms that exist for that answer. Partly live, shared/gate.js already does the filtering.",
+      "readsWell": "The first screen already earns its place, one tap and a retiree stops being shown savings-rate rooms. It is the only plan here that makes the app smaller rather than rearranging it.",
+      "costs": "It removes 8–19 rooms out of 64. The other 43 still need an order, so this cannot be the whole structure. It is a filter sitting on top of one.",
       "groups": [
         {
           "name": "Applies to everyone",
@@ -127,7 +127,7 @@
             "left-behind",
             "partner"
           ],
-          "note": "What the gate actually moves — between 8 and 19 rooms."
+          "note": "What the gate actually moves, between 8 and 19 rooms."
         },
         {
           "name": "Always available",
@@ -150,8 +150,8 @@
       "live": false,
       "mode": "bays",
       "premise": "The front door is a list of questions in the words a person would actually use. Rooms are the answers.",
-      "readsWell": "Matches how people actually arrive. Nobody wakes up wanting step 17 — they wake up wondering whether they are okay. It also gives the crisis rooms a door of their own instead of burying them at order 26.",
-      "costs": "Questions overlap and you have to pick one home per room — Sleep At Night is arguably three of these. And a room can only be found by someone who phrases the question your way.",
+      "readsWell": "Matches how people actually arrive. Nobody wakes up wanting step 17, they wake up wondering whether they are okay. It also gives the crisis rooms a door of their own instead of burying them at order 26.",
+      "costs": "Questions overlap and you have to pick one home per room, Sleep At Night is arguably three of these. And a room can only be found by someone who phrases the question your way.",
       "groups": [
         {
           "name": "Am I okay?",
@@ -247,8 +247,8 @@
       "by": null,
       "live": false,
       "mode": "bays",
-      "premise": "Nine verbs. Earn, spend, owe, keep, grow, protect, give, decide, learn — plus the housekeeping that is none of them.",
-      "readsWell": "Even bays — nothing is bigger than ten. The labels are one word each and need no explaining, which makes it the easiest of these to build a tab bar or an icon row from.",
+      "premise": "Nine verbs. Earn, spend, owe, keep, grow, protect, give, decide, learn, plus the housekeeping that is none of them.",
+      "readsWell": "Even bays. Nothing is bigger than ten. The labels are one word each and need no explaining, which makes it the easiest of these to build a tab bar or an icon row from.",
       "costs": "Verbs describe the tool, not the moment. Giving and What Matters land under the same verb as a tax deduction, and eight rooms have no verb at all.",
       "groups": [
         {
@@ -353,7 +353,7 @@
       "mode": "bays",
       "premise": "Five horizons, from the floor moving under you to the shape of a whole life.",
       "readsWell": "The only plan that puts the worst day at the top. Someone whose rent is due this week is three words from the right room, instead of scrolling past FIRE Lab to reach it.",
-      "costs": "Urgency is personal, not structural — Estate Basics is “this life” until a diagnosis makes it this week. And 14 rooms belong to no horizon.",
+      "costs": "Urgency is personal, not structural, Estate Basics is “this life” until a diagnosis makes it this week. And 14 rooms belong to no horizon.",
       "groups": [
         {
           "name": "Right now",
@@ -423,7 +423,7 @@
             "skill-tree",
             "foo-ladder"
           ],
-          "note": "The bay that catches everything that is not time-bound — nearly a quarter of the app.",
+          "note": "The bay that catches everything that is not time-bound, nearly a quarter of the app.",
           "warn": true
         }
       ]
@@ -511,7 +511,7 @@
           ]
         },
         {
-          "name": "Beside the ladder — no rung fits",
+          "name": "Beside the ladder, no rung fits",
           "rooms": [
             "values",
             "week",
@@ -542,7 +542,7 @@
       "mode": "bays",
       "premise": "The shape a normal phone app takes. Five words along the bottom, everything behind one of them.",
       "readsWell": "Nobody needs it explained. Five persistent words mean you are never more than two taps from anywhere, and the thumb reaches all of them.",
-      "costs": "Twenty rooms behind “Plan”, which means a second level of menu the moment you tap it — you have moved the long list, not removed it. And “You” becomes the drawer for whatever did not fit.",
+      "costs": "Twenty rooms behind “Plan”, which means a second level of menu the moment you tap it. You have moved the long list, not removed it. And “You” becomes the drawer for whatever did not fit.",
       "groups": [
         {
           "name": "Home",
@@ -589,7 +589,7 @@
             "protection",
             "partner"
           ],
-          "note": "A third of the app behind one word — the price of a tidy tab bar.",
+          "note": "A third of the app behind one word, the price of a tidy tab bar.",
           "warn": true
         },
         {
@@ -621,12 +621,12 @@
       "mode": "search",
       "premise": "Refuse to categorise. One search box, what you had open last, what the app thinks you need now, and an A–Z for everything else.",
       "readsWell": "Zero learning curve and no wrong shelf, because there are no shelves. Search is how people use a big app once they know it, and it scales to room 200 without a redesign.",
-      "costs": "Useless to a newcomer, which is most of the point of this app. You cannot search for a room whose existence you do not suspect — and discovery is exactly what 64 rooms need.",
+      "costs": "Useless to a newcomer, which is most of the point of this app. You cannot search for a room whose existence you do not suspect, and discovery is exactly what 64 rooms need.",
       "groups": [
         {
           "name": "The four surfaces",
           "rooms": [],
-          "note": "Not categories — ways in. The taxonomy problem is simply declined."
+          "note": "Not categories, ways in. The taxonomy problem is simply declined."
         },
         {
           "name": "Where you left off",
@@ -640,7 +640,7 @@
             "runway",
             "debt-payoff"
           ],
-          "note": "Driven by the gate and the FOO rung — the app’s own opinion, three or four rooms. A surface, not a shelf: these also sit in the A–Z below.",
+          "note": "Driven by the gate and the FOO rung, the app’s own opinion, three or four rooms. A surface, not a shelf: these also sit in the A–Z below.",
           "overlay": true
         },
         {
@@ -697,9 +697,9 @@
       "by": null,
       "live": false,
       "mode": "bays",
-      "premise": "Take the metaphor literally. They are already called rooms — so give them a building, and let people walk it.",
+      "premise": "Take the metaphor literally. They are already called rooms, so give them a building, and let people walk it.",
       "readsWell": "The only plan here that is memorable. You remember where a room is in a house without being told twice, and “it’s in the bedroom” is a sentence people can say to each other. It also gives the frightening rooms a soft place to sit.",
-      "costs": "Charm is not findability. A newcomer has to learn your house before they can use it, the metaphor strains at the edges — is a pension the attic or the study? — and it does not survive translation to a search box.",
+      "costs": "Charm is not findability. A newcomer has to learn your house before they can use it, the metaphor strains at the edges, is a pension the attic or the study? and it does not survive translation to a search box.",
       "groups": [
         {
           "name": "The hall",
@@ -811,8 +811,8 @@
       "by": null,
       "live": false,
       "mode": "bays",
-      "premise": "Not urgency — rhythm. Some rooms are a weekly habit, some are once a year, and most are opened on a day something happens.",
-      "readsWell": "It answers the question a returning user actually has — “what should I be doing today?” — which no other plan here answers. It also makes the app honest about how little of it needs opening twice.",
+      "premise": "Not urgency, rhythm. Some rooms are a weekly habit, some are once a year, and most are opened on a day something happens.",
+      "readsWell": "It answers the question a returning user actually has, “what should I be doing today?”, which no other plan here answers. It also makes the app honest about how little of it needs opening twice.",
       "costs": "Twenty-one rooms are event-driven and cannot be scheduled at all, so the biggest bay is the one the structure cannot help with. And rhythm is a habit you have not formed yet on day one.",
       "groups": [
         {
@@ -901,7 +901,7 @@
       "live": false,
       "mode": "bays",
       "premise": "Sort by the output, not the topic. Some rooms hand you a number, some hand you a decision, some hand you a different way of seeing it.",
-      "readsWell": "It sells each room on its promise rather than its subject, which is the difference between “Tax” and “a decision, made”. Bays come out even, and it is the only plan that separates “gives you a number” from “changes your mind” — two very different moods to be in.",
+      "readsWell": "It sells each room on its promise rather than its subject, which is the difference between “Tax” and “a decision, made”. Bays come out even, and it is the only plan that separates “gives you a number” from “changes your mind”, two very different moods to be in.",
       "costs": "You have to know what you want before you can navigate, and most people arrive knowing only that something feels wrong. Several rooms honestly deliver two of these.",
       "groups": [
         {
@@ -989,7 +989,7 @@
       "mode": "bays",
       "premise": "Organise around failure. Each bay is a way a financial life comes apart, and the rooms in it are what you do about that.",
       "readsWell": "Motivating in a way no verb or tab is. It puts “thirty years on the wrong thing” beside “running out this month” as a real risk, which is a genuinely unusual thing for a money app to say and is the truest thing about this one.",
-      "costs": "Fear as a front door. Someone doing fine opens it and is handed seven ways their life could fall apart — that is a reason to close the app, and the tone would have to be handled very carefully.",
+      "costs": "Fear as a front door. Someone doing fine opens it and is handed seven ways their life could fall apart. That is a reason to close the app, and the tone would have to be handled very carefully.",
       "groups": [
         {
           "name": "Running out this month",
@@ -1076,9 +1076,9 @@
       "by": null,
       "live": false,
       "mode": "bays",
-      "premise": "Money is rarely solitary. Sort by the other party — a partner, an employer, a lender, the government, the market, or nobody at all.",
+      "premise": "Money is rarely solitary. Sort by the other party, a partner, an employer, a lender, the government, the market, or nobody at all.",
       "readsWell": "It quietly teaches something true: sixteen of these rooms are nobody’s business but yours, and a different sixteen involve a counterparty who has their own interests. That is a useful thing to feel while using a money app.",
-      "costs": "An unusual way to think, so it needs explaining — and the bays do not map to any task anyone has ever set out to do. Nobody opens an app thinking “today I deal with a lender”.",
+      "costs": "An unusual way to think, so it needs explaining, and the bays do not map to any task anyone has ever set out to do. Nobody opens an app thinking “today I deal with a lender”.",
       "groups": [
         {
           "name": "Just you",
@@ -1137,7 +1137,7 @@
           ]
         },
         {
-          "name": "Nobody — just the numbers",
+          "name": "Nobody, just the numbers",
           "rooms": [
             "start",
             "ledger",
@@ -1163,12 +1163,12 @@
       "by": null,
       "live": false,
       "mode": "bays",
-      "premise": "Not a proposal — a measurement. Every room declares the fields it needs; this is that graph, computed from shared/registry.js and shared/ownership.js.",
-      "readsWell": "The only sheet here that is measured rather than argued. It settles what is genuinely ordered — Start Here and Cash Flow, and almost nothing else — and it updates itself as the registry changes.",
+      "premise": "Not a proposal, a measurement. Every room declares the fields it needs; this is that graph, computed from shared/registry.js and shared/ownership.js.",
+      "readsWell": "The only sheet here that is measured rather than argued. It settles what is genuinely ordered, Start Here and Cash Flow, and almost nothing else, and it updates itself as the registry changes.",
       "costs": "Four layers, one of them holding 37 rooms, is not a navigation structure. Its value is as evidence: it says the app is far flatter than the numbered path implies, which is a finding, not a front door.",
       "groups": [
         {
-          "name": "Layer 0 — need nothing from another room",
+          "name": "Layer 0, need nothing from another room",
           "rooms": [
             "debt-payoff",
             "expenses",
@@ -1191,7 +1191,7 @@
             "week",
             "debates"
           ],
-          "note": "Start Here is in this layer, not layer 0 — the front door has a prerequisite."
+          "note": "Start Here is in this layer, not layer 0, the front door has a prerequisite."
         },
         {
           "name": "Layer 2",
@@ -1216,7 +1216,7 @@
             "housing",
             "big-purchase"
           ],
-          "note": "37 rooms sit at exactly the same depth. There is no sequence among them — the numbered path invents one.",
+          "note": "37 rooms sit at exactly the same depth. There is no sequence among them, the numbered path invents one.",
           "warn": true
         },
         {
@@ -1246,7 +1246,7 @@
       "live": false,
       "mode": "flow",
       "premise": "No navigation at all. The app asks; you answer; it decides what to show you next and what to skip.",
-      "readsWell": "No structure to learn, because there is no structure. It is the gentlest possible front door and it fits what the app already does — the gate, the Walk-Through and the FOO rung are three-quarters of this engine already built.",
+      "readsWell": "No structure to learn, because there is no structure. It is the gentlest possible front door and it fits what the app already does, the gate, the Walk-Through and the FOO rung are three-quarters of this engine already built.",
       "costs": "You cannot get back to a room you liked, browse, or skip ahead, and a wrong turn on question 2 hides things forever. It needs an escape hatch, and the moment you add one you have rebuilt S-8 underneath it.",
       "groups": [
         {
@@ -1338,8 +1338,8 @@
       "live": false,
       "mode": "bays",
       "premise": "Sort by the size of the ask. A minute, five minutes, one sitting, one evening, or a habit you keep.",
-      "readsWell": "The most practical sheet here. It matches the constraint people actually have — time — and it makes the nine one-minute rooms findable, which is what someone standing at a bus stop can use. Nothing else here does that.",
-      "costs": "It says nothing about what a room is for, so it only works once you already know the app. And these estimates are mine — the app does not measure them, so they would rot quietly.",
+      "readsWell": "The most practical sheet here. It matches the constraint people actually have, time, and it makes the nine one-minute rooms findable, which is what someone standing at a bus stop can use. Nothing else here does that.",
+      "costs": "It says nothing about what a room is for, so it only works once you already know the app. And these estimates are mine. The app does not measure them, so they would rot quietly.",
       "groups": [
         {
           "name": "Under a minute",
@@ -1418,8 +1418,8 @@
       "live": false,
       "mode": "bays",
       "premise": "Sort by vocabulary debt, not by topic. Bay one is understood by a stranger; bay four is understood only by someone who has read this app’s documentation.",
-      "readsWell": "It is the only sheet that treats the NAMES as the problem rather than the arrangement, and on that it is right — no shelf saves a room called “Decumulation”. Sorted this way the jargon debt is a number you can watch go down.",
-      "costs": "Not a navigation structure at all. Nobody browses by reading difficulty. Its honest home is a rename list and a glossary, not a front door — and two rooms already share the name “Enough”, which no amount of shelving fixes.",
+      "readsWell": "It is the only sheet that treats the NAMES as the problem rather than the arrangement, and on that it is right, no shelf saves a room called “Decumulation”. Sorted this way the jargon debt is a number you can watch go down.",
+      "costs": "Not a navigation structure at all. Nobody browses by reading difficulty. Its honest home is a rename list and a glossary, not a front door, and two rooms already share the name “Enough”, which no amount of shelving fixes.",
       "groups": [
         {
           "name": "Needs nothing explained",
@@ -1472,7 +1472,7 @@
             "skill-tree",
             "what-if-life"
           ],
-          "note": "Not a word — a concept. These need a sentence before the room makes sense."
+          "note": "Not a word, a concept. These need a sentence before the room makes sense."
         },
         {
           "name": "Only this app says it like this",
@@ -1496,7 +1496,7 @@
       "mode": "hub",
       "premise": "The problem is not categories, it is that nothing tells you where you are. Pick six rooms as landmarks; every other room is “the one off X”, and no room is ever two hops from a landmark.",
       "readsWell": "It gives the app what it most obviously lacks: a sense of place. “The one off Cash Flow” is a location a person can remember and describe, and six landmarks is genuinely holdable. It also survives the flat dependency graph, because hubs are chosen for memorability, not for prerequisites.",
-      "costs": "Six hubs is six arbitrary decisions, and two of them — Dashboard and What Matters — are carrying twelve spokes each, which is a list again. Rooms that honestly belong to two hubs have to be assigned to one and become unfindable from the other.",
+      "costs": "Six hubs is six arbitrary decisions, and two of them, Dashboard and What Matters, are carrying twelve spokes each, which is a list again. Rooms that honestly belong to two hubs have to be assigned to one and become unfindable from the other.",
       "groups": [
         {
           "name": "Hub · Start Here",
@@ -1588,8 +1588,8 @@
       "by": "The correctness reviewer",
       "live": false,
       "mode": "bays",
-      "premise": "Sort by provenance. Where does each room’s number come from — your own figures, an assumption, a reference table, or nobody at all? Measured, where it can be.",
-      "readsWell": "The only arrangement that tells a person which numbers to trust — which for a money app is arguably the most useful thing a shelf could say. It also turns table confidence into something visible instead of buried in an assumptions drawer, and it would make the 17 unverified tables impossible to ignore.",
+      "premise": "Sort by provenance. Where does each room’s number come from, your own figures, an assumption, a reference table, or nobody at all? Measured, where it can be.",
+      "readsWell": "The only arrangement that tells a person which numbers to trust, which for a money app is arguably the most useful thing a shelf could say. It also turns table confidence into something visible instead of buried in an assumptions drawer, and it would make the 17 unverified tables impossible to ignore.",
       "costs": "It organises by how the app works, not by what a person wants, which is the classic mistake it is otherwise good at catching. Nobody has ever opened an app looking for the “plus one assumption” shelf. Better as a badge on every room than as the shelving itself.",
       "groups": [
         {
@@ -1636,7 +1636,7 @@
           "warn": true
         },
         {
-          "name": "No figure at all — writing",
+          "name": "No figure at all, writing",
           "rooms": [
             "cant-pay",
             "get-help",
@@ -1676,9 +1676,9 @@
       "by": "The accessibility reviewer",
       "live": false,
       "mode": "tree",
-      "premise": "Budget the choosing, not the content. Someone stressed, tired, on a phone, or using a screen reader can hold about three options — so no screen ever offers more than three, all the way down.",
-      "readsWell": "The only sheet designed for the state people are actually in when money is the problem — frightened, tired, one-handed, or listening rather than looking. Three choices reads aloud in about six seconds. It is also the only plan where the deepest room is four taps and every screen fits above the fold.",
-      "costs": "Four taps to everything, every time, including the room you use weekly — depth traded for width, and power users will hate it. And the ninth bay holds ten rooms, so the rule breaks at the bottom exactly where it was supposed to hold.",
+      "premise": "Budget the choosing, not the content. Someone stressed, tired, on a phone, or using a screen reader can hold about three options, so no screen ever offers more than three, all the way down.",
+      "readsWell": "The only sheet designed for the state people are actually in when money is the problem, frightened, tired, one-handed, or listening rather than looking. Three choices reads aloud in about six seconds. It is also the only plan where the deepest room is four taps and every screen fits above the fold.",
+      "costs": "Four taps to everything, every time, including the room you use weekly, depth traded for width, and power users will hate it. And the ninth bay holds ten rooms, so the rule breaks at the bottom exactly where it was supposed to hold.",
       "groups": [
         {
           "name": "Wrong right now › Money is short",

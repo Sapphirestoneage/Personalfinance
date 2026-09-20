@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/exercises.js — the exercise library: every doable unit in one
+   engines/exercises.js, the exercise library: every doable unit in one
    shape, five kinds, and the `run` kind computed on the household.
    DECISIONS.md D-131.
    --------------------------------------------------------------------------
@@ -7,7 +7,7 @@
      quest   an "I don't know" from the quiz turned into a look-up (v6.3)
      dare    the daily and thirty-day loop items (v6.3)
      canon   a named exercise from the FI canon, credited to its source and
-             described in our own words — never quoted
+             described in our own words, never quoted
      run     a calculation the APP performs on the household through the
              engine that owns it, which the person then judges; it carries a
              result to store and compare later
@@ -164,7 +164,7 @@
   }
 
   /**
-   * compute(h, T, id, opts) — a `run` exercise's figure, or why not. A
+   * compute(h, T, id, opts), a `run` exercise's figure, or why not. A
    * non-run returns incomplete: there is nothing to compute.
    */
   function compute(h, T, id, opts) {
@@ -179,7 +179,7 @@
   }
 
   /**
-   * list(h, T, opts) — the library as it applies to this household.
+   * list(h, T, opts), the library as it applies to this household.
    *   opts.kind          one of KINDS, or null for all
    *   opts.maxMinutes    default 15; null for no cap
    *   opts.snapshots     for the tree engine

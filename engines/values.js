@@ -1,8 +1,8 @@
 /* ==========================================================================
-   engines/values.js — Values vs. Spending Audit. SPEC.md §13, Tier 2.
+   engines/values.js, Values vs. Spending Audit. SPEC.md §13, Tier 2.
    --------------------------------------------------------------------------
    "Stated top-5 values vs. actual last-month spending. The 'gap' output is
-   inherently qualitative/visual — design as a comparison view, not a scalar."
+   inherently qualitative/visual, design as a comparison view, not a scalar."
 
    Taken literally. This file produces NO score. There is no alignment
    percentage, no rank correlation, no grade. It returns two ordered lists
@@ -22,7 +22,7 @@
        room stores their answer and this file prefers it wherever it exists.
 
    Needs categorised spending from the Cash Flow room. Without it, incomplete
-   — never a table of zeroes.
+, never a table of zeroes.
    ========================================================================== */
 (function (root, factory) {
   var deps;
@@ -68,10 +68,10 @@
 
   /**
    * Which value a category serves, and on whose authority.
-   *   'stated'   — the person said so
-   *   'default'  — the catalogue's starting point, untouched
-   *   'none'     — the person explicitly said it serves nothing they named
-   *   'unmapped' — the catalogue deliberately leaves it unclaimed
+   *   'stated'. The person said so
+   *   'default', the catalogue's starting point, untouched
+   *   'none', the person explicitly said it serves nothing they named
+   *   'unmapped', the catalogue deliberately leaves it unclaimed
    */
   function assignmentFor(household, table, categoryId) {
     var p = profileOf(household);
@@ -110,8 +110,8 @@
    *   { id, label, statedRank | null, monthlyCents, shareOfSpend,
    *     spendRank, categories[] }
    *
-   * plus the two orderings the room actually draws — `byStated` and
-   * `bySpend` — and the money that serves nothing the person named.
+   * plus the two orderings the room actually draws, `byStated` and
+   * `bySpend`, and the money that serves nothing the person named.
    *
    * `value` is the total monthly spending the rows account for, so a caller
    * can check the shares against something real. It is NOT a score.
@@ -122,7 +122,7 @@
     var summary = CashFlow.summarise(household, catalog);
     if (!Money.isOk(summary)) {
       return Money.incomplete(
-        'Split a month by category in Expenses first — this compares what you said '
+        'Split a month by category in Expenses first, this compares what you said '
           + 'matters against where the money actually went.',
         ['expenseEntries']);
     }
@@ -132,7 +132,7 @@
     stated.forEach(function (s) { statedRank[s.id] = s.rank; });
 
     /* Every dollar in the summary is rolled up under the value it serves,
-       named or not — the right-hand column is more useful when it can show
+       named or not, the right-hand column is more useful when it can show
        a value that eats a third of the money and never made the list.
        Savings categories are included: money put away serves something, and
        for anyone whose top value is Freedom or Security it is the main way
@@ -172,7 +172,7 @@
       });
     });
 
-    /* A named value with no spending against it still gets a row — that is
+    /* A named value with no spending against it still gets a row. That is
        one of the two things this tool exists to show. */
     stated.forEach(function (s) {
       if (!byValue[s.id]) byValue[s.id] = { monthlyCents: 0, categories: [] };
@@ -207,7 +207,7 @@
       byStated: byStated,
       bySpend: bySpend,
       statedCount: stated.length,
-      /* Money serving nothing on the list — a category with no value at
+      /* Money serving nothing on the list, a category with no value at
          all, or one whose value never made the top five. Shown, not
          scored. Together with the stated rows it accounts for every
          dollar exactly once. */
@@ -223,7 +223,7 @@
 
   /**
    * Every spending category with money against it, and what it is currently
-   * assigned to — the list the room turns into a row of choices. Categories
+   * assigned to, the list the room turns into a row of choices. Categories
    * with nothing spent are left out; there is nothing to decide about them.
    */
   function assignableCategories(household, table, catalog) {

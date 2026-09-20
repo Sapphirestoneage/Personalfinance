@@ -4,8 +4,8 @@
   "asOf": "2026-01-01",
   "source": "The Skill Stacker's catalogue: twenty-six money skills, each tied to one of the seven Dungeons & Dividends classes (its lever) and the sub-stats it trains, with an effect either verified from the household's own facts or valued by a stated convention (BRIEF §7.1).",
   "confidence": "convention",
-  "confidenceNote": "Every dollar figure here is a rule of thumb — a third off the dining line for cooking, $300 a year for a phone call — and says so in its source line. Effort figures are guesses at learning hours and daily practice minutes. Nothing here is measured.",
-  "note": "kind: once (done when verified or marked), habit (logged daily; decays after decayDays missed), periodic (due every everyDays). effect: cents_per_year with a fixed cents or a formula in the events engine's expression language over the household context; risk effects are worth $0 by design. verify: a household fact that marks a once-skill done on load — field is an ownership row; present / equals / gteField / source. fooStep: the FOO step this belongs to (0 = any). level: 1 starter, 2 built, 3 practised. rules: the thresholds the engine reads, see there. D-090.",
+  "confidenceNote": "Every dollar figure here is a rule of thumb, a third off the dining line for cooking, $300 a year for a phone call, and says so in its source line. Effort figures are guesses at learning hours and daily practice minutes. Nothing here is measured.",
+  "note": "kind: once (done when verified or marked), habit (logged daily; decays after decayDays missed), periodic (due every everyDays). effect: cents_per_year with a fixed cents or a formula in the events engine's expression language over the household context; risk effects are worth $0 by design. verify: a household fact that marks a once-skill done on load, field is an ownership row; present / equals / gteField / source. fooStep: the FOO step this belongs to (0 = any). level: 1 starter, 2 built, 3 practised. rules: the thresholds the engine reads, see there. D-090.",
   "rules": {
     "maxEquipped": 3,
     "windowDays": 30,
@@ -277,7 +277,7 @@
       "everyDays": null,
       "fooStep": 0,
       "level": 2,
-      "source": "A year of the flagged lines that are not needs — housing flagged as 'cut' is a finding, not a saving. The Rerank, D-085."
+      "source": "A year of the flagged lines that are not needs, housing flagged as 'cut' is a finding, not a saving. The Rerank, D-085."
     },
     {
       "id": "raise-one-point",
@@ -571,7 +571,7 @@
       "everyDays": null,
       "fooStep": 0,
       "level": 1,
-      "source": "$10 a working day less on lunch, 3 days a week — about $1,800 a year; a convention."
+      "source": "$10 a working day less on lunch, 3 days a week, about $1,800 a year; a convention."
     },
     {
       "id": "cut-one-line",
@@ -703,7 +703,7 @@
       "everyDays": 365,
       "fooStep": 0,
       "level": 3,
-      "source": "A 3% ask once a year, granted about half the time — shown at the full 3%, a convention."
+      "source": "A 3% ask once a year, granted about half the time, shown at the full 3%, a convention."
     },
     {
       "id": "know-your-market",
@@ -786,7 +786,7 @@
       "everyDays": 30,
       "fooStep": 0,
       "level": 1,
-      "source": "Cash, investments, debts — the Refresh page, monthly."
+      "source": "Cash, investments, debts, the Refresh page, monthly."
     },
     {
       "id": "annual-review",

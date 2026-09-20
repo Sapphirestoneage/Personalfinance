@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/downpayment.js — the Down Payment Countdown.
+   engines/downpayment.js, the Down Payment Countdown.
    DECISIONS.md D-217 (K6).
    --------------------------------------------------------------------------
    For a home price, what each down payment share (3.5% FHA, 5%, 10%, 20%)

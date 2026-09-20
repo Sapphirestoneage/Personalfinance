@@ -1,10 +1,10 @@
 /* ==========================================================================
-   engines/statement.js — what the 10x Statement says about a balance sheet.
+   engines/statement.js, what the 10x Statement says about a balance sheet.
    --------------------------------------------------------------------------
    Net worth is one number. This is the set of questions a balance sheet
    should also answer, each its own function returning a Result:
 
-     portfolios               three portfolios, not one list — liquid
+     portfolios               three portfolios, not one list, liquid
                               financial · illiquid financial · non-financial
      confidenceWeightedNetWorth  Σ value × how sure you are, beside the plain
      liquidityLadder          the five piles as reachable today · this month · this year · never,
@@ -122,7 +122,7 @@
 
   /**
    * liquidityLadder(household, rules, opts)
-   *   opts.age  — overrides the primary person's age (tests)
+   *   opts.age, overrides the primary person's age (tests)
    * 15.8: a VIEW of the five piles (Schema.tierOf), not its own data.
    * Cash is reachable today; taxable investments within a month; retirement
    * money within a year once its access age is reached (a Roth's basis at
@@ -240,7 +240,7 @@
   /**
    * worstPlausibleYear(household, tables)
    * Every deductible you carry, every out-of-pocket maximum, six months of
-   * essentials, less what unemployment would pay — against cash. Value =
+   * essentials, less what unemployment would pay, against cash. Value =
    * dollars short after cash (0 = covered).
    */
   function worstPlausibleYear(household, tables) {
@@ -313,7 +313,7 @@
 
   /**
    * propertyMetrics(household, property, opts)
-   *   opts.vacancyRate — the assumption when the record has none (0.08)
+   *   opts.vacancyRate, the assumption when the record has none (0.08)
    * NOI = (rent × (1 − vacancy) − opex) × 12. Cap rate = NOI / value.
    * Debt service = PITI × 12. DSCR = NOI / debt service. Cash-on-cash =
    * (NOI − debt service) / equity, equity = value − mortgage balance.

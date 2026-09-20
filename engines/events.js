@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/events.js — one life event, three ways. BRIEF §6.1, D-087.
+   engines/events.js, one life event, three ways. BRIEF §6.1, D-087.
    --------------------------------------------------------------------------
      Events.answers(template, given, env)        every question answered:
                                                  what was given, else the
@@ -11,8 +11,8 @@
      Events.evaluate(expr, env)                  the tiny expression language
                                                  templates are written in
 
-   A template is DATA (data/events/*.json): questions, and a diff — dated
-   overlays on income and expenses, one-time costs, asset moves — written
+   A template is DATA (data/events/*.json): questions, and a diff, dated
+   overlays on income and expenses, one-time costs, asset moves, written
    as expressions over the answers ("@months"), the household ("$cashCents")
    and the reference tables ({"table": "travelBands", "path": [...]}). The
    engine applies the diff, then the Triple D bundle (data/triple_d.json):
@@ -126,7 +126,7 @@
       }
       case 'growTo': {
         /* A balance with a yearly contribution, grown for some years at a
-           rate — the one projection loop. */
+           rate, the one projection loop. */
         return val(Projection.futureValueCents({ startCents: args.startCents, annualRate: args.annualRate, years: Math.max(0, Math.round(args.years)), annualContributionCents: args.annualContributionCents || 0 }));
       }
       case 'ssMonthly': {
@@ -341,7 +341,7 @@
 
     var env = { ctx: ctx, tables: tables, answers: {}, household: household };
     env.answers = answers(tpl, given, env);
-    /* Derived figures a template names once and uses many times — written
+    /* Derived figures a template names once and uses many times, written
        into the context under their own names, in order, after the answers. */
     (tpl.derived || []).forEach(function (dv) { env.ctx = ctx = Object.assign({}, ctx); ctx[dv.id] = evaluate(dv.value, env); });
     var bundle = bundleFor(tables, tpl, d);
@@ -401,7 +401,7 @@
     if (!ctx.matchKnown) flags.push({ key: 'matchUnknown', month: null, text: 'No 401(k) contribution entered, so no match is counted either way.' });
     var cash = ctx.cashCents, inv = ctx.investmentsCents, other = ctx.otherAssetsCents, debt = ctx.totalDebtCents;
     /* Loans a template takes on: a balance that amortises at the level
-       payment (engines/projection.js) — the payment itself is an expense
+       payment (engines/projection.js), the payment itself is an expense
        the template adds; here only the balance moves. */
     var loans = [];
     var monthly = [], runwayMin = null, lostMatch = 0, firstNegative = null, lowRunway = null;
@@ -442,8 +442,8 @@
       oneTimes.forEach(function (it) { if (it.when === m && it.cents !== null) cash -= it.cents; });
       assetMoves.forEach(function (it) {
         if (it.when !== m || it.cents === null) return;
-        /* source 'none': the target simply changes — a forfeited match, a
-           write-down — with no cash on the other side. */
+        /* source 'none': the target simply changes, a forfeited match, a
+           write-down, with no cash on the other side. */
         if (it.source !== 'none') cash -= it.cents;
         if (it.target === 'investments') inv += it.cents;
         else if (it.target === 'cash') cash += it.cents;      /* money arriving, with no source here */
@@ -507,8 +507,8 @@
     /* FI from the end state, on the dashboard's own terms (Tier0.yearsToFire):
        everything left over is invested. So what is invested then, plus the
        cash beyond the cushion floor, grows at the household's assumption
-       with the end state's residual savings — income less spending, plus
-       the plan and the match — continuing each year. */
+       with the end state's residual savings, income less spending, plus
+       the plan and the match, continuing each year. */
     var end = monthly[monthly.length - 1];
     var fiMonths = null;
     if (Money.isEntered(ctx.fireNumberCents)) {
@@ -556,7 +556,7 @@
     return out;
   }
 
-  /* Choice lists read from a reference table — one resolver, in the loader
+  /* Choice lists read from a reference table, one resolver, in the loader
      (shared/reference.js), shared with the block library. D-297. */
   function resolveChoices(template, tables) {
     var R = (typeof module === 'object' && module.exports) ? require('../shared/reference.js') : ((typeof self !== 'undefined' && self.SLAF) ? self.SLAF.Reference : null);

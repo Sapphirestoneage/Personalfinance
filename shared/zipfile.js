@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/zipfile.js — the one zip writer and reader. DECISIONS.md D-222.
+   shared/zipfile.js, the one zip writer and reader. DECISIONS.md D-222.
    --------------------------------------------------------------------------
    A spreadsheet zip (D-210) and an Excel workbook (D-222) are both zips, so
    there is one of these, not two.

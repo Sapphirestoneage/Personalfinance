@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/kids.js — the Kids and Tuition room's plan.
+   engines/kids.js, the Kids and Tuition room's plan.
    DECISIONS.md D-099 (the second wave of tranche rooms on the template).
    --------------------------------------------------------------------------
    Two things, per child and for the household:
@@ -35,7 +35,7 @@
    child without an age is costed as an infant (the youngest band, childcare
    included, eighteen years to go) and says so. A child at or past 18 costs
    nothing here and their tuition is due now. The saved pot goes to the
-   child whose bill comes first — the oldest — then the next, because that
+   child whose bill comes first, the oldest, then the next, because that
    is what one pot does. Empty is never zero: a target of nothing, or none
    entered, means no tuition line rather than a $0 need.
 
@@ -99,7 +99,7 @@
     }
     if (table.national && Money.isEntered(table.national.monthlyCents)) {
       return { cents: table.national.monthlyCents, source: 'national',
-        reason: code ? 'No childcare figure for ' + code + ' — the national figure stands in.' : 'No state entered — the national figure stands in. Set it in Start Here.' };
+        reason: code ? 'No childcare figure for ' + code + ', the national figure stands in.' : 'No state entered, the national figure stands in. Set it in Start Here.' };
     }
     return { cents: null, source: null, reason: code ? 'No childcare figure for ' + code + '.' : 'No state entered, and the table has no national figure.' };
   }
@@ -123,12 +123,12 @@
   }
 
   /**
-   * plan(household, tables) — the room's one call.
+   * plan(household, tables), the room's one call.
    */
   function plan(household, tables) {
     var h = household || {};
     var deps = Schema.createDependents(h.dependents);
-    if (deps === null) return Money.incomplete('Nobody depending on you is entered yet — say who in Start Here.', ['dependents']);
+    if (deps === null) return Money.incomplete('Nobody depending on you is entered yet, say who in Start Here.', ['dependents']);
     if (!deps.length) return Money.incomplete('Nobody depends on your income, so there is nothing to cost here.', ['dependents']);
     var costs = costTable(tables);
     if (!costs) return Money.incomplete('The child cost table (data/child_cost.json) is not loaded.', ['childCost']);
@@ -152,7 +152,7 @@
         daySchoolCents: 0, monthlyCents: 0, yearsTo18: past18 ? 0 : ADULT_AT - age
       };
       if (past18) {
-        c.note = 'Past 18 — no cost band here, and any tuition is due now.';
+        c.note = 'Past 18, no cost band here, and any tuition is due now.';
         return c;
       }
       var band = bandFor(costs, age * MONTHS);
@@ -167,7 +167,7 @@
       }
       if (daySchoolMonthly !== null && age >= SCHOOL_FROM) c.daySchoolCents = daySchoolMonthly;
       c.monthlyCents = c.costCents + (Money.isEntered(c.childcareCents) ? c.childcareCents : 0) + c.daySchoolCents;
-      if (!ageKnown) c.note = 'Age not entered — costed as an infant (the youngest band, childcare included, eighteen years to 18). Add the age in Start Here.';
+      if (!ageKnown) c.note = 'Age not entered, costed as an infant (the youngest band, childcare included, eighteen years to 18). Add the age in Start Here.';
       return c;
     });
 

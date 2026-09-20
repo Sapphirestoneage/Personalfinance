@@ -1,17 +1,17 @@
 /* ==========================================================================
-   engines/enough.js — Enough as the denominator.
+   engines/enough.js, Enough as the denominator.
    BRIEF §8, DECISIONS.md D-093 (the draft), D-101 (the room).
    --------------------------------------------------------------------------
    Enough is the monthly figure you would live on by choice. It is typed, or
-   it is proposed: from the joy curve (engines/fulfillment.js) — what you
+   it is proposed: from the joy curve (engines/fulfillment.js), what you
    spend, less the rated lines in the two low-joy quadrants that are not
-   essential — or, until a month is categorised and rated, as 85% of
+   essential, or, until a month is categorised and rated, as 85% of
    spending, a convention and named as one. Either way it becomes a second
    FI number beside the one spending makes, and the distance between the
    two, in dollars and in years, is the cost of not knowing your enough.
 
    Nothing here is a formula of its own. The FI number is Tier0.fireNumber
-   on a view of the household whose month is Enough — one function, the
+   on a view of the household whose month is Enough, one function, the
    same withdrawal rate. The years are Projection.yearsToTargetCents at the
    real return with this year's savings, fractional, exactly the way the
    lens (shared/lens.js fiInputs/yearsFrom) counts months bought and pushed,
@@ -94,7 +94,7 @@
     if (Money.isEntered(e.monthlyCents)) return Money.ok(e.monthlyCents, { source: e.source || 'entered', proposed: false });
     var p = propose(household, tables);
     if (Money.isOk(p)) return Money.ok(p.value, { source: p.basis, proposed: true, curve: p.curve || null, proposalSource: p.source });
-    return Money.incomplete('Set your Enough — type it, or add your monthly expenses so one can be proposed.', ['enough']);
+    return Money.incomplete('Set your Enough, type it, or add your monthly expenses so one can be proposed.', ['enough']);
   }
 
   /* A view of the household whose month is `monthlyCents`, so Tier0's FIRE
@@ -104,7 +104,7 @@
     return Schema.withMonthlySpend(household, monthlyCents);
   }
 
-  /* Years to a target at this year's savings and the real return — the
+  /* Years to a target at this year's savings and the real return, the
      lens's arithmetic (shared/lens.js fiInputs + yearsFrom), fractional so
      a small change moves it a small amount. */
   function contribution(household, tables) {
@@ -125,7 +125,7 @@
 
   /**
    * The two FI numbers and the distance between them. `value` is the gap
-   * in cents — FI on spending less FI on enough, the cost of not knowing
+   * in cents, FI on spending less FI on enough, the cost of not knowing
    * your enough; negative when enough sits above spending. The years to
    * each ride along as Results, incomplete on their own (no investments,
    * nothing saved) without taking the numbers with them.

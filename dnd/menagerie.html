@@ -6,18 +6,18 @@
 <meta name="slaf-build" content="2026-09-20 01:28Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="shared/errlog.js"></script>
-<title>The Menagerie — Dungeons &amp; Dividends</title>
+<title>The Menagerie, Dungeons &amp; Dividends</title>
 <meta name="description" content="Twenty-nine things that come for people's money, each with what it does and what stops it. Tap the ones that have happened to you."/>
 <meta property="og:type" content="website"/>
 <meta property="og:site_name" content="Dungeons &amp; Dividends"/>
-<meta property="og:title" content="The Menagerie — Dungeons &amp; Dividends"/>
+<meta property="og:title" content="The Menagerie, Dungeons &amp; Dividends"/>
 <meta property="og:description" content="Twenty-nine things that come for people’s money. Tap the ones that have happened to you."/>
 <meta property="og:url" content="https://sapphirestoneage.github.io/Personalfinance/dnd/menagerie.html"/>
 <meta property="og:image" content="https://sapphirestoneage.github.io/Personalfinance/dnd/og.png"/>
 <meta property="og:image:width" content="1200"/>
 <meta property="og:image:height" content="630"/>
 <meta name="twitter:card" content="summary_large_image"/>
-<meta name="twitter:title" content="The Menagerie — Dungeons &amp; Dividends"/>
+<meta name="twitter:title" content="The Menagerie, Dungeons &amp; Dividends"/>
 <meta name="twitter:description" content="Twenty-nine things that come for people’s money. Tap the ones that have happened to you."/>
 <meta name="twitter:image" content="https://sapphirestoneage.github.io/Personalfinance/dnd/og.png"/>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
@@ -25,7 +25,7 @@
 <link rel="stylesheet" href="shared/theme.css"/>
 <link rel="stylesheet" href="shared/skin.css"/>
 <!--
-  THE MENAGERIE — DD-028.
+  THE MENAGERIE, DD-028.
 
   The front door for people who will not fill in a form for a stranger's
   website but will absolutely read a bestiary. No inputs anywhere; every
@@ -33,7 +33,7 @@
 
   THE HONESTY RULE THIS PAGE EXISTS UNDER. Tapping "this one got me" is a
   SELF-REPORT. It is better input than a self-rating, because it reports an
-  event rather than an opinion of yourself — but it is not a measurement, and
+  event rather than an opinion of yourself, but it is not a measurement, and
   this page never writes a score, a sub-stat or a class. Everything derived
   from marks sits under one heading that says so, and the read admits its own
   bias: you cannot recognise the creature you never noticed, so slow erosion
@@ -42,7 +42,7 @@
 <style>
   /* Dungeons & Dividends keeps the characterful faces the shared theme gave
      up in D-154. A game wants a display serif; a financial statement does
-     not. theme.css stays byte-identical to the SPARKS copy — this override
+     not. theme.css stays byte-identical to the SPARKS copy, this override
      lives here, in the pages that want it. */
   :root {
     --font-display: 'Fraunces', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
@@ -97,7 +97,7 @@
 
   <h1>The Menagerie</h1>
   <p class="note">Twenty-nine things that come for people's money. Each one has a save it attacks, damage it
-     does, and something specific that stops it. <b>Tap the ones that have actually happened to you</b> —
+     does, and something specific that stops it. <b>Tap the ones that have actually happened to you</b>. 
      nothing is stored anywhere but this browser, and there is no form on this page at all.</p>
 
   <div id="read"></div>
@@ -159,7 +159,7 @@
       return '<div class="cage' + (m[c.name] ? ' marked' : '') + '">'
         + '<div class="nm">' + esc(c.name) + '</div>'
         + '<div class="meta">CR ' + esc(c.cr) + ' &middot; goes at your '
-        + esc(ABILITY[c.saveAbility || c.save] || c.save || '—') + ' &middot; ' + esc(c.damage || '') + '</div>'
+        + esc(ABILITY[c.saveAbility || c.save] || c.save || 'not yet') + ' &middot; ' + esc(c.damage || '') + '</div>'
         + '<div class="desc">' + esc(c.note || '') + '</div>'
         + (stops.length
             ? '<div class="stops"><b>Stopped by:</b> ' + esc(stops.join(', ')) + '</div>'
@@ -180,7 +180,7 @@
     if (!r.ready || r.count < 3) {
       html('read', r.count > 0
         ? '<p class="note faint">' + r.count + ' marked. At three the page will tell you what they had in '
-          + 'common — which is worth more than any single one of them.</p>'
+          + 'common, which is worth more than any single one of them.</p>'
         : '');
       return;
     }
@@ -190,7 +190,7 @@
       || (r.saves.length > 1 && top.n > r.saves[1].n);
     var blockLine = r.blockers.length
       ? 'The thing that would have stopped the most of them is <b>' + esc(blockerName(r.blockers[0].id))
-        + '</b>' + (r.blockers[0].n > 1 ? ' — it blocks ' + r.blockers[0].n + ' of your ' + r.count + '.' : '.')
+        + '</b>' + (r.blockers[0].n > 1 ? ', it blocks ' + r.blockers[0].n + ' of your ' + r.count + '.' : '.')
       : '';
 
     html('read',
@@ -199,7 +199,7 @@
       + '<div class="big">'
       + (sameDoor
           ? 'They nearly all came at the same door: <b>' + esc(ABILITY[top.ability] || top.ability) + '</b>.'
-          : 'They came at different doors — ' + r.saves.map(function (s) {
+          : 'They came at different doors, ' + r.saves.map(function (s) {
               return esc(ABILITY[s.ability] || s.ability); }).join(', ') + '.')
       + '</div>'
       + '<p class="note" style="margin-bottom:var(--space-2)">'
@@ -210,7 +210,7 @@
       + 'cannot tell the difference. A character would.</p>'
       + '</div>'
       + '<div class="caveat"><b>And one bias worth knowing about.</b> You can only recognise the creature you '
-      + 'noticed. The loud ones — the boiler, the layoff — get marked far more than the quiet ones, and the '
+      + 'noticed. The loud ones, the boiler, the layoff, get marked far more than the quiet ones, and the '
       + 'quiet ones are where most money actually goes. Whatever this says about you, it says nothing at all '
       + 'about the things you did not spot.</div>');
   }
@@ -231,7 +231,7 @@
     var n = el('load-notice');
     n.hidden = false;
     n.textContent = 'Couldn’t load the bestiary (' + err.message + '). If you opened this file directly it '
-      + 'needs to be served over http — try the published link instead.';
+      + 'needs to be served over http, try the published link instead.';
   });
 })();
 </script>

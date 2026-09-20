@@ -8,12 +8,12 @@
 <script src="../shared/errlog.js"></script>
 <script src="../shared/size.js"></script>
 <title>Debt · SPARKS</title>
-<meta name="description" content="Every debt in the order you will clear them and what a different order costs — the three student-loan plans side by side, and what a credit file is actually made of."/>
+<meta name="description" content="Every debt in the order you will clear them and what a different order costs, the three student-loan plans side by side, and what a credit file is actually made of."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-061, D-101, D-279 (the merge).
+  ROOM SPEC, SPEC.md §11. DECISIONS.md D-061, D-101, D-279 (the merge).
   Registry: debt-payoff.
 
   THREE READINGS OF WHAT YOU OWE.
@@ -272,7 +272,7 @@
   #view-the-order .strategy { text-align: left; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-raised); padding: var(--space-3); cursor: pointer; font-family: var(--font-body); color: var(--color-text); }
   
   #view-the-order .strategy[aria-pressed="true"] { border-color: var(--color-border-active); background: var(--color-surface-active); }
-  /* Name, interest, time to clear — three columns on fixed rails, so the
+  /* Name, interest, time to clear, three columns on fixed rails, so the
      four orderings read down as a table and not as four ragged cards. */
   #view-the-order .strategy-head { display: grid; grid-template-columns: minmax(0, 1fr) 9ch 10ch; gap: var(--space-3); align-items: baseline; }
   #view-the-order .strategy-name { font-weight: 600; min-width: 0; }
@@ -290,7 +290,7 @@
   #view-the-order .strategy-blurb { font-size: var(--text-xs); }
   }
   /* Reasons to keep it (D-132): the rational axis, beside "Feels like".
-     A chip is on, off, or suggested — suggested is dashed and says so,
+     A chip is on, off, or suggested, suggested is dashed and says so,
      and nothing is stored until it is confirmed. */
   
   #view-the-order .keep { margin-top: var(--space-3); padding-top: var(--space-2); border-top: 1px solid var(--color-border); }
@@ -519,10 +519,10 @@
 
   <!-- ===== THE ORDER (was rooms/debt-payoff.html) ===== -->
   <section id="view-the-order">
-  <p class="slaf-lede">Every debt, in the order you will clear them — and what a different order would cost or save.</p>
+  <p class="slaf-lede">Every debt, in the order you will clear them, and what a different order would cost or save.</p>
   <section class="slaf-card" id="out-plan">
     <span class="slaf-eyebrow">Debt-free in</span>
-    <div class="slaf-figure" data-figure>—</div>
+    <div class="slaf-figure" data-figure>not yet</div>
     <p class="slaf-reason" data-reason></p>
     <div data-detail></div>
     <label class="slaf-field stop-field" id="stop">
@@ -571,7 +571,7 @@
   <details class="slaf-card fold-card" id="out-strategies">
     <summary><span class="slaf-eyebrow">Which order</span><span class="fold-card-sum" id="strategy-sum"></span></summary>
     <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
-      Same money every month — only the order changes. Total interest shown.
+      Same money every month, only the order changes. Total interest shown.
     </p>
     <div class="strategies" id="strategy-list"></div>
     <div id="strategy-chart"></div>
@@ -627,7 +627,7 @@
 
   <!-- ===== STUDENT LOANS (was rooms/student-loans.html) ===== -->
   <section id="view-the-loans" hidden>
-  <p class="slaf-lede">Standard, income-driven, or aggressive: what each pays a month, when each clears, and what each costs in interest — for the loans you listed.</p>
+  <p class="slaf-lede">Standard, income-driven, or aggressive: what each pays a month, when each clears, and what each costs in interest, for the loans you listed.</p>
   <div class="room-standalone" id="sl-room-standalone" hidden></div>
 
   <section class="slaf-card" id="sl-number">
@@ -686,8 +686,8 @@
     <span class="slaf-eyebrow">Before anything else</span>
     <p class="no-score">
       <strong>There is no score on this page, and there cannot be.</strong>
-      A credit score is worked out by a credit bureau — a company that keeps a
-      file on you — from records this app has never seen: every account in your
+      A credit score is worked out by a credit bureau, a company that keeps a
+      file on you, from records this app has never seen: every account in your
       name, every payment, every time someone checked you out. Nothing here adds
       up to a number out of 850, and any page that offered you one from what you
       have typed into it would be making it up. What this room does instead is
@@ -725,7 +725,7 @@
     <span class="slaf-eyebrow">What this app can actually see</span>
     <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
       Two of the five, from the debts you have listed. A figure left blank
-      below is missing, not zero — it says what it needs.
+      below is missing, not zero. It says what it needs.
     </p>
     <ul class="rows" id="seen-list"></ul>
   </section>
@@ -742,7 +742,7 @@
   <section class="slaf-card" id="out-rights">
     <span class="slaf-eyebrow">What you are entitled to, free</span>
     <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">
-      Named, not linked. This app sends you nowhere and is paid by nobody —
+      Named, not linked. This app sends you nowhere and is paid by nobody, 
       type the address in yourself, and check it is the one written here.
     </p>
     <ul class="rows" id="rights-list"></ul>
@@ -817,7 +817,7 @@
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
    so its hat is ABSENT, not greyed, when the branch is not there (D-271).
-   The hash still reaches it — an old link must land somewhere honest — and
+   The hash still reaches it, an old link must land somewhere honest, and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
   'use strict';
@@ -837,8 +837,8 @@
     var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
     /* The default reading is the last row and matches everything, so there
        is always one. When the hash asks for a reading the gate has taken
-       away, fall back to the DEFAULT — the room's plainest reading, and the
-       one the person would have got with no hash at all — not to whichever
+       away, fall back to the DEFAULT, the room's plainest reading, and the
+       one the person would have got with no hash at all, not to whichever
        gated reading happens to sit first in this list. */
     var fallback = VIEWS[VIEWS.length - 1];
     var on = open(asked) ? asked
@@ -930,7 +930,7 @@
     }) });
   }
 
-  /* What a debt still needs before it can be planned — said live, under the
+  /* What a debt still needs before it can be planned, said live, under the
      row, because the row itself is not rebuilt while someone is typing in
      it (shared/liveform.js) and a stale warning read as a broken one. */
   function warningFor(d) {
@@ -1027,11 +1027,11 @@
                 + '<p class="debt-hint" data-family-hint="' + d.id + '"' + (d.type === 'family' ? '' : ' hidden') + '>With a due date and no monthly amount, the minimum is the balance spread over the months left.</p>'
                 + '<div class="debt-limit" data-cardonly="' + d.id + '"' + (d.type === 'credit_card' ? '' : ' hidden') + '>'
                 + field(d, 'creditLimitCents', 'Credit limit', '$', null, 'e.g. 10000')
-                + '<p class="debt-hint">Optional, and only used for credit utilisation — '
+                + '<p class="debt-hint">Optional, and only used for credit utilisation, '
                 + 'balance against limit, where 30% is the usual ceiling. Blank means the '
                 + 'ratio stays unavailable rather than guessed.</p></div>')
             + '<div class="debt-acts">'
-            + '<button type="button" class="debt-archive" data-archive="' + d.id + '" title="Paid off or on hold — keep it, stop counting it">Set aside</button>'
+            + '<button type="button" class="debt-archive" data-archive="' + d.id + '" title="Paid off or on hold, keep it, stop counting it">Set aside</button>'
             + '<button type="button" class="debt-remove" data-remove="' + d.id + '" aria-label="Remove">✕ Remove</button>'
             + '</div>')
         + '<p class="debt-warn" data-warn="' + d.id + '"></p>'
@@ -1060,9 +1060,9 @@
     }).join('');
   }
 
-  /* Everything under a row that is text or a hidden flag — the warning,
+  /* Everything under a row that is text or a hidden flag, the warning,
      the promo line, which blocks show for the type, whether the rate box
-     is live — painted on every write WITHOUT rebuilding the row. This is
+     is live, painted on every write WITHOUT rebuilding the row. This is
      what keeps the row honest while the user is still inside it. */
   function paintLive() {
     var debts = debtsOf(Spine.getProfile());
@@ -1093,7 +1093,7 @@
   /* Some debts do not behave like the rest, and the difference is worth
      real money. Medical is the strongest case: it is the most negotiable
      debt most people hold, it is frequently wrong, and paying it off takes
-     it off a credit report entirely — none of which is true of anything
+     it off a credit report entirely, none of which is true of anything
      else on this page. The notes live in data/debt_rules.json under
      `kindNotes` so the room states them rather than knowing them. D-151. */
   function kindNote(d) {
@@ -1239,7 +1239,7 @@
   }
 
   /* The only number that matters about a 0% card: whether you clear it
-     before the rate jumps, and what it takes if you will not. Text only —
+     before the rate jumps, and what it takes if you will not. Text only. 
      it never touches a control. D-053. */
   function paintPromos() {
     var debts = Spine.getProfile().debts || [];
@@ -1252,7 +1252,7 @@
         node.className = 'debt-promo is-warn';
         node.textContent = 'That promotional rate has already ended'
           + (status.knowsAfter
-              ? ' — this is being planned at ' + Money.formatRate(status.postRate, { decimals: 2 }) + '.'
+              ? '. This is being planned at ' + Money.formatRate(status.postRate, { decimals: 2 }) + '.'
               : '. Add the rate it reverted to so the plan is honest.');
         return;
       }
@@ -1260,14 +1260,14 @@
         node.className = 'debt-promo is-warn';
         node.textContent = status.monthsLeft + ' month'
           + (status.monthsLeft === 1 ? '' : 's') + ' of the promo left. Add the rate it '
-          + 'reverts to — without it this is planned as though 0% lasts forever.';
+          + 'reverts to, without it this is planned as though 0% lasts forever.';
         return;
       }
       var plan = Debt.clearBeforePromoEnds(d);
       if (!Money.isOk(plan)) { node.textContent = plan.reason; node.className = 'debt-promo'; return; }
       if (plan.alreadyClear) {
         node.className = 'debt-promo is-good';
-        node.textContent = 'Nothing owed — the promo end date does not matter.';
+        node.textContent = 'Nothing owed, the promo end date does not matter.';
         return;
       }
       node.className = 'debt-promo ' + (plan.clearsInTime ? 'is-good' : 'is-warn');
@@ -1278,7 +1278,7 @@
         : status.monthsLeft + ' month' + (status.monthsLeft === 1 ? '' : 's')
           + ' left. At ' + Money.formatCents(plan.payingCents) + '/mo you will still owe '
           + Money.formatCents(plan.leftWhenPromoEndsCents) + ' when the rate jumps to '
-          + Money.formatRate(status.postRate, { decimals: 2 }) + ' — clearing it in time takes '
+          + Money.formatRate(status.postRate, { decimals: 2 }) + ', clearing it in time takes '
           + Money.formatCents(plan.value) + '/mo.';
     });
   }
@@ -1328,7 +1328,7 @@
     writeField(id, key, node.value);
     if (DATE_FIELDS[key]) return;
     /* Tidy the value on THIS node rather than waiting for a rebuild to do
-       it — the rebuild is now deferred until the user leaves the form, and
+       it. The rebuild is now deferred until the user leaves the form, and
        setting one node's value replaces nothing. */
     if (key !== 'label') {
       var debt = findDebt(Spine.getProfile(), id);
@@ -1403,8 +1403,8 @@
 
   /* ---- The folded parts of a row -----------------------------------------
      A debt needs four facts to be planned: what it is, what is owed, the
-     minimum, and how interest works. Everything else — the feeling, the
-     reasons to keep it, the two dates, the credit limit — is set once and
+     minimum, and how interest works. Everything else, the feeling, the
+     reasons to keep it, the two dates, the credit limit, is set once and
      then rarely touched, so it folds behind a caret. Before this, one debt
      filled a phone screen and a household with three of them could not be
      read at all (D-134).
@@ -1459,8 +1459,8 @@
   /* ---- How interest works on this debt -----------------------------------
      One question instead of four scattered controls. Before this the row
      asked for a Rate, offered a "No interest charged" tick right beneath
-     it, and then — a hundred pixels further down, inside the cards-only
-     block — asked separately for "0% / promo ends" and "Then the rate
+     it, and then, a hundred pixels further down, inside the cards-only
+     block, asked separately for "0% / promo ends" and "Then the rate
      becomes". Three of those four say something about 0%, and two of them
      mean opposite things: interest-free is forever, a promo is a deadline
      (D-053). People ticked the wrong one, and the plan then treated a
@@ -1487,7 +1487,7 @@
   /* Deriving the mode purely from stored data deadlocks on promo: the
      mode is "promo" because a date is stored, but the date box only shows
      in promo mode, so a card with no date yet can never get one. So the
-     tap itself is remembered, for the visit only and never stored — the
+     tap itself is remembered, for the visit only and never stored, the
      same treatment a dismissed suggestion gets. A debt left in promo with
      nothing filled in is still, to every engine, a plain fixed-rate debt,
      and the sentence under the fields says exactly that. */
@@ -1557,7 +1557,7 @@
      one can be true. An empty list is None, and None is the default: a
      suggestion read off this debt's own type and rate is shown checked but
      dashed, stored only when it is confirmed, and dismissable. Nothing
-     here reorders the plan — the toggle beneath does that, and only when
+     here reorders the plan, the toggle beneath does that, and only when
      the household flips it. */
   var suggestDismissed = {};      /* per debt, this visit only: never stored */
 
@@ -1579,7 +1579,7 @@
     /* Always rendered, hidden when there is nothing to suggest: painted in
        place afterwards, because the row it sits in is never rebuilt. */
     var suggestLine = '<p class="keep-suggest" data-keep-suggest="' + d.id + '"' + (suggested.length ? '' : ' hidden') + '>'
-      + 'Suggested from this debt’s type and rate — nothing is saved until you say so. '
+      + 'Suggested from this debt’s type and rate. Nothing is saved until you say so. '
       + '<button type="button" data-keep-confirm="' + d.id + '">Keep these</button>'
       + '<button type="button" data-keep-dismiss="' + d.id + '">Not these</button></p>';
     var held = d.excludeFromAggressive === true;
@@ -1690,7 +1690,7 @@
     var detail = section.querySelector('[data-detail]');
     var isOk = Money.isOk(result);
     if (figure) {
-      figure.textContent = isOk ? formatter(result.value) : Money.EM_DASH;
+      figure.textContent = isOk ? formatter(result.value) : Money.NOT_YET;
       figure.classList.toggle('slaf-figure--incomplete', !isOk);
     }
     if (reason) { reason.textContent = isOk ? '' : (result.reason || ''); reason.hidden = isOk; }
@@ -1963,7 +1963,7 @@
           + (Money.isOk(freed) && freed.totalInterestCents < plan.totalInterestCents
               ? ' That costs ' + Money.formatCents(plan.totalInterestCents - freed.totalInterestCents)
                 + ' more in interest than letting the plan target ' + (held.length === 1 ? 'it' : 'them') + '.'
-              : ' It costs nothing extra here — the plan would have got to '
+              : ' It costs nothing extra here. The plan would have got to '
                 + (held.length === 1 ? 'it' : 'them') + ' last anyway.')
           + '</p>';
       }
@@ -1974,7 +1974,7 @@
         if (premium > 0) {
           detail += '<p class="slaf-reason">Ordering it this way costs '
             + Money.formatCents(premium) + ' more than '
-            + cheapest.strategy.label + '. That can still be the right call — '
+            + cheapest.strategy.label + '. That can still be the right call, '
             + 'a plan you stick to beats a cheaper one you abandon.</p>';
         }
       }
@@ -1990,7 +1990,7 @@
     var previousNote = el('tie-note');
     if (previousNote) previousNote.remove();
 
-    /* With some sets of debts every ordering lands in the same place —
+    /* With some sets of debts every ordering lands in the same place, 
        usually because the highest-rate debt is also the smallest. Work
        that out first: badging one row "cheapest" while all four show the
        same figure reads as a bug, not as a tie. */
@@ -2024,8 +2024,8 @@
         + 'aria-pressed="' + (s.id === strategyId) + '">'
         + '<span class="strategy-head">'
         + '<span class="strategy-name">' + s.label + badge + '</span>'
-        + '<span class="strategy-figure">' + (ok ? Money.formatCents(r.totalInterestCents) : Money.EM_DASH) + '</span>'
-        + '<span class="strategy-when">' + (ok ? monthsLabel(r.value) : Money.EM_DASH) + '</span>'
+        + '<span class="strategy-figure">' + (ok ? Money.formatCents(r.totalInterestCents) : Money.NOT_YET) + '</span>'
+        + '<span class="strategy-when">' + (ok ? monthsLabel(r.value) : Money.NOT_YET) + '</span>'
         + '</span>'
         + '<p class="strategy-blurb">' + s.blurb
         + (ok ? ' <span class="strategy-first">First debt gone in ' + monthsLabel(r.payoffs[0].month) + '.</span>'
@@ -2043,7 +2043,7 @@
 
     if (allTie) {
       wrap.insertAdjacentHTML('beforebegin',
-        '<p class="slaf-reason" id="tie-note">With these debts every order works out the same — '
+        '<p class="slaf-reason" id="tie-note">With these debts every order works out the same, '
         + 'the one costing you most is also the one you\u2019d clear first. Pick whichever you like.</p>');
     }
 
@@ -2052,7 +2052,7 @@
        not be run shows a dash, not a zero-length bar. */
     var chart = el('strategy-chart');
     if (!Money.isOk(cmp)) { chart.innerHTML = ''; return; }
-    /* Four bars of identical length, twice, is not a comparison — it is the
+    /* Four bars of identical length, twice, is not a comparison. It is the
        tie note drawn badly. The note above already says every order lands
        in the same place, so the pictures stand down until they differ. */
     if (allTie) { chart.innerHTML = ''; return; }
@@ -2100,7 +2100,7 @@
     }
     reason.hidden = true;
     caps.forEach(function (id) { el(id).hidden = false; });
-    /* What is still owed, month by month, for the chosen order — filled —
+    /* What is still owed, month by month, for the chosen order, filled, 
        with the other orders as thin dashed lines behind it, and a mark
        where each debt falls. Month 0 is today's balance. */
     var remaining = function (r) {
@@ -2109,7 +2109,7 @@
     /* One line per debt in its own colour, on top of the whole as a filled
        area; a dot where each one reaches zero. The other orders stay as a
        single dashed line each, so the picture is about the debts, not the
-       strategies — the bars above compare those. */
+       strategies, the bars above compare those. */
     var ids = Object.keys(plan.startingBalances || {});
     var colourOf = {};
     /* The target green is kept for money that is yours again (D-236), so no
@@ -2203,7 +2203,7 @@
     debtsOf(scoped(Spine.getProfile())).forEach(function (d) { byId[d.id] = d; });
     list.innerHTML = plan.payoffs.map(function (p) {
       var d = byId[p.debtId] || {};
-      /* The reasons, inline with the order they affect — and the one that
+      /* The reasons, inline with the order they affect, and the one that
          actually holds a debt back, said as such (D-132). */
       var tags = Debt.keepReasonLabels(d, RULES).map(function (t) { return '<i title="' + esc(t.hint || '') + '">' + esc(t.label) + '</i>'; });
       if (Debt.isExcluded(d)) tags.unshift('<i class="is-held" title="You are keeping this one on purpose: it is ordered last and gets only its minimum">held back on purpose</i>');
@@ -2284,7 +2284,7 @@
 
   /* The list of debts is the one part of this page that holds live inputs,
      so it is the one part that must not be rebuilt under a finger. The
-     outputs below it re-render on every change as before — they contain
+     outputs below it re-render on every change as before, they contain
      nothing focusable. See shared/liveform.js. */
   var debtForm = SLAF.LiveForm.guard(el('debt-list'), function () {
     renderDebts(Spine.getProfile());
@@ -2326,7 +2326,7 @@
       el('rewards-body').innerHTML = '<p class="slaf-reason">Add a credit card with a balance and a rate.</p>';
       return;
     }
-    /* Weight the rate by balance — carrying $3,000 at 22.9% and $200 at 15%
+    /* Weight the rate by balance, carrying $3,000 at 22.9% and $200 at 15%
        is not an average of 19%. */
     var totalBalance = cards.reduce(function (s2, d) { return s2 + d.balanceCents; }, 0);
     var weightedRate = cards.reduce(function (s2, d) {
@@ -2445,7 +2445,7 @@
     notice.hidden = false;
     notice.className = 'notice is-error';
     notice.textContent = 'Couldn’t load data/debt_rules.json (' + err.message
-      + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+      + '). Serve this over HTTP, python3 -m http.server, rather than opening the file directly.';
   });
 })();
 </script>
@@ -2547,11 +2547,11 @@
       r.order.forEach(function (id) { if (id !== rec.id) parts.push(esc(phrase(r.plans[id], { total: true }))); });
       var sub = parts.join(' · ');
       var idr = r.plans.income_driven;
-      if (idr.negativeAmortisation) sub += '. <strong>The income-driven payment is below the interest</strong> — the balance grows until it is forgiven, and what is forgiven can be more than you borrowed';
+      if (idr.negativeAmortisation) sub += '. <strong>The income-driven payment is below the interest</strong>, the balance grows until it is forgiven, and what is forgiven can be more than you borrowed';
       if (idr.ok && idr.forgivenCents > 0) sub += '. A forgiven balance may be taxed as income that year; that tax is not in these figures';
       if (r.chosen && !r.chosenIsRecommended && r.chosen.ok) sub += '. You picked ' + r.chosen.label.toLowerCase() + ': ' + (r.chosen.clears ? money(r.chosen.totalPaidCents - rec.totalPaidCents) + ' more than the cheapest plan that clears' : 'less paid, but the loans are forgiven rather than cleared');
       if (r.chosen && r.chosenIsRecommended) sub += '. That is the one you picked';
-      if (r.lump) sub += '. Reading the one debt from Start Here as the loans, since you are a student — type them out in <a href="' + esc(debtLink()) + '">Debt Payoff</a> to be exact';
+      if (r.lump) sub += '. Reading the one debt from Start Here as the loans, since you are a student, type them out in <a href="' + esc(debtLink()) + '">Debt Payoff</a> to be exact';
       if (r.derivedMinimumIds.length) sub += '. A loan with no minimum listed is paid level over ' + years(conv(T).standardTermYears);
       var zone = r.chosen ? (r.chosenIsRecommended ? 'good' : (r.chosen.ok ? 'watch' : null)) : null;
       return { label: label, value: rec.label + ': clear in ' + rec.clearYear, sub: sub, zone: zone, result: r };
@@ -2563,7 +2563,7 @@
       return Charts.bars({
         rows: r.order.map(function (id) {
           var p = r.plans[id];
-          if (!p.ok) return { label: p.label, value: null, note: money(p.monthlyPaymentCents) === Money.EM_DASH ? 'not yet' : money(p.monthlyPaymentCents) + ' a month', empty: p.incomeMissing ? 'add income' : 'never clears', color: PLAN_COLOURS[id] };
+          if (!p.ok) return { label: p.label, value: null, note: money(p.monthlyPaymentCents) === Money.NOT_YET ? 'not yet' : money(p.monthlyPaymentCents) + ' a month', empty: p.incomeMissing ? 'add income' : 'never clears', color: PLAN_COLOURS[id] };
           return { label: p.label, value: p.totalPaidCents, color: PLAN_COLOURS[id],
             note: money(p.monthlyPaymentCents) + ' a month · ' + (p.clears ? 'clears ' + p.clearYear : money(p.forgivenCents) + ' forgiven after ' + years(p.forgivenAtYears)) };
         }),
@@ -2573,11 +2573,11 @@
 
     inputs: [
       { ctl: 'plan', label: 'The plan', kind: 'select',
-        options: [['', 'Not chosen yet'], ['standard', 'Standard — the minimums, level over the term'], ['income_driven', 'Income-driven — a share of what you earn, the rest forgiven'], ['aggressive', 'Aggressive — standard plus an extra a month']],
+        options: [['', 'Not chosen yet'], ['standard', 'Standard, the minimums, level over the term'], ['income_driven', 'Income-driven, a share of what you earn, the rest forgiven'], ['aggressive', 'Aggressive, standard plus an extra a month']],
         read: function (h) { return readPlan(h).plan; }, write: function (v) { write('plan', v); } },
-      { ctl: 'extraMonthlyCents', label: 'Extra a month', kind: 'money', placeholder: 'e.g. 200', hint: 'On top of the standard payments — the aggressive plan. Blank or zero is the standard plan again.',
+      { ctl: 'extraMonthlyCents', label: 'Extra a month', kind: 'money', placeholder: 'e.g. 200', hint: 'On top of the standard payments, the aggressive plan. Blank or zero is the standard plan again.',
         read: function (h) { return readPlan(h).extraMonthlyCents; }, write: function (v) { write('extraMonthlyCents', v === null ? null : Math.max(0, v)); } },
-      { ctl: 'idrShare', label: 'Income-driven share', kind: 'pct', placeholder: 'e.g. 10', hint: 'Of discretionary income — what you earn above 1.5× a poverty line.',
+      { ctl: 'idrShare', label: 'Income-driven share', kind: 'pct', placeholder: 'e.g. 10', hint: 'Of discretionary income, what you earn above 1.5× a poverty line.',
         read: function (h) { return readPlan(h).idrShare; }, write: function (v) { write('idrShare', v === null ? null : Math.max(0, Math.min(1, v))); },
         propose: function (h, T) { return { value: conv(T).idrShareOfDiscretionary, source: 'the usual share (convention)' }; } },
       { ctl: 'forgivenessYears', label: 'Forgiveness after', kind: 'number', affix: 'years', placeholder: 'e.g. 20', hint: 'When an income-driven balance is written off. Zero means never.',
@@ -2604,11 +2604,11 @@
       var ok = Money.isOk(r);
       var src = 'data/student_loan_conventions.json v' + c.version + ' (' + c.confidence + ')';
       var rows = [
-        { label: 'The standard term', value: years(c.standardTermYears), source: 'the level-payment shape of a federal standard plan — ' + src },
-        { label: 'Income-driven share', value: Money.formatRate(ok ? r.share : c.idrShareOfDiscretionary, { decimals: 0 }) + ' of discretionary income', source: ok && r.shareSource === 'yours' ? 'yours' : 'the common figure — ' + src },
-        { label: 'Discretionary income', value: 'earnings above ' + Money.formatRate(c.discretionaryPovertyMultiple, { decimals: 0 }) + ' of a ' + Money.formatCents(Math.round(c.povertyLineDollars * 100)) + ' poverty line', source: 'a round poverty line for one person, the shape of the rule and not any year\'s table — ' + src },
-        { label: 'Forgiveness after', value: ok && r.forgivenessNone ? 'never' : years(ok ? r.forgivenessYears : c.forgivenessYears), source: ok && r.forgivenessSource === 'yours' ? 'yours' : 'the usual horizon; ' + c.forgivenessYearsGraduate + ' for graduate loans — ' + src },
-        { label: 'Extra a month', value: ok ? Money.formatCents(r.extraMonthlyCents) : Money.EM_DASH, source: ok && r.extraEntered ? 'yours' : 'nothing until you type one; the aggressive plan equals the standard one' },
+        { label: 'The standard term', value: years(c.standardTermYears), source: 'the level-payment shape of a federal standard plan, ' + src },
+        { label: 'Income-driven share', value: Money.formatRate(ok ? r.share : c.idrShareOfDiscretionary, { decimals: 0 }) + ' of discretionary income', source: ok && r.shareSource === 'yours' ? 'yours' : 'the common figure, ' + src },
+        { label: 'Discretionary income', value: 'earnings above ' + Money.formatRate(c.discretionaryPovertyMultiple, { decimals: 0 }) + ' of a ' + Money.formatCents(Math.round(c.povertyLineDollars * 100)) + ' poverty line', source: 'a round poverty line for one person, the shape of the rule and not any year\'s table, ' + src },
+        { label: 'Forgiveness after', value: ok && r.forgivenessNone ? 'never' : years(ok ? r.forgivenessYears : c.forgivenessYears), source: ok && r.forgivenessSource === 'yours' ? 'yours' : 'the usual horizon; ' + c.forgivenessYearsGraduate + ' for graduate loans, ' + src },
+        { label: 'Extra a month', value: ok ? Money.formatCents(r.extraMonthlyCents) : Money.NOT_YET, source: ok && r.extraEntered ? 'yours' : 'nothing until you type one; the aggressive plan equals the standard one' },
         { label: 'The payoff arithmetic', value: 'month by month, interest at rate ÷ 12', source: 'engines/debt.js, data/debt_rules.json v' + rules.version + ' (' + rules.confidence + '); the same run Debt Payoff shows' },
         { label: 'Income', value: ok && r.incomeKnown ? Money.formatCents(r.grossAnnualCents) + ' a year, held flat' : 'not entered', source: ok && r.incomeKnown ? 'Start Here; the income-driven payment does not rise with a raise here (convention)' : 'add it in Start Here for the income-driven line' },
         { label: 'Tax on a forgiven balance', value: 'not modelled', source: 'a written-off balance may count as income that year; named, not priced' }
@@ -2620,11 +2620,11 @@
     why: function (h, T, situation) {
       return {
         student: 'At a student\'s stage the loans are the number: the balance is set, the rate is set, and the only thing still open is the shape of paying it back. The three shapes here are the ones you will be offered, and the difference between them is measured in years and thousands.',
-        employed: 'The first years of pay decide the plan. A standard payment that fits the salary clears the loans on schedule; an extra on top clears them years early; an income-driven payment buys room now at the cost of interest later — or of a forgiven balance that may be taxed.',
+        employed: 'The first years of pay decide the plan. A standard payment that fits the salary clears the loans on schedule; an extra on top clears them years early; an income-driven payment buys room now at the cost of interest later, or of a forgiven balance that may be taxed.',
         selfEmployed: 'With uneven income, the income-driven shape is the one that bends with a thin year, and the aggressive one is what a fat year can do. Run both against a normal year here and remember the payment follows the income you report.',
         mixed: 'A job plus your own work means the pay that sets an income-driven payment is the sum of both. Standard and aggressive do not care where the money comes from; income-driven does.',
         retired: 'Loans carried into retirement are paid from a fixed draw, and the standard plan is the one that ends.',
-        betweenJobs: 'Between jobs, the income-driven payment falls with the income — that is what the shape is for — and the standard one does not.'
+        betweenJobs: 'Between jobs, the income-driven payment falls with the income. That is what the shape is for, and the standard one does not.'
       }[situation] || 'Three shapes of repayment for the same loans, priced in months and interest.';
     },
 
@@ -2676,14 +2676,14 @@
     var r = ratioRows(h, T).filter(function (x) { return x.id === id; });
     return r[0] || null;
   }
-  function rate(row) { return row && row.ok ? Money.formatRate(row.value, { decimals: 1 }) : Money.EM_DASH; }
+  function rate(row) { return row && row.ok ? Money.formatRate(row.value, { decimals: 1 }) : Money.NOT_YET; }
   function zoneOf(row) {
     if (!row || !row.ok) return 'blank';
     var z = row.verdict && row.verdict.zone;
     return z && z !== 'none' ? z : '';
   }
 
-  /* The band, said in the unit of the figure above it — the wording the
+  /* The band, said in the unit of the figure above it, the wording the
      Ratio Glossary uses, so the same band reads the same in both rooms. */
   function bandText(row) {
     var b = row && row.verdict && row.verdict.band;
@@ -2701,7 +2701,7 @@
      needed to. Saying nothing would leave three gaps that look like bugs. */
   var CANNOT_SEE = {
     paymentHistory: 'Nothing typed into this app records whether a bill was paid on time, or late. Your report is the only place that is written down.',
-    ageOfAccounts: 'This app holds what an account is worth or what it owes, never the date it was opened — so it cannot know how old anything is.',
+    ageOfAccounts: 'This app holds what an account is worth or what it owes, never the date it was opened, so it cannot know how old anything is.',
     newCredit: 'Applying for credit leaves a mark on your report. It leaves nothing anywhere in here.'
   };
   /* And, for the two it can: how close the figure this app holds really is
@@ -2735,7 +2735,7 @@
           label: label,
           value: null,
           reason: u.result.reason,
-          sub: 'Blank is not zero. Nothing here says you are using none of your limit — it says no limit has been '
+          sub: 'Blank is not zero. Nothing here says you are using none of your limit. It says no limit has been '
             + 'entered to measure against. ' + debtLink('Put a card’s limit in Debt Payoff')
         };
       }
@@ -2753,7 +2753,7 @@
     },
 
     /* The five factors and their published weights. Colour says whether this
-       app holds anything bearing on the part — blue it can, grey it cannot —
+       app holds anything bearing on the part, blue it can, grey it cannot, 
        so the picture itself carries the honesty rather than a footnote. */
     chart: function (h, T) {
       var list = factors(T);
@@ -2769,7 +2769,7 @@
             color: seen ? Charts.COLORS.contributed : Charts.COLORS.muted,
             note: !seen ? 'only your report knows this'
               : row && row.ok ? 'yours: ' + rate(row)
-              : 'this app can see this one — nothing entered yet'
+              : 'this app can see this one, nothing entered yet'
           };
         }),
         max: 1,
@@ -2780,7 +2780,7 @@
     /* Only real money goes through the lens. The card balance and the total
        owed are amounts someone actually owes, so pricing them in hours of
        life or months of FI says something true. A credit LIMIT is neither
-       owed nor held — reading it as "four months of FI" would be nonsense,
+       owed nor held, reading it as "four months of FI" would be nonsense,
        so it stays a plain figure in the line under the percentage. */
     amounts: function (h, T) {
       var rows = [];
@@ -2799,7 +2799,7 @@
       return [
         { label: 'The five weights',
           value: list.map(function (f) { return Money.formatRate(f.share, { decimals: 0 }); }).join(' / '),
-          source: 'data/credit_factors.json v' + t.version + ' — ' + t.source + ' (' + t.confidence + ')' },
+          source: 'data/credit_factors.json v' + t.version + ', ' + t.source + ' (' + t.confidence + ')' },
         { label: 'Why there is no score',
           value: 'none is computed',
           source: t.confidenceNote },
@@ -2812,25 +2812,25 @@
           source: 'The same call the dashboard and the Ratio Glossary make, so one number is calculated in one place. Utilisation counts only the cards with a limit entered, on both sides (D-045).' },
         { label: 'The bands on them',
           value: 'comfortable at or below ' + Money.formatRate(bands.bands.creditUtilization.good, { decimals: 0 }),
-          source: 'data/ratio_benchmarks.json v' + bands.version + ' (' + bands.confidence + ') — ' + bands.bands.creditUtilization.note },
+          source: 'data/ratio_benchmarks.json v' + bands.version + ' (' + bands.confidence + '), ' + bands.bands.creditUtilization.note },
         { label: 'How long things stay',
           value: t.howLongThingsStay.length + ' reporting periods',
-          source: 'Set by the Fair Credit Reporting Act, not by a scoring model — the periods in data/credit_factors.json v' + t.version + ' (' + t.confidence + ').' }
+          source: 'Set by the Fair Credit Reporting Act, not by a scoring model, the periods in data/credit_factors.json v' + t.version + ' (' + t.confidence + ').' }
       ];
     },
 
     why: function (h, T, situation) {
       return {
-        employed: 'Employed, a credit file mostly matters on the day you borrow — a mortgage, a car, a card. The cheapest time to fix it is the year before that day, not the week of it.',
+        employed: 'Employed, a credit file mostly matters on the day you borrow, a mortgage, a car, a card. The cheapest time to fix it is the year before that day, not the week of it.',
         selfEmployed: 'Self-employed, your file often does more work than your income does: a lender who cannot read two years of lumpy earnings will read your payment record instead. The business card counts here too if it reports to your personal file.',
-        mixed: 'With a job and your own work, the file is one file — there is no separate score for each. Every card in your own name, whatever you use it for, is on the same page of it.',
+        mixed: 'With a job and your own work, the file is one file. There is no separate score for each. Every card in your own name, whatever you use it for, is on the same page of it.',
         student: 'At a student’s stage the file is short, and a short file is a thin one. Nothing here can shortcut that; time is the only thing that lengthens it, so the useful move is to start something small and never miss it.',
-        betweenJobs: 'Between jobs a score does not know you are between jobs — it never sees income at all. What it sees is whether the minimums kept being paid, which is why the minimum is the bill to protect first when a month is short.',
-        retired: 'Retired, the file matters less often and matters a lot when it does — a move, a refinance, a new insurer in some states. A card kept open and lightly used keeps it alive at no cost.'
+        betweenJobs: 'Between jobs a score does not know you are between jobs. It never sees income at all. What it sees is whether the minimums kept being paid, which is why the minimum is the bill to protect first when a month is short.',
+        retired: 'Retired, the file matters less often and matters a lot when it does, a move, a refinance, a new insurer in some states. A card kept open and lightly used keeps it alive at no cost.'
       }[situation] || 'A credit file is a record somebody else keeps about how you have borrowed. This room says what is in it and which parts of it your own numbers already answer.';
     },
 
-    scope: 'This room cannot read your report, cannot see or estimate your score, and cannot dispute anything on your behalf. Errors, collections, and debt that has stopped being a spreadsheet problem need a person —',
+    scope: 'This room cannot read your report, cannot see or estimate your score, and cannot dispute anything on your behalf. Errors, collections, and debt that has stopped being a spreadsheet problem need a person, ',
 
     /* Everything that is content rather than calculation. Built on every
        paint from the table and the two ratios; there is nothing focusable on
@@ -2865,7 +2865,7 @@
             + '<span class="r-val is-blank">not here</span></div>'
             + '<p class="r-say">' + esc(CANNOT_SEE[f.id] || 'This app holds nothing bearing on this part.') + '</p>'
             + '<p class="r-note">Worth ' + esc(Money.formatRate(f.share, { decimals: 0 }))
-            + ' of a score. Your own report shows it — see what you are entitled to, below.</p></li>';
+            + ' of a score. Your own report shows it, see what you are entitled to, below.</p></li>';
         }
         var row = f.ratio ? ratio(h, T, f.ratio) : null;
         var band = row && row.ok ? bandText(row) : '';
@@ -2890,7 +2890,7 @@
 
       /* -- What you are entitled to. Named as text, never linked: this app
             sends you to no site and is paid by nobody (the Get Help
-            precedent — kinds of help, never a referral). -------------------- */
+            precedent, kinds of help, never a referral). -------------------- */
       el('rights-list').innerHTML = t.yourRights.map(function (r) {
         return '<li><div class="r-head"><span class="r-name">' + esc(r.what) + '</span></div>'
           + '<p class="r-where">' + esc(r.where) + '</p></li>';

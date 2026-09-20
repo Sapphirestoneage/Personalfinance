@@ -2,7 +2,7 @@
   "id": "advice_translator",
   "version": "1.1",
   "asOf": "2026-09-01",
-  "source": "Common personal-finance advice as it circulates — the 4% rule, 'never touch the emergency fund', 'always take the match', 'pay yourself first', 'save 10%', 'a house is an investment', 'rent is throwing money away', 'cut the coffee' — each restated for one household's numbers. The rules of thumb are conventions; the translations are arithmetic on the household's own figures.",
+  "source": "Common personal-finance advice as it circulates, the 4% rule, 'never touch the emergency fund', 'always take the match', 'pay yourself first', 'save 10%', 'a house is an investment', 'rent is throwing money away', 'cut the coffee', each restated for one household's numbers. The rules of thumb are conventions; the translations are arithmetic on the household's own figures.",
   "confidence": "convention",
   "confidenceNote": "None of these is a finding. Each is a piece of advice people hear, marked learn (worth taking, and here is what it means for you) or unlearn (worth dropping, and here is why for you). The order is a judgement about what usually matters first.",
   "note": "Each item: `when` names predicates engines/advice.js evaluates against the household (all must hold); `priority` orders ties (lower first); `body` carries {tokens} the engine fills. `room`/`anchor` say where to act. D-096.",
@@ -27,7 +27,7 @@
         "matchLeftOnTable"
       ],
       "headline": "“Always take the whole match.”",
-      "body": "For you that is {matchGap} a year you are not collecting — a raise your employer already agreed to. Raising your contribution to {matchCap} takes it.",
+      "body": "For you that is {matchGap} a year you are not collecting, a raise your employer already agreed to. Raising your contribution to {matchCap} takes it.",
       "room": "statement",
       "anchor": "setup"
     },
@@ -40,7 +40,7 @@
         "withdrawalKnown"
       ],
       "headline": "“The 4% rule.”",
-      "body": "You draw {withdrawalRate} of your investments a year to cover what income does not — {annualDraw}. Under 4% the convention says the money outlasts you; above 5% it starts to worry.",
+      "body": "You draw {withdrawalRate} of your investments a year to cover what income does not, {annualDraw}. Under 4% the convention says the money outlasts you; above 5% it starts to worry.",
       "room": "decumulation",
       "anchor": "number"
     },
@@ -53,7 +53,7 @@
         "withdrawalCovered"
       ],
       "headline": "“Retirement means living off the portfolio.”",
-      "body": "What comes in, {income} a month, covers your {spending} a month, so nothing is drawn. The {investments} invested is a reserve of {investmentYears} of spending, not a paycheque — and the 4% rule has nothing to say until it is.",
+      "body": "What comes in, {income} a month, covers your {spending} a month, so nothing is drawn. The {investments} invested is a reserve of {investmentYears} of spending, not a paycheque, and the 4% rule has nothing to say until it is.",
       "room": "decumulation",
       "anchor": "number"
     },
@@ -104,7 +104,7 @@
         "incomeKnown"
       ],
       "headline": "“Set aside a third for tax.”",
-      "body": "On {gross} a year the estimate is {tax}, {effectiveRate} — about {taxMonthly} a month put somewhere it cannot be spent, and a quarterly to pay.",
+      "body": "On {gross} a year the estimate is {tax}, {effectiveRate}, about {taxMonthly} a month put somewhere it cannot be spent, and a quarterly to pay.",
       "room": "tax",
       "anchor": "number"
     },
@@ -155,7 +155,7 @@
         "incomeKnown"
       ],
       "headline": "“Rent is throwing money away.”",
-      "body": "Rent buys a place to live, the way a mortgage's interest, tax, insurance and upkeep do — none of which build equity either. The question is the price-to-rent ratio where you are, not the word.",
+      "body": "Rent buys a place to live, the way a mortgage's interest, tax, insurance and upkeep do, none of which build equity either. The question is the price-to-rent ratio where you are, not the word.",
       "room": "housing",
       "anchor": "number"
     },
@@ -168,7 +168,7 @@
         "cashAboveNine"
       ],
       "headline": "“Cash is safe.”",
-      "body": "You hold {cashMonths} of spending in cash. Past six months the excess — {cashExcess} — loses to inflation every year it sits; the runway does not need it.",
+      "body": "You hold {cashMonths} of spending in cash. Past six months the excess, {cashExcess}, loses to inflation every year it sits; the runway does not need it.",
       "room": "statement",
       "anchor": "portfolios"
     },

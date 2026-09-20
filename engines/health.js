@@ -1,17 +1,17 @@
 /* ==========================================================================
-   engines/health.js — the Financial Health Score.
+   engines/health.js, the Financial Health Score.
    --------------------------------------------------------------------------
    SPEC.md §9 item 8 puts this last, because it aggregates everything else,
    and §12.4 left its weighting `[PENDING]` with an instruction not to guess.
-   That decision is now resolved as **tunable by age cohort** — see
-   DECISIONS.md D-043 — and the weights live in data/health_score.json where
+   That decision is now resolved as **tunable by age cohort**, see
+   DECISIONS.md D-043, and the weights live in data/health_score.json where
    anyone can retune a decade without touching a line of code.
 
    The whole score is built out of numbers this app already computes:
 
      engines/ratios.js gives every ratio and, through position(), the one
      canonical mapping from "a ratio and its benchmark band" to a 0-1 figure
-     — 1.0 at the good threshold, 0.5 at the warn threshold. Nothing here
+, 1.0 at the good threshold, 0.5 at the warn threshold. Nothing here
      re-derives a ratio, re-reads a band, or invents a second scale. §8.
 
    Three things this gets right that scores usually do not:
@@ -63,7 +63,7 @@
   /**
    * Which cohort an age falls in. Bounds are inclusive and either end may
    * be null for "open". Returns null for an age no cohort claims, which is
-   * a table error rather than a user state — the caller says so.
+   * a table error rather than a user state. The caller says so.
    */
   function cohortForAge(table, age) {
     var list = (table && table.cohorts) || [];
@@ -95,7 +95,7 @@
    *
    * A ratio counts only if it computed AND has a band to be judged against.
    * A ratio with no convention behind it (`null` band in
-   * data/ratio_benchmarks.json) is deliberately left out — it has no
+   * data/ratio_benchmarks.json) is deliberately left out. It has no
    * "good", so there is nothing to be near.
    *
    * Within a pillar the ratios are averaged flat. They are facets of one
@@ -140,7 +140,7 @@
       score: total / counted.length,
       counted: counted,
       skipped: skipped,
-      /* The one dragging this pillar down hardest — what the room names. */
+      /* The one dragging this pillar down hardest, what the room names. */
       weakest: counted.slice().sort(function (a, b) { return a.score - b.score; })[0]
     };
   }
@@ -185,7 +185,7 @@
       age = Money.isEntered(o.age) ? o.age : Schema.primaryAge(household);
       if (!Money.isEntered(age)) {
         return Money.incomplete(
-          'This is weighted by age — what matters at 25 is not what matters at 55 — '
+          'This is weighted by age, what matters at 25 is not what matters at 55, '
             + 'so it needs your date of birth first.', ['dob']);
       }
       cohort = cohortForAge(table, age);
@@ -214,7 +214,7 @@
 
     if (liveWeight === 0) {
       return Money.incomplete(
-        'Nothing here can be scored yet — fill in a room or two and come back.',
+        'Nothing here can be scored yet, fill in a room or two and come back.',
         ['ratios']);
     }
     if (coverage < minCoverage) {
@@ -236,7 +236,7 @@
     var out = Math.round(fraction * 100);
 
     /* Where the points are. For each pillar, how many points of the final
-       score are still on the table — weight × how far it is from full,
+       score are still on the table, weight × how far it is from full,
        normalised the same way the score is. This is the actionable half. */
     var headroom = pillars.filter(function (p) { return p.available; })
       .map(function (p) {

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/size.js — the page's size, before anything is drawn. D-317.
+   shared/size.js, the page's size, before anything is drawn. D-317.
    --------------------------------------------------------------------------
    The owner, on a phone: "how do I make things get smaller". Every box is
    a tap target and every card has room to breathe, which on a large phone

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/quickmath.js — the one-line calculators.
+   engines/quickmath.js, the one-line calculators.
    --------------------------------------------------------------------------
    SPEC.md §13 groups several tools whose maths is trivial and whose value is
    in the framing: the HYSA Switch calc, Girl Math / Lifetime Value
@@ -81,14 +81,14 @@
 
   /* ---- Cost per use ------------------------------------------------------
      §13's Girl Math / Lifetime Value: "cost-per-use math, playful framing.
-     Trivial math — entire value is in tone/copy."                        */
+     Trivial math, entire value is in tone/copy."                        */
 
   function costPerUse(opts) {
     var o = opts || {};
     var result = Money.safeDivide(o.priceCents, o.uses, {
       numeratorName: 'price', denominatorName: 'uses',
       missingReason: 'Add the price and how many times you’ll use it.',
-      zeroReason: 'Something used zero times has no cost per use — it just cost you the money.'
+      zeroReason: 'Something used zero times has no cost per use, it just cost you the money.'
     });
     if (!Money.isOk(result)) return result;
     return Money.ok(Math.round(result.value), {
@@ -119,7 +119,7 @@
   /* `assumedRate` is not part of the rule. It is the rate the rule gets
      checked AT when nobody has said what they would actually be charged,
      kept here so the one place that assumes a rate is the one place that
-     states it — and so a room can name the assumption out loud. */
+     states it, and so a room can name the assumption out loud. */
   var CAR_RULE = { downPaymentShare: 0.20, maxTermMonths: 36, maxPaymentShareOfGross: 0.08, assumedRate: 0.06 };
 
   function carRule2038(household, opts) {
@@ -189,7 +189,7 @@
      sold without writing a cheque, and an insurer paying out a write-off
      pays the car's value rather than the balance. That stretch is not a rule
      of thumb: it is where two curves cross, and both curves already exist
-     here — the loan balance from the amortisation in engines/projection.js,
+     here, the loan balance from the amortisation in engines/projection.js,
      and the value from the depreciation curve in data/car_costs.json, which
      is passed in rather than copied into this file (SPEC.md §7).          */
 
@@ -293,7 +293,7 @@
      The same $100, counted from both ends: what the habit adds to the
      mountain, and what it would have been if it had gone the other way.
 
-     The $30,000 half is exact and independent of any return assumption —
+     The $30,000 half is exact and independent of any return assumption, 
      it falls straight out of the withdrawal rate. The $90,000 half does NOT:
      it is roughly 26 years at 7%, or 30 years at 5.5%. So the headline pair
      is the illustration, and this computes both from the household's own
@@ -317,7 +317,7 @@
 
     /* Side two: what it would have become instead. The horizon defaults to
        the years between now and a normal retirement age, because that is the
-       span the comparison is actually about — but it is stated, not hidden. */
+       span the comparison is actually about, but it is stated, not hidden. */
     var years = o.years;
     var horizonBasis = 'given';
     if (!Money.isEntered(years)) {
@@ -352,7 +352,7 @@
       horizonBasis: horizonBasis,
       /* How many times bigger the road-not-taken is than the extra mountain. */
       ratio: additionCents > 0 ? invested.value / additionCents : null,
-      /* And the two sides added together — the full swing of one decision. */
+      /* And the two sides added together, the full swing of one decision. */
       totalSwingCents: additionCents + invested.value
     });
   }

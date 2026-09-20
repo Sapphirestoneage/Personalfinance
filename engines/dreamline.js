@@ -1,11 +1,11 @@
 /* ==========================================================================
-   engines/dreamline.js — the Dreamline: what the life costs a month, and
+   engines/dreamline.js, the Dreamline: what the life costs a month, and
    how many hours a week that is.
    BRIEF §8, DECISIONS.md D-093 / D-101.
    --------------------------------------------------------------------------
    Ferriss's exercise. Each dream priced a month, plus what you spend, times
    a pad, is the Target Monthly Income. At your real hourly wage that is a
-   number of hours a week — which is the point: a dream is not a sum, it
+   number of hours a week, which is the point: a dream is not a sum, it
    is a Tuesday afternoon.
 
      dreams a month   = Σ monthlyCents of the priced dreams
@@ -149,7 +149,7 @@
     });
   }
 
-  /** Hours a week at the real hourly wage to earn the target — and each dream's own. */
+  /** Hours a week at the real hourly wage to earn the target, and each dream's own. */
   function hoursPerWeek(household, tables) {
     var tmi = targetMonthlyIncome(household, tables);
     if (!Money.isOk(tmi)) return tmi;
@@ -187,7 +187,7 @@
   }
 
   /**
-   * picture(h, T) — everything the room shows, in one Result whose value is
+   * picture(h, T), everything the room shows, in one Result whose value is
    * the target monthly income. The gap and the hours are carried as their
    * own Results so the room can say which is missing without the target
    * going with it.

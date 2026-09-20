@@ -1,21 +1,21 @@
 /* ==========================================================================
-   engines/budget.js — the reflected budget: five buckets, estimated beside
+   engines/budget.js, the reflected budget: five buckets, estimated beside
    actual, and the month closed on them. DECISIONS.md D-128.
    --------------------------------------------------------------------------
    Nothing is typed onto the budget. Every figure here is READ:
 
      Estimated   for an open month, in order: a figure set by hand for that
-                 month and bucket (household.budget.estimated — the
+                 month and bucket (household.budget.estimated, the
                  Estimated-vs-Actual room's one write); else the last closed
                  month's actual for the bucket; else the onboarding figures
-                 the one-pager and Cash Flow already hold — take-home a
+                 the one-pager and Cash Flow already hold, take-home a
                  month for income, the typical-month lines by group for
                  expenses / savings / investments / debt, the workplace
                  contribution when no line is typed.
      Actual      the month's landings: income entries netted of tax
                  (engines/ledger.js month → takeHomeCents), and the expense
                  log by bucket (engines/cashflow.js logInMonth). The cost
-                 of earning an income entry is neither bucket's line — it
+                 of earning an income entry is neither bucket's line. It
                  is shown under income as what it cost.
 
    Closing a month (recordFor → Spine.closeMonth) freezes both columns into
@@ -100,7 +100,7 @@
    * The Estimated column for an open month, with where each figure came
    * from. Presets (D-129) stack: on a hand-set figure they add to it; with
    * none set they ARE the estimate, in place of the last closed month's
-   * actual or the onboarding figure — those already hold what was put in,
+   * actual or the onboarding figure, those already hold what was put in,
    * and stacking a limit on top would count it twice.
    *   opts.presets  { notApplicable, hypothetical, now } for engines/presets.js
    */
@@ -147,7 +147,7 @@
   }
 
   /**
-   * month(h, T, catalog, 'YYYY-MM') — the sheet. For a closed month the
+   * month(h, T, catalog, 'YYYY-MM'), the sheet. For a closed month the
    * columns are the record's, frozen, with actualRevised beside them when
    * a late entry moved it; for an open month they are read live.
    */
@@ -176,7 +176,7 @@
   }
 
   /**
-   * cashMovedSince(h, T, catalog, sinceIso, now) — what the ledger and
+   * cashMovedSince(h, T, catalog, sinceIso, now), what the ledger and
    * the log say has moved through cash since a date: income actually
    * received (cash landed, net of what was withheld) less every logged
    * outgoing, potential dates never counted, reimbursements credited on
@@ -214,7 +214,7 @@
   }
 
   /**
-   * revisedFor(h, T, catalog, record) — the actual as it stands now for a
+   * revisedFor(h, T, catalog, record), the actual as it stands now for a
    * closed month; null when nothing moved since the close. Whatever moved
    * is a late entry: it goes to actualRevised and nowhere else.
    */

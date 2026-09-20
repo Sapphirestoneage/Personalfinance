@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/bankcsv.js — bank CSV import, on-device. DECISIONS.md D-215 (J4).
+   engines/bankcsv.js, bank CSV import, on-device. DECISIONS.md D-215 (J4).
    --------------------------------------------------------------------------
    A CSV downloaded from a bank or card site, parsed here, nothing sent.
    Columns are mapped once per bank and remembered by the header signature

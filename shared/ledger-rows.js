@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/ledger-rows.js — the Ledger's row registry, read (18.2, D-183).
+   shared/ledger-rows.js, the Ledger's row registry, read (18.2, D-183).
    --------------------------------------------------------------------------
    data/ledger-rows.json lists every number the app can hold, one row each,
    keyed by the ownership field id so a row reads and writes through the

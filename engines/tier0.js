@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/tier0.js — the nine Tier 0 outputs.
+   engines/tier0.js, the nine Tier 0 outputs.
    --------------------------------------------------------------------------
    SPEC.md §9 item 3: pure functions off the registry. Every one takes the
    household (plus the reference tables it needs) and returns a Result. None
@@ -75,7 +75,7 @@
 
   /* ------------------------------------------------------ Take-home pay
      Gross minus the estimated tax, as a month. This is the money that can
-     actually be pointed at anything — the FOO ladder's waterfall pours it,
+     actually be pointed at anything, the FOO ladder's waterfall pours it,
      and for a long time poured the pre-tax figure instead, which put every
      step date about a third too early. BRIEF §1.1 item 1.
      One formula: the tax comes from estimatedAnnualTaxCents(), never a
@@ -89,7 +89,7 @@
      (take-home − annual expenses) / gross, take-home being gross less the
      estimated tax from the one place it is computed (Schema, D-171).
 
-     SPEC.md §12.1 (RESOLVED: build both). One numerator, two variants — the
+     SPEC.md §12.1 (RESOLVED: build both). One numerator, two variants, the
      including-match figure is the same numerator plus employer match
      dollars. They are never two separately maintained calculations, and
      every caller must say which one it is showing.
@@ -171,7 +171,7 @@
   }
 
   /* --------------------------------------------- 3. Emergency fund coverage
-     cash / monthly expenses, in months. Cash ALONE — not cash plus
+     cash / monthly expenses, in months. Cash ALONE, not cash plus
      investments. SPEC.md §13 input spec.                                  */
 
   function emergencyFundMonths(household) {
@@ -198,7 +198,7 @@
   }
 
   /* ------------------------------------------------- 4. Debt-to-income ratio
-     monthly debt payments / monthly GROSS income. Gross, not net — the
+     monthly debt payments / monthly GROSS income. Gross, not net, the
      28%/36% thresholds are calibrated to gross. SPEC.md §13.             */
 
   function debtToIncome(household) {
@@ -228,7 +228,7 @@
   /* ------------------------------------------------------ 5. FIRE number
      annual expenses / SWR. At the default 4% SWR this is expenses × 25;
      the division is the real formula so a different SWR just works.
-     SPEC.md §12.2 — the rate is an Assumption-class field, never inlined.
+     SPEC.md §12.2. The rate is an Assumption-class field, never inlined.
      `localOverrides` lets a room preview a different SWR without writing
      it to storage (SPEC.md §6).                                          */
 
@@ -300,8 +300,8 @@
     }
 
     var rates = savingsRate(household, tables);
-    /* Contribute the including-match figure when it is available — those
-       dollars really do land in the account — and fall back to the
+    /* Contribute the including-match figure when it is available, those
+       dollars really do land in the account, and fall back to the
        excluding-match figure otherwise. Which basis was used is reported
        back so the room can say so. */
     var basis = Money.isOk(rates.includingMatch) ? rates.includingMatch : rates.excludingMatch;
@@ -312,7 +312,7 @@
 
     var assumptions = Schema.resolveAssumptions(household, localOverrides);
 
-    /* One projection loop for the whole app — engines/projection.js. */
+    /* One projection loop for the whole app, engines/projection.js. */
     var projected = Projection.yearsToTargetCents({
       startCents: investments.value,
       targetCents: target.value,

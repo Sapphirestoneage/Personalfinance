@@ -1,15 +1,15 @@
 /* ==========================================================================
-   shared/lenses.js — a lens re-reads DAITE numbers and returns a verdict.
+   shared/lenses.js, a lens re-reads DAITE numbers and returns a verdict.
    --------------------------------------------------------------------------
    Thirty-three lenses in data/lenses.json, seven domains, one default a
    domain. A lens never adds a field: it reads what the owner rooms already
    hold, through the engines that already compute it (one formula, one
    function), and says in one sentence what a well-known framework would say
-   about it — then who it is for and who it is not for. Rooms never write
+   about it, then who it is for and who it is not for. Rooms never write
    lens logic; they call render(). DECISIONS.md D-175.
 
    The name: SLAF.Lens is the four-way $ / hours / bought / pushed toggle
-   (D-094). This is SLAF.Lenses — plural, the cards.
+   (D-094). This is SLAF.Lenses, plural, the cards.
 
      use(table)                        hand it data/lenses.json once
      all() · get(id) · domains()       the table
@@ -261,7 +261,7 @@
       var s = Money.safeDivide(line.value, gross.value / MONTHS, { denominatorName: 'grossAnnualIncome', zeroReason: 'No income to size a payment against.' });
       if (!Money.isOk(s)) return s;
       var rule = Q.carRule2038(h, {});
-      return Money.ok(s.value, { share: pct(s.value), amount: money(line.value), maxPrice: Money.isOk(rule) && Money.isEntered(rule.value) ? money(rule.value) : Money.EM_DASH });
+      return Money.ok(s.value, { share: pct(s.value), amount: money(line.value), maxPrice: Money.isOk(rule) && Money.isEntered(rule.value) ? money(rule.value) : Money.NOT_YET });
     },
     carnetworth: function (h) {
       var T0 = engine('Tier0'); if (!T0) return notLoaded('Tier0');
@@ -301,7 +301,7 @@
       var hourly = L.impliedHourlyCents('househack', h);
       var line = Schema.fat(h).accommodation;
       return Money.ok(gain.value, { gain: money(gain.value), line: money(line.value), hours: lv.hoursPerWeek,
-        hourly: Money.isOk(hourly) ? Money.formatCents(hourly.value, { decimals: 2 }) : Money.EM_DASH,
+        hourly: Money.isOk(hourly) ? Money.formatCents(hourly.value, { decimals: 2 }) : Money.NOT_YET,
         applies: L.applies('househack', h) ? 'It applies to you: you own a place or are weighing one.' : 'It does not apply yet: no property, and no price weighed in Housing Decision.' });
     },
     fiveyear: function (h, T) {
@@ -342,7 +342,7 @@
     effmarg: function (h, T) {
       var TR = engine('TaxRoom'); if (!TR) return notLoaded('TaxRoom');
       var p = TR.picture(h, T); if (!Money.isOk(p)) return p;
-      return Money.ok(p.value, { effective: pct(p.value, 1), marginal: p.bracket && Money.isEntered(p.bracket.rate) ? pct(p.bracket.rate) : Money.EM_DASH });
+      return Money.ok(p.value, { effective: pct(p.value, 1), marginal: p.bracket && Money.isEntered(p.bracket.rate) ? pct(p.bracket.rate) : Money.NOT_YET });
     },
     fourbuckets: function (h) {
       var r = retirementByCharacter(h);
@@ -365,7 +365,7 @@
       var p = TR.picture(h, T); if (!Money.isOk(p)) return p;
       var b = p.bracket || {};
       if (!Money.isEntered(b.roomCents)) return Money.incomplete('You are in the top bracket; there is no next one.', []);
-      return Money.ok(b.roomCents, { room: money(b.roomCents), marginal: pct(b.rate), next: Money.isEntered(b.nextRate) ? pct(b.nextRate) : Money.EM_DASH });
+      return Money.ok(b.roomCents, { room: money(b.roomCents), marginal: pct(b.rate), next: Money.isEntered(b.nextRate) ? pct(b.nextRate) : Money.NOT_YET });
     }
   };
 
@@ -394,7 +394,7 @@
   function fill(text, m) {
     return String(text).replace(/\{(\w+)\}/g, function (_, k) {
       var v = m[k];
-      if (v === undefined || v === null) return k === 'share' && Money.isEntered(m.value) ? pct(m.value) : Money.EM_DASH;
+      if (v === undefined || v === null) return k === 'share' && Money.isEntered(m.value) ? pct(m.value) : Money.NOT_YET;
       return String(v);
     });
   }
@@ -434,7 +434,7 @@
     return (lens.measure ? lens.measure + ' · ' : '') + 'band ' + text;
   }
   function figureText(lens, m) {
-    if (!Money.isOk(m)) return Money.EM_DASH;
+    if (!Money.isOk(m)) return Money.NOT_YET;
     switch (lens.id) {
       case 'diewithzero': return 'age ' + m.age;
       case 'foo': return 'step ' + m.step;

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/scenarios.js — pinned ways through, beside the household, not in it.
+   shared/scenarios.js, pinned ways through, beside the household, not in it.
    --------------------------------------------------------------------------
    A scenario is a URL's worth of state and a label: "House Hack, crash and
    job loss, low returns". It is not a fact about the household, so it never
@@ -81,7 +81,7 @@
     return out;
   }
   /** Put a dropped scenario back. Over the cap, the NEWEST goes instead, which
-      is the one whose pin just pushed it out — that is what Undo means here. */
+      is the one whose pin just pushed it out. That is what Undo means here. */
   function restore(item) {
     if (!item || !item.id) return null;
     var m = read();

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/debates.js — debates as buttons: both sides, on your numbers.
+   engines/debates.js, debates as buttons: both sides, on your numbers.
    DECISIONS.md D-218 (K3).
    --------------------------------------------------------------------------
    data/debates.json names each debate, its sides with their sources, the

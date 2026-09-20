@@ -6,18 +6,18 @@
 <meta name="slaf-build" content="2026-09-20 01:28Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="shared/errlog.js"></script>
-<title>Your profile — Dungeons &amp; Dividends</title>
+<title>Your profile, Dungeons &amp; Dividends</title>
 <meta name="description" content="The long read on your character: what you want, what you are afraid of, who you work with, who winds you up, and what hunts you."/>
 <meta property="og:type" content="website"/>
 <meta property="og:site_name" content="Dungeons &amp; Dividends"/>
-<meta property="og:title" content="Your profile — Dungeons &amp; Dividends"/>
+<meta property="og:title" content="Your profile, Dungeons &amp; Dividends"/>
 <meta property="og:description" content="Your sign, your pact, who you partner with, who you will find annoying, and what hunts you."/>
 <meta property="og:url" content="https://sapphirestoneage.github.io/Personalfinance/dnd/profile.html"/>
 <meta property="og:image" content="https://sapphirestoneage.github.io/Personalfinance/dnd/og.png"/>
 <meta property="og:image:width" content="1200"/>
 <meta property="og:image:height" content="630"/>
 <meta name="twitter:card" content="summary_large_image"/>
-<meta name="twitter:title" content="Your profile — Dungeons &amp; Dividends"/>
+<meta name="twitter:title" content="Your profile, Dungeons &amp; Dividends"/>
 <meta name="twitter:description" content="Your sign, your pact, who you partner with, who you will find annoying, and what hunts you."/>
 <meta name="twitter:image" content="https://sapphirestoneage.github.io/Personalfinance/dnd/og.png"/>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
@@ -25,7 +25,7 @@
 <link rel="stylesheet" href="shared/theme.css"/>
 <link rel="stylesheet" href="shared/skin.css"/>
 <!--
-  THE LONG READ — DD-027.
+  THE LONG READ, DD-027.
 
   This page is CHARACTERISATION, not measurement, and it says so at the top
   rather than in the small print. Everywhere else in this suite a number that
@@ -39,13 +39,13 @@
   and not below, and picking one is recorded as YOUR recognition rather than
   the page's finding.
 
-  No live text inputs on this page at all — everything is a button — so the
+  No live text inputs on this page at all, everything is a button, so the
   D-034 rebuild rule has nothing to bite on.
 -->
 <style>
   /* Dungeons & Dividends keeps the characterful faces the shared theme gave
      up in D-154. A game wants a display serif; a financial statement does
-     not. theme.css stays byte-identical to the SPARKS copy — this override
+     not. theme.css stays byte-identical to the SPARKS copy, this override
      lives here, in the pages that want it. */
   :root {
     --font-display: 'Fraunces', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
@@ -165,7 +165,7 @@
     <div id="p-bigthree"></div>
 
     <h2>Your shadow</h2>
-    <p class="note">The lever at the bottom — the one you never pull. It is the least fun of the four to read
+    <p class="note">The lever at the bottom, the one you never pull. It is the least fun of the four to read
        and by a distance the most useful, because a lever you never touch is one whose ways of going wrong
        you have never had to learn.</p>
     <div id="p-shadow"></div>
@@ -218,7 +218,7 @@
 
     <h2>Your party</h2>
     <p class="note">Who to build with, who to drink with, and who will make you grind your teeth. This is about
-       levers rubbing against each other, not about people — a lovely person on the wrong lever is still
+       levers rubbing against each other, not about people, a lovely person on the wrong lever is still
        going to irritate you at a certain point in a Sunday afternoon.</p>
     <div id="p-relations"></div>
 
@@ -251,13 +251,13 @@
     <hr class="rule"/>
     <h2>What hunts you</h2>
     <p class="note">Three kinds of thing, and only one of them is a monster. The other two are the ones that
-       actually get people — they do not roll initiative and they are usually quite pleasant at the time.</p>
+       actually get people. They do not roll initiative and they are usually quite pleasant at the time.</p>
 
     <h3 style="margin-top:var(--space-4)">The creature</h3>
     <div class="panel" id="p-weak"></div>
 
     <h3 style="margin-top:var(--space-5)">The people</h3>
-    <p class="note">Not villains. Mostly not even doing anything to you on purpose — which is precisely why
+    <p class="note">Not villains. Mostly not even doing anything to you on purpose, which is precisely why
        they get through.</p>
     <div id="p-people"></div>
 
@@ -267,7 +267,7 @@
 
     <h2>Where this comes from</h2>
     <div class="warnbox" id="p-origins-warning"></div>
-    <p class="note">Three doors. Walk through whichever one you recognise, or none of them — and note that the
+    <p class="note">Three doors. Walk through whichever one you recognise, or none of them, and note that the
        page learns nothing either way. It cannot check, and it will not pretend it did.</p>
     <div id="p-origins"></div>
     <p class="note faint" id="p-origin-echo" hidden></p>
@@ -327,13 +327,13 @@
     text('p-headline', P.headline);
     el('p-basis').textContent = P.basis === 'measured'
       ? 'Measured from your numbers'
-      : 'From your five answers — not measured';
+      : 'From your five answers, not measured';
     el('p-basis').className = 'basis' + (P.basis === 'measured' ? ' measured' : '');
     /* A profile read off borrowed numbers is a profile of somebody invented,
        and saying "measured from your numbers" over it would be a lie. */
     var pg = Store.profile().pregen;
     if (pg) {
-      el('p-basis').textContent = 'From ' + pg.name + ' — a ready-made character, not you';
+      el('p-basis').textContent = 'From ' + pg.name + ', a ready-made character, not you';
       el('p-basis').className = 'basis';
     }
 
@@ -342,12 +342,12 @@
       ? '<div class="panel"><h3>There are two of you</h3>'
         + '<p style="margin:0 0 var(--space-2)">Your answers say you play like <b>' + esc(P.otherName)
         + '</b>. Your money says you are <b>' + esc(P.name) + '</b>. Everything below describes the second one, '
-        + 'because that is the lever actually moving — but the first one is why some of it will feel wrong.</p>'
+        + 'because that is the lever actually moving, but the first one is why some of it will feel wrong.</p>'
         + '<p class="note" style="margin:0">The gap is the useful part. It usually means you are working one '
         + 'lever and thinking about another, and the thinking is where the frustration lives.</p></div>'
       : '');
 
-    /* THE ALMANAC. Invented, and labelled as invented directly underneath —
+    /* THE ALMANAC. Invented, and labelled as invented directly underneath. 
        the note is rendered from the table rather than retyped here, for the
        same reason the origins warning is. */
     var g = P.sign;
@@ -365,7 +365,7 @@
         }).join('')
       + '</div>');
 
-    /* First, second, third and the shadow — one ranking shown four ways. */
+    /* First, second, third and the shadow, one ranking shown four ways. */
     var b3 = Persona.bigThree(Store.household(), SHEET, TABLES);
     if (!b3.ready) {
       html('p-bigthree', '<p class="note">Nothing to rank yet.</p>');
@@ -461,7 +461,7 @@
     var pa = Persona.party(P.classId, TABLES);
     var groups = [
       ['They want you on their team', pa.worksWith, 'good',
-       'Nobody on the table names you as the one they want beside them. That is not an insult — it usually means your lever does the same job as somebody else’s.'],
+       'Nobody on the table names you as the one they want beside them. That is not an insult, it usually means your lever does the same job as somebody else’s.'],
       ['They find you annoying', pa.findsYouAnnoying, 'bad',
        'Nobody finds you annoying, which is either a compliment or a sign you are very easy to be around.'],
       ['They are wary of you', pa.waryOfYou, 'bad',
@@ -511,7 +511,7 @@
     if (!picked) { echo.hidden = true; return; }
     echo.hidden = false;
     echo.textContent = picked === 'none'
-      ? 'Noted, and left alone. Nothing on this page changes because of it — it was never scoring you.'
+      ? 'Noted, and left alone. Nothing on this page changes because of it. It was never scoring you.'
       : 'Noted. That is your recognition, not the page’s finding, and nothing here scores it.';
   }
 
@@ -541,7 +541,7 @@
     var n = el('load-notice');
     n.hidden = false;
     n.textContent = 'Couldn’t load the profile data (' + err.message + '). If you opened this file '
-      + 'directly it needs to be served over http — try the published link instead.';
+      + 'directly it needs to be served over http, try the published link instead.';
   });
 })();
 </script>

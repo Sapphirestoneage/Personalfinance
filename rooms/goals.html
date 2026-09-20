@@ -8,12 +8,12 @@
 <script src="../shared/errlog.js"></script>
 <script src="../shared/size.js"></script>
 <title>The Decision Room · SPARKS</title>
-<meta name="description" content="Anything you are weighing, in one place — what it costs, what it costs you, when it lands, whether it fits, and whether it can be undone."/>
+<meta name="description" content="Anything you are weighing, in one place, what it costs, what it costs you, when it lands, whether it fits, and whether it can be undone."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11, §9 item 6, §13. DECISIONS.md D-283 (the shell),
+  ROOM SPEC, SPEC.md §11, §9 item 6, §13. DECISIONS.md D-283 (the shell),
   D-292 (the second reading), D-293 (a line priced per unit).
 
   TWO READINGS OF A DECISION.
@@ -42,7 +42,7 @@
   None of the five is a new formula: the lens converts, Cash Flow says what
   is spare, and engines/reversibility.js gives the verdict it gave when it
   was a room. A BLOCK TYPE adds a way to FILL the five, never a sixth
-  answer — that is the whole discipline of the shell.
+  answer. That is the whole discipline of the shell.
 
   Two ways to start a block: a goal template (data/goal_templates.json), or
   a decision people weigh (data/reversibility.json), which arrives with the
@@ -51,13 +51,13 @@
   A LINE CAN PAY YOU (D-299): typed positive, flagged with the "pays you"
   toggle, counted negative. A block whose lines net negative brings money
   in, and the five read the other way round: what it pays, the hours it
-  buys back, when it starts, what it adds to what is spare — then the undo
+  buys back, when it starts, what it adds to what is spare, then the undo
   question exactly as before. That is what a lodger is, and the year at
   home, and selling the car. Not a sixth answer either.
 
   A LINE CAN BE PRICED PER UNIT (D-293): so many guests at so much each.
   The two figures MAKE the line's amount, they do not sit beside it, and
-  the room shows the product as a read-out rather than a third box — two
+  the room shows the product as a read-out rather than a third box, two
   ways to type one figure is how they come to disagree. What it buys is
   the marginal line under the five: what ONE MORE costs, in money, in
   hours and in FI days. That is not a sixth answer; it is the first two
@@ -67,7 +67,7 @@
 
   1. READS   Cash Flow's net surplus, to say whether the required monthly
              figure actually fits.
-  2. WRITES  It OWNS household.goals[] — name, template, target date, line
+  2. WRITES  It OWNS household.goals[], name, template, target date, line
              items, amount saved and monthly contribution.
   3. CALLS   engines/goals.js, which is the shared Goal Costing Engine §9
              item 6 requires before any goal calculator. Wedding, Dream and
@@ -75,7 +75,7 @@
   4. EMPTY   No goals: an invitation, not a zero. A goal missing a cost or a
              date says which. Blank line items are counted and reported, not
              summed as zero.
-  5. CONFIG  data/goal_templates.json — line-item labels only, no amounts.
+  5. CONFIG  data/goal_templates.json, line-item labels only, no amounts.
 -->
 <style>
   .room-back:hover { text-decoration: underline; }
@@ -257,7 +257,7 @@
   <section id="view-ahead-of-you">
   <section class="slaf-card" id="out-together">
     <span class="slaf-eyebrow">All of it together</span>
-    <div class="slaf-figure" data-figure>—</div>
+    <div class="slaf-figure" data-figure>not yet</div>
     <p class="slaf-reason" data-reason></p>
     <div id="together-body" style="margin-top:var(--space-3)"></div>
     <div id="together-chart"></div>
@@ -270,7 +270,7 @@
     <h2 style="margin:var(--space-2) 0 0">What are you saving for?</h2>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">
       Each one brings a checklist of the costs that turn up whether you
-      planned for them or not. The amounts are yours — we don't guess at
+      planned for them or not. The amounts are yours, we don't guess at
       prices.
     </p>
     <div class="picker" id="picker"></div>
@@ -287,7 +287,7 @@
 
   <!-- ===== BEHIND YOU (was rooms/worth.html) ===== -->
   <section id="view-behind-you" hidden>
-  <p class="slaf-lede">What you thought something would be worth before you bought it, against what it turned out to be worth — and what that gap says about your own guesses.</p>
+  <p class="slaf-lede">What you thought something would be worth before you bought it, against what it turned out to be worth, and what that gap says about your own guesses.</p>
 
   <section class="slaf-card" id="things">
     <span class="slaf-eyebrow">The things</span>
@@ -295,7 +295,7 @@
     <p class="slaf-hint" style="margin:0">
       Rate it <em>before</em> if you haven’t bought it yet, <em>after</em> if
       you have, and both if you want the comparison. Leave anything blank you
-      can’t call yet — blank stays blank here, it never quietly becomes zero.
+      can’t call yet, blank stays blank here, it never quietly becomes zero.
     </p>
     <div id="thing-list"></div>
     <p class="empty" id="thing-empty" hidden>Nothing here yet. Add something you bought recently, or something you’re thinking about.</p>
@@ -324,7 +324,7 @@
       <svg class="slope" id="slope" viewBox="0 0 200 140" preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="slope-desc"></svg>
       <p id="slope-desc" class="why"></p>
     </div>
-    <div class="slaf-figure" data-figure>—</div>
+    <div class="slaf-figure" data-figure>not yet</div>
     <p class="slaf-reason" data-reason></p>
     <div class="flag" id="gap-note" hidden></div>
   </section>
@@ -332,7 +332,7 @@
   <section class="slaf-card" id="out-regrets">
     <span class="slaf-eyebrow">The ones you would take back</span>
     <h2 style="margin:var(--space-2) 0 0">Rated three or under</h2>
-    <div class="slaf-figure" data-figure>—</div>
+    <div class="slaf-figure" data-figure>not yet</div>
     <p class="slaf-reason" data-reason></p>
     <ul class="regrets" id="regret-list"></ul>
     <p class="why" id="regret-why"></p>
@@ -346,7 +346,7 @@
 
   <p class="disclaimer">
     Educational tool, not financial advice. The templates list what to budget
-    for, never what things cost — that's far too regional to guess at. Your
+    for, never what things cost, that's far too regional to guess at. Your
     numbers stay in this browser.
   </p>
 </main>
@@ -426,7 +426,7 @@
   }
 
   /* A block started from a named decision. The undo figures are priced by
-     the same engine the room used — no second formula — and left blank,
+     the same engine the room used, no second formula, and left blank,
      with the engine's own reason, when the table has no honest figure for
      it (the child, the marriage) or still wants an answer. */
   function blockFromDecision(id) {
@@ -497,7 +497,7 @@
       out.when = { said: 'Funded' };
     } else if (Money.isEntered(p.monthsAtCurrentContribution)) {
       out.when = { said: monthsLabel(p.monthsAtCurrentContribution)
-        + (p.arrivesLate ? ' — ' + monthsLabel(p.monthsLate) + ' after the date' : ''),
+        + (p.arrivesLate ? ', ' + monthsLabel(p.monthsLate) + ' after the date' : ''),
         warn: !!p.arrivesLate };
     } else if (p.monthsUntil && Money.isOk(p.monthsUntil)) {
       out.when = { said: monthsLabel(p.monthsUntil.value) + ' to the date you named' };
@@ -546,7 +546,7 @@
   }
 
   /* One more of them. The same first two answers asked of the smallest
-     decision inside the block — one more guest, one more night — which for
+     decision inside the block, one more guest, one more night, which for
      a wedding is the only question anybody actually argues about. Not a
      sixth row: it sits apart, under the five, and only where a line is
      priced per unit. D-293. */
@@ -611,7 +611,7 @@
             ? '<p class="goal-note good">On track at ' + Money.formatCents(p.contributingMonthlyCents) + ' a month.</p>'
             : '<p class="goal-note warn">At ' + Money.formatCents(p.contributingMonthlyCents)
               + ' a month it lands in ' + monthsLabel(p.monthsAtCurrentContribution)
-              + (p.arrivesLate ? ' — ' + monthsLabel(p.monthsLate) + ' late' : '')
+              + (p.arrivesLate ? ', ' + monthsLabel(p.monthsLate) + ' late' : '')
               + '. ' + Money.formatCents(p.shortfallPerMonthCents) + ' a month short.</p>');
         }
         if (p.affordability) {
@@ -620,7 +620,7 @@
               + ' of the ' + Money.formatCents(p.affordability.surplusCents) + ' you have spare each month.</p>'
             : '<p class="goal-note warn">That is more than the '
               + Money.formatCents(p.affordability.surplusCents)
-              + ' you have spare — ' + Money.formatCents(p.affordability.shortPerMonthCents) + ' more.</p>');
+              + ' you have spare, ' + Money.formatCents(p.affordability.shortPerMonthCents) + ' more.</p>');
         }
         if (p.itemsBlank > 0) {
           out.push('<p class="goal-note">' + p.itemsBlank + ' item'
@@ -628,10 +628,10 @@
         }
       }
     } else {
-      out.push('<div class="goal-figure is-incomplete">' + (p.reason || '—') + '</div>');
+      out.push('<div class="goal-figure is-incomplete">' + (p.reason || 'not yet') + '</div>');
     }
 
-    /* The five, under whatever the headline said — including on a block
+    /* The five, under whatever the headline said, including on a block
        with no price, which still has an answer to the fifth (D-283). */
     out.push(fiveHtml(p));
     out.push(marginHtml(p));
@@ -662,7 +662,7 @@
         + '</div>');
 
       /* Can it be undone: two figures, on every block (D-283). Blank is
-         "not asked" — the fifth row says so rather than calling it a door. */
+         "not asked", the fifth row says so rather than calling it a door. */
       out.push('<span class="slaf-label" style="display:block;margin-top:var(--space-4)">If you changed your mind</span>');
       out.push('<div class="grid-2">'
         + '<label class="slaf-field" style="margin:0"><span class="slaf-label">What undoing it would cost</span>'
@@ -714,7 +714,7 @@
           + '<input type="text" inputmode="decimal" data-goal="' + goal.id + '" data-item="' + li.id
           + '" data-field="amountCents" value="'
           + (Money.isEntered(li.amountCents) ? Money.forInput(li.amountCents) : '')
-          + '" placeholder="—" aria-label="Amount"/></span>'
+          + '" placeholder="not yet" aria-label="Amount"/></span>'
           + '<button type="button" class="pays' + (li.pays ? ' is-on' : '') + '" data-goal="' + goal.id + '" data-item="' + li.id
           + '" data-field="pays" aria-pressed="' + (li.pays ? 'true' : 'false') + '" title="This line pays you rather than costing you">pays you</button>'
           + '<button type="button" data-remove-item="' + li.id + '" data-goal="' + goal.id
@@ -736,7 +736,7 @@
     var reason = section.querySelector('[data-reason]');
     var all = Goals.planAll(h, TABLES, {});
     if (!Money.isOk(all)) {
-      figure.textContent = Money.EM_DASH;
+      figure.textContent = Money.NOT_YET;
       figure.classList.add('slaf-figure--incomplete');
       reason.textContent = all.reason || '';
       reason.hidden = false;
@@ -766,8 +766,8 @@
     renderTogetherChart(h, all);
   }
 
-  /* Each goal as a bar toward its own target — the bar is the share saved,
-     the note says the dollars — and, under it, the month every goal wants
+  /* Each goal as a bar toward its own target. The bar is the share saved,
+     the note says the dollars, and, under it, the month every goal wants
      stacked into one bar so the total reads at the end. A goal that cannot
      be planned yet shows a dash and says why, never a zero-length bar. */
   function renderTogetherChart(h, all) {
@@ -800,7 +800,7 @@
   }
 
   /* Every goal card is a form. Rebuilding the list while someone is typing
-     in one destroys the field they are in — and on a phone that closes the
+     in one destroys the field they are in, and on a phone that closes the
      keyboard for good. See shared/liveform.js. */
   var goalForm = SLAF.LiveForm.guard(el('goal-list'), function () {
     var h = Spine.getProfile();
@@ -831,7 +831,7 @@
     if (field === 'name') patch.name = raw === '' ? null : raw;
     else if (field === 'targetDate') patch.targetDate = raw === '' ? null : raw;
     /* Months are a count, not money: parseMoney would read 3 as $3.00 and
-       store 300 (D-283). Blank stays null — not asked, not zero. */
+       store 300 (D-283). Blank stays null, not asked, not zero. */
     else if (field === 'undoMonths') {
       var n = String(raw).replace(/[^0-9.]/g, '');
       patch.undoMonths = n === '' ? null : Number(n);
@@ -848,7 +848,7 @@
       var copy = Object.assign({}, li);
       if (field === 'label') copy.label = raw === '' ? null : raw;
       /* A count of guests, not money: parseMoney would read 115 as $115
-         and store 11500 — the same trap as undoMonths. Blank is null, not
+         and store 11500, the same trap as undoMonths. Blank is null, not
          asked, never zero. D-293. */
       else if (field === 'units') {
         var n = String(raw).replace(/[^0-9.]/g, '');
@@ -949,7 +949,7 @@
     if (iid) writeItem(gid, iid, field, node.value);
     else writeGoal(gid, field, node.value);
     /* Tidy this one node. The list rebuild that used to do it is deferred
-       until focus leaves the form — see shared/liveform.js. */
+       until focus leaves the form, see shared/liveform.js. */
     if (/Cents$/.test(field)) {
       var cents = Money.parseMoney(node.value);
       node.value = Money.isEntered(cents) ? Money.forInput(cents) : '';
@@ -1018,8 +1018,8 @@
     var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
     /* The default reading is the last row and matches everything, so there
        is always one. When the hash asks for a reading the gate has taken
-       away, fall back to the DEFAULT — the room's plainest reading, and the
-       one the person would have got with no hash at all — not to whichever
+       away, fall back to the DEFAULT, the room's plainest reading, and the
+       one the person would have got with no hash at all, not to whichever
        gated reading happens to sit first in this list. */
     var fallback = VIEWS[VIEWS.length - 1];
     var on = open(asked) ? asked
@@ -1075,7 +1075,7 @@
   function setFigure(sectionId, text, why) {
     var f = figure(sectionId), r = reason(sectionId);
     if (text === null) {
-      f.textContent = Money.EM_DASH;
+      f.textContent = Money.NOT_YET;
       f.classList.add('slaf-figure--incomplete');
       r.textContent = why || '';
       r.hidden = !why;
@@ -1087,7 +1087,7 @@
     }
   }
 
-  /* ---- The list of things (live inputs — never rebuilt under a finger) --- */
+  /* ---- The list of things (live inputs, never rebuilt under a finger) --- */
 
   function thingCard(check) {
     var name = check.label === null || check.label === undefined ? '' : check.label;
@@ -1113,12 +1113,12 @@
       + (Money.isEntered(check.hoursSpent) ? String(check.hoursSpent) : '')
       + '" placeholder="e.g. 300" aria-label="Hours of use"/></span>'
       + '<span class="slaf-hint">Or hours you expect to, if it’s still ahead of you.</span></label>'
-      + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Before — what you thought</span>'
+      + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Before, what you thought</span>'
       + Rating.controlHtml({ scope: Worth.SCOPE, itemId: check.id, slot: 'predicted',
                              value: check.predictedRating, label: name || 'this',
                              name: 'Predicted worth' })
       + '</label>'
-      + '<label class="slaf-field" style="margin:0"><span class="slaf-label">After — what it was</span>'
+      + '<label class="slaf-field" style="margin:0"><span class="slaf-label">After, what it was</span>'
       + Rating.controlHtml({ scope: Worth.SCOPE, itemId: check.id, slot: 'actual',
                              value: check.actualRating, label: name || 'this',
                              name: 'Actual worth' })
@@ -1207,7 +1207,7 @@
     if (!field || !id) return;
     write(id, field, node.value);
     /* Tidy just this node. The list rebuild is deferred until focus leaves
-       the whole form — see shared/liveform.js. */
+       the whole form, see shared/liveform.js. */
     if (field === 'costCents') {
       var cents = Money.parseMoney(node.value);
       node.value = Money.isEntered(cents) ? Money.forInput(cents) : '';
@@ -1223,10 +1223,10 @@
   /* ---- Readouts --------------------------------------------------------- */
 
   function cell(value, formatter) {
-    return value === null || value === undefined ? Money.EM_DASH : formatter(value);
+    return value === null || value === undefined ? Money.NOT_YET : formatter(value);
   }
 
-  /* Cost per hour and cost per point are frequently small — a $90 knife used
+  /* Cost per hour and cost per point are frequently small, a $90 knife used
      for 900 hours costs ten cents an hour. Rounding that to whole dollars
      prints "$0", which reads as free and is the opposite of the point being
      made. Under ten dollars, show the cents. */
@@ -1272,7 +1272,7 @@
   }
 
   /* The slope chart. Predicted on the left, actual on the right, one line
-     each — the picture of a habit rather than of any single purchase.
+     each, the picture of a habit rather than of any single purchase.
 
      The right margin is wide because the labels live in it. Two things that
      landed on the same rating would print their names on top of each other,
@@ -1289,7 +1289,7 @@
   }
 
   /* Push overlapping labels apart, keeping them in rating order and inside
-     the plot. A greedy pass down then a correcting pass up — enough for the
+     the plot. A greedy pass down then a correcting pass up, enough for the
      handful of items this page ever holds. */
   function spread(ys) {
     var out = ys.slice();
@@ -1376,7 +1376,7 @@
         + ' came in meaningfully below what you expected'
         + (cal.worstMiss ? ', worst of all ' + esc(cal.worstMiss.check.label || 'one of these')
             + ' at ' + Math.abs(cal.worstMiss.gap) + ' points down' : '')
-        + '. The useful move is not to buy less — it is to knock '
+        + '. The useful move is not to buy less. It is to knock '
         + rounded + ' off your own guess before you decide.';
     } else if (mean > Worth.GAP_BAND) {
       note.innerHTML = '<strong>Things turn out better than you expect, by ' + rounded
@@ -1385,7 +1385,7 @@
     } else {
       note.innerHTML = '<strong>Your predictions hold up.</strong> On average you land within '
         + Worth.GAP_BAND + ' point of what you expected, across ' + cal.pairCount
-        + ' things. That is a genuinely useful thing to know about yourself — it means '
+        + ' things. That is a genuinely useful thing to know about yourself. It means '
         + 'the number you write down before buying can be trusted.';
     }
   }
@@ -1409,13 +1409,13 @@
     setFigure('out-regrets', Money.formatCents(r.value),
       r.count + ' of ' + r.ratedCount + ' rated things came in at ' + r.threshold
         + ' or under' + (r.shareOfSpend !== null
-          ? ' — ' + Math.round(r.shareOfSpend * 100) + '% of what you have spent on the things you have rated'
+          ? ', ' + Math.round(r.shareOfSpend * 100) + '% of what you have spent on the things you have rated'
           : '') + '.');
 
     el('regret-list').innerHTML = r.items.map(function (c) {
       return '<li><span>' + esc(c.label || 'Untitled') + '</span>'
         + '<span class="amt">' + (Money.isEntered(c.costCents)
-            ? Money.formatCents(c.costCents) : Money.EM_DASH) + '</span>'
+            ? Money.formatCents(c.costCents) : Money.NOT_YET) + '</span>'
         + '<span class="meta">' + Rating.dotsHtml(c.actualRating)
         + (Money.isEntered(c.predictedRating)
             ? ' &nbsp;you expected ' + c.predictedRating + ', got ' + c.actualRating
@@ -1425,7 +1425,7 @@
 
     el('regret-why').textContent = r.complete
       ? 'This is money already spent. It is here to price the next decision, not to '
-        + 'relitigate these ones — the total is only useful as a scale.'
+        + 'relitigate these ones. The total is only useful as a scale.'
       : 'Some of these have no price recorded, so the total is a floor rather than the '
         + 'whole figure.';
   }

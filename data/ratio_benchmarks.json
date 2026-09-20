@@ -4,8 +4,8 @@
   "asOf": "2026-01-01",
   "source": "Threshold values as they are commonly cited in lending and personal-finance guidance: the 28/36 housing and back-end rules used by mortgage underwriters, the 30%/10% credit-utilisation figures repeated by the bureaus, and the 3-6 month emergency-fund range. Where no convention exists the band is marked null and the ratio is reported without a verdict.",
   "confidence": "convention",
-  "confidenceNote": "Thresholds are rules of thumb and lending conventions, not measured findings. A ratio outside a band is a prompt to look, never a verdict — several of these bands are wrong for particular lives by design.",
-  "note": "SPEC.md Section 13, Tier 18/19. `direction` says which way is healthier: 'lower' means a smaller number is better. `good` is the edge of the comfortable zone and `warn` the edge of the uncomfortable one; for 'higher' ratios good is the floor to clear. A null band means no convention worth quoting exists — the ratio still computes, it just gets no colour.",
+  "confidenceNote": "Thresholds are rules of thumb and lending conventions, not measured findings. A ratio outside a band is a prompt to look, never a verdict, several of these bands are wrong for particular lives by design.",
+  "note": "SPEC.md Section 13, Tier 18/19. `direction` says which way is healthier: 'lower' means a smaller number is better. `good` is the edge of the comfortable zone and `warn` the edge of the uncomfortable one; for 'higher' ratios good is the floor to clear. A null band means no convention worth quoting exists. The ratio still computes, it just gets no colour.",
   "bands": {
     "debtToIncome": {
       "direction": "lower",
@@ -47,7 +47,7 @@
       "direction": "higher",
       "good": 6,
       "warn": 3,
-      "note": "Cash over burn rate — the same arithmetic, named the way people ask for it."
+      "note": "Cash over burn rate, the same arithmetic, named the way people ask for it."
     },
     "netWorthToIncome": {
       "direction": "higher",
@@ -83,7 +83,7 @@
       "direction": "lower",
       "good": 0.1,
       "warn": 0.15,
-      "note": "The 10-15% of take-home guidance, applied here to gross — so it reads slightly kinder than the original."
+      "note": "The 10-15% of take-home guidance, applied here to gross, so it reads slightly kinder than the original."
     },
     "investedShare": {
       "direction": "higher",
@@ -119,7 +119,7 @@
       "direction": "lower",
       "good": 0.15,
       "warn": 0.3,
-      "note": "Cash as a share of assets. 'Too much' depends entirely on why it is there — see the SWAN Number."
+      "note": "Cash as a share of assets. 'Too much' depends entirely on why it is there, see the SWAN Number."
     },
     "liquidToIlliquid": {
       "direction": "higher",
@@ -251,7 +251,7 @@
       "direction": "lower",
       "good": 0.04,
       "warn": 0.05,
-      "note": "The 4% rule as commonly cited; 5% is where most guidance starts to worry. A convention, not a finding — sequence risk is not in it."
+      "note": "The 4% rule as commonly cited; 5% is where most guidance starts to worry. A convention, not a finding, sequence risk is not in it."
     }
   }
 }

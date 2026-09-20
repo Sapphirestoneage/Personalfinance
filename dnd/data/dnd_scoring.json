@@ -2,10 +2,10 @@
   "id": "dnd_scoring",
   "version": "1.0",
   "asOf": "2026-09-04",
-  "source": "Agreed with the repo owner, 2026-09-04. The Dungeons & Dividends rulebook (§13 item 3) explicitly leaves sub-stat scoring unspecified: 'Exact sub-stat scoring formulas (real dollars/inputs -> 8-20 scores) — this is the one piece the Claude Code build prompt still needs.' These are that missing piece.",
+  "source": "Agreed with the repo owner, 2026-09-04. The Dungeons & Dividends rulebook (§13 item 3) explicitly leaves sub-stat scoring unspecified: 'Exact sub-stat scoring formulas (real dollars/inputs -> 8-20 scores). This is the one piece the Claude Code build prompt still needs.' These are that missing piece.",
   "confidence": "convention",
   "confidenceNote": "Calibration target: a US-population-median household scores 10 on every computed sub-stat, per the rulebook's own reading of 10-11 as 'neutral / average'. Median anchors are set from widely-published public figures (Census/BLS median earnings, BEA personal saving rate, SCF transaction-account balances) but are ROUNDED CONVENTIONS, not fitted distributions. Every other rung is an agreed shape, not a measurement. Edit this file to recalibrate; the engine reads it and holds no thresholds of its own.",
-  "note": "Ladders interpolate linearly between rungs and clamp to 8-20. A sub-stat whose input was never entered is INCOMPLETE, never 8 and never 0 — see CLAUDE.md 'Empty != zero'.",
+  "note": "Ladders interpolate linearly between rungs and clamp to 8-20. A sub-stat whose input was never entered is INCOMPLETE, never 8 and never 0, see CLAUDE.md 'Empty != zero'.",
   "scale": {
     "min": 8,
     "max": 20
@@ -14,23 +14,23 @@
     {
       "id": "featsOfStrength",
       "name": "Feats of Strength",
-      "blurb": "Eighteen quick questions about what you'd actually do. No maths, nothing to revise, and no answer that makes you look daft — the honest one always scores. Sets Intelligence, Wisdom and Charisma; the other three wait for your numbers.",
+      "blurb": "Eighteen quick questions about what you'd actually do. No maths, nothing to revise, and no answer that makes you look daft, the honest one always scores. Sets Intelligence, Wisdom and Charisma; the other three wait for your numbers.",
       "default": true
     },
     {
       "id": "pointBuy",
       "name": "Point Buy",
-      "blurb": "Spend 27 points across your six abilities, exactly as D&D Beyond does. Everything starts at 8, nothing goes above 15, and going high costs more each step — so a 15 has to be paid for somewhere."
+      "blurb": "Spend 27 points across your six abilities, exactly as D&D Beyond does. Everything starts at 8, nothing goes above 15, and going high costs more each step, so a 15 has to be paid for somewhere."
     },
     {
       "id": "standardArray",
       "name": "Standard Array",
-      "blurb": "Six fixed numbers — 15, 14, 13, 12, 10, 8 — and you decide which ability gets which. The quickest honest route when you don't fancy answering questions tonight."
+      "blurb": "Six fixed numbers, 15, 14, 13, 12, 10, 8, and you decide which ability gets which. The quickest honest route when you don't fancy answering questions tonight."
     },
     {
       "id": "roll",
       "name": "Roll",
-      "blurb": "4d6, drop the lowest, six times. You get what you get — and like at a table, rolling can't reach 19 or 20."
+      "blurb": "4d6, drop the lowest, six times. You get what you get, and like at a table, rolling can't reach 19 or 20."
     },
     {
       "id": "homebrew",
@@ -60,7 +60,7 @@
       "WIS",
       "CHA"
     ],
-    "note": "D&D Beyond's point buy, exactly: 27 points over the six abilities, every score starts at 8, nothing above 15, and 5e's own cost table. An earlier version spread 45 points across the nine sub-stats, which no table does — you buy abilities, not skills. Each bought ability sets all of its sub-stats to that score."
+    "note": "D&D Beyond's point buy, exactly: 27 points over the six abilities, every score starts at 8, nothing above 15, and 5e's own cost table. An earlier version spread 45 points across the nine sub-stats, which no table does, you buy abilities, not skills. Each bought ability sets all of its sub-stats to that score."
   },
   "standardArray": {
     "values": [
@@ -281,11 +281,11 @@
           "question": "Where your income can be earned from",
           "options": [
             {
-              "label": "Fully remote — location is irrelevant to my pay",
+              "label": "Fully remote, location is irrelevant to my pay",
               "points": 3
             },
             {
-              "label": "Hybrid — I could stretch the radius",
+              "label": "Hybrid, I could stretch the radius",
               "points": 1
             },
             {
@@ -325,7 +325,7 @@
               "points": 3
             },
             {
-              "label": "Soft ties — community, preference",
+              "label": "Soft ties, community, preference",
               "points": 2
             },
             {
@@ -492,7 +492,7 @@
     "negotiation": [
       {
         "order": 1,
-        "q": "A job offer lands. The number is fine. Not great — fine. What actually happens next?",
+        "q": "A job offer lands. The number is fine. Not great, fine. What actually happens next?",
         "options": [
           {
             "label": "I counter. I've already looked up what this role pays elsewhere.",
@@ -514,7 +514,7 @@
       },
       {
         "order": 10,
-        "q": "In the last three years, have you asked anyone for more money — a raise, a rate, a refund, a fee waived?",
+        "q": "In the last three years, have you asked anyone for more money, a raise, a rate, a refund, a fee waived?",
         "options": [
           {
             "label": "More than once, and it worked at least one of those times.",
@@ -560,7 +560,7 @@
       },
       {
         "order": 11,
-        "q": "The last person who recommended you a financial product — do you know how they got paid for it?",
+        "q": "The last person who recommended you a financial product, do you know how they got paid for it?",
         "options": [
           {
             "label": "Yes. I ask, because it changes what someone recommends.",
@@ -571,7 +571,7 @@
             "points": 4
           },
           {
-            "label": "No — it genuinely hadn't occurred to me.",
+            "label": "No, it genuinely hadn't occurred to me.",
             "points": 0
           },
           {
@@ -592,7 +592,7 @@
             "points": 6
           },
           {
-            "label": "A handful — four or five names come to mind straight away.",
+            "label": "A handful, four or five names come to mind straight away.",
             "points": 4
           },
           {
@@ -607,7 +607,7 @@
       },
       {
         "order": 12,
-        "q": "Think about your last few good things — work, a flat, a deal. How did they reach you?",
+        "q": "Think about your last few good things, work, a flat, a deal. How did they reach you?",
         "options": [
           {
             "label": "Through people I know, more than once.",
@@ -618,7 +618,7 @@
             "points": 4
           },
           {
-            "label": "All through public applications — but I could ask around if I had to.",
+            "label": "All through public applications, but I could ask around if I had to.",
             "points": 2
           },
           {
@@ -634,7 +634,7 @@
         "q": "There's a specific situation that reliably makes you spend money you didn't plan to. Can you name it right now?",
         "options": [
           {
-            "label": "Yes — and I've actually built something in to stop it.",
+            "label": "Yes, and I've actually built something in to stop it.",
             "points": 6
           },
           {
@@ -646,7 +646,7 @@
             "points": 2
           },
           {
-            "label": "No — it feels random from the inside.",
+            "label": "No, it feels random from the inside.",
             "points": 0
           }
         ]
@@ -684,7 +684,7 @@
             "points": 6
           },
           {
-            "label": "I've thought it through properly — just never wrote it down.",
+            "label": "I've thought it through properly, just never wrote it down.",
             "points": 4
           },
           {
@@ -706,7 +706,7 @@
             "points": 6
           },
           {
-            "label": "A couple of options — though I'd basically already decided.",
+            "label": "A couple of options, though I'd basically already decided.",
             "points": 3
           },
           {
@@ -726,7 +726,7 @@
         "q": "The market falls 30% over six weeks. Your money is in it. What do you actually do?",
         "options": [
           {
-            "label": "Nothing — or buy more. I decided this in advance, on a calm day.",
+            "label": "Nothing, or buy more. I decided this in advance, on a calm day.",
             "points": 6
           },
           {
@@ -748,7 +748,7 @@
         "q": "A friend says they're waiting for things to calm down before they start investing. You think:",
         "options": [
           {
-            "label": "Waiting has a cost too — that's time out of the market.",
+            "label": "Waiting has a cost too, that's time out of the market.",
             "points": 6
           },
           {
@@ -769,7 +769,7 @@
     "personability": [
       {
         "order": 7,
-        "q": "The people you share money with — partner, family, whoever. Where are they?",
+        "q": "The people you share money with, partner, family, whoever. Where are they?",
         "options": [
           {
             "label": "We set the plan together and we both actually follow it.",
@@ -828,7 +828,7 @@
         "q": "Two funds hold basically the same companies. What do you look at first?",
         "options": [
           {
-            "label": "The ongoing fee — on identical holdings it's the bit I control.",
+            "label": "The ongoing fee, on identical holdings it's the bit I control.",
             "points": 6
           },
           {
@@ -858,7 +858,7 @@
             "points": 4
           },
           {
-            "label": "Sounds good — insurance and savings in one.",
+            "label": "Sounds good, insurance and savings in one.",
             "points": 1
           },
           {
@@ -874,7 +874,7 @@
         "q": "A raise pushes you into a higher tax bracket. What happens to your take-home pay?",
         "options": [
           {
-            "label": "It goes up — only the money above the line is taxed at the higher rate.",
+            "label": "It goes up, only the money above the line is taxed at the higher rate.",
             "points": 6
           },
           {
@@ -882,7 +882,7 @@
             "points": 4
           },
           {
-            "label": "It could actually go down — that's the worry.",
+            "label": "It could actually go down, that's the worry.",
             "points": 1
           },
           {
@@ -893,7 +893,7 @@
       },
       {
         "order": 18,
-        "q": "Money going into a workplace pension or 401(k) before tax — what's the actual benefit?",
+        "q": "Money going into a workplace pension or 401(k) before tax, what's the actual benefit?",
         "options": [
           {
             "label": "I don't pay income tax on it this year; it's taxed when I take it out.",
@@ -908,14 +908,14 @@
             "points": 1
           },
           {
-            "label": "No idea — I just left whatever the default was.",
+            "label": "No idea, I just left whatever the default was.",
             "points": 0
           }
         ]
       }
     ]
   },
-  "quizNote": "Two questions per declared sub-stat, each worth 0-6 points, summed onto a base of 8 — which lands exactly on the 8-20 scale with no rescaling. Every question is BEHAVIOURAL: it asks what you did or would do, not whether you can recall a definition. There is no arithmetic and nothing to revise for, because a quiz that makes someone feel stupid is a quiz they close. The zero-point option is always a real thing real people do, phrased so that picking it costs no dignity. `order` drives display sequence: the two questions for a sub-stat sit far apart, and the driest topics (tax, instruments) come last, once someone is already invested in the run.",
+  "quizNote": "Two questions per declared sub-stat, each worth 0-6 points, summed onto a base of 8, which lands exactly on the 8-20 scale with no rescaling. Every question is BEHAVIOURAL: it asks what you did or would do, not whether you can recall a definition. There is no arithmetic and nothing to revise for, because a quiz that makes someone feel stupid is a quiz they close. The zero-point option is always a real thing real people do, phrased so that picking it costs no dignity. `order` drives display sequence: the two questions for a sub-stat sit far apart, and the driest topics (tax, instruments) come last, once someone is already invested in the run.",
   "hp": {
     "unitWeeks": true,
     "note": "1 HP = one week of expenses covered by liquid assets. Agreed with the owner 2026-09-04 to resolve the two incompatible HP definitions in rulebook §3A. See DECISIONS.md DD-001.",
@@ -954,7 +954,7 @@
       },
       {
         "classId": "keeper",
-        "measure": "Spending restraint — how far below a same-income benchmark the household actually spends"
+        "measure": "Spending restraint, how far below a same-income benchmark the household actually spends"
       }
     ],
     "keeperBenchmarkShare": 0.75,
@@ -1001,7 +1001,7 @@
     }
   },
   "initiative": {
-    "note": "BRIEF §9.1: initiative = DEX modifier + an automation bonus. The reasoning is that initiative is how fast you act before you have decided to act, and money that moves itself acts without you. The bonus is NOT derived from a savings figure — it is a separate answer, because a large savings rate you execute by hand every month is exactly the case this is meant to distinguish. Unanswered means no bonus is shown at all, not +0.",
+    "note": "BRIEF §9.1: initiative = DEX modifier + an automation bonus. The reasoning is that initiative is how fast you act before you have decided to act, and money that moves itself acts without you. The bonus is NOT derived from a savings figure. It is a separate answer, because a large savings rate you execute by hand every month is exactly the case this is meant to distinguish. Unanswered means no bonus is shown at all, not +0.",
     "automationBonus": {
       "all": 2,
       "most": 1,

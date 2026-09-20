@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/errlog.js — the local error log. DECISIONS.md D-210 (G3.16).
+   shared/errlog.js, the local error log. DECISIONS.md D-210 (G3.16).
    --------------------------------------------------------------------------
    The first script on every page (tools/stamp-build.js puts it there), so
    an error anywhere, even in a script that never finished loading, lands

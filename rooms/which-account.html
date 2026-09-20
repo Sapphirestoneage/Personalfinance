@@ -124,7 +124,7 @@
         <span class="from">15% if left blank, the middle long-term rate</span></label>
     </div>
     <p class="slaf-hint" style="margin:var(--space-3) 0 0">If you plan to stop early, your tax rate in those years is often lower than you'd guess, which tends to favor Traditional now.</p>
-    <div class="verdict" id="a-verdict">—</div>
+    <div class="verdict" id="a-verdict">not yet</div>
     <p class="why" id="a-why"></p>
     <div id="a-bands"></div>
     <div id="a-lens"></div>
@@ -153,7 +153,7 @@
       <label class="slaf-field" style="margin:0"><span class="slaf-label">Deferring, as employee</span>
         <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="s-employee" placeholder="the max" aria-label="Planned employee deferral"/></span></label>
     </div>
-    <div class="verdict" id="s-verdict">—</div>
+    <div class="verdict" id="s-verdict">not yet</div>
     <div class="bars" id="s-bars"></div>
     <div class="out-detail" id="s-detail"></div>
     <div class="flag" id="s-note" hidden></div>
@@ -294,7 +294,7 @@
     var r = Accounts.compareAccounts(compareOpts(null));
     var verdict = el('a-verdict');
     if (!Money.isOk(r)) {
-      verdict.textContent = r.reason || Money.EM_DASH; verdict.className = 'verdict is-incomplete';
+      verdict.textContent = r.reason || Money.NOT_YET; verdict.className = 'verdict is-incomplete';
       el('a-why').textContent = ''; el('a-ranked').innerHTML = ''; el('a-bands').innerHTML = '';
       return;
     }
@@ -332,7 +332,7 @@
       var here = taxable > prev && (top === null || taxable <= top);
       var above = taxable <= prev;
       var yours = above ? 0 : Math.min(taxable, top === null ? taxable : top) - prev;
-      var html = '<tr class="' + (here ? 'here' : above ? 'above' : '') + '"><td>' + Math.round(row.rate * 100) + '%</td><td>' + Money.formatCents(prev * 100) + ' to ' + (top === null ? 'up' : Money.formatCents(top * 100)) + '</td><td>' + (yours > 0 ? Money.formatCents(yours * 100) : Money.EM_DASH) + '</td></tr>';
+      var html = '<tr class="' + (here ? 'here' : above ? 'above' : '') + '"><td>' + Math.round(row.rate * 100) + '%</td><td>' + Money.formatCents(prev * 100) + ' to ' + (top === null ? 'up' : Money.formatCents(top * 100)) + '</td><td>' + (yours > 0 ? Money.formatCents(yours * 100) : Money.NOT_YET) + '</td></tr>';
       prev = top === null ? prev : top;
       return html;
     }).join('');
@@ -351,7 +351,7 @@
     if (!selfEmployed(h)) { card.parentNode.removeChild(card); return; }
     var r = Accounts.solo401k({ netProfitCents: v['s-profit'], plannedEmployeeCents: v['s-employee'], age: Schema.primaryAge(h), filingStatus: h.filingStatus, limits: TABLES.irsLimits, seTaxTable: TABLES.seTax });
     var verdict = el('s-verdict');
-    if (!Money.isOk(r)) { verdict.textContent = r.reason || Money.EM_DASH; verdict.className = 'verdict is-incomplete'; el('s-bars').innerHTML = ''; el('s-detail').innerHTML = ''; el('s-note').hidden = true; return; }
+    if (!Money.isOk(r)) { verdict.textContent = r.reason || Money.NOT_YET; verdict.className = 'verdict is-incomplete'; el('s-bars').innerHTML = ''; el('s-detail').innerHTML = ''; el('s-note').hidden = true; return; }
     verdict.className = 'verdict'; verdict.textContent = Money.formatCents(r.totalCents) + ' a year';
     var max = Math.max(r.employeeCents, r.employerCents, 1);
     el('s-bars').innerHTML = [['As employee', r.employeeCents], ['As employer', r.employerCents]].map(function (row) {

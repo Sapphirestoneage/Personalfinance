@@ -1,7 +1,7 @@
 {
   "id": "freelance",
   "title": "Going freelance",
-  "blurb": "A revenue target, a ramp, the hours — the self-employment tax on top, the month it breaks even, and the rate an hour has to bill to match the job.",
+  "blurb": "A revenue target, a ramp, the hours, the self-employment tax on top, the month it breaks even, and the rate an hour has to bill to match the job.",
   "version": "1.0",
   "asOf": "2026-01-01",
   "source": "An invented what-if template (D-086): its questions and defaults are conventions chosen for this app, not measurements; every reference figure it draws on names its own data/ file and source.",
@@ -327,7 +327,7 @@
   "protect": [
     "Health cover, every month of it",
     "Quarterly estimated tax, set aside as it is earned",
-    "The cushion — the ramp is paid for out of it"
+    "The cushion. The ramp is paid for out of it"
   ],
   "cut": [],
   "tripleD": {},
@@ -375,7 +375,7 @@
           ]
         }
       },
-      "note": "take-home of the revenue as if salary, less half the SE tax a month — the half an employer would have paid"
+      "note": "take-home of the revenue as if salary, less half the SE tax a month, the half an employer would have paid"
     }
   ]
 }

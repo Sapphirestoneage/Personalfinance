@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/adventure.js — five years, several ways, and what shocks them.
+   engines/adventure.js, five years, several ways, and what shocks them.
    --------------------------------------------------------------------------
    A sandbox over the household's real numbers: pick a way through, walk five
    years, and see where the finish line moves. It WRITES NOTHING. Every figure
@@ -7,7 +7,7 @@
    no field here for another room to fight over (D-017).
 
    Money is integer cents throughout. A missing baseline figure produces an
-   incomplete result naming what is absent — never a zero, and never a silent
+   incomplete result naming what is absent, never a zero, and never a silent
    `|| 0`, because a projection built on an assumed nought is a lie told
    confidently. DECISIONS.md D-167.
 
@@ -19,7 +19,7 @@
    v2 (D-176): saving is take-home minus spending, never gross. The baseline
    splits cash from what is invested; a crash hits the invested pot only; a
    job loss draws on cash first and reports the runway, and when the cash is
-   gone the row says "borrowing from month N" — the pot never goes quietly
+   gone the row says "borrowing from month N". The pot never goes quietly
    negative. Levers that survive a job loss keep paying through it. The share
    of a raise not kept is spent, which moves the target. Returns run three
    ways from data/return_bands.json. Drift is the baseline every other way is
@@ -45,7 +45,7 @@
     return Levers.get(id);
   }
 
-  /** The ways through, straight from data — never inlined here. With a
+  /** The ways through, straight from data, never inlined here. With a
       household, a way marked `onlyIf` shows only when that lever applies. */
   function paths(tables, household) {
     var t = table(tables);
@@ -226,7 +226,7 @@
     });
   }
 
-  /** Annual spending times 25 — the same arithmetic the FIRE room uses. */
+  /** Annual spending times 25, the same arithmetic the FIRE room uses. */
   function targetCents(annualSpendCents, withdrawalRate) {
     return Math.round(annualSpendCents / withdrawalRate);
   }

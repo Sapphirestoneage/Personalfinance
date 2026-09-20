@@ -1,8 +1,8 @@
 /* ==========================================================================
-   engines/ownership.js — what a place actually costs to own. Tier 17.
+   engines/ownership.js, what a place actually costs to own. Tier 17.
    --------------------------------------------------------------------------
    PUBLISHED AS SLAF.Owning, not SLAF.Ownership (D-280). shared/ownership.js
-   is a different module with a different job — which room owns which field —
+   is a different module with a different job, which room owns which field, 
    and it had this name first. The two never shared a page until Housing took
    The Deal, and then the second one loaded clobbered the first: the rent-or-
    buy reading called Ownership.describe and got a property engine.
@@ -23,7 +23,7 @@
    quietly taken as zero. Nothing here reads the household: the rooms hand
    in what they hold, so the same numbers can be asked hypothetically.
 
-   The mortgage itself is Projection.levelPaymentCents — one formula, one
+   The mortgage itself is Projection.levelPaymentCents, one formula, one
    function. DECISIONS.md D-223.
    ========================================================================== */
 (function (root, factory) {
@@ -53,11 +53,11 @@
   }
 
   /**
-   * cost(opts) — one month of owning.
+   * cost(opts), one month of owning.
    *   priceCents, downPct (0..1), annualRate, termMonths
    *   optional: hoaMonthlyCents, propertyTaxRate, insuranceRate,
    *             maintenanceRate, pmiRate, tables
-   * value: totalMonthlyCents — everything that leaves the account.
+   * value: totalMonthlyCents, everything that leaves the account.
    *   carryMonthlyCents   the part that buys nothing: interest, tax,
    *                       insurance, maintenance, mortgage insurance, HOA
    *   equityMonthlyCents  the part that is yours: the first month's principal
@@ -144,11 +144,11 @@
   }
 
   /**
-   * hold(opts) — owning it for `years`, against renting instead.
+   * hold(opts), owning it for `years`, against renting instead.
    *   everything cost() takes, plus years, and optionally
    *   rentMonthlyCents (what you would pay to rent instead) and
    *   appreciationRate (left out means the place is worth what you paid).
-   * value: costOfOwningCents — what the years actually cost, after the sale.
+   * value: costOfOwningCents, what the years actually cost, after the sale.
    */
   function hold(opts) {
     var o = opts || {};
@@ -196,9 +196,9 @@
   }
 
   /**
-   * rental(opts) — let out, at a monthly rent.
+   * rental(opts), let out, at a monthly rent.
    *   everything cost() takes, plus grossRentMonthlyCents.
-   * value: cashFlowMonthlyCents — what lands, or leaves, each month.
+   * value: cashFlowMonthlyCents, what lands, or leaves, each month.
    * Operating costs exclude the mortgage, the way net operating income is
    * always defined; the loan is debt service and is taken off after.
    */
@@ -242,11 +242,11 @@
   }
 
   /**
-   * hack(opts) — you live in one unit and let the others.
+   * hack(opts), you live in one unit and let the others.
    *   everything cost() takes, plus unitRentsCents: [cents, …] for the
    *   units you would let. Optionally rentMonthlyCents: what you would
    *   otherwise pay to rent a place of your own.
-   * value: youPayMonthlyCents — what living there costs you, after the rent
+   * value: youPayMonthlyCents, what living there costs you, after the rent
    *   the other units bring in. It can be negative: they pay you.
    */
   function hack(opts) {
@@ -283,7 +283,7 @@
   }
 
   /**
-   * metrics(o) — the four ratios, defined once so every room agrees.
+   * metrics(o), the four ratios, defined once so every room agrees.
    *   noiAnnualCents, debtServiceAnnualCents, valueCents, cashInvestedCents,
    *   equityCents (optional)
    * Cash-on-cash is the cash flow over the cash you actually put in. It is
@@ -304,7 +304,7 @@
   }
 
   /**
-   * underwrite(opts) — the rental priced the way it actually runs, against
+   * underwrite(opts), the rental priced the way it actually runs, against
    * the way it is usually advertised.
    *
    * A listing shows the rent less the mortgage and calls the difference
@@ -315,7 +315,7 @@
    *
    *   everything cost() takes, plus grossRentMonthlyCents
    *   optional: vacancyRate, capexRate, managementRate, selfManaged
-   * value: cashFlowMonthlyCents — after every reserve. Often negative.
+   * value: cashFlowMonthlyCents, after every reserve. Often negative.
    */
   function underwrite(opts) {
     var o = opts || {};
@@ -393,7 +393,7 @@
   }
 
   /**
-   * totalReturn(opts) — the four ways a rental pays, never blended into one
+   * totalReturn(opts), the four ways a rental pays, never blended into one
    * number without the split.
    *
    *   1. cash flow            what lands, after every reserve
@@ -404,7 +404,7 @@
    * opts: everything underwrite() takes, plus years, and optionally
    * appreciationRate and marginalRate (without a marginal rate the shelter
    * is not counted, because its worth depends entirely on your bracket).
-   * value: totalCents — the four added up over the years held.
+   * value: totalCents, the four added up over the years held.
    */
   function totalReturn(opts) {
     var o = opts || {};
@@ -466,7 +466,7 @@
   }
 
   /**
-   * stress(opts) — what breaks it. Every landlord meets at least one of
+   * stress(opts), what breaks it. Every landlord meets at least one of
    * these; the question is whether the deal survives it.
    * value: the number of scenarios it survives.
    */
@@ -509,7 +509,7 @@
   }
 
   /**
-   * houseHack(opts) — live in one unit, let the rest, priced honestly.
+   * houseHack(opts), live in one unit, let the rest, priced honestly.
    *
    * hack() above is the plain reading: the month less the rent collected.
    * This is the one that survives contact with a real building. It carries
@@ -522,7 +522,7 @@
    *   optional: rentMonthlyCents (what you would otherwise pay to rent),
    *             years and annualReturn (to carry the saving forward),
    *             vacancyRate, capexRate, managementRate
-   * value: youPayMonthlyCents — what living there costs you, after the
+   * value: youPayMonthlyCents, what living there costs you, after the
    *   rent the other units bring. Negative means they cover it and more.
    */
   function houseHack(opts) {

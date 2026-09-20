@@ -6,18 +6,18 @@
 <meta name="slaf-build" content="2026-09-20 01:28Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="shared/errlog.js"></script>
-<title>The type chart — Dungeons &amp; Dividends</title>
-<meta name="description" content="Six ways money gets taken off you — fear, flattery, urgency, complexity, guilt and greed — what each one comes at, what stops it, and which ones work on you."/>
+<title>The type chart, Dungeons &amp; Dividends</title>
+<meta name="description" content="Six ways money gets taken off you, fear, flattery, urgency, complexity, guilt and greed, what each one comes at, what stops it, and which ones work on you."/>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="shared/fonts.css"/>
 <link rel="stylesheet" href="shared/theme.css"/>
 <link rel="stylesheet" href="shared/skin.css"/>
 <!--
-  THE TYPE CHART — T10.
+  THE TYPE CHART, T10.
 
   §9.3 gave every creature an attackType. This is the page that reads them
   sideways: not "what is this monster" but "what KIND of thing works on me".
-  Six types is a small enough number to hold in your head, which is the point —
+  Six types is a small enough number to hold in your head, which is the point, 
   nobody remembers twenty-nine creatures, but "urgency works on me" is a
   sentence you can still act on in a shop.
 
@@ -29,7 +29,7 @@
   IT SORTS BY WHAT WORKS ON YOU. The order is worst defence first, because a
   list that opens with your strongest suit is a list nobody reads to the end
   of. Types whose saves you have not scored are held back in their own group
-  and labelled unmeasured — not weak, not strong, unknown.
+  and labelled unmeasured, not weak, not strong, unknown.
 
   LIVE-FORM: built once. There is one control on the page, a checkbox, and it
   is in the markup from the start.
@@ -37,7 +37,7 @@
 <style>
   /* Dungeons & Dividends keeps the characterful faces the shared theme gave
      up in D-154. A game wants a display serif; a financial statement does
-     not. theme.css stays byte-identical to the SPARKS copy — this override
+     not. theme.css stays byte-identical to the SPARKS copy, this override
      lives here, in the pages that want it. */
   :root {
     --font-display: 'Fraunces', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
@@ -164,7 +164,7 @@
             var thin = d.known && d.stat === id;
             return '<span class="chip' + (thin ? ' thin' : '') + '">' + esc(id) + '</span>';
           }).join('')
-        : '<span class="faint">—</span>')
+        : '<span class="faint">not yet</span>')
         + (t.hitsAll ? '<span class="chip">every save</span>' : '');
 
       var blockChips = t.blockers.length
@@ -196,7 +196,7 @@
                   + 'rather than safe.</span>' : '')
             + (t.attacks
                 ? '<br/><span class="faint">' + t.attacks + ' of these ' + (t.attacks === 1 ? 'is a bill that attacks' : 'are bills that attack')
-                  + ' your <b>Armour Class</b> instead — insurance, not judgment, is what stops '
+                  + ' your <b>Armour Class</b> instead, insurance, not judgment, is what stops '
                   + (t.attacks === 1 ? 'it' : 'those') + '.</span>' : '')
             + (d.hitsAll && d.worstOverall
                 ? '<br/><span class="faint">' + d.hitsAll + ' of these '
@@ -217,20 +217,20 @@
   function renderHistory() {
     var h = Enc.typeHistory(Store.encounters(), TABLES);
     el('hist-note').innerHTML = h.any
-      ? 'From your encounter log — ' + h.total + ' encounter' + (h.total === 1 ? '' : 's')
+      ? 'From your encounter log, ' + h.total + ' encounter' + (h.total === 1 ? '' : 's')
         + ' run so far'
         + (h.unknown ? ', ' + h.unknown + ' of which name a creature this bestiary no longer has'
                      : '') + '. This is what you have actually pointed at yourself, '
         + 'not a measurement of your life.'
-      : 'Nothing logged yet. Run an encounter and log it, and this fills in — over time it says '
+      : 'Nothing logged yet. Run an encounter and log it, and this fills in, over time it says '
         + 'which kinds of thing you keep going back to look at.';
 
     el('hist-rows').innerHTML = h.rows.map(function (r) {
       return '<tr><td>' + esc(r.label) + '</td>'
-        + '<td class="n">' + (r.seen || '—') + '</td>'
-        + '<td class="n">' + (r.seen ? r.landed : '—') + '</td>'
-        + '<td class="n">' + (r.seen ? r.blocked : '—') + '</td>'
-        + '<td class="n">' + (r.weeks ? r.weeks : '—') + '</td></tr>';
+        + '<td class="n">' + (r.seen || 'not yet') + '</td>'
+        + '<td class="n">' + (r.seen ? r.landed : 'not yet') + '</td>'
+        + '<td class="n">' + (r.seen ? r.blocked : 'not yet') + '</td>'
+        + '<td class="n">' + (r.weeks ? r.weeks : 'not yet') + '</td></tr>';
     }).join('');
   }
 
@@ -250,7 +250,7 @@
     var n = el('load-notice');
     n.hidden = false;
     n.textContent = 'Couldn’t load the game data (' + err.message + '). If you opened this file '
-      + 'directly it needs to be served over http — try the published link instead.';
+      + 'directly it needs to be served over http, try the published link instead.';
   });
 })();
 </script>

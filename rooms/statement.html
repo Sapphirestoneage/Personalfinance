@@ -163,14 +163,14 @@
     <div class="pair" id="nw-pair" style="margin-top:var(--space-3)">
       <div class="figure-cell">
         <span class="cap">What you own, less what you owe</span>
-        <span class="big" id="nw-plain">—</span>
+        <span class="big" id="nw-plain">not yet</span>
         <span class="sub" id="nw-plain-sub"></span>
       </div>
       <!-- 2. HUMAN CAPITAL: behind the humanCapital switch (D-313). The script
            removes this cell, not hides it, when the switch is off. -->
       <section class="figure-cell" id="human-capital">
         <span class="cap">Pay still to come</span>
-        <span class="big" id="hc-value">—</span>
+        <span class="big" id="hc-value">not yet</span>
         <span class="sub" id="hc-sub"></span>
       </section>
     </div>
@@ -192,7 +192,7 @@
   <!-- 4. WHERE THE NEXT DOLLAR LANDS -->
   <section class="slaf-card" id="next-dollar" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">Where the next dollar lands</span>
-    <p class="step" id="nd-step"><small>Step</small>—</p>
+    <p class="step" id="nd-step"><small>Step</small>not yet</p>
     <p class="why" id="nd-sub"></p>
   </section>
 
@@ -401,7 +401,7 @@
     var r = Foo.evaluate(h, TABLES);
     var step = el('nd-step'), sub = el('nd-sub');
     var ladderHref = Ownership.linkTo('foo-ladder', null, ROOM_ID);
-    if (r.status === 'incomplete') { step.innerHTML = '<small>Step</small>—'; sub.textContent = r.reason; return; }
+    if (r.status === 'incomplete') { step.innerHTML = '<small>Step</small>, '; sub.textContent = r.reason; return; }
     if (r.placement) {
       step.innerHTML = '<small>Step ' + esc(r.placement.step) + ' of ' + esc(TABLES.fooRules.ladder.length) + '</small>' + esc(r.placement.label);
       sub.innerHTML = 'Every extra dollar goes here first, in the order of operations. ' + (r.stoppedAt && typeof r.stoppedAt.detail === 'string' ? esc(r.stoppedAt.detail) + ' ' : '')

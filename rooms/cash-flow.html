@@ -8,12 +8,12 @@
 <script src="../shared/errlog.js"></script>
 <script src="../shared/size.js"></script>
 <title>The Month · SPARKS</title>
-<meta name="description" content="When the money moves: this month at a glance, every receipt on its date, where it all flows — and paydays against bills across the month, with the low point and the day it lands."/>
+<meta name="description" content="When the money moves: this month at a glance, every receipt on its date, where it all flows, and paydays against bills across the month, with the low point and the day it lands."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. DECISIONS.md D-101, D-275 (the merge).
+  ROOM SPEC, SPEC.md §11. DECISIONS.md D-101, D-275 (the merge).
   Registry: cash-flow.
 
   ONE MONTH, TWO READINGS.
@@ -24,13 +24,13 @@
                   instalments counted: the low point, and the day it lands
 
   What happened in the month and what is still to land in it are one month.
-  Rule 2 of D-229 — before and after of one thing is one room with a time
+  Rule 2 of D-229, before and after of one thing is one room with a time
   axis. What moved is first because it is the record; the dates are the
   forecast off it.
 
   1. READS   the expense log this room already shows, and what comes in.
-  2. WRITES  the log, as before, and the four calendar fields — pay cadence,
-             next payday, bills a month, pay-later due — whose owner moved
+  2. WRITES  the log, as before, and the four calendar fields, pay cadence,
+             next payday, bills a month, pay-later due, whose owner moved
              here with their boxes (D-275).
   3. CALLS   the engines each reading already called; no arithmetic moved.
   4. EMPTY   the dates reading names the figure it lacks rather than drawing
@@ -174,7 +174,7 @@
       <a class="return-chip" id="return-chip" href="budget.html#bucket-expenses" hidden>← Back to the budget</a>
     </div>
     <h2 style="margin:var(--space-2) 0 0">Log what actually went out</h2>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">A receipt, a bill paid, a transfer made — on its date. Your typical month lives in <a href="expenses.html#spending">Expenses</a>; this is the actual one, and the budget reads it. A cost of earning an income entry is logged here too, against that entry, and can only reduce the tax when it is.</p>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">A receipt, a bill paid, a transfer made, on its date. Your typical month lives in <a href="expenses.html#spending">Expenses</a>; this is the actual one, and the budget reads it. A cost of earning an income entry is logged here too, against that entry, and can only reduce the tax when it is.</p>
     <div class="form-grid" id="log-form">
       <label class="slaf-field"><span class="slaf-label">Amount</span>
         <span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="l-amount" placeholder="e.g. 64.20" aria-label="Amount"/></span></label>
@@ -182,7 +182,7 @@
         <span class="slaf-input-shell"><input type="date" id="l-date" aria-label="Date"/></span></label>
       <label class="slaf-field wide"><span class="slaf-label">The date is</span>
         <span class="slaf-input-shell"><select id="l-datekind" aria-label="How sure the date is">
-          <option value="exact">Exact — it went out, or it is due</option><option value="estimated">Estimated — about then</option><option value="potential">Potential — it may not happen; drawn, not counted</option>
+          <option value="exact">Exact. It went out, or it is due</option><option value="estimated">Estimated, about then</option><option value="potential">Potential. It may not happen; drawn, not counted</option>
         </select></span></label>
       <label class="slaf-field wide"><span class="slaf-label">What for</span>
         <span class="slaf-input-shell"><select id="l-category" aria-label="Category"></select></span></label>
@@ -190,9 +190,9 @@
         <span class="slaf-input-shell"><input type="text" id="l-note" placeholder="e.g. Trader Joe’s" aria-label="Note"/></span></label>
       <label class="slaf-field wide"><span class="slaf-label">What it produced</span>
         <span class="slaf-input-shell"><select id="l-produced" aria-label="What this expense produced">
-          <option value="personal">Nothing — a personal expense</option>
-          <option value="linked">Income — it is a cost of earning an entry</option>
-          <option value="reimbursable">A repayment — someone owes it back to me</option>
+          <option value="personal">Nothing, a personal expense</option>
+          <option value="linked">Income. It is a cost of earning an entry</option>
+          <option value="reimbursable">A repayment, someone owes it back to me</option>
         </select></span></label>
       <label class="slaf-field wide" id="l-linked-wrap" hidden><span class="slaf-label">Which income entry</span>
         <span class="slaf-input-shell"><select id="l-linked" aria-label="Income entry this expense produced"><option value="">Choose one</option></select></span></label>
@@ -237,7 +237,7 @@
 
   <section class="slaf-card" id="out-net-flow">
     <span class="slaf-eyebrow">Left at the end of the month</span>
-    <div class="slaf-figure" data-figure>—</div>
+    <div class="slaf-figure" data-figure>not yet</div>
     <p class="slaf-reason" data-reason></p>
     <div data-detail></div>
   </section>
@@ -330,7 +330,7 @@
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
    so its hat is ABSENT, not greyed, when the branch is not there (D-271).
-   The hash still reaches it — an old link must land somewhere honest — and
+   The hash still reaches it, an old link must land somewhere honest, and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
   'use strict';
@@ -349,8 +349,8 @@
     var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
     /* The default reading is the last row and matches everything, so there
        is always one. When the hash asks for a reading the gate has taken
-       away, fall back to the DEFAULT — the room's plainest reading, and the
-       one the person would have got with no hash at all — not to whichever
+       away, fall back to the DEFAULT, the room's plainest reading, and the
+       one the person would have got with no hash at all, not to whichever
        gated reading happens to sit first in this list. */
     var fallback = VIEWS[VIEWS.length - 1];
     var on = open(asked) ? asked
@@ -405,14 +405,14 @@
 
   /* ---------- the month at a glance --------------------------------------
      Three tiles: what comes in (take-home, Tier 0's one tax lookup), what
-     goes out (the lines, savings excluded — that money has not left), and
+     goes out (the lines, savings excluded, that money has not left), and
      what is left. Each says what it needs instead of showing a dash. */
   /* Every tile opens to what goes into it, each part a link to the room
      that owns it (D-317): the owner asked to see what a figure is made of. */
   function tile(cap, result, format, sub, cls, parts) {
     var ok = Money.isOk(result);
     return '<div class="tile"><div class="t-cap">' + cap + '</div>'
-      + '<div class="t-big' + (ok ? (cls || '') : ' is-incomplete') + '">' + (ok ? format(result.value) : (result.reason || '—')) + '</div>'
+      + '<div class="t-big' + (ok ? (cls || '') : ' is-incomplete') + '">' + (ok ? format(result.value) : (result.reason || 'not yet')) + '</div>'
       + (ok && sub ? '<div class="t-sub">' + sub + '</div>' : '')
       + (parts && parts.length ? '<details class="t-parts"><summary>What goes into this</summary><ul>' + parts.map(function (x) {
           return '<li><a href="' + esc(x.href) + '">' + esc(x.label) + '</a><b>' + esc(x.text) + '</b></li>';
@@ -456,7 +456,7 @@
     var floor = CashFlow.minimumViableMonthCents(h, TABLES.expenseCategories);
     var why = '';
     if (Money.isOk(left) && left.value < 0) why = 'More goes out than comes in. The lines in <a href="expenses.html#spending">Expenses</a> say where; the biggest ones move this most.';
-    else if (Money.isOk(floor)) why = 'The floor — the fixed lines and the debt minimums — is ' + Money.formatCents(floor.value) + ' a month. <a href="runway.html#the-plan">Runway can run at the floor →</a>';
+    else if (Money.isOk(floor)) why = 'The floor, the fixed lines and the debt minimums, is ' + Money.formatCents(floor.value) + ' a month. <a href="runway.html#the-plan">Runway can run at the floor →</a>';
     else if (Money.isOk(summary)) why = 'Tick <em>fixed</em> on the lines you could not cut next month, in <a href="expenses.html#spending">Expenses</a>, and the floor appears here.';
     else why = 'Type what a month costs in <a href="expenses.html#spending">Expenses</a>, once; log what actually goes out below, on its date.';
     el('glance-why').innerHTML = why;
@@ -471,7 +471,7 @@
     var detail = section.querySelector('[data-detail]');
     var isOk = Money.isOk(result);
     if (figure) {
-      figure.textContent = isOk ? formatter(result.value) : Money.EM_DASH;
+      figure.textContent = isOk ? formatter(result.value) : Money.NOT_YET;
       figure.classList.toggle('slaf-figure--incomplete', !isOk);
       figure.classList.toggle('slaf-figure--negative', isOk && result.value < 0);
     }
@@ -563,12 +563,12 @@
     el('l-deductible').disabled = !linked;
     if (!linked) el('l-deductible').checked = false;
     el('l-deductible-wrap').classList.toggle('is-off', !linked);
-    el('l-hint').textContent = path === 'reimbursable' ? 'Counts in full until it is paid back. When it is, tap “Paid back” on the line and the credit lands in that month — never back in this one. Never deductible.'
+    el('l-hint').textContent = path === 'reimbursable' ? 'Counts in full until it is paid back. When it is, tap “Paid back” on the line and the credit lands in that month, never back in this one. Never deductible.'
       : linked ? 'Logged against that income. Tick the box and it comes off the profit before self-employment tax.'
       : path === 'linked' ? 'Pick the income entry it produced. Only a cost of earning can ever reduce the tax.'
       : 'A personal expense can never reduce taxable income; if it produced an income entry, or someone owes it back, say so above.';
     var opt = el('l-category').selectedOptions[0];
-    if (!linked && opt && opt.getAttribute('data-cost')) el('l-hint').textContent = 'A cost of earning it needs the income entry it produced — choose “Income” above and pick one, or it is filed as personal spending in “Other”.';
+    if (!linked && opt && opt.getAttribute('data-cost')) el('l-hint').textContent = 'A cost of earning it needs the income entry it produced, choose “Income” above and pick one, or it is filed as personal spending in “Other”.';
   }
   el('l-produced').addEventListener('change', paintDeductible);
   el('l-linked').addEventListener('change', paintDeductible);
@@ -640,14 +640,14 @@
     el('logged').innerHTML += (log.potentialRows || []).filter(function (r) { return !r.hidden; }).map(function (r) {
       var cat = CashFlow.categoryById(TABLES.expenseCategories, r.categoryId);
       return '<li class="is-potential"><span class="lg-date">' + esc(r.date.slice(5)) + '<small>maybe</small></span>'
-        + '<span class="lg-what">' + esc(r.descriptor || (cat ? cat.label : r.categoryId)) + '<small>' + esc(cat ? cat.label : r.categoryId) + ' · potential — not counted until you make it exact</small></span>'
+        + '<span class="lg-what">' + esc(r.descriptor || (cat ? cat.label : r.categoryId)) + '<small>' + esc(cat ? cat.label : r.categoryId) + ' · potential, not counted until you make it exact</small></span>'
         + '<span class="lg-amt">' + esc(Money.formatCents(r.cents)) + '</span>'
         + '<button type="button" class="lg-x" data-unlog="' + r.entryId + '" aria-label="Remove">✕</button></li>';
     }).join('');
   }
   /* ---------- Where it flows: the Sankey (D-128) ------------------------------
-     Drawn from the spine on every render — the month's income entries netted
-     of tax, the log by bucket and by group — never from a saved dataset. With
+     Drawn from the spine on every render, the month's income entries netted
+     of tax, the log by bucket and by group, never from a saved dataset. With
      nothing logged this month it draws the typical month instead: take-home
      into the lines by group. */
   function renderFlow(h) {
@@ -694,7 +694,7 @@
       });
       var out = Object.keys(byBucket).reduce(function (t, b) { return t + byBucket[b]; }, 0);
       var left = inc.takeHomeCents + (log.reimbursedCents || 0) - out;
-      el('flow-why').textContent = inc.count ? Money.formatCents(inc.takeHomeCents) + ' came in after tax; ' + Money.formatCents(out) + ' has been logged going out' + (left > 0 ? ', ' + Money.formatCents(left) + ' not yet logged anywhere.' : left < 0 ? ' — more than came in.' : '.') : 'Nothing logged as coming in this month yet; the outgoings are drawn against an empty pool.';
+      el('flow-why').textContent = inc.count ? Money.formatCents(inc.takeHomeCents) + ' came in after tax; ' + Money.formatCents(out) + ' has been logged going out' + (left > 0 ? ', ' + Money.formatCents(left) + ' not yet logged anywhere.' : left < 0 ? ', more than came in.' : '.') : 'Nothing logged as coming in this month yet; the outgoings are drawn against an empty pool.';
     } else {
       el('flow-title').textContent = 'A typical month, from Expenses';
       var take = Tier0.takeHomeMonthlyCents(h, TABLES);
@@ -779,7 +779,7 @@
     notice.hidden = false;
     notice.className = 'notice is-error';
     notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message
-      + '). Serve this over HTTP — python3 -m http.server — rather than opening the file directly.';
+      + '). Serve this over HTTP, python3 -m http.server, rather than opening the file directly.';
   });
 })();
 </script>
@@ -880,8 +880,8 @@
       var c = T.calendarConventions || {};
       var r = m(h, T);
       return [
-        { label: 'Paydays', value: Money.isOk(r) ? (r.paydaySource === 'ledger' ? 'the Income entries’ landings' : String(Math.round(r.paydaysPerMonth * 100) / 100) + ' a month') : '—', source: Money.isOk(r) && r.paydaySource === 'ledger' ? 'each entry on its day, for the cash it brings net of what is withheld (engines/ledger.js)' : 'data/calendar_conventions.json v' + (c.version || '?') + ': 52 ÷ 12, 26 ÷ 12, 2 or 1 by cadence (' + (c.confidence || '') + ')' },
-        { label: 'Take-home', value: Money.isOk(r) && Money.isEntered(r.takeHomeCents) ? Money.formatCents(r.takeHomeCents) + ' a month' : '—', source: 'gross less the effective-rate table’s estimate (engines/tier0.js)' },
+        { label: 'Paydays', value: Money.isOk(r) ? (r.paydaySource === 'ledger' ? 'the Income entries’ landings' : String(Math.round(r.paydaysPerMonth * 100) / 100) + ' a month') : 'not yet', source: Money.isOk(r) && r.paydaySource === 'ledger' ? 'each entry on its day, for the cash it brings net of what is withheld (engines/ledger.js)' : 'data/calendar_conventions.json v' + (c.version || '?') + ': 52 ÷ 12, 26 ÷ 12, 2 or 1 by cadence (' + (c.confidence || '') + ')' },
+        { label: 'Take-home', value: Money.isOk(r) && Money.isEntered(r.takeHomeCents) ? Money.formatCents(r.takeHomeCents) + ' a month' : 'not yet', source: 'gross less the effective-rate table’s estimate (engines/tier0.js)' },
         { label: 'Bills', value: 'drawn on their day', source: 'every dated entry in the expense log on its day, a recurring one each month; a date that is only potential is drawn, never counted' },
         { label: 'The rest of spending', value: 'spread evenly', source: 'a month’s spending less the bills listed, a share on every day' },
         { label: 'The window', value: (Money.isOk(r) ? r.horizonDays : 31) + ' days', source: 'today included; today’s cash is the starting balance' },
@@ -892,9 +892,9 @@
     why: function (h, T, situation) {
       return {
         employed: 'Employed, the month has a rhythm: paydays land, bills land, and the gap between them is where an overdraft or a pay-later charge lives. This draws the rhythm so the low point is a date, not a surprise.',
-        selfEmployed: 'Self-employed, a pay cadence is a fiction — the month is drawn as if you paid yourself on a schedule, which is the point of Variable Income’s salary. Set the cadence to how you pay yourself.',
+        selfEmployed: 'Self-employed, a pay cadence is a fiction. The month is drawn as if you paid yourself on a schedule, which is the point of Variable Income’s salary. Set the cadence to how you pay yourself.',
         mixed: 'With a job and your own work, the job’s paydays are the rhythm and the own-work income arrives around them. This draws the job’s.',
-        student: 'A student’s money arrives in lumps — a term’s aid, a part-time paycheque — and rent lands on the first. The low point is usually the day before the lump.',
+        student: 'A student’s money arrives in lumps, a term’s aid, a part-time paycheque, and rent lands on the first. The low point is usually the day before the lump.',
         retired: 'Retired, the pension or Social Security day is the payday. Set the cadence to monthly and its day; the month is the same shape as anyone’s.',
         betweenJobs: 'Between jobs, the benefit’s day is the payday and the cadence is usually weekly or fortnightly; the low point is the day the runway feels shortest.'
       }[situation] || 'A month is not a number; it is a shape. This draws it a day at a time from what you tell it.';

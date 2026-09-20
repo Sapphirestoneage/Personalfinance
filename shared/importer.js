@@ -1,11 +1,11 @@
 /* ==========================================================================
-   shared/importer.js — new numbers in, sorted into where they belong.
+   shared/importer.js, new numbers in, sorted into where they belong.
    --------------------------------------------------------------------------
    The one-pager's paste (shared/gate.js parseImport) answers its own ten
    questions and nothing else: 'Chase Visa 2,300' became "total owed", and
    'rent 1,500/mo' became "a month of spending". Once the household is more
-   than the one-pager — itemised debts, several accounts, a categorised
-   month — a pasted statement has to land in the right LIST, as the right
+   than the one-pager, itemised debts, several accounts, a categorised
+   month, a pasted statement has to land in the right LIST, as the right
    RECORD, in one batch, with one undo. This is that.
 
      classify(text, tables)   → rows: one per line with an amount, each
@@ -96,11 +96,11 @@
   }
 
   /**
-   * classify(text, tables) — one row per line that carries an amount.
+   * classify(text, tables), one row per line that carries an amount.
    *   { i, line, label, cents, monthly, kind, sub, why }
    * kind: 'debt' | 'asset' | 'expense' | 'income' | 'skip'
    * sub:  a debt type, an asset category, an expense categoryId, or an
-   *       income basis — the thing the preview lets the person change.
+   *       income basis, the thing the preview lets the person change.
    */
   function classify(text, tables) {
     var kw = (tables && tables.importKeywords) || {};
@@ -128,7 +128,7 @@
       if (debt) {
         var asExpense = monthly && kw.monthlyMeansExpense ? kw.monthlyMeansExpense[debt.type] : null;
         if (asExpense) { row.kind = 'expense'; row.sub = asExpense; row.why = 'a monthly ' + debt.word + ' payment'; }
-        else { row.kind = 'debt'; row.sub = debt.type; row.why = '“' + debt.word + '”' + (monthly ? ' — a monthly amount, so the minimum; the balance is still needed' : ''); }
+        else { row.kind = 'debt'; row.sub = debt.type; row.why = '“' + debt.word + '”' + (monthly ? ', a monthly amount, so the minimum; the balance is still needed' : ''); }
         rows.push(row); return;
       }
 
@@ -140,7 +140,7 @@
       if (cat) { row.kind = 'expense'; row.sub = cat.categoryId; row.why = '“' + cat.word + '”' + (monthly ? '' : ', taken as a month'); rows.push(row); return; }
       if (asset) { row.kind = 'asset'; row.sub = asset.category; row.why = '“' + asset.word + '”'; rows.push(row); return; }
 
-      row.why = 'no word I know — pick where it goes, or leave it';
+      row.why = 'no word I know, pick where it goes, or leave it';
       rows.push(row);
     });
     return { rows: rows, taken: rows.filter(function (r) { return r.kind !== 'skip'; }).length, skipped: rows.filter(function (r) { return r.kind === 'skip'; }).length };
@@ -158,7 +158,7 @@
   }
 
   /**
-   * plan(rows, household) — what apply() will write, from the rows as the
+   * plan(rows, household), what apply() will write, from the rows as the
    * person left them (kind and sub may have been changed in the preview).
    */
   function plan(rows, household) {
@@ -194,7 +194,7 @@
   }
 
   /**
-   * apply(plan, Spine) — one batch, one undo. Income lands on the primary
+   * apply(plan, Spine), one batch, one undo. Income lands on the primary
    * adult: the intake's source is updated when it is the only one, else a
    * source of its own is added, so a second job pasted in is a second
    * source and not an overwrite.
@@ -236,7 +236,7 @@
   }
 
   /**
-   * merge(current, incoming) — a COPY of `current` with what `incoming`
+   * merge(current, incoming), a COPY of `current` with what `incoming`
    * adds: records its lists lack (by id), people it lacks and their
    * income sources, expense entries it lacks, and blank scalars filled.
    * Nothing already entered changes. Returns { household, added }.

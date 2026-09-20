@@ -1,11 +1,11 @@
 /* ==========================================================================
-   shared/store.js — persistence for Dungeons & Dividends.
+   shared/store.js, persistence for Dungeons & Dividends.
    --------------------------------------------------------------------------
    This is the ONE file that is deliberately different from the SLAF spine it
    replaces, and the difference is the whole point of this product.
 
-   What it keeps is a REAL SLAF household — the same shape shared/schema.js
-   defines, people and assets and debts and expenses — even though almost
+   What it keeps is a REAL SLAF household, the same shape shared/schema.js
+   defines, people and assets and debts and expenses, even though almost
    nobody using this tool will ever have heard of SLAF. That is not
    over-engineering. It is what makes "port it into the main suite" a copy
    rather than a translation: the export is the household object itself, so
@@ -54,7 +54,7 @@
      the main suite stores it and how engines/character.js reads it
      (profileOf() looks at household.dndProfile), so keeping them together
      means the engine works unchanged AND the export is just the household
-     object — nothing to reassemble on the far side. */
+     object, nothing to reassemble on the far side. */
   function blank() {
     var h = Schema.createHousehold();
     h.dndProfile = {};
@@ -68,7 +68,7 @@
     if (!raw) { state = blank(); return state; }
     try {
       var parsed = JSON.parse(raw);
-      /* A corrupt or half-written blob is kept on disk, not thrown away — the
+      /* A corrupt or half-written blob is kept on disk, not thrown away, the
          same rule the source spine follows. We fall back to a blank sheet in
          memory but never overwrite what is stored until a real save. */
       if (!parsed || typeof parsed !== 'object' || !parsed.people) {
@@ -101,7 +101,7 @@
   /* ---- The five numbers -------------------------------------------------
      Written INTO the household in its real shape, not into a flat bag, so
      the vendored Schema and Tier0 read them without knowing this product
-     exists. A null clears the record rather than storing a zero — empty is
+     exists. A null clears the record rather than storing a zero, empty is
      not zero here either.                                                */
 
   function upsert(list, record) {
@@ -118,7 +118,7 @@
     var h = household();
     if (field === 'grossAnnualIncomeCents') {
       /* Income hangs off a PERSON as an income source, not off the household
-         and not off the work profile — Schema.allIncomeSources() walks
+         and not off the work profile, Schema.allIncomeSources() walks
          people[].incomeSources[], and only people whose role is 'adult'. Get
          either of those wrong and the income silently reads as "not entered". */
       var person = h.people[0];
@@ -184,7 +184,7 @@
 
   /**
    * Filing status is not decoration. Tier0's savings rate subtracts estimated
-   * tax, and the effective-rate lookup keys off filing status — so without it
+   * tax, and the effective-rate lookup keys off filing status, so without it
    * savings rate is incomplete, which makes CON incomplete, which withholds
    * Max HP. One dropdown stands between a sheet with Hit Points and one
    * without.
@@ -252,7 +252,7 @@
     p.encounters.unshift({
       on: new Date().toISOString(),
       /* Historically the creature's NAME, not an id. Renaming the field would
-         orphan every stored record, so the name stays and readers join on it —
+         orphan every stored record, so the name stays and readers join on it, 
          see Encounter.typeHistory(), which also back-fills the two fields below
          for rows written before T10 added them. */
       monsterId: rec.monsterId || null,
@@ -265,7 +265,7 @@
       tier: rec.tier || null,
       source: rec.source || 'self'
     });
-    /* Keep the log bounded — this lives in localStorage alongside everything
+    /* Keep the log bounded, this lives in localStorage alongside everything
        else, and an unbounded list is how that quietly fills up. */
     if (p.encounters.length > 50) p.encounters.length = 50;
     save();
@@ -275,7 +275,7 @@
   function encounters() { return profile().encounters || []; }
 
   /**
-   * Load a character back in — BRIEF §9.5.
+   * Load a character back in, BRIEF §9.5.
    *
    * The counterpart to the export, and the reason someone can start on a phone
    * and finish on a laptop. Deliberately a REPLACE of the keys the envelope
@@ -284,7 +284,7 @@
    * not exist. Keys the envelope does not name are left completely alone, so
    * an older file missing a newer key does not wipe it.
    *
-   * Validation is the caller's job — call Export.validate() first and do not
+   * Validation is the caller's job, call Export.validate() first and do not
    * call this on a file that failed. The `contains` list is the authority on
    * what to take; a key present in the payload but unnamed is ignored, because
    * `contains` is the part the format guarantees.
@@ -315,8 +315,8 @@
    *
    * DELIBERATELY NOT THE ENCOUNTER LOG. `encounters` means "this was run
    * against my sheet and these are the numbers it produced"; `types.html`
-   * prints it as exactly that. A mark is a person saying "yes, that one" —
-   * a self-report, not a measurement — so it gets its own key and its own
+   * prints it as exactly that. A mark is a person saying "yes, that one", 
+   * a self-report, not a measurement, so it gets its own key and its own
    * sentence, and it must never reach declaredScores or a class. DD-028.
    */
   function markMet(name) {

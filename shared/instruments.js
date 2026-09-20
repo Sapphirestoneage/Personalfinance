@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/instruments.js — the six numbers on the dashboard's first screen,
+   shared/instruments.js, the six numbers on the dashboard's first screen,
    and the one place a snapshot learns what to freeze.
    --------------------------------------------------------------------------
    The dashboard shows six instruments above the fold; a snapshot has to
@@ -9,7 +9,7 @@
    dashboard and the Refresh page read it.
 
    Nothing is computed here. Every value is a call into an engine that
-   already owns the formula — Tier0, Ratios, Foo — and comes back as the
+   already owns the formula, Tier0, Ratios, Foo, and comes back as the
    Result it produced. BRIEF §1.5.
    ========================================================================== */
 (function (root, factory) {
@@ -154,7 +154,7 @@
     var results = {
       netWorth: Tier0.netWorth(household),
       /* The CONTRIBUTED rate is the headline when the 401(k) percentage is
-         known — what actually went somewhere — and the residual (gross
+         known, what actually went somewhere, and the residual (gross
          less spending less tax) stands in until then. D-080. */
       savingsRate: (function () {
         var c = CashFlow.savingsRateContributed(household, tables);
@@ -182,7 +182,7 @@
         result = Money.incomplete('Between jobs \u2014 nothing to measure against an income yet.', result.missing);
       }
       /* The verdict used to be borrowed wholesale from the ratio row named
-         in `band` — so the savings-rate instrument showed the CONTRIBUTED
+         in `band`, so the savings-rate instrument showed the CONTRIBUTED
          rate (13.8%) and coloured it green from the RESIDUAL rate (28.5%),
          a number that only appears in the panel. Judge the figure actually
          on screen against the same thresholds. D-145. */
@@ -217,7 +217,7 @@
     return { rows: rows, byId: byId, savingsRates: rates, shown: shown, lead: lead };
   }
 
-  /** Flat { id: Result } — what a snapshot freezes as computedOutputs. */
+  /** Flat { id: Result }, what a snapshot freezes as computedOutputs. */
   function outputs(household, tables, now) {
     var c = compute(household, tables, now);
     var out = {};
@@ -256,7 +256,7 @@
 
   function format(row) {
     var r = row.result;
-    if (!Money.isOk(r)) return Money.EM_DASH;
+    if (!Money.isOk(r)) return Money.NOT_YET;
     switch (row.unit) {
       case 'cents':  return Money.formatCents(r.value);
       case 'rate':   return Money.formatRate(r.value, { decimals: 1 });
@@ -283,8 +283,8 @@
   }
 
   /* ---- 3D: every instrument three ways (BRIEF §6.4, D-089) ----------------
-     The events engine on the EMPTY template — the Triple D bundles on the
-     baseline, no event — read back per instrument at the horizon. Load
+     The events engine on the EMPTY template, the Triple D bundles on the
+     baseline, no event, read back per instrument at the horizon. Load
      and debt-to-income do not move with returns or income-after, and the
      FOO step is a placement, not a projection: those three stay as they
      are and say so. */

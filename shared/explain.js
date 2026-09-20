@@ -1,11 +1,11 @@
 /* ==========================================================================
-   shared/explain.js — the ⓘ on a ratio: what it is, why it matters, what
+   shared/explain.js, the ⓘ on a ratio: what it is, why it matters, what
    moves it, and links to every number it reads.
    --------------------------------------------------------------------------
    A ratio on a screen was a name and a coloured figure. Asked what
    "solvency ratio" meant, or what to do about a red one, the page had no
    answer. This puts one behind a small button on every ratio row, on the
-   dashboard and in Every Ratio alike, from data/ratio_explainers.json —
+   dashboard and in Every Ratio alike, from data/ratio_explainers.json, 
    the same table engines/ratios.js attaches to each row as `explain`.
 
    Each field the ratio looks at renders as a link to the room that owns
@@ -52,7 +52,7 @@
 
   /**
    * The panel for one ratio row from Ratios.all(): its `explain`, its
-   * formula, and — when the caller passes one — the band in words.
+   * formula, and, when the caller passes one, the band in words.
    * Hidden until the button opens it.
    */
   function panel(row, household, roomId, extra) {

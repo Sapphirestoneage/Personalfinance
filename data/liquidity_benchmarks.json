@@ -2,7 +2,7 @@
   "id": "liquidity_benchmarks",
   "version": "1.0",
   "asOf": "2026-01-01",
-  "source": "Conventional emergency-fund coverage bands as they appear in mainstream personal-finance guidance (CFPB, FINRA, and the Financial Order of Operations' 3-6 month rung). Rules of thumb, not law — kept in data/ so the bands can be edited without touching the engine.",
+  "source": "Conventional emergency-fund coverage bands as they appear in mainstream personal-finance guidance (CFPB, FINRA, and the Financial Order of Operations' 3-6 month rung). Rules of thumb, not law, kept in data/ so the bands can be edited without touching the engine.",
   "confidence": "convention",
   "confidenceNote": "Coverage bands are rules of thumb from mainstream guidance, not law.",
   "note": "SPEC.md Section 13, Tier 1.5 SWAN Number. These bands exist ONLY to give a self-reported number some context. The SWAN Number is deliberately feeling-based: a band is never a verdict, and the room must not tell someone their own number is wrong. Bands are expressed in months of monthly expenses and are checked lowest-to-highest, so the first band whose maxMonths the value falls at or under wins; the last band has no maxMonths and catches everything above.",
@@ -12,7 +12,7 @@
       "minMonths": 0,
       "maxMonths": 1,
       "label": "A starter cushion",
-      "blurb": "About a month of expenses — enough to absorb a surprise bill without reaching for a card."
+      "blurb": "About a month of expenses, enough to absorb a surprise bill without reaching for a card."
     },
     {
       "id": "conventional_floor",
@@ -40,7 +40,7 @@
       "minMonths": 12,
       "maxMonths": null,
       "label": "A year or more",
-      "blurb": "Well past what any rule of thumb asks for. That is allowed — cash you hold for peace of mind is buying something the return on it does not measure."
+      "blurb": "Well past what any rule of thumb asks for. That is allowed, cash you hold for peace of mind is buying something the return on it does not measure."
     }
   ],
   "milestones": [

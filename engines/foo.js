@@ -1,15 +1,15 @@
 /* ==========================================================================
-   engines/foo.js — Financial Order of Operations placement + flags.
+   engines/foo.js, Financial Order of Operations placement + flags.
    --------------------------------------------------------------------------
    SPEC.md §13, ninth Tier 0 output. Rules-based, not formula-based: a
    sequential boolean gate down the ladder, stopping at the first unmet
-   condition. Every threshold comes from data/foo_rules.json — nothing here
+   condition. Every threshold comes from data/foo_rules.json, nothing here
    hardcodes a rate or a dollar figure.
 
    Three gate outcomes, not two. A step can be:
-       'met'      — the condition is satisfied, keep walking
-       'unmet'    — this is the user's placement, stop
-       'unknown'  — the inputs needed to judge it were never entered, stop
+       'met'. The condition is satisfied, keep walking
+       'unmet'. This is the user's placement, stop
+       'unknown'. The inputs needed to judge it were never entered, stop
                     and say which ones
 
    'unknown' exists because a missing input is not a failed step. Tier 0
@@ -45,8 +45,8 @@
   }
 
   /** What goes into the workplace plan, against this year's elective-deferral
-   *  limit. Both figures already exist — retirement.contributionPercent and
-   *  data/irs_limits_2026.json — and neither was being read past step 4.
+   *  limit. Both figures already exist, retirement.contributionPercent and
+   *  data/irs_limits_2026.json, and neither was being read past step 4.
    *  Returns null when either is missing; a guess here would be a number
    *  people act on. */
   function workplaceDeferral(household, tables) {
@@ -147,7 +147,7 @@
     /* --- Step 2: capture the full employer match -------------------------
        Needs to know whether the user is CONTRIBUTING enough to receive it,
        which the ten Tier 0 inputs do not capture. household.capturingFullMatch
-       is nullable on purpose — see DECISIONS.md D-008. */
+       is nullable on purpose, see DECISIONS.md D-008. */
     (function () {
       /* Derived from the contribution percentage and the match cap when
          both are known (D-061); the stored answer otherwise. */
@@ -159,7 +159,7 @@
       }
       if (!Money.isOk(match)) {
         steps.push(unknown('employer_match',
-          'Add your employer match — percentage and cap, or “none”.', ['employerMatch']));
+          'Add your employer match, percentage and cap, or “none”.', ['employerMatch']));
         return;
       }
       if (capturing === null || capturing === undefined) {
@@ -216,8 +216,8 @@
        figures nothing here collects, so the step stays UNKNOWN: guessing a
        placement would be worse than not having one.
 
-       But the workplace contribution IS held — retirement.contributionPercent,
-       owned by Where It Goes — and the elective-deferral limit is in
+       But the workplace contribution IS held, retirement.contributionPercent,
+       owned by Where It Goes, and the elective-deferral limit is in
        data/irs_limits_2026.json. The old sentence said steps 5 and up "need
        your actual contributions … which this room doesn't ask for yet",
        which was not true of the one contribution the app has, and it left a
@@ -233,7 +233,7 @@
         'Steps 5 and up need what goes into an HSA, a Roth or an IRA, which nothing here asks for yet. What is known: '
           + deferral.percent + '% of pay goes into the workplace plan, about ' + used
           + ' a year, against this year\u2019s ' + cap + ' elective-deferral limit'
-          + (deferral.atLimit ? ' — that limit is already met.' : ' — ' + spare + ' of that space is unused.'),
+          + (deferral.atLimit ? ', that limit is already met.' : ', ' + spare + ' of that space is unused.'),
         ['contributions']);
       step5.known = deferral;
       steps.push(step5);
@@ -249,7 +249,7 @@
 
   /* ---- Out-of-bounds flags ---------------------------------------------
      A flag fires when a later step is being pursued while an earlier one is
-     incomplete. Flags are evaluated INDEPENDENTLY of placement — a ladder
+     incomplete. Flags are evaluated INDEPENDENTLY of placement, a ladder
      that stops at step 2 still surfaces a step-3 problem. SPEC.md §13.   */
 
   function evaluateFlags(household, tables) {
@@ -285,7 +285,7 @@
       });
     }
 
-    /* 2. A real match going uncaptured. Only fires on an explicit "no" —
+    /* 2. A real match going uncaptured. Only fires on an explicit "no", 
           an unanswered question is not a finding. */
     var capturingFlag = Schema.capturingFullMatchDerived(household);
     if (Money.isOk(match) && match.value > 0 && Money.isOk(capturingFlag) && capturingFlag.value === false) {
@@ -311,7 +311,7 @@
     }
 
     /* 5. Revolving credit as an outsized share of total debt. SPEC.md calls
-          this "high implied credit utilisation relative to debt load" —
+          this "high implied credit utilisation relative to debt load", 
           utilisation proper needs credit limits, which Tier 0 does not
           collect, so this is the share-of-debt proxy. */
     var debts = Schema.aggregatableDebts(household);
@@ -333,7 +333,7 @@
 
     /* 6. The roof above the front-end guideline. The largest line in most
           budgets, the hardest to change in a hurry, and the one underwriters
-          read on its own — t.dtiHousingGuideline has been in the rules file
+          read on its own, t.dtiHousingGuideline has been in the rules file
           all along with nothing reading it. Accommodation as typed; this
           does not wait on a categorised month, for the same reason
           engines/ratios.js no longer does. */
@@ -351,7 +351,7 @@
 
     /* Flags come out in the ladder's order, not the file's. A flag is a step
        being skipped, so the one belonging to the earliest step is the one to
-       answer first — and the Dashboard shows flags[0]. Before this, the file
+       answer first, and the Dashboard shows flags[0]. Before this, the file
        happened to list the cash-versus-debt flag (step 3) above the
        uncaptured match (step 2), so the front door said "point the excess at
        the debt" while the ladder room said "capture the employer match", on
@@ -366,7 +366,7 @@
     return fired;
   }
 
-  /** Placement + flags together — the shape a room renders. */
+  /** Placement + flags together, the shape a room renders. */
   function evaluate(household, tables) {
     var walked = evaluateSteps(household, tables);
     if (walked.error) {
@@ -378,7 +378,7 @@
 
     var placement = null;
     /* Only an UNMET step is a placement. A step we couldn't judge is not
-       "where you are" — reporting it as one would tell someone with an
+       "where you are", reporting it as one would tell someone with an
        empty form that they're stuck on step 0. */
     if (last && last.status === 'unmet') {
       for (var i = 0; i < rules.ladder.length; i++) {

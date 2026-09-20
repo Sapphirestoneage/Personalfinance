@@ -1,5 +1,5 @@
 /* ==========================================================================
-   engines/trap.js — the Middle Class Trap Test.
+   engines/trap.js, the Middle Class Trap Test.
    DECISIONS.md D-218 (K1).
    --------------------------------------------------------------------------
    The debate: BiggerPockets Money says a net worth that is mostly the

@@ -1,7 +1,7 @@
 /* ==========================================================================
-   engines/windfall.js — a lump sum, all at once or spread out.
+   engines/windfall.js, a lump sum, all at once or spread out.
    --------------------------------------------------------------------------
-   SPEC.md §13, Tier 1: "Lump Sum vs. DCA — investing a lump sum vs.
+   SPEC.md §13, Tier 1: "Lump Sum vs. DCA, investing a lump sum vs.
    spreading over time. Showing the 'usually loses but reduces regret risk'
    nuance properly needs a Monte Carlo simulation, not a single
    deterministic projection."
@@ -11,13 +11,13 @@
 
    A single projection at a 7% expected return has exactly one answer:
    invest it all now. It has to. Money in the market for longer, at a
-   positive assumed rate, ends up ahead — the "comparison" is a restatement
+   positive assumed rate, ends up ahead, the "comparison" is a restatement
    of the assumption, dressed up as a finding. Showing that number with a
    verdict attached would be false confidence about the one thing the person
    actually wants to know, which is what happens if they are unlucky.
 
    A Monte Carlo would answer that, and a Monte Carlo needs return
-   distribution parameters — a mean, a volatility, and a defensible source
+   distribution parameters, a mean, a volatility, and a defensible source
    for both. This repo does not have them and will not invent them (D-036).
 
    So this engine inverts the question. Instead of asserting an outcome, it
@@ -29,7 +29,7 @@
    That is deterministic, needs no distribution, and is strictly more
    informative than a point estimate: it names the exact scenario in which
    the cautious choice wins, and leaves the odds of that scenario to the
-   person, who is allowed to have a view. The expected gap is reported too —
+   person, who is allowed to have a view. The expected gap is reported too, 
    as the price of the insurance, not as a verdict.
 
    The month-by-month simulation is deliberately a loop rather than a closed
@@ -67,7 +67,7 @@
   var SEARCH_STEPS = 60;          /* bisection: 2^-60 of the range, ample */
 
   /* Illustration rows, not forecasts. A bad year, a flat year, a normal
-     year, a good one — the person can replace any of them. */
+     year, a good one. The person can replace any of them. */
   var SCENARIO_RATES = [-0.30, -0.15, 0, 0.07, 0.20];
 
   /**
@@ -80,7 +80,7 @@
    *         mattress. Ignoring that is the most common way this comparison
    *         is rigged in favour of the lump sum.
    *
-   * Returns plain numbers (not a Result) — it is the inner loop, and every
+   * Returns plain numbers (not a Result). It is the inner loop, and every
    * caller has already checked its inputs.
    */
   function run(amountCents, months, annualRate, cashAnnualRate) {
@@ -95,7 +95,7 @@
     for (var m = 1; m <= months; m++) {
       /* Buy at the start of the month, so the slice is exposed for the
          month it was bought in. The slice is a fixed share of the ORIGINAL
-         amount — the interest the waiting cash earns stays in the account
+         amount, the interest the waiting cash earns stays in the account
          and goes in with the last purchase, which is what actually happens
          when somebody sets up a monthly transfer for a round number. */
       var buy = (m === months) ? waiting : slice;
@@ -130,7 +130,7 @@
   }
 
   /**
-   * The annual return at which the two strategies end level — below it,
+   * The annual return at which the two strategies end level, below it,
    * spreading wins.
    *
    * There is an identity hiding here, and it is the most useful sentence
@@ -138,7 +138,7 @@
    * waiting to be invested is not idle, it is earning the cash rate, so
    * spreading a lump sum is a blend of the market and the savings account,
    * and a blend beats the pure thing exactly when the thing it is blended
-   * with does better. Not "usually", not "on average" — exactly.
+   * with does better. Not "usually", not "on average", exactly.
    *
    * This is still solved by bisection rather than by returning the cash
    * rate, on purpose. The identity holds for THIS timing convention (buy at
@@ -149,7 +149,7 @@
    * safe to print in the room.
    *
    * Returns null when spreading never wins inside the search range, which
-   * happens when the cash rate is at or above the search floor's return —
+   * happens when the cash rate is at or above the search floor's return. 
    * the room says so rather than printing a number nobody could act on.
    */
   function breakEvenAnnualRate(amountCents, months, cashAnnualRate) {
@@ -169,7 +169,7 @@
    * The whole comparison.
    *   compare({ amountCents, months, annualRate, cashAnnualRate })
    *
-   * The Result's value is the GAP in cents — what going all in is expected
+   * The Result's value is the GAP in cents, what going all in is expected
    * to be worth over spreading it, at the assumed return. Positive means
    * the lump sum is ahead, which at any positive assumed return it will be;
    * that is why the break-even is the headline in the room and this is not.
@@ -195,7 +195,7 @@
     }
 
     /* Cash left waiting earns something unless you say it earns nothing.
-       Absent is not zero here either — but a rate genuinely can be zero, so
+       Absent is not zero here either, but a rate genuinely can be zero, so
        the default is stated rather than assumed silently. */
     var cashRate = Money.isEntered(o.cashAnnualRate) ? o.cashAnnualRate : 0;
 
@@ -216,7 +216,7 @@
       lumpCents: Math.round(r.lump),
       spreadCents: Math.round(r.spread),
       gapCents: Math.round(gap),
-      /* The gap as a share of the money itself — the comparable number
+      /* The gap as a share of the money itself, the comparable number
          across a $5,000 windfall and a $500,000 one. */
       gapShare: o.amountCents === 0 ? null : gap / o.amountCents,
       gapPerMonthCents: Math.round(gap / o.months),
@@ -224,7 +224,7 @@
       breakEvenAnnualRate: breakEven,
       breakEvenTotalDrop: totalDrop,
       /* How much of the money is exposed to the market on average across
-         the window — the plain reason the lump sum is ahead at all. */
+         the window, the plain reason the lump sum is ahead at all. */
       averageExposure: (o.months + 1) / (2 * o.months),
       averageWaitingCents: Math.round(o.amountCents * (o.months - 1) / (2 * o.months)),
       path: r.path,
@@ -237,7 +237,7 @@
   /**
    * What each strategy ends at IF the market did a given thing.
    *
-   * These are not forecasts and carry no probability — that is precisely
+   * These are not forecasts and carry no probability. That is precisely
    * what this engine refuses to invent. They are "suppose it did this"
    * rows, and the person picks the this. The point of the table is the
    * shape: spreading loses a little in every good scenario and saves a lot

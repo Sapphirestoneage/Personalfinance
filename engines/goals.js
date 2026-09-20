@@ -1,10 +1,10 @@
 /* ==========================================================================
-   engines/goals.js — the Goal Costing Engine.
+   engines/goals.js, the Goal Costing Engine.
    --------------------------------------------------------------------------
    SPEC.md §9 item 6: built BEFORE Wedding, Dream or any other goal
    calculator, because they are the same shape and building them separately
-   means building this three times. §13 says so outright — the Wedding calc is
-   "structurally identical to Dream Calculator — one Goal Costing Engine both
+   means building this three times. §13 says so outright, the Wedding calc is
+   "structurally identical to Dream Calculator, one Goal Costing Engine both
    call into", and the Travel calc is "the entry-level tier of the full
    Vacation/Travel Calculator engine, not a separate codebase".
 
@@ -17,7 +17,7 @@
        arrival    = months at the CURRENT contribution, which may be later
 
    The output that matters is not the total. It is whether the required
-   monthly figure fits in the money you actually have spare — which is why
+   monthly figure fits in the money you actually have spare, which is why
    this reads Cash Flow's surplus rather than asking again.
 
    FIVE OUTPUTS ON EVERY BLOCK (D-283). The Decision Room asks the same five
@@ -25,13 +25,13 @@
 
        what it costs      totalCents
        what it costs you  hours of your life at your real hourly wage, and
-                          the months of FI it pushes back — both through
+                          the months of FI it pushes back, both through
                           shared/lens.js, never a second conversion here
        when it lands      monthsUntil, and monthsAtCurrentContribution when
                           the two differ
        whether it fits    affordability, against Cash Flow's surplus
        can it be undone   undo: the cost and the months to reverse it, and
-                          the verdict those two make — engines/reversibility
+                          the verdict those two make, engines/reversibility
                           .js verdict(), which was a room and is a field
 
    None of the five is a new formula. That is the point of the shell: a
@@ -40,13 +40,13 @@
    A LINE CAN PAY YOU (D-299): rent a lodger pays, the thing you sell, the
    rent you would not pay for a year at home. Typed positive, flagged
    `pays`, counted negative in itemAmountCents. A block whose lines net
-   negative answers the same five questions the other way round — what it
-   pays, the hours it buys back, when it starts, what it adds — through
+   negative answers the same five questions the other way round, what it
+   pays, the hours it buys back, when it starts, what it adds, through
    the same Lens, opposite direction. Not a sixth answer either.
 
    A LINE CAN BE PRICED PER UNIT (D-293): so many guests at so much each,
    so many nights at so much a night. `itemAmountCents` makes the line's
-   figure from the two, and `marginalOf` asks what ONE MORE costs — in
+   figure from the two, and `marginalOf` asks what ONE MORE costs, in
    money, in hours, and in FI days, through the same Lens. That is not a
    sixth answer. It is the first two asked of the smallest decision inside
    the block, which for a wedding is the only question anybody actually
@@ -115,7 +115,7 @@
     if (Money.isEntered(goal && goal.lumpTargetCents)) {
       return Money.ok(goal.lumpTargetCents, { basis: 'lump' });
     }
-    return Money.incomplete('Add what it costs — either a total or the pieces.',
+    return Money.incomplete('Add what it costs, either a total or the pieces.',
       ['lineItems', 'lumpTarget']);
   }
 
@@ -139,7 +139,7 @@
    * date still reports its total and what is left to find.
    */
   /**
-   * Can it be undone — the fifth output, on every block (D-283).
+   * Can it be undone, the fifth output, on every block (D-283).
    *
    * Reversibility was a room that priced ONE named decision from a table of
    * questions. The table is still how a block can be STARTED, but the two
@@ -184,8 +184,8 @@
   }
 
   /* One more of them. NOT a sixth answer: it is "what it costs" and "what
-     it costs you" asked of the smallest decision the block contains — one
-     more guest, one more night — through the same Lens, with no second
+     it costs you" asked of the smallest decision the block contains, one
+     more guest, one more night, through the same Lens, with no second
      conversion. A block with no per-unit line has no margin and says null.
      D-293. */
   function marginalOf(goal, household, tables) {
@@ -216,8 +216,8 @@
     var spendNow = Schema.monthlyExpensesCents(household);
     var undoNow = undoOf(goal, Money.isOk(spendNow) ? spendNow.value : null, tables);
     var total = goalTotalCents(goal);
-    /* A block with no price is not a block with no answers. A decision —
-       change jobs, have a child — may never carry a figure, and the undo
+    /* A block with no price is not a block with no answers. A decision, 
+       change jobs, have a child, may never carry a figure, and the undo
        question is answered for it either way, so the incomplete result
        carries what IS known rather than nothing (D-283). */
     if (!Money.isOk(total)) {
@@ -232,8 +232,8 @@
     /* ---- A block that PAYS (D-299) ----------------------------------------
        Its lines net negative: a lodger's rent, the thing you sell, the year
        at home. Nothing is to be found, so the first four answers turn
-       around — what it pays, the hours it buys back and the FI it brings
-       forward, when it starts, what it adds to what is spare — and the
+       around, what it pays, the hours it buys back and the FI it brings
+       forward, when it starts, what it adds to what is spare, and the
        fifth is asked exactly as before. Same Lens, opposite direction. */
     if (total.value < 0) {
       var gain = -total.value;
@@ -292,7 +292,7 @@
       return Money.ok(0, Object.assign({ onTrack: true, fundedBy: 'already saved' }, shared));
     }
     /* No date is not no answers. The block has a price, so what it costs,
-       what it costs you and what one more of them costs are all known —
+       what it costs you and what one more of them costs are all known, 
        only "when it lands" and "whether it fits" wait on a date. Throwing
        the rest away made a fully priced wedding read "Add a price" on
        every row, which is the same mistake D-283 fixed for the unpriced
@@ -318,7 +318,7 @@
     if (tables && tables.expenseCategories) {
       var flow = CashFlow.netCashFlow(household, tables.expenseCategories, tables);
       /* When there is no surplus to compare against, say what Cash Flow
-         says — it names the thing to go and do. A room guessing its own
+         says, it names the thing to go and do. A room guessing its own
          reason here would send people to the wrong place (D-283). */
       if (!Money.isOk(flow)) affordabilityReason = flow.reason;
       if (Money.isOk(flow)) {
@@ -367,7 +367,7 @@
     if (tables && tables.expenseCategories) {
       var flow = CashFlow.netCashFlow(household, tables.expenseCategories, tables);
       /* When there is no surplus to compare against, say what Cash Flow
-         says — it names the thing to go and do. A room guessing its own
+         says, it names the thing to go and do. A room guessing its own
          reason here would send people to the wrong place (D-283). */
       if (!Money.isOk(flow)) affordabilityReason = flow.reason;
       if (Money.isOk(flow)) {
@@ -385,9 +385,9 @@
     });
   }
 
-  /** Build a goal from a template — line-item labels, no amounts. */
+  /** Build a goal from a template, line-item labels, no amounts. */
   /* A template's line is a LABEL, or an object when the line is priced per
-     unit: { label, unitLabel, unitsPerGroup }. Still no amounts — the
+     unit: { label, unitLabel, unitsPerGroup }. Still no amounts, the
      templates say what a thing is made of and never what it costs. D-293. */
   function fromTemplate(table, templateId, name) {
     var t = templateById(table, templateId);

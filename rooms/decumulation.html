@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  ROOM SPEC — SPEC.md §11. On the frozen template (D-097). DECISIONS.md
+  ROOM SPEC, SPEC.md §11. On the frozen template (D-097). DECISIONS.md
   D-216, D-218, D-228 (the reframe), D-284 (the merge). Registry: decumulation.
 
   FOUR READINGS OF COMING DOWN.
@@ -45,7 +45,7 @@
   2. WRITES  the three draw fields as before. The other three readings write
              nothing: they are what-ifs about money you have not drawn yet.
   3. CALLS   engines/decumulation.js, engines/reachable.js, engines/trap.js
-             and engines/rothaca.js — one each, unchanged.
+             and engines/rothaca.js, one each, unchanged.
   4. EMPTY   each reading names the figure it needs. No pot is not a zero
              pot.
   5. CONFIG  the tables each engine names.
@@ -400,7 +400,7 @@
    A reading may name a gate branch. Merging rooms must not widen who sees
    what: a reading that was a room the gate hid is a reading the gate hides,
    so its hat is ABSENT, not greyed, when the branch is not there (D-271).
-   The hash still reaches it — an old link must land somewhere honest — and
+   The hash still reaches it, an old link must land somewhere honest, and
    the reading says for whom it is, which is what Gate.why is for. */
 (function () {
   'use strict';
@@ -421,8 +421,8 @@
     var asked = VIEWS.filter(function (v) { return v.match.test(h); })[0];
     /* The default reading is the last row and matches everything, so there
        is always one. When the hash asks for a reading the gate has taken
-       away, fall back to the DEFAULT — the room's plainest reading, and the
-       one the person would have got with no hash at all — not to whichever
+       away, fall back to the DEFAULT, the room's plainest reading, and the
+       one the person would have got with no hash at all, not to whichever
        gated reading happens to sit first in this list. */
     var fallback = VIEWS[VIEWS.length - 1];
     var on = open(asked) ? asked
@@ -469,11 +469,11 @@
 
   /* ---- guesses, as a retiree --------------------------------------------------
      The template fills an empty spine with the intake's guesses, and with the
-     situation unanswered the gate guesses "employed" — whose withdrawal rate
+     situation unanswered the gate guesses "employed", whose withdrawal rate
      is, rightly, "a number for a retiree". This room exists only for
      retirees, so when the situation itself was guessed it asks the gate for
      a retiree's guesses instead. Nothing is written; the banner still says
-     the figures are guesses — the template's `guessAs` does it (D-101). */
+     the figures are guesses, the template's `guessAs` does it (D-101). */
   /* The template guesses a retiree here (guessAs), so nothing to re-guess. */
   function asRetiree(h) { return h; }
   function planFor(h, T) { return Decumulation.plan(asRetiree(h, T), T); }
@@ -492,7 +492,7 @@
       if (!Money.isOk(p)) return { label: label, value: null, reason: p.reason };
       var sub = 'Draw <strong>' + Money.formatCents(p.drawCents) + '</strong> a year = <strong>' + Money.formatRate(p.withdrawalRate, { decimals: 1 }) + '</strong> of ' + Money.formatCents(p.investmentsCents);
       if (p.vpw) sub += '; VPW allows <strong>' + Money.formatCents(p.vpw.allowedCents) + '</strong> at ' + ageLabel(p.vpw.age);
-      if (p.covered) sub += '. Income covers spending, so nothing is drawn' + (p.planned ? ' — the planned draw is zero' : '');
+      if (p.covered) sub += '. Income covers spending, so nothing is drawn' + (p.planned ? ', the planned draw is zero' : '');
       else if (p.planned) sub += '. Your planned figure' + (Money.isEntered(p.computedDrawCents) && p.computedDrawCents !== p.drawCents ? '; spending not covered by income is ' + Money.formatCents(p.computedDrawCents) : '');
       if (p.socialSecurityInYears !== null) sub += '. This draw runs until Social Security starts at ' + p.socialSecurityAt + ', ' + p.socialSecurityInYears + ' year' + (p.socialSecurityInYears === 1 ? '' : 's') + ' from now; no benefit is estimated here';
       if (p.stockShareClamped) sub += '. The share in stocks was read as ' + Math.round(p.stockShare * 100) + '%';
@@ -551,7 +551,7 @@
           if (!row || !row.ok || !(row.result.annualDrawCents > 0)) return null;
           return { value: row.result.annualDrawCents, source: 'spending not covered by income' };
         } },
-      { ctl: 'socialSecurityAt', label: 'Social Security from', kind: 'number', placeholder: 'e.g. 67', hint: 'The age you claim, or claimed. Only a note about timing — no benefit is estimated here.',
+      { ctl: 'socialSecurityAt', label: 'Social Security from', kind: 'number', placeholder: 'e.g. 67', hint: 'The age you claim, or claimed. Only a note about timing, no benefit is estimated here.',
         read: function (h) { return readDec(h).socialSecurityAt; },
         write: function (v) { set('socialSecurityAt', v === null || v <= 0 ? null : Math.round(v)); },
         propose: function (h, T) {
@@ -575,10 +575,10 @@
       var vpw = T.vpwTable, bands = T.ratioBenchmarks, band = bands && bands.bands && bands.bands.withdrawalRate;
       var share = Decumulation.stockShareOf(readDec(h));
       return [
-        { label: 'Real return', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094) — one steady rate, no bad decades' },
-        { label: 'The VPW table', value: Money.isOk(p) && p.vpw ? Money.formatRate(p.vpw.percentage, { decimals: 1 }) + ' at ' + ageLabel(p.vpw.age) + ', ' + Math.round(share.value * 100) + '% stocks' : 'needs your age', source: vpw ? 'data/vpw_table.json v' + vpw.version + ' — ' + vpw.confidence + ': ' + vpw.confidenceNote : 'data/vpw_table.json' },
+        { label: 'Real return', value: Money.formatRate(Schema.resolveAssumptions(h).returnReal, { decimals: 0 }), source: 'assumptions.returnReal (D-094), one steady rate, no bad decades' },
+        { label: 'The VPW table', value: Money.isOk(p) && p.vpw ? Money.formatRate(p.vpw.percentage, { decimals: 1 }) + ' at ' + ageLabel(p.vpw.age) + ', ' + Math.round(share.value * 100) + '% stocks' : 'needs your age', source: vpw ? 'data/vpw_table.json v' + vpw.version + ', ' + vpw.confidence + ': ' + vpw.confidenceNote : 'data/vpw_table.json' },
         { label: 'Share in stocks', value: Math.round(share.value * 100) + '%', source: share.entered ? (share.clamped ? 'yours, read within 0–100%' : 'yours') : 'the table’s middle column (convention)' },
-        { label: 'The withdrawal band', value: band ? Money.formatRate(band.good, { decimals: 0 }) + ' good / ' + Money.formatRate(band.warn, { decimals: 0 }) + ' watch' : '—', source: bands ? 'data/ratio_benchmarks.json v' + bands.version + ' — ' + (band && band.note ? band.note : bands.source) + ' (' + bands.confidence + ')' : 'data/ratio_benchmarks.json' },
+        { label: 'The withdrawal band', value: band ? Money.formatRate(band.good, { decimals: 0 }) + ' good / ' + Money.formatRate(band.warn, { decimals: 0 }) + ' watch' : 'not yet', source: bands ? 'data/ratio_benchmarks.json v' + bands.version + ', ' + (band && band.note ? band.note : bands.source) + ' (' + bands.confidence + ')' : 'data/ratio_benchmarks.json' },
         { label: 'Tax on withdrawals', value: 'none modelled', source: 'every figure here is pre-tax; a traditional 401(k) or IRA draw is taxed as income and the after-tax draw is smaller' },
         { label: 'Social Security', value: 'not estimated', source: 'engines/ss.js estimates from a working salary and a retiree’s income here is already the pension or benefit; the age you enter is used only to note when the draw changes' }
       ];

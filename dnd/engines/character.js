@@ -1,27 +1,27 @@
 /* ==========================================================================
-   engines/character.js — Dungeons & Dividends, the scoring engine.
+   engines/character.js, Dungeons & Dividends, the scoring engine.
    --------------------------------------------------------------------------
    The rulebook (data/dnd_rules.json, data/dnd_classes.json) says what the
    system IS. This file is the only place that turns a household into numbers,
-   and it holds no thresholds of its own — every dollar-to-score rung lives in
+   and it holds no thresholds of its own, every dollar-to-score rung lives in
    data/dnd_scoring.json so a recalibration is a data edit, not a code change.
 
    Three rules from CLAUDE.md shape everything here:
 
    1. EMPTY IS NOT ZERO. A sub-stat with no input is an incomplete Result, not
-      an 8. A main stat is incomplete until all three of its sub-stats score —
+      an 8. A main stat is incomplete until all three of its sub-stats score, 
       averaging two real numbers with a silent zero would invent a character.
    2. NO PRIVATE COPIES. Income, expenses, cash, investments, assets and debts
       are read through Schema/Tier0 from the household every other room writes.
       This engine owns nothing that already has an owner in shared/ownership.js.
    3. ONE FORMULA, ONE FUNCTION. Savings rate, emergency-fund months, the FIRE
-      number and FIRE progress are Tier0's. They are CALLED, never re-derived —
+      number and FIRE progress are Tier0's. They are CALLED, never re-derived, 
       Level is a reading of Tier0.fireProgress, not a second FIRE calculation.
 
    HP is in WEEKS. Rulebook §3A defines HP twice and incompatibly: once as the
    D&D die formula, once as "how many months of expenses your liquid assets can
-   cover". At 1 HP = 1 week the two finally agree in scale — a Level 1 d6 class
-   is ~6 weeks of runway, a Level 20 d12 with good CON is ~4 years — so Max HP
+   cover". At 1 HP = 1 week the two finally agree in scale, a Level 1 d6 class
+   is ~6 weeks of runway, a Level 20 d12 with good CON is ~4 years, so Max HP
    is the die formula (capacity) and Current HP is measured runway, in the same
    unit. DECISIONS.md DD-001.
    ========================================================================== */
@@ -148,13 +148,13 @@
     var anchors = scoring.anchors;
     var p = profileOf(household);
 
-    /* STR — Income Power: gross annual income against the population ladder. */
+    /* STR, Income Power: gross annual income against the population ladder. */
     var gross = Schema.grossAnnualIncomeCents(household);
     out.incomePower = Money.isOk(gross)
       ? scoreFromAnchor(anchors, 'incomePower', gross.value / 100)
       : Money.incomplete('Add your gross annual income.', ['grossAnnualIncome']);
 
-    /* STR — Income Trajectory: 3-year compound growth of that income. */
+    /* STR, Income Trajectory: 3-year compound growth of that income. */
     if (Money.isOk(gross) && Money.isEntered(p.incomeThreeYearsAgoCents) && p.incomeThreeYearsAgoCents > 0) {
       var cagr = Math.pow(gross.value / p.incomeThreeYearsAgoCents, 1 / 3) - 1;
       out.incomeTrajectory = scoreFromAnchor(anchors, 'incomeTrajectory', cagr);
@@ -163,7 +163,7 @@
         'Add what you earned three years ago to see your trajectory.', ['incomeThreeYearsAgo']);
     }
 
-    /* STR — Hustle Capacity: side income as a share of the main income,
+    /* STR, Hustle Capacity: side income as a share of the main income,
        plus a readiness bonus for a named, deployable skill. */
     if (Money.isOk(gross) && gross.value > 0 && Money.isEntered(p.sideIncomeAnnualCents)) {
       var ratio = p.sideIncomeAnnualCents / gross.value;
@@ -178,7 +178,7 @@
         'Add your side income (enter 0 if none) to score this.', ['sideIncome']);
     }
 
-    /* DEX — Liquidity Agility: the share of everything you own that you could
+    /* DEX, Liquidity Agility: the share of everything you own that you could
        actually reach in a week without a penalty. */
     var liquid = liquidAssetsCents(household);
     var totalAssets = Schema.totalAssetsCents(household);
@@ -191,22 +191,22 @@
       out.liquidityAgility = Money.incomplete('Add your cash and assets.', ['cashSavings', 'assets']);
     }
 
-    /* DEX — Structural Mobility: a checklist, not a dollar figure. */
+    /* DEX, Structural Mobility: a checklist, not a dollar figure. */
     out.structuralMobility = checklistScore(anchors.structuralMobility, p.mobility);
 
-    /* DEX — Obligation Flexibility: how much of the monthly outflow is locked. */
+    /* DEX, Obligation Flexibility: how much of the monthly outflow is locked. */
     out.obligationFlex = Money.isEntered(p.fixedCostShare)
       ? scoreFromAnchor(anchors, 'obligationFlex', p.fixedCostShare)
       : Money.incomplete('Say roughly what share of your spending is fixed.', ['fixedCostShare']);
 
-    /* CON — Savings Rate: Tier0 owns this formula. */
+    /* CON, Savings Rate: Tier0 owns this formula. */
     var rates = Tier0.savingsRate(household, tables);
     var rate = Money.isOk(rates.includingMatch) ? rates.includingMatch : rates.excludingMatch;
     out.savingsRate = Money.isOk(rate)
       ? scoreFromAnchor(anchors, 'savingsRate', rate.value)
       : Money.incomplete(rate.reason || 'Add income and expenses.', rate.missing || ['savingsRate']);
 
-    /* CON — Consistency: years at that rate, capped until disruption-tested. */
+    /* CON, Consistency: years at that rate, capped until disruption-tested. */
     if (Money.isEntered(p.yearsSustained)) {
       var c = scoreFromAnchor(anchors, 'consistency', p.yearsSustained);
       var cap = anchors.consistency.untestedCap;
@@ -217,7 +217,7 @@
       out.consistency = Money.incomplete('Say how long you have held this savings rate.', ['yearsSustained']);
     }
 
-    /* CON — Reserve Depth: Tier0 owns emergency-fund months. */
+    /* CON, Reserve Depth: Tier0 owns emergency-fund months. */
     var months = Tier0.emergencyFundMonths(household);
     out.reserveDepth = Money.isOk(months)
       ? scoreFromAnchor(anchors, 'reserveDepth', months.value)
@@ -247,7 +247,7 @@
 
   /* ---- The nine declared sub-stats --------------------------------------
      Generated, not measured. Five methods, exactly as D&D Beyond offers for
-     ability scores — the quiz is the "earn it" path, the rest are the same
+     ability scores. The quiz is the "earn it" path, the rest are the same
      shortcuts a table allows. Whichever produced the number, it lands on the
      same 8-20 scale, so nothing downstream needs to know which was used.   */
 
@@ -281,7 +281,7 @@
     return out;
   }
 
-  /* Ability-level methods can also set STR, DEX and CON — which are normally
+  /* Ability-level methods can also set STR, DEX and CON, which are normally
      computed from money. A bought value fills one of those sub-stats ONLY
      while the money that would compute it is absent, and every such Result
      is marked bought:true so no page can show it as measured. DD-018. */
@@ -356,7 +356,7 @@
   }
 
   /**
-   * A main stat is the average of its three sub-stats, rounded — and it is
+   * A main stat is the average of its three sub-stats, rounded, and it is
    * INCOMPLETE until all three score. Averaging what is present would quietly
    * treat "not answered" as a value, which is the exact bug CLAUDE.md's
    * "Empty is not zero" rule exists to prevent.
@@ -442,7 +442,7 @@
     var withBalance = debts.filter(function (d) {
       return Money.isEntered(d.balanceCents) && d.balanceCents > 0;
     });
-    /* Level 0 is a level with a row of its own — "No burden", no disadvantage.
+    /* Level 0 is a level with a row of its own, "No burden", no disadvantage.
        It used to come back rowless, and the first reader to touch .row on a
        debt-free household crashed the sheet (DD-019, found by the phone pass).
        An ok Result now always carries its row. */
@@ -480,7 +480,7 @@
   function maxHp(hitDie, lvl, conMod, burdenLevel, tables, perLevelBonus) {
     var perLevel = Math.ceil((hitDie + 1) / 2);
     var minGain = tables.dndScoring.hp.minGainPerLevel;
-    var bonus = perLevelBonus || 0;                 /* Tough, Backdoor Roth — DD-023 */
+    var bonus = perLevelBonus || 0;                 /* Tough, Backdoor Roth, DD-023 */
     var total = hitDie + conMod + bonus;
     for (var l = 2; l <= lvl; l++) total += Math.max(minGain, perLevel + conMod) + bonus;
     total = Math.max(1, total);
@@ -508,18 +508,18 @@
   }
 
   /**
-   * Exhaustion — BRIEF §9.7.
+   * Exhaustion, BRIEF §9.7.
    *
    * The rulebook names "Exhausted" once, as what the Unemployed status decays
    * into, and never defines it. This is the definition, and the key choice is
    * that it is DERIVED rather than declared: exhaustion is not a mood, it is
    * what a thin buffer costs you in decisions you can no longer afford to make
-   * well. So it reads current HP — weeks of runway — and nothing else.
+   * well. So it reads current HP, weeks of runway, and nothing else.
    *
    * Bands run from minWeeks (inclusive) up to maxWeeks (exclusive), so 12 weeks
    * is Rested and 11.9 is Watchful. The bottom is the exception and says so in
    * the data: level 5 carries minWeeksExclusive, because "under a week" must not
-   * swallow exactly zero — zero is level 6, Down, which is the death-save state
+   * swallow exactly zero, zero is level 6, Down, which is the death-save state
    * and a different thing from nearly out.
    */
   function exhaustion(hpResult, tables) {
@@ -545,7 +545,7 @@
 
   /**
    * Which of the rulebook's status effects this character has declared.
-   * Self-declared, like alignment — nothing here is inferred from the numbers,
+   * Self-declared, like alignment, nothing here is inferred from the numbers,
    * because none of it is visible in them. An undeclared status is undeclared,
    * not false.
    */
@@ -563,14 +563,14 @@
     };
   }
 
-  /* ---- Rests and pace — BRIEF §9.8 ---------------------------------------
+  /* ---- Rests and pace, BRIEF §9.8 ---------------------------------------
      The rulebook already specifies these under deathSaves.recovery:
 
-       Short Rest (a pay cycle) — regain HP equal to (income − expenses) for
+       Short Rest (a pay cycle), regain HP equal to (income − expenses) for
          that cycle, if positive.
-       Long Rest (a strong, uninterrupted month or quarter) — regain HP up to
+       Long Rest (a strong, uninterrupted month or quarter), regain HP up to
          max, contingent on a CON save.
-       Potion (a windfall) — heals a fixed amount immediately.
+       Potion (a windfall), heals a fixed amount immediately.
 
      HP is weeks (DD-001), so all three convert through one number: what a week
      of runway costs, which is a week of expenses. Nothing here invents a
@@ -578,7 +578,7 @@
      data and marked as an extension.                                        */
 
   /**
-   * A short rest — one pay cycle's surplus, expressed in weeks of runway.
+   * A short rest, one pay cycle's surplus, expressed in weeks of runway.
    * Returns weeks gained per month and per year, and what one week costs.
    * A negative surplus is a real answer: you are losing runway, not gaining it.
    */
@@ -608,7 +608,7 @@
   }
 
   /**
-   * A long rest — filling HP back to Max at the short-rest rate, and the CON
+   * A long rest, filling HP back to Max at the short-rest rate, and the CON
    * save the rulebook makes it contingent on.
    *
    * The DC is the one judgement call in §9.8 and lives in data. It rises with
@@ -654,7 +654,7 @@
   }
 
   /**
-   * Pace — BRIEF §9.8's other half. How fast Experience actually accrues, in
+   * Pace, BRIEF §9.8's other half. How fast Experience actually accrues, in
    * levels rather than dollars.
    *
    * nextLevelTarget() already knows what the next level costs in dollars; this
@@ -679,7 +679,7 @@
     }
     var perYear = basis.annualSavingsCents;
 
-    /* Contribution only — no growth assumed on the way to the NEXT level. A
+    /* Contribution only, no growth assumed on the way to the NEXT level. A
        single level is a short hop and compounding over it is noise dressed as
        precision; the FIRE projection, which spans decades, is where returns
        belong and Tier0 already owns it. */
@@ -728,7 +728,7 @@
     if (p.umbrellaPolicy === true) {
       ac += umb.ac; layers.push({ id: 'umbrella', label: umb.label, ac: umb.ac });
     }
-    if (acBonus) {                                   /* House Hack — DD-023 */
+    if (acBonus) {                                   /* House Hack, DD-023 */
       ac += acBonus; layers.push({ id: 'feat', label: 'Feat', ac: acBonus });
     }
     if (activeClassCount >= 2) {
@@ -779,7 +779,7 @@
     out.anchor = Money.isOk(cash) ? cash.value : null;
 
     /* The Keeper owns no pool. Its activity is the annual dollars NOT spent
-       against a same-income benchmark — which is what lets a genuinely frugal
+       against a same-income benchmark, which is what lets a genuinely frugal
        household out-rank a mid-sized portfolio, as §4 intends. */
     var annualSpend = annualExpensesCents(household);
     if (Money.isOk(gross) && Money.isOk(annualSpend)) {
@@ -959,7 +959,7 @@
   }
 
   /**
-   * Initiative — DEX modifier plus an automation bonus (BRIEF §9.1).
+   * Initiative, DEX modifier plus an automation bonus (BRIEF §9.1).
    * Money that moves itself acts before you have decided to act, which is what
    * initiative measures. Deliberately NOT derived from the savings rate: a
    * large rate executed by hand every month is precisely the case this is
@@ -987,7 +987,7 @@
   }
 
   /**
-   * A passive score — 10 + the modifier — for the three sub-stats that work
+   * A passive score, 10 + the modifier, for the three sub-stats that work
    * the way passive Perception does: they apply whether or not you thought
    * to look.
    */
@@ -1017,7 +1017,7 @@
       else if (/\bresistan/i.test(text)) out.push({ kind: 'Resistance', text: source });
     }
     (featuresEarned || []).forEach(function (f) { scan(f.feature + ' ' + f.detail, f.feature); });
-    (subFeatures || []).forEach(function (f) { scan(f.feature, f.feature.split(' — ')[0]); });
+    (subFeatures || []).forEach(function (f) { scan(f.feature, f.feature.split(', ')[0]); });
     return out;
   }
 
@@ -1043,7 +1043,7 @@
 
   /* ---- Projection --------------------------------------------------------
      The diagnostic half says where you are. This says what moves you, in the
-     units the thing is actually measured in — dollars for Level, weeks for
+     units the thing is actually measured in, dollars for Level, weeks for
      HP, a named rung for each sub-stat.                                    */
 
   function nextLevelTarget(household, tables, lvl) {
@@ -1083,7 +1083,7 @@
   /* ---- Why you got the character you got --------------------------------
      DD-025. A score with no account of where it came from is a horoscope. For
      every ability this returns the number, the three sub-stats under it, and
-     for each one the ACTUAL FIGURE OF YOURS that produced it — read back out
+     for each one the ACTUAL FIGURE OF YOURS that produced it, read back out
      of the Result's own `input`, never re-derived here, so the explanation
      cannot drift from the score it explains.
 
@@ -1128,13 +1128,13 @@
   }
 
   /**
-   * explain(household, tables) — the six abilities, each with its receipts.
+   * explain(household, tables), the six abilities, each with its receipts.
    *
    * `status` per ability is the honest one of four:
-   *   measured — every sub-stat under it came from your money
-   *   chosen   — you decided it (INT, WIS, CHA always; or a bought fallback)
-   *   partial  — some scored, some are still waiting on a figure
-   *   blank    — nothing under it has a number yet
+   *   measured, every sub-stat under it came from your money
+   *   chosen, you decided it (INT, WIS, CHA always; or a bought fallback)
+   *   partial, some scored, some are still waiting on a figure
+   *   blank, nothing under it has a number yet
    */
   function explain(household, tables) {
     if (!tables || !tables.dndRules || !tables.dndScoring) {
@@ -1184,10 +1184,10 @@
 
   /* ---- The whole sheet -------------------------------------------------- */
 
-  /* ---- Advancements: ASIs and feats — DD-023 ---------------------------
+  /* ---- Advancements: ASIs and feats, DD-023 ---------------------------
      At each ASI level you take +2 to one ability (or +1 to two), or a feat.
      The choice is stored per level in dndProfile.advancements and only counts
-     once that level is reached — drop a level and the choice waits, it is not
+     once that level is reached, drop a level and the choice waits, it is not
      lost. Only INT, WIS and CHA can be raised: they are the abilities you
      decide, and levelling is exactly when you decide again. STR, DEX and CON
      are measured from money; decreeing +2 income is fiction.               */
@@ -1244,7 +1244,7 @@
       if (!Money.isOk(r) || !plus || allowed.indexOf(id) === -1) { out[id] = r; return; }
       var raised = Math.min(cap, r.value + plus);
       /* Carry the Result's extras (bought, average…) but never its value or
-         status — Money.ok spreads extras over the result, and a stray
+         status, Money.ok spreads extras over the result, and a stray
          value: undefined in there erased the raised score. */
       var extra = {};
       Object.keys(r).forEach(function (k) { if (k !== 'value' && k !== 'status') extra[k] = r[k]; });

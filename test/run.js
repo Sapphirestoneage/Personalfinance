@@ -279,8 +279,8 @@ section('Empty state — nothing computes, nothing shows a fake zero');
   check('parseMoney("0") is an affirmative zero', Money.parseMoney('0'), 0);
   checkTrue('null is not "entered"', Money.isEntered(null) === false);
   checkTrue('0 IS "entered"', Money.isEntered(0) === true);
-  check('formatCents(null) renders an em dash', Money.formatCents(null), '—');
-  check('formatRate(null) renders an em dash', Money.formatRate(null), '—');
+  check('formatCents(null) renders the words not yet', Money.formatCents(null), 'not yet');
+  check('formatRate(null) renders the words not yet', Money.formatRate(null), 'not yet');
   check('parseRatePercent("7") is a decimal fraction', Money.parseRatePercent('7'), 0.07);
   check('formatRate(0.285) rounds for display', Money.formatRate(0.285, { decimals: 1 }), '28.5%');
 })();
@@ -3818,7 +3818,7 @@ section('Worth It');
 
     const zeroHours = W.costPerHour(check1({ costCents: 45000, hoursSpent: 0 }));
     check('zero hours of use has no cost per hour', zeroHours.status, 'incomplete');
-    checkTrue('and says that is the finding', /that is the finding/.test(zeroHours.reason));
+    checkTrue('and says that is the finding', /[Tt]hat is the finding/.test(zeroHours.reason));
 
     /* Zero cost is a real answer — a gift used for 300 hours cost nothing an
        hour, and that must not collapse into "not entered". */
@@ -6472,7 +6472,7 @@ function builtCardId(roomId, id) {
   fieldIds.forEach(function (fieldId) {
     const d = Ownership.describe(fieldId, empty, null);
     checkTrue(`${fieldId} describes cleanly when unset`, d !== null && d.isSet === false);
-    check(`${fieldId} shows an em dash when unset`, d.display, '—');
+    check(`${fieldId} shows the words not yet when unset`, d.display, 'not yet');
     checkTrue(`${fieldId} still offers a link when unset`, typeof d.href === 'string' && d.href.length > 1);
   });
 
@@ -8180,7 +8180,7 @@ section('Core (D-094): the command log — set, undo, redo, batch');
      label is given: the hover text on the button. */
   Spine.upsertAsset(Schema.createAsset({ id: 'a_cash', category: 'cash', valueCents: 950000 }));
   checkTrue('a room write is described by the field that moved: ' + Spine.peekUndo().label,
-    /Cash|cash/.test(Spine.peekUndo().label) && /— → \$9,500/.test(Spine.peekUndo().label));
+    /Cash|cash/.test(Spine.peekUndo().label) && /not yet → \$9,500/.test(Spine.peekUndo().label));
   Spine.upsertAsset({ id: 'a_cash', valueCents: 1200000 });
   check('before → after, in dollars', Spine.peekUndo().label.replace(/^[^$]*/, ''), '$9,500 → $12,000');
   Spine.undo();
@@ -8429,7 +8429,7 @@ section('Core (D-094): the lens, by hand');
 
   /* $ is the number itself. */
   check('$ passes dollars through', Lens.format(123456, '$', demo, T), '$1,235');
-  check('nothing to show is an em dash', Lens.format(null, 'hours', demo, T), Money.EM_DASH);
+  check('nothing to show is an em dash', Lens.format(null, 'hours', demo, T), Money.NOT_YET);
 
   /* Hours: dollars ÷ the real hourly wage, the same one the room shows. */
   const wage = Hourly.realHourlyWage(demo, T).value;
@@ -8751,7 +8751,7 @@ section('Up next and the FIRE tiers (D-234): what is open, what one answer opens
   const demo = UpNext.plan(Demo.build(), T);
   check('the demo opens every reading', demo.locked.length, 0);
   check('… ten of them', demo.open.length, UpNext.READINGS.length);
-  checkTrue('… each with a display string, never a dash', demo.open.every(e => typeof e.display === 'string' && e.display.length > 0 && e.display !== Money.EM_DASH));
+  checkTrue('… each with a display string, never a dash', demo.open.every(e => typeof e.display === 'string' && e.display.length > 0 && e.display !== Money.NOT_YET));
   const ret = Demo.build(); ret.people[0].employmentStatus = 'retired';
   checkTrue('a retiree has no savings rate or FI date reading, locked or open', ['savingsRate', 'fiDate'].every(id => !UpNext.plan(ret, T).open.concat(UpNext.plan(ret, T).locked).some(e => e.id === id)));
 
@@ -8871,7 +8871,7 @@ section('Fewer words, plain words (D-245): hints fold, pillars explain');
   const Progress = require(path.join(ROOT, 'shared/progress.js'));
   const hs = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/health_score.json'), 'utf8'));
   checkTrue('every pillar says what it measures, what good is, why, and what raises it', hs.pillars.every(p => p.plain && ['measures', 'good', 'why', 'improve'].every(k => typeof p.plain[k] === 'string' && p.plain[k].length > 20)));
-  checkTrue('… in short sentences without an em dash', hs.pillars.every(p => Object.keys(p.plain).every(k => p.plain[k].indexOf('—') === -1)));
+  checkTrue('… in short sentences without an em dash', hs.pillars.every(p => Object.keys(p.plain).every(k => p.plain[k].indexOf('\u2014') === -1)));
   const page = fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8');
   checkTrue('the Scorecard draws a verdict word and the caret on each pillar', /verdictWord\(p\.score\)/.test(page) && /class="pillar-more"/.test(page) && /To raise it:/.test(page));
   checkTrue('the hint fold is shared and the stylesheet carries it', typeof Progress.mountHintFolds === 'function' && Progress.HINT_FOLD_CHARS > 60 && /\.slaf-hint-toggle \{/.test(fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8')));
@@ -11343,7 +11343,7 @@ section('Lenses: a rule re-reads the numbers and returns a verdict (D-175)');
   check('over', Lenses.verdictFor(L, Money.ok(0.5, { share: '50%' })).text, 'o 50%');
   check('a measure may carry its own band', Lenses.verdictFor(L, Money.ok(0.5, { share: '50%', band: { low: 0, high: 1 } })).zone, 'in');
   check('incomplete carries the reason', Lenses.verdictFor(L, Money.incomplete('needs x', ['x'])).text, 'needs x');
-  check('an unfilled token never prints as a brace', Lenses.verdictFor({ band: null, verdict: ['a {nope} b'] }, Money.ok(1, {})).text, 'a — b');
+  check('an unfilled token never prints as a brace', Lenses.verdictFor({ band: null, verdict: ['a {nope} b'] }, Money.ok(1, {})).text, 'a not yet b');
 
   /* Empty is not zero: a blank household reads nothing as a number. */
   const blank = Schema.createHousehold();
@@ -12727,7 +12727,7 @@ section('18.2: every number the app can hold is one Ledger row, of one of three 
   checkTrue('every path appears in exactly one row', new Set(rows.map(r => r.path)).size === rows.length);
   checkTrue('every id appears once', new Set(rows.map(r => r.id)).size === rows.length);
   checkTrue('every lookup row has a where sentence and a roughly hint', rows.filter(r => r.kind === 'lookup').every(r => r.where && r.roughly));
-  checkTrue('...one sentence, no em dash', rows.filter(r => r.kind === 'lookup').every(r => r.where.indexOf('—') === -1 && r.where.length < 260));
+  checkTrue('...one sentence, no em dash', rows.filter(r => r.kind === 'lookup').every(r => r.where.indexOf('\u2014') === -1 && r.where.length < 260));
   checkTrue('every computed row names its engine and its inputs, and the inputs are rows', rows.filter(r => r.kind === 'computed').every(r => r.engine && Array.isArray(r.inputs) && r.inputs.every(id => LR.byId(id))));
   const engines = { Schema: Schema, Tier0: Tier0, Statement: require(path.join(ROOT, 'engines/statement.js')), Ledger: require(path.join(ROOT, 'engines/ledger.js')), Calendar: require(path.join(ROOT, 'engines/calendar.js')), Budget: require(path.join(ROOT, 'engines/budget.js')) };
   checkTrue('...and every engine named is a real function', rows.filter(r => r.kind === 'computed').every(r => { const [m, f] = r.engine.split('.'); return engines[m] && typeof engines[m][f] === 'function'; }), rows.filter(r => r.kind === 'computed').map(r => r.engine).join(','));
@@ -12833,7 +12833,7 @@ section('19.1: nine spheres in one file, depth gating precision, the shadow meas
   checkTrue('the shadow name is in the drawer and nowhere else in the entry', list.every(s => s.drawer.indexOf(s.shadow.name.toLowerCase()) >= 0 && [s.virtue, s.virtueLine, s.sharpens, s.shadow.sentence, s.shadow.measure, s.action.label].every(t => t.toLowerCase().indexOf(s.shadow.name.toLowerCase()) === -1)));
   checkTrue('every sentence states a measurement with a cost', list.every(s => /\{(n|minutes|dollars)\}/.test(s.shadow.sentence)));
   checkTrue('...and no judgement word', list.every(s => !/too much|should|\bbad\b|\bover\b/i.test(s.shadow.sentence)));
-  checkTrue('...and no em dash anywhere on screen', list.every(s => [s.virtue, s.virtueLine, s.sharpens, s.shadow.sentence, s.action.label].every(t => t.indexOf('—') === -1)));
+  checkTrue('...and no em dash anywhere on screen', list.every(s => [s.virtue, s.virtueLine, s.sharpens, s.shadow.sentence, s.action.label].every(t => t.indexOf('\u2014') === -1)));
   checkTrue('every action is one room and one filter', list.every(s => typeof s.action.room === 'string' && s.action.room && ('filter' in s.action)));
   checkTrue('every shadow engine is a real measure', list.every(s => Sp.ENGINES.indexOf(s.shadow.engine.replace(/^Spheres\./, '')) >= 0));
   checkTrue('the shadow names never reach a module that renders', ['shared/spheres.js', 'shared/ledger-rows.js'].every(f => { const src = fs.readFileSync(path.join(ROOT, f), 'utf8'); return NAMES.every(n => !new RegExp("'" + n + "'|\"" + n + "\"").test(src)); }));
@@ -12938,7 +12938,7 @@ section('18.4 and 18.5: the Ledger room, the target and one line per row (D-185)
   checkTrue('the Empyrean is one line with no number', /What Matters\. No numbers there\./.test(html));
   const NAMES = Sp.all().map(s => s.shadow.name);
   checkTrue('no shadow name appears in the room', NAMES.every(n => !new RegExp('\\b' + n + '\\b').test(html)));
-  checkTrue('no em dash on screen', doorsView.indexOf('—') === -1);
+  checkTrue('no em dash on screen', doorsView.indexOf('\u2014') === -1);
   const layouts = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/layouts.json'), 'utf8'));
   checkTrue('every Front Doors arrangement shelves the Ledger beside Start Here', layouts.layouts.every(l => l.groups.some(g => g.rooms.indexOf('ledger') >= 0)));
 })();
@@ -14854,7 +14854,7 @@ section('J7, J8: two views of Partner, Roth conversions before 65 (D-216)');
   const noPay = Partner.onTrack(Schema.createHousehold(Object.assign({}, two, { people: [you, Schema.createPerson({ id: 'q', role: 'adult', label: 'Sam' })] })), T);
   check('their pay missing: can\'t tell, never a guess', noPay.value, 'cantTell');
   checkTrue('one adult: incomplete, the same reason as the split', !Money.isOk(Partner.onTrack(Demo.build(), T)) && Partner.onTrack(Demo.build(), T).justYou === true);
-  checkTrue('no sentence carries an em-dash', [yes, close, no, pooled, noPay].every(r => r.sentence.indexOf('—') === -1));
+  checkTrue('no sentence carries an em-dash', [yes, close, no, pooled, noPay].every(r => r.sentence.indexOf('\u2014') === -1));
   /* -- J7: yours, mine, ours, from either side --------------------------------------- */
   const mine = Partner.tags(two);
   check('from your side: the joint account is ours, the 401k mine, the car loan yours', mine.assets.map(a => a.tag).concat(mine.debts.map(d => d.tag)).join(','), 'ours,mine,yours');
@@ -14923,7 +14923,7 @@ section('J7, J8: two views of Partner, Roth conversions before 65 (D-216)');
   checkTrue('...writes nothing to the household', rothRoom.indexOf('Spine.set(') === -1 && rothRoom.indexOf('Spine.updateProfile(') === -1);
   checkTrue('...never a point without its range', /data-range/.test(rothRoom) && / to /.test(rothRoom));
   checkTrue('...the premium is typed, never guessed: no premium table in data/', !fs.readdirSync(path.join(ROOT, 'data')).some(f => /premium/i.test(f)) && /only the marketplace can tell you/.test(rothRoom));
-  checkTrue('...no em-dash on screen', rothRoom.replace(/<!--[\s\S]*?-->/g, '').indexOf('—') === -1);
+  checkTrue('...no em-dash on screen', rothRoom.replace(/<!--[\s\S]*?-->/g, '').indexOf('\u2014') === -1);
   const rr = Registry.byId('decumulation');
   checkTrue('the room it lives in is under moves, and the reading keeps the switch',
     rr && rr.subgroup === 'moves' && !Registry.byId('roth-aca')
@@ -15233,7 +15233,7 @@ section('K1, K3: the Middle Class Trap Test and the Referee (D-218)');
   /* Seven in D-218; nine since D-300 brought soft saving and new-against-used. */
   check('nine debates: seven in the starter set and two from the book', list.length, 9);
   checkTrue('every side has its best case and a source; every debate a flip point and an engine function', list.every(d => d.sides.length >= 2 && d.sides.every(s => s.case && s.source) && d.flip && d.flip.label && typeof Debates.FN[d.fn] === 'function'));
-  checkTrue('no side text carries an em-dash or "you should"', list.every(d => d.sides.every(s => s.case.indexOf('—') === -1 && !/you should/i.test(s.case))));
+  checkTrue('no side text carries an em-dash or "you should"', list.every(d => d.sides.every(s => s.case.indexOf('\u2014') === -1 && !/you should/i.test(s.case))));
   /* the flip: moving the key input across it changes the answer the expected way */
   const withMortgage = rate => Schema.createHousehold(Object.assign({}, Demo.build(), { debts: [Schema.createDebt({ type: 'mortgage', balanceCents: 30000000, rate: rate })] }));
   check('a 1% mortgage: invest, in every band', Debates.run('mortgageVsInvest', withMortgage(0.01), T).value, 'b');
@@ -15998,7 +15998,7 @@ section('Every id a page writes to exists in that page (D-238)');
   /* The Scorecard wrote to el('provenance') and el('ra-provenance'), both of
      which were lost when the rooms merged (D-233). `el` returned null, the
      throw aborted the render three numbers early, and the catch around it
-     blamed data/ — so a room that had every input showed "—" for its
+     blamed data/ — so a room that had every input showed "not yet" for its
      emergency fund, its debt-to-income and its FIRE number under a red
      banner about a file that had loaded perfectly. Nothing failed loudly.
      A write to an id the page does not carry is always that bug. */
@@ -16478,6 +16478,46 @@ section('Every screen says how old its numbers are; the example says so; the lod
       checkTrue(`index loads ${s} for the lodge`, idx.indexOf('src="' + s + '"') !== -1));
     checkTrue('the lodge is hidden by default', /<div class="lodge" id="lodge" hidden>/.test(idx));
   }
+})();
+
+section('No em dash anywhere the app can show one (D-321)');
+
+(function () {
+  /* The owner's rule, from docs/SOLAR-SYSTEM.md 0.3 item 13: no em dashes in
+     any copy. The not-entered placeholder is the words "not yet" (the same
+     rule's item 7: empty reads "not yet"), so the glyph has no job left in
+     anything that ships. DECISIONS.md, docs/ and tools/ are the archive and
+     its reader: the log's own heading grammar still accepts the old
+     separator, so old entries keep parsing and nothing rewrites history. */
+  const EM = '—';
+  const dirs = ['rooms', 'shared', 'engines', 'data', 'dnd', 'dnd/rooms', 'dnd/shared', 'dnd/engines', 'dnd/data'];
+  const files = ['index.html'];
+  dirs.forEach(function (d) {
+    const full = path.join(ROOT, d);
+    if (!fs.existsSync(full)) return;
+    fs.readdirSync(full, { withFileTypes: true }).forEach(function (e) {
+      if (!e.isFile()) return;
+      if (!/\.(html|js|css|json)$/.test(e.name)) return;
+      if (d === 'dnd' && !/\.html$/.test(e.name)) return;
+      files.push(path.join(d, e.name));
+    });
+  });
+  fs.readdirSync(path.join(ROOT, 'data'), { withFileTypes: true })
+    .filter(e => e.isDirectory())
+    .forEach(e => fs.readdirSync(path.join(ROOT, 'data', e.name))
+      .filter(n => n.endsWith('.json'))
+      .forEach(n => files.push(path.join('data', e.name, n))));
+  let clean = 0;
+  files.forEach(function (rel) {
+    const src = fs.readFileSync(path.join(ROOT, rel), 'utf8');
+    const at = src.indexOf(EM);
+    if (at === -1) { clean++; return; }
+    checkTrue(rel + ' carries no em dash', false,
+      'first at character ' + at + ': ' + JSON.stringify(src.slice(Math.max(0, at - 45), at + 45)));
+  });
+  checkTrue('every shipped file is clean of the em dash (' + clean + ' files)', clean === files.length);
+  checkTrue('the not-entered placeholder is the words "not yet"', Money.formatCents(null) === 'not yet' && Money.formatRate(null) === 'not yet');
+  checkTrue('Money exports it under a name that says what it is', Money.NOT_YET === 'not yet' && Money.EM_DASH === undefined);
 })();
 
 /* ==========================================================================

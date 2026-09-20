@@ -1,11 +1,11 @@
 /* ==========================================================================
-   engines/buckets.js — Time Buckets: a price on each decade you have left,
+   engines/buckets.js, Time Buckets: a price on each decade you have left,
    set against the money there will be when it starts.
    DECISIONS.md D-101 (schema); the room's own entry follows.
    --------------------------------------------------------------------------
    Die With Zero's exercise: list what you want to do in each decade of the
    life you have left, price it, and set it against the net worth projected
-   for that decade — so the question becomes "can the fifties afford the
+   for that decade, so the question becomes "can the fifties afford the
    fifties" rather than "will there be enough at the end". The projection is
    Projection.pathCents, the one compound loop every growth chart draws, run
    ONCE from now to the plan age at the household's real return and its
@@ -34,8 +34,8 @@
   /* The last decade planned for starts before this age: 30 → 90s, seven
      decades at most. A convention, not a life expectancy. */
   var PLAN_AGE = 95;
-  /* With no date of birth the decades are laid out from the thirties — the
-     first decade the ideas table prices as more than a shoestring — and the
+  /* With no date of birth the decades are laid out from the thirties, the
+     first decade the ideas table prices as more than a shoestring, and the
      room says so. */
   var START_DECADE_WITHOUT_AGE = 30;
   /* The one experience the room's money boxes write: a decade's price with
@@ -78,7 +78,7 @@
     return Money.ok(out.length, { decades: out, age: known ? age : null, ageAssumed: !known, planAge: planAge, pastCents: past });
   }
 
-  /** Everything priced, across every decade stored — the ownership row's figure. */
+  /** Everything priced, across every decade stored, the ownership row's figure. */
   function totalPlannedCents(household) {
     return ((household && household.timeBuckets) || []).reduce(function (t, b) { return t + pricedCents(b.experiences); }, 0);
   }
@@ -96,7 +96,7 @@
    * experience but the 'Planned' one) the decade becomes one 'Planned'
    * experience at that price; with an itemised list the list is kept and a
    * 'Planned' remainder is added or updated so the decade's total equals the
-   * typed value — unless the typed value is below the list's own total, in
+   * typed value, unless the typed value is below the list's own total, in
    * which case there is no remainder that fits and the price replaces the
    * list. Returns a new list; never touches the one handed in.
    */
@@ -118,10 +118,10 @@
   }
 
   /**
-   * Investments projected to the start of each decade — ONE pathCents run
+   * Investments projected to the start of each decade, ONE pathCents run
    * from now to the plan age at the real return, contributing the current
    * yearly savings (Tier 0's including-match figure when there is one) a
-   * twelfth a month until the stop age when one is set, else throughout —
+   * twelfth a month until the stop age when one is set, else throughout, 
    * with each decade's cumulative plan set against the balance there.
    */
   function affordability(household, tables, opts) {
@@ -160,7 +160,7 @@
 
   /**
    * The room's one call: the total planned from this decade on, each decade
-   * with its price, its years away and — when the money can be projected —
+   * with its price, its years away and, when the money can be projected, 
    * the balance there and whether the plan has outrun it; the plan as a
    * share of the FI number. Incomplete, with a reason, when nothing is
    * priced yet.
@@ -174,7 +174,7 @@
     var total = rows.reduce(function (t, d) { return t + d.plannedCents; }, 0);
     var planned = rows.filter(function (d) { return d.plannedCents > 0; });
     if (!planned.length) {
-      return Money.incomplete(dd.pastCents > 0 ? 'Nothing planned for the decades ahead yet — put a price on one below.' : 'Nothing planned yet — put a price on a decade below.', ['timeBuckets']);
+      return Money.incomplete(dd.pastCents > 0 ? 'Nothing planned for the decades ahead yet, put a price on one below.' : 'Nothing planned yet, put a price on a decade below.', ['timeBuckets']);
     }
     var fire = Tier0.fireNumber(h);
     var share = Money.isOk(fire) && fire.value > 0 ? total / fire.value : null;
