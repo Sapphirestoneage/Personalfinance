@@ -774,7 +774,7 @@
      extra beats both; realized beats the estimate. */
   var REALIZED_MONTHS = 3;
 
-  /* The gap is Schema's one function (D-307), so Cash Flow's "Left" and
+  /* The gap is Schema's one function (D-317), so Cash Flow's "Left" and
      this estimate are the same figure on the same household. */
   function freeMonthlyCents(household, tables) { return Schema.monthlyGapCents(household, tables); }
 

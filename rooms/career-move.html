@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-20 01:20Z"/>
+<meta name="slaf-build" content="2026-09-20 01:28Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <script src="../shared/size.js"></script>
@@ -357,7 +357,7 @@
 <header class="room-head">
   <a class="room-back" href="../map.html">← All rooms</a>
   <h1>Work</h1>
-  <p class="room-lede">Every question about a job, in one place.</p>
+  <p class="room-lede">Every question about a job, in one place: an offer, a raise, a move, a break.</p>
 </header>
 
 <main class="slaf-wrap">
@@ -1347,8 +1347,8 @@
     if (!Money.isEntered(stored) && !Money.isEntered(v.marginal)) suggestBracket(node);
     if (note) {
       note.innerHTML = Money.isEntered(stored)
-        ? 'Your saved rate, from <a href="' + Ownership.linkTo('statement', 'setup')
-          + '">Where It Goes</a>. Changing it here changes it there too.'
+        ? 'Your saved rate, from <a href="' + Ownership.linkTo('ledger', 'x-T')
+          + '">the Ledger</a>. Changing it here changes it there too.'
         : 'Answered once and shared: whatever you type here is remembered for '
           + 'every other room that needs it.';
     }
@@ -1867,8 +1867,8 @@
     if (!Money.isEntered(stored) && !Money.isEntered(v.marginal)) suggestBracket(node);
     if (note) {
       note.innerHTML = Money.isEntered(stored)
-        ? 'Your saved rate, from <a href="' + Ownership.linkTo('statement', 'setup')
-          + '">Where It Goes</a>. Changing it here changes it there too.'
+        ? 'Your saved rate, from <a href="' + Ownership.linkTo('ledger', 'x-T')
+          + '">the Ledger</a>. Changing it here changes it there too.'
         : 'Answered once and shared: whatever you type here is remembered for '
           + 'every other room that needs it.';
     }

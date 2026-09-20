@@ -57,7 +57,7 @@ const CSP_RE = /<meta http-equiv="Content-Security-Policy" content="[^"]*"\/>\n?
 const ERRLOG_RE = /<script src="(?:\.\.\/)?shared\/errlog\.js"><\/script>\n?/;
 /* shared/size.js is the second script on every Money Rooms page (not the
    D&D pages, which have their own shared/): it reads the Comfortable or
-   Compact switch and marks the page before the first paint. D-307. */
+   Compact switch and marks the page before the first paint. D-317. */
 const SIZE_RE = /<script src="(?:\.\.\/)?shared\/size\.js"><\/script>\n?/;
 function sizeTag(file) { return file.indexOf('dnd/') === 0 ? '' : '\n<script src="' + (file.indexOf('rooms/') === 0 ? '../' : '') + 'shared/size.js"></script>'; }
 /* The D&D pages load only their own shared/ (a vendored, byte-identical

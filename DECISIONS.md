@@ -16296,7 +16296,281 @@ five lines in, four merchants, a rule filing Amtrak under travel, a for-date
 of the 25th reading "bought 15 days ahead" and the slope parting by $200, the
 same file through Your Data's one door with every line already in the log.
 
-## D-307 — The phone walk, round two: size, the dots, the ask, the gap, a line edited
+## D-308 — The Calendar comes back, with your own dates on it
+
+**Why.** The owner: "reinstate the calendar, that way there can be cash
+flow but also so you can add your own things to it, like apply for a
+new credit card, or things that are financial in nature but not
+inherently cash flow." D-275 folded the Calendar into The Month by rule
+2 of D-229; what The Month cannot hold is a date that is not money.
+
+**Decision.** `rooms/calendar.html` is a live room again: the one month
+picture `shared/daybyday.js` draws (The Month's own, never a copy), and
+under it your own dates: what, when, and a kind (to do, deadline,
+note), with done and remove. They live in `household.calendar.events[]`
+(`Schema.createCalendarEvent`), written by this room alone through the
+spine; not an ownership field, not a DAITE family, so no dot and no
+nag. `engines/calendar.js` reads them into the month as `ownHits` and
+`turns` of direction `note` with no money; the picture draws each on
+its day and lists it without an amount, in the Calendar and in The
+Month's dates reading alike. The pay rhythm and the bills stay The
+Month's. The registry, `docs/room-map.json` (thirty-two now) and every
+one of the twenty arrangements carry it beside The Month.
+
+**Replaces or removes.** The redirect stub. Nothing else; the owner's
+call overrides the freeze for this one room, and it holds no field
+that anything else reads.
+
+**Stored shape.** `calendar.events[]` is new on `slaf.household.v2`:
+`{ id, date, label, kind, done }`. `createCalendar` defaults it to `[]`;
+an older save loads with none and reads as before.
+
+**Verified.** `node test/run.js`, lane 2, `dnd/test/run.js`,
+`node test/features.js`, `node tools/context/build.js --check`; the
+Calendar at 390px with the demo: a date added, drawn on the grid and
+listed, marked done, shown in The Month too, removed; clean console.
+
+## D-309 — All three intakes stay
+
+**Why.** STATUS asked the owner which intake survives: Round 1, All at
+once, or Start Here. The owner: "have all 3 options available."
+
+**Decision.** All three stay live and reachable: Round 1 and All at
+once as the Ledger's doors, Start Here as its own room. Nothing retires
+into anything. `docs/room-map.json` keeps Start Here held under the
+Ledger with this as the reason, so the map and the app agree.
+
+**Replaces or removes.** The plan to retire Start Here into Express.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (the map's held rule), the three doors
+open at 390px.
+## D-310 — Plain words off the path, and the questions asked in rooms
+
+**Why.** D-258 rewrote the sixteen path rooms; the owner asked for the
+rest, and for the inline questions: "Keeps paying if the job goes: what
+does this even mean?"
+
+**Decision.** The ledes and registry blurbs of the seventeen rooms off
+the path are rewritten in short sentences that name the thing, the
+number and the unit, and the test that held the line for the path now
+covers every live room. Twenty-eight asked rows in
+`data/ledger-rows.json` get labels a person can answer ("Would this pay
+keep coming if the job ended?", "What you paid in (the cost basis)");
+the four ownership labels that mirror them follow. A renamed row keeps
+its old words in `wasLabels`, and `shared/csvexport.js` indexes them,
+so a sheet exported or typed under the old label still lands on the
+row (D-222's round trip holds).
+
+**Replaces or removes.** The old ledes, blurbs and labels.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (every live room's lede and blurb: no
+dash, no sentence over thirty words; every asked label under fourteen
+words; the hand-typed sheet with the old label still imports),
+`node test/forms.js`, `node tools/context/build.js --check`; four
+off-path rooms and the Income ask at 390px, clean console.
+
+## D-311 — Loose ends closed: the deduction says its year, and the front-page figure is a door
+
+**Why.** Left over from the owner's brief: the student-loan interest
+deduction figures were marked "to verify"; the front page's monthly
+figure was not a link; a typo audit was promised; the Cash Flow month
+card reads incomplete with the example numbers.
+
+**Decision.** `data/student_loan_conventions.json` carries the tax-year
+2025 band as recalled from IRS Topic 456 ($85,000 to $100,000 single,
+$170,000 to $200,000 joint, none filing separately) and says the IRS
+site could not be reached to confirm it; the phase-out test reads the
+band from the table. The front page's "Left each month" figure links
+to Your Statements, where it is made of lines. A scan of every live
+room's visible text for doubled words, doubled punctuation, spaces
+before punctuation and common misspellings found nothing real. The
+month card with the example numbers is by design: the household demo
+leaves the expense log empty on purpose, and The Month's own example
+button fills it.
+
+**Replaces or removes.** The "to verify" note with no year.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js`, `node tools/context/build.js --check`;
+the front page at 390px with the demo, the figure a link, clean console.
+## D-312 — The five-input opening: take-home, a band, a coast date, the levers
+
+**Why.** The owner's build prompt: the product answers one question first,
+"when can I stop needing a paycheck, and what moves that date?", for people
+in their twenties whose outcome is income and savings rate, not returns.
+Round 1 asked five things one screen at a time and answered with a runway;
+Start Here asked seventeen. Neither asked what lands.
+
+**Decision.** The Ledger's `#round-1` view is the opening: one screen, five
+inputs (age, take-home with a cadence, spending with an "I don't know",
+invested beside cash, any debt as rows), the situation as chips above them,
+and the answer under them, live. Take-home is a new Ledger row
+(`takeHomeMonthly`, `household.takeHome`, owned by the Ledger, its first
+view): `Schema.takeHomeAnnualCents` prefers logged paychecks, then the typed
+take-home, then the estimate from gross, and `Tier0.savingsRate` divides by
+take-home when no gross is known and says so (`basis`). Every write is
+stamped `roughly` until the one box marks them exact, which confirms them.
+`engines/opening.js` reads the five and returns the FI number at the
+declared 3.5% (`data/opening.json`, with 4% and 3.25% as the other Triple D
+points), years to the number at 3%, 5% and 7% real as a band with the likely
+one first, the coast date through `engines/coast.js`, the rate from
+take-home, the stage line (under a year of spending invested, returns rank
+last; over five, they rank naturally; thresholds in the file), and the three
+levers that move the likely date most, from five new entries in
+`data/levers.json` (`payStep`, `spendCut`, `returnUp`, `clearDearest`,
+`halfRaise`), a debt dearer than the expected nominal return ranked first
+whatever the months say. Between jobs or a student with nothing coming in,
+the runway is the hero and the FI view reads an expected take-home held for
+the session only; spending above take-home is "no date yet" with the next
+card on the biggest lever. Each day's band is one journal line
+(`Spine.journal`, `kind: 'band'`) so a later month can say whether it
+tightened. A disabled "Drop a paystub instead" is the hook for the parser.
+
+**Replaces or removes.** Round 1's five screens, the ZIP and gross-pay
+questions on the way in (both still asked where they change an answer). The
+paystub parser, the monthly update and the rest of section 4 of the prompt
+are not built.
+
+**Stored shape.** `household.takeHome { monthlyCents, typedCents, per }`,
+absent on older saves and read as not entered; `journal[]` entries may carry
+`band { worstMonths, likelyMonths, bestMonths }`, absent on every other kind.
+`meta.hasDebt` gains a write path through `Ownership.write('hasDebt')`.
+
+**Verified.** `node test/run.js` (33,684: the engine's edges, the four
+households of the brief from `fixtures/households/opening-*.json`, typed
+beats estimate, logged beats typed); `node test/opening.js` (each household
+reaches its answer in 6 to 10 taps and boxes at 360px, reload restores every
+box, undo and redo on an input); `test/forms.js` on the Ledger; render,
+features, sidebar, onefact, xss, comeback; the corpus and the property
+suite with `opening.test.js`.
+
+## D-313 — The Statement is four sections; the facts it asked for are the Ledger's
+
+**Why.** The owner's build prompt, Part 2: facts are entered in the Ledger
+only and rooms are views. The Statement held four readings, fifteen cards
+and every per-account box (value, kind, pile, confidence, basis, where it
+is held), plus the Roth and HSA contributions, the marginal rate and the
+target mix. Someone in their twenties met a balance sheet before a story.
+
+**Decision.** `rooms/statement.html` keeps its filename and holds four
+sections, nothing to type: net worth in plain words ("counting only what
+you are sure of" on screen, "confidence-weighted" in the drawer), the pay
+still to come beside it and never added (D-315), the liquidity ladder with
+property as a slow rung and a Roth with no basis as a look-it-up row citing
+Form 5498, and the order-of-operations step the next dollar lands on. Every
+per-account fact is a row in the Ledger's A door (`assetValue`,
+`assetAccountType`, `assetCharacter`, `assetTier`, `assetCostBasis` now
+"Cost basis, or Roth contributions", and four new rows: `assetConfidence`,
+`assetCashFlow`, `assetHassle`, `assetAccessAge`); so are `rothContributed`,
+`hsaContributed`, the new `onHdhp` and `hsaFamilyPlan`, the target mix, and
+`marginalRate` on the T door. Their owner in `shared/ownership.js` is
+`ledger`; the Ledger offers the N/A mark on the plan and HSA rows. Four
+readings are rooms again, each reading the Ledger and writing nothing:
+`rooms/bridge.html`, `rooms/which-account.html` (every box a what-if,
+prefilled from the facts), `rooms/the-mix.html`, `rooms/the-documents.html`,
+and `rooms/left-behind.html`. `engines/statement.js` liquidityLadder gains a
+`slow` band (property and other things: months, through a sale or a loan)
+and keeps `never` for money behind an age gate. A head script on the
+Statement forwards every old anchor before the page paints; the four
+redirect stubs follow their readings. `test/statement.js` walks the anchors,
+measures two phone screens, types into the what-if rooms and proves the
+household byte-identical, and reads a pre-split household back whole.
+
+**Replaces or removes.** The Statement's asset editor, "Add something you
+own", "Add an investment or retirement account", "Remove everything added
+here", the setup card, the allocation boxes, and the inline asks the twelve
+rows carried (`askIn: statement`, now null). Five rooms are added under the
+freeze because each replaces a reading or a card the Statement loses: the
+count of screens is unchanged and every one of them now has one owner. The
+room map counts thirty-six.
+
+**Stored shape.** No change to any field. Six rows read fields the schema
+already carried (`confidence`, `cashFlowMonthlyCents`, `hassle`,
+`accessAgeOverride`, `retirement.onHdhp`, `retirement.hsaFamilyPlan`). One
+new account type, `old_401k` (D-316). A household saved before this reads
+back whole; `fixtures/snapshots/pre-d313.household.json` is the proof.
+
+**Verified.** `node test/run.js` (33,987); `node test/statement.js`;
+`node test/forms.js` (the Ledger's A door, Left Behind); render, features,
+sidebar, onefact, xss, comeback, alignment, opening; the corpus and the
+property suite.
+
+## D-314 — The worst plausible year is the Cushion's
+
+**Why.** The Statement priced a bad year beside the balance sheet; the
+question it answers, what cash has to cover, is the one the Cushion's
+at-3am reading asks, and the cover facts it needs are asked on that
+reading's coverage card.
+
+**Decision.** `rooms/runway.html` carries a `#worst-year` card on the
+at-3am reading, rendered from `engines/statement.js` worstPlausibleYear,
+the same sum, with the deductible, the out-of-pocket maximum and the state
+as chips. The router matches `worst-`; `data/exercises.json` points there;
+the Statement forwards `#worst-year`.
+
+**Replaces or removes.** The Statement's worst-year card and the copy on
+the Cushion that sent people to it.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js`; `node test/statement.js` (the card prices
+a saved household); the features gate on the Cushion.
+
+## D-315 — The pay still to come, beside net worth, on a switch that defaults by age
+
+**Why.** At twenty-five the biggest thing most people own is the pay still
+ahead of them, and a balance sheet that omits it says the opposite of the
+truth. Adding it to net worth would be a second kind of lie.
+
+**Decision.** `engines/benchmarks.js` humanCapital takes `opts`: `basis`
+'take-home' reads `Schema.takeHomeAnnualCents`; `stopAge` is the opening's
+likely FI age when it has one, else `data/opening.json` coastTargetAge;
+`discountRate` is the likely real return and `raiseRate` the declared real
+raise rate, both from that file; the ratios keep the old call unchanged.
+The Statement shows it in its own cell, labelled rough, with one line of
+copy and links to Income and Protection. `data/features.json` gains
+`humanCapital`, user scope, default on, with `defaultWhen: "primary adult is
+under 40"`; `shared/features.js` reads that one phrase when no preference
+is stored. Off means the cell is absent, not hidden.
+
+**Replaces or removes.** Nothing on screen; the switch is the eighteenth.
+A default that depends on the household is new to the switch table and is
+the one phrase so far.
+
+**Stored shape.** No change; a preference under `prefs.features.humanCapital`
+when the person toggles it.
+
+**Verified.** `node test/run.js` (the switch on at 32 and off at 45; the
+engine with and without `opts`); `node test/statement.js`.
+
+## D-316 — A plan at a former employer is an account type, and Left Behind reads it
+
+**Why.** The brief asks Left Behind to surface when an account is tagged as
+a former employer's plan. `Schema.ACCOUNT_TYPES` had no such tag, so the
+room could only ever ask for a balance it had no way to see.
+
+**Decision.** `shared/schema.js` (and the byte-identical `dnd/shared/schema.js`)
+gain the account type `old_401k`, "A plan at a former employer", pre-tax,
+retirement; `data/ledger-rows.json` lists it. `rooms/left-behind.html`
+proposes that account's value in its balance box (read, never written;
+typing over it wins) and the Statement's ladder names the account with a
+link to the room. The Bridge lists the Rule of 55 only when such a plan, a
+401(k), 403(b) or TSP is held.
+
+**Replaces or removes.** Nothing; a value in an enum.
+
+**Stored shape.** `assets[].accountType` may be `old_401k`. An older build
+reading it would show the id as the label and derive nothing from it.
+
+**Verified.** `node test/run.js`; `node test/statement.js` (the tagged
+plan's balance is proposed and priced).
+
+## D-317 — The phone walk, round two: size, the dots, the ask, the gap, a line edited
 
 **Why.** Seven screenshots from the owner's phone in one sitting: everything
 too big; Convenience showing Avalanche's figure; "InterestClear in" and
@@ -16333,7 +16607,7 @@ opening to their parts; Sapphire preferred edited from $95 a month to $95 a
 year; an ask naming "Investments + retirement", rested by Not now, retired by
 Don't ask again, absent with the switch off. Console clean.
 
-## D-308 — The calendar, the way a phone calendar is used
+## D-318 — The calendar, the way a phone calendar is used
 
 **Why.** The owner: "make the calendar much more like Rocket Money, more
 enjoyable, more professional; this looks homemade." The dates reading was

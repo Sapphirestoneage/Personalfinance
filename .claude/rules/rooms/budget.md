@@ -1,7 +1,6 @@
 ---
 paths:
   - "rooms/budget.html"
-  - "engines/presets.js"
   - "engines/variance.js"
   - "engines/history.js"
 ---
@@ -10,7 +9,7 @@ File: rooms/budget.html · 1046 lines
 Engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget, variance, hourly, foo, fire, statement, benchmarks, ratios, events, skills, history
 Reference data: budget_templates.json, car_costs.json, confidence_weights.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, +8 more
 Owns: monthsClosed, historyCompareTo
-Reads from other owners: cashSavings (start), totalDebt (debt-payoff), netWorth (statement), monthlyExpenses (expenses)
+Reads from other owners: cashSavings (start), totalDebt (debt-payoff), netWorth (statement)
 Latest decisions:
   - D-276 — The Close: this month, every month, over time
   - D-257 — Budget: the month said plainly

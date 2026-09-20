@@ -21,22 +21,23 @@
     "capDollars": 2500,
     "phaseOut": {
       "single": {
-        "fromDollars": 80000,
-        "toDollars": 95000
+        "fromDollars": 85000,
+        "toDollars": 100000
       },
       "head_of_household": {
-        "fromDollars": 80000,
-        "toDollars": 95000
+        "fromDollars": 85000,
+        "toDollars": 100000
       },
       "married_joint": {
-        "fromDollars": 165000,
-        "toDollars": 195000
+        "fromDollars": 170000,
+        "toDollars": 200000
       },
       "married_separate": {
         "fromDollars": 0,
         "toDollars": 0
       }
     },
-    "note": "The federal student loan interest deduction (D-247): above the line, up to the cap a year across all student loans, phased out linearly over the income band for the filing status; not allowed filing separately. Recalled 2024 figures, to verify against the current IRS table. Applied per loan here, so two large loans can together overstate the cap."
+    "note": "The federal student loan interest deduction (D-247): above the line, up to the cap a year across all student loans, phased out linearly over the modified AGI band for the filing status; not allowed filing separately. The band is the tax-year 2025 one as recalled from IRS Topic 456 ($85,000 to $100,000 single or head of household, $170,000 to $200,000 married filing jointly); the IRS site could not be reached from the build to confirm it, and the 2026 inflation adjustment is not applied. Verify before relying on it. Applied per loan here, so two large loans can together overstate the cap. D-311.",
+    "taxYear": 2025
   }
 }

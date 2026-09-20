@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-20 01:28Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<script src="../shared/size.js"></script>
+<title>The Mix · SPARKS</title>
+<meta name="description" content="The split you are aiming for between stocks, bonds and cash, the band a slice may drift before you rebalance, and what that mix means in dollars on what you have invested. The targets are entered in the Ledger; this reads them."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC: SPEC.md §11. DECISIONS.md D-071 (the target mix), D-313
+  (carved from the Statement). Registry: the-mix.
+
+    #allocation   the target split and the band, read from the Ledger
+    #in-dollars   the same mix on what is invested today, and how far a
+                  slice may drift in dollars before it is rebalanced
+    #reading      the figures this page reads, each a link to its owner
+
+  There was no investing room to fold this into, and the anti-rule keeps
+  a reading about a target out of the Scorecard. It is a reading: the
+  four targets are Ledger rows (allocationStocks, allocationBonds,
+  allocationCash, rebalanceBand) and this page has no box for any of them.
+
+  1. READS   the target mix, the band, what is invested, the age.
+  2. WRITES  nothing.
+  3. CALLS   Schema.allocationStatus, Schema.investmentsCents. No engine of
+             its own: three multiplications, done once here.
+  4. EMPTY   no targets: says so and links to the Ledger row. No investment
+             total: the dollars section says which figure it is waiting for.
+  5. CONFIG  none.
+
+  LIVE-FORM: built once. No inputs on this page.
+  THEMING: none this pass.
+-->
+<style>
+  section[id] { scroll-margin-top: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .trio { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-2); margin-top: var(--space-3); }
+  @media (max-width: 400px) { .trio { grid-template-columns: 1fr; } }
+  .cell { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); min-width: 0; }
+  .cell .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
+  .cell .big { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; margin-top: var(--space-2); overflow-wrap: anywhere; }
+  .cell .big.is-incomplete { font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text-faint); }
+  .cell .sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-2); }
+  .cell a, .why a, .slaf-hint a { color: var(--color-accent-hover); }
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .why:empty { display: none; }
+  .track { display: flex; height: 14px; border-radius: var(--radius-pill); overflow: hidden; margin-top: var(--space-3); background: rgba(0,0,0,.22); box-shadow: inset 0 0 0 1px var(--color-border); }
+  .track i { display: block; height: 100%; }
+  .track .s { background: var(--color-accent); }
+  .track .b { background: var(--color-positive); }
+  .track .c { background: var(--color-caution); }
+  .room-drawer ul { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; padding-left: 1.2em; line-height: var(--leading-loose); }
+  .room-badge { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>The Mix</h1>
+  <p class="room-lede">The split you are aiming for between stocks, bonds and cash, and the band a slice may drift before you rebalance. Then the same mix in dollars, on what you have invested.</p>
+  <p class="room-badge" id="room-badge"></p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="allocation">
+    <span class="slaf-eyebrow">The mix you are aiming for</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">A target, not a reading of your accounts. Stocks, bonds and cash should add to 100; the band is how far a slice may drift before you rebalance it back. Entered in the Ledger, read here.</p>
+    <div class="trio">
+      <div class="cell"><span class="cap">Stocks</span><span class="big" id="mix-stocks">—</span></div>
+      <div class="cell"><span class="cap">Bonds</span><span class="big" id="mix-bonds">—</span></div>
+      <div class="cell"><span class="cap">Cash</span><span class="big" id="mix-cash">—</span></div>
+    </div>
+    <div class="track" id="mix-track" hidden></div>
+    <p class="why" id="alloc-read"></p>
+  </section>
+
+  <section class="slaf-card" id="in-dollars" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">In dollars</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">The same mix on what you have invested today, and how far the stocks slice may wander before the band says rebalance.</p>
+    <div class="trio">
+      <div class="cell"><span class="cap">Stocks</span><span class="big" id="usd-stocks">—</span></div>
+      <div class="cell"><span class="cap">Bonds</span><span class="big" id="usd-bonds">—</span></div>
+      <div class="cell"><span class="cap">Cash</span><span class="big" id="usd-cash">—</span></div>
+    </div>
+    <p class="why" id="usd-why"></p>
+    <div id="mix-lens" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <section class="slaf-card" id="reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Read here, entered in the Ledger. This room writes none of them.</p>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <details class="room-drawer" id="assumptions" style="margin-top:var(--space-4)">
+    <summary>Assumptions <small>Where each figure that is not yours comes from.</small></summary>
+    <ul id="assumptions-body"></ul>
+  </details>
+
+  <p class="disclaimer">Educational tool, not financial advice. A target mix is yours to choose; nothing here recommends one. Everything stays in this browser.</p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/staleness.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/features.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/ledger.js"></script>
+<script src="../engines/hourly.js"></script>
+<script src="../shared/lens.js"></script>
+
+<script>
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Ownership = SLAF.Ownership;
+  var ROOM_ID = 'the-mix';
+  var TABLES = null;
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function fmt(c) { return Money.formatCents(c); }
+  function pct(r) { return Money.formatRate(r, { decimals: 0 }); }
+  function setBig(id, ok, text) { var n = el(id); n.className = 'big' + (ok ? '' : ' is-incomplete'); n.textContent = text; }
+  function ledgerLink(field, text) { var d = Ownership.describe(field, Spine.getProfile(), ROOM_ID); return '<a href="' + esc(d ? d.href : Ownership.linkTo('ledger', 'x-A', ROOM_ID)) + '">' + esc(text) + ' →</a>'; }
+  function badge() {
+    var r = SLAF.Registry.byId(ROOM_ID);
+    var s = (TABLES.spheres && TABLES.spheres.spheres || []).filter(function (x) { return x.id === r.sphere; })[0];
+    el('room-badge').textContent = (s ? 'Sphere ' + s.order + ', ' + s.sphere + ' · ' : '') + 'about ' + r.minutes + ' minutes to read';
+  }
+
+  /* One place turns the targets into dollars: the invested total times each share. */
+  function inDollars(h) {
+    var a = h.allocation || {};
+    var inv = Schema.investmentsCents(h);
+    if (!Money.isOk(inv)) return inv;
+    var st = Schema.allocationStatus(h);
+    if (!Money.isOk(st) || !st.complete) return Money.incomplete('The three targets are not all entered yet.', ['allocationStocks']);
+    var out = { stocks: Math.round(inv.value * a.stocks), bonds: Math.round(inv.value * a.bonds), cash: Math.round(inv.value * a.cash) };
+    return Money.ok(inv.value, { parts: out, band: Money.isEntered(a.rebalanceBand) ? Math.round(inv.value * a.rebalanceBand) : null, balanced: st.balanced });
+  }
+
+  function renderMix(h) {
+    var a = h.allocation || {};
+    var ok = function (v) { return Money.isEntered(v); };
+    setBig('mix-stocks', ok(a.stocks), ok(a.stocks) ? pct(a.stocks) : 'not set');
+    setBig('mix-bonds', ok(a.bonds), ok(a.bonds) ? pct(a.bonds) : 'not set');
+    setBig('mix-cash', ok(a.cash), ok(a.cash) ? pct(a.cash) : 'not set');
+    var st = Schema.allocationStatus(h);
+    var read = el('alloc-read'), track = el('mix-track');
+    if (!Money.isOk(st)) { read.innerHTML = esc(st.reason) + ' ' + ledgerLink('allocationStocks', 'Set the mix in the Ledger'); track.hidden = true; return; }
+    var text;
+    if (!st.complete) {
+      text = esc(pct(st.value) + ' placed; ' + st.missing.join(', ') + ' still to enter. ') + ledgerLink('allocationStocks', 'In the Ledger');
+      track.hidden = true;
+    } else if (!st.balanced) {
+      text = esc('Adds to ' + pct(st.value) + ', not 100%: ' + (st.value > 1 ? pct(st.value - 1) + ' too much.' : pct(1 - st.value) + ' unplaced.') + ' ') + ledgerLink('allocationStocks', 'Fix it in the Ledger');
+      track.hidden = true;
+    } else {
+      text = esc(pct(a.stocks) + ' stocks · ' + pct(a.bonds) + ' bonds · ' + pct(a.cash) + ' cash.');
+      if (Money.isEntered(a.rebalanceBand) && Money.isEntered(a.stocks)) {
+        text += esc(' With a ±' + pct(a.rebalanceBand) + ' band, stocks are rebalanced outside ' + pct(Math.max(0, a.stocks - a.rebalanceBand)) + ' to ' + pct(Math.min(1, a.stocks + a.rebalanceBand)) + '.');
+      } else {
+        text += ' No band yet: ' + ledgerLink('rebalanceBand', 'set one in the Ledger');
+      }
+      track.hidden = false;
+      track.innerHTML = '<i class="s" style="width:' + (a.stocks * 100) + '%" title="stocks"></i><i class="b" style="width:' + (a.bonds * 100) + '%" title="bonds"></i><i class="c" style="width:' + (a.cash * 100) + '%" title="cash"></i>';
+    }
+    read.innerHTML = text;
+  }
+
+  function renderDollars(h) {
+    var d = inDollars(h);
+    if (!Money.isOk(d)) {
+      setBig('usd-stocks', false, d.reason); setBig('usd-bonds', false, '—'); setBig('usd-cash', false, '—');
+      el('usd-why').innerHTML = (d.missing || []).indexOf('investments') >= 0 || /invest/i.test(d.reason) ? ledgerLink('investments', 'Enter what is invested in the Ledger') : ledgerLink('allocationStocks', 'Set the mix in the Ledger');
+      return;
+    }
+    setBig('usd-stocks', true, fmt(d.parts.stocks)); setBig('usd-bonds', true, fmt(d.parts.bonds)); setBig('usd-cash', true, fmt(d.parts.cash));
+    el('usd-why').textContent = 'On ' + fmt(d.value) + ' invested.' + (d.band !== null ? ' The band is ' + fmt(d.band) + ' either way: the stocks slice may wander that far before a rebalance is due.' : '') + (d.balanced ? '' : ' The targets do not add to 100%, so these are shares of what they do add to.');
+  }
+
+  function renderAssumptions() {
+    el('assumptions-body').innerHTML = [
+      '<li><strong>The targets and the band</strong> are yours, entered once in the Ledger (allocationStocks, allocationBonds, allocationCash, rebalanceBand; D-071) and read everywhere else.</li>',
+      '<li><strong>In dollars</strong> is the invested total times each share; three multiplications, done here and nowhere else.</li>',
+      '<li><strong>What your accounts actually hold</strong> is not known to the app: no holding is ever entered, so there is no drift figure, only the band that would trigger a rebalance.</li>',
+      '<li><strong>This room stores nothing.</strong></li>'
+    ].join('');
+  }
+
+  function renderNow() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    renderMix(h); renderDollars(h); renderAssumptions();
+    el('reading-list').innerHTML = ['allocationStocks', 'allocationBonds', 'allocationCash', 'rebalanceBand', 'investments', 'age'].map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+  }
+  var queued = false;
+  function render() { if (queued) return; queued = true; setTimeout(function () { queued = false; renderNow(); }, 0); }
+
+  Spine.onChange(render);
+  Spine.registerRoom(ROOM_ID);
+  if (SLAF.Progress) SLAF.Progress.mount(ROOM_ID);
+  Reference.load().then(function (tables) {
+    TABLES = tables;
+    badge();
+    SLAF.Lens.mountStrip('mix-lens', function (h) {
+      var d = inDollars(h);
+      if (!Money.isOk(d)) return [];
+      return [{ label: 'Stocks, at the target', cents: d.parts.stocks, href: '#in-dollars' }, { label: 'Bonds, at the target', cents: d.parts.bonds, href: '#in-dollars' }, { label: 'Cash, at the target', cents: d.parts.cash, href: '#in-dollars' }];
+    }, function () { return TABLES; });
+    renderNow();
+  }).catch(function (err) {
+    var notice = el('load-notice'); notice.hidden = false; notice.className = 'notice is-error';
+    notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+  });
+})();
+</script>
+</body>
+</html>

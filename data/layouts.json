@@ -27,10 +27,15 @@
             "debt-payoff",
             "expenses",
             "cash-flow",
+            "calendar",
             "income",
             "budget",
             "financial-snapshot",
             "statement",
+            "bridge",
+            "which-account",
+            "the-mix",
+            "the-documents",
             "fire",
             "dashboard",
             "skill-tree",
@@ -45,6 +50,7 @@
             "decumulation",
             "tax",
             "career-move",
+            "left-behind",
             "partner",
             "housing",
             "big-purchase",
@@ -85,10 +91,15 @@
             "debt-payoff",
             "expenses",
             "cash-flow",
+            "calendar",
             "income",
             "budget",
             "financial-snapshot",
             "statement",
+            "bridge",
+            "which-account",
+            "the-mix",
+            "the-documents",
             "dashboard",
             "skill-tree",
             "values",
@@ -113,6 +124,7 @@
             "decumulation",
             "tax",
             "career-move",
+            "left-behind",
             "partner"
           ],
           "note": "What the gate actually moves — between 8 and 19 rooms."
@@ -147,7 +159,11 @@
             "dashboard",
             "financial-snapshot",
             "runway",
-            "statement"
+            "statement",
+            "bridge",
+            "which-account",
+            "the-mix",
+            "the-documents"
           ]
         },
         {
@@ -155,6 +171,7 @@
           "rooms": [
             "expenses",
             "cash-flow",
+            "calendar",
             "budget",
             "income"
           ]
@@ -182,7 +199,8 @@
           "name": "What if I…?",
           "rooms": [
             "what-if-life",
-            "career-move"
+            "career-move",
+            "left-behind"
           ]
         },
         {
@@ -237,7 +255,8 @@
           "name": "Earn",
           "rooms": [
             "income",
-            "career-move"
+            "career-move",
+            "left-behind"
           ]
         },
         {
@@ -245,6 +264,7 @@
           "rooms": [
             "expenses",
             "cash-flow",
+            "calendar",
             "budget",
             "big-purchase",
             "car",
@@ -262,7 +282,11 @@
           "name": "Keep",
           "rooms": [
             "runway",
-            "statement"
+            "statement",
+            "bridge",
+            "which-account",
+            "the-mix",
+            "the-documents"
           ]
         },
         {
@@ -345,6 +369,7 @@
           "rooms": [
             "expenses",
             "cash-flow",
+            "calendar",
             "budget",
             "income",
             "debt-payoff",
@@ -360,7 +385,8 @@
             "goals",
             "car",
             "big-purchase",
-            "career-move"
+            "career-move",
+            "left-behind"
           ]
         },
         {
@@ -368,6 +394,10 @@
           "rooms": [
             "fire",
             "statement",
+            "bridge",
+            "which-account",
+            "the-mix",
+            "the-documents",
             "housing",
             "partner",
             "what-if-life"
@@ -417,6 +447,7 @@
             "ledger",
             "expenses",
             "cash-flow",
+            "calendar",
             "income",
             "budget",
             "financial-snapshot",
@@ -463,7 +494,11 @@
         {
           "name": "7 · Hyper-accumulation",
           "rooms": [
-            "statement"
+            "statement",
+            "bridge",
+            "which-account",
+            "the-mix",
+            "the-documents"
           ]
         },
         {
@@ -483,6 +518,7 @@
             "debates",
             "skill-tree",
             "career-move",
+            "left-behind",
             "what-if-life",
             "partner",
             "decumulation",
@@ -523,10 +559,15 @@
           "rooms": [
             "expenses",
             "cash-flow",
+            "calendar",
             "income",
             "budget",
             "debt-payoff",
             "statement",
+            "bridge",
+            "which-account",
+            "the-mix",
+            "the-documents",
             "runway",
             "cant-pay",
             "tax"
@@ -543,6 +584,7 @@
             "car",
             "housing",
             "career-move",
+            "left-behind",
             "decumulation",
             "protection",
             "partner"
@@ -607,8 +649,10 @@
             "big-purchase",
             "budget",
             "career-move",
+            "left-behind",
             "expenses",
             "cash-flow",
+            "calendar",
             "debt-payoff",
             "decumulation",
             "week",
@@ -629,6 +673,10 @@
             "runway",
             "skill-tree",
             "statement",
+            "bridge",
+            "which-account",
+            "the-mix",
+            "the-documents",
             "debates",
             "car",
             "what-if-life",
@@ -668,6 +716,7 @@
           "rooms": [
             "expenses",
             "cash-flow",
+            "calendar",
             "budget",
             "income",
             "settings"
@@ -687,6 +736,10 @@
           "name": "The study",
           "rooms": [
             "statement",
+            "bridge",
+            "which-account",
+            "the-mix",
+            "the-documents",
             "tax",
             "fire",
             "foo-ladder"
@@ -706,7 +759,8 @@
           "name": "The workshop",
           "rooms": [
             "skill-tree",
-            "career-move"
+            "career-move",
+            "left-behind"
           ],
           "note": "What you can do, and what it is worth."
         },
@@ -766,6 +820,7 @@
           "rooms": [
             "expenses",
             "cash-flow",
+            "calendar",
             "budget"
           ]
         },
@@ -782,6 +837,10 @@
           "name": "Each quarter",
           "rooms": [
             "statement",
+            "bridge",
+            "which-account",
+            "the-mix",
+            "the-documents",
             "runway"
           ]
         },
@@ -811,6 +870,7 @@
           "rooms": [
             "cant-pay",
             "career-move",
+            "left-behind",
             "housing",
             "big-purchase",
             "car",
@@ -850,6 +910,10 @@
             "fire",
             "runway",
             "statement",
+            "bridge",
+            "which-account",
+            "the-mix",
+            "the-documents",
             "financial-snapshot"
           ]
         },
@@ -859,7 +923,8 @@
             "big-purchase",
             "housing",
             "car",
-            "career-move"
+            "career-move",
+            "left-behind"
           ]
         },
         {
@@ -878,6 +943,7 @@
           "rooms": [
             "expenses",
             "cash-flow",
+            "calendar",
             "budget",
             "income",
             "settings",
@@ -931,6 +997,7 @@
             "cant-pay",
             "expenses",
             "cash-flow",
+            "calendar",
             "budget",
             "runway"
           ]
@@ -938,7 +1005,8 @@
         {
           "name": "The income stopping",
           "rooms": [
-            "career-move"
+            "career-move",
+            "left-behind"
           ]
         },
         {
@@ -972,6 +1040,10 @@
             "fire",
             "tax",
             "statement",
+            "bridge",
+            "which-account",
+            "the-mix",
+            "the-documents",
             "foo-ladder",
             "goals",
             "what-if-life",
@@ -1028,6 +1100,7 @@
           "name": "An employer",
           "rooms": [
             "career-move",
+            "left-behind",
             "income"
           ]
         },
@@ -1053,6 +1126,10 @@
           "name": "The market",
           "rooms": [
             "statement",
+            "bridge",
+            "which-account",
+            "the-mix",
+            "the-documents",
             "runway",
             "what-if-life",
             "goals",
@@ -1067,6 +1144,7 @@
             "dashboard",
             "expenses",
             "cash-flow",
+            "calendar",
             "budget",
             "financial-snapshot",
             "settings",
@@ -1095,6 +1173,7 @@
             "debt-payoff",
             "expenses",
             "cash-flow",
+            "calendar",
             "income",
             "budget",
             "skill-tree",
@@ -1119,6 +1198,10 @@
           "rooms": [
             "financial-snapshot",
             "statement",
+            "bridge",
+            "which-account",
+            "the-mix",
+            "the-documents",
             "fire",
             "dashboard",
             "runway",
@@ -1128,6 +1211,7 @@
             "decumulation",
             "tax",
             "career-move",
+            "left-behind",
             "partner",
             "housing",
             "big-purchase"
@@ -1172,14 +1256,16 @@
             "runway",
             "get-help",
             "expenses",
-            "cash-flow"
+            "cash-flow",
+            "calendar"
           ]
         },
         {
           "name": "2 · “What comes in?”",
           "rooms": [
             "income",
-            "career-move"
+            "career-move",
+            "left-behind"
           ]
         },
         {
@@ -1195,6 +1281,10 @@
           "name": "4 · “What do you hold?”",
           "rooms": [
             "statement",
+            "bridge",
+            "which-account",
+            "the-mix",
+            "the-documents",
             "debt-payoff",
             "tax"
           ]
@@ -1276,9 +1366,14 @@
             "ledger",
             "expenses",
             "cash-flow",
+            "calendar",
             "income",
             "budget",
             "statement",
+            "bridge",
+            "which-account",
+            "the-mix",
+            "the-documents",
             "debt-payoff",
             "goals",
             "tax",
@@ -1297,6 +1392,7 @@
             "what-if-life",
             "partner",
             "career-move",
+            "left-behind",
             "decumulation",
             "foo-ladder"
           ],
@@ -1334,6 +1430,7 @@
             "budget",
             "expenses",
             "cash-flow",
+            "calendar",
             "goals",
             "protection",
             "tax",
@@ -1346,8 +1443,13 @@
             "car",
             "big-purchase",
             "career-move",
+            "left-behind",
             "debt-payoff",
             "statement",
+            "bridge",
+            "which-account",
+            "the-mix",
+            "the-documents",
             "financial-snapshot",
             "cant-pay",
             "dashboard"
@@ -1402,7 +1504,8 @@
             "start",
             "ledger",
             "partner",
-            "career-move"
+            "career-move",
+            "left-behind"
           ],
           "note": "Who you are and what is changing. Nine spokes.",
           "hub": "start"
@@ -1412,6 +1515,7 @@
           "rooms": [
             "expenses",
             "cash-flow",
+            "calendar",
             "income",
             "budget",
             "settings"
@@ -1423,6 +1527,10 @@
           "name": "Hub · The Statement",
           "rooms": [
             "statement",
+            "bridge",
+            "which-account",
+            "the-mix",
+            "the-documents",
             "runway",
             "tax",
             "protection",
@@ -1489,9 +1597,14 @@
           "rooms": [
             "expenses",
             "cash-flow",
+            "calendar",
             "income",
             "budget",
             "statement",
+            "bridge",
+            "which-account",
+            "the-mix",
+            "the-documents",
             "debt-payoff",
             "financial-snapshot",
             "runway"
@@ -1537,7 +1650,8 @@
         {
           "name": "Nothing yet, and it says so",
           "rooms": [
-            "career-move"
+            "career-move",
+            "left-behind"
           ],
           "note": "Rooms that refuse to compute until you enter something, rather than guessing. The behaviour this whole app is built around."
         },
@@ -1576,7 +1690,8 @@
         {
           "name": "Wrong right now › Work changed",
           "rooms": [
-            "career-move"
+            "career-move",
+            "left-behind"
           ]
         },
         {
@@ -1591,6 +1706,7 @@
           "rooms": [
             "expenses",
             "cash-flow",
+            "calendar",
             "income",
             "budget",
             "settings",
@@ -1602,6 +1718,10 @@
           "name": "Regular › What I hold",
           "rooms": [
             "statement",
+            "bridge",
+            "which-account",
+            "the-mix",
+            "the-documents",
             "tax",
             "protection"
           ]

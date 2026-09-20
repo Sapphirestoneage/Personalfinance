@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-20 01:20Z"/>
+<meta name="slaf-build" content="2026-09-20 01:28Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <script src="../shared/size.js"></script>
@@ -351,7 +351,7 @@
         + '<div class="choices"><button type="button" class="choice" data-ctl="noDeductible">I don’t have one — I’m on someone else’s plan</button></div>';
     },
     investments: function () {
-      return '<p class="q-help">Everything invested, retirement accounts included, as one total. Hold it at more than one place? Name each account in <a href="statement.html#assets">The Statement</a> and this becomes their total.</p>'
+      return '<p class="q-help">Everything invested, retirement accounts included, as one total. Hold it at more than one place? Name each account in <a href="ledger.html#x-A">the Ledger</a> and this becomes their total.</p>'
         + moneyInput('investments', 'One total', 'e.g. 48,000', 'Investments and retirement')
         + '<p class="field-note" data-note="investments" hidden></p>';
     },
@@ -939,7 +939,7 @@
         ? esc(Money.formatCents(Money.isOk(inv) ? inv.value : 0)) + ' across '
           + invAccounts.length + ' accounts — '
           + invAccounts.map(function (a) { return esc(a.label || 'unnamed'); }).join(', ')
-          + '. Edit them in <a href="statement.html#assets">The Statement</a>.'
+          + '. Edit them in <a href="ledger.html#x-A">the Ledger</a>.'
         : '';
     }
     if (Money.isOk(inv)) setMoney('investments', inv.value); else { setMoney('investments', null); propose('investments', g.investments, function (c) { WRITE.investments(c / 100); render(); }); }

@@ -3,38 +3,187 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-20 01:20Z"/>
+<meta name="slaf-build" content="2026-09-20 01:28Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <script src="../shared/size.js"></script>
-<title>Money Calendar & Pay-Later · SPARKS</title>
-<meta name="description" content="The Money Calendar is the dates reading of The Month now."/>
+<title>The Calendar · SPARKS</title>
+<meta name="description" content="The next 31 days as a calendar: paydays, bills and receipts on their days, and your own dates beside them."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <!--
-  REDIRECT — the Money Calendar is a reading of The Month (rooms/cash-flow.html#the-dates, DECISIONS.md D-275).
-  What happened in the month and what is still to land in it are one
-  month. Rule 2 of D-229.
-  The file stays so every link already out in the world keeps landing, hash
-  included. LIVE-FORM: built once. No inputs.
+  THE CALENDAR (D-308). Reinstated by the owner after D-275 folded it into
+  The Month. What brought it back: a date that is not money in or out —
+  apply for a card, cancel a renewal, a form due — needs a place, and The
+  Month has none.
+
+  1. READS   the one month engines/calendar.js runs: paydays from Income
+             or the cadence Cash Flow holds, bills and receipts on their
+             days, and this room's own dates.
+  2. WRITES  household.calendar.events[] — your own dates — and nothing
+             else. The pay rhythm and the bills stay Cash Flow's (D-275).
+  3. SHOWS   the month picture shared/daybyday.js draws (the same one The
+             Month shows; never a copy), then the list of your own dates.
+  4. LIVE-FORM: built once. The add form is markup; the list below it
+             holds buttons only and rebuilds freely.
 -->
-<meta http-equiv="refresh" content="0; url=cash-flow.html#the-dates"/>
+<style>
+  section[id] { scroll-margin-top: var(--space-4); }
+</style>
 </head>
 <body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../index.html">← Home</a>
+  <h1>The Calendar</h1>
+  <p class="room-lede">The next 31 days as a calendar. Paydays, bills and receipts land on their days, and your own dates sit beside them: a card to apply for, a renewal to cancel, a form due. Your dates are drawn, never counted as money.</p>
+</header>
+
 <main class="slaf-wrap">
-  <p style="color:var(--color-text-muted)">The Money Calendar is the dates reading of The Month now.
-    <a href="cash-flow.html#the-dates" id="go">Open it →</a></p>
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="month">
+    <span class="slaf-eyebrow">The next 31 days</span>
+    <p class="slaf-hint" id="month-sum" style="margin:var(--space-1) 0 0"></p>
+    <div id="month-body"></div>
+    <p class="slaf-reason" style="margin-top:var(--space-2)">Paydays come from <a href="income.html">Income</a>, or the pay rhythm set in <a href="cash-flow.html#cal-inputs">The Month</a>. Bills and receipts are logged in <a href="cash-flow.html#log">The Month</a> too. Everything else is spread evenly across the days.</p>
+  </section>
+
+  <section class="slaf-card" id="own-dates" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Your own dates</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 var(--space-3)">Anything with a date that is not money in or out. It is drawn on the month above and never counted.</p>
+    <div class="own-form" id="own-form">
+      <label class="slaf-field own-label"><span class="slaf-label">What</span><span class="slaf-input-shell"><input type="text" id="own-what" placeholder="e.g. Apply for the travel card" maxlength="80" autocomplete="off" aria-label="What"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">When</span><span class="slaf-input-shell"><input type="date" id="own-when" aria-label="When"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Kind</span><span class="slaf-input-shell"><select id="own-kind" aria-label="Kind"><option value="todo">To do</option><option value="deadline">Deadline</option><option value="note">Note</option></select></span></label>
+      <div class="own-acts"><button type="button" class="slaf-btn slaf-btn--primary" id="own-add">Add it to the month</button><span class="slaf-hint" id="own-say"></span></div>
+    </div>
+    <ol class="own-dates" id="own-list"></ol>
+  </section>
+
+  <p class="disclaimer">Educational tool, not financial advice. Your dates stay in this browser with the rest of your numbers.</p>
 </main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/features.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/income.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/ledger.js"></script>
+<script src="../engines/cashflow.js"></script>
+<script src="../engines/calendar.js"></script>
+<script src="../shared/charts.js"></script>
+<script src="../shared/daybyday.js"></script>
 <script>
-  /* Carry the section hash across so a deep link still lands. */
-  (function () {
-    var map = { '#number': '#cal-number', '#chart': '#cal-chart', '#inputs': '#cal-inputs', '#amounts': '#cal-amounts', '#assumptions': '#cal-assumptions', '#reading': '#cal-reading', '#reading-list': '#cal-reading-list' };
-    var hash = location.hash || '';
-    var target = 'cash-flow.html' + (map[hash] || '#the-dates');
-    document.getElementById('go').setAttribute('href', target);
-    location.replace(target);
-  })();
+(function () {
+  'use strict';
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference,
+      Cal = SLAF.Calendar, DayByDay = SLAF.DayByDay, Progress = SLAF.Progress;
+  var ROOM_ID = 'calendar';
+  var TABLES = null;
+
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function ordinal(n) { var s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+  function today() { var d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1 < 10 ? '0' : '') + (d.getMonth() + 1) + '-' + (d.getDate() < 10 ? '0' : '') + d.getDate(); }
+  function events(h) { return ((h.calendar || {}).events || []).slice(); }
+  function when(iso) { var d = new Date(iso + 'T12:00:00'); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
+
+  /* ---- The month: the one shared picture, the way a phone calendar is
+     used (D-318): the month with arrows, a button a day, the tapped day's
+     sheet, what is coming up. Two states the room owns: the month shown
+     and the day tapped. Tapping a day also sets the own-date form's day,
+     so "add something on this day" is one tap and a name. ---- */
+  var TODAY = today();
+  var VIEW = TODAY.slice(0, 7), SEL = TODAY;
+  function shiftYm(ym, n) { var d = new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + n, 1); var mo = d.getMonth() + 1; return d.getFullYear() + '-' + (mo < 10 ? '0' : '') + mo; }
+  function daysToEnd(ym) { var end = new Date(+ym.slice(0, 4), +ym.slice(5, 7), 0), t = new Date(+TODAY.slice(0, 4), +TODAY.slice(5, 7) - 1, +TODAY.slice(8, 10)); return Math.round((end - t) / 86400000) + 1; }
+  function pastRows(h) {
+    if (!SLAF.CashFlow || !TABLES.expenseCategories) return [];
+    var log = SLAF.CashFlow.logInMonth(h, TABLES.expenseCategories, VIEW), cats = TABLES.expenseCategories.categories || [];
+    return (log.rows || []).filter(function (r) { return r.date < TODAY && !r.hidden; }).map(function (r) { var c = cats.filter(function (x) { return x.id === r.categoryId; })[0]; return { date: r.date, label: r.descriptor || (c ? c.label : r.categoryId), cents: r.credit ? -Math.abs(r.cents) : r.cents, kind: 'log' }; });
+  }
+  function renderMonth(h) {
+    var r = Cal.month(h, TABLES, { days: Math.max(31, daysToEnd(VIEW)) });
+    el('month-body').innerHTML = DayByDay.monthView(r, { month: VIEW, selected: SEL, past: pastRows(h), own: events(h), canBack: VIEW > shiftYm(TODAY.slice(0, 7), -12), canForward: VIEW < shiftYm(TODAY.slice(0, 7), 3) })
+      + '<details class="cal-up cal-line"><summary>Cash across the days, as a line</summary>' + DayByDay.chart(r) + '</details>';
+    el('month-sum').textContent = Money.isOk(r)
+      ? 'Low point ' + Money.formatCents(r.lowCents) + ' on the ' + ordinal(r.lowDom) + (r.belowZero ? ' · under zero from the ' + ordinal(r.firstBelowDom) : r.tight ? ' · tightest the ' + ordinal(r.tight.fromDom) + '–' + ordinal(r.tight.toDom) : ' · never under a week of spending')
+        + ' · ' + Cal.turns(r).length + ' things land, ' + (r.ownHits || []).length + ' of them yours'
+      : '';
+  }
+
+  /* ---- Your own dates: the list, and the one writer ---- */
+  /* The one writer of your own dates: this room, straight to the spine.
+     Not an ownership field (no other room reads or waits on it) and not a
+     DAITE family; the list rides in the household so a backup carries it. */
+  function write(list) { Spine.set('calendar.events', list.map(Schema.createCalendarEvent), 'Your own dates'); }
+  function renderOwn(h) {
+    var list = events(h).filter(function (e) { return e.date && e.label; }).sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+    var t = today();
+    el('own-list').innerHTML = list.length ? list.map(function (e) {
+      return '<li class="' + (e.done ? 'is-done' : '') + (e.date < t && !e.done ? ' is-past' : '') + '" data-id="' + esc(e.id) + '">'
+        + '<span class="od-when">' + esc(when(e.date)) + '</span>'
+        + '<span class="od-what">' + esc(e.label) + '<small>' + esc(Schema.CALENDAR_EVENT_LABELS[e.kind] || e.kind) + (e.date < t && !e.done ? ' · past' : '') + '</small></span>'
+        + '<span class="od-acts"><button type="button" class="slaf-btn slaf-btn--quiet" data-done="' + esc(e.id) + '">' + (e.done ? 'Not done' : 'Done') + '</button><button type="button" class="slaf-btn slaf-btn--quiet" data-remove="' + esc(e.id) + '" aria-label="Remove">✕</button></span></li>';
+    }).join('') : '<li><span class="od-when"></span><span class="od-what" style="color:var(--color-text-faint)">Nothing yet. Add a date above and it appears on the month.</span><span></span></li>';
+  }
+  el('month-body').addEventListener('click', function (ev) {
+    var nav = ev.target.closest ? ev.target.closest('[data-cal-nav]') : null;
+    if (nav && !nav.disabled) { VIEW = shiftYm(VIEW, +nav.getAttribute('data-cal-nav')); SEL = VIEW === TODAY.slice(0, 7) ? TODAY : VIEW + '-01'; render(); return; }
+    var cellBtn = ev.target.closest ? ev.target.closest('[data-cal-day]') : null;
+    if (cellBtn) { SEL = cellBtn.getAttribute('data-cal-day'); el('own-when').value = SEL; render(); }
+  });
+  el('own-add').addEventListener('click', function () {
+    var label = String(el('own-what').value || '').trim(), date = el('own-when').value, kind = el('own-kind').value;
+    if (!label || !/^\d{4}-\d{2}-\d{2}$/.test(date)) { el('own-say').textContent = !label ? 'Say what it is.' : 'Pick a day.'; return; }
+    el('own-say').textContent = '';
+    write(events(Spine.getProfile()).concat([Schema.createCalendarEvent({ label: label, date: date, kind: kind })]));
+    el('own-what').value = '';
+  });
+  el('own-list').addEventListener('click', function (evt) {
+    var d = evt.target.closest('[data-done]'), r = evt.target.closest('[data-remove]');
+    if (!d && !r) return;
+    var id = (d || r).getAttribute(d ? 'data-done' : 'data-remove');
+    var list = events(Spine.getProfile());
+    if (r) list = list.filter(function (e) { return e.id !== id; });
+    else list = list.map(function (e) { return e.id === id ? Object.assign({}, e, { done: !e.done }) : e; });
+    write(list);
+  });
+
+  function render() {
+    if (!TABLES) return;
+    var h = Spine.getProfile();
+    renderMonth(h);
+    renderOwn(h);
+  }
+
+  Spine.registerRoom(ROOM_ID);
+  Spine.onChange(render);
+  Progress.mountHeader(ROOM_ID);
+  Progress.mount(ROOM_ID);
+  Reference.load().then(function (T) {
+    TABLES = T;
+    render();
+    if (location.hash) { var target = document.getElementById(location.hash.slice(1)); if (target) target.scrollIntoView({ block: 'start' }); }
+  }).catch(function (err) {
+    var n = el('load-notice'); n.hidden = false; n.className = 'notice is-error';
+    n.textContent = 'The reference tables did not load (' + err.message + '). Serve this over HTTP rather than opening the file directly.';
+  });
+})();
 </script>
 </body>
 </html>

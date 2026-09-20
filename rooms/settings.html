@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-20 01:20Z"/>
+<meta name="slaf-build" content="2026-09-20 01:28Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <script src="../shared/size.js"></script>
@@ -199,14 +199,14 @@
     el('paths').innerHTML = ['beginner', 'fi'].map(function (p) {
       return '<button type="button" class="choice" data-path="' + p + '" aria-pressed="' + (door === p) + '">' + (p === 'fi' ? 'FI' : 'Beginner') + '</button>';
     }).join('');
-    /* Comfortable or Compact (D-307): a preference shared/size.js reads
+    /* Comfortable or Compact (D-317): a preference shared/size.js reads
        before the first paint of every page; here it applies at once. */
     var size = Prefs.get('size', 'comfortable') === 'compact' ? 'compact' : 'comfortable';
     el('sizes').innerHTML = ['comfortable', 'compact'].map(function (v) {
       return '<button type="button" class="choice" data-size="' + esc(v) + '" aria-pressed="' + esc(String(size === v)) + '">' + esc(v === 'compact' ? 'Compact' : 'Comfortable') + '</button>';
     }).join('');
     document.documentElement.classList.toggle('is-compact', size === 'compact');
-    /* The ask, on or off everywhere (D-307). */
+    /* The ask, on or off everywhere (D-317). */
     var askOn = !Prefs.get('ask.off', false);
     var askSay = askOn ? 'On: a room that still needs a number asks for it once, at the top.' : 'Off: no room asks; every blank row waits in the Ledger.';
     el('ask-list').innerHTML = '<li data-row="ask"><div><b>Ask one question at the top of a room</b><span class="gloss">' + esc(askSay) + '</span></div>'

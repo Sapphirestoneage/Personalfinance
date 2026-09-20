@@ -287,25 +287,36 @@ const CASES = [
     }
   },
   {
-    room: '/rooms/statement.html#where-it-lands',
-    container: '#allocation',
+    /* The target mix is entered in the Ledger's A door since D-313; The Mix
+       reads it. The four rows sit at level 3, so every level is opened. */
+    room: '/rooms/ledger.html#all-at-once',
+    container: '#x-A',
     seed: 'demo',
+    prepare: async (page) => {
+      await page.waitForSelector('[data-mode="all"]');
+      await page.tap('[data-mode="all"]');
+      await page.waitForSelector('details.xlvl');
+      await page.$$eval('details.xlvl', ns => ns.forEach(n => { n.open = true; }));
+      await page.waitForSelector('[data-x-row="allocationStocks"] [data-x-input]');
+    },
     fields: [
-      { sel: '[data-alloc="stocks"]', type: '70' },
-      { sel: '[data-alloc="bonds"]', type: '20' },
-      { sel: '[data-alloc="cash"]', type: '10' },
-      { sel: '[data-alloc="rebalanceBand"]', type: '5' }
+      { sel: '[data-x-row="allocationStocks"] [data-x-input]', type: '70' },
+      { sel: '[data-x-row="allocationBonds"] [data-x-input]', type: '20' },
+      { sel: '[data-x-row="allocationCash"] [data-x-input]', type: '10' },
+      { sel: '[data-x-row="rebalanceBand"] [data-x-input]', type: '5' }
     ],
     expect: async (page) => {
       const a = await page.evaluate(() =>
         (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).allocation || {});
+      await page.goto(BASE + '/rooms/the-mix.html', { waitUntil: 'networkidle' });
+      await page.waitForTimeout(500);
       const read = await page.evaluate(() => document.getElementById('alloc-read').textContent);
       return [
         ['stocks stored as a share of one', a.stocks, 0.7],
         ['bonds too', a.bonds, 0.2],
         ['cash too', a.cash, 0.1],
         ['the band too', a.rebalanceBand, 0.05],
-        ['and the read-out names the band', /65%–75%/.test(read), true]
+        ['and The Mix reads the band back', /65% to 75%/.test(read), true]
       ];
     }
   },
@@ -589,39 +600,78 @@ const CASES = [
     }
   },
   {
-    room: '/rooms/statement.html',
-    container: '#asset-list',
+    /* The Calendar (D-308): one text box for your own date, built once;
+       the list beneath it rebuilds on every write and holds no input. */
+    room: '/rooms/calendar.html',
+    container: '#own-form',
     seed: 'demo',
-    prepare: async (page) => { await page.tap('#btn-add'); },
     fields: [
-      /* The first cards are Start Here's cash and investments, whose names
-         and values are read-only here; the tap on #btn-add appends ours. */
-      { sel: '#asset-list .asset:last-child input[data-field="label"]', type: 'The car' },
-      { sel: '#asset-list .asset:last-child input[data-field="valueCents"]', type: '5000' },
-      /* D-251: where it is held is typed on any card, Start Here's included. */
-      { sel: '#asset-list .asset:nth-child(2) input[data-field="institution"]', type: 'Example Broker' }
+      { sel: '#own-what', type: 'Apply for the travel card' }
     ],
     expect: async (page) => {
-      /* 15.8: the pile select stores the override and moves the flag. */
-      await page.selectOption('#asset-list .asset:last-child select[data-field="tier"]', 'taxable');
-      await page.waitForTimeout(400);
-      /* D-251: the account type sets the tax character; the lump from
-         Start Here keeps its category. */
-      await page.selectOption('#asset-list .asset:nth-child(2) select[data-field="accountType"]', '401k');
-      await page.waitForTimeout(400);
-      const a = await page.evaluate(() =>
-        (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).assets
-          .filter(x => x.category === 'real_estate' || x.category === 'vehicle').pop());
-      const lump = await page.evaluate(() => (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).assets[1]);
+      await page.fill('#own-when', '2030-01-15');
+      await page.tap('#own-add');
+      await page.waitForTimeout(500);
+      const ev = await page.evaluate(() => ((JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).calendar || {}).events || []);
       return [
-        ['the name was kept', a.label, 'The car'],
-        ['the value was kept', a.valueCents, 500000],
-        ['the pile was stored', a.tier, 'taxable'],
-        ['and the liquid flag follows it', a.liquid, true],
-        ['where it is held was stored', lump.institution, 'Example Broker'],
-        ['the account type was stored', lump.accountType, '401k'],
-        ['and set the tax character', lump.taxCharacter, 'pretax'],
-        ['without moving the lump out of its category', lump.category, 'investment']
+        ['the date was stored', ev.length, 1],
+        ['with its label', ev[0] && ev[0].label, 'Apply for the travel card'],
+        ['on its day', ev[0] && ev[0].date, '2030-01-15'],
+        ['and the box cleared for the next one', await page.$eval('#own-what', e => e.value), '']
+      ];
+    }
+  },
+  {
+    /* THE ACCOUNT LAYER (D-313): an account is named, valued, typed and
+       rated in the Ledger's A door and nowhere else. The Statement reads it. */
+    room: '/rooms/ledger.html#all-at-once',
+    container: '#x-A',
+    seed: 'demo',
+    prepare: async (page) => {
+      await page.waitForSelector('[data-mode="all"]');
+      await page.tap('[data-mode="all"]');
+      await page.waitForSelector('details.xlvl');
+      await page.$$eval('details.xlvl', ns => ns.forEach(n => { n.open = true; }));
+      await page.waitForSelector('[data-x-add="assets"] [data-x-add-name]');
+    },
+    fields: [
+      { sel: '[data-x-add="assets"] [data-x-add-name]', type: 'The car' },
+      { sel: '[data-x-add="assets"] [data-x-add-inst]', type: 'The driveway' },
+      { sel: '[data-x-add="assets"] [data-x-add-btn]', tap: true }
+    ],
+    expect: async (page) => {
+      /* The new line is found by its id, not its position: lines group under
+         their institution (D-223), so "last" is the last of a group. */
+      const id = await page.evaluate(() => ((JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).assets.filter(x => x.label === 'The car')[0] || {}).id);
+      const valueSel = '.xitem[data-x-itemid="' + id + '"] [data-x-row="assetValue"] [data-x-input]';
+      await page.waitForSelector(valueSel);
+      await page.fill(valueSel, '5000');
+      await page.dispatchEvent(valueSel, 'change'); await page.dispatchEvent(valueSel, 'blur');
+      await page.waitForTimeout(300);
+      /* The pile, the type and the confidence are selects on the same line. */
+      await page.selectOption('.xitem[data-x-itemid="' + id + '"] [data-x-row="assetTier"] select[data-x-input]', 'taxable');
+      await page.waitForTimeout(300);
+      await page.selectOption('.xitem[data-x-itemid="' + id + '"] [data-x-row="assetConfidence"] select[data-x-input]', '2');
+      await page.waitForTimeout(300);
+      /* D-251: the account type sets the tax character on the demo's lump. */
+      const lumpId = await page.evaluate(() => (JSON.parse(localStorage.getItem('slaf.household.v2')) || {}).assets.filter(x => x.category === 'investment')[0].id);
+      await page.selectOption('.xitem[data-x-itemid="' + lumpId + '"] [data-x-row="assetAccountType"] select[data-x-input]', '401k');
+      await page.waitForTimeout(300);
+      const s = await page.evaluate(([id, lumpId]) => {
+        const h = JSON.parse(localStorage.getItem('slaf.household.v2')) || {};
+        const a = h.assets.filter(x => x.id === id)[0], lump = h.assets.filter(x => x.id === lumpId)[0];
+        return { label: a.label, inst: a.institution, value: a.valueCents, tier: a.tier, liquid: a.liquid, confidence: a.confidence, type: lump.accountType, tc: lump.taxCharacter, cat: lump.category };
+      }, [id, lumpId]);
+      return [
+        ['the name was kept', s.label, 'The car'],
+        ['where it is held was kept', s.inst, 'The driveway'],
+        ['the value was kept', s.value, 500000],
+        ['the pile was stored', s.tier, 'taxable'],
+        ['and the liquid flag follows it', s.liquid, true],
+        ['the confidence was stored as the number the scale names', s.confidence, 2],
+        ['the account type was stored', s.type, '401k'],
+        ['and set the tax character', s.tc, 'pretax'],
+        ['without moving the lump out of its category', s.cat, 'investment']
       ];
     }
   },
@@ -1151,8 +1201,8 @@ const CASES = [
        every other case here — that nothing reached the household (D-052).
        The pinned $14,500 is the demo persona's cash-out cost: $8,800 federal
        at 22%, $1,700 North Carolina at 4.25%, $4,000 penalty on $40,000. */
-    room: '/rooms/statement.html#left-behind',
-    container: '#ro-room-inputs',
+    room: '/rooms/left-behind.html',
+    container: '#room-inputs',
     seed: 'demo',
     fields: [
       { sel: '[data-ctl="balance"]', type: '40000' },
@@ -1160,7 +1210,7 @@ const CASES = [
     ],
     expect: async (page) => {
       const r = await page.evaluate(() => ({
-        number: document.getElementById('ro-room-number').innerText,
+        number: document.getElementById('room-number').innerText,
         rows: document.getElementById('cost-rows').innerText,
         blob: localStorage.getItem('slaf.household.v2') || ''
       }));
@@ -1175,41 +1225,51 @@ const CASES = [
     }
   },
   {
-    /* THE FIRST ROUND (D-206): five screens, one box each, all in the markup
-       from boot; script only toggles [hidden]. Typing on each screen has to
-       survive the Next tap that reveals the next one. */
+    /* THE OPENING (D-312): five inputs on one screen, all in the markup from
+       boot. Typing in every box has to survive the taps between them, the
+       debt rows are drawn on the yes tap and must not redraw under a finger,
+       and every box writes through its owner. */
     room: '/rooms/ledger.html#round-1',
     container: '#view-round1',
     seed: 'empty',
+    prepare: async (page) => { await page.tap('[data-situation="employed"]'); await page.tap('[data-debt="yes"]'); await page.waitForTimeout(200); },
     fields: [
       { sel: '#in-age', type: '27' },
-      { sel: '[data-next="q-zip"]', tap: true },
-      { sel: '#in-zip', type: '12203' },
-      { sel: '[data-next="q-situation"]', tap: true },
-      { sel: '[data-situation="unemployed"]', tap: true },
-      { sel: '[data-next="q-pay"]', tap: true },
-      { sel: '#in-pay', type: '95000' },
-      { sel: '[data-next="q-cash"]', tap: true },
-      { sel: '#in-cash', type: '3000' }
+      { sel: '#in-take', type: '4200' },
+      { sel: '#in-spend', type: '2900' },
+      { sel: '#in-inv', type: '12000' },
+      { sel: '#in-cash', type: '3000' },
+      { sel: '[data-debt-field="balance"]', type: '8000' },
+      { sel: '[data-debt-field="rate"]', type: '22' }
     ],
     expect: async (page) => {
-      await page.tap('#btn-finish');
-      await page.waitForFunction(() => /runway|Nearly there/.test(document.getElementById('ins-headline').textContent), null, { timeout: 5000 });
+      await page.waitForFunction(() => /FI in about/.test(document.getElementById('op-headline').textContent), null, { timeout: 5000 });
       const s = await page.evaluate(() => {
         const h = SLAF.Spine.getProfile();
-        return { age: SLAF.Schema.primaryAge(h), zip: h.zip, status: h.people[0].employmentStatus,
-          lastPay: SLAF.Schema.unemploymentOf(h).lastGrossAnnualCents, cash: SLAF.Schema.cashCents(h).value,
-          headline: document.getElementById('ins-headline').textContent,
-          visible: [...document.querySelectorAll('.screen')].filter(e => !e.hidden).map(e => e.id).join(',') };
+        const d = SLAF.Schema.aggregatableDebts(h)[0] || {};
+        return { age: SLAF.Schema.primaryAge(h), status: h.people[0].employmentStatus,
+          take: h.takeHome && h.takeHome.monthlyCents, spend: SLAF.Schema.monthlyExpensesCents(h).value,
+          inv: SLAF.Schema.investmentsCents(h).value, cash: SLAF.Schema.cashCents(h).value,
+          hasDebt: h.meta.hasDebt, balance: d.balanceCents, rate: d.rate,
+          conf: (h.meta.fields.takeHomeMonthly || {}).confidence,
+          headline: document.getElementById('op-headline').textContent,
+          bands: document.querySelectorAll('#op-band .slaf-band').length,
+          levers: document.querySelectorAll('#op-levers li').length,
+          payFirst: document.getElementById('op-payfirst').textContent };
       });
       return [
         ['the age landed as a birth date', s.age, 27],
-        ['the ZIP landed', s.zip, '12203'],
-        ['the situation landed', s.status, 'unemployed'],
-        ['the last pay landed on the person', s.lastPay, 9500000],
+        ['the situation landed', s.status, 'employed'],
+        ['take-home landed as a month', s.take, 420000],
+        ['spending landed', s.spend, 290000],
+        ['invested landed', s.inv, 1200000],
         ['cash landed', s.cash, 300000],
-        ['one screen showing at the end: the insight', s.visible, 'insight'],
-        ['and it says something', /runway/.test(s.headline), true]
+        ['the debt is a yes with a balance and a rate', s.hasDebt === true && s.balance === 800000 && s.rate === 0.22, true],
+        ['every write is rough until marked exact', s.conf, 'roughly'],
+        ['a date appears', /FI in about/.test(s.headline), true],
+        ['three ways', s.bands, 3],
+        ['three levers', s.levers, 3],
+        ['a 22% card is paid first', /Pay this first/.test(s.payFirst), true]
       ];
     }
   },

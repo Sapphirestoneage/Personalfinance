@@ -69,7 +69,7 @@
     grossAnnualIncome: 'income.grossAnnualCents', employerMatch: 'income.sources[].employerMatch', capturingFullMatch: 'income.sources[].employerMatch',
     unemployment: 'income.sources[].benefit', incomeLow: 'income.variable', incomeHigh: 'income.variable', bufferMonths: 'income.variable',
     variableWindow: 'income.variable', futureIncome: 'income.future', ledgerIncome: 'income.ledger',
-    payCadence: 'income.cadence', nextPayday: 'income.cadence',
+    payCadence: 'income.cadence', nextPayday: 'income.cadence', takeHomeMonthly: 'income.takeHome',
     /* T */
     filingStatus: 'taxes.filingStatus', state: 'taxes.state', zip: 'taxes.zip', marginalRate: 'taxes.marginalRate',
     otherPreTax: 'taxes.otherPreTax', withheld: 'taxes.withheld',
@@ -90,6 +90,8 @@
     debtBalance: 'debt.items[].balanceCents', debtRate: 'debt.items[].rate', debtMinPayment: 'debt.items[].minimumCents',
     assetValue: 'assets.items[].valueCents', assetCharacter: 'assets.items[].taxCharacter', assetTier: 'assets.items[].tier', assetCostBasis: 'assets.items[].costBasisCents',
     assetInstitution: 'assets.items[].institution', assetAccountType: 'assets.items[].accountType',
+    assetConfidence: 'assets.items[].confidence', assetCashFlow: 'assets.items[].cashFlowMonthlyCents', assetHassle: 'assets.items[].hassle', assetAccessAge: 'assets.items[].accessAgeOverride',
+    onHdhp: 'you.cover', hsaFamilyPlan: 'you.cover',
     incomeType: 'income.sources[].type', paySurvives: 'income.sources[].survivesJobLoss', annualLine: 'expenses.annual[]',
     lastPay: 'income.sources[].lastPay',
     offerGross: 'plans.careerMove', offerHours: 'plans.careerMove', offerCommute: 'plans.careerMove', offerCosts: 'plans.careerMove', offerSignOn: 'plans.careerMove',

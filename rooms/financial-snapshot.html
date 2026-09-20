@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-20 01:20Z"/>
+<meta name="slaf-build" content="2026-09-20 01:28Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <script src="../shared/size.js"></script>
@@ -1813,7 +1813,7 @@
     SLAF.Lens.mountStrip('fp-lens', function (h) {
       var r = Tier0.fireProgress(h, TABLES);
       if (!Money.isOk(r)) return [];
-      return [{ label: 'Invested', cents: r.investmentsCents, href: Ownership.linkTo('statement', 'portfolios', ROOM_ID) }, { label: 'Target', cents: r.fireNumberCents, href: 'fire.html#out-target' },
+      return [{ label: 'Invested', cents: r.investmentsCents, href: Ownership.linkTo('statement', 'net-worth', ROOM_ID) }, { label: 'Target', cents: r.fireNumberCents, href: 'fire.html#out-target' },
               { label: 'Still to go', cents: Math.max(0, r.fireNumberCents - r.investmentsCents) }];
     }, function () { return TABLES; });
     render();

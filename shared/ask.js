@@ -117,6 +117,9 @@
     filingStatus: { single: 'Single', married_joint: 'Married, joint', married_separate: 'Married, separate', head_of_household: 'Head of household' },
     assetCharacter: { cash: 'Cash', taxable: 'Taxable', pretax: 'Pre-tax (401k, IRA)', roth: 'Roth', hsa: 'HSA', '529': '529', daf: 'Donor-advised', property: 'Property', business: 'Business', other: 'Other', unknown: 'Not sure' },
     assetTier: { cash: 'Cash', taxable: 'Taxable', retirement: 'Retirement', property: 'Property', other: 'Other' },
+    /* The confidence scale is data/access_rules.json confidenceScale, said the same way here. */
+    assetConfidence: { 1: 'Guaranteed', 2: '85% or better', 3: 'Real, but don’t count on it', 4: 'Probably zero' },
+    assetHassle: { 1: 'Easy', 2: 'Moderate', 3: 'Annoying' },
     incomeType: { w2: 'W-2 job', '1099': '1099 / own work', passive: 'Passive', benefit: 'A benefit', pension: 'Pension', socialSecurity: 'Social Security', equity: 'Equity' },
     loanPlan: { standard: 'Standard', income_driven: 'Income-driven', aggressive: 'Aggressive' },
     splitMode: { equal: 'Equal halves', proportional: 'In proportion to income', pooled: 'One pool' },
@@ -197,7 +200,7 @@
     if (u === 'percent') return row.id === 'contributionPercent' ? n : (n > 1 ? Math.round(n * 100) / 10000 : n);
     return n;
   }
-  /* Name the item (D-307). "What each account or thing is worth for this
+  /* Name the item (D-317). "What each account or thing is worth for this
      one" named nothing when the account had no label; now the institution
      and the account type stand in ("Example Bank · 401(k)"), then the
      category, and the last resort says so rather than pointing at nothing. */
@@ -212,7 +215,7 @@
     if (item.category) return 'the ' + String(item.category).replace(/_/g, ' ') + ' account with no name yet';
     return 'the one with no name yet';
   }
-  /* Rested and retired questions (D-307): "Not now" rests a question for
+  /* Rested and retired questions (D-317): "Not now" rests a question for
      a fortnight, "Don't ask this again" retires it, and Settings can turn
      the ask off everywhere. All three are preferences, never household. */
   var REST_DAYS = 14;

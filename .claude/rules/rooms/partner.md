@@ -9,7 +9,7 @@ File: rooms/partner.html · 664 lines
 Engines: projection, tier0, income, selfemployed, ledger, foo, cashflow, fire, statement, benchmarks, ratios, partner, kids
 Reference data: child_cost.json, childcare_by_state.json, confidence_weights.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, +6 more
 Owns: partnerName, partnerDob, splitMode, sharedMonthly, tuitionTarget, tuitionSaved, tuitionMonthly
-Reads from other owners: filingStatus (start), grossAnnualIncome (start), monthlyExpenses (expenses)
+Reads from other owners: filingStatus (start), grossAnnualIncome (start), takeHomeMonthly (ledger), monthlyExpenses (expenses)
 Latest decisions:
   - D-271 — Family, and a gate that survives a merge
   - D-216 — J7, J8: two views of Partner, Roth conversions before 65

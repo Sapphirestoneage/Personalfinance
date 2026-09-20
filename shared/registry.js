@@ -157,7 +157,7 @@
       needs: ['grossAnnualIncome'],
       order: 26.2,
       title: 'Wheels',
-      blurb: 'Does the car fit \u2014 twenty percent down, three years, under eight percent of what you earn \u2014 and underneath the payment, what it loses, what it costs to run, and whether the loan fits.',
+      blurb: 'Does the car fit? Twenty percent down, three years, and a payment under eight percent of what you earn. Underneath the payment: what it loses, what it costs to run, and whether the loan fits.',
       href: 'rooms/car.html',
       tier: 1,
       tags: ['cashflow', 'debt'],
@@ -183,7 +183,7 @@
       needs: [],
       order: 26.6,
       title: 'When It Won\u2019t All Get Paid',
-      blurb: 'A short month, and not everything can be paid. Which bill to protect first, what is negotiable, what a phone call is worth, and who helps for free.',
+      blurb: 'A short month, when not everything can be paid. Which bill to protect first, which is worth a phone call, and who helps for free.',
       href: 'rooms/cant-pay.html',
       tier: 0,
       tags: ['cashflow', 'debt'],
@@ -249,6 +249,33 @@
         { id: 'cal-inputs', label: 'Paydays, bills, pay-later' }
       ]
     },
+    /* The Calendar (D-308): the month as a calendar with your own dates on
+       it. Reinstated by the owner after D-275 folded it into The Month: a
+       date that is not money (apply for a card, a renewal to cancel, a
+       form due) needs a place, and the picture it sits on is The Month's
+       own, drawn by shared/daybyday.js, never a copy. */
+    {
+      id: 'calendar',
+      features: [],
+      group: 'numbers', subgroup: 'expenses', aliases: ['calendar', 'dates', 'this month', 'to do', 'deadline', 'renewal', 'apply'],
+      kind: 'about-you',
+      needs: [],
+      order: 1.55,
+      title: 'The Calendar',
+      blurb: 'The next 31 days as a calendar: paydays, bills and receipts on their days, and your own dates beside them, a card to apply for, a renewal to cancel, a form due. Your dates are drawn, never counted.',
+      href: 'rooms/calendar.html',
+      tier: 1,
+      tags: ['cashflow'],
+      /* It writes household.calendar.events, its own list of dates. Not a
+         DAITE family and not a fact another room waits on, so no dot and
+         no ownership field: the list is read by the calendar engine and
+         written here, nowhere else (D-308). */
+      daite: { reads: ['expenses', 'income'], writes: [] },
+      subsections: [
+        { id: 'month',     label: 'The next 31 days' },
+        { id: 'own-dates', label: 'Your own dates' }
+      ]
+    },
     {
       id: 'debt-payoff',
       features: ['studentLoanPaths'],
@@ -278,34 +305,142 @@
     },
     {
       id: 'statement',
-      features: ['afterTaxNetWorth', 'incomeFloor', 'equityComp', 'homeDetail'],
-      group: 'numbers', subgroup: 'assets', aliases: ['net worth', 'balance sheet', 'accounts', 'property', 'what you own', 'where it goes', 'roth', 'traditional', 'allocation', 'rebalance', 'solo 401k', 'statements', 'documents', 'quarterly', 'old 401k', 'rollover', 'left behind'],
+      features: ['afterTaxNetWorth', 'incomeFloor', 'equityComp', 'homeDetail', 'humanCapital'],
+      group: 'numbers', subgroup: 'assets', aliases: ['net worth', 'balance sheet', 'property', 'what you own', 'liquidity ladder', 'reachable', 'human capital', 'pay still to come', 'next dollar'],
       kind: 'core',
       needs: ['cashSavings', 'investments', 'totalDebt'],
       order: 1.8,
       title: 'The Statement',
-      blurb: 'Everything you own, in three groups: how sure you are of each, how fast you could get to it, and the one number underneath, your net worth. Where the next dollar lands and how it is split, and the same period written out as the three documents a company files.',
+      blurb: 'What you own, what you owe, and the one number underneath; beside it, the pay still to come. How fast you could reach each pile, and where the next dollar lands. Nothing to type: every figure is read from the Ledger.',
       href: 'rooms/statement.html',
       tier: 1,
       tags: ['debt'],
-      daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items'], writes: ['assets', 'assets.property', 'assets.items[].valueCents', 'assets.items[].taxCharacter', 'assets.items[].tier', 'assets.items[].costBasisCents', 'assets.items[].institution', 'assets.items[].accountType', 'assets.contributions.roth', 'assets.contributions.hsa', 'taxes.marginalRate', 'assets.allocation', 'assets.rebalanceBand'] },
+      /* Four sections since D-313; it writes nothing. The account layer it
+         used to edit is the Ledger's; the bridge, the account comparison,
+         the target mix, the documents and the plan left behind are rooms of
+         their own, and the worst plausible year is the Cushion's. */
+      daite: { reads: ['assets.cashCents', 'assets.invested', 'assets.property', 'assets.items[].confidence', 'assets.items[].costBasisCents', 'assets.items[].tier', 'debt.items', 'expenses', 'income.takeHome', 'you.dob'],
+               /* 'assets' here is the two computed readings it owns, net
+                  worth and net worth counting only what you are sure of
+                  (shared/ownership.js). It enters nothing: the account
+                  layer is the Ledger's (D-313). */
+               writes: ['assets'] },
       /* Replaces Net Worth (D-069); rooms/net-worth.html redirects here. */
       subsections: [
-        { id: 'portfolios', label: 'Three portfolios' },
-        { id: 'assets',     label: 'Rate what you own' },
-        { id: 'ladder',     label: 'The liquidity ladder' },
-        { id: 'bridge',     label: 'The bridge to 59½' },
-        { id: 'brackets',   label: 'Your bracket' },
-        { id: 'worst-year', label: 'The worst plausible year' },
-        { id: 'future',     label: 'Money that is coming' },
-        { id: 'reading',    label: 'Reading from elsewhere' },
-        { id: 'setup', label: 'Where the next dollar lands' },
-        { id: 'allocation', label: 'How it is split' },
-        { id: 'solo', label: 'A Solo 401k' },
-        { id: 'tabs', label: 'The three documents' },
-        { id: 'out-four', label: 'The four things you can do' },
-        { id: 'out-trap', label: 'The trap in the middle' },
-        { id: 'out-cost', label: 'What cashing out costs' }
+        { id: 'net-worth',     label: 'Net worth' },
+        { id: 'human-capital', label: 'The pay still to come' },
+        { id: 'ladder',        label: 'How fast you could reach it' },
+        { id: 'next-dollar',   label: 'Where the next dollar lands' },
+        { id: 'reading',       label: 'Reading from elsewhere' },
+        { id: 'assumptions',   label: 'Assumptions' }
+      ]
+    },
+    /* ---- Carved out of the Statement (D-313). Each replaces a reading or a
+       card the Statement had, so the count of screens is the same; each
+       reads the Ledger and writes nothing. `sphere` is the sphere whose rows
+       it reads most; `minutes` is how long it takes to read, not to fill. ---- */
+    {
+      id: 'bridge',
+      features: ['incomeFloor'],
+      group: 'numbers', subgroup: 'assets', aliases: ['bridge', 'bridge to 59½', '59 and a half', 'roth basis', 'roth conversion ladder', '72(t)', 'rule of 55', '457(b)', 'hsa receipts', 'money that is coming', 'pension', 'social security', 'annuity'],
+      kind: 'read', sphere: 'jupiter', minutes: 3,
+      needs: ['dob', 'monthlyExpenses', 'investments'],
+      order: 1.81,
+      title: 'The Bridge',
+      blurb: 'If work becomes optional before the retirement accounts open, the years in between need money you can reach. How many years, how short, and every source that reaches: some counted now, the rest explained.',
+      href: 'rooms/bridge.html',
+      tier: 1,
+      tags: ['cashflow'],
+      daite: { reads: ['assets', 'assets.cashCents', 'assets.invested', 'assets.items[].costBasisCents', 'assets.items[].accountType', 'expenses', 'income.future', 'you.dob'], writes: [] },
+      subsections: [
+        { id: 'bridge',      label: 'The bridge' },
+        { id: 'sources',     label: 'What reaches before 59½' },
+        { id: 'future',      label: 'Money that is coming' },
+        { id: 'reading',     label: 'Reading from elsewhere' },
+        { id: 'assumptions', label: 'Assumptions' }
+      ]
+    },
+    {
+      id: 'which-account',
+      features: ['matchVesting'],
+      group: 'numbers', subgroup: 'assets', aliases: ['which account', 'where it goes', 'roth', 'traditional', 'roth vs traditional', 'taxable', 'bracket', 'solo 401k', 'where the next dollar lands'],
+      kind: 'read', sphere: 'jupiter', minutes: 4,
+      needs: ['filingStatus', 'grossAnnualIncome', 'dob'],
+      order: 1.82,
+      title: 'Which Account',
+      blurb: 'Roth, Traditional or taxable for the next dollar, compared on the same pre-tax cost; the bracket that decides it; and what a Solo 401(k) actually allows when you work for yourself. Prefilled from the Ledger, every figure a what-if.',
+      href: 'rooms/which-account.html',
+      tier: 1,
+      tags: ['income'],
+      daite: { reads: ['assets.contributions.hsa', 'assets.contributions.pretax', 'assets.contributions.roth', 'expenses', 'income.grossAnnualCents', 'taxes.filingStatus', 'taxes.marginalRate', 'you.cover', 'you.dob', 'you.situation'], writes: [] },
+      subsections: [
+        { id: 'compare',     label: 'Roth, Traditional or taxable' },
+        { id: 'brackets',    label: 'Your bracket' },
+        { id: 'solo',        label: 'A Solo 401(k)' },
+        { id: 'reading',     label: 'Reading from elsewhere' },
+        { id: 'assumptions', label: 'Assumptions' }
+      ]
+    },
+    {
+      id: 'the-mix',
+      features: [],
+      group: 'numbers', subgroup: 'assets', aliases: ['the mix', 'allocation', 'asset allocation', 'rebalance', 'rebalance band', 'stocks bonds cash', 'how it is split'],
+      kind: 'read', sphere: 'jupiter', minutes: 2,
+      needs: ['investments'],
+      order: 1.83,
+      title: 'The Mix',
+      blurb: 'The split you are aiming for between stocks, bonds and cash, the band a slice may drift before you rebalance, and what that mix means in dollars on what you have invested. The targets are entered in the Ledger; this reads them.',
+      href: 'rooms/the-mix.html',
+      tier: 1,
+      tags: ['cashflow'],
+      daite: { reads: ['assets.allocation', 'assets.invested', 'assets.rebalanceBand', 'you.dob'], writes: [] },
+      subsections: [
+        { id: 'allocation',  label: 'The mix you are aiming for' },
+        { id: 'in-dollars',  label: 'In dollars' },
+        { id: 'reading',     label: 'Reading from elsewhere' },
+        { id: 'assumptions', label: 'Assumptions' }
+      ]
+    },
+    {
+      id: 'left-behind',
+      features: [],
+      group: 'decisions', subgroup: 'moves', aliases: ['left behind', 'old 401k', 'rollover', 'roll over', 'former employer', 'cash out', 'indirect rollover', '60-day'],
+      kind: 'explore', sphere: 'jupiter', minutes: 4,
+      needs: ['dob', 'grossAnnualIncome', 'filingStatus'],
+      order: 8.35,
+      title: 'Left Behind',
+      blurb: 'A workplace plan at an old job has four possible futures, and one is much worse than the others. What each costs, the paperwork trap in the middle, and the words to say instead. The balance is a what-if; nothing here is saved.',
+      href: 'rooms/left-behind.html',
+      tier: 2,
+      tags: ['income'],
+      daite: { reads: ['assets.items[].accountType', 'income.grossAnnualCents', 'taxes.filingStatus', 'taxes.state', 'you.dob', 'you.situation'], writes: [] },
+      subsections: [
+        { id: 'no-write',    label: 'Before anything else' },
+        { id: 'room-number', label: 'What cashing it out would cost' },
+        { id: 'out-four',    label: 'The four things you can do' },
+        { id: 'out-trap',    label: 'The trap in the middle' },
+        { id: 'out-cost',    label: 'What cashing out costs' },
+        { id: 'reading',     label: 'Reading from elsewhere' }
+      ]
+    },
+    {
+      id: 'the-documents',
+      features: ['annualLines'],
+      group: 'numbers', subgroup: 'assets', aliases: ['the documents', 'statements', 'income statement', 'cash flow statement', 'balance sheet', 'fire statement', 'quarterly', 'the period in words'],
+      kind: 'read', sphere: 'fixedstars', minutes: 5,
+      needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt'],
+      order: 1.84,
+      title: 'The Documents',
+      blurb: 'The three documents a company produces every quarter, for a household, and the same period written out in sentences. Off the beginner path: nothing here is typed in, and every line opens to where it came from.',
+      href: 'rooms/the-documents.html',
+      tier: 2,
+      tags: ['income', 'cashflow', 'debt'],
+      daite: { reads: ['assets', 'assets.cashCents', 'assets.invested', 'debt.items', 'expenses', 'expenses.log', 'income.grossAnnualCents', 'income.ledger', 'taxes.filingStatus'], writes: [] },
+      subsections: [
+        { id: 'out-basis', label: 'What these are built from' },
+        { id: 'out-doc',   label: 'The document' },
+        { id: 'out-how',   label: 'How each line is worked out' },
+        { id: 'reading',   label: 'Reading from elsewhere' }
       ]
     },
     {
@@ -387,10 +522,15 @@
       tier: 0,
       tags: ['income', 'cashflow', 'debt'],
       daite: { reads: ["assets","assets.allocation","assets.cashCents","assets.contributions.hsa","assets.contributions.pretax","assets.contributions.roth","assets.invested","assets.property","debt.items","debt.items[].minimumCents","debt.items[].plan","debt.none","expenses","expenses.floor","expenses.giving","expenses.insurance","expenses.log","expenses.months","expenses.needs.accommodation","expenses.needs.food","expenses.needs.transportation","expenses.shared","expenses.wants","expenses.wants.therapy","income.cadence","income.future","income.grossAnnualCents","income.ledger","income.sources[].benefit","income.sources[].employerMatch","income.variable","taxes.filingStatus","taxes.marginalRate","taxes.otherPreTax","taxes.state","taxes.withheld","taxes.zip","you.cover","you.dependents","you.dob","you.estate","you.partner","you.situation"],
-               /* It owns none of these. Round 1, all at once and since last
-                  time each write through Ownership.write, which is the owner's
-                  own path — one record, never a second copy (D-230). */
-               writes: ["assets.cashCents","assets.invested","debt.items","expenses","income.grossAnnualCents","income.sources[].lastPay","taxes.zip","you.dob","you.situation"] },
+               /* The opening, all at once and since last time each write
+                  through Ownership.write, which is the owner's own path: one
+                  record, never a second copy (D-230). Since D-313 the Ledger
+                  is also the owner of the account layer the Statement used to
+                  edit: each account's value, type, character, pile, confidence,
+                  basis, cash flow, hassle and access age; the Roth and HSA
+                  contributions and the HSA switches; the marginal rate; the
+                  target mix. Rooms read them and link here. */
+               writes: ["assets","assets.property","assets.items[].valueCents","assets.items[].taxCharacter","assets.items[].tier","assets.items[].costBasisCents","assets.items[].institution","assets.items[].accountType","assets.items[].confidence","assets.items[].cashFlowMonthlyCents","assets.items[].hassle","assets.items[].accessAgeOverride","assets.contributions.roth","assets.contributions.hsa","assets.allocation","assets.rebalanceBand","assets.cashCents","assets.invested","debt.items","expenses","income.grossAnnualCents","income.sources[].lastPay","income.takeHome","taxes.marginalRate","taxes.zip","you.cover","you.dob","you.situation"] },
       subsections: [
         { id: 'doors-home',   label: 'The six doors' },
         { id: 'door-D',       label: 'Debt' },
@@ -399,7 +539,7 @@
         { id: 'door-T',       label: 'Taxes' },
         { id: 'door-E',       label: 'Expenses' },
         { id: 'door-you',     label: 'You' },
-        { id: 'view-round1',  label: 'Round 1' },
+        { id: 'view-round1',  label: 'The opening' },
         { id: 'view-express', label: 'All at once' },
         { id: 'view-since',   label: 'Since last time' },
         { id: 'view-shelves', label: 'Arrangements' },
@@ -415,7 +555,7 @@
       needs: ['monthlyExpenses'],
       order: 21,
       title: 'What Matters',
-      blurb: 'The five things you say matter most, next to where the money actually went. No score \u2014 just the two lists, side by side.',
+      blurb: 'What you say matters to you, and what your money says. The two side by side, and the gap between them.',
       href: 'rooms/values.html',
       tier: 2,
       tags: ['cashflow'],
@@ -441,7 +581,7 @@
       needs: [],
       order: 20.2,
       title: 'The Skill Tree',
-      blurb: 'What the next hour does: every money skill in five bands, open, locked with the reason, done, or skipped because you are already past it. The ladder runs above it and the two unlock each other.',
+      blurb: 'What the next hour of learning is worth. The whole tree of money skills, the three to work on now, and the exercises for each.',
       href: 'rooms/skill-tree.html',
       tier: 2,
       tags: ['cashflow'],
@@ -467,7 +607,7 @@
       needs: ['monthlyExpenses', 'grossAnnualIncome'],
       order: 22,
       title: 'The Decision Room',
-      blurb: 'Anything you are weighing, in one place — what it costs, what it costs you, when it lands, whether it fits, and whether it can be undone.',
+      blurb: 'Anything you are weighing, on a card of its own, with the same five questions asked of every one. Then what your last answers turned out to be worth.',
       href: 'rooms/goals.html',
       tier: 2,
       tags: ['cashflow'],
@@ -521,6 +661,7 @@
         { id: 'am-number',   label: 'Your number' },
         { id: 'coverage',    label: 'Coverage checkup' },
         { id: 'out-gap',     label: 'Getting there' },
+        { id: 'worst-year',  label: 'The worst plausible year' },
         { id: 'hl-reading',  label: 'Reading from elsewhere' }
       ]
     },
@@ -569,7 +710,7 @@
       needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments'],
       order: 28,
       title: 'What If',
-      blurb: 'A sabbatical, a move, a second income \u2014 one event at a time, three ways: dream, default, disaster. Or the whole of the next five years, every way through it, measured against drifting.',
+      blurb: 'One thing you are turning over, seen three ways. Or the whole of the next five years, and every way through them.',
       href: 'rooms/what-if-life.html',
       tier: 2,
       tags: ['cashflow', 'income'],
@@ -614,7 +755,7 @@
     needs: [],
     order: 98.5,
     title: 'Settings',
-    blurb: 'Every switch, on one screen: what makes the numbers more honest, who is in the household, how far ahead to look, and what a beginner can skip. Nothing here changes a stored number.',
+    blurb: 'Every switch, on one screen. A switch changes what a room shows. It never changes a number you entered.',
     href: 'rooms/settings.html',
     tier: 0,
     tags: ['income', 'cashflow', 'debt'],
@@ -643,7 +784,7 @@
     needs: ['monthlyExpenses', 'cashSavings', 'grossAnnualIncome'],
     order: 32,
     title: 'Protection',
-    blurb: 'What a bad year would cost and what stands behind you — health, disability, life, the cushion — and the three estate facts that decide where it all goes if the worst happens.',
+    blurb: 'What stands behind you when a year goes wrong: insurance, deductibles and cover. And where everything goes if the worst happens.',
     href: 'rooms/protection.html',
     tier: 2,
     tags: ['cashflow'],
@@ -671,7 +812,7 @@
     needs: ['investments', 'monthlyExpenses', 'grossAnnualIncome'],
     order: 33,
     title: 'The Back Half',
-    blurb: 'How the money comes down: what you draw and how long it lasts, what you could actually reach today, what sits behind the 59½ wall, and what health cover costs before Medicare.',
+    blurb: 'How you spend the money down once you stop earning. Read this before you set the target, because it decides the target.',
     href: 'rooms/decumulation.html',
     tier: 2,
     tags: ['income'],
@@ -697,7 +838,7 @@
     needs: [],
     order: 48.5,
     title: 'The Referee',
-    blurb: 'Money debates people already have, both sides stated fairly with their sources and run on your numbers — and the advice everyone hears, sorted by whether it still applies to you.',
+    blurb: 'Money arguments people already have, both sides stated fairly and run on your numbers. Then the advice everyone hears, sorted by whether it still applies to you.',
     href: 'rooms/debates.html',
     tier: 2,
     tags: ['income', 'debt'],
@@ -739,7 +880,7 @@
     needs: ['grossAnnualIncome'],
     order: 37,
     title: 'Work',
-    blurb: 'Every question about a job in one place: this offer against the one you have, offers side by side, a second job, going out on your own, whether a course pays, a degree, and a planned break.',
+    blurb: 'Every question about a job, in one place: an offer, a raise, a move, a break.',
     href: 'rooms/career-move.html',
     tier: 2,
     tags: ['income'],
@@ -768,7 +909,7 @@
     needs: ['grossAnnualIncome', 'monthlyExpenses'],
     order: 38,
     title: 'Family',
-    blurb: 'Two incomes and how the shared month is split, and what each child costs a year with the tuition they will need — the other people in your household, and what the arrangement costs.',
+    blurb: 'The other people in your household, what the arrangement costs, and how the shared month is split.',
     href: 'rooms/partner.html',
     tier: 2,
     tags: ['income', 'cashflow'],
@@ -798,7 +939,7 @@
     needs: ['monthlyExpenses', 'grossAnnualIncome', 'cashSavings'],
     order: 40,
     title: 'Housing',
-    blurb: 'Rent against buying at this price and this rate, the four ways into a deposit with the date on each, and a property priced the way it actually runs.',
+    blurb: 'Rent or buy. What the deposit takes, what a month costs either way, and whether the building pays for itself.',
     href: 'rooms/housing.html',
     tier: 2,
     tags: ['cashflow'],
@@ -826,7 +967,7 @@
     needs: ['cashSavings', 'monthlyExpenses'],
     order: 41,
     title: 'Big Purchase',
-    blurb: 'One thing you are eyeing, priced in hours of your life and months of FI — and the same arithmetic over everything you want, for the monthly income the whole list would take.',
+    blurb: 'What the thing you want costs in hours of your life. Then the same question asked of everything you want.',
     href: 'rooms/big-purchase.html',
     tier: 2,
     tags: ['cashflow'],
@@ -854,7 +995,7 @@
     needs: ['monthlyExpenses'],
     order: 44,
     title: 'The Life',
-    blurb: 'The week you would design, priced, and the decades you plan to spend \u2014 whether the life you want and the money for it line up in time.',
+    blurb: 'The week you would design if you could, and the decades you plan to spend living it.',
     href: 'rooms/week.html',
     tier: 2,
     tags: ['cashflow'],
@@ -884,7 +1025,7 @@
     needs: [],
     order: 98,
     title: 'Your Data',
-    blurb: 'Save your numbers out as a spreadsheet, a page or a backup protected with a passphrase; bring any file from this app or a bank CSV in through one door, with a preview before anything saves; or start over.',
+    blurb: 'Your numbers live in this browser and nowhere else. Save them out, bring them in, or start over. Every file is read here; nothing is sent anywhere.',
     href: 'rooms/data.html',
     tier: 0,
     tags: ['income', 'cashflow', 'debt'],
@@ -912,7 +1053,7 @@
     needs: ['grossAnnualIncome'],
     order: 98.3,
     title: 'The Card',
-    blurb: 'Everything you would hand someone else, three ways: a progress card that carries the shape and never the size, your year in four lines, and the whole page for a lender or a planner.',
+    blurb: 'Everything you would hand someone else, three ways: a card, a page, and the whole thing for you.',
     href: 'rooms/one-pager.html',
     tier: 1,
     tags: ['income', 'cashflow', 'debt'],
@@ -937,7 +1078,7 @@
     needs: [],
     order: 29,
     title: 'Get Help',
-    blurb: 'What these rooms deliberately do not do, and what kind of person answers those questions. Kinds of help, never a name.',
+    blurb: 'Every room says what it cannot do. This is where those lines point: the questions that need a person, and what kind of person.',
     href: 'rooms/get-help.html',
     tier: 0,
     tags: ['income', 'cashflow', 'debt'],
@@ -981,9 +1122,9 @@
      path order. Anything not named falls in after, in path order. */
   var GROUP_ORDER = {
     home: ['dashboard', 'planner', 'start'],
-    numbers: ['debt-payoff', 'cant-pay', 'statement', 'income', 'tax', 'budget', 'expenses', 'cash-flow'],
+    numbers: ['debt-payoff', 'cant-pay', 'statement', 'bridge', 'which-account', 'the-mix', 'the-documents', 'income', 'tax', 'budget', 'expenses', 'cash-flow'],
     scorecard: ['financial-snapshot', 'foo-ladder', 'fire'],
-    decisions: ['career-move', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'protection', 'runway', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
+    decisions: ['career-move', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'protection', 'runway', 'left-behind', 'decumulation', 'adventure', 'what-if-life', 'timeline'],
     matters: ['values', 'goals', 'week'],
     levelup: ['skill-tree'],
     upkeep: ['data', 'ledger', 'settings', 'get-help']
@@ -1034,10 +1175,12 @@
      (D-094). Rooms with none are for everyone. The check is Gate.exists,
      reached lazily because the gate loads after the registry. */
   var REQUIRES = {
-    /* Where It Goes became The Statement's where-it-lands reading (D-278).
-       The Statement requires nothing — what you own is a question for
-       everybody — and that READING keeps the retirement branch, declared on
-       the router, so its hat is absent when there is no employer plan. */
+    /* Where It Goes became The Statement's where-it-lands reading (D-278)
+       and then Which Account, a room again (D-313). It requires nothing:
+       Roth against Traditional is a question for anyone with earned income,
+       and the Solo 401(k) card is for the self-employed, whom the retirement
+       branch would have hidden it from. The Statement requires nothing
+       either; what you own is a question for everybody. */
     /* Worth the hassle became Income's fourth reading (D-294) and kept the
        hours branch on the router, the way What it pays does. Income itself
        requires nothing: what comes in is a question for everybody. */

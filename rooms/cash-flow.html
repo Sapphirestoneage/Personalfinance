@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-20 01:20Z"/>
+<meta name="slaf-build" content="2026-09-20 01:28Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <script src="../shared/size.js"></script>
@@ -408,7 +408,7 @@
      goes out (the lines, savings excluded — that money has not left), and
      what is left. Each says what it needs instead of showing a dash. */
   /* Every tile opens to what goes into it, each part a link to the room
-     that owns it (D-307): the owner asked to see what a figure is made of. */
+     that owns it (D-317): the owner asked to see what a figure is made of. */
   function tile(cap, result, format, sub, cls, parts) {
     var ok = Money.isOk(result);
     return '<div class="tile"><div class="t-cap">' + cap + '</div>'
@@ -426,7 +426,7 @@
     /* Goes out is the four numbers (D-172) plus the debt minimums, which
        are not expenses but do leave the account; left is what remains. The
        gap is Schema's one function, the same figure Debt Payoff suggests as
-       the extra (D-307). */
+       the extra (D-317). */
     var fatTotal = Schema.fat(h).totalCents;
     var mins = Schema.monthlyDebtPaymentsCents(h);
     var out = Money.isOk(fatTotal) ? Money.ok(fatTotal.value + (Money.isOk(mins) ? mins.value : 0)) : Money.incomplete('Type the four numbers in Expenses.');
@@ -496,7 +496,7 @@
       Money.isOk(flow) ? dl([
         ['<a href="' + Ownership.linkTo('income', 'sources', 'cash-flow') + '">Take-home pay</a>', Money.formatCents(flow.netMonthlyIncomeCents)],
         ['<a href="' + Ownership.linkTo('expenses', 'spending', 'cash-flow') + '">Spending</a>', Money.formatCents(flow.spendMonthlyCents)],
-        ['<a href="' + Ownership.linkTo('statement', 'setup', 'cash-flow') + '">Into savings</a>', Money.formatCents(flow.savingsMonthlyCents)],
+        ['<a href="' + Ownership.linkTo('ledger', 'x-A', 'cash-flow') + '">Into savings</a>', Money.formatCents(flow.savingsMonthlyCents)],
         ['Unassigned', Money.formatCents(flow.unassignedCents)]
       ]) + '<p class="slaf-reason">Spending is the month typed in <a href="expenses.html#spending">Expenses</a>; the log below is what actually left.</p>' : '');
     renderLog(h);
@@ -796,7 +796,7 @@
   function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function ordinal(n) { var s = ['th', 'st', 'nd', 'rd'], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
   function m(h, T) { return Cal.month(h, T, {}); }
-  /* THE CALENDAR (D-308). The owner: make it like a phone calendar, and
+  /* THE CALENDAR (D-318). The owner: make it like a phone calendar, and
      professional. Two states the reading owns: the month on screen and the
      day tapped. The engine runs once from today to the end of the month on
      screen (opts.days), so a later month's balances are the same projection
@@ -824,7 +824,7 @@
   }
   function calendarHtml(h, T) {
     var r = mv(h, T);
-    return DayByDay.monthView(r, { month: VIEW, selected: SEL, past: pastRows(h, T), canBack: VIEW > shiftYm(TODAY.slice(0, 7), -CAL_BACK), canForward: VIEW < shiftYm(TODAY.slice(0, 7), CAL_AHEAD) })
+    return DayByDay.monthView(r, { month: VIEW, selected: SEL, past: pastRows(h, T), own: ((h.calendar || {}).events || []), canBack: VIEW > shiftYm(TODAY.slice(0, 7), -CAL_BACK), canForward: VIEW < shiftYm(TODAY.slice(0, 7), CAL_AHEAD) })
       + '<details class="cal-up cal-line"><summary>Cash across the days, as a line</summary>' + DayByDay.chart(r) + '</details>';
   }
 

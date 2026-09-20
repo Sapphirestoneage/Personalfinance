@@ -430,7 +430,7 @@
   }
 
   var DOT_WORD = { filled: 'every number this room owns is in', partly: 'some of its numbers are in', empty: 'nothing entered here yet' };
-  /* What a room still needs (D-307): its blank fields, each a link to the
+  /* What a room still needs (D-317): its blank fields, each a link to the
      box that takes it. The owner: "when I click on it say what needs to
      be filled". */
   function needHtml(roomId, readings) {

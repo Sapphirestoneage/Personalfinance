@@ -339,6 +339,18 @@
         how: Math.round(rule.percentOfBalance * 100) + '% of the balance or $' + rule.floorDollars + ', whichever is more: a common issuer convention, until the statement minimum is entered.',
         sources: ['data/debt_rules.json'] };
     },
+    /* Take-home from the gross (D-312): the one estimate the app already
+       makes, offered as a guess in the opening's box until what actually
+       lands is typed. Nothing to suggest once it is typed or logged. */
+    takeHomeFromGross: function (c) {
+      var typed = c.D.Schema.typedTakeHomeMonthlyCents ? c.D.Schema.typedTakeHomeMonthlyCents(c.h) : null;
+      if (typed && c.D.Money.isOk(typed)) return null;
+      var t = c.D.Schema.takeHomeMonthlyCents(c.h, c.tables);
+      if (!c.D.Money.isOk(t) || t.source === 'typed') return null;
+      return { value: t.value, unit: 'cents', display: money(c.D, t.value) + ' a month',
+        how: 'Gross pay less the estimated tax at your filing status, divided by twelve. What actually lands is the better number.',
+        sources: ['data/effective_tax_rates_2026.json'] };
+    },
     spendingFromPay: function (c) {
       var t = c.tables.onepagerDefaults;
       if (!t) return null;
@@ -478,6 +490,7 @@
     healthMonthly: function (h, v) { h.insurance = h.insurance || {}; h.insurance.health = h.insurance.health || {}; h.insurance.health.monthlyCents = v; },
     highestDeductible: function (h, v) { h.insurance = h.insurance || {}; h.insurance.highestDeductibleCents = v; },
     wantsMonthly: function (h, v, D) { h.expenses = D.Schema.createExpenses(h.expenses); h.expenses.wants.totalCents = v; },
+    takeHomeMonthly: function (h, v, D) { h.takeHome = D.Schema.createTakeHome({ monthlyCents: v, per: 'month' }); },
     investments: function (h, v, D) { h.assets = (h.assets || []).concat([D.Schema.createAsset({ id: 'suggest_inv', label: 'Investments (suggested)', category: 'investment', valueCents: v })]); },
     floorMonthly: function (h, v, D) { var p = D.Schema.primaryPerson(h); if (p) { p.unemployment = Object.assign({}, D.Schema.unemploymentOf(h), { floorMonthlyCents: v }); } },
     debtMinPayment: function (h, v, D, s) { (h.debts || []).forEach(function (d) { if (d.id === s.itemId) d.minPaymentCents = v; }); }

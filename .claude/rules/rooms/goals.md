@@ -10,7 +10,7 @@ File: rooms/goals.html · 1469 lines
 Engines: projection, tier0, income, selfemployed, ledger, cashflow, hourly, events, reversibility, goals, worth
 Reference data: effective_tax_rates_2026.json, expense_categories.json, goal_templates.json, reversibility.json, se_tax_2026.json, triple_d.json
 Owns: reversibilityDecision
-Reads from other owners: grossAnnualIncome (start), cashSavings (start), monthlyExpenses (expenses)
+Reads from other owners: grossAnnualIncome (start), takeHomeMonthly (ledger), cashSavings (start), monthlyExpenses (expenses)
 Latest decisions:
   - D-299 — A block that pays
   - D-296 — What If: two scenario rooms are each other, not two block types

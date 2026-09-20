@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-20 01:20Z"/>
+<meta name="slaf-build" content="2026-09-20 01:28Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <script src="../shared/size.js"></script>
@@ -18,18 +18,18 @@
   working: #out-net-worth and #ledger land on #portfolios, #assets stays.
   LIVE-FORM: built once. No inputs.
 -->
-<meta http-equiv="refresh" content="0; url=statement.html#what-you-own"/>
+<meta http-equiv="refresh" content="0; url=statement.html#net-worth"/>
 </head>
 <body class="slaf">
 <main class="slaf-wrap">
   <p style="color:var(--color-text-muted)">Net Worth is The Statement now.
-    <a href="statement.html#what-you-own" id="go">Open it →</a></p>
+    <a href="statement.html#net-worth" id="go">Open it →</a></p>
 </main>
 <script>
   (function () {
-    var map = { '#out-net-worth': '#portfolios', '#ledger': '#portfolios', '#from-elsewhere': '#reading' };
+    var map = { '#out-net-worth': '#net-worth', '#ledger': '#net-worth', '#from-elsewhere': '#reading' };
     var hash = location.hash || '';
-    var target = 'statement.html' + (map[hash] || hash || '#what-you-own');
+    var target = 'statement.html' + (map[hash] || hash || '#net-worth');
     document.getElementById('go').setAttribute('href', target);
     location.replace(target);
   })();

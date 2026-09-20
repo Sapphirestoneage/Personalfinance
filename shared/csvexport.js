@@ -382,7 +382,9 @@
     all.forEach(function (r) {
       byId[r.id.toLowerCase()] = r;
       (r.aliases || []).forEach(function (a) { byId[String(a).toLowerCase()] = r; });
-      var names = [r.label];
+      /* A row's former labels count too (D-310): a sheet typed or exported
+         under the old words still lands on the row. */
+      var names = [r.label].concat(r.wasLabels || []);
       var f = fieldOf(r.id); if (f && f.label) names.push(f.label);
       names.forEach(function (nm) { var k = norm(nm); if (k && !byWords[k]) byWords[k] = r; });
     });

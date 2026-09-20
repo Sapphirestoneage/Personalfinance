@@ -57,7 +57,7 @@
      Labels are written for the middle of a sentence, FIRE kept upper. */
   var READINGS = [
     { id: 'netWorth', label: 'net worth', say: 'what you own less what you owe',
-      needs: ['cashSavings', 'investments', 'totalDebt'], room: 'statement', anchor: 'assets',
+      needs: ['cashSavings', 'investments', 'totalDebt'], room: 'statement', anchor: 'net-worth',
       read: function (h) { return Tier0.netWorth(h); }, format: Money.formatCents },
     { id: 'takeHome', label: 'take-home pay, a month', say: 'what actually lands after tax',
       needs: ['grossAnnualIncome', 'filingStatus'], room: 'tax', anchor: 'number',

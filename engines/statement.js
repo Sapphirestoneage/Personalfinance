@@ -130,13 +130,17 @@
    * age you have not reached goes to "never". With no age the gate cannot
    * be applied and the result says so rather than pretending.
    */
-  var TIER_BAND = { cash: 'today', taxable: 'thisMonth', retirement: 'thisYear', property: 'never', other: 'never' };
+  /* Property and other things are SLOW, not never (D-313): a house or a
+     business turns into money in months, through a sale or by borrowing
+     against it. Only money behind an age gate is "never" (not without a
+     penalty or a birthday), and even that is named as locked. */
+  var TIER_BAND = { cash: 'today', taxable: 'thisMonth', retirement: 'thisYear', property: 'slow', other: 'slow' };
   function liquidityLadder(household, rules, opts) {
     if (!rules) return Money.incomplete('Access rules are not loaded.', ['accessRules']);
     var assets = valued(household);
     if (!assets.length) return Money.incomplete('Add something you own to build the ladder.', ['assets']);
     var age = opts && Money.isEntered(opts.age) ? opts.age : Schema.primaryAge(household);
-    var bands = { today: 0, thisMonth: 0, thisYear: 0, never: 0 };
+    var bands = { today: 0, thisMonth: 0, thisYear: 0, slow: 0, never: 0 };
     var byTier = { cash: 0, taxable: 0, retirement: 0, property: 0, other: 0 };
     var gatedCents = 0, unknownCents = 0, overriddenCount = 0, rows = [];
     assets.forEach(function (a) {
@@ -156,14 +160,14 @@
       }
       if (a.taxCharacter === 'unknown') unknownCents += a.valueCents;
       bands[band] += reachable;
-      if (band !== 'never') bands.never += locked;
+      bands.never += locked;
       gatedCents += locked;
       rows.push({ asset: a, tier: t.tier, derived: t.derived, band: band, accessAge: accessAge, gated: gated,
         reachableCents: reachable, lockedCents: locked });
     });
     return Money.ok(bands.today + bands.thisMonth + bands.thisYear, {
       bands: bands,
-      cumulative: { today: bands.today, thisMonth: bands.today + bands.thisMonth, thisYear: bands.today + bands.thisMonth + bands.thisYear },
+      cumulative: { today: bands.today, thisMonth: bands.today + bands.thisMonth, thisYear: bands.today + bands.thisMonth + bands.thisYear, slow: bands.today + bands.thisMonth + bands.thisYear + bands.slow },
       byTier: byTier,
       gatedCents: gatedCents,
       unknownCents: unknownCents,
