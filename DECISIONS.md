@@ -16970,6 +16970,41 @@ seven browser gates. Lane 2 caught a real one: `value('valueOf')` walked the
 prototype chain and answered; it now answers null, as it does for any reading
 this file does not know.
 
+## D-328 — A level that confirms, and a card that says what the answer bought
+
+**Why.** Two of band 1's levels do not collect anything: they show a figure
+the app worked out and ask whether it looks right. They had no way to be
+answered, so band 1 could never be finished. And answering anything told you
+nothing about what it just bought.
+
+**Decision.** Two halves.
+
+*The confirm levels.* `data/levels.json` gains a field kind, `confirm`: it
+names the reading it asks about (`confirms`) and collects nothing.
+`shared/solar.js` counts such a field answered when `meta.confirmedAt` carries
+the level's id, which is what `Spine.confirm` writes, and no figure changes.
+The Planets panel shows the reading's own figure (the rough state tax rate,
+the implied tax rate) and one button, "Yes, that looks right". T1 and T2 are
+the two, and band 1 is now 20 of its 24 facts answerable in place; the last
+four are the two debt totals, which come from adding a debt, gross pay, which
+belongs to an income source, and the rough total saved, which the app adds up.
+
+*The card.* A save or a confirm compares the readings the app could work out
+before and after, and names what is new: at most three, with their figures,
+and "and N more" beyond that. It goes on its own after nine seconds.
+
+**Replaces or removes.** Nothing. No new stored field, no new screen.
+
+**Stored shape.** No change: `meta.confirmedAt` already existed, and this puts
+a level id beside the field ids already in it.
+
+**Verified.** `node test/run.js` (35,172), `node test/solar.js` (5,152) with
+ten new lints, the D&D suite, export, xlsx, lane 2 and the seven browser
+gates. In a phone-sized browser: T1 showing 4.3% and T2 showing 19.0%, both
+confirmed with one tap and the level marking itself answered, and a card
+reading "That answer worked out 1 new reading, FI number $945,000" after the
+month's spending was typed.
+
 ---
 
 # The Dungeons & Dividends entries

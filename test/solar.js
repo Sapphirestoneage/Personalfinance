@@ -414,8 +414,11 @@ section('Where a household stands in the levels, and the screen that shows it');
   const b1fields = b1.reduce((n, l) => n + l.fields.length, 0);
   const b1home = b1.reduce((n, l) => n + l.fields.filter(f => f.existing && Ownership325.FIELDS[f.key]).length, 0);
   check('every band 1 fact now has a home in the app', b1home === b1fields - 2, `${b1home} of ${b1fields}`);
-  check('the two left are the tax confirmations, which confirm rather than collect',
-    b1.reduce((out, l) => out.concat(l.fields.filter(f => !f.existing).map(f => f.key)), []).join(',') === 'stateRateConfirmed,impliedRateSeen');
+  check('the two left collect nothing at all: they confirm a reading (D-328)',
+    b1.reduce((out, l) => out.concat(l.fields.filter(f => !f.existing)), []).every(f => f.kind === 'confirm' && !!f.confirms));
+  check('and the reading each one confirms is a real one',
+    Levels.levels.reduce((out, l) => out.concat(l.fields.filter(f => f.kind === 'confirm')), [])
+      .every(f => Recipes.recipes.some(r => r.id === f.confirms)));
   check('a computed fact says what it adds up from rather than offering a box',
     /function addsUpFrom/.test(page) && /adds up from/.test(page));
   /* An answer takes away the questions it settles: saying pay is steady drops
@@ -516,6 +519,28 @@ section('Where a household stands in the levels, and the screen that shows it');
   check('the screen shows the figure beside the reading it belongs to',
     /function readingValue/.test(page) && /Recipes\.value\(m\.id, h, TABLES\)/.test(page) && /u-val/.test(page));
   check('and names the level that would sharpen it', /sharpen with/.test(page));
+
+  /* D-328: the two levels that confirm rather than collect, and the card that
+     names what an answer just bought. */
+  const confirmFields = Levels.levels.reduce((out, l) => out.concat(l.fields.filter(f => f.kind === 'confirm').map(f => ({ level: l.id, f: f }))), []);
+  check('two levels confirm rather than collect, and they are the tax pair',
+    confirmFields.map(x => x.level).join(',') === 'T1,T2');
+  check('each names the reading it asks you to agree with',
+    confirmFields.every(x => RecipeEngine.IMPLEMENTED.indexOf(x.f.confirms) >= 0));
+  check('a confirm level collects nothing, so it has no ownership field',
+    confirmFields.every(x => !Ownership325.FIELDS[x.f.key]));
+  const notSaid = Solar.levelState(levelById.T1, demo);
+  check('unconfirmed, the level is not answered', notSaid.state === 'notYet' && notSaid.of === 1);
+  const saidSo = Schema.createHousehold(Object.assign({}, Demo.build(), { meta: { isDemo: true, hasDebt: true, confirmedAt: { T1: '2026-09-20T00:00:00Z' } } }));
+  check('saying it looks right answers it', Solar.levelState(levelById.T1, saidSo).state === 'done');
+  check('and nothing about the figure moved',
+    RecipeEngine.value('stateRateRough', saidSo, T).value === RecipeEngine.value('stateRateRough', demo, T).value);
+  check('the screen offers the agreement rather than a box',
+    /data-sky-confirm=/.test(page) && /Yes, that looks right/.test(page) && /Spine\.confirm\(levelId\)/.test(page));
+  check('and shows the figure it is asking about', /function readingFigure/.test(page));
+  check('an answer says what it just bought, at most three of them',
+    /function sayUnlocked/.test(page) && /fresh\.slice\(0, 3\)/.test(page) && /and ' \+ esc\(fresh\.length - 3\) \+ ' more/.test(page));
+  check('and the card goes on its own', /UNLOCK_MS/.test(page) && /box\.hidden = true/.test(page));
 
   const skyStart = page.indexOf('The planets (D-321, opened up in D-322)');
   const skyBlock = page.slice(skyStart, page.indexOf('</script>', skyStart));

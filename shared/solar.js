@@ -108,8 +108,20 @@
     if (!f.appliesWhen || f.appliesWhen === 'always') return true;
     return applies({ appliesWhen: f.appliesWhen }, h);
   }
+  /* A C level collects nothing: it shows a reading the app already worked out
+     and asks whether it looks right. It is answered when the person has said
+     so, which the spine records in meta.confirmedAt against the level's own
+     id (D-328). */
+  function confirmed(h, key) {
+    var at = h && h.meta && h.meta.confirmedAt;
+    return !!(at && at[key]);
+  }
   function fieldState(h, level, f) {
     var gated = fieldApplies(h, f);
+    if (f.kind === 'confirm') {
+      return { key: f.key, label: f.label, filled: confirmed(h, level.id), applies: gated, guessed: false,
+        href: null, display: null, own: true, confirms: f.confirms || null };
+    }
     if (f.existing && Ownership && Ownership.FIELDS && Ownership.FIELDS[f.key]) {
       var d = null;
       try { d = Ownership.describe(f.key, h || {}, null); } catch (e) { d = null; }

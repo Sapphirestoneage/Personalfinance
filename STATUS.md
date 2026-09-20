@@ -17,19 +17,18 @@ Updated: 2026-09-20
   benchmarks) and `shared/solar.js` reads it. The Ledger's seventh hat, Planets
   (`#planets`), shows six planets by ten bands; every level opens to what it
   needs, 56 facts are typed there through their owner (D-324), band 1's six
-  homeless facts live in `household.sketch` (D-325), and the unlocks tab shows
-  each Tier 1 reading's figure from `engines/recipes.js` (D-327).
-- **D-321, D-326** no em dash on screen in any spelling, the escape included; **D-319** every room says how old its numbers are.
-- **A link opens to the field (D-323)**: an `#anchor` lands the question at the
-  top, cursor in it; `test/anchors.js` opens all 70 in a browser.
+  homeless facts live in `household.sketch` (D-325), the unlocks tab shows each
+  Tier 1 reading's figure from `engines/recipes.js` (D-327), and a level can
+  confirm a figure rather than collect one (D-328). Band 1: 20 of 24 in place.
+- **D-321, D-326** no em dash on screen in any spelling; **D-319** every room says how old its numbers are.
+- **A link opens to the field (D-323)**: an `#anchor` lands the question at the top, cursor in it.
 - **Main is worked on by another lane**: merge it before every push. The reframe
   D-228 asks for has NOT shipped. Freeze holds (D-313).
 
 ## Next (top item first; one per session)
 1. **OWNER DECISION: which saving drives the FI date?** It is built on the gap
    (what COULD be saved). Band 1 now asks what IS saved (A3), $705/mo apart
-   for the example. Then: T1 and T2 confirm rather than collect, and the
-   unlock card.
+   for the example. Then: Tier 2 readings, and the moons.
 2. **OWNER DECISIONS held**: inline asks elsewhere (D-313 vs D-207); is the
    income floor means-tested? (D-228, D-284.)
 3. Paystub parser and monthly update: not built. `benefit_cliffs_2026.json` unverified.
