@@ -25,6 +25,9 @@ const Demo = require(path.join(ROOT, 'shared/demo-persona.js'));
 const HOUSE = Schema.createHousehold(Demo.build());
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8765/';
+/* The same launch every other browser gate uses: the pre-installed browser
+   where there is one, and playwright's own on a runner that has none. */
+const EXECUTABLE = process.env.CHROMIUM || '/opt/pw-browsers/chromium';
 let passed = 0; const failures = [];
 function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (detail ? '\n      ' + detail : '')); }
 
@@ -42,7 +45,7 @@ Levels.levels.forEach(l => l.fields.forEach(f => {
 }));
 
 (async () => {
-  const browser = await chromium.launch({ executablePath: process.env.CHROMIUM || '/opt/pw-browsers/chromium' });
+  const browser = await chromium.launch(require('fs').existsSync(EXECUTABLE) ? { executablePath: EXECUTABLE } : {});
   const page = await (await browser.newContext({ viewport: { width: 390, height: 844 } })).newPage();
   page.on('dialog', d => d.accept());
   /* The example household, so every room has something to draw. */
