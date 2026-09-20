@@ -5,7 +5,7 @@
  "source": "The Solar System master prompt (docs/SOLAR-SYSTEM.md), Part 1 section 1.7, turned into one record per level with the card fields of section 1.8. Cross-references (connects, payoff.metrics, grade) are computed from data/recipes.json by the build script, never typed.",
  "confidence": "convention",
  "confidenceNote": "A registry of questions, not a measurement. The minutes are rough costs to enter. The grade is a default priority (S: load-bearing per A5; A: feeds four or more metrics; B: one to three; C: none) that the engine re-ranks per household.",
- "note": "Six planets, thirty levels each, ten bands of three. tag: E enter, C confirm, S sharpen. fields[] are the facts a level collects: a key that is an ownership field id (existing: true) migrates from the Ledger row named in row; a new key is stored under levels.<planet>.<key>. appliesWhen is one of the situations phrases; a failing level is absent, never greyed, and the planet's maximum shrinks. prefillFrom names the levels a C level reads, each in the same or a lower band (lint). payoff.metrics are the recipes this level completes in its own band; payoff.lever (bands 8 to 10) is the data/levers.json lever the level adds to the sun. credit: true marks the Debt & Credit levels that never drop out. nextMove resolves in data/moves.json. No level exists to fill a slot (1.2).",
+ "note": "Six planets, thirty levels each, ten bands of three. tag: E enter, C confirm, S sharpen. fields[] are the facts a level collects: a key that is an ownership field id (existing: true) migrates from the Ledger row named in row; a key with existing: false has no home in the app yet (D-325 left only the two tax confirmations). appliesWhen is one of the situations phrases; a failing level is absent, never greyed, and the planet's maximum shrinks. prefillFrom names the levels a C level reads, each in the same or a lower band (lint). payoff.metrics are the recipes this level completes in its own band; payoff.lever (bands 8 to 10) is the data/levers.json lever the level adds to the sun. credit: true marks the Debt & Credit levels that never drop out. nextMove resolves in data/moves.json. No level exists to fill a slot (1.2).",
  "planets": [
   {
    "id": "you",
@@ -2067,10 +2067,12 @@
    "prompt": "Is your pay steady or variable? If variable: a low month, a typical month, a high month.",
    "fields": [
     {
-     "key": "incomeSteady",
+     "key": "payVaries",
      "kind": "yesno",
-     "label": "Pay is steady",
-     "existing": false
+     "label": "Pay swings month to month",
+     "existing": true,
+     "row": "payVaries",
+     "path": "sketch.payVaries"
     },
     {
      "key": "incomeLow",
@@ -2078,7 +2080,8 @@
      "label": "A low month",
      "existing": true,
      "row": "incomeLow",
-     "path": "income.variable.lowCents"
+     "path": "income.variable.lowCents",
+     "appliesWhen": "income.variable"
     },
     {
      "key": "incomeHigh",
@@ -2086,7 +2089,8 @@
      "label": "A high month",
      "existing": true,
      "row": "incomeHigh",
-     "path": "income.variable.highCents"
+     "path": "income.variable.highCents",
+     "appliesWhen": "income.variable"
     }
    ],
    "checkpoint": "The swing is known and the emergency fund target picks 3 or 6 months.",
@@ -3791,13 +3795,17 @@
      "key": "spendingIncludesDebt",
      "kind": "yesno",
      "label": "Total includes debt payments",
-     "existing": false
+     "existing": true,
+     "row": "spendingIncludesDebt",
+     "path": "sketch.spendingIncludesDebt"
     },
     {
      "key": "spendingIncludesSaving",
      "kind": "yesno",
      "label": "Total includes saving",
-     "existing": false
+     "existing": true,
+     "row": "spendingIncludesSaving",
+     "path": "sketch.spendingIncludesSaving"
     }
    ],
    "checkpoint": "The gap is clean: spending, saving and debt each counted once.",
@@ -5432,7 +5440,9 @@
      "key": "totalSaved",
      "kind": "cents",
      "label": "Saved and invested, total",
-     "existing": false
+     "existing": true,
+     "row": "totalSaved",
+     "path": "assets.saved"
     }
    ],
    "checkpoint": "Net worth appears the moment debt is in.",
@@ -5570,10 +5580,12 @@
    "prompt": "How much do you add each month, in total, anywhere?",
    "fields": [
     {
-     "key": "monthlyAdded",
+     "key": "savedMonthly",
      "kind": "cents",
      "label": "Added a month",
-     "existing": false
+     "existing": true,
+     "row": "savedMonthly",
+     "path": "sketch.savedMonthlyCents"
     }
    ],
    "checkpoint": "The actual savings rate and the leak rate appear.",
@@ -7341,7 +7353,9 @@
      "key": "highInterestBalance",
      "kind": "cents",
      "label": "Balance above about 8%",
-     "existing": false
+     "existing": true,
+     "row": "highInterestBalance",
+     "path": "sketch.highInterestCents"
     }
    ],
    "checkpoint": "The high-interest flag is set, and the order of operations knows.",
@@ -8947,7 +8961,9 @@
      "key": "refundLastYear",
      "kind": "cents",
      "label": "Refund, or owed as a negative",
-     "existing": false
+     "existing": true,
+     "row": "refundLastYear",
+     "path": "sketch.refundLastYearCents"
     }
    ],
    "checkpoint": "The refund share can read.",

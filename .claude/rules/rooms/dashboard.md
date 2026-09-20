@@ -7,7 +7,7 @@ File: index.html · 1903 lines
 Engines: none
 Reference data: advice_translator.json, ratio_benchmarks.json
 Owns: nothing
-Reads from other owners: filingStatus (start), grossAnnualIncome (start), cashSavings (start), capturingFullMatch (start), hasDebt (start), totalDebt (debt-payoff), netWorth (statement), retireAge (fire), +1 more
+Reads from other owners: filingStatus (start), grossAnnualIncome (start), cashSavings (start), capturingFullMatch (start), hasDebt (start), highInterestBalance (ledger), totalDebt (debt-payoff), netWorth (statement), +2 more
 Latest decisions:
   - DD-030 — A sheet that looks like one, and a link that previews
   - DD-028 — Four ways in, because one front door was asking before it gave

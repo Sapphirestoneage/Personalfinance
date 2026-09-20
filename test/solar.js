@@ -392,6 +392,46 @@ section('Where a household stands in the levels, and the screen that shows it');
   check('every box reaches the 44px tap target',
     /\.d-ask input\[type="text"\] \{ min-height: 44px/.test(page) && /\.d-ask \.choice \{[^}]*min-height: 44px/.test(page));
 
+  /* D-325: the six band-1 facts that had nowhere to live now have one, and
+     the seventh is worked out rather than asked twice. */
+  const Ownership325 = require(path.join(ROOT, 'shared/ownership.js'));
+  const Money325 = require(path.join(ROOT, 'shared/money.js'));
+  const Rows325 = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8')).rows;
+  const SKETCH = ['payVaries', 'spendingIncludesDebt', 'spendingIncludesSaving', 'savedMonthly', 'highInterestBalance', 'refundLastYear'];
+  SKETCH.forEach(id => {
+    const f = Ownership325.FIELDS[id];
+    check(`${id} has one owner that can read and write it`, !!f && typeof f.read === 'function' && typeof f.write === 'function');
+    check(`${id} has a row of its own`, Rows325.filter(r => r.id === id).length === 1);
+  });
+  check('a blank household holds none of them, since empty is not zero',
+    SKETCH.every(id => !Money325.isOk(Ownership325.FIELDS[id].read(blank))));
+  check('the example household answers all six', SKETCH.every(id => Money325.isOk(Ownership325.FIELDS[id].read(demo))));
+  check('the rough total saved is worked out from its two parts, never stored again',
+    typeof Ownership325.FIELDS.totalSaved.read === 'function' && typeof Ownership325.FIELDS.totalSaved.write !== 'function');
+  check('and it equals cash plus investments',
+    Ownership325.FIELDS.totalSaved.read(demo).value === Ownership325.FIELDS.cashSavings.read(demo).value + Ownership325.FIELDS.investments.read(demo).value);
+  const b1 = Levels.levels.filter(l => l.band === 1);
+  const b1fields = b1.reduce((n, l) => n + l.fields.length, 0);
+  const b1home = b1.reduce((n, l) => n + l.fields.filter(f => f.existing && Ownership325.FIELDS[f.key]).length, 0);
+  check('every band 1 fact now has a home in the app', b1home === b1fields - 2, `${b1home} of ${b1fields}`);
+  check('the two left are the tax confirmations, which confirm rather than collect',
+    b1.reduce((out, l) => out.concat(l.fields.filter(f => !f.existing).map(f => f.key)), []).join(',') === 'stateRateConfirmed,impliedRateSeen');
+  check('a computed fact says what it adds up from rather than offering a box',
+    /function addsUpFrom/.test(page) && /adds up from/.test(page));
+  /* An answer takes away the questions it settles: saying pay is steady drops
+     the low and high month, and the level is done with what is left. */
+  const steady = Schema.createHousehold(Object.assign({}, Demo.build(), { sketch: { payVaries: false } }));
+  const swings = Schema.createHousehold(Object.assign({}, Demo.build(), { sketch: { payVaries: true } }));
+  check('steady pay leaves one question on I3, and it is answered', (function () {
+    const st = Solar.levelState(levelById.I3, steady);
+    return st.of === 1 && st.state === 'done';
+  })());
+  check('pay that swings asks all three', Solar.levelState(levelById.I3, swings).of === 3);
+  check('the field gate is the same vocabulary a level uses',
+    /function fieldApplies/.test(fs.readFileSync(path.join(ROOT, 'shared/solar.js'), 'utf8')));
+  check('and the lever reads the answer before it guesses from the job',
+    /var said = h && h\.sketch \? h\.sketch\.payVaries : null;/.test(fs.readFileSync(path.join(ROOT, 'shared/levers.js'), 'utf8')));
+
   const skyStart = page.indexOf('The planets (D-321, opened up in D-322)');
   const skyBlock = page.slice(skyStart, page.indexOf('</script>', skyStart));
   check('a fact with an owner room links to it, and one without says so plainly', /'enter it'/.test(page) && /nowhere to type it yet/.test(page) && !/N\/A/.test(skyBlock));

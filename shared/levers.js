@@ -72,7 +72,14 @@
     if (c === 'dependents.any') return !!(h && Array.isArray(h.dependents) && h.dependents.length);
     if (c === 'debt.any') return !!(h && (h.debts || []).length);
     if (c === 'debt.studentLoan') return !!(h && (h.debts || []).some(function (d) { return d.type === 'student_loan'; }));
-    if (c === 'income.variable') { var so = situationOf(h); return so === 'selfEmployed' || so === 'mixed' || !!(h && h.variableIncome && (Money.isEntered(h.variableIncome.bufferMonths) || Money.isEntered(h.variableIncome.windowMonths))); }
+    /* Asked outright since D-325: a yes or a no settles it, and the old
+       inference from the job type only stands while nobody has said. */
+    if (c === 'income.variable') {
+      var said = h && h.sketch ? h.sketch.payVaries : null;
+      if (typeof said === 'boolean') return said;
+      var so = situationOf(h);
+      return so === 'selfEmployed' || so === 'mixed' || !!(h && h.variableIncome && (Money.isEntered(h.variableIncome.bufferMonths) || Money.isEntered(h.variableIncome.windowMonths)));
+    }
     if (c === 'cover.hsa') return !!(h && (h.assets || []).some(function (a) { return a.taxCharacter === 'hsa'; })) || !!(h && h.retirement && Money.isEntered(h.retirement.hsaContributedCents));
     if (c === 'cover.hdhp') return !!(h && h.retirement && h.retirement.onHdhp === true);
     if (c === 'asset.invested') return true;

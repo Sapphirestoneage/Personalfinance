@@ -16,8 +16,9 @@ Updated: 2026-09-20
   data layer is in (180 levels, 184 recipes, 17 moons, 98 moves, defaults,
   benchmarks) and `shared/solar.js` reads it. The Ledger's seventh hat, Planets
   (`#planets`), shows six planets by ten bands; every level opens to what it
-  needs, a tab says what finishing it unlocks, and 48 facts are typed right
-  there through their owner (D-324). `test/solar.js` lints it.
+  needs, a tab says what finishing it unlocks, and 56 facts are typed right
+  there through their owner (D-324). Band 1's six homeless facts now live in
+  `household.sketch` (D-325): 18 of its 24 answerable in place.
 - **D-321** no em dash on screen ("not yet" instead); **D-319** every room says how old its numbers are.
 - **A link opens to the field (D-323)**: an `#anchor` lands the question at the
   top, cursor in it; `test/anchors.js` opens all 70 in a browser.
@@ -25,10 +26,9 @@ Updated: 2026-09-20
   D-228 asks for has NOT shipped. Freeze holds (D-313).
 
 ## Next (top item first; one per session)
-1. **Band 1 end to end, the rest.** Nine band-1 facts have nowhere to live yet
-   (rough total saved, added a month, high-interest balance, last year's refund,
-   steady pay, what the spending total includes, two tax confirms). Then the
-   Tier 1 metrics and the unlock card. Under two minutes.
+1. **Band 1 end to end, the rest.** The two tax levels confirm rather than
+   collect (T1, T2): `Spine.confirm` exists, the screen needs the button. Then
+   the Tier 1 metrics computed and the unlock card. Under two minutes.
 2. **OWNER DECISION: inline asks elsewhere** (D-313 vs D-207). **Is the income
    floor means-tested?** (D-228, D-284.)
 3. Paystub parser and monthly update: not built. `benefit_cliffs_2026.json` unverified.

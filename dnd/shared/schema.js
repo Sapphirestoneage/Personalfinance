@@ -161,6 +161,17 @@
     'household.takeHome.monthlyCents':           { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'take-home pay a month, typed as such in the opening. Logged paychecks beat it; it beats the estimate from gross. Owned by the Ledger. D-312' },
     'household.takeHome.typedCents':             { class: 'raw',        unit: 'cents',   note: 'the figure as typed, per the cadence in `per`, so the box refills as it was filled. D-312' },
     'household.takeHome.per':                    { class: 'raw',        unit: 'enum',    values: ['month', 'week', 'fortnight', 'halfMonth'], note: 'what typedCents is per. D-312' },
+    /* The rough answers band 1 collects (D-325). Each one is a stand-in the
+       detail later supersedes: itemised debts beat highInterestCents, logged
+       contributions beat savedMonthlyCents, the tax room beats the refund.
+       A reader takes the detail whenever the detail exists. Owned by the
+       Ledger, asked on the Planets screen and in the Ledger's facts list. */
+    'household.sketch.payVaries':                { class: 'raw',        unit: 'bool',    note: 'pay swings month to month, said outright rather than inferred from the job type. null until asked. D-325' },
+    'household.sketch.spendingIncludesDebt':     { class: 'raw',        unit: 'bool',    note: 'the typed monthly spending total already has debt payments inside it, so the gap does not count them twice. D-325' },
+    'household.sketch.spendingIncludesSaving':   { class: 'raw',        unit: 'bool',    note: 'the typed monthly spending total already has saving inside it. D-325' },
+    'household.sketch.savedMonthlyCents':        { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'what actually gets added a month, anywhere. The gap says what could be saved; this says what is. The difference is the leak. D-325' },
+    'household.sketch.highInterestCents':        { class: 'raw',        unit: 'cents',   note: 'roughly how much is owed above about 8%, before every debt is itemised. Superseded by the debts list. D-325' },
+    'household.sketch.refundLastYearCents':      { class: 'raw',        unit: 'cents',   note: 'last year\'s refund, or what was owed as a negative. D-325' },
     'household.incomeBasis':                     { class: 'raw',        unit: 'enum',    values: ['earned', 'runRate'], note: 'which of the two annual figures feeds the model. DECISIONS.md D-047' },
     'retirement.contributionPercent':            { class: 'raw',        unit: 'percent', note: 'what you put into the workplace plan, as a % of salary. Owned by Where It Goes' },
     'retirement.rothContributedCents':           { class: 'raw',        unit: 'cents',   period: 'annual', note: 'into a Roth IRA so far this year' },
@@ -2248,6 +2259,23 @@
     return { monthlyCents: monthly, typedCents: typed, per: per };
   }
   function takeHomeOf(household) { return createTakeHome((household || {}).takeHome); }
+  /* The rough answers of band 1 (D-325). Six facts, each null until asked:
+     empty is not zero, so a blank refund is not "no refund" and a blank
+     high-interest balance is not "none". */
+  function createSketch(fields) {
+    var f = fields || {};
+    function tri(v) { return typeof v === 'boolean' ? v : null; }
+    function cents(v) { return Money.isEntered(v) ? Math.round(v) : null; }
+    return {
+      payVaries: tri(f.payVaries),
+      spendingIncludesDebt: tri(f.spendingIncludesDebt),
+      spendingIncludesSaving: tri(f.spendingIncludesSaving),
+      savedMonthlyCents: cents(f.savedMonthlyCents),
+      highInterestCents: cents(f.highInterestCents),
+      refundLastYearCents: cents(f.refundLastYearCents)
+    };
+  }
+  function sketchOf(household) { return createSketch((household || {}).sketch); }
   /** The typed take-home a month, or incomplete. */
   function typedTakeHomeMonthlyCents(household) {
     var t = takeHomeOf(household);
@@ -2347,6 +2375,7 @@
          Owned by Where It Goes. DECISIONS.md D-052. */
       retirement: createRetirement(f.retirement),
       takeHome: createTakeHome(f.takeHome),
+      sketch: createSketch(f.sketch),
       /* Your largest insurance deductible: the first thing a cash cushion
          has to cover, which is why Sleep At Night owns it. */
       insurance: createInsurance(f.insurance),
@@ -2678,6 +2707,17 @@
   /** Investments + retirement, the FIRE / retirement-benchmark numerator. */
   function investmentsCents(household) {
     return sumAssetsByCategory(household, ['investment', 'retirement']);
+  }
+
+  /** Cash and savings plus investments and retirement: the pile a plan starts
+   *  from, and the rough total band 1 asks for (A1, D-325). Property is not in
+   *  it, which is why this is not totalAssetsCents. */
+  function savedAndInvestedCents(household) {
+    var c = cashCents(household), i = investmentsCents(household);
+    if (!Money.isOk(c) && !Money.isOk(i)) return Money.incomplete('Neither part is entered yet.', ['cashSavings', 'investments']);
+    if (!Money.isOk(c)) return Money.incomplete('Cash is not entered yet.', ['cashSavings']);
+    if (!Money.isOk(i)) return Money.incomplete('Investments are not entered yet.', ['investments']);
+    return Money.ok(c.value + i.value);
   }
 
   /* "No debt" (meta.hasDebt === false, D-061) is an answer: with nothing
@@ -3363,6 +3403,7 @@
     HEALTH_TYPES: HEALTH_TYPES,
     createHealth: createHealth,
     createEstate: createEstate,
+    createSketch: createSketch, sketchOf: sketchOf, savedAndInvestedCents: savedAndInvestedCents,
     createDecumulation: createDecumulation,
     createTaxFacts: createTaxFacts,
     createCareer: createCareer,

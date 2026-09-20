@@ -100,14 +100,23 @@
     var v = box ? box[key] : undefined;
     return v !== undefined && v !== null && v !== '' && !(Array.isArray(v) && !v.length);
   }
+  /* A fact can be gated on its own, not just with its level: answering that
+     pay is steady takes the low and high month away, and the level is done
+     with the one question that was left (D-325). The phrase is the same
+     vocabulary a level uses. */
+  function fieldApplies(h, f) {
+    if (!f.appliesWhen || f.appliesWhen === 'always') return true;
+    return applies({ appliesWhen: f.appliesWhen }, h);
+  }
   function fieldState(h, level, f) {
+    var gated = fieldApplies(h, f);
     if (f.existing && Ownership && Ownership.FIELDS && Ownership.FIELDS[f.key]) {
       var d = null;
       try { d = Ownership.describe(f.key, h || {}, null); } catch (e) { d = null; }
-      if (d) return { key: f.key, label: f.label, filled: !!d.isSet, applies: d.applies !== false, guessed: !!d.guessed, href: d.href, display: d.display, own: true };
-      return { key: f.key, label: f.label, filled: false, applies: true, guessed: false, href: null, display: null, own: true };
+      if (d) return { key: f.key, label: f.label, filled: !!d.isSet, applies: gated && d.applies !== false, guessed: !!d.guessed, href: d.href, display: d.display, own: true };
+      return { key: f.key, label: f.label, filled: false, applies: gated, guessed: false, href: null, display: null, own: true };
     }
-    return { key: f.key, label: f.label, filled: stored(h, level, f.key), applies: true, guessed: false, href: null, display: null, own: false };
+    return { key: f.key, label: f.label, filled: stored(h, level, f.key), applies: gated, guessed: false, href: null, display: null, own: false };
   }
   function levelState(level, h) {
     var fields = (level.fields || []).map(function (f) { return fieldState(h, level, f); });
