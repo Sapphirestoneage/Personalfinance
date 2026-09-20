@@ -4,8 +4,7 @@ Updated: 2026-09-20
 
 ## Where it stands
 - **93 → 37 rooms**: the 32 of the merge programme with the Calendar back
-  (D-308), plus the five readings the Statement gave up in D-313, each a room
-  that reads the Ledger and writes nothing. `docs/room-map.json` is the cut list.
+  (D-308) plus the five readings of D-313. `docs/room-map.json` is the cut list.
 - **The calendar, redrawn (D-318)**: a phone calendar, one grid for both
   readings. **The phone walk, round two (D-317)**: Comfortable or Compact,
   the menu's dots explained, the ask rests or retires, the gap as a chip.
@@ -16,19 +15,22 @@ Updated: 2026-09-20
 - **New rooms**: The Bridge, Which Account, The Mix, The Documents, Left
   Behind (D-316). Worst plausible year is the Cushion's (D-314); pay still to
   come beside net worth (D-315).
-- **From main**: a bank or card statement in (D-306); the Calendar with your
-  own dates (D-308); all three intakes stay (D-309); plain words (D-310, D-311).
-- **The stranded audits ported (D-319)**: every room says how old its numbers
-  are; the example household says so on every screen, with a clear button; the
-  front page part-way through is a lodge. PRs #3, #4, #15 closed as superseded.
+- **From main**: a statement in (D-306); the Calendar (D-308); all three
+  intakes stay (D-309); plain words (D-310, D-311).
+- **The Solar System, step 1 (D-320)**: `docs/SOLAR-SYSTEM.md` is the spec.
+  The data layer is in: 180 levels, 184 recipes, 17 moons, 98 moves, defaults,
+  benchmarks, the lexicon; `test/solar.js` lints it. No UI yet, by the spec.
+- **The audits ported (D-319)**: every room says how old its numbers are; the
+  example says so with a clear button; the front page is a lodge part-way.
 - **Main is worked on directly by another lane**: merge it before every push.
   The reframe D-228 asks for has NOT shipped. Freeze holds (D-313).
 
 ## Next (top item first; one per session)
-1. **OWNER DECISION: inline asks elsewhere.** D-313 applies "facts are entered
-   in the Ledger only" to the Statement and the carved rooms; the Cushion,
-   Income, Protection and FIRE still ask a row inline (D-207). One door, or two.
-2. **OWNER DECISION: is the income floor means-tested?** (D-228, D-284.)
+1. **Solar System step 2: the engine.** The value store (number, none, rough,
+   unknown), the recipe evaluator, band and tier with shrinking planets,
+   give-or-take bands, the migration from the Ledger. Then band 1 end to end.
+2. **OWNER DECISION: inline asks elsewhere** (D-313 vs D-207). **Is the income
+   floor means-tested?** (D-228, D-284.)
 3. Paystub parser and monthly update: not built. `benefit_cliffs_2026.json` unverified.
 
 ## Known open

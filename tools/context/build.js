@@ -99,7 +99,7 @@ function decisionsIndexMd() {
 /* ---- DOC-MAP.md ---------------------------------------------------------- */
 function docMapMd() {
   const out = ['# Document map', GEN, '', 'Level 1 and 2 headings of the big documents with their line ranges, so a', 'section can be read with `sed -n START,ENDp FILE` instead of the whole file.', ''];
-  ['SPEC.md', 'ROADMAP.md', 'MONEY-MAP.md', 'DESIGN-AUDIT.md', 'LATER.md', 'README.md'].forEach(f => {
+  ['SPEC.md', 'ROADMAP.md', 'MONEY-MAP.md', 'DESIGN-AUDIT.md', 'LATER.md', 'README.md', 'docs/SOLAR-SYSTEM.md'].forEach(f => {
     const d = L.docHeadings(f);
     out.push('## ' + f + ' (' + d.total + ' lines)', '');
     d.heads.forEach(h => out.push((h.level === 2 ? '  - ' : '- ') + h.title + ' [' + h.start + '-' + h.end + ']'));

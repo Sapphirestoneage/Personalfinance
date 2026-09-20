@@ -16672,6 +16672,39 @@ and absent on older saves, which read as not demo and no days recorded.
 page at 390px with the example numbers, the clear button, and a part-way
 household; clean console.
 
+## D-320 — The Solar System, step 1: the levels, the recipes, the moons and their lints
+
+**Why.** The owner's master prompt (`docs/SOLAR-SYSTEM.md`) replaces the
+Ledger's progression and its 45-cell target with six planets of thirty
+levels, 184 metrics that light up as their inputs arrive, seventeen strategy
+moons and a home map, the Sky. Its build order starts with the data and its
+lints, no UI, and stops to show the owner.
+
+**Decision.** `data/levels.json` (180 levels with the card fields of section
+1.8; each field is an ownership id that migrates from its Ledger row, or a
+new key), `data/recipes.json` (141 metrics and 43 ratios, nine facets inside
+them; formulas named, computed in step 2), `data/moons.json` (17, with a data
+gate grammar), `data/moves.json` (98, a quick win with a dollar formula on
+every band of every planet), `data/defaults.json` (A2, each default naming
+its source and the level that replaces it; the tax and benefit tables the
+prompt names are the existing dated files, mapped, never copied),
+`data/benchmarks.json` (17 sources, 77 bands by lens). Part 5 extends
+`shared/glossary.json` with spec, lives, sourceLens and appliesWhen rather
+than opening a second glossary. `test/solar.js` is the lint suite the prompt
+asks for (band alignment, no fact twice, every payoff, every move and gate
+resolving, no N/A, no red, no em dash, the liquidity reveal, the Skill Tree,
+migration) and runs in CI.
+
+**Replaces or removes.** Nothing yet: step 1 adds no screen. The Ledger's
+progression and target go in step 4 (the Sky), per the prompt.
+
+**Stored shape.** No change yet. Step 2 adds `levels.<planet>.<key>` for
+new fields and the four value states; the migration keeps every Ledger row.
+
+**Verified.** `node test/solar.js` (5,008), `node test/run.js`, lane 2,
+`node tools/context/build.js --check`. Benchmark figures are as quoted in the
+prompt, unverified against their sources, and the file says so.
+
 ---
 
 # The Dungeons & Dividends entries

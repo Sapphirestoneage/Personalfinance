@@ -17,6 +17,7 @@ jobs:
       - name: Unit, D&D, export, spreadsheet
         run: |
           node test/run.js
+          node test/solar.js
           node dnd/test/run.js
           node test/export.js
           node test/xlsx.js
