@@ -3204,12 +3204,50 @@ section('Ratios');
     RatiosEngine.position(3, { direction: 'higher', good: null, warn: null }), null);
 
   const radar = RatiosEngine.radar(h, TABLES);
-  check('the radar plots every banded ratio that computed (14 before D-081, + shadow runway and worst-year coverage)', radar.value, 16);
+  check('the radar plots every banded ratio that computed (14 before D-081, + shadow runway and worst-year coverage, + the two of Amendment 1 B2)', radar.value, 18);
   checkTrue('and only ones with a band',
     radar.points.every(p => p.band && p.band.good !== null));
   checkTrue('every plotted point has a position inside the ceiling',
     radar.points.every(p => p.position >= 0 && p.position <= radar.ceiling));
   check('the comfortable ring sits at 1 by construction', radar.goodRing, 1);
+
+  /* Amendment 1, B2: two ratios the live tool never computed, and the ranking
+     that says which areas sit furthest outside their band. D-325. */
+  {
+    const consumer = RatiosEngine.byId('consumerDebtRatio');
+    const invest = RatiosEngine.byId('investmentRate');
+    checkTrue('both are ratios with a formula, a unit and what they need', [consumer, invest].every(r => r && r.formula && r.unit && r.needs));
+    const bands = require(path.join(ROOT, 'data/ratio_benchmarks.json')).bands;
+    check('consumer debt is read the lower the better', bands.consumerDebtRatio.direction, 'lower');
+    check('the investment rate the higher the better', bands.investmentRate.direction, 'higher');
+    const rows = RatiosEngine.all(h, TABLES).rows;
+    const cd = rows.filter(r => r.id === 'consumerDebtRatio')[0];
+    const ir = rows.filter(r => r.id === 'investmentRate')[0];
+    checkTrue('consumer debt counts cards and personal loans against a year of take-home', cd.ok && cd.value > 0 && cd.value < 1, cd.ok ? String(cd.value) : cd.result.reason);
+    checkTrue('...and a mortgage is not in it', (function () {
+      const noMortgage = JSON.parse(JSON.stringify(h));
+      noMortgage.debts = (noMortgage.debts || []).filter(d => d.type !== 'mortgage');
+      const r = RatiosEngine.all(noMortgage, TABLES).rows.filter(x => x.id === 'consumerDebtRatio')[0];
+      return r.ok && Math.abs(r.value - cd.value) < 1e-9;
+    })());
+    checkTrue('the investment rate is money into investments over gross', ir.ok && ir.value > 0 && ir.value < 1, ir.ok ? String(ir.value) : ir.result.reason);
+    checkTrue('...and cash piling up is not in it: it is the contributed sum, not the savings rate', (function () {
+      const richer = JSON.parse(JSON.stringify(h));
+      richer.assets = (richer.assets || []).map(a => a.category === 'cash' ? Object.assign({}, a, { valueCents: (a.valueCents || 0) + 50000000 }) : a);
+      const r = RatiosEngine.all(richer, TABLES).rows.filter(x => x.id === 'investmentRate')[0];
+      return r.ok && Math.abs(r.value - ir.value) < 1e-9;
+    })());
+    /* An empty household knows nothing, and an unknown is never a problem. */
+    const empty = RatiosEngine.furthestFromNormal(Schema.createHousehold({}), TABLES);
+    checkTrue('nothing entered ranks nothing, and says which silence it is', Money.isOk(empty) && empty.value.length === 0 && /nothing to rank|outside its band/.test(empty.note), empty.note);
+    const far = RatiosEngine.furthestFromNormal(h, TABLES);
+    checkTrue('the demo ranks at most three, worst first', Money.isOk(far) && far.value.length > 0 && far.value.length <= 3);
+    checkTrue('...ordered by how far past its own edge each one sits', far.value.every((x, i) => i === 0 || far.value[i - 1].share >= x.share));
+    checkTrue('...each naming its edge, its direction and its zone', far.value.every(x => x.label && Money.isEntered(x.edge) && /lower|higher/.test(x.direction) && /watch|out/.test(x.zone)));
+    checkTrue('...and a comfortable ratio is never ranked', far.value.every(x => x.zone !== 'good'));
+    const expl = require(path.join(ROOT, 'data/ratio_explainers.json')).ratios;
+    checkTrue('both explain themselves', ['consumerDebtRatio', 'investmentRate'].every(id => expl[id] && expl[id].what && expl[id].why && expl[id].improve));
+  }
 
   /* One drawing (D-323): shared/charts.js draws it for the front page and the Scorecard. */
   const Charts = require(path.join(ROOT, 'shared/charts.js'));

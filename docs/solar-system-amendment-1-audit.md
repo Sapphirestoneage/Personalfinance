@@ -34,9 +34,15 @@ the difference, not to start again.
 
 ## Real gaps, in the order they are worth doing
 
-1. **B2, five ratios the live tool does not compute.** `consumerDebtRatio`,
-   `investmentRate`, `basicLiquidity`, `mortgageQualRead`,
-   `furthestFromNormal`. The other forty-five in `engines/ratios.js` exist.
+1. ~~**B2, five ratios.**~~ **Done, D-325**, with two corrections to the
+   amendment. `consumerDebtRatio`, `investmentRate` and
+   `furthestFromNormal` are built. `basicLiquidity` was already live as
+   `liquidityRatio` (liquid assets over the full month), so it was not built
+   twice; the amendment says `runwayMonths` uses a bare-bones month, and in
+   this app it does not, it uses the full month too. The bare-bones figure
+   lives in `shadowRunway` and in `expenses.floor`. `mortgageQualRead`
+   belongs inside the housing room's mortgage capacity, not the ratio table,
+   and is still to do.
 2. **B1, `pointValue` and `lowBalanceDate`.** Both are derived from figures
    already entered and ask nothing new.
 3. **A4, three arrangements.** The twenty in `data/layouts.json` do not

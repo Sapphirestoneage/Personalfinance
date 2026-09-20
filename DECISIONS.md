@@ -16826,6 +16826,40 @@ gates. The Planets view at 390px with the example numbers: 17 of 161
 answered, six rows of ten bands, Assets opened to its bands and levels,
 clean console.
 
+## D-325 — Amendment 1, B2: consumer debt, the investment rate, and what is furthest off
+
+**Why.** Amendment 1 lists ratios the live tool computes and the Solar
+System spec dropped. Audited against `engines/ratios.js`, most were already
+there: `basicLiquidity` is `liquidityRatio`, and `investedShare` and
+`netWorthToIncome` already carry bands. Two were genuinely missing, and one
+ranking the amendment asks for had no home.
+
+**Decision.** `engines/ratios.js` gains `consumerDebtRatio` (card and
+personal loan balances over a year of take-home; a mortgage, a car and a
+student loan are read elsewhere against what they bought) and
+`investmentRate` (money into investments over gross, which is not the
+savings rate: cash piling up counts there and not here, and the sum is
+`CashFlow.savingsRateContributed`, never a second one). Both get a band in
+`data/ratio_benchmarks.json` marked as a stated convention, and an entry in
+`data/ratio_explainers.json`. `Ratios.furthestFromNormal` ranks the three
+ratios standing furthest outside their band, worst first, by the share of
+its own edge each one is past, so months and rates can be compared; it
+answers a different question from the FI-date levers and is labelled so. A
+ratio with no band or one that could not be worked out is never ranked: an
+unknown is not a problem, and the two silences say which they are.
+
+**Replaces or removes.** Nothing. `docs/solar-system-amendment-1-audit.md`
+records what the amendment asks for that is already built, so no second
+copy of DRAFTT, "not for me", the arrangements file or the settings file
+gets made.
+
+**Stored shape.** No change; both ratios read figures already entered.
+
+**Verified.** `node test/run.js` (both on the demo, the mortgage excluded
+from consumer debt, cash excluded from the investment rate, the ranking
+ordered and capped at three, a comfortable ratio never ranked, the empty
+household's silence named). The radar now plots eighteen.
+
 ---
 
 # The Dungeons & Dividends entries
