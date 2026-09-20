@@ -98,9 +98,14 @@
      incomplete rather than silently equal to the excluding-match one: an
      unanswered match is not a match of zero.                              */
 
+  /* The month's spending, everywhere in this file, is the CLEAN one
+     (D-327): if the person said their typed total already had the debt
+     payments or the saving inside it, those come out first, so the rate, the
+     cushion and the FI number each count them once. Unanswered, it is the
+     total as typed, which is what this file always read. */
   function savingsRate(household, tables) {
     var gross = Schema.grossAnnualIncomeCents(household);
-    var monthlyExpenses = Schema.monthlyExpensesCents(household);
+    var monthlyExpenses = Schema.cleanMonthlySpendingCents(household);
     /* Take-home minus spending - never gross minus spending. The one
        take-home figure is shared/schema.js's (D-171). Typed take-home
        (D-312) stands without a gross: the rate is then "from take-home",
@@ -176,7 +181,7 @@
 
   function emergencyFundMonths(household) {
     var cash = Schema.cashCents(household);
-    var expenses = Schema.monthlyExpensesCents(household);
+    var expenses = Schema.cleanMonthlySpendingCents(household);
     var result = Money.safeDivide(
       Money.isOk(cash) ? cash.value : null,
       Money.isOk(expenses) ? expenses.value : null,
@@ -233,7 +238,7 @@
      it to storage (SPEC.md §6).                                          */
 
   function fireNumber(household, localOverrides) {
-    var expenses = Schema.monthlyExpensesCents(household);
+    var expenses = Schema.cleanMonthlySpendingCents(household);
     if (!Money.isOk(expenses)) {
       return Money.incomplete('Add your monthly expenses to see your FIRE number.',
         ['monthlyExpenses']);

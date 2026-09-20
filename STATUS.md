@@ -16,9 +16,9 @@ Updated: 2026-09-20
   data layer is in (180 levels, 184 recipes, 17 moons, 98 moves, defaults,
   benchmarks) and `shared/solar.js` reads it. The Ledger's seventh hat, Planets
   (`#planets`), shows six planets by ten bands; every level opens to what it
-  needs, a tab says what finishing it unlocks, and 56 facts are typed right
-  there through their owner (D-324). Band 1's six homeless facts now live in
-  `household.sketch` (D-325): 18 of its 24 answerable in place.
+  needs, 56 facts are typed there through their owner (D-324), band 1's six
+  homeless facts live in `household.sketch` (D-325), and the unlocks tab shows
+  each Tier 1 reading's figure from `engines/recipes.js` (D-327).
 - **D-321, D-326** no em dash on screen in any spelling, the escape included; **D-319** every room says how old its numbers are.
 - **A link opens to the field (D-323)**: an `#anchor` lands the question at the
   top, cursor in it; `test/anchors.js` opens all 70 in a browser.
@@ -26,11 +26,12 @@ Updated: 2026-09-20
   D-228 asks for has NOT shipped. Freeze holds (D-313).
 
 ## Next (top item first; one per session)
-1. **Band 1 end to end, the rest.** The two tax levels confirm rather than
-   collect (T1, T2): `Spine.confirm` exists, the screen needs the button. Then
-   the Tier 1 metrics computed and the unlock card. Under two minutes.
-2. **OWNER DECISION: inline asks elsewhere** (D-313 vs D-207). **Is the income
-   floor means-tested?** (D-228, D-284.)
+1. **OWNER DECISION: which saving drives the FI date?** It is built on the gap
+   (what COULD be saved). Band 1 now asks what IS saved (A3), $705/mo apart
+   for the example. Then: T1 and T2 confirm rather than collect, and the
+   unlock card.
+2. **OWNER DECISIONS held**: inline asks elsewhere (D-313 vs D-207); is the
+   income floor means-tested? (D-228, D-284.)
 3. Paystub parser and monthly update: not built. `benefit_cliffs_2026.json` unverified.
 
 ## Known open

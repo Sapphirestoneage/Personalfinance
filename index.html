@@ -1564,7 +1564,10 @@
     Spine.updateProfile({
       people: d.people, filingStatus: d.filingStatus, state: d.state,
       assets: d.assets, debts: d.debts, expenses: d.expenses,
-      capturingFullMatch: d.capturingFullMatch, retirement: d.retirement, insurance: d.insurance
+      capturingFullMatch: d.capturingFullMatch, retirement: d.retirement, insurance: d.insurance,
+      /* The rough answers of band 1 too (D-325), so the example household is
+         a household that has answered band 1 rather than one with holes. */
+      sketch: d.sketch
     });
   });
 

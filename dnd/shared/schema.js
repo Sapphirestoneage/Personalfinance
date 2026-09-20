@@ -2945,10 +2945,31 @@
      "Left", Debt Payoff's extra when the box is blank, and anything else
      that asks read THIS, so two rooms can never disagree about it. A
      negative gap is a real answer: the month costs more than comes in. */
+  /** The month's spending with the things that are not spending taken out
+   *  (D-327). Someone who typed one total for the month may have counted the
+   *  debt payments or the saving inside it; E3 asks, and this is the only
+   *  place the answer is applied, so nothing is counted twice and nothing is
+   *  counted differently in two rooms. Unanswered, the total stands as typed,
+   *  which is what every reader assumed before the question existed. */
+  function cleanMonthlySpendingCents(household) {
+    var spend = monthlyExpensesCents(household);
+    if (!Money.isOk(spend)) return spend;
+    var s = sketchOf(household), out = spend.value, stripped = [];
+    if (s.spendingIncludesSaving === true && Money.isEntered(s.savedMonthlyCents)) {
+      out -= s.savedMonthlyCents; stripped.push('saving');
+    }
+    if (s.spendingIncludesDebt === true) {
+      var mins = monthlyDebtPaymentsCents(household);
+      if (Money.isOk(mins)) { out -= mins.value; stripped.push('debt payments'); }
+    }
+    return Money.ok(Math.max(0, Math.round(out)), {
+      source: spend.source || null, typedCents: spend.value, stripped: stripped
+    });
+  }
   function monthlyGapCents(household, tables) {
     var take = takeHomeMonthlyCents(household, tables);
     if (!Money.isOk(take)) return take;
-    var spend = monthlyExpensesCents(household);
+    var spend = cleanMonthlySpendingCents(household);
     if (!Money.isOk(spend)) return spend;
     var mins = monthlyDebtPaymentsCents(household);
     if (!Money.isOk(mins)) return mins;
@@ -3404,6 +3425,7 @@
     createHealth: createHealth,
     createEstate: createEstate,
     createSketch: createSketch, sketchOf: sketchOf, savedAndInvestedCents: savedAndInvestedCents,
+    cleanMonthlySpendingCents: cleanMonthlySpendingCents,
     createDecumulation: createDecumulation,
     createTaxFacts: createTaxFacts,
     createCareer: createCareer,
