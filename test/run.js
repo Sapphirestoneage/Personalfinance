@@ -747,7 +747,7 @@ const RULES = TABLES.debtRules;
   checkTrue('nothing free reads as the minimums alone, never as $0 extra', /leaves nothing free after spending and the minimums, so this is the minimums alone/.test(page));
   checkTrue('the room works the extra out through the engine when the box is blank (D-190)', /Debt\.extraCapacity\(h, TABLES, \{ estimateFrom: from, typedCents: extraCents \}\)/.test(page) && /effectiveExtraCents/.test(page) && !/function computedExtraCents/.test(page));
   checkTrue('...the estimate leans on the intake guesses, so a pay is enough for a figure', /SLAF\.Gate\.fillGuesses\(h, TABLES, null\)/.test(page));
-  checkTrue('...and the two figures show under the box, each saying what it came from', /id="extra-basis"/.test(page) && /row\('Estimate'/.test(page) && /row\('Realized'/.test(page) && /closed month/.test(page) && /guessed, fix it in Start Here/.test(page));
+  checkTrue('...and the two figures show under the box, each saying what it came from', /id="extra-basis"/.test(page) && /row\('The gap'/.test(page) && /row\('Realized'/.test(page) && /closed month/.test(page) && /guessed, fix it in Start Here/.test(page));
   checkTrue('...a stale engine falls back to the typed figure, never a crash', /typeof Debt\.extraCapacity !== 'function'/.test(page));
   checkTrue('the room shows the three lines above the figures, from the FOO table', /Debt\.milestones\(plan, h, RULES, \{ highInterestRate: FOO && FOO\.thresholds/.test(page) && /Credit cards gone/.test(page) && /Everything gone/.test(page) && /load\(\['debtRules', 'fooRules', 'effectiveTaxRates', 'onepagerDefaults'(, '[a-zA-Z]+')*\]\)/.test(page));
   checkTrue('a second ring: interest over the whole plan, by debt, from the payoffs (D-190)', /Interest over the plan, by debt/.test(page) && /p\.interestPaidCents/.test(page) && /plan\.totalInterestCents\), small: 'until it is all gone'/.test(page));
@@ -836,7 +836,7 @@ const RULES = TABLES.debtRules;
   checkTrue('the ring and the bars are drawn from the engine, never typed', /Charts\.donut\(\{\s*title: 'The month, by bucket'/.test(page) && /CashFlow\.logByFatBucket\(h, TABLES\.expenseCategories, m\)/.test(page));
   checkTrue('the bars carry a legend and both figures', /class="eva-legend"/.test(page) && /<small>of ' \+ \(hasEst/.test(page));
   checkTrue('a form for a named line: what, how much, every, which kind', /id="line-form"/.test(page) && /id="n-every"/.test(page) && /<option value="subscriptions">Subscription<\/option>/.test(page) && /value="fortnightly"/.test(page));
-  checkTrue('...written through the spine as a month, remembering how it was known', /everyCents: amount/.test(page) && /amountCents: monthly, period: 'monthly', source: 'manual'/.test(page) && /Spine\.upsertExpenseEntry\(Schema\.createExpenseEntry\(\{\s*id: 'ln_'/.test(page));
+  checkTrue('...written through the spine as a month, remembering how it was known', /everyCents: amount/.test(page) && /amountCents: monthly, period: 'monthly', source: 'manual'/.test(page) && /Spine\.upsertExpenseEntry\(Schema\.createExpenseEntry\(Object\.assign\(\{\}, was \|\| \{\}, \{\s*id: EDITING \|\| \('ln_'/.test(page));
   checkTrue('subscriptions have their own list, totalled a month and a year', /id="subs-list"/.test(page) && /' a year' : ''/.test(page));
   checkTrue('the category boxes ignore named lines, so nothing counts twice', /&& !e\.descriptor && e\.active !== false\) return e;/.test(page));
   check('one line under each of F, A and T says what its lines add up to', (page.match(/<span class="bucket-lines" data-bucket-hint="/g) || []).length, 3);
@@ -9062,7 +9062,7 @@ section('The Calendar comes back, with your own dates on it (D-308)');
   checkTrue('the picture draws a date of yours on its day and lists it without an amount', /class="cal-own" title="Apply for the travel card"/.test(html) && /is-note/.test(html) && /tn-amt is-note">To do</.test(html) && /cal-own is-done is-deadline/.test(html));
   checkTrue('the list is the room\'s own: no ownership field, no DAITE path, no dot', !Ownership.FIELDS.calendarEvents && !require(path.join(ROOT, 'shared/daite.js')).PATHS.calendarEvents && Registry.daite('calendar').writes.length === 0);
   const room = fs.readFileSync(path.join(ROOT, 'rooms/calendar.html'), 'utf8');
-  checkTrue('the room is live again, draws the shared picture, and writes only its own dates', !/http-equiv="refresh"/.test(room) && /DayByDay\.html\(r\)/.test(room) && /Spine\.set\('calendar\.events'/.test(room) && !/Spine\.set\('calendar\.(cadence|bills|nextPaydayDay)/.test(room));
+  checkTrue('the room is live again, draws the shared picture, and writes only its own dates', !/http-equiv="refresh"/.test(room) && /DayByDay\.monthView\(r, \{ month: VIEW/.test(room) && /Spine\.set\('calendar\.events'/.test(room) && !/Spine\.set\('calendar\.(cadence|bills|nextPaydayDay)/.test(room));
   checkTrue('every arrangement places it beside The Month', require(path.join(ROOT, 'data/layouts.json')).layouts.every(l => l.groups.some(g => (g.rooms || []).indexOf('calendar') !== -1)));
   checkTrue('the registry and the map both know it', !!Registry.byId('calendar') && JSON.parse(fs.readFileSync(path.join(ROOT, 'docs/room-map.json'), 'utf8')).rooms.some(x => x.id === 'calendar'));
 })();
@@ -9234,7 +9234,7 @@ section('What hits your account, and when: the month as turns, in Cash Flow and 
   /* The Money Calendar is The Month's dates reading since D-275: its slice of the page. */
   const calRoom = cf.slice(cf.indexOf('READING view-the-dates'));
   checkTrue('The Month shows it and recalculates on every render', /id="day-by-day"/.test(cf) && /engines\/calendar\.js/.test(cf) && /shared\/daybyday\.js/.test(cf) && /renderDayByDay\(h\)/.test(cf) && /DayByDay\.html\(r\)/.test(cf));
-  checkTrue('the dates reading draws the same, and holds no copy of the grid', /DayByDay\.html\(/.test(calRoom) && !/cal-grid/.test(calRoom));
+  checkTrue('the dates reading draws the same month view, and holds no copy of the grid (D-318)', /DayByDay\.monthView\(/.test(calRoom) && /DayByDay\.chart\(/.test(calRoom) && !/cal-grid/.test(calRoom));
   checkTrue('the registry names the section', Registry.byId('cash-flow').subsections.some(x => x.id === 'day-by-day'));
 })();
 
@@ -13840,7 +13840,7 @@ section('The doors, the levels, the inline asks, the understanding line (D-207)'
   checkTrue('the ask mounts from Progress.mount, so no room needs wiring, never on the Ledger or Start Here', /Ask\.mount\(roomId, host\)/.test(prog) && /\['ledger', 'start'\]/.test(prog));
   const askSrc = fs.readFileSync(path.join(ROOT, 'shared/ask.js'), 'utf8');
   checkTrue('the ask writes through the owner and declares LIVE-FORM (setNotSure is a mark, never a value)', /Ownership\.write\(p\.row\.id, value, ctx\)/.test(askSrc) && /LIVE-FORM: built once/.test(askSrc) && !/Spine\.(set(?!NotSure)|upsert)/.test(askSrc));
-  checkTrue('at most one ask per visit', /doc\.getElementById\('slaf-ask'\)\) return null/.test(askSrc));
+  checkTrue('at most one ask per visit', /doc\.getElementById\('slaf-ask'\) \|\| askOff\(\)\) return null/.test(askSrc));
   const led = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
   checkTrue('the Ledger home asks which door, shows six, one recommended with its reason', /Which one do you want to go into now\?/.test(led) && /id="door-you"/.test(led) && /is-recommended/.test(led) && /rec\.reason/.test(led));
   checkTrue('a door shows the level, the next level’s unlocks, Confirm these, Add these, N more unlock', /Confirm these/.test(led) && /Add these/.test(led) && /more unlock as you use the app/.test(led) && /Level ' \+ v\.level \+ ' of 4/.test(led));
@@ -14635,6 +14635,141 @@ section('J4, J5: bank CSV import on-device, the subscription finder (D-215)');
   checkTrue('Money Wrapped gains the leak line only when something was found', Wrapped.year(Spine.getProfile(), [], T, {}).lines.some(l => l.id === 'leak') && !Wrapped.year(Demo.build(), [], T, {}).lines.some(l => l.id === 'leak'));
   /* The finder is a reading of Expenses since D-267. */
   checkTrue('the reading never cancels anything: it writes a decision and says so', (function () { const e = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8'); return /a reminder, never an action|a note to\n?\s*yourself/.test(e) && !/cancelSubscription|fetch\(/.test(e); })());
+})();
+
+/* ==========================================================================
+   D-318: the calendar, the way a phone calendar is used
+   ========================================================================== */
+section('The calendar (D-318)');
+(function () {
+  const Cal = require(path.join(ROOT, 'engines/calendar.js'));
+  const DayByDay = require(path.join(ROOT, 'shared/daybyday.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Ref.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } });
+  const h = Demo.build();
+  h.calendar = { cadence: 'fortnightly', nextPaydayDay: 25 };
+  const r = Cal.month(h, T, { days: 45 });
+  check('the engine takes a longer window when asked, never a shorter one', r.days.length + ':' + Cal.month(h, T, { days: 5 }).days.length, '45:31');
+  const ym = r.startDate.slice(0, 7);
+  const y = +ym.slice(0, 4), mo = +ym.slice(5, 7), dim = new Date(y, mo, 0).getDate();
+  const view = DayByDay.monthView(r, { month: ym, selected: r.startDate });
+  check('the month view is the whole calendar month, a button a day', (view.match(/<button type="button" class="cal-cell[^"]*" data-cal-day="/g) || []).length, dim);
+  checkTrue('with a header naming the month and arrows either side', /<div class="cal-nav"><button[^>]*data-cal-nav="-1"/.test(view) && /<h3>[A-Z][a-z]+ \d{4}<small>this month<\/small><\/h3>/.test(view) && /data-cal-nav="1"/.test(view));
+  checkTrue('today is ringed and selected, and the tapped day’s sheet names the day', /class="cal-cell is-today[^"]*is-selected/.test(view) && /<div class="cal-sheet-head"><b>[A-Z][a-z]{2}, [A-Z][a-z]{2} \d+<\/b>/.test(view));
+  checkTrue('a payday is a green pill on its cell and a line on its sheet', /<i class="cal-in"[^>]*>\+\$/.test(view));
+  checkTrue('the strip sums the month in and out, and names the low point on its date', /<p class="cal-sum"><span class="is-in">\+\$/.test(view) && /<span class="is-out">−\$/.test(view) && /cal-sum-net/.test(view) && (!/cal-sum-low/.test(view) || /low \$[\d,]+ on [A-Z][a-z]{2} \d+</.test(view)));
+  checkTrue('what is coming up is listed for this month only', /<details class="cal-up" open><summary>Coming up in the next 14 days/.test(view));
+  const next = DayByDay.monthView(r, { month: (function () { const d = new Date(y, mo, 1); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); })() });
+  checkTrue('a later month is the same projection carried on, says so, and lists nothing as coming up', /Balances run from today/.test(next) && !/cal-upcoming/.test(next) && !/this month/.test(next));
+  const past = DayByDay.monthView(r, { month: ym, selected: ym + '-03', past: [{ date: ym + '-03', label: 'Trader Joes', cents: 6420, kind: 'log' }] });
+  checkTrue('a day already gone shows what the log says went out, and its sheet says it already happened', /data-cal-day="[\d-]+03"[^>]*>[\s\S]*?<i class="cal-out"[^>]*>−\$64/.test(past) && /<span>already happened<\/span>/.test(past) && /<span class="ds-kind">Logged<\/span><span class="ds-what">Trader Joes<\/span>/.test(past));
+  const empty = DayByDay.monthView(Cal.month(Schema.createHousehold({}), T, {}), { month: ym, past: [] });
+  checkTrue('a month that cannot be drawn says why and still shows its days', /class="cal-why">How often are you paid/.test(empty) && (empty.match(/data-cal-day="/g) || []).length === dim);
+  const cf = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8');
+  checkTrue('the reading owns two states, the month shown and the day tapped, and re-renders through the room', /var VIEW = TODAY\.slice\(0, 7\), SEL = TODAY;/.test(cf) && /data-cal-nav/.test(cf) && /data-cal-day/.test(cf) && /mounted\.render\(\)/.test(cf));
+  checkTrue('it runs the engine from today to the end of the month on screen', /Cal\.month\(h, T, \{ days: Math\.max\(31, daysToEnd\(VIEW\)\) \}\)/.test(cf));
+  checkTrue('past days come from the log, through the one cash flow engine', /CashFlow\.logInMonth\(h, T\.expenseCategories, VIEW\)/.test(cf) && /r\.date < TODAY/.test(cf));
+  const theme = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  checkTrue('a day cell and an arrow are finger-sized', /\.cal-cell \{[^}]*min-height: 64px/.test(theme) && /\.cal-nav-btn \{[^}]*width: 44px; height: 44px/.test(theme));
+  checkTrue('the registry names the card', Registry.byId('cash-flow').subsections.some(x => x.id === 'cal-chart' && x.label === 'The calendar'));
+})();
+
+/* ==========================================================================
+   D-317: the phone walk, round two — size, the dots, the ask, the gap
+   ========================================================================== */
+section('The phone walk, round two (D-317)');
+(function () {
+  const pages = ['index.html', 'map.html'].filter(f => fs.existsSync(path.join(ROOT, f))).concat(fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => /\.html$/.test(f)).map(f => 'rooms/' + f));
+  /* Size: the second script on every Money Rooms page, before any paint. */
+  const noSize = [], late = [];
+  pages.forEach(f => {
+    const t = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    const srcs = [...t.matchAll(/<script[^>]*src="([^"]+)"/g)].map(m => m[1]);
+    if (!srcs.some(x => /shared\/size\.js$/.test(x))) noSize.push(f);
+    else if (!/shared\/size\.js$/.test(srcs[1] || '')) late.push(f);
+  });
+  checkTrue('shared/size.js is on every Money Rooms page (' + pages.length + ')', noSize.length === 0, noSize.join(','));
+  checkTrue('and is the second script, right after errlog.js, so a compact page never paints large', late.length === 0, late.join(','));
+  checkTrue('the D&D pages do not carry it (their shared/ is vendored)', !fs.readdirSync(path.join(ROOT, 'dnd')).filter(f => /\.html$/.test(f)).some(f => /size\.js/.test(fs.readFileSync(path.join(ROOT, 'dnd', f), 'utf8'))));
+  const sizeSrc = fs.readFileSync(path.join(ROOT, 'shared/size.js'), 'utf8');
+  checkTrue('size.js reads the preference straight from storage and marks the root, nothing else', /slaf\.prefs\.v1/.test(sizeSrc) && /classList\.add\('is-compact'\)/.test(sizeSrc) && !/fetch\(|innerHTML/.test(sizeSrc));
+  const theme = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  const zoom = /html\.is-compact \{ zoom: (0\.\d+); \}/.exec(theme);
+  checkTrue('compact is one rule in the theme, and 44px stays above the 32px floor under it', !!zoom && 44 * Number(zoom[1]) >= 32);
+  const settings = fs.readFileSync(path.join(ROOT, 'rooms/settings.html'), 'utf8');
+  checkTrue('Settings offers Comfortable or Compact and applies it at once', /data-size="' \+ esc\(v\)/.test(settings) && /classList\.toggle\('is-compact'/.test(settings) && /Prefs\.set\('size'/.test(settings));
+  checkTrue('and a switch that turns the top-of-room question off everywhere', /data-pref-toggle="ask\.off"/.test(settings) && /id="ask"/.test(settings));
+  checkTrue('the registry lists both cards', Registry.byId('settings').subsections.some(x => x.id === 'size') && Registry.byId('settings').subsections.some(x => x.id === 'ask'));
+
+  /* Every room's stylesheet parses: the merge tool once stamped a selector
+     into a comment and doubled a media query, and the captions of a card
+     ran into one word on a phone. */
+  const broken = [];
+  pages.forEach(f => {
+    const t = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    [...t.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].forEach(m => {
+      const css = m[1], body = css.replace(/\/\*[\s\S]*?\*\//g, '');
+      const bal = (body.match(/\{/g) || []).length - (body.match(/\}/g) || []).length;
+      if (bal) broken.push(f + ' braces ' + bal);
+      if (/\*\/ \{\s*$/m.test(css)) broken.push(f + ' a comment opens a block');
+      const lines = css.split('\n');
+      for (let i = 1; i < lines.length; i++) if (/^\s*@media/.test(lines[i]) && lines[i].trim() === lines[i - 1].trim()) broken.push(f + ' doubled @media');
+    });
+  });
+  check('every room stylesheet parses: balanced braces, no comment opening a block, no doubled media query', broken.join('; '), '');
+
+  /* The menu's dots say what they mean, and a tap lists what is missing. */
+  const Progress = require(path.join(ROOT, 'shared/progress.js'));
+  const menu = Progress.menuHtml('car');
+  checkTrue('the menu carries a key for the three dots and says a dot can be tapped', /class="slaf-menu-key"/.test(menu) && /tap a dot for what is missing/.test(menu));
+  /* The dots need a household in a browser; here the builder is read. */
+  const progSrc = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+  checkTrue('every dot in the numbers group is a button that names the room it belongs to', /<button type="button" class="slaf-dot is-' \+ status \+ '" data-need="' \+ escapeHtml\(room\.id\)/.test(progSrc) && !/<i class="slaf-dot is-' \+ status/.test(progSrc));
+  checkTrue('and each has a hidden list of the blank rows, every one a link into the box that takes it', /<ul class="slaf-menu-need" data-need-for="' \+ escapeHtml\(roomId\) \+ '" hidden>/.test(progSrc) && /Ownership\.linkTo\(roomId, d && d\.anchor, null\)/.test(progSrc) && /if \(st\) out\.push\(needHtml\(r\.id, readings\)\);/.test(progSrc));
+  checkTrue('a tap on a dot opens the list and never follows the link', /button\[data-need\]/.test(progSrc) && /e\.preventDefault\(\); e\.stopPropagation\(\);/.test(progSrc));
+
+  /* The ask: named, rested, retired, or off. */
+  const Ask = require(path.join(ROOT, 'shared/ask.js'));
+  check('an item with no label is named by where it sits', Ask.itemLabel({ institution: 'Example Bank', accountType: 'k401', last4: '1003' }).replace(/·/g, '·'), Schema.whereItSits({ institution: 'Example Bank', accountType: 'k401' }) + ' ••1003');
+  check('one with nothing at all says so, rather than pointing at "this one"', Ask.itemLabel({ category: 'retirement' }), 'the retirement account with no name yet');
+  const store = {};
+  const fakeLS = { getItem: k => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: k => { delete store[k]; }, key: i => Object.keys(store)[i] || null, get length() { return Object.keys(store).length; } };
+  Object.defineProperty(global, 'localStorage', { value: fakeLS, configurable: true, writable: true });
+  const Prefs = require(path.join(ROOT, 'shared/prefs.js'));
+  Prefs.reset();
+  check('nothing is quiet to begin with', Ask.quiet('assetValue:a1') + ':' + Ask.askOff(), 'false:false');
+  Ask.rest('assetValue:a1');
+  checkTrue('Not now rests a question for a fortnight, as a preference, never on the household', Ask.quiet('assetValue:a1') && Ask.REST_DAYS === 14 && /^\d{4}-\d{2}-\d{2}$/.test(Prefs.get('ask.rested', {})['assetValue:a1']));
+  Ask.retire('idrShare');
+  checkTrue('Don’t ask this again retires it', Ask.quiet('idrShare') && Prefs.get('ask.never', []).indexOf('idrShare') === 0);
+  Prefs.set('ask.off', true);
+  checkTrue('and the switch turns the ask off everywhere', Ask.askOff());
+  Prefs.reset();
+  const askSrc = fs.readFileSync(path.join(ROOT, 'shared/ask.js'), 'utf8');
+  checkTrue('the card carries the retire button and says how long Not now rests it', /data-ask-never/.test(askSrc) && /rests it for two weeks/.test(askSrc) && /settings\.html#ask/.test(askSrc));
+  checkTrue('a rested or retired question is skipped when the next one is picked', /!quiet\(r\.id \+ ':' \+ items\[j\]\.id\)/.test(askSrc) && /if \(quiet\(r\.id\)\) continue;/.test(askSrc));
+
+  /* The gap is one function. */
+  const Debt = require(path.join(ROOT, 'engines/debt.js'));
+  const Ref = require(path.join(ROOT, 'shared/reference.js'));
+  const T = {};
+  Object.keys(Ref.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', Ref.TABLE_FILES[k]), 'utf8')); } catch (e) { /* skip */ } });
+  const demo = Demo.build();
+  const gap = Schema.monthlyGapCents(demo, T);
+  checkTrue('Schema.monthlyGapCents is take-home less the four numbers less the minimums, and names its parts', Money.isOk(gap) && gap.value === gap.takeHomeCents - gap.spendingCents - gap.minimumsCents && gap.takeHomeCents === Schema.takeHomeMonthlyCents(demo, T).value && gap.minimumsCents === Schema.monthlyDebtPaymentsCents(demo).value);
+  check('Debt Payoff’s estimate of the extra IS the gap', JSON.stringify(Debt.extraCapacity(demo, T, {}).estimate), JSON.stringify(gap));
+  const cf = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8');
+  checkTrue('Cash Flow’s Left reads the same function', /Schema\.monthlyGapCents\(h, TABLES\)/.test(cf));
+  checkTrue('and each glance tile opens to its parts, every part a link through ownership', /class="t-parts"/.test(cf) && /Ownership\.linkTo\(/.test(cf) && /What goes into this/.test(cf) && /less debt minimums/.test(cf));
+  const dp = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
+  checkTrue('the extra box offers the gap as a suggested chip, through the shared Suggest, only while blank and above zero', /SLAF\.Suggest\.show\(box, \{ value: est\.value \/ 100/.test(dp) && /c\.basis !== 'typed' && est && est\.value > 0/.test(dp));
+  checkTrue('and the row is named the gap, the same figure Cash Flow calls Left', /row\('The gap'/.test(dp) && /cash-flow\.html#glance/.test(dp));
+  checkTrue('Convenience says why it matches when nothing is tagged', /Nothing tagged yet/.test(dp) && /anyTag/.test(dp));
+
+  /* A named line can be edited. */
+  const exp = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8');
+  checkTrue('every named line has Edit beside Remove, and Edit loads the one form built once', /data-line-edit="/.test(exp) && /function editLine\(id\)/.test(exp) && /Save the line/.test(exp) && /Object\.assign\(\{\}, was \|\| \{\}/.test(exp));
 })();
 
 /* ==========================================================================
@@ -16250,6 +16385,133 @@ section('The five-input opening (D-312): the engine');
   check('without a gross the rate is from take-home and says so', sr.basis + ':' + Math.round(sr.value * 1000), 'take-home:375');
   checkTrue('the Ledger owns the row and the registry agrees', Ownership.ownerOf('takeHomeMonthly').owner === 'ledger' && Ownership.ownerOf('takeHomeMonthly').agrees === true);
   checkTrue('the D&D schema copy carries the block', fs.readFileSync(path.join(ROOT, 'dnd/shared/schema.js'), 'utf8').indexOf('createTakeHome') !== -1);
+})();
+
+section('Every screen says how old its numbers are; the example says so; the lodge knows you (D-319)');
+
+(function () {
+  const Staleness = require(path.join(ROOT, 'shared/staleness.js'));
+  const DAY = 86400000;
+  const now = Date.parse('2026-09-20T12:00:00Z');
+  const tableWas = Staleness.tableInUse();
+  Staleness.use(require(path.join(ROOT, 'data/staleness.json')));
+
+  /* -- Staleness.forFields / line: the fold a room header needs ------------ */
+  {
+    const h = Schema.createHousehold({});
+    check('nothing entered, nothing to date: line is null', Staleness.line(h, ['cashSavings', 'monthlyExpenses'], now), null);
+    check('… and forFields counts zero entered', Staleness.forFields(h, ['cashSavings'], now).entered, 0);
+
+    h.meta.updatedAt = new Date(now - 3 * DAY).toISOString();
+    const undated = Staleness.line(h, ['cashSavings'], now);
+    checkTrue('saved before dates were kept: the line says so, never a verdict', undated && /not dated/.test(undated.text) && undated.stale === false, JSON.stringify(undated));
+
+    h.meta.fields = { cashSavings: { asOf: new Date(now - 45 * DAY).toISOString(), source: 'typed', confidence: 'sure' },
+                      monthlyExpenses: { asOf: new Date(now - 2 * DAY).toISOString(), source: 'typed', confidence: 'sure' } };
+    const s = Staleness.forFields(h, ['cashSavings', 'monthlyExpenses', 'grossIncome'], now);
+    check('three asked, two dated (the third rides on the save stamp)', s.entered + ':' + s.dated + ':' + s.undated, '3:2:1');
+    check('the oldest is the cash, 45 days', s.oldest.fieldId + ':' + s.oldest.days, 'cashSavings:45');
+    check('cash past 30 days is the one stale row', s.stale.length + ':' + s.stale[0].fieldId, '1:cashSavings');
+    const l = Staleness.line(h, ['cashSavings', 'monthlyExpenses', 'grossIncome'], now);
+    checkTrue('the line names the oldest in plain words and counts the stale one', /about a month ago/.test(l.text) && /One is past the date/.test(l.text) && /1 not dated/.test(l.text), l.text);
+    check('… and flags stale for the dot', l.stale + ':' + l.oldestDays, 'true:45');
+    const one = Staleness.line(h, ['monthlyExpenses'], now);
+    check('one dated field reads as a single number', one.text, 'This number was last touched 2 days ago.');
+    check('a dob never goes stale even when old', Staleness.forFields({ meta: { fields: { dob: { asOf: '2020-01-01' } } } }, ['dob'], now).stale.length, 0);
+  }
+  Staleness.use(tableWas);
+
+  /* -- Schema.createVisits: never invented, never zeroed --------------------- */
+  {
+    const empty = Schema.createVisits(undefined);
+    check('absent -> empty record, not a first visit', JSON.stringify(empty), '{"firstAt":null,"lastAt":null,"days":[],"count":0}');
+    const v = Schema.createVisits({ days: ['2026-09-02', 'junk', '2026-09-01', '2026-09-02'], count: 7 });
+    check('days are validated, deduped and sorted', v.days.join(','), '2026-09-01,2026-09-02');
+    check('count keeps the true total when it is at least the kept days', v.count, 7);
+    check('a count below the kept days is the kept days', Schema.createVisits({ days: ['2026-09-01', '2026-09-02'], count: 1 }).count, 2);
+    check('first and last fall back to the days', v.firstAt + '|' + v.lastAt, '2026-09-01|2026-09-02');
+    checkTrue('createHousehold carries the record and a legacy save reads as no days', Schema.createHousehold({}).meta.visits.days.length === 0);
+    checkTrue('meta.visits is a declared field', !!Schema.FIELDS['meta.visits']);
+  }
+
+  /* -- The spine: one day per sitting, the demo flag, none of it on undo --- */
+  {
+    const spinePath = path.join(ROOT, 'shared/spine-v2.js');
+    const store = {};
+    global.localStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; } };
+    delete require.cache[require.resolve(spinePath)];
+    const Spine = require(spinePath);
+    check('no record yet: zero days, no last visit, no streak', JSON.stringify(Spine.visitStats(new Date('2026-09-20T10:00:00'))), JSON.stringify({ days: 0, first: null, last: null, lastDays: null, streak: 0, today: false }));
+    const d1 = new Date('2026-09-18T09:00:00'), d1b = new Date('2026-09-18T21:00:00'), d2 = new Date('2026-09-19T08:00:00'), d4 = new Date('2026-09-21T08:00:00');
+    Spine.noteVisit(d1); Spine.noteVisit(d1b);
+    check('two opens on one day are one day', Spine.visitStats(d1b).days, 1);
+    Spine.noteVisit(d2);
+    const s2 = Spine.visitStats(d2);
+    check('the next day makes two, a streak of two, today counted', s2.days + ':' + s2.streak + ':' + s2.today + ':' + s2.lastDays, '2:2:true:1');
+    const s4 = Spine.visitStats(d4);
+    check('looking two days later, not yet opened: last here 2 days ago, no streak', s4.lastDays + ':' + s4.streak + ':' + s4.today, '2:0:false');
+    checkTrue('the record is saved on the household', JSON.parse(store['slaf.household.v2']).meta.visits.days.join(',') === '2026-09-18,2026-09-19');
+    checkTrue('registerRoom notes the visit', (Spine.registerRoom('runway'), Spine.visitStats().today === true));
+    check('opening a screen never lands on the undo stack', Spine.getProfile().meta.undoStack ? Spine.getProfile().meta.undoStack.length : 0, 0);
+    check('the demo flag is off until the demo is written', Spine.isDemo(), false);
+    Spine.markDemo(true);
+    check('marking the demo sets it', Spine.isDemo(), true);
+    Spine.set('state', 'NC', 'typed over one figure');
+    check('typing over one figure does not clear it', Spine.isDemo(), true);
+    check('… and marking never landed on undo', Spine.historySize().undo, 1);
+    Spine.markDemo(false);
+    check('a deliberate clear takes it off', Spine.isDemo(), false);
+    Spine.markDemo(true); Spine.reset();
+    check('a reset clears it too', Spine.isDemo(), false);
+    delete global.localStorage; delete require.cache[require.resolve(spinePath)];
+  }
+
+  /* -- Progress: the age line and the demo line ----------------------------- */
+  {
+    const src = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+    checkTrue('mountHeader mounts the age line after the nav', /mountWalk\(roomId, nav\);\s*mountAge\(roomId, nav\);/.test(src));
+    checkTrue('the age line and the example mark paint into their own hosts, never a live form', /host\.id = 'slaf-age-host'/.test(src) && /mark\.id = 'slaf-demo-host'/.test(src) && /D-034/.test(src));
+    checkTrue('the example mark sits beside the menu button, costing no height', /menuBtn\.parentNode\.insertBefore\(mark, menuBtn\.nextSibling\)/.test(src));
+    checkTrue('the example household carries no age line: every figure of it was loaded today', /Spine\.isDemo\(\)\) return '';/.test(src));
+    checkTrue('the room visit reaches the household record', /Spine\.noteVisit\(\)/.test(src));
+    checkTrue('the demo clear asks first, then resets and reloads', /confirm\('Clear the example numbers/.test(src) && /Spine\.reset\(\)/.test(src) && /location\.reload\(\)/.test(src));
+    check('the dashboard carries no age line: it is the one screen made of every room', Progress.ageLineHtml('dashboard', Schema.createHousehold({})), '');
+    check('a room with nothing filled carries no age line', Progress.ageLineHtml('runway', Schema.createHousehold({})), '');
+    const ssrc = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+    ['.slaf-age-host', '.slaf-age', '.slaf-age-dot', '.slaf-demo-host', '.slaf-demo', '.slaf-linkbtn', '.slaf-age.is-stale'].forEach(c =>
+      checkTrue(`theme.css styles ${c}`, ssrc.indexOf(c) !== -1));
+    checkTrue('the D&D copies match', fs.readFileSync(path.join(ROOT, 'dnd/shared/theme.css'), 'utf8') === ssrc
+      && fs.readFileSync(path.join(ROOT, 'dnd/shared/schema.js'), 'utf8') === fs.readFileSync(path.join(ROOT, 'shared/schema.js'), 'utf8'));
+  }
+
+  /* -- The demo is marked wherever it is written ---------------------------- */
+  ['index.html', 'rooms/debt-payoff.html', 'rooms/expenses.html'].forEach(f => {
+    const s = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    if (/Demo(Persona)?\.build\(\)/.test(s)) checkTrue(`${f} marks the demo when it writes it`, /Spine\.markDemo\(true\)/.test(s));
+  });
+  {
+    const hits = [];
+    const walk = (d) => fs.readdirSync(d).forEach(n => { const p = path.join(d, n); if (fs.statSync(p).isDirectory()) { if (n !== 'node_modules' && n !== 'dnd' && n !== '.git') walk(p); } else if (/\.html$/.test(n)) hits.push(p); });
+    walk(path.join(ROOT, 'rooms')); hits.push(path.join(ROOT, 'index.html'));
+    hits.forEach(p => {
+      const s = fs.readFileSync(p, 'utf8');
+      if (/SLAF\.Demo(Persona)?\.build\(\)|\bDemo\.build\(\)/.test(s) && /Spine\.(updateProfile|replace|set)\(/.test(s))
+        checkTrue(`${path.relative(ROOT, p)} writes the demo and marks it`, /markDemo\(true\)/.test(s));
+    });
+  }
+
+  /* -- The lodge on the front page ------------------------------------------ */
+  {
+    const idx = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+    ['lodge', 'lodge-figure', 'lodge-line', 'lodge-meter', 'landing-cap', 'landing-head', 'landing-say'].forEach(id =>
+      checkTrue(`index has #${id}`, new RegExp('id="' + id + '"').test(idx)));
+    checkTrue('the lodge reads the First Round\'s own insight and the Ledger\'s meter, derived nowhere twice', /SLAF\.Doors\.firstInsight\(h, TABLES\)/.test(idx) && /SLAF\.Doors\.understanding\(/.test(idx));
+    checkTrue('the lodge paints after the Up Next strip and only when something is filled', /renderUpNext\(h\);\s*paintLodge\(h, SLAF\.Progress\.overall\(h\)\)/.test(idx) && /overall\.fieldsFilled > 0/.test(idx));
+    checkTrue('it says when you were last here from the visit record', /Spine\.visitStats\(\)/.test(idx));
+    ['shared/levers.js', 'shared/ledger-rows.js', 'shared/suggest.js', 'shared/doors.js'].forEach(s =>
+      checkTrue(`index loads ${s} for the lodge`, idx.indexOf('src="' + s + '"') !== -1));
+    checkTrue('the lodge is hidden by default', /<div class="lodge" id="lodge" hidden>/.test(idx));
+  }
 })();
 
 /* ==========================================================================

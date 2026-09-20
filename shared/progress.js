@@ -429,6 +429,24 @@
     try { return Ownership.readings(S.getProfile()); } catch (e) { return null; }
   }
 
+  var DOT_WORD = { filled: 'every number this room owns is in', partly: 'some of its numbers are in', empty: 'nothing entered here yet' };
+  /* What a room still needs (D-317): its blank fields, each a link to the
+     box that takes it. The owner: "when I click on it say what needs to
+     be filled". */
+  function needHtml(roomId, readings) {
+    if (!Ownership || !Ownership.ownedBy || !readings) return '';
+    var fields = Ownership.ownedBy(roomId);
+    var blank = fields.filter(function (f) { return readings[f] === null || readings[f] === undefined; });
+    var done = fields.length - blank.length;
+    var items = blank.map(function (f) {
+      var d = Ownership.FIELDS[f];
+      var to = Ownership.linkTo ? Ownership.linkTo(roomId, d && d.anchor, null) : '#';
+      return '<li><a href="' + escapeHtml(to) + '">' + escapeHtml(d && d.label ? d.label : f) + '</a></li>';
+    });
+    if (!items.length) items.push('<li class="is-done">Everything this room asks for is in.</li>');
+    else if (done) items.push('<li class="is-done">' + done + ' of ' + fields.length + ' already in.</li>');
+    return '<ul class="slaf-menu-need" data-need-for="' + escapeHtml(roomId) + '" hidden>' + items.join('') + '</ul>';
+  }
   function menuLink(room, roomId, current, status) {
     var here = room.id === current;
     var search = (room.title + ' ' + (room.aliases || []).join(' ')).toLowerCase();
@@ -436,7 +454,7 @@
       + escapeHtml(href(room.href, roomId)) + '"' + (here ? ' aria-current="page"' : '')
       + ' data-room="' + escapeHtml(room.id) + '" data-search="' + escapeHtml(search) + '">'
       + escapeHtml(room.title)
-      + (status ? '<i class="slaf-dot is-' + status + '" title="' + status + '" aria-label="' + status + '"></i>' : '')
+      + (status ? '<button type="button" class="slaf-dot is-' + status + '" data-need="' + escapeHtml(room.id) + '" title="' + DOT_WORD[status] + ': tap to see what this room still needs" aria-label="' + DOT_WORD[status] + '; what this room still needs"></button>' : '')
       + '</a>';
   }
   function extraLink(l, roomId) {
@@ -487,7 +505,9 @@
           out.push('<p class="slaf-menu-sub" data-subgroup="' + escapeHtml(r.subgroup) + '">' + escapeHtml(sg ? sg.label : r.subgroup) + '</p>');
           lastSub = r.subgroup;
         }
-        out.push(menuLink(r, roomId, roomId, g.id === 'numbers' ? roomStatus(r.id, readings) : null));
+        var st = g.id === 'numbers' ? roomStatus(r.id, readings) : null;
+        out.push(menuLink(r, roomId, roomId, st));
+        if (st) out.push(needHtml(r.id, readings));
         (byAfter[r.id] || []).forEach(function (l) { out.push(extraLink(l, roomId)); });
       });
       (byAfter.__end || []).forEach(function (l) { out.push(extraLink(l, roomId)); });
@@ -511,6 +531,7 @@
       + '<button type="button" class="slaf-menu-x" data-menu-close aria-label="Close the menu">✕</button>'
       + '</div>'
       + '<div class="slaf-menu-search"><input type="search" id="slaf-menu-q" placeholder="Find a room" aria-label="Find a room" autocomplete="off"></div>'
+      + '<p class="slaf-menu-key"><span><i class="slaf-dot is-filled"></i>all in</span><span><i class="slaf-dot is-partly"></i>some in</span><span><i class="slaf-dot is-empty"></i>nothing yet</span><span>tap a dot for what is missing</span></p>'
       + '<nav class="slaf-menu-body" aria-label="All rooms">' + menuBodyHtml(roomId) + '</nav>';
   }
 
@@ -585,6 +606,15 @@
     }, true);
     var q = panel.querySelector('#slaf-menu-q');
     if (q) q.addEventListener('input', function () { applySearch(panel, q.value); });
+    /* A tap on a dot opens the room's missing list under its link and
+       does not follow the link; a second tap closes it. */
+    panel.addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('button[data-need]') : null;
+      if (!b) return;
+      e.preventDefault(); e.stopPropagation();
+      var list = panel.querySelector('.slaf-menu-need[data-need-for="' + b.getAttribute('data-need') + '"]');
+      if (list) list.hidden = !list.hidden;
+    });
 
     /* The situation and the dots can change under the page: rebuild the
        body only, never the search box (a live input, D-034). */
@@ -1042,6 +1072,103 @@
     return n;
   }
 
+  /* ---- How old is what I am looking at? (D-319, ported from D-251) --------
+     Every owned number carries its own as-of date, and until now that date
+     reached two screens. One quiet line under the room header: the oldest
+     figure this room reads, when it was last touched, how many are past
+     their review interval, and how many are guesses the app filled in. A
+     prompt, never a verdict (D-057). Text only, so a repaint cannot disturb
+     a live input (D-034). */
+  function ageLineHtml(roomId, household) {
+    var g = globals();
+    var Staleness = g && g.SLAF && g.SLAF.Staleness;
+    var room = Registry.byId(roomId);
+    if (!Staleness || !Staleness.line || !room || roomId === 'dashboard') return '';
+    if (!(room.needs || []).length) return '';
+    /* The example household was loaded today, every figure of it: its age
+       says nothing, and the example line above already says whose it is. */
+    var Spine = g.SLAF && g.SLAF.Spine;
+    if (Spine && Spine.isDemo && Spine.isDemo()) return '';
+    var row = forRoom(roomId, household);
+    var filled = row ? row.filled.map(function (f) { return f.fieldId; }) : [];
+    if (!filled.length) return '';
+    var l = Staleness.line(household, filled);
+    if (!l) return '';
+    var guessed = row.filled.filter(function (f) { return f.guessed; }).length;
+    var guessText = guessed ? ' ' + (guessed === filled.length ? (guessed === 1 ? 'It is a guess the app filled in.' : 'All ' + guessed + ' are guesses the app filled in.')
+      : guessed + ' of ' + filled.length + (guessed === 1 ? ' is a guess' : ' are guesses') + ' the app filled in.') : '';
+    var ledger = Registry.byId('ledger');
+    var link = l.stale && ledger ? ' <a href="' + escapeHtml(href(ledger.href, roomId)) + '#view-since">Look at them \u2192</a>' : '';
+    return '<p class="slaf-age' + (l.stale ? ' is-stale' : '') + '" id="slaf-age"><span class="slaf-age-dot" aria-hidden="true"></span>'
+      + escapeHtml(l.text + guessText) + link + '</p>';
+  }
+  /* "These are not your numbers" (D-319): the example household says so on
+     every room until the person clears it. */
+  function demoLineHtml() {
+    var g = globals();
+    var Spine = g && g.SLAF && g.SLAF.Spine;
+    if (!Spine || !Spine.isDemo || !Spine.isDemo()) return '';
+    return '<span class="slaf-demo" id="slaf-demo" role="status"><b>Example numbers</b> \u00b7 Robin\u2019s, not yours \u00b7 '
+      + '<button type="button" class="slaf-linkbtn" id="slaf-demo-clear">Clear them</button></span>';
+  }
+  function mountAge(roomId, nav) {
+    var g = globals();
+    var Spine = g && g.SLAF && g.SLAF.Spine;
+    if (!Spine || !nav || document.getElementById('slaf-age-host')) return null;
+    var host = document.createElement('div');
+    host.id = 'slaf-age-host';
+    host.className = 'slaf-age-host';
+    /* The example mark sits beside the menu button, in the empty half of
+       that row, so it costs the page no height; the age line goes under the
+       nav. Both hosts go in first, so the paint below can find its own
+       button, looked up inside its host, never by id on the page. */
+    var mark = document.createElement('span');
+    mark.id = 'slaf-demo-host';
+    mark.className = 'slaf-demo-host';
+    var menuBtn = document.getElementById('slaf-menu-btn');
+    if (menuBtn && menuBtn.parentNode) menuBtn.parentNode.insertBefore(mark, menuBtn.nextSibling);
+    else nav.parentNode.insertBefore(mark, nav);
+    nav.parentNode.insertBefore(host, nav.nextSibling);
+    var tableJson = null;
+    function paint() {
+      /* ask.js may load its own copy of staleness.js after ours; a fresh
+         copy has no table, so the one we fetched is put back each paint. */
+      var St = g.SLAF && g.SLAF.Staleness;
+      if (St && tableJson && !St.tableInUse()) St.use(tableJson);
+      mark.innerHTML = demoLineHtml();
+      host.innerHTML = ageLineHtml(roomId, Spine.getProfile());
+      var clear = mark.querySelector('#slaf-demo-clear');
+      if (clear) clear.addEventListener('click', function () {
+        if (!g.confirm('Clear the example numbers and start from empty? Anything you typed over them goes too.')) return;
+        try { Spine.markDemo(false); } catch (e) { /* fine */ }
+        if (Spine.reset) Spine.reset();
+        g.location.reload();
+      });
+    }
+    paint();
+    if (Spine.onChange) Spine.onChange(paint);
+    /* Most rooms do not carry staleness.js; the age line pulls it in, then
+       the table, and repaints. Until then the demo line alone shows. */
+    var base = (typeof location !== 'undefined' && location.pathname.indexOf('/rooms/') !== -1 ? '../' : '');
+    function withTable() {
+      var R = g.SLAF && g.SLAF.Reference, St = g.SLAF && g.SLAF.Staleness;
+      if (!St) return;
+      if (St.tableInUse() || !R || !R.load) { paint(); return; }
+      try { R.load(['staleness']).then(function (t) { if (t && t.staleness) { tableJson = t.staleness; St.use(tableJson); } paint(); })['catch'](function () { paint(); }); } catch (e) { paint(); }
+    }
+    var src = base + 'shared/staleness.js';
+    var had = document.querySelector('script[src="' + src + '"]');
+    if (g.SLAF.Staleness) withTable();
+    else if (had) had.addEventListener('load', withTable);   /* another mount asked first: share its load */
+    else {
+      var sc = document.createElement('script');
+      sc.src = src;
+      sc.onload = withTable;
+      document.head.appendChild(sc);
+    }
+    return host;
+  }
+
   function mountHeader(roomId) {
     if (typeof document === 'undefined') return null;
     /* Mounted once. The header goes up at DOMContentLoaded (see the listener
@@ -1059,6 +1186,7 @@
     mountPurpose(roomId);
     mountSituation(roomId);
     mountWalk(roomId, nav);
+    mountAge(roomId, nav);
     mountDoors(roomId);
     mountFold(roomId);
     mountSectionSync(roomId);
@@ -1259,6 +1387,9 @@
      due mark is cleared by the Comeback's Done, or by a visit to it. */
   var COMEBACK_DAYS = 21;
   function noteVisit(g, roomId) {
+    /* The household's own visit log (D-319) is the person's history and
+       travels with an export; the Prefs stamp below is the Comeback's. */
+    try { if (g.SLAF && g.SLAF.Spine && g.SLAF.Spine.noteVisit) g.SLAF.Spine.noteVisit(); } catch (e) { /* storage refused */ }
     var Prefs = g.SLAF && g.SLAF.Prefs;
     if (!Prefs || !Prefs.get) return;
     try {
@@ -1436,7 +1567,7 @@
     chain: chain,
     mountHintFolds: mountHintFolds, HINT_FOLD_CHARS: HINT_FOLD_CHARS,
     purposeHtml: purposeHtml,
-    mountHeader: mountHeader, privacyReceipt: privacyReceipt, comebackDue: comebackDue, COMEBACK_DAYS: COMEBACK_DAYS,
+    mountHeader: mountHeader, ageLineHtml: ageLineHtml, privacyReceipt: privacyReceipt, comebackDue: comebackDue, COMEBACK_DAYS: COMEBACK_DAYS,
     mountFold: mountFold,
     mountSectionSync: mountSectionSync,
     roomIdFromLocation: roomIdFromLocation,

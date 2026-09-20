@@ -5,7 +5,7 @@ paths:
   - "engines/dreamline.js"
 ---
 # Big Purchase (`big-purchase`)
-File: rooms/big-purchase.html · 497 lines
+File: rooms/big-purchase.html · 498 lines
 Engines: projection, tier0, income, selfemployed, ledger, hourly, quickmath, purchase, dreamline
 Reference data: car_costs.json, dreamline.json, effective_tax_rates_2026.json, liquidity_benchmarks.json, se_tax_2026.json
 Owns: purchasePrice, purchaseMonths, purchaseRate, dreamsMonthly

@@ -6,7 +6,7 @@ paths:
   - "engines/quitfund.js"
 ---
 # The Cushion (`runway`)
-File: rooms/runway.html · 1767 lines
+File: rooms/runway.html · 1768 lines
 Engines: projection, tier0, income, ledger, cashflow, tax, runway, swan, hourly, betweenjobs, selfemployed, debt, reachable, countdown, quitfund, foo, fire, statement
 Reference data: aca_2026.json, access_rules.json, cobra_aca_2024.json, debt_rules.json, effective_tax_rates_2026.json, expense_categories.json, +10 more
 Owns: oopMax, termLife, disabilityMonthly, umbrella, expectedSearchMonths, floorMonthly, swanTarget

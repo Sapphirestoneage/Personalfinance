@@ -6,7 +6,7 @@ paths:
   - "engines/worth.js"
 ---
 # The Decision Room (`goals`)
-File: rooms/goals.html · 1468 lines
+File: rooms/goals.html · 1469 lines
 Engines: projection, tier0, income, selfemployed, ledger, cashflow, hourly, events, reversibility, goals, worth
 Reference data: effective_tax_rates_2026.json, expense_categories.json, goal_templates.json, reversibility.json, se_tax_2026.json, triple_d.json
 Owns: reversibilityDecision

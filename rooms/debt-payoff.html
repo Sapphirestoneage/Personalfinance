@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-19 19:19Z"/>
+<meta name="slaf-build" content="2026-09-20 01:28Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
+<script src="../shared/size.js"></script>
 <title>Debt · SPARKS</title>
 <meta name="description" content="Every debt in the order you will clear them and what a different order costs — the three student-loan plans side by side, and what a credit file is actually made of."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -278,12 +279,11 @@
   #view-the-order .strategy-figure, #view-the-order .strategy-when { font-family: var(--font-display); font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
   #view-the-order .strategy-blurb { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-1) 0 0; min-width: 0; }
   /* The caption row shares the cards' rails. Its letters are spaced less
-  #view-the-order than an eyebrow's so "interest" and "clear in" each fit their rail; {
-  #view-the-order spaced wider they ran into one word on a phone. */ {
+     than an eyebrow's so "interest" and "clear in" each fit their rail;
+     spaced wider they ran into one word on a phone. */
   #view-the-order .strategy-cols { display: grid; grid-template-columns: minmax(0, 1fr) 9ch 10ch; gap: var(--space-3); padding: 0 var(--space-3) 2px; font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: var(--color-text-faint); white-space: nowrap; }
   #view-the-order .strategy-cols span + span { text-align: right; }
   #view-the-order .strategy-first { color: var(--color-text-faint); }
-  @media (max-width: 420px) {
   @media (max-width: 420px) {
   #view-the-order .strategy-head, #view-the-order .strategy-cols { grid-template-columns: minmax(0, 1fr) 8ch 9.5ch; gap: var(--space-2); }
   #view-the-order .strategy-cols { padding: 0 var(--space-3); }
@@ -1787,11 +1787,11 @@
       var bits = 'pay after tax ' + Money.formatCents(est.takeHomeCents) + ', less spending ' + Money.formatCents(est.spendingCents) + ', less minimums ' + Money.formatCents(est.minimumsCents);
       if (c.guessed.length) bits += ' (' + c.guessed.map(function (id) { return id === 'grossAnnualIncome' ? 'pay' : 'spending'; }).join(' and ') + ' guessed, fix it in Start Here)';
       out += est.value > 0
-        ? row('Estimate', Money.formatCents(est.value), bits, c.basis === 'estimate')
-        : row('Estimate', '$0', 'your pay is ' + Money.formatCents(-est.value) + ' short of spending and the minimums: ' + bits
+        ? row('The gap', Money.formatCents(est.value), 'what is left each month once the month is paid for, the same figure <a href="cash-flow.html#glance">Cash Flow</a> calls Left: ' + bits, c.basis === 'estimate')
+        : row('The gap', '$0', 'nothing is free: your pay is ' + Money.formatCents(-est.value) + ' short of spending and the minimums, the same figure <a href="cash-flow.html#glance">Cash Flow</a> calls Left: ' + bits
             + '. If you can really pay more than the minimums, one of those is off. The usual two: the spending figure (<a href="expenses.html#spending">Expenses</a>) already counts these debt payments, or the pay after tax is worked out from your gross with a flat tax rate and your real paycheck is higher (<a href="start.html">Start Here</a>)', c.basis === 'estimate');
     } else {
-      out += row('Estimate', 'waiting', (c.estimateReason && /pay|income/i.test(c.estimateReason) ? 'add your pay in ' : 'finish ') + '<a href="start.html">Start Here</a> and this fills in', false, true);
+      out += row('The gap', 'waiting', (c.estimateReason && /pay|income/i.test(c.estimateReason) ? 'add your pay in ' : 'finish ') + '<a href="start.html">Start Here</a> and this fills in', false, true);
     }
     if (real) {
       var ms = real.months;
@@ -1803,6 +1803,15 @@
       out += row('Realized', 'waiting', 'close a month in <a href="budget.html">Budget</a> and the real figure shows here', false, true);
     }
     rows.innerHTML = out;
+    /* The box itself suggests the gap (D-317): a chip, the way every other
+       suggested figure in the app is offered, taken with one tap or typed
+       over. Only while the box is blank and the gap is above zero. */
+    if (box && SLAF.Suggest && typeof SLAF.Suggest.show === 'function') {
+      if (c.basis !== 'typed' && est && est.value > 0 && c.basis === 'estimate') {
+        SLAF.Suggest.show(box, { value: est.value / 100, display: Money.formatCents(est.value) + ' a month', source: 'the gap: what is left once the month is paid for',
+          onUse: function () { extraCents = est.value; box.value = Money.forInput(est.value).replace(/^\$/, ''); render(); } });
+      } else if (SLAF.Suggest.clear) { SLAF.Suggest.clear(box); }
+    }
     /* The one figure that leaves the account for debt each month. */
     var total = el('extra-total');
     if (total) {
@@ -2016,6 +2025,10 @@
       sum.textContent = cur && Money.isOk(cur) && curS ? curS.label + ' · ' + Money.formatCents(cur.totalInterestCents) + ' interest' : '';
     }
 
+    /* Convenience follows the Feels-like tag. With every debt Neutral it has
+       nothing to go on and lands where Avalanche lands, which read as a
+       bug ("why is convenience the same amount"); the row now says so. */
+    var anyTag = (h.debts || []).some(function (d) { return d && d.emotionalTag && d.emotionalTag !== 'neutral' && d.balanceCents > 0; });
     wrap.innerHTML = RULES.strategies.map(function (s) {
       var r = cmp.results ? cmp.results[s.id] : null;
       var ok = r && Money.isOk(r);
@@ -2035,6 +2048,7 @@
         + '<p class="strategy-blurb">' + s.blurb
         + (ok ? ' <span class="strategy-first">First debt gone in ' + monthsLabel(r.payoffs[0].month) + '.</span>'
               : ' <span class="strategy-first">Not run in this order: ' + esc((r && r.reason) || 'it could not be worked out') + '</span>')
+        + (s.id === 'convenience' && !anyTag ? ' <span class="strategy-first"><b>Nothing tagged yet</b>, so this is the same order as Avalanche. Under a debt\u2019s <em>Feels like</em>, choose family or one you\u2019d rather not owe, and it goes first.</span>' : '')
         + '</p>'
         + '</button>';
     }).join('');
@@ -2397,6 +2411,7 @@
     if ((h.debts || []).length
         && !window.confirm('This replaces the debts you’ve entered with the example. Continue?')) return;
     var demo = Demo.build();
+    if (Spine && Spine.markDemo) Spine.markDemo(true);   /* example numbers, said so on every room (D-319) */
     Spine.updateProfile({ debts: demo.debts });
     if (!Schema.primaryPerson(Spine.getProfile())) Spine.updateProfile({ people: demo.people });
     extraCents = 20000;

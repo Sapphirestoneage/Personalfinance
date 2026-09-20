@@ -9,7 +9,7 @@ paths:
   - "engines/microretirement.js"
 ---
 # Work (`career-move`)
-File: rooms/career-move.html · 2006 lines
+File: rooms/career-move.html · 2007 lines
 Engines: projection, tier0, income, selfemployed, ledger, hourly, careermove, offers, sidehustle, credential, degree, countdown, microretirement
 Reference data: blocks/sabbatical.json, career_momentum.json, cobra_aca_2024.json, effective_tax_rates_2026.json, federal_brackets_2026.json, fire_variants.json, +6 more
 Owns: offerGross, offerHours, offerCommute, offerCosts, offerSignOn

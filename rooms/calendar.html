@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-19 19:19Z"/>
+<meta name="slaf-build" content="2026-09-20 01:28Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
+<script src="../shared/size.js"></script>
 <title>The Calendar · SPARKS</title>
 <meta name="description" content="The next 31 days as a calendar: paydays, bills and receipts on their days, and your own dates beside them."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -101,10 +102,24 @@
   function events(h) { return ((h.calendar || {}).events || []).slice(); }
   function when(iso) { var d = new Date(iso + 'T12:00:00'); return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
 
-  /* ---- The month: the one shared picture ---- */
+  /* ---- The month: the one shared picture, the way a phone calendar is
+     used (D-318): the month with arrows, a button a day, the tapped day's
+     sheet, what is coming up. Two states the room owns: the month shown
+     and the day tapped. Tapping a day also sets the own-date form's day,
+     so "add something on this day" is one tap and a name. ---- */
+  var TODAY = today();
+  var VIEW = TODAY.slice(0, 7), SEL = TODAY;
+  function shiftYm(ym, n) { var d = new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + n, 1); var mo = d.getMonth() + 1; return d.getFullYear() + '-' + (mo < 10 ? '0' : '') + mo; }
+  function daysToEnd(ym) { var end = new Date(+ym.slice(0, 4), +ym.slice(5, 7), 0), t = new Date(+TODAY.slice(0, 4), +TODAY.slice(5, 7) - 1, +TODAY.slice(8, 10)); return Math.round((end - t) / 86400000) + 1; }
+  function pastRows(h) {
+    if (!SLAF.CashFlow || !TABLES.expenseCategories) return [];
+    var log = SLAF.CashFlow.logInMonth(h, TABLES.expenseCategories, VIEW), cats = TABLES.expenseCategories.categories || [];
+    return (log.rows || []).filter(function (r) { return r.date < TODAY && !r.hidden; }).map(function (r) { var c = cats.filter(function (x) { return x.id === r.categoryId; })[0]; return { date: r.date, label: r.descriptor || (c ? c.label : r.categoryId), cents: r.credit ? -Math.abs(r.cents) : r.cents, kind: 'log' }; });
+  }
   function renderMonth(h) {
-    var r = Cal.month(h, TABLES, {});
-    el('month-body').innerHTML = DayByDay.html(r);
+    var r = Cal.month(h, TABLES, { days: Math.max(31, daysToEnd(VIEW)) });
+    el('month-body').innerHTML = DayByDay.monthView(r, { month: VIEW, selected: SEL, past: pastRows(h), own: events(h), canBack: VIEW > shiftYm(TODAY.slice(0, 7), -12), canForward: VIEW < shiftYm(TODAY.slice(0, 7), 3) })
+      + '<details class="cal-up cal-line"><summary>Cash across the days, as a line</summary>' + DayByDay.chart(r) + '</details>';
     el('month-sum').textContent = Money.isOk(r)
       ? 'Low point ' + Money.formatCents(r.lowCents) + ' on the ' + ordinal(r.lowDom) + (r.belowZero ? ' · under zero from the ' + ordinal(r.firstBelowDom) : r.tight ? ' · tightest the ' + ordinal(r.tight.fromDom) + '–' + ordinal(r.tight.toDom) : ' · never under a week of spending')
         + ' · ' + Cal.turns(r).length + ' things land, ' + (r.ownHits || []).length + ' of them yours'
@@ -126,6 +141,12 @@
         + '<span class="od-acts"><button type="button" class="slaf-btn slaf-btn--quiet" data-done="' + esc(e.id) + '">' + (e.done ? 'Not done' : 'Done') + '</button><button type="button" class="slaf-btn slaf-btn--quiet" data-remove="' + esc(e.id) + '" aria-label="Remove">✕</button></span></li>';
     }).join('') : '<li><span class="od-when"></span><span class="od-what" style="color:var(--color-text-faint)">Nothing yet. Add a date above and it appears on the month.</span><span></span></li>';
   }
+  el('month-body').addEventListener('click', function (ev) {
+    var nav = ev.target.closest ? ev.target.closest('[data-cal-nav]') : null;
+    if (nav && !nav.disabled) { VIEW = shiftYm(VIEW, +nav.getAttribute('data-cal-nav')); SEL = VIEW === TODAY.slice(0, 7) ? TODAY : VIEW + '-01'; render(); return; }
+    var cellBtn = ev.target.closest ? ev.target.closest('[data-cal-day]') : null;
+    if (cellBtn) { SEL = cellBtn.getAttribute('data-cal-day'); el('own-when').value = SEL; render(); }
+  });
   el('own-add').addEventListener('click', function () {
     var label = String(el('own-what').value || '').trim(), date = el('own-when').value, kind = el('own-kind').value;
     if (!label || !/^\d{4}-\d{2}-\d{2}$/.test(date)) { el('own-say').textContent = !label ? 'Say what it is.' : 'Pick a day.'; return; }

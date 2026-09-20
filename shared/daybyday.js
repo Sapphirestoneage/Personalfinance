@@ -36,24 +36,128 @@
     });
   }
 
-  /* The same days as a calendar: a cell a day, what lands on it, the
-     balance underneath, the low point and any day under zero marked. */
-  function grid(r) {
+  /* ---- The calendar (D-318) ---------------------------------------------
+     A cell a day, the way a phone calendar is read: the day number, up to
+     two pills for what lands (green in, red out) and "+n" for the rest, the
+     balance underneath while the window covers the day, today ringed, the
+     low point marked, a day under zero tinted. Every cell is a button: the
+     room opens a day sheet for the one tapped. With opts.month the grid is
+     that whole calendar month, leading blanks and all; days before the
+     window are the past and show what the log says went out (opts.past);
+     without opts.month it is the window's own days, as before. */
+  var KIND_WORD = { payday: 'Payday', bill: 'Bill', payLater: 'Pay-later', log: 'Logged', annual: 'Yearly', income: 'Income' };
+  function kindWord(x) { return KIND_WORD[x.kind] || (x.direction === 'in' ? 'Income' : 'Bill'); }
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function isoOf(y, m, d) { return y + '-' + pad2(m) + '-' + pad2(d); }
+  function dim(y, m) { return new Date(y, m, 0).getDate(); }
+  function longMonth(ym) { return new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }); }
+  function dayName(date) { return new Date(+date.slice(0, 4), +date.slice(5, 7) - 1, +date.slice(8, 10)).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); }
+  function byDate(r) { var m = {}; if (Money.isOk(r)) r.days.forEach(function (d) { m[d.date] = d; }); return m; }
+  /* What one calendar day holds: the engine's events inside the window,
+     the log's rows before it. */
+  function eventsFor(r, date, opts) {
+    var d = Money.isOk(r) ? byDate(r)[date] : null;
+    if (d) { var ev = Cal.eventsOn(r, d); return { day: d, ins: ev.ins, outs: ev.bills, notes: ev.notes || [], past: false }; }
+    var past = ((opts && opts.past) || []).filter(function (x) { return x.date === date; });
+    /* A day gone still carries your own dates (they are stored, not drawn
+       from a window): the caller hands them over with the log's rows. */
+    var own = ((opts && opts.own) || []).filter(function (x) { return x.date === date; }).map(function (x) { return { id: x.id, label: x.label, kind: 'own', sub: x.kind || 'todo', done: x.done === true }; });
+    return { day: null, ins: past.filter(function (x) { return x.cents < 0; }).map(function (x) { return { label: x.label, cents: -x.cents, kind: 'log' }; }), outs: past.filter(function (x) { return x.cents > 0; }).map(function (x) { return { label: x.label, cents: x.cents, kind: 'log' }; }), notes: own, past: true };
+  }
+  function pill(x, dir) {
+    return '<i class="' + (dir === 'in' ? 'cal-in' : 'cal-out') + (x.kind === 'payLater' ? ' is-pl' : x.kind === 'annual' ? ' is-annual' : '') + (x.potential ? ' is-potential' : x.dateKind === 'estimated' ? ' is-estimated' : '') + '" title="' + esc(x.label) + mark(x) + '">' + (dir === 'in' ? '+' : '−') + short(x.cents) + '</i>';
+  }
+  function cell(r, date, opts, dom) {
+    var ev = eventsFor(r, date, opts);
+    var d = ev.day, today = Money.isOk(r) && r.startDate === date;
+    var cls = 'cal-cell' + (today ? ' is-today' : '') + (ev.past ? ' is-past' : '') + (d && d.index === r.lowIndex ? ' is-low' : '') + (d && d.balanceCents < 0 ? ' is-under' : '')
+      + (d && r.tight && d.index >= r.tight.fromIndex && d.index <= r.tight.toIndex ? ' is-tight' : '') + (opts && opts.selected === date ? ' is-selected' : '') + (!ev.ins.length && !ev.outs.length && !(ev.notes || []).length ? ' is-quiet' : '');
+    var all = ev.ins.map(function (x) { return pill(x, 'in'); }).concat(ev.outs.map(function (x) { return pill(x, 'out'); }))
+      .concat((ev.notes || []).map(function (n) { return '<i class="cal-own' + (n.done ? ' is-done' : '') + (n.sub === 'deadline' ? ' is-deadline' : '') + '" title="' + esc(n.label) + '">' + esc(n.label) + '</i>'; }));
+    var marks = all.slice(0, 2).join('') + (all.length > 2 ? '<i class="cal-more">+' + (all.length - 2) + '</i>' : '');
+    return '<button type="button" class="' + cls + '" data-cal-day="' + date + '" aria-pressed="' + (opts && opts.selected === date ? 'true' : 'false') + '" aria-label="' + esc(dayName(date)) + (all.length ? ', ' + all.length + (all.length === 1 ? ' item' : ' items') : ', nothing lands') + '">'
+      + '<b>' + (dom === 1 && !(opts && opts.month) ? esc(new Date(+date.slice(0, 4), +date.slice(5, 7) - 1, 1).toLocaleDateString('en-US', { month: 'short' })) + ' ' : '') + dom + '</b>'
+      + '<span class="cal-marks">' + marks + '</span>'
+      + (d ? '<small>' + short(d.balanceCents) + '</small>' : '<small class="is-none"></small>') + '</button>';
+  }
+  function grid(r, opts) {
+    var o = opts || {};
+    if (!o.month && !Money.isOk(r)) return '';
+    var cells = [], y, mo, first, count, start;
+    if (o.month) { y = +o.month.slice(0, 4); mo = +o.month.slice(5, 7); first = new Date(y, mo - 1, 1).getDay(); count = dim(y, mo); start = 1; }
+    else { var s0 = r.startDate; y = +s0.slice(0, 4); mo = +s0.slice(5, 7); first = new Date(y, mo - 1, +s0.slice(8, 10)).getDay(); }
+    var i;
+    for (i = 0; i < first; i++) cells.push('<span class="cal-cell is-blank" aria-hidden="true"></span>');
+    if (o.month) { for (i = start; i <= count; i++) cells.push(cell(r, isoOf(y, mo, i), o, i)); }
+    else { r.days.forEach(function (d) { cells.push(cell(r, d.date, o, d.dom)); }); }
+    while (cells.length % 7) cells.push('<span class="cal-cell is-blank" aria-hidden="true"></span>');
+    var rows = [];
+    for (i = 0; i < cells.length; i += 7) rows.push('<div class="cal-row">' + cells.slice(i, i + 7).join('') + '</div>');
+    return '<div class="cal-grid" role="grid" aria-label="' + (o.month ? esc(longMonth(o.month)) : 'The next ' + r.days.length + ' days') + ' as a calendar">'
+      + '<div class="cal-head">' + Cal.WEEKDAYS.map(function (w) { return '<span>' + w.slice(0, 1) + '<i>' + w.slice(1) + '</i></span>'; }).join('') + '</div>' + rows.join('') + '</div>';
+  }
+  function key() {
+    return '<p class="cal-key"><i class="cal-in">+$</i> in <i class="cal-out">−$</i> out <i class="cal-own">a date of yours</i> <i class="cal-out is-pl">−$</i> pay-later <i class="cal-out is-annual">−$</i> yearly <i class="cal-out is-estimated">−$</i> date estimated <span class="k-low">low point</span> <span class="k-under">under zero</span></p>';
+  }
+  /* The day sheet: what the tapped day holds, and the balance after. */
+  function daySheet(r, date, opts) {
+    var ev = eventsFor(r, date, opts);
+    var head = '<div class="cal-sheet-head"><b>' + esc(dayName(date)) + '</b>' + (ev.past ? '<span>already happened</span>' : ev.day && ev.day.index === r.lowIndex ? '<span class="is-low">the low point</span>' : '') + '</div>';
+    var items = ev.ins.map(function (x) { return { x: x, dir: 'in' }; }).concat(ev.outs.map(function (x) { return { x: x, dir: 'out' }; }));
+    var notes = (ev.notes || []);
+    if (!items.length && !notes.length) return '<div class="cal-sheet">' + head + '<p class="cal-sheet-empty">' + (ev.past ? 'Nothing logged on this day.' : 'Nothing lands on this day' + (ev.day ? '; the balance runs ' + Money.formatCents(ev.day.balanceCents) : '') + '.') + '</p></div>';
+    var labels = Cal.EVENT_LABELS || { todo: 'To do', deadline: 'Deadline', note: 'Note' };
+    return '<div class="cal-sheet">' + head + '<ul class="cal-sheet-list">' + items.map(function (it) {
+      return '<li' + (it.x.potential ? ' class="is-potential"' : '') + '><span class="ds-kind">' + esc(ev.past ? 'Logged' : kindWord(it.x)) + '</span><span class="ds-what">' + esc(it.x.label) + esc(mark(it.x)) + '</span><span class="ds-amt ' + (it.dir === 'in' ? 'is-in' : 'is-out') + '">' + (it.dir === 'in' ? '+' : '−') + esc(Money.formatCents(it.x.cents)) + '</span></li>';
+    }).join('') + notes.map(function (n) {
+      /* Your own date (D-318 on main): what it is, no amount. */
+      return '<li class="is-note' + (n.done ? ' is-done' : '') + '" data-own-id="' + esc(n.id || '') + '"><span class="ds-kind">' + esc(labels[n.sub] || n.sub) + '</span><span class="ds-what">' + esc(n.label) + '</span><span class="ds-amt is-note">' + (n.done ? 'done' : '') + '</span></li>';
+    }).join('') + '</ul>'
+      + (ev.day ? '<p class="cal-sheet-bal">Balance after this day <b' + (ev.day.balanceCents < 0 ? ' class="is-under"' : '') + '>' + esc(Money.formatCents(ev.day.balanceCents)) + '</b></p>' : '') + '</div>';
+  }
+  /* Coming up: the next n days' turns, grouped as they land. */
+  function upcoming(r, n) {
     if (!Money.isOk(r)) return '';
-    return '<div class="cal-grid" role="table" aria-label="The next 31 days as a calendar">'
-      + '<div class="cal-head">' + Cal.WEEKDAYS.map(function (w) { return '<span>' + w + '</span>'; }).join('') + '</div>'
-      + Cal.weeks(r).map(function (row) {
-        return '<div class="cal-row">' + row.map(function (d) {
-          if (!d) return '<span class="cal-cell is-blank"></span>';
-          var cls = 'cal-cell' + (d.today ? ' is-today' : '') + (d.isLow ? ' is-low' : '') + (d.belowZero ? ' is-under' : '') + (d.tight ? ' is-tight' : '');
-          var marks = '';
-          (d.ins || []).forEach(function (x) { marks += '<i class="cal-in' + (x.potential ? ' is-potential' : x.dateKind === 'estimated' ? ' is-estimated' : '') + '" title="' + esc(x.label) + mark(x) + '">+' + short(x.cents) + '</i>'; });
-          d.bills.forEach(function (b) { marks += '<i class="cal-out' + (b.kind === 'payLater' ? ' is-pl' : b.kind === 'annual' ? ' is-annual' : '') + (b.potential ? ' is-potential' : b.dateKind === 'estimated' ? ' is-estimated' : '') + '" title="' + esc(b.label) + mark(b) + '">−' + short(b.cents) + '</i>'; });
-          (d.notes || []).forEach(function (n) { marks += '<i class="cal-own' + (n.done ? ' is-done' : '') + (n.sub === 'deadline' ? ' is-deadline' : '') + '" title="' + esc(n.label) + '">' + esc(n.label) + '</i>'; });
-          return '<span class="' + cls + '"><b>' + (d.firstOfMonth || d.today ? d.month + ' ' : '') + d.dom + '</b>' + marks + '<small>' + short(d.balanceCents) + '</small></span>';
-        }).join('') + '</div>';
-      }).join('')
-      + '</div><p class="cal-key"><i class="cal-in">+$</i> money in · <i class="cal-out">−$</i> a bill or a logged expense · <i class="cal-own">a date of yours</i> · <i class="cal-out is-pl">−$</i> pay-later · <i class="cal-out is-estimated">−$</i> date estimated · <i class="cal-out is-potential">−$</i> potential, not counted · the figure is the cash at the end of the day · <span class="k-low">the low point</span> · <span class="k-under">under zero</span></p>';
+    var days = n || 14;
+    var list = Cal.turns(r).filter(function (t) { return t.index < days && !t.potential; });
+    if (!list.length) return '<p class="cal-sheet-empty">Nothing lands in the next ' + days + ' days.</p>';
+    var labels = Cal.EVENT_LABELS || { todo: 'To do', deadline: 'Deadline', note: 'Note' };
+    var ins = list.filter(function (t) { return t.direction === 'in'; }).reduce(function (s, t) { return s + t.cents; }, 0);
+    var outs = list.filter(function (t) { return t.direction === 'out'; }).reduce(function (s, t) { return s - t.cents; }, 0);
+    return '<p class="cal-up-sum"><span class="is-in">+' + esc(Money.formatCents(ins)) + ' in</span><span class="is-out">−' + esc(Money.formatCents(outs)) + ' out</span></p>'
+      + '<ol class="turns cal-upcoming">' + list.map(function (t) {
+        if (t.direction === 'note') return '<li class="is-note' + (t.done ? ' is-done' : '') + '"><span class="tn-when">' + esc(t.weekday) + ' ' + t.dom + '</span><span class="tn-what">' + esc(t.label) + '</span><span class="tn-amt is-note">' + esc(labels[t.sub] || t.sub) + '</span><span class="tn-bal">' + (t.done ? 'done' : '') + '</span></li>';
+        return '<li' + (t.index === r.lowIndex ? ' class="is-low"' : '') + '><span class="tn-when">' + esc(t.weekday) + ' ' + t.dom + '</span><span class="tn-what">' + esc(t.label) + esc(mark(t)) + '</span><span class="tn-amt ' + (t.direction === 'in' ? 'is-in' : 'is-out') + '">' + signed(t.cents) + '</span><span class="tn-bal' + (t.balanceCents < 0 ? ' is-under' : '') + '">' + esc(Money.formatCents(t.balanceCents)) + ' after</span></li>';
+      }).join('') + '</ol>';
+  }
+  /* The month, the way a phone calendar is used: a header with the month
+     and arrows, a summary strip, the grid, the tapped day's sheet, and
+     what is coming up. The room owns the two states (the month shown and
+     the day tapped) and re-renders through this. */
+  function monthView(r, opts) {
+    var o = opts || {};
+    var ym = o.month, y = +ym.slice(0, 4), mo = +ym.slice(5, 7), count = dim(y, mo);
+    var inC = 0, outC = 0, i;
+    for (i = 1; i <= count; i++) { var ev = eventsFor(r, isoOf(y, mo, i), o); ev.ins.forEach(function (x) { if (!x.potential) inC += x.cents; }); ev.outs.forEach(function (x) { if (!x.potential) outC += x.cents; }); }
+    var cur = Money.isOk(r) && r.startDate.slice(0, 7) === ym;
+    var why = Money.isOk(r) ? '' : '<p class="cal-why">' + esc(r.reason || 'The month cannot be drawn yet.') + ' The days still show what the log says went out.</p>';
+    /* The low point, named only when it falls inside the month on screen:
+       "on the 4th" under September, when the 4th is October's, misleads. */
+    var lowDate = Money.isOk(r) && r.days[r.lowIndex] ? r.days[r.lowIndex].date : null;
+    var low = lowDate && lowDate.slice(0, 7) === ym ? '<span class="cal-sum-low' + (r.belowZero ? ' is-under' : '') + '">low ' + esc(Money.formatCents(r.lowCents)) + ' on ' + esc(dayName(lowDate).replace(/^\w+, /, '')) + '</span>' : '';
+    var selected = o.selected && o.selected.slice(0, 7) === ym ? o.selected : null;
+    return '<div class="cal-month">'
+      + '<div class="cal-nav"><button type="button" class="cal-nav-btn" data-cal-nav="-1" aria-label="Earlier month"' + (o.canBack === false ? ' disabled' : '') + '>‹</button>'
+      + '<h3>' + esc(longMonth(ym)) + (cur ? '<small>this month</small>' : '') + '</h3>'
+      + '<button type="button" class="cal-nav-btn" data-cal-nav="1" aria-label="Later month"' + (o.canForward === false ? ' disabled' : '') + '>›</button></div>'
+      + why
+      + '<p class="cal-sum"><span class="is-in">+' + esc(Money.formatCents(inC)) + ' in</span><span class="is-out">−' + esc(Money.formatCents(outC)) + ' out</span><span class="cal-sum-net">net ' + (inC - outC < 0 ? '−' : '+') + esc(Money.formatCents(Math.abs(inC - outC))) + '</span>' + low + '</p>'
+      + grid(r, o)
+      + (selected ? daySheet(r, selected, o) : '<p class="cal-sheet-empty">Tap a day to see what lands on it.</p>')
+      + (cur ? '<details class="cal-up" open><summary>Coming up in the next 14 days</summary>' + upcoming(r, 14) + '</details>' : '')
+      + key()
+      + (!cur && !Money.isOk(r) ? '' : (!cur ? '<p class="cal-note">Balances run from today for the days the window covers; earlier days show what the log says went out.</p>' : ''))
+      + '</div>';
   }
 
   /* The turns, listed: what hits the account, when, and what is left. */
@@ -81,8 +185,8 @@
 
   function html(r) {
     if (!Money.isOk(r)) return chart(r);
-    return chart(r) + grid(r) + turnsHtml(r);
+    return chart(r) + grid(r) + key() + turnsHtml(r);
   }
 
-  return { chart: chart, grid: grid, turnsHtml: turnsHtml, html: html, turns: function (r) { return Cal.turns(r); }, SHOW: SHOW };
+  return { chart: chart, grid: grid, key: key, daySheet: daySheet, upcoming: upcoming, monthView: monthView, turnsHtml: turnsHtml, html: html, turns: function (r) { return Cal.turns(r); }, SHOW: SHOW, KIND_WORD: KIND_WORD };
 });

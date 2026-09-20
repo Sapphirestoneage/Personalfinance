@@ -43,7 +43,7 @@
      beside the version in every footer and in every backup, so a phone
      showing an old page can be told apart from a bug. version.json carries
      the same string; `node tools/stamp-build.js` sets both to today. D-202. */
-  var BUILD = '2026-09-19 19:19Z';
+  var BUILD = '2026-09-20 01:28Z';
 
   /* ======================================================================
      System assumption defaults — SPEC.md §12.2 (RESOLVED: 7% return, 4% SWR)
@@ -132,6 +132,7 @@
     'household.calendar.cadence':                { class: 'raw',        unit: 'enum',    values: ['weekly', 'fortnightly', 'semimonthly', 'monthly'], note: 'with nextPaydayDay (1–31), bills[] {label, cents, day}, payLater[] {label, cents, dueDay, instalmentsLeft}. Owned by Money Calendar. D-101' },
     'household.history.compareTo':               { class: 'raw',        unit: 'id',      note: 'the snapshot History compares today against. Owned by History. D-101' },
     'meta.fields':                               { class: 'raw',        unit: 'map',     note: '{ fieldId: { asOf, source, confidence, room } }: when a number was last set or confirmed, how it arrived (typed, pasted, imported, screenshot, migrated, block-default, quote) and how sure the person is (sure, roughly, unsure, unknown). Schema.meta reads it; the spine writes it. D-181' },
+    'meta.visits':                               { class: 'raw',        unit: 'map',     note: '{ firstAt, lastAt, days: [YYYY-MM-DD], count }: the calendar days this app was opened. Written by Spine.noteVisit on a room open, skipped by the command log. Absent before D-319 and read as no days recorded, never as never used.' },
     'meta.guessed':                              { class: 'raw',        unit: 'map',     note: '{ fieldId: true } for figures the one-pager committed as guesses; cleared per field the moment a real number is written. D-094' },
     'household.expenses.needs.food.monthlyCents':          { class: 'raw', unit: 'cents', note: 'FAT: food a month. Owned by Expenses (D-192; Cash Flow before it). D-172' },
     'household.expenses.needs.accommodation.monthlyCents': { class: 'raw', unit: 'cents', note: 'FAT: rent, or mortgage plus tax plus insurance, one number a month. Owned by Expenses (D-192; Cash Flow before it). D-172' },
@@ -2433,6 +2434,11 @@
       assumptionOverrides: f.assumptionOverrides || {},
       meta: Object.assign({
         visitedRooms: [],
+        /* The days this app was opened (D-319): { firstAt, lastAt, days,
+           count }. days is a set of calendar days, newest last, capped by
+           the spine; count is the true total. Absent on anything saved
+           before, which reads back as no days recorded. */
+        visits: createVisits(f.meta && f.meta.visits),
         createdAt: null,
         updatedAt: null,
         /* { fieldId: ISO } — when each owned field was last set or
@@ -2902,6 +2908,23 @@
       source: 'estimate', grossAnnualIncomeCents: gross.value, estimatedTaxCents: tax.value, effectiveRate: tax.effectiveRate, referenceVersion: tax.referenceVersion
     });
   }
+  /* THE GAP (D-317): what is free each month once the month is paid for.
+     Take-home, less the four numbers, less every debt minimum. Cash Flow's
+     "Left", Debt Payoff's extra when the box is blank, and anything else
+     that asks read THIS, so two rooms can never disagree about it. A
+     negative gap is a real answer: the month costs more than comes in. */
+  function monthlyGapCents(household, tables) {
+    var take = takeHomeMonthlyCents(household, tables);
+    if (!Money.isOk(take)) return take;
+    var spend = monthlyExpensesCents(household);
+    if (!Money.isOk(spend)) return spend;
+    var mins = monthlyDebtPaymentsCents(household);
+    if (!Money.isOk(mins)) return mins;
+    return Money.ok(take.value - spend.value - mins.value, {
+      takeHomeCents: take.value, spendingCents: spend.value, minimumsCents: mins.value,
+      spendingSource: spend.source || null, effectiveRate: take.effectiveRate === undefined ? null : take.effectiveRate
+    });
+  }
   function takeHomeMonthlyCents(household, tables) {
     var t = takeHomeAnnualCents(household, tables);
     if (!Money.isOk(t)) return t;
@@ -3226,6 +3249,20 @@
     var v = m[key];
     return v && typeof v === 'object' ? { at: v.at || null, expectedBy: v.expectedBy || null } : null;
   }
+  /** The visit record (D-319). Absent, malformed or legacy -> empty, never invented. */
+  function createVisits(v) {
+    var o = v && typeof v === 'object' ? v : {};
+    var days = Array.isArray(o.days) ? o.days.filter(function (d) { return typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d); }) : [];
+    var seen = {}, uniq = [];
+    days.forEach(function (d) { if (!seen[d]) { seen[d] = true; uniq.push(d); } });
+    uniq.sort();
+    return {
+      firstAt: typeof o.firstAt === 'string' ? o.firstAt : (uniq.length ? uniq[0] : null),
+      lastAt: typeof o.lastAt === 'string' ? o.lastAt : (uniq.length ? uniq[uniq.length - 1] : null),
+      days: uniq,
+      count: typeof o.count === 'number' && o.count >= uniq.length ? o.count : uniq.length
+    };
+  }
   function meta(household, pathOrId) {
     var ids = fieldIdsFor(pathOrId);
     var fieldId = ids.length ? ids[0] : (typeof pathOrId === 'string' ? pathOrId : null);
@@ -3287,6 +3324,7 @@
     saidNoDebt: saidNoDebt,
     TAX_CHARACTERS: TAX_CHARACTERS,
     ACCOUNT_TYPES: ACCOUNT_TYPES, ACCOUNT_TYPE_LABELS: ACCOUNT_TYPE_LABELS, accountType: accountType, applyAccountType: applyAccountType, whereItSits: whereItSits,
+    createVisits: createVisits,
     createCalendarEvent: createCalendarEvent, CALENDAR_EVENT_KINDS: CALENDAR_EVENT_KINDS, CALENDAR_EVENT_LABELS: CALENDAR_EVENT_LABELS,
     createWorkProfile: createWorkProfile,
     WORK_DEFAULTS: WORK_DEFAULTS,
@@ -3445,6 +3483,7 @@
     estimatedAnnualTaxCents: estimatedAnnualTaxCents,
     takeHomeAnnualCents: takeHomeAnnualCents,
     takeHomeMonthlyCents: takeHomeMonthlyCents,
+    monthlyGapCents: monthlyGapCents,
     loggedTakeHomeMonthlyCents: loggedTakeHomeMonthlyCents,
     typedTakeHomeMonthlyCents: typedTakeHomeMonthlyCents,
     employerMatchCents: employerMatchCents,
