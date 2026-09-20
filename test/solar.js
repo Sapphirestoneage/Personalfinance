@@ -341,10 +341,44 @@ section('Where a household stands in the levels, and the screen that shows it');
   /* The screen. */
   const page = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
   check('the Ledger carries a Planets hat and its view', /data-view="view-sky"/.test(page) && /id="view-sky"/.test(page) && /hash: '#planets'/.test(page));
-  check('the view draws six rows of ten bands from the engine', /Solar\.overall\(Spine\.getProfile\(\)\)/.test(page) && /sky-cells/.test(page) && /sky-dot/.test(page));
+  check('the view draws six rows of ten bands from the engine', /var o = Solar\.overall\(h\);/.test(page) && /sky-cells/.test(page) && /sky-dot/.test(page));
   check('a planet opens to its bands and the levels inside them', /sky-band-head/.test(page) && /sky-levels/.test(page) && /data-planet=/.test(page));
+  /* D-322: every level is a control, not a label, so you can see what it
+     still needs. A level with no room to type in says that rather than
+     looking broken. */
+  check('every level is a button carrying its id', /class="sky-lv" data-level="/.test(page) && /aria-expanded=/.test(page));
+  check('tapping a level opens its detail', /openLevel = openLevel === id \? null : id/.test(page) && /sky-lv-detail/.test(page));
+  check('the detail names what the level gives you, what it unlocks and where to find it', /What it gives you/.test(page) && /Unlocks\./.test(page) && /Where to find it/.test(page));
+  check('the detail lists every fact the level collects, with its state', /d-fields/.test(page) && /f\.filled \? 'in' : 'not yet'/.test(page));
+  /* D-322: the other half of the screen, what finishing a level buys. */
+  Solar.useRecipes(Recipes);
+  const mAll = Solar.metrics(blank), mDemo = Solar.metrics(demo);
+  check('every reading is either ready or waiting, never locked', mAll.length === 184 && mAll.every(m => m.state === 'ready' || m.state === 'waiting'));
+  check('a blank household has no reading ready, and each names what it waits on', mAll.every(m => m.state === 'waiting' && m.missing.length > 0));
+  check('the example household can already work some out', mDemo.filter(m => m.state === 'ready').length > 0, String(mDemo.filter(m => m.state === 'ready').length));
+  check('the closest to ready come first', mDemo[0].missing.length <= mDemo[mDemo.length - 1].missing.length);
+  check('everything a reading waits on is a real level', mAll.every(m => m.missing.every(id => !!levelById[id])));
+  const tr = Solar.tiers(demo);
+  check('ten bands of readings, counted', tr.length === 10 && tr.every(t => t.ready + t.waiting === t.total));
+  check('each band names the levels the most readings wait on', tr[0].blockers.length > 0 && tr[0].blockers[0].unlocks >= (tr[0].blockers[tr[0].blockers.length - 1] || {}).unlocks);
+  check('a blocker names a real level and how many readings it frees', tr[0].blockers.every(b => !!levelById[b.id] && b.unlocks > 0));
+
+  check('the view has two tabs, the planets and what unlocks', /data-tab="planets"/.test(page) && /data-tab="unlocks"/.test(page) && /id="sky-unlocks"/.test(page));
+  check('the unlocks tab leads with the levels that free the most readings', /Do these first/.test(page) && /unlocks ' \+ esc\(b\.unlocks\)/.test(page));
+  check('every reading says it is ready or names what it waits on', /Ready from what you have answered/.test(page) && /Waiting on/.test(page));
+  check('a level named there opens on the planets tab', /data-goto=/.test(page) && /tab = 'planets'; open = lv\.planet; openLevel = id/.test(page));
+  check('the readings are grouped by band and each band opens', /data-tier=/.test(page) && /openTier === n \? 0 : n/.test(page));
+  check('the unlocks tab says nothing is locked', /Nothing is locked: a reading simply cannot exist until its facts do/.test(page));
+
+  const skyStart = page.indexOf('The planets (D-321, opened up in D-322)');
+  const skyBlock = page.slice(skyStart, page.indexOf('</script>', skyStart));
+  check('a fact with an owner room links to it, and one without says so plainly', /'enter it'/.test(page) && /nowhere to type it yet/.test(page) && !/N\/A/.test(skyBlock));
+  check('a level nothing can collect yet explains itself', /Nothing on this screen can take this answer yet/.test(page));
+  check('the planet can be filtered to what is not done', /data-only="notYet"/.test(page) && /only === 'all' \|\| r\.state !== 'done'/.test(page));
+  check('the level buttons reach the 44px tap target', /\.sky-lv \{[^}]*min-height: 44px/.test(page));
+  check('the metric labels come from the recipes table, never retyped', /Reference\.load\(\['levels', 'recipes'\]\)/.test(page) && /RECIPES\[r\.id\] = r\.label/.test(page));
   check('it says what is answered and what is next', /levels answered/.test(page) && /id="sky-next"/.test(page));
-  check('the room loads the engine and the table', /shared\/solar\.js/.test(page) && /Reference\.load\(\['levels'\]\)/.test(page));
+  check('the room loads the engine and the tables', /shared\/solar\.js/.test(page) && /Reference\.load\(\['levels', 'recipes'\]\)/.test(page));
   check('the Planets view is registered as a subsection', /view-sky/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
   check('nothing on this screen is red or says incomplete', !/is-bad|is-danger/.test(page.slice(page.indexOf('id="view-sky"'), page.indexOf('id="view-sky"') + 2000)));
 }

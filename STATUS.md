@@ -9,19 +9,18 @@ Updated: 2026-09-20
   menu's dots, the ask that rests, the gap as a chip.
 - **The five-input opening (D-312)**: `rooms/ledger.html#round-1` is one
   screen, five inputs, the FI date as a band; 6 to 10 taps (`test/opening.js`).
-- **Facts are entered in the Ledger only (D-313)**: every per-account fact is
-  a Ledger row with one owner. The Statement is four sections.
+- **Facts are entered in the Ledger only (D-313)**: one owner per row.
 - **New rooms**: The Bridge, Which Account, The Mix, The Documents, Left
   Behind (D-316). Worst year is the Cushion's (D-314); pay to come (D-315).
 - **From main**: a statement in (D-306); the Calendar (D-308); all three
   intakes stay (D-309); plain words (D-310, D-311).
-- **The Solar System (D-320, D-321)**: `docs/SOLAR-SYSTEM.md` is the spec.
+- **The Solar System (D-320 to D-322)**: `docs/SOLAR-SYSTEM.md` is the spec.
   The data layer is in (180 levels, 184 recipes, 17 moons, 98 moves, defaults,
-  benchmarks, the lexicon), `shared/solar.js` reads it against a household,
-  and the Ledger's seventh hat, Planets (`#planets`), shows the six planets,
-  the ten bands, the levels in each and what is answered. `test/solar.js` lints it.
-- **No em dash anywhere the app can show one (D-321)**: the not-entered
-  placeholder is now the words "not yet"; the archive keeps its own.
+  benchmarks, the lexicon) and `shared/solar.js` reads it against a household.
+  The Ledger's seventh hat, Planets (`#planets`), shows six planets by ten
+  bands; every level opens to what it needs, and a second tab says what
+  finishing it unlocks (D-322). `test/solar.js` lints it.
+- **No em dash on screen (D-321)**: the not-entered placeholder reads "not yet".
 - **D-319**: every room says how old its numbers are; the example says so.
 - **Main is worked on directly by another lane**: merge it before every push.
   The reframe D-228 asks for has NOT shipped. Freeze holds (D-313).

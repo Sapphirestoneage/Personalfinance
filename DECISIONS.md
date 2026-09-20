@@ -16745,6 +16745,44 @@ gates. The Planets view at 390px with the example numbers: 17 of 161
 answered, six rows of ten bands, Assets opened to its bands and levels,
 clean console.
 
+## D-322 — Every level is a control, and a tab says what finishing them unlocks
+
+**Why.** The owner opened a planet and could not tap a level they had not
+answered. Only levels whose facts happen to have an owner room were links,
+which is backwards: the ones worth opening are the ones not done. There was
+no way to see what a level was waiting for, and no way to see what answering
+it would buy.
+
+**Decision.** Two halves, on two tabs inside the Ledger's Planets view.
+
+*The planets.* Every level is a button, 44px tall, carrying its id. Tapping
+one opens underneath it: what answering gives you, which readings it unlocks
+(labels read from `data/recipes.json`, never retyped), where to find the
+answer and roughly how long it takes, then every fact the level collects with
+its state, its value when it is in, and a link to the room that owns it. A
+fact the app has nowhere to put yet says "nowhere to type it yet", and a
+level where none of them can be entered says so in a sentence rather than
+looking broken. A filter shows all the levels or only the ones not done.
+
+*What unlocks.* `shared/solar.js` gains `metrics`, `tiers` and `answered`:
+a reading is ready when every level it needs is answered and waiting when one
+is not, naming which, so nothing is ever locked or N/A. The tab leads with
+the levels that free the most readings ("unlocks 26"), then lists all 184 by
+band, each ready or naming what it waits on. Every level named there is a
+button that opens that level on the planets tab.
+
+**Replaces or removes.** The level row that was a link only when one of its
+fields had an owner room.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (34,745), `node test/solar.js` (5,053), the
+other suites and the six browser gates. At 390px with the example numbers: 28
+levels tappable on You, the Not done filter showing 26, a level with an owner
+room offering its link and one without saying why, the unlocks tab leading
+with take-home pay at 26 readings, and a tap there opening that level on the
+planets tab. Clean console.
+
 ---
 
 # The Dungeons & Dividends entries
