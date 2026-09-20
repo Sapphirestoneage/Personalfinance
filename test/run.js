@@ -16218,6 +16218,133 @@ section('The five-input opening (D-312): the engine');
   checkTrue('the D&D schema copy carries the block', fs.readFileSync(path.join(ROOT, 'dnd/shared/schema.js'), 'utf8').indexOf('createTakeHome') !== -1);
 })();
 
+section('Every screen says how old its numbers are; the example says so; the lodge knows you (D-317)');
+
+(function () {
+  const Staleness = require(path.join(ROOT, 'shared/staleness.js'));
+  const DAY = 86400000;
+  const now = Date.parse('2026-09-20T12:00:00Z');
+  const tableWas = Staleness.tableInUse();
+  Staleness.use(require(path.join(ROOT, 'data/staleness.json')));
+
+  /* -- Staleness.forFields / line: the fold a room header needs ------------ */
+  {
+    const h = Schema.createHousehold({});
+    check('nothing entered, nothing to date: line is null', Staleness.line(h, ['cashSavings', 'monthlyExpenses'], now), null);
+    check('… and forFields counts zero entered', Staleness.forFields(h, ['cashSavings'], now).entered, 0);
+
+    h.meta.updatedAt = new Date(now - 3 * DAY).toISOString();
+    const undated = Staleness.line(h, ['cashSavings'], now);
+    checkTrue('saved before dates were kept: the line says so, never a verdict', undated && /not dated/.test(undated.text) && undated.stale === false, JSON.stringify(undated));
+
+    h.meta.fields = { cashSavings: { asOf: new Date(now - 45 * DAY).toISOString(), source: 'typed', confidence: 'sure' },
+                      monthlyExpenses: { asOf: new Date(now - 2 * DAY).toISOString(), source: 'typed', confidence: 'sure' } };
+    const s = Staleness.forFields(h, ['cashSavings', 'monthlyExpenses', 'grossIncome'], now);
+    check('three asked, two dated (the third rides on the save stamp)', s.entered + ':' + s.dated + ':' + s.undated, '3:2:1');
+    check('the oldest is the cash, 45 days', s.oldest.fieldId + ':' + s.oldest.days, 'cashSavings:45');
+    check('cash past 30 days is the one stale row', s.stale.length + ':' + s.stale[0].fieldId, '1:cashSavings');
+    const l = Staleness.line(h, ['cashSavings', 'monthlyExpenses', 'grossIncome'], now);
+    checkTrue('the line names the oldest in plain words and counts the stale one', /about a month ago/.test(l.text) && /One is past the date/.test(l.text) && /1 not dated/.test(l.text), l.text);
+    check('… and flags stale for the dot', l.stale + ':' + l.oldestDays, 'true:45');
+    const one = Staleness.line(h, ['monthlyExpenses'], now);
+    check('one dated field reads as a single number', one.text, 'This number was last touched 2 days ago.');
+    check('a dob never goes stale even when old', Staleness.forFields({ meta: { fields: { dob: { asOf: '2020-01-01' } } } }, ['dob'], now).stale.length, 0);
+  }
+  Staleness.use(tableWas);
+
+  /* -- Schema.createVisits: never invented, never zeroed --------------------- */
+  {
+    const empty = Schema.createVisits(undefined);
+    check('absent -> empty record, not a first visit', JSON.stringify(empty), '{"firstAt":null,"lastAt":null,"days":[],"count":0}');
+    const v = Schema.createVisits({ days: ['2026-09-02', 'junk', '2026-09-01', '2026-09-02'], count: 7 });
+    check('days are validated, deduped and sorted', v.days.join(','), '2026-09-01,2026-09-02');
+    check('count keeps the true total when it is at least the kept days', v.count, 7);
+    check('a count below the kept days is the kept days', Schema.createVisits({ days: ['2026-09-01', '2026-09-02'], count: 1 }).count, 2);
+    check('first and last fall back to the days', v.firstAt + '|' + v.lastAt, '2026-09-01|2026-09-02');
+    checkTrue('createHousehold carries the record and a legacy save reads as no days', Schema.createHousehold({}).meta.visits.days.length === 0);
+    checkTrue('meta.visits is a declared field', !!Schema.FIELDS['meta.visits']);
+  }
+
+  /* -- The spine: one day per sitting, the demo flag, none of it on undo --- */
+  {
+    const spinePath = path.join(ROOT, 'shared/spine-v2.js');
+    const store = {};
+    global.localStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; } };
+    delete require.cache[require.resolve(spinePath)];
+    const Spine = require(spinePath);
+    check('no record yet: zero days, no last visit, no streak', JSON.stringify(Spine.visitStats(new Date('2026-09-20T10:00:00'))), JSON.stringify({ days: 0, first: null, last: null, lastDays: null, streak: 0, today: false }));
+    const d1 = new Date('2026-09-18T09:00:00'), d1b = new Date('2026-09-18T21:00:00'), d2 = new Date('2026-09-19T08:00:00'), d4 = new Date('2026-09-21T08:00:00');
+    Spine.noteVisit(d1); Spine.noteVisit(d1b);
+    check('two opens on one day are one day', Spine.visitStats(d1b).days, 1);
+    Spine.noteVisit(d2);
+    const s2 = Spine.visitStats(d2);
+    check('the next day makes two, a streak of two, today counted', s2.days + ':' + s2.streak + ':' + s2.today + ':' + s2.lastDays, '2:2:true:1');
+    const s4 = Spine.visitStats(d4);
+    check('looking two days later, not yet opened: last here 2 days ago, no streak', s4.lastDays + ':' + s4.streak + ':' + s4.today, '2:0:false');
+    checkTrue('the record is saved on the household', JSON.parse(store['slaf.household.v2']).meta.visits.days.join(',') === '2026-09-18,2026-09-19');
+    checkTrue('registerRoom notes the visit', (Spine.registerRoom('runway'), Spine.visitStats().today === true));
+    check('opening a screen never lands on the undo stack', Spine.getProfile().meta.undoStack ? Spine.getProfile().meta.undoStack.length : 0, 0);
+    check('the demo flag is off until the demo is written', Spine.isDemo(), false);
+    Spine.markDemo(true);
+    check('marking the demo sets it', Spine.isDemo(), true);
+    Spine.set('state', 'NC', 'typed over one figure');
+    check('typing over one figure does not clear it', Spine.isDemo(), true);
+    check('… and marking never landed on undo', Spine.historySize().undo, 1);
+    Spine.markDemo(false);
+    check('a deliberate clear takes it off', Spine.isDemo(), false);
+    Spine.markDemo(true); Spine.reset();
+    check('a reset clears it too', Spine.isDemo(), false);
+    delete global.localStorage; delete require.cache[require.resolve(spinePath)];
+  }
+
+  /* -- Progress: the age line and the demo line ----------------------------- */
+  {
+    const src = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+    checkTrue('mountHeader mounts the age line after the nav', /mountWalk\(roomId, nav\);\s*mountAge\(roomId, nav\);/.test(src));
+    checkTrue('the age line and the example mark paint into their own hosts, never a live form', /host\.id = 'slaf-age-host'/.test(src) && /mark\.id = 'slaf-demo-host'/.test(src) && /D-034/.test(src));
+    checkTrue('the example mark sits beside the menu button, costing no height', /menuBtn\.parentNode\.insertBefore\(mark, menuBtn\.nextSibling\)/.test(src));
+    checkTrue('the example household carries no age line: every figure of it was loaded today', /Spine\.isDemo\(\)\) return '';/.test(src));
+    checkTrue('the room visit reaches the household record', /Spine\.noteVisit\(\)/.test(src));
+    checkTrue('the demo clear asks first, then resets and reloads', /confirm\('Clear the example numbers/.test(src) && /Spine\.reset\(\)/.test(src) && /location\.reload\(\)/.test(src));
+    check('the dashboard carries no age line: it is the one screen made of every room', Progress.ageLineHtml('dashboard', Schema.createHousehold({})), '');
+    check('a room with nothing filled carries no age line', Progress.ageLineHtml('runway', Schema.createHousehold({})), '');
+    const ssrc = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+    ['.slaf-age-host', '.slaf-age', '.slaf-age-dot', '.slaf-demo-host', '.slaf-demo', '.slaf-linkbtn', '.slaf-age.is-stale'].forEach(c =>
+      checkTrue(`theme.css styles ${c}`, ssrc.indexOf(c) !== -1));
+    checkTrue('the D&D copies match', fs.readFileSync(path.join(ROOT, 'dnd/shared/theme.css'), 'utf8') === ssrc
+      && fs.readFileSync(path.join(ROOT, 'dnd/shared/schema.js'), 'utf8') === fs.readFileSync(path.join(ROOT, 'shared/schema.js'), 'utf8'));
+  }
+
+  /* -- The demo is marked wherever it is written ---------------------------- */
+  ['index.html', 'rooms/debt-payoff.html', 'rooms/expenses.html'].forEach(f => {
+    const s = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    if (/Demo(Persona)?\.build\(\)/.test(s)) checkTrue(`${f} marks the demo when it writes it`, /Spine\.markDemo\(true\)/.test(s));
+  });
+  {
+    const hits = [];
+    const walk = (d) => fs.readdirSync(d).forEach(n => { const p = path.join(d, n); if (fs.statSync(p).isDirectory()) { if (n !== 'node_modules' && n !== 'dnd' && n !== '.git') walk(p); } else if (/\.html$/.test(n)) hits.push(p); });
+    walk(path.join(ROOT, 'rooms')); hits.push(path.join(ROOT, 'index.html'));
+    hits.forEach(p => {
+      const s = fs.readFileSync(p, 'utf8');
+      if (/SLAF\.Demo(Persona)?\.build\(\)|\bDemo\.build\(\)/.test(s) && /Spine\.(updateProfile|replace|set)\(/.test(s))
+        checkTrue(`${path.relative(ROOT, p)} writes the demo and marks it`, /markDemo\(true\)/.test(s));
+    });
+  }
+
+  /* -- The lodge on the front page ------------------------------------------ */
+  {
+    const idx = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+    ['lodge', 'lodge-figure', 'lodge-line', 'lodge-meter', 'landing-cap', 'landing-head', 'landing-say'].forEach(id =>
+      checkTrue(`index has #${id}`, new RegExp('id="' + id + '"').test(idx)));
+    checkTrue('the lodge reads the First Round\'s own insight and the Ledger\'s meter, derived nowhere twice', /SLAF\.Doors\.firstInsight\(h, TABLES\)/.test(idx) && /SLAF\.Doors\.understanding\(/.test(idx));
+    checkTrue('the lodge paints after the Up Next strip and only when something is filled', /renderUpNext\(h\);\s*paintLodge\(h, SLAF\.Progress\.overall\(h\)\)/.test(idx) && /overall\.fieldsFilled > 0/.test(idx));
+    checkTrue('it says when you were last here from the visit record', /Spine\.visitStats\(\)/.test(idx));
+    ['shared/levers.js', 'shared/ledger-rows.js', 'shared/suggest.js', 'shared/doors.js'].forEach(s =>
+      checkTrue(`index loads ${s} for the lodge`, idx.indexOf('src="' + s + '"') !== -1));
+    checkTrue('the lodge is hidden by default', /<div class="lodge" id="lodge" hidden>/.test(idx));
+  }
+})();
+
 /* ==========================================================================
    Report
    ========================================================================== */

@@ -1,6 +1,6 @@
 # STATUS (keep under 40 lines; /wrap rewrites it)
 
-Updated: 2026-09-19
+Updated: 2026-09-20
 
 ## Where it stands
 - **93 → 37 rooms**: the 32 of the merge programme with the Calendar back
@@ -18,20 +18,20 @@ Updated: 2026-09-19
   The Documents (tier 2), Left Behind (a plan tagged `old_401k` proposes its
   balance, D-316). The worst plausible year is the Cushion's (D-314). The pay
   still to come sits beside net worth, on a switch on by default under 40 (D-315).
-- **From main this session**: a bank or card statement in, every place money
-  went, the slope of a month (D-306); the Calendar with your own dates
-  (D-308); all three intakes stay (D-309); plain words everywhere (D-310, D-311).
+- **From main**: a bank or card statement in (D-306); the Calendar with your
+  own dates (D-308); all three intakes stay (D-309); plain words (D-310, D-311).
+- **The stranded audits ported (D-317)**: every room says how old its numbers
+  are; the example household says so on every screen, with a clear button; the
+  front page part-way through is a lodge. PRs #3, #4, #15 closed as superseded.
 - **Main is worked on directly by another lane**: merge it before every push.
-  The reframe D-228 asks for has NOT shipped. Freeze: five rooms added, each
-  replacing a reading or a card the Statement lost; screens unchanged (D-313).
+  The reframe D-228 asks for has NOT shipped. Freeze holds (D-313).
 
 ## Next (top item first; one per session)
 1. **OWNER DECISION: inline asks elsewhere.** D-313 applies "facts are entered
    in the Ledger only" to the Statement and the carved rooms; the Cushion,
    Income, Protection and FIRE still ask a row inline (D-207). One door, or two.
 2. **OWNER DECISION: is the income floor means-tested?** (D-228, D-284.)
-3. The paystub parser and the monthly update: not built; the hook is on the
-   opening. `data/benefit_cliffs_2026.json` is still `unverified`.
+3. Paystub parser and monthly update: not built. `benefit_cliffs_2026.json` unverified.
 
 ## Known open
 - Nothing. Every CI step is clean on this tree, browser gates included.

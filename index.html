@@ -213,6 +213,12 @@
   .landing .cta { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
   .landing .cta a { text-decoration: none; }
   .landing .resume { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: var(--space-4); }
+  .lodge { margin: 0 0 var(--space-4); padding: var(--space-3) 0 0; border-top: 1px solid var(--color-border); }
+  .lodge .lodge-figure { font-family: var(--font-display); font-size: var(--text-2xl, 2rem); line-height: 1.15; margin: 0; color: var(--color-text); font-variant-numeric: tabular-nums; }
+  .lodge .lodge-line { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+  .lodge .lodge-line .rough { color: var(--color-text-faint); }
+  .lodge .lodge-meter { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
+  .lodge .lodge-meter b { color: var(--color-text); font-variant-numeric: tabular-nums; }
   .landing .resume a { color: var(--color-accent-hover); }
   .landing .privacy { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-4); }
 
@@ -298,9 +304,18 @@
   <div class="notice" id="load-notice" hidden></div>
 
   <section class="slaf-card landing" id="landing" hidden>
-    <span class="slaf-eyebrow">SPARKS · Money rooms</span>
-    <h2>One set of numbers. Every tool reads it.</h2>
-    <p>Answer a short set of questions once — what you earn, spend, hold and owe — and every room opens already filled in, from your runway to your FI year. Nothing leaves this browser.</p>
+    <span class="slaf-eyebrow" id="landing-cap">SPARKS · Money rooms</span>
+    <h2 id="landing-head">One set of numbers. Every tool reads it.</h2>
+    <p id="landing-say">Answer a short set of questions once — what you earn, spend, hold and owe — and every room opens already filled in, from your runway to your FI year. Nothing leaves this browser.</p>
+    <!-- The lodge (D-317, ported from D-251): someone who has answered
+         anything is not a stranger. The figure they earned, the meter every
+         room shows, and when they were last here. Hidden until there is
+         something in it. -->
+    <div class="lodge" id="lodge" hidden>
+      <p class="lodge-figure" id="lodge-figure"></p>
+      <p class="lodge-line" id="lodge-line"></p>
+      <p class="lodge-meter" id="lodge-meter"></p>
+    </div>
     <div class="cta">
       <a class="slaf-btn slaf-btn--primary" id="btn-start" href="rooms/ledger.html#round-1">Walk me through it →</a>
       <a class="slaf-btn" id="btn-express" href="rooms/ledger.html#all-at-once">Give me the whole form</a>
@@ -535,6 +550,11 @@
 <script src="shared/ownership.js"></script>
 <script src="shared/guide.js"></script>
 <script src="shared/prefs.js"></script>
+<!-- D-317: the lodge reads Doors.firstInsight (the First Round's own insight) and Doors.understanding (the Ledger's meter); nothing is derived twice. -->
+<script src="shared/levers.js"></script>
+<script src="shared/ledger-rows.js"></script>
+<script src="shared/suggest.js"></script>
+<script src="shared/doors.js"></script>
 <script src="shared/features.js"></script>
 <script src="shared/progress.js"></script>
 <script src="shared/roomexport.js"></script>
@@ -1247,11 +1267,54 @@
     /* Part-way through: the Up Next strip says what is open and what the
        next answer opens (D-234); the first button carries on there. */
     var plan = renderUpNext(h);
+    paintLodge(h, SLAF.Progress.overall(h));
     if (plan.open.length && plan.next && plan.next.missing.length) {
       el('btn-start').textContent = 'Continue →';
       el('btn-start').href = plan.next.missing[0].href;
     }
     return false;
+  }
+
+  /* ---- The lodge (D-317): what you already earned, before you are asked for
+     more. The figure is Doors.firstInsight, the meter Doors.understanding,
+     the days Spine.visitStats; none re-derived. Hidden until the tables land
+     and something is entered. */
+  function paintLodge(h, overall) {
+    var box = el('lodge');
+    if (!box) return;
+    var has = overall && overall.fieldsFilled > 0;
+    if (!has || !TABLES || !SLAF.Doors) { box.hidden = true; return; }
+    var figure = el('lodge-figure'), line = el('lodge-line'), meter = el('lodge-meter');
+    var ins = null, u = null;
+    try { ins = SLAF.Doors.firstInsight(h, TABLES); } catch (e) { ins = null; }
+    try {
+      var sug = SLAF.Suggest && SLAF.Suggest.suggestions ? SLAF.Suggest.suggestions(h, TABLES) : [];
+      u = SLAF.Doors.understanding(h, TABLES, sug, TABLES.confidenceWeights);
+    } catch (e) { u = null; }
+    if (ins && ins.ok) {
+      figure.hidden = false; figure.textContent = ins.headline;
+      line.hidden = false;
+      var lineHtml = esc(ins.line) + (ins.rough && ins.usedSuggestions ? ' <span class="rough">Rough: it leans on ' + ins.usedSuggestions.length + ' guesses you can confirm or change.</span>' : '');
+      line.innerHTML = lineHtml;
+    } else {
+      figure.hidden = true;
+      line.hidden = !(ins && ins.reason);
+      if (ins && ins.reason) line.textContent = ins.reason;
+    }
+    var bits = [];
+    if (u && Money.isEntered(u.percent) && u.percent > 0) bits.push('This app holds <b>' + u.percent + '%</b> of your financial picture.');
+    var v = Spine.visitStats ? Spine.visitStats() : null;
+    if (v && v.days > 0) {
+      var when = v.lastDays === null || v.lastDays === 0 ? 'You started today' : v.lastDays === 1 ? 'You were last here yesterday' : 'You were last here ' + v.lastDays + ' days ago';
+      bits.push(esc(when) + (v.days > 1 ? ', on ' + v.days + ' days so far' : '') + '.');
+    }
+    meter.hidden = !bits.length;
+    var meterHtml = bits.join(' ');
+    meter.innerHTML = meterHtml;
+    box.hidden = false;
+    el('landing-cap').textContent = 'Where you got to';
+    el('landing-head').textContent = 'Welcome back.';
+    el('landing-say').textContent = 'Everything below opens already filled in with what you have given it. Nothing has left this browser.';
   }
 
   /* ---- Up next (D-234) ------------------------------------------------------
@@ -1496,6 +1559,7 @@
       : true;
     if (hasSomething && !window.confirm('Fill every answer with the example household, Robin Sparks? This replaces anything you have entered.')) return;
     var d = SLAF.DemoPersona.build();
+    if (Spine.markDemo) Spine.markDemo(true);   /* these are Robin's numbers, and every room says so (D-317) */
     Spine.updateProfile({
       people: d.people, filingStatus: d.filingStatus, state: d.state,
       assets: d.assets, debts: d.debts, expenses: d.expenses,
@@ -1815,6 +1879,7 @@
   Reference.load().then(function (tables) {
     TABLES = tables;
     Staleness.use(tables.staleness);
+    if (SLAF.LedgerRows && tables.ledgerRows) SLAF.LedgerRows.use(tables.ledgerRows);   /* the lodge's meter reads the rows (D-317) */
     renderNow();
     jumpToHash();
   }).catch(function (err) {

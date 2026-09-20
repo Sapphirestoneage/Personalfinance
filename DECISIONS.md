@@ -16570,6 +16570,40 @@ reading it would show the id as the label and derive nothing from it.
 **Verified.** `node test/run.js`; `node test/statement.js` (the tagged
 plan's balance is proposed and priced).
 
+## D-317 — Every screen says how old its numbers are; the example says so; the front page knows you
+
+**Why.** Three audits (`docs/ux-audit-2026-09-11.md`, `docs/persona-audit-2026-09-12.md`,
+`docs/END-TO-END-AUDIT.md`, arrived as pull requests #4 and #15 against the
+92-room app and stranded by the cut) found the same four things: a number's
+as-of date reached two screens; the example household was indistinguishable
+from your own from the second screen on; the front page greeted a returning
+person as a stranger; the depth switch (shipped as D-250).
+
+**Decision.** `shared/progress.js` mounts one line under every room header
+(`mountAge`): the oldest figure the room reads, how many are past their
+review date, how many are guesses; `shared/staleness.js` gains `forFields`
+and `line` (loaded lazily where a room does not carry it). `Spine.markDemo`
+is set wherever the example household is written (`index.html`,
+`rooms/expenses.html`, `rooms/debt-payoff.html`) and every room shows
+"Example numbers" beside the menu button, where it costs no height, with
+a clear button, until a deliberate clear or reset; the example carries no
+age line. `shared/ask.js` shares a script another mount already asked for.
+`Spine.noteVisit` records the local calendar day on a room open; the front
+page's landing, part-way through, becomes the lodge: the First Round's own
+insight, the Ledger's meter, when you were last here. Nothing derived twice.
+
+**Replaces or removes.** Pull requests #3, #4 and #15 (closed as superseded);
+the audits are kept as historical records under `docs/`.
+
+**Stored shape.** `meta.isDemo` (true or absent) and `meta.visits`
+`{ firstAt, lastAt, days[], count }` added; both skipped by the command log
+and absent on older saves, which read as not demo and no days recorded.
+
+**Verified.** `node test/run.js`, `node dnd/test/run.js`, `node test/forms.js`,
+`node test/features.js`; the Runway, FIRE and Expenses rooms and the front
+page at 390px with the example numbers, the clear button, and a part-way
+household; clean console.
+
 ---
 
 # The Dungeons & Dividends entries

@@ -1028,6 +1028,103 @@
     return n;
   }
 
+  /* ---- How old is what I am looking at? (D-317, ported from D-251) --------
+     Every owned number carries its own as-of date, and until now that date
+     reached two screens. One quiet line under the room header: the oldest
+     figure this room reads, when it was last touched, how many are past
+     their review interval, and how many are guesses the app filled in. A
+     prompt, never a verdict (D-057). Text only, so a repaint cannot disturb
+     a live input (D-034). */
+  function ageLineHtml(roomId, household) {
+    var g = globals();
+    var Staleness = g && g.SLAF && g.SLAF.Staleness;
+    var room = Registry.byId(roomId);
+    if (!Staleness || !Staleness.line || !room || roomId === 'dashboard') return '';
+    if (!(room.needs || []).length) return '';
+    /* The example household was loaded today, every figure of it: its age
+       says nothing, and the example line above already says whose it is. */
+    var Spine = g.SLAF && g.SLAF.Spine;
+    if (Spine && Spine.isDemo && Spine.isDemo()) return '';
+    var row = forRoom(roomId, household);
+    var filled = row ? row.filled.map(function (f) { return f.fieldId; }) : [];
+    if (!filled.length) return '';
+    var l = Staleness.line(household, filled);
+    if (!l) return '';
+    var guessed = row.filled.filter(function (f) { return f.guessed; }).length;
+    var guessText = guessed ? ' ' + (guessed === filled.length ? (guessed === 1 ? 'It is a guess the app filled in.' : 'All ' + guessed + ' are guesses the app filled in.')
+      : guessed + ' of ' + filled.length + (guessed === 1 ? ' is a guess' : ' are guesses') + ' the app filled in.') : '';
+    var ledger = Registry.byId('ledger');
+    var link = l.stale && ledger ? ' <a href="' + escapeHtml(href(ledger.href, roomId)) + '#view-since">Look at them \u2192</a>' : '';
+    return '<p class="slaf-age' + (l.stale ? ' is-stale' : '') + '" id="slaf-age"><span class="slaf-age-dot" aria-hidden="true"></span>'
+      + escapeHtml(l.text + guessText) + link + '</p>';
+  }
+  /* "These are not your numbers" (D-317): the example household says so on
+     every room until the person clears it. */
+  function demoLineHtml() {
+    var g = globals();
+    var Spine = g && g.SLAF && g.SLAF.Spine;
+    if (!Spine || !Spine.isDemo || !Spine.isDemo()) return '';
+    return '<span class="slaf-demo" id="slaf-demo" role="status"><b>Example numbers</b> \u00b7 Robin\u2019s, not yours \u00b7 '
+      + '<button type="button" class="slaf-linkbtn" id="slaf-demo-clear">Clear them</button></span>';
+  }
+  function mountAge(roomId, nav) {
+    var g = globals();
+    var Spine = g && g.SLAF && g.SLAF.Spine;
+    if (!Spine || !nav || document.getElementById('slaf-age-host')) return null;
+    var host = document.createElement('div');
+    host.id = 'slaf-age-host';
+    host.className = 'slaf-age-host';
+    /* The example mark sits beside the menu button, in the empty half of
+       that row, so it costs the page no height; the age line goes under the
+       nav. Both hosts go in first, so the paint below can find its own
+       button, looked up inside its host, never by id on the page. */
+    var mark = document.createElement('span');
+    mark.id = 'slaf-demo-host';
+    mark.className = 'slaf-demo-host';
+    var menuBtn = document.getElementById('slaf-menu-btn');
+    if (menuBtn && menuBtn.parentNode) menuBtn.parentNode.insertBefore(mark, menuBtn.nextSibling);
+    else nav.parentNode.insertBefore(mark, nav);
+    nav.parentNode.insertBefore(host, nav.nextSibling);
+    var tableJson = null;
+    function paint() {
+      /* ask.js may load its own copy of staleness.js after ours; a fresh
+         copy has no table, so the one we fetched is put back each paint. */
+      var St = g.SLAF && g.SLAF.Staleness;
+      if (St && tableJson && !St.tableInUse()) St.use(tableJson);
+      mark.innerHTML = demoLineHtml();
+      host.innerHTML = ageLineHtml(roomId, Spine.getProfile());
+      var clear = mark.querySelector('#slaf-demo-clear');
+      if (clear) clear.addEventListener('click', function () {
+        if (!g.confirm('Clear the example numbers and start from empty? Anything you typed over them goes too.')) return;
+        try { Spine.markDemo(false); } catch (e) { /* fine */ }
+        if (Spine.reset) Spine.reset();
+        g.location.reload();
+      });
+    }
+    paint();
+    if (Spine.onChange) Spine.onChange(paint);
+    /* Most rooms do not carry staleness.js; the age line pulls it in, then
+       the table, and repaints. Until then the demo line alone shows. */
+    var base = (typeof location !== 'undefined' && location.pathname.indexOf('/rooms/') !== -1 ? '../' : '');
+    function withTable() {
+      var R = g.SLAF && g.SLAF.Reference, St = g.SLAF && g.SLAF.Staleness;
+      if (!St) return;
+      if (St.tableInUse() || !R || !R.load) { paint(); return; }
+      try { R.load(['staleness']).then(function (t) { if (t && t.staleness) { tableJson = t.staleness; St.use(tableJson); } paint(); })['catch'](function () { paint(); }); } catch (e) { paint(); }
+    }
+    var src = base + 'shared/staleness.js';
+    var had = document.querySelector('script[src="' + src + '"]');
+    if (g.SLAF.Staleness) withTable();
+    else if (had) had.addEventListener('load', withTable);   /* another mount asked first: share its load */
+    else {
+      var sc = document.createElement('script');
+      sc.src = src;
+      sc.onload = withTable;
+      document.head.appendChild(sc);
+    }
+    return host;
+  }
+
   function mountHeader(roomId) {
     if (typeof document === 'undefined') return null;
     /* Mounted once. The header goes up at DOMContentLoaded (see the listener
@@ -1045,6 +1142,7 @@
     mountPurpose(roomId);
     mountSituation(roomId);
     mountWalk(roomId, nav);
+    mountAge(roomId, nav);
     mountDoors(roomId);
     mountFold(roomId);
     mountSectionSync(roomId);
@@ -1245,6 +1343,9 @@
      due mark is cleared by the Comeback's Done, or by a visit to it. */
   var COMEBACK_DAYS = 21;
   function noteVisit(g, roomId) {
+    /* The household's own visit log (D-317) is the person's history and
+       travels with an export; the Prefs stamp below is the Comeback's. */
+    try { if (g.SLAF && g.SLAF.Spine && g.SLAF.Spine.noteVisit) g.SLAF.Spine.noteVisit(); } catch (e) { /* storage refused */ }
     var Prefs = g.SLAF && g.SLAF.Prefs;
     if (!Prefs || !Prefs.get) return;
     try {
@@ -1422,7 +1523,7 @@
     chain: chain,
     mountHintFolds: mountHintFolds, HINT_FOLD_CHARS: HINT_FOLD_CHARS,
     purposeHtml: purposeHtml,
-    mountHeader: mountHeader, privacyReceipt: privacyReceipt, comebackDue: comebackDue, COMEBACK_DAYS: COMEBACK_DAYS,
+    mountHeader: mountHeader, ageLineHtml: ageLineHtml, privacyReceipt: privacyReceipt, comebackDue: comebackDue, COMEBACK_DAYS: COMEBACK_DAYS,
     mountFold: mountFold,
     mountSectionSync: mountSectionSync,
     roomIdFromLocation: roomIdFromLocation,
