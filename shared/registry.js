@@ -620,6 +620,8 @@
     tags: ['income', 'cashflow', 'debt'],
     daite: { reads: [], writes: ['prefs.features'] },
     subsections: [
+      { id: 'size',      label: 'Size' },
+      { id: 'ask',       label: 'The one question' },
       { id: 'accuracy',  label: 'Accuracy' },
       { id: 'household', label: 'Household' },
       { id: 'horizon',   label: 'Horizon' },

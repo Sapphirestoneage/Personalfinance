@@ -61,10 +61,10 @@ Fields: 114. Traced: 105. No other room mentions it: **56**.
 
 - `rentMonthly` — Rent or mortgage, a month · read by cash-flow, financial-snapshot, housing, debates
 - `monthlyExpenses` — Monthly expenses · read by start, income, cash-flow, budget, statement, dashboard, financial-snapshot, fire, skill-tree, values, goals, runway, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
-- `foodMonthly` — Food, a month · read by ledger, statement
-- `accommodationMonthly` — Rent or mortgage, a month · read by ledger, statement
-- `transportationMonthly` — Getting around, a month · read by ledger, statement
-- `wantsMonthly` — Everything else, a month · read by ledger, statement
+- `foodMonthly` — Food, a month · read by ledger, cash-flow, statement
+- `accommodationMonthly` — Rent or mortgage, a month · read by ledger, cash-flow, statement
+- `transportationMonthly` — Getting around, a month · read by ledger, cash-flow, statement
+- `wantsMonthly` — Everything else, a month · read by ledger, cash-flow, statement
 - `therapyMonthly` — Therapy, a month · read by ledger
 - `annualLine` — Once-a-year costs · read by ledger
 

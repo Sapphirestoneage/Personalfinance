@@ -7,7 +7,7 @@ paths:
   - "engines/statements.js"
 ---
 # The Statement (`statement`)
-File: rooms/statement.html · 2582 lines
+File: rooms/statement.html · 2583 lines
 Engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget, accounts, hourly, debt, gap, statements, taxroom
 Reference data: access_rules.json, car_costs.json, confidence_weights.json, debt_rules.json, effective_tax_rates_2026.json, expense_categories.json, +9 more
 Owns: rothContributed, hsaContributed, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, confidenceWeightedNetWorth, netWorth, assetValue, assetCharacter, assetTier, assetCostBasis, assetInstitution, assetAccountType

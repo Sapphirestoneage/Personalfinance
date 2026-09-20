@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-19 19:19Z"/>
+<meta name="slaf-build" content="2026-09-20 01:08Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
+<script src="../shared/size.js"></script>
 <title>Settings · SPARKS</title>
 <meta name="description" content="Every switch on one screen: what makes the numbers more honest, who is in the household, how far ahead to look, and what a beginner can skip."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -76,6 +77,16 @@
     <span class="slaf-eyebrow">A starting set</span>
     <p class="slaf-hint" style="margin:var(--space-2) 0 0">Beginner turns on only the defaults. FI turns on Accuracy and Horizon too. Either way, every switch below is yours to change.</p>
     <div class="paths" id="paths"></div>
+  </section>
+  <section class="slaf-card" id="size" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Size</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">How big everything is, on every page. Compact scales the whole app down by a seventh; every box stays big enough for a finger. On a phone, the system font size and display size (under the phone's own Settings) change it too.</p>
+    <div class="paths" id="sizes"></div>
+  </section>
+  <section class="slaf-card" id="ask" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">The one question at the top of a room</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">A room can open with one question it still needs. Not now rests a question for two weeks; Don't ask this again retires it. This switch turns the question off everywhere; the Ledger still lists every blank row.</p>
+    <ul class="sw" id="ask-list"></ul>
   </section>
   <section class="slaf-card" id="accuracy" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Accuracy</span><p class="slaf-hint" id="accuracy-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="accuracy-list"></ul></section>
   <section class="slaf-card" id="household" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Household</span><p class="slaf-hint" id="household-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="household-list"></ul></section>
@@ -188,12 +199,28 @@
     el('paths').innerHTML = ['beginner', 'fi'].map(function (p) {
       return '<button type="button" class="choice" data-path="' + p + '" aria-pressed="' + (door === p) + '">' + (p === 'fi' ? 'FI' : 'Beginner') + '</button>';
     }).join('');
+    /* Comfortable or Compact (D-307): a preference shared/size.js reads
+       before the first paint of every page; here it applies at once. */
+    var size = Prefs.get('size', 'comfortable') === 'compact' ? 'compact' : 'comfortable';
+    el('sizes').innerHTML = ['comfortable', 'compact'].map(function (v) {
+      return '<button type="button" class="choice" data-size="' + esc(v) + '" aria-pressed="' + esc(String(size === v)) + '">' + esc(v === 'compact' ? 'Compact' : 'Comfortable') + '</button>';
+    }).join('');
+    document.documentElement.classList.toggle('is-compact', size === 'compact');
+    /* The ask, on or off everywhere (D-307). */
+    var askOn = !Prefs.get('ask.off', false);
+    var askSay = askOn ? 'On: a room that still needs a number asks for it once, at the top.' : 'Off: no room asks; every blank row waits in the Ledger.';
+    el('ask-list').innerHTML = '<li data-row="ask"><div><b>Ask one question at the top of a room</b><span class="gloss">' + esc(askSay) + '</span></div>'
+      + '<div class="ctl"><button type="button" class="slaf-switch" role="switch" aria-checked="' + esc(String(askOn)) + '" data-pref-toggle="ask.off" aria-label="Ask one question at the top of a room"><span class="slaf-switch-track"><span class="slaf-switch-knob"></span></span><span class="slaf-switch-text">' + esc(askOn ? 'On' : 'Off') + '</span></button><span class="state">' + esc(askOn ? 'the default' : 'yours') + '</span></div></li>';
   }
   document.querySelector('main').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-feature]');
     if (b) { Features.set(b.getAttribute('data-feature'), !Features.on(b.getAttribute('data-feature'), h())); paint(); return; }
     var p = e.target.closest('button[data-path]');
     if (p) { Features.applyPath(p.getAttribute('data-path')); paint(); return; }
+    var sz = e.target.closest('button[data-size]');
+    if (sz) { Prefs.set('size', sz.getAttribute('data-size') === 'compact' ? 'compact' : null); paint(); return; }
+    var pt = e.target.closest('button[data-pref-toggle]');
+    if (pt) { var k = pt.getAttribute('data-pref-toggle'); Prefs.set(k, Prefs.get(k, false) ? null : true); paint(); return; }
     var s = e.target.closest('button[data-step]');
     if (s) {
       var path = s.getAttribute('data-step'), key = path.split('.')[1];

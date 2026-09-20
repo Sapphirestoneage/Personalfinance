@@ -7,7 +7,7 @@ paths:
   - "engines/layouts.js"
 ---
 # The Ledger (`ledger`)
-File: rooms/ledger.html · 2858 lines · utility room
+File: rooms/ledger.html · 2859 lines · utility room
 Engines: projection, tier0, income, ledger, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, fire, benchmarks, ratios, skills
 Reference data: access_rules.json, confidence_weights.json, debt_rules.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, +14 more
 Owns: nothing

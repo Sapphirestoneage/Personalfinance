@@ -55,6 +55,11 @@ const META = '<meta name="slaf-build" content="' + stamp + '"/>';
 const CSP = '<meta http-equiv="Content-Security-Policy" content="default-src \'self\'; script-src \'self\' \'unsafe-inline\'; style-src \'self\' \'unsafe-inline\'; img-src \'self\' data: blob:; font-src \'self\'; connect-src \'self\'; form-action \'none\'; base-uri \'none\'; object-src \'none\'; frame-src \'none\'; worker-src \'self\' blob:"/>';
 const CSP_RE = /<meta http-equiv="Content-Security-Policy" content="[^"]*"\/>\n?/;
 const ERRLOG_RE = /<script src="(?:\.\.\/)?shared\/errlog\.js"><\/script>\n?/;
+/* shared/size.js is the second script on every Money Rooms page (not the
+   D&D pages, which have their own shared/): it reads the Comfortable or
+   Compact switch and marks the page before the first paint. D-307. */
+const SIZE_RE = /<script src="(?:\.\.\/)?shared\/size\.js"><\/script>\n?/;
+function sizeTag(file) { return file.indexOf('dnd/') === 0 ? '' : '\n<script src="' + (file.indexOf('rooms/') === 0 ? '../' : '') + 'shared/size.js"></script>'; }
 /* The D&D pages load only their own shared/ (a vendored, byte-identical
    copy, like schema.js and money.js), so they get dnd/shared/errlog.js. */
 function errlogTag(file) { return '<script src="' + (file.indexOf('rooms/') === 0 ? '../' : '') + 'shared/errlog.js"></script>'; }
@@ -71,8 +76,8 @@ pages.forEach(f => {
   let after;
   /* Take the old CSP and errlog lines out, then put the three in together
      after the build meta, so every page reads the same whatever it had. */
-  let base = before.replace(CSP_RE, '').replace(ERRLOG_RE, '');
-  const trio = META + '\n' + CSP + '\n' + errlogTag(f);
+  let base = before.replace(CSP_RE, '').replace(ERRLOG_RE, '').replace(SIZE_RE, '');
+  const trio = META + '\n' + CSP + '\n' + errlogTag(f) + sizeTag(f);
   if (/<meta name="slaf-build" content="[^"]*"\/>/.test(base)) after = base.replace(/<meta name="slaf-build" content="[^"]*"\/>/, trio);
   else if (/<meta name="viewport"[^>]*>/.test(base)) after = base.replace(/(<meta name="viewport"[^>]*>)/, '$1\n' + trio);
   else { console.error(f + ': no viewport meta to stamp after'); process.exit(1); }

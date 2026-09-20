@@ -5,7 +5,7 @@ paths:
   - "engines/bankcsv.js"
 ---
 # Expenses (`expenses`)
-File: rooms/expenses.html · 1604 lines
+File: rooms/expenses.html · 1640 lines
 Engines: projection, tier0, ledger, cashflow, fire, income, selfemployed, tax, hourly, subscriptions, merchants, bankcsv
 Reference data: effective_tax_rates_2026.json, expense_categories.json, federal_brackets_2026.json, fire_variants.json, import_keywords.json, se_tax_2026.json
 Owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine

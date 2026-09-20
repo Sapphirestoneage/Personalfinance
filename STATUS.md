@@ -32,6 +32,12 @@ Updated: 2026-09-19
   went as one line with a category that becomes a rule for the next
   statement, and the slope of a month by the day money left against the day
   it was for, so what was bought ahead or paid late shows as the gap.
+- **The phone walk, round two (D-307).** Comfortable or Compact in Settings,
+  honoured before the first paint; the menu's dots explained and tappable
+  for what a room still needs; the ask names its item, rests, retires, or
+  turns off; one gap for Cash Flow and Debt Payoff, offered as a chip;
+  glance figures open to their linked parts; a named line can be edited;
+  two merge-corrupted stylesheets repaired and every room's CSS now parsed.
 - **The reframe D-228 asks for has NOT shipped**; the FI target is still
   spending ÷ the withdrawal rate, and both rooms say so in their spec.
 - **Freeze ON, and honoured**: nothing this session added a screen.

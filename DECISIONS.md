@@ -16296,6 +16296,43 @@ five lines in, four merchants, a rule filing Amtrak under travel, a for-date
 of the 25th reading "bought 15 days ahead" and the slope parting by $200, the
 same file through Your Data's one door with every line already in the log.
 
+## D-307 — The phone walk, round two: size, the dots, the ask, the gap, a line edited
+
+**Why.** Seven screenshots from the owner's phone in one sitting: everything
+too big; Convenience showing Avalanche's figure; "InterestClear in" and
+"Avalanchecheapest" run together; a dot in the menu nobody could read; a
+subscription that could only be deleted, not changed to yearly; a glance
+figure with nothing behind it; a question naming "this one"; and the same
+question back on every visit.
+
+**Decision.** Settings gains Size (Comfortable or Compact) and The one
+question (on or off). `shared/size.js` is the second script on every Money
+Rooms page (`tools/stamp-build.js` places it) and marks the root before the
+first paint; Compact is one theme rule, `html.is-compact { zoom: 0.86 }`, so
+44px targets stay above the 32px floor. The menu's dots carry a key and are
+buttons: a tap lists the room's blank rows, each a link. The ask names an item
+by where it sits (`Schema.whereItSits`), "Not now" rests it a fortnight,
+"Don't ask this again" retires it, both as prefs. `Schema.monthlyGapCents` is
+the one gap: Cash Flow's Left, Debt Payoff's estimate, and a Suggested chip on
+the extra box. Each Cash Flow tile opens to its parts, linked. Convenience
+says it is Avalanche until a debt is tagged. Expenses' add form edits a line.
+Two stylesheets the merge tool corrupted are repaired and a test now parses
+every room's CSS.
+
+**Replaces or removes.** Nothing on screen; two broken CSS blocks. No new
+room.
+
+**Stored shape.** No change to the household. Prefs gain `size`, `ask.off`,
+`ask.rested` (key → day) and `ask.never` (keys).
+
+**Verified.** `node test/run.js`, the fast suites, the tests/ lane, the eight
+browser gates, and at 390px: Compact set in Settings and honoured on arrival
+in Debt; the captions on their rails; the Convenience note; the gap row and
+its chip; a dot tapped listing three blank rows with links; the three tiles
+opening to their parts; Sapphire preferred edited from $95 a month to $95 a
+year; an ask naming "Investments + retirement", rested by Not now, retired by
+Don't ask again, absent with the switch off. Console clean.
+
 ---
 
 # The Dungeons & Dividends entries

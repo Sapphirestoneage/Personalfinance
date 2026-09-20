@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-19 19:19Z"/>
+<meta name="slaf-build" content="2026-09-20 01:08Z"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
+<script src="../shared/size.js"></script>
 <title>The Month · SPARKS</title>
 <meta name="description" content="When the money moves: this month at a glance, every receipt on its date, where it all flows — and paydays against bills across the month, with the low point and the day it lands."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -72,6 +73,12 @@
   #view-what-moved .tile .t-sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-1); }
   
   #view-what-moved .glance-why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
+  #view-what-moved .tile .t-parts { margin-top: var(--space-2); font-size: var(--text-xs); }
+  #view-what-moved .tile .t-parts > summary { cursor: pointer; color: var(--color-accent-hover); min-height: 32px; display: flex; align-items: center; }
+  #view-what-moved .tile .t-parts ul { list-style: none; margin: var(--space-1) 0 0; padding: 0; }
+  #view-what-moved .tile .t-parts li { display: flex; justify-content: space-between; gap: var(--space-2); padding: 2px 0; color: var(--color-text-muted); }
+  #view-what-moved .tile .t-parts li a { color: var(--color-text-muted); text-decoration: underline; min-width: 0; overflow-wrap: anywhere; }
+  #view-what-moved .tile .t-parts li b { font-variant-numeric: tabular-nums; white-space: nowrap; font-weight: 500; color: var(--color-text); }
   @media (max-width: 420px) { 
   #view-what-moved .glance { grid-template-columns: 1fr 1fr; } 
   #view-what-moved .glance .tile:first-child { grid-column: 1 / -1; } }
@@ -399,26 +406,52 @@
      Three tiles: what comes in (take-home, Tier 0's one tax lookup), what
      goes out (the lines, savings excluded — that money has not left), and
      what is left. Each says what it needs instead of showing a dash. */
-  function tile(cap, result, format, sub, cls) {
+  /* Every tile opens to what goes into it, each part a link to the room
+     that owns it (D-307): the owner asked to see what a figure is made of. */
+  function tile(cap, result, format, sub, cls, parts) {
     var ok = Money.isOk(result);
     return '<div class="tile"><div class="t-cap">' + cap + '</div>'
       + '<div class="t-big' + (ok ? (cls || '') : ' is-incomplete') + '">' + (ok ? format(result.value) : (result.reason || '—')) + '</div>'
-      + (ok && sub ? '<div class="t-sub">' + sub + '</div>' : '') + '</div>';
+      + (ok && sub ? '<div class="t-sub">' + sub + '</div>' : '')
+      + (parts && parts.length ? '<details class="t-parts"><summary>What goes into this</summary><ul>' + parts.map(function (x) {
+          return '<li><a href="' + esc(x.href) + '">' + esc(x.label) + '</a><b>' + esc(x.text) + '</b></li>';
+        }).join('') + '</ul></details>' : '')
+      + '</div>';
   }
+  function link(fieldId) { var f = Ownership.FIELDS[fieldId]; return f ? Ownership.linkTo(f.owner, f.anchor, ROOM_ID) : '#'; }
   function renderGlance(h, summary, flow) {
     var inc = Tier0.takeHomeMonthlyCents(h, TABLES);
     var money = function (v) { return Money.formatCents(v); };
-    var left = Money.isOk(flow) ? Money.ok(flow.value) : (Money.isOk(inc) && Money.isOk(summary) ? Money.ok(inc.value - summary.spendMonthlyCents) : Money.incomplete(!Money.isOk(inc) ? 'Needs your income, in Start Here.' : 'Type the four numbers in Expenses.'));
     /* Goes out is the four numbers (D-172) plus the debt minimums, which
-       are not expenses but do leave the account; left is what remains. */
+       are not expenses but do leave the account; left is what remains. The
+       gap is Schema's one function, the same figure Debt Payoff suggests as
+       the extra (D-307). */
     var fatTotal = Schema.fat(h).totalCents;
     var mins = Schema.monthlyDebtPaymentsCents(h);
     var out = Money.isOk(fatTotal) ? Money.ok(fatTotal.value + (Money.isOk(mins) ? mins.value : 0)) : Money.incomplete('Type the four numbers in Expenses.');
-    left = Money.isOk(inc) && Money.isOk(out) ? Money.ok(inc.value - out.value) : Money.incomplete(!Money.isOk(inc) ? 'Needs your income, in Start Here.' : 'Type the four numbers in Expenses.');
+    var gap = Schema.monthlyGapCents(h, TABLES);
+    var left = Money.isOk(gap) ? gap : Money.incomplete(!Money.isOk(inc) ? 'Needs your income, in Start Here.' : 'Type the four numbers in Expenses.');
+    var fat = Schema.fat(h);
+    var inParts = Money.isOk(inc) ? [
+      { label: 'Gross income, a year', href: link('grossAnnualIncome'), text: Money.isEntered(inc.grossAnnualIncomeCents) ? Money.formatCents(inc.grossAnnualIncomeCents) : '' },
+      { label: 'Tax, at ' + Money.formatRate(inc.effectiveRate, { decimals: 0 }) + ' effective', href: Ownership.linkTo('tax', 'inputs', ROOM_ID), text: Money.isEntered(inc.estimatedTaxCents) ? '−' + Money.formatCents(Math.round(inc.estimatedTaxCents / 12)) + ' a month' : '' },
+      { label: 'Take-home, a month', href: Ownership.linkTo('income', null, ROOM_ID), text: Money.formatCents(inc.value) }
+    ] : [];
+    var outParts = Money.isOk(out) ? ['food', 'accommodation', 'transportation', 'wants'].map(function (b) {
+      var r = fat[b]; var f = { food: 'foodMonthly', accommodation: 'accommodationMonthly', transportation: 'transportationMonthly', wants: 'wantsMonthly' }[b];
+      return { label: Ownership.FIELDS[f] ? Ownership.FIELDS[f].label : b, href: link(f), text: r && Money.isOk(r) ? Money.formatCents(r.value) : 'not entered' };
+    }).concat((h.debts || []).filter(function (d) { return d && d.archived !== true && Money.isEntered(d.minPaymentCents) && d.minPaymentCents > 0; }).map(function (d) {
+      return { label: 'Minimum: ' + (d.label || d.type || 'a debt'), href: Ownership.linkTo('debt-payoff', 'debts', ROOM_ID), text: Money.formatCents(d.minPaymentCents) };
+    })) : [];
+    var leftParts = Money.isOk(left) ? [
+      { label: 'Comes in', href: Ownership.linkTo('income', null, ROOM_ID), text: Money.formatCents(left.takeHomeCents) },
+      { label: 'less the four numbers', href: link('foodMonthly'), text: '−' + Money.formatCents(left.spendingCents) },
+      { label: 'less debt minimums', href: link('monthlyDebtPayments'), text: '−' + Money.formatCents(left.minimumsCents) }
+    ] : [];
     el('glance-tiles').innerHTML =
-      tile('Comes in', Money.isOk(inc) ? inc : Money.incomplete('Add your income in Start Here.'), money, Money.isOk(inc) ? 'take-home, after ' + Money.formatRate(inc.effectiveRate, { decimals: 0 }) + ' tax' : '')
-      + tile('Goes out', out, money, Money.isOk(out) ? 'the four numbers, from Expenses' + (Money.isOk(mins) && mins.value > 0 ? ' + ' + Money.formatCents(mins.value) + ' debt minimums' : '') : '')
-      + tile('Left', left, money, Money.isOk(left) && Money.isOk(summary) && summary.savingsMonthlyCents > 0 ? 'after ' + Money.formatCents(summary.savingsMonthlyCents) + ' into savings: ' + Money.formatCents(left.value - summary.savingsMonthlyCents) : '', Money.isOk(left) ? (left.value < 0 ? ' is-negative' : ' is-good') : '');
+      tile('Comes in', Money.isOk(inc) ? inc : Money.incomplete('Add your income in Start Here.'), money, Money.isOk(inc) ? 'take-home, after ' + Money.formatRate(inc.effectiveRate, { decimals: 0 }) + ' tax' : '', '', inParts)
+      + tile('Goes out', out, money, Money.isOk(out) ? 'the four numbers, from Expenses' + (Money.isOk(mins) && mins.value > 0 ? ' + ' + Money.formatCents(mins.value) + ' debt minimums' : '') : '', '', outParts)
+      + tile('Left', left, money, Money.isOk(left) && Money.isOk(summary) && summary.savingsMonthlyCents > 0 ? 'after ' + Money.formatCents(summary.savingsMonthlyCents) + ' into savings: ' + Money.formatCents(left.value - summary.savingsMonthlyCents) : '', Money.isOk(left) ? (left.value < 0 ? ' is-negative' : ' is-good') : '', leftParts);
     var floor = CashFlow.minimumViableMonthCents(h, TABLES.expenseCategories);
     var why = '';
     if (Money.isOk(left) && left.value < 0) why = 'More goes out than comes in. The lines in <a href="expenses.html#spending">Expenses</a> say where; the biggest ones move this most.';

@@ -34,10 +34,11 @@
       return { Money: require('./money.js'), Schema: require('./schema.js'), Ownership: require('./ownership.js'), LedgerRows: require('./ledger-rows.js'), Spine: require('./spine-v2.js'),
         Suggest: (function () { try { return require('./suggest.js'); } catch (e) { return null; } })(), Registry: require('./registry.js'),
         Doors: (function () { try { return require('./doors.js'); } catch (e) { return null; } })(),
-        Features: (function () { try { return require('./features.js'); } catch (e) { return null; } })() };
+        Features: (function () { try { return require('./features.js'); } catch (e) { return null; } })(),
+        Prefs: (function () { try { return require('./prefs.js'); } catch (e) { return null; } })() };
     }
     var S = g().SLAF || {};
-    return { Money: S.Money, Schema: S.Schema, Ownership: S.Ownership, LedgerRows: S.LedgerRows, Spine: S.Spine, Suggest: S.Suggest, Registry: S.Registry, Doors: S.Doors || null, Features: S.Features || null };
+    return { Money: S.Money, Schema: S.Schema, Ownership: S.Ownership, LedgerRows: S.LedgerRows, Spine: S.Spine, Suggest: S.Suggest, Registry: S.Registry, Doors: S.Doors || null, Features: S.Features || null, Prefs: S.Prefs || null };
   }
   /* The level gate (D-250): a room asks only for a row at or below the
      level its door has reached (the lowest level with a blank row, the
@@ -99,10 +100,11 @@
       if (r.repeat) {
         var items = D.LedgerRows.items(household, r) || [];
         for (var j = 0; j < items.length; j++) {
-          if (itemMissing(r, items[j]) && !parked(household, r.id + ':' + items[j].id)) return { row: r, item: items[j], suggestion: byRow[r.id + ':' + items[j].id] || null };
+          if (itemMissing(r, items[j]) && !parked(household, r.id + ':' + items[j].id) && !quiet(r.id + ':' + items[j].id)) return { row: r, item: items[j], suggestion: byRow[r.id + ':' + items[j].id] || null, remaining: items.filter(function (it) { return itemMissing(r, it); }).length };
         }
         continue;
       }
+      if (quiet(r.id)) continue;
       if (r.status === 'missing' || (r.status === 'notSure' && !parked(household, r.id))) return { row: r, item: null, suggestion: byRow[r.id] || null };
     }
     return null;
@@ -195,7 +197,43 @@
     if (u === 'percent') return row.id === 'contributionPercent' ? n : (n > 1 ? Math.round(n * 100) / 10000 : n);
     return n;
   }
-  function itemLabel(item) { return item ? (item.label || item.source || item.type || 'this one') : ''; }
+  /* Name the item (D-307). "What each account or thing is worth for this
+     one" named nothing when the account had no label; now the institution
+     and the account type stand in ("Example Bank · 401(k)"), then the
+     category, and the last resort says so rather than pointing at nothing. */
+  function itemLabel(item) {
+    if (!item) return '';
+    var D = deps();
+    if (item.label) return item.label;
+    var where = D.Schema && typeof D.Schema.whereItSits === 'function' ? D.Schema.whereItSits(item) : '';
+    if (where) return where + (item.last4 ? ' \u2022\u2022' + item.last4 : '');
+    if (item.source) return item.source;
+    if (item.type) return item.type;
+    if (item.category) return 'the ' + String(item.category).replace(/_/g, ' ') + ' account with no name yet';
+    return 'the one with no name yet';
+  }
+  /* Rested and retired questions (D-307): "Not now" rests a question for
+     a fortnight, "Don't ask this again" retires it, and Settings can turn
+     the ask off everywhere. All three are preferences, never household. */
+  var REST_DAYS = 14;
+  function P() { var D = deps(); return D.Prefs || null; }
+  function askOff() { var p = P(); return !!(p && p.get('ask.off', false)); }
+  function rested(key) {
+    var p = P(); if (!p) return false;
+    var until = (p.get('ask.rested', {}) || {})[key];
+    if (!until) return false;
+    var D = deps();
+    return until >= (D.Schema && D.Schema.localDay ? D.Schema.localDay() : '');
+  }
+  function retired(key) { var p = P(); return !!(p && (p.get('ask.never', []) || []).indexOf(key) >= 0); }
+  function rest(key) {
+    var p = P(); if (!p) return;
+    var D = deps(); var d = new Date(); d.setDate(d.getDate() + REST_DAYS);
+    var iso = d.getFullYear() + '-' + (d.getMonth() + 1 < 10 ? '0' : '') + (d.getMonth() + 1) + '-' + (d.getDate() < 10 ? '0' : '') + d.getDate();
+    var m = p.get('ask.rested', {}) || {}; m[key] = iso; p.set('ask.rested', m);
+  }
+  function retire(key) { var p = P(); if (!p) return; var l = p.get('ask.never', []) || []; if (l.indexOf(key) < 0) l.push(key); p.set('ask.never', l); }
+  function quiet(key) { return rested(key) || retired(key); }
 
   function mountCard(roomId, host, tables) {
     var D = deps();
@@ -209,9 +247,10 @@
     card.className = 'slaf-card slaf-ask';
     card.id = 'slaf-ask';
     card.setAttribute('data-ask-row', p.row.id);
-    var q = p.item ? p.row.label + ' for ' + itemLabel(p.item) : p.row.label;
+    var q = p.item ? p.row.label + ' \u2014 ' + itemLabel(p.item) : p.row.label;
+    var more = p.item && p.remaining > 1 ? ' (' + (p.remaining - 1) + ' more ' + (p.remaining - 1 === 1 ? 'asks' : 'ask') + ' the same after this)' : '';
     card.innerHTML = '<span class="slaf-eyebrow">One question this room needs</span>'
-      + '<p class="ask-q">' + esc(q) + '<span class="ask-why"> · unlocks ' + esc(p.row.unlocks) + '</span></p>'
+      + '<p class="ask-q">' + esc(q) + '<span class="ask-why"> · unlocks ' + esc(p.row.unlocks) + esc(more) + '</span></p>'
       + '<div class="ask-ctl">' + control(p.row, D) + '</div>'
       + (p.suggestion ? '<button type="button" class="slaf-use-this ask-sug" data-ask-sug>Suggested ' + esc(p.suggestion.display) + ' · use it</button><span class="slaf-hint ask-how">' + esc(p.suggestion.how) + '</span>' : '')
       + '<div class="ask-slip" data-ask-slip hidden></div>'
@@ -219,6 +258,7 @@
       + '<button type="button" class="slaf-btn slaf-btn--quiet" data-ask-notsure>Not sure yet</button>'
       + '<label class="ask-memory"><input type="checkbox" data-ask-memory/> from memory</label></div>'
       + '<div class="ask-when" data-ask-when hidden><label>Expect to know by <input type="month" data-ask-expected aria-label="Expected month"/></label> <button type="button" class="slaf-btn slaf-btn--small" data-ask-notsure-save>Mark it</button></div>'
+      + '<p class="ask-more"><button type="button" data-ask-never>Don\u2019t ask this again</button><span>Not now rests it for two weeks. Every question can be turned off in <a href="settings.html#ask">Settings</a>.</span></p>'
       + '<p class="slaf-hint ask-note" hidden></p>';
     var first = host.querySelector('.slaf-room-head, .room-head, header');
     if (first && first.parentNode === host) host.insertBefore(card, first.nextSibling); else host.insertBefore(card, host.firstChild);
@@ -272,9 +312,10 @@
       input.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') save.click(); });
     }
     card.addEventListener('click', function (ev) {
-      var b = ev.target.closest ? ev.target.closest('[data-ask-val],[data-ask-sug],[data-ask-skip],[data-ask-notsure],[data-ask-notsure-save]') : null;
+      var b = ev.target.closest ? ev.target.closest('[data-ask-val],[data-ask-sug],[data-ask-skip],[data-ask-notsure],[data-ask-notsure-save],[data-ask-never]') : null;
       if (!b) return;
-      if (b.hasAttribute('data-ask-skip')) { card.hidden = true; return; }
+      if (b.hasAttribute('data-ask-skip')) { rest(key); card.hidden = true; return; }
+      if (b.hasAttribute('data-ask-never')) { retire(key); close('This question will not be asked again. The row stays blank, never zero; the Ledger still lists it.'); return; }
       /* "Not sure yet" (G2.7): a mark, never a value, with the month they
          expect to know by; the card stops asking until then. */
       if (b.hasAttribute('data-ask-notsure')) { card.querySelector('[data-ask-when]').hidden = false; return; }
@@ -330,10 +371,10 @@
   }
   function mount(roomId, host) {
     var doc = g().document;
-    if (!doc || !host || doc.getElementById('slaf-ask')) return null;
+    if (!doc || !host || doc.getElementById('slaf-ask') || askOff()) return null;
     return ensure().then(function (t) { return mountCard(roomId, host, t); }).catch(function () { return null; });
   }
 
-  return { pick: pick, parse: parse, slip: slip, toRowPeriod: toRowPeriod, unitHtml: unitHtml, parked: parked, mount: mount, ensure: ensure,
+  return { pick: pick, parse: parse, slip: slip, toRowPeriod: toRowPeriod, unitHtml: unitHtml, parked: parked, quiet: quiet, rest: rest, retire: retire, askOff: askOff, itemLabel: itemLabel, REST_DAYS: REST_DAYS, mount: mount, ensure: ensure,
     control: function (row) { return control(row, deps()); }, esc: esc, ASKABLE_UNITS: ASKABLE_UNITS, ENUM_LABELS: ENUM_LABELS };
 });

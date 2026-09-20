@@ -774,18 +774,9 @@
      extra beats both; realized beats the estimate. */
   var REALIZED_MONTHS = 3;
 
-  function freeMonthlyCents(household, tables) {
-    var take = Schema.takeHomeMonthlyCents(household, tables);
-    if (!Money.isOk(take)) return take;
-    var spend = Schema.monthlyExpensesCents(household);
-    if (!Money.isOk(spend)) return spend;
-    var mins = Schema.monthlyDebtPaymentsCents(household);
-    if (!Money.isOk(mins)) return mins;
-    return Money.ok(take.value - spend.value - mins.value, {
-      takeHomeCents: take.value, spendingCents: spend.value, minimumsCents: mins.value,
-      spendingSource: spend.source || null
-    });
-  }
+  /* The gap is Schema's one function (D-307), so Cash Flow's "Left" and
+     this estimate are the same figure on the same household. */
+  function freeMonthlyCents(household, tables) { return Schema.monthlyGapCents(household, tables); }
 
   function realizedFreeMonthlyCents(household) {
     var months = (((household || {}).ledger || {}).months || [])

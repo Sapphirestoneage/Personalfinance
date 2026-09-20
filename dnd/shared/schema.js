@@ -43,7 +43,7 @@
      beside the version in every footer and in every backup, so a phone
      showing an old page can be told apart from a bug. version.json carries
      the same string; `node tools/stamp-build.js` sets both to today. D-202. */
-  var BUILD = '2026-09-19 19:19Z';
+  var BUILD = '2026-09-20 01:08Z';
 
   /* ======================================================================
      System assumption defaults — SPEC.md §12.2 (RESOLVED: 7% return, 4% SWR)
@@ -2833,6 +2833,23 @@
       source: 'estimate', grossAnnualIncomeCents: gross.value, estimatedTaxCents: tax.value, effectiveRate: tax.effectiveRate, referenceVersion: tax.referenceVersion
     });
   }
+  /* THE GAP (D-307): what is free each month once the month is paid for.
+     Take-home, less the four numbers, less every debt minimum. Cash Flow's
+     "Left", Debt Payoff's extra when the box is blank, and anything else
+     that asks read THIS, so two rooms can never disagree about it. A
+     negative gap is a real answer: the month costs more than comes in. */
+  function monthlyGapCents(household, tables) {
+    var take = takeHomeMonthlyCents(household, tables);
+    if (!Money.isOk(take)) return take;
+    var spend = monthlyExpensesCents(household);
+    if (!Money.isOk(spend)) return spend;
+    var mins = monthlyDebtPaymentsCents(household);
+    if (!Money.isOk(mins)) return mins;
+    return Money.ok(take.value - spend.value - mins.value, {
+      takeHomeCents: take.value, spendingCents: spend.value, minimumsCents: mins.value,
+      spendingSource: spend.source || null, effectiveRate: take.effectiveRate === undefined ? null : take.effectiveRate
+    });
+  }
   function takeHomeMonthlyCents(household, tables) {
     var t = takeHomeAnnualCents(household, tables);
     if (!Money.isOk(t)) return t;
@@ -3372,6 +3389,7 @@
     estimatedAnnualTaxCents: estimatedAnnualTaxCents,
     takeHomeAnnualCents: takeHomeAnnualCents,
     takeHomeMonthlyCents: takeHomeMonthlyCents,
+    monthlyGapCents: monthlyGapCents,
     loggedTakeHomeMonthlyCents: loggedTakeHomeMonthlyCents,
     employerMatchCents: employerMatchCents,
     monthlyExpensesCents: monthlyExpensesCents,
