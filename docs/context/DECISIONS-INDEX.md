@@ -311,8 +311,8 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - D-314 — The worst plausible year is the Cushion's [16503-16522] {runway}
 - D-315 — The pay still to come, beside net worth, on a switch that defaults by age [16524-16549]
 - D-316 — A plan at a former employer is an account type, and Left Behind reads it [16551-16571] {left-behind}
-- D-317 — A card's annual fee and the day it posts; a dealt walk step folds to a line [16573-16599] {debt-payoff}
-- D-318 — The radar is on the Scorecard too, drawn by one function [16601-16625] {financial-snapshot}
+- D-320 — A card's annual fee and the day it posts; a dealt walk step folds to a line [16573-16599] {debt-payoff}
+- D-321 — The radar is on the Scorecard too, drawn by one function [16601-16625] {financial-snapshot}
 
 ## Dungeons & Dividends (DD-) (30)
 

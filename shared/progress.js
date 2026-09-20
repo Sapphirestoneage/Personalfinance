@@ -804,7 +804,7 @@
     var dealt = at.state !== 'open';
     var out = [];
 
-    /* A step already dealt with folds to one line (D-317): the tick, the
+    /* A step already dealt with folds to one line (D-320): the tick, the
        step, and the way on. The person can open it for the bar, the
        stage, Undo and the hub; the room underneath is what they came for. */
     if (dealt) {
