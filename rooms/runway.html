@@ -1479,24 +1479,24 @@
     if (Money.isEntered(ins.oopMaxCents)) {
       rows.push(['A bad health year', Money.isOk(cash)
         ? (cash.value >= ins.oopMaxCents
-            ? 'up to ' + Money.formatCents(ins.oopMaxCents) + ' out of pocket \u2014 your cash clears it.'
-            : 'up to ' + Money.formatCents(ins.oopMaxCents) + ' out of pocket \u2014 ' + Money.formatCents(ins.oopMaxCents - cash.value) + ' more than you hold in cash.')
+            ? 'up to ' + Money.formatCents(ins.oopMaxCents) + ' out of pocket, and your cash clears it.'
+            : 'up to ' + Money.formatCents(ins.oopMaxCents) + ' out of pocket, ' + Money.formatCents(ins.oopMaxCents - cash.value) + ' more than you hold in cash.')
         : 'up to ' + Money.formatCents(ins.oopMaxCents) + ' out of pocket. Add your cash in Start Here to see whether it clears.']);
     } else {
-      rows.push(['A bad health year', 'Not priced \u2014 no out-of-pocket maximum entered.']);
+      rows.push(['A bad health year', 'Not priced: no out-of-pocket maximum entered.']);
     }
     if (Array.isArray(h.dependents) && h.dependents.length === 0) {
-      rows.push(['If you died', 'Nobody depends on your income, so term life is not a gap here' + (Money.isEntered(ins.termLifeCents) ? ' \u2014 the ' + Money.formatCents(ins.termLifeCents) + ' in force is a choice, not a need.' : '.')]);
+      rows.push(['If you died', 'Nobody depends on your income, so term life is not a gap here' + (Money.isEntered(ins.termLifeCents) ? ', and the ' + Money.formatCents(ins.termLifeCents) + ' in force is a choice, not a need.' : '.')]);
     } else if (Money.isEntered(ins.termLifeCents)) {
       rows.push(['If you died', Money.isOk(monthly) && monthly.value > 0
-        ? Money.formatCents(ins.termLifeCents) + ' of term life \u2014 ' + (Math.round(ins.termLifeCents / (monthly.value * 12) * 10) / 10) + ' years of your household\u2019s spending.'
+        ? Money.formatCents(ins.termLifeCents) + ' of term life, ' + (Math.round(ins.termLifeCents / (monthly.value * 12) * 10) / 10) + ' years of your household\u2019s spending.'
         : Money.formatCents(ins.termLifeCents) + ' of term life. Add monthly expenses to see how many years that is.']);
     } else {
       rows.push(['If you died', 'No term life entered.' + (h.dependents === null ? ' Whether anyone depends on your income is asked in Start Here.' : '')]);
     }
     if (Money.isEntered(ins.disabilityMonthlyCents)) {
       rows.push(['If you could not work', Money.isOk(monthly) && monthly.value > 0
-        ? Money.formatCents(ins.disabilityMonthlyCents) + '/mo of disability benefit \u2014 ' + Money.formatRate(ins.disabilityMonthlyCents / monthly.value, { decimals: 0 }) + ' of what you spend.'
+        ? Money.formatCents(ins.disabilityMonthlyCents) + '/mo of disability benefit, ' + Money.formatRate(ins.disabilityMonthlyCents / monthly.value, { decimals: 0 }) + ' of what you spend.'
         : Money.formatCents(ins.disabilityMonthlyCents) + '/mo of disability benefit.']);
     } else {
       rows.push(['If you could not work', 'No disability benefit entered.']);

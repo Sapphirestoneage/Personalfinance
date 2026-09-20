@@ -19,7 +19,7 @@ Updated: 2026-09-20
   needs, a tab says what finishing it unlocks, and 56 facts are typed right
   there through their owner (D-324). Band 1's six homeless facts now live in
   `household.sketch` (D-325): 18 of its 24 answerable in place.
-- **D-321** no em dash on screen ("not yet" instead); **D-319** every room says how old its numbers are.
+- **D-321, D-326** no em dash on screen in any spelling, the escape included; **D-319** every room says how old its numbers are.
 - **A link opens to the field (D-323)**: an `#anchor` lands the question at the
   top, cursor in it; `test/anchors.js` opens all 70 in a browser.
 - **Main is worked on by another lane**: merge it before every push. The reframe

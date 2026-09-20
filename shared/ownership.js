@@ -1206,7 +1206,7 @@
          for the field-status ledger. */
       meta: isSet ? Schema.meta(household || {}, fieldId) : null,
       level: isSet ? Schema.confidenceOf(household || {}, fieldId) : null,
-      glyph: isSet ? CONFIDENCE_GLYPH[Schema.confidenceOf(household || {}, fieldId)] : (userSaysNa(household, fieldId) ? '\u2014' : '\u25CB')
+      glyph: isSet ? CONFIDENCE_GLYPH[Schema.confidenceOf(household || {}, fieldId)] : (userSaysNa(household, fieldId) ? '\u00B7' : '\u25CB')
     };
   }
 
@@ -1395,7 +1395,7 @@
         + '" href="' + d.href + '" data-confidence="' + escapeHtml(d.level || '') + '">'
         + '<span class="slaf-owned-label">' + escapeHtml(d.label) + '</span>'
         + '<span class="slaf-owned-value">' + escapeHtml(d.display) + '</span>'
-        + '<span class="slaf-owned-from">' + (d.guessed ? 'a guess \u2014 fix it in ' : 'from ') + escapeHtml(d.ownerTitle) + ' →' + age + level + '</span>'
+        + '<span class="slaf-owned-from">' + (d.guessed ? 'a guess, fix it in ' : 'from ') + escapeHtml(d.ownerTitle) + ' →' + age + level + '</span>'
         + '</a>';
     }
     return '<a class="slaf-owned slaf-owned--empty" href="' + d.href + '">'

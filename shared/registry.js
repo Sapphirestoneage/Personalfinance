@@ -477,7 +477,7 @@
       needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt'],
       order: 3,
       title: 'The Dashboard',
-      blurb: 'Home. Where you are, the next thing money should do, the next thing to learn, and the date it points to \u2014 every number opens the room it came from.',
+      blurb: 'Home. Where you are, the next thing money should do, the next thing to learn, and the date it points to. Every number opens the room it came from.',
       /* The front door since D-058: index.html renders the dashboard once
          it has what it needs, and the intake landing until then. */
       href: 'index.html',
@@ -1254,7 +1254,7 @@
     var sit = G.situationOf ? G.situationOf(household) : null;
     if (!appliesToSituation(room, sit)) {
       var s = sit && G.byId ? G.byId(sit) : null;
-      return 'This one is not for where you are right now' + (s ? ' \u2014 ' + s.label.toLowerCase() + '.' : '.');
+      return 'This one is not for where you are right now' + (s ? ': ' + s.label.toLowerCase() + '.' : '.');
     }
     return G.why(household, requires(room.id));
   }

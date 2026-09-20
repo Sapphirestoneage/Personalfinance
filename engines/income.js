@@ -72,7 +72,7 @@
     { id: 'weekly',      label: 'a week',      short: 'wk',  periods: 52 },
     /* Variable income, freelance, tips, commission, given as a month on
        average. The arithmetic is monthly; the label says it varies. D-094. */
-    { id: 'variable',    label: 'a month on average \u2014 it varies', short: 'avg', periods: 12,
+    { id: 'variable',    label: 'a month on average, since it varies', short: 'avg', periods: 12,
       note: 'An average month. The runway and the rates read it as steady, which is the one thing it is not.' },
     { id: 'hourly',      label: 'an hour',     short: 'hr',  periods: null,
       needsHours: true,

@@ -687,7 +687,7 @@
       unit: 'rate', needs: 'your spending, income and investments',
       note: 'The share of investments drawn each year to cover what income does not. Income counts before tax while spending is after it, so the draw reads a little low for anyone with a pension or a wage.',
       compute: function (c) {
-        if (!decumulates(c.household)) return Money.incomplete('Not drawing down \u2014 a number for a retiree.', []);
+        if (!decumulates(c.household)) return Money.incomplete('Not drawing down yet. This one is for a retiree.', []);
         if (!Money.isEntered(c.monthlyExpenses)) return Money.incomplete('Add your monthly spending to see this.', ['monthlyExpenses']);
         if (!Money.isEntered(c.investments)) return Money.incomplete('Add your investments to see this.', ['investments']);
         /* GROSS income, deliberately, and the label now says so. Spending is

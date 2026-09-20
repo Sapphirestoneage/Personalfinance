@@ -830,7 +830,7 @@
     if (!Money.isEntered(age) || !Money.isOk(prog) || !Money.isOk(prog.yearsAway)) return want + '';
     var at = Math.round(age + prog.yearsAway.value);
     var diff = want - at;
-    return want + ' \u2014 at this pace you get there at ' + at
+    return want + ', and at this pace you get there at ' + at
       + (diff === 0 ? ', right on time' : diff > 0 ? ', ' + diff + ' year' + (diff === 1 ? '' : 's') + ' early'
          : ', ' + (-diff) + ' year' + (diff === -1 ? '' : 's') + ' late');
   }

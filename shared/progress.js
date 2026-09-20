@@ -290,7 +290,7 @@
     var guesses = (row.filled || []).filter(function (f) { return f.guessed; });
     if (guesses.length) {
       out.push('<p class="slaf-progress-note"><strong>' + guesses.length + ' of these '
-        + (guesses.length === 1 ? 'is' : 'are') + ' still a guess</strong> \u2014 '
+        + (guesses.length === 1 ? 'is' : 'are') + ' still a guess</strong>: '
         + guesses.map(function (f) { return escapeHtml(f.label); }).join(', ')
         + '. Good enough to compute with, worth fixing when you know.</p>');
     }
