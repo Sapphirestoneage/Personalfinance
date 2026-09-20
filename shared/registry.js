@@ -66,6 +66,7 @@
         { id: 'view-the-nine',        label: 'The nine numbers' },
         { id: 'view-savings-rate',    label: 'Savings rate' },
         { id: 'view-every-ratio',     label: 'Every ratio' },
+        { id: 'out-radar',            label: 'All of it at once' },
         { id: 'view-quick-math',      label: 'Quick math' },
         { id: 'view-where-you-rank',  label: 'Where you rank' },
         { id: 'out-score',            label: 'Everything, at once' },

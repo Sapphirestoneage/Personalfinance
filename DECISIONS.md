@@ -16598,6 +16598,30 @@ older saves and read as not asked.
 boundary, today, a fee with no date); the features and forms gates on Debt
 Payoff; a phone walk of the folded step at 360px.
 
+## D-318 — The radar is on the Scorecard too, drawn by one function
+
+**Why.** The owner asked where the spider chart went. It was under the
+front page's "The full panel" fold since D-096, and a chart of every banded
+ratio belongs on the page that lists every ratio.
+
+**Decision.** `shared/charts.js` gains `radar(r)`: the rings, spokes,
+shape, dots and numbers for a `Ratios.radar` result, one drawing. The front
+page calls it where it drew its own. `rooms/financial-snapshot.html` gains
+`#out-radar` at the top of the Every ratio reading: the chart, a legend
+whose names jump to the ratio's row below, the same sentence about what is
+below the range, and one line saying it is a view, not a score, with a link
+to The Score. The gate decides which spokes apply, as on the front page.
+The front page's copy stays folded where it was.
+
+**Replaces or removes.** Nothing; the front page's own drawing code, now
+the shared one.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (the chart's parts per spoke; both pages
+call the one function); the features gate on the Scorecard and the front
+page; render.
+
 ---
 
 # The Dungeons & Dividends entries

@@ -21,7 +21,8 @@ Updated: 2026-09-19
 - **From main**: the bank statement intake (D-306), the Calendar (D-308),
   all three intakes stay (D-309), plain words everywhere (D-310, D-311).
 - **A card's annual fee and the day it posts (D-317)**, asked on the Debt
-  card's fold, warned 45 days out; a dealt walk step folds to one line.
+  card's fold, warned 45 days out; a dealt walk step folds to one line. The
+  radar is on the Scorecard's Every ratio reading too, one drawing (D-318).
 - **Main is worked on directly by another lane**: merge it before every push.
   The reframe D-228 asks for has NOT shipped. Freeze: five rooms added, each
   replacing a reading or a card the Statement lost; screens unchanged (D-313).

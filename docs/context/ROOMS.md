@@ -8,7 +8,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 
 - **ledger** — The Ledger (utility) · 3185 lines · engines: projection, tier0, income, ledger, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, fire, coast, opening, benchmarks, ratios, skills · owns: takeHomeMonthly, rothContributed, hsaContributed, onHdhp, hsaFamilyPlan, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, assetValue, assetCharacter, assetTier, assetCostBasis, assetInstitution, assetAccountType, assetConfidence, assetCashFlow, assetHassle, assetAccessAge · D-313, D-303, D-241
 - **start** — Start Here · 1189 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-262, D-259, D-249
-- **dashboard** — The Dashboard · 1837 lines · no engines · DD-030, DD-028, DD-026
+- **dashboard** — The Dashboard · 1811 lines · no engines · DD-030, DD-028, DD-026
 
 ## Your Numbers (13)
 
@@ -28,7 +28,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 
 ## Scorecard (3)
 
-- **financial-snapshot** — The Scorecard · 2624 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath, statement, ratios, health, rankguess · D-245, D-241, D-238
+- **financial-snapshot** — The Scorecard · 2683 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath, statement, ratios, health, rankguess · D-318, D-245, D-241
 - **foo-ladder** — What The Next Dollar Does · 704 lines · engines: projection, tier0, income, selfemployed, ledger, hourly, foo, next100, windfall, cashflow, fire, statement, debt, benchmarks, ratios, skills, tax · D-242, D-231, D-058
 - **fire** — The Number · 1465 lines · engines: projection, tier0, income, ledger, fire, foo, journey, selfemployed, tax, hourly, cashflow, fulfillment, enough, coast, countdown, race · owns: enoughMonthly, retireAge, coastAge · D-285, D-240, D-235
 

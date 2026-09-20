@@ -3211,6 +3211,13 @@ section('Ratios');
     radar.points.every(p => p.position >= 0 && p.position <= radar.ceiling));
   check('the comfortable ring sits at 1 by construction', radar.goodRing, 1);
 
+  /* One drawing (D-318): shared/charts.js draws it for the front page and the Scorecard. */
+  const Charts = require(path.join(ROOT, 'shared/charts.js'));
+  const svg = Charts.radar(radar);
+  check('the chart has three rings, a shape, and a dot and a number per spoke', (svg.match(/<polygon/g) || []).length + '/' + (svg.match(/<circle class="dot"/g) || []).length + '/' + (svg.match(/<text class="num"/g) || []).length, '4/' + radar.value + '/' + radar.value);
+  checkTrue('the dashed ring is the healthy line', /class="ring-good"/.test(svg));
+  ['index.html', 'rooms/financial-snapshot.html'].forEach(f => checkTrue(f + ' draws the radar through the one function', /Charts\.radar\(/.test(fs.readFileSync(path.join(ROOT, f), 'utf8')) && !/rMax = 44/.test(fs.readFileSync(path.join(ROOT, f), 'utf8'))));
+  checkTrue('the Scorecard lists it on Every ratio, and the legend jumps to the row', /id="out-radar"/.test(fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8')) && /href="#r-' \+ esc\(p\.id\)/.test(fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8')) && Registry.byId('financial-snapshot').subsections.some(s => s.id === 'out-radar'));
   const thin = RatiosEngine.radar(Schema.createHousehold({}), TABLES);
   check('a radar with fewer than three axes is not drawn', thin.status, 'incomplete');
   checkTrue('and says why', /three axes/.test(thin.reason));
