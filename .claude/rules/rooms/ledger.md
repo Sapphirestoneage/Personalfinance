@@ -13,9 +13,9 @@ Reference data: access_rules.json, confidence_weights.json, debt_rules.json, eff
 Owns: takeHomeMonthly, rothContributed, hsaContributed, onHdhp, hsaFamilyPlan, marginalRate, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, assetValue, assetCharacter, assetTier, assetCostBasis, assetInstitution, assetAccountType, assetConfidence, assetCashFlow, assetHassle, assetAccessAge
 Reads from other owners: grossAnnualIncome (start), cashSavings (start), employmentStatus (start), hasDebt (start), contributionPercent (start), partnerDob (partner), totalDebt (debt-payoff), netWorth (statement), +13 more
 Latest decisions:
+  - D-326 — The menu has a top, and the Planets are in it
   - D-321 — No em dash anywhere the app can show one, and the planets get a screen
   - D-313 — The Statement is four sections; the facts it asked for are the Ledger's
   - D-303 — The screens a person actually meets: what floats, what toggles, what a Save gives you, and an intake that asks one family at a time
   - D-241 — Nothing counts a person's failures before they have typed anything
-  - D-230 — The Ledger swallows navigation: six pages become six hats
 Full context: node tools/context/pack.js ledger

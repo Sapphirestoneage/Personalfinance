@@ -1640,6 +1640,13 @@ ol.own-dates .od-acts { display: flex; gap: var(--space-1); white-space: nowrap;
 html.is-compact { zoom: 0.86; }
 
 /* ---- The menu's dots say what they mean (D-317) --------------------------- */
+/* The top of the menu (D-326): a view of the whole app, above the groups. */
+.slaf-menu-top { padding: var(--space-2) var(--space-3) 0; }
+.slaf-menu-top .slaf-menu-link.is-top { display: block; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md); background: var(--color-surface-raised); text-decoration: none; }
+.slaf-menu-top .slaf-menu-link.is-top:hover { border-color: var(--color-border-active); }
+.slaf-menu-top .slaf-menu-topname { display: block; font-weight: 600; color: var(--color-text); }
+.slaf-menu-top .slaf-menu-link.is-top small { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: 2px; }
 .slaf-menu-key { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); padding: var(--space-1) var(--space-3) var(--space-2); font-size: var(--text-xs); color: var(--color-text-faint); }
 .slaf-menu-key span { display: inline-flex; align-items: center; gap: 6px; }
 .slaf-menu-key .slaf-dot { margin-left: 0; }

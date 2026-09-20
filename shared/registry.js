@@ -1104,6 +1104,18 @@
      property for ownership rules and is no longer a heading. Subgroups are
      labels, never links. DRAFTT and the map are links into pages that are
      not rooms; they ride in `links`. ---- */
+  /* THE TOP OF THE MENU (D-326). A view that is a way of seeing the whole
+     app, rather than a room among rooms, sits above the groups: the menu is
+     on every page since D-324, so this is the one place a view can be put
+     that is always one tap away and never behind a fold. A group can be
+     collapsed; this cannot. Keep it to two or three, or it becomes a
+     second menu. */
+  var TOP_LINKS = [
+    { id: 'planets', title: 'The Planets', href: 'rooms/ledger.html#planets',
+      note: 'six planets, ten bands, what you have answered',
+      aliases: ['planets', 'the planets', 'sky', 'bands', 'levels', 'solar system', 'orbit'] }
+  ];
+
   var GROUPS = [
     { id: 'home',      label: 'Home',
       /* The twenty arrangements were reachable from one line of text on the
@@ -1136,6 +1148,7 @@
     upkeep: ['data', 'ledger', 'settings', 'get-help']
   };
   function groups() { return GROUPS.slice(); }
+  function topLinks() { return TOP_LINKS.slice(); }
   function groupById(id) { return GROUPS.filter(function (g) { return g.id === id; })[0] || null; }
   /** A room's appliesWhen, read against a situation id, a few fixed
       phrases, never evaluated as code (the levers use the same idiom). */
@@ -1318,6 +1331,7 @@
   function total() { return ROOMS.length; }
 
   return {
+    topLinks: topLinks, TOP_LINKS: TOP_LINKS,
     GROUPS: GROUPS,
     groups: groups,
     groupById: groupById,

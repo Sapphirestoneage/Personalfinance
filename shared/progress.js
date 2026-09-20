@@ -543,14 +543,32 @@
       + '<button type="button" class="slaf-menu-x" data-menu-close aria-label="Close the menu">✕</button>'
       + '</div>'
       + '<div class="slaf-menu-search"><input type="search" id="slaf-menu-q" placeholder="Find a room" aria-label="Find a room" autocomplete="off"></div>'
+      + topLinksHtml(roomId)
       + '<p class="slaf-menu-key"><span><i class="slaf-dot is-filled"></i>all in</span><span><i class="slaf-dot is-partly"></i>some in</span><span><i class="slaf-dot is-empty"></i>nothing yet</span><span>tap a dot for what is missing</span></p>'
       + '<nav class="slaf-menu-body" aria-label="All rooms">' + menuBodyHtml(roomId) + '</nav>';
+  }
+
+  /* The top of the menu (D-326): a view of the whole app, above the groups,
+     where no fold can hide it. Rendered from the registry, never from a
+     hard-coded href, so the day the Planets move the menu follows. */
+  function topLinksHtml(roomId) {
+    var links = Registry.topLinks ? Registry.topLinks() : [];
+    if (!links.length) return '';
+    return '<nav class="slaf-menu-top" aria-label="Views">' + links.map(function (l) {
+      var search = (l.title + ' ' + (l.aliases || []).join(' ')).toLowerCase();
+      return '<a class="slaf-menu-link is-extra is-top" href="' + escapeHtml(href(l.href, roomId)) + '" data-search="' + escapeHtml(search) + '">'
+        + '<span class="slaf-menu-topname">' + escapeHtml(l.title) + '</span>'
+        + (l.note ? '<small>' + escapeHtml(l.note) + '</small>' : '') + '</a>';
+    }).join('') + '</nav>';
   }
 
   /** The search: hide links that do not match, then groups with nothing
       left; while a query is in, matching groups open without being saved. */
   function applySearch(panel, query) {
     var q = String(query || '').trim().toLowerCase();
+    panel.querySelectorAll('.slaf-menu-top .slaf-menu-link').forEach(function (n) {
+      n.hidden = !!q && (n.getAttribute('data-search') || '').indexOf(q) === -1;
+    });
     panel.querySelectorAll('.slaf-menu-group').forEach(function (d) {
       var any = false, lastSub = null;
       d.querySelectorAll('.slaf-menu-link, .slaf-menu-sub').forEach(function (n) {

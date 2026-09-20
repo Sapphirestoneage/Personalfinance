@@ -61,7 +61,29 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
   check('the demo\'s Debt reads partly (the loan plan is not named)', await page.$eval('#slaf-menu [data-room="debt-payoff"] .slaf-dot', d => d.classList.contains('is-partly')));
   check('...Expenses partly (therapy is not tracked)', await page.$eval('#slaf-menu [data-room="expenses"] .slaf-dot', d => d.classList.contains('is-partly')));
   check('...and The Month empty', await page.$eval('#slaf-menu [data-room="cash-flow"] .slaf-dot', d => d.classList.contains('is-empty')));
-  check('the arrangements, DRAFTT and the map ride as links', (await page.$$eval('#slaf-menu .slaf-menu-link.is-extra', ls => ls.map(l => l.textContent).join('|'))) === 'Twenty ways to arrange these rooms|DRAFTT|Every room, on one page');
+  check('the Planets ride at the top, the arrangements, DRAFTT and the map as links', (await page.$$eval('#slaf-menu .slaf-menu-link.is-extra', ls => ls.map(l => { const n = l.querySelector('.slaf-menu-topname'); return (n ? n.textContent : l.textContent).trim(); }).join('|'))) === 'The Planets|Twenty ways to arrange these rooms|DRAFTT|Every room, on one page');
+
+  /* D-326: a view of the whole app sits above the groups, where no fold can
+     hide it, and the search reaches it like everything else. */
+  const top = await page.evaluate(() => {
+    const a = document.querySelector('#slaf-menu .slaf-menu-top .slaf-menu-link');
+    const body = document.querySelector('#slaf-menu .slaf-menu-body');
+    return a ? { href: a.getAttribute('href'), above: !!(body && (a.compareDocumentPosition(body) & Node.DOCUMENT_POSITION_FOLLOWING)), inFold: !!a.closest('details') } : null;
+  });
+  check('the Planets sit above every group, in no fold', !!top && top.above && !top.inFold, JSON.stringify(top));
+  check('...pointing at the Ledger\u2019s Planets hat, climbing out of rooms/', !!top && /\.\.\/ledger\.html#planets$|^ledger\.html#planets$|rooms\/ledger\.html#planets$/.test(top.href), top && top.href);
+  /* The panel is closed here, so the search is driven through its own
+     handler rather than a tap: what is under test is the filter, not the
+     drawer, which the map walk below opens for real. */
+  const search = async (q) => page.evaluate((q) => {
+    const box = document.getElementById('slaf-menu-q');
+    box.value = q;
+    box.dispatchEvent(new Event('input', { bubbles: true }));
+    return document.querySelector('#slaf-menu .slaf-menu-top .slaf-menu-link').hidden;
+  }, q);
+  check('the search finds it by a word for it', (await search('sky')) === false);
+  check('...and hides it when the search is about something else', (await search('mortgage')) === true);
+  await search('');
 
   /* D-324: the menu is on every page of the app, not only the rooms. The map
      has no back-link for the strip to stand in for, which is exactly why it

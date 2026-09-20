@@ -16860,6 +16860,32 @@ from consumer debt, cash excluded from the investment rate, the ranking
 ordered and capped at three, a comfortable ratio never ranked, the empty
 household's silence named). The radar now plots eighteen.
 
+## D-326 — The menu has a top, and the Planets are in it
+
+**Why.** The Planets view is a way of seeing the whole app rather than a
+room among rooms, and it sat inside the Ledger's hats, three taps down. The
+menu reaches every page since D-324, which makes it the one place a view can
+be put that is always one tap away.
+
+**Decision.** `shared/registry.js` gains `TOP_LINKS`, read through
+`Registry.topLinks()`; `shared/progress.js` renders them between the search
+box and the group key, above every group, in no fold, as
+`.slaf-menu-top`. The search reaches them like everything else. The first
+and only entry is The Planets, pointing at `rooms/ledger.html#planets`, with
+one line saying what it holds. The href comes from the registry, never a
+hard-coded path, so the day the Planets move the menu follows. Keep the list
+to two or three: a fourth makes a second menu.
+
+**Replaces or removes.** Nothing. The Planets hat on the Ledger is
+unchanged, and so is every group.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/sidebar.js` (it sits above every group and in no
+fold, the href climbs out of `rooms/` correctly, the search finds it by a
+word for it and hides it for an unrelated one, and the four extra links read
+in order); the link followed on a phone lands on the view with it shown.
+
 ---
 
 # The Dungeons & Dividends entries
