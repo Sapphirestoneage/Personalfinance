@@ -930,6 +930,42 @@ const CASES = [
     }
   },
   {
+    /* The Planets, answering a level where it is asked (D-324). The panel
+       holds live boxes inside a list this screen redraws whenever the
+       household changes, which is exactly the shape D-034 is about: the
+       box must survive its own save. */
+    room: '/rooms/ledger.html#planets',
+    container: '#sky-open',
+    seed: 'demo',
+    prepare: async (page) => {
+      await page.waitForTimeout(1200);
+      await page.click('.sky-row[data-planet="expenses"]');
+      await page.waitForTimeout(400);
+      await page.click('.sky-lv[data-level="E2"]');
+      await page.waitForTimeout(400);
+    },
+    fields: [
+      { sel: '[data-sky-ask="accommodationMonthly"] [data-ask-input]', type: '1450', clearFirst: true }
+    ],
+    expect: async (page) => {
+      await page.click('[data-sky-ask="accommodationMonthly"] [data-sky-save]');
+      await page.waitForTimeout(600);
+      const v = await page.evaluate(() => {
+        const n = document.querySelector('[data-sky-ask="accommodationMonthly"] [data-ask-input]');
+        const li = n ? n.closest('li') : null;
+        const mark = document.querySelector('.sky-lv[data-level="E2"] .mark');
+        const read = SLAF.Ownership.describe('accommodationMonthly', SLAF.Spine.getProfile(), null);
+        return { box: n ? n.value : 'gone', line: li ? li.className : '', mark: mark ? mark.textContent : '', stored: read ? read.display : '' };
+      });
+      return [
+        ['the box survived its own save', v.box, '1450'],
+        ['the fact reads as in', v.line, 'is-in'],
+        ['the level says it is answered', v.mark, 'answered'],
+        ['and the figure went to the one place it lives', v.stored, '$1,450/mo']
+      ];
+    }
+  },
+  {
     /* Start Here, landing on a question that ALREADY has an answer.
        This is the bug a person reported as "it resets everything I enter":
        the question auto-focused and select()'d the saved figure, so the

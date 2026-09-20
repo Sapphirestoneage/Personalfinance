@@ -370,15 +370,37 @@ section('Where a household stands in the levels, and the screen that shows it');
   check('the readings are grouped by band and each band opens', /data-tier=/.test(page) && /openTier === n \? 0 : n/.test(page));
   check('the unlocks tab says nothing is locked', /Nothing is locked: a reading simply cannot exist until its facts do/.test(page));
 
+  /* D-324: a level is answered where it is asked. The box is built from the
+     shared ask helpers, the answer goes through the field's owner, and the
+     panel is guarded so nothing is rebuilt under a finger. */
+  check('a fact whose owner takes a written answer gets a box in the panel',
+    /function answerFor\(def\)/.test(page) && /function askHtml\(a\)/.test(page) && /data-sky-ask=/.test(page));
+  check('the box is the shared one, so the unit and the period come with it',
+    /Ask\.control\(a\.row\)/.test(page) && /Ask\.parse\(a\.row, raw\)/.test(page) && /Ask\.toRowPeriod\(a\.row, v, per\.value\)/.test(page));
+  check('the answer is written through the owner, never into a copy',
+    /Ownership\.write\(a\.id, value\)/.test(page) && !/levels\.\w+\s*=\s*/.test(page));
+  check('a fact that needs a list or a whole form keeps its link instead',
+    /if \(row && row\.repeat\) return null;/.test(page) && /the whole room/.test(page));
+  check('the open box shows what is already stored, through the same reader',
+    /function fillBoxes/.test(page) && /Ask\.typed\(a\.row, v\)/.test(page));
+  check('one formula for the typed value, in shared/ask.js',
+    /typed: typed/.test(fs.readFileSync(path.join(ROOT, 'shared/ask.js'), 'utf8')));
+  check('the panel is guarded, so a save cannot rebuild the box under a finger',
+    /LiveForm\.guard\(el\('sky-open'\)/.test(page) && /skyForm\.request\(\)/.test(page) && /skyForm\.force\(\)/.test(page));
+  check('the line and the level say the answer landed, without a rebuild',
+    /function showAnswered/.test(page) && /Solar\.levelState\(lv, h\)/.test(page));
+  check('every box reaches the 44px tap target',
+    /\.d-ask input\[type="text"\] \{ min-height: 44px/.test(page) && /\.d-ask \.choice \{[^}]*min-height: 44px/.test(page));
+
   const skyStart = page.indexOf('The planets (D-321, opened up in D-322)');
   const skyBlock = page.slice(skyStart, page.indexOf('</script>', skyStart));
   check('a fact with an owner room links to it, and one without says so plainly', /'enter it'/.test(page) && /nowhere to type it yet/.test(page) && !/N\/A/.test(skyBlock));
   check('a level nothing can collect yet explains itself', /Nothing on this screen can take this answer yet/.test(page));
   check('the planet can be filtered to what is not done', /data-only="notYet"/.test(page) && /only === 'all' \|\| r\.state !== 'done'/.test(page));
   check('the level buttons reach the 44px tap target', /\.sky-lv \{[^}]*min-height: 44px/.test(page));
-  check('the metric labels come from the recipes table, never retyped', /Reference\.load\(\['levels', 'recipes'\]\)/.test(page) && /RECIPES\[r\.id\] = r\.label/.test(page));
+  check('the metric labels come from the recipes table, never retyped', /Reference\.load\(\['levels', 'recipes', 'ledgerRows', 'states'\]\)/.test(page) && /RECIPES\[r\.id\] = r\.label/.test(page));
   check('it says what is answered and what is next', /levels answered/.test(page) && /id="sky-next"/.test(page));
-  check('the room loads the engine and the tables', /shared\/solar\.js/.test(page) && /Reference\.load\(\['levels', 'recipes'\]\)/.test(page));
+  check('the room loads the engine and the tables', /shared\/solar\.js/.test(page) && /shared\/liveform\.js/.test(page) && /Reference\.load\(\['levels', 'recipes', 'ledgerRows', 'states'\]\)/.test(page));
   check('the Planets view is registered as a subsection', /view-sky/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
   check('nothing on this screen is red or says incomplete', !/is-bad|is-danger/.test(page.slice(page.indexOf('id="view-sky"'), page.indexOf('id="view-sky"') + 2000)));
 }

@@ -200,6 +200,18 @@
     if (u === 'percent') return row.id === 'contributionPercent' ? n : (n > 1 ? Math.round(n * 100) / 10000 : n);
     return n;
   }
+  /** The inverse of parse: a stored value as it is TYPED into a box, never
+      as it is read in a sentence. A box shows 1200, not "$1,200 a month",
+      so correcting a figure starts from what was entered. */
+  function typed(row, v, D) {
+    D = D || deps();
+    if (!row || !D.Money.isEntered(v)) return '';
+    var u = row.unit;
+    if (u === 'cents') return v % 100 ? String((v / 100).toFixed(2)) : String(v / 100);
+    if (u === 'rate' || (u === 'percent' && row.id !== 'contributionPercent')) return String(Math.round(v * 10000) / 100);
+    if (u === 'bool') return v ? 'true' : 'false';
+    return String(v);
+  }
   /* Name the item (D-317). "What each account or thing is worth for this
      one" named nothing when the account had no label; now the institution
      and the account type stand in ("Example Bank · 401(k)"), then the
@@ -388,6 +400,6 @@
     return ensure().then(function (t) { return mountCard(roomId, host, t); }).catch(function () { return null; });
   }
 
-  return { pick: pick, parse: parse, slip: slip, toRowPeriod: toRowPeriod, unitHtml: unitHtml, parked: parked, quiet: quiet, rest: rest, retire: retire, askOff: askOff, itemLabel: itemLabel, REST_DAYS: REST_DAYS, mount: mount, ensure: ensure,
+  return { pick: pick, parse: parse, typed: typed, slip: slip, toRowPeriod: toRowPeriod, unitHtml: unitHtml, parked: parked, quiet: quiet, rest: rest, retire: retire, askOff: askOff, itemLabel: itemLabel, REST_DAYS: REST_DAYS, mount: mount, ensure: ensure,
     control: function (row) { return control(row, deps()); }, esc: esc, ASKABLE_UNITS: ASKABLE_UNITS, ENUM_LABELS: ENUM_LABELS };
 });
