@@ -17052,6 +17052,45 @@ same as unasked, so the household mode waits to be told rather than reading
 "on your own"; and the liquidity rate is reachable over total, not the app's
 `liquidityRatio`, which is a different reading with a similar name.
 
+## D-330 — A band is a run of questions, not a hunt
+
+**Why.** The owner: "when I click on things it is very slow and doesn't
+immediately close. I want it to open the next thing immediately basically and
+automatically until the band or tier is done and then it's like congrats on
+completing x here is what you unlocked."
+
+**Decision.** Two things, and the first is the cause of the second.
+
+*One tap touches one level.* Opening a level used to redraw the whole planet,
+every band and every level, and then slide the page under the finger with a
+smooth scroll. The arithmetic was never the problem: every figure on the
+screen computes in single-digit milliseconds. The tap measured 940ms because
+the thing being tapped was moving, and a browser waits for that. Now
+`showLevel` closes the panel that is open and builds the one asked for under
+its own button; nothing else is rebuilt, and the page scrolls only when the
+level would otherwise be off screen, never smoothly. The same tap now lands in
+about 50ms.
+
+*A band runs.* Answering the last fact of a level opens the next level of that
+band by itself, with the cursor in its first box, focused inside the same tap
+so a phone's keyboard stays up. A level that asks two facts keeps you there
+until both are in. When the band has none left, the run ends with a card: the
+band and planet by name, the readings it bought with their figures, and a
+button into the next band.
+
+**Replaces or removes.** The hunt: closing a level, reading the list, finding
+the next one and opening it. Four taps become none.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (35,256), `node test/solar.js` (5,189), the
+D&D suite, export, xlsx, lane 2 and now eight browser gates. `test/flow.js` is
+new: it walks band 1 on Expenses as a person does, holds every tap under
+400ms, and checks that each answer opens the next question with the cursor in
+it, that a two-fact level waits for both, and that the run ends with a card
+naming the band, what it bought and the way on. Measured on the walk: opening
+a planet 87ms, a level 54ms, closing 47ms, saving and handing over 113ms.
+
 ---
 
 # The Dungeons & Dividends entries

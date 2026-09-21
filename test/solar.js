@@ -347,7 +347,7 @@ section('Where a household stands in the levels, and the screen that shows it');
      still needs. A level with no room to type in says that rather than
      looking broken. */
   check('every level is a button carrying its id', /class="sky-lv" data-level="/.test(page) && /aria-expanded=/.test(page));
-  check('tapping a level opens its detail', /openLevel = openLevel === id \? null : id/.test(page) && /sky-lv-detail/.test(page));
+  check('tapping a level opens its detail', /showLevel\(openLevel === id \? null : id/.test(page) && /sky-lv-detail/.test(page));
   check('the detail names what the level gives you, what it unlocks and where to find it', /What it gives you/.test(page) && /Unlocks\./.test(page) && /Where to find it/.test(page));
   check('the detail lists every fact the level collects, with its state', /d-fields/.test(page) && /f\.filled \? 'in' : 'not yet'/.test(page));
   /* D-322: the other half of the screen, what finishing a level buys. */
@@ -591,6 +591,23 @@ section('Where a household stands in the levels, and the screen that shows it');
     /function sayUnlocked/.test(page) && /fresh\.slice\(0, 3\)/.test(page) && /and ' \+ esc\(fresh\.length - 3\) \+ ' more/.test(page));
   check('and the card goes on its own', /UNLOCK_MS/.test(page) && /box\.hidden = true/.test(page));
 
+  /* D-330: a tap touches one level, and a band runs from one question to the
+     next. The walk itself is test/flow.js, in a browser. */
+  check('a tap opens and closes one level rather than redrawing the planet',
+    /function showLevel/.test(page) && /function closePanel/.test(page) && !/behavior: 'smooth'/.test(page.slice(skyStartIndex(page))));
+  check('and the page only moves when the level would be off screen',
+    /function onScreen/.test(page) && /if \(!onScreen\(btn\)\) btn\.scrollIntoView/.test(page));
+  check('an answer opens the next level of the band, in the same tap',
+    /function advance/.test(page) && /showLevel\(left\[0\]\.level\.id, \{ focus: true \}\)/.test(page));
+  check('a level with two facts is not left early',
+    /d-fields li:not\(\.is-in\)/.test(page));
+  check('the end of a band says so, and names what the run bought',
+    /function sayBandDone/.test(page) && /is done<\/b>/.test(page) && /data-sky-nextband=/.test(page));
+  check('the cursor lands in the next box within the tap that asked for it',
+    /function focusFirst/.test(page) && /preventScroll: true/.test(page));
+  check('the walk is held by a gate of its own', fs.existsSync(path.join(ROOT, 'test/flow.js'))
+    && /node test\/flow\.js/.test(fs.readFileSync(path.join(ROOT, '.github/workflows/test.yml'), 'utf8')));
+
   const skyStart = page.indexOf('The planets (D-321, opened up in D-322)');
   const skyBlock = page.slice(skyStart, page.indexOf('</script>', skyStart));
   check('a fact with an owner room links to it, and one without says so plainly', /'enter it'/.test(page) && /nowhere to type it yet/.test(page) && !/N\/A/.test(skyBlock));
@@ -603,6 +620,9 @@ section('Where a household stands in the levels, and the screen that shows it');
   check('the Planets view is registered as a subsection', /view-sky/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
   check('nothing on this screen is red or says incomplete', !/is-bad|is-danger/.test(page.slice(page.indexOf('id="view-sky"'), page.indexOf('id="view-sky"') + 2000)));
 }
+
+/* The planets script, for the checks that are about that view only. */
+function skyStartIndex(page) { return page.indexOf('The planets (D-321, opened up in D-322)'); }
 
 /* -- Report --------------------------------------------------------------- */
 console.log('\n' + '─'.repeat(66));

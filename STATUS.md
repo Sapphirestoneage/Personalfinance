@@ -20,7 +20,8 @@ Updated: 2026-09-20
   homeless facts live in `household.sketch` (D-325), the unlocks tab shows each
   Tier 1 and Tier 2 reading's figure from `engines/recipes.js` (D-327, D-329),
   and a level can confirm rather than collect (D-328). Band 1: 20 of 24 in
-  place. The FI date reads both ways, the plan's and what you actually save.
+  place. The FI date reads both ways. A band runs question to question and
+  ends with a card (D-330); `test/flow.js` walks it.
 - **D-321, D-326** no em dash in any spelling; **D-319** rooms say how old their numbers are.
 - **A link opens to the field (D-323)**: an `#anchor` lands the question at the top, cursor in it.
 - **Main is worked on by another lane**: merge before every push. D-228's reframe has NOT shipped. Freeze holds (D-313).

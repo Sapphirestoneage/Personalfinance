@@ -165,6 +165,7 @@
   .sky-unlocked ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
   .sky-unlocked li { font-size: var(--text-xs); display: flex; gap: var(--space-2); justify-content: space-between; }
   .sky-unlocked .n { font-variant-numeric: tabular-nums; color: var(--color-text); }
+  .sky-unlocked .d-save { margin-top: var(--space-2); }
   .sky-next { border: 1px solid var(--color-border-active); border-radius: var(--radius-md); padding: var(--space-3); margin: 0 0 var(--space-4); }
   .sky-next .eyebrow { font-size: var(--text-xs); letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-faint); }
   .sky-next b { display: block; margin: var(--space-1) 0; }
@@ -3706,9 +3707,17 @@
     var before = readable(Spine.getProfile());
     try {
       Ownership.write(a.id, value);
-      sayUnlocked(before);
       said(node, (note ? note + ' ' : '') + (value === null ? 'Cleared.' : 'Saved. Every room that reads it has it now.'));
       showAnswered(node, a);
+      /* On to the next of this band, if this level has nothing else to ask.
+         A level with two facts keeps you where you are until both are in. */
+      var here = node.closest ? node.closest('.sky-levels > li') : null;
+      var stillHere = here ? here.querySelectorAll('.d-fields li:not(.is-in)').length : 0;
+      if (stillHere) { sayUnlocked(before); return; }
+      if (value === null) { sayUnlocked(before); return; }
+      var levelId = here ? (here.querySelector('.sky-lv') || {}).getAttribute && here.querySelector('.sky-lv').getAttribute('data-level') : null;
+      sayUnlocked(before);
+      if (levelId) advance(levelId);
     } catch (e) {
       said(node, 'Could not save it here: ' + e.message);
     }
@@ -3741,6 +3750,123 @@
       item.classList.toggle('is-done', st.state === 'done');
     }
   }
+  /* ---- Opening a level (D-330) ----------------------------------------------
+     A tap used to redraw the whole planet: every band, every level, the panel
+     and the grid, and then slide the page under the finger. It measured under
+     a tenth of a second and still felt slow, because the thing you tapped
+     moved. Now a tap touches one level: the one that was open closes, the one
+     you asked for opens under its own button, and nothing else on the page is
+     rebuilt or scrolled unless the level would otherwise be off screen. */
+  function rowFor(id) {
+    for (var i = 0; i < PLANETS.length; i++) {
+      var bands = PLANETS[i].bands;
+      for (var j = 0; j < bands.length; j++) {
+        var rows = bands[j].rows;
+        for (var k = 0; k < rows.length; k++) { if (rows[k].level.id === id) return rows[k]; }
+      }
+    }
+    return null;
+  }
+  function closePanel() {
+    var open_ = document.querySelector('.sky-lv-detail');
+    if (!open_) return;
+    var item = open_.parentNode;
+    var btn = item ? item.querySelector('.sky-lv') : null;
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+    if (item && item.classList) item.classList.remove('is-open');
+    open_.parentNode.removeChild(open_);
+  }
+  /* The first box of a panel, focused in the same tap that opened it: a
+     programmatic focus a beat later does not raise a phone's keyboard, but
+     one inside the gesture does. */
+  function focusFirst(panel) {
+    var box = panel.querySelector('input, select, textarea');
+    if (!box) return null;
+    try { box.focus({ preventScroll: true }); } catch (e) { box.focus(); }
+    return box;
+  }
+  function onScreen(node) {
+    var r = node.getBoundingClientRect();
+    return r.top >= 0 && r.bottom <= (window.innerHeight || 0);
+  }
+  function showLevel(id, opts) {
+    var o = opts || {};
+    closePanel();
+    openLevel = id || null;
+    if (!openLevel) return null;
+    var btn = document.querySelector('.sky-lv[data-level="' + openLevel + '"]');
+    var r = rowFor(openLevel);
+    /* Not in the list: the filter is hiding it, so show everything and let
+       the full draw put it back. */
+    if (!btn || !r) { only = 'all'; paint(); skyForm.force(); return null; }
+    var panel = document.createElement('div');
+    panel.className = 'sky-lv-detail';
+    panel.innerHTML = detailHtml(r);
+    btn.parentNode.appendChild(panel);
+    btn.parentNode.classList.add('is-open');
+    btn.setAttribute('aria-expanded', 'true');
+    fillBoxes(panel);
+    if (!onScreen(btn)) btn.scrollIntoView({ block: 'nearest' });
+    return o.focus ? focusFirst(panel) : null;
+  }
+
+  /* ---- One after another, to the end of the band (D-330) --------------------
+     Answering used to end in a panel you had to close and a list you had to
+     read to find the next one. Now an answer opens the next level of the same
+     band by itself, so a band is a run of questions rather than a hunt. When
+     the band has none left, it says so and names what the run bought. */
+  function bandOf(id) {
+    var r = rowFor(id);
+    return r ? r.level.band : null;
+  }
+  function planetOf(id) {
+    var r = rowFor(id);
+    return r ? r.level.planet : null;
+  }
+  function stillOpenInBand(planet, band, not) {
+    var p = PLANETS.filter(function (x) { return x.id === planet; })[0];
+    if (!p) return [];
+    var b = p.bands[band - 1];
+    if (!b) return [];
+    return b.rows.filter(function (r) { return r.applies && r.state !== 'done' && r.level.id !== not; });
+  }
+  /* The readings this band's levels give you, once they can be worked out. */
+  function bandBought(band) {
+    var h = Spine.getProfile();
+    return Solar.metrics(h).filter(function (m) { return m.tier === band; })
+      .filter(function (m) { return !!readingValue(m, h); });
+  }
+  function sayBandDone(planet, band) {
+    var box = el('sky-unlocked');
+    if (!box) return;
+    var p = PLANETS.filter(function (x) { return x.id === planet; })[0];
+    var got = bandBought(band);
+    var lines = got.slice(0, 4).map(function (m) {
+      return '<li><span>' + esc(m.label) + '</span><span class="n">' + esc(readingFigure(m.id)) + '</span></li>';
+    }).join('');
+    var more = got.length > 4 ? '<li><span>and ' + esc(got.length - 4) + ' more, on the unlocks tab</span><span class="n"></span></li>' : '';
+    var next = PLANETS.filter(function (x) { return x.id === planet; })[0];
+    var left = next && next.bands[band] ? next.bands[band].rows.filter(function (r) { return r.applies && r.state !== 'done'; }) : [];
+    box.innerHTML = '<b>Band ' + esc(band) + ' on ' + esc((p && p.label) || planet) + ' is done</b>'
+      + (got.length ? '<ul>' + lines + more + '</ul>' : '<ul><li><span>Every reading it feeds is still waiting on another planet.</span><span class="n"></span></li></ul>')
+      + (left.length ? '<button type="button" class="d-save" data-sky-nextband="' + esc(left[0].level.id) + '">Start band ' + esc(band + 1) + '</button>' : '');
+    box.hidden = false;
+    if (unlockTimer) clearTimeout(unlockTimer);
+    /* This one waits to be read: it is the end of a run, not a note in
+       passing, and it carries the way on. */
+    unlockTimer = null;
+    if (!onScreen(box)) box.scrollIntoView({ block: 'nearest' });
+  }
+  /* The next question of the same band, opened in the same tap that answered
+     the last one. Nothing left in the band ends the run with the card. */
+  function advance(fromId) {
+    var band = bandOf(fromId), planet = planetOf(fromId);
+    if (!band || !planet) return;
+    var left = stillOpenInBand(planet, band, fromId);
+    if (!left.length) { closePanel(); openLevel = null; sayBandDone(planet, band); return; }
+    showLevel(left[0].level.id, { focus: true });
+  }
+
   /* ---- What that just bought (D-328) ---------------------------------------
      A reading the app could not work out a moment ago and can now is the whole
      point of answering. The set is the thirty engines/recipes.js knows, so the
@@ -3854,7 +3980,7 @@
     openLevel = null;
     paint();
     skyForm.force();
-    if (open) { var o = el('sky-open'); if (o && o.scrollIntoView) o.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+    if (open) { var o = el('sky-open'); if (o && o.scrollIntoView && !onScreen(o)) o.scrollIntoView({ block: 'nearest' }); }
   });
 
   el('sky-open').addEventListener('click', function (e) {
@@ -3885,9 +4011,12 @@
       if (!t.closest('[data-sky-agree]')) return;
       var levelId = yes.getAttribute('data-sky-confirm');
       try {
+        var wasReadable = readable(Spine.getProfile());
         Spine.confirm(levelId);
         said(yes, 'Confirmed. It reads as yours rather than the app\u2019s guess.');
         markConfirmed(yes, levelId);
+        sayUnlocked(wasReadable);
+        advance(levelId);
       } catch (e) { said(yes, 'Could not record that (' + e.message + ').'); }
       return;
     }
@@ -3897,11 +4026,7 @@
     var lv = t.closest('.sky-lv');
     if (!lv) return;
     var id = lv.getAttribute('data-level');
-    openLevel = openLevel === id ? null : id;
-    paint();
-    skyForm.force();
-    var still = document.querySelector('.sky-lv[data-level="' + id + '"]');
-    if (still && openLevel && still.scrollIntoView) still.scrollIntoView({ block: 'nearest' });
+    showLevel(openLevel === id ? null : id, { focus: true });
   });
   /* Enter saves, the same as the button beside it. */
   el('sky-open').addEventListener('keydown', function (e) {
@@ -3917,6 +4042,15 @@
     if (!ask || e.target.hasAttribute('data-ask-period')) return;
     if (e.target.hasAttribute('data-sky-month') || e.target.hasAttribute('data-sky-year')) return;
     if (e.target.tagName === 'SELECT' && e.target.hasAttribute('data-ask-input')) saveAnswer(ask, e.target.value || null);
+  });
+
+  /* "Start band N" carries the run on from the card. */
+  el('sky-unlocked').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('[data-sky-nextband]') : null;
+    if (!b) return;
+    var box = el('sky-unlocked');
+    box.hidden = true; box.innerHTML = '';
+    showLevel(b.getAttribute('data-sky-nextband'), { focus: true });
   });
 
   el('sky-tabs').addEventListener('click', function (e) {
@@ -3940,7 +4074,7 @@
     paint();
     skyForm.force();
     var btn = document.querySelector('.sky-lv[data-level="' + id + '"]');
-    if (btn && btn.scrollIntoView) btn.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    if (btn && btn.scrollIntoView) btn.scrollIntoView({ block: 'center' });
   });
 
   Reference.load(['levels', 'recipes', 'ledgerRows', 'states', 'effectiveTaxRates', 'stateBrackets', 'federalBrackets', 'levelsOfWealth', 'returnBands', 'fireVariants']).then(function (t) {
