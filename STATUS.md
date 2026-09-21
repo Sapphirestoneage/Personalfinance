@@ -18,17 +18,18 @@ Updated: 2026-09-20
   (`#planets`), shows six planets by ten bands; every level opens to what it
   needs, 56 facts are typed there through their owner (D-324), band 1's six
   homeless facts live in `household.sketch` (D-325), the unlocks tab shows each
-  Tier 1 reading's figure from `engines/recipes.js` (D-327), and a level can
-  confirm a figure rather than collect one (D-328). Band 1: 20 of 24 in place.
-- **D-321, D-326** no em dash on screen in any spelling; **D-319** every room says how old its numbers are.
+  Tier 1 and Tier 2 reading's figure from `engines/recipes.js` (D-327, D-329),
+  and a level can confirm rather than collect (D-328). Band 1: 20 of 24 in
+  place. The FI date reads both ways. A band runs question to question and
+  ends with a card (D-330); `test/flow.js` walks it.
+- **D-321, D-326** no em dash in any spelling; **D-319** rooms say how old their numbers are.
 - **A link opens to the field (D-323)**: an `#anchor` lands the question at the top, cursor in it.
-- **Main is worked on by another lane**: merge it before every push. The reframe
-  D-228 asks for has NOT shipped. Freeze holds (D-313).
+- **Main is worked on by another lane**: merge before every push. D-228's reframe has NOT shipped. Freeze holds (D-313).
 
 ## Next (top item first; one per session)
-1. **OWNER DECISION: which saving drives the FI date?** It is built on the gap
-   (what COULD be saved). Band 1 now asks what IS saved (A3), $705/mo apart
-   for the example. Then: Tier 2 readings, and the moons.
+1. **Tier 3 readings and the moons.** Tiers 1 and 2 are worked out (53 of the
+   184). Three band-2 facts still have nowhere to live: the credit band, the
+   extra put against debt, and how the household is arranged.
 2. **OWNER DECISIONS held**: inline asks elsewhere (D-313 vs D-207); is the
    income floor means-tested? (D-228, D-284.)
 3. Paystub parser and monthly update: not built. `benefit_cliffs_2026.json` unverified.

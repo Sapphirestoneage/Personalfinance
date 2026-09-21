@@ -38,6 +38,7 @@ jobs:
           node test/sidebar.js
           node test/forms.js
           node test/anchors.js
+          node test/flow.js
           node test/opening.js
           node test/statement.js
           node test/onefact.js

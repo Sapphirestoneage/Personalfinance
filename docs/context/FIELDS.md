@@ -5,7 +5,7 @@ A field is editable in its owner only (`shared/ownership.js`). "Read by" is a
 word-boundary match of the id (or id + Cents) in another room's HTML or in an
 engine loaded by two or fewer rooms; shared engines are left out so a field
 does not look used everywhere. Ids that are ordinary words are not traced.
-Fields: 128. Traced: 119. No other room mentions it: **62**.
+Fields: 128. Traced: 119. No other room mentions it: **61**.
 
 
 ## big-purchase (4)
@@ -131,7 +131,7 @@ Fields: 128. Traced: 119. No other room mentions it: **62**.
 
 - `partnerName` — The other of you · **no other room mentions it**
 - `partnerDob` — Their birth year · read by ledger
-- `splitMode` — How shared costs are split · **no other room mentions it**
+- `splitMode` — How shared costs are split · read by ledger
 - `sharedMonthly` — Shared costs, a month · **no other room mentions it**
 - `tuitionTarget` — Tuition target, per child · **no other room mentions it**
 - `tuitionSaved` — Saved for tuition so far · **no other room mentions it**
@@ -174,7 +174,7 @@ Fields: 128. Traced: 119. No other room mentions it: **62**.
 - `cashSavings` — Cash & savings · read by ledger, income, cash-flow, calendar, budget, statement, bridge, the-documents, dashboard, financial-snapshot, skill-tree, goals, runway, cant-pay, what-if-life, protection, housing, big-purchase, debates, one-pager
 - `investments` — Investments + retirement · too generic to trace
 - `employmentStatus` — Working situation · read by ledger, which-account, debt-payoff, tax, runway, career-move, debates
-- `employerMatch` — Employer match · read by the-documents, financial-snapshot, foo-ladder, career-move, debates
+- `employerMatch` — Employer match · read by ledger, the-documents, financial-snapshot, foo-ladder, career-move, debates
 - `capturingFullMatch` — Capturing the full match · read by expenses, dashboard, financial-snapshot, skill-tree, one-pager
 - `hasDebt` — Any debt · read by ledger, debt-payoff, dashboard, debates
 - `contributionPercent` — Workplace contribution · read by ledger, which-account, the-documents, tax, what-if-life

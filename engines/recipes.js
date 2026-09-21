@@ -35,19 +35,19 @@
      not when this file loads: a page may put this script before the ones it
      leans on, and a reading that silently returned "could not be worked out"
      because a global was not there yet is the bug that costs an afternoon. */
-  var Money, Schema, Ownership, Tier0, Ratios, Benchmarks, Coast, Tax;
+  var Money, Schema, Ownership, Tier0, Ratios, Benchmarks, Coast, Tax, Projection, Foo;
   function wire() {
     if (Money) return;
     if (typeof module === 'object' && module.exports) {
       Money = require('../shared/money.js'); Schema = require('../shared/schema.js');
       Ownership = require('../shared/ownership.js'); Tier0 = require('./tier0.js');
       Ratios = require('./ratios.js'); Benchmarks = require('./benchmarks.js');
-      Coast = require('./coast.js'); Tax = require('./tax.js');
+      Coast = require('./coast.js'); Tax = require('./tax.js'); Projection = require('./projection.js'); Foo = require('./foo.js');
       return;
     }
     var S = (root && root.SLAF) || {};
     Money = S.Money; Schema = S.Schema; Ownership = S.Ownership; Tier0 = S.Tier0;
-    Ratios = S.Ratios; Benchmarks = S.Benchmarks; Coast = S.Coast; Tax = S.Tax;
+    Ratios = S.Ratios; Benchmarks = S.Benchmarks; Coast = S.Coast; Tax = S.Tax; Projection = S.Projection; Foo = S.Foo;
   }
 
   var MONTHS = 12;
@@ -123,7 +123,21 @@
     /* Where it ends */
     fiNumber: function (h) { return Tier0.fireNumber(h); },
     pctToFI: function (h, t) { return Tier0.fireProgress(h, t); },
-    fiDate: function (h, t) { return ratio(h, t, 'fiDate'); },
+    /* The date, twice (D-329). The plan's date is the app's own, built on the
+       gap: the money that COULD be saved once spending and the minimums are
+       paid. Beside it, as a hypothetical rather than a replacement, the date
+       you arrive at if you keep adding exactly what you add now (A3). The
+       distance between them is the leak, in years. */
+    fiDate: function (h, t) {
+      var planned = ratio(h, t, 'fiDate');
+      if (!Money.isOk(planned)) return planned;
+      var at = ifYouKeepSaving(h, t);
+      if (!Money.isOk(at)) return planned;
+      return Money.ok(planned.value, {
+        years: planned.years, iso: planned.iso,
+        also: { label: 'at what you save now', value: at.value, unit: 'date', years: at.years }
+      });
+    },
     coastTarget: function (h, t) {
       var fi = Tier0.fireNumber(h), age = Schema.primaryAge(h), want = own(h, 'retireAge');
       if (!Money.isOk(fi)) return fi;
@@ -223,6 +237,138 @@
       if (tax <= 0) return Money.incomplete('The rough tax for the year is not a positive figure yet.', ['grossAnnualIncome', 'takeHomeMonthly']);
       return Money.ok(refund.value / tax, { roughTaxCents: tax });
     },
+    /* ---- Tier 2, the Basics (D-329) ---- */
+    trueMonthlySpend: function (h) {
+      var month = Schema.cleanMonthlySpendingCents(h);
+      if (!Money.isOk(month)) return month;
+      var yearly = Schema.annualMonthlyCents(h);
+      var extra = yearly && Money.isEntered(yearly.monthlyCents) ? yearly.monthlyCents : 0;
+      return Money.ok(month.value + extra, { monthCents: month.value, fromYearlyCents: extra, lines: (yearly && yearly.count) || 0 });
+    },
+    runwayMonths: function (h, t) { return ratio(h, t, 'runwayMonths'); },
+    efTarget: function (h, t) {
+      var months = cushionMonths(h, t), month = Schema.cleanMonthlySpendingCents(h);
+      if (months === null) return Money.incomplete('Say whether your pay swings, so the cushion knows 3 months or 6.', ['payVaries']);
+      if (!Money.isOk(month)) return month;
+      /* The bare-bones month (E5) is band 4. Until it is in, the whole month
+         stands in for it, which is the safer of the two errors, and the
+         reading says so. */
+      return Money.ok(month.value * months, { months: months, usesWholeMonth: true });
+    },
+    efCoverage: function (h, t) {
+      var target = FORMULAS.efTarget(h, t), cash = Schema.cashCents(h);
+      if (!Money.isOk(target)) return target;
+      return over(cash, target);
+    },
+    matchCapture: function (h) { return matchFacts(h); },
+    matchLeft: function (h) {
+      var m = matchFacts(h);
+      if (!Money.isOk(m)) return m;
+      return Money.ok(m.missedCents, { cap: m.cap, reached: m.reached });
+    },
+    /* The share of what you own that you could reach without a penalty. The
+       app's "liquidity ratio" is a different reading, liquid assets over the
+       month's spending, so this is not that row: it is reachable over total,
+       from the same two Schema figures the statement uses. */
+    liquidityRate: function (h) {
+      var reachable = sumAssets(h, ['cash', 'investment']), total = Schema.totalAssetsCents(h);
+      if (!reachable) return Money.incomplete('Add what you hold to see this.', ['cashSavings', 'investments']);
+      return over(Money.ok(reachable.value), total, { reachableCents: reachable.value });
+    },
+    bridgeYears: function (h, t) { return ratio(h, t, 'bridgeGapYears'); },
+    mustPayRate: function (h, t) {
+      var r = roof(h), mins = Schema.monthlyDebtPaymentsCents(h);
+      if (!Money.isOk(r)) return r;
+      if (!Money.isOk(mins)) return mins;
+      return over(Money.ok(r.value + mins.value), takeHome(h, t));
+    },
+    fatShares: function (h, t) {
+      var f = Schema.fat(h), take = takeHome(h, t);
+      if (!Money.isOk(take) || !take.value) return Money.isOk(take) ? Money.incomplete('Nothing to divide by yet.', ['takeHomeMonthly']) : take;
+      var buckets = ['food', 'accommodation', 'transportation', 'wants'];
+      var said = [], shares = {};
+      buckets.forEach(function (k) {
+        var b = f[k];
+        var cents = b && Money.isOk(b) ? b.value : (b && Money.isEntered(b.cents) ? b.cents : null);
+        if (!Money.isEntered(cents)) return;
+        shares[k] = cents / take.value;
+        said.push(k + ' ' + Math.round(shares[k] * 100) + '%');
+      });
+      if (!said.length) return Money.incomplete('Add the month, bucket by bucket, to see this.', ['monthlyExpenses']);
+      return Money.ok(said.join(', '), { shares: shares });
+    },
+    slotFirst: function (h, t) {
+      var walked = Foo.evaluate(h, t || {});
+      var steps = (walked && walked.steps) || [];
+      var open = steps.filter(function (x) { return x.status !== 'done'; })[0];
+      if (!open) return steps.length ? Money.ok('every step of the order is done') : Money.incomplete('The order of operations could not be walked yet.', ['fooRules']);
+      if (open.status === 'unknown') return Money.incomplete(open.detail || 'The order of operations needs more to walk.', open.missing || []);
+      var rules = ((t || {}).fooRules && ((t || {}).fooRules.steps || (t || {}).fooRules.ladder)) || [];
+      var named = rules.filter(function (x) { return x.key === open.key; })[0];
+      return Money.ok((named && named.label) || open.label || open.key, { key: open.key, detail: open.detail || null });
+    },
+    creditBand: function (h) {
+      var band = h && h.credit && h.credit.band;
+      return band ? Money.ok(band) : Money.incomplete('The credit band has nowhere to be entered yet.', ['creditBand']);
+    },
+    accountsUsed: function (h) {
+      var kinds = {};
+      (h.assets || []).forEach(function (a) { if (a.accountType) kinds[a.accountType] = true; });
+      var list = Object.keys(kinds);
+      if (!list.length) return Money.incomplete('Say what kind of account each one is to see this.', ['assetAccountType']);
+      return Money.ok(list.join(', '), { count: list.length });
+    },
+    payoffTimeExtra: function (h) {
+      var extra = h && h.debtPlan && Money.isEntered(h.debtPlan.extraMonthlyCents) ? h.debtPlan.extraMonthlyCents : null;
+      if (!Money.isEntered(extra)) return Money.incomplete('The extra you put against debt each month has nowhere to be entered yet.', ['debtExtra']);
+      var owed = Schema.totalDebtCents(h), pay = Schema.monthlyDebtPaymentsCents(h);
+      if (!Money.isOk(owed) || !Money.isOk(pay)) return Money.isOk(owed) ? pay : owed;
+      return FORMULAS.payoffTimeRough(Object.assign({}, h, { __extra: extra }));
+    },
+    homeEquity: function (h) { return homeEquityCents(h); },
+    householdMode: function (h) {
+      var people = (h.people || []).length;
+      var split = h.expenses && h.expenses.shared ? h.expenses.shared.mode : (h.splitMode || null);
+      var partnered = people > 1 || !!(h.partner && h.partner.name) || !!split;
+      if (partnered) return Money.ok(split === 'pooled' ? 'partnered, money pooled' : 'partnered, money kept separate', { split: split || null });
+      /* Solo is not the same as unasked. Nothing in the app says "I live
+         alone" yet, so a household with no partner and no split has not
+         answered this rather than having answered "on your own". */
+      return Money.incomplete('Whether the money is yours alone or shared has nowhere to be said yet.', ['householdMode']);
+    },
+    homeShareNW: function (h) {
+      var eq = homeEquityCents(h), nw = Tier0.netWorth(h);
+      if (!Money.isOk(eq)) return eq;
+      return over(eq, nw);
+    },
+    trapRatio: function (h) {
+      var eq = homeEquityCents(h), ret = sumAssets(h, ['retirement']), nw = Tier0.netWorth(h);
+      if (!Money.isOk(eq)) return eq;
+      if (!Money.isOk(nw)) return nw;
+      return over(Money.ok(eq.value + (ret ? ret.value : 0)), nw, { retirementCents: ret ? ret.value : 0, equityCents: eq.value });
+    },
+    ltv: function (h, t) { return ratio(h, t, 'loanToValue'); },
+    priceToIncome: function (h) {
+      var home = sumAssets(h, ['real_estate']);
+      if (!home) return Money.incomplete('Add the home to see this.', ['otherAssets']);
+      return over(home, Schema.grossAnnualIncomeCents(h));
+    },
+    carToIncome: function (h) {
+      var car = sumAssets(h, ['vehicle']);
+      if (!car) return Money.incomplete('Add the vehicle to see this.', ['otherAssets']);
+      return over(car, Schema.grossAnnualIncomeCents(h));
+    },
+    studentToIncome: function (h) {
+      var owed = sumDebts(h, ['student_loan']);
+      if (!owed) return Money.incomplete('Add the student loan to see this.', ['totalDebt']);
+      return over(owed, Schema.grossAnnualIncomeCents(h));
+    },
+    extraPayRate: function (h) {
+      var extra = h && h.debtPlan && Money.isEntered(h.debtPlan.extraMonthlyCents) ? h.debtPlan.extraMonthlyCents : null;
+      if (!Money.isEntered(extra)) return Money.incomplete('The extra you put against debt each month has nowhere to be entered yet.', ['debtExtra']);
+      return over(Money.ok(extra), Schema.monthlyDebtPaymentsCents(h));
+    },
+
     incomeVolatility: function (h) {
       /* Steady pay is an answer, not a blank: someone who said their pay does
          not swing has a swing of nothing, which is not an invented zero. */
@@ -236,6 +382,76 @@
       return Money.ok((high.value - low.value) / typical, { lowCents: low.value, highCents: high.value, typicalCents: typical });
     }
   };
+
+  /* ---- The twenty-three of Tier 2 (D-329) ----------------------------------
+     Band 2 asks what the month is really made of, what is reachable, and
+     which slot the next dollar belongs in. Same rule as Tier 1: the app's own
+     function wherever there is one. A reading whose fact has no home in the
+     app yet says what it is waiting for rather than guessing. */
+  function assetsOf(h, cats) {
+    return (h.assets || []).filter(function (a) { return cats.indexOf(a.category) >= 0 && Money.isEntered(a.valueCents); });
+  }
+  function sumAssets(h, cats) {
+    var list = assetsOf(h, cats);
+    return list.length ? Money.ok(list.reduce(function (n, a) { return n + a.valueCents; }, 0), { count: list.length }) : null;
+  }
+  function debtsOfType(h, types) {
+    return (h.debts || []).filter(function (d) { return types.indexOf(d.type) >= 0 && Money.isEntered(d.balanceCents); });
+  }
+  function sumDebts(h, types) {
+    var list = debtsOfType(h, types);
+    return list.length ? Money.ok(list.reduce(function (n, d) { return n + d.balanceCents; }, 0), { count: list.length }) : null;
+  }
+  function homeEquityCents(h) {
+    var home = sumAssets(h, ['real_estate']);
+    if (!home) return Money.incomplete('Add the home to see this.', ['otherAssets']);
+    var owed = sumDebts(h, ['mortgage']);
+    return Money.ok(home.value - (owed ? owed.value : 0), { homeCents: home.value, mortgageCents: owed ? owed.value : 0 });
+  }
+  /* The match: what the employer offers, and how much of it the contribution
+     actually reaches. One place, so the capture and what is left agree. */
+  function matchFacts(h) {
+    var p = (h.people || [])[0] || {};
+    var src = (p.incomeSources || [])[0] || {};
+    var m = src.employerMatch || {};
+    var gross = Schema.grossAnnualIncomeCents(h);
+    var pct = h.retirement && Money.isEntered(h.retirement.contributionPercent) ? h.retirement.contributionPercent / 100 : null;
+    if (!Money.isEntered(m.matchPercent) || !Money.isEntered(m.matchCapPercentOfSalary)) {
+      return Money.incomplete('Add what the employer matches to see this.', ['employerMatch']);
+    }
+    if (pct === null) return Money.incomplete('Add what you put in, as a share of pay, to see this.', ['contributionPercent']);
+    if (!Money.isOk(gross)) return gross;
+    var cap = m.matchCapPercentOfSalary;
+    var reached = Math.min(pct, cap);
+    return Money.ok(cap ? reached / cap : 0, {
+      matchPercent: m.matchPercent, cap: cap, contributing: pct, reached: reached,
+      missedCents: Math.round(gross.value * (cap - reached) * m.matchPercent)
+    });
+  }
+  function cushionMonths(h, t) {
+    var varies = own(h, 'payVaries');
+    var table = (t || {}).defaults && (t || {}).defaults.defaults ? (t || {}).defaults.defaults.emergencyFundMonths : null;
+    var band = (table && table.value) || { steady: 3, variable: 6 };
+    if (!Money.isOk(varies)) return null;
+    return varies.value ? band.variable : band.steady;
+  }
+
+  /* The same projection loop the app uses for its own date, handed the money
+     that actually lands rather than the gap. */
+  function ifYouKeepSaving(h, t) {
+    var target = Tier0.fireNumber(h), invested = Schema.investmentsCents(h), saved = own(h, 'savedMonthly');
+    if (!Money.isOk(target)) return target;
+    if (!Money.isOk(invested)) return invested;
+    if (!Money.isOk(saved)) return saved;
+    var a = Schema.resolveAssumptions(h, null, t || {});
+    var years = Projection.yearsToTargetCents({
+      startCents: invested.value, targetCents: target.value,
+      annualRate: a.expectedReturnRate, annualContributionCents: saved.value * MONTHS
+    });
+    if (!Money.isOk(years)) return years;
+    var now = new Date();
+    return Money.ok(now.getUTCFullYear() + years.value, { years: years.value, savedMonthlyCents: saved.value });
+  }
 
   var IMPLEMENTED = Object.keys(FORMULAS);
 
