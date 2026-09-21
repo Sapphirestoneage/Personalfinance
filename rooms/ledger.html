@@ -156,6 +156,8 @@
   /* The reading's own figure, once its levels are answered (D-327). */
   .u-val { font-variant-numeric: tabular-nums; color: var(--color-text); font-weight: 500; }
   .u-sharp { display: flex; flex-wrap: wrap; gap: 4px; align-items: baseline; color: var(--color-text-faint); font-size: var(--text-xs); }
+  /* The second answer, where a reading has one (D-329). */
+  .u-also { display: block; font-size: var(--text-xs); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
   /* What an answer just bought (D-328): named the moment it arrives, at most
      three, and gone on its own. */
   .sky-unlocked { border: 1px solid var(--color-accent); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); margin: 0 0 var(--space-3); background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
@@ -3610,7 +3612,19 @@
     var r = Recipes.value(m.id, h, TABLES);
     if (!r || !Money.isOk(r)) return '';
     var u = m.unit, v = r.value;
-    var said = u === 'cents' ? Money.formatCents(v)
+    var said = inUnit(v, u);
+    /* Some readings answer twice. The FI date is the plan's, built on the
+       money that could be saved; beside it, as a hypothetical rather than a
+       correction, the date you reach saving exactly what you save now
+       (D-329). Both, never one silently standing for the other. */
+    var also = r.also && Money.isEntered(r.also.value)
+      ? '<span class="u-also">' + esc(inUnit(r.also.value, r.also.unit || u)) + ' ' + esc(r.also.label) + '</span>' : '';
+    return '<span class="u-val">' + esc(said) + '</span>' + also;
+  }
+  function inUnit(v, u) {
+    return u === 'cents' ? Money.formatCents(v)
+      : u === 'dollarsPerYear' ? Money.formatCents(v) + ' a year'
+      : u === 'score' ? String(Math.round(v))
       : u === 'rate' ? Money.formatRate(v, { decimals: 1 })
       : u === 'multiple' ? Money.formatMultiple(v)
       : u === 'flag' ? (v ? 'yes' : 'no')
@@ -3618,7 +3632,6 @@
       : u === 'years' ? (Math.round(v * 10) / 10) + (Math.abs(v) === 1 ? ' year' : ' years')
       : u === 'date' ? String(Math.floor(v))
       : String(v);
-    return '<span class="u-val">' + esc(said) + '</span>';
   }
 
   function drawUnlocks(h) {

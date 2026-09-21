@@ -17005,6 +17005,53 @@ confirmed with one tap and the level marking itself answered, and a card
 reading "That answer worked out 1 new reading, FI number $945,000" after the
 month's spending was typed.
 
+## D-329 — The date both ways, and the twenty-three of Tier 2
+
+**Why.** The owner's call on the question D-327 left open: "add it as a
+hypothetical, show both." And band 2 had its facts and its levels but none of
+its readings.
+
+**Decision.** Two halves.
+
+*The date, twice.* `fiDate` keeps its meaning and its value: the plan's date,
+built on the gap, which is the money that COULD be saved. Beside it,
+`engines/recipes.js` attaches `also`, the date you reach if you keep adding
+exactly what you add now (A3), through `Projection.yearsToTargetCents`, the
+same loop the app's own date uses. Neither replaces the other. For the example
+household they read 2048 and 2060, and the twelve years between them are the
+leak, in years. The screen renders any reading's second answer the same way.
+
+*Tier 2.* The twenty-three readings of band 2, by the rule of D-327: the app's
+own function wherever there is one. The runway, the bridge years and the
+loan-to-value are rows of `engines/ratios.js`; the next slot for your money is
+`engines/foo.js`, named in the ladder's own words rather than its key. The
+rest are arithmetic over figures the app holds: the true monthly spend with
+the year's irregular costs folded in, the cushion target and how far the cash
+covers it, the match captured and what is left on the table, the share of what
+you own that is reachable, the must-pay rate, the month bucket by bucket, the
+home's share of net worth, the trap ratio, and the four "against your income"
+multiples.
+
+Three readings say their fact has nowhere to be entered yet (the credit band,
+the extra put against debt, and how the household is arranged), and one
+borrows: the cushion target uses the whole month until the bare-bones month
+(E5, band 4) is entered, and says so.
+
+**Replaces or removes.** Nothing. No new stored field, no new screen.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (35,208), `node test/solar.js` (5,182) with
+every Tier 2 figure checked by hand against the example household, the D&D
+suite, export, xlsx, lane 2 and the seven browser gates. On screen with the
+example numbers: the FI date reading "2048" and "2060 at what you save now",
+38 readings worked out, and band 2 showing the match capture at 66.7%, $720 a
+year left on the table, a $9,450 cushion target and every asset reachable.
+Two things the tests caught and the engine now gets right: solo is not the
+same as unasked, so the household mode waits to be told rather than reading
+"on your own"; and the liquidity rate is reachable over total, not the app's
+`liquidityRatio`, which is a different reading with a similar name.
+
 ---
 
 # The Dungeons & Dividends entries

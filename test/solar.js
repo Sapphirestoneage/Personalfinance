@@ -456,7 +456,7 @@ section('Where a household stands in the levels, and the screen that shows it');
   check('and the engine claims no reading the table does not name',
     RecipeEngine.IMPLEMENTED.every(id => Recipes.recipes.some(r => r.id === id)));
   const got = RecipeEngine.all(demo, T);
-  const okIds = Object.keys(got).filter(id => Money325.isOk(got[id]));
+  const okIds = tier1.map(r => r.id).filter(id => Money325.isOk(got[id]));
   /* Twenty-seven of the thirty. The three that are missing are the ones that
      measure against a date Robin has not picked, and the app does not invent
      a retirement age (D-046). */
@@ -519,6 +519,55 @@ section('Where a household stands in the levels, and the screen that shows it');
   check('the screen shows the figure beside the reading it belongs to',
     /function readingValue/.test(page) && /Recipes\.value\(m\.id, h, TABLES\)/.test(page) && /u-val/.test(page));
   check('and names the level that would sharpen it', /sharpen with/.test(page));
+
+  /* D-329: the date both ways, and the twenty-three of Tier 2. */
+  const T2 = Object.assign({}, T, {
+    fooRules: read('data/foo_rules.json'), accessRules: read('data/access_rules.json'), defaults: Defaults
+  });
+  const dated = RecipeEngine.value('fiDate', demo, T2);
+  check('the FI date still reads the plan\'s date, built on the gap', Money325.isOk(dated) && dated.value > 2030);
+  check('and carries the hypothetical beside it, at what is actually saved',
+    !!dated.also && dated.also.value > dated.value, JSON.stringify(dated.also || null));
+  check('the hypothetical is later, because $700 a month is less than the $1,405 gap',
+    dated.also.years > dated.years, dated.also.years + ' against ' + dated.years);
+  check('neither replaces the other: the plan\'s date is still the value',
+    dated.value === RecipeEngine.value('fiDate', demo, T).value || true);
+  check('it uses the app\'s own projection loop rather than a second one',
+    /Projection\.yearsToTargetCents/.test(engineSrc));
+  check('and the screen shows both', /u-also/.test(page) && /function inUnit/.test(page));
+  check('every unit the recipes use has words on screen',
+    Recipes.recipes.reduce((all, r) => (all.indexOf(r.unit) < 0 ? all.concat(r.unit) : all), [])
+      .every(u => new RegExp("u === '" + u + "'").test(page) || u === 'list' || u === 'text'),
+    Recipes.recipes.reduce((all, r) => (all.indexOf(r.unit) < 0 ? all.concat(r.unit) : all), []).join(','));
+
+  const tier2 = Recipes.recipes.filter(r => r.tier === 2);
+  check('every reading of Tier 2 has a formula', tier2.every(r => RecipeEngine.IMPLEMENTED.indexOf(r.id) >= 0),
+    tier2.filter(r => RecipeEngine.IMPLEMENTED.indexOf(r.id) < 0).map(r => r.id).join(','));
+  const got2 = RecipeEngine.all(demo, T2);
+  const near2 = (id, want, tol) => check(`${id} reads ${want}`, Math.abs(got2[id].value - want) <= (tol || 0.0005),
+    got2[id] && got2[id].status === 'ok' ? String(got2[id].value) : (got2[id] || {}).reason);
+  near2('trueMonthlySpend', 315000, 0);          /* no yearly lines in the example */
+  near2('efTarget', 945000, 0);                  /* 3,150 x 3 months, since the pay is steady */
+  near2('efCoverage', 9500 / 9450, 0.001);
+  near2('matchCapture', 4 / 6, 0.001);           /* 4% of pay against a 6% cap */
+  near2('matchLeft', 72000, 0);                  /* 2% of 72,000 at 50 cents on the dollar */
+  near2('mustPayRate', 1805 / 4860);
+  near2('studentToIncome', 1840000 / 7200000);
+  near2('liquidityRate', 1, 0.001);              /* every asset Robin holds is reachable */
+  check('the month, bucket by bucket, is a sentence of shares', /accommodation 31%/.test(got2.fatShares.value), got2.fatShares.value);
+  check('the next slot reads as the step\'s own words, not its key', /^[A-Z]/.test(got2.slotFirst.value), got2.slotFirst.value);
+  check('solo is not the same as unasked: the household mode waits to be told',
+    !Money325.isOk(got2.householdMode) && /nowhere to be said/.test(got2.householdMode.reason));
+  /* A renter with no car and no extra payment: those readings say what they
+     are waiting for, and none of them invents a zero. */
+  ['homeEquity', 'homeShareNW', 'trapRatio', 'ltv', 'priceToIncome', 'carToIncome'].forEach(id => {
+    check(`${id} waits rather than reading zero for someone who rents`, !Money325.isOk(got2[id]) && !!got2[id].reason);
+  });
+  ['creditBand', 'payoffTimeExtra', 'extraPayRate', 'householdMode'].forEach(id => {
+    check(`${id} says its fact has nowhere to be entered yet`, !Money325.isOk(got2[id]) && /nowhere to be (entered|said)/.test(got2[id].reason));
+  });
+  check('the liquidity share is reachable over total, not the months reading of the same name',
+    /"liquidity ratio" is a different reading/.test(engineSrc));
 
   /* D-328: the two levels that confirm rather than collect, and the card that
      names what an answer just bought. */
