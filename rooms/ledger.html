@@ -3560,8 +3560,37 @@
     });
     if (!shown) out.push('<p class="sky-sub">Every level on this planet is answered.</p>');
     var html = out.join('');
+    /* A figure typed and not yet saved belongs to the person, not to the
+       store: it is carried across the rebuild and put back. Without this, a
+       change anywhere else in the app repaints this list a third of a second
+       after your finger leaves the box, and what you typed is replaced by
+       what was saved before you started. */
+    var inHand = unsavedBoxes(box);
     box.innerHTML = html;
     fillBoxes(box);
+    putBack(box, inHand);
+  }
+  function unsavedBoxes(box) {
+    var held = {};
+    Array.prototype.forEach.call(box.querySelectorAll('[data-sky-ask]'), function (node) {
+      var a = ASKS[node.getAttribute('data-sky-ask')];
+      var input = node.querySelector('[data-ask-input]');
+      if (!a || !input) return;
+      var stored = a.row ? Ask.typed(a.row, valueOf(a)) : String(valueOf(a) === null ? '' : valueOf(a));
+      if (String(input.value || '') !== String(stored || '')) held[a.id] = input.value;
+    });
+    return held;
+  }
+  function putBack(box, held) {
+    Object.keys(held).forEach(function (id) {
+      var input = box.querySelector('[data-sky-ask="' + id + '"] [data-ask-input]');
+      if (input) input.value = held[id];
+    });
+  }
+  function valueOf(a) {
+    var f = Ownership.FIELDS[a.id];
+    var read = f && typeof f.read === 'function' ? f.read(Spine.getProfile()) : null;
+    return read && Money.isOk(read) ? read.value : null;
   }
 
   /* Each box opens showing what is already stored, so a figure is corrected

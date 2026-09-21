@@ -605,6 +605,8 @@ section('Where a household stands in the levels, and the screen that shows it');
     /function sayBandDone/.test(page) && /is done<\/b>/.test(page) && /data-sky-nextband=/.test(page));
   check('the cursor lands in the next box within the tap that asked for it',
     /function focusFirst/.test(page) && /preventScroll: true/.test(page));
+  check('a figure typed and not yet saved is carried across a rebuild',
+    /function unsavedBoxes/.test(page) && /function putBack/.test(page));
   check('the walk is held by a gate of its own', fs.existsSync(path.join(ROOT, 'test/flow.js'))
     && /node test\/flow\.js/.test(fs.readFileSync(path.join(ROOT, '.github/workflows/test.yml'), 'utf8')));
 

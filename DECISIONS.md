@@ -17078,12 +17078,18 @@ until both are in. When the band has none left, the run ends with a card: the
 band and planet by name, the readings it bought with their figures, and a
 button into the next band.
 
+One more the gates found on the way. A figure typed and not yet saved was
+replaced by the stored one whenever anything else in the app repainted this
+list, a third of a second after the finger left the box. It is now carried
+across the rebuild and put back: what you typed is yours until you save it or
+clear it.
+
 **Replaces or removes.** The hunt: closing a level, reading the list, finding
 the next one and opening it. Four taps become none.
 
 **Stored shape.** No change.
 
-**Verified.** `node test/run.js` (35,256), `node test/solar.js` (5,189), the
+**Verified.** `node test/run.js` (35,296), `node test/solar.js` (5,190), the
 D&D suite, export, xlsx, lane 2 and now eight browser gates. `test/flow.js` is
 new: it walks band 1 on Expenses as a person does, holds every tap under
 400ms, and checks that each answer opens the next question with the cursor in
