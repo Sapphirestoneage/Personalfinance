@@ -63,7 +63,7 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
   check('...and The Month empty', await page.$eval('#slaf-menu [data-room="cash-flow"] .slaf-dot', d => d.classList.contains('is-empty')));
   check('the Planets ride at the top, the arrangements, DRAFTT and the map as links', (await page.$$eval('#slaf-menu .slaf-menu-link.is-extra', ls => ls.map(l => { const n = l.querySelector('.slaf-menu-topname'); return (n ? n.textContent : l.textContent).trim(); }).join('|'))) === 'The Planets|Twenty ways to arrange these rooms|DRAFTT|Every room, on one page');
 
-  /* D-326: a view of the whole app sits above the groups, where no fold can
+  /* D-335: a view of the whole app sits above the groups, where no fold can
      hide it, and the search reaches it like everything else. */
   const top = await page.evaluate(() => {
     const a = document.querySelector('#slaf-menu .slaf-menu-top .slaf-menu-link');
@@ -85,7 +85,7 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
   check('...and hides it when the search is about something else', (await search('mortgage')) === true);
   await search('');
 
-  /* D-324: the menu is on every page of the app, not only the rooms. The map
+  /* D-333: the menu is on every page of the app, not only the rooms. The map
      has no back-link for the strip to stand in for, which is exactly why it
      had no way out; it takes the navigation and none of a room's furniture. */
   for (const page_ of [['/map.html', 'the map'], ['/index.html', 'the front page'], ['/rooms/statement.html', 'a room']]) {

@@ -510,7 +510,7 @@
        the kind that buys nothing lasting, read against what actually lands
        in the account; the investment rate is money going into investments,
        which savingsRate (everything saved) and the contributed rate
-       (the workplace plan) both blur. D-325. */
+       (the workplace plan) both blur. D-334. */
     { id: 'consumerDebtRatio', label: 'Consumer debt', tier: 19,
       formula: 'card and personal loan balances ÷ annual take-home',
       unit: 'rate', needs: 'your itemised debts and your take-home pay',
@@ -738,7 +738,7 @@
       unit: 'rate', needs: 'your spending, income and investments',
       note: 'The share of investments drawn each year to cover what income does not. Income counts before tax while spending is after it, so the draw reads a little low for anyone with a pension or a wage.',
       compute: function (c) {
-        if (!decumulates(c.household)) return Money.incomplete('Not drawing down \u2014 a number for a retiree.', []);
+        if (!decumulates(c.household)) return Money.incomplete('Not drawing down yet. This one is for a retiree.', []);
         if (!Money.isEntered(c.monthlyExpenses)) return Money.incomplete('Add your monthly spending to see this.', ['monthlyExpenses']);
         if (!Money.isEntered(c.investments)) return Money.incomplete('Add your investments to see this.', ['investments']);
         /* GROSS income, deliberately, and the label now says so. Spending is
@@ -951,7 +951,7 @@
    * unit. It ranks what is off; the FI-date levers rank what would move the
    * date most, and the two answer different questions (Amendment 1, B2).
    * A ratio with no band, or one that could not be worked out, is not
-   * ranked: an unknown is not a problem. D-325.
+   * ranked: an unknown is not a problem. D-334.
    */
   function furthestFromNormal(household, tables, opts) {
     var a = all(household, tables, opts);

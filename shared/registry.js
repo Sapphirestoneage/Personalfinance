@@ -478,7 +478,7 @@
       needs: ['grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'totalDebt'],
       order: 3,
       title: 'The Dashboard',
-      blurb: 'Home. Where you are, the next thing money should do, the next thing to learn, and the date it points to \u2014 every number opens the room it came from.',
+      blurb: 'Home. Where you are, the next thing money should do, the next thing to learn, and the date it points to. Every number opens the room it came from.',
       /* The front door since D-058: index.html renders the dashboard once
          it has what it needs, and the intake landing until then. */
       href: 'index.html',
@@ -531,7 +531,7 @@
                   basis, cash flow, hassle and access age; the Roth and HSA
                   contributions and the HSA switches; the marginal rate; the
                   target mix. Rooms read them and link here. */
-               writes: ["assets","assets.property","assets.items[].valueCents","assets.items[].taxCharacter","assets.items[].tier","assets.items[].costBasisCents","assets.items[].institution","assets.items[].accountType","assets.items[].confidence","assets.items[].cashFlowMonthlyCents","assets.items[].hassle","assets.items[].accessAgeOverride","assets.contributions.roth","assets.contributions.hsa","assets.allocation","assets.rebalanceBand","assets.cashCents","assets.invested","debt.items","expenses","income.grossAnnualCents","income.sources[].lastPay","income.takeHome","taxes.marginalRate","taxes.zip","you.cover","you.dob","you.situation"] },
+               writes: ["assets","assets.property","assets.items[].valueCents","assets.items[].taxCharacter","assets.items[].tier","assets.items[].costBasisCents","assets.items[].institution","assets.items[].accountType","assets.items[].confidence","assets.items[].cashFlowMonthlyCents","assets.items[].hassle","assets.items[].accessAgeOverride","assets.contributions.roth","assets.contributions.hsa","assets.allocation","assets.rebalanceBand","assets.cashCents","assets.invested","debt.items","expenses","income.grossAnnualCents","income.sources[].lastPay","income.takeHome","income.variable","taxes.marginalRate","taxes.refund","taxes.zip","you.cover","you.dob","you.situation","assets.added","debt.highInterest","expenses.total.includesDebt","expenses.total.includesSaving"] },
       subsections: [
         { id: 'doors-home',   label: 'The six doors' },
         { id: 'door-D',       label: 'Debt' },
@@ -1104,9 +1104,9 @@
      property for ownership rules and is no longer a heading. Subgroups are
      labels, never links. DRAFTT and the map are links into pages that are
      not rooms; they ride in `links`. ---- */
-  /* THE TOP OF THE MENU (D-326). A view that is a way of seeing the whole
+  /* THE TOP OF THE MENU (D-335). A view that is a way of seeing the whole
      app, rather than a room among rooms, sits above the groups: the menu is
-     on every page since D-324, so this is the one place a view can be put
+     on every page since D-333, so this is the one place a view can be put
      that is always one tap away and never behind a fold. A group can be
      collapsed; this cannot. Keep it to two or three, or it becomes a
      second menu. */
@@ -1120,7 +1120,7 @@
     { id: 'home',      label: 'Home',
       /* The twenty arrangements were reachable from one line of text on the
          map page and nowhere else; the menu is on every page, so they are
-         too. D-324. */
+         too. D-333. */
       links: [{ after: 'start', title: 'Twenty ways to arrange these rooms', href: 'rooms/ledger.html#arrangements', aliases: ['arrangements', 'layouts', 'views', 'ways in', 'shelves', 'twenty'] }] },
     { id: 'numbers',   label: 'Your Numbers', note: 'the owners; everything else reads from here',
       subgroups: [{ id: 'debt', label: 'Debt' }, { id: 'assets', label: 'Assets' }, { id: 'income', label: 'Income' }, { id: 'taxes', label: 'Taxes' }, { id: 'expenses', label: 'Expenses' }] },
@@ -1272,7 +1272,7 @@
     var sit = G.situationOf ? G.situationOf(household) : null;
     if (!appliesToSituation(room, sit)) {
       var s = sit && G.byId ? G.byId(sit) : null;
-      return 'This one is not for where you are right now' + (s ? ' \u2014 ' + s.label.toLowerCase() + '.' : '.');
+      return 'This one is not for where you are right now' + (s ? ': ' + s.label.toLowerCase() + '.' : '.');
     }
     return G.why(household, requires(room.id));
   }

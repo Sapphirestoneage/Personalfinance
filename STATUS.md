@@ -3,36 +3,37 @@
 Updated: 2026-09-20
 
 ## Where it stands
-- **93 → 37 rooms**: the 32 of the merge programme with the Calendar back
-  (D-308) plus the five readings of D-313. `docs/room-map.json` is the cut list.
-- **D-318** the calendar redrawn; **D-317** the phone walk: Compact, the menu's
-  dots, the ask that rests, the gap as a chip.
-- **The five-input opening (D-312)**: `rooms/ledger.html#round-1` is one
-  screen, five inputs, the FI date as a band; 6 to 10 taps (`test/opening.js`).
-- **Facts are entered in the Ledger only (D-313)**: every per-account fact is
-  a Ledger row with one owner. The Statement is four sections.
-- **New rooms**: The Bridge, Which Account, The Mix, The Documents, Left
-  Behind (D-316). Worst year is the Cushion's (D-314); pay to come (D-315).
-- **From main**: the Calendar (D-308); all three intakes stay (D-309); plain
-  words (D-310, D-311); number ages (D-319); no em dash on screen (D-321).
-- **The Solar System (D-320, D-321)**: `docs/SOLAR-SYSTEM.md` is the spec; the
-  data layer is in (180 levels, 184 recipes, 17 moons, 98 moves, defaults,
-  benchmarks, the lexicon); `shared/solar.js` reads it against a household; the
-  Ledger's seventh hat, Planets (`#planets`), shows the six planets, the ten
-  bands, the levels in each and what is answered. `test/solar.js` lints it.
-- **This lane**: a card's annual fee and the day it posts (D-322); the radar on
-  the Scorecard, one drawing (D-323); the menu on every page, the map included,
-  with the arrangements in it (D-324) and the Planets at its top (D-326);
-  Amendment 1's two missing ratios and the furthest-from-normal ranking (D-325),
-  audited in `docs/solar-system-amendment-1-audit.md`.
-- **Main is worked on directly by another lane**: merge it before every push.
-  The reframe D-228 asks for has NOT shipped. Freeze holds (D-313).
+- **93 → 37 rooms**: the 32 of the merge programme with the Calendar back plus
+  the five readings of D-313. `docs/room-map.json` is the cut list. **D-318**
+  the calendar redrawn; **D-317** the phone walk.
+- **The five-input opening (D-312)**: `#round-1` is one screen, five inputs,
+  the FI date as a band; 6 to 10 taps (`test/opening.js`).
+- **Facts are entered in the Ledger only (D-313)**: one owner per row. **New
+  rooms** (D-316): The Bridge, Which Account, The Mix, The Documents, Left
+  Behind. Worst year is the Cushion's (D-314); pay to come (D-315).
+- **From main**: a statement in (D-306); all three intakes stay (D-309).
+- **The Solar System (D-320 to D-324)**: `docs/SOLAR-SYSTEM.md` is the spec; the
+  data layer is in (180 levels, 184 recipes, 17 moons, 98 moves) and
+  `shared/solar.js` reads it. Planets (`#planets`) shows six planets by ten
+  bands; a level opens to what it needs, 56 facts are typed there through their
+  owner (D-324), band 1's six homeless facts live in `household.sketch` (D-325),
+  the unlocks tab shows each Tier 1 and 2 figure (D-327, D-329), a level can
+  confirm rather than collect (D-328), and a band runs question to question and
+  ends with a card (D-330); `test/flow.js` walks it.
+- **D-321, D-326** no em dash in any spelling; **D-319** rooms say how old their numbers are.
+- **A link opens to the field (D-323)**: an `#anchor` lands the question at the top, cursor in it.
+- **This lane**: a card's annual fee and when it posts (D-331); the radar on the
+  Scorecard, one drawing (D-332); the menu on every page (D-333) with the
+  Planets at its top (D-335); two missing ratios and the furthest-from-normal
+  ranking (D-334); `docs/solar-system-amendment-1-audit.md` reads Amendment 1.
+- **Main is worked on by another lane**: merge before every push. D-228's reframe has NOT shipped. Freeze holds (D-313).
 
 ## Next (top item first; one per session)
-1. **Solar System step 3: band 1 end to end.** The 18 Sketch levels answerable on
-   the Planets screen, their store, the Tier 1 metrics, the unlock card.
-2. **OWNER DECISION: inline asks elsewhere** (D-313 vs D-207). **Is the income
-   floor means-tested?** (D-228, D-284.)
+1. **Tier 3 readings and the moons.** Tiers 1 and 2 are worked out (53 of the
+   184). Three band-2 facts still have nowhere to live: the credit band, the
+   extra put against debt, and how the household is arranged.
+2. **OWNER DECISIONS held**: inline asks elsewhere (D-313 vs D-207); is the
+   income floor means-tested? (D-228, D-284.)
 3. Paystub parser and monthly update: not built. `benefit_cliffs_2026.json` unverified.
 
 ## Known open

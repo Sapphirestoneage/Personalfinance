@@ -5,7 +5,7 @@
   "taxYear": 2026,
   "source": "Federal ordinary-income brackets and standard deductions for tax year 2026 as announced by the IRS in its annual inflation adjustments (Rev. Proc. 2025-32). Transcribed from memory of the announcement; not yet re-derived against the published text.",
   "confidence": "unverified",
-  "confidenceNote": "Thresholds have NOT been checked against the IRS revenue procedure line by line. Every room that shows a bracket from this file labels it 'federal only, estimate' until that pass is done (BRIEF \u00a72.4). Marginal bracket only \u2014 no credits, no phase-outs, no state.",
+  "confidenceNote": "Thresholds have NOT been checked against the IRS revenue procedure line by line. Every room that shows a bracket from this file labels it 'federal only, estimate' until that pass is done (BRIEF \u00a72.4). Marginal bracket only: no credits, no phase-outs, no state.",
   "note": "Rates are decimal fractions. Each bracket row is the TOP of taxable income taxed at that rate (null = no ceiling). Taxable income = gross minus the standard deduction for the filing status; nothing else is subtracted. Reference.marginalBracket(h) does the lookup; it is a SUGGESTION on marginalRate (D-062), never written without the person tapping it.",
   "unit": "decimal fraction",
   "standardDeduction": {

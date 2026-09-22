@@ -930,6 +930,57 @@ const CASES = [
     }
   },
   {
+    /* The Planets, answering a level where it is asked (D-324). The panel
+       holds live boxes inside a list this screen redraws whenever the
+       household changes, which is exactly the shape D-034 is about: the
+       box must survive its own save. */
+    room: '/rooms/ledger.html#planets',
+    container: '#sky-open',
+    seed: 'demo',
+    prepare: async (page) => {
+      await page.waitForTimeout(1200);
+      await page.click('.sky-row[data-planet="expenses"]');
+      await page.waitForTimeout(400);
+      /* Band 2, where the example household still has questions open, so the
+         run has somewhere to hand over to. */
+      await page.click('[data-tier="2"]').catch(() => {});
+      await page.click('.sky-lv[data-level="E5"]');
+      await page.waitForTimeout(400);
+    },
+    fields: [
+      { sel: '[data-sky-ask] [data-ask-input]', type: '2400', clearFirst: true }
+    ],
+    expect: async (page) => {
+      /* The guard's real promise (D-034): a change somewhere else in the app
+         repaints this screen, and the half-typed figure is untouched. Not the
+         save itself, which hands over to the next question on purpose
+         (D-330), and is walked by test/flow.js. */
+      const field = await page.evaluate(() => {
+        const n = document.querySelector('[data-sky-ask] [data-ask-input]');
+        return n ? n.closest('[data-sky-ask]').getAttribute('data-sky-ask') : null;
+      });
+      await page.evaluate(() => SLAF.Ownership.write('cashSavings', 1234500));
+      await page.waitForTimeout(600);
+      const mid = await page.evaluate((f) => {
+        const n = document.querySelector('[data-sky-ask="' + f + '"] [data-ask-input]');
+        return n ? n.value : 'gone';
+      }, field);
+      await page.click('[data-sky-ask="' + field + '"] [data-sky-save]');
+      await page.waitForTimeout(700);
+      const after = await page.evaluate((f) => {
+        const open = document.querySelector('.sky-lv-detail');
+        const btn = open && open.parentNode.querySelector('.sky-lv');
+        const read = SLAF.Ownership.describe(f, SLAF.Spine.getProfile(), null);
+        return { openNow: btn ? btn.getAttribute('data-level') : null, stored: read ? read.display : '', asked: f };
+      }, field);
+      return [
+        ['a repaint from elsewhere leaves the typing alone', mid, '2400'],
+        ['the figure went to the one place it lives', /2,400/.test(after.stored), true],
+        ['and the run handed over to another question', after.openNow !== 'E5', true]
+      ];
+    }
+  },
+  {
     /* Start Here, landing on a question that ALREADY has an answer.
        This is the bug a person reported as "it resets everything I enter":
        the question auto-focused and select()'d the saved figure, so the

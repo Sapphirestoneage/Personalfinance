@@ -100,14 +100,35 @@
     var v = box ? box[key] : undefined;
     return v !== undefined && v !== null && v !== '' && !(Array.isArray(v) && !v.length);
   }
+  /* A fact can be gated on its own, not just with its level: answering that
+     pay is steady takes the low and high month away, and the level is done
+     with the one question that was left (D-325). The phrase is the same
+     vocabulary a level uses. */
+  function fieldApplies(h, f) {
+    if (!f.appliesWhen || f.appliesWhen === 'always') return true;
+    return applies({ appliesWhen: f.appliesWhen }, h);
+  }
+  /* A C level collects nothing: it shows a reading the app already worked out
+     and asks whether it looks right. It is answered when the person has said
+     so, which the spine records in meta.confirmedAt against the level's own
+     id (D-328). */
+  function confirmed(h, key) {
+    var at = h && h.meta && h.meta.confirmedAt;
+    return !!(at && at[key]);
+  }
   function fieldState(h, level, f) {
+    var gated = fieldApplies(h, f);
+    if (f.kind === 'confirm') {
+      return { key: f.key, label: f.label, filled: confirmed(h, level.id), applies: gated, guessed: false,
+        href: null, display: null, own: true, confirms: f.confirms || null };
+    }
     if (f.existing && Ownership && Ownership.FIELDS && Ownership.FIELDS[f.key]) {
       var d = null;
       try { d = Ownership.describe(f.key, h || {}, null); } catch (e) { d = null; }
-      if (d) return { key: f.key, label: f.label, filled: !!d.isSet, applies: d.applies !== false, guessed: !!d.guessed, href: d.href, display: d.display, own: true };
-      return { key: f.key, label: f.label, filled: false, applies: true, guessed: false, href: null, display: null, own: true };
+      if (d) return { key: f.key, label: f.label, filled: !!d.isSet, applies: gated && d.applies !== false, guessed: !!d.guessed, href: d.href, display: d.display, own: true };
+      return { key: f.key, label: f.label, filled: false, applies: gated, guessed: false, href: null, display: null, own: true };
     }
-    return { key: f.key, label: f.label, filled: stored(h, level, f.key), applies: true, guessed: false, href: null, display: null, own: false };
+    return { key: f.key, label: f.label, filled: stored(h, level, f.key), applies: gated, guessed: false, href: null, display: null, own: false };
   }
   function levelState(level, h) {
     var fields = (level.fields || []).map(function (f) { return fieldState(h, level, f); });
@@ -174,6 +195,56 @@
     };
   }
 
+  /* ---- What finishing a level unlocks (D-322) -----------------------------
+     data/recipes.json says which levels each reading needs. A reading is
+     ready when every one of them is answered, and waiting when any is not:
+     never locked, never N/A, and it always names what it is waiting on. */
+  var RECIPES = null;
+  function useRecipes(recipes) { RECIPES = recipes || null; return RECIPES; }
+  function recipes() { return RECIPES ? RECIPES.recipes.slice() : []; }
+  function answered(h) {
+    var out = {};
+    grid(h).forEach(function (p) {
+      p.rows.forEach(function (r) { if (r.applies && r.state === 'done') out[r.level.id] = true; });
+    });
+    return out;
+  }
+  /** Every reading, with what it still needs. Closest to ready first. */
+  function metrics(h, doneMap) {
+    var done = doneMap || answered(h);
+    return recipes().map(function (r) {
+      var missing = (r.needs || []).filter(function (id) { return !done[id]; });
+      return {
+        id: r.id, label: r.label, tier: r.tier, unit: r.unit, how: r.how, core: !!r.core,
+        needs: r.needs || [], missing: missing, have: (r.needs || []).length - missing.length, of: (r.needs || []).length,
+        state: missing.length ? 'waiting' : 'ready'
+      };
+    }).sort(function (a, b) {
+      if ((a.state === 'ready') !== (b.state === 'ready')) return a.state === 'ready' ? -1 : 1;
+      if (a.missing.length !== b.missing.length) return a.missing.length - b.missing.length;
+      if (a.tier !== b.tier) return a.tier - b.tier;
+      return a.label.localeCompare(b.label);
+    });
+  }
+  /** Per tier: how many readings are ready, and which levels the rest wait on. */
+  function tiers(h) {
+    var done = answered(h), all = metrics(h, done), out = [];
+    for (var t = 1; t <= 10; t++) {
+      var mine = all.filter(function (m) { return m.tier === t; });
+      var waiting = mine.filter(function (m) { return m.state === 'waiting'; });
+      var levels = {};
+      waiting.forEach(function (m) { m.missing.forEach(function (id) { levels[id] = (levels[id] || 0) + 1; }); });
+      out.push({
+        tier: t, name: (bands()[t - 1] || {}).name || ('Tier ' + t),
+        total: mine.length, ready: mine.length - waiting.length, waiting: waiting.length,
+        /* The levels the most readings are waiting on, worth doing first. */
+        blockers: Object.keys(levels).sort(function (a, b) { return levels[b] - levels[a]; })
+          .map(function (id) { return { id: id, unlocks: levels[id] }; })
+      });
+    }
+    return out;
+  }
+
   function grid(h) { return planets().map(function (p) { return planet(p.id, h); }); }
   function bandCleared(band, h) { return grid(h).every(function (p) { return (p.bands[band - 1] || {}).cleared; }); }
 
@@ -220,6 +291,7 @@
     use: use, table: table,
     planets: planets, bands: bands, levels: levels, byId: byId, forPlanet: forPlanet,
     applies: applies, levelState: levelState,
-    planet: planet, grid: grid, bandCleared: bandCleared, next: next, overall: overall
+    planet: planet, grid: grid, bandCleared: bandCleared, next: next, overall: overall,
+    useRecipes: useRecipes, recipes: recipes, answered: answered, metrics: metrics, tiers: tiers
   };
 });

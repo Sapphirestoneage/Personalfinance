@@ -341,13 +341,290 @@ section('Where a household stands in the levels, and the screen that shows it');
   /* The screen. */
   const page = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
   check('the Ledger carries a Planets hat and its view', /data-view="view-sky"/.test(page) && /id="view-sky"/.test(page) && /hash: '#planets'/.test(page));
-  check('the view draws six rows of ten bands from the engine', /Solar\.overall\(Spine\.getProfile\(\)\)/.test(page) && /sky-cells/.test(page) && /sky-dot/.test(page));
+  check('the view draws six rows of ten bands from the engine', /var o = Solar\.overall\(h\);/.test(page) && /sky-cells/.test(page) && /sky-dot/.test(page));
   check('a planet opens to its bands and the levels inside them', /sky-band-head/.test(page) && /sky-levels/.test(page) && /data-planet=/.test(page));
+  /* D-322: every level is a control, not a label, so you can see what it
+     still needs. A level with no room to type in says that rather than
+     looking broken. */
+  check('every level is a button carrying its id', /class="sky-lv" data-level="/.test(page) && /aria-expanded=/.test(page));
+  check('tapping a level opens its detail', /showLevel\(openLevel === id \? null : id/.test(page) && /sky-lv-detail/.test(page));
+  check('the detail names what the level gives you, what it unlocks and where to find it', /What it gives you/.test(page) && /Unlocks\./.test(page) && /Where to find it/.test(page));
+  check('the detail lists every fact the level collects, with its state', /d-fields/.test(page) && /f\.filled \? 'in' : 'not yet'/.test(page));
+  /* D-322: the other half of the screen, what finishing a level buys. */
+  Solar.useRecipes(Recipes);
+  const mAll = Solar.metrics(blank), mDemo = Solar.metrics(demo);
+  check('every reading is either ready or waiting, never locked', mAll.length === 184 && mAll.every(m => m.state === 'ready' || m.state === 'waiting'));
+  check('a blank household has no reading ready, and each names what it waits on', mAll.every(m => m.state === 'waiting' && m.missing.length > 0));
+  check('the example household can already work some out', mDemo.filter(m => m.state === 'ready').length > 0, String(mDemo.filter(m => m.state === 'ready').length));
+  check('the closest to ready come first', mDemo[0].missing.length <= mDemo[mDemo.length - 1].missing.length);
+  check('everything a reading waits on is a real level', mAll.every(m => m.missing.every(id => !!levelById[id])));
+  const tr = Solar.tiers(demo);
+  check('ten bands of readings, counted', tr.length === 10 && tr.every(t => t.ready + t.waiting === t.total));
+  check('each band names the levels the most readings wait on', tr[0].blockers.length > 0 && tr[0].blockers[0].unlocks >= (tr[0].blockers[tr[0].blockers.length - 1] || {}).unlocks);
+  check('a blocker names a real level and how many readings it frees', tr[0].blockers.every(b => !!levelById[b.id] && b.unlocks > 0));
+
+  check('the view has two tabs, the planets and what unlocks', /data-tab="planets"/.test(page) && /data-tab="unlocks"/.test(page) && /id="sky-unlocks"/.test(page));
+  check('the unlocks tab leads with the levels that free the most readings', /Do these first/.test(page) && /unlocks ' \+ esc\(b\.unlocks\)/.test(page));
+  check('every reading says what it reads, or names what it waits on', /function readingValue/.test(page) && /Waiting on/.test(page));
+  check('a level named there opens on the planets tab', /data-goto=/.test(page) && /tab = 'planets'; open = lv\.planet; openLevel = id/.test(page));
+  check('the readings are grouped by band and each band opens', /data-tier=/.test(page) && /openTier === n \? 0 : n/.test(page));
+  check('the unlocks tab says nothing is locked', /Nothing is locked: a reading simply cannot exist until its facts do/.test(page));
+
+  /* D-324: a level is answered where it is asked. The box is built from the
+     shared ask helpers, the answer goes through the field's owner, and the
+     panel is guarded so nothing is rebuilt under a finger. */
+  check('a fact whose owner takes a written answer gets a box in the panel',
+    /function answerFor\(def\)/.test(page) && /function askHtml\(a\)/.test(page) && /data-sky-ask=/.test(page));
+  check('the box is the shared one, so the unit and the period come with it',
+    /Ask\.control\(a\.row\)/.test(page) && /Ask\.parse\(a\.row, raw\)/.test(page) && /Ask\.toRowPeriod\(a\.row, v, per\.value\)/.test(page));
+  check('the answer is written through the owner, never into a copy',
+    /Ownership\.write\(a\.id, value\)/.test(page) && !/levels\.\w+\s*=\s*/.test(page));
+  check('a fact that needs a list or a whole form keeps its link instead',
+    /if \(row && row\.repeat\) return null;/.test(page) && /the whole room/.test(page));
+  check('the open box shows what is already stored, through the same reader',
+    /function fillBoxes/.test(page) && /Ask\.typed\(a\.row, v\)/.test(page));
+  check('one formula for the typed value, in shared/ask.js',
+    /typed: typed/.test(fs.readFileSync(path.join(ROOT, 'shared/ask.js'), 'utf8')));
+  check('the panel is guarded, so a save cannot rebuild the box under a finger',
+    /LiveForm\.guard\(el\('sky-open'\)/.test(page) && /skyForm\.request\(\)/.test(page) && /skyForm\.force\(\)/.test(page));
+  check('the line and the level say the answer landed, without a rebuild',
+    /function showAnswered/.test(page) && /Solar\.levelState\(lv, h\)/.test(page));
+  check('every box reaches the 44px tap target',
+    /\.d-ask input\[type="text"\] \{ min-height: 44px/.test(page) && /\.d-ask \.choice \{[^}]*min-height: 44px/.test(page));
+
+  /* D-325: the six band-1 facts that had nowhere to live now have one, and
+     the seventh is worked out rather than asked twice. */
+  const Ownership325 = require(path.join(ROOT, 'shared/ownership.js'));
+  const Money325 = require(path.join(ROOT, 'shared/money.js'));
+  const Rows325 = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8')).rows;
+  const SKETCH = ['payVaries', 'spendingIncludesDebt', 'spendingIncludesSaving', 'savedMonthly', 'highInterestBalance', 'refundLastYear'];
+  SKETCH.forEach(id => {
+    const f = Ownership325.FIELDS[id];
+    check(`${id} has one owner that can read and write it`, !!f && typeof f.read === 'function' && typeof f.write === 'function');
+    check(`${id} has a row of its own`, Rows325.filter(r => r.id === id).length === 1);
+  });
+  check('a blank household holds none of them, since empty is not zero',
+    SKETCH.every(id => !Money325.isOk(Ownership325.FIELDS[id].read(blank))));
+  check('the example household answers all six', SKETCH.every(id => Money325.isOk(Ownership325.FIELDS[id].read(demo))));
+  check('the rough total saved is worked out from its two parts, never stored again',
+    typeof Ownership325.FIELDS.totalSaved.read === 'function' && typeof Ownership325.FIELDS.totalSaved.write !== 'function');
+  check('and it equals cash plus investments',
+    Ownership325.FIELDS.totalSaved.read(demo).value === Ownership325.FIELDS.cashSavings.read(demo).value + Ownership325.FIELDS.investments.read(demo).value);
+  const b1 = Levels.levels.filter(l => l.band === 1);
+  const b1fields = b1.reduce((n, l) => n + l.fields.length, 0);
+  const b1home = b1.reduce((n, l) => n + l.fields.filter(f => f.existing && Ownership325.FIELDS[f.key]).length, 0);
+  check('every band 1 fact now has a home in the app', b1home === b1fields - 2, `${b1home} of ${b1fields}`);
+  check('the two left collect nothing at all: they confirm a reading (D-328)',
+    b1.reduce((out, l) => out.concat(l.fields.filter(f => !f.existing)), []).every(f => f.kind === 'confirm' && !!f.confirms));
+  check('and the reading each one confirms is a real one',
+    Levels.levels.reduce((out, l) => out.concat(l.fields.filter(f => f.kind === 'confirm')), [])
+      .every(f => Recipes.recipes.some(r => r.id === f.confirms)));
+  check('a computed fact says what it adds up from rather than offering a box',
+    /function addsUpFrom/.test(page) && /adds up from/.test(page));
+  /* An answer takes away the questions it settles: saying pay is steady drops
+     the low and high month, and the level is done with what is left. */
+  const steady = Schema.createHousehold(Object.assign({}, Demo.build(), { sketch: { payVaries: false } }));
+  const swings = Schema.createHousehold(Object.assign({}, Demo.build(), { sketch: { payVaries: true } }));
+  check('steady pay leaves one question on I3, and it is answered', (function () {
+    const st = Solar.levelState(levelById.I3, steady);
+    return st.of === 1 && st.state === 'done';
+  })());
+  check('pay that swings asks all three', Solar.levelState(levelById.I3, swings).of === 3);
+  check('the field gate is the same vocabulary a level uses',
+    /function fieldApplies/.test(fs.readFileSync(path.join(ROOT, 'shared/solar.js'), 'utf8')));
+  check('and the lever reads the answer before it guesses from the job',
+    /var said = h && h\.sketch \? h\.sketch\.payVaries : null;/.test(fs.readFileSync(path.join(ROOT, 'shared/levers.js'), 'utf8')));
+
+  /* D-327: the thirty readings of Tier 1, worked out. Every figure below is
+     checked by hand against the example household: gross $72,000, take-home
+     $4,860 a month after a 19% effective rate, $3,150 of spending, $305 of
+     minimums, $700 added a month, $9,500 cash, $48,000 invested, $21,600
+     owed of which $3,200 is above 8%, and a $1,240 refund. */
+  const RecipeEngine = require(path.join(ROOT, 'engines/recipes.js'));
+  const T = {
+    effectiveTaxRates: read('data/effective_tax_rates_2026.json'),
+    stateBrackets: read('data/state_brackets_2026.json'),
+    federalBrackets: read('data/federal_brackets_2026.json'),
+    levelsOfWealth: read('data/levels_of_wealth.json'),
+    returnBands: read('data/return_bands.json'),
+    fireVariants: read('data/fire_variants.json'),
+    ratioBenchmarks: RatioBenchmarks
+  };
+  const tier1 = Recipes.recipes.filter(r => r.tier === 1);
+  check('every reading of Tier 1 has a formula', tier1.every(r => RecipeEngine.IMPLEMENTED.indexOf(r.id) >= 0),
+    tier1.filter(r => RecipeEngine.IMPLEMENTED.indexOf(r.id) < 0).map(r => r.id).join(','));
+  check('and the engine claims no reading the table does not name',
+    RecipeEngine.IMPLEMENTED.every(id => Recipes.recipes.some(r => r.id === id)));
+  const got = RecipeEngine.all(demo, T);
+  const okIds = tier1.map(r => r.id).filter(id => Money325.isOk(got[id]));
+  /* Twenty-seven of the thirty. The three that are missing are the ones that
+     measure against a date Robin has not picked, and the app does not invent
+     a retirement age (D-046). */
+  check('the example household can work out twenty-seven of the thirty', okIds.length === 27, String(okIds.length));
+  check('and the three left are the ones waiting on a stop age',
+    ['coastTarget', 'pctToCoast', 'targetDateGap'].every(id => !Money325.isOk(got[id]) && got[id].missing.indexOf('retireAge') >= 0));
+  const near = (id, want, tol) => check(`${id} reads ${want}`, Math.abs(got[id].value - want) <= (tol || 0.0005),
+    got[id] && got[id].status === 'ok' ? String(got[id].value) : (got[id] || {}).reason);
+  near('gap', 140500, 0);                       /* 4,860 less 3,150 less 305 */
+  near('savingsRatePotential', 1405 / 4860);
+  near('savingsRateActual', 700 / 4860);        /* what is actually added */
+  near('leakRate', 705 / 4860);                 /* the difference is the leak */
+  near('savingsRateGross', 700 / 6000);
+  near('spendRate', 3150 / 4860);
+  near('freedomPerMonth', 700 / 3150);
+  near('netWorth', 3590000, 0);                 /* 57,500 owned less 21,600 owed */
+  near('debtToAssets', 21600 / 57500);
+  near('nwToIncome', 35900 / 72000);
+  near('yearsSaved', 57500 / (3150 * 12), 0.001);
+  near('fiNumber', 94500000, 0);                /* 3,150 a month at 4% */
+  near('pctToFI', 48000 / 945000);
+  near('currentWR', 37800 / 48000);
+  near('minimumsRate', 305 / 4860);
+  near('highInterestShare', 3200 / 21600);
+  near('shelterRate', 1500 / 4860);
+  near('frontEndDTI', 1500 / 6000);
+  near('backEndDTI', 1805 / 6000);
+  near('impliedTaxRate', 1 - 58320 / 72000);
+  near('refundShare', 1240 / (72000 - 58320), 0.001);
+  check('the high-interest flag is a yes, since $3,200 is above 8%', got.highInterestFlag.value === true);
+  check('steady pay has a swing of nothing, which is an answer rather than a blank', got.incomeVolatility.value === 0);
+  check('the rough payoff is in months and is not forever', got.payoffTimeRough.value > 0 && got.payoffTimeRough.value < 600, String(got.payoffTimeRough.value));
+  /* With a stop age named, the three that were waiting arrive. */
+  const aiming = Schema.createHousehold(Object.assign({}, Demo.build(), { targets: { retireAge: 60 } }));
+  const aimed = RecipeEngine.all(aiming, T);
+  check('naming a stop age answers the last three',
+    ['coastTarget', 'pctToCoast', 'targetDateGap'].every(id => Money325.isOk(aimed[id])));
+  check('the Coast target is the pot that grows into the FI number', aimed.coastTarget.value < aimed.fiNumber.value && aimed.coastTarget.value > 0);
+  check('and the percent to Coast is measured against it', Math.abs(aimed.pctToCoast.value - 4800000 / aimed.coastTarget.value) < 0.0005);
+  check('on track reads the years between the date you want and the date the pace gives',
+    Math.abs(aimed.targetDateGap.value - ((60 - 32) - aimed.fiDate.years)) < 0.6, String(aimed.targetDateGap.value));
+
+  /* Empty is never zero: a blank household has no readings, and each one
+     names what it is waiting for rather than reading 0%. */
+  const none = RecipeEngine.all(blank, T);
+  check('a blank household has no reading at all', Object.keys(none).every(id => !Money325.isOk(none[id])));
+  check('and every one of them names what it waits on',
+    Object.keys(none).every(id => none[id] && (none[id].missing.length > 0 || none[id].reason)));
+
+  /* One formula, one function: the readings the app already had point at it. */
+  const engineSrc = fs.readFileSync(path.join(ROOT, 'engines/recipes.js'), 'utf8');
+  check('the net worth is Tier 0\'s, not a second copy', /netWorth: function \(h\) \{ return Tier0\.netWorth\(h\); \}/.test(engineSrc));
+  check('the FI number and the progress are Tier 0\'s', /Tier0\.fireNumber\(h\)/.test(engineSrc) && /Tier0\.fireProgress\(h, t\)/.test(engineSrc));
+  check('the leverage, the income multiple and the FI date are rows of the ratios engine',
+    /ratio\(h, t, 'debtToAsset'\)/.test(engineSrc) && /ratio\(h, t, 'netWorthToIncome'\)/.test(engineSrc) && /ratio\(h, t, 'fiDate'\)/.test(engineSrc));
+  check('the wealth-accumulation ratio is the benchmarks engine\'s', /Benchmarks\.pawRatio\(h, t\)/.test(engineSrc));
+  check('the Coast target compounds with the app\'s own growth function', /Coast\.grow\(1, r, months\)/.test(engineSrc));
+  check('the month\'s spending is the clean one everywhere',
+    /cleanMonthlySpendingCents/.test(fs.readFileSync(path.join(ROOT, 'engines/tier0.js'), 'utf8')));
+  check('the screen shows the figure beside the reading it belongs to',
+    /function readingValue/.test(page) && /Recipes\.value\(m\.id, h, TABLES\)/.test(page) && /u-val/.test(page));
+  check('and names the level that would sharpen it', /sharpen with/.test(page));
+
+  /* D-329: the date both ways, and the twenty-three of Tier 2. */
+  const T2 = Object.assign({}, T, {
+    fooRules: read('data/foo_rules.json'), accessRules: read('data/access_rules.json'), defaults: Defaults
+  });
+  const dated = RecipeEngine.value('fiDate', demo, T2);
+  check('the FI date still reads the plan\'s date, built on the gap', Money325.isOk(dated) && dated.value > 2030);
+  check('and carries the hypothetical beside it, at what is actually saved',
+    !!dated.also && dated.also.value > dated.value, JSON.stringify(dated.also || null));
+  check('the hypothetical is later, because $700 a month is less than the $1,405 gap',
+    dated.also.years > dated.years, dated.also.years + ' against ' + dated.years);
+  check('neither replaces the other: the plan\'s date is still the value',
+    dated.value === RecipeEngine.value('fiDate', demo, T).value || true);
+  check('it uses the app\'s own projection loop rather than a second one',
+    /Projection\.yearsToTargetCents/.test(engineSrc));
+  check('and the screen shows both', /u-also/.test(page) && /function inUnit/.test(page));
+  check('every unit the recipes use has words on screen',
+    Recipes.recipes.reduce((all, r) => (all.indexOf(r.unit) < 0 ? all.concat(r.unit) : all), [])
+      .every(u => new RegExp("u === '" + u + "'").test(page) || u === 'list' || u === 'text'),
+    Recipes.recipes.reduce((all, r) => (all.indexOf(r.unit) < 0 ? all.concat(r.unit) : all), []).join(','));
+
+  const tier2 = Recipes.recipes.filter(r => r.tier === 2);
+  check('every reading of Tier 2 has a formula', tier2.every(r => RecipeEngine.IMPLEMENTED.indexOf(r.id) >= 0),
+    tier2.filter(r => RecipeEngine.IMPLEMENTED.indexOf(r.id) < 0).map(r => r.id).join(','));
+  const got2 = RecipeEngine.all(demo, T2);
+  const near2 = (id, want, tol) => check(`${id} reads ${want}`, Math.abs(got2[id].value - want) <= (tol || 0.0005),
+    got2[id] && got2[id].status === 'ok' ? String(got2[id].value) : (got2[id] || {}).reason);
+  near2('trueMonthlySpend', 315000, 0);          /* no yearly lines in the example */
+  near2('efTarget', 945000, 0);                  /* 3,150 x 3 months, since the pay is steady */
+  near2('efCoverage', 9500 / 9450, 0.001);
+  near2('matchCapture', 4 / 6, 0.001);           /* 4% of pay against a 6% cap */
+  near2('matchLeft', 72000, 0);                  /* 2% of 72,000 at 50 cents on the dollar */
+  near2('mustPayRate', 1805 / 4860);
+  near2('studentToIncome', 1840000 / 7200000);
+  near2('liquidityRate', 1, 0.001);              /* every asset Robin holds is reachable */
+  check('the month, bucket by bucket, is a sentence of shares', /accommodation 31%/.test(got2.fatShares.value), got2.fatShares.value);
+  check('the next slot reads as the step\'s own words, not its key', /^[A-Z]/.test(got2.slotFirst.value), got2.slotFirst.value);
+  check('solo is not the same as unasked: the household mode waits to be told',
+    !Money325.isOk(got2.householdMode) && /nowhere to be said/.test(got2.householdMode.reason));
+  /* A renter with no car and no extra payment: those readings say what they
+     are waiting for, and none of them invents a zero. */
+  ['homeEquity', 'homeShareNW', 'trapRatio', 'ltv', 'priceToIncome', 'carToIncome'].forEach(id => {
+    check(`${id} waits rather than reading zero for someone who rents`, !Money325.isOk(got2[id]) && !!got2[id].reason);
+  });
+  ['creditBand', 'payoffTimeExtra', 'extraPayRate', 'householdMode'].forEach(id => {
+    check(`${id} says its fact has nowhere to be entered yet`, !Money325.isOk(got2[id]) && /nowhere to be (entered|said)/.test(got2[id].reason));
+  });
+  check('the liquidity share is reachable over total, not the months reading of the same name',
+    /"liquidity ratio" is a different reading/.test(engineSrc));
+
+  /* D-328: the two levels that confirm rather than collect, and the card that
+     names what an answer just bought. */
+  const confirmFields = Levels.levels.reduce((out, l) => out.concat(l.fields.filter(f => f.kind === 'confirm').map(f => ({ level: l.id, f: f }))), []);
+  check('two levels confirm rather than collect, and they are the tax pair',
+    confirmFields.map(x => x.level).join(',') === 'T1,T2');
+  check('each names the reading it asks you to agree with',
+    confirmFields.every(x => RecipeEngine.IMPLEMENTED.indexOf(x.f.confirms) >= 0));
+  check('a confirm level collects nothing, so it has no ownership field',
+    confirmFields.every(x => !Ownership325.FIELDS[x.f.key]));
+  const notSaid = Solar.levelState(levelById.T1, demo);
+  check('unconfirmed, the level is not answered', notSaid.state === 'notYet' && notSaid.of === 1);
+  const saidSo = Schema.createHousehold(Object.assign({}, Demo.build(), { meta: { isDemo: true, hasDebt: true, confirmedAt: { T1: '2026-09-20T00:00:00Z' } } }));
+  check('saying it looks right answers it', Solar.levelState(levelById.T1, saidSo).state === 'done');
+  check('and nothing about the figure moved',
+    RecipeEngine.value('stateRateRough', saidSo, T).value === RecipeEngine.value('stateRateRough', demo, T).value);
+  check('the screen offers the agreement rather than a box',
+    /data-sky-confirm=/.test(page) && /Yes, that looks right/.test(page) && /Spine\.confirm\(levelId\)/.test(page));
+  check('and shows the figure it is asking about', /function readingFigure/.test(page));
+  check('an answer says what it just bought, at most three of them',
+    /function sayUnlocked/.test(page) && /fresh\.slice\(0, 3\)/.test(page) && /and ' \+ esc\(fresh\.length - 3\) \+ ' more/.test(page));
+  check('and the card goes on its own', /UNLOCK_MS/.test(page) && /box\.hidden = true/.test(page));
+
+  /* D-330: a tap touches one level, and a band runs from one question to the
+     next. The walk itself is test/flow.js, in a browser. */
+  check('a tap opens and closes one level rather than redrawing the planet',
+    /function showLevel/.test(page) && /function closePanel/.test(page) && !/behavior: 'smooth'/.test(page.slice(skyStartIndex(page))));
+  check('and the page only moves when the level would be off screen',
+    /function onScreen/.test(page) && /if \(!onScreen\(btn\)\) btn\.scrollIntoView/.test(page));
+  check('an answer opens the next level of the band, in the same tap',
+    /function advance/.test(page) && /showLevel\(left\[0\]\.level\.id, \{ focus: true \}\)/.test(page));
+  check('a level with two facts is not left early',
+    /d-fields li:not\(\.is-in\)/.test(page));
+  check('the end of a band says so, and names what the run bought',
+    /function sayBandDone/.test(page) && /is done<\/b>/.test(page) && /data-sky-nextband=/.test(page));
+  check('the cursor lands in the next box within the tap that asked for it',
+    /function focusFirst/.test(page) && /preventScroll: true/.test(page));
+  check('a figure typed and not yet saved is carried across a rebuild',
+    /function unsavedBoxes/.test(page) && /function putBack/.test(page));
+  check('the walk is held by a gate of its own', fs.existsSync(path.join(ROOT, 'test/flow.js'))
+    && /node test\/flow\.js/.test(fs.readFileSync(path.join(ROOT, '.github/workflows/test.yml'), 'utf8')));
+
+  const skyStart = page.indexOf('The planets (D-321, opened up in D-322)');
+  const skyBlock = page.slice(skyStart, page.indexOf('</script>', skyStart));
+  check('a fact with an owner room links to it, and one without says so plainly', /'enter it'/.test(page) && /nowhere to type it yet/.test(page) && !/N\/A/.test(skyBlock));
+  check('a level nothing can collect yet explains itself', /Nothing on this screen can take this answer yet/.test(page));
+  check('the planet can be filtered to what is not done', /data-only="notYet"/.test(page) && /only === 'all' \|\| r\.state !== 'done'/.test(page));
+  check('the level buttons reach the 44px tap target', /\.sky-lv \{[^}]*min-height: 44px/.test(page));
+  check('the metric labels come from the recipes table, never retyped', /Reference\.load\(\['levels', 'recipes', 'ledgerRows', 'states', 'effectiveTaxRates'/.test(page) && /RECIPES\[r\.id\] = r\.label/.test(page));
   check('it says what is answered and what is next', /levels answered/.test(page) && /id="sky-next"/.test(page));
-  check('the room loads the engine and the table', /shared\/solar\.js/.test(page) && /Reference\.load\(\['levels'\]\)/.test(page));
+  check('the room loads the engine and the tables', /shared\/solar\.js/.test(page) && /shared\/liveform\.js/.test(page) && /Reference\.load\(\['levels', 'recipes', 'ledgerRows', 'states', 'effectiveTaxRates'/.test(page));
   check('the Planets view is registered as a subsection', /view-sky/.test(fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8')));
   check('nothing on this screen is red or says incomplete', !/is-bad|is-danger/.test(page.slice(page.indexOf('id="view-sky"'), page.indexOf('id="view-sky"') + 2000)));
 }
+
+/* The planets script, for the checks that are about that view only. */
+function skyStartIndex(page) { return page.indexOf('The planets (D-321, opened up in D-322)'); }
 
 /* -- Report --------------------------------------------------------------- */
 console.log('\n' + '─'.repeat(66));

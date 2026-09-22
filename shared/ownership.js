@@ -454,6 +454,48 @@
       read: function (h) { var v = (h.estate || {}).willExists; return typeof v === 'boolean' ? Money.ok(v) : Money.incomplete('Not answered yet.', ['willExists']); },
       format: function (v) { return v ? 'Yes' : 'No'; }
     },
+    /* The rough answers of band 1 (D-325). Each is entered in the Ledger, on
+       the Planets screen or in the facts list, and read everywhere. A rough
+       figure never beats the detail: a reader that has the itemised debts or
+       the logged contributions uses those and leaves these alone. */
+    /* A1 asks the rough total saved and invested. The app keeps the two parts
+       (A2), so this is their sum rather than a third figure: one number, one
+       place, and answering the split answers this. */
+    totalSaved: {
+      label: 'Saved and invested, total', owner: 'ledger', anchor: 'planets',
+      read: function (h) { return Schema.savedAndInvestedCents(h); },
+      format: function (v) { return Money.formatCents(v); }
+    },
+    payVaries: {
+      label: 'Pay swings month to month', owner: 'ledger', anchor: 'planets',
+      read: function (h) { var v = (h.sketch || {}).payVaries; return typeof v === 'boolean' ? Money.ok(v) : Money.incomplete('Not answered yet.', ['payVaries']); },
+      format: function (v) { return v ? 'It swings' : 'Steady'; }
+    },
+    spendingIncludesDebt: {
+      label: 'The spending total includes debt payments', owner: 'ledger', anchor: 'planets',
+      read: function (h) { var v = (h.sketch || {}).spendingIncludesDebt; return typeof v === 'boolean' ? Money.ok(v) : Money.incomplete('Not answered yet.', ['spendingIncludesDebt']); },
+      format: function (v) { return v ? 'Yes, they are inside it' : 'No, they are separate'; }
+    },
+    spendingIncludesSaving: {
+      label: 'The spending total includes saving', owner: 'ledger', anchor: 'planets',
+      read: function (h) { var v = (h.sketch || {}).spendingIncludesSaving; return typeof v === 'boolean' ? Money.ok(v) : Money.incomplete('Not answered yet.', ['spendingIncludesSaving']); },
+      format: function (v) { return v ? 'Yes, it is inside it' : 'No, it is separate'; }
+    },
+    savedMonthly: {
+      label: 'Added a month', owner: 'ledger', anchor: 'planets',
+      read: function (h) { var v = (h.sketch || {}).savedMonthlyCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['savedMonthly']); },
+      format: function (v) { return Money.formatCents(v) + '/mo'; }
+    },
+    highInterestBalance: {
+      label: 'Owed above about 8%', owner: 'ledger', anchor: 'planets',
+      read: function (h) { var v = (h.sketch || {}).highInterestCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['highInterestBalance']); },
+      format: function (v) { return Money.formatCents(v); }
+    },
+    refundLastYear: {
+      label: 'Refund last year', owner: 'ledger', anchor: 'planets',
+      read: function (h) { var v = (h.sketch || {}).refundLastYearCents; return Money.isEntered(v) ? Money.ok(v) : Money.incomplete('Not entered yet.', ['refundLastYear']); },
+      format: function (v) { return v < 0 ? Money.formatCents(-v) + ' owed' : Money.formatCents(v) + ' back'; }
+    },
     poaExists: {
       label: 'A power of attorney', owner: 'protection', anchor: 'es-inputs',
       read: function (h) { var v = (h.estate || {}).poaExists; return typeof v === 'boolean' ? Money.ok(v) : Money.incomplete('Not answered yet.', ['poaExists']); },
@@ -1036,6 +1078,12 @@
     onHdhp: boolAt('retirement.onHdhp', 'High-deductible plan'),
     hsaFamilyPlan: boolAt('retirement.hsaFamilyPlan', 'Family HSA coverage'),
     contributionPercent: setAt('retirement.contributionPercent', 'Contribution'),
+    payVaries: boolAt('sketch.payVaries', 'Pay swings month to month'),
+    spendingIncludesDebt: boolAt('sketch.spendingIncludesDebt', 'The spending total includes debt payments'),
+    spendingIncludesSaving: boolAt('sketch.spendingIncludesSaving', 'The spending total includes saving'),
+    savedMonthly: centsAt('sketch.savedMonthlyCents', 'Added a month'),
+    highInterestBalance: centsAt('sketch.highInterestCents', 'Owed above about 8%'),
+    refundLastYear: centsAt('sketch.refundLastYearCents', 'Refund last year'),
     rothContributed: centsAt('retirement.rothContributedCents', 'Roth so far'),
     hsaContributed: centsAt('retirement.hsaContributedCents', 'HSA so far'),
     tuitionSaved: centsAt('kids.tuitionSavedCents', 'Saved for tuition'),
@@ -1158,7 +1206,7 @@
          for the field-status ledger. */
       meta: isSet ? Schema.meta(household || {}, fieldId) : null,
       level: isSet ? Schema.confidenceOf(household || {}, fieldId) : null,
-      glyph: isSet ? CONFIDENCE_GLYPH[Schema.confidenceOf(household || {}, fieldId)] : (userSaysNa(household, fieldId) ? '\u2014' : '\u25CB')
+      glyph: isSet ? CONFIDENCE_GLYPH[Schema.confidenceOf(household || {}, fieldId)] : (userSaysNa(household, fieldId) ? '\u00B7' : '\u25CB')
     };
   }
 
@@ -1347,7 +1395,7 @@
         + '" href="' + d.href + '" data-confidence="' + escapeHtml(d.level || '') + '">'
         + '<span class="slaf-owned-label">' + escapeHtml(d.label) + '</span>'
         + '<span class="slaf-owned-value">' + escapeHtml(d.display) + '</span>'
-        + '<span class="slaf-owned-from">' + (d.guessed ? 'a guess \u2014 fix it in ' : 'from ') + escapeHtml(d.ownerTitle) + ' →' + age + level + '</span>'
+        + '<span class="slaf-owned-from">' + (d.guessed ? 'a guess, fix it in ' : 'from ') + escapeHtml(d.ownerTitle) + ' →' + age + level + '</span>'
         + '</a>';
     }
     return '<a class="slaf-owned slaf-owned--empty" href="' + d.href + '">'

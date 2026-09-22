@@ -54,8 +54,9 @@
 -->
 <style>
   /* ---- The planets (D-321): six planets down the side, ten bands across,
-     three levels in every cell. No live input here, so this view is drawn
-     from scratch on every change (D-034 does not apply). */
+     three levels in every cell. The open level holds live boxes since D-324,
+     so #sky-open is guarded by shared/liveform.js (D-034); everything else
+     here is output and redraws on every change. */
   .sky-say { font-size: var(--text-sm); color: var(--color-text-muted); margin: 0 0 var(--space-3); }
   .sky-say b { color: var(--color-text); font-variant-numeric: tabular-nums; }
   .sky-grid { display: flex; flex-direction: column; gap: 2px; margin: 0 0 var(--space-3); }
@@ -88,15 +89,83 @@
   .sky-band-head .state { font-size: var(--text-xs); color: var(--color-text-faint); margin-left: auto; }
   .sky-band-head .state.is-clear { color: var(--color-accent-hover); }
   .sky-band p.why { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
-  .sky-levels { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
-  .sky-levels li { display: grid; grid-template-columns: 18px 1fr auto; gap: var(--space-2); align-items: baseline; font-size: var(--text-sm); line-height: var(--leading-normal, 1.5); }
+  .sky-tabs { display: flex; gap: var(--space-2); margin: 0 0 var(--space-3); }
+  .sky-tabs button { flex: 1; background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 8px var(--space-3); min-height: 40px; font: inherit; font-size: var(--text-sm); color: var(--color-text-muted); cursor: pointer; }
+  .sky-tabs button.is-on { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-bg); }
+  .u-lede { font-size: var(--text-sm); color: var(--color-text-muted); margin: 0 0 var(--space-3); line-height: var(--leading-loose); }
+  .u-head { font-size: var(--text-xs); letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-faint); margin: var(--space-4) 0 var(--space-2); }
+  .u-first { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .u-first button { display: grid; grid-template-columns: 1fr auto; gap: var(--space-2); align-items: baseline; width: 100%; min-height: 44px; padding: var(--space-2) var(--space-2) var(--space-2) 0; background: none; border: 0; border-radius: var(--radius-sm); font: inherit; font-size: var(--text-sm); color: inherit; text-align: left; cursor: pointer; }
+  .u-first button:hover { background: var(--color-surface-active); }
+  .u-first .u-where { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
+  .u-first .u-n { font-size: var(--text-xs); color: var(--color-accent-hover); white-space: nowrap; }
+  .u-tier { border-top: 1px solid var(--color-border); }
+  .u-tier > button { display: grid; grid-template-columns: auto 1fr auto; gap: var(--space-2); align-items: baseline; width: 100%; min-height: 44px; padding: var(--space-3) 0; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+  .u-tier > button .n { font-size: var(--text-xs); color: var(--color-text-faint); font-variant-numeric: tabular-nums; }
+  .u-tier > button b { font-size: var(--text-sm); font-weight: 600; }
+  .u-tier > button .c { font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; }
+  .u-tier > button .c.is-all { color: var(--color-accent-hover); }
+  .u-list { list-style: none; margin: 0 0 var(--space-3); padding: 0; display: flex; flex-direction: column; gap: var(--space-2); }
+  .u-list li { font-size: var(--text-sm); line-height: var(--leading-normal, 1.5); }
+  .u-list .u-name { color: var(--color-text); }
+  .u-list li.is-ready .u-name { color: var(--color-accent-hover); }
+  .u-list .u-needs { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: 4px; }
+  .u-list .u-needs span { font-size: var(--text-xs); color: var(--color-text-faint); }
+  .u-list .u-needs button { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 4px var(--space-2); min-height: 32px; font: inherit; font-size: var(--text-xs); color: var(--color-text-muted); cursor: pointer; }
+  .u-list .u-needs button:hover { border-color: var(--color-border-active); color: var(--color-text); }
+  .sky-filter { display: flex; gap: var(--space-2); margin: 0 0 var(--space-2); }
+  .sky-filter button { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-pill); padding: 6px var(--space-3); min-height: 36px; font: inherit; font-size: var(--text-xs); color: var(--color-text-muted); cursor: pointer; }
+  .sky-filter button.is-on { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-bg); }
+  .sky-levels { list-style: none; margin: var(--space-2) 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .sky-levels li { border-radius: var(--radius-sm); }
+  .sky-levels li.is-open { background: var(--color-surface-active); }
+  /* Every level is a control: tap it to see what it still needs. */
+  .sky-lv { display: grid; grid-template-columns: 18px 1fr auto; gap: var(--space-2); align-items: baseline; width: 100%; min-height: 44px; padding: var(--space-2) var(--space-2) var(--space-2) 0; background: none; border: 0; border-radius: var(--radius-sm); font: inherit; font-size: var(--text-sm); line-height: var(--leading-normal, 1.5); color: inherit; text-align: left; cursor: pointer; }
+  .sky-lv:hover { background: var(--color-surface-active); }
   .sky-levels .tag { font-size: var(--text-xs); color: var(--color-text-faint); font-weight: 600; }
-  .sky-levels .what { min-width: 0; }
-  .sky-levels .what a { color: var(--color-accent-hover); text-decoration: none; }
-  .sky-levels .what a:hover { text-decoration: underline; }
-  .sky-levels .what em { font-style: normal; color: var(--color-text-faint); font-size: var(--text-xs); display: block; }
+  .sky-levels .what { min-width: 0; color: var(--color-text); }
+  .sky-levels li.is-done .what { color: var(--color-text-muted); }
   .sky-levels .mark { font-size: var(--text-xs); color: var(--color-text-faint); white-space: nowrap; }
   .sky-levels .mark.is-done { color: var(--color-accent-hover); }
+  .sky-lv-detail { padding: 0 var(--space-2) var(--space-3) calc(18px + var(--space-2)); }
+  .sky-lv-detail p { margin: 0 0 var(--space-2); font-size: var(--text-xs); color: var(--color-text-muted); line-height: var(--leading-loose); }
+  .sky-lv-detail p b { color: var(--color-text); font-weight: 600; }
+  .sky-lv-detail .d-note { color: var(--color-text-faint); }
+  .d-fields { list-style: none; margin: 0 0 var(--space-2); padding: 0; display: flex; flex-direction: column; gap: var(--space-1); }
+  .d-fields li { display: flex; flex-wrap: wrap; gap: 2px var(--space-2); align-items: baseline; font-size: var(--text-xs); padding: 4px 0; border-top: 1px solid var(--color-border); }
+  .d-fields .d-name { color: var(--color-text); }
+  .d-fields li.is-in .d-name { color: var(--color-text-muted); }
+  .d-fields .d-state { color: var(--color-text-faint); margin-left: auto; white-space: nowrap; display: flex; gap: var(--space-2); align-items: baseline; }
+  .d-fields .d-go { padding-left: var(--space-2); border-left: 1px solid var(--color-border); }
+  .d-fields .d-val { color: var(--color-text); font-variant-numeric: tabular-nums; }
+  .d-fields a { color: var(--color-accent-hover); text-decoration: none; min-height: 32px; display: inline-block; }
+  .d-fields a:hover { text-decoration: underline; }
+  .d-fields .d-none { color: var(--color-text-faint); }
+  /* Answer it here (D-324): the box sits under the fact it belongs to, and
+     the room that owns it stays one tap away for anyone who wants the rest
+     of the picture. */
+  .d-ask { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; width: 100%; padding: var(--space-1) 0 var(--space-2); }
+  .d-ask .slaf-input-shell { flex: 1 1 140px; min-width: 0; }
+  .d-ask input[type="text"] { min-height: 44px; }
+  .d-ask select { min-height: 44px; }
+  .d-ask .choices { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+  .d-ask .choice { min-height: 44px; padding: 0 var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-surface); color: inherit; font: inherit; cursor: pointer; }
+  .d-ask .choice[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-surface-active); }
+  .d-ask .d-save { min-height: 44px; padding: 0 var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface); color: inherit; font: inherit; cursor: pointer; }
+  .d-said { font-size: var(--text-xs); color: var(--color-text-muted); flex-basis: 100%; min-height: 16px; }
+  /* The reading's own figure, once its levels are answered (D-327). */
+  .u-val { font-variant-numeric: tabular-nums; color: var(--color-text); font-weight: 500; }
+  .u-sharp { display: flex; flex-wrap: wrap; gap: 4px; align-items: baseline; color: var(--color-text-faint); font-size: var(--text-xs); }
+  /* The second answer, where a reading has one (D-329). */
+  .u-also { display: block; font-size: var(--text-xs); color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+  /* What an answer just bought (D-328): named the moment it arrives, at most
+     three, and gone on its own. */
+  .sky-unlocked { border: 1px solid var(--color-accent); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); margin: 0 0 var(--space-3); background: color-mix(in srgb, var(--color-accent) 8%, transparent); }
+  .sky-unlocked b { display: block; font-size: var(--text-sm); margin-bottom: 2px; }
+  .sky-unlocked ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .sky-unlocked li { font-size: var(--text-xs); display: flex; gap: var(--space-2); justify-content: space-between; }
+  .sky-unlocked .n { font-variant-numeric: tabular-nums; color: var(--color-text); }
+  .sky-unlocked .d-save { margin-top: var(--space-2); }
   .sky-next { border: 1px solid var(--color-border-active); border-radius: var(--radius-md); padding: var(--space-3); margin: 0 0 var(--space-4); }
   .sky-next .eyebrow { font-size: var(--text-xs); letter-spacing: .06em; text-transform: uppercase; color: var(--color-text-faint); }
   .sky-next b { display: block; margin: var(--space-1) 0; }
@@ -953,12 +1022,20 @@
 
   <!-- ================= THE PLANETS (D-321) ============================== -->
   <section id="view-sky" hidden>
-  <p class="slaf-lede">Six areas of your money, ten bands deep. A band means the same depth of knowing on every planet, so band 4 on Taxes is as deep as band 4 on Debt. Nothing here is locked: a level you have not answered is simply not yet.</p>
+  <p class="slaf-lede" id="planets">Six areas of your money, ten bands deep. A band means the same depth of knowing on every planet, so band 4 on Taxes is as deep as band 4 on Debt. Nothing here is locked: a level you have not answered is simply not yet.</p>
   <p class="sky-say" id="sky-say"></p>
-  <div class="sky-next" id="sky-next" hidden></div>
-  <div class="sky-grid" id="sky-grid"></div>
-  <p class="sky-key" id="sky-key"></p>
-  <div class="sky-open" id="sky-open"></div>
+  <div class="sky-tabs" id="sky-tabs" role="group" aria-label="Two ways to read the planets">
+    <button type="button" data-tab="planets" class="is-on">The planets</button>
+    <button type="button" data-tab="unlocks">What unlocks</button>
+  </div>
+  <div id="sky-planets">
+    <div class="sky-unlocked" id="sky-unlocked" role="status" hidden></div>
+    <div class="sky-next" id="sky-next" hidden></div>
+    <div class="sky-grid" id="sky-grid"></div>
+    <p class="sky-key" id="sky-key"></p>
+    <div class="sky-open" id="sky-open"></div>
+  </div>
+  <div id="sky-unlocks" hidden></div>
   </section>
 
 
@@ -1002,6 +1079,8 @@
 <script src="../engines/hourly.js"></script>
 <script src="../engines/subscriptions.js"></script>
 <script src="../shared/doors.js"></script>
+<script src="../shared/liveform.js"></script>
+<script src="../engines/recipes.js"></script>
 <script src="../shared/solar.js"></script>
 <script src="../shared/showmath.js"></script>
 <script src="../engines/sincelast.js"></script>
@@ -1020,6 +1099,12 @@
 <script src="../engines/skills.js"></script>
 <script src="../shared/instruments.js"></script>
 <script>
+/* ---- READING the-ledger, the doors, the hats and the facts (D-230) ----
+   Everything from here to the planets: the six doors, the five hat views and
+   the facts list. LIVE-FORM: built once. Every view and every control in it
+   is created one time at boot and only ever has its .value written or its
+   [hidden] toggled, which is why a hat switch cannot close the keyboard
+   under a finger (D-034). */
 (function () {
   var Money = SLAF.Money, Spine = SLAF.Spine, Ownership = SLAF.Ownership, Registry = SLAF.Registry, Progress = SLAF.Progress,
       LedgerRows = SLAF.LedgerRows, Spheres = SLAF.Spheres, Reference = SLAF.Reference, Suggest = SLAF.Suggest;
@@ -2076,7 +2161,7 @@
            badge says whether it is done. paintLevels fills the badge. */
         out += '<details class="xlvl" id="x-' + esc(d.id) + '-' + L + '" data-x-door="' + esc(d.id) + '" data-x-level="' + L + '">'
           + '<summary><span class="xlvl-n">Level ' + L + '</span><span class="xlvl-t">' + esc(lvl.label) + '</span>'
-          + '<span class="xbadge" data-x-badge>\u2014</span></summary>'
+          + '<span class="xbadge" data-x-badge></span></summary>'
           + '<div class="xlvl-body"><p class="xlvl-say">' + esc(lvl.gloss) + '</p>';
         var listsHere = {};
         rows.forEach(function (r) {
@@ -3244,20 +3329,42 @@
 })();
 </script>
 <script>
-/* ---- The planets (D-321) ---------------------------------------------------
+/* ---- READING view-sky, the planets (D-321, D-322, D-324) ----
+   ---- The planets (D-321, opened up in D-322) --------------------------------
    docs/SOLAR-SYSTEM.md, Part 1 and the list view of B12. Six planets down the
    side, the ten bands across, the three levels of a band in every cell, and
    what is already answered. shared/solar.js does the reading; this only draws.
-   The Sky's drawn version comes later; the list is the one that has to be
-   legible at 380px and is what a screen reader gets, so it is built first. */
+   Every level is a control: tapping one opens what it collects, which of those
+   facts are in, which are not, and where each one is entered. A level nothing
+   can collect yet says so rather than looking broken.
+
+   D-324: a fact whose owner takes a plain answer is typed right here. The box
+   is built from the same shared/ask.js helpers the Ledger's own facts view
+   uses, and the answer is written with Ownership.write, so it lands in the one
+   place that fact lives and every room reads the same copy. A fact that needs
+   a list (which debt, which account) or a whole form keeps its link to the
+   room that owns it. LIVE-FORM: #sky-open is guarded, so nothing is rebuilt
+   while a finger is in a box (D-034). */
 (function () {
   'use strict';
   var Solar = SLAF.Solar, Spine = SLAF.Spine, Reference = SLAF.Reference;
+  var Ownership = SLAF.Ownership, LedgerRows = SLAF.LedgerRows, Ask = SLAF.Ask, Money = SLAF.Money, LiveForm = SLAF.LiveForm;
+  var Recipes = SLAF.Recipes;
+  var TABLES = {};
   var host = document.getElementById('view-sky');
   if (!host || !Solar) return;
   var el = function (id) { return document.getElementById(id); };
   function esc(x) { return String(x === null || x === undefined ? '' : x).replace(/[&<>"']/g, function (c) { return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]; }); }
-  var ready = false, open = null;
+  var ready = false, open = null, openLevel = null, only = 'all', RECIPES = {}, tab = 'planets', openTier = 1;
+  var PLANETS = [], ASKS = {}, RECIPE_BY_ID = {}, RECIPE_META = {};
+  /* The units a box on this screen can take. A repeat row (which debt, which
+     account) needs the line picked first, and a formula row needs two figures,
+     so both of those stay a link to the room that owns them. */
+  var ASKABLE = ['cents', 'percent', 'rate', 'count', 'years', 'months', 'bool', 'enum', 'text'];
+  var STATES = [];
+  var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  function minutes(m, cap) { var t = m < 1 ? 'about half a minute' : 'about ' + Math.round(m) + (m < 2 ? ' minute' : ' minutes'); return cap ? t.charAt(0).toUpperCase() + t.slice(1) : t; }
 
   function dots(band) {
     return band.rows.map(function (r) {
@@ -3275,19 +3382,19 @@
       }).join('') + '</span></div>';
     var rows = all.map(function (p) {
       return '<button type="button" class="sky-row' + (open === p.id ? ' is-open' : '') + '" data-planet="' + esc(p.id) + '" aria-expanded="' + (open === p.id ? 'true' : 'false') + '">'
-        + '<span class="sky-name"><b>' + esc(p.label) + '</b><span>' + p.done + ' of ' + p.applicable + ' answered</span></span>'
+        + '<span class="sky-name"><b>' + esc(p.label) + '</b><span>' + esc(p.done) + ' of ' + esc(p.applicable) + ' answered</span></span>'
         + '<span class="sky-cells">' + p.bands.map(function (b) {
           return '<span class="sky-cell' + (b.cleared && b.applicable ? ' is-clear' : '') + '">' + dots(b) + '</span>';
         }).join('') + '</span></button>';
     }).join('');
     var html = head + rows;
-    el('sky-grid').innerHTML = html;   /* every part is built with esc() above */
+    el('sky-grid').innerHTML = html;
   }
 
   function drawKey(all) {
     var names = all[0].bands.map(function (b) { return b.band + ' ' + b.name; }).join(', ');
     el('sky-key').innerHTML = '<b>The bands:</b> ' + esc(names) + '.<br/>'
-      + 'A filled dot is a level you have answered, a hollow one is not yet, a short line is a level that does not apply to you, so that planet is shorter. A gold cell is a band you have finished. Tap a planet to read its levels.';
+      + 'A filled dot is a level you have answered, a hollow one is not yet, a short line is a level that does not apply to you, so that planet is shorter. A gold cell is a band you have finished. Tap a planet to read its levels, then tap a level to see what it needs.';
   }
 
   function drawSay(o) {
@@ -3297,8 +3404,123 @@
     var n = o.next, box = el('sky-next');
     if (!n) { box.hidden = true; return; }
     box.hidden = false;
-    box.innerHTML = '<span class="eyebrow">Next</span><b>' + esc(n.planetLabel) + ' ' + n.level.level + ': ' + esc(n.level.prompt) + '</b>'
-      + '<p>' + esc(n.why) + ' About ' + (n.level.minutes < 1 ? 'half a minute' : Math.round(n.level.minutes) + (n.level.minutes < 2 ? ' minute' : ' minutes')) + '. ' + esc(n.level.first15) + '</p>';
+    var next = '<span class="eyebrow">Next</span><b>' + esc(n.planetLabel) + ' ' + esc(n.level.level) + ': ' + esc(n.level.prompt) + '</b>'
+      + '<p>' + esc(n.why) + ' ' + esc(minutes(n.level.minutes)) + '. ' + esc(n.level.first15) + '</p>';
+    box.innerHTML = next;
+  }
+
+  /* ---- Answering a fact where it is asked (D-324) --------------------------
+     One owner per fact, still: this finds the field the level names, checks
+     that its owner takes a written answer, and hands back the row so the box
+     carries the right unit and period. No value is kept here. */
+  function answerFor(def) {
+    if (!def || !Ownership || !Ownership.FIELDS) return null;
+    var id = Ownership.FIELDS[def.key] ? def.key : (def.row && Ownership.FIELDS[def.row] ? def.row : null);
+    if (!id || typeof Ownership.FIELDS[id].write !== 'function') return null;
+    var row = LedgerRows && LedgerRows.byId ? LedgerRows.byId(def.row || id) : null;
+    if (row && row.repeat) return null;
+    if (row && row.unit === 'date' && id !== 'dob' && id !== 'partnerDob') return null;
+    if (row && row.unit !== 'date' && ASKABLE.indexOf(row.unit) < 0) return null;
+    /* An enum with nothing to choose from is not a question: the state list
+       comes from data/states.json, the rest name their own values. */
+    if (row && row.unit === 'enum' && row.id !== 'state' && !(row.values && row.values.length) && !Ask.ENUM_LABELS[row.id]) return null;
+    if (row && row.id === 'state' && !STATES.length) return null;
+    if (!row && def.kind !== 'age' && def.kind !== 'number') return null;
+    return { id: id, row: row, kind: def.kind, label: def.label };
+  }
+  function askHtml(a) {
+    var box;
+    if (a.row && a.row.unit === 'date') {
+      box = '<span class="slaf-input-shell"><select data-sky-month aria-label="Month"><option value="">Month</option>'
+        + MONTHS.map(function (m, i) { var n = String(i + 1); return '<option value="' + (n.length < 2 ? '0' + n : n) + '">' + esc(m) + '</option>'; }).join('')
+        + '</select><input type="text" inputmode="numeric" placeholder="Year, e.g. 1992" data-sky-year aria-label="Year"/></span>';
+    } else if (a.row && a.row.id === 'state') {
+      box = '<select data-ask-input aria-label="State"><option value="">Choose\u2026</option>'
+        + STATES.map(function (st) { return '<option value="' + esc(st.code) + '">' + esc(st.code + ' ' + st.name) + '</option>'; }).join('') + '</select>';
+    } else if (a.row) {
+      box = Ask.control(a.row);
+    } else {
+      box = '<span class="slaf-input-shell"><input type="text" inputmode="numeric" placeholder="e.g. 60" data-ask-input aria-label="' + esc(a.label) + '"/><span class="affix">years old</span></span>';
+    }
+    var saves = !(a.row && (a.row.unit === 'bool' || a.row.unit === 'enum'));
+    return '<div class="d-ask" data-sky-ask="' + esc(a.id) + '">' + box
+      + (saves ? '<button type="button" class="d-save" data-sky-save>Save</button>' : '')
+      + '<span class="d-said" data-sky-said role="status"></span></div>';
+  }
+
+  /* The figure a C level asks you to agree with, in the reading's own unit. */
+  function readingFigure(id) {
+    if (!Recipes || !id) return '';
+    var rec = RECIPE_META[id];
+    var r = Recipes.value(id, Spine.getProfile(), TABLES);
+    if (!rec || !r || !Money.isOk(r)) return '';
+    var v = r.value;
+    return rec.unit === 'rate' ? Money.formatRate(v, { decimals: 1 })
+      : rec.unit === 'cents' ? Money.formatCents(v)
+      : rec.unit === 'multiple' ? Money.formatMultiple(v) : String(v);
+  }
+
+  /* A field with a reader and no writer is worked out from others: this names
+     them in the words the person will see on their own lines. */
+  function addsUpFrom(key) {
+    var f = Ownership && Ownership.FIELDS ? Ownership.FIELDS[key] : null;
+    if (!f || typeof f.write === 'function') return null;
+    var row = LedgerRows && LedgerRows.byId ? LedgerRows.byId(key) : null;
+    var inputs = row && row.inputs ? row.inputs : [];
+    var names = inputs.map(function (id) { return (Ownership.FIELDS[id] || {}).label || id; }).filter(Boolean);
+    if (!names.length) return null;
+    return names.length > 1 ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : names[0];
+  }
+
+  /* What one level collects, fact by fact: what is in, what is not, where the
+     answer is typed, and which room holds the rest of the picture. A fact the
+     app has nowhere to put yet says that. */
+  function detailHtml(r) {
+    var lv = r.level, out = [];
+    out.push('<p class="d-why"><b>What it gives you.</b> ' + esc(lv.checkpoint) + '</p>');
+    var gives = (lv.payoff && lv.payoff.metrics || []).map(function (id) { return RECIPES[id]; }).filter(Boolean);
+    if (gives.length) out.push('<p class="d-why"><b>Unlocks.</b> ' + esc(gives.join(', ')) + '.</p>');
+    out.push('<p class="d-why"><b>Where to find it.</b> ' + esc(lv.first15) + ' ' + esc(minutes(lv.minutes, true)) + '.</p>');
+    var live = (r.fields || []).filter(function (f) { return f.applies; });
+    var defs = {};
+    (lv.fields || []).forEach(function (d) { defs[d.key] = d; });
+    if (live.length) {
+      out.push('<ul class="d-fields">');
+      live.forEach(function (f) {
+        var state = f.filled ? 'in' : 'not yet';
+        var val = f.filled && f.display ? ' <span class="d-val">' + esc(f.display) + '</span>' : '';
+        var def = defs[f.key] || {};
+        /* A C level shows the figure the app worked out and asks whether it
+           looks right. Nothing is collected, so there is no box (D-328). */
+        if (def.kind === 'confirm') {
+          var reading = RECIPE_BY_ID[def.confirms];
+          var said = readingFigure(def.confirms, r.level);
+          out.push('<li class="' + (f.filled ? 'is-in' : '') + '"><span class="d-name">' + esc(f.label) + '</span>'
+            + '<span class="d-state">' + esc(f.filled ? 'confirmed' : 'not yet') + (said ? ' <span class="d-val">' + esc(said) + '</span>' : '') + '</span>'
+            + '<div class="d-ask" data-sky-confirm="' + esc(r.level.id) + '">'
+            + (said ? '<button type="button" class="d-save" data-sky-agree>Yes, that looks right</button>'
+              : '<span class="d-none">' + esc(reading ? reading + ' is not worked out yet, so there is nothing to confirm.' : 'Nothing to confirm yet.') + '</span>')
+            + '<span class="d-said" data-sky-said role="status"></span></div></li>');
+          return;
+        }
+        var a = answerFor(def);
+        if (a) ASKS[a.id] = a;
+        /* A figure the app works out rather than asks for says what it adds
+           up from, instead of offering a box that would be a second copy. */
+        var adds = addsUpFrom(f.key);
+        var go = adds ? ' <span class="d-none">adds up from ' + esc(adds) + '</span>'
+          : f.href ? ' <a href="' + esc(f.href) + '">' + (a ? 'the whole room' : f.filled ? 'change it' : 'enter it') + ' \u2192</a>'
+          : a ? '' : ' <span class="d-none">nowhere to type it yet</span>';
+        out.push('<li class="' + (f.filled ? 'is-in' : '') + '"><span class="d-name">' + esc(f.label) + '</span>'
+          + '<span class="d-state">' + esc(state) + val + (go ? '<span class="d-go">' + go + '</span>' : '') + '</span>'
+          + (a ? askHtml(a) : '') + '</li>');
+      });
+      out.push('</ul>');
+    }
+    if (!live.some(function (f) { return f.href || answerFor(defs[f.key]) || (defs[f.key] || {}).kind === 'confirm'; })) {
+      out.push('<p class="d-note">Nothing on this screen can take this answer yet. It is one of the new questions, and the screen that asks it is the next step.</p>');
+    }
+    return out.join('');
   }
 
   function drawOpen(all) {
@@ -3306,47 +3528,591 @@
     if (!open) { box.innerHTML = ''; return; }
     var p = all.filter(function (x) { return x.id === open; })[0];
     if (!p) { box.innerHTML = ''; return; }
+    var left = p.applicable - p.done;
     var out = ['<h3>' + esc(p.label) + '</h3>',
-      '<p class="sky-sub">' + p.done + ' of ' + p.applicable + ' levels answered, working on band ' + p.working + ' of 10.'
-        + (p.applicable < p.rows.length ? ' ' + (p.rows.length - p.applicable) + ' levels do not apply to you, so this planet is shorter.' : '') + '</p>'];
+      '<p class="sky-sub">' + esc(p.done) + ' of ' + esc(p.applicable) + ' levels answered, working on band ' + esc(p.working) + ' of 10.'
+        + (p.applicable < p.rows.length ? ' ' + esc(p.rows.length - p.applicable) + ' levels do not apply to you, so this planet is shorter.' : '') + '</p>',
+      '<div class="sky-filter" role="group" aria-label="Which levels to show">'
+        + '<button type="button" data-only="all" class="' + (only === 'all' ? 'is-on' : '') + '">All ' + esc(p.applicable) + '</button>'
+        + '<button type="button" data-only="notYet" class="' + (only === 'notYet' ? 'is-on' : '') + '">Not done ' + esc(left) + '</button>'
+        + '</div>'];
+    var shown = 0;
     p.bands.forEach(function (b) {
       if (!b.applicable) return;
+      var rows = b.rows.filter(function (r) { return r.applies && (only === 'all' || r.state !== 'done'); });
+      if (!rows.length) return;
       var state = b.cleared ? 'finished' : b.done ? b.done + ' of ' + b.applicable : 'not yet';
-      out.push('<div class="sky-band"><div class="sky-band-head"><span class="n">Band ' + b.band + '</span><b>' + esc(b.name) + '</b>'
+      out.push('<div class="sky-band"><div class="sky-band-head"><span class="n">Band ' + esc(b.band) + '</span><b>' + esc(b.name) + '</b>'
         + '<span class="state' + (b.cleared ? ' is-clear' : '') + '">' + esc(state) + '</span></div>');
       out.push('<ul class="sky-levels">');
-      b.rows.forEach(function (r) {
-        if (!r.applies) return;
+      rows.forEach(function (r) {
+        shown++;
         var mark = r.state === 'done' ? 'answered' : r.state === 'part' ? r.filled + ' of ' + r.of : 'not yet';
-        var link = (r.fields || []).filter(function (f) { return f.href && f.applies; })[0];
-        var what = esc(r.level.prompt);
-        if (link) what = '<a href="' + esc(link.href) + '">' + what + '</a>';
-        out.push('<li><span class="tag" title="' + esc(({ E: 'Enter', C: 'Confirm', S: 'Sharpen' })[r.level.tag] || '') + '">' + esc(r.level.tag) + '</span>'
-          + '<span class="what">' + what + '<em>' + esc(r.level.checkpoint) + '</em></span>'
-          + '<span class="mark' + (r.state === 'done' ? ' is-done' : '') + '">' + esc(mark) + '</span></li>');
+        var isOpen = openLevel === r.level.id;
+        out.push('<li class="' + (r.state === 'done' ? 'is-done' : '') + (isOpen ? ' is-open' : '') + '">'
+          + '<button type="button" class="sky-lv" data-level="' + esc(r.level.id) + '" aria-expanded="' + (isOpen ? 'true' : 'false') + '">'
+          + '<span class="tag" title="' + esc(({ E: 'Enter', C: 'Confirm', S: 'Sharpen' })[r.level.tag] || '') + '">' + esc(r.level.tag) + '</span>'
+          + '<span class="what">' + esc(r.level.prompt) + '</span>'
+          + '<span class="mark' + (r.state === 'done' ? ' is-done' : '') + '">' + esc(mark) + '</span></button>'
+          + (isOpen ? '<div class="sky-lv-detail">' + detailHtml(r) + '</div>' : '') + '</li>');
       });
       out.push('</ul></div>');
     });
-    box.innerHTML = out.join('');
+    if (!shown) out.push('<p class="sky-sub">Every level on this planet is answered.</p>');
+    var html = out.join('');
+    /* A figure typed and not yet saved belongs to the person, not to the
+       store: it is carried across the rebuild and put back. Without this, a
+       change anywhere else in the app repaints this list a third of a second
+       after your finger leaves the box, and what you typed is replaced by
+       what was saved before you started. */
+    var inHand = unsavedBoxes(box);
+    box.innerHTML = html;
+    fillBoxes(box);
+    putBack(box, inHand);
+  }
+  function unsavedBoxes(box) {
+    var held = {};
+    Array.prototype.forEach.call(box.querySelectorAll('[data-sky-ask]'), function (node) {
+      var a = ASKS[node.getAttribute('data-sky-ask')];
+      var input = node.querySelector('[data-ask-input]');
+      if (!a || !input) return;
+      var stored = a.row ? Ask.typed(a.row, valueOf(a)) : String(valueOf(a) === null ? '' : valueOf(a));
+      if (String(input.value || '') !== String(stored || '')) held[a.id] = input.value;
+    });
+    return held;
+  }
+  function putBack(box, held) {
+    Object.keys(held).forEach(function (id) {
+      var input = box.querySelector('[data-sky-ask="' + id + '"] [data-ask-input]');
+      if (input) input.value = held[id];
+    });
+  }
+  function valueOf(a) {
+    var f = Ownership.FIELDS[a.id];
+    var read = f && typeof f.read === 'function' ? f.read(Spine.getProfile()) : null;
+    return read && Money.isOk(read) ? read.value : null;
+  }
+
+  /* Each box opens showing what is already stored, so a figure is corrected
+     rather than retyped from nothing. Read through the owner, never a copy. */
+  function fillBoxes(box) {
+    var h = Spine.getProfile();
+    Array.prototype.forEach.call(box.querySelectorAll('[data-sky-ask]'), function (node) {
+      var a = ASKS[node.getAttribute('data-sky-ask')];
+      if (!a) return;
+      var f = Ownership.FIELDS[a.id];
+      var read = f && typeof f.read === 'function' ? f.read(h) : null;
+      var v = read && Money.isOk(read) ? read.value : null;
+      var mo = node.querySelector('[data-sky-month]');
+      if (mo) {
+        if (typeof v === 'string' && /^\d{4}-\d{2}/.test(v)) { mo.value = v.slice(5, 7); node.querySelector('[data-sky-year]').value = v.slice(0, 4); }
+        return;
+      }
+      var choices = node.querySelectorAll('[data-ask-val]');
+      if (choices.length) {
+        Array.prototype.forEach.call(choices, function (b) {
+          var mine = v === null || v === undefined ? false : String(v) === b.getAttribute('data-ask-val');
+          b.setAttribute('aria-pressed', mine ? 'true' : 'false');
+        });
+        return;
+      }
+      var input = node.querySelector('[data-ask-input]');
+      /* One formula for "the value as it is typed", in shared/ask.js. */
+      if (input) input.value = a.row ? Ask.typed(a.row, v) : (Money.isEntered(v) ? String(v) : '');
+    });
+  }
+
+  /* ---- What finishing a level unlocks -------------------------------------
+     The other half of the screen: not what you have done, but what it buys.
+     A reading is ready when every level it needs is answered, and waiting
+     when one is not, naming which. Tapping a level it waits on opens that
+     level on the planets tab. */
+  function levelLabel(id) {
+    var lv = Solar.byId(id);
+    if (!lv) return id;
+    var p = Solar.planets().filter(function (x) { return x.id === lv.planet; })[0];
+    return (p ? p.label : lv.planet) + ' ' + lv.level;
+  }
+  /* A reading's own figure, in the unit data/recipes.json names for it. The
+     value comes from engines/recipes.js, which points at the function the app
+     already had wherever there was one (D-327). A reading this build cannot
+     work out yet says nothing rather than guessing. */
+  function readingValue(m, h) {
+    if (!Recipes) return '';
+    var r = Recipes.value(m.id, h, TABLES);
+    if (!r || !Money.isOk(r)) return '';
+    var u = m.unit, v = r.value;
+    var said = inUnit(v, u);
+    /* Some readings answer twice. The FI date is the plan's, built on the
+       money that could be saved; beside it, as a hypothetical rather than a
+       correction, the date you reach saving exactly what you save now
+       (D-329). Both, never one silently standing for the other. */
+    var also = r.also && Money.isEntered(r.also.value)
+      ? '<span class="u-also">' + esc(inUnit(r.also.value, r.also.unit || u)) + ' ' + esc(r.also.label) + '</span>' : '';
+    return '<span class="u-val">' + esc(said) + '</span>' + also;
+  }
+  function inUnit(v, u) {
+    return u === 'cents' ? Money.formatCents(v)
+      : u === 'dollarsPerYear' ? Money.formatCents(v) + ' a year'
+      : u === 'score' ? String(Math.round(v))
+      : u === 'rate' ? Money.formatRate(v, { decimals: 1 })
+      : u === 'multiple' ? Money.formatMultiple(v)
+      : u === 'flag' ? (v ? 'yes' : 'no')
+      : u === 'months' ? (v === null ? 'longer than this pace clears' : Math.round(v) + (Math.round(v) === 1 ? ' month' : ' months'))
+      : u === 'years' ? (Math.round(v * 10) / 10) + (Math.abs(v) === 1 ? ' year' : ' years')
+      : u === 'date' ? String(Math.floor(v))
+      : String(v);
+  }
+
+  function drawUnlocks(h) {
+    var box = el('sky-unlocks');
+    var all = Solar.metrics(h), tiers = Solar.tiers(h);
+    var readyN = all.filter(function (m) { return !!readingValue(m, h); }).length;
+    var out = ['<p class="u-lede"><b>' + esc(readyN) + '</b> of <b>' + esc(all.length) + '</b> readings can be worked out from what you have answered. '
+      + 'Every other one names the levels it is still waiting on. Nothing is locked: a reading simply cannot exist until its facts do.</p>'];
+    var blockers = tiers.reduce(function (acc, t) { return acc.concat(t.blockers); }, [])
+      .reduce(function (acc, b) { var hit = acc.filter(function (x) { return x.id === b.id; })[0]; if (hit) hit.unlocks += b.unlocks; else acc.push({ id: b.id, unlocks: b.unlocks }); return acc; }, [])
+      .sort(function (x, y) { return y.unlocks - x.unlocks; }).slice(0, 6);
+    if (blockers.length) {
+      out.push('<p class="u-head">Do these first</p><ul class="u-first">');
+      blockers.forEach(function (b) {
+        var lv = Solar.byId(b.id);
+        if (!lv) return;
+        out.push('<li><button type="button" data-goto="' + esc(b.id) + '">'
+          + '<span>' + esc(lv.prompt) + '<span class="u-where">' + esc(levelLabel(b.id)) + ', band ' + esc(lv.band) + ', ' + esc(minutes(lv.minutes)) + '</span></span>'
+          + '<span class="u-n">unlocks ' + esc(b.unlocks) + '</span></button></li>');
+      });
+      out.push('</ul>');
+    }
+    out.push('<p class="u-head">Every reading, by band</p>');
+    tiers.forEach(function (t) {
+      var mine = all.filter(function (m) { return m.tier === t.tier; });
+      var isOpen = openTier === t.tier;
+      out.push('<div class="u-tier"><button type="button" data-tier="' + esc(t.tier) + '" aria-expanded="' + (isOpen ? 'true' : 'false') + '">'
+        + '<span class="n">Band ' + esc(t.tier) + '</span><b>' + esc(t.name) + '</b>'
+        + '<span class="c' + (t.ready === t.total ? ' is-all' : '') + '">' + esc(t.ready) + ' of ' + esc(t.total) + ' ready</span></button>');
+      if (isOpen) {
+        out.push('<ul class="u-list">');
+        mine.forEach(function (m) {
+          /* A figure the app can already work out is shown, whether or not the
+             level that formally collects the fact has been answered: the app
+             may hold it another way (take-home estimated from gross). The
+             levels still on the list are then what SHARPENS it, rather than
+             what it waits for. */
+          var figure = readingValue(m, h);
+          var sharpen = figure && m.missing.length
+            ? '<span class="u-sharp">sharpen with ' + m.missing.slice(0, 2).map(function (id) {
+              return '<button type="button" data-goto="' + esc(id) + '">' + esc(levelLabel(id)) + '</button>';
+            }).join('') + '</span>' : '';
+          var needs = figure
+            ? '<span class="u-needs">' + figure + sharpen + '</span>'
+            : '<span class="u-needs"><span>Waiting on</span>' + m.missing.map(function (id) {
+              return '<button type="button" data-goto="' + esc(id) + '">' + esc(levelLabel(id)) + '</button>';
+            }).join('') + '</span>';
+          out.push('<li class="' + (figure ? 'is-ready' : '') + '"><span class="u-name">' + esc(m.label) + '</span>' + needs + '</li>');
+        });
+        out.push('</ul>');
+      }
+      out.push('</div>');
+    });
+    var html = out.join('');
+    box.innerHTML = html;
+  }
+
+  /* ---- Saving an answer (D-324) --------------------------------------------
+     Through the owner, always: Ownership.write puts the figure in the one
+     place that fact lives, the spine tells every room, and this screen
+     redraws its counts. The panel itself waits for the finger to leave
+     (LIVE-FORM, below) before it is redrawn. */
+  function said(node, text) {
+    var box = node.querySelector('[data-sky-said]');
+    if (!box) return;
+    box.textContent = text;
+    setTimeout(function () { if (box.textContent === text) box.textContent = ''; }, 2400);
+  }
+  function saveAnswer(node, value, note) {
+    var a = ASKS[node.getAttribute('data-sky-ask')];
+    if (!a) return;
+    var before = readable(Spine.getProfile());
+    try {
+      Ownership.write(a.id, value);
+      said(node, (note ? note + ' ' : '') + (value === null ? 'Cleared.' : 'Saved. Every room that reads it has it now.'));
+      showAnswered(node, a);
+      /* On to the next of this band, if this level has nothing else to ask.
+         A level with two facts keeps you where you are until both are in. */
+      var here = node.closest ? node.closest('.sky-levels > li') : null;
+      var stillHere = here ? here.querySelectorAll('.d-fields li:not(.is-in)').length : 0;
+      if (stillHere) { sayUnlocked(before); return; }
+      if (value === null) { sayUnlocked(before); return; }
+      var levelId = here ? (here.querySelector('.sky-lv') || {}).getAttribute && here.querySelector('.sky-lv').getAttribute('data-level') : null;
+      sayUnlocked(before);
+      if (levelId) advance(levelId);
+    } catch (e) {
+      said(node, 'Could not save it here: ' + e.message);
+    }
+  }
+  /* The line above the box says what it now holds, and the level says how
+     many of its facts are in, straight away. Text only: the panel itself is
+     not rebuilt until the finger has left it (LIVE-FORM). */
+  function showAnswered(node, a) {
+    var h = Spine.getProfile();
+    var li = node.closest ? node.closest('li') : null;
+    var d = null;
+    try { d = Ownership.describe(a.id, h, null); } catch (e) { d = null; }
+    if (li && d) {
+      li.className = d.isSet ? 'is-in' : '';
+      var state = li.querySelector('.d-state');
+      if (state) {
+        var val = d.isSet && d.display ? ' <span class="d-val">' + esc(d.display) + '</span>' : '';
+        var go = li.querySelector('.d-go');
+        state.innerHTML = esc(d.isSet ? 'in' : 'not yet') + val + (go ? go.outerHTML : '');
+      }
+    }
+    var item = li && li.closest ? li.closest('.sky-levels > li') : null;
+    var btn = item ? item.querySelector('.sky-lv') : null;
+    var lv = btn ? Solar.byId(btn.getAttribute('data-level')) : null;
+    var mark = btn ? btn.querySelector('.mark') : null;
+    if (lv && mark) {
+      var st = Solar.levelState(lv, h);
+      mark.textContent = st.state === 'done' ? 'answered' : st.state === 'part' ? st.filled + ' of ' + st.of : 'not yet';
+      mark.classList.toggle('is-done', st.state === 'done');
+      item.classList.toggle('is-done', st.state === 'done');
+    }
+  }
+  /* ---- Opening a level (D-330) ----------------------------------------------
+     A tap used to redraw the whole planet: every band, every level, the panel
+     and the grid, and then slide the page under the finger. It measured under
+     a tenth of a second and still felt slow, because the thing you tapped
+     moved. Now a tap touches one level: the one that was open closes, the one
+     you asked for opens under its own button, and nothing else on the page is
+     rebuilt or scrolled unless the level would otherwise be off screen. */
+  function rowFor(id) {
+    for (var i = 0; i < PLANETS.length; i++) {
+      var bands = PLANETS[i].bands;
+      for (var j = 0; j < bands.length; j++) {
+        var rows = bands[j].rows;
+        for (var k = 0; k < rows.length; k++) { if (rows[k].level.id === id) return rows[k]; }
+      }
+    }
+    return null;
+  }
+  function closePanel() {
+    var open_ = document.querySelector('.sky-lv-detail');
+    if (!open_) return;
+    var item = open_.parentNode;
+    var btn = item ? item.querySelector('.sky-lv') : null;
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+    if (item && item.classList) item.classList.remove('is-open');
+    open_.parentNode.removeChild(open_);
+  }
+  /* The first box of a panel, focused in the same tap that opened it: a
+     programmatic focus a beat later does not raise a phone's keyboard, but
+     one inside the gesture does. */
+  function focusFirst(panel) {
+    var box = panel.querySelector('input, select, textarea');
+    if (!box) return null;
+    try { box.focus({ preventScroll: true }); } catch (e) { box.focus(); }
+    return box;
+  }
+  function onScreen(node) {
+    var r = node.getBoundingClientRect();
+    return r.top >= 0 && r.bottom <= (window.innerHeight || 0);
+  }
+  function showLevel(id, opts) {
+    var o = opts || {};
+    closePanel();
+    openLevel = id || null;
+    if (!openLevel) return null;
+    var btn = document.querySelector('.sky-lv[data-level="' + openLevel + '"]');
+    var r = rowFor(openLevel);
+    /* Not in the list: the filter is hiding it, so show everything and let
+       the full draw put it back. */
+    if (!btn || !r) { only = 'all'; paint(); skyForm.force(); return null; }
+    var panel = document.createElement('div');
+    panel.className = 'sky-lv-detail';
+    panel.innerHTML = detailHtml(r);
+    btn.parentNode.appendChild(panel);
+    btn.parentNode.classList.add('is-open');
+    btn.setAttribute('aria-expanded', 'true');
+    fillBoxes(panel);
+    if (!onScreen(btn)) btn.scrollIntoView({ block: 'nearest' });
+    return o.focus ? focusFirst(panel) : null;
+  }
+
+  /* ---- One after another, to the end of the band (D-330) --------------------
+     Answering used to end in a panel you had to close and a list you had to
+     read to find the next one. Now an answer opens the next level of the same
+     band by itself, so a band is a run of questions rather than a hunt. When
+     the band has none left, it says so and names what the run bought. */
+  function bandOf(id) {
+    var r = rowFor(id);
+    return r ? r.level.band : null;
+  }
+  function planetOf(id) {
+    var r = rowFor(id);
+    return r ? r.level.planet : null;
+  }
+  function stillOpenInBand(planet, band, not) {
+    var p = PLANETS.filter(function (x) { return x.id === planet; })[0];
+    if (!p) return [];
+    var b = p.bands[band - 1];
+    if (!b) return [];
+    return b.rows.filter(function (r) { return r.applies && r.state !== 'done' && r.level.id !== not; });
+  }
+  /* The readings this band's levels give you, once they can be worked out. */
+  function bandBought(band) {
+    var h = Spine.getProfile();
+    return Solar.metrics(h).filter(function (m) { return m.tier === band; })
+      .filter(function (m) { return !!readingValue(m, h); });
+  }
+  function sayBandDone(planet, band) {
+    var box = el('sky-unlocked');
+    if (!box) return;
+    var p = PLANETS.filter(function (x) { return x.id === planet; })[0];
+    var got = bandBought(band);
+    var lines = got.slice(0, 4).map(function (m) {
+      return '<li><span>' + esc(m.label) + '</span><span class="n">' + esc(readingFigure(m.id)) + '</span></li>';
+    }).join('');
+    var more = got.length > 4 ? '<li><span>and ' + esc(got.length - 4) + ' more, on the unlocks tab</span><span class="n"></span></li>' : '';
+    var next = PLANETS.filter(function (x) { return x.id === planet; })[0];
+    var left = next && next.bands[band] ? next.bands[band].rows.filter(function (r) { return r.applies && r.state !== 'done'; }) : [];
+    box.innerHTML = '<b>Band ' + esc(band) + ' on ' + esc((p && p.label) || planet) + ' is done</b>'
+      + (got.length ? '<ul>' + lines + more + '</ul>' : '<ul><li><span>Every reading it feeds is still waiting on another planet.</span><span class="n"></span></li></ul>')
+      + (left.length ? '<button type="button" class="d-save" data-sky-nextband="' + esc(left[0].level.id) + '">Start band ' + esc(band + 1) + '</button>' : '');
+    box.hidden = false;
+    if (unlockTimer) clearTimeout(unlockTimer);
+    /* This one waits to be read: it is the end of a run, not a note in
+       passing, and it carries the way on. */
+    unlockTimer = null;
+    if (!onScreen(box)) box.scrollIntoView({ block: 'nearest' });
+  }
+  /* The next question of the same band, opened in the same tap that answered
+     the last one. Nothing left in the band ends the run with the card. */
+  function advance(fromId) {
+    var band = bandOf(fromId), planet = planetOf(fromId);
+    if (!band || !planet) return;
+    var left = stillOpenInBand(planet, band, fromId);
+    if (!left.length) { closePanel(); openLevel = null; sayBandDone(planet, band); return; }
+    showLevel(left[0].level.id, { focus: true });
+  }
+
+  /* ---- What that just bought (D-328) ---------------------------------------
+     A reading the app could not work out a moment ago and can now is the whole
+     point of answering. The set is the thirty engines/recipes.js knows, so the
+     comparison costs nothing worth measuring. */
+  function readable(h) {
+    var out = {};
+    if (!Recipes) return out;
+    Recipes.IMPLEMENTED.forEach(function (id) {
+      var r = Recipes.value(id, h, TABLES);
+      if (r && Money.isOk(r)) out[id] = true;
+    });
+    return out;
+  }
+  var UNLOCK_MS = 9000, unlockTimer = null;
+  function sayUnlocked(before) {
+    var box = el('sky-unlocked');
+    if (!box) return;
+    var now = readable(Spine.getProfile());
+    var fresh = Object.keys(now).filter(function (id) { return !before[id]; });
+    if (!fresh.length) return;
+    var lines = fresh.slice(0, 3).map(function (id) {
+      return '<li><span>' + esc(RECIPE_BY_ID[id] || id) + '</span><span class="n">' + esc(readingFigure(id)) + '</span></li>';
+    }).join('');
+    var more = fresh.length > 3 ? '<li><span>and ' + esc(fresh.length - 3) + ' more, on the unlocks tab</span><span class="n"></span></li>' : '';
+    box.innerHTML = '<b>That answer worked out ' + esc(fresh.length) + ' new reading' + (fresh.length === 1 ? '' : 's') + '</b><ul>' + lines + more + '</ul>';
+    box.hidden = false;
+    if (unlockTimer) clearTimeout(unlockTimer);
+    unlockTimer = setTimeout(function () { box.hidden = true; box.innerHTML = ''; }, UNLOCK_MS);
+  }
+
+  /* A C level just answered says so on its own line and on its level, without
+     the panel being rebuilt under the finger. */
+  function markConfirmed(node, levelId) {
+    var li = node.closest ? node.closest('li') : null;
+    if (li) {
+      li.className = 'is-in';
+      var state = li.querySelector('.d-state');
+      if (state) state.innerHTML = state.innerHTML.replace('not yet', 'confirmed');
+    }
+    var btn = document.querySelector('.sky-lv[data-level="' + levelId + '"]');
+    var mark = btn ? btn.querySelector('.mark') : null;
+    var lv = Solar.byId(levelId);
+    if (lv && mark) {
+      var st = Solar.levelState(lv, Spine.getProfile());
+      mark.textContent = st.state === 'done' ? 'answered' : st.state === 'part' ? st.filled + ' of ' + st.of : 'not yet';
+      mark.classList.toggle('is-done', st.state === 'done');
+      if (btn.parentNode && btn.parentNode.classList) btn.parentNode.classList.toggle('is-done', st.state === 'done');
+    }
+  }
+
+  /* A typed box: the same parse, the same percent-slip question and the same
+     period conversion the Ledger's own facts view uses. */
+  function commitTyped(node) {
+    var a = ASKS[node.getAttribute('data-sky-ask')];
+    if (!a) return;
+    var input = node.querySelector('[data-ask-input]');
+    if (!input) return;
+    var raw = String(input.value || '').trim();
+    if (raw === '') { saveAnswer(node, null); return; }
+    if (!a.row) {
+      var n = Number(raw.replace(/[^0-9.\-]/g, ''));
+      if (isNaN(n)) { said(node, 'A number, please.'); return; }
+      saveAnswer(node, n);
+      return;
+    }
+    var sl = Ask.slip(a.row, raw);
+    if (sl) {
+      said(node, sl.question + ' ' + sl.options.map(function (o) { return o.label; }).join(' or '));
+      return;
+    }
+    var v = Ask.parse(a.row, raw);
+    if (v === null) { said(node, 'A number, please.'); return; }
+    var per = node.querySelector('[data-ask-period]');
+    var conv = a.row.unit === 'cents' && per ? Ask.toRowPeriod(a.row, v, per.value) : { value: v, note: null };
+    if (conv.note && per) per.value = LedgerRows.period(a.row);
+    saveAnswer(node, conv.value, conv.note);
+  }
+  /* A month and a year make the one date this screen asks for. */
+  function commitDate(node) {
+    var mo = node.querySelector('[data-sky-month]'), yr = node.querySelector('[data-sky-year]');
+    if (!mo || !yr) return;
+    var y = String(yr.value || '').replace(/\D/g, '');
+    if (!mo.value || y.length !== 4) { said(node, 'A month and a four-digit year.'); return; }
+    saveAnswer(node, y + '-' + mo.value + '-01');
   }
 
   function paint() {
     if (!ready) return;
-    var o = Solar.overall(Spine.getProfile());
-    drawSay(o); drawGrid(o.planets); drawKey(o.planets); drawOpen(o.planets);
+    var h = Spine.getProfile();
+    var o = Solar.overall(h);
+    PLANETS = o.planets;
+    drawSay(o);
+    el('sky-planets').hidden = tab !== 'planets';
+    el('sky-unlocks').hidden = tab !== 'unlocks';
+    Array.prototype.forEach.call(document.querySelectorAll('#sky-tabs button'), function (b) {
+      b.classList.toggle('is-on', b.getAttribute('data-tab') === tab);
+    });
+    if (tab === 'planets') { drawGrid(o.planets); drawKey(o.planets); skyForm.request(); }
+    else { drawUnlocks(h); }
   }
+  /* LIVE-FORM (D-034): the open level holds boxes, so a redraw asked for
+     while someone is typing is held until the finger has left. Opening or
+     closing a level is the person's own tap, so that one forces it. */
+  var skyForm = LiveForm.guard(el('sky-open'), function () { drawOpen(PLANETS); });
 
   el('sky-grid').addEventListener('click', function (e) {
     var b = e.target.closest ? e.target.closest('.sky-row') : null;
     if (!b) return;
     var id = b.getAttribute('data-planet');
     open = open === id ? null : id;
+    openLevel = null;
     paint();
-    if (open) { var o = el('sky-open'); if (o && o.scrollIntoView) o.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+    skyForm.force();
+    if (open) { var o = el('sky-open'); if (o && o.scrollIntoView && !onScreen(o)) o.scrollIntoView({ block: 'nearest' }); }
   });
 
-  Reference.load(['levels']).then(function (t) {
+  el('sky-open').addEventListener('click', function (e) {
+    var t = e.target.closest ? e.target : null;
+    if (!t) return;
+    /* The boxes first: a tap inside one is never a tap on the level. */
+    var ask = t.closest('[data-sky-ask]');
+    if (ask) {
+      var choice = t.closest('[data-ask-val]');
+      if (choice) {
+        var raw = choice.getAttribute('data-ask-val');
+        saveAnswer(ask, raw === 'true' ? true : raw === 'false' ? false : raw);
+        Array.prototype.forEach.call(ask.querySelectorAll('[data-ask-val]'), function (b) {
+          b.setAttribute('aria-pressed', b === choice ? 'true' : 'false');
+        });
+        return;
+      }
+      if (t.closest('[data-sky-save]')) {
+        if (ask.querySelector('[data-sky-month]')) commitDate(ask); else commitTyped(ask);
+        return;
+      }
+      return;
+    }
+    /* A C level is answered by agreeing: the spine stamps it as confirmed
+       today, and nothing about the figure changes (D-328). */
+    var yes = t.closest('[data-sky-confirm]');
+    if (yes) {
+      if (!t.closest('[data-sky-agree]')) return;
+      var levelId = yes.getAttribute('data-sky-confirm');
+      try {
+        var wasReadable = readable(Spine.getProfile());
+        Spine.confirm(levelId);
+        said(yes, 'Confirmed. It reads as yours rather than the app\u2019s guess.');
+        markConfirmed(yes, levelId);
+        sayUnlocked(wasReadable);
+        advance(levelId);
+      } catch (e) { said(yes, 'Could not record that (' + e.message + ').'); }
+      return;
+    }
+    if (t.closest('.d-fields a')) return;
+    var f = t.closest('[data-only]');
+    if (f) { only = f.getAttribute('data-only'); openLevel = null; paint(); skyForm.force(); return; }
+    var lv = t.closest('.sky-lv');
+    if (!lv) return;
+    var id = lv.getAttribute('data-level');
+    showLevel(openLevel === id ? null : id, { focus: true });
+  });
+  /* Enter saves, the same as the button beside it. */
+  el('sky-open').addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') return;
+    var ask = e.target.closest ? e.target.closest('[data-sky-ask]') : null;
+    if (!ask) return;
+    e.preventDefault();
+    if (ask.querySelector('[data-sky-month]')) commitDate(ask); else commitTyped(ask);
+  });
+  /* A select is answered by choosing, not by a second tap on Save. */
+  el('sky-open').addEventListener('change', function (e) {
+    var ask = e.target.closest ? e.target.closest('[data-sky-ask]') : null;
+    if (!ask || e.target.hasAttribute('data-ask-period')) return;
+    if (e.target.hasAttribute('data-sky-month') || e.target.hasAttribute('data-sky-year')) return;
+    if (e.target.tagName === 'SELECT' && e.target.hasAttribute('data-ask-input')) saveAnswer(ask, e.target.value || null);
+  });
+
+  /* "Start band N" carries the run on from the card. */
+  el('sky-unlocked').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('[data-sky-nextband]') : null;
+    if (!b) return;
+    var box = el('sky-unlocked');
+    box.hidden = true; box.innerHTML = '';
+    showLevel(b.getAttribute('data-sky-nextband'), { focus: true });
+  });
+
+  el('sky-tabs').addEventListener('click', function (e) {
+    var b = e.target.closest ? e.target.closest('[data-tab]') : null;
+    if (!b) return;
+    tab = b.getAttribute('data-tab');
+    paint();
+    skyForm.force();
+  });
+
+  /* A level named anywhere in the unlocks tab opens on the planets tab. */
+  el('sky-unlocks').addEventListener('click', function (e) {
+    var t = e.target;
+    var tier = t.closest ? t.closest('[data-tier]') : null;
+    if (tier) { var n = Number(tier.getAttribute('data-tier')); openTier = openTier === n ? 0 : n; paint(); return; }
+    var go = t.closest ? t.closest('[data-goto]') : null;
+    if (!go) return;
+    var id = go.getAttribute('data-goto'), lv = Solar.byId(id);
+    if (!lv) return;
+    tab = 'planets'; open = lv.planet; openLevel = id; only = 'all';
+    paint();
+    skyForm.force();
+    var btn = document.querySelector('.sky-lv[data-level="' + id + '"]');
+    if (btn && btn.scrollIntoView) btn.scrollIntoView({ block: 'center' });
+  });
+
+  Reference.load(['levels', 'recipes', 'ledgerRows', 'states', 'effectiveTaxRates', 'stateBrackets', 'federalBrackets', 'levelsOfWealth', 'returnBands', 'fireVariants']).then(function (t) {
+    TABLES = t;
     Solar.use(t.levels);
+    Solar.useRecipes(t.recipes);
+    if (LedgerRows && t.ledgerRows) LedgerRows.use(t.ledgerRows);
+    STATES = (t.states && t.states.states) || [];
+    (t.recipes && t.recipes.recipes || []).forEach(function (r) { RECIPES[r.id] = r.label; RECIPE_BY_ID[r.id] = r.label; RECIPE_META[r.id] = r; });
     ready = true;
     paint();
     if (Spine.onChange) Spine.onChange(paint);

@@ -1,8 +1,8 @@
 {
   "seed": 20260910,
   "numRuns": 100,
-  "engines": 92,
-  "files": 95,
+  "engines": 93,
+  "files": 96,
   "missingFiles": [],
   "extraFiles": [
     "blocks",
@@ -2320,6 +2320,54 @@
       ]
     },
     {
+      "engine": "recipes",
+      "notes": [],
+      "properties": [
+        {
+          "name": "no throw, no NaN or Infinity, on any valid household (1 functions)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the same input gives the same output twice (no hidden state)",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "the household passed in is byte-identical afterwards",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "cents in, cents out: no *Cents field carries a fraction",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "every reading answers with a Result, on any household",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "a reading this file does not know answers null, rather than a figure",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        },
+        {
+          "name": "an empty household has no reading",
+          "ok": true,
+          "numRuns": 100,
+          "seed": 20260910
+        }
+      ]
+    },
+    {
       "engine": "rerank",
       "notes": [],
       "properties": [
@@ -3332,6 +3380,6 @@
       ]
     }
   ],
-  "totalProperties": 427,
+  "totalProperties": 434,
   "failedProperties": 7
 }

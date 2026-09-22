@@ -151,16 +151,27 @@
     'person.work.workCostsMonthlyCents':         { class: 'raw',        unit: 'cents',   period: 'monthly' },
     'person.work.weeksPerYear':                  { class: 'assumption', unit: 'weeks',   default: WORK_DEFAULTS.weeksPerYear },
     'computed.realHourlyWageCents':              { class: 'computed',   unit: 'cents',   note: 'per hour of life the job actually costs' },
-    'person.employmentStatus':                   { class: 'raw',        unit: 'enum',    values: ['employed', 'selfEmployed', 'both', 'notWorking', 'retired'], note: 'null means not asked. Decides whether an employer match is even a question \u2014 see EMPLOYMENT_STATUSES and DECISIONS.md D-055' },
-    'incomeSource.grossAnnualIncomeCents':       { class: 'raw',        unit: 'cents',   period: 'annual', note: 'THE annual figure every room reads. Derived from rateCents x frequency when those are set \u2014 see engines/income.js and DECISIONS.md D-047' },
-    'incomeSource.frequency':                    { class: 'raw',        unit: 'enum',    values: ['annual', 'monthly', 'semimonthly', 'fortnightly', 'weekly', 'hourly'], note: 'how the person is actually paid; semimonthly is 24 a year and fortnightly is 26 \u2014 they are not the same' },
+    'person.employmentStatus':                   { class: 'raw',        unit: 'enum',    values: ['employed', 'selfEmployed', 'both', 'notWorking', 'retired'], note: 'null means not asked. Decides whether an employer match is even a question, see EMPLOYMENT_STATUSES and DECISIONS.md D-055' },
+    'incomeSource.grossAnnualIncomeCents':       { class: 'raw',        unit: 'cents',   period: 'annual', note: 'THE annual figure every room reads. Derived from rateCents x frequency when those are set, see engines/income.js and DECISIONS.md D-047' },
+    'incomeSource.frequency':                    { class: 'raw',        unit: 'enum',    values: ['annual', 'monthly', 'semimonthly', 'fortnightly', 'weekly', 'hourly'], note: 'how the person is actually paid; semimonthly is 24 a year and fortnightly is 26, and they are not the same' },
     'incomeSource.rateCents':                    { class: 'raw',        unit: 'cents',   note: 'pay at `frequency`. Null means the annual figure was entered directly' },
     'incomeSource.hoursPerWeek':                 { class: 'raw',        unit: 'hours',   period: 'weekly', note: 'hourly pay only' },
     'incomeSource.monthsWorked':                 { class: 'raw',        unit: 'months',  note: 'how much of the last 12 months this job covered; absent means all of it' },
-    'incomeSource.ongoing':                      { class: 'raw',        unit: 'bool',    note: 'still the job \u2014 drives the run-rate figure beside the earned one' },
+    'incomeSource.ongoing':                      { class: 'raw',        unit: 'bool',    note: 'still the job, which drives the run-rate figure beside the earned one' },
     'household.takeHome.monthlyCents':           { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'take-home pay a month, typed as such in the opening. Logged paychecks beat it; it beats the estimate from gross. Owned by the Ledger. D-312' },
     'household.takeHome.typedCents':             { class: 'raw',        unit: 'cents',   note: 'the figure as typed, per the cadence in `per`, so the box refills as it was filled. D-312' },
     'household.takeHome.per':                    { class: 'raw',        unit: 'enum',    values: ['month', 'week', 'fortnight', 'halfMonth'], note: 'what typedCents is per. D-312' },
+    /* The rough answers band 1 collects (D-325). Each one is a stand-in the
+       detail later supersedes: itemised debts beat highInterestCents, logged
+       contributions beat savedMonthlyCents, the tax room beats the refund.
+       A reader takes the detail whenever the detail exists. Owned by the
+       Ledger, asked on the Planets screen and in the Ledger's facts list. */
+    'household.sketch.payVaries':                { class: 'raw',        unit: 'bool',    note: 'pay swings month to month, said outright rather than inferred from the job type. null until asked. D-325' },
+    'household.sketch.spendingIncludesDebt':     { class: 'raw',        unit: 'bool',    note: 'the typed monthly spending total already has debt payments inside it, so the gap does not count them twice. D-325' },
+    'household.sketch.spendingIncludesSaving':   { class: 'raw',        unit: 'bool',    note: 'the typed monthly spending total already has saving inside it. D-325' },
+    'household.sketch.savedMonthlyCents':        { class: 'raw',        unit: 'cents',   period: 'monthly', note: 'what actually gets added a month, anywhere. The gap says what could be saved; this says what is. The difference is the leak. D-325' },
+    'household.sketch.highInterestCents':        { class: 'raw',        unit: 'cents',   note: 'roughly how much is owed above about 8%, before every debt is itemised. Superseded by the debts list. D-325' },
+    'household.sketch.refundLastYearCents':      { class: 'raw',        unit: 'cents',   note: 'last year\'s refund, or what was owed as a negative. D-325' },
     'household.incomeBasis':                     { class: 'raw',        unit: 'enum',    values: ['earned', 'runRate'], note: 'which of the two annual figures feeds the model. DECISIONS.md D-047' },
     'retirement.contributionPercent':            { class: 'raw',        unit: 'percent', note: 'what you put into the workplace plan, as a % of salary. Owned by Where It Goes' },
     'retirement.rothContributedCents':           { class: 'raw',        unit: 'cents',   period: 'annual', note: 'into a Roth IRA so far this year' },
@@ -169,7 +180,7 @@
     'retirement.hsaFamilyPlan':                  { class: 'raw',        unit: 'bool',    note: 'family HSA coverage, which changes the limit' },
     'retirement.has401k':                        { class: 'raw',        unit: 'bool',    note: 'does an employer 401(k) exist to contribute to. null = not asked; the Max 401(k) preset is absent, not disabled, unless true. Asked once, by Budget. D-129' },
     'insurance.highestDeductibleCents':          { class: 'raw',        unit: 'cents',   note: 'the largest single deductible a cash cushion has to cover. Owned by Sleep At Night' },
-    'assumptions.marginalRate':                  { class: 'assumption', unit: 'rate',    default: null, note: 'NO default \u2014 asked once, never derived from the effective-rate table' },
+    'assumptions.marginalRate':                  { class: 'assumption', unit: 'rate',    default: null, note: 'NO default: asked once, never derived from the effective-rate table' },
     'incomeSource.type':                         { class: 'raw',        unit: 'enum',    values: ['w2', '1099', 'passive', 'benefit', 'pension', 'socialSecurity', 'equity'], note: 'what kind of pay it is; decides the tax rules and whether it survives a job loss. 15.4, D-181' },
     'incomeSource.survivesJobLoss':              { class: 'raw',        unit: 'bool',    note: 'keeps paying if the job goes. null = derived from the type (everything but a W-2 job survives); true/false is the person saying otherwise. Read through Schema.survivesJobLoss. 15.4, D-181' },
     'incomeSource.passiveTreatment':             { class: 'raw',        unit: 'enum',    values: ['ordinary', 'qualified'], note: 'passive income only: ordinary (rent, interest) or qualified (dividends, long-term gains). null reads as ordinary. 15.4, D-181' },
@@ -213,9 +224,9 @@
     'debt.dueOn':                                { class: 'raw',        unit: 'iso-date', note: 'when it is due back in full. On a family loan with no monthly amount, the minimum is the balance over the months left. D-124' },
     'debt.keepReasons[]':                        { class: 'raw',        unit: 'enum',    values: ['low_rate', 'tax_favoured', 'appreciating', 'building_credit', 'subsidised'], note: 'why this debt might be fine to carry on purpose - the rational axis, independent of emotionalTag. A list: more than one can apply, and an empty list is "no particular reason to keep it". Suggested from the debt\'s own type and rate at entry time, stored only when confirmed. Never changes the payoff order by itself. Owned by Debt Payoff. D-132' },
     'debt.excludeFromAggressive':                { class: 'raw',        unit: 'bool',    note: 'the household\'s decision that this debt is kept on purpose: the payoff plan orders it last and sends it only its minimum. The keep reasons inform this and never set it. Owned by Debt Payoff. D-132' },
-    'debt.creditLimitCents':                     { class: 'raw',        unit: 'cents',   note: 'revolving debt only \u2014 the limit the balance is a share of. Owned by Debt Payoff. DECISIONS.md D-045' },
-    'debt.annualFeeCents':                       { class: 'raw',        unit: 'cents',   period: 'annual', note: 'a card\u2019s yearly fee. Null means not asked, never no fee. Owned by Debt Payoff. D-322' },
-    'debt.annualFeeOn':                          { class: 'raw',        unit: 'iso-date', note: 'the day the fee posts; the month and day recur each year and Debt.annualFee reads the next one. D-322' },
+    'debt.creditLimitCents':                     { class: 'raw',        unit: 'cents',   note: 'revolving debt only: the limit the balance is a share of. Owned by Debt Payoff. DECISIONS.md D-045' },
+    'debt.annualFeeCents':                       { class: 'raw',        unit: 'cents',   period: 'annual', note: 'a card\u2019s yearly fee. Null means not asked, never no fee. Owned by Debt Payoff. D-331' },
+    'debt.annualFeeOn':                          { class: 'raw',        unit: 'iso-date', note: 'the day the fee posts; the month and day recur each year and Debt.annualFee reads the next one. D-331' },
     'debt.promoEndsOn':                          { class: 'raw',        unit: 'iso-date', note: 'when a 0%/promotional rate ends. Null means the rate is not promotional' },
     'debt.postPromoRate':                        { class: 'raw',        unit: 'rate',    period: 'annual', note: 'the rate the balance reverts to when the promo ends' },
     'expenses.monthlyEssential.estimatedValueCents': { class: 'raw',    unit: 'cents',   period: 'monthly', source: 'estimated', note: 'LEGACY, unread since D-172: migrated into wants.totalCents on load, kept for round-trip' },
@@ -438,11 +449,11 @@
    *
    * This exists because the app was asking everybody about their employer
    * match. If you are between jobs, self-employed, or retired, there is no
-   * employer, so that question has no true answer \u2014 and worse, leaving it
+   * employer, so that question has no true answer, and worse, leaving it
    * blank left the room permanently reading "1 thing left".
    *
-   *   earning    \u2014 is money expected to be coming in from work
-   *   hasEmployer\u2014 is there a company that could match contributions
+   *   earning:     is money expected to be coming in from work
+   *   hasEmployer: is there a company that could match contributions
    *
    * `hasEmployer: false` does not mean "no retirement plan". A self-employed
    * person has a solo 401(k) with no match; a retiree may be drawing from
@@ -455,12 +466,12 @@
       short: 'Employed',      earning: true,  hasEmployer: true },
     { id: 'selfEmployed', label: 'Self-employed or freelance',
       short: 'Self-employed', earning: true,  hasEmployer: false },
-    { id: 'both',         label: 'Both \u2014 a job and my own work',
+    { id: 'both',         label: 'Both, a job and my own work',
       short: 'Both',          earning: true,  hasEmployer: true },
     /* Between jobs is its own answer, not a shade of "not working": it
        has a sequence of its own, benefits, severance, a runway against a
        search, and the income question stops being the gate. D-092. */
-    { id: 'unemployed',   label: 'Unemployed \u2014 looking for work',
+    { id: 'unemployed',   label: 'Unemployed, looking for work',
       short: 'Unemployed',    earning: false, hasEmployer: false, seeking: true },
     /* On disability: not working, and the benefit is income. It goes on
        the income card like a pension does. D-092. */
@@ -484,7 +495,7 @@
   }
 
   /**
-   * householdEmployment(h) \u2014 the primary person's status, as a row.
+   * householdEmployment(h), the primary person's status, as a row.
    * Returns null when it has not been answered. A caller that treats null
    * as "no employer" is wrong: unanswered is not an answer, and the whole
    * point of this field is that the two are different.
@@ -575,7 +586,7 @@
   /**
    * Could this household have an employer match at all?
    *
-   * UNANSWERED COUNTS AS YES, deliberately \u2014 every household saved before
+   * UNANSWERED COUNTS AS YES, deliberately, since every household saved before
    * this field existed has no status, and silently deciding they have no
    * employer would hide a question they have already answered. So does an
    * already-entered match, whatever the status now says: a figure someone
@@ -1522,7 +1533,7 @@
       /* What a card costs to hold whether or not it is used, and the day of
          the year it posts. Null means not asked, never "no fee". The date
          is the day it last posted or will next post; the month and day are
-         what recur, and Debt.annualFee reads the next one. D-322. */
+         what recur, and Debt.annualFee reads the next one. D-331. */
       annualFeeCents: f.annualFeeCents === undefined ? null : f.annualFeeCents,
       annualFeeOn: f.annualFeeOn === undefined ? null : f.annualFeeOn,
       /* A 0% promotional period, and the rate the balance reverts to when it
@@ -2256,6 +2267,23 @@
     return { monthlyCents: monthly, typedCents: typed, per: per };
   }
   function takeHomeOf(household) { return createTakeHome((household || {}).takeHome); }
+  /* The rough answers of band 1 (D-325). Six facts, each null until asked:
+     empty is not zero, so a blank refund is not "no refund" and a blank
+     high-interest balance is not "none". */
+  function createSketch(fields) {
+    var f = fields || {};
+    function tri(v) { return typeof v === 'boolean' ? v : null; }
+    function cents(v) { return Money.isEntered(v) ? Math.round(v) : null; }
+    return {
+      payVaries: tri(f.payVaries),
+      spendingIncludesDebt: tri(f.spendingIncludesDebt),
+      spendingIncludesSaving: tri(f.spendingIncludesSaving),
+      savedMonthlyCents: cents(f.savedMonthlyCents),
+      highInterestCents: cents(f.highInterestCents),
+      refundLastYearCents: cents(f.refundLastYearCents)
+    };
+  }
+  function sketchOf(household) { return createSketch((household || {}).sketch); }
   /** The typed take-home a month, or incomplete. */
   function typedTakeHomeMonthlyCents(household) {
     var t = takeHomeOf(household);
@@ -2355,6 +2383,7 @@
          Owned by Where It Goes. DECISIONS.md D-052. */
       retirement: createRetirement(f.retirement),
       takeHome: createTakeHome(f.takeHome),
+      sketch: createSketch(f.sketch),
       /* Your largest insurance deductible: the first thing a cash cushion
          has to cover, which is why Sleep At Night owns it. */
       insurance: createInsurance(f.insurance),
@@ -2688,6 +2717,17 @@
     return sumAssetsByCategory(household, ['investment', 'retirement']);
   }
 
+  /** Cash and savings plus investments and retirement: the pile a plan starts
+   *  from, and the rough total band 1 asks for (A1, D-325). Property is not in
+   *  it, which is why this is not totalAssetsCents. */
+  function savedAndInvestedCents(household) {
+    var c = cashCents(household), i = investmentsCents(household);
+    if (!Money.isOk(c) && !Money.isOk(i)) return Money.incomplete('Neither part is entered yet.', ['cashSavings', 'investments']);
+    if (!Money.isOk(c)) return Money.incomplete('Cash is not entered yet.', ['cashSavings']);
+    if (!Money.isOk(i)) return Money.incomplete('Investments are not entered yet.', ['investments']);
+    return Money.ok(c.value + i.value);
+  }
+
   /* "No debt" (meta.hasDebt === false, D-061) is an answer: with nothing
      listed it reads as zero owed and zero a month, not as a blank. Left
      unanswered, an empty list is still incomplete, empty is not zero. */
@@ -2913,10 +2953,31 @@
      "Left", Debt Payoff's extra when the box is blank, and anything else
      that asks read THIS, so two rooms can never disagree about it. A
      negative gap is a real answer: the month costs more than comes in. */
+  /** The month's spending with the things that are not spending taken out
+   *  (D-327). Someone who typed one total for the month may have counted the
+   *  debt payments or the saving inside it; E3 asks, and this is the only
+   *  place the answer is applied, so nothing is counted twice and nothing is
+   *  counted differently in two rooms. Unanswered, the total stands as typed,
+   *  which is what every reader assumed before the question existed. */
+  function cleanMonthlySpendingCents(household) {
+    var spend = monthlyExpensesCents(household);
+    if (!Money.isOk(spend)) return spend;
+    var s = sketchOf(household), out = spend.value, stripped = [];
+    if (s.spendingIncludesSaving === true && Money.isEntered(s.savedMonthlyCents)) {
+      out -= s.savedMonthlyCents; stripped.push('saving');
+    }
+    if (s.spendingIncludesDebt === true) {
+      var mins = monthlyDebtPaymentsCents(household);
+      if (Money.isOk(mins)) { out -= mins.value; stripped.push('debt payments'); }
+    }
+    return Money.ok(Math.max(0, Math.round(out)), {
+      source: spend.source || null, typedCents: spend.value, stripped: stripped
+    });
+  }
   function monthlyGapCents(household, tables) {
     var take = takeHomeMonthlyCents(household, tables);
     if (!Money.isOk(take)) return take;
-    var spend = monthlyExpensesCents(household);
+    var spend = cleanMonthlySpendingCents(household);
     if (!Money.isOk(spend)) return spend;
     var mins = monthlyDebtPaymentsCents(household);
     if (!Money.isOk(mins)) return mins;
@@ -3371,6 +3432,8 @@
     HEALTH_TYPES: HEALTH_TYPES,
     createHealth: createHealth,
     createEstate: createEstate,
+    createSketch: createSketch, sketchOf: sketchOf, savedAndInvestedCents: savedAndInvestedCents,
+    cleanMonthlySpendingCents: cleanMonthlySpendingCents,
     createDecumulation: createDecumulation,
     createTaxFacts: createTaxFacts,
     createCareer: createCareer,

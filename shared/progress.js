@@ -237,7 +237,7 @@
     var room = Registry.byId(roomId);
     if (room && room.href) return room.href.indexOf('rooms/') !== 0;
     /* A page that is no room at all (the map, a redirect stub) still carries
-       the menu since D-324, and its links have to climb out of rooms/ when
+       the menu since D-333, and its links have to climb out of rooms/ when
        that is where it sits. The registry cannot say; the path can. */
     if (typeof location !== 'undefined') return String(location.pathname || '').indexOf('/rooms/') === -1;
     return true;
@@ -295,7 +295,7 @@
     var guesses = (row.filled || []).filter(function (f) { return f.guessed; });
     if (guesses.length) {
       out.push('<p class="slaf-progress-note"><strong>' + guesses.length + ' of these '
-        + (guesses.length === 1 ? 'is' : 'are') + ' still a guess</strong> \u2014 '
+        + (guesses.length === 1 ? 'is' : 'are') + ' still a guess</strong>: '
         + guesses.map(function (f) { return escapeHtml(f.label); }).join(', ')
         + '. Good enough to compute with, worth fixing when you know.</p>');
     }
@@ -351,7 +351,7 @@
        walk-through are the ways in from here. D-169. */
     if (roomId === 'dashboard') return '';
     /* A page that is no room has no neighbours to walk to, and inventing two
-       would read as instructions (the D-169 objection). One way home. D-324. */
+       would read as instructions (the D-169 objection). One way home. D-333. */
     if (!Registry.byId(roomId)) {
       return '<nav class="slaf-hops" aria-label="Where to next">'
         + '<a class="slaf-hop slaf-hop--prev" href="' + (atRoot(roomId) ? '' : '../') + 'index.html">\u2190 The Dashboard</a>'
@@ -548,7 +548,7 @@
       + '<nav class="slaf-menu-body" aria-label="All rooms">' + menuBodyHtml(roomId) + '</nav>';
   }
 
-  /* The top of the menu (D-326): a view of the whole app, above the groups,
+  /* The top of the menu (D-335): a view of the whole app, above the groups,
      where no fold can hide it. Rendered from the registry, never from a
      hard-coded href, so the day the Planets move the menu follows. */
   function topLinksHtml(roomId) {
@@ -864,7 +864,7 @@
     var dealt = at.state !== 'open';
     var out = [];
 
-    /* A step already dealt with folds to one line (D-322): the tick, the
+    /* A step already dealt with folds to one line (D-331): the tick, the
        step, and the way on. The person can open it for the bar, the
        stage, Undo and the hub; the room underneath is what they came for. */
     if (dealt) {
@@ -1199,6 +1199,173 @@
     return host;
   }
 
+  /* ---- Open to the field, not just the room (D-323) ------------------------
+     A link from anywhere in the app names a field by its anchor
+     (shared/ownership.js FIELDS[].anchor). Rooms build their inputs from the
+     household after the page loads, so by the time the box exists the browser
+     has long since given up on the hash: the person lands at the top of a
+     long room and has to hunt for the thing they tapped. This waits for the
+     target to appear, opens any fold around it, brings it under the header,
+     puts the cursor in its box and marks it for a moment so the eye lands in
+     the right place. It never rebuilds anything, so D-034 is untouched. */
+  var LANDED = 'slaf-landed', LANDED_MS = 2400, REVEAL_TRIES = 24, REVEAL_EVERY = 160;
+  var SETTLE_EVERY = 300, SETTLE_MS = 6000, SETTLE_BAND = 200;
+  function focusableIn(node) {
+    if (!node || !node.querySelectorAll) return null;
+    if (node.matches && node.matches('input, select, textarea')) return node;
+    var all = node.querySelectorAll('input, select, textarea');
+    for (var i = 0; i < all.length; i++) {
+      var c = all[i];
+      if (c.disabled || c.readOnly || c.type === 'hidden') continue;
+      if (!(c.offsetParent !== null || c.getBoundingClientRect().height > 0)) continue;
+      return c;
+    }
+    return null;
+  }
+  /* Whatever is pinned to the top of this room, measured rather than named:
+     rooms pin different things and a field tucked under one is still hidden. */
+  function headerOffset() {
+    var low = 0;
+    try {
+      var all = document.body.querySelectorAll('*');
+      for (var i = 0; i < all.length && i < 400; i++) {
+        var n = all[i], cs = window.getComputedStyle(n);
+        if (cs.position !== 'sticky' && cs.position !== 'fixed') continue;
+        var r = n.getBoundingClientRect();
+        if (r.top > 90 || r.bottom <= 0 || r.height > 240) continue;
+        if (r.bottom > low) low = r.bottom;
+      }
+    } catch (e) { low = 0; }
+    return Math.round(low) + 16;
+  }
+  function bringUp(g, node, smooth) {
+    var top = node.getBoundingClientRect().top + (g.pageYOffset || 0) - headerOffset();
+    try { g.scrollTo({ top: Math.max(0, top), behavior: smooth ? 'smooth' : 'auto' }); }
+    catch (e) { g.scrollTo(0, Math.max(0, top)); }
+  }
+  /* The ring is a glance, not a state: it starts when the field first lands and
+     it is gone LANDED_MS later, however many times the room redraws in between.
+     Keeping one clock for the whole landing stops a late settle pass from
+     starting the countdown over and leaving the ring sitting there. */
+  var landedAt = 0;
+  function markOn(g, node, box) {
+    var mark = box && box.closest ? (box.closest('.row, .field, label, li, .slaf-card') || node) : node;
+    var left = LANDED_MS - (Date.now() - landedAt);
+    if (left <= 0) { mark.classList.remove(LANDED); return mark; }
+    if (!mark.classList.contains(LANDED)) {
+      mark.classList.add(LANDED);
+      g.setTimeout(function () { mark.classList.remove(LANDED); }, left);
+    }
+    return mark;
+  }
+  function putCursor(node, id) {
+    /* The box itself, but only when the anchor is one question rather than a
+       whole view: a view's first input is not what was asked for. */
+    if (/^view-/.test(id)) return null;
+    var boxes = node.querySelectorAll ? node.querySelectorAll('input, select, textarea').length : 0;
+    if (boxes > 6) return null;
+    var box = focusableIn(node);
+    if (!box) return null;
+    if (document.activeElement && node.contains(document.activeElement) && document.activeElement !== document.body) return document.activeElement;
+    try { box.focus({ preventScroll: true }); } catch (e) { box.focus(); }
+    /* The caret goes after whatever is already there, never over it. A box
+       that arrives selected loses its saved figure to the first keystroke,
+       and on a phone the keyboard hides the selection before you see it. */
+    if (box.setSelectionRange && box.value && box.type === 'text') {
+      try { box.setSelectionRange(box.value.length, box.value.length); } catch (e2) { /* fine */ }
+    }
+    return box;
+  }
+  /* Rooms keep drawing after the first paint and some rebuild a card whole,
+     which drops the cursor and moves the page under it, so the landing is not
+     one moment: it is repeated while the room settles. Once the person moves
+     the page themselves it is theirs, and nothing below pulls it back. */
+  var moved = false, landing = 0;
+  function watchForAHand(g) {
+    if (watchForAHand.on) return;
+    watchForAHand.on = true;
+    ['wheel', 'touchstart', 'keydown', 'mousedown'].forEach(function (e) {
+      g.addEventListener(e, function () { moved = true; }, { passive: true });
+    });
+  }
+  /* One landing at a time, and only while it is still this one's turn: a
+     second link followed before the first has settled takes over, and a hand
+     on the page ends both. */
+  function mine(ticket) { return ticket === landing && !moved && Date.now() - landedAt <= SETTLE_MS; }
+  /* Keep the field at the top of the screen, not merely somewhere on it: a
+     field halfway down a long room is the thing this is here to stop. */
+  function align(g, id, node, first) {
+    var here = document.getElementById(id) || node;
+    if (!here) return null;
+    var t = here.getBoundingClientRect().top;
+    if (first || t < 0 || t > SETTLE_BAND) {
+      var reduced = g.matchMedia && g.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      bringUp(g, here, first && !reduced);
+    }
+    return here;
+  }
+  /* A card above the field can finish drawing, or collapse, a second or two
+     after the room first looks done, and either one drags the field off the
+     top again. Watching the page's own size puts it back in the same frame,
+     before an eye can catch it; the timer behind it is the fallback for a
+     browser without ResizeObserver. */
+  function watchLayout(g, id, node, ticket) {
+    if (!g.ResizeObserver) return;
+    var ro;
+    try {
+      ro = new g.ResizeObserver(function () {
+        if (!mine(ticket)) { ro.disconnect(); return; }
+        align(g, id, node, false);
+      });
+      ro.observe(document.documentElement);
+      if (document.body) ro.observe(document.body);
+    } catch (e) { return; }
+    g.setTimeout(function () { ro.disconnect(); }, SETTLE_MS);
+  }
+  function land(g, node, id, pass, ticket) {
+    var step = pass || 0;
+    var ticketNow = ticket;
+    if (step === 0) {
+      moved = false; landedAt = Date.now(); ticketNow = ++landing;
+      watchForAHand(g);
+      watchLayout(g, id, node, ticketNow);
+    }
+    if (ticketNow !== landing || moved) return;
+    var here = document.getElementById(id) || node;
+    var fold = here.closest ? here.closest('details') : null;
+    if (fold && !fold.open) fold.open = true;
+    here = align(g, id, here, step === 0) || here;
+    markOn(g, here, putCursor(here, id));
+    if (Date.now() - landedAt > SETTLE_MS) return;
+    g.setTimeout(function () { land(g, here, id, step + 1, ticketNow); }, step === 0 ? 350 : SETTLE_EVERY);
+  }
+  function revealTarget(hash, tries) {
+    if (typeof document === 'undefined') return;
+    var g = globals();
+    if (!g) return;
+    var id = (hash || (g.location ? g.location.hash : '') || '').replace(/^#/, '');
+    if (!id) return;
+    var left = tries === undefined ? REVEAL_TRIES : tries;
+    var node = null;
+    try { node = document.getElementById(id); } catch (e) { node = null; }
+    var shown = node && (node.offsetParent !== null || node.getBoundingClientRect().height > 0);
+    if (node && !shown && node.closest) {
+      var d = node.closest('details');
+      if (d && !d.open) { d.open = true; shown = node.getBoundingClientRect().height > 0; }
+    }
+    /* Wait for the box, not just the section around it: a room draws its
+       inputs from the household after the page has loaded, and landing on an
+       empty section is the thing this is here to stop. */
+    /* Wait a short while for the box to be drawn, then land anyway: some
+       anchors name a row that shows a figure rather than a place to type. */
+    var ready = shown && (/^view-/.test(id) || !!focusableIn(node) || left <= REVEAL_TRIES - 8);
+    if (!ready) {
+      if (left > 0) g.setTimeout(function () { revealTarget(id, left - 1); }, REVEAL_EVERY);
+      return;
+    }
+    land(g, node, id);
+  }
+
   function mountHeader(roomId) {
     if (typeof document === 'undefined') return null;
     /* Mounted once. The header goes up at DOMContentLoaded (see the listener
@@ -1214,7 +1381,7 @@
     else {
       /* No back-link to stand in for: the menu is navigation, and navigation
          is on every page of the app, so the strip goes at the top rather than
-         not at all. This is what kept the map page without a way out. D-324.
+         not at all. This is what kept the map page without a way out. D-333.
          ABOVE the page's own header, because a menu button below the title
          is a menu button nobody finds: the top left is where it is looked
          for on every other page. */
@@ -1229,7 +1396,7 @@
     mountMenu(roomId, nav);
     /* Everything below is a room's own furniture: the purpose line, the
        situation notice, the walk strip, the doors, the fold. A page that is
-       not a room takes the navigation and none of it. D-324. */
+       not a room takes the navigation and none of it. D-333. */
     if (!Registry.byId(roomId)) return nav;
     mountPurpose(roomId);
     mountSituation(roomId);
@@ -1605,12 +1772,13 @@
      A room that dies halfway still has its menu and its way out. D-170. */
   if (typeof document !== 'undefined' && typeof location !== 'undefined') {
     document.addEventListener('DOMContentLoaded', function () {
-      if (document.querySelector('.slaf-hops-host')) return;
       /* A redirect stub is a doorway, not a page: it is gone before a menu
-         would be read, and mounting one there flashes. D-324. */
-      if (document.querySelector('meta[http-equiv="refresh"]')) return;
-      mountHeader(roomIdFromLocation());
+         would be read, and mounting one there flashes. D-333. */
+      var stub = document.querySelector('meta[http-equiv="refresh"]');
+      if (!stub && !document.querySelector('.slaf-hops-host')) mountHeader(roomIdFromLocation());
+      revealTarget();
     });
+    window.addEventListener('hashchange', function () { revealTarget(); });
   }
 
   return {
@@ -1618,7 +1786,7 @@
     chain: chain,
     mountHintFolds: mountHintFolds, HINT_FOLD_CHARS: HINT_FOLD_CHARS,
     purposeHtml: purposeHtml,
-    mountHeader: mountHeader, ageLineHtml: ageLineHtml, privacyReceipt: privacyReceipt, comebackDue: comebackDue, COMEBACK_DAYS: COMEBACK_DAYS,
+    mountHeader: mountHeader, revealTarget: revealTarget, ageLineHtml: ageLineHtml, privacyReceipt: privacyReceipt, comebackDue: comebackDue, COMEBACK_DAYS: COMEBACK_DAYS,
     mountFold: mountFold,
     mountSectionSync: mountSectionSync,
     roomIdFromLocation: roomIdFromLocation,

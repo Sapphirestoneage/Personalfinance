@@ -1323,7 +1323,7 @@
       display: String(Math.round(b.value * 1000) / 10),
       source: 'the ' + TABLES.federalBrackets.taxYear + ' federal bracket for '
         + Money.formatCents(gross.value) + ' gross, ' + (Ownership.FILING_LABELS[h.filingStatus] || h.filingStatus).toLowerCase()
-        + ' \u2014 federal only, an estimate (' + TABLES.federalBrackets.confidence + ')',
+        + ', federal only, an estimate (' + TABLES.federalBrackets.confidence + ')',
       onUse: function (rate) { Spine.setAssumptionOverride('marginalRate', rate); }
     });
   }
@@ -1843,7 +1843,7 @@
       display: String(Math.round(b.value * 1000) / 10),
       source: 'the ' + TABLES.federalBrackets.taxYear + ' federal bracket for '
         + Money.formatCents(gross.value) + ' gross, ' + (Ownership.FILING_LABELS[h.filingStatus] || h.filingStatus).toLowerCase()
-        + ' \u2014 federal only, an estimate (' + TABLES.federalBrackets.confidence + ')',
+        + ', federal only, an estimate (' + TABLES.federalBrackets.confidence + ')',
       onUse: function (rate) { Spine.setAssumptionOverride('marginalRate', rate); }
     });
   }

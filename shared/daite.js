@@ -58,6 +58,7 @@
   var PATHS = {
     /* D */
     totalDebt: 'debt.items', monthlyDebtPayments: 'debt.items[].minimumCents', hasDebt: 'debt.none',
+    highInterestBalance: 'debt.highInterest',
     loanPlan: 'debt.items[].plan', loanExtra: 'debt.items[].plan', idrShare: 'debt.items[].plan', forgivenessYears: 'debt.items[].plan',
     /* A */
     cashSavings: 'assets.cashCents', investments: 'assets.invested', otherAssets: 'assets.property',
@@ -65,18 +66,21 @@
     allocationStocks: 'assets.allocation', allocationBonds: 'assets.allocation', allocationCash: 'assets.allocation',
     rebalanceBand: 'assets.allocation', stockShare: 'assets.allocation',
     rothContributed: 'assets.contributions.roth', hsaContributed: 'assets.contributions.hsa', contributionPercent: 'assets.contributions.pretax',
+    savedMonthly: 'assets.added', totalSaved: 'assets',
     /* I */
     grossAnnualIncome: 'income.grossAnnualCents', employerMatch: 'income.sources[].employerMatch', capturingFullMatch: 'income.sources[].employerMatch',
     unemployment: 'income.sources[].benefit', incomeLow: 'income.variable', incomeHigh: 'income.variable', bufferMonths: 'income.variable',
+    payVaries: 'income.variable',
     variableWindow: 'income.variable', futureIncome: 'income.future', ledgerIncome: 'income.ledger',
     payCadence: 'income.cadence', nextPayday: 'income.cadence', takeHomeMonthly: 'income.takeHome',
     /* T */
     filingStatus: 'taxes.filingStatus', state: 'taxes.state', zip: 'taxes.zip', marginalRate: 'taxes.marginalRate',
-    otherPreTax: 'taxes.otherPreTax', withheld: 'taxes.withheld',
+    otherPreTax: 'taxes.otherPreTax', withheld: 'taxes.withheld', refundLastYear: 'taxes.refund',
     /* E */
     monthlyExpenses: 'expenses', rentMonthly: 'expenses.needs.accommodation',
     foodMonthly: 'expenses.needs.food', accommodationMonthly: 'expenses.needs.accommodation', transportationMonthly: 'expenses.needs.transportation',
     wantsMonthly: 'expenses.wants', therapyMonthly: 'expenses.wants.therapy', billsMonthly: 'expenses.log', payLaterDue: 'expenses.log',
+    spendingIncludesDebt: 'expenses.total.includesDebt', spendingIncludesSaving: 'expenses.total.includesSaving',
     monthsClosed: 'expenses.months', givingPct: 'expenses.giving', givingTarget: 'expenses.giving', floorMonthly: 'expenses.floor',
     sharedMonthly: 'expenses.shared', splitMode: 'expenses.shared', healthMonthly: 'expenses.insurance',
     /* you */

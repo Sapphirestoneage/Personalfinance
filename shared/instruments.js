@@ -100,7 +100,7 @@
     var D = lazy('Debt', '../engines/debt.js');
     if (!D || !tables || !tables.debtRules) return Money.incomplete('The debt engine is not loaded.', []);
     var debts = Schema.aggregatableDebts(household);
-    if (!debts.length) return Money.incomplete(household.meta && household.meta.hasDebt === false ? 'No loans \u2014 nothing to clear.' : 'Add what you owe to see when it clears.', ['totalDebt']);
+    if (!debts.length) return Money.incomplete(household.meta && household.meta.hasDebt === false ? 'No loans, so nothing to clear.' : 'Add what you owe to see when it clears.', ['totalDebt']);
     var sim = D.simulate(household, tables.debtRules, { strategyId: 'avalanche' });
     if (!Money.isOk(sim)) return sim;
     var nowMs = now === undefined ? Date.now() : now;
@@ -179,7 +179,7 @@
       var band = spec.band ? ratioRow(spec.band) : null;
       var result = results[spec.id];
       if (betweenJobs && !Money.isOk(result) && (result.missing || []).some(function (m) { return /income/i.test(m); })) {
-        result = Money.incomplete('Between jobs \u2014 nothing to measure against an income yet.', result.missing);
+        result = Money.incomplete('Between jobs, so there is no income to measure against yet.', result.missing);
       }
       /* The verdict used to be borrowed wholesale from the ratio row named
          in `band`, so the savings-rate instrument showed the CONTRIBUTED

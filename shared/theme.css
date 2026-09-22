@@ -1245,7 +1245,7 @@ a:hover { color: var(--sapphire-100); }
   padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md); background: var(--color-surface-raised); }
 .slaf-walk.is-dealt { border-color: var(--color-positive); padding: 0; }
-/* A dealt step is one line until opened (D-322). */
+/* A dealt step is one line until opened (D-331). */
 .slaf-walk-fold { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
   gap: var(--space-2) var(--space-3); padding: var(--space-2) var(--space-3); cursor: pointer;
   list-style: none; min-height: 44px; font-size: var(--text-sm); }
@@ -1640,7 +1640,7 @@ ol.own-dates .od-acts { display: flex; gap: var(--space-1); white-space: nowrap;
 html.is-compact { zoom: 0.86; }
 
 /* ---- The menu's dots say what they mean (D-317) --------------------------- */
-/* The top of the menu (D-326): a view of the whole app, above the groups. */
+/* The top of the menu (D-335): a view of the whole app, above the groups. */
 .slaf-menu-top { padding: var(--space-2) var(--space-3) 0; }
 .slaf-menu-top .slaf-menu-link.is-top { display: block; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md); background: var(--color-surface-raised); text-decoration: none; }
@@ -1662,6 +1662,18 @@ html.is-compact { zoom: 0.86; }
 /* ---- The ask can rest, or stop (D-317) ------------------------------------ */
 .slaf-ask .ask-more { margin: var(--space-2) 0 0; font-size: var(--text-xs); color: var(--color-text-faint); display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); }
 .slaf-ask .ask-more button { background: none; border: 0; padding: 0; min-height: 32px; font: inherit; font-size: var(--text-xs); color: var(--color-text-muted); cursor: pointer; text-decoration: underline; }
+
+/* ---- Open to the field, not just the room (D-323) ----
+   A link that names a field lands on the box itself: the row it sits in is
+   marked for a moment so the eye goes to the right place. Never red. */
+.slaf-landed { animation: slaf-land 2.4s ease-out 1; border-radius: var(--radius-sm); }
+@keyframes slaf-land {
+  0%, 55% { box-shadow: 0 0 0 2px var(--color-accent), 0 0 0 6px color-mix(in srgb, var(--color-accent) 22%, transparent); }
+  100% { box-shadow: 0 0 0 2px transparent, 0 0 0 6px transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .slaf-landed { animation: none; box-shadow: 0 0 0 2px var(--color-accent); }
+}
 
 /* ---- How old the numbers on this screen are (D-319) ---- */
 .slaf-age-host { max-width: var(--measure); margin: 0 auto; width: 100%; }

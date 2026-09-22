@@ -51,7 +51,7 @@
   #view-the-score section[id], #view-the-nine section[id], #view-savings-rate section[id],
   #view-every-ratio section[id], #view-quick-math section[id], #view-where-you-rank section[id] { scroll-margin-top: var(--space-4); }
 
-  /* ---- The radar on Every ratio (D-323): the front page's chart, shared ---- */
+  /* ---- The radar on Every ratio (D-332): the front page's chart, shared ---- */
   #view-every-ratio .radar { width: 100%; max-width: 420px; height: auto; display: block; margin: var(--space-3) auto 0; overflow: visible; }
   #view-every-ratio .radar .ring { fill: none; stroke: var(--color-border-active); stroke-width: .6; }
   #view-every-ratio .radar .ring-good { fill: none; stroke: var(--color-positive); stroke-width: .8; stroke-dasharray: 2 2; }
@@ -833,7 +833,7 @@
   <!-- ================ EVERY RATIO (was rooms/ratios.html) ================ -->
   <section id="view-every-ratio" hidden>
   <p class="slaf-lede">Every ratio the app can work out, by zone, with what each one blocks until it moves.</p>
-  <!-- THE RADAR (D-323): the same chart the front page folds away, drawn by
+  <!-- THE RADAR (D-332): the same chart the front page folds away, drawn by
        shared/charts.js radar; each spoke's name jumps to its row below. -->
   <section class="slaf-card" id="out-radar">
     <span class="slaf-eyebrow">All of it at once</span>
@@ -2298,7 +2298,7 @@
     }).join('');
   }
 
-  /* ---- The radar (D-323) -------------------------------------------------
+  /* ---- The radar (D-332) -------------------------------------------------
      The gate says which ratios mean anything for this household, the engine
      places each on its own band, shared/charts.js draws it, and the legend
      jumps to the row below. Nothing here is added up. */

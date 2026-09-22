@@ -16671,88 +16671,6 @@ and absent on older saves, which read as not demo and no days recorded.
 `node test/features.js`; the Runway, FIRE and Expenses rooms and the front
 page at 390px with the example numbers, the clear button, and a part-way
 household; clean console.
-## D-322 — A card's annual fee and the day it posts; a dealt walk step folds to a line
-
-**Why.** The owner, on the phone: a card's annual fee is a fact the debt
-list could not hold, and the fee's date is the one date on a card a person
-can still act on. On the same phone, a walk step already marked done kept a
-full card of buttons above the room the person had come for.
-
-**Decision.** `Schema.createDebt` carries `annualFeeCents` and
-`annualFeeOn` (null until asked, never "no fee"). `Debt.annualFee(debt,
-asOf)` in `engines/debt.js` is the one reader: the fee, and the next day it
-posts (the stored month and day, this year if still ahead, else next), with
-`soon` inside a 45-day window. `rooms/debt-payoff.html` asks both in the
-card-only part of the "Dates, limit & fee" fold, says the fee and its date
-on the fold's summary line, and warns on the card while the window is open.
-`shared/progress.js`: a walk step that is done or set aside renders as a
-`details` folded to one line (the tick, the step, the way on) and opens on a
-tap for the bar, Undo and the hub; an open step is unchanged.
-
-**Replaces or removes.** Two thirds of the walk card's height on every
-room whose step is behind you. Nothing else.
-
-**Stored shape.** `debts[].annualFeeCents`, `debts[].annualFeeOn`, absent on
-older saves and read as not asked.
-
-**Verified.** `node test/run.js` (the fee's next date across the year
-boundary, today, a fee with no date); the features and forms gates on Debt
-Payoff; a phone walk of the folded step at 360px.
-
-## D-323 — The radar is on the Scorecard too, drawn by one function
-
-**Why.** The owner asked where the spider chart went. It was under the
-front page's "The full panel" fold since D-096, and a chart of every banded
-ratio belongs on the page that lists every ratio.
-
-**Decision.** `shared/charts.js` gains `radar(r)`: the rings, spokes,
-shape, dots and numbers for a `Ratios.radar` result, one drawing. The front
-page calls it where it drew its own. `rooms/financial-snapshot.html` gains
-`#out-radar` at the top of the Every ratio reading: the chart, a legend
-whose names jump to the ratio's row below, the same sentence about what is
-below the range, and one line saying it is a view, not a score, with a link
-to The Score. The gate decides which spokes apply, as on the front page.
-The front page's copy stays folded where it was.
-
-**Replaces or removes.** Nothing; the front page's own drawing code, now
-the shared one.
-
-**Stored shape.** No change.
-
-**Verified.** `node test/run.js` (the chart's parts per spoke; both pages
-call the one function); the features gate on the Scorecard and the front
-page; render.
-
-## D-324 — The menu is on every page, and the arrangements are in it
-
-**Why.** On the map page there was no way out: no menu, no rooms list, no
-route anywhere except the links in the body. The menu mounted by replacing
-a page's back-link, and the map is the one page in the app without one, so
-it silently got nothing. The twenty arrangements had the same problem in
-reverse: reachable from one line of text on that page and nowhere else.
-
-**Decision.** `shared/progress.js` `mountHeader` no longer requires a
-back-link: with one it replaces it as before, without one it inserts the
-strip above the page's own `<header>`, where the button is looked for.
-The auto-mount on `DOMContentLoaded` runs for a page the registry cannot
-name; a redirect stub is skipped, being a doorway rather than a page. A
-page that is not a registry room takes the navigation and none of a room's
-furniture (no purpose line, no situation notice, no walk strip, no doors,
-no fold), and its hops are one way home rather than two invented
-neighbours. `atRoot` falls back to the path when the registry cannot place
-the page, so the menu's links climb out of `rooms/` correctly.
-`shared/registry.js`: the Home group gains a link to the Ledger's
-arrangements, so the twenty views are one tap away from anywhere.
-
-**Replaces or removes.** The map page's dead end. The line of text offering
-the arrangements stays where it is; it is no longer the only way to them.
-
-**Stored shape.** No change.
-
-**Verified.** `node test/run.js`; `node test/sidebar.js` (the three bars,
-the full room list and the arrangements on the map, the front page and a
-room; the map's single hop; no room furniture on it); render and features.
-
 ## D-320 — The Solar System, step 1: the levels, the recipes, the moons and their lints
 
 **Why.** The owner's master prompt (`docs/SOLAR-SYSTEM.md`) replaces the
@@ -16826,7 +16744,441 @@ gates. The Planets view at 390px with the example numbers: 17 of 161
 answered, six rows of ten bands, Assets opened to its bands and levels,
 clean console.
 
-## D-325 — Amendment 1, B2: consumer debt, the investment rate, and what is furthest off
+## D-322 — Every level is a control, and a tab says what finishing them unlocks
+
+**Why.** The owner opened a planet and could not tap a level they had not
+answered. Only levels whose facts happen to have an owner room were links,
+which is backwards: the ones worth opening are the ones not done. There was
+no way to see what a level was waiting for, and no way to see what answering
+it would buy.
+
+**Decision.** Two halves, on two tabs inside the Ledger's Planets view.
+
+*The planets.* Every level is a button, 44px tall, carrying its id. Tapping
+one opens underneath it: what answering gives you, which readings it unlocks
+(labels read from `data/recipes.json`, never retyped), where to find the
+answer and roughly how long it takes, then every fact the level collects with
+its state, its value when it is in, and a link to the room that owns it. A
+fact the app has nowhere to put yet says "nowhere to type it yet", and a
+level where none of them can be entered says so in a sentence rather than
+looking broken. A filter shows all the levels or only the ones not done.
+
+*What unlocks.* `shared/solar.js` gains `metrics`, `tiers` and `answered`:
+a reading is ready when every level it needs is answered and waiting when one
+is not, naming which, so nothing is ever locked or N/A. The tab leads with
+the levels that free the most readings ("unlocks 26"), then lists all 184 by
+band, each ready or naming what it waits on. Every level named there is a
+button that opens that level on the planets tab.
+
+**Replaces or removes.** The level row that was a link only when one of its
+fields had an owner room.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (34,745), `node test/solar.js` (5,053), the
+other suites and the six browser gates. At 390px with the example numbers: 28
+levels tappable on You, the Not done filter showing 26, a level with an owner
+room offering its link and one without saying why, the unlocks tab leading
+with take-home pay at 26 readings, and a tap there opening that level on the
+planets tab. Clean console.
+
+## D-323 — A link that names a field opens to the field, not to the room
+
+**Why.** A level said where to answer a fact and the link dropped you at the
+top of a long room, sometimes with the question three screens down. The owner:
+"open it to the field, I don't want it to just be like to the screen."
+
+**Decision.** `shared/progress.js` reveals whatever the hash names, in every
+room. It waits for the box rather than the section, since most rooms draw
+their inputs from the household after load; it opens a `<details>` around the
+target; it scrolls the field under whatever the room pins to the top, measured
+rather than guessed; and it puts the cursor in the box unless the anchor names
+a whole view, with the caret after a saved figure rather than over it. `shared/theme.css` rings the row for 2.4 seconds, one clock per
+landing, held still for reduced motion. A card that draws or collapses late
+drags the field off the top, so a `ResizeObserver` puts it back in the same
+frame for six seconds, and a timer behind it covers browsers without one. The
+first wheel, touch, key or click ends the landing, and a second link takes it
+over. `rooms/start.html` gains the one missing id (`q-unemployed`).
+
+**Replaces or removes.** Nothing goes away: the same links now land on the
+question instead of the room, so the level's "where to answer" is a single tap
+rather than a hunt.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (34,938), `node test/solar.js`, the other
+suites and the six browser gates, `test/forms.js` included: landing on an
+answered question still leaves the figure intact when you type. New gate `test/anchors.js` opens all 70 field
+links in a phone-sized browser: 66 checks pass, 63 fields land near the top,
+7 are gated away for the example household. Clean console.
+
+## D-324 — A level is answered where it is asked
+
+**Why.** The Planets screen could tell you a level was not done and where the
+fact lived, and then sent you to another room to type it. Band 1 is meant to
+take under two minutes; three rooms and three trips back is not that.
+
+**Decision.** In `rooms/ledger.html`, the open level's panel puts a box beside
+every fact whose owner takes a plain written answer: 48 of the 274 facts the
+levels collect, 11 of band 1's 24. The box is `Ask.control` from
+`shared/ask.js`, so the unit, the period select, the percent-slip question and
+the parse are the ones the Ledger's own facts view uses; `Ask.typed` (new, the
+inverse of `Ask.parse`) fills it with what is already stored. The answer is
+written with `Ownership.write`, so it lands in the one place that fact lives
+and every room reads the same copy. A fact that needs a list picked first
+(which debt, which account) or a whole form keeps its link to the room that
+owns it, now reading "the whole room". `data/states.json` supplies the one
+enum the rows do not name themselves.
+
+**Replaces or removes.** The trip to another room for eleven of band 1's
+questions. Nothing is added to the household: no field, no screen, no store.
+
+**Stored shape.** No change. The nine band-1 facts that have no home yet
+(a rough total saved, what you add a month, the high-interest balance, last
+year's refund, whether pay is steady, whether the spending total includes debt
+or saving, and the two tax confirmations) still have none; they are the next
+step.
+
+**Verified.** `node test/run.js` (34,941), `node test/solar.js` (5,062) with
+nine new lints, `node test/forms.js` (701) with a new case that types into the
+panel, saves, and checks the box survives its own save, and the other suites
+and gates. LIVE-FORM: `#sky-open` is guarded with `shared/liveform.js`, and
+the room is now marked as two readings so the guard and the built-once views
+each hold where they belong.
+
+## D-325 — The six band-1 facts that had nowhere to live
+
+**Why.** Band 1 is meant to take under two minutes and light every Tier 1
+reading. Seven of its 24 facts could not be entered anywhere in the app, so
+the first two minutes ended in a dead end.
+
+**Decision.** Six of them become facts of the household, in one new block,
+`household.sketch`: whether pay swings, whether the typed spending total has
+debt payments or saving inside it, what is added a month, roughly how much is
+owed above 8%, and last year's refund. Each gets a row in
+`data/ledger-rows.json`, a reader and a writer in `shared/ownership.js` owned
+by the Ledger, a DAITE path, a sphere, and a value in the example household.
+Each replaces a guess the app was making: the cushion target inferred steady
+or variable pay from the job type, the gap assumed the spending total was
+clean, the savings rate assumed the whole gap was saved, and the high-interest
+flag needed every debt itemised first.
+
+The seventh, the rough total saved (A1), is NOT stored: `Schema.
+savedAndInvestedCents` adds cash and investments, the two parts the app
+already holds, and the Planets screen says "adds up from" rather than offering
+a box that would make a second copy of one number.
+
+A rough figure never beats the detail. Where both exist, the reader takes the
+itemised debts, the logged contributions, the tax room.
+
+An answer takes away the questions it settles. `shared/levers.js` asks
+`sketch.payVaries` before it guesses variable pay from the job type, and a
+level's field can carry its own `appliesWhen` (`shared/solar.js`
+`fieldApplies`), so saying pay is steady drops the low and high month from I3
+and the level is done with the one question that is left.
+
+**Replaces or removes.** No screen and no room. Band 1's dead end, and four
+inferences the app was making without asking.
+
+**Stored shape.** `household.sketch` is new: six keys, each `null` until
+answered, created empty by `Schema.createHousehold`. A saved household from
+before this has no `sketch` key and reads as six unanswered facts, which is
+what they are. Nothing else moved. `dnd/shared/schema.js` is re-vendored.
+
+**Verified.** `node test/run.js` (35,088), `node test/solar.js` (5,099) with
+twenty-three new lints, the D&D suite, export, xlsx, lane 2 and the browser gates.
+In a phone-sized browser on the Planets screen: A3 typed and saved, both E3
+answers tapped, the levels marking themselves answered, and A1 reading "adds
+up from Cash & savings and Investments + retirement". Band 1 is now 18 of 24
+answerable in place, the rest being the two list totals (D1, D2), gross pay
+(per income source) and the two tax confirmations, which confirm rather than
+collect.
+
+## D-326 — The em dash the first sweep could not see
+
+**Why.** D-321 promised no em dash anywhere the app can show one, and its
+check read every shipped file for the character. A string literal can spell
+the same character `\u2014`, and sixty-one of them did: "Not drawing down
+— a number for a retiree", "Both — a job and my own work", the
+unemployment run-out line, the Runway's four health and life lines, the
+Career Move bracket note, and eight reference tables.
+
+**Decision.** Every one is rewritten the way D-321 rewrote the rest: the mark
+becomes a comma, a colon or a full stop, and punctuation attaches to the word
+before it. Three placeholders that WERE an em dash now read the app's own
+words: the Goals room's blank figure and its empty note use `Money.NOT_YET`,
+the Ledger's level badge starts empty and is filled by `paintLevels`, and a
+field marked not applicable shows a middle dot rather than a dash. The check
+in `test/run.js` now looks for the character, the `\u2014` escape and the
+three HTML entities, in the same files as before.
+
+**Replaces or removes.** Nothing. This is the rest of D-321.
+
+**Stored shape.** No change. `dnd/shared/schema.js` is re-vendored.
+
+**Verified.** `node test/run.js` (35,094), `node test/solar.js`, the D&D
+suite, export, xlsx, lane 2 and the seven browser gates. The check fails on a
+reintroduced escape: tried it, saw it name the file and the character.
+
+## D-327 — The thirty readings of Tier 1, worked out
+
+**Why.** The Planets screen could say a reading was ready and never say what
+it read. A person who answered band 1 got a tick, not a figure.
+
+**Decision.** `engines/recipes.js` is new: one function per reading, for the
+thirty of Tier 1. The rule it is built on is ONE FORMULA, ONE FUNCTION, so
+most of it is pointers. The net worth, the FI number and the progress toward
+it are `engines/tier0.js`. The leverage, the income multiple and the FI date
+are rows of `engines/ratios.js`. The wealth-accumulation ratio is
+`engines/benchmarks.js`. The Coast target discounts the FI number with
+`Coast.grow`, the app's one compounding function. Only the readings with no
+home anywhere are written out here, each a line of arithmetic over figures the
+app already holds: the leak rate, the spend rate, freedom bought per month,
+the refund share, years of expenses saved, the high-interest share, the rough
+payoff time and the implied and state tax rates.
+
+`Schema.cleanMonthlySpendingCents` (new) applies the E3 answer in one place:
+if the typed monthly total already had the debt payments or the saving inside
+it, they come out first. `engines/tier0.js` reads it everywhere it used to
+read the raw total, so the gap, the savings rate, the cushion and the FI
+number each count a dollar once. Unanswered, it is the total as typed, which
+is what every reader assumed before the question existed.
+
+The unlocks tab shows the figure beside the reading. A reading the app can
+work out is shown even when the level that formally collects the fact is not
+answered, because the app may hold it another way (take-home estimated from
+gross); the levels still open are then named as what SHARPENS it, rather than
+what it waits for. The example household reads 27 of the 30, and the three
+left name the stop age nobody has picked.
+
+**Replaces or removes.** Nothing. No new stored field and no new screen.
+
+**Stored shape.** No change. `dnd/engines/tier0.js` and
+`dnd/shared/schema.js` are re-vendored.
+
+**Open, for the owner.** The app's FI date is built on the gap, which is what
+COULD be saved. Band 1 now also asks what IS saved (A3), and for the example
+household the two differ by $705 a month. The FI date still uses the gap, so
+nothing moved under anyone today; whether it should use the actual figure is
+the owner's call, and it is item 1 in STATUS.
+
+**Verified.** `node test/run.js` (35,122), `node test/solar.js` (5,141) with
+every Tier 1 figure checked by hand against the example household, the D&D
+suite, export, xlsx, lane 2 with a new property file for the engine, and the
+seven browser gates. Lane 2 caught a real one: `value('valueOf')` walked the
+prototype chain and answered; it now answers null, as it does for any reading
+this file does not know.
+
+## D-328 — A level that confirms, and a card that says what the answer bought
+
+**Why.** Two of band 1's levels do not collect anything: they show a figure
+the app worked out and ask whether it looks right. They had no way to be
+answered, so band 1 could never be finished. And answering anything told you
+nothing about what it just bought.
+
+**Decision.** Two halves.
+
+*The confirm levels.* `data/levels.json` gains a field kind, `confirm`: it
+names the reading it asks about (`confirms`) and collects nothing.
+`shared/solar.js` counts such a field answered when `meta.confirmedAt` carries
+the level's id, which is what `Spine.confirm` writes, and no figure changes.
+The Planets panel shows the reading's own figure (the rough state tax rate,
+the implied tax rate) and one button, "Yes, that looks right". T1 and T2 are
+the two, and band 1 is now 20 of its 24 facts answerable in place; the last
+four are the two debt totals, which come from adding a debt, gross pay, which
+belongs to an income source, and the rough total saved, which the app adds up.
+
+*The card.* A save or a confirm compares the readings the app could work out
+before and after, and names what is new: at most three, with their figures,
+and "and N more" beyond that. It goes on its own after nine seconds.
+
+**Replaces or removes.** Nothing. No new stored field, no new screen.
+
+**Stored shape.** No change: `meta.confirmedAt` already existed, and this puts
+a level id beside the field ids already in it.
+
+**Verified.** `node test/run.js` (35,172), `node test/solar.js` (5,152) with
+ten new lints, the D&D suite, export, xlsx, lane 2 and the seven browser
+gates. In a phone-sized browser: T1 showing 4.3% and T2 showing 19.0%, both
+confirmed with one tap and the level marking itself answered, and a card
+reading "That answer worked out 1 new reading, FI number $945,000" after the
+month's spending was typed.
+
+## D-329 — The date both ways, and the twenty-three of Tier 2
+
+**Why.** The owner's call on the question D-327 left open: "add it as a
+hypothetical, show both." And band 2 had its facts and its levels but none of
+its readings.
+
+**Decision.** Two halves.
+
+*The date, twice.* `fiDate` keeps its meaning and its value: the plan's date,
+built on the gap, which is the money that COULD be saved. Beside it,
+`engines/recipes.js` attaches `also`, the date you reach if you keep adding
+exactly what you add now (A3), through `Projection.yearsToTargetCents`, the
+same loop the app's own date uses. Neither replaces the other. For the example
+household they read 2048 and 2060, and the twelve years between them are the
+leak, in years. The screen renders any reading's second answer the same way.
+
+*Tier 2.* The twenty-three readings of band 2, by the rule of D-327: the app's
+own function wherever there is one. The runway, the bridge years and the
+loan-to-value are rows of `engines/ratios.js`; the next slot for your money is
+`engines/foo.js`, named in the ladder's own words rather than its key. The
+rest are arithmetic over figures the app holds: the true monthly spend with
+the year's irregular costs folded in, the cushion target and how far the cash
+covers it, the match captured and what is left on the table, the share of what
+you own that is reachable, the must-pay rate, the month bucket by bucket, the
+home's share of net worth, the trap ratio, and the four "against your income"
+multiples.
+
+Three readings say their fact has nowhere to be entered yet (the credit band,
+the extra put against debt, and how the household is arranged), and one
+borrows: the cushion target uses the whole month until the bare-bones month
+(E5, band 4) is entered, and says so.
+
+**Replaces or removes.** Nothing. No new stored field, no new screen.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (35,208), `node test/solar.js` (5,182) with
+every Tier 2 figure checked by hand against the example household, the D&D
+suite, export, xlsx, lane 2 and the seven browser gates. On screen with the
+example numbers: the FI date reading "2048" and "2060 at what you save now",
+38 readings worked out, and band 2 showing the match capture at 66.7%, $720 a
+year left on the table, a $9,450 cushion target and every asset reachable.
+Two things the tests caught and the engine now gets right: solo is not the
+same as unasked, so the household mode waits to be told rather than reading
+"on your own"; and the liquidity rate is reachable over total, not the app's
+`liquidityRatio`, which is a different reading with a similar name.
+
+## D-330 — A band is a run of questions, not a hunt
+
+**Why.** The owner: "when I click on things it is very slow and doesn't
+immediately close. I want it to open the next thing immediately basically and
+automatically until the band or tier is done and then it's like congrats on
+completing x here is what you unlocked."
+
+**Decision.** Two things, and the first is the cause of the second.
+
+*One tap touches one level.* Opening a level used to redraw the whole planet,
+every band and every level, and then slide the page under the finger with a
+smooth scroll. The arithmetic was never the problem: every figure on the
+screen computes in single-digit milliseconds. The tap measured 940ms because
+the thing being tapped was moving, and a browser waits for that. Now
+`showLevel` closes the panel that is open and builds the one asked for under
+its own button; nothing else is rebuilt, and the page scrolls only when the
+level would otherwise be off screen, never smoothly. The same tap now lands in
+about 50ms.
+
+*A band runs.* Answering the last fact of a level opens the next level of that
+band by itself, with the cursor in its first box, focused inside the same tap
+so a phone's keyboard stays up. A level that asks two facts keeps you there
+until both are in. When the band has none left, the run ends with a card: the
+band and planet by name, the readings it bought with their figures, and a
+button into the next band.
+
+One more the gates found on the way. A figure typed and not yet saved was
+replaced by the stored one whenever anything else in the app repainted this
+list, a third of a second after the finger left the box. It is now carried
+across the rebuild and put back: what you typed is yours until you save it or
+clear it.
+
+**Replaces or removes.** The hunt: closing a level, reading the list, finding
+the next one and opening it. Four taps become none.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (35,296), `node test/solar.js` (5,190), the
+D&D suite, export, xlsx, lane 2 and now eight browser gates. `test/flow.js` is
+new: it walks band 1 on Expenses as a person does, holds every tap under
+400ms, and checks that each answer opens the next question with the cursor in
+it, that a two-fact level waits for both, and that the run ends with a card
+naming the band, what it bought and the way on. Measured on the walk: opening
+a planet 87ms, a level 54ms, closing 47ms, saving and handing over 113ms.
+
+## D-331 — A card's annual fee and the day it posts; a dealt walk step folds to a line
+
+**Why.** The owner, on the phone: a card's annual fee is a fact the debt
+list could not hold, and the fee's date is the one date on a card a person
+can still act on. On the same phone, a walk step already marked done kept a
+full card of buttons above the room the person had come for.
+
+**Decision.** `Schema.createDebt` carries `annualFeeCents` and
+`annualFeeOn` (null until asked, never "no fee"). `Debt.annualFee(debt,
+asOf)` in `engines/debt.js` is the one reader: the fee, and the next day it
+posts (the stored month and day, this year if still ahead, else next), with
+`soon` inside a 45-day window. `rooms/debt-payoff.html` asks both in the
+card-only part of the "Dates, limit & fee" fold, says the fee and its date
+on the fold's summary line, and warns on the card while the window is open.
+`shared/progress.js`: a walk step that is done or set aside renders as a
+`details` folded to one line (the tick, the step, the way on) and opens on a
+tap for the bar, Undo and the hub; an open step is unchanged.
+
+**Replaces or removes.** Two thirds of the walk card's height on every
+room whose step is behind you. Nothing else.
+
+**Stored shape.** `debts[].annualFeeCents`, `debts[].annualFeeOn`, absent on
+older saves and read as not asked.
+
+**Verified.** `node test/run.js` (the fee's next date across the year
+boundary, today, a fee with no date); the features and forms gates on Debt
+Payoff; a phone walk of the folded step at 360px.
+
+## D-332 — The radar is on the Scorecard too, drawn by one function
+
+**Why.** The owner asked where the spider chart went. It was under the
+front page's "The full panel" fold since D-096, and a chart of every banded
+ratio belongs on the page that lists every ratio.
+
+**Decision.** `shared/charts.js` gains `radar(r)`: the rings, spokes,
+shape, dots and numbers for a `Ratios.radar` result, one drawing. The front
+page calls it where it drew its own. `rooms/financial-snapshot.html` gains
+`#out-radar` at the top of the Every ratio reading: the chart, a legend
+whose names jump to the ratio's row below, the same sentence about what is
+below the range, and one line saying it is a view, not a score, with a link
+to The Score. The gate decides which spokes apply, as on the front page.
+The front page's copy stays folded where it was.
+
+**Replaces or removes.** Nothing; the front page's own drawing code, now
+the shared one.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (the chart's parts per spoke; both pages
+call the one function); the features gate on the Scorecard and the front
+page; render.
+
+## D-333 — The menu is on every page, and the arrangements are in it
+
+**Why.** On the map page there was no way out: no menu, no rooms list, no
+route anywhere except the links in the body. The menu mounted by replacing
+a page's back-link, and the map is the one page in the app without one, so
+it silently got nothing. The twenty arrangements had the same problem in
+reverse: reachable from one line of text on that page and nowhere else.
+
+**Decision.** `shared/progress.js` `mountHeader` no longer requires a
+back-link: with one it replaces it as before, without one it inserts the
+strip above the page's own `<header>`, where the button is looked for.
+The auto-mount on `DOMContentLoaded` runs for a page the registry cannot
+name; a redirect stub is skipped, being a doorway rather than a page. A
+page that is not a registry room takes the navigation and none of a room's
+furniture (no purpose line, no situation notice, no walk strip, no doors,
+no fold), and its hops are one way home rather than two invented
+neighbours. `atRoot` falls back to the path when the registry cannot place
+the page, so the menu's links climb out of `rooms/` correctly.
+`shared/registry.js`: the Home group gains a link to the Ledger's
+arrangements, so the twenty views are one tap away from anywhere.
+
+**Replaces or removes.** The map page's dead end. The line of text offering
+the arrangements stays where it is; it is no longer the only way to them.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js`; `node test/sidebar.js` (the three bars,
+the full room list and the arrangements on the map, the front page and a
+room; the map's single hop; no room furniture on it); render and features.
+
+## D-334 — Amendment 1, B2: consumer debt, the investment rate, and what is furthest off
 
 **Why.** Amendment 1 lists ratios the live tool computes and the Solar
 System spec dropped. Audited against `engines/ratios.js`, most were already
@@ -16860,11 +17212,11 @@ from consumer debt, cash excluded from the investment rate, the ranking
 ordered and capped at three, a comfortable ratio never ranked, the empty
 household's silence named). The radar now plots eighteen.
 
-## D-326 — The menu has a top, and the Planets are in it
+## D-335 — The menu has a top, and the Planets are in it
 
 **Why.** The Planets view is a way of seeing the whole app rather than a
 room among rooms, and it sat inside the Ledger's hats, three taps down. The
-menu reaches every page since D-324, which makes it the one place a view can
+menu reaches every page since D-333, which makes it the one place a view can
 be put that is always one tap away.
 
 **Decision.** `shared/registry.js` gains `TOP_LINKS`, read through
@@ -16885,6 +17237,7 @@ unchanged, and so is every group.
 fold, the href climbs out of `rooms/` correctly, the search finds it by a
 word for it and hides it for an unrelated one, and the four extra links read
 in order); the link followed on a phone lands on the view with it shown.
+
 
 ---
 

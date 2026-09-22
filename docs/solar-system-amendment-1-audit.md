@@ -34,7 +34,7 @@ the difference, not to start again.
 
 ## Real gaps, in the order they are worth doing
 
-1. ~~**B2, five ratios.**~~ **Done, D-325**, with two corrections to the
+1. ~~**B2, five ratios.**~~ **Done, D-334**, with two corrections to the
    amendment. `consumerDebtRatio`, `investmentRate` and
    `furthestFromNormal` are built. `basicLiquidity` was already live as
    `liquidityRatio` (liquid assets over the full month), so it was not built

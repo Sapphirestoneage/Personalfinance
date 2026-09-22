@@ -200,6 +200,18 @@
     if (u === 'percent') return row.id === 'contributionPercent' ? n : (n > 1 ? Math.round(n * 100) / 10000 : n);
     return n;
   }
+  /** The inverse of parse: a stored value as it is TYPED into a box, never
+      as it is read in a sentence. A box shows 1200, not "$1,200 a month",
+      so correcting a figure starts from what was entered. */
+  function typed(row, v, D) {
+    D = D || deps();
+    if (!row || !D.Money.isEntered(v)) return '';
+    var u = row.unit;
+    if (u === 'cents') return v % 100 ? String((v / 100).toFixed(2)) : String(v / 100);
+    if (u === 'rate' || (u === 'percent' && row.id !== 'contributionPercent')) return String(Math.round(v * 10000) / 100);
+    if (u === 'bool') return v ? 'true' : 'false';
+    return String(v);
+  }
   /* Name the item (D-317). "What each account or thing is worth for this
      one" named nothing when the account had no label; now the institution
      and the account type stand in ("Example Bank · 401(k)"), then the
@@ -250,7 +262,7 @@
     card.className = 'slaf-card slaf-ask';
     card.id = 'slaf-ask';
     card.setAttribute('data-ask-row', p.row.id);
-    var q = p.item ? p.row.label + ' \u2014 ' + itemLabel(p.item) : p.row.label;
+    var q = p.item ? p.row.label + ', ' + itemLabel(p.item) : p.row.label;
     var more = p.item && p.remaining > 1 ? ' (' + (p.remaining - 1) + ' more ' + (p.remaining - 1 === 1 ? 'asks' : 'ask') + ' the same after this)' : '';
     card.innerHTML = '<span class="slaf-eyebrow">One question this room needs</span>'
       + '<p class="ask-q">' + esc(q) + '<span class="ask-why"> · unlocks ' + esc(p.row.unlocks) + esc(more) + '</span></p>'
@@ -388,6 +400,6 @@
     return ensure().then(function (t) { return mountCard(roomId, host, t); }).catch(function () { return null; });
   }
 
-  return { pick: pick, parse: parse, slip: slip, toRowPeriod: toRowPeriod, unitHtml: unitHtml, parked: parked, quiet: quiet, rest: rest, retire: retire, askOff: askOff, itemLabel: itemLabel, REST_DAYS: REST_DAYS, mount: mount, ensure: ensure,
+  return { pick: pick, parse: parse, typed: typed, slip: slip, toRowPeriod: toRowPeriod, unitHtml: unitHtml, parked: parked, quiet: quiet, rest: rest, retire: retire, askOff: askOff, itemLabel: itemLabel, REST_DAYS: REST_DAYS, mount: mount, ensure: ensure,
     control: function (row) { return control(row, deps()); }, esc: esc, ASKABLE_UNITS: ASKABLE_UNITS, ENUM_LABELS: ENUM_LABELS };
 });
