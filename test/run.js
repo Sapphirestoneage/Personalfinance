@@ -16870,6 +16870,91 @@ section('Every question in the Planets can be answered (D-337)');
     /function showLevelAnswer/.test(page) && /Solar\.levelState\(lv, Spine\.getProfile\(\)\)/.test(page));
 })();
 
+section('The planets dashboard (D-338)');
+
+(function () {
+  /* The owner: "I want there to be like a planet dashboard with a ton of data
+     visualizations and metrics and percentages with everything clearly
+     labeled." The rule the panel is held to: every figure on it is read from
+     an engine that already exists, every bar carries its own number in words,
+     and a share of nothing says "not yet" rather than 0%. */
+  const Charts = require(path.join(ROOT, 'shared/charts.js'));
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+
+  checkTrue('the Planets screen has a dashboard tab of its own',
+    /data-tab="dash"/.test(page) && /id="sky-dash"/.test(page) && /function drawDash/.test(page));
+  checkTrue('it counts facts, not just levels, and says which it means',
+    /function factCounts/.test(page) && /Questions answered/.test(page) && /Levels answered/.test(page));
+  checkTrue('the headline is a ring with the share in the middle',
+    /Charts\.donut\(/.test(page) && /of the questions/.test(page));
+  checkTrue('every planet and every band gets a labelled bar',
+    /function planetRows/.test(page) && /function bandRows/.test(page) && /Charts\.bars\(/.test(page));
+  checkTrue('the readings the app can already make are listed with their figures',
+    /function readyReadings/.test(page) && /dash-reads/.test(page));
+  checkTrue('each ratio is drawn against its own band, indexed to the edge',
+    /function ratioRows/.test(page) && /r\.value \/ edge/.test(page) && /marker: \{ at: 1/.test(page));
+  checkTrue('and prints the real figure beside the bar, not the index',
+    /display: ratioFigure\(r\)/.test(page));
+  checkTrue('the verdict is a word as well as a colour',
+    /'in range'/.test(page) && /'watch'/.test(page) && /'outside'/.test(page));
+  checkTrue('the shape is the same radar the Scorecard draws, from the same engine',
+    /Ratios\.radar\(h, TABLES/.test(page) && /Charts\.radar\(rad\)/.test(page));
+  checkTrue('nothing on it is worked out in the room: Solar, Recipes and Ratios do the reading',
+    /Solar\.overall\(h\)/.test(page) && /Solar\.tiers\(h\)/.test(page) && /Solar\.metrics\(h\)/.test(page));
+  checkTrue('a level that frees readings in three tiers is counted once, not three times',
+    /freed\[b\.id\] = \(freed\[b\.id\] \|\| 0\) \+ b\.unlocks/.test(page));
+  checkTrue('a label on a bar wraps rather than ending in an ellipsis',
+    /#sky-dash \.slaf-bars \.lbl \{[^}]*white-space: normal/.test(page));
+
+  /* A share of nothing is not zero: with no questions that apply, the ring
+     and the tiles say "not yet". */
+  const pctWords = (function () {
+    const m = /function pctWords\(part, whole\) \{([^}]*)\}/.exec(page);
+    checkTrue('the dashboard has one function for a share in words', !!m);
+    return m ? new Function('part', 'whole',
+      'function pct(p, w){ return w > 0 ? Math.round(p / w * 100) : null; }' + m[1]) : null;
+  })();
+  if (pctWords) {
+    check('a share of nothing reads as not yet', pctWords(0, 0), 'not yet');
+    check('and nothing answered out of a hundred is 0%', pctWords(0, 100), '0%');
+    check('and all of them is 100%', pctWords(7, 7), '100%');
+    check('and a part is rounded to a whole number', pctWords(1, 3), '33%');
+  }
+
+  /* The shared bar takes a figure of its own, which is what lets eighteen
+     measures of different scale share one axis honestly. */
+  const bullet = Charts.bars({
+    rows: [{ label: 'Debt-to-income', note: 'healthy under 36.0% \u00b7 in range', value: 0.14,
+      display: '5.1%', color: 'var(--color-positive)',
+      zones: [{ from: 0, to: 1, color: 'var(--color-surface-raised)' }],
+      marker: { at: 1, label: 'the edge' } }],
+    max: 2, format: function (v) { return v.toFixed(2); }
+  });
+  checkTrue('a bar row prints the figure it was given', /5\.1%/.test(bullet));
+  checkTrue('and never the index it plotted', !/0\.14/.test(bullet));
+  checkTrue('the band it should sit inside is drawn behind it', /<u style/.test(bullet));
+  checkTrue('and the edge of that band is marked', /<b style/.test(bullet));
+  const plain = Charts.bars({ rows: [{ label: 'One', value: 2 }], format: function (v) { return '$' + v; } });
+  checkTrue('a row with no figure of its own still formats the plotted one', /\$2/.test(plain));
+  const blank = Charts.bars({ rows: [{ label: 'One', value: null }] });
+  checkTrue('and a row with nothing says not yet, never 0', /not yet/.test(blank) && !/>0</.test(blank));
+
+  /* The radar needs its own svg and its own styles, in one place. */
+  checkTrue('the dashboard wraps the radar shapes in an svg with the same viewBox',
+    /<svg class="radar" viewBox="0 0 120 120"/.test(page));
+  const theme = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  checkTrue('and the radar has shared styles, so a third page does not copy them',
+    /\.radar \.ring \{/.test(theme) && /\.radar \.shape \{/.test(theme) && /\.radar \.num \{/.test(theme));
+
+  /* The load-order bug the dashboard found: the Statement captures Fire at
+     load time, so fire.js has to come first or every reading that reaches
+     the Statement throws. */
+  const fireAt = page.indexOf('engines/fire.js');
+  const stmtAt = page.indexOf('engines/statement.js');
+  checkTrue('fire.js loads before statement.js on the Ledger', fireAt > 0 && fireAt < stmtAt,
+    'fire at ' + fireAt + ', statement at ' + stmtAt);
+})();
+
 section('No em dash anywhere the app can show one (D-321)');
 
 (function () {

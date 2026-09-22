@@ -1687,3 +1687,18 @@ html.is-compact { zoom: 0.86; }
 .slaf-demo { font-size: var(--text-xs); line-height: var(--leading-normal, 1.5); color: var(--color-text-muted); }
 .slaf-demo b { color: var(--color-text); }
 .slaf-linkbtn { background: none; border: 0; padding: 0; font: inherit; color: var(--color-accent-hover); text-decoration: underline; cursor: pointer; }
+
+/* ---- The radar (D-332, shared since D-338) --------------------------------
+   shared/charts.js draws the shapes; this dresses them. The two pages that
+   had a radar first carry their own scoped copies of these rules, which are
+   more specific and still win there; any page that draws one from here on
+   gets it from this file rather than copying the block a third time, which
+   is how the Planets dashboard first drew a radar with an invisible web and
+   dark-on-dark numbers. */
+.radar { width: 100%; max-width: 420px; height: auto; display: block; margin: var(--space-3) auto 0; overflow: visible; }
+.radar .ring { fill: none; stroke: var(--color-border-active); stroke-width: .6; }
+.radar .ring-good { fill: none; stroke: var(--color-positive); stroke-width: .8; stroke-dasharray: 2 2; }
+.radar .spoke { stroke: var(--color-border-active); stroke-width: .4; }
+.radar .shape { fill: rgba(46, 111, 232, .28); stroke: var(--color-accent); stroke-width: 1.2; }
+.radar .dot { stroke: var(--ink-900); stroke-width: .5; }
+.radar .num { fill: var(--color-text-faint); font-size: 4.5px; font-family: var(--font-body); }

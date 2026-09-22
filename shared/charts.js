@@ -255,10 +255,15 @@
       }).join('');
       var marker = r.marker && num(r.marker.at)
         ? '<b style="left:' + ((anyNeg ? 50 : 0) + Math.max(0, Math.min(1, r.marker.at / maxAbs)) * (anyNeg ? 50 : 100)) + '%" title="' + esc(r.marker.label || '') + '"></b>' : '';
+      /* A row may print a figure of its own instead of the plotted one: a
+         bullet bar draws how far a ratio sits from its band's edge, which is
+         the only honest way to put measures of different scale on one axis,
+         and then says the real number beside it (D-338). */
+      var shown = v === null ? (r.empty || 'not yet') : (r.display !== undefined && r.display !== null ? r.display : format(v));
       return '<div class="row' + (v === null ? ' is-empty' : '') + '">'
         + '<span class="lbl">' + esc(r.label) + (r.note ? '<small>' + esc(r.note) + '</small>' : '') + '</span>'
         + '<span class="track">' + zones + (v === null ? '' : '<i style="left:' + left + '%;width:' + w + '%;background:' + color + '"></i>') + marker + '</span>'
-        + '<span class="val">' + (v === null ? esc(r.empty || 'not yet') : esc(format(v))) + '</span></div>';
+        + '<span class="val">' + esc(shown) + '</span></div>';
     }).join('');
     return '<div class="slaf-chart slaf-bars' + (anyNeg ? ' has-negative' : '') + '">' + html + '</div>';
   }

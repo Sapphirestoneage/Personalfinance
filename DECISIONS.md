@@ -17312,6 +17312,46 @@ household and all 161 that apply to the example household offer a way to
 answer, none says "nowhere to type it yet", and one fact of every kind saves
 and survives a reload.
 
+## D-338 — The planets dashboard: what is answered, what it bought, where each reading sits
+
+**Why.** The owner: "I want there to be like a planet dashboard with a ton of
+data visualizations and metrics and percentages with everything clearly
+labeled." The Planets screen could say how many levels were answered and
+nothing else: no shape to the progress, and no sight of the figures the
+answers had already bought.
+
+**Decision.** A third tab on `rooms/ledger.html#planets`, beside the planets
+and what unlocks. Six panels, in the order the questions get asked: how far in
+you are (a ring and four tiles, each with its count and its share); answered by
+planet; answered by band; readings ready by tier; every reading the app can
+already make, with its figure; each reading against its own normal range; the
+shape of it as the radar; and the levels that free the most readings next.
+Every figure is read from an engine that already exists, `shared/solar.js`,
+`engines/recipes.js` and `engines/ratios.js`; nothing is worked out in the
+room. `shared/charts.js` gains one thing: a bar row may carry a `display`,
+the real figure, so eighteen measures of different scale can share one axis by
+plotting each against the edge of its own band while printing its own number.
+
+**Replaces or removes.** Nothing is removed: the dashboard reads what the other
+two tabs already hold, and the Scorecard's radar is drawn by the same function
+so the two can never disagree. The freeze holds: no new room, no new field, no
+new vocabulary.
+
+**Stored shape.** No change. The dashboard writes nothing.
+
+**Two things it found.** `engines/statement.js` captures `Fire` at load time
+and `rooms/ledger.html` loaded `fire.js` after it, so every reading that
+reached the Statement threw on that page; fire.js now loads first. The radar's
+styles lived only in the two pages that drew one, so a third page got an
+invisible web; they are in `shared/theme.css` now, with those two pages
+keeping their more specific copies.
+
+**Verified.** `node test/run.js` 35817 and `node test/flow.js` 38, including
+that every bar carries its own figure, that a share of nothing reads "not
+yet" rather than 0%, and that a level named on the dashboard opens where it is
+answered. Looked at in a browser at 390px, empty and with the example
+household.
+
 ---
 
 # The Dungeons & Dividends entries

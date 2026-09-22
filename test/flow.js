@@ -170,6 +170,40 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
   check('"I am not sure" is recorded as an answer of its own', unsure.notSure);
   check('and no number is written in its place', unsure.value === null && unsure.status === 'incomplete', JSON.stringify(unsure));
 
+  console.log('\nThe dashboard reads what has been answered (D-338)');
+
+  await page.click('#sky-tabs [data-tab="dash"]');
+  await page.waitForTimeout(400);
+  const dash = await page.evaluate(() => {
+    const box = document.getElementById('sky-dash');
+    return {
+      shown: !box.hidden,
+      text: box.textContent.replace(/\s+/g, ' '),
+      bars: box.querySelectorAll('.slaf-bars .row').length,
+      rings: box.querySelectorAll('svg').length,
+      labelled: [...box.querySelectorAll('.slaf-bars .row')].every(r => (r.querySelector('.val') || {}).textContent),
+      tiles: box.querySelectorAll('.dash-tile').length
+    };
+  });
+  check('the dashboard opens on its own tab', dash.shown);
+  check('it counts the questions answered, not only the levels',
+    /Questions answered/.test(dash.text) && /Levels answered/.test(dash.text), dash.text.slice(0, 120));
+  check('every planet and every band has a bar', dash.bars >= 16, String(dash.bars));
+  check('and every bar carries its own figure', dash.labelled);
+  check('the headline tiles are there', dash.tiles >= 4, String(dash.tiles));
+  check('a ring is drawn for the share answered', dash.rings >= 1, String(dash.rings));
+  check('the figures it shows are the ones the band just bought',
+    /Readings the app can make/.test(dash.text));
+  /* A level named on the dashboard opens where it is answered. */
+  const target = await page.$('#sky-dash [data-goto]');
+  if (target) {
+    const id = await target.getAttribute('data-goto');
+    await target.click();
+    await page.waitForTimeout(400);
+    check('a level named on the dashboard opens on the planets tab',
+      (await openNow()) === id, id + ' vs ' + (await openNow()));
+  }
+
   check('no page errors', errors.length === 0, errors.join(' | '));
 
   console.log('\n' + '─'.repeat(66));

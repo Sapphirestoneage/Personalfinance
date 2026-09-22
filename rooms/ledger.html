@@ -100,6 +100,40 @@
   .u-first .u-where { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
   .u-first .u-n { font-size: var(--text-xs); color: var(--color-accent-hover); white-space: nowrap; }
   .u-tier { border-top: 1px solid var(--color-border); }
+  /* The dashboard (D-338). One measure, one hue: every bar on it says how
+     much of something is answered, so they are the same accent and the label
+     carries the identity. Every figure is printed beside its bar, so the
+     drawing is never the only way to read the number. */
+  .dash-hero { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; margin-bottom: var(--space-3); }
+  .dash-hero .slaf-chart { flex: 0 0 132px; margin-top: 0; }
+  .dash-tiles { flex: 1 1 200px; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-2); min-width: 0; }
+  .dash-tile { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2); min-width: 0; }
+  .dash-lbl { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
+  .dash-big { display: block; font-family: var(--font-display); font-size: var(--text-md); color: var(--color-text); font-variant-numeric: tabular-nums; line-height: var(--leading-tight); margin-top: 2px; }
+  .dash-note { display: block; font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 2px; }
+  .dash-sub { font-size: var(--text-xs); color: var(--color-text-faint); margin: 0 0 var(--space-2); line-height: var(--leading-loose); }
+  .dash-reads { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .dash-reads li { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: baseline; justify-content: space-between; padding: 6px 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); }
+  .dash-rname { color: var(--color-text-muted); min-width: 0; }
+  .dash-rval { color: var(--color-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  #sky-dash .slaf-bars .row { display: grid; grid-template-columns: minmax(96px, 1fr) minmax(70px, 2fr) auto; gap: var(--space-2); align-items: center; padding: 5px 0; font-size: var(--text-xs); }
+  /* A reading's name is never clipped to fit a bar: it wraps, because a
+     chart whose labels end in an ellipsis cannot be read at all. */
+  #sky-dash .slaf-bars .lbl { color: var(--color-text); min-width: 0; overflow: visible; white-space: normal; text-overflow: clip; line-height: var(--leading-tight); }
+  #sky-dash .slaf-bars .lbl small { display: block; color: var(--color-text-faint); }
+  #sky-dash .slaf-bars .track { position: relative; height: 8px; border-radius: 999px; background: var(--color-surface-raised); overflow: hidden; }
+  #sky-dash .slaf-bars .track i { position: absolute; top: 0; bottom: 0; border-radius: 999px; }
+  #sky-dash .slaf-bars .val { color: var(--color-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  #sky-dash .slaf-bars .track u { position: absolute; top: 0; bottom: 0; }
+  #sky-dash .slaf-bars .track b { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--color-border-active); border-radius: 1px; }
+  .dash-radar { max-width: 260px; margin: 0 auto var(--space-2); }
+  .dash-legend { list-style: none; margin: 0 0 var(--space-3); padding: 0; display: flex; flex-direction: column; gap: 2px; counter-reset: none; }
+  .dash-legend li { display: grid; grid-template-columns: 18px 1fr auto; gap: var(--space-2); align-items: baseline; font-size: var(--text-xs); padding: 4px 0; border-top: 1px solid var(--color-border); }
+  .dash-legend .n { color: var(--color-text-faint); font-variant-numeric: tabular-nums; }
+  .dash-legend .v { white-space: nowrap; color: var(--color-text-muted); }
+  .dash-legend .v.is-good { color: var(--color-positive); }
+  .dash-legend .v.is-watch { color: var(--color-caution); }
+  .dash-legend .v.is-out { color: var(--color-critical); }
   .u-tier > button { display: grid; grid-template-columns: auto 1fr auto; gap: var(--space-2); align-items: baseline; width: 100%; min-height: 44px; padding: var(--space-3) 0; background: none; border: 0; font: inherit; color: inherit; text-align: left; cursor: pointer; }
   .u-tier > button .n { font-size: var(--text-xs); color: var(--color-text-faint); font-variant-numeric: tabular-nums; }
   .u-tier > button b { font-size: var(--text-sm); font-weight: 600; }
@@ -1057,8 +1091,9 @@
   <section id="view-sky" hidden>
   <p class="slaf-lede" id="planets">Six areas of your money, ten bands deep. A band means the same depth of knowing on every planet, so band 4 on Taxes is as deep as band 4 on Debt. Nothing here is locked: a level you have not answered is simply not yet.</p>
   <p class="sky-say" id="sky-say"></p>
-  <div class="sky-tabs" id="sky-tabs" role="group" aria-label="Two ways to read the planets">
+  <div class="sky-tabs" id="sky-tabs" role="group" aria-label="Three ways to read the planets">
     <button type="button" data-tab="planets" class="is-on">The planets</button>
+    <button type="button" data-tab="dash">Dashboard</button>
     <button type="button" data-tab="unlocks">What unlocks</button>
   </div>
   <div id="sky-planets">
@@ -1069,6 +1104,7 @@
     <div class="sky-open" id="sky-open"></div>
   </div>
   <div id="sky-unlocks" hidden></div>
+  <div id="sky-dash" hidden></div>
   </section>
 
 
@@ -1107,6 +1143,10 @@
 <script src="../shared/backup.js"></script>
 <script src="../engines/tax.js"></script>
 <script src="../shared/suggest.js"></script>
+<!-- fire.js before statement.js: the Statement reads Fire.progressToward and
+     captures it at load time, so the other order leaves it undefined and any
+     reading that reaches the Statement throws (found by the dashboard, D-338). -->
+<script src="../engines/fire.js"></script>
 <script src="../engines/statement.js"></script>
 <script src="../engines/debt.js"></script>
 <script src="../engines/hourly.js"></script>
@@ -1117,6 +1157,7 @@
 <script src="../shared/solar.js"></script>
 <script src="../shared/sketch.js"></script>
 <script src="../shared/levelstore.js"></script>
+<script src="../shared/charts.js"></script>
 <script src="../shared/showmath.js"></script>
 <script src="../engines/sincelast.js"></script>
 <script src="../engines/selfemployed.js"></script>
@@ -1125,7 +1166,6 @@
 <script src="../engines/layouts.js"></script>
 <script src="../engines/foo.js"></script>
 <script src="../engines/cashflow.js"></script>
-<script src="../engines/fire.js"></script>
 <script src="../engines/coast.js"></script>
 <script src="../engines/opening.js"></script>
 <script src="../shared/upnext.js"></script>
@@ -3384,7 +3424,7 @@
   'use strict';
   var Solar = SLAF.Solar, Spine = SLAF.Spine, Reference = SLAF.Reference;
   var Ownership = SLAF.Ownership, LedgerRows = SLAF.LedgerRows, Ask = SLAF.Ask, Money = SLAF.Money, LiveForm = SLAF.LiveForm;
-  var Recipes = SLAF.Recipes, Sketch = SLAF.Sketch, Suggest = SLAF.Suggest, LevelStore = SLAF.LevelStore;
+  var Recipes = SLAF.Recipes, Sketch = SLAF.Sketch, Suggest = SLAF.Suggest, LevelStore = SLAF.LevelStore, Charts = SLAF.Charts, Ratios = SLAF.Ratios;
   var TABLES = {};
   var host = document.getElementById('view-sky');
   if (!host || !Solar) return;
@@ -3921,6 +3961,237 @@
     box.innerHTML = html;
   }
 
+  /* ---- The dashboard (D-338) ------------------------------------------------
+     The owner: "I want there to be like a planet dashboard with a ton of data
+     visualizations and metrics and percentages with everything clearly
+     labeled." Three questions, in this order: how far in am I, where is the
+     ground thin, and what can the app already tell me.
+
+     Every figure on it is read from an engine that already exists, never
+     worked out here: Solar for what is answered, engines/recipes.js for the
+     readings and their values, engines/ratios.js for the radar. Every bar
+     carries its own number and its own share in words beside it, so the
+     drawing is never the only way to read it, and a share of nothing says
+     "not yet" rather than 0%.
+
+     One measure, one hue: these bars all say "how much of this is answered",
+     so they are the same accent at the same weight, and the planet's name is
+     the label. Colour is never the only thing telling you which row is which. */
+  function pct(part, whole) { return whole > 0 ? Math.round(part / whole * 100) : null; }
+  function pctWords(part, whole) { var v = pct(part, whole); return v === null ? 'not yet' : v + '%'; }
+  function accent() { return 'var(--color-accent)'; }
+  function tile(label, big, note) {
+    return '<div class="dash-tile"><span class="dash-lbl">' + esc(label) + '</span>'
+      + '<b class="dash-big">' + esc(big) + '</b>'
+      + (note ? '<span class="dash-note">' + esc(note) + '</span>' : '') + '</div>';
+  }
+  /* Facts, not levels: a level with three questions is three answers, and
+     saying so is the honest count. */
+  function factCounts(h) {
+    var done = 0, live = 0;
+    PLANETS.forEach(function (p) {
+      p.rows.forEach(function (r) {
+        if (!r.applies) return;
+        (r.fields || []).forEach(function (f) {
+          if (!f.applies) return;
+          live++;
+          if (f.filled) done++;
+        });
+      });
+    });
+    return { done: done, of: live };
+  }
+  function planetRows() {
+    return PLANETS.map(function (p) {
+      return { label: p.label, value: p.applicable ? p.done / p.applicable : 0,
+        note: p.done + ' of ' + p.applicable + ' levels', color: accent(),
+        empty: 'not yet' };
+    });
+  }
+  function bandRows() {
+    var out = [];
+    for (var b = 1; b <= 10; b++) {
+      var done = 0, of = 0, cleared = 0, name = '';
+      PLANETS.forEach(function (p) {
+        var band = p.bands[b - 1];
+        if (!band || !band.applicable) return;
+        name = band.name;
+        done += band.done; of += band.applicable;
+        if (band.cleared) cleared++;
+      });
+      if (!of) continue;
+      out.push({ label: b + ' ' + name, value: done / of, color: accent(),
+        note: done + ' of ' + of + ' levels, ' + cleared + ' of 6 planets finished' });
+    }
+    return out;
+  }
+  /* What the app can already tell you, and what it is waiting for. A reading
+     is ready, or it names the levels it needs; nothing in between. */
+  function tierRows(h) {
+    return Solar.tiers(h).filter(function (t) { return t.total; }).map(function (t) {
+      return { label: 'Tier ' + t.tier, value: t.ready / t.total, color: accent(),
+        note: t.ready + ' of ' + t.total + ' readings ready' };
+    });
+  }
+  function readyReadings(h) {
+    return Solar.metrics(h).filter(function (m) { return m.state === 'ready'; })
+      .map(function (m) { return { id: m.id, label: m.label, value: readingValue(m, h) }; })
+      .filter(function (r) { return r.value; });
+  }
+  function drawDash(h) {
+    var box = el('sky-dash');
+    if (!box) return;
+    var o = Solar.overall(h);
+    var facts = factCounts(h);
+    var tiers = Solar.tiers(h);
+    var readings = tiers.reduce(function (a, t) { return { ready: a.ready + t.ready, total: a.total + t.total }; }, { ready: 0, total: 0 });
+    var ready = readyReadings(h);
+    var out = [];
+
+    out.push('<p class="u-lede">Everything here is counted from your own answers. A figure the app cannot work out yet says what it is waiting for rather than showing a zero.</p>');
+
+    /* 1. The headline: how far in, as one ring and four tiles. */
+    out.push('<h3 class="u-head">How far in you are</h3>');
+    out.push('<div class="dash-hero">'
+      + Charts.donut({
+        slices: [
+          { label: 'Answered', value: facts.done, color: 'var(--color-accent)' },
+          { label: 'Not yet', value: Math.max(0, facts.of - facts.done), color: 'var(--color-surface-raised)' }
+        ],
+        thickness: 14,
+        format: function (v) { return String(v); },
+        center: { big: pctWords(facts.done, facts.of), small: 'of the questions' },
+        empty: 'Nothing answered yet.'
+      })
+      + '<div class="dash-tiles">'
+      + tile('Questions answered', facts.done + ' of ' + facts.of, pctWords(facts.done, facts.of) + ' of what applies to you')
+      + tile('Levels answered', o.done + ' of ' + o.applicable, pctWords(o.done, o.applicable))
+      + tile('Bands finished on every planet', o.rings + ' of 10', o.rings ? 'ring ' + o.rings + ' is complete' : 'no ring complete yet')
+      + tile('Readings the app can make', readings.ready + ' of ' + readings.total, pctWords(readings.ready, readings.total))
+      + '</div></div>');
+
+    /* 2. Per planet, and per band: where the ground is thin. */
+    out.push('<h3 class="u-head">Answered, by planet</h3>');
+    out.push(Charts.bars({ rows: planetRows(), max: 1, format: function (v) { return Math.round(v * 100) + '%'; },
+      empty: 'Answer a level and this fills in.' }));
+    out.push('<h3 class="u-head">Answered, by band</h3>');
+    out.push('<p class="dash-sub">A band is the same depth on every planet. Band 1 is a sketch; band 10 is the horizon.</p>');
+    out.push(Charts.bars({ rows: bandRows(), max: 1, format: function (v) { return Math.round(v * 100) + '%'; },
+      empty: 'Answer a level and this fills in.' }));
+
+    /* 3. The readings themselves, with their own figures. */
+    out.push('<h3 class="u-head">Readings, by tier</h3>');
+    out.push(Charts.bars({ rows: tierRows(h), max: 1, format: function (v) { return Math.round(v * 100) + '%'; },
+      empty: 'Readings arrive as levels are answered.' }));
+    out.push('<h3 class="u-head">What the app can tell you now (' + ready.length + ')</h3>');
+    if (ready.length) {
+      out.push('<ul class="dash-reads">' + ready.map(function (r) {
+        return '<li><span class="dash-rname">' + esc(r.label) + '</span><span class="dash-rval">' + r.value + '</span></li>';
+      }).join('') + '</ul>');
+    } else {
+      out.push('<p class="dash-sub">None yet. The first readings arrive once band 1 is answered on Income, Expenses and Assets.</p>');
+    }
+
+    /* 4. Each ratio against its own normal band. Eighteen measures of
+          different scale cannot share one axis honestly, so the bar draws
+          how far each sits from the edge of its band (the line is 1) and the
+          real figure is printed beside it. The verdict is a word as well as
+          a colour. */
+    var ratios = ratioRows(h);
+    if (ratios.length) {
+      out.push('<h3 class="u-head">Where each reading sits against its normal range (' + ratios.length + ')</h3>');
+      out.push('<p class="dash-sub">The bar is how far you are from the edge of the healthy range; the marker is the edge itself. Your own figure is on the right.</p>');
+      out.push(Charts.bars({ rows: ratios, max: 2, format: function (v) { return v.toFixed(2); } }));
+    }
+
+    /* 5. The same shape the Scorecard draws, so a reading never looks like
+          two different things in two places. */
+    var rad = radarOf(h);
+    if (rad) {
+      out.push('<h3 class="u-head">The shape of it</h3>');
+      /* Charts.radar draws the shapes; the page supplies the svg, the same
+         viewBox the Scorecard uses, so the drawing is identical in both. */
+      out.push('<div class="dash-radar"><svg class="radar" viewBox="0 0 120 120" role="img" aria-label="'
+        + esc('Each reading against its normal range: ' + rad.points.length + ' spokes, further out is further from the range.')
+        + '">' + Charts.radar(rad) + '</svg></div>');
+      out.push('<ol class="dash-legend">' + rad.points.map(function (pt, i) {
+        return '<li><span class="n">' + (i + 1) + '</span><span>' + esc(pt.label) + '</span><span class="v is-' + esc(pt.zone) + '">' + esc(pt.zone === 'good' ? 'in its range' : pt.zone === 'watch' ? 'watch' : 'outside') + '</span></li>';
+      }).join('') + '</ol>');
+    }
+
+    /* 6. What frees the most, straight from the same blocker count the
+          unlocks tab uses, so the two can never disagree. */
+    /* One line per level, not one per tier: a level that frees readings in
+       three tiers frees them all at once, so its count is the sum. */
+    var freed = {};
+    tiers.forEach(function (t) {
+      (t.blockers || []).forEach(function (b) { freed[b.id] = (freed[b.id] || 0) + b.unlocks; });
+    });
+    var top = Object.keys(freed).map(function (id) { return { id: id, unlocks: freed[id] }; })
+      .sort(function (a, b) { return b.unlocks - a.unlocks; }).slice(0, 6);
+    if (top.length) {
+      out.push('<h3 class="u-head">Answer these next, and this many readings arrive</h3>');
+      out.push('<ul class="u-first">' + top.map(function (b) {
+        var lv = Solar.byId(b.id);
+        return '<li><button type="button" data-goto="' + esc(b.id) + '">'
+          + '<span>' + esc(levelLabel(b.id)) + '<span class="u-where">' + esc(lv ? planetLabel(lv.planet) + ' band ' + lv.band : '') + '</span></span>'
+          + '<span class="u-n">frees ' + esc(b.unlocks) + '</span></button></li>';
+      }).join('') + '</ul>');
+    }
+
+    box.innerHTML = out.join('');
+  }
+  function planetLabel(id) {
+    var p = PLANETS.filter(function (x) { return x.id === id; })[0];
+    return p ? p.label : id;
+  }
+  /* A ratio, its band, and how far it sits from the edge of that band. The
+     engine does the reading; nothing is worked out here. */
+  function ratioFigure(row) {
+    if (!Money.isEntered(row.value)) return 'not yet';
+    if (row.unit === 'rate') return Money.formatRate(row.value, { decimals: 1 });
+    if (row.unit === 'cents') return Money.formatCents(row.value);
+    if (row.unit === 'multiple') return Money.formatMultiple(row.value);
+    if (row.unit === 'months') return Money.formatMonths(row.value);
+    return String(Math.round(row.value * 10) / 10);
+  }
+  function ratioRows(h) {
+    if (!Ratios || !TABLES.ratioBenchmarks) return [];
+    var a = null;
+    try { a = Ratios.all(h, TABLES, {}); } catch (e) { return []; }
+    return (a.rows || []).filter(function (r) {
+      return r.ok && r.verdict && r.verdict.band && Money.isEntered(r.verdict.band.good) && r.verdict.band.good !== 0;
+    }).map(function (r) {
+      var b = r.verdict.band, edge = b.good;
+      var share = Math.max(0, Math.min(2, r.value / edge));
+      var zone = r.verdict.zone;
+      var word = zone === 'good' ? 'in range' : zone === 'warn' ? 'watch' : zone === 'none' ? '' : 'outside';
+      var colour = zone === 'good' ? 'var(--color-positive)' : zone === 'warn' ? 'var(--color-caution)' : 'var(--color-critical)';
+      var lower = b.direction === 'lower';
+      return {
+        label: r.label,
+        note: (lower ? 'healthy under ' : 'healthy over ') + ratioFigure({ value: edge, unit: r.unit }) + (word ? ' \u00b7 ' + word : ''),
+        value: share,
+        display: ratioFigure(r),
+        color: colour,
+        zones: [lower ? { from: 0, to: 1, color: 'var(--color-surface-raised)' } : { from: 1, to: 2, color: 'var(--color-surface-raised)' }],
+        marker: { at: 1, label: 'the edge of the healthy range' }
+      };
+    });
+  }
+  function radarOf(h) {
+    if (!Ratios || !Ratios.radar || !TABLES.ratioBenchmarks || !Charts || !Charts.radar) return null;
+    var G = SLAF.Gate;
+    var r = null;
+    try {
+      r = Ratios.radar(h, TABLES, {
+        snapshots: Spine.listSnapshots ? Spine.listSnapshots() : [],
+        applies: function (branch) { return G ? G.exists(h, branch) : true; }
+      });
+    } catch (e) { return null; }
+    return Money.isOk(r) && r.points && r.points.length >= 3 ? r : null;
+  }
+
   /* ---- Saving an answer (D-324) --------------------------------------------
      Through the owner, always: Ownership.write puts the figure in the one
      place that fact lives, the spine tells every room, and this screen
@@ -4393,10 +4664,12 @@
     drawSay(o);
     el('sky-planets').hidden = tab !== 'planets';
     el('sky-unlocks').hidden = tab !== 'unlocks';
+    el('sky-dash').hidden = tab !== 'dash';
     Array.prototype.forEach.call(document.querySelectorAll('#sky-tabs button'), function (b) {
       b.classList.toggle('is-on', b.getAttribute('data-tab') === tab);
     });
     if (tab === 'planets') { drawGrid(o.planets); drawKey(o.planets); skyForm.request(); }
+    else if (tab === 'dash') { drawDash(h); }
     else { drawUnlocks(h); }
   }
   /* LIVE-FORM (D-034): the open level holds boxes, so a redraw asked for
@@ -4549,6 +4822,18 @@
   });
 
   /* A level named anywhere in the unlocks tab opens on the planets tab. */
+  el('sky-dash').addEventListener('click', function (e) {
+    var go = e.target.closest ? e.target.closest('[data-goto]') : null;
+    if (!go) return;
+    var id = go.getAttribute('data-goto'), lv = Solar.byId(id);
+    if (!lv) return;
+    tab = 'planets'; open = lv.planet; openLevel = id; only = 'all';
+    paint();
+    skyForm.force();
+    var btn = document.querySelector('.sky-lv[data-level="' + id + '"]');
+    if (btn && btn.scrollIntoView) btn.scrollIntoView({ block: 'center' });
+  });
+
   el('sky-unlocks').addEventListener('click', function (e) {
     var t = e.target;
     var tier = t.closest ? t.closest('[data-tier]') : null;
@@ -4564,7 +4849,7 @@
     if (btn && btn.scrollIntoView) btn.scrollIntoView({ block: 'center' });
   });
 
-  Reference.load(['levels', 'recipes', 'ledgerRows', 'states', 'effectiveTaxRates', 'stateBrackets', 'federalBrackets', 'levelsOfWealth', 'returnBands', 'fireVariants', 'sketchHelp', 'fooRules']).then(function (t) {
+  Reference.load(['levels', 'recipes', 'ledgerRows', 'states', 'effectiveTaxRates', 'stateBrackets', 'federalBrackets', 'levelsOfWealth', 'returnBands', 'fireVariants', 'sketchHelp', 'fooRules', 'ratioBenchmarks', 'ratioExplainers', 'accessRules', 'confidenceWeights', 'expenseCategories']).then(function (t) {
     TABLES = t;
     if (Sketch) Sketch.use(t.sketchHelp);
     if (LevelStore) LevelStore.use(t.levels);
