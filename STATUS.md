@@ -6,11 +6,9 @@ Updated: 2026-09-22
 - **93 → 37 rooms**: the 32 of the merge programme with the Calendar back plus
   the five readings of D-313. `docs/room-map.json` is the cut list. **D-318**
   the calendar redrawn; **D-317** the phone walk; a statement in (D-306).
-- **The five-input opening (D-312)**: `#round-1` is one screen, five inputs, the
-  FI date as a band; 6 to 10 taps (`test/opening.js`).
+- **The five-input opening (D-312)**: `#round-1`, five inputs, the FI date as a band.
 - **Facts are entered in the Ledger only (D-313)**: one owner per row. **New rooms**
-  (D-316): The Bridge, Which Account, The Mix, The Documents, Left Behind.
-  Worst year is the Cushion's (D-314); pay to come (D-315).
+  (D-316): Bridge, Which Account, The Mix, Documents, Left Behind. D-314, D-315.
 - **The Solar System (D-320 to D-324)**: `docs/SOLAR-SYSTEM.md` is the spec, the
   data layer is in (180 levels, 184 recipes, 17 moons, 98 moves), `shared/solar.js`
   reads it. Planets (`#planets`) is six planets by ten bands; a level opens to
@@ -25,6 +23,8 @@ Updated: 2026-09-22
 - **This lane**: a card's annual fee (D-331); the radar on the Scorecard (D-332);
   the menu on every page (D-333) with the Planets at its top (D-335); two ratios
   and the furthest-from-normal ranking (D-334), Amendment 1 audited in `docs/`.
+- **On the cards (D-337)**: an expense says which card it went on; a card carries
+  a bonus target (Debt); The Close's `#on-cards` says the rate, reach and pace.
 - **Main is worked on by another lane**: merge before every push. D-228's reframe has NOT shipped. Freeze holds (D-313).
 
 ## Next (top item first; one per session)

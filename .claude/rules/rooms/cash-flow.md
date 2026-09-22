@@ -4,15 +4,15 @@ paths:
   - "engines/calendar.js"
 ---
 # The Month (`cash-flow`)
-File: rooms/cash-flow.html · 923 lines
+File: rooms/cash-flow.html · 954 lines
 Engines: projection, tier0, cashflow, income, selfemployed, ledger, budget, hourly, calendar
 Reference data: calendar_conventions.json, effective_tax_rates_2026.json, expense_categories.json, se_tax_2026.json
 Owns: payCadence, nextPayday, billsMonthly, payLaterDue
 Reads from other owners: grossAnnualIncome (start), takeHomeMonthly (ledger), cashSavings (start), rentMonthly (expenses), monthlyDebtPayments (debt-payoff), monthlyExpenses (expenses), foodMonthly (expenses), accommodationMonthly (expenses), +2 more
 Latest decisions:
+  - D-337 — Where an expense went: the card it was on, and the bonus that spending could reach
   - D-318 — The calendar, the way a phone calendar is used
   - D-275 — The Month: what moved, and the dates
   - D-260 — A room that throws while rendering says so, instead of blaming data/
   - D-253 — What hits your account, and when: the month as turns, in Cash Flow and the Calendar
-  - D-192 — Expenses is what a month costs; Cash Flow is when the money moves
 Full context: node tools/context/pack.js cash-flow

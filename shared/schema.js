@@ -227,6 +227,9 @@
     'debt.creditLimitCents':                     { class: 'raw',        unit: 'cents',   note: 'revolving debt only: the limit the balance is a share of. Owned by Debt Payoff. DECISIONS.md D-045' },
     'debt.annualFeeCents':                       { class: 'raw',        unit: 'cents',   period: 'annual', note: 'a card\u2019s yearly fee. Null means not asked, never no fee. Owned by Debt Payoff. D-331' },
     'debt.annualFeeOn':                          { class: 'raw',        unit: 'iso-date', note: 'the day the fee posts; the month and day recur each year and Debt.annualFee reads the next one. D-331' },
+    'debt.bonusSpendCents':                      { class: 'raw',        unit: 'cents',   note: 'a card only: the spending a sign-up bonus asks for inside its window. Null means not chasing one, never a zero target. Read by CashFlow.cardSpend. Owned by Debt. D-337' },
+    'debt.bonusFromOn':                          { class: 'raw',        unit: 'iso-date', note: 'the first day of the bonus window, usually the day the card opened; spending tagged to the card from this day counts. D-337' },
+    'debt.bonusByOn':                            { class: 'raw',        unit: 'iso-date', note: 'the last day of the bonus window: the spending must be reached by then. D-337' },
     'debt.promoEndsOn':                          { class: 'raw',        unit: 'iso-date', note: 'when a 0%/promotional rate ends. Null means the rate is not promotional' },
     'debt.postPromoRate':                        { class: 'raw',        unit: 'rate',    period: 'annual', note: 'the rate the balance reverts to when the promo ends' },
     'expenses.monthlyEssential.estimatedValueCents': { class: 'raw',    unit: 'cents',   period: 'monthly', source: 'estimated', note: 'LEGACY, unread since D-172: migrated into wants.totalCents on load, kept for round-trip' },
@@ -250,6 +253,7 @@
     'expenses.entries[].hidden':                 { class: 'raw',        unit: 'bool',    note: 'off the default list, still counted. D-128' },
     'expenses.entries[].active':                 { class: 'raw',        unit: 'bool',    note: 'false = archived: stops counting toward new estimates and actuals; closed months are untouched. D-128' },
     'expenses.entries[].forDate':                { class: 'raw',        unit: 'iso-date', note: 'the day the money was FOR when that is not the day it left: bought ahead, or paid late. Null = the same day. Read by the slope in Expenses only; every month total keeps counting the day it left. D-306' },
+    'expenses.entries[].paidWith':               { class: 'raw',        unit: 'id',      note: 'where the money left from: null = not said; "bank" = a bank account, debit or cash; otherwise the id of the credit card in debts[] it was charged to. Asked on the log (Cash Flow) and on a typical-month line (Expenses); read by CashFlow.cardSpend for The Close. Never changes what a month counts. D-337' },
     'expenses.rules[].key':                      { class: 'raw',        unit: 'text',    note: 'a merchant, as engines/merchants.js keys it (the finder’s key): which lines the rule files. Owned by Expenses. D-306' },
     'expenses.rules[].categoryId':               { class: 'raw',        unit: 'enum',    note: 'an id from data/expense_categories.json: where every line from that merchant files, past and future. D-306' },
     'household.ledger.income[].kind':            { class: 'raw',        unit: 'enum',    values: ['w2', 'se', 'bonus', 'gift', 'side', 'dividend', 'rental', 'other'], note: 'a dated income entry: amountCents, frequency (once, weekly, fortnightly, monthly, annual), receivedOn, taxable, taxMethod (w2, se, none), costs[] for se/side/rental, hidden, active. Owned by Income. D-128' },
@@ -1536,6 +1540,13 @@
          what recur, and Debt.annualFee reads the next one. D-331. */
       annualFeeCents: f.annualFeeCents === undefined ? null : f.annualFeeCents,
       annualFeeOn: f.annualFeeOn === undefined ? null : f.annualFeeOn,
+      /* A sign-up bonus the household is chasing on this card: the spending
+         the offer asks for, and the window it must land in. Null means not
+         chasing one, never "no bonus". CashFlow.cardSpend reads the three
+         against the expenses tagged to the card. D-337. */
+      bonusSpendCents: f.bonusSpendCents === undefined ? null : f.bonusSpendCents,
+      bonusFromOn: f.bonusFromOn === undefined ? null : f.bonusFromOn,
+      bonusByOn: f.bonusByOn === undefined ? null : f.bonusByOn,
       /* A 0% promotional period, and the rate the balance reverts to when it
          ends. `rate` above is the rate you are paying TODAY; these two say
          when that stops being true. Without them a 0% card looks free
@@ -1933,9 +1944,16 @@
       /* The day the money was FOR, when that is not the day it left: a
          ticket bought ahead, a bill paid late. Null = the same day. The
          slope in Expenses reads it; nothing that counts a month does. D-306. */
-      forDate: typeof f.forDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(f.forDate) ? f.forDate : null
+      forDate: typeof f.forDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(f.forDate) ? f.forDate : null,
+      /* Where the money left from (D-337): null = not said, 'bank' = a bank
+         account, debit or cash, otherwise the id of the card in debts[] it
+         was charged to. A tag, never a number: the month counts the same
+         whichever it is. */
+      paidWith: paidWithOf(f.paidWith)
     };
   }
+  var PAID_WITH_BANK = 'bank';
+  function paidWithOf(v) { return typeof v === 'string' && v ? v : null; }
 
   /* ---- The ledger: dated money in, and the months closed on it (D-128) ----
      An income ENTRY is a dated event, this paycheque, this invoice paid,
@@ -3394,6 +3412,7 @@
     createIncomeSource: createIncomeSource,
     createEstimatedTrackedPair: createEstimatedTrackedPair,
     createExpenseEntry: createExpenseEntry,
+    PAID_WITH_BANK: PAID_WITH_BANK,
     createIncomeEntry: createIncomeEntry,
     createIncomeCost: createIncomeCost,
     createMonthRecord: createMonthRecord,
