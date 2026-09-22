@@ -17239,6 +17239,43 @@ word for it and hides it for an unrelated one, and the four extra links read
 in order); the link followed on a phone lands on the view with it shown.
 
 
+## D-336 — Band 1 asked in words anyone can answer, with three ways out
+
+**Why.** The owner, on the Planets screen, at the question "How much do you
+add each month, in total, anywhere?": "Im not sure." The box took one number
+and gave no way to find it. Every band-1 question was the same: the app's own
+vocabulary, a box, and a Save.
+
+**Decision.** `data/sketch_help.json` holds, for each of the eighteen band-1
+levels, the question in plain words, one line of what it means, what counts
+and what to leave out, where to look on a phone, what to do when the answer is
+not known, and for the three questions that are really a sum, the pieces to
+add up. `shared/sketch.js` reads it and adds the pieces. `rooms/ledger.html`
+leads with the plain words (on the list, the next-up card and the open panel),
+and offers under the box: a starting number when one can be defended, an
+add-it-up fold, and "I am not sure". Three rules in `shared/suggest.js`
+(`grossFromTakeHome`, `savedFromGap`, `highInterestFromDebts`) give the
+starting numbers, one per row, each saying where its figure came from.
+
+**Replaces or removes.** The bare box. The three lines the panel opened with
+(what it gives you, unlocks, where to find it) move into the fold underneath,
+and the level's terse prompt is replaced on screen by the plain one. No new
+room, no new screen, no new stored field.
+
+**One correction.** Level E1's own prompt asks what a month costs "all in"
+while the field it writes is `wantsMonthly`, everything except shelter, which
+E2 then asks for separately. The plain wording asks for the field that is
+written, so shelter is not counted twice.
+
+**Stored shape.** No change. The pieces of a sum are scratch: only the total
+is written, through the field's own owner. A total or a starting number is
+stamped `confidence: roughly` (source `typed` or `suggested`), and "I am not
+sure" writes no number at all, only the D-209 mark.
+
+**Verified.** `node test/run.js` 35667, `node test/solar.js` 5190,
+`node test/flow.js` 30 including the band-1 walk, the browser gates, and a
+phone walk at 390px through A3, I2 and T3.
+
 ---
 
 # The Dungeons & Dividends entries

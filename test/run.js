@@ -16630,6 +16630,141 @@ section('A link that names a field opens to the field (D-323)');
   }));
 })();
 
+section('Band 1 in words anyone can answer (D-336)');
+
+(function () {
+  /* The owner's words: "Im not sure. Make the first level incredibly easier
+     to fill out for all the various areas. I want it to be that someone with
+     minimal to no knowledge can fill it out." So every question in band 1
+     carries plain words, what counts, where to look on a phone, and a way
+     through when the answer is not known: a total added up from pieces, a
+     starting number the app can defend, or saying "not sure" outright. What
+     none of it may do is put a number in that the person did not give. */
+  const Sketch = require(path.join(ROOT, 'shared/sketch.js'));
+  const Suggest = require(path.join(ROOT, 'shared/suggest.js'));
+  const LedgerRows = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Levels = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/levels.json'), 'utf8'));
+  const Help = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/sketch_help.json'), 'utf8'));
+  const Rows = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8'));
+  const rowById = {}; Rows.rows.forEach(r => { rowById[r.id] = r; });
+  const band1 = Levels.levels.filter(l => l.band === 1);
+  Sketch.use(Help);
+  LedgerRows.use(Rows);
+
+  check('band 1 is the eighteen levels of the Sketch band', band1.length, 18);
+  checkTrue('every one of them has plain words to be asked in',
+    band1.every(l => !!Sketch.help(l.id)),
+    band1.filter(l => !Sketch.help(l.id)).map(l => l.id).join(', '));
+  checkTrue('and nothing in the table names a level that is not band 1',
+    Object.keys(Help.levels).every(id => band1.some(l => l.id === id)));
+  Object.keys(Help.levels).forEach(function (id) {
+    const h = Help.levels[id];
+    checkTrue(`${id} says the question in plain words`, typeof h.plain === 'string' && h.plain.length > 8);
+    checkTrue(`${id} says in one line what the number means`, typeof h.means === 'string' && h.means.length > 12);
+    checkTrue(`${id} says where to look for it`, typeof h.look === 'string' && h.look.length > 8);
+    checkTrue(`${id} says what to do when the answer is not known`, typeof h.unsure === 'string' && h.unsure.length > 12);
+    /* A question nobody can read is not easier. Two lines on a phone is
+       about ninety characters; the app's own prompts are longer than that,
+       which is the thing being fixed. */
+    checkTrue(`${id} asks it in one readable line`, h.plain.length <= 95, h.plain);
+    checkTrue(`${id} asks a question, not a category`, /\?$/.test(h.plain) || /^(This|The app)/.test(h.plain), h.plain);
+  });
+
+  /* The pieces of an add-it-up question sum into the one field the level
+     writes, so they can only exist where there is one such field. */
+  Object.keys(Help.levels).filter(id => (Help.levels[id].parts || []).length).forEach(function (id) {
+    const lv = band1.filter(l => l.id === id)[0];
+    const fields = (lv.fields || []);
+    check(`${id} adds up into a single fact`, fields.length, 1);
+    const row = rowById[fields[0].row || fields[0].key];
+    checkTrue(`${id} adds up into a money fact`, !!row && row.unit === 'cents', row ? row.unit : 'no row');
+    checkTrue(`${id} labels every piece it asks for`,
+      Help.levels[id].parts.every(p => p.key && p.label && p.label.length > 3));
+  });
+
+  /* The sum itself. A blank box is not a zero (CLAUDE.md), so it is left
+     out of the total and the total says how many went in; nothing typed at
+     all is incomplete, never $0. */
+  check('nothing typed is incomplete, never zero', Sketch.total([]).status, 'incomplete');
+  check('and it holds no value', Sketch.total([]).value, null);
+  const two = Sketch.total([25000, null, 10000, undefined]);
+  check('the boxes that were filled are added', two.value, 35000);
+  check('and the total says how many went in', two.of, 2);
+  check('one box on its own is a total too', Sketch.total([500]).value, 500);
+  check('a typed zero is a figure, and counts', Sketch.total([0]).status, 'ok');
+  check('a typed zero adds nothing and still counts as answered', Sketch.total([0]).of, 1);
+
+  /* The starting numbers. Each refuses rather than inventing, and says in
+     its own sentence where the figure came from. */
+  const T = {};
+  const Ref336 = require(path.join(ROOT, 'shared/reference.js'));
+  fs.readdirSync(path.join(ROOT, 'data')).filter(f => f.endsWith('.json')).forEach(function (file) {
+    const name = Object.keys(Ref336.TABLE_FILES).filter(k => Ref336.TABLE_FILES[k] === file)[0];
+    if (name) T[name] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', file), 'utf8'));
+  });
+  const bare = Schema.createHousehold({ filingStatus: 'single' });
+  checkTrue('no take-home, no guess at gross pay', Suggest.forField(bare, T, 'grossAnnualIncome') === null);
+  /* Nobody has said how they file yet in band 1, and the figure still comes:
+     the table's single column stands in and the sentence says so. */
+  const paid = Schema.createHousehold({});
+  paid.takeHome = { monthlyCents: 420000, typedCents: 420000, per: 'month' };
+  const gross = Suggest.forField(paid, T, 'grossAnnualIncome');
+  checkTrue('take-home in, and gross can be worked back from it', !!gross && gross.value > 420000 * 12, gross ? String(gross.value) : 'none');
+  checkTrue('and it says how, in the sentence beside it', !!gross && /lands in your account/.test(gross.how));
+  checkTrue('a guess is never presented as a reading', !!gross && gross.confidence === 'suggested');
+  checkTrue('and it says which filing status it stood in for', !!gross && /filing on their own/.test(gross.how));
+  const joint = Schema.createHousehold({ filingStatus: 'married_joint' });
+  joint.takeHome = { monthlyCents: 420000, typedCents: 420000, per: 'month' };
+  const jointGuess = Suggest.forField(joint, T, 'grossAnnualIncome');
+  checkTrue('a household that has said so gets its own rate, with no stand-in line',
+    !!jointGuess && !/filing on their own/.test(jointGuess.how));
+
+  /* Robin has answered both of these, and a suggestion is only ever offered
+     for a blank: the fields are cleared here to ask the question fresh. */
+  function unanswered() {
+    const h = Demo.build();
+    h.sketch.savedMonthlyCents = null;
+    h.sketch.highInterestCents = null;
+    if (h.assets) h.assets.added = null;
+    return h;
+  }
+  const saved = Suggest.forField(unanswered(), T, 'savedMonthly');
+  checkTrue('what is left over is offered as the most that could be saved', !!saved && saved.value > 0);
+  checkTrue('and it says it is a ceiling, not a reading', !!saved && /at most/.test(saved.how));
+  const tight = unanswered();
+  tight.takeHome = { monthlyCents: 100000, typedCents: 100000, per: 'month' };
+  checkTrue('nothing left over, no figure offered', Suggest.forField(tight, T, 'savedMonthly') === null);
+
+  const noDebt = Schema.createHousehold({ filingStatus: 'single' });
+  checkTrue('no debts listed, no high-interest total', Suggest.forField(noDebt, T, 'highInterestBalance') === null);
+  const hi = Suggest.forField(unanswered(), T, 'highInterestBalance');
+  checkTrue('debts listed, and the ones above the threshold are added up', !!hi && hi.value > 0);
+  checkTrue('and it names how many and at what rate', !!hi && /already listed at/.test(hi.how));
+  checkTrue('the threshold is the one the ladder uses, not a second copy',
+    /fooRules/.test(fs.readFileSync(path.join(ROOT, 'shared/suggest.js'), 'utf8')));
+
+  /* The screen. */
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  checkTrue('the plain words are what the list, the next card and the panel all say',
+    /function promptOf\(lv\)/.test(page) && /esc\(promptOf\(r\.level\)\)/.test(page));
+  checkTrue('the panel leads with what the number means, and folds the app\u2019s own words away',
+    /class="d-means"/.test(page) && /d-more/.test(page) && /What counts, and where to look/.test(page));
+  checkTrue('the pieces of a sum are boxes that add up in front of you',
+    /data-sky-part=/.test(page) && /data-sky-total/.test(page) && /Sketch\.total\(partValues\(box\)\)/.test(page));
+  checkTrue('an empty piece is left out of the total, never counted as nothing',
+    /left out of the total, never counted as nothing/.test(page));
+  checkTrue('a starting number is offered, with the sentence that says where it came from',
+    /data-sky-starter=/.test(page) && /Suggest\.forField/.test(page) && /esc\(s\.how\)/.test(page));
+  checkTrue('a figure the app proposed is stamped rough wherever it is read',
+    /function markRough/.test(page) && /confidence: 'roughly'/.test(page));
+  checkTrue('"I am not sure" records the question as unanswered, and writes no number',
+    /data-sky-notsure=/.test(page) && /Spine\.setNotSure\(id, \{\}\)/.test(page) && /No number was written/.test(page));
+  checkTrue('every helper reaches the 44px tap target',
+    /\.d-notsure \{[^}]*min-height: 44px/.test(page) && /\.d-part input\[type="text"\] \{ min-height: 44px/.test(page));
+  checkTrue('and the answer still goes through the one owner of the fact',
+    /Ownership\.write\(id, value\)/.test(page));
+})();
+
 section('No em dash anywhere the app can show one (D-321)');
 
 (function () {

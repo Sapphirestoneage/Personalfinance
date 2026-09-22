@@ -113,6 +113,63 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
     return !c || c.hidden;
   }));
 
+  console.log('\nBand 1 can be answered by someone who does not know the answer (D-336)');
+
+  /* The owner, on the question that asks what goes away each month: "Im not
+     sure." So the same run is walked again on Assets, using only the ways
+     out a beginner has: the pieces added up, and saying so outright. */
+  await page.click('.sky-row[data-planet="expenses"]');
+  await page.click('.sky-row[data-planet="assets"]');
+  await page.waitForTimeout(250);
+  const asked = await page.textContent('.sky-lv[data-level="A3"]');
+  check('the question is asked in plain words on the list',
+    /How much money do you put away each month/.test(asked), asked.replace(/\s+/g, ' ').trim());
+
+  await page.click('.sky-lv[data-level="A3"]');
+  await page.waitForSelector('.d-sketch');
+  const panel = (await page.textContent('.sky-lv-detail')).replace(/\s+/g, ' ');
+  check('the panel says what the number means before it asks for it',
+    /Anything that leaves your spending/.test(panel));
+  check('and says what to do when nothing goes away', /type 0/.test(panel));
+  check('the app\u2019s own words are still there, folded away',
+    /What counts, and where to look/.test(panel) && /Unlocks\./.test(panel));
+
+  await page.click('.d-addup > summary');
+  const parts = await page.$$('[data-sky-part]');
+  check('the sum is broken into pieces anyone can answer', parts.length === 3, String(parts.length));
+  await parts[0].fill('250');
+  await parts[2].fill('100');
+  const running = await page.textContent('[data-sky-total]');
+  check('the boxes that were filled add up in front of you', /\$350/.test(running), running.trim());
+  check('and the empty one is left out rather than counted as nothing',
+    /2 boxes you filled/.test(running), running.trim());
+
+  await timed('using the total', () => page.click('[data-sky-usetotal]'));
+  await page.waitForTimeout(300);
+  const landed = await page.evaluate(() => {
+    const h = SLAF.Spine.getProfile();
+    const r = SLAF.Ownership.FIELDS.savedMonthly.read(h);
+    return { value: r.value, meta: (h.meta.fields || {}).savedMonthly || null };
+  });
+  check('the total is written through the field\u2019s owner', landed.value === 35000, String(landed.value));
+  check('and stands as rough, because it was added up rather than read off a statement',
+    !!landed.meta && landed.meta.confidence === 'roughly', JSON.stringify(landed.meta));
+
+  await page.click('.sky-row[data-planet="assets"]');
+  await page.click('.sky-row[data-planet="taxes"]');
+  await page.waitForTimeout(250);
+  await page.click('.sky-lv[data-level="T3"]');
+  await page.waitForSelector('.d-notsure');
+  await page.click('.d-notsure');
+  await page.waitForTimeout(300);
+  const unsure = await page.evaluate(() => {
+    const h = SLAF.Spine.getProfile();
+    const r = SLAF.Ownership.FIELDS.refundLastYear.read(h);
+    return { notSure: !!(h.meta.notSure || {}).refundLastYear, value: r.value, status: r.status };
+  });
+  check('"I am not sure" is recorded as an answer of its own', unsure.notSure);
+  check('and no number is written in its place', unsure.value === null && unsure.status === 'incomplete', JSON.stringify(unsure));
+
   check('no page errors', errors.length === 0, errors.join(' | '));
 
   console.log('\n' + '─'.repeat(66));
