@@ -17276,6 +17276,42 @@ sure" writes no number at all, only the D-209 mark.
 `node test/flow.js` 30 including the band-1 walk, the browser gates, and a
 phone walk at 390px through A3, I2 and T3.
 
+## D-337 — Every question in the Planets can be answered, and 195 facts get a home
+
+**Why.** The owner, on the Planets screen: "Make sure every single question in
+the planets is answerable." A level would open and say "nowhere to type it
+yet": 195 of the 274 facts data/levels.json asks about belonged to no room and
+had no store, so the question could not be answered by anybody.
+
+**Decision.** They are the Planets screen's own, kept at
+`levels.<planet>.<key>`, the place docs/SOLAR-SYSTEM.md reserved for them.
+`shared/levelstore.js` is the only writer: it holds the control shape for each
+of the eleven kinds data/levels.json declares, parses typed text to that kind
+with the app's own money and rate parsers, reads a Result back and says the
+value in words. `rooms/ledger.html` draws the control the kind asks for, so a
+yes or no is two buttons, an enum is its own declared values, a date is a
+month and a year, a list is chips added one at a time, and money is a box in
+dollars. `shared/schema.js` keeps the store and drops anything that is not the
+shape the kind allows.
+
+**Replaces or removes.** The sentence "nowhere to type it yet" and the note
+that said the screen could not take the answer. No new room, no new screen:
+the facts land in the panel that already asks for them.
+
+**Stored shape.** New: `household.levels`, one box per planet, keyed by the
+level field's key. COMPATIBILITY: every household saved before this has no
+`levels` box at all, which reads as nothing answered, which is what it was.
+Nothing outside the Planets screen reads it; a fact that later earns a room
+moves out with a migration rather than a copy. Empty is not zero here either:
+a blank box writes nothing, a typed 0 is kept, an empty list is unanswered.
+
+**Verified.** `node test/run.js` 35754, including a lint that every one of the
+274 fields ends in a box, a room, a figure that works itself out, the store,
+or a confirm. In a browser at 390px: all 137 levels that apply to a blank
+household and all 161 that apply to the example household offer a way to
+answer, none says "nowhere to type it yet", and one fact of every kind saves
+and survives a reload.
+
 ---
 
 # The Dungeons & Dividends entries

@@ -20,8 +20,10 @@ Updated: 2026-09-22
 - **D-321, D-326** no em dash; **D-319** rooms say how old their numbers are; **D-323** a link that names a field opens to the field.
 - **Band 1 is answerable with no knowledge (D-336)**: `data/sketch_help.json` says
   its eighteen questions in plain words, with what counts, where to look, an
-  add-it-up fold, a starting number where one can be defended, and a way to say
-  "I am not sure" that writes no number.
+  add-it-up fold, a starting number, and "I am not sure" that writes no number.
+- **Every question in the Planets can be answered (D-337)**: the 195 facts no
+  room owned live at `levels.<planet>.<key>` through `shared/levelstore.js`,
+  with a control per kind. "Nowhere to type it yet" is gone.
 - **This lane**: a card's annual fee (D-331); the radar on the Scorecard (D-332);
   the menu on every page (D-333) with the Planets at its top (D-335); two ratios
   and the furthest-from-normal ranking (D-334), Amendment 1 audited in `docs/`.

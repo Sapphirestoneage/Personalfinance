@@ -16765,6 +16765,111 @@ section('Band 1 in words anyone can answer (D-336)');
     /Ownership\.write\(id, value\)/.test(page));
 })();
 
+section('Every question in the Planets can be answered (D-337)');
+
+(function () {
+  /* The owner's words: "Make sure every single question in the planets is
+     answerable." Before this, 195 of the facts data/levels.json asks about
+     belonged to no room, and the panel said so: "nowhere to type it yet".
+     A question nobody can answer is not a question, it is a wall. Every
+     field must now end in one of four things, and this counts them. */
+  const LevelStore = require(path.join(ROOT, 'shared/levelstore.js'));
+  const Own = require(path.join(ROOT, 'shared/ownership.js'));
+  const LedgerRows = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Levels = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/levels.json'), 'utf8'));
+  const Rows = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8'));
+  const rowById = {}; Rows.rows.forEach(r => { rowById[r.id] = r; });
+  LevelStore.use(Levels);
+  LedgerRows.use(Rows);
+  const ASKABLE = ['cents', 'percent', 'rate', 'count', 'years', 'months', 'bool', 'enum', 'text'];
+
+  /* The same four answers the screen gives, in the same order it tries them. */
+  function howAnswered(level, f) {
+    if (f.kind === 'confirm') return 'confirm';
+    const id = Own.FIELDS[f.key] ? f.key : (f.row && Own.FIELDS[f.row] ? f.row : null);
+    if (id) {
+      const F = Own.FIELDS[id];
+      const row = rowById[f.row || id];
+      if (typeof F.write === 'function') {
+        if (row && row.repeat) return 'room';
+        if (row && row.unit === 'date') return 'box';
+        if (row && ASKABLE.indexOf(row.unit) < 0) return LevelStore.control(LevelStore.def(level.id, f.key)) ? 'store' : 'NOTHING';
+        return 'box';
+      }
+      const worksOut = row && row.inputs && row.inputs.length;
+      return worksOut ? 'adds up' : 'room';
+    }
+    return LevelStore.control(LevelStore.def(level.id, f.key)) ? 'store' : 'NOTHING';
+  }
+
+  const tally = {};
+  const stuck = [];
+  Levels.levels.forEach(function (l) {
+    (l.fields || []).forEach(function (f) {
+      const how = howAnswered(l, f);
+      tally[how] = (tally[how] || 0) + 1;
+      if (how === 'NOTHING') stuck.push(l.id + ':' + f.key + ' (' + f.kind + ')');
+    });
+  });
+  checkTrue('every field of every level can be answered somewhere',
+    stuck.length === 0, stuck.slice(0, 12).join(', '));
+  checkTrue('and the ways add up to every field the file asks for',
+    Object.keys(tally).reduce((n, k) => n + tally[k], 0) ===
+      Levels.levels.reduce((n, l) => n + (l.fields || []).length, 0),
+    JSON.stringify(tally));
+  checkTrue('the Planets screen is the home for the facts no room owns',
+    tally.store >= 190, String(tally.store));
+  checkTrue('and the rooms keep the ones they already owned',
+    tally.box >= 50 && tally.room >= 10, JSON.stringify(tally));
+
+  /* The store itself: a value per kind, cleaned to that kind, and nothing
+     else kept. Empty is not zero here either. */
+  const kinds = {};
+  Levels.levels.forEach(l => (l.fields || []).forEach(f => { kinds[f.kind] = true; }));
+  Object.keys(kinds).filter(k => k !== 'confirm').forEach(function (k) {
+    const sample = [];
+    Levels.levels.forEach(l => (l.fields || []).forEach(f => { if (f.kind === k && !sample.length && !Own.FIELDS[f.key]) sample.push({ l: l, f: f }); }));
+    if (!sample.length) return;
+    const d = LevelStore.def(sample[0].l.id, sample[0].f.key);
+    checkTrue(`a ${k} field has a control to draw`, !!LevelStore.control(d));
+    checkTrue(`a ${k} field knows where it lives`, /^levels\.[a-z]+\./.test(LevelStore.path(sample[0].l.id, sample[0].f.key)));
+  });
+  check('money is typed in dollars and kept in cents', LevelStore.parse({ kind: 'cents' }, '1,200'), 120000);
+  check('a percent is kept as a rate', LevelStore.parse({ kind: 'percent' }, '3'), 0.03);
+  check('an enum takes only its own values', LevelStore.parse({ kind: 'enum', values: ['rent', 'own'] }, 'castle'), null);
+  check('and does take one of them', LevelStore.parse({ kind: 'enum', values: ['rent', 'own'] }, 'own'), 'own');
+  check('a blank writes nothing', LevelStore.parse({ kind: 'number' }, '   '), null);
+  check('a typed zero is a figure', LevelStore.parse({ kind: 'number' }, '0'), 0);
+  check('a date is a month and a year', LevelStore.parse({ kind: 'date' }, '2030-06'), '2030-06');
+  check('and nothing else', LevelStore.parse({ kind: 'date' }, 'June'), null);
+  const h336 = { levels: { you: { kidsNow: 2, housingStatus: 'own', degrees: ['BA', 'MS'] } } };
+  check('a stored answer reads back', LevelStore.read(h336, 'Y5', 'kidsNow').value, 2);
+  check('an unanswered one is incomplete, not zero', LevelStore.read({}, 'Y5', 'kidsNow').status, 'incomplete');
+  check('and holds no number', LevelStore.read({}, 'Y5', 'kidsNow').value, null);
+  check('a list reads as its own words', LevelStore.display(h336, 'Y10', 'degrees'), 'BA, MS');
+  check('an enum reads as a label, not a code', LevelStore.display(h336, 'Y6', 'housingStatus'), 'Own');
+
+  /* The household keeps it, and keeps nothing strange. */
+  const kept = Schema.createHousehold({ levels: { you: { kidsNow: 2, junk: { a: 1 }, blank: '', list: ['BA', '', ' MS '] } } });
+  check('the store survives a load', kept.levels.you.kidsNow, 2);
+  check('a nested object is dropped rather than kept', kept.levels.you.junk, undefined);
+  check('a blank string is dropped', kept.levels.you.blank, undefined);
+  check('a list is trimmed and the empties fall out', kept.levels.you.list.join('|'), 'BA|MS');
+  check('a household from before this has an empty store, not a missing one',
+    JSON.stringify(Schema.createHousehold({}).levels), '{}');
+
+  /* The screen. */
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  checkTrue('the panel draws a control for a fact no room owns',
+    /function levelAskHtml/.test(page) && /data-lvl-ask=/.test(page));
+  checkTrue('every kind it can meet has a branch: choices, a month, chips, a box',
+    /data-lvl-val=/.test(page) && /data-lvl-month/.test(page) && /data-lvl-drop=/.test(page) && /data-lvl-input/.test(page));
+  checkTrue('the answer is written through the one store, never into the page',
+    /LevelStore\.write\(parts\.levelId, parts\.key/.test(page));
+  checkTrue('and the level counts it the moment it lands',
+    /function showLevelAnswer/.test(page) && /Solar\.levelState\(lv, Spine\.getProfile\(\)\)/.test(page));
+})();
+
 section('No em dash anywhere the app can show one (D-321)');
 
 (function () {

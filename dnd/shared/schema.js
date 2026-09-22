@@ -166,6 +166,7 @@
        contributions beat savedMonthlyCents, the tax room beats the refund.
        A reader takes the detail whenever the detail exists. Owned by the
        Ledger, asked on the Planets screen and in the Ledger's facts list. */
+    'household.levels.<planet>.<key>':           { class: 'raw',        unit: 'mixed',   note: 'the Solar System\u2019s own store (D-337): one box per planet, keyed by the level field\u2019s key in data/levels.json, holding the 195 facts no room owns. The kind in that file says what the value is; shared/levelstore.js is the only writer. Absent on every household saved before D-337, which reads as nothing answered.' },
     'household.sketch.payVaries':                { class: 'raw',        unit: 'bool',    note: 'pay swings month to month, said outright rather than inferred from the job type. null until asked. D-325' },
     'household.sketch.spendingIncludesDebt':     { class: 'raw',        unit: 'bool',    note: 'the typed monthly spending total already has debt payments inside it, so the gap does not count them twice. D-325' },
     'household.sketch.spendingIncludesSaving':   { class: 'raw',        unit: 'bool',    note: 'the typed monthly spending total already has saving inside it. D-325' },
@@ -2284,6 +2285,44 @@
     };
   }
   function sketchOf(household) { return createSketch((household || {}).sketch); }
+  /* ---- The Solar System's own store (D-337) --------------------------------
+     data/levels.json asks 195 facts that no room owns: how many children are
+     at home, whether you rent or own, what the plan band is, which degrees
+     you hold. They are kept here, one box per planet, under the level field's
+     own key, and nowhere else, so each still has exactly one owner: the
+     Planets screen. The value is whatever the field's kind says it is,
+     cleaned by shared/levelstore.js before it arrives: integer cents, a rate,
+     a boolean, one of an enum's declared values, a short string, an array of
+     short strings, or YYYY-MM. Anything else is dropped on load rather than
+     kept as a surprise.
+     COMPATIBILITY: a household saved before this has no `levels` box at all.
+     It reads as nothing answered, which is what it was, and the first answer
+     creates the box. Nothing outside the Planets screen reads it yet. */
+  function createLevels(box) {
+    var out = {};
+    if (!box || typeof box !== 'object') return out;
+    Object.keys(box).forEach(function (planet) {
+      var src = box[planet];
+      if (!src || typeof src !== 'object' || Array.isArray(src)) return;
+      var keep = {};
+      Object.keys(src).forEach(function (key) {
+        var v = src[key];
+        if (v === null || v === undefined || v === '') return;
+        if (Array.isArray(v)) {
+          var list = v.filter(function (s) { return typeof s === 'string' && s.trim() !== ''; })
+            .map(function (s) { return s.trim(); });
+          if (list.length) keep[key] = list;
+          return;
+        }
+        if (typeof v === 'number') { if (isFinite(v)) keep[key] = v; return; }
+        if (typeof v === 'boolean') { keep[key] = v; return; }
+        if (typeof v === 'string') { var s = v.trim(); if (s) keep[key] = s; return; }
+      });
+      if (Object.keys(keep).length) out[planet] = keep;
+    });
+    return out;
+  }
+  function levelsOf(household) { return createLevels((household || {}).levels); }
   /** The typed take-home a month, or incomplete. */
   function typedTakeHomeMonthlyCents(household) {
     var t = takeHomeOf(household);
@@ -2384,6 +2423,8 @@
       retirement: createRetirement(f.retirement),
       takeHome: createTakeHome(f.takeHome),
       sketch: createSketch(f.sketch),
+      /* Every fact the Solar System asks for that no room owns (D-337). */
+      levels: createLevels(f.levels),
       /* Your largest insurance deductible: the first thing a cash cushion
          has to cover, which is why Sleep At Night owns it. */
       insurance: createInsurance(f.insurance),
@@ -3432,7 +3473,7 @@
     HEALTH_TYPES: HEALTH_TYPES,
     createHealth: createHealth,
     createEstate: createEstate,
-    createSketch: createSketch, sketchOf: sketchOf, savedAndInvestedCents: savedAndInvestedCents,
+    createSketch: createSketch, sketchOf: sketchOf, createLevels: createLevels, levelsOf: levelsOf, savedAndInvestedCents: savedAndInvestedCents,
     cleanMonthlySpendingCents: cleanMonthlySpendingCents,
     createDecumulation: createDecumulation,
     createTaxFacts: createTaxFacts,

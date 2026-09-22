@@ -153,6 +153,13 @@
   .d-ask .choice[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-surface-active); }
   .d-ask .d-save { min-height: 44px; padding: 0 var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface); color: inherit; font: inherit; cursor: pointer; }
   .d-said { font-size: var(--text-xs); color: var(--color-text-muted); flex-basis: 100%; min-height: 16px; }
+  /* A fact the Planets screen owns (D-337): chips for a list, and the same
+     boxes and choices every other answer on this screen uses. */
+  .d-chips { display: flex; flex-wrap: wrap; gap: var(--space-1); flex-basis: 100%; }
+  .d-chips:empty { display: none; }
+  .d-chip { min-height: 32px; padding: 0 var(--space-2); border: 1px solid var(--color-border); border-radius: 999px; background: var(--color-surface); color: var(--color-text); font: inherit; font-size: var(--text-xs); cursor: pointer; }
+  .d-chip:hover { border-color: var(--color-border-strong); color: var(--color-text); }
+  .d-ask .choices { flex-basis: 100%; }
   /* Band 1 in words anyone can answer (D-336). The question in plain words
      leads, one line says what it means, and everything the app would rather
      say goes in the folds underneath. A phone at 380px shows the question,
@@ -1109,6 +1116,7 @@
 <script src="../engines/recipes.js"></script>
 <script src="../shared/solar.js"></script>
 <script src="../shared/sketch.js"></script>
+<script src="../shared/levelstore.js"></script>
 <script src="../shared/showmath.js"></script>
 <script src="../engines/sincelast.js"></script>
 <script src="../engines/selfemployed.js"></script>
@@ -3376,7 +3384,7 @@
   'use strict';
   var Solar = SLAF.Solar, Spine = SLAF.Spine, Reference = SLAF.Reference;
   var Ownership = SLAF.Ownership, LedgerRows = SLAF.LedgerRows, Ask = SLAF.Ask, Money = SLAF.Money, LiveForm = SLAF.LiveForm;
-  var Recipes = SLAF.Recipes, Sketch = SLAF.Sketch, Suggest = SLAF.Suggest;
+  var Recipes = SLAF.Recipes, Sketch = SLAF.Sketch, Suggest = SLAF.Suggest, LevelStore = SLAF.LevelStore;
   var TABLES = {};
   var host = document.getElementById('view-sky');
   if (!host || !Solar) return;
@@ -3483,6 +3491,60 @@
       + '<span class="d-said" data-sky-said role="status"></span></div>';
   }
 
+  /* ---- A fact with no room to go to (D-337) --------------------------------
+     A hundred and ninety-five of the facts data/levels.json asks about belong
+     to no room: how many children are at home, whether you rent or own, which
+     degrees you hold. They are the Planets screen's own, kept at
+     levels.<planet>.<key> through shared/levelstore.js, and the control comes
+     from the field's declared kind, so a yes or no is two buttons, an enum is
+     its own values, a date is a month and a year, and a list is chips you add
+     one at a time. Nothing here invents a value or a choice: every option is
+     one the table declares. */
+  function levelKey(levelId, key) { return levelId + '::' + key; }
+  function levelAskHtml(levelId, f) {
+    if (!LevelStore) return '';
+    var d = LevelStore.def(levelId, f.key);
+    var c = d ? LevelStore.control(d) : null;
+    if (!c) return '';
+    var h = Spine.getProfile();
+    var shown = LevelStore.display(h, levelId, f.key);
+    var stored = LevelStore.raw(h, levelId, f.key);
+    var box;
+    if (c.type === 'yesno' || c.type === 'choices') {
+      box = '<span class="choices">' + c.choices.map(function (o) {
+        var on = stored !== undefined && stored !== null && String(stored) === String(o.value);
+        return '<button type="button" class="choice" data-lvl-val="' + esc(String(o.value)) + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + esc(o.label) + '</button>';
+      }).join('') + '</span>';
+    } else if (c.type === 'month') {
+      var cur = /^(\d{4})-(\d{2})$/.exec(String(stored || ''));
+      box = '<span class="slaf-input-shell"><select data-lvl-month aria-label="Month"><option value="">Month</option>'
+        + MONTHS.map(function (m, i) {
+          var n = String(i + 1); n = n.length < 2 ? '0' + n : n;
+          return '<option value="' + n + '"' + (cur && cur[2] === n ? ' selected' : '') + '>' + esc(m) + '</option>';
+        }).join('')
+        + '</select><input type="text" inputmode="numeric" placeholder="Year, e.g. 2030" value="' + esc(cur ? cur[1] : '') + '" data-lvl-year aria-label="Year"/></span>'
+        + '<button type="button" class="d-save" data-lvl-save>Save</button>';
+    } else if (c.type === 'list') {
+      var items = Array.isArray(stored) ? stored : [];
+      box = '<span class="d-chips">' + items.map(function (s) {
+        return '<button type="button" class="d-chip" data-lvl-drop="' + esc(s) + '" title="Remove">' + esc(s) + ' \u00d7</button>';
+      }).join('') + '</span>'
+        + '<span class="slaf-input-shell"><input type="text" placeholder="' + esc(c.placeholder) + '" data-lvl-input aria-label="' + esc(f.label) + '"/></span>'
+        + '<button type="button" class="d-save" data-lvl-add>Add</button>';
+    } else {
+      var typed = c.type === 'money' && Money.isEntered(stored) ? String(stored / 100)
+        : c.type === 'rate' && Money.isEntered(stored) ? String(Math.round(stored * 10000) / 100)
+        : stored === null || stored === undefined ? '' : String(stored);
+      box = '<span class="slaf-input-shell">'
+        + (c.affix === '$' ? '<span class="affix">$</span>' : '')
+        + '<input type="text" inputmode="' + (c.type === 'text' ? 'text' : 'decimal') + '" placeholder="' + esc(c.placeholder || '') + '" value="' + esc(typed) + '" data-lvl-input aria-label="' + esc(f.label) + '"/>'
+        + (c.affix && c.affix !== '$' ? '<span class="affix">' + esc(c.affix) + '</span>' : '')
+        + '</span><button type="button" class="d-save" data-lvl-save>Save</button>';
+    }
+    return '<div class="d-ask" data-lvl-ask="' + esc(levelKey(levelId, f.key)) + '">' + box
+      + '<span class="d-said" data-sky-said role="status">' + (shown ? esc('In: ' + shown) : '') + '</span></div>';
+  }
+
   /* The figure a C level asks you to agree with, in the reading's own unit. */
   function readingFigure(id) {
     if (!Recipes || !id) return '';
@@ -3554,20 +3616,36 @@
         }
         var a = answerFor(def);
         if (a) { ASKS[a.id] = a; asks.push(a); }
+        /* A fact no room owns is answered here, in the Solar System's own
+           store (D-337). Before this it said "nowhere to type it yet", which
+           was true and useless: the question could not be answered by
+           anybody. */
+        var mine = !a && LevelStore && LevelStore.def(lv.id, f.key) ? levelAskHtml(lv.id, f) : '';
+        if (mine && !val) {
+          var own = LevelStore.display(Spine.getProfile(), lv.id, f.key);
+          if (own) val = ' <span class="d-val">' + esc(own) + '</span>';
+        }
         /* A figure the app works out rather than asks for says what it adds
            up from, instead of offering a box that would be a second copy. */
         var adds = addsUpFrom(f.key);
         var go = adds ? ' <span class="d-none">adds up from ' + esc(adds) + '</span>'
           : f.href ? ' <a href="' + esc(f.href) + '">' + (a ? 'the whole room' : f.filled ? 'change it' : 'enter it') + ' \u2192</a>'
-          : a ? '' : ' <span class="d-none">nowhere to type it yet</span>';
+          : (a || mine) ? '' : ' <span class="d-none">nowhere to type it yet</span>';
         out.push('<li class="' + (f.filled ? 'is-in' : '') + '"><span class="d-name">' + esc(f.label) + '</span>'
           + '<span class="d-state">' + esc(state) + val + (go ? '<span class="d-go">' + go + '</span>' : '') + '</span>'
-          + (a ? askHtml(a) : '') + '</li>');
+          + (a ? askHtml(a) : mine) + '</li>');
       });
       out.push('</ul>');
     }
-    if (!live.some(function (f) { return f.href || answerFor(defs[f.key]) || (defs[f.key] || {}).kind === 'confirm'; })) {
-      out.push('<p class="d-note">Nothing on this screen can take this answer yet. It is one of the new questions, and the screen that asks it is the next step.</p>');
+    /* Every fact now ends somewhere: a box on this screen, a link to the room
+       that owns the list, a figure that works itself out, or the Planets'
+       own store (D-337). The note that used to say otherwise is gone with
+       the thing it described. */
+    if (!live.some(function (f) {
+      return f.href || answerFor(defs[f.key]) || (defs[f.key] || {}).kind === 'confirm'
+        || (LevelStore && LevelStore.control(LevelStore.def(lv.id, f.key)));
+    })) {
+      out.push('<p class="d-note">This one is worked out from answers on other levels rather than typed.</p>');
     }
     if (hlp) out.push(sketchHtml(r, hlp, asks, gives, live, defs));
     return out.join('');
@@ -4175,6 +4253,104 @@
     } catch (e) { if (node) said(node, 'Could not record that (' + e.message + ').'); }
   }
 
+  /* ---- Saving a fact the Planets screen owns (D-337) ------------------------
+     Through shared/levelstore.js, which is the only writer: the value is
+     cleaned to its kind, the spine takes one undo entry, and the level's own
+     count and the run behave exactly as they do for a fact with a room. */
+  function levelPartsOf(node) {
+    var raw = node.getAttribute('data-lvl-ask') || '';
+    var cut = raw.indexOf('::');
+    return cut < 0 ? null : { levelId: raw.slice(0, cut), key: raw.slice(cut + 2) };
+  }
+  function levelSaved(node, value) {
+    var parts = levelPartsOf(node);
+    if (!parts) return;
+    var d = LevelStore.def(parts.levelId, parts.key);
+    var before = readable(Spine.getProfile());
+    try {
+      LevelStore.write(parts.levelId, parts.key, value, d ? d.label : null);
+    } catch (e) {
+      said(node, 'Could not save it here: ' + e.message);
+      return;
+    }
+    var shown = LevelStore.display(Spine.getProfile(), parts.levelId, parts.key);
+    said(node, value === null ? 'Cleared.' : 'Saved.' + (shown ? ' In: ' + shown : ''));
+    showLevelAnswer(node, parts, shown);
+    sayUnlocked(before);
+    var here = node.closest ? node.closest('.sky-levels > li') : null;
+    var stillHere = here ? here.querySelectorAll('.d-fields li:not(.is-in)').length : 0;
+    if (!stillHere && value !== null) advance(parts.levelId);
+  }
+  /* The line above the box, and the level's mark, without a rebuild: the
+     panel is not touched while a finger is in it (LIVE-FORM, D-034). */
+  function showLevelAnswer(node, parts, shown) {
+    var li = node.closest ? node.closest('li') : null;
+    if (li) {
+      li.className = shown ? 'is-in' : '';
+      var state = li.querySelector('.d-state');
+      if (state) {
+        var go = li.querySelector('.d-go');
+        state.innerHTML = esc(shown ? 'in' : 'not yet')
+          + (shown ? ' <span class="d-val">' + esc(shown) + '</span>' : '')
+          + (go ? go.outerHTML : '');
+      }
+    }
+    var item = li && li.closest ? li.closest('.sky-levels > li') : null;
+    var btn = item ? item.querySelector('.sky-lv') : null;
+    var lv = btn ? Solar.byId(btn.getAttribute('data-level')) : null;
+    var mark = btn ? btn.querySelector('.mark') : null;
+    if (lv && mark) {
+      var st = Solar.levelState(lv, Spine.getProfile());
+      mark.textContent = st.state === 'done' ? 'answered' : st.state === 'part' ? st.filled + ' of ' + st.of : 'not yet';
+      mark.classList.toggle('is-done', st.state === 'done');
+      item.classList.toggle('is-done', st.state === 'done');
+    }
+  }
+  function commitLevelTyped(node) {
+    var parts = levelPartsOf(node);
+    var input = node.querySelector('[data-lvl-input]');
+    if (!parts || !input) return;
+    var d = LevelStore.def(parts.levelId, parts.key);
+    var raw = String(input.value || '').trim();
+    if (raw === '') { levelSaved(node, null); return; }
+    var v = LevelStore.parse(d, raw);
+    if (v === null) { said(node, d && (d.kind === 'text' || d.kind === 'list') ? 'A few words, please.' : 'A number, please.'); return; }
+    levelSaved(node, v);
+  }
+  function commitLevelMonth(node) {
+    var parts = levelPartsOf(node);
+    var m = node.querySelector('[data-lvl-month]'), y = node.querySelector('[data-lvl-year]');
+    if (!parts || !m || !y) return;
+    var mm = String(m.value || ''), yy = String(y.value || '').replace(/[^0-9]/g, '');
+    if (!mm && !yy) { levelSaved(node, null); return; }
+    if (!mm || yy.length !== 4) { said(node, 'A month and a four-digit year, please.'); return; }
+    levelSaved(node, yy + '-' + mm);
+  }
+  function commitLevelList(node, drop) {
+    var parts = levelPartsOf(node);
+    if (!parts) return;
+    var d = LevelStore.def(parts.levelId, parts.key);
+    var h = Spine.getProfile();
+    var list;
+    if (drop !== undefined && drop !== null) list = LevelStore.removeFromList(h, parts.levelId, parts.key, drop, d ? d.label : null);
+    else {
+      var input = node.querySelector('[data-lvl-input]');
+      var item = input ? input.value : '';
+      if (!String(item || '').trim()) return;
+      list = LevelStore.addToList(h, parts.levelId, parts.key, item, d ? d.label : null);
+      if (input) input.value = '';
+    }
+    var shown = LevelStore.display(Spine.getProfile(), parts.levelId, parts.key);
+    var chips = node.querySelector('.d-chips');
+    if (chips) {
+      chips.innerHTML = (list || []).map(function (s) {
+        return '<button type="button" class="d-chip" data-lvl-drop="' + esc(s) + '">' + esc(s) + ' \u00d7</button>';
+      }).join('');
+    }
+    said(node, shown ? 'In: ' + shown : 'Cleared.');
+    showLevelAnswer(node, parts, shown);
+  }
+
   function commitTyped(node) {
     var a = ASKS[node.getAttribute('data-sky-ask')];
     if (!a) return;
@@ -4242,6 +4418,30 @@
   el('sky-open').addEventListener('click', function (e) {
     var t = e.target.closest ? e.target : null;
     if (!t) return;
+    /* A fact the Planets screen owns itself (D-337): its own boxes, chips
+       and choices, saved through shared/levelstore.js. */
+    var mine = t.closest('[data-lvl-ask]');
+    if (mine) {
+      var pick = t.closest('[data-lvl-val]');
+      if (pick) {
+        var rawVal = pick.getAttribute('data-lvl-val');
+        var parts = levelPartsOf(mine);
+        var d = parts ? LevelStore.def(parts.levelId, parts.key) : null;
+        levelSaved(mine, LevelStore.parse(d, rawVal));
+        Array.prototype.forEach.call(mine.querySelectorAll('[data-lvl-val]'), function (b) {
+          b.setAttribute('aria-pressed', b === pick ? 'true' : 'false');
+        });
+        return;
+      }
+      var drop = t.closest('[data-lvl-drop]');
+      if (drop) { commitLevelList(mine, drop.getAttribute('data-lvl-drop')); return; }
+      if (t.closest('[data-lvl-add]')) { commitLevelList(mine); return; }
+      if (t.closest('[data-lvl-save]')) {
+        if (mine.querySelector('[data-lvl-month]')) commitLevelMonth(mine); else commitLevelTyped(mine);
+        return;
+      }
+      return;
+    }
     /* The boxes first: a tap inside one is never a tap on the level. */
     var ask = t.closest('[data-sky-ask]');
     if (ask) {
@@ -4297,6 +4497,14 @@
   /* Enter saves, the same as the button beside it. */
   el('sky-open').addEventListener('keydown', function (e) {
     if (e.key !== 'Enter') return;
+    var own = e.target.closest ? e.target.closest('[data-lvl-ask]') : null;
+    if (own) {
+      e.preventDefault();
+      if (own.querySelector('[data-lvl-add]')) commitLevelList(own);
+      else if (own.querySelector('[data-lvl-month]')) commitLevelMonth(own);
+      else commitLevelTyped(own);
+      return;
+    }
     var ask = e.target.closest ? e.target.closest('[data-sky-ask]') : null;
     if (!ask) return;
     e.preventDefault();
@@ -4311,6 +4519,12 @@
   });
   /* A select is answered by choosing, not by a second tap on Save. */
   el('sky-open').addEventListener('change', function (e) {
+    var own = e.target.closest ? e.target.closest('[data-lvl-ask]') : null;
+    if (own && e.target.hasAttribute('data-lvl-month')) {
+      var y = own.querySelector('[data-lvl-year]');
+      if (y && String(y.value || '').replace(/[^0-9]/g, '').length === 4) commitLevelMonth(own);
+      return;
+    }
     var ask = e.target.closest ? e.target.closest('[data-sky-ask]') : null;
     if (!ask || e.target.hasAttribute('data-ask-period')) return;
     if (e.target.hasAttribute('data-sky-month') || e.target.hasAttribute('data-sky-year')) return;
@@ -4353,6 +4567,7 @@
   Reference.load(['levels', 'recipes', 'ledgerRows', 'states', 'effectiveTaxRates', 'stateBrackets', 'federalBrackets', 'levelsOfWealth', 'returnBands', 'fireVariants', 'sketchHelp', 'fooRules']).then(function (t) {
     TABLES = t;
     if (Sketch) Sketch.use(t.sketchHelp);
+    if (LevelStore) LevelStore.use(t.levels);
     Solar.use(t.levels);
     Solar.useRecipes(t.recipes);
     if (LedgerRows && t.ledgerRows) LedgerRows.use(t.ledgerRows);
