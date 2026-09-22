@@ -142,6 +142,20 @@
     c.mortgagePayment = debtSum(function (d) { return d.type === 'mortgage'; }, 'minPaymentCents');
     c.autoPayment = debtSum(function (d) { return d.type === 'auto'; }, 'minPaymentCents');
     c.revolvingBalance = debtSum(function (d) { return d.type === 'credit_card'; }, 'balanceCents');
+    c.personalLoanBalance = debtSum(function (d) { return d.type === 'personal'; }, 'balanceCents');
+    /* What goes into INVESTMENTS a month: the workplace plan at the stated
+       contribution percent, plus the Roth and the HSA where they are
+       entered, spread over the year. Cash piling up in savings is not here
+       on purpose (Amendment 1, B2). engines/cashflow.js owns the sum. */
+    c.investedMonthly = (function () {
+      var CF = (typeof module === 'object' && module.exports) ? require('./cashflow.js') : (typeof self !== 'undefined' && self.SLAF && self.SLAF.CashFlow);
+      if (!CF || typeof CF.savingsRateContributed !== 'function') return null;
+      var r = CF.savingsRateContributed(household, c.tables);
+      if (!Money.isOk(r) || !r.parts) return null;
+      var annual = 0, any = false;
+      r.parts.forEach(function (p) { if (Money.isEntered(p.annualCents)) { annual += p.annualCents; any = true; } });
+      return any ? annual / MONTHS : null;
+    })();
 
     /* Credit utilisation counts only the cards whose limit is known, on BOTH
        sides of the division. A card with a balance and no limit entered
@@ -490,6 +504,43 @@
           denominatorName: 'totalDebt',
           zeroReason: 'With no debt there is nothing to split.'
         });
+      } },
+
+    /* Amendment 1, B2: two the live tool never computed. Consumer debt is
+       the kind that buys nothing lasting, read against what actually lands
+       in the account; the investment rate is money going into investments,
+       which savingsRate (everything saved) and the contributed rate
+       (the workplace plan) both blur. D-334. */
+    { id: 'consumerDebtRatio', label: 'Consumer debt', tier: 19,
+      formula: 'card and personal loan balances ÷ annual take-home',
+      unit: 'rate', needs: 'your itemised debts and your take-home pay',
+      note: 'Cards and personal loans only: the debt that bought nothing that lasts. A mortgage, a car and a student loan are read elsewhere, against what they bought.',
+      compute: function (c) {
+        if (!Money.isEntered(c.takeHomeMonthly)) {
+          return Money.incomplete('Add your take-home pay to see this.', ['takeHomeMonthly']);
+        }
+        var card = Money.isEntered(c.revolvingBalance) ? c.revolvingBalance : null;
+        var personal = c.personalLoanBalance;
+        if (!Money.isEntered(card) && !Money.isEntered(personal)) {
+          return Money.incomplete('Add your debts, or say there are none, to see this.', ['debts']);
+        }
+        return over((Money.isEntered(card) ? card : 0) + (Money.isEntered(personal) ? personal : 0),
+          c.takeHomeMonthly * MONTHS, { denominatorName: 'takeHomeMonthly' });
+      } },
+
+    { id: 'investmentRate', label: 'Investment rate', tier: 19,
+      formula: 'money into investments ÷ gross income',
+      unit: 'rate', needs: 'your gross income and what goes into investments',
+      note: 'Money that buys assets, which is not the same as money not spent: cash piling up in savings counts in the savings rate and not here.',
+      compute: function (c) {
+        if (!Money.isEntered(c.monthlyGross)) {
+          return Money.incomplete('Add your income to see this.', ['grossAnnualIncome']);
+        }
+        var into = c.investedMonthly;
+        if (!Money.isEntered(into)) {
+          return Money.incomplete('Say what goes into investments each month, in the Ledger, to see this.', ['contributionPercent']);
+        }
+        return over(into, c.monthlyGross, { denominatorName: 'grossAnnualIncome' });
       } },
 
     { id: 'needsToWants', label: 'Needs to wants', tier: 19,
@@ -893,8 +944,52 @@
     });
   }
 
+  /**
+   * furthestFromNormal(household, tables, opts)
+   * The three ratios standing furthest outside their healthy band, worst
+   * first, by how far each sits from the near edge of its band in its own
+   * unit. It ranks what is off; the FI-date levers rank what would move the
+   * date most, and the two answer different questions (Amendment 1, B2).
+   * A ratio with no band, or one that could not be worked out, is not
+   * ranked: an unknown is not a problem. D-334.
+   */
+  function furthestFromNormal(household, tables, opts) {
+    var a = all(household, tables, opts);
+    var scored = [];
+    (a.rows || []).forEach(function (r) {
+      if (!r.ok || !r.verdict || r.verdict.zone === 'none' || r.verdict.zone === 'good') return;
+      var b = r.verdict.band;
+      if (!b || b.good === null || b.good === undefined) return;
+      var edge = b.good, v = r.value;
+      var away = b.direction === 'lower' ? v - edge : edge - v;
+      if (!(away > 0)) return;
+      /* Distances in different units cannot be compared, so the rank is the
+         SHARE of the edge each one is past: a third over is a third over,
+         whether the unit is months or a rate. */
+      var share = edge === 0 ? null : away / Math.abs(edge);
+      scored.push({ id: r.id, label: r.label, unit: r.unit, value: v, edge: edge,
+        direction: b.direction, zone: r.verdict.zone, awayBy: away, share: share, row: r });
+    });
+    scored.sort(function (x, y) {
+      if (x.share === null) return 1;
+      if (y.share === null) return -1;
+      return y.share - x.share;
+    });
+    var banded = (a.rows || []).filter(function (r) { return r.ok && r.verdict && r.verdict.zone !== 'none'; }).length;
+    var top = scored.slice(0, 3);
+    if (!top.length) {
+      /* Two different silences, and saying the wrong one is a small lie: a
+         page with nothing entered has not passed a test, it has not sat one. */
+      return Money.ok([], { ranked: 0, of: banded, note: banded === 0
+        ? 'Nothing with a healthy range behind it could be worked out yet, so there is nothing to rank.'
+        : 'Nothing that could be worked out sits outside its band.' });
+    }
+    return Money.ok(top, { ranked: scored.length, of: banded });
+  }
+
   return {
     RATIOS: RATIOS,
+    furthestFromNormal: furthestFromNormal,
     MONTHS: MONTHS,
     byId: byId,
     context: context,

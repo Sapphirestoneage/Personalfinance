@@ -3204,13 +3204,58 @@ section('Ratios');
     RatiosEngine.position(3, { direction: 'higher', good: null, warn: null }), null);
 
   const radar = RatiosEngine.radar(h, TABLES);
-  check('the radar plots every banded ratio that computed (14 before D-081, + shadow runway and worst-year coverage)', radar.value, 16);
+  check('the radar plots every banded ratio that computed (14 before D-081, + shadow runway and worst-year coverage, + the two of Amendment 1 B2)', radar.value, 18);
   checkTrue('and only ones with a band',
     radar.points.every(p => p.band && p.band.good !== null));
   checkTrue('every plotted point has a position inside the ceiling',
     radar.points.every(p => p.position >= 0 && p.position <= radar.ceiling));
   check('the comfortable ring sits at 1 by construction', radar.goodRing, 1);
 
+  /* Amendment 1, B2: two ratios the live tool never computed, and the ranking
+     that says which areas sit furthest outside their band. D-334. */
+  {
+    const consumer = RatiosEngine.byId('consumerDebtRatio');
+    const invest = RatiosEngine.byId('investmentRate');
+    checkTrue('both are ratios with a formula, a unit and what they need', [consumer, invest].every(r => r && r.formula && r.unit && r.needs));
+    const bands = require(path.join(ROOT, 'data/ratio_benchmarks.json')).bands;
+    check('consumer debt is read the lower the better', bands.consumerDebtRatio.direction, 'lower');
+    check('the investment rate the higher the better', bands.investmentRate.direction, 'higher');
+    const rows = RatiosEngine.all(h, TABLES).rows;
+    const cd = rows.filter(r => r.id === 'consumerDebtRatio')[0];
+    const ir = rows.filter(r => r.id === 'investmentRate')[0];
+    checkTrue('consumer debt counts cards and personal loans against a year of take-home', cd.ok && cd.value > 0 && cd.value < 1, cd.ok ? String(cd.value) : cd.result.reason);
+    checkTrue('...and a mortgage is not in it', (function () {
+      const noMortgage = JSON.parse(JSON.stringify(h));
+      noMortgage.debts = (noMortgage.debts || []).filter(d => d.type !== 'mortgage');
+      const r = RatiosEngine.all(noMortgage, TABLES).rows.filter(x => x.id === 'consumerDebtRatio')[0];
+      return r.ok && Math.abs(r.value - cd.value) < 1e-9;
+    })());
+    checkTrue('the investment rate is money into investments over gross', ir.ok && ir.value > 0 && ir.value < 1, ir.ok ? String(ir.value) : ir.result.reason);
+    checkTrue('...and cash piling up is not in it: it is the contributed sum, not the savings rate', (function () {
+      const richer = JSON.parse(JSON.stringify(h));
+      richer.assets = (richer.assets || []).map(a => a.category === 'cash' ? Object.assign({}, a, { valueCents: (a.valueCents || 0) + 50000000 }) : a);
+      const r = RatiosEngine.all(richer, TABLES).rows.filter(x => x.id === 'investmentRate')[0];
+      return r.ok && Math.abs(r.value - ir.value) < 1e-9;
+    })());
+    /* An empty household knows nothing, and an unknown is never a problem. */
+    const empty = RatiosEngine.furthestFromNormal(Schema.createHousehold({}), TABLES);
+    checkTrue('nothing entered ranks nothing, and says which silence it is', Money.isOk(empty) && empty.value.length === 0 && /nothing to rank|outside its band/.test(empty.note), empty.note);
+    const far = RatiosEngine.furthestFromNormal(h, TABLES);
+    checkTrue('the demo ranks at most three, worst first', Money.isOk(far) && far.value.length > 0 && far.value.length <= 3);
+    checkTrue('...ordered by how far past its own edge each one sits', far.value.every((x, i) => i === 0 || far.value[i - 1].share >= x.share));
+    checkTrue('...each naming its edge, its direction and its zone', far.value.every(x => x.label && Money.isEntered(x.edge) && /lower|higher/.test(x.direction) && /watch|out/.test(x.zone)));
+    checkTrue('...and a comfortable ratio is never ranked', far.value.every(x => x.zone !== 'good'));
+    const expl = require(path.join(ROOT, 'data/ratio_explainers.json')).ratios;
+    checkTrue('both explain themselves', ['consumerDebtRatio', 'investmentRate'].every(id => expl[id] && expl[id].what && expl[id].why && expl[id].improve));
+  }
+
+  /* One drawing (D-332): shared/charts.js draws it for the front page and the Scorecard. */
+  const Charts = require(path.join(ROOT, 'shared/charts.js'));
+  const svg = Charts.radar(radar);
+  check('the chart has three rings, a shape, and a dot and a number per spoke', (svg.match(/<polygon/g) || []).length + '/' + (svg.match(/<circle class="dot"/g) || []).length + '/' + (svg.match(/<text class="num"/g) || []).length, '4/' + radar.value + '/' + radar.value);
+  checkTrue('the dashed ring is the healthy line', /class="ring-good"/.test(svg));
+  ['index.html', 'rooms/financial-snapshot.html'].forEach(f => checkTrue(f + ' draws the radar through the one function', /Charts\.radar\(/.test(fs.readFileSync(path.join(ROOT, f), 'utf8')) && !/rMax = 44/.test(fs.readFileSync(path.join(ROOT, f), 'utf8'))));
+  checkTrue('the Scorecard lists it on Every ratio, and the legend jumps to the row', /id="out-radar"/.test(fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8')) && /href="#r-' \+ esc\(p\.id\)/.test(fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8')) && Registry.byId('financial-snapshot').subsections.some(s => s.id === 'out-radar'));
   const thin = RatiosEngine.radar(Schema.createHousehold({}), TABLES);
   check('a radar with fewer than three axes is not drawn', thin.status, 'incomplete');
   checkTrue('and says why', /three axes/.test(thin.reason));
@@ -6355,6 +6400,33 @@ section('Promotional rates');
     const past = Debt.promoStatus(card({ promoEndsOn: '2026-01-01' }), NOW);
     checkTrue('a date gone by is expired, not negative months', past.expired);
     check('and months left is zero, never below', past.monthsLeft, 0);
+  }
+
+  /* -- The annual fee, and when it next posts (D-331) --------------------- */
+  {
+    check('no fee entered is no fee, not a zero one', Debt.annualFee(card(), NOW), null);
+    const fee = Debt.annualFee(card({ annualFeeCents: 9500, annualFeeOn: '2025-03-12' }), NOW);
+    check('the fee is what was typed', fee.feeCents, 9500);
+    checkTrue('the next posting is the same month and day, in the next year that is still ahead', /-03-12$/.test(fee.nextOn) && fee.nextOn > Schema.localDay(NOW), fee.nextOn);
+    checkTrue('days until is a whole number of days ahead', Number.isInteger(fee.daysUntil) && fee.daysUntil > 0);
+    const dated = Debt.annualFee(card({ annualFeeCents: 9500, annualFeeOn: '2020-10-05' }), '2026-09-20T12:00:00');
+    check('this year when the day is still ahead', dated.nextOn, '2026-10-05');
+    check('… fifteen days out', dated.daysUntil, 15);
+    checkTrue('… and inside the window to call', dated.soon && Debt.FEE_SOON_DAYS >= 15);
+    const passed = Debt.annualFee(card({ annualFeeCents: 9500, annualFeeOn: '2020-09-19' }), '2026-09-20T12:00:00');
+    check('next year once the day has gone by', passed.nextOn, '2027-09-19');
+    checkTrue('… and not soon', !passed.soon);
+    const today = Debt.annualFee(card({ annualFeeCents: 9500, annualFeeOn: '2019-09-20' }), '2026-09-20T12:00:00');
+    check('today is today, not next year', today.daysUntil, 0);
+    const undated = Debt.annualFee(card({ annualFeeCents: 9500 }), NOW);
+    checkTrue('a fee with no date has a cost and no next date', undated.feeCents === 9500 && undated.nextOn === null && !undated.soon);
+    const shape = Schema.createDebt({});
+    checkTrue('the shape carries both, null until asked', shape.annualFeeCents === null && shape.annualFeeOn === null);
+    const room = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
+    checkTrue('the card fold asks both, on cards only, and the date commits on change', /field\(d, 'annualFeeCents', 'Annual fee'/.test(room) && /data-field="annualFeeOn"/.test(room) && /annualFeeOn: true/.test(room));
+    checkTrue('the warning says when the fee is about to post', /annual fee posts on/.test(room));
+    const walk = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+    checkTrue('a dealt walk step folds to one line the person can open (D-331)', /<details class="slaf-walk is-dealt"/.test(walk) && /slaf-walk-fold/.test(walk));
   }
 
   /* -- The rate the simulation actually charges --------------------------- */
@@ -15560,6 +15632,36 @@ section('The CSV round trip made resilient (D-221)');
    while it is still live in the registry — which is the failure that would
    otherwise let the map read as finished work that nobody did.
    ========================================================================== */
+section('The menu is on every page (D-333)');
+
+(function () {
+  const Prog = require(path.join(ROOT, 'shared/progress.js'));
+  const src = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+  checkTrue('the header no longer needs a back-link to stand in for',
+    /var back = document\.querySelector\('\.room-back, \.back'\);\s*\n\s*if \(back\)/.test(src) && !/if \(!back\) return null;/.test(src));
+  checkTrue('a page with its own header takes the strip above it, where the button is looked for',
+    /body > header/.test(src));
+  checkTrue('a page that is no room takes the navigation and none of a room\u2019s furniture',
+    /if \(!Registry\.byId\(roomId\)\) return nav;/.test(src));
+  checkTrue('a redirect stub takes none of it: it is a doorway, not a page',
+    /meta\[http-equiv="refresh"\]/.test(src));
+  checkTrue('the auto-mount no longer refuses a page the registry does not name',
+    /mountHeader\(roomIdFromLocation\(\)\);/.test(src));
+  /* The map sits at the root and the rooms do not; the menu's links have to
+     climb out of rooms/ from a page the registry cannot place. */
+  checkTrue('the path decides when the registry cannot', /indexOf\('\/rooms\/'\) === -1/.test(src));
+  const home = Registry.groups().filter(g => g.id === 'home')[0];
+  const views = (home.links || []).filter(l => /arrangements/.test(l.href))[0];
+  checkTrue('the twenty arrangements are a link in the menu, from every page', !!views);
+  check('...pointing at the Ledger\u2019s arrangements door', views.href, 'rooms/ledger.html#arrangements');
+  checkTrue('...and findable by the words for it', ['layouts', 'views', 'ways in'].every(w => (views.aliases || []).indexOf(w) >= 0));
+  /* map.html is the page that had no way out: it is not a registry room, so
+     nothing but this rule puts a menu on it. */
+  checkTrue('the map is still not a room, and still has no back-link of its own',
+    !Registry.all().some(r => r.href === 'map.html') && !/room-back|class="back"/.test(fs.readFileSync(path.join(ROOT, 'map.html'), 'utf8')));
+  checkTrue('shared/progress.js exports the mount the pages rely on', typeof Prog.mountHeader === 'function');
+})();
+
 section('The thirty (docs/room-map.json)');
 
 (function () {
@@ -16526,6 +16628,141 @@ section('A link that names a field opens to the field (D-323)');
        half these rooms build their cards from the household, so the id never
        appears in the source. test/anchors.js walks them in a browser. */
   }));
+})();
+
+section('Band 1 in words anyone can answer (D-336)');
+
+(function () {
+  /* The owner's words: "Im not sure. Make the first level incredibly easier
+     to fill out for all the various areas. I want it to be that someone with
+     minimal to no knowledge can fill it out." So every question in band 1
+     carries plain words, what counts, where to look on a phone, and a way
+     through when the answer is not known: a total added up from pieces, a
+     starting number the app can defend, or saying "not sure" outright. What
+     none of it may do is put a number in that the person did not give. */
+  const Sketch = require(path.join(ROOT, 'shared/sketch.js'));
+  const Suggest = require(path.join(ROOT, 'shared/suggest.js'));
+  const LedgerRows = require(path.join(ROOT, 'shared/ledger-rows.js'));
+  const Levels = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/levels.json'), 'utf8'));
+  const Help = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/sketch_help.json'), 'utf8'));
+  const Rows = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/ledger-rows.json'), 'utf8'));
+  const rowById = {}; Rows.rows.forEach(r => { rowById[r.id] = r; });
+  const band1 = Levels.levels.filter(l => l.band === 1);
+  Sketch.use(Help);
+  LedgerRows.use(Rows);
+
+  check('band 1 is the eighteen levels of the Sketch band', band1.length, 18);
+  checkTrue('every one of them has plain words to be asked in',
+    band1.every(l => !!Sketch.help(l.id)),
+    band1.filter(l => !Sketch.help(l.id)).map(l => l.id).join(', '));
+  checkTrue('and nothing in the table names a level that is not band 1',
+    Object.keys(Help.levels).every(id => band1.some(l => l.id === id)));
+  Object.keys(Help.levels).forEach(function (id) {
+    const h = Help.levels[id];
+    checkTrue(`${id} says the question in plain words`, typeof h.plain === 'string' && h.plain.length > 8);
+    checkTrue(`${id} says in one line what the number means`, typeof h.means === 'string' && h.means.length > 12);
+    checkTrue(`${id} says where to look for it`, typeof h.look === 'string' && h.look.length > 8);
+    checkTrue(`${id} says what to do when the answer is not known`, typeof h.unsure === 'string' && h.unsure.length > 12);
+    /* A question nobody can read is not easier. Two lines on a phone is
+       about ninety characters; the app's own prompts are longer than that,
+       which is the thing being fixed. */
+    checkTrue(`${id} asks it in one readable line`, h.plain.length <= 95, h.plain);
+    checkTrue(`${id} asks a question, not a category`, /\?$/.test(h.plain) || /^(This|The app)/.test(h.plain), h.plain);
+  });
+
+  /* The pieces of an add-it-up question sum into the one field the level
+     writes, so they can only exist where there is one such field. */
+  Object.keys(Help.levels).filter(id => (Help.levels[id].parts || []).length).forEach(function (id) {
+    const lv = band1.filter(l => l.id === id)[0];
+    const fields = (lv.fields || []);
+    check(`${id} adds up into a single fact`, fields.length, 1);
+    const row = rowById[fields[0].row || fields[0].key];
+    checkTrue(`${id} adds up into a money fact`, !!row && row.unit === 'cents', row ? row.unit : 'no row');
+    checkTrue(`${id} labels every piece it asks for`,
+      Help.levels[id].parts.every(p => p.key && p.label && p.label.length > 3));
+  });
+
+  /* The sum itself. A blank box is not a zero (CLAUDE.md), so it is left
+     out of the total and the total says how many went in; nothing typed at
+     all is incomplete, never $0. */
+  check('nothing typed is incomplete, never zero', Sketch.total([]).status, 'incomplete');
+  check('and it holds no value', Sketch.total([]).value, null);
+  const two = Sketch.total([25000, null, 10000, undefined]);
+  check('the boxes that were filled are added', two.value, 35000);
+  check('and the total says how many went in', two.of, 2);
+  check('one box on its own is a total too', Sketch.total([500]).value, 500);
+  check('a typed zero is a figure, and counts', Sketch.total([0]).status, 'ok');
+  check('a typed zero adds nothing and still counts as answered', Sketch.total([0]).of, 1);
+
+  /* The starting numbers. Each refuses rather than inventing, and says in
+     its own sentence where the figure came from. */
+  const T = {};
+  const Ref336 = require(path.join(ROOT, 'shared/reference.js'));
+  fs.readdirSync(path.join(ROOT, 'data')).filter(f => f.endsWith('.json')).forEach(function (file) {
+    const name = Object.keys(Ref336.TABLE_FILES).filter(k => Ref336.TABLE_FILES[k] === file)[0];
+    if (name) T[name] = JSON.parse(fs.readFileSync(path.join(ROOT, 'data', file), 'utf8'));
+  });
+  const bare = Schema.createHousehold({ filingStatus: 'single' });
+  checkTrue('no take-home, no guess at gross pay', Suggest.forField(bare, T, 'grossAnnualIncome') === null);
+  /* Nobody has said how they file yet in band 1, and the figure still comes:
+     the table's single column stands in and the sentence says so. */
+  const paid = Schema.createHousehold({});
+  paid.takeHome = { monthlyCents: 420000, typedCents: 420000, per: 'month' };
+  const gross = Suggest.forField(paid, T, 'grossAnnualIncome');
+  checkTrue('take-home in, and gross can be worked back from it', !!gross && gross.value > 420000 * 12, gross ? String(gross.value) : 'none');
+  checkTrue('and it says how, in the sentence beside it', !!gross && /lands in your account/.test(gross.how));
+  checkTrue('a guess is never presented as a reading', !!gross && gross.confidence === 'suggested');
+  checkTrue('and it says which filing status it stood in for', !!gross && /filing on their own/.test(gross.how));
+  const joint = Schema.createHousehold({ filingStatus: 'married_joint' });
+  joint.takeHome = { monthlyCents: 420000, typedCents: 420000, per: 'month' };
+  const jointGuess = Suggest.forField(joint, T, 'grossAnnualIncome');
+  checkTrue('a household that has said so gets its own rate, with no stand-in line',
+    !!jointGuess && !/filing on their own/.test(jointGuess.how));
+
+  /* Robin has answered both of these, and a suggestion is only ever offered
+     for a blank: the fields are cleared here to ask the question fresh. */
+  function unanswered() {
+    const h = Demo.build();
+    h.sketch.savedMonthlyCents = null;
+    h.sketch.highInterestCents = null;
+    if (h.assets) h.assets.added = null;
+    return h;
+  }
+  const saved = Suggest.forField(unanswered(), T, 'savedMonthly');
+  checkTrue('what is left over is offered as the most that could be saved', !!saved && saved.value > 0);
+  checkTrue('and it says it is a ceiling, not a reading', !!saved && /at most/.test(saved.how));
+  const tight = unanswered();
+  tight.takeHome = { monthlyCents: 100000, typedCents: 100000, per: 'month' };
+  checkTrue('nothing left over, no figure offered', Suggest.forField(tight, T, 'savedMonthly') === null);
+
+  const noDebt = Schema.createHousehold({ filingStatus: 'single' });
+  checkTrue('no debts listed, no high-interest total', Suggest.forField(noDebt, T, 'highInterestBalance') === null);
+  const hi = Suggest.forField(unanswered(), T, 'highInterestBalance');
+  checkTrue('debts listed, and the ones above the threshold are added up', !!hi && hi.value > 0);
+  checkTrue('and it names how many and at what rate', !!hi && /already listed at/.test(hi.how));
+  checkTrue('the threshold is the one the ladder uses, not a second copy',
+    /fooRules/.test(fs.readFileSync(path.join(ROOT, 'shared/suggest.js'), 'utf8')));
+
+  /* The screen. */
+  const page = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  checkTrue('the plain words are what the list, the next card and the panel all say',
+    /function promptOf\(lv\)/.test(page) && /esc\(promptOf\(r\.level\)\)/.test(page));
+  checkTrue('the panel leads with what the number means, and folds the app\u2019s own words away',
+    /class="d-means"/.test(page) && /d-more/.test(page) && /What counts, and where to look/.test(page));
+  checkTrue('the pieces of a sum are boxes that add up in front of you',
+    /data-sky-part=/.test(page) && /data-sky-total/.test(page) && /Sketch\.total\(partValues\(box\)\)/.test(page));
+  checkTrue('an empty piece is left out of the total, never counted as nothing',
+    /left out of the total, never counted as nothing/.test(page));
+  checkTrue('a starting number is offered, with the sentence that says where it came from',
+    /data-sky-starter=/.test(page) && /Suggest\.forField/.test(page) && /esc\(s\.how\)/.test(page));
+  checkTrue('a figure the app proposed is stamped rough wherever it is read',
+    /function markRough/.test(page) && /confidence: 'roughly'/.test(page));
+  checkTrue('"I am not sure" records the question as unanswered, and writes no number',
+    /data-sky-notsure=/.test(page) && /Spine\.setNotSure\(id, \{\}\)/.test(page) && /No number was written/.test(page));
+  checkTrue('every helper reaches the 44px tap target',
+    /\.d-notsure \{[^}]*min-height: 44px/.test(page) && /\.d-part input\[type="text"\] \{ min-height: 44px/.test(page));
+  checkTrue('and the answer still goes through the one owner of the fact',
+    /Ownership\.write\(id, value\)/.test(page));
 })();
 
 section('No em dash anywhere the app can show one (D-321)');

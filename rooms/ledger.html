@@ -153,6 +153,32 @@
   .d-ask .choice[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-surface-active); }
   .d-ask .d-save { min-height: 44px; padding: 0 var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface); color: inherit; font: inherit; cursor: pointer; }
   .d-said { font-size: var(--text-xs); color: var(--color-text-muted); flex-basis: 100%; min-height: 16px; }
+  /* Band 1 in words anyone can answer (D-336). The question in plain words
+     leads, one line says what it means, and everything the app would rather
+     say goes in the folds underneath. A phone at 380px shows the question,
+     the box and one way out without scrolling. */
+  .sky-lv-detail .d-plain { color: var(--color-text); font-size: var(--text-sm); line-height: var(--leading-normal); margin-bottom: 4px; }
+  .sky-lv-detail .d-means { color: var(--color-text-muted); }
+  .sky-lv-detail .d-unsure { color: var(--color-text-muted); border-left: 2px solid var(--color-border-strong); padding-left: var(--space-2); }
+  .d-sketch { display: flex; flex-direction: column; gap: var(--space-2); }
+  .d-starter { display: flex; flex-wrap: wrap; gap: 4px var(--space-2); align-items: baseline; }
+  .d-starter small { flex-basis: 100%; font-size: var(--text-xs); color: var(--color-text-faint); line-height: var(--leading-loose); }
+  .d-notsure { align-self: flex-start; min-height: 44px; padding: 0 var(--space-3); border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: transparent; color: var(--color-text-muted); font: inherit; font-size: var(--text-xs); cursor: pointer; }
+  .d-notsure:hover { border-color: var(--color-border-strong); color: var(--color-text); }
+  .d-addup, .d-more { border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
+  .d-addup > summary, .d-more > summary { min-height: 44px; display: flex; align-items: center; padding: 0 var(--space-2); font-size: var(--text-xs); color: var(--color-text); cursor: pointer; }
+  .d-addup > *:not(summary), .d-more > *:not(summary) { margin-left: var(--space-2); margin-right: var(--space-2); }
+  .d-parts { display: flex; flex-direction: column; gap: var(--space-2); }
+  .d-part { display: flex; flex-wrap: wrap; gap: 4px var(--space-2); align-items: center; }
+  .d-part .d-part-name { flex: 1 1 140px; min-width: 0; font-size: var(--text-xs); color: var(--color-text); }
+  .d-part .d-part-name small { display: block; color: var(--color-text-faint); }
+  .d-part .slaf-input-shell { flex: 0 1 140px; }
+  .d-part input[type="text"] { min-height: 44px; }
+  .d-addup .d-total { font-variant-numeric: tabular-nums; color: var(--color-text); }
+  .d-addup .slaf-btn { margin-bottom: var(--space-2); }
+  .d-addup .slaf-btn[disabled] { opacity: 0.45; cursor: default; }
+  .d-more .d-bullets { margin: 0 0 var(--space-2) var(--space-3); padding: 0; font-size: var(--text-xs); color: var(--color-text-muted); line-height: var(--leading-loose); }
+  .d-more .d-list { margin-bottom: 4px; }
   /* The reading's own figure, once its levels are answered (D-327). */
   .u-val { font-variant-numeric: tabular-nums; color: var(--color-text); font-weight: 500; }
   .u-sharp { display: flex; flex-wrap: wrap; gap: 4px; align-items: baseline; color: var(--color-text-faint); font-size: var(--text-xs); }
@@ -1082,6 +1108,7 @@
 <script src="../shared/liveform.js"></script>
 <script src="../engines/recipes.js"></script>
 <script src="../shared/solar.js"></script>
+<script src="../shared/sketch.js"></script>
 <script src="../shared/showmath.js"></script>
 <script src="../engines/sincelast.js"></script>
 <script src="../engines/selfemployed.js"></script>
@@ -3349,7 +3376,7 @@
   'use strict';
   var Solar = SLAF.Solar, Spine = SLAF.Spine, Reference = SLAF.Reference;
   var Ownership = SLAF.Ownership, LedgerRows = SLAF.LedgerRows, Ask = SLAF.Ask, Money = SLAF.Money, LiveForm = SLAF.LiveForm;
-  var Recipes = SLAF.Recipes;
+  var Recipes = SLAF.Recipes, Sketch = SLAF.Sketch, Suggest = SLAF.Suggest;
   var TABLES = {};
   var host = document.getElementById('view-sky');
   if (!host || !Solar) return;
@@ -3364,6 +3391,13 @@
   var STATES = [];
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+  /* One wording per question (D-336). Where band 1 has plain words, they are
+     what the list, the next-up card and the open panel all say, so nobody is
+     asked the same thing twice in two voices. */
+  function promptOf(lv) {
+    var hlp = lv && Sketch && Sketch.help ? Sketch.help(lv.id) : null;
+    return hlp && hlp.plain ? hlp.plain : (lv ? lv.prompt : '');
+  }
   function minutes(m, cap) { var t = m < 1 ? 'about half a minute' : 'about ' + Math.round(m) + (m < 2 ? ' minute' : ' minutes'); return cap ? t.charAt(0).toUpperCase() + t.slice(1) : t; }
 
   function dots(band) {
@@ -3404,8 +3438,9 @@
     var n = o.next, box = el('sky-next');
     if (!n) { box.hidden = true; return; }
     box.hidden = false;
-    var next = '<span class="eyebrow">Next</span><b>' + esc(n.planetLabel) + ' ' + esc(n.level.level) + ': ' + esc(n.level.prompt) + '</b>'
-      + '<p>' + esc(n.why) + ' ' + esc(minutes(n.level.minutes)) + '. ' + esc(n.level.first15) + '</p>';
+    var hlp = Sketch && Sketch.help ? Sketch.help(n.level.id) : null;
+    var next = '<span class="eyebrow">Next</span><b>' + esc(n.planetLabel) + ' ' + esc(n.level.level) + ': ' + esc(promptOf(n.level)) + '</b>'
+      + '<p>' + esc(n.why) + ' ' + esc(minutes(n.level.minutes)) + '. ' + esc(hlp && hlp.look ? hlp.look : n.level.first15) + '</p>';
     box.innerHTML = next;
   }
 
@@ -3477,10 +3512,24 @@
      app has nowhere to put yet says that. */
   function detailHtml(r) {
     var lv = r.level, out = [];
-    out.push('<p class="d-why"><b>What it gives you.</b> ' + esc(lv.checkpoint) + '</p>');
+    /* Band 1 in words anyone can answer (D-336). A level with help leads with
+       the question in plain words and one line of what it means, and puts
+       the app's own vocabulary (what it gives you, what it unlocks) in the
+       fold underneath, where it is there for whoever wants it and in nobody
+       else's way. Every other band reads exactly as it did. */
+    var hlp = Sketch && Sketch.help ? Sketch.help(lv.id) : null;
     var gives = (lv.payoff && lv.payoff.metrics || []).map(function (id) { return RECIPES[id]; }).filter(Boolean);
-    if (gives.length) out.push('<p class="d-why"><b>Unlocks.</b> ' + esc(gives.join(', ')) + '.</p>');
-    out.push('<p class="d-why"><b>Where to find it.</b> ' + esc(lv.first15) + ' ' + esc(minutes(lv.minutes, true)) + '.</p>');
+    if (hlp) {
+      /* The question itself is on the button that opened this panel, in the
+         same plain words (promptOf), so the panel does not say it twice: it
+         goes straight to what the question means. */
+      out.push('<p class="d-means">' + esc(hlp.means) + '</p>');
+    } else {
+      out.push('<p class="d-why"><b>What it gives you.</b> ' + esc(lv.checkpoint) + '</p>');
+      if (gives.length) out.push('<p class="d-why"><b>Unlocks.</b> ' + esc(gives.join(', ')) + '.</p>');
+      out.push('<p class="d-why"><b>Where to find it.</b> ' + esc(lv.first15) + ' ' + esc(minutes(lv.minutes, true)) + '.</p>');
+    }
+    var asks = [];
     var live = (r.fields || []).filter(function (f) { return f.applies; });
     var defs = {};
     (lv.fields || []).forEach(function (d) { defs[d.key] = d; });
@@ -3504,7 +3553,7 @@
           return;
         }
         var a = answerFor(def);
-        if (a) ASKS[a.id] = a;
+        if (a) { ASKS[a.id] = a; asks.push(a); }
         /* A figure the app works out rather than asks for says what it adds
            up from, instead of offering a box that would be a second copy. */
         var adds = addsUpFrom(f.key);
@@ -3520,6 +3569,81 @@
     if (!live.some(function (f) { return f.href || answerFor(defs[f.key]) || (defs[f.key] || {}).kind === 'confirm'; })) {
       out.push('<p class="d-note">Nothing on this screen can take this answer yet. It is one of the new questions, and the screen that asks it is the next step.</p>');
     }
+    if (hlp) out.push(sketchHtml(r, hlp, asks, gives, live, defs));
+    return out.join('');
+  }
+
+  /* ---- The three ways out of a band-1 question (D-336) ----------------------
+     Under the box: what to do when the answer is not known, a starting number
+     when the app can work one out from what is already in (shared/suggest.js,
+     one rule per row, so the same guess and the same "how I got this" appear
+     wherever the row is asked), the pieces to add up when the question is
+     really a sum, and a way to say "I am not sure" that records exactly that
+     rather than a zero (D-209). The app's own words go in the fold. */
+  function starterFor(id) {
+    if (!Suggest || !Suggest.forField || !id) return null;
+    try { return Suggest.forField(Spine.getProfile(), TABLES, id); } catch (e) { return null; }
+  }
+  function bullets(list) {
+    return '<ul class="d-bullets">' + (list || []).map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>';
+  }
+  /* The one money fact a band-1 level asks for, whether or not this screen
+     shows a box for it. A fact kept per line (each income source, each debt)
+     keeps its link to the room that owns the list, but while the list is
+     empty the question is still about the household, so the starting number
+     and the add-it-up total can answer it through the same owner. */
+  function moneyFieldFor(lv, live, defs) {
+    if (!Ownership || !Ownership.FIELDS || live.length !== 1) return null;
+    var def = defs[live[0].key] || {};
+    var id = Ownership.FIELDS[def.key] ? def.key : (def.row && Ownership.FIELDS[def.row] ? def.row : null);
+    if (!id || typeof Ownership.FIELDS[id].write !== 'function') return null;
+    var row = LedgerRows && LedgerRows.byId ? LedgerRows.byId(def.row || id) : null;
+    if (!row || row.unit !== 'cents') return null;
+    if (row.repeat && (LedgerRows.items(Spine.getProfile(), row) || []).length) return null;
+    return { id: id, row: row };
+  }
+  function sketchHtml(r, hlp, asks, gives, live, defs) {
+    var lv = r.level, out = [];
+    /* One plain money question is the case the helpers are for. A level that
+       asks two things (cash and invested) or a yes or no is already short. */
+    var a = asks.length === 1 && asks[0].row && asks[0].row.unit === 'cents' ? asks[0] : moneyFieldFor(lv, live, defs);
+    var parts = a ? Sketch.parts(lv.id) : [];
+    out.push('<div class="d-sketch">');
+    if (hlp.unsure) out.push('<p class="d-unsure">' + esc(hlp.unsure) + '</p>');
+    if (a) {
+      var s = starterFor(a.id);
+      if (s) {
+        out.push('<div class="d-starter"><button type="button" class="slaf-use-this" data-sky-starter="' + esc(a.id) + '">Start with ' + esc(s.display) + '</button>'
+          + '<small>' + esc(s.how) + '</small></div>');
+      }
+      if (parts.length) {
+        out.push('<details class="d-addup" data-sky-addup="' + esc(a.id) + '"><summary>Add it up with me</summary>'
+          + '<div class="d-parts">' + parts.map(function (part, i) {
+            return '<label class="d-part"><span class="d-part-name">' + esc(part.label)
+              + (part.hint ? '<small>' + esc(part.hint) + '</small>' : '') + '</span>'
+              + '<span class="slaf-input-shell"><span class="affix">$</span>'
+              + '<input type="text" inputmode="decimal" data-sky-part="' + i + '" aria-label="' + esc(part.label) + '"/></span></label>';
+          }).join('') + '</div>'
+          + '<p class="d-total" data-sky-total role="status">Fill in what you know. A box you leave empty is left out of the total, never counted as nothing.</p>'
+          + '<button type="button" class="slaf-btn slaf-btn--primary" data-sky-usetotal disabled>Use this total</button></details>');
+      }
+    }
+    /* Saying "I am not sure" is an answer to any question, not only to a
+       money one: an age, a yes or no, a state. The only ones without it are
+       the levels that ask you to agree with a figure, where there is nothing
+       to be unsure of yet. */
+    var unsureId = a ? a.id : (asks.length === 1 ? asks[0].id : null);
+    if (unsureId) {
+      out.push('<button type="button" class="d-notsure" data-sky-notsure="' + esc(unsureId) + '">I am not sure</button>');
+      out.push('<span class="d-said" data-sky-said role="status"></span>');
+    }
+    out.push('<details class="d-more"><summary>What counts, and where to look</summary>');
+    if (hlp.counts && hlp.counts.length) out.push('<p class="d-list"><b>This counts</b></p>' + bullets(hlp.counts));
+    if (hlp.skip && hlp.skip.length) out.push('<p class="d-list"><b>Leave this out</b></p>' + bullets(hlp.skip));
+    if (hlp.look) out.push('<p class="d-list"><b>Where to look.</b> ' + esc(hlp.look) + ' ' + esc(minutes(lv.minutes, true)) + '.</p>');
+    out.push('<p class="d-list"><b>What it gives you.</b> ' + esc(lv.checkpoint) + '</p>');
+    if (gives.length) out.push('<p class="d-list"><b>Unlocks.</b> ' + esc(gives.join(', ')) + '.</p>');
+    out.push('</details></div>');
     return out.join('');
   }
 
@@ -3552,7 +3676,7 @@
         out.push('<li class="' + (r.state === 'done' ? 'is-done' : '') + (isOpen ? ' is-open' : '') + '">'
           + '<button type="button" class="sky-lv" data-level="' + esc(r.level.id) + '" aria-expanded="' + (isOpen ? 'true' : 'false') + '">'
           + '<span class="tag" title="' + esc(({ E: 'Enter', C: 'Confirm', S: 'Sharpen' })[r.level.tag] || '') + '">' + esc(r.level.tag) + '</span>'
-          + '<span class="what">' + esc(r.level.prompt) + '</span>'
+          + '<span class="what">' + esc(promptOf(r.level)) + '</span>'
           + '<span class="mark' + (r.state === 'done' ? ' is-done' : '') + '">' + esc(mark) + '</span></button>'
           + (isOpen ? '<div class="sky-lv-detail">' + detailHtml(r) + '</div>' : '') + '</li>');
       });
@@ -3948,6 +4072,109 @@
 
   /* A typed box: the same parse, the same percent-slip question and the same
      period conversion the Ledger's own facts view uses. */
+  /* ---- Answering without knowing (D-336) -----------------------------------
+     A starting number is written like any other answer, through the owner,
+     and tagged as the app's guess rather than the person's figure, so every
+     screen that reads it can say so. The add-it-up total is the person's own
+     arithmetic, so it is tagged roughly and no more. "I am not sure" writes
+     no number at all: it records the question as asked and unanswered
+     (D-209), and the run moves on rather than stalling on a box. */
+  function askNodeFor(el_) {
+    var li = el_ && el_.closest ? el_.closest('.sky-levels > li') : null;
+    return li ? li.querySelector('[data-sky-ask]') : null;
+  }
+  /* One way in for every answer this block can produce. A level with a box
+     writes through it, so the box, the level's count and the run all behave
+     as if it had been typed. A level whose fact is kept per line has no box
+     here, so the same figure goes through the same owner and the panel is
+     asked to redraw once the finger has left it. */
+  function writeAnswer(id, value, note, from) {
+    var node = askNodeFor(from);
+    if (node && node.getAttribute('data-sky-ask') === id) { saveAnswer(node, value, note); return; }
+    var host = from && from.closest ? from.closest('.d-sketch') : null;
+    var before = readable(Spine.getProfile());
+    try {
+      Ownership.write(id, value);
+      if (host) said(host, (note ? note + ' ' : '') + 'Saved. Every room that reads it has it now.');
+      sayUnlocked(before);
+      var li = from && from.closest ? from.closest('.sky-levels > li') : null;
+      var lv = li ? li.querySelector('.sky-lv') : null;
+      if (lv) advance(lv.getAttribute('data-level'));
+    } catch (e) {
+      if (host) said(host, 'Could not save it here: ' + e.message);
+    }
+  }
+  /* A figure the app proposed, or one the person added up, is ROUGH, and
+     says so on every screen that reads it. tagWrite stamps the next save,
+     which is enough for a plain field; a fact kept per line is written
+     through its list, so the stamp is set again by name afterwards, and only
+     once the value is really there. */
+  function markRough(id, source) {
+    if (!Spine.setFieldMeta || !Ownership.FIELDS[id]) return;
+    var r = null;
+    try { r = Ownership.FIELDS[id].read(Spine.getProfile()); } catch (e) { return; }
+    if (!Money.isOk(r)) return;
+    try { Spine.setFieldMeta(id, { source: source, confidence: 'roughly' }); } catch (e) { /* the number stands either way */ }
+  }
+  function useStarter(id, btn) {
+    var s = starterFor(id);
+    if (!s) {
+      var host = btn.closest ? btn.closest('.d-sketch') : null;
+      if (host) said(host, 'That starting number cannot be worked out any more.');
+      return;
+    }
+    if (Spine.tagWrite) Spine.tagWrite({ source: 'suggested', confidence: 'roughly' });
+    writeAnswer(id, s.value, 'Saved as a starting number, marked rough.', btn);
+    markRough(id, 'suggested');
+  }
+  function partValues(box) {
+    var id = box.getAttribute('data-sky-addup');
+    var row = (ASKS[id] && ASKS[id].row) || (LedgerRows && LedgerRows.byId ? LedgerRows.byId(id) : null);
+    return Array.prototype.map.call(box.querySelectorAll('[data-sky-part]'), function (input) {
+      var raw = String(input.value || '').trim();
+      if (raw === '' || !row) return null;
+      return Ask.parse(row, raw);
+    }).filter(function (v) { return v !== null && v !== undefined; });
+  }
+  function totalLine(box) {
+    var out = box.querySelector('[data-sky-total]');
+    var btn = box.querySelector('[data-sky-usetotal]');
+    var sum = Sketch.total(partValues(box));
+    if (!Money.isOk(sum)) {
+      out.textContent = 'Fill in what you know. A box you leave empty is left out of the total, never counted as nothing.';
+      btn.disabled = true;
+      return null;
+    }
+    var n = sum.of;
+    out.textContent = 'The ' + n + ' box' + (n === 1 ? '' : 'es') + ' you filled add up to ' + Money.formatCents(sum.value) + '.';
+    btn.disabled = false;
+    return sum.value;
+  }
+  function commitTotal(box) {
+    if (!box) return;
+    var v = totalLine(box);
+    if (v === null) return;
+    var id = box.getAttribute('data-sky-addup');
+    var node = askNodeFor(box);
+    var a = ASKS[id];
+    var per = node ? node.querySelector('[data-ask-period]') : null;
+    var conv = a && a.row && a.row.unit === 'cents' && per ? Ask.toRowPeriod(a.row, v, per.value) : { value: v, note: null };
+    if (Spine.tagWrite) Spine.tagWrite({ source: 'typed', confidence: 'roughly' });
+    writeAnswer(id, conv.value, conv.note || 'Added up from the boxes you filled.', box);
+    markRough(id, 'typed');
+  }
+  function markNotSure(id, btn) {
+    var node = askNodeFor(btn) || (btn.closest ? btn.closest('.d-sketch') : null);
+    if (!Spine.setNotSure) return;
+    try {
+      Spine.setNotSure(id, {});
+      if (node) said(node, 'Marked not sure. No number was written, and the app will ask again rather than assume.');
+      var li = btn.closest ? btn.closest('.sky-levels > li') : null;
+      var lv = li ? li.querySelector('.sky-lv') : null;
+      if (lv) advance(lv.getAttribute('data-level'));
+    } catch (e) { if (node) said(node, 'Could not record that (' + e.message + ').'); }
+  }
+
   function commitTyped(node) {
     var a = ASKS[node.getAttribute('data-sky-ask')];
     if (!a) return;
@@ -4033,6 +4260,16 @@
       }
       return;
     }
+    /* The three ways out of a band-1 question (D-336): a starting number the
+       app can defend, the total of the pieces, and saying so when the answer
+       is not known. Each one ends in the same Ownership.write as typing it,
+       or in nothing being written at all. */
+    var start = t.closest('[data-sky-starter]');
+    if (start) { useStarter(start.getAttribute('data-sky-starter'), start); return; }
+    var useTotal = t.closest('[data-sky-usetotal]');
+    if (useTotal) { commitTotal(useTotal.closest('[data-sky-addup]')); return; }
+    var unsure = t.closest('[data-sky-notsure]');
+    if (unsure) { markNotSure(unsure.getAttribute('data-sky-notsure'), unsure); return; }
     /* A C level is answered by agreeing: the spine stamps it as confirmed
        today, and nothing about the figure changes (D-328). */
     var yes = t.closest('[data-sky-confirm]');
@@ -4064,6 +4301,13 @@
     if (!ask) return;
     e.preventDefault();
     if (ask.querySelector('[data-sky-month]')) commitDate(ask); else commitTyped(ask);
+  });
+  /* The running total under the add-it-up boxes, as they are typed (D-336).
+     Text only: nothing in the panel is rebuilt while a finger is in a box. */
+  el('sky-open').addEventListener('input', function (e) {
+    var box = e.target.closest ? e.target.closest('[data-sky-addup]') : null;
+    if (!box || !e.target.hasAttribute('data-sky-part')) return;
+    totalLine(box);
   });
   /* A select is answered by choosing, not by a second tap on Save. */
   el('sky-open').addEventListener('change', function (e) {
@@ -4106,8 +4350,9 @@
     if (btn && btn.scrollIntoView) btn.scrollIntoView({ block: 'center' });
   });
 
-  Reference.load(['levels', 'recipes', 'ledgerRows', 'states', 'effectiveTaxRates', 'stateBrackets', 'federalBrackets', 'levelsOfWealth', 'returnBands', 'fireVariants']).then(function (t) {
+  Reference.load(['levels', 'recipes', 'ledgerRows', 'states', 'effectiveTaxRates', 'stateBrackets', 'federalBrackets', 'levelsOfWealth', 'returnBands', 'fireVariants', 'sketchHelp', 'fooRules']).then(function (t) {
     TABLES = t;
+    if (Sketch) Sketch.use(t.sketchHelp);
     Solar.use(t.levels);
     Solar.useRecipes(t.recipes);
     if (LedgerRows && t.ledgerRows) LedgerRows.use(t.ledgerRows);

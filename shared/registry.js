@@ -66,6 +66,7 @@
         { id: 'view-the-nine',        label: 'The nine numbers' },
         { id: 'view-savings-rate',    label: 'Savings rate' },
         { id: 'view-every-ratio',     label: 'Every ratio' },
+        { id: 'out-radar',            label: 'All of it at once' },
         { id: 'view-quick-math',      label: 'Quick math' },
         { id: 'view-where-you-rank',  label: 'Where you rank' },
         { id: 'out-score',            label: 'Everything, at once' },
@@ -1103,8 +1104,24 @@
      property for ownership rules and is no longer a heading. Subgroups are
      labels, never links. DRAFTT and the map are links into pages that are
      not rooms; they ride in `links`. ---- */
+  /* THE TOP OF THE MENU (D-335). A view that is a way of seeing the whole
+     app, rather than a room among rooms, sits above the groups: the menu is
+     on every page since D-333, so this is the one place a view can be put
+     that is always one tap away and never behind a fold. A group can be
+     collapsed; this cannot. Keep it to two or three, or it becomes a
+     second menu. */
+  var TOP_LINKS = [
+    { id: 'planets', title: 'The Planets', href: 'rooms/ledger.html#planets',
+      note: 'six planets, ten bands, what you have answered',
+      aliases: ['planets', 'the planets', 'sky', 'bands', 'levels', 'solar system', 'orbit'] }
+  ];
+
   var GROUPS = [
-    { id: 'home',      label: 'Home' },
+    { id: 'home',      label: 'Home',
+      /* The twenty arrangements were reachable from one line of text on the
+         map page and nowhere else; the menu is on every page, so they are
+         too. D-333. */
+      links: [{ after: 'start', title: 'Twenty ways to arrange these rooms', href: 'rooms/ledger.html#arrangements', aliases: ['arrangements', 'layouts', 'views', 'ways in', 'shelves', 'twenty'] }] },
     { id: 'numbers',   label: 'Your Numbers', note: 'the owners; everything else reads from here',
       subgroups: [{ id: 'debt', label: 'Debt' }, { id: 'assets', label: 'Assets' }, { id: 'income', label: 'Income' }, { id: 'taxes', label: 'Taxes' }, { id: 'expenses', label: 'Expenses' }] },
     { id: 'scorecard', label: 'Scorecard', note: 'read-only',
@@ -1131,6 +1148,7 @@
     upkeep: ['data', 'ledger', 'settings', 'get-help']
   };
   function groups() { return GROUPS.slice(); }
+  function topLinks() { return TOP_LINKS.slice(); }
   function groupById(id) { return GROUPS.filter(function (g) { return g.id === id; })[0] || null; }
   /** A room's appliesWhen, read against a situation id, a few fixed
       phrases, never evaluated as code (the levers use the same idiom). */
@@ -1313,6 +1331,7 @@
   function total() { return ROOMS.length; }
 
   return {
+    topLinks: topLinks, TOP_LINKS: TOP_LINKS,
     GROUPS: GROUPS,
     groups: groups,
     groupById: groupById,

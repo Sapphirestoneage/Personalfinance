@@ -51,6 +51,24 @@
   #view-the-score section[id], #view-the-nine section[id], #view-savings-rate section[id],
   #view-every-ratio section[id], #view-quick-math section[id], #view-where-you-rank section[id] { scroll-margin-top: var(--space-4); }
 
+  /* ---- The radar on Every ratio (D-332): the front page's chart, shared ---- */
+  #view-every-ratio .radar { width: 100%; max-width: 420px; height: auto; display: block; margin: var(--space-3) auto 0; overflow: visible; }
+  #view-every-ratio .radar .ring { fill: none; stroke: var(--color-border-active); stroke-width: .6; }
+  #view-every-ratio .radar .ring-good { fill: none; stroke: var(--color-positive); stroke-width: .8; stroke-dasharray: 2 2; }
+  #view-every-ratio .radar .spoke { stroke: var(--color-border-active); stroke-width: .4; }
+  #view-every-ratio .radar .shape { fill: rgba(46,111,232,.28); stroke: var(--color-accent); stroke-width: 1.2; }
+  #view-every-ratio .radar .dot { stroke: var(--ink-900); stroke-width: .5; }
+  #view-every-ratio .radar .num { fill: var(--color-text-faint); font-size: 4.5px; font-family: var(--font-body); }
+  #view-every-ratio ol.legend { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: var(--text-sm); }
+  #view-every-ratio ol.legend li { display: grid; grid-template-columns: 22px 1fr auto; gap: var(--space-2); align-items: baseline; padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
+  #view-every-ratio ol.legend li:last-child { border-bottom: none; }
+  #view-every-ratio ol.legend .n { color: var(--color-text-faint); font-variant-numeric: tabular-nums; }
+  #view-every-ratio ol.legend a { color: var(--color-text); text-decoration: none; border-bottom: 1px dotted var(--color-border-strong); }
+  #view-every-ratio ol.legend .v { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  #view-every-ratio ol.legend .v.is-good { color: var(--color-positive); }
+  #view-every-ratio ol.legend .v.is-watch { color: var(--color-caution); }
+  #view-every-ratio ol.legend .v.is-out { color: var(--color-critical-text); }
+
   /* ---- The score, from rooms/health.html (D-233) ------------------------ */
   
   #view-the-score .room-back:hover { text-decoration: underline; }
@@ -815,6 +833,19 @@
   <!-- ================ EVERY RATIO (was rooms/ratios.html) ================ -->
   <section id="view-every-ratio" hidden>
   <p class="slaf-lede">Every ratio the app can work out, by zone, with what each one blocks until it moves.</p>
+  <!-- THE RADAR (D-332): the same chart the front page folds away, drawn by
+       shared/charts.js radar; each spoke's name jumps to its row below. -->
+  <section class="slaf-card" id="out-radar">
+    <span class="slaf-eyebrow">All of it at once</span>
+    <h2 style="margin:var(--space-2) 0 0">Am I in the green everywhere?</h2>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">One spoke per number that has a healthy range behind it. <strong>Further out is better.</strong> The dashed circle is the line you want to be on or outside; a dot inside it is below the usual range. The numbers round the edge match the list under the chart, and each name jumps to its row below.</p>
+    <div id="radar-body" hidden>
+      <svg class="radar" id="radar" viewBox="0 0 120 120" role="img" aria-labelledby="radar-desc"></svg>
+      <ol class="legend" id="radar-legend"></ol>
+    </div>
+    <p class="why" id="radar-desc"></p>
+    <p class="r-note" style="margin-top:var(--space-2)">A view, not a score. Each spoke stands on its own band and nothing here adds them together; <a href="#the-score">The Score</a> does that, and shows its weighting.</p>
+  </section>
   <section class="slaf-card" id="summary">
     <span class="slaf-eyebrow">How many are answerable</span>
     <div class="tally" id="tally">not yet</div>
@@ -1062,7 +1093,7 @@
   var VIEWS = [
     { id: 'view-the-nine',       match: /^#(the-nine|draftt|out-net-worth|out-savings-rate|out-emergency-fund|out-dti|out-fire|out-foo|out-retirement|out-percentile|out-benchmarks|out-flags|out-fire-progress|lenses|provenance|inputs|three-|cold-start|nw-|pct-|fire-bar|sr-|ef-swan|snapshot-note|ladder-list|flags-body|benchmarks-more|fp-lens)/ },
     { id: 'view-savings-rate',   match: /^#(savings-rate|out-rate|out-benchmark|breakdown|what-if|b-|r-in|r-ex|bench-|wi-)/ },
-    { id: 'view-every-ratio',    match: /^#(every-ratio|out-wealth|out-safety|out-lending|out-blocked|summary|tally|zone|bars-|list-|ra-)/ },
+    { id: 'view-every-ratio',    match: /^#(every-ratio|out-radar|radar|out-wealth|out-safety|out-lending|out-blocked|summary|tally|zone|bars-|list-|ra-)/ },
     { id: 'view-quick-math',     match: /^#(quick-math|habit|car|five|hysa|peruse|use-|u-|c-|f-|h-|qm-|seed-host)/ },
     { id: 'view-where-you-rank', match: /^#(where-you-rank|guess|reveal|in-guess|btn-reveal|g-word)/ },
     { id: 'view-the-score',      match: /^#(the-score|out-score|out-pillars|out-headroom|out-cohorts|out-missing|pillars|headroom|cohorts|missing-body|score-|h-reading)/ }
@@ -2267,11 +2298,39 @@
     }).join('');
   }
 
+  /* ---- The radar (D-332) -------------------------------------------------
+     The gate says which ratios mean anything for this household, the engine
+     places each on its own band, shared/charts.js draws it, and the legend
+     jumps to the row below. Nothing here is added up. */
+  function renderRadar(h, rows) {
+    var G = SLAF.Gate;
+    var r = Ratios.radar(h, TABLES, { snapshots: Spine.listSnapshots(), applies: function (branch) { return G ? G.exists(h, branch) : true; } });
+    el('radar-body').hidden = !Money.isOk(r);
+    if (!Money.isOk(r)) { el('radar-desc').textContent = r.reason; el('radar-legend').innerHTML = ''; return; }
+    el('radar').innerHTML = Charts.radar(r);
+    el('radar-legend').innerHTML = r.points.map(function (p, i) {
+      var row = rows.filter(function (x) { return x.id === p.id; })[0];
+      return '<li><span class="n">' + (i + 1) + '</span>'
+        + '<span><a href="#r-' + esc(p.id) + '">' + esc(p.label) + '</a></span>'
+        + '<span class="v is-' + p.zone + '">' + (row ? esc(show(row)) : '') + '</span></li>';
+    }).join('');
+    var out = r.points.filter(function (p) { return p.zone === 'out'; });
+    var watch = r.points.filter(function (p) { return p.zone === 'watch'; });
+    var drawn = r.points.length, parts = [];
+    if (out.length) parts.push('<strong>' + out.length + ' ' + (out.length === 1 ? 'is' : 'are') + ' below the healthy range</strong> (' + out.map(function (p) { return esc(p.label); }).join(', ') + ')');
+    if (watch.length) parts.push(watch.length + ' ' + (watch.length === 1 ? 'is' : 'are') + ' close to the line (' + watch.map(function (p) { return esc(p.label); }).join(', ') + ')');
+    var fine = drawn - out.length - watch.length;
+    if (fine > 0) parts.push(fine === drawn ? 'all ' + fine + ' are comfortable' : fine + ' ' + (fine === 1 ? ' is' : ' are') + ' comfortable');
+    var tail = r.notYet && r.notYet.length ? ' ' + r.notYet.length + ' more ' + (r.notYet.length === 1 ? 'has' : 'have') + ' a healthy range but ' + (r.notYet.length === 1 ? 'is' : 'are') + ' waiting on something not entered yet; the list below says what.' : '';
+    el('radar-desc').innerHTML = 'Of the <strong>' + esc(String(drawn)) + '</strong> that could be worked out from what you have entered, ' + parts.join('; ') + '.' + esc(tail);
+  }
+
   function renderNow() {
     if (!TABLES) return;
     var h = Spine.getProfile();
     var a = Ratios.all(h, TABLES, { snapshots: Spine.listSnapshots() });
     var rows = a.rows;
+    renderRadar(h, rows);
 
     el('tally').textContent = a.value + ' of ' + a.total + ' answerable';
     var scored = rows.filter(function (r) { return r.ok && r.verdict.zone !== 'none'; });

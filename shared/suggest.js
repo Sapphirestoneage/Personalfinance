@@ -218,6 +218,19 @@
     return { Money: S.Money, Schema: S.Schema, Ownership: S.Ownership, Tax: S.Tax, Spine: S.Spine, LedgerRows: S.LedgerRows };
   }
   function pct(r) { return Math.round(r * 1000) / 10 + '%'; }
+  /* Two readers a band-1 rule needs and the rest do not, loaded where they
+     are (D-336): the effective-rate lookup, and the one function in the app
+     that decides what counts as high interest. */
+  function ref() {
+    if (typeof module === 'object' && module.exports) { try { return require('./reference.js'); } catch (e) { return null; } }
+    var g_ = typeof self !== 'undefined' ? self : null;
+    return g_ && g_.SLAF ? g_.SLAF.Reference || null : null;
+  }
+  function foo() {
+    if (typeof module === 'object' && module.exports) { try { return require('../engines/foo.js'); } catch (e) { return null; } }
+    var g_ = typeof self !== 'undefined' ? self : null;
+    return g_ && g_.SLAF ? g_.SLAF.Foo || null : null;
+  }
   function money(D, c) { return D.Money.formatCents(c); }
 
   var RULES = {
@@ -351,6 +364,67 @@
         how: 'Gross pay less the estimated tax at your filing status, divided by twelve. What actually lands is the better number.',
         sources: ['data/effective_tax_rates_2026.json'] };
     },
+    /* ---- Band 1, answered without knowing (D-336) -------------------------
+       Three questions the Sketch band asks that a beginner cannot look up in
+       a minute. Each rule says where its figure came from in the same
+       sentence it offers it, and each refuses rather than inventing: no
+       debts listed, no high-interest total; nothing left over, no saving
+       figure; no take-home, no gross. */
+    grossFromTakeHome: function (c) {
+      var R = ref();
+      /* Band 1 asks this before anybody has said how they file, so the
+         table's single column stands in and the sentence beside the figure
+         says so. Nothing is written about filing status either way. */
+      var said = c.h && c.h.filingStatus;
+      var status = said || 'single';
+      var typed = c.D.Schema.typedTakeHomeMonthlyCents ? c.D.Schema.typedTakeHomeMonthlyCents(c.h) : null;
+      if (!R || !c.tables.effectiveTaxRates) return null;
+      if (!typed || !c.D.Money.isOk(typed) || typed.value <= 0) return null;
+      var net = typed.value * MONTHS;
+      /* The table is a lookup of rate by gross, so the gross is found by
+         walking it: the net is a first guess, its rate gives a better gross,
+         and that gross's own rate settles it. Two passes is enough at this
+         precision. */
+      var gross = net;
+      for (var i = 0; i < 2; i++) {
+        var rate = R.lookupEffectiveTaxRate(c.tables.effectiveTaxRates, gross / 100, status);
+        if (!c.D.Money.isOk(rate) || rate.value >= 1) return null;
+        gross = Math.round(net / (1 - rate.value));
+      }
+      var shown = R.lookupEffectiveTaxRate(c.tables.effectiveTaxRates, gross / 100, status);
+      if (!c.D.Money.isOk(shown)) return null;
+      return { value: gross, unit: 'cents', display: money(c.D, gross) + ' a year',
+        how: 'Worked back from the ' + money(c.D, typed.value) + ' a month that lands in your account, at the rough ' + pct(shown.value) + ' this table gives someone on that pay'
+          + (said ? '' : ', filing on their own; filing jointly it comes out lower') + '. A payslip beats it.',
+        sources: ['data/effective_tax_rates_2026.json'] };
+    },
+    savedFromGap: function (c) {
+      var take = c.D.Schema.takeHomeMonthlyCents(c.h, c.tables);
+      var spend = c.D.Schema.monthlyExpensesCents(c.h);
+      if (!c.D.Money.isOk(take) || !c.D.Money.isOk(spend)) return null;
+      var mins = c.real('monthlyDebtPayments');
+      var owed = c.D.Money.isEntered(mins) ? mins : 0;
+      var left = Math.round(take.value - spend.value - owed);
+      if (left <= 0) return null;
+      return { value: left, unit: 'cents', display: money(c.D, left) + ' a month',
+        how: money(c.D, take.value) + ' lands, ' + money(c.D, spend.value) + ' is spent'
+          + (owed ? ' and ' + money(c.D, owed) + ' goes to debts' : '')
+          + ', so at most ' + money(c.D, left) + ' a month could be going away. If less of it is, type what is.',
+        sources: [] };
+    },
+    highInterestFromDebts: function (c) {
+      var Foo = foo();
+      var t = c.tables.fooRules;
+      if (!Foo || !t || !t.thresholds) return null;
+      var hi = null;
+      try { hi = Foo.highInterestDebts(c.h, t.thresholds); } catch (e) { return null; }
+      if (!hi || !hi.above || !hi.above.length) return null;
+      var v = hi.above.reduce(function (n, d) { return n + (c.D.Money.isEntered(d.balanceCents) ? d.balanceCents : 0); }, 0);
+      if (v <= 0) return null;
+      return { value: v, unit: 'cents', display: money(c.D, v),
+        how: 'Added up from the ' + hi.above.length + ' debt' + (hi.above.length === 1 ? '' : 's') + ' you have already listed at ' + pct(t.thresholds.highInterestDebtRate) + ' or more.',
+        sources: ['data/foo_rules.json'] };
+    },
     spendingFromPay: function (c) {
       var t = c.tables.onepagerDefaults;
       if (!t) return null;
@@ -427,8 +501,16 @@
     var rows = D.LedgerRows ? D.LedgerRows.all() : [];
     return rows.filter(function (r) { return r.suggestFrom && RULES[r.suggestFrom]; });
   }
-  function itemsFor(D, h, row) {
-    return D.LedgerRows && row.repeat ? (D.LedgerRows.items(h, row) || []) : [null];
+  function itemsFor(D, h, row, opts) {
+    /* A row kept per line (each debt, each income source) normally suggests
+       per line, and suggests nothing while the list is empty. Band 1 asks
+       about the household before any line exists (D-336), so a row named in
+       opts.asHousehold runs its rule once, with no item, and only while
+       nothing is listed. */
+    if (!D.LedgerRows || !row.repeat) return [null];
+    var items = D.LedgerRows.items(h, row) || [];
+    if (!items.length && opts && opts.asHousehold && opts.asHousehold.indexOf(row.id) >= 0) return [null];
+    return items;
   }
   function itemValue(row, item) {
     if (!item) return null;
@@ -452,7 +534,7 @@
        feed one later (state before the benefit; filing before the rate). */
     rowsWithRules(D).forEach(function (row) {
       if (opts && opts.onlyApplicable !== false && D.LedgerRows && !D.LedgerRows.applies(row, h) && !/NotApplicable$/.test(row.suggestFrom)) return;
-      itemsFor(D, h, row).forEach(function (item) {
+      itemsFor(D, h, row, opts).forEach(function (item) {
         var entered = item ? D.Money.isEntered(itemValue(row, item)) : (realValue(D, h, row.id) !== null);
         if (entered) return;
         var c = Object.assign({}, ctxBase, { row: row, item: item });
@@ -472,6 +554,14 @@
   }
   function forRow(household, tables, rowId, itemId) {
     return suggestions(household, tables).filter(function (s) { return s.rowId === rowId && (itemId ? s.itemId === itemId : true); })[0] || null;
+  }
+  /** The suggestion for one row asked of the household rather than of a line
+      (D-336): the same rule, the same wording, for a band-1 question put to
+      someone who has listed no accounts yet. Once a line exists, this is
+      forRow again and the per-line suggestions take over. */
+  function forField(household, tables, rowId) {
+    return suggestions(household, tables, { asHousehold: [rowId] })
+      .filter(function (s) { return s.rowId === rowId && !s.itemId; })[0] || null;
   }
 
   /* overlay: a copy with every non-N/A suggestion applied at its household
@@ -531,7 +621,7 @@
     RULES: RULES,
     TABLES: ['ledgerRows', 'zipPrefixes', 'uiBenefits', 'savingsPresets', 'federalBrackets', 'stateBrackets', 'protectionConventions', 'debtRules', 'onepagerDefaults', 'retirementMilestones', 'cobraAca'],
     suggestions: suggestions,
-    forRow: forRow,
+    forRow: forRow, forField: forField,
     overlay: overlay,
     confirm: confirm
   };

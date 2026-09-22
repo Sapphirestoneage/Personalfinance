@@ -28,6 +28,8 @@
   var TABLE_FILES = {
     /* The Solar System (D-320): the levels, the recipes, the moons and their moves, the defaults and the benchmark lenses. */
     levels: 'levels.json', recipes: 'recipes.json', moons: 'moons.json', moves: 'moves.json', defaults: 'defaults.json', benchmarks: 'benchmarks.json',
+    /* Band 1 in words anyone can answer (D-336). */
+    sketchHelp: 'sketch_help.json',
     effectiveTaxRates: 'effective_tax_rates_2026.json',
     advice: 'advice.json',
     plausibleRanges: 'plausible_ranges.json',

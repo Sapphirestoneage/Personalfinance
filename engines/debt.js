@@ -156,6 +156,33 @@
    * Returns null when there is no promo, the common case, and not a state
    * worth a Result object.
    */
+  /**
+   * annualFee(debt, asOf)
+   * A card's yearly fee and when it next posts: the month and day of the
+   * stored date, in this year if that is still ahead, else next year. Null
+   * when no fee is entered; a fee with no date has no next date. `soon` is
+   * inside the window a person can still cancel before it posts.
+   */
+  var FEE_SOON_DAYS = 45;
+  function annualFee(debt, asOf) {
+    if (!debt || !Money.isEntered(debt.annualFeeCents)) return null;
+    var out = { feeCents: debt.annualFeeCents, chargedOn: debt.annualFeeOn || null, nextOn: null, daysUntil: null, soon: false };
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(debt.annualFeeOn || '');
+    if (!m) return out;
+    var today = Schema.localDay(asOf);
+    var t = /^(\d{4})-(\d{2})-(\d{2})$/.exec(today);
+    if (!t) return out;
+    var todayMs = Date.UTC(+t[1], +t[2] - 1, +t[3]);
+    var year = +t[1];
+    var next = Date.UTC(year, +m[2] - 1, +m[3]);
+    if (next < todayMs) next = Date.UTC(year + 1, +m[2] - 1, +m[3]);
+    var d = new Date(next);
+    out.nextOn = d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0');
+    out.daysUntil = Math.round((next - todayMs) / 86400000);
+    out.soon = out.daysUntil <= FEE_SOON_DAYS;
+    return out;
+  }
+
   function promoStatus(debt, asOf) {
     if (!debt || !debt.promoEndsOn) return null;
     var left = Schema.monthsUntil(debt.promoEndsOn, asOf, {
@@ -849,6 +876,7 @@
     pushPhases: pushPhases,
     monthFlow: monthFlow,
     promoStatus: promoStatus,
+    annualFee: annualFee, FEE_SOON_DAYS: FEE_SOON_DAYS,
     effectiveRate: effectiveRate,
     rateInMonth: rateInMonth,
     clearBeforePromoEnds: clearBeforePromoEnds,

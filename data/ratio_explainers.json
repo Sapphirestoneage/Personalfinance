@@ -92,7 +92,7 @@
     },
     "currentRatio": {
       "what": "Liquid assets divided by a year of required debt payments.",
-      "why": "Under 1×, a year of minimums is more than you could lay hands on. It is a stress test for a bad year.",
+      "why": "Under 1\u00d7, a year of minimums is more than you could lay hands on. It is a stress test for a bad year.",
       "improve": "Grow cash or clear a payment. Either side moves it.",
       "looksAt": [
         "cashSavings",
@@ -316,7 +316,7 @@
     },
     "worstPlausibleYearCoverage": {
       "what": "Cash divided by a year in which everything goes wrong at once: job loss, the deductible, the essentials, net of the benefit.",
-      "why": "1× means the cash would carry that year. It replaces the vague 3 to 6 months once the inputs exist.",
+      "why": "1\u00d7 means the cash would carry that year. It replaces the vague 3 to 6 months once the inputs exist.",
       "improve": "Cash, a lower deductible, or a lower floor of essentials. Sleep At Night shows the pieces.",
       "looksAt": [
         "cashSavings",
@@ -373,9 +373,9 @@
       ]
     },
     "bridgeGapYears": {
-      "what": "Years between the age FI arrives and 59½, when retirement accounts open.",
+      "what": "Years between the age FI arrives and 59\u00bd, when retirement accounts open.",
       "why": "Those years have to be funded from taxable money and Roth basis. Zero means no bridge is needed.",
-      "improve": "Save the bridge years in taxable accounts; The Statement shows what is reachable before 59½.",
+      "improve": "Save the bridge years in taxable accounts; The Statement shows what is reachable before 59\u00bd.",
       "looksAt": [
         "dob",
         "monthlyExpenses",
@@ -419,6 +419,24 @@
         "monthlyExpenses",
         "investments",
         "grossAnnualIncome"
+      ]
+    },
+    "consumerDebtRatio": {
+      "what": "Card and personal loan balances as a share of a year of take-home pay.",
+      "why": "This is the debt that bought nothing lasting. A mortgage has a house behind it and a car loan has a car; these have last year behind them, at the highest rates you carry.",
+      "improve": "Clear the dearest balance first and stop adding to it. Debt Payoff prices each order; the annual fee on a card is on its own line there now.",
+      "looksAt": [
+        "totalDebt",
+        "takeHomeMonthly"
+      ]
+    },
+    "investmentRate": {
+      "what": "Money going into investments each month as a share of gross pay.",
+      "why": "Not spending money and buying assets with it are different things, and only the second compounds. The savings rate counts both; this counts the part that buys something.",
+      "improve": "Raise the workplace contribution, or move what is piling up in savings beyond the cushion into investments. Which Account says where the next dollar should land.",
+      "looksAt": [
+        "grossAnnualIncome",
+        "contributionPercent"
       ]
     }
   }

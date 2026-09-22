@@ -16671,7 +16671,6 @@ and absent on older saves, which read as not demo and no days recorded.
 `node test/features.js`; the Runway, FIRE and Expenses rooms and the front
 page at 390px with the example numbers, the clear button, and a part-way
 household; clean console.
-
 ## D-320 — The Solar System, step 1: the levels, the recipes, the moons and their lints
 
 **Why.** The owner's master prompt (`docs/SOLAR-SYSTEM.md`) replaces the
@@ -17096,6 +17095,186 @@ new: it walks band 1 on Expenses as a person does, holds every tap under
 it, that a two-fact level waits for both, and that the run ends with a card
 naming the band, what it bought and the way on. Measured on the walk: opening
 a planet 87ms, a level 54ms, closing 47ms, saving and handing over 113ms.
+
+## D-331 — A card's annual fee and the day it posts; a dealt walk step folds to a line
+
+**Why.** The owner, on the phone: a card's annual fee is a fact the debt
+list could not hold, and the fee's date is the one date on a card a person
+can still act on. On the same phone, a walk step already marked done kept a
+full card of buttons above the room the person had come for.
+
+**Decision.** `Schema.createDebt` carries `annualFeeCents` and
+`annualFeeOn` (null until asked, never "no fee"). `Debt.annualFee(debt,
+asOf)` in `engines/debt.js` is the one reader: the fee, and the next day it
+posts (the stored month and day, this year if still ahead, else next), with
+`soon` inside a 45-day window. `rooms/debt-payoff.html` asks both in the
+card-only part of the "Dates, limit & fee" fold, says the fee and its date
+on the fold's summary line, and warns on the card while the window is open.
+`shared/progress.js`: a walk step that is done or set aside renders as a
+`details` folded to one line (the tick, the step, the way on) and opens on a
+tap for the bar, Undo and the hub; an open step is unchanged.
+
+**Replaces or removes.** Two thirds of the walk card's height on every
+room whose step is behind you. Nothing else.
+
+**Stored shape.** `debts[].annualFeeCents`, `debts[].annualFeeOn`, absent on
+older saves and read as not asked.
+
+**Verified.** `node test/run.js` (the fee's next date across the year
+boundary, today, a fee with no date); the features and forms gates on Debt
+Payoff; a phone walk of the folded step at 360px.
+
+## D-332 — The radar is on the Scorecard too, drawn by one function
+
+**Why.** The owner asked where the spider chart went. It was under the
+front page's "The full panel" fold since D-096, and a chart of every banded
+ratio belongs on the page that lists every ratio.
+
+**Decision.** `shared/charts.js` gains `radar(r)`: the rings, spokes,
+shape, dots and numbers for a `Ratios.radar` result, one drawing. The front
+page calls it where it drew its own. `rooms/financial-snapshot.html` gains
+`#out-radar` at the top of the Every ratio reading: the chart, a legend
+whose names jump to the ratio's row below, the same sentence about what is
+below the range, and one line saying it is a view, not a score, with a link
+to The Score. The gate decides which spokes apply, as on the front page.
+The front page's copy stays folded where it was.
+
+**Replaces or removes.** Nothing; the front page's own drawing code, now
+the shared one.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (the chart's parts per spoke; both pages
+call the one function); the features gate on the Scorecard and the front
+page; render.
+
+## D-333 — The menu is on every page, and the arrangements are in it
+
+**Why.** On the map page there was no way out: no menu, no rooms list, no
+route anywhere except the links in the body. The menu mounted by replacing
+a page's back-link, and the map is the one page in the app without one, so
+it silently got nothing. The twenty arrangements had the same problem in
+reverse: reachable from one line of text on that page and nowhere else.
+
+**Decision.** `shared/progress.js` `mountHeader` no longer requires a
+back-link: with one it replaces it as before, without one it inserts the
+strip above the page's own `<header>`, where the button is looked for.
+The auto-mount on `DOMContentLoaded` runs for a page the registry cannot
+name; a redirect stub is skipped, being a doorway rather than a page. A
+page that is not a registry room takes the navigation and none of a room's
+furniture (no purpose line, no situation notice, no walk strip, no doors,
+no fold), and its hops are one way home rather than two invented
+neighbours. `atRoot` falls back to the path when the registry cannot place
+the page, so the menu's links climb out of `rooms/` correctly.
+`shared/registry.js`: the Home group gains a link to the Ledger's
+arrangements, so the twenty views are one tap away from anywhere.
+
+**Replaces or removes.** The map page's dead end. The line of text offering
+the arrangements stays where it is; it is no longer the only way to them.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js`; `node test/sidebar.js` (the three bars,
+the full room list and the arrangements on the map, the front page and a
+room; the map's single hop; no room furniture on it); render and features.
+
+## D-334 — Amendment 1, B2: consumer debt, the investment rate, and what is furthest off
+
+**Why.** Amendment 1 lists ratios the live tool computes and the Solar
+System spec dropped. Audited against `engines/ratios.js`, most were already
+there: `basicLiquidity` is `liquidityRatio`, and `investedShare` and
+`netWorthToIncome` already carry bands. Two were genuinely missing, and one
+ranking the amendment asks for had no home.
+
+**Decision.** `engines/ratios.js` gains `consumerDebtRatio` (card and
+personal loan balances over a year of take-home; a mortgage, a car and a
+student loan are read elsewhere against what they bought) and
+`investmentRate` (money into investments over gross, which is not the
+savings rate: cash piling up counts there and not here, and the sum is
+`CashFlow.savingsRateContributed`, never a second one). Both get a band in
+`data/ratio_benchmarks.json` marked as a stated convention, and an entry in
+`data/ratio_explainers.json`. `Ratios.furthestFromNormal` ranks the three
+ratios standing furthest outside their band, worst first, by the share of
+its own edge each one is past, so months and rates can be compared; it
+answers a different question from the FI-date levers and is labelled so. A
+ratio with no band or one that could not be worked out is never ranked: an
+unknown is not a problem, and the two silences say which they are.
+
+**Replaces or removes.** Nothing. `docs/solar-system-amendment-1-audit.md`
+records what the amendment asks for that is already built, so no second
+copy of DRAFTT, "not for me", the arrangements file or the settings file
+gets made.
+
+**Stored shape.** No change; both ratios read figures already entered.
+
+**Verified.** `node test/run.js` (both on the demo, the mortgage excluded
+from consumer debt, cash excluded from the investment rate, the ranking
+ordered and capped at three, a comfortable ratio never ranked, the empty
+household's silence named). The radar now plots eighteen.
+
+## D-335 — The menu has a top, and the Planets are in it
+
+**Why.** The Planets view is a way of seeing the whole app rather than a
+room among rooms, and it sat inside the Ledger's hats, three taps down. The
+menu reaches every page since D-333, which makes it the one place a view can
+be put that is always one tap away.
+
+**Decision.** `shared/registry.js` gains `TOP_LINKS`, read through
+`Registry.topLinks()`; `shared/progress.js` renders them between the search
+box and the group key, above every group, in no fold, as
+`.slaf-menu-top`. The search reaches them like everything else. The first
+and only entry is The Planets, pointing at `rooms/ledger.html#planets`, with
+one line saying what it holds. The href comes from the registry, never a
+hard-coded path, so the day the Planets move the menu follows. Keep the list
+to two or three: a fourth makes a second menu.
+
+**Replaces or removes.** Nothing. The Planets hat on the Ledger is
+unchanged, and so is every group.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/sidebar.js` (it sits above every group and in no
+fold, the href climbs out of `rooms/` correctly, the search finds it by a
+word for it and hides it for an unrelated one, and the four extra links read
+in order); the link followed on a phone lands on the view with it shown.
+
+
+## D-336 — Band 1 asked in words anyone can answer, with three ways out
+
+**Why.** The owner, on the Planets screen, at the question "How much do you
+add each month, in total, anywhere?": "Im not sure." The box took one number
+and gave no way to find it. Every band-1 question was the same: the app's own
+vocabulary, a box, and a Save.
+
+**Decision.** `data/sketch_help.json` holds, for each of the eighteen band-1
+levels, the question in plain words, one line of what it means, what counts
+and what to leave out, where to look on a phone, what to do when the answer is
+not known, and for the three questions that are really a sum, the pieces to
+add up. `shared/sketch.js` reads it and adds the pieces. `rooms/ledger.html`
+leads with the plain words (on the list, the next-up card and the open panel),
+and offers under the box: a starting number when one can be defended, an
+add-it-up fold, and "I am not sure". Three rules in `shared/suggest.js`
+(`grossFromTakeHome`, `savedFromGap`, `highInterestFromDebts`) give the
+starting numbers, one per row, each saying where its figure came from.
+
+**Replaces or removes.** The bare box. The three lines the panel opened with
+(what it gives you, unlocks, where to find it) move into the fold underneath,
+and the level's terse prompt is replaced on screen by the plain one. No new
+room, no new screen, no new stored field.
+
+**One correction.** Level E1's own prompt asks what a month costs "all in"
+while the field it writes is `wantsMonthly`, everything except shelter, which
+E2 then asks for separately. The plain wording asks for the field that is
+written, so shelter is not counted twice.
+
+**Stored shape.** No change. The pieces of a sum are scratch: only the total
+is written, through the field's own owner. A total or a starting number is
+stamped `confidence: roughly` (source `typed` or `suggested`), and "I am not
+sure" writes no number at all, only the D-209 mark.
+
+**Verified.** `node test/run.js` 35667, `node test/solar.js` 5190,
+`node test/flow.js` 30 including the band-1 walk, the browser gates, and a
+phone walk at 390px through A3, I2 and T3.
 
 ---
 

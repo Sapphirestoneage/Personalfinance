@@ -185,13 +185,13 @@
       "direction": "higher",
       "good": 6,
       "warn": 3,
-      "note": "The same 3–6 month convention as emergency fund coverage, applied to a wider pool."
+      "note": "The same 3\u20136 month convention as emergency fund coverage, applied to a wider pool."
     },
     "worstPlausibleYearCoverage": {
       "direction": "higher",
       "good": 1,
       "warn": 0.5,
-      "note": "1× is covered by definition; half-covered is the watch line, a convention chosen here."
+      "note": "1\u00d7 is covered by definition; half-covered is the watch line, a convention chosen here."
     },
     "automationRatio": {
       "direction": "higher",
@@ -252,6 +252,18 @@
       "good": 0.04,
       "warn": 0.05,
       "note": "The 4% rule as commonly cited; 5% is where most guidance starts to worry. A convention, not a finding, sequence risk is not in it."
+    },
+    "consumerDebtRatio": {
+      "direction": "lower",
+      "good": 0.1,
+      "warn": 0.2,
+      "note": "A stated convention, not a finding: cards and personal loans under a tenth of take-home is comfortable, a fifth is where the payments start deciding the month. Amendment 1, B2."
+    },
+    "investmentRate": {
+      "direction": "higher",
+      "good": 0.15,
+      "warn": 0.1,
+      "note": "The same 15% of gross the retirement milestones assume, read as money into investments rather than money not spent. Amendment 1, B2."
     }
   }
 }

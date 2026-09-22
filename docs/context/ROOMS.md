@@ -6,9 +6,9 @@ Full context for one: `node tools/context/pack.js <id>`.
 
 ## Home (3)
 
-- **ledger** — The Ledger (utility) · 4127 lines · engines: projection, tier0, income, ledger, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, recipes, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, fire, coast, opening, benchmarks, ratios, skills · owns: takeHomeMonthly, rothContributed, hsaContributed, onHdhp, hsaFamilyPlan, marginalRate, totalSaved, payVaries, spendingIncludesDebt, spendingIncludesSaving, savedMonthly, highInterestBalance, refundLastYear, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, assetValue, assetCharacter, assetTier, assetCostBasis, assetInstitution, assetAccountType, assetConfidence, assetCashFlow, assetHassle, assetAccessAge · D-324, D-321, D-313
+- **ledger** — The Ledger (utility) · 4373 lines · engines: projection, tier0, income, ledger, swan, variance, rerank, tax, statement, debt, hourly, subscriptions, recipes, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, fire, coast, opening, benchmarks, ratios, skills · owns: takeHomeMonthly, rothContributed, hsaContributed, onHdhp, hsaFamilyPlan, marginalRate, totalSaved, payVaries, spendingIncludesDebt, spendingIncludesSaving, savedMonthly, highInterestBalance, refundLastYear, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, assetValue, assetCharacter, assetTier, assetCostBasis, assetInstitution, assetAccountType, assetConfidence, assetCashFlow, assetHassle, assetAccessAge · D-336, D-335, D-324
 - **start** — Start Here · 1189 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-323, D-262, D-259
-- **dashboard** — The Dashboard · 1906 lines · no engines · DD-030, DD-028, DD-026
+- **dashboard** — The Dashboard · 1880 lines · no engines · DD-030, DD-028, DD-026
 
 ## Your Numbers (13)
 
@@ -22,13 +22,13 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **which-account** — Which Account · 421 lines · engines: projection, tier0, selfemployed, tax, income, ledger, cashflow, taxroom, accounts, hourly, coast, opening · D-313
 - **the-mix** — The Mix · 240 lines · engines: projection, tier0, income, ledger, hourly · D-313
 - **the-documents** — The Documents · 499 lines · engines: projection, tier0, fire, selfemployed, tax, income, ledger, cashflow, quickmath, presets, budget, debt, gap, statements · D-313
-- **debt-payoff** — Debt · 2904 lines · engines: projection, debt, tier0, income, selfemployed, ledger, studentloans, hourly, foo, cashflow, fire, statement, benchmarks, ratios · owns: loanPlan, loanExtra, idrShare, forgivenessYears, totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment · D-319, D-279, D-252
+- **debt-payoff** — Debt · 2922 lines · engines: projection, debt, tier0, income, selfemployed, ledger, studentloans, hourly, foo, cashflow, fire, statement, benchmarks, ratios · owns: loanPlan, loanExtra, idrShare, forgivenessYears, totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment · D-331, D-319, D-279
 - **tax** — Tax · 464 lines · engines: projection, tier0, selfemployed, income, ledger, tax, taxroom, hourly, rothaca, cliff · owns: otherPreTax, withheld · D-301, D-150, D-142
 - **cant-pay** — When It Won’t All Get Paid · 533 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow · D-240, D-148
 
 ## Scorecard (3)
 
-- **financial-snapshot** — The Scorecard · 2625 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath, statement, ratios, health, rankguess · D-245, D-241, D-238
+- **financial-snapshot** — The Scorecard · 2684 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath, statement, ratios, health, rankguess · D-332, D-245, D-241
 - **foo-ladder** — What The Next Dollar Does · 705 lines · engines: projection, tier0, income, selfemployed, ledger, hourly, foo, next100, windfall, cashflow, fire, statement, debt, benchmarks, ratios, skills, tax · D-242, D-231, D-058
 - **fire** — The Number · 1466 lines · engines: projection, tier0, income, ledger, fire, foo, journey, selfemployed, tax, hourly, cashflow, fulfillment, enough, coast, countdown, race · owns: enoughMonthly, retireAge, coastAge · D-285, D-240, D-235
 

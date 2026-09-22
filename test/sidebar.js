@@ -61,7 +61,58 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
   check('the demo\'s Debt reads partly (the loan plan is not named)', await page.$eval('#slaf-menu [data-room="debt-payoff"] .slaf-dot', d => d.classList.contains('is-partly')));
   check('...Expenses partly (therapy is not tracked)', await page.$eval('#slaf-menu [data-room="expenses"] .slaf-dot', d => d.classList.contains('is-partly')));
   check('...and The Month empty', await page.$eval('#slaf-menu [data-room="cash-flow"] .slaf-dot', d => d.classList.contains('is-empty')));
-  check('DRAFTT and the map ride as links', (await page.$$eval('#slaf-menu .slaf-menu-link.is-extra', ls => ls.map(l => l.textContent).join('|'))) === 'DRAFTT|Every room, on one page');
+  check('the Planets ride at the top, the arrangements, DRAFTT and the map as links', (await page.$$eval('#slaf-menu .slaf-menu-link.is-extra', ls => ls.map(l => { const n = l.querySelector('.slaf-menu-topname'); return (n ? n.textContent : l.textContent).trim(); }).join('|'))) === 'The Planets|Twenty ways to arrange these rooms|DRAFTT|Every room, on one page');
+
+  /* D-335: a view of the whole app sits above the groups, where no fold can
+     hide it, and the search reaches it like everything else. */
+  const top = await page.evaluate(() => {
+    const a = document.querySelector('#slaf-menu .slaf-menu-top .slaf-menu-link');
+    const body = document.querySelector('#slaf-menu .slaf-menu-body');
+    return a ? { href: a.getAttribute('href'), above: !!(body && (a.compareDocumentPosition(body) & Node.DOCUMENT_POSITION_FOLLOWING)), inFold: !!a.closest('details') } : null;
+  });
+  check('the Planets sit above every group, in no fold', !!top && top.above && !top.inFold, JSON.stringify(top));
+  check('...pointing at the Ledger\u2019s Planets hat, climbing out of rooms/', !!top && /\.\.\/ledger\.html#planets$|^ledger\.html#planets$|rooms\/ledger\.html#planets$/.test(top.href), top && top.href);
+  /* The panel is closed here, so the search is driven through its own
+     handler rather than a tap: what is under test is the filter, not the
+     drawer, which the map walk below opens for real. */
+  const search = async (q) => page.evaluate((q) => {
+    const box = document.getElementById('slaf-menu-q');
+    box.value = q;
+    box.dispatchEvent(new Event('input', { bubbles: true }));
+    return document.querySelector('#slaf-menu .slaf-menu-top .slaf-menu-link').hidden;
+  }, q);
+  check('the search finds it by a word for it', (await search('sky')) === false);
+  check('...and hides it when the search is about something else', (await search('mortgage')) === true);
+  await search('');
+
+  /* D-333: the menu is on every page of the app, not only the rooms. The map
+     has no back-link for the strip to stand in for, which is exactly why it
+     had no way out; it takes the navigation and none of a room's furniture. */
+  for (const page_ of [['/map.html', 'the map'], ['/index.html', 'the front page'], ['/rooms/statement.html', 'a room']]) {
+    await page.goto(BASE + page_[0], { waitUntil: 'networkidle' });
+    await page.waitForTimeout(400);
+    const seen = await page.evaluate(() => ({
+      btn: !!document.getElementById('slaf-menu-btn'),
+      bars: document.querySelectorAll('#slaf-menu-btn .slaf-menu-bars i').length,
+      rooms: document.querySelectorAll('#slaf-menu [data-room]').length,
+      views: !!document.querySelector('#slaf-menu a[href*="arrangements"]'),
+      hops: document.querySelectorAll('.slaf-hops-host .slaf-hop').length,
+      wide: document.documentElement.scrollWidth
+    }));
+    check(page_[1] + ': the three bars are there, and the menu lists every room', seen.btn && seen.bars === 3 && seen.rooms > 30, JSON.stringify(seen));
+    check(page_[1] + ': the arrangements are one tap away', seen.views);
+    check(page_[1] + ': nothing wider than the screen', seen.wide <= 412, String(seen.wide));
+  }
+  await page.goto(BASE + '/map.html', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(300);
+  const mapNav = await page.evaluate(() => ({
+    hops: Array.prototype.map.call(document.querySelectorAll('.slaf-hops-host .slaf-hop'), a => a.textContent.trim()),
+    purpose: !!document.getElementById('slaf-purpose'),
+    opens: (function () { document.getElementById('slaf-menu-btn').click(); return !document.getElementById('slaf-menu').hidden; })()
+  }));
+  check('the map offers one honest way back, not two invented neighbours', mapNav.hops.length === 1 && /Dashboard/.test(mapNav.hops[0]), JSON.stringify(mapNav.hops));
+  check('...and no room furniture rides along', !mapNav.purpose);
+  check('...and the button opens the menu', mapNav.opens);
 
   /* Only the current room's group is open on load. */
   await page.evaluate(() => { try { localStorage.removeItem('slaf.prefs.v1'); } catch (e) {} });

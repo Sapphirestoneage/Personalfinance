@@ -429,8 +429,43 @@
     return '<div class="slaf-chart slaf-sankey"><svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(o.title || 'where the money flows') + '">' + parts.join('') + '</svg></div>';
   }
 
+  /**
+   * radar(r)
+   * The spider chart of Ratios.radar's result: one spoke a banded ratio,
+   * the dashed ring the healthy line, further out better, a dot on each
+   * spoke coloured by its zone and numbered to match a legend. Returns the
+   * inner markup for a 120 by 120 viewBox. Drawn on the front page and on
+   * the Scorecard from this one function (D-332).
+   */
+  function radar(r) {
+    var cx = 60, cy = 60, rMax = 44;
+    var pts = r.points, n = pts.length;
+    if (!n) return '';
+    var scale = function (pos) { return (Math.min(pos, r.ceiling) / r.ceiling) * rMax; };
+    var angle = function (i) { return ((i / n) * 360 - 90) * Math.PI / 180; };
+    var x = function (i, rad) { return cx + rad * Math.cos(angle(i)); };
+    var y = function (i, rad) { return cy + rad * Math.sin(angle(i)); };
+    var parts = [];
+    [r.ceiling, r.goodRing, r.warnRing].forEach(function (ring, k) {
+      var poly = pts.map(function (_, i) { return x(i, scale(ring)) + ',' + y(i, scale(ring)); }).join(' ');
+      parts.push('<polygon class="' + (k === 1 ? 'ring-good' : 'ring') + '" points="' + poly + '"/>');
+    });
+    pts.forEach(function (_, i) {
+      parts.push('<line class="spoke" x1="' + cx + '" y1="' + cy + '" x2="' + x(i, rMax) + '" y2="' + y(i, rMax) + '"/>');
+    });
+    var shape = pts.map(function (p, i) { return x(i, scale(p.position)) + ',' + y(i, scale(p.position)); }).join(' ');
+    parts.push('<polygon class="shape" points="' + shape + '"/>');
+    pts.forEach(function (p, i) {
+      var col = p.zone === 'good' ? 'var(--color-positive)' : p.zone === 'watch' ? 'var(--color-caution)' : 'var(--color-critical)';
+      parts.push('<circle class="dot" cx="' + x(i, scale(p.position)) + '" cy="' + y(i, scale(p.position)) + '" r="1.8" fill="' + col + '"/>');
+      parts.push('<text class="num" text-anchor="middle" x="' + x(i, rMax + 6) + '" y="' + (y(i, rMax + 6) + 1.6) + '">' + (i + 1) + '</text>');
+    });
+    return parts.join('');
+  }
+
   return {
     COLORS: COLORS,
+    radar: radar,
     sankey: sankey,
     shortMoney: shortMoney,
     percent: percent,

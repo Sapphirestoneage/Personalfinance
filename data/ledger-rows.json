@@ -257,7 +257,7 @@
       "door": "I",
       "level": 1,
       "round": null,
-      "suggestFrom": null,
+      "suggestFrom": "grossFromTakeHome",
       "askIn": null,
       "moves": true,
       "unlocks": "take-home pay, the savings rate, the true hourly wage"
@@ -2272,7 +2272,7 @@
       "door": "A",
       "level": 2,
       "round": null,
-      "suggestFrom": null,
+      "suggestFrom": "savedFromGap",
       "askIn": "financial-snapshot",
       "moves": true,
       "unlocks": "the savings rate you actually have, and the leak: what the gap says you could save, less what you do"
@@ -2291,7 +2291,7 @@
       "door": "D",
       "level": 3,
       "round": null,
-      "suggestFrom": null,
+      "suggestFrom": "highInterestFromDebts",
       "askIn": "debt-payoff",
       "moves": true,
       "unlocks": "which comes first, paying the expensive debt or investing"

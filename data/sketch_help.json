@@ -1,0 +1,227 @@
+{
+  "id": "sketch_help",
+  "version": "1.0.0",
+  "asOf": "2026-09-22",
+  "source": "Band 1 of the Solar System (data/levels.json, the Sketch band) said in words someone who has never used a finance app can answer: what the question means, what counts and what to leave out, where on a phone to find it, what to do when the answer is not known, and for the three questions that are really a sum, the pieces to add up.",
+  "confidence": "convention",
+  "confidenceNote": "Wording, not figures. Nothing here is a number the app computes with: the only values it can produce are what the person types into the add-it-up boxes, which are summed and written to the field that already owns them. The starting numbers offered beside a question come from shared/suggest.js and carry their own sources.",
+  "note": "Keyed by level id, so a level with no entry simply shows what it showed before. Band 1 only: bands 2 and up ask people who have already answered these. `parts` appear only where the level writes one plain money field, and are scratch boxes: they are summed, the total is written through the field's owner, and the pieces are not stored.",
+  "levels": {
+    "Y1": {
+      "plain": "What month and year were you born?",
+      "means": "Your age. It sets every date the app works out, like the year work could become optional.",
+      "look": "Your driving licence, your passport, or the birthday your phone already knows.",
+      "unsure": "There is nothing to look up here. If you are not sure of the exact day, the month and year are all the app asks for."
+    },
+    "Y2": {
+      "plain": "What is your ZIP code?",
+      "means": "Where you live, so the app can use your state's tax rate instead of a national average.",
+      "look": "It is on any piece of post, or saved in your phone under your own address.",
+      "unsure": "Type the ZIP and the state fills itself in. If you have just moved, use where you live now, not where you came from."
+    },
+    "Y3": {
+      "plain": "At what age would you like work to be optional?",
+      "means": "The age you would like to stop needing a paycheck. It is a wish, not a promise, and you can change it any day.",
+      "look": "Nothing to look up. Say the first age that comes into your head.",
+      "unsure": "If you have no idea, tap \"I am not sure\" below. The app keeps working to 65, which is the age most people pick, and tells you it is using its own number."
+    },
+    "I1": {
+      "plain": "How much money actually lands in your account each month?",
+      "means": "What you are paid after tax and anything else is taken out. Not the big number your job talks about.",
+      "counts": [
+        "your pay, after everything is taken out",
+        "a second job, or work you do on the side",
+        "anything else that arrives every month, like a benefit or support payment"
+      ],
+      "skip": [
+        "money you move between your own accounts",
+        "a one-off gift or a refund"
+      ],
+      "look": "Open your bank app and look at the money that came in from your employer over the last month. Add those up.",
+      "parts": [
+        {
+          "key": "main",
+          "label": "Your main pay, in a month",
+          "hint": "paid twice a month? add both"
+        },
+        {
+          "key": "side",
+          "label": "A second job or side work",
+          "hint": "leave blank if there is none"
+        },
+        {
+          "key": "other",
+          "label": "Anything else that arrives every month",
+          "hint": "benefits, support, a regular payment"
+        }
+      ],
+      "unsure": "Use a normal month, not the best one. Rough is fine, and you can sharpen it any time."
+    },
+    "I2": {
+      "plain": "Before anything is taken out, how much are you paid a year?",
+      "means": "The large number on your offer letter or payslip, before tax. Paid by the hour? It is your rate times the hours you really work, times 52.",
+      "look": "Your last payslip: look for the word gross, usually near the top. Or your offer letter.",
+      "unsure": "If you have never looked, the app can work a figure back from what lands in your account, and offers it below when it has enough to do that. Correct it the next time you see a payslip."
+    },
+    "I3": {
+      "plain": "Is your pay about the same every month?",
+      "means": "Whether you can count on the same amount arriving. Pay that jumps around needs a bigger cushion, so the app asks for a low month and a high month.",
+      "look": "Look at the last three payments in your bank app. If they are close, your pay is steady.",
+      "unsure": "If the last three were within about a hundred dollars of each other, answer yes."
+    },
+    "E1": {
+      "plain": "Apart from rent or mortgage, roughly what does a month cost you?",
+      "means": "Everything else you spend in a normal month. Rent or mortgage is the next question, so leave it out of this one.",
+      "counts": [
+        "food, shopping and eating out",
+        "getting around: petrol, fares, the car",
+        "phone, internet, subscriptions",
+        "clothes, haircuts, gifts, fun"
+      ],
+      "skip": [
+        "rent or mortgage, which comes next",
+        "loan and card payments",
+        "money you put away"
+      ],
+      "look": "Most bank apps will total a month of spending for you. Or use the boxes below and add it up in pieces.",
+      "parts": [
+        {
+          "key": "food",
+          "label": "Food, shopping and eating out"
+        },
+        {
+          "key": "getting",
+          "label": "Getting around",
+          "hint": "petrol, fares, the car"
+        },
+        {
+          "key": "bills",
+          "label": "Phone, internet, subscriptions"
+        },
+        {
+          "key": "rest",
+          "label": "Everything else",
+          "hint": "clothes, fun, gifts"
+        }
+      ],
+      "unsure": "Nobody knows this to the dollar. If a starting number is offered below, take it and correct it once you have looked. Rough is better than blank here."
+    },
+    "E2": {
+      "plain": "What do you pay for your home each month?",
+      "means": "Rent, or the mortgage payment. If you own, and the property tax and home insurance come out in the same payment, include them.",
+      "counts": [
+        "rent, or the mortgage payment",
+        "property tax and home insurance, if they are inside that payment"
+      ],
+      "skip": [
+        "gas, water and electricity",
+        "internet and phone"
+      ],
+      "look": "Your rent agreement, or the one payment that leaves your account for the mortgage each month.",
+      "unsure": "If you split the home with someone, type your share, not the whole payment. If you pay nothing, type 0: it is a real answer."
+    },
+    "E3": {
+      "plain": "Was your loan or card payment already inside the spending number you just gave?",
+      "means": "The app counts every dollar once. If those payments were inside that total, it takes them out so nothing is counted twice.",
+      "look": "Nothing to look up. Think back to the number you typed a moment ago.",
+      "unsure": "Most people think of loan payments as separate from spending. If you are not sure, answer no."
+    },
+    "A1": {
+      "plain": "Roughly how much money do you have saved and invested altogether?",
+      "means": "Everything you have put away: money in the bank, a retirement plan at work, anything invested. There is no box for this one: it adds itself up from the next question, which asks for those two pieces.",
+      "counts": [
+        "current and savings accounts",
+        "a retirement plan at work, like a 401(k), 403(b) or TSP",
+        "an IRA or an investing app"
+      ],
+      "skip": [
+        "your home and your car",
+        "money you owe, which is asked about later"
+      ],
+      "look": "Open each app and read the balance on the first screen. Add them together.",
+      "unsure": "Nearest thousand is fine, and you do not have to answer it here: answer the next question, how much is in the bank and how much is invested, and this one fills itself."
+    },
+    "A2": {
+      "plain": "Of that, how much is sitting in a bank, and how much is invested?",
+      "means": "Bank money is what you could spend today. Invested money is in the market: a retirement plan at work, an IRA, an investing app.",
+      "look": "Your bank app for the first number. Your retirement or investing app for the second.",
+      "unsure": "If you have a 401(k), 403(b), TSP or a pension pot at work, it counts as invested, even if you have never looked at it."
+    },
+    "A3": {
+      "plain": "How much money do you put away each month?",
+      "means": "Anything that leaves your spending and goes somewhere it can grow.",
+      "counts": [
+        "what comes out of your pay for retirement",
+        "money you move into savings",
+        "money you put into investing"
+      ],
+      "skip": [
+        "paying down a card or a loan, which is asked about later",
+        "what your employer puts in for you, which has its own question"
+      ],
+      "look": "Your payslip shows the retirement line. Your bank app shows the transfer to savings, usually on the same day each month.",
+      "parts": [
+        {
+          "key": "work",
+          "label": "Out of your pay, into retirement",
+          "hint": "401(k), 403(b), TSP, pension"
+        },
+        {
+          "key": "savings",
+          "label": "Moved into savings"
+        },
+        {
+          "key": "investing",
+          "label": "Into investing",
+          "hint": "an IRA, a brokerage, an app"
+        }
+      ],
+      "unsure": "If nothing goes away on its own, type 0. Zero is a real answer here, and the app treats it as one rather than as a blank."
+    },
+    "D1": {
+      "plain": "Do you owe money to anyone?",
+      "means": "Cards, a car loan, student loans, buy now pay later, money borrowed from family.",
+      "counts": [
+        "a credit card balance you do not clear every month",
+        "a car loan, a student loan, a personal loan",
+        "buy now pay later, and money owed to family"
+      ],
+      "skip": [
+        "this month's bills you have not paid yet",
+        "rent"
+      ],
+      "look": "Each card or loan app shows a balance. The balance is what you owe, not the monthly payment.",
+      "unsure": "If you pay your card off in full every month and owe nothing today, answer no. The app then hides the debt questions and this planet gets shorter."
+    },
+    "D2": {
+      "plain": "Added together, what do you have to pay on those debts each month?",
+      "means": "The smallest payment each one asks for, added up. Not what you would like to pay, and not what you sometimes pay.",
+      "look": "Each statement has a line called minimum payment. A car or student loan payment is fixed, so that is its minimum.",
+      "unsure": "If a card is the only debt and you are not sure, its minimum is usually a small share of the balance, and the statement says so in one line."
+    },
+    "D3": {
+      "plain": "How much of what you owe is on something with a high rate?",
+      "means": "High means about 8 percent a year or more. Credit cards almost always are. Car loans and student loans usually are not.",
+      "look": "Your card statement shows the rate, often written APR, usually near the bottom or on the second page.",
+      "unsure": "If it is a card balance you do not clear every month, count it here. If the only debts you have are a car loan or student loans, type 0."
+    },
+    "T1": {
+      "plain": "The app guessed your state's tax rate from where you live. Does it look about right?",
+      "means": "Saying yes marks the figure as checked by you. Nothing about the number changes either way.",
+      "look": "Your payslip lists state tax as its own line, if your state takes any.",
+      "unsure": "If you have never looked at this, leave it alone. The app keeps its own estimate and goes on saying it is an estimate."
+    },
+    "T2": {
+      "plain": "This is the share of your pay that never reaches your account.",
+      "means": "It is not all tax. Retirement saving and health cover come out of the same pay, so this number looks higher than your tax rate until a payslip is read.",
+      "look": "Nothing to look up. Read the figure and move on.",
+      "unsure": "There is no wrong answer here. Tap yes once you have read it."
+    },
+    "T3": {
+      "plain": "Last spring, did money come back from the tax office, or did you have to pay?",
+      "means": "Money back means too much was taken from your pay all year. Having to pay means too little was.",
+      "look": "Your tax return, or the payment that arrived in your bank app in spring.",
+      "unsure": "If you have no idea, tap \"I am not sure\". It sharpens one reading and holds nothing else up. Money you had to pay goes in as a negative."
+    }
+  }
+}

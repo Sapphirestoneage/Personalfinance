@@ -1244,7 +1244,15 @@ a:hover { color: var(--sapphire-100); }
 .slaf-walk { max-width: var(--measure); margin: 0 auto var(--space-4);
   padding: var(--space-3) var(--space-4); border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-md); background: var(--color-surface-raised); }
-.slaf-walk.is-dealt { border-color: var(--color-positive); }
+.slaf-walk.is-dealt { border-color: var(--color-positive); padding: 0; }
+/* A dealt step is one line until opened (D-331). */
+.slaf-walk-fold { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+  gap: var(--space-2) var(--space-3); padding: var(--space-2) var(--space-3); cursor: pointer;
+  list-style: none; min-height: 44px; font-size: var(--text-sm); }
+.slaf-walk-fold::-webkit-details-marker { display: none; }
+.slaf-walk-fold .slaf-walk-where { color: var(--color-positive); }
+.slaf-walk-next { color: var(--color-accent-hover); text-decoration: none; font-weight: 600; min-width: 0; }
+.slaf-walk-body { padding: 0 var(--space-3) var(--space-3); border-top: 1px solid var(--color-border); padding-top: var(--space-2); }
 .slaf-walk-line { display: flex; flex-wrap: wrap; align-items: baseline;
   justify-content: space-between; gap: var(--space-2); }
 .slaf-walk-where { font-size: var(--text-sm); font-weight: 600; }
@@ -1632,6 +1640,13 @@ ol.own-dates .od-acts { display: flex; gap: var(--space-1); white-space: nowrap;
 html.is-compact { zoom: 0.86; }
 
 /* ---- The menu's dots say what they mean (D-317) --------------------------- */
+/* The top of the menu (D-335): a view of the whole app, above the groups. */
+.slaf-menu-top { padding: var(--space-2) var(--space-3) 0; }
+.slaf-menu-top .slaf-menu-link.is-top { display: block; padding: var(--space-2) var(--space-3); border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-md); background: var(--color-surface-raised); text-decoration: none; }
+.slaf-menu-top .slaf-menu-link.is-top:hover { border-color: var(--color-border-active); }
+.slaf-menu-top .slaf-menu-topname { display: block; font-weight: 600; color: var(--color-text); }
+.slaf-menu-top .slaf-menu-link.is-top small { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: 2px; }
 .slaf-menu-key { display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); padding: var(--space-1) var(--space-3) var(--space-2); font-size: var(--text-xs); color: var(--color-text-faint); }
 .slaf-menu-key span { display: inline-flex; align-items: center; gap: 6px; }
 .slaf-menu-key .slaf-dot { margin-left: 0; }

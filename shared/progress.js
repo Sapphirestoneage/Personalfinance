@@ -235,7 +235,12 @@
      (the dashboard, since D-058) and links without the ../ prefix. */
   function atRoot(roomId) {
     var room = Registry.byId(roomId);
-    return !!(room && room.href && room.href.indexOf('rooms/') !== 0);
+    if (room && room.href) return room.href.indexOf('rooms/') !== 0;
+    /* A page that is no room at all (the map, a redirect stub) still carries
+       the menu since D-333, and its links have to climb out of rooms/ when
+       that is where it sits. The registry cannot say; the path can. */
+    if (typeof location !== 'undefined') return String(location.pathname || '').indexOf('/rooms/') === -1;
+    return true;
   }
 
   function href(path, roomId) {
@@ -345,6 +350,13 @@
        on the path at all, and they read as instructions. The menu and the
        walk-through are the ways in from here. D-169. */
     if (roomId === 'dashboard') return '';
+    /* A page that is no room has no neighbours to walk to, and inventing two
+       would read as instructions (the D-169 objection). One way home. D-333. */
+    if (!Registry.byId(roomId)) {
+      return '<nav class="slaf-hops" aria-label="Where to next">'
+        + '<a class="slaf-hop slaf-hop--prev" href="' + (atRoot(roomId) ? '' : '../') + 'index.html">\u2190 The Dashboard</a>'
+        + '</nav>';
+    }
     var nb = neighbours(roomId);
     var mapHref = (atRoot(roomId) ? '' : '../') + 'map.html';
     var homeHref = (atRoot(roomId) ? '' : '../') + 'index.html';
@@ -531,14 +543,32 @@
       + '<button type="button" class="slaf-menu-x" data-menu-close aria-label="Close the menu">✕</button>'
       + '</div>'
       + '<div class="slaf-menu-search"><input type="search" id="slaf-menu-q" placeholder="Find a room" aria-label="Find a room" autocomplete="off"></div>'
+      + topLinksHtml(roomId)
       + '<p class="slaf-menu-key"><span><i class="slaf-dot is-filled"></i>all in</span><span><i class="slaf-dot is-partly"></i>some in</span><span><i class="slaf-dot is-empty"></i>nothing yet</span><span>tap a dot for what is missing</span></p>'
       + '<nav class="slaf-menu-body" aria-label="All rooms">' + menuBodyHtml(roomId) + '</nav>';
+  }
+
+  /* The top of the menu (D-335): a view of the whole app, above the groups,
+     where no fold can hide it. Rendered from the registry, never from a
+     hard-coded href, so the day the Planets move the menu follows. */
+  function topLinksHtml(roomId) {
+    var links = Registry.topLinks ? Registry.topLinks() : [];
+    if (!links.length) return '';
+    return '<nav class="slaf-menu-top" aria-label="Views">' + links.map(function (l) {
+      var search = (l.title + ' ' + (l.aliases || []).join(' ')).toLowerCase();
+      return '<a class="slaf-menu-link is-extra is-top" href="' + escapeHtml(href(l.href, roomId)) + '" data-search="' + escapeHtml(search) + '">'
+        + '<span class="slaf-menu-topname">' + escapeHtml(l.title) + '</span>'
+        + (l.note ? '<small>' + escapeHtml(l.note) + '</small>' : '') + '</a>';
+    }).join('') + '</nav>';
   }
 
   /** The search: hide links that do not match, then groups with nothing
       left; while a query is in, matching groups open without being saved. */
   function applySearch(panel, query) {
     var q = String(query || '').trim().toLowerCase();
+    panel.querySelectorAll('.slaf-menu-top .slaf-menu-link').forEach(function (n) {
+      n.hidden = !!q && (n.getAttribute('data-search') || '').indexOf(q) === -1;
+    });
     panel.querySelectorAll('.slaf-menu-group').forEach(function (d) {
       var any = false, lastSub = null;
       d.querySelectorAll('.slaf-menu-link, .slaf-menu-sub').forEach(function (n) {
@@ -834,8 +864,22 @@
     var dealt = at.state !== 'open';
     var out = [];
 
-    out.push('<div class="slaf-walk' + (dealt ? ' is-dealt' : '') + '" id="slaf-walk">');
-    out.push('<div class="slaf-walk-line">');
+    /* A step already dealt with folds to one line (D-331): the tick, the
+       step, and the way on. The person can open it for the bar, the
+       stage, Undo and the hub; the room underneath is what they came for. */
+    if (dealt) {
+      out.push('<details class="slaf-walk is-dealt" id="slaf-walk"' + (walkOpen ? ' open' : '') + '>');
+      out.push('<summary class="slaf-walk-fold"><span class="slaf-walk-where">'
+        + (at.state === 'done' ? '\u2713 Step ' + at.step + ' of ' + at.total + ' done' : 'Step ' + at.step + ' of ' + at.total + ' set aside') + '</span>'
+        + (at.next
+            ? '<a class="slaf-walk-next" href="' + hrefFrom(roomId, at.next.href) + '">Next: ' + escapeHtml(at.next.title) + ' \u2192</a>'
+            : '<a class="slaf-walk-next" href="' + hub + '">That was the last one \u2192</a>')
+        + '</summary>');
+      out.push('<div class="slaf-walk-body">');
+    } else {
+      out.push('<div class="slaf-walk" id="slaf-walk">');
+    }
+    out.push('<div class="slaf-walk-line">'); 
     out.push('<span class="slaf-walk-where">Step ' + at.step + ' of ' + at.total
       + ' <span class="slaf-walk-stage">' + escapeHtml(at.stage ? at.stage.title : '') + '</span></span>');
     out.push('<a class="slaf-walk-hub" href="' + hub + '">All ' + p.total + ' steps</a>');
@@ -857,16 +901,15 @@
         + '</span>');
       out.push('<button type="button" class="slaf-btn slaf-btn--quiet" data-walk="open">Undo</button>');
     }
-    if (at.next) {
-      out.push('<a class="slaf-btn' + (dealt ? ' slaf-btn--primary' : ' slaf-btn--quiet') + '" href="'
-        + hrefFrom(roomId, at.next.href) + '">Next: ' + escapeHtml(at.next.title) + ' →</a>');
-    } else if (dealt) {
-      out.push('<a class="slaf-btn slaf-btn--primary" href="' + hub + '">That was the last one →</a>');
+    if (at.next && !dealt) {
+      out.push('<a class="slaf-btn slaf-btn--quiet" href="' + hrefFrom(roomId, at.next.href) + '">Next: ' + escapeHtml(at.next.title) + ' →</a>');
     }
     out.push('</div>');
-    out.push('</div>');
+    out.push(dealt ? '</div></details>' : '</div>');
     return out.join('');
   }
+  /* Whether the folded strip is open, kept across repaints for the session. */
+  var walkOpen = false;
 
   /* A room's registry href is written from the site root ("rooms/x.html").
      From inside rooms/ that needs the "../" stripped off the front. */
@@ -892,6 +935,7 @@
       var fresh = box.firstChild;
       if (have) have.parentNode.replaceChild(fresh, have);
       else nav.parentNode.insertBefore(fresh, nav.nextSibling);
+      if (fresh.tagName === 'DETAILS') fresh.addEventListener('toggle', function () { walkOpen = fresh.open; });
       wire(fresh);
       return fresh;
     }
@@ -1329,13 +1373,31 @@
        loaded; the room's own later call is then a no-op. D-170. */
     var have = document.querySelector('.slaf-hops-host');
     if (have) return have;
-    var back = document.querySelector('.room-back, .back');
-    if (!back) return null;
     var nav = document.createElement('div');
     nav.className = 'slaf-hops-host';
     nav.innerHTML = returnHtml(roomId) + headerNavHtml(roomId);
-    back.parentNode.replaceChild(nav, back);
+    var back = document.querySelector('.room-back, .back');
+    if (back) { back.parentNode.replaceChild(nav, back); }
+    else {
+      /* No back-link to stand in for: the menu is navigation, and navigation
+         is on every page of the app, so the strip goes at the top rather than
+         not at all. This is what kept the map page without a way out. D-333.
+         ABOVE the page's own header, because a menu button below the title
+         is a menu button nobody finds: the top left is where it is looked
+         for on every other page. */
+      var header = document.querySelector('body > header');
+      if (header) { header.parentNode.insertBefore(nav, header); }
+      else {
+        var host = document.querySelector('main') || document.querySelector('.slaf-wrap') || document.querySelector('.wrap') || document.body;
+        if (!host) return null;
+        host.insertBefore(nav, host.firstChild);
+      }
+    }
     mountMenu(roomId, nav);
+    /* Everything below is a room's own furniture: the purpose line, the
+       situation notice, the walk strip, the doors, the fold. A page that is
+       not a room takes the navigation and none of it. D-333. */
+    if (!Registry.byId(roomId)) return nav;
     mountPurpose(roomId);
     mountSituation(roomId);
     mountWalk(roomId, nav);
@@ -1710,8 +1772,10 @@
      A room that dies halfway still has its menu and its way out. D-170. */
   if (typeof document !== 'undefined' && typeof location !== 'undefined') {
     document.addEventListener('DOMContentLoaded', function () {
-      var id = roomIdFromLocation();
-      if (id && !document.querySelector('.slaf-hops-host')) mountHeader(id);
+      /* A redirect stub is a doorway, not a page: it is gone before a menu
+         would be read, and mounting one there flashes. D-333. */
+      var stub = document.querySelector('meta[http-equiv="refresh"]');
+      if (!stub && !document.querySelector('.slaf-hops-host')) mountHeader(roomIdFromLocation());
       revealTarget();
     });
     window.addEventListener('hashchange', function () { revealTarget(); });
