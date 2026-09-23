@@ -383,6 +383,8 @@
         <span class="slaf-input-shell"><select id="n-every" aria-label="How often it repeats"><option value="monthly">month</option><option value="weekly">week</option><option value="fortnightly">two weeks</option><option value="quarterly">three months</option><option value="annual">year</option></select></span></label>
       <label class="slaf-field"><span class="slaf-label">Kind</span>
         <span class="slaf-input-shell"><select id="n-bucket" aria-label="What kind of line"><option value="subscriptions">Subscription</option><option value="wants">Something else</option><option value="food">Part of F · Food</option><option value="accommodation">Part of A · Accommodation</option><option value="transportation">Part of T · Transportation</option></select></span></label>
+      <label class="slaf-field" id="n-paid-wrap" hidden><span class="slaf-label">Paid with</span>
+        <span class="slaf-input-shell"><select id="n-paid" aria-label="Where the money leaves from"><option value="">Not said</option></select></span></label>
       <div class="slaf-field wide"><button type="button" class="slaf-btn slaf-btn--primary" id="btn-line-add">Add the line</button> <span class="slaf-hint" id="line-say"></span></div>
     </div>
     <div class="line-group" id="subs">
@@ -917,13 +919,39 @@
       ? Money.formatCents(e.everyCents, { exact: true, decimals: e.everyCents % 100 ? 2 : 0 }) + ' ' + EVERY_WORD[e.every]
       : Money.formatCents(e.amountCents, { exact: true, decimals: e.amountCents % 100 ? 2 : 0 }) + ' a month';
     var bucket = Schema.fatBucketOf(e.categoryId);
-    return '<li><span class="ln-name">' + esc(e.descriptor) + (sub ? '' : '<small>' + esc(LINE_BUCKET_WORD[bucket] || bucket) + '</small>') + '</span>'
+    var where = paidWithWord(e.paidWith);
+    return '<li><span class="ln-name">' + esc(e.descriptor) + (sub && !where ? '' : '<small>' + esc((sub ? '' : LINE_BUCKET_WORD[bucket] || bucket) + (where ? (sub ? '' : ' · ') + where : '')) + '</small>') + '</span>'
       + '<span class="ln-every">' + esc(known) + '</span>'
       + '<span class="ln-month">' + Money.formatCents(e.amountCents) + '/mo</span>'
       + '<span class="ln-acts"><button type="button" class="ln-x" data-line-edit="' + esc(e.id) + '" aria-label="Edit ' + esc(e.descriptor) + '" title="Change the name, the amount or how often">Edit</button>'
       + '<button type="button" class="ln-x" data-line-remove="' + esc(e.id) + '" aria-label="Remove ' + esc(e.descriptor) + '">✕</button></span></li>';
   }
+  /* Where a line leaves from (D-337): a bank account, or one of the cards
+     in Debt. Asked only when there is a card to name. The options are
+     rewritten only when the cards changed, so a select in use is never
+     rebuilt under a thumb (the form is built once). */
+  var paidSig = null, cardsById = {};
+  function paintPaidWith(h) {
+    var sel = el('n-paid'), wrap = el('n-paid-wrap');
+    var cards = (h.debts || []).filter(function (d) { return d && d.type === 'credit_card' && d.archived !== true; });
+    cardsById = {};
+    cards.forEach(function (d) { cardsById[d.id] = (d.label || 'Credit card') + (d.last4 ? ' ·' + d.last4 : ''); });
+    wrap.hidden = !cards.length;
+    var sig = cards.map(function (d) { return d.id + ':' + cardsById[d.id]; }).join('|');
+    if (sig === paidSig) return;
+    paidSig = sig;
+    var cur = sel.value;
+    sel.innerHTML = '<option value="">Not said</option><option value="' + Schema.PAID_WITH_BANK + '">Bank account, debit or cash</option>'
+      + cards.map(function (d) { return '<option value="' + esc(d.id) + '">' + esc(cardsById[d.id]) + '</option>'; }).join('');
+    if (cur === Schema.PAID_WITH_BANK || cardsById[cur]) sel.value = cur;
+  }
+  function paidWithWord(tag) {
+    if (!tag) return '';
+    if (tag === Schema.PAID_WITH_BANK) return 'from the bank';
+    return cardsById[tag] ? 'on ' + cardsById[tag] : 'on a card since removed';
+  }
   function paintLines(h) {
+    paintPaidWith(h);
     var all = namedLines(h);
     var subs = all.filter(function (e) { return e.categoryId === 'subscriptions'; });
     var rest = all.filter(function (e) { return e.categoryId !== 'subscriptions'; });
@@ -952,6 +980,7 @@
     var typed = Money.isEntered(e.everyCents) && e.every ? e.everyCents : e.amountCents;
     el('n-amount').value = Money.forInput(typed).replace(/^\$/, '');
     el('n-bucket').value = bucketOfLine(e);
+    el('n-paid').value = e.paidWith || '';
     el('btn-line-add').textContent = 'Save the line';
     el('line-say').innerHTML = 'Editing <b>' + esc(e.descriptor) + '</b>. <button type="button" class="slaf-btn slaf-btn--small slaf-btn--quiet" id="btn-line-cancel">Cancel</button>';
     el('line-form').scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -960,7 +989,7 @@
   function stopEditing() {
     EDITING = null;
     el('btn-line-add').textContent = 'Add the line';
-    el('n-label').value = ''; el('n-amount').value = ''; el('n-every').value = 'monthly'; el('n-bucket').value = 'subscriptions';
+    el('n-label').value = ''; el('n-amount').value = ''; el('n-every').value = 'monthly'; el('n-bucket').value = 'subscriptions'; el('n-paid').value = '';
   }
   function wireLines() {
     el('btn-line-add').addEventListener('click', function () {
@@ -975,7 +1004,8 @@
       Spine.upsertExpenseEntry(Schema.createExpenseEntry(Object.assign({}, was || {}, {
         id: EDITING || ('ln_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)),
         categoryId: LINE_CATEGORY[bucket] || 'other', amountCents: monthly, period: 'monthly', source: 'manual',
-        descriptor: label, every: every, everyCents: amount
+        descriptor: label, every: every, everyCents: amount,
+        paidWith: el('n-paid-wrap').hidden ? (was ? was.paidWith : null) : (el('n-paid').value || null)
       })));
       el('line-say').textContent = (was ? 'Saved ' : 'Added ') + label + ', ' + Money.formatCents(monthly) + ' a month' + (every !== 'monthly' ? ' (' + Money.formatCents(amount) + ' ' + EVERY_WORD[every] + ')' : '') + '.';
       stopEditing();

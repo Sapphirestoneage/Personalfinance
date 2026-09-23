@@ -17276,6 +17276,35 @@ sure" writes no number at all, only the D-209 mark.
 `node test/flow.js` 30 including the band-1 walk, the browser gates, and a
 phone walk at 390px through A3, I2 and T3.
 
+## D-337 — Where an expense went: the card it was on, and the bonus that spending could reach
+
+**Why.** The owner: "where does this expense go, is it on a credit card, and
+which one?" so a credit card spend calculator can say how big a sign-up
+bonus is within spending already planned.
+
+**Decision.** Every expense entry can say where the money left from
+(`paidWith`: the bank, or the id of a card in debts[]); the log in Cash Flow
+(`rooms/cash-flow.html`) and a typical-month line in Expenses
+(`rooms/expenses.html`) ask it, only when a card exists. A card carries a
+bonus target (`bonusSpendCents`, `bonusFromOn`, `bonusByOn`), asked in the
+card fold in Debt (`rooms/debt-payoff.html`), which warns while it slips.
+`CashFlow.cardSpend` (`engines/cashflow.js`) is the one reader: per card the
+month, the rate (trailing three months, else the typical lines, never this
+month scaled), the reach over 3 and 6 months, and the target's pace. The
+Close reads it as `#on-cards` (`rooms/budget.html`), links only. A tag, never
+a number: nothing a month counts changes.
+
+**Replaces or removes.** No screen; the freeze allows it because the reading
+sits inside The Close and the asks sit inside the three forms that own the
+data. The move `rewards.oneSignupBonus` now has a room.
+
+**Stored shape.** `expenses.entries[].paidWith` and `debts[].bonusSpendCents`,
+`bonusFromOn`, `bonusByOn` added; absent on older saves, read as not said.
+
+**Verified.** `node test/run.js` 35744, `node test/forms.js` 700,
+`node test/solar.js` 5191; a phone walk at 390px through Expenses, Debt, Cash
+Flow and The Close with the example numbers, clean console.
+
 ---
 
 # The Dungeons & Dividends entries

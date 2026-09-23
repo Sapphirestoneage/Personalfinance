@@ -208,6 +208,27 @@
   #view-this-month .pill.is-quiet { color: var(--color-text-faint); }
   
   #view-this-month .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
+  /* On the cards (D-337): one row a card, the bonus target as a track. */
+  #view-this-month .oc-all { font-family: var(--font-display); font-size: var(--text-xl); font-variant-numeric: tabular-nums; line-height: 1.15; margin-top: var(--space-2); }
+  #view-this-month .oc-say { margin: var(--space-1) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+  #view-this-month .oc-list { display: grid; gap: var(--space-3); margin-top: var(--space-3); }
+  #view-this-month .oc-card { border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-surface-raised, transparent); padding: var(--space-3); }
+  #view-this-month .oc-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; }
+  #view-this-month .oc-name { font-weight: 600; }
+  #view-this-month .oc-name small { display: block; font-weight: 400; font-size: var(--text-xs); color: var(--color-text-faint); }
+  #view-this-month .oc-amt { font-family: var(--font-display); font-variant-numeric: tabular-nums; font-size: var(--text-lg); white-space: nowrap; }
+  #view-this-month .oc-amt small { display: block; font-family: var(--font-body); font-size: var(--text-xs); color: var(--color-text-faint); text-align: right; }
+  #view-this-month .oc-line { margin: var(--space-2) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+  #view-this-month .oc-line.is-behind { color: var(--color-caution); }
+  #view-this-month .oc-line.is-missed { color: var(--color-critical); }
+  #view-this-month .oc-line.is-reached, #view-this-month .oc-line.is-on-pace { color: var(--color-positive); }
+  #view-this-month .oc-track { position: relative; height: 10px; margin-top: var(--space-2); border-radius: 5px; background: var(--color-surface); border: 1px solid var(--color-border); overflow: hidden; }
+  #view-this-month .oc-track i { position: absolute; left: 0; top: 0; bottom: 0; background: var(--color-positive); }
+  #view-this-month .oc-track i.is-behind { background: var(--color-caution); }
+  #view-this-month .oc-track i.is-missed { background: var(--color-critical); }
+  #view-this-month .oc-track b { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--color-text-muted); }
+  #view-this-month .oc-key { display: flex; justify-content: space-between; gap: var(--space-2); margin-top: var(--space-1); font-size: var(--text-xs); color: var(--color-text-faint); }
+  #view-this-month .oc-links { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
   
   #view-this-month .say { font-size: var(--text-sm); margin: var(--space-3) 0 0; color: var(--color-text-muted); }
   
@@ -306,6 +327,16 @@
     <div class="month-say" id="month-say"></div>
     <div class="cards" id="rows"></div>
     <p class="why" id="sheet-why"></p>
+  </section>
+
+  <!-- D-337: which card carried the month, and the bonus it could reach.
+       Read off the tags the log and the typical month carry; nothing is
+       typed here. -->
+  <section class="slaf-card card-gap" id="on-cards">
+    <span class="slaf-eyebrow">On the cards</span>
+    <h2 style="margin:var(--space-2) 0 0" id="oc-title">Which card carried the month</h2>
+    <div id="oc-body"></div>
+    <p class="why" id="oc-why"></p>
   </section>
 
   <section class="slaf-card card-gap" id="close">
@@ -513,7 +544,7 @@
 /* ---- READING view-this-month, from rooms/budget.html (D-276) ---- */
 (function () {
   'use strict';
-  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Budget = SLAF.Budget, Ledger = SLAF.Ledger, Presets = SLAF.Presets;
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Budget = SLAF.Budget, Ledger = SLAF.Ledger, Presets = SLAF.Presets, CashFlow = SLAF.CashFlow;
   var ROOM_ID = 'budget';   /* the room this reading lives in */
   var TABLES = null;
   var month = null;          /* the month shown */
@@ -665,6 +696,64 @@
     }
     justAdded = null;
   }
+  /* ---- On the cards (D-337) --------------------------------------------
+     Read off CashFlow.cardSpend for the month shown: what each card
+     carried, what it runs at, the bonus that rate could reach, and the
+     target a card is chasing. Links only; the tags are typed where the
+     expense is (the log, a typical line) and the target in Debt. */
+  function pctOf(c, max) { return Math.max(0, Math.min(100, max > 0 ? c / max * 100 : 0)); }
+  function days(n) { return n + (n === 1 ? ' day' : ' days'); }
+  function isoDay(iso) { var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); return m ? new Date(Date.UTC(+m[1], +m[2] - 1, +m[3])).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }) : ''; }
+  function rateWords(rate) {
+    if (!Money.isEntered(rate.cents)) return null;
+    return 'runs about ' + money(rate.cents) + ' a month' + (rate.basis === 'trailing' ? ', the last ' + rate.months + ' months' : ', from the typical month\u2019s lines');
+  }
+  function targetHtml(t, isCurrent) {
+    if (!t) return '';
+    if (t.verdict === 'incomplete') return '<p class="oc-line">Chasing a ' + esc(money(t.spendCents)) + ' bonus spend. ' + esc(t.reason) + ' <a href="debt-payoff.html#the-order">In Debt →</a></p>';
+    var word = t.verdict === 'reached' ? 'Reached. ' + money(t.spentCents) + ' of ' + money(t.spendCents) + ' is on the card' + (t.daysLeft > 0 ? ', with ' + days(t.daysLeft) + ' to spare' : '') + '.'
+      : t.verdict === 'missed' ? 'The window closed ' + isoDay(t.byOn) + ' with ' + money(t.spentCents) + ' of ' + money(t.spendCents) + ' on the card.'
+      : t.verdict === 'not-started' ? 'The window opens ' + isoDay(t.fromOn) + ': ' + money(t.spendCents) + ' by ' + isoDay(t.byOn) + '.'
+      : money(t.spentCents) + ' of ' + money(t.spendCents) + ' so far, ' + days(t.daysLeft) + ' left to ' + isoDay(t.byOn) + '. '
+        + (t.verdict === 'on-pace' ? 'On pace. ' : 'Behind the day. ')
+        + (Money.isEntered(t.atRateCents) ? (t.atRateCents >= t.spendCents ? 'At the usual rate it gets there.' : 'At the usual rate it lands at ' + money(t.atRateCents) + '; about ' + money(t.neededPerMonthCents) + ' a month from here reaches it.') : 'About ' + money(t.neededPerMonthCents) + ' a month from here reaches it.')
+        + (t.scheduledCents ? ' ' + money(t.scheduledCents) + ' more is dated ahead inside the window.' : '');
+    var track = t.verdict === 'not-started' ? '' : '<div class="oc-track" role="img" aria-label="Bonus spend so far against the target"><i class="is-' + esc(t.verdict) + '" style="width:' + pctOf(t.spentCents, t.spendCents) + '%"></i>'
+      + (t.verdict === 'on-pace' || t.verdict === 'behind' ? '<b style="left:' + pctOf(t.expectedByNowCents, t.spendCents) + '%" title="Where the window is"></b>' : '') + '</div>'
+      + '<div class="oc-key"><span>' + esc(money(t.spentCents)) + ' on the card</span><span>' + esc(money(t.spendCents)) + ' asked for</span></div>';
+    return '<p class="oc-line is-' + esc(t.verdict) + '">' + esc(word) + '</p>' + track;
+  }
+  function renderCards(h, isCurrent) {
+    var box = el('oc-body'), why = el('oc-why');
+    var sp = CashFlow.cardSpend(h, { month: month });
+    var w = sp.windows;
+    if (!sp.hasCards) {
+      box.innerHTML = '<p class="oc-say">No credit card in Debt yet. Add one there and the log asks which card each expense went on; this reading then says what each card carries and the sign-up bonus that spending could reach.</p>'
+        + '<div class="oc-links"><a class="pill is-quiet" href="debt-payoff.html#the-order">Add a card in Debt →</a></div>';
+      why.textContent = '';
+      return;
+    }
+    var all = sp.all;
+    var head = Money.isEntered(all.rateCents)
+      ? '<div class="oc-all">' + esc(money(all.rateCents)) + ' a month on cards</div>'
+        + '<p class="oc-say">A sign-up bonus that asks for up to ' + esc(money(all.reach[0].cents)) + ' in ' + w[0] + ' months, or ' + esc(money(all.reach[1].cents)) + ' in ' + w[1] + ', is spending you already do.'
+        + (Money.isEntered(sp.bank.rateCents) && sp.bank.rateCents > 0 ? ' Another ' + esc(money(sp.bank.rateCents)) + ' a month leaves from the bank and could move to a card.' : '') + '</p>'
+      : '<div class="oc-all">not yet</div><p class="oc-say">Nothing tagged to a card yet. Say “Paid with” on each expense as you log it, or on a line of the typical month, and the cards start to add up.</p>';
+    var cards = sp.cards.map(function (c) {
+      var rw = rateWords(c.rate);
+      return '<article class="oc-card" id="oc-' + esc(c.id) + '">'
+        + '<div class="oc-head"><span class="oc-name">' + esc(c.label) + (c.last4 ? ' ·' + esc(c.last4) : '') + '<small>' + esc(rw || 'no rate yet: nothing tagged to it in earlier months or the typical month') + '</small></span>'
+        + '<span class="oc-amt">' + esc(money(c.thisMonthCents)) + '<small>' + (c.thisMonthCount ? c.thisMonthCount + (c.thisMonthCount === 1 ? ' receipt' : ' receipts') + (isCurrent ? ' so far' : '') : 'nothing logged on it') + '</small></span></div>'
+        + (rw ? '<p class="oc-line">Could reach a ' + esc(money(c.reach[0].cents)) + ' bonus spend in ' + w[0] + ' months, ' + esc(money(c.reach[1].cents)) + ' in ' + w[1] + '.</p>' : '')
+        + targetHtml(c.target, isCurrent)
+        + '</article>';
+    }).join('');
+    box.innerHTML = head + '<div class="oc-list">' + cards + '</div>'
+      + (sp.untaggedCount ? '<p class="oc-say">' + esc(money(sp.untaggedThisMonthCents)) + ' logged this month says nowhere yet (' + esc(sp.untaggedCount + (sp.untaggedCount === 1 ? ' receipt' : ' receipts')) + ').</p>' : '')
+      + '<div class="oc-links"><a class="pill is-quiet" href="cash-flow.html#log">Log a card expense →</a><a class="pill is-quiet" href="debt-payoff.html#the-order">Set a bonus target in Debt →</a></div>';
+    why.textContent = 'A tag, never a number: the month counts the same whichever card carried it. The rate is the last ' + sp.trailingMonths + ' months of tagged spending, or the typical month\u2019s tagged lines until there are months to read.';
+  }
+
   /* ---- The presets (D-129): stacked into Savings and Investments --------
      Nothing typed. Each is read through the function that owns it; the
      button stacks it into this month's Estimated or takes it out. The Max
@@ -783,6 +872,7 @@
     /* A late entry into a closed month moves only its revised column. */
     if (Budget.syncRevised(h, TABLES, CAT(), Spine)) h = Spine.getProfile();
     renderSheet(householdForView(h));
+    renderCards(h, month === Schema.localMonth());
     renderMonths(h);
   }
 

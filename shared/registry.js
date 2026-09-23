@@ -126,7 +126,7 @@
     {
       id: 'budget',
       features: ['annualLines'],
-      group: 'numbers', subgroup: 'expenses', aliases: ['budget', 'buckets', 'estimate', 'plan the month', 'variance', 'estimated vs actual', 'history', 'changes', 'log', 'snapshots'],
+      group: 'numbers', subgroup: 'expenses', aliases: ['budget', 'buckets', 'estimate', 'plan the month', 'variance', 'estimated vs actual', 'history', 'changes', 'log', 'snapshots', 'credit card spend', 'sign-up bonus', 'on the cards'],
       kind: 'about-you',
       needs: [],
       order: 1.6,
@@ -138,6 +138,7 @@
       daite: { reads: ['assets.cashCents', 'assets.invested', 'debt.items'], writes: ['expenses.budget', 'expenses.months', 'prefs.history'] },
       subsections: [
         { id: 'sheet',  label: 'The sheet' },
+        { id: 'on-cards', label: 'On the cards' },
         { id: 'close',  label: 'Month-end' },
         { id: 'months', label: 'Closed months' },
         { id: 'single', label: 'One closed month' },
