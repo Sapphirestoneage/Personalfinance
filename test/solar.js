@@ -613,7 +613,14 @@ section('Where a household stands in the levels, and the screen that shows it');
   const skyStart = page.indexOf('The planets (D-321, opened up in D-322)');
   const skyBlock = page.slice(skyStart, page.indexOf('</script>', skyStart));
   check('a fact with an owner room links to it, and one without says so plainly', /'enter it'/.test(page) && /nowhere to type it yet/.test(page) && !/N\/A/.test(skyBlock));
-  check('a level nothing can collect yet explains itself', /Nothing on this screen can take this answer yet/.test(page));
+  /* D-338 took the other case away: every question can be answered now, in a
+     room, in a box on this screen, or in the Planets' own store. What is left
+     is a level whose figure is worked out from answers on other levels, and
+     it says that rather than apologising for the screen. */
+  check('a level with nothing to type says it is worked out elsewhere',
+    /This one is worked out from answers on other levels rather than typed/.test(page));
+  check('and no level says the screen cannot take the answer',
+    !/Nothing on this screen can take this answer yet/.test(page));
   check('the planet can be filtered to what is not done', /data-only="notYet"/.test(page) && /only === 'all' \|\| r\.state !== 'done'/.test(page));
   check('the level buttons reach the 44px tap target', /\.sky-lv \{[^}]*min-height: 44px/.test(page));
   check('the metric labels come from the recipes table, never retyped', /Reference\.load\(\['levels', 'recipes', 'ledgerRows', 'states', 'effectiveTaxRates'/.test(page) && /RECIPES\[r\.id\] = r\.label/.test(page));
