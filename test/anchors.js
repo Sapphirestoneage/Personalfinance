@@ -61,8 +61,14 @@ Levels.levels.forEach(l => l.fields.forEach(f => {
   let absent = 0, notApplicable = 0;
   for (const f of fields) {
     await page.goto(BASE + f.href + '#' + f.anchor, { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(4200);
-    const r = await page.evaluate((a) => {
+    await page.waitForTimeout(1200);
+    /* The landing is not one moment: shared/progress.js keeps putting the
+       field back at the top for six seconds while the room finishes drawing
+       and cards above it grow or collapse (SETTLE_MS). A single snapshot at
+       4.2s read whatever was on the screen between two of those passes, so
+       the gate failed on a different field each run and told nobody why.
+       Look until it has landed, and only call it a miss if it never does. */
+    const read = () => page.evaluate((a) => {
       const n = document.getElementById(a);
       if (!n) return { missing: true };
       const box = n.getBoundingClientRect();
@@ -78,6 +84,13 @@ Levels.levels.forEach(l => l.fields.forEach(f => {
         marked: !!document.querySelector('.slaf-landed')
       };
     }, f.anchor);
+    let r = await read();
+    /* Missing and hidden are polled too: a room that builds its boxes from
+       the household has no node at all for the first second. */
+    for (let waited = 1200; waited < 7600 && !r.landed; waited += 300) {
+      await page.waitForTimeout(300);
+      r = await read();
+    }
     if (r.missing) {
       /* A question the situation gate has taken away is not on the page, and
          that is right: nothing in the app offers a link to one. */

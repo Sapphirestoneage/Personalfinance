@@ -17097,6 +17097,11 @@ section('The standard the app is held to (D-340)');
     /focusin[\s\S]{0,200}row === settling[\s\S]{0,40}letGo\(\)/.test(ledger));
   checkTrue('...through a class, not by rebuilding the row (D-034)',
     /classList\.add\('is-settling'\)/.test(ledger) && /classList\.remove\('is-settling'\)/.test(ledger));
+  checkTrue('a link that names a field keeps that field while the room lands on it',
+    /var ARRIVED =/.test(progress) && /arrivalHandled/.test(progress)
+    && /if \(ARRIVED && !arrivalHandled && !moved\) return;/.test(progress));
+  checkTrue('...and the address stops following the reader only while the app is the one scrolling',
+    /if \(!moved && landedAt && Date\.now\(\) - landedAt <= SETTLE_MS\) return;/.test(progress));
   checkTrue('the walk is tapped through by a gate, not only read',
     /data-walk="next"/.test(fs.readFileSync(path.join(ROOT, 'test/forms.js'), 'utf8')));
 

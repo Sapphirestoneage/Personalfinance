@@ -1215,6 +1215,16 @@
      the right place. It never rebuilds anything, so D-034 is untouched. */
   var LANDED = 'slaf-landed', LANDED_MS = 2400, REVEAL_TRIES = 24, REVEAL_EVERY = 160;
   var SETTLE_EVERY = 300, SETTLE_MS = 6000, SETTLE_BAND = 200;
+  /* ---- The address you arrived at (D-341) ----------------------------------
+     The section sync below rewrites the hash as the page scrolls, so the URL
+     always names what you are reading. The browser's own jump to an anchor is
+     a scroll like any other, so on a cold load it fired that rewrite before
+     this file had read the hash: the link said #gv-inputs, the hash said
+     #gv-number by the time anyone looked, and the field the person tapped was
+     left 600px down the screen. What the link asked for is remembered here,
+     at load, and the sync holds off until that landing has begun. */
+  var ARRIVED = (typeof location !== 'undefined' && location.hash) ? location.hash.replace(/^#/, '') : '';
+  var arrivalHandled = false;
   function focusableIn(node) {
     if (!node || !node.querySelectorAll) return null;
     if (node.matches && node.matches('input, select, textarea')) return node;
@@ -1331,6 +1341,7 @@
     var step = pass || 0;
     var ticketNow = ticket;
     if (step === 0) {
+      if (id === ARRIVED) arrivalHandled = true;
       moved = false; landedAt = Date.now(); ticketNow = ++landing;
       watchForAHand(g);
       watchLayout(g, id, node, ticketNow);
@@ -1348,7 +1359,9 @@
     if (typeof document === 'undefined') return;
     var g = globals();
     if (!g) return;
-    var id = (hash || (g.location ? g.location.hash : '') || '').replace(/^#/, '');
+    /* No argument means "whatever the address says", and until the arrival
+       has been handled the address that counts is the one it arrived with. */
+    var id = (hash || (!arrivalHandled && ARRIVED ? ARRIVED : '') || (g.location ? g.location.hash : '') || '').replace(/^#/, '');
     if (!id) return;
     var left = tries === undefined ? REVEAL_TRIES : tries;
     var node = null;
@@ -1559,6 +1572,10 @@
     }
     function sync() {
       queued = false;
+      /* Not while the app is the one scrolling: the URL follows the reader,
+         and until the landing has begun nobody has read anything yet. */
+      if (ARRIVED && !arrivalHandled && !moved) return;
+      if (!moved && landedAt && Date.now() - landedAt <= SETTLE_MS) return;
       var sec = current();
       if (!sec || location.hash === '#' + sec.id) return;
       try { history.replaceState(history.state, '', location.pathname + location.search + '#' + sec.id); } catch (err) { /* fine */ }

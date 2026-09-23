@@ -17431,13 +17431,23 @@ between touchend and click, taking 68px out of the page, so the sticky strip
 jumped up and the click landed behind the button. The row lets go once the tap
 that took its focus away has landed. One class, one timer, no rebuild (D-034).
 
+And the third: a link that names a field opened the room and then slid away
+from it. `mountSectionSync` keeps the address naming whatever you are reading
+by rewriting the hash on every scroll, and the browser's own jump to an anchor
+is a scroll like any other, so on a cold load the rewrite ran before this file
+had read the hash. The link said `#gv-inputs`, the hash said `#gv-number` a
+moment later, and the field the person tapped sat 600px down the screen. What
+the address arrived with is remembered at load now, and the sync holds off
+until that landing has begun or a hand has taken the page.
+
 **Replaces or removes.** The bottom toast. No screen and no field is added.
 
 **Stored shape.** No change.
 
 **Verified.** `node test/forms.js` 125, the guided walk case among them (it was
-failing on exactly this before the fix); `node test/run.js`; the walk tapped
-through by hand at 412px with the touch events logged.
+failing on exactly this before the fix); `node test/anchors.js` 77 fields, the
+two that were landing 500px down among them; `node test/run.js`; the walk
+tapped through by hand at 412px with the touch events logged.
 
 
 ---
