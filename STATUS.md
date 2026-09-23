@@ -1,6 +1,6 @@
 # STATUS (keep under 40 lines; /wrap rewrites it)
 
-Updated: 2026-09-22
+Updated: 2026-09-23
 
 ## Where it stands
 - **93 → 37 rooms** with the Calendar back and the five readings of D-313. **D-318** the
@@ -17,24 +17,25 @@ Updated: 2026-09-22
 - **Band 1 is answerable with no knowledge (D-336)**: `data/sketch_help.json` says its
   eighteen questions in plain words, with what counts, where to look, an add-it-up fold,
   a starting number, and "I am not sure" that writes no number.
-- **Every question in the Planets can be answered (D-337)**: the 195 facts no room owned
+- **On the cards (D-337, from main)**: an expense says which card it went on; a card carries
+  a bonus target (Debt); The Close's `#on-cards` says the rate, reach and pace.
+- **Every question in the Planets can be answered (D-338)**: the 195 facts no room owned
   live at `levels.<planet>.<key>` through `shared/levelstore.js`, one control per kind.
-- **The dashboard (D-338)**: a third tab on `#planets`: a ring and four tiles, bars by
-  planet and band, readings by tier, every reading the app can make with its figure,
-  each against its normal range, and the radar.
-- **This lane**: a card's annual fee (D-331); the radar on the Scorecard (D-332); the
-  menu everywhere (D-333) with the Planets at its top (D-335); two ratios and the
-  furthest-from-normal ranking (D-334).
-- **The standard (D-339)**: `docs/DESIGN.md`, 22 rules each with the check that holds it.
+- **The Planets dashboard (D-339)**: an Overview tab: a ring and four tiles, bars by planet
+  and band, readings by tier, every reading with its figure, each against its normal range.
+- **The standard (D-340)**: `docs/DESIGN.md`, 22 rules each with the check that holds it.
   No unrounded number reaches a screen (gated over every room), undo docks in the page,
   one row of tabs, small print folded, chips not link soup.
+- **This lane**: a card's annual fee (D-331); the radar on the Scorecard (D-332); the menu
+  everywhere (D-333) with the Planets at its top (D-335); two ratios and the
+  furthest-from-normal ranking (D-334).
 - **Main is worked on by another lane**: merge before every push. D-228's reframe has NOT shipped. Freeze holds (D-313).
 
 ## Next (top item first; one per session)
 1. **Tier 3 readings and the moons.** Tiers 1 and 2 are worked out (53 of 184).
-   Every fact now has a home (D-337), so this is engines, not storage.
-2. **OWNER DECISIONS held**: inline asks elsewhere (D-313 vs D-207); is the income floor means-tested? (D-228, D-284.)
-3. Paystub parser and monthly update: not built. `benefit_cliffs_2026.json` unverified.
+2. **Room by room against `docs/DESIGN.md`.** The four main screens are done; the
+   Scorecard and the Cushion carry the most numbers and are next.
+3. **OWNER DECISIONS held**: inline asks elsewhere (D-313 vs D-207); income floor means-tested? (D-228, D-284.)
 
 ## Known open
 - Nothing. Every CI step is clean on this tree, browser gates included.

@@ -170,7 +170,7 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
   check('"I am not sure" is recorded as an answer of its own', unsure.notSure);
   check('and no number is written in its place', unsure.value === null && unsure.status === 'incomplete', JSON.stringify(unsure));
 
-  console.log('\nThe dashboard reads what has been answered (D-338)');
+  console.log('\nThe dashboard reads what has been answered (D-339)');
 
   await page.click('#sky-tabs [data-tab="dash"]');
   await page.waitForTimeout(400);

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   shared/levelstore.js, the 195 facts no room owns. D-337.
+   shared/levelstore.js, the 195 facts no room owns. D-338.
    --------------------------------------------------------------------------
    data/levels.json asks 180 levels' worth of questions. Fifty-seven of the
    facts behind them belong to a room already, and are typed through that

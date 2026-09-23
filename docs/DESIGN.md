@@ -4,7 +4,7 @@ One page. It exists because "make it look professional" is not a review you
 can act on, and "the label wraps onto three lines" is. Everything below is a
 rule a session can check, most of them in `test/run.js` or a browser gate.
 
-D-339 wrote it. Add to it when a rule earns its place; do not add taste.
+D-340 wrote it. Add to it when a rule earns its place; do not add taste.
 
 ## Numbers
 

@@ -574,7 +574,7 @@
         rows.push({ id: e.id, entryId: e.id, date: o.date, cents: o.cents, categoryId: e.categoryId, group: g, bucket: bucket,
           descriptor: e.descriptor || null, linkedIncomeId: e.linkedIncomeId || null, deductible: e.deductible === true, recurring: e.period === 'monthly', hidden: e.hidden === true,
           dateKind: o.dateKind || 'exact', estimated: o.estimated === true,
-          produced: e.produced || (e.linkedIncomeId ? 'linked' : 'personal'),
+          produced: e.produced || (e.linkedIncomeId ? 'linked' : 'personal'), paidWith: e.paidWith || null,
           reimbursableFrom: reimb ? e.reimbursableFrom || null : null, reimbursementStatus: reimb ? e.reimbursementStatus : null, expectedAmountCents: reimb ? e.expectedAmountCents : null });
         byGroup[g] = (byGroup[g] || 0) + o.cents;
         byBucket[bucket] = (byBucket[bucket] || 0) + o.cents;
@@ -603,6 +603,133 @@
     return { month: month, rows: rows, byGroup: byGroup, byBucket: byBucket, personalCents: personal, incomeCostsCents: costs, deductibleCents: deductible,
       pendingReimbursementCents: pendingReimb, reimbursedCents: reimbursed, count: rows.length, potentialRows: potentialRows, potentialCents: potential };
   }
+  /* ---- On the cards (D-337) ---------------------------------------------
+     Every expense can say where the money left from (`paidWith`): a bank
+     account, or one of the credit cards in debts[]. This reads that tag
+     back, per card: what went on it in a month, what it runs at, and how
+     far along a sign-up bonus target is. A tag, never a number: nothing
+     here changes what a month counts. */
+  /* The windows a sign-up offer usually gives: arithmetic, not reference
+     data, the way CLOSED_AVERAGE_MONTHS is (D-130). */
+  var CARD_TRAILING_MONTHS = 3;
+  var BONUS_WINDOWS_MONTHS = [3, 6];
+  var DAYS_PER_MONTH = 365.25 / 12;
+  var ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+  function dayMs(iso) { var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); return m ? Date.UTC(+m[1], +m[2] - 1, +m[3]) : null; }
+  function shiftMonth(month, n) { var y = +month.slice(0, 4), m = +month.slice(5, 7) - 1 + n; var d = new Date(Date.UTC(y, m, 1)); return d.getUTCFullYear() + '-' + (d.getUTCMonth() + 1 < 10 ? '0' : '') + (d.getUTCMonth() + 1); }
+  function cardsOf(household) {
+    return ((household && household.debts) || []).filter(function (d) { return d && d.type === 'credit_card' && d.archived !== true; });
+  }
+  /* Every counted occurrence (exact or estimated, never potential) tagged
+     to `paidWith`, dated inside [from, to] inclusive, on the months the
+     window touches. */
+  function taggedBetween(household, paidWith, from, to) {
+    var rows = [];
+    if (!ISO_DAY.test(from || '') || !ISO_DAY.test(to || '') || from > to) return rows;
+    logEntries(household).forEach(function (e) {
+      if (e.active === false || e.paidWith !== paidWith) return;
+      for (var m = from.slice(0, 7); m <= to.slice(0, 7); m = shiftMonth(m, 1)) {
+        logOccurrences(e, m).forEach(function (o) {
+          if (o.potential || o.date < from || o.date > to) return;
+          rows.push({ entryId: e.id, date: o.date, cents: o.cents, categoryId: e.categoryId, descriptor: e.descriptor || null });
+        });
+      }
+    });
+    return rows;
+  }
+  function sumRows(rows) { return rows.reduce(function (t, r) { return t + r.cents; }, 0); }
+  function monthEdges(month) {
+    var y = +month.slice(0, 4), m = +month.slice(5, 7);
+    var last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    return { from: month + '-01', to: month + '-' + (last < 10 ? '0' : '') + last };
+  }
+  /* The typical month's lines (Expenses) tagged to a card: what is planned
+     to go on it, before anything is logged. */
+  function typicalTagged(household, paidWith) {
+    var cents = 0, any = false;
+    ((household && household.expenses && household.expenses.entries) || []).forEach(function (e) {
+      if (!e || e.active === false || e.source === 'log' || e.period !== 'monthly' || e.paidWith !== paidWith) return;
+      if (!Money.isEntered(e.amountCents)) return;
+      any = true; cents += e.amountCents;
+    });
+    return any ? cents : null;
+  }
+  /* What a tag runs at, a month: the trailing full months when any of
+     them carry a tagged expense, else the typical month's tagged lines,
+     else nothing (never this month scaled up, which would be a guess). */
+  function rateFor(household, paidWith, month) {
+    var from = shiftMonth(month, -CARD_TRAILING_MONTHS), to = shiftMonth(month, -1);
+    var edges = { from: monthEdges(from).from, to: monthEdges(to).to };
+    var rows = taggedBetween(household, paidWith, edges.from, edges.to);
+    var typical = typicalTagged(household, paidWith);
+    if (rows.length) return { cents: Math.round(sumRows(rows) / CARD_TRAILING_MONTHS), basis: 'trailing', months: CARD_TRAILING_MONTHS, from: from, to: to, totalCents: sumRows(rows), typicalCents: typical };
+    if (typical !== null) return { cents: typical, basis: 'typical', months: null, from: null, to: null, totalCents: null, typicalCents: typical };
+    return { cents: null, basis: null, months: null, from: null, to: null, totalCents: null, typicalCents: null };
+  }
+  function reachFor(rateCents) {
+    return BONUS_WINDOWS_MONTHS.map(function (n) { return { months: n, cents: Money.isEntered(rateCents) ? rateCents * n : null }; });
+  }
+  /* A card's bonus target, read against the tagged spending in its window. */
+  function bonusTarget(household, card, today, rateCents) {
+    if (!card || !Money.isEntered(card.bonusSpendCents)) return null;
+    var out = { spendCents: card.bonusSpendCents, fromOn: card.bonusFromOn || null, byOn: card.bonusByOn || null,
+      spentCents: null, scheduledCents: null, leftCents: null, daysLeft: null, daysTotal: null, daysPassed: null,
+      expectedByNowCents: null, neededPerMonthCents: null, atRateCents: null, verdict: 'incomplete', reason: null };
+    if (!ISO_DAY.test(out.byOn || '')) { out.reason = 'Add the day the bonus must be reached by.'; return out; }
+    if (!ISO_DAY.test(out.fromOn || '')) { out.reason = 'Add the day the window opened, usually the day the card did.'; return out; }
+    if (out.fromOn > out.byOn) { out.reason = 'The window closes before it opens; check the two dates.'; return out; }
+    var rows = taggedBetween(household, card.id, out.fromOn, out.byOn);
+    var spent = 0, scheduled = 0;
+    rows.forEach(function (r) { if (r.date <= today) spent += r.cents; else scheduled += r.cents; });
+    out.spentCents = spent; out.scheduledCents = scheduled;
+    out.leftCents = Math.max(0, out.spendCents - spent);
+    var t = dayMs(today), a = dayMs(out.fromOn), b = dayMs(out.byOn);
+    out.daysTotal = Math.round((b - a) / 86400000) + 1;
+    out.daysLeft = Math.max(0, Math.round((b - t) / 86400000));
+    out.daysPassed = Math.max(0, Math.min(out.daysTotal, Math.round((t - a) / 86400000) + 1));
+    if (spent >= out.spendCents) { out.verdict = 'reached'; return out; }
+    if (today > out.byOn) { out.verdict = 'missed'; return out; }
+    if (today < out.fromOn) { out.verdict = 'not-started'; return out; }
+    out.expectedByNowCents = Math.round(out.spendCents * out.daysPassed / out.daysTotal);
+    out.neededPerMonthCents = out.daysLeft > 0 ? Math.round(out.leftCents / (out.daysLeft / DAYS_PER_MONTH)) : out.leftCents;
+    if (Money.isEntered(rateCents)) out.atRateCents = spent + scheduled + Math.round(rateCents * out.daysLeft / DAYS_PER_MONTH);
+    out.verdict = spent >= out.expectedByNowCents ? 'on-pace' : 'behind';
+    return out;
+  }
+  /**
+   * cardSpend(household, { now, month }) → what each credit card carried in
+   * the month, what it runs at, the bonus it could reach, and its target.
+   * `month` defaults to the month of `now`. No catalog: a tag needs no group.
+   */
+  function cardSpend(household, opts) {
+    var o = opts || {};
+    var today = Schema.localDay(o.now);
+    var month = /^\d{4}-\d{2}$/.test(o.month || '') ? o.month : today.slice(0, 7);
+    var edges = monthEdges(month);
+    var cards = cardsOf(household);
+    var allRate = 0, anyRate = false, taggedThisMonth = 0;
+    var out = cards.map(function (d) {
+      var rows = taggedBetween(household, d.id, edges.from, edges.to);
+      var rate = rateFor(household, d.id, month);
+      if (Money.isEntered(rate.cents)) { allRate += rate.cents; anyRate = true; }
+      taggedThisMonth += sumRows(rows);
+      return { id: d.id, label: d.label || 'Credit card', institution: d.institution || null, last4: d.last4 || null,
+        thisMonthCents: sumRows(rows), thisMonthCount: rows.length, rows: rows,
+        rate: rate, reach: reachFor(rate.cents), target: bonusTarget(household, d, today, rate.cents) };
+    });
+    var bankRows = taggedBetween(household, Schema.PAID_WITH_BANK, edges.from, edges.to);
+    var bankRate = rateFor(household, Schema.PAID_WITH_BANK, month);
+    var untagged = 0, untaggedCount = 0;
+    logEntries(household).forEach(function (e) {
+      if (e.active === false || e.paidWith) return;
+      logOccurrences(e, month).forEach(function (occ) { if (occ.potential) return; untagged += occ.cents; untaggedCount++; });
+    });
+    return { asOf: today, month: month, cards: out, hasCards: cards.length > 0,
+      taggedThisMonthCents: taggedThisMonth, bankThisMonthCents: sumRows(bankRows), untaggedThisMonthCents: untagged, untaggedCount: untaggedCount,
+      all: { rateCents: anyRate ? allRate : null, reach: reachFor(anyRate ? allRate : null) },
+      bank: { rateCents: bankRate.cents, basis: bankRate.basis },
+      windows: BONUS_WINDOWS_MONTHS.slice(), trailingMonths: CARD_TRAILING_MONTHS };
+  }
   /** Reimbursable expenses still waiting to be paid back, whatever the month. */
   function pendingReimbursements(household) {
     return logEntries(household).filter(function (e) { return e.active !== false && e.produced === 'reimbursable' && e.reimbursementStatus !== 'received'; });
@@ -618,6 +745,9 @@
     logInMonth: logInMonth,
     logByFatBucket: logByFatBucket,
     pendingReimbursements: pendingReimbursements,
+    cardSpend: cardSpend,
+    CARD_TRAILING_MONTHS: CARD_TRAILING_MONTHS,
+    BONUS_WINDOWS_MONTHS: BONUS_WINDOWS_MONTHS,
     normaliseToMonthly: normaliseToMonthly,
     summarise: summarise,
     netMonthlyIncomeCents: netMonthlyIncomeCents,

@@ -876,7 +876,7 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
-      Reference = SLAF.Reference, Demo = SLAF.DemoPersona, Debt = SLAF.Debt, Charts = SLAF.Charts;
+      Reference = SLAF.Reference, Demo = SLAF.DemoPersona, Debt = SLAF.Debt, Charts = SLAF.Charts, CashFlow = SLAF.CashFlow;
 
   var ROOM_ID = 'debt-payoff';   /* the room this reading lives in */
   var RULES = null;
@@ -945,7 +945,18 @@
        while there is time to call, silent the rest of the year. */
     var fee = Debt.annualFee(d);
     if (fee && fee.soon) return 'The ' + Money.formatCents(fee.feeCents) + ' annual fee posts on ' + isoDay(fee.nextOn) + (fee.daysUntil <= 0 ? ', today' : ', in ' + fee.daysUntil + (fee.daysUntil === 1 ? ' day' : ' days')) + '. Decide before then whether the card earns its fee, and ask them to waive it if you keep it.';
+    /* A bonus target that is slipping is said here too, while there is
+       still time to move planned spending onto the card (D-337). */
+    var target = bonusTargetFor(d);
+    if (target && target.verdict === 'incomplete') return 'The bonus target needs its window: ' + target.reason;
+    if (target && target.verdict === 'behind') return Money.formatCents(target.spentCents) + ' of the ' + Money.formatCents(target.spendCents) + ' bonus spend is on the card, with ' + target.daysLeft + (target.daysLeft === 1 ? ' day' : ' days') + ' left. About ' + Money.formatCents(target.neededPerMonthCents) + ' a month from here reaches it; log what goes on the card as paid with it.';
+    if (target && target.verdict === 'missed') return 'The bonus window closed on ' + isoDay(target.byOn) + ' with ' + Money.formatCents(target.spentCents) + ' of ' + Money.formatCents(target.spendCents) + ' on the card. Clear the target, or check the statement if more went on it than was logged.';
     return '';
+  }
+  function bonusTargetFor(d) {
+    if (!d || d.type !== 'credit_card' || !Money.isEntered(d.bonusSpendCents)) return null;
+    var card = CashFlow.cardSpend(Spine.getProfile()).cards.filter(function (c) { return c.id === d.id; })[0];
+    return card ? card.target : null;
   }
 
   /* The list's footer: what is owed and the minimums, added up. A debt
@@ -1040,7 +1051,15 @@
                 + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Charged on, each year</span>'
                 + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id + '" data-field="annualFeeOn" value="' + (d.annualFeeOn || '') + '" aria-label="Date the annual fee posts"/></span></label>'
                 + '</div>'
-                + '<p class="debt-hint">What the card costs to hold whether or not you use it. The month and day recur; the card says a few weeks before it posts, which is when a call can still waive it or close the card.</p></div>')
+                + '<p class="debt-hint">What the card costs to hold whether or not you use it. The month and day recur; the card says a few weeks before it posts, which is when a call can still waive it or close the card.</p>'
+                + '<div class="debt-dates" style="margin-top:var(--space-3)">'
+                + field(d, 'bonusSpendCents', 'Bonus asks for spending of', '$', null, 'e.g. 4000')
+                + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Window opened</span>'
+                + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id + '" data-field="bonusFromOn" value="' + (d.bonusFromOn || '') + '" aria-label="First day of the bonus window"/></span></label>'
+                + '<label class="slaf-field" style="margin:0"><span class="slaf-label">Reached by</span>'
+                + '<span class="slaf-input-shell"><input type="date" data-debt="' + d.id + '" data-field="bonusByOn" value="' + (d.bonusByOn || '') + '" aria-label="Last day of the bonus window"/></span></label>'
+                + '</div>'
+                + '<p class="debt-hint">A sign-up bonus you are chasing: the spending the offer asks for and the window it gives, usually three months from the day the card opened. Expenses logged as paid with this card count toward it; <a href="budget.html#on-cards">The Close</a> says how far along it is.</p></div>')
             + '<div class="debt-acts">'
             + '<button type="button" class="debt-archive" data-archive="' + d.id + '" title="Paid off or on hold, keep it, stop counting it">Set aside</button>'
             + '<button type="button" class="debt-remove" data-remove="' + d.id + '" aria-label="Remove">✕ Remove</button>'
@@ -1357,7 +1376,7 @@
     }
   });
 
-  var DATE_FIELDS = { promoEndsOn: true, borrowedOn: true, dueOn: true, annualFeeOn: true };
+  var DATE_FIELDS = { promoEndsOn: true, borrowedOn: true, dueOn: true, annualFeeOn: true, bonusFromOn: true, bonusByOn: true };
 
   el('debt-list').addEventListener('change', function (evt) {
     var node = evt.target;
@@ -1471,6 +1490,7 @@
     if (Money.isEntered(d.creditLimitCents)) bits.push('limit ' + Money.formatCents(d.creditLimitCents));
     var fee = Debt.annualFee(d);
     if (fee) bits.push(Money.formatCents(fee.feeCents) + ' fee' + (fee.nextOn ? ' on ' + isoDay(fee.nextOn) : ' a year'));
+    if (Money.isEntered(d.bonusSpendCents)) bits.push(Money.formatCents(d.bonusSpendCents) + ' bonus spend' + (d.bonusByOn ? ' by ' + isoDay(d.bonusByOn) : ''));
     return bits.length ? esc(bits.join(' · ')) : 'nothing set';
   }
 

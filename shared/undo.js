@@ -109,7 +109,7 @@
   }
 
   Spine.onChange(function () { paint(); announce(); });
-  /* ---- Where the pair lives (D-339) ----------------------------------------
+  /* ---- Where the pair lives (D-340) ----------------------------------------
      It used to float over the page, bottom right and then bottom left, and
      both corners covered something: first a figure (D-144), then the labels
      in the left gutter. A control that sits on top of the thing you are

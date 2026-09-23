@@ -101,7 +101,7 @@
   .u-first .u-where { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
   .u-first .u-n { font-size: var(--text-xs); color: var(--color-accent-hover); white-space: nowrap; }
   .u-tier { border-top: 1px solid var(--color-border); }
-  /* The dashboard (D-338). One measure, one hue: every bar on it says how
+  /* The dashboard (D-339). One measure, one hue: every bar on it says how
      much of something is answered, so they are the same accent and the label
      carries the identity. Every figure is printed beside its bar, so the
      drawing is never the only way to read the number. */
@@ -188,7 +188,7 @@
   .d-ask .choice[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-surface-active); }
   .d-ask .d-save { min-height: 44px; padding: 0 var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface); color: inherit; font: inherit; cursor: pointer; }
   .d-said { font-size: var(--text-xs); color: var(--color-text-muted); flex-basis: 100%; min-height: 16px; }
-  /* A fact the Planets screen owns (D-337): chips for a list, and the same
+  /* A fact the Planets screen owns (D-338): chips for a list, and the same
      boxes and choices every other answer on this screen uses. */
   .d-chips { display: flex; flex-wrap: wrap; gap: var(--space-1); flex-basis: 100%; }
   .d-chips:empty { display: none; }
@@ -1149,7 +1149,7 @@
 <script src="../shared/suggest.js"></script>
 <!-- fire.js before statement.js: the Statement reads Fire.progressToward and
      captures it at load time, so the other order leaves it undefined and any
-     reading that reaches the Statement throws (found by the dashboard, D-338). -->
+     reading that reaches the Statement throws (found by the dashboard, D-339). -->
 <script src="../engines/fire.js"></script>
 <script src="../engines/statement.js"></script>
 <script src="../engines/debt.js"></script>
@@ -1457,7 +1457,7 @@
     Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
       var mine = a.getAttribute('data-view') === on.id;
       a.setAttribute('aria-current', mine ? 'page' : 'false');
-      /* The seven ways in are one sideways-scrolling row (D-339), so the one
+      /* The seven ways in are one sideways-scrolling row (D-340), so the one
          you are on is brought into view rather than left off the end. */
       if (mine && a.scrollIntoView) {
         try { a.scrollIntoView({ block: 'nearest', inline: 'center' }); } catch (e) { /* older browsers scroll on their own */ }
@@ -3496,7 +3496,7 @@
     if (!n) { box.hidden = true; return; }
     box.hidden = false;
     var hlp = Sketch && Sketch.help ? Sketch.help(n.level.id) : null;
-    /* Two sentences and a time, each in its own place (D-339). Glued
+    /* Two sentences and a time, each in its own place (D-340). Glued
        together they read "lights the first metrics. about half a minute.
        Nothing to look up." with a lowercase sentence in the middle. */
     var next = '<span class="eyebrow">Next</span><b>' + esc(n.planetLabel) + ' ' + esc(n.level.level) + ': ' + esc(promptOf(n.level)) + '</b>'
@@ -3544,7 +3544,7 @@
       + '<span class="d-said" data-sky-said role="status"></span></div>';
   }
 
-  /* ---- A fact with no room to go to (D-337) --------------------------------
+  /* ---- A fact with no room to go to (D-338) --------------------------------
      A hundred and ninety-five of the facts data/levels.json asks about belong
      to no room: how many children are at home, whether you rent or own, which
      degrees you hold. They are the Planets screen's own, kept at
@@ -3670,7 +3670,7 @@
         var a = answerFor(def);
         if (a) { ASKS[a.id] = a; asks.push(a); }
         /* A fact no room owns is answered here, in the Solar System's own
-           store (D-337). Before this it said "nowhere to type it yet", which
+           store (D-338). Before this it said "nowhere to type it yet", which
            was true and useless: the question could not be answered by
            anybody. */
         var mine = !a && LevelStore && LevelStore.def(lv.id, f.key) ? levelAskHtml(lv.id, f) : '';
@@ -3692,7 +3692,7 @@
     }
     /* Every fact now ends somewhere: a box on this screen, a link to the room
        that owns the list, a figure that works itself out, or the Planets'
-       own store (D-337). The note that used to say otherwise is gone with
+       own store (D-338). The note that used to say otherwise is gone with
        the thing it described. */
     if (!live.some(function (f) {
       return f.href || answerFor(defs[f.key]) || (defs[f.key] || {}).kind === 'confirm'
@@ -3974,7 +3974,7 @@
     box.innerHTML = html;
   }
 
-  /* ---- The dashboard (D-338) ------------------------------------------------
+  /* ---- The dashboard (D-339) ------------------------------------------------
      The owner: "I want there to be like a planet dashboard with a ton of data
      visualizations and metrics and percentages with everything clearly
      labeled." Three questions, in this order: how far in am I, where is the
@@ -4537,7 +4537,7 @@
     } catch (e) { if (node) said(node, 'Could not record that (' + e.message + ').'); }
   }
 
-  /* ---- Saving a fact the Planets screen owns (D-337) ------------------------
+  /* ---- Saving a fact the Planets screen owns (D-338) ------------------------
      Through shared/levelstore.js, which is the only writer: the value is
      cleaned to its kind, the spine takes one undo entry, and the level's own
      count and the run behave exactly as they do for a fact with a room. */
@@ -4704,7 +4704,7 @@
   el('sky-open').addEventListener('click', function (e) {
     var t = e.target.closest ? e.target : null;
     if (!t) return;
-    /* A fact the Planets screen owns itself (D-337): its own boxes, chips
+    /* A fact the Planets screen owns itself (D-338): its own boxes, chips
        and choices, saved through shared/levelstore.js. */
     var mine = t.closest('[data-lvl-ask]');
     if (mine) {

@@ -186,6 +186,8 @@
         </select></span></label>
       <label class="slaf-field wide"><span class="slaf-label">What for</span>
         <span class="slaf-input-shell"><select id="l-category" aria-label="Category"></select></span></label>
+      <label class="slaf-field wide" id="l-paidwith-wrap" hidden><span class="slaf-label">Paid with</span>
+        <span class="slaf-input-shell"><select id="l-paidwith" aria-label="Where the money left from"><option value="">Not said</option></select></span></label>
       <label class="slaf-field wide"><span class="slaf-label">A note</span>
         <span class="slaf-input-shell"><input type="text" id="l-note" placeholder="e.g. Trader Joe’s" aria-label="Note"/></span></label>
       <label class="slaf-field wide"><span class="slaf-label">What it produced</span>
@@ -539,6 +541,32 @@
     el('l-category').value = 'groceries';
     if (!el('l-date').value) el('l-date').value = today();
   }
+  /* Where the money left from (D-337): a bank account, or one of the
+     cards in Debt. Asked only when there is a card to name; the choice
+     is kept between receipts, since a run of them tends to share one.
+     The options are rewritten only when the cards changed, so a select
+     in use is never rebuilt under a thumb. */
+  var paidWithSig = null;
+  function paintPaidWith(h) {
+    var sel = el('l-paidwith'), wrap = el('l-paidwith-wrap');
+    var cards = (h.debts || []).filter(function (d) { return d && d.type === 'credit_card' && d.archived !== true; });
+    wrap.hidden = !cards.length;
+    var sig = cards.map(function (d) { return d.id + ':' + (d.label || '') + ':' + (d.last4 || ''); }).join('|');
+    if (sig === paidWithSig) return;
+    paidWithSig = sig;
+    var cur = sel.value;
+    sel.innerHTML = '<option value="">Not said</option><option value="' + Schema.PAID_WITH_BANK + '">Bank account, debit or cash</option>' + cards.map(function (d) {
+      return '<option value="' + esc(d.id) + '">' + esc(cardName(d)) + '</option>';
+    }).join('');
+    if (cur === Schema.PAID_WITH_BANK || cards.some(function (d) { return d.id === cur; })) sel.value = cur;
+  }
+  function cardName(d) { return (d.label || 'Credit card') + (d.last4 ? ' ·' + d.last4 : ''); }
+  function paidWithWord(h, tag) {
+    if (!tag) return '';
+    if (tag === Schema.PAID_WITH_BANK) return 'from the bank';
+    var card = (h.debts || []).filter(function (d) { return d && d.id === tag; })[0];
+    return card ? 'on ' + cardName(card) : 'on a card since removed';
+  }
   function paintLinked(h) {
     var sel = el('l-linked');
     var cur = sel.value;
@@ -594,7 +622,8 @@
       produced: linked ? 'linked' : path === 'reimbursable' ? 'reimbursable' : 'personal',
       linkedIncomeId: linked, deductible: !!linked && el('l-deductible').checked,
       reimbursableFrom: path === 'reimbursable' ? (el('l-from').value.trim() || null) : null,
-      expectedAmountCents: path === 'reimbursable' && Money.isEntered(expected) ? expected : undefined
+      expectedAmountCents: path === 'reimbursable' && Money.isEntered(expected) ? expected : undefined,
+      paidWith: el('l-paidwith-wrap').hidden ? null : (el('l-paidwith').value || null)
     });
     Spine.upsertExpenseEntry(entry);
     el('log-say').textContent = 'Logged ' + Money.formatCents(cents) + (linked ? (entry.deductible ? ', deductible against ' : ', against ') + (el('l-linked').selectedOptions[0].textContent)
@@ -618,6 +647,7 @@
   });
   function renderLog(h) {
     paintLinked(h);
+    paintPaidWith(h);
     var m = Ledger.thisMonth();
     var log = CashFlow.logInMonth(h, TABLES.expenseCategories, m);
     el('log-month-title').textContent = Schema.monthLabel(m) + (log.count ? ' · ' + Money.formatCents(log.personalCents) + ' personal' + (log.incomeCostsCents ? ' · ' + Money.formatCents(log.incomeCostsCents) + ' costs of earning' : '') + (log.pendingReimbursementCents ? ' · ' + Money.formatCents(log.pendingReimbursementCents) + ' owed back to you' : '') : '')
@@ -630,8 +660,9 @@
       var tail = r.credit ? ' · paid back' + (r.reimbursableFrom ? ' by ' + esc(r.reimbursableFrom) : '')
         : reimb ? (r.reimbursementStatus === 'received' ? ' · paid back' : ' · owed back' + (r.reimbursableFrom ? ' by ' + esc(r.reimbursableFrom) : '') + ', counts until it is')
         : r.linkedIncomeId ? ' · for ' + esc(names[r.linkedIncomeId] || 'an income entry') + (r.deductible ? ', deductible' : ', not deductible') : '';
+      var where = r.credit ? '' : paidWithWord(h, r.paidWith);
       return '<li' + (r.credit ? ' class="is-credit"' : '') + '><span class="lg-date">' + esc(r.date.slice(5)) + (r.dateKind === 'estimated' ? '<small>about</small>' : '') + '</span>'
-        + '<span class="lg-what">' + esc(r.descriptor || (cat ? cat.label : r.categoryId)) + '<small>' + esc(cat ? cat.label : r.categoryId) + (r.recurring ? ' · every month' : '') + (r.dateKind === 'estimated' ? ' · date estimated' : '') + tail + '</small></span>'
+        + '<span class="lg-what">' + esc(r.descriptor || (cat ? cat.label : r.categoryId)) + '<small>' + esc(cat ? cat.label : r.categoryId) + (r.recurring ? ' · every month' : '') + (r.dateKind === 'estimated' ? ' · date estimated' : '') + (where ? ' · ' + esc(where) : '') + tail + '</small></span>'
         + '<span class="lg-amt' + (r.linkedIncomeId ? ' lg-cost' : r.credit ? ' lg-credit' : '') + '">' + esc((r.credit ? '−' : '') + Money.formatCents(Math.abs(r.cents))) + '</span>'
         + (r.credit ? '<span></span>' : reimb && r.reimbursementStatus !== 'received' ? '<button type="button" class="lg-x" data-paid="' + r.entryId + '" title="Mark it paid back on the date in the form">Paid back</button>'
         : '<button type="button" class="lg-x" data-unlog="' + r.entryId + '" aria-label="Remove">✕</button>') + '</li>';

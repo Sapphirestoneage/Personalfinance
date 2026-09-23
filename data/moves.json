@@ -925,7 +925,9 @@
    "why": "A bonus on spending you would do anyway is the biggest rewards move, once the balance is zero every month.",
    "first15": "Match the minimum spend to a planned purchase.",
    "checkpoint": "The bonus posted.",
-   "rooms": [],
+   "rooms": [
+    "budget"
+   ],
    "quickWin": false,
    "dollars": null,
    "planet": "expenses"

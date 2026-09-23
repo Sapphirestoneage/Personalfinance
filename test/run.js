@@ -6429,6 +6429,76 @@ section('Promotional rates');
     checkTrue('a dealt walk step folds to one line the person can open (D-331)', /<details class="slaf-walk is-dealt"/.test(walk) && /slaf-walk-fold/.test(walk));
   }
 
+  /* -- On the cards: where an expense went, and the bonus it reaches (D-337) -- */
+  {
+    const NOW = '2026-09-20T12:00:00';
+    const cardOf = (extra) => Schema.createDebt(Object.assign({ id: 'c1', label: 'Blue', type: 'credit_card', last4: '4321' }, extra || {}));
+    const entry = (extra) => Schema.createExpenseEntry(Object.assign({ categoryId: 'groceries', period: 'once', source: 'log' }, extra));
+    check('a tag is kept as typed', Schema.createExpenseEntry({ amountCents: 1, paidWith: 'c1' }).paidWith, 'c1');
+    check('no tag is null, never an empty string', Schema.createExpenseEntry({ amountCents: 1, paidWith: '' }).paidWith, null);
+    check('the bank is one word the schema owns', Schema.PAID_WITH_BANK, 'bank');
+    checkTrue('the four fields are documented', !!Schema.FIELDS['expenses.entries[].paidWith'] && !!Schema.FIELDS['debt.bonusSpendCents'] && !!Schema.FIELDS['debt.bonusFromOn'] && !!Schema.FIELDS['debt.bonusByOn']);
+    const shape = Schema.createDebt({});
+    checkTrue('a card carries the target, null until asked', shape.bonusSpendCents === null && shape.bonusFromOn === null && shape.bonusByOn === null);
+    const h = { debts: [cardOf({ bonusSpendCents: 400000, bonusFromOn: '2026-08-01', bonusByOn: '2026-10-31' }), Schema.createDebt({ id: 'gone', type: 'credit_card', archived: true }), Schema.createDebt({ id: 'car', type: 'auto' })],
+      expenses: { entries: [
+        entry({ id: 'a', amountCents: 12000, date: '2026-09-03', paidWith: 'c1' }),
+        entry({ id: 'b', amountCents: 5000, period: 'monthly', date: '2026-06-10', paidWith: 'c1' }),
+        entry({ id: 'c', categoryId: 'housing', amountCents: 150000, date: '2026-09-01', paidWith: 'bank' }),
+        entry({ id: 'd', amountCents: 3000, date: '2026-09-05' }),
+        entry({ id: 'e', amountCents: 9900, date: '2026-09-25', dateKind: 'potential', paidWith: 'c1' }),
+        entry({ id: 'f', amountCents: 7700, date: '2026-09-28', dateKind: 'estimated', paidWith: 'c1' }),
+        entry({ id: 'x', amountCents: 8800, date: '2026-09-02', paidWith: 'c1', active: false }),
+        Schema.createExpenseEntry({ id: 't', categoryId: 'subscriptions', amountCents: 4500, period: 'monthly', source: 'manual', paidWith: 'c1' })
+      ] } };
+    const sp = CashFlow.cardSpend(h, { now: NOW });
+    check('the month is the month of now', sp.month, '2026-09');
+    check('only live credit cards are read: not the archived one, not the car', sp.cards.map(c => c.id).join(','), 'c1');
+    check('this month on the card: the receipt, the recurring one, the estimated one; never the potential or the archived', sp.cards[0].thisMonthCents, 12000 + 5000 + 7700);
+    check('...counted as receipts', sp.cards[0].thisMonthCount, 3);
+    check('the bank this month is the rent', sp.bankThisMonthCents, 150000);
+    check('what says nowhere is the untagged receipt', sp.untaggedThisMonthCents + '/' + sp.untaggedCount, '3000/1');
+    check('the rate is the trailing three full months, June to August, when any carries a tag', sp.cards[0].rate.basis + ':' + sp.cards[0].rate.cents + ':' + sp.cards[0].rate.from + ':' + sp.cards[0].rate.to, 'trailing:5000:2026-06:2026-08');
+    check('the reach is the rate over the offer windows', sp.cards[0].reach.map(r => r.months + '=' + r.cents).join(','), '3=15000,6=30000');
+    check('the windows are three and six months', CashFlow.BONUS_WINDOWS_MONTHS.join(','), '3,6');
+    const t = sp.cards[0].target;
+    check('the target counts what is on the card inside the window, dated up to today', t.spentCents, 5000 * 2 + 12000);
+    check('...and what is dated ahead inside it, apart', t.scheduledCents, 5000 + 7700);
+    check('days: the window is 92 days, 51 passed, 41 left', t.daysTotal + '/' + t.daysPassed + '/' + t.daysLeft, '92/51/41');
+    check('behind: less on the card than the day explains', t.verdict, 'behind');
+    checkTrue('what is needed a month from here is the gap over the days left', t.neededPerMonthCents > 0 && t.neededPerMonthCents === Math.round(t.leftCents / (41 / (365.25 / 12))));
+    checkTrue('at the usual rate it lands short', t.atRateCents < t.spendCents && t.atRateCents === t.spentCents + t.scheduledCents + Math.round(5000 * 41 / (365.25 / 12)));
+    const typicalOnly = CashFlow.cardSpend({ debts: [cardOf()], expenses: { entries: [h.expenses.entries[7]] } }, { now: NOW });
+    check('with no month to read, the rate is the typical month\u2019s tagged lines', typicalOnly.cards[0].rate.basis + ':' + typicalOnly.cards[0].rate.cents, 'typical:4500');
+    const none = CashFlow.cardSpend({ debts: [cardOf()], expenses: { entries: [entry({ id: 'a', amountCents: 12000, date: '2026-09-03', paidWith: 'c1' })] } }, { now: NOW });
+    checkTrue('this month alone is never scaled into a rate', none.cards[0].rate.cents === null && none.all.rateCents === null && none.cards[0].reach[0].cents === null);
+    check('no cards, no reading', CashFlow.cardSpend({ debts: [], expenses: { entries: [] } }, { now: NOW }).hasCards, false);
+    const reached = CashFlow.cardSpend({ debts: [cardOf({ bonusSpendCents: 10000, bonusFromOn: '2026-08-01', bonusByOn: '2026-10-31' })], expenses: { entries: [entry({ id: 'a', amountCents: 12000, date: '2026-09-03', paidWith: 'c1' })] } }, { now: NOW }).cards[0].target;
+    check('reached once the card carries the spend', reached.verdict + ':' + reached.leftCents, 'reached:0');
+    const missed = CashFlow.cardSpend({ debts: [cardOf({ bonusSpendCents: 900000, bonusFromOn: '2026-05-01', bonusByOn: '2026-07-31' })], expenses: { entries: [entry({ id: 'a', amountCents: 12000, date: '2026-06-03', paidWith: 'c1' })] } }, { now: NOW }).cards[0].target;
+    check('missed once the window has closed short', missed.verdict + ':' + missed.spentCents, 'missed:12000');
+    const early = CashFlow.cardSpend({ debts: [cardOf({ bonusSpendCents: 900000, bonusFromOn: '2026-11-01', bonusByOn: '2027-01-31' })], expenses: { entries: [] } }, { now: NOW }).cards[0].target;
+    check('not started before the window opens', early.verdict, 'not-started');
+    const undated = CashFlow.cardSpend({ debts: [cardOf({ bonusSpendCents: 900000 })], expenses: { entries: [] } }, { now: NOW }).cards[0].target;
+    checkTrue('a target with no window is incomplete and says which date it needs', undated.verdict === 'incomplete' && /reached by/.test(undated.reason));
+    check('no target is null, not a zero one', CashFlow.cardSpend({ debts: [cardOf()], expenses: { entries: [] } }, { now: NOW }).cards[0].target, null);
+    const shown = CashFlow.cardSpend(h, { now: NOW, month: '2026-08' });
+    check('the month shown can be an earlier one', shown.cards[0].thisMonthCents, 5000);
+    const rows = CashFlow.logInMonth(h, TABLES.expenseCategories, '2026-09').rows;
+    checkTrue('the log\u2019s rows carry the tag so the list can say it', rows.some(r => r.entryId === 'a' && r.paidWith === 'c1') && rows.some(r => r.entryId === 'd' && r.paidWith === null));
+    const cf = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8');
+    checkTrue('the log asks where it was paid from, only when there is a card, and writes the tag', /id="l-paidwith"/.test(cf) && /paidWith: el\('l-paidwith-wrap'\)\.hidden \? null/.test(cf) && /wrap\.hidden = !cards\.length/.test(cf));
+    const ex = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8');
+    checkTrue('a typical line asks the same and keeps the tag when the ask is hidden', /id="n-paid"/.test(ex) && /paidWith: el\('n-paid-wrap'\)\.hidden \? \(was \? was\.paidWith : null\)/.test(ex));
+    const dp = fs.readFileSync(path.join(ROOT, 'rooms/debt-payoff.html'), 'utf8');
+    checkTrue('the card fold asks the target and its window, and the dates commit on change', /field\(d, 'bonusSpendCents'/.test(dp) && /data-field="bonusFromOn"/.test(dp) && /data-field="bonusByOn"/.test(dp) && /bonusFromOn: true, bonusByOn: true/.test(dp));
+    checkTrue('the card warns when the target is behind', /target\.verdict === 'behind'/.test(dp));
+    const bd = fs.readFileSync(path.join(ROOT, 'rooms/budget.html'), 'utf8');
+    checkTrue('The Close reads the cards and types nothing', /id="on-cards"/.test(bd) && /CashFlow\.cardSpend\(h, \{ month: month \}\)/.test(bd) && !/<input[^>]*id="oc-/.test(bd) && Registry.byId('budget').subsections.some(x => x.id === 'on-cards'));
+    const demoLines = Demo.buildSpending();
+    checkTrue('the example tags its everyday lines to the card and the rest to the bank', demoLines.some(e => e.paidWith === 'demo_debt_1') && demoLines.some(e => e.paidWith === 'bank') && demoLines.every(e => e.paidWith));
+  }
+
   /* -- The rate the simulation actually charges --------------------------- */
   {
     const c = card();
@@ -16765,7 +16835,7 @@ section('Band 1 in words anyone can answer (D-336)');
     /Ownership\.write\(id, value\)/.test(page));
 })();
 
-section('Every question in the Planets can be answered (D-337)');
+section('Every question in the Planets can be answered (D-338)');
 
 (function () {
   /* The owner's words: "Make sure every single question in the planets is
@@ -16870,7 +16940,7 @@ section('Every question in the Planets can be answered (D-337)');
     /function showLevelAnswer/.test(page) && /Solar\.levelState\(lv, Spine\.getProfile\(\)\)/.test(page));
 })();
 
-section('The planets dashboard (D-338)');
+section('The planets dashboard (D-339)');
 
 (function () {
   /* The owner: "I want there to be like a planet dashboard with a ton of data
@@ -16955,7 +17025,7 @@ section('The planets dashboard (D-338)');
     'fire at ' + fireAt + ', statement at ' + stmtAt);
 })();
 
-section('The standard the app is held to (D-339)');
+section('The standard the app is held to (D-340)');
 
 (function () {
   /* The owner: "Make every single thing feel more professional look

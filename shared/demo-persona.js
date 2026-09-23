@@ -100,17 +100,20 @@
        Debt minimums are deliberately absent: that category is derived from
        the itemised debts below ($210 + $95 = $305) and is not typed in
        anywhere. See DECISIONS.md D-017. */
+    /* Where each line leaves from (D-337): the rent and the transfers
+       from the bank, the everyday lines on the card, so The Close can say
+       what the card runs at and the bonus spend it could reach. */
     monthlySpending: [
-      { categoryId: 'housing',           amount: 1500 },
-      { categoryId: 'groceries',         amount: 450 },
-      { categoryId: 'utilities',         amount: 180 },
-      { categoryId: 'transportation',    amount: 220 },
-      { categoryId: 'insurance',         amount: 150 },
-      { categoryId: 'dining_out',        amount: 260 },
-      { categoryId: 'subscriptions',     amount: 45 },
-      { categoryId: 'entertainment',     amount: 90 },
-      { categoryId: 'emergency_savings', amount: 300 },
-      { categoryId: 'retirement',        amount: 400 }
+      { categoryId: 'housing',           amount: 1500, paidWith: 'bank' },
+      { categoryId: 'groceries',         amount: 450,  paidWith: 'demo_debt_1' },
+      { categoryId: 'utilities',         amount: 180,  paidWith: 'bank' },
+      { categoryId: 'transportation',    amount: 220,  paidWith: 'demo_debt_1' },
+      { categoryId: 'insurance',         amount: 150,  paidWith: 'bank' },
+      { categoryId: 'dining_out',        amount: 260,  paidWith: 'demo_debt_1' },
+      { categoryId: 'subscriptions',     amount: 45,   paidWith: 'demo_debt_1' },
+      { categoryId: 'entertainment',     amount: 90,   paidWith: 'demo_debt_1' },
+      { categoryId: 'emergency_savings', amount: 300,  paidWith: 'bank' },
+      { categoryId: 'retirement',        amount: 400,  paidWith: 'bank' }
     ],
 
     /* How much each line gives Robin, 1-10, for The Rerank (D-085). Chosen
@@ -229,7 +232,8 @@
         categoryId: row.categoryId,
         amountCents: Money.toCents(row.amount),
         period: 'monthly',
-        source: 'manual'
+        source: 'manual',
+        paidWith: row.paidWith || null
       });
     });
   }

@@ -73,7 +73,7 @@ function check(name, ok, detail) {
         seen = await page.evaluate(() => {
         const main = document.querySelector('main') || document.body;
         const text = (main.innerText || '');
-        /* A figure nobody would say out loud (D-339). "to age
+        /* A figure nobody would say out loud (D-340). "to age
            55.88101594379056" shipped because an engine's working number
            reached a screen unformatted. Money, rates, months, multiples and
            ages all round before they are shown, so any run of three or more

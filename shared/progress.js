@@ -1050,7 +1050,7 @@
     var parts = [];
     if (shows.length) parts.push('<span><b>Shows:</b> ' + shows.join(', ') + more + '.</span>');
     parts.push('<span><b>Needs:</b> ' + (needs.length ? needs.join(', ') : 'nothing entered elsewhere') + '.</span>');
-    /* Folded since D-339. It is a contents page, useful once and in the way
+    /* Folded since D-340. It is a contents page, useful once and in the way
        every time after: four lines of small print between the room's name
        and the room. It opens on a tap and says so. */
     return '<details class="slaf-purpose" id="slaf-purpose">'
