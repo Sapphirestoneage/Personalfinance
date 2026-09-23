@@ -1853,6 +1853,17 @@ function check(name, actual, expected) {
   console.log('  ✗ ' + name + `  (expected ${expected}, got ${actual})`);
 }
 
+/* A failure that does not name its cause is its own defect. Playwright puts
+   the first line ("Timeout 6000ms exceeded") in the message and the thing it
+   was actually waiting for in the call log below it; keep both, so the
+   report says which selector never arrived. */
+function why(err) {
+  const m = String(err && err.message ? err.message : err);
+  const head = m.split('\n')[0];
+  const waiting = (m.match(/waiting for [^\n]+/) || [])[0];
+  return waiting ? head + '  (' + waiting.trim() + ')' : head;
+}
+
 async function revealFolded(page) {
   try {
     const btn = await page.$('#showrest');
@@ -2013,8 +2024,8 @@ async function tagFields(page, container) {
     } catch (err) {
       /* A detached-element timeout IS the bug: the node the tap was headed
          for stopped existing. Report it as a failure rather than crashing. */
-      failures.push(`${c.room} — ${String(err.message).split('\n')[0]}`);
-      console.log('  ✗ ' + c.room + ' — ' + String(err.message).split('\n')[0]);
+      failures.push(`${c.room} — ${why(err)}`);
+      console.log('  ✗ ' + c.room + ' — ' + why(err));
     }
     await ctx.close();
   }
@@ -2078,8 +2089,8 @@ async function tagFields(page, container) {
     if (c.also) { for (const [name, actual, expected] of c.also(stored)) check(name, actual, expected); }
     check('no page errors', errs.join('; '), '');
     } catch (err) {
-      failures.push(`${c.room} — ${String(err.message).split('\n')[0]}`);
-      console.log('  ✗ ' + c.room + ' — ' + String(err.message).split('\n')[0]);
+      failures.push(`${c.room} — ${why(err)}`);
+      console.log('  ✗ ' + c.room + ' — ' + why(err));
     }
     await ctx.close();
   }

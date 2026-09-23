@@ -17413,6 +17413,33 @@ Nothing gains a screen or a field.
 rules; `node test/render.js` 302 across every room in both states; the browser
 gates; and the four main screens looked at again at 390px, before and after.
 
+## D-341 — Nothing moves under a finger
+
+**Why.** The guided walk in the Ledger did not move when you tapped Next on a
+phone. Nothing errored, nothing said so: the tap simply did nothing, and the
+second tap often landed on Undo and took the answer back. Two separate things
+were moving the target between the finger lifting and the click arriving.
+
+**Decision.** One rule, two fixes. The save toast leaves the bottom of the
+screen and sits at the top: the bottom is where a room's primary action lives
+(the walk's Next is sticky there) and where the soft keyboard comes up, and the
+toast was covering Next for the seven seconds after every single answer. And a
+row in the Express form now keeps its height for half a second after the focus
+leaves it: the "Not sure yet" button, the "from memory" tick and the line
+saying why the question is asked are shown on focus and were being put away
+between touchend and click, taking 68px out of the page, so the sticky strip
+jumped up and the click landed behind the button. The row lets go once the tap
+that took its focus away has landed. One class, one timer, no rebuild (D-034).
+
+**Replaces or removes.** The bottom toast. No screen and no field is added.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/forms.js` 125, the guided walk case among them (it was
+failing on exactly this before the fix); `node test/run.js`; the walk tapped
+through by hand at 412px with the touch events logged.
+
+
 ---
 
 # The Dungeons & Dividends entries

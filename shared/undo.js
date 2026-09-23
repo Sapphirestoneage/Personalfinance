@@ -75,8 +75,15 @@
 
   function hideToast() { toast.hidden = true; if (toastTimer) { clearTimeout(toastTimer); toastTimer = null; } }
 
-  function showToast(text, offerUndo) {
-    toast.innerHTML = '<span class="slaf-toast-text">' + esc(text) + '</span>'
+  /* The tag carries the verb, the text carries the app's own words for what
+     moved. Keeping them apart is what lets the words stay as they are: the
+     label is sometimes a field ("Any debt") and sometimes already a sentence
+     ("Cash savings not yet \u2192 $3,000"), and no prefix reads well before
+     both. A notice with no verb at all read as a fragment with a button after
+     it, which is the thing it was built to stop being. D-341. */
+  function showToast(text, offerUndo, tag) {
+    toast.innerHTML = (tag ? '<span class="slaf-toast-tag">' + esc(tag) + '</span>' : '')
+      + '<span class="slaf-toast-text">' + esc(text) + '</span>'
       + (offerUndo ? '<button type="button" class="slaf-toast-undo">Undo</button>' : '')
       + '<button type="button" class="slaf-toast-x" aria-label="Dismiss">\u00D7</button>';
     toast.hidden = false;
@@ -101,9 +108,12 @@
     if (lastDepth === null) { lastDepth = size.undo; return; }   /* first paint is not news */
     if (size.undo > lastDepth) {
       var u = Spine.peekUndo();
-      if (u && u.label) showToast(u.label, true);
+      if (u && u.label) showToast(u.label, true, 'Saved');
     } else if (size.undo < lastDepth) {
-      showToast('Undone', false);
+      /* What was just taken back is the top of the redo stack, so the notice
+         can name it rather than saying 'Undone' and leaving you to guess. */
+      var r = Spine.peekRedo();
+      showToast(r && r.label ? r.label : 'That is back as it was', false, 'Undone');
     }
     lastDepth = size.undo;
   }

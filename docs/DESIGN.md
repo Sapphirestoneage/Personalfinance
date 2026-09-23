@@ -44,30 +44,37 @@ D-340 wrote it. Add to it when a rule earns its place; do not add taste.
     sentence are left alone (padding them tears the paragraph apart).
 12. **`test/alignment.js` holds every multi-cell row** at every width. A cell
     that shifts its neighbours is a bug, not a detail.
+13. **Nothing moves under a finger.** A tap is a touch and then, milliseconds
+    later, a click at the same point. Anything that collapses in between, a
+    help line put away on blur, a toast that appears, moves the target and the
+    click lands on whatever took its place. Whatever a row shows on focus, it
+    keeps until the tap that took the focus away has landed (D-341), and the
+    bottom of the screen belongs to the primary action and the keyboard, not
+    to a notice.
 
 ## Charts (and see the `dataviz` skill)
 
-13. **Pick the form before the colour.** Magnitude is a bar; a share of a
+14. **Pick the form before the colour.** Magnitude is a bar; a share of a
     whole is a ring; a value against a range is a bullet bar; one number is a
     number.
-14. **One measure, one hue.** Bars that all answer the same question are the
+15. **One measure, one hue.** Bars that all answer the same question are the
     same accent; the label carries the identity, never the colour alone.
-15. **Status colours are reserved** (positive, caution, critical) and always
+16. **Status colours are reserved** (positive, caution, critical) and always
     ship with the word as well: "in range", "watch", "outside".
-16. **Every mark carries its own figure** beside it. A chart is never the only
+17. **Every mark carries its own figure** beside it. A chart is never the only
     way to read a number.
-17. **Measures of different scale never share an axis.** Index each to its own
+18. **Measures of different scale never share an axis.** Index each to its own
     band edge and print the real figure, or draw two charts.
-18. **A chart's styles live once**, in `shared/theme.css`, not copied into each
+19. **A chart's styles live once**, in `shared/theme.css`, not copied into each
     page that draws one.
 
 ## Accessibility
 
-19. **`:focus-visible` on everything interactive**, one ring, defined once.
-20. **`prefers-reduced-motion` is honoured** globally.
-21. **Every drawing has a text equivalent**: a legend, a table, or the figure
+20. **`:focus-visible` on everything interactive**, one ring, defined once.
+21. **`prefers-reduced-motion` is honoured** globally.
+22. **Every drawing has a text equivalent**: a legend, a table, or the figure
     printed beside it.
-22. **Nothing is conveyed by colour alone.**
+23. **Nothing is conveyed by colour alone.**
 
 ## How to check
 

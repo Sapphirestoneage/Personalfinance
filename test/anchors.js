@@ -24,7 +24,12 @@ const Demo = require(path.join(ROOT, 'shared/demo-persona.js'));
    taken away is known here rather than looking like a broken link. */
 const HOUSE = Schema.createHousehold(Demo.build());
 
-const BASE = process.env.BASE || 'http://127.0.0.1:8765/';
+/* Either name, with or without the trailing slash: the other gates read
+   SLAF_BASE and these two read BASE, and a run that set only one of them
+   died on "Cannot navigate to invalid URL" rather than saying which
+   address it had been handed. D-341. */
+const BASE = String(process.env.SLAF_BASE || process.env.BASE || 'http://127.0.0.1:8765')
+  .replace(/\/+$/, '') + '/';
 /* The same launch every other browser gate uses: the pre-installed browser
    where there is one, and playwright's own on a runner that has none. */
 const EXECUTABLE = process.env.CHROMIUM || '/opt/pw-browsers/chromium';

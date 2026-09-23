@@ -13990,8 +13990,13 @@ section('All at once: a second view of the same rows (D-208, a Ledger view since
   /* D-304: anything that appears when a row takes the focus appears UNDER
      the control. Revealed above it, the choice button moved out from under
      the finger between touchend and click, the browser retargeted the click
-     to the row, and the answer was dropped without a word. */
-  checkTrue('what a row reveals on focus sits below what you are answering', /class="xwhy"/.test(html) && /\.xrow:focus-within \.xwhy \{ display: block; \}/.test(html) && !/:focus-within \.lab/.test(html));
+     to the row, and the answer was dropped without a word.
+     D-341: below the control was not enough. Putting it AWAY on blur took
+     68px out of the page in the same gap, which moved everything under the
+     row instead, the walk's own Next button among it. The row keeps its
+     height until that click has landed. */
+  checkTrue('what a row reveals on focus sits below what you are answering', /class="xwhy"/.test(html) && /\.xrow:focus-within \.xwhy, #view-express \.xrow\.is-settling \.xwhy \{ display: block; \}/.test(html) && !/:focus-within \.lab/.test(html));
+  checkTrue('...and is not taken away until the tap that took the focus has landed', /is-settling/.test(html) && /function letGo/.test(html));
   checkTrue('rows that stop applying are hidden, never rebuilt or cleared', /n\.el\.hidden = !applies/.test(html) && !/innerHTML = ''/.test(html.split('function paintApplies')[1].split('function paintSuggestions')[0]));
   checkTrue('a suggestion is a chip beside the box, never typed into it', /Suggested ' \+ esc\(s\.display\) \+ ' · use it/.test(html) && /data-x-use/.test(html));
   checkTrue('a sticky bar carries the understanding line and a jump menu', /class="xbar"/.test(html) && /position: sticky/.test(html) && /id="xjump"/.test(html) && /Doors\.understanding\(/.test(html));
@@ -17069,17 +17074,31 @@ section('The standard the app is held to (D-340)');
   checkTrue('and the one you are on is scrolled into view',
     /inline: 'center'/.test(fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8')));
 
-  /* 14 to 17. The chart rules, where they can be read from the source. */
+  /* 15 to 18. The chart rules, where they can be read from the source. */
   const ledger = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
   checkTrue('bars that answer one question wear one hue', /function accent\(\)/.test(ledger));
   checkTrue('a verdict is a word beside the colour', /'in range'/.test(ledger) && /'outside'/.test(ledger));
   checkTrue('measures of different scale are indexed, not stacked on one axis',
     /r\.value \/ edge/.test(ledger) && /display: ratioFigure\(r\)/.test(ledger));
 
-  /* 19 and 20. The two that make it usable by anyone. */
+  /* 20 and 21. The two that make it usable by anyone. */
   checkTrue('one focus ring, defined once', /:focus-visible \{[^}]*outline:/.test(theme.replace(/\n/g, ' ')));
   checkTrue('and motion is off for anyone who asks for that',
     /@media \(prefers-reduced-motion: reduce\)[^}]*\{[^}]*\*/.test(theme.replace(/\n/g, ' ')));
+
+  /* 13. Nothing moves under a finger (D-341). */
+  checkTrue('the toast confirms at the top, leaving the bottom to the action and the keyboard',
+    /\.slaf-toast \{[^}]*top: max\(12px/.test(theme.replace(/\n/g, ' ')));
+  checkTrue('...and nothing puts it back at the bottom on a wider screen',
+    !/\.slaf-toast \{ bottom:/.test(theme));
+  checkTrue('a row holds its height until the tap that took its focus has landed',
+    /is-settling/.test(ledger) && /setTimeout\(letGo/.test(ledger));
+  checkTrue('...and it lets go the moment the focus comes back to it',
+    /focusin[\s\S]{0,200}row === settling[\s\S]{0,40}letGo\(\)/.test(ledger));
+  checkTrue('...through a class, not by rebuilding the row (D-034)',
+    /classList\.add\('is-settling'\)/.test(ledger) && /classList\.remove\('is-settling'\)/.test(ledger));
+  checkTrue('the walk is tapped through by a gate, not only read',
+    /data-walk="next"/.test(fs.readFileSync(path.join(ROOT, 'test/forms.js'), 'utf8')));
 
   /* The page itself: it is a standard only if it is written down. */
   checkTrue('the standard is written down', design.length > 2000);

@@ -453,9 +453,14 @@
   #view-express .xrow .lab .unit { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
   /* Under the control, and only while the row has the focus. Everything that
      appears on focus sits BELOW what you are answering, so nothing you are
-     about to tap ever moves. */
+     about to tap ever moves.
+     `is-settling` is the same row, holding its height for a beat after the
+     focus has gone (D-341). Collapsing the instant focus leaves took 68px
+     out of the page between a finger lifting and the click being dispatched,
+     which moved the walk's Next button out from under that very tap. The row
+     lets go once the tap it was standing in for has landed. */
   #view-express .xrow .xwhy { display: none; grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-faint); line-height: var(--leading-normal); }
-  #view-express .xrow:focus-within .xwhy { display: block; }
+  #view-express .xrow:focus-within .xwhy, #view-express .xrow.is-settling .xwhy { display: block; }
   #view-express .xrow .xwhy .why, #view-express .xrow .xwhy .own { display: block; }
   #view-express .xrow .xstates { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
   #view-express .xrow .xstates:empty { display: none; }
@@ -464,8 +469,10 @@
      theme.css makes that display:none !important, so a row that must not
      offer "Not sure yet" does not start offering it here. */
   #view-express .xrow .xstates > [data-x-notsure], #view-express .xrow .xstates > .x-memory { display: none; }
-  #view-express .xrow:focus-within .xstates > [data-x-notsure] { display: inline-flex; }
-  #view-express .xrow:focus-within .xstates > .x-memory { display: inline-flex; }
+  #view-express .xrow:focus-within .xstates > [data-x-notsure],
+  #view-express .xrow.is-settling .xstates > [data-x-notsure] { display: inline-flex; }
+  #view-express .xrow:focus-within .xstates > .x-memory,
+  #view-express .xrow.is-settling .xstates > .x-memory { display: inline-flex; }
   #view-express .xrow .xstates .slaf-btn--small { min-height: 32px; padding: 0 var(--space-2); font-size: var(--text-xs); }
   #view-express .xrow .slaf-unit { margin-left: 0; }
   #view-express .xrow .ctl .slaf-input-shell { display: flex; align-items: center; gap: var(--space-2); }
@@ -2485,6 +2492,34 @@
   }
   function wire() {
     var form = el('xform');
+    /* ---- Nothing collapses under a finger (D-341) ------------------------
+       A row shows "Not sure yet", "from memory" and why it is asked while it
+       has the focus, and puts them away when the focus goes: 68px out of the
+       page. A tap is a touchend and then, a moment later, a click at the same
+       point; the focus moves in between. So answering a question and reaching
+       for Next meant the page shrank mid-tap and the click landed on the strip
+       behind the button. Nothing was broken and nothing said so: the walk
+       simply did not move.
+       The row keeps its height until the tap that took the focus away has been
+       dispatched, then lets go. One timer, one class, no rebuild (D-034). */
+    var settling = null, settleTimer = null;
+    function letGo() {
+      if (settleTimer) { clearTimeout(settleTimer); settleTimer = null; }
+      if (settling) { settling.classList.remove('is-settling'); settling = null; }
+    }
+    form.addEventListener('focusout', function (ev) {
+      var row = ev.target.closest ? ev.target.closest('.xrow') : null;
+      if (!row) return;
+      if (settling && settling !== row) letGo();
+      settling = row;
+      row.classList.add('is-settling');
+      if (settleTimer) clearTimeout(settleTimer);
+      settleTimer = setTimeout(letGo, 500);
+    });
+    form.addEventListener('focusin', function (ev) {
+      var row = ev.target.closest ? ev.target.closest('.xrow') : null;
+      if (row && row === settling) letGo();
+    });
     /* An identity field (the name, the institution, the last four, the kind)
        is not a figure: it writes through the list's owner, not through the
        row's, and then the line re-reads its own head and the groups settle.

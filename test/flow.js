@@ -26,7 +26,12 @@ const path = require('path');
 const ROOT = path.join(__dirname, '..');
 const { chromium } = require('playwright');
 
-const BASE = process.env.BASE || 'http://127.0.0.1:8765/';
+/* Either name, with or without the trailing slash: the other gates read
+   SLAF_BASE and these two read BASE, and a run that set only one of them
+   died on "Cannot navigate to invalid URL" rather than saying which
+   address it had been handed. D-341. */
+const BASE = String(process.env.SLAF_BASE || process.env.BASE || 'http://127.0.0.1:8765')
+  .replace(/\/+$/, '') + '/';
 const EXECUTABLE = process.env.CHROMIUM || '/opt/pw-browsers/chromium';
 /* Generous on purpose: this is a guard against the second-long redraw the
    owner felt, not a benchmark. A tap that takes this long is broken. */
