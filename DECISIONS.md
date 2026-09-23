@@ -17481,6 +17481,30 @@ check replaced by six that hold the new one; the Scorecard read at 390px with
 the example household, every label whole.
 
 
+## D-343 — The Cushion answers before it asks
+
+**Why.** The room exists to say how long the money lasts, and said it after two
+screens of boxes: the situation, a paragraph about that situation, six figures
+already known from Start Here, and only then the number. A person who had
+answered everything in the Ledger still had to scroll past a form to find out.
+
+**Decision.** `#out-runway` moves above `#the-plan` in the How Long view. The
+room reads: what it is, then "3 months" with the reason and the lasting gap,
+then the situation and the boxes that shape it, then the drawdown, what would
+buy more, and the three exits. Blank, the card says what it is waiting for
+("Add what you have saved to see how long it lasts"), which is the promise the
+Statement and the Scorecard already make.
+
+**Replaces or removes.** Nothing is added: one card moved. No new screen, field
+or figure.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js`; `node test/forms.js` with the room's two
+cases (the boxes are the same boxes, in the same card); the room read at 390px
+with the example household and with nothing entered.
+
+
 ---
 
 # The Dungeons & Dividends entries

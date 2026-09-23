@@ -248,6 +248,20 @@
   <!-- ================= HOW LONG (was rooms/runway.html) ================== -->
   <section id="view-how-long">
   <p class="slaf-lede">The plain reading: what you can spend, against what a month costs, and what would buy you more months.</p>
+
+  <!-- The answer first, then what it is made of (D-343). This room exists to
+       say how long the money lasts; it used to say it after two screens of
+       boxes, so a person who had already answered everything in the Ledger
+       had to scroll past the form to find out. Blank, it says what it is
+       waiting for, which is the same promise the Statement makes. -->
+  <section class="slaf-card" id="out-runway">
+    <span class="slaf-eyebrow">How long the money lasts</span>
+    <div class="slaf-figure" data-figure>not yet</div>
+    <p class="slaf-reason" data-reason></p>
+    <div class="flag" id="runway-note" hidden></div>
+    <p class="slaf-hint" id="beyond-cash" hidden></p>
+  </section>
+
   <section class="slaf-card" id="the-plan">
     <span class="slaf-eyebrow">What’s happening</span>
     <h2 style="margin:var(--space-2) 0 var(--space-3)">The situation</h2>
@@ -352,14 +366,6 @@
       <button type="button" class="slaf-btn" id="btn-demo">Try with example numbers</button>
       <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-clear">Clear</button>
     </div>
-  </section>
-
-  <section class="slaf-card" id="out-runway">
-    <span class="slaf-eyebrow">How long the money lasts</span>
-    <div class="slaf-figure" data-figure>not yet</div>
-    <p class="slaf-reason" data-reason></p>
-    <div class="flag" id="runway-note" hidden></div>
-    <p class="slaf-hint" id="beyond-cash" hidden></p>
   </section>
 
   <section class="slaf-card" id="out-path">

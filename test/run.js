@@ -17131,6 +17131,17 @@ section('The standard the app is held to (D-340)');
     /test\/render\.js/.test(design) && /test\/alignment\.js/.test(design) && /node test\/run\.js/.test(design));
 })();
 
+section('The Cushion answers before it asks (D-343)');
+
+(function () {
+  const runway = fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8');
+  checkTrue('the months come before the form that shapes them',
+    runway.indexOf('id="out-runway"') < runway.indexOf('id="the-plan"'));
+  checkTrue('...and with nothing entered the card says what it is waiting for, not a zero',
+    /Add what you have saved to see how long it lasts/.test(runway)
+    || /Add what you have saved/.test(fs.readFileSync(path.join(ROOT, 'engines/runway.js'), 'utf8')));
+})();
+
 section('No em dash anywhere the app can show one (D-321)');
 
 (function () {
