@@ -11410,7 +11410,27 @@ section('DRAFTT: seven shares against seven bands (D-173)');
   /* The screen: one section, seven rows max, no chart, the pick is buttons. */
   const page = fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8');
   checkTrue('the Snapshot opens on DRAFTT', page.indexOf('id="draftt"') < page.indexOf('id="inputs"'));
-  checkTrue('no chart in the scorecard', !/Charts\.[a-z]+\([^)]*draftt/i.test(page) && page.indexOf("el('draftt-rows')") !== -1);
+  /* D-342: the measuring stick draws. D-173 shipped it as seven paragraphs
+     and no chart at all; a value against a range is a bullet bar, which is
+     docs/DESIGN.md rule 13, and seven shares of one pay packet share one
+     axis honestly. The words and the figures stayed: the chart carries them,
+     so nothing is read by colour or by length alone. */
+  checkTrue('the shares are drawn against their bands, one axis for all of them',
+    /function drafttChart/.test(page) && /Charts\.bars\(\{ rows: bars/.test(page));
+  checkTrue('...each bar prints its own figure, its amount and its band in words',
+    /note: bits\.join/.test(page) && /'band ' \+ bandText\(b\)/.test(page));
+  checkTrue('...and the verdict is a word beside the colour, never the colour alone',
+    /function verdictWords/.test(page) && /'in range'/.test(page) && /'over the band'/.test(page));
+  checkTrue('whose bands is asked once, above the chart, not four buttons on every row',
+    /id="draftt-whose"/.test(page) && /data-whose=/.test(page));
+  checkTrue('...and the row by row provenance, with the per row override, is folded under it',
+    /<details class="slaf-purpose" id="draftt-detail">/.test(page) && page.indexOf("el('draftt-rows')") !== -1);
+  const themeCss = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  checkTrue('a bar label is never cut off on a phone',
+    /@media \(max-width: 560px\) \{[\s\S]{0,900}\.slaf-bars \.lbl \{ grid-column: 1 \/ -1/.test(themeCss));
+  checkTrue('...and the bar itself takes the width the label gave up, in every room that sets its own columns',
+    /\.slaf-bars \.track \{ grid-column: 1 \/ -2; \}/.test(themeCss)
+    && /\.slaf-bars \.val \{ grid-column: -2 \/ -1; \}/.test(themeCss));
   checkTrue('the pick is a button, not a box', /data-src="' \+ row\.id/.test(page) && !/<input[^>]*draftt/.test(page));
   checkTrue('the bands table is a registered reference table', /bands: 'bands\.json'/.test(fs.readFileSync(path.join(ROOT, 'shared/reference.js'), 'utf8')));
 })();

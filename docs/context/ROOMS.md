@@ -28,7 +28,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 
 ## Scorecard (3)
 
-- **financial-snapshot** — The Scorecard · 2684 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath, statement, ratios, health, rankguess · D-332, D-245, D-241
+- **financial-snapshot** — The Scorecard · 2774 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath, statement, ratios, health, rankguess · D-332, D-245, D-241
 - **foo-ladder** — What The Next Dollar Does · 705 lines · engines: projection, tier0, income, selfemployed, ledger, hourly, foo, next100, windfall, cashflow, fire, statement, debt, benchmarks, ratios, skills, tax · D-242, D-231, D-058
 - **fire** — The Number · 1466 lines · engines: projection, tier0, income, ledger, fire, foo, journey, selfemployed, tax, hourly, cashflow, fulfillment, enough, coast, countdown, race · owns: enoughMonthly, retireAge, coastAge · D-285, D-240, D-235
 

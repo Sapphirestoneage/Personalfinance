@@ -17450,6 +17450,37 @@ two that were landing 500px down among them; `node test/run.js`; the walk
 tapped through by hand at 412px with the touch events logged.
 
 
+## D-342 — The measuring stick draws, and asks whose bands once
+
+**Why.** The Scorecard's first block was seven paragraphs: a share, a band, a
+verdict, four buttons asking whose band this row reads, an explainer and a
+link, repeated seven times. Four thousand pixels to say what a glance can say.
+D-173 decided "no chart" and did not say why; docs/DESIGN.md 13 says a value
+against a range is a bullet bar, and seven shares of one pay packet share one
+axis honestly.
+
+**Decision.** DRAFTT is a chart. One bar a letter on one axis, the healthy
+band a green stripe behind it, the bar the colour of its verdict, and beside
+each one its own figure, its amount a month, the band in words and the verdict
+in words ("in range", "over the band", "under the band"), so nothing is read
+by colour or by length alone. Whose bands is asked once, above the chart, and
+one tap sets every row that has that source; the row by row provenance and the
+per row override are folded under it, unchanged. On a phone a bar's label takes
+the whole first line rather than being cut to "Retirement s...", which is every
+bars chart in the app, not only this one.
+
+**Replaces or removes.** D-173's "no chart" and the twenty-eight per row
+buttons. The block is 780px instead of about 4,000. No screen, no field, and
+no new figure: every number was already on the page.
+
+**Stored shape.** No change. The pick is still a device preference, never a
+household fact.
+
+**Verified.** `node test/run.js` 36030, with the D-173 section's "no chart"
+check replaced by six that hold the new one; the Scorecard read at 390px with
+the example household, every label whole.
+
+
 ---
 
 # The Dungeons & Dividends entries

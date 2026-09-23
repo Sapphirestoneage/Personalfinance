@@ -225,6 +225,11 @@
   #view-the-nine .draftt .dr-foot a { color: var(--color-accent-hover); text-decoration: none; }
   
   #view-the-nine .draftt .dr-foot .slaf-lens-btn { min-height: 28px; padding: 0 8px; }
+  /* Whose bands, asked once above the chart (D-342). */
+  #view-the-nine .draftt-whose { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: var(--space-4) 0 var(--space-2); }
+  #view-the-nine .draftt-whose-lbl { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-faint); }
+  #view-the-nine #draftt-chart .slaf-bars .row .lbl small { color: var(--color-text-faint); }
+  #view-the-nine #draftt-detail { margin-top: var(--space-4); }
   @media (max-width: 520px) {
     
   #view-the-nine .draftt .dr { grid-template-columns: 2em minmax(0, 1fr) auto; }
@@ -615,14 +620,24 @@
     <span>Answer them once and every number on this page fills itself in.</span>
   </a>
 
-  <!-- DRAFTT (D-173): the one pager out. Seven shares against seven bands,
-       one verdict word each, the owner a tap away. No chart. -->
+  <!-- DRAFTT (D-173, drawn in D-342): the one pager out. Seven shares against
+       seven bands, each bar inside or outside its band with the figure beside
+       it and the verdict in words; whose bands is asked once, above them; the
+       row by row provenance and the per row override are folded under. -->
   <section class="slaf-card" id="draftt">
     <span class="slaf-eyebrow">DRAFTT, the measuring stick</span>
     <h2 style="margin:var(--space-2) 0 var(--space-2)">Seven shares of your pay, each against a healthy band</h2>
-    <p class="slaf-hint" style="margin:0">Debt · Retirement · Accommodation · Food · Transportation · Taxes, and Therapy while you track it. Shares are of take-home pay unless the row says gross. Pick whose band each row reads; the pick is remembered on this device, not in your numbers.</p>
+    <p class="slaf-hint" style="margin:0">Debt · Retirement · Accommodation · Food · Transportation · Taxes, and Therapy while you track it. Shares are of take-home pay unless the row says gross. The green stripe on each bar is the healthy band; the pick below is remembered on this device, not in your numbers.</p>
     <p class="slaf-hint" id="draftt-basis" style="margin:var(--space-2) 0 0"></p>
-    <ol class="draftt" id="draftt-rows"></ol>
+    <div class="draftt-whose">
+      <span class="draftt-whose-lbl">Whose bands</span>
+      <span class="slaf-lens" id="draftt-whose" role="group" aria-label="Whose bands every row reads"></span>
+    </div>
+    <div id="draftt-chart"></div>
+    <details class="slaf-purpose" id="draftt-detail">
+      <summary>Row by row: where each band comes from, and where to change the figure</summary>
+      <ol class="draftt" id="draftt-rows"></ol>
+    </details>
   </section>
 
   <!-- Lenses (D-175): the same numbers read the way a framework would read
@@ -1371,12 +1386,76 @@
     if (b.low <= 0) return 'under ' + pct(b.high, 0);
     return pct(b.low, 0) + ' to ' + pct(b.high, 0);
   }
+  /* The verdict is a word, never a colour on its own, and it is the word the
+     rest of the app uses for the same idea (D-340 rule 15). */
+  function verdictWords(v) { return v === 'in' ? 'in range' : v === 'over' ? 'over the band' : v === 'under' ? 'under the band' : ''; }
+  var DR_COLOR = { 'in': Charts.COLORS.target, over: Charts.COLORS.debt, under: Charts.COLORS.spend };
+
+  /* ---- The bars (D-342) ----------------------------------------------------
+     Seven shares of one pay packet: one measure, one axis, one hue a verdict.
+     Each bar carries its own figure and the band it is being read against, so
+     the drawing is never the only way to read the number. The band is a green
+     stripe behind the bar rather than a second bar: it is a range, not a
+     quantity. D-173 drew no chart at all, which left seven paragraphs saying
+     what a glance can say. */
+  function drafttChart(r) {
+    var top = 0;
+    r.rows.forEach(function (row) {
+      if (Money.isOk(row.share)) top = Math.max(top, row.share.value);
+      if (row.band) {
+        top = Math.max(top, row.band.low * 1.4);
+        if (row.band.high < 1) top = Math.max(top, row.band.high * 1.25);
+      }
+    });
+    var bars = r.rows.map(function (row) {
+      var ok = Money.isOk(row.share);
+      var b = row.band;
+      var bits = [];
+      if (row.amountCents !== null && row.amountCents !== undefined) bits.push(Money.formatCents(row.amountCents) + ' a month');
+      if (b) bits.push('band ' + bandText(b));
+      if (row.verdict) bits.push(verdictWords(row.verdict));
+      return {
+        label: row.letter + ' \u00b7 ' + row.label,
+        note: bits.join(' \u00b7 '),
+        value: ok ? row.share.value : null,
+        color: DR_COLOR[row.verdict] || Charts.COLORS.contributed,
+        zones: b ? [{ from: Math.max(0, b.low), to: b.high >= 1 ? Infinity : b.high, color: Charts.COLORS.target }] : [],
+        empty: ok ? null : (row.share.reason || Money.NOT_YET)
+      };
+    });
+    return Charts.bars({ rows: bars, format: function (v) { return pct(v); }, max: top > 0 ? top : null });
+  }
+
+  /* ---- Whose bands, asked once (D-342) -------------------------------------
+     The same four sources were offered on every row, twenty-eight buttons for
+     one question. It is asked once here and applied to every row that has
+     that source; a row that wants a different one still says so in the fold,
+     and this control then shows nothing pressed, which is the truth. */
+  function drafttWhose(r) {
+    var all = {}, order = [];
+    r.rows.forEach(function (row) {
+      Draftt.sourcesFor(TABLES, row.id).forEach(function (s) {
+        if (!all[s.id]) { all[s.id] = { id: s.id, label: s.label, rows: 0 }; order.push(s.id); }
+        all[s.id].rows++;
+      });
+    });
+    var using = {};
+    r.rows.forEach(function (row) { using[row.band ? row.band.sourceId : ''] = (using[row.band ? row.band.sourceId : ''] || 0) + 1; });
+    el('draftt-whose').innerHTML = order.map(function (id) {
+      var s = all[id];
+      return '<button type="button" class="slaf-lens-btn" data-whose="' + esc(id) + '" aria-pressed="'
+        + (using[id] === r.rows.length ? 'true' : 'false') + '">' + esc(s.label) + '</button>';
+    }).join('');
+  }
+
   function renderDraftt(h) {
     if (!TABLES || !TABLES.bands) return;
     var r = Draftt.rows(h, TABLES, draftPrefs());
     el('draftt-basis').textContent = Money.isOk(r.takeHomeMonthlyCents)
       ? 'Take-home ' + Money.formatCents(r.takeHomeMonthlyCents.value) + ' a month, gross ' + Money.formatCents(r.grossMonthlyCents.value) + '. A band stated on gross is shown here converted to take-home, and says so.'
       : 'Add your income and filing status in Start Here and the shares appear.';
+    drafttWhose(r);
+    el('draftt-chart').innerHTML = drafttChart(r);
     el('draftt-rows').innerHTML = r.rows.map(function (row) {
       var ok = Money.isOk(row.share);
       var srcs = Draftt.sourcesFor(TABLES, row.id);
@@ -1387,7 +1466,7 @@
         + '<span class="dr-label">' + esc(row.label) + '<small>' + esc(row.sub) + (row.amountCents !== null ? ' · ' + Money.formatCents(row.amountCents) : '') + '</small></span>'
         + '<span class="dr-share' + (ok ? '' : ' is-incomplete') + '">' + (ok ? pct(row.share.value) : esc(row.share.reason || Money.NOT_YET)) + '</span>'
         + '<span class="dr-band">' + esc(bandText(row.band)) + (row.band && row.band.converted ? ' <em>(' + pct(row.band.statedHigh >= 1 ? row.band.statedLow : row.band.statedHigh, 0) + ' of ' + (row.band.statedBasis === 'gross' ? 'gross' : 'take-home') + ', converted)</em>' : '') + '</span>'
-        + '<span class="dr-verdict">' + (row.verdict || '') + '</span>'
+        + '<span class="dr-verdict">' + esc(verdictWords(row.verdict)) + '</span>'
         + '<span class="dr-foot">'
         + '<span class="slaf-lens" role="group" aria-label="Whose band for ' + esc(row.label) + '">' + srcs.map(function (s) {
             return '<button type="button" class="slaf-lens-btn" data-src="' + row.id + ':' + s.id + '" aria-pressed="' + (s.id === row.sourceId) + '" title="' + esc(s.note) + '">' + esc(s.label) + '</button>';
@@ -1402,6 +1481,17 @@
     if (!b) return;
     var parts = b.getAttribute('data-src').split(':');
     Prefs.set('draftt.' + parts[0], parts[1]);
+    renderDraftt(Spine.getProfile());
+  });
+  /* One tap sets every row that has this source; a row that does not stays as
+     it was rather than being given a band nobody stated for it. */
+  el('draftt-whose').addEventListener('click', function (evt) {
+    var b = evt.target.closest('[data-whose]');
+    if (!b) return;
+    var want = b.getAttribute('data-whose');
+    Draftt.ORDER.forEach(function (id) {
+      if (Draftt.sourcesFor(TABLES, id).some(function (s) { return s.id === want; })) Prefs.set('draftt.' + id, want);
+    });
     renderDraftt(Spine.getProfile());
   });
 

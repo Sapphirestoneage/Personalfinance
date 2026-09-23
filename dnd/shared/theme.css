@@ -1127,6 +1127,20 @@ html.slaf-menu-pinned .slaf-menu-head { padding-top: var(--space-4); }
    a phone, scrolling the whole page sideways. A reason is a sentence and
    wraps like one; a figure is still a figure. */
 .slaf-bars .row > * { min-width: 0; }
+/* A phone has no room for a third of the row of label, a bar and a figure:
+   "Retirement saving" came out as "Retirement s...". The name takes the
+   whole first line, the bar and its figure the second, so nothing is cut and
+   the bar gets the width it needs to be read. D-342. */
+@media (max-width: 560px) {
+  .slaf-bars .row { gap: var(--space-1) var(--space-2); padding: var(--space-2) 0; }
+  /* Placed by column rather than by a new template, because four rooms set a
+     template of their own for their bars and a second one here would only
+     win in some of them, leaving the track squeezed into the label's old
+     column. Spanning works whatever the template is. */
+  .slaf-bars .lbl { grid-column: 1 / -1; white-space: normal; overflow: visible; text-overflow: clip; }
+  .slaf-bars .track { grid-column: 1 / -2; }
+  .slaf-bars .val { grid-column: -2 / -1; }
+}
 .slaf-bars .row.is-empty .val { white-space: normal; overflow-wrap: break-word; text-align: left; }
 
 /* Touch targets. A finger is not a cursor: the suggestion chip was 19px
