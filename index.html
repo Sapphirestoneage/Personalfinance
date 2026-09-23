@@ -100,6 +100,11 @@
   .room-lede { color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   section[id] { scroll-margin-top: var(--space-4); }
 
+  .un-open-lbl { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-bottom: var(--space-1); }
+  .un-open-list { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+  .un-open-chip { display: inline-flex; align-items: baseline; gap: 6px; min-height: 32px; padding: 4px 10px; border: 1px solid var(--color-border); border-radius: var(--radius-pill); font-size: var(--text-xs); color: var(--color-text-muted); text-decoration: none; }
+  .un-open-chip:hover { border-color: var(--color-border-active); color: var(--color-text); }
+  .un-open-chip b { color: var(--color-text); font-variant-numeric: tabular-nums; font-weight: 500; }
   .radar { width: 100%; height: auto; display: block; margin-top: var(--space-3); overflow: visible; }
   .radar .ring { fill: none; stroke: var(--color-border-active); stroke-width: .6; }
   /* The dashed ring is the healthy line and FURTHER OUT IS BETTER, so the
@@ -1381,8 +1386,15 @@
       return '<li>Then ' + esc(e.label) + ', ' + e.cost + (e.cost === 1 ? ' answer' : ' answers') + ' away'
         + (e.missing.length ? ': ' + e.missing.map(function (m) { return fieldLink(m, plan); }).join(', ') : '') + '</li>';
     }).join('');
+    /* Eleven underlined links separated by dots read as one long underlined
+       sentence, which is a wall rather than a list (D-339). Each is its own
+       chip now: the name, then the figure, in the same row a finger can hit. */
     el('un-open').innerHTML = plan.open.length
-      ? 'Open: ' + plan.open.map(function (e) { return '<a href="' + esc(e.href) + '">' + esc(e.label) + ' ' + esc(e.display) + '</a>'; }).join(' · ')
+      ? '<span class="un-open-lbl">Already open</span><span class="un-open-list">'
+        + plan.open.map(function (e) {
+          return '<a class="un-open-chip" href="' + esc(e.href) + '">' + esc(e.label)
+            + '<b>' + esc(e.display) + '</b></a>';
+        }).join('') + '</span>'
       : '';
     return plan;
   }

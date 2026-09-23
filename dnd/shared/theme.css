@@ -791,9 +791,19 @@ a.slaf-btn, a.slaf-btn:hover { text-decoration: none; }
 .slaf-undo-btn:hover:not(:disabled), .slaf-undo-btn:focus-visible { background: var(--color-surface); }
 .slaf-undo-btn:disabled { opacity: .3; cursor: default; }
 .slaf-undo-btn span { font-size: var(--text-xs); }
-/* On a phone the top-right corner is the room nav's; the pair sits
-   bottom right, above the soft keyboard's usual reach, as a thumb reaches. */
-@media (max-width: 640px) { .slaf-undo { top: auto; bottom: 14px; right: 12px; } html.has-undo body { padding-bottom: 76px; } .slaf-undo-btn span { display: none; } .slaf-undo-btn { padding: 0 12px; min-height: 38px; font-size: var(--text-md); } }
+/* Docked in the room's header strip (D-339): in the flow, scrolling away
+   with the rest of the page, covering nothing. The floating corner below is
+   the fallback for a page that has no header strip. */
+.slaf-hops-host .slaf-undo.is-docked { position: static; margin-left: auto; box-shadow: none; background: transparent; border-color: transparent; padding: 0; gap: var(--space-1); }
+.slaf-hops-host .slaf-undo.is-docked .slaf-undo-btn { border: 1px solid var(--color-border); min-height: 36px; }
+.slaf-hops-host .slaf-undo.is-docked .slaf-undo-btn span { display: none; }
+/* A page with the strip but no hops in it: the pair sits at the right of
+   that line, pulled up beside the note above it rather than opening a band
+   of empty space over the room's name. */
+.slaf-hops-host:has(> .slaf-undo.is-alone) { flex-direction: row; justify-content: flex-end; margin-top: calc(var(--space-3) * -1); }
+/* On a phone the top-right corner is the room nav's; a pair that could not
+   dock sits bottom right, above the soft keyboard's usual reach. */
+@media (max-width: 640px) { .slaf-undo:not(.is-docked) { top: auto; bottom: 14px; right: 12px; } html.has-undo body { padding-bottom: 76px; } .slaf-undo:not(.is-docked) .slaf-undo-btn span { display: none; } .slaf-undo:not(.is-docked) .slaf-undo-btn { padding: 0 12px; min-height: 38px; font-size: var(--text-md); } }
 
 /* ---- The lens toggle (shared/lens.js). D-094. ---- */
 /* The lens says what it does (D-256): a caption, the buttons, one line on the mode in use. */
@@ -825,6 +835,15 @@ a.slaf-btn, a.slaf-btn:hover { text-decoration: none; }
 .lens-card.is-incomplete .lens-figure { font-family: var(--font-body); font-size: var(--text-xs); color: var(--color-text-faint); }
 .lens-card .lens-who { margin: var(--space-2) 0 0; font-size: var(--text-xs); color: var(--color-text-faint); display: flex; flex-direction: column; gap: 2px; }
 .lens-card .lens-who b { font-weight: 600; color: var(--color-text-muted); }
+
+/* ---- A way on, at the end of a paragraph (D-339) --------------------------
+   "Grow it →" and "Protect it →" were underlined links inside a sentence,
+   so a phone broke them across two lines and the arrow landed on its own.
+   As chips they are one tap target each, they never split, and the sentence
+   above them stays a sentence. */
+.slaf-gos { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-top: var(--space-2); }
+.slaf-go { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 4px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-pill); font-size: var(--text-xs); color: var(--color-accent-hover); text-decoration: none; white-space: nowrap; }
+.slaf-go:hover { border-color: var(--color-border-active); color: var(--color-text); text-decoration: none; }
 
 /* ---- The room template (shared/room.js). D-097. ---- */
 .room-number { display: flex; flex-direction: column; }
@@ -984,6 +1003,11 @@ details.room-drawer summary small { display: block; font-family: var(--font-body
 .slaf-return:hover { border-color: var(--color-accent-hover); color: var(--color-text); text-decoration: none; }
 .slaf-hops-host { display: flex; flex-direction: column; align-items: flex-start; }
 .slaf-hops-host .slaf-hops { width: 100%; }
+/* With the undo pair docked in it (D-339) the strip is one row: the way
+   out on the left and the right, the pair at the end of the same line,
+   rather than a second line of its own under them. */
+.slaf-hops-host:has(> .slaf-undo.is-docked) { flex-direction: row; align-items: center; gap: var(--space-2); }
+.slaf-hops-host:has(> .slaf-undo.is-docked) > .slaf-hops { flex: 1 1 auto; min-width: 0; margin-bottom: 0; }
 
 .slaf-menu-btn {
   display: inline-flex; align-items: center; justify-content: center;
@@ -1102,7 +1126,7 @@ html.slaf-menu-pinned .slaf-menu-head { padding-top: var(--space-4); }
    value in the dashboard panel scrolls past. Measured at 320px it covered
    the FI ratio figure completely. The left gutter is labels. D-144. */
 @media (max-width: 640px) {
-  .slaf-undo { left: 12px; right: auto; }
+  .slaf-undo:not(.is-docked) { left: 12px; right: auto; }
 }
 
 @media (pointer: coarse) {
@@ -1453,7 +1477,21 @@ html.has-math, html.has-math body { overflow: hidden; }
    between pages. One place, because the 93-to-30 merge (D-227) gives every
    surviving room the same strip, and a second copy of it would drift.
    The first hat is always the simplest reading, and it is the default. */
-.slaf-hats { display: flex; flex-wrap: wrap; gap: var(--space-1); margin: var(--space-3) 0 var(--space-4); }
+/* One row, not three (D-339). Seven ways in wrapped onto three lines of
+   pills on a phone, which read as a pile rather than a choice, and pushed
+   the room itself below the fold. They scroll sideways now, the way a tab
+   strip does everywhere else, with the one you are on kept in view. */
+.slaf-hats { display: flex; flex-wrap: nowrap; overflow-x: auto; overflow-y: hidden; gap: var(--space-1); margin: var(--space-3) 0 var(--space-4); padding-bottom: 2px; scroll-snap-type: x proximity; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.slaf-hats::-webkit-scrollbar { display: none; }
+.slaf-hats a { flex: 0 0 auto; scroll-snap-align: start; white-space: nowrap; }
+/* The row is scrollable, so it says so: the pills fade out at each edge
+   instead of being sliced in half by the viewport. */
+@supports (mask-image: linear-gradient(90deg, #000, #000)) {
+  @media (max-width: 719px) {
+    .slaf-hats { mask-image: linear-gradient(90deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%); }
+  }
+}
+@media (min-width: 720px) { .slaf-hats { flex-wrap: wrap; overflow: visible; } }
 .slaf-hats a { font-family: var(--font-display); font-size: var(--text-sm); text-decoration: none;
   border: 1px solid var(--color-border); border-radius: var(--radius-pill);
   padding: 4px 12px; color: var(--color-text-muted); min-height: 32px; }
@@ -1463,6 +1501,13 @@ html.has-math, html.has-math body { overflow: hidden; }
 
 /* The plain line under a room title (D-237): what it shows, what it needs. */
 .slaf-purpose { margin: var(--space-2) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); line-height: var(--leading-loose); }
+/* Folded (D-339): the room's own words first, its contents page on a tap. */
+.slaf-purpose > summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; font-size: var(--text-xs); color: var(--color-text-faint); list-style: none; }
+.slaf-purpose > summary::-webkit-details-marker { display: none; }
+.slaf-purpose > summary::before { content: "+"; margin-right: 6px; font-variant-numeric: tabular-nums; }
+.slaf-purpose[open] > summary::before { content: "\2013"; }
+.slaf-purpose > summary:hover { color: var(--color-text-muted); }
+.slaf-purpose-body { padding-bottom: var(--space-1); }
 .slaf-purpose b { color: var(--color-text); font-weight: 600; }
 .slaf-purpose span { display: inline-block; margin-right: var(--space-3); }
 

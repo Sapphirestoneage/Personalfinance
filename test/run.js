@@ -16955,6 +16955,68 @@ section('The planets dashboard (D-338)');
     'fire at ' + fireAt + ', statement at ' + stmtAt);
 })();
 
+section('The standard the app is held to (D-339)');
+
+(function () {
+  /* The owner: "Make every single thing feel more professional look
+     professional meet professional standards." A review nobody can act on
+     becomes rules a session can check. docs/DESIGN.md holds them; these
+     hold the ones that can be held here. */
+  const Money = require(path.join(ROOT, 'shared/money.js'));
+  const theme = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  const progress = fs.readFileSync(path.join(ROOT, 'shared/progress.js'), 'utf8');
+  const undo = fs.readFileSync(path.join(ROOT, 'shared/undo.js'), 'utf8');
+  const design = fs.readFileSync(path.join(ROOT, 'docs/DESIGN.md'), 'utf8');
+
+  /* 1. Nothing unrounded reaches a screen. */
+  check('an age is whole years, however it was worked out', Money.formatAge(55.88101594379056), '56');
+  check('a typed age is left alone', Money.formatAge(62), '62');
+  check('and no age at all is not a zero', Money.formatAge(null), 'not yet');
+  checkTrue('every room is checked for unrounded working numbers',
+    /\\d\+\\\.\\d\{3,\}/.test(fs.readFileSync(path.join(ROOT, 'test/render.js'), 'utf8')),
+    'test/render.js should scan rendered text for 3+ decimals');
+  const statement = fs.readFileSync(path.join(ROOT, 'rooms/statement.html'), 'utf8');
+  checkTrue('the Statement formats the age it shows', /Money\.formatAge\(hc\.stopAge\)/.test(statement));
+  const which = fs.readFileSync(path.join(ROOT, 'rooms/which-account.html'), 'utf8');
+  checkTrue('and so does Which Account', /Money\.formatAge\(stop\)/.test(which));
+
+  /* 4. The room's own words first: what it shows and needs is folded. */
+  checkTrue('what a room shows and needs is folded, not four lines of small print',
+    /<details class="slaf-purpose"/.test(progress) && /What this room shows, and what it needs/.test(progress));
+  checkTrue('and the fold has a style of its own', /\.slaf-purpose > summary \{/.test(theme));
+
+  /* 8. Nothing floats over what you are reading. */
+  checkTrue('the undo pair docks into the page rather than floating over it',
+    /function dock\(\)/.test(undo) && /is-docked/.test(undo));
+  checkTrue('the docked pair is in the flow, not fixed',
+    /\.slaf-undo\.is-docked \{[^}]*position: static/.test(theme.replace(/\n/g, ' ')));
+  checkTrue('and the floating corner is only what is left when there is no strip',
+    /\.slaf-undo:not\(\.is-docked\)/.test(theme));
+
+  /* 9. One row of tabs, not three. */
+  checkTrue('the ways into a room are one sideways row on a phone',
+    /\.slaf-hats \{[^}]*overflow-x: auto/.test(theme.replace(/\n/g, ' ')));
+  checkTrue('and the one you are on is scrolled into view',
+    /inline: 'center'/.test(fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8')));
+
+  /* 14 to 17. The chart rules, where they can be read from the source. */
+  const ledger = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  checkTrue('bars that answer one question wear one hue', /function accent\(\)/.test(ledger));
+  checkTrue('a verdict is a word beside the colour', /'in range'/.test(ledger) && /'outside'/.test(ledger));
+  checkTrue('measures of different scale are indexed, not stacked on one axis',
+    /r\.value \/ edge/.test(ledger) && /display: ratioFigure\(r\)/.test(ledger));
+
+  /* 19 and 20. The two that make it usable by anyone. */
+  checkTrue('one focus ring, defined once', /:focus-visible \{[^}]*outline:/.test(theme.replace(/\n/g, ' ')));
+  checkTrue('and motion is off for anyone who asks for that',
+    /@media \(prefers-reduced-motion: reduce\)[^}]*\{[^}]*\*/.test(theme.replace(/\n/g, ' ')));
+
+  /* The page itself: it is a standard only if it is written down. */
+  checkTrue('the standard is written down', design.length > 2000);
+  checkTrue('and every rule in it says how it is checked',
+    /test\/render\.js/.test(design) && /test\/alignment\.js/.test(design) && /node test\/run\.js/.test(design));
+})();
+
 section('No em dash anywhere the app can show one (D-321)');
 
 (function () {

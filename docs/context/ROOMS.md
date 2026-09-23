@@ -6,9 +6,9 @@ Full context for one: `node tools/context/pack.js <id>`.
 
 ## Home (3)
 
-- **ledger** — The Ledger (utility) · 4872 lines · engines: projection, tier0, income, ledger, swan, variance, rerank, tax, fire, statement, debt, hourly, subscriptions, recipes, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, coast, opening, benchmarks, ratios, skills · owns: takeHomeMonthly, rothContributed, hsaContributed, onHdhp, hsaFamilyPlan, marginalRate, totalSaved, payVaries, spendingIncludesDebt, spendingIncludesSaving, savedMonthly, highInterestBalance, refundLastYear, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, assetValue, assetCharacter, assetTier, assetCostBasis, assetInstitution, assetAccountType, assetConfidence, assetCashFlow, assetHassle, assetAccessAge · D-338, D-337, D-336
+- **ledger** — The Ledger (utility) · 4885 lines · engines: projection, tier0, income, ledger, swan, variance, rerank, tax, fire, statement, debt, hourly, subscriptions, recipes, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, coast, opening, benchmarks, ratios, skills · owns: takeHomeMonthly, rothContributed, hsaContributed, onHdhp, hsaFamilyPlan, marginalRate, totalSaved, payVaries, spendingIncludesDebt, spendingIncludesSaving, savedMonthly, highInterestBalance, refundLastYear, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, assetValue, assetCharacter, assetTier, assetCostBasis, assetInstitution, assetAccountType, assetConfidence, assetCashFlow, assetHassle, assetAccessAge · D-338, D-337, D-336
 - **start** — Start Here · 1189 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-323, D-262, D-259
-- **dashboard** — The Dashboard · 1880 lines · no engines · DD-030, DD-028, DD-026
+- **dashboard** — The Dashboard · 1892 lines · no engines · DD-030, DD-028, DD-026
 
 ## Your Numbers (13)
 
@@ -17,7 +17,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **cash-flow** — The Month · 923 lines · engines: projection, tier0, cashflow, income, selfemployed, ledger, budget, hourly, calendar · owns: payCadence, nextPayday, billsMonthly, payLaterDue · D-318, D-275, D-260
 - **calendar** — The Calendar · 190 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, calendar · D-308, D-275, D-253
 - **budget** — The Close · 1046 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget, variance, hourly, foo, fire, statement, benchmarks, ratios, events, skills, history · owns: monthsClosed, historyCompareTo · D-276, D-257, D-130
-- **statement** — The Statement · 484 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget, hourly, foo, coast, opening, benchmarks · owns: confidenceWeightedNetWorth, netWorth · D-313, D-290, D-278
+- **statement** — The Statement · 486 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget, hourly, foo, coast, opening, benchmarks · owns: confidenceWeightedNetWorth, netWorth · D-313, D-290, D-278
 - **bridge** — The Bridge · 296 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, hourly · D-313
 - **which-account** — Which Account · 421 lines · engines: projection, tier0, selfemployed, tax, income, ledger, cashflow, taxroom, accounts, hourly, coast, opening · D-313
 - **the-mix** — The Mix · 240 lines · engines: projection, tier0, income, ledger, hourly · D-313

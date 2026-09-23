@@ -17352,6 +17352,38 @@ yet" rather than 0%, and that a level named on the dashboard opens where it is
 answered. Looked at in a browser at 390px, empty and with the example
 household.
 
+## D-339 — The standard the app is held to, and the first pass against it
+
+**Why.** The owner: "This is pretty complex and it feels messy. Make every
+single thing feel more professional look professional meet professional
+standards." A review nobody can act on has to become rules a session can
+check, so the rules are written down and most of them are tested.
+
+**Decision.** `docs/DESIGN.md` is the standard: twenty-two rules over numbers,
+words, layout, charts and access, each with the check that holds it. The first
+pass against it fixes what the audit found at 390px:
+`Money.formatAge` and the two rooms that were printing an engine's working
+number ("to age 55.88101594379056"); `test/render.js` now fails on any three
+decimals rendered in any room, empty or with data. The undo pair docks into
+the room's own strip instead of floating over the page (it covered a figure in
+one corner and the labels in the other). The seven ways into the Ledger are one
+sideways row with the current one scrolled into view, not three lines of pills.
+What a room shows and needs is folded. The Planets lede leads with the count
+and folds the explanation. The Next card stopped gluing two sentences into one.
+The Statement's tile label is one line, "about" left the figure for the note,
+and its two ways on are chips. The front page's eleven underlined links are
+chips. The Planets tab is "Overview", since "The Dashboard" is a room.
+
+**Replaces or removes.** The floating undo corner, the four-line shows-and-needs
+block at the top of every room, the three-line pill pile, and the link soup.
+Nothing gains a screen or a field.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` 35878, with twenty new checks that hold the
+rules; `node test/render.js` 302 across every room in both states; the browser
+gates; and the four main screens looked at again at 390px, before and after.
+
 ---
 
 # The Dungeons & Dividends entries

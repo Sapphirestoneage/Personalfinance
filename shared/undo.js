@@ -109,9 +109,43 @@
   }
 
   Spine.onChange(function () { paint(); announce(); });
-  function mount() { document.body.appendChild(box); document.body.appendChild(toast);
-    /* The room keeps the space the bar will use, whether or not it shows yet,
-       so the page never shifts under a finger when the first change lands. */
-    document.documentElement.classList.add('has-undo'); paint(); }
+  /* ---- Where the pair lives (D-339) ----------------------------------------
+     It used to float over the page, bottom right and then bottom left, and
+     both corners covered something: first a figure (D-144), then the labels
+     in the left gutter. A control that sits on top of the thing you are
+     reading is not a small annoyance, it is the app looking unfinished.
+     It docks in the room's own header strip instead, beside the way out,
+     where it scrolls away with everything else and covers nothing. A page
+     without that strip (a redirect stub, a print view) keeps the floating
+     corner as a fallback, which is the only place left to put it. */
+  function dock() {
+    /* Beside the way out, on a room that has one. A page with no hops (the
+       front page) would leave the pair stranded on a line of its own, so
+       there it goes into the top strip beside the menu button instead. */
+    var host = document.querySelector('.slaf-hops-host');
+    if (!host) return false;
+    if (box.parentNode === host) return true;
+    host.appendChild(box);
+    box.classList.add('is-docked');
+    /* A front page has the strip but no hops in it, so the pair rides the
+       line on its own, pulled up beside the note above it rather than
+       sitting in a band of empty space. */
+    if (!host.querySelector('.slaf-hops')) box.classList.add('is-alone');
+    document.documentElement.classList.remove('has-undo');
+    return true;
+  }
+  function mount() {
+    document.body.appendChild(box);
+    document.body.appendChild(toast);
+    if (!dock()) {
+      /* No header yet: keep the space the bar will use so the page never
+         shifts under a finger when the first change lands, and try again
+         once the header has mounted. */
+      document.documentElement.classList.add('has-undo');
+      var tries = 0;
+      var again = setInterval(function () { if (dock() || ++tries > 20) clearInterval(again); }, 100);
+    }
+    paint();
+  }
   if (document.body) mount(); else document.addEventListener('DOMContentLoaded', mount);
 })();

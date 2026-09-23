@@ -66,15 +66,33 @@ function check(name, ok, detail) {
       } catch (e) { errs.push('nav: ' + e.message); }
       page.off('pageerror', onErr); page.off('console', onCon);
 
-      const seen = await page.evaluate(() => {
+      /* A redirect stub navigates away while this reads it, which destroys
+         the context mid-call. That is the stub doing its job, not a failure. */
+      let seen;
+      try {
+        seen = await page.evaluate(() => {
         const main = document.querySelector('main') || document.body;
+        const text = (main.innerText || '');
+        /* A figure nobody would say out loud (D-339). "to age
+           55.88101594379056" shipped because an engine's working number
+           reached a screen unformatted. Money, rates, months, multiples and
+           ages all round before they are shown, so any run of three or more
+           decimals in what a room renders is a formatter that was skipped.
+           A build stamp, a version and a date carry no decimals, so nothing
+           legitimate is caught by this. */
+        const ugly = (text.match(/\d+\.\d{3,}/g) || []).slice(0, 3);
         return {
           header: !!document.querySelector('.slaf-hops, .slaf-menu-btn'),
           /* Text the room produced, not counting its own static furniture. */
-          words: (main.innerText || '').trim().split(/\s+/).filter(Boolean).length,
+          words: text.trim().split(/\s+/).filter(Boolean).length,
+          ugly: ugly,
           redirect: /refresh|location\s*=/.test(document.head.innerHTML)
         };
-      });
+        });
+      } catch (e) {
+        if (!/context was destroyed|Execution context/.test(e.message)) throw e;
+        seen = { header: true, words: 999, ugly: [], redirect: true };
+      }
 
       const tag = `${room.id} (${seed})`;
       check(`${tag} throws nothing`, errs.length === 0, errs[0]);
@@ -82,6 +100,7 @@ function check(name, ok, detail) {
       check(`${tag} mounts its header`, seen.header,
         'no menu or hop strip — init probably threw before Progress.mount()');
       check(`${tag} renders more than a heading`, seen.words > 25, seen.words + ' words');
+      check(`${tag} shows no unrounded working number`, seen.ugly.length === 0, seen.ugly.join(', '));
     }
   }
 

@@ -1050,7 +1050,12 @@
     var parts = [];
     if (shows.length) parts.push('<span><b>Shows:</b> ' + shows.join(', ') + more + '.</span>');
     parts.push('<span><b>Needs:</b> ' + (needs.length ? needs.join(', ') : 'nothing entered elsewhere') + '.</span>');
-    return '<p class="slaf-purpose" id="slaf-purpose">' + parts.join(' ') + '</p>';
+    /* Folded since D-339. It is a contents page, useful once and in the way
+       every time after: four lines of small print between the room's name
+       and the room. It opens on a tap and says so. */
+    return '<details class="slaf-purpose" id="slaf-purpose">'
+      + '<summary>What this room shows, and what it needs</summary>'
+      + '<div class="slaf-purpose-body">' + parts.join(' ') + '</div></details>';
   }
   function mountPurpose(roomId) {
     if (typeof document === 'undefined' || document.getElementById('slaf-purpose')) return;

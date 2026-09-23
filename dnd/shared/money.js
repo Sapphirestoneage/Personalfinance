@@ -211,6 +211,17 @@
     return rounded + (rounded === 1 ? ' month' : ' months');
   }
 
+  /** An age, in whole years. Ages arrive from two places: a person types
+      one (62), or a date engine works one out (55.88101594379056, the age at
+      which a projection crosses a line). Both are ages when they reach a
+      screen, and nobody says they will stop work at fifty-five point eight
+      eight one. D-339. */
+  function formatAge(years, opts) {
+    var o = opts || {};
+    if (!isEntered(years)) return o.placeholder || NOT_YET;
+    return String(Math.round(years));
+  }
+
   /** Ratio -> "3.2x". */
   function formatMultiple(x, opts) {
     var o = opts || {};
@@ -260,6 +271,7 @@
     formatRate: formatRate,
     formatMonths: formatMonths,
     formatMultiple: formatMultiple,
+    formatAge: formatAge,
     display: display
   };
 });

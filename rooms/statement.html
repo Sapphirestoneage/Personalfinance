@@ -162,7 +162,7 @@
     <span class="slaf-eyebrow">Net worth</span>
     <div class="pair" id="nw-pair" style="margin-top:var(--space-3)">
       <div class="figure-cell">
-        <span class="cap">What you own, less what you owe</span>
+        <span class="cap">Owned, less owed</span>
         <span class="big" id="nw-plain">not yet</span>
         <span class="sub" id="nw-plain-sub"></span>
       </div>
@@ -349,9 +349,11 @@
       el('hc-links').innerHTML = '';
       return;
     }
-    setFig('hc-value', 'hc-sub', true, 'about ' + fmt(hc.value),
-      esc('to age ' + hc.stopAge + ', in today’s money · rough'));
-    el('hc-links').innerHTML = '<a href="' + esc(Ownership.linkTo('income', null, ROOM_ID)) + '">Grow it →</a> <a href="' + esc(Ownership.linkTo('protection', null, ROOM_ID)) + '">Protect it →</a>';
+    setFig('hc-value', 'hc-sub', true, fmt(hc.value),
+      esc('a rough figure, to age ' + Money.formatAge(hc.stopAge) + ', in today’s money'));
+    el('hc-links').innerHTML = '<span class="slaf-gos">'
+      + '<a class="slaf-go" href="' + esc(Ownership.linkTo('income', null, ROOM_ID)) + '">Grow it →</a>'
+      + '<a class="slaf-go" href="' + esc(Ownership.linkTo('protection', null, ROOM_ID)) + '">Protect it →</a></span>';
   }
 
   /* ---- 3. The ladder ------------------------------------------------------ */

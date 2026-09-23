@@ -275,7 +275,7 @@
     var op = Opening.read(h, TABLES);
     var likely = op && op.band && op.band.hasDate && op.band.runs && op.band.runs.likely;
     var stop = likely && Money.isEntered(likely.age) ? likely.age : TABLES.opening.coastTargetAge;
-    if (Money.isEntered(age)) set('a-years', Math.max(0, Math.round(stop - age)), 'to age ' + esc(String(stop)) + (likely ? ', the likely date from the opening' : ', the fallback stop age'));
+    if (Money.isEntered(age)) set('a-years', Math.max(0, Math.round(stop - age)), 'to age ' + esc(Money.formatAge(stop)) + (likely ? ', the likely date from the opening' : ', the fallback stop age'));
     else set('a-years', null, '<a href="' + esc(ledgerHref('dob')) + '">Enter your age in the Ledger →</a>');
     set('a-return', a.expectedReturnRate, 'the return assumption, ' + esc(Money.formatRate(a.expectedReturnRate, { decimals: 0 })));
     /* Solo: the own-work income. */

@@ -58,6 +58,7 @@
      so #sky-open is guarded by shared/liveform.js (D-034); everything else
      here is output and redraws on every change. */
   .sky-say { font-size: var(--text-sm); color: var(--color-text-muted); margin: 0 0 var(--space-3); }
+  .sky-next-meta { font-size: var(--text-xs); color: var(--color-text-faint); margin-top: var(--space-1) !important; }
   .sky-say b { color: var(--color-text); font-variant-numeric: tabular-nums; }
   .sky-grid { display: flex; flex-direction: column; gap: 2px; margin: 0 0 var(--space-3); }
   .sky-head, .sky-row { display: grid; grid-template-columns: 92px 1fr; gap: var(--space-2); align-items: center; }
@@ -1089,11 +1090,14 @@
 
   <!-- ================= THE PLANETS (D-321) ============================== -->
   <section id="view-sky" hidden>
-  <p class="slaf-lede" id="planets">Six areas of your money, ten bands deep. A band means the same depth of knowing on every planet, so band 4 on Taxes is as deep as band 4 on Debt. Nothing here is locked: a level you have not answered is simply not yet.</p>
   <p class="sky-say" id="sky-say"></p>
+  <details class="slaf-purpose" id="planets">
+    <summary>How the planets work</summary>
+    <div class="slaf-purpose-body">Six areas of your money, ten bands deep. A band means the same depth of knowing on every planet, so band 4 on Taxes is as deep as band 4 on Debt. Nothing here is locked: a level you have not answered is simply not yet.</div>
+  </details>
   <div class="sky-tabs" id="sky-tabs" role="group" aria-label="Three ways to read the planets">
     <button type="button" data-tab="planets" class="is-on">The planets</button>
-    <button type="button" data-tab="dash">Dashboard</button>
+    <button type="button" data-tab="dash">Overview</button>
     <button type="button" data-tab="unlocks">What unlocks</button>
   </div>
   <div id="sky-planets">
@@ -1453,6 +1457,11 @@
     Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
       var mine = a.getAttribute('data-view') === on.id;
       a.setAttribute('aria-current', mine ? 'page' : 'false');
+      /* The seven ways in are one sideways-scrolling row (D-339), so the one
+         you are on is brought into view rather than left off the end. */
+      if (mine && a.scrollIntoView) {
+        try { a.scrollIntoView({ block: 'nearest', inline: 'center' }); } catch (e) { /* older browsers scroll on their own */ }
+      }
     });
     return on.id;
   }
@@ -3487,8 +3496,12 @@
     if (!n) { box.hidden = true; return; }
     box.hidden = false;
     var hlp = Sketch && Sketch.help ? Sketch.help(n.level.id) : null;
+    /* Two sentences and a time, each in its own place (D-339). Glued
+       together they read "lights the first metrics. about half a minute.
+       Nothing to look up." with a lowercase sentence in the middle. */
     var next = '<span class="eyebrow">Next</span><b>' + esc(n.planetLabel) + ' ' + esc(n.level.level) + ': ' + esc(promptOf(n.level)) + '</b>'
-      + '<p>' + esc(n.why) + ' ' + esc(minutes(n.level.minutes)) + '. ' + esc(hlp && hlp.look ? hlp.look : n.level.first15) + '</p>';
+      + '<p>' + esc(hlp && hlp.look ? hlp.look : n.level.first15) + '</p>'
+      + '<p class="sky-next-meta">' + esc(minutes(n.level.minutes, true)) + ' \u00b7 ' + esc(n.why) + '</p>';
     box.innerHTML = next;
   }
 
