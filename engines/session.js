@@ -89,7 +89,7 @@
       if (h.meta && h.meta.hasDebt === false) return { pass: true, why: 'no debt' };
       if (!(h.debts || []).length) return { pass: false, why: 'no debts listed, and "no debt" not said' };
       var r = safe(function () { return D.Debt.simulate(h, T.debtRules, {}); });
-      return { pass: isOk(r), why: isOk(r) ? 'debt-free in ' + r.months + ' months' : 'no debt-free date yet' };
+      return { pass: isOk(r), why: isOk(r) ? 'debt-free in ' + monthsText(r.months) + ' at the minimums alone' : 'no debt-free date yet' };
     },
     emergencyMonths: function (h) {
       var r = safe(function () { return D.Tier0.emergencyFundMonths(h); });
@@ -201,7 +201,7 @@
     var b = {}; (before[list] || []).forEach(function (x) { b[x.id] = x; });
     var a = {}; (after[list] || []).forEach(function (x) { a[x.id] = x; });
     var fields = list === 'debts'
-      ? [['balanceCents', 'balance', Money.formatCents], ['rate', 'rate', function (v) { return Money.formatRate(v); }], ['minPaymentCents', 'payment', Money.formatCents]]
+      ? [['balanceCents', 'balance', Money.formatCents], ['rate', 'rate', function (v) { return Money.formatRate(v, { decimals: 1 }); }], ['minPaymentCents', 'payment', Money.formatCents]]
       : [['valueCents', 'value', Money.formatCents]];
     Object.keys(a).forEach(function (id) {
       var x = a[id], label = x.label || name;
@@ -237,7 +237,8 @@
         var x = ra[id], y = rb[id];
         var was = y ? y.text : null, now = x.text;
         if (was === now || /listed$/.test(String(now)) || /listed$/.test(String(was))) return;
-        changed.push(x.label + ': ' + (was || 'not yet') + ' to ' + (now || 'not yet'));
+        var line = x.label + ': ' + (was || 'not yet') + ' to ' + (now || 'not yet');
+        if (changed.indexOf(line) === -1) changed.push(line);     /* two fields, one label and one figure: say it once */
       });
     }
     changed = changed.concat(itemLines(B, A, 'debts', 'A debt'), itemLines(B, A, 'assets', 'An account'));

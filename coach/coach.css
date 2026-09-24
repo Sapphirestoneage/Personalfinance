@@ -105,6 +105,8 @@ dialog.coach-dialog::backdrop { background: rgba(0, 0, 0, .6); }
 .feel button[aria-pressed="true"] { border-color: var(--color-border-active); background: var(--color-surface-active); }
 .presenter-bar { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); font-size: var(--text-xs); color: var(--color-text-faint); }
 @media print {
+  body.printing-recap main, body.printing-recap dialog { display: none !important; }
+  body.printing-recap .print-page { display: block !important; }
   .no-print, .quick, .crumbs, .coach-actions { display: none !important; }
   body { background: #fff !important; color: #000 !important; }
   .print-page { color: #000; }

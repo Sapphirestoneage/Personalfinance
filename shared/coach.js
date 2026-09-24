@@ -183,6 +183,12 @@
     var list = read().clients.map(function (c) { return { client: clone(c), keys: Profiles.readKeys(c.id) }; });
     return { slafCoachExport: SIGNATURE, kind: 'all', savedAt: nowIso(now), clients: list, importTemplates: templates() };
   }
+  /* A recap leaves as its text and the client's name only: never the
+     household, never a coach note (the text is built without them). */
+  function recapFile(id, text, now) {
+    var c = client(id);
+    return { slafCoachExport: SIGNATURE, kind: 'recap', savedAt: nowIso(now), client: { name: c ? c.name : null }, text: String(text || '') };
+  }
   function day(now) {
     var d = now ? new Date(now) : new Date();
     return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
@@ -482,7 +488,7 @@
     roster: roster, clients: clients, client: client, addClient: addClient, updateClient: updateClient,
     archive: archive, removeClient: removeClient, tick: tick, ticked: ticked,
     saveTemplate: saveTemplate, templates: templates,
-    clientFile: clientFile, allFile: allFile, filename: filename, isCoachFile: isCoachFile,
+    clientFile: clientFile, allFile: allFile, recapFile: recapFile, filename: filename, isCoachFile: isCoachFile,
     seal: seal, openFile: openFile, restore: restore, _reset: _reset,
     setVerdict: setVerdict, setShown: setShown, DEMO_ID: DEMO_ID, ensureDemo: ensureDemo,
     record: record, addNote: addNote, removeNote: removeNote, addHomework: addHomework, setHomeworkDone: setHomeworkDone,

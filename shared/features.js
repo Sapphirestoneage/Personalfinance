@@ -85,10 +85,19 @@
   }
 
   /** The one question a room or engine asks. */
+  function coachClient() {
+    var g = typeof self !== 'undefined' ? self : (typeof global !== 'undefined' ? global : null);
+    var P = (typeof module === 'object' && module.exports) ? require('./profiles.js') : (g && g.SLAF && g.SLAF.Profiles);
+    return !!(P && P.active && P.active() !== 'default');
+  }
   function on(id, household) {
     var f = get(id);
     if (!f) return false;
     if (f.scope === 'situation') return !!situationSays(id, household);
+    /* Coach Mode (D-342): on a client's household every switch a person can
+       flip is on; the coach decides what matters, not a beginner default.
+       The coach's own household keeps the coach's own switches. */
+    if (coachClient()) return true;
     var stored = Prefs ? Prefs.get(prefKey(id), null) : null;
     if (stored === true || stored === false) return stored;
     /* A default that depends on the household (D-313): the one fixed phrase

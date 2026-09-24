@@ -155,6 +155,30 @@
     if (m) setCoach(m[1] === '1');
   } catch (e) { /* no location here */ }
 
+  /* A room opened on its own in a tab that is on a client's household says
+     so at the top, with the way back, so a coach never mistakes a client's
+     numbers for their own. Not inside the coach console's frame (the
+     console says it), and never with Coach Mode off. */
+  function banner() {
+    try {
+      var doc = root && root.document;
+      if (!doc || active() === DEFAULT || root.top !== root) return;
+      if (/\/coach\//.test(root.location.pathname || '')) return;
+      var add = function () {
+        if (doc.getElementById('slaf-profile-banner') || !doc.body) return;
+        var d = doc.createElement('div');
+        d.id = 'slaf-profile-banner';
+        d.setAttribute('role', 'note');
+        d.style.cssText = 'position:sticky;top:0;z-index:50;padding:6px 12px;font:14px/1.4 system-ui,sans-serif;background:#5a3b00;color:#fff;text-align:center';
+        var up = /\/rooms\//.test(root.location.pathname || '') ? '../' : '';
+        d.innerHTML = 'Coach Mode: this tab shows a client\'s numbers, not yours. <a style="color:#fff;text-decoration:underline" href="' + up + 'coach/index.html">Back to Coach Home</a>';
+        doc.body.insertBefore(d, doc.body.firstChild);
+      };
+      if (doc.readyState === 'loading') doc.addEventListener('DOMContentLoaded', add); else add();
+    } catch (e) { /* no document here */ }
+  }
+  banner();
+
   /* Tests only: forget the tab's memory. */
   function _reset() { memoryActive = null; var s = session(); if (s) { try { s.removeItem(ACTIVE_KEY); } catch (e) { /* fine */ } } }
 

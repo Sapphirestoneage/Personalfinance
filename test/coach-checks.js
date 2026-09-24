@@ -381,6 +381,71 @@ module.exports = function run(h) {
     checkTrue('coach/ holds its three screens and nothing more (D-338)', coachPages.every(f => ['index.html', 'session.html', 'client.html'].indexOf(f) !== -1), coachPages.join(', '));
   }
 
+
+  /* ======================================================================
+     C and E: the console's writes, the session lifecycle and the recap
+     (D-342, D-343)
+     ====================================================================== */
+  section('Coach Mode C, E: a session start to end, and its recap (D-342, D-343)');
+  {
+    const T = tablesAll();
+    const { s, Spine, Coach, Profiles } = withOwnership();
+    const Session = require(P('engines/session.js'));
+    const Q = require(P('engines/quickentry.js'));
+    const Demo = require(P('shared/demo-persona.js'));
+    const d = Coach.ensureDemo(Demo);
+    Spine.useProfile(d.id);
+    const sess = Coach.startSession('2026-09-24T15:00:00Z');
+    checkTrue('start session freezes the household in a labelled snapshot', Spine.listSnapshots().some(x => x.id === sess.startSnapshotId && x.reason === 'coach-session-start' && x.rawInputs.household));
+    check('starting twice keeps the one open session', Coach.startSession().id, sess.id);
+    const quick = Coach.applyQuick(Q.parse('car 450/mo 5.9% 38 left', T.quickEntry, Spine.getProfile()), { stopId: 'debt', sessionId: sess.id });
+    check('quick entry writes the owning rows', Spine.getProfile().debts.filter(x => x.label === 'Car loan').map(x => x.minPaymentCents + '@' + x.rate).join(), '45000@0.059');
+    check('and keeps the words it did not read as a private stop note', quick.note.kind + ':' + quick.note.stopId + ':' + quick.note.text, 'coach:debt:Car loan: 38 payments left');
+    const unparsed = Coach.applyQuick(Q.parse('client mentions a bonus maybe', T.quickEntry, Spine.getProfile()), { stopId: 'income' });
+    check('a line quick entry cannot read writes no number, only a note', unparsed.written + ':' + unparsed.note.text, '0:client mentions a bonus maybe');
+    Coach.addNote({ kind: 'coach', text: 'PRIVATE-ONLY-7731', stopId: 'debt', sessionId: sess.id });
+    Coach.addNote({ kind: 'shared', text: 'We will clear the card first', stopId: 'debt', sessionId: sess.id });
+    Coach.addHomework({ text: 'Find the 401k fee ratio', dueOn: '2026-10-08', stopId: 'assets', sessionId: sess.id });
+    Coach.tick(d.id, 'debt', 'q:every', true);
+    const ended = Coach.endSession(sess.id, { stopsCovered: ['debt'], ticked: [{ stopId: 'debt', itemId: 'q:every' }], now: '2026-09-24T16:05:00Z' });
+    checkTrue('end session snapshots again and closes it with its length', !!ended.endSnapshotId && ended.durationMs === 65 * 60000 && Coach.openSession() === null);
+    const before = Coach.snapshotHousehold(ended.startSnapshotId), after = Coach.snapshotHousehold(ended.endSnapshotId);
+    check('the start snapshot is the plan as it was (no car loan)', before.debts.some(x => x.label === 'Car loan'), false);
+    check('the end snapshot has it', after.debts.some(x => x.label === 'Car loan'), true);
+    const stops = Session.path(T.sessionPaths, 'default', {});
+    const r = Coach.record();
+    const recap = Session.recap(before, after, T, { stops, stopsCovered: ended.stopsCovered, ticked: ended.ticked, notes: r.notes, homework: r.homework, sessionId: sess.id });
+    checkTrue('the recap says what was covered', /Debt \(1 item done\)/.test(recap.text));
+    checkTrue('the recap names the new debt', /Added Car loan: rate 5\.9%, payment \$450/.test(recap.text), recap.text);
+    checkTrue('ratios before and after', /Debt-to-income: \d+% to \d+%/.test(recap.text));
+    checkTrue('the FI band before and after', /The FI date: .* before, .* now|The FI date: .*\(same\)/.test(recap.text));
+    checkTrue('shared notes and homework with the due date are in', /clear the card first/.test(recap.text) && /401k fee ratio \(by 2026-10-08\)/.test(recap.text));
+    checkTrue('no coach note reaches the recap, not the typed one, not the quick-entry one', recap.text.indexOf('PRIVATE-ONLY-7731') === -1 && recap.text.indexOf('38 payments left') === -1 && recap.text.indexOf('bonus maybe') === -1);
+    Coach.saveRecap(sess.id, recap.text + '\nEdited by the coach.');
+    const file = Coach.recapFile(d.id, Coach.record().sessions[0].recapText);
+    checkTrue('the recap file carries the text and the name, and no household', file.kind === 'recap' && /Edited by the coach/.test(file.text) && !file.keys && !file.household && JSON.stringify(file).indexOf('PRIVATE-ONLY-7731') === -1);
+    /* The coach profile: every switch on, no ask card; home keeps its own. */
+    const Features = require(P('shared/features.js'));
+    Features.use(T.features);
+    const userSwitches = Features.all().filter(f => f.scope === 'user');
+    checkTrue('on a client household every user switch is on', userSwitches.every(f => Features.on(f.id, Spine.getProfile())));
+    Spine.useProfile('default');
+    checkTrue('on the coach\'s own household the defaults stand', userSwitches.some(f => !Features.on(f.id, Spine.getProfile())));
+    checkTrue('the personal household never gained a coach record', s.getItem('slaf.household.v2') === null || JSON.parse(s.getItem('slaf.household.v2')).coach === undefined);
+    doneOwn();
+  }
+  {
+    const con = fs.readFileSync(P('coach/console.js'), 'utf8');
+    const page = fs.readFileSync(P('coach/session.html'), 'utf8');
+    checkTrue('the console has no client picker: switching goes through Coach Home', !/<select[^>]*client/i.test(page) && !/Coach\.clients\(/.test(con));
+    checkTrue('an unknown client id draws nothing (no guess)', /if \(!client\) \{/.test(con));
+    checkTrue('the console marks itself built once (D-034)', /LIVE-FORM: built once/.test(page));
+    checkTrue('detours nest at most two deep', /MAX_DETOURS = 2/.test(con));
+    checkTrue('the session embeds rooms only from this origin', /frame-src 'self'/.test(page) && !/frame-src 'self' http/.test(page));
+    const settingsCsp = fs.readFileSync(P('rooms/settings.html'), 'utf8');
+    checkTrue('rooms still refuse every frame', /frame-src 'none'/.test(settingsCsp));
+  }
+
   /* The async checks run last, one after another: they swap the global
      storage like every block here, so they must not overlap the others. */
   return pending.reduce((chain, fn) => chain.then(fn), Promise.resolve());

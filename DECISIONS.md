@@ -17384,6 +17384,45 @@ Coach Mode switch (`rooms/settings.html#advanced`).
 
 **Verified.** `node test/run.js`; Coach Home in Chromium, clean console.
 
+## D-342 — The Session console: path, embedded room, rail, detour, quick entry, notes
+
+**Why.** Spec section 3.2: where the coach spends a live call.
+
+**Decision.** `coach/session.html` (`coach/console.js`) switches the tab to
+the client named in `?client=` (no picker on the page). Left the path from
+`engines/session.js`; centre the stop's owning room in a same-origin frame
+(coach pages alone allow `frame-src 'self'`); right the rail against the
+session's start snapshot. Detour keeps a crumb, two deep. On a client profile
+`shared/features.js` reads every user switch as on and `shared/ask.js` asks
+nothing; `shared/profiles.js` bannered any room opened in a client tab.
+
+**Replaces or removes.** The owner's sheet tabs per topic.
+
+**Stored shape.** `household.coach.notes[]` (coach or shared), `homework[]`,
+`comments[]`; roster `stopOrder`, `skipped`, ticks. No existing shape changes.
+
+**Verified.** `node test/run.js`; a Chromium walk: start, quick entry,
+notes, detour and back, end, clean console.
+
+## D-343 — A session starts and ends on a snapshot, and the recap writes itself
+
+**Why.** Spec section 5: the recap is a diff of two snapshots, in words.
+
+**Decision.** Start and End session append labelled snapshots
+(`coach-session-start`, `coach-session-end`) whose `rawInputs.household`
+freezes the plan. `Session.recap` writes covered stops, numbers changed,
+ratios and the FI band before and after, shared notes, homework; coach notes
+are never read. Export: print to PDF, copy as text, or a sealed file
+(`Coach.recapFile`: the text and the name only). Coach Home lists every
+session and opens any snapshot read-only in Client View.
+
+**Replaces or removes.** The recap email written by hand.
+
+**Stored shape.** `household.coach.sessions[]`; snapshots gain two reasons,
+their shape is unchanged (`rawInputs` already existed).
+
+**Verified.** `node test/run.js` (the recap never holds a coach note).
+
 ---
 
 # The Dungeons & Dividends entries
