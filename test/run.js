@@ -13264,7 +13264,21 @@ section('Backup: one file for every key (D-202)');
         const arg = m[1].trim();
         let key = null;
         const lit = arg.match(/^['"]([^'"]+)['"]$/);
-        if (lit) key = lit[1];
+        /* A key through the profile layer (D-339): scoped(KEY), Profiles.key(KEY)
+           or a no-argument helper like seenKey() that returns one. The base key
+           is what the audit knows; the layer only prefixes it. */
+        const via = arg.match(/^[A-Za-z_$][\w$.]*\(\s*([A-Za-z_$][\w$]*)?\s*\)$/);
+        if (via && !via[1]) {
+          const helper = arg.split('(')[0].trim();
+          const body = text.match(new RegExp('function\\s+' + helper + '\\s*\\(\\s*\\)\\s*\\{[^}]*?\\b([A-Z_]*KEY)\\b'));
+          const def = body && text.match(new RegExp('\\b(?:var|const|let)\\s+' + body[1] + '\\s*=\\s*[\'"]([^\'"]+)[\'"]'));
+          if (def) key = def[1];
+        } else if (via) {
+          const def = text.match(new RegExp('\\b(?:var|const|let)\\s+' + via[1] + '\\s*=\\s*[\'"]([^\'"]+)[\'"]'));
+          if (def) key = def[1];
+        }
+        if (key !== null) { /* resolved through the layer */ }
+        else if (lit) key = lit[1];
         else if (/^[A-Za-z_$][\w$]*$/.test(arg)) {
           const def = text.match(new RegExp('\\b(?:var|const|let)\\s+' + arg.replace(/\$/g, '\\$') + '\\s*=\\s*[\'"]([^\'"]+)[\'"]'));
           if (def) key = def[1];
@@ -13313,7 +13327,10 @@ section('Backup: one file for every key (D-202)');
     checkTrue('every stored key starts with a backed-up prefix (the static drift guard)', stray.length === 0, stray.join('; '));
     /* The audit's list, pinned: a key that appears here for the first time
        is a key the backup now carries, and this says so out loud. */
-    const known = ['slaf.household.v2', 'slaf.snapshots.v1', 'slaf.household.unreadable', 'slaf.prefs.v1', 'slaf.scenarios.v1', 'slaf.skilltree.seen', 'slaf.backup.undo.v1', 'slaf.errlog.v1', 'dnd.character.v1', 'dnd.skin.v1'];
+    const known = ['slaf.household.v2', 'slaf.snapshots.v1', 'slaf.household.unreadable', 'slaf.prefs.v1', 'slaf.scenarios.v1', 'slaf.skilltree.seen', 'slaf.backup.undo.v1', 'slaf.errlog.v1', 'dnd.character.v1', 'dnd.skin.v1',
+      /* Coach Mode (D-339): the tab's profile id lives in sessionStorage; a
+         client's keys sit under 'slaf.p.<id>.'; the roster is slaf.coach.v1. */
+      'slaf.profile.active', 'slaf.p.', 'slaf.coach.v1', 'slaf.coach.'];
     const seen = new Set();
     files.forEach(p => {
       const text = fs.readFileSync(p, 'utf8');

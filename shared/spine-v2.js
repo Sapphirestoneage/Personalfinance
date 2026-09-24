@@ -29,14 +29,14 @@
 (function (root, factory) {
   var deps;
   if (typeof module === 'object' && module.exports) {
-    deps = { Money: require('./money.js'), Schema: require('./schema.js') };
+    deps = { Money: require('./money.js'), Schema: require('./schema.js'), Profiles: require('./profiles.js') };
   } else {
-    deps = { Money: root.SLAF && root.SLAF.Money, Schema: root.SLAF && root.SLAF.Schema };
+    deps = { Money: root.SLAF && root.SLAF.Money, Schema: root.SLAF && root.SLAF.Schema, Profiles: root.SLAF && root.SLAF.Profiles };
   }
-  var api = factory(deps.Money, deps.Schema);
+  var api = factory(deps.Money, deps.Schema, deps.Profiles);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Spine = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Profiles) {
   'use strict';
 
   var STORAGE_KEY = 'slaf.household.v2';
@@ -62,18 +62,26 @@
 
   var useLocal = hasLocalStorage();
 
+  /* Coach Mode (D-339): every key goes through the profile layer. With the
+     default profile, and always with Coach Mode off, a key is itself. */
+  function scoped(key) { return Profiles ? Profiles.key(key) : key; }
+  function activeProfile() { return Profiles ? Profiles.active() : 'default'; }
+
   function readRaw(key) {
+    key = scoped(key);
     if (!useLocal) return memoryStore[key] === undefined ? null : memoryStore[key];
     try { return localStorage.getItem(key); } catch (e) { return null; }
   }
 
   function writeRaw(key, value) {
+    key = scoped(key);
     if (!useLocal) { memoryStore[key] = value; return; }
     try { localStorage.setItem(key, value); }
     catch (e) { memoryStore[key] = value; }   /* quota exceeded, degrade, don't throw */
   }
 
   function removeRaw(key) {
+    key = scoped(key);
     if (!useLocal) { delete memoryStore[key]; return; }
     try { localStorage.removeItem(key); } catch (e) { /* ignore */ }
   }
@@ -261,9 +269,12 @@
   /* ---- Load / save ------------------------------------------------------ */
 
   var cache = null;
+  var cacheProfile = null;       /* the profile the cache was read from */
 
   function load() {
-    if (cache) return cache;
+    if (cache && cacheProfile === activeProfile()) return cache;
+    if (cache) { cache = null; lastSaved = null; lastReadings = null; }
+    cacheProfile = activeProfile();
     loadUncached();
     var stale = stalePage();
     if (stale) storage = { status: 'stale-page', storedVersion: storage.storedVersion, targetVersion: storage.targetVersion, writable: false, pageBuild: stale.page, coreBuild: stale.core };
@@ -573,6 +584,9 @@
 
   function save(opts) {
     if (!cache) return;
+    /* The cache belongs to the profile it was read from. A switch since
+       then means this write would land in the wrong household: drop it. */
+    if (cacheProfile !== activeProfile()) { cache = null; lastSaved = null; lastReadings = null; return; }
     var now = new Date().toISOString();
     cache.meta.updatedAt = now;
     var beforeReadings = lastReadings;
@@ -590,7 +604,7 @@
       /* Something we could not read is sitting in that key. The session
          still works, it just does not persist, which is the correct cost
          of not destroying whatever is already there. */
-      memoryStore[STORAGE_KEY] = JSON.stringify(cache);
+      memoryStore[scoped(STORAGE_KEY)] = JSON.stringify(cache);
       return;
     }
     writeRaw(STORAGE_KEY, JSON.stringify(cache));
@@ -646,7 +660,7 @@
      this tab's listeners. Keeps two open rooms from diverging. */
   if (typeof window !== 'undefined' && window.addEventListener) {
     window.addEventListener('storage', function (evt) {
-      if (evt.key !== STORAGE_KEY) return;
+      if (evt.key !== scoped(STORAGE_KEY)) return;
       /* Reload rather than just drop: the command log diffs against the
          last thing SAVED, and that is now the other tab's. Both tabs read
          one stack, so an undo here takes back the other tab's write too, 
@@ -1886,6 +1900,41 @@
     return getProfile();
   }
 
+  /* ---- Profiles (Coach Mode, D-339) -----------------------------------------
+     useProfile(id) switches this tab to a client's household (or 'default'
+     back to the person's own); every read after it is that household's.
+     householdOf(id) reads another profile's household WITHOUT switching,
+     read-only, for Coach Home's roster: nothing is cached, nothing saved,
+     and two households are never held by the spine at once.            */
+  function useProfile(id) {
+    if (!Profiles) return 'default';
+    var now = Profiles.use(id);
+    cache = null; lastSaved = null; lastReadings = null;
+    load();
+    notify();
+    return now;
+  }
+  function readOther(id, base) {
+    if (!Profiles) return null;
+    var k = Profiles.key(base, id);
+    if (!useLocal) return memoryStore[k] === undefined ? null : memoryStore[k];
+    try { return localStorage.getItem(k); } catch (e) { return null; }
+  }
+  function householdOf(id) {
+    var raw = readOther(id, STORAGE_KEY);
+    if (!raw) return null;
+    var parsed = null;
+    try { parsed = JSON.parse(raw); } catch (e) { return null; }
+    if (!parsed || typeof parsed !== 'object') return null;
+    var r = migrateStored(parsed);
+    return r.ok ? clone(r.household) : null;
+  }
+  function snapshotsOf(id) {
+    var raw = readOther(id, SNAPSHOT_KEY);
+    try { var a = raw ? JSON.parse(raw) : []; return Array.isArray(a) ? a : []; } catch (e) { return []; }
+  }
+  function clearSnapshots() { removeRaw(SNAPSHOT_KEY); }
+
   /** Drop the cache and read storage again, what a page load does. The
    *  tests use it to prove the command log survives one. */
   function _reload() {
@@ -1899,6 +1948,11 @@
     STORAGE_KEY: STORAGE_KEY,
     SNAPSHOT_KEY: SNAPSHOT_KEY,
     getProfile: getProfile,
+    useProfile: useProfile,
+    activeProfile: activeProfile,
+    householdOf: householdOf,
+    snapshotsOf: snapshotsOf,
+    clearSnapshots: clearSnapshots,
     householdAt: householdAt,
     updateProfile: updateProfile,
     journal: journal,

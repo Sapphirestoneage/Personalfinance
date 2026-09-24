@@ -7,6 +7,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <script src="../shared/size.js"></script>
+<script src="../shared/profiles.js"></script>
 <title>The Skill Tree · SPARKS</title>
 <meta name="description" content="Every money skill in five bands, three of them to practise at a time, and every doable exercise in one place, what the next hour does."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -782,6 +783,8 @@
   var TREE_LABEL = {}, BAND_LABEL = {};   /* id → the name a reader should see */
   var CHIP_MAX = 4;
   var SEEN_KEY = 'slaf.skilltree.seen';
+  /* The active profile's copy (Coach Mode, D-339); today's key otherwise. */
+  function seenKey() { return SLAF.Profiles ? SLAF.Profiles.key(SEEN_KEY) : SEEN_KEY; }
 
   function el(id) { return document.getElementById(id); }
   function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
@@ -810,7 +813,7 @@
   /* ---- The band cutscene: once per band that came into view ---------------- */
   function renderReveal(r) {
     var seen = {};
-    try { seen = JSON.parse(localStorage.getItem(SEEN_KEY) || '{}'); } catch (e) { seen = {}; }
+    try { seen = JSON.parse(localStorage.getItem(seenKey()) || '{}'); } catch (e) { seen = {}; }
     var full = r.bands.filter(function (b) { return b.visibility === 'full'; });
     var fresh = full.filter(function (b) { return b.order > 1 && !seen[b.id]; })[0];
     if (!fresh) { el('reveal-host').innerHTML = ''; return; }
@@ -1066,9 +1069,9 @@
     if (ro) { Spine.setSkillDone(ro.getAttribute('data-reopen'), false); return; }
     var seen = evt.target.closest('[data-seen]');
     if (seen) {
-      var m = {}; try { m = JSON.parse(localStorage.getItem(SEEN_KEY) || '{}'); } catch (e) { m = {}; }
+      var m = {}; try { m = JSON.parse(localStorage.getItem(seenKey()) || '{}'); } catch (e) { m = {}; }
       m[seen.getAttribute('data-seen')] = true;
-      try { localStorage.setItem(SEEN_KEY, JSON.stringify(m)); } catch (e) { /* fine */ }
+      try { localStorage.setItem(seenKey(), JSON.stringify(m)); } catch (e) { /* fine */ }
       render();
     }
   });
