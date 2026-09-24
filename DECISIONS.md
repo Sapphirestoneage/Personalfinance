@@ -17344,6 +17344,46 @@ The device backup (D-202) neither carries nor removes them.
 
 **Verified.** `node test/run.js` (test/coach-checks.js), `node test/forms.js` 700.
 
+## D-340 — The session path as data, one engine for every coach reading, and quick entry
+
+**Why.** Coach Mode (D-338) runs a session down a path of stops and needs the
+same ratios, FI band and goals the rooms show, before and after.
+
+**Decision.** `data/session_paths.json`: nine stops, two path templates; each
+stop names Ledger rows, rooms, ratios, questions and doneWhen tests.
+`engines/session.js` evaluates doneWhen from the household and reads the
+rail, band, recap diff, goals and life map only through Tier0, CashFlow,
+Ratios, Opening, Goals and Debt. `engines/quickentry.js` with
+`data/quick_entry.json` turns shorthand into a plan; a line it cannot read
+is a note, never a number.
+
+**Replaces or removes.** No screen. The path replaces the owner's blank sheet.
+
+**Stored shape.** `household.coach { sessions, notes, homework, checkins,
+comments }` (Schema.createCoachRecord), present only once a coach writes it:
+a personal household never gains the key. Absent reads as empty.
+
+**Verified.** `node test/run.js`; `tests/properties` session and quickentry.
+
+## D-341 — Coach Home: the roster, the demo client, a sheet in
+
+**Why.** Spec section 3.1 and 8: the coach's list of clients, and a way off the
+Google Sheet.
+
+**Decision.** `coach/index.html` (`coach/home.js`): one row a client, every
+figure read with `Spine.householdOf`, never switched to; the tab goes back to
+the personal household on open. The demo client is the example persona.
+Import maps CSV columns to Ledger rows or quick-entry words once, kept by name
+in the roster; unmapped columns become private notes. Settings gains the
+Coach Mode switch (`rooms/settings.html#advanced`).
+
+**Replaces or removes.** The Google Sheet's roster tab.
+
+**Stored shape.** Roster only (`slaf.coach.v1`): `importTemplates`,
+`blockVerdicts`, `shownBlocks`. No household change.
+
+**Verified.** `node test/run.js`; Coach Home in Chromium, clean console.
+
 ---
 
 # The Dungeons & Dividends entries

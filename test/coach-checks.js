@@ -191,7 +191,7 @@ module.exports = function run(h) {
 
   /* A4: one client's sealed file restores into a fresh browser; all
      clients go in one file. Real crypto, so these run async. */
-  pending.push((async function () {
+  pending.push(async function () {
     const { s, Spine, Coach } = fresh({});
     coachOn(s);
     const c = Coach.addClient({ name: 'Eden' });
@@ -233,7 +233,7 @@ module.exports = function run(h) {
     check('names and all', g.Coach.clients().map(x => x.name).sort().join(), 'Eden,Fox');
     checkTrue('Fox has an empty household, not a copy of Eden\'s', g.Spine.householdOf(other.id) === null);
     done();
-  })());
+  });
 
   /* No real data in the repository: .gitignore refuses the file names, and
      no tracked file carries the signature as JSON. */
@@ -307,5 +307,81 @@ module.exports = function run(h) {
     check('items: the rows, then the questions', Session.items(SP.stops.income).map(i => i.id).slice(0, 2).join(), 'row:grossAnnualIncome,row:takeHomeMonthly');
   }
 
-  return Promise.all(pending);
+
+  /* ======================================================================
+     B: Coach Home's logic, the demo client and the sheet import (D-341)
+     ====================================================================== */
+  section('Coach Mode B: the demo client, and a sheet in (D-341)');
+  function tablesAll() {
+    const Reference = require(P('shared/reference.js'));
+    const T = {};
+    Object.keys(Reference.TABLE_FILES).forEach(k => { try { T[k] = JSON.parse(fs.readFileSync(P('data/' + Reference.TABLE_FILES[k]), 'utf8')); } catch (e) { /* optional */ } });
+    return T;
+  }
+  function withOwnership(seed) {
+    const f = fresh(seed || {});
+    coachOn(f.s);
+    global.SLAF.Money = require(P('shared/money.js'));
+    global.SLAF.Registry = require(P('shared/registry.js'));
+    delete require.cache[require.resolve(P('shared/ownership.js'))];
+    global.SLAF.Ownership = require(P('shared/ownership.js'));
+    global.SLAF.Csv = require(P('shared/csv.js'));
+    global.SLAF.QuickEntry = require(P('engines/quickentry.js'));
+    return f;
+  }
+  function doneOwn() { delete require.cache[require.resolve(P('shared/ownership.js'))]; done(); }
+  {
+    const T = tablesAll();
+    const { s, Spine, Coach } = withOwnership();
+    const Demo = require(P('shared/demo-persona.js'));
+    const d = Coach.ensureDemo(Demo, '2026-09-24T12:00:00Z');
+    check('the demo client is labelled example numbers', d.name, 'Demo client (example numbers)');
+    check('asking again does not make a second one', Coach.ensureDemo(Demo).id, d.id);
+    const h = Spine.householdOf(d.id);
+    checkTrue('the demo household is the example persona, marked demo', h.meta.isDemo === true && h.people[0].label === Demo.build().people[0].label);
+    check('with three goals that have dates, so the life picture stop is done', h.goals.filter(g => g.targetDate).length, 3);
+    checkTrue('and the personal household was never written', s.getItem('slaf.household.v2') === null);
+
+    /* A sheet: mapped columns go to their rows; the rest become notes. */
+    const c = Coach.addClient({ name: 'Sheet Client' });
+    const csv = 'Month,Rent,Food,Car loan,HYSA,Mood,Marginal\n' + 'Aug,"$2,000",550,,9000,ok,22%\n' + 'Sep,"$2,100",600,12000,12500,good,22%\n';
+    const cols = Coach.suggest(['Month', 'Rent', 'Food', 'Car loan', 'HYSA', 'Mood', 'Marginal'], T);
+    check('the first guess maps Rent to its row', cols.Rent, 'qe:rent');
+    check('and Food', cols.Food, 'qe:food');
+    cols.Food = 'row:foodMonthly';     /* a Ledger row picked by hand reads the cell straight */
+    check('and a debt column to the quick-entry word', cols['Car loan'], 'qe:car loan');
+    check('and leaves a column it does not know unmapped', cols.Mood, null);
+    cols.Marginal = 'row:marginalRate';
+    const plan = Coach.sheetPlan(csv, cols, T);
+    check('the last filled line of each column is read', plan.writes.filter(w => w.header === 'Food')[0].value, 60000);
+    checkTrue('unmapped columns become notes, never numbers', plan.notes.some(n => /Mood: good/.test(n)) && plan.notes.some(n => /Month: Sep/.test(n)));
+    Spine.useProfile(c.id);
+    const out = Coach.applySheet(plan, T);
+    const ch = Spine.getProfile();
+    check('rent reached the housing row', ch.expenses.needs.accommodation.monthlyCents, 210000);
+    check('the car loan was added as a debt with its balance', ch.debts.map(x => x.label + ':' + x.balanceCents).join(), 'Car loan:1200000');
+    check('the HYSA was added as an account', ch.assets.filter(a => a.accountType === 'hysa').map(a => a.valueCents).join(), '1250000');
+    checkTrue('the notes are private coach notes', Coach.record().notes.length === 2 && Coach.record().notes.every(n => n.kind === 'coach' && n.source === 'import'));
+    check('written count', out.written >= 4, true);
+    Spine.useProfile('default');
+    checkTrue('the personal household never saw the sheet', s.getItem('slaf.household.v2') === null);
+    Coach.saveTemplate('My sheet', cols);
+    check('a mapping is kept by name in the roster', Coach.templates()['My sheet'].columns.Rent, 'qe:rent');
+    checkTrue('the roster still carries no money', !/210000|1200000|1250000/.test(s.getItem('slaf.coach.v1')));
+    doneOwn();
+  }
+  {
+    const settings = fs.readFileSync(P('rooms/settings.html'), 'utf8');
+    checkTrue('Settings has the Coach Mode switch, a preference, off by default', /data-pref-toggle="coachMode"/.test(settings) && /Prefs\.get\('coachMode', false\) === true/.test(settings));
+    const home = fs.readFileSync(P('coach/home.js'), 'utf8');
+    checkTrue('Coach Home puts the tab back on the personal household first', home.indexOf("Spine.useProfile('default')") !== -1 && home.indexOf("Spine.useProfile('default')") < home.indexOf('Reference.load'));
+    checkTrue('Coach Home reads clients without switching (householdOf)', /Spine\.householdOf\(c\.id\)/.test(home));
+    checkTrue('Coach Home is guarded: nothing draws with Coach Mode off', /if \(!UI\.guard\(el\('main'\)\)\) return;/.test(home));
+    const coachPages = fs.readdirSync(P('coach')).filter(f => f.endsWith('.html'));
+    checkTrue('coach/ holds its three screens and nothing more (D-338)', coachPages.every(f => ['index.html', 'session.html', 'client.html'].indexOf(f) !== -1), coachPages.join(', '));
+  }
+
+  /* The async checks run last, one after another: they swap the global
+     storage like every block here, so they must not overlap the others. */
+  return pending.reduce((chain, fn) => chain.then(fn), Promise.resolve());
 };

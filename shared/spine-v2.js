@@ -565,7 +565,7 @@
     skills: 'a skill', scenarios: 'a scenario', properties: 'a property', futureIncome: 'future income', values: 'your values', community: 'community',
     estate: 'estate basics', giving: 'giving', decumulation: 'the drawdown', tax: 'tax facts', career: 'the offer', partner: 'the split', kids: 'the kids',
     housing: 'the place', purchase: 'the purchase', variableIncome: 'the buffer', dependents: 'who depends on you', assumptions: 'an assumption', assumptionOverrides: 'an assumption',
-    ledger: 'the ledger', budget: 'the budget' };
+    ledger: 'the ledger', budget: 'the budget', coach: 'the coach record' };
   function record(changes, label) {
     if (!changes.length) return;
     cache.meta.undoStack = cache.meta.undoStack || [];

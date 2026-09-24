@@ -93,7 +93,7 @@
   <section class="slaf-card" id="household" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Household</span><p class="slaf-hint" id="household-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="household-list"></ul></section>
   <section class="slaf-card" id="horizon" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Horizon</span><p class="slaf-hint" id="horizon-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="horizon-list"></ul></section>
   <section class="slaf-card" id="assumptions" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Assumptions</span><p class="slaf-hint" style="margin:var(--space-1) 0 var(--space-2)">Declared once, here, and read by every projection. Every engine works in today’s money, so the return is real, over inflation. The two rates below are yours to step.</p><ul class="sw" id="assumptions-list"></ul></section>
-  <section class="slaf-card" id="advanced" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Advanced</span><p class="slaf-hint" id="advanced-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="advanced-list"></ul></section>
+  <section class="slaf-card" id="advanced" style="margin-top:var(--space-4)"><span class="slaf-eyebrow">Advanced</span><p class="slaf-hint" id="advanced-line" style="margin:var(--space-1) 0 var(--space-2)"></p><ul class="sw" id="advanced-list"></ul><ul class="sw" id="coach-list"></ul></section>
   <section class="slaf-card" id="backup" style="margin-top:var(--space-4)" aria-label="Backup"></section>
 </main>
 
@@ -212,6 +212,11 @@
     var askSay = askOn ? 'On: a room that still needs a number asks for it once, at the top.' : 'Off: no room asks; every blank row waits in the Ledger.';
     el('ask-list').innerHTML = '<li data-row="ask"><div><b>Ask one question at the top of a room</b><span class="gloss">' + esc(askSay) + '</span></div>'
       + '<div class="ctl"><button type="button" class="slaf-switch" role="switch" aria-checked="' + esc(String(askOn)) + '" data-pref-toggle="ask.off" aria-label="Ask one question at the top of a room"><span class="slaf-switch-track"><span class="slaf-switch-knob"></span></span><span class="slaf-switch-text">' + esc(askOn ? 'On' : 'Off') + '</span></button><span class="state">' + esc(askOn ? 'the default' : 'yours') + '</span></div></li>';
+    /* Coach Mode (D-338): off unless switched on here, or by ?coach=1 once.
+       On, it opens the three coach screens; nothing else on this site moves. */
+    var coachOn = Prefs.get('coachMode', false) === true;
+    el('coach-list').innerHTML = '<li data-row="coachMode"><div><b>Coach Mode</b><span class="gloss">' + esc(coachOn ? 'On: a roster of clients, one household each, kept apart from yours. Your own numbers stay exactly where they are.' : 'Off: for a money coach running live sessions with clients. Your own numbers are never touched.') + (coachOn ? ' <a href="../coach/index.html">Open Coach Home</a>' : '') + '</span></div>'
+      + '<div class="ctl"><button type="button" class="slaf-switch" role="switch" aria-checked="' + esc(String(coachOn)) + '" data-pref-toggle="coachMode" aria-label="Coach Mode"><span class="slaf-switch-track"><span class="slaf-switch-knob"></span></span><span class="slaf-switch-text">' + esc(coachOn ? 'On' : 'Off') + '</span></button><span class="state">' + esc(coachOn ? 'yours' : 'the default') + '</span></div></li>';
   }
   document.querySelector('main').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-feature]');

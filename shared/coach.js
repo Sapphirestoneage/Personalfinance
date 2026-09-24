@@ -35,16 +35,39 @@
      seal(obj, passphrase)        Promise<sealed text> (the envelope is marked too)
      restore(obj, { replace })    writes each client's profile and roster entry
      openFile(text, passphrase)   Promise<obj>: a sealed or plain coach file
+
+   THE CLIENT'S OWN RECORD. household.coach, in the ACTIVE profile, written
+   through the spine like any fact (one labelled change, undoable). Every
+   number a coach types still goes through Ownership to the row that owns
+   it; the record keeps only what was said and when.
+     record()                     household.coach, normalised (empty lists if none)
+     addNote({ kind: 'coach'|'shared', text, stopId, sessionId, source })
+     removeNote(id)
+     addHomework({ text, dueOn, stopId, itemId, sessionId }) / setHomeworkDone(id, on)
+     startSession(now)            snapshot the household, open a session
+     endSession(id, { stopsCovered, ticked, now })   snapshot again, close it
+     openSession()                the session still open, or null
+     saveRecap(id, text)          the recap as edited
+     snapshotHousehold(snapId)    the household a coach snapshot froze
+     addCheckin(fields)           balances written through Ownership, the
+                                  report kept as reported (F1)
+     addComment(fields) / resolveComment(id, on)   (F2)
+     applyQuick(plan, ctx)        a quick-entry plan saved (C5)
+     setVerdict(clientId, blockId, 'go'|'wait'|'no'|null)   roster, no money
+     setShown(clientId, blockId, on)   a block the Client View may draw
+     ensureDemo(Demo)             the demo client, from the example persona
    ========================================================================== */
 (function (root, factory) {
   var node = typeof module === 'object' && module.exports;
   var deps = node
-    ? { Profiles: require('./profiles.js'), Vault: require('./vault.js') }
-    : { Profiles: root.SLAF && root.SLAF.Profiles, Vault: root.SLAF && root.SLAF.Vault };
-  var api = factory(deps.Profiles, function () { return deps.Vault || (root && root.SLAF && root.SLAF.Vault); });
+    ? { Profiles: require('./profiles.js'), Vault: require('./vault.js'), Schema: require('./schema.js') }
+    : { Profiles: root.SLAF && root.SLAF.Profiles, Vault: root.SLAF && root.SLAF.Vault, Schema: root.SLAF && root.SLAF.Schema };
+  var g = root || (typeof globalThis !== 'undefined' ? globalThis : {});
+  function slaf() { return (g.SLAF) || (typeof globalThis !== 'undefined' && globalThis.SLAF) || {}; }
+  var api = factory(deps.Profiles, function () { return deps.Vault || slaf().Vault; }, deps.Schema || slaf().Schema, slaf);
   if (node) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Coach = api; }
-})(typeof self !== 'undefined' ? self : null, function (Profiles, vault) {
+})(typeof self !== 'undefined' ? self : null, function (Profiles, vault, Schema, slaf) {
   'use strict';
 
   var KEY = 'slaf.coach.v1';
@@ -219,6 +242,239 @@
     return [{ ok: false, reason: 'A recap is not a backup.' }];
   }
 
+  /* ---- Roster: block verdicts and what the client may see ------------- */
+  function setVerdict(id, blockId, v) {
+    var obj = read(); var c = find(obj, id); if (!c) return null;
+    c.blockVerdicts = c.blockVerdicts || {};
+    if (['go', 'wait', 'no'].indexOf(v) >= 0) c.blockVerdicts[blockId] = v; else delete c.blockVerdicts[blockId];
+    write(obj); return c.blockVerdicts[blockId] || null;
+  }
+  function setShown(id, blockId, on) {
+    var obj = read(); var c = find(obj, id); if (!c) return null;
+    c.shownBlocks = c.shownBlocks || {};
+    if (on) c.shownBlocks[blockId] = true; else delete c.shownBlocks[blockId];
+    write(obj); return !!c.shownBlocks[blockId];
+  }
+
+  /* ---- The client's own record (household.coach, the active profile) ---- */
+  function Spine() { var S = slaf().Spine; if (!S) throw new Error('The spine is not loaded.'); return S; }
+  function Ownership() { var O = slaf().Ownership; if (!O) throw new Error('Ownership is not loaded.'); return O; }
+  function sch() { return Schema || slaf().Schema; }
+  function record() { return sch().createCoachRecord(Spine().getProfile().coach || {}); }
+  function change(fn) {
+    var rec = record();
+    var out = fn(rec);
+    Spine().updateProfile({ coach: rec });
+    return clone(out);
+  }
+  function addNote(f) {
+    var text = String((f && f.text) || '').trim();
+    if (!text) return null;
+    return change(function (rec) { var n = sch().createCoachNote(Object.assign({}, f, { text: text, at: nowIso(f.now) })); rec.notes.push(n); return n; });
+  }
+  function removeNote(id) { return change(function (rec) { rec.notes = rec.notes.filter(function (n) { return n.id !== id; }); return true; }); }
+  function addHomework(f) {
+    var text = String((f && f.text) || '').trim();
+    if (!text) return null;
+    return change(function (rec) { var hw = sch().createCoachHomework(Object.assign({}, f, { text: text, at: nowIso(f.now) })); rec.homework.push(hw); return hw; });
+  }
+  function setHomeworkDone(id, on, now) {
+    return change(function (rec) { var hw = rec.homework.filter(function (x) { return x.id === id; })[0]; if (hw) hw.doneAt = on === false ? null : nowIso(now); return hw || null; });
+  }
+  function freeze(reason) {
+    var S = Spine();
+    var h = S.getProfile();
+    if (h.meta) { delete h.meta.undoStack; delete h.meta.redoStack; }
+    return S.appendSnapshot({ reason: reason, rawInputs: { household: h } });
+  }
+  function snapshotHousehold(snapId, profileId) {
+    var S = Spine();
+    var list = profileId ? S.snapshotsOf(profileId) : S.listSnapshots();
+    var snap = list.filter(function (x) { return x.id === snapId; })[0];
+    return snap && snap.rawInputs && snap.rawInputs.household ? sch().createHousehold(snap.rawInputs.household) : null;
+  }
+  function openSession() {
+    var list = record().sessions.filter(function (x) { return !x.endedAt; });
+    return list.length ? clone(list[list.length - 1]) : null;
+  }
+  function startSession(now) {
+    var open = openSession();
+    if (open) return open;
+    var d = new Date(now || Date.now());
+    var snap = freeze('coach-session-start');
+    return change(function (rec) {
+      var s = sch().createCoachSession({ startedAt: d.toISOString(), startSnapshotId: snap.id });
+      rec.sessions.push(s); return s;
+    });
+  }
+  function endSession(id, f) {
+    var o = f || {};
+    var snap = freeze('coach-session-end');
+    return change(function (rec) {
+      var s = rec.sessions.filter(function (x) { return x.id === id; })[0];
+      if (!s) return null;
+      var end = new Date(o.now || Date.now());
+      s.endedAt = end.toISOString();
+      s.endSnapshotId = snap.id;
+      s.durationMs = s.startedAt ? Math.max(0, end.getTime() - Date.parse(s.startedAt)) : null;
+      if (Array.isArray(o.stopsCovered)) s.stopsCovered = o.stopsCovered.slice();
+      if (Array.isArray(o.ticked)) s.ticked = o.ticked.slice();
+      return s;
+    });
+  }
+  function saveRecap(id, text) {
+    return change(function (rec) { var s = rec.sessions.filter(function (x) { return x.id === id; })[0]; if (s) s.recapText = String(text || '').slice(0, 20000); return s || null; });
+  }
+
+  /* A check-in (F1): each balance goes to the row that owns it, through
+     Ownership, so the Ledger moves; the record keeps what was reported.
+     A balance key is a row id, or 'rowId:itemId' for one line of a list. */
+  function writeBalance(key, cents) {
+    var parts = String(key).split(':');
+    Ownership().write(parts[0], cents, parts[1] ? { itemId: parts[1] } : null);
+  }
+  function addCheckin(f) {
+    var o = f || {};
+    var ci = sch().createCoachCheckin(Object.assign({}, o, { at: nowIso(o.now), date: o.date || (sch().localDay ? sch().localDay(o.now ? new Date(o.now) : undefined) : null) }));
+    Spine().batch('A check-in', function () {
+      Object.keys(ci.balances).forEach(function (k) { writeBalance(k, ci.balances[k]); });
+    });
+    return change(function (rec) {
+      rec.checkins.push(ci);
+      ci.homeworkTicked.forEach(function (hid) { var hw = rec.homework.filter(function (x) { return x.id === hid; })[0]; if (hw && !hw.doneAt) hw.doneAt = ci.at; });
+      return ci;
+    });
+  }
+  function addComment(f) {
+    var text = String((f && f.text) || '').trim();
+    if (!text) return null;
+    return change(function (rec) { var c = sch().createCoachComment(Object.assign({}, f, { text: text, at: nowIso(f.now) })); rec.comments.push(c); return c; });
+  }
+  function resolveComment(id, on, now) {
+    return change(function (rec) { var c = rec.comments.filter(function (x) { return x.id === id; })[0]; if (c) c.resolvedAt = on === false ? null : nowIso(now); return c || null; });
+  }
+
+  /* Quick entry (C5): the plan from engines/quickentry.js, saved. A new
+     line is added through its owner first; each figure then goes to its
+     row. Words kept aside become a private note on the stop. */
+  function applyQuick(plan, ctx) {
+    var c = ctx || {};
+    if (!plan || plan.kind === 'empty') return { written: 0, note: null };
+    var O = Ownership(), written = 0, newId = null;
+    if (plan.kind === 'rows') {
+      Spine().batch(plan.label + ', by quick entry', function () {
+        if (plan.add) { var rec = O.addItem(plan.add.list, plan.add.fields); newId = rec && rec.id; }
+        plan.writes.forEach(function (w) {
+          var item = w.item === 'new' ? newId : w.item;
+          O.write(w.field, w.value, item ? { itemId: item } : null);
+          written++;
+        });
+      });
+    }
+    var note = plan.note ? addNote({ kind: 'coach', text: plan.note, stopId: c.stopId || null, sessionId: c.sessionId || null, source: 'quick' }) : null;
+    return { written: written, note: note, itemId: newId };
+  }
+
+  /* The demo client: the example persona (shared/demo-persona.js), three
+     goals with dates and one check-in, all example numbers, labelled so. */
+  var DEMO_ID = 'demo';
+  function ensureDemo(Demo, now) {
+    var have = read().clients.filter(function (c) { return c.demo; })[0];
+    if (have) return clone(have);
+    var entry = addClient({ id: DEMO_ID, name: 'Demo client (example numbers)', demo: true, now: now });
+    var h = Demo.build();
+    h.meta = h.meta || {};
+    h.meta.isDemo = true;
+    var y = new Date(now || Date.now()).getFullYear();
+    h.goals = [
+      sch().createGoal({ name: 'Wedding', targetDate: (y + 2) + '-06-01', savedCents: 300000, monthlyContributionCents: 40000, lumpTargetCents: 2500000 }),
+      sch().createGoal({ name: 'House down payment', targetDate: (y + 5) + '-09-01', savedCents: 500000, monthlyContributionCents: 60000, lumpTargetCents: 6000000 }),
+      sch().createGoal({ name: 'Sabbatical', targetDate: (y + 4) + '-01-01', savedCents: 0, monthlyContributionCents: null, lumpTargetCents: 1800000 })
+    ];
+    Profiles.writeKeys(entry.id, { 'slaf.household.v2': JSON.stringify(sch().createHousehold(h)) });
+    return entry;
+  }
+
+  /* ---- Sheet import (spec section 8) --------------------------------------
+     sheetTargets(T)              what a column can map to: a single Ledger
+                                  row in cents or a rate ('row:<id>'), or a
+                                  quick-entry word ('qe:<word>', so a debt or
+                                  an account column reads as 'car 12000')
+     suggest(headers, T)          a first guess at the mapping, by label
+     sheetPlan(text, columns, T)  { writes: [{ header, target, raw, value | plan }],
+                                    notes: [text], bad: [header] }: the last
+                                  filled cell of each column; unmapped columns
+                                  become notes, a cell that does not read as a
+                                  number becomes a note too, never a guess
+     applySheet(plan, T)          writes into the ACTIVE profile            */
+  function Csv() { var C = slaf().Csv; if (!C) throw new Error('The CSV reader is not loaded.'); return C; }
+  function QE() { return slaf().QuickEntry; }
+  function sheetTargets(T) {
+    var O = slaf().Ownership;
+    var writable = O && O.writable ? O.writable() : [];
+    var rows = ((T.ledgerRows && T.ledgerRows.rows) || []).filter(function (r) { return (r.unit === 'cents' || r.unit === 'rate') && !r.repeat && writable.indexOf(r.id) >= 0; })
+      .map(function (r) { return { id: 'row:' + r.id, label: r.label, unit: r.unit, words: [r.id.toLowerCase(), String(r.label).toLowerCase()] }; });
+    var qe = ((T.quickEntry && T.quickEntry.entries) || []).map(function (e) {
+      var what = e.kind === 'debt' ? e.label + ', balance (or a payment with /mo)' : e.kind === 'asset' ? e.label + ', what is in it' : e.label + (e.period === 'year' ? ', a year' : ', a month');
+      return { id: 'qe:' + e.words[0], label: what, unit: 'quick', words: e.words };
+    });
+    return rows.concat(qe);
+  }
+  function suggest(headers, T) {
+    var targets = sheetTargets(T);
+    var out = {};
+    (headers || []).forEach(function (hd) {
+      var h = String(hd).toLowerCase().replace(/[^a-z0-9()% ]+/g, ' ').replace(/\s+/g, ' ').trim();
+      var best = null;
+      targets.forEach(function (t) { t.words.forEach(function (w) { if (w && (h === w || h.indexOf(w) === 0) && (!best || w.length > best.len)) best = { id: t.id, len: w.length }; }); });
+      out[hd] = best ? best.id : null;
+    });
+    return out;
+  }
+  function sheetPlan(text, columns, T) {
+    var parsed = Csv().parse(String(text || ''));
+    var headers = parsed.headers || [];
+    var cols = columns || {};
+    var writes = [], notes = [], bad = [];
+    var targets = {}; sheetTargets(T).forEach(function (t) { targets[t.id] = t; });
+    headers.forEach(function (hd, i) {
+      var raw = null;
+      for (var r = parsed.rows.length - 1; r >= 0; r--) { var cell = parsed.rows[r][i]; if (cell !== undefined && String(cell).trim() !== '') { raw = String(cell).trim(); break; } }
+      if (raw === null) return;
+      var target = cols[hd] && targets[cols[hd]] ? targets[cols[hd]] : null;
+      if (!target) { notes.push('From the sheet, ' + hd + ': ' + raw); return; }
+      if (target.unit === 'cents') {
+        var c = Csv().amount(raw);
+        if (typeof c !== 'number') { bad.push(hd); notes.push('From the sheet, ' + hd + ' (did not read as an amount): ' + raw); return; }
+        writes.push({ header: hd, target: target.id, raw: raw, value: c, label: target.label });
+      } else if (target.unit === 'rate') {
+        var n = Csv().number(raw);
+        if (n.blank || n.bad || n.value === null) { bad.push(hd); notes.push('From the sheet, ' + hd + ' (did not read as a rate): ' + raw); return; }
+        var v = n.percent || n.value > 1 ? n.value / 100 : n.value;
+        writes.push({ header: hd, target: target.id, raw: raw, value: Number(v.toFixed(8)), label: target.label });
+      } else {
+        var Q = QE();
+        var plan = Q ? Q.parse(target.words[0] + ' ' + raw, T.quickEntry, null) : null;
+        if (!plan || plan.kind !== 'rows') { bad.push(hd); notes.push('From the sheet, ' + hd + ': ' + raw); return; }
+        writes.push({ header: hd, target: target.id, raw: raw, plan: plan, label: target.label });
+      }
+    });
+    return { headers: headers, writes: writes, notes: notes, bad: bad };
+  }
+  function applySheet(plan, T) {
+    var O = Ownership(), n = 0;
+    Spine().batch('Imported from a sheet', function () {
+      plan.writes.forEach(function (w) {
+        /* read again against the household as it now stands, so a second
+           column of the same kind updates the line the first one added */
+        if (w.plan) { n += applyQuick(QE().parse(w.plan.text, T.quickEntry, Spine().getProfile()), {}).written; return; }
+        O.write(w.target.slice(4), w.value); n++;
+      });
+    });
+    plan.notes.forEach(function (t) { addNote({ kind: 'coach', text: t, source: 'import' }); });
+    return { written: n, notes: plan.notes.length };
+  }
+
   /** Tests only. */
   function _reset() { write(empty()); }
 
@@ -227,5 +483,10 @@
     archive: archive, removeClient: removeClient, tick: tick, ticked: ticked,
     saveTemplate: saveTemplate, templates: templates,
     clientFile: clientFile, allFile: allFile, filename: filename, isCoachFile: isCoachFile,
-    seal: seal, openFile: openFile, restore: restore, _reset: _reset };
+    seal: seal, openFile: openFile, restore: restore, _reset: _reset,
+    setVerdict: setVerdict, setShown: setShown, DEMO_ID: DEMO_ID, ensureDemo: ensureDemo,
+    record: record, addNote: addNote, removeNote: removeNote, addHomework: addHomework, setHomeworkDone: setHomeworkDone,
+    startSession: startSession, endSession: endSession, openSession: openSession, saveRecap: saveRecap, snapshotHousehold: snapshotHousehold,
+    sheetTargets: sheetTargets, suggest: suggest, sheetPlan: sheetPlan, applySheet: applySheet,
+    addCheckin: addCheckin, addComment: addComment, resolveComment: resolveComment, applyQuick: applyQuick };
 });
