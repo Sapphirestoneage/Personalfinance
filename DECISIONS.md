@@ -17305,6 +17305,32 @@ data. The move `rewards.oneSignupBonus` now has a room.
 `node test/solar.js` 5191; a phone walk at 390px through Expenses, Debt, Cash
 Flow and The Close with the example numbers, clean console.
 
+## D-338 — Where the money went, by place: all of it, and the part you chose
+
+**Why.** The owner: say where each expense was spent (which place or company),
+then draw where all the money went and where the discretionary money went, so
+a person can see what their spending says they value, and change it.
+
+**Decision.** The log's note is the place (`descriptor`, the key the merchant
+list already uses): `rooms/cash-flow.html` asks "Where it went" and offers the
+places already used. `Merchants.byPlace(h, tables, { months })` in
+`engines/merchants.js` is the one reader: a window of the log (1, 3 months or
+everything) folded by place through `CashFlow.logInMonth`, all money and
+discretionary money apart; `Merchants.discretionary(row, catalog)` is the
+catalog's own wants bucket, in the expenses bucket, and not marked fixed.
+`rooms/expenses.html#merchants` draws both as bars above the place list with
+the window switch, and points at What Matters for the question the order
+raises. The example gains a month of dated lines with places (`Demo.buildLog`).
+
+**Replaces or removes.** No screen and no field: the note's label and the
+reading it feeds. Cash Flow's flow hint links to it instead of a second chart.
+
+**Stored shape.** No change. `CashFlow.logInMonth` rows carry `fixed`.
+
+**Verified.** `node test/run.js` 35789, `node test/forms.js` 700,
+`node test/solar.js` 5191; a phone walk at 390px through Expenses and Cash
+Flow with the example numbers, the three windows, clean console.
+
 ---
 
 # The Dungeons & Dividends entries

@@ -1,6 +1,6 @@
 # STATUS (keep under 40 lines; /wrap rewrites it)
 
-Updated: 2026-09-22
+Updated: 2026-09-24
 
 ## Where it stands
 - **93 → 37 rooms**: the 32 of the merge programme with the Calendar back plus
@@ -17,14 +17,15 @@ Updated: 2026-09-22
   figure (D-327, D-329), a level can confirm (D-328), a band runs to a card (D-330).
 - **D-321, D-326** no em dash; **D-319** rooms say how old their numbers are; **D-323** a link that names a field opens to the field.
 - **Band 1 is answerable with no knowledge (D-336)**: `data/sketch_help.json` says
-  its eighteen questions in plain words, with what counts, where to look, an
-  add-it-up fold, a starting number where one can be defended, and a way to say
-  "I am not sure" that writes no number.
+  its eighteen questions in plain words, with what counts, where to look, a
+  starting number where one can be defended, and "I am not sure" writes none.
 - **This lane**: a card's annual fee (D-331); the radar on the Scorecard (D-332);
   the menu on every page (D-333) with the Planets at its top (D-335); two ratios
   and the furthest-from-normal ranking (D-334), Amendment 1 audited in `docs/`.
 - **On the cards (D-337)**: an expense says which card it went on; a card carries
   a bonus target (Debt); The Close's `#on-cards` says the rate, reach and pace.
+  **By place (D-338)**: the log's note is the place; Expenses `#merchants` draws
+  where all the money went and where the discretionary part went.
 - **Main is worked on by another lane**: merge before every push. D-228's reframe has NOT shipped. Freeze holds (D-313).
 
 ## Next (top item first; one per session)
