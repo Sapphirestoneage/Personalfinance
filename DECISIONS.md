@@ -17323,6 +17323,27 @@ No room, field or screen of the public site changes.
 
 **Verified.** `node test/run.js`.
 
+## D-339 — Profiles: one household per client, the personal one untouched
+
+**Why.** Coach Mode (D-338) needs many households in one browser.
+
+**Decision.** `shared/profiles.js`, the third script on every page, names the
+tab's household: `default` is today's keys; a client's are the same keys under
+`slaf.p.<id>.` (household, snapshots, quarantine, scenarios, skill-tree marks).
+It counts only while `prefs.coachMode` is on. `Spine.useProfile`,
+`activeProfile`, `householdOf` (read another without switching). The roster
+is `slaf.coach.v1`, no money; `shared/coach.js` seals one client or all.
+
+**Replaces or removes.** Nothing on the public site; the raw snapshot removal
+in `rooms/data.html` now goes through `Spine.clearSnapshots`.
+
+**Stored shape.** No change to any existing key: the default profile reads
+and writes exactly today's keys, so migration is zero. New keys only:
+`slaf.p.<id>.*`, `slaf.coach.v1`, and `slaf.profile.active` in sessionStorage.
+The device backup (D-202) neither carries nor removes them.
+
+**Verified.** `node test/run.js` (test/coach-checks.js), `node test/forms.js` 700.
+
 ---
 
 # The Dungeons & Dividends entries

@@ -16906,11 +16906,18 @@ section('No em dash anywhere the app can show one (D-321)');
    Report
    ========================================================================== */
 
-console.log('\n' + '─'.repeat(66));
-if (failures.length === 0) {
-  console.log(`✓ ${passed} checks passed`);
-  process.exit(0);
-}
-console.log(`✗ ${failures.length} failed, ${passed} passed\n`);
-failures.forEach((f, i) => console.log(`  ${i + 1}. ${f}`));
-process.exit(1);
+/* Coach Mode (D-338 onward) keeps its checks in one file beside this one;
+   some use the vault's real crypto, so the report waits for them. */
+const coachPending = require('./coach-checks.js')({ check, checkTrue, section, ROOT })
+  .catch(e => { failures.push('Coach Mode checks threw: ' + (e && e.stack || e)); });
+
+coachPending.then(function () {
+  console.log('\n' + '─'.repeat(66));
+  if (failures.length === 0) {
+    console.log(`✓ ${passed} checks passed`);
+    process.exit(0);
+  }
+  console.log(`✗ ${failures.length} failed, ${passed} passed\n`);
+  failures.forEach((f, i) => console.log(`  ${i + 1}. ${f}`));
+  process.exit(1);
+});
