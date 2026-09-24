@@ -82,6 +82,8 @@
     bands: 'bands.json',
     levers: 'levers.json',
     opening: 'opening.json',
+    /* Coach Mode (D-340): the session paths and the quick-entry words. */
+    sessionPaths: 'session_paths.json', quickEntry: 'quick_entry.json',
     lenses: 'lenses.json',
     features: 'features.json',
     /* Scenario blocks: one expansion table a type (D-178). */

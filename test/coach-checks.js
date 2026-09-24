@@ -268,5 +268,44 @@ module.exports = function run(h) {
     checkTrue('every page with the spine loads shared/profiles.js before it', bad.length === 0, bad.join(', '));
   }
 
+
+  /* ======================================================================
+     C1: the session paths file, and the engine that reads it (D-340)
+     ====================================================================== */
+  section('Coach Mode C1: the session paths, every name resolves (D-340)');
+  {
+    const SP = JSON.parse(fs.readFileSync(P('data/session_paths.json'), 'utf8'));
+    const rows = JSON.parse(fs.readFileSync(P('data/ledger-rows.json'), 'utf8')).rows.map(r => r.id);
+    const Ratios = require(P('engines/ratios.js'));
+    const Registry = require(P('shared/registry.js'));
+    const Session = require(P('engines/session.js'));
+    const Reference = require(P('shared/reference.js'));
+    check('the file is registered as a reference table', Reference.TABLE_FILES.sessionPaths, 'session_paths.json');
+    check('the quick-entry words are too', Reference.TABLE_FILES.quickEntry, 'quick_entry.json');
+    const def = SP.paths.filter(p => p.id === 'default')[0];
+    check('the default path is the spec\'s nine stops in order', def.stops.join(), 'life,income,spending,debt,safety,assets,taxes,goals,decisions');
+    const bad = [];
+    Object.keys(SP.stops).forEach(id => {
+      const st = SP.stops[id];
+      (st.ledgerRows || []).forEach(r => { if (rows.indexOf(r) === -1) bad.push(id + ': row ' + r); });
+      (st.ratios || []).forEach(r => { if (!Ratios.byId(r)) bad.push(id + ': ratio ' + r); });
+      (st.rooms || []).forEach(r => { const room = Registry.byId(r.split('#')[0]); if (!room) bad.push(id + ': room ' + r); else if (r.indexOf('#') !== -1 && !(room.subsections || []).some(x => x.id === r.split('#')[1])) bad.push(id + ': section ' + r); });
+      (st.doneWhen || []).forEach(t => { if (Session.TESTS.indexOf(t.test) === -1) bad.push(id + ': test ' + t.test); });
+      if (!st.doneWhen || !st.doneWhen.length) bad.push(id + ': no doneWhen');
+      if (!st.doneLabel) bad.push(id + ': no doneLabel');
+      const qids = (st.questions || []).map(q => q.id);
+      if (new Set(qids).size !== qids.length) bad.push(id + ': duplicate question id');
+    });
+    SP.paths.forEach(p => p.stops.forEach(id => { if (!SP.stops[id]) bad.push(p.id + ': stop ' + id); }));
+    SP.rail.forEach(r => { if (!Ratios.byId(r)) bad.push('rail: ' + r); });
+    checkTrue('every row, ratio, room, section and test the paths name exists', bad.length === 0, bad.join('; '));
+    checkTrue('the rail holds the spec\'s five ratios (FI band and net worth are drawn beside them)', ['savingsRate', 'debtToIncome', 'emergencyFundMonths', 'liquidityRatio', 'housingRatio'].every(x => SP.rail.indexOf(x) !== -1));
+    /* A client's own order and skips */
+    const stops = Session.path(SP, 'default', { stopOrder: ['debt', 'income'], skipped: { life: true } });
+    check('a client\'s own order goes first, the rest follow', stops.slice(0, 3).map(s => s.id).join(), 'debt,income,life');
+    check('a skipped stop is marked, not dropped', stops.filter(s => s.skipped).map(s => s.id).join(), 'life');
+    check('items: the rows, then the questions', Session.items(SP.stops.income).map(i => i.id).slice(0, 2).join(), 'row:grossAnnualIncome,row:takeHomeMonthly');
+  }
+
   return Promise.all(pending);
 };
