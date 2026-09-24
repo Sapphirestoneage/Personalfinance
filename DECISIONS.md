@@ -17423,6 +17423,46 @@ their shape is unchanged (`rawInputs` already existed).
 
 **Verified.** `node test/run.js` (the recap never holds a coach note).
 
+## D-344 — Client View: the life map, the goals, what changed, homework
+
+**Why.** Spec section 3.3: what the client sees on a shared screen, and later
+on a phone.
+
+**Decision.** `coach/client.html` (`coach/clientpage.js`) draws
+`coach/clientview.js`, a pure renderer: the life map (goals, Coast FI, the
+FI band, benchmark multiples, blocks marked "show client") drawn at the width
+it is shown at; each goal's amount, date, monthly need, landing at the current
+pace and status (`Session.goals`); what changed since the session began;
+homework and the next date. `ClientView.visible` is its one door into the
+coach record: shared notes, homework, check-in dates. `?snap=` shows any
+snapshot read-only. Presenter mode links nowhere else.
+
+**Replaces or removes.** The sheet's summary tab.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` (no coach note in the rendered page); axe
+clean; `test/responsive.js` gains the three coach screens, clean at 320 to 1440.
+
+## D-345 — Check-ins and comments as data, coach-entered for now
+
+**Why.** Spec section 6: the shapes the later client portal reads.
+
+**Decision.** A check-in (`Coach.addCheckin`, the form in Client View) writes
+each reported balance through `Ownership.write` to the row that owns it and
+keeps what was reported; a blank box is not reported. Comments attach to a
+row, goal or recap; one logged for the client says so. Coach Home reads the
+status from the last check-in date: in (35 days), late (65), missing.
+
+**Replaces or removes.** Monthly updates sent to the owner by text.
+
+**Stored shape.** `household.coach.checkins[] { id, date, balances { rowId or
+rowId:itemId: cents }, incomeCents, feeling, text, homeworkTicked, enteredBy,
+at }`, `comments[] { id, target { kind, id }, by, loggedByCoach, at, text,
+resolvedAt }`. Both new; absent reads as empty.
+
+**Verified.** `node test/run.js`; a phone check-in in Chromium.
+
 ---
 
 # The Dungeons & Dividends entries

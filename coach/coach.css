@@ -11,12 +11,13 @@
 .coach-say { min-height: 1.4em; font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
 .coach-say.is-good { color: var(--color-positive); }
 .coach-say.is-bad { color: var(--color-critical-text); }
-.coach input[type="text"], .coach input[type="date"], .coach input[type="password"], .coach input[type="number"], .coach select, .coach textarea {
+.coach input[type="text"], .coach input[type="date"], .coach input[type="password"], .coach input[type="number"], .coach select, .coach textarea,
+.client input[type="text"], .client input[type="date"], .client select, .client textarea {
   font: inherit; color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-sm); padding: 6px 10px; min-height: 40px; max-width: 100%; box-sizing: border-box; }
-.coach textarea { width: 100%; min-height: 5rem; resize: vertical; }
-.coach label.inline { display: inline-flex; flex-direction: column; gap: 2px; font-size: var(--text-sm); color: var(--color-text-muted); }
-.coach .row { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: flex-end; }
+.coach textarea, .client textarea { width: 100%; min-height: 5rem; resize: vertical; }
+.coach label.inline, .client label.inline { max-width: 100%; min-width: 0; display: inline-flex; flex-direction: column; gap: 2px; font-size: var(--text-sm); color: var(--color-text-muted); }
+.coach .row, .client .row { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: flex-end; }
 
 /* Coach Home: the roster */
 .roster { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
@@ -55,6 +56,7 @@
 .items { list-style: none; margin: 0; padding: 0; }
 .items li { display: flex; gap: var(--space-2); align-items: flex-start; padding: 3px 0; }
 .items li.is-here { background: var(--color-surface-active); border-radius: var(--radius-sm); }
+.items label.tick { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; min-height: 32px; flex: 0 0 auto; }
 .items input[type="checkbox"] { width: 20px; height: 20px; margin-top: 2px; flex: 0 0 auto; }
 .items .item-text { flex: 1 1 auto; min-width: 0; }
 .items .hw-btn { flex: 0 0 auto; font-size: var(--text-xs); }
@@ -91,7 +93,7 @@ dialog.coach-dialog::backdrop { background: rgba(0, 0, 0, .6); }
 .client { max-width: 56rem; margin: 0 auto; padding: var(--space-3); }
 .client section { margin-top: var(--space-4); }
 .lifemap { position: relative; width: 100%; overflow-x: auto; }
-.lifemap svg { display: block; min-width: 560px; width: 100%; height: auto; }
+.lifemap svg { display: block; width: 100%; height: auto; }
 .goal-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: var(--space-3); }
 .goal-card { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); background: var(--color-surface); }
 .goal-card .fig { font-family: var(--font-display); font-size: var(--text-xl); }
@@ -111,3 +113,6 @@ dialog.coach-dialog::backdrop { background: rgba(0, 0, 0, .6); }
   body { background: #fff !important; color: #000 !important; }
   .print-page { color: #000; }
 }
+
+.coach select, .client select { width: auto; max-width: 100%; }
+#cm-target { width: 100%; }

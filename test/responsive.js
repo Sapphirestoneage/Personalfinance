@@ -66,6 +66,9 @@ const SIDEWAYS_OK = {
   const only = (process.env.SLAF_ONLY || '').split(',').filter(Boolean);
   let pages = ['index.html'].concat(
     fs.readdirSync(path.join(ROOT, 'rooms')).filter(f => f.endsWith('.html')).map(f => 'rooms/' + f));
+  /* The three Coach Mode screens (D-338), last: they switch the tab to the
+     demo client, so every room above is measured on the seeded household. */
+  pages = pages.concat(['coach/index.html?coach=1', 'coach/session.html?client=demo', 'coach/client.html?client=demo&presenter=1']);
   if (only.length) pages = pages.filter(p => only.some(o => p.indexOf(o) >= 0));
 
   let bad = 0, checked = 0;
@@ -95,7 +98,7 @@ const SIDEWAYS_OK = {
       await p.goto(BASE + '/' + page, { waitUntil: 'domcontentloaded' });
       await p.waitForTimeout(320);
       checked++;
-      const id = path.basename(page, '.html');
+      const id = path.basename(page.split('?')[0], '.html');
       const r = await p.evaluate((floor) => {
         const doc = document.documentElement;
         const out = { sideways: doc.scrollWidth - doc.clientWidth, culprits: [], small: [], clipped: [], used: 0 };

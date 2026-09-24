@@ -81,7 +81,7 @@
             var shown = fieldText(it.rowId, household);
             value = '<span class="coach-note">: ' + esc(shown ? shown : 'not yet') + (st && st.state === 'roughly' ? ', rough' : '') + (st && st.stale ? ', stale' : '') + '</span>';
           }
-          return '<li class="' + (here === it.id ? 'is-here' : '') + '"><input type="checkbox" data-tick="' + esc(it.id) + '" aria-label="Done: ' + esc(itemLabel(s, it)) + '"' + (t ? ' checked' : '') + '/>'
+          return '<li class="' + (here === it.id ? 'is-here' : '') + '"><label class="tick"><input type="checkbox" data-tick="' + esc(it.id) + '" aria-label="Done: ' + esc(itemLabel(s, it)) + '"' + (t ? ' checked' : '') + '/></label>'
             + '<button type="button" class="slaf-linkbtn item-text" data-item="' + esc(it.id) + '">' + (it.kind === 'question' ? 'Ask: ' : '') + esc(itemLabel(s, it)) + value + '</button>'
             + '<button type="button" class="slaf-btn slaf-btn--small slaf-btn--quiet hw-btn" data-hw="' + esc(it.id) + '">Homework</button></li>';
         }).join('') + '</ul>'

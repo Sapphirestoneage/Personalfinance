@@ -446,6 +446,67 @@ module.exports = function run(h) {
     checkTrue('rooms still refuse every frame', /frame-src 'none'/.test(settingsCsp));
   }
 
+
+  /* ======================================================================
+     D and F: Client View never shows a coach note; check-ins and
+     comments (D-344, D-345)
+     ====================================================================== */
+  section('Coach Mode D, F: Client View, check-ins, comments (D-344, D-345)');
+  {
+    const T = tablesAll();
+    const { s, Spine, Coach } = withOwnership();
+    const Demo = require(P('shared/demo-persona.js'));
+    const Session = require(P('engines/session.js'));
+    const ClientView = require(P('coach/clientview.js'));
+    const d = Coach.ensureDemo(Demo);
+    Spine.useProfile(d.id);
+    const sess = Coach.startSession();
+    Coach.addNote({ kind: 'coach', text: 'COACHNOTE-A worried about job', stopId: 'income', sessionId: sess.id });
+    Coach.addNote({ kind: 'coach', text: 'COACHNOTE-B session aside', sessionId: sess.id });
+    Coach.addNote({ kind: 'coach', text: 'COACHNOTE-C from quick entry', source: 'quick' });
+    Coach.addNote({ kind: 'shared', text: 'SHAREDNOTE keep three months of cash', stopId: 'safety', sessionId: sess.id });
+    Coach.addHomework({ text: 'Log in to the 401k and find the fee', dueOn: '2026-10-08' });
+    Coach.addComment({ target: { kind: 'row', id: 'accommodationMonthly' }, by: 'client', text: 'COMMENT rent goes to 2,300 in March' });
+    const h = Spine.getProfile();
+    /* The whole household, coach record and all, straight into the renderer. */
+    const html = ClientView.render(h, T, { name: d.name, asOf: '2026-09-24', since: Coach.snapshotHousehold(sess.startSnapshotId), sinceDate: sess.startedAt, nextSessionAt: '2026-10-08', blocks: [], verdicts: {} });
+    checkTrue('Client View renders no coach note, of any source', ['COACHNOTE-A', 'COACHNOTE-B', 'COACHNOTE-C'].every(t => html.indexOf(t) === -1));
+    checkTrue('and no comment text (comments are the coach\'s log for now)', html.indexOf('COMMENT rent') === -1);
+    checkTrue('it does show the shared note and the homework', html.indexOf('SHAREDNOTE') !== -1 && html.indexOf('find the fee') !== -1);
+    checkTrue('the four sections, in order', ['cv-map', 'cv-goals', 'cv-changed', 'cv-homework'].every((id, i, a) => html.indexOf('id="' + id + '"') !== -1 && (i === 0 || html.indexOf('id="' + a[i - 1] + '"') < html.indexOf('id="' + id + '"'))));
+    const vis = ClientView.visible(h.coach);
+    checkTrue('the one door from the coach record keeps only what a client may read', Object.keys(vis).sort().join() === 'checkins,homework,shared' && vis.shared.every(n => !('kind' in n)));
+    checkTrue('each goal has an amount, a date, a monthly figure and a status', Session.goals(h, T, { asOf: '2026-09-24' }).every(g => g.totalCents !== null && g.targetDate && g.monthlyCents !== null && ['on-track', 'short', 'decide'].indexOf(g.status) !== -1));
+    const svg = ClientView.lifeMapSvg(Session.lifeMap(h, T, { asOf: '2026-09-24' }), 360);
+    checkTrue('the life map draws the goals and the FI band, even at phone width', /Wedding/.test(svg) && /FI, likely/.test(svg) && /<rect /.test(svg));
+    const page = fs.readFileSync(P('coach/clientpage.js'), 'utf8');
+    checkTrue('Client View reads no roster list and no other profile', !/Coach\.clients\(|householdOf\(|Coach\.roster\(/.test(page));
+    checkTrue('in presenter mode there is no link to Coach Home', /presenter \? '<span>Client view<\/span>'/.test(page));
+
+    /* F1: a check-in writes through Ownership and keeps its own record. */
+    const debt = Spine.getProfile().debts[0];
+    const cash = Spine.getProfile().assets[0];
+    const ci = Coach.addCheckin({ date: '2026-10-01', balances: { ['debtBalance:' + debt.id]: 123400, ['assetValue:' + cash.id]: 800000 }, incomeCents: null, feeling: 4, text: 'Better month', homeworkTicked: [Coach.record().homework[0].id], enteredBy: 'client' });
+    check('the owning debt row moved', Spine.getProfile().debts[0].balanceCents, 123400);
+    check('and the account', Spine.getProfile().assets[0].valueCents, 800000);
+    checkTrue('the check-in keeps what was reported, as reported', ci.balances['debtBalance:' + debt.id] === 123400 && ci.feeling === 4 && ci.enteredBy === 'client' && ci.incomeCents === null);
+    checkTrue('a homework ticked in the check-in is done', !!Coach.record().homework[0].doneAt);
+    const ci2 = Coach.addCheckin({ date: '2026-10-02', balances: {}, feeling: null, text: 'no numbers this time' });
+    check('an empty balance is not reported, and nothing is written as zero', Object.keys(ci2.balances).length + ':' + Spine.getProfile().debts[0].balanceCents, '0:123400');
+    /* F2: comments */
+    const cm = Coach.record().comments[0];
+    checkTrue('a comment logged for the client says so', cm.by === 'client' && cm.loggedByCoach === true && cm.target.kind === 'row' && cm.resolvedAt === null);
+    Coach.resolveComment(cm.id, true);
+    checkTrue('and can be resolved', !!Coach.record().comments[0].resolvedAt);
+    /* F4: the status Coach Home shows */
+    check('check-in in within a month', Session.checkinStatus(Coach.record().checkins, Date.parse('2026-10-20')), 'in');
+    check('late after five weeks', Session.checkinStatus(Coach.record().checkins, Date.parse('2026-11-20')), 'late');
+    check('missing after two months, or never', Session.checkinStatus([], Date.parse('2026-11-20')), 'missing');
+    Spine.useProfile('default');
+    checkTrue('the personal household is untouched by all of it', s.getItem('slaf.household.v2') === null);
+    doneOwn();
+  }
+
   /* The async checks run last, one after another: they swap the global
      storage like every block here, so they must not overlap the others. */
   return pending.reduce((chain, fn) => chain.then(fn), Promise.resolve());

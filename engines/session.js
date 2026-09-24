@@ -291,6 +291,12 @@
     if (isNaN(a) || isNaN(b)) return null;
     return (b - a) / (365.25 * 24 * 3600 * 1000);
   }
+  function yearsUntil(iso, asOf) {
+    if (!iso) return null;
+    var a = new Date(asOf.slice(0, 10) + 'T00:00:00Z'), b = new Date((iso.length === 7 ? iso + '-01' : iso.slice(0, 10)) + 'T00:00:00Z');
+    if (isNaN(a) || isNaN(b)) return null;
+    return (b - a) / (365.25 * 24 * 3600 * 1000);
+  }
   function lifeMap(h, T, opts) {
     var o = opts || {};
     var asOf = o.asOf || Schema.localDay();
@@ -310,9 +316,12 @@
     ((T.retirementMilestones && T.retirementMilestones.milestones) || []).forEach(function (m) { marks.push({ id: 'multiple-' + m.age, label: m.multiple + 'x salary saved', age: m.age, kind: 'benchmark' }); });
     ((T.milestones && T.milestones.milestones) || []).forEach(function (m) { if (m.age) marks.push({ id: m.id, label: m.label, age: m.age.years + (m.age.months || 0) / 12, kind: 'rule' }); });
     var blocks = (o.blocks || []).map(function (b) {
-      var from = b.dates && (b.dates.start || b.dates.from) || null;
-      return { id: b.id, label: b.label, verdict: (o.verdicts || {})[b.id] || null, age: ageAt(dob, from) };
+      var from = Array.isArray(b.dates) && b.dates[0] ? b.dates[0].start : null;
+      return { id: b.id, label: b.label, verdict: (o.verdicts || {})[b.id] || null, age: ageAt(dob, from), years: yearsUntil(from, asOf), from: from };
     });
+    gl.forEach(function (g) { g.years = yearsUntil(g.targetDate, asOf); });
+    marks.forEach(function (m) { m.years = age !== null ? m.age - age : null; });
+    if (band.hasDate) { band.bestYears = band.best / 12; band.likelyYears = band.likely / 12; band.worstYears = band.worst / 12; }
     var endAge = Math.max(age !== null ? age + 10 : 70, band.hasDate ? band.worstAge + 5 : 0,
       gl.reduce(function (m, g) { return g.age !== null && g.age > m ? g.age : m; }, 0));
     var startAge = age !== null ? Math.floor(age) : null;
