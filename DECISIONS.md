@@ -17305,6 +17305,24 @@ data. The move `rewards.oneSignupBonus` now has a room.
 `node test/solar.js` 5191; a phone walk at 390px through Expenses, Debt, Cash
 Flow and The Close with the example numbers, clean console.
 
+## D-338 — Coach Mode: the freeze lifts for coach/ and its three screens only
+
+**Why.** The owner coaches clients live on calls from a shared Google Sheet.
+The spec is `docs/COACH-MODE.md`: Coach Home, the Session, Client View.
+
+**Decision.** A `coach/` folder holds exactly three screens (`index.html`,
+`session.html`, `client.html`), reached only when `prefs.coachMode` is on
+(Settings, or `?coach=1` once). The freeze still holds for `rooms/`: no new
+rooms, lenses, frameworks or vocabularies. Coach screens embed the owning
+room or Ledger row; they never edit a field a second way.
+
+**Replaces or removes.** The Google Sheet the owner runs client sessions from.
+No room, field or screen of the public site changes.
+
+**Stored shape.** No change in this entry; D-339 adds the profile layer.
+
+**Verified.** `node test/run.js`.
+
 ---
 
 # The Dungeons & Dividends entries

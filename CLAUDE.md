@@ -42,6 +42,7 @@ Shortcuts: `/start`, `/room <id>`, `/find <words>`, `/simplify`, `/drift`, `/wra
 - If a request would add one, ask "what does this replace?" before building.
 - Prefer deleting, merging, and wiring existing rooms together.
 - Every session should leave the app with the same or fewer screens and fields.
+- Exception (D-338): `coach/` is allowed its three screens (Home, Session, Client View) and nothing more.
 
 ## Stop and ask instead of guessing
 
