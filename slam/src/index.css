@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+/* Light and dark follow the phone. Tokens live here; Tailwind utilities do
+   the rest. Every var used below is defined in this file. */
+@theme {
+  --color-ink: #0f172a;
+  --color-paper: #f8fafc;
+  --color-accent: #0284c7;
+  --color-accent-soft: #e0f2fe;
+  --color-good: #15803d;
+  --color-warn: #b45309;
+  --color-muted: #64748b;
+  --color-line: #e2e8f0;
+  --color-card: #ffffff;
+}
+
+
+html {
+  color-scheme: light dark;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: #f8fafc;
+  color: #0f172a;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  min-height: 100dvh;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #0b1220;
+    color: #e2e8f0;
+  }
+}
+
+/* Big tap targets everywhere; phones first. */
+button, input, select {
+  font: inherit;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}

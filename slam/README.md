@@ -1,0 +1,24 @@
+# SLAM Profit Engine
+
+Stress Less About Money: a local-first, phone-first web app that shows how
+every business decision flows to profit. Everything stays on the device.
+
+Phase 0 (this folder, now): the engine (`src/engine`), the data layer with
+labeled assumptions, Dexie storage and plain-file backup (`src/data`), the
+canonical sample (`src/content`), golden tests G1-G21 (`tests/golden`), and
+a one-screen shell that proves it on a phone. Phase 1 (the real screens)
+waits for the owner's go. `CLAUDE.md` is the condensed spec;
+`docs/OPEN-QUESTIONS.md` lists what still needs the owner's answer.
+
+```
+npm ci
+npm run dev        # http://localhost:5173
+npm test           # engine, golden and storage tests (Vitest)
+npm run build      # installable PWA in dist/
+npm run test:e2e   # phone flows against the build (Playwright)
+npm run check      # all of the above
+```
+
+`SINGLEFILE=1 npm run build` produces one self-contained HTML file.
+If Playwright's own Chromium is not installed, point it at one:
+`PLAYWRIGHT_CHROMIUM_PATH=/path/to/chrome npm run test:e2e`.
