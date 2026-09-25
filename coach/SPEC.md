@@ -4,7 +4,7 @@ Repo: `Sapphirestoneage/PersonalFinance` (Money Rooms / SPARKS / SLAF)
 Written: Sept 24, 2026
 Scope decided by the owner: **just me first, clients later.** Clients will eventually get a view with monthly check-ins and comments, but this pass builds the coach side only and lays the data shapes the client side will need.
 
-Coach Mode is a separate app in `coach/`, built in parallel with SPARKS (D-338;
+Coach Mode is a separate app in `coach/`, built in parallel with SPARKS (D-339;
 its own log is `coach/DECISIONS.md`). The later client portal: `coach/LATER.md`.
 
 ---

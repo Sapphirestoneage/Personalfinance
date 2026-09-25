@@ -1,7 +1,6 @@
 ---
 paths:
   - "rooms/data.html"
-  - "engines/merchants.js"
   - "engines/bankcsv.js"
 ---
 # Your Data (`data`)

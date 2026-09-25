@@ -574,7 +574,7 @@
         rows.push({ id: e.id, entryId: e.id, date: o.date, cents: o.cents, categoryId: e.categoryId, group: g, bucket: bucket,
           descriptor: e.descriptor || null, linkedIncomeId: e.linkedIncomeId || null, deductible: e.deductible === true, recurring: e.period === 'monthly', hidden: e.hidden === true,
           dateKind: o.dateKind || 'exact', estimated: o.estimated === true,
-          produced: e.produced || (e.linkedIncomeId ? 'linked' : 'personal'), paidWith: e.paidWith || null,
+          produced: e.produced || (e.linkedIncomeId ? 'linked' : 'personal'), paidWith: e.paidWith || null, fixed: e.fixed === true, fixed: e.fixed === true,
           reimbursableFrom: reimb ? e.reimbursableFrom || null : null, reimbursementStatus: reimb ? e.reimbursementStatus : null, expectedAmountCents: reimb ? e.expectedAmountCents : null });
         byGroup[g] = (byGroup[g] || 0) + o.cents;
         byBucket[bucket] = (byBucket[bucket] || 0) + o.cents;

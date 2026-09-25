@@ -1632,6 +1632,10 @@ ol.own-dates .od-acts { display: flex; gap: var(--space-1); white-space: nowrap;
 .slaf-slope-figs .fig { display: flex; flex-direction: column; gap: 2px; }
 .slaf-slope-figs .fig b { font-family: var(--font-display); font-size: var(--text-lg); font-variant-numeric: tabular-nums; }
 .slaf-slope-figs .fig span { font-size: var(--text-xs); color: var(--color-text-muted); }
+/* Where the money went, by place (D-338): the window switch and two headings. */
+.slaf-where-window { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-3); }
+.slaf-where-window .slaf-btn[aria-pressed="true"] { border-color: var(--color-accent); color: var(--color-text); }
+.slaf-where-h { margin: var(--space-4) 0 0; font-size: var(--text-base); }
 .slaf-slope-month { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-2); }
 
 /* ---- Comfortable or Compact (D-317) --------------------------------------

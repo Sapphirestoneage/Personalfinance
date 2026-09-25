@@ -1,6 +1,6 @@
 # Coach Mode, later: the client portal
 
-Written: Sept 24, 2026; revised Sept 25 when Coach Mode became its own app (D-338, CD-001 onward).
+Written: Sept 24, 2026; revised Sept 25 when Coach Mode became its own app (D-339, CD-001 onward).
 Spec: `coach/SPEC.md` section 9. **Nothing here is built.** This file
 exists so the shapes the portal reads are fixed now and nothing needs to
 migrate when it ships.

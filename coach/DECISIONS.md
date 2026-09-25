@@ -1,7 +1,7 @@
 # Coach Mode decisions (CD-###)
 
 This lane's own log, so it never contends with SPARKS for a number. SPARKS
-records the one fact that the lane exists (D-338). New entry: the next CD
+records the one fact that the lane exists (D-339). New entry: the next CD
 number, at the end, 20 lines at most. Reasoning goes in the commit message.
 
 ## CD-001 — Its own app, carrying only the engines it reads

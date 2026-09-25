@@ -238,5 +238,49 @@
     });
   }
 
-  return { VALUES: VALUES, build: build, buildSpending: buildSpending };
+  /* A month of dated lines with the place each went (D-338): the same
+     month as the typical lines above, so the charts by place have
+     something to draw the first time. Days are this month's; a day past
+     the month's end is folded to its last day. Everyday lines on the
+     card, the rent and the transfer from the bank (D-337). */
+  VALUES.logLines = [
+    { day: 1,  categoryId: 'housing',           amount: 1500,  where: 'Maple Street Management', paidWith: 'bank' },
+    { day: 2,  categoryId: 'emergency_savings', amount: 300,   where: 'Transfer to savings',      paidWith: 'bank' },
+    { day: 3,  categoryId: 'groceries',         amount: 112.4, where: 'Trader Joe\u2019s',        paidWith: 'demo_debt_1' },
+    { day: 4,  categoryId: 'subscriptions',     amount: 15.49, where: 'Netflix',                  paidWith: 'demo_debt_1', fixed: true },
+    { day: 6,  categoryId: 'dining_out',        amount: 38,    where: 'Sweetgreen',               paidWith: 'demo_debt_1' },
+    { day: 8,  categoryId: 'transportation',    amount: 52,    where: 'Shell',                    paidWith: 'demo_debt_1' },
+    { day: 9,  categoryId: 'shopping',          amount: 64.2,  where: 'Amazon',                   paidWith: 'demo_debt_1' },
+    { day: 10, categoryId: 'groceries',         amount: 96.8,  where: 'Trader Joe\u2019s',        paidWith: 'demo_debt_1' },
+    { day: 12, categoryId: 'utilities',         amount: 180,   where: 'Con Edison',               paidWith: 'bank' },
+    { day: 13, categoryId: 'dining_out',        amount: 71.5,  where: 'Via Carota',               paidWith: 'demo_debt_1' },
+    { day: 15, categoryId: 'entertainment',     amount: 45,    where: 'AMC Theatres',             paidWith: 'demo_debt_1' },
+    { day: 17, categoryId: 'groceries',         amount: 104.3, where: 'Trader Joe\u2019s',        paidWith: 'demo_debt_1' },
+    { day: 18, categoryId: 'shopping',          amount: 29.99, where: 'Amazon',                   paidWith: 'demo_debt_1' },
+    { day: 20, categoryId: 'dining_out',        amount: 42,    where: 'Sweetgreen',               paidWith: 'demo_debt_1' },
+    { day: 22, categoryId: 'personal_care',     amount: 35,    where: 'Great Clips',              paidWith: 'demo_debt_1' },
+    { day: 24, categoryId: 'transportation',    amount: 48,    where: 'Shell',                    paidWith: 'demo_debt_1' },
+    { day: 26, categoryId: 'entertainment',     amount: 22,    where: 'Steam',                    paidWith: 'demo_debt_1' }
+  ];
+  function buildLog(month) {
+    var ym = /^\d{4}-\d{2}$/.test(month || '') ? month : Schema.localMonth();
+    var last = new Date(+ym.slice(0, 4), +ym.slice(5, 7), 0).getDate();
+    return VALUES.logLines.map(function (row, i) {
+      var d = Math.min(row.day, last);
+      return Schema.createExpenseEntry({
+        id: 'demo_log_' + i,
+        categoryId: row.categoryId,
+        amountCents: Money.toCents(row.amount),
+        period: 'once',
+        date: ym + '-' + (d < 10 ? '0' : '') + d,
+        dateKind: 'exact',
+        descriptor: row.where,
+        source: 'log',
+        paidWith: row.paidWith || null,
+        fixed: row.fixed === true ? true : null
+      });
+    });
+  }
+
+  return { VALUES: VALUES, build: build, buildSpending: buildSpending, buildLog: buildLog };
 });
