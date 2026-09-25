@@ -525,7 +525,20 @@
   <section class="slaf-card" id="merchants" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">Every place money went</span>
     <h2 style="margin:var(--space-2) 0 0" id="merch-title">Nothing from a statement yet</h2>
-    <p class="slaf-hint" style="margin:var(--space-2) 0 0">One line a place, however many times it charged you. Choose where a place files and every line from it, past and future, follows: that is a rule, and the next statement uses it. Open a place to see its lines and to say what day a line was <em>for</em>, when that is not the day it was paid.</p>
+    <!-- D-338: the same log drawn by place, all money and the discretionary
+         part apart. The window is a choice for this visit, saved nowhere. -->
+    <div class="slaf-where-window" role="group" aria-label="The window drawn">
+      <button type="button" class="slaf-btn slaf-btn--quiet" data-window="1" aria-pressed="true">This month</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" data-window="3" aria-pressed="false">3 months</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" data-window="0" aria-pressed="false">Everything</button>
+    </div>
+    <h3 class="slaf-where-h" id="where-all-title">Where all the money went</h3>
+    <div id="where-all"></div>
+    <h3 class="slaf-where-h" id="where-disc-title">Where the discretionary money went</h3>
+    <p class="slaf-hint" id="where-disc-say" data-fold="never" style="margin:var(--space-1) 0 0"></p>
+    <div id="where-disc"></div>
+    <p class="slaf-hint" id="where-values" data-fold="never" style="margin:var(--space-2) 0 0">This is the order the money chose. If it is not the order you would choose, <a href="values.html#spending">What Matters</a> reads the same log against what you say matters, and the typical month's lines are yours to change above.</p>
+    <p class="slaf-hint" style="margin:var(--space-4) 0 0">One line a place, however many times it charged you. Choose where a place files and every line from it, past and future, follows: that is a rule, and the next statement uses it. Open a place to see its lines and to say what day a line was <em>for</em>, when that is not the day it was paid.</p>
     <ul class="slaf-merch" id="merch-list"></ul>
     <p class="empty" id="merch-empty">No statement lines yet. Bring one in above, or log spending by date in <a href="cash-flow.html#log">Cash Flow</a>.</p>
   </section>
@@ -1440,7 +1453,7 @@
         capturingFullMatch: demo.capturingFullMatch
       });
     }
-    Spine.updateProfile({ expenses: { entries: Demo.buildSpending() } });
+    Spine.updateProfile({ expenses: { entries: Demo.buildSpending().concat(Demo.buildLog()) } });
     render();
     el('out-summary').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
@@ -1543,6 +1556,8 @@
   var TABLES = null;
   var MONTH = Schema.localDay().slice(0, 7);
   var BUILT = '';            /* the merchant set the list was built for */
+  var WINDOW = 1;            /* months drawn by place: 1, 3, or 0 for everything (D-338) */
+  var TOP = 8;               /* places drawn on their own; the rest fold into one bar */
   function el(id) { return document.getElementById(id); }
   function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function cats() { return ((TABLES && TABLES.expenseCategories) || {}).categories || []; }
@@ -1595,6 +1610,46 @@
       row.children[1].innerHTML = esc(catLabel(e.categoryId)) + (e.categorizedBy === 'rule' ? ' <small>· your rule</small>' : '');
     });
   }
+  /* ---- Where the money went, by place (D-338) ----------------------------
+     Two charts off one reader: every place, then the discretionary part.
+     The largest few on their own, the rest as one bar, and the values room
+     for the question the order raises. Nothing typed here. */
+  function placeRows(rows, pick, total) {
+    var live = rows.map(function (r) { return { r: r, v: pick(r) }; }).filter(function (x) { return x.v > 0; }).sort(function (a, b) { return b.v - a.v; });
+    var head = live.slice(0, TOP), rest = live.slice(TOP);
+    var out = head.map(function (x) {
+      return { label: x.r.label, value: x.v, note: catLabel(x.r.categoryId) + (x.r.count > 1 ? ' · ' + x.r.count + ' times' : '') + (total > 0 ? ' · ' + Math.round(x.v / total * 100) + '%' : '') };
+    });
+    if (rest.length) out.push({ label: 'Everywhere else', value: rest.reduce(function (t, x) { return t + x.v; }, 0), note: rest.length + ' more places', color: 'var(--color-text-faint)' });
+    return out;
+  }
+  function windowWords(w) {
+    if (!w.months) return 'nothing dated yet';
+    if (WINDOW === 1 || w.from === w.to) return Schema.monthLabel(w.to);
+    if (WINDOW === 3) return Schema.monthLabel(w.from) + ' to ' + Schema.monthLabel(w.to);
+    return 'everything dated, ' + Schema.monthLabel(w.from) + ' to ' + Schema.monthLabel(w.to);
+  }
+  function renderWhere(h) {
+    var w = Merchants.byPlace(h, TABLES, { months: WINDOW });
+    var words = windowWords(w);
+    document.querySelectorAll('#merchants [data-window]').forEach(function (b) { b.setAttribute('aria-pressed', String(+b.getAttribute('data-window') === WINDOW)); });
+    el('where-all-title').textContent = w.count ? 'Where all the money went, ' + words : 'Where all the money went';
+    el('where-all').innerHTML = Charts.bars({
+      rows: placeRows(w.rows, function (r) { return r.totalCents; }, w.totalCents),
+      empty: WINDOW === 1 ? 'Nothing dated in this month yet. Log what went out in Cash Flow, or bring a statement in above.' : 'Nothing dated in this window yet.'
+    });
+    el('where-disc-title').textContent = w.discretionaryCents > 0 ? 'Where the discretionary money went, ' + words : 'Where the discretionary money went';
+    el('where-disc-say').textContent = w.count
+      ? (w.discretionaryCents > 0
+        ? Money.formatCents(w.discretionaryCents) + ' of the ' + Money.formatCents(w.totalCents) + ', ' + Math.round(w.discretionaryCents / Math.max(1, w.totalCents) * 100) + '%, was money you chose to spend: the wants, and nothing marked fixed.'
+        : 'Nothing in this window files under wants, so nothing here was discretionary.')
+      : '';
+    el('where-disc').innerHTML = Charts.bars({
+      rows: placeRows(w.rows, function (r) { return r.discretionaryCents; }, w.discretionaryCents),
+      empty: w.count ? 'Every line in this window is a need, a saving or a payment; nothing to draw.' : 'The discretionary part draws once something is dated.'
+    });
+    el('where-values').hidden = !w.discretionaryCents;
+  }
   function renderMerchants(h) {
     var list = Merchants.list(h, TABLES);
     var sig = list.map(function (m) { return m.key + ':' + m.entries.map(function (e) { return e.id; }).join('.'); }).join('|');
@@ -1633,9 +1688,15 @@
   function render() {
     if (!TABLES) return;
     var h = Spine.getProfile();
+    renderWhere(h);
     renderMerchants(h);
     renderSlope(h);
   }
+  el('merchants').addEventListener('click', function (ev) {
+    var b = ev.target.closest ? ev.target.closest('[data-window]') : null; if (!b) return;
+    WINDOW = +b.getAttribute('data-window');
+    render();
+  });
   /* A category chosen for a merchant is a rule, and the rule re-files every
      line from that merchant now; the next statement in uses it too. One
      undo takes the rule and every re-filed line back together. */

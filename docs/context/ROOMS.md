@@ -13,8 +13,8 @@ Full context for one: `node tools/context/pack.js <id>`.
 ## Your Numbers (13)
 
 - **income** — Income · 2276 lines · engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget, variableincome, hourly, hassle, timeline · owns: incomeLow, incomeHigh, bufferMonths, variableWindow, ledgerIncome, futureIncome, incomeType, paySurvives · D-295, D-294, D-277
-- **expenses** — Expenses · 1671 lines · engines: projection, tier0, ledger, cashflow, fire, income, selfemployed, tax, hourly, subscriptions, merchants, bankcsv · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-337, D-319, D-306
-- **cash-flow** — The Month · 954 lines · engines: projection, tier0, cashflow, income, selfemployed, ledger, budget, hourly, calendar · owns: payCadence, nextPayday, billsMonthly, payLaterDue · D-337, D-318, D-275
+- **expenses** — Expenses · 1732 lines · engines: projection, tier0, ledger, cashflow, fire, income, selfemployed, tax, hourly, subscriptions, merchants, bankcsv · owns: rentMonthly, monthlyExpenses, foodMonthly, accommodationMonthly, transportationMonthly, wantsMonthly, therapyMonthly, annualLine · D-338, D-337, D-319
+- **cash-flow** — The Month · 970 lines · engines: projection, tier0, cashflow, income, selfemployed, ledger, budget, subscriptions, merchants, hourly, calendar · owns: payCadence, nextPayday, billsMonthly, payLaterDue · D-338, D-337, D-318
 - **calendar** — The Calendar · 190 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, calendar · D-308, D-275, D-253
 - **budget** — The Close · 1136 lines · engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget, variance, hourly, foo, fire, statement, benchmarks, ratios, events, skills, history · owns: monthsClosed, historyCompareTo · D-337, D-276, D-257
 - **statement** — The Statement · 484 lines · engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget, hourly, foo, coast, opening, benchmarks · owns: confidenceWeightedNetWorth, netWorth · D-313, D-290, D-278
