@@ -22,7 +22,10 @@ Tailwind 4 (mobile-first, light and dark). Vitest for the engine, Playwright
 for flows. `vite-plugin-singlefile` is optional (`SINGLEFILE=1 npm run build`).
 
 Commands (run from `slam/`): `npm run dev`, `npm test` (engine + golden),
-`npm run build`, `npm run test:e2e` (needs a build), `npm run check` (all).
+`npm run build`, `npm run test:e2e` (needs a build), `npm run build:app`
+(the committed copy under `slam/app/`, which GitHub Pages serves from
+`main` at `/Personalfinance/slam/app/`; rebuild it in every commit that
+changes the app), `npm run check` (all of the above).
 
 ## Layout
 

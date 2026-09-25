@@ -21,6 +21,9 @@ npm run test:e2e   # phone flows against the build (Playwright)
 npm run check      # all of the above
 ```
 
+`npm run build:app` writes the committed copy under `app/`, which GitHub
+Pages serves from `main` at https://sapphirestoneage.github.io/Personalfinance/slam/app/
+once this branch is merged. Rebuild it in every commit that changes the app.
 `SINGLEFILE=1 npm run build` produces one self-contained HTML file.
 If Playwright's own Chromium is not installed, point it at one:
 `PLAYWRIGHT_CHROMIUM_PATH=/path/to/chrome npm run test:e2e`.
