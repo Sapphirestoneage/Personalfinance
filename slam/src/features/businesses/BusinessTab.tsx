@@ -12,6 +12,7 @@ import { businessToModel } from '@/data/model';
 import { BarList } from '../shared/BarList';
 import { Basis, Big, Button, Card, Disclosure, Note, Toggle } from '../shared/ui';
 import { NumberField } from '../shared/NumberField';
+import { MissingList } from '../shared/MissingList';
 import { useLabelMode, useSellableHours } from '../shared/hooks';
 import { count, money, percent } from '../shared/format';
 import { SourcesEditor } from './SourcesEditor';
@@ -84,9 +85,7 @@ export function BusinessTab({ id }: { id: string }) {
             <Basis basedOn={month.basedOn} />
           </>
         ) : (
-          <Note tone="warn" testId="tab-incomplete">
-            Missing: {month && !month.ok ? month.missing.join(', ') : ''}. Fill those in below.
-          </Note>
+          <MissingList keys={month && !month.ok ? month.missing : []} currentBusinessId={id} testId="tab-incomplete" />
         )}
       </Card>
 

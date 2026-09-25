@@ -31,6 +31,8 @@ export function CheckIn() {
   const putWeekLog = useAppStore((s) => s.putWeekLog);
   const week = weekStartOf();
   const existing = weekLogs.find((w) => w.weekStart === week && !w.businessId);
+  const lastSaved = weekLogs.find((w) => w.checkedIn && !w.businessId);
+  const daysSince = lastSaved ? Math.floor((Date.now() - new Date(lastSaved.weekStart).getTime()) / 86_400_000) : null;
   const [draft, setDraft] = useState<WeekLog | null>(null);
   const [saved, setSaved] = useState(false);
   if (!profile) return null;
@@ -66,7 +68,10 @@ export function CheckIn() {
 
   return (
     <Card title="60-second check-in" testId="checkin">
-      <p className="mb-3 text-xs text-slate-500">Week of {week}. Tap what happened; leave what you do not know.</p>
+      <p className="mb-3 text-xs text-slate-500">
+        Week of {week}. Tap what happened; leave what you do not know.
+        {daysSince !== null && daysSince >= 13 && !existing?.checkedIn ? ` Your last check-in was ${daysSince} days ago.` : ''}
+      </p>
       <div className="space-y-2">
         <Counter label="Contacts" value={log.inquiries} onChange={(v) => set({ inquiries: v })} testId="ci-inquiries" />
         <Counter label="Bookings" value={log.bookings} onChange={(v) => set({ bookings: v })} testId="ci-bookings" />

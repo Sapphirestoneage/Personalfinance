@@ -8,15 +8,7 @@ import { CONTACT_NAME, NON_AFFILIATION, NO_ADVICE, ON_DEVICE } from '@/content/c
 import { navigate } from '@/app/router';
 import { Button, Card, ConfirmButton, Note, Toggle } from '../shared/ui';
 
-function download(text: string, name: string) {
-  const blob = new Blob([text], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = name;
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
+import { saveFile } from '../shared/download';
 
 interface InstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -87,14 +79,30 @@ export function Demo() {
       <Card title="Backup" testId="backup-card">
         <p className="mb-3 text-xs text-slate-500">{ON_DEVICE}</p>
         <div className="space-y-2">
-          <Button testId="export" onClick={() => void exportBackup().then((t) => { download(t, exportFileName()); setNote(EXPORT_REMINDER); })}>
+          <Button
+            testId="export"
+            onClick={() =>
+              void exportBackup().then(async (t) => {
+                const r = await saveFile(t, exportFileName());
+                setNote(r === 'saved' ? EXPORT_REMINDER : r === 'declined' ? 'Not saved. Tap again when you want the file.' : 'This view cannot save files. Open the installed app to save a backup.');
+              })
+            }
+          >
             Save a backup file
           </Button>
           <Button kind="secondary" testId="import" onClick={() => fileRef.current?.click()}>
             Restore from a file
           </Button>
           <input ref={fileRef} data-testid="import-file" type="file" accept="application/json,.json" className="hidden" onChange={(e) => void onImport(e.target.files?.[0])} />
-          <Button kind="secondary" testId="snapshot" onClick={() => { download(snapshotText(), exportFileName(new Date(), 'snapshot')); setNote(`Snapshot saved. Send the file to ${CONTACT_NAME} however you usually share files. It holds your numbers and week logs, never client records. ${EXPORT_REMINDER}`); }}>
+          <Button
+            kind="secondary"
+            testId="snapshot"
+            onClick={() =>
+              void saveFile(snapshotText(), exportFileName(new Date(), 'snapshot')).then((r) =>
+                setNote(r === 'saved' ? `Snapshot saved. Send the file to ${CONTACT_NAME} however you usually share files. It holds your numbers and week logs, never client records. ${EXPORT_REMINDER}` : r === 'declined' ? 'Not saved.' : 'This view cannot save files. Open the installed app to save a snapshot.'),
+              )
+            }
+          >
             Snapshot to send to {CONTACT_NAME}
           </Button>
         </div>

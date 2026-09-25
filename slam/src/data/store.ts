@@ -65,6 +65,7 @@ export interface AppState {
   resetFresh(): Promise<void>;
   hide(): void;
   unhide(): void;
+  clearError(): void;
   setPresenter(on: boolean): void;
   model(): ProfileModel | null;
 }
@@ -347,6 +348,7 @@ export const useAppStore = create<AppState>((set, get) => {
 
     hide: () => set({ hidden: true }),
     unhide: () => set({ hidden: false }),
+    clearError: () => set({ error: null }),
     setPresenter: (on) => set({ presenter: on }),
 
     model() {

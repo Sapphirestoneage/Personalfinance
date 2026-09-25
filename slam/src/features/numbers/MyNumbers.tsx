@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { Bars } from '../shared/Bars';
 import { BarList } from '../shared/BarList';
 import { Basis, Big, Button, Card, Empty, Note } from '../shared/ui';
+import { MissingList } from '../shared/MissingList';
 import { useModel, useSellableHours, useTotals } from '../shared/hooks';
 import { count, money } from '../shared/format';
 
@@ -70,13 +71,8 @@ export function MyNumbers() {
   }
   if (!totals || !totals.ok) {
     return (
-      <Card title="My Numbers" testId="numbers-incomplete">
-        <Note tone="warn">Not enough to add up yet. Missing: {totals && !totals.ok ? totals.missing.join(', ') : ''}.</Note>
-        <div className="mt-3">
-          <Button to="businesses" kind="secondary">
-            Fill them in
-          </Button>
-        </div>
+      <Card title="My Numbers">
+        <MissingList keys={totals && !totals.ok ? totals.missing : []} testId="numbers-incomplete" />
       </Card>
     );
   }

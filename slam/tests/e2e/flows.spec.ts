@@ -70,9 +70,9 @@ test.describe('first-time user', () => {
     await open(page, 'businesses/you-inPerson');
     await page.getByTestId('in-bookingRate').fill('');
     await page.getByTestId('in-bookingRate').blur();
-    await expect(page.getByTestId('tab-incomplete')).toContainText('bookingRate');
+    await expect(page.getByTestId('tab-incomplete')).toContainText('Share of screened people who book');
     await open(page, 'numbers');
-    await expect(page.getByTestId('numbers-incomplete')).toContainText('bookingRate');
+    await expect(page.getByTestId('numbers-incomplete')).toContainText('In person: Share of screened people who book');
   });
 });
 

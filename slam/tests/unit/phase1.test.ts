@@ -90,3 +90,18 @@ describe('the snapshot for Sapphire', () => {
     expect((snap.thisMonth as { ok: boolean }).ok).toBe(true);
   });
 });
+
+describe('missing keys become words and a place to fix them', async () => {
+  const { describeMissing } = await import('@/features/shared/missing');
+  const rows = sampleRows('sample-inperson');
+  it('names the business and the field, and links to the tab', () => {
+    const m = describeMissing('sample-inperson-inPerson.bookingRate', rows.businesses, 'plain');
+    expect(m.text).toBe('In person: Share of screened people who book');
+    expect(m.to).toBe('businesses/sample-inperson-inPerson');
+  });
+  it('handles offers, shared settings, and keys from inside one business', () => {
+    expect(describeMissing('sample-inperson-inPerson.single.priceCents', rows.businesses, 'domme').text).toBe('In-person, Single session: Price');
+    expect(describeMissing('shared.fixedCostsCents', rows.businesses, 'plain').to).toBe('businesses/settings');
+    expect(describeMissing('single.priceCents', rows.businesses, 'pro', 'sample-inperson-inPerson').text).toBe('In-person sessions, Single session (core offer): Price');
+  });
+});

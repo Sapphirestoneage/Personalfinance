@@ -54,16 +54,21 @@ export function Today() {
           <p className="mt-2 text-xs text-slate-500">Nothing leaves this phone. The Hide button at the top swaps the screen for a plain page in one tap.</p>
         </Card>
       )}
-      <Card title="Do this next" testId="next-card">
+      <Card title={step.complete ? 'Pathway complete' : 'Do this next'} testId="next-card">
         <p className="text-lg font-semibold" data-testid="next-title">
-          {step.stage.title}
-          {business ? ` for ${business.name}` : ''}
+          {step.complete ? 'Every stage, every business.' : `${step.stage.title}${business ? ` for ${business.name}` : ''}`}
         </p>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{step.stage.question}</p>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{step.complete ? 'From here it is the weekly check-in, and a fresh diagnosis whenever a month surprises you.' : step.stage.question}</p>
         <div className="mt-3">
-          <Button to={to} testId="next-go">
-            {anyActive || step.stage.tool === 'setup' ? `Start (about ${step.stage.minutes} min)` : 'Tick your businesses'}
-          </Button>
+          {step.complete ? (
+            <Button to={`toolbox/diagnose?business=${model.businesses.filter((b) => b.active).sort((a, b) => a.priority - b.priority)[0]?.id ?? ''}`} testId="next-go" kind="secondary">
+              Run the diagnosis again
+            </Button>
+          ) : (
+            <Button to={to} testId="next-go">
+              {anyActive || step.stage.tool === 'setup' ? `Start (about ${step.stage.minutes} min)` : 'Tick your businesses'}
+            </Button>
+          )}
         </div>
         <div className="mt-3">
           <div className="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-800">

@@ -21,6 +21,9 @@ export function Layout({ children }: { children: ReactNode }) {
   const presenter = useAppStore((s) => s.presenter);
   const route = useRoute();
   const demo = useAppStore((s) => s.profile?.demo ?? false);
+  const error = useAppStore((s) => s.error);
+  const status = useAppStore((s) => s.status);
+  const clearError = useAppStore((s) => s.clearError);
   const current = route.parts[0] ?? 'today';
   useEffect(() => setOpen(false), [route]);
   useEffect(() => {
@@ -80,6 +83,14 @@ export function Layout({ children }: { children: ReactNode }) {
         <p data-testid="sample-banner" className="mb-3 rounded-lg bg-amber-50 px-3 py-1.5 text-center text-xs text-amber-900 dark:bg-amber-900/30 dark:text-amber-100">
           Sample numbers, not anyone's. <a href={href('demo')} className="underline">Use your own</a>
         </p>
+      )}
+      {status === 'ready' && error && (
+        <div role="alert" data-testid="save-error" className="mb-3 flex items-start justify-between gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-900 dark:bg-red-900/30 dark:text-red-100">
+          <span>Could not save that: {error}. The screen was reloaded from what is stored.</span>
+          <button type="button" onClick={clearError} aria-label="Dismiss" className="shrink-0 px-1">
+            ×
+          </button>
+        </div>
       )}
       <main>{children}</main>
     </div>

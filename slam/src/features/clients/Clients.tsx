@@ -188,12 +188,15 @@ export function Clients() {
   const [editing, setEditing] = useState<ClientRecord | null>(null);
   const month = new Date().toISOString().slice(0, 7);
   const flags = useMemo(() => budgetCheck(clients, sales, month), [clients, sales, month]);
+  const businesses = useAppStore((s) => s.businesses);
+  const firstBusinessId = businesses.filter((b) => b.active).sort((a, b) => a.priority - b.priority)[0]?.id;
   if (!profile) return null;
 
   const blank = (): ClientRecord => ({
     id: newId('c'),
     profileId: profile.id,
     alias: '',
+    ...(firstBusinessId ? { businessId: firstBusinessId } : {}),
     stage: 'inquiry',
     keyDates: { firstContact: new Date().toISOString().slice(0, 10) },
     screeningResult: 'pending',

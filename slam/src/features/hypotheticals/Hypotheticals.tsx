@@ -6,7 +6,8 @@ import { useAppStore } from '@/data/store';
 import type { EventId, ScenarioKind } from '@/data/schemas';
 import { compareScenarios, DISASTER_EVENTS, DREAM_EVENTS, EVENT_DEFAULTS, type EventParams, type ScenarioSpec } from '@/engine/scenarios';
 import { Bars } from '../shared/Bars';
-import { Big, Card, Note, Toggle } from '../shared/ui';
+import { Big, Card, Toggle } from '../shared/ui';
+import { MissingList } from '../shared/MissingList';
 import { useModel } from '../shared/hooks';
 import { count, money } from '../shared/format';
 
@@ -101,7 +102,7 @@ export function Hypotheticals() {
         <div className="mt-3">
           <Bars rows={rows} format={(v) => money(v, { whole: true })} summary={`Profit a month. Disaster ${profitOf('Disaster') === null ? 'cannot be computed yet' : money(profitOf('Disaster'), { whole: true })}, Dream ${profitOf('Dream') === null ? 'not yet' : money(profitOf('Dream'), { whole: true })}.`} />
         </div>
-        {!compared.Normal.ok && <Note tone="warn">Missing: {compared.Normal.missing.join(', ')}.</Note>}
+        {!compared.Normal.ok && <MissingList keys={compared.Normal.missing} />}
       </Card>
 
       <Card title="Runway in Disaster" testId="runway-card">
