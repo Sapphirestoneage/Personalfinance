@@ -36,9 +36,20 @@ Commands (run from `slam/`): `npm run dev`, `npm test` (engine + golden),
 - `src/content/` canonical demo profile, presets, samples, glossary,
   template copy. All copy non-explicit. Hormozi frameworks credited with a
   non-affiliation line; no book text reproduced.
-- `src/features/` one folder per tool or screen.
-- `tests/golden/` G1..G21 (Vitest). `tests/unit/` engine, schema and storage
-  tests. `tests/e2e/` Playwright flows.
+- `src/features/` one folder per screen: today (check-in), numbers, clients,
+  businesses (list, setup, tab, shared settings), hypotheticals, toolbox
+  (ToolShell + `tools.ts`, the eight tools as data), demo (samples, backup,
+  snapshot, presenter), quick-hide, shared (ui, Bars, NumberField, hooks).
+- `src/app/` the hash router and the Layout (three-bar menu, Hide button).
+- `src/content/fields.ts` every typed field with plain, domme and pro
+  labels; `stages.ts` the nine pathway stages; `samples.ts` the three
+  sample profiles, the fresh profile, and the benchmarks the diagnosis
+  compares against.
+- `src/engine/pathway.ts` (next step), `src/engine/diagnose.ts` (the
+  bottleneck: biggest gain from bringing one sales step to typical;
+  screening is never a candidate; capacity wins when the cap binds).
+- `tests/golden/` G1..G21 (Vitest). `tests/unit/` engine, schema, storage,
+  pathway, diagnosis and sample tests. `tests/e2e/` Playwright phone flows.
 
 ## App structure (phase 1)
 
@@ -186,18 +197,30 @@ stops: profit is -$1,500.
 
 ## Phases
 
-Phase 0 (done in this branch): project setup, Zod schemas, Dexie storage
-with export/import, Assumption and label system loaded with the canonical
-assumptions, formulas F01-F12, F23, F24, golden tests G1-G21 passing. Done
-when all tests pass, data survives reload, and export then import restores
-everything exactly (`tests/e2e/persistence.spec.ts`).
+Phase 0 (done): project setup, Zod schemas, Dexie storage with
+export/import, Assumption and label system loaded with the canonical
+assumptions, formulas F01-F12, F23, F24, golden tests G1-G21 passing.
 
-Phase 1 (waits for the owner's go): side menu, business selection and
-ranking, the four v1 business tabs, Hypotheticals, Quick Diagnosis, demo
-mode (3 sample profiles, presenter view, reset), basic dashboard, weekly
-check-in with two-tap inquiry log, send-to-Sapphire snapshot file. Done
-when a first-time user on a phone reaches her bottleneck in under 5
-minutes, it works offline, and a test confirms zero network requests.
+Phase 1 (done): side menu, business selection and ranking, the four v1
+business tabs, Hypotheticals, Quick Diagnosis, demo mode (3 sample
+profiles, presenter view, reset), My Numbers dashboard, weekly check-in
+with the two-tap contact log, snapshot file for Sapphire. The phone flows
+in `tests/e2e/flows.spec.ts` prove: a first-time user reaches her
+bottleneck from three numbers in under 5 minutes, data survives reload,
+export then import restores exactly, quick-hide, zero requests leave the
+device, and the app opens offline.
+
+How the screens use the engine: a first-time user starts on a fresh
+profile (nothing ticked, every number a labeled preset). Today shows the
+next pathway step; guided tools write her answers live (label Yours);
+Toolbox tools open in a sandbox and write only on "Save to my business".
+Either way finishing a tool checks off that stage for that business.
+Store writes are optimistic (screen first, row second). A check-in counts
+once per week, when she presses Save; "+1 contact" alone does not.
+
+Next (not started): v2 business types, per-platform follower rows,
+guided-mode copy per label mode, and the owner's answers to
+`docs/OPEN-QUESTIONS.md`.
 
 Open questions and the working assumptions behind them are in
 `docs/OPEN-QUESTIONS.md`. Answer them there; do not reopen decided items.

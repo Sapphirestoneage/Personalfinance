@@ -120,3 +120,27 @@ here is decided; an answer changes one place in the code and one line here.
 
 22. **Mode names.** "Plain", "Domme", "Pro" label sets. Phase 0 stores the
     choice; phase 1 ships the copy.
+
+## Added in phase 1
+
+23. **What "typical" means in the diagnosis.** The quick diagnosis compares
+    her rates and prices to the canonical presets (booking 40%, show 85%,
+    rebook 30%, $500 single, and so on) and calls the step with the biggest
+    gain the bottleneck. Cohort numbers from Sapphire would be better
+    benchmarks; drop them into `benchmarksFor` in `src/content/samples.ts`
+    with the label Cohort.
+
+24. **Bookings in the diagnosis.** She types contacts and bookings; the
+    booking rate is derived as bookings / (contacts x pass rate), with the
+    pass rate left at its preset until she changes it in the tab.
+
+25. **Guided mode writes live.** In the pathway, each answer is saved to
+    her business as she goes (label Yours). Only the Toolbox uses the
+    sandbox. Say if the pathway should also hold answers until the end.
+
+26. **Presenter view** is bigger text only. Say what else it should hide
+    or show.
+
+27. **The snapshot** carries settings, businesses, offers, week logs and
+    milestones, plus this month's computed numbers for reading; never
+    clients or sales. Confirm.

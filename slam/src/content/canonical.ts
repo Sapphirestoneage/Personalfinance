@@ -3,12 +3,10 @@
    the demo profile use exactly these numbers. Money in cents, rates as
    fractions. Label: Preset, source: "SLAM sample".
    ========================================================================== */
-import type { Business, Offer, Profile, Scenario } from '@/data/schemas';
-import { CANONICAL_STAMP, assume, mapOf } from '@/data/assumptions';
+import { assume, mapOf } from '@/data/assumptions';
 import type { BusinessModel, ProfileModel } from '@/engine/model';
 import type { Book } from '@/engine/reader';
 import type { OfferBooks } from '@/engine/businesses/shared';
-import { SCENARIO_PRESETS } from '@/engine/scenarios';
 
 export const SAMPLE = 'SLAM sample';
 
@@ -189,91 +187,4 @@ export function canonicalProfileModel(mix: InPersonMix = {}): ProfileModel {
     businesses: [canonicalInPerson(mix), canonicalContent(), canonicalCalls(), canonicalRegulars()],
     shared: canonicalShared(),
   };
-}
-
-/* ---------- Storage rows (the demo profile in Dexie) ------------------------ */
-
-export const DEMO_PROFILE_ID = 'demo';
-
-function offerRow(businessId: string, type: Offer['type'], name: string, book: Book, recurring: boolean, active = true): Offer {
-  const row: Offer = {
-    id: `${businessId}-${type}`,
-    businessId,
-    type,
-    name,
-    active,
-    recurring,
-    priceCents: book.priceCents!,
-    variableCostCents: book.variableCostCents!,
-    feeRate: book.feeRate!,
-    allInHours: book.allInHours!,
-  };
-  for (const k of ['takeRate', 'monthsRetained', 'sessionsIncluded', 'sessionsPerMonth', 'weeks', 'closeRate', 'minutes'] as const) {
-    const a = book[k];
-    if (a) row[k] = a;
-  }
-  return row;
-}
-
-export interface DemoRows {
-  profile: Profile;
-  businesses: Business[];
-  offers: Offer[];
-  scenarios: Scenario[];
-}
-
-/** The demo profile as rows. In-person is #1 with add-on and retainer on, the arc off. */
-export function demoRows(now: string = CANONICAL_STAMP): DemoRows {
-  const pid = DEMO_PROFILE_ID;
-  const business = (id: string, type: Business['type'], name: string, priority: number, inputs: Book): Business => ({
-    id,
-    profileId: pid,
-    type,
-    name,
-    active: true,
-    priority,
-    inputs,
-    scenarioOverrides: {},
-    createdAt: now,
-    updatedAt: now,
-  });
-  const businesses: Business[] = [
-    business('b-inperson', 'inPerson', 'In-person', 1, inPersonInputs()),
-    business('b-content', 'content', 'Content', 2, contentInputs()),
-    business('b-calls', 'calls', 'Calls', 3, callsInputs()),
-    business('b-regulars', 'regulars', 'Regulars', 4, regularsInputs()),
-  ];
-  const c = contentOffers();
-  const offers: Offer[] = [
-    offerRow('b-inperson', 'single', 'Single session', singleOffer(), false),
-    offerRow('b-inperson', 'addon', 'Add-on', addonOffer(), false),
-    offerRow('b-inperson', 'retainer', 'Retainer', retainerOffer(), true),
-    offerRow('b-inperson', 'arc', 'Discipline Arc', arcOffer(), false, false),
-    offerRow('b-content', 'subscription', 'Subscription', c.subscription!, true),
-    offerRow('b-content', 'custom', 'Custom', c.custom!, false),
-    offerRow('b-content', 'digital', 'Digital product', c.digital!, false),
-    offerRow('b-content', 'ppv', 'Pay-per-view', c.ppv!, false),
-    offerRow('b-calls', 'call', 'Video call', callsOffers().call!, false),
-    offerRow('b-regulars', 'tribute', 'Regular', regularsOffers().tribute!, true),
-  ];
-  const scenarios: Scenario[] = (['Normal', 'Dream', 'Disaster'] as const).map((kind) => ({
-    id: `${pid}-${kind}`,
-    profileId: pid,
-    kind,
-    multipliers: { ...SCENARIO_PRESETS[kind] },
-    events: [],
-    updatedAt: now,
-  }));
-  const profile: Profile = {
-    id: pid,
-    alias: 'Sample',
-    demo: true,
-    labelMode: 'plain',
-    settings: canonicalShared(),
-    pathway: { businessId: 'b-inperson', stage: 'Setup', completedSteps: [] },
-    checkInCount: 0,
-    createdAt: now,
-    updatedAt: now,
-  };
-  return { profile, businesses, offers, scenarios };
 }

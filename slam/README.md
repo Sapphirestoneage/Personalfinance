@@ -3,12 +3,13 @@
 Stress Less About Money: a local-first, phone-first web app that shows how
 every business decision flows to profit. Everything stays on the device.
 
-Phase 0 (this folder, now): the engine (`src/engine`), the data layer with
+Phases 0 and 1 are in: the engine (`src/engine`), the data layer with
 labeled assumptions, Dexie storage and plain-file backup (`src/data`), the
-canonical sample (`src/content`), golden tests G1-G21 (`tests/golden`), and
-a one-screen shell that proves it on a phone. Phase 1 (the real screens)
-waits for the owner's go. `CLAUDE.md` is the condensed spec;
-`docs/OPEN-QUESTIONS.md` lists what still needs the owner's answer.
+canonical sample and three demo profiles (`src/content`), golden tests
+G1-G21 (`tests/golden`), and the screens (`src/features`): Today with the
+check-in, My Numbers, Clients, My businesses, Hypotheticals, Toolbox, and
+Demo/backup. `CLAUDE.md` is the condensed spec; `docs/OPEN-QUESTIONS.md`
+lists what still needs the owner's answer.
 
 ```
 npm ci

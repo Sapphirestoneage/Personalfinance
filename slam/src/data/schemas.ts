@@ -292,6 +292,8 @@ export const WeekLogSchema = z
     hours: z.number().finite().nonnegative().nullable(),
     energy: z.number().int().min(1).max(5).nullable(),
     note: shortText.optional(),
+    /** true once she pressed Save on the check-in; a "+1 contact" tap alone does not count */
+    checkedIn: z.boolean(),
     loggedAt: isoDateTime,
   })
   .strict();

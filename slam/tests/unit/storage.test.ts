@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { SlamDB } from '@/data/db';
 import { comparable, exportAll, exportFileName, importAll, parseExport, serialize } from '@/data/transfer';
 import { useAppStore } from '@/data/store';
-import { demoRows } from '@/content/canonical';
+import { sampleRows } from '@/content/samples';
+const demoRows = () => sampleRows('sample-inperson');
 import { aggregateMonth } from '@/engine/aggregate';
 import { inPersonMonth } from '@/engine/businesses';
 import { canonicalInPerson } from '@/content/canonical';
@@ -56,7 +57,7 @@ describe('Dexie storage', () => {
       updatedAt: '2026-09-01T00:00:00.000Z',
     });
     await db.putSale({ id: 's1', profileId: 'demo', businessId: 'b-regulars', clientId: 'c1', date: '2026-09-03', amountCents: 20_000, feeCents: 2_000, variableCostCents: 0, createdAt: '2026-09-03T00:00:00.000Z' });
-    await db.putWeekLog({ id: 'w1', profileId: 'demo', weekStart: '2026-08-31', inquiries: 12, bookings: 3, sessionsHeld: null, revenueCents: null, hours: 20, energy: 4, loggedAt: '2026-09-06T00:00:00.000Z' });
+    await db.putWeekLog({ id: 'w1', profileId: 'demo', weekStart: '2026-08-31', inquiries: 12, bookings: 3, sessionsHeld: null, revenueCents: null, hours: 20, energy: 4, checkedIn: true, loggedAt: '2026-09-06T00:00:00.000Z' });
     await db.putMilestone({ id: 'm1', profileId: 'demo', key: 'first-checkin', achievedAt: '2026-09-06T00:00:00.000Z' });
 
     const before = await exportAll(db, new Date('2026-09-10T00:00:00.000Z'));
@@ -87,14 +88,23 @@ describe('Dexie storage', () => {
 
 describe('the store', () => {
   beforeEach(() => {
-    useAppStore.setState({ status: 'loading', profile: null, businesses: [], offers: [], scenarios: [], hidden: false, seeded: null, error: null });
+    useAppStore.setState({ status: 'loading', profile: null, businesses: [], offers: [], scenarios: [], clients: [], sales: [], weekLogs: [], milestones: [], hidden: false, seeded: null, error: null });
   });
 
-  it('seeds the demo on an empty device and computes G1 from what it stored', async () => {
+  it('seeds a fresh profile on an empty device: nothing ticked, every number a labeled preset', async () => {
     await useAppStore.getState().init(fresh());
+    const s0 = useAppStore.getState();
+    expect(s0.status).toBe('ready');
+    expect(s0.seeded).toBe('fresh');
+    expect(s0.businesses.every((b) => !b.active)).toBe(true);
+    expect(s0.businesses.every((b) => Object.values(b.inputs).every((a) => a.label !== 'Yours'))).toBe(true);
+  });
+
+  it('loads the in-person sample and computes the G7 mix from what it stored', async () => {
+    await useAppStore.getState().init(fresh());
+    await useAppStore.getState().loadSample('sample-inperson');
     const s = useAppStore.getState();
-    expect(s.status).toBe('ready');
-    expect(s.seeded).toBe('demo');
+    expect(s.seeded).toBe('sample');
     expect(s.businesses.map((b) => b.priority)).toEqual([1, 2, 3, 4]);
     const model = s.model()!;
     const inPerson = model.businesses.find((b) => b.type === 'inPerson')!;
@@ -107,24 +117,27 @@ describe('the store', () => {
 
   it('writes a typed value through, labeled Yours, and exports then imports it exactly', async () => {
     await useAppStore.getState().init(fresh());
-    await useAppStore.getState().setInput('b-inperson', 'inquiriesPerMonth', 42);
-    const b = useAppStore.getState().businesses.find((x) => x.id === 'b-inperson')!;
+    await useAppStore.getState().loadSample('sample-inperson');
+    const id = 'sample-inperson-inPerson';
+    await useAppStore.getState().setInput(id, 'inquiriesPerMonth', 42);
+    const b = useAppStore.getState().businesses.find((x) => x.id === id)!;
     expect(b.inputs.inquiriesPerMonth?.value).toBe(42);
     expect(b.inputs.inquiriesPerMonth?.label).toBe('Yours');
     const text = await useAppStore.getState().exportBackup();
-    await useAppStore.getState().resetToDemo();
-    expect(useAppStore.getState().businesses.find((x) => x.id === 'b-inperson')!.inputs.inquiriesPerMonth?.value).toBe(60);
+    await useAppStore.getState().resetFresh();
+    expect(useAppStore.getState().businesses.find((x) => x.id === id)).toBeUndefined();
     await useAppStore.getState().importBackup(text);
-    expect(useAppStore.getState().businesses.find((x) => x.id === 'b-inperson')!.inputs.inquiriesPerMonth?.value).toBe(42);
+    expect(useAppStore.getState().businesses.find((x) => x.id === id)!.inputs.inquiriesPerMonth?.value).toBe(42);
     expect(useAppStore.getState().seeded).toBe('import');
   });
 
   it('a null value is stored as not entered and the engine reports it missing', async () => {
     await useAppStore.getState().init(fresh());
-    await useAppStore.getState().setInput('b-inperson', 'bookingRate', null);
+    await useAppStore.getState().loadSample('sample-inperson');
+    await useAppStore.getState().setInput('sample-inperson-inPerson', 'bookingRate', null);
     const model = useAppStore.getState().model()!;
     const r = aggregateMonth(model);
     expect(r.ok).toBe(false);
-    if (!r.ok) expect(r.missing).toContain('b-inperson.bookingRate');
+    if (!r.ok) expect(r.missing).toContain('sample-inperson-inPerson.bookingRate');
   });
 });

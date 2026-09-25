@@ -14,7 +14,8 @@ import {
   WeekLogSchema,
   MilestoneSchema,
 } from '@/data/schemas';
-import { demoRows } from '@/content/canonical';
+import { sampleRows } from '@/content/samples';
+const demoRows = () => sampleRows('sample-inperson');
 
 const STAMP = '2026-09-01T00:00:00.000Z';
 
@@ -69,7 +70,7 @@ describe('every stored schema is strict and stores nothing computed', () => {
   }
   it('the demo rows all validate', () => {
     const rows = demoRows();
-    expect(ProfileSchema.parse(rows.profile).id).toBe('demo');
+    expect(ProfileSchema.parse(rows.profile).id).toBe('sample-inperson');
     for (const b of rows.businesses) expect(BusinessSchema.parse(b).id).toBe(b.id);
     for (const o of rows.offers) expect(OfferSchema.parse(o).id).toBe(o.id);
     for (const s of rows.scenarios) expect(ScenarioSchema.parse(s).id).toBe(s.id);
