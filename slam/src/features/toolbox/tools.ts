@@ -15,9 +15,10 @@ import type { Book } from '@/engine/reader';
 import { withValues } from '@/engine/reader';
 import { computeBusinessMonth, type OfferBooks } from '@/engine/businesses';
 import { diagnose } from '@/engine/diagnose';
-import { arcPlan, clientsFromEvents, costToAcquire, grossProfitPerSale, lifetimeGrossProfit, ltgpToCac, powerCurve, subscriberOfferLift, throughputPerHour, valueStack } from '@/engine/formulas';
-import { sensitivity } from '@/engine/sensitivity';
+import { arcPlan, clientsFromEvents, costToAcquire, grossProfitPerSale, lifetimeGrossProfit, ltgpToCac, LTGP_TO_CAC_TARGET, powerCurve, STACK_TO_PRICE_TARGET, subscriberOfferLift, throughputPerHour, valueEquation, valueStack, WEEKS_PER_MONTH } from '@/engine/formulas';
 import { inquiriesForGoal } from '@/engine/reverse';
+import { sourceShare } from '@/engine/model';
+import { sensitivity } from '@/engine/sensitivity';
 import { rankMoves } from '@/engine/leverage';
 import { count, money, percent } from '../shared/format';
 
@@ -30,6 +31,8 @@ export interface ToolField {
   fallback?: number | null;
   min?: number;
   max?: number;
+  /** a heading shown when the section changes (standalone) or as the question's eyebrow (guided) */
+  section?: string;
 }
 
 export interface ToolLine {
@@ -43,7 +46,13 @@ export interface ToolResult {
   lines: ToolLine[];
   summary: string;
   missing?: string[];
+  /** which published framework the tool leans on, with the non-affiliation */
+  credit?: string;
 }
+
+export const CREDIT_OFFERS = 'Value equation and value stack after Alex Hormozi ($100M Offers). SLAM is independent; no book text is reproduced.';
+export const CREDIT_LEADS = 'Volume, owned vs rented audiences and the lead math after Alex Hormozi ($100M Leads). SLAM is independent.';
+export const CREDIT_LTGP = 'Worth-to-cost (LTGP : CAC) after Alex Hormozi. SLAM is independent.';
 
 export interface ToolCtx {
   business: BusinessModel;
@@ -76,8 +85,8 @@ function unitOf(where: 'inputs' | 'shared' | OfferType, key: string, ctx: ToolCt
   const list = where === 'inputs' ? BUSINESS_FIELDS[ctx.business.type] : where === 'shared' ? SHARED_FIELDS : OFFER_FIELDS[where];
   return list.find((f) => f.key === key)?.unit ?? 'count';
 }
-const F = (where: 'inputs' | 'shared' | OfferType, key: string, ctx: ToolCtx, help?: string): ToolField => ({ key: `${where}.${key}`, label: label(where, key, ctx.mode, ctx), unit: unitOf(where, key, ctx), help });
-const T = (key: string, label: string, unit: Unit, fallback: number | null, help?: string): ToolField => ({ key: `tool.${key}`, label, unit, fallback, help });
+const F = (where: 'inputs' | 'shared' | OfferType, key: string, ctx: ToolCtx, help?: string, section?: string): ToolField => ({ key: `${where}.${key}`, label: label(where, key, ctx.mode, ctx), unit: unitOf(where, key, ctx), help, section });
+const T = (key: string, label: string, unit: Unit, fallback: number | null, help?: string, section?: string): ToolField => ({ key: `tool.${key}`, label, unit, fallback, help, section });
 
 /** the business with the tool's values laid over it */
 export function applied(values: Values, ctx: ToolCtx): BusinessModel {
@@ -157,7 +166,21 @@ const diagnoseTool: ToolDef = {
       lines.push({ label: 'Worth, at typical', value: `${money(d.gainCents, { sign: true, whole: true })} a month`, tone: 'good' });
     }
     lines.push({ label: 'Do this next', value: d.next });
-    const summary = d.kind === 'capacity' ? 'Fix this before chasing more contacts; the app will not advise volume past capacity.' : d.gainCents > 0 ? `Fix this first: at a typical rate it is worth ${money(d.gainCents, { sign: true, whole: true })} a month, more than any other single move.` : 'Fix this first; the plan tool says how many contacts the goal needs.';
+    let summary = d.kind === 'capacity' ? 'Fix this before chasing more contacts; the app will not advise volume past capacity.' : d.gainCents > 0 ? `Fix this first: at a typical rate it is worth ${money(d.gainCents, { sign: true, whole: true })} a month, more than any other single move.` : 'Fix this first; the plan tool says how many contacts the goal needs.';
+    if (d.kind === 'contacts' || d.kind === 'audience') {
+      const goal = ctx.shared.incomeGoalCents?.value ?? null;
+      const have = b.inputs.inquiriesPerMonth?.value ?? b.inputs.followers?.value ?? null;
+      const r = goal === null ? null : inquiriesForGoal(b, ctx.shared, goal);
+      if (r && r.ok && have !== null) {
+        const unit = r.value.unit === 'inquiry' ? 'contacts' : `${r.value.unit}s`;
+        lines.push({ label: `${unit[0]!.toUpperCase() + unit.slice(1)} a month for ${money(goal!, { whole: true })}`, value: `${count(r.value.inquiriesNeeded, 0)} (you have ${count(have, 0)})`, tone: r.value.withinCapacity ? 'plain' : 'warn' });
+        summary = r.value.withinCapacity
+          ? `The funnel works; it needs more people in it. ${count(r.value.inquiriesNeeded, 0)} ${unit} a month reach your goal; you have ${count(have, 0)}. Volume is the job now.`
+          : `The goal needs more than you can deliver at these prices; raise price or add an offer before chasing volume.`;
+      } else if (goal === null) {
+        lines.push({ label: 'For your goal', value: 'Set an income goal in Shared settings to see how many contacts it needs.' });
+      }
+    }
     return { ok: true, lines, summary };
   },
 };
@@ -165,21 +188,36 @@ const diagnoseTool: ToolDef = {
 /* ---------- 2. Offer ---------- */
 
 const STACK_ITEMS: Array<[string, string]> = [
-  ['v1', 'What the time itself would cost elsewhere'],
-  ['v2', 'Preparation done for them'],
+  ['v1', 'The core result: what the time itself is worth to them'],
+  ['v2', 'Preparation done for them before they arrive'],
   ['v3', 'Aftercare and follow-up'],
-  ['v4', 'Priority access'],
+  ['v4', 'Priority access or a guaranteed date'],
   ['v5', 'Something only you do'],
+  ['v6', 'A bonus that costs you little and means a lot'],
 ];
+
+const VALUE_EQ: Array<[keyof import('@/engine/formulas').ValueEquationInput, string, string]> = [
+  ['outcome', 'How clearly can a new client picture the result?', '1 = vague, 5 = they can see it'],
+  ['likelihood', 'How sure are they it happens with you?', '1 = a gamble, 5 = reputation, reviews, a clear process'],
+  ['speed', 'How soon do they get it?', '1 = weeks of waiting, 5 = a date this week'],
+  ['ease', 'How easy is it for them, after screening?', '1 = many steps, 5 = one message, one deposit, one date. Screening itself stays as it is.'],
+];
+const LEVER_ADVICE: Record<keyof import('@/engine/formulas').ValueEquationInput, string> = {
+  outcome: 'Name the result in the offer and on the page: what a first session gives them, in their words.',
+  likelihood: 'Show the process and the proof: how a booking goes, what others say, what you never do.',
+  speed: 'Offer the first available date in the same message; a waitlist raises price, not delay.',
+  ease: 'After screening, one reply with the deposit link and two dates. Never shorten screening to make it easier.',
+};
 
 const offerTool: ToolDef = {
   id: 'offer',
   saves: true,
   fields(ctx) {
     const main = mainOffer(ctx);
-    const fields = [F(main, 'priceCents', ctx), F(main, 'feeRate', ctx), F(main, 'variableCostCents', ctx), F(main, 'allInHours', ctx)];
-    for (const [k, l] of STACK_ITEMS) fields.push(T(k, `Worth: ${l}`, 'dollars', null, 'What this piece alone is worth to them, in dollars. Leave empty if it does not apply.'));
-    fields.push(F('shared', 'incomeGoalCents', ctx));
+    const fields = [F(main, 'priceCents', ctx, undefined, 'Your offer'), F(main, 'feeRate', ctx, undefined, 'Your offer'), F(main, 'variableCostCents', ctx, undefined, 'Your offer'), F(main, 'allInHours', ctx, undefined, 'Your offer')];
+    for (const [k, q, help] of VALUE_EQ) fields.push({ key: `tool.${k}`, label: q, unit: 'rating', fallback: 3, help, min: 1, max: 5, section: 'The value equation: rate each 1 to 5' });
+    STACK_ITEMS.forEach(([k, l], i) => fields.push(T(k, l, 'dollars', null, i === 0 ? 'What each piece alone would be worth to them. Leave a piece empty if it does not apply.' : undefined, 'The value stack: what they get, in dollars')));
+    fields.push(F('shared', 'incomeGoalCents', ctx, undefined, 'Your goal'));
     return fields;
   },
   compute(values, ctx) {
@@ -193,18 +231,31 @@ const offerTool: ToolDef = {
     const tp = throughputPerHour(price, variable, hours);
     const items = STACK_ITEMS.map(([k, l]) => ({ name: l, valueCents: v(values, `tool.${k}`) ?? 0 })).filter((i) => i.valueCents > 0);
     const stack = valueStack(items, price);
+    const eq = valueEquation({ outcome: v(values, 'tool.outcome') ?? 3, likelihood: v(values, 'tool.likelihood') ?? 3, speed: v(values, 'tool.speed') ?? 3, ease: v(values, 'tool.ease') ?? 3 });
     const lines: ToolLine[] = [
       { label: 'Gross profit per sale', value: money(gp, { whole: true }), tone: gp > 0 ? 'good' : 'warn' },
       { label: 'Per all-in hour', value: tp === null ? 'not yet' : `${money(tp, { whole: true })} an hour` },
+      { label: 'Value equation', value: `${eq.index} of 100`, tone: eq.index >= 70 ? 'good' : eq.index >= 45 ? 'plain' : 'warn' },
+      { label: 'Weakest lever', value: LEVER_ADVICE[eq.weakest], tone: 'warn' },
     ];
-    if (items.length) lines.push({ label: 'Value stack vs price', value: `${money(stack.totalCents, { whole: true })} vs ${money(price, { whole: true })}`, tone: stack.aboveprice ? 'good' : 'warn' });
+    if (items.length) {
+      lines.push({ label: 'Value stack vs price', value: `${money(stack.totalCents, { whole: true })} vs ${money(price, { whole: true })}`, tone: stack.aboveprice ? 'good' : 'warn' });
+      if (stack.ratio !== null) lines.push({ label: 'Stack to price', value: `${count(stack.ratio, 1)}x (aim for ${STACK_TO_PRICE_TARGET}x or more)`, tone: stack.ratio >= STACK_TO_PRICE_TARGET ? 'good' : 'plain' });
+    }
     const goal = v(values, 'shared.incomeGoalCents');
     if (goal !== null) {
       const plan = arcPlan({ priceCents: price, feeRate: fee, variableCostCents: variable, allInHours: hours, goalCents: goal });
       if (plan) lines.push({ label: `Sales a month for ${money(goal, { whole: true })}`, value: `${count(plan.clientsNeeded, 2)} sales, ${count(plan.hoursNeeded, 1)} hours` });
     }
-    const summary = `${money(gp, { whole: true })} of gross profit per sale, ${tp === null ? '' : money(tp, { whole: true }) + ' per all-in hour'}${items.length ? (stack.aboveprice ? '; the stack is worth more than the price, which is where a price should sit.' : '; the stack is worth less than the price, so add value or explain it better before raising price.') : '.'}`;
-    return { ok: true, lines, summary };
+    const stackWord = !items.length
+      ? 'Fill in the stack to see whether the price looks small next to what they get.'
+      : stack.ratio !== null && stack.ratio >= STACK_TO_PRICE_TARGET
+        ? 'The stack is worth several times the price: room to raise it, and easy to explain.'
+        : stack.aboveprice
+          ? 'The stack is worth more than the price, but not by much: add a piece that costs you little before raising price.'
+          : 'The stack is worth less than the price: add value or say it better before raising price.';
+    const summary = `${money(gp, { whole: true })} of gross profit per sale${tp === null ? '' : `, ${money(tp, { whole: true })} per all-in hour`}. ${stackWord} Weakest lever: ${eq.weakest === 'ease' ? 'ease after screening' : eq.weakest}.`;
+    return { ok: true, lines, summary, credit: CREDIT_OFFERS };
   },
 };
 
@@ -220,7 +271,7 @@ const presenceTool: ToolDef = {
     T('postsPlanned', 'Posts you could do', 'count', 100),
     T('peopleWanted', 'People you want to reach', 'count', 500),
   ],
-  compute(values) {
+  compute(values, ctx) {
     const done = v(values, 'tool.postsDone');
     const reached = v(values, 'tool.peopleReached');
     const b = v(values, 'tool.curveB');
@@ -235,7 +286,10 @@ const presenceTool: ToolDef = {
       const posts = Math.pow(wanted / a, 1 / b);
       lines.push({ label: `Posts to reach ${count(wanted, 0)} people`, value: count(posts, 0) });
     }
-    return { ok: true, lines, summary: `Reach compounds: at this curve, ${count(planned ?? 0, 0)} posts reach about ${count(curve(planned ?? 0), 0)} people. Consistency beats volume in any one week.` };
+    const rented = sourceShare(ctx.business, (s) => !s.owned);
+    if (rented !== null) lines.push({ label: 'Contacts through rented sources', value: percent(rented), tone: rented > 0.7 ? 'warn' : 'plain' });
+    const rentedWord = rented === null ? ' Add your sources on the business tab to see how much rides on platforms you do not own.' : rented > 0.7 ? ` ${percent(rented)} of your contacts come through sources you do not own; build one you do (a list, a site) alongside.` : ` ${percent(1 - rented)} of your contacts come through sources you own, which no ban can take.`;
+    return { ok: true, lines, summary: `Reach compounds: at this curve, ${count(planned ?? 0, 0)} posts reach about ${count(curve(planned ?? 0), 0)} people. Consistency beats volume in any one week.${rentedWord}`, credit: CREDIT_LEADS };
   },
 };
 
@@ -245,21 +299,33 @@ const conversationsTool: ToolDef = {
   id: 'conversations',
   saves: false,
   fields: () => [
-    T('events', 'Events or outings a month', 'count', 2),
-    T('conversations', 'Real conversations per event', 'count', 10),
-    T('closeRate', 'Share that become a contact', 'percent', 0.05),
-    T('wanted', 'New clients you want a month', 'count', 3),
+    T('reachPerDay', 'Reach actions a day (posts, messages, replies)', 'count', 10, 'The daily volume. Consistency beats bursts.', 'Daily reach'),
+    T('replyRate', 'Share of reach actions that turn into a contact', 'percent', 0.03, undefined, 'Daily reach'),
+    T('events', 'Events or outings a month', 'count', 2, undefined, 'In person'),
+    T('conversations', 'Real conversations per event', 'count', 10, undefined, 'In person'),
+    T('closeRate', 'Share of conversations that become a contact', 'percent', 0.05, undefined, 'In person'),
+    T('wanted', 'New contacts you want a month', 'count', 20, undefined, 'Your target'),
   ],
   compute(values) {
+    const reach = v(values, 'tool.reachPerDay');
+    const reply = v(values, 'tool.replyRate');
     const e = v(values, 'tool.events');
     const c = v(values, 'tool.conversations');
     const r = v(values, 'tool.closeRate');
     const wanted = v(values, 'tool.wanted');
     if (e === null || c === null || r === null) return missingResult(['events, conversations and share']);
-    const clients = clientsFromEvents(e, c, r);
-    const lines: ToolLine[] = [{ label: 'Clients a month from conversations', value: count(clients, 2) }];
-    if (wanted !== null && r > 0 && c > 0) lines.push({ label: `Conversations a month for ${count(wanted, 0)}`, value: count(wanted / r, 0) }, { label: 'That is, events a month', value: count(wanted / r / c, 1) });
-    return { ok: true, lines, summary: `${count(e, 0)} events with ${count(c, 0)} conversations each at ${percent(r)} is ${count(clients, 2)} clients a month.` };
+    const fromEvents = clientsFromEvents(e, c, r);
+    const workDays = 5 * WEEKS_PER_MONTH;
+    const fromReach = reach !== null && reply !== null ? reach * reply * workDays : null;
+    const lines: ToolLine[] = [];
+    if (fromReach !== null) lines.push({ label: 'Contacts a month from daily reach', value: count(fromReach, 1) });
+    lines.push({ label: 'Contacts a month from events', value: count(fromEvents, 2) });
+    if (wanted !== null) {
+      if (reply !== null && reply > 0) lines.push({ label: `Reach actions a day for ${count(wanted, 0)} contacts`, value: count(wanted / reply / workDays, 0) });
+      if (r > 0 && c > 0) lines.push({ label: `Or conversations a month for ${count(wanted, 0)}`, value: count(wanted / r, 0) });
+    }
+    const total = (fromReach ?? 0) + fromEvents;
+    return { ok: true, lines, summary: `About ${count(total, 1)} contacts a month at this volume${wanted !== null ? total >= wanted ? ', enough for your target.' : `, short of the ${count(wanted, 0)} you want: the fix is more reach actions, not a cleverer message.` : '.'}`, credit: CREDIT_LEADS };
   },
 };
 
@@ -292,13 +358,13 @@ const moneyTool: ToolDef = {
   saves: true,
   fields(ctx) {
     return [
-      F('shared', 'acquisitionSpendCents', ctx),
-      F('shared', 'acquisitionHoursPerMonth', ctx),
-      F('shared', 'hourlyValueCents', ctx),
-      T('subscribers', 'Subscribers or followers you could make an offer to', 'count', null, 'Optional: an offer with a credit, to people who already follow you.'),
-      T('takeRate', 'Share who would take it', 'percent', 0.03),
-      T('creditCents', 'Credit you would give each', 'dollars', 3_000),
-      T('wouldBookAnyway', 'How many would have booked anyway', 'count', 0),
+      F('shared', 'acquisitionSpendCents', ctx, undefined, 'What finding a client costs'),
+      F('shared', 'acquisitionHoursPerMonth', ctx, undefined, 'What finding a client costs'),
+      F('shared', 'hourlyValueCents', ctx, undefined, 'What finding a client costs'),
+      T('subscribers', 'Subscribers or followers you could make an offer to', 'count', null, 'Optional: an offer with a credit, to people who already follow you.', 'An offer to people who already follow you'),
+      T('takeRate', 'Share who would take it', 'percent', 0.03, undefined, 'An offer to people who already follow you'),
+      T('creditCents', 'Credit you would give each', 'dollars', 3_000, undefined, 'An offer to people who already follow you'),
+      T('wouldBookAnyway', 'How many would have booked anyway', 'count', 0, undefined, 'An offer to people who already follow you'),
     ];
   },
   compute(values, ctx) {
@@ -323,16 +389,18 @@ const moneyTool: ToolDef = {
       const cac = costToAcquire(spend, hours, hourly, newClients);
       const r = ltgpToCac(ltgp, cac, months !== null ? gpSale : gpSale * (1 + rebook));
       lines.push({ label: 'Cost to acquire one', value: cac === null ? 'no new clients yet' : money(cac, { whole: true }) });
-      if (r.ratio !== null) lines.push({ label: 'Worth : cost', value: `${count(r.ratio, 1)} : 1`, tone: r.ratio >= 3 ? 'good' : 'warn' });
+      if (r.ratio !== null) lines.push({ label: 'Worth : cost', value: `${count(r.ratio, 1)} : 1 (aim for ${LTGP_TO_CAC_TARGET} : 1 or better)`, tone: r.ratio >= LTGP_TO_CAC_TARGET ? 'good' : 'warn' });
       if (r.paybackDays !== null) lines.push({ label: 'Days to pay back', value: count(r.paybackDays, 0) });
-      if (r.ratio !== null) summary += ` For every dollar and hour spent finding one, ${count(r.ratio, 1)} come back.`;
+      if (r.ratio !== null) summary += r.ratio >= LTGP_TO_CAC_TARGET ? ` For every dollar and hour spent finding one, ${count(r.ratio, 1)} come back: spend more on finding clients, not less.` : ` Only ${count(r.ratio, 1)} comes back per dollar and hour spent finding one; raise what a client is worth (price, rebooks, a retainer) before spending more on finding them.`;
+    } else {
+      lines.push({ label: 'Cost to find one', value: 'Fill in spend, hours and your hourly value to see it.' });
     }
     const subs = v(values, 'tool.subscribers');
     if (subs !== null && subs > 0) {
       const lift = subscriberOfferLift({ subscribers: subs, takeRate: v(values, 'tool.takeRate') ?? 0, creditCents: v(values, 'tool.creditCents') ?? 0, wouldBookAnyway: v(values, 'tool.wouldBookAnyway') ?? 0, gpPerBookingCents: per?.grossProfitCents && b.type !== 'inPerson' ? per.grossProfitCents : gpSale });
       lines.push({ label: 'An offer to them would add', value: `${money(lift, { sign: true, whole: true })}`, tone: lift > 0 ? 'good' : 'warn' });
     }
-    return { ok: true, lines, summary };
+    return { ok: true, lines, summary, credit: CREDIT_LTGP };
   },
 };
 
@@ -372,7 +440,8 @@ const strategyTool: ToolDef = {
   fields(ctx) {
     const f: ToolField[] = [F('shared', 'hourlyValueCents', ctx)];
     for (const m of MOVES) {
-      f.push(T(`${m}_profit`, `Move ${m}: profit it adds a year`, 'dollars', m === 'A' ? 600_000 : null), T(`${m}_cash`, `Move ${m}: cash it costs`, 'dollars', m === 'A' ? 50_000 : null), T(`${m}_hours`, `Move ${m}: hours it costs`, 'hours', m === 'A' ? 20 : null), T(`${m}_weeks`, `Move ${m}: weeks until money`, 'count', m === 'A' ? 4 : null));
+      const sec = `Move ${m}`;
+      f.push(T(`${m}_profit`, 'Profit it adds a year', 'dollars', m === 'A' ? 600_000 : null, undefined, sec), T(`${m}_cash`, 'Cash it costs', 'dollars', m === 'A' ? 50_000 : null, undefined, sec), T(`${m}_hours`, 'Hours it costs', 'hours', m === 'A' ? 20 : null, undefined, sec), T(`${m}_weeks`, 'Weeks until the money', 'count', m === 'A' ? 4 : null, undefined, sec));
     }
     return f;
   },
@@ -385,7 +454,7 @@ const strategyTool: ToolDef = {
     if (!moves.length) return missingResult(['at least one move']);
     const ranked = rankMoves(moves);
     const lines = ranked.map((m, i) => ({ label: `${i + 1}. ${m.name}`, value: m.score === null ? 'no cost given' : `${count(m.score, 1)}x back`, tone: i === 0 ? ('good' as const) : ('plain' as const) }));
-    return { ok: true, lines, summary: `${ranked[0]!.name} pays best for what it costs${ranked[0]!.score !== null ? `: about ${count(ranked[0]!.score, 1)} dollars of yearly profit per dollar of cost, after the wait` : ''}.` };
+    return { ok: true, lines, summary: `${ranked[0]!.name} pays best for what it costs${ranked[0]!.score !== null ? `: about ${count(ranked[0]!.score, 1)} dollars of yearly profit per dollar of cost, after the wait` : ''}.`, credit: 'Leverage as output per unit of input, after Alex Hormozi. SLAM is independent.' };
   },
 };
 

@@ -291,6 +291,8 @@ export const WeekLogSchema = z
     inquiries: count,
     bookings: count,
     sessionsHeld: count,
+    /** posts, messages, outreach: the volume that makes contacts happen */
+    reachActions: count,
     revenueCents: count,
     hours: z.number().finite().nonnegative().nullable(),
     energy: z.number().int().min(1).max(5).nullable(),

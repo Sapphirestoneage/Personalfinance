@@ -57,7 +57,7 @@ describe('Dexie storage', () => {
       updatedAt: '2026-09-01T00:00:00.000Z',
     });
     await db.putSale({ id: 's1', profileId: 'demo', businessId: 'b-regulars', clientId: 'c1', date: '2026-09-03', amountCents: 20_000, feeCents: 2_000, variableCostCents: 0, createdAt: '2026-09-03T00:00:00.000Z' });
-    await db.putWeekLog({ id: 'w1', profileId: 'demo', weekStart: '2026-08-31', inquiries: 12, bookings: 3, sessionsHeld: null, revenueCents: null, hours: 20, energy: 4, checkedIn: true, loggedAt: '2026-09-06T00:00:00.000Z' });
+    await db.putWeekLog({ id: 'w1', profileId: 'demo', weekStart: '2026-08-31', inquiries: 12, bookings: 3, sessionsHeld: null, reachActions: 12, revenueCents: null, hours: 20, energy: 4, checkedIn: true, loggedAt: '2026-09-06T00:00:00.000Z' });
     await db.putMilestone({ id: 'm1', profileId: 'demo', key: 'first-checkin', achievedAt: '2026-09-06T00:00:00.000Z' });
 
     const before = await exportAll(db, new Date('2026-09-10T00:00:00.000Z'));

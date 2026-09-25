@@ -13,6 +13,8 @@ interface Props {
   help?: string;
   min?: number;
   max?: number;
+  /** a tool's own question: no yours/estimate badge, just the answer */
+  plain?: boolean;
   onCommit(value: number | null): void;
 }
 
@@ -33,12 +35,31 @@ export function fromDisplay(text: string, unit: Unit): number | null | undefined
   return n;
 }
 
-export function NumberField({ id, label, assumption, unit = 'count', help, min, max, onCommit }: Props) {
+export function NumberField({ id, label, assumption, unit = 'count', help, min, max, plain = false, onCommit }: Props) {
   const stored = assumption?.value ?? null;
   const [text, setText] = useState(toDisplay(stored, unit));
   useEffect(() => setText(toDisplay(stored, unit)), [stored, unit]);
   const yours = assumption?.label === 'Yours';
   const badge = assumption ? LABEL_WORDS[assumption.label] : 'not set';
+
+  if (unit === 'rating') {
+    const lo = min ?? 1;
+    const hi = max ?? 5;
+    const steps = Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
+    return (
+      <div>
+        <span className="mb-1 block text-sm font-medium">{label}</span>
+        <div className="flex gap-1.5" role="radiogroup" aria-label={label} data-testid={id}>
+          {steps.map((n) => (
+            <button key={n} type="button" role="radio" aria-checked={stored === n} data-testid={`${id}-${n}`} onClick={() => onCommit(n)} className={`h-11 flex-1 rounded-xl text-base font-medium ${stored === n ? 'bg-sky-700 text-white' : 'border border-slate-300 dark:border-slate-700'}`}>
+              {n}
+            </button>
+          ))}
+        </div>
+        {help && <span className="mt-1 block text-xs text-slate-500">{help}</span>}
+      </div>
+    );
+  }
 
   if (unit === 'flag') {
     const on = stored === 1;
@@ -69,9 +90,11 @@ export function NumberField({ id, label, assumption, unit = 'count', help, min, 
       <span className="mb-1 flex items-baseline justify-between gap-2 text-sm">
         <span className="font-medium">{label}</span>
         {/* fixed width, so the label never re-wraps when a number becomes hers (a moving button loses taps) */}
-        <span data-testid={`${id}-label`} className={`w-20 shrink-0 rounded-full px-2 py-0.5 text-center text-xs ${yours ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'}`}>
-          {yours ? 'yours' : 'estimate'}
-        </span>
+        {!plain && (
+          <span data-testid={`${id}-label`} className={`w-20 shrink-0 rounded-full px-2 py-0.5 text-center text-xs ${yours ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'}`}>
+            {yours ? 'yours' : 'estimate'}
+          </span>
+        )}
       </span>
       <span className="flex items-center gap-2">
         {unit === 'dollars' && <span className="text-slate-500">$</span>}
@@ -96,7 +119,7 @@ export function NumberField({ id, label, assumption, unit = 'count', help, min, 
         {unit === 'minutes' && <span className="text-slate-500">min</span>}
       </span>
       {/* always one line here, so the field never changes height when a number becomes hers */}
-      <span className="mt-1 block min-h-4 text-xs text-slate-500">{help ?? (assumption ? (yours ? 'Your number.' : `${badge.charAt(0).toUpperCase() + badge.slice(1)}: ${assumption.source}.`) : '')}</span>
+      <span className="mt-1 block min-h-4 text-xs text-slate-500">{help ?? (assumption && !plain ? (yours ? 'Your number.' : `${badge.charAt(0).toUpperCase() + badge.slice(1)}: ${assumption.source}.`) : '')}</span>
     </label>
   );
 }

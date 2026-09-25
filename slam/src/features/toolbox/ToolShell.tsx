@@ -111,6 +111,7 @@ export function ToolShell({ tool, businessId, guided }: { tool: Exclude<ToolId, 
       <p className="mt-3 text-sm" data-testid="tool-summary">
         {result.summary}
       </p>
+      {result.credit && <p className="mt-2 text-xs text-slate-500">{result.credit}</p>}
       {result.ok && (
         <div className="mt-4 space-y-2">
           {!saved ? (
@@ -145,7 +146,8 @@ export function ToolShell({ tool, businessId, guided }: { tool: Exclude<ToolId, 
         </Card>
         {!last && f && (
           <Card testId="tool-question">
-            <NumberField key={f.key} id={`q-${f.key.replace('.', '-')}`} label={f.label} help={f.help} unit={f.unit} assumption={values[f.key]} onCommit={(v) => commit(f, v)} />
+            {f.section && <p className="mb-2 text-xs uppercase tracking-wide text-slate-500">{f.section}</p>}
+            <NumberField key={f.key} id={`q-${f.key.replace('.', '-')}`} label={f.label} help={f.help} unit={f.unit} min={f.min} max={f.max} plain={f.key.startsWith('tool.')} assumption={values[f.key]} onCommit={(v) => commit(f, v)} />
             <div className="mt-4 grid grid-cols-2 gap-2">
               <Button kind="secondary" onClick={() => (step === 0 ? navigate('today') : setStep(step - 1))}>
                 Back
@@ -178,8 +180,11 @@ export function ToolShell({ tool, businessId, guided }: { tool: Exclude<ToolId, 
       </Card>
       <Card testId="tool-fields">
         <div className="space-y-4">
-          {fields.map((f) => (
-            <NumberField key={f.key} id={`q-${f.key.replace('.', '-')}`} label={f.label} help={f.help} unit={f.unit} assumption={values[f.key]} onCommit={(v) => commit(f, v)} />
+          {fields.map((f, i) => (
+            <div key={f.key}>
+              {f.section && fields[i - 1]?.section !== f.section && <h3 className={`mb-3 text-sm font-semibold ${i > 0 ? 'mt-2 border-t border-slate-100 pt-4 dark:border-slate-800' : ''}`}>{f.section}</h3>}
+              <NumberField id={`q-${f.key.replace('.', '-')}`} label={f.label} help={f.help} unit={f.unit} min={f.min} max={f.max} plain={f.key.startsWith('tool.')} assumption={values[f.key]} onCommit={(v) => commit(f, v)} />
+            </div>
           ))}
         </div>
       </Card>

@@ -286,3 +286,45 @@ export function valueStack(items: ValueStackItem[], priceCents: number): { total
 export function roundCents(cents: number): number {
   return Math.round(cents);
 }
+
+/* ---------- The value equation (after Hormozi; SLAM is not affiliated) --------------- */
+export interface ValueEquationInput {
+  /** how clearly a new client can picture the result, 1..5 */
+  outcome: number;
+  /** how sure they are it happens with her, 1..5 */
+  likelihood: number;
+  /** how soon they get it, 1..5 (5 = right away) */
+  speed: number;
+  /** how easy it is for them, 1..5 (5 = effortless) */
+  ease: number;
+}
+export interface ValueEquationResult {
+  /** 0..100 */
+  index: number;
+  /** the lever furthest from 5 */
+  weakest: keyof ValueEquationInput;
+}
+/** value = (outcome x likelihood) / (delay x effort); on 1..5 scales, delay = 6 - speed and effort = 6 - ease */
+export function valueEquation(v: ValueEquationInput): ValueEquationResult {
+  const clamp = (x: number) => Math.min(5, Math.max(1, x));
+  const o = clamp(v.outcome);
+  const l = clamp(v.likelihood);
+  const d = 6 - clamp(v.speed);
+  const e = 6 - clamp(v.ease);
+  const raw = (o * l) / (d * e);
+  /* raw runs from 1/25 to 25; map its log to 0..100 so each step matters the same */
+  const index = Math.round(((Math.log(raw) - Math.log(1 / 25)) / (Math.log(25) - Math.log(1 / 25))) * 100);
+  const entries: Array<[keyof ValueEquationInput, number]> = [
+    ['outcome', o],
+    ['likelihood', l],
+    ['speed', clamp(v.speed)],
+    ['ease', clamp(v.ease)],
+  ];
+  entries.sort((a, b) => a[1] - b[1]);
+  return { index, weakest: entries[0]![0] };
+}
+
+/** Hormozi's rule of thumb for LTGP:CAC; a preset she can question. */
+export const LTGP_TO_CAC_TARGET = 3;
+/** a value stack worth this many times the price makes the price feel small */
+export const STACK_TO_PRICE_TARGET = 3;

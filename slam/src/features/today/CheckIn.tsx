@@ -42,6 +42,7 @@ export function CheckIn() {
     inquiries: null,
     bookings: null,
     sessionsHeld: null,
+    reachActions: null,
     revenueCents: null,
     hours: null,
     energy: null,
@@ -70,6 +71,7 @@ export function CheckIn() {
         <Counter label="Contacts" value={log.inquiries} onChange={(v) => set({ inquiries: v })} testId="ci-inquiries" />
         <Counter label="Bookings" value={log.bookings} onChange={(v) => set({ bookings: v })} testId="ci-bookings" />
         <Counter label="Sessions or calls held" value={log.sessionsHeld} onChange={(v) => set({ sessionsHeld: v })} testId="ci-sessions" />
+        <Counter label="Reach actions (posts, messages)" value={log.reachActions} onChange={(v) => set({ reachActions: v })} testId="ci-reach" />
         <div className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2 dark:border-slate-800">
           <span className="text-sm font-medium">Energy</span>
           <span className="flex gap-1">

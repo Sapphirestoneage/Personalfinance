@@ -25,6 +25,7 @@ export function Today() {
   const checkIns = profile.checkInCount;
   const recent = weekLogs.slice(0, 4).map((w) => w.inquiries).filter((n): n is number => n !== null);
   const earlier = weekLogs.slice(4, 8).map((w) => w.inquiries).filter((n): n is number => n !== null);
+  const reach = weekLogs.slice(0, 4).map((w) => w.reachActions).filter((n): n is number => n !== null);
   const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 
   const fresh = !anyActive && checkIns === 0;
@@ -94,7 +95,8 @@ export function Today() {
               if (a === null) return 'Log contacts in the check-in to see momentum.';
               if (b === null) return `About ${a.toFixed(1)} contacts a week over the last four check-ins.`;
               const d = a - b;
-              return `${a.toFixed(1)} contacts a week lately, ${d >= 0 ? 'up' : 'down'} ${Math.abs(d).toFixed(1)} on the four weeks before.`;
+              const r = avg(reach);
+              return `${a.toFixed(1)} contacts a week lately, ${d >= 0 ? 'up' : 'down'} ${Math.abs(d).toFixed(1)} on the four weeks before.${r !== null && r > 0 ? ` About ${(a / r).toFixed(2)} contacts per reach action; volume is what moves this.` : ''}`;
             })()}
           </p>
         )}

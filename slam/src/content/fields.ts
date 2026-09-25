@@ -5,7 +5,7 @@
    ========================================================================== */
 import type { BusinessType, LabelMode, OfferType } from '@/data/schemas';
 
-export type Unit = 'count' | 'dollars' | 'percent' | 'hours' | 'months' | 'flag' | 'minutes';
+export type Unit = 'count' | 'dollars' | 'percent' | 'hours' | 'months' | 'flag' | 'minutes' | 'rating';
 
 export interface FieldMeta {
   key: string;
