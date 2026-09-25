@@ -6,7 +6,7 @@ paths:
   - "engines/giving.js"
 ---
 # What Matters (`values`)
-File: rooms/values.html · 1680 lines
+File: rooms/values.html · 1679 lines
 Engines: projection, tier0, income, selfemployed, ledger, cashflow, values, fulfillment, rerank, foo, fire, statement, benchmarks, ratios, hourly, giving
 Reference data: common_costs.json, confidence_weights.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, foo_rules.json, +5 more
 Owns: givingPct, givingTarget, rerankCut

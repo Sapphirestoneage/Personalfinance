@@ -5,7 +5,7 @@ paths:
   - "engines/history.js"
 ---
 # The Close (`budget`)
-File: rooms/budget.html · 1137 lines
+File: rooms/budget.html · 1136 lines
 Engines: projection, tier0, income, selfemployed, ledger, cashflow, quickmath, presets, budget, variance, hourly, foo, fire, statement, benchmarks, ratios, events, skills, history
 Reference data: budget_templates.json, car_costs.json, confidence_weights.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, +8 more
 Owns: monthsClosed, historyCompareTo

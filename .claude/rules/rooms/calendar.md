@@ -4,7 +4,7 @@ paths:
   - "engines/calendar.js"
 ---
 # The Calendar (`calendar`)
-File: rooms/calendar.html · 191 lines
+File: rooms/calendar.html · 190 lines
 Engines: projection, tier0, income, selfemployed, ledger, cashflow, calendar
 Reference data: effective_tax_rates_2026.json, expense_categories.json, se_tax_2026.json
 Owns: nothing

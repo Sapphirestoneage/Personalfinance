@@ -17305,163 +17305,23 @@ data. The move `rewards.oneSignupBonus` now has a room.
 `node test/solar.js` 5191; a phone walk at 390px through Expenses, Debt, Cash
 Flow and The Close with the example numbers, clean console.
 
-## D-338 — Coach Mode: the freeze lifts for coach/ and its three screens only
+## D-338 — Coach Mode is its own app in coach/, a lane beside SPARKS like dnd/
 
-**Why.** The owner coaches clients live on calls from a shared Google Sheet.
-The spec is `docs/COACH-MODE.md`: Coach Home, the Session, Client View.
+**Why.** The owner coaches clients live from a Google Sheet, and wants the coach
+tool built in parallel without the bulk of the rooms (spec: `coach/SPEC.md`).
 
-**Decision.** A `coach/` folder holds exactly three screens (`index.html`,
-`session.html`, `client.html`), reached only when `prefs.coachMode` is on
-(Settings, or `?coach=1` once). The freeze still holds for `rooms/`: no new
-rooms, lenses, frameworks or vocabularies. Coach screens embed the owning
-room or Ledger row; they never edit a field a second way.
+**Decision.** `coach/` is a separate app with three screens (Home, Session,
+Client View), its own storage (`coach.` keys, never `slaf.`), byte-identical
+copies of the few engines it reads (`coach/tools/vendor.js`), its own tests
+(`node coach/test/run.js`, in CI) and its own log (`coach/DECISIONS.md`,
+`CD-###`). Nothing in `rooms/`, `shared/`, `engines/` or `data/` changes for it.
 
-**Replaces or removes.** The Google Sheet the owner runs client sessions from.
-No room, field or screen of the public site changes.
+**Replaces or removes.** The owner's client Google Sheet. No SPARKS screen.
 
-**Stored shape.** No change in this entry; D-339 adds the profile layer.
+**Stored shape.** No change to `slaf.household.v2` or any SPARKS key. The
+SPARKS device backup neither carries nor removes `coach.` keys.
 
-**Verified.** `node test/run.js`.
-
-## D-339 — Profiles: one household per client, the personal one untouched
-
-**Why.** Coach Mode (D-338) needs many households in one browser.
-
-**Decision.** `shared/profiles.js`, the third script on every page, names the
-tab's household: `default` is today's keys; a client's are the same keys under
-`slaf.p.<id>.` (household, snapshots, quarantine, scenarios, skill-tree marks).
-It counts only while `prefs.coachMode` is on. `Spine.useProfile`,
-`activeProfile`, `householdOf` (read another without switching). The roster
-is `slaf.coach.v1`, no money; `shared/coach.js` seals one client or all.
-
-**Replaces or removes.** Nothing on the public site; the raw snapshot removal
-in `rooms/data.html` now goes through `Spine.clearSnapshots`.
-
-**Stored shape.** No change to any existing key: the default profile reads
-and writes exactly today's keys, so migration is zero. New keys only:
-`slaf.p.<id>.*`, `slaf.coach.v1`, and `slaf.profile.active` in sessionStorage.
-The device backup (D-202) neither carries nor removes them.
-
-**Verified.** `node test/run.js` (test/coach-checks.js), `node test/forms.js` 700.
-
-## D-340 — The session path as data, one engine for every coach reading, and quick entry
-
-**Why.** Coach Mode (D-338) runs a session down a path of stops and needs the
-same ratios, FI band and goals the rooms show, before and after.
-
-**Decision.** `data/session_paths.json`: nine stops, two path templates; each
-stop names Ledger rows, rooms, ratios, questions and doneWhen tests.
-`engines/session.js` evaluates doneWhen from the household and reads the
-rail, band, recap diff, goals and life map only through Tier0, CashFlow,
-Ratios, Opening, Goals and Debt. `engines/quickentry.js` with
-`data/quick_entry.json` turns shorthand into a plan; a line it cannot read
-is a note, never a number.
-
-**Replaces or removes.** No screen. The path replaces the owner's blank sheet.
-
-**Stored shape.** `household.coach { sessions, notes, homework, checkins,
-comments }` (Schema.createCoachRecord), present only once a coach writes it:
-a personal household never gains the key. Absent reads as empty.
-
-**Verified.** `node test/run.js`; `tests/properties` session and quickentry.
-
-## D-341 — Coach Home: the roster, the demo client, a sheet in
-
-**Why.** Spec section 3.1 and 8: the coach's list of clients, and a way off the
-Google Sheet.
-
-**Decision.** `coach/index.html` (`coach/home.js`): one row a client, every
-figure read with `Spine.householdOf`, never switched to; the tab goes back to
-the personal household on open. The demo client is the example persona.
-Import maps CSV columns to Ledger rows or quick-entry words once, kept by name
-in the roster; unmapped columns become private notes. Settings gains the
-Coach Mode switch (`rooms/settings.html#advanced`).
-
-**Replaces or removes.** The Google Sheet's roster tab.
-
-**Stored shape.** Roster only (`slaf.coach.v1`): `importTemplates`,
-`blockVerdicts`, `shownBlocks`. No household change.
-
-**Verified.** `node test/run.js`; Coach Home in Chromium, clean console.
-
-## D-342 — The Session console: path, embedded room, rail, detour, quick entry, notes
-
-**Why.** Spec section 3.2: where the coach spends a live call.
-
-**Decision.** `coach/session.html` (`coach/console.js`) switches the tab to
-the client named in `?client=` (no picker on the page). Left the path from
-`engines/session.js`; centre the stop's owning room in a same-origin frame
-(coach pages alone allow `frame-src 'self'`); right the rail against the
-session's start snapshot. Detour keeps a crumb, two deep. On a client profile
-`shared/features.js` reads every user switch as on and `shared/ask.js` asks
-nothing; `shared/profiles.js` bannered any room opened in a client tab.
-
-**Replaces or removes.** The owner's sheet tabs per topic.
-
-**Stored shape.** `household.coach.notes[]` (coach or shared), `homework[]`,
-`comments[]`; roster `stopOrder`, `skipped`, ticks. No existing shape changes.
-
-**Verified.** `node test/run.js`; a Chromium walk: start, quick entry,
-notes, detour and back, end, clean console.
-
-## D-343 — A session starts and ends on a snapshot, and the recap writes itself
-
-**Why.** Spec section 5: the recap is a diff of two snapshots, in words.
-
-**Decision.** Start and End session append labelled snapshots
-(`coach-session-start`, `coach-session-end`) whose `rawInputs.household`
-freezes the plan. `Session.recap` writes covered stops, numbers changed,
-ratios and the FI band before and after, shared notes, homework; coach notes
-are never read. Export: print to PDF, copy as text, or a sealed file
-(`Coach.recapFile`: the text and the name only). Coach Home lists every
-session and opens any snapshot read-only in Client View.
-
-**Replaces or removes.** The recap email written by hand.
-
-**Stored shape.** `household.coach.sessions[]`; snapshots gain two reasons,
-their shape is unchanged (`rawInputs` already existed).
-
-**Verified.** `node test/run.js` (the recap never holds a coach note).
-
-## D-344 — Client View: the life map, the goals, what changed, homework
-
-**Why.** Spec section 3.3: what the client sees on a shared screen, and later
-on a phone.
-
-**Decision.** `coach/client.html` (`coach/clientpage.js`) draws
-`coach/clientview.js`, a pure renderer: the life map (goals, Coast FI, the
-FI band, benchmark multiples, blocks marked "show client") drawn at the width
-it is shown at; each goal's amount, date, monthly need, landing at the current
-pace and status (`Session.goals`); what changed since the session began;
-homework and the next date. `ClientView.visible` is its one door into the
-coach record: shared notes, homework, check-in dates. `?snap=` shows any
-snapshot read-only. Presenter mode links nowhere else.
-
-**Replaces or removes.** The sheet's summary tab.
-
-**Stored shape.** No change.
-
-**Verified.** `node test/run.js` (no coach note in the rendered page); axe
-clean; `test/responsive.js` gains the three coach screens, clean at 320 to 1440.
-
-## D-345 — Check-ins and comments as data, coach-entered for now
-
-**Why.** Spec section 6: the shapes the later client portal reads.
-
-**Decision.** A check-in (`Coach.addCheckin`, the form in Client View) writes
-each reported balance through `Ownership.write` to the row that owns it and
-keeps what was reported; a blank box is not reported. Comments attach to a
-row, goal or recap; one logged for the client says so. Coach Home reads the
-status from the last check-in date: in (35 days), late (65), missing.
-
-**Replaces or removes.** Monthly updates sent to the owner by text.
-
-**Stored shape.** `household.coach.checkins[] { id, date, balances { rowId or
-rowId:itemId: cents }, incomeCents, feeling, text, homeworkTicked, enteredBy,
-at }`, `comments[] { id, target { kind, id }, by, loggedByCoach, at, text,
-resolvedAt }`. Both new; absent reads as empty.
-
-**Verified.** `node test/run.js`; a phone check-in in Chromium.
+**Verified.** `node test/run.js`; `node coach/test/run.js`.
 
 ---
 

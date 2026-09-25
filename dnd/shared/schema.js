@@ -2367,63 +2367,7 @@
     };
   }
 
-  /* ---- Coach Mode (D-338 to D-344) -----------------------------------------
-     household.coach exists only on a coach's client profile, and only once
-     something has been written to it: a personal household never gains the
-     key, so its stored bytes are exactly what they were. Every list is
-     optional and ignored with Coach Mode off. Money in integer cents; a
-     balance not reported is absent, never zero.                         */
-  function coachStr(v, max) { return typeof v === 'string' ? v.slice(0, max || 4000) : null; }
-  function coachIso(v) { return typeof v === 'string' && v ? v : null; }
-  function coachCents(v) { return typeof v === 'number' && isFinite(v) ? Math.round(v) : null; }
-  function createCoachSession(f) {
-    f = f || {};
-    return { id: f.id || newId('cs'), startedAt: coachIso(f.startedAt), endedAt: coachIso(f.endedAt),
-      startSnapshotId: f.startSnapshotId || null, endSnapshotId: f.endSnapshotId || null,
-      stopsCovered: Array.isArray(f.stopsCovered) ? f.stopsCovered.filter(function (x) { return typeof x === 'string'; }) : [],
-      ticked: Array.isArray(f.ticked) ? f.ticked.filter(function (t) { return t && typeof t.stopId === 'string' && typeof t.itemId === 'string'; }).map(function (t) { return { stopId: t.stopId, itemId: t.itemId }; }) : [],
-      recapText: coachStr(f.recapText, 20000), durationMs: typeof f.durationMs === 'number' && f.durationMs >= 0 ? f.durationMs : null };
-  }
-  function createCoachNote(f) {
-    f = f || {};
-    return { id: f.id || newId('cn'), kind: f.kind === 'shared' ? 'shared' : 'coach', stopId: f.stopId || null, sessionId: f.sessionId || null,
-      text: coachStr(f.text) || '', at: coachIso(f.at), source: ['typed', 'quick', 'import'].indexOf(f.source) >= 0 ? f.source : 'typed' };
-  }
-  function createCoachHomework(f) {
-    f = f || {};
-    return { id: f.id || newId('hw'), text: coachStr(f.text, 500) || '', dueOn: coachIso(f.dueOn), stopId: f.stopId || null, itemId: f.itemId || null,
-      sessionId: f.sessionId || null, at: coachIso(f.at), doneAt: coachIso(f.doneAt) };
-  }
-  function createCoachCheckin(f) {
-    f = f || {};
-    var balances = {};
-    if (f.balances && typeof f.balances === 'object') Object.keys(f.balances).forEach(function (k) { var c = coachCents(f.balances[k]); if (c !== null) balances[k] = c; });
-    var feeling = typeof f.feeling === 'number' && f.feeling >= 1 && f.feeling <= 5 ? Math.round(f.feeling) : null;
-    return { id: f.id || newId('ci'), date: coachIso(f.date), balances: balances, incomeCents: coachCents(f.incomeCents), feeling: feeling,
-      text: coachStr(f.text, 2000) || '', homeworkTicked: Array.isArray(f.homeworkTicked) ? f.homeworkTicked.filter(function (x) { return typeof x === 'string'; }) : [],
-      enteredBy: f.enteredBy === 'client' ? 'client' : 'coach', at: coachIso(f.at) };
-  }
-  function createCoachComment(f) {
-    f = f || {};
-    var t = f.target || {};
-    return { id: f.id || newId('cm'), target: { kind: ['row', 'goal', 'recap'].indexOf(t.kind) >= 0 ? t.kind : 'row', id: typeof t.id === 'string' ? t.id : null },
-      by: f.by === 'client' ? 'client' : 'coach', loggedByCoach: f.by === 'client' && f.loggedByCoach !== false,
-      at: coachIso(f.at), text: coachStr(f.text, 2000) || '', resolvedAt: coachIso(f.resolvedAt) };
-  }
-  function createCoachRecord(f) {
-    f = f || {};
-    function list(a, make) { return Array.isArray(a) ? a.map(make) : []; }
-    return { sessions: list(f.sessions, createCoachSession), notes: list(f.notes, createCoachNote), homework: list(f.homework, createCoachHomework),
-      checkins: list(f.checkins, createCoachCheckin), comments: list(f.comments, createCoachComment) };
-  }
-
   function createHousehold(fields) {
-    var h = createHouseholdCore(fields);
-    if (fields && fields.coach && typeof fields.coach === 'object') h.coach = createCoachRecord(fields.coach);
-    return h;
-  }
-
-  function createHouseholdCore(fields) {
     var f = fields || {};
     return {
       schemaVersion: SCHEMA_VERSION,
@@ -3442,8 +3386,6 @@
     isComputedField: isComputedField,
     newId: newId,
     createHousehold: createHousehold,
-    createCoachRecord: createCoachRecord, createCoachSession: createCoachSession, createCoachNote: createCoachNote,
-    createCoachHomework: createCoachHomework, createCoachCheckin: createCoachCheckin, createCoachComment: createCoachComment,
     createPerson: createPerson,
     EMPLOYMENT_STATUSES: EMPLOYMENT_STATUSES,
     employmentStatus: employmentStatus,

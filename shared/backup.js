@@ -62,12 +62,6 @@
   var PREFIXES = ['slaf.', 'dnd.'];
   var UNDO_KEY = 'slaf.backup.undo.v1';
   var IGNORE = [UNDO_KEY, '__slaf_probe__'];
-  /* Coach Mode (D-339): the client profiles and the roster are NOT this
-     device's backup. They have their own sealed files (shared/coach.js),
-     a restore of this file never removes them, and a personal backup
-     never carries a client's numbers. */
-  var COACH = ['slaf.p.', 'slaf.coach.'];
-  function coachKey(key) { for (var i = 0; i < COACH.length; i++) if (key.indexOf(COACH[i]) === 0) return true; return false; }
 
   function g() { return typeof self !== 'undefined' ? self : (typeof global !== 'undefined' ? global : {}); }
   function slaf() { return g().SLAF || {}; }
@@ -75,7 +69,7 @@
     try { return typeof localStorage !== 'undefined' ? localStorage : null; } catch (e) { return null; }
   }
   function owned(key) {
-    if (IGNORE.indexOf(key) !== -1 || coachKey(key)) return false;
+    if (IGNORE.indexOf(key) !== -1) return false;
     for (var i = 0; i < PREFIXES.length; i++) if (key.indexOf(PREFIXES[i]) === 0) return true;
     return false;
   }
@@ -267,7 +261,7 @@
      same rule statically over every room, which is what catches a new room
      before it ships.                                                       */
   function drift() {
-    return allKeys().filter(function (k) { return IGNORE.indexOf(k) === -1 && !coachKey(k) && !owned(k); }).sort();
+    return allKeys().filter(function (k) { return IGNORE.indexOf(k) === -1 && !owned(k); }).sort();
   }
   function isDev() {
     var loc = g().location;

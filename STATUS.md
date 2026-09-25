@@ -1,38 +1,40 @@
 # STATUS (keep under 40 lines; /wrap rewrites it)
 
-Updated: 2026-09-24
+Updated: 2026-09-22
 
 ## Where it stands
-- **Coach Mode is built (D-338 to D-345)** on branch
-  `claude/coach-mode-spec-build-86qskf`, not yet on `main`. Spec:
-  `docs/COACH-MODE.md`; the later portal: `docs/COACH-MODE-LATER.md`.
-  Off unless Settings' switch (or `?coach=1`) is on; the public site is unchanged.
-  - Profiles (D-339): a household per client under `slaf.p.<id>.`; the personal
-    household keeps today's keys, untouched. Sealed backups per client or all.
-  - `coach/` holds three screens and nothing more: Home (roster, demo client,
-    sheet import), Session (path, embedded room, rail, detour, quick entry,
-    notes, homework, recap), Client View (life map, goals, what changed,
-    homework, check-in). `engines/session.js` and `engines/quickentry.js`.
-  - Guards: no coach note reaches Client View or any export; no tracked file
-    carries the coach export signature; `.gitignore` refuses coach files.
-- **93 → 37 rooms**; the five-input opening (D-312); facts in the Ledger only
-  (D-313); the Solar System (D-320 to D-330); band 1 in plain words (D-336);
-  an expense's card and the bonus it can reach (D-337).
-- **Main is worked on by another lane**: merge before every push. Freeze holds
-  for `rooms/` (D-313); `coach/` is the one exception (D-338).
+- **93 → 37 rooms**: the 32 of the merge programme with the Calendar back plus
+  the five readings of D-313. `docs/room-map.json` is the cut list. **D-318**
+  the calendar redrawn; **D-317** the phone walk; a statement in (D-306).
+- **The five-input opening (D-312)**: `#round-1`, five inputs, the FI date as a band.
+- **Facts are entered in the Ledger only (D-313)**: one owner per row. **New rooms**
+  (D-316): Bridge, Which Account, The Mix, Documents, Left Behind. D-314, D-315.
+- **The Solar System (D-320 to D-324)**: `docs/SOLAR-SYSTEM.md` is the spec, the
+  data layer is in (180 levels, 184 recipes, 17 moons, 98 moves), `shared/solar.js`
+  reads it. Planets (`#planets`) is six planets by ten bands; a level opens to
+  what it needs, 56 facts are typed there (D-324), band 1's six homeless facts
+  live in `household.sketch` (D-325), the unlocks tab shows each Tier 1 and 2
+  figure (D-327, D-329), a level can confirm (D-328), a band runs to a card (D-330).
+- **D-321, D-326** no em dash; **D-319** rooms say how old their numbers are; **D-323** a link that names a field opens to the field.
+- **Band 1 is answerable with no knowledge (D-336)**: `data/sketch_help.json` says
+  its eighteen questions in plain words, with what counts, where to look, an
+  add-it-up fold, a starting number where one can be defended, and a way to say
+  "I am not sure" that writes no number.
+- **This lane**: a card's annual fee (D-331); the radar on the Scorecard (D-332);
+  the menu on every page (D-333) with the Planets at its top (D-335); two ratios
+  and the furthest-from-normal ranking (D-334), Amendment 1 audited in `docs/`.
+- **On the cards (D-337)**: an expense says which card it went on; a card carries
+  a bonus target (Debt); The Close's `#on-cards` says the rate, reach and pace.
+- **Coach Mode is its own lane (D-338)**: `coach/`, status in `coach/STATUS.md`.
+- **Main is worked on by another lane**: merge before every push. D-228's reframe has NOT shipped. Freeze holds (D-313).
 
 ## Next (top item first; one per session)
-1. **Owner: try Coach Mode with the demo client**, then merge the branch.
-   Open questions for the owner: is "match 4%" in quick entry right as dollar
-   for dollar up to 4% of pay? Check-in status windows (in by 35 days, late by
-   65) right for a monthly rhythm?
-2. **Tier 3 readings and the moons.** Three band-2 facts still have nowhere to
-   live: the credit band, the extra put against debt, the household arrangement.
-3. **OWNER DECISIONS held**: inline asks elsewhere (D-313 vs D-207); is the
+1. **Tier 3 readings and the moons.** Tiers 1 and 2 are worked out (53 of the
+   184). Three band-2 facts still have nowhere to live: the credit band, the
+   extra put against debt, and how the household is arranged.
+2. **OWNER DECISIONS held**: inline asks elsewhere (D-313 vs D-207); is the
    income floor means-tested? (D-228, D-284.)
-4. Paystub parser and monthly update: not built. `benefit_cliffs_2026.json` unverified.
+3. Paystub parser and monthly update: not built. `benefit_cliffs_2026.json` unverified.
 
 ## Known open
-- The client portal (logins, a server) is deliberately not built: see
-  `docs/COACH-MODE-LATER.md`. `tests/a11y-audit.js` does not list the coach
-  screens (it reads `rooms.json`); axe was run on them by hand, clean.
+- Nothing. Every CI step is clean on this tree, browser gates included.

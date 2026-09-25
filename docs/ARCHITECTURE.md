@@ -18,17 +18,9 @@ never in it: `slaf.scenarios.v1` (`shared/scenarios.js`, capped at ten) and
 through `Spine.householdAt(date, { blocks })`. Readings are computed on every
 render; engines never write. Undo snapshots sit under `slaf.snapshots.v1`.
 
-Coach Mode (D-338 to D-345) adds profiles (`shared/profiles.js`, the third
-script on every page): the default profile is exactly the keys above; a
-client's are the same keys under `slaf.p.<id>.`, active per tab and only while
-`prefs.coachMode` is on. The roster is `slaf.coach.v1` (no money); a client's
-sessions, notes, homework, check-ins and comments sit in `household.coach`,
-present only on a client profile. The device backup carries neither.
-
 ## Folders
 
 - `rooms/` — 71 registered pages, one per room; markup + inline script.
-- `coach/` — Coach Mode's three screens and nothing more (D-338): Home, Session, Client View.
 - `engines/` — 89 pure calculation modules; take a household, return Results.
 - `shared/spine-v2.js` — load/save/migrate the household; `onChange`; `householdAt`.
 - `shared/schema.js` — constructors and accessors; every stored shape starts here.
@@ -39,7 +31,6 @@ present only on a client profile. The device backup carries neither.
 - `shared/blocks.js`, `shared/scenarios.js` — hypotheticals beside the facts.
 - `shared/liveform.js` — guard for containers of live inputs (D-034).
 - `shared/backup.js` — export/import of everything this browser holds (D-204).
-- `shared/profiles.js`, `shared/coach.js` — which household a tab reads; the roster and sealed client files.
 - `data/` — 80 reference files, year-versioned; `ledger-rows.json` (every
   number the app can hold, 81 rows), `spheres.json`, `levers.json`,
   `lenses.json`, `blocks/<type>.json`; keys map to files in `shared/reference.js`.

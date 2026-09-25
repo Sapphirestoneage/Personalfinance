@@ -5,7 +5,7 @@ paths:
   - "engines/rothaca.js"
 ---
 # The Back Half (`decumulation`)
-File: rooms/decumulation.html · 798 lines
+File: rooms/decumulation.html · 797 lines
 Engines: projection, tier0, income, selfemployed, ledger, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation, tax, reachable, trap, rothaca
 Reference data: aca_2026.json, access_rules.json, confidence_weights.json, debates.json, early_access_rules_2026.json, effective_tax_rates_2026.json, +11 more
 Owns: stockShare, plannedAnnualDraw, socialSecurityAt

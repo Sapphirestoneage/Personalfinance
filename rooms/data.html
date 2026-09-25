@@ -7,7 +7,6 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
 <script src="../shared/size.js"></script>
-<script src="../shared/profiles.js"></script>
 <title>Your Data · SPARKS</title>
 <meta name="description" content="Every way numbers get in or out of this browser: a file, a share link, or a pasted statement sorted into the debt, account, expense or income it is."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
@@ -795,7 +794,7 @@
     if (empty && !el('reset-snaps').checked) { note('reset-note', 'There is nothing entered to clear.', ''); return; }
     if (!window.confirm('Clear the household from this browser' + (el('reset-snaps').checked ? ', and every snapshot' : '') + '? Download a file first if you might want it back.')) return;
     Spine.reset();
-    if (el('reset-snaps').checked) { Spine.clearSnapshots(); }
+    if (el('reset-snaps').checked) { try { localStorage.removeItem('slaf.snapshots.v1'); } catch (e) { /* fine */ } }
     note('reset-note', 'Cleared. Start Here is the way back in.', 'is-good');
   });
 

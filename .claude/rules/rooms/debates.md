@@ -8,7 +8,7 @@ paths:
   - "engines/advicerules.js"
 ---
 # The Referee (`debates`)
-File: rooms/debates.html · 584 lines
+File: rooms/debates.html · 583 lines
 Engines: selfemployed, tax, projection, tier0, income, ledger, trap, quickmath, firstcar, debates, foo, cashflow, fire, statement, benchmarks, ratios, hourly, debt, advice, unlearning, advicerules
 Reference data: aca_2026.json, advice.json, advice_translator.json, car_costs.json, confidence_weights.json, debates.json, +16 more
 Owns: unlearningDropped

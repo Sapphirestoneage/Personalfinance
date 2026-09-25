@@ -26,19 +26,13 @@
      duplicateBlock(id, { replacing })         next label, blank dates
    ========================================================================== */
 (function (root, factory) {
-  var P = (typeof module === 'object' && module.exports) ? require('./profiles.js') : (root && root.SLAF && root.SLAF.Profiles);
-  var api = factory(P);
+  var api = factory();
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Scenarios = api; }
-})(typeof self !== 'undefined' ? self : null, function (Profiles) {
+})(typeof self !== 'undefined' ? self : null, function () {
   'use strict';
 
   var KEY = 'slaf.scenarios.v1';
-  /* Coach Mode (D-339): the key is the active profile's; the memory copy
-     is dropped when the tab switches household. */
-  var memoryProfile = null;
-  function profileNow() { return Profiles ? Profiles.active() : 'default'; }
-  function scoped(k) { return Profiles ? Profiles.key(k) : k; }
   var CAP = 10;
   var memory = null;
   var listeners = [];
@@ -47,10 +41,9 @@
   function byAge(a, b) { return (a.createdAt - b.createdAt) || ((a.seq || 0) - (b.seq || 0)); }
 
   function read() {
-    if (memory && memoryProfile === profileNow()) return memory;
-    memoryProfile = profileNow();
+    if (memory) return memory;
     var raw = null;
-    try { raw = typeof localStorage !== 'undefined' ? localStorage.getItem(scoped(KEY)) : null; } catch (e) { raw = null; }
+    try { raw = typeof localStorage !== 'undefined' ? localStorage.getItem(KEY) : null; } catch (e) { raw = null; }
     var parsed = null;
     if (raw) { try { parsed = JSON.parse(raw); } catch (e) { parsed = null; } }
     memory = parsed && Array.isArray(parsed.items) ? parsed : { version: 1, items: [], blocks: [], seq: 0 };
@@ -59,8 +52,7 @@
     return memory;
   }
   function write() {
-    if (memoryProfile !== profileNow()) { memory = null; return; }     /* switched since the read: never write across */
-    try { if (typeof localStorage !== 'undefined') localStorage.setItem(scoped(KEY), JSON.stringify(memory)); } catch (e) { /* memory only */ }
+    try { if (typeof localStorage !== 'undefined') localStorage.setItem(KEY, JSON.stringify(memory)); } catch (e) { /* memory only */ }
     listeners.slice().forEach(function (fn) { try { fn(all()); } catch (e) { /* a listener must not break the write */ } });
   }
   function all() { return read().items.slice().sort(byAge).reverse(); }
@@ -108,7 +100,7 @@
     return function () { var i = listeners.indexOf(fn); if (i !== -1) listeners.splice(i, 1); };
   }
   /** Tests only. */
-  function reset() { memory = { version: 1, items: [], blocks: [], seq: 0 }; memoryProfile = profileNow(); write(); }
+  function reset() { memory = { version: 1, items: [], blocks: [], seq: 0 }; write(); }
 
   /* ---- Blocks (D-178) ---------------------------------------------------- */
   var TYPES = [

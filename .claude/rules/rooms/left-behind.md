@@ -3,7 +3,7 @@ paths:
   - "rooms/left-behind.html"
 ---
 # Left Behind (`left-behind`)
-File: rooms/left-behind.html · 757 lines
+File: rooms/left-behind.html · 756 lines
 Engines: projection, tier0, fire, selfemployed, tax, income, ledger, cashflow, taxroom, hourly
 Reference data: access_rules.json, effective_tax_rates_2026.json, expense_categories.json, federal_brackets_2026.json, fire_variants.json, rollover_options.json, +3 more
 Owns: nothing

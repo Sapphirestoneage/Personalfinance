@@ -6,7 +6,7 @@ paths:
   - "engines/ownership.js"
 ---
 # Housing (`housing`)
-File: rooms/housing.html · 903 lines
+File: rooms/housing.html · 902 lines
 Engines: projection, tier0, income, selfemployed, ledger, foo, cashflow, fire, statement, benchmarks, ratios, housing, debt, countdown, downpayment, ownership
 Reference data: blocks/home.json, confidence_weights.json, debt_rules.json, down_payment.json, effective_tax_rates_2026.json, expense_categories.json, +12 more
 Owns: rentAlternative, homePrice, downPct, mortgageRate

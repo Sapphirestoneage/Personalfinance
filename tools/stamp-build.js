@@ -59,21 +59,13 @@ const ERRLOG_RE = /<script src="(?:\.\.\/)?shared\/errlog\.js"><\/script>\n?/;
    D&D pages, which have their own shared/): it reads the Comfortable or
    Compact switch and marks the page before the first paint. D-317. */
 const SIZE_RE = /<script src="(?:\.\.\/)?shared\/size\.js"><\/script>\n?/;
-function up(file) { return (file.indexOf('rooms/') === 0 || file.indexOf('coach/') === 0) ? '../' : ''; }
-function sizeTag(file) { return file.indexOf('dnd/') === 0 ? '' : '\n<script src="' + up(file) + 'shared/size.js"></script>'; }
-/* shared/profiles.js is the third (Coach Mode, D-339): it says which
-   household this tab reads before any module reads one. Not on D&D pages. */
-const PROFILES_RE = /<script src="(?:\.\.\/)?shared\/profiles\.js"><\/script>\n?/;
-function profilesTag(file) { return file.indexOf('dnd/') === 0 ? '' : '\n<script src="' + up(file) + 'shared/profiles.js"></script>'; }
-/* The three coach screens (D-338) embed a room in the Session's work area,
-   so their policy allows a frame from this same origin, and nothing else. */
-function cspFor(file) { return file.indexOf('coach/') === 0 ? CSP.replace("frame-src 'none'", "frame-src 'self'") : CSP; }
+function sizeTag(file) { return file.indexOf('dnd/') === 0 ? '' : '\n<script src="' + (file.indexOf('rooms/') === 0 ? '../' : '') + 'shared/size.js"></script>'; }
 /* The D&D pages load only their own shared/ (a vendored, byte-identical
    copy, like schema.js and money.js), so they get dnd/shared/errlog.js. */
-function errlogTag(file) { return '<script src="' + up(file) + 'shared/errlog.js"></script>'; }
+function errlogTag(file) { return '<script src="' + (file.indexOf('rooms/') === 0 ? '../' : '') + 'shared/errlog.js"></script>'; }
 const pages = [];
 ['index.html', 'map.html'].forEach(f => { if (fs.existsSync(path.join(ROOT, f))) pages.push(f); });
-['rooms', 'dnd', 'coach'].forEach(d => {
+['rooms', 'dnd'].forEach(d => {
   const dir = path.join(ROOT, d);
   if (fs.existsSync(dir)) fs.readdirSync(dir).filter(f => f.endsWith('.html')).forEach(f => pages.push(d + '/' + f));
 });
@@ -84,8 +76,8 @@ pages.forEach(f => {
   let after;
   /* Take the old CSP and errlog lines out, then put the three in together
      after the build meta, so every page reads the same whatever it had. */
-  let base = before.replace(CSP_RE, '').replace(ERRLOG_RE, '').replace(SIZE_RE, '').replace(PROFILES_RE, '');
-  const trio = META + '\n' + cspFor(f) + '\n' + errlogTag(f) + sizeTag(f) + profilesTag(f);
+  let base = before.replace(CSP_RE, '').replace(ERRLOG_RE, '').replace(SIZE_RE, '');
+  const trio = META + '\n' + CSP + '\n' + errlogTag(f) + sizeTag(f);
   if (/<meta name="slaf-build" content="[^"]*"\/>/.test(base)) after = base.replace(/<meta name="slaf-build" content="[^"]*"\/>/, trio);
   else if (/<meta name="viewport"[^>]*>/.test(base)) after = base.replace(/(<meta name="viewport"[^>]*>)/, '$1\n' + trio);
   else { console.error(f + ': no viewport meta to stamp after'); process.exit(1); }

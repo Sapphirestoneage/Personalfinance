@@ -232,10 +232,7 @@
      the ask off everywhere. All three are preferences, never household. */
   var REST_DAYS = 14;
   function P() { var D = deps(); return D.Prefs || null; }
-  /* Coach Mode (D-342): no "one question" card on a client's household; the
-     coach runs the session down the path and decides what is asked next. */
-  function coachClient() { var s = (typeof module === 'object' && module.exports) ? require('./profiles.js') : (g().SLAF && g().SLAF.Profiles); return !!(s && s.active && s.active() !== 'default'); }
-  function askOff() { var p = P(); return coachClient() || !!(p && p.get('ask.off', false)); }
+  function askOff() { var p = P(); return !!(p && p.get('ask.off', false)); }
   function rested(key) {
     var p = P(); if (!p) return false;
     var until = (p.get('ask.rested', {}) || {})[key];

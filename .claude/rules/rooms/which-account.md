@@ -4,7 +4,7 @@ paths:
   - "engines/accounts.js"
 ---
 # Which Account (`which-account`)
-File: rooms/which-account.html · 422 lines
+File: rooms/which-account.html · 421 lines
 Engines: projection, tier0, selfemployed, tax, income, ledger, cashflow, taxroom, accounts, hourly, coast, opening
 Reference data: effective_tax_rates_2026.json, expense_categories.json, federal_brackets_2026.json, irs_limits_2026.json, levers.json, opening.json, +3 more
 Owns: nothing
