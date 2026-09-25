@@ -66,6 +66,8 @@ export function ToolShell({ tool, businessId, guided }: { tool: Exclude<ToolId, 
   const [moved, setMoved] = useState<{ before: number | null; after: number | null; replacedEstimates: boolean } | null>(null);
   /* the month as it stood when the tool opened, so the change is against what she came in with */
   const opened = useRef<number | null | undefined>(undefined);
+  /* the labels each field had when the tool opened: guided mode writes live, so the model no longer remembers */
+  const openedLabels = useRef<Record<string, string>>({});
 
   const business = useMemo(() => {
     if (!model) return null;
@@ -78,7 +80,10 @@ export function ToolShell({ tool, businessId, guided }: { tool: Exclude<ToolId, 
   useEffect(() => {
     if (!ctx || !pending) return;
     const init: Values = {};
-    for (const f of fields) init[f.key] = initial(f, ctx);
+    for (const f of fields) {
+      init[f.key] = initial(f, ctx);
+      openedLabels.current[f.key] = init[f.key]!.label;
+    }
     setValues(init);
     setPending(false);
   }, [ctx, fields, pending]);
@@ -112,7 +117,7 @@ export function ToolShell({ tool, businessId, guided }: { tool: Exclude<ToolId, 
     const st = useAppStore.getState();
     const after = st.profile ? aggregateMonth(profileToModel(st.profile, st.businesses, st.offers, st.sources)) : null;
     /* did this run replace estimates with her numbers (the picture getting honest), or change numbers that were already hers (a decision)? */
-    const replacedEstimates = fields.some((f) => !f.key.startsWith('tool.') && initial(f, ctx).label !== 'Yours' && values[f.key]?.label === 'Yours');
+    const replacedEstimates = fields.some((f) => !f.key.startsWith('tool.') && openedLabels.current[f.key] !== 'Yours' && values[f.key]?.label === 'Yours');
     setMoved({ before: opened.current ?? null, after: after && after.ok ? after.value.profitCents : null, replacedEstimates });
     setSaved(true);
   };
