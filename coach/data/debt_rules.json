@@ -1,0 +1,215 @@
+{
+  "id": "debt_rules",
+  "version": "1.2000000000000002",
+  "asOf": "2026-01-01",
+  "source": "Payoff-ordering strategies and minimum-payment conventions for the Debt Calculator.",
+  "confidence": "convention",
+  "confidenceNote": "Minimum-payment formulas vary by issuer; 2% or $25 is a common convention, not a universal rule.",
+  "note": "SPEC.md Section 13, minimum payment formulas vary by issuer (typically 1-3% of balance, or a flat floor, whichever is greater) and must not be hardcoded to one formula. A user-entered statement minimum always wins over anything derived here. Strategy definitions live in this file so adding one is a data edit, not an engine change.",
+  "minimumPayment": {
+    "note": "Used only when the user has not entered their actual statement minimum. Revolving accounts can be derived; instalment loans cannot, because the payment depends on the original term, which we do not ask for.",
+    "rules": [
+      {
+        "id": "revolving_percent_or_floor",
+        "appliesToTypes": [
+          "credit_card"
+        ],
+        "method": "percent_of_balance_or_floor",
+        "percentOfBalance": 0.02,
+        "floorDollars": 25,
+        "note": "2% of the balance or $25, whichever is greater, a common issuer convention, not a universal rule."
+      },
+      {
+        "id": "instalment_not_derivable",
+        "appliesToTypes": [
+          "student_loan",
+          "auto",
+          "mortgage",
+          "personal",
+          "medical",
+          "other"
+        ],
+        "method": "not_derivable",
+        "note": "Depends on the original term and amortisation schedule. Ask the user rather than inventing one."
+      },
+      {
+        "id": "family_balance_over_months_to_due",
+        "appliesToTypes": [
+          "family"
+        ],
+        "method": "balance_over_months_to_due",
+        "note": "Money borrowed from family or a friend has no statement and usually no interest: the minimum is the balance spread evenly over the months until the agreed pay-back date. A typed monthly amount still wins. D-124"
+      }
+    ]
+  },
+  "strategies": [
+    {
+      "id": "avalanche",
+      "label": "Avalanche",
+      "blurb": "Highest interest rate first. Costs the least in total interest.",
+      "orderBy": "rate",
+      "direction": "desc"
+    },
+    {
+      "id": "snowball",
+      "label": "Snowball",
+      "blurb": "Smallest balance first. Costs more, but clears accounts sooner, which is what keeps people going.",
+      "orderBy": "balance",
+      "direction": "asc"
+    },
+    {
+      "id": "convenience",
+      "label": "Convenience",
+      "blurb": "Whatever you most want gone, money owed to family, a debt tied to someone you'd rather not owe. Tag them and they go first.",
+      "orderBy": "emotionalPriority",
+      "direction": "desc",
+      "tieBreak": "rate"
+    },
+    {
+      "id": "hybrid",
+      "label": "Hybrid",
+      "blurb": "Clear anything small enough to finish quickly, then switch to highest-rate-first.",
+      "orderBy": "hybrid",
+      "direction": "desc",
+      "quickWinBelowDollars": 1000
+    }
+  ],
+  "emotionalPriority": {
+    "note": "Ranking for the convenience method. A debt with no tag sits at 0.",
+    "tags": [
+      {
+        "id": "family",
+        "label": "Owed to family or a friend",
+        "priority": 3
+      },
+      {
+        "id": "shameful",
+        "label": "One I'd rather not think about",
+        "priority": 2
+      },
+      {
+        "id": "entangled",
+        "label": "Tied to someone I'd rather not be tied to",
+        "priority": 2
+      },
+      {
+        "id": "annoying",
+        "label": "Just irritating",
+        "priority": 1
+      }
+    ]
+  },
+  "limits": {
+    "maxMonths": 600,
+    "note": "50 years. A simulation that hits this is reported as never paying off at the current payment, not truncated silently."
+  },
+  "keepReasons": {
+    "note": "The rational counterpart to emotionalPriority: why a debt might be fine to carry on purpose. Multi-select on each debt; an empty list is \"None\". These NEVER change the payoff order by themselves - the household must flip excludeFromAggressive on the debt for that (D-132). suggestWhen is offered at entry time from the debt's own type and rate, shown as a suggestion and stored only when confirmed.",
+    "lowRateCeiling": 0.06,
+    "lowRateNote": "A rate at or under this reads as low enough to be worth suggesting 'Low interest rate'. A convention, not a threshold the maths uses: the payoff engine always works from the real rate.",
+    "tags": [
+      {
+        "id": "low_rate",
+        "label": "Low interest rate",
+        "hint": "Cheap money is worth keeping cheap.",
+        "suggestWhen": {
+          "rateAtMost": 0.06
+        }
+      },
+      {
+        "id": "tax_favoured",
+        "label": "Tax-favourable interest",
+        "hint": "Mortgage or student-loan interest, the kind that can actually be deducted.",
+        "suggestWhen": {
+          "types": [
+            "mortgage",
+            "student_loan"
+          ]
+        }
+      },
+      {
+        "id": "appreciating",
+        "label": "Backed by an appreciating asset",
+        "hint": "A mortgage on a home, for instance: the debt buys something that may be worth more later.",
+        "suggestWhen": {
+          "types": [
+            "mortgage"
+          ]
+        }
+      },
+      {
+        "id": "building_credit",
+        "label": "Building credit on purpose",
+        "hint": "Kept open deliberately, for the utilisation and the history.",
+        "suggestWhen": null
+      },
+      {
+        "id": "subsidised",
+        "label": "Employer-subsidised or promotional rate",
+        "hint": "Someone else is paying part of it, or the rate is a promotion that has not ended.",
+        "suggestWhen": {
+          "hasPromo": true
+        }
+      }
+    ]
+  },
+  "kindNotes": [
+    {
+      "id": "medical",
+      "appliesToTypes": [
+        "medical"
+      ],
+      "headline": "Medical debt does not behave like the others",
+      "points": [
+        "It is the most negotiable debt most people ever hold. Ask the billing office for an itemised bill first, then for financial assistance, non-profit hospitals are required to have a charity-care policy, and most do not mention it unless asked by name.",
+        "It is frequently wrong. Duplicate lines, services never given, and charges an insurer should have paid are ordinary rather than rare. The itemised bill is how you find them.",
+        "Once paid, a medical collection comes off your credit report entirely, unlike every other kind. Unpaid medical collections under $500 are no longer reported at all.",
+        "It almost never carries interest while it sits with the provider. Moving it onto a credit card to 'deal with it' turns the cheapest debt you have into one of the most expensive."
+      ],
+      "doNot": "Do not put a medical bill on a credit card to clear it. That converts a 0%, negotiable, report-free debt into an interest-bearing one that is none of those things."
+    },
+    {
+      "id": "family",
+      "appliesToTypes": [
+        "family"
+      ],
+      "headline": "Money from family is a relationship first",
+      "points": [
+        "There is no statement, no rate and no collections process, which is why this app asks for a pay-back date instead of a minimum (D-124).",
+        "The cost of paying it late is not measured in interest. It is worth saying out loud what the plan is, to the person, before the plan slips."
+      ],
+      "doNot": null
+    },
+    {
+      "id": "federalStudent",
+      "appliesToTypes": [
+        "student_loan"
+      ],
+      "headline": "A federal student loan is the most flexible debt on this list",
+      "points": [
+        "An income-driven repayment plan can legitimately set the payment at zero when income is low, and zero still counts as paid. A forbearance does not do the same thing.",
+        "It is the one debt where paying the minimum during a hard year is a plan rather than a failure.",
+        "Private student loans are not the same and carry none of this. Check which you have before assuming."
+      ],
+      "doNot": "Do not refinance a federal loan privately to shave the rate without first checking what protections you are giving up. They do not come back."
+    }
+  ],
+  "pace": {
+    "note": "How fast to pay a debt, read off its REAL cost (D-247): the rate after any tax deduction, then after inflation, against the real return the rest of the app assumes. Three words, in data so the threshold is not buried in a room.",
+    "slowlyAtOrBelowReal": 0.0,
+    "verdicts": {
+      "slowly": {
+        "label": "Pay slowly",
+        "why": "After tax and inflation this debt costs nothing or less than nothing: every year, the money you owe is worth less than it was. Pay the minimum and put the rest where it earns."
+      },
+      "schedule": {
+        "label": "Pay on schedule",
+        "why": "After tax and inflation this debt costs less than investing is expected to earn. Pay it as agreed, no extra, and send the extra to what earns more."
+      },
+      "fast": {
+        "label": "Pay fast",
+        "why": "After tax and inflation this debt costs more than investing is expected to earn. Every extra dollar here beats the market, guaranteed."
+      }
+    }
+  }
+}

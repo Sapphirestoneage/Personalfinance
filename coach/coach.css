@@ -19,6 +19,16 @@
 .coach label.inline, .client label.inline { max-width: 100%; min-width: 0; display: inline-flex; flex-direction: column; gap: 2px; font-size: var(--text-sm); color: var(--color-text-muted); }
 .coach .row, .client .row { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: flex-end; }
 
+/* The Session's entry form */
+.figures { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 0 var(--space-3); margin-bottom: var(--space-3); }
+.figures li { border-bottom: 1px solid var(--color-border); }
+.entry-row { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: flex-end; padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
+.entry-row .rough { min-height: 40px; font-size: var(--text-xs); }
+.entry-list { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3) var(--space-3); margin: var(--space-3) 0; min-width: 0; }
+.entry-list legend { font-weight: 600; padding: 0 4px; }
+.entry-line { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: flex-end; padding: var(--space-2) 0; border-bottom: 1px dashed var(--color-border); }
+.entry-line input[type="text"] { width: 9rem; }
+
 /* Coach Home: the roster */
 .roster { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
 .roster th, .roster td { text-align: left; padding: var(--space-2); border-bottom: 1px solid var(--color-border); vertical-align: top; }
@@ -64,8 +74,6 @@
 .tests li.pass { color: var(--color-positive); }
 .tests li.fail { color: var(--color-text-muted); }
 .workcol { min-width: 0; }
-.work-tabs { display: flex; flex-wrap: wrap; gap: var(--space-1); margin-bottom: var(--space-2); }
-.work-frame { width: 100%; height: 72vh; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg); }
 .crumbs { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-2); }
 .crumb { border: 1px solid var(--color-caution); color: var(--color-caution); background: none; border-radius: var(--radius-pill); padding: 4px 12px; font: inherit; font-size: var(--text-sm); cursor: pointer; min-height: 36px; }
 .rail { list-style: none; margin: 0; padding: 0; }

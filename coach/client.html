@@ -3,27 +3,23 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-20 01:28Z"/>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'self'; worker-src 'self' blob:"/>
-<script src="../shared/errlog.js"></script>
-<script src="../shared/size.js"></script>
-<script src="../shared/profiles.js"></script>
-<title>Your plan · SPARKS</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <meta name="robots" content="noindex"/>
-<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
-<link rel="stylesheet" href="../shared/fonts.css"/>
-<link rel="stylesheet" href="../shared/theme.css"/>
+<title>Your plan</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
 <link rel="stylesheet" href="coach.css"/>
 <!--
-  CLIENT VIEW, presenter mode (Coach Mode, D-344, docs/COACH-MODE.md 3.3).
+  CLIENT VIEW, presenter mode (CD-007, coach/SPEC.md 3.3).
 
-  1. READS   one client's household (?client=, switched to for this tab),
-             or a frozen snapshot of it (?snap=, read-only). Nothing from
-             the roster but that client's name, next date and the blocks
-             marked "show client". coach/clientview.js keeps only shared
-             notes, homework and check-in dates from the coach record.
-  2. WRITES  a check-in (F3), through Ownership to the rows that own each
-             balance, and the check-in record itself. Nothing else.
+  1. READS   one client (?client=), or a frozen snapshot of them (?snap=,
+             read-only). Of the roster, only that client's name and next
+             date. coach/clientview.js keeps only shared notes, homework,
+             check-in dates and the decisions marked "show client" from the
+             coach record.
+  2. WRITES  a check-in: each reported balance to the field that holds it,
+             and the check-in record itself. Nothing else.
   3. SHOWS   the life map, each goal and when it lands, what changed since
              the last session, homework and the next session. Phone first.
 
@@ -59,49 +55,25 @@
   <p class="disclaimer">Prepared with your coach. Not investment advice.</p>
 </main>
 
-<script src="../shared/money.js"></script>
-<script src="../shared/schema.js"></script>
-<script src="../shared/registry.js"></script>
-<script src="../shared/reference.js"></script>
-<script src="../shared/spine-v2.js"></script>
-<script src="../shared/ownership.js"></script>
-<script src="../shared/daite.js"></script>
-<script src="../shared/gate.js"></script>
-<script src="../shared/guide.js"></script>
-<script src="../shared/prefs.js"></script>
-<script src="../shared/staleness.js"></script>
-<script src="../shared/levers.js"></script>
-<script src="../shared/expr.js"></script>
-<script src="../shared/ledger-rows.js"></script>
-<script src="../shared/csv.js"></script>
-<script src="../shared/vault.js"></script>
-<script src="../shared/scenarios.js"></script>
-<script src="../shared/coach.js"></script>
-<script src="../shared/demo-persona.js"></script>
-<script src="../engines/projection.js"></script>
-<script src="../engines/tier0.js"></script>
-<script src="../engines/income.js"></script>
-<script src="../engines/ledger.js"></script>
-<script src="../engines/swan.js"></script>
-<script src="../engines/selfemployed.js"></script>
-<script src="../engines/hourly.js"></script>
-<script src="../engines/tax.js"></script>
-<script src="../engines/statement.js"></script>
-<script src="../engines/debt.js"></script>
-<script src="../engines/cashflow.js"></script>
-<script src="../engines/foo.js"></script>
-<script src="../engines/fire.js"></script>
-<script src="../engines/coast.js"></script>
-<script src="../engines/opening.js"></script>
-<script src="../engines/benchmarks.js"></script>
-<script src="../engines/skills.js"></script>
-<script src="../engines/ratios.js"></script>
-<script src="../shared/lens.js"></script>
-<script src="../engines/events.js"></script>
-<script src="../engines/reversibility.js"></script>
-<script src="../engines/goals.js"></script>
-<script src="../engines/session.js"></script>
-<script src="../engines/quickentry.js"></script>
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/csv.js"></script>
+<script src="shared/vault.js"></script>
+<script src="shared/demo-persona.js"></script>
+<script src="shared/fields.js"></script>
+<script src="shared/coach.js"></script>
+<script src="shared/tables.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/tier0.js"></script>
+<script src="engines/debt.js"></script>
+<script src="engines/foo.js"></script>
+<script src="engines/cashflow.js"></script>
+<script src="engines/coast.js"></script>
+<script src="engines/opening.js"></script>
+<script src="engines/countdown.js"></script>
+<script src="engines/session.js"></script>
+<script src="engines/quickentry.js"></script>
 <script src="common.js"></script>
 <script src="clientview.js"></script>
 <script src="clientpage.js"></script>

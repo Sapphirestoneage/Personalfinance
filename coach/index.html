@@ -3,28 +3,21 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta name="slaf-build" content="2026-09-20 01:28Z"/>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'self'; worker-src 'self' blob:"/>
-<script src="../shared/errlog.js"></script>
-<script src="../shared/size.js"></script>
-<script src="../shared/profiles.js"></script>
-<title>Coach Home · SPARKS</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <meta name="robots" content="noindex"/>
-<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
-<link rel="stylesheet" href="../shared/fonts.css"/>
-<link rel="stylesheet" href="../shared/theme.css"/>
+<title>Coach Home</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
 <link rel="stylesheet" href="coach.css"/>
 <!--
-  COACH HOME, the roster (Coach Mode, D-338, docs/COACH-MODE.md 3.1).
+  COACH HOME, the roster (CD-006, coach/SPEC.md 3.1).
 
-  1. READS   the roster (slaf.coach.v1) and, for each client, that client's
-             household through Spine.householdOf: read-only, never switched
-             to, so two households are never drawn from the spine at once.
-             This page puts the tab back on the personal household on open.
+  1. READS   the roster (coach.roster.v1) and each client's household, one
+             at a time, through coach/shared/coach.js. Nothing of SPARKS.
   2. WRITES  the roster (new client, archive, next session date, import
-             templates), a client's household only in the sheet import
-             (switched to, written through Ownership, switched back), and
-             files the coach saves (sealed backups).
+             mappings), a client's household only in the sheet import, and
+             the sealed files the coach saves.
   3. SHOWS   one row a client: stage on the path, last and next session,
              rough or stale numbers, the check-in, the FI band now against
              the first session. The demo client is always a row.
@@ -41,7 +34,6 @@
     <div class="coach-actions">
       <label class="slaf-switch" style="min-height:36px"><input type="checkbox" id="show-archived"/> Show archived</label>
       <button type="button" class="slaf-btn slaf-btn--small" id="btn-backup-all">Back up all clients</button>
-      <a class="slaf-btn slaf-btn--small slaf-btn--quiet" href="../index.html">My own numbers</a>
     </div>
   </div>
 
@@ -100,49 +92,25 @@
   </section>
 </main>
 
-<script src="../shared/money.js"></script>
-<script src="../shared/schema.js"></script>
-<script src="../shared/registry.js"></script>
-<script src="../shared/reference.js"></script>
-<script src="../shared/spine-v2.js"></script>
-<script src="../shared/ownership.js"></script>
-<script src="../shared/daite.js"></script>
-<script src="../shared/gate.js"></script>
-<script src="../shared/guide.js"></script>
-<script src="../shared/prefs.js"></script>
-<script src="../shared/staleness.js"></script>
-<script src="../shared/levers.js"></script>
-<script src="../shared/expr.js"></script>
-<script src="../shared/ledger-rows.js"></script>
-<script src="../shared/csv.js"></script>
-<script src="../shared/vault.js"></script>
-<script src="../shared/scenarios.js"></script>
-<script src="../shared/coach.js"></script>
-<script src="../shared/demo-persona.js"></script>
-<script src="../engines/projection.js"></script>
-<script src="../engines/tier0.js"></script>
-<script src="../engines/income.js"></script>
-<script src="../engines/ledger.js"></script>
-<script src="../engines/swan.js"></script>
-<script src="../engines/selfemployed.js"></script>
-<script src="../engines/hourly.js"></script>
-<script src="../engines/tax.js"></script>
-<script src="../engines/statement.js"></script>
-<script src="../engines/debt.js"></script>
-<script src="../engines/cashflow.js"></script>
-<script src="../engines/foo.js"></script>
-<script src="../engines/fire.js"></script>
-<script src="../engines/coast.js"></script>
-<script src="../engines/opening.js"></script>
-<script src="../engines/benchmarks.js"></script>
-<script src="../engines/skills.js"></script>
-<script src="../engines/ratios.js"></script>
-<script src="../shared/lens.js"></script>
-<script src="../engines/events.js"></script>
-<script src="../engines/reversibility.js"></script>
-<script src="../engines/goals.js"></script>
-<script src="../engines/session.js"></script>
-<script src="../engines/quickentry.js"></script>
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/csv.js"></script>
+<script src="shared/vault.js"></script>
+<script src="shared/demo-persona.js"></script>
+<script src="shared/fields.js"></script>
+<script src="shared/coach.js"></script>
+<script src="shared/tables.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/tier0.js"></script>
+<script src="engines/debt.js"></script>
+<script src="engines/foo.js"></script>
+<script src="engines/cashflow.js"></script>
+<script src="engines/coast.js"></script>
+<script src="engines/opening.js"></script>
+<script src="engines/countdown.js"></script>
+<script src="engines/session.js"></script>
+<script src="engines/quickentry.js"></script>
 <script src="common.js"></script>
 <script src="home.js"></script>
 </body>

@@ -1,10 +1,7 @@
 /* ==========================================================================
-   coach/common.js, the small pieces the three coach screens share (D-338).
+   coach/common.js, the small pieces the three coach screens share (CD-006).
    --------------------------------------------------------------------------
      CoachUI.el(id), esc(s)       the usual two
-     CoachUI.guard(host)          true when Coach Mode is on; else fills host
-                                  with the one screen a visitor sees here and
-                                  returns false (nothing else is drawn)
      CoachUI.param(name)          a query parameter
      CoachUI.say(id, text, kind)  a status line ('good' | 'bad' | null)
      CoachUI.download(name, text, mime)
@@ -21,14 +18,6 @@
   function param(name) {
     var m = new RegExp('[?&]' + name + '=([^&#]*)').exec(root.location.search || '');
     return m ? decodeURIComponent(m[1].replace(/\+/g, ' ')) : null;
-  }
-  function guard(host) {
-    if (SLAF.Profiles && SLAF.Profiles.coachOn()) return true;
-    host.innerHTML = '<section class="slaf-card coach-off"><span class="slaf-eyebrow">Coach Mode</span>'
-      + '<h1>Coach Mode is off</h1><p class="slaf-lede">These screens are for a money coach running live sessions with clients. '
-      + 'Turn Coach Mode on in <a href="../rooms/settings.html#advanced">Settings</a>. Your own numbers are never touched.</p>'
-      + '<p><a class="slaf-btn" href="../index.html">Back to Money Rooms</a></p></section>';
-    return false;
   }
   function say(id, text, kind) {
     var n = el(id); if (!n) return;
@@ -63,5 +52,5 @@
     var d = new Date(iso.length <= 10 ? iso + 'T12:00:00' : iso);
     return isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
-  SLAF.CoachUI = { el: el, esc: esc, param: param, guard: guard, say: say, download: download, readFile: readFile, clientOr: clientOr, duration: duration, day: day };
+  SLAF.CoachUI = { el: el, esc: esc, param: param, say: say, download: download, readFile: readFile, clientOr: clientOr, duration: duration, day: day };
 })(typeof self !== 'undefined' ? self : this);

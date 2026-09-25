@@ -1,5 +1,5 @@
 /* ==========================================================================
-   coach/clientview.js, what the client sees (D-344, docs/COACH-MODE.md 3.3).
+   coach/clientview.js, what the client sees (CD-007, coach/SPEC.md 3.3).
    --------------------------------------------------------------------------
    Pure: a household and the tables in, one HTML string out. It is handed
    the client's household and a short list of what may be shown; it is
@@ -9,16 +9,17 @@
    whole record still cannot leak a private note.
 
      ClientView.render(h, T, opts) -> html
-       opts: { name, asOf, mapWidth (px the map is drawn at), since (a household, the start of the last
-               session), sinceDate, nextSessionAt, blocks (already the ones
-               marked "show client"), verdicts, readOnly, snapLabel }
+       opts: { record (the client's coach record), name, asOf, mapWidth
+               (px the map is drawn at), since (a household, the start of
+               the last session), sinceDate, nextSessionAt, readOnly, snapLabel }
+       Decisions are drawn only when marked "show client".
      ClientView.visible(record)    the part of household.coach a client
                                    may see: { shared, homework, checkins }
      ClientView.lifeMapSvg(map, w) the timeline as an SVG string
    ========================================================================== */
 (function (root, factory) {
   var node = typeof module === 'object' && module.exports;
-  var deps = node ? { Money: require('../shared/money.js'), Session: require('../engines/session.js') }
+  var deps = node ? { Money: require('./shared/money.js'), Session: require('./engines/session.js') }
     : { Money: root.SLAF && root.SLAF.Money, Session: root.SLAF && root.SLAF.Session };
   var api = factory(deps.Money, deps.Session);
   if (node) module.exports = api;
@@ -103,8 +104,8 @@
   function render(h, T, opts) {
     var o = opts || {};
     var asOf = o.asOf;
-    var rec = visible(h && h.coach);
-    var map = Session.lifeMap(h, T, { asOf: asOf, blocks: o.blocks || [], verdicts: o.verdicts || {} });
+    var rec = visible(o.record);
+    var map = Session.lifeMap(h, T, { asOf: asOf, decisions: (o.record && o.record.decisions) || [] });
     var mapWidth = o.mapWidth || 900;
     var goals = Session.goals(h, T, { asOf: asOf });
     var band = map.band;
@@ -133,7 +134,7 @@
     /* 3. what changed since the last session */
     var changed = [];
     if (o.since) {
-      var r = Session.recap(o.since, h, T, { stops: [] });
+      var r = Session.recap(o.since, h, T, { stops: [], readings: o.readings || null });
       r.sections.filter(function (s) { return s.id === 'numbers' || s.id === 'fi'; }).forEach(function (s) { s.lines.forEach(function (l) { if (l !== 'No number changed.') changed.push(l); }); });
     }
     var doneSince = rec.homework.filter(function (x) { return x.doneAt && (!o.sinceDate || x.doneAt >= o.sinceDate); });
