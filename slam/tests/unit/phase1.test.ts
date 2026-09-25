@@ -27,6 +27,7 @@ describe('the pathway', () => {
     const later = nextStep([a], [stepKey('a', 'Diagnose'), stepKey('a', 'Offer')]);
     expect(later.stage.stage).toBe('Presence');
     within(later.progress, 3 / 9, 1e-9);
+    expect(later.business).toEqual({ done: 2, total: 8 });
   });
   it('with nothing ticked the next step is Setup', () => {
     const a = canonicalInPerson({}, 'a', 1);

@@ -4,9 +4,11 @@ import { useMemo, useState } from 'react';
 import { useAppStore } from '@/data/store';
 import { CLIENT_STAGES, DEPOSIT_STATUSES, LOST_REASONS, SCREENING_RESULTS, type ClientRecord, type Sale } from '@/data/schemas';
 import { budgetCheck } from '@/engine/budgets';
+import { funnelFromLog, LOG_MIN_CONTACTS } from '@/engine/reality';
+import { percent } from '../shared/format';
 import { Button, Card, ConfirmButton, Empty, Note } from '../shared/ui';
 import { useLabelMode, newId } from '../shared/hooks';
-import { money } from '../shared/format';
+import { money, count } from '../shared/format';
 
 const STAGE_WORDS: Record<ClientRecord['stage'], string> = { inquiry: 'Contacted', screening: 'Screening', booked: 'Booked', showed: 'Showed', client: 'Client', regular: 'Regular', lost: 'Lost' };
 const SCREEN_WORDS: Record<ClientRecord['screeningResult'], string> = { pending: 'Not yet', pass: 'Passed', fail: 'Did not pass', withdrawn: 'Withdrew' };
@@ -136,6 +138,46 @@ function ClientForm({ client, onSave, onDelete, onClose }: { client: ClientRecor
   );
 }
 
+function FromYourLog() {
+  const clients = useAppStore((s) => s.clients);
+  const businesses = useAppStore((s) => s.businesses);
+  const setInput = useAppStore((s) => s.setInput);
+  const [used, setUsed] = useState(false);
+  const inPerson = businesses.filter((b) => b.active && b.type === 'inPerson')[0];
+  const f = useMemo(() => funnelFromLog(clients, inPerson?.id ?? null), [clients, inPerson?.id]);
+  if (!inPerson || f.contacts === 0) return null;
+  const use = async () => {
+    if (f.contactsPerMonth !== null) await setInput(inPerson.id, 'inquiriesPerMonth', Math.round(f.contactsPerMonth), 'Yours', 'from your client log');
+    if (f.passRate !== null) await setInput(inPerson.id, 'passRate', f.passRate, 'Yours', 'from your client log');
+    if (f.bookingRate !== null) await setInput(inPerson.id, 'bookingRate', f.bookingRate, 'Yours', 'from your client log');
+    if (f.showRate !== null) await setInput(inPerson.id, 'showRate', f.showRate, 'Yours', 'from your client log');
+    setUsed(true);
+  };
+  return (
+    <Card title="From your log, last 90 days" testId="from-log">
+      <p className="text-sm">
+        {f.contacts} contacted · {f.passed} passed screening · {f.booked} booked · {f.showed} showed
+      </p>
+      <p className="mt-1 text-xs text-slate-500">
+        Pass {f.passRate === null ? 'not yet' : percent(f.passRate)} · booking {f.bookingRate === null ? 'not yet' : percent(f.bookingRate)} · show {f.showRate === null ? 'not yet' : percent(f.showRate)} · about {f.contactsPerMonth === null ? '?' : count(f.contactsPerMonth, 0)} contacts a month
+      </p>
+      {f.enough ? (
+        <div className="mt-3">
+          {used ? (
+            <Note tone="good" testId="log-used">These rates are now your in-person numbers, labeled yours.</Note>
+          ) : (
+            <Button kind="secondary" testId="use-log" onClick={() => void use()}>
+              Use these rates in my numbers
+            </Button>
+          )}
+        </div>
+      ) : (
+        <p className="mt-2 text-xs text-slate-500">After {LOG_MIN_CONTACTS} contacts these can replace your estimates in one tap ({LOG_MIN_CONTACTS - f.contacts} to go).</p>
+      )}
+    </Card>
+  );
+}
+
 export function Clients() {
   const profile = useAppStore((s) => s.profile);
   const clients = useAppStore((s) => s.clients);
@@ -192,6 +234,7 @@ export function Clients() {
       <Button testId="new-client" onClick={() => setEditing(blank())}>
         + Log a contact
       </Button>
+      <FromYourLog />
       {flags.length > 0 && (
         <Note tone="warn" testId="client-flags">
           {flags.map((f) => `${f.alias} is ${money(f.overByCents, { whole: true })} past their agreed budget`).join('; ')}. Time for a check-in.

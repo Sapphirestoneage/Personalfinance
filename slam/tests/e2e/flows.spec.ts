@@ -45,7 +45,7 @@ test.describe('first-time user', () => {
     await expect(page.getByTestId('tool-saved')).toBeVisible();
     await open(page);
     await expect(page.getByTestId('next-title')).toContainText('Your offer');
-    await expect(page.getByTestId('progress')).toContainText('2 of 9');
+    await expect(page.getByTestId('progress')).toContainText('In-person: 1 of 8 stages done');
   });
 
   test('her numbers are labeled yours and survive a reload', async ({ page }) => {
@@ -146,6 +146,13 @@ test.describe('check-in and clients', () => {
     await page.getByTestId('save-checkin').click();
     await expect(page.getByTestId('checkin-saved')).toContainText('1 check-in');
     await expect(page.getByTestId('momentum')).toContainText('after 4 check-ins');
+    await open(page, 'numbers');
+    await expect(page.getByTestId('reality')).toContainText('1 check-in vs the model');
+    await expect(page.getByTestId('reality-contacts')).toContainText('model says 60');
+    await page.getByTestId('use-checkins').click();
+    await open(page, 'businesses/sample-inperson-inPerson');
+    await expect(page.getByTestId('in-inquiriesPerMonth')).toHaveValue('4');
+    await expect(page.getByTestId('in-inquiriesPerMonth-label')).toHaveText('yours');
   });
 
   test('clients are aliases with a stage and a budget flag', async ({ page }) => {
@@ -162,8 +169,11 @@ test.describe('check-in and clients', () => {
     await page.getByTestId('cf-log').click();
     await page.getByTestId('cf-save').click();
     await expect(page.getByTestId('client-flags')).toContainText('Blue is $50 past');
+    await expect(page.getByTestId('from-log')).toContainText('1 contacted');
+    await expect(page.getByTestId('from-log')).toContainText('9 to go');
     await open(page);
     await expect(page.getByTestId('budget-flags')).toContainText('Blue');
+    await expect(page.getByTestId('milestones')).toContainText('First contact logged');
   });
 });
 

@@ -3,6 +3,8 @@ import { useMemo } from 'react';
 import { useAppStore } from '@/data/store';
 import { nextStep } from '@/engine/pathway';
 import { budgetCheck } from '@/engine/budgets';
+import { milestoneState, MILESTONES } from '@/engine/reality';
+import { useEffect } from 'react';
 import { Big, Button, Card, Note } from '../shared/ui';
 import { useModel, useTotals } from '../shared/hooks';
 import { money } from '../shared/format';
@@ -17,6 +19,13 @@ export function Today() {
   const totals = useTotals();
   const step = useMemo(() => (model && profile ? nextStep(model.businesses, profile.pathway.completedSteps) : null), [model, profile]);
   const flags = useMemo(() => budgetCheck(clients, sales, new Date().toISOString().slice(0, 7)), [clients, sales]);
+  const milestones = useAppStore((s) => s.milestones);
+  const addMilestone = useAppStore((s) => s.addMilestone);
+  const ms = useMemo(() => (profile && model ? milestoneState(profile, model.businesses, clients, milestones) : null), [profile, model, clients, milestones]);
+  useEffect(() => {
+    if (!ms) return;
+    for (const k of ms.achieved) if (!milestones.some((m) => m.key === k)) void addMilestone(k);
+  }, [ms, milestones, addMilestone]);
   if (!profile || !model || !step) return null;
 
   const business = step.businessId ? model.businesses.find((b) => b.id === step.businessId) : null;
@@ -58,10 +67,11 @@ export function Today() {
         </div>
         <div className="mt-3">
           <div className="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-800">
-            <div className="h-2 rounded-full bg-sky-600" style={{ width: `${Math.round(step.progress * 100)}%` }} />
+            <div className="h-2 rounded-full bg-sky-600" style={{ width: `${Math.round((step.business ? step.business.done / step.business.total : step.progress) * 100)}%` }} />
           </div>
           <p className="mt-1 text-xs text-slate-500" data-testid="progress">
-            Pathway: {step.done} of {step.total} steps done.
+            {step.business && business ? `${business.name}: ${step.business.done} of ${step.business.total} stages done.` : `Pathway: ${step.done} of ${step.total} steps done.`}
+            {step.business && model.businesses.filter((b) => b.active).length > 1 ? ` All businesses: ${step.done} of ${step.total}.` : ''}
           </p>
         </div>
       </Card>
@@ -83,6 +93,24 @@ export function Today() {
       )}
 
       <CheckIn />
+
+      {ms && (ms.latest || ms.next) && (
+        <Card title="Milestones" testId="milestones">
+          {ms.latest && (
+            <p className="text-sm">
+              <span className="mr-2 inline-block rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800 dark:bg-green-900/40 dark:text-green-200">done</span>
+              {ms.latest.title}
+            </p>
+          )}
+          {ms.next && (
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+              <span className="mr-2 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">next</span>
+              {ms.next.next}
+            </p>
+          )}
+          <p className="mt-2 text-xs text-slate-500">{ms.achieved.length} of {MILESTONES.length} so far.</p>
+        </Card>
+      )}
 
       <Card title="Momentum" testId="momentum">
         {checkIns < 4 ? (

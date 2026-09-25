@@ -14,6 +14,8 @@ export interface NextStep {
   progress: number;
   done: number;
   total: number;
+  /** progress within the business the next step belongs to */
+  business: { done: number; total: number } | null;
 }
 
 export function pathwayPlan(businesses: BusinessModel[]): Array<{ businessId: string | null; stage: StageMeta }> {
@@ -35,7 +37,9 @@ export function nextStep(businesses: BusinessModel[], completedSteps: string[]):
     p.businessId === null ? businesses.some((b) => b.active) : done.has(stepKey(p.businessId, p.stage.stage));
   const doneCount = plan.filter(isDone).length;
   const next = plan.find((p) => !isDone(p)) ?? plan[plan.length - 1]!;
-  return { stage: next.stage, businessId: next.businessId, progress: plan.length ? doneCount / plan.length : 0, done: doneCount, total: plan.length };
+  const mine = next.businessId ? plan.filter((p) => p.businessId === next.businessId) : [];
+  const business = next.businessId ? { done: mine.filter(isDone).length, total: mine.length } : null;
+  return { stage: next.stage, businessId: next.businessId, progress: plan.length ? doneCount / plan.length : 0, done: doneCount, total: plan.length, business };
 }
 
 export function stageIndex(stage: PathwayStage): number {

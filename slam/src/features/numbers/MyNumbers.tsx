@@ -5,10 +5,49 @@ import { useAppStore } from '@/data/store';
 import { toKeepAfterSetAside } from '@/engine/aggregate';
 import { runwayMonths } from '@/engine/formulas';
 import { sensitivity } from '@/engine/sensitivity';
+import { checkInsVsModel } from '@/engine/reality';
+import { useState } from 'react';
 import { Bars } from '../shared/Bars';
 import { Basis, Big, Button, Card, Empty, Note } from '../shared/ui';
 import { useModel, useSellableHours, useTotals } from '../shared/hooks';
 import { count, money } from '../shared/format';
+
+function RealityCheck({ firstId }: { firstId: string | undefined }) {
+  const weekLogs = useAppStore((s) => s.weekLogs);
+  const setInput = useAppStore((s) => s.setInput);
+  const model = useModel();
+  const [used, setUsed] = useState(false);
+  const first = model?.businesses.find((b) => b.id === firstId) ?? null;
+  const r = useMemo(() => checkInsVsModel(weekLogs, first), [weekLogs, first]);
+  if (!first || r.weeks === 0) return null;
+  const key = first.type === 'inPerson' ? 'inquiriesPerMonth' : first.type === 'calls' ? 'callsPerMonth' : null;
+  return (
+    <Card title={`Your last ${r.weeks} check-in${r.weeks === 1 ? '' : 's'} vs the model`} testId="reality">
+      <ul className="space-y-1 text-sm">
+        {r.contactsPerMonth !== null && (
+          <li data-testid="reality-contacts">
+            Contacts: about <strong>{count(r.contactsPerMonth, 0)}</strong> a month logged{r.modelContactsPerMonth !== null ? `, model says ${count(r.modelContactsPerMonth, 0)}` : ''}
+            {r.contactsGap !== null ? ` (${r.contactsGap >= 0 ? '+' : ''}${Math.round(r.contactsGap * 100)}%)` : ''}.
+          </li>
+        )}
+        {r.bookingsPerMonth !== null && <li>Bookings: about {count(r.bookingsPerMonth, 0)} a month.</li>}
+        {r.sessionsPerMonth !== null && <li>Sessions or calls held: about {count(r.sessionsPerMonth, 0)} a month.</li>}
+        {r.reachPerWeek !== null && <li>Reach actions: about {count(r.reachPerWeek, 0)} a week.</li>}
+      </ul>
+      {key && r.contactsPerMonth !== null && r.contactsGap !== null && Math.abs(r.contactsGap) > 0.1 && (
+        <div className="mt-3">
+          {used ? (
+            <Note tone="good">Your model now uses what you logged.</Note>
+          ) : (
+            <Button kind="secondary" testId="use-checkins" onClick={() => void setInput(first.id, key, Math.round(r.contactsPerMonth!), 'Yours', 'from your check-ins').then(() => setUsed(true))}>
+              Use {count(r.contactsPerMonth, 0)} a month in my numbers
+            </Button>
+          )}
+        </div>
+      )}
+    </Card>
+  );
+}
 
 export function MyNumbers() {
   const profile = useAppStore((s) => s.profile);
@@ -67,6 +106,8 @@ export function MyNumbers() {
         )}
         <Basis basedOn={totals.basedOn} testId="numbers-basis" />
       </Card>
+
+      <RealityCheck firstId={first?.id} />
 
       <Card title="Where it comes from">
         <Bars rows={rows} format={(v) => money(v, { whole: true })} summary={`${top?.name ?? ''} brings ${Math.round((top?.shareOfGp ?? 0) * 100)}% of gross profit${rows.length > 1 ? `; ${rows.length} businesses counted, in your priority order` : ''}.`} testId="share-bars" />
