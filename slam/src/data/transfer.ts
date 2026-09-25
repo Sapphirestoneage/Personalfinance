@@ -5,7 +5,8 @@
    transaction, so a bad file changes nothing.
    ========================================================================== */
 import type { SlamDB } from './db';
-import { EXPORT_FORMAT, type ExportFile, ExportSchema, SCHEMA_VERSION } from './schemas';
+import { EXPORT_FORMAT, type ExportFile, ExportSchema, OLDEST_IMPORTABLE_VERSION, SCHEMA_VERSION } from './schemas';
+import { migrateExport, migrateWeekLog } from './migrate';
 
 export const EXPORT_REMINDER =
   'This file holds your numbers in plain text. Keep it somewhere private (a locked folder or an encrypted drive), and delete copies you no longer need.';
@@ -44,7 +45,7 @@ export async function exportAll(db: SlamDB, now: Date = new Date()): Promise<Exp
     sources: byId(sources),
     clients: byId(clients),
     sales: byId(sales),
-    weekLogs: byId(weekLogs),
+    weekLogs: byId(weekLogs).map((w) => migrateWeekLog(w as unknown as Record<string, unknown>) as unknown as typeof w),
     milestones: byId(milestones),
   };
   return ExportSchema.parse(file);
@@ -69,7 +70,11 @@ export function parseExport(text: string): ExportFile {
   } catch {
     throw new ImportError('That file is not readable as a backup.');
   }
-  const result = ExportSchema.safeParse(raw);
+  if (!raw || typeof raw !== 'object' || (raw as { format?: unknown }).format !== EXPORT_FORMAT) throw new ImportError('That file is not a backup from this app.');
+  const version = (raw as { schemaVersion?: unknown }).schemaVersion;
+  if (typeof version !== 'number' || version < OLDEST_IMPORTABLE_VERSION) throw new ImportError('That backup is from a version this app cannot read.');
+  if (version > SCHEMA_VERSION) throw new ImportError('That backup is from a newer version of the app. Update the app, then try again.');
+  const result = ExportSchema.safeParse(migrateExport(raw as Record<string, unknown>));
   if (!result.success) {
     const first = result.error.issues[0];
     const where = first?.path.join('.') || 'file';

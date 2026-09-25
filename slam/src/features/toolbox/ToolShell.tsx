@@ -10,7 +10,7 @@ import { navigate } from '@/app/router';
 import { Button, Card, Note, Toggle } from '../shared/ui';
 import { NumberField } from '../shared/NumberField';
 import { useLabelMode, useModel, useSellableHours } from '../shared/hooks';
-import { TOOLS, type ToolCtx, type ToolField, type Values } from './tools';
+import { FORMULA_TEXT, TOOLS, type ToolCtx, type ToolField, type Values } from './tools';
 
 function initial(field: ToolField, ctx: ToolCtx): Assumption {
   const [where, key] = field.key.split('.') as [string, string];
@@ -112,6 +112,16 @@ export function ToolShell({ tool, businessId, guided }: { tool: Exclude<ToolId, 
         {result.summary}
       </p>
       {result.credit && <p className="mt-2 text-xs text-slate-500">{result.credit}</p>}
+      {mode === 'pro' && result.formulas && result.formulas.length > 0 && (
+        <ul className="mt-2 space-y-1 text-xs text-slate-500" data-testid="tool-formulas">
+          {result.formulas.map((f) => (
+            <li key={f} className="flex gap-2">
+              <span className="shrink-0 rounded bg-slate-100 px-1.5 font-mono dark:bg-slate-800">{f}</span>
+              <span>{FORMULA_TEXT[f]}</span>
+            </li>
+          ))}
+        </ul>
+      )}
       {result.ok && (
         <div className="mt-4 space-y-2">
           {!saved ? (

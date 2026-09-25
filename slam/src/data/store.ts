@@ -13,6 +13,7 @@ import { profileToModel } from './model';
 import type { Business, ClientRecord, EventId, EventParamsPatch, Label, LabelMode, Milestone, Multipliers, Offer, PathwayStage, Profile, Sale, Scenario, ScenarioKind, ScenarioOverride, Source, WeekLog } from './schemas';
 import { buildSnapshot } from './snapshot';
 import { comparable, exportAll, importAll, parseExport, serialize } from './transfer';
+import { migrateWeekLog } from './migrate';
 
 export type Status = 'loading' | 'ready' | 'error';
 
@@ -82,7 +83,7 @@ async function readAll(d: SlamDB) {
   const scenarios = pid ? await d.scenarios.where('profileId').equals(pid).toArray() : [];
   const clients = pid ? await d.clients.where('profileId').equals(pid).toArray() : [];
   const sales = pid ? await d.sales.where('profileId').equals(pid).toArray() : [];
-  const weekLogs = pid ? await d.weekLogs.where('profileId').equals(pid).toArray() : [];
+  const weekLogs = pid ? (await d.weekLogs.where('profileId').equals(pid).toArray()).map((w) => migrateWeekLog(w as unknown as Record<string, unknown>) as unknown as WeekLog) : [];
   const milestones = pid ? await d.milestones.where('profileId').equals(pid).toArray() : [];
   const sources = pid ? await d.sources.where('profileId').equals(pid).toArray() : [];
   businesses.sort((a, b) => a.priority - b.priority);

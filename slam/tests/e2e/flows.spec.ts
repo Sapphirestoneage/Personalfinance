@@ -208,6 +208,16 @@ test.describe('privacy and offline', () => {
     expect(snapshot.clients).toBeUndefined();
   });
 
+  test('the menu reaches every screen, and the explainer reads in plain words', async ({ page }) => {
+    await loadSample(page);
+    await page.getByTestId('menu').click();
+    await expect(page.getByTestId('drawer')).toBeVisible();
+    await page.getByTestId('nav-about').click();
+    await expect(page.getByTestId('about')).toContainText('Screening');
+    await expect(page.getByTestId('about')).toContainText('never treats it as a sales step');
+    await page.keyboard.press('Escape');
+  });
+
   test('one tap hides the app behind a plain screen', async ({ page }) => {
     await loadSample(page);
     await page.getByTestId('hide').click();

@@ -376,7 +376,10 @@ export type Profile = z.infer<typeof ProfileSchema>;
 /* ---------- The export file -------------------------------------------------- */
 
 export const EXPORT_FORMAT = 'slam-backup';
-export const SCHEMA_VERSION = 1;
+/* 2: WeekLog gained checkedIn and reachActions; Source gained followers;
+   Scenario gained eventParams. Version 1 files are migrated on import. */
+export const SCHEMA_VERSION = 2;
+export const OLDEST_IMPORTABLE_VERSION = 1;
 
 export const ExportSchema = z
   .object({

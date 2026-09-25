@@ -26,6 +26,7 @@ import {
   type WeekLog,
   WeekLogSchema,
 } from './schemas';
+import { migrateScenario, migrateSource, migrateWeekLog } from './migrate';
 
 export interface Meta {
   key: string;
@@ -49,7 +50,7 @@ export class SlamDB extends Dexie {
   constructor(name: string = DB_NAME) {
     super(name);
     /* Bumping this version needs an upgrade function and a note in CLAUDE.md. */
-    this.version(1).stores({
+    const stores = {
       profiles: 'id',
       businesses: 'id, profileId, [profileId+priority]',
       offers: 'id, businessId',
@@ -60,7 +61,23 @@ export class SlamDB extends Dexie {
       weekLogs: 'id, profileId, weekStart',
       milestones: 'id, profileId, key',
       meta: 'key',
-    });
+    };
+    this.version(1).stores(stores);
+    /* 2: week logs gained checkedIn and reachActions (and sessions became sessionsHeld);
+       sources may carry followers; scenarios may carry eventParams. Same indexes. */
+    this.version(2)
+      .stores(stores)
+      .upgrade(async (tx) => {
+        /* modify() edits in place: copy the migrated row over, and drop keys the migration removed */
+        const apply = (migrate: (r: Record<string, unknown>) => Record<string, unknown>) => (row: Record<string, unknown>) => {
+          const next = migrate(row);
+          for (const k of Object.keys(row)) if (!(k in next)) delete row[k];
+          Object.assign(row, next);
+        };
+        await tx.table('weekLogs').toCollection().modify(apply(migrateWeekLog));
+        await tx.table('scenarios').toCollection().modify(apply(migrateScenario));
+        await tx.table('sources').toCollection().modify(apply(migrateSource));
+      });
   }
 
   get dataTables() {

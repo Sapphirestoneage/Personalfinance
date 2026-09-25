@@ -48,7 +48,28 @@ export interface ToolResult {
   missing?: string[];
   /** which published framework the tool leans on, with the non-affiliation */
   credit?: string;
+  /** the formulas behind the answer, named for Pro mode */
+  formulas?: string[];
 }
+
+export const FORMULA_TEXT: Record<string, string> = {
+  F01: 'clients = contacts × pass × booking × show (× close for a consult offer)',
+  F02: 'gross profit per sale = price × (1 − fee) − delivery cost',
+  F03: 'sessions = new clients × (1 + rebook) + continuity sessions',
+  F04: 'sessions never exceed capacity (sessions cap, or sellable hours ÷ all-in hours)',
+  F05: 'profit = gross profit − acquisition spend − fixed costs',
+  F06: 'lifetime gross profit = gross profit a month × months kept',
+  F07: 'cost to acquire = (spend + hours × hourly value) ÷ new clients',
+  F08: 'worth : cost = lifetime gross profit ÷ cost to acquire; payback = cost ÷ daily gross profit',
+  F09: 'per hour = (price − delivery cost) ÷ all-in hours',
+  F10: 'contacts needed = (goal + fixed + spend) ÷ gross profit per contact, then the capacity check',
+  F11: 'leverage = added yearly profit ÷ (cash + hours × hourly value + learning) × 52 ÷ (52 + weeks to money)',
+  F12: 'sensitivity = profit change from one small move of one input',
+  G12: 'clients from events = events × conversations × close rate',
+  G13: 'reach = a × posts^b, a fitted from what you have',
+  G14: 'lift = (takers − would-book-anyway) × gross profit − takers × credit',
+  VE: 'value = (outcome × likelihood) ÷ (delay × effort)',
+};
 
 export const CREDIT_OFFERS = 'Value equation and value stack after Alex Hormozi ($100M Offers). SLAM is independent; no book text is reproduced.';
 export const CREDIT_LEADS = 'Volume, owned vs rented audiences and the lead math after Alex Hormozi ($100M Leads). SLAM is independent.';
@@ -181,7 +202,7 @@ const diagnoseTool: ToolDef = {
         lines.push({ label: 'For your goal', value: 'Set an income goal in Shared settings to see how many contacts it needs.' });
       }
     }
-    return { ok: true, lines, summary };
+    return { ok: true, lines, summary, formulas: ['F01', 'F02', 'F03', 'F04', 'F12', 'F10'] };
   },
 };
 
@@ -255,7 +276,7 @@ const offerTool: ToolDef = {
           ? 'The stack is worth more than the price, but not by much: add a piece that costs you little before raising price.'
           : 'The stack is worth less than the price: add value or say it better before raising price.';
     const summary = `${money(gp, { whole: true })} of gross profit per sale${tp === null ? '' : `, ${money(tp, { whole: true })} per all-in hour`}. ${stackWord} Weakest lever: ${eq.weakest === 'ease' ? 'ease after screening' : eq.weakest}.`;
-    return { ok: true, lines, summary, credit: CREDIT_OFFERS };
+    return { ok: true, lines, summary, credit: CREDIT_OFFERS, formulas: ['F02', 'F09', 'VE'] };
   },
 };
 
@@ -289,7 +310,7 @@ const presenceTool: ToolDef = {
     const rented = sourceShare(ctx.business, (s) => !s.owned);
     if (rented !== null) lines.push({ label: 'Contacts through rented sources', value: percent(rented), tone: rented > 0.7 ? 'warn' : 'plain' });
     const rentedWord = rented === null ? ' Add your sources on the business tab to see how much rides on platforms you do not own.' : rented > 0.7 ? ` ${percent(rented)} of your contacts come through sources you do not own; build one you do (a list, a site) alongside.` : ` ${percent(1 - rented)} of your contacts come through sources you own, which no ban can take.`;
-    return { ok: true, lines, summary: `Reach compounds: at this curve, ${count(planned ?? 0, 0)} posts reach about ${count(curve(planned ?? 0), 0)} people. Consistency beats volume in any one week.${rentedWord}`, credit: CREDIT_LEADS };
+    return { ok: true, lines, summary: `Reach compounds: at this curve, ${count(planned ?? 0, 0)} posts reach about ${count(curve(planned ?? 0), 0)} people. Consistency beats volume in any one week.${rentedWord}`, credit: CREDIT_LEADS, formulas: ['G13'] };
   },
 };
 
@@ -325,7 +346,7 @@ const conversationsTool: ToolDef = {
       if (r > 0 && c > 0) lines.push({ label: `Or conversations a month for ${count(wanted, 0)}`, value: count(wanted / r, 0) });
     }
     const total = (fromReach ?? 0) + fromEvents;
-    return { ok: true, lines, summary: `About ${count(total, 1)} contacts a month at this volume${wanted !== null ? total >= wanted ? ', enough for your target.' : `, short of the ${count(wanted, 0)} you want: the fix is more reach actions, not a cleverer message.` : '.'}`, credit: CREDIT_LEADS };
+    return { ok: true, lines, summary: `About ${count(total, 1)} contacts a month at this volume${wanted !== null ? total >= wanted ? ', enough for your target.' : `, short of the ${count(wanted, 0)} you want: the fix is more reach actions, not a cleverer message.` : '.'}`, credit: CREDIT_LEADS, formulas: ['G12'] };
   },
 };
 
@@ -347,7 +368,7 @@ const bookingsTool: ToolDef = {
     if (!m.ok) return missingResult(m.missing);
     const rows = sensitivity(b, ctx.sellableHours).filter((r) => !r.key.endsWith('passRate')).slice(0, 4);
     const lines: ToolLine[] = [{ label: 'Gross profit a month', value: money(m.value.grossProfitCents, { whole: true }) }, ...rows.map((r) => ({ label: `${r.label} ${r.move}`, value: `${money(r.deltaCents, { sign: true, whole: true })} a month`, tone: 'good' as const }))];
-    return { ok: true, lines, summary: rows[0] ? `${rows[0].label} is the step that moves profit most: ${rows[0].move} is worth ${money(rows[0].deltaCents, { sign: true, whole: true })} a month.` : 'Nothing to move yet.' };
+    return { ok: true, lines, summary: rows[0] ? `${rows[0].label} is the step that moves profit most: ${rows[0].move} is worth ${money(rows[0].deltaCents, { sign: true, whole: true })} a month.` : 'Nothing to move yet.', formulas: ['F01', 'F03', 'F12'] };
   },
 };
 
@@ -400,7 +421,7 @@ const moneyTool: ToolDef = {
       const lift = subscriberOfferLift({ subscribers: subs, takeRate: v(values, 'tool.takeRate') ?? 0, creditCents: v(values, 'tool.creditCents') ?? 0, wouldBookAnyway: v(values, 'tool.wouldBookAnyway') ?? 0, gpPerBookingCents: per?.grossProfitCents && b.type !== 'inPerson' ? per.grossProfitCents : gpSale });
       lines.push({ label: 'An offer to them would add', value: `${money(lift, { sign: true, whole: true })}`, tone: lift > 0 ? 'good' : 'warn' });
     }
-    return { ok: true, lines, summary, credit: CREDIT_LTGP };
+    return { ok: true, lines, summary, credit: CREDIT_LTGP, formulas: ['F06', 'F07', 'F08', 'G14'] };
   },
 };
 
@@ -427,7 +448,7 @@ const planTool: ToolDef = {
     const summary = x.withinCapacity
       ? `${count(x.inquiriesNeeded, 0)} ${unitWord} a month gets you to ${money(goal, { whole: true })} after fixed costs, within what you can deliver.`
       : `The goal needs more than you can deliver at these prices. Raise price or add an offer before chasing more ${unitWord}; the app will not advise volume past capacity.`;
-    return { ok: true, lines, summary };
+    return { ok: true, lines, summary, formulas: ['F10', 'F04'] };
   },
 };
 
@@ -454,7 +475,7 @@ const strategyTool: ToolDef = {
     if (!moves.length) return missingResult(['at least one move']);
     const ranked = rankMoves(moves);
     const lines = ranked.map((m, i) => ({ label: `${i + 1}. ${m.name}`, value: m.score === null ? 'no cost given' : `${count(m.score, 1)}x back`, tone: i === 0 ? ('good' as const) : ('plain' as const) }));
-    return { ok: true, lines, summary: `${ranked[0]!.name} pays best for what it costs${ranked[0]!.score !== null ? `: about ${count(ranked[0]!.score, 1)} dollars of yearly profit per dollar of cost, after the wait` : ''}.`, credit: 'Leverage as output per unit of input, after Alex Hormozi. SLAM is independent.' };
+    return { ok: true, lines, summary: `${ranked[0]!.name} pays best for what it costs${ranked[0]!.score !== null ? `: about ${count(ranked[0]!.score, 1)} dollars of yearly profit per dollar of cost, after the wait` : ''}.`, credit: 'Leverage as output per unit of input, after Alex Hormozi. SLAM is independent.', formulas: ['F11'] };
   },
 };
 

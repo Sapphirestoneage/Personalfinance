@@ -13,6 +13,7 @@ const MENU: Array<{ to: string; label: string; testId: string }> = [
   { to: 'hypotheticals', label: 'Hypotheticals', testId: 'nav-hypotheticals' },
   { to: 'toolbox', label: 'Toolbox', testId: 'nav-toolbox' },
   { to: 'demo', label: 'Demo, backup and settings', testId: 'nav-demo' },
+  { to: 'about', label: 'How SLAM thinks', testId: 'nav-about' },
 ];
 
 export function Layout({ children }: { children: ReactNode }) {

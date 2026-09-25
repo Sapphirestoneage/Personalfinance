@@ -15,6 +15,7 @@ import { Hypotheticals } from './features/hypotheticals/Hypotheticals';
 import { Toolbox } from './features/toolbox/Toolbox';
 import { ToolShell } from './features/toolbox/ToolShell';
 import { Demo } from './features/demo/Demo';
+import { About } from './features/about/About';
 
 const TOOL_IDS: ToolId[] = ['diagnose', 'offer', 'presence', 'conversations', 'bookings', 'money', 'plan', 'strategy'];
 
@@ -43,6 +44,8 @@ function Page() {
       return <Toolbox />;
     case 'demo':
       return <Demo />;
+    case 'about':
+      return <About />;
     default:
       return <Today />;
   }

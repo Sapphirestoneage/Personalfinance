@@ -51,7 +51,12 @@ export function Today() {
             <li>2. Contacts, bookings, price. Everything else starts as a labeled estimate.</li>
             <li>3. See where the money leaks, and the one move that fixes it.</li>
           </ol>
-          <p className="mt-2 text-xs text-slate-500">Nothing leaves this phone. The Hide button at the top swaps the screen for a plain page in one tap.</p>
+          <p className="mt-2 text-xs text-slate-500">
+            Nothing leaves this phone. The Hide button at the top swaps the screen for a plain page in one tap.{' '}
+            <a href="#/about" className="underline">
+              How it thinks
+            </a>
+          </p>
         </Card>
       )}
       <Card title={step.complete ? 'Pathway complete' : 'Do this next'} testId="next-card">
