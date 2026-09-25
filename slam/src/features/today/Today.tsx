@@ -115,7 +115,7 @@ export function Today() {
           {ms.next && (
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
               <span className="mr-2 inline-block rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300">next</span>
-              {ms.next.next}
+              {ms.next.to === 'today' ? ms.next.next : <a href={`#/${ms.next.to}`} className="underline">{ms.next.next}</a>}
             </p>
           )}
           <p className="mt-2 text-xs text-slate-500">{ms.achieved.length} of {MILESTONES.length} so far.</p>

@@ -233,6 +233,19 @@ measured on next month's gross profit (`leverBasisCents`) so churn and
 conversion carry their real value while this month's number stays what
 she typed.
 
+Later passes (done): Dexie version 2 with an in-place upgrade and backup
+schema version 2 with migration of version 1 files (`src/data/migrate.ts`
+is the one place that knows older shapes); "How SLAM thinks" (`#/about`)
+and formula footnotes on tool results in Pro mode; an error boundary;
+a plain-text Markdown snapshot beside the JSON one; invariant tests over
+random inputs (`tests/unit/invariants.test.ts`); a stage filter on
+clients; files saved through the claude.ai viewer's `downloads`
+capability when the page runs there (`src/features/shared/download.ts`).
+
+Changing a stored shape now means: bump `SCHEMA_VERSION`, add a rule to
+`migrate.ts`, add a Dexie version with `.upgrade`, and a test in
+`tests/unit/migrate.test.ts`.
+
 Next (not started): v2 business types, guided-mode copy per label mode,
 and the owner's answers to `docs/OPEN-QUESTIONS.md`.
 

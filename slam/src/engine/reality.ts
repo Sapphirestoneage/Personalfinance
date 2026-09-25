@@ -96,14 +96,14 @@ export function checkInsVsModel(weekLogs: WeekLog[], first: BusinessModel | null
 /* ---------- milestones ------------------------------------------------------ */
 
 export const MILESTONES = [
-  { key: 'first_business', title: 'Ticked a business', next: 'Tick what you run in Setup.' },
-  { key: 'first_yours', title: 'First number of your own', next: 'Replace one estimate with your number.' },
-  { key: 'diagnosed', title: 'Found the bottleneck', next: 'Run the quick diagnosis.' },
-  { key: 'goal_set', title: 'Set an income goal', next: 'Set your income goal in Shared settings.' },
-  { key: 'first_checkin', title: 'First check-in', next: 'Save your first 60-second check-in.' },
-  { key: 'first_client', title: 'First contact logged', next: 'Log a contact on the Clients screen.' },
-  { key: 'four_checkins', title: 'Four check-ins: momentum unlocked', next: 'Four saved check-ins unlock momentum.' },
-  { key: 'half_yours', title: 'Half your numbers are yours', next: 'Replace estimates until half of #1 is yours.' },
+  { key: 'first_business', title: 'Ticked a business', next: 'Tick what you run in Setup.', to: 'businesses/setup' },
+  { key: 'first_yours', title: 'First number of your own', next: 'Replace one estimate with your number.', to: 'businesses' },
+  { key: 'diagnosed', title: 'Found the bottleneck', next: 'Run the quick diagnosis.', to: 'toolbox/diagnose' },
+  { key: 'goal_set', title: 'Set an income goal', next: 'Set your income goal in Shared settings.', to: 'businesses/settings' },
+  { key: 'first_checkin', title: 'First check-in', next: 'Save your first 60-second check-in.', to: 'today' },
+  { key: 'first_client', title: 'First contact logged', next: 'Log a contact on the Clients screen.', to: 'clients' },
+  { key: 'four_checkins', title: 'Four check-ins: momentum unlocked', next: 'Four saved check-ins unlock momentum.', to: 'today' },
+  { key: 'half_yours', title: 'Half your numbers are yours', next: 'Replace estimates until half of #1 is yours.', to: 'businesses' },
 ] as const;
 export type MilestoneKey = (typeof MILESTONES)[number]['key'];
 

@@ -9,8 +9,18 @@ import { STAGE_BY_TOOL, type ToolId } from '@/content/stages';
 import { navigate } from '@/app/router';
 import { Button, Card, Note, Toggle } from '../shared/ui';
 import { NumberField } from '../shared/NumberField';
+import { count, money, percent } from '../shared/format';
 import { useLabelMode, useModel, useSellableHours } from '../shared/hooks';
 import { FORMULA_TEXT, TOOLS, type ToolCtx, type ToolField, type Values } from './tools';
+
+/** the value the way the field shows it, for "Keep 60" */
+function shown(v: number, unit: ToolField['unit']): string {
+  if (unit === 'dollars') return money(v, { whole: Number.isInteger(v / 100) });
+  if (unit === 'percent') return percent(v, Number.isInteger(v * 100) ? 0 : 1);
+  if (unit === 'hours') return `${count(v)}h`;
+  if (unit === 'minutes') return `${count(v, 0)} min`;
+  return count(v);
+}
 
 function initial(field: ToolField, ctx: ToolCtx): Assumption {
   const [where, key] = field.key.split('.') as [string, string];
@@ -163,7 +173,7 @@ export function ToolShell({ tool, businessId, guided }: { tool: Exclude<ToolId, 
                 Back
               </Button>
               <Button testId="tool-next" onClick={() => setStep(step + 1)}>
-                {step + 1 === fields.length ? 'See the answer' : values[f.key]?.label === 'Yours' ? 'Next' : 'Keep the estimate'}
+                {step + 1 === fields.length ? 'See the answer' : values[f.key]?.label === 'Yours' || values[f.key]?.value === null || values[f.key]?.value === undefined ? 'Next' : `Keep ${shown(values[f.key]!.value!, f.unit)}`}
               </Button>
             </div>
           </Card>

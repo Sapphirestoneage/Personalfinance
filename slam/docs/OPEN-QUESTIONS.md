@@ -171,3 +171,14 @@ here is decided; an answer changes one place in the code and one line here.
 
 33. **Event sizes** live on the scenario rows (Disaster's sizes for
     disaster events, Dream's for dream events), not per business.
+
+34. **Older rows and files.** A week log saved before the check-in flag
+    existed counts as a check-in when it holds any number. Say if those
+    should count as zero instead.
+
+35. **The readable snapshot** lists every input of every active business
+    with its label. Say if Sapphire would rather have fewer lines.
+
+36. **The error screen** shows the technical message under the plain
+    one, so a screenshot to Sapphire says what broke. Say if it should
+    hide it.
