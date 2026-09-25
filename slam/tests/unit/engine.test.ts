@@ -207,3 +207,19 @@ describe('agreed budgets', () => {
     expect(budgetCheck([{ ...client, agreedBudgetCents: null }], [sale('s1', '2026-09-02', 9000)], '2026-09')).toHaveLength(0);
   });
 });
+
+describe('content levers move next month', () => {
+  it('churn and follower-to-subscriber rate carry a real delta', async () => {
+    const { sensitivity } = await import('@/engine/sensitivity');
+    const rows = sensitivity(canonicalContent(), null);
+    const churn = rows.find((r) => r.key === 'inputs.churnRate')!;
+    const conv = rows.find((r) => r.key === 'inputs.followerToSubRate')!;
+    /* +1 point churn on 150 subscribers loses 1.5 subscribers next month at $12 each */
+    within(churn.deltaCents, -1.5 * 1200, 1e-6);
+    /* +1 point conversion on 5,000 followers adds 50 subscribers next month at $12 each */
+    within(conv.deltaCents, 50 * 1200, 1e-6);
+    /* this month's gross profit is untouched by either (G15 still holds) */
+    const m = unwrap(aggregateMonth({ businesses: [canonicalContent()], shared: canonicalShared() }));
+    within(m.grossProfitCents, $(2600), 1e-6);
+  });
+});

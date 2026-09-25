@@ -17,6 +17,11 @@ export interface SensitivityRow {
   deltaCents: number;
 }
 
+/** what the delta is measured on, for the caption */
+export function leverBasisWord(type: BusinessModel['type']): string {
+  return type === 'content' ? "next month's gross profit" : 'gross profit a month';
+}
+
 type Target = { where: 'inputs' | OfferType; key: string; label: string; kind: 'point' | 'percent'; amount: number };
 
 const RATE = (where: Target['where'], key: string, label: string): Target => ({ where, key, label, kind: 'point', amount: 0.01 });
@@ -91,7 +96,8 @@ export function sensitivity(b: BusinessModel, sellableHours: number | null): Sen
     const after = computeBusinessMonth(b.type, inputs, offers, ctx);
     if (!after.ok) continue;
     const move = t.kind === 'point' ? '+1 point' : `${t.amount > 0 ? '+' : '-'}1%`;
-    rows.push({ key: `${t.where}.${t.key}`, label: t.label, move, deltaCents: after.value.grossProfitCents - base.value.grossProfitCents });
+    const basis = (m: typeof base.value) => m.leverBasisCents ?? m.grossProfitCents;
+    rows.push({ key: `${t.where}.${t.key}`, label: t.label, move, deltaCents: basis(after.value) - basis(base.value) });
   }
   return rows.sort((x, y) => Math.abs(y.deltaCents) - Math.abs(x.deltaCents));
 }

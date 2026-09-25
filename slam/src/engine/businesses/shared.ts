@@ -32,6 +32,8 @@ export interface BusinessMonth {
   lines: GpLine[];
   /** economics of one more inquiry or one more person, before any cap */
   perUnit: { unit: string; grossProfitCents: number; sessions: number } | null;
+  /** what the levers move, when it is not this month's gross profit (content: next month's, so churn and conversion count) */
+  leverBasisCents?: number;
 }
 
 /** Offers that apply to a business, keyed by type; absent = not offered. */
@@ -61,5 +63,5 @@ export function scaleMonth(m: BusinessMonth, factor: number): BusinessMonth {
     grossProfitCents: l.grossProfitCents * factor,
   }));
   const sums = sumLines(lines);
-  return { ...m, ...sums, volumes, lines, hoursUsed: m.hoursNeeded * factor };
+  return { ...m, ...sums, volumes, lines, hoursUsed: m.hoursNeeded * factor, ...(m.leverBasisCents !== undefined ? { leverBasisCents: m.leverBasisCents * factor } : {}) };
 }

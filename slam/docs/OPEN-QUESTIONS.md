@@ -144,3 +144,30 @@ here is decided; an answer changes one place in the code and one line here.
 27. **The snapshot** carries settings, businesses, offers, week logs and
     milestones, plus this month's computed numbers for reading; never
     clients or sales. Confirm.
+
+## Added in the polish passes
+
+28. **Value equation scoring.** Four 1-to-5 ratings; the index maps the
+    log of (outcome x likelihood) / (delay x effort) to 0..100 so every
+    step counts the same. The weakest lever's advice never touches
+    screening. Change in `src/engine/formulas.ts` (`valueEquation`).
+
+29. **Stack-to-price target 3x and worth-to-cost 3 : 1.** Both presets,
+    both from the published frameworks. Change the constants in
+    `src/engine/formulas.ts`.
+
+30. **Rates from the client log** use records whose first contact is
+    inside the last 90 days and need 10 contacts before the one-tap
+    replace. Change `LOG_MIN_CONTACTS` and the window in
+    `src/engine/reality.ts`.
+
+31. **Content levers on next month.** This month's gross profit uses the
+    subscriber count she typed; churn and follower-to-subscriber rate are
+    measured on next month's number so they show a real value. Say if the
+    tab should show next month's number too.
+
+32. **Milestones** are eight fixed keys, computed from what she has done;
+    stored rows only add to them. Wording in `src/engine/reality.ts`.
+
+33. **Event sizes** live on the scenario rows (Disaster's sizes for
+    disaster events, Dream's for dream events), not per business.

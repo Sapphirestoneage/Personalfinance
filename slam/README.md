@@ -3,7 +3,8 @@
 Stress Less About Money: a local-first, phone-first web app that shows how
 every business decision flows to profit. Everything stays on the device.
 
-Phases 0 and 1 are in: the engine (`src/engine`), the data layer with
+Phases 0 and 1 are in, plus four polish passes (layering, the Hormozi-
+inspired tools, the reality loop, phone polish): the engine (`src/engine`), the data layer with
 labeled assumptions, Dexie storage and plain-file backup (`src/data`), the
 canonical sample and three demo profiles (`src/content`), golden tests
 G1-G21 (`tests/golden`), and the screens (`src/features`): Today with the

@@ -6,7 +6,7 @@ import { useAppStore } from '@/data/store';
 import { BUSINESS_FIELDS, BUSINESS_NAMES, OFFER_FIELDS, OFFER_NAMES, OFFER_TYPES_BY_BUSINESS, type FieldMeta } from '@/content/fields';
 import type { Offer } from '@/data/schemas';
 import { computeBusinessMonth } from '@/engine/businesses';
-import { sensitivity } from '@/engine/sensitivity';
+import { sensitivity, leverBasisWord } from '@/engine/sensitivity';
 import { explainMonth } from '@/engine/explain';
 import { businessToModel } from '@/data/model';
 import { BarList } from '../shared/BarList';
@@ -144,7 +144,7 @@ export function BusinessTab({ id }: { id: string }) {
 
       {levers.length > 0 && (
         <Card title="What moves it most" testId="tab-levers">
-          <BarList rows={levers.map((l, i) => ({ label: `${l.label} ${l.move}`, value: l.deltaCents, emphasis: i === 0 }))} format={(v) => money(v, { sign: true, whole: true })} summary={`${levers[0]!.label} ${levers[0]!.move} is the biggest single move: ${money(levers[0]!.deltaCents, { sign: true, whole: true })} a month. Screening is not on this list on purpose.`} />
+          <BarList rows={levers.map((l, i) => ({ label: `${l.label} ${l.move}`, value: l.deltaCents, emphasis: i === 0 }))} format={(v) => money(v, { sign: true, whole: true })} summary={`${levers[0]!.label} ${levers[0]!.move} is the biggest single move: ${money(levers[0]!.deltaCents, { sign: true, whole: true })} on ${leverBasisWord(business.type)}.${business.type === 'inPerson' ? ' Screening is not on this list on purpose.' : ''}`} />
         </Card>
       )}
 

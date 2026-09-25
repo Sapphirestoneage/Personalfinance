@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { useAppStore } from '@/data/store';
 import { toKeepAfterSetAside } from '@/engine/aggregate';
 import { runwayMonths } from '@/engine/formulas';
-import { sensitivity } from '@/engine/sensitivity';
+import { sensitivity, leverBasisWord } from '@/engine/sensitivity';
 import { checkInsVsModel } from '@/engine/reality';
 import { useState } from 'react';
 import { Bars } from '../shared/Bars';
@@ -117,7 +117,7 @@ export function MyNumbers() {
 
       {levers.length > 0 && first && (
         <Card title={`Biggest levers for ${first.name}`} testId="levers">
-          <BarList rows={levers.map((l, i) => ({ label: `${l.label} ${l.move}`, value: l.deltaCents, emphasis: i === 0 }))} format={(v) => money(v, { sign: true, whole: true })} summary="Profit change a month from one small move. Screening is not on this list on purpose." />
+          <BarList rows={levers.map((l, i) => ({ label: `${l.label} ${l.move}`, value: l.deltaCents, emphasis: i === 0 }))} format={(v) => money(v, { sign: true, whole: true })} summary={`Change in ${leverBasisWord(first.type)} from one small move.${first.type === 'inPerson' ? ' Screening is not on this list on purpose.' : ''}`} />
         </Card>
       )}
     </div>

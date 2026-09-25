@@ -47,7 +47,9 @@ Commands (run from `slam/`): `npm run dev`, `npm test` (engine + golden),
   compares against.
 - `src/engine/pathway.ts` (next step), `src/engine/diagnose.ts` (the
   bottleneck: biggest gain from bringing one sales step to typical;
-  screening is never a candidate; capacity wins when the cap binds).
+  screening is never a candidate; capacity wins when the cap binds),
+  `src/engine/reality.ts` (log funnel, check-ins vs model, milestones),
+  `src/engine/explain.ts` (the math with her numbers, for Pro mode).
 - `tests/golden/` G1..G21 (Vitest). `tests/unit/` engine, schema, storage,
   pathway, diagnosis and sample tests. `tests/e2e/` Playwright phone flows.
 
@@ -218,9 +220,21 @@ Either way finishing a tool checks off that stage for that business.
 Store writes are optimistic (screen first, row second). A check-in counts
 once per week, when she presses Save; "+1 contact" alone does not.
 
-Next (not started): v2 business types, per-platform follower rows,
-guided-mode copy per label mode, and the owner's answers to
-`docs/OPEN-QUESTIONS.md`.
+Polish passes after phase 1 (done): field tiers (core first, detail
+folded; Pro shows all and spells out the math, `engine/explain.ts`);
+sources of contacts, owned or rented, feeding the ban and house events;
+the value equation and value stack in the Offer tool, the 3 : 1
+worth-to-cost rule, daily reach in Conversations, contacts-needed in the
+diagnosis, reach actions in the check-in; the reality loop
+(`engine/reality.ts`: rates from the client log, check-ins vs the model,
+milestones); editable event sizes; charts loaded on demand; a CSS bar
+list for levers; an install hint; a sample banner. Content levers are
+measured on next month's gross profit (`leverBasisCents`) so churn and
+conversion carry their real value while this month's number stays what
+she typed.
+
+Next (not started): v2 business types, guided-mode copy per label mode,
+and the owner's answers to `docs/OPEN-QUESTIONS.md`.
 
 Open questions and the working assumptions behind them are in
 `docs/OPEN-QUESTIONS.md`. Answer them there; do not reopen decided items.

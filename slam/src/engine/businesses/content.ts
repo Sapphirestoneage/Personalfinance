@@ -18,6 +18,8 @@ import { type BusinessMonth, type GpLine, type MonthContext, type OfferBooks, su
 
 export interface ContentMonth extends BusinessMonth {
   newSubscribersPerMonth: number;
+  /** subscribers x (1 - churn) + new subscribers */
+  subscribersNextMonth: number;
   monthsRetained: number | null;
   ltgpPerSubscriberCents: number | null;
 }
@@ -61,12 +63,16 @@ export function contentMonth(inputs: Book, offers: OfferBooks, _ctx: MonthContex
   if (missing.length) return incomplete(missing);
 
   const newSubscribersPerMonth = followers * followerToSubRate;
+  const subscribersNextMonth = subscribers * (1 - churnRate) + newSubscribersPerMonth;
   const monthsRetained = churnRate > 0 ? 1 / churnRate : null;
   const sums = sumLines(lines);
+  /* levers move next month's number, so churn and follower-to-subscriber count for something */
+  const leverBasisCents = sums.grossProfitCents + (subscribersNextMonth - subscribers) * gpPerSubMonth;
   return ok(
     {
       type: 'content',
       ...sums,
+      leverBasisCents,
       fixedCostsCents: toolsCostCents,
       hoursNeeded: hours,
       hoursUsed: hours,
@@ -76,6 +82,7 @@ export function contentMonth(inputs: Book, offers: OfferBooks, _ctx: MonthContex
       lines,
       perUnit: subscribers > 0 ? { unit: 'subscriber', grossProfitCents: gpPerSubMonth, sessions: 0 } : null,
       newSubscribersPerMonth,
+      subscribersNextMonth,
       monthsRetained,
       ltgpPerSubscriberCents: monthsRetained === null ? null : lifetimeGrossProfit(gpPerSubMonth, monthsRetained),
     },
