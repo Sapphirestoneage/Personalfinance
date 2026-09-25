@@ -27,8 +27,23 @@ export function Today() {
   const earlier = weekLogs.slice(4, 8).map((w) => w.inquiries).filter((n): n is number => n !== null);
   const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 
+  const fresh = !anyActive && checkIns === 0;
+
   return (
     <div className="space-y-4">
+      {fresh && (
+        <Card testId="welcome">
+          <p className="text-lg font-semibold" style={{ textWrap: 'balance' }}>
+            Three numbers, then the one thing to fix.
+          </p>
+          <ol className="mt-2 space-y-1 text-sm text-slate-600 dark:text-slate-300">
+            <li>1. Tick what you run.</li>
+            <li>2. Contacts, bookings, price. Everything else starts as a labeled estimate.</li>
+            <li>3. See where the money leaks, and the one move that fixes it.</li>
+          </ol>
+          <p className="mt-2 text-xs text-slate-500">Nothing leaves this phone. The Hide button at the top swaps the screen for a plain page in one tap.</p>
+        </Card>
+      )}
       <Card title="Do this next" testId="next-card">
         <p className="text-lg font-semibold" data-testid="next-title">
           {step.stage.title}

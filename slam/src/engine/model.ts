@@ -2,9 +2,20 @@
    The engine's view of a profile: plain books, no storage types.
    `data/store.ts` builds this from Dexie rows; tests build it by hand.
    ========================================================================== */
-import type { Business, BusinessType, ScenarioKind, ScenarioOverride } from '@/data/schemas';
+import type { Business, BusinessType, ScenarioKind, ScenarioOverride, SourceType } from '@/data/schemas';
 import type { Book } from './reader';
 import type { OfferBooks } from './businesses/shared';
+
+/** Where contacts come from, as the engine sees it. */
+export interface SourceModel {
+  id: string;
+  type: SourceType;
+  owned: boolean;
+  /** share of contacts, 0..1; null when not entered */
+  share: number | null;
+  followers: number | null;
+  costCents: number | null;
+}
 
 export interface BusinessModel {
   id: string;
@@ -15,6 +26,16 @@ export interface BusinessModel {
   inputs: Book;
   offers: OfferBooks;
   scenarioOverrides?: Business['scenarioOverrides'];
+  sources?: SourceModel[];
+}
+
+/** Share of contacts that come through rented platforms, or through the house; null when no source says. */
+export function sourceShare(b: BusinessModel, pick: (s: SourceModel) => boolean): number | null {
+  const list = (b.sources ?? []).filter(pick);
+  if (!list.length) return null;
+  const known = list.filter((s) => s.share !== null);
+  if (!known.length) return null;
+  return Math.min(1, known.reduce((t, s) => t + (s.share ?? 0), 0));
 }
 
 export interface ProfileModel {

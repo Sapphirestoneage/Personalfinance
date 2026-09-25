@@ -10,7 +10,7 @@ import type { ProfileModel } from '@/engine/model';
 import { setValue } from './assumptions';
 import { getDb, type SlamDB } from './db';
 import { profileToModel } from './model';
-import type { Business, ClientRecord, EventId, Label, LabelMode, Milestone, Multipliers, Offer, PathwayStage, Profile, Sale, Scenario, ScenarioKind, ScenarioOverride, WeekLog } from './schemas';
+import type { Business, ClientRecord, EventId, Label, LabelMode, Milestone, Multipliers, Offer, PathwayStage, Profile, Sale, Scenario, ScenarioKind, ScenarioOverride, Source, WeekLog } from './schemas';
 import { buildSnapshot } from './snapshot';
 import { comparable, exportAll, importAll, parseExport, serialize } from './transfer';
 
@@ -33,13 +33,14 @@ export interface AppState {
   sales: Sale[];
   weekLogs: WeekLog[];
   milestones: Milestone[];
+  sources: Source[];
   hidden: boolean;
   presenter: boolean;
   seeded: 'existing' | 'fresh' | 'sample' | 'import' | null;
 
   init(db?: SlamDB): Promise<void>;
   reload(): Promise<void>;
-  setInput(businessId: string, key: string, value: number | null, label?: Label): Promise<void>;
+  setInput(businessId: string, key: string, value: number | null, label?: Label, source?: string): Promise<void>;
   setOfferValue(offerId: string, key: string, value: number | null, label?: Label): Promise<void>;
   setOfferActive(offerId: string, active: boolean): Promise<void>;
   setSetting(key: string, value: number | null, label?: Label): Promise<void>;
@@ -50,6 +51,8 @@ export interface AppState {
   completeStep(businessId: string, stage: PathwayStage): Promise<void>;
   setScenario(kind: ScenarioKind, multipliers: Multipliers, events: EventId[]): Promise<void>;
   setBusinessOverride(businessId: string, kind: ScenarioKind, override: ScenarioOverride | undefined): Promise<void>;
+  putSource(s: Source): Promise<void>;
+  deleteSource(id: string): Promise<void>;
   putClient(c: ClientRecord): Promise<void>;
   deleteClient(id: string): Promise<void>;
   addSale(s: Sale): Promise<void>;
@@ -80,10 +83,12 @@ async function readAll(d: SlamDB) {
   const sales = pid ? await d.sales.where('profileId').equals(pid).toArray() : [];
   const weekLogs = pid ? await d.weekLogs.where('profileId').equals(pid).toArray() : [];
   const milestones = pid ? await d.milestones.where('profileId').equals(pid).toArray() : [];
+  const sources = pid ? await d.sources.where('profileId').equals(pid).toArray() : [];
   businesses.sort((a, b) => a.priority - b.priority);
+  sources.sort((a, b) => a.name.localeCompare(b.name));
   weekLogs.sort((a, b) => b.weekStart.localeCompare(a.weekStart));
   clients.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-  return { profile, businesses, offers, scenarios, clients, sales, weekLogs, milestones };
+  return { profile, businesses, offers, scenarios, clients, sales, weekLogs, milestones, sources };
 }
 
 async function seed(d: SlamDB, rows: Rows): Promise<void> {
@@ -130,6 +135,7 @@ export const useAppStore = create<AppState>((set, get) => {
     sales: [],
     weekLogs: [],
     milestones: [],
+    sources: [],
     hidden: false,
     presenter: false,
     seeded: null,
@@ -154,11 +160,11 @@ export const useAppStore = create<AppState>((set, get) => {
       set({ ...(await readAll(db())) });
     },
 
-    async setInput(businessId, key, value, label = 'Yours') {
+    async setInput(businessId, key, value, label = 'Yours', source) {
       const b = get().businesses.find((x) => x.id === businessId);
       if (!b) return;
-      const source = label === 'Yours' ? 'typed by you' : (b.inputs[key]?.source ?? '');
-      await saveBusiness({ ...b, inputs: setValue(b.inputs, key, value, label, source, now()), updatedAt: now() });
+      const src = source ?? (label === 'Yours' ? 'typed by you' : (b.inputs[key]?.source ?? ''));
+      await saveBusiness({ ...b, inputs: setValue(b.inputs, key, value, label, src, now()), updatedAt: now() });
     },
 
     async setOfferValue(offerId, key, value, label = 'Yours') {
@@ -260,6 +266,17 @@ export const useAppStore = create<AppState>((set, get) => {
       await saveBusiness({ ...b, scenarioOverrides, updatedAt: now() });
     },
 
+    async putSource(src) {
+      const rest = get().sources.filter((x) => x.id !== src.id);
+      set({ sources: [...rest, src].sort((a, b) => a.name.localeCompare(b.name)) });
+      await persist(() => db().putSource(src));
+    },
+
+    async deleteSource(id) {
+      set({ sources: get().sources.filter((x) => x.id !== id) });
+      await persist(() => db().sources.delete(id));
+    },
+
     async putClient(c) {
       await db().putClient(c);
       const rest = get().clients.filter((x) => x.id !== c.id);
@@ -333,9 +350,9 @@ export const useAppStore = create<AppState>((set, get) => {
     setPresenter: (on) => set({ presenter: on }),
 
     model() {
-      const { profile, businesses, offers } = get();
+      const { profile, businesses, offers, sources } = get();
       if (!profile) return null;
-      return profileToModel(profile, businesses, offers);
+      return profileToModel(profile, businesses, offers, sources);
     },
   };
 });

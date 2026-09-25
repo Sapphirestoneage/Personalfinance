@@ -53,7 +53,7 @@ test.describe('first-time user', () => {
     await page.getByTestId('tick-inPerson').check();
     await page.getByTestId('setup-done').click();
     await open(page, 'businesses/you-inPerson');
-    await expect(page.getByTestId('in-inquiriesPerMonth-label')).toContainText('estimate');
+    await expect(page.getByTestId('in-inquiriesPerMonth-label')).toHaveText('estimate');
     await page.getByTestId('in-inquiriesPerMonth').fill('42');
     await page.getByTestId('in-inquiriesPerMonth').blur();
     await expect(page.getByTestId('in-inquiriesPerMonth-label')).toHaveText('yours');

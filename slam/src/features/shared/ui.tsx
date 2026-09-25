@@ -144,6 +144,26 @@ export function ConfirmButton({ children, confirmLabel = 'Tap again to confirm',
   );
 }
 
+/** Progressive disclosure: a labeled fold. Open by default when `open`. */
+export function Disclosure({ label, children, open = false, testId, count }: { label: string; children: ReactNode; open?: boolean; testId?: string; count?: number }) {
+  const [isOpen, setOpen] = useState(open);
+  useEffect(() => setOpen(open), [open]);
+  return (
+    <div className="rounded-xl border border-slate-200 dark:border-slate-800">
+      <button type="button" data-testid={testId} aria-expanded={isOpen} onClick={() => setOpen(!isOpen)} className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium">
+        <span>
+          {label}
+          {count !== undefined && <span className="ml-2 text-xs font-normal text-slate-500">{count}</span>}
+        </span>
+        <span aria-hidden="true" className={`text-slate-400 transition ${isOpen ? 'rotate-90' : ''}`}>
+          ›
+        </span>
+      </button>
+      {isOpen && <div className="border-t border-slate-100 px-4 py-4 dark:border-slate-800">{children}</div>}
+    </div>
+  );
+}
+
 export function Empty({ children }: { children: ReactNode }) {
   return <p className="rounded-xl border border-dashed border-slate-300 p-4 text-center text-sm text-slate-500 dark:border-slate-700">{children}</p>;
 }

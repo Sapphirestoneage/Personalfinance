@@ -15,7 +15,7 @@ import type { BusinessType, EventId, Multipliers, ScenarioKind } from '@/data/sc
 import { aggregateMonth, type MonthTotals } from './aggregate';
 import { computeBusinessMonth, type OfferBooks } from './businesses';
 import { runwayMonths, type RunwayResult } from './formulas';
-import { type BusinessModel, type ProfileModel, activeInPriorityOrder, overrideFor } from './model';
+import { type BusinessModel, type ProfileModel, activeInPriorityOrder, overrideFor, sourceShare } from './model';
 import { type Book, reader, scaled, withValues } from './reader';
 import { type Result, incomplete, ok } from './types';
 
@@ -123,12 +123,22 @@ export function applyEvent(b: BusinessModel, event: EventId, p: EventParams, sha
   const none: EventEffect = { business: b, heldCashCents: 0 };
   const t = b.type;
   switch (event) {
-    case 'platform_ban':
-      if (t === 'inPerson') return { ...none, business: { ...b, inputs: scaled(b.inputs, { inquiriesPerMonth: 1 - p.platformShareOfInquiries }) } };
-      return { ...none, business: { ...b, inputs: scaled(b.inputs, factors(AUDIENCE_KEYS[t], 0)) } };
-    case 'house_stops':
+    case 'platform_ban': {
+      /* her own sources say how much rides on rented platforms; the default stands in until then */
+      const rented = sourceShare(b, (s) => !s.owned && (s.type === 'platform' || s.type === 'directory' || s.type === 'ads'));
+      if (t === 'inPerson') return { ...none, business: { ...b, inputs: scaled(b.inputs, { inquiriesPerMonth: 1 - (rented ?? p.platformShareOfInquiries) }) } };
+      /* audience businesses: the biggest rented platform goes, or everything when she has not said */
+      const platforms = (b.sources ?? []).filter((s) => !s.owned && s.followers !== null);
+      const total = platforms.reduce((x, s) => x + (s.followers ?? 0), 0);
+      const biggest = platforms.reduce((x, s) => Math.max(x, s.followers ?? 0), 0);
+      const keep = total > 0 ? 1 - biggest / total : 0;
+      return { ...none, business: { ...b, inputs: scaled(b.inputs, factors(AUDIENCE_KEYS[t], keep)) } };
+    }
+    case 'house_stops': {
       if (t !== 'inPerson') return none;
-      return { ...none, business: { ...b, inputs: scaled(b.inputs, { inquiriesPerMonth: 1 - p.houseShareOfInquiries }) } };
+      const house = sourceShare(b, (s) => s.type === 'house');
+      return { ...none, business: { ...b, inputs: scaled(b.inputs, { inquiriesPerMonth: 1 - (house ?? p.houseShareOfInquiries) }) } };
+    }
     case 'top_regular_leaves': {
       if (t !== 'regulars') return none;
       const n = b.inputs.activeRegulars?.value;

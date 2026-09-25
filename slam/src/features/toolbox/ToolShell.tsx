@@ -151,7 +151,7 @@ export function ToolShell({ tool, businessId, guided }: { tool: Exclude<ToolId, 
                 Back
               </Button>
               <Button testId="tool-next" onClick={() => setStep(step + 1)}>
-                {step + 1 === fields.length ? 'See the answer' : 'Next'}
+                {step + 1 === fields.length ? 'See the answer' : values[f.key]?.label === 'Yours' ? 'Next' : 'Keep the estimate'}
               </Button>
             </div>
           </Card>

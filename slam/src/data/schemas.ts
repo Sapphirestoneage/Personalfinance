@@ -187,7 +187,10 @@ export const SourceSchema = z
     name: shortText,
     owned: z.boolean(),
     costCents: AssumptionSchema,
+    /** share of this business's contacts that arrive through it, 0..1 */
     shareOfInquiries: AssumptionSchema,
+    /** for a platform: followers there */
+    followers: AssumptionSchema.optional(),
     updatedAt: isoDateTime,
   })
   .strict();

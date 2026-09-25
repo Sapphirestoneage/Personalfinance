@@ -15,7 +15,8 @@ export function useModel(): ProfileModel | null {
   const profile = useAppStore((s) => s.profile);
   const businesses = useAppStore((s) => s.businesses);
   const offers = useAppStore((s) => s.offers);
-  return useMemo(() => (profile ? profileToModel(profile, businesses, offers) : null), [profile, businesses, offers]);
+  const sources = useAppStore((s) => s.sources);
+  return useMemo(() => (profile ? profileToModel(profile, businesses, offers, sources) : null), [profile, businesses, offers, sources]);
 }
 
 export function useTotals(): Result<MonthTotals> | null {

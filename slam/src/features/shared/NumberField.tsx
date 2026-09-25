@@ -68,8 +68,9 @@ export function NumberField({ id, label, assumption, unit = 'count', help, min, 
     <label htmlFor={id} className="block">
       <span className="mb-1 flex items-baseline justify-between gap-2 text-sm">
         <span className="font-medium">{label}</span>
-        <span data-testid={`${id}-label`} className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${yours ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'}`}>
-          {yours ? 'yours' : `estimate: ${badge}`}
+        {/* fixed width, so the label never re-wraps when a number becomes hers (a moving button loses taps) */}
+        <span data-testid={`${id}-label`} className={`w-20 shrink-0 rounded-full px-2 py-0.5 text-center text-xs ${yours ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'}`}>
+          {yours ? 'yours' : 'estimate'}
         </span>
       </span>
       <span className="flex items-center gap-2">
@@ -94,8 +95,8 @@ export function NumberField({ id, label, assumption, unit = 'count', help, min, 
         {unit === 'months' && <span className="text-slate-500">mo</span>}
         {unit === 'minutes' && <span className="text-slate-500">min</span>}
       </span>
-      {help && <span className="mt-1 block text-xs text-slate-500">{help}</span>}
-      {assumption && !yours && !help && <span className="mt-1 block text-xs text-slate-500">Source: {assumption.source}.</span>}
+      {/* always one line here, so the field never changes height when a number becomes hers */}
+      <span className="mt-1 block min-h-4 text-xs text-slate-500">{help ?? (assumption ? (yours ? 'Your number.' : `${badge.charAt(0).toUpperCase() + badge.slice(1)}: ${assumption.source}.`) : '')}</span>
     </label>
   );
 }

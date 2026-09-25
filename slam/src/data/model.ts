@@ -4,7 +4,7 @@
 import type { BusinessModel, ProfileModel } from '@/engine/model';
 import type { OfferBooks } from '@/engine/businesses/shared';
 import type { Book } from '@/engine/reader';
-import type { Business, Offer, Profile } from './schemas';
+import type { Business, Offer, Profile, Source } from './schemas';
 
 const OFFER_NUMBER_FIELDS = [
   'priceCents',
@@ -29,15 +29,28 @@ export function offerToBook(o: Offer): Book {
   return book;
 }
 
-export function businessToModel(b: Business, offers: Offer[]): BusinessModel {
+export function businessToModel(b: Business, offers: Offer[], sources: Source[] = []): BusinessModel {
   const books: OfferBooks = {};
   for (const o of offers) if (o.businessId === b.id && o.active) books[o.type] = offerToBook(o);
-  return { id: b.id, type: b.type, name: b.name, active: b.active, priority: b.priority, inputs: b.inputs, offers: books, scenarioOverrides: b.scenarioOverrides };
+  const mine = sources.filter((s) => s.businessId === b.id);
+  return {
+    id: b.id,
+    type: b.type,
+    name: b.name,
+    active: b.active,
+    priority: b.priority,
+    inputs: b.inputs,
+    offers: books,
+    scenarioOverrides: b.scenarioOverrides,
+    ...(mine.length
+      ? { sources: mine.map((s) => ({ id: s.id, type: s.type, owned: s.owned, share: s.shareOfInquiries.value, followers: s.followers?.value ?? null, costCents: s.costCents.value })) }
+      : {}),
+  };
 }
 
-export function profileToModel(profile: Profile, businesses: Business[], offers: Offer[]): ProfileModel {
+export function profileToModel(profile: Profile, businesses: Business[], offers: Offer[], sources: Source[] = []): ProfileModel {
   return {
-    businesses: businesses.filter((b) => b.profileId === profile.id).map((b) => businessToModel(b, offers)),
+    businesses: businesses.filter((b) => b.profileId === profile.id).map((b) => businessToModel(b, offers, sources)),
     shared: profile.settings,
   };
 }
