@@ -11,7 +11,7 @@ import { setValue } from './assumptions';
 import { getDb, type SlamDB } from './db';
 import { profileToModel } from './model';
 import type { Business, ClientRecord, EventId, EventParamsPatch, Label, LabelMode, Milestone, Multipliers, Offer, PathwayStage, Profile, Sale, Scenario, ScenarioKind, ScenarioOverride, Source, WeekLog } from './schemas';
-import { buildSnapshot } from './snapshot';
+import { buildSnapshot, snapshotMarkdown } from './snapshot';
 import { comparable, exportAll, importAll, parseExport, serialize } from './transfer';
 import { migrateWeekLog } from './migrate';
 
@@ -62,6 +62,7 @@ export interface AppState {
   exportBackup(): Promise<string>;
   importBackup(text: string): Promise<void>;
   snapshotText(): string;
+  snapshotMarkdownText(): string;
   loadSample(sampleId: string): Promise<void>;
   resetFresh(): Promise<void>;
   hide(): void;
@@ -333,6 +334,12 @@ export const useAppStore = create<AppState>((set, get) => {
       const { profile, businesses, offers, weekLogs, milestones } = get();
       if (!profile) return '';
       return JSON.stringify(buildSnapshot(profile, businesses, offers, weekLogs, milestones), null, 2);
+    },
+
+    snapshotMarkdownText() {
+      const { profile, businesses, offers, weekLogs } = get();
+      if (!profile) return '';
+      return snapshotMarkdown(profile, businesses, offers, weekLogs);
     },
 
     async loadSample(sampleId) {

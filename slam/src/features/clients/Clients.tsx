@@ -186,6 +186,7 @@ export function Clients() {
   const deleteClient = useAppStore((s) => s.deleteClient);
   const mode = useLabelMode();
   const [editing, setEditing] = useState<ClientRecord | null>(null);
+  const [stageFilter, setStageFilter] = useState<ClientRecord['stage'] | 'all'>('all');
   const month = new Date().toISOString().slice(0, 7);
   const flags = useMemo(() => budgetCheck(clients, sales, month), [clients, sales, month]);
   const businesses = useAppStore((s) => s.businesses);
@@ -231,6 +232,7 @@ export function Clients() {
   }
 
   const counts = CLIENT_STAGES.map((s) => [s, clients.filter((c) => c.stage === s).length] as const).filter(([, n]) => n > 0);
+  const shown = stageFilter === 'all' ? clients : clients.filter((c) => c.stage === stageFilter);
 
   return (
     <div className="space-y-4">
@@ -248,9 +250,18 @@ export function Clients() {
           <Empty>No contacts logged yet. Each one is an alias and a stage; that is all this needs.</Empty>
         ) : (
           <>
-            <p className="mb-2 text-xs text-slate-500">{counts.map(([s, n]) => `${STAGE_WORDS[s]} ${n}`).join(' · ')}</p>
+            <div className="mb-2 flex flex-wrap gap-1">
+              <button type="button" onClick={() => setStageFilter('all')} className={`rounded-full px-2.5 py-1 text-xs ${stageFilter === 'all' ? 'bg-sky-700 text-white' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                All {clients.length}
+              </button>
+              {counts.map(([s, n]) => (
+                <button key={s} type="button" data-testid={`filter-${s}`} onClick={() => setStageFilter(stageFilter === s ? 'all' : s)} className={`rounded-full px-2.5 py-1 text-xs ${stageFilter === s ? 'bg-sky-700 text-white' : 'bg-slate-100 dark:bg-slate-800'}`}>
+                  {STAGE_WORDS[s]} {n}
+                </button>
+              ))}
+            </div>
             <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-              {clients.map((c) => (
+              {shown.map((c) => (
                 <li key={c.id}>
                   <button type="button" data-testid={`client-${c.alias}`} onClick={() => setEditing(c)} className="flex w-full items-center justify-between py-3 text-left">
                     <span>

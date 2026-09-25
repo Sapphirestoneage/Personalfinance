@@ -55,6 +55,7 @@ export function Demo() {
   const exportBackup = useAppStore((s) => s.exportBackup);
   const importBackup = useAppStore((s) => s.importBackup);
   const snapshotText = useAppStore((s) => s.snapshotText);
+  const snapshotMarkdownText = useAppStore((s) => s.snapshotMarkdownText);
   const [note, setNote] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const businesses = useAppStore((s) => s.businesses);
@@ -104,6 +105,17 @@ export function Demo() {
             }
           >
             Snapshot to send to {CONTACT_NAME}
+          </Button>
+          <Button
+            kind="secondary"
+            testId="snapshot-md"
+            onClick={() =>
+              void saveFile(snapshotMarkdownText(), exportFileName(new Date(), 'summary').replace(/\.json$/, '.md')).then((r) =>
+                setNote(r === 'saved' ? `Summary saved as plain text: this month, the three futures, each business and your recent check-ins. Readable on any phone. ${EXPORT_REMINDER}` : r === 'declined' ? 'Not saved.' : 'This view cannot save files. Open the installed app to save a summary.'),
+              )
+            }
+          >
+            Summary to read (plain text)
           </Button>
         </div>
         {note && (

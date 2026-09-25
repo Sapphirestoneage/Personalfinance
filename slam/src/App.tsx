@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useAppStore } from '@/data/store';
 import { Layout } from './app/Layout';
+import { ErrorBoundary } from './app/ErrorBoundary';
 import { useRoute } from './app/router';
 import type { ToolId } from './content/stages';
 import { QuickHide } from './features/quick-hide/QuickHide';
@@ -68,7 +69,11 @@ export function App() {
     <Layout>
       {status === 'loading' && <p data-testid="loading" className="p-4 text-sm text-slate-500">Opening your numbers…</p>}
       {status === 'error' && <p className="rounded-xl bg-red-50 p-4 text-sm text-red-800 dark:bg-red-900/30 dark:text-red-100">This device could not open its storage: {error}</p>}
-      {status === 'ready' && <Page />}
+      {status === 'ready' && (
+        <ErrorBoundary>
+          <Page />
+        </ErrorBoundary>
+      )}
     </Layout>
   );
 }

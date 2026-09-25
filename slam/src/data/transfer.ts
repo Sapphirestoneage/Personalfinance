@@ -11,7 +11,7 @@ import { migrateExport, migrateWeekLog } from './migrate';
 export const EXPORT_REMINDER =
   'This file holds your numbers in plain text. Keep it somewhere private (a locked folder or an encrypted drive), and delete copies you no longer need.';
 
-export function exportFileName(date: Date = new Date(), kind: 'backup' | 'snapshot' = 'backup'): string {
+export function exportFileName(date: Date = new Date(), kind: 'backup' | 'snapshot' | 'summary' = 'backup'): string {
   const d = date.toISOString().slice(0, 10);
   return `numbers-${kind}-${d}.json`;
 }
