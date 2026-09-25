@@ -1,6 +1,6 @@
 /* Demo, backup and settings: sample profiles, presenter view, reset,
    backup in and out, and the snapshot for Sapphire. */
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useAppStore } from '@/data/store';
 import { SAMPLES } from '@/content/samples';
 import { EXPORT_REMINDER, exportFileName } from '@/data/transfer';
@@ -16,6 +16,42 @@ function download(text: string, name: string) {
   a.download = name;
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+interface InstallPromptEvent extends Event {
+  prompt(): Promise<void>;
+}
+
+function InstallHint() {
+  const [prompt, setPrompt] = useState<InstallPromptEvent | null>(null);
+  const [installed, setInstalled] = useState(false);
+  useEffect(() => {
+    const standalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as { standalone?: boolean }).standalone === true;
+    setInstalled(standalone);
+    const onPrompt = (e: Event) => {
+      e.preventDefault();
+      setPrompt(e as InstallPromptEvent);
+    };
+    window.addEventListener('beforeinstallprompt', onPrompt);
+    window.addEventListener('appinstalled', () => setInstalled(true));
+    return () => window.removeEventListener('beforeinstallprompt', onPrompt);
+  }, []);
+  if (installed) return null;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  return (
+    <Card title="Put it on your home screen" testId="install-card">
+      <p className="text-sm text-slate-600 dark:text-slate-300">Installed, it opens like an app, works without signal, and stays out of your browser history.</p>
+      {prompt ? (
+        <div className="mt-3">
+          <Button testId="install" onClick={() => void prompt.prompt()}>
+            Install
+          </Button>
+        </div>
+      ) : (
+        <p className="mt-2 text-sm">{ios ? 'In Safari: tap Share, then "Add to Home Screen".' : 'In your browser menu: tap "Install app" or "Add to Home screen".'}</p>
+      )}
+    </Card>
+  );
 }
 
 export function Demo() {
@@ -95,6 +131,8 @@ export function Demo() {
           </ConfirmButton>
         </div>
       </Card>
+
+      <InstallHint />
 
       <footer className="space-y-2 px-1 text-xs text-slate-500">
         <p>{NO_ADVICE}</p>

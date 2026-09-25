@@ -20,8 +20,22 @@ export function Layout({ children }: { children: ReactNode }) {
   const hide = useAppStore((s) => s.hide);
   const presenter = useAppStore((s) => s.presenter);
   const route = useRoute();
+  const demo = useAppStore((s) => s.profile?.demo ?? false);
   const current = route.parts[0] ?? 'today';
   useEffect(() => setOpen(false), [route]);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    window.addEventListener('keydown', onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [open]);
 
   return (
     <div className={`mx-auto min-h-dvh max-w-md px-4 pb-8 pt-[max(env(safe-area-inset-top),0.75rem)] ${presenter ? 'text-[118%]' : ''}`}>
@@ -62,6 +76,11 @@ export function Layout({ children }: { children: ReactNode }) {
         </div>
       )}
 
+      {demo && (
+        <p data-testid="sample-banner" className="mb-3 rounded-lg bg-amber-50 px-3 py-1.5 text-center text-xs text-amber-900 dark:bg-amber-900/30 dark:text-amber-100">
+          Sample numbers, not anyone's. <a href={href('demo')} className="underline">Use your own</a>
+        </p>
+      )}
       <main>{children}</main>
     </div>
   );

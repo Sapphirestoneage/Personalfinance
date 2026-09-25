@@ -4,11 +4,22 @@
 import { useMemo, useState } from 'react';
 import { useAppStore } from '@/data/store';
 import type { EventId, ScenarioKind } from '@/data/schemas';
-import { compareScenarios, DISASTER_EVENTS, DREAM_EVENTS, type ScenarioSpec } from '@/engine/scenarios';
+import { compareScenarios, DISASTER_EVENTS, DREAM_EVENTS, EVENT_DEFAULTS, type EventParams, type ScenarioSpec } from '@/engine/scenarios';
 import { Bars } from '../shared/Bars';
 import { Big, Card, Note, Toggle } from '../shared/ui';
 import { useModel } from '../shared/hooks';
 import { count, money } from '../shared/format';
+
+/** the size behind an event, when it has one she can change */
+const EVENT_SIZE: Partial<Record<EventId, { key: keyof EventParams; label: string; unit: 'percent' | 'x' }>> = {
+  platform_ban: { key: 'platformShareOfInquiries', label: 'Share of in-person contacts through platforms (used when no source says)', unit: 'percent' },
+  house_stops: { key: 'houseShareOfInquiries', label: 'Share of contacts from the house (used when no source says)', unit: 'percent' },
+  top_regular_leaves: { key: 'topRegularMultiple', label: 'The top regular pays this many times the average', unit: 'x' },
+  price_war: { key: 'priceWarCut', label: 'Price cut', unit: 'percent' },
+  viral_post: { key: 'viralAudienceLift', label: 'Audience lift', unit: 'percent' },
+  press_feature: { key: 'pressInquiryLift', label: 'Contacts lift', unit: 'percent' },
+  regular_upgrades_to_retainer: { key: 'retainerUpgradeMultiple', label: 'The upgraded regular pays this many times the average', unit: 'x' },
+};
 
 const EVENT_WORDS: Record<EventId, string> = {
   platform_ban: 'A platform bans you',
@@ -16,7 +27,7 @@ const EVENT_WORDS: Record<EventId, string> = {
   top_regular_leaves: 'Your top regular leaves',
   month_off_sick: 'A month off sick',
   processor_hold: 'The processor holds funds 30 days',
-  price_war: 'A price war (prices -15%)',
+  price_war: 'A price war',
   viral_post: 'A post goes viral',
   press_feature: 'A press feature',
   waitlist: 'A waitlist fills every slot',
@@ -57,7 +68,9 @@ export function Hypotheticals() {
   const [editing, setEditing] = useState<ScenarioKind>('Disaster');
   const [overrideBiz, setOverrideBiz] = useState<string>('');
   const specs: ScenarioSpec[] = useMemo(() => scenarios.map((s) => ({ kind: s.kind, multipliers: s.multipliers, events: s.events })), [scenarios]);
-  const compared = useMemo(() => (model && specs.length ? compareScenarios(model, specs) : null), [model, specs]);
+  /* event sizes live on the scenario rows; the Disaster row's sizes apply to disaster events, the Dream row's to dream events */
+  const params: EventParams = useMemo(() => ({ ...EVENT_DEFAULTS, ...(scenarios.find((s) => s.kind === 'Disaster')?.eventParams ?? {}), ...(scenarios.find((s) => s.kind === 'Dream')?.eventParams ?? {}) }), [scenarios]);
+  const compared = useMemo(() => (model && specs.length ? compareScenarios(model, specs, params) : null), [model, specs, params]);
   if (!model || !compared || !profile) return null;
   const kinds: ScenarioKind[] = ['Disaster', 'Normal', 'Dream'];
   const profitOf = (k: ScenarioKind) => {
@@ -109,34 +122,39 @@ export function Hypotheticals() {
       </Card>
 
       <Card title="Each business's share" testId="share-card">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs text-slate-500">
-              <th className="py-1">Business</th>
-              {kinds.map((k) => (
-                <th key={k} className="py-1 text-right">
-                  {k}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {active.map((b) => (
-              <tr key={b.id} className="border-t border-slate-100 dark:border-slate-800">
-                <td className="py-1">{b.name}</td>
+        <div className="grid grid-cols-3 gap-2 text-xs text-slate-500">
+          {kinds.map((k) => (
+            <div key={k} className="text-right">
+              {k}
+            </div>
+          ))}
+        </div>
+        <ul className="mt-1 divide-y divide-slate-100 dark:divide-slate-800">
+          {active.map((b) => (
+            <li key={b.id} className="py-2">
+              <div className="text-sm font-medium">{b.name}</div>
+              <div className="grid grid-cols-3 gap-2 text-sm tabular-nums">
                 {kinds.map((k) => {
                   const r = compared[k];
                   const share = r && r.ok ? r.value.totals.businesses.find((x) => x.id === b.id) : null;
                   return (
-                    <td key={k} className="py-1 text-right tabular-nums">
-                      {share ? `${money(share.month.grossProfitCents, { whole: true })} (${Math.round(share.shareOfGp * 100)}%)` : 'not yet'}
-                    </td>
+                    <div key={k} className="text-right">
+                      {share ? (
+                        <>
+                          <div>{money(share.month.grossProfitCents, { whole: true })}</div>
+                          <div className="text-xs text-slate-500">{Math.round(share.shareOfGp * 100)}%</div>
+                        </>
+                      ) : (
+                        'not yet'
+                      )}
+                    </div>
                   );
                 })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-1 text-xs text-slate-500">Gross profit a month and share of the total, in each future.</p>
       </Card>
 
       <Card title="Change a future" testId="edit-card">
@@ -153,15 +171,37 @@ export function Hypotheticals() {
         </div>
         <p className="mt-3 mb-2 text-xs uppercase tracking-wide text-slate-500">Events</p>
         <div className="space-y-2">
-          {eventsFor.map((e) => (
-            <Toggle
-              key={e}
-              label={EVENT_WORDS[e]}
-              testId={`event-${e}`}
-              on={editingScenario.events.includes(e)}
-              onChange={(on) => void setScenario(editing, editingScenario.multipliers, on ? [...editingScenario.events, e] : editingScenario.events.filter((x) => x !== e))}
-            />
-          ))}
+          {eventsFor.map((e) => {
+            const on = editingScenario.events.includes(e);
+            const size = EVENT_SIZE[e];
+            const current = size ? (params[size.key] as number) : null;
+            return (
+              <div key={e}>
+                <Toggle label={EVENT_WORDS[e]} testId={`event-${e}`} on={on} onChange={(v) => void setScenario(editing, editingScenario.multipliers, v ? [...editingScenario.events, e] : editingScenario.events.filter((x) => x !== e))} />
+                {on && size && current !== null && (
+                  <label className="mt-1 flex items-center justify-between gap-2 px-1 text-xs text-slate-600 dark:text-slate-300">
+                    <span>{size.label}</span>
+                    <span className="flex shrink-0 items-center gap-1">
+                      <input
+                        data-testid={`size-${e}`}
+                        type="number"
+                        inputMode="decimal"
+                        defaultValue={size.unit === 'percent' ? Math.round(current * 100) : current}
+                        onBlur={(ev) => {
+                          const n = Number(ev.target.value);
+                          if (!Number.isFinite(n)) return;
+                          const value = size.unit === 'percent' ? Math.min(1, Math.max(0, n / 100)) : Math.max(0, n);
+                          void setScenario(editing, editingScenario.multipliers, editingScenario.events, { ...(editingScenario.eventParams ?? {}), [size.key]: value });
+                        }}
+                        className="w-16 rounded-lg border border-slate-300 px-2 py-1 text-right dark:border-slate-700 dark:bg-slate-900"
+                      />
+                      <span>{size.unit === 'percent' ? '%' : 'x'}</span>
+                    </span>
+                  </label>
+                )}
+              </div>
+            );
+          })}
         </div>
         <p className="mt-4 mb-2 text-xs uppercase tracking-wide text-slate-500">One business differently</p>
         <select data-testid="override-biz" value={overrideBiz} onChange={(e) => setOverrideBiz(e.target.value)} className="w-full rounded-xl border border-slate-300 px-3 py-2 dark:border-slate-700 dark:bg-slate-900">

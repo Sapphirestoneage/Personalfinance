@@ -49,7 +49,7 @@ export function Button({
   type?: 'button' | 'submit';
 }) {
   const cls = {
-    primary: 'bg-sky-700 text-white hover:bg-sky-800 disabled:bg-slate-300',
+    primary: 'bg-sky-700 text-white hover:bg-sky-800 disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-800 dark:disabled:text-slate-500',
     secondary: 'border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800',
     quiet: 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200',
     danger: 'border border-red-300 text-red-700 dark:border-red-800 dark:text-red-300',

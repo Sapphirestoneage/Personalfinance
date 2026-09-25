@@ -36,8 +36,21 @@ body {
 }
 
 /* Big tap targets everywhere; phones first. */
-button, input, select {
+button, input, select, textarea {
   font: inherit;
+}
+h1, h2, h3 {
+  text-wrap: balance;
+}
+:focus-visible {
+  outline: 2px solid #0284c7;
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 input[type="number"] {
   -moz-appearance: textfield;

@@ -160,6 +160,20 @@ export type Offer = z.infer<typeof OfferSchema>;
 
 /* ---------- Scenarios ------------------------------------------------------- */
 
+/** How big each event is; every key optional, the engine's defaults fill the rest. */
+export const EventParamsSchema = z
+  .object({
+    platformShareOfInquiries: z.number().min(0).max(1).optional(),
+    houseShareOfInquiries: z.number().min(0).max(1).optional(),
+    topRegularMultiple: z.number().min(0).optional(),
+    priceWarCut: z.number().min(0).max(1).optional(),
+    viralAudienceLift: z.number().min(0).optional(),
+    pressInquiryLift: z.number().min(0).optional(),
+    retainerUpgradeMultiple: z.number().min(0).optional(),
+  })
+  .strict();
+export type EventParamsPatch = z.infer<typeof EventParamsSchema>;
+
 export const ScenarioSchema = z
   .object({
     id,
@@ -167,6 +181,7 @@ export const ScenarioSchema = z
     kind: ScenarioKindSchema,
     multipliers: MultipliersSchema,
     events: z.array(EventIdSchema),
+    eventParams: EventParamsSchema.optional(),
     updatedAt: isoDateTime,
   })
   .strict();

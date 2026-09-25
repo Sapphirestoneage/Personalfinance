@@ -9,7 +9,7 @@ import { computeBusinessMonth } from '@/engine/businesses';
 import { sensitivity } from '@/engine/sensitivity';
 import { explainMonth } from '@/engine/explain';
 import { businessToModel } from '@/data/model';
-import { Bars } from '../shared/Bars';
+import { BarList } from '../shared/BarList';
 import { Basis, Big, Button, Card, Disclosure, Note, Toggle } from '../shared/ui';
 import { NumberField } from '../shared/NumberField';
 import { useLabelMode, useSellableHours } from '../shared/hooks';
@@ -65,9 +65,10 @@ export function BusinessTab({ id }: { id: string }) {
         )}
         {month && month.ok ? (
           <>
+            <p className="mb-2 text-xs text-slate-500">A month, from the numbers below.</p>
             <div className="grid grid-cols-2 gap-4">
-              <Big label="Gross profit a month" value={money(month.value.grossProfitCents, { whole: true })} testId="tab-gp" />
-              <Big label="Hours a month" value={count(month.value.hoursUsed, 0)} />
+              <Big label="Gross profit" value={money(month.value.grossProfitCents, { whole: true })} testId="tab-gp" />
+              <Big label="Hours" value={count(month.value.hoursUsed, 0)} />
               {Object.entries(month.value.volumes)
                 .filter(([k]) => ['sessions', 'newClients', 'subscribers', 'paidCalls', 'activeRegulars'].includes(k))
                 .slice(0, 2)
@@ -89,7 +90,7 @@ export function BusinessTab({ id }: { id: string }) {
         )}
       </Card>
 
-      <Card title="The numbers that matter" testId="tab-inputs" action={<span className="text-xs text-slate-500">{yoursCount} of {fields.length} yours</span>}>
+      <Card title="The numbers that matter" testId="tab-inputs" action={<span className="shrink-0 whitespace-nowrap text-xs text-slate-500">{yoursCount} of {fields.length} yours</span>}>
         <div className="space-y-4">{core.map(field)}</div>
       </Card>
 
@@ -143,7 +144,7 @@ export function BusinessTab({ id }: { id: string }) {
 
       {levers.length > 0 && (
         <Card title="What moves it most" testId="tab-levers">
-          <Bars rows={levers.map((l) => ({ label: `${l.label} ${l.move}`, value: l.deltaCents }))} format={(v) => money(v, { sign: true, whole: true })} summary={`${levers[0]!.label} ${levers[0]!.move} is the biggest single move: ${money(levers[0]!.deltaCents, { sign: true, whole: true })} a month.`} />
+          <BarList rows={levers.map((l, i) => ({ label: `${l.label} ${l.move}`, value: l.deltaCents, emphasis: i === 0 }))} format={(v) => money(v, { sign: true, whole: true })} summary={`${levers[0]!.label} ${levers[0]!.move} is the biggest single move: ${money(levers[0]!.deltaCents, { sign: true, whole: true })} a month. Screening is not on this list on purpose.`} />
         </Card>
       )}
 

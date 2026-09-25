@@ -10,7 +10,7 @@ import type { ProfileModel } from '@/engine/model';
 import { setValue } from './assumptions';
 import { getDb, type SlamDB } from './db';
 import { profileToModel } from './model';
-import type { Business, ClientRecord, EventId, Label, LabelMode, Milestone, Multipliers, Offer, PathwayStage, Profile, Sale, Scenario, ScenarioKind, ScenarioOverride, Source, WeekLog } from './schemas';
+import type { Business, ClientRecord, EventId, EventParamsPatch, Label, LabelMode, Milestone, Multipliers, Offer, PathwayStage, Profile, Sale, Scenario, ScenarioKind, ScenarioOverride, Source, WeekLog } from './schemas';
 import { buildSnapshot } from './snapshot';
 import { comparable, exportAll, importAll, parseExport, serialize } from './transfer';
 
@@ -49,7 +49,7 @@ export interface AppState {
   setPriorityOrder(ids: string[]): Promise<void>;
   setLabelMode(mode: LabelMode): Promise<void>;
   completeStep(businessId: string, stage: PathwayStage): Promise<void>;
-  setScenario(kind: ScenarioKind, multipliers: Multipliers, events: EventId[]): Promise<void>;
+  setScenario(kind: ScenarioKind, multipliers: Multipliers, events: EventId[], eventParams?: EventParamsPatch): Promise<void>;
   setBusinessOverride(businessId: string, kind: ScenarioKind, override: ScenarioOverride | undefined): Promise<void>;
   putSource(s: Source): Promise<void>;
   deleteSource(id: string): Promise<void>;
@@ -249,10 +249,10 @@ export const useAppStore = create<AppState>((set, get) => {
       await saveProfile({ ...p, pathway: { ...p.pathway, completedSteps: [...p.pathway.completedSteps, key] }, updatedAt: now() });
     },
 
-    async setScenario(kind, multipliers, events) {
+    async setScenario(kind, multipliers, events, eventParams) {
       const s = get().scenarios.find((x) => x.kind === kind);
       if (!s) return;
-      const next: Scenario = { ...s, multipliers, events, updatedAt: now() };
+      const next: Scenario = { ...s, multipliers, events, ...(eventParams !== undefined ? { eventParams } : {}), updatedAt: now() };
       await db().putScenario(next);
       set({ scenarios: get().scenarios.map((x) => (x.id === next.id ? next : x)) });
     },

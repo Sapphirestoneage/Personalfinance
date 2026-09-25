@@ -4,7 +4,7 @@ import { useAppStore } from '@/data/store';
 import { SHARED_FIELDS } from '@/content/fields';
 import { NO_ADVICE } from '@/content/credits';
 import type { LabelMode } from '@/data/schemas';
-import { Card } from '../shared/ui';
+import { Card, Disclosure } from '../shared/ui';
 import { NumberField } from '../shared/NumberField';
 import { useLabelMode } from '../shared/hooks';
 
@@ -17,10 +17,20 @@ export function SharedSettings() {
   return (
     <div className="space-y-4">
       <Card title="Shared settings" testId="shared-settings">
+        <p className="mb-3 text-xs text-slate-500">These live once and every business reads them.</p>
         <div className="space-y-4">
-          {SHARED_FIELDS.map((f) => (
+          {SHARED_FIELDS.filter((f) => f.tier !== 'more' || mode === 'pro').map((f) => (
             <NumberField key={f.key} id={`shared-${f.key}`} label={f.labels[mode]} help={f.help} unit={f.unit} min={f.min} max={f.max} assumption={profile.settings[f.key]} onCommit={(v) => void setSetting(f.key, v)} />
           ))}
+          {mode !== 'pro' && (
+            <Disclosure label="More detail" testId="settings-more" count={SHARED_FIELDS.filter((f) => f.tier === 'more').length}>
+              <div className="space-y-4">
+                {SHARED_FIELDS.filter((f) => f.tier === 'more').map((f) => (
+                  <NumberField key={f.key} id={`shared-${f.key}`} label={f.labels[mode]} help={f.help} unit={f.unit} min={f.min} max={f.max} assumption={profile.settings[f.key]} onCommit={(v) => void setSetting(f.key, v)} />
+                ))}
+              </div>
+            </Disclosure>
+          )}
         </div>
         <p className="mt-4 text-xs text-slate-500">{NO_ADVICE}</p>
       </Card>

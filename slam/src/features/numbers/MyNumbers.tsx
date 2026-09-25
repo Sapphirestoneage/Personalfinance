@@ -8,6 +8,7 @@ import { sensitivity } from '@/engine/sensitivity';
 import { checkInsVsModel } from '@/engine/reality';
 import { useState } from 'react';
 import { Bars } from '../shared/Bars';
+import { BarList } from '../shared/BarList';
 import { Basis, Big, Button, Card, Empty, Note } from '../shared/ui';
 import { useModel, useSellableHours, useTotals } from '../shared/hooks';
 import { count, money } from '../shared/format';
@@ -116,17 +117,7 @@ export function MyNumbers() {
 
       {levers.length > 0 && first && (
         <Card title={`Biggest levers for ${first.name}`} testId="levers">
-          <ul className="space-y-2">
-            {levers.map((l) => (
-              <li key={l.key} className="flex items-baseline justify-between text-sm">
-                <span>
-                  {l.label} <span className="text-slate-500">{l.move}</span>
-                </span>
-                <span className="font-semibold tabular-nums">{money(l.deltaCents, { sign: true, whole: true })}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-2 text-xs text-slate-500">Profit change a month from one small move. Screening is not on this list on purpose.</p>
+          <BarList rows={levers.map((l, i) => ({ label: `${l.label} ${l.move}`, value: l.deltaCents, emphasis: i === 0 }))} format={(v) => money(v, { sign: true, whole: true })} summary="Profit change a month from one small move. Screening is not on this list on purpose." />
         </Card>
       )}
     </div>
