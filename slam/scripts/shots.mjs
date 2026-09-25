@@ -14,7 +14,7 @@ await go('toolbox/diagnose?guided=1&business=you-inPerson'); await shot('03-guid
 await page.getByTestId('q-inputs-inquiriesPerMonth').fill('40'); await page.getByTestId('tool-next').click();
 await page.getByTestId('q-tool-bookingsLastMonth').fill('3'); await page.getByTestId('tool-next').click();
 await page.getByTestId('q-single-priceCents').fill('450'); await page.getByTestId('tool-next').click(); await page.waitForTimeout(300); await shot('04-diagnosis');
-await go('demo'); page.once('dialog', (d) => d.accept()); await page.getByTestId('sample-sample-inperson').click(); await page.getByTestId('today-numbers').waitFor(); await page.waitForTimeout(300); await shot('05-today-sample');
+await go('demo'); await page.getByTestId('sample-sample-inperson').click(); await page.getByTestId('sample-sample-inperson').click().catch(() => {}); await page.getByTestId('today-numbers').waitFor(); await page.waitForTimeout(300); await shot('05-today-sample');
 await go('numbers'); await page.waitForTimeout(500); await shot('06-numbers');
 await go('hypotheticals'); await page.waitForTimeout(500); await shot('07-hypotheticals');
 await go('businesses'); await shot('08-businesses');

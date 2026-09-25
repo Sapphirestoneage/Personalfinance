@@ -6,7 +6,7 @@ import { SAMPLES } from '@/content/samples';
 import { EXPORT_REMINDER, exportFileName } from '@/data/transfer';
 import { CONTACT_NAME, NON_AFFILIATION, NO_ADVICE, ON_DEVICE } from '@/content/credits';
 import { navigate } from '@/app/router';
-import { Button, Card, Note, Toggle } from '../shared/ui';
+import { Button, Card, ConfirmButton, Note, Toggle } from '../shared/ui';
 
 function download(text: string, name: string) {
   const blob = new Blob([text], { type: 'application/json' });
@@ -29,7 +29,10 @@ export function Demo() {
   const snapshotText = useAppStore((s) => s.snapshotText);
   const [note, setNote] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const businesses = useAppStore((s) => s.businesses);
   if (!profile) return null;
+  /* a fresh profile nobody has typed into can be replaced without asking */
+  const hasOwnNumbers = businesses.some((b) => Object.values(b.inputs).some((a) => a.label === 'Yours')) || Object.values(profile.settings).some((a) => a.label === 'Yours');
 
   const onImport = async (file: File | undefined) => {
     if (!file) return;
@@ -70,31 +73,26 @@ export function Demo() {
         <p className="mb-3 text-xs text-slate-500">{profile.demo ? `Showing "${profile.alias}". Sample numbers, not anyone's.` : 'Load a sample to walk someone through the app. Save a backup first if this device holds your own numbers.'}</p>
         <div className="space-y-2">
           {SAMPLES.map((s) => (
-            <button
-              key={s.id}
-              type="button"
-              data-testid={`sample-${s.id}`}
-              onClick={() => {
-                if (profile.demo || window.confirm('Replace what is on this device with this sample? Save a backup first if you need it.')) void loadSample(s.id).then(() => navigate('today'));
-              }}
-              className="block w-full rounded-xl border border-slate-200 p-3 text-left dark:border-slate-800"
-            >
+            <div key={s.id} className="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
               <span className="block font-medium">{s.title}</span>
-              <span className="block text-xs text-slate-500">{s.blurb}</span>
-            </button>
+              <span className="mb-2 block text-xs text-slate-500">{s.blurb}</span>
+              {profile.demo || !hasOwnNumbers ? (
+                <Button kind="secondary" testId={`sample-${s.id}`} onClick={() => void loadSample(s.id).then(() => navigate('today'))}>
+                  Load this sample
+                </Button>
+              ) : (
+                <ConfirmButton kind="secondary" testId={`sample-${s.id}`} confirmLabel="Tap again: this replaces your numbers" onConfirm={() => void loadSample(s.id).then(() => navigate('today'))}>
+                  Load this sample
+                </ConfirmButton>
+              )}
+            </div>
           ))}
         </div>
         <div className="mt-3 space-y-2">
           <Toggle on={presenter} onChange={setPresenter} label="Presenter view (bigger text)" testId="presenter" />
-          <Button
-            kind="danger"
-            testId="reset"
-            onClick={() => {
-              if (window.confirm('Start over with an empty profile? Everything on this device is removed. This cannot be undone.')) void resetFresh().then(() => navigate('today'));
-            }}
-          >
+          <ConfirmButton testId="reset" confirmLabel="Tap again: everything here is removed" onConfirm={() => void resetFresh().then(() => navigate('today'))}>
             Start over, empty
-          </Button>
+          </ConfirmButton>
         </div>
       </Card>
 

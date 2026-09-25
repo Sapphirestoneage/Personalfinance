@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 import { useAppStore } from '@/data/store';
 import { CLIENT_STAGES, DEPOSIT_STATUSES, LOST_REASONS, SCREENING_RESULTS, type ClientRecord, type Sale } from '@/data/schemas';
 import { budgetCheck } from '@/engine/budgets';
-import { Button, Card, Empty, Note } from '../shared/ui';
+import { Button, Card, ConfirmButton, Empty, Note } from '../shared/ui';
 import { useLabelMode, newId } from '../shared/hooks';
 import { money } from '../shared/format';
 
@@ -127,9 +127,9 @@ function ClientForm({ client, onSave, onDelete, onClose }: { client: ClientRecor
       </div>
       {onDelete && (
         <div className="mt-2">
-          <Button kind="danger" onClick={onDelete}>
+          <ConfirmButton onConfirm={onDelete} confirmLabel="Tap again to delete for good">
             Delete this record
-          </Button>
+          </ConfirmButton>
         </div>
       )}
     </Card>
@@ -177,10 +177,8 @@ export function Clients() {
           isNew
             ? undefined
             : () => {
-                if (window.confirm('Delete this record? This cannot be undone.')) {
-                  void deleteClient(editing.id);
-                  setEditing(null);
-                }
+                void deleteClient(editing.id);
+                setEditing(null);
               }
         }
       />

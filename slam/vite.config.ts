@@ -12,6 +12,12 @@ const singleFile = process.env.SINGLEFILE === '1';
 
 const plugins: PluginOption[] = [react(), tailwindcss()];
 if (singleFile) {
+  /* No service worker in the one-file build: stub the register call. */
+  plugins.push({
+    name: 'slam-stub-pwa-register',
+    resolveId: (id) => (id === 'virtual:pwa-register' ? '\0slam-pwa-stub' : null),
+    load: (id) => (id === '\0slam-pwa-stub' ? 'export function registerSW() { return () => Promise.resolve(); }' : null),
+  });
   plugins.push(viteSingleFile());
 } else {
   plugins.push(

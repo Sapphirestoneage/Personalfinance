@@ -13,7 +13,6 @@ async function open(page: Page, path = 'today') {
 
 async function loadSample(page: Page, id = 'sample-inperson') {
   await open(page, 'demo');
-  page.once('dialog', (d) => void d.accept());
   await page.getByTestId(`sample-${id}`).click();
   await expect(page.getByTestId('today-numbers')).toBeVisible();
 }
@@ -181,7 +180,8 @@ test.describe('privacy and offline', () => {
     expect(text).not.toMatch(/domme|findom|kink/i);
     await expect(page.getByTestId('note')).toContainText('private');
 
-    page.once('dialog', (d) => void d.accept());
+    await page.getByTestId('reset').click();
+    await expect(page.getByTestId('reset')).toContainText('Tap again');
     await page.getByTestId('reset').click();
     await expect(page.getByTestId('next-title')).toContainText('Setup');
     await open(page, 'demo');

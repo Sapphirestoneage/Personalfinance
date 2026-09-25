@@ -1,5 +1,5 @@
 /* Small, phone-first building blocks used by every screen. */
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import type { Label } from '@/data/schemas';
 import type { BasedOn } from '@/engine/types';
 import { href } from '@/app/router';
@@ -117,6 +117,30 @@ export function Note({ children, tone = 'info', testId }: { children: ReactNode;
     <p data-testid={testId} className={`rounded-lg p-3 text-sm ${cls}`}>
       {children}
     </p>
+  );
+}
+
+/** A destructive action that asks in the page: first tap arms it, second tap does it. No browser dialogs. */
+export function ConfirmButton({ children, confirmLabel = 'Tap again to confirm', onConfirm, kind = 'danger', testId }: { children: ReactNode; confirmLabel?: string; onConfirm: () => void; kind?: 'primary' | 'secondary' | 'quiet' | 'danger'; testId?: string }) {
+  const [armed, setArmed] = useState(false);
+  useEffect(() => {
+    if (!armed) return;
+    const t = setTimeout(() => setArmed(false), 6000);
+    return () => clearTimeout(t);
+  }, [armed]);
+  return (
+    <Button
+      kind={armed ? 'primary' : kind}
+      testId={testId}
+      onClick={() => {
+        if (armed) {
+          setArmed(false);
+          onConfirm();
+        } else setArmed(true);
+      }}
+    >
+      {armed ? confirmLabel : children}
+    </Button>
   );
 }
 
