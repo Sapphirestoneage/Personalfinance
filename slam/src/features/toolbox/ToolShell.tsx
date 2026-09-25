@@ -2,7 +2,9 @@
    prefilled, then the answer. Standalone: every field on one screen with
    the sandbox on; nothing is written until "Save to my business". Either
    way, finishing checks off the matching pathway step. */
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { aggregateMonth } from '@/engine/aggregate';
+import { profileToModel } from '@/data/model';
 import { useAppStore, type ValuePatch } from '@/data/store';
 import type { Assumption, OfferType } from '@/data/schemas';
 import { STAGE_BY_TOOL, type ToolId } from '@/content/stages';
@@ -61,6 +63,9 @@ export function ToolShell({ tool, businessId, guided }: { tool: Exclude<ToolId, 
   const [values, setValues] = useState<Values>({});
   const [saved, setSaved] = useState(false);
   const [pending, setPending] = useState(true);
+  const [moved, setMoved] = useState<{ before: number | null; after: number | null; replacedEstimates: boolean } | null>(null);
+  /* the month as it stood when the tool opened, so the change is against what she came in with */
+  const opened = useRef<number | null | undefined>(undefined);
 
   const business = useMemo(() => {
     if (!model) return null;
@@ -89,6 +94,10 @@ export function ToolShell({ tool, businessId, guided }: { tool: Exclude<ToolId, 
     );
   }
 
+  if (opened.current === undefined) {
+    const t = aggregateMonth(model);
+    opened.current = t.ok ? t.value.profitCents : null;
+  }
   const derived = def.derive ? def.derive(values, ctx) : values;
   const result = def.compute(derived, ctx);
   const commit = (f: ToolField, v: number | null) => {
@@ -100,6 +109,11 @@ export function ToolShell({ tool, businessId, guided }: { tool: Exclude<ToolId, 
   const finish = async () => {
     if (def.saves && sandbox) await applyValues(business.id, toPatch(derived, ctx));
     await completeStep(business.id, stage.stage);
+    const st = useAppStore.getState();
+    const after = st.profile ? aggregateMonth(profileToModel(st.profile, st.businesses, st.offers, st.sources)) : null;
+    /* did this run replace estimates with her numbers (the picture getting honest), or change numbers that were already hers (a decision)? */
+    const replacedEstimates = fields.some((f) => !f.key.startsWith('tool.') && initial(f, ctx).label !== 'Yours' && values[f.key]?.label === 'Yours');
+    setMoved({ before: opened.current ?? null, after: after && after.ok ? after.value.profitCents : null, replacedEstimates });
     setSaved(true);
   };
 
@@ -141,7 +155,15 @@ export function ToolShell({ tool, businessId, guided }: { tool: Exclude<ToolId, 
           ) : (
             <>
               <Note tone="good" testId="tool-saved">
-                {def.saves && sandbox ? 'Saved to your business and ' : ''}checked off on your pathway.
+                {def.saves && sandbox ? 'Saved to your business and checked off on your pathway.' : 'Checked off on your pathway.'}
+                {moved && moved.before !== null && moved.after !== null && Math.round(moved.after) !== Math.round(moved.before) && (
+                  <span data-testid="tool-moved" className="mt-1 block font-medium">
+                    {moved.replacedEstimates
+                      ? `Built on your numbers now: ${money(moved.after, { whole: true })} profit a month. The estimates had said ${money(moved.before, { whole: true })}.`
+                      : `Your month moved from ${money(moved.before, { whole: true })} to ${money(moved.after, { whole: true })} profit (${money(moved.after - moved.before, { sign: true, whole: true })}).`}
+                  </span>
+                )}
+                {moved && moved.before !== null && moved.after !== null && Math.round(moved.after) === Math.round(moved.before) && def.saves && <span className="mt-1 block">Your month's profit is unchanged: nothing you entered moved it yet.</span>}
               </Note>
               <Button kind="secondary" to="today">
                 Back to Today

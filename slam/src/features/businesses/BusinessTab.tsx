@@ -55,7 +55,7 @@ export function BusinessTab({ id }: { id: string }) {
 
   return (
     <div className="space-y-4">
-      <Card title={`${business.active ? `#${business.priority} ` : ''}${BUSINESS_NAMES[business.type][mode]}`} testId="biz-tab">
+      <Card title={`${business.active ? `#${business.priority} ` : ''}${BUSINESS_NAMES[business.type][mode]}`} testId="biz-tab" action={business.active ? <a href={`#/toolbox/diagnose?business=${id}`} data-testid="tab-diagnose" className="shrink-0 whitespace-nowrap text-xs text-sky-700 underline dark:text-sky-300">Diagnose</a> : undefined}>
         {!business.active && (
           <div className="mb-3 space-y-2">
             <Note tone="warn">Not counted in any total.</Note>

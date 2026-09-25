@@ -43,6 +43,7 @@ test.describe('first-time user', () => {
 
     await page.getByTestId('tool-finish').click();
     await expect(page.getByTestId('tool-saved')).toBeVisible();
+    await expect(page.getByTestId('tool-moved')).toContainText('Built on your numbers now');
     await open(page);
     await expect(page.getByTestId('next-title')).toContainText('Your offer');
     await expect(page.getByTestId('progress')).toContainText('In-person: 1 of 8 stages done');

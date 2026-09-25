@@ -262,6 +262,8 @@ const offerTool: ToolDef = {
     if (items.length) {
       lines.push({ label: 'Value stack vs price', value: `${money(stack.totalCents, { whole: true })} vs ${money(price, { whole: true })}`, tone: stack.aboveprice ? 'good' : 'warn' });
       if (stack.ratio !== null) lines.push({ label: 'Stack to price', value: `${count(stack.ratio, 1)}x (aim for ${STACK_TO_PRICE_TARGET}x or more)`, tone: stack.ratio >= STACK_TO_PRICE_TARGET ? 'good' : 'plain' });
+      const supported = stack.totalCents / STACK_TO_PRICE_TARGET;
+      lines.push({ label: `Price the stack supports at ${STACK_TO_PRICE_TARGET}x`, value: money(supported, { whole: true }), tone: supported > price ? 'good' : 'plain' });
     }
     const goal = v(values, 'shared.incomeGoalCents');
     if (goal !== null) {

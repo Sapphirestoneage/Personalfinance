@@ -14,6 +14,21 @@ import { MissingList } from '../shared/MissingList';
 import { useModel, useSellableHours, useTotals } from '../shared/hooks';
 import { count, money } from '../shared/format';
 
+function WeeksChart() {
+  const weekLogs = useAppStore((s) => s.weekLogs);
+  const saved = useMemo(() => weekLogs.filter((w) => w.checkedIn && !w.businessId).slice(0, 8).reverse(), [weekLogs]);
+  if (saved.length < 2) return null;
+  const rows = saved.map((w) => ({ label: w.weekStart.slice(5), value: w.inquiries ?? 0, emphasis: w === saved[saved.length - 1] }));
+  const bookings = saved.map((w) => w.bookings ?? 0);
+  const total = rows.reduce((s, r) => s + r.value, 0);
+  const best = rows.reduce((b, r) => (r.value > b.value ? r : b), rows[0]!);
+  return (
+    <Card title={`Contacts by week, last ${saved.length} check-ins`} testId="weeks-chart">
+      <BarList rows={rows} format={(v) => count(v, 0)} summary={`${total} contacts over ${saved.length} weeks, best week ${best.label} with ${best.value}. Bookings those weeks: ${bookings.join(', ')}.`} />
+    </Card>
+  );
+}
+
 function RealityCheck({ firstId }: { firstId: string | undefined }) {
   const weekLogs = useAppStore((s) => s.weekLogs);
   const setInput = useAppStore((s) => s.setInput);
@@ -105,6 +120,7 @@ export function MyNumbers() {
       </Card>
 
       <RealityCheck firstId={first?.id} />
+      <WeeksChart />
 
       <Card title="Where it comes from">
         <Bars rows={rows} format={(v) => money(v, { whole: true })} summary={`${top?.name ?? ''} brings ${Math.round((top?.shareOfGp ?? 0) * 100)}% of gross profit${rows.length > 1 ? `; ${rows.length} businesses counted, in your priority order` : ''}.`} testId="share-bars" />
