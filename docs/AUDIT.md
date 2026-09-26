@@ -81,10 +81,11 @@ carries it. Coach Mode has its own audit at `coach/AUDIT.md`; this one is the
   is where facts are typed. A handful of rooms ask for a what-if figure of
   their own (a house price, a career move's new pay); those boxes carry their
   room's own hint but not the five sentences. They are next.
-- **Charts inside string builders.** Eleven rooms draw through the new layer.
-  The rest still draw their charts inline, which is the same library and the
-  same figures, but without the shape and colour controls. Mechanical to
-  finish, room by room.
+- **Charts inside string builders.** Twenty-three rooms draw through the new
+  layer, including every room built on `shared/room.js` (D-349). What is left
+  is the handful of pictures built inside a bigger HTML string, mostly in Debt
+  Payoff and the Scorecard's lenses: same library, same figures, no controls.
+  Each needs a placeholder and a draw call.
 - **Tier 3 readings and the moons** (`STATUS.md`), and the two owner decisions
   held there.
 

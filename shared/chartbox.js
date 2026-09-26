@@ -114,7 +114,11 @@
   }
   function typesFor(kind, spec) {
     if (spec && typeof spec.render === 'function') {
-      return [{ id: 'native', label: spec.shapeLabel || 'As drawn' }].concat(KINDS[kind] || []);
+      var own = { id: 'native', label: spec.shapeLabel || 'As drawn' };
+      /* Offer another shape only when there are rows to build one from.
+         Otherwise the reader taps "Columns" and gets an empty box, which is
+         a worse chart than the one they had. */
+      return rowsOf(spec).length ? [own].concat(KINDS[kind] || []) : [own];
     }
     return (KINDS[kind] || KINDS.compare).slice();
   }
@@ -179,6 +183,12 @@
 
   function paint(spec) {
     var rows = rowsOf(spec);
+    /* A room that hands in its own drawing draws it, empty or not: the room
+       knows what to say when there is nothing yet, and it says it better than
+       this file can. The shapes below are only for a set of rows. */
+    if (typeOf(spec) === 'native' && typeof spec.render === 'function') {
+      return spec.render(colors(spec.id, Math.max(rows.length, spec.hues || 4), themeOf(spec)));
+    }
     if (!rows.length) {
       return '<div class="slaf-chart is-empty"><p class="slaf-reason">'
         + esc(spec.empty || 'Nothing to draw yet.') + '</p></div>';
@@ -194,10 +204,9 @@
     var type = typeOf(spec);
     var hues = colors(spec.id, Math.max(rows.length, spec.hues || 0), themeOf(spec));
     /* A room with a picture this file has no shape for (a drawdown path, a
-       week laid out in hours, a Sankey) hands in its own drawing instead. It
-       still gets the colour orders and the table, because those are about
-       reading the figures rather than about the shape. */
-    if (type === 'native' && typeof spec.render === 'function') return spec.render(hues);
+       week laid out in hours, a Sankey) hands in its own drawing instead; it
+       is drawn above, before the empty check, because the room's own empty
+       words are better than this file's. */
     /* The theme owns the colour. A row keeps its own only when the spec says
        the colours carry meaning, which is the verdict case: in range, watch
        and outside are reserved and a palette does not get to overrule them
@@ -305,11 +314,16 @@
   function draw(host, spec) {
     if (!host || !spec || !spec.id) return null;
     var wasOpen = OPEN[spec.id] === true;
+    var art = paint(spec);
+    /* Nothing drawn yet means nothing to re-shape, recolour or tabulate: the
+       controls would be four rows of chrome around one sentence. The room's
+       own sentence is the whole box until there is a figure in it. */
+    var bare = !rowsOf(spec).length && /is-empty/.test(art);
     host.innerHTML =
-      (spec.title ? '<p class="cbx-title">' + esc(spec.title) + '</p>' : '')
-      + '<div class="cbx-art">' + paint(spec) + '</div>'
-      + controlsHtml(spec)
-      + (tableOpen(spec) ? '<div class="cbx-twin">' + tableHtml(spec) + '</div>' : '');
+      (spec.title && !bare ? '<p class="cbx-title">' + esc(spec.title) + '</p>' : '')
+      + '<div class="cbx-art">' + art + '</div>'
+      + (bare ? '' : controlsHtml(spec))
+      + (!bare && tableOpen(spec) ? '<div class="cbx-twin">' + tableHtml(spec) + '</div>' : '');
     host.className = (host.className || '').indexOf('cbx') > -1 ? host.className : ((host.className || '') + ' cbx').trim();
     var tools = host.querySelector('.cbx-tools');
     if (tools && wasOpen) tools.open = true;

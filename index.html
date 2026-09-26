@@ -592,6 +592,7 @@
 <script src="engines/runway.js"></script>
 <script src="engines/betweenjobs.js"></script>
 <script src="shared/charts.js"></script>
+<script src="shared/chartbox.js"></script>
 <script src="shared/explain.js"></script>
 <script src="shared/gate.js"></script>
 <script src="shared/upnext.js"></script>
@@ -611,7 +612,7 @@
       Reference = SLAF.Reference, Ownership = SLAF.Ownership,
       Tier0 = SLAF.Tier0, Foo = SLAF.Foo, Ratios = SLAF.Ratios, Goals = SLAF.Goals,
       Staleness = SLAF.Staleness, Instruments = SLAF.Instruments,
-      Benchmarks = SLAF.Benchmarks, Gate = SLAF.Gate, Lens = SLAF.Lens, Advice = SLAF.Advice, Registry = SLAF.Registry, Charts = SLAF.Charts;
+      Benchmarks = SLAF.Benchmarks, Gate = SLAF.Gate, Lens = SLAF.Lens, Advice = SLAF.Advice, Registry = SLAF.Registry, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox;
 
   /* Every number opens the room it came from: the instrument → room map. */
   var OPENS = {
@@ -1140,7 +1141,7 @@
   var justFroze = false;
 
   function renderAltitude(h) {
-    var Charts = SLAF.Charts;
+    var Charts = SLAF.Charts, ChartBox = SLAF.ChartBox;
     var nw = Tier0.netWorth(h);
     /* The slice percentages are shares of assets PLUS debt, a total that
        appeared nowhere, so three different figures sat in one 300px block
@@ -1194,7 +1195,7 @@
     if (!Money.isOk(path)) { host.innerHTML = ''; why.textContent = path.reason; return; }
     var crossed = null;
     path.years.forEach(function (r) { if (crossed === null && r.balanceCents >= fire.value) crossed = age + r.year; });
-    host.innerHTML = Charts.area({
+    ChartBox.draw(host, { id: 'dashboard-path', kind: 'series', render: function () { return Charts.area({
       title: 'Investments over time against the FIRE number',
       series: [
         { label: 'Investments', color: Charts.COLORS.growth, fill: true, points: path.years.map(function (r) { return [age + r.year, Math.max(0, r.balanceCents)]; }) },
@@ -1204,7 +1205,7 @@
       vLines: stopAge !== null ? [{ x: stopAge, label: 'stop at ' + stopAge }] : [],
       dots: crossed !== null ? [{ x: crossed, y: fire.value }] : [],
       x: { label: 'age', format: function (v) { return String(Math.round(v)); } }
-    });
+    }); } });
     why.textContent = Money.formatCents(Math.round(basis.annualSavingsCents / 12)) + ' a month at ' + Money.formatRate(a.expectedReturnRate, { decimals: 1 })
       + (stopAge !== null ? ' until ' + stopAge + ', then ' + Money.formatCents(fire.annualExpensesCents) + ' a year out' : '; set a stop age in FIRE to see the drawdown')
       + '. ' + (crossed !== null ? 'Crosses the number at ' + crossed + '.' : 'Does not reach the number in this window.') + ' One fixed return, so a smooth line.';

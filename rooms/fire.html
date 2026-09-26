@@ -801,7 +801,7 @@
     var pts = function (k) { return path.years.map(function (r) { return [age + r.year, fut(Math.max(0, r[k]), r.year)]; }); };
     var crossed = null;
     path.years.forEach(function (r) { if (crossed === null && r.balanceCents >= target.value) crossed = age + r.year; });
-    host.innerHTML = Charts.area({
+    ChartBox.draw(host, { id: 'fire-path', kind: 'series', render: function () { return Charts.area({
       title: 'Investments over time against your number',
       series: [
         { label: 'Investments', color: Charts.COLORS.growth, points: pts('balanceCents'), fill: true },
@@ -813,7 +813,7 @@
       dots: crossed !== null ? [{ x: crossed, y: target.value }] : [],
       x: { label: 'age', format: function (v) { return String(Math.round(v)); } },
       y: { min: Math.min(0, path.value) }
-    });
+    }); } });
     why.textContent = Money.formatCents(prog.investmentsCents) + ' today, ' + Money.formatCents(Math.round(basis.annualSavingsCents / 12)) + ' a month added until '
       + (stopAge !== null ? 'age ' + stopAge : 'the end') + ' at ' + Money.formatRate(assumptions.expectedReturnRate, { decimals: 1 }) + ' a year'
       + (stopAge !== null ? ', then ' + Money.formatCents(target.annualExpensesCents) + ' a year drawn out' : '')

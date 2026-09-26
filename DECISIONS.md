@@ -17649,6 +17649,38 @@ case among them, which was failing on exactly this; the four rows typed by hand
 at 412px and all four landing.
 
 
+## D-349 — The room shell draws through the chart layer, so every room built on it does
+
+**Why.** Nineteen rooms are built on `shared/room.js`, and each one draws its
+picture into the same `#room-chart` host. Converting them one at a time would
+have been nineteen edits and nineteen chances to get a bracket wrong.
+
+**Decision.** The shell hands that host to `shared/chartbox.js` (D-347). The
+room's own drawing stays the shape, because the shell cannot know whether a
+week laid out in hours or a drawdown path could honestly be a ring; what every
+one of them gains is the eight colour orders, the table twin and the fold that
+holds them. A room may say more in its spec (`chartKind`, `chartRows`,
+`chartFormat`, `chartShape`) and get the other shapes as well.
+
+Three more pictures moved over at the same time: the Dashboard's path, the
+FIRE room's path and the Debt Payoff balance, which held their host in a
+variable rather than by id.
+
+Two things the layer learned doing it. A room that hands in its own drawing
+draws it even when there is nothing in it yet, because the room's own "Place an
+hour in a block to see where the week goes" is better than this file's "Nothing
+to draw yet". And a picture with nothing drawn shows no controls at all: four
+rows of chrome around one sentence is worse than the sentence alone.
+
+**Replaces or removes.** Nothing. No new screen, field or figure.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` 36297; `node test/render.js` 302; ten shell
+rooms opened with the example household, the controls appearing exactly where
+there is something to re-shape.
+
+
 ---
 
 # The Dungeons & Dividends entries

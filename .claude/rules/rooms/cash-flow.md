@@ -4,7 +4,7 @@ paths:
   - "engines/calendar.js"
 ---
 # The Month (`cash-flow`)
-File: rooms/cash-flow.html · 970 lines
+File: rooms/cash-flow.html · 971 lines
 Engines: projection, tier0, cashflow, income, selfemployed, ledger, budget, subscriptions, merchants, hourly, calendar
 Reference data: calendar_conventions.json, effective_tax_rates_2026.json, expense_categories.json, se_tax_2026.json
 Owns: payCadence, nextPayday, billsMonthly, payLaterDue

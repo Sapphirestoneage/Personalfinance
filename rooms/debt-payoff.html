@@ -2230,14 +2230,14 @@
        picture. Every figure is the cascade's or the flow's. */
     el('story').innerHTML = storyHtml(plan, cas, Money.isOk(flow) ? flow : null, longMonth);
     el('effect').innerHTML = effectHtml(plan, monthLabel);
-    chart.innerHTML = Charts.area({
+    ChartBox.draw(chart, { id: 'debt-payoff-balance', kind: 'series', render: function () { return Charts.area({
       title: 'Balance remaining, month by month, one line per debt',
       series: [{ label: 'All debts (' + plan.strategy.label.toLowerCase() + ' order)', color: Charts.COLORS.debt, points: remaining(plan), fill: true, width: 1 }]
         .concat(perDebt).concat(others),
       dots: plan.payoffs.map(function (p) { return { x: p.month, y: 0, color: colourOf[p.debtId] || Charts.COLORS.target }; }),
       x: { label: 'paid off by', format: monthLabel },
       y: { min: 0 }
-    });
+    }); } });
     var byId = {};
     debtsOf(scoped(Spine.getProfile())).forEach(function (d) { byId[d.id] = d; });
     list.innerHTML = plan.payoffs.map(function (p) {

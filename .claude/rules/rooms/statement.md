@@ -3,7 +3,7 @@ paths:
   - "rooms/statement.html"
 ---
 # The Statement (`statement`)
-File: rooms/statement.html · 517 lines
+File: rooms/statement.html · 522 lines
 Engines: projection, tier0, fire, selfemployed, tax, statement, income, ledger, cashflow, quickmath, presets, budget, hourly, foo, coast, opening, benchmarks
 Reference data: access_rules.json, car_costs.json, confidence_weights.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, +6 more
 Owns: confidenceWeightedNetWorth, netWorth

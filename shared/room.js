@@ -60,7 +60,7 @@
   if (typeof document === 'undefined') { if (typeof module === 'object' && module.exports) module.exports = { IDS: ['room-number', 'room-chart', 'room-inputs', 'room-lens', 'room-amounts', 'room-assumptions', 'room-why', 'room-scope', 'reading-list'] }; return; }
   var S = root.SLAF || (root.SLAF = {});
   var Money = S.Money, Schema = S.Schema, Spine = S.Spine, Reference = S.Reference, Ownership = S.Ownership,
-      Gate = S.Gate, Lens = S.Lens, Suggest = S.Suggest, Registry = S.Registry;
+      Gate = S.Gate, Lens = S.Lens, Suggest = S.Suggest, Registry = S.Registry, ChartBox = S.ChartBox;
 
   var IDS = ['room-number', 'room-chart', 'room-inputs', 'room-lens', 'room-amounts', 'room-assumptions', 'room-why', 'room-scope', 'reading-list'];
 
@@ -243,13 +243,31 @@
         + (ok ? '' : goHtml(h))
         + (n.sub ? '<span class="sub">' + n.sub + '</span>' : '');
     }
+    /* ---- The room's picture, and the reader's say in it (D-349) ------------
+       Every room built on this shell draws one chart, and the shell is the
+       one place it lands. Handing it to shared/chartbox.js gives all of them
+       the colour orders and the table twin in a single change: the room's own
+       drawing is kept as the shape (the shell cannot know whether a stacked
+       week or a drawdown path could honestly be a ring), and what the reader
+       gains is the palette, the table and the figures. */
     function paintChart(h) {
       var host = el('room-chart');
       if (!host || !spec.chart) return;
-      var html = spec.chart(h, TABLES) || '';
+      var draw = function () { return spec.chart(h, TABLES) || ''; };
+      var html = draw();
       if (html === lastChart) return;
       lastChart = html;
-      host.innerHTML = html;
+      if (ChartBox && html) {
+        ChartBox.draw(host, {
+          id: 'room-' + (spec.id || (S.Progress && S.Progress.roomIdFromLocation ? S.Progress.roomIdFromLocation() : '') || 'chart'),
+          kind: spec.chartKind || 'series',
+          shapeLabel: spec.chartShape || 'As drawn', render: draw,
+          rows: spec.chartRows ? spec.chartRows(h, TABLES) : null,
+          format: spec.chartFormat || null
+        });
+      } else {
+        host.innerHTML = html;
+      }
       var c = host.querySelector('.slaf-chart');
       if (c) { c.classList.add('is-animated'); }
     }
