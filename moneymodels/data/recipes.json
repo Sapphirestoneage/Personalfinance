@@ -1,0 +1,1369 @@
+{
+  "id": "moneymodels_recipes",
+  "version": "1.0",
+  "asOf": "2026-09-26",
+  "source": "The figures the model can compute, each with what it needs. Formulas are functions in moneymodels/engines/model.js keyed by id; this file names the inputs, the tier, the unit and what the figure is for. Tier N may need only facts from bands 1 to N (linted in moneymodels/test/run.js).",
+  "confidence": "convention",
+  "confidenceNote": "The thresholds on ratio30 (1 and 2) and ltgpCac (3) are the book's rules of thumb.",
+  "note": "kind: 'number' (a figure), 'badge' (earned by finishing levels), 'chart' (a picture), 'read' (a sentence). unit: cents, percent, ratio, count, days, months, text. A recipe with no formula in the engine is a lint failure.",
+  "recipes": [
+    {
+      "id": "learnedFound",
+      "label": "You know what a money model is",
+      "tier": 1,
+      "kind": "badge",
+      "needs": [
+        "F1",
+        "F2",
+        "F3"
+      ],
+      "says": "The sequence, the cash constraint, the four offers."
+    },
+    {
+      "id": "learnedAttr",
+      "label": "You know the attraction plays",
+      "tier": 1,
+      "kind": "badge",
+      "needs": [
+        "A1",
+        "A2",
+        "A3"
+      ],
+      "says": "The door, six ways to build it, the three parts it needs."
+    },
+    {
+      "id": "learnedUp",
+      "label": "You know the upsell plays",
+      "tier": 1,
+      "kind": "badge",
+      "needs": [
+        "U1",
+        "U2",
+        "U3"
+      ],
+      "says": "The moment after yes, four plays, and the ask."
+    },
+    {
+      "id": "learnedDown",
+      "label": "You know the downsell plays",
+      "tier": 1,
+      "kind": "badge",
+      "needs": [
+        "D1",
+        "D2",
+        "D3"
+      ],
+      "says": "The smaller yes, four plays, where it sits."
+    },
+    {
+      "id": "learnedCont",
+      "label": "You know the continuity plays",
+      "tier": 1,
+      "kind": "badge",
+      "needs": [
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "says": "One sale into many, five plays, churn."
+    },
+    {
+      "id": "learnedKpi",
+      "label": "You know the six numbers",
+      "tier": 1,
+      "kind": "badge",
+      "needs": [
+        "K1",
+        "K2",
+        "K3"
+      ],
+      "says": "The numbers, the two thresholds, the four ways to grow."
+    },
+    {
+      "id": "gpPerSale",
+      "label": "Gross profit per sale, today",
+      "tier": 2,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "price",
+        "deliveryCost"
+      ],
+      "says": "What one sale of your main offer leaves after delivering it."
+    },
+    {
+      "id": "grossMargin",
+      "label": "Gross margin, today",
+      "tier": 2,
+      "kind": "number",
+      "unit": "percent",
+      "needs": [
+        "price",
+        "deliveryCost"
+      ],
+      "says": "The share of the price you keep after delivery. Above 50% is where most of the plays become affordable."
+    },
+    {
+      "id": "cac",
+      "label": "Cost of a customer (CAC)",
+      "tier": 2,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "adSpend",
+        "newCustomers"
+      ],
+      "says": "What you spent to get customers, divided by the customers you got."
+    },
+    {
+      "id": "firstSaleGap",
+      "label": "First sale minus the cost of the customer",
+      "tier": 2,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "price",
+        "deliveryCost",
+        "adSpend",
+        "newCustomers"
+      ],
+      "says": "Gross profit on the first sale, less what the customer cost. Negative means the first sale does not pay for the customer, which is exactly what the rest of the model is for."
+    },
+    {
+      "id": "affordableCustomers",
+      "label": "Customers you can afford per month",
+      "tier": 2,
+      "kind": "number",
+      "unit": "count",
+      "needs": [
+        "growthCash",
+        "adSpend",
+        "newCustomers"
+      ],
+      "says": "Cash for getting customers divided by the cost of one. The scale ceiling before the model self-funds."
+    },
+    {
+      "id": "cpl",
+      "label": "Cost per lead",
+      "tier": 2,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "adSpend",
+        "leads"
+      ],
+      "says": "Spend divided by leads."
+    },
+    {
+      "id": "impliedCustomers",
+      "label": "Customers the funnel implies",
+      "tier": 2,
+      "kind": "number",
+      "unit": "count",
+      "needs": [
+        "leads",
+        "attrConversion"
+      ],
+      "says": "Leads times the attraction conversion rate. Compare with the customers you counted."
+    },
+    {
+      "id": "attrGp",
+      "label": "Attraction offer gross profit",
+      "tier": 2,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "attrPrice",
+        "attrCost"
+      ],
+      "says": "Price less delivery, per buyer."
+    },
+    {
+      "id": "upGp",
+      "label": "Upsell gross profit",
+      "tier": 2,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "upPrice",
+        "upCost"
+      ],
+      "says": "Per taker."
+    },
+    {
+      "id": "upExpected",
+      "label": "Upsell profit per customer",
+      "tier": 2,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "upPrice",
+        "upCost",
+        "upTake"
+      ],
+      "says": "Upsell gross profit times the take rate: what the upsell adds to every customer on average."
+    },
+    {
+      "id": "downGp",
+      "label": "Downsell gross profit",
+      "tier": 2,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "downPrice",
+        "downCost"
+      ],
+      "says": "Per taker."
+    },
+    {
+      "id": "downExpected",
+      "label": "Downsell profit per customer",
+      "tier": 2,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "downPrice",
+        "downCost",
+        "downTake",
+        "upTake"
+      ],
+      "says": "Downsell gross profit, times the share who said no to the upsell, times the downsell take rate."
+    },
+    {
+      "id": "contGp",
+      "label": "Continuity gross profit per month",
+      "tier": 2,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "contPrice",
+        "contCost"
+      ],
+      "says": "Per member, per month."
+    },
+    {
+      "id": "expectedMonths",
+      "label": "Months a member stays, on average",
+      "tier": 2,
+      "kind": "number",
+      "unit": "months",
+      "needs": [
+        "churn"
+      ],
+      "says": "One divided by monthly churn."
+    },
+    {
+      "id": "contLtgp",
+      "label": "Continuity lifetime profit per customer",
+      "tier": 2,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "contPrice",
+        "contCost",
+        "contJoin",
+        "churn"
+      ],
+      "says": "Monthly gross profit, times the months a member stays, times the share who join."
+    },
+    {
+      "id": "collected30",
+      "label": "30-day cash collected per customer (planned)",
+      "tier": 2,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "attrPrice",
+        "attrCost",
+        "upPrice",
+        "upCost",
+        "upTake",
+        "downPrice",
+        "downCost",
+        "downTake",
+        "contPrice",
+        "contCost",
+        "contJoin"
+      ],
+      "says": "Cash before delivery costs: the figure to compare with what you counted at the bank. The gross profit twin is the headline."
+    },
+    {
+      "id": "gp30",
+      "label": "30-day cash per customer (planned)",
+      "tier": 2,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "attrPrice",
+        "attrCost",
+        "upPrice",
+        "upCost",
+        "upTake",
+        "downPrice",
+        "downCost",
+        "downTake",
+        "contPrice",
+        "contCost",
+        "contJoin"
+      ],
+      "says": "Gross profit the sequence collects from one customer in their first 30 days, assuming every offer is made inside the month. Prove levels U10, D10 and C10 check that."
+    },
+    {
+      "id": "ratio30",
+      "label": "30-day ratio (planned)",
+      "tier": 2,
+      "kind": "number",
+      "unit": "ratio",
+      "needs": [
+        "attrPrice",
+        "attrCost",
+        "upPrice",
+        "upCost",
+        "upTake",
+        "downPrice",
+        "downCost",
+        "downTake",
+        "contPrice",
+        "contCost",
+        "contJoin",
+        "adSpend",
+        "newCustomers"
+      ],
+      "says": "30-day cash divided by the cost of a customer. 1 is break even, 2 is self-funding."
+    },
+    {
+      "id": "maxCac",
+      "label": "The most you could pay for a customer",
+      "tier": 2,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "attrPrice",
+        "attrCost",
+        "upPrice",
+        "upCost",
+        "upTake",
+        "downPrice",
+        "downCost",
+        "downTake",
+        "contPrice",
+        "contCost",
+        "contJoin"
+      ],
+      "says": "Half the 30-day cash: the cost of a customer that still leaves you self-funding."
+    },
+    {
+      "id": "ltgp",
+      "label": "Lifetime gross profit per customer (LTGP)",
+      "tier": 2,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "attrPrice",
+        "attrCost",
+        "upPrice",
+        "upCost",
+        "upTake",
+        "downPrice",
+        "downCost",
+        "downTake",
+        "contPrice",
+        "contCost",
+        "contJoin",
+        "churn"
+      ],
+      "says": "Everything the sequence earns from one customer, less delivery, over their whole stay."
+    },
+    {
+      "id": "ltgpCac",
+      "label": "LTGP to CAC",
+      "tier": 2,
+      "kind": "number",
+      "unit": "ratio",
+      "needs": [
+        "attrPrice",
+        "attrCost",
+        "upPrice",
+        "upCost",
+        "upTake",
+        "downPrice",
+        "downCost",
+        "downTake",
+        "contPrice",
+        "contCost",
+        "contJoin",
+        "churn",
+        "adSpend",
+        "newCustomers"
+      ],
+      "says": "How many times over a customer pays for themselves. The book wants at least 3."
+    },
+    {
+      "id": "cashPerLead",
+      "label": "30-day cash per lead",
+      "tier": 2,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "attrPrice",
+        "attrCost",
+        "upPrice",
+        "upCost",
+        "upTake",
+        "downPrice",
+        "downCost",
+        "downTake",
+        "contPrice",
+        "contCost",
+        "contJoin",
+        "attrConversion"
+      ],
+      "says": "What a lead is worth to you in the first month, so you know what you can pay for one."
+    },
+    {
+      "id": "capacityHeadroom",
+      "label": "Room to grow before capacity",
+      "tier": 2,
+      "kind": "number",
+      "unit": "count",
+      "needs": [
+        "capacity",
+        "newCustomers"
+      ],
+      "says": "Customers per month you could add before you cannot serve them."
+    },
+    {
+      "id": "breakEvenCustomers",
+      "label": "Customers a month to cover fixed costs",
+      "tier": 2,
+      "kind": "number",
+      "unit": "count",
+      "needs": [
+        "fixedCosts",
+        "attrPrice",
+        "attrCost",
+        "upPrice",
+        "upCost",
+        "upTake",
+        "downPrice",
+        "downCost",
+        "downTake",
+        "contPrice",
+        "contCost",
+        "contJoin"
+      ],
+      "says": "Fixed costs divided by 30-day cash per customer. Above this, the month is profitable on new customers alone."
+    },
+    {
+      "id": "unitEconomics",
+      "label": "Where a customer's first-month cash goes",
+      "tier": 2,
+      "kind": "chart",
+      "needs": [
+        "attrPrice",
+        "attrCost",
+        "upPrice",
+        "upCost",
+        "upTake",
+        "downPrice",
+        "downCost",
+        "downTake",
+        "contPrice",
+        "contCost",
+        "contJoin",
+        "adSpend",
+        "newCustomers"
+      ],
+      "says": "Delivery, the cost of the customer, and what is left."
+    },
+    {
+      "id": "waterfall30",
+      "label": "The 30-day cash, offer by offer",
+      "tier": 2,
+      "kind": "chart",
+      "needs": [
+        "attrPrice",
+        "attrCost",
+        "upPrice",
+        "upCost",
+        "upTake",
+        "downPrice",
+        "downCost",
+        "downTake",
+        "contPrice",
+        "contCost",
+        "contJoin",
+        "adSpend",
+        "newCustomers"
+      ],
+      "says": "Each offer's gross profit stacked against the cost of the customer, with the two threshold lines."
+    },
+    {
+      "id": "funnel",
+      "label": "The sequence as a funnel",
+      "tier": 2,
+      "kind": "chart",
+      "needs": [
+        "leads",
+        "attrConversion",
+        "upTake",
+        "downTake",
+        "contJoin"
+      ],
+      "says": "From 100 leads: who buys, who goes bigger, who takes the smaller yes, who keeps paying."
+    },
+    {
+      "id": "retentionCurve",
+      "label": "Members left, month by month",
+      "tier": 2,
+      "kind": "chart",
+      "needs": [
+        "churn"
+      ],
+      "says": "A cohort of 100 joiners at your churn rate, for a year."
+    },
+    {
+      "id": "growthCurve",
+      "label": "Customers per month if you reinvest",
+      "tier": 2,
+      "kind": "chart",
+      "needs": [
+        "growthCash",
+        "adSpend",
+        "newCustomers",
+        "attrPrice",
+        "attrCost",
+        "upPrice",
+        "upCost",
+        "upTake",
+        "downPrice",
+        "downCost",
+        "downTake",
+        "contPrice",
+        "contCost",
+        "contJoin",
+        "reinvestShare",
+        "capacity"
+      ],
+      "says": "Twelve months, buying customers with last month's 30-day cash, capped at capacity."
+    },
+    {
+      "id": "health",
+      "label": "The model's health, six ways",
+      "tier": 2,
+      "kind": "chart",
+      "needs": [
+        "price",
+        "deliveryCost",
+        "attrPrice",
+        "attrCost",
+        "upPrice",
+        "upCost",
+        "upTake",
+        "downPrice",
+        "downCost",
+        "downTake",
+        "contPrice",
+        "contCost",
+        "contJoin",
+        "churn",
+        "adSpend",
+        "newCustomers",
+        "attrConversion"
+      ],
+      "says": "Margin, 30-day ratio, LTGP to CAC, upsell take, retention and conversion, each against a target."
+    },
+    {
+      "id": "offerLine",
+      "label": "The promise",
+      "tier": 3,
+      "kind": "read",
+      "needs": [
+        "customer",
+        "promise"
+      ],
+      "says": "The line every offer points at."
+    },
+    {
+      "id": "constraintRead",
+      "label": "The constraint, and the planet it points at",
+      "tier": 3,
+      "kind": "read",
+      "needs": [
+        "constraint"
+      ],
+      "says": "Which part of the model to build first."
+    },
+    {
+      "id": "sequenceGaps",
+      "label": "Gaps in today's sequence",
+      "tier": 3,
+      "kind": "read",
+      "needs": [
+        "seqFirst",
+        "seqNext",
+        "seqNo",
+        "seqOngoing"
+      ],
+      "says": "Which of the four offers you do not have yet."
+    },
+    {
+      "id": "attrPlayRead",
+      "label": "Your attraction play",
+      "tier": 3,
+      "kind": "read",
+      "needs": [
+        "attrPlay"
+      ],
+      "says": "Named."
+    },
+    {
+      "id": "attrOfferWritten",
+      "label": "The attraction offer, written",
+      "tier": 3,
+      "kind": "read",
+      "needs": [
+        "attrOffer",
+        "attrString"
+      ],
+      "says": "One sentence and its string."
+    },
+    {
+      "id": "attrDesigned",
+      "label": "Attraction offer design list done",
+      "tier": 3,
+      "kind": "badge",
+      "needs": [
+        "A9"
+      ],
+      "says": "Seven checks."
+    },
+    {
+      "id": "upPlayRead",
+      "label": "Your upsell play",
+      "tier": 3,
+      "kind": "read",
+      "needs": [
+        "upPlay"
+      ],
+      "says": "Named."
+    },
+    {
+      "id": "upScriptWritten",
+      "label": "The upsell script, written",
+      "tier": 3,
+      "kind": "read",
+      "needs": [
+        "upScript",
+        "upNoReply"
+      ],
+      "says": "The ask and the reply to the no."
+    },
+    {
+      "id": "upDesigned",
+      "label": "Upsell design list done",
+      "tier": 3,
+      "kind": "badge",
+      "needs": [
+        "U9"
+      ],
+      "says": "Seven checks."
+    },
+    {
+      "id": "downPlayRead",
+      "label": "Your downsell play",
+      "tier": 3,
+      "kind": "read",
+      "needs": [
+        "downPlay"
+      ],
+      "says": "Named."
+    },
+    {
+      "id": "downScriptWritten",
+      "label": "The downsell script, written",
+      "tier": 3,
+      "kind": "read",
+      "needs": [
+        "downScript",
+        "downCut"
+      ],
+      "says": "The smaller yes, and what is smaller."
+    },
+    {
+      "id": "downDesigned",
+      "label": "Downsell design list done",
+      "tier": 3,
+      "kind": "badge",
+      "needs": [
+        "D9"
+      ],
+      "says": "Six checks."
+    },
+    {
+      "id": "contPlayRead",
+      "label": "Your continuity play",
+      "tier": 3,
+      "kind": "read",
+      "needs": [
+        "contPlay"
+      ],
+      "says": "Named."
+    },
+    {
+      "id": "contScriptWritten",
+      "label": "The continuity pitch, written",
+      "tier": 3,
+      "kind": "read",
+      "needs": [
+        "contScript",
+        "contHook"
+      ],
+      "says": "The pitch and the reason to stay."
+    },
+    {
+      "id": "contDesigned",
+      "label": "Continuity design list done",
+      "tier": 3,
+      "kind": "badge",
+      "needs": [
+        "C9"
+      ],
+      "says": "Six checks."
+    },
+    {
+      "id": "northStarRead",
+      "label": "The number on the wall",
+      "tier": 3,
+      "kind": "read",
+      "needs": [
+        "northStar"
+      ],
+      "says": "Named."
+    },
+    {
+      "id": "scoreboardSet",
+      "label": "The scoreboard has an owner",
+      "tier": 3,
+      "kind": "read",
+      "needs": [
+        "scoreboardWhere",
+        "scoreboardWho"
+      ],
+      "says": "Where, who, when."
+    },
+    {
+      "id": "scoreboardFilled",
+      "label": "Scoreboard rows filled",
+      "tier": 3,
+      "kind": "badge",
+      "needs": [
+        "K9"
+      ],
+      "says": "Six rows."
+    },
+    {
+      "id": "modelWritten",
+      "label": "The whole model, written",
+      "tier": 3,
+      "kind": "read",
+      "needs": [
+        "attrOffer",
+        "upScript",
+        "downScript",
+        "contScript"
+      ],
+      "says": "All four offers in one place, in order."
+    },
+    {
+      "id": "baselinePayback",
+      "label": "Days to get cash back, today",
+      "tier": 4,
+      "kind": "number",
+      "unit": "days",
+      "needs": [
+        "daysToCash"
+      ],
+      "says": "The before figure. The model's payback days go beside it."
+    },
+    {
+      "id": "baselineRatio",
+      "label": "30-day ratio, today",
+      "tier": 4,
+      "kind": "number",
+      "unit": "ratio",
+      "needs": [
+        "cash30Today",
+        "adSpend",
+        "newCustomers"
+      ],
+      "says": "What the business does now, before the sequence."
+    },
+    {
+      "id": "beforeAfter",
+      "label": "Before and after",
+      "tier": 4,
+      "kind": "chart",
+      "needs": [
+        "cash30Today",
+        "adSpend",
+        "newCustomers",
+        "attrPrice",
+        "attrCost",
+        "upPrice",
+        "upCost",
+        "upTake",
+        "downPrice",
+        "downCost",
+        "downTake",
+        "contPrice",
+        "contCost",
+        "contJoin"
+      ],
+      "says": "Today's 30-day cash beside the planned sequence, against the cost of a customer."
+    },
+    {
+      "id": "foundationsAudited",
+      "label": "Foundation numbers audited",
+      "tier": 4,
+      "kind": "badge",
+      "needs": [
+        "F12"
+      ],
+      "says": "Five checks."
+    },
+    {
+      "id": "effectiveUpTake",
+      "label": "Real upsell take across all customers",
+      "tier": 4,
+      "kind": "number",
+      "unit": "percent",
+      "needs": [
+        "showRate",
+        "upOfferedShare",
+        "upTake"
+      ],
+      "says": "Show rate, times the share asked, times the take rate when asked. The number that actually hits the bank."
+    },
+    {
+      "id": "attrGpNet",
+      "label": "Attraction gross profit after refunds",
+      "tier": 4,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "attrPrice",
+        "attrCost",
+        "refundRate"
+      ],
+      "says": "Gross profit less the price times the refund rate."
+    },
+    {
+      "id": "attrTested",
+      "label": "Attraction offer tested",
+      "tier": 4,
+      "kind": "badge",
+      "needs": [
+        "A12"
+      ],
+      "says": "Six checks."
+    },
+    {
+      "id": "downCash30",
+      "label": "Downsell cash inside 30 days",
+      "tier": 4,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "downPrice",
+        "downTake",
+        "upTake",
+        "planFirstShare"
+      ],
+      "says": "Only the first payment lands inside the month."
+    },
+    {
+      "id": "cash30Verified",
+      "label": "30-day cash, checked against timing",
+      "tier": 4,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "attrPrice",
+        "attrCost",
+        "upPrice",
+        "upCost",
+        "upTake",
+        "downPrice",
+        "downCost",
+        "downTake",
+        "contPrice",
+        "contCost",
+        "contJoin",
+        "upWhen",
+        "planFirstShare",
+        "contFirstDays"
+      ],
+      "says": "The planned 30-day cash, dropping any offer whose cash lands after day 30 and counting only the first plan payment."
+    },
+    {
+      "id": "paybackDays",
+      "label": "Payback days (planned)",
+      "tier": 4,
+      "kind": "number",
+      "unit": "days",
+      "needs": [
+        "attrPrice",
+        "attrCost",
+        "upPrice",
+        "upCost",
+        "upTake",
+        "downPrice",
+        "downCost",
+        "downTake",
+        "contPrice",
+        "contCost",
+        "contJoin",
+        "churn",
+        "adSpend",
+        "newCustomers",
+        "upWhen",
+        "contFirstDays"
+      ],
+      "says": "The day the sequence's cumulative gross profit passes the cost of the customer."
+    },
+    {
+      "id": "paybackChart",
+      "label": "Cumulative cash against the cost of a customer",
+      "tier": 4,
+      "kind": "chart",
+      "needs": [
+        "attrPrice",
+        "attrCost",
+        "upPrice",
+        "upCost",
+        "upTake",
+        "downPrice",
+        "downCost",
+        "downTake",
+        "contPrice",
+        "contCost",
+        "contJoin",
+        "churn",
+        "adSpend",
+        "newCustomers",
+        "upWhen",
+        "contFirstDays"
+      ],
+      "says": "Ninety days, one line, with the day-30 mark and the cost of the customer."
+    },
+    {
+      "id": "upTested",
+      "label": "Upsell tested",
+      "tier": 4,
+      "kind": "badge",
+      "needs": [
+        "U12"
+      ],
+      "says": "Five checks."
+    },
+    {
+      "id": "planLeak",
+      "label": "Cash lost to failed plans, per customer",
+      "tier": 4,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "downPrice",
+        "downTake",
+        "upTake",
+        "planFirstShare",
+        "planDefault"
+      ],
+      "says": "The unpaid remainder times the default rate, spread over customers."
+    },
+    {
+      "id": "downTested",
+      "label": "Downsell tested",
+      "tier": 4,
+      "kind": "badge",
+      "needs": [
+        "D12"
+      ],
+      "says": "Five checks."
+    },
+    {
+      "id": "retain3Check",
+      "label": "Month-three retention, predicted and measured",
+      "tier": 4,
+      "kind": "chart",
+      "needs": [
+        "churn",
+        "retain3"
+      ],
+      "says": "What your churn rate predicts at month three, beside what you counted."
+    },
+    {
+      "id": "contTested",
+      "label": "Continuity tested",
+      "tier": 4,
+      "kind": "badge",
+      "needs": [
+        "C12"
+      ],
+      "says": "Five checks."
+    },
+    {
+      "id": "measuredRatio",
+      "label": "30-day ratio, measured",
+      "tier": 4,
+      "kind": "number",
+      "unit": "ratio",
+      "needs": [
+        "measuredCash30",
+        "adSpend",
+        "newCustomers"
+      ],
+      "says": "From a real cohort, after the model."
+    },
+    {
+      "id": "planVsActual",
+      "label": "Planned, measured, and before",
+      "tier": 4,
+      "kind": "chart",
+      "needs": [
+        "measuredCash30",
+        "cash30Today",
+        "adSpend",
+        "newCustomers",
+        "attrPrice",
+        "attrCost",
+        "upPrice",
+        "upCost",
+        "upTake",
+        "downPrice",
+        "downCost",
+        "downTake",
+        "contPrice",
+        "contCost",
+        "contJoin"
+      ],
+      "says": "Three bars against the cost of a customer."
+    },
+    {
+      "id": "customerGrowth",
+      "label": "Customer growth since the model",
+      "tier": 4,
+      "kind": "number",
+      "unit": "percent",
+      "needs": [
+        "measuredNewCustomers",
+        "newCustomers"
+      ],
+      "says": "New customers after, against before."
+    },
+    {
+      "id": "monthClosed",
+      "label": "A month closed",
+      "tier": 4,
+      "kind": "badge",
+      "needs": [
+        "K12"
+      ],
+      "says": "Six checks."
+    },
+    {
+      "id": "gpPerHour",
+      "label": "Gross profit per hour of your time",
+      "tier": 5,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "attrPrice",
+        "attrCost",
+        "upPrice",
+        "upCost",
+        "upTake",
+        "downPrice",
+        "downCost",
+        "downTake",
+        "contPrice",
+        "contCost",
+        "contJoin",
+        "hoursPerCustomer"
+      ],
+      "says": "The 30-day cash per customer divided by the hours you put into one. Raise the price, cut the delivery, or hire, depending on whether you like this number."
+    },
+    {
+      "id": "rhythmSet",
+      "label": "The weekly rhythm",
+      "tier": 5,
+      "kind": "badge",
+      "needs": [
+        "F15"
+      ],
+      "says": "Four checks."
+    },
+    {
+      "id": "firstPlanetRead",
+      "label": "The planet you build first",
+      "tier": 5,
+      "kind": "read",
+      "needs": [
+        "firstPlanet"
+      ],
+      "says": "Named."
+    },
+    {
+      "id": "attrStacked",
+      "label": "A second attraction play",
+      "tier": 5,
+      "kind": "read",
+      "needs": [
+        "attrStack"
+      ],
+      "says": "Named."
+    },
+    {
+      "id": "runRevenue",
+      "label": "Cash a full run brings in",
+      "tier": 5,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "attrCap",
+        "attrPrice",
+        "attrCost",
+        "upPrice",
+        "upCost",
+        "upTake",
+        "downPrice",
+        "downCost",
+        "downTake",
+        "contPrice",
+        "contCost",
+        "contJoin"
+      ],
+      "says": "The cap times the 30-day cash per customer."
+    },
+    {
+      "id": "attrSharpened",
+      "label": "Attraction offer sharpened",
+      "tier": 5,
+      "kind": "badge",
+      "needs": [
+        "A15"
+      ],
+      "says": "Five runs."
+    },
+    {
+      "id": "up2Expected",
+      "label": "Second upsell profit per customer",
+      "tier": 5,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "up2Price",
+        "up2Take",
+        "upTake"
+      ],
+      "says": "Price times the second take rate times the first, spread over all customers. Delivery cost is not asked for; treat it as an upper bound."
+    },
+    {
+      "id": "ltgpFull",
+      "label": "LTGP with the second upsell and the yearly plan",
+      "tier": 5,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "attrPrice",
+        "attrCost",
+        "upPrice",
+        "upCost",
+        "upTake",
+        "downPrice",
+        "downCost",
+        "downTake",
+        "contPrice",
+        "contCost",
+        "contJoin",
+        "churn",
+        "up2Price",
+        "up2Take",
+        "contAnnualPrice",
+        "contAnnualTake"
+      ],
+      "says": "The tier-2 figure plus the Optimize band's additions."
+    },
+    {
+      "id": "anchorGap",
+      "label": "How much smaller the upsell looks beside the anchor",
+      "tier": 5,
+      "kind": "number",
+      "unit": "percent",
+      "needs": [
+        "anchorPrice",
+        "upPrice"
+      ],
+      "says": "The upsell as a share of the anchor. Under a third reads as the sensible choice."
+    },
+    {
+      "id": "upSharpened",
+      "label": "Upsell sharpened",
+      "tier": 5,
+      "kind": "badge",
+      "needs": [
+        "U15"
+      ],
+      "says": "Five runs."
+    },
+    {
+      "id": "entryDownExpected",
+      "label": "Entry downsell cash per lead",
+      "tier": 5,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "entryDownPrice",
+        "entryDownTake",
+        "attrConversion"
+      ],
+      "says": "Price times the take rate among the leads who did not buy."
+    },
+    {
+      "id": "cashPerLeadFull",
+      "label": "30-day cash per lead with the entry downsell",
+      "tier": 5,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "attrPrice",
+        "attrCost",
+        "upPrice",
+        "upCost",
+        "upTake",
+        "downPrice",
+        "downCost",
+        "downTake",
+        "contPrice",
+        "contCost",
+        "contJoin",
+        "attrConversion",
+        "entryDownPrice",
+        "entryDownTake"
+      ],
+      "says": "Cash per lead, plus what the leads who said no now bring."
+    },
+    {
+      "id": "downStacked",
+      "label": "The second downsell's cut",
+      "tier": 5,
+      "kind": "read",
+      "needs": [
+        "downCut2"
+      ],
+      "says": "Named."
+    },
+    {
+      "id": "downSharpened",
+      "label": "Downsell sharpened",
+      "tier": 5,
+      "kind": "badge",
+      "needs": [
+        "D15"
+      ],
+      "says": "Five runs."
+    },
+    {
+      "id": "annualLift",
+      "label": "Cash the yearly plan moves into month one",
+      "tier": 5,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "contAnnualPrice",
+        "contAnnualTake",
+        "contJoin",
+        "contPrice"
+      ],
+      "says": "The yearly price less the first month already counted, times the share who choose it, per customer."
+    },
+    {
+      "id": "gp30Stacked",
+      "label": "30-day cash with the yearly plan",
+      "tier": 5,
+      "kind": "number",
+      "unit": "cents",
+      "needs": [
+        "attrPrice",
+        "attrCost",
+        "upPrice",
+        "upCost",
+        "upTake",
+        "downPrice",
+        "downCost",
+        "downTake",
+        "contPrice",
+        "contCost",
+        "contJoin",
+        "contAnnualPrice",
+        "contAnnualTake"
+      ],
+      "says": "Planned 30-day cash plus the yearly plan's lift."
+    },
+    {
+      "id": "contStacked",
+      "label": "The next reason to stay",
+      "tier": 5,
+      "kind": "read",
+      "needs": [
+        "contHook2"
+      ],
+      "says": "Named."
+    },
+    {
+      "id": "contSharpened",
+      "label": "Continuity sharpened",
+      "tier": 5,
+      "kind": "badge",
+      "needs": [
+        "C15"
+      ],
+      "says": "Five cohorts."
+    },
+    {
+      "id": "breakEvenTake",
+      "label": "Take rate that keeps the price test even",
+      "tier": 5,
+      "kind": "number",
+      "unit": "percent",
+      "needs": [
+        "upPrice",
+        "upCost",
+        "upTake",
+        "priceRaise"
+      ],
+      "says": "If the raised price takes at least this share, you are no worse off."
+    },
+    {
+      "id": "bottleneckRead",
+      "label": "The next bottleneck",
+      "tier": 5,
+      "kind": "read",
+      "needs": [
+        "bottleneck"
+      ],
+      "says": "Named."
+    },
+    {
+      "id": "quarterReviewed",
+      "label": "A quarter reviewed",
+      "tier": 5,
+      "kind": "badge",
+      "needs": [
+        "K15"
+      ],
+      "says": "Five checks."
+    }
+  ]
+}

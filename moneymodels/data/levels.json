@@ -1,0 +1,3255 @@
+{
+ "id": "moneymodels_levels",
+ "version": "1.0",
+ "asOf": "2026-09-26",
+ "source": "A companion workbook to the ideas in Alex Hormozi's book $100M Money Models (Acquisition.com, 2025). Every lesson here is a paraphrase in this app's own words, never the book's text; the exercises are the book's homework restated as things to type, tick or pick. Read the book for the reasoning and the stories. Play names are this app's plain-word labels for the book's offer types.",
+ "confidence": "convention",
+ "confidenceNote": "Thresholds (pay back the cost of a customer in 30 days, twice that to self-fund, lifetime gross profit at least three times the cost of a customer) are the book's rules of thumb, not measured findings. Your own numbers decide.",
+ "note": "Read by moneymodels/engines/model.js. Six planets, five bands of three levels each, 90 levels. A band means the same depth on every planet: Learn (read and check), Numbers (type your figures), Build (the exercises), Prove (run it and measure), Optimize (stack and sharpen). A recipe of tier N may need only facts from bands 1 to N (linted).",
+ "planets": [
+  {
+   "id": "found",
+   "label": "Foundations",
+   "short": "Model",
+   "blurb": "What a money model is, what it costs you to get a customer today, and the one rule the whole book rests on.",
+   "hue": "blue"
+  },
+  {
+   "id": "attr",
+   "label": "Attraction",
+   "short": "Attract",
+   "blurb": "The first yes: the offer that turns a stranger into a customer without draining your cash.",
+   "hue": "aqua"
+  },
+  {
+   "id": "up",
+   "label": "Upsell",
+   "short": "Upsell",
+   "blurb": "The bigger yes, asked at the moment it is easiest to say. Where the model makes its money.",
+   "hue": "orange"
+  },
+  {
+   "id": "down",
+   "label": "Downsell",
+   "short": "Downsell",
+   "blurb": "The smaller yes after a no. Keeps the customer and recovers cash you would have lost.",
+   "hue": "violet"
+  },
+  {
+   "id": "cont",
+   "label": "Continuity",
+   "short": "Resell",
+   "blurb": "The yes that repeats: getting customers to keep paying, which is what makes lifetime profit large.",
+   "hue": "yellow"
+  },
+  {
+   "id": "kpi",
+   "label": "KPIs and Scale",
+   "short": "KPIs",
+   "blurb": "The six numbers to watch, the two thresholds, and how fast customer money can fund the next customer.",
+   "hue": "magenta"
+  }
+ ],
+ "bands": [
+  {
+   "band": 1,
+   "name": "Learn",
+   "meaning": "Read the idea, then answer one check question",
+   "payoff": "reveal"
+  },
+  {
+   "band": 2,
+   "name": "Numbers",
+   "meaning": "Type your figures for this part of the model",
+   "payoff": "reveal"
+  },
+  {
+   "band": 3,
+   "name": "Build",
+   "meaning": "The exercises: pick a play, write the offer, tick the design list",
+   "payoff": "power"
+  },
+  {
+   "band": 4,
+   "name": "Prove",
+   "meaning": "Run it for real and type what happened",
+   "payoff": "certainty"
+  },
+  {
+   "band": 5,
+   "name": "Optimize",
+   "meaning": "Stack a second play and sharpen the numbers",
+   "payoff": "power"
+  }
+ ],
+ "tags": {
+  "R": "Read",
+  "E": "Enter",
+  "B": "Build",
+  "C": "Check"
+ },
+ "levels": [
+  {
+   "id": "F1",
+   "planet": "found",
+   "level": 1,
+   "band": 1,
+   "tag": "R",
+   "title": "What a money model is",
+   "lesson": [
+    "A money model is a deliberate sequence of offers. Not one product with a price on it: the order in which you ask a customer to say yes, what you ask for each time, and what you do when they say no.",
+    "The point of the sequence is cash timing. A business that makes plenty of profit over two years can still die in month two, because the money to get the next customer is not back in the bank yet.",
+    "So the question the whole book asks is: how do you get a customer to pay you more, sooner, than it costs you to get and serve them?"
+   ],
+   "kind": "quiz",
+   "quiz": {
+    "q": "Which of these is a money model?",
+    "options": [
+     "A product with a good price",
+     "A sequence of offers: the first yes, a bigger yes, a smaller yes after a no, and a repeating yes",
+     "A marketing budget"
+    ],
+    "answer": 1,
+    "why": "One price is one offer. A money model is the order of offers around it and what each one is for."
+   },
+   "minutes": 2,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "learnedFound"
+    ]
+   }
+  },
+  {
+   "id": "F2",
+   "planet": "found",
+   "level": 2,
+   "band": 1,
+   "tag": "R",
+   "title": "The cash constraint and the 30-day rule",
+   "lesson": [
+    "Every customer costs money to get (ads, time, commissions) and money to serve. If that cash comes back in a year, you can only afford as many customers as your savings allow. Growth is capped by your bank balance, not by demand.",
+    "The rule of thumb the book builds on: get back at least what a customer cost you within 30 days. Get back twice that and every customer pays for the next one. Then growth is funded by customers, not by you or a lender.",
+    "Thirty days is not magic. It is roughly how long a card bill or an ad invoice gives you before the money is due."
+   ],
+   "kind": "quiz",
+   "quiz": {
+    "q": "A customer costs $150 to get. What does the model want back from them inside 30 days?",
+    "options": [
+     "At least $150, and ideally $300 or more",
+     "Whatever they pay over their lifetime",
+     "Nothing, as long as the business is profitable by year end"
+    ],
+    "answer": 0,
+    "why": "Break-even inside 30 days keeps you alive. Twice the cost lets the next customer be bought with this one's money."
+   },
+   "minutes": 2,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "learnedFound"
+    ]
+   }
+  },
+  {
+   "id": "F3",
+   "planet": "found",
+   "level": 3,
+   "band": 1,
+   "tag": "R",
+   "title": "The four kinds of offer",
+   "lesson": [
+    "Attraction offers get the first yes from a stranger. Their job is to bring people in cheaply, not to make the money.",
+    "Upsell offers ask for a bigger yes right after the first one, when trust is highest. This is where the model earns.",
+    "Downsell offers turn a no into a smaller yes: same promise, lighter package or easier terms.",
+    "Continuity offers get the customer to keep paying: a membership, a subscription, a retainer. This is what makes the lifetime value large.",
+    "Each of the next four planets takes one of these. Do them in order: a great upsell with no one to offer it to is worth nothing."
+   ],
+   "kind": "quiz",
+   "quiz": {
+    "q": "A customer says no to the bigger package. Which offer comes next?",
+    "options": [
+     "Another attraction offer",
+     "A downsell: the same promise in a lighter or easier form",
+     "Nothing, the sale is over"
+    ],
+    "answer": 1,
+    "why": "A no to the price or the size is not a no to the result. The downsell keeps the customer and some of the cash."
+   },
+   "minutes": 2,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "learnedFound"
+    ]
+   }
+  },
+  {
+   "id": "F4",
+   "planet": "found",
+   "level": 4,
+   "band": 2,
+   "tag": "E",
+   "title": "What your main offer sells for today",
+   "lesson": [
+    "Start with the business as it is. One product or service, the one most customers buy first. Its price, before any discount."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "price",
+     "kind": "cents",
+     "label": "Price of your main offer today",
+     "help": "What one customer pays for it. If it is monthly, use one month here; the model will handle the repeat part on the Continuity planet."
+    }
+   ],
+   "minutes": 1,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "gpPerSale",
+     "grossMargin"
+    ]
+   }
+  },
+  {
+   "id": "F5",
+   "planet": "found",
+   "level": 5,
+   "band": 2,
+   "tag": "E",
+   "title": "What it costs you to deliver one",
+   "lesson": [
+    "Everything you spend to serve one customer for that offer: materials, shipping, contractor hours, software seats, the hours you pay someone for. Not rent, not ads. If you deliver it yourself, count your hours at what you would pay someone else."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "deliveryCost",
+     "kind": "cents",
+     "label": "Cost to deliver one sale",
+     "help": "Only the costs that happen because this one customer bought. Type 0 if there truly are none (a digital file, say)."
+    }
+   ],
+   "minutes": 3,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "gpPerSale",
+     "grossMargin"
+    ]
+   }
+  },
+  {
+   "id": "F6",
+   "planet": "found",
+   "level": 6,
+   "band": 2,
+   "tag": "E",
+   "title": "What a customer costs you to get",
+   "lesson": [
+    "The cost of a customer is everything you spent to get customers in a month, divided by the customers you got. Ads, the person who runs them, referral fees, the free sessions you gave away. Last month is fine. A rough month is better than nothing; you will replace it on the Prove band."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "adSpend",
+     "kind": "cents",
+     "label": "Spent on getting customers last month",
+     "help": "Ads, agency, commissions, giveaways, the salary of whoever does the marketing."
+    },
+    {
+     "key": "newCustomers",
+     "kind": "count",
+     "label": "New customers last month",
+     "help": "People who paid for the first time. Not leads, not sign-ups."
+    }
+   ],
+   "minutes": 4,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "cac",
+     "firstSaleGap",
+     "affordableCustomers"
+    ]
+   }
+  },
+  {
+   "id": "F7",
+   "planet": "found",
+   "level": 7,
+   "band": 3,
+   "tag": "B",
+   "title": "Exercise: the promise in one line",
+   "lesson": [
+    "Every offer in the model points at the same result. Write it the way the customer would say it, not the way your industry does. 'Lose the first ten pounds in six weeks' beats 'a holistic fitness programme'.",
+    "This line is reused on every planet: the attraction offer promises it, the upsell gets it faster, the downsell gets it lighter, continuity keeps it."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "customer",
+     "kind": "text",
+     "label": "Who the customer is, in a few words",
+     "help": "One kind of person. 'Busy parents who stopped exercising' is a customer; 'anyone' is not."
+    },
+    {
+     "key": "promise",
+     "kind": "text",
+     "label": "The result they want, in their words",
+     "help": "A result with a size and a time if you can: what, how much, by when."
+    }
+   ],
+   "minutes": 6,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "offerLine"
+    ]
+   }
+  },
+  {
+   "id": "F8",
+   "planet": "found",
+   "level": 8,
+   "band": 3,
+   "tag": "B",
+   "title": "Exercise: name the constraint",
+   "lesson": [
+    "A business is held back by one thing at a time. Pick the one that is true right now. The model's planets map onto it: not enough customers is an attraction problem; not enough per customer is upsell and downsell; they do not stay is continuity; it costs too much to serve is a margin problem to fix before any of them."
+   ],
+   "kind": "choice",
+   "fields": [
+    {
+     "key": "constraint",
+     "kind": "choice",
+     "label": "What is holding the business back right now?",
+     "options": [
+      {
+       "id": "customers",
+       "label": "Not enough customers"
+      },
+      {
+       "id": "perCustomer",
+       "label": "Each customer does not pay enough"
+      },
+      {
+       "id": "stay",
+       "label": "They do not stay or come back"
+      },
+      {
+       "id": "cost",
+       "label": "It costs too much to serve them"
+      }
+     ]
+    }
+   ],
+   "minutes": 2,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "constraintRead"
+    ]
+   }
+  },
+  {
+   "id": "F9",
+   "planet": "found",
+   "level": 9,
+   "band": 3,
+   "tag": "B",
+   "title": "Exercise: map today's sequence",
+   "lesson": [
+    "Write down what a customer is actually offered today, in the order it happens. Most businesses find they have one offer and then silence. That silence is the money model you are about to build."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "seqFirst",
+     "kind": "text",
+     "label": "The first thing a stranger is offered",
+     "help": "The ad, the free consult, the intro price. Whatever comes first."
+    },
+    {
+     "key": "seqNext",
+     "kind": "text",
+     "label": "What they are offered after buying",
+     "help": "Type 'nothing' if nothing. That is an honest and common answer."
+    },
+    {
+     "key": "seqNo",
+     "kind": "text",
+     "label": "What happens when they say no",
+     "help": "A follow-up? A cheaper option? Nothing?"
+    },
+    {
+     "key": "seqOngoing",
+     "kind": "text",
+     "label": "What they pay for on an ongoing basis",
+     "help": "A membership, a retainer, refills, or 'nothing'."
+    }
+   ],
+   "minutes": 5,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "sequenceGaps"
+    ]
+   }
+  },
+  {
+   "id": "F10",
+   "planet": "found",
+   "level": 10,
+   "band": 4,
+   "tag": "E",
+   "title": "How long cash takes to come back today",
+   "lesson": [
+    "From the day you spend the first dollar on getting a customer to the day their money is in your account. Count the sales cycle, the free trial, the invoice terms. This is the number the model shortens."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "daysToCash",
+     "kind": "days",
+     "label": "Days from first ad dollar to first cash collected",
+     "help": "Typical, not best case. If you invoice on 30-day terms after a two-week trial, that is about 45."
+    }
+   ],
+   "minutes": 3,
+   "payoff": {
+    "currency": "certainty",
+    "metrics": [
+     "baselinePayback"
+    ]
+   }
+  },
+  {
+   "id": "F11",
+   "planet": "found",
+   "level": 11,
+   "band": 4,
+   "tag": "E",
+   "title": "Cash per customer in their first 30 days, today",
+   "lesson": [
+    "Take last month's new customers and add up everything they paid you in their first 30 days. Divide by how many there were. This is the before picture; the model page shows the after beside it."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "cash30Today",
+     "kind": "cents",
+     "label": "Cash collected per new customer in their first 30 days",
+     "help": "Collected, not invoiced. A payment plan counts only the payments that landed inside 30 days."
+    }
+   ],
+   "minutes": 6,
+   "payoff": {
+    "currency": "certainty",
+    "metrics": [
+     "baselineRatio",
+     "beforeAfter"
+    ]
+   }
+  },
+  {
+   "id": "F12",
+   "planet": "found",
+   "level": 12,
+   "band": 4,
+   "tag": "C",
+   "title": "Checklist: the numbers audit",
+   "lesson": [
+    "Before building anything new, make sure the four foundation figures are real rather than remembered. Tick each once it comes from a statement, a report or a count, not a guess."
+   ],
+   "kind": "checklist",
+   "items": [
+    {
+     "id": "spendByChannel",
+     "text": "Marketing spend is tracked by channel, month by month"
+    },
+    {
+     "id": "customersBySource",
+     "text": "New customers are counted with where they came from"
+    },
+    {
+     "id": "unitCost",
+     "text": "The cost to deliver one sale comes from real invoices or hours"
+    },
+    {
+     "id": "cash30Counted",
+     "text": "The 30-day cash per customer was counted from actual payments"
+    },
+    {
+     "id": "constraintWritten",
+     "text": "The constraint is written down where the team can see it"
+    }
+   ],
+   "minutes": 10,
+   "payoff": {
+    "currency": "certainty",
+    "metrics": [
+     "foundationsAudited"
+    ]
+   }
+  },
+  {
+   "id": "F13",
+   "planet": "found",
+   "level": 13,
+   "band": 5,
+   "tag": "E",
+   "title": "Your hours per customer",
+   "lesson": [
+    "The cost to deliver (level 5) priced your time at what you would pay someone else. This asks for the hours themselves: everything you personally spend on one customer in their first month, selling and serving. The model turns it into gross profit per hour of your time, which is the number that says whether to raise the price, cut delivery, or hire."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "hoursPerCustomer",
+     "kind": "count",
+     "label": "Hours of your own time per customer, first month",
+     "help": "Selling, onboarding, delivering, chasing. A rough count is fine."
+    }
+   ],
+   "minutes": 3,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "gpPerHour"
+    ]
+   }
+  },
+  {
+   "id": "F14",
+   "planet": "found",
+   "level": 14,
+   "band": 5,
+   "tag": "B",
+   "title": "Exercise: the play you run first",
+   "lesson": [
+    "The constraint you named on level 8 says which planet to build first. Pick it here so the next-up card points at it. You can change your mind later; you cannot build four things at once."
+   ],
+   "kind": "choice",
+   "fields": [
+    {
+     "key": "firstPlanet",
+     "kind": "choice",
+     "label": "Which part of the model do you build first?",
+     "options": [
+      {
+       "id": "attr",
+       "label": "Attraction: bring more people in"
+      },
+      {
+       "id": "up",
+       "label": "Upsell: earn more from each one"
+      },
+      {
+       "id": "down",
+       "label": "Downsell: lose fewer at the no"
+      },
+      {
+       "id": "cont",
+       "label": "Continuity: keep them paying"
+      }
+     ]
+    }
+   ],
+   "minutes": 1,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "firstPlanetRead"
+    ]
+   }
+  },
+  {
+   "id": "F15",
+   "planet": "found",
+   "level": 15,
+   "band": 5,
+   "tag": "C",
+   "title": "Checklist: the weekly rhythm",
+   "lesson": [
+    "The model is not a launch, it is a habit. Once a week, four numbers and one change."
+   ],
+   "kind": "checklist",
+   "items": [
+    {
+     "id": "weekCac",
+     "text": "Cost of a customer refreshed for last week"
+    },
+    {
+     "id": "weekCash30",
+     "text": "30-day cash per customer refreshed"
+    },
+    {
+     "id": "weekRatio",
+     "text": "The 30-day ratio compared with the two thresholds"
+    },
+    {
+     "id": "weekOneChange",
+     "text": "One change chosen for next week, and only one"
+    }
+   ],
+   "minutes": 5,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "rhythmSet"
+    ]
+   }
+  },
+  {
+   "id": "A1",
+   "planet": "attr",
+   "level": 1,
+   "band": 1,
+   "tag": "R",
+   "title": "What an attraction offer is for",
+   "lesson": [
+    "The attraction offer's job is to turn a stranger into a customer. It is the door, not the room. If it makes a profit on its own, wonderful; if it only covers the cost of getting the customer, that is still a win, because the upsell and continuity are waiting behind it.",
+    "The mistake is to make the attraction offer the whole business: then every customer must be profitable on day one, and the price has to be high, and fewer people walk through the door.",
+    "A good attraction offer is easy to say yes to, makes the promise from Foundations level 7 in a small, fast form, and naturally leads to the next offer."
+   ],
+   "kind": "quiz",
+   "quiz": {
+    "q": "The attraction offer breaks even after covering the cost of the customer. Good or bad?",
+    "options": [
+     "Bad: every offer should make a profit",
+     "Good: the customer cost nothing net, and the upsell and continuity are still to come",
+     "Neither, it depends on the industry"
+    ],
+    "answer": 1,
+    "why": "A free customer who then sees an upsell and a continuity offer is the whole idea."
+   },
+   "minutes": 2,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "learnedAttr"
+    ]
+   }
+  },
+  {
+   "id": "A2",
+   "planet": "attr",
+   "level": 2,
+   "band": 1,
+   "tag": "R",
+   "title": "The attraction plays",
+   "lesson": [
+    "Win your money back: the customer pays, and gets it back (or as credit) if they hit a defined result and follow the rules. Most will not hit it; the ones who do are the ones you want to keep.",
+    "Giveaway: one big prize, many entrants, and everyone who did not win gets an offer. Cheap leads at volume.",
+    "Decoy: a free or very cheap option beside the real one, so the real one looks like the sensible choice, and the free option filters out people who would never pay.",
+    "Buy some, get some free: bundle volume up front. The free part is margin you would have spent on getting them back anyway.",
+    "Pay less now or pay more later: two prices for the same thing, a smaller one paid today and a larger one paid on results or over time. Both close; one brings cash forward.",
+    "Free with strings: free only when the string (a deposit, a booked call, an upsell moment) makes the free customer pay off."
+   ],
+   "kind": "quiz",
+   "quiz": {
+    "q": "In 'win your money back', who ends up refunded?",
+    "options": [
+     "Everyone who asks",
+     "The few who hit the stated result and followed every rule",
+     "Nobody, it is a trick"
+    ],
+    "answer": 1,
+    "why": "The condition is real and reachable. The people who reach it are your best customers, and the refund is cheaper than the ad that would have found them."
+   },
+   "minutes": 3,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "learnedAttr"
+    ]
+   }
+  },
+  {
+   "id": "A3",
+   "planet": "attr",
+   "level": 3,
+   "band": 1,
+   "tag": "R",
+   "title": "The three parts every attraction offer needs",
+   "lesson": [
+    "A clear result with a time on it. Not 'a great experience'; 'ten pounds in six weeks'.",
+    "A reason it is cheap or free that the customer believes: a challenge, a first-time price, a limited batch, a prize. Cheap with no reason reads as low quality.",
+    "A string that leads to the next offer: the results call, the check-in, the thing they have to come in for. That is where the upsell lives."
+   ],
+   "kind": "quiz",
+   "quiz": {
+    "q": "Which attraction offer is missing something?",
+    "options": [
+     "'Six-week challenge, $500, win it back if you finish all 18 sessions'",
+     "'50% off everything this month'",
+     "'Free strategy session, then we build your plan together'"
+    ],
+    "answer": 1,
+    "why": "A discount has no result, no reason and no string. The other two have all three."
+   },
+   "minutes": 2,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "learnedAttr"
+    ]
+   }
+  },
+  {
+   "id": "A4",
+   "planet": "attr",
+   "level": 4,
+   "band": 2,
+   "tag": "E",
+   "title": "The attraction offer's price",
+   "lesson": [
+    "What the stranger pays for the first yes. Type 0 if the plan is free with strings; that is a real answer and the model will treat it as one."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "attrPrice",
+     "kind": "cents",
+     "label": "Price of the attraction offer",
+     "help": "The cash collected up front, before any refund or credit."
+    }
+   ],
+   "minutes": 1,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "attrGp",
+     "gp30",
+     "ratio30"
+    ]
+   }
+  },
+  {
+   "id": "A5",
+   "planet": "attr",
+   "level": 5,
+   "band": 2,
+   "tag": "E",
+   "title": "What the attraction offer costs to deliver",
+   "lesson": [
+    "Same idea as Foundations level 5, for this offer. Include the prize if it is a giveaway (prize cost divided by expected entrants) and the expected refunds if it is win-your-money-back (Prove level 11 sharpens that)."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "attrCost",
+     "kind": "cents",
+     "label": "Cost to deliver the attraction offer to one customer",
+     "help": "Per customer, all in. 0 is allowed."
+    }
+   ],
+   "minutes": 3,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "attrGp",
+     "gp30",
+     "ratio30"
+    ]
+   }
+  },
+  {
+   "id": "A6",
+   "planet": "attr",
+   "level": 6,
+   "band": 2,
+   "tag": "E",
+   "title": "Leads, and how many of them buy",
+   "lesson": [
+    "A lead is someone who raised a hand: a form, a call, a walk-in. The share who take the attraction offer is the conversion rate. Together with what you spend (Foundations 6) this gives the cost of a lead."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "leads",
+     "kind": "count",
+     "label": "Leads per month",
+     "help": "People who asked, booked or messaged. Last month is fine."
+    },
+    {
+     "key": "attrConversion",
+     "kind": "percent",
+     "label": "Share of leads who take the attraction offer",
+     "help": "Buyers divided by leads, as a percent."
+    }
+   ],
+   "minutes": 3,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "cpl",
+     "cashPerLead",
+     "impliedCustomers"
+    ]
+   }
+  },
+  {
+   "id": "A7",
+   "planet": "attr",
+   "level": 7,
+   "band": 3,
+   "tag": "B",
+   "title": "Exercise: pick your attraction play",
+   "lesson": [
+    "The Plays page says which of these the numbers already support for you. Pick one. A second one comes on the Optimize band."
+   ],
+   "kind": "choice",
+   "fields": [
+    {
+     "key": "attrPlay",
+     "kind": "choice",
+     "label": "Your attraction play",
+     "options": [
+      {
+       "id": "winBack",
+       "label": "Win your money back"
+      },
+      {
+       "id": "giveaway",
+       "label": "Giveaway"
+      },
+      {
+       "id": "decoy",
+       "label": "Decoy"
+      },
+      {
+       "id": "bxgy",
+       "label": "Buy some, get some free"
+      },
+      {
+       "id": "payLessNow",
+       "label": "Pay less now or pay more later"
+      },
+      {
+       "id": "freeStrings",
+       "label": "Free with strings"
+      }
+     ]
+    }
+   ],
+   "minutes": 2,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "attrPlayRead"
+    ]
+   }
+  },
+  {
+   "id": "A8",
+   "planet": "attr",
+   "level": 8,
+   "band": 3,
+   "tag": "B",
+   "title": "Exercise: write the offer in one sentence",
+   "lesson": [
+    "Use the frame: 'Get [the result] in [the time] for [the price], and [the reason it is cheap or the condition of the reward].' Then add the string: what happens next that leads to the upsell.",
+    "Say it out loud. If it takes two breaths, it is too long."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "attrOffer",
+     "kind": "text",
+     "label": "The attraction offer, one sentence",
+     "help": "Result, time, price, reason."
+    },
+    {
+     "key": "attrString",
+     "kind": "text",
+     "label": "The string: what leads to the next offer",
+     "help": "The results call, the week-two check-in, the pickup, the delivery."
+    }
+   ],
+   "minutes": 8,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "attrOfferWritten"
+    ]
+   }
+  },
+  {
+   "id": "A9",
+   "planet": "attr",
+   "level": 9,
+   "band": 3,
+   "tag": "C",
+   "title": "Checklist: attraction offer design",
+   "lesson": [
+    "Tick what the offer as written has. Anything unticked is the next thing to fix before it goes out."
+   ],
+   "kind": "checklist",
+   "items": [
+    {
+     "id": "result",
+     "text": "Names one result with a size and a time"
+    },
+    {
+     "id": "reason",
+     "text": "Gives a believable reason it is cheap or free"
+    },
+    {
+     "id": "deadline",
+     "text": "Has a deadline or a limited number"
+    },
+    {
+     "id": "string",
+     "text": "Has a string that puts the customer in front of the upsell"
+    },
+    {
+     "id": "condition",
+     "text": "Any money-back or reward has a measurable, written condition"
+    },
+    {
+     "id": "coversCost",
+     "text": "The price covers the cost to deliver it"
+    },
+    {
+     "id": "trackable",
+     "text": "You can count who came in through it"
+    }
+   ],
+   "minutes": 5,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "attrDesigned"
+    ]
+   }
+  },
+  {
+   "id": "A10",
+   "planet": "attr",
+   "level": 10,
+   "band": 4,
+   "tag": "E",
+   "title": "How many buyers actually show up",
+   "lesson": [
+    "A customer who paid and never came in cannot be upsold. Show rate is the share of attraction buyers who consume the thing (attend, open, start). The upsell take rate on the next planet is measured on these people."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "showRate",
+     "kind": "percent",
+     "label": "Share of attraction buyers who show up or start",
+     "help": "From your first run. 100 if everyone did."
+    }
+   ],
+   "minutes": 2,
+   "payoff": {
+    "currency": "certainty",
+    "metrics": [
+     "effectiveUpTake"
+    ]
+   }
+  },
+  {
+   "id": "A11",
+   "planet": "attr",
+   "level": 11,
+   "band": 4,
+   "tag": "E",
+   "title": "What you actually paid back",
+   "lesson": [
+    "For win-your-money-back and any guarantee: the share of buyers who got a refund or credit. Type 0 if the play has no refund. This sharpens the attraction offer's real margin."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "refundRate",
+     "kind": "percent",
+     "label": "Share of attraction buyers refunded or credited",
+     "help": "Refunds paid divided by buyers. 0 if none."
+    }
+   ],
+   "minutes": 2,
+   "payoff": {
+    "currency": "certainty",
+    "metrics": [
+     "attrGpNet"
+    ]
+   }
+  },
+  {
+   "id": "A12",
+   "planet": "attr",
+   "level": 12,
+   "band": 4,
+   "tag": "C",
+   "title": "Checklist: the first test run",
+   "lesson": [
+    "One channel, one offer, one week. The point is to count, not to win."
+   ],
+   "kind": "checklist",
+   "items": [
+    {
+     "id": "oneChannel",
+     "text": "Ran on one channel only, so the count is clean"
+    },
+    {
+     "id": "oneWeek",
+     "text": "Ran for a fixed period with a real deadline"
+    },
+    {
+     "id": "countedLeads",
+     "text": "Counted leads"
+    },
+    {
+     "id": "countedBuyers",
+     "text": "Counted buyers"
+    },
+    {
+     "id": "countedCost",
+     "text": "Counted every dollar spent, including time"
+    },
+    {
+     "id": "objections",
+     "text": "Wrote down the top three reasons people said no"
+    }
+   ],
+   "minutes": 5,
+   "payoff": {
+    "currency": "certainty",
+    "metrics": [
+     "attrTested"
+    ]
+   }
+  },
+  {
+   "id": "A13",
+   "planet": "attr",
+   "level": 13,
+   "band": 5,
+   "tag": "B",
+   "title": "Exercise: stack a second play",
+   "lesson": [
+    "Plays combine. A giveaway feeds a decoy (the losers get the cheap option beside the real one). Win-your-money-back stacks on a challenge. Pick the second play that feeds the first."
+   ],
+   "kind": "choice",
+   "fields": [
+    {
+     "key": "attrStack",
+     "kind": "choice",
+     "label": "The second attraction play",
+     "options": [
+      {
+       "id": "winBack",
+       "label": "Win your money back"
+      },
+      {
+       "id": "giveaway",
+       "label": "Giveaway"
+      },
+      {
+       "id": "decoy",
+       "label": "Decoy"
+      },
+      {
+       "id": "bxgy",
+       "label": "Buy some, get some free"
+      },
+      {
+       "id": "payLessNow",
+       "label": "Pay less now or pay more later"
+      },
+      {
+       "id": "freeStrings",
+       "label": "Free with strings"
+      },
+      {
+       "id": "none",
+       "label": "None yet"
+      }
+     ]
+    }
+   ],
+   "minutes": 2,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "attrStacked"
+    ]
+   }
+  },
+  {
+   "id": "A14",
+   "planet": "attr",
+   "level": 14,
+   "band": 5,
+   "tag": "E",
+   "title": "The limit that makes the deadline real",
+   "lesson": [
+    "Scarcity only works when it is true. Decide how many you will take per run (seats, units, slots) and say it. When it sells out, it sells out."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "attrCap",
+     "kind": "count",
+     "label": "Customers you will take per run",
+     "help": "A number you would actually stop at."
+    }
+   ],
+   "minutes": 1,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "runRevenue"
+    ]
+   }
+  },
+  {
+   "id": "A15",
+   "planet": "attr",
+   "level": 15,
+   "band": 5,
+   "tag": "C",
+   "title": "Checklist: sharpening the attraction offer",
+   "lesson": [
+    "Change one thing per run, in this order. Each tick is one run."
+   ],
+   "kind": "checklist",
+   "items": [
+    {
+     "id": "biggerPromise",
+     "text": "Made the promise bigger or more specific"
+    },
+    {
+     "id": "tighterDeadline",
+     "text": "Shortened the deadline or lowered the cap"
+    },
+    {
+     "id": "cheapBonus",
+     "text": "Added a bonus that costs you little and them a lot to get elsewhere"
+    },
+    {
+     "id": "secondPrice",
+     "text": "Tested a second price point"
+    },
+    {
+     "id": "cutCost",
+     "text": "Cut the cost to deliver without cutting the result"
+    }
+   ],
+   "minutes": 5,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "attrSharpened"
+    ]
+   }
+  },
+  {
+   "id": "U1",
+   "planet": "up",
+   "level": 1,
+   "band": 1,
+   "tag": "R",
+   "title": "Why the moment after a yes is worth the most",
+   "lesson": [
+    "Someone who just paid you trusts you more than they will at any other point. They have decided you are worth money. Asking for a bigger yes in that window is far cheaper than finding a new customer.",
+    "The upsell is where the money model makes its money. The attraction offer pays for the customer; the upsell pays for the business.",
+    "The rule: the upsell must be a faster, bigger or easier way to get the same result they just bought. Not a different product. 'You want this; this gets you there sooner.'"
+   ],
+   "kind": "quiz",
+   "quiz": {
+    "q": "When is the upsell cheapest to make?",
+    "options": [
+     "A month after the first purchase, once they have seen results",
+     "Right after the first yes, or right after their first win",
+     "Before they buy anything, to anchor high"
+    ],
+    "answer": 1,
+    "why": "Trust peaks at the yes and at the first result. Both are upsell moments; the first is the one most businesses skip."
+   },
+   "minutes": 2,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "learnedUp"
+    ]
+   }
+  },
+  {
+   "id": "U2",
+   "planet": "up",
+   "level": 2,
+   "band": 1,
+   "tag": "R",
+   "title": "The upsell plays",
+   "lesson": [
+    "Classic: the next thing they need to get the result faster or keep it. The membership after the challenge, the installation after the product.",
+    "Menu: several add-ons, they pick. People say yes to something more often than to one thing.",
+    "Anchor: show the biggest option first. The one you actually want to sell looks reasonable next to it.",
+    "Rollover: credit what they just paid toward the bigger thing. 'The $500 you paid comes off the $2,000 programme.' The first purchase becomes a deposit."
+   ],
+   "kind": "quiz",
+   "quiz": {
+    "q": "What does a rollover upsell do with the money the customer already paid?",
+    "options": [
+     "Refunds it",
+     "Counts it toward the bigger offer, so the first purchase becomes a deposit",
+     "Ignores it"
+    ],
+    "answer": 1,
+    "why": "A customer who has already paid part of the bigger thing is halfway to yes."
+   },
+   "minutes": 2,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "learnedUp"
+    ]
+   }
+  },
+  {
+   "id": "U3",
+   "planet": "up",
+   "level": 3,
+   "band": 1,
+   "tag": "R",
+   "title": "The ask",
+   "lesson": [
+    "An upsell that is never offered has a take rate of zero. Most upsell problems are not the offer; it is that nobody asked.",
+    "Ask in one sentence, as a service: 'Since you want [result], the people who get there fastest also [next step]. Want me to add it?' Then stop talking.",
+    "Every customer is asked. Not the ones who look rich. Every one."
+   ],
+   "kind": "quiz",
+   "quiz": {
+    "q": "The upsell take rate is 5%. What is the first thing to check?",
+    "options": [
+     "The price",
+     "Whether every customer was actually offered it",
+     "The product"
+    ],
+    "answer": 1,
+    "why": "Offered-to share times take-rate-when-offered is the real number. Fix the asking before the offer."
+   },
+   "minutes": 2,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "learnedUp"
+    ]
+   }
+  },
+  {
+   "id": "U4",
+   "planet": "up",
+   "level": 4,
+   "band": 2,
+   "tag": "E",
+   "title": "The upsell's price",
+   "lesson": [
+    "The bigger yes. If it is a payment plan, type the total here; the Downsell planet handles split terms."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "upPrice",
+     "kind": "cents",
+     "label": "Price of the upsell",
+     "help": "Total price, before any rollover credit."
+    }
+   ],
+   "minutes": 1,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "upGp",
+     "upExpected",
+     "gp30"
+    ]
+   }
+  },
+  {
+   "id": "U5",
+   "planet": "up",
+   "level": 5,
+   "band": 2,
+   "tag": "E",
+   "title": "What the upsell costs to deliver",
+   "lesson": [
+    "Per customer, all in, for the whole thing you are selling."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "upCost",
+     "kind": "cents",
+     "label": "Cost to deliver the upsell to one customer",
+     "help": "Materials, hours, seats. 0 is allowed."
+    }
+   ],
+   "minutes": 2,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "upGp",
+     "upExpected",
+     "gp30"
+    ]
+   }
+  },
+  {
+   "id": "U6",
+   "planet": "up",
+   "level": 6,
+   "band": 2,
+   "tag": "E",
+   "title": "How many take it",
+   "lesson": [
+    "Of the customers offered the upsell, the share who say yes. If you have not run it yet, use a modest guess (one in five is a common starting point for a well-matched upsell) and mark it to revisit on Prove."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "upTake",
+     "kind": "percent",
+     "label": "Share of customers offered the upsell who take it",
+     "help": "Takers divided by those asked, as a percent."
+    }
+   ],
+   "minutes": 2,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "upExpected",
+     "gp30",
+     "ratio30",
+     "ltgp"
+    ]
+   }
+  },
+  {
+   "id": "U7",
+   "planet": "up",
+   "level": 7,
+   "band": 3,
+   "tag": "B",
+   "title": "Exercise: pick your upsell play",
+   "lesson": [
+    "Classic if there is an obvious next step. Menu if you have several. Anchor if you have a premium tier. Rollover if the attraction offer's price is a meaningful part of the upsell's."
+   ],
+   "kind": "choice",
+   "fields": [
+    {
+     "key": "upPlay",
+     "kind": "choice",
+     "label": "Your upsell play",
+     "options": [
+      {
+       "id": "classic",
+       "label": "Classic: the next step"
+      },
+      {
+       "id": "menu",
+       "label": "Menu: they pick from add-ons"
+      },
+      {
+       "id": "anchor",
+       "label": "Anchor: biggest option first"
+      },
+      {
+       "id": "rollover",
+       "label": "Rollover: first payment becomes a deposit"
+      }
+     ]
+    }
+   ],
+   "minutes": 2,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "upPlayRead"
+    ]
+   }
+  },
+  {
+   "id": "U8",
+   "planet": "up",
+   "level": 8,
+   "band": 3,
+   "tag": "B",
+   "title": "Exercise: write the upsell script",
+   "lesson": [
+    "One sentence to ask, one sentence for the most common no. The frame: 'Since you want [result], most people who get it fastest also [next step]. Want me to add that?'"
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "upScript",
+     "kind": "text",
+     "label": "The ask, in one sentence",
+     "help": "Say it as a service, not a sale."
+    },
+    {
+     "key": "upNoReply",
+     "kind": "text",
+     "label": "What you say to the most common no",
+     "help": "Usually it leads to the downsell."
+    }
+   ],
+   "minutes": 8,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "upScriptWritten"
+    ]
+   }
+  },
+  {
+   "id": "U9",
+   "planet": "up",
+   "level": 9,
+   "band": 3,
+   "tag": "C",
+   "title": "Checklist: upsell design",
+   "lesson": [
+    "Tick what is true of the upsell as written."
+   ],
+   "kind": "checklist",
+   "items": [
+    {
+     "id": "withinMinutes",
+     "text": "Offered within minutes of the first yes, or at the first win"
+    },
+    {
+     "id": "sameResult",
+     "text": "Gets the same result faster, bigger or easier"
+    },
+    {
+     "id": "pricedAbove",
+     "text": "Priced above the attraction offer"
+    },
+    {
+     "id": "costKnown",
+     "text": "Cost to deliver is known"
+    },
+    {
+     "id": "oneSentence",
+     "text": "The ask fits in one sentence"
+    },
+    {
+     "id": "noSafe",
+     "text": "A no does not undo the first sale"
+    },
+    {
+     "id": "everyoneAsked",
+     "text": "There is a way to make sure every customer is asked"
+    }
+   ],
+   "minutes": 5,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "upDesigned"
+    ]
+   }
+  },
+  {
+   "id": "U10",
+   "planet": "up",
+   "level": 10,
+   "band": 4,
+   "tag": "E",
+   "title": "When it is offered",
+   "lesson": [
+    "Days after the first purchase. Day 0 is at the checkout. This decides whether the upsell's cash lands inside the 30 days."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "upWhen",
+     "kind": "days",
+     "label": "Days after the first purchase the upsell is offered",
+     "help": "0 if at checkout. 14 if at the two-week check-in."
+    }
+   ],
+   "minutes": 1,
+   "payoff": {
+    "currency": "certainty",
+    "metrics": [
+     "paybackDays",
+     "cash30Verified"
+    ]
+   }
+  },
+  {
+   "id": "U11",
+   "planet": "up",
+   "level": 11,
+   "band": 4,
+   "tag": "E",
+   "title": "How many were actually asked",
+   "lesson": [
+    "From the first run: of the customers who showed up, the share who were offered the upsell at all. This is the number that is usually the problem."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "upOfferedShare",
+     "kind": "percent",
+     "label": "Share of customers who were offered the upsell",
+     "help": "Asked divided by customers who showed up."
+    }
+   ],
+   "minutes": 2,
+   "payoff": {
+    "currency": "certainty",
+    "metrics": [
+     "effectiveUpTake"
+    ]
+   }
+  },
+  {
+   "id": "U12",
+   "planet": "up",
+   "level": 12,
+   "band": 4,
+   "tag": "C",
+   "title": "Checklist: the first upsell run",
+   "lesson": [
+    "Two weeks of asking every customer, counting, and listening."
+   ],
+   "kind": "checklist",
+   "items": [
+    {
+     "id": "scriptUsed",
+     "text": "The script was used word for word"
+    },
+    {
+     "id": "everyoneAskedRun",
+     "text": "Every customer was asked (a tally proves it)"
+    },
+    {
+     "id": "countedAskedTook",
+     "text": "Counted asked and took"
+    },
+    {
+     "id": "topNo",
+     "text": "Heard and wrote down the top reason for no"
+    },
+    {
+     "id": "oneChange",
+     "text": "Changed one thing for the next run"
+    }
+   ],
+   "minutes": 5,
+   "payoff": {
+    "currency": "certainty",
+    "metrics": [
+     "upTested"
+    ]
+   }
+  },
+  {
+   "id": "U13",
+   "planet": "up",
+   "level": 13,
+   "band": 5,
+   "tag": "E",
+   "title": "A second upsell",
+   "lesson": [
+    "After the first upsell, a second one to the people who took it: the done-with-you tier, the equipment, the extra seats. Price and expected take."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "up2Price",
+     "kind": "cents",
+     "label": "Price of the second upsell",
+     "help": "Offered to takers of the first."
+    },
+    {
+     "key": "up2Take",
+     "kind": "percent",
+     "label": "Share of first-upsell takers who take it",
+     "help": "A guess is fine to start."
+    }
+   ],
+   "minutes": 3,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "up2Expected",
+     "ltgpFull"
+    ]
+   }
+  },
+  {
+   "id": "U14",
+   "planet": "up",
+   "level": 14,
+   "band": 5,
+   "tag": "E",
+   "title": "The anchor price",
+   "lesson": [
+    "The biggest thing you could sell, priced as if someone will buy it. Some will. The rest see the real upsell as reasonable."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "anchorPrice",
+     "kind": "cents",
+     "label": "Price of your top tier",
+     "help": "Shown first, sold rarely."
+    }
+   ],
+   "minutes": 2,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "anchorGap"
+    ]
+   }
+  },
+  {
+   "id": "U15",
+   "planet": "up",
+   "level": 15,
+   "band": 5,
+   "tag": "C",
+   "title": "Checklist: sharpening the upsell",
+   "lesson": [
+    "One per run."
+   ],
+   "kind": "checklist",
+   "items": [
+    {
+     "id": "anchorFirst",
+     "text": "Showed the anchor before the real upsell"
+    },
+    {
+     "id": "addedMenu",
+     "text": "Turned one upsell into a short menu"
+    },
+    {
+     "id": "rolloverCredit",
+     "text": "Credited the first payment toward the upsell"
+    },
+    {
+     "id": "raisedTen",
+     "text": "Raised the price 10% and watched the take rate"
+    },
+    {
+     "id": "askedAtWin",
+     "text": "Added a second ask at the customer's first win"
+    }
+   ],
+   "minutes": 5,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "upSharpened"
+    ]
+   }
+  },
+  {
+   "id": "D1",
+   "planet": "down",
+   "level": 1,
+   "band": 1,
+   "tag": "R",
+   "title": "A no is not the end",
+   "lesson": [
+    "When a customer says no to the upsell, most businesses stop. The customer wanted the result a minute ago; what they said no to was the size or the terms.",
+    "A downsell offers a smaller yes: the same promise with less in the box, or the same box with easier terms. It recovers cash that was walking out, and it keeps the customer in the sequence for continuity.",
+    "Order matters: first change the terms (a payment plan), then the package (a lighter version), then the price. Cutting the price first teaches customers to say no."
+   ],
+   "kind": "quiz",
+   "quiz": {
+    "q": "The customer says no to a $2,000 programme. What is the first downsell to try?",
+    "options": [
+     "$1,000 for the same programme",
+     "The same programme at $2,000 in four payments",
+     "A different product"
+    ],
+    "answer": 1,
+    "why": "Same value, easier terms. Price cuts come last and cost the most."
+   },
+   "minutes": 2,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "learnedDown"
+    ]
+   }
+  },
+  {
+   "id": "D2",
+   "planet": "down",
+   "level": 2,
+   "band": 1,
+   "tag": "R",
+   "title": "The downsell plays",
+   "lesson": [
+    "Payment plan: the same offer split over time. Usually the first thing to try, and often the only one needed.",
+    "Trial with a string: try it, and pay if you keep it, or pay a penalty if you do not do the work. The string keeps the free part from being free forever.",
+    "Lighter version: fewer parts, less access, less support, same result more slowly. Keep the promise, shrink the package.",
+    "Deposit and decide: a small payment to hold the price or the spot, decided later. Cash today, and a reason to come back."
+   ],
+   "kind": "quiz",
+   "quiz": {
+    "q": "What makes a trial a downsell rather than a giveaway?",
+    "options": [
+     "It is shorter",
+     "There is a string: a payment if they keep it or do not do the work",
+     "It is only for some people"
+    ],
+    "answer": 1,
+    "why": "A trial with no string is a free customer with no path to paying. The string is the point."
+   },
+   "minutes": 2,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "learnedDown"
+    ]
+   }
+  },
+  {
+   "id": "D3",
+   "planet": "down",
+   "level": 3,
+   "band": 1,
+   "tag": "R",
+   "title": "Where the downsell sits",
+   "lesson": [
+    "There are two nos in the model. The no to the attraction offer (a stranger who did not buy) and the no to the upsell (a customer who did not go bigger). Each can have a downsell.",
+    "Start with the second. Those people already paid you once, showed up, and heard the upsell. A smaller yes from them is the easiest cash in the business.",
+    "The downsell after the attraction offer comes on the Optimize band, once the rest works."
+   ],
+   "kind": "quiz",
+   "quiz": {
+    "q": "Which downsell should be built first?",
+    "options": [
+     "The one for strangers who did not buy the attraction offer",
+     "The one for customers who said no to the upsell",
+     "Both at once"
+    ],
+    "answer": 1,
+    "why": "They are warm, present and have already paid. Build where the yes is easiest."
+   },
+   "minutes": 2,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "learnedDown"
+    ]
+   }
+  },
+  {
+   "id": "D4",
+   "planet": "down",
+   "level": 4,
+   "band": 2,
+   "tag": "E",
+   "title": "The downsell's price",
+   "lesson": [
+    "What the smaller yes costs the customer in total. For a payment plan on the same upsell, that may equal the upsell price; the terms are what changed."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "downPrice",
+     "kind": "cents",
+     "label": "Price of the downsell",
+     "help": "Total over all payments."
+    }
+   ],
+   "minutes": 1,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "downGp",
+     "downExpected",
+     "gp30"
+    ]
+   }
+  },
+  {
+   "id": "D5",
+   "planet": "down",
+   "level": 5,
+   "band": 2,
+   "tag": "E",
+   "title": "What the downsell costs to deliver",
+   "lesson": [
+    "Per customer. A lighter version should cost less to deliver; a payment plan costs the same as the upsell."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "downCost",
+     "kind": "cents",
+     "label": "Cost to deliver the downsell to one customer",
+     "help": "All in. 0 is allowed."
+    }
+   ],
+   "minutes": 2,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "downGp",
+     "downExpected",
+     "gp30"
+    ]
+   }
+  },
+  {
+   "id": "D6",
+   "planet": "down",
+   "level": 6,
+   "band": 2,
+   "tag": "E",
+   "title": "How many take it",
+   "lesson": [
+    "Of the customers who said no to the upsell and were offered the downsell, the share who take it."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "downTake",
+     "kind": "percent",
+     "label": "Share of upsell nos who take the downsell",
+     "help": "Takers divided by those offered, as a percent."
+    }
+   ],
+   "minutes": 2,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "downExpected",
+     "gp30",
+     "ratio30",
+     "ltgp",
+     "maxCac"
+    ]
+   }
+  },
+  {
+   "id": "D7",
+   "planet": "down",
+   "level": 7,
+   "band": 3,
+   "tag": "B",
+   "title": "Exercise: pick your downsell play",
+   "lesson": [
+    "Payment plan unless there is a clear reason not to. The Plays page says which ones the numbers support."
+   ],
+   "kind": "choice",
+   "fields": [
+    {
+     "key": "downPlay",
+     "kind": "choice",
+     "label": "Your downsell play",
+     "options": [
+      {
+       "id": "paymentPlan",
+       "label": "Payment plan"
+      },
+      {
+       "id": "trialString",
+       "label": "Trial with a string"
+      },
+      {
+       "id": "lighter",
+       "label": "Lighter version"
+      },
+      {
+       "id": "deposit",
+       "label": "Deposit and decide"
+      }
+     ]
+    }
+   ],
+   "minutes": 2,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "downPlayRead"
+    ]
+   }
+  },
+  {
+   "id": "D8",
+   "planet": "down",
+   "level": 8,
+   "band": 3,
+   "tag": "B",
+   "title": "Exercise: write the downsell script",
+   "lesson": [
+    "It follows the no directly. 'Totally fair. Would it help if we did [terms or lighter version] instead? You would still get [result], just [the change].'"
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "downScript",
+     "kind": "text",
+     "label": "The downsell, in one sentence",
+     "help": "Acknowledge the no, offer the smaller yes, keep the result."
+    },
+    {
+     "key": "downCut",
+     "kind": "text",
+     "label": "What exactly is smaller",
+     "help": "Fewer sessions, longer terms, less support, no guarantee. Name it."
+    }
+   ],
+   "minutes": 6,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "downScriptWritten"
+    ]
+   }
+  },
+  {
+   "id": "D9",
+   "planet": "down",
+   "level": 9,
+   "band": 3,
+   "tag": "C",
+   "title": "Checklist: downsell design",
+   "lesson": [
+    "Tick what is true of the downsell as written."
+   ],
+   "kind": "checklist",
+   "items": [
+    {
+     "id": "samePromise",
+     "text": "Keeps the same result, only the package or terms shrink"
+    },
+    {
+     "id": "termsFirst",
+     "text": "Terms were tried before price"
+    },
+    {
+     "id": "stillProfitable",
+     "text": "Still covers its cost to deliver"
+    },
+    {
+     "id": "leadsToCont",
+     "text": "Still puts the customer in front of the continuity offer"
+    },
+    {
+     "id": "notAdvertised",
+     "text": "Is never advertised, only offered after a no"
+    },
+    {
+     "id": "oneSentenceDown",
+     "text": "The offer fits in one sentence"
+    }
+   ],
+   "minutes": 4,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "downDesigned"
+    ]
+   }
+  },
+  {
+   "id": "D10",
+   "planet": "down",
+   "level": 10,
+   "band": 4,
+   "tag": "E",
+   "title": "The payment plan's shape",
+   "lesson": [
+    "How many payments, and how big the first one is. The first payment is what lands inside the 30 days; the rest is a promise."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "planPayments",
+     "kind": "count",
+     "label": "Number of payments",
+     "help": "1 if paid in full."
+    },
+    {
+     "key": "planFirstShare",
+     "kind": "percent",
+     "label": "Share of the price paid up front",
+     "help": "The first payment as a percent of the total. 100 if paid in full."
+    }
+   ],
+   "minutes": 2,
+   "payoff": {
+    "currency": "certainty",
+    "metrics": [
+     "downCash30",
+     "cash30Verified"
+    ]
+   }
+  },
+  {
+   "id": "D11",
+   "planet": "down",
+   "level": 11,
+   "band": 4,
+   "tag": "E",
+   "title": "How many plans fail",
+   "lesson": [
+    "Payment plans leak. The share of plan customers who stop paying before the end. Type 0 if none have."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "planDefault",
+     "kind": "percent",
+     "label": "Share of payment plans that stop early",
+     "help": "Stopped divided by started."
+    }
+   ],
+   "minutes": 2,
+   "payoff": {
+    "currency": "certainty",
+    "metrics": [
+     "planLeak"
+    ]
+   }
+  },
+  {
+   "id": "D12",
+   "planet": "down",
+   "level": 12,
+   "band": 4,
+   "tag": "C",
+   "title": "Checklist: the first downsell run",
+   "lesson": [
+    "Two weeks, every no gets the downsell, count what happens."
+   ],
+   "kind": "checklist",
+   "items": [
+    {
+     "id": "everyNo",
+     "text": "Every upsell no was offered the downsell"
+    },
+    {
+     "id": "countedDown",
+     "text": "Counted offered and took"
+    },
+    {
+     "id": "plansTracked",
+     "text": "Payment plans are tracked to the last payment"
+    },
+    {
+     "id": "reasonNoNo",
+     "text": "Wrote down why people said no to the downsell too"
+    },
+    {
+     "id": "oneChangeDown",
+     "text": "Changed one thing for the next run"
+    }
+   ],
+   "minutes": 4,
+   "payoff": {
+    "currency": "certainty",
+    "metrics": [
+     "downTested"
+    ]
+   }
+  },
+  {
+   "id": "D13",
+   "planet": "down",
+   "level": 13,
+   "band": 5,
+   "tag": "E",
+   "title": "A downsell for the first no",
+   "lesson": [
+    "For strangers who did not take the attraction offer: a lower entry. A single session, a smaller batch, a deposit. Price and expected take among those who said no."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "entryDownPrice",
+     "kind": "cents",
+     "label": "Price of the entry downsell",
+     "help": "Offered to leads who did not buy the attraction offer."
+    },
+    {
+     "key": "entryDownTake",
+     "kind": "percent",
+     "label": "Share of attraction nos who take it",
+     "help": "A guess is fine to start."
+    }
+   ],
+   "minutes": 3,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "entryDownExpected",
+     "cashPerLeadFull"
+    ]
+   }
+  },
+  {
+   "id": "D14",
+   "planet": "down",
+   "level": 14,
+   "band": 5,
+   "tag": "B",
+   "title": "Exercise: the second thing you can shrink",
+   "lesson": [
+    "If the first downsell is a payment plan, the second is a lighter version, and the other way round. Pick what you cut in the second one."
+   ],
+   "kind": "choice",
+   "fields": [
+    {
+     "key": "downCut2",
+     "kind": "choice",
+     "label": "What the second downsell cuts",
+     "options": [
+      {
+       "id": "time",
+       "label": "Time with you"
+      },
+      {
+       "id": "access",
+       "label": "Access or seats"
+      },
+      {
+       "id": "support",
+       "label": "Support or check-ins"
+      },
+      {
+       "id": "guarantee",
+       "label": "The guarantee"
+      },
+      {
+       "id": "speed",
+       "label": "Speed of the result"
+      }
+     ]
+    }
+   ],
+   "minutes": 2,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "downStacked"
+    ]
+   }
+  },
+  {
+   "id": "D15",
+   "planet": "down",
+   "level": 15,
+   "band": 5,
+   "tag": "C",
+   "title": "Checklist: sharpening the downsell",
+   "lesson": [
+    "One per run."
+   ],
+   "kind": "checklist",
+   "items": [
+    {
+     "id": "biggerFirst",
+     "text": "Raised the first payment's share"
+    },
+    {
+     "id": "fewerPayments",
+     "text": "Cut the number of payments"
+    },
+    {
+     "id": "autoPay",
+     "text": "Put every plan on automatic payment"
+    },
+    {
+     "id": "secondDownsell",
+     "text": "Added the second downsell after the second no"
+    },
+    {
+     "id": "depositTested",
+     "text": "Tested a deposit-and-decide for the walkaways"
+    }
+   ],
+   "minutes": 4,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "downSharpened"
+    ]
+   }
+  },
+  {
+   "id": "C1",
+   "planet": "cont",
+   "level": 1,
+   "band": 1,
+   "tag": "R",
+   "title": "One sale into many",
+   "lesson": [
+    "A customer who pays once is a transaction. A customer who pays every month is an asset. Continuity is what turns the model from a series of launches into a business that grows while you sleep.",
+    "The lifetime gross profit of a customer is mostly continuity. A $150 a month membership with 8% monthly churn is worth about twelve and a half months, over $1,800 of revenue, from one yes.",
+    "Every earlier offer should end by placing the customer in front of the continuity offer."
+   ],
+   "kind": "quiz",
+   "quiz": {
+    "q": "Monthly churn is 10%. On average how many months does a member stay?",
+    "options": [
+     "About 10",
+     "About 5",
+     "About 20"
+    ],
+    "answer": 0,
+    "why": "Expected months is one divided by the monthly churn: 1 / 0.10 = 10."
+   },
+   "minutes": 2,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "learnedCont"
+    ]
+   }
+  },
+  {
+   "id": "C2",
+   "planet": "cont",
+   "level": 2,
+   "band": 1,
+   "tag": "R",
+   "title": "The continuity plays",
+   "lesson": [
+    "Bonus for committing: a gift, worth a lot to them and little to you, for joining the ongoing plan today.",
+    "Discount for a longer term: pay for a year, get it cheaper. Cash forward, churn removed.",
+    "Waived fee: the setup or first month is free if they join now. The fee exists so that waiving it means something.",
+    "Bonuses over time: something new arrives in month two, month three, month six. Reasons to stay, not just reasons to join.",
+    "The default: the ongoing plan is the normal thing to buy; the one-off is the exception you have to ask for."
+   ],
+   "kind": "quiz",
+   "quiz": {
+    "q": "What is 'bonuses over time' for?",
+    "options": [
+     "Getting people to join",
+     "Getting people to stay, by giving them something to wait for",
+     "Raising the price"
+    ],
+    "answer": 1,
+    "why": "Joining bonuses fight the first no. Bonuses over time fight churn."
+   },
+   "minutes": 2,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "learnedCont"
+    ]
+   }
+  },
+  {
+   "id": "C3",
+   "planet": "cont",
+   "level": 3,
+   "band": 1,
+   "tag": "R",
+   "title": "Churn is the tax",
+   "lesson": [
+    "Churn is the share of members who leave each month. Halving it doubles the value of every customer you already have, without a single new lead.",
+    "Measure it monthly, by cohort (people who joined the same month). A single average hides a leak in month two.",
+    "Most churn happens early, before the customer has had a win. The continuity offer's first job is to get them a win fast."
+   ],
+   "kind": "quiz",
+   "quiz": {
+    "q": "Churn drops from 10% to 5% a month. What happens to the average member's lifetime value?",
+    "options": [
+     "It goes up a little",
+     "It roughly doubles",
+     "Nothing until you raise prices"
+    ],
+    "answer": 1,
+    "why": "Expected months goes from 10 to 20. Same price, twice the months."
+   },
+   "minutes": 2,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "learnedCont"
+    ]
+   }
+  },
+  {
+   "id": "C4",
+   "planet": "cont",
+   "level": 4,
+   "band": 2,
+   "tag": "E",
+   "title": "The monthly price",
+   "lesson": [
+    "What a member pays each month. If it is yearly, divide by twelve here; the yearly option comes on Optimize."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "contPrice",
+     "kind": "cents",
+     "label": "Continuity price per month",
+     "help": "Per member, per month."
+    }
+   ],
+   "minutes": 1,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "contGp",
+     "contLtgp",
+     "ltgp"
+    ]
+   }
+  },
+  {
+   "id": "C5",
+   "planet": "cont",
+   "level": 5,
+   "band": 2,
+   "tag": "E",
+   "title": "What a member costs to serve each month",
+   "lesson": [
+    "Per member, per month: the classes they attend, the software seat, the check-in call, the shipment."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "contCost",
+     "kind": "cents",
+     "label": "Cost to serve one member for a month",
+     "help": "All in. 0 is allowed."
+    }
+   ],
+   "minutes": 2,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "contGp",
+     "contLtgp",
+     "ltgp"
+    ]
+   }
+  },
+  {
+   "id": "C6",
+   "planet": "cont",
+   "level": 6,
+   "band": 2,
+   "tag": "E",
+   "title": "Who joins, and who leaves",
+   "lesson": [
+    "The share of customers who join continuity by the end of the sequence, and the share of members who leave each month. If you have no history, guess and revisit on Prove."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "contJoin",
+     "kind": "percent",
+     "label": "Share of customers who join continuity",
+     "help": "Joiners divided by customers who finished the earlier offers."
+    },
+    {
+     "key": "churn",
+     "kind": "percent",
+     "label": "Monthly churn",
+     "help": "Members who left this month divided by members at the start of it."
+    }
+   ],
+   "minutes": 3,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "expectedMonths",
+     "contLtgp",
+     "ltgp",
+     "ltgpCac",
+     "retentionCurve"
+    ]
+   }
+  },
+  {
+   "id": "C7",
+   "planet": "cont",
+   "level": 7,
+   "band": 3,
+   "tag": "B",
+   "title": "Exercise: pick your continuity play",
+   "lesson": [
+    "The default first: make the ongoing plan the normal purchase. Then one of the others to remove the first no."
+   ],
+   "kind": "choice",
+   "fields": [
+    {
+     "key": "contPlay",
+     "kind": "choice",
+     "label": "Your continuity play",
+     "options": [
+      {
+       "id": "bonus",
+       "label": "Bonus for committing"
+      },
+      {
+       "id": "longerTerm",
+       "label": "Discount for a longer term"
+      },
+      {
+       "id": "waived",
+       "label": "Waived fee"
+      },
+      {
+       "id": "overTime",
+       "label": "Bonuses over time"
+      },
+      {
+       "id": "default",
+       "label": "The default"
+      }
+     ]
+    }
+   ],
+   "minutes": 2,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "contPlayRead"
+    ]
+   }
+  },
+  {
+   "id": "C8",
+   "planet": "cont",
+   "level": 8,
+   "band": 3,
+   "tag": "B",
+   "title": "Exercise: write the continuity pitch",
+   "lesson": [
+    "Frame: 'To keep [result] going, most people stay on for [the ongoing plan]. It is [price] a month, and if you start today you also get [bonus].' Then the reason to stay: what arrives later."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "contScript",
+     "kind": "text",
+     "label": "The pitch, one or two sentences",
+     "help": "Result, plan, price, the joining bonus."
+    },
+    {
+     "key": "contHook",
+     "kind": "text",
+     "label": "The reason to stay past month one",
+     "help": "What arrives in month two, three, six. A tracked result counts."
+    }
+   ],
+   "minutes": 8,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "contScriptWritten"
+    ]
+   }
+  },
+  {
+   "id": "C9",
+   "planet": "cont",
+   "level": 9,
+   "band": 3,
+   "tag": "C",
+   "title": "Checklist: continuity design",
+   "lesson": [
+    "Tick what is true of the continuity offer as written."
+   ],
+   "kind": "checklist",
+   "items": [
+    {
+     "id": "isDefault",
+     "text": "The ongoing plan is the default purchase"
+    },
+    {
+     "id": "joinBonus",
+     "text": "There is a reason to join today"
+    },
+    {
+     "id": "stayReason",
+     "text": "There is a reason to stay past month one"
+    },
+    {
+     "id": "firstWin",
+     "text": "The first month is built to deliver a visible win"
+    },
+    {
+     "id": "autoBilled",
+     "text": "Billing is automatic"
+    },
+    {
+     "id": "churnMeasured",
+     "text": "Churn is measured monthly by cohort"
+    }
+   ],
+   "minutes": 4,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "contDesigned"
+    ]
+   }
+  },
+  {
+   "id": "C10",
+   "planet": "cont",
+   "level": 10,
+   "band": 4,
+   "tag": "E",
+   "title": "When the first month gets charged",
+   "lesson": [
+    "Days from the first purchase to the first continuity charge. If the membership starts after a six-week challenge, that is about 42, and the first month's cash is outside the 30 days. Charging at signup, with the plan starting later, moves it inside."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "contFirstDays",
+     "kind": "days",
+     "label": "Days from the first purchase to the first continuity charge",
+     "help": "0 if charged at signup."
+    }
+   ],
+   "minutes": 1,
+   "payoff": {
+    "currency": "certainty",
+    "metrics": [
+     "cash30Verified",
+     "paybackDays"
+    ]
+   }
+  },
+  {
+   "id": "C11",
+   "planet": "cont",
+   "level": 11,
+   "band": 4,
+   "tag": "E",
+   "title": "Who is still there at month three",
+   "lesson": [
+    "From a cohort that joined at least three months ago: the share still paying. The model compares it with what your churn figure predicts."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "retain3",
+     "kind": "percent",
+     "label": "Share of a cohort still paying at month three",
+     "help": "Still paying divided by joined."
+    }
+   ],
+   "minutes": 3,
+   "payoff": {
+    "currency": "certainty",
+    "metrics": [
+     "retain3Check"
+    ]
+   }
+  },
+  {
+   "id": "C12",
+   "planet": "cont",
+   "level": 12,
+   "band": 4,
+   "tag": "C",
+   "title": "Checklist: the first continuity run",
+   "lesson": [
+    "One cohort, followed for three months."
+   ],
+   "kind": "checklist",
+   "items": [
+    {
+     "id": "everyoneOffered",
+     "text": "Every finishing customer was offered continuity"
+    },
+    {
+     "id": "cohortTagged",
+     "text": "The cohort is tagged by joining month"
+    },
+    {
+     "id": "winTracked",
+     "text": "The first-month win is tracked per member"
+    },
+    {
+     "id": "leaversAsked",
+     "text": "Every leaver was asked why"
+    },
+    {
+     "id": "oneChangeCont",
+     "text": "Changed one thing for the next cohort"
+    }
+   ],
+   "minutes": 4,
+   "payoff": {
+    "currency": "certainty",
+    "metrics": [
+     "contTested"
+    ]
+   }
+  },
+  {
+   "id": "C13",
+   "planet": "cont",
+   "level": 13,
+   "band": 5,
+   "tag": "E",
+   "title": "The longer-term option",
+   "lesson": [
+    "A yearly (or six-month) plan at a discount, paid up front. It moves a year of cash into the first 30 days and removes churn for that year. Price and expected take among joiners."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "contAnnualPrice",
+     "kind": "cents",
+     "label": "Price of the yearly plan, paid up front",
+     "help": "Total for the year."
+    },
+    {
+     "key": "contAnnualTake",
+     "kind": "percent",
+     "label": "Share of joiners who choose it",
+     "help": "A guess is fine to start."
+    }
+   ],
+   "minutes": 3,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "annualLift",
+     "gp30Stacked"
+    ]
+   }
+  },
+  {
+   "id": "C14",
+   "planet": "cont",
+   "level": 14,
+   "band": 5,
+   "tag": "B",
+   "title": "Exercise: the second reason to stay",
+   "lesson": [
+    "Pick the retention play you add next. Each one answers 'why stay in month four?'"
+   ],
+   "kind": "choice",
+   "fields": [
+    {
+     "key": "contHook2",
+     "kind": "choice",
+     "label": "The next reason to stay",
+     "options": [
+      {
+       "id": "drip",
+       "label": "A bonus that arrives every few months"
+      },
+      {
+       "id": "community",
+       "label": "A group they would miss"
+      },
+      {
+       "id": "tracking",
+       "label": "A result they can watch grow"
+      },
+      {
+       "id": "priceLock",
+       "label": "A price locked while they stay"
+      },
+      {
+       "id": "milestones",
+       "label": "Milestones with rewards"
+      }
+     ]
+    }
+   ],
+   "minutes": 2,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "contStacked"
+    ]
+   }
+  },
+  {
+   "id": "C15",
+   "planet": "cont",
+   "level": 15,
+   "band": 5,
+   "tag": "C",
+   "title": "Checklist: sharpening continuity",
+   "lesson": [
+    "One per cohort."
+   ],
+   "kind": "checklist",
+   "items": [
+    {
+     "id": "annualOffered",
+     "text": "Offered the yearly plan at joining"
+    },
+    {
+     "id": "month2Bonus",
+     "text": "Added a month-two bonus"
+    },
+    {
+     "id": "saveOffer",
+     "text": "Built a save offer for the moment someone cancels"
+    },
+    {
+     "id": "failedCards",
+     "text": "Chased failed payments the same day"
+    },
+    {
+     "id": "cohortReview",
+     "text": "Reviewed churn by cohort monthly"
+    }
+   ],
+   "minutes": 4,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "contSharpened"
+    ]
+   }
+  },
+  {
+   "id": "K1",
+   "planet": "kpi",
+   "level": 1,
+   "band": 1,
+   "tag": "R",
+   "title": "The six numbers",
+   "lesson": [
+    "Cost of a customer (CAC): what you spend to get one.",
+    "Gross profit per sale: price minus the cost to deliver.",
+    "30-day cash: gross profit collected from a customer in their first 30 days, across the whole sequence.",
+    "Lifetime gross profit (LTGP): everything a customer earns you, less delivery, over their whole stay.",
+    "LTGP to CAC: how many times over a customer pays for themselves.",
+    "Payback days: how long until a customer has paid back their cost."
+   ],
+   "kind": "quiz",
+   "quiz": {
+    "q": "Price $500, cost to deliver $120, cost of the customer $150. What is the gross profit per sale?",
+    "options": [
+     "$380",
+     "$230",
+     "$350"
+    ],
+    "answer": 0,
+    "why": "Gross profit is price minus delivery cost: 500 minus 120. The cost of the customer is compared against it, not subtracted from it."
+   },
+   "minutes": 3,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "learnedKpi"
+    ]
+   }
+  },
+  {
+   "id": "K2",
+   "planet": "kpi",
+   "level": 2,
+   "band": 1,
+   "tag": "R",
+   "title": "The two thresholds",
+   "lesson": [
+    "30-day cash at least equal to CAC: you break even on each customer before the bills for getting them are due. You are alive.",
+    "30-day cash at least twice CAC: each customer funds the next one. You can grow as fast as you can deliver, with no outside money.",
+    "LTGP at least three times CAC: the business is worth running. Below that, the customers are barely paying for the marketing."
+   ],
+   "kind": "quiz",
+   "quiz": {
+    "q": "30-day cash is $300 and CAC is $150. Which is true?",
+    "options": [
+     "Break even only",
+     "Self-funding: each customer pays for the next",
+     "Losing money"
+    ],
+    "answer": 1,
+    "why": "Twice the cost inside 30 days is the self-funding line."
+   },
+   "minutes": 2,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "learnedKpi"
+    ]
+   }
+  },
+  {
+   "id": "K3",
+   "planet": "kpi",
+   "level": 3,
+   "band": 1,
+   "tag": "R",
+   "title": "The four ways to grow",
+   "lesson": [
+    "More customers (attraction). More per customer (upsell, downsell, price). More often (continuity). Less to deliver (margin).",
+    "Every business grows through those four, and only those four. When you are stuck, the constraint from Foundations level 8 names which one.",
+    "The model's charts move when you move any of them; try it on the Model page once your numbers are in."
+   ],
+   "kind": "quiz",
+   "quiz": {
+    "q": "Which of these is not one of the four ways to grow?",
+    "options": [
+     "Customers buy more often",
+     "A bigger office",
+     "Each sale costs less to deliver"
+    ],
+    "answer": 1,
+    "why": "An office is a cost. Growth comes from customers, price, frequency and margin."
+   },
+   "minutes": 2,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "learnedKpi"
+    ]
+   }
+  },
+  {
+   "id": "K4",
+   "planet": "kpi",
+   "level": 4,
+   "band": 2,
+   "tag": "E",
+   "title": "How many you can serve",
+   "lesson": [
+    "The ceiling on the other side: customers you can take on in a month before quality drops. The growth chart flattens here."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "capacity",
+     "kind": "count",
+     "label": "Most new customers you can serve in a month",
+     "help": "Honest, at current staff and hours."
+    }
+   ],
+   "minutes": 2,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "capacityHeadroom",
+     "growthCurve"
+    ]
+   }
+  },
+  {
+   "id": "K5",
+   "planet": "kpi",
+   "level": 5,
+   "band": 2,
+   "tag": "E",
+   "title": "What the business costs to keep open",
+   "lesson": [
+    "Rent, salaries, software, insurance: the monthly costs that do not change with one more customer. Gross profit has to cover this before there is any profit."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "fixedCosts",
+     "kind": "cents",
+     "label": "Fixed costs per month",
+     "help": "Everything that is due whether or not a customer buys."
+    }
+   ],
+   "minutes": 3,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "breakEvenCustomers"
+    ]
+   }
+  },
+  {
+   "id": "K6",
+   "planet": "kpi",
+   "level": 6,
+   "band": 2,
+   "tag": "E",
+   "title": "The loop: cash in, share back in",
+   "lesson": [
+    "Two figures that decide how fast the model can spin. The cash you can put toward getting customers each month is the ceiling before the model self-funds. The share of each month's 30-day cash you put back into ads is what makes the ceiling rise. 100 is all of it."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "growthCash",
+     "kind": "cents",
+     "label": "Cash available for getting customers each month",
+     "help": "What you could spend on ads and sales this month without missing payroll or rent."
+    },
+    {
+     "key": "reinvestShare",
+     "kind": "percent",
+     "label": "Share of 30-day cash reinvested in getting customers",
+     "help": "As a percent. 50 is half."
+    }
+   ],
+   "minutes": 3,
+   "payoff": {
+    "currency": "reveal",
+    "metrics": [
+     "affordableCustomers",
+     "growthCurve"
+    ]
+   }
+  },
+  {
+   "id": "K7",
+   "planet": "kpi",
+   "level": 7,
+   "band": 3,
+   "tag": "B",
+   "title": "Exercise: the one number on the wall",
+   "lesson": [
+    "Pick the one KPI the whole team sees every week. The constraint says which: customers means CAC or leads; per customer means 30-day cash; stay means churn."
+   ],
+   "kind": "choice",
+   "fields": [
+    {
+     "key": "northStar",
+     "kind": "choice",
+     "label": "The number you watch weekly",
+     "options": [
+      {
+       "id": "cac",
+       "label": "Cost of a customer"
+      },
+      {
+       "id": "cash30",
+       "label": "30-day cash per customer"
+      },
+      {
+       "id": "ratio30",
+       "label": "30-day ratio"
+      },
+      {
+       "id": "churn",
+       "label": "Monthly churn"
+      },
+      {
+       "id": "ltgpCac",
+       "label": "LTGP to CAC"
+      },
+      {
+       "id": "leads",
+       "label": "Leads per week"
+      }
+     ]
+    }
+   ],
+   "minutes": 1,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "northStarRead"
+    ]
+   }
+  },
+  {
+   "id": "K8",
+   "planet": "kpi",
+   "level": 8,
+   "band": 3,
+   "tag": "B",
+   "title": "Exercise: the scoreboard",
+   "lesson": [
+    "Where the numbers live, who updates them, and when. A number nobody owns is a number nobody has."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "scoreboardWhere",
+     "kind": "text",
+     "label": "Where the scoreboard lives",
+     "help": "A sheet, a whiteboard, this page."
+    },
+    {
+     "key": "scoreboardWho",
+     "kind": "text",
+     "label": "Who updates it, and on which day",
+     "help": "One name, one day."
+    }
+   ],
+   "minutes": 3,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "scoreboardSet"
+    ]
+   }
+  },
+  {
+   "id": "K9",
+   "planet": "kpi",
+   "level": 9,
+   "band": 3,
+   "tag": "C",
+   "title": "Checklist: what the scoreboard shows",
+   "lesson": [
+    "Tick each row once it is on the board with a real number."
+   ],
+   "kind": "checklist",
+   "items": [
+    {
+     "id": "rowCac",
+     "text": "Cost of a customer, this month"
+    },
+    {
+     "id": "rowCash30",
+     "text": "30-day cash per customer"
+    },
+    {
+     "id": "rowRatio",
+     "text": "30-day ratio against the two thresholds"
+    },
+    {
+     "id": "rowTakes",
+     "text": "Upsell, downsell and continuity take rates"
+    },
+    {
+     "id": "rowChurn",
+     "text": "Monthly churn by cohort"
+    },
+    {
+     "id": "rowLtgp",
+     "text": "LTGP to CAC"
+    }
+   ],
+   "minutes": 5,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "scoreboardFilled"
+    ]
+   }
+  },
+  {
+   "id": "K10",
+   "planet": "kpi",
+   "level": 10,
+   "band": 4,
+   "tag": "E",
+   "title": "The 30-day cash you measured",
+   "lesson": [
+    "After running the new sequence for a month: the cash actually collected per new customer in their first 30 days. The model page shows it against what the plan predicted and against the before figure."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "measuredCash30",
+     "kind": "cents",
+     "label": "Measured 30-day cash per new customer, after the model",
+     "help": "Collected, from a real cohort."
+    }
+   ],
+   "minutes": 6,
+   "payoff": {
+    "currency": "certainty",
+    "metrics": [
+     "measuredRatio",
+     "planVsActual"
+    ]
+   }
+  },
+  {
+   "id": "K11",
+   "planet": "kpi",
+   "level": 11,
+   "band": 4,
+   "tag": "E",
+   "title": "The customers you got last month",
+   "lesson": [
+    "New customers in the first full month of the model, compared with the before figure from Foundations level 6."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "measuredNewCustomers",
+     "kind": "count",
+     "label": "New customers last month, after the model",
+     "help": "First-time payers."
+    }
+   ],
+   "minutes": 2,
+   "payoff": {
+    "currency": "certainty",
+    "metrics": [
+     "customerGrowth"
+    ]
+   }
+  },
+  {
+   "id": "K12",
+   "planet": "kpi",
+   "level": 12,
+   "band": 4,
+   "tag": "C",
+   "title": "Checklist: the monthly close",
+   "lesson": [
+    "Once a month, in this order."
+   ],
+   "kind": "checklist",
+   "items": [
+    {
+     "id": "closeSpend",
+     "text": "Total spent on getting customers, by channel"
+    },
+    {
+     "id": "closeCustomers",
+     "text": "New customers, by source"
+    },
+    {
+     "id": "closeCash30",
+     "text": "30-day cash for last month's cohort"
+    },
+    {
+     "id": "closeTakes",
+     "text": "Take rates for each offer"
+    },
+    {
+     "id": "closeChurn",
+     "text": "Churn for every open cohort"
+    },
+    {
+     "id": "closeUpdate",
+     "text": "The numbers on this page updated"
+    }
+   ],
+   "minutes": 6,
+   "payoff": {
+    "currency": "certainty",
+    "metrics": [
+     "monthClosed"
+    ]
+   }
+  },
+  {
+   "id": "K13",
+   "planet": "kpi",
+   "level": 13,
+   "band": 5,
+   "tag": "E",
+   "title": "A price test",
+   "lesson": [
+    "Raise the upsell price by a set percent for the next run and watch the take rate. Type the raise here; the model shows what take rate would leave you no worse off."
+   ],
+   "kind": "facts",
+   "fields": [
+    {
+     "key": "priceRaise",
+     "kind": "percent",
+     "label": "Percent to raise the upsell price in the next run",
+     "help": "10 is a common first test."
+    }
+   ],
+   "minutes": 1,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "breakEvenTake"
+    ]
+   }
+  },
+  {
+   "id": "K14",
+   "planet": "kpi",
+   "level": 14,
+   "band": 5,
+   "tag": "B",
+   "title": "Exercise: the next bottleneck",
+   "lesson": [
+    "Once the model self-funds, something else stops growth. Name it so the next quarter has a target."
+   ],
+   "kind": "choice",
+   "fields": [
+    {
+     "key": "bottleneck",
+     "kind": "choice",
+     "label": "What stops growth next?",
+     "options": [
+      {
+       "id": "cash",
+       "label": "Cash to buy customers"
+      },
+      {
+       "id": "capacity",
+       "label": "Capacity to serve them"
+      },
+      {
+       "id": "leads",
+       "label": "Leads"
+      },
+      {
+       "id": "conversion",
+       "label": "Conversion of leads"
+      },
+      {
+       "id": "delivery",
+       "label": "Cost or quality of delivery"
+      }
+     ]
+    }
+   ],
+   "minutes": 2,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "bottleneckRead"
+    ]
+   }
+  },
+  {
+   "id": "K15",
+   "planet": "kpi",
+   "level": 15,
+   "band": 5,
+   "tag": "C",
+   "title": "Checklist: the quarterly review",
+   "lesson": [
+    "Every three months, the whole model, top to bottom."
+   ],
+   "kind": "checklist",
+   "items": [
+    {
+     "id": "qConstraint",
+     "text": "Re-named the constraint"
+    },
+    {
+     "id": "qOffers",
+     "text": "Re-read every offer sentence out loud"
+    },
+    {
+     "id": "qKill",
+     "text": "Killed or fixed the weakest offer"
+    },
+    {
+     "id": "qThresholds",
+     "text": "Checked both thresholds on the quarter's real numbers"
+    },
+    {
+     "id": "qCapacity",
+     "text": "Raised capacity or the price if the model is at the ceiling"
+    }
+   ],
+   "minutes": 8,
+   "payoff": {
+    "currency": "power",
+    "metrics": [
+     "quarterReviewed"
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="robots" content="noindex"/>
+<title>Money Models</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="app.css"/>
+<!--
+  MONEY MODELS, a workbook that walks you through the ideas in $100M Money
+  Models (MM-001 to MM-005; moneymodels/README.md). Its own app beside
+  Money Rooms, the way coach/ and dnd/ are: nothing in rooms/, shared/,
+  engines/ or data/ is read or written.
+
+  1. READS   moneymodels.v1 in this browser (shared/store.js), and the
+             tables in data/ (levels, recipes, plays, the example numbers).
+  2. WRITES  moneymodels.v1 only: facts, quiz answers, ticked boxes.
+  3. SHOWS   the Sky (six planets on five orbits), each planet's fifteen
+             levels, the figures that unlock, the plays that open, and the
+             assembled model with its charts.
+
+  LIVE-FORM: the open level's boxes (#lv-panel) are built once when the
+  level opens and never rebuilt while a finger is in one; typing repaints
+  only the pieces around it (app.js, paintAround).
+-->
+</head>
+<body class="slaf">
+<a class="mm-skip" href="#main">Skip to content</a>
+<header class="mm-head">
+  <a class="mm-wordmark" href="#sky">Money Models</a>
+  <nav class="mm-nav" aria-label="Pages">
+    <a href="#sky" data-nav="sky">The Sky</a>
+    <a href="#kpis" data-nav="kpis">Figures</a>
+    <a href="#plays" data-nav="plays">Plays</a>
+    <a href="#model" data-nav="model">Your model</a>
+  </nav>
+</header>
+<main class="mm" id="main">
+  <p class="mm-say" id="mm-say" role="status"></p>
+
+  <section id="view-sky" hidden aria-labelledby="sky-h">
+    <span class="slaf-eyebrow">A workbook for $100M Money Models</span>
+    <h1 id="sky-h">Get paid back before the bill is due</h1>
+    <p class="slaf-lede">A money model is the order in which you ask a customer to say yes. Six planets, each fifteen levels deep: read the idea, type your numbers, do the exercises, run it, sharpen it. Figures light as their inputs arrive; plays open when your numbers say they fit. Nothing here leaves this browser.</p>
+    <div class="mm-actions" id="sky-actions"></div>
+    <div class="mm-two">
+      <div class="mm-skyhost" id="sky-host"></div>
+      <div>
+        <div class="slaf-card mm-next" id="sky-next"></div>
+        <div class="slaf-card mm-sun" id="sky-sun"></div>
+      </div>
+    </div>
+    <div class="mm-planets" id="sky-planets"></div>
+    <p class="mm-key">A planet sits on the orbit of the last band it finished, so it moves outward as you level it. The sun lights when the model pays a customer back inside 30 days, and fully when it pays back twice over.</p>
+  </section>
+
+  <section id="view-planet" hidden aria-labelledby="pl-h">
+    <a class="mm-back" href="#sky">The Sky</a>
+    <span class="slaf-eyebrow" id="pl-eyebrow"></span>
+    <h1 id="pl-h"></h1>
+    <p class="slaf-lede" id="pl-lede"></p>
+    <div class="mm-two mm-two--planet">
+      <div class="mm-bands" id="pl-bands"></div>
+      <div class="mm-level" id="lv-panel"></div>
+    </div>
+  </section>
+
+  <section id="view-kpis" hidden aria-labelledby="k-h">
+    <a class="mm-back" href="#sky">The Sky</a>
+    <span class="slaf-eyebrow">What unlocks</span>
+    <h1 id="k-h">The figures</h1>
+    <p class="slaf-lede">Every figure the model can compute, in five tiers. A figure that is not lit names exactly what it is waiting on; tap the level to go and answer it.</p>
+    <div id="k-head"></div>
+    <div id="k-tiers"></div>
+  </section>
+
+  <section id="view-plays" hidden aria-labelledby="p-h">
+    <a class="mm-back" href="#sky">The Sky</a>
+    <span class="slaf-eyebrow">The moons</span>
+    <h1 id="p-h">The plays</h1>
+    <p class="slaf-lede">Nineteen ways to build the four offers. A play opens when your numbers say it fits; until then it says what it is waiting on. Each carries the steps to run it.</p>
+    <div id="p-list"></div>
+  </section>
+
+  <section id="view-model" hidden aria-labelledby="m-h">
+    <a class="mm-back" href="#sky">The Sky</a>
+    <span class="slaf-eyebrow">The sun</span>
+    <h1 id="m-h">Your money model</h1>
+    <p class="slaf-lede">The four offers in order, and what the numbers say they do together.</p>
+    <div id="m-body"></div>
+  </section>
+
+  <p class="mm-foot">Not financial or business advice. A companion to the book, in this app's own words; read the book for the reasoning. Every figure stays in this browser.</p>
+</main>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="engines/model.js"></script>
+<script src="shared/charts.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

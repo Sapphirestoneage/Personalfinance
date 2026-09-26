@@ -17349,6 +17349,26 @@ SPARKS device backup neither carries nor removes `coach.` keys.
 
 **Verified.** `node test/run.js`; `node coach/test/run.js`.
 
+## D-340 — Money Models is its own app in moneymodels/, a lane beside SPARKS like coach/
+
+**Why.** The owner wants a tool that runs them through *$100M Money Models*
+(offers, upsell, downsell, continuity, the KPIs), using the Ledger's planets
+and levels dynamic, while the freeze holds.
+
+**Decision.** `moneymodels/` is a separate app: one page (the Sky, a planet,
+the figures, the plays, your model), six planets by five bands of three
+levels, its own storage (`moneymodels.v1`, never `slaf.`), one byte copy of
+`shared/theme.css`, its own tests (`node moneymodels/test/run.js`, in CI) and
+its own log (`moneymodels/DECISIONS.md`, `MM-###`). Nothing in `rooms/`,
+`shared/`, `engines/` or `data/` changes for it.
+
+**Replaces or removes.** No SPARKS screen. A new lane, like `coach/` (D-339).
+
+**Stored shape.** No change to `slaf.household.v2` or any SPARKS key. The
+SPARKS device backup neither carries nor removes `moneymodels.` keys.
+
+**Verified.** `node test/run.js`; `node moneymodels/test/run.js`.
+
 ---
 
 # The Dungeons & Dividends entries
