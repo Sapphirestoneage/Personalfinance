@@ -124,7 +124,7 @@
         <a class="slaf-btn" id="btn-app" href="https://github.com/sapphirestoneage/Personalfinance/archive/refs/heads/main.zip" download>Download the whole app</a>
       </div>
       <p class="data-note" id="sheet-note" hidden></p>
-      <p class="slaf-hint" style="margin:var(--space-2) 0 0">The spreadsheet opens in Excel, Numbers or Google Sheets: a tab a door, money in money cells, a blank left blank. The app zip is the source from GitHub: unzip it and open <code>index.html</code> through a small local server (on a computer, <code>python3 -m http.server</code> in that folder, then <code>localhost:8000</code>). Your numbers are not in the zip; they stay in this browser and in your backup file.</p>
+      <p class="slaf-hint" style="margin:var(--space-2) 0 0">The spreadsheet opens in Excel, Numbers or Google Sheets and it is the whole app in one file (D-356): every question on a tab for its door, asked in plain words with what it means and where to find it beside it, and a last tab that works out what your numbers say. The figures there are real formulas, so the file keeps working after you close this. Never used the app? <a href="../sheet/money-rooms-blank.xlsx" download>Download the empty one</a> and start typing. The app zip is the source from GitHub: unzip it and open <code>index.html</code> through a small local server (on a computer, <code>python3 -m http.server</code> in that folder, then <code>localhost:8000</code>). Your numbers are not in the zip; they stay in this browser and in your backup file.</p>
     </details>
   </section>
 
@@ -263,6 +263,7 @@
 <script src="../shared/csv.js"></script>
 <script src="../shared/zipfile.js"></script>
 <script src="../shared/xlsx.js"></script>
+<script src="../shared/workbook.js"></script>
 <script src="../shared/csvexport.js"></script>
 <script src="../engines/subscriptions.js"></script>
 <script src="../engines/merchants.js"></script>
@@ -344,11 +345,11 @@
   }
   /* The workbook (main's D-222): a tab a door, money in money cells. */
   el('btn-xlsx').addEventListener('click', function () {
-    SLAF.Reference.load(['ledgerRows', 'staleness', 'confidenceWeights']).then(function (t) {
+    SLAF.Reference.load(['ledgerRows', 'staleness', 'confidenceWeights', 'workbook', 'states', 'expenseCategories']).then(function (t) {
       SLAF.LedgerRows.use(t.ledgerRows);
       var name = SLAF.CsvExport.workbookName(Schema.localDay());
       save(SLAF.CsvExport.workbook(Spine.getProfile(), t), name, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      note('sheet-note', 'Downloaded ' + name + '. It opens as a spreadsheet: a tab a door, money in money cells. Edit the "Your number" column and bring it back through the door below.', 'is-good');
+      note('sheet-note', 'Downloaded ' + name + '. Eight tabs: how to use it, the six doors in order, and what your numbers say. Type in the shaded cells and the bold figures work themselves out. Bring it back through the door below.', 'is-good');
     }).catch(function (err) { note('sheet-note', 'Could not build the spreadsheet: ' + err.message, 'is-error'); });
   });
   /* One CSV out and the same CSV back in (D-220), through shared/csvexport.js. */

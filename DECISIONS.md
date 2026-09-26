@@ -17852,6 +17852,56 @@ the day `data/benefit_cliffs_2026.json` stops reading `unverified` while the
 taper is still unbuilt, so the next step is remembered by the build and not by
 a note in a file.
 
+
+## D-356 — The whole app, as one spreadsheet you can work in
+
+**Why.** The owner: "convert this into essentially a really really professional
+spreadsheet, I think the app is a bit too complex for me rn". Thirty-seven
+rooms is a lot of app when what you want is to sit down with your numbers. The
+workbook that existed (D-222) was a photograph of them: values in cells, an
+audit column, nothing that worked anything out.
+
+**Decision.** The file is the app now. Eight tabs: how to use it, the six
+doors in the order worth filling them in, and what your numbers say. All 97
+rows are on it, including the ones a household's situation hides, so the file
+is the whole app and not a selection from it. Each is asked in the same plain
+words the app asks it in (D-347), with what it means, where to find it, what
+is close enough and what to do if you do not know, in the columns beside it.
+Shaded cell means type here; bold means the sheet worked it out. A choice is a
+dropdown, so it cannot be typed wrong.
+
+Every derived figure is a real formula over named cells, so the file keeps
+working after the app is closed: `netWorth` reads
+`cashSavings+investments+otherAssets-totalDebt`, not a number someone pasted.
+
+One formula, one function still holds, which is the whole difficulty here. The
+thirteen computed rows are GENERATED from `formula.terms` in
+`data/ledger-rows.json`, the same signed sum the app reads. The nineteen
+readings are listed in `data/workbook.json`, and each names the engine that
+owns it. `test/workbook.js` has a small spreadsheet of its own: it works every
+formula out and compares it to that engine, over three households. Two ways of
+saying one thing cannot drift when the build works both out and compares them.
+
+Empty is not zero here either: an unanswered row is an empty shaded cell, and
+a reading that needs it shows nothing rather than an answer it does not have.
+
+**Replaces or removes.** Replaces D-222's workbook entirely; one file still
+leaves and comes back, so nothing is added to Your Data. `sheet/` holds the
+blank one, built by `tools/workbook.js`, for someone who has never opened the
+app. No new room: the freeze holds.
+
+**Stored shape.** No change to saved data. The workbook's first column, the
+plain question, is read back as a label, so a line typed at the bottom of a
+tab under the question above it lands on its row; `shared/csvexport.js` matches
+a row by its plain words as well as its label and id.
+
+**Verified.** `node test/workbook.js` 54, the sheet and the engines agreeing
+reading by reading and blank by blank; `node test/xlsx.js` 43, out and back
+with a balance edited and a debt typed at the bottom somewhere else; `node
+test/run.js` 36542; `node tools/workbook.js --check`; the file opened with an
+independent reader, and downloaded from Your Data in a real browser with no
+console error.
+
 ---
 
 # The Dungeons & Dividends entries

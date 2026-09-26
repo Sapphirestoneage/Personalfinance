@@ -90,48 +90,85 @@ function repackDeflated(files) {
   const parts = await Zipfile.read(book);
   ok('the content types, the workbook, its styles and a sheet a door', ['[Content_Types].xml', '_rels/.rels', 'xl/workbook.xml', 'xl/_rels/workbook.xml.rels', 'xl/styles.xml', 'xl/worksheets/sheet1.xml', 'xl/worksheets/sheet6.xml'].every((n) => n in parts));
   const wbXml = Zipfile.text(parts['xl/workbook.xml']);
-  eq('the tabs are named in words, a door each, and a page of notes last', (wbXml.match(/<sheet name="([^"]*)"/g) || []).map((s) => s.slice(13, -1)).join(', '), 'Debt, Assets, Income, Taxes, Expenses, You, How to use this');
-  const assets = Zipfile.text(parts['xl/worksheets/sheet2.xml']);
-  ok('the heading row stays put when the sheet scrolls, and the columns filter', /state="frozen"/.test(assets) && /<autoFilter/.test(assets));
-  ok('money sits in a money cell and a percent in a percent cell: numbers, not text', /s="3"><v>9500<\/v>/.test(assets) && /s="4"><v>0.04<\/v>/.test(assets));
+  const tabs = (wbXml.match(/<sheet name="([^"]*)"/g) || []).map((s) => s.slice(13, -1));
+  /* D-356: the file is the app, so it opens on a page that says how to use
+     it, walks the six doors in order, and ends on what the numbers say. */
+  eq('it opens on Start here, walks the doors in order, and ends on the readings',
+    tabs.join(', '), 'Start here, 1. About you, 2. Money in, 3. Money out, 4. What you own, 5. What you owe, 6. Tax, What it says');
+  const sheetOf = (name) => Zipfile.text(parts['xl/worksheets/sheet' + (tabs.indexOf(name) + 1) + '.xml']);
+  const own = sheetOf('4. What you own');
+  ok('the heading row and the question column stay put when the sheet scrolls, and the columns filter',
+    /ySplit="1"/.test(own) && /xSplit="1"/.test(own) && /state="frozen"/.test(own) && /<autoFilter/.test(own));
+  ok('money sits in a money cell and a percent in a percent cell: numbers, not text', /s="13"><v>9500<\/v>/.test(own) && /s="14"><v>0.04<\/v>/.test(own));
   const styles = Zipfile.text(parts['xl/styles.xml']);
   ok('...under the formats that show them as $9,500.00 and 4.00%', /&quot;\$&quot;#,##0\.00/.test(styles) && /formatCode="0\.00%"/.test(styles));
-  ok('a date sits in a date cell', /yyyy/.test(styles) && /s="5"><v>\d{5}<\/v>/.test(Zipfile.text(parts['xl/worksheets/sheet6.xml'])));
+  ok('a date sits in a date cell', /yyyy/.test(styles) && /s="15"><v>\d{5}<\/v>/.test(sheetOf('1. About you')));
+
+  section('It is a model, not a photograph of one');
+  ok('the figures the app works out are formulas, not numbers typed in once',
+    /<f>cashSavings\+investments\+otherAssets-totalDebt<\/f>/.test(own));
+  ok('the readings are formulas too, over names anyone can read',
+    /<f>IF\(monthlyExpenses=0,&quot;&quot;,cashSavings\/monthlyExpenses\)<\/f>/.test(sheetOf('What it says')));
+  ok('the names are defined, so a formula reads as a sentence',
+    /<definedName name="cashSavings">/.test(wbXml) && /<definedName name="monthlyExpenses">/.test(wbXml));
+  ok('and every spreadsheet is told to work the whole file out on opening', /fullCalcOnLoad="1"/.test(wbXml));
+  ok('a choice cannot be typed wrong: it is a dropdown', /<dataValidation type="list"/.test(sheetOf('5. What you owe')));
 
   section('And it reads back as what a person sees');
   const sheets = await Xlsx.read(book);
-  eq('the same tabs', sheets.map((s) => s.name).join(','), 'Debt,Assets,Income,Taxes,Expenses,You,How to use this');
-  eq('headings in words, with the two ids the app needs kept at the end', sheets[1].rows[0].join(' | '), 'What it is | Which one | Your number | In | How sure | Last checked | Came from | row id | item id');
-  const cash = sheets[1].rows.filter((r) => r[0] === 'Cash and savings')[0];
+  eq('the same tabs', sheets.map((s) => s.name).join(','), tabs.join(','));
+  const tab = (name) => sheets.filter((s) => s.name === name)[0];
+  const byRowId = (name, id) => tab(name).rows.filter((r) => r[13] === id);
+  eq('headings in words: the question first, the number next, the ids the app needs last',
+    tab('4. What you own').rows[0].join(' | '),
+    'In plain words | Which one | Your number | In | What it means | Where to find it | Close enough | If you are not sure | What it unlocks | How sure | Last checked | Came from | What it is | row id | item id | Which pile');
+  const cash = byRowId('4. What you own', 'cashSavings')[0];
   eq('the money plain and the unit in words', cash[2] + ' ' + cash[3], '9500 dollars');
-  eq('a percent cell comes back a percent, because the sheet says it is one', sheets[1].rows.filter((r) => /Workplace contribution/.test(r[0]))[0][2], '4%');
-  eq('a choice reads in words, not in its id', sheets[5].rows.filter((r) => r[0] === 'Working situation')[0][2], 'Employed');
-  eq('a date reads as a date', sheets[5].rows.filter((r) => /Month and year you were born/.test(r[0]))[0][2], '1994-04-12');
+  eq('asked in plain words, not in the app\u2019s own label', cash[0], 'How much money could you spend this week without selling anything?');
+  ok('with the five sentences beside it', cash[4] && cash[5] && cash[6] && cash[7]);
+  eq('a percent cell comes back a percent, because the sheet says it is one', byRowId('4. What you own', 'contributionPercent')[0][2], '4%');
+  eq('a choice reads in words, not in its id', byRowId('1. About you', 'employmentStatus')[0][2], 'Employed');
+  eq('a date reads as a date', byRowId('1. About you', 'dob')[0][2], '1994-04-12');
 
   section('Out and back, with nothing changed');
   const text = await Csv.fromFile(book);
   const plain = Csv.plan(text, demo, T);
   ok('a spreadsheet nobody edited asks for no change and needs no look', !plain.counts.change && !plain.counts.add && plain.problems === 0 && plain.entries.length > 40);
-  ok('every line says which tab and row it came from', /^Assets, row \d+$/.test(plain.entries.filter((e) => e.row === 'cashSavings')[0].line));
+  ok('every line says which tab and row it came from', /^4\. What you own, row \d+$/.test(plain.entries.filter((e) => e.row === 'cashSavings')[0].line));
 
   section('A sheet re-saved and edited somewhere else');
   const edited = {};
   Object.keys(parts).forEach((n) => { edited[n] = parts[n]; });
-  edited['xl/worksheets/sheet2.xml'] = Zipfile.text(parts['xl/worksheets/sheet2.xml']).replace(/(<c r="C4"[^>]*><v>)9500(<\/v>)/, '$112500$2');
-  const debt = Zipfile.text(parts['xl/worksheets/sheet1.xml']);
+  const ownPart = 'xl/worksheets/sheet' + (tabs.indexOf('4. What you own') + 1) + '.xml';
+  const owePart = 'xl/worksheets/sheet' + (tabs.indexOf('5. What you owe') + 1) + '.xml';
+  /* The itemised line, not the roll-up above it: with a list of accounts on
+     the tab, the planner treats the total as covered by them (D-220). */
+  const ownXml = Zipfile.text(parts[ownPart]);
+  const assetRow = (ownXml.match(/<row r="(\d+)"[^>]*>(?:(?!<\/row>)[\s\S])*?>assetValue<(?:(?!<\/row>)[\s\S])*?<\/row>/) || [])[1];
+  ok('the itemised account line was found to edit', !!assetRow, 'no assetValue row');
+  edited[ownPart] = ownXml.replace(new RegExp('(<c r="C' + assetRow + '"[^>]*><v>)9500(</v>)'), '$112500$2');
+  ok('and its balance was changed', edited[ownPart].indexOf('12500') > -1);
+  const debt = Zipfile.text(parts[owePart]);
   const nRows = (debt.match(/<row\b/g) || []).length;
-  edited['xl/worksheets/sheet1.xml'] = debt.replace('</sheetData>',
-    '<row r="' + (nRows + 1) + '"><c r="A' + (nRows + 1) + '" t="s"><v>0</v></c><c r="B' + (nRows + 1) + '" t="s"><v>1</v></c><c r="C' + (nRows + 1) + '" s="3"><v>12000</v></c></row>'
-    + '<row r="' + (nRows + 2) + '"><c r="A' + (nRows + 2) + '" t="s"><v>2</v></c><c r="B' + (nRows + 2) + '" t="s"><v>1</v></c><c r="C' + (nRows + 2) + '" s="4"><v>0.0625</v></c></row>'
+  /* A person adding a debt at the bottom of the tab copies the question from
+     the line above, which is the plain one in the first column (D-356). */
+  edited[owePart] = debt.replace('</sheetData>',
+    '<row r="' + (nRows + 1) + '"><c r="A' + (nRows + 1) + '" t="s"><v>0</v></c><c r="B' + (nRows + 1) + '" t="s"><v>1</v></c><c r="C' + (nRows + 1) + '" s="13"><v>12000</v></c></row>'
+    + '<row r="' + (nRows + 2) + '"><c r="A' + (nRows + 2) + '" t="s"><v>2</v></c><c r="B' + (nRows + 2) + '" t="s"><v>1</v></c><c r="C' + (nRows + 2) + '" s="14"><v>0.0625</v></c></row>'
     + '</sheetData>');
-  edited['xl/sharedStrings.xml'] = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="3" uniqueCount="3"><si><t>Balance</t></si><si><t>Car loan</t></si><si><t>Interest rate</t></si></sst>';
+  const q = (id) => LR.byId(id).plain;
+  edited['xl/sharedStrings.xml'] = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="3" uniqueCount="3">'
+    + '<si><t>' + q('debtBalance') + '</t></si><si><t>Car loan</t></si><si><t>' + q('debtRate') + '</t></si></sst>';
   const repacked = repackDeflated(edited);
   ok('the re-saved file is written the other way: every part compressed', repacked.length !== book.length);
   const text2 = await Csv.fromFile(repacked);
   Spine.updateProfile(Demo.build());
   const p2 = Csv.plan(text2, Spine.getProfile(), T);
-  ok('it reads: the edited balance, and a debt typed at the bottom with no ids at all', p2.entries.filter((e) => e.row === 'assetValue' && e.status === 'change')[0].value === 1250000 && p2.entries.filter((e) => e.item === 'Car loan' && e.status === 'add').length === 2);
-  ok('a shared string is read like any other word', p2.entries.filter((e) => e.item === 'Car loan')[0].label === 'Balance');
+  const changed = p2.entries.filter((e) => e.status === 'change');
+  ok('it reads the edited balance', changed.length === 1 && changed[0].row === 'assetValue' && changed[0].value === 1250000, JSON.stringify(changed.map((e) => e.row + '=' + e.value)));
+  ok('and a debt typed at the bottom with no ids at all', p2.entries.filter((e) => e.item === 'Car loan' && e.status === 'add').length === 2,
+    JSON.stringify(p2.entries.filter((e) => e.item === 'Car loan').map((e) => e.row + ':' + e.status)));
+  ok('a shared string is read like any other word', p2.entries.filter((e) => e.item === 'Car loan')[0].label === LR.byId('debtBalance').label);
   const r = Csv.apply(p2, Spine);
   const h = Spine.getProfile();
   ok('applying lands both, through the rooms that own them', r.failed.length === 0 && h.assets.filter((a) => a.id === 'demo_asset_cash')[0].valueCents === 1250000 && h.debts.filter((d) => d.label === 'Car loan').length === 1);

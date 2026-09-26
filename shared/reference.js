@@ -36,6 +36,9 @@
     retirementMilestones: 'retirement_milestones.json',
     milestones: 'milestones.json',
     ledgerRows: 'ledger-rows.json',
+    /* The app as one spreadsheet: the tabs, and the formula for each
+       reading with the engine it must agree with (D-356). */
+    workbook: 'workbook.json',
     spheres: 'spheres.json',
     netWorthPercentiles: 'net_worth_percentiles_scf_2022.json',
     irsLimits: 'irs_limits_2026.json',

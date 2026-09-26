@@ -104,17 +104,17 @@ section can be read with `sed -n START,ENDp FILE` instead of the whole file.
   - Phone and desktop, measured (D-136) [152-168]
   - What people ask about that this does not answer (the coverage gap) [169-241]
 
-## README.md (251 lines)
+## README.md (252 lines)
 
 - SPARKS / SLAF [1-10]
   - Live [11-23]
   - Run it locally [24-33]
   - Changing things [34-66]
-  - Layout [67-175]
-  - No dependencies, and no build step anywhere [176-191]
-  - Verify [192-233]
-  - Rules that are easy to break [234-245]
-  - Not financial advice [246-251]
+  - Layout [67-176]
+  - No dependencies, and no build step anywhere [177-192]
+  - Verify [193-234]
+  - Rules that are easy to break [235-246]
+  - Not financial advice [247-252]
 
 ## docs/SOLAR-SYSTEM.md (1674 lines)
 

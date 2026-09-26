@@ -23,6 +23,8 @@ jobs:
           node marketing/test/run.js
           node test/export.js
           node test/xlsx.js
+          node test/workbook.js
+          node tools/workbook.js --check
       - name: Lane 2 (corpus, properties, data, glossary, migration, QR)
         working-directory: tests
         run: |

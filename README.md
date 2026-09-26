@@ -81,6 +81,7 @@ vendor/fonts/       Self-hosted typefaces (no CDN, no other vendored code)
 shared/             The spine everything depends on
   qr.js               a QR code of the share link, drawn from the standard's tables, no library (D-201)
   ask.js              ask at the moment of need: the one blank row a room asks for (askIn), inline, at most once a visit, written through the owner; mounted from Progress.mount (D-207)
+  workbook.js         the whole app as one spreadsheet: all 97 rows on a tab for their door, asked in plain words with the five sentences beside them, every derived figure a live formula over named cells, and a tab of readings; built from data/workbook.json, tied to the engines by test/workbook.js (D-356)
   doors.js            the six doors (D, A, I, T, E, You): rows behind each, the headline, how far along, which to open next, and the first insight after the first round (D-206); the four levels, the insight each unlocks, and the understanding line (D-207)
   suggest.js          a value the app proposes, shown but not taken (D-060), and since D-205 the rules that propose it: every answer fills more rows as suggestions, derived from data/ and never stored; one tap confirms through the owner
   backup.js           everything this browser holds as one file: every slaf. and dnd. key, save, load with a confirm and an undo, and the drift guard that warns on a dev host when a room writes outside those prefixes (D-202). On the Ledger and in Settings

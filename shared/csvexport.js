@@ -112,7 +112,11 @@
   /* The columns a sheet may call by another name. */
   var HEADER_ALIASES = {
     row: ['row', 'id', 'row_id', 'field', 'key', 'code'],
-    label: ['label', 'name', 'question', 'row_label', 'title', 'what'],
+    /* `in_plain_words` is the workbook's first column since D-356: the
+       question as a person is asked it. A row is still found by its id when
+       the id column is there; this is what makes a line somebody typed at the
+       bottom of a tab, copying the question above it, land on its row. */
+    label: ['label', 'name', 'question', 'in_plain_words', 'row_label', 'title', 'what'],
     item: ['item', 'account', 'debt', 'which', 'item_name', 'line', 'for'],
     value: ['value', 'amount', 'new', 'new_value', 'number', 'entered', 'answer'],
     item_id: ['item_id', 'itemid', 'item_key'],
@@ -385,6 +389,10 @@
       /* A row's former labels count too (D-310): a sheet typed or exported
          under the old words still lands on the row. */
       var names = [r.label].concat(r.wasLabels || []);
+      /* The workbook asks in plain words and puts them in the first column
+         (D-356), so a line typed at the bottom of a tab, under the question
+         above it, lands on the row it is copying. */
+      if (r.plain) names.push(r.plain);
       var f = fieldOf(r.id); if (f && f.label) names.push(f.label);
       names.forEach(function (nm) { var k = norm(nm); if (k && !byWords[k]) byWords[k] = r; });
     });
@@ -664,20 +672,18 @@
       return l[c.key];
     });
   }
-  /** build(h, tables) → a workbook, one tab a door plus a page of notes. */
+  /** build(h, tables) → the workbook. Since D-356 this is not a photograph of
+      your numbers but the app itself as a sheet: every row on a tab for its
+      door, asked in plain words with the five sentences beside it, every
+      derived figure a live formula, and a tab that works out what it all
+      says. shared/workbook.js builds it; the headings it writes are the ones
+      `plan` reads back, so the file still goes out and comes home (D-220). */
   function workbook(household, tables, opts) {
     if (!Xlsx) throw new Error('CsvExport.workbook needs shared/xlsx.js');
-    var all = rows(household, tables);
-    var sheets = Doors.DOORS.map(function (d) {
-      var mine = all.filter(function (l) { return l.door === d.id; });
-      return { name: d.label, columns: SHEET_COLUMNS, rows: mine.map(function (l) { return sheetRow(l, tables); }) };
-    }).filter(function (s) { return s.rows.length; });
-    sheets.push({
-      name: 'How to use this',
-      columns: [{ header: 'Money Rooms, your numbers, on one sheet a door', width: 110 }],
-      rows: readme(household, tables).split('\n').map(function (t) { return [t]; })
-    });
-    return Xlsx.build(sheets, { title: 'Money Rooms', day: Schema.localDay(), now: opts && opts.now });
+    var W = (typeof module === 'object' && module.exports) ? require('./workbook.js')
+      : ((typeof self !== 'undefined' ? self : {}).SLAF || {}).Workbook;
+    if (!W) throw new Error('CsvExport.workbook needs shared/workbook.js');
+    return W.file(household, tables, opts || {});
   }
   function workbookName(day) { return 'money-rooms-' + day + '.xlsx'; }
   /** The sheets a workbook was read into, as the one text the planner reads. */
@@ -710,5 +716,5 @@
 
   return { rows: rows, files: files, csv: csv, parse: parse, readme: readme, zip: zip, crc32: crc32, dollars: dollars, COLUMNS: COLUMNS, UNIT_WORDS: UNIT_WORDS,
     workbook: workbook, workbookName: workbookName, fromWorkbook: fromWorkbook, fromFile: fromFile, SHEET_COLUMNS: SHEET_COLUMNS,
-    single: single, filename: filename, read: read, fromText: fromText, shown: shown, plan: plan, apply: apply, signature: signature, valueText: valueText, norm: norm, findRow: findRow, rowIndex: rowIndex, enumChoices: enumChoices, CREATOR: CREATOR };
+    single: single, filename: filename, read: read, fromText: fromText, shown: shown, plan: plan, apply: apply, signature: signature, valueText: valueText, wholePercent: wholePercent, norm: norm, findRow: findRow, rowIndex: rowIndex, enumChoices: enumChoices, CREATOR: CREATOR };
 });
