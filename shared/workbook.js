@@ -136,6 +136,12 @@
     if (BY_HAND[row.id] !== undefined) return BY_HAND[row.id];
     var terms = (row.formula && row.formula.terms) || [];
     if (!terms.length) return null;
+    /* A row whose formula names a reference table is not the sum of its terms:
+       the confidence-weighted net worth lists assets and debts, but each asset
+       is multiplied by a weight from data/confidence_weights.json first, and
+       adding the terms up would print a different number under the right
+       label. Those rows get their sentence instead. */
+    if (((row.formula && row.formula.references) || []).length) return null;
     var parts = [];
     for (var i = 0; i < terms.length; i++) {
       var t = terms[i];

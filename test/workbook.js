@@ -308,6 +308,13 @@ function sheetValue(ev, id) {
     ok(r.id + ' says the same as its terms', named.every((t) => f.indexOf(t.id) > -1), f);
   });
   ok('most of them made it onto the sheet', written >= 8, String(written) + ' of ' + computed.length);
+  /* A row whose formula leans on a reference table is not the sum of its
+     terms, and a plain sum under its label would be a wrong number wearing a
+     right name. It must show its sentence instead. */
+  const weighted = computed.filter((r) => ((r.formula && r.formula.references) || []).length);
+  ok('a row that needs a reference table is never generated from its terms',
+    weighted.every((r) => !Workbook.computedFormula(r, { assetValue: { isRange: true }, totalDebt: {} })),
+    weighted.map((r) => r.id).join(', '));
 
   section('Every reading agrees with the engine that owns it');
   const households = {
