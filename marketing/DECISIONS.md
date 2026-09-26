@@ -93,3 +93,29 @@ lonely chart row.
 
 **Verified.** `node marketing/test/run.js`; the Scoreboard at 1280 and
 400 wide in Chromium with the example data and empty, no console errors.
+
+## MD-010 — The Scoreboard as one spreadsheet, for the owner who trusts a cell over an app
+
+**Why.** The owner finds the app confusing and does not trust what they cannot
+click on. A spreadsheet shows every formula.
+
+**Decision.** `marketing/tools/sheet.py` writes `marketing/Marketing-Scoreboard.xlsx`:
+the same three logs (Posts, People, Touches) and the same readings, every one
+a formula over those tabs. Leads, calls and clients are counted from three
+dates typed on People (became a lead on, call booked on, became a client on)
+rather than a stage history, because a date in a cell is checkable. Blank is
+never zero: a sum over a column nobody typed reads blank, and a rate with a
+blank in it reads blank. Dropdowns and the weekly targets live on Lists; the
+Weekly tab carries the streak and three charts. Example rows say EXAMPLE.
+The file opens in Google Sheets (File, Import) or Excel; nothing in it runs.
+
+**Replaces or removes.** Nothing in the app; it is the same tool in a form
+the owner will use. If the sheet is what gets used, the app is the thing to
+retire.
+
+**Stored shape.** None. The workbook is a template; the owner's copy lives in
+their Drive.
+
+**Verified.** Every formula recalculated by LibreOffice with no errors; the
+example numbers checked by hand (reach 10,070, engagement 7.3%, two leads
+in the period, Ada overdue by three days).
