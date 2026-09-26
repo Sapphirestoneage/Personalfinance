@@ -13,3 +13,8 @@ package-lock.json
 money-rooms-coach-*
 money-rooms-recap-*
 *.coach.json
+
+# Marketing Scoreboard (D-340): contacts and results never enter this public
+# repository. Saves are made on the owner's device and stay there.
+scoreboard-*
+*.mkt.json

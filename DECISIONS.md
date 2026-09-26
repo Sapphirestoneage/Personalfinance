@@ -17349,6 +17349,27 @@ SPARKS device backup neither carries nor removes `coach.` keys.
 
 **Verified.** `node test/run.js`; `node coach/test/run.js`.
 
+## D-340 — The Marketing Scoreboard is its own app in marketing/, a lane beside SPARKS like coach/
+
+**Why.** The owner wants to measure every post, every contact and every touch
+(what gets measured gets managed), and share the numbers with marketer
+friends. It is not a room: no household number is in it.
+
+**Decision.** `marketing/` is a separate app with three screens (Scoreboard,
+Content log, People), its own storage (`mkt.` keys, never `slaf.` or
+`coach.`), byte-identical copies of the few files it reads (`marketing/tools/vendor.js`),
+its own tests (`node marketing/test/run.js`, in CI) and its own log
+(`marketing/DECISIONS.md`, `MD-###`). Nothing in `rooms/`, `shared/`,
+`engines/` or `data/` changes for it.
+
+**Replaces or removes.** The marketing spreadsheet the owner would otherwise
+start. No SPARKS screen.
+
+**Stored shape.** No change to `slaf.household.v2` or any SPARKS key. The
+SPARKS device backup neither carries nor removes `mkt.` keys.
+
+**Verified.** `node test/run.js`; `node marketing/test/run.js`.
+
 ---
 
 # The Dungeons & Dividends entries
