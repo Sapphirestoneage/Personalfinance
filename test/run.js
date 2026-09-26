@@ -750,7 +750,10 @@ const RULES = TABLES.debtRules;
   checkTrue('...and the two figures show under the box, each saying what it came from', /id="extra-basis"/.test(page) && /row\('The gap'/.test(page) && /row\('Realized'/.test(page) && /closed month/.test(page) && /guessed, fix it in Start Here/.test(page));
   checkTrue('...a stale engine falls back to the typed figure, never a crash', /typeof Debt\.extraCapacity !== 'function'/.test(page));
   checkTrue('the room shows the three lines above the figures, from the FOO table', /Debt\.milestones\(plan, h, RULES, \{ highInterestRate: FOO && FOO\.thresholds/.test(page) && /Credit cards gone/.test(page) && /Everything gone/.test(page) && /load\(\['debtRules', 'fooRules', 'effectiveTaxRates', 'onepagerDefaults'(, '[a-zA-Z]+')*\]\)/.test(page));
-  checkTrue('a second ring: interest over the whole plan, by debt, from the payoffs (D-190)', /Interest over the plan, by debt/.test(page) && /p\.interestPaidCents/.test(page) && /plan\.totalInterestCents\), small: 'until it is all gone'/.test(page));
+  /* The wording moved with the picture when it became the reader's to
+     re-shape (D-348); what this holds is that there are two rings, the second
+     built from the payoffs and centred on the whole plan's interest. */
+  checkTrue('a second ring: interest over the whole plan, by debt, from the payoffs (D-190)', /Interest over the whole plan, by debt/.test(page) && /p\.interestPaidCents/.test(page) && /plan\.totalInterestCents\), small: 'until it is all gone'/.test(page));
 })();
 
 /* -- What is free a month for the debts (D-190) ---------------------------- */
@@ -17029,7 +17032,7 @@ section('The planets dashboard (D-342)');
   checkTrue('it counts facts, not just levels, and says which it means',
     /function factCounts/.test(page) && /Questions answered/.test(page) && /Levels answered/.test(page));
   checkTrue('the headline is a ring with the share in the middle',
-    /Charts\.donut\(/.test(page) && /of the questions/.test(page));
+    /kind: 'breakdown'[\s\S]{0,400}of the questions/.test(page));
   checkTrue('every planet and every band gets a labelled bar',
     /function planetRows/.test(page) && /function bandRows/.test(page)
     && /ChartBox\.draw\(el\('dash-planets'\)/.test(page) && /ChartBox\.draw\(el\('dash-bands'\)/.test(page));

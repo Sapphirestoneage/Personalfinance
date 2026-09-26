@@ -380,13 +380,14 @@
 <script src="../engines/reversibility.js"></script>
 <script src="../engines/goals.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../shared/chartbox.js"></script>
 <script src="../shared/rating.js"></script>
 <script src="../engines/worth.js"></script>
 <script>
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
-      Reference = SLAF.Reference, Goals = SLAF.Goals, Charts = SLAF.Charts,
+      Reference = SLAF.Reference, Goals = SLAF.Goals, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox,
       Reversibility = SLAF.Reversibility;
 
   var ROOM_ID = 'goals';
@@ -782,9 +783,16 @@
       return { label: name, value: share, color: Charts.COLORS.series[i % Charts.COLORS.series.length],
         note: Money.formatCents(p.savedCents) + ' of ' + Money.formatCents(p.totalCents) + ' \u00b7 ' + when };
     });
-    var html = '<span class="slaf-label" style="display:block;margin-top:var(--space-3)">How far along each one is</span>'
-      + Charts.bars({ title: 'Progress toward each goal', rows: rows, max: 1,
-          format: function (v) { return Math.round(v * 100) + '%'; } });
+    /* Two pictures, each the reader's to re-shape (D-348): how far along each
+       goal is, and what they all ask for in a month. */
+    el('together-chart').innerHTML = '<div id="goals-progress"></div><div id="goals-monthly" style="margin-top:var(--space-3)"></div>';
+    ChartBox.draw(el('goals-progress'), {
+      id: 'goals-progress', kind: 'compare',
+      title: 'How far along each one is.',
+      rows: rows.map(function (r) { return { label: r.label, value: r.value, note: r.note }; }), max: 1,
+      format: function (v) { return Math.round(v * 100) + '%'; },
+      empty: 'Name a goal and give it a figure to see it here.'
+    });
     var parts = all.plans.map(function (p, i) {
       return { label: (goals[i] && goals[i].name) || 'A goal', plan: p, i: i };
     }).filter(function (x) {
@@ -793,10 +801,14 @@
       return { label: x.label, value: x.plan.requiredMonthlyCents, color: Charts.COLORS.series[x.i % Charts.COLORS.series.length] };
     });
     if (parts.length) {
-      html += '<span class="slaf-label" style="display:block;margin-top:var(--space-3)">A month, all goals together</span>'
-        + Charts.stacked({ title: 'What every goal needs a month, together', rows: [{ label: 'A month', parts: parts }] });
+      ChartBox.draw(el('goals-monthly'), {
+        id: 'goals-monthly', kind: 'breakdown',
+        title: 'What every goal asks for in a month, together.',
+        rows: parts.map(function (x) { return { label: x.label, value: x.value }; }),
+        format: function (v) { return Money.formatCents(v); },
+        empty: 'Give a goal a date and it will say what it needs a month.'
+      });
     }
-    el('together-chart').innerHTML = html;
   }
 
   /* Every goal card is a form. Rebuilding the list while someone is typing

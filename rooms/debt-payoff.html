@@ -1931,23 +1931,38 @@
       var d = live.filter(function (x) { return x.id === p.debtId; })[0];
       return t + (d && d.type === 'credit_card' ? p.interestPaidCents : 0);
     }, 0) : 0;
-    el('plan-chart').innerHTML = !Money.isOk(plan) ? '' : '<div class="plan-charts"><div>' + Charts.donut({
-      title: 'Interest a month, by debt',
-      slices: slices,
-      center: { big: Money.formatCents(totalMonthly), small: 'a month in interest' },
-      empty: 'Add a rate to each debt to see where the interest goes.'
-    }) + (totalMonthly > 0 && cardsMonthly > 0
-      ? '<p class="slaf-hint" style="margin-top:var(--space-2)">The cards are ' + Money.formatCents(cardsMonthly) + ' of that, '
-        + Math.round(cardsMonthly / totalMonthly * 100) + '%. Clear them and the rest costs ' + Money.formatCents(totalMonthly - cardsMonthly) + ' a month.</p>'
-      : '') + '</div><div>' + Charts.donut({
-      title: 'Interest over the plan, by debt',
-      slices: planSlices,
-      center: { big: Money.formatCents(plan.totalInterestCents), small: 'until it is all gone' },
-      empty: 'Nothing left to pay interest on.'
-    }) + (plan.totalInterestCents > 0 && cardsPlan > 0
-      ? '<p class="slaf-hint" style="margin-top:var(--space-2)">The cards cost ' + Money.formatCents(cardsPlan) + ' of that, '
-        + Math.round(cardsPlan / plan.totalInterestCents * 100) + '%, before they are gone.</p>'
-      : '') + '</div></div>';
+    /* Two pictures, each the reader's to re-shape (D-348): where the interest
+       goes this month, and where it goes over the whole plan. They keep their
+       own hosts so a choice on one does not move the other. */
+    el('plan-chart').innerHTML = !Money.isOk(plan) ? '' : '<div class="plan-charts"><div id="plan-chart-now"></div><div id="plan-chart-all"></div></div>';
+    if (Money.isOk(plan)) {
+      ChartBox.draw(el('plan-chart-now'), {
+        id: 'debt-interest-now', kind: 'breakdown',
+        title: 'Interest a month, by debt.',
+        rows: slices.map(function (x) { return { label: x.label, value: x.value }; }),
+        format: function (v) { return Money.formatCents(v); },
+        center: { big: Money.formatCents(totalMonthly), small: 'a month in interest' },
+        empty: 'Add a rate to each debt to see where the interest goes.'
+      });
+      if (totalMonthly > 0 && cardsMonthly > 0) {
+        el('plan-chart-now').insertAdjacentHTML('beforeend', '<p class="slaf-hint" style="margin-top:var(--space-2)">The cards are '
+          + esc(Money.formatCents(cardsMonthly)) + ' of that, ' + Math.round(cardsMonthly / totalMonthly * 100)
+          + '%. Clear them and the rest costs ' + esc(Money.formatCents(totalMonthly - cardsMonthly)) + ' a month.</p>');
+      }
+      ChartBox.draw(el('plan-chart-all'), {
+        id: 'debt-interest-plan', kind: 'breakdown',
+        title: 'Interest over the whole plan, by debt.',
+        rows: planSlices.map(function (x) { return { label: x.label, value: x.value }; }),
+        format: function (v) { return Money.formatCents(v); },
+        center: { big: Money.formatCents(plan.totalInterestCents), small: 'until it is all gone' },
+        empty: 'Nothing left to pay interest on.'
+      });
+      if (plan.totalInterestCents > 0 && cardsPlan > 0) {
+        el('plan-chart-all').insertAdjacentHTML('beforeend', '<p class="slaf-hint" style="margin-top:var(--space-2)">The cards cost '
+          + esc(Money.formatCents(cardsPlan)) + ' of that, ' + Math.round(cardsPlan / plan.totalInterestCents * 100)
+          + '%, before they are gone.</p>');
+      }
+    }
     if (Money.isOk(plan)) {
       /* Minimums alone, no stop: the do-nothing line every plan is read against. */
       var baseline = Debt.simulate(h, RULES, { strategyId: strategyId, extraMonthlyCents: 0 });
@@ -2104,10 +2119,23 @@
           note: s.id === strategyId ? 'chosen' : (!allTie && ok && cmp.cheapestStrategyId === s.id ? 'cheapest' : null) };
       });
     };
-    chart.innerHTML = '<span class="slaf-label" style="display:block;margin-top:var(--space-3)">Total interest, by order</span>'
-      + Charts.bars({ title: 'Total interest by strategy', rows: rowsFor(function (r) { return r.totalInterestCents; }) })
-      + '<span class="slaf-label" style="display:block;margin-top:var(--space-3)">Months to clear, by order</span>'
-      + Charts.bars({ title: 'Months to clear by strategy', rows: rowsFor(function (r) { return r.value; }), format: monthsLabel });
+    /* Two measures of different scale never share an axis (docs/DESIGN.md 17),
+       so they are two pictures, each the reader's to re-shape (D-348). The
+       chosen order keeps its colour, because that mark is a state. */
+    chart.innerHTML = '<div id="cmp-interest"></div><div id="cmp-months" style="margin-top:var(--space-3)"></div>';
+    ChartBox.draw(el('cmp-interest'), {
+      id: 'debt-compare-interest', kind: 'compare', keepColors: true,
+      title: 'Total interest, by the order you clear them in.',
+      rows: rowsFor(function (r) { return r.totalInterestCents; }),
+      format: function (v) { return Money.formatCents(v); },
+      empty: 'Add a rate to each debt to compare the orders.'
+    });
+    ChartBox.draw(el('cmp-months'), {
+      id: 'debt-compare-months', kind: 'compare', keepColors: true,
+      title: 'Months to clear, by the same orders.',
+      rows: rowsFor(function (r) { return r.value; }), format: monthsLabel,
+      empty: 'Add a minimum payment to each debt to compare the orders.'
+    });
   }
 
   el('strategy-list').addEventListener('click', function (evt) {
@@ -2566,7 +2594,16 @@
           x: { label: 'years from now', format: function (v) { return String(Math.round(v)); } }, y: { min: 0 } })
           + '<p class="why">Every payment on the standard plan adds up to ' + money(paidNominal) + ' on paper, but ' + money(paidToday) + ' in today\u2019s money: at ' + pct1(a.inflation) + ' inflation the later payments are made with cheaper dollars. That is the whole case for paying a cheap loan slowly.</p>';
       }
-      host.innerHTML = '<ul class="rc-list">' + rows.join('') + '</ul>' + chart;
+      /* The list, then the balance path as a picture the reader owns (D-348).
+         The path is two lines over time, which only an area chart tells the
+         truth about, so the shape stays and the colours and the table do not. */
+      host.innerHTML = '<ul class="rc-list">' + rows.join('') + '</ul><div id="sl-real-cost-chart"></div>';
+      if (chart) {
+        ChartBox.draw(document.getElementById('sl-real-cost-chart'), {
+          id: 'debt-student-real-cost', kind: 'series',
+          shapeLabel: 'Two lines', render: function () { return chart; }
+        });
+      }
     },
 
     number: function (h, T) {

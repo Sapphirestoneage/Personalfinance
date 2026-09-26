@@ -433,7 +433,7 @@
   /* No SLAF.Spine handle on purpose: this room reads the household through
      the template and writes nothing at all, so it never needs one. */
   var Money = SLAF.Money, Schema = SLAF.Schema, Ownership = SLAF.Ownership,
-      QuickMath = SLAF.QuickMath, Charts = SLAF.Charts, Room = SLAF.Room;
+      QuickMath = SLAF.QuickMath, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox, Room = SLAF.Room;
 
   var MONTHS = 12;
   /* The horizon the headline uses. Three years is not a preference: it is the
@@ -752,12 +752,14 @@
       /* ---- What it costs to run ---------------------------------------- */
       var biggest = t.runningCosts.slice().sort(function (a, b) { return b.share - a.share; })[0];
       var fuel = t.runningCosts.filter(function (r) { return r.id === 'fuel'; })[0];
-      setHtml('run-chart', Charts.donut({
-        title: 'Where a year of running costs goes',
-        slices: t.runningCosts.map(function (r) { return { label: r.label, value: r.share, note: r.note || '' }; }),
+      ChartBox.draw(document.getElementById('run-chart'), {
+        id: 'car-running-costs', kind: 'breakdown',
+        title: 'Where a year of running costs goes.',
+        rows: t.runningCosts.map(function (r) { return { label: r.label, value: r.share, note: r.note || '' }; }),
         format: function (v) { return Charts.percent(v); },
-        center: { big: Charts.percent(fuel.share), small: 'is fuel' }
-      }));
+        center: { big: Charts.percent(fuel.share), small: 'is fuel' },
+        empty: 'The running-cost table did not load.'
+      });
       setHtml('run-say',
         'Fuel is <strong>' + esc(Charts.percent(fuel.share)) + '</strong> of it, the cost everybody shops on, '
         + 'and under a quarter of the total. The biggest slice is <strong>' + esc(biggest.label.toLowerCase())

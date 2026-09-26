@@ -1306,9 +1306,17 @@
             : (v.target.reason || 'needs more')
       };
     });
-    el('variant-chart').innerHTML = vrows.length
-      ? Charts.bars({ title: 'The FIRE number for each flavour', rows: vrows })
-      : waiting(target);
+    /* The flavours, the reader's to re-shape (D-348). The standard one keeps
+       its colour: it is the mark the others are read against. */
+    if (!vrows.length) { el('variant-chart').innerHTML = waiting(target); }
+    else {
+      ChartBox.draw(el('variant-chart'), {
+        id: 'fire-variants', kind: 'compare', keepColors: true,
+        title: 'The number each flavour of the idea asks for.',
+        rows: vrows, format: function (v) { return Money.formatCents(v); },
+        empty: 'Add what you spend and the flavours appear.'
+      });
+    }
 
     /* ---- Where the number comes from ------------------------------------ */
     var monthly = Schema.monthlyExpensesCents(h);

@@ -1311,18 +1311,36 @@
         return c.bucket === b.id && c.monthlyCents > 0;
       }).map(part) };
     }).filter(function (r) { return r.parts.length; });
-    return Charts.donut({
-      title: 'Spending by category',
-      slices: spending.map(part),
-      center: { big: Money.formatCents(summary.spendMonthlyCents), small: 'a month' },
-      empty: 'Nothing has left yet, every line entered is savings.'
-    }) + Charts.stacked({ title: 'Each bucket, line by line', rows: rows });
+    return { spending: spending.map(part), buckets: rows,
+             centre: { big: Money.formatCents(summary.spendMonthlyCents), small: 'a month' } };
   }
 
   function renderSummary(summary) {
     var detail = '';
     if (Money.isOk(summary)) {
-      el('summary-charts').innerHTML = summaryCharts(summary);
+      /* Two pictures, each the reader's to re-shape (D-348): the month by
+         category, and each bucket line by line. */
+      var sc = summaryCharts(summary);
+      el('summary-charts').innerHTML = '<div id="sum-by-category"></div><div id="sum-by-bucket" style="margin-top:var(--space-3)"></div>';
+      ChartBox.draw(el('sum-by-category'), {
+        id: 'expenses-by-category', kind: 'breakdown',
+        title: 'The month, by category.',
+        rows: sc.spending.map(function (x) { return { label: x.label, value: x.value }; }),
+        format: function (v) { return Money.formatCents(v); },
+        center: sc.centre,
+        empty: 'Nothing has left yet, every line entered is savings.'
+      });
+      ChartBox.draw(el('sum-by-bucket'), {
+        id: 'expenses-by-bucket', kind: 'breakdown',
+        shapeLabel: 'One bar a bucket',
+        title: 'Each bucket, line by line.',
+        render: function () { return Charts.stacked({ title: 'Each bucket, line by line', rows: sc.buckets }); },
+        rows: sc.buckets.map(function (r) {
+          return { label: r.label, value: r.parts.reduce(function (t, x) { return t + (x.value || 0); }, 0) };
+        }),
+        format: function (v) { return Money.formatCents(v); },
+        empty: 'Put a line in a bucket and it appears here.'
+      });
       detail = dl([
           ['Essential only', Money.formatCents(summary.essentialMonthlyCents)],
           ['Into savings', Money.formatCents(summary.savingsMonthlyCents)]

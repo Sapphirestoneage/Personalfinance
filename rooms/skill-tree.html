@@ -698,6 +698,7 @@
 <script src="../engines/events.js"></script>
 <script src="../engines/skills.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../shared/chartbox.js"></script>
 <script src="../engines/income.js"></script>
 <script src="../engines/fire.js"></script>
 <script src="../engines/decumulation.js"></script>
@@ -1329,7 +1330,7 @@
   /* ---- Curves: three pictures through the one chart module -------------------- */
 
   function renderCurves() {
-    var Charts = SLAF.Charts;
+    var Charts = SLAF.Charts, ChartBox = SLAF.ChartBox;
     var c = TABLES.curves;
     var hh = h();
     /* 1. The poster, drawn as the fiction it is: clipped at the cap. */
@@ -1339,28 +1340,32 @@
       if (Math.pow(c.poster.base, d) <= c.poster.cap * 1.5) honest.push([d, Math.pow(c.poster.base, d)]);
       if (clipAt === null && Math.pow(c.poster.base, d) >= c.poster.cap) clipAt = d;
     }
-    el('curve-poster').innerHTML = Charts.area({
+    ChartBox.draw(el('curve-poster'), { id: 'skills-curve-poster', kind: 'series', shapeLabel: 'The curve',
+      title: 'The claim, and the line it cannot hold.',
+      render: function () { return Charts.area({
       title: 'The poster: 1.01 to the power of days, clipped',
       series: [{ label: 'Clipped at ×' + c.poster.cap, color: Charts.COLORS.spend, fill: true, points: pts },
                { label: 'What it claims', color: Charts.COLORS.debt, fill: false, dash: true, points: honest }],
       vLines: clipAt !== null ? [{ x: clipAt, label: 'day ' + clipAt }] : [],
       x: { label: 'days', format: function (v) { return String(Math.round(v)); } },
       y: { min: 0, max: c.poster.cap * 1.5, format: function (v) { return '×' + (Math.round(v * 10) / 10); } }
-    });
+    }); } });
     el('curve-poster-p').textContent = c.poster.base + ' a day is ×' + (Math.round(Math.pow(c.poster.base, c.poster.days) * 10) / 10) + ' in ' + c.poster.days + ' days. Nothing compounds like that, so the line is clipped at ×' + c.poster.cap + (clipAt !== null ? ' on day ' + clipAt : '') + '.';
     /* 2. Capability: logistic on practice days, with your best habit marked. */
     var cp = [];
     for (var dd = 0; dd <= 120; dd += 4) cp.push([dd, Skills.capability(TABLES, dd)]);
     var best = 0;
     Object.keys(hh.skills || {}).forEach(function (id) { var st = hh.skills[id]; if (st.kind === 'habit') best = Math.max(best, st.log.length); });
-    el('curve-cap').innerHTML = Charts.area({
+    ChartBox.draw(el('curve-cap'), { id: 'skills-curve-capability', kind: 'series', shapeLabel: 'The curve',
+      title: 'Capability against practice days.',
+      render: function () { return Charts.area({
       title: 'Capability against practice days',
       series: [{ label: 'Capability', color: Charts.COLORS.contributed, fill: true, points: cp }],
       dots: best ? [{ x: Math.min(120, best), y: Skills.capability(TABLES, best), color: Charts.COLORS.target }] : [],
       vLines: [{ x: c.logistic.midpointDays, label: 'day ' + c.logistic.midpointDays }],
       x: { label: 'practice days', format: function (v) { return String(Math.round(v)); } },
       y: { min: 0, max: 1, format: function (v) { return Math.round(v * 100) + '%'; } }
-    });
+    }); } });
     el('curve-cap-p').textContent = 'A logistic: slow at first, fastest around day ' + c.logistic.midpointDays + ', then levelling. ' + (best ? 'Your longest-logged habit is at ' + best + ' day' + (best === 1 ? '' : 's') + ', ' + Math.round(100 * Skills.capability(TABLES, best)) + '% of the way.' : 'No habit logged yet.');
     /* 3. The ledger, grown to 65 along the wealth multiplier. */
     var total = Skills.ledgerTotalCents(hh);
@@ -1369,12 +1374,14 @@
       var curve = Benchmarks.curve(TABLES.wealthMultiplier, fv.age);
       var lp = [[fv.age, total]], acc = total;
       for (var m = 0; m < curve.factors.length; m++) { acc *= curve.factors[m]; if ((m + 1) % curve.perYear === 0) lp.push([fv.age + (m + 1) / curve.perYear, Math.round(acc)]); }
-      el('curve-ledger').innerHTML = Charts.area({
+      ChartBox.draw(el('curve-ledger'), { id: 'skills-curve-ledger', kind: 'series', shapeLabel: 'The curve',
+      title: 'What is logged, grown to 65.',
+      render: function () { return Charts.area({
         title: 'The ledger grown to 65',
         series: [{ label: 'The ledger, grown', color: Charts.COLORS.growth, fill: true, points: lp }],
         hLines: [{ y: total, label: 'logged ' + Charts.shortMoney(total), color: Charts.COLORS.contributed }],
         x: { label: 'age', format: function (v) { return String(Math.round(v)); } }
-      });
+      }); } });
       el('curve-ledger-p').textContent = fmt(total) + ' logged so far becomes ' + fmt(fv.value) + ' at ' + fv.endAge + ', the wealth multiplier at ' + fv.age + ', a convention, not a forecast.';
     } else {
       el('curve-ledger').innerHTML = Charts.area({ series: [], empty: total > 0 ? fv.reason : 'Nothing in the ledger yet. Log a day and this draws itself.' });
@@ -1385,29 +1392,38 @@
   /* ---- The ledger by skill, and the stacks side by side ----------------------- */
 
   function renderLedgerRing() {
-    var Charts = SLAF.Charts;
+    var Charts = SLAF.Charts, ChartBox = SLAF.ChartBox;
     var hh = h();
     var by = {}, order = [];
     (hh.practiceLedger || []).forEach(function (e) {
       if (!by[e.skill]) { by[e.skill] = 0; order.push(e.skill); }
       by[e.skill] += e.cents;
     });
-    el('ledger-ring').innerHTML = order.length ? Charts.donut({
-      title: 'The ledger by skill',
-      slices: order.map(function (id) { var s = Skills.byId(TABLES, id); return { label: s ? s.name : id, value: by[id] }; }),
-      center: { big: Charts.shortMoney(Skills.ledgerTotalCents(hh)), small: 'logged' }
-    }) : '';
+    if (!order.length) { el('ledger-ring').innerHTML = ''; }
+    else {
+      ChartBox.draw(el('ledger-ring'), {
+        id: 'skills-ledger-by-skill', kind: 'breakdown',
+        title: 'What is logged, by skill.',
+        rows: order.map(function (id) { var sk = Skills.byId(TABLES, id); return { label: sk ? sk.name : id, value: by[id] }; }),
+        format: function (v) { return fmt(v); },
+        center: { big: Charts.shortMoney(Skills.ledgerTotalCents(hh)), small: 'logged' },
+        empty: 'Log a day against a skill and it appears here.'
+      });
+    }
   }
 
   function renderStackBars(values) {
-    var Charts = SLAF.Charts;
-    el('stack-bars').innerHTML = Charts.bars({
-      title: 'The five stacks a year',
+    var Charts = SLAF.Charts, ChartBox = SLAF.ChartBox;
+    ChartBox.draw(el('stack-bars'), {
+      id: 'skills-stacks', kind: 'compare', keepColors: true,
+      title: 'What each of the five stacks is worth in a year.',
       rows: values.map(function (r) {
         return { label: r.stack.name, value: r.value, note: r.activeCount + ' of ' + r.total + ' on' + (r.capped ? ' · capped' : ''),
                  color: r.value > 0 ? Charts.COLORS.target : Charts.COLORS.muted, marker: r.capCents > 0 ? { at: r.capCents, label: 'cap ' + fmt(r.capCents) } : null };
       }),
-      max: Math.max.apply(null, values.map(function (r) { return Math.max(r.capCents, r.value); }).concat([1]))
+      format: function (v) { return fmt(v); },
+      max: Math.max.apply(null, values.map(function (r) { return Math.max(r.capCents, r.value); }).concat([1])),
+      empty: 'Turn a skill on and its stack appears here.'
     });
   }
 

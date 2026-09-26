@@ -4118,16 +4118,7 @@
     /* 1. The headline: how far in, as one ring and four tiles. */
     out.push('<h3 class="u-head">How far in you are</h3>');
     out.push('<div class="dash-hero">'
-      + Charts.donut({
-        slices: [
-          { label: 'Answered', value: facts.done, color: 'var(--color-accent)' },
-          { label: 'Not yet', value: Math.max(0, facts.of - facts.done), color: 'var(--color-surface-raised)' }
-        ],
-        thickness: 14,
-        format: function (v) { return String(v); },
-        center: { big: pctWords(facts.done, facts.of), small: 'of the questions' },
-        empty: 'Nothing answered yet.'
-      })
+      + '<div id="dash-ring"></div>'
       + '<div class="dash-tiles">'
       + tile('Questions answered', facts.done + ' of ' + facts.of, pctWords(facts.done, facts.of) + ' of what applies to you')
       + tile('Levels answered', o.done + ' of ' + o.applicable, pctWords(o.done, o.applicable))
@@ -4209,6 +4200,19 @@
        honest for that kind, choose a colour order, or read it as a table.
        The choice is kept on this device and never touches the household. */
     var pct = function (v) { return Math.round(v * 100) + '%'; };
+    /* Answered against not yet: two parts of one whole, so the reader may
+       take it as a ring, bars or one stacked bar (D-348). The two colours
+       are a state, not a palette, so they stay. */
+    ChartBox.draw(el('dash-ring'), {
+      id: 'planets-answered', kind: 'breakdown', keepColors: true,
+      rows: [
+        { label: 'Answered', value: facts.done, color: 'var(--color-accent)' },
+        { label: 'Not yet', value: Math.max(0, facts.of - facts.done), color: 'var(--color-surface-raised)' }
+      ],
+      format: function (v) { return String(v); },
+      center: { big: pctWords(facts.done, facts.of), small: 'of the questions' },
+      empty: 'Nothing answered yet.'
+    });
     ChartBox.draw(el('dash-planets'), {
       id: 'planets-by-planet', kind: 'compare', rows: planetRows(), format: pct, max: 1,
       title: 'How much of each planet is answered.',

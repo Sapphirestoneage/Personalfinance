@@ -17726,6 +17726,40 @@ decision room asks for has no plain question: 51 of 51 carry one. Five rooms
 opened at 390px with a fold open.
 
 
+## D-352 — Every picture in the app is the reader's to re-shape
+
+**Why.** D-348 built the layer and put eleven rooms on it, D-350 took the
+nineteen built on the shell. What was left was the pictures drawn inside a
+bigger HTML string: the Scorecard's assets ring, its percentile band, its
+savings-rate ring and its three ratio groups; Debt Payoff's two interest rings,
+its two strategy comparisons and the student-loan path; the Goals progress and
+monthly bars; the Expenses category ring and bucket stack; the FIRE flavours;
+the Skill Tree's three curves, its ledger ring and its five stacks; the
+Dashboard's net worth ring; the Planets ring; the Income thirty-year line; the
+running-cost ring in Wheels. Twenty-two of them, all with the same figures and
+no way to change the shape or the colours.
+
+**Decision.** They all go through `shared/chartbox.js` now. Where a set is rows
+of label and value, the reader gets the honest shapes for its kind; where the
+drawing is a path or a stack over time, the room keeps the shape and the reader
+gets the colour orders and the table. Two comparisons that had shared a card on
+different scales (Debt Payoff's total interest and months to clear) are two
+pictures, per docs/DESIGN.md 17.
+
+Verdict and state colours are kept where they mean something: the chosen
+strategy, your own mark in a percentile band, a ratio's in-range or outside, an
+answered-against-not-yet ring. Everything else takes the reader's theme.
+
+**Replaces or removes.** A dead 1,234-character block in Debt Payoff that the
+new hosts replaced. No new screen, field or figure.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` 36382; `node test/render.js` 302; twelve rooms
+opened with the example household, every picture carrying its controls and no
+page errors.
+
+
 ---
 
 # The Dungeons & Dividends entries

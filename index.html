@@ -1165,10 +1165,19 @@
     });
     var slices = order.map(function (k) { return { label: k.replace('_', ' '), value: groups[k], color: CATEGORY_COLOURS[k] || Charts.COLORS.series[order.indexOf(k) % 8] }; });
     if (Money.isOk(nw) && nw.totalDebtCents > 0) slices.push({ label: 'owed', value: nw.totalDebtCents, color: Charts.COLORS.debt, note: 'debt, against the rest' });
-    el('nw-donut').innerHTML = slices.length ? Charts.donut({
-      title: 'What net worth is made of', slices: slices,
-      center: { big: Money.isOk(nw) ? Charts.shortMoney(nw.value) : 'not yet', small: 'net worth' }
-    }) : '';
+    /* The first picture anybody sees, and theirs to re-shape (D-348). The
+       debt slice keeps its colour, because owed is not another category. */
+    if (!slices.length) { el('nw-donut').innerHTML = ''; }
+    else {
+      ChartBox.draw(el('nw-donut'), {
+        id: 'dashboard-net-worth', kind: 'breakdown',
+        title: 'What your net worth is made of.',
+        rows: slices, keepColors: true,
+        format: function (v) { return Money.formatCents(v); },
+        center: { big: Money.isOk(nw) ? Charts.shortMoney(nw.value) : 'not yet', small: 'net worth' },
+        empty: 'Name what you own in the Ledger and this fills in.'
+      });
+    }
 
     /* The climb: what is invested, growing at the expected return with
        this year's savings added each month until the stop age, then

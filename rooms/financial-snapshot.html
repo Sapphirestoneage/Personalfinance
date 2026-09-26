@@ -1576,27 +1576,34 @@
         + '</div>';
     }
     setCard('out-net-worth', shown, function (v) { return Money.formatCents(v); }, detail);
-    el('nw-chart').innerHTML = Money.isOk(r) ? assetsDonut(h, shown) : '';
+    /* The reader's picture (D-348): the same slices, any honest shape. */
+    if (!Money.isOk(r)) { el('nw-chart').innerHTML = ''; }
+    else {
+      ChartBox.draw(el('nw-chart'), {
+        id: 'scorecard-assets', kind: 'breakdown',
+        title: 'What you own, by kind.',
+        rows: assetsRows(h),
+        format: function (v) { return Money.formatCents(v); },
+        center: { big: Money.formatCents(shown.value), small: 'net worth' },
+        empty: 'Name what you own in the Ledger and this fills in.'
+      });
+    }
   }
 
   /* What is owned, by category, with the net figure in the middle. The
      slices are the same aggregatable records the engine summed; a record
      with no amount is not a slice, and a category nobody has entered is
      not listed as $0. */
-  function assetsDonut(h, nw) {
+  /* The slices, without a shape: shared/chartbox.js draws them in whichever
+     one the reader picked, and the colours come from their theme (D-348). */
+  function assetsRows(h) {
     var byCategory = {};
     Schema.aggregatableAssets(h).forEach(function (a) {
       if (!Money.isEntered(a.valueCents) || a.valueCents <= 0) return;
       byCategory[a.category] = (byCategory[a.category] || 0) + a.valueCents;
     });
-    return Charts.donut({
-      title: 'Assets by category',
-      slices: ASSET_CATEGORIES.filter(function (c) { return byCategory[c[0]] > 0; })
-        .map(function (c, i) {
-          return { label: c[1], value: byCategory[c[0]], color: Charts.COLORS.series[i % Charts.COLORS.series.length] };
-        }),
-      center: { big: Money.formatCents(nw.value), small: 'net worth' }
-    });
+    return ASSET_CATEGORIES.filter(function (c) { return byCategory[c[0]] > 0; })
+      .map(function (c) { return { label: c[1], value: byCategory[c[0]] }; });
   }
 
   function renderSavingsRate(rates) {
@@ -1705,7 +1712,14 @@
       reason.textContent = r.reason || '';
       detail.innerHTML = '';
     }
-    el('pct-chart').innerHTML = percentileBars(r, nw);
+    /* The percentile band as a picture the reader owns (D-348). Their own
+       figure keeps its colour, because it is the one mark that is not a
+       comparison: everything else on this chart is the reference. */
+    ChartBox.draw(el('pct-chart'), {
+      id: 'scorecard-percentile', kind: 'compare', keepColors: true,
+      shapeLabel: 'Against the band', render: function () { return percentileBars(r, nw); },
+      empty: 'Add your age and what you own to see where you sit.'
+    });
   }
 
   /* Your net worth against the band's breakpoints, as bars. The band comes
@@ -2039,16 +2053,21 @@
        shortfall has no share of a whole, so that case gets no ring; the
        sentence under the detail says what happened instead. Saved is the
        lead variant, your money only. */
-    el('b-chart').innerHTML = saved < 0 ? '' : Charts.donut({
-      title: 'Where a year of gross pay goes',
-      slices: [
-        { label: 'Tax', value: r.estimatedTaxCents, color: Charts.COLORS.series[7],
-          note: 'flat effective rate' },
-        { label: 'Spending', value: r.annualExpensesCents, color: Charts.COLORS.spend },
-        { label: 'Saved', value: saved, color: Charts.COLORS.target, note: 'your money only' }
-      ],
-      center: { big: Money.formatCents(gross), small: 'gross a year' }
-    });
+    if (saved < 0) { el('b-chart').innerHTML = ''; }
+    else {
+      ChartBox.draw(el('b-chart'), {
+        id: 'scorecard-where-pay-goes', kind: 'breakdown',
+        title: 'Where a year of gross pay goes.',
+        rows: [
+          { label: 'Tax', value: r.estimatedTaxCents, note: 'flat effective rate' },
+          { label: 'Spending', value: r.annualExpensesCents },
+          { label: 'Saved', value: saved, note: 'your money only' }
+        ],
+        format: function (v) { return Money.formatCents(v); },
+        center: { big: Money.formatCents(gross), small: 'gross a year' },
+        empty: 'Add your pay and your spending and this fills in.'
+      });
+    }
 
     el('b-detail').innerHTML = dl([
       ['Gross pay', Money.formatCents(gross)],
@@ -2364,14 +2383,24 @@
     return 'needs ' + (names.length ? names.join(', ') : 'more');
   }
 
+  /* Each group of ratios is a picture the reader owns (D-348). The verdict
+     colours stay theirs: in range, watch and outside are reserved words as
+     well as colours, and a palette does not get to overrule them. */
   function renderBars(nodeId, rows) {
+    ChartBox.draw(el(nodeId), {
+      id: 'scorecard-' + nodeId, kind: 'meter', keepColors: true,
+      shapeLabel: 'Against its band', render: function () { return barsHtml(rows); },
+      empty: 'A reading appears here once the app can work it out.'
+    });
+  }
+  function barsHtml(rows) {
     var byUnit = {};
     rows.forEach(function (r) {
       if (!UNIT_FORMAT[r.unit] || r.unavailable) return;
       (byUnit[r.unit] = byUnit[r.unit] || []).push(r);
     });
     var units = Object.keys(UNIT_FORMAT).filter(function (u) { return byUnit[u]; });
-    el(nodeId).innerHTML = units.map(function (unit) {
+    return units.map(function (unit) {
       var group = byUnit[unit];
       var top = 0;
       var bars = group.map(function (r) {

@@ -1983,6 +1983,9 @@
 
   /* ---- The months ahead ---------------------------------------------------- */
 
+  /* The thirty-year line is drawn after the block it sits in is in the page,
+     so the picture keeps its own host and the reader's controls (D-348). */
+  var AHEAD_CHART = null;
   function monthsHtml(h) {
     var grid = Timeline.months(h, { years: 30 });
     if (!Money.isOk(grid)) {
@@ -2002,7 +2005,8 @@
       + ' This counts only what is on this page, your current pay lives in '
       + '<a href="' + esc(Ownership.linkTo('income', 'sources')) + '">Income</a>.</p>');
 
-    out.push(Charts.area({
+    out.push('<div id="ahead-chart"></div>');
+    AHEAD_CHART = function () { return Charts.area({
       title: 'What lands each month, over the next 30 years',
       series: [{
         label: 'A month',
@@ -2016,7 +2020,8 @@
       /* 15.9: the age milestones inside the 30 years, faint. D-181. */
       vLines: Schema.milestoneMarks(h, MILESTONES, { axis: 'months', from: 0, to: 30 * 12 }),
       empty: 'Nothing placed yet.'
-    }));
+    }); };
+
 
     if (f) {
       out.push('<div class="facts">');
@@ -2254,6 +2259,14 @@
   function render() {
     var h = Spine.getProfile();
     el('months-body').innerHTML = monthsHtml(h) + barsHtml(h);
+    /* The thirty-year line, the reader's to recolour and to read as a table
+       (D-348). It stays a line: money over time is not a ring. */
+    if (AHEAD_CHART && el('ahead-chart')) {
+      ChartBox.draw(el('ahead-chart'), {
+        id: 'income-ahead', kind: 'series',
+        shapeLabel: 'Over time', render: AHEAD_CHART
+      });
+    }
     el('waiting-body').innerHTML = waitingHtml(h);
     el('gaps-body').innerHTML = gapsHtml(h);
     el('tl-reading-list').innerHTML = readingHtml(h);

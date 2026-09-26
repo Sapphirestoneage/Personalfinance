@@ -25,20 +25,21 @@ Updated: 2026-09-26
   bands asked once. **The Cushion answers before it asks (D-346)**.
 - **The audit (`docs/AUDIT.md`)**: the app walked twice, as a beginner and as a coach
   showing a client; every finding says what was done.
-- **Plain words on every box (D-347)**: the five sentences (plain, means, where, close
-  enough, if you are not sure) on all 84 typed rows, a "What is this?" fold in the Ledger.
-  Gated at Flesch-Kincaid 6; the set reads at 3.8.
-- **Pictures the reader owns (D-348, D-349, D-350)**: `shared/chartbox.js` gives a number
-  set the honest shapes for its kind, eight validated colour orders and a table twin.
-  Twenty-three rooms draw through it, every shell room among them.
+- **Plain words on every box (D-347, D-351)**: the five sentences on all 84 typed rows
+  and on the 51 what-if boxes the decision rooms ask for. Gated at Flesch-Kincaid 6; the
+  set reads at 3.8. Every box in the app that takes an answer says what it is.
+- **Pictures the reader owns (D-348 to D-352)**: `shared/chartbox.js` gives a number set
+  the honest shapes for its kind, eight validated colour orders and a table twin. EVERY
+  picture in the app goes through it now, including the ones built inside HTML strings.
 - **This lane, earlier**: a card's annual fee (D-331); the radar (D-332); the menu
   everywhere (D-333, D-335); two ratios and the ranking (D-334).
 - **Main is worked on by another lane**: merge before every push. D-228's reframe has NOT
   shipped. Freeze holds (D-313). Coach Mode is its own lane in `coach/` (D-339) and the
-  Marketing Scoreboard in `marketing/` (D-340), each with its own log.## Next (top item first; one per session)
-1. **Finish the chart layer**: the rooms that still draw inline (about half the call
-   sites) and the boxes outside the Ledger that want the five sentences (`docs/AUDIT.md`,
-   "Still open").
+  Marketing Scoreboard in `marketing/` (D-340), each with its own log.
+
+## Next (top item first; one per session)
+1. **Tier 3 readings and the moons.** Tiers 1 and 2 are worked out (53 of the 184);
+   three band-2 facts still have nowhere to live.
 2. **Room by room against `docs/DESIGN.md`.** Four main screens and the measuring stick
    are done; the Cushion and The Close are next.
 3. **OWNER DECISIONS held**: inline asks elsewhere (D-313 vs D-207); income floor means-tested? (D-228, D-284.)

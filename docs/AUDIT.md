@@ -80,11 +80,11 @@ carries it. Coach Mode has its own audit at `coach/AUDIT.md`; this one is the
 - ~~The rooms' own explanations.~~ Done, D-351: the fifty-one what-if boxes the
   decision rooms ask for carry the same five sentences, drawn by the same fold.
   Every box in the app that takes an answer now says what it is in plain words.
-- **Charts inside string builders.** Twenty-three rooms draw through the new
-  layer, including every room built on `shared/room.js` (D-350). What is left
-  is the handful of pictures built inside a bigger HTML string, mostly in Debt
-  Payoff and the Scorecard's lenses: same library, same figures, no controls.
-  Each needs a placeholder and a draw call.
+- ~~Charts inside string builders.~~ Done, D-352. Every picture in the app now
+  goes through the layer: the rooms that draw directly, the nineteen built on
+  `shared/room.js`, and the twenty-two that were built inside a bigger HTML
+  string. A reader can change the shape of any set of rows, recolour any
+  picture, and read any of them as a table.
 - **Tier 3 readings and the moons** (`STATUS.md`), and the two owner decisions
   held there.
 
