@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="robots" content="noindex"/>
+<title>Content log</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="mkt.css"/>
+<!--
+  THE CONTENT LOG (MD-007). One row a post, its results typed later.
+
+  1. READS   posts through marketing/shared/mkt.js.
+  2. WRITES  a post (the new-post form), its results (the row's form), a
+             CSV import, and the CSV the owner saves.
+  3. SHOWS   the log, newest first, sortable; a form to log one; an open
+             row's results form; the posts still waiting for results.
+
+  LIVE-FORM: built once. The new-post form is static markup. The table is
+  repainted on save and on sort; the one open row's results form is built
+  when the row opens and left alone until it closes.
+-->
+</head>
+<body class="slaf">
+<main class="mkt" id="main">
+  <div id="head"></div>
+
+  <section class="slaf-card" aria-labelledby="h-new">
+    <h2 id="h-new">Log a post</h2>
+    <form id="new-post" autocomplete="off">
+      <div class="row">
+        <label class="inline"><span>Date <span id="h-date"></span></span><input type="date" id="f-date" required/></label>
+        <label class="inline"><span>Channel <span id="h-channel"></span></span><select id="f-channel"></select></label>
+        <label class="inline"><span>Format <span id="h-format"></span></span><select id="f-format"></select></label>
+        <label class="inline"><span>Topic <span id="h-pillar"></span></span><input type="text" id="f-pillar" class="mid" list="pillars" placeholder="money habits"/><datalist id="pillars"></datalist></label>
+        <label class="inline"><span>The ask <span id="h-cta"></span></span><select id="f-cta"></select></label>
+        <label class="inline"><span>Minutes to make <span id="h-minutes"></span></span><input type="text" id="f-minutes" class="short" inputmode="numeric"/></label>
+      </div>
+      <div class="row">
+        <label class="inline"><span>Hook <span id="h-hook"></span></span><input type="text" id="f-hook" class="wide" placeholder="The first line"/></label>
+        <label class="inline"><span>Link</span><input type="url" id="f-link" class="mid" placeholder="https://"/></label>
+        <button type="submit" class="slaf-btn slaf-btn--primary">Log it</button>
+      </div>
+      <p class="mkt-say" id="say-new"></p>
+    </form>
+  </section>
+
+  <section aria-labelledby="h-log">
+    <div class="bar">
+      <h2 id="h-log">The log</h2>
+      <span class="mkt-note" id="log-count"></span>
+      <span class="grow"></span>
+      <label class="inline"><span>Show</span><select id="filter"><option value="all">Everything</option><option value="unchecked">Waiting for results</option><option value="checked">With results</option></select></label>
+      <input type="search" id="search" class="mid" placeholder="Search hook or topic" aria-label="Search"/>
+      <button type="button" class="slaf-btn" id="btn-csv">Save as CSV</button>
+      <label class="slaf-btn" for="file-csv">Import a CSV</label>
+      <input type="file" id="file-csv" accept=".csv,text/csv" hidden/>
+    </div>
+    <p class="mkt-say" id="say-log"></p>
+    <div class="tbl-wrap"><table class="tbl" id="tbl"></table></div>
+  </section>
+
+  <section>
+    <details class="fold"><summary>Importing posts from a spreadsheet <span class="mkt-note">what the columns can be called</span></summary>
+      <p class="mkt-note">A header row, then one row a post. The reader finds columns by name: <b>date</b>, <b>channel</b> (or platform), <b>format</b>, <b>topic</b> (or pillar), <b>hook</b> (or title), <b>cta</b>, <b>link</b>, <b>minutes</b>, and the results <b>reach</b> (or impressions, views), <b>likes</b>, <b>comments</b>, <b>shares</b>, <b>saves</b>, <b>clicks</b>, <b>dms</b>, <b>follows</b>, <b>leads</b>. Anything else is ignored. A blank result stays blank.</p>
+    </details>
+  </section>
+</main>
+<script src="shared/csv.js"></script>
+<script src="shared/money.js"></script>
+<script src="shared/charts.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/mkt.js"></script>
+<script src="engines/kpi.js"></script>
+<script src="common.js"></script>
+<script src="posts.js"></script>
+</body>
+</html>
