@@ -63,6 +63,7 @@ level, and every other playbook shows it read-only with a link.
 | `engines/reads.js` | Every figure and picture spec, pure |
 | `shared/charts.js` | Bars, funnels, meters, lines, stacked bars, the four-way grid, small multiples, as SVG with a table twin |
 | `tools/vendor.js` | The look carried from SPARKS as byte-identical copies (theme, fonts, icon) |
+| `The-Binders.xlsx`, `tools/build_xlsx.py` | The same binder as one Excel workbook (PB-002): a Start sheet, a Dashboard, a Readings sheet of live formulas and charts, one sheet per playbook; rebuilt from `data/` by the script |
 | `test/run.js` | The Binders' tests (`node binders/test/run.js`, also in CI) |
 | `DECISIONS.md` | This lane's log (`PB-###`) |
 
@@ -76,6 +77,18 @@ of live inputs are built once (`LIVE-FORM: built once`). Colours: the four
 system hues were run through the colour-vision validator against the app's
 dark surface and pass; status is a word beside a colour, never a colour alone;
 every picture has a table twin.
+
+## The spreadsheet
+
+`The-Binders.xlsx` is the whole binder for someone who would rather not open
+an app: the same twelve playbooks, bands, exercises and checklists, with the
+readings as live formulas and the pictures as charts. Yellow cells with blue
+text are the ones to fill; a band reads done when every yellow cell in it
+holds an answer and every checklist item is Y; the Dashboard shows all twelve
+and lights a ring when every playbook clears a band. Money is typed in whole
+dollars and percentages as percentages there. Rebuild it after a content
+change with `python3 binders/tools/build_xlsx.py` (needs `openpyxl`), then
+recalculate it in LibreOffice or Excel so the cached values are fresh.
 
 ## Working on it
 

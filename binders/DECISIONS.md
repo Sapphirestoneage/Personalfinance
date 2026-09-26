@@ -31,3 +31,29 @@ SPARKS device backup neither carries nor removes it.
 
 **Verified.** `node binders/test/run.js`; `node test/run.js`; the two pages
 served and walked in Chromium with a clean console.
+
+## PB-002: The binder as one Excel workbook, built from the same data
+
+**Why.** The owner finds the app more than they want right now and asked for
+a professional spreadsheet instead.
+
+**Decision.** `tools/build_xlsx.py` writes `The-Binders.xlsx` from
+`data/playbooks.json` and `data/example.json`: Start here, Dashboard (all
+twelve playbooks, the band matrix, rings, headline readings, a completion
+chart), Readings (every figure as a live formula, 1,287 formulas in all, with
+charts), one sheet per playbook (band progress, then every exercise and
+checklist with yellow input cells, dropdowns for ratings, choices and Y/N,
+small tables for logs, an example column from the made-up coach), and a
+hidden Lists sheet. Shared facts are typed on their owner sheet and read
+elsewhere in green. Money is whole dollars, percentages are fractions shown as
+percentages. Verified against the app: with the example answers typed in,
+seventeen readings match the engine's figures and LibreOffice reports zero
+formula errors.
+
+**Replaces or removes.** Nothing; the app stays. The workbook is the same
+content in a second form.
+
+**Stored shape.** None in the browser; the workbook is a file the owner keeps.
+
+**Verified.** `node binders/test/run.js`; the recalculation check with zero
+errors; the readings compared to the engine on the example answers.
