@@ -2,9 +2,9 @@
   "archetypes": 28,
   "edges": 6,
   "sweep": {
-    "calls": 9214,
+    "calls": 9248,
     "engines": 93,
-    "functions": 271
+    "functions": 272
   },
   "findings": [],
   "failures": [],
