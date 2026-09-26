@@ -17760,6 +17760,39 @@ opened with the example household, every picture carrying its controls and no
 page errors.
 
 
+## D-353 — Tier 3, the Breakdown: the twenty readings worked out
+
+**Why.** `STATUS.md`'s top item. `data/recipes.json` has named these twenty
+since D-320 and `engines/recipes.js` worked out the fifty-three of Tiers 1 and
+2 (D-327, D-329). Tier 3 is where the month stops being a total and becomes a
+breakdown: which slice is needs and which is wants, what the tax year is
+shaping up to be, what the debt costs in interest rather than in balance, and
+what share of pay each part takes.
+
+**Decision.** All twenty are worked out, and almost every one of them points at
+the engine that already owns the figure: the measuring stick is
+`engines/draftt.js`, the net worth statement is `engines/statement.js`, the
+refund and the withholding are `Schema.estimatedAnnualTaxCents`, the month is
+`CashFlow.summarise`, the promotional cliff is `Debt.promoStatus`. Only the
+shares of pay are written out here, and each is one division over figures the
+app already holds.
+
+Empty is not zero throughout: a household that has not said what it spends has
+no needs-and-wants split, rather than a split of nothing. A published limit
+stated in dollars (the deferral cap) is turned into cents once, where it is
+read.
+
+**Replaces or removes.** Nothing. No new screen, field or figure: these are
+readings the Solar System already promised.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` 36428, with a section that fails if any Tier 3
+reading is missing, throws, returns a bare number, or reads as zero on an empty
+household; `node test/solar.js` 5192; the Planets screen showing the new
+readings in its Tier 3 row.
+
+
 ---
 
 # The Dungeons & Dividends entries

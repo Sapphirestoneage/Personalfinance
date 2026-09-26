@@ -453,6 +453,252 @@
     return Money.ok(now.getUTCFullYear() + years.value, { years: years.value, savedMonthlyCents: saved.value });
   }
 
+  /* ---- The twenty of Tier 3, the Breakdown (D-353) --------------------------
+     Band 3 asks what the month is actually made of, once the totals are in:
+     which slice is needs and which is wants, what the tax year is shaping up
+     to be, what the debt costs in interest rather than in balance, and which
+     share of pay each of those takes. Same rule as Tier 1 and Tier 2, and it
+     does most of the work here: every one of these points at the engine that
+     already owns the figure. Draftt is engines/draftt.js, the net worth
+     statement is engines/statement.js, the tax year is engines/tax.js, the
+     debt readings are engines/debt.js and the month is engines/cashflow.js.
+     Nothing is retyped, and a reading whose facts are not in yet says which
+     ones rather than guessing. */
+  function summaryOf(h, t) {
+    var cats = (t || {}).expenseCategories;
+    if (!cats) return Money.incomplete('The category table is not loaded.', ['expenseCategories']);
+    var CashFlow = engine('CashFlow', './cashflow.js');
+    if (!CashFlow) return Money.incomplete('The month is not loaded yet.', ['expenseEntries']);
+    return CashFlow.summarise(h, cats, {});
+  }
+  /* One bucket of the month, in cents a month. */
+  function bucketCents(h, t, bucket) {
+    var s = summaryOf(h, t);
+    if (!Money.isOk(s)) return s;
+    var v = (s.byBucket || {})[bucket];
+    return Money.isEntered(v) ? Money.ok(v, { of: s.spendMonthlyCents }) : Money.incomplete('Nothing is in that bucket yet.', ['expenseEntries']);
+  }
+  /* The categories named, added up, in cents a month. */
+  function categoriesCents(h, t, ids) {
+    var s = summaryOf(h, t);
+    if (!Money.isOk(s)) return s;
+    var rows = (s.categories || []).filter(function (c) { return ids.indexOf(c.categoryId) >= 0; });
+    if (!rows.length) return Money.incomplete('Nothing has been put in those lines yet.', ['expenseEntries']);
+    return Money.ok(rows.reduce(function (n, c) { return n + c.monthlyCents; }, 0), { count: rows.length });
+  }
+  /* Every debt with a balance and a rate: the pair most Tier 3 debt readings
+     need, and the one place that says what is missing. */
+  /* Every source of pay with a figure on it, in one shape: the sources list
+     names the field grossAnnualIncomeCents, and the household's own total is
+     Schema's. */
+  function incomeSources(h) {
+    var list = Schema.allIncomeSources ? Schema.allIncomeSources(h) : [];
+    return list.filter(function (s) { return Money.isEntered(s.grossAnnualIncomeCents) && s.grossAnnualIncomeCents > 0; })
+      .map(function (s) { return { label: s.source || s.label || 'A source', cents: s.grossAnnualIncomeCents }; });
+  }
+  function ratedDebts(h) {
+    var all = (h.debts || []).filter(function (d) { return Money.isEntered(d.balanceCents) && d.balanceCents > 0; });
+    if (!all.length) return Money.incomplete('Add what you owe to see this.', ['debtBalance']);
+    var rated = all.filter(function (d) { return Money.isEntered(d.aprPercent) || Money.isEntered(d.rate); });
+    if (!rated.length) return Money.incomplete('Add the rate on each debt to see this.', ['debtRate']);
+    return Money.ok(rated, { of: all.length, missingRate: all.length - rated.length });
+  }
+  function rateOf(d) {
+    var r = Money.isEntered(d.aprPercent) ? d.aprPercent / 100 : d.rate;
+    return Money.isEntered(r) ? r : null;
+  }
+  function engine(name, path) {
+    if (typeof module === 'object' && module.exports) { try { return require(path); } catch (e) { return null; } }
+    return (root && root.SLAF) ? root.SLAF[name] : null;
+  }
+
+  var TIER3 = {
+    /* What the month is made of */
+    nwi: function (h, t) {
+      var s = summaryOf(h, t);
+      if (!Money.isOk(s)) return s;
+      var income = grossMonthly(h);
+      if (!Money.isOk(income) || !income.value) return Money.isOk(income) ? Money.incomplete('Nothing to divide by yet.', ['grossAnnualIncome']) : income;
+      var needs = (s.byBucket || {}).needs || 0, wants = (s.byBucket || {}).wants || 0;
+      var investing = (s.byBucket || {}).savings || 0;
+      return Money.ok([needs / income.value, wants / income.value, investing / income.value], {
+        needsCents: needs, wantsCents: wants, investingCents: investing,
+        incomeCents: income.value,
+        labels: ['needs', 'wants', 'investing']
+      });
+    },
+    draftt: function (h, t) {
+      var Draftt = engine('Draftt', './draftt.js');
+      if (!Draftt) return Money.incomplete('The measuring stick is not loaded.', ['bands']);
+      if (!(t || {}).bands) return Money.incomplete('The band table is not loaded.', ['bands']);
+      var r = Draftt.rows(h, t, {});
+      if (!r || !r.rows) return Money.incomplete('Add your pay and your spending to see this.', ['takeHomeMonthly']);
+      var placed = r.rows.filter(function (row) { return Money.isOk(row.share); });
+      if (!placed.length) return Money.incomplete('Add your pay and your spending to see this.', ['takeHomeMonthly']);
+      var out = placed.filter(function (row) { return row.verdict && row.verdict !== 'in'; });
+      return Money.ok(placed.length - out.length, { of: placed.length, outside: out.map(function (row) { return row.label; }) });
+    },
+    nwStatement: function (h, t) {
+      var Statement = engine('Statement', './statement.js');
+      if (!Statement) return Money.incomplete('The statement is not loaded.', ['accessRules']);
+      if (!(t || {}).accessRules) return Money.incomplete('The access rules are not loaded.', ['accessRules']);
+      var p = Statement.portfolios(h, t.accessRules);
+      if (!Money.isOk(p)) return p;
+      return Money.isEntered(p.plainNetWorthCents)
+        ? Money.ok(p.plainNetWorthCents, { assetsCents: p.totalAssetsCents, debtsCents: p.totalDebtCents })
+        : Money.incomplete('Say whether you owe anything to see what is left.', ['hasDebt']);
+    },
+    incomeBySource: function (h) {
+      var sources = incomeSources(h);
+      if (!sources.length) return Money.incomplete('Add what you are paid to see this.', ['grossAnnualIncome']);
+      var total = sources.reduce(function (n, x) { return n + x.cents; }, 0);
+      return Money.ok(sources.map(function (x) { return x.cents / total; }), {
+        totalCents: total, labels: sources.map(function (x) { return x.label; }),
+        centsEach: sources.map(function (x) { return x.cents; })
+      });
+    },
+    sideShare: function (h) {
+      var sources = incomeSources(h);
+      if (sources.length < 2) return Money.incomplete('Add a second source of pay to see this.', ['grossAnnualIncome']);
+      var total = sources.reduce(function (n, x) { return n + x.cents; }, 0);
+      var biggest = sources.slice().sort(function (a, b) { return b.cents - a.cents; })[0];
+      return Money.ok((total - biggest.cents) / total, {
+        mainCents: biggest.cents, sideCents: total - biggest.cents, totalCents: total
+      });
+    },
+
+    /* The tax year, as it stands */
+    taxableIncome: function (h, t) {
+      var gross = Schema.grossAnnualIncomeCents(h);
+      if (!Money.isOk(gross)) return gross;
+      var pre = own(h, 'otherPreTax');
+      var contrib = h.retirement && Money.isEntered(h.retirement.contributionPercent)
+        ? Math.round(gross.value * h.retirement.contributionPercent / 100) : 0;
+      var preCents = Money.isOk(pre) ? pre.value : 0;
+      return Money.ok(Math.max(0, gross.value - preCents - contrib), {
+        grossCents: gross.value, preTaxCents: preCents, retirementCents: contrib,
+        note: 'before the standard deduction'
+      });
+    },
+    refundOwed: function (h, t) {
+      var withheld = own(h, 'withheld');
+      if (!Money.isOk(withheld)) return withheld;
+      var owed = Schema.estimatedAnnualTaxCents(h, t);
+      if (!Money.isOk(owed)) return owed;
+      return Money.ok(withheld.value - owed.value, {
+        withheldCents: withheld.value, owedCents: owed.value,
+        direction: withheld.value >= owed.value ? 'refund' : 'owed'
+      });
+    },
+    withholdAccuracy: function (h, t) {
+      var withheld = own(h, 'withheld');
+      if (!Money.isOk(withheld)) return withheld;
+      var owed = Schema.estimatedAnnualTaxCents(h, t);
+      if (!Money.isOk(owed) || !owed.value) return Money.isOk(owed) ? Money.incomplete('Nothing to divide by yet.', ['grossAnnualIncome']) : owed;
+      return Money.ok(withheld.value / owed.value, { withheldCents: withheld.value, owedCents: owed.value });
+    },
+
+    /* What the saving really is */
+    trueSavingsRate: function (h, t) {
+      var saved = own(h, 'savedMonthly');
+      if (!Money.isOk(saved)) return saved;
+      var gross = Schema.grossAnnualIncomeCents(h);
+      if (!Money.isOk(gross) || !gross.value) return Money.isOk(gross) ? Money.incomplete('Nothing to divide by yet.', ['grossAnnualIncome']) : gross;
+      var contrib = h.retirement && Money.isEntered(h.retirement.contributionPercent)
+        ? Math.round(gross.value * h.retirement.contributionPercent / 100) : 0;
+      /* What is typed as saved, plus what the payslip sends before you see
+         it. The employer's match is not counted: it is not your saving. */
+      var all = saved.value * MONTHS + contrib;
+      return Money.ok(all / gross.value, {
+        typedMonthlyCents: saved.value, workplaceAnnualCents: contrib, allAnnualCents: all, grossCents: gross.value
+      });
+    },
+    retContribRate: function (h) {
+      var pct = h.retirement && Money.isEntered(h.retirement.contributionPercent) ? h.retirement.contributionPercent / 100 : null;
+      if (pct === null) return Money.incomplete('Add what you put in at work, as a share of pay, to see this.', ['contributionPercent']);
+      var gross = Schema.grossAnnualIncomeCents(h);
+      return Money.ok(pct, Money.isOk(gross) ? { annualCents: Math.round(gross.value * pct), grossCents: gross.value } : {});
+    },
+    contribFill: function (h, t) {
+      var pct = h.retirement && Money.isEntered(h.retirement.contributionPercent) ? h.retirement.contributionPercent / 100 : null;
+      if (pct === null) return Money.incomplete('Add what you put in at work, as a share of pay, to see this.', ['contributionPercent']);
+      var gross = Schema.grossAnnualIncomeCents(h);
+      if (!Money.isOk(gross)) return gross;
+      /* data/irs_limits_*.json states the deferral limit in dollars, like
+         every published figure; money is cents inside the app. */
+      var limits = (t || {}).irsLimits;
+      var dollars = limits && limits.limits ? limits.limits.elective401k : null;
+      if (!Money.isEntered(dollars)) return Money.incomplete('The contribution limit table is not loaded.', ['irsLimits']);
+      var cap = Math.round(dollars * 100);
+      var going = Math.round(gross.value * pct);
+      return Money.ok(Math.min(1, going / cap), { goingCents: going, capCents: cap, leftCents: Math.max(0, cap - going) });
+    },
+
+    /* What the debt costs, rather than what it is */
+    weightedDebtRate: function (h) {
+      var r = ratedDebts(h);
+      if (!Money.isOk(r)) return r;
+      var debts = r.value;
+      var owed = debts.reduce(function (n, d) { return n + d.balanceCents; }, 0);
+      if (!owed) return Money.incomplete('Nothing to weight yet.', ['debtBalance']);
+      var weighted = debts.reduce(function (n, d) { return n + d.balanceCents * (rateOf(d) || 0); }, 0);
+      return Money.ok(weighted / owed, { owedCents: owed, count: debts.length, missingRate: r.missingRate });
+    },
+    interestPerMonth: function (h) {
+      var r = ratedDebts(h);
+      if (!Money.isOk(r)) return r;
+      var cents = r.value.reduce(function (n, d) { return n + d.balanceCents * (rateOf(d) || 0) / MONTHS; }, 0);
+      return Money.ok(Math.round(cents), { count: r.value.length, missingRate: r.missingRate });
+    },
+    interestToIncome: function (h) {
+      var interest = TIER3.interestPerMonth(h);
+      if (!Money.isOk(interest)) return interest;
+      return over(Money.ok(interest.value), grossMonthly(h));
+    },
+    promoCliff: function (h) {
+      var Debt = engine('Debt', './debt.js');
+      if (!Debt || !Debt.promoStatus) return Money.incomplete('The debt engine is not loaded.', ['debtRules']);
+      var promos = (h.debts || []).filter(function (d) { return d.promo && d.promo.endsOn; });
+      if (!promos.length) return Money.incomplete('No debt of yours is on a promotional rate.', ['debtRate']);
+      var soonest = promos.slice().sort(function (a, b) { return String(a.promo.endsOn).localeCompare(String(b.promo.endsOn)); })[0];
+      var st = Debt.promoStatus(soonest, new Date());
+      var months = st && Money.isEntered(st.monthsLeft) ? st.monthsLeft : null;
+      if (months === null) return Money.incomplete('Add when the promotional rate ends to see this.', ['debtRate']);
+      return Money.ok(months, { label: soonest.label || 'A card', endsOn: soonest.promo.endsOn, balanceCents: soonest.balanceCents });
+    },
+
+    /* The shares of pay each part of the month takes */
+    recurringTotal: function (h, t) { return categoriesCents(h, t, ['utilities', 'subscriptions']); },
+    recurringShare: function (h, t) {
+      var cents = TIER3.recurringTotal(h, t);
+      if (!Money.isOk(cents)) return cents;
+      return over(Money.ok(cents.value), grossMonthly(h));
+    },
+    transportRate: function (h, t) {
+      var cents = categoriesCents(h, t, ['transportation']);
+      if (!Money.isOk(cents)) return cents;
+      return over(Money.ok(cents.value), grossMonthly(h));
+    },
+    carPaymentRate: function (h, t) {
+      var loans = (h.debts || []).filter(function (d) { return d.type === 'auto' && Money.isEntered(d.minimumPaymentCents); });
+      if (!loans.length) return Money.incomplete('Add a car loan and its payment to see this.', ['debtMinPayment']);
+      var pay = loans.reduce(function (n, d) { return n + d.minimumPaymentCents; }, 0);
+      return over(Money.ok(pay), takeHome(h, t));
+    },
+    givingRate: function (h, t) {
+      var target = h.giving && Money.isEntered(h.giving.annualTargetCents) ? h.giving.annualTargetCents : null;
+      var pct = h.giving && Money.isEntered(h.giving.pctOfIncome) ? h.giving.pctOfIncome : null;
+      if (pct !== null) return Money.ok(pct > 1 ? pct / 100 : pct, { from: 'the share you set' });
+      if (target === null) return Money.incomplete('Set what you want to give, as a share or a figure, to see this.', ['givingTarget']);
+      var gross = Schema.grossAnnualIncomeCents(h);
+      if (!Money.isOk(gross) || !gross.value) return Money.isOk(gross) ? Money.incomplete('Nothing to divide by yet.', ['grossAnnualIncome']) : gross;
+      return Money.ok(target / gross.value, { targetCents: target, grossCents: gross.value, from: 'the figure you set' });
+    }
+  };
+
+  /* Tier 3 joins the table the rooms already read (D-353). */
+  Object.keys(TIER3).forEach(function (k) { FORMULAS[k] = TIER3[k]; });
+
   var IMPLEMENTED = Object.keys(FORMULAS);
 
   /** One reading. null when this file does not work that one out yet, so a

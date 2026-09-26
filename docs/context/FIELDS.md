@@ -5,7 +5,7 @@ A field is editable in its owner only (`shared/ownership.js`). "Read by" is a
 word-boundary match of the id (or id + Cents) in another room's HTML or in an
 engine loaded by two or fewer rooms; shared engines are left out so a field
 does not look used everywhere. Ids that are ordinary words are not traced.
-Fields: 128. Traced: 119. No other room mentions it: **61**.
+Fields: 128. Traced: 119. No other room mentions it: **59**.
 
 
 ## big-purchase (4)
@@ -188,13 +188,13 @@ Fields: 128. Traced: 119. No other room mentions it: **61**.
 
 ## tax (2)
 
-- `otherPreTax` — Other pre-tax, a year · **no other room mentions it**
+- `otherPreTax` — Other pre-tax, a year · read by ledger
 - `withheld` — Withheld so far · too generic to trace
 
 ## values (3)
 
 - `givingPct` — Giving, share of income · **no other room mentions it**
-- `givingTarget` — Giving, a year · **no other room mentions it**
+- `givingTarget` — Giving, a year · read by ledger
 - `rerankCut` — What The Rerank would cut · read by skill-tree
 
 ## week (2)

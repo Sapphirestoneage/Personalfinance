@@ -85,8 +85,12 @@ carries it. Coach Mode has its own audit at `coach/AUDIT.md`; this one is the
   `shared/room.js`, and the twenty-two that were built inside a bigger HTML
   string. A reader can change the shape of any set of rows, recolour any
   picture, and read any of them as a table.
-- **Tier 3 readings and the moons** (`STATUS.md`), and the two owner decisions
-  held there.
+- ~~Tier 3 readings.~~ Done, D-353: the twenty are worked out, each pointing at
+  the engine that already owns the figure. Tiers 4 to 10 and the moons are the
+  next of that work.
+- **Two owner decisions** are still held in `STATUS.md`: whether a room may ask
+  for a fact inline (D-313 against D-207), and whether the income floor is
+  means-tested (D-228, D-284). Both need the owner, not another pass.
 
 ## How to check any of it
 

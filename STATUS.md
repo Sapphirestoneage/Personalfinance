@@ -38,8 +38,7 @@ Updated: 2026-09-26
   Marketing Scoreboard in `marketing/` (D-340), each with its own log.
 
 ## Next (top item first; one per session)
-1. **Tier 3 readings and the moons.** Tiers 1 and 2 are worked out (53 of the 184);
-   three band-2 facts still have nowhere to live.
+1. **Tier 4 and up, and the moons.** Tiers 1 to 3 are worked out (73 of the 184).
 2. **Room by room against `docs/DESIGN.md`.** Four main screens and the measuring stick
    are done; the Cushion and The Close are next.
 3. **OWNER DECISIONS held**: inline asks elsewhere (D-313 vs D-207); income floor means-tested? (D-228, D-284.)

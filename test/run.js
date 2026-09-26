@@ -17181,6 +17181,66 @@ section('The standard the app is held to (D-343)');
     /test\/render\.js/.test(design) && /test\/alignment\.js/.test(design) && /node test\/run\.js/.test(design));
 })();
 
+section('Tier 3, the Breakdown: twenty readings worked out (D-353)');
+
+(function () {
+  /* STATUS's top item. data/recipes.json has named these twenty since D-320;
+     engines/recipes.js now works them out, each one pointing at the engine
+     that already owns the figure rather than retyping a formula. */
+  const Recipes = require(path.join(ROOT, 'engines/recipes.js'));
+  const recipes = require(path.join(ROOT, 'data/recipes.json')).recipes;
+  const tier3 = recipes.filter(r => r.tier === 3);
+  check('Tier 3 has twenty readings', tier3.length, 20);
+  const missing = tier3.filter(r => Recipes.IMPLEMENTED.indexOf(r.id) === -1).map(r => r.id);
+  check('...and every one of them is worked out', missing.join(', '), '');
+
+  const T = {
+    expenseCategories: require(path.join(ROOT, 'data/expense_categories.json')),
+    bands: require(path.join(ROOT, 'data/bands.json')),
+    accessRules: require(path.join(ROOT, 'data/access_rules.json')),
+    irsLimits: require(path.join(ROOT, 'data/irs_limits_2026.json')),
+    effectiveTaxRates: require(path.join(ROOT, 'data/effective_tax_rates_2026.json')),
+    debtRules: require(path.join(ROOT, 'data/debt_rules.json'))
+  };
+  const households = {
+    'nothing entered': Schema.createHousehold({}),
+    'the example one': Schema.createHousehold(Demo.build())
+  };
+  Object.keys(households).forEach(name => {
+    const h = households[name];
+    const bad = [];
+    tier3.forEach(r => {
+      let v;
+      try { v = Recipes.value(r.id, h, T); } catch (e) { bad.push(r.id + ' threw ' + e.message); return; }
+      if (!v) { bad.push(r.id + ' returned nothing'); return; }
+      if (!Money.isOk(v) && !v.reason) bad.push(r.id + ' is incomplete with no reason');
+      if (Money.isOk(v)) {
+        const flat = Array.isArray(v.value) ? v.value : [v.value];
+        flat.forEach(x => { if (typeof x === 'number' && !Number.isFinite(x)) bad.push(r.id + ' is not a finite number'); });
+      }
+    });
+    check(`every Tier 3 reading is a Result with ${name}`, bad.join(' | '), '');
+  });
+
+  /* One formula, one function: the readings that have an engine point at it. */
+  const src = fs.readFileSync(path.join(ROOT, 'engines/recipes.js'), 'utf8');
+  checkTrue('the measuring stick reading is the Scorecard\'s own engine', /Draftt\.rows\(h, t, \{\}\)/.test(src));
+  checkTrue('the net worth statement is the Statement\'s own engine', /Statement\.portfolios\(h, t\.accessRules\)/.test(src));
+  checkTrue('the refund is the app\'s own tax estimate', /Schema\.estimatedAnnualTaxCents\(h, t\)/.test(src));
+  checkTrue('the month is the app\'s own summary', /CashFlow\.summarise\(h, cats, \{\}\)/.test(src));
+  checkTrue('the promotional cliff is the debt engine\'s', /Debt\.promoStatus\(soonest/.test(src));
+  checkTrue('a published limit in dollars is turned into cents once, where it is read',
+    /Math\.round\(dollars \* 100\)/.test(src));
+
+  /* Empty is not zero: a reading with no facts says what it waits for. */
+  const blank = Schema.createHousehold({});
+  const zeros = tier3.filter(r => {
+    const v = Recipes.value(r.id, blank, T);
+    return v && Money.isOk(v) && v.value === 0;
+  }).map(r => r.id);
+  check('nothing reads as zero on an empty household', zeros.join(', '), '');
+})();
+
 section('The rooms ask in plain words too (D-351)');
 
 (function () {
