@@ -77,7 +77,7 @@ section('The reference data carries its provenance (PN-002)');
   const Tables = require(A('shared/tables.js'));
   Object.keys(Tables.FILES).forEach(k => {
     ['version', 'asOf', 'confidence', 'source', 'confidenceNote'].forEach(f => checkTrue(`data/${Tables.FILES[k]} carries ${f}`, typeof T[k][f] === 'string' && T[k][f].length > 0));
-    checkTrue(`data/${Tables.FILES[k]} is year-versioned or a rules file`, /_20\d\d\.json$|rules\.json$|help\.json$/.test(Tables.FILES[k]));
+    checkTrue(`data/${Tables.FILES[k]} is year-versioned or a rules file`, /_20\d\d\.json$|rules\.json$|help\.json$|site\.json$/.test(Tables.FILES[k]));
   });
   const onDisk = fs.readdirSync(A('data')).filter(f => f.endsWith('.json'));
   checkTrue('every data file on disk is registered', onDisk.every(f => Object.values(Tables.FILES).indexOf(f) !== -1), onDisk.join(','));
