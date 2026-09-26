@@ -11,18 +11,21 @@
 <link rel="stylesheet" href="shared/theme.css"/>
 <link rel="stylesheet" href="mkt.css"/>
 <!--
-  THE SCOREBOARD (MD-006). What gets measured gets managed.
+  THE SCOREBOARD (MD-006, MD-009). What gets measured gets managed.
 
   1. READS   posts, people and touches through marketing/shared/mkt.js;
              every figure through marketing/engines/kpi.js. Nothing of SPARKS.
   2. WRITES  the weekly targets, chart preferences, the demo flag, and the
              files the owner saves (everything, or a share report).
-  3. SHOWS   this week against the targets with pace; the period's numbers;
-             the funnel; week-by-week pictures; by channel and by topic;
-             the best posts; who to contact today; the share report.
+  3. SHOWS   this week's read (the sentences), this week against the
+             targets with pace, the period's numbers against the period
+             before, the funnel, reach-outs by lane, week-by-week pictures,
+             what works (the posting heatmap, formats, asks, topics, the best
+             posts), where the money comes from (attribution, conversion,
+             the sales cycle), who to contact today, the share report.
 
-  LIVE-FORM: built once. The targets are typed in boxes that sit inside
-  stat tiles repainted only on a change event of another control.
+  LIVE-FORM: built once. The targets are static inputs in #targets, shown
+  by a toggle; nothing repaints them. Every other box is read-only.
 -->
 </head>
 <body class="slaf">
@@ -46,19 +49,26 @@
     </div>
   </section>
 
+  <section class="slaf-card" aria-labelledby="h-read">
+    <div class="section-head"><div><span class="eyebrow">This week's read</span><h2 id="h-read">What the numbers say</h2></div><span class="grow"></span><span class="mkt-note" id="read-when"></span></div>
+    <div class="read"><ul class="read-list" id="read"></ul><div class="read-streak" id="streak"></div></div>
+  </section>
+
   <section aria-labelledby="h-week">
-    <div class="bar">
-      <h2 id="h-week">This week</h2>
-      <span class="mkt-note" id="week-range"></span>
-      <span class="grow"></span>
-      <span class="mkt-note">Type a target in any tile to change it.</span>
+    <div class="section-head"><div><span class="eyebrow">This week</span><h2 id="h-week">Against the targets</h2></div><span class="mkt-note" id="week-range"></span><span class="grow"></span>
+      <button type="button" class="slaf-btn" id="btn-targets" aria-expanded="false" aria-controls="targets">Edit targets</button></div>
+    <div class="stats grid-5" id="week"></div>
+    <div class="targets" id="targets" hidden>
+      <label class="inline"><span>Posts a week</span><input type="text" inputmode="numeric" data-target="postsPerWeek" id="t-posts"/></label>
+      <label class="inline"><span>Reach-outs a week</span><input type="text" inputmode="numeric" data-target="outreachPerWeek" id="t-outreach"/></label>
+      <label class="inline"><span>Conversations a week</span><input type="text" inputmode="numeric" data-target="conversationsPerWeek" id="t-conversations"/></label>
+      <label class="inline"><span>Leads a week</span><input type="text" inputmode="numeric" data-target="leadsPerWeek" id="t-leads"/></label>
+      <label class="inline"><span>Calls booked a week</span><input type="text" inputmode="numeric" data-target="callsPerWeek" id="t-calls"/></label>
     </div>
-    <div class="stats" id="week"></div>
   </section>
 
   <section aria-labelledby="h-period">
-    <div class="bar">
-      <h2 id="h-period">The numbers</h2>
+    <div class="section-head"><div><span class="eyebrow">The period</span><h2 id="h-period">The numbers</h2></div>
       <label class="inline"><span>Period</span>
         <select id="period">
           <option value="7">Last 7 days</option>
@@ -67,6 +77,7 @@
           <option value="365">Last year</option>
           <option value="all">All time</option>
         </select></label>
+      <span class="mkt-note" id="period-note"></span>
       <span class="grow"></span>
       <button type="button" class="slaf-btn" id="btn-share">Share report</button>
       <button type="button" class="slaf-btn" id="btn-save">Save everything</button>
@@ -74,20 +85,28 @@
       <input type="file" id="file-load" accept=".json,application/json" hidden/>
     </div>
     <p class="mkt-say" id="say"></p>
-    <div class="stats" id="numbers"></div>
-    <h3>Reach-outs by lane <span class="mkt-note">(the Core Four, and referrals)</span></h3>
-    <div class="lanes" id="lanes"></div>
+    <div class="stats grid-5" id="numbers"></div>
   </section>
 
   <section aria-labelledby="h-funnel">
-    <div class="bar"><h2 id="h-funnel">The funnel</h2><span id="funnel-help"></span></div>
-    <ul class="funnel" id="funnel"></ul>
-    <p class="mkt-note" id="funnel-note"></p>
+    <div class="grid-3-2">
+      <div class="slaf-card">
+        <div class="section-head"><div><span class="eyebrow">Stranger to client</span><h2 id="h-funnel">The funnel</h2></div><span id="funnel-help"></span></div>
+        <p class="funnel-legend">Each bar is a share of the step before it. The lighter bars come from posts; the darker ones are people.</p>
+        <ul class="funnel" id="funnel"></ul>
+        <p class="mkt-note funnel-note" id="funnel-note"></p>
+      </div>
+      <div class="slaf-card">
+        <div class="section-head"><div><span class="eyebrow">The Core Four, and referrals</span><h2>Reach-outs by lane</h2></div><span id="lanes-help"></span></div>
+        <div class="lanes grid-5" id="lanes"></div>
+        <p class="mkt-note" id="lanes-note"></p>
+      </div>
+    </div>
   </section>
 
   <section aria-labelledby="h-pics">
-    <h2 id="h-pics">Week by week</h2>
-    <div class="pics">
+    <div class="section-head"><div><span class="eyebrow">Twelve weeks</span><h2 id="h-pics">Week by week</h2></div></div>
+    <div class="pics grid-4">
       <div id="pic-posts"></div>
       <div id="pic-reach"></div>
       <div id="pic-outreach"></div>
@@ -95,22 +114,38 @@
     </div>
   </section>
 
-  <section aria-labelledby="h-where">
-    <h2 id="h-where">Where it works</h2>
-    <div class="pics">
-      <div id="pic-channel"></div>
-      <div id="pic-pillar"></div>
+  <section aria-labelledby="h-works">
+    <div class="section-head"><div><span class="eyebrow">What works</span><h2 id="h-works">Formats, asks, topics, days</h2></div></div>
+    <div class="slaf-card" style="margin-bottom:12px">
+      <div class="section-head"><h3 style="margin:0">Posting days</h3><span class="mkt-note" id="heat-note"></span></div>
+      <div class="heat" id="heat"></div>
+      <div class="heat-key" id="heat-key"></div>
     </div>
-    <h3>By channel</h3>
-    <div class="tbl-wrap"><table class="tbl" id="tbl-channel"></table></div>
-    <h3>By topic</h3>
-    <div class="tbl-wrap"><table class="tbl" id="tbl-pillar"></table></div>
-    <h3>Best posts <span class="mkt-note">(by engagement rate, at least 100 reach)</span></h3>
+    <div class="pics grid-4">
+      <div id="pic-channel"></div>
+      <div id="pic-format"></div>
+      <div id="pic-pillar"></div>
+      <div id="pic-weekday"></div>
+    </div>
+    <div class="grid-2" style="margin-top:12px">
+      <div><h3>By ask <span class="mkt-note">(what you asked people to do)</span></h3><div class="tbl-wrap"><table class="tbl" id="tbl-cta"></table></div></div>
+      <div><h3>By channel</h3><div class="tbl-wrap"><table class="tbl" id="tbl-channel"></table></div></div>
+    </div>
+    <h3 style="margin-top:12px">Best posts <span class="mkt-note">(by engagement rate, at least 100 reach)</span></h3>
     <div class="tbl-wrap"><table class="tbl" id="tbl-best"></table></div>
   </section>
 
+  <section aria-labelledby="h-money">
+    <div class="section-head"><div><span class="eyebrow">Attribution</span><h2 id="h-money">Where the money comes from</h2></div><span class="mkt-note" id="money-note"></span></div>
+    <div class="conv" id="conv"></div>
+    <div class="grid-2" style="margin-top:12px">
+      <div><h3>By lane <span class="mkt-note">(how you met them)</span></h3><div class="tbl-wrap"><table class="tbl" id="tbl-lane"></table></div></div>
+      <div><h3>By the post that brought them</h3><div class="tbl-wrap"><table class="tbl" id="tbl-attr"></table></div></div>
+    </div>
+  </section>
+
   <section aria-labelledby="h-due">
-    <div class="bar"><h2 id="h-due">Who to contact today</h2><span id="due-help"></span><span class="grow"></span><a class="slaf-btn" href="people.html">Open People</a></div>
+    <div class="section-head"><div><span class="eyebrow">Today</span><h2 id="h-due">Who to contact</h2></div><span id="due-help"></span><span class="grow"></span><a class="slaf-btn" href="people.html?show=due">Open People</a></div>
     <ul class="due" id="due"></ul>
   </section>
 

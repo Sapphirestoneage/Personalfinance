@@ -18,6 +18,12 @@
      KPI.nextTouch(person, touches, stages, cadences, today)
      KPI.due(people, touches, stages, cadences, today)   who to contact, in order
      KPI.lanes(touches)                  the Core Four, counted
+     KPI.compare(data, range)            the period beside the one before it
+     KPI.byCta(posts) byWeekday(posts)   what works: by ask, by weekday
+     KPI.heatmap(posts, { weeks, to })    posts a day, week by week
+     KPI.attribution(people, posts, r)   leads, clients, revenue by channel and lane
+     KPI.conversion(people)              stage-to-stage rates, days to close
+     KPI.insights(data, o)               this week's read, as sentences
    data: { posts, people, touches }
    ========================================================================== */
 (function (root, factory) {
@@ -103,8 +109,11 @@
     ];
     var prev = null;
     steps.forEach(function (s) { s.ofPrevious = prev === null ? null : rate(s.value, prev.value); if (num(s.value)) prev = s; });
-    var worst = null;
-    steps.forEach(function (s) { if (num(s.ofPrevious) && (worst === null || s.ofPrevious < worst.ofPrevious)) worst = s; });
+    /* the worst drop is judged among the people steps (a post's reach to its
+       engagements is always the steepest, and says nothing about selling) */
+    var worst = null, peopleSteps = steps.slice(3);
+    peopleSteps.forEach(function (s) { if (num(s.ofPrevious) && (worst === null || s.ofPrevious < worst.ofPrevious)) worst = s; });
+    if (!worst) steps.forEach(function (s) { if (num(s.ofPrevious) && (worst === null || s.ofPrevious < worst.ofPrevious)) worst = s; });
     return { steps: steps, worst: worst ? worst.id : null };
   }
 
@@ -192,7 +201,111 @@
     return out;
   }
 
+  /* ---- Against the previous period ------------------------------------------- */
+  var LOWER_IS_BETTER = { hoursPerLead: true, hours: true };
+  function compare(data, r) {
+    var now = period(data, r);
+    if (!r || !r.from) return { now: now, before: null, delta: {} };
+    var days = daysBetween(r.from, r.to) + 1;
+    var before = period(data, { from: addDays(r.from, -days), to: addDays(r.from, -1) });
+    var delta = {};
+    Object.keys(now).forEach(function (k) {
+      if (!num(now[k]) || !num(before[k])) return;
+      var abs = now[k] - before[k], pct = before[k] === 0 ? null : abs / Math.abs(before[k]);
+      delta[k] = { abs: Math.round(abs * 1000) / 1000, pct: pct === null ? null : Math.round(pct * 1000) / 1000, better: abs === 0 ? null : (LOWER_IS_BETTER[k] ? abs < 0 : abs > 0) };
+    });
+    return { now: now, before: before, delta: delta, days: days };
+  }
+
+  /* ---- What works: by ask, by weekday, the posting heatmap ------------------- */
+  function byCta(posts) {
+    var g = {}; posts.forEach(function (p) { var k = p.cta || 'none'; (g[k] = g[k] || []).push(p); });
+    return Object.keys(g).map(function (k) { var pr = period({ posts: g[k], people: [], touches: [] }, {}); return { id: k, posts: g[k].length, impressions: pr.impressions, engagementRate: pr.engagementRate, dms: pr.dms, clicks: pr.clicks, leads: pr.postLeads, leadsPerPost: pr.postLeads === null ? null : Math.round(pr.postLeads / g[k].length * 100) / 100 }; })
+      .sort(function (a, b) { return (b.leadsPerPost || 0) - (a.leadsPerPost || 0) || (b.engagementRate || 0) - (a.engagementRate || 0); });
+  }
+  var WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  function weekdayOf(d) { return (new Date(ms(d)).getUTCDay() + 6) % 7; }
+  function byWeekday(posts) {
+    var g = WEEKDAYS.map(function () { return []; });
+    posts.forEach(function (p) { g[weekdayOf(p.date)].push(p); });
+    return g.map(function (list, i) { var pr = period({ posts: list, people: [], touches: [] }, {}); return { id: WEEKDAYS[i], posts: list.length, impressions: pr.impressions, engagementRate: pr.engagementRate, follows: pr.follows }; });
+  }
+  function heatmap(posts, o) {
+    o = o || {}; var n = o.weeks || 12, last = weekStart(o.to), starts = [];
+    for (var i = n - 1; i >= 0; i--) starts.push(addDays(last, -7 * i));
+    var byDay = {}; posts.forEach(function (p) { byDay[p.date] = (byDay[p.date] || 0) + 1; });
+    var cells = starts.map(function (s) { return WEEKDAYS.map(function (w, d) { var day = addDays(s, d); return { date: day, count: byDay[day] || 0, future: o.to && day > o.to }; }); });
+    var max = 0; cells.forEach(function (col) { col.forEach(function (c) { if (c.count > max) max = c.count; }); });
+    var active = 0, total = 0; cells.forEach(function (col) { col.forEach(function (c) { if (!c.future) { total++; if (c.count) active++; } }); });
+    return { starts: starts, weekdays: WEEKDAYS, cells: cells, max: max, daysActive: active, daysTotal: total };
+  }
+
+  /* ---- Where the money comes from ------------------------------------------- */
+  function attribution(people, posts, r) {
+    var postById = {}; (posts || []).forEach(function (p) { postById[p.id] = p; });
+    var byChannel = {}, byLane = {};
+    function bump(g, k, p) {
+      var row = g[k] = g[k] || { id: k, people: 0, leads: 0, clients: 0, revenue: null };
+      row.people++;
+      var h = p.stageHistory || [];
+      if (h.some(function (x) { return x.stage === 'lead' && inRange(x.at, r || {}); })) row.leads++;
+      if (h.some(function (x) { return x.stage === 'client' && inRange(x.at, r || {}); })) { row.clients++; if (num(p.value)) row.revenue = (row.revenue || 0) + p.value; }
+    }
+    (people || []).forEach(function (p) {
+      if (p.archived) return;
+      var post = p.fromPostId && postById[p.fromPostId];
+      if (post) bump(byChannel, post.channel, p);
+      bump(byLane, p.source || 'unknown', p);
+    });
+    var sort = function (g) { return Object.keys(g).map(function (k) { return g[k]; }).sort(function (a, b) { return (b.revenue || 0) - (a.revenue || 0) || b.clients - a.clients || b.leads - a.leads || b.people - a.people; }); };
+    var linked = (people || []).filter(function (p) { return !p.archived && p.fromPostId && postById[p.fromPostId]; }).length;
+    return { byChannel: sort(byChannel), byLane: sort(byLane), linked: linked, unlinked: (people || []).filter(function (p) { return !p.archived; }).length - linked };
+  }
+  function median(list) { if (!list.length) return null; var s = list.slice().sort(function (a, b) { return a - b; }), m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : Math.round((s[m - 1] + s[m]) / 2); }
+  function conversion(people) {
+    var reached = { conversation: 0, lead: 0, call: 0, client: 0 }, cycle = [], toLead = [];
+    (people || []).forEach(function (p) {
+      var at = {}; (p.stageHistory || []).forEach(function (h) { if (!at[h.stage]) at[h.stage] = h.at; });
+      Object.keys(reached).forEach(function (s) { if (at[s]) reached[s]++; });
+      if (at.lead && at.client) cycle.push(daysBetween(at.lead, at.client));
+      if (at.conversation && at.lead) toLead.push(daysBetween(at.conversation, at.lead));
+    });
+    return { reached: reached, leadRate: rate(reached.lead, reached.conversation), callRate: rate(reached.call, reached.lead), closeRate: rate(reached.client, reached.call), leadToClient: rate(reached.client, reached.lead),
+      daysToClose: median(cycle), daysToLead: median(toLead) };
+  }
+
+  /* ---- This week's read: the sentences a good coach would say ------------------ */
+  function insights(data, o) {
+    var out = [], today = o.today, r = o.range, labels = o.labels || {};
+    if (!(data.posts || []).length && !(data.people || []).length) return [{ kind: 'info', text: 'Log your first post and add a few people, and this space fills with what to do next.' }];
+    var sc = scorecard(data, o.targets, today), cmp = compare(data, r), now = cmp.now, d = cmp.delta;
+    var pct = function (v) { return Math.round(v * 1000) / 10 + '%'; };
+    var name = function (list, id) { return (labels[list] && labels[list][id]) || id; };
+    var streakN = streak(data.posts, o.targets && o.targets.postsPerWeek, today);
+    var daysLeft = daysBetween(today, sc.to);
+    sc.rows.forEach(function (row) {
+      if (row.zone === 'out' || row.zone === 'watch') out.push({ kind: row.zone === 'out' ? 'bad' : 'watch', text: (row.zone === 'out' ? 'Behind on ' : 'A little behind on ') + name('targets', row.id).toLowerCase() + ': ' + row.actual + ' of ' + row.target + ' with ' + (daysLeft === 0 ? 'today left' : daysLeft + (daysLeft === 1 ? ' day' : ' days') + ' left') + '. ' + (row.left > 0 && daysLeft > 0 ? Math.ceil(row.left / (daysLeft + 1)) + ' a day gets there.' : '') });
+    });
+    var due = o.people ? o.people.filter(function (x) { return x.status === 'overdue'; }) : [];
+    if (due.length) out.push({ kind: 'bad', text: due.length + (due.length === 1 ? ' person is' : ' people are') + ' overdue for a touch. The longest waiting: ' + due[0].person.name + ', ' + due[0].daysOver + ' days.', href: 'people.html' });
+    if (streakN !== null && streakN >= 2) out.push({ kind: 'good', text: streakN + ' weeks in a row on the posting target. Keep the streak; it is worth more than any single post.' });
+    if (num(now.replyRate) && now.peopleReached >= 5) out.push({ kind: now.replyRate >= 0.3 ? 'good' : now.replyRate < 0.15 ? 'watch' : 'info', text: pct(now.replyRate) + ' of the people you reached out to replied' + (now.replyRate < 0.15 ? '. Change the message before you change the volume.' : now.replyRate >= 0.3 ? '. The message works; the lever now is volume.' : '.') });
+    var best = bestPosts(data.posts.filter(function (p) { return inRange(p.date, r); }), { n: 1 })[0];
+    if (best) out.push({ kind: 'good', text: 'Best post this period: "' + (best.post.hook || best.post.date) + '" on ' + name('channels', best.post.channel) + ', ' + pct(best.r.engagementRate) + ' engagement' + (num(best.post.results.saves) && best.post.results.saves > 0 ? ' and ' + best.post.results.saves + ' saves' : '') + '. Make another like it.', href: 'posts.html' });
+    var f = funnel(data, r), worst = f.steps.filter(function (s) { return s.id === f.worst; })[0];
+    if (worst && num(worst.ofPrevious)) out.push({ kind: 'info', text: 'The biggest drop in the funnel is at "' + worst.label.toLowerCase() + '": ' + pct(worst.ofPrevious) + ' of the step before. One thing to work on this month.' });
+    var fm = byFormat(data.posts.filter(function (p) { return inRange(p.date, r); })).filter(function (g) { return g.posts >= 3 && num(g.engagementRate); }).sort(function (a, b) { return b.engagementRate - a.engagementRate; });
+    if (fm.length >= 2) out.push({ kind: 'info', text: name('formats', fm[0].id) + ' posts get ' + pct(fm[0].engagementRate) + ' engagement against ' + pct(fm[fm.length - 1].engagementRate) + ' for ' + name('formats', fm[fm.length - 1].id).toLowerCase() + '. Make more of the first.' });
+    if (d.impressions && d.impressions.pct !== null && Math.abs(d.impressions.pct) >= 0.2) out.push({ kind: d.impressions.better ? 'good' : 'watch', text: 'Reach is ' + (d.impressions.better ? 'up ' : 'down ') + pct(Math.abs(d.impressions.pct)) + ' on the previous ' + cmp.days + ' days.' });
+    var unchecked = now.posts - now.postsChecked;
+    if (unchecked >= 2) out.push({ kind: 'info', text: unchecked + ' posts have no results typed yet. Numbers you do not record cannot be managed.', href: 'posts.html?show=unchecked' });
+    if (!out.length) out.push({ kind: 'info', text: data.posts.length ? 'Nothing to flag. Log the week and come back Sunday.' : 'Log your first post and add a few people, and this space fills with what to do next.' });
+    var order = { bad: 0, watch: 1, good: 2, info: 3 };
+    return out.sort(function (a, b) { return order[a.kind] - order[b.kind]; }).slice(0, o.max || 7);
+  }
+
   return { STAGE_ORDER: STAGE_ORDER, postResults: postResults, weekStart: weekStart, addDays: addDays, daysBetween: daysBetween, period: period, funnel: funnel,
     byChannel: byChannel, byPillar: byPillar, byFormat: byFormat, weekly: weekly, scorecard: scorecard, streak: streak, bestPosts: bestPosts,
-    nextTouch: nextTouch, due: due, lanes: lanes, pipeline: pipeline };
+    nextTouch: nextTouch, due: due, lanes: lanes, pipeline: pipeline,
+    compare: compare, byCta: byCta, byWeekday: byWeekday, heatmap: heatmap, attribution: attribution, conversion: conversion, insights: insights, WEEKDAYS: WEEKDAYS };
 });
