@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="robots" content="noindex"/>
+<title>A playbook, The Binders</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="binders.css"/>
+<!--
+  A PLAYBOOK, one planet (PB-001, binders/README.md). ?id=<playbook>.
+
+  1. READS   binders.v1 through shared/store.js; data/playbooks.json.
+  2. WRITES  one answer or one checklist tick at a time.
+  3. SHOWS   the idea, the pictures this playbook earns, six bands with
+             every exercise and checklist, the checkpoint each band reaches.
+
+  LIVE-FORM: built once (book.js). Inputs are rendered at load and never
+  rebuilt; a change repaints the pictures and the states only.
+-->
+</head>
+<body class="slaf">
+<main class="bd" id="main">
+  <div id="head"></div>
+  <div class="book-nav" id="book-nav"></div>
+  <div class="book-head" id="book-head"></div>
+
+  <section aria-label="The pictures">
+    <h2>The pictures</h2>
+    <p class="bd-note" id="progress-say"></p>
+    <div class="reads" id="reads"></div>
+  </section>
+
+  <section aria-label="The bands">
+    <div class="bands" id="bands" role="tablist"></div>
+    <div id="levels"></div>
+  </section>
+
+  <div id="foot"></div>
+</main>
+<script src="shared/store.js"></script>
+<script src="shared/model.js"></script>
+<script src="engines/reads.js"></script>
+<script src="shared/charts.js"></script>
+<script src="app.js"></script>
+<script src="book.js"></script>
+</body>
+</html>

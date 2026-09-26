@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="robots" content="noindex"/>
+<title>The Binders</title>
+<meta name="description" content="A workbook that walks you through twelve business playbooks in four systems, as planets with six bands each. Everything stays in your browser."/>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="binders.css"/>
+<!--
+  THE SKY, the Binders' home map (PB-001, binders/README.md).
+
+  1. READS   binders.v1 through shared/store.js and the tables in data/.
+             Nothing of SPARKS: no slaf. key is touched.
+  2. WRITES  only the example answers (behind a button), an import, a clear.
+  3. SHOWS   twelve planets on six orbits, the counts, the next three
+             levels, the grid, the four systems.
+
+  LIVE-FORM: built once. The only typed box is the import textarea, which
+  sits outside anything repainted.
+-->
+</head>
+<body class="slaf">
+<main class="bd" id="main">
+  <div id="head"></div>
+
+  <section class="slaf-card" id="welcome" hidden aria-label="How this works" style="margin-bottom:var(--space-4)">
+    <span class="slaf-eyebrow">Welcome</span>
+    <h2>Twelve playbooks, one binder</h2>
+    <p>Four systems: how strangers find you (Leads), how they become customers (Sales), how they stay and bring more (Delivery), and how each one pays for the next (Profit). Three playbooks each. Every playbook is a planet with six bands: read the idea, type the facts, do the exercises, build the thing, run it, sharpen it. A band means the same depth on every planet.</p>
+    <p class="bd-note">Nothing here is locked. A picture you have not earned says what it is waiting on. Empty is not zero: a blank box means not known yet. Everything stays in this browser.</p>
+    <div class="bd-actions" style="margin-top:var(--space-3)">
+      <a class="slaf-btn slaf-btn--primary" href="playbook.html?id=machine">Start with Marketing Machine</a>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-welcome-done">Got it</button>
+    </div>
+  </section>
+
+  <div class="sky-wrap">
+    <section aria-label="The sky">
+      <div id="sky"></div>
+      <div class="sky-key" id="sky-key"></div>
+    </section>
+    <section aria-label="Where you stand">
+      <div class="stats" id="stats"></div>
+      <h2>Next three</h2>
+      <div class="next" id="next"></div>
+      <p class="bd-say" id="say" role="status"></p>
+    </section>
+  </div>
+
+  <section aria-label="Every planet by band" style="margin-top:var(--space-4)">
+    <h2>Every planet, every band</h2>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section aria-label="The four systems">
+    <h2>The four systems</h2>
+    <div class="systems" id="systems"></div>
+  </section>
+
+  <details class="fold">
+    <summary>Backup and reset</summary>
+    <p class="bd-note">Your answers live only in this browser. Export them to a file now and then; import them on another device.</p>
+    <div class="bd-actions" style="margin:var(--space-2) 0">
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-export">Export to the box</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-import">Import from the box</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-clear">Clear everything</button>
+    </div>
+    <textarea class="io" id="io" aria-label="Export and import box" spellcheck="false"></textarea>
+  </details>
+
+  <div id="foot"></div>
+</main>
+<script src="shared/store.js"></script>
+<script src="shared/model.js"></script>
+<script src="engines/reads.js"></script>
+<script src="shared/charts.js"></script>
+<script src="app.js"></script>
+<script src="sky.js"></script>
+</body>
+</html>

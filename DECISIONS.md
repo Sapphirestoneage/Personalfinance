@@ -17349,7 +17349,29 @@ SPARKS device backup neither carries nor removes `coach.` keys.
 
 **Verified.** `node test/run.js`; `node coach/test/run.js`.
 
+## D-340 — The Binders is its own app in binders/, a lane beside SPARKS like dnd/ and coach/
+
+**Why.** The owner wants a tool for each of the twelve playbooks in the $100M
+playbook binder (Leads, Sales, Delivery, Profit), run through the
+levels-and-planets dynamic, with pictures, every exercise and checklists.
+
+**Decision.** `binders/` is a separate app with two screens (the sky, a
+playbook), its own storage (`binders.v1`, never a `slaf.` key), copies of the
+look only (`binders/tools/vendor.js`), its own tests (`node binders/test/run.js`,
+in CI) and its own log (`binders/DECISIONS.md`, `PB-###`). Twelve planets in
+four systems, six bands each, the same depth on every planet. Nothing in
+`rooms/`, `shared/`, `engines/` or `data/` changes for it.
+
+**Replaces or removes.** Nothing in SPARKS. No SPARKS screen changes; the
+freeze on rooms holds, as D-339 did for `coach/`.
+
+**Stored shape.** No change to `slaf.household.v2` or any SPARKS key. The
+SPARKS device backup neither carries nor removes `binders.v1`.
+
+**Verified.** `node test/run.js`; `node binders/test/run.js`.
+
 ---
+
 
 # The Dungeons & Dividends entries
 

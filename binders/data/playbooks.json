@@ -1,0 +1,2489 @@
+{
+  "id": "binders_playbooks",
+  "version": "1.0",
+  "asOf": "2026-09-26",
+  "source": "Original wording written for this app. The structure follows the four systems (Leads, Sales, Delivery, Profit) and twelve playbook titles of the ACQ playbook binder that shipped with the $100M Money Models launch; the ideas come from the published $100M books and Acquisition.com's public material. No text of any book or playbook is reproduced here.",
+  "confidence": "convention",
+  "confidenceNote": "The exercises are a workbook reading of public frameworks, not the playbooks themselves. Rules of thumb in the copy (three to one, five minutes, nine touches, thirty days) are stated as rules of thumb.",
+  "note": "Read by binders/app.js and binders/engines/reads.js. Twelve playbooks (planets) in four systems, six bands each: the same band means the same depth on every planet. A level is done when every exercise holds an answer and every checklist item is ticked. Exercise keys are unique across the file; a key marked shared is owned here and read elsewhere through { ref }. Money is typed in dollars and stored in integer cents.",
+  "bands": [
+    {
+      "n": 1,
+      "name": "Read",
+      "meaning": "The one idea, and where you stand on it today",
+      "payoff": "reveal",
+      "verb": "E"
+    },
+    {
+      "n": 2,
+      "name": "Facts",
+      "meaning": "The few numbers this playbook runs on",
+      "payoff": "reveal",
+      "verb": "E"
+    },
+    {
+      "n": 3,
+      "name": "Exercises",
+      "meaning": "The pen and paper work the playbook asks for",
+      "payoff": "reveal",
+      "verb": "E"
+    },
+    {
+      "n": 4,
+      "name": "Build",
+      "meaning": "Assemble the thing you will use, and tick it off",
+      "payoff": "power",
+      "verb": "C"
+    },
+    {
+      "n": 5,
+      "name": "Run",
+      "meaning": "Use it for a stretch and log what happened",
+      "payoff": "certainty",
+      "verb": "S"
+    },
+    {
+      "n": 6,
+      "name": "Sharpen",
+      "meaning": "The moves only visible once the numbers are real",
+      "payoff": "power",
+      "verb": "C"
+    }
+  ],
+  "systems": [
+    {
+      "id": "leads",
+      "label": "Leads",
+      "order": 1,
+      "question": "How do strangers find out you exist?",
+      "hue": "blue"
+    },
+    {
+      "id": "sales",
+      "label": "Sales",
+      "order": 2,
+      "question": "How does a stranger become a customer?",
+      "hue": "aqua"
+    },
+    {
+      "id": "delivery",
+      "label": "Delivery",
+      "order": 3,
+      "question": "How does a customer stay and bring more?",
+      "hue": "orange"
+    },
+    {
+      "id": "profit",
+      "label": "Profit",
+      "order": 4,
+      "question": "How does each customer pay for the next?",
+      "hue": "violet"
+    }
+  ],
+  "playbooks": [
+    {
+      "id": "machine",
+      "system": "leads",
+      "order": 1,
+      "label": "Marketing Machine",
+      "letter": "M",
+      "oneLine": "Four ways to let people know you exist, and how much of each you need.",
+      "idea": "Advertising is letting people know about the thing you sell. There are only four ways to do it: reach out to people who already know you, post content for people who do not know you yet, reach out cold to strangers, and pay to put your message in front of them. Anyone else who gets you leads is doing one of those four on your behalf. The machine is the amount of each you do every day, on purpose, counted.",
+      "reads": [
+        "machineMix",
+        "leadsNeeded",
+        "leadRate"
+      ],
+      "levels": [
+        {
+          "band": 1,
+          "title": "The four ways, and what you do now",
+          "why": "Most lead problems are volume problems wearing a strategy costume. Before choosing anything, write down what actually happened last week.",
+          "exercises": [
+            {
+              "key": "machine_rate",
+              "kind": "rating",
+              "label": "How steady is your lead flow, 1 to 5",
+              "help": "One is not at all, five is fully. Your honest read today."
+            },
+            {
+              "key": "machine_now",
+              "kind": "long",
+              "label": "What you did last week to get leads, literally",
+              "help": "How many messages, how many posts, how many cold contacts, how many dollars. Count, do not describe."
+            },
+            {
+              "key": "machine_channel_now",
+              "kind": "choice",
+              "label": "The channel that brings most of your leads today",
+              "options": [
+                "Warm outreach: people who know me",
+                "Content: posting for people who do not know me yet",
+                "Cold outreach: contacting strangers",
+                "Paid ads",
+                "None yet"
+              ]
+            }
+          ],
+          "checklist": [
+            "I can name the four ways to get leads without looking",
+            "I wrote what I actually did last week, not what I meant to do"
+          ],
+          "checkpoint": "The planet shows where you start and the four ways are named.",
+          "minutes": 6
+        },
+        {
+          "band": 2,
+          "title": "The weekly counts",
+          "why": "A machine has dials. These are the dials: how much of each way you do in a normal week, and how many people raise a hand because of it.",
+          "exercises": [
+            {
+              "key": "warm_week",
+              "kind": "number",
+              "label": "Warm reach-outs per week",
+              "help": "Messages to people who already know you: contacts, followers, past customers."
+            },
+            {
+              "key": "content_week",
+              "kind": "number",
+              "label": "Pieces of content per week",
+              "help": "Posts, emails, videos: anything for people who do not know you yet."
+            },
+            {
+              "key": "cold_week",
+              "kind": "number",
+              "label": "Cold contacts per week",
+              "help": "Strangers you reached out to first: calls, DMs, emails, doors."
+            },
+            {
+              "key": "ads_week",
+              "kind": "money",
+              "label": "Ad spend per week",
+              "help": "Dollars paid for attention. Zero is a number; leave it blank if you do not know."
+            },
+            {
+              "key": "leads_month",
+              "kind": "number",
+              "label": "Engaged leads per month",
+              "help": "People who replied, booked, or opted in. A view is not a lead."
+            },
+            {
+              "key": "customers_wanted",
+              "kind": "number",
+              "label": "New customers you want per month",
+              "help": "The target the machine has to produce."
+            }
+          ],
+          "checklist": [
+            "Every count comes from a log, a sent folder or a receipt, not from memory"
+          ],
+          "checkpoint": "The machine mix draws, and the leads-needed figure computes once Closing and Lead Nurture have their rates.",
+          "minutes": 8
+        },
+        {
+          "band": 3,
+          "title": "The warm list, the topics, the cold sources",
+          "why": "Warm outreach is the cheapest lead you will ever get, and almost nobody does it fully. Content starts with questions you already get asked. Cold outreach starts with a list that already exists somewhere.",
+          "exercises": [
+            {
+              "key": "warm_list",
+              "kind": "list",
+              "label": "Your warm list, one name a line",
+              "help": "Everyone who has your number, follows you, or has emailed you. Aim for 100. Stop when you run out, not when you get bored."
+            },
+            {
+              "key": "content_topics",
+              "kind": "list",
+              "label": "Ten things a customer asked you this month, one a line",
+              "help": "Each is a piece of content. Their question is the hook."
+            },
+            {
+              "key": "cold_sources",
+              "kind": "list",
+              "label": "Three places a list of your strangers already exists",
+              "help": "A directory, a group, a conference list, a public register."
+            },
+            {
+              "key": "first_channel",
+              "kind": "choice",
+              "label": "The one channel you will max out first",
+              "options": [
+                "Warm outreach",
+                "Content",
+                "Cold outreach",
+                "Paid ads"
+              ],
+              "help": "One. The rule is: max one channel before adding the next."
+            }
+          ],
+          "checklist": [
+            "The warm list is every name I have, not a sample",
+            "The ten topics are real questions, in the words they were asked"
+          ],
+          "checkpoint": "Three lists exist and one channel is chosen.",
+          "minutes": 25
+        },
+        {
+          "band": 4,
+          "title": "The daily minimum",
+          "why": "A number you hit every day beats a plan you admire. Write the minimum as counts per day, then put someone in charge of it, even if that someone is you on Friday.",
+          "exercises": [
+            {
+              "key": "daily_plan",
+              "kind": "long",
+              "label": "Your daily advertising minimum",
+              "help": "Per day: how many warm messages, how many pieces of content, how many cold contacts, how many ad dollars. Small and daily beats big and monthly."
+            },
+            {
+              "key": "daily_log_where",
+              "kind": "text",
+              "label": "Where the daily count is logged",
+              "help": "A sheet, a note, a wall. It has to exist before day one."
+            }
+          ],
+          "checklist": [
+            "A place to log every day's count exists",
+            "The warm list has 100 names or every name I have",
+            "The first channel has a daily number attached",
+            "Someone is accountable for the number by Friday, even if it is me",
+            "The minimum is small enough to hit on a bad day"
+          ],
+          "checkpoint": "The plan is written and the log is ready.",
+          "minutes": 10
+        },
+        {
+          "band": 5,
+          "title": "Run it for two weeks",
+          "why": "Now the machine gets numbers of its own. Count reach and count leads. The ratio between them is the first honest reading of your message.",
+          "exercises": [
+            {
+              "key": "run_days",
+              "kind": "number",
+              "label": "Days you ran the daily minimum"
+            },
+            {
+              "key": "run_reach",
+              "kind": "number",
+              "label": "Contacts made in the run",
+              "help": "Every warm message, post, cold contact and thousand ad views, all counted as one each."
+            },
+            {
+              "key": "run_leads",
+              "kind": "number",
+              "label": "Engaged leads from the run",
+              "help": "Replied, booked or opted in."
+            },
+            {
+              "key": "run_days_hit",
+              "kind": "number",
+              "label": "Days the minimum was actually hit"
+            }
+          ],
+          "checklist": [
+            "The daily minimum was hit at least four days in five"
+          ],
+          "checkpoint": "Your lead rate shows beside the rate you had before.",
+          "minutes": 15
+        },
+        {
+          "band": 6,
+          "title": "More, better, new",
+          "why": "When the machine works a little, the temptation is to add a channel. The rule is: more of the same first, then better, then new. Lead getters (customers who refer, employees, agencies, affiliates) are the four ways done by other people.",
+          "exercises": [
+            {
+              "key": "next_move",
+              "kind": "choice",
+              "label": "The next move",
+              "options": [
+                "More: double the volume on the same channel",
+                "Better: fix the message, same volume",
+                "New: add the next channel, keep this one running"
+              ],
+              "help": "Take More unless volume is truly maxed. Take New last."
+            },
+            {
+              "key": "lead_getters",
+              "kind": "list",
+              "label": "One person for each lead getter that applies",
+              "help": "A past customer who would refer, an employee who could do outreach, an agency, an affiliate. Name a real person or write none."
+            }
+          ],
+          "checklist": [
+            "I doubled the volume before I changed the channel",
+            "A referral ask is written into the delivery (see Retention)",
+            "The weekly counts are on the scorecard (see Implementation SOPs)"
+          ],
+          "checkpoint": "The next move is decided and a lead getter is named.",
+          "minutes": 10
+        }
+      ]
+    },
+    {
+      "id": "hooks",
+      "system": "leads",
+      "order": 2,
+      "label": "Hooks",
+      "letter": "H",
+      "oneLine": "The first line earns the second. Nothing you make gets read without one.",
+      "idea": "A hook is the part of a message people see before they decide whether to keep going: the headline, the first sentence, the first second of a video, the subject line. Most attention is lost right there. The work is not to write one good hook and hope. It is to write many, score them, run the best few, and keep the winners in a bank you draw on for years.",
+      "reads": [
+        "hookRate",
+        "hookResults"
+      ],
+      "levels": [
+        {
+          "band": 1,
+          "title": "Read your last three first lines as a stranger",
+          "why": "You cannot fix what you have not looked at. Pull up the last three things you sent or posted and read only the first line of each.",
+          "exercises": [
+            {
+              "key": "hooks_rate",
+              "kind": "rating",
+              "label": "How often does what you post or send get a reply or a click, 1 to 5",
+              "help": "One is not at all, five is fully. Your honest read today."
+            },
+            {
+              "key": "hooks_now",
+              "kind": "long",
+              "label": "Your last three hooks, pasted in",
+              "help": "The headline, the first line, the subject line. As they were, not as you would fix them."
+            }
+          ],
+          "checklist": [
+            "I read my last three first lines as a stranger would",
+            "I can say who each one was for"
+          ],
+          "checkpoint": "Your starting point on the planet is set.",
+          "minutes": 5
+        },
+        {
+          "band": 2,
+          "title": "Last week's attention",
+          "why": "Two counts turn a feeling into a rate: how many people saw the first line, and how many did anything after it.",
+          "exercises": [
+            {
+              "key": "views_week",
+              "kind": "number",
+              "label": "Views or opens last week, total",
+              "help": "Across every post, email and ad."
+            },
+            {
+              "key": "engaged_week",
+              "kind": "number",
+              "label": "Replies, clicks or saves last week, total"
+            },
+            {
+              "key": "hooks_written_week",
+              "kind": "number",
+              "label": "Hooks you drafted last week",
+              "help": "Drafts, not posts. Zero is a number."
+            }
+          ],
+          "checklist": [
+            "The counts come from the platform, not a guess"
+          ],
+          "checkpoint": "Your hook rate shows.",
+          "minutes": 5
+        },
+        {
+          "band": 3,
+          "title": "Twenty hooks for one idea",
+          "why": "Volume is the method. Twenty hooks for one idea, using different frames, gets you two good ones. One hook gets you one hope.",
+          "exercises": [
+            {
+              "key": "hook_who",
+              "kind": "text",
+              "label": "Who it is for, in the words they use for themselves"
+            },
+            {
+              "key": "hook_proof",
+              "kind": "text",
+              "label": "The one fact or result that backs the idea",
+              "help": "A number, a name, a before and after. If there is none, see Proof Checklist."
+            },
+            {
+              "key": "hook_bank",
+              "kind": "list",
+              "label": "Twenty hooks for the idea, one a line",
+              "help": "Frames to rotate: a question, a number, a claim with a condition, a common mistake, a before and after, a call-out of who it is for, a short story opener."
+            }
+          ],
+          "checklist": [
+            "All twenty are for the same idea",
+            "At least five different frames were used",
+            "None promises more than the proof can back"
+          ],
+          "checkpoint": "A hook bank exists.",
+          "minutes": 25
+        },
+        {
+          "band": 4,
+          "title": "Pick three and place them",
+          "why": "Score each hook on four things: it is specific, it is for someone, it makes you curious, and it is true. Take the top three, and make sure they are three different frames, not one hook three ways.",
+          "exercises": [
+            {
+              "key": "hook_top3",
+              "kind": "list",
+              "label": "Your top three, one a line, highest score first"
+            },
+            {
+              "key": "hook_format",
+              "kind": "choice",
+              "label": "Where the three will run",
+              "options": [
+                "A post",
+                "An email subject line",
+                "An ad",
+                "A video opener",
+                "A direct message opener"
+              ]
+            }
+          ],
+          "checklist": [
+            "Each of the three names who it is for or what it is about in the first five words",
+            "None of the three promises something the proof cannot back",
+            "The three are different frames, not one hook three ways",
+            "Each one is scheduled to run at least three times"
+          ],
+          "checkpoint": "Three hooks are placed and scheduled.",
+          "minutes": 10
+        },
+        {
+          "band": 5,
+          "title": "Run the three",
+          "why": "Run each hook enough times to compare. Count the same thing for each: replies, clicks or saves. Then write the count beside each hook.",
+          "exercises": [
+            {
+              "key": "hook_runs",
+              "kind": "number",
+              "label": "Times the three ran in total",
+              "help": "Posts sent, emails sent, or ad views in hundreds."
+            },
+            {
+              "key": "hook_wins",
+              "kind": "number",
+              "label": "Replies, clicks or saves the three got, total"
+            },
+            {
+              "key": "hook_results",
+              "kind": "list",
+              "label": "Each hook with its count, hook | count",
+              "help": "One a line. The bar beside it draws from the number after the bar."
+            }
+          ],
+          "checklist": [
+            "Each hook ran at least three times before I judged it"
+          ],
+          "checkpoint": "Before and after hook rates sit side by side, and the three are ranked.",
+          "minutes": 10
+        },
+        {
+          "band": 6,
+          "title": "Keep the winners, mark the losers",
+          "why": "A hook that beat the average goes in the bank and gets reused. A hook that lost goes in the bank too, marked, so you never rewrite it by accident.",
+          "exercises": [
+            {
+              "key": "hook_winners",
+              "kind": "list",
+              "label": "Winners to keep in the bank, one a line",
+              "help": "Used more than once and beat the average."
+            },
+            {
+              "key": "hook_next",
+              "kind": "choice",
+              "label": "What to change next",
+              "options": [
+                "The frame",
+                "The who",
+                "The claim",
+                "The format it runs in"
+              ]
+            }
+          ],
+          "checklist": [
+            "Winning hooks are in a bank I can open in ten seconds",
+            "Losing hooks are in the bank too, marked as losers",
+            "Next week's twenty are on the calendar"
+          ],
+          "checkpoint": "The bank has winners and the next twenty are scheduled.",
+          "minutes": 8
+        }
+      ]
+    },
+    {
+      "id": "nurture",
+      "system": "leads",
+      "order": 3,
+      "label": "Lead Nurture",
+      "letter": "N",
+      "oneLine": "A lead is a person who raised a hand. The next hour and the next thirty days decide whether it counts.",
+      "idea": "Most leads are lost between the hand-raise and the conversation. Speed is the first lever: a reply inside minutes is worth many replies tomorrow. Persistence is the second: most people need to hear from you more times than feels polite, and they are not annoyed, they are busy. A lead magnet, a small free thing that solves one narrow problem and shows the next one, gives every follow-up a reason to exist.",
+      "reads": [
+        "replySpeed",
+        "callRate",
+        "touchCurve"
+      ],
+      "levels": [
+        {
+          "band": 1,
+          "title": "What happens when a hand goes up",
+          "why": "Time it. Count it. Most people are shocked by both numbers the first time they look.",
+          "exercises": [
+            {
+              "key": "nurture_rate",
+              "kind": "rating",
+              "label": "How fast and how many times a new lead hears from you, 1 to 5",
+              "help": "One is not at all, five is fully. Your honest read today."
+            },
+            {
+              "key": "nurture_now",
+              "kind": "long",
+              "label": "What happens today when someone raises a hand",
+              "help": "Who replies, in how long, how many times, with what. Step by step."
+            }
+          ],
+          "checklist": [
+            "I timed my last reply to a new lead",
+            "I counted how many touches a lead gets before I stop"
+          ],
+          "checkpoint": "Your starting point on the planet is set.",
+          "minutes": 6
+        },
+        {
+          "band": 2,
+          "title": "Speed, touches, and the booking rate",
+          "why": "Three numbers describe the whole system: how fast, how many times, and what share of leads end up in a conversation.",
+          "exercises": [
+            {
+              "key": "reply_minutes",
+              "kind": "number",
+              "label": "Minutes from hand-raise to first reply, typical",
+              "help": "In working hours. Look at the last five leads and take the middle one."
+            },
+            {
+              "key": "touches",
+              "kind": "number",
+              "label": "Touches a lead gets before you stop",
+              "help": "Messages, calls, emails: every attempt counts as one."
+            },
+            {
+              "key": "call_rate",
+              "kind": "pct",
+              "label": "Of engaged leads, the share who book a conversation",
+              "help": "Booked, not shown. Showing is measured in Closing Handbook.",
+              "shared": true
+            }
+          ],
+          "checklist": [
+            "The reply time is measured from five real leads, not one"
+          ],
+          "checkpoint": "Reply speed and the booking rate show.",
+          "minutes": 6
+        },
+        {
+          "band": 3,
+          "title": "The magnet, the sequence, the short check-in",
+          "why": "A lead magnet is a free thing that solves a narrow problem completely and reveals the next problem, which your paid thing solves. The sequence is the nine or so touches after it. The short check-in is the one-line question you send to every lead that has gone quiet.",
+          "exercises": [
+            {
+              "key": "magnet_type",
+              "kind": "choice",
+              "label": "Your lead magnet kind",
+              "options": [
+                "Reveal a problem they did not know they had: an audit, a score, a checklist",
+                "A sample or trial of the real thing",
+                "One step of a multi-step result: the first week, the first tool"
+              ]
+            },
+            {
+              "key": "magnet_name",
+              "kind": "text",
+              "label": "Name it as the result it gives",
+              "help": "Not what it is, what they get."
+            },
+            {
+              "key": "followup_seq",
+              "kind": "list",
+              "label": "The follow-up sequence, one touch a line: day, channel, what it says",
+              "help": "Aim for nine touches over thirty days, on at least two channels. Every touch has one ask."
+            },
+            {
+              "key": "nine_word",
+              "kind": "long",
+              "label": "Your short check-in for a quiet lead",
+              "help": "One question, under fifteen words, easy to answer with one word."
+            }
+          ],
+          "checklist": [
+            "The magnet solves its problem completely, not a teaser",
+            "The sequence uses at least two channels",
+            "Every touch has exactly one ask"
+          ],
+          "checkpoint": "The magnet, the sequence and the check-in are written.",
+          "minutes": 30
+        },
+        {
+          "band": 4,
+          "title": "Put a person on the five minutes",
+          "why": "Speed is a staffing decision. Someone gets told about every new lead, and answers inside five minutes in working hours. The sequence is scheduled, not remembered.",
+          "exercises": [
+            {
+              "key": "speed_owner",
+              "kind": "text",
+              "label": "Who replies to a new lead within five minutes, and how they find out",
+              "help": "A name and a notification. If it is you, say what buzzes."
+            },
+            {
+              "key": "sequence_where",
+              "kind": "text",
+              "label": "Where the sequence is scheduled",
+              "help": "A tool, a calendar, a checklist on the wall."
+            }
+          ],
+          "checklist": [
+            "The lead magnet exists and can be sent as one link",
+            "Every new lead gets a reply within five minutes in working hours",
+            "The nine touches are scheduled, not remembered",
+            "Every quiet lead gets the short check-in after thirty days",
+            "Every touch has one ask"
+          ],
+          "checkpoint": "The system runs without anyone remembering it.",
+          "minutes": 12
+        },
+        {
+          "band": 5,
+          "title": "Thirty days of leads",
+          "why": "Now measure the same three numbers on leads that went through the new sequence. Log how many replied at each touch: that curve tells you where the sequence earns its keep.",
+          "exercises": [
+            {
+              "key": "run_leads_n",
+              "kind": "number",
+              "label": "Leads that entered the sequence in the run"
+            },
+            {
+              "key": "run_booked",
+              "kind": "number",
+              "label": "Of those, how many booked a conversation"
+            },
+            {
+              "key": "run_reply_minutes",
+              "kind": "number",
+              "label": "Median minutes to first reply in the run"
+            },
+            {
+              "key": "touch_log",
+              "kind": "log",
+              "label": "Replies by touch",
+              "columns": [
+                "touch",
+                "sent",
+                "replied"
+              ],
+              "help": "One row a touch: how many were sent that touch, how many replied to it."
+            }
+          ],
+          "checklist": [
+            "The run covered at least thirty days so the late touches had time to land"
+          ],
+          "checkpoint": "Before and after booking rates, reply speed, and the touch curve all show.",
+          "minutes": 12
+        },
+        {
+          "band": 6,
+          "title": "Faster, more, better, or reactivate",
+          "why": "With a curve in hand the next move is obvious. If late touches still get replies, add more. If nobody replies after touch two, fix the magnet. And the old list is the cheapest campaign you will ever run.",
+          "exercises": [
+            {
+              "key": "nurture_next",
+              "kind": "choice",
+              "label": "The next move",
+              "options": [
+                "Faster: cut the reply time in half",
+                "More: add three touches",
+                "Better: change the magnet",
+                "Reactivate: send the short check-in to the whole old list"
+              ]
+            },
+            {
+              "key": "old_list_size",
+              "kind": "number",
+              "label": "Leads on the old list who never bought",
+              "help": "They get the short check-in this month."
+            }
+          ],
+          "checklist": [
+            "The old list got the short check-in this month",
+            "The magnet's next-problem points at the paid thing",
+            "Reply time is on the weekly scorecard"
+          ],
+          "checkpoint": "The next move is decided and the old list is in play.",
+          "minutes": 10
+        }
+      ]
+    },
+    {
+      "id": "closing",
+      "system": "sales",
+      "order": 1,
+      "label": "Closing Handbook",
+      "letter": "C",
+      "oneLine": "A sale is a conversation with a shape. Learn the shape and the pressure goes out of it.",
+      "idea": "The conversation runs in six moves, and the letters spell CLOSER: clarify why they came, label the problem back to them in their words, overview what they have tried and why it did not hold, sell the outcome and not the method, explain away the concerns that remain, and reinforce the decision the moment they say yes. Concerns come in three kinds: about circumstances (time, money), about other people (a partner, a boss), and about themselves (fit, doubt). Each kind has an answer you write once and say many times.",
+      "reads": [
+        "salesFunnel",
+        "showRate",
+        "closeRate",
+        "cashPerSale",
+        "objectionBars"
+      ],
+      "levels": [
+        {
+          "band": 1,
+          "title": "Your last conversation, in six lines",
+          "why": "Write up your last sales conversation from open to close. Where did it drift? Where did you talk most? Where did you lose them, if you did?",
+          "exercises": [
+            {
+              "key": "closing_rate_self",
+              "kind": "rating",
+              "label": "How confident are you in a sales conversation, 1 to 5",
+              "help": "One is not at all, five is fully. Your honest read today."
+            },
+            {
+              "key": "closing_now",
+              "kind": "long",
+              "label": "Your last sales conversation, open to close, in six lines",
+              "help": "One line per move if you can. If you cannot find six moves, that is the finding."
+            }
+          ],
+          "checklist": [
+            "I recorded or wrote up my last call",
+            "I know where in the call I lose people"
+          ],
+          "checkpoint": "Your starting point on the planet is set.",
+          "minutes": 8
+        },
+        {
+          "band": 2,
+          "title": "The funnel of one month",
+          "why": "Booked, shown, bought, paid. Four counts make three rates, and each rate has its own playbook.",
+          "exercises": [
+            {
+              "key": "calls_booked_month",
+              "kind": "number",
+              "label": "Conversations booked last month"
+            },
+            {
+              "key": "calls_shown_month",
+              "kind": "number",
+              "label": "Of those, how many showed up"
+            },
+            {
+              "key": "closed_month",
+              "kind": "number",
+              "label": "Of those, how many bought"
+            },
+            {
+              "key": "cash_collected_month",
+              "kind": "money",
+              "label": "Cash collected at the close last month, total",
+              "help": "What actually arrived, not what was promised."
+            }
+          ],
+          "checklist": [
+            "The four counts come from a calendar and a bank statement, not memory"
+          ],
+          "checkpoint": "Show rate, close rate and cash per sale show, and the Marketing Machine can compute leads needed.",
+          "minutes": 8
+        },
+        {
+          "band": 3,
+          "title": "Write your six moves",
+          "why": "One paragraph per letter, in your own words, as you would say it to a friend across a table.",
+          "exercises": [
+            {
+              "key": "c_clarify",
+              "kind": "long",
+              "label": "Clarify: the two questions you open with",
+              "help": "Why now? What made you reach out? Their answer is the rest of the call."
+            },
+            {
+              "key": "c_label",
+              "kind": "long",
+              "label": "Label: the sentence that names their problem back to them",
+              "help": "In their words. Then ask: is that right?"
+            },
+            {
+              "key": "c_overview",
+              "kind": "long",
+              "label": "Overview: the question that draws out what they tried and why it did not hold",
+              "help": "The point is that they hear themselves say it."
+            },
+            {
+              "key": "c_sell",
+              "kind": "long",
+              "label": "Sell the vacation: the outcome, in three sentences, with no method in it",
+              "help": "The beach, not the plane."
+            },
+            {
+              "key": "c_explain",
+              "kind": "long",
+              "label": "Explain away: your answer to each of the three kinds of concern",
+              "help": "Circumstances (time, money). Other people (a partner, a boss). Themselves (fit, doubt). One answer each."
+            },
+            {
+              "key": "c_reinforce",
+              "kind": "long",
+              "label": "Reinforce: what happens in the first 24 hours after yes",
+              "help": "A message, a call, a small gift. The decision needs a second yes from their future self."
+            }
+          ],
+          "checklist": [
+            "Each move is written as I would say it, not as a script sounds",
+            "The label uses their words, not mine"
+          ],
+          "checkpoint": "The six moves exist in your voice.",
+          "minutes": 35
+        },
+        {
+          "band": 4,
+          "title": "One page, and the objection bank",
+          "why": "The script fits on one page or it will not be used. The objection bank grows after every call and never shrinks.",
+          "exercises": [
+            {
+              "key": "objection_bank",
+              "kind": "list",
+              "label": "The objection bank: concern | your answer, one a line",
+              "help": "Every concern you have ever heard, with the answer after the bar. Add to it after every call."
+            }
+          ],
+          "checklist": [
+            "The script fits on one page",
+            "Every question in it is one I would ask a friend",
+            "The price is said once, plainly, with no apology",
+            "Silence after the price is written into the script",
+            "The three concern answers are memorised, not read",
+            "Reinforce happens the same day, every time"
+          ],
+          "checkpoint": "The one-page script and the bank are ready.",
+          "minutes": 15
+        },
+        {
+          "band": 5,
+          "title": "A month on the script",
+          "why": "Run the script on every conversation for a month. Count the same four things. Log which objections came up and how often you answered them well.",
+          "exercises": [
+            {
+              "key": "run_calls",
+              "kind": "number",
+              "label": "Conversations in the run",
+              "help": "Shown, not booked."
+            },
+            {
+              "key": "run_closed",
+              "kind": "number",
+              "label": "Sales in the run"
+            },
+            {
+              "key": "run_cash",
+              "kind": "money",
+              "label": "Cash collected at the close in the run, total"
+            },
+            {
+              "key": "objections_log",
+              "kind": "log",
+              "label": "Objections heard",
+              "columns": [
+                "objection",
+                "times heard",
+                "answered well"
+              ],
+              "help": "One row an objection."
+            }
+          ],
+          "checklist": [
+            "Every conversation in the run used the script",
+            "One conversation a week was reviewed from a recording"
+          ],
+          "checkpoint": "Before and after close rates, and the objection bars, show.",
+          "minutes": 12
+        },
+        {
+          "band": 6,
+          "title": "Which rate, and who else can run it",
+          "why": "Each rate points at a different fix. And the script only counts once someone other than you can close with it.",
+          "exercises": [
+            {
+              "key": "closing_next",
+              "kind": "choice",
+              "label": "The rate to work next",
+              "options": [
+                "Show rate: fix the reminders before the call",
+                "Close rate: tighten the label and the overview",
+                "Cash rate: change the payment ask",
+                "Handoff: write the script so someone else can run it"
+              ]
+            },
+            {
+              "key": "closer_next",
+              "kind": "text",
+              "label": "Who runs the script next, other than you",
+              "help": "A name, or none yet."
+            }
+          ],
+          "checklist": [
+            "Calls are recorded and one a week is reviewed",
+            "The objection bank grew after every call",
+            "Reinforce runs the same day, every time",
+            "Close rate is on the weekly scorecard"
+          ],
+          "checkpoint": "The next rate to work is decided.",
+          "minutes": 8
+        }
+      ]
+    },
+    {
+      "id": "proof",
+      "system": "sales",
+      "order": 2,
+      "label": "Proof Checklist",
+      "letter": "P",
+      "oneLine": "People do not buy the promise. They buy the evidence that the promise held for someone like them.",
+      "idea": "Whether someone believes an outcome will happen for them is half of what a thing is worth to them. Proof moves that belief. It comes in kinds: results with a number, before and after pairs, named testimonials, third-party marks (reviews, press, credentials), and demonstrations. The checklist is a habit rather than a project: collect proof at every win, put a proof beside every claim, and match the kind of proof to the doubt it answers.",
+      "reads": [
+        "proofInventory",
+        "proofCoverage",
+        "askRate"
+      ],
+      "levels": [
+        {
+          "band": 1,
+          "title": "Read your pitch as a doubter",
+          "why": "Open your sales page or your pitch and read it as someone who has been burned before. Mark every claim that has nothing beside it.",
+          "exercises": [
+            {
+              "key": "proof_rate",
+              "kind": "rating",
+              "label": "How much evidence backs your offer today, 1 to 5",
+              "help": "One is not at all, five is fully. Your honest read today."
+            },
+            {
+              "key": "proof_now",
+              "kind": "long",
+              "label": "Every piece of proof you can put your hands on in five minutes",
+              "help": "Screenshots, messages, reviews, numbers. List them."
+            }
+          ],
+          "checklist": [
+            "I read my pitch as a doubter",
+            "I marked every claim with no proof beside it"
+          ],
+          "checkpoint": "Your starting point on the planet is set.",
+          "minutes": 8
+        },
+        {
+          "band": 2,
+          "title": "Count the proof by kind",
+          "why": "Five kinds, five counts. The shape of the count tells you what to collect next.",
+          "exercises": [
+            {
+              "key": "proof_results",
+              "kind": "number",
+              "label": "Results with a number",
+              "help": "A client got X in Y. Counted individually."
+            },
+            {
+              "key": "proof_stories",
+              "kind": "number",
+              "label": "Named testimonials, written or on video"
+            },
+            {
+              "key": "proof_before_after",
+              "kind": "number",
+              "label": "Before and after pairs",
+              "help": "Pictures, screenshots, two numbers."
+            },
+            {
+              "key": "proof_third",
+              "kind": "number",
+              "label": "Third-party marks",
+              "help": "Reviews on a platform, press, credentials, awards."
+            },
+            {
+              "key": "proof_demos",
+              "kind": "number",
+              "label": "Demonstrations",
+              "help": "A free sample, a live walkthrough, a recorded one."
+            },
+            {
+              "key": "customers_served",
+              "kind": "number",
+              "label": "Customers you have served, total",
+              "help": "Ever. The proof inventory is measured against this."
+            }
+          ],
+          "checklist": [
+            "Each count is of things I could show today, not things I could get"
+          ],
+          "checkpoint": "The proof inventory draws, by kind.",
+          "minutes": 8
+        },
+        {
+          "band": 3,
+          "title": "Claims, doubts, and ten people to ask",
+          "why": "Every claim your offer makes needs a proof or a cut. Every doubt a buyer has needs a proof that answers it. And ten past customers are one message away from a testimonial.",
+          "exercises": [
+            {
+              "key": "claims",
+              "kind": "list",
+              "label": "Every claim your offer makes, one a line"
+            },
+            {
+              "key": "doubts",
+              "kind": "list",
+              "label": "The five doubts a buyer has before paying, in their words",
+              "help": "Will it work for me? What if I fail? Is this person real?"
+            },
+            {
+              "key": "ask_list",
+              "kind": "list",
+              "label": "Ten past customers to ask this week, one a line, with what to ask each for",
+              "help": "Name | the specific result to ask about | the kind of proof (a number, a story, a screenshot)."
+            }
+          ],
+          "checklist": [
+            "The doubts are in the buyer's words, not mine",
+            "Each of the ten asks names a specific result"
+          ],
+          "checkpoint": "Claims, doubts and the ask list exist.",
+          "minutes": 20
+        },
+        {
+          "band": 4,
+          "title": "A proof beside every claim",
+          "why": "Map each claim to the proof beside it. A claim with nothing beside it is cut or held until the proof arrives.",
+          "exercises": [
+            {
+              "key": "proof_map",
+              "kind": "list",
+              "label": "Claim | the proof beside it | the kind, one a line",
+              "help": "A claim with no proof gets the word cut after the bar."
+            },
+            {
+              "key": "proof_folder",
+              "kind": "text",
+              "label": "Where the proof lives",
+              "help": "One folder anyone on the team can reach."
+            }
+          ],
+          "checklist": [
+            "Every claim has a proof beside it or is cut",
+            "The three biggest doubts each have a proof that answers them",
+            "Asking for proof happens at the moment of a win, inside the delivery",
+            "Proof is stored in one folder anyone on the team can reach",
+            "Every name and number in the proof is real and permitted"
+          ],
+          "checkpoint": "Every live claim has evidence beside it.",
+          "minutes": 15
+        },
+        {
+          "band": 5,
+          "title": "A week of asking",
+          "why": "Send the ten asks. Count what came back. Count where you placed it.",
+          "exercises": [
+            {
+              "key": "run_asked",
+              "kind": "number",
+              "label": "Testimonials asked for in the run"
+            },
+            {
+              "key": "run_got",
+              "kind": "number",
+              "label": "Testimonials received"
+            },
+            {
+              "key": "run_placed",
+              "kind": "number",
+              "label": "Places proof was added",
+              "help": "The page, the script, an ad, an email: each counts as one."
+            }
+          ],
+          "checklist": [
+            "Every ask named a specific result",
+            "Every proof received was placed somewhere within a week"
+          ],
+          "checkpoint": "The ask rate and the placements show.",
+          "minutes": 8
+        },
+        {
+          "band": 6,
+          "title": "Numbers, faces, marks, or a guarantee",
+          "why": "The strongest proof for the biggest doubt is a promise you will make good on. A guarantee names the outcome and the term, and it is priced in.",
+          "exercises": [
+            {
+              "key": "proof_next",
+              "kind": "choice",
+              "label": "The next kind to build",
+              "options": [
+                "Numbers: turn stories into results with figures",
+                "Faces: get three on video",
+                "Reach: get third-party marks",
+                "Guarantee: back the biggest doubt with a promise"
+              ]
+            },
+            {
+              "key": "guarantee",
+              "kind": "text",
+              "label": "The guarantee, in one sentence",
+              "help": "What outcome, by when, or what happens. Or none yet."
+            }
+          ],
+          "checklist": [
+            "A proof ask is written into the delivery (see Retention)",
+            "The guarantee names the outcome and the term",
+            "Proof is refreshed every quarter, oldest out"
+          ],
+          "checkpoint": "The next kind of proof is decided.",
+          "minutes": 8
+        }
+      ]
+    },
+    {
+      "id": "ads",
+      "system": "sales",
+      "order": 3,
+      "label": "GOATed Ads",
+      "letter": "G",
+      "oneLine": "A paid ad is a call-out, a reason, and an ask, bought by the thousand and judged by the cost of a customer.",
+      "idea": "Paid ads are the fourth of the four ways to get leads and the one that scales fastest once the math works. An ad has three parts: a call-out that says who it is for, value that gives them a reason to keep watching, and a call to action that says the one thing to do next. The math is a chain: cost per thousand views, the share who click, the share who become leads, the share who book, the share who buy. An ad is good when the lifetime gross profit of a customer is at least three times what it cost to get them.",
+      "reads": [
+        "adChain",
+        "adCosts",
+        "ltgpToCac"
+      ],
+      "levels": [
+        {
+          "band": 1,
+          "title": "What you spend and what comes back",
+          "why": "Most people know their spend and not their cost per customer. Write the honest version, including \"not yet\".",
+          "exercises": [
+            {
+              "key": "ads_rate",
+              "kind": "rating",
+              "label": "How well do you know your cost per customer from ads, 1 to 5",
+              "help": "One is not at all, five is fully. Your honest read today."
+            },
+            {
+              "key": "ads_now",
+              "kind": "long",
+              "label": "What you spend, where, and what you get, a sentence each",
+              "help": "If you have never run an ad, write that, and write the top ad in your space in its three parts."
+            }
+          ],
+          "checklist": [
+            "I have a number for cost per lead or I wrote not yet",
+            "I looked at the best ad in my space and wrote its three parts"
+          ],
+          "checkpoint": "Your starting point on the planet is set.",
+          "minutes": 6
+        },
+        {
+          "band": 2,
+          "title": "The chain, last month",
+          "why": "Six counts, from the platform and the calendar. Each link in the chain is a rate you can fix on its own.",
+          "exercises": [
+            {
+              "key": "ad_spend_month",
+              "kind": "money",
+              "label": "Ad spend last month"
+            },
+            {
+              "key": "ad_impressions",
+              "kind": "number",
+              "label": "Impressions last month",
+              "help": "Times the ad was shown."
+            },
+            {
+              "key": "ad_clicks",
+              "kind": "number",
+              "label": "Clicks last month"
+            },
+            {
+              "key": "ad_leads",
+              "kind": "number",
+              "label": "Leads from ads last month",
+              "help": "Opted in, replied or booked."
+            },
+            {
+              "key": "ad_booked",
+              "kind": "number",
+              "label": "Conversations booked from ads last month"
+            },
+            {
+              "key": "ad_sales",
+              "kind": "number",
+              "label": "Customers from ads last month"
+            }
+          ],
+          "checklist": [
+            "The counts come from the platform and the calendar for the same month"
+          ],
+          "checkpoint": "The chain draws, the costs compute, and the ratio shows once Lifetime Value has its facts.",
+          "minutes": 8
+        },
+        {
+          "band": 3,
+          "title": "Ten call-outs, ten reasons, five asks",
+          "why": "Write the three parts separately and in volume. The best ad is a combination you have not tried yet.",
+          "exercises": [
+            {
+              "key": "callouts",
+              "kind": "list",
+              "label": "Ten call-outs: who it is for, in their words, one a line",
+              "help": "A job, a situation, a place, a thing they own, a thing they want."
+            },
+            {
+              "key": "value_lines",
+              "kind": "list",
+              "label": "Ten value lines: the reason to keep watching, one a line",
+              "help": "A result, a mistake, a number, a story, a demonstration."
+            },
+            {
+              "key": "ctas",
+              "kind": "list",
+              "label": "Five calls to action, one a line",
+              "help": "One verb, one place, one reason to do it now."
+            }
+          ],
+          "checklist": [
+            "Every call-out would make the right person stop",
+            "Every value line is a claim the proof can back (see Proof Checklist)"
+          ],
+          "checkpoint": "The parts exist in volume.",
+          "minutes": 25
+        },
+        {
+          "band": 4,
+          "title": "The ad, in three versions",
+          "why": "Assemble one ad from the parts, then two more with different hooks and the same offer. The landing place has to say the same thing as the ad.",
+          "exercises": [
+            {
+              "key": "ad_script",
+              "kind": "long",
+              "label": "The ad, written out: call-out, value, call to action"
+            },
+            {
+              "key": "ad_place",
+              "kind": "choice",
+              "label": "The format",
+              "options": [
+                "Short video",
+                "Image and text",
+                "Long video",
+                "Search text"
+              ]
+            },
+            {
+              "key": "ad_landing",
+              "kind": "text",
+              "label": "Where the click lands, and the one thing it asks"
+            }
+          ],
+          "checklist": [
+            "The call-out names the person in the first two seconds or the first line",
+            "The value is a claim the proof can back",
+            "One call to action, one place to go",
+            "The landing place says the same thing as the ad",
+            "Three versions exist: same offer, three hooks (see Hooks)"
+          ],
+          "checkpoint": "Three versions are ready to run.",
+          "minutes": 20
+        },
+        {
+          "band": 5,
+          "title": "Two weeks of spend",
+          "why": "Run the three versions on a budget you can afford to lose. Count the chain again.",
+          "exercises": [
+            {
+              "key": "run_spend",
+              "kind": "money",
+              "label": "Spend in the run"
+            },
+            {
+              "key": "run_impr",
+              "kind": "number",
+              "label": "Impressions in the run"
+            },
+            {
+              "key": "run_clicks",
+              "kind": "number",
+              "label": "Clicks in the run"
+            },
+            {
+              "key": "run_leads_ads",
+              "kind": "number",
+              "label": "Leads in the run"
+            },
+            {
+              "key": "run_sales_ads",
+              "kind": "number",
+              "label": "Customers in the run"
+            }
+          ],
+          "checklist": [
+            "The budget was one I could lose without harm",
+            "Each version got the same spend"
+          ],
+          "checkpoint": "Before and after costs per customer show.",
+          "minutes": 10
+        },
+        {
+          "band": 6,
+          "title": "Which link, or scale",
+          "why": "A weak click rate is a hook problem. Clicks that do not become leads is a page problem. Leads that do not buy is a sales problem. If the ratio holds at three to one, spend more.",
+          "exercises": [
+            {
+              "key": "ads_next",
+              "kind": "choice",
+              "label": "The next move",
+              "options": [
+                "Hook: the click rate is low",
+                "Page: clicks do not become leads",
+                "Sales: leads do not become buyers (see Closing Handbook)",
+                "Scale: the ratio holds, spend more"
+              ]
+            },
+            {
+              "key": "next_budget",
+              "kind": "money",
+              "label": "Next month's budget"
+            }
+          ],
+          "checklist": [
+            "Cost per customer is on the weekly scorecard",
+            "Losing versions are turned off inside a week",
+            "The winning ad has a new hook in test beside it"
+          ],
+          "checkpoint": "The next move and the budget are decided.",
+          "minutes": 8
+        }
+      ]
+    },
+    {
+      "id": "retention",
+      "system": "delivery",
+      "order": 1,
+      "label": "Retention",
+      "letter": "R",
+      "oneLine": "Keeping a customer is the cheapest sale you will ever make. The first days decide it.",
+      "idea": "Every month a share of customers leave. That share sets how long an average customer stays: one divided by the monthly churn. Churn is highest early, so the first days matter most: a fast first win, a clear next step, and a person who checks in. Most churn has a reason you can name, and the reasons cluster. Count them, fix the biggest, and ask the ones who stay to bring a friend.",
+      "reads": [
+        "churn",
+        "lifetime",
+        "retentionCurve",
+        "cohorts"
+      ],
+      "levels": [
+        {
+          "band": 1,
+          "title": "The first 48 hours, as they are",
+          "why": "Write what a new customer experiences in their first two days with you, step by step. Then ask the last person who left why they went.",
+          "exercises": [
+            {
+              "key": "ret_rate",
+              "kind": "rating",
+              "label": "How well do you know why customers leave, 1 to 5",
+              "help": "One is not at all, five is fully. Your honest read today."
+            },
+            {
+              "key": "ret_now",
+              "kind": "long",
+              "label": "A customer's first 48 hours, step by step",
+              "help": "What arrives, who calls, what they are asked to do."
+            }
+          ],
+          "checklist": [
+            "I know how many customers left last month",
+            "I asked the last one who left why"
+          ],
+          "checkpoint": "Your starting point on the planet is set.",
+          "minutes": 8
+        },
+        {
+          "band": 2,
+          "title": "Last month's churn",
+          "why": "Two counts make the churn. One more says how long the first win takes.",
+          "exercises": [
+            {
+              "key": "customers_start",
+              "kind": "number",
+              "label": "Customers at the start of last month"
+            },
+            {
+              "key": "customers_left",
+              "kind": "number",
+              "label": "Customers who left during last month"
+            },
+            {
+              "key": "days_first_win",
+              "kind": "number",
+              "label": "Days until a new customer sees a first result, typical"
+            }
+          ],
+          "checklist": [
+            "Left means stopped paying or cancelled, counted from the records"
+          ],
+          "checkpoint": "Churn, expected lifetime and the retention curve show.",
+          "minutes": 6
+        },
+        {
+          "band": 3,
+          "title": "The first win, the reasons, the steps",
+          "why": "The first win is the smallest result a customer can get in week one. The reasons are every explanation you have heard for leaving, with a count. The steps are the first 48 hours rewritten.",
+          "exercises": [
+            {
+              "key": "first_win",
+              "kind": "text",
+              "label": "The first win, and the step that gets it",
+              "help": "The smallest result a new customer can see in the first week."
+            },
+            {
+              "key": "churn_reasons",
+              "kind": "list",
+              "label": "Every reason a customer gave for leaving, reason | count, one a line"
+            },
+            {
+              "key": "onboarding_steps",
+              "kind": "list",
+              "label": "The first 48 hours, rewritten, one step a line",
+              "help": "Who does what, when."
+            }
+          ],
+          "checklist": [
+            "The first win is something a customer can see, not something I can see",
+            "The reasons come from real customers, not guesses"
+          ],
+          "checkpoint": "The first win, the reasons and the new steps exist.",
+          "minutes": 25
+        },
+        {
+          "band": 4,
+          "title": "The check-ins and the referral ask",
+          "why": "A person, not a form, checks in on day two and day seven. Every leaving customer is asked one question. Every staying customer is asked for a referral at the first win.",
+          "exercises": [
+            {
+              "key": "referral_ask",
+              "kind": "text",
+              "label": "The referral ask, word for word",
+              "help": "Said at the first win, by a person."
+            },
+            {
+              "key": "exit_question",
+              "kind": "text",
+              "label": "The one question a leaving customer is asked"
+            }
+          ],
+          "checklist": [
+            "The first win is scheduled inside the first week for every new customer",
+            "A person checks in on day 2 and day 7",
+            "The next step is always visible to the customer",
+            "A leaving customer is asked one question before they go",
+            "A staying customer is asked for a referral at the first win"
+          ],
+          "checkpoint": "The delivery has check-ins, an exit question and a referral ask built in.",
+          "minutes": 12
+        },
+        {
+          "band": 5,
+          "title": "A month of the new first week",
+          "why": "Count churn again on a month where every new customer got the new first week. Log each month's starters and how many are still here.",
+          "exercises": [
+            {
+              "key": "run_start",
+              "kind": "number",
+              "label": "Customers at the start of the run month"
+            },
+            {
+              "key": "run_left",
+              "kind": "number",
+              "label": "Customers who left in the run month"
+            },
+            {
+              "key": "cohort_log",
+              "kind": "log",
+              "label": "Cohorts: customers who started in a month and how many are still here",
+              "columns": [
+                "month",
+                "started",
+                "still here"
+              ]
+            }
+          ],
+          "checklist": [
+            "Every new customer in the run got the day 2 and day 7 check-ins"
+          ],
+          "checkpoint": "Before and after churn, and the cohort bars, show.",
+          "minutes": 10
+        },
+        {
+          "band": 6,
+          "title": "Onboarding, cadence, fit, or winback",
+          "why": "The biggest churn reason gets an owner and a date. Everyone who left this quarter gets a winback message. Some churn is a sales problem: stop selling to the ones who leave.",
+          "exercises": [
+            {
+              "key": "ret_next",
+              "kind": "choice",
+              "label": "The next move",
+              "options": [
+                "Onboarding: the first week",
+                "Cadence: the check-ins",
+                "Fit: stop selling to the ones who leave",
+                "Winback: reactivate the ones who left"
+              ]
+            },
+            {
+              "key": "churn_owner",
+              "kind": "text",
+              "label": "The top churn reason, its owner, and the fix date"
+            }
+          ],
+          "checklist": [
+            "The top churn reason has an owner and a fix date",
+            "A winback message went to everyone who left this quarter",
+            "Churn is on the weekly scorecard"
+          ],
+          "checkpoint": "The next move is decided and the top reason has an owner.",
+          "minutes": 8
+        }
+      ]
+    },
+    {
+      "id": "ltv",
+      "system": "delivery",
+      "order": 2,
+      "label": "Lifetime Value",
+      "letter": "V",
+      "oneLine": "What a customer is worth over their whole stay, in gross profit. Every other number answers to this one.",
+      "idea": "Lifetime gross profit is what a customer pays you over their stay, minus what it costs to deliver to them. It is the price, times the gross margin, times how many times they buy. There are only four ways to raise it: more customers, more per purchase, more purchases, and a longer stay. Know the number, then compare it to what a customer costs to get. Three to one is the rule of thumb below which a business feels like a treadmill.",
+      "reads": [
+        "ltgp",
+        "ltgpToCac",
+        "fourLevers"
+      ],
+      "levels": [
+        {
+          "band": 1,
+          "title": "Guess first",
+          "why": "Write your guess before you look anything up. The gap between the guess and the number is the lesson.",
+          "exercises": [
+            {
+              "key": "ltv_rate",
+              "kind": "rating",
+              "label": "How sure are you what a customer is worth, 1 to 5",
+              "help": "One is not at all, five is fully. Your honest read today."
+            },
+            {
+              "key": "ltv_now",
+              "kind": "long",
+              "label": "Your guess: what a customer pays you in total, and what it costs you to deliver"
+            }
+          ],
+          "checklist": [
+            "I wrote the guess before looking anything up"
+          ],
+          "checkpoint": "Your starting point on the planet is set.",
+          "minutes": 4
+        },
+        {
+          "band": 2,
+          "title": "Price, margin, purchases, cost to acquire",
+          "why": "Four facts. Three make the value, the fourth is what it cost. These four are read by other playbooks, so they are typed here and nowhere else.",
+          "exercises": [
+            {
+              "key": "price",
+              "kind": "money",
+              "label": "Price of the main thing you sell, per purchase",
+              "shared": true
+            },
+            {
+              "key": "gross_margin",
+              "kind": "pct",
+              "label": "Gross margin: the share of the price left after delivery costs",
+              "help": "If it costs you 30 of every 100 to deliver, the margin is 70.",
+              "shared": true
+            },
+            {
+              "key": "purchases_per_customer",
+              "kind": "number",
+              "label": "Purchases per customer over their stay",
+              "help": "For a monthly thing, the months they stay. See Retention for the churn that sets it."
+            },
+            {
+              "key": "cac",
+              "kind": "money",
+              "label": "Cost to get one customer",
+              "help": "All marketing and sales spend in a month, divided by new customers that month.",
+              "shared": true
+            }
+          ],
+          "checklist": [
+            "Gross margin is measured from real delivery costs, not guessed",
+            "Cost to acquire includes people's time, not only ad spend"
+          ],
+          "checkpoint": "Lifetime gross profit and its ratio to acquisition cost show.",
+          "minutes": 10
+        },
+        {
+          "band": 3,
+          "title": "One move per lever",
+          "why": "Four levers, one move each. Write the move, not the wish.",
+          "exercises": [
+            {
+              "key": "lever_more_customers",
+              "kind": "long",
+              "label": "More customers: the one move"
+            },
+            {
+              "key": "lever_more_per",
+              "kind": "long",
+              "label": "More per purchase: what could ride along with the main thing"
+            },
+            {
+              "key": "lever_more_often",
+              "kind": "long",
+              "label": "More purchases: what brings them back sooner"
+            },
+            {
+              "key": "lever_longer",
+              "kind": "long",
+              "label": "A longer stay: what makes staying easy or leaving costly"
+            }
+          ],
+          "checklist": [
+            "Each move is something that could start this month"
+          ],
+          "checkpoint": "Four moves exist.",
+          "minutes": 15
+        },
+        {
+          "band": 4,
+          "title": "Pick one lever for the quarter",
+          "why": "One lever, one target, ninety days. The picture shows what each lever does to the value at ten percent.",
+          "exercises": [
+            {
+              "key": "ltv_lever_pick",
+              "kind": "choice",
+              "label": "The lever for this quarter",
+              "options": [
+                "More customers",
+                "More per purchase",
+                "More purchases",
+                "A longer stay"
+              ]
+            },
+            {
+              "key": "ltv_target",
+              "kind": "text",
+              "label": "The target for that lever in ninety days, as a number"
+            }
+          ],
+          "checklist": [
+            "Gross margin is measured, not guessed",
+            "The four levers each have one move written",
+            "One lever is picked for the quarter",
+            "The ratio of value to cost is on the weekly scorecard"
+          ],
+          "checkpoint": "One lever is chosen with a number on it.",
+          "minutes": 6
+        },
+        {
+          "band": 5,
+          "title": "The quarter's numbers",
+          "why": "Same four facts, ninety days later.",
+          "exercises": [
+            {
+              "key": "run_price",
+              "kind": "money",
+              "label": "Price after the quarter"
+            },
+            {
+              "key": "run_margin",
+              "kind": "pct",
+              "label": "Gross margin after the quarter"
+            },
+            {
+              "key": "run_purchases",
+              "kind": "number",
+              "label": "Purchases per customer after the quarter"
+            },
+            {
+              "key": "run_cac",
+              "kind": "money",
+              "label": "Cost to get one customer after the quarter"
+            }
+          ],
+          "checklist": [
+            "The four numbers were recomputed from records, not adjusted from memory"
+          ],
+          "checkpoint": "Before and after value and ratio show.",
+          "minutes": 8
+        },
+        {
+          "band": 6,
+          "title": "Which playbook moves it next",
+          "why": "Each lever has a playbook. The ratio tells you which one you need.",
+          "exercises": [
+            {
+              "key": "ltv_next",
+              "kind": "choice",
+              "label": "The next playbook",
+              "options": [
+                "Raise the price (see Price Raise)",
+                "Add the upsell (see Promo Cash)",
+                "Cut churn (see Retention)",
+                "Cut the cost to acquire (see GOATed Ads, Marketing Machine)"
+              ]
+            }
+          ],
+          "checklist": [
+            "Lifetime gross profit is recomputed monthly from real numbers",
+            "Every offer decision is checked against the ratio first"
+          ],
+          "checkpoint": "The next playbook is chosen.",
+          "minutes": 4
+        }
+      ]
+    },
+    {
+      "id": "brand",
+      "system": "delivery",
+      "order": 3,
+      "label": "Branding",
+      "letter": "B",
+      "oneLine": "A brand is what people already like, tied to your name, on purpose, over and over.",
+      "idea": "A brand is an association: you, paired with things a group of people already wants, enough times that the pairing sticks. It is built by choosing who you are for, what you stand beside, and what you will never do, and then being boringly consistent about all three. The test is simple: can a customer describe you in one sentence, and does it match the sentence you wrote.",
+      "reads": [
+        "consistency",
+        "associations"
+      ],
+      "levels": [
+        {
+          "band": 1,
+          "title": "Three customers describe you",
+          "why": "Ask three real customers to describe you in one sentence. Write their words exactly. The gap between their sentence and yours is the work.",
+          "exercises": [
+            {
+              "key": "brand_rate",
+              "kind": "rating",
+              "label": "Could a stranger say what you stand for after one look, 1 to 5",
+              "help": "One is not at all, five is fully. Your honest read today."
+            },
+            {
+              "key": "brand_now",
+              "kind": "long",
+              "label": "Three customers describe you in a sentence each",
+              "help": "Their words, not yours."
+            }
+          ],
+          "checklist": [
+            "I asked three real people",
+            "I wrote their words, not mine"
+          ],
+          "checkpoint": "Your starting point on the planet is set.",
+          "minutes": 10
+        },
+        {
+          "band": 2,
+          "title": "The sentence and the touches",
+          "why": "Your sentence, and how often your people see you in a week, and how many of those times looked like the same brand.",
+          "exercises": [
+            {
+              "key": "brand_sentence",
+              "kind": "text",
+              "label": "Your sentence: who you are for and what you stand beside"
+            },
+            {
+              "key": "brand_touches_week",
+              "kind": "number",
+              "label": "Times a week your name shows up in front of your people",
+              "help": "Posts, emails, mentions, ads."
+            },
+            {
+              "key": "brand_consistent",
+              "kind": "number",
+              "label": "Of those, how many looked and sounded like the same brand"
+            }
+          ],
+          "checklist": [
+            "The touches were counted from a week's actual output"
+          ],
+          "checkpoint": "Consistency shows as a meter.",
+          "minutes": 6
+        },
+        {
+          "band": 3,
+          "title": "Ten to stand beside, five to never touch",
+          "why": "Associations are chosen, not discovered. Ten things your people already love that you can honestly stand beside. Five things you will never do or be seen with. Five fixed elements so the pairing looks the same every time.",
+          "exercises": [
+            {
+              "key": "assoc_want",
+              "kind": "list",
+              "label": "Ten things your people already love that you can honestly stand beside, one a line",
+              "help": "Ideas, results, places, values, people."
+            },
+            {
+              "key": "assoc_never",
+              "kind": "list",
+              "label": "Five things you will never do or be seen with, one a line"
+            },
+            {
+              "key": "brand_look",
+              "kind": "list",
+              "label": "The five fixed elements, one a line",
+              "help": "A colour, a font, a phrase, a format, a name for your people."
+            }
+          ],
+          "checklist": [
+            "Each of the ten is something I would still stand beside in five years",
+            "The never list has things I have actually been tempted by"
+          ],
+          "checkpoint": "The lists exist.",
+          "minutes": 20
+        },
+        {
+          "band": 4,
+          "title": "The one-page guide",
+          "why": "Everything on one page: the sentence, the ten, the five nevers, the five fixed elements. Then one format that repeats weekly under the same name.",
+          "exercises": [
+            {
+              "key": "brand_guide_where",
+              "kind": "text",
+              "label": "Where the one-page guide lives"
+            },
+            {
+              "key": "brand_format",
+              "kind": "text",
+              "label": "The weekly format and its name",
+              "help": "The Friday number, the Monday question: a format your people can expect."
+            }
+          ],
+          "checklist": [
+            "The sentence is on the home page and the profile",
+            "The five fixed elements are in a one-page guide",
+            "Every post this week pairs the name with one of the ten",
+            "Nothing this week touches the never list",
+            "One format repeats weekly under the same name"
+          ],
+          "checkpoint": "The guide is written and the weekly format is named.",
+          "minutes": 12
+        },
+        {
+          "band": 5,
+          "title": "A month on brand",
+          "why": "Count the touches and how many matched the guide. Then ask three customers again.",
+          "exercises": [
+            {
+              "key": "run_touches",
+              "kind": "number",
+              "label": "Touches in the run month"
+            },
+            {
+              "key": "run_on_brand",
+              "kind": "number",
+              "label": "Touches that matched the guide"
+            },
+            {
+              "key": "run_descriptions",
+              "kind": "long",
+              "label": "Three customers describe you again, after the run"
+            }
+          ],
+          "checklist": [
+            "The three were asked the same question as in band 1"
+          ],
+          "checkpoint": "Before and after consistency show, and the descriptions sit beside the sentence.",
+          "minutes": 10
+        },
+        {
+          "band": 6,
+          "title": "Narrower, louder, tighter, or bigger",
+          "why": "If the descriptions match the sentence, get louder. If they do not, narrow who it is for or tighten the touches. Pairing with a name your people already trust is the fastest jump.",
+          "exercises": [
+            {
+              "key": "brand_next",
+              "kind": "choice",
+              "label": "The next move",
+              "options": [
+                "Narrower: cut who it is for",
+                "Louder: more touches",
+                "Tighter: fix the off-brand touches",
+                "Bigger: stand beside a name they already trust"
+              ]
+            },
+            {
+              "key": "brand_pair",
+              "kind": "text",
+              "label": "The name you could stand beside, and how",
+              "help": "A person, a place, an event, a cause. Or none yet."
+            }
+          ],
+          "checklist": [
+            "Off-brand touches went to zero for a month",
+            "The three descriptions match the sentence"
+          ],
+          "checkpoint": "The next move is decided.",
+          "minutes": 6
+        }
+      ]
+    },
+    {
+      "id": "price",
+      "system": "profit",
+      "order": 1,
+      "label": "Price Raise",
+      "letter": "$",
+      "oneLine": "Most businesses are underpriced. The math says how many customers you can lose on a raise and still come out ahead.",
+      "idea": "Price is the number the value earns. When you raise it some customers leave, and the question is how many you can lose before the raise stops paying. With a gross margin, the breakeven loss is the raise divided by the margin plus the raise: at a 70 percent margin, a 20 percent raise can lose about a fifth of customers and make the same profit. Raise price after you have raised value, tell existing customers before, and give them a reason the new price is fair.",
+      "reads": [
+        "breakevenLoss",
+        "profitCurve",
+        "profitBeforeAfter"
+      ],
+      "levels": [
+        {
+          "band": 1,
+          "title": "Why is your price what it is",
+          "why": "Most prices are inherited, copied, or set once in a nervous moment. Write the honest reason, and find the highest price in your market.",
+          "exercises": [
+            {
+              "key": "price_rate",
+              "kind": "rating",
+              "label": "How recent is your last raise, 1 (years ago or never) to 5 (this quarter)",
+              "help": "One is not at all, five is fully. Your honest read today."
+            },
+            {
+              "key": "price_now",
+              "kind": "long",
+              "label": "Why your price is what it is, honestly"
+            },
+            {
+              "key": "market_high",
+              "kind": "money",
+              "label": "The highest price in your market, and who charges it",
+              "help": "The number. Put the name in the line above if you like."
+            }
+          ],
+          "checklist": [
+            "I know the highest price in my market and who charges it"
+          ],
+          "checkpoint": "Your starting point on the planet is set.",
+          "minutes": 6
+        },
+        {
+          "band": 2,
+          "title": "The raise you are considering",
+          "why": "The price and the margin are read from Lifetime Value. Add how many buy a month and the raise you have in mind.",
+          "exercises": [
+            {
+              "ref": "price"
+            },
+            {
+              "ref": "gross_margin"
+            },
+            {
+              "key": "customers_month",
+              "kind": "number",
+              "label": "Customers who buy per month at the current price"
+            },
+            {
+              "key": "raise_pct",
+              "kind": "pct",
+              "label": "The raise you are considering, as a share of the price",
+              "help": "20 means a fifth more."
+            }
+          ],
+          "checklist": [
+            "The raise is a number, not a feeling"
+          ],
+          "checkpoint": "The breakeven loss and the profit curve show.",
+          "minutes": 5
+        },
+        {
+          "band": 3,
+          "title": "Raise the value first, then write the message",
+          "why": "Value goes up before price does: faster, surer, easier, less effort. Then the message to existing customers, and the choice of what they keep.",
+          "exercises": [
+            {
+              "key": "value_adds",
+              "kind": "list",
+              "label": "Five ways to raise the value before the price, one a line",
+              "help": "Faster to the result, more likely to work, easier to do, less to give up."
+            },
+            {
+              "key": "price_story",
+              "kind": "long",
+              "label": "The message to existing customers",
+              "help": "What changed, when, and what they keep."
+            },
+            {
+              "key": "grandfather",
+              "kind": "choice",
+              "label": "What existing customers keep",
+              "options": [
+                "The old price for a set term",
+                "The old price for as long as they stay",
+                "Nothing: everyone moves on the same day"
+              ]
+            }
+          ],
+          "checklist": [
+            "At least two of the five value adds can ship this month",
+            "The message says a date"
+          ],
+          "checkpoint": "The value adds and the message exist.",
+          "minutes": 15
+        },
+        {
+          "band": 4,
+          "title": "The new price and the date",
+          "why": "A number and a day. Everything that shows a price changes on that day.",
+          "exercises": [
+            {
+              "key": "new_price",
+              "kind": "money",
+              "label": "The new price"
+            },
+            {
+              "key": "raise_date",
+              "kind": "text",
+              "label": "The date it takes effect"
+            }
+          ],
+          "checklist": [
+            "The value adds ship before the raise",
+            "Existing customers hear it from a person, before the date",
+            "The new price is on every page and script on the date",
+            "The sales script says the price once, without apology (see Closing Handbook)",
+            "The breakeven loss is written down and watched"
+          ],
+          "checkpoint": "The raise is scheduled.",
+          "minutes": 6
+        },
+        {
+          "band": 5,
+          "title": "The first month at the new price",
+          "why": "Count who bought and what they actually paid.",
+          "exercises": [
+            {
+              "key": "run_customers_after",
+              "kind": "number",
+              "label": "Customers who bought in the first month at the new price"
+            },
+            {
+              "key": "run_price_realised",
+              "kind": "money",
+              "label": "Average price actually paid that month"
+            }
+          ],
+          "checklist": [
+            "Discounts given in the month are in the average, not hidden"
+          ],
+          "checkpoint": "Profit before and after shows, against the breakeven line.",
+          "minutes": 6
+        },
+        {
+          "band": 6,
+          "title": "Again, hold, above, or below",
+          "why": "If the loss was well under breakeven, raise again next quarter. If it was near, hold. A tier above and an entry below are both ways to raise the average without touching the middle.",
+          "exercises": [
+            {
+              "key": "price_next",
+              "kind": "choice",
+              "label": "The next move",
+              "options": [
+                "Raise again in a quarter",
+                "Hold: the loss was near breakeven",
+                "Add a higher tier above it",
+                "Add a lower entry below it (see Promo Cash)"
+              ]
+            }
+          ],
+          "checklist": [
+            "Price is reviewed every quarter, on the calendar",
+            "The highest tier is priced above the market's highest"
+          ],
+          "checkpoint": "The next move is decided.",
+          "minutes": 4
+        }
+      ]
+    },
+    {
+      "id": "promo",
+      "system": "profit",
+      "order": 2,
+      "label": "Promo Cash",
+      "letter": "¢",
+      "oneLine": "Make more from a customer in the first thirty days than it costs to get and serve them. Then growth pays for itself.",
+      "idea": "A money model is the order of offers a customer meets. It starts with an attraction offer that gets a stranger to say yes: win your money back, a free thing with a string attached, a discount for a commitment, a giveaway, or a decoy beside the real thing. Then the offers that follow: an upsell at the moment of yes, a downsell for the no, and continuity so the money keeps arriving. The target is that the gross profit collected in the first thirty days is more than it cost to acquire and deliver. Then every customer funds the next one.",
+      "reads": [
+        "thirtyDayCash",
+        "thirtyDayRatio"
+      ],
+      "levels": [
+        {
+          "band": 1,
+          "title": "The order of offers, as it is",
+          "why": "Write the sequence a customer meets today, first offer to last. Most businesses have one.",
+          "exercises": [
+            {
+              "key": "promo_rate",
+              "kind": "rating",
+              "label": "Does a new customer pay for their own acquisition in 30 days, 1 (no idea) to 5 (yes, measured)",
+              "help": "One is not at all, five is fully. Your honest read today."
+            },
+            {
+              "key": "promo_now",
+              "kind": "long",
+              "label": "The order of offers a customer meets today, first to last"
+            }
+          ],
+          "checklist": [
+            "I wrote the order as it is, not as I wish it were"
+          ],
+          "checkpoint": "Your starting point on the planet is set.",
+          "minutes": 5
+        },
+        {
+          "band": 2,
+          "title": "Thirty-day cash and cost",
+          "why": "What a new customer pays in their first thirty days, what it costs to serve them in that time, and the cost to get them, which is read from Lifetime Value.",
+          "exercises": [
+            {
+              "ref": "cac"
+            },
+            {
+              "key": "first_cash",
+              "kind": "money",
+              "label": "Cash collected from a new customer in the first 30 days, typical"
+            },
+            {
+              "key": "deliver_cost_30",
+              "kind": "money",
+              "label": "Cost to deliver to that customer in the first 30 days"
+            },
+            {
+              "key": "upsell_take",
+              "kind": "pct",
+              "label": "Share of new customers who take an upsell today",
+              "help": "Zero if there is no upsell. Blank if you do not know."
+            }
+          ],
+          "checklist": [
+            "Cash is what arrived, not what was invoiced"
+          ],
+          "checkpoint": "The thirty-day cash picture and its ratio show.",
+          "minutes": 8
+        },
+        {
+          "band": 3,
+          "title": "Attraction, upsell, downsell, continuity",
+          "why": "Four offers, one sentence each. The attraction offer gets the yes. The upsell rides the yes. The downsell keeps the no in the door. Continuity keeps the money arriving.",
+          "exercises": [
+            {
+              "key": "attraction_type",
+              "kind": "choice",
+              "label": "Your attraction offer kind",
+              "options": [
+                "Win your money back: a result earns a refund or a credit",
+                "Free with a string: free now, paid after, or a deposit",
+                "Commit for a discount: a term for a lower price",
+                "Giveaway: a prize that collects many leads",
+                "Decoy: a lesser option that makes the real one obvious"
+              ]
+            },
+            {
+              "key": "attraction_offer",
+              "kind": "text",
+              "label": "The attraction offer in one sentence"
+            },
+            {
+              "key": "upsell_offer",
+              "kind": "text",
+              "label": "The upsell offered at the moment of yes, and its price"
+            },
+            {
+              "key": "downsell_offer",
+              "kind": "text",
+              "label": "The downsell for the no",
+              "help": "A payment plan, a trial, a smaller version."
+            },
+            {
+              "key": "continuity_offer",
+              "kind": "text",
+              "label": "The continuity, and the reason to stay",
+              "help": "A bonus, a waived fee, a term price."
+            }
+          ],
+          "checklist": [
+            "The attraction offer has a string that leads to the paid thing",
+            "The upsell is offered inside the yes, not a week later"
+          ],
+          "checkpoint": "The four offers exist.",
+          "minutes": 20
+        },
+        {
+          "band": 4,
+          "title": "Price the upsell and expect a take rate",
+          "why": "A number for the upsell and a share you expect to take it. The picture redraws with them.",
+          "exercises": [
+            {
+              "key": "upsell_price",
+              "kind": "money",
+              "label": "The upsell price"
+            },
+            {
+              "key": "upsell_take_target",
+              "kind": "pct",
+              "label": "The share you expect to take the upsell"
+            }
+          ],
+          "checklist": [
+            "The attraction offer has a string that leads to the paid thing",
+            "The upsell is offered inside the yes",
+            "The downsell keeps a no in the door",
+            "Continuity has a reason to stay written into it",
+            "Thirty-day cash is measured per customer, not per month"
+          ],
+          "checkpoint": "The money model is priced.",
+          "minutes": 6
+        },
+        {
+          "band": 5,
+          "title": "A month of new customers",
+          "why": "Every new customer in the run month, their cash in thirty days, and what they cost to get and serve.",
+          "exercises": [
+            {
+              "key": "run_new_customers",
+              "kind": "number",
+              "label": "New customers in the run month"
+            },
+            {
+              "key": "run_cash_30",
+              "kind": "money",
+              "label": "Cash collected from them in their first 30 days, total"
+            },
+            {
+              "key": "run_cost_30",
+              "kind": "money",
+              "label": "Cost to acquire and deliver them in 30 days, total"
+            }
+          ],
+          "checklist": [
+            "Every new customer met the full sequence"
+          ],
+          "checkpoint": "Before and after thirty-day ratios show.",
+          "minutes": 8
+        },
+        {
+          "band": 6,
+          "title": "The string, the take, continuity, or cost",
+          "why": "Four ways to move the ratio. Draw the model on one page: offer, then offer, then offer.",
+          "exercises": [
+            {
+              "key": "promo_next",
+              "kind": "choice",
+              "label": "The next move",
+              "options": [
+                "Raise the attraction offer's string",
+                "Raise the upsell take rate",
+                "Add continuity",
+                "Cut delivery cost in the first 30 days"
+              ]
+            }
+          ],
+          "checklist": [
+            "The thirty-day ratio is on the weekly scorecard",
+            "The money model is drawn on one page: offer, then offer, then offer"
+          ],
+          "checkpoint": "The next move is decided.",
+          "minutes": 4
+        }
+      ]
+    },
+    {
+      "id": "sops",
+      "system": "profit",
+      "order": 3,
+      "label": "Implementation SOPs",
+      "letter": "S",
+      "oneLine": "A playbook only counts when someone other than you can run it. Write it down, give it a number, look at the number weekly.",
+      "idea": "The other eleven playbooks each end with a thing to run and a number to watch. This one turns them into an operating rhythm: a one-page procedure for each (purpose, owner, steps, the checklist, the number it moves), a weekly scorecard with the few numbers that matter, and a meeting short enough to happen every week. The test of a written procedure is a new person running it without you in the room.",
+      "reads": [
+        "handoff",
+        "ownerHours",
+        "scorecard"
+      ],
+      "levels": [
+        {
+          "band": 1,
+          "title": "The things only you can do",
+          "why": "List them without softening. Each one is a procedure that has not been written yet.",
+          "exercises": [
+            {
+              "key": "sops_rate",
+              "kind": "rating",
+              "label": "How much of your business runs without you, 1 to 5",
+              "help": "One is not at all, five is fully. Your honest read today."
+            },
+            {
+              "key": "sops_now",
+              "kind": "list",
+              "label": "The things only you can do today, one a line"
+            }
+          ],
+          "checklist": [
+            "I wrote the list without softening it"
+          ],
+          "checkpoint": "Your starting point on the planet is set.",
+          "minutes": 6
+        },
+        {
+          "band": 2,
+          "title": "Written, handed off, and your hours",
+          "why": "Three counts: procedures that exist on paper, procedures someone else runs, and the hours a week you spend on work someone else could do.",
+          "exercises": [
+            {
+              "key": "sops_written",
+              "kind": "number",
+              "label": "Procedures written down today"
+            },
+            {
+              "key": "sops_others_run",
+              "kind": "number",
+              "label": "Of those, how many someone else runs"
+            },
+            {
+              "key": "hours_week_owner",
+              "kind": "number",
+              "label": "Hours a week you spend on work someone else could do"
+            }
+          ],
+          "checklist": [
+            "The hours come from a week actually tracked"
+          ],
+          "checkpoint": "The handoff meter and the owner hours show.",
+          "minutes": 6
+        },
+        {
+          "band": 3,
+          "title": "Twelve procedures, one written now, the scorecard",
+          "why": "One line per playbook with an owner. Then write one procedure in full to learn the shape. Then choose the scorecard: at most eight numbers.",
+          "exercises": [
+            {
+              "key": "sop_list",
+              "kind": "list",
+              "label": "The twelve procedures, one a line: procedure | owner"
+            },
+            {
+              "key": "sop_template",
+              "kind": "long",
+              "label": "One procedure, in full",
+              "help": "Purpose. Owner. Steps. The checklist. The number it moves."
+            },
+            {
+              "key": "scorecard_numbers",
+              "kind": "list",
+              "label": "The scorecard, at most eight numbers, one a line: number | the playbook it comes from"
+            }
+          ],
+          "checklist": [
+            "Every procedure has a named owner, even if it is me for now",
+            "The scorecard has no number nobody would act on"
+          ],
+          "checkpoint": "The list, one full procedure and the scorecard exist.",
+          "minutes": 25
+        },
+        {
+          "band": 4,
+          "title": "The weekly meeting",
+          "why": "Day, time, length, who. The scorecard is filled before it, and it ends with one change.",
+          "exercises": [
+            {
+              "key": "meeting_when",
+              "kind": "text",
+              "label": "The weekly meeting: day, time, length, who"
+            }
+          ],
+          "checklist": [
+            "Every procedure fits on one page",
+            "Every procedure names a number",
+            "The scorecard is filled before the meeting, not in it",
+            "One procedure was run by someone else this week",
+            "The meeting ends with one change, not ten"
+          ],
+          "checkpoint": "The rhythm is set.",
+          "minutes": 5
+        },
+        {
+          "band": 5,
+          "title": "Four weeks of scorecard",
+          "why": "One row a week. Four numbers are enough to start: leads, sales, customers kept, cash collected.",
+          "exercises": [
+            {
+              "key": "scorecard_log",
+              "kind": "log",
+              "label": "The scorecard, one row a week",
+              "columns": [
+                "week",
+                "leads",
+                "sales",
+                "kept",
+                "cash"
+              ],
+              "help": "Cash in whole dollars."
+            },
+            {
+              "key": "run_hours_owner",
+              "kind": "number",
+              "label": "Hours a week on work someone else could do, after four weeks"
+            }
+          ],
+          "checklist": [
+            "Four weeks in a row were filled before the meeting"
+          ],
+          "checkpoint": "The scorecard draws as lines, and owner hours before and after show.",
+          "minutes": 10
+        },
+        {
+          "band": 6,
+          "title": "Hand off, cut, fix, or hire",
+          "why": "One more procedure handed off. One number cut if nobody uses it. The one that fell, fixed. And the biggest owner-only task is a hire.",
+          "exercises": [
+            {
+              "key": "sops_next",
+              "kind": "choice",
+              "label": "The next move",
+              "options": [
+                "Hand off one more procedure",
+                "Cut a number nobody uses",
+                "Fix the one number that fell",
+                "Hire for the biggest owner-only task"
+              ]
+            },
+            {
+              "key": "handoff_next",
+              "kind": "text",
+              "label": "The procedure to hand off next, and to whom"
+            }
+          ],
+          "checklist": [
+            "Four weeks of scorecard exist",
+            "Owner-only hours fell this month",
+            "Every playbook in this binder has its procedure written"
+          ],
+          "checkpoint": "The next move is decided.",
+          "minutes": 5
+        }
+      ]
+    }
+  ]
+}

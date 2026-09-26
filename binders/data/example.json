@@ -1,0 +1,235 @@
+{
+  "app": "binders",
+  "example": true,
+  "note": "Made-up numbers for a money coach who sells an eight-week programme to young professionals. Loaded only behind Try with example answers. No real business or person.",
+  "state": {
+    "version": 1,
+    "rough": {},
+    "prefs": {},
+    "checks": {
+      "machine-1": {
+        "0": true,
+        "1": true
+      },
+      "closing-1": {
+        "0": true
+      },
+      "ltv-1": {
+        "0": true
+      },
+      "ltv-2": {
+        "0": true,
+        "1": true
+      }
+    },
+    "answers": {
+      "machine_rate": 2,
+      "machine_now": "About thirty warm messages, five posts, twenty cold DMs. No ads worth counting.",
+      "machine_channel_now": 0,
+      "warm_week": 30,
+      "content_week": 5,
+      "cold_week": 20,
+      "ads_week": 10000,
+      "leads_month": 25,
+      "customers_wanted": 8,
+      "warm_list": [
+        "Jordan (old colleague)",
+        "Sam (gym)",
+        "Priya (newsletter reply)",
+        "Alex (cousin)",
+        "Dev (podcast guest)"
+      ],
+      "content_topics": [
+        "Should I pay off the loan or invest?",
+        "How much emergency fund is enough?",
+        "Is my 401k match worth it?"
+      ],
+      "hooks_rate": 2,
+      "views_week": 4000,
+      "engaged_week": 90,
+      "hooks_written_week": 3,
+      "hook_results": [
+        "The 401k mistake I see every week | 41",
+        "Three numbers before you open a brokerage | 22",
+        "What I tell a 24 year old with a raise | 17"
+      ],
+      "hook_runs": 9,
+      "hook_wins": 80,
+      "nurture_rate": 2,
+      "reply_minutes": 90,
+      "touches": 3,
+      "call_rate": 40,
+      "run_leads_n": 30,
+      "run_booked": 16,
+      "run_reply_minutes": 8,
+      "touch_log": [
+        [
+          "1",
+          30,
+          9
+        ],
+        [
+          "2",
+          21,
+          4
+        ],
+        [
+          "3",
+          17,
+          2
+        ],
+        [
+          "4",
+          15,
+          1
+        ]
+      ],
+      "closing_rate_self": 3,
+      "closing_now": "Opened with my story, showed the programme, said the price, got a maybe.",
+      "calls_booked_month": 20,
+      "calls_shown_month": 14,
+      "closed_month": 5,
+      "cash_collected_month": 600000,
+      "run_calls": 16,
+      "run_closed": 7,
+      "run_cash": 900000,
+      "objections_log": [
+        [
+          "Need to think about it",
+          6,
+          2
+        ],
+        [
+          "Can I afford it",
+          4,
+          3
+        ],
+        [
+          "Partner has to agree",
+          3,
+          1
+        ]
+      ],
+      "proof_rate": 2,
+      "proof_results": 2,
+      "proof_stories": 6,
+      "proof_before_after": 1,
+      "proof_third": 3,
+      "proof_demos": 1,
+      "customers_served": 40,
+      "claims": [
+        "Control of your money in eight weeks",
+        "No finance degree needed",
+        "Keep the life you have"
+      ],
+      "proof_map": [
+        "Control in eight weeks | Sam's before and after | before and after",
+        "No finance degree | six named stories | testimonials",
+        "Keep the life you have | cut"
+      ],
+      "run_asked": 10,
+      "run_got": 4,
+      "run_placed": 3,
+      "ads_rate": 1,
+      "ad_spend_month": 40000,
+      "ad_impressions": 50000,
+      "ad_clicks": 900,
+      "ad_leads": 60,
+      "ad_booked": 12,
+      "ad_sales": 3,
+      "ret_rate": 2,
+      "customers_start": 30,
+      "customers_left": 3,
+      "days_first_win": 10,
+      "run_start": 32,
+      "run_left": 2,
+      "cohort_log": [
+        [
+          "Jan",
+          8,
+          6
+        ],
+        [
+          "Feb",
+          10,
+          8
+        ],
+        [
+          "Mar",
+          9,
+          8
+        ]
+      ],
+      "ltv_rate": 2,
+      "ltv_now": "Maybe fifteen hundred, costs me a couple hundred to deliver.",
+      "price": 150000,
+      "gross_margin": 80,
+      "purchases_per_customer": 1.5,
+      "cac": 40000,
+      "brand_rate": 2,
+      "brand_sentence": "For young professionals who freeze at money: calm, plain, no judgement.",
+      "brand_touches_week": 12,
+      "brand_consistent": 7,
+      "assoc_want": [
+        "Calm",
+        "Plain words",
+        "Index funds",
+        "Small wins",
+        "No judgement"
+      ],
+      "assoc_never": [
+        "Crypto tips",
+        "Shame"
+      ],
+      "brand_look": [
+        "Deep blue",
+        "One question a week"
+      ],
+      "price_rate": 1,
+      "customers_month": 5,
+      "raise_pct": 20,
+      "market_high": 500000,
+      "promo_rate": 1,
+      "first_cash": 150000,
+      "deliver_cost_30": 20000,
+      "upsell_take": 0,
+      "upsell_price": 50000,
+      "upsell_take_target": 30,
+      "sops_rate": 1,
+      "sops_written": 4,
+      "sops_others_run": 1,
+      "hours_week_owner": 15,
+      "run_hours_owner": 9,
+      "scorecard_log": [
+        [
+          "1",
+          22,
+          4,
+          30,
+          5000
+        ],
+        [
+          "2",
+          26,
+          5,
+          31,
+          6200
+        ],
+        [
+          "3",
+          19,
+          4,
+          31,
+          4800
+        ],
+        [
+          "4",
+          31,
+          7,
+          33,
+          9000
+        ]
+      ]
+    }
+  }
+}
