@@ -28,6 +28,7 @@ Updated: 2026-09-24
   where all the money went and where the discretionary part went.
 - **`slam/` (SLAM Profit Engine, phases 0 and 1)**: separate app, own CLAUDE.md and CI job; G1-G21 and the phone flows green.
 - **Main is worked on by another lane**: merge before every push. D-228's reframe has NOT shipped. Freeze holds (D-313).
+  Coach Mode is its own lane in `coach/` (D-339, `coach/STATUS.md`).
 
 ## Next (top item first; one per session)
 1. **Tier 3 readings and the moons.** Tiers 1 and 2 are worked out (53 of the

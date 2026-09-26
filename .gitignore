@@ -5,3 +5,11 @@
 node_modules/
 package.json
 package-lock.json
+
+# Coach Mode (D-339): a client's numbers never enter this public repository.
+# Sealed client backups, all-client backups and session recaps are made on
+# the coach's device and stay there. test/coach-checks.js also fails if any
+# tracked file carries the coach export signature.
+money-rooms-coach-*
+money-rooms-recap-*
+*.coach.json

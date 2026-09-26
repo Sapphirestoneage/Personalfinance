@@ -1,0 +1,29 @@
+{
+  "id": "opening",
+  "version": "1.0",
+  "asOf": "2026-09-19",
+  "source": "The five-input opening's declared assumptions, in one file so the room and engines/opening.js never inline a figure. The withdrawal rate is 3.5% because this audience faces fifty- to sixty-year retirements: the 4% convention was fitted to thirty-year windows (Bengen 1994, the Trinity study), and the early-retirement literature (Early Retirement Now's safe withdrawal series; the Trinity update for longer horizons) puts a sixty-year horizon nearer 3.25% to 3.5%. The three real returns bracket data/return_bands.json's planning bands from below: 3%, 5% and 7% real, so the band is honest about a stock-heavy portfolio without promising the all-equity long-run average.",
+  "confidence": "convention",
+  "confidenceNote": "Planning conventions, not findings. Every figure here is shown in the opening's assumptions drawer with this note and can be changed there for the session; nothing here is a fact about a household.",
+  "note": "Read by engines/opening.js. withdrawalPoints are the Triple D points the drawer shows beside the 3.5% default: the 4% convention and the 3.25% floor. realReturns are the three runs behind the FI date band: worst plausible, likely, best plausible. stages are the Advice Translator's early lines: below `investedBelowYears` years of spending invested, the stage applies; the last stage has no ceiling. leverIds name the levers in data/levers.json the opening ranks, in the order ties break. Money in cents.",
+  "withdrawalRate": 0.035,
+  "withdrawalPoints": { "convention": 0.04, "likely": 0.035, "floor": 0.0325 },
+  "realReturns": { "worst": 0.03, "likely": 0.05, "best": 0.07 },
+  "coastTargetAge": 65,
+  "unknownSpendingShare": 0.7,
+  "unknownSpendingNote": "When someone does not know what they spend, seven tenths of take-home stands in, tagged rough: the median household saves in the teens of take-home, so seven tenths overstates spending a little and understates the date, which is the safer error on an opening screen.",
+  "raiseRateReal": 0.02,
+  "raiseRateNote": "The real raise rate the save-half-of-every-raise lever assumes: 2% a year over inflation, a career's typical early-years pace rather than a whole-career average.",
+  "incomeStepMonthlyCents": 50000,
+  "spendingCutShare": 0.10,
+  "returnBump": 0.01,
+  "debtPayoffYears": 5,
+  "debtPayoffNote": "A debt with no minimum payment entered is priced as a five-year level payment at its rate, so 'clear the dearest debt' can say what it frees. A stated stand-in, never a fact.",
+  "horizonYears": 60,
+  "stages": [
+    { "id": "early", "investedBelowYears": 1, "line": "Right now income and savings rate are almost all of your outcome. Returns barely matter yet.", "returnLeversLast": true },
+    { "id": "middle", "investedBelowYears": 5, "line": null, "returnLeversLast": false },
+    { "id": "late", "investedBelowYears": null, "line": "Your portfolio now does real work. Fees, allocation, and which account you use start to matter.", "returnLeversLast": false }
+  ],
+  "leverIds": ["payStep", "spendCut", "clearDearest", "halfRaise", "returnUp"]
+}

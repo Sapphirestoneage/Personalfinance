@@ -17331,6 +17331,24 @@ reading it feeds. Cash Flow's flow hint links to it instead of a second chart.
 `node test/solar.js` 5191; a phone walk at 390px through Expenses and Cash
 Flow with the example numbers, the three windows, clean console.
 
+## D-339 — Coach Mode is its own app in coach/, a lane beside SPARKS like dnd/
+
+**Why.** The owner coaches clients live from a Google Sheet, and wants the coach
+tool built in parallel without the bulk of the rooms (spec: `coach/SPEC.md`).
+
+**Decision.** `coach/` is a separate app with three screens (Home, Session,
+Client View), its own storage (`coach.` keys, never `slaf.`), byte-identical
+copies of the few engines it reads (`coach/tools/vendor.js`), its own tests
+(`node coach/test/run.js`, in CI) and its own log (`coach/DECISIONS.md`,
+`CD-###`). Nothing in `rooms/`, `shared/`, `engines/` or `data/` changes for it.
+
+**Replaces or removes.** The owner's client Google Sheet. No SPARKS screen.
+
+**Stored shape.** No change to `slaf.household.v2` or any SPARKS key. The
+SPARKS device backup neither carries nor removes `coach.` keys.
+
+**Verified.** `node test/run.js`; `node coach/test/run.js`.
+
 ---
 
 # The Dungeons & Dividends entries

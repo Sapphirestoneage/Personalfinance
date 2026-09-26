@@ -1,0 +1,286 @@
+/* ==========================================================================
+   shared/demo-persona.js, the one demo household, defined once.
+   --------------------------------------------------------------------------
+   SPEC.md §5.1. Every room's "Try with example numbers" action fills from
+   THIS persona, so the example salary a visitor sees in one room is the same
+   salary the household model shows in the next. Rooms must not hardcode
+   their own demo numbers.
+
+   These are the values logged in DECISIONS.md (D-005). Changing one here
+   changes it everywhere, update that entry too.
+
+   This repo is public. Robin Sparks is fictional; every figure below is
+   invented for demonstration.
+   ========================================================================== */
+(function (root, factory) {
+  var deps;
+  if (typeof module === 'object' && module.exports) {
+    deps = { Money: require('./money.js'), Schema: require('./schema.js') };
+  } else {
+    deps = { Money: root.SLAF && root.SLAF.Money, Schema: root.SLAF && root.SLAF.Schema };
+  }
+  var api = factory(deps.Money, deps.Schema);
+  if (typeof module === 'object' && module.exports) { module.exports = api; }
+  if (root) { root.SLAF = root.SLAF || {}; root.SLAF.DemoPersona = api; }
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema) {
+  'use strict';
+
+  /* Plain-dollar figures, the numbers a person would type into the form.
+     Rooms read these to populate their inputs; build() converts to cents. */
+  var VALUES = {
+    label: 'Robin Sparks',
+    dob: '1994-04-12',
+    state: 'NC',
+    filingStatus: 'single',
+
+    employmentStatus: 'employed',           // a W-2 job, so the match questions apply
+    grossAnnualIncome: 72000,
+    incomeType: 'w2',
+    employerMatchPercent: 0.5,              // matches 50 cents on the dollar
+    employerMatchCapPercentOfSalary: 0.06,  // up to the first 6% of salary
+    capturingFullMatch: false,              // deliberately NOT capturing it, 
+                                            // makes the demo surface a real flag
+
+    cashSavings: 9500,
+    investmentsAndRetirement: 48000,
+
+    /* Retirement setup and the deductible, the facts the FOO ladder's
+       timeline reads. 4% into the plan against a 6% match cap is exactly
+       why capturingFullMatch is false above: the demo leaves match on the
+       table, and the ladder should say so. Not on a high-deductible plan,
+       so the HSA question does not apply. */
+    contributionPercent: 4,                 // whole percent of salary
+    rothContributedThisYear: 1500,
+
+    /* The rough answers band 1 asks (D-325). Robin's pay is steady; the
+       $3,150 month is spending only, with the $305 of debt minimums and the
+       $700 a month of saving counted separately; the credit card is the
+       $3,200 above 8%; and last year's refund was $1,240, which is a year of
+       Robin's own money held back and a real quick win. */
+    payVaries: false,
+    spendingIncludesDebt: false,
+    spendingIncludesSaving: false,
+    savedMonthly: 700,
+    highInterestBalance: 3200,
+    refundLastYear: 1240,
+    onHdhp: false,
+    highestDeductible: 2500,
+
+    debts: [
+      { label: 'Student loan', balance: 18400, rate: 0.055, minPayment: 210, type: 'student_loan' },
+      { label: 'Credit card',  balance: 3200,  rate: 0.229, minPayment: 95,  type: 'credit_card' }
+    ],
+
+    /* The month as the four numbers (D-172): food, rent, getting around,
+       everything else. They sum to $3,150 - the same month the demo has
+       always had - so every figure downstream is unchanged. Deliberately
+       NOT the sum of the category lines below ($2,805 of spending): the
+       lines are a split Robin started and did not finish, and Cash Flow's
+       "lines vs the four numbers" card shows the -$345 gap. */
+    fat: { food: 710, accommodation: 1500, transportation: 220, wants: 720 },
+
+    /* What the job actually takes, beyond the paycheque. 40 paid hours plus
+       13 unpaid ones a week, and $400/mo of costs that only exist because
+       Robin has a job. Feeds the Real Hourly Wage room. */
+    work: {
+      contractedHoursPerWeek: 40,
+      unpaidOvertimeHoursPerWeek: 3,
+      commuteHoursPerWeek: 5,
+      prepHoursPerWeek: 2.5,
+      decompressHoursPerWeek: 2.5,
+      workCosts: 400,
+      weeksPerYear: 48
+    },
+
+
+    /* What Robin actually spends, by category, the Cash Flow room's example.
+       Deliberately NOT equal to the $3,150 estimate above: the essential
+       categories here total $2,805, so the demo shows a real −$345 divergence
+       between what Robin guessed and what Robin spends (SPEC.md §12.3).
+       Debt minimums are deliberately absent: that category is derived from
+       the itemised debts below ($210 + $95 = $305) and is not typed in
+       anywhere. See DECISIONS.md D-017. */
+    /* Where each line leaves from (D-337): the rent and the transfers
+       from the bank, the everyday lines on the card, so The Close can say
+       what the card runs at and the bonus spend it could reach. */
+    monthlySpending: [
+      { categoryId: 'housing',           amount: 1500, paidWith: 'bank' },
+      { categoryId: 'groceries',         amount: 450,  paidWith: 'demo_debt_1' },
+      { categoryId: 'utilities',         amount: 180,  paidWith: 'bank' },
+      { categoryId: 'transportation',    amount: 220,  paidWith: 'demo_debt_1' },
+      { categoryId: 'insurance',         amount: 150,  paidWith: 'bank' },
+      { categoryId: 'dining_out',        amount: 260,  paidWith: 'demo_debt_1' },
+      { categoryId: 'subscriptions',     amount: 45,   paidWith: 'demo_debt_1' },
+      { categoryId: 'entertainment',     amount: 90,   paidWith: 'demo_debt_1' },
+      { categoryId: 'emergency_savings', amount: 300,  paidWith: 'bank' },
+      { categoryId: 'retirement',        amount: 400,  paidWith: 'bank' }
+    ],
+
+    /* How much each line gives Robin, 1-10, for The Rerank (D-085). Chosen
+       so the cost order and the value order disagree in both directions:
+       housing and the debt minimums cost the most and give the least, the
+       subscriptions and going out cost the least and give the most. */
+    rerankJoy: {
+      housing: 4, groceries: 8, utilities: 5, transportation: 4, insurance: 3,
+      dining_out: 8, subscriptions: 8, entertainment: 9, debt_minimums: 1
+    }
+  };
+
+  /* Convenience roll-ups for rooms whose Tier 0 form takes lump sums. */
+  VALUES.totalDebtBalance = VALUES.debts.reduce(function (s, d) { return s + d.balance; }, 0);
+  VALUES.totalMonthlyDebtPayments = VALUES.debts.reduce(function (s, d) { return s + d.minPayment; }, 0);
+
+  /** Build a complete household object from the persona. */
+  function build() {
+    var person = Schema.createPerson({
+      id: 'demo_person_robin',
+      label: VALUES.label,
+      role: 'adult',
+      dob: VALUES.dob,
+      employmentStatus: VALUES.employmentStatus,
+      work: Object.assign({}, VALUES.work, {
+        workCostsMonthlyCents: Money.toCents(VALUES.work.workCosts)
+      })
+    });
+
+    person.incomeSources.push(Schema.createIncomeSource({
+      id: 'demo_income_primary',
+      personId: person.id,
+      source: 'Day job',
+      grossAnnualIncomeCents: Money.toCents(VALUES.grossAnnualIncome),
+      type: VALUES.incomeType,
+      employerMatch: {
+        matchPercent: VALUES.employerMatchPercent,
+        matchCapPercentOfSalary: VALUES.employerMatchCapPercentOfSalary
+      }
+    }));
+
+    var household = Schema.createHousehold({
+      people: [person],
+      filingStatus: VALUES.filingStatus,
+      state: VALUES.state,
+      assets: [
+        Schema.createAsset(Object.assign({
+          id: 'demo_asset_cash', label: 'Savings account', category: 'cash', institution: 'Example Bank',
+          valueCents: Money.toCents(VALUES.cashSavings), liquid: true, ownerIds: [person.id]
+        }, Schema.applyAccountType({ category: 'cash' }, 'hysa'))),
+        Schema.createAsset({
+          id: 'demo_asset_invest', label: 'Investments + retirement', category: 'investment', accountType: 'mixed',
+          valueCents: Money.toCents(VALUES.investmentsAndRetirement), liquid: false, ownerIds: [person.id]
+        })
+      ],
+      debts: VALUES.debts.map(function (d, i) {
+        return Schema.createDebt({
+          id: 'demo_debt_' + i,
+          label: d.label,
+          balanceCents: Money.toCents(d.balance),
+          rate: d.rate,
+          minPaymentCents: Money.toCents(d.minPayment),
+          type: d.type,
+          ownerIds: [person.id]
+        });
+      }),
+      expenses: {
+        needs: {
+          food: { monthlyCents: Money.toCents(VALUES.fat.food) },
+          accommodation: { monthlyCents: Money.toCents(VALUES.fat.accommodation) },
+          transportation: { monthlyCents: Money.toCents(VALUES.fat.transportation) }
+        },
+        wants: { totalCents: Money.toCents(VALUES.fat.wants), therapy: null },
+        /* Left empty here on purpose. The categorised breakdown is the Cash
+           Flow room's example, loaded by buildSpending() when that room asks
+           for it, so every other room's demo still opens on the estimate,
+           which is the state a first-time visitor is actually in. */
+        entries: []
+      },
+      capturingFullMatch: VALUES.capturingFullMatch,
+      /* Robin lives alone: nobody depends on this income, so term life is
+         not a gap on the checkup. D-092. */
+      dependents: false,
+      retirement: Schema.createRetirement({
+        contributionPercent: VALUES.contributionPercent,
+        rothContributedCents: Money.toCents(VALUES.rothContributedThisYear),
+        onHdhp: VALUES.onHdhp
+      }),
+      insurance: Schema.createInsurance({
+        highestDeductibleCents: Money.toCents(VALUES.highestDeductible)
+      }),
+      /* The Rerank's joy per line, in the one ratings store. The lines
+         themselves arrive with buildSpending(). D-085. */
+      ratings: { rerank: Object.assign({}, VALUES.rerankJoy) },
+      sketch: {
+        payVaries: VALUES.payVaries,
+        spendingIncludesDebt: VALUES.spendingIncludesDebt,
+        spendingIncludesSaving: VALUES.spendingIncludesSaving,
+        savedMonthlyCents: Money.toCents(VALUES.savedMonthly),
+        highInterestCents: Money.toCents(VALUES.highInterestBalance),
+        refundLastYearCents: Money.toCents(VALUES.refundLastYear)
+      },
+      /* Robin has two debts, and says so: hasDebt is the answer that keeps
+         Debt Payoff on the path. D-061. */
+      meta: { isDemo: true, hasDebt: true }
+    });
+
+    return household;
+  }
+
+  /** The categorised month of spending, as expense entries. */
+  function buildSpending() {
+    return VALUES.monthlySpending.map(function (row, i) {
+      return Schema.createExpenseEntry({
+        id: 'demo_spend_' + i,
+        categoryId: row.categoryId,
+        amountCents: Money.toCents(row.amount),
+        period: 'monthly',
+        source: 'manual',
+        paidWith: row.paidWith || null
+      });
+    });
+  }
+
+  /* A month of dated lines with the place each went (D-338): the same
+     month as the typical lines above, so the charts by place have
+     something to draw the first time. Days are this month's; a day past
+     the month's end is folded to its last day. Everyday lines on the
+     card, the rent and the transfer from the bank (D-337). */
+  VALUES.logLines = [
+    { day: 1,  categoryId: 'housing',           amount: 1500,  where: 'Maple Street Management', paidWith: 'bank' },
+    { day: 2,  categoryId: 'emergency_savings', amount: 300,   where: 'Transfer to savings',      paidWith: 'bank' },
+    { day: 3,  categoryId: 'groceries',         amount: 112.4, where: 'Trader Joe\u2019s',        paidWith: 'demo_debt_1' },
+    { day: 4,  categoryId: 'subscriptions',     amount: 15.49, where: 'Netflix',                  paidWith: 'demo_debt_1', fixed: true },
+    { day: 6,  categoryId: 'dining_out',        amount: 38,    where: 'Sweetgreen',               paidWith: 'demo_debt_1' },
+    { day: 8,  categoryId: 'transportation',    amount: 52,    where: 'Shell',                    paidWith: 'demo_debt_1' },
+    { day: 9,  categoryId: 'shopping',          amount: 64.2,  where: 'Amazon',                   paidWith: 'demo_debt_1' },
+    { day: 10, categoryId: 'groceries',         amount: 96.8,  where: 'Trader Joe\u2019s',        paidWith: 'demo_debt_1' },
+    { day: 12, categoryId: 'utilities',         amount: 180,   where: 'Con Edison',               paidWith: 'bank' },
+    { day: 13, categoryId: 'dining_out',        amount: 71.5,  where: 'Via Carota',               paidWith: 'demo_debt_1' },
+    { day: 15, categoryId: 'entertainment',     amount: 45,    where: 'AMC Theatres',             paidWith: 'demo_debt_1' },
+    { day: 17, categoryId: 'groceries',         amount: 104.3, where: 'Trader Joe\u2019s',        paidWith: 'demo_debt_1' },
+    { day: 18, categoryId: 'shopping',          amount: 29.99, where: 'Amazon',                   paidWith: 'demo_debt_1' },
+    { day: 20, categoryId: 'dining_out',        amount: 42,    where: 'Sweetgreen',               paidWith: 'demo_debt_1' },
+    { day: 22, categoryId: 'personal_care',     amount: 35,    where: 'Great Clips',              paidWith: 'demo_debt_1' },
+    { day: 24, categoryId: 'transportation',    amount: 48,    where: 'Shell',                    paidWith: 'demo_debt_1' },
+    { day: 26, categoryId: 'entertainment',     amount: 22,    where: 'Steam',                    paidWith: 'demo_debt_1' }
+  ];
+  function buildLog(month) {
+    var ym = /^\d{4}-\d{2}$/.test(month || '') ? month : Schema.localMonth();
+    var last = new Date(+ym.slice(0, 4), +ym.slice(5, 7), 0).getDate();
+    return VALUES.logLines.map(function (row, i) {
+      var d = Math.min(row.day, last);
+      return Schema.createExpenseEntry({
+        id: 'demo_log_' + i,
+        categoryId: row.categoryId,
+        amountCents: Money.toCents(row.amount),
+        period: 'once',
+        date: ym + '-' + (d < 10 ? '0' : '') + d,
+        dateKind: 'exact',
+        descriptor: row.where,
+        source: 'log',
+        paidWith: row.paidWith || null,
+        fixed: row.fixed === true ? true : null
+      });
+    });
+  }
+
+  return { VALUES: VALUES, build: build, buildSpending: buildSpending, buildLog: buildLog };
+});

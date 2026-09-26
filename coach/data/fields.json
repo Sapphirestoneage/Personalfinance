@@ -1,0 +1,300 @@
+{
+  "id": "coach_fields",
+  "version": "2026.1",
+  "asOf": "2026-09-25",
+  "source": "Coach Mode's entry forms (CD-003, plain words CD-009). Each id is the SPARKS Ledger row of the same name (data/ledger-rows.json), written to the same place in the household, so a client file could one day open in SPARKS unchanged. Labels are short; the full plain-words help for each is in data/help.json.",
+  "confidence": "convention",
+  "confidenceNote": "A list of questions and where their answers live, not a figure. coach/shared/fields.js writes each one; nothing here is a number.",
+  "note": "unit: cents (per says month or year), rate (a fraction, typed as a percent), date, bool, count, enum (choices), text, match (two percents). list: debt | asset | goal for one-line-per-item fields; their item keys are the field ids below.",
+  "fields": {
+    "dob": {
+      "label": "Date of birth",
+      "unit": "date"
+    },
+    "dependents": {
+      "label": "People who count on this money",
+      "unit": "count"
+    },
+    "grossAnnualIncome": {
+      "label": "Yearly pay, before tax",
+      "unit": "cents",
+      "per": "year"
+    },
+    "takeHomeMonthly": {
+      "label": "What lands in the bank, a month",
+      "unit": "cents",
+      "per": "month"
+    },
+    "payVaries": {
+      "label": "Pay changes a lot month to month",
+      "unit": "bool"
+    },
+    "accommodationMonthly": {
+      "label": "Home, a month (rent or mortgage)",
+      "unit": "cents",
+      "per": "month"
+    },
+    "foodMonthly": {
+      "label": "Food, a month",
+      "unit": "cents",
+      "per": "month"
+    },
+    "transportationMonthly": {
+      "label": "Getting around, a month",
+      "unit": "cents",
+      "per": "month"
+    },
+    "wantsMonthly": {
+      "label": "Everything else, a month",
+      "unit": "cents",
+      "per": "month"
+    },
+    "hasDebt": {
+      "label": "Owes money to anyone",
+      "unit": "bool"
+    },
+    "cashSavings": {
+      "label": "Cash in the bank, all together",
+      "unit": "cents"
+    },
+    "investments": {
+      "label": "Invested, all together",
+      "unit": "cents"
+    },
+    "highestDeductible": {
+      "label": "Biggest insurance deductible",
+      "unit": "cents"
+    },
+    "termLife": {
+      "label": "Life insurance, the amount",
+      "unit": "cents"
+    },
+    "disabilityMonthly": {
+      "label": "Disability pay if unable to work, a month",
+      "unit": "cents",
+      "per": "month"
+    },
+    "employerMatch": {
+      "label": "Employer match",
+      "unit": "match"
+    },
+    "contributionPercent": {
+      "label": "Share of pay going to retirement",
+      "unit": "rate"
+    },
+    "filingStatus": {
+      "label": "How they file taxes",
+      "unit": "enum",
+      "choices": [
+        [
+          "single",
+          "Single"
+        ],
+        [
+          "married_joint",
+          "Married, filing jointly"
+        ],
+        [
+          "married_separate",
+          "Married, filing separately"
+        ],
+        [
+          "head_of_household",
+          "Head of household"
+        ]
+      ]
+    },
+    "state": {
+      "label": "State (two letters)",
+      "unit": "text"
+    },
+    "marginalRate": {
+      "label": "Tax on the next dollar",
+      "unit": "rate"
+    },
+    "debtLabel": {
+      "label": "What it is",
+      "unit": "text",
+      "list": "debt"
+    },
+    "debtType": {
+      "label": "Kind",
+      "unit": "enum",
+      "list": "debt",
+      "choices": [
+        [
+          "credit_card",
+          "Credit card"
+        ],
+        [
+          "student_loan",
+          "Student loan"
+        ],
+        [
+          "auto",
+          "Car loan"
+        ],
+        [
+          "mortgage",
+          "Mortgage"
+        ],
+        [
+          "personal",
+          "Personal loan"
+        ],
+        [
+          "medical",
+          "Medical"
+        ],
+        [
+          "family",
+          "Owed to family"
+        ],
+        [
+          "other",
+          "Other"
+        ]
+      ]
+    },
+    "debtBalance": {
+      "label": "Still owed",
+      "unit": "cents",
+      "list": "debt"
+    },
+    "debtRate": {
+      "label": "Interest rate",
+      "unit": "rate",
+      "list": "debt"
+    },
+    "debtMinPayment": {
+      "label": "Smallest payment, a month",
+      "unit": "cents",
+      "per": "month",
+      "list": "debt"
+    },
+    "assetLabel": {
+      "label": "Account",
+      "unit": "text",
+      "list": "asset"
+    },
+    "assetAccountType": {
+      "label": "Kind",
+      "unit": "enum",
+      "list": "asset",
+      "choices": [
+        [
+          "checking",
+          "Checking"
+        ],
+        [
+          "savings",
+          "Savings"
+        ],
+        [
+          "hysa",
+          "High-yield savings"
+        ],
+        [
+          "brokerage",
+          "Brokerage (taxable)"
+        ],
+        [
+          "401k",
+          "401(k)"
+        ],
+        [
+          "roth_401k",
+          "Roth 401(k)"
+        ],
+        [
+          "403b",
+          "403(b)"
+        ],
+        [
+          "traditional_ira",
+          "Traditional IRA"
+        ],
+        [
+          "roth_ira",
+          "Roth IRA"
+        ],
+        [
+          "hsa",
+          "HSA"
+        ],
+        [
+          "crypto",
+          "Crypto"
+        ],
+        [
+          "other",
+          "Other"
+        ]
+      ]
+    },
+    "assetValue": {
+      "label": "In it right now",
+      "unit": "cents",
+      "list": "asset"
+    },
+    "goalName": {
+      "label": "Goal",
+      "unit": "text",
+      "list": "goal"
+    },
+    "goalDate": {
+      "label": "By when",
+      "unit": "date",
+      "list": "goal"
+    },
+    "goalAmount": {
+      "label": "Costs about",
+      "unit": "cents",
+      "list": "goal"
+    },
+    "goalSaved": {
+      "label": "Saved so far",
+      "unit": "cents",
+      "list": "goal"
+    },
+    "goalMonthly": {
+      "label": "Going in, a month",
+      "unit": "cents",
+      "per": "month",
+      "list": "goal"
+    }
+  },
+  "lists": {
+    "debt": {
+      "label": "Debts",
+      "add": "Add a debt",
+      "fields": [
+        "debtLabel",
+        "debtType",
+        "debtBalance",
+        "debtRate",
+        "debtMinPayment"
+      ]
+    },
+    "asset": {
+      "label": "Accounts",
+      "add": "Add an account",
+      "fields": [
+        "assetLabel",
+        "assetAccountType",
+        "assetValue"
+      ]
+    },
+    "goal": {
+      "label": "Goals",
+      "add": "Add a goal",
+      "fields": [
+        "goalName",
+        "goalDate",
+        "goalAmount",
+        "goalSaved",
+        "goalMonthly"
+      ]
+    }
+  }
+}

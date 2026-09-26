@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<meta name="robots" content="noindex"/>
+<title>Coach Home</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="coach.css"/>
+<!--
+  COACH HOME, the roster (CD-006, CD-011, coach/SPEC.md 3.1).
+
+  1. READS   the roster (coach.roster.v1) and each client's household, one
+             at a time, through coach/shared/coach.js. Nothing of SPARKS.
+  2. WRITES  the roster (new client, archive, next session date, import
+             mappings), a client's household only in the sheet import, and
+             the sealed files the coach saves.
+  3. SHOWS   one card a client: a picture of their progress, the next stop,
+             the last and next session, the check-in, the numbers to check.
+             The demo client is always a card. A welcome card says how the
+             app works until the first real client exists.
+
+  LIVE-FORM: built once. The cards are repainted only from buttons and
+  changes of a date or a select; the typed boxes (new client, passphrase,
+  the import) sit outside the repainted grid.
+-->
+</head>
+<body class="slaf">
+<main class="coach" id="main">
+  <div id="head"></div>
+
+  <section class="slaf-card welcome" id="welcome" hidden aria-label="How this works">
+    <div>
+      <span class="slaf-eyebrow">Welcome</span>
+      <h2>Three steps, every time</h2>
+      <ol class="steps">
+        <li><b>Add a client.</b> A name is enough. Their numbers stay in this browser, apart from anyone else's.</li>
+        <li><b>Open a session.</b> Go stop by stop down the path. Type what the client tells you; the pictures update as you go.</li>
+        <li><b>Show them their view.</b> One screen for the client: the life map, the goals, what changed, homework.</li>
+      </ol>
+      <div class="coach-actions">
+        <a class="slaf-btn slaf-btn--primary" href="session.html?client=demo">Try it with the example client</a>
+        <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-welcome-done">Got it</button>
+      </div>
+    </div>
+    <div class="coach-note">
+      <p><b>Nothing leaves this device</b> unless you save a locked file on purpose. There is no account and no server.</p>
+      <p><b>Empty is not zero.</b> A box left blank means "not known yet". Every box has a <span class="help-btn" aria-hidden="true" style="display:inline-flex;width:22px;height:22px;font-size:11px;vertical-align:middle">?</span> that says what it means, where to find it, and what to do if unsure.</p>
+    </div>
+  </section>
+
+  <section aria-label="Clients" id="roster-section">
+    <div class="coach-actions" style="justify-content:space-between;margin-bottom:var(--space-2)">
+      <h2 style="margin:0">Clients</h2>
+      <label class="slaf-switch" style="min-height:36px"><input type="checkbox" id="show-archived"/> Show archived</label>
+    </div>
+    <div class="cards" id="cards"></div>
+    <p class="coach-say" id="roster-say" role="status"></p>
+  </section>
+
+  <section class="slaf-card" id="new-client" style="margin-top:var(--space-4)">
+    <h2>Add a client</h2>
+    <div class="row">
+      <label class="inline">Name or nickname<input type="text" id="new-name" autocomplete="off" maxlength="60" placeholder="for example: Jordan"/></label>
+      <label class="inline">Which path<select id="new-path"></select></label>
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-new">Add client</button>
+    </div>
+    <p class="coach-note">The full path is nine stops, for a new client. The check-up is four, for someone coming back.</p>
+    <p class="coach-say" id="new-say" role="status"></p>
+  </section>
+
+  <details class="slaf-card fold" id="import" style="margin-top:var(--space-4)">
+    <summary>Bring a client over from a spreadsheet <span class="coach-note">(optional)</span></summary>
+    <ol class="steps">
+      <li>In Google Sheets, open the client's tab and choose <b>File, Download, Comma Separated Values (.csv)</b>.</li>
+      <li>Choose that file here and press <b>Read the file</b>.</li>
+      <li>For each column, pick where it goes. A column you leave as "Keep as a note" is saved as a private note, never as a number.</li>
+      <li>Give the mapping a name, so the next client takes seconds.</li>
+    </ol>
+    <div class="row">
+      <label class="inline">Client<select id="imp-client"></select></label>
+      <label class="inline">The .csv file<input type="file" id="imp-file" accept=".csv,text/csv,text/plain"/></label>
+      <label class="inline">A saved mapping<select id="imp-template"><option value="">None</option></select></label>
+      <button type="button" class="slaf-btn" id="btn-imp-read">Read the file</button>
+    </div>
+    <div id="imp-map" hidden>
+      <table class="map-table" id="imp-table"></table>
+      <div class="row" style="margin-top:var(--space-2)">
+        <label class="inline">Save this mapping as<input type="text" id="imp-name" maxlength="60" placeholder="for example: My sheet"/></label>
+        <button type="button" class="slaf-btn slaf-btn--primary" id="btn-imp-go">Bring the numbers in</button>
+      </div>
+    </div>
+    <p class="coach-say" id="imp-say" role="status"></p>
+  </details>
+
+  <details class="slaf-card fold" id="restore" style="margin-top:var(--space-4)">
+    <summary>Keep a safe copy <span class="coach-note">(back up and restore)</span></summary>
+    <p class="coach-note">A copy is one file, locked with a password you choose. Nobody can open it without the password, not even this app, so keep the password somewhere safe. Keep the files off shared drives.</p>
+    <div class="row" style="margin-top:var(--space-2)">
+      <label class="inline">Password (8 characters or more)<input type="password" id="pass" autocomplete="new-password"/></label>
+      <button type="button" class="slaf-btn" id="btn-backup-all">Save a copy of every client</button>
+    </div>
+    <h3 style="margin-top:var(--space-3)">Load a copy</h3>
+    <div class="row">
+      <label class="inline">The file<input type="file" id="restore-file" accept=".json,application/json"/></label>
+      <label class="slaf-switch" style="min-height:36px"><input type="checkbox" id="restore-replace"/> Replace a client already here</label>
+      <button type="button" class="slaf-btn" id="btn-restore">Load it</button>
+    </div>
+    <p class="coach-say" id="backup-say" role="status"></p>
+  </details>
+</main>
+
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/csv.js"></script>
+<script src="shared/vault.js"></script>
+<script src="shared/demo-persona.js"></script>
+<script src="shared/fields.js"></script>
+<script src="shared/coach.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/tier0.js"></script>
+<script src="engines/debt.js"></script>
+<script src="engines/foo.js"></script>
+<script src="engines/cashflow.js"></script>
+<script src="engines/coast.js"></script>
+<script src="engines/opening.js"></script>
+<script src="engines/countdown.js"></script>
+<script src="engines/session.js"></script>
+<script src="engines/quickentry.js"></script>
+<script src="common.js"></script>
+<script src="home.js"></script>
+</body>
+</html>
