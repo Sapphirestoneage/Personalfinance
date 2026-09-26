@@ -46,8 +46,20 @@ next). A planet moves out an orbit for every band it finishes.
 | `data/recipes.json` | The 95 figures: tier, inputs, unit, what each says |
 | `data/plays.json` | The 19 plays: what each is, when it opens, five steps |
 | `data/demo.json` | The example numbers |
+| `Money-Models-Workbook.xlsx`, `tools/workbook.py` | The same workbook as a spreadsheet: one sheet per planet, a Dashboard of live formulas, Plays, Your Model; built from the tables by `python3 moneymodels/tools/workbook.py` |
 | `test/run.js` | This app's tests (`node moneymodels/test/run.js`, also in CI) |
 | `DECISIONS.md`, `STATUS.md` | This lane's log (`MM-###`) and where it stands |
+
+## The spreadsheet
+
+`Money-Models-Workbook.xlsx` is the whole workbook for someone who would
+rather not use the app: the six planet sheets carry every lesson, question,
+box and checklist; the Dashboard computes every figure with formulas over
+named cells (`price`, `cac`, `gp30`, ...), so it reads "not yet" until the
+inputs exist and never shows a fake zero; Plays says which plays are open;
+Your Model reads the four offers back. A switch on Start Here runs it on the
+example numbers or on yours. It is generated from `data/` by
+`tools/workbook.py` (openpyxl), so the app and the sheet cannot drift.
 
 ## The rules that carry over from SPARKS
 

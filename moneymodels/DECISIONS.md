@@ -56,3 +56,21 @@ opens and never rebuilt by a store change; typing repaints the bands list and
 the payoff strip only (D-034).
 
 **Stored shape.** No change.
+
+## MM-006 — The same workbook as a spreadsheet, generated from the tables
+
+**Why.** The owner finds the app too much for now and asked for a
+professional spreadsheet.
+
+**Decision.** `tools/workbook.py` builds `Money-Models-Workbook.xlsx` from
+`data/levels.json`, `recipes.json`, `plays.json` and `demo.json`: one sheet
+per planet (every level's lesson, question, boxes and checklist, with an
+Example column and an In use column), a Dashboard where every figure is a
+formula over named cells and reads "not yet" until its inputs exist, Plays
+with Open or Waiting per play, Your Model, and Start Here with the legend,
+the planets-by-bands grid and the example switch (`useExample`). Money in
+dollars, percents as fractions; the formulas are the engine's, one per
+recipe. Rebuild after any change to the tables; the checked-in file is the
+deliverable.
+
+**Stored shape.** None; the spreadsheet is a file, not a store.
