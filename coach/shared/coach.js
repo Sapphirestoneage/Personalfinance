@@ -300,11 +300,13 @@
     });
     return singles.concat(qe);
   }
+  /* a header and a target word compare the same way: lower case, punctuation gone, one space */
+  function plainWords(x) { return String(x).toLowerCase().replace(/[^a-z0-9()% ]+/g, ' ').replace(/\s+/g, ' ').trim(); }
   function suggest(headers, T) {
     var targets = sheetTargets(T), out = {};
     (headers || []).forEach(function (hd) {
-      var h = String(hd).toLowerCase().replace(/[^a-z0-9()% ]+/g, ' ').replace(/\s+/g, ' ').trim(), best = null;
-      targets.forEach(function (t) { t.words.forEach(function (w) { if (w && (h === w || h.indexOf(w + ' ') === 0 || h === w) && (!best || w.length > best.len)) best = { id: t.id, len: w.length }; }); });
+      var h = plainWords(hd), best = null;
+      targets.forEach(function (t) { t.words.forEach(function (raw) { var w = plainWords(raw); if (w && (h === w || h.indexOf(w + ' ') === 0) && (!best || w.length > best.len)) best = { id: t.id, len: w.length }; }); });
       out[hd] = best ? best.id : null;
     });
     return out;

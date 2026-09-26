@@ -346,6 +346,7 @@ section('Check-ins, comments, a sheet in (CD-006, CD-008)');
   check('the first guess maps Rent', cols.Rent, 'qe:rent');
   check('and a debt column to its quick-entry word', cols['Car loan'], 'qe:car loan');
   check('and leaves a column it does not know unmapped', cols.Mood, null);
+  check('a label with a comma maps too (the words compare the same way)', Coach.suggest(['Life insurance, the amount'], T)['Life insurance, the amount'], 'field:termLife');
   cols.Marginal = 'field:marginalRate'; cols.Food = 'field:foodMonthly';
   const plan = Coach.sheetPlan(csv, cols, T, Csv, Q);
   check('the last filled line of each column is read', plan.writes.filter(w => w.header === 'Food')[0].value, 60000);
