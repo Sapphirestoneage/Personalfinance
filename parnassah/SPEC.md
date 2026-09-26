@@ -42,7 +42,17 @@ then adds them to what is left.
 - Not advice. The site does the arithmetic so the conversation with a rav, a
   preparer and a lawyer starts from a number.
 
-## 4. Not built
+## 4. The selling layer
+
+The site exists to sell the coaching; the tools are the draw. Five pages
+carry the selling (landing, coaching, about, resources, book) and every tool
+page ends in the band that books a call. Every word of those pages, every
+price and the booking link live in `data/site.json`, so the coach edits them
+without touching a page. Nothing is invented: unknown facts are `[edit:]`
+placeholders the tests list, and a testimonial appears only once a real one
+is added to `proof`.
+
+## 5. Not built
 
 - A monthly close or a log of what was actually spent (SPARKS does that).
 - A tax estimate from gross; the family types take-home and the year's tax.

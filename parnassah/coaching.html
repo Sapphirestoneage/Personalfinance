@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<title>Coaching</title>
+<meta name="description" content="Money coaching for Modern Orthodox families: one session to see the year, a season for the tuition years, or one big decision. Who it is for and how it works."/>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="parnassah.css"/>
+<!--
+  COACHING, the offers (PN-013).
+  1. READS   data/site.json.
+  2. WRITES  nothing.
+  3. SHOWS   who it is for, the three offers, how it works, the questions people ask, the call.
+-->
+</head>
+<body class="slaf">
+<main class="pn" id="main">
+  <div id="pn-head"></div>
+  <h1>Coaching</h1>
+  <p class="lede" id="lede"></p>
+  <section class="pn-section" id="who" aria-labelledby="h-who"></section>
+  <section class="pn-section" id="offers" aria-labelledby="h-offers"></section>
+  <section class="pn-section" id="process" aria-labelledby="h-process"></section>
+  <section class="pn-section pn-faq" id="faq" aria-labelledby="h-faq"></section>
+  <div id="pn-cta"></div>
+<footer class="pn-foot">
+<p>Nothing leaves this device. There is no account and no server; a backup is a file you save on purpose.</p>
+<p>Empty is not zero: a blank box means "not entered", and a figure that needs it says so instead of guessing.</p>
+<p>The reference figures are dated starting points of low confidence, not quotes. Nothing here is halachic, tax or legal advice: bring the numbers to your rav, your preparer and your lawyer.</p>
+</footer>
+</main>
+<script src="shared/money.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/tuition.js"></script>
+<script src="engines/jewishyear.js"></script>
+<script src="engines/tzedakah.js"></script>
+<script src="engines/milestones.js"></script>
+<script src="engines/home.js"></script>
+<script src="engines/plan.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  var PN = SLAF.PN, esc = PN.esc, Money = SLAF.Money;
+  PN.bootSite('coaching', function (T) {
+    var S = T.site;
+    PN.el('lede').textContent = 'One-to-one, on a video call, with your own numbers on the screen. ' + S.coach.firstName + ' types as you talk; you leave with a picture and three things to do.';
+    PN.el('who').innerHTML = '<h2 id="h-who">' + esc(S.whoFor.title) + '</h2><div class="pn-two"><div><h3>Yes, if</h3><ul>' + S.whoFor.yes.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div><div><h3>Not the right fit for</h3><ul>' + S.whoFor.no.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join('') + '</ul></div></div>';
+    PN.el('offers').innerHTML = '<h2 id="h-offers">Three ways to work together</h2><div class="pn-offers">' + S.offers.map(function (o) {
+      var price = Money.isEntered(o.priceDollars) ? Money.formatCents(o.priceDollars * 100) : 'Ask on the call';
+      var note = o.priceNote && !/^\[edit/.test(o.priceNote) ? '<small>' + esc(o.priceNote) + '</small>' : '';
+      return '<div class="pn-offer' + (o.featured ? ' is-featured' : '') + '"><h3>' + esc(o.name) + '</h3><p class="tagline">' + esc(o.tagline) + '</p><p class="for">' + esc(o.for) + '</p><ul>' + o.includes.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') + '</ul><p class="price">' + esc(price) + note + '</p><a class="slaf-btn' + (o.featured ? ' slaf-btn--primary' : '') + '" href="book.html">' + esc(S.contact.bookingLabel) + '</a></div>';
+    }).join('') + '</div>';
+    PN.el('process').innerHTML = '<h2 id="h-process">' + esc(S.process.title) + '</h2><ol class="pn-steps">' + S.process.steps.map(function (st) { return '<li><b>' + esc(st.title) + '</b><p>' + esc(st.text) + '</p></li>'; }).join('') + '</ol>';
+    PN.el('faq').innerHTML = '<h2 id="h-faq">Questions people ask</h2>' + S.faq.map(function (f) { return '<details><summary>' + esc(f.q) + '</summary><p>' + esc(f.a) + '</p></details>'; }).join('');
+  });
+})();
+</script>
+</body>
+</html>

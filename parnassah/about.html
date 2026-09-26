@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<title>About</title>
+<meta name="description" content="About Eli Saperstein, money coach for Modern Orthodox families: who I am, how I work, and why the free tools on this site exist."/>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="parnassah.css"/>
+<!--
+  ABOUT, the coach (PN-013).
+  1. READS   data/site.json.
+  2. WRITES  nothing.
+  3. SHOWS   who the coach is, in the coach's own words, and the call.
+-->
+</head>
+<body class="slaf">
+<main class="pn" id="main">
+  <div id="pn-head"></div>
+  <h1 id="h-name"></h1>
+  <p class="lede" id="lede"></p>
+  <div class="pn-about"><div id="bio"></div><div><div class="pn-portrait" id="portrait"></div><ul class="pn-creds" id="creds"></ul></div></div>
+  <section class="pn-section" id="how" aria-labelledby="h-how">
+    <h2 id="h-how">How I work</h2>
+    <div class="pn-lines">
+      <div><b>Your numbers, your decisions</b><p>I do not sell anything but my time. No products, no portfolio, no commission. You decide; I make sure you can see what you are deciding.</p></div>
+      <div><b>Plain words</b><p>Every number on the screen has a sentence beside it saying what it means and where to find it. If a term needs a glossary, I have failed.</p></div>
+      <div><b>Empty is not zero</b><p>A number we do not know yet stays blank, and the picture says so. I would rather show you an honest gap than a tidy guess.</p></div>
+      <div><b>The rav has the last word</b><p>Maaser, inheritance, a heter iska: I do the arithmetic and send you to your rav with a number, never a ruling.</p></div>
+    </div>
+  </section>
+  <div id="pn-cta"></div>
+<footer class="pn-foot">
+<p>Nothing leaves this device. There is no account and no server; a backup is a file you save on purpose.</p>
+<p>Empty is not zero: a blank box means "not entered", and a figure that needs it says so instead of guessing.</p>
+<p>The reference figures are dated starting points of low confidence, not quotes. Nothing here is halachic, tax or legal advice: bring the numbers to your rav, your preparer and your lawyer.</p>
+</footer>
+</main>
+<script src="shared/money.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/tuition.js"></script>
+<script src="engines/jewishyear.js"></script>
+<script src="engines/tzedakah.js"></script>
+<script src="engines/milestones.js"></script>
+<script src="engines/home.js"></script>
+<script src="engines/plan.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  var PN = SLAF.PN, esc = PN.esc;
+  function edit(t) { return esc(t).replace(/\[edit:[^\]]*\]/g, function (m) { return '<span class="pn-edit">' + m + '</span>'; }); }
+  PN.bootSite('about', function (T) {
+    var C = T.site.coach;
+    PN.el('h-name').textContent = C.name;
+    PN.el('lede').innerHTML = edit(C.title) + (C.community ? ' <span class="pn-note">' + edit(C.community) + '</span>' : '');
+    PN.el('bio').innerHTML = C.bio.map(function (p) { return '<p>' + edit(p) + '</p>'; }).join('');
+    PN.el('portrait').innerHTML = C.photo ? '<img src="' + esc(C.photo) + '" alt="' + esc(C.name) + '"/>' : esc(C.name);
+    PN.el('creds').innerHTML = C.credentials.map(function (c) { return '<li>' + edit(c) + '</li>'; }).join('');
+  });
+})();
+</script>
+</body>
+</html>

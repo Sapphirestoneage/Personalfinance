@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<title>Book a free call</title>
+<meta name="description" content="Book a free 20-minute call with Eli Saperstein, money coach for Modern Orthodox families. No preparation, no numbers needed."/>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="parnassah.css"/>
+<!--
+  BOOK, the call (PN-013).
+  1. READS   data/site.json: the booking link, or the email, or neither.
+  2. WRITES  nothing.
+  3. SHOWS   what the call is, what to bring, what happens after, and the one button.
+-->
+</head>
+<body class="slaf">
+<main class="pn" id="main">
+  <div id="pn-head"></div>
+  <h1 id="h-title"></h1>
+  <p class="lede" id="lede"></p>
+  <div class="pn-grid pn-grid--wide">
+    <div class="pn-book-panel" id="panel"></div>
+    <section class="slaf-card" aria-labelledby="h-bring"><h2 id="h-bring">What to bring</h2><ul id="bring"></ul><h3 style="margin-top:var(--space-3)">After the call</h3><p class="pn-note" id="after"></p></section>
+  </div>
+  <section class="pn-section pn-faq" id="faq" aria-labelledby="h-faq"></section>
+<footer class="pn-foot">
+<p>Nothing leaves this device. There is no account and no server; a backup is a file you save on purpose.</p>
+<p>Empty is not zero: a blank box means "not entered", and a figure that needs it says so instead of guessing.</p>
+<p>The reference figures are dated starting points of low confidence, not quotes. Nothing here is halachic, tax or legal advice: bring the numbers to your rav, your preparer and your lawyer.</p>
+</footer>
+</main>
+<script src="shared/money.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/tuition.js"></script>
+<script src="engines/jewishyear.js"></script>
+<script src="engines/tzedakah.js"></script>
+<script src="engines/milestones.js"></script>
+<script src="engines/home.js"></script>
+<script src="engines/plan.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  var PN = SLAF.PN, esc = PN.esc;
+  PN.bootSite('book', function (T) {
+    var S = T.site, B = S.book, link = PN.bookLink(T);
+    PN.el('h-title').textContent = B.title;
+    PN.el('lede').textContent = B.intro;
+    var panel = '<h2>' + esc(S.contact.bookingLabel) + '</h2>';
+    if (link) panel += '<p class="pn-note">' + (link.external ? 'The calendar opens in a new tab. Pick any slot that suits you.' : 'Your mail app opens with a note to ' + esc(S.coach.firstName) + '. Say when suits you and you will hear back within a day.') + '</p><p><a class="slaf-btn slaf-btn--primary" href="' + esc(link.href) + '"' + (link.external ? ' target="_blank" rel="noopener"' : '') + '>' + esc(S.contact.bookingLabel) + '</a></p>';
+    else panel += '<p class="pn-note"><span class="pn-edit">[edit: set contact.bookingUrl or contact.email in data/site.json and this becomes the button]</span></p>';
+    panel += '<p class="pn-note">Free, twenty minutes, on a video call. No preparation and no numbers needed.</p>';
+    PN.el('panel').innerHTML = panel;
+    PN.el('bring').innerHTML = B.bring.map(function (b) { return '<li>' + esc(b) + '</li>'; }).join('');
+    PN.el('after').textContent = B.after;
+    PN.el('faq').innerHTML = '<h2 id="h-faq">Before you book</h2>' + S.faq.slice(0, 3).map(function (f) { return '<details><summary>' + esc(f.q) + '</summary><p>' + esc(f.a) + '</p></details>'; }).join('');
+  });
+})();
+</script>
+</body>
+</html>

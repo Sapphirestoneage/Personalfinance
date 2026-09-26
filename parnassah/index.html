@@ -4,54 +4,30 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
-<title>Parnassah</title>
+<title>Parnassah: money coaching for the Modern Orthodox household</title>
+<meta name="description" content="Money coaching for Modern Orthodox families: tuition, camp, the simchas and the house, worked out together, live. Free tools, no account, and a free 20-minute call."/>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="shared/fonts.css"/>
 <link rel="stylesheet" href="shared/theme.css"/>
 <link rel="stylesheet" href="parnassah.css"/>
 <!--
-  PARNASSAH, the home page (PN-011, PN-012).
-  1. READS   the family (parnassah.household.v1) and every engine, for one figure a tile.
-  2. WRITES  the household facts and the children: the only page that does.
-  3. SHOWS   what the site is, the household form, the children, and a tile a page.
-  LIVE-FORM: built once. The children's rows are rebuilt only on add or remove.
+  THE LANDING PAGE (PN-013).
+  1. READS   data/site.json, and the engines for nothing: no household is drawn here.
+  2. WRITES  nothing.
+  3. SHOWS   the hero, the squeeze, how coaching works, the offers, the free tools, the coach, the call.
 -->
 </head>
 <body class="slaf">
 <main class="pn" id="main">
   <div id="pn-head"></div>
-  <h1>Money planning for the Modern Orthodox household</h1>
-  <p class="lede">Tuition for every child, the Jewish year, tzedakah, the simchas, a home within a walk of the shul. A general planner does not see these lines. This site lays them out in plain words, adds them up, and shows what is left, in this browser only.</p>
-  <div class="pn-actions" id="pn-actions"></div>
-
-  <div class="pn-grid pn-grid--wide">
-    <section class="slaf-card" aria-labelledby="h-household">
-      <span class="slaf-eyebrow">Start here</span>
-      <h2 id="h-household">The household</h2>
-      <p class="pn-note">Seven facts. Every other page reads them from here.</p>
-      <div id="form-household"></div>
-    </section>
-    <section class="slaf-card" aria-labelledby="h-kids">
-      <span class="slaf-eyebrow">Start here</span>
-      <h2 id="h-kids">The children</h2>
-      <p class="pn-note">A year of birth places each child in a grade, a camp age and a simcha year. Boy or girl sets the bar or bat mitzvah; the year in Israel adds a year of tuition at eighteen.</p>
-      <div class="pn-list" id="kids"></div>
-      <div class="pn-actions"><button type="button" class="slaf-btn" id="kid-add">Add a child</button></div>
-    </section>
-  </div>
-
-  <h2 style="margin-top:var(--space-5)">The pages</h2>
-  <div class="pn-tiles" id="tiles"></div>
-
-  <section class="slaf-card" aria-labelledby="h-how">
-    <h2 id="h-how">How this works</h2>
-    <ol class="pn-guide-steps">
-      <li><b>Type what you know.</b> A blank box is "not entered", never zero. Every box has a <span class="help-btn" aria-hidden="true" style="display:inline-flex;width:22px;height:22px;font-size:11px;vertical-align:middle">?</span> that says what it means, where to find it, and what to do if unsure.</li>
-      <li><b>Start from a typical figure where you have none.</b> Tuition, camp, a wedding: the site carries dated bands, marked as assumed until you replace them.</li>
-      <li><b>Read the picture.</b> Each page draws its numbers and says what they mean. The last page adds them all up.</li>
-    </ol>
-    <p class="pn-note">Not sure where to begin? <b>Try with example numbers</b> above fills every page with the Adlers, an invented family of six in Teaneck. Nothing about them is real.</p>
-  </section>
+  <section class="pn-hero" id="hero"></section>
+  <section class="pn-section" id="squeeze" aria-labelledby="h-squeeze"></section>
+  <section class="pn-section" id="process" aria-labelledby="h-process"></section>
+  <section class="pn-section" id="offers" aria-labelledby="h-offers"></section>
+  <section class="pn-section" id="tools" aria-labelledby="h-tools"></section>
+  <section class="pn-section" id="proof" aria-labelledby="h-proof" hidden></section>
+  <section class="pn-section" id="coach" aria-labelledby="h-coach"></section>
+  <div id="pn-cta"></div>
 <footer class="pn-foot">
 <p>Nothing leaves this device. There is no account and no server; a backup is a file you save on purpose.</p>
 <p>Empty is not zero: a blank box means "not entered", and a figure that needs it says so instead of guessing.</p>
@@ -71,57 +47,25 @@
 <script src="common.js"></script>
 <script>
 (function () {
-  var PN = SLAF.PN, Store = SLAF.Store, Money = SLAF.Money, esc = PN.esc;
-  var render = {
-    form: function (h, T) {
-      var regions = T.tuition.regions.map(function (r) { return { value: r.id, label: r.label }; });
-      var communities = T.communities.communities.map(function (c) { return { value: c.id, label: c.label }; });
-      PN.el('form-household').innerHTML = '<div class="row">'
-        + PN.field({ label: 'What to call the household', path: 'household.name', type: 'text', help: 'name' }, T)
-        + PN.field({ label: 'Region', path: 'household.region', type: 'select', options: regions, help: 'region' }, T)
-        + PN.field({ label: 'Community', path: 'household.community', type: 'select', options: communities, help: 'community', empty: 'Not listed or not sure' }, T)
-        + '</div><div class="row">'
-        + PN.field({ label: 'Gross income, a year, both earners', path: 'household.grossAnnualCents', type: 'cents', help: 'gross' }, T)
-        + PN.field({ label: 'Take-home, a month', path: 'household.takeHomeMonthlyCents', type: 'cents', help: 'takeHome' }, T)
-        + PN.field({ label: 'To retirement, a month', path: 'household.retirementMonthlyCents', type: 'cents', help: 'retirement' }, T)
-        + PN.field({ label: 'Older parent, year of birth', path: 'household.olderParentBirthYear', type: 'int', help: 'parentBirthYear' }, T)
-        + '</div>';
-    },
-    lists: function (h, T) {
-      var host = PN.el('kids');
-      if (!h.kids.length) { host.innerHTML = '<p class="pn-note">No children yet. Add one below, or try the example family.</p>'; return; }
-      host.innerHTML = h.kids.map(function (k, i) {
-        var p = 'kids.' + i + '.';
-        return '<div class="pn-line">'
-          + PN.field({ label: 'Name', path: p + 'name', type: 'text' }, T)
-          + PN.field({ label: 'Year of birth', path: p + 'birthYear', type: 'int', help: 'birthYear' }, T)
-          + PN.field({ label: 'Boy or girl', path: p + 'sex', type: 'select', options: [{ value: 'boy', label: 'Boy' }, { value: 'girl', label: 'Girl' }], help: 'sex' }, T)
-          + PN.field({ label: 'A year in Israel at 18', path: p + 'gapYear', type: 'bool', help: 'gapYear' }, T)
-          + PN.field({ label: 'Summer', path: p + 'camp', type: 'select', options: [{ value: 'sleepaway', label: 'Sleepaway camp' }, { value: 'day', label: 'Day camp' }, { value: 'none', label: 'No camp' }], help: 'camp' }, T)
-          + '<button type="button" class="slaf-btn slaf-btn--quiet" data-remove="' + i + '" aria-label="Remove this child">Remove</button></div>';
-      }).join('');
-      host.querySelectorAll('[data-remove]').forEach(function (b) { b.addEventListener('click', function () { h.kids.splice(Number(b.getAttribute('data-remove')), 1); Store.save(h); render.lists(h, T); PN.bind(document, h); PN.fill(host, h); }); });
-      PN.bind(host, h); PN.fill(host, h);
-    },
-    draw: function (h, T) {
-      var o = {};
-      var t = SLAF.Tuition.plan(h, T, o), y = SLAF.JewishYear.calendar(h, T, o), z = SLAF.Tzedakah.owed(h, T, o), m = SLAF.Milestones.timeline(h, T, o), p = SLAF.Plan.picture(h, T, o);
-      var hm = SLAF.Home.carry(h, T, { tuitionAnnualCents: Money.isOk(t) ? t.value.thisYearCents : null });
-      var tiles = [
-        { href: 'tuition.html', title: 'Tuition', text: 'Every child, every school year, until the youngest is out: the mountain and its peak.', fig: Money.isOk(t) ? PN.fmt(t.value.thisYearCents) + ' this school year' : t.reason },
-        { href: 'year.html', title: 'The year', text: 'Dues, the holidays, the Shabbat table and the summer, laid on twelve months so the spikes show.', fig: Money.isOk(y) ? PN.fmt(y.value.annualCents) + ' a year' + (y.value.complete ? '' : ' so far') : y.reason },
-        { href: 'tzedakah.html', title: 'Tzedakah', text: 'A tenth of what, and how much of it has gone out. The arithmetic under each approach, never the ruling.', fig: Money.isOk(z) ? PN.fmt(z.value.remainingCents) + ' still to give this year' : z.reason },
-        { href: 'milestones.html', title: 'Simchas', text: 'Bar and bat mitzvahs, the year in Israel, weddings and the years after, on a line of years.', fig: Money.isOk(m) && m.value.next ? 'Next: ' + m.value.next.label + ', ' + (m.value.next.name || '') + ', ' + m.value.next.year : (Money.isOk(m) ? 'Nothing ahead on the line' : m.reason) },
-        { href: 'home.html', title: 'The home', text: 'A house within a walk of the shul, and what it costs a month once tuition has had its share.', fig: Money.isOk(hm) ? PN.fmt(hm.value.totalMonthlyCents) + ' a month to carry' : hm.reason },
-        { href: 'plan.html', title: 'The picture', text: 'Take-home in, everything above out, and what is left. The checklist of what should be in place.', fig: Money.isOk(p) ? PN.fmt(p.value.leftCents) + ' a year left for everything else' + (p.value.complete ? '' : ', so far') : p.reason },
-        { href: 'guide.html', title: 'Guide', text: 'The words, the checklists, and the rules that change the arithmetic: 529 for K to 12, the dependent care account, a halachic will.', fig: '' }
-      ];
-      PN.el('tiles').innerHTML = tiles.map(function (x) { return '<a class="pn-tile" href="' + x.href + '"><h3>' + esc(x.title) + '</h3><p>' + esc(x.text) + '</p>' + (x.fig ? '<span class="pn-tile-fig">' + esc(x.fig) + '</span>' : '') + '</a>'; }).join('');
-    }
-  };
-  PN.el('kid-add').addEventListener('click', function () { var h = render.h; h.kids.push({ id: Store.nextId(h.kids, 'k'), name: null, birthYear: null, sex: null, gapYear: null, camp: null }); Store.save(h); render.lists(h, render.T); });
-  var boot = PN.boot;
-  PN.boot('index', { form: function (h, T) { render.h = h; render.T = T; render.form(h, T); }, lists: render.lists, draw: render.draw });
+  var PN = SLAF.PN, esc = PN.esc, Money = SLAF.Money;
+  function edit(t) { return String(t).replace(/\[edit:[^\]]*\]/g, function (m) { return '<span class="pn-edit">' + esc(m) + '</span>'; }); }
+  function safe(t) { return edit(esc(t)); }
+  PN.bootSite('index', function (T) {
+    var S = T.site, H = S.hero;
+    PN.el('hero').innerHTML = '<span class="slaf-eyebrow">' + esc(H.eyebrow) + '</span><h1>' + esc(H.headline) + '</h1><p>' + esc(H.sub) + '</p>'
+      + '<div class="pn-actions"><a class="slaf-btn slaf-btn--primary" href="book.html">' + esc(H.primary) + '</a><a class="slaf-btn" href="tools.html">' + esc(H.secondary) + '</a></div>'
+      + '<p class="pn-hero-note">No account, no server, nothing sent anywhere. The tools keep your numbers in your own browser.</p>';
+    PN.el('squeeze').innerHTML = '<h2 id="h-squeeze">' + esc(S.squeeze.title) + '</h2><div class="pn-lines">' + S.squeeze.lines.map(function (l) { return '<div><b>' + esc(l.label) + '</b><p>' + esc(l.text) + '</p></div>'; }).join('') + '</div>';
+    PN.el('process').innerHTML = '<h2 id="h-process">' + esc(S.process.title) + '</h2><ol class="pn-steps">' + S.process.steps.map(function (st) { return '<li><b>' + esc(st.title) + '</b><p>' + esc(st.text) + '</p></li>'; }).join('') + '</ol>';
+    PN.el('offers').innerHTML = '<h2 id="h-offers">Three ways to work together</h2><div class="pn-offers">' + S.offers.map(function (o) {
+      var price = Money.isEntered(o.priceDollars) ? Money.formatCents(o.priceDollars * 100) : 'Ask on the call';
+      return '<div class="pn-offer' + (o.featured ? ' is-featured' : '') + '"><h3>' + esc(o.name) + '</h3><p class="tagline">' + esc(o.tagline) + '</p><p class="for">' + esc(o.for) + '</p><ul>' + o.includes.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') + '</ul><p class="price">' + esc(price) + '</p><a class="slaf-btn' + (o.featured ? ' slaf-btn--primary' : '') + '" href="book.html">' + esc(S.contact.bookingLabel) + '</a></div>';
+    }).join('') + '</div><p class="pn-note" style="margin-top:var(--space-2)"><a href="coaching.html">More on each, who it is for, and the questions people ask.</a></p>';
+    PN.el('tools').innerHTML = '<h2 id="h-tools">' + esc(S.resources.title) + '</h2><p class="lede">' + esc(S.resources.intro) + '</p><div class="pn-tiles">' + S.resources.tools.map(function (t) { return '<a class="pn-tile" href="' + esc(t.href) + '"><h3>' + esc(t.title) + '</h3><p>' + esc(t.text) + '</p></a>'; }).join('') + '</div>';
+    if (S.proof.length) { PN.el('proof').hidden = false; PN.el('proof').innerHTML = '<h2 id="h-proof">What families say</h2><div class="pn-proof">' + S.proof.map(function (p) { return '<blockquote>' + esc(p.text) + '<cite>' + esc(p.who) + '</cite></blockquote>'; }).join('') + '</div>'; }
+    PN.el('coach').innerHTML = '<h2 id="h-coach">About ' + esc(S.coach.firstName) + '</h2><div class="pn-about"><div><p class="lede">' + safe(S.coach.short) + '</p><p><a href="about.html">More about ' + esc(S.coach.firstName) + '</a></p></div>'
+      + '<div class="pn-portrait">' + (S.coach.photo ? '<img src="' + esc(S.coach.photo) + '" alt="' + esc(S.coach.name) + '"/>' : esc(S.coach.name) + '<br/>' + esc(S.coach.title)) + '</div></div>';
+  });
 })();
 </script>
 </body>

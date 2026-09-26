@@ -22,7 +22,8 @@
     milestones: 'milestones_2026.json',
     communities: 'communities_2026.json',
     rules: 'rules_2026.json',
-    help: 'help.json'
+    help: 'help.json',
+    site: 'site.json'
   };
   function loadSync() {
     var fs = require('fs'), path = require('path');

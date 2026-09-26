@@ -21,6 +21,7 @@ function check(name, actual, expected) { if (actual === expected) { passed++; re
 function checkTrue(name, ok, detail) { if (ok) { passed++; return; } failures.push(name + (detail ? '\n      ' + detail : '')); }
 function near(name, actual, expected, tol) { checkTrue(name, typeof actual === 'number' && Math.abs(actual - expected) <= (tol || 1), 'expected about ' + expected + ', got ' + actual); }
 function section(t) { console.log('\n' + t); }
+const pending = [];
 
 function fakeStorage(seed) {
   const store = Object.assign({}, seed || {});
@@ -384,22 +385,30 @@ section('The pictures (PN-010)');
 /* ======================================================================
    The pages (PN-011, PN-012)
    ====================================================================== */
-section('The eight pages (PN-011, PN-012)');
+section('The thirteen pages (PN-011, PN-012, PN-013)');
 {
   const pages = fs.readdirSync(APP).filter(f => f.endsWith('.html')).sort();
-  check('eight pages', pages.join(','), 'guide.html,home.html,index.html,milestones.html,plan.html,tuition.html,tzedakah.html,year.html');
+  check('thirteen pages', pages.join(','), 'about.html,book.html,coaching.html,guide.html,home.html,index.html,milestones.html,plan.html,resources.html,tools.html,tuition.html,tzedakah.html,year.html');
+  const selling = ['index.html', 'coaching.html', 'about.html', 'resources.html', 'book.html'];
   const common = fs.readFileSync(A('common.js'), 'utf8');
   pages.forEach(f => {
     const s = fs.readFileSync(A(f), 'utf8');
+    const sells = selling.indexOf(f) !== -1;
     checkTrue(f + ' carries a Content Security Policy that keeps it to itself', /http-equiv="Content-Security-Policy"[^>]*default-src 'self'/.test(s) && /connect-src 'self'/.test(s));
     checkTrue(f + ' opts into the theme with <body class="slaf">', /<body class="slaf">/.test(s));
-    checkTrue(f + ' has a header host, the actions and a lede', s.indexOf('id="pn-head"') !== -1 && s.indexOf('id="pn-actions"') !== -1 && s.indexOf('class="lede"') !== -1);
+    const desc = (/<meta name="description" content="([^"]*)"/.exec(s) || [])[1] || '';
+    checkTrue(f + ' has a description for search, under 170 characters', desc.length > 40 && desc.length <= 170, desc.length + ' characters');
+    checkTrue(f + ' is not hidden from search', !/name="robots"[^>]*noindex/.test(s));
+    checkTrue(f + ' has a header host and a lede', s.indexOf('id="pn-head"') !== -1 && s.indexOf('class="lede"') !== -1);
+    if (!sells) checkTrue(f + ' has the actions', s.indexOf('id="pn-actions"') !== -1);
     checkTrue(f + ' loads every engine and common.js', ['engines/tuition.js', 'engines/jewishyear.js', 'engines/tzedakah.js', 'engines/milestones.js', 'engines/home.js', 'engines/plan.js', 'common.js'].every(x => s.indexOf('src="' + x + '"') !== -1));
     checkTrue(f + ' says what it reads, writes and shows', /READS/.test(s) && /WRITES/.test(s) && /SHOWS/.test(s));
-    checkTrue(f + ' boots with its own page id', new RegExp("PN\\.boot\\('" + f.replace('.html', '') + "'").test(s));
+    checkTrue(f + ' boots with its own page id', new RegExp("PN\\.boot" + (sells ? 'Site' : '') + "\\('" + f.replace('.html', '') + "'").test(s));
     checkTrue(f + ' has a footer that says nothing leaves the device and that this is not advice', /Nothing leaves this device/.test(s) && /halachic, tax or legal advice/.test(s));
+    if (f !== 'book.html') checkTrue(f + ' carries the band that books a call', s.indexOf('id="pn-cta"') !== -1);
   });
   checkTrue('the nav names every page', pages.every(f => common.indexOf("href: '" + f + "'") !== -1));
+  checkTrue('the tool sub-nav names only tools, and the site nav ends in the call', /id: 'book', href: 'book.html', label: 'Book a call', primary: true/.test(common) && !/PAGES = \[[\s\S]*?book\.html/.test(common.slice(common.indexOf('var PAGES'), common.indexOf('function el'))));
   /* Nothing that ships carries an em dash (D-321); the vendored money.js is SPARKS' own. */
   const dashed = [];
   function walk(d) { fs.readdirSync(d, { withFileTypes: true }).forEach(e => { const p = path.join(d, e.name); if (e.isDirectory()) { if (e.name !== 'vendor') walk(p); } else if (/\.(js|html|css|json|md)$/.test(e.name) && ['money.js', 'theme.css', 'fonts.css', 'DECISIONS.md', 'run.js'].indexOf(e.name) === -1) { if (fs.readFileSync(p, 'utf8').indexOf('\u2014') !== -1) dashed.push(path.relative(APP, p)); } }); }
@@ -415,6 +424,38 @@ section('The eight pages (PN-011, PN-012)');
     (src.match(/var\(\s*(--[a-z0-9-]+)\s*\)/gi) || []).map(m => m.replace(/var\(\s*/i, '').replace(/\s*\)$/, '')).forEach(t => { if (!defs.has(t) && !local.has(t)) orphans.push(f + ' uses ' + t); });
   });
   checkTrue('every CSS token resolves', orphans.length === 0, orphans.join(', '));
+}
+
+/* ======================================================================
+   The selling layer: one file of copy (PN-013, PN-014)
+   ====================================================================== */
+section('The selling layer: every word in data/site.json (PN-013, PN-014)');
+{
+  const S = T.site;
+  checkTrue('the coach has a name, a title and a short line', typeof S.coach.name === 'string' && S.coach.name.length > 3 && S.coach.title.length > 10 && S.coach.short.length > 40);
+  checkTrue('the bio is paragraphs', Array.isArray(S.coach.bio) && S.coach.bio.length >= 3 && S.coach.bio.every(p => typeof p === 'string' && p.length > 20));
+  ['eyebrow', 'headline', 'sub', 'primary', 'secondary'].forEach(k => checkTrue('the hero has ' + k, typeof S.hero[k] === 'string' && S.hero[k].length > 3));
+  checkTrue('the headline is short enough to read at a glance', S.hero.headline.split(/\s+/).length <= 16, S.hero.headline);
+  check('three offers', S.offers.length, 3);
+  S.offers.forEach(o => {
+    checkTrue('offer ' + o.id + ' says who it is for and what it includes', typeof o.for === 'string' && o.for.length > 20 && Array.isArray(o.includes) && o.includes.length >= 3);
+    checkTrue('offer ' + o.id + ' prices in whole dollars or asks on the call', o.priceDollars === null || Number.isInteger(o.priceDollars));
+  });
+  check('exactly one offer is featured', S.offers.filter(o => o.featured).length, 1);
+  checkTrue('every question in the FAQ is a question', S.faq.length >= 4 && S.faq.every(f => /\?$/.test(f.q) && f.a.length > 30));
+  checkTrue('proof is a list, empty until a real family says something', Array.isArray(S.proof) && S.proof.every(p => p.text && p.who));
+  const pages = fs.readdirSync(APP).filter(f => f.endsWith('.html'));
+  S.resources.tools.forEach(t => checkTrue('resource ' + t.href + ' is a page', pages.indexOf(t.href) !== -1));
+  const guide = fs.readFileSync(A('guide.html'), 'utf8');
+  S.resources.checklists.forEach(c => { const id = c.href.split('#')[1]; checkTrue('checklist anchor #' + id + ' exists in the guide', new RegExp('id="' + id + '"').test(guide)); });
+  checkTrue('the process has four steps, each with a title and words', S.process.steps.length === 4 && S.process.steps.every(st => st.title && st.text.length > 40));
+  checkTrue('the contact block has the three keys', ['email', 'bookingUrl', 'bookingLabel'].every(k => k in S.contact));
+  checkTrue('a booking link, when set, is https', !S.contact.bookingUrl || /^https:\/\//.test(S.contact.bookingUrl));
+  checkTrue('the only network addresses live in site.json', pages.concat(['common.js']).every(f => !/https?:\/\//.test(fs.readFileSync(A(f), 'utf8').replace(/<!--[\s\S]*?-->/g, ''))));
+  const raw = fs.readFileSync(A('data/site.json'), 'utf8');
+  const edits = raw.match(/\[edit:[^\]]*\]/g) || [];
+  if (edits.length || !S.contact.bookingUrl) pending.push('site.json still has ' + edits.length + ' [edit:] placeholders' + (!S.contact.bookingUrl && !S.contact.email ? ' and no booking link or email' : '') + ': the coach fills them before the site goes live');
+  checkTrue('no placeholder leaks into the hero, the offers\' names or the FAQ', !/\[edit/.test(JSON.stringify(S.hero) + S.offers.map(o => o.name + o.for + o.includes.join()).join() + JSON.stringify(S.faq)));
 }
 
 /* ======================================================================
@@ -449,5 +490,6 @@ section('The decisions log');
 }
 
 /* ====================================================================== */
-console.log('\n' + passed + ' checks passed' + (failures.length ? ', ' + failures.length + ' failed' : ''));
+pending.forEach(p => console.log('\n  PENDING ' + p));
+console.log('\n' + passed + ' checks passed' + (failures.length ? ', ' + failures.length + ' failed' : '') + (pending.length ? ', ' + pending.length + ' pending' : ''));
 if (failures.length) { failures.forEach(f => console.log('\n  FAIL ' + f)); process.exit(1); }

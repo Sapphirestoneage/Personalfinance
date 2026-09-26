@@ -1,0 +1,125 @@
+{
+  "version": "2026.1",
+  "asOf": "2026-09",
+  "confidence": "high",
+  "source": "The coach's own words about the practice, drawn from the Coach Mode spec (coach/SPEC.md): live sessions down a nine-stop path, homework, a recap, monthly check-ins between sessions.",
+  "confidenceNote": "Everything on the selling pages comes from this one file. Edit the words here; no page needs to change. Anything in square brackets is a placeholder the coach fills in before the site goes live: the tests list them.",
+  "coach": {
+    "name": "Eli Saperstein",
+    "firstName": "Eli",
+    "title": "Money coach for the Modern Orthodox household",
+    "community": "[edit: your community, for example Teaneck, NJ]",
+    "photo": null,
+    "short": "I sit with Modern Orthodox families and work the numbers with them, live, until the year makes sense: tuition, camp, the Shabbat table, tzedakah, the simchas, the house, and what is left for everything else.",
+    "bio": [
+      "I am a money coach. Not a financial advisor who manages your investments, not an accountant who files your return: the person who sits on your side of the table, opens your numbers with you, and works through them until you can see the whole year and the next twenty.",
+      "The families I work with look like mine. Several children in day school, a shul we walk to, camp in the summer, a bar mitzvah on the calendar and a wedding somewhere past it. The general advice does not fit us. A budget app has no line for tuition assistance or Pesach. I built the free tools on this site because I could not find one that did.",
+      "[edit: two or three sentences about you: where you live, how long you have coached, what you did before, why you started. Keep it plain.]",
+      "A session with me is not a lecture. You bring what you know, I type as we talk, and the picture updates on the screen in front of you. Between sessions you check in once a month, in two minutes, and we see what moved."
+    ],
+    "credentials": [
+      "[edit: a credential, a training, or the number of families you have worked with]",
+      "[edit: another, or delete this line]"
+    ]
+  },
+  "contact": {
+    "email": null,
+    "bookingUrl": null,
+    "bookingLabel": "Book a free 20-minute call",
+    "moneyRoomsUrl": "https://sapphirestoneage.github.io/Personalfinance/"
+  },
+  "hero": {
+    "eyebrow": "Money coaching for the Modern Orthodox household",
+    "headline": "Tuition, camp, the simchas, the house. Let us make the year add up.",
+    "sub": "One-to-one coaching for families with children in day school and a shul to walk to. We open your numbers together, live, and leave every session with a picture you can act on. The tools here are free; the coaching is where they come alive.",
+    "primary": "Book a free 20-minute call",
+    "secondary": "Try the free tools"
+  },
+  "squeeze": {
+    "title": "The squeeze no general planner sees",
+    "lines": [
+      { "label": "Tuition", "text": "The largest line in the house, for every child, for twenty years. It arrives before retirement saving has had its turn." },
+      { "label": "The year", "text": "Dues in Elul, nine yom tov meals in Tishrei, Pesach in Nisan, camp in June. A Jewish year spends in spikes, and the spikes land on the same months every year." },
+      { "label": "The simchas", "text": "A bar mitzvah at thirteen, a year in Israel at eighteen, a wedding in the twenties. Each one is on the calendar today, and each one is paid for in a single year." },
+      { "label": "The house", "text": "It has to be within a walk of the shul, inside the eruv. The streets that qualify carry a premium, and the mortgage page never asks about tuition." }
+    ]
+  },
+  "process": {
+    "title": "How coaching works",
+    "steps": [
+      { "title": "A free call", "text": "Twenty minutes. You tell me what is keeping you up; I tell you whether I can help and what it would look like. No numbers needed yet." },
+      { "title": "The first sessions", "text": "We go stop by stop down one path: the big picture, income, spending, debt, the cushion, what you own, taxes, the goals with dates, and the big decisions. I type as we talk; the picture updates in front of you." },
+      { "title": "Homework and a recap", "text": "Every session ends with a recap you keep: what changed, what is next, and two or three pieces of homework with dates. Find the 401(k) fee. Call the tuition committee. Price the camp." },
+      { "title": "Monthly check-ins", "text": "Between sessions, a two-minute check-in once a month: what moved, how you feel about money on a scale of one to five, homework ticked. We see the progress photo, not just the snapshot." }
+    ]
+  },
+  "offers": [
+    {
+      "id": "picture",
+      "name": "The Picture",
+      "tagline": "One session, one clear year",
+      "for": "A family that wants to see the whole year add up, once, with someone in the room.",
+      "includes": ["A 90-minute live session down the full path", "Your household in the tools, entered together", "The recap: the picture, the three biggest levers, the homework", "One check-in a month later"],
+      "priceDollars": null,
+      "priceNote": "[edit: the price, or leave blank to show 'ask on the call']"
+    },
+    {
+      "id": "year",
+      "name": "The Tuition Years",
+      "tagline": "A season of sessions, then the check-ins",
+      "for": "A family with several children in school that wants a plan for the years ahead and someone to keep it honest.",
+      "includes": ["Four live sessions over three months", "The tuition mountain, the simcha line and the home, worked out together", "The tuition committee letter and the insurance gaps, handled", "Monthly check-ins for a year, with a note back each time"],
+      "priceDollars": null,
+      "priceNote": "[edit: the price, or leave blank to show 'ask on the call']",
+      "featured": true
+    },
+    {
+      "id": "decision",
+      "name": "One Big Decision",
+      "tagline": "The house, the move, the school, the year in Israel",
+      "for": "A family facing one decision with a number on it and a date attached.",
+      "includes": ["One session on the decision alone", "The scenario laid on your household, with a verdict: go, wait, or no", "A one-page write-up you can show your spouse and your rav"],
+      "priceDollars": null,
+      "priceNote": "[edit: the price, or leave blank to show 'ask on the call']"
+    }
+  ],
+  "whoFor": {
+    "title": "Who this is for",
+    "yes": ["Two earners, or one, with children in day school or about to be", "A household that feels squeezed on an income that should not feel squeezed", "A family with a simcha or a house on the horizon and no plan for it yet", "Anyone who has tried a budgeting app and given up because it had no line for tuition"],
+    "no": ["Anyone looking for investment picks or someone to manage a portfolio", "A halachic ruling on maaser or inheritance: I will do the arithmetic and send you to your rav with a number", "Tax preparation"]
+  },
+  "faq": [
+    { "q": "Is this financial advice?", "a": "No. I do not sell products, manage money or pick investments. I coach: we work your own numbers together and you make the decisions. For a ruling, a return or a portfolio you keep your rav, your preparer and your advisor." },
+    { "q": "Do I have to share my numbers before the call?", "a": "No. The free call is a conversation. Numbers come in the first session, and we enter them together." },
+    { "q": "Where do my numbers live?", "a": "In the session, on my screen, in a file sealed with a passphrase that stays on my device. The free tools on this site keep everything in your own browser; nothing is sent anywhere." },
+    { "q": "Do you work with families outside my community?", "a": "Yes. Sessions are on a video call. The tools carry typical figures for the New York and New Jersey metro, the other large communities, and smaller ones." },
+    { "q": "What if we cannot afford coaching right now?", "a": "Use the free tools. Every page works on its own and none of it asks for an account. If the picture says something gives, the guide page says who to talk to, starting with the tuition committee and the shul." }
+  ],
+  "proof": [],
+  "resources": {
+    "title": "Free tools and resources",
+    "intro": "Everything here is free, needs no account, and stays in your browser. Start with the household page, then take the tool that matches the question on your mind.",
+    "tools": [
+      { "href": "tools.html", "title": "Your household", "text": "Seven facts and the children. Every other tool reads from here." },
+      { "href": "tuition.html", "title": "The tuition mountain", "text": "Every child, every school year, the peak and the lifetime." },
+      { "href": "year.html", "title": "The Jewish year", "text": "Twelve months from Elul, the spikes, and the set-aside that covers them." },
+      { "href": "tzedakah.html", "title": "Maaser, worked out", "text": "A tenth of what; given, left, and the pace to Elul." },
+      { "href": "milestones.html", "title": "The simcha line", "text": "Bar and bat mitzvahs, the year in Israel, weddings, aliyah, on a line of years." },
+      { "href": "home.html", "title": "The house near the shul", "text": "What it costs a month once tuition has had its share, and the price that fits." },
+      { "href": "plan.html", "title": "The whole picture", "text": "Take-home in, six lines out, and the checklist a family with tuition should tick." },
+      { "href": "guide.html", "title": "The guide", "text": "The words, the checklists, and the rules that change the arithmetic." }
+    ],
+    "checklists": [
+      { "href": "guide.html#committee", "title": "What to ask the tuition committee", "text": "Six questions before you sign the enrolment contract." },
+      { "href": "guide.html#house", "title": "Before you sign for the house", "text": "Walk it on a Friday night, add tuition before you decide, ask the town about the tax after the sale." },
+      { "href": "guide.html#paperwork", "title": "The halachic paperwork", "text": "A will with a halachic clause, a heter iska, the halachic prenup." },
+      { "href": "guide.html#insurance", "title": "Insurance for a large family", "text": "Term life on both parents, disability, the umbrella." }
+    ]
+  },
+  "book": {
+    "title": "Book a free call",
+    "intro": "Twenty minutes on a video call. You tell me what is on your mind; I tell you whether I can help and what it would look like. No preparation and no numbers needed.",
+    "bring": ["The question that made you click: the house, the tuition letter, the wedding, the feeling that it does not add up", "A rough sense of your take-home a month, if you have it; if not, that is fine", "Your spouse, if the decisions are shared"],
+    "after": "After the call you get a short note with what we discussed and, if it fits, a link to book the first session."
+  }
+}

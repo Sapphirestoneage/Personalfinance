@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<title>Free tools and resources</title>
+<meta name="description" content="Free tools for Modern Orthodox family finances: the tuition mountain, the Jewish year, maaser, the simcha line, the house near the shul, and the checklists."/>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="parnassah.css"/>
+<!--
+  RESOURCES, the free tools and the checklists (PN-013).
+  1. READS   data/site.json.
+  2. WRITES  nothing.
+  3. SHOWS   every free tool, the checklists in the guide, Money Rooms, and the call.
+-->
+</head>
+<body class="slaf">
+<main class="pn" id="main">
+  <div id="pn-head"></div>
+  <h1 id="h-title"></h1>
+  <p class="lede" id="lede"></p>
+  <section class="pn-section" id="tools" aria-labelledby="h-tools"></section>
+  <section class="pn-section" id="checklists" aria-labelledby="h-checklists"></section>
+  <section class="pn-section" id="rooms" aria-labelledby="h-rooms"></section>
+  <div id="pn-cta"></div>
+<footer class="pn-foot">
+<p>Nothing leaves this device. There is no account and no server; a backup is a file you save on purpose.</p>
+<p>Empty is not zero: a blank box means "not entered", and a figure that needs it says so instead of guessing.</p>
+<p>The reference figures are dated starting points of low confidence, not quotes. Nothing here is halachic, tax or legal advice: bring the numbers to your rav, your preparer and your lawyer.</p>
+</footer>
+</main>
+<script src="shared/money.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/tuition.js"></script>
+<script src="engines/jewishyear.js"></script>
+<script src="engines/tzedakah.js"></script>
+<script src="engines/milestones.js"></script>
+<script src="engines/home.js"></script>
+<script src="engines/plan.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  var PN = SLAF.PN, esc = PN.esc;
+  PN.bootSite('resources', function (T) {
+    var R = T.site.resources;
+    PN.el('h-title').textContent = R.title;
+    PN.el('lede').textContent = R.intro;
+    PN.el('tools').innerHTML = '<h2 id="h-tools">The tools</h2><div class="pn-tiles">' + R.tools.map(function (t) { return '<a class="pn-tile" href="' + esc(t.href) + '"><h3>' + esc(t.title) + '</h3><p>' + esc(t.text) + '</p></a>'; }).join('') + '</div>';
+    PN.el('checklists').innerHTML = '<h2 id="h-checklists">The checklists</h2><div class="pn-tiles">' + R.checklists.map(function (t) { return '<a class="pn-tile" href="' + esc(t.href) + '"><h3>' + esc(t.title) + '</h3><p>' + esc(t.text) + '</p></a>'; }).join('') + '</div>';
+    var url = T.site.contact.moneyRoomsUrl;
+    PN.el('rooms').innerHTML = '<h2 id="h-rooms">Beyond the community lines</h2><p class="lede">Parnassah carries the lines a general planner does not see. For everything else (the debts, the accounts, the retirement date, the monthly close) there is Money Rooms, the same maker\'s free household planner: seventy small rooms over one household, no account, nothing sent anywhere.</p>'
+      + (url ? '<p><a class="slaf-btn" href="' + esc(url) + '" rel="noopener">Open Money Rooms</a></p>' : '');
+  });
+})();
+</script>
+</body>
+</html>

@@ -136,3 +136,33 @@ page's footer says nothing leaves the device, empty is not zero, and that
 this is arithmetic, not halachic, tax or legal advice.
 
 **Stored shape.** No change.
+
+## PN-013 — The selling layer: five pages around the free tools, a call on every one
+
+**Why.** The site is the owner's front door: the tools draw people in, the
+coaching is what it sells.
+
+**Decision.** `index.html` is a landing page (the hero, the squeeze, how
+coaching works, three offers, the tools, the coach); `coaching.html`,
+`about.html`, `resources.html` and `book.html` carry the rest. The tools moved
+to `tools.html`, unchanged. Every tool page ends in the band that books a call
+(`PN.cta`); the site nav ends in Book a call. No testimonial is invented:
+`proof` is an empty list until a real family says something, and the section
+stays hidden while it is empty. Every page carries a description for search.
+
+**Stored shape.** No change.
+
+## PN-014 — Every word of the selling pages lives in data/site.json
+
+**Why.** The owner is not a coder and will change the words, the prices and
+the booking link more often than anything else.
+
+**Decision.** `data/site.json` holds the coach, the contact (booking link,
+email, the button's label), the hero, the squeeze, the process, the offers,
+who it is for, the FAQ, proof, resources and the booking page. Facts the
+builder could not know are `[edit: ...]` placeholders, shown in warning
+colour on the page and listed as pending by the tests, never guessed. The
+only network addresses on the site come from this file (the tests fail on
+any other).
+
+**Stored shape.** No change.

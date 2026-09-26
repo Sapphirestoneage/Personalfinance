@@ -17,8 +17,17 @@
   'use strict';
   var SLAF = root.SLAF = root.SLAF || {};
   var Money = SLAF.Money, Store = SLAF.Store;
-  var PAGES = [
+  /* The site: the selling pages, and the tools behind them. */
+  var SITE = [
     { id: 'index', href: 'index.html', label: 'Home' },
+    { id: 'tools', href: 'tools.html', label: 'Free tools', tools: true },
+    { id: 'coaching', href: 'coaching.html', label: 'Coaching' },
+    { id: 'resources', href: 'resources.html', label: 'Resources' },
+    { id: 'about', href: 'about.html', label: 'About' },
+    { id: 'book', href: 'book.html', label: 'Book a call', primary: true }
+  ];
+  var PAGES = [
+    { id: 'tools', href: 'tools.html', label: 'Your household' },
     { id: 'tuition', href: 'tuition.html', label: 'Tuition' },
     { id: 'year', href: 'year.html', label: 'The year' },
     { id: 'tzedakah', href: 'tzedakah.html', label: 'Tzedakah' },
@@ -41,11 +50,35 @@
     return 'saved ' + Math.floor(d / 30) + ' months ago: worth a fresh look';
   }
 
-  function header(pageId, h) {
-    var nav = PAGES.map(function (p) { return '<a href="' + p.href + '"' + (p.id === pageId ? ' aria-current="page"' : '') + '>' + esc(p.label) + '</a>'; }).join('');
-    return '<header class="pn-head"><div class="pn-brand"><a class="pn-wordmark" href="index.html">Parnassah</a><span class="pn-tag">Money planning for the Modern Orthodox household</span></div>'
-      + '<nav class="pn-nav" aria-label="Pages">' + nav + '</nav>'
-      + '<div class="pn-family"><span id="pn-family-name">' + esc(h.household.name || 'Your household') + '</span><span class="pn-age" id="pn-age">' + esc(age(h.savedAt)) + '</span></div></header>';
+  function isTool(pageId) { return PAGES.some(function (p) { return p.id === pageId; }); }
+  function header(pageId, h, T) {
+    var tool = isTool(pageId);
+    var site = SITE.map(function (p) {
+      var current = p.id === pageId || (p.tools && tool);
+      return '<a href="' + p.href + '"' + (current ? ' aria-current="page"' : '') + (p.primary ? ' class="slaf-btn slaf-btn--primary pn-nav-book"' : '') + '>' + esc(p.label) + '</a>';
+    }).join('');
+    var sub = tool ? '<nav class="pn-subnav" aria-label="The tools">' + PAGES.map(function (p) { return '<a href="' + p.href + '"' + (p.id === pageId ? ' aria-current="page"' : '') + '>' + esc(p.label) + '</a>'; }).join('') + '</nav>' : '';
+    var who = tool && h ? '<div class="pn-family"><span id="pn-family-name">' + esc(h.household.name || 'Your household') + '</span><span class="pn-age" id="pn-age">' + esc(age(h.savedAt)) + '</span></div>' : '';
+    var brand = T && T.site ? T.site.coach.title : 'Money planning for the Modern Orthodox household';
+    return '<header class="pn-head' + (tool ? ' pn-head--tool' : '') + '"><div class="pn-brand"><a class="pn-wordmark" href="index.html">Parnassah</a><span class="pn-tag">' + esc(brand) + '</span></div>'
+      + '<nav class="pn-nav" aria-label="Site">' + site + '</nav>' + who + '</header>' + sub;
+  }
+
+  /* ---- The band that sells: on every tool page, above the footer ------------------ */
+  function cta(T, kind) {
+    var S = T.site; if (!S) return '';
+    var lines = {
+      tool: ['These numbers, with someone on your side of the table.', 'The tools are free and they are yours. A coaching session is where they turn into a plan: we open your household together, live, and you leave with a picture and three things to do.'],
+      site: ['Ready when you are.', S.book.intro]
+    }[kind || 'tool'];
+    return '<section class="pn-cta" aria-label="Book a call"><div><h2>' + esc(lines[0]) + '</h2><p>' + esc(lines[1]) + '</p></div>'
+      + '<div class="pn-cta-acts"><a class="slaf-btn slaf-btn--primary" href="book.html">' + esc(S.contact.bookingLabel) + '</a><a class="slaf-btn slaf-btn--quiet" href="coaching.html">How coaching works</a></div></section>';
+  }
+  function bookLink(T) {
+    var C = T.site.contact;
+    if (C.bookingUrl) return { href: C.bookingUrl, external: true };
+    if (C.email) return { href: 'mailto:' + C.email + '?subject=' + encodeURIComponent('A free call'), external: false };
+    return null;
   }
 
   /* ---- Help: the plain words ------------------------------------------------ */
@@ -166,8 +199,9 @@
 
   function boot(pageId, render) {
     var h = Store.load();
-    el('pn-head').innerHTML = header(pageId, h);
     SLAF.Tables.load('data/').then(function (T) {
+      el('pn-head').innerHTML = header(pageId, h, T);
+      var band = el('pn-cta'); if (band) band.innerHTML = cta(T, 'tool');
       Money.setDisplayRounding(1);
       if (render.form) render.form(h, T);
       if (render.lists) render.lists(h, T);
@@ -182,5 +216,15 @@
       el('main').insertAdjacentHTML('afterbegin', '<p class="slaf-error">The reference data did not load (' + esc(e.message) + '). Serve the folder over http, for example with python3 -m http.server, and open it again.</p>');
     });
   }
-  SLAF.PN = { el: el, esc: esc, fmt: fmt, pct: pct, PAGES: PAGES, header: header, help: help, field: field, band: band, read: read, write: write, bind: bind, fill: fill, chart: chart, figure: figure, say: say, boot: boot, age: age };
+  /* A selling page: no household form, the same header and footer. */
+  function bootSite(pageId, draw) {
+    SLAF.Tables.load('data/').then(function (T) {
+      el('pn-head').innerHTML = header(pageId, null, T);
+      var band = el('pn-cta'); if (band) band.innerHTML = cta(T, 'site');
+      draw(T);
+    }).catch(function (e) {
+      el('main').insertAdjacentHTML('afterbegin', '<p class="slaf-error">The site data did not load (' + esc(e.message) + '). Serve the folder over http, for example with python3 -m http.server, and open it again.</p>');
+    });
+  }
+  SLAF.PN = { SITE: SITE, isTool: isTool, cta: cta, bookLink: bookLink, bootSite: bootSite, el: el, esc: esc, fmt: fmt, pct: pct, PAGES: PAGES, header: header, help: help, field: field, band: band, read: read, write: write, bind: bind, fill: fill, chart: chart, figure: figure, say: say, boot: boot, age: age };
 })(typeof self !== 'undefined' ? self : this);
