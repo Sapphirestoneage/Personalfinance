@@ -3,7 +3,7 @@ paths:
   - "rooms/the-mix.html"
 ---
 # The Mix (`the-mix`)
-File: rooms/the-mix.html · 240 lines
+File: rooms/the-mix.html · 265 lines
 Engines: projection, tier0, income, ledger, hourly
 Reference data: effective_tax_rates_2026.json
 Owns: nothing

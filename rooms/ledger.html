@@ -451,14 +451,6 @@
   #view-express .xrow:first-of-type { border-top: 0; }
   #view-express .xrow .lab { font-size: var(--text-sm); min-width: 0; }
   #view-express .xrow .lab .unit { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
-  /* Under the control, and only while the row has the focus. Everything that
-     appears on focus sits BELOW what you are answering, so nothing you are
-     about to tap ever moves.
-     `is-settling` is the same row, holding its height for a beat after the
-     focus has gone (D-343). Collapsing the instant focus leaves took 68px
-     out of the page between a finger lifting and the click being dispatched,
-     which moved the walk's Next button out from under that very tap. The row
-     lets go once the tap it was standing in for has landed. */
   /* What is this? (D-346): shut at rest, one tap to the plain words. It sits
      under the control like everything else the row reveals, and being a
      <details> it is the person who opens and closes it, never focus. */
@@ -470,20 +462,27 @@
   #view-express .xrow .xhelp-plain { margin: var(--space-1) 0 var(--space-2); color: var(--color-text); font-size: var(--text-sm); line-height: var(--leading-normal); }
   #view-express .xrow .xhelp-line { margin: 0 0 var(--space-1); color: var(--color-text-muted); line-height: var(--leading-normal); max-width: var(--measure); }
   #view-express .xrow .xhelp-line b { color: var(--color-text-faint); font-weight: 600; }
-  #view-express .xrow .xwhy { display: none; grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-faint); line-height: var(--leading-normal); }
-  #view-express .xrow:focus-within .xwhy, #view-express .xrow.is-settling .xwhy { display: block; }
-  #view-express .xrow .xwhy .why, #view-express .xrow .xwhy .own { display: block; }
-  #view-express .xrow .xstates { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; }
-  #view-express .xrow .xstates:empty { display: none; }
-  /* Put away at rest, back the moment the row has the focus. paintState
-     still sets the `hidden` ATTRIBUTE on the ones that do not apply, and
-     theme.css makes that display:none !important, so a row that must not
-     offer "Not sure yet" does not start offering it here. */
-  #view-express .xrow .xstates > [data-x-notsure], #view-express .xrow .xstates > .x-memory { display: none; }
+  /* ---- The states line keeps its height, always (D-348) --------------------
+     "Not sure yet" and "from memory" still appear only on the row you are
+     answering, because on every row at once they would be forty buttons of
+     noise. What changed is that the line they appear in is always there and
+     always the same height: they fade in and out of a slot rather than
+     pushing the page around.
+     Two bugs came out of that line changing size. Taken away the moment
+     focus left, it moved the walk's Next button out from under the very tap
+     that had just answered a question (D-343). Held open for half a second
+     instead, it moved the NEXT row out from under the next tap, and the four
+     allocation rows each lost an answer. Nothing that appears on focus has a
+     size now, so there is nothing to hold and nothing to jump.
+     paintState still sets the `hidden` ATTRIBUTE on the ones that do not
+     apply, and theme.css makes that display:none !important, so a row that
+     must not offer "Not sure yet" does not start offering it here. */
+  #view-express .xrow .xstates { display: flex; gap: var(--space-2); align-items: center; flex-wrap: wrap; min-height: 34px; }
+  #view-express .xrow .xstates > [data-x-notsure], #view-express .xrow .xstates > .x-memory {
+    visibility: hidden; opacity: 0; transition: opacity .12s ease;
+  }
   #view-express .xrow:focus-within .xstates > [data-x-notsure],
-  #view-express .xrow.is-settling .xstates > [data-x-notsure] { display: inline-flex; }
-  #view-express .xrow:focus-within .xstates > .x-memory,
-  #view-express .xrow.is-settling .xstates > .x-memory { display: inline-flex; }
+  #view-express .xrow:focus-within .xstates > .x-memory { visibility: visible; opacity: 1; }
   #view-express .xrow .xstates .slaf-btn--small { min-height: 32px; padding: 0 var(--space-2); font-size: var(--text-xs); }
   #view-express .xrow .slaf-unit { margin-left: 0; }
   #view-express .xrow .ctl .slaf-input-shell { display: flex; align-items: center; gap: var(--space-2); }
@@ -2043,13 +2042,15 @@
      so it costs no room until it is wanted and never moves under a finger
      (D-343). Band 1 of the Planets has had this since D-336; this is the same
      promise for every other box in the app. */
-  function helpHtml(row) {
+  function helpHtml(row, owner) {
     if (!row || row.kind === 'computed') return '';
     var parts = [
       ['means', 'What it means', row.means],
       ['where', 'Where to find it', row.where],
       ['roughly', 'Close enough', row.roughly],
-      ['unsure', 'If you are not sure', row.unsure]
+      ['unsure', 'If you are not sure', row.unsure],
+      ['unlocks', 'What it unlocks', row.unlocks],
+      ['owner', 'Where else it shows', owner ? 'Entered here and in ' + owner.title + '; one record, two doors.' : null]
     ].filter(function (p) { return p[2]; });
     if (!row.plain && !parts.length) return '';
     return '<details class="xhelp" data-x-help="' + esc(row.id) + '">'
@@ -2076,14 +2077,11 @@
        touchend and click, the browser retargeted the click to the row, and
        the answer was silently dropped. Anything that appears on focus now
        appears under the thing being answered. D-223. */
-    var why = row.unlocks ? '<span class="why">Unlocks ' + esc(row.unlocks) + '</span>' : '';
-    var own = owner && row.kind !== 'computed' ? '<span class="own">Entered here and in ' + esc(owner.title) + '; one record, two doors.</span>' : '';
     return '<div class="xrow" data-x-row="' + esc(row.id) + '" data-x-key="' + esc(key) + '"' + (item ? ' data-x-item="' + esc(item.id) + '"' : '') + '>'
       + '<div class="lab">' + esc(row.label) + (row.unit !== 'cents' && LedgerRows.unitLabel(row) ? '<span class="unit">' + esc(LedgerRows.unitLabel(row)) + '</span>' : '') + '</div>'
       + '<div class="ctl">' + control(row, key) + '</div>'
       + statesHtml(row)
-      + helpHtml(row)
-      + (why || own ? '<div class="xwhy">' + why + own + '</div>' : '')
+      + helpHtml(row, row.kind !== 'computed' ? owner : null)
       + '<div class="sug" data-x-sug hidden></div><div class="saved" data-x-saved></div></div>';
   }
   /* ==========================================================================
@@ -2533,39 +2531,17 @@
   }
   function wire() {
     var form = el('xform');
-    /* ---- Nothing collapses under a finger (D-343) ------------------------
-       A row shows "Not sure yet", "from memory" and why it is asked while it
-       has the focus, and puts them away when the focus goes: 68px out of the
-       page. A tap is a touchend and then, a moment later, a click at the same
-       point; the focus moves in between. So answering a question and reaching
-       for Next meant the page shrank mid-tap and the click landed on the strip
-       behind the button. Nothing was broken and nothing said so: the walk
-       simply did not move.
-       The row keeps its height until the tap that took the focus away has been
-       dispatched, then lets go. One timer, one class, no rebuild (D-034). */
-    var settling = null, settleTimer = null;
-    function letGo() {
-      if (settleTimer) { clearTimeout(settleTimer); settleTimer = null; }
-      if (settling) { settling.classList.remove('is-settling'); settling = null; }
-    }
-    form.addEventListener('focusout', function (ev) {
-      var row = ev.target.closest ? ev.target.closest('.xrow') : null;
-      if (!row) return;
-      if (settling && settling !== row) letGo();
-      settling = row;
-      row.classList.add('is-settling');
-      if (settleTimer) clearTimeout(settleTimer);
-      settleTimer = setTimeout(letGo, 500);
-    });
-    form.addEventListener('focusin', function (ev) {
-      var row = ev.target.closest ? ev.target.closest('.xrow') : null;
-      if (row && row === settling) letGo();
-    });
-    /* An identity field (the name, the institution, the last four, the kind)
-       is not a figure: it writes through the list's owner, not through the
-       row's, and then the line re-reads its own head and the groups settle.
-       On 'change', so a half-typed bank name never starts a group of its
-       own and never moves a node while a finger is in it. D-223. */
+    /* ---- Nothing shifts when a row takes or loses the focus (D-348) --------
+       A row shows "Not sure yet" and "from memory" while it has the focus.
+       They used to be taken away the moment it lost focus, which took 68px
+       out of the page between a finger lifting and the click arriving, and
+       the tap landed on whatever moved into that spot (D-343). Holding the
+       row open for half a second only moved the jump to the NEXT tap, which
+       is how the four allocation rows lost an answer each.
+       The fix is that there is nothing to hold: the states line keeps its
+       height whether the buttons are in it or not, and everything else a row
+       has to say lives in the fold, which the person opens. Nothing appears
+       or disappears on focus that has a size. */
     form.addEventListener('change', function (ev) {
       var idf = ev.target.closest ? ev.target.closest('[data-x-item-field]') : null;
       if (idf) { commitIdentity(idf); return; }

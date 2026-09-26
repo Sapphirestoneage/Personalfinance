@@ -17616,6 +17616,39 @@ with data; the Planets Overview and the Scorecard re-shaped and recoloured by
 hand at 390px.
 
 
+## D-348 — Nothing that appears on focus has a size
+
+**Why.** D-343 stopped a row's focus extras being taken away between a finger
+lifting and the click arriving, by holding the row's height for half a second.
+That did not remove the jump; it moved it onto the next tap. Typing down the
+four allocation rows, each row's release pulled the next one out from under the
+finger, and `test/forms.js` caught an answer going missing every run.
+
+**Decision.** There is nothing left to hold. The states line ("Not sure yet",
+"from memory") is always in the row and always the same height; the buttons
+fade in and out of that reserved slot rather than pushing the page around.
+Everything else a row had to say on focus, what it unlocks and which other room
+holds the same record, moved into the "What is this?" fold (D-346), where it
+reads as help instead of as furniture. No timer, no held class, no rebuild.
+
+Two pictures came with it, both in rooms that had figures and no drawing at
+all: the Statement's net worth as what you own by bucket and what you owe, and
+its liquidity ladder as how much sits at each distance from your hand; and The
+Mix's target, in place of the three coloured strips it drew by hand, plus the
+same mix in dollars. A ring of one slice is no longer drawn anywhere: a share
+of a whole needs two parts before it is a picture, and the room says so.
+
+**Replaces or removes.** D-343's settle timer and the `is-settling` class; the
+`.xwhy` line under every row; The Mix's hand-rolled strip. No new screen or
+field.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` 36263; `node test/forms.js`, the allocation
+case among them, which was failing on exactly this; the four rows typed by hand
+at 412px and all four landing.
+
+
 ---
 
 # The Dungeons & Dividends entries

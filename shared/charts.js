@@ -223,8 +223,10 @@
     var legend = slices.map(function (s, i) {
       var color = s.color || COLORS.series[i % COLORS.series.length];
       var share = total > 0 ? Math.max(0, s.value) / total : 0;
+      /* A set that is already shares says 70% once, not "70% 70%" (D-348). */
       return '<li><i style="background:' + color + '"></i><span class="lbl">' + esc(s.label) + (s.note ? '<small>' + esc(s.note) + '</small>' : '') + '</span>'
-        + '<span class="val">' + esc(format(s.value)) + '</span><span class="pct">' + percent(share) + '</span></li>';
+        + '<span class="val">' + esc(format(s.value)) + '</span>'
+        + (o.showShare === false ? '' : '<span class="pct">' + percent(share) + '</span>') + '</li>';
     }).join('');
     return '<div class="slaf-chart slaf-donut"><div class="ring">' + svg + '</div><ul class="slaf-legend is-table">' + legend + '</ul></div>';
   }

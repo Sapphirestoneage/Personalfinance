@@ -179,11 +179,15 @@
     <p class="sure" id="nw-sure"></p>
     <p class="why" id="nw-direction"></p>
     <p class="parts" id="nw-parts"></p>
+    <!-- What it is made of, as a picture (D-347). The same buckets the line
+         above names; the reader chooses the shape and the colours. -->
+    <div id="nw-chart"></div>
   </section>
 
   <!-- 3. THE LIQUIDITY LADDER -->
   <section class="slaf-card" id="ladder" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">How fast you could reach it</span>
+    <div id="ladder-chart"></div>
     <ul class="ladder" id="ladder-list"></ul>
     <ul class="lookup" id="ladder-lookup"></ul>
     <p class="why" id="ladder-why"></p>
@@ -225,6 +229,8 @@
 <script src="../shared/prefs.js"></script>
 <script src="../shared/features.js"></script>
 <script src="../shared/progress.js"></script>
+<script src="../shared/charts.js"></script>
+<script src="../shared/chartbox.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
 <script src="../engines/projection.js"></script>
@@ -252,7 +258,7 @@
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference,
       Ownership = SLAF.Ownership, Statement = SLAF.Statement, Features = SLAF.Features,
-      Foo = SLAF.Foo, Opening = SLAF.Opening, Benchmarks = SLAF.Benchmarks;
+      Foo = SLAF.Foo, Opening = SLAF.Opening, Benchmarks = SLAF.Benchmarks, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox;
   var ROOM_ID = 'statement';
   var TABLES = null;
 
@@ -315,7 +321,22 @@
     var parts = el('nw-parts');
     if (Money.isOk(p)) {
       parts.innerHTML = esc(p.order.map(function (id) { var b = p.buckets[id]; return b.label + ' ' + fmt(b.totalCents); }).join(' · ')) + cashMovedHint(h);
-    } else parts.textContent = '';
+      /* The same buckets as a picture (D-347): what the figure above is made
+         of, in whatever shape the reader prefers. */
+      var owned = p.order.map(function (id) {
+        var b = p.buckets[id];
+        return { label: b.label, value: Math.max(0, b.totalCents) };
+      }).filter(function (r) { return r.value > 0; });
+      /* What you owe belongs in the same picture: net worth is the two sides
+         against each other, and a ring of the assets alone flatters. */
+      if (p.totalDebtCents) owned.push({ label: 'What you owe', value: -p.totalDebtCents, note: 'debts, all of them' });
+      ChartBox.draw(el('nw-chart'), {
+        id: 'statement-net-worth', kind: 'compare',
+        title: 'What the figure above is made of: what you own, by how fast you could reach it, and what you owe.',
+        rows: owned, format: fmt,
+        empty: 'Name what you own in the Ledger and this fills in.'
+      });
+    } else { parts.textContent = ''; el('nw-chart').innerHTML = ''; }
   }
   /* What the ledger and the log say has moved through cash since the figure
      was confirmed: set beside it, never applied to it (D-130). */
@@ -376,6 +397,16 @@
       return '<li class="' + r.cls + '"><span>' + esc(r.name) + '<span class="when">' + esc(r.when) + '</span></span><span class="amt">' + esc(fmt(r.cents)) + '</span>'
         + (r.cum !== null && r.cum !== r.cents ? '<span class="cum">' + esc(fmt(r.cum)) + ' by then, all told</span>' : '') + '</li>';
     }).join('');
+    /* The ladder as a picture (D-347): how much sits at each distance, with
+       how long it takes to reach beside every bar. */
+    ChartBox.draw(el('ladder-chart'), {
+      id: 'statement-ladder', kind: 'breakdown',
+      title: 'How much sits at each distance from your hand.',
+      rows: rows.map(function (r) { return { label: r.name, value: Math.max(0, r.cents || 0), note: r.when }; })
+        .filter(function (r) { return r.value > 0; }),
+      format: fmt,
+      empty: 'Name what you own in the Ledger and this fills in.'
+    });
     /* A Roth with no contributions figure is reachable and not counted: say
        where to look it up, and that a rough figure is fine for now. A plan
        left at a former employer gets its own room. */

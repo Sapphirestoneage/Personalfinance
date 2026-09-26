@@ -14013,10 +14013,18 @@ section('All at once: a second view of the same rows (D-208, a Ledger view since
      to the row, and the answer was dropped without a word.
      D-343: below the control was not enough. Putting it AWAY on blur took
      68px out of the page in the same gap, which moved everything under the
-     row instead, the walk's own Next button among it. The row keeps its
-     height until that click has landed. */
-  checkTrue('what a row reveals on focus sits below what you are answering', /class="xwhy"/.test(html) && /\.xrow:focus-within \.xwhy, #view-express \.xrow\.is-settling \.xwhy \{ display: block; \}/.test(html) && !/:focus-within \.lab/.test(html));
-  checkTrue('...and is not taken away until the tap that took the focus has landed', /is-settling/.test(html) && /function letGo/.test(html));
+     row instead, the walk's own Next button among it.
+     D-348: holding the row open for half a second only moved that jump to
+     the next tap, and four rows in a row each lost an answer. Nothing that
+     appears on focus has a size now: the states line is always there and
+     always the same height, and everything else a row has to say is in the
+     fold the person opens. */
+  checkTrue('what a row reveals on focus changes no height at all',
+    /\.xstates \{ display: flex;[^}]*min-height: 34px/.test(html.replace(/\n/g, ' '))
+    && /visibility: hidden; opacity: 0/.test(html)
+    && !/:focus-within \.lab/.test(html));
+  checkTrue('...so there is no settle timer left to get the timing wrong',
+    !/is-settling/.test(html) && !/function letGo/.test(html));
   checkTrue('rows that stop applying are hidden, never rebuilt or cleared', /n\.el\.hidden = !applies/.test(html) && !/innerHTML = ''/.test(html.split('function paintApplies')[1].split('function paintSuggestions')[0]));
   checkTrue('a suggestion is a chip beside the box, never typed into it', /Suggested ' \+ esc\(s\.display\) \+ ' · use it/.test(html) && /data-x-use/.test(html));
   checkTrue('a sticky bar carries the understanding line and a jump menu', /class="xbar"/.test(html) && /position: sticky/.test(html) && /id="xjump"/.test(html) && /Doors\.understanding\(/.test(html));
@@ -17149,12 +17157,10 @@ section('The standard the app is held to (D-342)');
     /\.slaf-toast \{[^}]*top: max\(12px/.test(theme.replace(/\n/g, ' ')));
   checkTrue('...and nothing puts it back at the bottom on a wider screen',
     !/\.slaf-toast \{ bottom:/.test(theme));
-  checkTrue('a row holds its height until the tap that took its focus has landed',
-    /is-settling/.test(ledger) && /setTimeout\(letGo/.test(ledger));
-  checkTrue('...and it lets go the moment the focus comes back to it',
-    /focusin[\s\S]{0,200}row === settling[\s\S]{0,40}letGo\(\)/.test(ledger));
-  checkTrue('...through a class, not by rebuilding the row (D-034)',
-    /classList\.add\('is-settling'\)/.test(ledger) && /classList\.remove\('is-settling'\)/.test(ledger));
+  checkTrue('a row keeps its height whether or not it has the focus (D-348)',
+    /min-height: 34px/.test(ledger) && /visibility: hidden; opacity: 0/.test(ledger));
+  checkTrue('...so nothing is timed, held or rebuilt to keep it still',
+    !/is-settling/.test(ledger) && !/setTimeout\(letGo/.test(ledger));
   checkTrue('a link that names a field keeps that field while the room lands on it',
     /var ARRIVED =/.test(progress) && /arrivalHandled/.test(progress)
     && /if \(ARRIVED && !arrivalHandled && !moved\) return;/.test(progress));
@@ -17269,7 +17275,9 @@ section('Every box says what it is, in words anyone can read (D-346)');
   /* And the room actually shows it: a fold on the row, opened by the person. */
   const ledger = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
   checkTrue('the Ledger draws the help on every row that takes an answer',
-    /function helpHtml\(row\)/.test(ledger) && /<details class="xhelp"/.test(ledger));
+    /function helpHtml\(row, owner\)/.test(ledger) && /<details class="xhelp"/.test(ledger));
+  checkTrue('...and what a row unlocks, and who else holds it, are in there too',
+    /'What it unlocks', row\.unlocks/.test(ledger) && /'Where else it shows'/.test(ledger));
   checkTrue('...with the five parts in the order a person needs them',
     /'What it means'[\s\S]{0,120}'Where to find it'[\s\S]{0,120}'Close enough'[\s\S]{0,140}'If you are not sure'/.test(ledger));
   checkTrue('...shut at rest, so it costs nothing until it is asked for',

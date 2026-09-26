@@ -183,6 +183,14 @@
       return '<div class="slaf-chart is-empty"><p class="slaf-reason">'
         + esc(spec.empty || 'Nothing to draw yet.') + '</p></div>';
     }
+    /* A ring of one slice says 100% and nothing else: it is a figure wearing
+       a circle. A share of a whole needs at least two parts before it is a
+       picture, and until then the room says what would make it one. */
+    if (spec.kind === 'breakdown' && rows.filter(function (r) { return r.value; }).length < 2) {
+      return '<div class="slaf-chart is-empty"><p class="slaf-reason">'
+        + esc(spec.one || spec.empty || 'One part is all there is so far, so there is nothing to compare it with yet.')
+        + '</p></div>';
+    }
     var type = typeOf(spec);
     var hues = colors(spec.id, Math.max(rows.length, spec.hues || 0), themeOf(spec));
     /* A room with a picture this file has no shape for (a drawdown path, a
@@ -203,9 +211,13 @@
     var format = spec.format || function (v) { return String(v); };
 
     if (type === 'donut') {
+      /* When the figures are already shares of one, the ring's own percent
+         column would print each one twice. */
+      var sum = painted.reduce(function (t, r) { return t + (typeof r.value === 'number' ? r.value : 0); }, 0);
       return Charts.donut({
-        slices: painted.map(function (r) { return { label: r.label, value: r.value, color: r.color }; }),
-        format: format, center: spec.center || null, empty: spec.empty
+        slices: painted.map(function (r) { return { label: r.label, value: r.value, color: r.color, note: r.note }; }),
+        format: format, center: spec.center || null, empty: spec.empty,
+        showShare: !(sum > 0.98 && sum < 1.02)
       });
     }
     if (type === 'columns') {

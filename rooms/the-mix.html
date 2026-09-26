@@ -50,11 +50,10 @@
   .cell a, .why a, .slaf-hint a { color: var(--color-accent-hover); }
   .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
   .why:empty { display: none; }
-  .track { display: flex; height: 14px; border-radius: var(--radius-pill); overflow: hidden; margin-top: var(--space-3); background: rgba(0,0,0,.22); box-shadow: inset 0 0 0 1px var(--color-border); }
-  .track i { display: block; height: 100%; }
-  .track .s { background: var(--color-accent); }
-  .track .b { background: var(--color-positive); }
-  .track .c { background: var(--color-caution); }
+  /* The strip of three colours this room drew by hand is a picture now
+     (D-347): the same three figures, in whatever shape the reader picks,
+     with the figures printed beside them. */
+  .track { display: block; margin-top: var(--space-3); }
   .room-drawer ul { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; padding-left: 1.2em; line-height: var(--leading-loose); }
   .room-badge { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
 </style>
@@ -91,6 +90,7 @@
       <div class="cell"><span class="cap">Bonds</span><span class="big" id="usd-bonds">not yet</span></div>
       <div class="cell"><span class="cap">Cash</span><span class="big" id="usd-cash">not yet</span></div>
     </div>
+    <div id="usd-chart"></div>
     <p class="why" id="usd-why"></p>
     <div id="mix-lens" style="margin-top:var(--space-3)"></div>
   </section>
@@ -121,6 +121,8 @@
 <script src="../shared/prefs.js"></script>
 <script src="../shared/features.js"></script>
 <script src="../shared/progress.js"></script>
+<script src="../shared/charts.js"></script>
+<script src="../shared/chartbox.js"></script>
 <script src="../shared/roomexport.js"></script>
 <script src="../shared/undo.js"></script>
 <script src="../engines/projection.js"></script>
@@ -133,7 +135,7 @@
 <script>
 (function () {
   'use strict';
-  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Ownership = SLAF.Ownership;
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Ownership = SLAF.Ownership, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox;
   var ROOM_ID = 'the-mix';
   var TABLES = null;
   function el(id) { return document.getElementById(id); }
@@ -182,8 +184,20 @@
       } else {
         text += ' No band yet: ' + ledgerLink('rebalanceBand', 'set one in the Ledger');
       }
+      /* The mix as a picture the reader owns (D-347), in place of the three
+         coloured strips this room drew by hand. Same three figures. */
       track.hidden = false;
-      track.innerHTML = '<i class="s" style="width:' + (a.stocks * 100) + '%" title="stocks"></i><i class="b" style="width:' + (a.bonds * 100) + '%" title="bonds"></i><i class="c" style="width:' + (a.cash * 100) + '%" title="cash"></i>';
+      ChartBox.draw(track, {
+        id: 'the-mix-target', kind: 'breakdown',
+        title: 'The mix you are aiming for.',
+        rows: [
+          { label: 'Stocks', value: a.stocks },
+          { label: 'Bonds', value: a.bonds },
+          { label: 'Cash', value: a.cash }
+        ].filter(function (r) { return Money.isEntered(r.value); }),
+        format: function (v) { return pct(v); },
+        empty: 'Set the mix in the Ledger and it draws here.'
+      });
     }
     read.innerHTML = text;
   }
@@ -196,6 +210,17 @@
       return;
     }
     setBig('usd-stocks', true, fmt(d.parts.stocks)); setBig('usd-bonds', true, fmt(d.parts.bonds)); setBig('usd-cash', true, fmt(d.parts.cash));
+    ChartBox.draw(el('usd-chart'), {
+      id: 'the-mix-dollars', kind: 'breakdown',
+      title: 'The same mix, in dollars, on what you have invested today.',
+      rows: [
+        { label: 'Stocks', value: d.parts.stocks },
+        { label: 'Bonds', value: d.parts.bonds },
+        { label: 'Cash', value: d.parts.cash }
+      ].filter(function (r) { return r.value; }),
+      format: fmt,
+      empty: 'Enter what is invested in the Ledger and it draws here.'
+    });
     el('usd-why').textContent = 'On ' + fmt(d.value) + ' invested.' + (d.band !== null ? ' The band is ' + fmt(d.band) + ' either way: the stocks slice may wander that far before a rebalance is due.' : '') + (d.balanced ? '' : ' The targets do not add to 100%, so these are shares of what they do add to.');
   }
 
