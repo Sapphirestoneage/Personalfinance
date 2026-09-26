@@ -1,0 +1,65 @@
+{
+  "version": "2026-09",
+  "channels": [
+    { "id": "instagram", "label": "Instagram" }, { "id": "tiktok", "label": "TikTok" }, { "id": "youtube", "label": "YouTube" },
+    { "id": "linkedin", "label": "LinkedIn" }, { "id": "x", "label": "X" }, { "id": "threads", "label": "Threads" },
+    { "id": "facebook", "label": "Facebook" }, { "id": "newsletter", "label": "Newsletter" }, { "id": "podcast", "label": "Podcast" },
+    { "id": "blog", "label": "Blog" }, { "id": "other", "label": "Other" }
+  ],
+  "formats": [
+    { "id": "short_video", "label": "Short video" }, { "id": "long_video", "label": "Long video" }, { "id": "carousel", "label": "Carousel" },
+    { "id": "image", "label": "Image" }, { "id": "text", "label": "Text post" }, { "id": "story", "label": "Story" },
+    { "id": "live", "label": "Live" }, { "id": "email", "label": "Email" }, { "id": "article", "label": "Article" }, { "id": "episode", "label": "Episode" }
+  ],
+  "ctas": [
+    { "id": "none", "label": "No ask" }, { "id": "follow", "label": "Follow" }, { "id": "comment", "label": "Comment a word" },
+    { "id": "dm", "label": "DM me" }, { "id": "link", "label": "Click the link" }, { "id": "book", "label": "Book a call" },
+    { "id": "buy", "label": "Buy" }, { "id": "share", "label": "Share it" }
+  ],
+  "results": [
+    { "id": "impressions", "label": "Reach", "short": "Reach" }, { "id": "likes", "label": "Likes", "short": "Likes" },
+    { "id": "comments", "label": "Comments", "short": "Cmts" }, { "id": "shares", "label": "Shares", "short": "Shares" },
+    { "id": "saves", "label": "Saves", "short": "Saves" }, { "id": "clicks", "label": "Link clicks", "short": "Clicks" },
+    { "id": "dms", "label": "DMs or replies it started", "short": "DMs" }, { "id": "follows", "label": "New followers", "short": "Follows" },
+    { "id": "leads", "label": "Leads it brought", "short": "Leads" }
+  ],
+  "stages": [
+    { "id": "stranger", "label": "Stranger", "order": 0, "cadence": null, "how": "Comment on something of theirs first. No pitch." },
+    { "id": "follower", "label": "Follower", "order": 1, "cadence": 30, "how": "Reply to their content, or a DM about something they posted." },
+    { "id": "conversation", "label": "In conversation", "order": 2, "cadence": 7, "how": "A DM or a message that asks a question about them." },
+    { "id": "lead", "label": "Lead", "order": 3, "cadence": 3, "how": "An email or a voice note. Offer the next step plainly." },
+    { "id": "call", "label": "Call booked", "order": 4, "cadence": 1, "how": "Confirm the call the day before. Send what to bring." },
+    { "id": "client", "label": "Client", "order": 5, "cadence": 30, "how": "A check-in call or email. Ask what changed." },
+    { "id": "advocate", "label": "Advocate", "order": 6, "cadence": 90, "how": "Thank them. Ask who else should hear about this." },
+    { "id": "lost", "label": "Not now", "order": 7, "cadence": null, "how": "Leave it. A kind note in six months if they said so." }
+  ],
+  "kinds": [
+    { "id": "comment", "label": "Comment" }, { "id": "dm", "label": "DM" }, { "id": "email", "label": "Email" },
+    { "id": "text", "label": "Text" }, { "id": "call", "label": "Call" }, { "id": "voice", "label": "Voice note" },
+    { "id": "meeting", "label": "Met in person" }, { "id": "gift", "label": "Gift or card" }
+  ],
+  "lanes": [
+    { "id": "warm", "label": "Warm outreach", "what": "People who already know you." },
+    { "id": "cold", "label": "Cold outreach", "what": "People who do not know you yet." },
+    { "id": "content", "label": "From content", "what": "They came to you because of a post." },
+    { "id": "paid", "label": "Paid", "what": "An ad brought them." },
+    { "id": "referral", "label": "Referral", "what": "Someone sent them." }
+  ],
+  "outcomes": [
+    { "id": "none", "label": "No reply yet" }, { "id": "replied", "label": "They replied" }, { "id": "booked", "label": "Call booked" },
+    { "id": "sold", "label": "They bought" }, { "id": "declined", "label": "Not now" }
+  ],
+  "sources": [
+    { "id": "content", "label": "Found my content" }, { "id": "referral", "label": "Referred" }, { "id": "event", "label": "Met at an event" },
+    { "id": "known", "label": "Already knew them" }, { "id": "cold", "label": "Cold" }, { "id": "import", "label": "Imported list" }
+  ],
+  "targets": [
+    { "id": "postsPerWeek", "label": "Posts a week", "default": 5 },
+    { "id": "outreachPerWeek", "label": "Reach-outs a week", "default": 25 },
+    { "id": "conversationsPerWeek", "label": "Conversations a week", "default": 10 },
+    { "id": "leadsPerWeek", "label": "Leads a week", "default": 3 },
+    { "id": "callsPerWeek", "label": "Calls booked a week", "default": 2 }
+  ],
+  "goodEngagementRate": { "watch": 0.02, "good": 0.05 },
+  "goodReplyRate": { "watch": 0.15, "good": 0.30 }
+}

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="robots" content="noindex"/>
+<title>Marketing Scoreboard</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="mkt.css"/>
+<!--
+  THE SCOREBOARD (MD-006). What gets measured gets managed.
+
+  1. READS   posts, people and touches through marketing/shared/mkt.js;
+             every figure through marketing/engines/kpi.js. Nothing of SPARKS.
+  2. WRITES  the weekly targets, chart preferences, the demo flag, and the
+             files the owner saves (everything, or a share report).
+  3. SHOWS   this week against the targets with pace; the period's numbers;
+             the funnel; week-by-week pictures; by channel and by topic;
+             the best posts; who to contact today; the share report.
+
+  LIVE-FORM: built once. The targets are typed in boxes that sit inside
+  stat tiles repainted only on a change event of another control.
+-->
+</head>
+<body class="slaf">
+<main class="mkt" id="main">
+  <div id="head"></div>
+
+  <section class="slaf-card welcome" id="welcome" hidden aria-label="How this works">
+    <div>
+      <span class="slaf-eyebrow">Welcome</span>
+      <h2>Measure it, then manage it</h2>
+      <ol class="steps">
+        <li><b>Log every post</b> on the Content screen: where, what, the hook, the ask. Come back in three days and type its numbers.</li>
+        <li><b>Put people in</b> on the People screen, by hand or from a CSV of your contacts. Each has a stage and a rhythm; the app says who to reach out to today, and how.</li>
+        <li><b>Read this screen weekly.</b> Targets, pace, the funnel and its worst step. Save the share report for your marketer friends.</li>
+      </ol>
+      <p class="mkt-note">Everything stays in this browser. Save a backup from time to time. No numbers are sent anywhere.</p>
+    </div>
+    <div class="mkt-actions">
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-demo">Try with example data</button>
+      <a class="slaf-btn" href="posts.html">Log my first post</a>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-week">
+    <div class="bar">
+      <h2 id="h-week">This week</h2>
+      <span class="mkt-note" id="week-range"></span>
+      <span class="grow"></span>
+      <span class="mkt-note">Type a target in any tile to change it.</span>
+    </div>
+    <div class="stats" id="week"></div>
+  </section>
+
+  <section aria-labelledby="h-period">
+    <div class="bar">
+      <h2 id="h-period">The numbers</h2>
+      <label class="inline"><span>Period</span>
+        <select id="period">
+          <option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="365">Last year</option>
+          <option value="all">All time</option>
+        </select></label>
+      <span class="grow"></span>
+      <button type="button" class="slaf-btn" id="btn-share">Share report</button>
+      <button type="button" class="slaf-btn" id="btn-save">Save everything</button>
+      <label class="slaf-btn" for="file-load">Load a file</label>
+      <input type="file" id="file-load" accept=".json,application/json" hidden/>
+    </div>
+    <p class="mkt-say" id="say"></p>
+    <div class="stats" id="numbers"></div>
+    <h3>Reach-outs by lane <span class="mkt-note">(the Core Four, and referrals)</span></h3>
+    <div class="lanes" id="lanes"></div>
+  </section>
+
+  <section aria-labelledby="h-funnel">
+    <div class="bar"><h2 id="h-funnel">The funnel</h2><span id="funnel-help"></span></div>
+    <ul class="funnel" id="funnel"></ul>
+    <p class="mkt-note" id="funnel-note"></p>
+  </section>
+
+  <section aria-labelledby="h-pics">
+    <h2 id="h-pics">Week by week</h2>
+    <div class="pics">
+      <div id="pic-posts"></div>
+      <div id="pic-reach"></div>
+      <div id="pic-outreach"></div>
+      <div id="pic-leads"></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-where">
+    <h2 id="h-where">Where it works</h2>
+    <div class="pics">
+      <div id="pic-channel"></div>
+      <div id="pic-pillar"></div>
+    </div>
+    <h3>By channel</h3>
+    <div class="tbl-wrap"><table class="tbl" id="tbl-channel"></table></div>
+    <h3>By topic</h3>
+    <div class="tbl-wrap"><table class="tbl" id="tbl-pillar"></table></div>
+    <h3>Best posts <span class="mkt-note">(by engagement rate, at least 100 reach)</span></h3>
+    <div class="tbl-wrap"><table class="tbl" id="tbl-best"></table></div>
+  </section>
+
+  <section aria-labelledby="h-due">
+    <div class="bar"><h2 id="h-due">Who to contact today</h2><span id="due-help"></span><span class="grow"></span><a class="slaf-btn" href="people.html">Open People</a></div>
+    <ul class="due" id="due"></ul>
+  </section>
+
+  <section>
+    <details class="fold"><summary>The words <span class="mkt-note">every term, one sentence</span></summary><div id="words"></div></details>
+  </section>
+
+  <dialog class="mkt-dialog" id="share-dialog">
+    <h2>Share report</h2>
+    <p class="mkt-note">Plain text. Copy it into a message, or save it as a file. No names of contacts are in it.</p>
+    <textarea class="share-box" id="share-text" readonly></textarea>
+    <div class="mkt-actions"><button type="button" class="slaf-btn slaf-btn--primary" id="share-copy">Copy</button><button type="button" class="slaf-btn" id="share-save">Save as a file</button><button type="button" class="slaf-btn" id="share-close">Close</button></div>
+  </dialog>
+</main>
+<script src="shared/csv.js"></script>
+<script src="shared/money.js"></script>
+<script src="shared/charts.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/mkt.js"></script>
+<script src="shared/demo.js"></script>
+<script src="engines/kpi.js"></script>
+<script src="common.js"></script>
+<script src="board.js"></script>
+</body>
+</html>
