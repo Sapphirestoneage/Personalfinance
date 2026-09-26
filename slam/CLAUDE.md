@@ -56,6 +56,14 @@ changes the app), `npm run check` (all of the above).
 - `tests/golden/` G1..G21 (Vitest). `tests/unit/` engine, schema, storage,
   pathway, diagnosis and sample tests. `tests/e2e/` Playwright phone flows.
 
+## The workbook (`slam/workbook/`)
+
+The owner asked for the engine as a spreadsheet when the app felt like too
+much. `build.py` writes `numbers-workbook.xlsx` with openpyxl: the same
+formulas, sample numbers and rules as the app, nine tabs, live formulas
+only. Rebuild and recheck per `slam/workbook/README.md` whenever a formula
+or a canonical number changes in `src/engine`.
+
 ## App structure (phase 1)
 
 Side menu (three-bar icon): Today (one "do this next" card, pathway
