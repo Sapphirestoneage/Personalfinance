@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="robots" content="noindex"/>
+<title>The long game</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="safeword.css"/>
+<!--
+  THE LONG GAME (SF-010). Owns you.age and longgame.*. Reads the taxes (the profit, for the SEP and Solo 401(k) room) and the fund page's lean month (the number, the cushion). Shows how much the chosen account can take, the path to the stop age, what it pays a month, the number, and the exit cushion. Growth is SPARKS' projection engine, carried as a copy.
+  LIVE-FORM: built once. The form is drawn from the stored household when
+  the page opens; a change saves and repaints the read-outs only.
+-->
+</head>
+<body class="slaf safeword">
+<main class="sw" id="main">
+  <div id="head"></div>
+  <p class="sw-lede">Nobody is matching your contributions. That cuts both ways: no free money, and no plan chosen for you. Self-employed accounts can take far more than a job's plan; the page says how much yours can take from the same profit the Taxes page sees, then draws the path to the age you want to stop, and the cushion for the year you plan to step away from the work, if there is one.</p>
+  <div class="sw-two">
+    <section aria-label="The long game">
+      <div class="slaf-card">
+        <h2>Where it is going</h2>
+        <div class="sw-form" id="lg-form"></div>
+      </div>
+      <div class="slaf-card" style="margin-top:var(--space-3)">
+        <h2>The exit</h2>
+        <div class="sw-form" id="exit-form"></div>
+        <p class="sw-note" style="margin-top:8px">Optional. The year you plan to stop doing this work, or change how you do it, and how many lean months of cushion you want in hand that day. Different from retiring: this is the pivot fund.</p>
+      </div>
+    </section>
+    <aside class="sw-sticky" aria-label="The picture">
+      <div class="sw-stats" id="stats"></div>
+      <div class="slaf-card"><h3>The path</h3><div id="chart-path"></div><div id="flags"></div></div>
+    </aside>
+  </div>
+  <footer class="sw-foot">
+    <p>Nothing here leaves your browser. No account, no server, no tracking. Numbers are estimates for planning, not tax or legal advice; a tax pro or lawyer who knows the work is the person for your return and your papers. Every table says what year it is for and how sure it is.</p>
+  </footer>
+</main>
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/model.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/selfemployed.js"></script>
+<script src="engines/tax.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/streams.js"></script>
+<script src="engines/house.js"></script>
+<script src="engines/rails.js"></script>
+<script src="engines/taxplan.js"></script>
+<script src="engines/fund.js"></script>
+<script src="engines/longgame.js"></script>
+<script src="engines/dynamic.js"></script>
+<script src="engines/family.js"></script>
+<script src="engines/play.js"></script>
+<script src="engines/plan.js"></script>
+<script src="common.js"></script>
+<script>
+SW.boot({ page: 'longgame' }, function (ctx) {
+  var S = window.SLAF, Money = S.Money, Model = S.Model, LongGame = S.LongGame, Streams = S.Streams, House = S.House, TaxPlan = S.TaxPlan, Charts = S.Charts;
+  var g = ctx.h.longgame;
+  document.getElementById('lg-form').innerHTML = SW.numInput('age', ctx.h.you.age, 'Your age', 'you.age') + SW.select('account', Model.ACCOUNTS, g.account || 'none', 'The account', 'longgame.account') + SW.moneyInput('balance', g.balanceCents, 'In it now', 'longgame.balance') + SW.moneyInput('month', g.monthCents, 'Going in each month', 'longgame.month') + SW.rateInput('rate', g.annualRate, 'Growth a year, after inflation', 'longgame.rate') + SW.numInput('stop', g.stopAge, 'Age you want to stop', 'longgame.stopAge') +
+    '<p class="sw-hint"><button type="button" class="sw-use" id="use-five">Use 5% a year</button> <span>The usual long-run guess for a mixed fund, after inflation.</span></p>';
+  document.getElementById('exit-form').innerHTML = SW.numInput('exit', g.exitYear, 'The year you step away', 'longgame.exitYear') + SW.numInput('cushion', g.cushionMonths, 'Lean months of cushion', 'longgame.cushionMonths');
+  function onEdit() { ctx.save(function (h) { SW.ownIt(h); var n;
+    n = SW.readNum(document.getElementById('age')); h.you.age = Money.isEntered(n) && n > 0 ? Math.round(n) : null;
+    h.longgame.account = document.getElementById('account').value; h.longgame.balanceCents = SW.readMoney(document.getElementById('balance')); h.longgame.monthCents = SW.readMoney(document.getElementById('month')); h.longgame.annualRate = SW.readRate(document.getElementById('rate'));
+    n = SW.readNum(document.getElementById('stop')); h.longgame.stopAge = Money.isEntered(n) && n > 0 ? Math.round(n) : null;
+    n = SW.readNum(document.getElementById('exit')); h.longgame.exitYear = Money.isEntered(n) && n > 1900 ? Math.round(n) : null;
+    n = SW.readNum(document.getElementById('cushion')); h.longgame.cushionMonths = Money.isEntered(n) && n >= 0 ? Math.round(n) : null; }); }
+  ['lg-form', 'exit-form'].forEach(function (id) { var el = document.getElementById(id); el.addEventListener('input', onEdit); el.addEventListener('change', onEdit); });
+  document.getElementById('use-five').addEventListener('click', function () { document.getElementById('rate').value = '5'; onEdit(); });
+  function stat(k, r, kind, hero, why) { return '<div class="sw-stat' + (hero ? ' sw-stat--hero' : '') + '"><span class="sw-k">' + k + '</span><span class="sw-v">' + SW.fig(r, kind) + '</span>' + (why ? '<span class="sw-why">' + why + '</span>' : '') + '</div>'; }
+  ctx.paint = function (h, T) {
+    var St = Streams.read(h, T), H = House.read(h, T, St), X = TaxPlan.read(h, T, St, H), L = LongGame.read(h, T, St, X);
+    var room = L.room.unlimited ? '<span class="sw-fig">no limit</span>' : SW.fig(L.room);
+    document.getElementById('stats').innerHTML = '<div class="sw-stat sw-stat--hero"><span class="sw-k">This account can take, a year</span><span class="sw-v">' + room + '</span>' + (SW.ok(L.room) ? '<span class="sw-why">' + SW.esc(L.room.basis) + (L.room.catchup ? ', with the over-50 catch-up' : '') + (Money.isEntered(L.room.value) && Money.isEntered(h.longgame.monthCents) ? '; you are putting in ' + SW.money(h.longgame.monthCents * 12) + ' a year' : '') + '</span>' : '') + '</div>' +
+      stat('At ' + (Money.isEntered(h.longgame.stopAge) ? 'age ' + h.longgame.stopAge : 'the stop age'), L.atStop) + stat('Which pays, a month', L.monthlyAtStop, 'money', false, SW.ok(L.monthlyAtStop) ? 'at a ' + SW.pct(L.withdrawalRate) + ' draw' : '') + stat('The number (' + L.multiple + ' lean years)', L.number) +
+      '<div class="sw-stat"><span class="sw-k">The path crosses it</span><span class="sw-v">' + (SW.ok(L.crossesAtYear) ? (L.crossesAtYear.never ? '<span class="sw-notyet">not by then</span>' : '<span class="sw-fig">age ' + L.crossesAtYear.age + '</span>') : SW.fig(L.crossesAtYear)) + '</span>' + (SW.ok(L.crossesAtYear) && L.crossesAtYear.never ? '<span class="sw-why">short by ' + SW.money(L.crossesAtYear.shortCents) + ' at the stop age</span>' : '') + '</div>' +
+      stat('The exit cushion', L.exit.cushion) + stat('To set aside for it, a month', L.exit.monthly, 'money', false, Money.isEntered(L.exit.years) && L.exit.years > 0 ? L.exit.years + ' ' + SW.plural(L.exit.years, 'year') + ' to ' + L.exit.year : (L.exit.monthly && L.exit.monthly.now ? 'the year is here' : ''));
+    document.getElementById('chart-path').innerHTML = SW.ok(L.path) ? Charts.line({ series: [{ label: 'Balance', points: L.path.years.map(function (r) { return { x: h.you.age + r.year, y: r.balanceCents }; }) }, { label: 'Put in', points: L.path.years.map(function (r) { return { x: h.you.age + r.year, y: r.contributedCents }; }) }], target: SW.ok(L.number) ? L.number.value : null, targetLabel: 'the number', xLabel: function (x) { return 'age ' + Math.round(x); }, title: 'The path to the stop age' }) : '<p class="sw-empty">' + SW.esc(L.path.reason) + '</p>';
+    var f = '';
+    if (SW.ok(L.room) && Money.isEntered(L.room.value) && Money.isEntered(h.longgame.monthCents) && h.longgame.monthCents * 12 > L.room.value) f += '<div class="sw-flag">That is more than the account can take in a year. The rest needs a second account, or a plain brokerage one.</div>';
+    f += '<p class="sw-note">Limits: ' + SW.esc(T.irsLimits.version) + ' (' + SW.esc(T.irsLimits.confidence) + '). ' + SW.esc(T.irsLimits.confidenceNote) + '</p>';
+    document.getElementById('flags').innerHTML = f;
+  };
+});
+</script>
+</body>
+</html>

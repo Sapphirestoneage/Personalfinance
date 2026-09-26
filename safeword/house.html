@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="robots" content="noindex"/>
+<title>The house</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="safeword.css"/>
+<!--
+  THE HOUSE (SF-010). Owns costs[] and you.sessionCents, you.sessionsMonth. Reads the streams for the share of what lands. Shows the month, fixed against variable, what a return usually carries, the house's cost per session and the sessions that cover it.
+  LIVE-FORM: built once. The form is drawn from the stored household when
+  the page opens; a change saves and repaints the read-outs only.
+-->
+</head>
+<body class="slaf safeword">
+<main class="sw" id="main">
+  <div id="head"></div>
+  <p class="sw-lede">What it costs to run the practice, a month at a time. Fixed costs come whether you work or not; they are what the safeword fund has to carry. The deductible column is a plain word on how a tax pro who knows the work usually treats each kind, so the Taxes page can count the right ones. Platform and processor cuts are not here: the Streams page already counts them.</p>
+  <div class="sw-two">
+    <section aria-label="Costs">
+      <div class="slaf-card">
+        <h2>The costs</h2>
+        <div id="rows"></div>
+        <div class="sw-actions" style="margin-top:var(--space-3)"><button type="button" class="slaf-btn slaf-btn--primary" id="add">Add a cost</button></div>
+      </div>
+      <div class="slaf-card" style="margin-top:var(--space-3)">
+        <h2>One session</h2>
+        <div class="sw-form" id="session-form"></div>
+        <p class="sw-note" style="margin-top:8px">Optional. With these two, the page says what the house costs per session and how many sessions a month pay for it before you earn a dollar for yourself.</p>
+      </div>
+    </section>
+    <aside class="sw-sticky" aria-label="What the house costs">
+      <div class="sw-stats" id="stats"></div>
+      <div class="slaf-card"><h3>Where the money goes</h3><div id="chart-kinds"></div></div>
+      <div class="slaf-card" style="margin-top:var(--space-3)"><h3>What a return usually carries</h3><div id="chart-ded"></div><p class="sw-note" id="ded-note"></p></div>
+    </aside>
+  </div>
+  <footer class="sw-foot">
+    <p>Nothing here leaves your browser. No account, no server, no tracking. Numbers are estimates for planning, not tax or legal advice; a tax pro or lawyer who knows the work is the person for your return and your papers. Every table says what year it is for and how sure it is.</p>
+  </footer>
+</main>
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/model.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/selfemployed.js"></script>
+<script src="engines/tax.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/streams.js"></script>
+<script src="engines/house.js"></script>
+<script src="engines/rails.js"></script>
+<script src="engines/taxplan.js"></script>
+<script src="engines/fund.js"></script>
+<script src="engines/longgame.js"></script>
+<script src="engines/dynamic.js"></script>
+<script src="engines/family.js"></script>
+<script src="engines/play.js"></script>
+<script src="engines/plan.js"></script>
+<script src="common.js"></script>
+<script>
+SW.boot({ page: 'house' }, function (ctx) {
+  var S = window.SLAF, Money = S.Money, Model = S.Model, House = S.House, Streams = S.Streams, Charts = S.Charts;
+  var T = ctx.T, kinds = T.costKinds.kinds, list = document.getElementById('rows');
+  var DED = [{ id: 'usually', label: 'Usually' }, { id: 'sometimes', label: 'Sometimes' }, { id: 'ask', label: 'Ask a tax pro' }];
+  function rowHtml(c) {
+    var id = c.id, k = House.kindOf(T, c.kind);
+    return '<div class="sw-row" data-id="' + id + '">' +
+      SW.select(id + '-kind', kinds.map(function (x) { return { id: x.id, label: x.label }; }), c.kind, 'Kind', 'cost.kind') +
+      '<div class="sw-field sw-field--name">' + SW.label(id + '-label', 'Call it', 'cost.label') + '<input type="text" id="' + id + '-label" maxlength="60" autocomplete="off" value="' + SW.esc(c.label || '') + '" placeholder="' + SW.esc(k.label) + '"/></div>' +
+      SW.moneyInput(id + '-month', c.monthCents, 'A month', 'cost.month') +
+      SW.select(id + '-fixed', [{ id: 'fixed', label: 'Fixed: comes anyway' }, { id: 'variable', label: 'Varies with the work' }], (c.fixed === null ? k.fixed : c.fixed) ? 'fixed' : 'variable', 'Fixed or varies', 'cost.fixed') +
+      SW.select(id + '-ded', DED, c.deductible || k.deductible, 'On a return', 'cost.deductible') +
+      '<p class="sw-hint sw-kind-hint">' + SW.esc(k.hint) + '</p>' +
+      '<button type="button" class="slaf-btn slaf-btn--quiet sw-remove" data-remove="' + id + '">Remove</button></div>';
+  }
+  function add(c) { list.insertAdjacentHTML('beforeend', rowHtml(c)); }
+  ctx.h.costs.forEach(add);
+  document.getElementById('add').addEventListener('click', function () { var c = Model.cost({ kind: 'space' }); ctx.save(function (h) { h.costs.push(c); }); add(c); });
+  function read(row, h) {
+    var id = row.getAttribute('data-id'), c = h.costs.filter(function (x) { return x.id === id; })[0]; if (!c) return;
+    var g = function (k) { return document.getElementById(id + '-' + k); };
+    var kindChanged = c.kind !== g('kind').value;
+    c.kind = g('kind').value; c.label = g('label').value.trim() || null; c.monthCents = SW.readMoney(g('month'));
+    var k = House.kindOf(T, c.kind);
+    if (kindChanged) { g('fixed').value = k.fixed ? 'fixed' : 'variable'; g('ded').value = k.deductible; g('label').placeholder = k.label; row.querySelector('.sw-kind-hint').textContent = k.hint; }
+    c.fixed = g('fixed').value === 'fixed'; c.deductible = g('ded').value;
+  }
+  function onEdit(e) { var row = e.target.closest('.sw-row'); if (!row) return; ctx.save(function (h) { SW.ownIt(h); read(row, h); }); }
+  list.addEventListener('input', onEdit); list.addEventListener('change', onEdit);
+  list.addEventListener('click', function (e) { var rm = e.target.getAttribute('data-remove'); if (rm) { ctx.save(function (h) { SW.ownIt(h); h.costs = h.costs.filter(function (x) { return x.id !== rm; }); }); e.target.closest('.sw-row').remove(); } });
+  var sf = document.getElementById('session-form');
+  sf.innerHTML = SW.moneyInput('session', ctx.h.you.sessionCents, 'One session brings, before cuts', 'you.session') + SW.numInput('sessions', ctx.h.you.sessionsMonth, 'Sessions in a typical month', 'you.sessionsMonth');
+  function onYou() { ctx.save(function (h) { SW.ownIt(h); h.you.sessionCents = SW.readMoney(document.getElementById('session')); var n = SW.readNum(document.getElementById('sessions')); h.you.sessionsMonth = Money.isEntered(n) && n >= 0 ? n : null; }); }
+  sf.addEventListener('input', onYou); sf.addEventListener('change', onYou);
+  function stat(k, r, kind, hero) { return '<div class="sw-stat' + (hero ? ' sw-stat--hero' : '') + '"><span class="sw-k">' + k + '</span><span class="sw-v">' + SW.fig(r, kind) + '</span></div>'; }
+  ctx.paint = function (h, T) {
+    var St = Streams.read(h, T), H = House.read(h, T, St);
+    document.getElementById('stats').innerHTML = stat('The house, a month', H.monthTotal, 'money', true) + stat('Fixed: comes anyway', H.fixedMonth) + stat('Varies with the work', H.variableMonth) + stat('A year', H.yearTotal) + stat('Share of what lands', H.shareOfNet, 'pct') + stat('The house, per session', H.perSession) + stat('Sessions a month that pay for the house', H.breakEven, 'num');
+    document.getElementById('chart-kinds').innerHTML = Charts.share({ rows: H.byKind.map(function (b) { return { label: b.label, cents: b.cents }; }), title: 'Where the money goes' });
+    var d = H.deductible;
+    document.getElementById('chart-ded').innerHTML = Charts.bars({ rows: [{ label: 'Usually carried', cents: SW.ok(d.usually) ? d.usually.value : null }, { label: 'Sometimes (argued)', cents: SW.ok(d.sometimes) ? d.sometimes.value : null }, { label: 'Ask a tax pro', cents: SW.ok(d.ask) ? d.ask.value : null }], title: 'What a return usually carries, a month' });
+    document.getElementById('ded-note').textContent = T.costKinds.confidenceNote;
+  };
+});
+</script>
+</body>
+</html>

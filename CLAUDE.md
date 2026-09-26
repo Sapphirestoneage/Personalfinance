@@ -42,8 +42,9 @@ Shortcuts: `/start`, `/room <id>`, `/find <words>`, `/simplify`, `/drift`, `/wra
 - If a request would add one, ask "what does this replace?" before building.
 - Prefer deleting, merging, and wiring existing rooms together.
 - Every session should leave the app with the same or fewer screens and fields.
-- Exception (D-339): `coach/` is a separate app (like `dnd/`), three screens, its own
-  tests and log (`coach/README.md`). Nothing outside `coach/` changes for it.
+- Exception (D-339, D-340): `coach/` and `safeword/` are separate apps (like `dnd/`),
+  each with its own tests and log (`coach/README.md`, `safeword/README.md`).
+  Nothing outside that folder changes for either.
 
 ## Stop and ask instead of guessing
 

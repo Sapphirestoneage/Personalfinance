@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="robots" content="noindex"/>
+<title>The safeword</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="safeword.css"/>
+<!--
+  THE SAFEWORD (SF-010). Owns personal.leanMonthCents, personal.typicalMonthCents and fund.*. Reads the house (fixed costs), the streams (the concentration, the typical month) and the rails (the balance marked as the fund, the freeze check). Shows the target, how far along it is, how long it carries you, and when it is full.
+  LIVE-FORM: built once. The form is drawn from the stored household when
+  the page opens; a change saves and repaints the read-outs only.
+-->
+</head>
+<body class="slaf safeword">
+<main class="sw" id="main">
+  <div id="head"></div>
+  <p class="sw-lede">The safeword is the fund that lets you say no: to a client, a scene, a platform's new terms, a bank's letter. It is sized for this life, not an office job: your lean month plus the house's fixed costs, for as many months as you choose, with a buffer when one platform holds your rent and another when nothing you hold is beyond a freeze.</p>
+  <div class="sw-two">
+    <section aria-label="Your month and the fund">
+      <div class="slaf-card">
+        <h2>Your own month</h2>
+        <div class="sw-form" id="month-form"></div>
+        <p class="sw-note" style="margin-top:8px">The lean month is food, home, transport, meds, the phone: what it costs to stay housed and fed with every extra cut. The typical month is what you actually spend. Both are yours, not the practice's; the house has its own page.</p>
+      </div>
+      <div class="slaf-card" style="margin-top:var(--space-3)">
+        <h2>The fund</h2>
+        <div class="sw-form" id="fund-form"></div>
+        <p class="sw-note" style="margin-top:8px">Six months is the usual answer for work that can stop overnight. Mark which account holds the fund on the <a href="rails.html">Rails</a> page; the balance comes from there.</p>
+      </div>
+      <div class="slaf-card" style="margin-top:var(--space-3)">
+        <h2>How the target is built</h2>
+        <div id="working"></div>
+      </div>
+    </section>
+    <aside class="sw-sticky" aria-label="The fund">
+      <div class="sw-stats" id="stats"></div>
+      <div class="slaf-card"><h3>How far along</h3><div id="chart-meter"></div><div id="flags"></div></div>
+    </aside>
+  </div>
+  <footer class="sw-foot">
+    <p>Nothing here leaves your browser. No account, no server, no tracking. Numbers are estimates for planning, not tax or legal advice; a tax pro or lawyer who knows the work is the person for your return and your papers. Every table says what year it is for and how sure it is.</p>
+  </footer>
+</main>
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/model.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/selfemployed.js"></script>
+<script src="engines/tax.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/streams.js"></script>
+<script src="engines/house.js"></script>
+<script src="engines/rails.js"></script>
+<script src="engines/taxplan.js"></script>
+<script src="engines/fund.js"></script>
+<script src="engines/longgame.js"></script>
+<script src="engines/dynamic.js"></script>
+<script src="engines/family.js"></script>
+<script src="engines/play.js"></script>
+<script src="engines/plan.js"></script>
+<script src="common.js"></script>
+<script>
+SW.boot({ page: 'fund' }, function (ctx) {
+  var S = window.SLAF, Money = S.Money, Fund = S.Fund, Streams = S.Streams, House = S.House, Rails = S.Rails, Charts = S.Charts;
+  document.getElementById('month-form').innerHTML = SW.moneyInput('lean', ctx.h.personal.leanMonthCents, 'Your lean month', 'personal.lean') + SW.moneyInput('typical', ctx.h.personal.typicalMonthCents, 'Your typical month', 'personal.typical');
+  document.getElementById('fund-form').innerHTML = SW.numInput('months', ctx.h.fund.targetMonths, 'Months it should carry you', 'fund.targetMonths') + SW.rateInput('rate', ctx.h.fund.setAsideRate, 'Share of each month that goes in', 'fund.setAsideRate') +
+    '<p class="sw-hint"><button type="button" class="sw-use" id="use-six">Use six months</button></p>';
+  function onEdit() { ctx.save(function (h) { SW.ownIt(h);
+    h.personal.leanMonthCents = SW.readMoney(document.getElementById('lean')); h.personal.typicalMonthCents = SW.readMoney(document.getElementById('typical'));
+    var m = SW.readNum(document.getElementById('months')); h.fund.targetMonths = Money.isEntered(m) && m >= 0 ? Math.round(m * 2) / 2 : null; h.fund.setAsideRate = SW.readRate(document.getElementById('rate')); }); }
+  ['month-form', 'fund-form'].forEach(function (id) { var el = document.getElementById(id); el.addEventListener('input', onEdit); el.addEventListener('change', onEdit); });
+  document.getElementById('use-six').addEventListener('click', function () { document.getElementById('months').value = '6'; onEdit(); });
+  function stat(k, r, kind, hero) { return '<div class="sw-stat' + (hero ? ' sw-stat--hero' : '') + '"><span class="sw-k">' + k + '</span><span class="sw-v">' + SW.fig(r, kind) + '</span></div>'; }
+  function line(k, v) { return '<li><span>' + k + '</span><span></span><span>' + v + '</span></li>'; }
+  ctx.paint = function (h, T) {
+    var St = Streams.read(h, T), H = House.read(h, T, St), R = Rails.read(h, T, St), F = Fund.read(h, T, St, H, R);
+    document.getElementById('stats').innerHTML = stat('The target', F.target, 'money', true) + stat('In the fund now', F.balance) + stat('Still to put in', F.gap) + stat('It carries you for', F.noMonths, 'months') + stat('Going in each month', F.setAsideMonth) + stat('Full in', F.monthsToFund, 'monthsWhole');
+    document.getElementById('chart-meter').innerHTML = SW.ok(F.progress) ? Charts.meter({ value: F.balance.value, target: F.target.value, label: 'The fund' }) : '<p class="sw-empty">' + SW.esc(F.target.status === 'ok' ? F.balance.reason : F.target.reason) + '</p>';
+    var flags = '';
+    if (F.platformBuffer.flagged) flags += '<div class="sw-flag">' + SW.esc(F.platformBuffer.topLabel) + ' brings half or more of what lands and can vanish overnight, so ' + F.platformBuffer.months + ' months of it are added to the target.</div>';
+    if (F.freezeBuffer.flagged) flags += '<div class="sw-flag">Nothing you hold is beyond a freeze: less than a lean month in cash or the like. One lean month more is added to the target until that changes on the <a href="rails.html">Rails</a> page.</div>';
+    if (SW.ok(F.progress) && F.progress.value >= 1) flags += '<div class="sw-flag is-good">The fund is full. Every no you need is paid for.</div>';
+    document.getElementById('flags').innerHTML = flags;
+    var w = SW.ok(F.target) ? '<ul class="sw-split">' + line('Your lean month', SW.money(F.monthCost.leanCents)) + line('The house’s fixed costs', '+ ' + SW.money(F.monthCost.fixedCents)) + line('A month to be carried', SW.money(F.monthCost.value)) + line('Times ' + F.base.months + ' months', SW.money(F.base.value)) + line('Platform buffer', '+ ' + SW.money(F.platformBuffer.value)) + line('Freeze buffer', '+ ' + SW.money(F.freezeBuffer.value)) + '<li class="is-total"><span>The target</span><span></span><span>' + SW.money(F.target.value) + '</span></li></ul>'
+      : '<p class="sw-empty">' + SW.esc(F.target.reason) + '</p>';
+    document.getElementById('working').innerHTML = w;
+  };
+});
+</script>
+</body>
+</html>

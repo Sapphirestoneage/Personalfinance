@@ -1,0 +1,20 @@
+{
+  "id": "protocol_rules",
+  "version": "2026.1",
+  "asOf": "2026-09-01",
+  "source": "Guardrails for money that moves inside a dynamic: allowances, tributes, financial submission, a shared purse. Drawn from consent practice in the community: a cap, a review, a way out, and a floor nobody goes below.",
+  "confidence": "conversational",
+  "confidenceNote": "These are the app's checks, not anyone's rules for your relationship. A check that fails is a conversation to have, not a verdict.",
+  "checks": [
+    { "id": "floor", "label": "The giver stays above their own floor", "why": "After their share of the house and what they give, the giver can still cover their own lean month. Money play that eats rent is not play." },
+    { "id": "cap", "label": "There is a cap", "why": "A monthly ceiling, agreed in advance, that no scene raises." },
+    { "id": "review", "label": "There is a review date", "why": "A day both of you look at the numbers with the scene off." },
+    { "id": "safeword", "label": "There is a safeword for money", "why": "One word ends the arrangement, no explanation owed, no penalty." },
+    { "id": "fundFirst", "label": "The giver's own fund is not drained", "why": "What they give comes from what is left after their fund set-aside, never from the fund." }
+  ],
+  "splitRules": [
+    { "id": "equal", "label": "Equal shares", "hint": "Everyone pays the same." },
+    { "id": "proportional", "label": "In proportion to income", "hint": "Whoever earns more pays more, in the same ratio." },
+    { "id": "custom", "label": "Agreed shares", "hint": "You set each person's share." }
+  ]
+}

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="robots" content="noindex"/>
+<title>House rules</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="safeword.css"/>
+<!--
+  HOUSE RULES (SF-010). Owns house.*: the people, the shared month, the split rule, and the protocol (money that moves inside the dynamic). The person marked 'me' carries no numbers here: their income is the Streams page's and their lean month the Safeword page's. Shows each person's share and what is left above their floor, and the protocol against five guardrails.
+  LIVE-FORM: built once. The form is drawn from the stored household when
+  the page opens; a change saves and repaints the read-outs only.
+-->
+</head>
+<body class="slaf safeword">
+<main class="sw" id="main">
+  <div id="head"></div>
+  <p class="sw-lede">A D/s household, a polycule, a leather family, two people and a lease. The split is how the shared month is divided. The protocol is money that moves inside the dynamic on purpose: an allowance, a tribute, a drain, a shared purse one person controls. Kink has rules for that, and they are the same rules as for any scene: a cap, a review, a way out, and a floor nobody goes below.</p>
+  <div class="sw-two">
+    <section aria-label="The house">
+      <div class="slaf-card">
+        <h2>Who is in the house</h2>
+        <div id="rows"></div>
+        <div class="sw-actions" style="margin-top:var(--space-3)"><button type="button" class="slaf-btn slaf-btn--primary" id="add">Add a person</button><span class="sw-note">First names or scene names. Your own line reads from the other pages.</span></div>
+      </div>
+      <div class="slaf-card" style="margin-top:var(--space-3)">
+        <h2>The shared month</h2>
+        <div class="sw-form" id="shared-form"></div>
+      </div>
+      <div class="slaf-card" style="margin-top:var(--space-3)">
+        <h2>The protocol</h2>
+        <div class="sw-form" id="protocol-form"></div>
+        <p class="sw-note" style="margin-top:8px">Leave it empty if no money moves inside the dynamic. A failed check is a conversation to have with the scene off, not a verdict.</p>
+      </div>
+    </section>
+    <aside class="sw-sticky" aria-label="The split">
+      <div class="slaf-card"><h3>The split</h3><div id="split"></div></div>
+      <div class="slaf-card" style="margin-top:var(--space-3)"><h3>The five guardrails</h3><ul class="sw-checks" id="checks"></ul><div id="verdict"></div></div>
+    </aside>
+  </div>
+  <footer class="sw-foot">
+    <p>Nothing here leaves your browser. No account, no server, no tracking. Numbers are estimates for planning, not tax or legal advice; a tax pro or lawyer who knows the work is the person for your return and your papers. Every table says what year it is for and how sure it is.</p>
+  </footer>
+</main>
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/model.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/selfemployed.js"></script>
+<script src="engines/tax.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/streams.js"></script>
+<script src="engines/house.js"></script>
+<script src="engines/rails.js"></script>
+<script src="engines/taxplan.js"></script>
+<script src="engines/fund.js"></script>
+<script src="engines/longgame.js"></script>
+<script src="engines/dynamic.js"></script>
+<script src="engines/family.js"></script>
+<script src="engines/play.js"></script>
+<script src="engines/plan.js"></script>
+<script src="common.js"></script>
+<script>
+SW.boot({ page: 'dynamic' }, function (ctx) {
+  var S = window.SLAF, Money = S.Money, Model = S.Model, Dynamic = S.Dynamic, Streams = S.Streams, Charts = S.Charts;
+  var T = ctx.T, list = document.getElementById('rows');
+  function rowHtml(p) {
+    var id = p.id, me = p.role === 'me';
+    return '<div class="sw-row" data-id="' + id + '">' +
+      '<div class="sw-field sw-field--name">' + SW.label(id + '-name', 'Name', 'person.name') + '<input type="text" id="' + id + '-name" maxlength="40" autocomplete="off" value="' + SW.esc(p.name || '') + '"/></div>' +
+      SW.select(id + '-role', Model.ROLES, p.role, 'Role', 'person.role') +
+      '<span class="sw-me" ' + (me ? '' : 'hidden') + '><span class="sw-note">Income from <a href="streams.html">Streams</a>, lean month from <a href="fund.html">The safeword</a>.</span></span>' +
+      '<span class="sw-them" ' + (me ? 'hidden' : '') + '>' + SW.moneyInput(id + '-income', p.incomeMonthCents, 'Brings in, a month', 'person.income') + ' ' + SW.moneyInput(id + '-lean', p.leanMonthCents, 'Their lean month', 'person.lean') + '</span>' +
+      '<span class="sw-share" ' + (ctx.h.house.splitRule === 'custom' ? '' : 'hidden') + '>' + SW.rateInput(id + '-share', p.share, 'Agreed share', 'person.share') + '</span>' +
+      '<button type="button" class="slaf-btn slaf-btn--quiet sw-remove" data-remove="' + id + '">Remove</button></div>';
+  }
+  function add(p) { list.insertAdjacentHTML('beforeend', rowHtml(p)); }
+  ctx.h.house.people.forEach(add);
+  if (!ctx.h.house.people.length) { var me = Model.person({ role: 'me', name: ctx.h.you.name }); ctx.h.house.people.push(me); S.Store.save(ctx.h); add(me); }
+  document.getElementById('add').addEventListener('click', function () { var p = Model.person({ role: 'partner' }); ctx.save(function (h) { h.house.people.push(p); }); add(p); refreshPeople(); });
+  function read(row, h) {
+    var id = row.getAttribute('data-id'), p = h.house.people.filter(function (x) { return x.id === id; })[0]; if (!p) return;
+    var g = function (k) { return document.getElementById(id + '-' + k); };
+    p.name = g('name').value.trim() || null; p.role = g('role').value; p.incomeMonthCents = SW.readMoney(g('income')); p.leanMonthCents = SW.readMoney(g('lean')); p.share = SW.readRate(g('share'));
+    row.querySelector('.sw-me').hidden = p.role !== 'me'; row.querySelector('.sw-them').hidden = p.role === 'me';
+  }
+  function onEdit(e) { var row = e.target.closest('.sw-row'); if (!row) return; ctx.save(function (h) { SW.ownIt(h); read(row, h); }); refreshPeople(); }
+  list.addEventListener('input', onEdit); list.addEventListener('change', onEdit);
+  list.addEventListener('click', function (e) { var rm = e.target.getAttribute('data-remove'); if (rm) { ctx.save(function (h) { SW.ownIt(h); h.house.people = h.house.people.filter(function (x) { return x.id !== rm; }); }); e.target.closest('.sw-row').remove(); refreshPeople(); } });
+  var pr = ctx.h.house.protocol;
+  document.getElementById('shared-form').innerHTML = SW.moneyInput('shared', ctx.h.house.sharedMonthCents, 'The house costs, a month, all in', 'house.shared') + SW.select('rule', T.protocolRules.splitRules, ctx.h.house.splitRule, 'How it is split', 'house.splitRule');
+  document.getElementById('protocol-form').innerHTML = SW.select('from', [], pr.fromId || '', 'From', 'protocol.from') + SW.select('to', [], pr.toId || '', 'To', 'protocol.to') + SW.moneyInput('amount', pr.monthCents, 'A month', 'protocol.amount') + SW.moneyInput('cap', pr.capCents, 'The cap', 'protocol.cap') + SW.dateInput('review', pr.reviewDate, 'Review date', 'protocol.review') +
+    '<div class="sw-field sw-checkfield"><label class="sw-check"><input type="checkbox" id="safeword"' + (pr.safeword ? ' checked' : '') + '/> There is a safeword for money</label>' + SW.help('protocol.safeword') + '</div>';
+  function refreshPeople() {
+    var people = [{ id: '', label: 'Nobody' }].concat(ctx.h.house.people.map(function (p) { return { id: p.id, label: p.name || (p.role === 'me' ? 'Me' : 'Someone') }; }));
+    ['from', 'to'].forEach(function (k) { var el = document.getElementById(k), v = ctx.h.house.protocol[k + 'Id'] || ''; el.innerHTML = people.map(function (o) { return '<option value="' + SW.esc(o.id) + '"' + (o.id === v ? ' selected' : '') + '>' + SW.esc(o.label) + '</option>'; }).join(''); });
+    var custom = ctx.h.house.splitRule === 'custom';
+    Array.prototype.forEach.call(list.querySelectorAll('.sw-share'), function (el) { el.hidden = !custom; });
+  }
+  refreshPeople();
+  function onForms() { ctx.save(function (h) { SW.ownIt(h);
+    h.house.sharedMonthCents = SW.readMoney(document.getElementById('shared')); h.house.splitRule = document.getElementById('rule').value;
+    h.house.protocol.fromId = document.getElementById('from').value || null; h.house.protocol.toId = document.getElementById('to').value || null; h.house.protocol.monthCents = SW.readMoney(document.getElementById('amount')); h.house.protocol.capCents = SW.readMoney(document.getElementById('cap')); h.house.protocol.reviewDate = SW.readDate(document.getElementById('review')); h.house.protocol.safeword = document.getElementById('safeword').checked; }); refreshPeople(); }
+  ['shared-form', 'protocol-form'].forEach(function (id) { var el = document.getElementById(id); el.addEventListener('input', onForms); el.addEventListener('change', onForms); });
+  ctx.paint = function (h, T) {
+    var St = Streams.read(h, T), D = Dynamic.read(h, T, St);
+    var s = '';
+    if (!D.people.length) s = '<p class="sw-empty">Add the people in the house.</p>';
+    else {
+      s = '<div class="sw-stat" style="margin-bottom:var(--space-2)"><span class="sw-k">The shared month</span><span class="sw-v">' + SW.fig(D.shared) + '</span></div>';
+      s += Charts.bars({ rows: D.people.filter(function (p) { return SW.ok(p.shareCents); }).map(function (p) { return { label: p.name, cents: p.shareCents.value, share: SW.ok(p.share) ? p.share.value : null }; }), title: 'Each person’s share' });
+      s += '<ul class="sw-checks">' + D.people.map(function (p) { return '<li><span class="sw-mark ' + (p.aboveFloor === true ? 'is-pass' : p.aboveFloor === false ? 'is-fail' : 'is-unknown') + '">' + (p.aboveFloor === true ? '✓' : p.aboveFloor === false ? '✗' : '?') + '</span><span><b>' + SW.esc(p.name) + '</b>: pays ' + SW.fig(p.shareCents, 'money', { why: false }) + ', keeps ' + SW.fig(p.leftCents, 'money', { why: false }) + (Money.isEntered(p.leanCents) ? ' against a lean month of ' + SW.money(p.leanCents) : '') + '</span>' + (p.aboveFloor === false ? '<span class="sw-why sw-bad">below their own floor after the split</span>' : p.aboveFloor === null ? '<span class="sw-why">' + SW.esc(!SW.ok(p.incomeCents) ? p.incomeCents.reason : !SW.ok(p.shareCents) ? p.shareCents.reason : 'needs their lean month') + '</span>' : '') + '</li>'; }).join('') + '</ul>';
+      if (D.splitRule === 'custom' && D.sharesSumOk === false) s += '<div class="sw-flag">The agreed shares do not add up to 100%.</div>';
+    }
+    document.getElementById('split').innerHTML = s;
+    var P = D.protocol;
+    document.getElementById('checks').innerHTML = P.checks.map(function (c) { return '<li><span class="sw-mark ' + (c.pass === true ? 'is-pass' : c.pass === false ? 'is-fail' : 'is-unknown') + '">' + (c.pass === true ? '✓' : c.pass === false ? '✗' : '?') + '</span><span>' + SW.esc(c.label) + (c.detail && typeof c.detail === 'string' ? ' <span class="sw-note">(' + SW.esc(c.detail.replace(/: (-?\d+)$/, function (m, n) { return ': ' + SW.money(Number(n)); })) + ')</span>' : '') + '</span><span class="sw-why">' + SW.esc(c.why) + '</span></li>'; }).join('');
+    var v = '';
+    if (P.active) v = P.passed === P.of ? '<div class="sw-flag is-good">' + SW.esc(P.from.name) + ' gives ' + SW.esc(P.to.name) + ' ' + SW.money(P.monthCents) + ' a month, and every guardrail holds.</div>' : P.checks.some(function (c) { return c.pass === false; }) ? '<div class="sw-flag is-bad">' + (P.of - P.passed - P.unknown) + ' ' + SW.plural(P.of - P.passed - P.unknown, 'guardrail does', 'guardrails do') + ' not hold. Worth a talk before the next scene.</div>' : '<div class="sw-flag">Some guardrails cannot be judged yet.</div>';
+    else v = '<p class="sw-note">No money moves inside the dynamic, or it is not filled in yet.</p>';
+    document.getElementById('verdict').innerHTML = v;
+  };
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="robots" content="noindex"/>
+<title>Safeword</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="safeword.css"/>
+<!--
+  SAFEWORD HOME (SF-010). Reads the household to say how far along the plan is; writes nothing but the example numbers and a backup.
+  LIVE-FORM: built once. The form is drawn from the stored household when
+  the page opens; a change saves and repaints the read-outs only.
+-->
+</head>
+<body class="slaf safeword">
+<main class="sw" id="main">
+  <div id="head"></div>
+
+  <section class="slaf-card" id="welcome" aria-label="What this is">
+    <div class="sw-two">
+      <div>
+        <span class="slaf-eyebrow">What this is</span>
+        <h2>A money plan for a life that most planners pretend does not exist.</h2>
+        <p class="sw-lede">Sessions, subs, clips, tributes, a vanilla job on the side. A dungeon by the hour. A platform that can close your account on a Tuesday. A partner the law does not call family. A tribute protocol that needs a cap and a safeword. This is a planner built for that, with the community's own words and none of the judgement.</p>
+        <p class="sw-lede">It works like a coach's session: every box has a <span class="help-btn" aria-hidden="true" style="display:inline-flex;width:20px;height:20px;font-size:11px;vertical-align:middle">?</span> that says what it means in plain words, where to find it, and what to do if you are not sure. A box left blank means <b>not known yet</b>, never zero.</p>
+        <div class="sw-actions">
+          <button type="button" class="slaf-btn slaf-btn--primary" id="btn-demo">Try with example numbers</button>
+          <a class="slaf-btn" href="streams.html">Start with my own</a>
+        </div>
+      </div>
+      <div class="sw-stat sw-stat--hero" id="progress-card">
+        <span class="sw-k">Where the plan stands</span>
+        <span class="sw-v" id="progress-v">0 of 9 pages</span>
+        <span class="sw-why" id="progress-why">Nothing entered yet. Start with the Streams page, or try the example.</span>
+      </div>
+    </div>
+  </section>
+
+  <section aria-label="The pages">
+    <h2>The ten pages</h2>
+    <div class="sw-cards" id="cards"></div>
+  </section>
+
+  <section class="slaf-card" aria-label="Privacy">
+    <h2>Why it is safe to type here</h2>
+    <div class="sw-grid">
+      <div><h3>It stays in this browser</h3><p class="sw-note">There is no account and no server. The numbers live in this browser's own storage, on this device, under a key of their own. Clear the browser and they are gone; back them up first.</p></div>
+      <div><h3>Working name is enough</h3><p class="sw-note">Nothing asks for a legal name, an address, a platform login or a client's name. A stream is "Sessions" or "Subs"; a place money sits is "Bank A".</p></div>
+      <div><h3>Back up, or wipe</h3><p class="sw-note">A backup is one plain file you keep where you choose. Wiping is one button and it is final.</p>
+        <div class="sw-actions" style="margin-top:8px">
+          <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-export">Save a backup file</button>
+          <label class="slaf-btn slaf-btn--quiet" for="import-file">Bring a backup in</label><input type="file" id="import-file" accept="application/json,.json" hidden/>
+          <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-wipe">Wipe everything</button>
+        </div>
+        <p class="sw-say" id="backup-say" role="status"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="slaf-card" aria-label="Who it is for">
+    <h2>Three ways in</h2>
+    <div class="sw-grid">
+      <div><h3>I earn from this</h3><p class="sw-note">Pro domme, escort, content creator, cam, findom, phone, teaching. Start at <a href="streams.html">Streams</a>, then <a href="house.html">The house</a> and <a href="taxes.html">Taxes</a>. The safeword fund is sized for a platform closing on you.</p></div>
+      <div><h3>I spend on this</h3><p class="sw-note">Cons, gear, club dues, classes. Start at <a href="play.html">The life</a> and <a href="fund.html">The safeword</a>; skip the house and the taxes if you have a vanilla job that withholds.</p></div>
+      <div><h3>We run a house</h3><p class="sw-note">A D/s household, a polycule, a leather family. <a href="dynamic.html">House rules</a> splits the shared month and checks any money that moves inside the dynamic against five guardrails. <a href="family.html">Chosen family</a> is the papers that make your people count.</p></div>
+    </div>
+  </section>
+  <footer class="sw-foot">
+    <p>Nothing here leaves your browser. No account, no server, no tracking. Numbers are estimates for planning, not tax or legal advice; a tax pro or lawyer who knows the work is the person for your return and your papers. Every table says what year it is for and how sure it is.</p>
+  </footer>
+</main>
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/model.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/selfemployed.js"></script>
+<script src="engines/tax.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/streams.js"></script>
+<script src="engines/house.js"></script>
+<script src="engines/rails.js"></script>
+<script src="engines/taxplan.js"></script>
+<script src="engines/fund.js"></script>
+<script src="engines/longgame.js"></script>
+<script src="engines/dynamic.js"></script>
+<script src="engines/family.js"></script>
+<script src="engines/play.js"></script>
+<script src="engines/plan.js"></script>
+<script src="common.js"></script>
+<script>
+SW.boot({ page: 'index' }, function (ctx) {
+  var S = window.SLAF, Store = S.Store, Demo = S.Demo, Plan = S.Plan;
+  document.getElementById('btn-demo').addEventListener('click', function () { Store.useDemo(Demo.household()); location.reload(); });
+  document.getElementById('btn-export').addEventListener('click', function () {
+    SW.download('safeword-backup-' + SW.today() + '.json', Store.exportJson(ctx.h));
+    document.getElementById('backup-say').textContent = 'Saved. Keep the file somewhere only you can reach.';
+  });
+  document.getElementById('import-file').addEventListener('change', function (e) {
+    var f = e.target.files && e.target.files[0]; if (!f) return;
+    var r = new FileReader();
+    r.onload = function () { var h = Store.importJson(String(r.result)); if (h instanceof Error) { document.getElementById('backup-say').textContent = h.message; return; } Store.save(h); location.reload(); };
+    r.readAsText(f);
+  });
+  document.getElementById('btn-wipe').addEventListener('click', function () { if (confirm('Forget every number in this browser? There is no undo.')) { Store.wipe(); location.reload(); } });
+  ctx.paint = function (h, T) {
+    var p = Plan.read(h, T);
+    document.getElementById('progress-v').textContent = p.doneCount + ' of ' + p.pages.length + ' pages';
+    var next = p.pages.filter(function (x) { return !x.done; })[0];
+    document.getElementById('progress-why').textContent = !next ? 'Every page has its numbers. The plan is on the last page.'
+      : (p.doneCount ? 'Next: ' + next.label + '. ' : 'Nothing entered yet. ') + (next.missing[0] || '');
+    document.getElementById('cards').innerHTML = SW.PAGES.filter(function (pg) { return pg.id !== 'index'; }).map(function (pg) {
+      var st = p.pages.filter(function (x) { return x.id === pg.id; })[0];
+      var mark = pg.id === 'plan' ? '' : st && st.done ? '<span class="sw-good">has its numbers</span>' : '<span class="sw-notyet">not yet</span>';
+      return '<a class="slaf-card" href="' + pg.href + '"><h3>' + SW.esc(pg.label) + '</h3><p>' + SW.esc(pg.sub) + '</p><p style="margin-top:6px">' + mark + '</p></a>';
+    }).join('');
+  };
+});
+</script>
+</body>
+</html>

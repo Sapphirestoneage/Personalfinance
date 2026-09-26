@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="robots" content="noindex"/>
+<title>The plan</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="safeword.css"/>
+<!--
+  THE PLAN (SF-010). Owns nothing. Reads every engine and shows the split: of every dollar that lands, the share to the tax jar, the fund, the house, the long game and the life, and what is left against the lean month. Prints as one page.
+  LIVE-FORM: built once. The form is drawn from the stored household when
+  the page opens; a change saves and repaints the read-outs only.
+-->
+</head>
+<body class="slaf safeword">
+<main class="sw" id="main">
+  <div id="head"></div>
+  <p class="sw-lede">One page that says what to do with a month's money the day it lands. Every number here comes from another page; nothing is typed on this one. Print it and put it where the cash is counted.</p>
+  <div class="sw-two">
+    <section aria-label="The split">
+      <div class="slaf-card">
+        <h2>The split, every time money lands</h2>
+        <div id="split"></div>
+      </div>
+      <div class="slaf-card" style="margin-top:var(--space-3)">
+        <h2>The picture</h2>
+        <div id="chart-split"></div>
+      </div>
+      <div class="slaf-card" style="margin-top:var(--space-3)">
+        <h2>Page by page</h2>
+        <ul class="sw-checks" id="pages"></ul>
+      </div>
+    </section>
+    <aside class="sw-sticky" aria-label="Headlines">
+      <div class="sw-stats" id="stats"></div>
+      <div class="sw-actions no-print"><button type="button" class="slaf-btn" id="print">Print this page</button></div>
+    </aside>
+  </div>
+  <footer class="sw-foot">
+    <p>Nothing here leaves your browser. No account, no server, no tracking. Numbers are estimates for planning, not tax or legal advice; a tax pro or lawyer who knows the work is the person for your return and your papers. Every table says what year it is for and how sure it is.</p>
+  </footer>
+</main>
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/model.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/selfemployed.js"></script>
+<script src="engines/tax.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/streams.js"></script>
+<script src="engines/house.js"></script>
+<script src="engines/rails.js"></script>
+<script src="engines/taxplan.js"></script>
+<script src="engines/fund.js"></script>
+<script src="engines/longgame.js"></script>
+<script src="engines/dynamic.js"></script>
+<script src="engines/family.js"></script>
+<script src="engines/play.js"></script>
+<script src="engines/plan.js"></script>
+<script src="common.js"></script>
+<script>
+SW.boot({ page: 'plan' }, function (ctx) {
+  var S = window.SLAF, Money = S.Money, Plan = S.Plan, Charts = S.Charts;
+  document.getElementById('print').addEventListener('click', function () { window.print(); });
+  function stat(k, r, kind, hero, why) { return '<div class="sw-stat' + (hero ? ' sw-stat--hero' : '') + '"><span class="sw-k">' + k + '</span><span class="sw-v">' + SW.fig(r, kind) + '</span>' + (why ? '<span class="sw-why">' + why + '</span>' : '') + '</div>'; }
+  ctx.paint = function (h, T) {
+    var p = Plan.read(h, T);
+    var hero = p.closes === null ? '<span class="sw-notyet">not yet</span>' : p.closes ? '<span class="sw-fig sw-good">closes</span>' : '<span class="sw-fig sw-bad">does not close</span>';
+    document.getElementById('stats').innerHTML = '<div class="sw-stat sw-stat--hero"><span class="sw-k">A typical month</span><span class="sw-v">' + hero + '</span><span class="sw-why">' + (p.closes === null ? SW.esc(p.yours.reason || 'Some pages still need their numbers.') : p.closes ? 'after every share, ' + SW.money(p.yours.value) + ' is left against a lean month of ' + SW.money(p.lean) : 'after every share, ' + SW.money(p.yours.value) + ' is left; the lean month is ' + SW.money(p.lean) + '. Something has to give: the house, the fund’s pace, or the long game’s.') + '</span></div>' +
+      stat('What lands', p.S.typicalNet) + stat('The floor', p.S.floorNet) + stat('The safeword, how far', p.F.progress, 'pct') + stat('Tax jar, of every $100 from the work', p.TX.jarPer100) + stat('Rails checks passed', SW.ok(p.R.score) ? Money.ok(p.R.score.passed) : p.R.score, 'num') + stat('Papers ready', p.FA.score, 'pct');
+    var rows = p.split.map(function (s) { return '<li><span>' + SW.esc(s.label) + '</span><span>' + (SW.ok(s.rate) ? SW.pct(s.rate.value) : '') + '</span><span>' + SW.fig(s.cents, 'money', { why: false }) + '</span></li>'; }).join('');
+    rows += '<li class="is-total"><span>Yours, to live on</span><span>' + (SW.ok(p.yours) && p.net ? SW.pct(p.yours.value / p.net) : '') + '</span><span>' + SW.fig(p.yours, 'money', { why: false }) + '</span></li>';
+    document.getElementById('split').innerHTML = '<ul class="sw-split">' + rows + '</ul>' + (SW.ok(p.yours) ? '' : '<p class="sw-note" style="margin-top:8px">' + SW.esc(p.yours.reason) + '</p>') +
+      '<p class="sw-note" style="margin-top:12px">The tax jar is a share of the self-employed part only; a job withholds its own. The house is the practice’s costs at their monthly pace. The life is a year of it, spread evenly.</p>';
+    document.getElementById('chart-split').innerHTML = SW.ok(p.yours) ? Charts.share({ rows: p.split.map(function (s) { return { label: s.label, cents: s.cents.value }; }).concat([{ label: 'Yours', cents: Math.max(0, p.yours.value) }]), title: 'The split' }) : '<p class="sw-empty">Every page needs its numbers first.</p>';
+    document.getElementById('pages').innerHTML = p.pages.map(function (pg) { var page = SW.PAGES.filter(function (x) { return x.id === pg.id; })[0]; return '<li><span class="sw-mark ' + (pg.done ? 'is-pass' : 'is-unknown') + '">' + (pg.done ? '✓' : '?') + '</span><span><a href="' + page.href + '">' + SW.esc(pg.label) + '</a>' + (pg.done ? '' : ': <span class="sw-note">' + SW.esc(pg.missing[0] || 'not yet') + '</span>') + '</span></li>'; }).join('');
+  };
+});
+</script>
+</body>
+</html>

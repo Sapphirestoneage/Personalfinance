@@ -13,3 +13,6 @@ package-lock.json
 money-rooms-coach-*
 money-rooms-recap-*
 *.coach.json
+
+# Safeword (D-340): a person's backup file never enters this public repository.
+safeword-backup-*

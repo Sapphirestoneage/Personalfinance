@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="robots" content="noindex"/>
+<title>Rails</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="safeword.css"/>
+<!--
+  RAILS (SF-010). Owns rails[]: every place money sits or moves through, its balance, its closure risk, whether it is the practice's and whether it is the fund. Reads the streams for where each lands. Shows the balances, the flow by rail, the platform-held money and the five-point checklist.
+  LIVE-FORM: built once. The form is drawn from the stored household when
+  the page opens; a change saves and repaints the read-outs only.
+-->
+</head>
+<body class="slaf safeword">
+<main class="sw" id="main">
+  <div id="head"></div>
+  <p class="sw-lede">Adult work loses accounts. Not for anything you did: a policy changes, a keyword trips, a review team decides. The rails are every place your money sits or moves through, and the question the page asks of each is what happens to your month if it closes tomorrow.</p>
+  <div class="sw-two">
+    <section aria-label="Where money sits">
+      <div class="slaf-card">
+        <h2>The places</h2>
+        <div id="rows"></div>
+        <div class="sw-actions" style="margin-top:var(--space-3)"><button type="button" class="slaf-btn slaf-btn--primary" id="add">Add a place</button><span class="sw-note">Working names are enough: "Bank A", "the app", "cash".</span></div>
+      </div>
+    </section>
+    <aside class="sw-sticky" aria-label="How it can fail">
+      <div class="sw-stats" id="stats"></div>
+      <div class="slaf-card"><h3>The five checks</h3><ul class="sw-checks" id="checks"></ul></div>
+      <div class="slaf-card" style="margin-top:var(--space-3)"><h3>Where a month lands</h3><div id="chart-flow"></div></div>
+      <div class="slaf-card" style="margin-top:var(--space-3)"><h3>Where it sits</h3><div id="chart-bal"></div></div>
+    </aside>
+  </div>
+  <footer class="sw-foot">
+    <p>Nothing here leaves your browser. No account, no server, no tracking. Numbers are estimates for planning, not tax or legal advice; a tax pro or lawyer who knows the work is the person for your return and your papers. Every table says what year it is for and how sure it is.</p>
+  </footer>
+</main>
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/model.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/selfemployed.js"></script>
+<script src="engines/tax.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/streams.js"></script>
+<script src="engines/house.js"></script>
+<script src="engines/rails.js"></script>
+<script src="engines/taxplan.js"></script>
+<script src="engines/fund.js"></script>
+<script src="engines/longgame.js"></script>
+<script src="engines/dynamic.js"></script>
+<script src="engines/family.js"></script>
+<script src="engines/play.js"></script>
+<script src="engines/plan.js"></script>
+<script src="common.js"></script>
+<script>
+SW.boot({ page: 'rails' }, function (ctx) {
+  var S = window.SLAF, Money = S.Money, Model = S.Model, Rails = S.Rails, Streams = S.Streams, Charts = S.Charts;
+  var T = ctx.T, kinds = T.railKinds.kinds, list = document.getElementById('rows');
+  function rowHtml(r) {
+    var id = r.id, k = Rails.kindOf(T, r.kind);
+    return '<div class="sw-row" data-id="' + id + '">' +
+      SW.select(id + '-kind', kinds.map(function (x) { return { id: x.id, label: x.label }; }), r.kind, 'Kind', 'rail.kind') +
+      '<div class="sw-field sw-field--name">' + SW.label(id + '-label', 'Call it', 'rail.label') + '<input type="text" id="' + id + '-label" maxlength="60" autocomplete="off" value="' + SW.esc(r.label || '') + '" placeholder="' + SW.esc(k.label) + '"/></div>' +
+      SW.moneyInput(id + '-balance', r.balanceCents, 'In it now', 'rail.balance') +
+      SW.select(id + '-risk', Model.RISKS, r.closeRisk || k.closeRisk, 'Chance it closes on you', 'rail.closeRisk') +
+      SW.select(id + '-work', [{ id: '', label: 'Not said' }, { id: 'yes', label: 'The practice’s' }, { id: 'no', label: 'My own' }], r.forWork === true ? 'yes' : r.forWork === false ? 'no' : '', 'Whose', 'rail.forWork') +
+      '<div class="sw-field sw-checkfield"><label class="sw-check"><input type="checkbox" id="' + id + '-fund"' + (r.isFund ? ' checked' : '') + '/> This is the safeword fund</label>' + SW.help('rail.isFund') + '</div>' +
+      '<p class="sw-hint sw-kind-hint">' + SW.esc(k.hint) + '</p>' +
+      '<button type="button" class="slaf-btn slaf-btn--quiet sw-remove" data-remove="' + id + '">Remove</button></div>';
+  }
+  function add(r) { list.insertAdjacentHTML('beforeend', rowHtml(r)); }
+  ctx.h.rails.forEach(add);
+  document.getElementById('add').addEventListener('click', function () { var r = Model.rail({ kind: 'bank' }); ctx.save(function (h) { h.rails.push(r); }); add(r); });
+  function read(row, h) {
+    var id = row.getAttribute('data-id'), r = h.rails.filter(function (x) { return x.id === id; })[0]; if (!r) return;
+    var g = function (k) { return document.getElementById(id + '-' + k); };
+    var kindChanged = r.kind !== g('kind').value;
+    r.kind = g('kind').value; r.label = g('label').value.trim() || null; r.balanceCents = SW.readMoney(g('balance'));
+    var k = Rails.kindOf(T, r.kind);
+    if (kindChanged) { g('risk').value = k.closeRisk; g('label').placeholder = k.label; row.querySelector('.sw-kind-hint').textContent = k.hint; }
+    r.closeRisk = g('risk').value; r.forWork = g('work').value === 'yes' ? true : g('work').value === 'no' ? false : null; r.isFund = g('fund').checked;
+  }
+  function onEdit(e) { var row = e.target.closest('.sw-row'); if (!row) return; ctx.save(function (h) { SW.ownIt(h); read(row, h); }); }
+  list.addEventListener('input', onEdit); list.addEventListener('change', onEdit);
+  list.addEventListener('click', function (e) { var rm = e.target.getAttribute('data-remove'); if (rm) { ctx.save(function (h) { SW.ownIt(h); h.rails = h.rails.filter(function (x) { return x.id !== rm; }); }); e.target.closest('.sw-row').remove(); } });
+  function stat(k, r, kind, hero) { return '<div class="sw-stat' + (hero ? ' sw-stat--hero' : '') + '"><span class="sw-k">' + k + '</span><span class="sw-v">' + SW.fig(r, kind) + '</span></div>'; }
+  ctx.paint = function (h, T) {
+    var St = Streams.read(h, T), R = Rails.read(h, T, St);
+    var score = SW.ok(R.score) ? '<span class="sw-fig">' + R.score.passed + ' of ' + R.score.of + '</span>' : SW.fig(R.score);
+    document.getElementById('stats').innerHTML = '<div class="sw-stat sw-stat--hero"><span class="sw-k">Checks passed</span><span class="sw-v">' + score + '</span>' + (SW.ok(R.score) && R.score.unknown ? '<span class="sw-why">' + R.score.unknown + ' cannot be judged yet</span>' : '') + '</div>' +
+      stat('Everything you hold', R.balances) + stat('Beyond a freeze (cash and the like)', R.beyondFreeze) + stat('Sitting on a platform, not paid out', R.platformHeld) +
+      '<div class="sw-stat"><span class="sw-k">Most of a month lands in</span><span class="sw-v">' + (R.topFlow.id ? '<span class="sw-fig" style="font-size:var(--text-md)">' + SW.esc(R.topFlow.label) + '</span><span class="sw-why' + (R.topFlow.flagged ? ' sw-bad' : '') + '">' + SW.pct(R.topFlow.share) + ' of what lands' + (R.topFlow.flagged ? ', and it can close on you' : '') + '</span>' : '<span class="sw-notyet">not yet</span>') + '</span></div>';
+    document.getElementById('checks').innerHTML = R.checklist.map(function (c) { return '<li><span class="sw-mark ' + (c.pass === true ? 'is-pass' : c.pass === false ? 'is-fail' : 'is-unknown') + '">' + (c.pass === true ? '✓' : c.pass === false ? '✗' : '?') + '</span><span>' + SW.esc(c.label) + (c.detail ? ' <span class="sw-note">(' + SW.esc(c.detail) + ')</span>' : '') + '</span><span class="sw-why">' + SW.esc(c.why) + '</span></li>'; }).join('');
+    document.getElementById('chart-flow').innerHTML = Charts.share({ rows: R.rows.filter(function (r) { return r.flowCents > 0; }).map(function (r) { return { label: r.label, cents: r.flowCents }; }), title: 'Where a month lands' }) + (R.unrouted.length ? '<p class="sw-note">' + R.unrouted.length + ' ' + SW.plural(R.unrouted.length, 'stream has', 'streams have') + ' no place yet; say where on the <a href="streams.html">Streams</a> page.</p>' : '');
+    document.getElementById('chart-bal').innerHTML = Charts.bars({ rows: R.rows.filter(function (r) { return Money.isEntered(r.balanceCents); }).map(function (r) { return { label: r.label + (r.isFund ? ' (the fund)' : ''), cents: r.balanceCents }; }), title: 'Where it sits', mono: true, hue: 2 });
+  };
+});
+</script>
+</body>
+</html>

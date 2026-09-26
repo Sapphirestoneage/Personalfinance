@@ -1,0 +1,17 @@
+{
+  "id": "play_kinds",
+  "version": "2026.1",
+  "asOf": "2026-09-01",
+  "source": "What a kink life costs to live, not to earn from: the categories people budget for, with a rough yearly range from community budgeting threads.",
+  "confidence": "conversational",
+  "confidenceNote": "Ranges are for a sense of scale only. Yours is the number you type.",
+  "kinds": [
+    { "id": "events", "label": "Cons and events", "hint": "Tickets, hotel, travel, the vendor hall.", "typicalYearLow": 500, "typicalYearHigh": 4000 },
+    { "id": "gear", "label": "Gear", "hint": "Rope, leather, impact, restraints, furniture, the things that last.", "typicalYearLow": 200, "typicalYearHigh": 3000 },
+    { "id": "membership", "label": "Memberships and parties", "hint": "Dungeon or club dues, play party entry, munches.", "typicalYearLow": 100, "typicalYearHigh": 1500 },
+    { "id": "education", "label": "Classes and workshops", "hint": "Skill classes, intensives, a mentor.", "typicalYearLow": 0, "typicalYearHigh": 1200 },
+    { "id": "care", "label": "Care and safety", "hint": "Aftercare supplies, first aid, safer sex supplies, shears.", "typicalYearLow": 50, "typicalYearHigh": 400 },
+    { "id": "look", "label": "The look", "hint": "Fetish wear, latex, boots, the outfit for the party.", "typicalYearLow": 0, "typicalYearHigh": 2500 },
+    { "id": "other", "label": "Something else", "hint": "Anything the list does not name.", "typicalYearLow": 0, "typicalYearHigh": 0 }
+  ]
+}

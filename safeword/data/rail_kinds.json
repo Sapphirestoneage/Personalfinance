@@ -1,0 +1,29 @@
+{
+  "id": "rail_kinds",
+  "version": "2026.1",
+  "asOf": "2026-09-01",
+  "source": "Where money sits and moves for adult work, and how each place tends to fail: closed accounts, frozen payouts, a platform holding a balance. Drawn from performers' own accounts of account closures; not a rating of any company.",
+  "confidence": "conversational",
+  "confidenceNote": "closeRisk is a starting point for the kind, not a fact about your bank. Set your own from what you have seen.",
+  "note": "A balance still sitting on a platform, unpaid out, is the riskiest money you have: it is theirs until it lands. The Rails page counts it apart.",
+  "kinds": [
+    { "id": "bank", "label": "Bank account", "hint": "Checking or savings in your name, or the practice's.", "closeRisk": "medium", "holds": true, "moves": true },
+    { "id": "processor", "label": "Payment processor", "hint": "The company that turns card payments into a deposit for you.", "closeRisk": "high", "holds": false, "moves": true },
+    { "id": "app", "label": "Payment app", "hint": "A peer to peer app. Most forbid adult work in their terms, so a closure can come without warning.", "closeRisk": "high", "holds": true, "moves": true },
+    { "id": "platform", "label": "Platform balance (not paid out yet)", "hint": "Money a site shows you but has not sent. Not yours until it lands.", "closeRisk": "high", "holds": true, "moves": false },
+    { "id": "cash", "label": "Cash", "hint": "Notes in a safe place. Cannot be frozen; can be lost, stolen or questioned.", "closeRisk": "low", "holds": true, "moves": false },
+    { "id": "crypto", "label": "Crypto", "hint": "A wallet you hold the keys to. Cannot be closed; can lose value fast and is hard to spend.", "closeRisk": "low", "holds": true, "moves": true },
+    { "id": "prepaid", "label": "Prepaid or gift cards", "hint": "Gift cards and prepaid balances taken as tribute.", "closeRisk": "medium", "holds": true, "moves": false }
+  ],
+  "rules": {
+    "oneRailShare": 0.6,
+    "oneRailNote": "When most of your income lands through one rail, a closure there is a closure of the practice.",
+    "checklist": [
+      { "id": "twoBanks", "label": "Two banks, not one", "why": "If one closes your account, the other still pays rent." },
+      { "id": "twoProcessors", "label": "A backup way to take a card", "why": "A processor drop should cost you a week, not a season." },
+      { "id": "cashMonth", "label": "One lean month in cash or a place nobody can freeze", "why": "A frozen account is a frozen life without it." },
+      { "id": "separate", "label": "The practice's money apart from your own", "why": "Records stay clean and a closure hits one, not both." },
+      { "id": "platformLow", "label": "Nothing large left sitting on a platform", "why": "Take payouts on a schedule. A held balance is a loan you did not agree to." }
+    ]
+  }
+}

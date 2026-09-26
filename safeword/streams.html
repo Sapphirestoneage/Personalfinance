@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="robots" content="noindex"/>
+<title>Streams</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="safeword.css"/>
+<!--
+  STREAMS (SF-010). Owns streams[]: every way of earning, its low and typical month, the platform's cut, the processor's cut, the cash share, the months it runs, and where it lands. Reads the rails for the where. Shows what lands, the floor, the fees and the concentration.
+  LIVE-FORM: built once. The form is drawn from the stored household when
+  the page opens; a change saves and repaints the read-outs only.
+-->
+</head>
+<body class="slaf safeword">
+<main class="sw" id="main">
+  <div id="head"></div>
+  <p class="sw-lede">Every way you earn, one line each. Type what a month brings <b>before</b> anyone's cut, then the cuts, and the page says what actually lands. The low month matters as much as the typical one: the floor is what the safeword fund is built on.</p>
+  <div class="sw-two">
+    <section aria-label="Your streams">
+      <div class="slaf-card">
+        <h2>Ways you earn</h2>
+        <div id="rows"></div>
+        <div class="sw-actions" style="margin-top:var(--space-3)">
+          <button type="button" class="slaf-btn slaf-btn--primary" id="add">Add a way you earn</button>
+          <span class="sw-note">One line per platform or kind. A vanilla job goes here too, as "tax withheld".</span>
+        </div>
+      </div>
+    </section>
+    <aside aria-label="What lands" class="sw-sticky">
+      <div class="sw-stats" id="stats"></div>
+      <div class="slaf-card"><h3>What lands, by kind</h3><div id="chart-kinds"></div></div>
+      <div class="slaf-card" style="margin-top:var(--space-3)"><h3>Typical month against the floor</h3><div id="chart-floor"></div><div id="flags"></div></div>
+    </aside>
+  </div>
+  <footer class="sw-foot">
+    <p>Nothing here leaves your browser. No account, no server, no tracking. Numbers are estimates for planning, not tax or legal advice; a tax pro or lawyer who knows the work is the person for your return and your papers. Every table says what year it is for and how sure it is.</p>
+  </footer>
+</main>
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/model.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/selfemployed.js"></script>
+<script src="engines/tax.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/streams.js"></script>
+<script src="engines/house.js"></script>
+<script src="engines/rails.js"></script>
+<script src="engines/taxplan.js"></script>
+<script src="engines/fund.js"></script>
+<script src="engines/longgame.js"></script>
+<script src="engines/dynamic.js"></script>
+<script src="engines/family.js"></script>
+<script src="engines/play.js"></script>
+<script src="engines/plan.js"></script>
+<script src="common.js"></script>
+<script>
+SW.boot({ page: 'streams' }, function (ctx) {
+  var S = window.SLAF, Money = S.Money, Model = S.Model, Streams = S.Streams, Charts = S.Charts;
+  var T = ctx.T, kinds = T.streamKinds.kinds, list = document.getElementById('rows');
+  function railOptions(h) { return [{ id: '', label: 'Not placed yet' }].concat(Model.rows(h.rails).map(function (r) { return { id: r.id, label: r.label || r.kind }; })); }
+  function rowHtml(s, h) {
+    var id = s.id, k = Streams.kindOf(T, s.kind);
+    return '<div class="sw-row" data-id="' + id + '">' +
+      SW.select(id + '-kind', kinds.map(function (x) { return { id: x.id, label: x.label }; }), s.kind, 'Kind', 'stream.kind') +
+      '<div class="sw-field sw-field--name">' + SW.label(id + '-label', 'Call it', 'stream.label') + '<input type="text" id="' + id + '-label" maxlength="60" autocomplete="off" value="' + SW.esc(s.label || '') + '" placeholder="' + SW.esc(k.label) + '"/></div>' +
+      SW.moneyInput(id + '-typical', s.typicalMonthCents, 'A typical month, before cuts', 'stream.typical') +
+      SW.moneyInput(id + '-low', s.lowMonthCents, 'A low month', 'stream.low') +
+      SW.rateInput(id + '-platform', s.platformFeeRate, 'Platform’s cut', 'stream.platformFee') +
+      SW.rateInput(id + '-processor', s.processorFeeRate, 'Processor’s cut', 'stream.processorFee') +
+      SW.rateInput(id + '-cash', s.cashShare, 'Paid in cash', 'stream.cashShare') +
+      '<div class="sw-field sw-field--short">' + SW.label(id + '-months', 'Months a year', 'stream.monthsActive') + '<input type="text" inputmode="numeric" id="' + id + '-months" value="' + (Money.isEntered(s.monthsActive) ? s.monthsActive : '') + '"/></div>' +
+      SW.select(id + '-rail', railOptions(h), s.railId || '', 'Lands in', 'stream.rail') +
+      '<p class="sw-hint"><button type="button" class="sw-use" data-use="' + id + '">Use the common cuts for this kind</button> <span class="sw-kind-hint">' + SW.esc(k.hint) + '</span></p>' +
+      '<button type="button" class="slaf-btn slaf-btn--quiet sw-remove" data-remove="' + id + '">Remove</button></div>';
+  }
+  function add(s) { list.insertAdjacentHTML('beforeend', rowHtml(s, ctx.h)); }
+  ctx.h.streams.forEach(add);
+  if (!ctx.h.streams.length) { var first = Model.stream({ kind: 'inperson', monthsActive: 12 }); ctx.h.streams.push(first); S.Store.save(ctx.h); add(first); }
+  document.getElementById('add').addEventListener('click', function () { var s = Model.stream({ kind: 'subs', monthsActive: 12 }); ctx.save(function (h) { h.streams.push(s); }); add(s); });
+  function read(row, h) {
+    var id = row.getAttribute('data-id'), s = h.streams.filter(function (x) { return x.id === id; })[0]; if (!s) return;
+    var g = function (k) { return document.getElementById(id + '-' + k); };
+    s.kind = g('kind').value; s.label = g('label').value.trim() || null;
+    s.typicalMonthCents = SW.readMoney(g('typical')); s.lowMonthCents = SW.readMoney(g('low'));
+    s.platformFeeRate = SW.readRate(g('platform')); s.processorFeeRate = SW.readRate(g('processor')); s.cashShare = SW.readRate(g('cash'));
+    var m = SW.readNum(g('months')); s.monthsActive = Money.isEntered(m) ? Math.max(0, Math.min(12, Math.round(m))) : null;
+    s.railId = g('rail').value || null;
+    row.querySelector('.sw-kind-hint').textContent = Streams.kindOf(T, s.kind).hint;
+    g('label').placeholder = Streams.kindOf(T, s.kind).label;
+  }
+  function onEdit(e) { var row = e.target.closest('.sw-row'); if (!row) return; ctx.save(function (h) { SW.ownIt(h); read(row, h); }); }
+  list.addEventListener('input', onEdit); list.addEventListener('change', onEdit);
+  list.addEventListener('click', function (e) {
+    var rm = e.target.getAttribute('data-remove'), use = e.target.getAttribute('data-use');
+    if (rm) { ctx.save(function (h) { SW.ownIt(h); h.streams = h.streams.filter(function (x) { return x.id !== rm; }); }); e.target.closest('.sw-row').remove(); }
+    if (use) { var row = e.target.closest('.sw-row'), k = Streams.kindOf(T, document.getElementById(use + '-kind').value);
+      document.getElementById(use + '-platform').value = SW.rateText(k.typicalPlatformFee); document.getElementById(use + '-processor').value = SW.rateText(k.typicalProcessorFee); document.getElementById(use + '-cash').value = SW.rateText(k.typicalCashShare);
+      ctx.save(function (h) { SW.ownIt(h); read(row, h); }); SW.toast('Common cuts filled in. Change them to yours.'); }
+  });
+  function stat(k, r, kind, hero) { return '<div class="sw-stat' + (hero ? ' sw-stat--hero' : '') + '"><span class="sw-k">' + k + '</span><span class="sw-v">' + SW.fig(r, kind) + '</span></div>'; }
+  ctx.paint = function (h, T) {
+    var R = Streams.read(h, T);
+    document.getElementById('stats').innerHTML = stat('What lands in a typical month', R.typicalNet, 'money', true) + stat('The floor (every low month at once)', R.floorNet) + stat('A year, at the typical pace', R.annualNet) + stat('Paid in cuts, a year', R.feesYear) + stat('Traceable (not cash)', R.traceableShare, 'pct') + stat('Self-employed part, a year', R.seNetAnnual);
+    document.getElementById('chart-kinds').innerHTML = Charts.share({ rows: R.byKind.map(function (b) { return { label: b.label, cents: b.cents }; }), title: 'What lands, by kind' });
+    var rows = R.rows.filter(function (r) { return SW.ok(r.netTypical); });
+    document.getElementById('chart-floor').innerHTML = Charts.bars({ rows: rows.map(function (r) { return { label: r.label, cents: r.netTypical.value }; }), title: 'Typical month, what lands', mono: true, hue: 0 }) +
+      (rows.some(function (r) { return SW.ok(r.netLow); }) ? '<p class="sw-caption">Low months, what lands</p>' + Charts.bars({ rows: rows.filter(function (r) { return SW.ok(r.netLow); }).map(function (r) { return { label: r.label, cents: r.netLow.value }; }), title: 'Low month, what lands', mono: true, hue: 1 }) : '');
+    var c = R.concentration, flags = '';
+    if (c.flagged) flags += '<div class="sw-flag">' + SW.esc(c.topLabel) + ' brings ' + SW.pct(c.topShare) + ' of what lands, and it can vanish overnight. ' + SW.esc(T.streamKinds.concentration.oneStreamNote) + '</div>';
+    else if (c.topId && c.topShare >= T.streamKinds.concentration.oneStreamShare) flags += '<div class="sw-flag is-good">' + SW.esc(c.topLabel) + ' brings ' + SW.pct(c.topShare) + ' of what lands. It is not a platform, so no buffer is added for it.</div>';
+    var unrouted = R.rows.filter(function (r) { return !r.railId; });
+    if (unrouted.length && Model.rows(h.rails).length) flags += '<div class="sw-flag">' + unrouted.length + ' ' + SW.plural(unrouted.length, 'stream has', 'streams have') + ' no place to land yet. Pick one in "Lands in" so the Rails page can see the flow.</div>';
+    if (!Model.rows(h.rails).length) flags += '<p class="sw-note">Add where your money sits on the <a href="rails.html">Rails</a> page, then come back and say where each stream lands.</p>';
+    document.getElementById('flags').innerHTML = flags;
+  };
+});
+</script>
+</body>
+</html>

@@ -17349,6 +17349,31 @@ SPARKS device backup neither carries nor removes `coach.` keys.
 
 **Verified.** `node test/run.js`; `node coach/test/run.js`.
 
+## D-340 — Safeword is its own app in safeword/, a lane beside SPARKS like coach/
+
+**Why.** The owner asked for a complete money planner for the kink, sex work
+and domme community: several ways of earning with platform cuts, a practice's
+costs, cash income and the tax jar, a fund sized for a platform closing, banks
+that drop adult work, money inside a D/s dynamic, and papers for chosen family.
+None of that fits a room, and the freeze holds (D-313).
+
+**Decision.** `safeword/` is a separate app with eleven screens, its own storage
+(`safeword.household.v1`, never `slaf.` or `coach.`), byte-identical copies of the
+engines it reads (`safeword/tools/vendor.js`: money, schema, reference,
+selfemployed, tax, projection and their tables), its own tests
+(`node safeword/test/run.js` and `node safeword/test/browser.js`, in CI) and its
+own log (`safeword/DECISIONS.md`, `SF-###`). Nothing in `rooms/`, `shared/`,
+`engines/` or `data/` changes for it.
+
+**Replaces or removes.** Nothing in SPARKS: it is a separate product for a
+different audience, the same exception D-339 made for `coach/`.
+
+**Stored shape.** No change to `slaf.household.v2` or any SPARKS key. The
+SPARKS device backup neither carries nor removes `safeword.` keys.
+
+**Verified.** `node test/run.js`; `node safeword/test/run.js`;
+`node safeword/test/browser.js`.
+
 ---
 
 # The Dungeons & Dividends entries

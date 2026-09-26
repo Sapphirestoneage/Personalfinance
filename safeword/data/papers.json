@@ -1,0 +1,24 @@
+{
+  "id": "papers",
+  "version": "2026.1",
+  "asOf": "2026-09-01",
+  "source": "The papers that decide who speaks for you and who gets what, with the weight each carries for people whose partners, play family or polycule are not their legal next of kin. General shape of US estate basics; every state's forms differ.",
+  "confidence": "conversational",
+  "confidenceNote": "Not legal advice. A lawyer who has seen a chosen family before will know your state's forms; many states have free statutory ones for the medical and financial powers.",
+  "note": "weight is how much of the readiness score the paper carries. Beneficiary forms outrank a will for the accounts they sit on, so they weigh as much as the will.",
+  "papers": [
+    { "id": "will", "label": "A will", "hint": "Says who gets what is not already spoken for, and who handles it. Without one, the state's list decides, and a partner who is not a spouse is not on it.", "weight": 20 },
+    { "id": "beneficiaries", "label": "Beneficiary forms on every account", "hint": "Retirement accounts, life insurance and any account with a transfer on death form pass by that form, not the will. Blank means the estate, which means the state's list.", "weight": 20 },
+    { "id": "healthProxy", "label": "Medical power of attorney", "hint": "Who speaks for you in a hospital. Without it a partner may not even be let in the room.", "weight": 15 },
+    { "id": "financialPoa", "label": "Financial power of attorney", "hint": "Who can pay your rent and reach your accounts if you cannot.", "weight": 10 },
+    { "id": "digital", "label": "The digital file", "hint": "Where the content accounts, the wallet keys, the two-factor codes and the passwords are, and who may use them. A platform balance dies with the login.", "weight": 10 },
+    { "id": "names", "label": "The name file", "hint": "Which accounts, leases and bills are under which name, working or legal, so the person handling things can find them all.", "weight": 10 },
+    { "id": "emergency", "label": "The emergency plan", "hint": "If you are hurt, held or arrested: who to call first, who has a key, who feeds the animals, where the bail or lawyer money is.", "weight": 10 },
+    { "id": "wishes", "label": "A letter of wishes", "hint": "Not a legal paper. What you want said and not said, who should be told what, what happens to the content.", "weight": 5 }
+  ],
+  "statuses": [
+    { "id": "done", "label": "Done", "share": 1 },
+    { "id": "started", "label": "Started", "share": 0.5 },
+    { "id": "none", "label": "Not yet", "share": 0 }
+  ]
+}

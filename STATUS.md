@@ -27,7 +27,7 @@ Updated: 2026-09-24
   **By place (D-338)**: the log's note is the place; Expenses `#merchants` draws
   where all the money went and where the discretionary part went.
 - **Main is worked on by another lane**: merge before every push. D-228's reframe has NOT shipped. Freeze holds (D-313).
-  Coach Mode is its own lane in `coach/` (D-339, `coach/STATUS.md`).
+  Two lanes beside SPARKS: `coach/` (D-339) and `safeword/`, the planner for the kink, sex work and domme community (D-340); each has its own STATUS.md.
 
 ## Next (top item first; one per session)
 1. **Tier 3 readings and the moons.** Tiers 1 and 2 are worked out (53 of the

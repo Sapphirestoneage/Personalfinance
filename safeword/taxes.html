@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="robots" content="noindex"/>
+<title>Taxes</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="safeword.css"/>
+<!--
+  TAXES (SF-010). Owns you.filingStatus, you.state and taxes.*. Reads the streams (the self-employed part and the wages) and the house (what a return usually carries). Shows the jar: the share of every dollar from the work to set aside, and the four estimated payments with the safe harbour. Self-employment tax and the brackets are SPARKS' own engines, carried as copies.
+  LIVE-FORM: built once. The form is drawn from the stored household when
+  the page opens; a change saves and repaints the read-outs only.
+-->
+</head>
+<body class="slaf safeword">
+<main class="sw" id="main">
+  <div id="head"></div>
+  <p class="sw-lede">Cash is income. The page assumes you report what you keep, and gives you the two numbers that make that painless: the share of every dollar from the work to put in a jar the day it lands, and the four dates the jar gets emptied. A vanilla job's withholding is counted separately; the jar is for the work.</p>
+  <div class="sw-two">
+    <section aria-label="Your tax picture">
+      <div class="slaf-card">
+        <h2>How you file</h2>
+        <div class="sw-form" id="file-form"></div>
+      </div>
+      <div class="slaf-card" style="margin-top:var(--space-3)">
+        <h2>What you already do</h2>
+        <div class="sw-form" id="now-form"></div>
+        <p class="sw-note" style="margin-top:8px">Last year's numbers unlock the safe harbour: pay what you owed last year, in four parts, and there is no penalty whatever this year brings. It is the one rule most calculators skip.</p>
+      </div>
+      <div class="slaf-card" style="margin-top:var(--space-3)">
+        <h2>The working</h2>
+        <div id="working"></div>
+      </div>
+    </section>
+    <aside class="sw-sticky" aria-label="The jar">
+      <div class="sw-stats" id="stats"></div>
+      <div class="slaf-card"><h3>Where a year's tax comes from</h3><div id="chart-tax"></div></div>
+      <div class="slaf-card" style="margin-top:var(--space-3)"><h3>The four dates</h3><div id="quarters"></div></div>
+    </aside>
+  </div>
+  <footer class="sw-foot">
+    <p>Nothing here leaves your browser. No account, no server, no tracking. Numbers are estimates for planning, not tax or legal advice; a tax pro or lawyer who knows the work is the person for your return and your papers. Every table says what year it is for and how sure it is.</p>
+  </footer>
+</main>
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/model.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/selfemployed.js"></script>
+<script src="engines/tax.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/streams.js"></script>
+<script src="engines/house.js"></script>
+<script src="engines/rails.js"></script>
+<script src="engines/taxplan.js"></script>
+<script src="engines/fund.js"></script>
+<script src="engines/longgame.js"></script>
+<script src="engines/dynamic.js"></script>
+<script src="engines/family.js"></script>
+<script src="engines/play.js"></script>
+<script src="engines/plan.js"></script>
+<script src="common.js"></script>
+<script>
+SW.boot({ page: 'taxes' }, function (ctx) {
+  var S = window.SLAF, Money = S.Money, Model = S.Model, TaxPlan = S.TaxPlan, Streams = S.Streams, House = S.House, Charts = S.Charts;
+  var T = ctx.T;
+  var states = [{ id: '', label: 'Not chosen yet' }].concat(Object.keys(T.stateBrackets.states).sort().map(function (s) { var r = T.stateBrackets.states[s]; return { id: s, label: s + (r.type === 'none' ? ' (no income tax)' : '') }; }));
+  document.getElementById('file-form').innerHTML = SW.select('filing', [{ id: '', label: 'Not chosen yet' }].concat(Model.FILING), ctx.h.you.filingStatus || '', 'Filing status', 'you.filingStatus') + SW.select('state', states, ctx.h.you.state || '', 'State', 'you.state') +
+    '<div class="sw-field sw-checkfield"><label class="sw-check"><input type="checkbox" id="sometimes"' + (ctx.h.taxes.countSometimes ? ' checked' : '') + '/> Count the "sometimes" costs too</label>' + SW.help('taxes.countSometimes') + '</div>';
+  var tx = ctx.h.taxes;
+  document.getElementById('now-form').innerHTML = SW.rateInput('setaside', tx.setAsideRate, 'Share you set aside now', 'taxes.setAsideRate') + SW.moneyInput('prior', tx.priorYearLiabilityCents, 'Last year’s total tax', 'taxes.priorYearLiability') + SW.moneyInput('agi', tx.priorYearAgiCents, 'Last year’s adjusted gross income', 'taxes.priorYearAgi') + SW.moneyInput('paid', tx.paidThisYearCents, 'Paid in so far this year', 'taxes.paidThisYear');
+  function onEdit() { ctx.save(function (h) { SW.ownIt(h);
+    h.you.filingStatus = document.getElementById('filing').value || null; h.you.state = document.getElementById('state').value || null; h.taxes.countSometimes = document.getElementById('sometimes').checked;
+    h.taxes.setAsideRate = SW.readRate(document.getElementById('setaside')); h.taxes.priorYearLiabilityCents = SW.readMoney(document.getElementById('prior')); h.taxes.priorYearAgiCents = SW.readMoney(document.getElementById('agi')); h.taxes.paidThisYearCents = SW.readMoney(document.getElementById('paid')); }); }
+  ['file-form', 'now-form'].forEach(function (id) { var el = document.getElementById(id); el.addEventListener('input', onEdit); el.addEventListener('change', onEdit); });
+  function stat(k, r, kind, hero) { return '<div class="sw-stat' + (hero ? ' sw-stat--hero' : '') + '"><span class="sw-k">' + k + '</span><span class="sw-v">' + SW.fig(r, kind) + '</span></div>'; }
+  function line(k, v) { return '<li><span>' + k + '</span><span></span><span>' + v + '</span></li>'; }
+  ctx.paint = function (h, T) {
+    var St = Streams.read(h, T), H = House.read(h, T, St), X = TaxPlan.read(h, T, St, H);
+    var jar = SW.ok(X.jarPer100) ? '<span class="sw-fig">' + SW.money(X.jarPer100.value) + '</span>' : SW.fig(X.total || X.jarPer100);
+    document.getElementById('stats').innerHTML = '<div class="sw-stat sw-stat--hero"><span class="sw-k">Of every $100 from the work, put in the jar</span><span class="sw-v">' + jar + '</span>' + (SW.ok(X.setAsideRate) ? '<span class="sw-why">' + SW.pct(X.setAsideRate.value, 1) + ' of what lands from the work' + (X.stateIncluded ? ', state included' : ', federal only until a state is chosen') + '</span>' : '') + '</div>' +
+      stat('A year’s tax, all in', X.total) + stat('Self-employment tax', X.se) + stat('Federal income tax', X.federal) + stat('State', X.state) + stat('Profit the return sees', X.profit) +
+      '<div class="sw-stat"><span class="sw-k">What you set aside now</span><span class="sw-v">' + (Money.isEntered(X.current.rate) ? SW.pct(X.current.rate) : '<span class="sw-notyet">not yet</span>') + '</span>' + (Money.isEntered(X.current.gapRate) ? '<span class="sw-why ' + (X.current.gapRate > 0.005 ? 'sw-bad' : 'sw-good') + '">' + (X.current.gapRate > 0.005 ? 'short by ' + SW.pct(X.current.gapRate, 1) + ' of every dollar' : 'enough, with ' + SW.pct(-X.current.gapRate, 1) + ' to spare') + '</span>' : '') + '</div>';
+    document.getElementById('chart-tax').innerHTML = SW.ok(X.total) ? Charts.share({ rows: [{ label: 'Self-employment tax', cents: X.se.value }, { label: 'Federal income tax', cents: X.federal.value }, { label: 'State', cents: X.stateIncluded ? X.state.value : 0 }], title: 'Where a year’s tax comes from' }) : '<p class="sw-empty">' + SW.esc(X.total.reason) + '</p>';
+    var q = X.quarterly, qs = '';
+    if (SW.ok(q)) {
+      qs = '<div class="sw-stat sw-stat--hero"><span class="sw-k">Each payment</span><span class="sw-v">' + SW.money(q.value) + '</span><span class="sw-why">' + (q.basedOn === 'prior-year safe harbour' ? 'the safe harbour: ' + SW.pct(q.priorYearShare) + ' of last year’s tax, the lesser of the two' : q.basedOn === 'current-year-only' ? SW.pct(q.currentYearShare) + ' of this year’s estimate; add last year’s tax for the safe harbour' : SW.pct(q.currentYearShare) + ' of this year’s estimate, which is the lesser') + '</span></div>' +
+        '<ul class="sw-split">' + q.dueDates.map(function (d) { return line(d, SW.money(q.value)); }).join('') + line('For the year', SW.money(q.payableAcrossQuartersCents)) + (SW.ok(X.remaining) ? '<li class="is-total"><span>Still to pay this year</span><span></span><span>' + SW.money(X.remaining.value) + '</span></li>' : '') + '</ul>';
+    } else qs = '<p class="sw-empty">' + SW.esc(q ? q.reason : 'Fill in the streams and how you file.') + '</p>';
+    document.getElementById('quarters').innerHTML = qs;
+    var w = '';
+    if (SW.ok(X.total)) {
+      w = '<ul class="sw-split">' + line('The self-employed part that lands, a year', SW.money(X.profit.grossCents)) + line('Costs a return usually carries' + (X.profit.countSometimes ? ', the "sometimes" ones too' : ''), '− ' + SW.money(X.profit.costsYearCents)) + line('Profit', SW.money(X.profit.value)) +
+        line('Net earnings (' + SW.pct(X.se.netEarningsFactor, 2) + ' of profit)', SW.money(X.se.netEarningsCents)) + line('Social Security' + (X.se.socialSecurityCappedAt ? ', capped' : ''), SW.money(X.se.socialSecurityCents)) + line('Medicare', SW.money(X.se.medicareCents)) + (X.se.additionalMedicareCents ? line('Additional Medicare', SW.money(X.se.additionalMedicareCents)) : '') + line('Half of that, taken off income', '− ' + SW.money(X.se.deductibleHalfCents)) +
+        line('Wages from a job, on top', SW.money(X.wages)) + line('Taxable income after the standard deduction', SW.money(X.federal.taxableIncomeCents)) + line('Federal, marginal rate ' + SW.pct(X.federal.marginalRate), SW.money(X.federal.value)) + (X.stateIncluded ? line('State (' + X.state.type + ', ' + SW.esc(X.state.approximation) + ')', SW.money(X.state.value)) : line('State', 'not chosen')) +
+        (X.wages > 0 ? line('Of which the job’s withholding should cover', '− ' + SW.money(X.onWagesAlone.value)) : '') + '<li class="is-total"><span>On the work</span><span></span><span>' + SW.money(X.onTheWork.value) + '</span></li></ul>';
+      var o = X.ifOtherWay;
+      if (SW.ok(o.setAsideRate) && SW.ok(X.setAsideRate) && Math.abs(o.setAsideRate.value - X.setAsideRate.value) > 0.0005) w += '<div class="sw-flag">' + (o.countSometimes ? 'If a tax pro lets the "sometimes" costs through, the jar drops to ' : 'Without the "sometimes" costs, the jar is ') + '<b>' + SW.pct(o.setAsideRate.value, 1) + '</b>. Tick or untick the box above to plan on it.</div>';
+      w += '<p class="sw-note" style="margin-top:8px">Tables: self-employment tax ' + SW.esc(T.seTax.version) + ' (' + SW.esc(T.seTax.confidence) + '), federal brackets ' + SW.esc(T.federalBrackets.version) + ' (' + SW.esc(T.federalBrackets.confidence) + '), state ' + SW.esc(T.stateBrackets.version) + ' (' + SW.esc(T.stateBrackets.confidence) + '). Credits, retirement deductions and health premiums are not modelled; the jar is a ceiling, not a bill.</p>';
+    } else w = '<p class="sw-empty">' + SW.esc(X.total.reason) + '</p>';
+    document.getElementById('working').innerHTML = w;
+  };
+});
+</script>
+</body>
+</html>

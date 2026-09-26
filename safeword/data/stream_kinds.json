@@ -1,0 +1,26 @@
+{
+  "id": "stream_kinds",
+  "version": "2026.1",
+  "asOf": "2026-09-01",
+  "source": "Kinds of income common in kink, sex work and domme practice, with a common platform cut as a starting point. Cuts are the rough middle of what performers report publicly; every site sets its own and changes it.",
+  "confidence": "conversational",
+  "confidenceNote": "The fee starting points are suggestions a person taps, never written on their own. Your platform's own statement is the number to use.",
+  "note": "w2 is true for pay that arrives with tax withheld (a vanilla job). Everything else is self-employment income for the tax page. platformRisk says how fast the stream can vanish through no fault of yours: high means a policy change or a ban can end it overnight.",
+  "kinds": [
+    { "id": "inperson", "label": "In-person sessions", "hint": "Sessions, bookings, appointments, doubles.", "typicalPlatformFee": 0, "typicalProcessorFee": 0.03, "typicalCashShare": 0.7, "platformRisk": "low", "w2": false },
+    { "id": "subs", "label": "Subscriptions", "hint": "A monthly fan or subscriber site: subs, tips and paid messages.", "typicalPlatformFee": 0.2, "typicalProcessorFee": 0, "typicalCashShare": 0, "platformRisk": "high", "w2": false },
+    { "id": "clips", "label": "Clips and content sales", "hint": "Clip stores, custom videos, photo sets.", "typicalPlatformFee": 0.35, "typicalProcessorFee": 0, "typicalCashShare": 0, "platformRisk": "high", "w2": false },
+    { "id": "cam", "label": "Cam and live shows", "hint": "Live streaming, token and private shows.", "typicalPlatformFee": 0.5, "typicalProcessorFee": 0, "typicalCashShare": 0, "platformRisk": "high", "w2": false },
+    { "id": "tribute", "label": "Tributes and financial domination", "hint": "Tributes, gifts, drains, wishlist and cash gifts. Fees are the payment rail's, not a platform's.", "typicalPlatformFee": 0, "typicalProcessorFee": 0.03, "typicalCashShare": 0.1, "platformRisk": "medium", "w2": false },
+    { "id": "phone", "label": "Phone, text and voice", "hint": "Phone lines, texting and audio, paid by the minute or the month.", "typicalPlatformFee": 0.4, "typicalProcessorFee": 0, "typicalCashShare": 0, "platformRisk": "medium", "w2": false },
+    { "id": "teaching", "label": "Teaching, events and workshops", "hint": "Classes, demos, con appearances, coaching, rope or impact intensives.", "typicalPlatformFee": 0.15, "typicalProcessorFee": 0.03, "typicalCashShare": 0.3, "platformRisk": "low", "w2": false },
+    { "id": "goods", "label": "Goods and merch", "hint": "Worn items, gear you make, prints, merch.", "typicalPlatformFee": 0.1, "typicalProcessorFee": 0.03, "typicalCashShare": 0.1, "platformRisk": "medium", "w2": false },
+    { "id": "vanilla", "label": "Vanilla job (tax withheld)", "hint": "A job that pays with tax already taken out. Counted as wages, not self-employment.", "typicalPlatformFee": 0, "typicalProcessorFee": 0, "typicalCashShare": 0, "platformRisk": "low", "w2": true },
+    { "id": "other", "label": "Something else", "hint": "Anything the list does not name.", "typicalPlatformFee": 0, "typicalProcessorFee": 0.03, "typicalCashShare": 0, "platformRisk": "medium", "w2": false }
+  ],
+  "concentration": {
+    "oneStreamShare": 0.5,
+    "oneStreamNote": "When one stream brings half or more of what you keep, its platform holds your rent. The fund page adds a buffer for it.",
+    "bufferMonths": 2
+  }
+}

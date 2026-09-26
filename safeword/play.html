@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="robots" content="noindex"/>
+<title>The life</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="safeword.css"/>
+<!--
+  THE LIFE (SF-010). Owns play[]: what the scene costs to live, a year at a time. Reads the typical personal month (Safeword page) and what lands (Streams). Shows the year, the month it works out to, and each kind against the usual range.
+  LIVE-FORM: built once. The form is drawn from the stored household when
+  the page opens; a change saves and repaints the read-outs only.
+-->
+</head>
+<body class="slaf safeword">
+<main class="sw" id="main">
+  <div id="head"></div>
+  <p class="sw-lede">Cons, rope, leather, club dues, classes, the outfit for the party. None of it is a business cost unless you earn from it; all of it is real money, and a year of it is more than most people guess. Type it by the year, since that is how it comes, and the page turns it into the monthly set-aside that makes the con ticket a non-event.</p>
+  <div class="sw-two">
+    <section aria-label="What the life costs">
+      <div class="slaf-card">
+        <h2>A year of it</h2>
+        <div id="rows"></div>
+        <div class="sw-actions" style="margin-top:var(--space-3)"><button type="button" class="slaf-btn slaf-btn--primary" id="add">Add a line</button></div>
+      </div>
+    </section>
+    <aside class="sw-sticky" aria-label="The picture">
+      <div class="sw-stats" id="stats"></div>
+      <div class="slaf-card"><h3>Where it goes</h3><div id="chart-kinds"></div><div id="ranges"></div></div>
+    </aside>
+  </div>
+  <footer class="sw-foot">
+    <p>Nothing here leaves your browser. No account, no server, no tracking. Numbers are estimates for planning, not tax or legal advice; a tax pro or lawyer who knows the work is the person for your return and your papers. Every table says what year it is for and how sure it is.</p>
+  </footer>
+</main>
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/model.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/selfemployed.js"></script>
+<script src="engines/tax.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/streams.js"></script>
+<script src="engines/house.js"></script>
+<script src="engines/rails.js"></script>
+<script src="engines/taxplan.js"></script>
+<script src="engines/fund.js"></script>
+<script src="engines/longgame.js"></script>
+<script src="engines/dynamic.js"></script>
+<script src="engines/family.js"></script>
+<script src="engines/play.js"></script>
+<script src="engines/plan.js"></script>
+<script src="common.js"></script>
+<script>
+SW.boot({ page: 'play' }, function (ctx) {
+  var S = window.SLAF, Money = S.Money, Model = S.Model, Play = S.Play, Streams = S.Streams, Charts = S.Charts;
+  var T = ctx.T, kinds = T.playKinds.kinds, list = document.getElementById('rows');
+  function rowHtml(p) {
+    var id = p.id, k = Play.kindOf(T, p.kind);
+    return '<div class="sw-row" data-id="' + id + '">' + SW.select(id + '-kind', kinds.map(function (x) { return { id: x.id, label: x.label }; }), p.kind, 'Kind', 'play.kind') +
+      '<div class="sw-field sw-field--name">' + SW.label(id + '-label', 'Call it', 'play.label') + '<input type="text" id="' + id + '-label" maxlength="60" autocomplete="off" value="' + SW.esc(p.label || '') + '" placeholder="' + SW.esc(k.label) + '"/></div>' +
+      SW.moneyInput(id + '-year', p.yearCents, 'A year', 'play.year') + '<p class="sw-hint sw-kind-hint">' + SW.esc(k.hint) + '</p>' +
+      '<button type="button" class="slaf-btn slaf-btn--quiet sw-remove" data-remove="' + id + '">Remove</button></div>';
+  }
+  function add(p) { list.insertAdjacentHTML('beforeend', rowHtml(p)); }
+  ctx.h.play.forEach(add);
+  document.getElementById('add').addEventListener('click', function () { var p = Model.play({ kind: 'events' }); ctx.save(function (h) { h.play.push(p); }); add(p); });
+  function read(row, h) { var id = row.getAttribute('data-id'), p = h.play.filter(function (x) { return x.id === id; })[0]; if (!p) return; var g = function (k) { return document.getElementById(id + '-' + k); };
+    p.kind = g('kind').value; p.label = g('label').value.trim() || null; p.yearCents = SW.readMoney(g('year')); var k = Play.kindOf(T, p.kind); g('label').placeholder = k.label; row.querySelector('.sw-kind-hint').textContent = k.hint; }
+  function onEdit(e) { var row = e.target.closest('.sw-row'); if (!row) return; ctx.save(function (h) { SW.ownIt(h); read(row, h); }); }
+  list.addEventListener('input', onEdit); list.addEventListener('change', onEdit);
+  list.addEventListener('click', function (e) { var rm = e.target.getAttribute('data-remove'); if (rm) { ctx.save(function (h) { SW.ownIt(h); h.play = h.play.filter(function (x) { return x.id !== rm; }); }); e.target.closest('.sw-row').remove(); } });
+  function stat(k, r, kind, hero) { return '<div class="sw-stat' + (hero ? ' sw-stat--hero' : '') + '"><span class="sw-k">' + k + '</span><span class="sw-v">' + SW.fig(r, kind) + '</span></div>'; }
+  ctx.paint = function (h, T) {
+    var St = Streams.read(h, T), P = Play.read(h, T, St);
+    document.getElementById('stats').innerHTML = stat('A year of the life', P.yearTotal, 'money', true) + stat('Set aside each month', P.gearFundMonth) + stat('Of your typical month', P.shareOfTypical, 'pct') + stat('Of what lands', P.shareOfNet, 'pct');
+    document.getElementById('chart-kinds').innerHTML = Charts.share({ rows: P.byKind.map(function (b) { return { label: b.label, cents: b.cents }; }), title: 'Where it goes' });
+    document.getElementById('ranges').innerHTML = P.byKind.length ? '<ul class="sw-checks">' + P.byKind.map(function (b) { return '<li><span class="sw-mark ' + (b.where === 'above the usual range' ? 'is-fail' : 'is-pass') + '">' + (b.where === 'above the usual range' ? '↑' : '✓') + '</span><span>' + SW.esc(b.label) + ': ' + SW.money(b.cents) + (b.where ? ', ' + b.where + ' (' + SW.money(b.low) + ' to ' + SW.money(b.high) + ')' : '') + '</span></li>'; }).join('') + '</ul><p class="sw-note">' + SW.esc(T.playKinds.confidenceNote) + '</p>' : '';
+  };
+});
+</script>
+</body>
+</html>

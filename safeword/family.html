@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="robots" content="noindex"/>
+<title>Chosen family</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="safeword.css"/>
+<!--
+  CHOSEN FAMILY (SF-010). Owns papers: where each of eight papers stands. Reads the house (who is in it) and the filing status (whether they are legal next of kin). Shows a readiness score, the next paper, and why it matters for a family the law does not name.
+  LIVE-FORM: built once. The form is drawn from the stored household when
+  the page opens; a change saves and repaints the read-outs only.
+-->
+</head>
+<body class="slaf safeword">
+<main class="sw" id="main">
+  <div id="head"></div>
+  <p class="sw-lede">If you are hurt, held or gone, the law reaches for a list: spouse, parents, siblings. A partner of ten years, a submissive who lives with you, a leather family, a polycule: not on it. Eight papers put your people on the list instead. Say where each stands; the page says which one to do next and why.</p>
+  <div class="sw-two">
+    <section aria-label="The papers">
+      <div class="slaf-card">
+        <h2>The eight papers</h2>
+        <div id="rows"></div>
+      </div>
+    </section>
+    <aside class="sw-sticky" aria-label="Readiness">
+      <div class="sw-stats" id="stats"></div>
+      <div class="slaf-card"><h3>How far along</h3><div id="chart-meter"></div><div id="flags"></div></div>
+    </aside>
+  </div>
+  <footer class="sw-foot">
+    <p>Nothing here leaves your browser. No account, no server, no tracking. Numbers are estimates for planning, not tax or legal advice; a tax pro or lawyer who knows the work is the person for your return and your papers. Every table says what year it is for and how sure it is.</p>
+  </footer>
+</main>
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/model.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/selfemployed.js"></script>
+<script src="engines/tax.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/streams.js"></script>
+<script src="engines/house.js"></script>
+<script src="engines/rails.js"></script>
+<script src="engines/taxplan.js"></script>
+<script src="engines/fund.js"></script>
+<script src="engines/longgame.js"></script>
+<script src="engines/dynamic.js"></script>
+<script src="engines/family.js"></script>
+<script src="engines/play.js"></script>
+<script src="engines/plan.js"></script>
+<script src="common.js"></script>
+<script>
+SW.boot({ page: 'family' }, function (ctx) {
+  var S = window.SLAF, Family = S.Family, Charts = S.Charts;
+  var T = ctx.T, list = document.getElementById('rows');
+  var opts = [{ id: '', label: 'Not said' }].concat(T.papers.statuses.map(function (s) { return { id: s.id, label: s.label }; }));
+  list.innerHTML = T.papers.papers.map(function (p) { return '<div class="sw-row" data-id="' + p.id + '"><div style="flex:1 1 20rem;min-width:0"><b>' + SW.esc(p.label) + '</b> ' + SW.help('paper.' + p.id) + '<p class="sw-note" style="margin-top:4px">' + SW.esc(p.hint) + '</p></div>' + SW.select('paper-' + p.id, opts, ctx.h.papers[p.id] || '', 'Where it stands') + '</div>'; }).join('');
+  list.addEventListener('change', function (e) { var row = e.target.closest('.sw-row'); if (!row) return; var id = row.getAttribute('data-id'); ctx.save(function (h) { SW.ownIt(h); var v = document.getElementById('paper-' + id).value; if (v) h.papers[id] = v; else delete h.papers[id]; }); });
+  ctx.paint = function (h, T) {
+    var F = Family.read(h, T);
+    document.getElementById('stats').innerHTML = '<div class="sw-stat sw-stat--hero"><span class="sw-k">Ready</span><span class="sw-v">' + SW.fig(F.score, 'pct') + '</span>' + (SW.ok(F.score) ? '<span class="sw-why">' + F.score.answered + ' of ' + F.score.of + ' papers answered; the score weighs each by what it decides</span>' : '') + '</div>' +
+      '<div class="sw-stat"><span class="sw-k">Do next</span><span class="sw-v">' + (F.next ? '<span class="sw-fig" style="font-size:var(--text-md)">' + SW.esc(F.next.label) + '</span>' : '<span class="sw-fig">Nothing. All done.</span>') + '</span>' + (F.next ? '<span class="sw-why">' + SW.esc(F.next.hint) + '</span>' : '') + '</div>';
+    document.getElementById('chart-meter').innerHTML = SW.ok(F.score) ? Charts.meter({ value: Math.round(F.score.value * 100), target: 100, label: 'Papers ready' }) + Charts.bars({ rows: F.papers.map(function (p) { return { label: p.label, cents: p.weight * 100 * (p.share || 0), color: p.status === 'done' ? Charts.HUES[3] : p.status === 'started' ? Charts.HUES[1] : '#8a8078' }; }), unit: 'num', title: 'Weight done, by paper' }).replace(/<details[\s\S]*?<\/details>/, '') : '<p class="sw-empty">' + SW.esc(F.score.reason) + '</p>';
+    var f = '';
+    if (F.note) f += '<div class="sw-flag is-bad">' + SW.esc(F.note) + '</div>';
+    f += '<p class="sw-note">' + SW.esc(T.papers.confidenceNote) + '</p>';
+    document.getElementById('flags').innerHTML = f;
+  };
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "id": "cost_kinds",
+  "version": "2026.1",
+  "asOf": "2026-09-01",
+  "source": "The costs of running a domme, sex work or kink practice, with a plain word on whether a return usually carries each. General shape of the ordinary and necessary business expense rule; nothing here is advice about your return.",
+  "confidence": "conversational",
+  "confidenceNote": "deductible says how a tax pro who knows the work usually treats the kind: usually, sometimes (clothing and grooming are the classic argument: the test is whether it is unsuitable for daily life), or ask. The tax page counts only usually; it shows what changes if sometimes is allowed.",
+  "note": "Platform and processor fees are not a kind here on purpose. They are computed on the Streams page from each stream, so they are never typed twice.",
+  "kinds": [
+    { "id": "space", "label": "Space", "hint": "Dungeon or studio rent, hourly space, the room's share of your home.", "fixed": true, "deductible": "usually" },
+    { "id": "gear", "label": "Gear and equipment", "hint": "Furniture, restraints, implements, toys, cameras, lights, the things that wear out.", "fixed": false, "deductible": "usually" },
+    { "id": "wardrobe", "label": "Wardrobe and the look", "hint": "Costumes, latex, boots, nails, hair, makeup for the work.", "fixed": false, "deductible": "sometimes" },
+    { "id": "ads", "label": "Ads and listings", "hint": "Directory listings, ad spots, promotion, a verified badge.", "fixed": true, "deductible": "usually" },
+    { "id": "screening", "label": "Screening and safety", "hint": "Screening services, a second phone number, a booking assistant, a safety call.", "fixed": true, "deductible": "usually" },
+    { "id": "content", "label": "Photos and content", "hint": "Shoots, editing, a photographer, props for content.", "fixed": false, "deductible": "usually" },
+    { "id": "web", "label": "Website and software", "hint": "Hosting, a domain, scheduling, storage, editing software.", "fixed": true, "deductible": "usually" },
+    { "id": "travel", "label": "Travel and touring", "hint": "Flights, hotels and cars for touring or sessions away from home.", "fixed": false, "deductible": "usually" },
+    { "id": "pro", "label": "Accountant, lawyer, coach", "hint": "The professionals who keep the practice safe and legal.", "fixed": true, "deductible": "usually" },
+    { "id": "privacy", "label": "Privacy and security", "hint": "A mail service, a PO box, a VPN, a work phone, a second name on the door.", "fixed": true, "deductible": "usually" },
+    { "id": "education", "label": "Training and education", "hint": "Classes, certifications, a mentor, a first aid course.", "fixed": false, "deductible": "usually" },
+    { "id": "supplies", "label": "Supplies and cleaning", "hint": "Gloves, wipes, lube, laundry, the consumables of a session.", "fixed": false, "deductible": "usually" },
+    { "id": "health", "label": "Health and testing", "hint": "Testing, therapy, bodywork that keeps you working.", "fixed": false, "deductible": "ask" },
+    { "id": "other", "label": "Something else", "hint": "A cost the list does not name.", "fixed": false, "deductible": "ask" }
+  ]
+}
