@@ -19,6 +19,8 @@ Updated: 2026-09-26
 ## Next
 1. The owner tries it with the demo client, then with one real client, and
    says which words still land wrong.
-2. Owner questions: is "match 4%" right as dollar for dollar up to 4% of pay?
-   Check-in windows (in by 35 days, late by 65) right for a monthly rhythm?
-3. Later, not now: the client portal (`LATER.md`).
+2. Later, not now: the client portal (`LATER.md`).
+
+## Settled by the owner (2026-09-26)
+- "Match 4%" means dollar for dollar up to 4% of pay. Stays as built.
+- Check-in windows stay: in by 35 days, late by 65.
