@@ -13744,6 +13744,45 @@ section('Phase A: suggestions, derived and never stored (D-205)');
   checkTrue('every suggestFrom names a rule that exists', badRule.length === 0, badRule.join(', '));
   const badAsk = rows.filter(r => r.askIn && !Registry.byId(r.askIn)).map(r => r.id + ':' + r.askIn);
   checkTrue('every askIn names a room in the registry', badAsk.length === 0, badAsk.join(', '));
+  /* ---- The later floor is flat (D-355) -------------------------------------
+     The second owner decision D-228 held open, and the answer: ship the flat
+     floor, and add the taper as a named reading once the 2026 tables are
+     verified rather than guessed. Two rooms say so in their assumptions, and
+     this check is the reminder with teeth: the day
+     data/benefit_cliffs_2026.json stops saying "unverified", the build fails
+     until the taper is built or this decision is revisited. */
+  {
+    const cliffs = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/benefit_cliffs_2026.json'), 'utf8'));
+    const back = fs.readFileSync(path.join(ROOT, 'rooms/decumulation.html'), 'utf8');
+    const num = fs.readFileSync(path.join(ROOT, 'rooms/fire.html'), 'utf8');
+    checkTrue('The Back Half says the later floor is flat, in words', /flat, no means test/.test(back) && /D-355/.test(back));
+    checkTrue('and The Number says the target leaves it out', /The later floor/.test(num) && /no means test/.test(num));
+    const Features = require(path.join(ROOT, 'shared/features.js'));
+    Features.use(require(path.join(ROOT, 'data/features.json')));
+    const taperBuilt = typeof Features.KNOWN === 'object' ? !!Features.KNOWN.floorTaper : /floorTaper/.test(fs.readFileSync(path.join(ROOT, 'data/features.json'), 'utf8'));
+    checkTrue('the taper waits on a verified table, and the build will say when it no longer does',
+      cliffs.confidence === 'unverified' || taperBuilt,
+      'data/benefit_cliffs_2026.json is now "' + cliffs.confidence + '": D-355 says the means-tested taper is the next reading, behind a switch');
+  }
+
+  /* ---- One fact, one place to type it (D-354) ------------------------------
+     The owner's ruling on D-207 against D-313: a room may ask inline for a
+     fact it OWNS, or for the one fact it is BLOCKED on (the registry's
+     `needs`). Fourteen rows used to be asked in a room that only read them,
+     which is a second place to type a household number; their askIn is null
+     now, and shared/ask.js refuses any that come back. */
+  {
+    const OwnMap = require(path.join(ROOT, 'shared/ownership.js')).FIELDS;
+    const foreign = rows.filter(r => r.askIn && OwnMap[r.id] && OwnMap[r.id].owner !== r.askIn)
+      .map(r => r.id + ': owned by ' + OwnMap[r.id].owner + ', asked in ' + r.askIn);
+    checkTrue('no row is asked in a room that does not own it', foreign.length === 0, foreign.join('; '));
+    const AskSrc = fs.readFileSync(path.join(ROOT, 'shared/ask.js'), 'utf8');
+    checkTrue('and shared/ask.js enforces it rather than trusting the table', /function mayAsk/.test(AskSrc) && /f\.owner === roomId/.test(AskSrc) && /needs\.indexOf\(row\.id\) >= 0/.test(AskSrc));
+    checkTrue('the fact a room is blocked on is asked first, ahead of the level gate', /blocked: true/.test(AskSrc) && AskSrc.indexOf('blocked: true') < AskSrc.indexOf("r.askIn !== roomId"));
+    checkTrue('the inline ask reads in the same plain words the Ledger uses (D-347)', /p\.row\.plain \|\| p\.row\.label/.test(AskSrc) && /slaf-help-line/.test(AskSrc));
+    const noPlain = rows.filter(r => r.askIn && !r.plain).map(r => r.id);
+    checkTrue('and every row a room can ask carries that plain question', noPlain.length === 0, noPlain.join(', '));
+  }
   checkTrue('the ZIP table is registered and sourced', Reference.TABLE_FILES.zipPrefixes === 'zip_prefixes.json' && T.zipPrefixes.verify === true && /USPS/.test(T.zipPrefixes.source));
   checkTrue('every rule reads its numbers from data/, none inline', !/\b(869|0\.02|1500|2200|477)\b/.test(fs.readFileSync(sugPath, 'utf8').split('var RULES')[1].split('/* Rows a rule may read')[0]));
 
@@ -13939,7 +13978,7 @@ section('The doors, the levels, the inline asks, the understanding line (D-207)'
   }
   /* ---- The inline ask (D) ------------------------------------------------- */
   {
-    const { Spine, Sug, Ask } = fresh();
+    const { Spine, Own, Sug, Ask } = fresh();
     Spine.ensurePrimaryPerson('You');
     check('a room with nothing to ask gets nothing', Ask.pick(Spine.getProfile(), 'quick-math', T, []), null);
     Spine.upsertDebt(Schema.createDebt({ id: 'visa', label: 'Visa', type: 'credit_card', balanceCents: 320000, rate: 0.24 }));
@@ -13955,15 +13994,39 @@ section('The doors, the levels, the inline asks, the understanding line (D-207)'
        the askDeeper switch lets them. */
     const Features = require(path.join(ROOT, 'shared/features.js'));
     Features.use(require(path.join(ROOT, 'data/features.json')));
+    /* ---- The one fact a room is blocked on (D-354) ------------------------
+       This household has debts and nothing else: no cash, no investments.
+       Protection and the FI room cannot draw a figure without those, and
+       the registry says so in `needs`, so each asks for its own blocker
+       first and ahead of the level gate. */
+    const blockP = Ask.pick(h, 'protection', T, sug);
+    checkTrue('Protection asks for the one fact it is blocked on, cash', !!blockP && blockP.row.id === 'cashSavings' && blockP.blocked === true, blockP && blockP.row.id);
+    checkTrue('the FI room asks for its own blocker, investments', Ask.pick(h, 'fire', T, sug).row.id === 'investments');
     /* Estate Basics is Protection's where-it-goes reading since D-266, so
        the inline ask is put to the room that holds it; every row it owns
-       sits at level 2 or deeper. */
-    check('Protection asks nothing while the you door is at level 1', Ask.pick(h, 'protection', T, sug), null);
+       sits at level 2 or deeper. With the blockers answered, the level gate
+       is back in charge (D-250). */
+    Own.write('cashSavings', 400000);
+    Own.write('investments', 1200000);
+    const h2 = Spine.getProfile(), sug2 = Sug.suggestions(h2, T);
+    check('Protection asks nothing while the you door is at level 1', Ask.pick(h2, 'protection', T, sug2), null);
     Features.set('askDeeper', true);
-    const deeper = Ask.pick(h, 'protection', T, sug);
+    const deeper = Ask.pick(h2, 'protection', T, sug2);
     checkTrue('with the deeper switch on, Protection asks cover, a will, POA or beneficiaries', !!deeper && ['willExists', 'poaExists', 'beneficiariesSet', 'healthCover', 'healthMonthly'].indexOf(deeper.row.id) !== -1, deeper && deeper.row.id);
-    checkTrue('and the FI room asks allocation', /^allocation/.test(Ask.pick(h, 'fire', T, sug).row.id));
+    /* The FI room used to ask for the allocation here. The Ledger owns those
+       four rows and the FI room is not blocked on them, so since D-354 it
+       links to the Ledger instead of asking, and has nothing of its own left
+       to ask once its blockers are answered. */
+    check('the FI room asks nothing it does not own', Ask.pick(h2, 'fire', T, sug2), null);
     Features.set('askDeeper', null);
+    /* The other half of the decision: a room may NOT ask for a fact it
+       merely reads. Debt Payoff reads "do you have debts", which Start Here
+       owns and the registry does not list among its needs, so the room
+       links to it instead of asking (D-313 over D-207). */
+    checkTrue('a room never asks for a fact it neither owns nor is blocked on', ['hasDebt', 'highInterestBalance'].every(id => {
+      const q = Ask.pick(Schema.createHousehold(), 'debt-payoff', T, []);
+      return !q || q.row.id !== id;
+    }));
     check('parses money', Ask.parse({ unit: 'cents' }, '1,200'), 120000);
     check('parses a rate typed as a percent', Ask.parse({ unit: 'rate' }, '24.99'), 0.2499);
     check('and a rate typed as a fraction', Ask.parse({ unit: 'rate' }, '0.06'), 0.06);

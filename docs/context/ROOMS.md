@@ -30,7 +30,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 
 - **financial-snapshot** — The Scorecard · 2811 lines · engines: projection, tier0, foo, cashflow, benchmarks, swan, draftt, hourly, selfemployed, tax, income, ledger, taxroom, fire, housing, quickmath, statement, ratios, health, rankguess · D-332, D-245, D-241
 - **foo-ladder** — What The Next Dollar Does · 706 lines · engines: projection, tier0, income, selfemployed, ledger, hourly, foo, next100, windfall, cashflow, fire, statement, debt, benchmarks, ratios, skills, tax · D-242, D-231, D-058
-- **fire** — The Number · 1475 lines · engines: projection, tier0, income, ledger, fire, foo, journey, selfemployed, tax, hourly, cashflow, fulfillment, enough, coast, countdown, race · owns: enoughMonthly, retireAge, coastAge · D-285, D-240, D-235
+- **fire** — The Number · 1479 lines · engines: projection, tier0, income, ledger, fire, foo, journey, selfemployed, tax, hourly, cashflow, fulfillment, enough, coast, countdown, race · owns: enoughMonthly, retireAge, coastAge · D-285, D-240, D-235
 
 ## Decisions (10)
 
@@ -39,7 +39,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 - **car** — Wheels · 942 lines · engines: projection, tier0, income, selfemployed, ledger, hourly, quickmath, firstcar · D-268, D-255, D-151
 - **what-if-life** — What If · 1259 lines · engines: projection, tier0, income, ledger, fire, cashflow, statement, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events, foo, adventure · D-296, D-146, D-087
 - **protection** — Protection · 472 lines · engines: projection, tier0, income, selfemployed, ledger, protection, hourly, estate · owns: healthCover, healthMonthly, beneficiariesSet, willExists, poaExists · D-266, D-103, D-098
-- **decumulation** — The Back Half · 798 lines · engines: projection, tier0, income, selfemployed, ledger, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation, tax, reachable, trap, rothaca · owns: stockShare, plannedAnnualDraw, socialSecurityAt · D-286, D-284, D-228
+- **decumulation** — The Back Half · 803 lines · engines: projection, tier0, income, selfemployed, ledger, foo, cashflow, fire, statement, benchmarks, ratios, hourly, vpw, decumulation, tax, reachable, trap, rothaca · owns: stockShare, plannedAnnualDraw, socialSecurityAt · D-286, D-284, D-228
 - **career-move** — Work · 2008 lines · engines: projection, tier0, income, selfemployed, ledger, hourly, careermove, offers, sidehustle, credential, degree, countdown, microretirement · owns: offerGross, offerHours, offerCommute, offerCosts, offerSignOn · D-281
 - **partner** — Family · 665 lines · engines: projection, tier0, income, selfemployed, ledger, foo, cashflow, fire, statement, benchmarks, ratios, partner, kids · owns: partnerName, partnerDob, splitMode, sharedMonthly, tuitionTarget, tuitionSaved, tuitionMonthly · D-271, D-216, D-109
 - **housing** — Housing · 903 lines · engines: projection, tier0, income, selfemployed, ledger, foo, cashflow, fire, statement, benchmarks, ratios, housing, debt, countdown, downpayment, ownership · owns: rentAlternative, homePrice, downPct, mortgageRate · D-280, D-130, D-111

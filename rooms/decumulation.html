@@ -581,7 +581,12 @@
         { label: 'Share in stocks', value: Math.round(share.value * 100) + '%', source: share.entered ? (share.clamped ? 'yours, read within 0–100%' : 'yours') : 'the table’s middle column (convention)' },
         { label: 'The withdrawal band', value: band ? Money.formatRate(band.good, { decimals: 0 }) + ' good / ' + Money.formatRate(band.warn, { decimals: 0 }) + ' watch' : 'not yet', source: bands ? 'data/ratio_benchmarks.json v' + bands.version + ', ' + (band && band.note ? band.note : bands.source) + ' (' + bands.confidence + ')' : 'data/ratio_benchmarks.json' },
         { label: 'Tax on withdrawals', value: 'none modelled', source: 'every figure here is pre-tax; a traditional 401(k) or IRA draw is taxed as income and the after-tax draw is smaller' },
-        { label: 'Social Security', value: 'not estimated', source: 'engines/ss.js estimates from a working salary and a retiree’s income here is already the pension or benefit; the age you enter is used only to note when the draw changes' }
+        { label: 'Social Security', value: 'not estimated', source: 'engines/ss.js estimates from a working salary and a retiree’s income here is already the pension or benefit; the age you enter is used only to note when the draw changes' },
+        /* D-355: the owner's answer to the question D-228 held open. The floor
+           is FLAT. A benefit or pension counts at its full amount, and nothing
+           here reduces it as other income rises. The taper is a later reading
+           and waits on verified tables, not a guess. */
+        { label: 'The later floor', value: 'flat, no means test', source: 'D-355: a benefit or pension is counted at its full amount. Some of them fall as other income rises; this app does not model that yet, and will not until data/benefit_cliffs_2026.json is verified rather than recalled' }
       ];
     },
 

@@ -88,9 +88,17 @@ carries it. Coach Mode has its own audit at `coach/AUDIT.md`; this one is the
 - ~~Tier 3 readings.~~ Done, D-353: the twenty are worked out, each pointing at
   the engine that already owns the figure. Tiers 4 to 10 and the moons are the
   next of that work.
-- **Two owner decisions** are still held in `STATUS.md`: whether a room may ask
-  for a fact inline (D-313 against D-207), and whether the income floor is
-  means-tested (D-228, D-284). Both need the owner, not another pass.
+- ~~Two owner decisions.~~ Both answered. **D-354**: a room may ask inline for
+  the one fact it is blocked on, in the same plain words the Ledger uses, and
+  everything else it merely reads stays a link to the room that owns it. The
+  fourteen rows that were asked in a room that did not own them are asked there
+  no longer. **D-355**: the later floor is flat, counted in full with no means
+  test, said in words in The Back Half and The Number; the taper is the next
+  reading of The Back Half and waits on `data/benefit_cliffs_2026.json` being
+  verified rather than recalled, which `test/run.js` now watches for.
+- **Tiers 4 to 10 and the moons** are the remaining Solar System work, and the
+  room-by-room pass against `docs/DESIGN.md` has four screens left. Neither is
+  a finding from this audit; both are in `STATUS.md`.
 
 ## How to check any of it
 

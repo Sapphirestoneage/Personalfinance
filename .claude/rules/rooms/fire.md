@@ -7,9 +7,9 @@ paths:
   - "engines/race.js"
 ---
 # The Number (`fire`)
-File: rooms/fire.html · 1475 lines
+File: rooms/fire.html · 1479 lines
 Engines: projection, tier0, income, ledger, fire, foo, journey, selfemployed, tax, hourly, cashflow, fulfillment, enough, coast, countdown, race
-Reference data: effective_tax_rates_2026.json, expense_categories.json, federal_brackets_2026.json, fire_variants.json, foo_rules.json, irs_limits_2026.json, +3 more
+Reference data: benefit_cliffs_2026.json, effective_tax_rates_2026.json, expense_categories.json, federal_brackets_2026.json, fire_variants.json, foo_rules.json, +4 more
 Owns: enoughMonthly, retireAge, coastAge
 Reads from other owners: filingStatus (start), grossAnnualIncome (start), netWorth (statement), monthlyExpenses (expenses)
 Latest decisions:

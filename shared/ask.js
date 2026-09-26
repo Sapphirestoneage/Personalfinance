@@ -82,21 +82,59 @@
     return ns.expectedBy >= D.Schema.localMonth();
   }
 
+  /* ---- Whose question is this? (D-354) --------------------------------------
+     D-207 lets a room ask inline. D-313 says a fact is typed in exactly one
+     place. They met on the fourteen rows a room asked for that another room
+     owns, and the owner settled it: a room may ask inline for the ONE fact it
+     cannot work without, and everything else it reads stays a link to the
+     room that owns it.
+
+     So a row may be asked here when either is true:
+       - this room OWNS the field. Asking in the owner room is not a second
+         place to type it; it is the place.
+       - this room is BLOCKED on it: the registry's `needs` names it, so the
+         room has no number to show until it is answered.
+     A row that is neither is somebody else's question, and the chip that
+     already renders beside the figure links to where it is asked. */
+  function blocking(D, roomId) {
+    var room = D.Registry && typeof D.Registry.byId === 'function' ? D.Registry.byId(roomId) : null;
+    return (room && room.needs) || [];
+  }
+  function mayAsk(D, row, roomId, needs) {
+    var f = D.Ownership.FIELDS[row.id];
+    if (!f || typeof f.write !== 'function') return false;
+    if (f.owner === roomId) return true;
+    return needs.indexOf(row.id) >= 0;
+  }
+
   function pick(household, roomId, tables, sug) {
     var D = deps();
     if (!D.LedgerRows) return null;
     var rows = D.LedgerRows.rows(household, tables, { filter: 'all' });
     var byRow = {}; (sug || []).forEach(function (s) { if (!s.na) byRow[s.key] = s; });
+    var needs = blocking(D, roomId);
     var deep = deeperAllowed(D, household, tables), levelCache = {};
+    /* The fact the room is blocked on goes first, and skips the level gate:
+       a room with no number on the screen is not deepening anything. It is
+       asked whether or not the row names this room in `askIn`, because being
+       blocked is the room's own claim on the question. */
+    for (var b = 0; b < rows.length; b++) {
+      var n = rows[b];
+      if (needs.indexOf(n.id) === -1 || n.kind === 'computed' || n.repeat) continue;
+      if (ASKABLE_UNITS.indexOf(n.unit) === -1 || quiet(n.id)) continue;
+      if (!mayAsk(D, n, roomId, needs)) continue;
+      if (n.status === 'missing' || (n.status === 'notSure' && !parked(household, n.id))) {
+        return { row: n, item: null, suggestion: byRow[n.id] || null, blocked: true };
+      }
+    }
     for (var i = 0; i < rows.length; i++) {
       var r = rows[i];
       if (r.askIn !== roomId || r.kind === 'computed' || ASKABLE_UNITS.indexOf(r.unit) === -1) continue;
+      if (!mayAsk(D, r, roomId, needs)) continue;   /* D-354: somebody else's question */
       if (!deep && Money_isEntered(r.level) && r.level > 1) {
         if (levelCache[r.door] === undefined) levelCache[r.door] = askableLevel(D, household, rows, r.door);
         if (r.level > levelCache[r.door]) continue;
       }
-      var f = D.Ownership.FIELDS[r.id];
-      if (!f || typeof f.write !== 'function') continue;
       if (r.repeat) {
         var items = D.LedgerRows.items(household, r) || [];
         for (var j = 0; j < items.length; j++) {
@@ -112,6 +150,20 @@
 
   /* ---- The card ------------------------------------------------------------ */
   function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  /* The five sentences a row carries (D-347), drawn the way shared/room.js
+     draws them, so a question reads the same wherever it is asked. */
+  function helpHtml(row) {
+    var parts = [
+      ['What it means', row.means],
+      ['Where to find it', row.where],
+      ['Close enough', row.roughly],
+      ['If you are not sure', row.unsure]
+    ].filter(function (x) { return x[1]; });
+    if (!parts.length) return '';
+    return '<details class="slaf-help"><summary>What is this?</summary>'
+      + parts.map(function (x) { return '<p class="slaf-help-line"><b>' + esc(x[0]) + '.</b> ' + esc(x[1]) + '</p>'; }).join('')
+      + '</details>';
+  }
   var ENUM_LABELS = {
     healthCover: { employer: 'Through work', marketplace: 'Marketplace', cobra: 'COBRA', medicaid: 'Medicaid', parent: 'A parent’s plan', none: 'None' },
     filingStatus: { single: 'Single', married_joint: 'Married, joint', married_separate: 'Married, separate', head_of_household: 'Head of household' },
@@ -262,11 +314,16 @@
     card.className = 'slaf-card slaf-ask';
     card.id = 'slaf-ask';
     card.setAttribute('data-ask-row', p.row.id);
-    var q = p.item ? p.row.label + ', ' + itemLabel(p.item) : p.row.label;
+    /* The question in the same plain words the Ledger asks it in (D-347), and
+       the same fold under it: what it means, where to find it, what is close
+       enough, what to do when you do not know. A room asking in the moment is
+       no place to make someone work harder for it than the Ledger would. */
+    var q = p.item ? p.row.label + ', ' + itemLabel(p.item) : (p.row.plain || p.row.label);
     var more = p.item && p.remaining > 1 ? ' (' + (p.remaining - 1) + ' more ' + (p.remaining - 1 === 1 ? 'asks' : 'ask') + ' the same after this)' : '';
     card.innerHTML = '<span class="slaf-eyebrow">One question this room needs</span>'
-      + '<p class="ask-q">' + esc(q) + '<span class="ask-why"> · unlocks ' + esc(p.row.unlocks) + esc(more) + '</span></p>'
+      + '<p class="ask-q">' + esc(q) + '<span class="ask-why">Unlocks ' + esc(p.row.unlocks) + esc(more) + '</span></p>'
       + '<div class="ask-ctl">' + control(p.row, D) + '</div>'
+      + helpHtml(p.row)
       + (p.suggestion ? '<button type="button" class="slaf-use-this ask-sug" data-ask-sug>Suggested ' + esc(p.suggestion.display) + ' · use it</button><span class="slaf-hint ask-how">' + esc(p.suggestion.how) + '</span>' : '')
       + '<div class="ask-slip" data-ask-slip hidden></div>'
       + '<div class="ask-acts"><button type="button" class="slaf-btn slaf-btn--primary" data-ask-save hidden>Save</button><button type="button" class="slaf-btn slaf-btn--quiet" data-ask-skip>Not now</button>'

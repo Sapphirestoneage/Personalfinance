@@ -17793,6 +17793,65 @@ household; `node test/solar.js` 5192; the Planets screen showing the new
 readings in its Tier 3 row.
 
 
+## D-354 — A room asks only for the one fact it is blocked on
+
+**Why.** One of the two open questions in `STATUS.md`, and the owner settled
+it: "inline only for the one fact a room is blocked on". D-207 let a room ask
+inline for any blank row naming it in `askIn`; D-313 says a fact is typed in
+exactly one place. Fourteen rows sat across the join: the FI room asked for an
+allocation the Ledger owns, Debt Payoff asked whether you have debts, which
+Start Here owns. Each was a second place to type a household number.
+
+**Decision.** A room may ask inline for a row only when it OWNS the field, or
+when it is BLOCKED on it: the registry's `needs` names it, so the room has no
+figure to show until it is answered. Anything else it merely reads stays the
+link it always was. The blocking fact is asked first and above the level gate
+of D-250, because a room with nothing on the screen is not deepening anything.
+The card now asks in the row's plain words with the same five-sentence fold the
+Ledger uses (D-347), so a question reads the same wherever it is put.
+
+**Replaces or removes.** Removes the fourteen cross-room asks. No new
+component: `shared/ask.js` is still the one inline ask in the app.
+
+**Stored shape.** No change to saved data. `data/ledger-rows.json` sets those
+fourteen rows' `askIn` to null; a saved household is untouched, and an older
+copy of the table simply asks what `shared/ask.js` now refuses.
+
+**Verified.** `node test/run.js` 36470, with a check that no row is asked in a
+room that does not own it and that `shared/ask.js` enforces it rather than
+trusting the table; `node test/onefact.js` 48, which opens every room that is
+blocked on a fact it can ask for and fails if it asks for anything else.
+
+
+
+## D-355 — The later floor is flat, and the taper is a named next reading
+
+**Why.** The other question `STATUS.md` held for the owner, recorded in D-228
+and repeated in D-284: is the income floor modelled as means-tested? Galloway's
+objection is that without it the room sells comfort. The owner's answer: ship
+the flat floor, and add the taper as a named reading once the 2026 tables are
+verified rather than guessed.
+
+**Decision.** A benefit or pension counts at its full amount. Nothing in the
+app reduces a later floor as other income rises. Two rooms say so where the
+figure is read: The Back Half's assumptions say "flat, no means test", and The
+Number's say the target leaves the floor out altogether, which makes it the
+pessimistic one. The taper is the next reading of The Back Half, behind a
+switch, and it waits on `data/benefit_cliffs_2026.json`, whose own
+`confidence` is `unverified` and whose note says the two state lists were
+recalled, not fetched. A guessed taper would move the number every room quotes.
+
+**Replaces or removes.** Removes the second of the two owner questions held in
+`STATUS.md`. D-228's engine change, the FI target falling out of the draw, is
+now unblocked and is ordinary roadmap work rather than a held decision.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` 36504, including a check that fails the build
+the day `data/benefit_cliffs_2026.json` stops reading `unverified` while the
+taper is still unbuilt, so the next step is remembered by the build and not by
+a note in a file.
+
 ---
 
 # The Dungeons & Dividends entries
