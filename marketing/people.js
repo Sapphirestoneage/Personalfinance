@@ -100,6 +100,8 @@
     f.elements.cadence.value = p && p.cadence !== null ? p.cadence : '';
     f.elements.nextAt.value = p && p.nextAt ? p.nextAt : '';
     f.elements.value.value = p && p.value !== null ? (p.value / 100).toFixed(2).replace(/\.00$/, '') : '';
+    var recent = M.posts().sort(function (a, b) { return a.date < b.date ? 1 : -1; }).slice(0, 60);
+    el('f-from').innerHTML = '<option value="">none in particular</option>' + recent.map(function (x) { return '<option value="' + esc(x.id) + '"' + (p && p.fromPostId === x.id ? ' selected' : '') + '>' + esc(UI.day(x.date) + ', ' + UI.label(T.tables.channels, x.channel) + (x.hook ? ': ' + x.hook.slice(0, 48) : '')) + '</option>'; }).join('');
     UI.say('say-dlg', '');
     el('dlg').showModal(); f.elements.name.focus();
   }
@@ -107,6 +109,7 @@
     e.preventDefault();
     var f = el('person-form'), fields = {};
     ['name', 'company', 'role', 'email', 'phone', 'platform', 'handle', 'stage', 'source', 'tags', 'notes', 'nextAt', 'value'].forEach(function (k) { fields[k] = f.elements[k].value; });
+    fields.fromPostId = f.elements.fromPostId.value || null;
     fields.cadence = f.elements.cadence.value === '' ? null : f.elements.cadence.value;
     var r = editId ? M.updatePerson(editId, fields) : M.addPerson(fields);
     if (!r.ok) { UI.say('say-dlg', 'Check: ' + r.bad.join(', ') + '.', 'bad'); return; }

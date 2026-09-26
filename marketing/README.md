@@ -15,7 +15,7 @@ weeks of made-up posts and people; "Clear them and start fresh" removes them.
 
 | Screen | What it does |
 |---|---|
-| `index.html`, `board.js` | The Scoreboard: this week against the targets with pace, the period's numbers, reach-outs by lane (the Core Four, and referrals), the funnel and its worst step, week-by-week pictures, by channel and by topic, the best posts, who to contact today, the share report |
+| `index.html`, `board.js` | The Scoreboard: this week's read (the sentences), this week against the targets with pace, every number against the period before, reach-outs by lane (the Core Four, and referrals), the funnel and its worst step, week-by-week pictures, the posting heatmap, what works by format, ask, topic and weekday, the best posts, attribution by lane and by the post that brought them, conversion rates and the sales cycle, who to contact today, the share report |
 | `posts.html`, `posts.js` | The Content log: log a post (date, channel, format, topic, hook, the ask, minutes), type its results later (reach, likes, comments, shares, saves, clicks, DMs, follows, leads), sort, search, CSV in and out |
 | `people.html`, `people.js` | People: the pipeline by stage, everyone with their last and next touch, the open person with their touches and a touch form, add and edit, CSV import (LinkedIn connections, Google Contacts, any sheet with a name column), CSV out |
 
@@ -56,3 +56,6 @@ weeks of made-up posts and people; "Clear them and start fresh" removes them.
 - **Pace**, where a weekly number should be by today if the week ends on target.
 - **Streak**, weeks in a row the posting target was hit.
 - **Next touch**, the last touch plus the stage's rhythm (or the person's own, or a date you set).
+- **Against before**, the same figure over the period of the same length just before this one.
+- **Conversion**, all time: conversations that became leads, leads that became calls, calls that became clients; and the median days from lead to client.
+- **Attribution**, people, leads, clients and revenue by lane (how you met them) and by the post that brought them.

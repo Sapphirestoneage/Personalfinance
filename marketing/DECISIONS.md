@@ -65,3 +65,31 @@ report is plain text and names no contact.
 
 **Verified.** `node marketing/test/run.js`; the three screens opened in
 Chromium with the example data, no console errors.
+
+## MD-009 — The second pass: the read, the period before, what works, where the money comes from
+
+**Why.** The owner wants a marketer to look at the Scoreboard and see a tool,
+not a sheet: even grids, and the readings a marketer expects.
+
+**Decision.** `engines/kpi.js` gains `compare` (every figure against the
+period of the same length before it, with "better" knowing that hours a lead
+should fall), `byCta`, `byWeekday`, `heatmap` (posts a day, twelve weeks),
+`attribution` (people, leads, clients and revenue by lane and by the post
+that brought them), `conversion` (stage-to-stage rates all time, the median
+days from lead to client) and `insights` (the sentences: pace, overdue,
+streak, reply rate, the best post, the worst people step of the funnel,
+the winning format, reach against before, results not typed). The funnel's
+worst step is judged among the people steps. The Scoreboard draws all of
+it in fixed grids of five, four and two; the targets are edited in one
+static row behind a toggle, never repainted; a blank target is the usual
+one from `data/tables.json`. A person can be linked to the post that
+brought them (People, Edit). `posts.html?show=unchecked` opens the log on
+the posts waiting for results.
+
+**Replaces or removes.** The targets typed inside the tiles; the single
+lonely chart row.
+
+**Stored shape.** No change. `fromPostId` existed and is now settable.
+
+**Verified.** `node marketing/test/run.js`; the Scoreboard at 1280 and
+400 wide in Chromium with the example data and empty, no console errors.
