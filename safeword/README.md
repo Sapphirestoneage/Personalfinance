@@ -5,15 +5,41 @@ planners pretend does not exist. Its own app, built beside Money Rooms
 (SPARKS) the way `coach/` and `dnd/` are: nothing in `rooms/`, `shared/`,
 `engines/` or `data/` changes for it, and nothing in SPARKS depends on it.
 
+Two layers in one folder. The **site** (SF-011) sells the coaching: a landing
+page, three audience pages, the offers, the guides, the booking page, all drawn
+from `data/site.json`. The **planner** is the free tool behind it: ten screens
+that keep every number in the visitor's browser.
+
 Open `safeword/index.html` (served: `python3 -m http.server`, then
-`http://localhost:8000/safeword/`). "Try with example numbers" loads Vesper,
-an invented pro domme; every figure in the example is made up for scale.
+`http://localhost:8000/safeword/`). On the planner, "Try with example numbers"
+loads Vesper, an invented pro domme; every figure in the example is made up.
+
+## Changing the site (no code)
+
+Everything a visitor reads about Eli, the prices, the guarantee, the capacity
+line, the questions and the booking link live in **`data/site.json`**. Edit
+that file and every page follows. Three things to do first:
+
+1. `bookingUrl`: paste a scheduling link (Calendly, Google appointment
+   schedule, HubSpot meetings). Until then "Book" opens an email. Set
+   `embedBooking` to `true` to show the calendar inside the booking page.
+2. `offers[].priceCents`: the session and house prices were set from the
+   $300-an-hour figure in the existing offer document; change them freely.
+3. `testimonials`: paste real client quotes as `{ "quote": "...", "who": "..." }`.
+   The section stays hidden while the list is empty.
 
 ## What is in here
 
 | Path | What it is |
 |---|---|
-| `index.html` | Home: what it is, the three ways in, how far the plan is, backup and wipe |
+| `index.html` | The landing page: who it is for, why the usual advice fails, the method, the offers, the free tools |
+| `for-dommes.html`, `for-creators.html`, `for-houses.html` | One landing page an audience: the pains, what a session looks like, the offers, the guides |
+| `services.html` | The three offers in full, the guarantee, the method, how booking works, the questions |
+| `about.html` | Eli: the bio, the stance, how he works |
+| `resources.html` | Six printable guides: the 48-hour list, the tax jar, the tribute protocol, the eight papers, what to ask a bank, the first $1,000 |
+| `book.html` | Pick an offer, book (a scheduling link, or an email with the offer in the subject) |
+| `site.js`, `site.css`, `data/site.json`, `og.svg` | The site's chrome, its look, its every word, its share image |
+| `tools.html` | The planner's home: the three ways in, how far the plan is, backup and wipe |
 | `streams.html` | Every way you earn: the typical and low month, the cuts, the cash share, where it lands |
 | `house.html` | What the practice costs to run: fixed against variable, what a return usually carries, break-even |
 | `taxes.html` | The jar (of every $100 from the work, how much to set aside) and the four estimated payments |

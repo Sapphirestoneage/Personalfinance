@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src https://calendly.com https://calendar.google.com https://*.hubspot.com https://meetings.hubspot.com"/>
+<title>Book a call with Eli</title>
+<meta name="description" content="Book a money coaching call: the 90-minute Safeword Session, the 8-week SPARKS Clarity Package, or the House Session. Working name welcome, video, no intake form."/>
+<link rel="canonical" href="https://sapphirestoneage.github.io/Personalfinance/safeword/book.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:title" content="Book a call with Eli"/>
+<meta property="og:description" content="Book a money coaching call: the 90-minute Safeword Session, the 8-week SPARKS Clarity Package, or the House Session. Working name welcome, video, no intake form."/>
+<meta property="og:url" content="https://sapphirestoneage.github.io/Personalfinance/safeword/book.html"/>
+<meta property="og:image" content="https://sapphirestoneage.github.io/Personalfinance/safeword/og.svg"/>
+<meta name="twitter:card" content="summary"/>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="safeword.css"/>
+<link rel="stylesheet" href="site.css"/>
+<!-- BOOK A CALL (SF-011). Reads data/site.json only; stores nothing. -->
+</head>
+<body class="slaf safeword">
+<main class="mk" id="main">
+  <div id="mk-head"></div>
+  <section class="mk-hero" aria-label="Book">
+    <div>
+      <span class="mk-eyebrow">Book a call</span>
+      <h1>Pick a time. Bring the name you go by.</h1>
+      <p class="mk-lede">Video, ninety minutes for the session, two hours for the house. No intake form. If you want a head start, fill in the Streams page of the <a href="tools.html">planner</a> first, but it is not required.</p>
+      <p class="mk-note" data-fill="capacity"></p>
+      <div class="mk-actions" style="margin-top:var(--space-3)">
+        <a class="slaf-btn slaf-btn--primary" id="book-primary" data-book="" href="#">Book a call</a>
+        <a class="slaf-btn" href="services.html">See what each option includes</a>
+      </div>
+      <p class="mk-note" id="book-how" style="margin-top:var(--space-2)"></p>
+    </div>
+    <div class="mk-hero-card">
+      <span class="mk-k">Which one</span>
+      <div id="book-offers"></div>
+    </div>
+  </section>
+  <section class="mk-section" id="book-embed-host" hidden aria-label="Calendar"><iframe class="mk-embed" id="book-embed" title="Booking calendar" loading="lazy"></iframe></section>
+  <section class="mk-section" aria-label="What happens next">
+    <h2>What happens after you book</h2>
+    <div class="mk-grid">
+      <div class="mk-card"><h3>You get a confirmation</h3><p>With the video link and one line on what to have to hand: your rate and your rent, or three months of payout statements, or everyone in the house.</p></div>
+      <div class="mk-card"><h3>The call is the work</h3><p>We fill the planner together and read what it says. You leave with the first three moves written down and a recap the same day.</p></div>
+      <div class="mk-card"><h3>Nothing is kept on my side</h3><p>Your numbers live in your browser. If you share your screen, that is the only time I see them. Notes from the call go in the recap I send you and nowhere else.</p></div>
+    </div>
+  </section>
+  <section class="mk-section" aria-label="Questions"><h2>Before you book</h2><div data-fill="faq"></div></section>
+  <div id="mk-foot"></div>
+</main>
+<script src="site.js"></script>
+<script>
+Site.boot('book', function (site) {
+  var want = (location.search.match(/[?&]offer=([a-z0-9]+)/) || [])[1] || null;
+  var host = document.getElementById('book-offers');
+  host.innerHTML = site.offers.map(function (o) {
+    return '<label class="sw-check" style="align-items:flex-start;min-height:0;margin-bottom:10px"><input type="radio" name="offer" value="' + Site.esc(o.id) + '"' + (o.id === want || (!want && o.featured) ? ' checked' : '') + ' style="margin-top:3px"/><span><b style="color:var(--color-text)">' + Site.esc(o.name) + '</b><br/>' + Site.esc(o.length) + ' &middot; ' + Site.money(o.priceCents) + '</span></label>';
+  }).join('');
+  var primary = document.getElementById('book-primary');
+  function apply() {
+    var picked = (host.querySelector('input:checked') || {}).value || null;
+    primary.href = Site.bookHref(site, picked);
+    var o = site.offers.filter(function (x) { return x.id === picked; })[0];
+    primary.textContent = o ? o.cta : 'Book a call';
+    document.getElementById('book-how').textContent = site.bookingUrl ? 'The button opens the calendar. Pick any time that is open.' : 'The button opens an email to Eli with the option in the subject line. Add the name you go by and a few times that work; you get a reply with a time and the video link.';
+  }
+  host.addEventListener('change', apply); apply();
+  if (site.bookingUrl && site.embedBooking) { var f = document.getElementById('book-embed'); f.src = site.bookingUrl; document.getElementById('book-embed-host').hidden = false; }
+});
+</script>
+</body>
+</html>

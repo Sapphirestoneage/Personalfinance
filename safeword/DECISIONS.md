@@ -102,3 +102,24 @@ fail on a missing or an unused one. `shared/charts.js` draws five validated
 hues on the warm dark surface, every picture with a table twin. `safeword.css`
 overrides the SPARKS tokens: near-black, oxblood, a serif for headings.
 `test/browser.js` walks every page at phone width in CI.
+
+## SF-011 — The site sells the coaching; the planner is the free tool behind it
+
+**Why.** The owner wants landing pages that book calls and sell coaching, with
+the planner as the free resource and words about him for the community.
+
+**Decision.** Eight marketing pages beside the planner: `index.html` (the
+landing), three audience pages (`for-dommes`, `for-creators`, `for-houses`),
+`services`, `about`, `resources` (six printable guides) and `book`. The
+planner's home moves to `tools.html`; its header links to the site and to
+booking. Every word about the coach, every price, the guarantee, the capacity
+line, the questions, the booking link and the testimonials come from
+`data/site.json`; `site.js` draws the chrome and fills the pages from it, and
+stores nothing. Testimonials stay empty until the owner pastes real ones. With
+no booking link set, "Book" opens an email with the offer in the subject.
+Marketing pages and `tools.html` are indexable with a description, a
+canonical and Open Graph tags; the planner's other screens stay `noindex`.
+`test/run.js` checks the config, every link and anchor, and that no page
+claims a regulated designation; `test/browser.js` walks the eight pages.
+
+**Stored shape.** None. A marketing page reads nothing from the browser.

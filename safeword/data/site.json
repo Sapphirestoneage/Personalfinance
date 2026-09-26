@@ -1,0 +1,109 @@
+{
+  "id": "site",
+  "version": "2026.1",
+  "asOf": "2026-09-26",
+  "source": "The words the marketing pages are built from: who the coach is, what is for sale, how to book. Drawn from the owner's own offer documents (StressLess About Finance, the SPARKS Method, the SPARKS Clarity Package). Everything a visitor sees about the coach comes from this one file.",
+  "confidence": "owner",
+  "confidenceNote": "Edit this file to change the site: the prices, the booking link, the bio, the capacity line. Testimonials stay empty until the owner pastes real ones; the pages hide the section when the list is empty.",
+  "brand": "Safeword",
+  "byline": "by StressLess About Finance",
+  "coach": {
+    "name": "Eli Saperstein",
+    "title": "Financial coach",
+    "credentials": ["Big 4 audit background", "100+ clients coached", "Builds every tool his clients use", "Sells no products, takes no referral fees"],
+    "email": "elizsaperstein@gmail.com",
+    "linkedin": "https://www.linkedin.com/in/eli-saperstein",
+    "city": "New York",
+    "bio": [
+      "I am a financial coach. Before that I was an auditor at a Big 4 firm, which means I spent years reading other people's numbers for a living and learned that the numbers are never the hard part. The hard part is the person who cannot open the app.",
+      "I have coached more than a hundred people through the same thing: money that is coming in, sometimes a lot of it, and no system for what happens next. I build the tools myself, I do not sell products, and nobody pays me to recommend anything. What you pay for is clarity and a plan you will actually keep.",
+      "This site exists because the people who most need a money plan are the ones the finance world pretends not to see. If your income is cash, sessions, subs, tributes or clips; if a platform or a bank can end your month with an email; if the people you would trust with your life are not the people the law calls your family, then every mainstream planner has already failed you once. I built one that starts from your life instead."
+    ],
+    "stance": [
+      "No judgment. The work is the work. I want to know what lands, what it costs and what you want it to buy you.",
+      "No products. I do not sell insurance, funds or anything with my name on a commission line.",
+      "No flinching. Say the platform, the rail, the protocol, the client. I have heard it, and if I have not, I will ask what it means and keep going.",
+      "Working name is fine. Book under whatever name you use for the work. I do not need your legal name to plan your money."
+    ]
+  },
+  "bookingUrl": null,
+  "embedBooking": false,
+  "capacityLine": "I take on three private clients a month so the coaching stays hands-on. When the month is full, the booking page says so and you go on the list for the next one.",
+  "method": [
+    { "letter": "S", "name": "Snapshot", "what": "The honest picture: what lands, what it costs, what you hold, what you owe. No hiding from a number, no shame about one." },
+    { "letter": "P", "name": "Plan", "what": "A split for every dollar that lands, built for your actual life: the tax jar, the fund, the house, the long game, the rest." },
+    { "letter": "A", "name": "Activate", "what": "Accounts opened, money moved, the second bank and the backup rail set up, together on the call, so nothing waits for a better week." },
+    { "letter": "R", "name": "Rewire", "what": "The beliefs and habits that keep money frozen: the shame, the avoidance, the story that this work is not a real income. It is." },
+    { "letter": "K", "name": "Keep going", "what": "A monthly rhythm that runs itself: the jar filled the day money lands, the quarterlies paid, the fund growing without a decision each time." }
+  ],
+  "offers": [
+    {
+      "id": "session",
+      "name": "The Safeword Session",
+      "for": "One call. One clear answer.",
+      "length": "90 minutes, video, working name welcome",
+      "priceCents": 45000,
+      "priceNote": "one session",
+      "what": [
+        "We fill in the free planner together, live, with your real numbers.",
+        "You leave with your floor, your tax jar figure, the size of your safeword fund and the first three moves.",
+        "A written recap the same day, and one week of questions by message."
+      ],
+      "bestFor": "Someone who has never had a money plan, or has one that ignores how they actually earn.",
+      "cta": "Book the session"
+    },
+    {
+      "id": "package",
+      "name": "The SPARKS Clarity Package",
+      "for": "Eight weeks. The whole system, built and running.",
+      "length": "8 weeks: four 60-minute calls, messages between them with a 24-hour reply",
+      "priceCents": 300000,
+      "priceNote": "or three payments of $1,100",
+      "what": [
+        "Snapshot, plan, activation, rewiring, the monthly rhythm: the five phases of the SPARKS Method, on your numbers.",
+        "Every tool built for you: the split, the tax jar and quarterly schedule, the fund target, the rails map, the retirement room, the papers list.",
+        "Accounts opened and money moved on the calls. A second bank. A backup rail. The fund started. The first retirement contribution made.",
+        "Weekly check-in prompts, session recordings, a before-and-after scorecard at the end.",
+        "Thirty days of messaging after the last call so the new rhythm sticks."
+      ],
+      "bestFor": "Someone whose income is real and whose system is not: money sitting on a platform, a tax bill that surprises them each April, a fund that never gets built.",
+      "cta": "Apply for the package",
+      "featured": true
+    },
+    {
+      "id": "house",
+      "name": "The House Session",
+      "for": "Two or more people, one plan.",
+      "length": "2 hours, video, everyone on the call",
+      "priceCents": 60000,
+      "priceNote": "one session for the house",
+      "what": [
+        "The shared month split in a way everyone can say out loud: equal, in proportion, or agreed.",
+        "Each person's floor, so nobody in the house is quietly under water.",
+        "If money moves inside the dynamic, the protocol written down: the cap, the review date, the safeword, the floor. Consent practice, applied to money.",
+        "The eight papers, and who holds which one."
+      ],
+      "bestFor": "A D/s household, a polycule, a leather family, two people and a lease.",
+      "cta": "Book for the house"
+    }
+  ],
+  "guarantee": {
+    "name": "The Financial Clarity Guarantee",
+    "text": "Finish the package and show up to your calls. If after eight weeks you do not have a plan built on your real income, a funded account, and a monthly rhythm you can keep, I keep working with you at no charge until you do. You only lose if you do not show up."
+  },
+  "faq": [
+    { "q": "Do you need my legal name?", "a": "No. Book under your working name. If we set up accounts together, that happens on your screen, not mine." },
+    { "q": "Is this tax or legal advice?", "a": "No. I am a coach, not a CPA or a lawyer. I will get your numbers straight and tell you exactly what to bring to the tax pro and the lawyer, and I can suggest what to look for in one who knows the work." },
+    { "q": "What if my income is all cash?", "a": "Then the plan is built on what actually lands and the tax jar assumes you report it. What you decide to do with that is yours; the arithmetic works either way." },
+    { "q": "Do you work with people who are not sex workers?", "a": "Yes. Anyone whose kink life, house or chosen family the usual planners ignore. The free tools have a page for the scene's own spending and one for a house with more than two people in it." },
+    { "q": "Where do my numbers live?", "a": "In your own browser, on your own device. The free tools have no account and no server. On a call, you share your screen, or you do not." },
+    { "q": "What happens on the first call?", "a": "We open the planner, fill in your streams and your lean month, and you see your floor and your tax jar figure before the call ends. Then we decide together whether one session was enough." }
+  ],
+  "testimonials": [],
+  "audiences": [
+    { "id": "dommes", "href": "for-dommes.html", "label": "For dommes and pro sex workers", "short": "Dommes and pros" },
+    { "id": "creators", "href": "for-creators.html", "label": "For creators, cam and findom", "short": "Creators" },
+    { "id": "houses", "href": "for-houses.html", "label": "For D/s houses and polycules", "short": "Houses" }
+  ],
+  "baseUrl": "https://sapphirestoneage.github.io/Personalfinance/safeword/"
+}

@@ -3,126 +3,107 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
-<meta name="robots" content="noindex"/>
-<title>Safeword</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<title>Safeword: money coaching for kink, sex work and the domme's house</title>
+<meta name="description" content="Financial coaching and free planning tools for dommes, sex workers, creators, D/s houses and polycules. Cash income, platform risk, the tax jar, the fund that lets you say no. No judgment, no products."/>
+<link rel="canonical" href="https://sapphirestoneage.github.io/Personalfinance/safeword/index.html"/>
+<meta property="og:type" content="website"/>
+<meta property="og:title" content="Safeword: money coaching for kink, sex work and the domme's house"/>
+<meta property="og:description" content="Financial coaching and free planning tools for dommes, sex workers, creators, D/s houses and polycules. Cash income, platform risk, the tax jar, the fund that lets you say no. No judgment, no products."/>
+<meta property="og:url" content="https://sapphirestoneage.github.io/Personalfinance/safeword/index.html"/>
+<meta property="og:image" content="https://sapphirestoneage.github.io/Personalfinance/safeword/og.svg"/>
+<meta name="twitter:card" content="summary"/>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="shared/fonts.css"/>
 <link rel="stylesheet" href="shared/theme.css"/>
 <link rel="stylesheet" href="safeword.css"/>
-<!--
-  SAFEWORD HOME (SF-010). Reads the household to say how far along the plan is; writes nothing but the example numbers and a backup.
-  LIVE-FORM: built once. The form is drawn from the stored household when
-  the page opens; a change saves and repaints the read-outs only.
--->
+<link rel="stylesheet" href="site.css"/>
+<!-- SAFEWORD HOME, the landing page (SF-011). Reads data/site.json only; stores nothing. -->
 </head>
 <body class="slaf safeword">
-<main class="sw" id="main">
-  <div id="head"></div>
-
-  <section class="slaf-card" id="welcome" aria-label="What this is">
-    <div class="sw-two">
-      <div>
-        <span class="slaf-eyebrow">What this is</span>
-        <h2>A money plan for a life that most planners pretend does not exist.</h2>
-        <p class="sw-lede">Sessions, subs, clips, tributes, a vanilla job on the side. A dungeon by the hour. A platform that can close your account on a Tuesday. A partner the law does not call family. A tribute protocol that needs a cap and a safeword. This is a planner built for that, with the community's own words and none of the judgement.</p>
-        <p class="sw-lede">It works like a coach's session: every box has a <span class="help-btn" aria-hidden="true" style="display:inline-flex;width:20px;height:20px;font-size:11px;vertical-align:middle">?</span> that says what it means in plain words, where to find it, and what to do if you are not sure. A box left blank means <b>not known yet</b>, never zero.</p>
-        <div class="sw-actions">
-          <button type="button" class="slaf-btn slaf-btn--primary" id="btn-demo">Try with example numbers</button>
-          <a class="slaf-btn" href="streams.html">Start with my own</a>
-        </div>
+<main class="mk" id="main">
+  <div id="mk-head"></div>
+  <section class="mk-hero" aria-label="Introduction">
+    <div>
+      <span class="mk-eyebrow">Money coaching for the life the planners pretend does not exist</span>
+      <h1>Your income is real. Your plan should be built on it.</h1>
+      <p class="mk-lede">Sessions, subs, clips, tributes, a vanilla job on the side. A dungeon by the hour. A platform that can close your account on a Tuesday. A partner the law does not call family. I coach money for exactly this, with the community's own words and none of the judgment.</p>
+      <div class="mk-actions">
+        <a class="slaf-btn slaf-btn--primary" href="book.html">Book a call</a>
+        <a class="slaf-btn" href="tools.html">Try the free planner</a>
       </div>
-      <div class="sw-stat sw-stat--hero" id="progress-card">
-        <span class="sw-k">Where the plan stands</span>
-        <span class="sw-v" id="progress-v">0 of 9 pages</span>
-        <span class="sw-why" id="progress-why">Nothing entered yet. Start with the Streams page, or try the example.</span>
-      </div>
+      <p class="mk-note" style="margin-top:var(--space-3)">Working name is fine. Nothing on this site asks for your legal name, and the planner keeps every number in your own browser.</p>
+    </div>
+    <div class="mk-hero-card">
+      <span class="mk-k">What a first call gives you</span>
+      <span class="mk-v">Your floor. Your jar. Your fund.</span>
+      <ul>
+        <li><b>The floor:</b> what a bad month brings after every cut, so you know the number you are planning around.</li>
+        <li><b>The tax jar:</b> of every $100 from the work, how much to set aside the day it lands.</li>
+        <li><b>The safeword fund:</b> the money that lets you say no, sized for a platform closing on you.</li>
+      </ul>
     </div>
   </section>
 
-  <section aria-label="The pages">
-    <h2>The ten pages</h2>
-    <div class="sw-cards" id="cards"></div>
-  </section>
-
-  <section class="slaf-card" aria-label="Privacy">
-    <h2>Why it is safe to type here</h2>
-    <div class="sw-grid">
-      <div><h3>It stays in this browser</h3><p class="sw-note">There is no account and no server. The numbers live in this browser's own storage, on this device, under a key of their own. Clear the browser and they are gone; back them up first.</p></div>
-      <div><h3>Working name is enough</h3><p class="sw-note">Nothing asks for a legal name, an address, a platform login or a client's name. A stream is "Sessions" or "Subs"; a place money sits is "Bank A".</p></div>
-      <div><h3>Back up, or wipe</h3><p class="sw-note">A backup is one plain file you keep where you choose. Wiping is one button and it is final.</p>
-        <div class="sw-actions" style="margin-top:8px">
-          <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-export">Save a backup file</button>
-          <label class="slaf-btn slaf-btn--quiet" for="import-file">Bring a backup in</label><input type="file" id="import-file" accept="application/json,.json" hidden/>
-          <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-wipe">Wipe everything</button>
-        </div>
-        <p class="sw-say" id="backup-say" role="status"></p>
-      </div>
-    </div>
-  </section>
-
-  <section class="slaf-card" aria-label="Who it is for">
+  <section class="mk-section" aria-label="Who this is for">
     <h2>Three ways in</h2>
-    <div class="sw-grid">
-      <div><h3>I earn from this</h3><p class="sw-note">Pro domme, escort, content creator, cam, findom, phone, teaching. Start at <a href="streams.html">Streams</a>, then <a href="house.html">The house</a> and <a href="taxes.html">Taxes</a>. The safeword fund is sized for a platform closing on you.</p></div>
-      <div><h3>I spend on this</h3><p class="sw-note">Cons, gear, club dues, classes. Start at <a href="play.html">The life</a> and <a href="fund.html">The safeword</a>; skip the house and the taxes if you have a vanilla job that withholds.</p></div>
-      <div><h3>We run a house</h3><p class="sw-note">A D/s household, a polycule, a leather family. <a href="dynamic.html">House rules</a> splits the shared month and checks any money that moves inside the dynamic against five guardrails. <a href="family.html">Chosen family</a> is the papers that make your people count.</p></div>
+    <div class="mk-grid">
+      <a class="mk-card" href="for-dommes.html"><h3>Dommes and pro sex workers</h3><p>In-person sessions, cash and card, a space by the hour, screening costs, a tax bill that surprises you every April. The plan starts from what lands.</p><p><b>For dommes and pros &rarr;</b></p></a>
+      <a class="mk-card" href="for-creators.html"><h3>Creators, cam and findom</h3><p>Subs, clips, tokens, tributes. A platform's cut, a balance it has not paid out, a ban that can end your month. Redundancy is the plan.</p><p><b>For creators &rarr;</b></p></a>
+      <a class="mk-card" href="for-houses.html"><h3>D/s houses and polycules</h3><p>A shared month with three people in it. Money that moves inside the dynamic. Partners the law does not call family. Consent practice, applied to money.</p><p><b>For houses &rarr;</b></p></a>
     </div>
   </section>
-  <footer class="sw-foot">
-    <p>Nothing here leaves your browser. No account, no server, no tracking. Numbers are estimates for planning, not tax or legal advice; a tax pro or lawyer who knows the work is the person for your return and your papers. Every table says what year it is for and how sure it is.</p>
-  </footer>
+
+  <section class="mk-section" aria-label="What is wrong with the usual advice">
+    <h2>Why the usual advice keeps failing you</h2>
+    <ul class="mk-pains">
+      <li><b>"Budget your paycheck."</b> You do not have one. You have four streams, three cuts and a cash share, and the number that matters is the low month, not the average.</li>
+      <li><b>"Keep three months of expenses."</b> A platform ban does not wait three months, and a frozen bank account does not care what your savings say. The fund has to be sized for how this work actually stops.</li>
+      <li><b>"Just report it and pay quarterly."</b> Fine. How much, out of every hundred, on the day it lands? That is the only tax number you can act on, and no calculator gives it to you.</li>
+      <li><b>"Talk to your financial advisor."</b> Who flinches at the word session, has never heard of a tribute protocol, and wants to sell you a fund.</li>
+      <li><b>"Name your spouse as beneficiary."</b> And if your people are a partner of ten years, a submissive who lives with you, or a leather family? The state's list does not have them on it.</li>
+      <li><b>"Track your spending."</b> You know where it goes: gear, cons, the club, the look. The question is what a year of the life costs and how to make it a non-event.</li>
+    </ul>
+  </section>
+
+  <section class="mk-section" aria-label="The method">
+    <span class="mk-eyebrow">How the coaching works</span>
+    <h2>The SPARKS Method, on your numbers</h2>
+    <div data-fill="method"></div>
+  </section>
+
+  <section class="mk-section" aria-label="Coaching">
+    <span class="mk-eyebrow">Work with Eli</span>
+    <h2>One call, or the whole system</h2>
+    <div data-fill="offers-brief"></div>
+    <p class="mk-note" style="margin-top:var(--space-3)"><a href="services.html">Everything each one includes, and the guarantee &rarr;</a></p>
+  </section>
+
+  <div data-fill="testimonials"></div>
+
+  <section class="mk-section" aria-label="Free tools and resources">
+    <h2>Free, no email needed</h2>
+    <div class="mk-grid">
+      <a class="mk-card" href="tools.html"><h3>The Safeword planner</h3><p>Ten screens: your streams, the house, the tax jar, the fund, the rails, the long game, the house rules, the papers, the life, the plan. Everything stays in your browser.</p><p><b>Open the planner &rarr;</b></p></a>
+      <a class="mk-card" href="resources.html#platform"><h3>When a platform closes your account</h3><p>The 48-hour list: what to do first, what to move, what to say, what not to touch.</p><p><b>Read it &rarr;</b></p></a>
+      <a class="mk-card" href="resources.html#protocol"><h3>The tribute protocol, written down</h3><p>A one-page agreement for money inside a dynamic: the cap, the review date, the safeword, the floor.</p><p><b>Read it &rarr;</b></p></a>
+    </div>
+  </section>
+
+  <section class="mk-section" aria-label="About">
+    <div class="mk-band">
+      <div><h2>Eli Saperstein, financial coach</h2><p>Big 4 auditor turned coach. More than a hundred clients. Builds his own tools, sells no products, and does not flinch. <a href="about.html">About Eli &rarr;</a></p></div>
+      <a class="slaf-btn slaf-btn--primary" href="book.html">Book a call</a>
+    </div>
+  </section>
+
+  <section class="mk-section" aria-label="Questions">
+    <h2>Questions people ask before they book</h2>
+    <div data-fill="faq"></div>
+  </section>
+  <div id="mk-foot"></div>
 </main>
-<script src="shared/money.js"></script>
-<script src="shared/schema.js"></script>
-<script src="shared/reference.js"></script>
-<script src="shared/tables.js"></script>
-<script src="shared/model.js"></script>
-<script src="shared/store.js"></script>
-<script src="shared/demo.js"></script>
-<script src="shared/charts.js"></script>
-<script src="engines/selfemployed.js"></script>
-<script src="engines/tax.js"></script>
-<script src="engines/projection.js"></script>
-<script src="engines/streams.js"></script>
-<script src="engines/house.js"></script>
-<script src="engines/rails.js"></script>
-<script src="engines/taxplan.js"></script>
-<script src="engines/fund.js"></script>
-<script src="engines/longgame.js"></script>
-<script src="engines/dynamic.js"></script>
-<script src="engines/family.js"></script>
-<script src="engines/play.js"></script>
-<script src="engines/plan.js"></script>
-<script src="common.js"></script>
-<script>
-SW.boot({ page: 'index' }, function (ctx) {
-  var S = window.SLAF, Store = S.Store, Demo = S.Demo, Plan = S.Plan;
-  document.getElementById('btn-demo').addEventListener('click', function () { Store.useDemo(Demo.household()); location.reload(); });
-  document.getElementById('btn-export').addEventListener('click', function () {
-    SW.download('safeword-backup-' + SW.today() + '.json', Store.exportJson(ctx.h));
-    document.getElementById('backup-say').textContent = 'Saved. Keep the file somewhere only you can reach.';
-  });
-  document.getElementById('import-file').addEventListener('change', function (e) {
-    var f = e.target.files && e.target.files[0]; if (!f) return;
-    var r = new FileReader();
-    r.onload = function () { var h = Store.importJson(String(r.result)); if (h instanceof Error) { document.getElementById('backup-say').textContent = h.message; return; } Store.save(h); location.reload(); };
-    r.readAsText(f);
-  });
-  document.getElementById('btn-wipe').addEventListener('click', function () { if (confirm('Forget every number in this browser? There is no undo.')) { Store.wipe(); location.reload(); } });
-  ctx.paint = function (h, T) {
-    var p = Plan.read(h, T);
-    document.getElementById('progress-v').textContent = p.doneCount + ' of ' + p.pages.length + ' pages';
-    var next = p.pages.filter(function (x) { return !x.done; })[0];
-    document.getElementById('progress-why').textContent = !next ? 'Every page has its numbers. The plan is on the last page.'
-      : (p.doneCount ? 'Next: ' + next.label + '. ' : 'Nothing entered yet. ') + (next.missing[0] || '');
-    document.getElementById('cards').innerHTML = SW.PAGES.filter(function (pg) { return pg.id !== 'index'; }).map(function (pg) {
-      var st = p.pages.filter(function (x) { return x.id === pg.id; })[0];
-      var mark = pg.id === 'plan' ? '' : st && st.done ? '<span class="sw-good">has its numbers</span>' : '<span class="sw-notyet">not yet</span>';
-      return '<a class="slaf-card" href="' + pg.href + '"><h3>' + SW.esc(pg.label) + '</h3><p>' + SW.esc(pg.sub) + '</p><p style="margin-top:6px">' + mark + '</p></a>';
-    }).join('');
-  };
-});
-</script>
+<script src="site.js"></script>
+<script>Site.boot('index');</script>
 </body>
 </html>

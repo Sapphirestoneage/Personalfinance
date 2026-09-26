@@ -12,7 +12,7 @@
    ========================================================================== */
 'use strict';
 const { chromium } = require('playwright');
-const PAGES = ['index', 'streams', 'house', 'taxes', 'fund', 'rails', 'longgame', 'dynamic', 'family', 'play', 'plan'];
+const PAGES = ['tools', 'streams', 'house', 'taxes', 'fund', 'rails', 'longgame', 'dynamic', 'family', 'play', 'plan'];
 const BASE = process.env.SAFEWORD_BASE || 'http://127.0.0.1:8765/safeword/';
 let passed = 0; const failures = [];
 function ok(name, cond, detail) { if (cond) passed++; else failures.push(name + (detail ? ': ' + detail : '')); }
@@ -28,7 +28,7 @@ function ok(name, cond, detail) { if (cond) passed++; else failures.push(name + 
   for (const mode of ['blank', 'demo']) {
     for (const p of PAGES) {
       await open(p);
-      if (mode === 'demo' && p === 'index') { await page.click('#btn-demo'); await page.waitForSelector('.sw-banner'); }
+      if (mode === 'demo' && p === 'tools') { await page.click('#btn-demo'); await page.waitForSelector('.sw-banner'); }
       const horiz = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
       ok(mode + ' ' + p + ' fits a phone', !horiz);
       ok(mode + ' ' + p + ' draws the header', await page.locator('.sw-nav a[aria-current="page"]').count() === 1);
@@ -65,6 +65,15 @@ function ok(name, cond, detail) { if (cond) passed++; else failures.push(name + 
   await open('fund');
   await page.fill('#lean', ''); await page.dispatchEvent('#lean', 'input');
   ok('a cleared box is null, not zero', await page.evaluate(() => JSON.parse(localStorage.getItem('safeword.household.v1')).personal.leanMonthCents === null));
+  /* The marketing pages: each draws its strip, its booking button resolves, and nothing is stored. */
+  for (const p of ['index', 'for-dommes', 'for-creators', 'for-houses', 'services', 'about', 'resources', 'book']) {
+    await page.goto(BASE + p + '.html' + (p === 'book' ? '?offer=session' : ''), { waitUntil: 'networkidle' });
+    await page.waitForSelector('.mk-nav');
+    ok(p + ' fits a phone', !(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1)));
+    ok(p + ' has a working booking link', (await page.locator('a[href^="book.html"], a[href^="mailto:"], a[href^="http"]').count()) > 0);
+    ok(p + ' stores nothing', await page.evaluate(() => Object.keys(localStorage).every(k => k === 'safeword.household.v1')));
+  }
+  ok('the book page picks the offer from the address', /Book the session/.test(await page.textContent('#book-primary')));
   await browser.close();
   ok('no console errors anywhere', errors.length === 0, errors.join(' | '));
   console.log(passed + ' passed, ' + failures.length + ' failed');

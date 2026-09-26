@@ -23,7 +23,7 @@
   var Money = S.Money, Store = S.Store, Tables = S.Tables, Demo = S.Demo;
 
   var PAGES = [
-    { id: 'index', href: 'index.html', label: 'Home', short: 'Home' },
+    { id: 'tools', href: 'tools.html', label: 'Tools home' },
     { id: 'streams', href: 'streams.html', label: 'Streams', sub: 'Every way you earn, and what lands' },
     { id: 'house', href: 'house.html', label: 'The house', sub: 'What the practice costs to run' },
     { id: 'taxes', href: 'taxes.html', label: 'Taxes', sub: 'The jar, and the four dates' },
@@ -130,9 +130,9 @@
     var out = '<header class="sw-head">';
     out += '<div class="sw-brand"><a class="sw-wordmark" href="index.html">Safeword</a><span class="sw-screen">Money for kink, sex work and the domme’s house</span></div>';
     out += '<div class="sw-head-title"><h1>' + esc(page.label) + '</h1>' + (page.sub ? '<p class="sw-head-sub">' + esc(page.sub) + '</p>' : '') + '</div>';
-    out += '<div class="sw-head-actions">' + (blank ? '<button type="button" class="slaf-btn slaf-btn--primary" id="sw-try-demo">Try with example numbers</button>' : '') + '</div>';
+    out += '<div class="sw-head-actions">' + (blank ? '<button type="button" class="slaf-btn slaf-btn--quiet" id="sw-try-demo">Try with example numbers</button>' : '') + '<a class="slaf-btn slaf-btn--primary" href="book.html">Book a call</a></div>';
     out += '</header>';
-    out += '<nav class="sw-nav" aria-label="Pages">' + PAGES.map(function (p) { return '<a href="' + p.href + '"' + (p.id === pageId ? ' aria-current="page"' : '') + '>' + esc(p.label) + '</a>'; }).join('') + '</nav>';
+    out += '<nav class="sw-nav" aria-label="Pages"><a href="index.html" class="sw-nav-site">&#8592; Safeword</a>' + PAGES.map(function (p) { return '<a href="' + p.href + '"' + (p.id === pageId ? ' aria-current="page"' : '') + '>' + esc(p.label) + '</a>'; }).join('') + '</nav>';
     if (h.meta.demo) out += '<div class="sw-banner" role="status"><span><b>These are Vesper’s example numbers</b>, not yours. Change any box and they become yours to keep, or start clean.</span><button type="button" class="slaf-btn slaf-btn--quiet" id="sw-clear-demo">Start with my own</button></div>';
     return out;
   }

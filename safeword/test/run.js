@@ -34,7 +34,7 @@ function fresh(seed) {
   ['Streams', 'House', 'TaxPlan', 'Fund', 'Rails', 'LongGame', 'Dynamic', 'Family', 'Play', 'Plan'].forEach(n => { E[n] = require(A('engines/' + n.toLowerCase() + '.js')); });
   return Object.assign({ s, T, Money: require(A('shared/money.js')), Model: require(A('shared/model.js')), Store: require(A('shared/store.js')), Demo: require(A('shared/demo.js')), Charts: require(A('shared/charts.js')) }, E);
 }
-const PAGES = ['index', 'streams', 'house', 'taxes', 'fund', 'rails', 'longgame', 'dynamic', 'family', 'play', 'plan'];
+const PAGES = ['tools', 'streams', 'house', 'taxes', 'fund', 'rails', 'longgame', 'dynamic', 'family', 'play', 'plan'];
 
 /* ======================================================================
    A separate app: its own copies, its own keys, nothing reached outside
@@ -59,7 +59,7 @@ section('A separate app (SF-001)');
   PAGES.forEach(p => {
     const src = fs.readFileSync(A(p + '.html'), 'utf8');
     checkTrue(p + '.html carries the CSP', /Content-Security-Policy/.test(src) && /default-src 'self'/.test(src));
-    checkTrue(p + '.html is noindex', /name="robots" content="noindex"/.test(src));
+    checkTrue(p + '.html is noindex (tools.html is the door, so it is not)', p === 'tools' ? !/noindex/.test(src) : /name="robots" content="noindex"/.test(src));
     checkTrue(p + '.html opts into the theme', /<body class="slaf safeword">/.test(src));
     checkTrue(p + '.html says LIVE-FORM', /LIVE-FORM/.test(src));
     checkTrue(p + '.html has a viewport', /name="viewport"/.test(src));
@@ -474,6 +474,48 @@ section('Words and pictures (SF-010)');
 }
 
 /* ======================================================================
+   The marketing pages (SF-011)
+   ====================================================================== */
+section('The marketing pages (SF-011)');
+{
+  const SITE = ['index', 'for-dommes', 'for-creators', 'for-houses', 'services', 'about', 'resources', 'book'];
+  const site = JSON.parse(fs.readFileSync(A('data/site.json'), 'utf8'));
+  ['brand', 'byline', 'capacityLine', 'baseUrl'].forEach(k => checkTrue('site.json has ' + k, typeof site[k] === 'string' && site[k].length > 0));
+  ['name', 'title', 'email', 'linkedin', 'city'].forEach(k => checkTrue('site.json coach has ' + k, typeof site.coach[k] === 'string' && site.coach[k].length > 0));
+  checkTrue('the coach is a coach, not a regulated designation', !/\bCFP\b|certified financial planner/i.test(JSON.stringify(site)));
+  checkTrue('three offers, each with a price in cents and a call to action', site.offers.length === 3 && site.offers.every(o => Number.isInteger(o.priceCents) && o.cta && o.what.length >= 3 && o.bestFor));
+  check('exactly one offer is featured', site.offers.filter(o => o.featured).length, 1);
+  checkTrue('the package is the owner\u2019s own price', site.offers.filter(o => o.id === 'package')[0].priceCents === 300000);
+  checkTrue('the method has five phases spelling SPARKS', site.method.map(m => m.letter).join('') === 'SPARK' && site.method.length === 5);
+  checkTrue('testimonials are empty until the owner pastes real ones', Array.isArray(site.testimonials));
+  site.testimonials.forEach(t => checkTrue('a testimonial has a quote and a who', t.quote && t.who));
+  checkTrue('the guarantee is the owner\u2019s', /keep working with you at no charge/.test(site.guarantee.text));
+  const all = SITE.concat(PAGES);
+  SITE.forEach(p => {
+    const src = fs.readFileSync(A(p + '.html'), 'utf8');
+    checkTrue(p + '.html is indexable (no noindex)', src.indexOf('noindex') === -1);
+    checkTrue(p + '.html has a description', /<meta name="description" content="[^"]{60,}"/.test(src));
+    checkTrue(p + '.html has a canonical and Open Graph tags', /rel="canonical" href="https:\/\/sapphirestoneage\.github\.io\/Personalfinance\/safeword\/[a-z-]+\.html"/.test(src) && /property="og:title"/.test(src) && /og:image/.test(src));
+    checkTrue(p + '.html carries the CSP and a viewport', /Content-Security-Policy/.test(src) && /name="viewport"/.test(src));
+    checkTrue(p + '.html loads site.js after the footer host', src.lastIndexOf('site.js') > src.indexOf('id="mk-foot"'));
+    checkTrue(p + '.html reaches the booking page', /href="book\.html/.test(src) || p === 'book');
+    checkTrue(p + '.html links to the free tools', /tools\.html|dynamic\.html/.test(src));
+    checkTrue(p + '.html stores nothing', !/localStorage|sessionStorage|document\.cookie/.test(src));
+    (src.match(/href="([a-z-]+\.html)/g) || []).map(m => m.slice(6, -5)).forEach(t => checkTrue(p + '.html links to a page that exists (' + t + ')', all.indexOf(t) !== -1));
+    (src.match(/href="resources\.html#([a-z]+)"/g) || []).map(m => m.match(/#([a-z]+)/)[1]).forEach(a => checkTrue(p + '.html links to a guide that exists (#' + a + ')', new RegExp('id="' + a + '"').test(fs.readFileSync(A('resources.html'), 'utf8'))));
+    const m = src.match(/<script>([\s\S]*?)<\/script>\s*<\/body>/);
+    if (m) { try { new Function(m[1]); passed++; } catch (e) { failures.push(p + '.html page script parses: ' + e.message); } }
+  });
+  checkTrue('book.html allows only the booking hosts in frames', /frame-src https:\/\/calendly\.com/.test(fs.readFileSync(A('book.html'), 'utf8')));
+  checkTrue('every other marketing page frames nothing', SITE.filter(p => p !== 'book').every(p => /frame-src 'none'/.test(fs.readFileSync(A(p + '.html'), 'utf8'))));
+  checkTrue('the resources page has six guides', (fs.readFileSync(A('resources.html'), 'utf8').match(/class="mk-guide"/g) || []).length === 6);
+  const sitejs = fs.readFileSync(A('site.js'), 'utf8');
+  SITE.filter(p => p !== 'book').forEach(p => checkTrue('the site strip lists ' + p, sitejs.indexOf("href: '" + p + ".html'") !== -1));
+  checkTrue('the tool header links back to the site and to booking', /href="index\.html"/.test(fs.readFileSync(A('common.js'), 'utf8')) && /href="book\.html"/.test(fs.readFileSync(A('common.js'), 'utf8')));
+  checkTrue('the SPARKS registry does not point at the site either', fs.readFileSync(path.join(ROOT, 'shared/registry.js'), 'utf8').indexOf('safeword') === -1);
+}
+
+/* ======================================================================
    The log
    ====================================================================== */
 section('The log');
@@ -487,7 +529,7 @@ section('The log');
   const dangling = Array.from(referenced).filter(n => ids.indexOf(n) === -1);
   checkTrue('every SF- number a file cites is in the log', dangling.length === 0, dangling.join(','));
   checkTrue('STATUS.md exists and is short', fs.existsSync(A('STATUS.md')) && fs.readFileSync(A('STATUS.md'), 'utf8').split('\n').length < 40);
-  checkTrue('README.md names every page', PAGES.every(p => fs.readFileSync(A('README.md'), 'utf8').indexOf(p + '.html') !== -1));
+  checkTrue('README.md names every page', PAGES.concat(['index', 'services', 'about', 'resources', 'book', 'for-dommes']).every(p => fs.readFileSync(A('README.md'), 'utf8').indexOf(p + '.html') !== -1));
 }
 
 delete global.localStorage;
