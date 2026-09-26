@@ -17548,6 +17548,36 @@ or figure.
 cases (the boxes are the same boxes, in the same card); the room read at 390px
 with the example household and with nothing entered.
 
+## D-346 — Every box says what it is, in words a third grader can read
+
+**Why.** The owner: "Identify gaps in user knowledge on how to fill it. The
+goal is a 3rd grader or someone overwhelmed with finance can fill it out." The
+audit found the gap exactly: of the 84 boxes a person can type into, 56 had no
+sentence saying where to find the number and none had a plain restatement of
+the question, what counts, or what to do when the answer is not known. Band 1
+of the Planets has had all of that since D-336; every other box had a label.
+
+**Decision.** Each typed row in `data/ledger-rows.json` carries five short
+sentences: `plain` (the question as a person would ask it), `means` (what
+counts), `where` (where to find it), `roughly` (what a good enough answer looks
+like) and `unsure` (what to do when you do not know). The Ledger draws them as
+a "What is this?" fold under the control, shut at rest, opened by the person
+and kept open by the browser, so it costs no room and never moves under a
+finger (D-343). No room writes its own copy: the row table is the one source.
+
+**Replaces or removes.** The bare label as the only explanation, and the
+`where` sentence that was shown for lookup rows only and hidden everywhere
+else. No new screen, field or figure.
+
+**Stored shape.** No change. Help is reference data, never a household fact.
+
+**Verified.** `node test/run.js` 36161, with a section that fails when any
+typed box is missing one of the five, when the help reads above sixth grade,
+or when a plain question carries jargon; the whole set reads at
+Flesch-Kincaid grade 3.8. `node test/forms.js` 125 on the Ledger: the fold
+changes no control and typing still survives. Read at 390px with the fold open.
+
+
 ---
 
 # The Dungeons & Dividends entries

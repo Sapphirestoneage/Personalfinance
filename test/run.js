@@ -17168,6 +17168,55 @@ section('The standard the app is held to (D-342)');
     /test\/render\.js/.test(design) && /test\/alignment\.js/.test(design) && /node test\/run\.js/.test(design));
 })();
 
+section('Every box says what it is, in words anyone can read (D-346)');
+
+(function () {
+  /* The owner: "Identify gaps in user knowledge on how to fill it. The goal is
+     a 3rd grader or someone overwhelmed with finance can fill it out." Band 1
+     of the Planets has had this since D-336. This holds the same promise for
+     every box in the Ledger, which is the one place a fact is typed (D-313). */
+  const rows = require(path.join(ROOT, 'data/ledger-rows.json')).rows;
+  const typed = rows.filter(r => !r.formula && !r.engine && r.kind !== 'computed');
+  const KEYS = ['plain', 'means', 'where', 'roughly', 'unsure'];
+  checkTrue('there are rows to check', typed.length > 60);
+  KEYS.forEach(k => {
+    const missing = typed.filter(r => !r[k] || String(r[k]).trim().length < 12).map(r => r.id);
+    check(`every box a person can type in has ${k}`, missing.join(', '), '');
+  });
+
+  /* A sentence a person cannot read is not help. Flesch-Kincaid over all of
+     it, with the same plain syllable count the glossary test uses; the whole
+     set has to read at sixth grade or easier. */
+  const blob = typed.map(r => KEYS.map(k => r[k]).join(' ')).join(' ');
+  const words = blob.match(/[A-Za-z']+/g) || [];
+  const sentences = blob.split(/[.!?]+/).filter(x => x.trim());
+  const syllables = (w) => {
+    const t = w.toLowerCase().replace(/[^a-z]/g, '').replace(/e$/, '');
+    return Math.max(1, (t.match(/[aeiouy]+/g) || []).length);
+  };
+  const syl = words.reduce((a, w) => a + syllables(w), 0);
+  const grade = 0.39 * (words.length / sentences.length) + 11.8 * (syl / words.length) - 15.59;
+  console.log(`  note: box help reads at Flesch-Kincaid grade ${grade.toFixed(1)} over ${typed.length} boxes, ${words.length} words`);
+  checkTrue(`the help reads at sixth grade or easier (${grade.toFixed(1)})`, grade <= 6);
+
+  /* The plain question is the one line that must carry no jargon at all: the
+     terms below are allowed further down, where the row explains them. */
+  const JARGON = ['apr', 'marginal', 'allocation', 'liquidity', 'equities', 'basis point',
+    'amortiz', 'vested', 'pre-tax', 'after-tax', 'tax-advantaged', 'drawdown', 'asset class'];
+  const rough = typed.filter(r => JARGON.some(j => new RegExp('\\b' + j, 'i').test(String(r.plain))))
+    .map(r => r.id);
+  check('no jargon in the plain question', rough.join(', '), '');
+
+  /* And the room actually shows it: a fold on the row, opened by the person. */
+  const ledger = fs.readFileSync(path.join(ROOT, 'rooms/ledger.html'), 'utf8');
+  checkTrue('the Ledger draws the help on every row that takes an answer',
+    /function helpHtml\(row\)/.test(ledger) && /<details class="xhelp"/.test(ledger));
+  checkTrue('...with the five parts in the order a person needs them',
+    /'What it means'[\s\S]{0,120}'Where to find it'[\s\S]{0,120}'Close enough'[\s\S]{0,140}'If you are not sure'/.test(ledger));
+  checkTrue('...shut at rest, so it costs nothing until it is asked for',
+    /\.xhelp \{ grid-column: 1 \/ -1/.test(ledger) && !/\.xrow:focus-within \.xhelp/.test(ledger));
+})();
+
 section('The Cushion answers before it asks (D-345)');
 
 (function () {

@@ -459,6 +459,17 @@
      out of the page between a finger lifting and the click being dispatched,
      which moved the walk's Next button out from under that very tap. The row
      lets go once the tap it was standing in for has landed. */
+  /* What is this? (D-346): shut at rest, one tap to the plain words. It sits
+     under the control like everything else the row reveals, and being a
+     <details> it is the person who opens and closes it, never focus. */
+  #view-express .xrow .xhelp { grid-column: 1 / -1; margin-top: var(--space-1); font-size: var(--text-xs); }
+  #view-express .xrow .xhelp > summary { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 2px; color: var(--color-accent-hover); cursor: pointer; list-style: none; }
+  #view-express .xrow .xhelp > summary::-webkit-details-marker { display: none; }
+  #view-express .xrow .xhelp > summary::before { content: '?'; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border: 1px solid currentColor; border-radius: 50%; font-size: 10px; font-weight: 700; }
+  #view-express .xrow .xhelp[open] > summary::before { content: '\2212'; }
+  #view-express .xrow .xhelp-plain { margin: var(--space-1) 0 var(--space-2); color: var(--color-text); font-size: var(--text-sm); line-height: var(--leading-normal); }
+  #view-express .xrow .xhelp-line { margin: 0 0 var(--space-1); color: var(--color-text-muted); line-height: var(--leading-normal); max-width: var(--measure); }
+  #view-express .xrow .xhelp-line b { color: var(--color-text-faint); font-weight: 600; }
   #view-express .xrow .xwhy { display: none; grid-column: 1 / -1; font-size: var(--text-xs); color: var(--color-text-faint); line-height: var(--leading-normal); }
   #view-express .xrow:focus-within .xwhy, #view-express .xrow.is-settling .xwhy { display: block; }
   #view-express .xrow .xwhy .why, #view-express .xrow .xwhy .own { display: block; }
@@ -2020,6 +2031,34 @@
       + '<div class="x-when" data-x-when hidden><label>Expect to know by <input type="month" data-x-expected aria-label="Expected month"/></label> <button type="button" class="slaf-btn slaf-btn--small" data-x-notsure-save>Mark it</button></div>'
       + '<div class="x-slip" data-x-slip hidden></div>';
   }
+  /* ---- What is this? (D-346) -----------------------------------------------
+     Every box a person can type in says, in plain words, what is being asked,
+     what counts, where to find it, what a good enough answer looks like, and
+     what to do when the answer is not known. The row table carries the five
+     sentences, read through LedgerRows like everything else; no copy is
+     written here.
+
+     It is a fold, shut at rest, opened by a tap and kept open by the browser,
+     so it costs no room until it is wanted and never moves under a finger
+     (D-343). Band 1 of the Planets has had this since D-336; this is the same
+     promise for every other box in the app. */
+  function helpHtml(row) {
+    if (!row || row.kind === 'computed') return '';
+    var parts = [
+      ['means', 'What it means', row.means],
+      ['where', 'Where to find it', row.where],
+      ['roughly', 'Close enough', row.roughly],
+      ['unsure', 'If you are not sure', row.unsure]
+    ].filter(function (p) { return p[2]; });
+    if (!row.plain && !parts.length) return '';
+    return '<details class="xhelp" data-x-help="' + esc(row.id) + '">'
+      + '<summary>What is this?</summary>'
+      + (row.plain ? '<p class="xhelp-plain">' + esc(row.plain) + '</p>' : '')
+      + parts.map(function (p) {
+          return '<p class="xhelp-line"><b>' + esc(p[1]) + '.</b> ' + esc(p[2]) + '</p>';
+        }).join('')
+      + '</details>';
+  }
   function rowHtml(row, key, item) {
     var f = Ownership.FIELDS[row.id];
     /* A row the Ledger itself owns has no second door to name. */
@@ -2042,6 +2081,7 @@
       + '<div class="lab">' + esc(row.label) + (row.unit !== 'cents' && LedgerRows.unitLabel(row) ? '<span class="unit">' + esc(LedgerRows.unitLabel(row)) + '</span>' : '') + '</div>'
       + '<div class="ctl">' + control(row, key) + '</div>'
       + statesHtml(row)
+      + helpHtml(row)
       + (why || own ? '<div class="xwhy">' + why + own + '</div>' : '')
       + '<div class="sug" data-x-sug hidden></div><div class="saved" data-x-saved></div></div>';
   }

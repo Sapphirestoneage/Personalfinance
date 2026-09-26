@@ -50,7 +50,12 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": false,
-      "unlocks": "which order the doors open in and which switches start on"
+      "unlocks": "which order the doors open in and which switches start on",
+      "plain": "Are you just getting started, or are you working towards the day money is optional?",
+      "means": "It only changes which questions come first. Nothing is locked, and you can switch whenever you like.",
+      "where": "Nothing to look up. Pick the one that sounds more like you today.",
+      "roughly": "If you are not sure, pick getting started. It asks the shortest set of questions.",
+      "unsure": "Pick either one. It changes the order of the questions, never your numbers."
     },
     {
       "id": "dob",
@@ -70,7 +75,12 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": false,
-      "unlocks": "every age-based figure: the buffer target, the retirement milestones, the FI date"
+      "unlocks": "every age-based figure: the buffer target, the retirement milestones, the FI date",
+      "plain": "What month and year were you born?",
+      "means": "Your age. It sets every date the app works out, like the year work could become optional.",
+      "where": "Your driving licence, your passport, or the birthday your phone already knows.",
+      "roughly": "The month and year are all the app asks for. The day is not needed.",
+      "unsure": "There is nothing to look up here. If you know the year, use it and pick any month."
     },
     {
       "id": "state",
@@ -89,7 +99,12 @@
       "suggestFrom": "zipToState",
       "askIn": null,
       "moves": false,
-      "unlocks": "state tax, the unemployment benefit cap and the state cost columns"
+      "unlocks": "state tax, the unemployment benefit cap and the state cost columns",
+      "plain": "Which state do you live in?",
+      "means": "Where you pay state tax. If you moved this year, use the state you live in now.",
+      "where": "The address on your driving licence or your last tax return.",
+      "roughly": "The state you sleep in most nights.",
+      "unsure": "Pick where you live now. You can change it later and every number follows."
     },
     {
       "id": "dependents",
@@ -108,7 +123,12 @@
       "suggestFrom": "dependentsFromHousehold",
       "askIn": null,
       "moves": false,
-      "unlocks": "whether life cover and tuition are questions at all"
+      "unlocks": "whether life cover and tuition are questions at all",
+      "plain": "How many people depend on your income?",
+      "means": "Children, or anyone else whose bills you pay. Do not count yourself. Count a partner only if they do not earn.",
+      "where": "Nothing to look up. Count the people in your home who could not pay their own way without you.",
+      "roughly": "Most people answer 0, 1 or 2.",
+      "unsure": "If it is close, count the person. It makes the app a little more careful, never less."
     },
     {
       "id": "employmentStatus",
@@ -127,7 +147,12 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": false,
-      "unlocks": "which rows apply: match, unemployment, own-work tax"
+      "unlocks": "which rows apply: match, unemployment, own-work tax",
+      "plain": "What is your working situation right now?",
+      "means": "How your money comes in: a job with a payslip, working for yourself, between jobs, or retired.",
+      "where": "Nothing to look up. Pick what is true this month.",
+      "roughly": "If you do two of these, pick the one that brings in the most money.",
+      "unsure": "Pick the closest one. You can change it any time, and the app re-asks only what changes."
     },
     {
       "id": "filingStatus",
@@ -146,7 +171,12 @@
       "suggestFrom": "filingFromHousehold",
       "askIn": null,
       "moves": false,
-      "unlocks": "the federal brackets, so the marginal rate and take-home pay"
+      "unlocks": "the federal brackets, so the marginal rate and take-home pay",
+      "plain": "How do you file your taxes?",
+      "means": "Single, married filing together, married filing apart, or head of household. It sets your tax brackets.",
+      "where": "The top of last year's tax return (Form 1040), in the box marked Filing Status.",
+      "roughly": "Married and filing one return together is the most common if you are married.",
+      "unsure": "If you are single with no children, pick single. That is right for most people."
     },
     {
       "id": "zip",
@@ -165,7 +195,12 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": false,
-      "unlocks": "the state, suggested from the first three digits"
+      "unlocks": "the state, suggested from the first three digits",
+      "plain": "What is your ZIP code?",
+      "means": "Five digits. It is used for local prices and local rules, never to identify you.",
+      "where": "Your post, your bank statement, or the address on your phone.",
+      "roughly": "The ZIP where you live, not where you work.",
+      "unsure": "Leave it blank. Only a few local numbers need it, and they will say so."
     },
     {
       "id": "partnerName",
@@ -184,7 +219,12 @@
       "suggestFrom": null,
       "askIn": "partner",
       "moves": false,
-      "unlocks": "the household of two: shared costs and both incomes"
+      "unlocks": "the household of two: shared costs and both incomes",
+      "plain": "What should the app call the other person in your household?",
+      "means": "A first name or a nickname, so the screens can say who a number belongs to.",
+      "where": "Nothing to look up.",
+      "roughly": "A first name is plenty.",
+      "unsure": "Leave it blank if you would rather not. The app will say “your partner” instead."
     },
     {
       "id": "partnerDob",
@@ -203,7 +243,12 @@
       "suggestFrom": null,
       "askIn": "partner",
       "moves": false,
-      "unlocks": "the second person’s ages in every milestone"
+      "unlocks": "the second person’s ages in every milestone",
+      "plain": "What month and year was your partner born?",
+      "means": "Their age, for the dates that depend on it, like when each of you can reach retirement money.",
+      "where": "Ask them, or their licence or passport.",
+      "roughly": "The year is what matters most.",
+      "unsure": "Leave it blank. Your own dates still work without it."
     },
     {
       "id": "age",
@@ -260,7 +305,10 @@
       "suggestFrom": "grossFromTakeHome",
       "askIn": null,
       "moves": true,
-      "unlocks": "take-home pay, the savings rate, the true hourly wage"
+      "unlocks": "take-home pay, the savings rate, the true hourly wage",
+      "plain": "How much are you paid in a year, before anything is taken out?",
+      "means": "The whole number your employer pays you, before tax, insurance or retirement money comes out.",
+      "unsure": "Take one payslip, find the gross for that period, and multiply: weekly by 52, every two weeks by 26, twice a month by 24, monthly by 12."
     },
     {
       "id": "takeHomeMonthly",
@@ -282,7 +330,10 @@
       "askIn": null,
       "moves": true,
       "unlocks": "the savings rate from take-home, the FI date range and the coast date, before any tax figure is known",
-      "note": "The opening asks take-home rather than gross (D-312): the audience knows what lands, not what is withheld. Stored as a month; the per-paycheck figure and its cadence are kept beside it so the box refills as typed. Logged paychecks beat it; it beats the estimate from gross."
+      "note": "The opening asks take-home rather than gross (D-312): the audience knows what lands, not what is withheld. Stored as a month; the per-paycheck figure and its cadence are kept beside it so the box refills as typed. Logged paychecks beat it; it beats the estimate from gross.",
+      "plain": "How much money actually lands in your bank each month?",
+      "means": "What is left after tax and everything else that comes out of your pay. The number you can spend.",
+      "unsure": "Look at one month of your bank statement and add up the payments from your employer."
     },
     {
       "id": "lastPay",
@@ -305,7 +356,12 @@
       "unlocks": "the benefit estimate, the marginal rate and the milestones while between jobs",
       "wasLabels": [
         "Your last pay, a year"
-      ]
+      ],
+      "plain": "In your last full year of work, what were you paid before tax?",
+      "means": "It is used to work out what unemployment pay would be.",
+      "where": "Your last W-2, box 1, or the last payslip of that job.",
+      "roughly": "The yearly figure from the job you just left, to the nearest thousand.",
+      "unsure": "Use your best memory of the yearly figure. It only sets the size of a benefit estimate."
     },
     {
       "id": "incomeType",
@@ -337,7 +393,12 @@
       "unlocks": "how each source is taxed: W-2 withholding, self-employment tax, or none",
       "wasLabels": [
         "What kind of pay"
-      ]
+      ],
+      "plain": "What kind of pay is this?",
+      "means": "A salary that is the same each time, hourly pay, work for yourself, or something else.",
+      "where": "Your payslip says salary or hourly. If nobody takes tax out for you, it is work for yourself.",
+      "roughly": "Pick the one that brings in the most.",
+      "unsure": "If a company takes tax out before paying you, it is a job. If not, it is work for yourself."
     },
     {
       "id": "paySurvives",
@@ -360,7 +421,12 @@
       "unlocks": "the worst plausible year: what keeps paying if the job goes",
       "wasLabels": [
         "Keeps paying if the job goes"
-      ]
+      ],
+      "plain": "If this job ended tomorrow, would this money keep coming?",
+      "means": "Rent from a property, a pension already being paid, or a partner's pay would keep coming. A salary would not.",
+      "where": "Nothing to look up. Ask yourself whether the money depends on you turning up.",
+      "roughly": "For most pay from a job, the answer is no.",
+      "unsure": "Answer no. The app then plans for the harder case."
     },
     {
       "id": "employerMatch",
@@ -381,7 +447,10 @@
       "suggestFrom": "matchNotApplicable",
       "askIn": null,
       "moves": false,
-      "unlocks": "the free money on the table and the first rung of the order of operations"
+      "unlocks": "the free money on the table and the first rung of the order of operations",
+      "plain": "How much does your employer add to your retirement account?",
+      "means": "Free money your employer puts in when you put money in. Often something like half of what you pay in, up to 6% of your salary.",
+      "unsure": "Look on your benefits page for the word match. If you cannot find it, put 0 and the app will tell you what a typical match would be worth."
     },
     {
       "id": "capturingFullMatch",
@@ -441,7 +510,10 @@
       "suggestFrom": "unemploymentWeekly",
       "askIn": "runway",
       "moves": true,
-      "unlocks": "the runway between jobs"
+      "unlocks": "the runway between jobs",
+      "plain": "If you lost your job, how much would the state pay you each week?",
+      "means": "What the state pays each week while you look for work. It usually runs for about six months.",
+      "unsure": "Search for your state plus unemployment weekly benefit. If you would rather not, put 0 and the app plans without it."
     },
     {
       "id": "futureIncome",
@@ -467,7 +539,10 @@
       "unlocks": "the timeline: what stacks and where the gaps are",
       "wasLabels": [
         "Money that is coming: a pension, a benefit, a job ahead"
-      ]
+      ],
+      "plain": "Is there money coming later that has not started yet?",
+      "means": "A pension that begins at a certain age, Social Security, a payout, or a job that starts next month.",
+      "unsure": "If nothing is coming, leave it out. Only add a line for money you are fairly sure about."
     },
     {
       "id": "payCadence",
@@ -486,7 +561,12 @@
       "suggestFrom": null,
       "askIn": "cash-flow",
       "moves": false,
-      "unlocks": "the calendar on your real pay rhythm, two- and three-paycheck months labelled"
+      "unlocks": "the calendar on your real pay rhythm, two- and three-paycheck months labelled",
+      "plain": "How often are you paid?",
+      "means": "Weekly, every two weeks, twice a month, or monthly. It sets when the app expects money to land.",
+      "where": "Your payslips: look at the dates on the last two.",
+      "roughly": "Every two weeks is the most common in the United States.",
+      "unsure": "Look at your bank statement and see how many times your employer paid you last month."
     },
     {
       "id": "nextPayday",
@@ -505,7 +585,12 @@
       "suggestFrom": null,
       "askIn": "cash-flow",
       "moves": false,
-      "unlocks": "the days until money arrives, on the calendar"
+      "unlocks": "the days until money arrives, on the calendar",
+      "plain": "When is your next payday?",
+      "means": "The next date money from work lands in your account. The calendar uses it to lay out the month.",
+      "where": "Your last payslip usually shows the next date, or count forward from the last one.",
+      "roughly": "The month is enough if you do not know the day.",
+      "unsure": "Leave it blank. Only the calendar uses it, and it will say so."
     },
     {
       "id": "incomeLow",
@@ -524,7 +609,12 @@
       "suggestFrom": null,
       "askIn": "income",
       "moves": true,
-      "unlocks": "the planning base for variable income: the low month"
+      "unlocks": "the planning base for variable income: the low month",
+      "plain": "In a bad month, how little do you bring in?",
+      "means": "For pay that swings, the low end. Not the worst month ever, just a normal bad one.",
+      "where": "Three to six months of bank statements. Find the smallest month.",
+      "roughly": "The quietest month you can remember in the last year.",
+      "unsure": "Use the smallest month you can remember. The app plans around the low number, so a careful guess is safe."
     },
     {
       "id": "incomeHigh",
@@ -543,7 +633,12 @@
       "suggestFrom": null,
       "askIn": "income",
       "moves": true,
-      "unlocks": "how much a high month can send to the next step"
+      "unlocks": "how much a high month can send to the next step",
+      "plain": "In a good month, how much do you bring in?",
+      "means": "The high end of pay that swings.",
+      "where": "The same statements as the low month. Find the biggest one.",
+      "roughly": "The busiest month you can remember in the last year.",
+      "unsure": "Use your best month from last year."
     },
     {
       "id": "bufferMonths",
@@ -566,7 +661,12 @@
       "note": "A buffer target applies to anyone; Variable Income reads it, the Rule of 5 suggests it (D-205).",
       "wasLabels": [
         "Buffer, months"
-      ]
+      ],
+      "plain": "When pay swings, how many months of spending do you want kept aside?",
+      "means": "A cushion for the quiet months, said in months of spending rather than dollars.",
+      "where": "Nothing to look up. It is a choice about how safe you want to feel.",
+      "roughly": "Three months is the usual answer. Six if your pay is very uneven.",
+      "unsure": "Put 3. You can change it once you see what it asks of you."
     },
     {
       "id": "variableWindow",
@@ -588,7 +688,12 @@
       "unlocks": "the rolling average the variable-income view reads",
       "wasLabels": [
         "Rolling window, months"
-      ]
+      ],
+      "plain": "How many months should the app average your pay over?",
+      "means": "How far back to look when pay is different every month.",
+      "where": "Nothing to look up.",
+      "roughly": "Six months smooths out most jobs. Twelve if the work is seasonal.",
+      "unsure": "Put 6. Six months is the usual answer and you can change it later."
     },
     {
       "id": "ledgerIncome",
@@ -643,7 +748,10 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": true,
-      "unlocks": "the runway, emergency-fund coverage, reachable money"
+      "unlocks": "the runway, emergency-fund coverage, reachable money",
+      "plain": "How much money could you spend this week without selling anything?",
+      "means": "Checking, savings and cash. Not investments, not retirement money.",
+      "unsure": "Open your banking app and add up the balances you see. That is the answer."
     },
     {
       "id": "investments",
@@ -664,7 +772,10 @@
       "suggestFrom": "investmentsFromAge",
       "askIn": null,
       "moves": true,
-      "unlocks": "net worth, the FI number gap, the retirement multiple"
+      "unlocks": "net worth, the FI number gap, the retirement multiple",
+      "plain": "How much is in your investments and retirement accounts, all together?",
+      "means": "Money already invested: a 401(k), an IRA, a brokerage account. Not your house, not cash.",
+      "unsure": "Add up the balance of every account that is invested. If one is hard to reach, put what you remember and mark it a guess."
     },
     {
       "id": "assetValue",
@@ -687,7 +798,10 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": true,
-      "unlocks": "net worth account by account, and reachable money by account"
+      "unlocks": "net worth account by account, and reachable money by account",
+      "plain": "What is this account or thing worth today?",
+      "means": "Today's value, not what you paid. For a house, what it would sell for; for an account, the balance.",
+      "unsure": "For an account, read the balance. For a house, use a website's estimate and mark it a guess."
     },
     {
       "id": "assetInstitution",
@@ -708,7 +822,12 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": false,
-      "unlocks": "a statement that reads like the one your bank sends: each account named, where it lives"
+      "unlocks": "a statement that reads like the one your bank sends: each account named, where it lives",
+      "plain": "Who holds this account?",
+      "means": "The bank, the brokerage or the company name. It is only a label, so you can tell two accounts apart.",
+      "where": "The top of the statement, or the app you log in to.",
+      "roughly": "A short name is fine: Chase, Fidelity, the credit union.",
+      "unsure": "Leave it blank and the app will call it by its type instead."
     },
     {
       "id": "assetAccountType",
@@ -755,7 +874,12 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": false,
-      "unlocks": "the tax wrapper and the pile, set from the name on the statement"
+      "unlocks": "the tax wrapper and the pile, set from the name on the statement",
+      "plain": "What kind of account is this?",
+      "means": "Checking, savings, a 401(k), an IRA, a brokerage account, a house. The type decides the tax rules that apply.",
+      "where": "The statement usually says the type right under the name.",
+      "roughly": "If it came from a job and you cannot touch it until you are older, it is a 401(k).",
+      "unsure": "Pick the closest. If it is money you can spend today, it is checking or savings."
     },
     {
       "id": "assetCharacter",
@@ -792,7 +916,12 @@
       "unlocks": "reachable money: what you could get to in an emergency, by tax type",
       "wasLabels": [
         "How it is taxed on the way out"
-      ]
+      ],
+      "plain": "When you take money out of this account, is it taxed?",
+      "means": "Three cases: taxed on the way out (most retirement accounts), tax free on the way out (a Roth), or already taxed (cash and ordinary investments).",
+      "where": "The account name usually says. Anything with Roth in the name comes out tax free.",
+      "roughly": "A 401(k) or IRA without Roth in the name is taxed on the way out.",
+      "unsure": "Pick already taxed for bank and brokerage money. That is right nearly every time."
     },
     {
       "id": "assetTier",
@@ -822,7 +951,12 @@
       "unlocks": "the liquidity ladder: cash, taxable, retirement, property",
       "wasLabels": [
         "Which pile it sits in"
-      ]
+      ],
+      "plain": "Which pile does this belong in: cash, investments, retirement, or property?",
+      "means": "It sets how quickly the money can be reached. Cash is today, retirement may cost a penalty, property takes months.",
+      "where": "Nothing to look up.",
+      "roughly": "If you can spend it this week it is cash. If it is for later it is retirement.",
+      "unsure": "Pick investments for anything in a brokerage account."
     },
     {
       "id": "assetCostBasis",
@@ -847,7 +981,10 @@
       "unlocks": "the tax on pulling money from a taxable account, and the Roth contributions you can take back before 59½",
       "wasLabels": [
         "Cost basis"
-      ]
+      ],
+      "plain": "How much of your own money did you put into this account?",
+      "means": "The money you put in yourself, not what it has grown to. It decides how much tax is owed when you sell.",
+      "unsure": "Leave it blank. The app will say it cannot work out the tax yet, rather than guess."
     },
     {
       "letter": "A",
@@ -875,7 +1012,12 @@
       ],
       "level": 2,
       "note": "The confidence scale in data/access_rules.json; the Statement counts only what you are sure of (D-066, D-313).",
-      "unlocks": "a net worth that counts only what you are sure of"
+      "unlocks": "a net worth that counts only what you are sure of",
+      "plain": "How sure are you that it is worth that?",
+      "means": "A bank balance is exact. A house is a guess. The app shows a guess differently, so you know what you are looking at.",
+      "where": "Nothing to look up.",
+      "roughly": "Exact for anything you read off a statement, a guess for anything you valued yourself.",
+      "unsure": "Pick a guess. Nothing is lost by being honest."
     },
     {
       "letter": "A",
@@ -898,7 +1040,10 @@
       "level": 4,
       "where": "A rental or a business: what it pays you a month after its own costs. An account that pays nothing out: leave it blank.",
       "roughly": "Rent minus the mortgage payment, to the nearest hundred.",
-      "unlocks": "the income line of the three documents, and whether a property carries itself"
+      "unlocks": "the income line of the three documents, and whether a property carries itself",
+      "plain": "Does this pay you anything each month?",
+      "means": "Rent, dividends or interest this thing pays you in a normal month.",
+      "unsure": "Put 0 if nothing arrives. Most accounts pay nothing until you sell."
     },
     {
       "letter": "A",
@@ -925,7 +1070,12 @@
       ],
       "level": 4,
       "note": "1 easy, 2 moderate, 3 annoying; for anything that produces income (D-066).",
-      "unlocks": "what an income-producing thing costs you in hours, not just dollars"
+      "unlocks": "what an income-producing thing costs you in hours, not just dollars",
+      "plain": "How hard is it to turn this into money you can spend?",
+      "means": "A bank account is easy. A house is hard. It changes which things the app suggests using first.",
+      "where": "Nothing to look up.",
+      "roughly": "Easy for bank and brokerage money, hard for property or a business.",
+      "unsure": "Pick easy for anything you could sell this week."
     },
     {
       "letter": "A",
@@ -948,7 +1098,10 @@
       "level": 4,
       "where": "The plan’s summary description: a plan that allows the Rule of 55, a 457(b) with no age gate at all. Blank means the usual rule for the account type.",
       "roughly": "Leave it blank; the rule for the account type applies.",
-      "unlocks": "the bridge to 59½ and the liquidity ladder, account by account"
+      "unlocks": "the bridge to 59½ and the liquidity ladder, account by account",
+      "plain": "At what age can you take this money out without a penalty?",
+      "means": "Only fill this in if the usual rule is wrong for you. Most retirement money is reachable at 59 and a half.",
+      "unsure": "Leave it blank. The app knows the usual rule for each account type."
     },
     {
       "id": "otherAssets",
@@ -1006,7 +1159,10 @@
       "unlocks": "the savings rate as contributed, and whether the match is captured",
       "wasLabels": [
         "Workplace contribution, share of pay"
-      ]
+      ],
+      "plain": "What share of your pay goes into your retirement account at work?",
+      "means": "The percent of each paycheck that goes into your workplace retirement plan before you see it.",
+      "unsure": "Your payslip shows the amount. Divide it by your gross pay for that period and multiply by 100."
     },
     {
       "id": "rothContributed",
@@ -1027,7 +1183,10 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": true,
-      "unlocks": "room left this year under the Roth limit"
+      "unlocks": "room left this year under the Roth limit",
+      "plain": "How much have you put into a Roth IRA so far this year?",
+      "means": "Only money you put in yourself this year, not what the account is worth.",
+      "unsure": "If you have not put anything in this year, put 0."
     },
     {
       "letter": "A",
@@ -1047,7 +1206,12 @@
       "label": "On a high-deductible health plan",
       "appliesWhen": "always",
       "note": "HSA-eligible or not (stored at retirement.onHdhp); asked here since the Statement stopped asking (D-313).",
-      "unlocks": "whether an HSA is open to you at all"
+      "unlocks": "whether an HSA is open to you at all",
+      "plain": "Is your health plan a high-deductible one?",
+      "means": "A plan with a big deductible that lets you use a health savings account (an HSA).",
+      "where": "Your plan summary. It will say high deductible, or HSA eligible.",
+      "roughly": "If you have an HSA, the answer is yes.",
+      "unsure": "Answer no. Only the HSA limit uses it."
     },
     {
       "letter": "A",
@@ -1067,7 +1231,12 @@
       "label": "Family coverage on that plan",
       "appliesWhen": "cover.hdhp",
       "note": "Family coverage roughly doubles the HSA limit (stored at retirement.hsaFamilyPlan). D-313.",
-      "unlocks": "the HSA limit that applies to you"
+      "unlocks": "the HSA limit that applies to you",
+      "plain": "Does that plan cover your family, or only you?",
+      "means": "Family cover has a higher savings limit than single cover.",
+      "where": "Your insurance card usually names everyone covered.",
+      "roughly": "If anyone else is on the card, it is family cover.",
+      "unsure": "Pick just me. The limit is then the safer, smaller one."
     },
     {
       "id": "hsaContributed",
@@ -1088,7 +1257,10 @@
       "suggestFrom": null,
       "askIn": null,
       "moves": true,
-      "unlocks": "room left this year under the HSA limit"
+      "unlocks": "room left this year under the HSA limit",
+      "plain": "How much has gone into your health savings account this year?",
+      "means": "Everything added this year, including anything your employer put in.",
+      "unsure": "Your payslip's year-to-date column shows it. If you have no HSA, put 0."
     },
     {
       "id": "tuitionSaved",
@@ -1109,7 +1281,10 @@
       "suggestFrom": null,
       "askIn": "partner",
       "moves": true,
-      "unlocks": "the tuition gap and the monthly to close it"
+      "unlocks": "the tuition gap and the monthly to close it",
+      "plain": "How much have you saved for school or college so far?",
+      "means": "The balance of a 529 or any account set aside for school.",
+      "unsure": "If you have not started, put 0."
     },
     {
       "id": "allocationStocks",
@@ -1128,7 +1303,12 @@
       "suggestFrom": null,
       "askIn": "fire",
       "moves": false,
-      "unlocks": "the stock, bond, cash split and the rebalance drift"
+      "unlocks": "the stock, bond, cash split and the rebalance drift",
+      "plain": "What share of your investments do you want in stocks?",
+      "means": "Your target, not what you have now. Stocks grow more and fall harder.",
+      "where": "Nothing to look up. It is a choice about how much bumpiness you can live with.",
+      "roughly": "A common rule of thumb is 110 minus your age. At 35 that is 75%.",
+      "unsure": "Leave it blank until you have read The Mix. Nothing else needs it."
     },
     {
       "id": "allocationBonds",
@@ -1147,7 +1327,12 @@
       "suggestFrom": null,
       "askIn": "fire",
       "moves": false,
-      "unlocks": "the stock, bond, cash split and the rebalance drift"
+      "unlocks": "the stock, bond, cash split and the rebalance drift",
+      "plain": "What share do you want in bonds?",
+      "means": "The steadier part. It grows less and falls less.",
+      "where": "Nothing to look up.",
+      "roughly": "Whatever is left after stocks and cash, so the three add to 100%.",
+      "unsure": "Leave it blank. The app will say what is missing when you fill in stocks."
     },
     {
       "id": "allocationCash",
@@ -1166,7 +1351,12 @@
       "suggestFrom": null,
       "askIn": "fire",
       "moves": false,
-      "unlocks": "the stock, bond, cash split and the rebalance drift"
+      "unlocks": "the stock, bond, cash split and the rebalance drift",
+      "plain": "What share do you want kept as cash?",
+      "means": "Money that does not move, ready to spend.",
+      "where": "Nothing to look up.",
+      "roughly": "Often 0% to 10% inside an investment pot, because your cushion is held separately.",
+      "unsure": "Put 0 and keep your cushion in a savings account instead."
     },
     {
       "id": "rebalanceBand",
@@ -1188,7 +1378,12 @@
       "unlocks": "when the drift is far enough to act on",
       "wasLabels": [
         "Rebalance band"
-      ]
+      ],
+      "plain": "How far can the mix drift before you fix it?",
+      "means": "If you want 70% stocks and a band of 5%, you tidy it up when stocks pass 75% or fall under 65%.",
+      "where": "Nothing to look up.",
+      "roughly": "Five percentage points is the usual answer.",
+      "unsure": "Put 5. Five points is the usual answer and nothing breaks if it is wrong."
     },
     {
       "id": "stockShare",
@@ -1210,7 +1405,12 @@
       "unlocks": "the decumulation path’s risk",
       "wasLabels": [
         "Share in stocks"
-      ]
+      ],
+      "plain": "What share of your invested money is actually in stocks right now?",
+      "means": "What you hold today, not your target. The difference between the two is the drift.",
+      "where": "Your brokerage's summary page usually shows the split as a pie or a percent.",
+      "roughly": "A target date fund is roughly 90% stocks when you are young and less as you age.",
+      "unsure": "Leave it blank. The app will not guess a split you did not give it."
     },
     {
       "id": "netWorth",
@@ -1321,7 +1521,12 @@
       "suggestFrom": null,
       "askIn": "debt-payoff",
       "moves": false,
-      "unlocks": "whether the Debt door has anything behind it"
+      "unlocks": "whether the Debt door has anything behind it",
+      "plain": "Do you owe money to anyone?",
+      "means": "Credit cards, student loans, a car loan, a mortgage, money owed to family. Anything you have to pay back.",
+      "where": "Nothing to look up yet. If a statement arrives asking for a payment, that is a debt.",
+      "roughly": "If you carry a card balance past the due date, that counts.",
+      "unsure": "Answer yes if anything comes to mind. The next questions ask for one card or loan at a time."
     },
     {
       "id": "debtBalance",
@@ -1344,7 +1549,10 @@
       "suggestFrom": null,
       "askIn": "debt-payoff",
       "moves": true,
-      "unlocks": "total owed and the payoff timeline"
+      "unlocks": "total owed and the payoff timeline",
+      "plain": "How much is left to pay on this one?",
+      "means": "What you owe today on this one card or loan, not the limit and not the monthly payment.",
+      "unsure": "Open the app or statement for that card and read the balance. Today's number is fine."
     },
     {
       "id": "debtRate",
@@ -1366,7 +1574,10 @@
       "suggestFrom": null,
       "askIn": "debt-payoff",
       "moves": true,
-      "unlocks": "the payoff order and interest cost a month"
+      "unlocks": "the payoff order and interest cost a month",
+      "plain": "What interest rate does this one charge?",
+      "means": "The yearly interest rate, the APR. It is what makes one debt worse than another.",
+      "unsure": "If you cannot find it, put 24% for a credit card and mark it a guess. That is near the average."
     },
     {
       "id": "debtMinPayment",
@@ -1388,7 +1599,10 @@
       "suggestFrom": "minimumFromBalance",
       "askIn": "debt-payoff",
       "moves": true,
-      "unlocks": "the minimums total, the extra on top of them, the payoff date"
+      "unlocks": "the minimums total, the extra on top of them, the payoff date",
+      "plain": "What is the smallest payment they will accept each month?",
+      "means": "The minimum due each month. Paying only this is what keeps a debt alive for years.",
+      "unsure": "Your statement says minimum payment due. If you cannot find it, use 2% of the balance for a card."
     },
     {
       "id": "totalDebt",
@@ -1477,7 +1691,10 @@
       "suggestFrom": null,
       "askIn": "debt-payoff",
       "moves": false,
-      "unlocks": "the student loan trajectory under the plan chosen"
+      "unlocks": "the student loan trajectory under the plan chosen",
+      "plain": "Which student loan plan are you on?",
+      "means": "Standard, graduated, or one of the income-driven plans. The plan decides the payment and whether the rest is ever written off.",
+      "unsure": "Log in to your loan servicer; the plan name is on the front page. If you have never changed it, it is the standard plan."
     },
     {
       "id": "loanExtra",
@@ -1496,7 +1713,12 @@
       "suggestFrom": null,
       "askIn": "debt-payoff",
       "moves": true,
-      "unlocks": "how much sooner the loans end"
+      "unlocks": "how much sooner the loans end",
+      "plain": "How much extra do you put towards the loans each month?",
+      "means": "Anything above the minimum payment.",
+      "where": "Your bank statement, or the payment you set up with the loan servicer.",
+      "roughly": "If you only ever pay the minimum, put 0.",
+      "unsure": "Put 0. The app will show what adding extra would do."
     },
     {
       "id": "idrShare",
@@ -1518,7 +1740,12 @@
       "unlocks": "the income-driven payment",
       "wasLabels": [
         "Income-driven share"
-      ]
+      ],
+      "plain": "What share of your income does the payment plan take?",
+      "means": "Income-driven plans take a set share of what you earn above a floor, often 5% to 20%.",
+      "where": "Your loan servicer's website, on the page that names your plan.",
+      "roughly": "10% is the most common.",
+      "unsure": "Leave it blank unless you are on an income-driven plan. The app will use the plan's own figure."
     },
     {
       "id": "forgivenessYears",
@@ -1540,7 +1767,12 @@
       "unlocks": "the forgiveness horizon on the student loan path",
       "wasLabels": [
         "Forgiveness after"
-      ]
+      ],
+      "plain": "How many years until the rest of the loan is written off?",
+      "means": "Some plans cancel what is left after a set number of years of payments.",
+      "where": "Your loan servicer's website, or the plan's rules.",
+      "roughly": "Twenty years is common, ten for public service work.",
+      "unsure": "Leave it blank if no plan of yours mentions forgiveness."
     },
     {
       "id": "marginalRate",
@@ -1564,7 +1796,10 @@
       "unlocks": "the value of every pre-tax dollar: the Roth versus traditional answer",
       "wasLabels": [
         "Marginal tax rate"
-      ]
+      ],
+      "plain": "On your next dollar of pay, how much goes to tax?",
+      "means": "The share of your next dollar of pay that goes to tax, federal and state together. It is not the same as the share of all your pay that goes to tax.",
+      "unsure": "Leave it blank. The app works it out from your pay, your state and your filing status."
     },
     {
       "id": "otherPreTax",
@@ -1588,7 +1823,10 @@
       "unlocks": "taxable income after the deductions the paycheck already takes",
       "wasLabels": [
         "Other pre-tax deductions, a year"
-      ]
+      ],
+      "plain": "What else comes out of your pay before tax?",
+      "means": "Health insurance premiums, an FSA, transit money, union dues. Anything taken out before tax is worked out, but not retirement money, which is counted elsewhere.",
+      "unsure": "Your payslip lists them. Add the ones that are not retirement, then multiply for a year."
     },
     {
       "id": "withheld",
@@ -1612,7 +1850,10 @@
       "unlocks": "whether withholding is on track for the year",
       "wasLabels": [
         "Tax withheld so far this year"
-      ]
+      ],
+      "plain": "How much tax has been taken out of your pay so far this year?",
+      "means": "The federal tax taken out of your pay so far this year, from the year-to-date column.",
+      "unsure": "Leave it blank unless you are checking whether too much or too little is coming out."
     },
     {
       "id": "foodMonthly",
@@ -1631,7 +1872,12 @@
       "suggestFrom": null,
       "askIn": "expenses",
       "moves": true,
-      "unlocks": "the FAT floor: the minimum viable month"
+      "unlocks": "the FAT floor: the minimum viable month",
+      "plain": "How much do you spend on food in a month?",
+      "means": "Groceries and eating out together, for everyone you feed.",
+      "where": "Your bank and card statements: add up the grocery shops and the restaurants for one month.",
+      "roughly": "In the United States, about $400 to $700 a month for one person, $800 to $1,200 for a family of four.",
+      "unsure": "Take one week you remember clearly and multiply by 4.3."
     },
     {
       "id": "accommodationMonthly",
@@ -1653,7 +1899,12 @@
       "suggestFrom": null,
       "askIn": "expenses",
       "moves": true,
-      "unlocks": "the FAT floor, and the housing share of spending"
+      "unlocks": "the FAT floor, and the housing share of spending",
+      "plain": "What do you pay each month for the roof over your head?",
+      "means": "Rent, or your mortgage payment with the tax and insurance that ride along with it.",
+      "where": "Your lease, or the payment leaving your bank each month.",
+      "roughly": "The one payment you make to the landlord or the lender.",
+      "unsure": "Use the payment that leaves your account. Do not try to split it up."
     },
     {
       "id": "transportationMonthly",
@@ -1672,7 +1923,12 @@
       "suggestFrom": null,
       "askIn": "expenses",
       "moves": true,
-      "unlocks": "the FAT floor, and the car rules"
+      "unlocks": "the FAT floor, and the car rules",
+      "plain": "What does getting around cost you each month?",
+      "means": "Car payment, fuel, insurance, repairs, bus or train fares, parking.",
+      "where": "Your statements: the fuel stops, the insurance payment, the car payment, the fares.",
+      "roughly": "A car costs most people $500 to $900 a month once everything is counted.",
+      "unsure": "Add the car payment and insurance, then add $150 for fuel and repairs."
     },
     {
       "id": "wantsMonthly",
@@ -1691,7 +1947,12 @@
       "suggestFrom": "spendingFromPay",
       "askIn": "expenses",
       "moves": true,
-      "unlocks": "spending a month, so the savings rate and the FI number"
+      "unlocks": "spending a month, so the savings rate and the FI number",
+      "plain": "Everything else you spend on in a month: how much?",
+      "means": "Clothes, hobbies, streaming, gifts, holidays spread across the year. The spending that is not food, home, getting around, health or debt.",
+      "where": "Take a month of statements, cross off the lines you have already counted, and add what is left.",
+      "roughly": "For many people it is a quarter to a third of take-home pay.",
+      "unsure": "Take your take-home pay, subtract everything you have already entered, and see what is missing. That gap is usually this."
     },
     {
       "id": "therapyMonthly",
@@ -1710,7 +1971,12 @@
       "suggestFrom": null,
       "askIn": "expenses",
       "moves": true,
-      "unlocks": "a health line kept apart from wants"
+      "unlocks": "a health line kept apart from wants",
+      "plain": "What do you pay for therapy or counselling each month?",
+      "means": "What leaves your pocket after any insurance, for everyone in the household.",
+      "where": "Your card statement, or the invoice from the practice.",
+      "roughly": "The session price times how many you have in a month.",
+      "unsure": "Put 0 if you do not have any. This row only shows when you ask for it."
     },
     {
       "id": "annualLine",
@@ -1731,7 +1997,12 @@
       "suggestFrom": null,
       "askIn": "expenses",
       "moves": true,
-      "unlocks": "the once-a-year costs a monthly budget forgets"
+      "unlocks": "the once-a-year costs a monthly budget forgets",
+      "plain": "What do you pay once a year that would hurt if you forgot it?",
+      "means": "Insurance premiums, tax bills, holidays, school fees, a big subscription. Each one gets its own line.",
+      "where": "Last year's bank statements: look for the big payments that happened once.",
+      "roughly": "Most households have three to six of these.",
+      "unsure": "Start with the ones you can name. You can add more any time."
     },
     {
       "id": "monthlyExpenses",
@@ -1806,7 +2077,12 @@
       "unlocks": "the runway at the floor",
       "wasLabels": [
         "The floor, a month"
-      ]
+      ],
+      "plain": "If money got tight, what is the least a month could cost?",
+      "means": "Rent, food, power, the smallest debt payments, insurance. What you would still be paying with everything else cut.",
+      "where": "Take your normal month and cross off anything you could stop within a month.",
+      "roughly": "For most people it lands between half and three quarters of normal spending.",
+      "unsure": "Leave it blank and the app will use two thirds of your spending, and say so."
     },
     {
       "id": "healthCover",
@@ -1825,7 +2101,12 @@
       "suggestFrom": "healthCoverUnder26",
       "askIn": "protection",
       "moves": false,
-      "unlocks": "the cost of cover after a job ends, and the HSA question"
+      "unlocks": "the cost of cover after a job ends, and the HSA question",
+      "plain": "Where does your health insurance come from?",
+      "means": "Through a job, bought on your own, a government plan, or none right now.",
+      "where": "Your insurance card, or the deduction on your payslip if it comes out of your pay.",
+      "roughly": "If it comes out of your pay, it is through a job.",
+      "unsure": "If you have a card and do not pay for it yourself, it is almost always through a job."
     },
     {
       "id": "healthMonthly",
@@ -1846,7 +2127,10 @@
       "suggestFrom": "healthMonthlyBetweenJobs",
       "askIn": "protection",
       "moves": true,
-      "unlocks": "a month of spending with cover counted"
+      "unlocks": "a month of spending with cover counted",
+      "plain": "What does health cover cost you each month?",
+      "means": "What you pay for cover each month, after any help from an employer. Not the deductible, and not what a visit costs.",
+      "unsure": "If it comes out of your pay, your payslip shows it. Multiply a weekly deduction by 4.3."
     },
     {
       "id": "highestDeductible",
@@ -1870,7 +2154,10 @@
       "unlocks": "the first thing a cash cushion has to cover",
       "wasLabels": [
         "Highest deductible"
-      ]
+      ],
+      "plain": "Before your insurance starts paying, how much do you pay first?",
+      "means": "The deductible: what you pay out of your own pocket in a year before the plan picks up the rest. Use the highest one you have, across health, car and home.",
+      "unsure": "Put in $2,000 for now and mark it as a guess. It only sets the size of the first cushion."
     },
     {
       "id": "oopMax",
@@ -1884,7 +2171,7 @@
       "minutes": 2,
       "family": "you",
       "where": "The same summary of benefits, the line called out-of-pocket limit, the family figure.",
-      "roughly": "Type 8,000.",
+      "roughly": "It is usually two to four times the deductible, so $4,000 to $12,000 for many plans.",
       "door": "you",
       "level": 3,
       "round": null,
@@ -1894,7 +2181,10 @@
       "unlocks": "the worst plausible year’s medical line",
       "wasLabels": [
         "Out-of-pocket maximum"
-      ]
+      ],
+      "plain": "In the worst year, what is the most your health plan would make you pay?",
+      "means": "The out-of-pocket maximum: once you have paid this much in a year, the plan pays everything else it covers.",
+      "unsure": "Leave it blank. The app will use the deductible and say it is being careful."
     },
     {
       "id": "termLife",
@@ -1918,7 +2208,10 @@
       "unlocks": "the life-cover gap against ten times income",
       "wasLabels": [
         "Term life in force"
-      ]
+      ],
+      "plain": "If you died, how much would a life insurance policy pay out?",
+      "means": "The face amount of any term life policy, including one through your job. Add them together.",
+      "unsure": "If you do not know of a policy, put 0. The app will tell you what the gap looks like."
     },
     {
       "id": "disabilityMonthly",
@@ -1942,7 +2235,10 @@
       "unlocks": "the disability-cover gap against 60% of pay",
       "wasLabels": [
         "Disability benefit, a month"
-      ]
+      ],
+      "plain": "If you could not work, how much would you be paid each month?",
+      "means": "Disability cover, from work or bought on your own. It is the money that arrives while you cannot earn.",
+      "unsure": "If you do not know of any, put 0. That is the honest answer for many people."
     },
     {
       "id": "umbrella",
@@ -1966,7 +2262,10 @@
       "unlocks": "the liability gap",
       "wasLabels": [
         "Umbrella policy"
-      ]
+      ],
+      "plain": "Do you have an umbrella policy, and for how much?",
+      "means": "Extra liability cover that sits on top of your car and home insurance, usually sold in millions.",
+      "unsure": "Most people do not have one. Put 0 if nothing says otherwise."
     },
     {
       "id": "givingPct",
@@ -1988,7 +2287,12 @@
       "unlocks": "the giving rate beside the savings rate",
       "wasLabels": [
         "Giving, share of income"
-      ]
+      ],
+      "plain": "What share of your income do you want to give away?",
+      "means": "A target, not what you gave. It can be zero.",
+      "where": "Nothing to look up. It is a decision, not a fact.",
+      "roughly": "People who give to a set plan often pick something between 1% and 10%.",
+      "unsure": "Leave it blank. Nothing else in the app needs it."
     },
     {
       "id": "givingTarget",
@@ -2007,7 +2311,12 @@
       "suggestFrom": null,
       "askIn": "values",
       "moves": true,
-      "unlocks": "the giving line a year"
+      "unlocks": "the giving line a year",
+      "plain": "How much do you want to give away this year, in dollars?",
+      "means": "The same question as the share, said in money instead. Fill in whichever is easier.",
+      "where": "Nothing to look up.",
+      "roughly": "Last year's giving is a fair starting point.",
+      "unsure": "Leave it blank if you would rather answer as a share of income."
     },
     {
       "id": "splitMode",
@@ -2029,7 +2338,12 @@
       "unlocks": "each partner’s share of the shared month",
       "wasLabels": [
         "How shared costs are split"
-      ]
+      ],
+      "plain": "How do the two of you split the shared bills?",
+      "means": "Down the middle, in proportion to what each earns, or one person pays.",
+      "where": "Nothing to look up. It is how you already do it.",
+      "roughly": "Half and half is the most common answer.",
+      "unsure": "Pick half and half. You can change it when you see the numbers."
     },
     {
       "id": "sharedMonthly",
@@ -2048,7 +2362,12 @@
       "suggestFrom": null,
       "askIn": "partner",
       "moves": true,
-      "unlocks": "the shared month, split"
+      "unlocks": "the shared month, split",
+      "plain": "How much of your monthly spending is shared between you?",
+      "means": "The bills you both live on: rent, power, food. Not each person's own spending.",
+      "where": "Your statements: the bills that would exist even if one of you moved out for a week.",
+      "roughly": "Rent plus power plus food gets you most of the way.",
+      "unsure": "Add rent and food. That is close enough to start."
     },
     {
       "id": "billsMonthly",
@@ -2158,7 +2477,12 @@
       "unlocks": "the estate checklist: who gets the accounts",
       "wasLabels": [
         "Beneficiaries named"
-      ]
+      ],
+      "plain": "Have you said who gets each account if you die?",
+      "means": "A named beneficiary on a retirement account or life policy. It beats a will, so it matters more than it sounds.",
+      "where": "Log in to each account and look for beneficiary. It is usually under settings or profile.",
+      "roughly": "Answer yes only if you have actually seen a name on the account.",
+      "unsure": "If you have never looked, answer no. It is the most common answer and it is a quick job to fix."
     },
     {
       "id": "willExists",
@@ -2177,7 +2501,12 @@
       "suggestFrom": null,
       "askIn": "protection",
       "moves": false,
-      "unlocks": "the estate checklist: whether there is a will"
+      "unlocks": "the estate checklist: whether there is a will",
+      "plain": "Do you have a will?",
+      "means": "A signed document saying who handles your things and who gets them.",
+      "where": "Your files at home, or the lawyer or website that wrote it.",
+      "roughly": "If you cannot remember signing one, you almost certainly do not have one.",
+      "unsure": "Answer no. The app will show you what it would take, and nothing here is urgent."
     },
     {
       "id": "poaExists",
@@ -2199,7 +2528,12 @@
       "unlocks": "the estate checklist: who acts if you cannot",
       "wasLabels": [
         "A power of attorney"
-      ]
+      ],
+      "plain": "Have you named someone to act for you if you cannot?",
+      "means": "A power of attorney: the person who can pay your bills or make medical calls while you cannot.",
+      "where": "The same file as a will, if you had one written.",
+      "roughly": "It usually comes as a pair with a will.",
+      "unsure": "Answer no if nothing comes to mind."
     },
     {
       "id": "payVaries",
@@ -2218,7 +2552,12 @@
       "suggestFrom": null,
       "askIn": "income",
       "moves": false,
-      "unlocks": "how big a cushion to aim for: steady pay needs three months, pay that swings needs six"
+      "unlocks": "how big a cushion to aim for: steady pay needs three months, pay that swings needs six",
+      "plain": "Is your pay different from month to month?",
+      "means": "Tips, commission, overtime, or work for yourself all make pay swing.",
+      "where": "Look at three months of pay landing in your bank. Are they the same number?",
+      "roughly": "If the difference between months is more than about a tenth, answer yes.",
+      "unsure": "Answer yes. The app then asks for a low month and a high month and plans for the low one."
     },
     {
       "id": "spendingIncludesDebt",
@@ -2237,7 +2576,12 @@
       "suggestFrom": null,
       "askIn": "expenses",
       "moves": false,
-      "unlocks": "a clean gap: spending, debt and saving each counted once"
+      "unlocks": "a clean gap: spending, debt and saving each counted once",
+      "plain": "Does the spending number you gave already include debt payments?",
+      "means": "It stops the app counting your card payment twice.",
+      "where": "Think back to the number you typed for spending. Did the card payment sit inside it?",
+      "roughly": "If you took the number off a bank statement, it almost certainly includes them.",
+      "unsure": "Answer yes if the number came from your bank. That is the common case."
     },
     {
       "id": "spendingIncludesSaving",
@@ -2256,7 +2600,12 @@
       "suggestFrom": null,
       "askIn": "expenses",
       "moves": false,
-      "unlocks": "a clean gap: spending, debt and saving each counted once"
+      "unlocks": "a clean gap: spending, debt and saving each counted once",
+      "plain": "Does that spending number include the money you save?",
+      "means": "Saving is not spending, so the app takes it back out if it is in there.",
+      "where": "Think back to the number. Did the transfer to savings sit inside it?",
+      "roughly": "Most people do not count saving as spending.",
+      "unsure": "Answer no. That is right for most people."
     },
     {
       "id": "savedMonthly",
@@ -2275,7 +2624,12 @@
       "suggestFrom": "savedFromGap",
       "askIn": "financial-snapshot",
       "moves": true,
-      "unlocks": "the savings rate you actually have, and the leak: what the gap says you could save, less what you do"
+      "unlocks": "the savings rate you actually have, and the leak: what the gap says you could save, less what you do",
+      "plain": "How much do you put away in a normal month?",
+      "means": "Money that leaves your spending and goes into savings or investments, including what comes out of your pay.",
+      "where": "Your bank statement: the transfers to savings, plus the retirement lines on your payslip.",
+      "roughly": "To the nearest fifty dollars.",
+      "unsure": "Put what you meant to save. The app compares it with what really moved."
     },
     {
       "id": "highInterestBalance",
@@ -2294,7 +2648,12 @@
       "suggestFrom": "highInterestFromDebts",
       "askIn": "debt-payoff",
       "moves": true,
-      "unlocks": "which comes first, paying the expensive debt or investing"
+      "unlocks": "which comes first, paying the expensive debt or investing",
+      "plain": "How much do you owe on anything charging more than about 8%?",
+      "means": "Usually credit cards and personal loans. Expensive money is the first thing to clear.",
+      "where": "Add up the balances on cards and loans whose rate is over 8%.",
+      "roughly": "If you only have cards, this is your whole card balance.",
+      "unsure": "If you list each card above, the app works this out for you."
     },
     {
       "id": "refundLastYear",
@@ -2313,7 +2672,12 @@
       "suggestFrom": null,
       "askIn": "tax",
       "moves": true,
-      "unlocks": "whether the withholding is worth fixing: a big refund is a year of your money held back"
+      "unlocks": "whether the withholding is worth fixing: a big refund is a year of your money held back",
+      "plain": "How much was your tax refund last year?",
+      "means": "The money the government sent back after your return. If you owed money instead, put 0.",
+      "where": "Last year's tax return, or the deposit in your bank around April.",
+      "roughly": "To the nearest hundred is fine.",
+      "unsure": "Leave it blank. It is only used to spot money sitting idle all year."
     },
     {
       "id": "totalSaved",
