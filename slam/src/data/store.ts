@@ -10,7 +10,7 @@ import type { ProfileModel } from '@/engine/model';
 import { setValue } from './assumptions';
 import { getDb, type SlamDB } from './db';
 import { profileToModel } from './model';
-import type { Business, ClientRecord, EventId, EventParamsPatch, Label, LabelMode, Milestone, Multipliers, Offer, PathwayStage, Profile, Sale, Scenario, ScenarioKind, ScenarioOverride, Source, WeekLog } from './schemas';
+import type { Business, ChartPref, ClientRecord, EventId, EventParamsPatch, Label, LabelMode, Milestone, Multipliers, Offer, PathwayStage, Profile, Sale, Scenario, ScenarioKind, ScenarioOverride, Source, WeekLog } from './schemas';
 import { buildSnapshot, snapshotMarkdown } from './snapshot';
 import { comparable, exportAll, importAll, parseExport, serialize } from './transfer';
 import { migrateWeekLog } from './migrate';
@@ -49,6 +49,7 @@ export interface AppState {
   setBusinessActive(businessId: string, active: boolean): Promise<void>;
   setPriorityOrder(ids: string[]): Promise<void>;
   setLabelMode(mode: LabelMode): Promise<void>;
+  setChartPref(id: string, pref: ChartPref): Promise<void>;
   completeStep(businessId: string, stage: PathwayStage): Promise<void>;
   setScenario(kind: ScenarioKind, multipliers: Multipliers, events: EventId[], eventParams?: EventParamsPatch): Promise<void>;
   setBusinessOverride(businessId: string, kind: ScenarioKind, override: ScenarioOverride | undefined): Promise<void>;
@@ -237,6 +238,13 @@ export const useAppStore = create<AppState>((set, get) => {
         for (const b of next) await d.putBusiness(b);
       });
       set({ businesses: next.sort((a, b) => a.priority - b.priority) });
+    },
+
+    async setChartPref(id, pref) {
+      const p = get().profile;
+      if (!p) return;
+      const prev = p.chartPrefs?.[id] ?? {};
+      await saveProfile({ ...p, chartPrefs: { ...(p.chartPrefs ?? {}), [id]: { ...prev, ...pref } }, updatedAt: now() });
     },
 
     async setLabelMode(mode) {

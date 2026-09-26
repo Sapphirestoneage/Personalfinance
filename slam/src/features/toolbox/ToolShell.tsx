@@ -11,9 +11,12 @@ import { STAGE_BY_TOOL, type ToolId } from '@/content/stages';
 import { navigate } from '@/app/router';
 import { Button, Card, Note, Toggle } from '../shared/ui';
 import { NumberField } from '../shared/NumberField';
+import { Viz } from '../shared/Viz';
 import { count, money, percent } from '../shared/format';
 import { useLabelMode, useModel, useSellableHours } from '../shared/hooks';
 import { FORMULA_TEXT, TOOLS, type ToolCtx, type ToolField, type Values } from './tools';
+import { helpFor } from '@/content/help';
+import { typicalFor } from '@/content/samples';
 
 /** the value the way the field shows it, for "Keep 60" */
 function shown(v: number, unit: ToolField['unit']): string {
@@ -105,8 +108,8 @@ export function ToolShell({ tool, businessId, guided }: { tool: Exclude<ToolId, 
   }
   const derived = def.derive ? def.derive(values, ctx) : values;
   const result = def.compute(derived, ctx);
-  const commit = (f: ToolField, v: number | null) => {
-    const next: Values = { ...values, [f.key]: { key: f.key.split('.')[1]!, value: v, label: 'Yours', source: 'typed by you', updated: new Date().toISOString() } };
+  const commit = (f: ToolField, v: number | null, label: 'Yours' | 'Preset' = 'Yours') => {
+    const next: Values = { ...values, [f.key]: { key: f.key.split('.')[1]!, value: v, label, source: label === 'Yours' ? 'typed by you' : 'the typical number, chosen by you', updated: new Date().toISOString() } };
     setValues(next);
     setSaved(false);
     if (!sandbox && def.saves) void applyValues(business.id, toPatch(def.derive ? def.derive(next, ctx) : next, ctx));
@@ -136,6 +139,11 @@ export function ToolShell({ tool, businessId, guided }: { tool: Exclude<ToolId, 
             );
           })}
         </dl>
+      )}
+      {result.viz && result.viz.rows.length > 0 && (
+        <div className="mt-3">
+          <Viz id={result.viz.id} testId="tool-viz" rows={result.viz.rows} format={result.viz.format} summary={result.viz.summary} kinds={result.viz.kinds} />
+        </div>
       )}
       <p className="mt-3 text-sm" data-testid="tool-summary">
         {result.summary}
@@ -194,7 +202,7 @@ export function ToolShell({ tool, businessId, guided }: { tool: Exclude<ToolId, 
         {!last && f && (
           <Card testId="tool-question">
             {f.section && <p className="mb-2 text-xs uppercase tracking-wide text-slate-500">{f.section}</p>}
-            <NumberField key={f.key} id={`q-${f.key.replace('.', '-')}`} label={f.label} help={f.help} unit={f.unit} min={f.min} max={f.max} plain={f.key.startsWith('tool.')} assumption={values[f.key]} onCommit={(v) => commit(f, v)} />
+            <NumberField key={f.key} id={`q-${f.key.replace('.', '-')}`} label={f.label} help={f.help} unit={f.unit} min={f.min} max={f.max} plain={f.key.startsWith('tool.')} assumption={values[f.key]} guide={f.key.startsWith('tool.') ? undefined : helpFor(f.key.split('.')[0]!, f.key.split('.')[1]!)} typical={f.key.startsWith('tool.') ? null : typicalFor(business.type, f.key.split('.')[0]!, f.key.split('.')[1]!)} onUseTypical={(v) => commit(f, v, 'Preset')} onCommit={(v) => commit(f, v)} />
             <div className="mt-4 grid grid-cols-2 gap-2">
               <Button kind="secondary" onClick={() => (step === 0 ? navigate('today') : setStep(step - 1))}>
                 Back
@@ -230,7 +238,7 @@ export function ToolShell({ tool, businessId, guided }: { tool: Exclude<ToolId, 
           {fields.map((f, i) => (
             <div key={f.key}>
               {f.section && fields[i - 1]?.section !== f.section && <h3 className={`mb-3 text-sm font-semibold ${i > 0 ? 'mt-2 border-t border-slate-100 pt-4 dark:border-slate-800' : ''}`}>{f.section}</h3>}
-              <NumberField id={`q-${f.key.replace('.', '-')}`} label={f.label} help={f.help} unit={f.unit} min={f.min} max={f.max} plain={f.key.startsWith('tool.')} assumption={values[f.key]} onCommit={(v) => commit(f, v)} />
+              <NumberField id={`q-${f.key.replace('.', '-')}`} label={f.label} help={f.help} unit={f.unit} min={f.min} max={f.max} plain={f.key.startsWith('tool.')} assumption={values[f.key]} guide={f.key.startsWith('tool.') ? undefined : helpFor(f.key.split('.')[0]!, f.key.split('.')[1]!)} typical={f.key.startsWith('tool.') ? null : typicalFor(business.type, f.key.split('.')[0]!, f.key.split('.')[1]!)} onUseTypical={(v) => commit(f, v, 'Preset')} onCommit={(v) => commit(f, v)} />
             </div>
           ))}
         </div>

@@ -352,6 +352,15 @@ export const PATHWAY_STAGES = [
 export const PathwayStageSchema = z.enum(PATHWAY_STAGES);
 export type PathwayStage = z.infer<typeof PathwayStageSchema>;
 
+export const CHART_KINDS = ['bar', 'column', 'donut', 'line'] as const;
+export const ChartKindSchema = z.enum(CHART_KINDS);
+export type ChartKind = z.infer<typeof ChartKindSchema>;
+export const CHART_HUES = ['rose', 'plum', 'gold', 'green', 'teal', 'slate'] as const;
+export const ChartHueSchema = z.enum(CHART_HUES);
+export type ChartHue = z.infer<typeof ChartHueSchema>;
+export const ChartPrefSchema = z.object({ kind: ChartKindSchema.optional(), hue: ChartHueSchema.optional() }).strict();
+export type ChartPref = z.infer<typeof ChartPrefSchema>;
+
 export const ProfileSchema = z
   .object({
     id,
@@ -359,6 +368,8 @@ export const ProfileSchema = z
     demo: z.boolean(),
     labelMode: LabelModeSchema,
     settings: AssumptionMapSchema,
+    /** how she likes each chart drawn, by chart id */
+    chartPrefs: z.record(z.string(), ChartPrefSchema).optional(),
     pathway: z
       .object({
         businessId: id.optional(),

@@ -4,12 +4,14 @@
 import { useMemo } from 'react';
 import { useAppStore } from '@/data/store';
 import { BUSINESS_FIELDS, BUSINESS_NAMES, OFFER_FIELDS, OFFER_NAMES, OFFER_TYPES_BY_BUSINESS, type FieldMeta } from '@/content/fields';
+import { helpFor } from '@/content/help';
+import { typicalFor } from '@/content/samples';
 import type { Offer } from '@/data/schemas';
 import { computeBusinessMonth } from '@/engine/businesses';
 import { sensitivity, leverBasisWord } from '@/engine/sensitivity';
 import { explainMonth } from '@/engine/explain';
 import { businessToModel } from '@/data/model';
-import { BarList } from '../shared/BarList';
+import { Viz } from '../shared/Viz';
 import { Basis, Big, Button, Card, Disclosure, Note, Toggle } from '../shared/ui';
 import { NumberField } from '../shared/NumberField';
 import { MissingList } from '../shared/MissingList';
@@ -50,7 +52,22 @@ export function BusinessTab({ id }: { id: string }) {
   const core = fields.filter((f) => f.tier !== 'more' || pro);
   const detail = pro ? [] : fields.filter((f) => f.tier === 'more');
   const yoursCount = Object.values(business.inputs).filter((a) => a.label === 'Yours').length;
-  const field = (f: FieldMeta) => <NumberField key={f.key} id={`in-${f.key}`} label={f.labels[mode]} help={f.help} unit={f.unit} min={f.min} max={f.max} assumption={business.inputs[f.key]} onCommit={(v) => void setInput(id, f.key, v)} />;
+  const field = (f: FieldMeta) => (
+    <NumberField
+      key={f.key}
+      id={`in-${f.key}`}
+      label={f.labels[mode]}
+      help={f.help}
+      unit={f.unit}
+      min={f.min}
+      max={f.max}
+      assumption={business.inputs[f.key]}
+      guide={helpFor('inputs', f.key)}
+      typical={typicalFor(business.type, 'inputs', f.key)}
+      onUseTypical={(v) => void setInput(id, f.key, v, 'Preset', 'the typical number, chosen by you')}
+      onCommit={(v) => void setInput(id, f.key, v)}
+    />
+  );
   const mainType = business.type === 'inPerson' ? (arcOn ? 'arc' : 'single') : OFFER_TYPES_BY_BUSINESS[business.type][0];
 
   return (
@@ -89,6 +106,32 @@ export function BusinessTab({ id }: { id: string }) {
         )}
       </Card>
 
+      {month && month.ok && month.value.lines.length > 0 && (
+        <Card title="Where this business's money comes from" testId="tab-lines">
+          <Viz id={`lines-${business.type}`} testId="tab-lines-viz" kinds={['donut', 'bar', 'column']} rows={month.value.lines.map((l, i) => ({ label: l.label, value: l.grossProfitCents, emphasis: i === 0 }))} format={(v) => money(v, { whole: true })} summary={month.value.lines.map((l) => `${l.label} ${money(l.grossProfitCents, { whole: true })}`).join(', ') + ` a month of gross profit.`} />
+        </Card>
+      )}
+
+      {month && month.ok && business.type === 'inPerson' && (
+        <Card title="From contacts to sessions" testId="tab-funnel">
+          {(() => {
+            const inq = business.inputs.inquiriesPerMonth?.value ?? 0;
+            const pass = inq * (business.inputs.passRate?.value ?? 0);
+            const booked = pass * (business.inputs.bookingRate?.value ?? 0);
+            const showed = booked * (business.inputs.showRate?.value ?? 0);
+            const sessions = month.value.volumes.sessions ?? 0;
+            const rows = [
+              { label: 'Contacts', value: Math.round(inq * 10) / 10 },
+              { label: 'Passed screening', value: Math.round(pass * 10) / 10 },
+              { label: 'Booked', value: Math.round(booked * 10) / 10 },
+              { label: 'Showed', value: Math.round(showed * 10) / 10 },
+              { label: 'Sessions', value: Math.round(sessions * 10) / 10, emphasis: true },
+            ];
+            return <Viz id="funnel" testId="tab-funnel-viz" kinds={['column', 'bar']} rows={rows} format={(v) => count(v, 1)} summary={`Of ${count(inq, 0)} contacts a month, ${count(pass, 1)} pass screening, ${count(booked, 1)} book, ${count(showed, 1)} show, and with rebooks that is ${count(sessions, 1)} sessions.`} />;
+          })()}
+        </Card>
+      )}
+
       <Card title="The numbers that matter" testId="tab-inputs" action={<span className="shrink-0 whitespace-nowrap text-xs text-slate-500">{yoursCount} of {fields.length} yours</span>}>
         <div className="space-y-4">{core.map(field)}</div>
       </Card>
@@ -108,13 +151,13 @@ export function BusinessTab({ id }: { id: string }) {
                 {o.active && (
                   <div className="mt-3 space-y-3">
                     {offerFields.map((f) => (
-                      <NumberField key={f.key} id={`of-${type}-${f.key}`} label={f.labels[mode]} help={f.help} unit={f.unit} assumption={o[f.key as 'priceCents']} onCommit={(v) => void setOfferValue(o.id, f.key, v)} />
+                      <NumberField key={f.key} id={`of-${type}-${f.key}`} label={f.labels[mode]} help={f.help} unit={f.unit} assumption={o[f.key as 'priceCents']} guide={helpFor(type, f.key)} typical={typicalFor(business.type, type, f.key)} onUseTypical={(v) => void setOfferValue(o.id, f.key, v, 'Preset', 'the typical number, chosen by you')} onCommit={(v) => void setOfferValue(o.id, f.key, v)} />
                     ))}
                     {offerDetail.length > 0 && (
                       <Disclosure label="More detail" testId={`offer-more-${type}`}>
                         <div className="space-y-3">
                           {offerDetail.map((f) => (
-                            <NumberField key={f.key} id={`of-${type}-${f.key}`} label={f.labels[mode]} help={f.help} unit={f.unit} assumption={o[f.key as 'priceCents']} onCommit={(v) => void setOfferValue(o.id, f.key, v)} />
+                            <NumberField key={f.key} id={`of-${type}-${f.key}`} label={f.labels[mode]} help={f.help} unit={f.unit} assumption={o[f.key as 'priceCents']} guide={helpFor(type, f.key)} typical={typicalFor(business.type, type, f.key)} onUseTypical={(v) => void setOfferValue(o.id, f.key, v, 'Preset', 'the typical number, chosen by you')} onCommit={(v) => void setOfferValue(o.id, f.key, v)} />
                           ))}
                         </div>
                       </Disclosure>
@@ -143,7 +186,7 @@ export function BusinessTab({ id }: { id: string }) {
 
       {levers.length > 0 && (
         <Card title="What moves it most" testId="tab-levers">
-          <BarList rows={levers.map((l, i) => ({ label: `${l.label} ${l.move}`, value: l.deltaCents, emphasis: i === 0 }))} format={(v) => money(v, { sign: true, whole: true })} summary={`${levers[0]!.label} ${levers[0]!.move} is the biggest single move: ${money(levers[0]!.deltaCents, { sign: true, whole: true })} on ${leverBasisWord(business.type)}.${business.type === 'inPerson' ? ' Screening is not on this list on purpose.' : ''}`} />
+          <Viz id={`levers-${business.type}`} testId="tab-levers-viz" kinds={['bar', 'column']} rows={levers.map((l, i) => ({ label: `${l.label} ${l.move}`, value: l.deltaCents, emphasis: i === 0 }))} format={(v) => money(v, { sign: true, whole: true })} summary={`${levers[0]!.label} ${levers[0]!.move} is the biggest single move: ${money(levers[0]!.deltaCents, { sign: true, whole: true })} on ${leverBasisWord(business.type)}.${business.type === 'inPerson' ? ' Screening is not on this list on purpose.' : ''}`} />
         </Card>
       )}
 

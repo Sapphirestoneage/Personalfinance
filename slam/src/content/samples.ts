@@ -239,3 +239,11 @@ export function sampleRows(id: string, now?: string): Rows {
 export function benchmarksFor(type: BusinessType): { inputs: Book; offers: OfferBooks } {
   return { inputs: baseInputs(type), offers: baseOffers(type) };
 }
+
+/** The typical number for a field, from the presets; null when none. */
+export function typicalFor(type: BusinessType, where: string, key: string): number | null {
+  if (where === 'shared') return canonicalShared()[key]?.value ?? null;
+  if (where === 'inputs') return baseInputs(type)[key]?.value ?? null;
+  const book = baseOffers(type)[where as keyof OfferBooks];
+  return book?.[key]?.value ?? null;
+}

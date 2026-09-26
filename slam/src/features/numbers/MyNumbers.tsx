@@ -7,8 +7,7 @@ import { runwayMonths } from '@/engine/formulas';
 import { sensitivity, leverBasisWord } from '@/engine/sensitivity';
 import { checkInsVsModel } from '@/engine/reality';
 import { useState } from 'react';
-import { Bars } from '../shared/Bars';
-import { BarList } from '../shared/BarList';
+import { Viz } from '../shared/Viz';
 import { Basis, Big, Button, Card, Empty, Note } from '../shared/ui';
 import { MissingList } from '../shared/MissingList';
 import { useModel, useSellableHours, useTotals } from '../shared/hooks';
@@ -24,7 +23,7 @@ function WeeksChart() {
   const best = rows.reduce((b, r) => (r.value > b.value ? r : b), rows[0]!);
   return (
     <Card title={`Contacts by week, last ${saved.length} check-ins`} testId="weeks-chart">
-      <BarList rows={rows} format={(v) => count(v, 0)} summary={`${total} contacts over ${saved.length} weeks, best week ${best.label} with ${best.value}. Bookings those weeks: ${bookings.join(', ')}.`} />
+      <Viz id="weeks" testId="weeks-viz" kinds={['column', 'line', 'bar']} rows={rows} format={(v) => count(v, 0)} summary={`${total} contacts over ${saved.length} weeks, best week ${best.label} with ${best.value}. Bookings those weeks: ${bookings.join(', ')}.`} />
     </Card>
   );
 }
@@ -119,17 +118,44 @@ export function MyNumbers() {
         <Basis basedOn={totals.basedOn} testId="numbers-basis" />
       </Card>
 
+      <Card title="Where the month goes" testId="month-viz">
+        <Viz
+          id="month"
+          kinds={['column', 'bar']}
+          rows={[
+            { label: 'Gross profit', value: t.grossProfitCents },
+            { label: 'Fixed costs', value: -t.fixedCostsCents },
+            ...(t.acquisitionSpendCents > 0 ? [{ label: 'Finding clients', value: -t.acquisitionSpendCents }] : []),
+            { label: 'Profit', value: t.profitCents, emphasis: true },
+          ]}
+          format={(v) => money(v, { whole: true })}
+          summary={`${money(t.grossProfitCents, { whole: true })} of gross profit, less ${money(t.fixedCostsCents, { whole: true })} of fixed costs${t.acquisitionSpendCents > 0 ? ` and ${money(t.acquisitionSpendCents, { whole: true })} spent finding clients` : ''}, leaves ${money(t.profitCents, { whole: true })}.`}
+        />
+      </Card>
+
+      {sellable !== null && t.businesses.length > 0 && (
+        <Card title="Where the hours go" testId="hours-viz">
+          <Viz
+            id="hours"
+            kinds={['donut', 'bar', 'column']}
+            rows={[...t.businesses.map((b) => ({ label: b.name, value: Math.round(b.month.hoursUsed), emphasis: b.priority === 1 })), ...(sellable - t.hoursUsed > 0 ? [{ label: 'Free', value: Math.round(sellable - t.hoursUsed) }] : [])]}
+            format={(v) => `${count(v, 0)} h`}
+            summary={`${count(t.hoursUsed, 0)} of ${count(sellable, 0)} sellable hours a month are spoken for${sellable - t.hoursUsed > 0 ? `; ${count(sellable - t.hoursUsed, 0)} are free` : '; none are free'}.`}
+          />
+        </Card>
+      )}
+
       <RealityCheck firstId={first?.id} />
       <WeeksChart />
 
       <Card title="Where it comes from">
-        <Bars rows={rows} format={(v) => money(v, { whole: true })} summary={`${top?.name ?? ''} brings ${Math.round((top?.shareOfGp ?? 0) * 100)}% of gross profit${rows.length > 1 ? `; ${rows.length} businesses counted, in your priority order` : ''}.`} testId="share-bars" />
+        <Viz id="share" testId="share-bars" kinds={['donut', 'bar', 'column']} rows={rows} format={(v) => money(v, { whole: true })} summary={`${top?.name ?? ''} brings ${Math.round((top?.shareOfGp ?? 0) * 100)}% of gross profit${rows.length > 1 ? `; ${rows.length} businesses counted, in your priority order` : ''}.`} />
         {t.businesses.some((b) => b.month.hoursLimited) && <Note tone="warn">Some businesses got fewer hours than they asked for; #1 takes its hours first.</Note>}
       </Card>
 
       {levers.length > 0 && first && (
         <Card title={`Biggest levers for ${first.name}`} testId="levers">
-          <BarList rows={levers.map((l, i) => ({ label: `${l.label} ${l.move}`, value: l.deltaCents, emphasis: i === 0 }))} format={(v) => money(v, { sign: true, whole: true })} summary={`Change in ${leverBasisWord(first.type)} from one small move.${first.type === 'inPerson' ? ' Screening is not on this list on purpose.' : ''}`} />
+          <Viz id="levers" testId="levers-viz" kinds={['bar', 'column']} rows={levers.map((l, i) => ({ label: `${l.label} ${l.move}`, value: l.deltaCents, emphasis: i === 0 }))} format={(v) => money(v, { sign: true, whole: true })} summary={`Change in ${leverBasisWord(first.type)} from one small move.${first.type === 'inPerson' ? ' Screening is not on this list on purpose.' : ''}`} />
         </Card>
       )}
     </div>

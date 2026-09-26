@@ -7,6 +7,7 @@ import { href } from '@/app/router';
 import { Button, Card } from '../shared/ui';
 import { useModel } from '../shared/hooks';
 import { Rounds } from './Rounds';
+import { Viz } from '../shared/Viz';
 import { useLevels } from './useLevels';
 
 const DOT: Record<string, string> = {
@@ -95,6 +96,16 @@ export function Levels() {
           </ul>
         </Card>
       )}
+
+      <Card title="Levels done, by band" testId="levels-viz">
+        <Viz
+          id="levels-by-band"
+          kinds={['column', 'bar']}
+          rows={BANDS.map((b) => ({ label: b.name, value: overview.levels.filter((l) => l.level.band === b.band && l.status === 'done').length, emphasis: overview.rounds.find((r) => r.band === b.band)?.complete }))}
+          format={(v) => `${v}`}
+          summary={`${overview.doneCount} of ${overview.total} levels done: ${overview.rounds.map((r) => `${r.name} ${r.planetsDone} of ${r.planetsTotal}`).join(', ')}.`}
+        />
+      </Card>
 
       <Card title="What the levels unlock" testId="readings">
         {BANDS.map((b) => {

@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import { useAppStore } from '@/data/store';
 import type { EventId, ScenarioKind } from '@/data/schemas';
 import { compareScenarios, DISASTER_EVENTS, DREAM_EVENTS, EVENT_DEFAULTS, type EventParams, type ScenarioSpec } from '@/engine/scenarios';
-import { Bars } from '../shared/Bars';
+import { Viz } from '../shared/Viz';
 import { Big, Card, Toggle } from '../shared/ui';
 import { MissingList } from '../shared/MissingList';
 import { useModel } from '../shared/hooks';
@@ -100,7 +100,7 @@ export function Hypotheticals() {
           ))}
         </div>
         <div className="mt-3">
-          <Bars rows={rows} format={(v) => money(v, { whole: true })} summary={`Profit a month. Disaster ${profitOf('Disaster') === null ? 'cannot be computed yet' : money(profitOf('Disaster'), { whole: true })}, Dream ${profitOf('Dream') === null ? 'not yet' : money(profitOf('Dream'), { whole: true })}.`} />
+          <Viz id="futures" testId="futures-viz" kinds={['column', 'bar', 'line']} rows={rows} format={(v) => money(v, { whole: true })} summary={`Profit a month. Disaster ${profitOf('Disaster') === null ? 'cannot be computed yet' : money(profitOf('Disaster'), { whole: true })}, Dream ${profitOf('Dream') === null ? 'not yet' : money(profitOf('Dream'), { whole: true })}.`} />
         </div>
         {!compared.Normal.ok && <MissingList keys={compared.Normal.missing} />}
       </Card>
@@ -156,6 +156,16 @@ export function Hypotheticals() {
           ))}
         </ul>
         <p className="mt-1 text-xs text-slate-500">Gross profit a month and share of the total, in each future.</p>
+        {(() => {
+          const r = compared[editing];
+          if (!r || !r.ok) return null;
+          const shares = r.value.totals.businesses.map((b) => ({ label: b.name, value: b.month.grossProfitCents, emphasis: b.priority === 1 }));
+          return (
+            <div className="mt-3">
+              <Viz id="future-shares" testId="future-shares-viz" kinds={['donut', 'bar', 'column']} rows={shares} format={(v) => money(v, { whole: true })} summary={`In ${editing}, ${shares[0]?.label ?? ''} brings ${money(shares[0]?.value ?? 0, { whole: true })} of ${money(r.value.totals.grossProfitCents, { whole: true })} gross profit. Pick a future below to redraw.`} />
+            </div>
+          );
+        })()}
       </Card>
 
       <Card title="Change a future" testId="edit-card">

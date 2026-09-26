@@ -261,6 +261,15 @@ the pathway; band 5 is the pathway's power tools. `#/levels` is the map,
 `#/levels/<id>` runs one level to its unlock card; Today offers the next
 short level ahead of the next long tool while bands 2 and 3 are open.
 
+Audit pass (done): every field carries a "Not sure?" panel from
+`src/content/help.ts` (what counts, where to look, no idea?) with a
+one-tap typical number (label Preset, source "the typical number, chosen
+by you"); `src/features/shared/Viz.tsx` is the one chart component
+(bars, columns, ring, line; six hues; the choice is stored per chart id
+in `profile.chartPrefs`), used on Today, My Numbers, Hypotheticals, the
+business tab, Levels and every tool result. One hue per chart; a ring
+uses steps of the same hue and a legend, never a rainbow.
+
 Next (not started): v2 business types, guided-mode copy per label mode,
 and the owner's answers to `docs/OPEN-QUESTIONS.md`.
 

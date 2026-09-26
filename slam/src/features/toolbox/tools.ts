@@ -50,6 +50,8 @@ export interface ToolResult {
   credit?: string;
   /** the formulas behind the answer, named for Pro mode */
   formulas?: string[];
+  /** a picture of the answer */
+  viz?: { id: string; rows: Array<{ label: string; value: number; emphasis?: boolean }>; format: (v: number) => string; summary: string; kinds?: Array<'bar' | 'column' | 'donut' | 'line'> };
 }
 
 export const FORMULA_TEXT: Record<string, string> = {
@@ -202,7 +204,17 @@ const diagnoseTool: ToolDef = {
         lines.push({ label: 'For your goal', value: 'Set an income goal in Shared settings to see how many contacts it needs.' });
       }
     }
-    return { ok: true, lines, summary, formulas: ['F01', 'F02', 'F03', 'F04', 'F12', 'F10'] };
+    const viz = (() => {
+      if (b.type !== 'inPerson') {
+        return { id: 'diag-lines', rows: m.value.lines.map((l) => ({ label: l.label, value: l.grossProfitCents })), format: (x: number) => money(x, { whole: true }), summary: 'Gross profit a month by line.', kinds: ['bar', 'donut', 'column'] as Array<'bar' | 'donut' | 'column'> };
+      }
+      const inq = b.inputs.inquiriesPerMonth?.value ?? 0;
+      const pass = inq * (b.inputs.passRate?.value ?? 0);
+      const booked = pass * (b.inputs.bookingRate?.value ?? 0);
+      const showed = booked * (b.inputs.showRate?.value ?? 0);
+      return { id: 'diag-funnel', rows: [{ label: 'Contacts', value: Math.round(inq) }, { label: 'Passed', value: Math.round(pass * 10) / 10 }, { label: 'Booked', value: Math.round(booked * 10) / 10 }, { label: 'Showed', value: Math.round(showed * 10) / 10 }, { label: 'Sessions', value: Math.round((m.value.volumes.sessions ?? 0) * 10) / 10, emphasis: true }], format: (x: number) => count(x, 1), summary: `Where people drop out between contact and session. The biggest drop is the bottleneck: ${d.headline.toLowerCase()}`, kinds: ['column', 'bar'] as Array<'column' | 'bar'> };
+    })();
+    return { ok: true, lines, summary, formulas: ['F01', 'F02', 'F03', 'F04', 'F12', 'F10'], viz };
   },
 };
 
@@ -278,7 +290,10 @@ const offerTool: ToolDef = {
           ? 'The stack is worth more than the price, but not by much: add a piece that costs you little before raising price.'
           : 'The stack is worth less than the price: add value or say it better before raising price.';
     const summary = `${money(gp, { whole: true })} of gross profit per sale${tp === null ? '' : `, ${money(tp, { whole: true })} per all-in hour`}. ${stackWord} Weakest lever: ${eq.weakest === 'ease' ? 'ease after screening' : eq.weakest}.`;
-    return { ok: true, lines, summary, credit: CREDIT_OFFERS, formulas: ['F02', 'F09', 'VE'] };
+    const viz = items.length
+      ? { id: 'offer-stack', rows: [...items.map((i) => ({ label: i.name.split(':')[0]!, value: i.valueCents })), { label: 'Your price', value: price, emphasis: true }], format: (x: number) => money(x, { whole: true }), summary: `The pieces of the stack next to the price of ${money(price, { whole: true })}.`, kinds: ['bar', 'column', 'donut'] as Array<'bar' | 'column' | 'donut'> }
+      : { id: 'offer-split', rows: [{ label: 'Kept', value: gp, emphasis: true }, { label: 'Fee', value: price * fee }, { label: 'Delivery', value: variable }], format: (x: number) => money(x, { whole: true }), summary: `Of ${money(price, { whole: true })}, ${money(gp, { whole: true })} is yours after the fee and delivery.`, kinds: ['donut', 'bar', 'column'] as Array<'donut' | 'bar' | 'column'> };
+    return { ok: true, lines, summary, credit: CREDIT_OFFERS, formulas: ['F02', 'F09', 'VE'], viz };
   },
 };
 
@@ -312,7 +327,10 @@ const presenceTool: ToolDef = {
     const rented = sourceShare(ctx.business, (s) => !s.owned);
     if (rented !== null) lines.push({ label: 'Contacts through rented sources', value: percent(rented), tone: rented > 0.7 ? 'warn' : 'plain' });
     const rentedWord = rented === null ? ' Add your sources on the business tab to see how much rides on platforms you do not own.' : rented > 0.7 ? ` ${percent(rented)} of your contacts come through sources you do not own; build one you do (a list, a site) alongside.` : ` ${percent(1 - rented)} of your contacts come through sources you own, which no ban can take.`;
-    return { ok: true, lines, summary: `Reach compounds: at this curve, ${count(planned ?? 0, 0)} posts reach about ${count(curve(planned ?? 0), 0)} people. Consistency beats volume in any one week.${rentedWord}`, credit: CREDIT_LEADS, formulas: ['G13'] };
+    const top = Math.max(planned ?? 0, done * 4, 20);
+    const pts = [0.1, 0.25, 0.5, 0.75, 1].map((f) => Math.round(top * f));
+    const viz = { id: 'presence-curve', rows: pts.map((n) => ({ label: `${n} posts`, value: Math.round(curve(n)), emphasis: planned !== null && n === Math.round(top) })), format: (x: number) => count(x, 0), summary: `People reached as posts add up; the curve bends upward, so the later posts do more than the first.`, kinds: ['line', 'column', 'bar'] as Array<'line' | 'column' | 'bar'> };
+    return { ok: true, lines, summary: `Reach compounds: at this curve, ${count(planned ?? 0, 0)} posts reach about ${count(curve(planned ?? 0), 0)} people. Consistency beats volume in any one week.${rentedWord}`, credit: CREDIT_LEADS, formulas: ['G13'], viz };
   },
 };
 
@@ -348,7 +366,8 @@ const conversationsTool: ToolDef = {
       if (r > 0 && c > 0) lines.push({ label: `Or conversations a month for ${count(wanted, 0)}`, value: count(wanted / r, 0) });
     }
     const total = (fromReach ?? 0) + fromEvents;
-    return { ok: true, lines, summary: `About ${count(total, 1)} contacts a month at this volume${wanted !== null ? total >= wanted ? ', enough for your target.' : `, short of the ${count(wanted, 0)} you want: the fix is more reach actions, not a cleverer message.` : '.'}`, credit: CREDIT_LEADS, formulas: ['G12'] };
+    const viz = { id: 'conv-sources', rows: [...(fromReach !== null ? [{ label: 'From daily reach', value: Math.round(fromReach * 10) / 10 }] : []), { label: 'From events', value: Math.round(fromEvents * 10) / 10 }, ...(wanted !== null ? [{ label: 'Wanted', value: wanted, emphasis: true }] : [])], format: (x: number) => count(x, 1), summary: `Contacts a month from each source, next to what you want.`, kinds: ['column', 'bar'] as Array<'column' | 'bar'> };
+    return { ok: true, lines, summary: `About ${count(total, 1)} contacts a month at this volume${wanted !== null ? total >= wanted ? ', enough for your target.' : `, short of the ${count(wanted, 0)} you want: the fix is more reach actions, not a cleverer message.` : '.'}`, credit: CREDIT_LEADS, formulas: ['G12'], viz };
   },
 };
 
@@ -370,7 +389,7 @@ const bookingsTool: ToolDef = {
     if (!m.ok) return missingResult(m.missing);
     const rows = sensitivity(b, ctx.sellableHours).filter((r) => !r.key.endsWith('passRate')).slice(0, 4);
     const lines: ToolLine[] = [{ label: 'Gross profit a month', value: money(m.value.grossProfitCents, { whole: true }) }, ...rows.map((r) => ({ label: `${r.label} ${r.move}`, value: `${money(r.deltaCents, { sign: true, whole: true })} a month`, tone: 'good' as const }))];
-    return { ok: true, lines, summary: rows[0] ? `${rows[0].label} is the step that moves profit most: ${rows[0].move} is worth ${money(rows[0].deltaCents, { sign: true, whole: true })} a month.` : 'Nothing to move yet.', formulas: ['F01', 'F03', 'F12'] };
+    return { ok: true, lines, summary: rows[0] ? `${rows[0].label} is the step that moves profit most: ${rows[0].move} is worth ${money(rows[0].deltaCents, { sign: true, whole: true })} a month.` : 'Nothing to move yet.', formulas: ['F01', 'F03', 'F12'], viz: { id: 'bookings-levers', rows: rows.map((r, i) => ({ label: `${r.label} ${r.move}`, value: r.deltaCents, emphasis: i === 0 })), format: (x: number) => money(x, { sign: true, whole: true }), summary: 'Profit change a month from one small move on each step.', kinds: ['bar', 'column'] as Array<'bar' | 'column'> } };
   },
 };
 
@@ -423,7 +442,9 @@ const moneyTool: ToolDef = {
       const lift = subscriberOfferLift({ subscribers: subs, takeRate: v(values, 'tool.takeRate') ?? 0, creditCents: v(values, 'tool.creditCents') ?? 0, wouldBookAnyway: v(values, 'tool.wouldBookAnyway') ?? 0, gpPerBookingCents: per?.grossProfitCents && b.type !== 'inPerson' ? per.grossProfitCents : gpSale });
       lines.push({ label: 'An offer to them would add', value: `${money(lift, { sign: true, whole: true })}`, tone: lift > 0 ? 'good' : 'warn' });
     }
-    return { ok: true, lines, summary, credit: CREDIT_LTGP, formulas: ['F06', 'F07', 'F08', 'G14'] };
+    const cacForViz = spend !== null && hours !== null && hourly !== null ? costToAcquire(spend, hours, hourly, newClients) : null;
+    const viz = { id: 'money-worth', rows: [{ label: 'Per sale', value: gpSale }, { label: 'Over their time', value: ltgp, emphasis: true }, ...(cacForViz !== null ? [{ label: 'Cost to find one', value: cacForViz }] : [])], format: (x: number) => money(x, { whole: true }), summary: cacForViz !== null ? `A client is worth ${money(ltgp, { whole: true })} against ${money(cacForViz, { whole: true })} to find.` : `A client is worth ${money(ltgp, { whole: true })} over their time; add what finding one costs to compare.`, kinds: ['column', 'bar'] as Array<'column' | 'bar'> };
+    return { ok: true, lines, summary, credit: CREDIT_LTGP, formulas: ['F06', 'F07', 'F08', 'G14'], viz };
   },
 };
 
@@ -450,7 +471,9 @@ const planTool: ToolDef = {
     const summary = x.withinCapacity
       ? `${count(x.inquiriesNeeded, 0)} ${unitWord} a month gets you to ${money(goal, { whole: true })} after fixed costs, within what you can deliver.`
       : `The goal needs more than you can deliver at these prices. Raise price or add an offer before chasing more ${unitWord}; the app will not advise volume past capacity.`;
-    return { ok: true, lines, summary, formulas: ['F10', 'F04'] };
+    const have = b.inputs.inquiriesPerMonth?.value ?? b.inputs.followers?.value ?? b.inputs.callsPerMonth?.value ?? b.inputs.activeRegulars?.value ?? 0;
+    const viz = { id: 'plan-need', rows: [{ label: 'You have', value: Math.round(have) }, { label: 'Goal needs', value: x.inquiriesNeeded, emphasis: true }], format: (v: number) => count(v, 0), summary: `${unitWord[0]!.toUpperCase() + unitWord.slice(1)} a month you have against what the goal needs.`, kinds: ['column', 'bar'] as Array<'column' | 'bar'> };
+    return { ok: true, lines, summary, formulas: ['F10', 'F04'], viz };
   },
 };
 
@@ -477,7 +500,7 @@ const strategyTool: ToolDef = {
     if (!moves.length) return missingResult(['at least one move']);
     const ranked = rankMoves(moves);
     const lines = ranked.map((m, i) => ({ label: `${i + 1}. ${m.name}`, value: m.score === null ? 'no cost given' : `${count(m.score, 1)}x back`, tone: i === 0 ? ('good' as const) : ('plain' as const) }));
-    return { ok: true, lines, summary: `${ranked[0]!.name} pays best for what it costs${ranked[0]!.score !== null ? `: about ${count(ranked[0]!.score, 1)} dollars of yearly profit per dollar of cost, after the wait` : ''}.`, credit: 'Leverage as output per unit of input, after Alex Hormozi. SLAM is independent.', formulas: ['F11'] };
+    return { ok: true, lines, summary: `${ranked[0]!.name} pays best for what it costs${ranked[0]!.score !== null ? `: about ${count(ranked[0]!.score, 1)} dollars of yearly profit per dollar of cost, after the wait` : ''}.`, credit: 'Leverage as output per unit of input, after Alex Hormozi. SLAM is independent.', formulas: ['F11'], viz: { id: 'strategy-scores', rows: ranked.map((m, i) => ({ label: m.name, value: Math.round((m.score ?? 0) * 10) / 10, emphasis: i === 0 })), format: (x: number) => `${count(x, 1)}x`, summary: 'Yearly profit per dollar of cost, after the wait, for each move.', kinds: ['column', 'bar'] as Array<'column' | 'bar'> } };
   },
 };
 

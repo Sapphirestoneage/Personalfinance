@@ -187,3 +187,11 @@ here is decided; an answer changes one place in the code and one line here.
     by the owner: a confirmed estimate counts the same as a typed number.
     Open: whether Today should keep offering the next short level ahead of
     the next tool.
+
+38. **Chart choices** (type and hue) are stored on the profile, so they
+    travel with a backup and the snapshot. Say if they should stay on the
+    device instead.
+
+39. **"Use the typical number"** writes the preset back with the label
+    Preset and the source "the typical number, chosen by you", so it still
+    reads as an estimate. Say if choosing it should count as hers.

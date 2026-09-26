@@ -116,6 +116,40 @@ test.describe('demo mode and dashboards', () => {
     await expect(page.getByTestId('presenter')).toHaveAttribute('aria-checked', 'true');
   });
 
+  test('every field explains itself, and a typical number is one tap away', async ({ page }) => {
+    await loadSample(page);
+    await open(page, 'businesses/sample-inperson-inPerson');
+    await page.getByTestId('in-passRate').fill('12');
+    await page.getByTestId('in-passRate').blur();
+    await expect(page.getByTestId('in-passRate-label')).toHaveText('yours');
+    await page.getByTestId('in-passRate-notsure').click();
+    await expect(page.getByTestId('in-passRate-guide')).toContainText('What counts');
+    await expect(page.getByTestId('in-passRate-guide')).toContainText('never suggests changing it');
+    await page.getByTestId('in-passRate-typical').click();
+    await expect(page.getByTestId('in-passRate')).toHaveValue('50');
+    await expect(page.getByTestId('in-passRate-label')).toHaveText('estimate');
+    await open(page, 'businesses/settings');
+    await page.getByTestId('shared-fixedCostsCents-notsure').click();
+    await expect(page.getByTestId('shared-fixedCostsCents-guide')).toContainText('Where to look');
+  });
+
+  test('charts switch type and color, and remember it', async ({ page }) => {
+    await loadSample(page);
+    await open(page, 'numbers');
+    await expect(page.getByTestId('share-bars')).toHaveAttribute('data-kind', 'donut');
+    await page.getByTestId('share-bars-kind-column').click();
+    await page.getByTestId('share-bars-color').click();
+    await page.getByTestId('share-bars-hue-gold').click();
+    await expect(page.getByTestId('share-bars')).toHaveAttribute('data-kind', 'column');
+    await expect(page.getByTestId('share-bars')).toHaveAttribute('data-hue', 'gold');
+    await page.reload();
+    await expect(page.getByTestId('share-bars')).toHaveAttribute('data-kind', 'column');
+    await expect(page.getByTestId('share-bars')).toHaveAttribute('data-hue', 'gold');
+    await expect(page.getByTestId('month-viz')).toContainText('leaves');
+    await open(page, 'toolbox/diagnose?business=sample-inperson-inPerson');
+    await expect(page.getByTestId('tool-viz')).toBeVisible();
+  });
+
   test('ranking changes #1 and inactive businesses stay out of totals', async ({ page }) => {
     await loadSample(page);
     await open(page, 'numbers');

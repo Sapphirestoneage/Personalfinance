@@ -12,6 +12,7 @@ import { CheckIn } from './CheckIn';
 import { useLevels } from '../levels/useLevels';
 import { Rounds } from '../levels/Rounds';
 import { PLANETS } from '@/content/levels';
+import { Viz } from '../shared/Viz';
 
 export function Today() {
   const profile = useAppStore((s) => s.profile);
@@ -102,6 +103,11 @@ export function Today() {
             <Big label="Gross profit" value={money(totals.value.grossProfitCents, { whole: true })} />
           </div>
           <p className="mt-2 text-xs text-slate-500">{totals.basedOn.allYours ? 'From your numbers.' : 'Mostly estimates still. Each tool you finish replaces some.'}</p>
+          {totals.value.businesses.length > 1 && (
+            <div className="mt-3">
+              <Viz id="today-share" testId="today-share-viz" kinds={['donut', 'bar', 'column']} height={180} rows={totals.value.businesses.map((b) => ({ label: b.name, value: b.month.grossProfitCents, emphasis: b.priority === 1 }))} format={(v) => money(v, { whole: true })} summary={`${totals.value.businesses[0]?.name ?? ''} brings ${Math.round((totals.value.businesses[0]?.shareOfGp ?? 0) * 100)}% of this month's gross profit.`} />
+            </div>
+          )}
         </Card>
       )}
 

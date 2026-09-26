@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import type { Assumption } from '@/data/schemas';
 import { LABEL_WORDS } from '@/data/assumptions';
 import type { Unit } from '@/content/fields';
+import type { FieldHelp } from '@/content/help';
 
 interface Props {
   id: string;
@@ -15,7 +16,13 @@ interface Props {
   max?: number;
   /** a tool's own question: no yours/estimate badge, just the answer */
   plain?: boolean;
+  /** the "Not sure?" panel */
+  guide?: FieldHelp;
+  /** the typical number, offered as a one-tap fallback */
+  typical?: number | null;
   onCommit(value: number | null): void;
+  /** set the typical number as an estimate (not hers) */
+  onUseTypical?(value: number): void;
 }
 
 export function toDisplay(value: number | null, unit: Unit): string {
@@ -35,9 +42,10 @@ export function fromDisplay(text: string, unit: Unit): number | null | undefined
   return n;
 }
 
-export function NumberField({ id, label, assumption, unit = 'count', help, min, max, plain = false, onCommit }: Props) {
+export function NumberField({ id, label, assumption, unit = 'count', help, min, max, plain = false, guide, typical, onCommit, onUseTypical }: Props) {
   const stored = assumption?.value ?? null;
   const [text, setText] = useState(toDisplay(stored, unit));
+  const [showGuide, setShowGuide] = useState(false);
   useEffect(() => setText(toDisplay(stored, unit)), [stored, unit]);
   const yours = assumption?.label === 'Yours';
   const badge = assumption ? LABEL_WORDS[assumption.label] : 'not set';
@@ -119,7 +127,26 @@ export function NumberField({ id, label, assumption, unit = 'count', help, min, 
         {unit === 'minutes' && <span className="text-slate-500">min</span>}
       </span>
       {/* always one line here, so the field never changes height when a number becomes hers */}
-      <span className="mt-1 block min-h-4 text-xs text-slate-500">{help ?? (assumption && !plain ? (yours ? 'Your number.' : `${badge.charAt(0).toUpperCase() + badge.slice(1)}: ${assumption.source}.`) : '')}</span>
+      <span className="mt-1 flex min-h-4 items-start justify-between gap-2 text-xs text-slate-500">
+        <span>{help ?? (assumption && !plain ? (yours ? 'Your number.' : `${badge.charAt(0).toUpperCase() + badge.slice(1)}: ${assumption.source}.`) : '')}</span>
+        {guide && (
+          <button type="button" data-testid={`${id}-notsure`} aria-expanded={showGuide} onClick={(e) => { e.preventDefault(); setShowGuide(!showGuide); }} className="shrink-0 whitespace-nowrap text-sky-700 underline decoration-dotted dark:text-sky-300">
+            {showGuide ? 'Got it' : 'Not sure?'}
+          </button>
+        )}
+      </span>
+      {guide && showGuide && (
+        <span data-testid={`${id}-guide`} className="mt-2 block space-y-1.5 rounded-xl bg-sky-50 p-3 text-xs text-slate-700 dark:bg-sky-950/40 dark:text-slate-200">
+          <span className="block"><strong>What counts.</strong> {guide.what}</span>
+          <span className="block"><strong>Where to look.</strong> {guide.where}</span>
+          <span className="block"><strong>No idea?</strong> {guide.unsure}</span>
+          {typical !== null && typical !== undefined && onUseTypical && !(assumption?.label !== 'Yours' && assumption?.value === typical) && (
+            <button type="button" data-testid={`${id}-typical`} onClick={(e) => { e.preventDefault(); onUseTypical(typical); setShowGuide(false); }} className="mt-1 block rounded-lg border border-sky-300 px-3 py-1.5 font-medium text-sky-800 dark:border-sky-800 dark:text-sky-200">
+              Use the typical number: {toDisplay(typical, unit)}{unit === 'percent' ? '%' : unit === 'dollars' ? ' dollars' : unit === 'hours' ? ' h' : ''}
+            </button>
+          )}
+        </span>
+      )}
     </label>
   );
 }

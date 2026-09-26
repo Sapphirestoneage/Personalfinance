@@ -5,6 +5,8 @@ import { useMemo, useRef, useState } from 'react';
 import { useAppStore } from '@/data/store';
 import { BANDS, PLANETS, type FieldRef, type Level } from '@/content/levels';
 import { BUSINESS_FIELDS, OFFER_FIELDS, SHARED_FIELDS } from '@/content/fields';
+import { helpFor } from '@/content/help';
+import { typicalFor } from '@/content/samples';
 import { STAGE_BY_TOOL, STAGES } from '@/content/stages';
 import { aggregateMonth } from '@/engine/aggregate';
 import { profileToModel } from '@/data/model';
@@ -206,6 +208,14 @@ export function LevelRun({ levelId, businessId }: { levelId: string; businessId:
       if (o) await setOfferValue(o.id, r.key, value, 'Yours', source);
     }
   };
+  const writeTypical = async (r: FieldRef, value: number) => {
+    if (r.where === 'inputs') await setInput(business.id, r.key, value, 'Preset', 'the typical number, chosen by you');
+    else if (r.where === 'shared') await setSetting(r.key, value, 'Preset', 'the typical number, chosen by you');
+    else {
+      const o = offers.find((x) => x.businessId === business.id && x.type === r.where);
+      if (o) await setOfferValue(o.id, r.key, value, 'Preset', 'the typical number, chosen by you');
+    }
+  };
   const advance = () => {
     if (step + 1 >= refs.length) setFinished(true);
     else setStep(step + 1);
@@ -223,7 +233,7 @@ export function LevelRun({ levelId, businessId }: { levelId: string; businessId:
           {refs.length > 1 ? `${step + 1} of ${refs.length}. ` : ''}
           {isYours ? 'Already yours; change it or keep it.' : 'Type your number, or confirm the estimate if it is about right.'}
         </p>
-        <NumberField id={`lv-${ref.where}-${ref.key}`} label={meta?.labels[mode] ?? ref.key} help={meta?.help} unit={meta?.unit ?? 'count'} min={meta?.min} max={meta?.max} assumption={a} onCommit={(v) => void write(ref, v)} />
+        <NumberField id={`lv-${ref.where}-${ref.key}`} label={meta?.labels[mode] ?? ref.key} help={meta?.help} unit={meta?.unit ?? 'count'} min={meta?.min} max={meta?.max} assumption={a} guide={helpFor(ref.where, ref.key)} typical={typicalFor(business.type, ref.where, ref.key)} onUseTypical={(v) => void writeTypical(ref, v)} onCommit={(v) => void write(ref, v)} />
         <div className="mt-4 grid grid-cols-2 gap-2">
           {isYours ? (
             <Button kind="secondary" onClick={() => (step === 0 ? navigate(`levels${q}`) : setStep(step - 1))}>
