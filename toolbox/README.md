@@ -29,6 +29,12 @@ Open `toolbox/index.html` (served: `python3 -m http.server`, then
 uses; `toolbox.css` is what they wear on top of `shared/theme.css`.
 `data/plan_loan_rules_2026.json` is the one reference file, year-tagged.
 
+**The same ten tools as one workbook:** `SPARKS-Toolbox.xlsx`, built by
+`python3 toolbox/tools/build-xlsx.py` from the same data files. Eleven tabs
+(a cover, ten tools) plus a Tax Tables tab; every answer is a live formula on
+the yellow input cells above it. Rebuild it after changing a tool's maths and
+recalculate it (the xlsx skill's `recalc.py`) before committing.
+
 ## The rules that carry over from SPARKS
 
 - **No real financial data, ever.** Example numbers sit behind "Try with example numbers".
@@ -67,3 +73,4 @@ second line, so identity is never colour alone.
 - **TB-011** Sinking Funds is the one tool with a list, kept under its own key. What the fund should hold today is each bill's accrued share.
 - **TB-012** Stay or Move sums both paths over the lease term and names the counter-offer: the rent at which staying costs what moving does.
 - **TB-013** Paycheck Check is the paystub check without the parser: five typed lines, the SPARKS tax engine, and the change per remaining check. STATUS.md's "paystub parser: not built" stays true; this is the half that needed no parser.
+- **TB-014** The workbook. `SPARKS-Toolbox.xlsx` is the ten tools for someone who finds the app too much: one tab a tool, inputs in yellow, the verdict as a sentence, the 2026 figures on a Tax Tables tab rather than inside formulas. Same maths as the pages (the level payment is PMT, the loop is NPER and FV, the tax is the bracket ladder as one SUMPRODUCT); the pages stay the reference. Verified by LibreOffice recalculation, 762 formulas, no errors, and every verdict matching the page with the same example numbers.
