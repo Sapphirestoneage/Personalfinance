@@ -17,7 +17,8 @@ from openpyxl.chart import LineChart, BarChart, Reference
 from openpyxl.comments import Comment
 
 ROOT = os.path.join(os.path.dirname(__file__), '..', '..')
-OUT = os.path.join(ROOT, 'toolbox', 'SPARKS-Toolbox.xlsx')
+NO_CHARTS = os.environ.get('NO_CHARTS') == '1'   # a lighter build for uploading to Google Sheets
+OUT = os.environ.get('XLSX_OUT') or os.path.join(ROOT, 'toolbox', 'SPARKS-Toolbox.xlsx')
 FED = json.load(open(os.path.join(ROOT, 'data', 'federal_brackets_2026.json')))
 SE = json.load(open(os.path.join(ROOT, 'data', 'se_tax_2026.json')))
 RULES = json.load(open(os.path.join(ROOT, 'toolbox', 'data', 'plan_loan_rules_2026.json')))
@@ -365,7 +366,7 @@ for k in range(0, 31):
 ch = LineChart(); ch.title = 'What is still owed'; ch.height = 7.5; ch.width = 16; ch.y_axis.numFmt = '$#,##0'; ch.x_axis.title = 'years from now'
 ch.add_data(Reference(ws, min_col=3, min_row=first - 1, max_col=4, max_row=r - 1), titles_from_data=True)
 ch.set_categories(Reference(ws, min_col=2, min_row=first, max_row=r - 1))
-ws.add_chart(ch, f'F{TB_ROW}')
+NO_CHARTS or ws.add_chart(ch, f'F{TB_ROW}')
 verdict(ws, row_v, f"=IF({c['best']}=\"Keep the loan you have\",\"Keep the loan you have. Refinancing costs \"&TEXT({c['d1']},\"$#,##0\")&\" more over its life.\",IF({c['best']}=\"Take the new loan\",\"Take the new loan: \"&TEXT(-{c['d1']},\"$#,##0\")&\" less over its life. The payment falls by \"&TEXT({c['save']},\"$#,##0\")&\" a month and the closing costs are paid back in \"&IF(ISNUMBER({c['be']}),TEXT({c['be']},\"0\")&\" months.\",\"no time.\"),\"Take the new loan but keep paying the old amount: \"&TEXT(-{c['d2']},\"$#,##0\")&\" less over its life, gone in \"&TEXT({c['n2']},\"0\")&\" months. Take the lower rate, ignore the lower payment.\"))")
 
 # =============================================================================
@@ -483,7 +484,7 @@ for k in range(0, 62):
 ch = LineChart(); ch.title = 'The lump sum, invested and drawn'; ch.height = 7.5; ch.width = 16; ch.y_axis.numFmt = '$#,##0'; ch.x_axis.title = 'age'; ch.legend = None
 ch.add_data(Reference(ws, min_col=6, min_row=49, max_row=111), titles_from_data=True)
 ch.set_categories(Reference(ws, min_col=3, min_row=50, max_row=111))
-ws.add_chart(ch, 'H4')
+NO_CHARTS or ws.add_chart(ch, 'H4')
 verdict(ws, row_v, f"=IF(ISNUMBER({c['runout']}),\"The payments, if you expect to live past \"&{c['runout']}&\". At \"&TEXT({c['ret']},\"0.0%\")&\" the lump sum runs out at that age. The payments are quietly promising \"&IF(ISNUMBER({c['irr']}),TEXT({c['irr']},\"0.0%\"),\"less than nothing\")&\" a year.\",\"The lump sum, if you can earn \"&TEXT({c['ret']},\"0.0%\")&\". Drawn at \"&TEXT({c['mo']},\"$#,##0\")&\" a month it still holds \"&TEXT({c['left']},\"$#,##0\")&\" at \"&{c['to']}&\". The payments promise only \"&IF(ISNUMBER({c['irr']}),TEXT({c['irr']},\"0.0%\"),\"less than nothing\")&\" a year.\")")
 
 # =============================================================================
@@ -668,7 +669,7 @@ out(ws, r, 'Start with this much if it runs short', f"=IF({c['low']}<0,{c['hold'
 ch = LineChart(); ch.title = 'The fund over the next year'; ch.height = 7; ch.width = 15; ch.y_axis.numFmt = '$#,##0'; ch.legend = None
 ch.add_data(Reference(ws, min_col=4, min_row=L0 - 1, max_row=L12), titles_from_data=True)
 ch.set_categories(Reference(ws, min_col=2, min_row=L0, max_row=L12))
-ws.add_chart(ch, f'G{L0 - 2}')
+NO_CHARTS or ws.add_chart(ch, f'G{L0 - 2}')
 r += 1
 small(ws, r, 'Each bill\'s set-aside is its amount over the months between one and the next. What the fund should hold today is the share of each bill that has accrued since the last one: a yearly bill due next month is nearly all owed already. The months ahead start from that amount, add the set-aside and take out what lands.')
 verdict(ws, row_v, f"=IF({c['monthly']}=0,\"Add a bill to see the set-aside.\",\"Set aside \"&TEXT({c['monthly']},\"$#,##0\")&\" a month. The fund should hold \"&TEXT({c['hold']},\"$#,##0\")&\" today.\"&IF({c['low']}<0,\" Starting there it runs \"&TEXT(-{c['low']},\"$#,##0\")&\" short in the year ahead: start with \"&TEXT({c['startWith']},\"$#,##0\")&\" instead.\",\"\"))")
@@ -715,7 +716,7 @@ for k in range(0, 37):
 ch = LineChart(); ch.title = 'What each path has cost'; ch.height = 7.5; ch.width = 16; ch.y_axis.numFmt = '$#,##0'; ch.x_axis.title = 'months'
 ch.add_data(Reference(ws, min_col=3, min_row=first - 1, max_col=4, max_row=r - 1), titles_from_data=True)
 ch.set_categories(Reference(ws, min_col=2, min_row=first, max_row=r - 1))
-ws.add_chart(ch, f'F{T0}')
+NO_CHARTS or ws.add_chart(ch, f'F{T0}')
 verdict(ws, row_v, f"=IF(ABS({c['delta']})<50,\"A wash over \"&{c['term']}&\" months: the two come within \"&TEXT(ABS({c['delta']}),\"$#,##0\")&\". Stay, unless you want to move.\",IF({c['delta']}>0,\"Move. Over \"&{c['term']}&\" months it is \"&TEXT({c['delta']},\"$#,##0\")&\" cheaper, moving costs included; they are paid back in \"&TEXT({c['be']},\"0\")&\" months.\",\"Stay. Over \"&{c['term']}&\" months moving would cost \"&TEXT(-{c['delta']},\"$#,##0\")&\" more.\"))&\" The counter-offer is \"&TEXT({c['counter']},\"$#,##0\")&\".\"")
 
 # ---- order and finish -----------------------------------------------------------
@@ -725,5 +726,13 @@ for ws in wb.worksheets:
     ws.sheet_properties.tabColor = NAVY if ws.title in ('Start Here', 'Tax Tables') else '3987E5'
     ws.page_setup.fitToWidth = 1; ws.page_setup.orientation = 'portrait'
     ws.sheet_properties.pageSetUpPr.fitToPage = True
+# One tool per file (for uploading tool by tool): keep that tab plus Tax Tables when it reads it.
+TOOL_ONLY = os.environ.get('TOOL_ONLY')
+if TOOL_ONLY:
+    keep = {TOOL_ONLY}
+    if TOOL_ONLY in ('01 Paycheck', '07 Three Paychecks', '08 401k Loan'): keep.add('Tax Tables')
+    for ws in list(wb.worksheets):
+        if ws.title not in keep: wb.remove(ws)
+    wb.active = 0
 wb.save(OUT)
 print('wrote', OUT)
