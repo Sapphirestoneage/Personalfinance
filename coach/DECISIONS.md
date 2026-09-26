@@ -73,3 +73,54 @@ client". `?snap=` shows any snapshot read-only; presenter mode links nowhere.
 **Decision.** A check-in writes each reported balance to its field and keeps
 the report; a blank box is not reported. Comments attach to a field, goal or
 recap. Status: in (35 days), late (65), missing. Shapes in `LATER.md`.
+
+## CD-009 — Plain words on every box, read-out and stop
+
+**Why.** The owner's bar: a third grader, or someone overwhelmed by money, can
+fill it in. Bare labels ("Pay before tax, a year") could not be answered by
+someone who has never read a payslip. `coach/AUDIT.md` lists what was found.
+
+**Decision.** `data/help.json` holds, for every field, the question in plain
+words, what it means, where to find it, an example and the way out when unsure;
+for every read-out a plain label, what it means and what good looks like; for
+every stop how to run it and when it is done; and a Words panel. A "?" beside
+each box opens it. Labels in `fields.json` and `session_paths.json` are plain;
+a read-out's words live in help.json only. Client-facing copy never says "FI":
+it is the work-optional date. Wording for pay, home, debt and savings follows
+SPARKS' owner-approved `data/sketch_help.json`. `test/run.js` fails if a field,
+read-out or stop lacks help, or a help sentence runs past 26 words.
+
+## CD-010 — Pictures for every number set, drawn only as validated colours
+
+**Why.** The only picture was the life map. The owner wants a chart for every
+number set, with the type and colours changeable, and colour meaning nothing
+on its own.
+
+**Decision.** `shared/charts.js` draws breakdowns (donut, pie, columns, bars,
+one bar), comparisons, series (line, area, columns, stacked, sparkline),
+meters (bar, dial), progress (bars, rings) and ranges (band, bars) from specs
+`engines/session.js` builds only from engine figures: the month, the year, own
+and owe, accounts, debts, the payoff, what an extra payment does, five meters,
+goals, the band, the path, net worth and mood over time. Every chart has
+Customise (the types that fit, eight themes, a swatch a series), Show as a
+table, and a tip on hover or focus; choices live in `coach.prefs.v1`.
+
+**Colours.** Eight hues and eight theme orders, each run through the dataviz
+validator against this app's dark surface (#12151B) on 26 Sept 2026: all
+40,320 orders were tried, 1,684 pass, and the theme for each lead hue is the
+passing order with the widest colour-vision separation. Status (good, watch,
+needs care) uses the app's tokens with a word beside it, never a series hue.
+
+**Stored shape.** `coach.prefs.v1` (display only, no money). No household change.
+
+## CD-011 — The look: one header, a welcome, cards, a step bar, tabs, print
+
+**Decision.** One header on every screen. Coach Home opens on three steps until
+the first real client exists, then one card a client with the progress picture
+and one primary action; import and backup are folded behind plain headings. The
+Session has a step bar, the stop's questions as a script, read-outs as tiles,
+the pictures, then the form; quick entry sits at the top of the work card (the
+sticky bar drew over the notes); one note box with a private/shared switch.
+Client View leads with the work-optional age, then the map and the pictures;
+presenter mode hides the coach's controls; it prints as a clean report. The
+demo client carries three example sessions and check-ins so nothing is empty.

@@ -38,6 +38,11 @@
 
      onChange(fn)                   any coach key written, here or in another
                                     window (the Client View follows the Session)
+
+   DISPLAY PREFERENCES (coach.prefs.v1): how the coach likes things drawn.
+   Never money. { charts: { <chartId>: { type, theme, colors: { seriesId: hue } } },
+   theme (the default colour order), welcomeSeen }
+     prefs() setPref(key, value) chartPref(id) setChartPref(id, patch)
    ========================================================================== */
 (function (root, factory) {
   var node = typeof module === 'object' && module.exports;
@@ -52,6 +57,7 @@
   'use strict';
   var Schema = D.Schema, Money = D.Money, Fields = D.Fields;
   var ROSTER = 'coach.roster.v1';
+  var PREFS = 'coach.prefs.v1';
   var SIGNATURE = 1;
   var DEFAULT_PATH = 'default';
   var DEMO_ID = 'demo';
@@ -79,6 +85,18 @@
   function newId() { return 'c_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   function clientKey(id) { if (!validId(id)) throw new Error('Not a client id: ' + id); return 'coach.client.' + id + '.v1'; }
   function snapKey(id) { if (!validId(id)) throw new Error('Not a client id: ' + id); return 'coach.client.' + id + '.snaps.v1'; }
+
+  /* ---- Display preferences ------------------------------------------------- */
+  function prefs() { var o = null; try { o = JSON.parse(get(PREFS) || 'null'); } catch (e) { o = null; } if (!o || typeof o !== 'object') o = {}; if (!o.charts || typeof o.charts !== 'object') o.charts = {}; return o; }
+  function writePrefs(o) { set(PREFS, JSON.stringify(o)); notify(PREFS); }
+  function setPref(key, value) { var o = prefs(); if (value === null || value === undefined) delete o[key]; else o[key] = value; writePrefs(o); return o; }
+  function chartPref(id) { var o = prefs(); return Object.assign({ theme: o.theme || null }, o.charts[id] || {}); }
+  function setChartPref(id, patch) {
+    var o = prefs(), c = Object.assign({}, o.charts[id] || {}, patch || {});
+    if (patch && patch.colors) c.colors = Object.assign({}, (o.charts[id] || {}).colors || {}, patch.colors);
+    Object.keys(c).forEach(function (k) { if (c[k] === null || c[k] === undefined) delete c[k]; });
+    o.charts[id] = c; writePrefs(o); return c;
+  }
 
   /* ---- The roster --------------------------------------------------------- */
   function emptyRoster() { return { version: 1, clients: [], importTemplates: {} }; }
@@ -340,7 +358,37 @@
       Schema.createGoal({ name: 'House down payment', targetDate: (y + 5) + '-09-01', savedCents: 500000, monthlyContributionCents: 60000, lumpTargetCents: 6000000 }),
       Schema.createGoal({ name: 'Sabbatical', targetDate: (y + 4) + '-01-01', savedCents: 0, monthlyContributionCents: null, lumpTargetCents: 1800000 })
     ];
-    writeClient(c.id, { household: Schema.createHousehold(h), coach: makeRecord({ decisions: [{ label: 'Buy a car next year', startsOn: (y + 1) + '-03', showClient: true }] }) });
+    /* Three example sessions before today, so the pictures have a past:
+       each is a frozen household with the numbers a little further back,
+       and a short recap. Example numbers only, like the persona itself. */
+    var base = now ? new Date(now) : new Date();
+    function ago(months, days) { var d = new Date(base.getTime()); d.setMonth(d.getMonth() - months); d.setDate(d.getDate() - (days || 0)); return d; }
+    function past(cash, invested, card, wedding) {
+      var p = Schema.createHousehold(JSON.parse(JSON.stringify(h)));
+      p.assets.forEach(function (a) { if (a.category === 'cash') a.valueCents = cash; else if (a.category === 'investment' || a.category === 'retirement') a.valueCents = invested; });
+      p.debts.forEach(function (d) { if (d.type === 'credit_card') d.balanceCents = card; });
+      p.goals[0].savedCents = wedding;
+      return p;
+    }
+    var stages = [{ at: ago(6), h: past(520000, 4150000, 460000, 0), covered: ['life', 'income', 'spending'], recap: 'First session: the big picture, what lands each month, and a normal month.' },
+      { at: ago(4), h: past(690000, 4380000, 410000, 100000), covered: ['debt', 'safety'], recap: 'Every debt listed. The card goes first. Cushion: two and a half months.' },
+      { at: ago(2), h: past(830000, 4600000, 360000, 200000), covered: ['assets', 'goals'], recap: 'Accounts listed, the match at work found. Three goals priced.' }];
+    var snaps = [], sessions = [];
+    stages.forEach(function (st, i) {
+      var start = Schema.newId('snap'), end = Schema.newId('snap');
+      var endAt = new Date(st.at.getTime() + 55 * 60000);
+      snaps.push({ id: start, at: st.at.toISOString(), reason: 'coach-session-start', household: st.h });
+      snaps.push({ id: end, at: endAt.toISOString(), reason: 'coach-session-end', household: i + 1 < stages.length ? stages[i + 1].h : st.h });
+      sessions.push({ startedAt: st.at.toISOString(), endedAt: endAt.toISOString(), startSnapshotId: start, endSnapshotId: end, stopsCovered: st.covered, ticked: [], recapText: c.name + ', session of ' + st.at.toDateString() + '\n\n' + st.recap, durationMs: 55 * 60000 });
+    });
+    var checkins = [{ date: Schema.localDay(ago(3)), feeling: 2, text: 'Tight month, the car needed tyres.', enteredBy: 'client', at: ago(3).toISOString() },
+      { date: Schema.localDay(ago(2)), feeling: 3, text: 'Paid the card down a bit.', enteredBy: 'client', at: ago(2).toISOString() },
+      { date: Schema.localDay(ago(1)), feeling: 4, text: 'Set up the automatic transfer.', enteredBy: 'client', at: ago(1).toISOString() }];
+    var notes = [{ kind: 'shared', text: 'The card goes first: it costs the most.', stopId: 'debt', sessionId: null, at: ago(4).toISOString() }];
+    var homework = [{ text: 'Find the fee on the 401(k) funds', dueOn: Schema.localDay(ago(-1)), stopId: 'assets', at: ago(2).toISOString() }, { text: 'Move $300 a month to savings automatically', dueOn: Schema.localDay(ago(1)), stopId: 'safety', at: ago(4).toISOString(), doneAt: ago(1).toISOString() }];
+    set(snapKey(c.id), JSON.stringify(snaps));
+    writeClient(c.id, { household: Schema.createHousehold(h), coach: makeRecord({ sessions: sessions, checkins: checkins, notes: notes, homework: homework,
+      decisions: [{ label: 'Buy a car next year', startsOn: (y + 1) + '-03', showClient: true }, { label: 'Move closer to work', startsOn: (y + 2) + '-01', verdict: 'wait', showClient: true }] }) });
     return c;
   }
 
@@ -402,7 +450,8 @@
   /** Every key this app has written: the roster and each client's two. */
   function ownKeys() { return keys().filter(function (k) { return k.indexOf('coach.') === 0; }).sort(); }
 
-  return { ROSTER: ROSTER, SIGNATURE: SIGNATURE, DEMO_ID: DEMO_ID, onChange: onChange, ownKeys: ownKeys, validId: validId,
+  return { ROSTER: ROSTER, PREFS: PREFS, SIGNATURE: SIGNATURE, DEMO_ID: DEMO_ID, onChange: onChange, ownKeys: ownKeys, validId: validId,
+    prefs: prefs, setPref: setPref, chartPref: chartPref, setChartPref: setChartPref,
     roster: roster, clients: clients, client: client, addClient: addClient, updateClient: updateClient, archive: archive, removeClient: removeClient,
     tick: tick, ticked: ticked, saveTemplate: saveTemplate, templates: templates,
     household: household, record: record, makeRecord: makeRecord, setField: setField, addItem: addItem, removeItem: removeItem,

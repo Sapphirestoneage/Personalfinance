@@ -17,7 +17,7 @@
 })(typeof self !== 'undefined' ? self : null, function () {
   'use strict';
   var FILES = {
-    sessionPaths: 'session_paths.json', coachFields: 'fields.json', quickEntry: 'quick_entry.json',
+    sessionPaths: 'session_paths.json', coachFields: 'fields.json', quickEntry: 'quick_entry.json', coachHelp: 'help.json',
     effectiveTaxRates: 'effective_tax_rates_2026.json', expenseCategories: 'expense_categories.json', opening: 'opening.json',
     returnBands: 'return_bands.json', levers: 'levers.json', debtRules: 'debt_rules.json', retirementMilestones: 'retirement_milestones.json',
     milestones: 'milestones.json', fooRules: 'foo_rules.json', netWorthPercentiles: 'net_worth_percentiles_scf_2022.json', ratioBenchmarks: 'ratio_benchmarks.json'
