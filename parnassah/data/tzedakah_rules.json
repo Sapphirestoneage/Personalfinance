@@ -1,0 +1,36 @@
+{
+  "version": "2026.1",
+  "asOf": "2026-09",
+  "confidence": "medium",
+  "source": "The common practices of maaser kesafim as taught in Modern Orthodox communities, and the United States rules on charitable deductions, donor-advised funds and qualified charitable distributions as of 2026.",
+  "confidenceNote": "This page does not decide halacha. It shows the arithmetic under each common approach so a family can bring one number to their rav. The tax notes are general and change with the law.",
+  "rates": [
+    { "id": "maaser",  "label": "A tenth (maaser)",  "rate": 0.10, "note": "The common practice." },
+    { "id": "chomesh", "label": "A fifth (chomesh)", "rate": 0.20, "note": "The generous measure, for those who can." },
+    { "id": "custom",  "label": "Your own share",    "rate": null, "note": "Type the share you have settled on." }
+  ],
+  "bases": [
+    { "id": "gross", "label": "Gross income",                 "note": "Before tax. The stricter reading." },
+    { "id": "net",   "label": "Income after tax",             "note": "The widely followed view: the tax never reached your hands." }
+  ],
+  "kinds": [
+    { "id": "shul",    "label": "The shul" },
+    { "id": "school",  "label": "The school's scholarship fund" },
+    { "id": "local",   "label": "Local families and gemachs" },
+    { "id": "israel",  "label": "Israel" },
+    { "id": "torah",   "label": "Torah learning" },
+    { "id": "other",   "label": "Everything else" }
+  ],
+  "questions": [
+    "Does my children's tuition count? Most say the basic obligation does not; some allow the part of full tuition that carries another family. Ask.",
+    "Is maaser owed on the employer's retirement match, on a gift, on an inheritance, on a tax refund?",
+    "May maaser money pay for a family member in need, or for the kiddush I sponsor?",
+    "Should the shul's dues come from maaser? Many hold dues are a fee, not tzedakah, but a voluntary gift above the dues is."
+  ],
+  "tax": [
+    { "id": "daf",   "label": "A donor-advised fund", "note": "Give appreciated stock in a high-income year, take the deduction then, and grant it out over the years that follow. Useful when a bonus or a sale lands." },
+    { "id": "stock", "label": "Appreciated stock",     "note": "Giving shares held over a year skips the capital gains tax and deducts the full value, for a family that itemizes." },
+    { "id": "qcd",   "label": "A qualified charitable distribution", "note": "From age 70 and a half, money sent straight from an IRA to a charity is not income at all. It counts toward a required distribution." },
+    { "id": "bunch", "label": "Bunching",              "note": "Two years of giving in one year can lift a family over the standard deduction; the donor-advised fund makes this easy." }
+  ]
+}

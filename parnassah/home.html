@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<title>The home</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="parnassah.css"/>
+<!--
+  THE HOME, a house within a walk of the shul (PN-008, PN-012).
+  1. READS   the community and take-home from the household; this year's tuition; the communities table.
+  2. WRITES  home.* and household.community only.
+  3. SHOWS   what the house costs a month, its share of take-home alone and with tuition, the verdict, the price that fits, and the communities side by side.
+  LIVE-FORM: built once.
+-->
+</head>
+<body class="slaf">
+<main class="pn" id="main">
+  <div id="pn-head"></div>
+  <h1>The home</h1>
+  <p class="lede">The house has to be within a walk of the shul and inside the eruv, so the streets that qualify carry a premium. This page prices the house a month, then asks the question a general mortgage page never asks: what is left once tuition has had its share?</p>
+  <div class="pn-actions" id="pn-actions"></div>
+  <div class="pn-figures">
+    <div class="pn-figure" id="fig-month"><span class="pn-figure-label">To carry the house, a month</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+    <div class="pn-figure" id="fig-share"><span class="pn-figure-label">Of take-home</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+    <div class="pn-figure" id="fig-with"><span class="pn-figure-label">With tuition</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+    <div class="pn-figure" id="fig-max"><span class="pn-figure-label">The price that fits</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+  </div>
+  <div class="pn-grid pn-grid--wide">
+    <section class="slaf-card" aria-labelledby="h-form">
+      <h2 id="h-form">The house</h2>
+      <p class="pn-note" id="community-note"></p>
+      <div id="form-home"></div>
+    </section>
+    <section class="slaf-card" aria-labelledby="h-chart">
+      <h2 id="h-chart">The verdict</h2>
+      <p id="verdict"></p>
+      <p class="pn-say" id="say"></p>
+      <div id="chart"></div>
+      <div id="chart-communities"></div>
+    </section>
+  </div>
+<footer class="pn-foot">
+<p>Nothing leaves this device. There is no account and no server; a backup is a file you save on purpose.</p>
+<p>Empty is not zero: a blank box means "not entered", and a figure that needs it says so instead of guessing.</p>
+<p>The reference figures are dated starting points of low confidence, not quotes. Nothing here is halachic, tax or legal advice: bring the numbers to your rav, your preparer and your lawyer.</p>
+</footer>
+</main>
+<script src="shared/money.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/tuition.js"></script>
+<script src="engines/jewishyear.js"></script>
+<script src="engines/tzedakah.js"></script>
+<script src="engines/milestones.js"></script>
+<script src="engines/home.js"></script>
+<script src="engines/plan.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  var PN = SLAF.PN, Money = SLAF.Money, esc = PN.esc, Charts = SLAF.Charts;
+  var render = {
+    form: function (h, T) {
+      var M = T.communities.mortgage;
+      PN.el('form-home').innerHTML = '<div class="row">'
+        + PN.field({ label: 'Community', path: 'household.community', type: 'select', options: T.communities.communities.map(function (c) { return { value: c.id, label: c.label }; }), help: 'community', empty: 'Not listed or not sure' }, T)
+        + PN.field({ label: 'The price', path: 'home.priceCents', type: 'cents', help: 'price' }, T)
+        + PN.field({ label: 'Down payment', path: 'home.downShare', type: 'rate', help: 'downShare', hint: 'Typical ' + Math.round(M.downShare * 100) + '%' }, T)
+        + '</div><div class="row">'
+        + PN.field({ label: 'Mortgage rate', path: 'home.ratePercent', type: 'rate', help: 'rate', hint: 'Typical ' + M.ratePercent + '%' }, T)
+        + PN.field({ label: 'Over', path: 'home.years', type: 'int', help: 'years', affix: 'years', hint: 'Typical ' + M.years }, T)
+        + PN.field({ label: 'Property tax, a year, of the price', path: 'home.taxRate', type: 'rate', help: 'taxRate' }, T)
+        + PN.field({ label: 'Insurance, a year, of the price', path: 'home.insuranceRate', type: 'rate', help: 'insuranceRate', hint: 'Typical ' + (M.insuranceRate * 100) + '%' }, T)
+        + '</div><div class="row">'
+        + PN.field({ label: 'What the home costs now, a month', path: 'home.currentHousingMonthlyCents', type: 'cents', help: 'currentHousing' }, T)
+        + '</div>';
+    },
+    draw: function (h, T) {
+      var t = SLAF.Tuition.plan(h, T);
+      var r = SLAF.Home.carry(h, T, { tuitionAnnualCents: Money.isOk(t) ? t.value.thisYearCents : null });
+      var c = SLAF.Home.community(h, T);
+      PN.el('community-note').textContent = c && Money.isEntered(c.homeDollars) ? 'In ' + c.label + ' a family home near the shul runs about ' + Money.formatCents(c.homeDollars * 100) + ', with property tax near ' + (c.taxRate * 100).toFixed(1) + '% a year. Type the house you are looking at to replace both.' : 'Pick a community for a typical price and tax rate, or type your own.';
+      var G = T.communities.guide;
+      if (!Money.isOk(r)) {
+        ['fig-month', 'fig-share', 'fig-with', 'fig-max'].forEach(function (id) { PN.figure(id, Money.NOT_YET, 'incomplete', ''); });
+        PN.el('verdict').innerHTML = ''; PN.say('say', r.reason); PN.el('chart').innerHTML = '';
+      } else {
+        var v = r.value;
+        PN.figure('fig-month', PN.fmt(v.totalMonthlyCents), null, 'on ' + PN.fmt(v.priceCents) + (v.source === 'community' ? ', the community\'s typical price' : '') + ', ' + PN.pct(v.downShare) + ' down at ' + Money.formatRate(v.rate, { decimals: 2 }));
+        PN.figure('fig-share', v.share !== null ? PN.pct(v.share) : Money.NOT_YET, v.share === null ? 'incomplete' : v.share <= G.housingShareOfTakeHome ? 'good' : 'watch', v.share === null ? 'type take-home on the home page' : 'the guide says up to ' + PN.pct(G.housingShareOfTakeHome) + ' for the house alone');
+        PN.figure('fig-with', v.withTuitionShare !== null ? PN.pct(v.withTuitionShare) : Money.NOT_YET, v.withTuitionShare === null ? 'incomplete' : v.verdict === 'fits' ? 'good' : v.verdict === 'tight' ? 'watch' : 'over', v.withTuitionShare === null ? 'needs tuition and take-home' : 'house and tuition together; the guide says up to ' + PN.pct(G.housingAndTuitionShareOfTakeHome));
+        PN.figure('fig-max', v.maxPriceCents !== null ? PN.fmt(v.maxPriceCents) : Money.NOT_YET, v.maxPriceCents === null ? 'incomplete' : null, v.maxPriceCents === null ? '' : 'the price that keeps house and tuition inside the guide');
+        var verdict = v.verdict === 'fits' ? ['good', 'Fits'] : v.verdict === 'tight' ? ['watch', 'Tight'] : v.verdict === 'over' ? ['over', 'Over the line'] : null;
+        PN.el('verdict').innerHTML = verdict ? '<span class="pn-verdict is-' + verdict[0] + '">' + verdict[1] + '</span> ' + esc(v.verdict === 'fits' ? 'House and tuition together leave room for the rest of the year.' : v.verdict === 'tight' ? 'House and tuition together leave little for the rest; every other line will feel it.' : 'House and tuition together take more than the guide allows. Something gives: the price, the tuition assistance, the income, or the timing.') : '';
+        PN.say('say', v.deltaMonthlyCents !== null ? (v.deltaMonthlyCents > 0 ? PN.fmt(v.deltaMonthlyCents) + ' a month more than the home costs now.' : PN.fmt(-v.deltaMonthlyCents) + ' a month less than the home costs now.') : '');
+        PN.chart(PN.el('chart'), Charts.hbars({ items: [{ label: 'Principal and interest', value: v.piMonthlyCents }, { label: 'Property tax', value: v.taxMonthlyCents }, { label: 'Insurance', value: v.insuranceMonthlyCents }, { label: 'Tuition, a month', value: v.tuitionMonthlyCents, status: 'neutral' }].filter(function (x) { return Money.isEntered(x.value); }), title: 'A month, in parts' }), { title: 'What a month asks: the house in three parts, and tuition beside it.' });
+      }
+      var rows = T.communities.communities.filter(function (x) { return Money.isEntered(x.homeDollars); }).sort(function (a, b) { return a.homeDollars - b.homeDollars; });
+      PN.chart(PN.el('chart-communities'), Charts.hbars({ items: rows.map(function (x) { return { label: x.label.replace(/,.*$/, ''), value: x.homeDollars * 100, status: x.id === h.household.community ? 'good' : 'neutral' }; }), title: 'A family home near the shul, by community' }), { title: 'A family home near the shul, by community: typical prices of low confidence, dated ' + T.communities.asOf + '. Yours is marked.' });
+    }
+  };
+  PN.boot('home', render);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<title>Tzedakah</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="parnassah.css"/>
+<!--
+  TZEDAKAH, maaser (PN-006, PN-012).
+  1. READS   gross income from the household; the tzedakah rules.
+  2. WRITES  tzedakah.* only: the share, the base, the year's tax, the gifts.
+  3. SHOWS   owed, given, left, the pace; where the giving went; the questions for your rav; the tax notes.
+  LIVE-FORM: built once. The gifts are rebuilt only on add or remove.
+-->
+</head>
+<body class="slaf">
+<main class="pn" id="main">
+  <div id="pn-head"></div>
+  <h1>Tzedakah</h1>
+  <p class="lede">A tenth of what? The arithmetic under each common approach, so you bring one number to your rav rather than a shrug. What has gone out so far, by kind, and the monthly pace that closes the gap by Elul.</p>
+  <div class="pn-actions" id="pn-actions"></div>
+  <div class="pn-figures">
+    <div class="pn-figure" id="fig-owed"><span class="pn-figure-label">This year's share</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+    <div class="pn-figure" id="fig-given"><span class="pn-figure-label">Given so far</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+    <div class="pn-figure" id="fig-left"><span class="pn-figure-label">Still to give</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+    <div class="pn-figure" id="fig-pace"><span class="pn-figure-label">A month, to get there</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+  </div>
+  <div class="pn-grid pn-grid--wide">
+    <section class="slaf-card" aria-labelledby="h-form">
+      <h2 id="h-form">Your approach</h2>
+      <div id="form-tzedakah"></div>
+      <h3>What has gone out this year</h3>
+      <div class="pn-list" id="gifts"></div>
+      <div class="pn-actions"><button type="button" class="slaf-btn" id="gift-add">Add a gift</button></div>
+    </section>
+    <section class="slaf-card" aria-labelledby="h-chart">
+      <h2 id="h-chart">Where it went</h2>
+      <p class="pn-say" id="say"></p>
+      <div id="chart"></div>
+      <div id="chart-pace"></div>
+    </section>
+  </div>
+  <div class="pn-grid">
+    <section class="slaf-card" aria-labelledby="h-rav"><h2 id="h-rav">Questions for your rav</h2><ul class="pn-guide-list" id="questions"></ul></section>
+    <section class="slaf-card" aria-labelledby="h-tax"><h2 id="h-tax">The tax side</h2><ul class="pn-rows" id="tax"></ul></section>
+  </div>
+<footer class="pn-foot">
+<p>Nothing leaves this device. There is no account and no server; a backup is a file you save on purpose.</p>
+<p>Empty is not zero: a blank box means "not entered", and a figure that needs it says so instead of guessing.</p>
+<p>The reference figures are dated starting points of low confidence, not quotes. Nothing here is halachic, tax or legal advice: bring the numbers to your rav, your preparer and your lawyer.</p>
+</footer>
+</main>
+<script src="shared/money.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/tuition.js"></script>
+<script src="engines/jewishyear.js"></script>
+<script src="engines/tzedakah.js"></script>
+<script src="engines/milestones.js"></script>
+<script src="engines/home.js"></script>
+<script src="engines/plan.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  var PN = SLAF.PN, Money = SLAF.Money, Store = SLAF.Store, esc = PN.esc, Charts = SLAF.Charts;
+  var render = {
+    form: function (h, T) {
+      render.h = h; render.T = T;
+      PN.el('form-tzedakah').innerHTML = '<div class="row">'
+        + PN.field({ label: 'The share', path: 'tzedakah.rateId', type: 'select', options: T.tzedakah.rates.map(function (r) { return { value: r.id, label: r.label }; }), help: 'rateId', empty: 'Choose one' }, T)
+        + PN.field({ label: 'Your own share', path: 'tzedakah.customRate', type: 'rate', help: 'customRate' }, T)
+        + PN.field({ label: 'Of what', path: 'tzedakah.baseId', type: 'select', options: T.tzedakah.bases.map(function (b) { return { value: b.id, label: b.label }; }), help: 'baseId', empty: 'Choose one' }, T)
+        + PN.field({ label: 'Income tax this year, all of it', path: 'tzedakah.taxAnnualCents', type: 'cents', help: 'taxAnnual' }, T)
+        + '</div>';
+      PN.el('questions').innerHTML = T.tzedakah.questions.map(function (q) { return '<li>' + esc(q) + '</li>'; }).join('');
+      PN.el('tax').innerHTML = T.tzedakah.tax.map(function (t) { return '<li><span><b>' + esc(t.label) + '</b><br/><span class="pn-note">' + esc(t.note) + '</span></span></li>'; }).join('');
+    },
+    lists: function (h, T) {
+      var host = PN.el('gifts');
+      if (!h.tzedakah.gifts.length) { host.innerHTML = '<p class="pn-note">Nothing listed yet.</p>'; return; }
+      host.innerHTML = h.tzedakah.gifts.map(function (g, i) {
+        var p = 'tzedakah.gifts.' + i + '.';
+        return '<div class="pn-line">' + PN.field({ label: 'To whom', path: p + 'label', type: 'text' }, T)
+          + PN.field({ label: 'Kind', path: p + 'kind', type: 'select', options: T.tzedakah.kinds.map(function (k) { return { value: k.id, label: k.label }; }), empty: 'Choose' }, T)
+          + PN.field({ label: 'Amount this year', path: p + 'cents', type: 'cents' }, T)
+          + '<button type="button" class="slaf-btn slaf-btn--quiet" data-remove="' + i + '" aria-label="Remove this gift">Remove</button></div>';
+      }).join('');
+      host.querySelectorAll('[data-remove]').forEach(function (b) { b.addEventListener('click', function () { h.tzedakah.gifts.splice(Number(b.getAttribute('data-remove')), 1); Store.save(h); render.lists(h, T); }); });
+      PN.bind(host, h); PN.fill(host, h);
+    },
+    draw: function (h, T) {
+      var z = SLAF.Tzedakah.owed(h, T);
+      if (!Money.isOk(z)) {
+        ['fig-owed', 'fig-given', 'fig-left', 'fig-pace'].forEach(function (id) { PN.figure(id, Money.NOT_YET, 'incomplete', ''); });
+        PN.say('say', z.reason); PN.el('chart').innerHTML = ''; PN.el('chart-pace').innerHTML = ''; return;
+      }
+      var v = z.value, base = T.tzedakah.bases.filter(function (b) { return b.id === v.baseId; })[0];
+      PN.figure('fig-owed', PN.fmt(v.owedCents), null, PN.pct(v.rate) + ' of ' + PN.fmt(v.baseCents) + ' (' + (base ? base.label.toLowerCase() : '') + ')');
+      PN.figure('fig-given', PN.fmt(v.givenCents), null, v.gifts.length + (v.gifts.length === 1 ? ' gift' : ' gifts') + ' listed');
+      PN.figure('fig-left', PN.fmt(Math.max(0, v.remainingCents)), v.remainingCents <= 0 ? 'good' : 'watch', v.remainingCents <= 0 ? 'given in full' + (v.remainingCents < 0 ? ', and ' + PN.fmt(-v.remainingCents) + ' over' : '') : Math.round(100 * (v.shareGiven || 0)) + '% of the way');
+      PN.figure('fig-pace', PN.fmt(v.paceMonthlyCents), null, v.monthsLeft + (v.monthsLeft === 1 ? ' month' : ' months') + ' to Elul');
+      PN.say('say', v.gifts.length ? '' : 'List what has gone out to see where it went.');
+      if (v.byKind.length) PN.chart(PN.el('chart'), Charts.stackbar({ items: v.byKind.map(function (k) { return { label: k.label, value: k.cents }; }), title: 'Where the giving went' }), { title: 'Where the giving went, as a share of what has gone out.' });
+      else PN.el('chart').innerHTML = '';
+      PN.chart(PN.el('chart-pace'), Charts.hbars({ items: [{ label: 'This year\'s share', value: v.owedCents, status: 'neutral' }, { label: 'Given so far', value: v.givenCents, status: v.remainingCents <= 0 ? 'good' : 'watch' }], title: 'Owed against given' }), { title: 'This year\'s share beside what has gone out.' });
+    }
+  };
+  PN.el('gift-add').addEventListener('click', function () { var h = render.h; h.tzedakah.gifts.push({ id: Store.nextId(h.tzedakah.gifts, 'g'), label: null, kind: 'other', cents: null }); Store.save(h); render.lists(h, render.T); });
+  PN.boot('tzedakah', render);
+})();
+</script>
+</body>
+</html>

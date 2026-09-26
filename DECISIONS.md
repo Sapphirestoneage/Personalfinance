@@ -17351,6 +17351,30 @@ SPARKS device backup neither carries nor removes `coach.` keys.
 
 ---
 
+## D-340 — Parnassah is its own app in parnassah/, a lane beside SPARKS like coach/
+
+**Why.** The owner wants a complete financial planning site for the Modern
+Orthodox household: tuition for every child, the Jewish year, tzedakah, the
+simchas, a home within a walk of the shul, and what is left. None of those
+lines is a room, and the freeze (D-313) holds.
+
+**Decision.** `parnassah/` is a separate app with eight pages, six pure
+engines, its own storage (`parnassah.household.v1`, never `slaf.` or
+`coach.`), byte-identical copies of `shared/money.js`, the theme and the fonts
+(`parnassah/tools/vendor.js`), its own tests (`node parnassah/test/run.js`,
+in CI) and its own log (`parnassah/DECISIONS.md`, `PN-###`). Nothing in
+`rooms/`, `shared/`, `engines/` or `data/` changes for it.
+
+**Replaces or removes.** Nothing in SPARKS: it is a different audience's
+front door, and the freeze forbids a room for any of its lines.
+
+**Stored shape.** No change to `slaf.household.v2` or any SPARKS key. The
+SPARKS device backup neither carries nor removes `parnassah.` keys.
+
+**Verified.** `node test/run.js`; `node parnassah/test/run.js`.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

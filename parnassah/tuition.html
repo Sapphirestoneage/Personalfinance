@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<title>Tuition</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="parnassah.css"/>
+<!--
+  TUITION, the mountain (PN-004, PN-012).
+  1. READS   the children and the region from the household; the tuition table.
+  2. WRITES  tuition.* only: the assistance share, the sibling rule, the four stage prices.
+  3. SHOWS   this year, the peak year, the lifetime; the stacked years by child; the rules that help.
+  LIVE-FORM: built once.
+-->
+</head>
+<body class="slaf">
+<main class="pn" id="main">
+  <div id="pn-head"></div>
+  <h1>Tuition</h1>
+  <p class="lede">The largest line in the household, and the one no general planner carries. Every child, every school year from this one until the youngest is out and back from Israel, added up.</p>
+  <div class="pn-actions" id="pn-actions"></div>
+  <div class="pn-figures">
+    <div class="pn-figure" id="fig-year"><span class="pn-figure-label">This school year</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+    <div class="pn-figure" id="fig-peak"><span class="pn-figure-label">The peak year</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+    <div class="pn-figure" id="fig-life"><span class="pn-figure-label">From here to the last year</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+    <div class="pn-figure" id="fig-end"><span class="pn-figure-label">The last tuition year</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+  </div>
+  <div class="pn-grid pn-grid--wide">
+    <section class="slaf-card" aria-labelledby="h-form">
+      <h2 id="h-form">Your school's numbers</h2>
+      <p class="pn-note" id="region-note"></p>
+      <div id="form-tuition"></div>
+    </section>
+    <section class="slaf-card" aria-labelledby="h-chart">
+      <h2 id="h-chart">The mountain</h2>
+      <p class="pn-say" id="say"></p>
+      <div id="chart"></div>
+      <details class="pn-details" id="years-details"><summary>Every year, every child</summary><div id="years"></div></details>
+    </section>
+  </div>
+  <section class="slaf-card" aria-labelledby="h-rules">
+    <h2 id="h-rules">The rules that help</h2>
+    <ul class="pn-rows" id="rules"></ul>
+  </section>
+<footer class="pn-foot">
+<p>Nothing leaves this device. There is no account and no server; a backup is a file you save on purpose.</p>
+<p>Empty is not zero: a blank box means "not entered", and a figure that needs it says so instead of guessing.</p>
+<p>The reference figures are dated starting points of low confidence, not quotes. Nothing here is halachic, tax or legal advice: bring the numbers to your rav, your preparer and your lawyer.</p>
+</footer>
+</main>
+<script src="shared/money.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/tuition.js"></script>
+<script src="engines/jewishyear.js"></script>
+<script src="engines/tzedakah.js"></script>
+<script src="engines/milestones.js"></script>
+<script src="engines/home.js"></script>
+<script src="engines/plan.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  var PN = SLAF.PN, Money = SLAF.Money, esc = PN.esc, Charts = SLAF.Charts;
+  function hintFor(h, T, stageId) { var r = h.household.region; return r && T.tuition.annualDollars[r] ? PN.band(T.tuition.annualDollars[r][stageId], T) : 'Pick a region on the home page for a typical figure'; }
+  var render = {
+    form: function (h, T) {
+      PN.el('form-tuition').innerHTML = '<div class="row">'
+        + PN.field({ label: 'Tuition assistance (the committee\'s reduction)', path: 'tuition.assistanceShare', type: 'rate', help: 'assistanceShare' }, T)
+        + PN.field({ label: 'Sibling discount', path: 'tuition.siblingShare', type: 'rate', help: 'siblingShare' }, T)
+        + PN.field({ label: 'From which child', path: 'tuition.siblingFrom', type: 'int', help: 'siblingFrom', affix: 'th' }, T)
+        + '</div><h3>Full tuition a year, before assistance</h3><div class="row">'
+        + T.tuition.stages.map(function (s) { return PN.field({ label: s.label, path: 'tuition.overrides.' + s.id, type: 'cents', help: 'stage_' + s.id, hint: hintFor(h, T, s.id) }, T); }).join('')
+        + '</div>';
+    },
+    draw: function (h, T) {
+      var t = SLAF.Tuition.plan(h, T);
+      var region = T.tuition.regions.filter(function (r) { return r.id === h.household.region; })[0];
+      PN.el('region-note').textContent = region ? 'Typical figures are for ' + region.label + '. Type your own school\'s to replace them.' : 'No region yet: pick one on the home page, or type your school\'s own tuition below.';
+      T.tuition.stages.forEach(function (s) { var n = document.querySelector('#f-tuition-overrides-' + s.id); if (n) { var hint = n.parentNode.querySelector('.pn-hint'); if (hint) hint.textContent = hintFor(h, T, s.id); } });
+      if (!Money.isOk(t)) {
+        ['fig-year', 'fig-peak', 'fig-life', 'fig-end'].forEach(function (id) { PN.figure(id, Money.NOT_YET, 'incomplete', ''); });
+        PN.say('say', t.reason, null); PN.el('chart').innerHTML = ''; PN.el('years').innerHTML = ''; PN.el('rules').innerHTML = '';
+        return;
+      }
+      var v = t.value;
+      PN.figure('fig-year', PN.fmt(v.thisYearCents), null, v.kidsInSchool + (v.kidsInSchool === 1 ? ' child' : ' children') + ' in school, ' + v.startYear + ' to ' + (v.startYear + 1));
+      PN.figure('fig-peak', PN.fmt(v.peak.cents), 'watch', v.peak.year + ' to ' + (v.peak.year + 1));
+      PN.figure('fig-life', PN.fmt(v.lifetimeCents), null, (v.years.length) + ' school years');
+      PN.figure('fig-end', String(v.lastYear + 1), null, 'the summer the last tuition bill is paid');
+      PN.say('say', (v.assumedAny ? 'Some stages use the typical figure for the region (marked assumed). ' : '') + (v.priceMissing ? 'A stage with no price and no region is left out. ' : '') + (t.missing.length ? 'A child with no year of birth is left out.' : ''), v.assumedAny || v.priceMissing || t.missing.length ? 'watch' : null);
+      var kids = h.kids.filter(function (k) { return Money.isEntered(k.birthYear); }).sort(function (a, b) { return a.birthYear - b.birthYear; });
+      var series = kids.map(function (k) { return { id: k.id, label: k.name || 'Child born ' + k.birthYear, values: v.years.map(function (y) { var r = y.perKid.filter(function (x) { return x.kidId === k.id; })[0]; return r ? r.cents : null; }) }; });
+      var peakIdx = v.years.map(function (y) { return y.year; }).indexOf(v.peak.year);
+      PN.chart(PN.el('chart'), Charts.columns({ categories: v.years.map(function (y) { return String(y.year); }), series: series, stacked: true, title: 'Tuition by school year, one colour a child', highlight: peakIdx, highlightLabel: 'peak', rowLabel: 'School year' }), { title: 'Tuition a school year, stacked by child. Hover a bar for the figure.' });
+      PN.el('years').innerHTML = '<table class="pn-months"><thead><tr><th>Year</th>' + kids.map(function (k) { return '<th>' + esc(k.name || k.birthYear) + '</th>'; }).join('') + '<th>Total</th></tr></thead><tbody>'
+        + v.years.map(function (y) { return '<tr><td>' + y.year + '</td>' + kids.map(function (k) { var r = y.perKid.filter(function (x) { return x.kidId === k.id; })[0]; return '<td class="num">' + (r ? esc(PN.fmt(r.cents)) + '<div class="items">' + esc(r.stageId === 'gap' ? 'Israel' : r.grade < 0 ? (r.grade === -2 ? 'nursery' : 'pre-K') : r.grade === 0 ? 'K' : 'grade ' + r.grade) + (r.assumed ? ', assumed' : '') + '</div>' : '') + '</td>'; }).join('') + '<td class="num"><b>' + esc(PN.fmt(y.totalCents)) + '</b></td></tr>'; }).join('') + '</tbody></table>';
+      var R = T.rules;
+      var early = v.years[0].perKid.filter(function (r) { return r.stageId === 'early'; }).length;
+      var rules = [
+        { label: R.k12From529.label, value: Money.formatCents(R.k12From529.dollars * 100), note: R.k12From529.note + (v.kidsInSchool ? ' With ' + v.kidsInSchool + ' in school that is up to ' + Money.formatCents(R.k12From529.dollars * 100 * v.kidsInSchool) + ' a year that could come out of a 529.' : '') },
+        { label: R.dependentCareFsa.label, value: Money.formatCents(R.dependentCareFsa.dollars * 100), note: R.dependentCareFsa.note + (early ? ' It applies to the ' + early + ' in nursery or pre-K this year.' : '') },
+        { label: R.childTaxCredit.label, value: Money.formatCents(R.childTaxCredit.dollars * 100), note: R.childTaxCredit.note },
+        { label: 'The tuition committee', value: '', note: T.tuition.notes.assistance }
+      ];
+      PN.el('rules').innerHTML = rules.map(function (r) { return '<li><span><b>' + esc(r.label) + '</b><br/><span class="pn-note">' + esc(r.note) + '</span></span><b>' + esc(r.value) + '</b></li>'; }).join('')
+        + '<li class="is-muted"><span>' + esc(T.rules.confidenceNote) + '</span></li>';
+    }
+  };
+  PN.boot('tuition', render);
+})();
+</script>
+</body>
+</html>

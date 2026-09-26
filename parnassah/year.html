@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<title>The year</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="parnassah.css"/>
+<!--
+  THE YEAR, the calendar of costs (PN-005, PN-012).
+  1. READS   the children (for camp) and the year table.
+  2. WRITES  year.* only: each event, the Shabbat week, the two camp prices.
+  3. SHOWS   the twelve months from Elul, the level set-aside, the cushion, and the fund's balance.
+  LIVE-FORM: built once.
+-->
+</head>
+<body class="slaf">
+<main class="pn" id="main">
+  <div id="pn-head"></div>
+  <h1>The year</h1>
+  <p class="lede">Shul dues in Elul, Tishrei's nine meals, Pesach, the summer. The Jewish year spends in spikes. Answer each line and the twelve months show where the spikes land and what a level monthly set-aside looks like.</p>
+  <div class="pn-actions" id="pn-actions"></div>
+  <div class="pn-figures">
+    <div class="pn-figure" id="fig-year"><span class="pn-figure-label">The year</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+    <div class="pn-figure" id="fig-month"><span class="pn-figure-label">Set aside a month</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+    <div class="pn-figure" id="fig-cushion"><span class="pn-figure-label">Start the fund with</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+    <div class="pn-figure" id="fig-answered"><span class="pn-figure-label">Lines answered</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+  </div>
+  <div class="pn-grid pn-grid--wide">
+    <section class="slaf-card" aria-labelledby="h-form">
+      <h2 id="h-form">Your year</h2>
+      <p class="pn-note">Each line says the month it usually lands. Type zero for a line that does not apply; leave it blank until you know.</p>
+      <div id="form-year"></div>
+    </section>
+    <section class="slaf-card" aria-labelledby="h-chart">
+      <h2 id="h-chart">Twelve months, from Elul</h2>
+      <p class="pn-say" id="say"></p>
+      <div id="chart"></div>
+      <div id="chart-balance"></div>
+      <details class="pn-details"><summary>Month by month</summary><div id="months"></div></details>
+    </section>
+  </div>
+<footer class="pn-foot">
+<p>Nothing leaves this device. There is no account and no server; a backup is a file you save on purpose.</p>
+<p>Empty is not zero: a blank box means "not entered", and a figure that needs it says so instead of guessing.</p>
+<p>The reference figures are dated starting points of low confidence, not quotes. Nothing here is halachic, tax or legal advice: bring the numbers to your rav, your preparer and your lawyer.</p>
+</footer>
+</main>
+<script src="shared/money.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/tuition.js"></script>
+<script src="engines/jewishyear.js"></script>
+<script src="engines/tzedakah.js"></script>
+<script src="engines/milestones.js"></script>
+<script src="engines/home.js"></script>
+<script src="engines/plan.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  var PN = SLAF.PN, Money = SLAF.Money, esc = PN.esc, Charts = SLAF.Charts, JY = SLAF.JewishYear;
+  var render = {
+    form: function (h, T) {
+      var Y = T.year;
+      var byKind = {};
+      Y.events.forEach(function (e) { (byKind[e.kind] = byKind[e.kind] || []).push(e); });
+      var html = '';
+      [['dues', 'Dues and memberships'], ['holiday', 'The holidays'], ['travel', 'Travel']].forEach(function (pair) {
+        html += '<h3>' + esc(pair[1]) + '</h3><div class="row">' + (byKind[pair[0]] || []).map(function (e) { return PN.field({ label: e.label + ' (' + JY.LABELS[e.month - 1] + ')', path: 'year.events.' + e.id, type: 'cents', help: 'event_' + e.id, hint: PN.band(e.dollars, T) }, T); }).join('') + '</div>';
+      });
+      html += '<h3>Every week</h3><div class="row">' + PN.field({ label: Y.weekly.label + ', a week', path: 'year.shabbatWeeklyCents', type: 'cents', help: 'shabbat', hint: PN.band(Y.weekly.dollars, T) }, T) + '</div>';
+      html += '<h3>The summer</h3><p class="pn-note">Which child goes where is set on the home page. A price typed here applies to each child who goes.</p><div class="row">'
+        + PN.field({ label: Y.camp.sleepaway.label + ', a child', path: 'year.campSleepawayCents', type: 'cents', help: 'campSleepaway', hint: PN.band(Y.camp.sleepaway.dollars, T) }, T)
+        + PN.field({ label: Y.camp.day.label + ', a child', path: 'year.campDayCents', type: 'cents', help: 'campDay', hint: PN.band(Y.camp.day.dollars, T) }, T) + '</div>';
+      PN.el('form-year').innerHTML = html;
+    },
+    draw: function (h, T) {
+      var y = JY.calendar(h, T);
+      var total = T.year.events.length + 1 + (h.kids.some(function (k) { return k.camp === 'sleepaway' || k.camp === 'day'; }) ? 1 : 0);
+      if (!Money.isOk(y)) {
+        ['fig-year', 'fig-month', 'fig-cushion'].forEach(function (id) { PN.figure(id, Money.NOT_YET, 'incomplete', ''); });
+        PN.figure('fig-answered', '0 of ' + total, 'incomplete', ''); PN.say('say', y.reason); PN.el('chart').innerHTML = ''; PN.el('chart-balance').innerHTML = ''; PN.el('months').innerHTML = '';
+        return;
+      }
+      var v = y.value;
+      PN.figure('fig-year', PN.fmt(v.annualCents), null, v.complete ? 'every line answered' : 'so far; ' + v.unanswered.length + ' not yet answered');
+      PN.figure('fig-month', PN.fmt(v.monthlyCents), null, 'a twelfth of the year, every month');
+      PN.figure('fig-cushion', PN.fmt(v.cushionCents), v.cushionCents > 0 ? 'watch' : 'good', v.cushionCents > 0 ? 'so the fund never dips below zero' : 'the level set-aside covers every month');
+      PN.figure('fig-answered', v.answered + ' of ' + total, v.complete ? 'good' : 'watch', v.complete ? '' : v.unanswered.map(function (u) { return u.label; }).join(', '));
+      PN.say('say', v.campKids.length ? 'Camp: ' + v.campKids.map(function (c) { return (c.name || 'a child') + ' (' + (c.kind === 'sleepaway' ? 'sleepaway' : 'day') + ')'; }).join(', ') + '.' : 'No child is down for camp on the home page.');
+      var cats = v.months.map(function (m) { return m.label.split(' ')[0]; });
+      var series = JY.KINDS.map(function (k) { return { id: k.id, label: k.label, values: v.months.map(function (m) { var s = 0, any = false; m.items.forEach(function (it) { if (it.kind === k.id) { s += it.cents; any = true; } }); return any ? s : null; }) }; }).filter(function (s) { return s.values.some(function (x) { return x !== null; }); });
+      PN.chart(PN.el('chart'), Charts.columns({ categories: cats, series: series, stacked: true, title: 'The year by month, stacked by kind', marker: { value: v.monthlyCents, label: 'set aside a month' }, rowLabel: 'Month' }), { title: 'What each month asks, by kind. The dashed line is the level set-aside.' });
+      PN.chart(PN.el('chart-balance'), Charts.line({ categories: cats, series: [{ label: 'The fund', values: v.balance }], area: true, title: 'The fund after each month', rowLabel: 'Month' }), { title: 'The fund at the end of each month, starting from zero in ' + v.months[0].label + ' with the level set-aside going in. Below zero means start with a cushion.' });
+      PN.el('months').innerHTML = '<table class="pn-months"><thead><tr><th>Month</th><th>Asks</th><th></th></tr></thead><tbody>' + v.months.map(function (m) { return '<tr><td>' + esc(m.label) + '</td><td><div class="items">' + m.items.map(function (it) { return esc(it.label) + ' ' + esc(PN.fmt(it.cents)); }).join('<br/>') + '</div></td><td class="num"><b>' + esc(PN.fmt(m.cents)) + '</b></td></tr>'; }).join('') + '</tbody></table>';
+    }
+  };
+  PN.boot('year', render);
+})();
+</script>
+</body>
+</html>

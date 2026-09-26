@@ -44,6 +44,7 @@ Shortcuts: `/start`, `/room <id>`, `/find <words>`, `/simplify`, `/drift`, `/wra
 - Every session should leave the app with the same or fewer screens and fields.
 - Exception (D-339): `coach/` is a separate app (like `dnd/`), three screens, its own
   tests and log (`coach/README.md`). Nothing outside `coach/` changes for it.
+  Likewise (D-340) `parnassah/`, the Modern Orthodox planning site (`parnassah/README.md`).
 
 ## Stop and ask instead of guessing
 

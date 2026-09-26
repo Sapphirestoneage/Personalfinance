@@ -1,0 +1,14 @@
+{
+  "version": "2026.1",
+  "asOf": "2026-09",
+  "confidence": "medium",
+  "source": "United States federal rules for 2026 as amended in July 2025 (the One Big Beautiful Bill Act), read from the IRS and from plan-provider summaries in summer 2026.",
+  "confidenceNote": "The dollar limits are indexed and the law moves. Confirm each figure with the plan or a preparer before acting on it; the planner shows them so a family knows the question exists.",
+  "k12From529": { "label": "529 withdrawals for K to 12 tuition, per child per year", "dollars": 20000, "note": "Raised from ten thousand for 2026. Many states give a deduction on the way in; some claw it back on a K to 12 withdrawal. Check your state." },
+  "dependentCareFsa": { "label": "Dependent care FSA, per household per year", "dollars": 7500, "note": "Raised from five thousand for 2026. Pays nursery, pre-K and day camp for a child under thirteen with pre-tax dollars, when both parents work." },
+  "childTaxCredit": { "label": "Child tax credit, per child", "dollars": 2200, "note": "Per child under seventeen, phasing out at higher incomes." },
+  "emergencyMonths": { "label": "Emergency fund, months of the lean month", "months": 4, "note": "A family with tuition due every month wants the higher end of the usual three to six." },
+  "lifeCoverMultiple": { "label": "Term life cover, multiple of income", "multiple": 12, "note": "A large family with tuition ahead of it needs more years of income replaced than the usual ten. Term is cheap; both parents need it, including the one who earns less." },
+  "halachicWill": { "label": "A will with a halachic clause", "note": "Torah inheritance rules and state law differ. A will that adds a shtar chatzi zachar, or a rabbinically drafted clause, lets both hold at once. Ask your rav and a lawyer who has done one." },
+  "heterIska": { "label": "Heter iska", "note": "A loan between Jews with interest needs a heter iska. Most Jewish-owned lenders and gemachs have one; ask before a private loan." }
+}

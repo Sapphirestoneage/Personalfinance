@@ -1,0 +1,30 @@
+{
+  "version": "2026.1",
+  "asOf": "2026-09",
+  "confidence": "low",
+  "source": "Published tuition schedules of Modern Orthodox day schools and yeshiva high schools in the New York and New Jersey metro area, the larger communities (Baltimore, Boston, Chicago, Los Angeles, South Florida, Washington) and smaller communities, read in summer 2026 and rounded to bands.",
+  "confidenceNote": "Every school sets its own number and raises it most years. The typical figure is a starting point for a family that has not looked up its own school yet; the tuition planner replaces it the moment a real schedule is typed in. Fees, building funds, dinner obligations and busing are not in these bands.",
+  "regions": [
+    { "id": "nynj", "label": "New York and New Jersey metro" },
+    { "id": "large", "label": "Another large community" },
+    { "id": "small", "label": "A smaller community" }
+  ],
+  "stages": [
+    { "id": "early", "label": "Early childhood (nursery and pre-K)", "gradeFrom": -2, "gradeTo": -1 },
+    { "id": "elementary", "label": "Elementary and middle (K to 8)", "gradeFrom": 0, "gradeTo": 8 },
+    { "id": "high", "label": "High school (9 to 12)", "gradeFrom": 9, "gradeTo": 12 },
+    { "id": "gap", "label": "The year in Israel", "gradeFrom": 13, "gradeTo": 13 }
+  ],
+  "annualDollars": {
+    "nynj":  { "early": { "low": 12000, "typical": 17000, "high": 24000 }, "elementary": { "low": 19000, "typical": 26000, "high": 34000 }, "high": { "low": 30000, "typical": 38000, "high": 48000 }, "gap": { "low": 24000, "typical": 32000, "high": 42000 } },
+    "large": { "early": { "low": 9000,  "typical": 13000, "high": 19000 }, "elementary": { "low": 15000, "typical": 21000, "high": 28000 }, "high": { "low": 22000, "typical": 30000, "high": 40000 }, "gap": { "low": 24000, "typical": 32000, "high": 42000 } },
+    "small": { "early": { "low": 7000,  "typical": 10000, "high": 15000 }, "elementary": { "low": 10000, "typical": 15000, "high": 22000 }, "high": { "low": 14000, "typical": 20000, "high": 30000 }, "gap": { "low": 24000, "typical": 32000, "high": 42000 } }
+  },
+  "kindergartenAge": 5,
+  "schoolYearStartMonth": 9,
+  "notes": {
+    "gap": "The year in Israel is tuition, room and board, and two flights. A MASA grant and the yeshiva or seminary's own aid come off the top; the planner asks for the net figure.",
+    "assistance": "Most schools set a family's tuition through a tuition committee that reads the tax return. The planner takes the reduction as a share and applies it to every child, which is what most committees do.",
+    "sibling": "A sibling discount, where a school gives one, is usually a few percent on the third child onward. Type the school's own rule; the default is none."
+  }
+}

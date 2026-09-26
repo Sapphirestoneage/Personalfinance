@@ -1,0 +1,32 @@
+{
+  "version": "2026.1",
+  "asOf": "2026-09",
+  "confidence": "low",
+  "source": "Shul dues schedules, camp fee tables, kosher grocery pricing and the running costs Modern Orthodox families report, gathered in summer 2026 and rounded to bands per family.",
+  "confidenceNote": "These are starting points for a family that has not added up its own year. Each one is an input the family replaces. The month is the civil month the cost usually lands in; the Hebrew calendar drifts, so a Tishrei that starts in September one year starts in October the next.",
+  "yearStart": "2026-09",
+  "events": [
+    { "id": "shul",     "label": "Shul membership",                "month": 9,  "kind": "dues",   "dollars": { "low": 1500, "typical": 2800, "high": 5000 }, "note": "Full family dues. Many shuls bill in Elul, before Rosh Hashanah. A younger or single membership costs less." },
+    { "id": "seats",    "label": "High Holiday seats",             "month": 9,  "kind": "dues",   "dollars": { "low": 0,    "typical": 400,  "high": 1200 }, "note": "Often included in membership. Type zero if yours are." },
+    { "id": "sukkot",   "label": "Sukkot: lulav, etrog, the sukkah", "month": 10, "kind": "holiday", "dollars": { "low": 150, "typical": 450, "high": 1500 }, "note": "One lulav and etrog set is roughly a hundred dollars; schach and a sukkah are a one-time buy that come round again when they wear out." },
+    { "id": "yomtov",   "label": "Tishrei meals and guests",       "month": 10, "kind": "holiday", "dollars": { "low": 400,  "typical": 900,  "high": 2000 }, "note": "Rosh Hashanah, Yom Kippur break-fast, Sukkot, Shemini Atzeret and Simchat Torah: nine yom tov meals on top of the usual Shabbat." },
+    { "id": "chanukah", "label": "Chanukah",                       "month": 12, "kind": "holiday", "dollars": { "low": 100,  "typical": 400,  "high": 1200 }, "note": "Candles, oil, gifts, latkes and a party." },
+    { "id": "purim",    "label": "Purim",                          "month": 3,  "kind": "holiday", "dollars": { "low": 150,  "typical": 450,  "high": 1200 }, "note": "Mishloach manot, matanot l'evyonim, the seudah, costumes." },
+    { "id": "pesach",   "label": "Pesach at home",                 "month": 4,  "kind": "holiday", "dollars": { "low": 800,  "typical": 2200, "high": 5000 }, "note": "The extra over an ordinary month: kosher for Pesach food, matzah, wine, and the things the kitchen needs. A hotel program is a separate line; type it here if you go." },
+    { "id": "shavuot",  "label": "Shavuot",                        "month": 6,  "kind": "holiday", "dollars": { "low": 100,  "typical": 300,  "high": 800 }, "note": "Two days of meals, the dairy kind." },
+    { "id": "mikvah",   "label": "Mikvah",                         "month": 9,  "kind": "dues",   "dollars": { "low": 0,    "typical": 400,  "high": 900 }, "note": "Many mikvaot ask a yearly membership or a fee per visit. Type zero if it does not apply." },
+    { "id": "eruv",     "label": "Eruv and community dues",        "month": 9,  "kind": "dues",   "dollars": { "low": 0,    "typical": 150,  "high": 400 }, "note": "The eruv, the vaad, the chevra kadisha: the small yearly asks." },
+    { "id": "israel",   "label": "Israel trip",                    "month": 12, "kind": "travel", "dollars": { "low": 0,    "typical": 0,    "high": 12000 }, "note": "A family trip, when there is one. Leave it empty if there is none this year." }
+  ],
+  "weekly": {
+    "id": "shabbat",
+    "label": "The Shabbat table",
+    "dollars": { "low": 120, "typical": 220, "high": 450 },
+    "weeks": 52,
+    "note": "What Shabbat adds each week over ordinary weekday eating: challah, wine, meat or chicken, dessert, and the guests. Kosher meat runs at roughly one and a half to two times the ordinary price."
+  },
+  "camp": {
+    "sleepaway": { "label": "Sleepaway camp", "month": 6, "dollars": { "low": 6000, "typical": 9500, "high": 14000 }, "ageFrom": 9, "ageTo": 16, "note": "Four to eight weeks. A deposit is usually due in the winter; the balance in the spring or at the start of June." },
+    "day":       { "label": "Day camp",       "month": 6, "dollars": { "low": 2500, "typical": 4500, "high": 7000 },  "ageFrom": 3, "ageTo": 10, "note": "A full summer of day camp for a younger child." }
+  }
+}

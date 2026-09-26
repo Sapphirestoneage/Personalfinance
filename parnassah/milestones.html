@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<title>Simchas</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="parnassah.css"/>
+<!--
+  SIMCHAS, the milestones ahead (PN-007, PN-012).
+  1. READS   the children; the milestones table; the year in Israel from tuition.
+  2. WRITES  milestones.* and plan.simchaMonthlyCents only.
+  3. SHOWS   each simcha in its year, the next one, the set-aside that meets every one on time, the gap to what goes aside now.
+  LIVE-FORM: built once.
+-->
+</head>
+<body class="slaf">
+<main class="pn" id="main">
+  <div id="pn-head"></div>
+  <h1>Simchas</h1>
+  <p class="lede">A bar or bat mitzvah for each child, a year in Israel, a wedding and the first years after it. Each lands in a year you can name today. Placed on the line, they say what to put aside now so that no simcha is paid for with a loan.</p>
+  <div class="pn-actions" id="pn-actions"></div>
+  <div class="pn-figures">
+    <div class="pn-figure" id="fig-next"><span class="pn-figure-label">The next one</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+    <div class="pn-figure" id="fig-total"><span class="pn-figure-label">Ahead, all of them</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+    <div class="pn-figure" id="fig-need"><span class="pn-figure-label">To meet each on time</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+    <div class="pn-figure" id="fig-gap"><span class="pn-figure-label">Against what goes aside now</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+  </div>
+  <div class="pn-grid pn-grid--wide">
+    <section class="slaf-card" aria-labelledby="h-form">
+      <h2 id="h-form">What each one costs your family</h2>
+      <div id="form-milestones"></div>
+    </section>
+    <section class="slaf-card" aria-labelledby="h-chart">
+      <h2 id="h-chart">The line of years</h2>
+      <p class="pn-say" id="say"></p>
+      <div id="chart"></div>
+      <ul class="pn-rows" id="events"></ul>
+    </section>
+  </div>
+<footer class="pn-foot">
+<p>Nothing leaves this device. There is no account and no server; a backup is a file you save on purpose.</p>
+<p>Empty is not zero: a blank box means "not entered", and a figure that needs it says so instead of guessing.</p>
+<p>The reference figures are dated starting points of low confidence, not quotes. Nothing here is halachic, tax or legal advice: bring the numbers to your rav, your preparer and your lawyer.</p>
+</footer>
+</main>
+<script src="shared/money.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/tuition.js"></script>
+<script src="engines/jewishyear.js"></script>
+<script src="engines/tzedakah.js"></script>
+<script src="engines/milestones.js"></script>
+<script src="engines/home.js"></script>
+<script src="engines/plan.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  var PN = SLAF.PN, Money = SLAF.Money, esc = PN.esc, Charts = SLAF.Charts;
+  function row(T, id) { return T.milestones.events.filter(function (e) { return e.id === id; })[0]; }
+  var render = {
+    form: function (h, T) {
+      var A = T.milestones.aliyah;
+      PN.el('form-milestones').innerHTML = '<div class="row">'
+        + PN.field({ label: 'A bar mitzvah', path: 'milestones.barmitzvahCents', type: 'cents', help: 'barmitzvah', hint: PN.band(row(T, 'barmitzvah').dollars, T) }, T)
+        + PN.field({ label: 'A bat mitzvah', path: 'milestones.batmitzvahCents', type: 'cents', help: 'batmitzvah', hint: PN.band(row(T, 'batmitzvah').dollars, T) }, T)
+        + '</div><div class="row">'
+        + PN.field({ label: 'A wedding, the whole of it', path: 'milestones.weddingCents', type: 'cents', help: 'wedding', hint: PN.band(row(T, 'wedding').dollars, T) }, T)
+        + PN.field({ label: 'Your share', path: 'milestones.weddingShareId', type: 'select', options: T.milestones.weddingShares.map(function (s) { return { value: s.id, label: s.label }; }), help: 'weddingShare', empty: 'Choose one' }, T)
+        + PN.field({ label: 'Your own share', path: 'milestones.customShare', type: 'rate', help: 'customShare' }, T)
+        + PN.field({ label: 'Married at', path: 'milestones.weddingAge', type: 'int', help: 'weddingAge', affix: 'years old', hint: 'Typical ' + row(T, 'wedding').age }, T)
+        + '</div><div class="row">'
+        + PN.field({ label: 'Supporting the young couple, a year', path: 'milestones.supportAnnualCents', type: 'cents', help: 'support', hint: PN.band(row(T, 'support').dollars, T) }, T)
+        + PN.field({ label: 'For how many years', path: 'milestones.supportYears', type: 'int', help: 'supportYears', affix: 'years' }, T)
+        + PN.field({ label: 'Put aside for simchas now, a month', path: 'plan.simchaMonthlyCents', type: 'cents', help: 'simchaMonthly' }, T)
+        + '</div><h3>' + esc(A.label) + '</h3><p class="pn-note">' + esc(A.note) + '</p><div class="row">'
+        + PN.field({ label: 'Planning aliyah', path: 'milestones.aliyah.on', type: 'bool', help: 'aliyahOn' }, T)
+        + PN.field({ label: 'In which year', path: 'milestones.aliyah.year', type: 'int', help: 'aliyahYear' }, T)
+        + A.items.map(function (it) { return PN.field({ label: it.label, path: 'milestones.aliyah.' + it.id + 'Cents', type: 'cents', help: 'aliyah_' + it.id, hint: PN.band(it.dollars, T) }, T); }).join('')
+        + '</div>';
+    },
+    draw: function (h, T) {
+      var m = SLAF.Milestones.timeline(h, T);
+      if (!Money.isOk(m)) {
+        ['fig-next', 'fig-total', 'fig-need', 'fig-gap'].forEach(function (id) { PN.figure(id, Money.NOT_YET, 'incomplete', ''); });
+        PN.say('say', m.reason); PN.el('chart').innerHTML = ''; PN.el('events').innerHTML = ''; return;
+      }
+      var v = m.value;
+      PN.figure('fig-next', v.next ? v.next.year : Money.NOT_YET, null, v.next ? v.next.label + (v.next.name ? ', ' + v.next.name : '') + ', ' + PN.fmt(v.next.cents) + (v.next.assumed ? ' (assumed)' : '') : 'nothing on the line');
+      PN.figure('fig-total', PN.fmt(v.totalCents), null, v.events.filter(function (e) { return e.countedIn === 'here'; }).length + ' simchas; the years in Israel are on the tuition page');
+      PN.figure('fig-need', PN.fmt(v.setAsideMonthlyCents), null, 'a month, from now, so each is paid when it lands');
+      var now = h.plan.simchaMonthlyCents;
+      if (Money.isEntered(now)) { var gap = v.setAsideMonthlyCents - now; PN.figure('fig-gap', PN.fmt(Math.abs(gap)), gap <= 0 ? 'good' : 'watch', gap <= 0 ? 'ahead of the pace' : 'a month short of the pace'); }
+      else PN.figure('fig-gap', Money.NOT_YET, 'incomplete', 'type what goes aside now');
+      var notes = [];
+      if (v.needSex.length) notes.push('A child with no boy or girl set has no bar or bat mitzvah on the line.');
+      if (v.shareMissing) notes.push('Type your share of a wedding to place the weddings.');
+      if (v.assumedAny) notes.push('Figures marked assumed use the typical band until you type your own.');
+      PN.say('say', notes.join(' '), notes.length ? 'watch' : null);
+      var names = [], seen = {};
+      v.events.forEach(function (e) { var k = e.kidId || 'family'; if (!seen[k]) { seen[k] = true; names.push({ id: k, label: e.name || 'The family' }); } });
+      var cats = v.byYear.map(function (y) { return String(y.year); });
+      var series = names.map(function (n) { return { id: n.id, label: n.label, values: v.byYear.map(function (y) { var s = 0, any = false; y.items.forEach(function (e) { if ((e.kidId || 'family') === n.id && e.countedIn === 'here') { s += e.cents; any = true; } }); return any ? s : null; }) }; });
+      PN.chart(PN.el('chart'), Charts.columns({ categories: cats, series: series, stacked: true, title: 'Simchas by year, one colour a child', rowLabel: 'Year' }), { title: 'What each year asks, stacked by child. The years in Israel are not in the bars.' });
+      PN.el('events').innerHTML = v.events.map(function (e) { return '<li' + (e.countedIn !== 'here' ? ' class="is-muted"' : '') + '><span>' + e.year + ' (' + (e.yearsAway === 0 ? 'this year' : e.yearsAway === 1 ? 'next year' : 'in ' + e.yearsAway + ' years') + '): ' + esc(e.label) + (e.name ? ', ' + esc(e.name) : '') + (e.countedIn !== 'here' ? ' (counted on the tuition page)' : '') + '</span><b' + (e.assumed ? ' class="is-assumed"' : '') + '>' + esc(PN.fmt(e.cents)) + (e.assumed ? ' assumed' : '') + '</b></li>'; }).join('');
+    }
+  };
+  PN.boot('milestones', render);
+})();
+</script>
+</body>
+</html>

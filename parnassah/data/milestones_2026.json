@@ -1,0 +1,29 @@
+{
+  "version": "2026.1",
+  "asOf": "2026-09",
+  "confidence": "low",
+  "source": "What Modern Orthodox families in the United States report spending on a bar or bat mitzvah, a year in Israel, a wedding and the first years of a young couple, gathered in summer 2026 and rounded to bands.",
+  "confidenceNote": "A simcha costs what a family decides it costs. The bands are wide on purpose; the planner asks for the family's own figure and uses the typical one only until it has it.",
+  "events": [
+    { "id": "barmitzvah",  "label": "Bar mitzvah",  "age": 13, "applies": "boy",  "dollars": { "low": 8000,  "typical": 25000, "high": 75000 }, "note": "Tefillin and the lessons, the kiddush, the seudah or party, and the trip if there is one." },
+    { "id": "batmitzvah",  "label": "Bat mitzvah",  "age": 12, "applies": "girl", "dollars": { "low": 5000,  "typical": 18000, "high": 60000 }, "note": "The celebration, the chesed project, the trip if there is one." },
+    { "id": "gap",         "label": "The year in Israel", "age": 18, "applies": "any", "dollars": { "low": 24000, "typical": 32000, "high": 42000 }, "note": "Counted on the tuition page when the child's gap year is on. It shows here so the timeline is whole." },
+    { "id": "wedding",     "label": "Wedding",      "age": 24, "applies": "any",  "dollars": { "low": 40000, "typical": 90000, "high": 200000 }, "note": "The whole wedding. Below, the share convention says how much of it is yours." },
+    { "id": "support",     "label": "Supporting the young couple", "age": 24, "applies": "any", "dollars": { "low": 12000, "typical": 24000, "high": 48000 }, "note": "A year of help while they study or start out. The planner multiplies by the number of years you expect to give it." }
+  ],
+  "weddingShares": [
+    { "id": "half",  "label": "Split down the middle", "share": 0.5, "note": "Each side pays half." },
+    { "id": "flop",  "label": "FLOP",                  "share": 0.35, "note": "The chatan's family pays flowers, liquor, orchestra and photography; the kallah's family pays the rest. Roughly a third to two thirds." },
+    { "id": "bride", "label": "The kallah's side pays", "share": 1.0, "note": "The older convention." },
+    { "id": "custom","label": "Your own share",        "share": null, "note": "Type it." }
+  ],
+  "aliyah": {
+    "label": "Aliyah",
+    "items": [
+      { "id": "pilot",    "label": "Pilot trip",            "dollars": { "low": 3000,  "typical": 6000,  "high": 12000 } },
+      { "id": "lift",     "label": "The lift (shipping)",   "dollars": { "low": 6000,  "typical": 12000, "high": 20000 } },
+      { "id": "landing",  "label": "The first three months", "dollars": { "low": 10000, "typical": 20000, "high": 40000 }, "note": "Rent and deposits, a car, appliances, ulpan, the school's absorption fees." }
+    ],
+    "note": "Nefesh B'Nefesh and the Jewish Agency give grants and the flight; the Ministry of Absorption pays a living stipend for the first months. A new oleh's foreign income and assets are exempt from Israeli tax for ten years, though reporting rules changed in 2026. Check both before you count on them."
+  }
+}

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<title>The picture</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="parnassah.css"/>
+<!--
+  THE PICTURE, the whole household (PN-009, PN-012).
+  1. READS   every engine; the household; the rules table.
+  2. WRITES  plan.* only: the emergency fund, the lean month, life cover, the will, disability, the retirement pot, the return.
+  3. SHOWS   take-home split into its lines and what is left; the checklist; the decade of tuition beside retirement; the freed tuition.
+  LIVE-FORM: built once.
+-->
+</head>
+<body class="slaf">
+<main class="pn" id="main">
+  <div id="pn-head"></div>
+  <h1>The picture</h1>
+  <p class="lede">Take-home in. Tuition, the year, tzedakah, the home, the simchas and retirement out. What is left is the ordinary month: weekday food, the cars, clothes, the rest. Then the checklist a family with tuition ahead of it should be able to tick.</p>
+  <div class="pn-actions" id="pn-actions"></div>
+  <div class="pn-figures">
+    <div class="pn-figure" id="fig-in"><span class="pn-figure-label">Take-home, a year</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+    <div class="pn-figure" id="fig-out"><span class="pn-figure-label">The community lines, a year</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+    <div class="pn-figure" id="fig-left"><span class="pn-figure-label">Left for everything else</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+    <div class="pn-figure" id="fig-left-month"><span class="pn-figure-label">That is, a month</span><span class="pn-figure-value"></span><span class="pn-figure-note"></span></div>
+  </div>
+  <section class="slaf-card" aria-labelledby="h-split">
+    <h2 id="h-split">Where the take-home goes</h2>
+    <p class="pn-say" id="say"></p>
+    <div id="chart"></div>
+    <ul class="pn-rows" id="steps"></ul>
+  </section>
+  <div class="pn-grid pn-grid--wide">
+    <section class="slaf-card" aria-labelledby="h-form">
+      <h2 id="h-form">What is in place</h2>
+      <div id="form-plan"></div>
+    </section>
+    <section class="slaf-card" aria-labelledby="h-check">
+      <h2 id="h-check">The checklist</h2>
+      <ul class="pn-check" id="checklist"></ul>
+    </section>
+  </div>
+  <section class="slaf-card" aria-labelledby="h-decade">
+    <h2 id="h-decade">The tuition years, and after</h2>
+    <p class="pn-note">Modern Orthodox families save for retirement late because tuition takes the years when compounding would have done the most. The bars are every tuition year ahead; the line is what goes to retirement now. Below, what the freed tuition could grow to if it kept going into savings the year the last bill is paid.</p>
+    <div id="chart-decade"></div>
+    <p id="freed"></p>
+  </section>
+<footer class="pn-foot">
+<p>Nothing leaves this device. There is no account and no server; a backup is a file you save on purpose.</p>
+<p>Empty is not zero: a blank box means "not entered", and a figure that needs it says so instead of guessing.</p>
+<p>The reference figures are dated starting points of low confidence, not quotes. Nothing here is halachic, tax or legal advice: bring the numbers to your rav, your preparer and your lawyer.</p>
+</footer>
+</main>
+<script src="shared/money.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/tuition.js"></script>
+<script src="engines/jewishyear.js"></script>
+<script src="engines/tzedakah.js"></script>
+<script src="engines/milestones.js"></script>
+<script src="engines/home.js"></script>
+<script src="engines/plan.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  var PN = SLAF.PN, Money = SLAF.Money, esc = PN.esc, Charts = SLAF.Charts;
+  var render = {
+    form: function (h, T) {
+      PN.el('form-plan').innerHTML = '<div class="row">'
+        + PN.field({ label: 'The emergency fund, today', path: 'plan.emergencyCents', type: 'cents', help: 'emergency' }, T)
+        + PN.field({ label: 'The lean month', path: 'plan.leanMonthCents', type: 'cents', help: 'leanMonth' }, T)
+        + PN.field({ label: 'Term life cover in force, both parents', path: 'plan.lifeCoverCents', type: 'cents', help: 'lifeCover' }, T)
+        + '</div><div class="row">'
+        + PN.field({ label: 'A will with a halachic clause', path: 'plan.hasWill', type: 'bool', help: 'hasWill' }, T)
+        + PN.field({ label: 'Disability cover on the earners', path: 'plan.hasDisability', type: 'bool', help: 'hasDisability' }, T)
+        + PN.field({ label: 'Retirement savings, today', path: 'plan.retirementBalanceCents', type: 'cents', help: 'retirementBalance' }, T)
+        + PN.field({ label: 'Growth to assume, a year', path: 'plan.returnRate', type: 'rate', help: 'returnRate', hint: 'After inflation, 4 to 5% is the usual sober figure' }, T)
+        + '</div>';
+    },
+    draw: function (h, T) {
+      var p = SLAF.Plan.picture(h, T);
+      if (!Money.isOk(p)) {
+        ['fig-in', 'fig-out', 'fig-left', 'fig-left-month'].forEach(function (id) { PN.figure(id, Money.NOT_YET, 'incomplete', ''); });
+        PN.say('say', p.reason); PN.el('chart').innerHTML = ''; PN.el('steps').innerHTML = ''; PN.el('checklist').innerHTML = ''; PN.el('chart-decade').innerHTML = ''; PN.el('freed').textContent = '';
+        return;
+      }
+      var v = p.value, out = v.takeHomeAnnualCents - v.leftCents;
+      PN.figure('fig-in', PN.fmt(v.takeHomeAnnualCents), null, 'twelve of the monthly take-home');
+      PN.figure('fig-out', PN.fmt(out), null, v.complete ? 'six lines' : 'so far; ' + v.missing.length + ' of six lines not yet known');
+      var kind = v.leftShare === null ? null : v.leftCents < 0 ? 'over' : v.leftShare < 0.15 ? 'watch' : 'good';
+      PN.figure('fig-left', PN.fmt(v.leftCents), kind, v.leftShare !== null ? PN.pct(v.leftShare) + ' of take-home' + (v.leftCents < 0 ? ': the lines above cannot all be paid from this income' : v.leftShare < 0.15 ? ': thin; the ordinary month will feel every spike' : '') : '');
+      PN.figure('fig-left-month', PN.fmt(Math.round(v.leftCents / 12)), kind, 'for food on weekdays, the cars, clothes, everything else');
+      PN.say('say', v.simchaGapMonthlyCents !== null && v.simchaGapMonthlyCents > 0 ? 'The simcha set-aside here is what goes aside now; the simchas page says it is ' + PN.fmt(v.simchaGapMonthlyCents) + ' a month short of meeting each on time.' : '');
+      var items = v.steps.filter(function (s) { return s.status === 'ok' && s.cents > 0; }).map(function (s) { return { label: s.label, value: s.cents }; });
+      if (v.leftCents > 0) items.push({ label: 'Left for everything else', value: v.leftCents, color: 'var(--color-neutral)' });
+      PN.chart(PN.el('chart'), Charts.stackbar({ items: items, total: v.leftCents > 0 ? v.takeHomeAnnualCents : out, title: 'Where the take-home goes' }), { title: v.leftCents > 0 ? 'The year\'s take-home, split into its lines.' : 'The lines, as shares of what they add up to; together they exceed the take-home.' });
+      PN.el('steps').innerHTML = v.steps.map(function (s) { return '<li' + (s.status !== 'ok' ? ' class="is-muted"' : '') + '><span>' + esc(s.label) + (s.note ? '<br/><span class="pn-note">' + esc(s.note) + '</span>' : '') + '</span><b>' + esc(s.status === 'ok' ? PN.fmt(s.cents) : Money.NOT_YET) + '</b></li>'; }).join('');
+      PN.el('checklist').innerHTML = v.checklist.map(function (c) { return '<li class="is-' + c.state + '"><span class="mark" aria-hidden="true">' + (c.state === 'done' ? '\u2713' : c.state === 'short' ? '!' : '?') + '</span><div><b>' + esc(c.label) + '</b> <span class="pn-note">' + esc(c.state === 'done' ? 'in place' : c.state === 'short' ? 'not yet' : 'not known') + '</span><p class="detail">' + esc(c.detail) + '</p></div></li>'; }).join('');
+      if (v.decade.length) {
+        PN.chart(PN.el('chart-decade'), Charts.columns({ categories: v.decade.map(function (d) { return String(d.year); }), series: [{ label: 'Tuition', values: v.decade.map(function (d) { return d.tuitionCents; }) }], stacked: true, title: 'Tuition by year, with retirement saving as a line', marker: Money.isEntered(h.household.retirementMonthlyCents) ? { value: h.household.retirementMonthlyCents * 12, label: 'to retirement a year' } : null, rowLabel: 'Year' }), { title: 'Every tuition year ahead. The dashed line is what goes to retirement now, a year.' });
+        var f = v.freed;
+        PN.el('freed').textContent = f ? 'The last tuition bill is paid in ' + f.year + '. Kept going into savings at ' + PN.fmt(f.monthlyCents) + ' a month, the freed tuition grows to about ' + PN.fmt(f.at65Cents) + ' by ' + f.age65Year + ', the older parent\'s 65th year, at ' + PN.pct(h.plan.returnRate) + ' a year' + (Money.isEntered(h.plan.retirementBalanceCents) ? ', on top of the ' + PN.fmt(h.plan.retirementBalanceCents) + ' saved today and what goes in until then' : '') + '.' : 'Type the older parent\'s year of birth on the home page and a growth rate above to see what the freed tuition could become.';
+      } else { PN.el('chart-decade').innerHTML = ''; PN.el('freed').textContent = v.parts.tuition.reason || ''; }
+    }
+  };
+  PN.boot('plan', render);
+})();
+</script>
+</body>
+</html>

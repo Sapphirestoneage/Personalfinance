@@ -1,0 +1,25 @@
+{
+  "version": "2026.1",
+  "asOf": "2026-09",
+  "confidence": "low",
+  "source": "Listing sites and county assessor pages for single-family homes within an eruv and a walk of a Modern Orthodox shul, read in summer 2026 and rounded. Property tax is the effective rate on a home at that price.",
+  "confidenceNote": "A median is not a house. Prices move every season and the walkable streets carry a premium over the town's median. Use the row to see the shape of the choice, then type the price of the house you are looking at.",
+  "communities": [
+    { "id": "teaneck",     "label": "Teaneck and Bergenfield, NJ", "region": "nynj",  "homeDollars": 950000,  "taxRate": 0.026 },
+    { "id": "englewood",   "label": "Englewood, NJ",              "region": "nynj",  "homeDollars": 1300000, "taxRate": 0.021 },
+    { "id": "westorange",  "label": "West Orange and Livingston, NJ", "region": "nynj", "homeDollars": 850000, "taxRate": 0.027 },
+    { "id": "fivetowns",   "label": "The Five Towns, NY",         "region": "nynj",  "homeDollars": 1250000, "taxRate": 0.019 },
+    { "id": "riverdale",   "label": "Riverdale, NY",              "region": "nynj",  "homeDollars": 1100000, "taxRate": 0.012 },
+    { "id": "queens",      "label": "Kew Gardens Hills and Hillcrest, NY", "region": "nynj", "homeDollars": 1150000, "taxRate": 0.010 },
+    { "id": "silverspring","label": "Silver Spring, MD",          "region": "large", "homeDollars": 800000,  "taxRate": 0.010 },
+    { "id": "baltimore",   "label": "Baltimore, MD",              "region": "large", "homeDollars": 550000,  "taxRate": 0.014 },
+    { "id": "boston",      "label": "Brookline and Newton, MA",   "region": "large", "homeDollars": 1500000, "taxRate": 0.010 },
+    { "id": "chicago",     "label": "Skokie and West Rogers Park, IL", "region": "large", "homeDollars": 600000, "taxRate": 0.021 },
+    { "id": "la",          "label": "Pico-Robertson, CA",         "region": "large", "homeDollars": 2000000, "taxRate": 0.012 },
+    { "id": "boca",        "label": "Boca Raton, FL",             "region": "large", "homeDollars": 900000,  "taxRate": 0.016 },
+    { "id": "atlanta",     "label": "Toco Hills, GA",             "region": "large", "homeDollars": 650000,  "taxRate": 0.011 },
+    { "id": "other",       "label": "Somewhere else",             "region": "small", "homeDollars": null,    "taxRate": null }
+  ],
+  "mortgage": { "ratePercent": 6.25, "years": 30, "insuranceRate": 0.004, "downShare": 0.20 },
+  "guide": { "housingShareOfTakeHome": 0.30, "housingAndTuitionShareOfTakeHome": 0.55 }
+}
