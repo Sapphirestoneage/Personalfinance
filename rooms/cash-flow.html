@@ -188,8 +188,9 @@
         <span class="slaf-input-shell"><select id="l-category" aria-label="Category"></select></span></label>
       <label class="slaf-field wide" id="l-paidwith-wrap" hidden><span class="slaf-label">Paid with</span>
         <span class="slaf-input-shell"><select id="l-paidwith" aria-label="Where the money left from"><option value="">Not said</option></select></span></label>
-      <label class="slaf-field wide"><span class="slaf-label">A note</span>
-        <span class="slaf-input-shell"><input type="text" id="l-note" placeholder="e.g. Trader Joe’s" aria-label="Note"/></span></label>
+      <label class="slaf-field wide"><span class="slaf-label">Where it went</span>
+        <span class="slaf-input-shell"><input type="text" id="l-note" list="l-places" placeholder="e.g. Trader Joe’s, Amazon, the landlord" aria-label="The place or company the money went to"/></span>
+        <datalist id="l-places"></datalist></label>
       <label class="slaf-field wide"><span class="slaf-label">What it produced</span>
         <span class="slaf-input-shell"><select id="l-produced" aria-label="What this expense produced">
           <option value="personal">Nothing, a personal expense</option>
@@ -315,6 +316,8 @@
 <script src="../engines/selfemployed.js"></script>
 <script src="../engines/ledger.js"></script>
 <script src="../engines/budget.js"></script>
+<script src="../engines/subscriptions.js"></script>
+<script src="../engines/merchants.js"></script>
 <script src="../shared/manage.js"></script>
 <script src="../shared/charts.js"></script>
 <script src="../engines/hourly.js"></script>
@@ -546,6 +549,18 @@
      is kept between receipts, since a run of them tends to share one.
      The options are rewritten only when the cards changed, so a select
      in use is never rebuilt under a thumb. */
+  /* The places already used, offered as the next one is typed (D-338):
+     one spelling a place, so the charts by place fold them together.
+     Rewritten only when the set changes. */
+  var placesSig = null;
+  function paintPlaces(h) {
+    var seen = {}, names = [];
+    SLAF.Merchants.byPlace(h, TABLES, { months: 0 }).rows.forEach(function (r) { if (!seen[r.key]) { seen[r.key] = true; names.push(r.label); } });
+    var sig = names.join('|');
+    if (sig === placesSig) return;
+    placesSig = sig;
+    el('l-places').innerHTML = names.map(function (n) { return '<option value="' + esc(n) + '"></option>'; }).join('');
+  }
   var paidWithSig = null;
   function paintPaidWith(h) {
     var sel = el('l-paidwith'), wrap = el('l-paidwith-wrap');
@@ -648,6 +663,7 @@
   function renderLog(h) {
     paintLinked(h);
     paintPaidWith(h);
+    paintPlaces(h);
     var m = Ledger.thisMonth();
     var log = CashFlow.logInMonth(h, TABLES.expenseCategories, m);
     el('log-month-title').textContent = Schema.monthLabel(m) + (log.count ? ' · ' + Money.formatCents(log.personalCents) + ' personal' + (log.incomeCostsCents ? ' · ' + Money.formatCents(log.incomeCostsCents) + ' costs of earning' : '') + (log.pendingReimbursementCents ? ' · ' + Money.formatCents(log.pendingReimbursementCents) + ' owed back to you' : '') : '')
@@ -725,7 +741,7 @@
       });
       var out = Object.keys(byBucket).reduce(function (t, b) { return t + byBucket[b]; }, 0);
       var left = inc.takeHomeCents + (log.reimbursedCents || 0) - out;
-      el('flow-why').textContent = inc.count ? Money.formatCents(inc.takeHomeCents) + ' came in after tax; ' + Money.formatCents(out) + ' has been logged going out' + (left > 0 ? ', ' + Money.formatCents(left) + ' not yet logged anywhere.' : left < 0 ? ', more than came in.' : '.') : 'Nothing logged as coming in this month yet; the outgoings are drawn against an empty pool.';
+      el('flow-why').innerHTML = esc(inc.count ? Money.formatCents(inc.takeHomeCents) + ' came in after tax; ' + Money.formatCents(out) + ' has been logged going out' + (left > 0 ? ', ' + Money.formatCents(left) + ' not yet logged anywhere.' : left < 0 ? ', more than came in.' : '.') : 'Nothing logged as coming in this month yet; the outgoings are drawn against an empty pool.') + ' By kind here; <a href="expenses.html#merchants">by place, in Expenses</a>.';
     } else {
       el('flow-title').textContent = 'A typical month, from Expenses';
       var take = Tier0.takeHomeMonthlyCents(h, TABLES);

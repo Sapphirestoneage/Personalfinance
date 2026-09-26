@@ -17305,7 +17305,51 @@ data. The move `rewards.oneSignupBonus` now has a room.
 `node test/solar.js` 5191; a phone walk at 390px through Expenses, Debt, Cash
 Flow and The Close with the example numbers, clean console.
 
-## D-338 — Every question in the Planets can be answered, and 195 facts get a home
+## D-338 — Where the money went, by place: all of it, and the part you chose
+
+**Why.** The owner: say where each expense was spent (which place or company),
+then draw where all the money went and where the discretionary money went, so
+a person can see what their spending says they value, and change it.
+
+**Decision.** The log's note is the place (`descriptor`, the key the merchant
+list already uses): `rooms/cash-flow.html` asks "Where it went" and offers the
+places already used. `Merchants.byPlace(h, tables, { months })` in
+`engines/merchants.js` is the one reader: a window of the log (1, 3 months or
+everything) folded by place through `CashFlow.logInMonth`, all money and
+discretionary money apart; `Merchants.discretionary(row, catalog)` is the
+catalog's own wants bucket, in the expenses bucket, and not marked fixed.
+`rooms/expenses.html#merchants` draws both as bars above the place list with
+the window switch, and points at What Matters for the question the order
+raises. The example gains a month of dated lines with places (`Demo.buildLog`).
+
+**Replaces or removes.** No screen and no field: the note's label and the
+reading it feeds. Cash Flow's flow hint links to it instead of a second chart.
+
+**Stored shape.** No change. `CashFlow.logInMonth` rows carry `fixed`.
+
+**Verified.** `node test/run.js` 35789, `node test/forms.js` 700,
+`node test/solar.js` 5191; a phone walk at 390px through Expenses and Cash
+Flow with the example numbers, the three windows, clean console.
+
+## D-339 — Coach Mode is its own app in coach/, a lane beside SPARKS like dnd/
+
+**Why.** The owner coaches clients live from a Google Sheet, and wants the coach
+tool built in parallel without the bulk of the rooms (spec: `coach/SPEC.md`).
+
+**Decision.** `coach/` is a separate app with three screens (Home, Session,
+Client View), its own storage (`coach.` keys, never `slaf.`), byte-identical
+copies of the few engines it reads (`coach/tools/vendor.js`), its own tests
+(`node coach/test/run.js`, in CI) and its own log (`coach/DECISIONS.md`,
+`CD-###`). Nothing in `rooms/`, `shared/`, `engines/` or `data/` changes for it.
+
+**Replaces or removes.** The owner's client Google Sheet. No SPARKS screen.
+
+**Stored shape.** No change to `slaf.household.v2` or any SPARKS key. The
+SPARKS device backup neither carries nor removes `coach.` keys.
+
+**Verified.** `node test/run.js`; `node coach/test/run.js`.
+
+## D-340 — Every question in the Planets can be answered, and 195 facts get a home
 
 **Why.** The owner, on the Planets screen: "Make sure every single question in
 the planets is answerable." A level would open and say "nowhere to type it
@@ -17341,7 +17385,7 @@ household and all 161 that apply to the example household offer a way to
 answer, none says "nowhere to type it yet", and one fact of every kind saves
 and survives a reload.
 
-## D-339 — The planets dashboard: what is answered, what it bought, where each reading sits
+## D-341 — The planets dashboard: what is answered, what it bought, where each reading sits
 
 **Why.** The owner: "I want there to be like a planet dashboard with a ton of
 data visualizations and metrics and percentages with everything clearly
@@ -17381,7 +17425,7 @@ yet" rather than 0%, and that a level named on the dashboard opens where it is
 answered. Looked at in a browser at 390px, empty and with the example
 household.
 
-## D-340 — The standard the app is held to, and the first pass against it
+## D-342 — The standard the app is held to, and the first pass against it
 
 **Why.** The owner: "This is pretty complex and it feels messy. Make every
 single thing feel more professional look professional meet professional
@@ -17413,7 +17457,7 @@ Nothing gains a screen or a field.
 rules; `node test/render.js` 302 across every room in both states; the browser
 gates; and the four main screens looked at again at 390px, before and after.
 
-## D-341 — Nothing moves under a finger
+## D-343 — Nothing moves under a finger
 
 **Why.** The guided walk in the Ledger did not move when you tapped Next on a
 phone. Nothing errored, nothing said so: the tap simply did nothing, and the
@@ -17450,7 +17494,7 @@ two that were landing 500px down among them; `node test/run.js`; the walk
 tapped through by hand at 412px with the touch events logged.
 
 
-## D-342 — The measuring stick draws, and asks whose bands once
+## D-344 — The measuring stick draws, and asks whose bands once
 
 **Why.** The Scorecard's first block was seven paragraphs: a share, a band, a
 verdict, four buttons asking whose band this row reads, an explainer and a
@@ -17481,7 +17525,7 @@ check replaced by six that hold the new one; the Scorecard read at 390px with
 the example household, every label whole.
 
 
-## D-343 — The Cushion answers before it asks
+## D-345 — The Cushion answers before it asks
 
 **Why.** The room exists to say how long the money lasts, and said it after two
 screens of boxes: the situation, a paragraph about that situation, six figures
@@ -17503,7 +17547,6 @@ or figure.
 **Verified.** `node test/run.js`; `node test/forms.js` with the room's two
 cases (the boxes are the same boxes, in the same card); the room read at 390px
 with the example household and with nothing entered.
-
 
 ---
 

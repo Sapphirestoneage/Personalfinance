@@ -11410,7 +11410,7 @@ section('DRAFTT: seven shares against seven bands (D-173)');
   /* The screen: one section, seven rows max, no chart, the pick is buttons. */
   const page = fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8');
   checkTrue('the Snapshot opens on DRAFTT', page.indexOf('id="draftt"') < page.indexOf('id="inputs"'));
-  /* D-342: the measuring stick draws. D-173 shipped it as seven paragraphs
+  /* D-344: the measuring stick draws. D-173 shipped it as seven paragraphs
      and no chart at all; a value against a range is a bullet bar, which is
      docs/DESIGN.md rule 13, and seven shares of one pay packet share one
      axis honestly. The words and the figures stayed: the chart carries them,
@@ -14011,7 +14011,7 @@ section('All at once: a second view of the same rows (D-208, a Ledger view since
      the control. Revealed above it, the choice button moved out from under
      the finger between touchend and click, the browser retargeted the click
      to the row, and the answer was dropped without a word.
-     D-341: below the control was not enough. Putting it AWAY on blur took
+     D-343: below the control was not enough. Putting it AWAY on blur took
      68px out of the page in the same gap, which moved everything under the
      row instead, the walk's own Next button among it. The row keeps its
      height until that click has landed. */
@@ -14968,6 +14968,43 @@ section('A statement in, the merchants, the slope (D-306)');
   check('bought ahead and paid late are each named and counted', s.aheadCents + ':' + s.aheadCount + ':' + s.behindCents + ':' + s.behindCount, '20000:1:6000:1');
   checkTrue('both lines cumulate and never fall', s.days.every((d, i) => i === 0 || (d.cumPaidCents >= s.days[i - 1].cumPaidCents && d.cumForCents >= s.days[i - 1].cumForCents)));
   check('a past month runs to its last day', Merchants.slope(Spine.getProfile(), { month: '2026-08', today: '2026-09-19' }).days.length, 31);
+
+  /* -- where the money went, by place, and the discretionary part (D-338) -- */
+  {
+    const P = (x) => Schema.createExpenseEntry(Object.assign({ period: 'once', source: 'log', dateKind: 'exact' }, x));
+    const hw = { expenses: { entries: [
+      P({ id: 'w1', categoryId: 'groceries', amountCents: 8412, date: '2026-09-05', descriptor: 'TRADER JOES MARKET #512' }),
+      P({ id: 'w2', categoryId: 'dining_out', amountCents: 4200, date: '2026-09-12', descriptor: 'Sweetgreen' }),
+      P({ id: 'w3', categoryId: 'dining_out', amountCents: 3100, date: '2026-08-20', descriptor: 'Sweetgreen' }),
+      P({ id: 'w4', categoryId: 'housing', amountCents: 150000, period: 'monthly', date: '2026-06-01', descriptor: 'Rent' }),
+      P({ id: 'w5', categoryId: 'emergency_savings', amountCents: 30000, date: '2026-09-02', descriptor: 'Ally transfer' }),
+      P({ id: 'w6', categoryId: 'entertainment', amountCents: 2500, date: '2026-09-25', dateKind: 'potential', descriptor: 'Concert' }),
+      P({ id: 'w7', categoryId: 'subscriptions', amountCents: 1549, date: '2026-09-03', descriptor: 'NETFLIX.COM', fixed: true }),
+      P({ id: 'w8', categoryId: 'shopping', amountCents: 6420, date: '2026-09-09', descriptor: 'Amazon', produced: 'reimbursable', reimbursableFrom: 'work', reimbursementStatus: 'received', dateReceived: '2026-09-15' }),
+      P({ id: 'w9', categoryId: 'shopping', amountCents: 1000, date: '2026-09-10', descriptor: 'Amazon', active: false })
+    ] } };
+    const one = Merchants.byPlace(hw, T, { today: '2026-09-20', months: 1 });
+    check('this month, by place, largest first', one.rows.map(r => r.key + ':' + r.totalCents).join(','), 'rent:150000,ally transfer:30000,trader joes market:8412,sweetgreen:4200,netflix com:1549,amazon:0');
+    check('the recurring rent counts once in the month; the potential concert and the archived line never', one.count, 6);
+    check('a repayment received is money back at that place, in the month it came', one.rows.filter(r => r.key === 'amazon')[0].totalCents, 0);
+    check('discretionary is the catalog\u2019s wants, not the rent, the transfer, the groceries, or the fixed subscription', one.rows.map(r => r.key + ':' + r.discretionaryCents).filter(x => !/:0$/.test(x)).join(','), 'sweetgreen:4200');
+    check('...and the totals say so', one.totalCents + '/' + one.discretionaryCents, (150000 + 30000 + 8412 + 4200 + 1549) + '/4200');
+    check('a place keeps the category most of its money filed under', one.rows.filter(r => r.key === 'trader joes market')[0].categoryId, 'groceries');
+    const three = Merchants.byPlace(hw, T, { today: '2026-09-20', months: 3 });
+    check('three months run July to September', three.from + '..' + three.to + ':' + three.months, '2026-07..2026-09:3');
+    check('...and fold the two Sweetgreen visits', three.rows.filter(r => r.key === 'sweetgreen')[0].count + ':' + three.rows.filter(r => r.key === 'sweetgreen')[0].totalCents, '2:7300');
+    const all = Merchants.byPlace(hw, T, { today: '2026-09-20', months: 0 });
+    check('everything runs from the earliest dated line, so the rent counts every month since June', all.from + ':' + all.rows.filter(r => r.key === 'rent')[0].totalCents, '2026-06:600000');
+    check('nothing dated is an empty window, not a zero one', Merchants.byPlace({ expenses: { entries: [] } }, T, { today: '2026-09-20', months: 0 }).from, null);
+    checkTrue('discretionary needs the catalog; without it nothing is called discretionary', !Merchants.discretionary({ categoryId: 'dining_out' }, null) && Merchants.discretionary({ categoryId: 'dining_out' }, T.expenseCategories) && !Merchants.discretionary({ categoryId: 'dining_out', fixed: true }, T.expenseCategories) && !Merchants.discretionary({ categoryId: 'dining_out', bucket: 'savings' }, T.expenseCategories));
+    const ex = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8');
+    checkTrue('Expenses draws both charts off the one reader, with a window switch and the way to What Matters', /id="where-all"/.test(ex) && /id="where-disc"/.test(ex) && /Merchants\.byPlace\(h, TABLES, \{ months: WINDOW \}\)/.test(ex) && /data-window="0"/.test(ex) && /href="values\.html#spending"/.test(ex));
+    const cfw = fs.readFileSync(path.join(ROOT, 'rooms/cash-flow.html'), 'utf8');
+    checkTrue('the log asks where it went and offers the places already used', /Where it went/.test(cfw) && /list="l-places"/.test(cfw) && /SLAF\.Merchants\.byPlace\(h, TABLES, \{ months: 0 \}\)/.test(cfw) && /engines\/merchants\.js/.test(cfw));
+    const log = Demo.buildLog('2026-02');
+    checkTrue('the example has a month of dated lines with places, folded to the month\u2019s last day', log.length > 10 && log.every(e => e.source === 'log' && e.descriptor && /^2026-02-\d{2}$/.test(e.date)) && log.every(e => +e.date.slice(8) <= 28));
+    checkTrue('...some discretionary, some not, one fixed', log.some(e => e.categoryId === 'dining_out') && log.some(e => e.categoryId === 'housing') && log.some(e => e.fixed === true));
+  }
   checkTrue('a month total still counts the day it left: the cash flow log is untouched by forDate', (function () { const CF = require(path.join(ROOT, 'engines/cashflow.js')); return CF.logInMonth(Spine.getProfile(), T.expenseCategories, '2026-09').rows.some(r => r.entryId === con.id); })());
   checkTrue('the two fields are documented', !!Schema.FIELDS['expenses.entries[].forDate'] && !!Schema.FIELDS['expenses.rules[].key'] && !!Schema.FIELDS['expenses.rules[].categoryId']);
 
@@ -16860,7 +16897,7 @@ section('Band 1 in words anyone can answer (D-336)');
     /Ownership\.write\(id, value\)/.test(page));
 })();
 
-section('Every question in the Planets can be answered (D-338)');
+section('Every question in the Planets can be answered (D-340)');
 
 (function () {
   /* The owner's words: "Make sure every single question in the planets is
@@ -16965,7 +17002,7 @@ section('Every question in the Planets can be answered (D-338)');
     /function showLevelAnswer/.test(page) && /Solar\.levelState\(lv, Spine\.getProfile\(\)\)/.test(page));
 })();
 
-section('The planets dashboard (D-339)');
+section('The planets dashboard (D-341)');
 
 (function () {
   /* The owner: "I want there to be like a planet dashboard with a ton of data
@@ -17050,7 +17087,7 @@ section('The planets dashboard (D-339)');
     'fire at ' + fireAt + ', statement at ' + stmtAt);
 })();
 
-section('The standard the app is held to (D-340)');
+section('The standard the app is held to (D-342)');
 
 (function () {
   /* The owner: "Make every single thing feel more professional look
@@ -17106,7 +17143,7 @@ section('The standard the app is held to (D-340)');
   checkTrue('and motion is off for anyone who asks for that',
     /@media \(prefers-reduced-motion: reduce\)[^}]*\{[^}]*\*/.test(theme.replace(/\n/g, ' ')));
 
-  /* 13. Nothing moves under a finger (D-341). */
+  /* 13. Nothing moves under a finger (D-343). */
   checkTrue('the toast confirms at the top, leaving the bottom to the action and the keyboard',
     /\.slaf-toast \{[^}]*top: max\(12px/.test(theme.replace(/\n/g, ' ')));
   checkTrue('...and nothing puts it back at the bottom on a wider screen',
@@ -17131,7 +17168,7 @@ section('The standard the app is held to (D-340)');
     /test\/render\.js/.test(design) && /test\/alignment\.js/.test(design) && /node test\/run\.js/.test(design));
 })();
 
-section('The Cushion answers before it asks (D-343)');
+section('The Cushion answers before it asks (D-345)');
 
 (function () {
   const runway = fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8');

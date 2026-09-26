@@ -258,7 +258,7 @@
       /* A row may print a figure of its own instead of the plotted one: a
          bullet bar draws how far a ratio sits from its band's edge, which is
          the only honest way to put measures of different scale on one axis,
-         and then says the real number beside it (D-339). */
+         and then says the real number beside it (D-341). */
       var shown = v === null ? (r.empty || 'not yet') : (r.display !== undefined && r.display !== null ? r.display : format(v));
       return '<div class="row' + (v === null ? ' is-empty' : '') + '">'
         + '<span class="lbl">' + esc(r.label) + (r.note ? '<small>' + esc(r.note) + '</small>' : '') + '</span>'

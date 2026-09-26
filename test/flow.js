@@ -29,7 +29,7 @@ const { chromium } = require('playwright');
 /* Either name, with or without the trailing slash: the other gates read
    SLAF_BASE and these two read BASE, and a run that set only one of them
    died on "Cannot navigate to invalid URL" rather than saying which
-   address it had been handed. D-341. */
+   address it had been handed. D-343. */
 const BASE = String(process.env.SLAF_BASE || process.env.BASE || 'http://127.0.0.1:8765')
   .replace(/\/+$/, '') + '/';
 const EXECUTABLE = process.env.CHROMIUM || '/opt/pw-browsers/chromium';
@@ -175,7 +175,7 @@ function check(name, ok, detail) { if (ok) passed++; else failures.push(name + (
   check('"I am not sure" is recorded as an answer of its own', unsure.notSure);
   check('and no number is written in its place', unsure.value === null && unsure.status === 'incomplete', JSON.stringify(unsure));
 
-  console.log('\nThe dashboard reads what has been answered (D-339)');
+  console.log('\nThe dashboard reads what has been answered (D-341)');
 
   await page.click('#sky-tabs [data-tab="dash"]');
   await page.waitForTimeout(400);

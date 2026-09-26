@@ -32,20 +32,30 @@
      Merchants.slope(h, { month })           → { from, to, days[], paidCents,
                                              forCents, aheadCents, behindCents,
                                              aheadCount, behindCount }
+     Merchants.discretionary(row, catalog)   true when a logged line is wants
+                                             money: a category the catalog
+                                             files under wants, in the expenses
+                                             bucket, and not marked fixed (D-338)
+     Merchants.byPlace(h, tables, { months, month, today })
+                                             → { from, to, months, rows[], totalCents,
+                                             discretionaryCents, count }: a
+                                             window of the log folded by place,
+                                             all money and discretionary money
+                                             apart, largest first (D-338)
    Money is integer cents. Nothing here writes; the room writes through
    the spine.
    ========================================================================== */
 (function (root, factory) {
   var deps;
   if (typeof module === 'object' && module.exports) {
-    deps = { Money: require('../shared/money.js'), Schema: require('../shared/schema.js'), Subs: require('./subscriptions.js') };
+    deps = { Money: require('../shared/money.js'), Schema: require('../shared/schema.js'), Subs: require('./subscriptions.js'), CashFlow: require('./cashflow.js') };
   } else {
-    deps = { Money: root.SLAF && root.SLAF.Money, Schema: root.SLAF && root.SLAF.Schema, Subs: root.SLAF && root.SLAF.Subscriptions };
+    deps = { Money: root.SLAF && root.SLAF.Money, Schema: root.SLAF && root.SLAF.Schema, Subs: root.SLAF && root.SLAF.Subscriptions, CashFlow: root.SLAF && root.SLAF.CashFlow };
   }
-  var api = factory(deps.Money, deps.Schema, deps.Subs);
+  var api = factory(deps.Money, deps.Schema, deps.Subs, deps.CashFlow);
   if (typeof module === 'object' && module.exports) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Merchants = api; }
-})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Subs) {
+})(typeof self !== 'undefined' ? self : null, function (Money, Schema, Subs, CashFlow) {
   'use strict';
   var ISO = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -137,6 +147,64 @@
      day outside it shows on the paid line only, and money for a day in the
      window paid outside it shows on the for line only: that gap IS the
      point. */
+  /* ---- Where the money went, by place (D-338) --------------------------
+     A window of the log folded by place: every counted occurrence (the
+     month's own reader, so a recurring bill, a statement line and a
+     receipt typed by hand all count once, a potential date never, a
+     repayment received as money back), keyed the way the list above keys.
+     Discretionary money is the part a person chose: a category the catalog
+     files under wants; spending, not savings, a contribution or a debt
+     payment; and nothing marked fixed. */
+  function discretionary(row, catalog) {
+    if (!row || row.fixed === true || !catalog || !CashFlow) return false;
+    if (row.bucket && row.bucket !== 'expenses') return false;
+    /* The catalog's own word: a category in the wants bucket is "real
+       spending, but discretionary" (data/expense_categories.json). */
+    var c = CashFlow.categoryById(catalog, row.categoryId);
+    return !!(c && c.bucket === 'wants');
+  }
+  function shiftYm(ym, n) { var d = new Date(+ym.slice(0, 4), +ym.slice(5, 7) - 1 + n, 1); return d.getFullYear() + '-' + pad(d.getMonth() + 1); }
+  function byPlace(h, tables, opts) {
+    var o = opts || {};
+    var catalog = (tables || {}).expenseCategories || null;
+    var today = Schema.localDay(o.today);
+    var last = /^\d{4}-\d{2}$/.test(o.month || '') ? o.month : today.slice(0, 7);
+    var n = o.months === undefined || o.months === null ? 1 : Math.max(0, Math.floor(o.months));
+    var months = [];
+    if (n > 0) { for (var i = n - 1; i >= 0; i--) months.push(shiftYm(last, -i)); }
+    else {
+      var seen = {};
+      (((h || {}).expenses || {}).entries || []).forEach(function (e) { if (e && e.source === 'log' && e.active !== false && e.date && ISO.test(e.date)) seen[e.date.slice(0, 7)] = true; });
+      months = Object.keys(seen).filter(function (m) { return m <= last; }).sort();
+      /* A recurring line counts every month from its first; the window
+         runs from the earliest dated line to the month shown. */
+      if (months.length) { for (var m = months[0]; m <= last; m = shiftYm(m, 1)) if (months.indexOf(m) < 0) months.push(m); months.sort(); }
+    }
+    var groups = {}, total = 0, disc = 0, count = 0;
+    months.forEach(function (m) {
+      (CashFlow ? CashFlow.logInMonth(h, catalog, m).rows : []).forEach(function (r) {
+        var k = key(r.descriptor || r.categoryId || '');
+        if (!k) return;
+        var g = groups[k] = groups[k] || { key: k, label: r.descriptor || k, count: 0, totalCents: 0, discretionaryCents: 0, cats: {}, lastDate: null };
+        var isDisc = discretionary(r, catalog);
+        g.count += r.credit ? 0 : 1;
+        g.totalCents += r.cents;
+        if (isDisc) g.discretionaryCents += r.cents;
+        g.cats[r.categoryId || 'other'] = (g.cats[r.categoryId || 'other'] || 0) + r.cents;
+        if (!g.lastDate || r.date >= g.lastDate) { g.lastDate = r.date; if (r.descriptor) g.label = r.descriptor; }
+        total += r.cents; if (isDisc) disc += r.cents; if (!r.credit) count++;
+      });
+    });
+    var rows = Object.keys(groups).map(function (k) {
+      var g = groups[k];
+      var top = Object.keys(g.cats).sort(function (a, b) { return g.cats[b] - g.cats[a]; })[0] || null;
+      return { key: g.key, label: g.label, count: g.count, totalCents: g.totalCents, discretionaryCents: g.discretionaryCents, categoryId: top, lastDate: g.lastDate };
+    });
+    rows.sort(function (a, b) { return b.totalCents - a.totalCents || (a.label < b.label ? -1 : 1); });
+    return { from: months.length ? months[0] : null, to: months.length ? months[months.length - 1] : null, months: months.length,
+      rows: rows, totalCents: total, discretionaryCents: disc, count: count };
+  }
+
   function pad(n) { return (n < 10 ? '0' : '') + n; }
   function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
   function addDays(day, n) { var d = new Date(+day.slice(0, 4), +day.slice(5, 7) - 1, +day.slice(8, 10) + n); return iso(d); }
@@ -165,5 +233,5 @@
     return { month: ym, from: from, to: to, today: today, days: days, count: count, paidCents: paidTotal, forCents: forTotal, aheadCents: ahead, aheadCount: aheadN, behindCents: behind, behindCount: behindN };
   }
 
-  return { key: key, lines: lines, rules: rules, setRule: setRule, categoryFor: categoryFor, list: list, refile: refile, slope: slope };
+  return { key: key, lines: lines, rules: rules, setRule: setRule, categoryFor: categoryFor, list: list, refile: refile, slope: slope, discretionary: discretionary, byPlace: byPlace };
 });

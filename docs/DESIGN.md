@@ -4,7 +4,7 @@ One page. It exists because "make it look professional" is not a review you
 can act on, and "the label wraps onto three lines" is. Everything below is a
 rule a session can check, most of them in `test/run.js` or a browser gate.
 
-D-340 wrote it. Add to it when a rule earns its place; do not add taste.
+D-342 wrote it. Add to it when a rule earns its place; do not add taste.
 
 ## Numbers
 
@@ -48,7 +48,7 @@ D-340 wrote it. Add to it when a rule earns its place; do not add taste.
     later, a click at the same point. Anything that collapses in between, a
     help line put away on blur, a toast that appears, moves the target and the
     click lands on whatever took its place. Whatever a row shows on focus, it
-    keeps until the tap that took the focus away has landed (D-341), and the
+    keeps until the tap that took the focus away has landed (D-343), and the
     bottom of the screen belongs to the primary action and the keyboard, not
     to a notice.
 

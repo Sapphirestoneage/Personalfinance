@@ -12,7 +12,7 @@ Reference data: aca_2026.json, access_rules.json, cobra_aca_2024.json, debt_rule
 Owns: oopMax, termLife, disabilityMonthly, umbrella, expectedSearchMonths, floorMonthly, swanTarget
 Reads from other owners: grossAnnualIncome (start), takeHomeMonthly (ledger), cashSavings (start), employmentStatus (start), highestDeductible (start), healthCover (protection), healthMonthly (protection), monthlyExpenses (expenses)
 Latest decisions:
-  - D-343 — The Cushion answers before it asks
+  - D-345 — The Cushion answers before it asks
   - D-314 — The worst plausible year is the Cushion's
   - D-232 — The Cushion: four readings of one number
   - D-130 — What was pushed off, built: dates that are only estimated or potential, the calendar from the ledger, one month of spending, one rent, what the log moved, N/A in its owner room, an emergency-fund preset

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<meta name="robots" content="noindex"/>
+<title>Session</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="coach.css"/>
+<!--
+  THE SESSION, the coach console (CD-006, CD-010, CD-011, coach/SPEC.md 3.2).
+
+  1. READS   the client named in ?client= (from the roster; an unknown id
+             draws nothing): the path, the stop's entries, read-outs and
+             pictures, the rail against the session's start snapshot, notes.
+  2. WRITES  that client only, through coach/shared/coach.js: entries (the
+             form, quick entry), ticks, notes, homework, comments, decisions,
+             the session and its recap; and how the coach likes each chart
+             drawn (coach.prefs.v1, display only).
+  3. SHOWS   a step bar; left the path; centre the stop's questions, its
+             read-outs as tiles, its pictures, its entry form with plain
+             words on every box; right the five numbers as meters.
+
+  There is no client picker here, on purpose: switching clients goes
+  through Coach Home, so another household never flashes on a shared screen.
+
+  LIVE-FORM: built once per stop. The entry form is built when the coach
+  moves to a stop (or adds or removes a line), never while a box in it is
+  in use; a saved box repaints the path, the tiles, the pictures and the
+  rail only. Every other text box (quick entry, the note box, homework,
+  comments, the recap) is static markup and never rebuilt.
+-->
+</head>
+<body class="slaf">
+<main class="coach" id="main">
+  <div id="head"></div>
+  <div class="stepbar" id="stepbar" aria-live="polite"></div>
+  <p class="coach-say" id="top-say" role="status"></p>
+
+  <div class="console" id="console">
+    <aside class="pathcol" aria-label="The session path">
+      <div class="row" style="margin-bottom:var(--space-2)"><label class="inline">Which path<select id="path-template"></select></label></div>
+      <div id="path"></div>
+    </aside>
+
+    <section class="workcol" aria-label="The work area">
+      <div class="crumbs" id="crumbs"></div>
+      <div class="slaf-card" id="work" aria-live="off">
+        <div class="quick" id="quick">
+          <label class="inline" style="width:100%">Quick entry, while the client talks <span class="coach-note">(car 450/mo 5.9% 38 left, rent 2100, 401k 38k match 4%, hysa 12.5k)</span>
+            <input type="text" id="quick-in" autocomplete="off" spellcheck="false" aria-describedby="quick-preview" placeholder="type it the way they say it, then press Enter"/></label>
+          <div class="preview" id="quick-preview" aria-live="polite"></div>
+        </div>
+        <div class="field-label" style="margin-top:var(--space-3)"><h2 id="work-title" style="margin:0">This stop</h2><span id="work-help"></span></div>
+        <p class="coach-note" id="work-covers"></p>
+        <ul class="ask" id="ask"></ul>
+        <div class="stats" id="figures"></div>
+        <div class="pics" id="pics"></div>
+        <div id="form"></div>
+        <p class="coach-say" id="form-say" role="status"></p>
+      </div>
+
+      <div class="slaf-card" id="notes">
+        <h2>Notes</h2>
+        <div class="tabs" role="tablist" aria-label="Notes for">
+          <button type="button" role="tab" aria-selected="true" data-tab="stop" id="tab-stop">This stop</button>
+          <button type="button" role="tab" aria-selected="false" data-tab="session" id="tab-session">This session</button>
+        </div>
+        <div class="note-kind" role="radiogroup" aria-label="Who sees this note">
+          <label><input type="radio" name="note-kind" value="coach" checked/> Private: only you see it</label>
+          <label><input type="radio" name="note-kind" value="shared"/> Shared: in the recap and the client's view</label>
+        </div>
+        <label class="inline" style="width:100%"><span class="slaf-label">The note</span><textarea id="note-text"></textarea></label>
+        <button type="button" class="slaf-btn slaf-btn--small" id="btn-note-add">Add the note</button>
+        <ul class="note-list" id="list-notes"></ul>
+
+        <h3 style="margin-top:var(--space-4)">Homework</h3>
+        <p class="coach-note">One thing to find or do before next time. Press Homework beside any item on the path to start one.</p>
+        <div class="row">
+          <label class="inline" style="flex:1 1 16rem">What to do<input type="text" id="hw-text" maxlength="500" placeholder="for example: find the fee on the 401(k) funds"/></label>
+          <label class="inline">By<input type="date" id="hw-due"/></label>
+          <button type="button" class="slaf-btn slaf-btn--small" id="btn-hw-add">Add homework</button>
+        </div>
+        <ul class="note-list" id="list-hw"></ul>
+
+        <h3 style="margin-top:var(--space-4)">Comments</h3>
+        <p class="coach-note">A remark tied to one number or goal, from you or from the client.</p>
+        <div class="row">
+          <label class="inline">On<select id="cm-target"></select></label>
+          <label class="inline" style="flex:1 1 16rem">The comment<input type="text" id="cm-text" maxlength="2000"/></label>
+          <label class="inline">Who said it<select id="cm-by"><option value="coach">Me</option><option value="client">The client (I am writing it down)</option></select></label>
+          <button type="button" class="slaf-btn slaf-btn--small" id="btn-cm-add">Add comment</button>
+        </div>
+        <ul class="note-list" id="list-cm"></ul>
+      </div>
+    </section>
+
+    <aside class="railcol" aria-label="The five numbers">
+      <h2>The five numbers</h2>
+      <p class="coach-note">Now, and where each was when the session started.</p>
+      <ul class="rail" id="rail"></ul>
+    </aside>
+  </div>
+
+  <section class="slaf-card" id="recap" style="margin-top:var(--space-4)" hidden>
+    <h2>The recap</h2>
+    <p class="coach-note">Written from the numbers at the start and the end of the session. Change any line; your private notes are never in it.</p>
+    <textarea id="recap-text" style="min-height:22rem"></textarea>
+    <div class="row" style="margin-top:var(--space-2)">
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-recap-save">Save the recap</button>
+      <button type="button" class="slaf-btn" id="btn-recap-print">Print or save as PDF</button>
+      <button type="button" class="slaf-btn" id="btn-recap-copy">Copy the text</button>
+      <label class="inline">Password for a locked file<input type="password" id="recap-pass" autocomplete="new-password"/></label>
+      <button type="button" class="slaf-btn" id="btn-recap-seal">Save a locked file</button>
+    </div>
+    <p class="coach-say" id="recap-say" role="status"></p>
+  </section>
+</main>
+
+<div class="print-page" id="print-page" hidden></div>
+
+<dialog class="coach-dialog" id="detour-dialog" aria-labelledby="detour-title">
+  <h2 id="detour-title">Take a detour to</h2>
+  <p class="coach-note">Sometimes a stop cannot finish until another is done. Go there; a chip at the top brings you straight back to where you were. At most two deep.</p>
+  <div id="detour-list"></div>
+  <div class="row" style="margin-top:var(--space-2)"><button type="button" class="slaf-btn slaf-btn--quiet" id="detour-cancel">Stay here</button></div>
+</dialog>
+
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/csv.js"></script>
+<script src="shared/vault.js"></script>
+<script src="shared/demo-persona.js"></script>
+<script src="shared/fields.js"></script>
+<script src="shared/coach.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/charts.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/tier0.js"></script>
+<script src="engines/debt.js"></script>
+<script src="engines/foo.js"></script>
+<script src="engines/cashflow.js"></script>
+<script src="engines/coast.js"></script>
+<script src="engines/opening.js"></script>
+<script src="engines/countdown.js"></script>
+<script src="engines/session.js"></script>
+<script src="engines/quickentry.js"></script>
+<script src="common.js"></script>
+<script src="console.js"></script>
+</body>
+</html>
