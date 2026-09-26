@@ -34,6 +34,13 @@ weeks of made-up posts and people; "Clear them and start fresh" removes them.
 | `test/run.js` | The tests (`node marketing/test/run.js`, also in CI) |
 | `DECISIONS.md`, `STATUS.md` | This lane's log (`MD-###`) and where it stands |
 
+## The same thing as a spreadsheet
+
+`Marketing-Scoreboard.xlsx` is the Scoreboard as one workbook (MD-010): the
+same three logs and the same readings, every number a formula you can click
+on. Open it in Google Sheets (File, Import, Upload) or Excel.
+`python3 marketing/tools/sheet.py` rebuilds it (needs `openpyxl`).
+
 ## The rules that carry over from SPARKS
 
 - **Empty is not zero.** A result nobody typed is blank; a rate with a blank

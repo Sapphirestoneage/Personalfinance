@@ -15,6 +15,9 @@ Updated: 2026-09-26
   attribution by lane and channel, conversion rates and the sales cycle,
   who to contact today, the share report.
 
+- **The spreadsheet (MD-010)**: `Marketing-Scoreboard.xlsx`, the same tool as
+  one workbook, because the owner trusts a cell over an app.
+
 ## Next
 1. The owner tries it with the example data, then logs a week of real
    posts and imports one contacts file, and says which words land wrong.
