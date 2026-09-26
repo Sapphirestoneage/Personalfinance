@@ -291,25 +291,26 @@ section('A session, the recap, Client View: no coach note ever shows (CD-006, CD
   const stops = Session.path(T.sessionPaths, 'default', {});
   const recap = Session.recap(before, after, T, { stops, stopsCovered: ended.stopsCovered, ticked: ended.ticked, notes: r.notes, homework: r.homework, sessionId: sess.id, readings: Fields.readings });
   checkTrue('the recap: covered, the new debt, ratios, the FI date, shared notes, homework',
-    /Debt \(1 item done\)/.test(recap.text) && /Added Car loan: rate 5\.9%, payment \$450/.test(recap.text) && /Debt-to-income: \d+% to \d+%/.test(recap.text)
-    && /The FI date/.test(recap.text) && /SHARED keep three months/.test(recap.text) && /401k fee ratio \(by 2026-10-08\)/.test(recap.text), recap.text);
+    /What you owe \(1 item done\)/.test(recap.text) && /Added Car loan: rate 5\.9%, payment \$450/.test(recap.text) && /Pay going to debt: \d+% to \d+%/.test(recap.text)
+    && /The work-optional date/.test(recap.text) && !/\bFI\b/.test(recap.text) && /SHARED keep three months/.test(recap.text) && /401k fee ratio \(by 2026-10-08\)/.test(recap.text), recap.text);
   checkTrue('no coach note reaches the recap: typed, quick or unread', ['PRIVATE-7731', '38 payments left', 'bonus maybe', 'COMMENT'].every(t => recap.text.indexOf(t) === -1));
   Coach.saveRecap(d.id, sess.id, recap.text + '\nEdited by the coach.');
-  const rf = Coach.recapFile(d.id, Coach.record(d.id).sessions[0].recapText);
+  const rf = Coach.recapFile(d.id, Coach.record(d.id).sessions.filter(x => x.id === sess.id)[0].recapText);
   checkTrue('a recap file is the text and the name, never the household', rf.kind === 'recap' && /Edited/.test(rf.text) && !rf.data && JSON.stringify(rf).indexOf('PRIVATE') === -1);
   /* Client View gets the whole record, and still shows only what it may. */
   const html = ClientView.render(Coach.household(d.id), T, { record: Coach.record(d.id), readings: Fields.readings, name: d.name, asOf: '2026-09-25', since: before, sinceDate: sess.startedAt, nextSessionAt: '2026-10-08', mapWidth: 360 });
   checkTrue('Client View renders no coach note and no comment', ['PRIVATE-7731', '38 payments left', 'bonus maybe', 'COMMENT'].every(t => html.indexOf(t) === -1));
   checkTrue('it shows the shared note, the homework and the shown decision', /SHARED keep/.test(html) && /401k fee ratio/.test(html) && /Buy a car next year/.test(html));
   checkTrue('the four sections, in order', ['cv-map', 'cv-goals', 'cv-changed', 'cv-homework'].every((id, i, a) => html.indexOf('id="' + id + '"') !== -1 && (i === 0 || html.indexOf('id="' + a[i - 1] + '"') < html.indexOf('id="' + id + '"'))));
-  checkTrue('the one door into the record keeps only shared notes, homework, check-ins', Object.keys(ClientView.visible(Coach.record(d.id))).sort().join() === 'checkins,homework,shared');
+  checkTrue('the one door into the record keeps only shared notes, homework, check-ins and shown decisions', Object.keys(ClientView.visible(Coach.record(d.id))).sort().join() === 'checkins,decisions,homework,shared');
+  checkTrue('a decision not marked "show client" never passes the door', ClientView.visible({ decisions: [{ id: 'x', label: 'HIDDEN', showClient: false }, { id: 'y', label: 'SHOWN', showClient: true }] }).decisions.map(x => x.label).join() === 'SHOWN');
   Coach.setDecision(d.id, Coach.record(d.id).decisions[0].id, { showClient: false });
   checkTrue('a decision not marked "show client" is not drawn', ClientView.render(Coach.household(d.id), T, { record: Coach.record(d.id), asOf: '2026-09-25', mapWidth: 900 }).indexOf('Buy a car next year') === -1);
   const g = Session.goals(Coach.household(d.id), T, { asOf: '2026-09-25' });
   checkTrue('each demo goal has an amount, a monthly figure and a status', g.length === 3 && g.every(x => x.totalCents !== null && x.monthlyCents !== null && ['on-track', 'short', 'decide'].indexOf(x.status) !== -1));
   const client = fs.readFileSync(C('clientpage.js'), 'utf8');
   checkTrue('Client View reads no roster list', !/Coach\.clients\(|Coach\.roster\(/.test(client));
-  checkTrue('in presenter mode it links nowhere', /presenter \? '<span>Client view<\/span>'/.test(client));
+  checkTrue('in presenter mode it links nowhere', /presenter: presenter/.test(client) && /actions: presenter \? ''/.test(client));
   checkTrue('no SPARKS key was written through all of it', Object.keys(s.store).every(k => k.indexOf('coach.') === 0));
   done();
 }
@@ -359,6 +360,95 @@ section('Check-ins, comments, a sheet in (CD-006, CD-008)');
   check('imported entries are marked rough', Session.roughCount(ch) >= 4, true);
   Coach.saveTemplate('My sheet', cols);
   check('a mapping is kept by name in the roster', Coach.templates()['My sheet'].columns.Rent, 'qe:rent');
+  done();
+}
+
+
+/* ======================================================================
+   Plain words on everything (CD-009)
+   ====================================================================== */
+section('Plain words: every box, read-out and stop has help (CD-009)');
+{
+  const { T, Fields, Session } = fresh({});
+  const H = T.coachHelp;
+  const fields = Object.keys(T.coachFields.fields);
+  const missing = fields.filter(id => { const e = H.fields[id]; return !e || !e.plain || !e.means || !e.look || !e.unsure; });
+  checkTrue('every field has the question, what it means, where to find it, and a way out when unsure (' + fields.length + ' fields)', missing.length === 0, missing.join(', '));
+  const stale = Object.keys(H.fields).filter(id => fields.indexOf(id) === -1);
+  checkTrue('no help entry names a field that does not exist', stale.length === 0, stale.join(', '));
+  const readouts = Object.keys(T.sessionPaths.readouts);
+  const ro = readouts.filter(id => !H.readouts[id] || !H.readouts[id].label || !H.readouts[id].what);
+  checkTrue('every read-out has a plain label and what it means (' + readouts.length + ')', ro.length === 0, ro.join(', '));
+  checkTrue('the five rail read-outs say what good looks like', ['savingsRate', 'debtToIncome', 'emergencyFundMonths', 'liquidityRatio', 'housingRatio'].every(id => H.readouts[id].good));
+  const stops = Object.keys(T.sessionPaths.stops).filter(id => !H.stops[id] || !H.stops[id].title || !H.stops[id].intro || !H.stops[id].done);
+  checkTrue('every stop says how to run it and when it is done', stops.length === 0, stops.join(', '));
+  checkTrue('the words panel explains the work-optional date', H.words.some(w => /work-optional/.test(w[0])));
+  /* Short sentences, common words: nothing longer than 26 words, no finance jargon a client would trip on. */
+  const jargon = /\b(APR|DTI|liquidity ratio|amortis|amortiz|discretionary|net present|annuit|equity|leverag)\w*/i;
+  const long = [], hard = [];
+  const scan = (where, text) => { String(text).split(/[.?!]\s/).forEach(sent => { if (sent.trim().split(/\s+/).length > 26) long.push(where); }); if (jargon.test(text) && !/APR/.test(text)) hard.push(where + ': ' + text.match(jargon)[0]); };
+  Object.keys(H.fields).forEach(id => ['plain', 'means', 'look', 'unsure'].forEach(k => scan('field ' + id + '.' + k, H.fields[id][k])));
+  Object.keys(H.readouts).forEach(id => ['what', 'good'].forEach(k => H.readouts[id][k] && scan('readout ' + id + '.' + k, H.readouts[id][k])));
+  Object.keys(H.stops).forEach(id => ['intro', 'done'].forEach(k => scan('stop ' + id + '.' + k, H.stops[id][k])));
+  checkTrue('no help sentence runs past 26 words', long.length === 0, long.join(', '));
+  checkTrue('no help entry leans on a term the panel does not explain', hard.length === 0, hard.join(', '));
+  const rail = Session.rail(require(C('shared/demo-persona.js')).build(), T);
+  checkTrue('a rail row carries its plain label and its "good looks like"', rail[0].label === 'How much you keep' && /20%/.test(rail[0].good));
+  checkTrue('the client-facing renderer never says FI', !/\bFI\b/.test(fs.readFileSync(C('clientview.js'), 'utf8').replace(/\/\*[\s\S]*?\*\//, '')));
+}
+
+/* ======================================================================
+   Pictures (CD-010)
+   ====================================================================== */
+section('Pictures: every number set, every type, colours that pass (CD-010)');
+{
+  const { T, Session, Demo, Schema } = fresh({});
+  const Charts = require(C('shared/charts.js'));
+  const hues = Object.keys(Charts.HUES).sort().join();
+  checkTrue('eight hues, and every theme is an order of exactly those eight', Charts.THEMES.length === 8 && Charts.THEMES.every(t => t.order.slice().sort().join() === hues));
+  checkTrue('the eight theme orders were the validated ones (CD-010 records the run)', Charts.THEMES.map(t => t.order[0]).sort().join() === hues);
+  const h = Demo.build();
+  h.goals = [Schema.createGoal({ name: 'Wedding', targetDate: '2028-06-01', savedCents: 300000, monthlyContributionCents: 40000, lumpTargetCents: 2500000 })];
+  const P = Session.pictures(h, T, { asOf: '2026-09-26', snapshots: [], checkins: [] });
+  checkTrue('the pictures cover the month, the year, own and owe, accounts, debts, the payoff, the pace, the meters, the goals, the band and the path',
+    ['month', 'year', 'ownOwe', 'accounts', 'debts', 'payoff', 'debtPace', 'cushion', 'keep', 'debtShare', 'homeShare', 'goals', 'goalsMonthly', 'fiBand', 'path'].every(k => P[k]), Object.keys(P).join());
+  let drawn = 0; const bad = [];
+  Object.keys(P).forEach(k => Charts.types(P[k].kind).concat(P[k].kind === 'series' ? [{ id: 'spark' }] : []).forEach(t => [300, 700].forEach(w => {
+    const r = Charts.render(P[k], { type: t.id, width: w }); drawn++;
+    if (/NaN|undefined|Infinity/.test(r.svg) || (r.svg.match(/<svg/g) || []).length !== 1) bad.push(k + '/' + t.id + '/' + w);
+    if (Charts.table(P[k]).indexOf('<table') !== 0) bad.push(k + ' table');
+  })));
+  checkTrue('every picture draws as every type it may take, at phone and desktop width, with no gap in it (' + drawn + ' drawings)', bad.length === 0, bad.join(', '));
+  const nums = (svg) => (svg.match(/>\$[0-9.,]+[KM]?</g) || []).map(t => t.slice(1, -1));
+  checkTrue('a picture never invents a number: the one figure written on the month donut is its total',
+    nums(Charts.render(P.month, { type: 'donut', width: 500 }).svg).every(t => t === Charts.shortMoney(P.month.slices.reduce((s, x) => s + (x.value || 0), 0))));
+  checkTrue('the payoff picture reaches zero when the debts are gone', P.payoff.series.every(s => s.values[s.values.length - 1] === 0));
+  checkTrue('the debt pace picture says an extra $100 shortens the wait', P.debtPace.slices[1].value < P.debtPace.slices[0].value);
+  checkTrue('the path stops at the amount that makes work optional', P.path.series[3].values.every(v => v === P.path.series[3].values[0]));
+  const scale = Charts.ticks(0, 93, 4);
+  checkTrue('the scale always reaches the tallest mark', scale[scale.length - 1] >= 93);
+  checkTrue('a two-part breakdown is drawn as bars, not a two-slice pie', Charts.render(P.takeHomeVsGross, { width: 400 }).type === 'bar' && Charts.render({ kind: 'breakdown', title: 'x', unit: 'cents', slices: [{ id: 'a', label: 'a', value: 1 }, { id: 'b', label: 'b', value: 2 }] }, { width: 400 }).type === 'hbar');
+  checkTrue('colour follows the entity: a swatch picked for one slice moves only that slice', (() => { const a = Charts.render(P.month, { width: 400, colors: { food: 'red' } }).colors, b = Charts.render(P.month, { width: 400 }).colors; return a[1] === Charts.HUES.red && a[0] === b[0] && a[2] === b[2]; })());
+  checkTrue('a status meter never wears a series colour', !/#[0-9a-f]{6}/i.test(Charts.render(P.cushion, { width: 400 }).svg.replace(/#12151B/g, '')));
+  checkTrue('every mark is a hit target with its own words', (Charts.render(P.debts, { width: 400, type: 'hbar' }).svg.match(/class="ck-mark"[^>]*data-tip="[^"]+"[^>]*tabindex="0"/g) || []).length === P.debts.slices.length);
+  const legend = Charts.render(P.payoff, { width: 400, type: 'line' }).legend;
+  checkTrue('two or more series get a legend; one colour gets none', /<ul class="ck-legend">/.test(legend) && Charts.render(P.debtPace, { width: 400 }).legend === '');
+  /* the record of what the coach chose, in the store, never money */
+  const f2 = fresh({});
+  f2.Coach.setChartPref('stop-month', { type: 'pie', theme: 'sunset', colors: { food: 'red' } });
+  f2.Coach.setChartPref('stop-month', { colors: { home: 'blue' } });
+  const pref = f2.Coach.chartPref('stop-month');
+  checkTrue('a chart\'s type, theme and swatches are kept, and a new swatch keeps the others', pref.type === 'pie' && pref.theme === 'sunset' && pref.colors.food === 'red' && pref.colors.home === 'blue');
+  checkTrue('preferences live under their own key and hold no number', f2.s.getItem('coach.prefs.v1') !== null && !/[0-9]{4,}/.test(f2.s.getItem('coach.prefs.v1')));
+  done();
+  /* history: the demo client carries example sessions and check-ins */
+  const f3 = fresh({});
+  const d = f3.Coach.ensureDemo(f3.Demo, '2026-09-26T12:00:00Z');
+  const rec = f3.Coach.record(d.id);
+  checkTrue('the demo client carries three example sessions, three check-ins and two decisions', rec.sessions.length === 3 && rec.checkins.length === 3 && rec.decisions.length === 2 && f3.Coach.snapshots(d.id).length === 6);
+  const hist = f3.Session.history(f3.Coach.snapshots(d.id), rec.checkins, f3.Coach.household(d.id), T, '2026-09-26');
+  checkTrue('so net worth over time has four points and the mood three', hist.netWorth.x.length === 4 && hist.mood.x.length === 3);
+  checkTrue('and every example session recap is example words, not a number a client could mistake', rec.sessions.every(x => /session of/.test(x.recapText)));
   done();
 }
 

@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="shared/theme.css"/>
 <link rel="stylesheet" href="coach.css"/>
 <!--
-  CLIENT VIEW, presenter mode (CD-007, coach/SPEC.md 3.3).
+  CLIENT VIEW, presenter mode (CD-007, CD-010, CD-011, coach/SPEC.md 3.3).
 
   1. READS   one client (?client=), or a frozen snapshot of them (?snap=,
              read-only). Of the roster, only that client's name and next
@@ -20,32 +20,39 @@
              coach record.
   2. WRITES  a check-in: each reported balance to the field that holds it,
              and the check-in record itself. Nothing else.
-  3. SHOWS   the life map, each goal and when it lands, what changed since
-             the last session, homework and the next session. Phone first.
+  3. SHOWS   the work-optional date as a hero, the life map, the whole
+             picture, a normal month, the debts, the goals, the path, what
+             changed, homework, how they have felt; a Words panel; the
+             check-in. Phone first.
 
   Never on this page: coach notes, the path's scripts, the roster, another
   client, a link to Coach Home in presenter mode.
 
-  LIVE-FORM: built once. The four sections are drawn into #view, which holds
-  no input. The check-in form is built on open and again only after a save,
+  LIVE-FORM: built once. The sections are drawn into #view, which holds no
+  input. The check-in form is built on open and again only after a save,
   never while it is being typed in.
 -->
 </head>
 <body class="slaf">
 <main class="client" id="main">
-  <div class="presenter-bar no-print" id="presenter-bar"></div>
+  <div id="head"></div>
   <div id="view"></div>
+
+  <details class="slaf-card fold" id="words">
+    <summary>Words used here, in plain English</summary>
+    <div id="words-body"></div>
+  </details>
 
   <section class="slaf-card" id="checkin" hidden>
     <h2>This month's check-in</h2>
-    <p class="coach-note">Only what moved. Leave a box empty if you do not know: empty is not zero.</p>
+    <p class="coach-note">Only what moved. Leave a box empty if you do not know: empty means "not sure", never zero.</p>
     <form id="ci-form" autocomplete="off">
       <div class="row"><label class="inline">Date<input type="date" id="ci-date"/></label>
-        <label class="inline">Filled in by<select id="ci-by"><option value="client">The client</option><option value="coach">The coach, from a message</option></select></label></div>
+        <label class="inline" id="ci-by-wrap">Filled in by<select id="ci-by"><option value="client">The client</option><option value="coach">The coach, from a message</option></select></label></div>
       <div id="ci-balances" style="margin-top:var(--space-2)"></div>
-      <div class="row" style="margin-top:var(--space-2)"><label class="inline">Income this month, if it was different<input type="text" inputmode="decimal" id="ci-income"/></label></div>
-      <p class="slaf-label" style="margin:var(--space-3) 0 var(--space-1)">How are you feeling about money? (1 is awful, 5 is great)</p>
-      <div class="feel" id="ci-feel"></div>
+      <div class="row" style="margin-top:var(--space-2)"><label class="inline">Money in this month, if it was different<span class="affix"><span>$</span><input type="text" inputmode="decimal" id="ci-income" style="border:0;background:transparent"/></span></label></div>
+      <p class="slaf-label" style="margin:var(--space-3) 0 var(--space-1)" id="ci-feel-label">How do you feel about money right now?</p>
+      <div class="feel" id="ci-feel" role="group" aria-labelledby="ci-feel-label"></div>
       <label class="inline" style="width:100%;margin-top:var(--space-2)">Anything to say<textarea id="ci-text" maxlength="2000"></textarea></label>
       <div id="ci-homework" style="margin-top:var(--space-2)"></div>
       <button type="submit" class="slaf-btn slaf-btn--primary" style="margin-top:var(--space-2)">Save the check-in</button>
@@ -64,6 +71,7 @@
 <script src="shared/fields.js"></script>
 <script src="shared/coach.js"></script>
 <script src="shared/tables.js"></script>
+<script src="shared/charts.js"></script>
 <script src="engines/projection.js"></script>
 <script src="engines/tier0.js"></script>
 <script src="engines/debt.js"></script>

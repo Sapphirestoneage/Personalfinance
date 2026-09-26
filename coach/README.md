@@ -15,7 +15,9 @@ Open `coach/index.html` (served: `python3 -m http.server`, then
 | `index.html`, `home.js` | Coach Home: the roster, new client, the sheet import, backups |
 | `session.html`, `console.js` | The Session: the path, the stop's entry form, the rail, quick entry, notes, the recap |
 | `client.html`, `clientpage.js`, `clientview.js` | Client View: the life map, goals, what changed, homework, the check-in |
-| `common.js`, `coach.css` | What the three screens share |
+| `common.js`, `coach.css` | What the three screens share: the header, the help toggles, the chart frame |
+| `shared/charts.js` | Every picture, as SVG from an engine's figures; eight validated colour themes |
+| `data/help.json` | The plain words: every field, read-out and stop, and the Words panel |
 | `shared/coach.js` | The store: roster, clients, sessions, notes, check-ins, files (`coach.` keys only) |
 | `shared/fields.js`, `data/fields.json` | Every entry the coach can type, and where it lives in a household |
 | `shared/tables.js` | Loads `data/` |
@@ -24,7 +26,7 @@ Open `coach/index.html` (served: `python3 -m http.server`, then
 | `data/session_paths.json` | The stops and path templates, editable without code |
 | `tools/vendor.js` | The SPARKS files carried as byte-identical copies |
 | `test/run.js` | The coach's tests (`node coach/test/run.js`, also in CI) |
-| `SPEC.md`, `LATER.md` | What it is; the client portal, not built |
+| `SPEC.md`, `LATER.md`, `AUDIT.md` | What it is; the client portal, not built; the audit of 26 Sept 2026 |
 | `DECISIONS.md`, `STATUS.md` | This lane's log (`CD-###`) and where it stands |
 
 ## The rules that carry over from SPARKS

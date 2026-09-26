@@ -1,0 +1,454 @@
+{
+  "id": "coach_help",
+  "version": "2026.1",
+  "asOf": "2026-09-26",
+  "source": "Coach Mode plain words (CD-009). Written for someone who has never looked at a payslip: short sentences, common words. The wording for dates of birth, pay, home, debt and savings follows SPARKS' owner-approved data/sketch_help.json.",
+  "confidence": "convention",
+  "confidenceNote": "Words, not figures. The 'good' lines are the common guides (3 to 6 months of cushion, 28% on housing, 20% saved) and say so; nothing here is a number the app computes.",
+  "note": "fields: one entry a field id in data/fields.json (plain, means, look, unsure, example). readouts: one a read-out id in data/session_paths.json (label, what, good). stops: one a stop (title, intro, done). words: [term, plain], the glossary.",
+  "fields": {
+    "dob": {
+      "plain": "When were you born?",
+      "means": "Your age. It sets every date, like the year work could become a choice.",
+      "look": "Your driver's licence, or the birthday your phone already knows.",
+      "unsure": "The month and year are enough. Pick the first of the month if you do not know the day.",
+      "example": "1994-04-12"
+    },
+    "dependents": {
+      "plain": "How many people count on your money?",
+      "means": "Kids, or anyone else you support. More people means a bigger cushion.",
+      "look": "Count them. Do not count yourself, or a partner who earns.",
+      "unsure": "If nobody, type 0. That is a real answer.",
+      "example": "2"
+    },
+    "grossAnnualIncome": {
+      "plain": "How much are you paid in a year, before anything is taken out?",
+      "means": "The big number your job talks about. Tax has not come out of it yet.",
+      "look": "Your offer letter, or the word 'gross' on a payslip. Paid by the hour? Your rate, times the hours you really work, times 52.",
+      "unsure": "Leave it blank. We can work it out from what lands in your account.",
+      "example": "72,000"
+    },
+    "takeHomeMonthly": {
+      "plain": "How much money lands in your account each month?",
+      "means": "What you are paid after tax and everything else comes out. Your life runs on this number.",
+      "look": "Open your bank app. Add up what came in from your job over the last month.",
+      "unsure": "Use a normal month, not the best one. Rough is fine.",
+      "example": "4,200"
+    },
+    "payVaries": {
+      "plain": "Does your pay change a lot from month to month?",
+      "means": "Pay that jumps around needs a bigger cushion.",
+      "look": "Look at your last three paydays in your bank app. If they are close, say no.",
+      "unsure": "If they were within about a hundred dollars of each other, say no."
+    },
+    "accommodationMonthly": {
+      "plain": "What do you pay for your home each month?",
+      "means": "Rent, or the mortgage payment. If tax and home insurance are inside that payment, include them.",
+      "look": "Your rent agreement, or the one payment that leaves your account for the mortgage.",
+      "unsure": "If you split the home with someone, type your share. If you pay nothing, type 0: that is a real answer.",
+      "example": "1,500"
+    },
+    "foodMonthly": {
+      "plain": "What does food cost you in a month?",
+      "means": "Groceries and eating out, together.",
+      "look": "Most bank apps can total a month of grocery and restaurant spending.",
+      "unsure": "Nobody knows this to the dollar. A rough number beats a blank.",
+      "example": "600"
+    },
+    "transportationMonthly": {
+      "plain": "What does getting around cost in a month?",
+      "means": "Gas, fares, parking, car insurance, repairs. Not the car loan payment: that goes with debts.",
+      "look": "Your bank app, for a normal month.",
+      "unsure": "Rough is fine. Tick 'this is a guess'.",
+      "example": "220"
+    },
+    "wantsMonthly": {
+      "plain": "Roughly, what does everything else cost in a month?",
+      "means": "Phone, internet, subscriptions, clothes, haircuts, gifts, fun. Not rent, food, getting around, loan payments, or money you put away.",
+      "look": "Your bank app. Or add it up in pieces.",
+      "unsure": "Take a guess and tick 'this is a guess'. You can sharpen it later.",
+      "example": "700"
+    },
+    "hasDebt": {
+      "plain": "Do you owe money to anyone?",
+      "means": "Cards, a car loan, student loans, buy now pay later, money owed to family.",
+      "look": "Each card or loan app shows a balance.",
+      "unsure": "If you pay your card off in full every month and owe nothing today, say no."
+    },
+    "cashSavings": {
+      "plain": "How much money is in the bank, all together?",
+      "means": "Checking and savings: money you could spend today.",
+      "look": "Your bank app: the balance on the first screen. Add every account.",
+      "unsure": "Nearest hundred is fine. Or list each account on the 'What you own' stop instead.",
+      "example": "9,500"
+    },
+    "investments": {
+      "plain": "How much is invested, all together?",
+      "means": "Money in the market: a retirement plan at work, an IRA, an investing app.",
+      "look": "Your retirement or investing app. A 401(k) at work counts, even if you never look at it.",
+      "unsure": "Nearest thousand is fine. Or list each account on the 'What you own' stop.",
+      "example": "48,000"
+    },
+    "highestDeductible": {
+      "plain": "What is the most you would have to pay before insurance kicks in?",
+      "means": "Your biggest deductible: health, car or home. The first thing a cash cushion has to cover.",
+      "look": "Your health plan card or app, under 'deductible'.",
+      "unsure": "Leave it blank if you do not know.",
+      "example": "2,500"
+    },
+    "termLife": {
+      "plain": "How much life insurance do you have?",
+      "means": "The amount paid out if you died. Often it comes through work.",
+      "look": "Your benefits page at work, or the policy.",
+      "unsure": "If nobody depends on your money, you may not need any. Leave it blank if unsure.",
+      "example": "250,000"
+    },
+    "disabilityMonthly": {
+      "plain": "If you could not work, what would you get each month?",
+      "means": "Disability insurance pays part of your pay if you get sick or hurt. Often it comes through work.",
+      "look": "Your benefits page at work: 'long-term disability'.",
+      "unsure": "Leave it blank if you do not know.",
+      "example": "3,000"
+    },
+    "employerMatch": {
+      "plain": "Does your employer add money when you save for retirement?",
+      "means": "A match is free money. '50% up to 6%' means: for every dollar you put in, up to 6% of your pay, they add 50 cents.",
+      "look": "Your benefits page, or HR. Two numbers: how much they match, and up to what share of your pay.",
+      "unsure": "Ask HR: 'do you match my 401(k), and how much?'",
+      "example": "50 and 6"
+    },
+    "contributionPercent": {
+      "plain": "What share of your pay goes to retirement?",
+      "means": "The percent taken from each paycheck into your 401(k) or similar.",
+      "look": "Your payslip, or the retirement plan app.",
+      "unsure": "Type 0 if nothing goes in. That is a real answer.",
+      "example": "4"
+    },
+    "filingStatus": {
+      "plain": "How do you file your taxes?",
+      "means": "Single, married filing together, and so on. It sets your tax rate.",
+      "look": "The top of last year's tax return.",
+      "unsure": "Most single people file single. Most married couples file together."
+    },
+    "state": {
+      "plain": "Which state do you live in?",
+      "means": "Your state has its own tax rate.",
+      "look": "Two letters, like NC.",
+      "unsure": "Where you live now, not where you came from.",
+      "example": "NC"
+    },
+    "marginalRate": {
+      "plain": "What is your tax rate on the next dollar you earn?",
+      "means": "Your marginal rate. It says how much of a raise, or of a pretax saving, is really tax.",
+      "look": "Your coach can read it off your pay and how you file. Or the tax return.",
+      "unsure": "Leave it blank. We work it out from your pay.",
+      "example": "22"
+    },
+    "debtLabel": {
+      "plain": "What is this debt?",
+      "means": "A name you recognise.",
+      "look": "The card or loan app.",
+      "unsure": "Anything works: 'the blue card'.",
+      "example": "Visa card"
+    },
+    "debtType": {
+      "plain": "What kind of debt is it?",
+      "means": "Credit cards cost the most. Student loans and mortgages usually cost less.",
+      "look": "The app or statement says.",
+      "unsure": "Pick the closest."
+    },
+    "debtBalance": {
+      "plain": "How much do you still owe on it?",
+      "means": "The whole balance, not the monthly payment.",
+      "look": "The balance on the first screen of the app.",
+      "unsure": "Rough is fine. Tick 'this is a guess'.",
+      "example": "3,200"
+    },
+    "debtRate": {
+      "plain": "What interest rate does it charge?",
+      "means": "The yearly percent, often called APR. Higher means it costs more to keep.",
+      "look": "On the statement, often near the bottom: 'APR'. Cards are often 20 to 30.",
+      "unsure": "Leave it blank. It can be added later.",
+      "example": "22.9"
+    },
+    "debtMinPayment": {
+      "plain": "What is the smallest payment it asks for each month?",
+      "means": "The minimum. Not what you would like to pay.",
+      "look": "The statement: 'minimum payment'. A car or student loan has one fixed payment.",
+      "unsure": "Leave it blank if you do not know.",
+      "example": "95"
+    },
+    "assetLabel": {
+      "plain": "What is this account?",
+      "means": "A name you recognise.",
+      "look": "The app.",
+      "unsure": "Anything works: 'savings at the bank'.",
+      "example": "Savings at Chase"
+    },
+    "assetAccountType": {
+      "plain": "What kind of account is it?",
+      "means": "It says whether the money is cash you can spend, or invested for later, and how it is taxed.",
+      "look": "The app: checking, savings, 401(k), IRA, brokerage.",
+      "unsure": "Pick the closest. 'Other' is fine."
+    },
+    "assetValue": {
+      "plain": "How much is in it right now?",
+      "means": "Today's balance.",
+      "look": "The first screen of the app.",
+      "unsure": "Nearest hundred is fine.",
+      "example": "12,500"
+    },
+    "goalName": {
+      "plain": "What is the goal?",
+      "means": "Something you want money for, with a date.",
+      "look": "Nothing to look up. Say it in your own words.",
+      "unsure": "Start with the biggest one.",
+      "example": "A wedding"
+    },
+    "goalDate": {
+      "plain": "When do you want it by?",
+      "means": "The date. It sets how much a month it takes.",
+      "look": "Nothing to look up. A rough date is fine.",
+      "unsure": "Pick a year and the first of a month.",
+      "example": "2028-06-01"
+    },
+    "goalAmount": {
+      "plain": "About how much will it cost?",
+      "means": "The whole cost, in today's money.",
+      "look": "A quick search, or a number you have heard.",
+      "unsure": "Rough is fine. Tick 'this is a guess'.",
+      "example": "25,000"
+    },
+    "goalSaved": {
+      "plain": "How much have you saved for it so far?",
+      "means": "Money already set aside for this goal.",
+      "look": "The savings account you use for it.",
+      "unsure": "If nothing yet, type 0.",
+      "example": "3,000"
+    },
+    "goalMonthly": {
+      "plain": "How much goes toward it each month?",
+      "means": "What you already put away for it, on purpose.",
+      "look": "A transfer in your bank app.",
+      "unsure": "If nothing yet, type 0.",
+      "example": "400"
+    }
+  },
+  "readouts": {
+    "savingsRate": {
+      "label": "How much you keep",
+      "what": "Of what you earn, the share you do not spend. Saved money is what buys freedom later.",
+      "good": "10% is a start. 20% is strong. 30% and up is fast."
+    },
+    "debtToIncome": {
+      "label": "Pay going to debt",
+      "what": "Of your monthly pay before tax, the share that goes to debt payments.",
+      "good": "Under 20% is comfortable. Over 36% is a squeeze."
+    },
+    "emergencyFundMonths": {
+      "label": "Months of cushion",
+      "what": "How many months your cash in the bank would cover if pay stopped.",
+      "good": "3 months is the floor. 6 is calm."
+    },
+    "liquidityRatio": {
+      "label": "Months you could reach",
+      "what": "Like the cushion, but counting everything you could turn into cash quickly.",
+      "good": "3 to 6 months."
+    },
+    "housingRatio": {
+      "label": "Home as a share of pay",
+      "what": "Of your pay before tax, the share that goes on rent or the mortgage.",
+      "good": "Under 28% is the usual guide."
+    },
+    "netWorth": {
+      "label": "What you own minus what you owe",
+      "what": "Everything you own, minus every debt. The one number that shows the whole picture.",
+      "good": "Going up over time is what matters, not the number today."
+    },
+    "takeHome": {
+      "label": "What lands each month",
+      "what": "Pay after tax and deductions, a month."
+    },
+    "surplus": {
+      "label": "Left over each month",
+      "what": "What lands, minus what a month costs. This is the money that pays for goals.",
+      "good": "Above zero. More is faster."
+    },
+    "spending": {
+      "label": "What a month costs",
+      "what": "Home, food, getting around and everything else, added up."
+    },
+    "totalDebt": {
+      "label": "All you owe",
+      "what": "Every debt added up.",
+      "good": "Going down."
+    },
+    "debtPayments": {
+      "label": "Debt payments a month",
+      "what": "All the minimum payments together."
+    },
+    "debtFree": {
+      "label": "Debt-free in",
+      "what": "How long until every debt is gone, paying only the minimums. Paying extra makes it shorter."
+    },
+    "cash": {
+      "label": "Cash in the bank",
+      "what": "Money you could spend today."
+    },
+    "invested": {
+      "label": "Invested",
+      "what": "Money in the market, growing for later."
+    },
+    "marginalRate": {
+      "label": "Tax on the next dollar",
+      "what": "Of the next dollar you earn, the share that goes to tax. It says what a raise, or a pretax saving, is really worth."
+    },
+    "goalsMonthly": {
+      "label": "All goals, a month",
+      "what": "What every goal needs each month, added up, to land on time.",
+      "good": "Fits inside what is left over each month."
+    },
+    "fiDate": {
+      "label": "The work-optional date",
+      "what": "When what you have saved could pay for life without a paycheck. Three cases: good, likely, slow.",
+      "good": "Sooner is nice, but the direction matters more: it moves when you save more or spend less."
+    }
+  },
+  "stops": {
+    "life": {
+      "title": "The big picture",
+      "intro": "Start with what they want, not with numbers. Three goals with rough dates is enough. Write them the way the client says them.",
+      "done": "Three goals with dates."
+    },
+    "income": {
+      "title": "Money coming in",
+      "intro": "One number matters most: what lands in the account each month. Get that first. The before-tax number can wait.",
+      "done": "We know what lands each month, even roughly."
+    },
+    "spending": {
+      "title": "Money going out",
+      "intro": "Four boxes: home, food, getting around, everything else. Rough is fine. Then look at what is left.",
+      "done": "We know what is left at the end of a normal month."
+    },
+    "debt": {
+      "title": "What you owe",
+      "intro": "List every debt. The balance and the rate matter most; the minimum payment sets the pace. Then look at when they are gone.",
+      "done": "Every debt is listed and the debt-free date shows."
+    },
+    "safety": {
+      "title": "The cushion",
+      "intro": "How long could they go if pay stopped? Cash in the bank first, then the insurance that protects the rest.",
+      "done": "We know how many months the cushion covers, and what is missing."
+    },
+    "assets": {
+      "title": "What you own",
+      "intro": "Every account with money in it. The kind matters: cash you can spend, or money invested for later.",
+      "done": "We can see the whole picture: owned minus owed."
+    },
+    "taxes": {
+      "title": "Taxes",
+      "intro": "Two facts set the rate: how they file and where they live. Then one easy win, like a pretax contribution.",
+      "done": "We know the tax on the next dollar, and one move to try."
+    },
+    "goals": {
+      "title": "Goals and the map",
+      "intro": "Put a price and a date on each goal. The app says what each needs a month and whether it fits.",
+      "done": "Every goal has a monthly number and a status."
+    },
+    "decisions": {
+      "title": "Big decisions",
+      "intro": "The choices on their mind this year: a house, a car, a job, a move. Each one gets a verdict: go, wait, or no.",
+      "done": "Each decision has a verdict."
+    }
+  },
+  "words": [
+    [
+      "the work-optional date",
+      "The day work becomes a choice: what you have saved could pay for life without a paycheck."
+    ],
+    [
+      "coast",
+      "From this age, what is already invested grows to enough by itself. You could stop adding and still get there."
+    ],
+    [
+      "take-home pay",
+      "What lands in your account after tax and everything else comes out."
+    ],
+    [
+      "pay before tax",
+      "The big number your job talks about, before tax comes out. Also called gross pay."
+    ],
+    [
+      "net worth",
+      "Everything you own, minus everything you owe."
+    ],
+    [
+      "cushion",
+      "Cash in the bank that covers life if pay stops. Also called an emergency fund."
+    ],
+    [
+      "minimum payment",
+      "The smallest amount a card or loan asks for each month."
+    ],
+    [
+      "interest rate",
+      "The yearly percent a debt charges, or an account pays. Often written APR."
+    ],
+    [
+      "401(k)",
+      "A retirement account through work. Money goes in before tax, often with a match from your employer."
+    ],
+    [
+      "IRA",
+      "A retirement account you open yourself. Roth means the tax was paid already."
+    ],
+    [
+      "high-yield savings",
+      "A savings account that pays more interest than a normal one. Still cash you can spend."
+    ],
+    [
+      "brokerage",
+      "An investing account with no special tax rules. You can take money out any time."
+    ],
+    [
+      "match",
+      "Money your employer adds when you save for retirement. Free money."
+    ],
+    [
+      "tax on the next dollar",
+      "Your marginal rate: of the next dollar you earn, the share that goes to tax."
+    ],
+    [
+      "a guess",
+      "A number typed roughly, to be checked later. The app shows it as rough until it is confirmed."
+    ],
+    [
+      "snapshot",
+      "A copy of all the numbers on a day, kept so a later day can be compared to it."
+    ],
+    [
+      "recap",
+      "The summary of a session: what we covered, what changed, homework."
+    ],
+    [
+      "check-in",
+      "A short monthly update: balances that moved, and how you feel about money."
+    ],
+    [
+      "homework",
+      "One thing to find or do before the next session."
+    ],
+    [
+      "verdict",
+      "Go, wait, or no on a big decision."
+    ],
+    [
+      "detour",
+      "Leaving the current stop for a moment, with a way straight back."
+    ],
+    [
+      "stop",
+      "One step on the path a session follows. Nine stops, in order, unless you skip or move them."
+    ]
+  ]
+}

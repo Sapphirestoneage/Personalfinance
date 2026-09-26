@@ -23,6 +23,9 @@
      lifeMap(h, T, opts)             the Client View's timeline
      checkinStatus(checkins, now)    'in' | 'late' | 'missing'
      roughCount(h, now)              rough or stale entries (meta.fields)
+     pictures(h, T, ctx)             every chart the screens draw, as specs
+                                     for coach/shared/charts.js: { id: spec }
+     history(snapshots, checkins, h, T, asOf)   net worth and mood over time
 
    ctx for done/stage/recap: { stopId, notes, homework, decisions, sessionId,
    ticked, stops, stopsCovered, readings: fn(h) -> { id: { label, text } } }.
@@ -31,8 +34,8 @@
   var node = typeof module === 'object' && module.exports;
   var deps = node ? {
     Money: require('../shared/money.js'), Schema: require('../shared/schema.js'), Tier0: require('./tier0.js'),
-    CashFlow: require('./cashflow.js'), Opening: require('./opening.js'), Countdown: require('./countdown.js'), Debt: require('./debt.js')
-  } : ['Money', 'Schema', 'Tier0', 'CashFlow', 'Opening', 'Countdown', 'Debt'].reduce(function (o, k) { o[k] = root.SLAF && root.SLAF[k]; return o; }, {});
+    CashFlow: require('./cashflow.js'), Opening: require('./opening.js'), Countdown: require('./countdown.js'), Debt: require('./debt.js'), Projection: require('./projection.js')
+  } : ['Money', 'Schema', 'Tier0', 'CashFlow', 'Opening', 'Countdown', 'Debt', 'Projection'].reduce(function (o, k) { o[k] = root.SLAF && root.SLAF[k]; return o; }, {});
   var api = factory(deps);
   if (node) { module.exports = api; }
   if (root) { root.SLAF = root.SLAF || {}; root.SLAF.Session = api; }
@@ -194,7 +197,7 @@
     var r = READ[id] ? safe(function () { return READ[id](h, T); }) : null;
     var ok = isOk(r), v = ok ? r.value : null;
     var zone = ok ? verdict(id, v, T.ratioBenchmarks) : 'none';
-    return { id: id, label: d.label, unit: d.unit, value: v, ok: ok, text: d.unit === 'monthsText' ? (ok ? monthsText(v) : 'not yet') : unitText(d.unit, v), zone: zone, reason: ok ? null : (r && r.reason) || null };
+    return { id: id, label: d.label, unit: d.unit, value: v, ok: ok, text: d.unit === 'monthsText' ? (ok ? monthsText(v) : 'not yet') : unitText(d.unit, v), zone: zone, reason: ok ? null : (r && r.reason) || null, what: d.what || null, good: d.good || null };
   }
   /* The band colours, read the way engines/ratios.js verdict() reads them. */
   function verdict(id, value, table) {
@@ -204,7 +207,13 @@
     var warn = band.direction === 'lower' ? value <= band.warn : value >= band.warn;
     return good ? 'good' : warn ? 'watch' : 'out';
   }
-  function defsOf(T) { return (T.sessionPaths && T.sessionPaths.readouts) || {}; }
+  /* A read-out's unit is in session_paths.json; its words (label, what
+     it means, what good looks like) are in help.json, one place each. */
+  function defsOf(T) {
+    var units = (T.sessionPaths && T.sessionPaths.readouts) || {}, words = (T.coachHelp && T.coachHelp.readouts) || {}, out = {};
+    Object.keys(units).forEach(function (id) { out[id] = Object.assign({ label: id }, units[id], words[id] || {}); });
+    return out;
+  }
   function rail(h, T, ids) { return (ids || (T.sessionPaths && T.sessionPaths.rail) || []).map(function (id) { return readOne(id, h, T, defsOf(T)); }); }
   function figures(h, T, ids) { return (ids || []).map(function (id) { return readOne(id, h, T, defsOf(T)); }); }
   function netWorth(h) { var r = safe(function () { return D.Tier0.netWorth(h); }); return isOk(r) ? r.value : null; }
@@ -291,10 +300,10 @@
       var was2 = rb2.filter(function (x) { return x.id === r.id; })[0]; was = was2 ? was2.text : was; return r.label + ': ' + (was === now ? now + ' (same)' : was + ' to ' + now);
     });
     ratioLines.unshift('Net worth: ' + (nb.netWorth.text || 'not yet') + (nb.netWorth.text === na.netWorth.text ? ' (same)' : ' to ' + (na.netWorth.text || 'not yet')));
-    sections.push({ id: 'ratios', title: 'Ratios before and after', lines: ratioLines });
+    sections.push({ id: 'ratios', title: 'The numbers, before and after', lines: ratioLines });
     /* FI band */
     var fb = fiBand(B, T), fa = fiBand(A, T);
-    sections.push({ id: 'fi', title: 'Financial independence', lines: [fb.text === fa.text ? 'The FI date: ' + fa.text + ' (same)' : 'The FI date: ' + fb.text + ' before, ' + fa.text + ' now'] });
+    sections.push({ id: 'fi', title: 'The work-optional date', lines: [fb.text === fa.text ? 'The work-optional date: ' + fa.text + ' (same)' : 'The work-optional date: ' + fb.text + ' before, ' + fa.text + ' now'] });
     /* shared notes and homework: this session's only; coach notes never */
     var shared = (c.notes || []).filter(function (n) { return n.kind === 'shared' && (!c.sessionId || n.sessionId === c.sessionId) && n.text; }).map(function (n) { return n.text; });
     if (shared.length) sections.push({ id: 'notes', title: 'Notes', lines: shared });
@@ -396,6 +405,102 @@
     return Object.keys(f).filter(function (k) { var m = f[k] || {}; return m.confidence === 'roughly' || (m.asOf && (t - Date.parse(m.asOf)) / 86400000 > STALE_DAYS); }).length;
   }
 
-  return { path: path, items: items, done: done, stage: stage, TESTS: Object.keys(TESTS), READOUTS: Object.keys(READ), rail: rail, figures: figures, fiBand: fiBand, netWorth: netWorth,
+  /* ---- Pictures: one spec per number set, from the engines' figures ----------
+     Nothing is computed here that an engine does not already produce; the
+     specs only arrange those figures for coach/shared/charts.js.      */
+  var ZONE_WORDS = { good: 'good', watch: 'watch', out: 'needs care', none: '' };
+  function monthsMeter(id, title, v, T) {
+    return { id: id, kind: 'meter', title: title, unit: 'months', value: v, max: 12,
+      bands: [{ to: 3, zone: 'out', label: '3 months' }, { to: 6, zone: 'watch', label: '6 months' }, { to: 12, zone: 'good' }],
+      zone: verdict(id, v, T.ratioBenchmarks), zoneWords: { good: 'calm', watch: 'getting there', out: 'thin', none: '' } };
+  }
+  function rateMeter(id, title, v, max, bands, T, words) {
+    return { id: id, kind: 'meter', title: title, unit: 'rate', value: v, max: max, bands: bands, zone: verdict(id, v, T.ratioBenchmarks), zoneWords: words || ZONE_WORDS };
+  }
+  function pictures(h, T, ctx) {
+    var c = ctx || {}, P = {};
+    var rr = {}; rail(h, T, ['savingsRate', 'debtToIncome', 'emergencyFundMonths', 'liquidityRatio', 'housingRatio']).forEach(function (r) { rr[r.id] = r; });
+    var needs = (h.expenses && h.expenses.needs) || {}, wants = (h.expenses && h.expenses.wants) || {};
+    var vv = function (x) { return Money.isEntered(x) ? x : null; };
+    var home = vv(needs.accommodation && needs.accommodation.monthlyCents), food = vv(needs.food && needs.food.monthlyCents), go = vv(needs.transportation && needs.transportation.monthlyCents), rest = vv(wants.totalCents);
+    var debtPay = val(safe(function () { return Schema.monthlyDebtPaymentsCents(h); })), take = val(safe(function () { return Schema.takeHomeMonthlyCents(h, T); }));
+    var spent = [home, food, go, rest, debtPay].reduce(function (s, x) { return s + (x || 0); }, 0);
+    var left = take !== null ? take - spent : null;
+    P.month = { kind: 'breakdown', title: 'Where a month goes', unit: 'cents', totalLabel: 'a month', slices: [
+      { id: 'home', label: 'Home', value: home }, { id: 'food', label: 'Food', value: food }, { id: 'go', label: 'Getting around', value: go },
+      { id: 'rest', label: 'Everything else', value: rest }, { id: 'debt', label: 'Debt payments', value: debtPay }, { id: 'left', label: 'Left over', value: left !== null && left > 0 ? left : null }] };
+    var gross = val(safe(function () { return Schema.grossAnnualIncomeCents(h); }));
+    var taxes = gross !== null && take !== null ? Math.max(0, gross - take * 12) : null;
+    P.year = { kind: 'breakdown', title: 'Where a year of pay goes', unit: 'cents', totalLabel: 'a year', slices: [
+      { id: 'tax', label: 'Tax and deductions', value: taxes }, { id: 'spend', label: 'Spending', value: (home !== null || food !== null || go !== null || rest !== null) ? (home || 0) + (food || 0) + (go || 0) + (rest || 0) : null },
+      { id: 'debt', label: 'Debt payments', value: debtPay }, { id: 'left', label: 'Left over', value: left !== null && left > 0 ? left : null }].map(function (s) { return s.id === 'tax' ? s : Object.assign({}, s, { value: s.value === null ? null : s.value * 12 }); }) };
+    P.takeHomeVsGross = { kind: 'compare', title: 'Pay before and after tax, a month', unit: 'cents', oneColor: true, slices: [
+      { id: 'gross', label: 'Before tax', value: gross !== null ? Math.round(gross / 12) : null }, { id: 'take', label: 'Lands in the bank', value: take }] };
+    var own = val(safe(function () { return Schema.totalAssetsCents(h); })), owe = val(safe(function () { return Schema.totalDebtCents(h); }));
+    P.ownOwe = { kind: 'compare', title: 'What you own and what you owe', unit: 'cents', slices: [
+      { id: 'own', label: 'Own', value: own }, { id: 'owe', label: 'Owe', value: owe !== null ? -owe : null }, { id: 'net', label: 'Net', value: own !== null && owe !== null ? own - owe : (own !== null && (h.meta && h.meta.hasDebt === false) ? own : null) }] };
+    P.accounts = { kind: 'breakdown', title: 'Your accounts', unit: 'cents', totalLabel: 'owned', slices: Schema.aggregatableAssets(h).map(function (a) { return { id: a.id, label: a.label || 'An account', value: vv(a.valueCents) }; }) };
+    var debts = Schema.aggregatableDebts(h);
+    P.debts = { kind: 'breakdown', title: 'What you owe, by debt', unit: 'cents', totalLabel: 'owed', oneColor: false, slices: debts.map(function (d) { return { id: d.id, label: d.label || 'A debt', value: vv(d.balanceCents) }; }) };
+    var sim = safe(function () { return D.Debt.simulate(h, T.debtRules, {}); });
+    if (isOk(sim) && sim.schedule && sim.schedule.length) {
+      var step = sim.months > 120 ? 12 : sim.months > 36 ? 6 : sim.months > 12 ? 3 : 1;
+      var pts = [{ month: 0, balances: sim.startingBalances }];
+      sim.schedule.forEach(function (row) { if (row.month % step === 0 || row.month === sim.months) pts.push(row); });
+      var few = debts.length <= 5;
+      P.payoff = { kind: 'series', title: 'When the debts are gone', unit: 'cents', x: pts.map(function (p) { return p.month === 0 ? 'now' : p.month < 12 ? p.month + ' mo' : (Math.round(p.month / 12 * 10) / 10) + ' yr'; }),
+        series: few ? debts.map(function (d) { return { id: d.id, label: d.label || 'A debt', values: pts.map(function (p) { return Math.max(0, (p.balances || {})[d.id] || 0); }) }; })
+          : [{ id: 'all', label: 'All debts', values: pts.map(function (p) { var b = p.balances || {}; return Object.keys(b).reduce(function (s, k) { return s + Math.max(0, b[k]); }, 0); }) }] };
+      var pace = [0, 10000, 25000].map(function (extra) { var r2 = safe(function () { return D.Debt.simulate(h, T.debtRules, { extraMonthlyCents: extra }); }); return isOk(r2) ? r2.months : null; });
+      P.debtPace = { kind: 'compare', title: 'Debt-free sooner: what an extra payment does', unit: 'months', oneColor: true, slices: [
+        { id: 'min', label: 'Minimums only', value: pace[0] }, { id: 'p100', label: 'Add $100 a month', value: pace[1] }, { id: 'p250', label: 'Add $250 a month', value: pace[2] }] };
+    }
+    P.cushion = monthsMeter('emergencyFundMonths', 'Months of cushion', rr.emergencyFundMonths.value, T);
+    P.reach = monthsMeter('liquidityRatio', 'Months you could reach', rr.liquidityRatio.value, T);
+    P.keep = rateMeter('savingsRate', 'How much you keep', rr.savingsRate.value, 0.5, [{ to: 0.1, zone: 'out', label: '10%' }, { to: 0.2, zone: 'watch', label: '20%' }, { to: 0.5, zone: 'good' }], T, { good: 'strong', watch: 'a start', out: 'thin', none: '' });
+    P.debtShare = rateMeter('debtToIncome', 'Pay going to debt', rr.debtToIncome.value, 0.6, [{ to: 0.2, zone: 'good', label: '20%' }, { to: 0.36, zone: 'watch', label: '36%' }, { to: 0.6, zone: 'out' }], T, { good: 'comfortable', watch: 'watch', out: 'a squeeze', none: '' });
+    P.homeShare = rateMeter('housingRatio', 'Home as a share of pay', rr.housingRatio.value, 0.6, [{ to: 0.28, zone: 'good', label: '28%' }, { to: 0.36, zone: 'watch', label: '36%' }, { to: 0.6, zone: 'out' }], T, { good: 'comfortable', watch: 'watch', out: 'heavy', none: '' });
+    var mr = val(safe(function () { var a = Schema.resolveAssumptions(h); return Money.isEntered(a.marginalRate) ? Money.ok(a.marginalRate) : null; }));
+    P.taxNext = { kind: 'meter', title: 'Of the next dollar, this much is tax', unit: 'rate', value: mr, max: 0.5, bands: [], zone: 'none', zoneWords: {} };
+    var gs = goals(h, T, { asOf: c.asOf });
+    P.goals = { kind: 'progress', title: 'Your goals: saved so far', unit: 'cents', items: gs.map(function (g) { return { id: g.id, label: g.name, value: g.savedCents, total: g.totalCents }; }).filter(function (g) { return g.total !== null; }) };
+    P.goalsMonthly = { kind: 'series', defaultType: 'bar', title: 'Each goal, a month: needed and going in', unit: 'cents', x: gs.map(function (g) { return g.name; }),
+      series: [{ id: 'need', label: 'Needs a month', values: gs.map(function (g) { return g.monthlyCents; }) }, { id: 'going', label: 'Going in now', values: gs.map(function (g) { var x = (h.goals || []).filter(function (y) { return y.id === g.id; })[0]; return x && Money.isEntered(x.monthlyContributionCents) ? x.monthlyContributionCents : 0; }) }] };
+    var band = fiBand(h, T);
+    P.fiBand = { kind: 'range', title: 'The work-optional date', unit: 'years', best: band.hasDate ? band.best / 12 : null, likely: band.hasDate ? band.likely / 12 : null, worst: band.hasDate ? band.worst / 12 : null,
+      emptyText: band.alreadyThere ? 'already there' : 'no date yet: a few numbers are still to come' };
+    var op = safe(function () { return D.Opening.read(h, T); });
+    if (op && op.band && op.band.hasDate && op.model && Money.isEntered(op.model.investedCents)) {
+      var returns = (T.opening && T.opening.realReturns) || { worst: 0.03, likely: 0.05, best: 0.07 };
+      var years = Math.min(40, Math.max(5, Math.ceil(op.band.runs.worst.months / 12) + 2));
+      var line = function (rate) { var r = D.Projection.pathCents({ startCents: op.model.investedCents, monthlyContributionCents: op.band.savingMonthlyCents, annualRate: rate, years: years }); return isOk(r) ? r.years.map(function (y) { return y.balanceCents; }) : []; };
+      var xs = []; for (var yy = 0; yy <= years; yy++) xs.push(yy === 0 ? 'now' : yy + ' yr');
+      P.path = { kind: 'series', title: 'Your path to work-optional', unit: 'cents', x: xs, series: [
+        { id: 'best', label: 'Good case', values: line(returns.best) }, { id: 'likely', label: 'Likely', values: line(returns.likely) }, { id: 'worst', label: 'Slow case', values: line(returns.worst) },
+        { id: 'enough', label: 'Enough to stop', values: xs.map(function () { return op.band.fiNumberCents; }) }] };
+    }
+    var hist = history(c.snapshots || [], c.checkins || [], h, T, c.asOf);
+    if (hist.netWorth) P.netWorthOverTime = hist.netWorth;
+    if (hist.mood) P.mood = hist.mood;
+    return P;
+  }
+  /* Over time: net worth at each session's start and end, and the mood of
+     each check-in. Two or more points, or nothing. */
+  function dayOf(iso) { return String(iso || '').slice(0, 10); }
+  function shortDay(iso) { var d = new Date(dayOf(iso) + 'T12:00:00Z'); if (isNaN(d)) return String(iso); var M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']; return M[d.getUTCMonth()] + ' ' + d.getUTCFullYear().toString().slice(2); }
+  function history(snapshots, checkins, h, T, asOf) {
+    var out = { netWorth: null, mood: null };
+    var byDay = {};
+    (snapshots || []).forEach(function (s) { if (!s || !s.household) return; var nw = val(safe(function () { return D.Tier0.netWorth(Schema.createHousehold(s.household)); })); if (nw === null) return; byDay[dayOf(s.at)] = nw; });
+    var today = asOf || Schema.localDay(), nwNow = netWorth(h);
+    if (nwNow !== null) byDay[today] = nwNow;
+    var days = Object.keys(byDay).sort();
+    if (days.length >= 2) out.netWorth = { kind: 'series', title: 'What you own minus what you owe, over time', unit: 'cents', x: days.map(shortDay), series: [{ id: 'nw', label: 'Net worth', values: days.map(function (d) { return byDay[d]; }) }] };
+    var cis = (checkins || []).filter(function (c) { return c && c.date && Money.isEntered(c.feeling); }).sort(function (a, b) { return String(a.date).localeCompare(String(b.date)); });
+    if (cis.length >= 2) out.mood = { kind: 'series', ymin: 1, ymax: 5, title: 'How you felt about money, each check-in', unit: 'score', x: cis.map(function (c) { return shortDay(c.date); }), series: [{ id: 'feel', label: 'Feeling (1 to 5)', values: cis.map(function (c) { return c.feeling; }) }] };
+    return out;
+  }
+
+  return { path: path, items: items, done: done, stage: stage, TESTS: Object.keys(TESTS), READOUTS: Object.keys(READ), rail: rail, figures: figures, pictures: pictures, history: history, fiBand: fiBand, netWorth: netWorth,
     numbers: numbers, recap: recap, goals: goals, lifeMap: lifeMap, checkinStatus: checkinStatus, roughCount: roughCount, monthsText: monthsText, ageAt: ageAt };
 });
