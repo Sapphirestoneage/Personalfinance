@@ -1,0 +1,17 @@
+{
+  "id": "plan_loan_rules",
+  "version": "2026.1",
+  "asOf": "2026-01-01",
+  "taxYear": 2026,
+  "source": "Internal Revenue Code section 72(p) for the loan limits and repayment term; section 72(t) for the early-distribution penalty. Statutory figures, not indexed to inflation.",
+  "confidence": "high",
+  "confidenceNote": "The $50,000 cap, the 50% of vested balance rule, the five-year term and the 10% additional tax before 59 and a half have been unchanged for decades. A plan may set tighter limits than the law; the plan document wins.",
+  "note": "Read by toolbox/engines/planloan.js. Never inline these in a calculator.",
+  "maxLoanCents": 5000000,
+  "maxShareOfVested": 0.5,
+  "smallBalanceFloorCents": 1000000,
+  "maxMonths": 60,
+  "primaryHomeMaxMonths": 180,
+  "penaltyRate": 0.10,
+  "penaltyAge": 59.5
+}

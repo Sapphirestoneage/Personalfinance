@@ -1,6 +1,6 @@
 # STATUS (keep under 40 lines; /wrap rewrites it)
 
-Updated: 2026-09-24
+Updated: 2026-09-26
 
 ## Where it stands
 - **93 → 37 rooms**: the 32 of the merge programme with the Calendar back plus
@@ -27,7 +27,7 @@ Updated: 2026-09-24
   **By place (D-338)**: the log's note is the place; Expenses `#merchants` draws
   where all the money went and where the discretionary part went.
 - **Main is worked on by another lane**: merge before every push. D-228's reframe has NOT shipped. Freeze holds (D-313).
-  Coach Mode is its own lane in `coach/` (D-339, `coach/STATUS.md`).
+  Coach Mode is its own lane in `coach/` (D-339); **the Toolbox** (D-340) is another: ten calculators in `toolbox/`, own tests and log (`toolbox/README.md`).
 
 ## Next (top item first; one per session)
 1. **Tier 3 readings and the moons.** Tiers 1 and 2 are worked out (53 of the

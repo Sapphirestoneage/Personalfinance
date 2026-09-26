@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Three Paychecks · The Toolbox</title>
+<meta name="description" content="Paid every two weeks means two months a year hold a third check. Which months, how much, and the budget that never counts on it."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<link rel="stylesheet" href="toolbox.css"/>
+<!--
+  THREE PAYCHECKS (TB-009).
+  1. READS   monthly take-home (Schema.takeHomeMonthlyCents) to start the
+             net-per-check box, at the frequency chosen.
+  2. WRITES  nothing.
+  3. CALLS   toolbox/engines/paydays.js calendar.
+  4. EMPTY   the verdict names the missing box.
+  LIVE-FORM: built once.
+-->
+</head>
+<body class="slaf">
+<header class="tb-head" id="tb-head"></header>
+<main class="slaf-wrap">
+  <section class="slaf-card" id="in">
+    <span class="slaf-eyebrow">How you are paid</span>
+    <div class="tb-grid is-3" style="margin-top:var(--space-3)">
+      <label class="slaf-field"><span class="slaf-label">How often</span><select id="freq"><option value="">choose</option><option value="biweekly">Every two weeks</option><option value="weekly">Every week</option><option value="semimonthly">Twice a month</option><option value="monthly">Once a month</option></select></label>
+      <label class="slaf-field"><span class="slaf-label">Next payday</span><input type="date" id="next"/></label>
+      <label class="slaf-field"><span class="slaf-label">Net pay per check</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="net" placeholder="e.g. 1,800"/></span><span class="tb-from" id="net-from"></span></label>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="out">
+    <span class="slaf-eyebrow">The next twelve months</span>
+    <p class="tb-verdict is-incomplete" id="verdict">Say how often you are paid and when the next one lands.</p>
+    <p class="tb-why" id="why"></p>
+    <div class="tb-months" id="months"></div>
+    <div class="tb-rows" id="rows" hidden></div>
+    <div class="tb-flag is-info" id="flag" hidden></div>
+  </section>
+
+  <p class="tb-small">Every two weeks is 26 checks a year against a budget of 24; every week is 52 against 48. The months are counted from your next payday forward. A payday that falls on a weekend or holiday and is paid early may shift a month by one check. This tool stores nothing.</p>
+</main>
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="engines/paydays.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  'use strict';
+  var TB = SLAF.TB, Money = SLAF.Money, P = SLAF.TB.Paydays;
+  TB.header({ num: 7, title: 'Three Paychecks', lede: 'Paid every two weeks, two months a year hold a third check. Here are the months, the amount, and the budget that never counts on it.' });
+  var f = TB.form({ freq: 'select', next: 'date', net: 'money' }, render);
+  var d = new Date(); d.setDate(d.getDate() + ((5 - d.getDay() + 7) % 7 || 7));
+  TB.actions(f, { freq: 'biweekly', next: d.toISOString().slice(0, 10), net: 180000 });
+  var h = TB.household();
+  function prefillNet() {
+    if (!h) return;
+    var m = TB.val(SLAF.Schema.takeHomeMonthlyCents(h));
+    var fq = f.v.freq && P.FREQ[f.v.freq];
+    if (m && fq) TB.prefill(f, 'net', Math.round(m * 12 / fq.perYear), 'from your Ledger, at this frequency');
+  }
+
+  function render(v) {
+    prefillNet();
+    var r = P.calendar({ frequency: v.freq, nextPayday: v.next, netCents: v.net });
+    if (!Money.isOk(r)) { TB.incomplete('verdict', r, ['rows', 'flag']); TB.el('months').innerHTML = ''; TB.el('why').textContent = ''; return; }
+    if (!r.hasExtra) {
+      TB.verdict('verdict', 'Paid ' + P.FREQ[v.freq].label + ', every month has the same number of checks. There is no extra one.');
+      TB.el('why').textContent = 'The extra-paycheck month is a feature of weekly and two-week pay only.';
+      TB.el('months').innerHTML = ''; TB.show('rows', false); TB.show('flag', false); return;
+    }
+    var names = r.extraMonths.map(function (m) { return m.label; });
+    TB.verdict('verdict', names.length ? names.join(' and ') + (names.length === 1 ? ' holds' : ' hold') + ' an extra check' + (r.extraCents ? ': ' + TB.money(r.extraCents) + ' a year the budget does not need.' : '.') : 'No extra month in the next twelve.', 'good');
+    TB.el('why').textContent = r.perYear + ' checks a year, ' + r.base + ' in a normal month, ' + (r.base + 1) + ' in ' + r.extraChecksPerYear + ' of them.' + (r.budgetBaseCents ? ' Build the month on ' + TB.money(r.budgetBaseCents) + ' (' + r.base + ' checks) and the extra ' + r.extraChecksPerYear + ' are free to go somewhere on purpose.' : '');
+    TB.el('months').innerHTML = r.months.map(function (m) {
+      return '<div class="tb-month' + (m.extra ? ' is-extra' : '') + '"><span class="tb-mn">' + TB.esc(m.label) + '</span><span class="tb-md">' + m.dates.map(function (dd) { return TB.esc(TB.day(dd, { month: undefined, year: undefined })); }).join(' · ') + '</span>' + (m.extra ? '<span class="tb-mx">' + m.count + ' checks' + (v.net ? ' · +' + TB.money(v.net * m.extraCount) : '') + '</span>' : '') + '</div>';
+    }).join('');
+    TB.rows('rows', [
+      ['Checks a year', String(r.perYear)],
+      ['A normal month', r.base + ' checks' + (r.budgetBaseCents ? ', ' + TB.money(r.budgetBaseCents) : '')],
+      ['The extra checks', r.extraChecksPerYear + ' a year' + (r.extraCents ? ', ' + TB.money(r.extraCents) : '')],
+      ['Spread over the year', r.extraPerMonthCents ? TB.money(r.extraPerMonthCents) + ' a month' : Money.NOT_YET],
+      ['Take-home for the year', r.annualNetCents ? TB.money(r.annualNetCents) : Money.NOT_YET, true]
+    ]);
+    TB.flag('flag', '<strong>Decide now where the extra goes.</strong> The month it lands feels rich and the money goes to nothing in particular. A standing rule beats a good intention: the whole check to the highest-rate debt, to the cushion until it holds three months, or to the sinking funds. <a href="sinking-funds.html">Sinking Funds</a> will tell you what the fund should hold.', 'info');
+  }
+  render(f.v);
+})();
+</script>
+</body>
+</html>

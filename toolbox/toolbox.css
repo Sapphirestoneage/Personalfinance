@@ -1,0 +1,102 @@
+/* ==========================================================================
+   toolbox/toolbox.css, what the eleven Toolbox pages share on top of the
+   SPARKS theme (TB-001). The theme supplies the tokens, the card, the field,
+   the button; this file supplies the shelf, the tool head, the result rail
+   and the small pictures. No colour is invented here except the three chart
+   hues, validated on the dark surface (TB-002).
+   ========================================================================== */
+:root {
+  --tb-series-a: #3987e5;   /* now, stay, the old loan */
+  --tb-series-b: #d95926;   /* the alternative */
+  --tb-series-c: #199e70;   /* a third path, or the target line */
+}
+
+/* ---- The head every page wears ---------------------------------------- */
+.tb-head { max-width: var(--measure); margin: 0 auto; padding: var(--space-4) var(--space-4) 0; }
+.tb-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; font-size: var(--text-sm); }
+.tb-wordmark { font-family: var(--font-display); font-size: var(--text-md); letter-spacing: .01em; color: var(--color-text); text-decoration: none; }
+.tb-wordmark small { font-family: var(--font-body); font-size: var(--text-xs); color: var(--color-text-faint); margin-left: var(--space-2); }
+.tb-bar a { color: var(--color-accent-hover); }
+.tb-bar nav { display: flex; gap: var(--space-3); flex-wrap: wrap; }
+.tb-title { margin: var(--space-4) 0 0; font-family: var(--font-display); font-size: var(--text-2xl); line-height: var(--leading-tight); }
+.tb-lede { margin: var(--space-2) 0 0; color: var(--color-text-muted); font-size: var(--text-base); line-height: var(--leading-normal); max-width: 60ch; }
+.tb-acts { display: flex; gap: var(--space-2); flex-wrap: wrap; margin: var(--space-3) 0 0; }
+.tb-demo { display: none; font-size: var(--text-xs); color: var(--color-caution); margin: var(--space-2) 0 0; }
+body.is-demo .tb-demo { display: block; }
+
+/* ---- The shelf (index) ------------------------------------------------ */
+.tb-shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--space-3); margin-top: var(--space-4); }
+.tb-tool { display: flex; flex-direction: column; gap: var(--space-2); text-decoration: none; color: inherit; border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-4); background: var(--color-surface); transition: border-color var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease); }
+.tb-tool:hover, .tb-tool:focus-visible { border-color: var(--color-border-active); transform: translateY(-1px); }
+.tb-tool .tb-num { font-family: var(--font-mono, monospace); font-size: var(--text-xs); color: var(--color-text-faint); letter-spacing: var(--tracking-eyebrow); }
+.tb-tool h2 { margin: 0; font-size: var(--text-lg); font-family: var(--font-display); }
+.tb-tool p { margin: 0; font-size: var(--text-sm); color: var(--color-text-muted); line-height: var(--leading-normal); }
+.tb-tool .tb-asks { margin-top: auto; font-size: var(--text-xs); color: var(--color-text-faint); }
+.tb-tool svg { width: 100%; height: 44px; display: block; }
+
+/* ---- Inputs ------------------------------------------------------------- */
+.tb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); align-items: start; }
+.tb-grid.is-3 { grid-template-columns: 1fr 1fr 1fr; }
+@media (max-width: 520px) { .tb-grid, .tb-grid.is-3 { grid-template-columns: 1fr; } }
+.tb-grid .slaf-field { margin: 0; }
+.tb-from { display: block; font-size: var(--text-xs); color: var(--color-text-faint); margin-top: 4px; min-height: 1em; }
+.tb-from:empty { display: none; }
+.slaf-field select, .slaf-field input[type=date] { width: 100%; min-height: var(--control-height); font: inherit; color: var(--color-text); background: var(--color-panel); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 0 var(--space-3); }
+.slaf-field select:focus-visible, .slaf-field input[type=date]:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: 1px; }
+.tb-sub { margin: var(--space-4) 0 var(--space-2); font-size: var(--text-sm); font-weight: 600; color: var(--color-text-muted); }
+
+/* ---- Results ------------------------------------------------------------ */
+.tb-verdict { font-family: var(--font-display); font-size: var(--text-xl); line-height: var(--leading-tight); margin: var(--space-3) 0 0; }
+.tb-verdict.is-incomplete { font-family: var(--font-body); font-size: var(--text-base); color: var(--color-text-faint); }
+.tb-verdict.is-good { color: var(--color-positive); }
+.tb-verdict.is-bad { color: var(--color-critical); }
+.tb-why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; line-height: var(--leading-normal); }
+.tb-why a { color: var(--color-accent-hover); }
+.tb-rows { margin: var(--space-3) 0 0; font-size: var(--text-sm); }
+.tb-rows dl { display: grid; grid-template-columns: 1fr auto; gap: var(--space-1) var(--space-3); margin: 0; }
+.tb-rows dt { color: var(--color-text-faint); }
+.tb-rows dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.tb-rows dd.is-strong, .tb-rows dt.is-strong { color: var(--color-text); font-weight: 600; }
+.tb-compare { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-3); margin-top: var(--space-3); }
+.tb-option { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); position: relative; }
+.tb-option.is-best { border-color: var(--color-border-active); background: var(--color-surface-active); }
+.tb-option .tb-tag { position: absolute; top: -9px; right: var(--space-3); font-size: 10px; letter-spacing: var(--tracking-eyebrow); text-transform: uppercase; color: var(--color-accent-contrast); background: var(--color-accent); padding: 1px 8px; border-radius: var(--radius-pill); }
+.tb-option .tb-k { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
+.tb-option .tb-v { display: block; font-family: var(--font-display); font-size: var(--text-lg); font-variant-numeric: tabular-nums; margin-top: 2px; }
+.tb-option .tb-s { display: block; font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-1); line-height: var(--leading-normal); }
+.tb-swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: middle; margin-right: 6px; }
+.tb-flag { border-left: 3px solid var(--color-caution); background: rgba(216,166,63,.08); padding: var(--space-3); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; font-size: var(--text-sm); margin-top: var(--space-3); line-height: var(--leading-normal); }
+.tb-flag.is-critical { border-left-color: var(--color-critical); background: rgba(226,86,91,.08); }
+.tb-flag.is-info { border-left-color: var(--color-accent); background: rgba(46,111,232,.08); }
+.tb-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); margin-top: var(--space-3); }
+.tb-table th, .tb-table td { text-align: right; padding: var(--space-2) var(--space-1); border-top: 1px solid var(--color-border); font-variant-numeric: tabular-nums; vertical-align: top; }
+.tb-table th { color: var(--color-text-faint); font-weight: 500; font-size: var(--text-xs); border-top: 0; }
+.tb-table th:first-child, .tb-table td:first-child { text-align: left; }
+.tb-table tr.is-mark td { color: var(--color-text); font-weight: 600; background: var(--color-surface-active); }
+.tb-table tr.is-faint td { color: var(--color-text-faint); }
+.tb-table td.is-neg { color: var(--color-critical); }
+.tb-table td.is-pos { color: var(--color-positive); }
+.tb-table .tb-act { background: none; border: 0; color: var(--color-critical); cursor: pointer; font: inherit; font-size: var(--text-xs); padding: 0; }
+.tb-small { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-3) 0 0; line-height: var(--leading-loose); }
+.tb-small ul { margin: var(--space-1) 0 0; padding-left: 1.2em; }
+.tb-stores { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; }
+
+/* ---- Months as a strip (paydays, sinking funds) -------------------------- */
+.tb-months { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: var(--space-2); margin-top: var(--space-3); }
+.tb-month { border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2); font-size: var(--text-xs); min-height: 64px; }
+.tb-month.is-extra { border-color: var(--tb-series-c); background: rgba(25,158,112,.10); }
+.tb-month .tb-mn { display: block; color: var(--color-text-muted); font-weight: 600; }
+.tb-month .tb-md { display: block; color: var(--color-text-faint); margin-top: 2px; line-height: 1.5; }
+.tb-month .tb-mx { display: block; color: var(--tb-series-c); font-weight: 600; margin-top: 4px; }
+
+/* ---- The ladder rungs ----------------------------------------------------- */
+.tb-rungs { margin-top: var(--space-3); display: grid; gap: var(--space-2); }
+.tb-rung { display: grid; grid-template-columns: 64px 1fr auto; gap: var(--space-2); align-items: center; font-size: var(--text-sm); }
+.tb-rung .tb-track { height: 12px; border-radius: var(--radius-pill); background: rgba(57,135,229,.18); overflow: hidden; position: relative; }
+.tb-rung .tb-fill { position: absolute; left: 0; top: 0; height: 100%; background: var(--tb-series-a); border-radius: var(--radius-pill); }
+.tb-rung .tb-when { color: var(--color-text-faint); font-size: var(--text-xs); white-space: nowrap; }
+
+/* ---- Pictures ------------------------------------------------------------- */
+.tb-pic { margin-top: var(--space-3); }
+.tb-pic .slaf-chart svg { width: 100%; height: auto; }
+.tb-pic .tb-cap { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; }

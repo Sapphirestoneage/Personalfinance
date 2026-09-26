@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Lump Sum or Payments · The Toolbox</title>
+<meta name="description" content="A pension buyout, a severance, a settlement: one amount now or so much a month for life. The return the payments quietly promise, and the age the lump sum runs out."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<link rel="stylesheet" href="toolbox.css"/>
+<!--
+  LUMP SUM OR PAYMENTS (TB-007).
+  1. READS   your age from the household (Schema.primaryAge), as a starting
+             value for one box.
+  2. WRITES  nothing.
+  3. CALLS   toolbox/engines/lumpsum.js compare.
+  4. EMPTY   the verdict names the missing box.
+  LIVE-FORM: built once.
+-->
+</head>
+<body class="slaf">
+<header class="tb-head" id="tb-head"></header>
+<main class="slaf-wrap">
+  <section class="slaf-card" id="in">
+    <span class="slaf-eyebrow">The two offers</span>
+    <div class="tb-grid" style="margin-top:var(--space-3)">
+      <label class="slaf-field"><span class="slaf-label">The lump sum, today</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="lump" placeholder="e.g. 200,000"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Or, a month</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="monthly" placeholder="e.g. 1,200"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Payments rise each year by</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="cola" placeholder="0 if fixed"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field"><span class="slaf-label">Payments start at age</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" id="start-age" placeholder="now, if blank"/></span></label>
+    </div>
+    <span class="slaf-eyebrow" style="display:block;margin-top:var(--space-4)">You</span>
+    <div class="tb-grid is-3" style="margin-top:var(--space-3)">
+      <label class="slaf-field"><span class="slaf-label">Your age</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" id="age" placeholder="e.g. 62"/></span><span class="tb-from" id="age-from"></span></label>
+      <label class="slaf-field"><span class="slaf-label">Plan to age</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" id="to-age" placeholder="90"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Return you would earn on the lump</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="return" placeholder="e.g. 5"/><span class="slaf-affix">%</span></span></label>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="out">
+    <span class="slaf-eyebrow">The answer</span>
+    <p class="tb-verdict is-incomplete" id="verdict">Fill in the boxes above to see this.</p>
+    <p class="tb-why" id="why"></p>
+    <div class="tb-compare" id="options" hidden></div>
+    <div class="tb-flag" id="flag" hidden></div>
+    <div class="tb-rows" id="rows" hidden></div>
+    <div class="tb-pic" id="pic" hidden></div>
+  </section>
+
+  <p class="tb-small">The implied rate is the yearly return at which the lump sum, invested today, would fund exactly these payments to the age you plan to. The run-out age takes the lump, grows it at your rate compounded monthly, and draws the payment from the start age. Nothing here knows how long you will live, whether the payer stays solvent, or what tax either path carries: a lump sum rolled to an IRA is not taxed on arrival; a payment is taxed as it comes. This tool stores nothing.</p>
+</main>
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/charts.js"></script>
+<script src="engines/lumpsum.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  'use strict';
+  var TB = SLAF.TB, Money = SLAF.Money, Charts = SLAF.Charts, L = SLAF.TB.LumpSum;
+  TB.header({ num: 5, title: 'Lump Sum or Payments', lede: 'One amount now, or so much a month for life. What return are the payments quietly promising, and how long would the lump sum last if you took it?' });
+  var f = TB.form({ lump: 'money', monthly: 'money', cola: 'rate', 'start-age': 'num', age: 'num', 'to-age': 'num', 'return': 'rate' }, render);
+  TB.actions(f, { lump: 20000000, monthly: 120000, cola: 0, 'start-age': null, age: 62, 'to-age': 90, 'return': 0.05 });
+  var h = TB.household();
+  if (h) { var age = TB.val(SLAF.Schema.primaryAge(h)); if (age) TB.prefill(f, 'age', age); }
+
+  function render(v) {
+    var r = L.compare({ lumpCents: v.lump, monthlyCents: v.monthly, ageNow: v.age, startAge: v['start-age'], toAge: v['to-age'], colaRate: v.cola, returnRate: v['return'] });
+    if (!Money.isOk(r)) { TB.incomplete('verdict', r, ['options', 'flag', 'rows', 'pic']); TB.el('why').textContent = ''; return; }
+    var yrs = function (a) { return Math.floor(a) + (a % 1 >= 0.5 ? ' and a half' : ''); };
+    if (r.value === 'lump') TB.verdict('verdict', 'The lump sum, if you can earn ' + TB.rate(v['return'], 1) + '. Drawn at ' + TB.money(v.monthly) + ' a month it still holds ' + TB.money(r.leftoverAtToAgeCents) + ' at ' + r.toAge + '.', 'good');
+    else TB.verdict('verdict', 'The payments, if you expect to live past ' + yrs(r.runsOutAge) + '. At ' + TB.rate(v['return'], 1) + ' the lump sum runs out at that age.', 'good');
+    TB.el('why').textContent = r.impliedBelowZero
+      ? 'The payments add up to less than the lump sum even with no return at all. They are worth ' + TB.money(r.totalPaymentsCents) + ' by ' + r.toAge + '.'
+      : 'The payments are quietly promising ' + TB.rate(r.impliedRate, 1) + ' a year: that is the return the lump sum would have to earn to fund them to ' + r.toAge + '. You said you would earn ' + TB.rate(v['return'], 1) + ', which is ' + (r.yourRateBeatsImplied ? 'more, so the lump sum can do better.' : 'less, so the payments are the better deal on the arithmetic.');
+    TB.options('options', [
+      { key: 'lump', label: 'Take the lump sum', color: TB.SERIES.a, value: TB.money(v.lump), sub: 'invested at ' + TB.rate(v['return'], 1) + ', drawn at ' + TB.money(v.monthly) + ' a month from ' + r.startAge + '<br/>' + (r.runsOutAge ? 'empty at ' + yrs(r.runsOutAge) : TB.money(r.leftoverAtToAgeCents) + ' left at ' + r.toAge), tag: 'ahead' },
+      { key: 'payments', label: 'Take the payments', color: TB.SERIES.b, value: TB.money(r.totalPaymentsCents), sub: 'received by ' + r.toAge + (v.cola ? ', rising ' + TB.rate(v.cola, 1) + ' a year' : '') + '<br/>worth ' + (r.impliedBelowZero ? 'less than the lump at any return' : TB.rate(r.impliedRate, 1) + ' a year'), tag: 'ahead' }
+    ], r.value);
+    TB.flag('flag', '<strong>The age is the whole decision.</strong> Payments for life are insurance against living long; a lump sum is a bet you will not, or that you will earn more than ' + (r.impliedRate !== null ? TB.rate(r.impliedRate, 1) : 'nothing') + '. Someone in good health with long-lived parents should lean to the payments; someone who needs the money flexible, or has heirs, to the lump. Also ask who stands behind the payments.', 'info');
+    TB.rows('rows', [
+      ['Years of payments to equal the lump', r.yearsOfPaymentsToMatchLump ? (Math.round(r.yearsOfPaymentsToMatchLump * 10) / 10) + ' years, ignoring returns' : Money.NOT_YET],
+      ['Payments start', r.monthsUntilStart ? 'in ' + TB.span(r.monthsUntilStart) + ', at ' + r.startAge : 'now'],
+      ['Implied return of the payments', r.impliedBelowZero ? 'below zero' : TB.rate(r.impliedRate, 2), true],
+      ['Lump sum runs out at', r.runsOutAge ? yrs(r.runsOutAge) : 'not before ' + r.toAge, true]
+    ]);
+    TB.chart('pic', Charts.area({ title: 'The lump sum, invested and drawn', width: 360, height: 200, x: { label: 'age', format: function (x) { return Math.round(x); } },
+      series: [{ label: 'Lump sum left, at ' + TB.rate(v['return'], 1), color: TB.SERIES.a, points: r.path.map(function (p) { return [p.age, p.balanceCents]; }), fill: true }],
+      vLines: r.runsOutAge ? [{ x: r.runsOutAge, label: 'empty' }] : [] }), 'The balance if you take the lump sum and draw the same monthly amount from it.');
+  }
+  render(f.v);
+})();
+</script>
+</body>
+</html>

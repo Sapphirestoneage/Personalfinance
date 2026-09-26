@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Cash Ladder · The Toolbox</title>
+<meta name="description" content="CDs or Treasury bills in rungs against one savings account: the blended rate, what unlocks when, and the tax-equivalent edge of a Treasury."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<link rel="stylesheet" href="toolbox.css"/>
+<!--
+  CASH LADDER (TB-008).
+  1. READS   cash on hand (Schema.cashCents) as a starting value for one box.
+  2. WRITES  nothing.
+  3. CALLS   toolbox/engines/ladder.js build.
+  4. EMPTY   the verdict names the missing box. A rung with no rate is not a rung.
+  LIVE-FORM: built once. Four rungs are in the HTML; none is added or removed.
+-->
+</head>
+<body class="slaf">
+<header class="tb-head" id="tb-head"></header>
+<main class="slaf-wrap">
+  <section class="slaf-card" id="in">
+    <span class="slaf-eyebrow">The cash, and where it sits now</span>
+    <div class="tb-grid" style="margin-top:var(--space-3)">
+      <label class="slaf-field"><span class="slaf-label">Cash to place</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="cash" placeholder="e.g. 20,000"/></span><span class="tb-from" id="cash-from"></span></label>
+      <label class="slaf-field"><span class="slaf-label">Savings account rate</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="hysa" placeholder="e.g. 4.1"/><span class="slaf-affix">%</span></span></label>
+    </div>
+    <span class="slaf-eyebrow" style="display:block;margin-top:var(--space-4)">The rungs</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">A term and its rate. Leave a rung blank to skip it. The cash is split evenly unless you give shares.</p>
+    <div class="tb-grid is-3" style="margin-top:var(--space-3)">
+      <label class="slaf-field"><span class="slaf-label">Rung 1, months</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" id="m1" placeholder="3"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Rate</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="r1" placeholder="e.g. 5.0"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field"><span class="slaf-label">Share (optional)</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="s1" placeholder="equal"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field"><span class="slaf-label">Rung 2, months</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" id="m2" placeholder="6"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Rate</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="r2" placeholder="e.g. 4.9"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field"><span class="slaf-label">Share (optional)</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="s2" placeholder="equal"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field"><span class="slaf-label">Rung 3, months</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" id="m3" placeholder="9"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Rate</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="r3" placeholder="e.g. 4.8"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field"><span class="slaf-label">Share (optional)</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="s3" placeholder="equal"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field"><span class="slaf-label">Rung 4, months</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" id="m4" placeholder="12"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Rate</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="r4" placeholder="e.g. 4.6"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field"><span class="slaf-label">Share (optional)</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="s4" placeholder="equal"/><span class="slaf-affix">%</span></span></label>
+    </div>
+    <label class="slaf-switch" style="margin-top:var(--space-3)"><input type="checkbox" id="treasury"/> These are Treasury bills (no state income tax)</label>
+    <div class="tb-grid" id="state-box" hidden style="margin-top:var(--space-2)">
+      <label class="slaf-field"><span class="slaf-label">Your state income tax rate</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="state-rate" placeholder="e.g. 5"/><span class="slaf-affix">%</span></span></label>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="out">
+    <span class="slaf-eyebrow">The answer</span>
+    <p class="tb-verdict is-incomplete" id="verdict">Fill in the cash, the account rate and at least one rung.</p>
+    <p class="tb-why" id="why"></p>
+    <div class="tb-rungs" id="rungs"></div>
+    <div class="tb-rows" id="rows" hidden></div>
+    <div class="tb-flag is-info" id="flag" hidden></div>
+  </section>
+
+  <p class="tb-small">Each rung earns simple interest to its maturity; the year figure is the cash times the spread between the ladder's blended rate and the account. A Treasury's tax-equivalent rate is its rate divided by one minus your state rate, because its interest is exempt from state income tax and the account's is not; the comparison uses it. Rates you type are taken as annual yields. Early withdrawal penalties on CDs, reinvestment at maturity and federal tax are not modelled. This tool stores nothing.</p>
+</main>
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="engines/ladder.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  'use strict';
+  var TB = SLAF.TB, Money = SLAF.Money, Ld = SLAF.TB.Ladder;
+  TB.header({ num: 6, title: 'Cash Ladder', lede: 'Cash you will not need this month, split across CDs or Treasury bills that mature at different times, against leaving it all in the savings account.' });
+  var spec = { cash: 'money', hysa: 'rate', treasury: 'check', 'state-rate': 'rate' };
+  [1, 2, 3, 4].forEach(function (i) { spec['m' + i] = 'int'; spec['r' + i] = 'rate'; spec['s' + i] = 'rate'; });
+  var f = TB.form(spec, render);
+  TB.actions(f, { cash: 2000000, hysa: 0.041, m1: 3, r1: 0.05, m2: 6, r2: 0.049, m3: 9, r3: 0.048, m4: 12, r4: 0.046, treasury: true, 'state-rate': 0.05 });
+  var h = TB.household();
+  if (h) { var cash = TB.val(SLAF.Schema.cashCents(h)); if (cash) TB.prefill(f, 'cash', cash); }
+
+  function render(v) {
+    TB.show('state-box', !!v.treasury);
+    var rungs = [1, 2, 3, 4].map(function (i) { return { months: v['m' + i], rate: v['r' + i], share: v['s' + i] }; });
+    var r = Ld.build({ cashCents: v.cash, rungs: rungs, hysaRate: v.hysa, treasury: v.treasury, stateRate: v['state-rate'], startDate: TB.today() });
+    if (!Money.isOk(r)) { TB.incomplete('verdict', r, ['rows', 'flag']); TB.el('rungs').innerHTML = ''; TB.el('why').textContent = ''; return; }
+    var edge = r.value;
+    if (Math.abs(edge) < 100) TB.verdict('verdict', 'A wash: the ladder and the account earn within ' + TB.money(Math.abs(edge)) + ' a year of each other.');
+    else if (edge > 0) TB.verdict('verdict', 'The ladder earns ' + TB.money(edge) + ' a year more than the account.', 'good');
+    else TB.verdict('verdict', 'The account wins by ' + TB.money(-edge) + ' a year. Leave it where it is.', 'bad');
+    TB.el('why').textContent = 'Blended, the ladder pays ' + TB.rate(r.blendedRate, 2) + (r.treasury && r.stateRate ? ', worth ' + TB.rate(r.blendedTaxEquivalentRate, 2) + ' against a taxable account once state tax is counted' : '') + '. The account pays ' + TB.rate(r.hysaRate, 2) + '. The first rung unlocks ' + TB.day(r.firstUnlockOn) + '; the last ' + TB.day(r.lastUnlockOn) + '.';
+    var maxM = r.rungs[r.rungs.length - 1].months;
+    TB.el('rungs').innerHTML = r.rungs.map(function (x) {
+      return '<div class="tb-rung"><span>' + TB.esc(TB.money(x.amountCents)) + '</span><span class="tb-track" title="' + x.months + ' months"><span class="tb-fill" style="width:' + (x.months / maxM * 100) + '%"></span></span><span class="tb-when">' + x.months + ' mo at ' + TB.rate(x.rate, 2) + ' · ' + TB.esc(TB.day(x.maturesOn, { year: undefined })) + ' · +' + TB.money(x.interestCents) + '</span></div>';
+    }).join('');
+    TB.rows('rows', [
+      ['Blended rate', TB.rate(r.blendedRate, 2)],
+      ['Tax-equivalent, against a taxable account', r.treasury && r.stateRate ? TB.rate(r.blendedTaxEquivalentRate, 2) : 'same, not a Treasury or no state tax'],
+      ['Average months locked', (Math.round(r.averageMonths * 10) / 10) + ''],
+      ['Interest by the last maturity, ladder', TB.money(r.interestToMaturityCents)],
+      ['Same money in the account, same dates', TB.money(r.hysaToMaturityCents)],
+      ['A year of the ladder against the account', (edge >= 0 ? '+' : '−') + TB.money(Math.abs(edge)), true]
+    ]);
+    TB.flag('flag', '<strong>A ladder is a promise not to touch the money.</strong> Keep the cash you might need before ' + TB.day(r.firstUnlockOn) + ' in the account, and ladder only the rest. When a rung matures, roll it to the longest term and the ladder keeps unlocking every ' + r.firstUnlockMonths + ' months.', 'info');
+  }
+  render(f.v);
+})();
+</script>
+</body>
+</html>

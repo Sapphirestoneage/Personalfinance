@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Pay Cash or Finance · The Toolbox</title>
+<meta name="description" content="0% for 24 months, or a discount for cash. Which leaves you richer after the last payment, and the back interest a deferred-interest plan hides."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<link rel="stylesheet" href="toolbox.css"/>
+<!--
+  PAY CASH OR FINANCE (TB-006).
+  1. READS   nothing from the household.
+  2. WRITES  nothing.
+  3. CALLS   toolbox/engines/cashorfinance.js compare.
+  4. EMPTY   the verdict names the missing box.
+  LIVE-FORM: built once.
+-->
+</head>
+<body class="slaf">
+<header class="tb-head" id="tb-head"></header>
+<main class="slaf-wrap">
+  <section class="slaf-card" id="in">
+    <span class="slaf-eyebrow">The thing, and the two ways to pay</span>
+    <div class="tb-grid" style="margin-top:var(--space-3)">
+      <label class="slaf-field"><span class="slaf-label">Price</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="price" placeholder="e.g. 2,400"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Discount for paying cash</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="discount" placeholder="0 if none"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field"><span class="slaf-label">Financing APR</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="apr" placeholder="0 for a 0% offer"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field"><span class="slaf-label">Months of payments</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" id="months" placeholder="e.g. 24"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Any fee to finance</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="fee" placeholder="0 if none"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">What your cash earns where it sits</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="park" placeholder="e.g. 4"/><span class="slaf-affix">%</span></span><span class="slaf-hint" style="margin:4px 0 0">The savings account rate, usually.</span></label>
+    </div>
+    <label class="slaf-switch" style="margin-top:var(--space-3)"><input type="checkbox" id="deferred"/> It is a "no interest if paid in full by" plan (deferred interest)</label>
+    <div class="tb-grid" id="deferred-box" hidden style="margin-top:var(--space-2)">
+      <label class="slaf-field"><span class="slaf-label">The rate on the fine print</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="deferred-apr" placeholder="e.g. 29.99"/><span class="slaf-affix">%</span></span></label>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="out">
+    <span class="slaf-eyebrow">The answer</span>
+    <p class="tb-verdict is-incomplete" id="verdict">Fill in the boxes above to see this.</p>
+    <p class="tb-why" id="why"></p>
+    <div class="tb-compare" id="options" hidden></div>
+    <div class="tb-flag" id="flag" hidden></div>
+    <div class="tb-rows" id="rows" hidden></div>
+  </section>
+
+  <p class="tb-small">You are assumed to hold the price in cash. Paying cash: the discount stays in the account and earns the parked rate. Financing: the account keeps earning while a payment leaves it each month and any fee leaves at once. Whichever leaves more in the account after the last payment won. The payment is the level payment for the APR and term. This tool stores nothing.</p>
+</main>
+<script src="../shared/money.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="engines/loan.js"></script>
+<script src="engines/cashorfinance.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  'use strict';
+  var TB = SLAF.TB, Money = SLAF.Money, C = SLAF.TB.CashOrFinance;
+  TB.header({ num: 4, title: 'Pay Cash or Finance', lede: 'The shop offers 0% for two years, or a little off for cash. Which leaves you with more after the last payment?' });
+  var f = TB.form({ price: 'money', discount: 'rate', apr: 'rate', months: 'int', fee: 'money', park: 'rate', deferred: 'check', 'deferred-apr': 'rate' }, render);
+  TB.actions(f, { price: 240000, discount: 0.05, apr: 0, months: 24, fee: 0, park: 0.04, deferred: true, 'deferred-apr': 0.2999 });
+
+  function render(v) {
+    TB.show('deferred-box', !!v.deferred);
+    var r = C.compare({ priceCents: v.price, cashDiscountRate: v.discount, apr: v.apr, months: v.months, feeCents: v.fee, parkRate: v.park, deferredInterest: v.deferred, deferredApr: v['deferred-apr'] });
+    if (!Money.isOk(r)) { TB.incomplete('verdict', r, ['options', 'flag', 'rows']); TB.el('why').textContent = ''; return; }
+    var edge = Math.abs(r.edgeCents);
+    if (edge < 100) TB.verdict('verdict', 'It is a wash: the two end within ' + TB.money(edge) + ' of each other.');
+    else if (r.value === 'finance') TB.verdict('verdict', 'Take the payments. You end ' + TB.money(edge) + ' ahead.', 'good');
+    else TB.verdict('verdict', 'Pay cash. You end ' + TB.money(edge) + ' ahead.', 'good');
+    TB.el('why').textContent = r.value === 'finance'
+      ? 'Your cash earns ' + TB.money(r.earnedWhileWaitingCents) + ' while the payments run' + (r.financeInterestCents + r.feeCents > 0 ? ', against ' + TB.money(r.financeInterestCents + r.feeCents) + ' of interest and fees' : ', and the financing costs nothing') + (r.discountCents ? '; the cash discount of ' + TB.money(r.discountCents) + ' was not enough to beat that.' : '.')
+      : (r.discountCents ? 'The cash discount of ' + TB.money(r.discountCents) + ' is worth more than the ' + TB.money(r.earnedWhileWaitingCents) + ' your cash would earn while paying in instalments' : 'The financing costs ' + TB.money(r.financeInterestCents + r.feeCents) + ' and your cash would earn only ' + TB.money(r.earnedWhileWaitingCents)) + (r.financeInterestCents ? '. The payments carry ' + TB.money(r.financeInterestCents) + ' of interest.' : '.');
+    TB.options('options', [
+      { key: 'cash', label: 'Pay cash now', color: TB.SERIES.a, value: TB.money(r.cashEndCents), sub: 'left in the account after ' + TB.span(v.months) + '<br/>pay ' + TB.money(r.cashPriceCents) + ' today', tag: 'richer' },
+      { key: 'finance', label: 'Take the payments', color: TB.SERIES.b, value: TB.money(r.financeEndCents), sub: 'left in the account after ' + TB.span(v.months) + '<br/>' + TB.money(r.paymentCents) + ' a month, ' + TB.money(r.totalPaymentsCents) + ' in all', tag: 'richer' }
+    ], edge < 100 ? null : r.value);
+    var flags = [];
+    if (r.deferred) flags.push(r.backInterestCents !== null
+      ? '<strong>Deferred interest.</strong> Miss one payment, or leave any balance at the end, and about <strong>' + TB.money(r.backInterestCents) + '</strong> of interest is charged back from day one at ' + TB.rate(v['deferred-apr'], 2) + '. Set the payments to autopay and finish a month early.'
+      : '<strong>Deferred interest.</strong> Type the rate on the fine print to see what lands if a payment slips.');
+    if (r.accountRunsDry) flags.push('<strong>The payments outrun the cash.</strong> With interest at ' + TB.rate(v.apr, 1) + ' the payments total more than the price; the account goes ' + TB.money(-r.financeEndCents) + ' short by the end.');
+    TB.flag('flag', flags.join('<br/><br/>') || null, r.deferred ? null : 'info');
+    TB.rows('rows', [
+      ['Cash price after the discount', TB.money(r.cashPriceCents)],
+      ['Monthly payment', TB.money(r.paymentCents)],
+      ['Interest and fees on the financing', TB.money(r.financeInterestCents + r.feeCents)],
+      ['Earned by your cash while the payments run', TB.money(r.earnedWhileWaitingCents)],
+      ['Your cash would need to earn', r.breakEvenParkRate === null ? 'more than 100%: cash always wins here' : r.breakEvenParkRate === 0 ? 'nothing: the payments win at any rate' : TB.rate(r.breakEvenParkRate, 1) + ' for the two to tie', true]
+    ]);
+  }
+  render(f.v);
+})();
+</script>
+</body>
+</html>

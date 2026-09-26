@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Stay or Move · The Toolbox</title>
+<meta name="description" content="The rent went up. Over the lease you would sign, does moving pay for itself, and what is the counter-offer that makes staying a wash?"/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<link rel="stylesheet" href="toolbox.css"/>
+<!--
+  STAY OR MOVE (TB-012).
+  1. READS   the rent you pay now (Schema.rentMonthlyCents) as a starting value.
+  2. WRITES  nothing.
+  3. CALLS   toolbox/engines/stayormove.js compare.
+  4. EMPTY   the verdict names the missing box.
+  LIVE-FORM: built once.
+-->
+</head>
+<body class="slaf">
+<header class="tb-head" id="tb-head"></header>
+<main class="slaf-wrap">
+  <section class="slaf-card" id="in">
+    <span class="slaf-eyebrow">The rents</span>
+    <div class="tb-grid is-3" style="margin-top:var(--space-3)">
+      <label class="slaf-field"><span class="slaf-label">Rent now</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="now" placeholder="e.g. 1,800"/></span><span class="tb-from" id="now-from"></span></label>
+      <label class="slaf-field"><span class="slaf-label">Rent if you stay</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="stay" placeholder="the renewal letter"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Rent at the new place</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="move" placeholder="e.g. 1,700"/></span></label>
+    </div>
+    <span class="slaf-eyebrow" style="display:block;margin-top:var(--space-4)">What moving costs, once</span>
+    <div class="tb-grid is-3" style="margin-top:var(--space-3)">
+      <label class="slaf-field"><span class="slaf-label">Movers, truck, boxes</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="movers" placeholder="e.g. 1,200"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Fees and deposit you will not see again</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="fees" placeholder="application, cleaning"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Overlap rent, time off, the rest</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="other-once" placeholder="e.g. 800"/></span></label>
+    </div>
+    <span class="slaf-eyebrow" style="display:block;margin-top:var(--space-4)">What changes every month</span>
+    <div class="tb-grid is-3" style="margin-top:var(--space-3)">
+      <label class="slaf-field"><span class="slaf-label">Commute, more (+) or less (−) a month</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="commute" placeholder="0 if the same"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Utilities, parking, the rest, + or −</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="other-monthly" placeholder="0 if the same"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Lease you would sign, months</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" id="term" placeholder="12"/></span></label>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="out">
+    <span class="slaf-eyebrow">The answer</span>
+    <p class="tb-verdict is-incomplete" id="verdict">Fill in the two rents to see this.</p>
+    <p class="tb-why" id="why"></p>
+    <div class="tb-compare" id="options" hidden></div>
+    <div class="tb-flag is-info" id="flag" hidden></div>
+    <div class="tb-rows" id="rows" hidden></div>
+    <div class="tb-pic" id="pic" hidden></div>
+  </section>
+
+  <p class="tb-small">Both paths are summed over the lease term you name. Staying costs the new rent each month. Moving costs the new place's rent plus the monthly changes, plus the one-off costs on day one. The counter-offer is the rent at which staying would cost exactly what moving does over the term. A returned deposit is not a cost, so do not enter it; the hassle of moving is real and has no box. This tool stores nothing.</p>
+</main>
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/charts.js"></script>
+<script src="engines/stayormove.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  'use strict';
+  var TB = SLAF.TB, Money = SLAF.Money, Charts = SLAF.Charts, SM = SLAF.TB.StayOrMove;
+  TB.header({ num: 10, title: 'Stay or Move', lede: 'The renewal letter came. Over the lease you would sign, does moving pay for itself? And the one number to take back to the landlord.' });
+  var f = TB.form({ now: 'money', stay: 'money', move: 'money', movers: 'money', fees: 'money', 'other-once': 'money', commute: 'money', 'other-monthly': 'money', term: 'int' }, render);
+  TB.actions(f, { now: 180000, stay: 195000, move: 170000, movers: 120000, fees: 50000, 'other-once': 80000, commute: 5000, 'other-monthly': 0, term: 12 });
+  var h = TB.household();
+  if (h) { var rent = SLAF.Schema.rentMonthlyCents(h); var c = rent && Money.isEntered(rent.cents) ? rent.cents : TB.val(rent); if (c) TB.prefill(f, 'now', c); }
+
+  function sum(list) { var t = 0, any = false; list.forEach(function (x) { if (Money.isEntered(x)) { t += x; any = true; } }); return any ? t : null; }
+  function render(v) {
+    var r = SM.compare({ rentNowCents: v.now, rentStayCents: v.stay, rentMoveCents: v.move, oneOffCents: sum([v.movers, v.fees, v['other-once']]), commuteDeltaCents: v.commute, otherDeltaCents: v['other-monthly'], termMonths: v.term });
+    if (!Money.isOk(r)) { TB.incomplete('verdict', r, ['options', 'flag', 'rows', 'pic']); TB.el('why').textContent = ''; return; }
+    var d = Math.abs(r.deltaCents);
+    if (d < 5000) TB.verdict('verdict', 'A wash over ' + TB.span(r.termMonths) + ': the two come within ' + TB.money(d) + '. Stay, unless you want to move.');
+    else if (r.value === 'move') TB.verdict('verdict', 'Move. Over ' + TB.span(r.termMonths) + ' it is ' + TB.money(d) + ' cheaper, moving costs included.', 'good');
+    else TB.verdict('verdict', 'Stay. Over ' + TB.span(r.termMonths) + ' moving would cost ' + TB.money(d) + ' more than the new rent.', null);
+    TB.el('why').textContent = (r.increaseRate !== null ? 'The rise is ' + TB.money(r.increaseCents) + ' a month, ' + TB.pct(r.increaseRate, 1) + '. ' : '')
+      + (r.monthlySavingCents > 0 ? 'Moving saves ' + TB.money(r.monthlySavingCents) + ' a month all in, and the ' + TB.money(r.oneOffCents) + ' of moving costs are paid back in ' + TB.span(r.breakEvenMonths) + (r.breakEvenInsideTerm ? ', inside the lease.' : ', which is longer than the lease.') : r.monthlySavingCents < 0 ? 'The new place costs ' + TB.money(-r.monthlySavingCents) + ' a month more once the commute and the rest are counted, so moving never pays back.' : 'Month to month the two cost the same, so the moving costs decide it.');
+    TB.options('options', [
+      { key: 'stay', label: 'Stay', color: TB.SERIES.a, value: TB.money(r.totalStayCents), sub: TB.money(v.stay) + ' a month for ' + TB.span(r.termMonths), tag: 'cheaper' },
+      { key: 'move', label: 'Move', color: TB.SERIES.b, value: TB.money(r.totalMoveCents), sub: TB.money(r.monthlyMoveCents) + ' a month all in<br/>+ ' + TB.money(r.oneOffCents) + ' once', tag: 'cheaper' }
+    ], d < 5000 ? null : r.value);
+    TB.flag('flag', '<strong>The counter-offer is ' + TB.money(r.counterRentCents) + '.</strong> At that rent, staying costs exactly what moving does over ' + TB.span(r.termMonths) + '. Anything under it and you are ahead staying; the landlord is ahead too, because an empty month costs them a month of rent. ' + (r.counterRentCents < v.stay ? 'Ask for it.' : 'The letter is already below it.'), 'info');
+    TB.rows('rows', [
+      ['Moving, once', TB.money(r.oneOffCents)], ['Every month, moving against staying', (r.monthlySavingCents >= 0 ? '−' : '+') + TB.money(Math.abs(r.monthlySavingCents))],
+      ['Break-even', r.breakEvenMonths === null ? 'never' : TB.span(r.breakEvenMonths)], ['Over the lease', (r.deltaCents >= 0 ? 'moving saves ' : 'staying saves ') + TB.money(d), true],
+      ['Counter-offer', TB.money(r.counterRentCents), true]
+    ]);
+    var pts = function (arr) { return arr.map(function (c, i) { return [i, c]; }); };
+    TB.chart('pic', Charts.area({ title: 'What each path has cost, month by month', width: 360, height: 200, x: { label: 'months', format: function (x) { return Math.round(x); } },
+      series: [{ label: 'Stay', color: TB.SERIES.a, points: pts(r.stayCum), fill: false }, { label: 'Move', color: TB.SERIES.b, points: pts(r.moveCum), fill: false, dash: true }],
+      vLines: r.breakEvenInsideTerm ? [{ x: r.breakEvenMonths, label: 'break-even' }] : [] }), 'Moving starts higher by the one-off costs. Where the lines cross, moving has paid for itself.');
+  }
+  render(f.v);
+})();
+</script>
+</body>
+</html>

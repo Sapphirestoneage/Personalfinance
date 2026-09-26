@@ -17349,6 +17349,32 @@ SPARKS device backup neither carries nor removes `coach.` keys.
 
 **Verified.** `node test/run.js`; `node coach/test/run.js`.
 
+## D-340 — The Toolbox: ten calculators in toolbox/, a lane beside SPARKS like coach/ and dnd/
+
+**Why.** The owner asked for the tools SPARKS did not have: the questions that
+arrive as a letter, an offer or a paystub, and that no room answers. Ten were
+named and built in one pass, all at once, to be seen whole.
+
+**Decision.** `toolbox/` is a separate app: one shelf (`toolbox/index.html`) and
+ten tools (Paycheck Check, Refinance, Move the Debt, Pay Cash or Finance, Lump
+Sum or Payments, Cash Ladder, Three Paychecks, Borrow From Yourself, Sinking
+Funds, Stay or Move), each a pure engine in `toolbox/engines/` and a page. They
+read `shared/` and `engines/` in place (the level payment, compound growth and
+the tax engine are not rewritten) and prefill from the household read-only;
+none writes a `slaf.*` key. Its own tests (`node toolbox/test/run.js`, in CI)
+and its own log (`toolbox/README.md`, `TB-###`). Nothing in `rooms/`,
+`shared/`, `engines/` or `data/` changes for it.
+
+**Replaces or removes.** No SPARKS screen. The freeze (D-313) is on rooms,
+frameworks, lenses and vocabularies; this adds none of those and no field.
+It does add screens, outside the app, at the owner's explicit request.
+
+**Stored shape.** No change to `slaf.household.v2`. Sinking Funds keeps its
+list under `toolbox.sinking.v1`; the SPARKS backup neither carries nor removes it.
+
+**Verified.** `node test/run.js`; `node toolbox/test/run.js`; every Toolbox
+page opened at phone and desktop width with the example numbers, no console error.
+
 ---
 
 # The Dungeons & Dividends entries

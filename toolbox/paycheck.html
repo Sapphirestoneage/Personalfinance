@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Paycheck Check · The Toolbox</title>
+<meta name="description" content="Read one paystub as a year. Is the withholding on track, or is April a refund or a bill? The change per check that lands it near zero, and the payroll tax checked too."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<link rel="stylesheet" href="toolbox.css"/>
+<!--
+  PAYCHECK CHECK (TB-013). STATUS.md has said "paystub parser: not built" for
+  a while; this is the check without the parser: you type the five lines.
+  1. READS   filing status, state and gross income from the household, as
+             starting values (the gross per check at the frequency chosen).
+  2. WRITES  nothing.
+  3. CALLS   toolbox/engines/paycheck.js check, on engines/tax.js (ordinaryTax,
+             fica, stateTax) and the SPARKS bracket tables via shared/reference.js.
+  4. EMPTY   the verdict names the missing box.
+  5. CONFIG  data/federal_brackets_2026.json, data/se_tax_2026.json,
+             data/state_brackets_2026.json.
+  LIVE-FORM: built once.
+-->
+</head>
+<body class="slaf">
+<header class="tb-head" id="tb-head"></header>
+<main class="slaf-wrap">
+  <div class="notice is-error" id="load-notice" hidden></div>
+  <section class="slaf-card" id="in">
+    <span class="slaf-eyebrow">One paystub</span>
+    <div class="tb-grid is-3" style="margin-top:var(--space-3)">
+      <label class="slaf-field"><span class="slaf-label">Gross pay, this check</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="gross" placeholder="e.g. 3,000"/></span><span class="tb-from" id="gross-from"></span></label>
+      <label class="slaf-field"><span class="slaf-label">Paid</span><select id="freq"><option value="biweekly">Every two weeks</option><option value="weekly">Every week</option><option value="semimonthly">Twice a month</option><option value="monthly">Once a month</option></select></label>
+      <label class="slaf-field"><span class="slaf-label">Federal income tax withheld</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="fed" placeholder="the federal line"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">401(k) or other pre-tax, this check</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="pretax" placeholder="0 if none"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Health, HSA, FSA premiums, this check</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="s125" placeholder="0 if none"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Social Security + Medicare withheld</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="fica" placeholder="optional, to check it"/></span></label>
+    </div>
+    <span class="slaf-eyebrow" style="display:block;margin-top:var(--space-4)">You</span>
+    <div class="tb-grid is-3" style="margin-top:var(--space-3)">
+      <label class="slaf-field"><span class="slaf-label">Filing status</span><select id="filing"><option value="">choose</option><option value="single">Single</option><option value="married_joint">Married, joint</option><option value="married_separate">Married, separate</option><option value="head_of_household">Head of household</option></select><span class="tb-from" id="filing-from"></span></label>
+      <label class="slaf-field"><span class="slaf-label">State</span><span class="slaf-input-shell"><input type="text" id="state" placeholder="e.g. CA" maxlength="2" style="text-transform:uppercase"/></span><span class="tb-from" id="state-from"></span></label>
+      <label class="slaf-field"><span class="slaf-label">State tax withheld, this check</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="state-w" placeholder="optional"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Checks already received this year</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" id="so-far" placeholder="0 in January"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Other income this year, no withholding</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="other" placeholder="interest, a side gig"/></span></label>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="out">
+    <span class="slaf-eyebrow">April, read from this check</span>
+    <p class="tb-verdict is-incomplete" id="verdict">Type the gross, the federal tax withheld and your filing status.</p>
+    <p class="tb-why" id="why"></p>
+    <div class="tb-flag" id="flag" hidden></div>
+    <div class="tb-rows" id="rows" hidden></div>
+    <div class="tb-flag is-info" id="fica-flag" hidden></div>
+    <div class="tb-rows" id="state-rows" hidden></div>
+  </section>
+
+  <p class="tb-small" id="small">Every check is assumed to look like this one. The year's federal tax is the SPARKS tax engine on the year's wages after the pre-tax deductions and the standard deduction; no credits, no itemising, no other household income unless you type it. Payroll tax is Social Security up to the wage base plus Medicare. The state figure applies the state schedule to federal taxable income and ignores state deductions and credits. An estimate, not a return; the W-4 is where the change is made. This tool stores nothing.</p>
+</main>
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../engines/selfemployed.js"></script>
+<script src="../engines/tax.js"></script>
+<script src="engines/paycheck.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  'use strict';
+  var TB = SLAF.TB, Money = SLAF.Money, PC = SLAF.TB.Paycheck, TABLES = null;
+  TB.header({ num: 1, title: 'Paycheck Check', lede: 'One paystub, read as a year. Is the withholding on track, or is April going to be a refund or a bill? And the change per check that lands it near zero.' });
+  var f = TB.form({ gross: 'money', freq: 'select', fed: 'money', pretax: 'money', s125: 'money', fica: 'money', filing: 'select', state: 'text', 'state-w': 'money', 'so-far': 'int', other: 'money' }, render);
+  TB.actions(f, { gross: 300000, freq: 'biweekly', fed: 28000, pretax: 18000, s125: 12000, fica: null, filing: 'single', state: 'CA', 'state-w': 10000, 'so-far': 18, other: 0 });
+  var h = TB.household();
+  function prefill() {
+    if (!h) return;
+    if (h.filingStatus) TB.prefill(f, 'filing', SLAF.Schema.filingStatusOf(h.filingStatus));
+    if (h.state) TB.prefill(f, 'state', h.state);
+    var g = TB.val(SLAF.Schema.grossAnnualIncomeCents(h));
+    var n = PC.PERIODS[f.v.freq];
+    if (g && n) TB.prefill(f, 'gross', Math.round(g / n), 'from your Ledger, at this frequency');
+  }
+
+  function render(v) {
+    if (!TABLES) return;
+    prefill();
+    var r = PC.check({ grossCents: v.gross, frequency: v.freq, pretaxCents: v.pretax, section125Cents: v.s125, fedWithheldCents: v.fed, ficaWithheldCents: v.fica, filingStatus: v.filing, state: (v.state || '').toUpperCase() || null, stateWithheldCents: v['state-w'], checksSoFar: v['so-far'], otherIncomeCents: v.other }, TABLES);
+    if (!Money.isOk(r)) { TB.incomplete('verdict', r, ['flag', 'rows', 'fica-flag', 'state-rows']); TB.el('why').textContent = ''; return; }
+    var gap = Math.abs(r.gapCents);
+    if (gap < 20000) TB.verdict('verdict', 'On track. April comes within ' + TB.money(gap) + ' either way.', 'good');
+    else if (r.refund) TB.verdict('verdict', 'A refund of about ' + TB.money(gap) + ' in April.', r.bigRefund ? null : 'good');
+    else TB.verdict('verdict', 'A bill of about ' + TB.money(gap) + ' in April.', r.underpaid ? 'bad' : null);
+    TB.el('why').textContent = 'At ' + r.checksPerYear + ' checks this is ' + TB.money(r.annualGrossCents) + ' a year. After ' + TB.money((v.pretax || 0) + (v.s125 || 0)) + ' a check of pre-tax deductions and the standard deduction, ' + TB.money(r.taxableIncomeCents) + ' is taxable; the federal tax on it is ' + TB.money(r.federalTaxCents) + ' (' + TB.pct(r.effectiveFederalRate, 1) + ' of gross, ' + TB.pct(r.marginalRate) + ' on the next dollar). This check withholds ' + TB.money(v.fed) + ', which is ' + TB.money(r.federalWithheldCents) + ' over the year.';
+    var adj = r.perCheckAdjustCents;
+    TB.flag('flag', adj === null ? null : gap < 20000 ? '<strong>Leave the W-4 alone.</strong>' : (r.refund
+      ? '<strong>You are lending the government ' + TB.money(Math.abs(adj)) + ' a check, interest free.</strong> ' + (r.bigRefund ? 'A W-4 change adding that much to each of the ' + r.checksLeft + ' checks left would bring April to zero and put the money in your month instead. If the refund is a savings plan you like, keep it, but know that it is one.' : 'Small enough to leave, unless you would rather have it now.')
+      : '<strong>Add about ' + TB.money(adj) + ' of extra withholding to each of the ' + r.checksLeft + ' checks left</strong> (line 4(c) on the W-4) and April comes to zero. ' + (r.underpaid ? 'Under-withholding by this much can also carry a penalty; the safe harbours are 90% of this year\'s tax or 100% of last year\'s.' : '')), r.underpaid ? 'critical' : (r.refund && !r.bigRefund ? 'info' : null));
+    TB.rows('rows', [
+      ['Gross for the year', TB.money(r.annualGrossCents)], ['Federal taxable income', TB.money(r.taxableIncomeCents)],
+      ['Federal tax for the year', TB.money(r.federalTaxCents)], ['Withheld for the year, at this rate', TB.money(r.federalWithheldCents)],
+      ['April', (r.gapCents > 0 ? 'owe ' : 'refund ') + TB.money(gap), true],
+      ['Change per check to land at zero', adj === null ? 'no checks left this year' : (adj > 0 ? '+' : '−') + TB.money(Math.abs(adj)), true],
+      ['Take-home per check', TB.money(r.takeHomePerCheckCents)]
+    ]);
+    TB.flag('fica-flag', r.ficaPerCheckCents === null ? null : '<strong>Payroll tax on this check should be about ' + TB.money(r.ficaPerCheckCents) + '</strong> (Social Security and Medicare on ' + TB.money(r.ficaWagesCents / r.checksPerYear) + ').' + (r.ficaGapPerCheckCents === null ? ' Type the line from the stub to check it.' : Math.abs(r.ficaGapPerCheckCents) < 500 ? ' Yours matches.' : ' Yours is ' + TB.money(Math.abs(r.ficaGapPerCheckCents)) + (r.ficaGapPerCheckCents > 0 ? ' more' : ' less') + '; past the Social Security wage base late in the year that is normal, otherwise ask payroll.'), 'info');
+    if (r.state && !r.state.unavailable) {
+      TB.rows('state-rows', [['State tax for the year, ' + (v.state || '').toUpperCase(), TB.money(r.state.taxCents)]].concat(r.state.withheldCents === null ? [['State withheld', 'type this check\'s state line to compare']] : [['State withheld for the year', TB.money(r.state.withheldCents)], ['State, in April', (r.state.gapCents > 0 ? 'owe ' : 'refund ') + TB.money(Math.abs(r.state.gapCents)), true], ['Change per check', r.state.perCheckAdjustCents === null ? Money.NOT_YET : (r.state.perCheckAdjustCents > 0 ? '+' : '−') + TB.money(Math.abs(r.state.perCheckAdjustCents))]]));
+    } else if (r.state && r.state.unavailable) TB.rows('state-rows', [['State', r.state.reason]]);
+    else TB.show('state-rows', false);
+  }
+  SLAF.Reference.load(['federalBrackets', 'seTax', 'stateBrackets']).then(function (t) { TABLES = t; render(f.v); }).catch(function (e) { var n = TB.el('load-notice'); n.hidden = false; n.textContent = 'Could not load the tax tables in data/ (' + e.message + ').'; });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Move the Debt · The Toolbox</title>
+<meta name="description" content="A balance transfer or a consolidation loan against staying put. Each costed to the last payment, with the payment that clears the transfer inside its promo."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<link rel="stylesheet" href="toolbox.css"/>
+<!--
+  MOVE THE DEBT (TB-005).
+  1. READS   nothing from the household; the offers are typed from the letters.
+  2. WRITES  nothing.
+  3. CALLS   toolbox/engines/movedebt.js compare.
+  4. EMPTY   the verdict names the missing box. An offer left blank is simply
+             not an option, not a zero-cost one.
+  LIVE-FORM: built once.
+-->
+</head>
+<body class="slaf">
+<header class="tb-head" id="tb-head"></header>
+<main class="slaf-wrap">
+  <section class="slaf-card" id="in">
+    <span class="slaf-eyebrow">The debt</span>
+    <div class="tb-grid is-3" style="margin-top:var(--space-3)">
+      <label class="slaf-field"><span class="slaf-label">Balance</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="balance" placeholder="e.g. 8,000"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">APR now</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="apr" placeholder="e.g. 24"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field"><span class="slaf-label">What you can pay a month</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="payment" placeholder="e.g. 400"/></span></label>
+    </div>
+    <span class="slaf-eyebrow" style="display:block;margin-top:var(--space-4)">A balance transfer card</span>
+    <div class="tb-grid is-3" style="margin-top:var(--space-3)">
+      <label class="slaf-field"><span class="slaf-label">Transfer fee</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="t-fee" placeholder="e.g. 3"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field"><span class="slaf-label">Promo, months at 0%</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" id="t-months" placeholder="e.g. 18"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">APR after the promo</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="t-after" placeholder="e.g. 27"/><span class="slaf-affix">%</span></span></label>
+    </div>
+    <span class="slaf-eyebrow" style="display:block;margin-top:var(--space-4)">A consolidation loan</span>
+    <div class="tb-grid is-3" style="margin-top:var(--space-3)">
+      <label class="slaf-field"><span class="slaf-label">Loan APR</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="l-apr" placeholder="e.g. 11"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field"><span class="slaf-label">Term, months</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" id="l-months" placeholder="e.g. 24"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Origination fee</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="l-fee" placeholder="e.g. 2"/><span class="slaf-affix">%</span></span></label>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="out">
+    <span class="slaf-eyebrow">The answer</span>
+    <p class="tb-verdict is-incomplete" id="verdict">Fill in the debt and at least one offer to see this.</p>
+    <p class="tb-why" id="why"></p>
+    <div class="tb-compare" id="options" hidden></div>
+    <div class="tb-flag" id="flag" hidden></div>
+    <div class="tb-pic" id="pic" hidden></div>
+    <div class="tb-flag is-info" id="trap" hidden><strong>The trap is not in the arithmetic.</strong> A card moved to 0% is an empty card. If it fills again, you have two balances, and this page has no box for that. Close it, freeze it, or cut it up.</div>
+  </section>
+
+  <p class="tb-small">The cost of a path is everything paid minus the balance itself: interest plus fees. Each path is run month by month at your payment (the loan at its own payment), interest rounded to the cent. The transfer fee goes onto the balance; the promo is taken at 0% and the after-rate applies to whatever is left. Minimum payments, late fees, credit score effects and the cost of a hard pull are not modelled. This tool stores nothing.</p>
+</main>
+<script src="../shared/money.js"></script>
+<script src="../shared/charts.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="engines/loan.js"></script>
+<script src="engines/movedebt.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  'use strict';
+  var TB = SLAF.TB, Money = SLAF.Money, Charts = SLAF.Charts, M = SLAF.TB.MoveDebt;
+  TB.header({ num: 3, title: 'Move the Debt', lede: 'A balance transfer or a consolidation loan against leaving it where it is. Three paths, each run to the last payment.' });
+  var f = TB.form({ balance: 'money', apr: 'rate', payment: 'money', 't-fee': 'rate', 't-months': 'int', 't-after': 'rate', 'l-apr': 'rate', 'l-months': 'int', 'l-fee': 'rate' }, render);
+  TB.actions(f, { balance: 800000, apr: 0.24, payment: 40000, 't-fee': 0.03, 't-months': 18, 't-after': 0.27, 'l-apr': 0.11, 'l-months': 24, 'l-fee': 0.02 });
+  var NAMES = { stay: 'Stay where it is', transfer: 'Balance transfer', loan: 'Consolidation loan' };
+  var COLORS = { stay: TB.SERIES.a, transfer: TB.SERIES.b, loan: TB.SERIES.c };
+
+  function render(v) {
+    var r = M.compare({ balanceCents: v.balance, aprNow: v.apr, paymentCents: v.payment,
+      transfer: { feeRate: v['t-fee'], promoMonths: v['t-months'], aprAfter: v['t-after'] },
+      loan: { apr: v['l-apr'], months: v['l-months'], feeRate: v['l-fee'] } });
+    if (!Money.isOk(r)) { TB.incomplete('verdict', r, ['options', 'flag', 'pic', 'trap']); TB.el('why').textContent = ''; return; }
+    var stay = r.byKey.stay, t = r.byKey.transfer, l = r.byKey.loan;
+    if (r.options.length === 1) {
+      TB.verdict('verdict', stay.never ? 'At ' + TB.money(v.payment) + ' a month this never clears: the interest alone is more than that.' : 'Staying put clears it in ' + TB.span(stay.months) + ' and costs ' + TB.money(stay.costCents) + ' in interest.', stay.never ? 'bad' : null);
+      TB.el('why').textContent = 'Type an offer above to compare it.';
+      TB.show('options', false); TB.show('pic', false); TB.show('trap', false); TB.flag('flag', null); return;
+    }
+    var best = r.byKey[r.value];
+    if (!best) TB.verdict('verdict', 'None of these clears the balance at ' + TB.money(v.payment) + ' a month.', 'bad');
+    else if (r.value === 'stay') TB.verdict('verdict', 'Stay where it is. The offers cost more than they save.', null);
+    else TB.verdict('verdict', NAMES[r.value] + ': ' + (r.savesVsStayCents !== null ? TB.money(r.savesVsStayCents) + ' less than staying put' : 'the only path that clears it') + ', gone in ' + TB.span(best.months) + '.', 'good');
+    TB.el('why').textContent = stay.never ? 'Where it is, ' + TB.money(v.payment) + ' a month does not even cover the interest.' : 'Where it is, ' + TB.money(v.payment) + ' a month clears it in ' + TB.span(stay.months) + ' and ' + TB.money(stay.costCents) + ' of interest.';
+    TB.options('options', r.options.map(function (p) {
+      var sub = p.cleared ? TB.money(p.paymentCents) + ' a month for ' + TB.span(p.months) + '<br/>' + TB.money(p.interestCents) + ' interest' + (p.feeCents ? ' + ' + TB.money(p.feeCents) + ' fee' : '') : (p.never ? 'never clears at this payment' : 'not cleared in 50 years');
+      return { key: p.key, label: NAMES[p.key], color: COLORS[p.key], value: p.cleared ? TB.money(p.costCents) : Money.NOT_YET, sub: sub, tag: 'cheapest' };
+    }), r.value);
+    var flags = [];
+    if (t) {
+      flags.push(t.clearsInPromo
+        ? '<strong>' + TB.money(v.payment) + ' a month clears the transfer inside the promo.</strong> The after-rate of ' + TB.rate(v['t-after'], 1) + ' never applies. The minimum that does it is ' + TB.money(t.toClearInPromoCents) + ' a month.'
+        : '<strong>' + TB.money(v.payment) + ' a month leaves ' + TB.money(t.leftAtPromoEndCents) + ' when the promo ends,</strong> and that balance then pays ' + TB.rate(v['t-after'], 1) + '. To clear it inside the ' + t.promoMonths + ' months you would need ' + TB.money(t.toClearInPromoCents) + ' a month.');
+    }
+    if (l && l.overBudget) flags.push('<strong>The loan payment is ' + TB.money(l.paymentCents) + ' a month,</strong> ' + TB.money(l.budgetGapCents) + ' more than you said you can pay.');
+    TB.flag('flag', flags.join('<br/><br/>') || null, t && !t.clearsInPromo ? null : 'info');
+    var pts = function (p) { return p.balances.map(function (b, i) { return [i, b]; }); };
+    TB.chart('pic', Charts.area({ title: 'Balance left, month by month', width: 360, height: 200, x: { label: 'months', format: function (x) { return Math.round(x); } },
+      series: r.options.filter(function (p) { return p.balances && p.balances.length > 1; }).map(function (p) { return { label: NAMES[p.key], color: COLORS[p.key], points: pts(p), fill: false, dash: p.key === 'transfer' }; }),
+      vLines: t ? [{ x: t.promoMonths, label: 'promo ends' }] : [] }), 'What is still owed under each path.');
+    TB.show('trap', !!t);
+  }
+  render(f.v);
+})();
+</script>
+</body>
+</html>

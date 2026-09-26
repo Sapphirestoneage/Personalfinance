@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Refinance · The Toolbox</title>
+<meta name="description" content="Is a new loan worth its closing costs? The new payment, the break-even month, the lifetime cost of three paths, and the trap of a lower payment on a longer term."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<link rel="stylesheet" href="toolbox.css"/>
+<!--
+  REFINANCE (TB-004). Any loan: a mortgage, a car, a student loan.
+  1. READS   nothing from the household; every box is typed.
+  2. WRITES  nothing.
+  3. CALLS   toolbox/engines/refinance.js compare, on engines/projection.js
+             levelPaymentCents and toolbox/engines/loan.js simulate.
+  4. EMPTY   the verdict says which box is missing; no zero is ever shown.
+  LIVE-FORM: built once.
+-->
+</head>
+<body class="slaf">
+<header class="tb-head" id="tb-head"></header>
+<main class="slaf-wrap">
+  <section class="slaf-card" id="in">
+    <span class="slaf-eyebrow">The loan you have</span>
+    <div class="tb-grid" style="margin-top:var(--space-3)">
+      <label class="slaf-field"><span class="slaf-label">Balance left</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="balance" placeholder="e.g. 300,000"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Rate now</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="rate-now" placeholder="e.g. 7"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field"><span class="slaf-label">Months left</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" id="months-left" placeholder="e.g. 300"/></span><span class="slaf-hint" style="margin:4px 0 0">Or type the payment instead.</span></label>
+      <label class="slaf-field"><span class="slaf-label">Payment now (optional)</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="pay-now" placeholder="if you know it"/></span></label>
+    </div>
+    <span class="slaf-eyebrow" style="display:block;margin-top:var(--space-4)">The loan on offer</span>
+    <div class="tb-grid is-3" style="margin-top:var(--space-3)">
+      <label class="slaf-field"><span class="slaf-label">New rate</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="rate-new" placeholder="e.g. 5.5"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field"><span class="slaf-label">New term, months</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" id="months-new" placeholder="e.g. 360"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Closing costs</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="closing" placeholder="e.g. 6,000"/></span></label>
+    </div>
+    <label class="slaf-switch" style="margin-top:var(--space-3)"><input type="checkbox" id="roll-in"/> Roll the closing costs into the new balance</label>
+  </section>
+
+  <section class="slaf-card" id="out">
+    <span class="slaf-eyebrow">The answer</span>
+    <p class="tb-verdict is-incomplete" id="verdict">Fill in the boxes above to see this.</p>
+    <p class="tb-why" id="why"></p>
+    <div class="tb-compare" id="options" hidden></div>
+    <div class="tb-flag" id="flag" hidden></div>
+    <div class="tb-rows" id="rows" hidden></div>
+    <div class="tb-pic" id="pic" hidden></div>
+  </section>
+
+  <p class="tb-small">The payment on each loan is the level payment for its rate and term (engines/projection.js). Every path is run month by month to its last payment; interest is rounded to the cent each month. Closing costs count in the new loan's cost whether paid up front or rolled in. Taxes, escrow, insurance and points are not modelled; a mortgage interest deduction is not either. This tool stores nothing.</p>
+</main>
+<script src="../shared/money.js"></script>
+<script src="../shared/charts.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="engines/loan.js"></script>
+<script src="engines/refinance.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  'use strict';
+  var TB = SLAF.TB, Money = SLAF.Money, Charts = SLAF.Charts, R = SLAF.TB.Refinance;
+  TB.header({ num: 2, title: 'Refinance', lede: 'Is the new loan worth its closing costs? Three paths costed to the last payment, and the month the saving has paid the costs back.' });
+  var f = TB.form({ balance: 'money', 'rate-now': 'rate', 'months-left': 'int', 'pay-now': 'money', 'rate-new': 'rate', 'months-new': 'int', closing: 'money', 'roll-in': 'check' }, render);
+  TB.actions(f, { balance: 30000000, 'rate-now': 0.07, 'months-left': 300, 'pay-now': null, 'rate-new': 0.055, 'months-new': 360, closing: 600000, 'roll-in': false });
+
+  var NAMES = { old: 'Keep the loan you have', 'new': 'Take the new loan', samePay: 'New loan, keep paying the old amount' };
+  var COLORS = { old: TB.SERIES.a, 'new': TB.SERIES.b, samePay: TB.SERIES.c };
+
+  function render(v) {
+    var r = R.compare({ balanceCents: v.balance, currentRate: v['rate-now'], monthsLeft: v['months-left'], currentPaymentCents: v['pay-now'], newRate: v['rate-new'], newMonths: v['months-new'], closingCents: v.closing, rollIn: v['roll-in'] });
+    if (!Money.isOk(r)) { TB.incomplete('verdict', r, ['options', 'flag', 'rows', 'pic']); TB.el('why').textContent = ''; return; }
+    var best = r.byKey[r.value], old = r.byKey.old, nw = r.byKey['new'];
+    var saves = old.totalPaidCents - best.totalPaidCents;
+    if (r.value === 'old') {
+      TB.verdict('verdict', 'Keep the loan you have. Refinancing costs ' + TB.money(-saves === 0 ? 0 : nw.totalPaidCents - old.totalPaidCents) + ' more over its life.', 'bad');
+    } else {
+      TB.verdict('verdict', NAMES[r.value] + ': ' + TB.money(saves) + ' less over the life of the loan.', 'good');
+    }
+    var why = '';
+    if (r.monthlySavingCents > 0) {
+      why = 'The payment falls by ' + TB.money(r.monthlySavingCents) + ' a month. ' + (r.breakEvenMonths === 0 ? 'There are no closing costs to pay back.' : 'The closing costs of ' + TB.money(r.closingCents) + ' are paid back in ' + TB.span(r.breakEvenMonths) + '.');
+    } else if (r.monthlySavingCents < 0) {
+      why = 'The payment rises by ' + TB.money(-r.monthlySavingCents) + ' a month' + (r.byKey['new'].months < old.months ? ', because the new term is shorter; the loan is gone ' + TB.span(old.months - nw.months) + ' sooner.' : '.');
+    } else why = 'The payment is the same.';
+    TB.el('why').textContent = why;
+    TB.options('options', r.paths.map(function (p) {
+      return { key: p.key, label: NAMES[p.key], color: COLORS[p.key], value: TB.money(p.totalPaidCents), tag: 'cheapest',
+        sub: TB.money(p.paymentCents) + ' a month for ' + TB.span(p.months) + '<br/>' + TB.money(p.interestCents) + ' of interest' + (p.key !== 'old' && r.closingCents ? ' and costs' : '') };
+    }), r.value);
+    TB.flag('flag', r.paymentFallsCostRises
+      ? '<strong>The payment falls and the lifetime cost rises.</strong> The new term runs ' + TB.span(nw.months - old.months) + ' longer than the loan you have, so the smaller payment is paid for many more months. ' + (r.byKey.samePay ? 'Keep paying the old amount on the new loan and it clears in ' + TB.span(r.byKey.samePay.months) + ', ' + TB.money(-r.samePayDeltaCents) + ' cheaper than today.' : '')
+      : (r.value === 'samePay' ? '<strong>The saving is in the payment you keep making.</strong> Take the lower rate, ignore the lower payment.' : ''), r.paymentFallsCostRises ? null : 'info');
+    TB.rows('rows', [
+      ['Payment now', TB.money(old.paymentCents)], ['New payment', TB.money(nw.paymentCents)],
+      ['Monthly difference', (r.monthlySavingCents >= 0 ? '−' : '+') + TB.money(Math.abs(r.monthlySavingCents))],
+      ['Break-even', r.breakEvenMonths === null ? 'never: the payment does not fall' : r.breakEvenMonths === 0 ? 'at once' : TB.span(r.breakEvenMonths)],
+      ['Lifetime difference, new loan', (r.lifetimeDeltaCents <= 0 ? '−' : '+') + TB.money(Math.abs(r.lifetimeDeltaCents)), true]
+    ]);
+    var pts = function (p) { return p.balances.map(function (b, i) { return [i / 12, b]; }).filter(function (x, i, a) { return i % 3 === 0 || i === a.length - 1; }); };
+    TB.chart('pic', Charts.area({ title: 'Balance left, year by year', width: 360, height: 200, x: { label: 'years from now', format: function (x) { return Math.round(x) + 'y'; } },
+      series: r.paths.map(function (p) { return { label: NAMES[p.key], color: COLORS[p.key], points: pts(p), fill: false, dash: p.key === 'new' }; }) }),
+      'What is still owed under each path. A line that reaches zero later carries more months of interest.');
+  }
+  render(f.v);
+})();
+</script>
+</body>
+</html>

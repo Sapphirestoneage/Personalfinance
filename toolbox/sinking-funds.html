@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Sinking Funds · The Toolbox</title>
+<meta name="description" content="The yearly bills that arrive all at once, spread into a monthly set-aside. What the fund should hold today and what lands in each of the next twelve months."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<link rel="stylesheet" href="toolbox.css"/>
+<!--
+  SINKING FUNDS (TB-011). The one tool that keeps something: its list of bills,
+  under toolbox.sinking.v1 in this browser. Never a slaf.* key.
+  1. READS   nothing from the household.
+  2. WRITES  its own list to toolbox.sinking.v1. Nothing else.
+  3. CALLS   toolbox/engines/sinking.js plan.
+  4. EMPTY   no bills, no plan; the verdict says so.
+  LIVE-FORM: the entry boxes at the top are built once and only cleared; the
+  list of saved bills below is a read-only table repainted on every change,
+  with a remove button per row. No live input is ever rebuilt.
+-->
+</head>
+<body class="slaf">
+<header class="tb-head" id="tb-head"></header>
+<main class="slaf-wrap">
+  <section class="slaf-card" id="in">
+    <span class="slaf-eyebrow">Add a bill</span>
+    <div class="tb-grid" style="margin-top:var(--space-3)">
+      <label class="slaf-field"><span class="slaf-label">What it is</span><span class="slaf-input-shell"><input type="text" id="name" placeholder="e.g. Car insurance"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">How much</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="amount" placeholder="e.g. 900"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">How often</span><select id="every"><option value="12">Every year</option><option value="6">Twice a year</option><option value="3">Every quarter</option><option value="24">Every two years</option><option value="36">Every three years</option><option value="60">Every five years</option></select></label>
+      <label class="slaf-field"><span class="slaf-label">Next due</span><input type="date" id="due"/></label>
+    </div>
+    <div class="tb-acts"><button type="button" class="slaf-btn slaf-btn--primary" id="add">Add it</button><span class="slaf-hint" id="add-say" style="align-self:center"></span></div>
+    <div id="list" hidden></div>
+  </section>
+
+  <section class="slaf-card" id="out">
+    <span class="slaf-eyebrow">The fund</span>
+    <p class="tb-verdict is-incomplete" id="verdict">Add a bill to see the set-aside.</p>
+    <p class="tb-why" id="why"></p>
+    <div class="tb-rows" id="rows" hidden></div>
+    <div class="tb-flag" id="flag" hidden></div>
+    <div class="tb-months" id="months"></div>
+    <div class="tb-pic" id="pic" hidden></div>
+  </section>
+
+  <p class="tb-small">Each bill's set-aside is its amount over the months between one and the next, rounded up to the cent. What the fund should hold today is the share of each bill that has "accrued" since the last one: a yearly bill due next month is nearly all owed already. The months ahead start from the amount the fund should hold, add the set-aside and take out what lands. The list of bills is kept in this browser under its own key and nowhere else; nothing is written to your household.</p>
+</main>
+<script src="../shared/money.js"></script>
+<script src="../shared/charts.js"></script>
+<script src="engines/sinking.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  'use strict';
+  var TB = SLAF.TB, Money = SLAF.Money, Charts = SLAF.Charts, S = SLAF.TB.Sinking;
+  var KEY = 'toolbox.sinking.v1';
+  TB.header({ num: 9, title: 'Sinking Funds', lede: 'The bills that come once or twice a year and always feel like a surprise. Spread into a monthly amount, with what the fund should already hold.' });
+  var f = TB.form({ name: 'text', amount: 'money', every: 'select', due: 'date' }, function () {});
+  var items = load();
+  TB.actions(f, function () {
+    var t = new Date(), y = t.getFullYear();
+    items = [
+      { id: 'x1', name: 'Car insurance', amountCents: 90000, everyMonths: 6, nextDue: y + '-12-15' },
+      { id: 'x2', name: 'Holidays and gifts', amountCents: 120000, everyMonths: 12, nextDue: y + '-12-01' },
+      { id: 'x3', name: 'Property tax', amountCents: 320000, everyMonths: 12, nextDue: (y + 1) + '-04-10' },
+      { id: 'x4', name: 'Tyres', amountCents: 80000, everyMonths: 36, nextDue: (y + 1) + '-08-01' },
+      { id: 'x5', name: 'Vet, the yearly visit', amountCents: 35000, everyMonths: 12, nextDue: (y + 1) + '-02-20' }
+    ];
+    save(); render(); return {};
+  });
+  TB.el('tb-clear').addEventListener('click', function () { items = []; save(); render(); });
+  TB.el('tb-clear').textContent = 'Clear the list';
+
+  function load() { try { var j = JSON.parse(localStorage.getItem(KEY) || '[]'); return Array.isArray(j) ? j : []; } catch (e) { return []; } }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(items)); } catch (e) { /* private mode: the list lives for the page only */ } }
+
+  TB.el('add').addEventListener('click', function () {
+    f.read();
+    var v = f.v, say = TB.el('add-say');
+    if (!Money.isEntered(v.amount) || v.amount <= 0) { say.textContent = 'How much is it?'; return; }
+    if (!v.due) { say.textContent = 'When is it next due?'; return; }
+    items.push({ id: 'b' + Date.now(), name: (v.name || '').trim() || 'A bill', amountCents: v.amount, everyMonths: Number(v.every) || 12, nextDue: v.due });
+    save(); f.setAll({ name: null, amount: null, due: null }); say.textContent = 'Added.'; document.body.classList.remove('is-demo'); render();
+  });
+
+  var EVERY = { 3: 'quarterly', 6: 'twice a year', 12: 'yearly', 24: 'every 2 years', 36: 'every 3 years', 60: 'every 5 years' };
+  function render() {
+    var r = S.plan(items, TB.today());
+    var list = TB.el('list');
+    if (!items.length) { list.hidden = true; list.innerHTML = ''; TB.incomplete('verdict', r, ['rows', 'flag', 'pic']); TB.el('months').innerHTML = ''; TB.el('why').textContent = ''; return; }
+    var byId = {}; if (Money.isOk(r)) r.items.forEach(function (it, i) { byId[items.filter(function (x) { return x.name === it.name && x.nextDue === it.nextDue; })[0].id] = it; });
+    TB.table('list', ['Bill', 'Amount', 'How often', 'Next due', 'A month', 'Hold now', ''], items.map(function (it) {
+      var p = byId[it.id];
+      return { cells: [it.name, TB.money(it.amountCents), EVERY[it.everyMonths] || ('every ' + it.everyMonths + ' months'), TB.day(it.nextDue), p ? TB.money(p.monthlyCents) : Money.NOT_YET, p ? TB.money(p.shouldHoldCents) : Money.NOT_YET, { html: '<button type="button" class="tb-act" data-remove="' + TB.esc(it.id) + '">remove</button>' }] };
+    }));
+    Array.prototype.forEach.call(list.querySelectorAll('[data-remove]'), function (b) { b.addEventListener('click', function () { items = items.filter(function (x) { return x.id !== b.getAttribute('data-remove'); }); save(); render(); }); });
+    if (!Money.isOk(r)) { TB.incomplete('verdict', r, ['rows', 'flag', 'pic']); TB.el('months').innerHTML = ''; return; }
+    TB.verdict('verdict', 'Set aside ' + TB.money(r.value) + ' a month. The fund should hold ' + TB.money(r.holdNowCents) + ' today.', 'good');
+    TB.el('why').textContent = items.length + (items.length === 1 ? ' bill' : ' bills') + ', ' + TB.money(r.yearlyCents) + ' a year. The biggest month ahead is ' + r.biggestMonth.label + ' at ' + TB.money(r.biggestMonth.cents) + '.';
+    TB.rows('rows', [['A month, all bills', TB.money(r.value), true], ['A year', TB.money(r.yearlyCents)], ['The fund should hold today', TB.money(r.holdNowCents), true], ['Lowest the fund gets in the next year', TB.money(r.lowestCents) + (r.lowestIn ? ', in ' + r.lowestIn : '')]]);
+    TB.flag('flag', r.shortfallCents > 0 ? '<strong>Starting from ' + TB.money(r.holdNowCents) + ', the fund runs ' + TB.money(r.shortfallCents) + ' short in ' + r.lowestIn + '.</strong> Start it with ' + TB.money(r.holdNowCents + r.shortfallCents) + ' instead, or add ' + TB.money(Math.ceil(r.shortfallCents / 12)) + ' a month for the first year.' : null);
+    TB.el('months').innerHTML = r.landing.map(function (m) {
+      return '<div class="tb-month' + (m.cents ? ' is-extra' : '') + '"><span class="tb-mn">' + TB.esc(m.label) + '</span>' + (m.cents ? '<span class="tb-mx">−' + TB.money(m.cents) + '</span><span class="tb-md">' + m.items.map(TB.esc).join(', ') + '</span>' : '<span class="tb-md">nothing due</span>') + '</div>';
+    }).join('');
+    TB.chart('pic', Charts.area({ title: 'The fund over the next year', width: 360, height: 180, x: { label: 'months from now', format: function (x) { return Math.round(x); } },
+      series: [{ label: 'Fund balance, saving ' + TB.money(r.value) + ' a month', color: TB.SERIES.a, points: r.path.map(function (p) { return [p.index, p.cents]; }), fill: true }],
+      hLines: [{ y: 0, label: '' }] }), 'Starts at what the fund should hold today. Each month adds the set-aside and takes out what lands.');
+  }
+  render();
+})();
+</script>
+</body>
+</html>

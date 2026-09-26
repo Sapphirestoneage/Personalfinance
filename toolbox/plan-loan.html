@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Borrow From Yourself · The Toolbox</title>
+<meta name="description" content="A 401(k) loan looks free because the interest comes back to you. What the money did not earn while it was out, the cost of paused contributions, and the bill if you leave the job."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<link rel="stylesheet" href="toolbox.css"/>
+<!--
+  BORROW FROM YOURSELF (TB-010).
+  1. READS   your age (Schema.primaryAge) for the penalty test.
+  2. WRITES  nothing.
+  3. CALLS   toolbox/engines/planloan.js cost, with toolbox/data/plan_loan_rules_2026.json.
+  4. EMPTY   the verdict names the missing box.
+  LIVE-FORM: built once.
+-->
+</head>
+<body class="slaf">
+<header class="tb-head" id="tb-head"></header>
+<main class="slaf-wrap">
+  <div class="notice is-error" id="load-notice" hidden></div>
+  <section class="slaf-card" id="in">
+    <span class="slaf-eyebrow">The loan</span>
+    <div class="tb-grid is-3" style="margin-top:var(--space-3)">
+      <label class="slaf-field"><span class="slaf-label">Borrow</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="loan" placeholder="e.g. 20,000"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Vested balance in the plan</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="vested" placeholder="e.g. 80,000"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Loan rate</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="loan-rate" placeholder="e.g. 8.5"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field"><span class="slaf-label">Repay over, months</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" id="months" placeholder="up to 60"/></span></label>
+      <label class="slaf-field"><span class="slaf-label">Return the plan would earn</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="market" placeholder="e.g. 7"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field"><span class="slaf-label">Contributions you would pause, a month</span><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" inputmode="decimal" id="paused" placeholder="0 if none"/></span></label>
+    </div>
+    <span class="slaf-eyebrow" style="display:block;margin-top:var(--space-4)">The two risks</span>
+    <div class="tb-grid is-3" style="margin-top:var(--space-3)">
+      <label class="slaf-field"><span class="slaf-label">Your age</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" id="age" placeholder="e.g. 40"/></span><span class="tb-from" id="age-from"></span></label>
+      <label class="slaf-field"><span class="slaf-label">Your marginal tax rate</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="marginal" placeholder="e.g. 22"/><span class="slaf-affix">%</span></span></label>
+      <label class="slaf-field"><span class="slaf-label">If you left the job after, months</span><span class="slaf-input-shell"><input type="text" inputmode="numeric" id="leave" placeholder="e.g. 24"/></span></label>
+    </div>
+    <span class="slaf-eyebrow" style="display:block;margin-top:var(--space-4)">The alternative</span>
+    <div class="tb-grid is-3" style="margin-top:var(--space-3)">
+      <label class="slaf-field"><span class="slaf-label">A personal loan at</span><span class="slaf-input-shell"><input type="text" inputmode="decimal" id="personal" placeholder="e.g. 12"/><span class="slaf-affix">%</span></span></label>
+    </div>
+  </section>
+
+  <section class="slaf-card" id="out">
+    <span class="slaf-eyebrow">The answer</span>
+    <p class="tb-verdict is-incomplete" id="verdict">Fill in the loan to see what it costs.</p>
+    <p class="tb-why" id="why"></p>
+    <div class="tb-compare" id="options" hidden></div>
+    <div class="tb-flag" id="limit" hidden></div>
+    <div class="tb-rows" id="rows" hidden></div>
+    <div class="tb-flag is-critical" id="leave-flag" hidden></div>
+  </section>
+
+  <p class="tb-small" id="small">The cost of a plan loan is the growth the borrowed money misses: what it would have become left in the plan, less what the repayments become as they land back in and grow. Paused contributions are counted at what they would have grown to; a lost employer match is not counted, and would make it worse. On leaving a job the unpaid balance is due; a plan may allow rolling the offset to an IRA by the tax deadline. The limits come from toolbox/data/plan_loan_rules_2026.json. This tool stores nothing.</p>
+</main>
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="engines/loan.js"></script>
+<script src="engines/planloan.js"></script>
+<script src="common.js"></script>
+<script>
+(function () {
+  'use strict';
+  var TB = SLAF.TB, Money = SLAF.Money, PL = SLAF.TB.PlanLoan, RULES = null;
+  TB.header({ num: 8, title: 'Borrow From Yourself', lede: 'A 401(k) loan pays its interest back to you, which makes it look free. It is not. Here is what it costs, and what it costs if you leave.' });
+  var f = TB.form({ loan: 'money', vested: 'money', 'loan-rate': 'rate', months: 'int', market: 'rate', paused: 'money', age: 'num', marginal: 'rate', leave: 'int', personal: 'rate' }, render);
+  TB.actions(f, { loan: 2000000, vested: 8000000, 'loan-rate': 0.085, months: 60, market: 0.07, paused: 50000, age: 40, marginal: 0.22, leave: 24, personal: 0.12 });
+  var h = TB.household();
+  if (h) { var age = TB.val(SLAF.Schema.primaryAge(h)); if (age) TB.prefill(f, 'age', age); }
+
+  function render(v) {
+    if (!RULES) return;
+    var r = PL.cost({ loanCents: v.loan, vestedCents: v.vested, loanRate: v['loan-rate'], months: v.months, marketRate: v.market, pausedMonthlyCents: v.paused, age: v.age, marginalRate: v.marginal, leaveAfterMonths: v.leave, personalLoanRate: v.personal }, RULES);
+    if (!Money.isOk(r)) { TB.incomplete('verdict', r, ['options', 'limit', 'rows', 'leave-flag']); TB.el('why').textContent = ''; return; }
+    var total = r.value;
+    TB.verdict('verdict', total > 0 ? 'Borrowing from yourself costs about ' + TB.money(total) + ' over the ' + TB.span(v.months) + '.' : 'At a loan rate above the plan return, the loan costs you nothing on the arithmetic.', total > 0 ? null : 'good');
+    TB.el('why').textContent = 'The payment is ' + TB.money(r.paymentCents) + ' a month, ' + TB.money(r.interestToSelfCents) + ' of it interest paid to your own account. Left in the plan, the ' + TB.money(v.loan) + ' would have grown to ' + TB.money(r.stayedInvestedCents) + '; paid back a month at a time it grows to ' + TB.money(r.repaidGrowsToCents) + '. The gap is ' + TB.money(r.lostGrowthCents) + (r.pausedCostCents ? ', and the paused contributions would have been worth ' + TB.money(r.pausedCostCents) + ' by the end.' : '.');
+    var opts = [{ key: 'plan', label: 'Plan loan', color: TB.SERIES.a, value: TB.money(Math.max(0, total)), sub: 'growth missed' + (r.pausedCostCents ? ' and contributions paused' : '') + '<br/>' + TB.money(r.paymentCents) + ' a month', tag: 'cheaper' }];
+    if (r.personal) opts.push({ key: 'personal', label: 'Personal loan at ' + TB.rate(r.personal.rate, 1), color: TB.SERIES.b, value: TB.money(r.personal.interestCents), sub: 'interest paid to a lender<br/>' + TB.money(r.personal.paymentCents) + ' a month', tag: 'cheaper' });
+    TB.options('options', opts, r.personal ? (r.personalCheaper ? 'personal' : 'plan') : null);
+    var lim = [];
+    if (r.overLimit) lim.push('<strong>The plan cannot lend this much.</strong> The law allows the lesser of ' + TB.money(r.rules.maxLoanCents) + ' and half the vested balance: ' + TB.money(r.allowedCents) + ' here.');
+    if (r.overTerm) lim.push('<strong>' + v.months + ' months is over the ' + r.rules.maxMonths + ' the law allows</strong> for anything but a first home.');
+    TB.flag('limit', lim.join('<br/>') || null, null);
+    TB.rows('rows', [
+      ['Most the plan can lend', TB.money(r.allowedCents)],
+      ['Monthly payment', TB.money(r.paymentCents)],
+      ['Interest, paid to yourself', TB.money(r.interestToSelfCents)],
+      ['Growth the borrowed money misses', TB.money(r.lostGrowthCents)],
+      ['Paused contributions, at what they would be worth', r.pausedCostCents ? TB.money(r.pausedCostCents) + ' (' + TB.money(r.pausedPutInCents) + ' not put in)' : 'none'],
+      ['Cost of the plan loan', TB.money(Math.max(0, total)), true]
+    ]);
+    if (r.leave) {
+      var L = r.leave;
+      TB.flag('leave-flag', '<strong>Leave the job after ' + TB.span(L.afterMonths) + ' and ' + TB.money(L.outstandingCents) + ' is still owed.</strong> Not repaid by the tax deadline, it becomes a withdrawal: ' + (L.taxCents !== null ? TB.money(L.taxCents) + ' of tax at ' + TB.rate(v.marginal, 0) : 'income tax at your rate') + (L.penalised ? ' plus the ' + TB.pct(r.rules.penaltyRate) + ' penalty, ' + TB.money(L.penaltyCents) + ', because you would be ' + Math.floor(L.ageThen) + ', under ' + r.rules.penaltyAge : (L.penalised === false ? ', no penalty past ' + r.rules.penaltyAge : '')) + (L.billCents !== null ? '. A bill of about <strong>' + TB.money(L.billCents) + '</strong>, on money that is also gone from the plan.' : '.'), 'critical');
+    } else TB.flag('leave-flag', null);
+  }
+  fetch('data/plan_loan_rules_2026.json').then(function (res) { if (!res.ok) throw new Error(res.status); return res.json(); }).then(function (j) { RULES = j; render(f.v); }).catch(function (e) { var n = TB.el('load-notice'); n.hidden = false; n.textContent = 'Could not load the plan loan rules (' + e.message + ').'; });
+})();
+</script>
+</body>
+</html>

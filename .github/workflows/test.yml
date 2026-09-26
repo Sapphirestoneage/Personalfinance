@@ -20,6 +20,7 @@ jobs:
           node test/solar.js
           node dnd/test/run.js
           node coach/test/run.js
+          node toolbox/test/run.js
           node test/export.js
           node test/xlsx.js
       - name: Lane 2 (corpus, properties, data, glossary, migration, QR)
