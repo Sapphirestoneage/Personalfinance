@@ -107,6 +107,7 @@
   UI.boot(function (tables) {
     T = tables;
     el('head').innerHTML = UI.header({ screen: 'Content', title: 'The content log', sub: 'One row a post. Type its numbers a few days later; blank is not zero.' });
+    var show = /[?&]show=(\w+)/.exec(location.search || ''); if (show && el('filter').querySelector('option[value="' + show[1] + '"]')) el('filter').value = show[1];
     fill(); drawTable();
     el('new-post').addEventListener('submit', submitNew);
     el('filter').addEventListener('change', drawTable); el('search').addEventListener('input', drawTable);

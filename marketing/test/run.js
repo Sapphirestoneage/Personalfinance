@@ -331,6 +331,65 @@ section('When and how to contact someone (MD-003)');
   done();
 }
 
+section('Against the period before, what works, attribution, the read (MD-009)');
+{
+  const { K, T, Demo } = fresh();
+  const P = (date, results, extra) => Object.assign({ id: 'p' + date + Math.random(), date, channel: 'instagram', format: 'text', pillar: 'x', hook: '', cta: 'none', minutes: null, results: Object.assign({ impressions: null, likes: null, comments: null, shares: null, saves: null, clicks: null, dms: null, follows: null, leads: null }, results || {}) }, extra || {});
+  const posts = [P('2026-09-20', { impressions: 2000, likes: 100 }), P('2026-09-10', { impressions: 1000, likes: 20 }), P('2026-09-01', { impressions: 500 }, { cta: 'book', results: { impressions: 500, leads: 2 } }), P('2026-08-25', { impressions: 1000, likes: 50 })];
+  const c = K.compare({ posts, people: [], touches: [] }, { from: '2026-09-01', to: '2026-09-30' });
+  check('the period before is the same length, ending the day before', c.before.from + '..' + c.before.to, '2026-08-02..2026-08-31');
+  check('reach against before, as a share', c.delta.impressions.pct, 2.5);
+  check('...and it is better', c.delta.impressions.better, true);
+  check('a figure null in either period has no delta', c.delta.follows, undefined);
+  check('all time has nothing to compare against', K.compare({ posts, people: [], touches: [] }, { from: null, to: '2026-09-30' }).before, null);
+  const lower = K.compare({ posts: [P('2026-09-05', {}, { minutes: 120 }), P('2026-08-05', {}, { minutes: 60 })], people: [], touches: [] }, { from: '2026-09-01', to: '2026-09-30' });
+  check('more hours is worse, not better', lower.delta.hours.better, false);
+
+  const cta = K.byCta(posts.filter(p => p.date >= '2026-09-01'));
+  check('by ask ranks by leads a post', cta[0].id + ':' + cta[0].leadsPerPost, 'book:2');
+  const wd = K.byWeekday(posts);
+  check('by weekday has seven rows, Monday first', wd.length + ':' + wd[0].id, '7:Mon');
+  check('Sep 20 2026 is a Sunday', wd[6].posts, 1);
+  const h = K.heatmap(posts, { weeks: 2, to: '2026-09-26' });
+  check('the heatmap has a column a week and a cell a day', h.cells.length + 'x' + h.cells[0].length, '2x7');
+  check('the day with a post counts it (Sunday of the first week)', h.cells[0][6].count, 1);
+  check('today is not future', h.cells[1][5].future, false);
+  check('tomorrow is', h.cells[1][6].future, true);
+  checkTrue('a day after today is future', K.heatmap(posts, { weeks: 1, to: '2026-09-23' }).cells[0][6].future);
+
+  const people = [
+    { id: 'a', name: 'A', stage: 'client', source: 'referral', fromPostId: posts[0].id, value: 100000, archived: false, stageHistory: [{ stage: 'conversation', at: '2026-09-01' }, { stage: 'lead', at: '2026-09-04' }, { stage: 'call', at: '2026-09-06' }, { stage: 'client', at: '2026-09-14' }] },
+    { id: 'b', name: 'B', stage: 'lead', source: 'referral', fromPostId: null, value: null, archived: false, stageHistory: [{ stage: 'conversation', at: '2026-09-02' }, { stage: 'lead', at: '2026-09-09' }] },
+    { id: 'c', name: 'C', stage: 'follower', source: 'cold', fromPostId: 'gone', value: null, archived: false, stageHistory: [{ stage: 'follower', at: '2026-09-02' }] },
+    { id: 'd', name: 'D', stage: 'client', source: 'cold', fromPostId: null, value: 50000, archived: true, stageHistory: [{ stage: 'client', at: '2026-09-02' }] }
+  ];
+  const a = K.attribution(people, posts, { from: '2026-09-01', to: '2026-09-30' });
+  check('by lane: referrals brought two people, two leads, one client', a.byLane[0].id + ':' + a.byLane[0].people + ':' + a.byLane[0].leads + ':' + a.byLane[0].clients + ':' + a.byLane[0].revenue, 'referral:2:2:1:100000');
+  check('an archived person is left out', a.byLane.reduce((n, g) => n + g.people, 0), 3);
+  check('by channel counts only people linked to a post that exists', a.byChannel.length + ':' + a.byChannel[0].id + ':' + a.byChannel[0].people, '1:instagram:1');
+  check('and says how many are linked', a.linked + ' of ' + (a.linked + a.unlinked), '1 of 3');
+  const cv = K.conversion(people);
+  check('conversation to lead, all time', cv.leadRate, 1);
+  check('lead to call', cv.callRate, 0.5);
+  check('days from lead to client, the middle case', cv.daysToClose, 10);
+  check('days from conversation to lead', cv.daysToLead, 5);
+  check('nobody: no rates, no days', K.conversion([]).leadRate === null && K.conversion([]).daysToClose === null, true);
+
+  const demo = Demo.build(TODAY);
+  const L = {}; ['targets', 'channels', 'formats'].forEach(k => { L[k] = {}; T.tables[k].forEach(r => { L[k][r.id] = r.label; }); });
+  const due = K.due(demo.people, demo.touches, T.tables.stages, {}, TODAY);
+  const read = K.insights(demo, { today: TODAY, range: { from: '2026-08-28', to: TODAY }, targets: demo.targets, labels: L, people: due, max: 7 });
+  checkTrue('the read is a handful of sentences', read.length >= 3 && read.length <= 7);
+  checkTrue('each one is short, plain, and ends with a full stop', read.every(i => /[.]$/.test(i.text) && i.text.indexOf('—') === -1 && i.text.length < 220), read.map(i => i.text).join(' | '));
+  checkTrue('the worst comes first', read.map(i => ({ bad: 0, watch: 1, good: 2, info: 3 })[i.kind]).every((v, i, arr) => i === 0 || v >= arr[i - 1]));
+  checkTrue('an overdue person is named', read.some(i => /overdue for a touch/.test(i.text)));
+  const emptyRead = K.insights({ posts: [], people: [], touches: [] }, { today: TODAY, range: { from: '2026-09-01', to: TODAY }, targets: {}, labels: L, people: [] });
+  check('nothing logged: one sentence that says what to do', emptyRead.length + ':' + emptyRead[0].kind, '1:info');
+  const f = K.funnel(demo, { from: '2026-07-05', to: TODAY });
+  checkTrue('the worst funnel step is judged among the people steps', ['conversations', 'leads', 'calls', 'clients'].indexOf(f.worst) !== -1, f.worst);
+  done();
+}
+
 /* ---- Report --------------------------------------------------------------- */
 console.log('\n' + '-'.repeat(66));
 if (!failures.length) { console.log('ok ' + passed + ' marketing checks passed'); process.exit(0); }

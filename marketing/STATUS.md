@@ -8,9 +8,12 @@ Updated: 2026-09-26
   only SPARKS files that mention it are `CLAUDE.md`, `STATUS.md`, D-340,
   the CI step and the `.gitignore` rules.
 - Built: the content log with results typed later; people with stages,
-  rhythms, touches and CSV import; the Scoreboard with weekly targets and
-  pace, the period's numbers, lanes, the funnel, week-by-week charts, by
-  channel and topic, best posts, who to contact today, the share report.
+  rhythms, touches, CSV import and the post that brought them; the
+  Scoreboard with this week's read (MD-009), weekly targets and pace, every
+  number against the period before, lanes, the funnel, week-by-week charts,
+  the posting heatmap, what works by format, ask, topic and weekday,
+  attribution by lane and channel, conversion rates and the sales cycle,
+  who to contact today, the share report.
 
 ## Next
 1. The owner tries it with the example data, then logs a week of real
