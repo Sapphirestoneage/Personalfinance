@@ -4,20 +4,26 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
-<meta name="description" content="Money planning for queer Jewish life: the Jewish year's costs, tzedakah, chosen-family protections, making a family, gender-affirming care, interest-free loans, and an Elul reckoning. Nothing leaves your browser."/>
-<title>Kehillah: money planning for queer Jewish life</title>
+<meta name="description" content="Live money coaching with Eli Saperstein for queer Jews and the people who love them: the Jewish year priced, chosen-family protections, family building, care, and giving. Free tools, a free first call, sliding scale."/>
+<meta property="og:type" content="website"/>
+<meta property="og:title" content="Stress Less About Money: money coaching for queer Jewish life"/>
+<meta property="og:description" content="Live money coaching with Eli Saperstein for queer Jews and the people who love them: the Jewish year priced, chosen-family protections, family building, care, and giving. Free tools, a free first call, sliding scale."/>
+<meta property="og:image" content="https://sapphirestoneage.github.io/Personalfinance/kehillah/og.png"/>
+<meta property="og:url" content="https://sapphirestoneage.github.io/Personalfinance/kehillah/index.html"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<title>Stress Less About Money: money coaching for queer Jewish life</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="shared/fonts.css"/>
 <link rel="stylesheet" href="shared/theme.css"/>
 <link rel="stylesheet" href="kehillah.css"/>
 <!--
-  KEHILLAH HOME (D-340, KD-004).
+  HOME, the landing page (D-340, KD-005).
 
-  1. READS   the plan (kehillah.plan.v1) through shared/store.js, and every
-             engine, to say where each page stands. Nothing of Money Rooms.
-  2. WRITES  nothing but the demo flag (the strip in the header).
-  3. SHOWS   what this is, the eight doors, and one line a door about what
-             is entered there.
+  1. READS   data/practice.json for every word about the practice; the plan
+             and the engines only to say what is entered in each free tool.
+  2. WRITES  nothing but the demo flag.
+  3. SHOWS   the offer, who it is for, how it works, the services, the free
+             tools, a word from Eli, the questions people ask, and the call.
 
   LIVE-FORM: built once. There are no typed boxes on this page.
 -->
@@ -26,42 +32,70 @@
 <main class="k" id="main">
   <div id="head"></div>
 
-  <section class="k-hero" aria-label="What this is">
+  <section class="k-hero k-hero--sell" aria-label="The offer">
     <div>
       <span class="k-eyebrow">For queer Jews and the people who love them</span>
-      <h1>Money planning that knows what year it is, and who your family is.</h1>
-      <p class="k-lead">Eight pages for the costs a general budget forgets: the holidays, the giving, the papers that protect a chosen family, the price of making a family or getting care, and the interest-free loan that was always there. Type what you know. Blank means not entered. Nothing leaves this browser.</p>
+      <h1>Money coaching that knows what year it is, and who your family is.</h1>
+      <p class="k-lead">I am Eli. I sit with you on video, we put your numbers on the screen, and you watch your year change shape as we move things. The Jewish calendar is in the plan. So is your chosen family. The first call is free, and the tools below are free forever.</p>
       <div class="k-actions">
-        <a class="slaf-btn slaf-btn--primary" href="year.html">Start with the year</a>
-        <a class="slaf-btn" href="chosen-family.html">Check the papers</a>
+        <a class="slaf-btn slaf-btn--primary k-bigbtn" id="hero-book" href="book.html">Book a free call</a>
+        <a class="slaf-btn k-bigbtn" href="work-with-me.html">See how coaching works</a>
       </div>
+      <p class="k-note" style="margin-top:var(--space-3)" id="hero-where"></p>
     </div>
-    <div class="k-card k-card--raised" id="where" aria-label="Where you stand">
+    <div class="k-card k-card--raised" aria-label="Where you stand">
+      <span class="k-eyebrow">Try a tool first, if you like</span>
       <h2>Where you stand</h2>
       <div id="where-body" class="k-note">Loading.</div>
     </div>
   </section>
 
-  <section aria-label="The pages">
-    <div class="k-grid" id="doors"></div>
+  <section class="k-section" aria-label="Who this is for">
+    <span class="k-eyebrow">Who this is for</span>
+    <h2>If any of these is you, we should talk.</h2>
+    <div class="k-grid k-grid--2" id="for-whom"></div>
   </section>
 
-  <section class="k-section k-grid k-grid--2" aria-label="How it works">
+  <section class="k-section" aria-label="How it works">
+    <span class="k-eyebrow">How it works</span>
+    <h2>Three steps, and the first one is free.</h2>
+    <ol class="k-steps" id="steps"></ol>
+  </section>
+
+  <section class="k-section" aria-label="Ways to work together">
+    <span class="k-eyebrow">Ways to work together</span>
+    <h2>One session, the full path, or a check-up.</h2>
+    <p class="k-note" id="pricing"></p>
+    <div class="k-grid" id="services"></div>
+  </section>
+
+  <section class="k-section" aria-label="The free tools" id="tools">
+    <span class="k-eyebrow">The free tools</span>
+    <h2>Eight calculators for the costs a general budget forgets.</h2>
+    <p class="k-note">Use them on your own, share them with your people, or bring one to a session. They store nothing on a server; blank means not entered, never zero.</p>
+    <div class="k-grid" id="doors" style="margin-top:var(--space-4)"></div>
+  </section>
+
+  <section class="k-section k-grid k-grid--2" aria-label="A word from Eli">
     <div class="k-card">
-      <h2>Three rules</h2>
-      <p><b>Empty is not zero.</b> A blank box is "not entered yet" and the page says so. It never becomes a number on its own.</p>
-      <p><b>The guide figure is not your figure.</b> Beside every box is a typical range and sometimes a starting number. Press "use this" and it becomes yours; otherwise it is a hint.</p>
-      <p><b>Nothing leaves this browser.</b> There is no account and no server. Clear your numbers with one button. The example household is invented.</p>
+      <span class="k-eyebrow">A word from Eli</span>
+      <h2 id="about-lead"></h2>
+      <p id="about-first"></p>
+      <a class="slaf-btn" href="about.html">More about Eli</a>
     </div>
     <div class="k-card">
-      <h2>Why these pages</h2>
-      <p>A Jewish year has its own calendar of bills. A queer household often has no legal default that matches its shape. Making a family or getting care can cost more than a car and less than a house, and is planned like neither. And the tradition already holds the answers for two of the hardest parts: a rate for giving, and a loan without interest.</p>
-      <p class="k-note">This sits beside <a href="../index.html">Money Rooms</a>, the household app, and reads none of its numbers.</p>
+      <span class="k-eyebrow">What I believe about money</span>
+      <div class="k-values" id="values" style="margin-top:var(--space-3)"></div>
     </div>
   </section>
 
-  <div id="words"></div>
-  <div id="foot" class="k-foot"><p>Nothing on this site is legal, tax or medical advice. Every figure is arithmetic on what you typed, beside a guide range with its source named on each page.</p></div>
+  <section class="k-section k-card k-faq" aria-label="Questions people ask">
+    <h2>Questions people ask before the call</h2>
+    <div id="faq"></div>
+  </section>
+
+  <div id="cta"></div>
+  <div id="sitefoot"></div>
 </main>
 
 <script src="shared/money.js"></script>

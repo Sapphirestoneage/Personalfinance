@@ -21,17 +21,23 @@
 (function (root) {
   'use strict';
   var SLAF = root.SLAF = root.SLAF || {};
-  var PAGES = [
+  var SITE = { name: 'Stress Less About Money', sub: 'Eli Saperstein, money coaching for queer Jewish life', toolkit: 'Kehillah, the free toolkit' };
+  var MAIN = [
     { id: 'index', href: 'index.html', label: 'Home' },
+    { id: 'work-with-me', href: 'work-with-me.html', label: 'Work with me' },
+    { id: 'about', href: 'about.html', label: 'About Eli' },
+    { id: 'resources', href: 'resources.html', label: 'Resources' }
+  ];
+  var TOOLS = [
     { id: 'year', href: 'year.html', label: 'The Year' },
     { id: 'tzedakah', href: 'tzedakah.html', label: 'Tzedakah' },
     { id: 'chosen-family', href: 'chosen-family.html', label: 'Chosen Family' },
     { id: 'family', href: 'family.html', label: 'Making a Family' },
     { id: 'care', href: 'care.html', label: 'Care' },
     { id: 'gemach', href: 'gemach.html', label: 'Gemach' },
-    { id: 'elul', href: 'elul.html', label: 'Elul' },
-    { id: 'resources', href: 'resources.html', label: 'Resources' }
+    { id: 'elul', href: 'elul.html', label: 'Elul' }
   ];
+  var PAGES = MAIN.concat(TOOLS, [{ id: 'book', href: 'book.html', label: 'Book a free call' }]);
   function el(id) { return document.getElementById(id); }
   function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function money(cents, opts) { return SLAF.Money.formatCents(cents, Object.assign({ placeholder: 'not yet', roundTo: 100 }, opts || {})); }
@@ -51,21 +57,24 @@
   function header(page) {
     var host = el('head'); if (!host) return;
     var demo = SLAF.Store.isDemo();
+    var tool = TOOLS.some(function (t) { return t.id === page; });
+    function nav(list) { return list.map(function (p) { return '<li><a href="' + esc(p.href) + '"' + (p.id === page ? ' aria-current="page"' : '') + '>' + esc(p.label) + '</a></li>'; }).join(''); }
     host.className = 'k-head';
     host.innerHTML =
       '<div class="k-head-top">' +
-        '<a class="k-wordmark" href="index.html">Kehillah<small>Money planning for queer Jewish life</small></a>' +
-        '<nav aria-label="Pages"><ul class="k-nav">' + PAGES.map(function (p) {
-          return '<li><a href="' + esc(p.href) + '"' + (p.id === page ? ' aria-current="page"' : '') + '>' + esc(p.label) + '</a></li>';
-        }).join('') + '</ul></nav>' +
+        '<a class="k-wordmark" href="index.html">' + esc(SITE.name) + '<small>' + esc(SITE.sub) + '</small></a>' +
+        '<nav aria-label="Pages" class="k-nav-main"><ul class="k-nav">' + nav(MAIN) + '</ul>' +
+        '<a class="slaf-btn slaf-btn--primary k-book" href="book.html"' + (page === 'book' ? ' aria-current="page"' : '') + '>Book a free call</a></nav>' +
       '</div>' +
       '<div class="k-band" aria-hidden="true"></div>' +
-      '<div class="k-demo" id="demo-strip">' +
-        '<span id="demo-state">' + (demo ? '<span class="is-on">Example numbers are loaded.</span> They are invented; nothing here is anyone\'s real money.' : 'Nothing leaves this browser. Blank means not entered yet; a typed 0 means zero.') + '</span>' +
+      '<nav aria-label="Free tools" class="k-tools"><span class="k-eyebrow">' + esc(SITE.toolkit) + '</span><ul class="k-nav">' + nav(TOOLS) + '</ul></nav>' +
+      (tool || page === 'index' ? '<div class="k-demo" id="demo-strip">' +
+        '<span id="demo-state">' + (demo ? '<span class="is-on">Example numbers are loaded.</span> They are invented; nothing here is anyone\'s real money.' : 'Free to use. Nothing leaves this browser. Blank means not entered yet; a typed 0 means zero.') + '</span>' +
         '<button type="button" class="slaf-btn slaf-btn--quiet" id="btn-demo">' + (demo ? 'Clear the example' : 'Try with example numbers') + '</button>' +
         (!demo ? '<button type="button" class="slaf-btn slaf-btn--quiet" id="btn-clear">Clear my numbers</button>' : '') +
-      '</div>';
-    el('btn-demo').addEventListener('click', function () {
+      '</div>' : '');
+    var bd = el('btn-demo');
+    if (bd) bd.addEventListener('click', function () {
       if (SLAF.Store.isDemo()) { SLAF.Store.clear(); }
       else {
         var p = SLAF.Store.load();
@@ -82,11 +91,35 @@
     });
   }
 
+  /* ---- The call to action every tool page ends with ------------------------ */
+  function bookHref(T) {
+    var b = T && T.practice && T.practice.booking;
+    if (b && /^https:\/\//.test(b.url || '')) return b.url;
+    return 'book.html';
+  }
+  function cta(host, T, page) {
+    if (!host || !T.practice) return;
+    var P = T.practice; var line = P.toolCtas[page] || 'Want to go through this with someone? The first call is free.';
+    host.className = 'k-cta';
+    host.innerHTML = '<div class="k-cta-body"><span class="k-eyebrow">A free tool from ' + esc(P.practice.name) + '</span><h2>' + esc(line) + '</h2><p class="k-note">' + esc(P.booking.plain) + '</p></div>' +
+      '<div class="k-actions"><a class="slaf-btn slaf-btn--primary" href="' + esc(bookHref(T)) + '"' + (bookHref(T) !== 'book.html' ? ' rel="noopener"' : '') + '>' + esc(P.booking.label) + '</a><a class="slaf-btn" href="work-with-me.html">How coaching works</a></div>';
+  }
+  function siteFoot(host, T) {
+    if (!host || !T.practice) return;
+    var P = T.practice;
+    host.className = 'k-sitefoot';
+    host.innerHTML = '<div><b>' + esc(P.practice.name) + '</b> <span class="k-note">' + esc(P.person.name) + ' (' + esc(P.person.pronouns) + '), ' + esc(P.person.role.toLowerCase()) + '. ' + esc(P.person.where) + '</span></div>' +
+      '<ul class="k-nav">' + MAIN.concat([{ href: 'book.html', label: 'Book a free call' }]).map(function (p) { return '<li><a href="' + esc(p.href) + '">' + esc(p.label) + '</a></li>'; }).join('') + '</ul>' +
+      '<p class="k-note">Coaching, not financial, legal, tax or medical advice. The tools are free, keep nothing on a server, and their guide figures name their source on each page. Share them with anyone.</p>';
+  }
+
   /* ---- Boot ------------------------------------------------------------- */
   function boot(page, fn) {
     header(page);
     SLAF.Tables.load().then(function (T) {
       fn(T, plan());
+      cta(el('cta'), T, page);
+      siteFoot(el('sitefoot'), T);
     }).catch(function (e) {
       var m = el('main') || document.body;
       var n = document.createElement('p'); n.className = 'k-say is-bad';
@@ -176,6 +209,6 @@
     host.innerHTML = '<p><b>Where the guide figures come from.</b> ' + esc(t.source) + '</p><p>' + esc(t.confidenceNote) + ' Table version ' + esc(t.version) + ', as of ' + esc(t.asOf) + '.</p><p>Nothing on this page is legal, tax or medical advice. It is arithmetic on what you typed.</p>';
   }
 
-  SLAF.K = { PAGES: PAGES, el: el, esc: esc, money: money, range: range, plan: plan, say: say, header: header, boot: boot,
+  SLAF.K = { PAGES: PAGES, MAIN: MAIN, TOOLS: TOOLS, SITE: SITE, bookHref: bookHref, cta: cta, siteFoot: siteFoot, el: el, esc: esc, money: money, range: range, plan: plan, say: say, header: header, boot: boot,
     bindMoney: bindMoney, bindNumber: bindNumber, bindText: bindText, bindSelect: bindSelect, chips: chips, stat: stat, bar: bar, words: words, day: day, foot: foot };
 })(typeof self !== 'undefined' ? self : this);

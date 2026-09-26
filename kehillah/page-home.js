@@ -1,4 +1,4 @@
-/* kehillah/page-home.js, Home (KD-004): the doors and one line a door. */
+/* kehillah/page-home.js, Home, the landing page (KD-004, KD-005): the practice from data/practice.json, the doors and one line a door. */
 (function () {
   'use strict';
   var K = SLAF.K, M = SLAF.Money;
@@ -12,7 +12,31 @@
     { id: 'elul', href: 'elul.html', eyebrow: 'Taking stock', title: 'Elul', blurb: 'Eight questions a year and four a month, in your words. The accounting of the soul, for money.' },
     { id: 'resources', href: 'resources.html', eyebrow: 'Doors', title: 'Resources', blurb: 'Queer Jewish community, free loans and emergency help, legal protection, and money help without a sales pitch.' }
   ];
+  function services(host, T, lead) {
+    var P = T.practice;
+    host.innerHTML = P.services.map(function (s) {
+      var price = s.priceCents === 0 ? 'Free' : M.isEntered(s.priceCents) ? K.money(s.priceCents) : 'Sliding scale';
+      return '<section class="k-card k-service' + (s.id === lead ? ' k-service--lead' : '') + '" aria-label="' + K.esc(s.name) + '"><div><span class="k-eyebrow">' + K.esc(s.length) + '</span><h3 style="font-family:var(--font-display);font-size:var(--text-lg)">' + K.esc(s.name) + '</h3></div>' +
+        '<div class="k-price">' + K.esc(price) + '<small>' + K.esc(s.priceCents === 0 ? 'No cost, no obligation' : M.isEntered(s.priceCents) ? 'Sliding scale on request' : 'settled on the free call') + '</small></div>' +
+        '<div><p><b>For:</b> ' + K.esc(s.for) + '</p><p>' + K.esc(s.plain) + '</p><ul>' + s.includes.map(function (i) { return '<li>' + K.esc(i) + '</li>'; }).join('') + '</ul></div>' +
+        '<div><a class="slaf-btn' + (s.id === 'call' ? ' slaf-btn--primary' : '') + '" href="' + K.esc(K.bookHref(T)) + '">' + K.esc(s.cta) + '</a></div></section>';
+    }).join('');
+  }
+  function faq(host, T) {
+    host.innerHTML = T.practice.faq.map(function (f) { return '<details><summary>' + K.esc(f.q) + '</summary><p>' + K.esc(f.a) + '</p></details>'; }).join('');
+  }
   K.boot('index', function (T, plan) {
+    var P = T.practice;
+    K.el('hero-book').setAttribute('href', K.bookHref(T));
+    K.el('hero-where').textContent = P.person.where + ' ' + P.booking.length + ', no cost, no pitch.';
+    K.el('for-whom').innerHTML = P.forWhom.map(function (f) { return '<div class="k-card"><h3>' + K.esc(f.title) + '</h3><p class="k-note">' + K.esc(f.plain) + '</p></div>'; }).join('');
+    K.el('steps').innerHTML = P.steps.map(function (s) { return '<li><b>' + K.esc(s.title) + '</b><span class="k-note">' + K.esc(s.plain) + '</span></li>'; }).join('');
+    K.el('pricing').textContent = P.pricing;
+    services(K.el('services'), T, 'call');
+    K.el('about-lead').textContent = P.about.lead;
+    K.el('about-first').textContent = P.about.paragraphs[0];
+    K.el('values').innerHTML = P.about.values.map(function (v) { return '<div><b>' + K.esc(v.title) + '</b><p class="k-note">' + K.esc(v.plain) + '</p></div>'; }).join('');
+    faq(K.el('faq'), T);
     var today = new Date();
     var Y = SLAF.Year.read(T.year, plan.year.lines, today);
     var Z = SLAF.Tzedakah.read(T.tzedakah, plan.tzedakah, today, T.year.ends);
@@ -35,7 +59,7 @@
     }).join('');
     var filled = (Y.entered ? 1 : 0) + (M.isOk(Z.targetCents) ? 1 : 0) + (P.done + P.todo + P.na ? 1 : 0) + (F.path ? 1 : 0) + (C.entered ? 1 : 0) + (G.status === 'ok' ? 1 : 0);
     var w = K.el('where-body');
-    if (!filled) { w.textContent = 'Nothing entered yet. Each page fills this in as you go, or try the example numbers from the strip above.'; return; }
+    if (!filled) { w.textContent = 'Nothing entered yet. Each tool fills this in as you go, or press "Try with example numbers" above to see a whole household.'; return; }
     w.className = '';
     w.innerHTML = '<div class="k-stats">' +
       '<div class="k-stat"><span class="k-eyebrow">The year, each month</span><div class="now' + (Y.entered ? '' : ' is-empty') + '">' + K.esc(Y.entered ? K.money(Y.monthlyCents) : 'not yet') + '</div></div>' +
@@ -50,4 +74,5 @@
       return pick ? K.day(pick.d) : 'not yet';
     }
   });
+  SLAF.K.services = services; SLAF.K.faq = faq;
 })();

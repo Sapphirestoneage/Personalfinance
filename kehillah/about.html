@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="description" content="Eli Saperstein (he/him) is a money coach for queer Jewish life: live sessions on video, plain words, no shame, and free tools that keep nothing on a server."/>
+<meta property="og:type" content="website"/>
+<meta property="og:title" content="About Eli Saperstein, money coach"/>
+<meta property="og:description" content="Eli Saperstein (he/him) is a money coach for queer Jewish life: live sessions on video, plain words, no shame, and free tools that keep nothing on a server."/>
+<meta property="og:image" content="https://sapphirestoneage.github.io/Personalfinance/kehillah/og.png"/>
+<meta property="og:url" content="https://sapphirestoneage.github.io/Personalfinance/kehillah/about.html"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<title>About Eli Saperstein, money coach</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="kehillah.css"/>
+<!--
+  ABOUT (D-340, KD-005).
+
+  1. READS   data/practice.json. Nothing of the plan.
+  2. WRITES  nothing.
+  3. SHOWS   who Eli is, what he believes about money, and the call.
+
+  LIVE-FORM: built once. There are no typed boxes on this page.
+-->
+</head>
+<body class="slaf">
+<main class="k" id="main">
+  <div id="head"></div>
+
+  <section class="k-hero" aria-label="About">
+    <div class="k-prose">
+      <span class="k-eyebrow">About</span>
+      <h1 id="name"></h1>
+      <p class="k-note" id="meta"></p>
+      <h2 id="lead" style="margin-top:var(--space-4)"></h2>
+      <div id="paragraphs"></div>
+      <div class="k-actions" style="margin-top:var(--space-4)"><a class="slaf-btn slaf-btn--primary k-bigbtn" id="book" href="book.html">Book a free call</a><a class="slaf-btn k-bigbtn" href="work-with-me.html">How coaching works</a></div>
+    </div>
+    <div>
+      <div class="k-portrait" id="portrait">A photo of Eli goes here.</div>
+      <div class="k-card" style="margin-top:var(--space-4)">
+        <span class="k-eyebrow">What I believe about money</span>
+        <div class="k-values" id="values" style="margin-top:var(--space-3)"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="k-section k-grid k-grid--2" aria-label="The tools and the app">
+    <div class="k-card">
+      <h2>The free tools</h2>
+      <p>Every calculator on this site came out of a session: a question a client asked that deserved a better answer than a guess. They are free, they keep nothing on a server, and you can share them with anyone.</p>
+      <a class="slaf-btn" href="index.html#tools">See the tools</a>
+    </div>
+    <div class="k-card">
+      <h2>Money Rooms</h2>
+      <p>The larger household app I build in the open, with the same rules: blank means not entered, a guess is never turned into a number, nothing leaves your browser. In sessions we use its coach console, so what you see on the call is what you can keep using after.</p>
+      <a class="slaf-btn" href="../index.html">Open Money Rooms</a>
+    </div>
+  </section>
+
+  <div id="cta"></div>
+  <div id="sitefoot"></div>
+</main>
+
+<script src="shared/money.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="kehillah.js"></script>
+<script src="page-about.js"></script>
+</body>
+</html>

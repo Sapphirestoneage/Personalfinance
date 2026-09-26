@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="description" content="How money coaching with Eli Saperstein works: a free call, then one 90-minute session, a nine-session path, a yearly check-up, or a workshop for your community. Sliding scale."/>
+<meta property="og:type" content="website"/>
+<meta property="og:title" content="Work with me: coaching with Eli, one session or the full path"/>
+<meta property="og:description" content="How money coaching with Eli Saperstein works: a free call, then one 90-minute session, a nine-session path, a yearly check-up, or a workshop for your community. Sliding scale."/>
+<meta property="og:image" content="https://sapphirestoneage.github.io/Personalfinance/kehillah/og.png"/>
+<meta property="og:url" content="https://sapphirestoneage.github.io/Personalfinance/kehillah/work-with-me.html"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<title>Work with me: coaching with Eli, one session or the full path</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="kehillah.css"/>
+<!--
+  WORK WITH ME (D-340, KD-005).
+
+  1. READS   data/practice.json. Nothing of the plan.
+  2. WRITES  nothing.
+  3. SHOWS   the services, what a session is like, the nine stops, the price
+             rule, the questions people ask, and the call.
+
+  LIVE-FORM: built once. There are no typed boxes on this page.
+-->
+</head>
+<body class="slaf">
+<main class="k" id="main">
+  <div id="head"></div>
+
+  <section class="k-hero k-hero--sell" aria-label="The offer">
+    <div>
+      <span class="k-eyebrow">Work with me</span>
+      <h1>Your numbers on the screen, updating as we talk.</h1>
+      <p class="k-lead">A session is not a lecture and not a spreadsheet handed over afterward. We sit on video, I type what you tell me, and the picture forms in front of you: what comes in, what goes out, what the year will cost, when the goal lands. You leave with a written recap and numbers you can defend.</p>
+      <div class="k-actions"><a class="slaf-btn slaf-btn--primary k-bigbtn" id="book" href="book.html">Book a free call</a></div>
+    </div>
+    <div class="k-card k-card--raised">
+      <span class="k-eyebrow">The price</span>
+      <h2>Sliding scale, always</h2>
+      <p id="pricing"></p>
+    </div>
+  </section>
+
+  <section class="k-section" aria-label="Ways to work together">
+    <span class="k-eyebrow">Ways to work together</span>
+    <h2>Pick the shape. The call decides the rest.</h2>
+    <div class="k-grid" id="services" style="margin-top:var(--space-4)"></div>
+  </section>
+
+  <section class="k-section" aria-label="What a session is like">
+    <span class="k-eyebrow">What a session is like</span>
+    <h2>Nine stops, in the order that makes each one easier.</h2>
+    <p class="k-note">The Full Path takes them one a session. The First Round takes the first two and the map. The Check-up takes four. Every stop is questions in plain words, then numbers, then a reading you can see.</p>
+    <ol class="k-steps" id="stops" style="margin-top:var(--space-4)"></ol>
+  </section>
+
+  <section class="k-section" aria-label="How it works">
+    <span class="k-eyebrow">How it works</span>
+    <ol class="k-steps" id="steps"></ol>
+  </section>
+
+  <section class="k-section k-card k-faq" aria-label="Questions people ask">
+    <h2>Questions people ask before the call</h2>
+    <div id="faq"></div>
+  </section>
+
+  <div id="cta"></div>
+  <div id="sitefoot"></div>
+</main>
+
+<script src="shared/money.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="kehillah.js"></script>
+<script src="page-home.js"></script>
+<script src="page-work.js"></script>
+</body>
+</html>

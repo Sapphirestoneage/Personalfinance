@@ -61,3 +61,24 @@ through `esc()`. Pages run no inline script (`script-src 'self'`).
 **Replaces or removes.** Nothing in SPARKS; this is a lane beside it.
 
 **Stored shape.** No change.
+
+## KD-005 — The site sells the coaching; the tools are the free part
+
+**Why.** The owner wants landing pages that send people to book a call and
+that share the free tools, with the practice and the person on the page.
+
+**Decision.** Every word about the practice lives in `data/practice.json`
+(person, practice, booking, services, pricing rule, steps, who it is for,
+about, questions, one call-to-action line a tool). Home is the landing page;
+`work-with-me.html`, `about.html` and `book.html` are new; every tool page
+ends with the call-to-action band and the site foot (`K.cta`, `K.siteFoot`).
+No price is invented: the free call is 0, every other service is `null` and
+reads "sliding scale" until the owner sets it. No testimonial exists until a
+real one does. The booking address is blank until the owner sets it; the
+Book page says so honestly rather than pointing at nothing. Link previews
+carry `og.png`, drawn by `tools/og.js` from the practice file.
+
+**Replaces or removes.** Nothing in SPARKS. The old Home's "three rules"
+and "why these pages" folded into the landing page's tools section.
+
+**Stored shape.** No change.

@@ -30,9 +30,40 @@ a.k-wordmark:hover { color: var(--color-accent-hover); }
 .k-nav { display: flex; flex-wrap: wrap; gap: var(--space-1) var(--space-2); margin: 0; padding: 0; list-style: none; }
 .k-nav a { display: inline-block; padding: 6px var(--space-3); border-radius: var(--radius-pill); color: var(--color-text-muted); text-decoration: none; font-size: var(--text-sm); border: 1px solid transparent; min-height: 32px; }
 .k-nav a:hover { color: var(--color-text); border-color: var(--color-border-strong); }
+.k-nav-main { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); }
+.k-book { min-height: 36px; padding: 6px var(--space-4); text-decoration: none; }
+.k-tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-1) var(--space-3); }
+.k-tools .k-eyebrow { white-space: nowrap; }
 .k-nav a[aria-current="page"] { color: var(--color-text); background: var(--color-surface-active); border-color: var(--color-border-active); font-weight: 600; }
 .k-demo { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2) var(--space-3); margin-top: var(--space-3); font-size: var(--text-sm); color: var(--color-text-muted); }
 .k-demo .is-on { color: var(--color-caution); font-weight: 600; }
+
+/* ---- The selling pages ----------------------------------------------------- */
+.k-cta { margin-top: var(--space-6); padding: var(--space-5); border: 1px solid var(--color-border-active); border-radius: var(--radius-lg); background: var(--color-surface-active); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-4); align-items: center; }
+.k-cta h2 { margin: var(--space-1) 0; font-size: var(--text-lg); }
+.k-sitefoot { margin-top: var(--space-6); padding-top: var(--space-4); border-top: 1px solid var(--color-border); display: grid; gap: var(--space-2); }
+.k-hero--sell h1 { font-size: var(--text-3xl); }
+.k-hero--sell .k-lead { font-size: var(--text-lg); }
+.k-proof { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-3); margin-top: var(--space-5); }
+.k-proof .k-stat .now { font-size: var(--text-lg); }
+.k-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-4); counter-reset: step; }
+.k-steps li { counter-increment: step; padding: var(--space-4); border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); }
+.k-steps li::before { content: counter(step); display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 50%; background: var(--color-accent); color: var(--color-accent-contrast); font-weight: 600; margin-bottom: var(--space-2); }
+.k-steps b { display: block; font-family: var(--font-display); font-size: var(--text-md); }
+.k-service { display: grid; grid-template-rows: auto auto 1fr auto; }
+.k-service .k-price { font-family: var(--font-display); font-weight: 600; font-size: var(--text-lg); margin: var(--space-2) 0; }
+.k-service .k-price small { display: block; font-family: var(--font-body); font-weight: 400; font-size: var(--text-xs); color: var(--color-text-faint); }
+.k-service ul { margin: var(--space-2) 0 var(--space-3); padding-left: 1.1em; color: var(--color-text-muted); font-size: var(--text-sm); }
+.k-service ul li { margin: 2px 0; }
+.k-service--lead { border-color: var(--color-border-active); background: var(--color-surface-active); }
+.k-faq details { border-top: 1px solid var(--color-border); padding: var(--space-2) 0; }
+.k-faq summary { cursor: pointer; font-weight: 600; min-height: 40px; display: flex; align-items: center; }
+.k-faq p { margin: var(--space-1) 0 var(--space-2); color: var(--color-text-muted); }
+.k-values { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-3); }
+.k-portrait { aspect-ratio: 1; border-radius: var(--radius-lg); background: var(--color-surface-raised); border: 1px solid var(--color-border); display: flex; align-items: center; justify-content: center; text-align: center; color: var(--color-text-faint); font-size: var(--text-sm); padding: var(--space-4); }
+.k-prose p { font-size: var(--text-md); max-width: 46rem; }
+.k-bigbtn { font-size: var(--text-md); padding: var(--space-3) var(--space-5); min-height: 48px; }
+@media (max-width: 720px) { .k-cta { grid-template-columns: 1fr; } .k-hero--sell h1 { font-size: var(--text-2xl); } }
 
 /* ---- Page furniture -------------------------------------------------------- */
 .k-hero { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: var(--space-5); align-items: start; margin-bottom: var(--space-6); }

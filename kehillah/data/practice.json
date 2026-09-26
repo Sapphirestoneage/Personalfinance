@@ -1,0 +1,63 @@
+{
+  "id": "practice",
+  "version": "2026.1",
+  "asOf": "2026-09-26",
+  "source": "The practice as the owner describes it: Stress Less About Money, Eli Saperstein, live money coaching over video, the nine-stop path and the four-stop check-up from the coach console. Prices are not set here on purpose; the free call settles them.",
+  "confidence": "convention",
+  "confidenceNote": "Words about a person and a practice, kept in one file so the owner can correct any line without touching a page. A blank booking address hides nothing: the Book page says how to reach out instead. Nothing here is a figure the app computes.",
+  "person": { "name": "Eli Saperstein", "first": "Eli", "pronouns": "he/him", "role": "Money coach", "where": "Sessions by video, Eastern time. Anywhere in North America." },
+  "practice": { "name": "Stress Less About Money", "tagline": "Money coaching for queer Jewish life", "toolkit": "Kehillah", "siteUrl": "https://sapphirestoneage.github.io/Personalfinance/kehillah/" },
+  "booking": { "url": "", "email": "", "label": "Book a free call", "length": "20 minutes", "plain": "Twenty minutes, no cost, no pitch. You say what is going on; you leave with one next step, whether or not we work together." },
+  "services": [
+    { "id": "call", "name": "A free call", "length": "20 minutes", "priceCents": 0, "for": "Anyone who is not sure yet.", "plain": "You talk, I listen, and we find the one thing to do next. If coaching is not the answer, I will say so and point you somewhere better.", "includes": ["One next step you can take this week", "An honest read on whether coaching would help", "No follow-up unless you ask for it"], "cta": "Book the call" },
+    { "id": "first-round", "name": "The First Round", "length": "One session, 90 minutes", "priceCents": null, "for": "You want a full picture of the year ahead, once, without signing up for a program.", "plain": "We put every number you know on the table and watch the picture form: what comes in, what goes out, what the Jewish year will cost, and where the room is. You leave with a written map and a set of numbers you can defend.", "includes": ["The big picture and the year, priced", "Every reading from the free tools, filled in together", "A one-page recap in plain words", "Two weeks of email for the questions that come after"], "cta": "Ask about the First Round" },
+    { "id": "full-path", "name": "The Full Path", "length": "Nine sessions over three to four months", "priceCents": null, "for": "You want the whole thing handled: debt, the cushion, the accounts, taxes, the goals, and the big decisions this year.", "plain": "Nine stops, one a session, in the order that makes each one easier than the last: the big picture, money coming in, money going out, what you owe, the cushion, what you own, taxes, goals and the map, and the big decisions. Between sessions, a short monthly check-in keeps the numbers alive.", "includes": ["Nine live sessions, your numbers on the screen the whole time", "A monthly check-in between sessions", "Homework that fits in an evening, never a spreadsheet", "A recap after every session, and a map at the end", "Your chosen family or partner welcome in any session"], "cta": "Ask about the Full Path" },
+    { "id": "check-up", "name": "The Check-up", "length": "One session, 60 minutes", "priceCents": null, "for": "Past clients, or anyone with a map who wants it looked at once a year.", "plain": "Four stops: money in, money out, what you owe, and the goals. What moved, what did not, and what to change for the year ahead. Elul is a good month for it.", "includes": ["The four readings, refreshed", "One change for the year, agreed and written down"], "cta": "Ask about a Check-up" },
+    { "id": "community", "name": "For a community", "length": "One workshop, 75 to 90 minutes", "priceCents": null, "for": "A shul, a minyan, a Keshet or Eshel group, a Moishe House, a Hillel, a chevra of friends.", "plain": "A workshop on the money nobody teaches: the Jewish year priced, tzedakah as a plan, the papers a chosen family needs, or an Elul money reckoning. Everyone leaves with the free tools filled in for their own household.", "includes": ["A workshop shaped to your group, online or in person in the Northeast", "The free tools, walked through live", "A follow-up call for anyone who wants one"], "cta": "Ask about a workshop" }
+  ],
+  "pricing": "Sliding scale, always. The price is settled on the free call, in a conversation, and nobody is turned away for money. If it would take a gemach to pay for coaching, the coaching is not worth it; we would start there instead.",
+  "steps": [
+    { "title": "Book a free call", "plain": "Twenty minutes. You say what is going on. I say what I would do first." },
+    { "title": "Choose the shape", "plain": "One session, the full path, or a check-up. The price is settled on the call, on a sliding scale." },
+    { "title": "See it move", "plain": "Every session is live: your numbers on the screen, updating as we talk. You watch the year change shape." }
+  ],
+  "forWhom": [
+    { "title": "You are queer, Jewish, or both, and every money guide assumes a life you do not have.", "plain": "A married couple with two kids and a mortgage is not the only household. Yours gets a plan built for its actual shape." },
+    { "title": "You want the Jewish year in the budget.", "plain": "Dues, the holidays, camp, a life-cycle event: the costs a general budget forgets, on a calendar, paid for before they arrive." },
+    { "title": "You are saving toward something large and specific.", "plain": "Care. A child. A wedding. A cushion for leaving safely. A number, a month, and a way to get there." },
+    { "title": "You have avoided money because of shame, and you are done avoiding it.", "plain": "No judgment, no jargon, no homework you will hate. Plain words, your numbers, one step at a time." }
+  ],
+  "about": {
+    "lead": "I am a money coach, and I built these tools for my own community.",
+    "paragraphs": [
+      "My practice is called Stress Less About Money, because that is the whole job. I sit with people, on video, and we put their numbers on the screen together. Not a spreadsheet handed over afterward: the picture forms while we talk, and you watch your own year change shape as we move things around.",
+      "I came to this the way most people do, by needing it. The money advice I could find assumed a life I did not have: a certain kind of family, a certain calendar, a certain set of papers already signed. Queer Jewish life has its own costs and its own protections, and nobody was writing them down. So I started writing them down.",
+      "The tools on this site are free, and they keep nothing on a server. They came out of the sessions: every one is a question a client asked that deserved a better answer than a guess. They sit beside Money Rooms, the larger household app I build in the open, with the same rules. Blank means not entered. A guess is never turned into a number. Nothing leaves your browser.",
+      "What I believe about money is short. It is not a moral report card. Shame is more expensive than any mistake. The tradition already holds two of the best answers there are, a rate for giving and a loan without interest, and a good plan makes room for the people you have chosen, whatever the law calls them."
+    ],
+    "values": [
+      { "title": "Plain words", "plain": "If I cannot say it in a sentence you would use, I have not understood it yet." },
+      { "title": "No shame", "plain": "Every number is just a number. We look at it together and then we decide." },
+      { "title": "Your household, as it is", "plain": "Partnered, married, more than two of you, chosen family, on your own. The plan fits the shape." },
+      { "title": "Nothing leaves your browser", "plain": "The tools store nothing on a server. In sessions, your file stays yours, sealed with a password only you know." }
+    ]
+  },
+  "faq": [
+    { "q": "Do I need to be Jewish, or queer, to work with you?", "a": "No. The tools and the practice are built around queer Jewish life, and that is who I am for first. If the way I work sounds right to you, book the call." },
+    { "q": "Is this financial advice? Do you manage money?", "a": "No. I am a coach, not an advisor or a planner licensed to sell products, and I never touch your accounts. I help you see your numbers clearly and decide. For investments, taxes or law, I will say when it is time to see a professional and help you find one." },
+    { "q": "What does it cost?", "a": "A sliding scale, settled on the free call. I do not publish a rate because the same number is generous for one person and impossible for another. Nobody is turned away for money." },
+    { "q": "Can my partner, partners or chosen family join?", "a": "Yes, in any session. Money is shared in more shapes than the law recognizes, and the plan should be built with the people who share it." },
+    { "q": "What do I need to prepare?", "a": "Nothing. If you want a head start, try any of the free tools with your own numbers; they stay in your browser and we can look at them together." },
+    { "q": "What if I already tried the tools and got stuck?", "a": "That is the most common reason people book. Bring the page that stuck." }
+  ],
+  "toolCtas": {
+    "year": "Want the year priced with someone beside you? A free call is twenty minutes.",
+    "tzedakah": "Not sure what rate is right for your year? Say it out loud on a free call.",
+    "chosen-family": "The papers are the part people put off. A free call is a good place to stop putting it off.",
+    "family": "A number this large deserves a second pair of eyes. The call is free.",
+    "care": "Insurance rules are the hard part here. Bring your plan document to a free call and we read it together.",
+    "gemach": "Deciding between saving first and borrowing well is exactly what a session is for.",
+    "elul": "Some people do the reckoning alone. Some do it with a coach. Both count.",
+    "resources": "If none of these doors is the right one, book the call and I will help you find it."
+  }
+}

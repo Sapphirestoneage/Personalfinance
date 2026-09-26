@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="description" content="Twenty minutes on video, no cost, no pitch. Say what is going on with money; leave with one next step. Money coaching for queer Jewish life."/>
+<meta property="og:type" content="website"/>
+<meta property="og:title" content="Book a free call with Eli"/>
+<meta property="og:description" content="Twenty minutes on video, no cost, no pitch. Say what is going on with money; leave with one next step. Money coaching for queer Jewish life."/>
+<meta property="og:image" content="https://sapphirestoneage.github.io/Personalfinance/kehillah/og.png"/>
+<meta property="og:url" content="https://sapphirestoneage.github.io/Personalfinance/kehillah/book.html"/>
+<meta name="twitter:card" content="summary_large_image"/>
+<title>Book a free call with Eli</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="kehillah.css"/>
+<!--
+  BOOK (D-340, KD-005).
+
+  1. READS   data/practice.json: the booking address, the email, the length.
+  2. WRITES  nothing.
+  3. SHOWS   the booking button when an address is set, what to expect on the
+             call, and how to reach out when no address is set yet.
+
+  LIVE-FORM: built once. There are no typed boxes on this page.
+-->
+</head>
+<body class="slaf">
+<main class="k" id="main">
+  <div id="head"></div>
+
+  <section class="k-hero" aria-label="Book">
+    <div>
+      <span class="k-eyebrow">Book a free call</span>
+      <h1>Twenty minutes. No cost, no pitch.</h1>
+      <p class="k-lead" id="plain"></p>
+      <div class="k-actions" id="actions"></div>
+      <p class="k-say" id="say"></p>
+    </div>
+    <div class="k-card k-card--raised">
+      <h2>What happens on the call</h2>
+      <ol class="steps" style="padding-left:1.2em;margin:0;display:grid;gap:var(--space-2)">
+        <li><b>You say what is going on.</b> In any words. No numbers needed, though you can bring them.</li>
+        <li><b>I say what I would do first.</b> One step, this week, whether or not we work together.</li>
+        <li><b>We decide if there is a next call.</b> If coaching would help, I say which shape and we settle a price on the sliding scale. If it would not, I say that too.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="k-section k-grid k-grid--2" aria-label="Before the call">
+    <div class="k-card">
+      <h2>If you want a head start</h2>
+      <p>Try one of the free tools with your own numbers before we talk. They stay in your browser; on the call, share your screen and we look together. The one most people bring is <a href="year.html">The Year</a>.</p>
+    </div>
+    <div class="k-card">
+      <h2>Who this is for</h2>
+      <p>Queer Jews and the people who love them, first. Anyone who wants plain words and no shame, always. Partners and chosen family are welcome on the call.</p>
+    </div>
+  </section>
+
+  <div id="sitefoot"></div>
+</main>
+
+<script src="shared/money.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="kehillah.js"></script>
+<script src="page-book.js"></script>
+</body>
+</html>

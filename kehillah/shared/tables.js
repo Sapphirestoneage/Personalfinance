@@ -17,7 +17,7 @@
   var FILES = {
     year: 'jewish_year_5787.json', tzedakah: 'tzedakah.json', protections: 'protections.json',
     family: 'family_building_2026.json', care: 'care_2026.json', gemach: 'gemach.json',
-    resources: 'resources.json', elul: 'elul.json', words: 'words.json'
+    resources: 'resources.json', elul: 'elul.json', words: 'words.json', practice: 'practice.json'
   };
   function base() {
     var s = typeof document !== 'undefined' && document.querySelector('script[src*="shared/tables.js"]');

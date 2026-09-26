@@ -42,7 +42,9 @@ const Family = require(A('engines/family.js'));
 const Care = require(A('engines/care.js'));
 const Loan = require(A('engines/loan.js'));
 const TODAY = '2026-09-26';
-const PAGES = ['care', 'chosen-family', 'elul', 'family', 'gemach', 'index', 'resources', 'tzedakah', 'year'];
+const PAGES = ['about', 'book', 'care', 'chosen-family', 'elul', 'family', 'gemach', 'index', 'resources', 'tzedakah', 'work-with-me', 'year'];
+const TOOLS = ['year', 'tzedakah', 'chosen-family', 'family', 'care', 'gemach', 'elul', 'resources'];
+const SCRIPT = { index: 'page-home.js', 'work-with-me': 'page-work.js' };
 
 /* ======================================================================
    A separate app (KD-001)
@@ -63,18 +65,20 @@ section('A separate app (KD-001, D-340)');
   });
   checkTrue('nothing in kehillah/ loads a script, style or font from outside kehillah/', outside.length === 0, outside.join('; '));
   const pages = fs.readdirSync(APP).filter(f => f.endsWith('.html')).map(f => f.replace(/\.html$/, '')).sort();
-  check('nine pages and nothing more', pages.join(), PAGES.join());
+  check('twelve pages and nothing more', pages.join(), PAGES.join());
   pages.forEach(p => {
     const t = fs.readFileSync(A(p + '.html'), 'utf8');
     checkTrue(p + '.html refuses every frame and every other origin, and runs no inline script', /frame-src 'none'/.test(t) && /default-src 'self'/.test(t) && /script-src 'self';/.test(t) && !/<script>/.test(t));
     checkTrue(p + '.html marks its inputs built once (D-034)', /LIVE-FORM: built once/.test(t));
     checkTrue(p + '.html opts into the theme with <body class="slaf">', /<body class="slaf">/.test(t));
-    checkTrue(p + '.html wears the header and the words fold', /id="head"/.test(t) && /id="words"/.test(t));
+    checkTrue(p + '.html wears the header and the site foot', /id="head"/.test(t) && /id="sitefoot"/.test(t));
+    if (TOOLS.indexOf(p) !== -1) checkTrue(p + '.html, a tool, has the words fold and the call to action', /id="words"/.test(t) && /id="cta"/.test(t));
+    checkTrue(p + '.html carries link-preview tags with absolute addresses', /og:title/.test(t) && /og:image" content="https:\/\//.test(t) && new RegExp('og:url" content="https://[^"]+/' + p + '\\.html"').test(t));
     checkTrue(p + '.html has a description for the link preview', /<meta name="description" content="[^"]{40,}"/.test(t));
     /* Every script tag resolves, and the page script is the last one. */
     const scripts = (t.match(/<script src="([^"]+)"><\/script>/g) || []).map(s => s.replace(/<script src="|"><\/script>/g, ''));
     checkTrue(p + '.html: every script exists', scripts.every(s => fs.existsSync(A(s))), scripts.filter(s => !fs.existsSync(A(s))).join(', '));
-    const pageJs = 'page-' + (p === 'index' ? 'home' : p) + '.js';
+    const pageJs = SCRIPT[p] || 'page-' + p + '.js';
     check(p + '.html loads its own page script last', scripts[scripts.length - 1], pageJs);
     /* Every engine the page script names is loaded by a script tag before it. */
     const js = fs.readFileSync(A(pageJs), 'utf8');
@@ -82,7 +86,7 @@ section('A separate app (KD-001, D-340)');
     Object.keys(ENGINES).forEach(k => { if (new RegExp('SLAF\\.' + k + '\\.').test(js)) checkTrue(p + '.html loads ' + ENGINES[k] + ' for its script', scripts.indexOf(ENGINES[k]) !== -1); });
     /* Every static id the page script asks for is in the page (the ids it builds itself are prefixed). */
     const ids = new Set((t.match(/ id="([^"]+)"/g) || []).map(m => m.slice(5, -1)));
-    const asked = (js.match(/K\.el\('([a-z0-9-]+)'\)/g) || []).map(m => m.slice(6, -2)).filter(id => !/^(s[1-4]|c[1-3]|line-|it-|cov-|nm-|after-|row-|urg-|g-)/.test(id) || /^g-(cause|label|cents|date|level|note|add|say)$/.test(id) || /^row-(try|tries)$/.test(id));
+    const asked = (js.match(/K\.el\('([a-z0-9-]+)'\)/g) || []).map(m => m.slice(6, -2)).filter(id => !/^(s[1-4]|c[1-3]|line-|it-|cov-|nm-|after-|row-|urg-|g-)/.test(id) || /^g-(cause|label|cents|date|level|note|add|say)$/.test(id) || /^row-(try|tries)$/.test(id)).filter(id => !(p === 'work-with-me' && /^(hero-|for-whom|about-|values|where-body|doors)/.test(id)));
     const missing = asked.filter(id => !ids.has(id));
     checkTrue(p + '.html has every id its script asks for', missing.length === 0, missing.join(', '));
   });
@@ -99,6 +103,7 @@ section('A separate app (KD-001, D-340)');
   });
   /* Every innerHTML that concatenates a variable goes through esc(). */
   files.filter(p => /page-.*\.js$|kehillah\.js$/.test(p)).forEach(p => {
+    /* page-home.js is also loaded by work-with-me.html for its renderers; the asked-ids check above already skips the home-only ids there. */
     const t = fs.readFileSync(p, 'utf8');
     /* Only what reaches innerHTML: a statement is a chunk ending in ';' at a line end. */
     const chunks = t.split(/;\s*\n/).filter(c => /innerHTML/.test(c));
@@ -140,6 +145,15 @@ section('The tables');
   checkTrue('the HSA family limit is above the individual one', T.care.hsa.familyCents > T.care.hsa.individualCents);
   checkTrue('every resource has an https address or a relative one', T.resources.groups.every(g => g.items.every(i => /^https:\/\/|^\.\.\//.test(i.url))));
   checkTrue('every word has a term and one sentence', T.words.words.every(w => w.length === 2 && w[0].length > 0 && w[1].length > 10));
+  const PR = T.practice;
+  checkTrue('the practice names the person, the pronouns, the practice and the toolkit', PR.person.name === 'Eli Saperstein' && PR.person.pronouns === 'he/him' && PR.practice.name === 'Stress Less About Money' && PR.practice.toolkit === 'Kehillah');
+  checkTrue('no price is invented: the free call is 0, every other service is null until the owner sets it', PR.services.every(s => s.id === 'call' ? s.priceCents === 0 : s.priceCents === null || Number.isInteger(s.priceCents)));
+  checkTrue('the booking address is blank or https', PR.booking.url === '' || /^https:\/\//.test(PR.booking.url));
+  checkTrue('the booking email is blank or an address', PR.booking.email === '' || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(PR.booking.email));
+  checkTrue('every tool has its own call-to-action line', TOOLS.every(t => typeof PR.toolCtas[t] === 'string' && PR.toolCtas[t].length > 20));
+  checkTrue('there are no testimonials until real ones exist', !PR.testimonials || PR.testimonials.length === 0);
+  checkTrue('the nav names every tool and every selling page', (() => { const src = fs.readFileSync(A('kehillah.js'), 'utf8'); return TOOLS.filter(t => t !== 'resources').every(t => src.indexOf("href: '" + t + ".html'") !== -1) && ['work-with-me', 'about', 'resources', 'book'].every(t => src.indexOf("href: '" + t + ".html'") !== -1); })());
+  checkTrue('the link-preview picture exists and is a PNG', fs.existsSync(A('og.png')) && fs.readFileSync(A('og.png')).slice(1, 4).toString() === 'PNG');
 }
 
 /* ======================================================================
@@ -358,7 +372,7 @@ section('The log');
 {
   const log = fs.readFileSync(A('DECISIONS.md'), 'utf8');
   const nums = (log.match(/^## KD-(\d{3}) /gm) || []).map(m => Number(m.slice(6, 9)));
-  checkTrue('there are KD entries', nums.length >= 4);
+  checkTrue('there are KD entries', nums.length >= 5);
   checkTrue('KD numbers are 1..n, in order, none twice', nums.every((n, i) => n === i + 1));
   const long = log.split(/^## /m).slice(1).filter(s => s.split('\n').length > 24).map(s => s.split('\n')[0]);
   checkTrue('every entry is short (the reasoning goes in the commit)', long.length === 0, long.join(', '));
