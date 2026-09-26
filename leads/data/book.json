@@ -1,0 +1,601 @@
+{
+  "id": "leads_book",
+  "version": "2026.1",
+  "asOf": "2026-09-26",
+  "source": "The frameworks of $100M Leads (Alex Hormozi, 2023), restated in this app's own words and turned into exercises. The book is the reference; nothing here quotes it. Chapter numbers point the reader back to it.",
+  "confidence": "convention",
+  "confidenceNote": "Frameworks and exercises, not figures. The one rule of thumb carried as a number is the book's: lifetime gross profit should be at least three times what a customer cost to get, and the first thirty days should pay back twice that cost before you scale ads.",
+  "book": { "title": "$100M Leads", "author": "Alex Hormozi", "year": 2023 },
+  "bands": [
+    { "n": 1, "id": "learn", "name": "Learn", "means": "The idea, in one sitting", "payoff": "Clarity" },
+    { "n": 2, "id": "sketch", "name": "Sketch", "means": "Write your version of it", "payoff": "A draft you can use tomorrow" },
+    { "n": 3, "id": "do", "name": "Do", "means": "Run it, with a checklist", "payoff": "Leads" },
+    { "n": 4, "id": "measure", "name": "Measure", "means": "Put numbers on it", "payoff": "Certainty" },
+    { "n": 5, "id": "scale", "name": "Scale", "means": "More, better, new", "payoff": "Power" }
+  ],
+  "order": ["magnet", "warm", "content", "cold", "paid", "referrals", "employees", "agencies", "affiliates"],
+  "planets": [
+    { "id": "magnet", "sun": true, "name": "The Lead Magnet", "short": "Magnet", "chapter": "Chapter 2, Leads alone are not enough", "hue": "yellow",
+      "blurb": "Everything orbits this: one free thing that solves one narrow problem for the people you want, so they raise a hand.", "appliesWhen": "always" },
+    { "id": "warm", "name": "Warm Outreach", "short": "Warm", "chapter": "Chapter 4, Warm outreach", "hue": "aqua", "who": "People who know you", "how": "One to one",
+      "blurb": "Reach out, one at a time, to people who already know you. The cheapest way to your first customers.", "appliesWhen": "always" },
+    { "id": "content", "name": "Free Content", "short": "Content", "chapter": "Chapter 5, Post free content", "hue": "blue", "who": "People who know you", "how": "One to many",
+      "blurb": "Post things worth keeping, so strangers become people who know you, and some of them ask.", "appliesWhen": "always" },
+    { "id": "cold", "name": "Cold Outreach", "short": "Cold", "chapter": "Chapter 6, Cold outreach", "hue": "violet", "who": "Strangers", "how": "One to one",
+      "blurb": "Reach out, one at a time, to people who have never heard of you. Volume, personal first lines, and something of value up front.", "appliesWhen": "always" },
+    { "id": "paid", "name": "Paid Ads", "short": "Ads", "chapter": "Chapter 7, Run paid ads", "hue": "orange", "who": "Strangers", "how": "One to many",
+      "blurb": "Pay to put your lead magnet in front of strangers. Fast, and it costs money while you learn.", "appliesWhen": "budget",
+      "dimMessage": "Paid ads spend money while you learn. Say in Start Here that you have a monthly ad budget and this planet lights." },
+    { "id": "referrals", "name": "Referrals", "short": "Referrals", "chapter": "Chapter 8, Customer referrals", "hue": "green", "getter": true,
+      "blurb": "Customers who bring customers. The best leads there are, and the only growth that costs nothing.", "appliesWhen": "customers",
+      "dimMessage": "Referrals need customers to refer. Say in Start Here that you have at least one paying customer and this planet lights." },
+    { "id": "employees", "name": "Employees", "short": "Team", "chapter": "Chapter 9, Employees", "hue": "magenta", "getter": true,
+      "blurb": "People on your team who do the core four for you. Document, demonstrate, duplicate.", "appliesWhen": "team",
+      "dimMessage": "This planet is for handing the work to a team. Say in Start Here that you have one, or are hiring, and it lights." },
+    { "id": "agencies", "name": "Agencies", "short": "Agency", "chapter": "Chapter 10, Agencies", "hue": "red", "getter": true,
+      "blurb": "Hire an agency to learn a channel from, then bring it in-house.", "appliesWhen": "budget",
+      "dimMessage": "An agency costs money every month. Say in Start Here that you have a budget and this planet lights." },
+    { "id": "affiliates", "name": "Affiliates", "short": "Affiliates", "chapter": "Chapter 11, Affiliates", "hue": "yellow", "getter": true,
+      "blurb": "Other businesses that already serve your customer, sending them to you for a cut.", "appliesWhen": "customers",
+      "dimMessage": "Affiliates want proof that customers get results. Say in Start Here that you have at least one paying customer and this planet lights." }
+  ],
+  "start": {
+    "title": "Start here",
+    "chapter": "Chapters 1, 3 and 12: the core four, and advertising in real life",
+    "intro": "Six answers. They set which planets light, and they are the promise the book asks you to make: pick one way to get leads, do it a hundred times a day, and keep going until the goal is hit.",
+    "fields": [
+      { "key": "sells", "label": "What you sell, in one line", "type": "text", "example": "Piano lessons for adults who gave up as kids" },
+      { "key": "serves", "label": "Who it is for, in one line", "type": "text", "example": "Busy adults in their 30s and 40s who want to play again" },
+      { "key": "customers", "label": "Paying customers today", "type": "choice", "options": [["none", "None yet"], ["some", "One to ten"], ["many", "More than ten"]] },
+      { "key": "budget", "label": "Money you could spend on ads each month", "type": "choice", "options": [["none", "None right now"], ["some", "Some, and I could afford to lose it while I learn"]] },
+      { "key": "team", "label": "Who does the work", "type": "choice", "options": [["solo", "Just me"], ["hiring", "Me, and I am hiring"], ["team", "A team"]] },
+      { "key": "goal", "label": "Engaged leads you want each week", "type": "number", "unit": "count", "example": 20, "hint": "An engaged lead is someone who gave you a way to reach them and showed interest. The book's whole point is that this is the number to chase." },
+      { "key": "first", "label": "The one core four planet you will start with", "type": "choice", "options": [["warm", "Warm outreach: I know people"], ["content", "Free content: I can post every day"], ["cold", "Cold outreach: I can do volume"], ["paid", "Paid ads: I have money to learn with"]], "hint": "The book's order for a one-person business is warm outreach first, then content, then cold, then paid." }
+    ],
+    "rule": "The rule of 100: a hundred primary actions a day on your first planet. A hundred warm messages. A hundred minutes making content. A hundred cold reach-outs. A hundred dollars of ads. Every day, until the goal is hit."
+  },
+  "levels": [
+    { "id": "magnet-1", "planet": "magnet", "band": 1, "title": "A lead is not an engaged lead", "minutes": 5, "chapter": "Chapter 2",
+      "says": "A lead is anyone you could contact. An engaged lead is someone who showed interest and gave you a way to reach them. Only engaged leads matter, and a lead magnet is how you make them: one free thing that solves one narrow problem for one kind of person.",
+      "checkpoint": "You can say who you serve and the one narrow problem the magnet will solve.",
+      "fields": [
+        { "key": "who", "label": "The person the magnet is for", "type": "text", "example": "Adults who quit piano as kids" },
+        { "key": "problem", "label": "The narrow problem it solves, the first step of the bigger one", "type": "text", "example": "Not knowing which songs are easy enough to start with" }
+      ] },
+    { "id": "magnet-2", "planet": "magnet", "band": 1, "title": "Pick the kind of magnet", "minutes": 5, "chapter": "Chapter 2, step 2",
+      "says": "There are three kinds. One reveals a problem they did not know they had (a test, a check, an audit). One is a sample or a trial of the real thing. One is a single step of a many-step process, done for them.",
+      "checkpoint": "One kind chosen, with a reason.",
+      "fields": [
+        { "key": "kind", "label": "The kind", "type": "choice", "options": [["reveal", "Reveal a problem"], ["sample", "A sample or a trial"], ["step", "One step of a bigger process"]] },
+        { "key": "why", "label": "Why this kind fits the problem", "type": "long", "example": "They do not know how rusty they are, so a five-minute playing check shows them where to start." }
+      ] },
+    { "id": "magnet-3", "planet": "magnet", "band": 2, "title": "How it is delivered", "minutes": 5, "chapter": "Chapter 2, step 3",
+      "says": "A magnet arrives as software, as information, as a service done for them, or as a physical thing. Pick the one they would actually use. Information is easiest to make; a service is hardest to ignore.",
+      "checkpoint": "One delivery picked.",
+      "fields": [
+        { "key": "delivery", "label": "Delivered as", "type": "choice", "options": [["software", "Software or a tool"], ["information", "Information: a guide, a video, a list"], ["service", "A service done for them"], ["physical", "A physical thing"]] },
+        { "key": "what", "label": "What it is, in one line", "type": "text", "example": "A twelve-minute video that finds your level and gives you three songs" }
+      ] },
+    { "id": "magnet-4", "planet": "magnet", "band": 2, "title": "Name it, three ways", "minutes": 10, "chapter": "Chapter 2, step 4",
+      "says": "The name is the headline: what they get, for whom, and why now. Write three, then pick the one a stranger would understand fastest. Test the others later as ad hooks.",
+      "checkpoint": "Three names written, one chosen.",
+      "fields": [
+        { "key": "name1", "label": "Name one", "type": "text", "example": "The Rusty Fingers Test" },
+        { "key": "name2", "label": "Name two", "type": "text", "example": "Find your first three songs in twelve minutes" },
+        { "key": "name3", "label": "Name three", "type": "text", "example": "The adult beginner's starting map" },
+        { "key": "pick", "label": "The one you will use", "type": "choice", "options": [["1", "Name one"], ["2", "Name two"], ["3", "Name three"]] }
+      ] },
+    { "id": "magnet-5", "planet": "magnet", "band": 3, "title": "Make it easy to take in", "minutes": 15, "chapter": "Chapter 2, step 5",
+      "says": "The fastest magnet wins. Offer it in the formats people already use, keep it short, and ask for nothing but a way to reach them.",
+      "checkpoint": "Every box ticked for the magnet as it exists today.",
+      "checklist": [
+        "It takes under fifteen minutes to use",
+        "It works on a phone",
+        "It comes in the format they prefer (text, video, audio, a tool)",
+        "No account or download is needed to get value from it",
+        "It asks for one thing only: a way to reach them"
+      ] },
+    { "id": "magnet-6", "planet": "magnet", "band": 3, "title": "Make it so good they would pay", "minutes": 20, "chapter": "Chapter 2, step 6",
+      "says": "Give away the thing you could charge for. A magnet that solves the narrow problem completely earns trust for the bigger one. A weak magnet costs you the lead and the reputation.",
+      "checkpoint": "Every box ticked honestly.",
+      "checklist": [
+        "It solves the narrow problem completely, not half of it",
+        "Someone would pay for it as it stands",
+        "It gives a result before they buy anything",
+        "It is the best free thing of its kind that you know of",
+        "You have used it yourself, start to finish, as a stranger would"
+      ] },
+    { "id": "magnet-7", "planet": "magnet", "band": 3, "title": "Tell them what to do next", "minutes": 10, "chapter": "Chapter 2, step 7",
+      "says": "A magnet ends with a call to action: say exactly what to do, and give a reason to do it now. Scarcity, a deadline, or a bonus that goes away all work. A magnet with no ask is a gift, not advertising.",
+      "checkpoint": "The ask is written and it says why now.",
+      "fields": [
+        { "key": "ask", "label": "The ask, word for word", "type": "long", "example": "Book a free twenty-minute first lesson this week." },
+        { "key": "now", "label": "The reason to act now", "type": "choice", "options": [["scarcity", "Only so many spots"], ["deadline", "A deadline"], ["bonus", "A bonus that goes away"], ["none", "None yet, I will add one"]] }
+      ] },
+    { "id": "magnet-8", "planet": "magnet", "band": 4, "title": "Count who took it and who engaged", "minutes": 5, "chapter": "Chapter 2",
+      "says": "Two numbers a month: how many people took the magnet, and how many of those became engaged leads (replied, booked, asked). If the second is a small share of the first, the ask is weak or the magnet drew the wrong people.",
+      "checkpoint": "Both numbers entered for the last month.",
+      "fields": [
+        { "key": "took", "label": "People who took the magnet last month", "type": "number", "unit": "count", "example": 60 },
+        { "key": "engaged", "label": "Of them, engaged leads", "type": "number", "unit": "count", "example": 18 }
+      ],
+      "reading": { "kind": "share", "of": "engaged", "over": "took", "label": "Engaged share" } },
+    { "id": "magnet-9", "planet": "magnet", "band": 5, "title": "More magnets, better magnets, new problems", "minutes": 20, "chapter": "Chapter 2",
+      "says": "Once one magnet works, make the next: a second narrow problem, a second format, or one magnet per planet. Retire the weakest. The magnet is the start of every planet's funnel, so a better magnet lifts all of them.",
+      "checkpoint": "Every box ticked.",
+      "checklist": [
+        "Each planet you use has a magnet that fits how it reaches people",
+        "The weakest magnet of the last quarter was retired or rewritten",
+        "A second narrow problem has its own magnet",
+        "Every magnet ends with the same next step into the paid offer"
+      ] },
+
+    { "id": "warm-1", "planet": "warm", "band": 1, "title": "What warm outreach is", "minutes": 5, "chapter": "Chapter 4",
+      "says": "One-to-one messages to people who already know you: your contacts, your followers, past customers. It costs nothing but time, and it is where the book says a business with no customers starts. The rule of 100 applies: a hundred reach-outs a day.",
+      "checkpoint": "Read, and confirmed.", "confirm": "Got it" },
+    { "id": "warm-2", "planet": "warm", "band": 1, "title": "Acknowledge, compliment, ask", "minutes": 10, "chapter": "Chapter 4, step 3",
+      "says": "A warm message is personal or it is spam. Acknowledge something true about them, compliment something real, then ask a question they will want to answer. No pitch in the first message. The pitch comes after they reply.",
+      "checkpoint": "One real message written for one real person.",
+      "fields": [
+        { "key": "person", "label": "A real contact (first name is fine)", "type": "text", "example": "Sam" },
+        { "key": "aca", "label": "Your acknowledge, compliment, ask", "type": "long", "example": "Saw you finished the marathon, that is a serious year of training. How are the knees holding up?" }
+      ] },
+    { "id": "warm-3", "planet": "warm", "band": 2, "title": "Get your list", "minutes": 20, "chapter": "Chapter 4, step 1",
+      "says": "Everyone you can reach is your list: phone contacts, email contacts, and followers on every platform. Count them. Most people are surprised how many hundreds they already know.",
+      "checkpoint": "Every count entered. Zero is fine, blank is not.",
+      "fields": [
+        { "key": "phone", "label": "Phone contacts", "type": "number", "unit": "count", "example": 420 },
+        { "key": "email", "label": "Email contacts", "type": "number", "unit": "count", "example": 310 },
+        { "key": "social", "label": "Followers and connections, all platforms", "type": "number", "unit": "count", "example": 900 }
+      ],
+      "reading": { "kind": "sum", "keys": ["phone", "email", "social"], "label": "Your list" } },
+    { "id": "warm-4", "planet": "warm", "band": 2, "title": "Pick the platform", "minutes": 5, "chapter": "Chapter 4, step 2",
+      "says": "Reach people where they already answer you. One platform to start. Text if they text you, email if they email you, direct messages if that is where the list lives.",
+      "checkpoint": "One platform picked.",
+      "fields": [
+        { "key": "platform", "label": "Where you will message first", "type": "choice", "options": [["text", "Text messages"], ["dm", "Direct messages on a social platform"], ["email", "Email"], ["phone", "Phone calls"], ["person", "In person"]] },
+        { "key": "why", "label": "Why there", "type": "text", "example": "Most of my list is in my phone and they reply to texts within the day" }
+      ] },
+    { "id": "warm-5", "planet": "warm", "band": 2, "title": "Write the offer sentence", "minutes": 15, "chapter": "Chapter 4, step 6",
+      "says": "When someone replies, you tell them what you do in one sentence: I help this kind of person get this result in this much time without this pain. Then the ask: do you know anyone who would want that? Asking about others is easier to say yes to, and often they say me.",
+      "checkpoint": "All four blanks filled and the sentence reads well out loud.",
+      "fields": [
+        { "key": "who", "label": "I help", "type": "text", "example": "adults who quit piano as kids" },
+        { "key": "outcome", "label": "get", "type": "text", "example": "playing a song they love" },
+        { "key": "time", "label": "in", "type": "text", "example": "thirty days" },
+        { "key": "without", "label": "without", "type": "text", "example": "scales, theory, or a teacher who sighs" }
+      ],
+      "reading": { "kind": "sentence", "template": "I help {who} get {outcome} in {time} without {without}. Do you know anyone who would want that?", "label": "Your offer" } },
+    { "id": "warm-6", "planet": "warm", "band": 3, "title": "The daily hundred", "minutes": 90, "chapter": "Chapter 4, steps 4 and 5",
+      "says": "A hundred personal messages a day, from your list, on your platform. Warm each reply with another acknowledge, compliment, ask before the offer. Log the count. The book's promise is simple: do this every day and the first customers come.",
+      "checkpoint": "A day where every box is true. Tick it, then log the count on the Machine page.",
+      "checklist": [
+        "The list is open and sorted so you never hunt for the next name",
+        "One hundred messages sent, each with a real acknowledge and compliment",
+        "Every reply got a second personal message before any offer",
+        "The offer sentence was said to everyone who engaged",
+        "Everyone who said no was asked if they know someone",
+        "Today's count is logged"
+      ],
+      "log": "warm" },
+    { "id": "warm-7", "planet": "warm", "band": 3, "title": "Free, then proof, then a price", "minutes": 30, "chapter": "Chapter 4, steps 7 and 8",
+      "says": "The first few customers pay with feedback and a testimonial, not money. Serve them so well the results are undeniable. Ask for the testimonial and a referral. Then charge the next batch, and raise the price a little with every batch after that.",
+      "checkpoint": "Every box ticked.",
+      "checklist": [
+        "Five people said yes to the free version",
+        "Each got more than was promised",
+        "Each gave a testimonial in their own words",
+        "Each was asked for one referral",
+        "The next batch was charged, and the price goes up with each batch"
+      ] },
+    { "id": "warm-8", "planet": "warm", "band": 3, "title": "Keep the list warm", "minutes": 30, "chapter": "Chapter 4, step 9",
+      "says": "A list goes cold if you only show up to sell. Touch it regularly with something useful or personal, and add every new person you meet to it the same day.",
+      "checkpoint": "Every box ticked.",
+      "checklist": [
+        "A monthly note goes to the whole list with something useful, no ask",
+        "Every new person you meet is added to the list the same day",
+        "Past customers hear from you as often as prospects do"
+      ] },
+    { "id": "warm-9", "planet": "warm", "band": 4, "title": "Your warm numbers", "minutes": 5, "chapter": "Chapter 4",
+      "says": "Four numbers a week: messages sent, replies, offers made, and yeses. Reply rate tells you whether the messages are personal. Yes rate tells you whether the offer is good.",
+      "checkpoint": "All four entered for the last seven days.",
+      "fields": [
+        { "key": "sent", "label": "Messages sent", "type": "number", "unit": "count", "example": 500 },
+        { "key": "replies", "label": "Replies", "type": "number", "unit": "count", "example": 140 },
+        { "key": "offers", "label": "Offers made", "type": "number", "unit": "count", "example": 60 },
+        { "key": "yes", "label": "Yeses", "type": "number", "unit": "count", "example": 9 }
+      ],
+      "reading": { "kind": "funnel", "keys": ["sent", "replies", "offers", "yes"], "label": "Last seven days" } },
+    { "id": "warm-10", "planet": "warm", "band": 5, "title": "More, better, new", "minutes": 20, "chapter": "Chapters 4 and 12",
+      "says": "More: a bigger list, from everyone you meet and every customer's circle. Better: a tighter offer sentence and a referral ask every time. New: when warm outreach runs every day without you thinking about it, add the next planet, not before.",
+      "checkpoint": "Every box ticked.",
+      "checklist": [
+        "The list grows every week and the growth is counted",
+        "The offer sentence was rewritten from what people actually said yes to",
+        "Warm outreach runs daily, and someone else could run it from the checklist",
+        "The next planet is chosen"
+      ] },
+
+    { "id": "content-1", "planet": "content", "band": 1, "title": "The content unit: hook, retain, reward", "minutes": 5, "chapter": "Chapter 5",
+      "says": "Every piece of content does three jobs. The hook earns the first second of attention. The middle keeps it, with a list, steps, or a story. The reward is what they walk away with, so they come back. Post it where the people you want already spend their time.",
+      "checkpoint": "Read, and confirmed.", "confirm": "Got it" },
+    { "id": "content-2", "planet": "content", "band": 1, "title": "Give, give, give, ask", "minutes": 5, "chapter": "Chapter 5",
+      "says": "Most content gives and never asks. Some content asks. The ratio is yours to set, and the book's advice is to give far more than you ask. An ask can sit inside a giving piece (integrated) or be its own piece now and then (intermittent).",
+      "checkpoint": "A ratio chosen.",
+      "fields": [
+        { "key": "ratio", "label": "Giving pieces for every asking piece", "type": "choice", "options": [["3", "Three gives, one ask"], ["5", "Five gives, one ask"], ["10", "Ten gives, one ask"]] },
+        { "key": "style", "label": "How you will ask", "type": "choice", "options": [["integrated", "A line inside giving pieces"], ["intermittent", "A whole piece, now and then"], ["both", "Both"]] }
+      ] },
+    { "id": "content-3", "planet": "content", "band": 2, "title": "Five hooks from five places", "minutes": 20, "chapter": "Chapter 5, hooks",
+      "says": "Hooks come from topics, and topics come from five places: your far past, your recent past, what is happening now, what is trending, and something you make happen. Write one hook from each. A hook is a headline: a question, a bold claim, a number, or the start of a story.",
+      "checkpoint": "Five hooks written.",
+      "fields": [
+        { "key": "far", "label": "From your far past", "type": "text", "example": "I quit piano at nine. Here is what I would tell that kid." },
+        { "key": "recent", "label": "From your recent past", "type": "text", "example": "A student played her wedding song last week after six lessons." },
+        { "key": "present", "label": "From right now", "type": "text", "example": "Teaching the same song to three adults today. Three different mistakes." },
+        { "key": "trend", "label": "From a trend", "type": "text", "example": "That viral piano clip? Here is the one trick that makes it easy." },
+        { "key": "made", "label": "Something you made happen", "type": "text", "example": "I asked twenty adults why they quit. All twenty said the same thing." }
+      ] },
+    { "id": "content-4", "planet": "content", "band": 2, "title": "Three shapes that keep attention", "minutes": 20, "chapter": "Chapter 5, retain",
+      "says": "People stay for lists, for steps, and for stories. Outline one piece in each shape from your hooks. Short pieces do one shape; long pieces stack them.",
+      "checkpoint": "Three outlines written.",
+      "fields": [
+        { "key": "list", "label": "A list piece (the hook, then the items)", "type": "long", "example": "Five songs adults can play in week one: 1. ... 2. ..." },
+        { "key": "steps", "label": "A steps piece (the hook, then the order)", "type": "long", "example": "How to relearn a song in a week: day one ... day two ..." },
+        { "key": "story", "label": "A story piece (the hook, the turn, the lesson)", "type": "long", "example": "She had not touched a piano in twenty years. Then ..." }
+      ] },
+    { "id": "content-5", "planet": "content", "band": 2, "title": "The reward, and the platform", "minutes": 10, "chapter": "Chapter 5, reward",
+      "says": "The reward is the reason they follow: they got something they can use. Say what each piece leaves them with. Then pick one platform, the one where your people already are, and stay there until it works.",
+      "checkpoint": "A platform picked and the reward written.",
+      "fields": [
+        { "key": "platform", "label": "The one platform to start", "type": "text", "example": "Instagram" },
+        { "key": "reward", "label": "What a viewer leaves with", "type": "text", "example": "One thing to try at the piano tonight" }
+      ] },
+    { "id": "content-6", "planet": "content", "band": 3, "title": "A week of posting", "minutes": 120, "chapter": "Chapter 5",
+      "says": "Plan seven pieces, post one a day, and answer everyone who comments. Content compounds: the first week feels like talking to a room with nobody in it. The book says post anyway.",
+      "checkpoint": "A week where every box is true.",
+      "checklist": [
+        "Seven pieces planned, each with a hook from the five places",
+        "Each piece has one shape: list, steps, or story",
+        "Each piece names what the viewer leaves with",
+        "The give-to-ask ratio was kept",
+        "One piece was posted every day",
+        "Every comment got a reply"
+      ] },
+    { "id": "content-7", "planet": "content", "band": 3, "title": "A hundred minutes a day", "minutes": 100, "chapter": "Chapters 5 and 12",
+      "says": "The rule of 100 for content is time: a hundred minutes a day making and posting. Log it. Days you skip are days the room stays empty.",
+      "checkpoint": "A day with the minutes logged.",
+      "checklist": [
+        "A hundred minutes on content today, timed",
+        "At least one piece posted",
+        "Today's minutes are logged"
+      ],
+      "log": "content" },
+    { "id": "content-8", "planet": "content", "band": 4, "title": "Your content numbers", "minutes": 5, "chapter": "Chapter 5",
+      "says": "Three numbers a month: pieces posted, followers gained, and engaged leads that came from content. Pieces tell you if you are doing the work. Followers tell you if the hooks work. Engaged leads tell you if the asks work.",
+      "checkpoint": "All three entered for the last month.",
+      "fields": [
+        { "key": "pieces", "label": "Pieces posted", "type": "number", "unit": "count", "example": 28 },
+        { "key": "followers", "label": "Followers gained", "type": "number", "unit": "count", "example": 240 },
+        { "key": "engaged", "label": "Engaged leads from content", "type": "number", "unit": "count", "example": 12 }
+      ] },
+    { "id": "content-9", "planet": "content", "band": 5, "title": "More, better, new", "minutes": 30, "chapter": "Chapter 5, grow",
+      "says": "More: post more often. Better: look at the ten best pieces and make more like them. New: cut long pieces into short ones, take the winners to a second platform, then hand the cutting to someone else.",
+      "checkpoint": "Every box ticked.",
+      "checklist": [
+        "The ten best pieces of the quarter are listed with what their hooks had in common",
+        "Posting frequency went up and stayed up",
+        "Winners are repurposed to a second platform",
+        "Someone else cuts long pieces into short ones"
+      ] },
+
+    { "id": "cold-1", "planet": "cold", "band": 1, "title": "What cold outreach is", "minutes": 5, "chapter": "Chapter 6",
+      "says": "One-to-one messages to strangers who fit your customer. It works on four things: a list of the right people, a first line that proves you looked at them, something of real value in the first message, and volume, because most will not answer. Expect to reach many to get one.",
+      "checkpoint": "Read, and confirmed.", "confirm": "Got it" },
+    { "id": "cold-2", "planet": "cold", "band": 2, "title": "Get the list", "minutes": 30, "chapter": "Chapter 6, lists",
+      "says": "Three ways to get names: a tool that finds them, a list you buy, or a list you build by hand from where your customers gather. Start with the one you can have by tomorrow.",
+      "checkpoint": "A source picked and a count of names in hand.",
+      "fields": [
+        { "key": "source", "label": "Where the names come from", "type": "choice", "options": [["tool", "A tool that finds them"], ["buy", "A list I buy"], ["build", "A list I build by hand"]] },
+        { "key": "names", "label": "Names in the list today", "type": "number", "unit": "count", "example": 800 }
+      ] },
+    { "id": "cold-3", "planet": "cold", "band": 2, "title": "The first line, and the gift", "minutes": 20, "chapter": "Chapter 6, personalize and value",
+      "says": "The first line is about them, and it proves a person wrote it. Then give something of value before you ask anything: the lead magnet, a fix, a result they can see fast. Big, fast value is what makes a stranger answer.",
+      "checkpoint": "Both written.",
+      "fields": [
+        { "key": "line", "label": "A first line for one name on the list", "type": "text", "example": "Your studio's spring recital video has 2,000 views, and the adult students got the loudest cheers." },
+        { "key": "gift", "label": "What you give in that first message", "type": "long", "example": "A free twelve-minute level check for any adult student who wants to restart." }
+      ] },
+    { "id": "cold-4", "planet": "cold", "band": 2, "title": "The follow-up plan", "minutes": 10, "chapter": "Chapter 6, follow up",
+      "says": "A stranger who did not answer has not said no. Follow up more times than feels comfortable, in more than one way: message, email, a call, a voice note. Decide the number of touches and the channels before you start, so the plan runs itself.",
+      "checkpoint": "A number of touches and at least two channels.",
+      "fields": [
+        { "key": "touches", "label": "Touches before you stop", "type": "number", "unit": "count", "example": 7 },
+        { "key": "channels", "label": "Channels you will use", "type": "multi", "options": [["email", "Email"], ["dm", "Direct message"], ["phone", "Phone"], ["voice", "Voice note"], ["mail", "Physical mail"]] }
+      ] },
+    { "id": "cold-5", "planet": "cold", "band": 3, "title": "The daily hundred", "minutes": 120, "chapter": "Chapter 6",
+      "says": "A hundred new cold reach-outs a day, plus every follow-up that is due. Personal first line, the gift, the ask. Log the count.",
+      "checkpoint": "A day where every box is true.",
+      "checklist": [
+        "One hundred new reach-outs sent",
+        "Each had a first line about them",
+        "Each gave the gift before any ask",
+        "Every follow-up that was due went out, on the planned channel",
+        "Today's count is logged"
+      ],
+      "log": "cold" },
+    { "id": "cold-6", "planet": "cold", "band": 3, "title": "Make the volume run itself", "minutes": 60, "chapter": "Chapter 6, volume",
+      "says": "Volume is the whole game, and volume needs a system: templates with a personal first line, a tool that sends and tracks, a list refilled every week, and, when it works, someone else doing the sending.",
+      "checkpoint": "Every box ticked.",
+      "checklist": [
+        "Templates exist for the first message and every follow-up",
+        "A tool sends, tracks and reminds you of follow-ups",
+        "The list is refilled every week before it runs out",
+        "Someone else can run a day from the checklist"
+      ] },
+    { "id": "cold-7", "planet": "cold", "band": 4, "title": "Your cold numbers", "minutes": 5, "chapter": "Chapter 6",
+      "says": "Three numbers a week: reach-outs, replies, and bookings. The reply rate tests the first line and the gift. The booking rate tests the ask.",
+      "checkpoint": "All three entered for the last seven days.",
+      "fields": [
+        { "key": "sent", "label": "Reach-outs sent", "type": "number", "unit": "count", "example": 500 },
+        { "key": "replies", "label": "Replies", "type": "number", "unit": "count", "example": 25 },
+        { "key": "booked", "label": "Bookings", "type": "number", "unit": "count", "example": 6 }
+      ],
+      "reading": { "kind": "funnel", "keys": ["sent", "replies", "booked"], "label": "Last seven days" } },
+    { "id": "cold-8", "planet": "cold", "band": 5, "title": "More, better, new", "minutes": 30, "chapter": "Chapter 6",
+      "says": "More: more senders and a bigger list. Better: test first lines and gifts against each other and keep the winner. New: a new list source or a new channel once the current one is steady.",
+      "checkpoint": "Every box ticked.",
+      "checklist": [
+        "Two first lines were tested against each other this month and the winner kept",
+        "Two gifts were tested the same way",
+        "Daily volume went up",
+        "A second channel or list source is running"
+      ] },
+
+    { "id": "paid-1", "planet": "paid", "band": 1, "title": "What paid ads are, and the money rule", "minutes": 10, "chapter": "Chapter 7",
+      "says": "You pay a platform to show your lead magnet to strangers. It is the fastest way to reach many, and the only one that costs cash while you learn. Two rules from the book keep it safe: over a customer's life, gross profit should be at least three times what they cost to get, and the first thirty days should bring in twice that cost before you spend more.",
+      "checkpoint": "Read, and confirmed.", "confirm": "Got it" },
+    { "id": "paid-2", "planet": "paid", "band": 1, "title": "The parts of an ad", "minutes": 5, "chapter": "Chapter 7, part 1",
+      "says": "Call out the person so the right people stop and the wrong ones scroll on. Hook them the way content does. Give them the value: what they get, for whom, and why now. Then the call to action: the magnet, and one clear step.",
+      "checkpoint": "Read, and confirmed.", "confirm": "Got it" },
+    { "id": "paid-3", "planet": "paid", "band": 2, "title": "The platform and the call-out", "minutes": 15, "chapter": "Chapter 7, part 1",
+      "says": "Advertise where your people already are. Then write the labels that call them out: who should see this, and who should not. A good call-out makes a stranger feel found.",
+      "checkpoint": "All three written.",
+      "fields": [
+        { "key": "platform", "label": "The platform", "type": "text", "example": "Facebook and Instagram" },
+        { "key": "callout", "label": "Who this is for (the labels)", "type": "text", "example": "Adults over 35 who used to play piano" },
+        { "key": "notfor", "label": "Who should scroll past", "type": "text", "example": "Parents looking for kids' lessons" }
+      ] },
+    { "id": "paid-4", "planet": "paid", "band": 2, "title": "Write the ad", "minutes": 30, "chapter": "Chapter 7, part 1",
+      "says": "Four pieces, in order. Write it plain. The magnet is the offer in the ad; the paid product comes later.",
+      "checkpoint": "All four written.",
+      "fields": [
+        { "key": "hook", "label": "The hook", "type": "text", "example": "Quit piano as a kid? Your hands remember more than you think." },
+        { "key": "value", "label": "The value: what, for whom, why now", "type": "long", "example": "A free twelve-minute level check that finds three songs you can play this month. For adults who stopped. Ten spots this week." },
+        { "key": "cta", "label": "The call to action", "type": "text", "example": "Tap to get your level check." },
+        { "key": "magnet", "label": "The magnet it points to", "type": "text", "example": "The Rusty Fingers Test" }
+      ] },
+    { "id": "paid-5", "planet": "paid", "band": 3, "title": "Launch day", "minutes": 60, "chapter": "Chapter 7",
+      "says": "A hundred dollars a day is the book's rule of 100 for ads: enough to learn, small enough to lose. Launch a few versions, capture the contact, and make sure you can see what each lead cost from day one.",
+      "checkpoint": "Every box ticked on launch day.",
+      "checklist": [
+        "The daily budget is set and you can afford to lose it while you learn",
+        "At least three versions of the ad are live (different hooks)",
+        "The ad points to the magnet, and the magnet asks for a way to reach them",
+        "Cost per lead is visible in the dashboard",
+        "A person or a system follows up with every lead the same day"
+      ],
+      "log": "paid" },
+    { "id": "paid-6", "planet": "paid", "band": 3, "title": "The testing loop", "minutes": 30, "chapter": "Chapter 7, part 2",
+      "says": "Every week: keep the winner, kill the losers, launch new challengers. Change one thing at a time, the hook most often. The loop never stops; that is the job.",
+      "checkpoint": "Every box ticked for the last week.",
+      "checklist": [
+        "The losing versions were turned off",
+        "New challengers went live against the winner",
+        "One thing changed per challenger",
+        "Cost per engaged lead was compared, not just cost per lead"
+      ] },
+    { "id": "paid-7", "planet": "paid", "band": 4, "title": "Cost per lead, cost per engaged lead, cost per customer", "minutes": 5, "chapter": "Chapter 7, part 2",
+      "says": "Three costs, and they belong on the Machine page where the whole funnel lives: what you spent, how many engaged leads it made, and how many customers. The Machine turns them into the cost of one engaged lead and the cost of one customer.",
+      "checkpoint": "The Machine has your monthly spend, your funnel rates, and your working days.",
+      "needs": ["adSpendCents", "reachPerDay", "daysPerMonth", "replyRate", "bookRate", "showRate", "closeRate"] },
+    { "id": "paid-8", "planet": "paid", "band": 4, "title": "The three-to-one check", "minutes": 5, "chapter": "Chapter 7, part 2",
+      "says": "Lifetime gross profit divided by the cost of a customer. Under three, fix the offer or the funnel before spending more. The thirty-day check sits beside it: gross profit in the first month against twice the cost of a customer.",
+      "checkpoint": "The Machine has the price, the margin, and how long a customer stays.",
+      "needs": ["firstPurchaseCents", "monthlyCents", "monthsKept", "marginRate"] },
+    { "id": "paid-9", "planet": "paid", "band": 5, "title": "More, better, new", "minutes": 20, "chapter": "Chapter 7, part 2",
+      "says": "More: raise the budget while the three-to-one and thirty-day checks hold, and stop the moment they do not. Better: better hooks, tighter call-outs, a stronger magnet. New: a second platform, once the first is boring.",
+      "checkpoint": "Every box ticked.",
+      "checklist": [
+        "The budget only rises when both money checks pass",
+        "There is a rule for when it falls back",
+        "The best hook of the quarter is known and reused",
+        "A second platform is being tested with its own small budget"
+      ] },
+
+    { "id": "referrals-1", "planet": "referrals", "band": 1, "title": "Why referrals beat everything", "minutes": 5, "chapter": "Chapter 8",
+      "says": "A referred customer costs nothing to get, buys more, and stays longer. A business grows on its own only when the customers coming in from referrals outnumber the customers leaving. Referrals come from goodwill, and goodwill is the gap between what you promised and what they got.",
+      "checkpoint": "Read, and confirmed.", "confirm": "Got it" },
+    { "id": "referrals-2", "planet": "referrals", "band": 2, "title": "Make it worth referring", "minutes": 20, "chapter": "Chapter 8",
+      "says": "Before asking, make the product more referable. The book lists the ways: sell to better-fit customers, set better expectations, get more of them to a result, get them there faster, and keep them longer. Pick the one you will do this quarter.",
+      "checkpoint": "One picked and the change written.",
+      "fields": [
+        { "key": "lever", "label": "This quarter", "type": "choice", "options": [["fit", "Sell to better-fit customers"], ["expect", "Set better expectations"], ["more", "Get more customers to a result"], ["faster", "Get them there faster"], ["longer", "Keep them longer"]] },
+        { "key": "change", "label": "The change, in one line", "type": "text", "example": "Every new student plays a full song in lesson one, so the first week has a win." }
+      ] },
+    { "id": "referrals-3", "planet": "referrals", "band": 2, "title": "How you will ask", "minutes": 20, "chapter": "Chapter 8",
+      "says": "Six ways to ask, from the book: a reward for the referrer, a reward for both, asking right after a win, bonuses that unlock when they refer, referral events, and a standing program. Choose the ones you will run and write the offer.",
+      "checkpoint": "At least one way chosen and the offer written.",
+      "fields": [
+        { "key": "ways", "label": "The ways you will use", "type": "multi", "options": [["one", "A reward for the referrer"], ["two", "A reward for both"], ["moment", "Ask right after a win"], ["unlock", "Bonuses that unlock"], ["event", "A referral event"], ["program", "A standing program"]] },
+        { "key": "offer", "label": "The referral offer, word for word", "type": "long", "example": "Bring a friend to their first lesson and you both get the next one free." }
+      ] },
+    { "id": "referrals-4", "planet": "referrals", "band": 3, "title": "Ask every time", "minutes": 30, "chapter": "Chapter 8",
+      "says": "The ask lives at two moments: when they buy, and when they win. Make both automatic, track who sent whom, and thank the referrer within the day.",
+      "checkpoint": "Every box ticked.",
+      "checklist": [
+        "Every new customer hears the referral offer at signup",
+        "Every first win is followed by the ask",
+        "Who referred whom is written down",
+        "Every referrer is thanked the same day",
+        "The referral offer is somewhere customers can find it without asking"
+      ] },
+    { "id": "referrals-5", "planet": "referrals", "band": 4, "title": "Referrals in, customers out", "minutes": 5, "chapter": "Chapter 8",
+      "says": "Two rates a month, and the Machine draws what they do over a year: the share of customers who brought a new one, and the share who left. When the first is bigger than the second, the business grows without ads.",
+      "checkpoint": "The Machine has your customer count, your referral rate and your churn.",
+      "needs": ["customersNow", "referralRate", "churnRate"] },
+    { "id": "referrals-6", "planet": "referrals", "band": 5, "title": "More, better, new", "minutes": 20, "chapter": "Chapter 8",
+      "says": "More: ask at more moments. Better: a bigger reward for the referrer whose people stay. New: the customers who refer most are your first affiliates.",
+      "checkpoint": "Every box ticked.",
+      "checklist": [
+        "The referral rate is higher than it was last quarter",
+        "The best referrers are named",
+        "The best referrers were offered the affiliate deal"
+      ] },
+
+    { "id": "employees-1", "planet": "employees", "band": 1, "title": "Someone else does the core four", "minutes": 5, "chapter": "Chapter 9",
+      "says": "An employee who does one of the core four for you is a lead getter. Training is three steps: document what you do, demonstrate it while they watch, then duplicate: they do it while you watch, until their numbers match yours.",
+      "checkpoint": "Read, and confirmed.", "confirm": "Got it" },
+    { "id": "employees-2", "planet": "employees", "band": 2, "title": "Document one job", "minutes": 45, "chapter": "Chapter 9, document",
+      "says": "Pick the core four action you do every day and write it as a checklist a stranger could follow. The daily hundred on that planet is the checklist; add the words you say and the numbers you expect.",
+      "checkpoint": "A job picked and its checklist written.",
+      "fields": [
+        { "key": "job", "label": "The job to hand off first", "type": "choice", "options": [["warm", "Warm outreach"], ["content", "Content"], ["cold", "Cold outreach"], ["paid", "Paid ads"]] },
+        { "key": "doc", "label": "The checklist, step by step", "type": "long", "example": "1. Open the list. 2. Send 100 messages using the template, first line personal. 3. ..." }
+      ] },
+    { "id": "employees-3", "planet": "employees", "band": 3, "title": "Demonstrate, then duplicate", "minutes": 120, "chapter": "Chapter 9",
+      "says": "They watch you do a full day. Then you watch them do a full day. Then they do it alone and you check the numbers. Pay for outcomes you can count.",
+      "checkpoint": "Every box ticked.",
+      "checklist": [
+        "They watched a whole day of the job, with the checklist in hand",
+        "You watched them do a whole day",
+        "They did a week alone and the numbers were checked daily",
+        "Their pay is tied to a number they control"
+      ] },
+    { "id": "employees-4", "planet": "employees", "band": 4, "title": "Their numbers against yours", "minutes": 5, "chapter": "Chapter 9",
+      "says": "One comparison a week: their daily actions and results beside yours from the same job. Train until the gap closes.",
+      "checkpoint": "Both entered.",
+      "fields": [
+        { "key": "theirs", "label": "Their actions a day", "type": "number", "unit": "count", "example": 80 },
+        { "key": "yours", "label": "Your actions a day, same job", "type": "number", "unit": "count", "example": 100 }
+      ],
+      "reading": { "kind": "share", "of": "theirs", "over": "yours", "label": "Of your pace" } },
+    { "id": "employees-5", "planet": "employees", "band": 5, "title": "More, better, new", "minutes": 20, "chapter": "Chapter 9",
+      "says": "More: a second person on the same job. Better: the best of them trains the next. New: a person on the next planet, and eventually someone who runs the people.",
+      "checkpoint": "Every box ticked.",
+      "checklist": [
+        "Two people run the first job",
+        "The best of them trains new hires from the checklist",
+        "A second planet has its own person",
+        "Someone other than you checks the daily numbers"
+      ] },
+
+    { "id": "agencies-1", "planet": "agencies", "band": 1, "title": "Rent the skill, then own it", "minutes": 5, "chapter": "Chapter 10",
+      "says": "An agency is a way to learn a channel from people who already know it. The book's play: hire one that is good, say up front you plan to bring the work in-house, have your person sit in on everything, then hire a cheaper one to sustain while your person takes over.",
+      "checkpoint": "Read, and confirmed.", "confirm": "Got it" },
+    { "id": "agencies-2", "planet": "agencies", "band": 2, "title": "The interview", "minutes": 30, "chapter": "Chapter 10",
+      "says": "Ask every agency the same questions and write the answers down. The channel is theirs to run; the learning is yours to keep.",
+      "checkpoint": "Every question asked of at least two agencies.",
+      "checklist": [
+        "Who exactly will run my account, and how many others do they run",
+        "What does the first ninety days look like, week by week",
+        "Can my person sit in on every call and see every setting",
+        "Show me results for a business like mine, with the numbers",
+        "I told them I intend to bring this in-house and asked how they will help"
+      ],
+      "fields": [ { "key": "pick", "label": "The agency you chose, and why", "type": "text", "example": "Northside, because their person will train mine on the calls" } ] },
+    { "id": "agencies-3", "planet": "agencies", "band": 3, "title": "Run the engagement", "minutes": 30, "chapter": "Chapter 10",
+      "says": "Fixed term, weekly calls with your person in the room, every account in your name, and the numbers in your hands every month. When your person can do it, the expensive agency's job is done.",
+      "checkpoint": "Every box ticked.",
+      "checklist": [
+        "The contract has an end date",
+        "The ad accounts and the pages belong to you, not the agency",
+        "Your person is on every weekly call",
+        "You get spend, leads, engaged leads and customers every month",
+        "Your person has a date to take over"
+      ] },
+    { "id": "agencies-4", "planet": "agencies", "band": 4, "title": "What the agency costs per lead", "minutes": 5, "chapter": "Chapter 10",
+      "says": "The fee plus the spend, over the engaged leads it made. Compare it with what your own planets cost per engaged lead; that is the number that says when to bring it home.",
+      "checkpoint": "All three entered for last month.",
+      "fields": [
+        { "key": "fee", "label": "Agency fee last month", "type": "number", "unit": "dollars", "example": 3000 },
+        { "key": "spend", "label": "Ad spend last month", "type": "number", "unit": "dollars", "example": 3000 },
+        { "key": "engaged", "label": "Engaged leads it produced", "type": "number", "unit": "count", "example": 120 }
+      ],
+      "reading": { "kind": "costPer", "keys": ["fee", "spend"], "over": "engaged", "label": "Cost per engaged lead" } },
+    { "id": "agencies-5", "planet": "agencies", "band": 5, "title": "Bring it home", "minutes": 20, "chapter": "Chapter 10",
+      "says": "Your person runs it. A cheaper agency, or none, sustains it. The learning stays.",
+      "checkpoint": "Every box ticked.",
+      "checklist": [
+        "Your person runs the channel day to day",
+        "The expensive agency is done, or on a smaller retainer",
+        "Cost per engaged lead held or fell after the handover"
+      ] },
+
+    { "id": "affiliates-1", "planet": "affiliates", "band": 1, "title": "Other businesses that send you customers", "minutes": 5, "chapter": "Chapter 11",
+      "says": "An affiliate already sells to the people you want. Recruiting them is a core four campaign of its own: find them, reach out, make them an offer, get them started, and pay them. One good affiliate can outdo a planet.",
+      "checkpoint": "Read, and confirmed.", "confirm": "Got it" },
+    { "id": "affiliates-2", "planet": "affiliates", "band": 2, "title": "Who your affiliates are", "minutes": 30, "chapter": "Chapter 11",
+      "says": "Describe the business that already serves your customer and does not compete with you. Then list twenty of them by name.",
+      "checkpoint": "The profile written and twenty names counted.",
+      "fields": [
+        { "key": "profile", "label": "The ideal affiliate, in one line", "type": "text", "example": "Piano shops and tuners who meet adults with a piano gathering dust" },
+        { "key": "count", "label": "Named candidates on your list", "type": "number", "unit": "count", "example": 20 }
+      ] },
+    { "id": "affiliates-3", "planet": "affiliates", "band": 2, "title": "The affiliate offer", "minutes": 30, "chapter": "Chapter 11",
+      "says": "What do they get: a share of each sale, a fee per lead, or your product to give their customers. What gets them started: the book favours having them use or buy the product first, and launching together. Write it.",
+      "checkpoint": "Both chosen and the offer written.",
+      "fields": [
+        { "key": "pay", "label": "How they are paid", "type": "choice", "options": [["share", "A share of each sale"], ["lead", "A fee per lead"], ["product", "Product for their customers"], ["mix", "A mix"]] },
+        { "key": "activate", "label": "What gets them started", "type": "choice", "options": [["buy", "They use or buy it first"], ["launch", "A launch we run together"], ["both", "Both"]] },
+        { "key": "offer", "label": "The offer, word for word", "type": "long", "example": "Send us an adult who restarts and we pay you a third of their first month, every time." }
+      ] },
+    { "id": "affiliates-4", "planet": "affiliates", "band": 3, "title": "Recruit and launch", "minutes": 120, "chapter": "Chapter 11",
+      "says": "Reach the twenty the way you reach any lead: warm if you know them, cold if you do not. Get the first ones started with a launch you run together, and give them everything they need to sell without thinking.",
+      "checkpoint": "Every box ticked.",
+      "checklist": [
+        "All twenty were contacted, with the offer",
+        "The first affiliate used or bought the product",
+        "A launch was run together and the results shared",
+        "Every affiliate has ready-made messages, links and the magnet",
+        "Payouts go out on a fixed day"
+      ] },
+    { "id": "affiliates-5", "planet": "affiliates", "band": 4, "title": "Your affiliate numbers", "minutes": 5, "chapter": "Chapter 11",
+      "says": "Two numbers a month: affiliates who sent at least one lead, and the engaged leads they sent. The first says whether they are activated; the second says whether it is worth more of your time.",
+      "checkpoint": "Both entered for last month.",
+      "fields": [
+        { "key": "active", "label": "Affiliates who sent a lead", "type": "number", "unit": "count", "example": 4 },
+        { "key": "engaged", "label": "Engaged leads from affiliates", "type": "number", "unit": "count", "example": 22 }
+      ] },
+    { "id": "affiliates-6", "planet": "affiliates", "band": 5, "title": "More, better, new", "minutes": 20, "chapter": "Chapter 11",
+      "says": "More: recruit every month. Better: a leaderboard, tiers and prizes for the ones who send the most. New: a person whose whole job is affiliates.",
+      "checkpoint": "Every box ticked.",
+      "checklist": [
+        "Recruiting runs monthly, from a list that is refilled",
+        "Affiliates can see how they rank",
+        "The top tier earns more",
+        "Someone owns the affiliate program"
+      ] }
+  ],
+  "words": [
+    ["Lead", "Anyone you could contact."],
+    ["Engaged lead", "Someone who showed interest and gave you a way to reach them. The number the whole book is about."],
+    ["Lead magnet", "A free thing that solves one narrow problem for the person you want, in exchange for a way to reach them."],
+    ["Core four", "The only four ways to get leads: warm outreach, free content, cold outreach, paid ads. Two are to people who know you and two are to strangers; two are one to one and two are one to many."],
+    ["Lead getter", "Someone who does the core four for you: a customer who refers, an employee, an agency, an affiliate."],
+    ["Rule of 100", "A hundred primary actions a day on your chosen planet: messages, minutes of content, reach-outs, or dollars."],
+    ["Open to goal", "You do not stop for the day when the hundred is done; you stop when the goal is hit, or the hundred, whichever is later."],
+    ["Acknowledge, compliment, ask", "The shape of a warm message: something true about them, something you like, a question they want to answer."],
+    ["Hook, retain, reward", "The three jobs of a piece of content."],
+    ["Big fast value", "What a cold message gives before it asks anything."],
+    ["More, better, new", "The three ways to scale any planet: do more of it, do it better, add a new place to do it."],
+    ["Cost per engaged lead", "What you spent, divided by the engaged leads it made."],
+    ["Cost to get a customer", "What you spent on getting leads, divided by the customers it made."],
+    ["Lifetime gross profit", "Everything a customer pays you over their life, minus what it costs you to deliver it."],
+    ["Three to one", "The book's rule: lifetime gross profit should be at least three times the cost to get a customer."],
+    ["Thirty-day check", "Gross profit in a customer's first thirty days should cover the cost to get them twice, so the customers pay for the ads."],
+    ["Churn", "The share of customers who leave in a month."],
+    ["Referral rate", "The share of customers who bring a new customer in a month."],
+    ["Document, demonstrate, duplicate", "How you train someone to do a job: write it down, show them, watch them."]
+  ]
+}

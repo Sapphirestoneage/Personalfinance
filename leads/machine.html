@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<meta name="robots" content="noindex"/>
+<title>The Leads Ladder: the Machine</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="leads.css"/>
+<!--
+  THE MACHINE (LD-007). The book's numbers in one place: the funnel from
+  reach to customers, what a lead and a customer cost, what a customer is
+  worth, the two money checks, the levers, referrals against churn, and
+  the rule-of-100 log.
+
+  1. READS   leads.state.v1 (kpis, log, start.goal) through shared/store.js.
+  2. WRITES  the kpis (this page owns them; a Measure level on the sky
+             links here rather than holding a copy) and the log.
+  3. SHOWS   every reading engines/machine.js returns, each as a picture
+             with a table twin and a sentence of meaning.
+
+  LIVE-FORM: built once. The inputs and the log form are built once; a
+  keystroke saves and repaints the readouts on the right, never the form.
+-->
+</head>
+<body class="slaf">
+<main class="lz" id="main">
+  <div id="head"></div>
+  <div class="lz-machine">
+    <div class="lz-inputs" id="inputs"></div>
+    <div class="lz-stack">
+      <section class="lz-card" aria-label="The funnel">
+        <span class="lz-eyebrow">A month at these numbers</span>
+        <div class="lz-figures" id="figures"></div>
+        <div id="ch-funnel"></div>
+        <p class="lz-note" id="funnel-words" style="margin-top:var(--space-2)"></p>
+      </section>
+      <section class="lz-card" aria-label="The two money checks">
+        <span class="lz-eyebrow">The book's two checks</span>
+        <div class="lz-grid lz-grid--2">
+          <div id="ch-ratio"></div>
+          <div id="ch-payback"></div>
+        </div>
+        <p class="lz-verdict" id="checks-words" style="margin-top:var(--space-3)"></p>
+      </section>
+      <section class="lz-card" aria-label="The levers">
+        <span class="lz-eyebrow">The levers</span>
+        <div id="ch-levers"></div>
+        <p class="lz-note" id="levers-words" style="margin-top:var(--space-2)"></p>
+      </section>
+      <section class="lz-card" aria-label="Referrals against churn">
+        <span class="lz-eyebrow">A year of customers</span>
+        <div id="ch-growth"></div>
+        <p class="lz-note" id="growth-words" style="margin-top:var(--space-2)"></p>
+      </section>
+      <section class="lz-card" id="log" aria-label="The rule of 100">
+        <span class="lz-eyebrow">The rule of 100</span>
+        <div class="lz-figures" id="log-figures"></div>
+        <div id="ch-log"></div>
+        <div class="lz-fields" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,9rem),1fr))">
+          <label class="lz-field"><span>Day</span><input type="date" id="log-date"/></label>
+          <label class="lz-field"><span>Planet</span><select id="log-planet"><option value="warm">Warm outreach</option><option value="content">Free content (minutes)</option><option value="cold">Cold outreach</option><option value="paid">Paid ads (dollars)</option></select></label>
+          <label class="lz-field"><span>Count</span><input type="number" id="log-count" inputmode="numeric" min="0" step="1" placeholder="100"/></label>
+          <div class="lz-field"><span>&nbsp;</span><button type="button" class="slaf-btn slaf-btn--primary" id="btn-log">Log it</button></div>
+        </div>
+        <p class="lz-say" id="log-say" role="status"></p>
+        <ul class="lz-log-list" id="log-list"></ul>
+      </section>
+      <section class="lz-card" aria-label="The goal">
+        <span class="lz-eyebrow">Open to goal</span>
+        <div id="ch-goal"></div>
+        <p class="lz-note" id="goal-words" style="margin-top:var(--space-2)"></p>
+      </section>
+    </div>
+  </div>
+  <footer class="lz-foot no-print">
+    <div class="lz-actions">
+      <button type="button" class="slaf-btn" id="btn-demo">Try with example numbers</button>
+      <a class="slaf-btn slaf-btn--quiet" href="index.html">Back to the sky</a>
+    </div>
+    <p class="lz-faint">Rates are stored as fractions and money as cents; what you see is formatted at display. A blank box gives "not yet", never a zero.</p>
+  </footer>
+</main>
+
+<script src="shared/money.js"></script>
+<script src="shared/charts.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="engines/ladder.js"></script>
+<script src="engines/machine.js"></script>
+<script src="common.js"></script>
+<script src="machine.js"></script>
+</body>
+</html>

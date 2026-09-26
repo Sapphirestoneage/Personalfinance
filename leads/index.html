@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<meta name="robots" content="noindex"/>
+<title>The Leads Ladder: the Sky</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="leads.css"/>
+<!--
+  THE SKY (LD-005). The map of $100M Leads as a solar system: the lead
+  magnet is the sun, the core four and the four lead getters are the eight
+  planets, the five bands (Learn, Sketch, Do, Measure, Scale) are the rings.
+  A planet rides the ring of the band it is working on.
+
+  1. READS   leads.state.v1 through shared/store.js and data/book.json.
+             Nothing of SPARKS, the coach or D&D.
+  2. WRITES  Start Here's answers, a level's answers, ticks and flags.
+  3. SHOWS   the sky (and its list view), the strip, the next three, the
+             planet view with its band ladder, the come-back list, the book.
+
+  LIVE-FORM: built once. Start Here and a planet's ladder are built once
+  when opened; a keystroke saves and repaints the marks, the sky and the
+  strip, never the form that holds the caret.
+-->
+</head>
+<body class="slaf">
+<main class="lz" id="main">
+  <div id="head"></div>
+
+  <section id="sky-screen">
+    <details class="lz-fold" id="start" style="margin-bottom:var(--space-4)">
+      <summary>Start here <span class="lz-note" id="start-sum"></span></summary>
+      <div class="lz-fold-body">
+        <p class="lz-note" id="start-intro"></p>
+        <div class="lz-fields" id="start-fields"></div>
+        <p class="lz-checkpoint" id="start-rule"></p>
+        <p class="lz-say" id="start-say" role="status"></p>
+      </div>
+    </details>
+
+    <div class="lz-strip" id="strip"></div>
+
+    <div class="lz-sky-wrap">
+      <div>
+        <div class="lz-sky-tools">
+          <p class="lz-sky-say" id="sky-say" style="margin:0"></p>
+          <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-list" aria-pressed="false">List view</button>
+        </div>
+        <div class="lz-sky" id="sky" aria-label="The sky: nine bodies on five rings"></div>
+        <div class="lz-list" id="sky-list" hidden></div>
+        <p class="lz-faint" style="margin-top:var(--space-2)">A planet rides the ring of the band it is working on. A gold ring means every planet that applies has finished that band. The green field is the part of the book where a draft already gets you leads. Tap a planet or the sun to open it.</p>
+      </div>
+      <div class="lz-stack">
+        <section class="lz-card" aria-label="The next three">
+          <span class="lz-eyebrow">Next three</span>
+          <ol class="lz-next" id="next"></ol>
+          <p class="lz-faint" id="next-why" style="margin-top:var(--space-2)"></p>
+        </section>
+        <section class="lz-card" id="later-card" hidden aria-label="Come back to">
+          <span class="lz-eyebrow">Come back to</span>
+          <ul class="lz-later" id="later"></ul>
+        </section>
+      </div>
+    </div>
+
+    <section id="book" class="lz-card" style="margin-top:var(--space-5)" aria-label="The book">
+      <span class="lz-eyebrow">The book</span>
+      <h2 id="book-title"></h2>
+      <div class="lz-grid--2 lz-grid">
+        <div>
+          <h3>Where each chapter lives</h3>
+          <ul class="lz-book-map" id="book-map"></ul>
+        </div>
+        <div>
+          <h3>The core four</h3>
+          <p class="lz-note">Four ways to let people know you exist, and only four. Two speak to people who already know you, two to strangers. Two are one to one, two are one to many.</p>
+          <div class="lz-matrix" id="matrix"></div>
+        </div>
+      </div>
+      <h3 style="margin-top:var(--space-4)">The words</h3>
+      <dl class="lz-words" id="words"></dl>
+      <p class="lz-faint" id="book-source" style="margin-top:var(--space-3)"></p>
+    </section>
+  </section>
+
+  <section id="planet-screen" hidden>
+    <div class="lz-planet-head">
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-back">Back to the sky</button>
+      <span class="lz-dot" id="planet-dot"></span>
+      <h2 id="planet-name"></h2>
+      <span class="lz-chip" id="planet-chip"></span>
+    </div>
+    <p class="lz-note" id="planet-blurb"></p>
+    <p class="lz-say" id="planet-dim" role="status"></p>
+    <div class="lz-ladder-wrap">
+      <div id="ladder"></div>
+      <aside class="lz-side">
+        <div id="planet-rings"></div>
+        <section class="lz-card" aria-label="This planet">
+          <span class="lz-eyebrow">In the book</span>
+          <p class="lz-note" id="planet-chapter"></p>
+          <span class="lz-eyebrow" style="margin-top:var(--space-3)">The bands</span>
+          <ul class="lz-book-map" id="planet-bands"></ul>
+        </section>
+      </aside>
+    </div>
+  </section>
+
+  <footer class="lz-foot no-print">
+    <div class="lz-actions">
+      <button type="button" class="slaf-btn" id="btn-demo">Try with example numbers</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-reset">Start over</button>
+      <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-save">Save a copy</button>
+      <label class="slaf-btn slaf-btn--quiet" style="cursor:pointer">Load a copy<input type="file" id="load-file" accept=".json,application/json" style="display:none"/></label>
+    </div>
+    <p class="lz-say" id="foot-say" role="status"></p>
+    <p class="lz-faint">Everything stays in this browser. Nothing is sent anywhere. The example numbers are invented.</p>
+  </footer>
+</main>
+
+<script src="shared/money.js"></script>
+<script src="shared/charts.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="engines/ladder.js"></script>
+<script src="engines/machine.js"></script>
+<script src="common.js"></script>
+<script src="sky.js"></script>
+</body>
+</html>

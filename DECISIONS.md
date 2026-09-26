@@ -17349,6 +17349,30 @@ SPARKS device backup neither carries nor removes `coach.` keys.
 
 **Verified.** `node test/run.js`; `node coach/test/run.js`.
 
+## D-340 — The Leads Ladder is its own app in leads/, a lane beside SPARKS like coach/
+
+**Why.** The owner asked for a tool that walks through $100M Leads (Alex
+Hormozi) with the planets-and-levels mechanic, with pictures, every exercise
+and checklists. The freeze allows a separate app on D-339's pattern, not a room.
+
+**Decision.** `leads/` is a separate app with two screens (the Sky, the
+Machine), the book restated as data (`leads/data/book.json`: the lead magnet
+as the sun, the core four and the four lead getters as planets, five bands as
+rings, 67 levels), its own storage (`leads.state.v1`, never `slaf.`),
+byte-identical copies of the coach's charts and SPARKS' money module
+(`leads/tools/vendor.js`), its own tests (`node leads/test/run.js`, in CI)
+and its own log (`leads/DECISIONS.md`, `LD-###`). Nothing in `rooms/`,
+`shared/`, `engines/` or `data/` changes for it.
+
+**Replaces or removes.** Nothing in SPARKS; it is not a room and reads no
+household. The freeze holds.
+
+**Stored shape.** No change to `slaf.household.v2` or any SPARKS key. The
+SPARKS device backup neither carries nor removes `leads.` keys.
+
+**Verified.** `node test/run.js`; `node leads/test/run.js`; the headless walk
+of both pages at 1280 and 390 wide with no console errors.
+
 ---
 
 # The Dungeons & Dividends entries
