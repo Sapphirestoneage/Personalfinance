@@ -44,6 +44,8 @@ carries it. Coach Mode has its own audit at `coach/AUDIT.md`; this one is the
 | P5 | The Scorecard's measuring stick was seven paragraphs and 28 buttons, about 4,000px, and said "no chart" by decision. | Fixed, D-344. Seven bullet bars on one axis, the band a stripe behind each, the figure and the verdict in words beside it. 780px. |
 | P6 | Bar labels were cut to "Retirement s..." on a phone. | Fixed, D-344. The label takes the first line and the bar takes the rest, in every bars chart in the app. |
 | P7 | A comparison chart drew a legend that repeated the axis labels. | Fixed, D-347. One series carries its name on the axis; the legend goes. |
+| P8 | Four live rooms had figures and no drawing at all: the Statement, The Mix, The Bridge and the one-pager. | Fixed for the first two, D-348: net worth as what you own by bucket and what you owe, the liquidity ladder by distance from your hand, and The Mix's target and dollars. In the Statement they are folded, because that room promises four sections inside two phone screens (D-306) and its own gate caught the picture breaking it. |
+| P9 | A ring of one slice was drawn as if it were a chart. | Fixed, D-348. A share of a whole needs two parts before it is a picture; until then the room says what would make it one. |
 
 ## Flow: what happened when a finger actually landed
 

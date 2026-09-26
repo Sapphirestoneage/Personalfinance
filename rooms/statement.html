@@ -120,6 +120,10 @@
   .hc-line { font-size: var(--text-xs); color: var(--color-text-muted); margin: var(--space-2) 0 0; line-height: var(--leading-normal); }
   .hc-line a { color: var(--color-accent-hover); margin-right: var(--space-2); }
   .hc-line:empty { display: none; }
+  .pic > summary { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; color: var(--color-accent-hover); font-size: var(--text-xs); cursor: pointer; list-style: none; }
+  .pic > summary::-webkit-details-marker { display: none; }
+  .pic > summary::before { content: '\25A4'; font-size: 12px; }
+  .pic[open] > summary { color: var(--color-text-muted); }
   .parts { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-2) 0 0; }
   .ladder { list-style: none; margin: var(--space-3) 0 0; padding: 0; }
   .ladder li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 var(--space-3); padding: 6px 0; border-top: 1px solid var(--color-border); font-size: var(--text-sm); align-items: baseline; }
@@ -179,15 +183,16 @@
     <p class="sure" id="nw-sure"></p>
     <p class="why" id="nw-direction"></p>
     <p class="parts" id="nw-parts"></p>
-    <!-- What it is made of, as a picture (D-347). The same buckets the line
-         above names; the reader chooses the shape and the colours. -->
-    <div id="nw-chart"></div>
+    <!-- What it is made of, as a picture (D-347), folded because this room
+         promises four sections inside two phone screens (D-306) and a picture
+         that is always open costs a third of one. One tap, and it is there. -->
+    <details class="pic"><summary>See it as a picture</summary><div id="nw-chart"></div></details>
   </section>
 
   <!-- 3. THE LIQUIDITY LADDER -->
   <section class="slaf-card" id="ladder" style="margin-top:var(--space-4)">
     <span class="slaf-eyebrow">How fast you could reach it</span>
-    <div id="ladder-chart"></div>
+    <details class="pic"><summary>See it as a picture</summary><div id="ladder-chart"></div></details>
     <ul class="ladder" id="ladder-list"></ul>
     <ul class="lookup" id="ladder-lookup"></ul>
     <p class="why" id="ladder-why"></p>
