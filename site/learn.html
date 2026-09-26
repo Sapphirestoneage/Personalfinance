@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>How FIRE works · SPARKS</title>
+<meta name="description" content="The whole idea of financial independence in one page: the multiplication, the savings rate, the order money should go in, the six sizes of the number, and how the money comes back down."/>
+<meta property="og:title" content="How FIRE works · SPARKS"/>
+<meta property="og:description" content="The multiplication, the savings rate, the order money goes in, the six sizes, the back half. One page, plain words."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<link rel="stylesheet" href="site.css"/>
+<!--
+  LEARN, the ideas behind the rooms in plain words. site/README.md, SD-003.
+
+  1. READS   nothing of the household.
+  2. WRITES  nothing.
+  3. CALLS   engines/fire.js and engines/projection.js for the savings-rate
+             table (#rate-table): each row is a household built in memory
+             that spends (1 - rate) of its pay, run through the one FIRE
+             formula and the one years-to-target loop. The ladder (#order)
+             and the six sizes (#sizes) are drawn from data/foo_rules.json
+             and data/fire_variants.json, never retyped here.
+  4. EMPTY   Nothing to be empty; the tables are reference data.
+  5. CONFIG  the two files above, the app's default 5% real return.
+
+  LIVE-FORM: built once. No inputs on this page.
+-->
+</head>
+<body class="slaf site">
+<header class="site-head" id="site-head"></header>
+<main id="main" class="site-wrap">
+  <section class="site-hero" aria-labelledby="h-learn" style="padding-bottom: var(--space-4)">
+    <span class="slaf-eyebrow">Learn</span>
+    <h1 id="h-learn">How FIRE works, on one page.</h1>
+    <p class="lede">Financial independence is one multiplication and one habit. The multiplication sizes the pot. The habit, a savings rate held for years, fills it. Everything else on this site is detail around those two.</p>
+  </section>
+
+  <section class="site-section" id="idea" aria-labelledby="h-idea">
+    <span class="slaf-eyebrow">1 · The multiplication</span>
+    <h2 id="h-idea">Twenty-five times what you spend</h2>
+    <p>A pot of invested money can pay out a small slice of itself every year, more or less forever, because the rest keeps growing. The slice most people plan around is 4% a year. Turn that round and the pot has to be 25 times a year of spending. Spend $40,000 a year and the number is a million. Spend $30,000 and it is $750,000.</p>
+    <p>Three things follow, and they are the whole game.</p>
+    <ul class="site-rules">
+      <li><b>Spending sets the number, not income.</b> A raise you spend moves the target up. A raise you keep moves you toward it twice: more saved, and a smaller number to reach.</li>
+      <li><b>The 4% is a choice, not a law.</b> A cautious plan draws 3.5% and needs 29 times spending; a bold one draws 4.5% and needs 22. <a href="number.html">Your number</a> shows all four side by side.</li>
+      <li><b>Everything is in today's dollars.</b> The app uses a return <em>above</em> inflation, 5% by default, so the number you see is the number you would recognise.</li>
+    </ul>
+    <div class="site-callout"><p><b>In the app:</b> <a href="../rooms/fire.html">The Number</a> keeps this multiplication, in six sizes, with your own figures in it. Its assumptions are on the page and you can move them.</p></div>
+  </section>
+
+  <section class="site-section" id="rate" aria-labelledby="h-rate">
+    <span class="slaf-eyebrow">2 · The habit</span>
+    <h2 id="h-rate">The savings rate is the whole timeline</h2>
+    <p>How long it takes does not depend on how much you earn. It depends on what share of your take-home pay you keep. Someone who keeps half their pay reaches 25 times their spending in about the same number of years whether they earn $40,000 or $400,000. The table is that arithmetic, run from nothing, at the app's default return above inflation.</p>
+    <div id="rate-table"><p class="site-empty">Working it out.</p></div>
+    <p class="site-count">Starting from zero, the return set above inflation, the number at 25 times spending. Money already invested shortens every row. The years are the same engine that draws your date in <a href="../rooms/financial-snapshot.html#view-savings-rate">the Scorecard</a>.</p>
+  </section>
+
+  <section class="site-section" id="order" aria-labelledby="h-order">
+    <span class="slaf-eyebrow">3 · The order</span>
+    <h2 id="h-order">Where the next dollar should go</h2>
+    <p>Not every dollar has the same job. A dollar that clears a 24% credit card beats a dollar in the market; a dollar that captures an employer match beats both. The ladder below, the Financial Order of Operations popularised by The Money Guy Show, puts the jobs in order. You stand on the first step you have not finished.</p>
+    <ol class="site-steps" id="ladder"><li class="is-zero"><b>Loading the ladder.</b></li></ol>
+    <div class="site-callout"><p><b>In the app:</b> <a href="../rooms/foo-ladder.html">What The Next Dollar Does</a> reads your household and says which step you are on and what it takes to climb. The thresholds live in one data file, not in the code.</p></div>
+  </section>
+
+  <section class="site-section" id="sizes" aria-labelledby="h-sizes">
+    <span class="slaf-eyebrow">4 · The sizes</span>
+    <h2 id="h-sizes">Six versions of one number</h2>
+    <p>The community has names for the number at different sizes of life. They are not six calculations. They are the same multiplication with a different month of spending in it, plus two twists: Coast discounts the full number back to today, and Barista lets part-time pay cover part of the bill.</p>
+    <ol class="site-rungs" id="variants"><li><span class="rung-name">Loading.</span></li></ol>
+  </section>
+
+  <section class="site-section" id="words" aria-labelledby="h-words">
+    <span class="slaf-eyebrow">5 · The words the app uses</span>
+    <h2 id="h-words">Five families, three boxes, seven bands</h2>
+    <dl class="site-defs">
+      <dt>DAITE</dt><dd>Debt, assets, income, taxes, expenses. Every number a household holds belongs to one of the five, and the rooms are arranged by them. Type a figure in the room that owns it and every other room reads it.</dd>
+      <dt>FAT</dt><dd>Food, accommodation, transportation. The three boxes whose total is the lean month: what you would spend if everything optional stopped. Lean FIRE is 25 times this.</dd>
+      <dt>DRAFTT</dt><dd>Seven shares of your income measured against seven bands: the scorecard's measuring stick. Each ratio is judged on its own axis; nothing sums them into a score you could game.</dd>
+      <dt>The Ledger</dt><dd>Every number the app can hold, as one row each: some you know, some you look up, some are computed. Facts are entered there, once, and read everywhere.</dd>
+      <dt>Triple D</dt><dd>Drawdown, duration, depth. The shaded band on the long chart: how far the money could fall, for how long, and how deep, on the way down.</dd>
+    </dl>
+    <p><a href="glossary.html">Every term in the app, in one plain sentence each.</a></p>
+  </section>
+
+  <section class="site-section" id="back" aria-labelledby="h-back">
+    <span class="slaf-eyebrow">6 · The back half</span>
+    <h2 id="h-back">You cannot size the mountain until you know how you come down it</h2>
+    <p>The number assumes a way down: a withdrawal rate, an order to draw accounts in, a floor of income that does not depend on the market. A plan that stops at "reach the number" is half a plan. The other half is the sequence of bad years you might meet first, the age the money has to last to, the bridge between stopping work and the accounts you cannot touch yet, and what is left behind.</p>
+    <ul class="site-grid">
+      <li><a class="site-card" href="../rooms/decumulation.html"><h3>The Back Half</h3><p>The withdrawal, the draw order, the age the money lasts to.</p></a></li>
+      <li><a class="site-card" href="../rooms/bridge.html"><h3>The Bridge</h3><p>The years between the last paycheque and the first account you may open without penalty.</p></a></li>
+      <li><a class="site-card" href="../rooms/which-account.html"><h3>Which Account</h3><p>Where a dollar should sit, given when you will need it and how it is taxed.</p></a></li>
+      <li><a class="site-card" href="../rooms/left-behind.html"><h3>Left Behind</h3><p>What the people you leave get, and the papers that make it so.</p></a></li>
+    </ul>
+  </section>
+
+  <section class="site-section" id="go" aria-labelledby="h-go">
+    <span class="slaf-eyebrow">Now</span>
+    <h2 id="h-go">Put your own numbers in</h2>
+    <div class="site-doors">
+      <a class="slaf-btn slaf-btn--primary" href="number.html">Work out my number</a>
+      <a class="slaf-btn" href="../rooms/ledger.html#round-1">Start with five questions</a>
+      <a class="slaf-btn slaf-btn--quiet" href="tools.html">Every room</a>
+    </div>
+  </section>
+</main>
+<footer class="site-foot" id="site-foot"></footer>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/fire.js"></script>
+<script src="site.js"></script>
+<script>
+(function () {
+  'use strict';
+  Site.head('learn'); Site.foot();
+  var S = window.SLAF, Money = S.Money, Schema = S.Schema, Fire = S.Fire, Projection = S.Projection;
+  var esc = Site.esc;
+  var RATE = Schema.resolveAssumptions(null).expectedReturnRate;   /* the app's default, real */
+  var SWR = Schema.resolveAssumptions(null).swrRate;
+  var PAY = Money.toCents(100000);   /* any pay: it cancels out of the years */
+
+  /* One row of the savings-rate table: a household spending (1 - rate) of
+     its pay, its number from the one formula, the years from the one loop. */
+  function row(rate, T) {
+    var spendMonthly = Math.round(PAY * (1 - rate) / 12);
+    var h = Schema.createHousehold({ people: [Schema.createPerson({ role: 'adult' })], expenses: { wants: { totalCents: spendMonthly } } });
+    var target = Fire.calculateFIRE(h, T, { localOverrides: { expectedReturnRate: RATE, swrRate: SWR } });
+    if (!Money.isOk(target)) return null;
+    var yrs = Projection.yearsToTargetCents({ startCents: 0, targetCents: target.value, annualRate: RATE, annualContributionCents: Math.round(PAY * rate), fractional: true });
+    return { rate: rate, years: Money.isOk(yrs) ? yrs.value : null };
+  }
+  function paintRates(T) {
+    var rates = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8];
+    var html = '<table class="site-table"><thead><tr><th>You keep</th><th class="num">Years to the number</th><th>Which means</th></tr></thead><tbody>';
+    rates.forEach(function (r) {
+      var o = row(r, T);
+      var y = o && o.years !== null ? Math.round(o.years) : null;
+      var say = y === null ? 'longer than a working life' : y > 40 ? 'a full career and then some' : y > 25 ? 'a full career' : y > 15 ? 'a long stretch, but a stretch' : y > 8 ? 'about a decade' : 'a handful of years';
+      html += '<tr><td>' + Math.round(r * 100) + '% of pay</td><td class="num' + (y === null ? ' is-faint' : '') + '">' + (y === null ? 'over 60' : y) + '</td><td>' + esc(say) + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    document.getElementById('rate-table').innerHTML = html;
+  }
+  function paintLadder(T) {
+    var steps = (T.fooRules && T.fooRules.ladder) || [];
+    var host = document.getElementById('ladder');
+    host.innerHTML = steps.map(function (s) {
+      return '<li' + (s.step === 0 ? ' class="is-zero"' : '') + '><b>' + esc(s.label) + '</b></li>';
+    }).join('');
+  }
+  function paintVariants(T) {
+    var list = (T.fireVariants && T.fireVariants.variants) || [];
+    var host = document.getElementById('variants');
+    host.innerHTML = list.map(function (v) {
+      var size = v.mode === 'expenses' ? (Math.round(v.expenseFactor * 100) + '% of your month, times 25') : v.mode === 'coast' ? 'the full number, discounted to today' : 'the full number, less what part-time pay covers';
+      return '<li><span class="rung-name">' + esc(v.label) + '</span><span class="rung-years">' + esc(size) + '</span><p class="rung-say">' + esc(v.blurb) + '</p></li>';
+    }).join('');
+  }
+  S.Reference.load(['fireVariants', 'fooRules'], '../data/').then(function (T) {
+    paintRates(T); paintLadder(T); paintVariants(T);
+  }).catch(function (e) {
+    document.getElementById('rate-table').innerHTML = '<p class="site-empty">The reference tables did not load. Open this page over http, not from a file.</p>';
+    if (window.ErrLog) window.ErrLog.record('load', String(e && e.message), 'site/learn');
+  });
+})();
+</script>
+</body>
+</html>

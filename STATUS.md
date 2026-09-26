@@ -1,6 +1,6 @@
 # STATUS (keep under 40 lines; /wrap rewrites it)
 
-Updated: 2026-09-24
+Updated: 2026-09-26
 
 ## Where it stands
 - **93 → 37 rooms**: the 32 of the merge programme with the Calendar back plus
@@ -28,6 +28,8 @@ Updated: 2026-09-24
   where all the money went and where the discretionary part went.
 - **Main is worked on by another lane**: merge before every push. D-228's reframe has NOT shipped. Freeze holds (D-313).
   Coach Mode is its own lane in `coach/` (D-339, `coach/STATUS.md`).
+- **The community front (D-340)**: `site/` is the public face, six pages, its own
+  tests and log (`site/README.md`, `SD-001` to `SD-006`). Reads the engines live.
 
 ## Next (top item first; one per session)
 1. **Tier 3 readings and the moons.** Tiers 1 and 2 are worked out (53 of the

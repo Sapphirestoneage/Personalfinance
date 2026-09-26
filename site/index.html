@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<title>SPARKS · Financial planning for the FIRE community</title>
+<meta name="description" content="Work out your FIRE number, see the order your money should go in, and plan the whole road to financial independence. Free, private, nothing leaves your browser."/>
+<meta property="og:title" content="SPARKS · Financial planning for the FIRE community"/>
+<meta property="og:description" content="Your FIRE number in six sizes, the order money should go in, and 37 rooms that share one household. No account. Nothing leaves your browser."/>
+<meta property="og:type" content="website"/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<link rel="stylesheet" href="site.css"/>
+<!--
+  THE COMMUNITY FRONT, home. site/README.md, SD-001.
+
+  1. READS   nothing of the household. The three doors lead into the app,
+             the calculator and Coach Mode.
+  2. WRITES  nothing.
+  3. CALLS   no engine. Every figure on this page is a rule of thumb the
+             Learn page derives from the engines; this page only points.
+
+  LIVE-FORM: built once. There are no inputs on this page.
+-->
+</head>
+<body class="slaf site">
+<header class="site-head" id="site-head"></header>
+<main id="main">
+  <section class="site-hero site-wrap" aria-labelledby="h-hero">
+    <span class="slaf-eyebrow">Free · private · no account</span>
+    <h1 id="h-hero">Plan the whole road to financial independence.</h1>
+    <p class="lede">SPARKS is a set of small money rooms that all read one household: your number in six sizes, the order your next dollar should go in, the month, the debt, the back half. Type a figure once and every room already knows it.</p>
+    <div class="site-doors">
+      <a class="slaf-btn slaf-btn--primary" href="number.html">Work out my number</a>
+      <a class="slaf-btn" href="../rooms/ledger.html#round-1">Start with five questions</a>
+      <a class="slaf-btn slaf-btn--quiet" href="learn.html">How FIRE works</a>
+    </div>
+  </section>
+
+  <section class="site-section site-wrap" id="what" aria-labelledby="h-what">
+    <span class="slaf-eyebrow">What it is</span>
+    <h2 id="h-what">One household, thirty-seven rooms</h2>
+    <p class="lede">Most FIRE calculators ask the same five numbers over and over and forget them when you close the tab. Here the numbers live in one place in your browser, each one owned by exactly one room, and every other room reads it.</p>
+    <ul class="site-grid">
+      <li><a class="site-card" href="../rooms/fire.html"><h3>The Number</h3><p>Coast, Lean, FIRE, Chubby, Fat and Barista, as rungs of one ladder, with the rung you are on and the years to the next.</p><span class="site-go">Open the room</span></a></li>
+      <li><a class="site-card" href="../rooms/foo-ladder.html"><h3>What The Next Dollar Does</h3><p>The order money should go in, ten steps, and the step you are standing on right now.</p><span class="site-go">Open the room</span></a></li>
+      <li><a class="site-card" href="../rooms/financial-snapshot.html"><h3>The Scorecard</h3><p>Everything you have entered, read back six ways: the nine numbers, the savings rate, every ratio, where you rank.</p><span class="site-go">Open the room</span></a></li>
+      <li><a class="site-card" href="../rooms/decumulation.html"><h3>The Back Half</h3><p>How the money comes down: the withdrawal, the order accounts are drawn, the age it lasts to.</p><span class="site-go">Open the room</span></a></li>
+      <li><a class="site-card" href="../rooms/debt-payoff.html"><h3>Debt</h3><p>Every balance, the rate, the payoff order, the date it is gone, and what that frees up.</p><span class="site-go">Open the room</span></a></li>
+      <li><a class="site-card" href="tools.html"><h3>All thirty-seven</h3><p>Every room by the question it answers, from the first paycheque to the estate.</p><span class="site-go">See the rooms</span></a></li>
+    </ul>
+  </section>
+
+  <section class="site-section site-wrap" id="how" aria-labelledby="h-how">
+    <span class="slaf-eyebrow">How it goes</span>
+    <h2 id="h-how">Three ways in, one road</h2>
+    <ol class="site-steps">
+      <li><b>Five questions, one answer.</b><p>Age, what comes in, what goes out, what you have saved, what you owe. That is enough for a first FI date, shown as a band rather than a single false-precise year. <a href="../rooms/ledger.html#round-1">The first round</a>.</p></li>
+      <li><b>Every room fills in.</b><p>Each number has one owner. Change your spending in Expenses and the Number, the Scorecard and the Back Half all move. Nothing is asked twice.</p></li>
+      <li><b>The next thing money should do.</b><p>The ladder says which step you are on and what it takes to climb. The dashboard says the date it all points to. <a href="../index.html">The dashboard</a>.</p></li>
+    </ol>
+    <div class="site-callout">
+      <p><b>Not sure yet?</b> Every room has a "Try with example numbers" button. Robin Sparks is a made-up household on a $72,000 salary; use them to see the shape of a plan before you type your own.</p>
+    </div>
+  </section>
+
+  <section class="site-section site-wrap" id="rules" aria-labelledby="h-rules">
+    <span class="slaf-eyebrow">The rules it keeps</span>
+    <h2 id="h-rules">Built for people who count</h2>
+    <ul class="site-rules">
+      <li><b>Nothing leaves your browser.</b> No account, no server, no analytics, no network call after the page loads. Your data lives in this browser and leaves only as a file you make.</li>
+      <li><b>Empty is not zero.</b> A blank box means "not entered yet". A number you have not given is never quietly treated as nothing.</li>
+      <li><b>One formula, one function.</b> The FIRE number on this site, in the room and on the coach's console is the same calculation, run from the same file.</li>
+      <li><b>Every number says how old it is.</b> A reading from a figure you typed six months ago says so.</li>
+      <li><b>Example numbers only, on purpose.</b> This is a public project. No real household's figures are anywhere in it.</li>
+    </ul>
+    <p><a href="about.html">More about the rules, and who made this.</a></p>
+  </section>
+
+  <section class="site-section site-wrap" id="coach" aria-labelledby="h-coach">
+    <span class="slaf-eyebrow">For coaches</span>
+    <h2 id="h-coach">Sitting beside someone?</h2>
+    <p class="lede">Coach Mode is a console for a money coach: a roster of clients, a live session down a path of stops, and a view the client sees. Each client's numbers stay apart, sealed, on the coach's own device.</p>
+    <div class="site-doors">
+      <a class="slaf-btn" href="../coach/index.html">Open Coach Mode</a>
+      <a class="slaf-btn slaf-btn--quiet" href="../coach/session.html?client=demo">Try it with the example client</a>
+    </div>
+  </section>
+</main>
+<footer class="site-foot" id="site-foot"></footer>
+<script src="site.js"></script>
+<script>Site.head('home'); Site.foot();</script>
+</body>
+</html>

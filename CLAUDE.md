@@ -44,6 +44,8 @@ Shortcuts: `/start`, `/room <id>`, `/find <words>`, `/simplify`, `/drift`, `/wra
 - Every session should leave the app with the same or fewer screens and fields.
 - Exception (D-339): `coach/` is a separate app (like `dnd/`), three screens, its own
   tests and log (`coach/README.md`). Nothing outside `coach/` changes for it.
+- Exception (D-340): `site/` is the public front, six pages, its own tests and log
+  (`site/README.md`). It reads `shared/`, `engines/`, `data/` and never copies them.
 
 ## Stop and ask instead of guessing
 

@@ -17349,6 +17349,29 @@ SPARKS device backup neither carries nor removes `coach.` keys.
 
 **Verified.** `node test/run.js`; `node coach/test/run.js`.
 
+## D-340 — The community front is its own app in site/, a lane beside SPARKS like coach/
+
+**Why.** The owner: a complete financial planning website for the SPARKS /
+FIRE community. The app's root is the dashboard, a screen that reads a
+household; a visitor with nothing typed met "not yet" and no page that said
+what this is, what FIRE is, or where to begin.
+
+**Decision.** `site/` is a separate app in the D-339 pattern: six pages
+(Home, Your number, Learn, The rooms, Glossary, About), its own stylesheet on
+the theme tokens, its own tests (`node site/test/run.js`, `node
+site/test/browser.js`, both in CI) and its own log (`site/DECISIONS.md`,
+`SD-###`). It loads `../shared`, `../engines` and `../data` directly, so the
+number it shows is the room's number from the room's file. Nothing in
+`rooms/`, `shared/`, `engines/` or `data/` changes for it.
+
+**Replaces or removes.** No SPARKS screen. It is the page that was missing in
+front of the app, not a room; the freeze (D-313) holds.
+
+**Stored shape.** No change. The site writes no key.
+
+**Verified.** `node test/run.js`; `node site/test/run.js`; `node
+site/test/browser.js` at 390 and 1100 wide, clean console.
+
 ---
 
 # The Dungeons & Dividends entries

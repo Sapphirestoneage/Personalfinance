@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>The rooms · SPARKS</title>
+<meta name="description" content="Every SPARKS room by the question it answers: the number, the next dollar, the month, the debt, the house, the kids, the back half."/>
+<meta property="og:title" content="The rooms · SPARKS"/>
+<meta property="og:description" content="Thirty-seven money rooms that share one household, listed by the question each one answers."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<link rel="stylesheet" href="site.css"/>
+<!--
+  THE ROOMS, the directory for someone who has not been inside. SD-004.
+
+  1. READS   shared/registry.js, the same list the app's Map and menu read,
+             so a room renamed or merged there is renamed or gone here.
+  2. WRITES  nothing.
+  3. CALLS   nothing else. The "by question" list is this page's own
+             wording, each entry a room id the site test checks against
+             the registry.
+
+  LIVE-FORM: built once. No inputs on this page.
+-->
+</head>
+<body class="slaf site">
+<header class="site-head" id="site-head"></header>
+<main id="main" class="site-wrap">
+  <section class="site-hero" aria-labelledby="h-rooms" style="padding-bottom: var(--space-4)">
+    <span class="slaf-eyebrow">The rooms</span>
+    <h1 id="h-rooms">Every room, by the question it answers.</h1>
+    <p class="lede">A room is one screen for one question. They all read the same household, so you never type a number twice. Pick the question you have today.</p>
+  </section>
+
+  <section class="site-section" id="questions" aria-labelledby="h-q">
+    <span class="slaf-eyebrow">Start from a question</span>
+    <h2 id="h-q">What do you want to know?</h2>
+    <ul class="site-grid" id="questions-list"></ul>
+  </section>
+
+  <section class="site-section" id="all" aria-labelledby="h-all">
+    <span class="slaf-eyebrow">All of them</span>
+    <h2 id="h-all">The rooms, in the order the app walks them</h2>
+    <p class="lede">Your Numbers are the owners: the rooms where facts are typed. Everything else reads from there.</p>
+    <div id="groups"><p class="site-empty">Loading the registry.</p></div>
+    <p class="site-count">The app's own map, with filters and the next unfinished room first, is at <a href="../map.html">map.html</a>.</p>
+  </section>
+</main>
+<footer class="site-foot" id="site-foot"></footer>
+
+<script src="../shared/registry.js"></script>
+<script src="site.js"></script>
+<script>
+(function () {
+  'use strict';
+  Site.head('tools'); Site.foot();
+  var R = window.SLAF.Registry, esc = Site.esc;
+
+  /* The questions a person in the community arrives with, each to the one
+     room that answers it. Ids only; titles come from the registry so a
+     rename there is a rename here. site/test/run.js checks every id. */
+  var QUESTIONS = [
+    { q: 'How much do I need, and when could I stop?', id: 'fire' },
+    { q: 'What should my next dollar do?', id: 'foo-ladder' },
+    { q: 'Am I saving enough? Where do I rank?', id: 'financial-snapshot' },
+    { q: 'Where does the money go each month?', id: 'expenses' },
+    { q: 'Will everything get paid this month?', id: 'cant-pay' },
+    { q: 'How long would the cash last without a paycheque?', id: 'runway' },
+    { q: 'Which debt first, and when is it gone?', id: 'debt-payoff' },
+    { q: 'Which account should this money sit in?', id: 'which-account' },
+    { q: 'How does the money come back down once I stop?', id: 'decumulation' },
+    { q: 'What if we have a kid, move, or change jobs?', id: 'what-if-life' },
+    { q: 'Buy, or keep renting?', id: 'housing' },
+    { q: 'Is this big purchase worth it?', id: 'big-purchase' },
+    { q: 'What is the tax on this?', id: 'tax' },
+    { q: 'What do I actually want the money for?', id: 'values' },
+    { q: 'How do we stop arguing about money?', id: 'debates' },
+    { q: 'What do the people I leave behind get?', id: 'left-behind' }
+  ];
+  var rooms = R.ROOMS.slice().sort(function (a, b) { return a.order - b.order; });
+  function byId(id) { for (var i = 0; i < rooms.length; i++) if (rooms[i].id === id) return rooms[i]; return null; }
+  function href(room) { return '../' + room.href; }
+
+  document.getElementById('questions-list').innerHTML = QUESTIONS.map(function (x) {
+    var room = byId(x.id);
+    if (!room) return '';
+    return '<li><a class="site-card" href="' + esc(href(room)) + '"><h3>' + esc(x.q) + '</h3><p>' + esc(room.title) + '</p><span class="site-go">Open the room</span></a></li>';
+  }).join('');
+
+  /* Group ids on a room may be a top group or one of its subgroups. A top
+     group's own id wins ('home' is both the Home group and the "Home &
+     things" subgroup of Decisions), so each room is drawn exactly once. */
+  var parent = {};
+  R.GROUPS.forEach(function (g) { (g.subgroups || []).forEach(function (s) { parent[s.id] = g.id; }); });
+  R.GROUPS.forEach(function (g) { parent[g.id] = g.id; });
+  var html = '';
+  R.GROUPS.forEach(function (g) {
+    var here = rooms.filter(function (r) { return parent[r.group] === g.id; });
+    if (!here.length) return;
+    html += '<h3>' + esc(g.label) + (g.note ? ' <small class="site-count">' + esc(g.note) + '</small>' : '') + '</h3><ul class="site-grid">';
+    here.forEach(function (r) {
+      html += '<li><a class="site-card" href="' + esc(href(r)) + '"><h3>' + esc(r.title) + '</h3><p>' + esc(r.blurb) + '</p></a></li>';
+    });
+    html += '</ul>';
+  });
+  document.getElementById('groups').innerHTML = html;
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Your FIRE number · SPARKS</title>
+<meta name="description" content="Three numbers in, six FIRE numbers out: Coast, Lean, FIRE, Chubby, Fat and Barista, the years to each, and how the answer moves with the return and the withdrawal rate."/>
+<meta property="og:title" content="Your FIRE number · SPARKS"/>
+<meta property="og:description" content="Three numbers in, six FIRE numbers out, and the years to each. Nothing leaves your browser."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<link rel="stylesheet" href="site.css"/>
+<!--
+  YOUR NUMBER, the community front's one calculator. site/README.md, SD-002.
+
+  1. READS   the five boxes on this page. Never the stored household: this
+             page is for someone who has typed nothing into SPARKS yet.
+  2. WRITES  nothing. Not a `slaf.` key, not a cookie. "Carry it into
+             SPARKS" is a link to the first round; the person types there.
+  3. CALLS   engines/fire.js (Fire.tiers, the one FIRE formula, D-285) on a
+             household built in memory from the boxes with shared/schema.js,
+             and engines/projection.js (yearsToTargetCents) for the years.
+             No formula is re-implemented here. The example figures are
+             shared/demo-persona.js, the same Robin Sparks every room shows.
+  4. EMPTY   Spending missing: no number, and the sentence says which box.
+             Invested missing: the rungs are drawn unplaced. Saving missing:
+             the rungs have no years.
+  5. CONFIG  data/fire_variants.json (the six sizes), the app's default
+             assumptions (5% real return, 4% withdrawal, shared/schema.js).
+
+  LIVE-FORM: built once. The five inputs and two selects are in the HTML
+  and are never rebuilt; only #out is repainted, on every input event.
+-->
+</head>
+<body class="slaf site">
+<header class="site-head" id="site-head"></header>
+<main id="main" class="site-wrap">
+  <section class="site-hero" aria-labelledby="h-num" style="padding-bottom: var(--space-4)">
+    <span class="slaf-eyebrow">Your number</span>
+    <h1 id="h-num">Three numbers in, six numbers out.</h1>
+    <p class="lede">What you spend, what you have invested, what you put away. Out comes the FIRE number in six sizes and the years to each, from the same formula the app runs. Nothing you type is stored.</p>
+  </section>
+
+  <form class="site-form" id="form" autocomplete="off" onsubmit="return false" aria-label="Your figures">
+    <div class="slaf-field"><label for="spend">What you spend in a month</label><input id="spend" inputmode="decimal" placeholder="$ 0"/></div>
+    <div class="slaf-field"><label for="invested">What you have invested so far</label><input id="invested" inputmode="decimal" placeholder="$ 0"/></div>
+    <div class="slaf-field"><label for="saving">What you put away each month</label><input id="saving" inputmode="decimal" placeholder="$ 0"/></div>
+    <div class="slaf-field"><label for="age">Your age (for Coast)</label><input id="age" inputmode="numeric" placeholder="years"/></div>
+    <div class="slaf-field"><label for="parttime">Part-time pay a year (for Barista)</label><input id="parttime" inputmode="decimal" placeholder="$ 0"/></div>
+    <div class="slaf-field"><label for="ret">Return above inflation</label>
+      <select id="ret"><option value="0.03">3% a year</option><option value="0.04">4% a year</option><option value="0.05" selected>5% a year (the app's default)</option><option value="0.06">6% a year</option><option value="0.07">7% a year</option></select></div>
+    <div class="slaf-field"><label for="swr">Withdrawal rate</label>
+      <select id="swr"><option value="0.03">3% (33x spending)</option><option value="0.035">3.5% (29x spending)</option><option value="0.04" selected>4% (25x spending)</option><option value="0.045">4.5% (22x spending)</option></select></div>
+    <p class="site-note">Everything is in today's dollars. Spending is the whole month, savings included or not, as you like: the number covers what you spend. Coast assumes you stop adding at 65 at the latest; the room lets you pick the age.</p>
+  </form>
+  <div class="site-acts">
+    <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-example">Try with example numbers</button>
+    <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-clear">Clear</button>
+  </div>
+
+  <div id="out" aria-live="polite">
+    <div class="site-figure"><span class="slaf-eyebrow">Your FIRE number</span><div class="big is-incomplete">Add what you spend in a month to see it.</div></div>
+  </div>
+
+  <section class="site-section" id="next" aria-labelledby="h-next">
+    <span class="slaf-eyebrow">Then</span>
+    <h2 id="h-next">Carry it into the rooms</h2>
+    <p class="lede">This page keeps nothing. The app does, in your browser, and the same three numbers plus your age and income open every room: the ladder, the scorecard, the debt, the back half.</p>
+    <div class="site-doors">
+      <a class="slaf-btn slaf-btn--primary" href="../rooms/ledger.html#round-1">Start with five questions</a>
+      <a class="slaf-btn slaf-btn--quiet" href="../rooms/fire.html">The Number, the full room</a>
+    </div>
+  </section>
+</main>
+<footer class="site-foot" id="site-foot"></footer>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/fire.js"></script>
+<script src="../shared/demo-persona.js"></script>
+<script src="site.js"></script>
+<script>
+(function () {
+  'use strict';
+  Site.head('number'); Site.foot();
+  var S = window.SLAF, Money = S.Money, Schema = S.Schema, Fire = S.Fire, Projection = S.Projection;
+  var esc = Site.esc;
+  var $ = function (id) { return document.getElementById(id); };
+  var out = $('out');
+  var COAST_AGE = 65;
+  var T = null;
+
+  function readAge() {
+    var v = $('age').value.trim();
+    if (v === '') return null;
+    var n = Number(v);
+    return isFinite(n) && n > 0 && n < 120 ? Math.floor(n) : null;
+  }
+  /* A date of birth the schema's age reads back as the age typed: January
+     the first, this year minus the age. Nothing is stored. */
+  function dobFor(age) {
+    if (age === null) return null;
+    return String(new Date().getFullYear() - age) + '-01-01';
+  }
+  function household(spend, invested, age) {
+    var person = Schema.createPerson({ role: 'adult', dob: dobFor(age) });
+    var assets = invested === null ? [] : [Schema.createAsset({ category: 'investment', valueCents: invested })];
+    return Schema.createHousehold({ people: [person], assets: assets, expenses: { wants: { totalCents: spend } } });
+  }
+  function years(start, target, rate, saving) {
+    if (start === null || saving === null) return null;
+    return Projection.yearsToTargetCents({ startCents: start, targetCents: target, annualRate: rate, annualContributionCents: saving * 12, fractional: true });
+  }
+  function sayYears(r) {
+    if (!r) return 'not yet';
+    if (!Money.isOk(r)) return r.reason.indexOf('More than') === 0 ? 'over 60 years' : 'never at this pace';
+    if (r.alreadyThere || r.value === 0) return 'reached';
+    if (r.value < 1) return 'under a year';
+    var y = r.value < 10 ? Math.round(r.value * 10) / 10 : Math.round(r.value);
+    return 'about ' + y + (y === 1 ? ' year' : ' years');
+  }
+  function pct(x) { return (Math.round(x * 1000) / 10) + '%'; }
+  function fmt(c) { return Money.formatCents(c); }
+
+  function paint() {
+    if (!T) return;
+    var spend = Site.readDollars($('spend')), invested = Site.readDollars($('invested')), saving = Site.readDollars($('saving'));
+    var age = readAge(), parttime = Site.readDollars($('parttime'));
+    var rate = Number($('ret').value), swr = Number($('swr').value);
+    if (spend === null) {
+      out.innerHTML = '<div class="site-figure"><span class="slaf-eyebrow">Your FIRE number</span><div class="big is-incomplete">Add what you spend in a month to see it.</div></div>';
+      return;
+    }
+    var h = household(spend, invested, age);
+    var opts = { localOverrides: { expectedReturnRate: rate, swrRate: swr }, coastTargetAge: COAST_AGE };
+    if (parttime !== null) opts.baristaAnnualIncomeCents = parttime;
+    var tiers = Fire.tiers(h, T, opts);
+    var rungs = tiers.rungs || [];
+    var std = null;
+    rungs.forEach(function (r) { if (r.id === 'standard') std = r; });
+    var html = '';
+    if (!std) {
+      html += '<div class="site-figure"><span class="slaf-eyebrow">Your FIRE number</span><div class="big is-incomplete">' + esc(tiers.reason || 'Not yet.') + '</div></div>';
+      out.innerHTML = html; return;
+    }
+    var eta = years(invested, std.targetCents, rate, saving);
+    var multiple = Math.round(1 / swr);
+    html += '<div class="site-figure"><span class="slaf-eyebrow">Your FIRE number</span><div class="big">' + esc(fmt(std.targetCents)) + '</div>';
+    html += '<p class="say">' + esc(fmt(spend * 12)) + ' a year at a ' + esc(pct(swr)) + ' withdrawal rate, which is ' + multiple + ' times your spending.';
+    if (invested !== null) {
+      var share = Math.min(1, invested / std.targetCents);
+      html += ' You have <b>' + esc(pct(share)) + '</b> of it.';
+      html += '</p><div class="site-bar" role="img" aria-label="' + esc(pct(share)) + ' of the way"><span style="width:' + Math.round(share * 100) + '%"></span></div>';
+      html += '<p class="say">';
+      if (saving === null) html += 'Add what you put away each month to see the years.';
+      else if (Money.isOk(eta)) html += 'At ' + esc(fmt(saving)) + ' a month and ' + esc(pct(rate)) + ' above inflation, <b>' + esc(sayYears(eta)) + '</b>' + (eta.alreadyThere ? '.' : ' to go.');
+      else html += esc(eta.reason);
+      html += '</p>';
+    } else {
+      html += ' Add what you have invested to see how far along you are.</p>';
+    }
+    html += '</div>';
+
+    html += '<section class="site-section" aria-labelledby="h-six"><span class="slaf-eyebrow">The six sizes</span><h2 id="h-six">One formula, six rungs</h2>';
+    html += '<p class="lede">Smallest first. Each rung is the same multiplication with a different month of spending in it; Coast is the full number discounted back to today.</p><ol class="site-rungs">';
+    rungs.forEach(function (r) {
+      var e = years(invested, r.targetCents, rate, saving);
+      var cls = r.reached ? ' is-reached' : '';
+      var yr = r.reached ? 'reached' : (invested === null ? 'add what you have invested' : sayYears(e));
+      html += '<li><span class="rung-name">' + esc(r.label) + '</span><span class="rung-fig' + cls + '">' + esc(fmt(r.targetCents)) + ' <span class="rung-years">· ' + esc(yr) + '</span></span>';
+      html += '<p class="rung-say">' + esc(r.blurb) + (r.id === 'coast' ? ' Assumes nothing more is added and the money grows until ' + COAST_AGE + '.' : '') + '</p></li>';
+    });
+    html += '</ol>';
+    var notes = [];
+    if (age === null) notes.push('Add your age to see Coast.');
+    if (parttime === null) notes.push('Add what part-time work could pay to see Barista.');
+    if (notes.length) html += '<p class="site-count">' + esc(notes.join(' ')) + '</p>';
+    html += '</section>';
+
+    if (invested !== null && saving !== null) {
+      var rates = [0.03, 0.05, 0.07], swrs = [0.03, 0.035, 0.04, 0.045];
+      html += '<section class="site-section" aria-labelledby="h-sens"><span class="slaf-eyebrow">How sure is it</span><h2 id="h-sens">The years, as the assumptions move</h2>';
+      html += '<p class="lede">Years to the full number at ' + esc(fmt(saving)) + ' a month. Down the side, how much of the pot you draw each year; across, what the money earns above inflation. Your pick is in blue.</p>';
+      html += '<table class="site-table"><thead><tr><th>Withdrawal</th><th>Number</th>';
+      rates.forEach(function (r) { html += '<th class="num">' + esc(pct(r)) + ' return</th>'; });
+      html += '</tr></thead><tbody>';
+      swrs.forEach(function (w) {
+        var t = Fire.calculateFIRE(h, T, { localOverrides: { swrRate: w, expectedReturnRate: rate } });
+        html += '<tr><td>' + esc(pct(w)) + ' (' + Math.round(1 / w) + 'x)</td><td class="num">' + (Money.isOk(t) ? esc(fmt(t.value)) : 'not yet') + '</td>';
+        rates.forEach(function (r) {
+          var e = Money.isOk(t) ? years(invested, t.value, r, saving) : null;
+          var here = (w === swr && r === rate) ? ' is-here' : '';
+          html += '<td class="num' + here + '">' + esc(sayYears(e).replace('about ', '')) + '</td>';
+        });
+        html += '</tr>';
+      });
+      html += '</tbody></table></section>';
+    }
+    out.innerHTML = html;
+  }
+
+  ['spend', 'invested', 'saving', 'age', 'parttime', 'ret', 'swr'].forEach(function (id) {
+    $(id).addEventListener('input', paint);
+    $(id).addEventListener('change', paint);
+  });
+  $('btn-example').addEventListener('click', function () {
+    var V = S.DemoPersona.VALUES;
+    var demo = S.DemoPersona.build();
+    $('spend').value = String(V.fat.food + V.fat.accommodation + V.fat.transportation + V.fat.wants);
+    $('invested').value = String(V.investmentsAndRetirement);
+    $('saving').value = String(V.savedMonthly);
+    $('age').value = String(Schema.primaryAge(demo));
+    $('parttime').value = '';
+    paint();
+  });
+  $('btn-clear').addEventListener('click', function () {
+    ['spend', 'invested', 'saving', 'age', 'parttime'].forEach(function (id) { $(id).value = ''; });
+    paint();
+  });
+  S.Reference.load(['fireVariants'], '../data/').then(function (tables) { T = tables; paint(); }).catch(function (e) {
+    out.innerHTML = '<div class="site-figure"><span class="slaf-eyebrow">Your FIRE number</span><div class="big is-incomplete">The reference table did not load. Open this page over http, not from a file.</div></div>';
+    if (window.ErrLog) window.ErrLog.record('load', String(e && e.message), 'site/number');
+  });
+})();
+</script>
+</body>
+</html>

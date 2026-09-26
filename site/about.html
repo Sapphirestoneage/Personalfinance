@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<title>About · SPARKS</title>
+<meta name="description" content="What SPARKS is, the rules it holds itself to, what it is not, who made it, and how to help."/>
+<meta property="og:title" content="About · SPARKS"/>
+<meta property="og:description" content="What SPARKS is, the rules it holds itself to, and what it is not."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<link rel="stylesheet" href="site.css"/>
+<!--
+  ABOUT. SD-006. Reads nothing, writes nothing, calls nothing.
+  LIVE-FORM: built once. No inputs on this page.
+-->
+</head>
+<body class="slaf site">
+<header class="site-head" id="site-head"></header>
+<main id="main" class="site-wrap">
+  <section class="site-hero" aria-labelledby="h-about" style="padding-bottom: var(--space-4)">
+    <span class="slaf-eyebrow">About</span>
+    <h1 id="h-about">Small rooms, one household, no server.</h1>
+    <p class="lede">SPARKS is a set of money rooms built by a money coach who wanted one set of numbers to follow a person from the first conversation to the last. It is free, it is open, and it runs entirely in your browser.</p>
+  </section>
+
+  <section class="site-section" id="rules" aria-labelledby="h-rules">
+    <span class="slaf-eyebrow">The rules</span>
+    <h2 id="h-rules">What it holds itself to</h2>
+    <p class="lede">These are design constraints, and the tests fail when a room breaks one.</p>
+    <ul class="site-rules">
+      <li><b>Nothing leaves your browser.</b> No account, no server, no analytics, no font or script from anywhere else. The page's own security policy forbids it, so it is enforced rather than promised. Your data lives in this browser's storage and leaves only as a file or a link you make on purpose.</li>
+      <li><b>Empty is not zero.</b> A blank box means "not entered". A zero means you typed zero. A reading that needs a figure you have not given says so instead of inventing one.</li>
+      <li><b>One owner per number.</b> Every shared figure is editable in exactly one room and shown as a read-only link everywhere else, so there is never a second copy to drift.</li>
+      <li><b>One formula, one function.</b> A calculation lives in one file. The FIRE number on this site, in the room, and on a coach's console is the same code.</li>
+      <li><b>Money is whole cents.</b> Nothing is rounded until it is drawn on the screen.</li>
+      <li><b>Every number says how old it is.</b> A reading built on a figure from months ago says so.</li>
+      <li><b>Reference data is data, dated.</b> Tax brackets, contribution limits, benchmarks: each is a file with a year, a source and a confidence note, never a number typed into the code.</li>
+      <li><b>No real household, ever.</b> The project is public. The only figures in it belong to Robin Sparks, who is made up.</li>
+    </ul>
+  </section>
+
+  <section class="site-section" id="not" aria-labelledby="h-not">
+    <span class="slaf-eyebrow">Honest limits</span>
+    <h2 id="h-not">What it is not</h2>
+    <ul class="site-rules">
+      <li><b>Not advice.</b> It is arithmetic with your figures in it and plain words around it. A decision about your own money deserves a person who knows your whole picture.</li>
+      <li><b>United States, 2026.</b> The tax, contribution and benefit tables are US figures for the year in their name. The multiplication works anywhere; the tax rooms do not.</li>
+      <li><b>One browser.</b> Your numbers live where you typed them. Back them up from Your Data or Settings; the app reminds you every thirty days.</li>
+      <li><b>Today's dollars.</b> Every projection uses a return above inflation, so the numbers are in money you would recognise. That is a choice; the assumption is on the page wherever it is used.</li>
+    </ul>
+  </section>
+
+  <section class="site-section" id="family" aria-labelledby="h-family">
+    <span class="slaf-eyebrow">The family</span>
+    <h2 id="h-family">Three apps, one set of formulas</h2>
+    <ul class="site-grid">
+      <li><a class="site-card" href="../index.html"><h3>SPARKS</h3><p>The money rooms. Thirty-seven screens that share one household.</p><span class="site-go">Open the app</span></a></li>
+      <li><a class="site-card" href="../coach/index.html"><h3>Coach Mode</h3><p>A console for a money coach: clients, a live session, and the view the client sees.</p><span class="site-go">Open Coach Mode</span></a></li>
+      <li><a class="site-card" href="../dnd/index.html"><h3>Dungeons &amp; Dividends</h3><p>The same numbers as a character sheet, for people who learn by playing.</p><span class="site-go">Roll a character</span></a></li>
+    </ul>
+  </section>
+
+  <section class="site-section" id="help" aria-labelledby="h-help">
+    <span class="slaf-eyebrow">Help</span>
+    <h2 id="h-help">Found a wrong number, or a word that does not land?</h2>
+    <p>The code and every decision behind it are public. Open an issue on GitHub with the room, the number and what you expected, and it will be read. Copy is written next to the thing it describes, so a better sentence is a one-line change.</p>
+    <div class="site-doors">
+      <a class="slaf-btn" href="https://github.com/sapphirestoneage/Personalfinance" rel="noopener">The repository</a>
+      <a class="slaf-btn slaf-btn--quiet" href="../rooms/get-help.html">Get Help, inside the app</a>
+    </div>
+  </section>
+</main>
+<footer class="site-foot" id="site-foot"></footer>
+<script src="site.js"></script>
+<script>Site.head('about'); Site.foot();</script>
+</body>
+</html>
