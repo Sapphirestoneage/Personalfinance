@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eliz Saperstein</title>
+<meta name="description" content="Eliz Saperstein: projects, hobbies, tools and a resume, all in one place.">
+<link rel="canonical" href="https://sapphirestoneage.github.io/Personalfinance/me/">
+<meta property="og:type" content="profile">
+<meta property="og:title" content="Eliz Saperstein">
+<meta property="og:description" content="Projects, hobbies, tools and a resume, all in one place.">
+<meta property="og:url" content="https://sapphirestoneage.github.io/Personalfinance/me/">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:description" content="Projects, hobbies, tools and a resume, all in one place.">
+<meta name="robots" content="index, follow">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="site.css">
+</head>
+<body>
+<a class="skip" href="#about">Skip to content</a>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" id="brand" href="#top">Me</a>
+    <nav aria-label="Sections">
+      <a href="#about">About</a>
+      <a href="#projects">Projects</a>
+      <a href="#hobbies">Hobbies</a>
+      <a href="#tools">Tools</a>
+      <a href="#resume">Resume</a>
+      <a href="#contact">Contact</a>
+    </nav>
+    <button class="theme" id="theme" type="button" aria-label="Theme">◑</button>
+  </div>
+</header>
+
+<main id="top">
+  <div class="hero">
+    <div class="wrap">
+      <div class="avatar" id="avatar" aria-hidden="true"></div>
+      <div>
+        <h1 id="name"></h1>
+        <p class="tag" id="tagline"></p>
+        <p class="where" id="where"></p>
+        <div class="links" id="links"></div>
+      </div>
+    </div>
+  </div>
+
+  <section id="about">
+    <div class="wrap">
+      <header><h2>About</h2></header>
+      <div class="prose" id="about-text"></div>
+    </div>
+  </section>
+
+  <section id="projects">
+    <div class="wrap">
+      <header>
+        <h2>Projects</h2>
+        <p>Things I built that you can open right now. Everything runs in your browser.</p>
+      </header>
+      <div class="grid" id="projects-grid"></div>
+    </div>
+  </section>
+
+  <section id="hobbies">
+    <div class="wrap">
+      <header>
+        <h2>Hobbies</h2>
+        <p>What I am into when I am not building.</p>
+      </header>
+      <div class="grid" id="hobbies-grid"></div>
+    </div>
+  </section>
+
+  <section id="tools">
+    <div class="wrap">
+      <header>
+        <h2>Tools</h2>
+        <p>Small things I made for myself and now share.</p>
+      </header>
+      <div class="grid" id="tools-grid"></div>
+    </div>
+  </section>
+
+  <section id="resume">
+    <div class="wrap">
+      <header><h2>Resume</h2></header>
+      <div class="resume">
+        <div>
+          <p class="lead" id="resume-lead"></p>
+          <p class="summary" id="resume-summary"></p>
+          <div id="jobs"></div>
+        </div>
+        <aside class="side">
+          <div class="block">
+            <h3>Skills</h3>
+            <ul class="skills" id="skills"></ul>
+          </div>
+          <div class="block" id="education-block">
+            <h3>Education</h3>
+            <div id="education"></div>
+          </div>
+          <div class="block download" id="download"></div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section id="contact" class="contact">
+    <div class="wrap">
+      <p class="lead" id="contact-lead"></p>
+      <a class="email" id="contact-email" href="#"></a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span><span id="foot-name"></span> · <span id="foot-year"></span></span>
+    <span id="foot-links"></span>
+  </div>
+</footer>
+
+<script src="content.js"></script>
+<script src="render.js"></script>
+</body>
+</html>

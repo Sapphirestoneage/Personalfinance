@@ -17349,6 +17349,27 @@ SPARKS device backup neither carries nor removes `coach.` keys.
 
 **Verified.** `node test/run.js`; `node coach/test/run.js`.
 
+## D-340 — A personal site in me/, its own thing beside SPARKS like dnd/ and coach/
+
+**Why.** The owner wants one page people find when they search their name:
+hobbies, projects, personal tools and a resume, with the money rooms and
+Dungeons & Dividends promoted from it.
+
+**Decision.** `me/` is a static page about a person, not a household:
+`me/index.html` (the sections), `me/content.js` (every word, edited by the
+owner), `me/render.js` (draws it), `me/site.css` (its own tokens, none from
+`shared/theme.css`). No storage but a remembered theme (`me.theme`). No
+registry entry, no room, no shared module. Nothing in `rooms/`, `shared/`,
+`engines/` or `data/` changes for it.
+
+**Replaces or removes.** No SPARKS screen. It stands in for a profile page the
+owner would otherwise keep on another service.
+
+**Stored shape.** No change to `slaf.household.v2` or any SPARKS key.
+
+**Verified.** `node test/run.js`; the page served and rendered in Chromium at
+1280 and 390 wide with a clean console.
+
 ---
 
 # The Dungeons & Dividends entries
