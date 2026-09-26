@@ -1,0 +1,29 @@
+{
+  "id": "care_2026",
+  "version": "2026.1",
+  "asOf": "2026-09-26",
+  "source": "Typical US self-pay ranges from published surgeon fee schedules, pharmacy cash prices and trans health resource guides, rounded. HSA and FSA limits are the IRS figures for 2026. Name and gender marker costs are typical court and agency filing fees.",
+  "confidence": "rough",
+  "confidenceNote": "Insurance changes everything here: a covered surgery costs the deductible plus coinsurance up to the plan's out-of-pocket maximum, an uncovered one costs the whole fee. Coverage rules have been moving state by state and plan by plan; check the plan document, not a summary. Costs and limits should be checked against the year's figures.",
+  "hsa": { "individualCents": 440000, "familyCents": 875000, "catchUpCents": 100000, "plain": "A health savings account, if your plan is a high-deductible one. Money in is untaxed, money out for care is untaxed, and it rolls over for years. The best account there is for a surgery you are planning." },
+  "fsa": { "limitCents": 340000, "plain": "A flexible spending account through work. Untaxed in and out, but most of it must be spent within the year, so size it to a known cost." },
+  "items": [
+    { "id": "hrt", "label": "Hormones, each month", "kind": "month", "lowCents": 2000, "highCents": 15000, "plain": "Estrogen, testosterone, blockers, and the pharmacy's cash price if not covered. Generic testosterone cypionate is at the low end; patches and gels are higher." },
+    { "id": "labs", "label": "Blood work and visits, each year", "kind": "year", "lowCents": 20000, "highCents": 150000, "plain": "The check-ups that go with hormones: a few draws a year and the visits." },
+    { "id": "therapy", "label": "Therapy, each month", "kind": "month", "lowCents": 0, "highCents": 80000, "plain": "If you see someone. Letters for surgery may need a therapist too; sliding scales are common." },
+    { "id": "top", "label": "Top surgery", "kind": "once", "lowCents": 800000, "highCents": 1500000, "plain": "Chest masculinization or breast augmentation. The surgeon, the facility, the anesthesia and the follow-up." },
+    { "id": "hysto", "label": "Hysterectomy or orchiectomy", "kind": "once", "lowCents": 500000, "highCents": 2000000, "plain": "Often covered when other surgery is not, since it is also ordinary medicine." },
+    { "id": "bottom", "label": "Bottom surgery", "kind": "once", "lowCents": 2000000, "highCents": 10000000, "plain": "Vaginoplasty, phalloplasty or metoidioplasty. The widest range, and the one where coverage matters most. Often more than one stage." },
+    { "id": "ffs", "label": "Facial surgery", "kind": "once", "lowCents": 2000000, "highCents": 6000000, "plain": "Facial feminization or masculinization. Rarely covered; the one most people save for." },
+    { "id": "voice", "label": "Voice therapy or surgery", "kind": "once", "lowCents": 50000, "highCents": 1500000, "plain": "Sessions with a speech therapist at the low end; surgery at the high." },
+    { "id": "hair", "label": "Hair removal or a hair system", "kind": "once", "lowCents": 100000, "highCents": 1500000, "plain": "Electrolysis or laser over a year or two, or a wig or hairpiece. Rarely covered except before bottom surgery." },
+    { "id": "gear", "label": "Binders, packers, forms, clothes", "kind": "year", "lowCents": 5000, "highCents": 100000, "plain": "The small things, each year. Mutual-aid groups give many away." },
+    { "id": "travel", "label": "Travel and time off for surgery", "kind": "once", "lowCents": 0, "highCents": 1000000, "plain": "Flights, a hotel for a caregiver, weeks off work. Type the pay you would miss too." }
+  ],
+  "names": [
+    { "id": "court", "label": "Court name change", "lowCents": 5000, "highCents": 50000, "plain": "The filing fee, and in some states a newspaper notice. Fee waivers exist for low income." },
+    { "id": "passport", "label": "Passport", "lowCents": 13000, "highCents": 20000, "plain": "A new book. Rules on the gender marker have changed more than once; check the current form before you file." },
+    { "id": "licence", "label": "Driver's licence or state ID", "lowCents": 1000, "highCents": 5000, "plain": "The state's replacement fee." },
+    { "id": "documents", "label": "Everything else", "lowCents": 0, "highCents": 20000, "plain": "Birth certificate, bank, insurance, diplomas, the synagogue's records. Mostly time, some fees." }
+  ]
+}

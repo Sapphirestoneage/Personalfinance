@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-label="Kehillah">
+  <rect width="120" height="120" rx="26" fill="#0E1116"/>
+  <g fill="none" stroke="#6AA0FF" stroke-width="7" stroke-linejoin="round">
+    <path d="M60 18 L94 76 L26 76 Z"/>
+    <path d="M60 94 L26 36 L94 36 Z"/>
+  </g>
+  <rect x="24" y="102" width="14" height="6" rx="3" fill="#E2565B"/>
+  <rect x="40" y="102" width="14" height="6" rx="3" fill="#D8A63F"/>
+  <rect x="56" y="102" width="14" height="6" rx="3" fill="#3FB27F"/>
+  <rect x="72" y="102" width="14" height="6" rx="3" fill="#4A85F0"/>
+  <rect x="88" y="102" width="10" height="6" rx="3" fill="#B07CF0"/>
+</svg>

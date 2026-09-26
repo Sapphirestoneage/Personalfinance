@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="description" content="Money planning for queer Jewish life: the Jewish year's costs, tzedakah, chosen-family protections, making a family, gender-affirming care, interest-free loans, and an Elul reckoning. Nothing leaves your browser."/>
+<title>Kehillah: money planning for queer Jewish life</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="kehillah.css"/>
+<!--
+  KEHILLAH HOME (D-340, KD-004).
+
+  1. READS   the plan (kehillah.plan.v1) through shared/store.js, and every
+             engine, to say where each page stands. Nothing of Money Rooms.
+  2. WRITES  nothing but the demo flag (the strip in the header).
+  3. SHOWS   what this is, the eight doors, and one line a door about what
+             is entered there.
+
+  LIVE-FORM: built once. There are no typed boxes on this page.
+-->
+</head>
+<body class="slaf">
+<main class="k" id="main">
+  <div id="head"></div>
+
+  <section class="k-hero" aria-label="What this is">
+    <div>
+      <span class="k-eyebrow">For queer Jews and the people who love them</span>
+      <h1>Money planning that knows what year it is, and who your family is.</h1>
+      <p class="k-lead">Eight pages for the costs a general budget forgets: the holidays, the giving, the papers that protect a chosen family, the price of making a family or getting care, and the interest-free loan that was always there. Type what you know. Blank means not entered. Nothing leaves this browser.</p>
+      <div class="k-actions">
+        <a class="slaf-btn slaf-btn--primary" href="year.html">Start with the year</a>
+        <a class="slaf-btn" href="chosen-family.html">Check the papers</a>
+      </div>
+    </div>
+    <div class="k-card k-card--raised" id="where" aria-label="Where you stand">
+      <h2>Where you stand</h2>
+      <div id="where-body" class="k-note">Loading.</div>
+    </div>
+  </section>
+
+  <section aria-label="The pages">
+    <div class="k-grid" id="doors"></div>
+  </section>
+
+  <section class="k-section k-grid k-grid--2" aria-label="How it works">
+    <div class="k-card">
+      <h2>Three rules</h2>
+      <p><b>Empty is not zero.</b> A blank box is "not entered yet" and the page says so. It never becomes a number on its own.</p>
+      <p><b>The guide figure is not your figure.</b> Beside every box is a typical range and sometimes a starting number. Press "use this" and it becomes yours; otherwise it is a hint.</p>
+      <p><b>Nothing leaves this browser.</b> There is no account and no server. Clear your numbers with one button. The example household is invented.</p>
+    </div>
+    <div class="k-card">
+      <h2>Why these pages</h2>
+      <p>A Jewish year has its own calendar of bills. A queer household often has no legal default that matches its shape. Making a family or getting care can cost more than a car and less than a house, and is planned like neither. And the tradition already holds the answers for two of the hardest parts: a rate for giving, and a loan without interest.</p>
+      <p class="k-note">This sits beside <a href="../index.html">Money Rooms</a>, the household app, and reads none of its numbers.</p>
+    </div>
+  </section>
+
+  <div id="words"></div>
+  <div id="foot" class="k-foot"><p>Nothing on this site is legal, tax or medical advice. Every figure is arithmetic on what you typed, beside a guide range with its source named on each page.</p></div>
+</main>
+
+<script src="shared/money.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="engines/timeline.js"></script>
+<script src="engines/year.js"></script>
+<script src="engines/tzedakah.js"></script>
+<script src="engines/protections.js"></script>
+<script src="engines/family.js"></script>
+<script src="engines/care.js"></script>
+<script src="engines/loan.js"></script>
+<script src="kehillah.js"></script>
+<script src="page-home.js"></script>
+</body>
+</html>

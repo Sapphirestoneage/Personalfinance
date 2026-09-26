@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="description" content="The ten papers that put your chosen family in charge instead of the law's defaults, each with a price and a status, and a cushion for leaving safely."/>
+<title>Chosen Family: the papers, and the cushion</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="kehillah.css"/>
+<!--
+  CHOSEN FAMILY (D-340, KD-004).
+
+  1. READS   plan.protections (shape, status a paper) and plan.cushion
+             (monthCents, savedCents, monthlyCents); data/protections.json.
+  2. WRITES  the same.
+  3. SHOWS   the papers with a status each and "urgent" for this household's
+             shape; what the ones still to do cost; the cushion as months.
+
+  LIVE-FORM: built once. The paper rows and the cushion boxes are built at
+  boot; a change repaints only #stats and #cushion-out.
+-->
+</head>
+<body class="slaf">
+<main class="k" id="main">
+  <div id="head"></div>
+
+  <section class="k-hero" aria-label="Why">
+    <div>
+      <span class="k-eyebrow">Protection</span>
+      <h1>The law has defaults. They are not your people.</h1>
+      <p class="k-lead" id="why"></p>
+    </div>
+    <div class="k-card k-card--raised">
+      <h2>Your household</h2>
+      <p class="k-note">Which papers are urgent depends on this. Pick the closest.</p>
+      <div id="shape"></div>
+    </div>
+  </section>
+
+  <section class="k-stats" id="stats" aria-label="The papers in figures"></section>
+  <div id="bar"></div>
+
+  <section class="k-card k-section" aria-label="The papers">
+    <h2>The papers</h2>
+    <p class="k-note">Mark each one. "Does not apply" is honest, not a dodge: a married couple with no kids has no guardianship to name. The price is the typical range, from a free state form to a lawyer.</p>
+    <div class="k-rows" id="papers"></div>
+  </section>
+
+  <section class="k-card k-section" aria-label="The cushion">
+    <h2>A cushion for leaving safely</h2>
+    <p class="k-note">If a home, a job or a family could stop being safe, the number that matters is how many months you could cover on your own. Three months of the bare minimum is the usual first goal. Type the lean month: rent, food, transport, medication, nothing else.</p>
+    <div class="k-inline">
+      <label>A lean month costs<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" id="c-month" autocomplete="off" placeholder="not entered"/></span></label>
+      <label>Set aside for it today<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" id="c-saved" autocomplete="off" placeholder="not entered"/></span></label>
+      <label>Added each month<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" id="c-monthly" autocomplete="off" placeholder="not entered"/></span></label>
+    </div>
+    <div class="k-stats" id="cushion-out" style="margin-top:var(--space-4)"></div>
+    <p class="k-note" style="margin-top:var(--space-3)">Keep it in an account in your name only, at a bank the household does not share, with paperless statements. A gemach can bridge a gap this pot cannot; the Gemach page compares.</p>
+  </section>
+
+  <div id="words"></div>
+  <div id="foot"></div>
+</main>
+
+<script src="shared/money.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="engines/timeline.js"></script>
+<script src="engines/protections.js"></script>
+<script src="kehillah.js"></script>
+<script src="page-chosen-family.js"></script>
+</body>
+</html>

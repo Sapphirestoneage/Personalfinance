@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="description" content="What making a family costs on the path you choose: insemination, IVF, surrogacy or adoption; what comes back; and the month you get there."/>
+<title>Making a Family: what the path costs, and when</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="kehillah.css"/>
+<!--
+  MAKING A FAMILY (D-340, KD-004).
+
+  1. READS   plan.family (path, tries, perTryCents, onceCents, coveredCents,
+             savedCents, monthlyCents, afterward{}); data/family_building_2026.json.
+  2. WRITES  the same.
+  3. SHOWS   the path's guide ranges, the cost, what comes back (insurance,
+             the adoption credit), the target, and the savings timeline.
+
+  LIVE-FORM: built once. Every box is built at boot; choosing a path
+  repaints only the guide text beside the boxes and the read-outs.
+-->
+</head>
+<body class="slaf">
+<main class="k" id="main">
+  <div id="head"></div>
+
+  <section class="k-hero" aria-label="The path">
+    <div>
+      <span class="k-eyebrow">Making a family</span>
+      <h1>It costs what it costs. Say the number and it gets a date.</h1>
+      <p class="k-lead">Pick the path. The page shows the typical range for one try and for the one-time costs; you type your clinic's or agency's own figure. Insurance, a grant and the adoption tax credit come off. What is left gets a month.</p>
+    </div>
+    <div class="k-card k-card--raised">
+      <h2>The path</h2>
+      <div id="path"></div>
+      <p class="k-note" id="path-plain" style="margin-top:var(--space-3)"></p>
+    </div>
+  </section>
+
+  <section class="k-stats" id="stats" aria-label="In figures"></section>
+  <div id="bar"></div>
+  <p class="k-note" id="bar-say"></p>
+
+  <section class="k-grid k-grid--2 k-section">
+    <div class="k-card" aria-label="The costs">
+      <h2>The costs</h2>
+      <div class="k-rows">
+        <div class="k-row" id="row-try"><div><div class="k-label">One try costs</div><p class="k-plain">One cycle, one round, one attempt, with its medication.</p><div class="k-guide" id="g-try"></div></div><div class="k-box"><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" id="perTry" autocomplete="off" placeholder="not entered" aria-label="One try costs"/></span></div></div>
+        <div class="k-row" id="row-tries"><div><div class="k-label">How many tries to plan for</div><p class="k-plain">Plan for more than one. The guide is the usual span.</p><div class="k-guide" id="g-tries"></div></div><div class="k-box"><span class="slaf-input-shell"><input type="text" id="tries" autocomplete="off" placeholder="not entered" aria-label="How many tries"/></span></div></div>
+        <div class="k-row"><div><div class="k-label">One-time costs</div><p class="k-plain" id="once-label">Screening, legal work, storage, an agency.</p><div class="k-guide" id="g-once"></div></div><div class="k-box"><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" id="once" autocomplete="off" placeholder="not entered" aria-label="One-time costs"/></span></div></div>
+        <div class="k-row"><div><div class="k-label">Paid by insurance, a grant or family</div><p class="k-plain">What someone else covers. Leave blank if nobody does; 0 is the same here.</p></div><div class="k-box"><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" id="covered" autocomplete="off" placeholder="not entered" aria-label="Paid by someone else"/></span></div></div>
+      </div>
+    </div>
+    <div class="k-card" aria-label="Saving">
+      <h2>Saving toward it</h2>
+      <div class="k-rows">
+        <div class="k-row"><div><div class="k-label">Set aside today</div><p class="k-plain">Only the money that is for this.</p></div><div class="k-box"><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" id="saved" autocomplete="off" placeholder="not entered" aria-label="Set aside today"/></span></div></div>
+        <div class="k-row"><div><div class="k-label">Added each month</div><p class="k-plain">What goes in on payday.</p></div><div class="k-box"><span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" id="monthly" autocomplete="off" placeholder="not entered" aria-label="Added each month"/></span></div></div>
+      </div>
+      <h3 style="margin-top:var(--space-4)">And afterward</h3>
+      <p class="k-note">Not in the target, but real. Type what you can see.</p>
+      <div class="k-rows" id="afterward"></div>
+    </div>
+  </section>
+
+  <div id="words"></div>
+  <div id="foot"></div>
+</main>
+
+<script src="shared/money.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="engines/timeline.js"></script>
+<script src="engines/family.js"></script>
+<script src="kehillah.js"></script>
+<script src="page-family.js"></script>
+</body>
+</html>

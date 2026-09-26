@@ -37,6 +37,7 @@ render; engines never write. Undo snapshots sit under `slaf.snapshots.v1`.
 - `test/run.js` — 28k unit checks, node only; `test/forms.js` — phone form walk.
 - `tests/` — property, corpus, data and a11y suites with their reports.
 - `dnd/` — Dungeons & Dividends, a separate tool; `dnd/shared/*` are vendored copies.
+- `coach/`, `kehillah/` — Coach Mode and Kehillah (queer Jewish money planning), separate apps with their own logs (D-339, D-340).
 - `tools/context/` — `build.js` (indexes, room cards) and `pack.js` (per-task context).
 - `docs/context/` — generated indexes: ROOMS, FIELDS, DECISIONS-INDEX, DOC-MAP.
 

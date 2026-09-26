@@ -1,0 +1,26 @@
+{
+  "id": "family_building_2026",
+  "version": "2026.1",
+  "asOf": "2026-09-26",
+  "source": "Typical US self-pay ranges as published by fertility clinics, sperm and egg banks, adoption agencies and Family Equality's family-building cost guides, rounded. The adoption tax credit is the federal figure for tax year 2026, per child, phasing out at higher incomes.",
+  "confidence": "rough",
+  "confidenceNote": "These are wide ranges for a reason: a clinic in one city charges twice another, and one cycle may or may not be enough. Insurance mandates for fertility care exist in some states and increasingly cover single people and same-sex couples, but check yours. The tax credit figure should be checked against the year's IRS number before you file.",
+  "adoptionCreditCents": 1767000,
+  "adoptionCreditNote": "About $17,670 for 2026, per child, as a credit against federal tax, for adoption costs other than adopting a spouse's child. Confirm the year's figure.",
+  "paths": [
+    { "id": "iui-known", "label": "Home or clinic insemination with a known donor", "plain": "A friend or chosen family member as donor. Cheapest, and the one with the most paperwork: a donor agreement, and a second-parent adoption afterward.", "perTryLowCents": 0, "perTryHighCents": 150000, "triesLow": 2, "triesHigh": 6, "onceLowCents": 100000, "onceHighCents": 300000, "onceLabel": "Donor agreement and legal review", "credit": false },
+    { "id": "iui-bank", "label": "IUI with donor sperm from a bank", "plain": "Vials are bought per try, plus the clinic's fee for the insemination and monitoring. Several tries is normal.", "perTryLowCents": 150000, "perTryHighCents": 500000, "triesLow": 3, "triesHigh": 6, "onceLowCents": 0, "onceHighCents": 100000, "onceLabel": "Screening and storage", "credit": false },
+    { "id": "ivf", "label": "IVF, own eggs", "plain": "One retrieval and transfer, with medication. Many people need more than one round.", "perTryLowCents": 1500000, "perTryHighCents": 3000000, "triesLow": 1, "triesHigh": 3, "onceLowCents": 100000, "onceHighCents": 300000, "onceLabel": "Screening, storage, donor sperm if needed", "credit": false },
+    { "id": "reciprocal-ivf", "label": "Reciprocal IVF", "plain": "One partner's eggs, the other carries. An IVF round plus a second person's medication and monitoring.", "perTryLowCents": 2000000, "perTryHighCents": 3500000, "triesLow": 1, "triesHigh": 3, "onceLowCents": 200000, "onceHighCents": 500000, "onceLabel": "Donor sperm, screening, legal work", "credit": false },
+    { "id": "egg-freezing", "label": "Freezing eggs before transition or later", "plain": "One retrieval and storage per year. Not a child yet: a door kept open.", "perTryLowCents": 800000, "perTryHighCents": 1500000, "triesLow": 1, "triesHigh": 2, "onceLowCents": 50000, "onceHighCents": 100000, "onceLabel": "A year of storage", "credit": false },
+    { "id": "surrogacy", "label": "Gestational surrogacy", "plain": "IVF plus a carrier's compensation, her insurance, an agency and lawyers on both sides. The most expensive path by far.", "perTryLowCents": 2000000, "perTryHighCents": 3500000, "triesLow": 1, "triesHigh": 2, "onceLowCents": 10000000, "onceHighCents": 17000000, "onceLabel": "Carrier compensation, agency, legal, insurance", "credit": false },
+    { "id": "adoption-domestic", "label": "Domestic infant adoption", "plain": "Through an agency or a lawyer. The federal adoption tax credit gives a large part back after the fact.", "perTryLowCents": 0, "perTryHighCents": 0, "triesLow": 1, "triesHigh": 1, "onceLowCents": 3000000, "onceHighCents": 6000000, "onceLabel": "Agency, legal, home study, birth-parent costs", "credit": true },
+    { "id": "adoption-foster", "label": "Adopting from foster care", "plain": "Usually close to free, with a monthly subsidy in many cases. The credit applies in full for a child with special needs even with no costs.", "perTryLowCents": 0, "perTryHighCents": 0, "triesLow": 1, "triesHigh": 1, "onceLowCents": 0, "onceHighCents": 300000, "onceLabel": "Legal fees, often reimbursed", "credit": true },
+    { "id": "adoption-international", "label": "International adoption", "plain": "Fewer countries allow it for queer parents each year; check before you plan. Travel is a large part.", "perTryLowCents": 0, "perTryHighCents": 0, "triesLow": 1, "triesHigh": 1, "onceLowCents": 3000000, "onceHighCents": 7000000, "onceLabel": "Agency, country fees, travel, legal", "credit": true }
+  ],
+  "afterward": [
+    { "id": "second-parent", "label": "Second-parent adoption", "lowCents": 150000, "highCents": 600000, "plain": "So the parent who did not give birth is a parent in every state. On the Chosen Family page too." },
+    { "id": "leave", "label": "Unpaid leave", "lowCents": 0, "highCents": 2000000, "plain": "Weeks without pay if your job's leave is short. Type the pay you would miss." },
+    { "id": "first-year", "label": "The first year", "lowCents": 500000, "highCents": 2500000, "plain": "Childcare, gear, the pediatrician, and a brit or naming. Rough, and real." }
+  ]
+}

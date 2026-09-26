@@ -17349,6 +17349,27 @@ SPARKS device backup neither carries nor removes `coach.` keys.
 
 **Verified.** `node test/run.js`; `node coach/test/run.js`.
 
+## D-340 — Kehillah is its own app in kehillah/, a lane beside SPARKS like coach/
+
+**Why.** The owner asked for a complete money-planning site for the queer
+Jewish community. The freeze allows no new room; D-339 set the pattern.
+
+**Decision.** `kehillah/` is a separate app with nine pages (Home, The Year,
+Tzedakah, Chosen Family, Making a Family, Care, Gemach, Elul, Resources),
+its own storage (`kehillah.plan.v1`, never `slaf.`), byte-identical copies of
+the money module, the theme and the fonts only (`kehillah/tools/vendor.js`),
+its own year-versioned tables in `kehillah/data/`, its own tests
+(`node kehillah/test/run.js`, in CI) and its own log (`kehillah/DECISIONS.md`,
+`KD-###`). Nothing in `rooms/`, `shared/`, `engines/` or `data/` changes for it.
+
+**Replaces or removes.** No SPARKS screen. It is the answer to "a site for the
+community" that does not add a room to the household app.
+
+**Stored shape.** No change to `slaf.household.v2` or any SPARKS key. The
+SPARKS device backup neither carries nor removes `kehillah.` keys.
+
+**Verified.** `node test/run.js`; `node kehillah/test/run.js`.
+
 ---
 
 # The Dungeons & Dividends entries

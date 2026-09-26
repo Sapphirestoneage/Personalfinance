@@ -1,0 +1,41 @@
+{
+  "id": "tzedakah",
+  "version": "2026.1",
+  "asOf": "2026-09-26",
+  "source": "The rates are the ones in Jewish law and custom: a tenth (ma'aser) is the norm, a fifth (chomesh) is the ceiling the Talmud sets so that a giver does not become a taker, and less than a tenth is fine when money is tight. The ladder is Maimonides' eight levels of giving (Mishneh Torah, Laws of Gifts to the Poor 10:7-14), in plain words.",
+  "confidence": "convention",
+  "confidenceNote": "Rates and levels are a tradition, not a rule this app enforces. Whether the tenth is taken from gross or after-tax income is a question rabbis answer differently; the app lets you choose and says which you chose.",
+  "rates": [
+    { "id": "less", "label": "Less than a tenth", "rate": 0.05, "plain": "When money is tight, a tenth is not asked of you. Five percent here is a stand-in; type your own." },
+    { "id": "maaser", "label": "A tenth (ma'aser)", "rate": 0.10, "plain": "The ordinary rate in Jewish practice: one dollar in ten." },
+    { "id": "chomesh", "label": "A fifth (chomesh)", "rate": 0.20, "plain": "The generous rate, and the ceiling the tradition sets: give more than this and you may need help yourself." }
+  ],
+  "bases": [
+    { "id": "net", "label": "After-tax income", "plain": "What actually lands in your account. The more common reading." },
+    { "id": "gross", "label": "Before-tax income", "plain": "Your salary as written. Some hold to this; it gives a bigger number." }
+  ],
+  "ladder": [
+    { "level": 8, "label": "Giving grudgingly", "plain": "You give, but you wish you had not." },
+    { "level": 7, "label": "Giving less than you should, but gladly", "plain": "Less than the need, with a good face." },
+    { "level": 6, "label": "Giving after being asked", "plain": "The full amount, once someone asks." },
+    { "level": 5, "label": "Giving before being asked", "plain": "You see the need and give without being asked." },
+    { "level": 4, "label": "The receiver knows you, you do not know them", "plain": "You give openly to someone you never learn about." },
+    { "level": 3, "label": "You know the receiver, they do not know you", "plain": "An anonymous gift to a named person." },
+    { "level": 2, "label": "Neither knows the other", "plain": "Giving to a fund or a community chest, so nobody is shamed and nobody is thanked." },
+    { "level": 1, "label": "Helping someone become self-supporting", "plain": "A loan, a job, a partnership, an interest-free gemach. The highest rung: a gift that ends the need." }
+  ],
+  "moments": [
+    { "id": "yk", "label": "Yom Kippur pledge", "holiday": "yom-kippur", "plain": "Many communities ask for a yearly gift on Yom Kippur. Decide the number before the day so the ask meets a plan and not a mood." },
+    { "id": "purim", "label": "Gifts to the poor on Purim", "holiday": "purim", "plain": "Matanot l'evyonim: two gifts to two people in need, on the day. Any amount counts." },
+    { "id": "pesach", "label": "Wheat money before Pesach", "holiday": "pesach", "plain": "Ma'ot chitim: helping others afford their seder. Jewish family services and many shuls run a fund." },
+    { "id": "yahrzeit", "label": "A yahrzeit gift", "holiday": null, "plain": "Giving on the anniversary of a death, in the person's name. Put the date in the notes so it is not a surprise." }
+  ],
+  "causes": [
+    { "id": "queer-jewish", "label": "Queer Jewish organizations", "plain": "The groups that made room for you. See the Resources page." },
+    { "id": "free-loan", "label": "A Hebrew free loan fund", "plain": "The top of the ladder: a gift that becomes a loan that becomes another loan." },
+    { "id": "local-need", "label": "Local need: food, rent, warmth", "plain": "A food bank, a rent fund, a shelter, a mutual-aid pot." },
+    { "id": "trans-mutual-aid", "label": "Trans and queer mutual aid", "plain": "Surgery funds, housing funds, name-change funds. Often the difference for one person." },
+    { "id": "community", "label": "Your shul, minyan or havurah", "plain": "Beyond dues: the building, the rabbi, the free High Holiday seats for the next person." },
+    { "id": "other", "label": "Somewhere else", "plain": "Anything. Say what in the note." }
+  ]
+}

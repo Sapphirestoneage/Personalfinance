@@ -1,0 +1,37 @@
+{
+  "id": "resources",
+  "version": "2026.1",
+  "asOf": "2026-09-26",
+  "source": "Organizations that serve queer Jews, or queer people, or Jews, on money and the things money touches. Public organizations, with their own public addresses.",
+  "confidence": "convention",
+  "confidenceNote": "A list of doors, not a recommendation. Organizations change names, close and merge; the address may have moved by the time you read this. If a link is dead, the name will still search. Nothing on this page costs money to ask.",
+  "groups": [
+    { "id": "queer-jewish", "label": "Queer Jewish community", "plain": "Where being both is the starting point.", "items": [
+      { "name": "Keshet", "url": "https://www.keshetonline.org", "plain": "Works for LGBTQ+ equality in Jewish life; runs Shabbatonim, trainings and a directory of welcoming communities." },
+      { "name": "Eshel", "url": "https://www.eshelonline.org", "plain": "Community and support for LGBTQ+ Jews from Orthodox homes, and their families." },
+      { "name": "JQY (Jewish Queer Youth)", "url": "https://www.jqyouth.org", "plain": "Support, a drop-in center and crisis help for LGBTQ+ Jewish youth, especially from Orthodox and Hasidic communities." },
+      { "name": "SVARA", "url": "https://svara.org", "plain": "A traditionally radical yeshiva: queer-led Talmud study, open to all, sliding scale." },
+      { "name": "Congregation Beit Simchat Torah", "url": "https://cbst.org", "plain": "The LGBTQ+ synagogue in New York; services online too." },
+      { "name": "A Wider Bridge", "url": "https://awiderbridge.org", "plain": "Connects LGBTQ+ communities in North America and Israel." }
+    ] },
+    { "id": "loans-aid", "label": "Interest-free loans and emergency help", "plain": "Money without a lender's price on it.", "items": [
+      { "name": "International Association of Jewish Free Loans", "url": "https://freeloan.org", "plain": "The directory of Hebrew free loan societies. The Gemach page says how they work." },
+      { "name": "Jewish Family Service (your city)", "url": "https://www.networkjhsa.org", "plain": "Nearly every city has one: emergency grants, food, counseling, case management. Search 'Jewish Family Service' plus your city; the Network of Jewish Human Service Agencies lists them." },
+      { "name": "Jewish Federations of North America", "url": "https://www.jewishfederations.org", "plain": "Your local Federation funds the agencies above and often runs an emergency fund." },
+      { "name": "Point of Pride", "url": "https://www.pointofpride.org", "plain": "Free binders and femme shapewear, and funds for surgery, hormones and electrolysis." },
+      { "name": "Trans Lifeline microgrants", "url": "https://translifeline.org", "plain": "Small grants for name changes and IDs, and a peer support line." }
+    ] },
+    { "id": "legal", "label": "Legal protection for families like yours", "plain": "The papers on the Chosen Family page, and who helps with them.", "items": [
+      { "name": "Lambda Legal", "url": "https://lambdalegal.org", "plain": "LGBTQ+ civil rights law; a help desk and plain guides on protecting your family." },
+      { "name": "National Center for Lesbian Rights", "url": "https://www.nclrights.org", "plain": "Legal help and guides on marriage, parentage and second-parent adoption." },
+      { "name": "Family Equality", "url": "https://www.familyequality.org", "plain": "For LGBTQ+ families and those becoming one: family-building guides, state-by-state law, and cost information." },
+      { "name": "Advocates for Trans Equality", "url": "https://transequality.org", "plain": "The ID documents center: how to change your name and gender marker in each state and on federal papers." },
+      { "name": "Transgender Law Center", "url": "https://transgenderlawcenter.org", "plain": "Legal information and a help line for trans and nonbinary people." }
+    ] },
+    { "id": "money", "label": "Money help without the sales pitch", "plain": "People whose job is to help, not to sell.", "items": [
+      { "name": "Association for Financial Counseling and Planning Education", "url": "https://www.afcpe.org", "plain": "Find an accredited financial counselor. Many work on a sliding scale or free through a nonprofit." },
+      { "name": "SAGE", "url": "https://www.sageusa.org", "plain": "Advocacy and services for LGBTQ+ elders: benefits counseling, housing, a hotline." },
+      { "name": "Money Rooms", "url": "../index.html", "plain": "The bigger app this one sits beside: the whole household's numbers, one owner a field. Same rules, more rooms." }
+    ] }
+  ]
+}

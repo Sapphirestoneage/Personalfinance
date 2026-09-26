@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="description" content="The Jewish year 5787 as a calendar of costs: dues, the holidays, Shabbat every week, camp and school, and what to set aside each month."/>
+<title>The Year: what 5787 costs, month by month</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="kehillah.css"/>
+<!--
+  THE YEAR (D-340, KD-004).
+
+  1. READS   plan.year.lines (one cents-or-null a line) and plan.year.savedCents;
+             data/jewish_year_5787.json for the holidays and the guide ranges.
+  2. WRITES  those same paths, one box each.
+  3. SHOWS   the next holiday, the year's total, the monthly set-aside, the
+             twelve months as bars, and one row a cost line with its guide.
+
+  LIVE-FORM: built once. The rows of boxes are built at boot and never
+  rebuilt; a change repaints only the read-outs (#stats, #months, #calendar).
+-->
+</head>
+<body class="slaf">
+<main class="k" id="main">
+  <div id="head"></div>
+
+  <section class="k-hero" aria-label="The next holiday">
+    <div>
+      <span class="k-eyebrow">The Jewish year 5787</span>
+      <h1>Every holiday with a price, on one calendar.</h1>
+      <p class="k-lead">Type what each line costs your household. Blank lines stay out of the total; the guide beside each box is a typical range, not your number. Weekly lines count fifty-two times, monthly ones twelve.</p>
+    </div>
+    <div class="k-card k-card--raised">
+      <h2 id="next-title">Next up</h2>
+      <p id="next-body" class="k-note">Loading.</p>
+    </div>
+  </section>
+
+  <section class="k-stats" id="stats" aria-label="The year in figures"></section>
+
+  <section class="k-card k-section" aria-label="The twelve months ahead">
+    <h2>The months ahead, to the end of 5787</h2>
+    <p class="k-note">Dated lines land in their holiday's month; weekly and monthly lines are spread evenly. A holiday already behind us is shown where it comes round again. The tallest month is the one to save for now.</p>
+    <div class="k-months" id="months" aria-hidden="true"></div>
+    <div class="k-months-labels" id="months-labels"></div>
+    <p class="k-note" id="months-say"></p>
+  </section>
+
+  <section class="k-card k-section" aria-label="The lines">
+    <h2>What each line costs you</h2>
+    <div class="k-rows" id="lines"></div>
+  </section>
+
+  <section class="k-card k-section" aria-label="Set aside">
+    <h2>Already set aside for the year</h2>
+    <div class="k-inline">
+      <label>What is in the holiday pot today<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" id="saved" autocomplete="off" placeholder="not entered"/></span></label>
+      <div class="k-stat" id="pot"></div>
+    </div>
+  </section>
+
+  <section class="k-card k-section" aria-label="The calendar">
+    <h2>The calendar of 5787</h2>
+    <div class="k-scroll"><table class="k-table" id="calendar"></table></div>
+  </section>
+
+  <div id="words"></div>
+  <div id="foot"></div>
+</main>
+
+<script src="shared/money.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="engines/year.js"></script>
+<script src="kehillah.js"></script>
+<script src="page-year.js"></script>
+</body>
+</html>

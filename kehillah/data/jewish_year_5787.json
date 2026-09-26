@@ -1,0 +1,42 @@
+{
+  "id": "jewish_year_5787",
+  "version": "5787.1",
+  "asOf": "2026-09-26",
+  "source": "Dates: the fixed Hebrew calendar, converted for 5787 (a leap year, 13 months). Costs: typical US ranges gathered from synagogue fee pages, Jewish camp and day school published tuition, and the owner's coaching practice, rounded. Every figure is a starting point to replace with your own.",
+  "confidence": "rough",
+  "confidenceNote": "The dates are the ordinary calendar and should be right; check one against any Jewish calendar before printing invitations. The cost ranges are wide on purpose: a synagogue's dues run from waived to several thousand dollars, and the sliding scale is real, so ask. Nothing here is a number the app computes; every line waits for what you type.",
+  "year": 5787,
+  "starts": "2026-09-11",
+  "ends": "2027-10-01",
+  "leapYear": true,
+  "holidays": [
+    { "id": "rosh-hashanah", "name": "Rosh Hashanah", "plain": "The new year. Two days, apples and honey, a round challah, the shofar.", "eve": "2026-09-11", "starts": "2026-09-12", "ends": "2026-09-13" },
+    { "id": "yom-kippur", "name": "Yom Kippur", "plain": "The day of atonement. A fast, and the day many make their yearly pledge.", "eve": "2026-09-20", "starts": "2026-09-21", "ends": "2026-09-21" },
+    { "id": "sukkot", "name": "Sukkot", "plain": "A week of meals in a hut outside. A lulav and etrog if you wave them.", "eve": "2026-09-25", "starts": "2026-09-26", "ends": "2026-10-02" },
+    { "id": "simchat-torah", "name": "Shemini Atzeret and Simchat Torah", "plain": "The end of the fall holidays. Dancing with the Torah.", "eve": "2026-10-02", "starts": "2026-10-03", "ends": "2026-10-04" },
+    { "id": "hanukkah", "name": "Hanukkah", "plain": "Eight nights of candles, fried food, and for many, gifts.", "eve": "2026-12-04", "starts": "2026-12-05", "ends": "2026-12-12" },
+    { "id": "tu-bishvat", "name": "Tu BiShvat", "plain": "The new year for trees. Fruit, and a good day to give to the land.", "eve": "2027-01-22", "starts": "2027-01-23", "ends": "2027-01-23" },
+    { "id": "purim", "name": "Purim", "plain": "Costumes, the megillah, food baskets for friends, and gifts to the poor. This is a leap year, so Purim falls in the second Adar.", "eve": "2027-03-22", "starts": "2027-03-23", "ends": "2027-03-23" },
+    { "id": "pesach", "name": "Pesach", "plain": "Passover. Eight days without leavened food, and the seder meals. The costliest food week of the year for most households.", "eve": "2027-04-21", "starts": "2027-04-22", "ends": "2027-04-29" },
+    { "id": "shavuot", "name": "Shavuot", "plain": "The giving of the Torah. Cheesecake, an all-night study, flowers.", "eve": "2027-06-10", "starts": "2027-06-11", "ends": "2027-06-12" },
+    { "id": "tisha-bav", "name": "Tisha B'Av", "plain": "A fast day of mourning. No cost, a day off if you keep it.", "eve": "2027-08-11", "starts": "2027-08-12", "ends": "2027-08-12" },
+    { "id": "rosh-hashanah-5788", "name": "Rosh Hashanah 5788", "plain": "Next year's new year. Your plan for 5788 starts before this.", "eve": "2027-10-01", "starts": "2027-10-02", "ends": "2027-10-03" }
+  ],
+  "lines": [
+    { "id": "dues", "label": "Synagogue or community membership", "holiday": "rosh-hashanah", "plain": "What a shul, minyan or havurah asks for the year. Almost every one has a sliding scale, and many queer-led communities ask for what you can. Asking is normal.", "lowCents": 0, "highCents": 300000, "startCents": 90000, "kind": "year" },
+    { "id": "hh-tickets", "label": "High Holiday seats", "holiday": "rosh-hashanah", "plain": "Some communities charge non-members for Rosh Hashanah and Yom Kippur seats. Members usually pay nothing extra. Many queer communities and campus Hillels are free.", "lowCents": 0, "highCents": 40000, "startCents": 0, "kind": "year" },
+    { "id": "hh-food", "label": "Rosh Hashanah and break-fast meals", "holiday": "rosh-hashanah", "plain": "Round challah, honey, a brisket or its vegan cousin, the meal after the Yom Kippur fast. Hosting costs more than being hosted.", "lowCents": 5000, "highCents": 40000, "startCents": 15000, "kind": "year" },
+    { "id": "sukkah", "label": "A sukkah, and a lulav and etrog", "holiday": "sukkot", "plain": "A sukkah kit is a one-time buy that lasts years; a lulav and etrog set is yearly. Many people use the community's and pay nothing.", "lowCents": 0, "highCents": 60000, "startCents": 6000, "kind": "year" },
+    { "id": "hanukkah", "label": "Hanukkah: candles, latkes, gifts", "holiday": "hanukkah", "plain": "Candles and oil are cheap. Gifts are the choice: one small thing a night, one big thing, or none. Chosen family often swaps gifts for one shared night.", "lowCents": 1000, "highCents": 80000, "startCents": 12000, "kind": "year" },
+    { "id": "purim", "label": "Purim: food baskets and gifts to the poor", "holiday": "purim", "plain": "Two food gifts to friends (mishloach manot) and two gifts to people in need (matanot l'evyonim) are the tradition. Costumes are extra and optional.", "lowCents": 2000, "highCents": 30000, "startCents": 6000, "kind": "year" },
+    { "id": "pesach", "label": "Pesach: the seder and eight days of food", "holiday": "pesach", "plain": "Matzah, wine, the seder plate, and kosher-for-Passover groceries that cost more than the ordinary kind. Hosting a seder for ten is the high end.", "lowCents": 10000, "highCents": 100000, "startCents": 30000, "kind": "year" },
+    { "id": "shavuot", "label": "Shavuot and the smaller days", "holiday": "shavuot", "plain": "Cheesecake, flowers, a Tu BiShvat fruit plate. Small, and easy to forget.", "lowCents": 0, "highCents": 15000, "startCents": 3000, "kind": "year" },
+    { "id": "shabbat", "label": "Shabbat, each week", "holiday": null, "plain": "Candles, challah, wine or grape juice, and a nicer dinner than a weeknight. Fifty-two weeks. Hosting your people costs more and is often the point.", "lowCents": 1000, "highCents": 12000, "startCents": 3500, "kind": "week" },
+    { "id": "kosher", "label": "The kosher premium, each month", "holiday": null, "plain": "If you keep kosher, meat, cheese and some packaged food cost more than the ordinary kind. Type the extra, not the whole grocery bill. Zero is right if you do not keep kosher.", "lowCents": 0, "highCents": 40000, "startCents": 0, "kind": "month" },
+    { "id": "tzedakah-year", "label": "Tzedakah, if planned here", "holiday": "yom-kippur", "plain": "Your giving for the year, if you want it on this calendar. The Tzedakah page works it out from your income; type its number here, or leave this blank and keep the two apart.", "lowCents": 0, "highCents": 1000000, "startCents": null, "kind": "year" },
+    { "id": "camp", "label": "Jewish summer camp", "holiday": "shavuot", "plain": "Overnight camp for one child, one summer. Scholarships and first-year grants (One Happy Camper) are common; the sticker price is rarely what families pay.", "lowCents": 0, "highCents": 1200000, "startCents": null, "kind": "year" },
+    { "id": "school", "label": "Day school or Hebrew school", "holiday": "rosh-hashanah", "plain": "Supplementary Hebrew school is a few hundred to a couple of thousand a year; day school is tens of thousands, nearly always with tuition assistance. Per child.", "lowCents": 0, "highCents": 4000000, "startCents": null, "kind": "year" },
+    { "id": "lifecycle", "label": "A life-cycle event this year", "holiday": null, "plain": "A wedding, a b'nai mitzvah, a baby naming or a brit, a conversion, a funeral or an unveiling. If one is coming this year, put a rough figure here; if not, leave it blank.", "lowCents": 0, "highCents": 5000000, "startCents": null, "kind": "year" },
+    { "id": "travel", "label": "Travel to be with family for a holiday", "holiday": "pesach", "plain": "Flights or a long drive to a seder or a break-fast, for the family you were born into or the one you chose.", "lowCents": 0, "highCents": 200000, "startCents": null, "kind": "year" }
+  ]
+}

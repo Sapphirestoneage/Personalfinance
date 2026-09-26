@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="description" content="A tzedakah plan: a tenth, a fifth or your own rate of income, what that is in dollars, what you have given so far this year, and the ladder of giving."/>
+<title>Tzedakah: a rate, a target, and the ladder</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="kehillah.css"/>
+<!--
+  TZEDAKAH (D-340, KD-004).
+
+  1. READS   plan.tzedakah (incomeCents, base, rate, gifts[]); data/tzedakah.json.
+  2. WRITES  the same. A gift is added from the entry form and removed from
+             its row; nothing else edits a gift.
+  3. SHOWS   the target, what is given, the gap and the monthly pace; the
+             gifts by cause; the ladder with a count a rung; the year's moments.
+
+  LIVE-FORM: built once. The income box, the chips and the entry form are
+  built at boot. The gifts table is rebuilt on add or remove; it holds no
+  typed box, only rows and remove buttons.
+-->
+</head>
+<body class="slaf">
+<main class="k" id="main">
+  <div id="head"></div>
+
+  <section class="k-hero" aria-label="Your rate">
+    <div>
+      <span class="k-eyebrow">Giving</span>
+      <h1>A tenth is the custom. The number is yours.</h1>
+      <p class="k-lead">Tzedakah is from the word for justice: a share owed, not a tip. The tradition sets a tenth as the norm, a fifth as the ceiling, and less when money is tight. Choose the rate and the income it applies to, and the page does the arithmetic and keeps the tally.</p>
+    </div>
+    <div class="k-card k-card--raised">
+      <h2>The rate</h2>
+      <div class="k-inline">
+        <label>Your income for the year<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" id="income" autocomplete="off" placeholder="not entered"/></span></label>
+        <label>Counted as<div id="base"></div></label>
+      </div>
+      <div style="margin-top:var(--space-3)">
+        <span class="k-eyebrow">The share</span>
+        <div id="rates" style="margin-top:var(--space-1)"></div>
+        <div class="k-inline" style="margin-top:var(--space-2)">
+          <label>Or your own rate, in percent<span class="slaf-input-shell"><input type="text" id="rate" autocomplete="off" placeholder="10"/><span class="slaf-affix">%</span></span></label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="k-stats" id="stats" aria-label="The year in figures"></section>
+  <div id="bar"></div>
+  <p class="k-note" id="bar-say"></p>
+
+  <section class="k-grid k-grid--2 k-section">
+    <div class="k-card" aria-label="Add a gift">
+      <h2>Add a gift</h2>
+      <div class="k-inline">
+        <label>To<select class="k-select" id="g-cause"></select></label>
+        <label>Who, by name<input type="text" id="g-label" maxlength="60" autocomplete="off" placeholder="for example: the shul"/></label>
+        <label>How much<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" id="g-cents" autocomplete="off" placeholder="not entered"/></span></label>
+        <label>When<input type="date" id="g-date"/></label>
+        <label>Which rung<select class="k-select" id="g-level"><option value="">Not sure</option></select></label>
+        <label>A note<input type="text" id="g-note" maxlength="80" autocomplete="off" placeholder="Yom Kippur pledge, a yahrzeit"/></label>
+      </div>
+      <div class="k-actions" style="margin-top:var(--space-3)"><button type="button" class="slaf-btn slaf-btn--primary" id="g-add">Add it</button><span class="k-say" id="g-say" role="status"></span></div>
+      <h3 style="margin-top:var(--space-4)">This year's gifts</h3>
+      <div class="k-scroll"><table class="k-table" id="gifts"></table></div>
+    </div>
+    <div class="k-card" aria-label="The ladder">
+      <h2>The ladder of giving</h2>
+      <p class="k-note">Maimonides ranked eight ways to give. The rung is about how, not how much; the top rung is a loan or a job, which is what a gemach is. The count is how many of your gifts sit on each rung.</p>
+      <ol class="k-ladder" id="ladder"></ol>
+    </div>
+  </section>
+
+  <section class="k-card k-section" aria-label="The moments">
+    <h2>The moments of the year that ask</h2>
+    <ul class="k-links" id="moments"></ul>
+  </section>
+
+  <div id="words"></div>
+  <div id="foot"></div>
+</main>
+
+<script src="shared/money.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="engines/tzedakah.js"></script>
+<script src="kehillah.js"></script>
+<script src="page-tzedakah.js"></script>
+</body>
+</html>

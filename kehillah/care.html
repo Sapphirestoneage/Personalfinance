@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="description" content="Gender-affirming care planned in dollars: each item, whether insurance covers it, the out-of-pocket maximum, the HSA or FSA that pays untaxed, the name change, and the month you get there."/>
+<title>Care: what it costs out of pocket, and the account that pays</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="kehillah.css"/>
+<!--
+  CARE (D-340, KD-004).
+
+  1. READS   plan.care (insured, deductibleCents, oopMaxCents, items{}, hsa{},
+             savedCents, monthlyCents, names{}); data/care_2026.json.
+  2. WRITES  the same.
+  3. SHOWS   what this year costs out of pocket once covered lines are capped
+             at the plan's maximum, the HSA room, the name change, the timeline.
+
+  LIVE-FORM: built once. Every box and every covered/not chip is built at
+  boot; a change repaints only #stats, #bar, #hsa-out and #names-out.
+-->
+</head>
+<body class="slaf">
+<main class="k" id="main">
+  <div id="head"></div>
+
+  <section class="k-hero" aria-label="Insurance">
+    <div>
+      <span class="k-eyebrow">Gender-affirming care</span>
+      <h1>The price is the price only if nothing covers it.</h1>
+      <p class="k-lead">Type each item's cost and say whether your plan covers it. Covered lines add up only to the plan's out-of-pocket maximum; uncovered lines are yours in full. The result is the year's real number, the one to put in an untaxed account and save toward.</p>
+    </div>
+    <div class="k-card k-card--raised">
+      <h2>Your insurance</h2>
+      <div id="insured"></div>
+      <div class="k-inline" style="margin-top:var(--space-3)">
+        <label>The deductible<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" id="deductible" autocomplete="off" placeholder="not entered"/></span></label>
+        <label>The out-of-pocket maximum<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" id="oop" autocomplete="off" placeholder="not entered"/></span></label>
+      </div>
+      <p class="k-note" style="margin-top:var(--space-2)">Both are on the plan's summary of benefits. The maximum is the number that matters here.</p>
+    </div>
+  </section>
+
+  <section class="k-stats" id="stats" aria-label="In figures"></section>
+  <div id="bar"></div>
+  <p class="k-note" id="bar-say"></p>
+
+  <section class="k-card k-section" aria-label="The items">
+    <h2>What you are planning</h2>
+    <p class="k-note">Only the lines that are yours. A monthly line counts twelve times in the year.</p>
+    <div class="k-rows" id="items"></div>
+  </section>
+
+  <section class="k-grid k-grid--2 k-section">
+    <div class="k-card" aria-label="The account">
+      <h2>The account that pays untaxed</h2>
+      <p class="k-note" id="hsa-plain"></p>
+      <div id="hsa-type" style="margin-top:var(--space-2)"></div>
+      <div class="k-inline" style="margin-top:var(--space-3)">
+        <label>Put in so far this year<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" id="hsa-sofar" autocomplete="off" placeholder="not entered"/></span></label>
+        <div class="k-stat" id="hsa-out"></div>
+      </div>
+      <p class="k-note" id="fsa-plain" style="margin-top:var(--space-3)"></p>
+      <h3 style="margin-top:var(--space-4)">Saving toward it</h3>
+      <div class="k-inline">
+        <label>Set aside today<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" id="saved" autocomplete="off" placeholder="not entered"/></span></label>
+        <label>Added each month<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" id="monthly" autocomplete="off" placeholder="not entered"/></span></label>
+      </div>
+    </div>
+    <div class="k-card" aria-label="The name">
+      <h2>The name change</h2>
+      <p class="k-note">Small fees, many of them, and they add up to a number worth planning. Added to the target below.</p>
+      <div class="k-rows" id="names"></div>
+      <div class="k-stat" id="names-out" style="margin-top:var(--space-3)"></div>
+    </div>
+  </section>
+
+  <div id="words"></div>
+  <div id="foot"></div>
+</main>
+
+<script src="shared/money.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="engines/timeline.js"></script>
+<script src="engines/care.js"></script>
+<script src="kehillah.js"></script>
+<script src="page-care.js"></script>
+</body>
+</html>

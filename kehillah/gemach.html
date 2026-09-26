@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="description" content="What a Hebrew free loan saves against a credit card or a bank loan on the same amount and months, how a gemach works, and where to find one."/>
+<title>Gemach: a loan without interest, beside the card</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="kehillah.css"/>
+<!--
+  GEMACH (D-340, KD-004).
+
+  1. READS   plan.gemach (amountCents, termMonths, cardApr, loanApr, monthlyCents);
+             data/gemach.json.
+  2. WRITES  the same.
+  3. SHOWS   three monthly payments and three totals on the same loan, what
+             the gemach saves, the months to save it first, and the societies.
+
+  LIVE-FORM: built once. The five boxes are built at boot; a change repaints
+  only #compare and #wait.
+-->
+</head>
+<body class="slaf">
+<main class="k" id="main">
+  <div id="head"></div>
+
+  <section class="k-hero" aria-label="What a gemach is">
+    <div>
+      <span class="k-eyebrow">Interest-free loans</span>
+      <h1>The tradition already built the bank you want.</h1>
+      <p class="k-lead" id="plain"></p>
+    </div>
+    <div class="k-card k-card--raised">
+      <h2>The loan</h2>
+      <div class="k-inline">
+        <label>How much<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" id="amount" autocomplete="off" placeholder="not entered"/></span></label>
+        <label>Paid back over, in months<span class="slaf-input-shell"><input type="text" id="term" autocomplete="off" placeholder="36"/></span></label>
+        <label>Your card's rate<span class="slaf-input-shell"><input type="text" id="card" autocomplete="off" placeholder="24.9"/><span class="slaf-affix">%</span></span></label>
+        <label>A bank loan's rate<span class="slaf-input-shell"><input type="text" id="loan" autocomplete="off" placeholder="12.9"/><span class="slaf-affix">%</span></span></label>
+      </div>
+      <p class="k-note" style="margin-top:var(--space-2)">The rates are on your statement and the bank's offer. A blank rate leaves that column out.</p>
+    </div>
+  </section>
+
+  <section class="k-compare" id="compare" aria-label="The same loan three ways"></section>
+  <p class="k-note" id="compare-say"></p>
+
+  <section class="k-grid k-grid--2 k-section">
+    <div class="k-card" aria-label="Wait or borrow">
+      <h2>Or save it first</h2>
+      <p class="k-note">Sometimes the answer is to wait. Type what you could put aside each month and see how long the wait is; then compare it with the thing you need the money for.</p>
+      <div class="k-inline">
+        <label>Could put aside each month<span class="slaf-input-shell"><span class="slaf-affix">$</span><input type="text" id="monthly" autocomplete="off" placeholder="not entered"/></span></label>
+        <div class="k-stat" id="wait"></div>
+      </div>
+    </div>
+    <div class="k-card" aria-label="How it works">
+      <h2>How it usually works</h2>
+      <ul class="k-links" id="typical"></ul>
+    </div>
+  </section>
+
+  <section class="k-card k-section" aria-label="Where to find one">
+    <h2>Where to find one</h2>
+    <p class="k-note" id="finder"></p>
+    <ul class="k-links" id="societies"></ul>
+  </section>
+
+  <div id="words"></div>
+  <div id="foot"></div>
+</main>
+
+<script src="shared/money.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="engines/loan.js"></script>
+<script src="kehillah.js"></script>
+<script src="page-gemach.js"></script>
+</body>
+</html>

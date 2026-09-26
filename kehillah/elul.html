@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="description" content="Eight questions a year and four a month, in your words: the Jewish practice of taking stock in Elul, applied to money. Answers stay in your browser."/>
+<title>Elul: the accounting of the soul, for money</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="kehillah.css"/>
+<!--
+  ELUL (D-340, KD-004).
+
+  1. READS   plan.elul (yearly{}, monthly{}, yearlyAt, monthlyAt); data/elul.json.
+  2. WRITES  the same: one text an answer, and the date of the last sitting.
+  3. SHOWS   the questions, the answers, and when you last sat with them.
+             Computes nothing.
+
+  LIVE-FORM: built once. The text boxes are built at boot and never rebuilt.
+-->
+</head>
+<body class="slaf">
+<main class="k" id="main">
+  <div id="head"></div>
+
+  <section class="k-hero" aria-label="What this is">
+    <div>
+      <span class="k-eyebrow">Taking stock</span>
+      <h1>Cheshbon ha-nefesh, with a bank statement open.</h1>
+      <p class="k-lead" id="plain"></p>
+    </div>
+    <div class="k-card k-card--raised">
+      <h2>When you last sat with this</h2>
+      <p id="last-yearly" class="k-note"></p>
+      <p id="last-monthly" class="k-note"></p>
+      <div class="k-actions" style="margin-top:var(--space-3)">
+        <button type="button" class="slaf-btn slaf-btn--primary" id="btn-yearly">I did the year's reckoning today</button>
+        <button type="button" class="slaf-btn" id="btn-monthly">I did the month's today</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="k-grid k-grid--2 k-section">
+    <div class="k-card" aria-label="The year's questions">
+      <h2>Once a year, in Elul</h2>
+      <p class="k-note">Or whenever the year turns for you. Answers save as you go; there is no score.</p>
+      <div id="yearly"></div>
+    </div>
+    <div class="k-card" aria-label="The month's questions">
+      <h2>Each new moon</h2>
+      <p class="k-note">Four questions at Rosh Chodesh, or on the first of the month. Short answers.</p>
+      <div id="monthly"></div>
+      <h3 style="margin-top:var(--space-5)">A Shabbat from money</h3>
+      <p class="k-note">One day a week with no banking app, no shopping, no bill. For those who keep Shabbat it is already the rule; for those who do not, it is the cheapest financial habit there is. Nothing to enter: only to keep.</p>
+    </div>
+  </section>
+
+  <div id="words"></div>
+  <div id="foot"></div>
+</main>
+
+<script src="shared/money.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="kehillah.js"></script>
+<script src="page-elul.js"></script>
+</body>
+</html>

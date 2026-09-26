@@ -1,0 +1,25 @@
+{
+  "id": "elul",
+  "version": "2026.1",
+  "asOf": "2026-09-26",
+  "source": "Cheshbon ha-nefesh, the accounting of the soul, is the tradition of taking stock in Elul, the month before Rosh Hashanah. These are the same questions asked of a bank balance, written by the owner for coaching sessions.",
+  "confidence": "convention",
+  "confidenceNote": "Questions, not figures. The page stores your answers and nothing else; it computes nothing from them.",
+  "plain": "Elul is the month before the new year, when Jews take stock. This page does the same for money, in your words, once a year. The answers are yours; nothing here scores them. There is also a shorter one for the new moon each month.",
+  "yearly": [
+    { "id": "gave", "q": "What did I give away this year, and did it match what I said I would?", "hint": "The Tzedakah page has the number. The question is about the gap, and how it feels." },
+    { "id": "received", "q": "What did I receive that I did not earn: a gift, a loan, help, a place to stay?", "hint": "Chosen family runs on this. Name it so it can be returned or passed on." },
+    { "id": "owed", "q": "Who do I owe, in money or in kind, and have I said so out loud?", "hint": "A gemach, a friend, a parent, a fund. The debt that is unspoken costs the most." },
+    { "id": "protected", "q": "If I had been hit by a bus in Av, would the right people have been in charge?", "hint": "The Chosen Family page lists the papers. Which ones are still not done?" },
+    { "id": "spent-on-shame", "q": "Where did I spend to cover shame, and where did I not spend out of shame?", "hint": "A dinner you paid for to belong; care you put off because you did not feel you deserved it." },
+    { "id": "family-money", "q": "What money passed between me and my family of origin, and what did it cost?", "hint": "Strings, silence, a name not used. Or nothing, and that was fine. Write it down either way." },
+    { "id": "shabbat", "q": "Did I rest from money one day a week, or did it follow me?", "hint": "No banking app on Shabbat is a practice. So is one no-spend day for those who do not keep it." },
+    { "id": "next", "q": "What is the one money thing I want to be true by next Elul?", "hint": "One. The pages here will hold the number; this is the sentence." }
+  ],
+  "monthly": [
+    { "id": "m-spent", "q": "What did this month cost that I did not plan?" },
+    { "id": "m-holiday", "q": "What is on the Jewish calendar in the next thirty days, and is it paid for?" },
+    { "id": "m-gave", "q": "Did I give this month? To whom?" },
+    { "id": "m-ask", "q": "Is there help I should ask for before next month?" }
+  ]
+}

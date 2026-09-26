@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="description" content="Queer Jewish community, interest-free loans and emergency help, legal protection for families like yours, and money help without a sales pitch."/>
+<title>Resources: the doors, all free to knock on</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="kehillah.css"/>
+<!--
+  RESOURCES (D-340, KD-004).
+
+  1. READS   data/resources.json. Nothing of the plan.
+  2. WRITES  nothing.
+  3. SHOWS   four groups of organizations, each in one line.
+
+  LIVE-FORM: built once. There are no typed boxes on this page.
+-->
+</head>
+<body class="slaf">
+<main class="k" id="main">
+  <div id="head"></div>
+
+  <section class="k-hero" aria-label="What this is">
+    <div>
+      <span class="k-eyebrow">Doors</span>
+      <h1>Nobody does this alone, and nobody has to.</h1>
+      <p class="k-lead">The organizations below exist for exactly the situations on the other pages. Every one of them is free to ask. If a link has moved, the name still searches.</p>
+    </div>
+    <div class="k-card k-card--raised">
+      <h2>Three asks that are normal</h2>
+      <p><b>"Do you have a sliding scale?"</b> Every synagogue, most therapists, many camps. The answer is nearly always yes.</p>
+      <p><b>"Is there an emergency fund?"</b> Your Federation and Jewish Family Service have one. So does your shul, quietly.</p>
+      <p><b>"Would you be my guarantor?"</b> That is how a gemach works. It is a compliment to be asked.</p>
+    </div>
+  </section>
+
+  <div class="k-grid k-grid--2 k-section" id="groups"></div>
+
+  <div id="words"></div>
+  <div id="foot"></div>
+</main>
+
+<script src="shared/money.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/store.js"></script>
+<script src="shared/demo.js"></script>
+<script src="kehillah.js"></script>
+<script src="page-resources.js"></script>
+</body>
+</html>

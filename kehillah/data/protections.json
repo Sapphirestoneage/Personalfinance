@@ -1,0 +1,33 @@
+{
+  "id": "protections",
+  "version": "2026.1",
+  "asOf": "2026-09-26",
+  "source": "The document list is the standard estate-planning set as taught by LGBTQ+ legal groups (Lambda Legal's and the National Center for Lesbian Rights' guides on protecting families). Costs are typical US ranges: state forms free, online services at the low end, an attorney at the high end.",
+  "confidence": "rough",
+  "confidenceNote": "Law is by state and changes; marriage and second-parent adoption rules in particular. Costs vary by city. Nothing here is legal advice; it is a checklist with a price tag so the papers get done.",
+  "why": "If you are not married to the person you share your life with, or your family of origin is not your family, the law's defaults can hand decisions and money to people you would not choose. Every paper below replaces a default with your choice.",
+  "shapes": [
+    { "id": "solo", "label": "On my own", "plain": "One adult, with or without kids." },
+    { "id": "married", "label": "Married", "plain": "Legally married, to one person." },
+    { "id": "partnered", "label": "Partnered, not married", "plain": "One or more partners, no marriage certificate." },
+    { "id": "poly", "label": "More than two of us", "plain": "A polycule, a triad, a household of adults who share money and care." },
+    { "id": "chosen", "label": "Chosen family household", "plain": "Adults who are each other's people, sharing a home or a life, not partners." }
+  ],
+  "papers": [
+    { "id": "will", "label": "A will", "plain": "Who gets what, and who raises your kids, if you die. Without one the state decides, and the state does not know your chosen family.", "lowCents": 10000, "highCents": 150000, "urgentFor": ["partnered", "poly", "chosen", "solo"], "where": "A state statutory form, an online service, or a lawyer. If you have kids or a home, a lawyer." },
+    { "id": "healthcare-proxy", "label": "A health care proxy", "plain": "Who speaks for you in a hospital when you cannot. Without it, a hospital calls your legal next of kin, which may be a parent who does not use your name.", "lowCents": 0, "highCents": 30000, "urgentFor": ["partnered", "poly", "chosen", "solo"], "where": "Most states have a free form. Sign it, give copies to the person named and your doctor." },
+    { "id": "poa", "label": "A durable power of attorney", "plain": "Who can pay your bills and deal with your bank if you are alive but cannot. Ends at death; the will takes over.", "lowCents": 0, "highCents": 50000, "urgentFor": ["partnered", "poly", "chosen"], "where": "A state form or a lawyer. Banks sometimes want their own version; ask yours." },
+    { "id": "hipaa", "label": "A HIPAA release", "plain": "Lets the hospital talk to the people you name about your care. A proxy decides; a release gets told.", "lowCents": 0, "highCents": 10000, "urgentFor": ["partnered", "poly", "chosen"], "where": "Free forms are everywhere; your doctor's office has one." },
+    { "id": "beneficiaries", "label": "Beneficiary names on every account", "plain": "Retirement accounts, life insurance and most bank accounts pass by the name on the account, not by the will. An old name on a form beats a new will. Check each one.", "lowCents": 0, "highCents": 0, "urgentFor": ["solo", "married", "partnered", "poly", "chosen"], "where": "Each account's website, under beneficiaries. Fifteen minutes each." },
+    { "id": "guardianship", "label": "Guardianship for the kids", "plain": "Who raises your children if you cannot, named in the will and, in some states, in a separate paper. If a co-parent has no legal tie to the child, this is the paper that protects them.", "lowCents": 0, "highCents": 100000, "urgentFor": ["solo", "partnered", "poly", "chosen"], "where": "Inside the will, or a standby guardianship form where your state has one." },
+    { "id": "second-parent", "label": "A second-parent or confirmatory adoption", "plain": "Makes a non-biological parent a legal parent everywhere, not only in the state that put both names on the birth certificate. Courts elsewhere must honor an adoption; they do not have to honor a birth certificate.", "lowCents": 150000, "highCents": 600000, "urgentFor": ["married", "partnered", "poly"], "where": "A family lawyer. Some states have a cheaper confirmatory path for married parents." },
+    { "id": "cohabitation", "label": "A cohabitation or partnership agreement", "plain": "For partners who are not married: who owns what, who pays what, what happens to the home if you part. Marriage comes with these rules built in; without it you write your own.", "lowCents": 50000, "highCents": 300000, "urgentFor": ["partnered", "poly", "chosen"], "where": "A lawyer who has done one for a queer household before. Ask the Resources page." },
+    { "id": "funeral", "label": "Funeral and body wishes, in writing", "plain": "Your name, your pronouns, who plans it, a Jewish burial or not, which community. Some states let you name an agent for this; a written letter helps everywhere.", "lowCents": 0, "highCents": 20000, "urgentFor": ["solo", "partnered", "poly", "chosen"], "where": "A letter you sign and give to two people, or a state disposition form. Tell your chevra kadisha if you have one." },
+    { "id": "documents-name", "label": "Every ID in your name and gender", "plain": "Passport, licence, Social Security, bank, insurance. A name that does not match across papers gets a claim delayed at the worst moment.", "lowCents": 0, "highCents": 50000, "urgentFor": ["solo", "married", "partnered", "poly", "chosen"], "where": "The Care page has the name-change costs." }
+  ],
+  "statuses": [
+    { "id": "done", "label": "Done" },
+    { "id": "todo", "label": "Not yet" },
+    { "id": "na", "label": "Does not apply" }
+  ]
+}

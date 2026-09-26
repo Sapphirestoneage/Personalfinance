@@ -1,0 +1,26 @@
+{
+  "id": "gemach",
+  "version": "2026.1",
+  "asOf": "2026-09-26",
+  "source": "How Hebrew free loan societies work, from the International Association of Jewish Free Loans and the published terms of its member agencies. The societies listed are long-standing member agencies; their terms are typical, not quoted.",
+  "confidence": "rough",
+  "confidenceNote": "Each society sets its own maximum, its own residency rule and its own guarantor rule, and some serve anyone in their area regardless of religion. Check the society's own page before you count on a figure. The comparison rates on the page are what you type; the app assumes nothing.",
+  "plain": "A gemach (from gemilut chasadim, acts of loving-kindness) lends money at no interest. Hebrew free loan societies have done this in North America for over a hundred years: you borrow, you pay back monthly, someone else borrows the same dollars next. Most ask for one or two guarantors, people who promise to pay if you cannot, which is what makes a loan possible without a credit score.",
+  "typical": {
+    "minCents": 50000,
+    "maxCents": 2500000,
+    "termMonthsLow": 12,
+    "termMonthsHigh": 60,
+    "guarantors": "One or two, usually not living with you",
+    "uses": "Rent and moving, medical and dental, gender-affirming care, fertility and adoption, a car to get to work, tuition, a small business, debt consolidation, conversion costs, a wedding, a funeral."
+  },
+  "finder": { "label": "International Association of Jewish Free Loans", "url": "https://freeloan.org", "plain": "The directory of member societies. Start here to find the one for your city." },
+  "societies": [
+    { "name": "Hebrew Free Loan Society (New York)", "url": "https://hfls.org", "area": "New York City, Long Island, Westchester", "note": "Founded 1892. Lends to residents regardless of faith." },
+    { "name": "Jewish Free Loan Association (Los Angeles)", "url": "https://jfla.org", "area": "Greater Los Angeles and Ventura County", "note": "Many named funds, among them ones for fertility and for LGBTQ+ borrowers." },
+    { "name": "Hebrew Free Loan (San Francisco)", "url": "https://hflasf.org", "area": "Northern California", "note": "Loans for education, health, housing, business, fertility and gender-affirming care." },
+    { "name": "Hebrew Free Loan of Detroit", "url": "https://hfldetroit.org", "area": "Southeast Michigan", "note": "Founded 1895. Personal, business and education loans." },
+    { "name": "Hebrew Free Loan Association of Pittsburgh", "url": "https://hflapgh.org", "area": "Greater Pittsburgh", "note": "Founded 1887. Open to all residents." },
+    { "name": "Jewish Free Loan (Toronto)", "url": "https://jewishfreeloan.ca", "area": "Greater Toronto", "note": "For Canadians: the same idea." }
+  ]
+}
