@@ -88,3 +88,23 @@ referrals (lines), the rule-of-100 log (thirty days of columns, streak and
 count), and the goal from Start Here (a bar). Every picture has a table
 twin and a sentence of meaning; every incomplete reading names what is
 missing on the left.
+
+## LD-008 — The same book as one spreadsheet
+
+**Why.** The owner found the app too much for now and asked for a
+professional spreadsheet instead.
+
+**Decision.** `tools/workbook.py` reads `data/book.json` and writes
+`Leads-Ladder.xlsx`: a Start Here sheet (the seven answers, where you stand
+by planet and band, ring cleared, the Machine in brief, the book map), one
+sheet a body (every level with what the book says, its yellow input cells,
+Y checklists, its own reading and a Done / In progress / Not yet status
+worked out by formula), the Machine (the same formulas as
+`engines/machine.js`, with the funnel, levers and referral charts), the
+daily log and the words. Yellow cells with blue text are the only ones to
+type in; a blank is "not yet", never zero. The example numbers are invented
+and say so. The file is committed recalculated; `test/run.js` checks it
+carries every level title, every checklist item and cached values, so it
+cannot go stale against the book without a test saying so.
+
+**Stored shape.** None. The workbook stands alone; the app does not read it.

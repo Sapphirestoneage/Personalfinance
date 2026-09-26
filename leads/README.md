@@ -8,7 +8,8 @@ rings, and every exercise in the book is a level. Its own app, built the way
 `data/` changes for it, and nothing in SPARKS depends on it.
 
 Open `leads/index.html` (served: `python3 -m http.server`, then
-`http://localhost:8000/leads/`). The example numbers are invented.
+`http://localhost:8000/leads/`). The example numbers are invented. The same
+book as a spreadsheet is `leads/Leads-Ladder.xlsx` (LD-008).
 
 ## What is in here
 
@@ -23,6 +24,7 @@ Open `leads/index.html` (served: `python3 -m http.server`, then
 | `shared/tables.js` | Loads `data/` |
 | `common.js`, `leads.css` | The header, the chart frame, the look |
 | `shared/charts.js`, `shared/money.js` | Byte-identical copies of Coach Mode's charts and SPARKS' money (`tools/vendor.js`) |
+| `Leads-Ladder.xlsx`, `tools/workbook.py` | The same book as one spreadsheet, generated from `data/book.json` (`python3 leads/tools/workbook.py`, then recalculate); yellow cells are the ones to type in |
 | `test/run.js` | The ladder's tests (`node leads/test/run.js`, also in CI) |
 | `DECISIONS.md`, `STATUS.md` | This lane's log (`LD-###`) and where it stands |
 

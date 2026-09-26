@@ -371,6 +371,58 @@ section('No real data in the repository, no em dash in leads/');
   checkTrue('the book data credits the author and says it is a restatement, not a quote', /Hormozi/.test(book) && /own words/.test(book));
 }
 
+
+/* ======================================================================
+   The workbook
+   ====================================================================== */
+section('The workbook: the same book as one spreadsheet (LD-008)');
+{
+  /* A .xlsx is a zip. Read its shared strings without a dependency: walk
+     the local file headers, inflate the one entry we need. */
+  function zipEntry(buf, want) {
+    /* the central directory at the end of the file names every entry with
+       its sizes, so streamed entries (LibreOffice writes them) read too */
+    let eocd = -1;
+    for (let i = buf.length - 22; i >= Math.max(0, buf.length - 70000); i--) { if (buf.readUInt32LE(i) === 0x06054b50) { eocd = i; break; } }
+    if (eocd < 0) return null;
+    let p = buf.readUInt32LE(eocd + 16);
+    while (p + 46 <= buf.length && buf.readUInt32LE(p) === 0x02014b50) {
+      const method = buf.readUInt16LE(p + 10), csize = buf.readUInt32LE(p + 20), nlen = buf.readUInt16LE(p + 28), xlen = buf.readUInt16LE(p + 30), clen = buf.readUInt16LE(p + 32), off = buf.readUInt32LE(p + 42);
+      const name = buf.toString('utf8', p + 46, p + 46 + nlen);
+      if (name === want) {
+        const lnlen = buf.readUInt16LE(off + 26), lxlen = buf.readUInt16LE(off + 28), start = off + 30 + lnlen + lxlen;
+        const raw = buf.slice(start, start + csize);
+        return method === 8 ? require('zlib').inflateRawSync(raw).toString('utf8') : raw.toString('utf8');
+      }
+      p += 46 + nlen + xlen + clen;
+    }
+    return null;
+  }
+  const xlsxPath = L('Leads-Ladder.xlsx');
+  checkTrue('leads/Leads-Ladder.xlsx exists (python3 leads/tools/workbook.py writes it)', fs.existsSync(xlsxPath));
+  if (fs.existsSync(xlsxPath)) {
+    const buf = fs.readFileSync(xlsxPath);
+    const wbXml = zipEntry(buf, 'xl/workbook.xml') || '', strings = zipEntry(buf, 'xl/sharedStrings.xml') || '';
+    const names = (wbXml.match(/<sheet [^>]*name="([^"]+)"/g) || []).map(m => /name="([^"]+)"/.exec(m)[1]);
+    ['Start Here', 'Machine', 'Magnet', 'Warm', 'Content', 'Cold', 'Ads', 'Referrals', 'Employees', 'Agencies', 'Affiliates', 'Daily Log', 'Words'].forEach(n => checkTrue('the workbook has a ' + n + ' sheet', names.indexOf(n) !== -1));
+    const T = fresh().T;
+    const unesc = (s) => s.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+    const text = unesc(strings);
+    const missing = T.book.levels.filter(l => text.indexOf(l.title) === -1).map(l => l.id);
+    checkTrue('every level title of book.json is in the workbook (regenerate it when the book changes)', missing.length === 0, missing.join(', '));
+    const missingChecks = [];
+    T.book.levels.forEach(l => (l.checklist || []).forEach(c => { if (text.indexOf(c) === -1) missingChecks.push(l.id); }));
+    checkTrue('every checklist item is in the workbook', missingChecks.length === 0, missingChecks.join(', '));
+    checkTrue('every word of the glossary is in the workbook', T.book.words.every(w => text.indexOf(w[0]) !== -1));
+    checkTrue('the workbook says its numbers are examples', /invented/.test(text));
+    const cached = zipEntry(buf, 'xl/worksheets/sheet2.xml') || '';
+    checkTrue('the workbook was recalculated before it was committed (formula cells carry values)', /<f[^>]*>[^<]*<\/f>\s*<v>[^<]+<\/v>/.test(cached));
+    checkTrue('no formula errors are cached in the Machine sheet', !/<v>#(REF|NAME|VALUE|DIV\/0)/.test(cached));
+    const gen = fs.readFileSync(L('tools/workbook.py'), 'utf8');
+    checkTrue('the generator reads the book, never a copy of it', /book\.json/.test(gen));
+  }
+}
+
 /* ---- Report --------------------------------------------------------------- */
 delete global.localStorage;
 console.log('\n' + '-'.repeat(66));
