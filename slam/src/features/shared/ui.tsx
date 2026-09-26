@@ -6,7 +6,7 @@ import { href } from '@/app/router';
 
 export function Card({ title, children, testId, action }: { title?: string; children: ReactNode; testId?: string; action?: ReactNode }) {
   return (
-    <section data-testid={testId} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+    <section data-testid={testId} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-sky-900/5 dark:border-sky-950 dark:bg-slate-900">
       {(title || action) && (
         <div className="mb-3 flex items-baseline justify-between gap-2">
           {title && <h2 className="text-base font-semibold">{title}</h2>}
@@ -23,7 +23,7 @@ export function Big({ label, value, testId, tone = 'plain', sub }: { label: stri
   return (
     <div>
       <div className="text-xs uppercase tracking-wide text-slate-500">{label}</div>
-      <div data-testid={testId} className={`text-2xl font-semibold tabular-nums ${color}`}>
+      <div data-testid={testId} className={`display text-3xl font-semibold tabular-nums ${color}`}>
         {value}
       </div>
       {sub && <div className="text-xs text-slate-500">{sub}</div>}
@@ -49,7 +49,7 @@ export function Button({
   type?: 'button' | 'submit';
 }) {
   const cls = {
-    primary: 'bg-sky-700 text-white hover:bg-sky-800 disabled:bg-slate-200 disabled:text-slate-400 dark:disabled:bg-slate-800 dark:disabled:text-slate-500',
+    primary: 'bg-gradient-to-r from-sky-700 to-sky-500 text-white shadow-sm shadow-sky-900/20 hover:from-sky-800 hover:to-sky-600 disabled:from-slate-200 disabled:to-slate-200 disabled:text-slate-400 disabled:shadow-none dark:disabled:from-slate-800 dark:disabled:to-slate-800 dark:disabled:text-slate-500',
     secondary: 'border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800',
     quiet: 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200',
     danger: 'border border-red-300 text-red-700 dark:border-red-800 dark:text-red-300',

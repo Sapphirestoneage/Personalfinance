@@ -183,8 +183,7 @@ here is decided; an answer changes one place in the code and one line here.
     one, so a screenshot to Sapphire says what broke. Say if it should
     hide it.
 
-37. **Levels.** Five planets by five bands mirror the SPARKS Sky. A
-    confirmed estimate counts as hers ("confirmed by you"), the same as a
-    typed number. Say if confirming should count for less, and whether
-    Today should keep offering the next short level ahead of the next
-    tool.
+37. **Levels.** Five planets by five bands mirror the SPARKS Sky. Decided
+    by the owner: a confirmed estimate counts the same as a typed number.
+    Open: whether Today should keep offering the next short level ahead of
+    the next tool.

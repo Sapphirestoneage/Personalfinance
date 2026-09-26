@@ -43,7 +43,7 @@ export function Bars({ rows, format, summary, testId, height }: Props) {
     void loadEcharts().then((echarts) => {
       if (cancelled || !ref.current) return;
       const dark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const ink = dark ? '#cbd5e1' : '#334155';
+      const ink = dark ? '#e3d3dc' : '#4b3544';
       chart = echarts.init(ref.current, undefined, { renderer: 'canvas' });
       chart.setOption({
         animation: false,
@@ -55,7 +55,7 @@ export function Bars({ rows, format, summary, testId, height }: Props) {
           {
             type: 'bar',
             barMaxWidth: 18,
-            data: rows.map((r) => ({ value: r.value, itemStyle: { color: r.emphasis ? '#0369a1' : '#7dd3fc', borderRadius: 4 } })),
+            data: rows.map((r) => ({ value: r.value, itemStyle: { color: r.emphasis ? '#be185d' : '#f9a8d4', borderRadius: 4 } })),
             label: { show: true, position: 'right', color: ink, fontSize: 12, formatter: (p: { value: number }) => format(p.value) },
           },
         ],

@@ -12,7 +12,7 @@ export function Rounds({ rounds, compact = false }: { rounds: RoundState[]; comp
             <span
               aria-hidden="true"
               className={`flex ${compact ? 'h-8 w-8' : 'h-11 w-11'} items-center justify-center rounded-full`}
-              style={{ background: r.complete ? '#0369a1' : `conic-gradient(#38bdf8 ${deg}deg, var(--ring-rest) ${deg}deg)` }}
+              style={{ background: r.complete ? '#be185d' : `conic-gradient(#ec4899 ${deg}deg, var(--ring-rest) ${deg}deg)` }}
             >
               <span className={`flex ${compact ? 'h-6 w-6 text-[10px]' : 'h-8 w-8 text-xs'} items-center justify-center rounded-full font-semibold ${r.complete ? 'bg-sky-700 text-white' : 'bg-white text-slate-700 dark:bg-slate-900 dark:text-slate-200'}`}>{r.band}</span>
             </span>

@@ -1,44 +1,78 @@
 @import "tailwindcss";
 
-/* Light and dark follow the phone. Tokens live here; Tailwind utilities do
-   the rest. Every var used below is defined in this file. */
+/* The palette: rose and magenta on blush by day, on plum-black velvet by
+   night, with warm mauve neutrals and a touch of gold for estimates.
+   Components use Tailwind's sky and slate names; those names are remapped
+   here, so the whole app changes in one place. Every var used below is
+   defined in this file. No web fonts: the display face comes from the
+   phone's own serifs, so nothing is fetched. */
 @theme {
-  --color-ink: #0f172a;
-  --color-paper: #f8fafc;
-  --color-accent: #0284c7;
-  --color-accent-soft: #e0f2fe;
-  --color-good: #15803d;
-  --color-warn: #b45309;
-  --color-muted: #64748b;
-  --color-line: #e2e8f0;
-  --color-card: #ffffff;
+  /* accent (rose, magenta) in place of sky */
+  --color-sky-50: #fdf2f8;
+  --color-sky-100: #fce7f3;
+  --color-sky-200: #fbcfe8;
+  --color-sky-300: #f9a8d4;
+  --color-sky-400: #f472b6;
+  --color-sky-500: #ec4899;
+  --color-sky-600: #db2777;
+  --color-sky-700: #be185d;
+  --color-sky-800: #9d174d;
+  --color-sky-900: #831843;
+  --color-sky-950: #500724;
+  /* neutrals with a mauve cast in place of slate */
+  --color-slate-50: #fbf6f9;
+  --color-slate-100: #f6ecf2;
+  --color-slate-200: #ecdce6;
+  --color-slate-300: #d9c2d0;
+  --color-slate-400: #ab8ea0;
+  --color-slate-500: #85687a;
+  --color-slate-600: #634a59;
+  --color-slate-700: #4b3544;
+  --color-slate-800: #33212d;
+  --color-slate-900: #22131d;
+  --color-slate-950: #150a11;
+  /* estimates and warnings: soft gold rather than amber */
+  --color-amber-50: #fdf6ec;
+  --color-amber-100: #f9e9cf;
+  --color-amber-300: #e9c27a;
+  --color-amber-400: #d9a94f;
+  --color-amber-700: #9a6512;
+  --color-amber-800: #7c500e;
+  --color-amber-900: #5f3d0a;
+  /* yours and good: a deep, soft green that sits well next to rose */
+  --color-green-100: #e4f3ea;
+  --color-green-200: #bfe3cd;
+  --color-green-300: #86c9a3;
+  --color-green-700: #1f6b47;
+  --color-green-800: #185539;
+  --color-green-900: #113d29;
+  --font-display: "Didot", "Baskerville", "Cormorant Garamond", "Palatino", "Georgia", "Noto Serif", serif;
 }
-
 
 html {
   color-scheme: light dark;
   -webkit-text-size-adjust: 100%;
-  --ring-rest: #e2e8f0;
+  --ring-rest: #ecdce6;
+  --paper: #fbf5f8;
+  --ink: #22131d;
 }
 @media (prefers-color-scheme: dark) {
   html {
-    --ring-rest: #1e293b;
+    --ring-rest: #33212d;
+    --paper: #140b12;
+    --ink: #f6ecf2;
   }
 }
 
 body {
   margin: 0;
-  background: #f8fafc;
-  color: #0f172a;
+  background: var(--paper);
+  color: var(--ink);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   min-height: 100dvh;
-}
-
-@media (prefers-color-scheme: dark) {
-  body {
-    background: #0b1220;
-    color: #e2e8f0;
-  }
+  /* a faint rose glow at the top, like light through a curtain */
+  background-image: radial-gradient(120% 40% at 50% -10%, rgba(219, 39, 119, 0.10), transparent 70%);
+  background-repeat: no-repeat;
 }
 
 /* Big tap targets everywhere; phones first. */
@@ -48,8 +82,17 @@ button, input, select, textarea {
 h1, h2, h3 {
   text-wrap: balance;
 }
+/* headings and hero numbers in the display serif */
+h1, h2, .display {
+  font-family: var(--font-display);
+  letter-spacing: 0.01em;
+}
+h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
 :focus-visible {
-  outline: 2px solid #0284c7;
+  outline: 2px solid #db2777;
   outline-offset: 2px;
 }
 @media (prefers-reduced-motion: reduce) {

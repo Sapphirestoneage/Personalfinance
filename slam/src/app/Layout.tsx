@@ -44,14 +44,14 @@ export function Layout({ children }: { children: ReactNode }) {
 
   return (
     <div className={`mx-auto min-h-dvh max-w-md px-4 pb-8 pt-[max(env(safe-area-inset-top),0.75rem)] ${presenter ? 'text-[118%]' : ''}`}>
-      <header className="mb-4 flex items-center justify-between">
+      <header className="mb-4 flex items-center justify-between border-b border-transparent pb-3 [border-image:linear-gradient(90deg,transparent,#db2777_50%,transparent)_1]">
         <button type="button" aria-label="Menu" data-testid="menu" onClick={() => setOpen(true)} className="rounded-lg p-2 -ml-2">
           <span className="block h-0.5 w-6 bg-current" />
           <span className="mt-1.5 block h-0.5 w-6 bg-current" />
           <span className="mt-1.5 block h-0.5 w-6 bg-current" />
         </button>
         <a href={href('today')} className="text-center">
-          <div className="text-lg font-bold tracking-tight">{APP_NAME}</div>
+          <div className="display text-2xl font-semibold tracking-[0.12em]">{APP_NAME}</div>
           <div className="text-[11px] text-slate-500">{APP_TAGLINE}</div>
         </a>
         <button type="button" data-testid="hide" onClick={hide} aria-label="Hide" className="rounded-full border border-slate-300 px-3 py-1.5 text-sm font-medium dark:border-slate-700">
@@ -63,7 +63,7 @@ export function Layout({ children }: { children: ReactNode }) {
         <div className="fixed inset-0 z-40" role="dialog" aria-label="Menu">
           <button type="button" aria-label="Close menu" className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
           <nav data-testid="drawer" className="absolute inset-y-0 left-0 w-72 bg-white p-4 shadow-xl dark:bg-slate-900">
-            <div className="mb-4 text-lg font-bold">{APP_NAME}</div>
+            <div className="display mb-4 text-2xl font-semibold tracking-[0.12em]">{APP_NAME}</div>
             <ul className="space-y-1">
               {MENU.map((m) => (
                 <li key={m.to}>
