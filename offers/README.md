@@ -9,7 +9,9 @@ SPARKS depends on it.
 
 Open `offers/index.html` (served: `python3 -m http.server`, then
 `http://localhost:8000/offers/`). The example offer is made up: a strength
-program for new fathers, with invented numbers.
+program for new fathers, with invented numbers. Prefer a spreadsheet? Open
+`Offer Builder.xlsx` (blank) or `Offer Builder (example).xlsx` instead; the
+same exercises, the same readings, no code.
 
 ## The shape
 
@@ -43,6 +45,8 @@ sentence, and usually a picture, each with a table twin.
 | `shared/charts.js` | Every picture, as SVG from an engine's figures |
 | `shared/store.js` | The store: `offers.offer.v1` and `offers.prefs.v1`, never a `slaf.` key |
 | `shared/money.js`, `shared/theme.css`, `favicon.svg` | Byte-identical copies of the SPARKS files (`tools/vendor.js`) |
+| `Offer Builder.xlsx`, `Offer Builder (example).xlsx` | The same walk as a workbook: one tab per planet, fill-in cells, checklists, a dashboard with charts, the offer sheet (OD-002) |
+| `tools/workbook.py` | Builds the two workbooks from the example and the same exercises |
 | `test/run.js` | The tests (`node offers/test/run.js`, also in CI) |
 | `DECISIONS.md`, `STATUS.md` | This lane's log (`OD-###`) and where it stands |
 

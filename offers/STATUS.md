@@ -6,6 +6,8 @@ Updated: 2026-09-26
 - **OD-001**: the app exists. Three screens, six planets by four bands, 50
   levels covering every exercise in *$100M Offers*, 45 readings with pictures,
   the offer sheet, the example offer, tests in CI.
+- **OD-002**: the workbook. `Offer Builder.xlsx` and the example copy carry the
+  same walk for the owner, who found the app too much for now.
 - The lane is recorded in the SPARKS log as D-340. Nothing outside `offers/`
   changes for it.
 
