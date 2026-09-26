@@ -1,0 +1,51 @@
+{
+  "readouts": {
+    "posts": { "what": "How many pieces you published in the period. Volume is the input you control most.", "good": "Your weekly target, every week. A streak matters more than a big week." },
+    "impressions": { "what": "How many times your posts were shown, added up. Each platform calls it reach, views or impressions; use the biggest honest number it gives you and use the same one every time.", "good": "Growing week on week. The number itself matters less than the direction." },
+    "engagementRate": { "what": "Likes, comments, shares and saves, divided by reach. Says whether the people who saw it cared.", "good": "Above 2% is fine, above 5% is good. Saves and shares are worth more than likes." },
+    "follows": { "what": "New followers your posts brought, added up from what you typed on each post.", "good": "Any. Compare it to reach: a post that brings followers at a high rate is worth repeating." },
+    "leads": { "what": "People who moved to Lead in the period: they asked about working with you, or gave you a way to reach them.", "good": "Your weekly target. If reach is up and leads are flat, the ask on the posts is the thing to change." },
+    "outreach": { "what": "Messages you sent to people, by lane: warm, cold, from content, paid, referral. This is the work nobody sees.", "good": "The weekly target, done daily. Twenty-five a week is five a working day." },
+    "conversations": { "what": "People who replied, or who reached out first, in the period. Counted once a person.", "good": "A third of the people you reach out to. Below one in six, change the message, not the volume." },
+    "replyRate": { "what": "People who replied divided by people you reached out to.", "good": "Above 30% warm, above 10% cold." },
+    "calls": { "what": "Calls booked in the period, from a stage change to Call booked or a touch marked booked.", "good": "Your weekly target." },
+    "clients": { "what": "People who became clients in the period.", "good": "Any. Note where each one came from; that lane gets more of your time." },
+    "revenue": { "what": "The value you typed for each person who became a client in the period.", "good": "Only what was actually agreed. No forecasts here." },
+    "hours": { "what": "Minutes you typed on each post, added up. The cost side.", "good": "Falling per lead over time. If it rises for three months, the format is wrong." },
+    "hoursPerLead": { "what": "Content hours divided by leads. What a lead costs you in time.", "good": "Falling. There is no right number; only your last one." },
+    "streak": { "what": "Weeks in a row you hit the posting target, counting back from this week.", "good": "Longer than last month." },
+    "funnel": { "what": "Each step of the way from a stranger to a client, as a count and as a share of the step before.", "good": "Find the step with the worst drop. That is the only thing to work on this month." },
+    "due": { "what": "People whose next touch is today or overdue, from their stage's rhythm or the date you set.", "good": "Empty by the end of the day." }
+  },
+  "fields": {
+    "date": { "plain": "When did it go out?", "means": "The day it was published, not the day you made it." },
+    "channel": { "plain": "Where did it go out?", "means": "One platform a row. The same video on two platforms is two rows." },
+    "format": { "plain": "What kind of piece?", "means": "So you can see which formats earn their time." },
+    "pillar": { "plain": "What was it about?", "means": "A short topic word: money, family, behind the scenes, a story. Use the same words every time so they group." },
+    "hook": { "plain": "The first line.", "means": "The words on screen or the opening sentence. The thing people decide on." },
+    "cta": { "plain": "What did you ask people to do?", "means": "Leads come from asks. No ask, no lead, and that is fine sometimes." },
+    "minutes": { "plain": "How long did it take to make?", "means": "Rough minutes. Leave it blank if you do not know; a blank is not a zero." },
+    "impressions": { "plain": "Reach", "means": "Views, reach or impressions from the platform's own numbers. Pick one and stick to it." },
+    "results": { "plain": "How did it do?", "means": "Come back a few days later and type the platform's numbers. Blank means not checked yet." },
+    "name": { "plain": "Who?", "means": "The name you would use to them." },
+    "stage": { "plain": "Where are they with you?", "means": "Stranger, follower, in conversation, lead, call booked, client, advocate, or not now." },
+    "cadence": { "plain": "How often to reach out?", "means": "Days between touches. Blank uses the stage's usual rhythm. Zero means never." },
+    "nextAt": { "plain": "Contact them on", "means": "A date you set overrides the rhythm. Clear it to go back to the rhythm." },
+    "value": { "plain": "What did they pay?", "means": "Only for a client. The agreed amount in dollars." },
+    "lane": { "plain": "Which lane?", "means": "Warm (they know you), cold (they do not), from content (a post brought them), paid, referral." },
+    "outcome": { "plain": "What happened?", "means": "No reply yet, they replied, a call got booked, they bought, or not now." }
+  },
+  "words": [
+    ["Reach", "How many times a post was shown."],
+    ["Engagement", "Likes, comments, shares and saves, together."],
+    ["Engagement rate", "Engagement divided by reach."],
+    ["Touch", "One message, comment, call or meeting with one person."],
+    ["Lane", "Where the person came from: warm, cold, content, paid, referral."],
+    ["Conversation", "A person who replied or reached out first."],
+    ["Lead", "Someone who asked about working with you or gave you a way to reach them."],
+    ["Funnel", "The steps from stranger to client, each as a share of the one before."],
+    ["Cadence", "How many days between touches for a person."],
+    ["Streak", "Weeks in a row the posting target was hit."],
+    ["Pace", "Where this week's number should be by now if the week ends on target."]
+  ]
+}

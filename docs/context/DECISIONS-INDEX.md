@@ -5,7 +5,7 @@ One line per entry in DECISIONS.md: id, title, `[start-end]` lines, `{rooms}` it
 touches. `~` marks an entry a later one supersedes. Read one with
 `node tools/context/pack.js D-123` or `sed -n START,ENDp DECISIONS.md`.
 
-## SPARKS (D-) (337)
+## SPARKS (D-) (338)
 
 - D-001 — Repo state did not match the brief's Section 0 premise [13-58] {dashboard}
 - D-002 — navy-sapphire design system, centralised as CSS custom properties [60-99]
@@ -334,46 +334,47 @@ touches. `~` marks an entry a later one supersedes. Read one with
 - D-337 — Where an expense went: the card it was on, and the bonus that spending could reach [17279-17306] {expenses, cash-flow, budget, debt-payoff}
 - D-338 — Where the money went, by place: all of it, and the part you chose [17308-17332] {expenses, cash-flow}
 - D-339 — Coach Mode is its own app in coach/, a lane beside SPARKS like dnd/ [17334-17350]
-- D-340 — Every question in the Planets can be answered, and 195 facts get a home [17352-17386] {ledger}
-- D-341 — The planets dashboard: what is answered, what it bought, where each reading sits [17388-17426] {ledger}
-- D-342 — The standard the app is held to, and the first pass against it [17428-17458]
-- D-343 — Nothing moves under a finger [17460-17494]
-- D-344 — The measuring stick draws, and asks whose bands once [17497-17525]
-- D-345 — The Cushion answers before it asks [17528-17549] {runway}
-- D-346 — Every box says what it is, in words a third grader can read [17551-17578]
-- D-347 — Every number set is a picture, and the reader owns its shape and its colours [17581-17616]
-- D-348 — Nothing that appears on focus has a size [17619-17649]
-- D-349 — The room shell draws through the chart layer, so every room built on it does [17652-17684]
+- D-340 — The Marketing Scoreboard is its own app in marketing/, a lane beside SPARKS like coach/ [17352-17371]
+- D-341 — Every question in the Planets can be answered, and 195 facts get a home [17373-17407] {ledger}
+- D-342 — The planets dashboard: what is answered, what it bought, where each reading sits [17409-17447] {ledger}
+- D-343 — The standard the app is held to, and the first pass against it [17449-17479]
+- D-344 — Nothing moves under a finger [17481-17515]
+- D-345 — The measuring stick draws, and asks whose bands once [17518-17546]
+- D-346 — The Cushion answers before it asks [17549-17570] {runway}
+- D-347 — Every box says what it is, in words a third grader can read [17572-17599]
+- D-348 — Every number set is a picture, and the reader owns its shape and its colours [17602-17637]
+- D-349 — Nothing that appears on focus has a size [17640-17670]
+- D-350 — The room shell draws through the chart layer, so every room built on it does [17673-17704]
 
 ## Dungeons & Dividends (DD-) (30)
 
-- DD-001 — HP is measured in weeks, which is what makes §3A stop contradicting itself [17719-17771]
-- DD-002 — The eighteen scoring formulas, and why "average" means the median American [17773-17856]
-- DD-003 — Seven classes, not ten [17858-17882]
-- DD-004 — The character sheet is a sibling, not a room [17884-17959]
-- DD-005 — The character sheet lives here after all, in a folder [17961-18012] {dashboard}
-- DD-006 — The D&D tool's licence posture, and what "parody" actually constrains [18014-18050]
-- DD-007 — The D&D sheet is the form, and how that survives D-034 [18052-18118]
-- DD-008 — A monster's danger is a property of the meeting, not of the monster [18120-18249]
-- DD-009 — The free page tells you what hunts you, and is careful about what it cannot see [18251-18359] {dashboard}
-- DD-010 — Fifteen more creatures, and a mark saying which are ours [18361-18433]
-- DD-011 — Four tiers of play, and a function that refuses to place you [18435-18506]
-- DD-012 — Exhaustion is derived, statuses are declared, and both change the game [18508-18600]
-- DD-013 — Rests and pace, in the only unit HP has [18602-18689]
-- DD-014 — The card is the product, so it is drawn rather than laid out [18691-18759] {dashboard}
-- DD-015 — The file says which of itself may be believed, and a character can come home [18761-18845]
-- DD-016 — DM mode: the scenario is the URL, and it never touches your character [18847-18932]
-- DD-017 — Six types, derived from the bestiary, and a log field I said existed and did not [18934-19023]
-- DD-018 — Six abilities to buy, like D&D Beyond, and what a bought Strength is worth [19025-19103] {dashboard}
-- DD-019 — Two ways to get hurt: bills attack your armour, pitches go around it [19105-19195]
-- DD-020 — A failed save has to cost something [19197-19231]
-- DD-021 — A bleed is measured against a rest [19233-19272]
-- DD-022 — One strong save, one weak, and every save covered [19274-19311]
-- DD-023 — ASIs and feats that do something [19313-19381]
-- DD-024 — The campaign: ten rounds, a fork of your household, and advice that moves with you [19383-19523]
-- DD-025 — Creation lives in the campaign: your numbers, your six, and the receipts [19525-19644] {dashboard}
-- DD-026 — The whole run through: five questions, a build, your six, and what to do about them [19646-19808] {dashboard}
-- DD-027 — The long read: an Enneagram-shaped profile, and the one thing it refuses to do [19810-20040]
-- DD-028 — Four ways in, because one front door was asking before it gave [20042-20165] {dashboard}
-- DD-029 — HP reads the one runway function; the lump is one total, not split [20167-20185]
-- DD-030 — A sheet that looks like one, and a link that previews [20187-20280] {dashboard}
+- DD-001 — HP is measured in weeks, which is what makes §3A stop contradicting itself [17739-17791]
+- DD-002 — The eighteen scoring formulas, and why "average" means the median American [17793-17876]
+- DD-003 — Seven classes, not ten [17878-17902]
+- DD-004 — The character sheet is a sibling, not a room [17904-17979]
+- DD-005 — The character sheet lives here after all, in a folder [17981-18032] {dashboard}
+- DD-006 — The D&D tool's licence posture, and what "parody" actually constrains [18034-18070]
+- DD-007 — The D&D sheet is the form, and how that survives D-034 [18072-18138]
+- DD-008 — A monster's danger is a property of the meeting, not of the monster [18140-18269]
+- DD-009 — The free page tells you what hunts you, and is careful about what it cannot see [18271-18379] {dashboard}
+- DD-010 — Fifteen more creatures, and a mark saying which are ours [18381-18453]
+- DD-011 — Four tiers of play, and a function that refuses to place you [18455-18526]
+- DD-012 — Exhaustion is derived, statuses are declared, and both change the game [18528-18620]
+- DD-013 — Rests and pace, in the only unit HP has [18622-18709]
+- DD-014 — The card is the product, so it is drawn rather than laid out [18711-18779] {dashboard}
+- DD-015 — The file says which of itself may be believed, and a character can come home [18781-18865]
+- DD-016 — DM mode: the scenario is the URL, and it never touches your character [18867-18952]
+- DD-017 — Six types, derived from the bestiary, and a log field I said existed and did not [18954-19043]
+- DD-018 — Six abilities to buy, like D&D Beyond, and what a bought Strength is worth [19045-19123] {dashboard}
+- DD-019 — Two ways to get hurt: bills attack your armour, pitches go around it [19125-19215]
+- DD-020 — A failed save has to cost something [19217-19251]
+- DD-021 — A bleed is measured against a rest [19253-19292]
+- DD-022 — One strong save, one weak, and every save covered [19294-19331]
+- DD-023 — ASIs and feats that do something [19333-19401]
+- DD-024 — The campaign: ten rounds, a fork of your household, and advice that moves with you [19403-19543]
+- DD-025 — Creation lives in the campaign: your numbers, your six, and the receipts [19545-19664] {dashboard}
+- DD-026 — The whole run through: five questions, a build, your six, and what to do about them [19666-19828] {dashboard}
+- DD-027 — The long read: an Enneagram-shaped profile, and the one thing it refuses to do [19830-20060]
+- DD-028 — Four ways in, because one front door was asking before it gave [20062-20185] {dashboard}
+- DD-029 — HP reads the one runway function; the lump is one total, not split [20187-20205]
+- DD-030 — A sheet that looks like one, and a link that previews [20207-20300] {dashboard}

@@ -223,7 +223,7 @@
     var legend = slices.map(function (s, i) {
       var color = s.color || COLORS.series[i % COLORS.series.length];
       var share = total > 0 ? Math.max(0, s.value) / total : 0;
-      /* A set that is already shares says 70% once, not "70% 70%" (D-348). */
+      /* A set that is already shares says 70% once, not "70% 70%" (D-349). */
       return '<li><i style="background:' + color + '"></i><span class="lbl">' + esc(s.label) + (s.note ? '<small>' + esc(s.note) + '</small>' : '') + '</span>'
         + '<span class="val">' + esc(format(s.value)) + '</span>'
         + (o.showShare === false ? '' : '<span class="pct">' + percent(share) + '</span>') + '</li>';
@@ -260,7 +260,7 @@
       /* A row may print a figure of its own instead of the plotted one: a
          bullet bar draws how far a ratio sits from its band's edge, which is
          the only honest way to put measures of different scale on one axis,
-         and then says the real number beside it (D-341). */
+         and then says the real number beside it (D-342). */
       var shown = v === null ? (r.empty || 'not yet') : (r.display !== undefined && r.display !== null ? r.display : format(v));
       return '<div class="row' + (v === null ? ' is-empty' : '') + '">'
         + '<span class="lbl">' + esc(r.label) + (r.note ? '<small>' + esc(r.note) + '</small>' : '') + '</span>'
@@ -359,7 +359,7 @@
     var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(o.title || 'columns over time') + '">'
       + grid + '<line class="axis" x1="' + PL + '" x2="' + (W - PR) + '" y1="' + (PT + plotH).toFixed(1) + '" y2="' + (PT + plotH).toFixed(1) + '"/>' + body + divider + '</svg>';
     /* One series needs no legend: the column already wears its own name on
-       the axis, and repeating it is chrome (D-347, the dataviz rule). */
+       the axis, and repeating it is chrome (D-348, the dataviz rule). */
     var legend = o.legend === false ? '' : Object.keys(seen).map(function (k) { return '<li><i style="background:' + seen[k] + '"></i>' + esc(k) + '</li>'; }).join('');
     return '<div class="slaf-chart slaf-columns">' + svg + (legend ? '<ul class="slaf-legend">' + legend + '</ul>' : '') + '</div>';
   }

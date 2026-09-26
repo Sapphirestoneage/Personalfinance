@@ -243,7 +243,7 @@
         + (ok ? '' : goHtml(h))
         + (n.sub ? '<span class="sub">' + n.sub + '</span>' : '');
     }
-    /* ---- The room's picture, and the reader's say in it (D-349) ------------
+    /* ---- The room's picture, and the reader's say in it (D-350) ------------
        Every room built on this shell draws one chart, and the shell is the
        one place it lands. Handing it to shared/chartbox.js gives all of them
        the colour orders and the table twin in a single change: the room's own

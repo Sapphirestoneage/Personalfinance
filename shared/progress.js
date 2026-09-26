@@ -1050,7 +1050,7 @@
     var parts = [];
     if (shows.length) parts.push('<span><b>Shows:</b> ' + shows.join(', ') + more + '.</span>');
     parts.push('<span><b>Needs:</b> ' + (needs.length ? needs.join(', ') : 'nothing entered elsewhere') + '.</span>');
-    /* Folded since D-342. It is a contents page, useful once and in the way
+    /* Folded since D-343. It is a contents page, useful once and in the way
        every time after: four lines of small print between the room's name
        and the room. It opens on a tap and says so. */
     return '<details class="slaf-purpose" id="slaf-purpose">'
@@ -1215,7 +1215,7 @@
      the right place. It never rebuilds anything, so D-034 is untouched. */
   var LANDED = 'slaf-landed', LANDED_MS = 2400, REVEAL_TRIES = 24, REVEAL_EVERY = 160;
   var SETTLE_EVERY = 300, SETTLE_MS = 6000, SETTLE_BAND = 200;
-  /* ---- The address you arrived at (D-343) ----------------------------------
+  /* ---- The address you arrived at (D-344) ----------------------------------
      The section sync below rewrites the hash as the page scrolls, so the URL
      always names what you are reading. The browser's own jump to an anchor is
      a scroll like any other, so on a cold load it fired that rewrite before

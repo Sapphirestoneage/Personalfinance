@@ -101,7 +101,7 @@
   .u-first .u-where { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
   .u-first .u-n { font-size: var(--text-xs); color: var(--color-accent-hover); white-space: nowrap; }
   .u-tier { border-top: 1px solid var(--color-border); }
-  /* The dashboard (D-341). One measure, one hue: every bar on it says how
+  /* The dashboard (D-342). One measure, one hue: every bar on it says how
      much of something is answered, so they are the same accent and the label
      carries the identity. Every figure is printed beside its bar, so the
      drawing is never the only way to read the number. */
@@ -188,7 +188,7 @@
   .d-ask .choice[aria-pressed="true"] { border-color: var(--color-accent); background: var(--color-surface-active); }
   .d-ask .d-save { min-height: 44px; padding: 0 var(--space-3); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); background: var(--color-surface); color: inherit; font: inherit; cursor: pointer; }
   .d-said { font-size: var(--text-xs); color: var(--color-text-muted); flex-basis: 100%; min-height: 16px; }
-  /* A fact the Planets screen owns (D-340): chips for a list, and the same
+  /* A fact the Planets screen owns (D-341): chips for a list, and the same
      boxes and choices every other answer on this screen uses. */
   .d-chips { display: flex; flex-wrap: wrap; gap: var(--space-1); flex-basis: 100%; }
   .d-chips:empty { display: none; }
@@ -451,7 +451,7 @@
   #view-express .xrow:first-of-type { border-top: 0; }
   #view-express .xrow .lab { font-size: var(--text-sm); min-width: 0; }
   #view-express .xrow .lab .unit { display: block; font-size: var(--text-xs); color: var(--color-text-faint); }
-  /* What is this? (D-346): shut at rest, one tap to the plain words. It sits
+  /* What is this? (D-347): shut at rest, one tap to the plain words. It sits
      under the control like everything else the row reveals, and being a
      <details> it is the person who opens and closes it, never focus. */
   #view-express .xrow .xhelp { grid-column: 1 / -1; margin-top: var(--space-1); font-size: var(--text-xs); }
@@ -462,7 +462,7 @@
   #view-express .xrow .xhelp-plain { margin: var(--space-1) 0 var(--space-2); color: var(--color-text); font-size: var(--text-sm); line-height: var(--leading-normal); }
   #view-express .xrow .xhelp-line { margin: 0 0 var(--space-1); color: var(--color-text-muted); line-height: var(--leading-normal); max-width: var(--measure); }
   #view-express .xrow .xhelp-line b { color: var(--color-text-faint); font-weight: 600; }
-  /* ---- The states line keeps its height, always (D-348) --------------------
+  /* ---- The states line keeps its height, always (D-349) --------------------
      "Not sure yet" and "from memory" still appear only on the row you are
      answering, because on every row at once they would be forty buttons of
      noise. What changed is that the line they appear in is always there and
@@ -470,7 +470,7 @@
      pushing the page around.
      Two bugs came out of that line changing size. Taken away the moment
      focus left, it moved the walk's Next button out from under the very tap
-     that had just answered a question (D-343). Held open for half a second
+     that had just answered a question (D-344). Held open for half a second
      instead, it moved the NEXT row out from under the next tap, and the four
      allocation rows each lost an answer. Nothing that appears on focus has a
      size now, so there is nothing to hold and nothing to jump.
@@ -1166,7 +1166,7 @@
 <script src="../shared/suggest.js"></script>
 <!-- fire.js before statement.js: the Statement reads Fire.progressToward and
      captures it at load time, so the other order leaves it undefined and any
-     reading that reaches the Statement throws (found by the dashboard, D-341). -->
+     reading that reaches the Statement throws (found by the dashboard, D-342). -->
 <script src="../engines/fire.js"></script>
 <script src="../engines/statement.js"></script>
 <script src="../engines/debt.js"></script>
@@ -1475,7 +1475,7 @@
     Array.prototype.forEach.call(document.querySelectorAll('#hats a'), function (a) {
       var mine = a.getAttribute('data-view') === on.id;
       a.setAttribute('aria-current', mine ? 'page' : 'false');
-      /* The seven ways in are one sideways-scrolling row (D-342), so the one
+      /* The seven ways in are one sideways-scrolling row (D-343), so the one
          you are on is brought into view rather than left off the end. */
       if (mine && a.scrollIntoView) {
         try { a.scrollIntoView({ block: 'nearest', inline: 'center' }); } catch (e) { /* older browsers scroll on their own */ }
@@ -2031,7 +2031,7 @@
       + '<div class="x-when" data-x-when hidden><label>Expect to know by <input type="month" data-x-expected aria-label="Expected month"/></label> <button type="button" class="slaf-btn slaf-btn--small" data-x-notsure-save>Mark it</button></div>'
       + '<div class="x-slip" data-x-slip hidden></div>';
   }
-  /* ---- What is this? (D-346) -----------------------------------------------
+  /* ---- What is this? (D-347) -----------------------------------------------
      Every box a person can type in says, in plain words, what is being asked,
      what counts, where to find it, what a good enough answer looks like, and
      what to do when the answer is not known. The row table carries the five
@@ -2040,7 +2040,7 @@
 
      It is a fold, shut at rest, opened by a tap and kept open by the browser,
      so it costs no room until it is wanted and never moves under a finger
-     (D-343). Band 1 of the Planets has had this since D-336; this is the same
+     (D-344). Band 1 of the Planets has had this since D-336; this is the same
      promise for every other box in the app. */
   function helpHtml(row, owner) {
     if (!row || row.kind === 'computed') return '';
@@ -2531,11 +2531,11 @@
   }
   function wire() {
     var form = el('xform');
-    /* ---- Nothing shifts when a row takes or loses the focus (D-348) --------
+    /* ---- Nothing shifts when a row takes or loses the focus (D-349) --------
        A row shows "Not sure yet" and "from memory" while it has the focus.
        They used to be taken away the moment it lost focus, which took 68px
        out of the page between a finger lifting and the click arriving, and
-       the tap landed on whatever moved into that spot (D-343). Holding the
+       the tap landed on whatever moved into that spot (D-344). Holding the
        row open for half a second only moved the jump to the NEXT tap, which
        is how the four allocation rows lost an answer each.
        The fix is that there is nothing to hold: the states line keeps its
@@ -3548,7 +3548,7 @@
     if (!n) { box.hidden = true; return; }
     box.hidden = false;
     var hlp = Sketch && Sketch.help ? Sketch.help(n.level.id) : null;
-    /* Two sentences and a time, each in its own place (D-342). Glued
+    /* Two sentences and a time, each in its own place (D-343). Glued
        together they read "lights the first metrics. about half a minute.
        Nothing to look up." with a lowercase sentence in the middle. */
     var next = '<span class="eyebrow">Next</span><b>' + esc(n.planetLabel) + ' ' + esc(n.level.level) + ': ' + esc(promptOf(n.level)) + '</b>'
@@ -3596,7 +3596,7 @@
       + '<span class="d-said" data-sky-said role="status"></span></div>';
   }
 
-  /* ---- A fact with no room to go to (D-340) --------------------------------
+  /* ---- A fact with no room to go to (D-341) --------------------------------
      A hundred and ninety-five of the facts data/levels.json asks about belong
      to no room: how many children are at home, whether you rent or own, which
      degrees you hold. They are the Planets screen's own, kept at
@@ -3722,7 +3722,7 @@
         var a = answerFor(def);
         if (a) { ASKS[a.id] = a; asks.push(a); }
         /* A fact no room owns is answered here, in the Solar System's own
-           store (D-340). Before this it said "nowhere to type it yet", which
+           store (D-341). Before this it said "nowhere to type it yet", which
            was true and useless: the question could not be answered by
            anybody. */
         var mine = !a && LevelStore && LevelStore.def(lv.id, f.key) ? levelAskHtml(lv.id, f) : '';
@@ -3744,7 +3744,7 @@
     }
     /* Every fact now ends somewhere: a box on this screen, a link to the room
        that owns the list, a figure that works itself out, or the Planets'
-       own store (D-340). The note that used to say otherwise is gone with
+       own store (D-341). The note that used to say otherwise is gone with
        the thing it described. */
     if (!live.some(function (f) {
       return f.href || answerFor(defs[f.key]) || (defs[f.key] || {}).kind === 'confirm'
@@ -4026,7 +4026,7 @@
     box.innerHTML = html;
   }
 
-  /* ---- The dashboard (D-341) ------------------------------------------------
+  /* ---- The dashboard (D-342) ------------------------------------------------
      The owner: "I want there to be like a planet dashboard with a ton of data
      visualizations and metrics and percentages with everything clearly
      labeled." Three questions, in this order: how far in am I, where is the
@@ -4203,7 +4203,7 @@
 
     box.innerHTML = out.join('');
 
-    /* ---- The pictures, each one the reader's to re-shape (D-347) -----------
+    /* ---- The pictures, each one the reader's to re-shape (D-348) -----------
        Every number set on this screen is handed to shared/chartbox.js with
        the kind it is, so the reader can choose among the shapes that are
        honest for that kind, choose a colour order, or read it as a table.
@@ -4616,7 +4616,7 @@
     } catch (e) { if (node) said(node, 'Could not record that (' + e.message + ').'); }
   }
 
-  /* ---- Saving a fact the Planets screen owns (D-340) ------------------------
+  /* ---- Saving a fact the Planets screen owns (D-341) ------------------------
      Through shared/levelstore.js, which is the only writer: the value is
      cleaned to its kind, the spine takes one undo entry, and the level's own
      count and the run behave exactly as they do for a fact with a room. */
@@ -4783,7 +4783,7 @@
   el('sky-open').addEventListener('click', function (e) {
     var t = e.target.closest ? e.target : null;
     if (!t) return;
-    /* A fact the Planets screen owns itself (D-340): its own boxes, chips
+    /* A fact the Planets screen owns itself (D-341): its own boxes, chips
        and choices, saved through shared/levelstore.js. */
     var mine = t.closest('[data-lvl-ask]');
     if (mine) {

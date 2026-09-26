@@ -11,31 +11,31 @@ Updated: 2026-09-26
   184 recipes, 17 moons, 98 moves, read by `shared/solar.js`. Planets is six planets by
   ten bands, unlocks shows Tier 1 and 2, a level can confirm.
 - **From main**: on the cards (D-337); by place (D-338), Expenses `#merchants` draws where
-  all the money went and where the discretionary part went. Coach Mode is its own lane in
-  `coach/` (D-339, `coach/STATUS.md`, `CD-###`).
-- **Anyone can answer it (D-336, D-340)**: band 1 in plain words, with an add-it-up fold
+  all the money went and where the discretionary part went.
+- **Anyone can answer it (D-336, D-341)**: band 1 in plain words, with an add-it-up fold
   and an "I am not sure" that writes no number; the 195 facts no room owned live at
   `levels.<planet>.<key>` through `shared/levelstore.js`.
-- **The Planets dashboard (D-341)**: an Overview tab: a ring, four tiles, bars by planet
+- **The Planets dashboard (D-342)**: an Overview tab: a ring, four tiles, bars by planet
   and band, readings by tier, each against its normal range.
-- **The standard (D-342)**: `docs/DESIGN.md`, 23 rules each with its check. No unrounded
+- **The standard (D-343)**: `docs/DESIGN.md`, 23 rules each with its check. No unrounded
   number reaches a screen, undo docks in the page, one row of tabs, small print folded.
-- **Nothing moves under a finger (D-343)**: the toast left the bottom (it covered the
+- **Nothing moves under a finger (D-344)**: the toast left the bottom (it covered the
   walk's Next), a row holds its height through a tap, a field link keeps its field.
-- **The measuring stick draws (D-344)**: DRAFTT is seven bullet bars on one axis, whose
-  bands asked once. **The Cushion answers before it asks (D-345)**.
+- **The measuring stick draws (D-345)**: DRAFTT is seven bullet bars on one axis, whose
+  bands asked once. **The Cushion answers before it asks (D-346)**.
 - **The audit (`docs/AUDIT.md`)**: the app walked twice, as a beginner and as a coach
   showing a client; every finding says what was done.
-- **Plain words on every box (D-346)**: the five sentences (plain, means, where, close
+- **Plain words on every box (D-347)**: the five sentences (plain, means, where, close
   enough, if you are not sure) on all 84 typed rows, a "What is this?" fold in the Ledger.
   Gated at Flesch-Kincaid 6; the set reads at 3.8.
-- **Pictures the reader owns (D-347)**: `shared/chartbox.js` gives a number set the honest
-  shapes for its kind, eight validated colour orders and a table twin; eleven rooms use it.
+- **Pictures the reader owns (D-348, D-349, D-350)**: `shared/chartbox.js` gives a number
+  set the honest shapes for its kind, eight validated colour orders and a table twin.
+  Twenty-three rooms draw through it, every shell room among them.
 - **This lane, earlier**: a card's annual fee (D-331); the radar (D-332); the menu
   everywhere (D-333, D-335); two ratios and the ranking (D-334).
 - **Main is worked on by another lane**: merge before every push. D-228's reframe has NOT
-  shipped. Freeze holds (D-313).
-## Next (top item first; one per session)
+  shipped. Freeze holds (D-313). Coach Mode is its own lane in `coach/` (D-339) and the
+  Marketing Scoreboard in `marketing/` (D-340), each with its own log.## Next (top item first; one per session)
 1. **Finish the chart layer**: the rooms that still draw inline (about half the call
    sites) and the boxes outside the Ledger that want the five sentences (`docs/AUDIT.md`,
    "Still open").

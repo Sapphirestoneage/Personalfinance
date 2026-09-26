@@ -183,7 +183,7 @@
     <p class="sure" id="nw-sure"></p>
     <p class="why" id="nw-direction"></p>
     <p class="parts" id="nw-parts"></p>
-    <!-- What it is made of, as a picture (D-347), folded because this room
+    <!-- What it is made of, as a picture (D-348), folded because this room
          promises four sections inside two phone screens (D-306) and a picture
          that is always open costs a third of one. One tap, and it is there. -->
     <details class="pic"><summary>See it as a picture</summary><div id="nw-chart"></div></details>
@@ -326,7 +326,7 @@
     var parts = el('nw-parts');
     if (Money.isOk(p)) {
       parts.innerHTML = esc(p.order.map(function (id) { var b = p.buckets[id]; return b.label + ' ' + fmt(b.totalCents); }).join(' · ')) + cashMovedHint(h);
-      /* The same buckets as a picture (D-347): what the figure above is made
+      /* The same buckets as a picture (D-348): what the figure above is made
          of, in whatever shape the reader prefers. */
       var owned = p.order.map(function (id) {
         var b = p.buckets[id];
@@ -402,7 +402,7 @@
       return '<li class="' + r.cls + '"><span>' + esc(r.name) + '<span class="when">' + esc(r.when) + '</span></span><span class="amt">' + esc(fmt(r.cents)) + '</span>'
         + (r.cum !== null && r.cum !== r.cents ? '<span class="cum">' + esc(fmt(r.cum)) + ' by then, all told</span>' : '') + '</li>';
     }).join('');
-    /* The ladder as a picture (D-347): how much sits at each distance, with
+    /* The ladder as a picture (D-348): how much sits at each distance, with
        how long it takes to reach beside every bar. */
     ChartBox.draw(el('ladder-chart'), {
       id: 'statement-ladder', kind: 'breakdown',

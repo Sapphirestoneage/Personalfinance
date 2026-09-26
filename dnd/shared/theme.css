@@ -791,7 +791,7 @@ a.slaf-btn, a.slaf-btn:hover { text-decoration: none; }
 .slaf-undo-btn:hover:not(:disabled), .slaf-undo-btn:focus-visible { background: var(--color-surface); }
 .slaf-undo-btn:disabled { opacity: .3; cursor: default; }
 .slaf-undo-btn span { font-size: var(--text-xs); }
-/* Docked in the room's header strip (D-342): in the flow, scrolling away
+/* Docked in the room's header strip (D-343): in the flow, scrolling away
    with the rest of the page, covering nothing. The floating corner below is
    the fallback for a page that has no header strip. */
 .slaf-hops-host .slaf-undo.is-docked { position: static; margin-left: auto; box-shadow: none; background: transparent; border-color: transparent; padding: 0; gap: var(--space-1); }
@@ -836,7 +836,7 @@ a.slaf-btn, a.slaf-btn:hover { text-decoration: none; }
 .lens-card .lens-who { margin: var(--space-2) 0 0; font-size: var(--text-xs); color: var(--color-text-faint); display: flex; flex-direction: column; gap: 2px; }
 .lens-card .lens-who b { font-weight: 600; color: var(--color-text-muted); }
 
-/* ---- A way on, at the end of a paragraph (D-342) --------------------------
+/* ---- A way on, at the end of a paragraph (D-343) --------------------------
    "Grow it →" and "Protect it →" were underlined links inside a sentence,
    so a phone broke them across two lines and the arrow landed on its own.
    As chips they are one tap target each, they never split, and the sentence
@@ -965,7 +965,7 @@ details.room-drawer summary small { display: block; font-family: var(--font-body
    the next family" landed on Undo and took the answer back. The bottom belongs
    to the action and to the soft keyboard. A confirmation goes at the top,
    where it covers a heading for a moment and nothing anybody is about to
-   press. D-343. */
+   press. D-344. */
 .slaf-toast {
   position: fixed; left: 50%; transform: translateX(-50%);
   top: max(12px, env(safe-area-inset-top)); bottom: auto; z-index: 95;
@@ -1015,7 +1015,7 @@ details.room-drawer summary small { display: block; font-family: var(--font-body
 .slaf-return:hover { border-color: var(--color-accent-hover); color: var(--color-text); text-decoration: none; }
 .slaf-hops-host { display: flex; flex-direction: column; align-items: flex-start; }
 .slaf-hops-host .slaf-hops { width: 100%; }
-/* With the undo pair docked in it (D-342) the strip is one row: the way
+/* With the undo pair docked in it (D-343) the strip is one row: the way
    out on the left and the right, the pair at the end of the same line,
    rather than a second line of its own under them. */
 .slaf-hops-host:has(> .slaf-undo.is-docked) { flex-direction: row; align-items: center; gap: var(--space-2); }
@@ -1128,7 +1128,7 @@ html.slaf-menu-pinned .slaf-menu-head { padding-top: var(--space-4); }
    wraps like one; a figure is still a figure. */
 .slaf-bars .row > * { min-width: 0; }
 
-/* ---- A picture you can re-shape (shared/chartbox.js, D-347) ----------------
+/* ---- A picture you can re-shape (shared/chartbox.js, D-348) ----------------
    The drawing, then a fold holding the shapes this number set can honestly
    take, the eight colour orders, and the table twin. Shut at rest: a room with
    nine pictures would otherwise carry nine rows of chrome before a number. */
@@ -1167,7 +1167,7 @@ html.slaf-menu-pinned .slaf-menu-head { padding-top: var(--space-4); }
 /* A phone has no room for a third of the row of label, a bar and a figure:
    "Retirement saving" came out as "Retirement s...". The name takes the
    whole first line, the bar and its figure the second, so nothing is cut and
-   the bar gets the width it needs to be read. D-344. */
+   the bar gets the width it needs to be read. D-345. */
 @media (max-width: 560px) {
   .slaf-bars .row { gap: var(--space-1) var(--space-2); padding: var(--space-2) 0; }
   /* Placed by column rather than by a new template, because four rooms set a
@@ -1540,7 +1540,7 @@ html.has-math, html.has-math body { overflow: hidden; }
    between pages. One place, because the 93-to-30 merge (D-227) gives every
    surviving room the same strip, and a second copy of it would drift.
    The first hat is always the simplest reading, and it is the default. */
-/* One row, not three (D-342). Seven ways in wrapped onto three lines of
+/* One row, not three (D-343). Seven ways in wrapped onto three lines of
    pills on a phone, which read as a pile rather than a choice, and pushed
    the room itself below the fold. They scroll sideways now, the way a tab
    strip does everywhere else, with the one you are on kept in view. */
@@ -1564,7 +1564,7 @@ html.has-math, html.has-math body { overflow: hidden; }
 
 /* The plain line under a room title (D-237): what it shows, what it needs. */
 .slaf-purpose { margin: var(--space-2) 0 0; font-size: var(--text-sm); color: var(--color-text-muted); line-height: var(--leading-loose); }
-/* Folded (D-342): the room's own words first, its contents page on a tap. */
+/* Folded (D-343): the room's own words first, its contents page on a tap. */
 .slaf-purpose > summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; font-size: var(--text-xs); color: var(--color-text-faint); list-style: none; }
 .slaf-purpose > summary::-webkit-details-marker { display: none; }
 .slaf-purpose > summary::before { content: "+"; margin-right: 6px; font-variant-numeric: tabular-nums; }
@@ -1800,7 +1800,7 @@ html.is-compact { zoom: 0.86; }
 .slaf-demo b { color: var(--color-text); }
 .slaf-linkbtn { background: none; border: 0; padding: 0; font: inherit; color: var(--color-accent-hover); text-decoration: underline; cursor: pointer; }
 
-/* ---- The radar (D-332, shared since D-341) --------------------------------
+/* ---- The radar (D-332, shared since D-342) --------------------------------
    shared/charts.js draws the shapes; this dresses them. The two pages that
    had a radar first carry their own scoped copies of these rules, which are
    more specific and still win there; any page that draws one from here on

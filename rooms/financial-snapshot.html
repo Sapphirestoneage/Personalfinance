@@ -225,7 +225,7 @@
   #view-the-nine .draftt .dr-foot a { color: var(--color-accent-hover); text-decoration: none; }
   
   #view-the-nine .draftt .dr-foot .slaf-lens-btn { min-height: 28px; padding: 0 8px; }
-  /* Whose bands, asked once above the chart (D-344). */
+  /* Whose bands, asked once above the chart (D-345). */
   #view-the-nine .draftt-whose { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin: var(--space-4) 0 var(--space-2); }
   #view-the-nine .draftt-whose-lbl { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .06em; color: var(--color-text-faint); }
   #view-the-nine #draftt-chart .slaf-bars .row .lbl small { color: var(--color-text-faint); }
@@ -620,7 +620,7 @@
     <span>Answer them once and every number on this page fills itself in.</span>
   </a>
 
-  <!-- DRAFTT (D-173, drawn in D-344): the one pager out. Seven shares against
+  <!-- DRAFTT (D-173, drawn in D-345): the one pager out. Seven shares against
        seven bands, each bar inside or outside its band with the figure beside
        it and the verdict in words; whose bands is asked once, above them; the
        row by row provenance and the per row override are folded under. -->
@@ -1388,11 +1388,11 @@
     return pct(b.low, 0) + ' to ' + pct(b.high, 0);
   }
   /* The verdict is a word, never a colour on its own, and it is the word the
-     rest of the app uses for the same idea (D-342 rule 15). */
+     rest of the app uses for the same idea (D-343 rule 15). */
   function verdictWords(v) { return v === 'in' ? 'in range' : v === 'over' ? 'over the band' : v === 'under' ? 'under the band' : ''; }
   var DR_COLOR = { 'in': Charts.COLORS.target, over: Charts.COLORS.debt, under: Charts.COLORS.spend };
 
-  /* ---- The bars (D-344) ----------------------------------------------------
+  /* ---- The bars (D-345) ----------------------------------------------------
      Seven shares of one pay packet: one measure, one axis, one hue a verdict.
      Each bar carries its own figure and the band it is being read against, so
      the drawing is never the only way to read the number. The band is a green
@@ -1427,7 +1427,7 @@
     return { rows: bars, format: function (v) { return pct(v); }, max: top > 0 ? top : null };
   }
 
-  /* ---- Whose bands, asked once (D-344) -------------------------------------
+  /* ---- Whose bands, asked once (D-345) -------------------------------------
      The same four sources were offered on every row, twenty-eight buttons for
      one question. It is asked once here and applied to every row that has
      that source; a row that wants a different one still says so in the fold,
@@ -1456,7 +1456,7 @@
       ? 'Take-home ' + Money.formatCents(r.takeHomeMonthlyCents.value) + ' a month, gross ' + Money.formatCents(r.grossMonthlyCents.value) + '. A band stated on gross is shown here converted to take-home, and says so.'
       : 'Add your income and filing status in Start Here and the shares appear.';
     drafttWhose(r);
-    /* The reader's own picture (D-347): the shape is theirs to change, the
+    /* The reader's own picture (D-348): the shape is theirs to change, the
        verdict colours are not, because in range and outside mean something. */
     var dr = drafttChart(r);
     ChartBox.draw(el('draftt-chart'), {

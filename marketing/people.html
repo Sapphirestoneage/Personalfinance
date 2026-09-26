@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'"/>
+<meta name="robots" content="noindex"/>
+<title>People</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="mkt.css"/>
+<!--
+  PEOPLE (MD-008). The contacts, their stage, and when and how to reach them.
+
+  1. READS   people and touches through marketing/shared/mkt.js; who is due
+             through marketing/engines/kpi.js.
+  2. WRITES  a person (add, edit, stage, rhythm, archive), a touch, a CSV
+             import (contacts, LinkedIn connections, Google contacts), and
+             the CSV the owner saves. Contacts never leave this browser.
+  3. SHOWS   the pipeline by stage; the list, sortable and searchable, with
+             each person's next touch; the open person: their facts, their
+             touches, the touch form.
+
+  LIVE-FORM: built once. The list is repainted on save and sort. The person
+  panel is built when a person opens and left alone until another does.
+-->
+</head>
+<body class="slaf">
+<main class="mkt" id="main">
+  <div id="head"></div>
+
+  <section aria-labelledby="h-pipe">
+    <div class="bar"><h2 id="h-pipe">The pipeline</h2><span class="grow"></span>
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-add">Add a person</button>
+      <label class="slaf-btn" for="file-csv">Import contacts (CSV)</label>
+      <input type="file" id="file-csv" accept=".csv,text/csv" hidden/>
+      <button type="button" class="slaf-btn" id="btn-csv">Save as CSV</button>
+    </div>
+    <div class="lanes" id="pipe"></div>
+    <p class="mkt-say" id="say"></p>
+  </section>
+
+  <div class="split">
+    <section aria-labelledby="h-list">
+      <div class="bar">
+        <h2 id="h-list">Everyone</h2>
+        <span class="mkt-note" id="count"></span>
+        <span class="grow"></span>
+        <label class="inline"><span>Show</span><select id="filter"><option value="due">Due now</option><option value="all" selected>Everyone</option><option value="lead">Leads and calls</option><option value="client">Clients and advocates</option><option value="archived">Archived</option></select></label>
+        <input type="search" id="search" class="mid" placeholder="Search name, company, tag" aria-label="Search"/>
+      </div>
+      <div class="tbl-wrap"><table class="tbl" id="tbl"></table></div>
+    </section>
+    <aside class="panel slaf-card" id="panel" aria-live="polite">
+      <p class="mkt-note">Pick a person to see their touches, or add one.</p>
+    </aside>
+  </div>
+
+  <section>
+    <details class="fold"><summary>Importing contacts <span class="mkt-note">Google Contacts, LinkedIn connections, any sheet</span></summary>
+      <p class="mkt-note">A header row, then one row a person. Columns are found by name: <b>name</b> (or first name and last name), <b>email</b>, <b>phone</b>, <b>company</b> (or organization), <b>role</b> (or position, title), <b>platform</b>, <b>handle</b> (or url), <b>source</b>, <b>stage</b>, <b>tags</b> (or labels), <b>notes</b>, and a date column such as <b>connected on</b>. LinkedIn's connections export and Google's contacts export both read as they are. People already here (same email, or same name and company) are skipped.</p>
+    </details>
+  </section>
+
+  <dialog class="mkt-dialog" id="dlg">
+    <form id="person-form" method="dialog" autocomplete="off">
+      <h2 id="dlg-title">Add a person</h2>
+      <div class="row">
+        <label class="inline"><span>Name <span id="h-name"></span></span><input type="text" name="name" class="mid" required/></label>
+        <label class="inline"><span>Company</span><input type="text" name="company" class="mid"/></label>
+        <label class="inline"><span>Role</span><input type="text" name="role" class="mid"/></label>
+      </div>
+      <div class="row">
+        <label class="inline"><span>Email</span><input type="email" name="email" class="mid"/></label>
+        <label class="inline"><span>Phone</span><input type="tel" name="phone" class="short"/></label>
+        <label class="inline"><span>Platform</span><select name="platform" id="f-platform"></select></label>
+        <label class="inline"><span>Handle or link</span><input type="text" name="handle" class="mid"/></label>
+      </div>
+      <div class="row">
+        <label class="inline"><span>Stage <span id="h-stage"></span></span><select name="stage" id="f-stage"></select></label>
+        <label class="inline"><span>How we met</span><select name="source" id="f-source"></select></label>
+        <label class="inline"><span>Days between touches <span id="h-cadence"></span></span><input type="text" name="cadence" class="short" inputmode="numeric" placeholder="stage's usual"/></label>
+        <label class="inline"><span>Contact them on <span id="h-nextAt"></span></span><input type="date" name="nextAt"/></label>
+      </div>
+      <div class="row">
+        <label class="inline"><span>Tags</span><input type="text" name="tags" class="mid" placeholder="comma, separated"/></label>
+        <label class="inline"><span>What they paid <span id="h-value"></span></span><input type="text" name="value" class="short" inputmode="decimal" placeholder="$"/></label>
+      </div>
+      <label class="inline" style="width:100%"><span>Notes</span><textarea name="notes"></textarea></label>
+      <p class="mkt-say" id="say-dlg"></p>
+      <div class="mkt-actions"><button type="submit" class="slaf-btn slaf-btn--primary" value="save">Save</button><button type="button" class="slaf-btn" id="dlg-cancel">Cancel</button></div>
+    </form>
+  </dialog>
+</main>
+<script src="shared/csv.js"></script>
+<script src="shared/money.js"></script>
+<script src="shared/charts.js"></script>
+<script src="shared/tables.js"></script>
+<script src="shared/mkt.js"></script>
+<script src="engines/kpi.js"></script>
+<script src="common.js"></script>
+<script src="people.js"></script>
+</body>
+</html>

@@ -27,7 +27,7 @@ const HOUSE = Schema.createHousehold(Demo.build());
 /* Either name, with or without the trailing slash: the other gates read
    SLAF_BASE and these two read BASE, and a run that set only one of them
    died on "Cannot navigate to invalid URL" rather than saying which
-   address it had been handed. D-343. */
+   address it had been handed. D-344. */
 const BASE = String(process.env.SLAF_BASE || process.env.BASE || 'http://127.0.0.1:8765')
   .replace(/\/+$/, '') + '/';
 /* The same launch every other browser gate uses: the pre-installed browser

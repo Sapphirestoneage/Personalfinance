@@ -44,7 +44,7 @@ module.exports = function (t) {
 
   /* ---- The charts are the shared ones ------------------------------------ */
   /* The shapes are the shared library's, drawn through shared/chartbox.js so
-     the reader can change the shape and the colours (D-347). Either call is
+     the reader can change the shape and the colours (D-348). Either call is
      the same drawing code; what this holds is that the room never hand-rolls
      an SVG of its own. */
   checkTrue('donut, bars and area all come from shared/charts.js',

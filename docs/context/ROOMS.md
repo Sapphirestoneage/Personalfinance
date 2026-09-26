@@ -6,7 +6,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 
 ## Home (3)
 
-- **ledger** — The Ledger (utility) · 4964 lines · engines: projection, tier0, income, ledger, swan, variance, rerank, tax, fire, statement, debt, hourly, subscriptions, recipes, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, coast, opening, benchmarks, ratios, skills · owns: takeHomeMonthly, rothContributed, hsaContributed, onHdhp, hsaFamilyPlan, marginalRate, totalSaved, payVaries, spendingIncludesDebt, spendingIncludesSaving, savedMonthly, highInterestBalance, refundLastYear, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, assetValue, assetCharacter, assetTier, assetCostBasis, assetInstitution, assetAccountType, assetConfidence, assetCashFlow, assetHassle, assetAccessAge · D-341, D-340, D-336
+- **ledger** — The Ledger (utility) · 4964 lines · engines: projection, tier0, income, ledger, swan, variance, rerank, tax, fire, statement, debt, hourly, subscriptions, recipes, sincelast, selfemployed, reachable, notknowing, layouts, foo, cashflow, coast, opening, benchmarks, ratios, skills · owns: takeHomeMonthly, rothContributed, hsaContributed, onHdhp, hsaFamilyPlan, marginalRate, totalSaved, payVaries, spendingIncludesDebt, spendingIncludesSaving, savedMonthly, highInterestBalance, refundLastYear, allocationStocks, allocationBonds, allocationCash, rebalanceBand, otherAssets, assetValue, assetCharacter, assetTier, assetCostBasis, assetInstitution, assetAccountType, assetConfidence, assetCashFlow, assetHassle, assetAccessAge · D-342, D-341, D-336
 - **start** — Start Here · 1189 lines · engines: income · owns: dob, age, state, zip, filingStatus, grossAnnualIncome, unemployment, lastPay, cashSavings, investments, employmentStatus, employerMatch, capturingFullMatch, hasDebt, contributionPercent, highestDeductible, dependents · D-323, D-262, D-259
 - **dashboard** — The Dashboard · 1893 lines · no engines · DD-030, DD-028, DD-026
 
@@ -35,7 +35,7 @@ Full context for one: `node tools/context/pack.js <id>`.
 ## Decisions (10)
 
 - **left-behind** — Left Behind · 757 lines · engines: projection, tier0, fire, selfemployed, tax, income, ledger, cashflow, taxroom, hourly · D-316, D-313, D-150
-- **runway** — The Cushion · 1775 lines · engines: projection, tier0, income, ledger, cashflow, tax, runway, swan, hourly, betweenjobs, selfemployed, debt, reachable, countdown, quitfund, foo, fire, statement · owns: oopMax, termLife, disabilityMonthly, umbrella, expectedSearchMonths, floorMonthly, swanTarget · D-345, D-314, D-232
+- **runway** — The Cushion · 1775 lines · engines: projection, tier0, income, ledger, cashflow, tax, runway, swan, hourly, betweenjobs, selfemployed, debt, reachable, countdown, quitfund, foo, fire, statement · owns: oopMax, termLife, disabilityMonthly, umbrella, expectedSearchMonths, floorMonthly, swanTarget · D-346, D-314, D-232
 - **car** — Wheels · 940 lines · engines: projection, tier0, income, selfemployed, ledger, hourly, quickmath, firstcar · D-268, D-255, D-151
 - **what-if-life** — What If · 1259 lines · engines: projection, tier0, income, ledger, fire, cashflow, statement, rerank, hourly, selfemployed, tax, debt, quickmath, vpw, ss, events, foo, adventure · D-296, D-146, D-087
 - **protection** — Protection · 472 lines · engines: projection, tier0, income, selfemployed, ledger, protection, hourly, estate · owns: healthCover, healthMonthly, beneficiariesSet, willExists, poaExists · D-266, D-103, D-098

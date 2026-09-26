@@ -80,7 +80,7 @@
      label is sometimes a field ("Any debt") and sometimes already a sentence
      ("Cash savings not yet \u2192 $3,000"), and no prefix reads well before
      both. A notice with no verb at all read as a fragment with a button after
-     it, which is the thing it was built to stop being. D-343. */
+     it, which is the thing it was built to stop being. D-344. */
   function showToast(text, offerUndo, tag) {
     toast.innerHTML = (tag ? '<span class="slaf-toast-tag">' + esc(tag) + '</span>' : '')
       + '<span class="slaf-toast-text">' + esc(text) + '</span>'
@@ -119,7 +119,7 @@
   }
 
   Spine.onChange(function () { paint(); announce(); });
-  /* ---- Where the pair lives (D-342) ----------------------------------------
+  /* ---- Where the pair lives (D-343) ----------------------------------------
      It used to float over the page, bottom right and then bottom left, and
      both corners covered something: first a figure (D-144), then the labels
      in the left gutter. A control that sits on top of the thing you are

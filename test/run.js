@@ -11410,7 +11410,7 @@ section('DRAFTT: seven shares against seven bands (D-173)');
   /* The screen: one section, seven rows max, no chart, the pick is buttons. */
   const page = fs.readFileSync(path.join(ROOT, 'rooms/financial-snapshot.html'), 'utf8');
   checkTrue('the Snapshot opens on DRAFTT', page.indexOf('id="draftt"') < page.indexOf('id="inputs"'));
-  /* D-344: the measuring stick draws. D-173 shipped it as seven paragraphs
+  /* D-345: the measuring stick draws. D-173 shipped it as seven paragraphs
      and no chart at all; a value against a range is a bullet bar, which is
      docs/DESIGN.md rule 13, and seven shares of one pay packet share one
      axis honestly. The words and the figures stayed: the chart carries them,
@@ -14011,10 +14011,10 @@ section('All at once: a second view of the same rows (D-208, a Ledger view since
      the control. Revealed above it, the choice button moved out from under
      the finger between touchend and click, the browser retargeted the click
      to the row, and the answer was dropped without a word.
-     D-343: below the control was not enough. Putting it AWAY on blur took
+     D-344: below the control was not enough. Putting it AWAY on blur took
      68px out of the page in the same gap, which moved everything under the
      row instead, the walk's own Next button among it.
-     D-348: holding the row open for half a second only moved that jump to
+     D-349: holding the row open for half a second only moved that jump to
      the next tap, and four rows in a row each lost an answer. Nothing that
      appears on focus has a size now: the states line is always there and
      always the same height, and everything else a row has to say is in the
@@ -16905,7 +16905,7 @@ section('Band 1 in words anyone can answer (D-336)');
     /Ownership\.write\(id, value\)/.test(page));
 })();
 
-section('Every question in the Planets can be answered (D-340)');
+section('Every question in the Planets can be answered (D-341)');
 
 (function () {
   /* The owner's words: "Make sure every single question in the planets is
@@ -17010,7 +17010,7 @@ section('Every question in the Planets can be answered (D-340)');
     /function showLevelAnswer/.test(page) && /Solar\.levelState\(lv, Spine\.getProfile\(\)\)/.test(page));
 })();
 
-section('The planets dashboard (D-341)');
+section('The planets dashboard (D-342)');
 
 (function () {
   /* The owner: "I want there to be like a planet dashboard with a ton of data
@@ -17096,7 +17096,7 @@ section('The planets dashboard (D-341)');
     'fire at ' + fireAt + ', statement at ' + stmtAt);
 })();
 
-section('The standard the app is held to (D-342)');
+section('The standard the app is held to (D-343)');
 
 (function () {
   /* The owner: "Make every single thing feel more professional look
@@ -17152,12 +17152,12 @@ section('The standard the app is held to (D-342)');
   checkTrue('and motion is off for anyone who asks for that',
     /@media \(prefers-reduced-motion: reduce\)[^}]*\{[^}]*\*/.test(theme.replace(/\n/g, ' ')));
 
-  /* 13. Nothing moves under a finger (D-343). */
+  /* 13. Nothing moves under a finger (D-344). */
   checkTrue('the toast confirms at the top, leaving the bottom to the action and the keyboard',
     /\.slaf-toast \{[^}]*top: max\(12px/.test(theme.replace(/\n/g, ' ')));
   checkTrue('...and nothing puts it back at the bottom on a wider screen',
     !/\.slaf-toast \{ bottom:/.test(theme));
-  checkTrue('a row keeps its height whether or not it has the focus (D-348)',
+  checkTrue('a row keeps its height whether or not it has the focus (D-349)',
     /min-height: 34px/.test(ledger) && /visibility: hidden; opacity: 0/.test(ledger));
   checkTrue('...so nothing is timed, held or rebuilt to keep it still',
     !/is-settling/.test(ledger) && !/setTimeout\(letGo/.test(ledger));
@@ -17175,7 +17175,7 @@ section('The standard the app is held to (D-342)');
     /test\/render\.js/.test(design) && /test\/alignment\.js/.test(design) && /node test\/run\.js/.test(design));
 })();
 
-section('Every number set is a picture the reader can re-shape (D-347)');
+section('Every number set is a picture the reader can re-shape (D-348)');
 
 (function () {
   /* The owner: "I want there to be a ton of data visualisations for each
@@ -17233,7 +17233,7 @@ section('Every number set is a picture the reader can re-shape (D-347)');
   checkTrue('the chrome has one style, in the theme, not per room', /\.cbx-tools \{/.test(theme) && /\.cbx-swatch \{/.test(theme));
 })();
 
-section('Every box says what it is, in words anyone can read (D-346)');
+section('Every box says what it is, in words anyone can read (D-347)');
 
 (function () {
   /* The owner: "Identify gaps in user knowledge on how to fill it. The goal is
@@ -17284,7 +17284,7 @@ section('Every box says what it is, in words anyone can read (D-346)');
     /\.xhelp \{ grid-column: 1 \/ -1/.test(ledger) && !/\.xrow:focus-within \.xhelp/.test(ledger));
 })();
 
-section('The Cushion answers before it asks (D-345)');
+section('The Cushion answers before it asks (D-346)');
 
 (function () {
   const runway = fs.readFileSync(path.join(ROOT, 'rooms/runway.html'), 'utf8');

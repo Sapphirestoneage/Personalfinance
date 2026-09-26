@@ -17349,7 +17349,28 @@ SPARKS device backup neither carries nor removes `coach.` keys.
 
 **Verified.** `node test/run.js`; `node coach/test/run.js`.
 
-## D-340 — Every question in the Planets can be answered, and 195 facts get a home
+## D-340 — The Marketing Scoreboard is its own app in marketing/, a lane beside SPARKS like coach/
+
+**Why.** The owner wants to measure every post, every contact and every touch
+(what gets measured gets managed), and share the numbers with marketer
+friends. It is not a room: no household number is in it.
+
+**Decision.** `marketing/` is a separate app with three screens (Scoreboard,
+Content log, People), its own storage (`mkt.` keys, never `slaf.` or
+`coach.`), byte-identical copies of the few files it reads (`marketing/tools/vendor.js`),
+its own tests (`node marketing/test/run.js`, in CI) and its own log
+(`marketing/DECISIONS.md`, `MD-###`). Nothing in `rooms/`, `shared/`,
+`engines/` or `data/` changes for it.
+
+**Replaces or removes.** The marketing spreadsheet the owner would otherwise
+start. No SPARKS screen.
+
+**Stored shape.** No change to `slaf.household.v2` or any SPARKS key. The
+SPARKS device backup neither carries nor removes `mkt.` keys.
+
+**Verified.** `node test/run.js`; `node marketing/test/run.js`.
+
+## D-341 — Every question in the Planets can be answered, and 195 facts get a home
 
 **Why.** The owner, on the Planets screen: "Make sure every single question in
 the planets is answerable." A level would open and say "nowhere to type it
@@ -17385,7 +17406,7 @@ household and all 161 that apply to the example household offer a way to
 answer, none says "nowhere to type it yet", and one fact of every kind saves
 and survives a reload.
 
-## D-341 — The planets dashboard: what is answered, what it bought, where each reading sits
+## D-342 — The planets dashboard: what is answered, what it bought, where each reading sits
 
 **Why.** The owner: "I want there to be like a planet dashboard with a ton of
 data visualizations and metrics and percentages with everything clearly
@@ -17425,7 +17446,7 @@ yet" rather than 0%, and that a level named on the dashboard opens where it is
 answered. Looked at in a browser at 390px, empty and with the example
 household.
 
-## D-342 — The standard the app is held to, and the first pass against it
+## D-343 — The standard the app is held to, and the first pass against it
 
 **Why.** The owner: "This is pretty complex and it feels messy. Make every
 single thing feel more professional look professional meet professional
@@ -17457,7 +17478,7 @@ Nothing gains a screen or a field.
 rules; `node test/render.js` 302 across every room in both states; the browser
 gates; and the four main screens looked at again at 390px, before and after.
 
-## D-343 — Nothing moves under a finger
+## D-344 — Nothing moves under a finger
 
 **Why.** The guided walk in the Ledger did not move when you tapped Next on a
 phone. Nothing errored, nothing said so: the tap simply did nothing, and the
@@ -17494,7 +17515,7 @@ two that were landing 500px down among them; `node test/run.js`; the walk
 tapped through by hand at 412px with the touch events logged.
 
 
-## D-344 — The measuring stick draws, and asks whose bands once
+## D-345 — The measuring stick draws, and asks whose bands once
 
 **Why.** The Scorecard's first block was seven paragraphs: a share, a band, a
 verdict, four buttons asking whose band this row reads, an explainer and a
@@ -17525,7 +17546,7 @@ check replaced by six that hold the new one; the Scorecard read at 390px with
 the example household, every label whole.
 
 
-## D-345 — The Cushion answers before it asks
+## D-346 — The Cushion answers before it asks
 
 **Why.** The room exists to say how long the money lasts, and said it after two
 screens of boxes: the situation, a paragraph about that situation, six figures
@@ -17548,7 +17569,7 @@ or figure.
 cases (the boxes are the same boxes, in the same card); the room read at 390px
 with the example household and with nothing entered.
 
-## D-346 — Every box says what it is, in words a third grader can read
+## D-347 — Every box says what it is, in words a third grader can read
 
 **Why.** The owner: "Identify gaps in user knowledge on how to fill it. The
 goal is a 3rd grader or someone overwhelmed with finance can fill it out." The
@@ -17563,7 +17584,7 @@ counts), `where` (where to find it), `roughly` (what a good enough answer looks
 like) and `unsure` (what to do when you do not know). The Ledger draws them as
 a "What is this?" fold under the control, shut at rest, opened by the person
 and kept open by the browser, so it costs no room and never moves under a
-finger (D-343). No room writes its own copy: the row table is the one source.
+finger (D-344). No room writes its own copy: the row table is the one source.
 
 **Replaces or removes.** The bare label as the only explanation, and the
 `where` sentence that was shown for lookup rows only and hidden everywhere
@@ -17578,7 +17599,7 @@ Flesch-Kincaid grade 3.8. `node test/forms.js` 125 on the Ledger: the fold
 changes no control and typing still survives. Read at 390px with the fold open.
 
 
-## D-347 — Every number set is a picture, and the reader owns its shape and its colours
+## D-348 — Every number set is a picture, and the reader owns its shape and its colours
 
 **Why.** The owner: "I want there to be a ton of data visualisations for each
 number set possible as well as the ability to change the type of chart and
@@ -17616,9 +17637,9 @@ with data; the Planets Overview and the Scorecard re-shaped and recoloured by
 hand at 390px.
 
 
-## D-348 — Nothing that appears on focus has a size
+## D-349 — Nothing that appears on focus has a size
 
-**Why.** D-343 stopped a row's focus extras being taken away between a finger
+**Why.** D-344 stopped a row's focus extras being taken away between a finger
 lifting and the click arriving, by holding the row's height for half a second.
 That did not remove the jump; it moved it onto the next tap. Typing down the
 four allocation rows, each row's release pulled the next one out from under the
@@ -17628,7 +17649,7 @@ finger, and `test/forms.js` caught an answer going missing every run.
 "from memory") is always in the row and always the same height; the buttons
 fade in and out of that reserved slot rather than pushing the page around.
 Everything else a row had to say on focus, what it unlocks and which other room
-holds the same record, moved into the "What is this?" fold (D-346), where it
+holds the same record, moved into the "What is this?" fold (D-347), where it
 reads as help instead of as furniture. No timer, no held class, no rebuild.
 
 Two pictures came with it, both in rooms that had figures and no drawing at
@@ -17638,7 +17659,7 @@ Mix's target, in place of the three coloured strips it drew by hand, plus the
 same mix in dollars. A ring of one slice is no longer drawn anywhere: a share
 of a whole needs two parts before it is a picture, and the room says so.
 
-**Replaces or removes.** D-343's settle timer and the `is-settling` class; the
+**Replaces or removes.** D-344's settle timer and the `is-settling` class; the
 `.xwhy` line under every row; The Mix's hand-rolled strip. No new screen or
 field.
 
@@ -17649,13 +17670,13 @@ case among them, which was failing on exactly this; the four rows typed by hand
 at 412px and all four landing.
 
 
-## D-349 — The room shell draws through the chart layer, so every room built on it does
+## D-350 — The room shell draws through the chart layer, so every room built on it does
 
 **Why.** Nineteen rooms are built on `shared/room.js`, and each one draws its
 picture into the same `#room-chart` host. Converting them one at a time would
 have been nineteen edits and nineteen chances to get a bracket wrong.
 
-**Decision.** The shell hands that host to `shared/chartbox.js` (D-347). The
+**Decision.** The shell hands that host to `shared/chartbox.js` (D-348). The
 room's own drawing stays the shape, because the shell cannot know whether a
 week laid out in hours or a drawdown path could honestly be a ring; what every
 one of them gains is the eight colour orders, the table twin and the fold that
@@ -17679,7 +17700,6 @@ rows of chrome around one sentence is worse than the sentence alone.
 **Verified.** `node test/run.js` 36297; `node test/render.js` 302; ten shell
 rooms opened with the example household, the controls appearing exactly where
 there is something to re-shape.
-
 
 ---
 
