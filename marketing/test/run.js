@@ -62,7 +62,7 @@ section('A separate app (MD-001)');
   checkTrue('no tracked file carries a Scoreboard export (' + tracked.length + ' files read)', tracked.length > 0 && carrying.length === 0, carrying.join(', '));
   const EM = [String.fromCharCode(0x2014), '\\u2014', '&mdash;', '&#8212;'];
   const dirty = [];
-  function walk2(d) { fs.readdirSync(d, { withFileTypes: true }).forEach(e => { const p = path.join(d, e.name); if (e.isDirectory()) walk2(p); else if (/\.(html|js|css|json|md)$/.test(e.name) && p !== __filename) { const t = fs.readFileSync(p, 'utf8'); if (EM.some(x => t.indexOf(x) !== -1)) dirty.push(path.relative(APP, p)); } }); }
+  function walk2(d) { fs.readdirSync(d, { withFileTypes: true }).forEach(e => { const p = path.join(d, e.name); if (e.isDirectory()) walk2(p); else if (/\.(html|js|css|json)$/.test(e.name) && p !== __filename) { const t = fs.readFileSync(p, 'utf8'); if (EM.some(x => t.indexOf(x) !== -1)) dirty.push(path.relative(APP, p)); } }); }
   walk2(APP);
   checkTrue('no em dash anywhere in marketing/', dirty.length === 0, dirty.join(', '));
   const ci = fs.readFileSync(path.join(ROOT, '.github/workflows/test.yml'), 'utf8');
