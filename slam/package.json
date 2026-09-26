@@ -1,0 +1,41 @@
+{
+  "name": "slam-profit-engine",
+  "private": true,
+  "version": "0.1.0",
+  "description": "SLAM Profit Engine: a local-first, phone-first calculator that shows how every business decision flows to profit.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -p tsconfig.json --noEmit && vite build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "check": "npm run typecheck && npm run test && npm run build && npm run test:e2e && npm run build:app",
+    "build:app": "vite build --outDir app --emptyOutDir"
+  },
+  "dependencies": {
+    "dexie": "^4.4.6",
+    "echarts": "^6.1.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "zod": "^4.6.5",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^26.6.2",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "fake-indexeddb": "^6.2.5",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.0",
+    "vite": "^8.3.1",
+    "vite-plugin-pwa": "^1.3.0",
+    "vite-plugin-singlefile": "^2.3.3",
+    "vitest": "^5.0.1"
+  }
+}
