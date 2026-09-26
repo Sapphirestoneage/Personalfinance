@@ -1,0 +1,148 @@
+Money Models: the numbers and the dashboard (Google Sheets edition)
+"Type in column D. Blank means not known yet; a typed 0 is a real zero. Money in dollars, rates as fractions (0.25 = 25%). Every figure below is a live formula and reads ""not yet"" until its inputs are in. Lessons, checklists and charts are in the Excel workbook and the app."
+Use the example numbers? (Yes or No),Yes
+
+Planet,Level,What to type,Your answer,Example,In use,Help
+Foundations,4,Price of your main offer today,,199,"=IF($B$3=""Yes"",E6,IF(D6="""","""",D6))","Dollars. What one customer pays for it. If it is monthly, use one month here; the model will handle the repeat part on the Continuity planet."
+Foundations,5,Cost to deliver one sale,,60,"=IF($B$3=""Yes"",E7,IF(D7="""","""",D7))","Dollars. Only the costs that happen because this one customer bought. Type 0 if there truly are none (a digital file, say)."
+Foundations,6,Spent on getting customers last month,,6000,"=IF($B$3=""Yes"",E8,IF(D8="""","""",D8))","Dollars. Ads, agency, commissions, giveaways, the salary of whoever does the marketing."
+Foundations,6,New customers last month,,40,"=IF($B$3=""Yes"",E9,IF(D9="""","""",D9))","People who paid for the first time. Not leads, not sign-ups."
+Foundations,7,"Who the customer is, in a few words",,Busy parents who stopped exercising,"=IF($B$3=""Yes"",E10,IF(D10="""","""",D10))",One kind of person. 'Busy parents who stopped exercising' is a customer; 'anyone' is not.
+Foundations,7,"The result they want, in their words",,Lose the first ten pounds in six weeks,"=IF($B$3=""Yes"",E11,IF(D11="""","""",D11))","A result with a size and a time if you can: what, how much, by when."
+Foundations,8,What is holding the business back right now?,,Each customer does not pay enough,"=IF($B$3=""Yes"",E12,IF(D12="""","""",D12))",Pick one: Not enough customers / Each customer does not pay enough / They do not stay or come back / It costs too much to serve them
+Foundations,9,The first thing a stranger is offered,,A $199 six-week class pass,"=IF($B$3=""Yes"",E13,IF(D13="""","""",D13))","The ad, the free consult, the intro price. Whatever comes first."
+Foundations,9,What they are offered after buying,,Nothing,"=IF($B$3=""Yes"",E14,IF(D14="""","""",D14))",Type 'nothing' if nothing. That is an honest and common answer.
+Foundations,9,What happens when they say no,,Nothing,"=IF($B$3=""Yes"",E15,IF(D15="""","""",D15))",A follow-up? A cheaper option? Nothing?
+Foundations,9,What they pay for on an ongoing basis,,Nothing,"=IF($B$3=""Yes"",E16,IF(D16="""","""",D16))","A membership, a retainer, refills, or 'nothing'."
+Foundations,10,Days from first ad dollar to first cash collected,,21,"=IF($B$3=""Yes"",E17,IF(D17="""","""",D17))","Days. Typical, not best case. If you invoice on 30-day terms after a two-week trial, that is about 45."
+Foundations,11,Cash collected per new customer in their first 30 days,,199,"=IF($B$3=""Yes"",E18,IF(D18="""","""",D18))","Dollars. Collected, not invoiced. A payment plan counts only the payments that landed inside 30 days."
+Foundations,13,"Hours of your own time per customer, first month",,6,"=IF($B$3=""Yes"",E19,IF(D19="""","""",D19))","Selling, onboarding, delivering, chasing. A rough count is fine."
+Foundations,14,Which part of the model do you build first?,,Upsell: earn more from each one,"=IF($B$3=""Yes"",E20,IF(D20="""","""",D20))",Pick one: Attraction: bring more people in / Upsell: earn more from each one / Downsell: lose fewer at the no / Continuity: keep them paying
+Attraction,4,Price of the attraction offer,,500,"=IF($B$3=""Yes"",E21,IF(D21="""","""",D21))","Dollars. The cash collected up front, before any refund or credit."
+Attraction,5,Cost to deliver the attraction offer to one customer,,120,"=IF($B$3=""Yes"",E22,IF(D22="""","""",D22))","Dollars. Per customer, all in. 0 is allowed."
+Attraction,6,Leads per month,,400,"=IF($B$3=""Yes"",E23,IF(D23="""","""",D23))","People who asked, booked or messaged. Last month is fine."
+Attraction,6,Share of leads who take the attraction offer,,0.1,"=IF($B$3=""Yes"",E24,IF(D24="""","""",D24))","A fraction, e.g. 0.25 for 25%. Buyers divided by leads."
+Attraction,7,Your attraction play,,Win your money back,"=IF($B$3=""Yes"",E25,IF(D25="""","""",D25))","Pick one: Win your money back / Giveaway / Decoy / Buy some, get some free / Pay less now or pay more later / Free with strings"
+Attraction,8,"The attraction offer, one sentence",,"Lose ten pounds in six weeks for $500, and win it all back if you finish every session.","=IF($B$3=""Yes"",E26,IF(D26="""","""",D26))","Result, time, price, reason."
+Attraction,8,The string: what leads to the next offer,,The week-two results check-in with a coach,"=IF($B$3=""Yes"",E27,IF(D27="""","""",D27))","The results call, the week-two check-in, the pickup, the delivery."
+Attraction,10,Share of attraction buyers who show up or start,,0.85,"=IF($B$3=""Yes"",E28,IF(D28="""","""",D28))","A fraction, e.g. 0.25 for 25%. From your first run. 1 if everyone did."
+Attraction,11,Share of attraction buyers refunded or credited,,0.12,"=IF($B$3=""Yes"",E29,IF(D29="""","""",D29))","A fraction, e.g. 0.25 for 25%. Refunds paid divided by buyers. 0 if none."
+Attraction,13,The second attraction play,,Giveaway,"=IF($B$3=""Yes"",E30,IF(D30="""","""",D30))","Pick one: Win your money back / Giveaway / Decoy / Buy some, get some free / Pay less now or pay more later / Free with strings / None yet"
+Attraction,14,Customers you will take per run,,30,"=IF($B$3=""Yes"",E31,IF(D31="""","""",D31))",A number you would actually stop at.
+Upsell,4,Price of the upsell,,1200,"=IF($B$3=""Yes"",E32,IF(D32="""","""",D32))","Dollars. Total price, before any rollover credit."
+Upsell,5,Cost to deliver the upsell to one customer,,300,"=IF($B$3=""Yes"",E33,IF(D33="""","""",D33))","Dollars. Materials, hours, seats. 0 is allowed."
+Upsell,6,Share of customers offered the upsell who take it,,0.25,"=IF($B$3=""Yes"",E34,IF(D34="""","""",D34))","A fraction, e.g. 0.25 for 25%. Takers divided by those asked."
+Upsell,7,Your upsell play,,Rollover: first payment becomes a deposit,"=IF($B$3=""Yes"",E35,IF(D35="""","""",D35))",Pick one: Classic: the next step / Menu: they pick from add-ons / Anchor: biggest option first / Rollover: first payment becomes a deposit
+Upsell,8,"The ask, in one sentence",,"Since you want the ten pounds gone for good, the people who keep it off go straight onto the year programme, and the $500 you paid comes off it. Want me to set that up?","=IF($B$3=""Yes"",E36,IF(D36="""","""",D36))","Say it as a service, not a sale."
+Upsell,8,What you say to the most common no,,Totally fair. Would three payments make it work?,"=IF($B$3=""Yes"",E37,IF(D37="""","""",D37))",Usually it leads to the downsell.
+Upsell,10,Days after the first purchase the upsell is offered,,3,"=IF($B$3=""Yes"",E38,IF(D38="""","""",D38))",Days. 0 if at checkout. 14 if at the two-week check-in.
+Upsell,11,Share of customers who were offered the upsell,,0.8,"=IF($B$3=""Yes"",E39,IF(D39="""","""",D39))","A fraction, e.g. 0.25 for 25%. Asked divided by customers who showed up."
+Upsell,13,Price of the second upsell,,2000,"=IF($B$3=""Yes"",E40,IF(D40="""","""",D40))",Dollars. Offered to takers of the first.
+Upsell,13,Share of first-upsell takers who take it,,0.1,"=IF($B$3=""Yes"",E41,IF(D41="""","""",D41))","A fraction, e.g. 0.25 for 25%. A guess is fine to start."
+Upsell,14,Price of your top tier,,2400,"=IF($B$3=""Yes"",E42,IF(D42="""","""",D42))","Dollars. Shown first, sold rarely."
+Downsell,4,Price of the downsell,,450,"=IF($B$3=""Yes"",E43,IF(D43="""","""",D43))",Dollars. Total over all payments.
+Downsell,5,Cost to deliver the downsell to one customer,,300,"=IF($B$3=""Yes"",E44,IF(D44="""","""",D44))",Dollars. All in. 0 is allowed.
+Downsell,6,Share of upsell nos who take the downsell,,0.4,"=IF($B$3=""Yes"",E45,IF(D45="""","""",D45))","A fraction, e.g. 0.25 for 25%. Takers divided by those offered."
+Downsell,7,Your downsell play,,Payment plan,"=IF($B$3=""Yes"",E46,IF(D46="""","""",D46))",Pick one: Payment plan / Trial with a string / Lighter version / Deposit and decide
+Downsell,8,"The downsell, in one sentence",,No problem. We can do the same programme as three payments of $150; you still get the full year.,"=IF($B$3=""Yes"",E47,IF(D47="""","""",D47))","Acknowledge the no, offer the smaller yes, keep the result."
+Downsell,8,What exactly is smaller,,Nothing is cut; the terms are longer,"=IF($B$3=""Yes"",E48,IF(D48="""","""",D48))","Fewer sessions, longer terms, less support, no guarantee. Name it."
+Downsell,10,Number of payments,,3,"=IF($B$3=""Yes"",E49,IF(D49="""","""",D49))",1 if paid in full.
+Downsell,10,Share of the price paid up front,,0.34,"=IF($B$3=""Yes"",E50,IF(D50="""","""",D50))","A fraction, e.g. 0.25 for 25%. The first payment as a fraction of the total. 1 if paid in full."
+Downsell,11,Share of payment plans that stop early,,0.08,"=IF($B$3=""Yes"",E51,IF(D51="""","""",D51))","A fraction, e.g. 0.25 for 25%. Stopped divided by started."
+Downsell,13,Price of the entry downsell,,99,"=IF($B$3=""Yes"",E52,IF(D52="""","""",D52))",Dollars. Offered to leads who did not buy the attraction offer.
+Downsell,13,Share of attraction nos who take it,,0.2,"=IF($B$3=""Yes"",E53,IF(D53="""","""",D53))","A fraction, e.g. 0.25 for 25%. A guess is fine to start."
+Downsell,14,What the second downsell cuts,,Support or check-ins,"=IF($B$3=""Yes"",E54,IF(D54="""","""",D54))",Pick one: Time with you / Access or seats / Support or check-ins / The guarantee / Speed of the result
+Continuity,4,Continuity price per month,,149,"=IF($B$3=""Yes"",E55,IF(D55="""","""",D55))","Dollars. Per member, per month."
+Continuity,5,Cost to serve one member for a month,,40,"=IF($B$3=""Yes"",E56,IF(D56="""","""",D56))",Dollars. All in. 0 is allowed.
+Continuity,6,Share of customers who join continuity,,0.6,"=IF($B$3=""Yes"",E57,IF(D57="""","""",D57))","A fraction, e.g. 0.25 for 25%. Joiners divided by customers who finished the earlier offers."
+Continuity,6,Monthly churn,,0.08,"=IF($B$3=""Yes"",E58,IF(D58="""","""",D58))","A fraction, e.g. 0.25 for 25%. Members who left this month divided by members at the start of it."
+Continuity,7,Your continuity play,,The default,"=IF($B$3=""Yes"",E59,IF(D59="""","""",D59))",Pick one: Bonus for committing / Discount for a longer term / Waived fee / Bonuses over time / The default
+Continuity,8,"The pitch, one or two sentences",,"To keep the weight off, most people stay on as members: $149 a month, and if you start today the first month's meal plans are included.","=IF($B$3=""Yes"",E60,IF(D60="""","""",D60))","Result, plan, price, the joining bonus."
+Continuity,8,The reason to stay past month one,,"A new eight-week block every two months, and a tracked weigh-in chart","=IF($B$3=""Yes"",E61,IF(D61="""","""",D61))","What arrives in month two, three, six. A tracked result counts."
+Continuity,10,Days from the first purchase to the first continuity charge,,42,"=IF($B$3=""Yes"",E62,IF(D62="""","""",D62))",Days. 0 if charged at signup.
+Continuity,11,Share of a cohort still paying at month three,,0.78,"=IF($B$3=""Yes"",E63,IF(D63="""","""",D63))","A fraction, e.g. 0.25 for 25%. Still paying divided by joined."
+Continuity,13,"Price of the yearly plan, paid up front",,1490,"=IF($B$3=""Yes"",E64,IF(D64="""","""",D64))",Dollars. Total for the year.
+Continuity,13,Share of joiners who choose it,,0.15,"=IF($B$3=""Yes"",E65,IF(D65="""","""",D65))","A fraction, e.g. 0.25 for 25%. A guess is fine to start."
+Continuity,14,The next reason to stay,,A result they can watch grow,"=IF($B$3=""Yes"",E66,IF(D66="""","""",D66))",Pick one: A bonus that arrives every few months / A group they would miss / A result they can watch grow / A price locked while they stay / Milestones with rewards
+KPIs and Scale,4,Most new customers you can serve in a month,,80,"=IF($B$3=""Yes"",E67,IF(D67="""","""",D67))","Honest, at current staff and hours."
+KPIs and Scale,5,Fixed costs per month,,9000,"=IF($B$3=""Yes"",E68,IF(D68="""","""",D68))",Dollars. Everything that is due whether or not a customer buys.
+KPIs and Scale,6,Cash available for getting customers each month,,8000,"=IF($B$3=""Yes"",E69,IF(D69="""","""",D69))",Dollars. What you could spend on ads and sales this month without missing payroll or rent.
+KPIs and Scale,6,Share of 30-day cash reinvested in getting customers,,0.5,"=IF($B$3=""Yes"",E70,IF(D70="""","""",D70))","A fraction, e.g. 0.25 for 25%. 0.5 is half."
+KPIs and Scale,7,The number you watch weekly,,30-day cash per customer,"=IF($B$3=""Yes"",E71,IF(D71="""","""",D71))",Pick one: Cost of a customer / 30-day cash per customer / 30-day ratio / Monthly churn / LTGP to CAC / Leads per week
+KPIs and Scale,8,Where the scoreboard lives,,The whiteboard by the front desk,"=IF($B$3=""Yes"",E72,IF(D72="""","""",D72))","A sheet, a whiteboard, this page."
+KPIs and Scale,8,"Who updates it, and on which day",,"Sam, every Monday","=IF($B$3=""Yes"",E73,IF(D73="""","""",D73))","One name, one day."
+KPIs and Scale,10,"Measured 30-day cash per new customer, after the model",,760,"=IF($B$3=""Yes"",E74,IF(D74="""","""",D74))","Dollars. Collected, from a real cohort."
+KPIs and Scale,11,"New customers last month, after the model",,55,"=IF($B$3=""Yes"",E75,IF(D75="""","""",D75))",First-time payers.
+KPIs and Scale,13,Percent to raise the upsell price in the next run,,0.1,"=IF($B$3=""Yes"",E76,IF(D76="""","""",D76))","A fraction, e.g. 0.25 for 25%. 0.1 is a common first test."
+KPIs and Scale,14,What stops growth next?,,Capacity to serve them,"=IF($B$3=""Yes"",E77,IF(D77="""","""",D77))",Pick one: Cash to buy customers / Capacity to serve them / Leads / Conversion of leads / Cost or quality of delivery
+
+The figures,Value,Verdict,What it says
+Foundations: the business today
+"Gross profit per sale, today","=IF(AND($F$6<>"""",$F$7<>""""),$F$6-$F$7,""not yet"")",,What one sale of your main offer leaves after delivering it.
+"Gross margin, today","=IF(AND($F$6<>"""",$F$7<>""""),IF($F$6=0,""no margin"",($F$6-$F$7)/$F$6),""not yet"")","=IF(ISNUMBER(B82),IF(B82>=0.5,""good"",IF(B82>=0.3,""watch"",""low"")),"""")",The share of the price you keep after delivery. Above 50% is where most of the plays become affordable.
+Cost of a customer (CAC),"=IF(AND($F$8<>"""",$F$9<>""""),IF($F$9=0,""no customers"",$F$8/$F$9),""not yet"")",,"What you spent to get customers, divided by the customers you got."
+First sale minus the cost of the customer,"=IF(AND(ISNUMBER($B$81),ISNUMBER($B$83)),$B$81-$B$83,""not yet"")","=IF(ISNUMBER(B84),IF(B84>=0,""pays for itself"",""the rest of the model covers this""),"""")","Gross profit on the first sale, less what the customer cost. Negative means the first sale does not pay for the customer, which is exactly what the rest of the model is for."
+Cost per lead,"=IF(AND($F$8<>"""",$F$23<>""""),IF($F$23=0,""no leads"",$F$8/$F$23),""not yet"")",,Spend divided by leads.
+"30-day ratio, today (cash collected / CAC)","=IF(AND($F$18<>"""",ISNUMBER($B$83)),IF($B$83=0,""free customers"",$F$18/$B$83),""not yet"")","=IF(ISNUMBER(B86),IF(B86>=2,""self-funding"",IF(B86>=1,""break even"",""losing"")),"""")","What the business does now, before the sequence."
+"The sequence: each offer, per customer"
+Attraction offer gross profit,"=IF(AND($F$21<>"""",$F$22<>""""),$F$21-$F$22,""not yet"")",,"Price less delivery, per buyer."
+Upsell gross profit (per taker),"=IF(AND($F$32<>"""",$F$33<>""""),$F$32-$F$33,""not yet"")",,Per taker.
+Upsell profit per customer,"=IF(AND(ISNUMBER($B$89),$F$34<>""""),$B$89*$F$34,""not yet"")",,Upsell gross profit times the take rate: what the upsell adds to every customer on average.
+Downsell gross profit (per taker),"=IF(AND($F$43<>"""",$F$44<>""""),$F$43-$F$44,""not yet"")",,Per taker.
+Downsell profit per customer,"=IF(AND(ISNUMBER($B$91),$F$34<>"""",$F$45<>""""),$B$91*(1-$F$34)*$F$45,""not yet"")",,"Downsell gross profit, times the share who said no to the upsell, times the downsell take rate."
+Continuity gross profit per month,"=IF(AND($F$55<>"""",$F$56<>""""),$F$55-$F$56,""not yet"")",,"Per member, per month."
+"Continuity, first month, per customer","=IF(AND(ISNUMBER($B$93),$F$57<>""""),$B$93*$F$57,""not yet"")",,Monthly gross profit times the share who join.
+"Months a member stays, on average","=IF(AND($F$58<>""""),IF($F$58=0,""nobody leaves"",1/$F$58),""not yet"")",,One divided by monthly churn.
+Continuity lifetime profit per customer,"=IF(AND(ISNUMBER($B$93),$F$57<>"""",ISNUMBER($B$95)),$B$93*$F$57*$B$95,""not yet"")",,"Monthly gross profit, times the months a member stays, times the share who join."
+The headline: the 30-day rule and lifetime value
+"30-day cash per customer (planned, gross profit)","=IF(AND(ISNUMBER($B$88),ISNUMBER($B$90),ISNUMBER($B$92),ISNUMBER($B$94)),$B$88+$B$90+$B$92+$B$94,""not yet"")",,"Gross profit the sequence collects from one customer in their first 30 days, assuming every offer is made inside the month. Prove levels U10, D10 and C10 check that."
+30-day cash collected per customer (before delivery),"=IF(AND($F$21<>"""",$F$32<>"""",$F$34<>"""",$F$43<>"""",$F$45<>"""",$F$55<>"""",$F$57<>""""),$F$21+$F$32*$F$34+$F$43*(1-$F$34)*$F$45+$F$55*$F$57,""not yet"")",,Cash before delivery costs: the figure to compare with what you counted at the bank. The gross profit twin is the headline.
+30-day ratio (planned),"=IF(AND(ISNUMBER($B$98),ISNUMBER($B$83)),IF($B$83=0,""free customers"",$B$98/$B$83),""not yet"")","=IF(ISNUMBER(B100),IF(B100>=2,""SELF-FUNDING: each customer pays for the next"",IF(B100>=1,""break even inside the month"",""not paying back inside 30 days"")),"""")","30-day cash divided by the cost of a customer. 1 is break even, 2 is self-funding."
+The most you could pay for a customer,"=IF(AND(ISNUMBER($B$98)),$B$98/2,""not yet"")",,Half the 30-day cash: the cost of a customer that still leaves you self-funding.
+Lifetime gross profit per customer (LTGP),"=IF(AND(ISNUMBER($B$88),ISNUMBER($B$90),ISNUMBER($B$92),ISNUMBER($B$96)),$B$88+$B$90+$B$92+$B$96,""not yet"")",,"Everything the sequence earns from one customer, less delivery, over their whole stay."
+LTGP to CAC,"=IF(AND(ISNUMBER($B$102),ISNUMBER($B$83)),IF($B$83=0,""free customers"",$B$102/$B$83),""not yet"")","=IF(ISNUMBER(B103),IF(B103>=3,""good: 3x or more"",IF(B103>=1,""thin"",""losing"")),"""")",How many times over a customer pays for themselves. The book wants at least 3.
+30-day cash per lead,"=IF(AND(ISNUMBER($B$98),$F$24<>""""),$B$98*$F$24,""not yet"")",,"What a lead is worth to you in the first month, so you know what you can pay for one."
+Customers a month to cover fixed costs,"=IF(AND($F$68<>"""",ISNUMBER($B$98)),IF($B$98<=0,""no profit in 30 days"",ROUNDUP($F$68/$B$98,0)),""not yet"")",,"Fixed costs divided by 30-day cash per customer. Above this, the month is profitable on new customers alone."
+Customers you can afford per month,"=IF(AND($F$69<>"""",ISNUMBER($B$83)),IF($B$83=0,""no ceiling"",ROUNDDOWN($F$69/$B$83,0)),""not yet"")",,Cash for getting customers divided by the cost of one. The scale ceiling before the model self-funds.
+Room to grow before capacity,"=IF(AND($F$67<>"""",$F$9<>""""),$F$67-$F$9,""not yet"")",,Customers per month you could add before you cannot serve them.
+Gross profit per hour of your time,"=IF(AND(ISNUMBER($B$98),$F$19<>""""),IF($F$19=0,""no hours"",$B$98/$F$19),""not yet"")",,"The 30-day cash per customer divided by the hours you put into one. Raise the price, cut the delivery, or hire, depending on whether you like this number."
+Prove: what actually happened
+Real upsell take across all customers,"=IF(AND($F$28<>"""",$F$39<>"""",$F$34<>""""),$F$28*$F$39*$F$34,""not yet"")",,"Show rate, times the share asked, times the take rate when asked. The number that actually hits the bank."
+Attraction gross profit after refunds,"=IF(AND(ISNUMBER($B$88),$F$21<>"""",$F$29<>""""),$B$88-$F$21*$F$29,""not yet"")",,Gross profit less the price times the refund rate.
+"30-day cash, checked against timing","=IF(AND(ISNUMBER($B$88),$F$38<>"""",ISNUMBER($B$90),$F$43<>"""",$F$50<>"""",$F$44<>"""",$F$34<>"""",$F$45<>"""",$F$62<>"""",ISNUMBER($B$94)),$B$88+IF($F$38<=30,$B$90+($F$43*$F$50-$F$44)*(1-$F$34)*$F$45,0)+IF($F$62<=30,$B$94,0),""not yet"")",,"The planned 30-day cash, dropping any offer whose cash lands after day 30 and counting only the first plan payment."
+"Cash lost to failed payment plans, per customer","=IF(AND($F$43<>"""",$F$50<>"""",$F$51<>"""",$F$34<>"""",$F$45<>""""),$F$43*(1-$F$50)*$F$51*(1-$F$34)*$F$45,""not yet"")",,"The unpaid remainder times the default rate, spread over customers."
+"Month-three retention, predicted by churn","=IF(AND($F$58<>""""),(1-$F$58)^3,""not yet"")",,What your churn rate predicts at month three. Compare it with the cohort you counted.
+"30-day ratio, measured (cash collected / CAC)","=IF(AND($F$74<>"""",ISNUMBER($B$83)),IF($B$83=0,""free customers"",$F$74/$B$83),""not yet"")","=IF(ISNUMBER(B115),IF(B115>=2,""self-funding"",IF(B115>=1,""break even"",""losing"")),"""")","From a real cohort, after the model."
+Customer growth since the model,"=IF(AND($F$75<>"""",$F$9<>""""),IF($F$9=0,""no customers before"",$F$75/$F$9-1),""not yet"")",,"New customers after, against before."
+Optimize
+Cash a full run brings in,"=IF(AND($F$31<>"""",ISNUMBER($B$99)),$F$31*$B$99,""not yet"")",,The cap times the 30-day cash per customer.
+Second upsell profit per customer,"=IF(AND($F$40<>"""",$F$41<>"""",$F$34<>""""),$F$40*$F$41*$F$34,""not yet"")",,"Price times the second take rate times the first, spread over all customers. Delivery cost is not asked for; treat it as an upper bound."
+The upsell as a share of the anchor,"=IF(AND($F$42<>"""",$F$32<>""""),IF($F$42=0,""no anchor"",$F$32/$F$42),""not yet"")",,The upsell as a share of the anchor. Under a third reads as the sensible choice.
+Cash the yearly plan moves into month one,"=IF(AND($F$64<>"""",$F$55<>"""",$F$65<>"""",$F$57<>""""),($F$64-$F$55)*$F$65*$F$57,""not yet"")",,"The yearly price less the first month already counted, times the share who choose it, per customer."
+30-day cash with the yearly plan,"=IF(AND(ISNUMBER($B$98),ISNUMBER($B$121)),$B$98+$B$121,""not yet"")",,Planned 30-day cash plus the yearly plan's lift.
+LTGP with the second upsell and the yearly plan,"=IF(AND(ISNUMBER($B$102),ISNUMBER($B$119),ISNUMBER($B$121)),$B$102+$B$119+$B$121,""not yet"")",,The tier-2 figure plus the Optimize band's additions.
+Entry downsell cash per lead,"=IF(AND($F$52<>"""",$F$53<>"""",$F$24<>""""),$F$52*$F$53*(1-$F$24),""not yet"")",,Price times the take rate among the leads who did not buy.
+Take rate that keeps a price test even,"=IF(AND(ISNUMBER($B$89),$F$32<>"""",$F$76<>"""",$F$34<>""""),IF($B$89+$F$32*$F$76<=0,""no profit"",$F$34*$B$89/($B$89+$F$32*$F$76)),""not yet"")",,"If the raised price takes at least this share, you are no worse off."
+
+The plays,Open?,What it is,Opens when
+Attraction: Win your money back,"=IF(AND(AND(ISNUMBER($B$82),$B$82>=0.5),$F$11<>""""),""Open"",""Waiting"")","The customer pays, and gets it back (or as credit) if they hit a stated result and follow the rules. Most will not; the ones who do are the customers you want.","gross margin of at least 50%, so a refund does not sink you; a promise with a result you can measure"
+Attraction: Giveaway,"=IF(AND(ISNUMBER($B$85),$B$85>=20.0),""Open"",""Waiting"")","One big prize, many entrants, and everyone who did not win gets an offer. Cheap leads at volume.","a cost per lead of $20 or more, so cheaper leads matter"
+Attraction: Decoy,"=IF(AND(ISNUMBER($F$21),$F$21>0.0),""Open"",""Waiting"")","A free or very cheap option next to the real one, so the real one looks like the sensible choice and the free one filters out people who would never pay.",a paid attraction offer for the decoy to sit beside
+"Attraction: Buy some, get some free","=IF(AND(ISNUMBER($B$82),$B$82>=0.6),""Open"",""Waiting"")",Bundle volume up front. The free part is margin you would have spent on getting the customer back anyway.,"gross margin of at least 60%, so the free units cost you little"
+Attraction: Pay less now or pay more later,"=IF(AND(ISNUMBER($F$6),$F$6>=500.0),""Open"",""Waiting"")",Two prices for the same thing: a smaller one paid today and a larger one paid on results or over time. Both close; one brings cash forward.,"a main offer of $500 or more, where the two prices differ enough to matter"
+Attraction: Free with strings,"=IF(AND(AND(ISNUMBER($B$90),$B$90>=0.0),ISNUMBER($B$83)),""Open"",""Waiting"")","Free only when the string (a deposit, a booked call, an upsell moment) makes the free customer pay off.",an upsell with a known profit per customer; the cost of a customer
+Upsell: Classic upsell,"=IF(ISNUMBER($B$88),""Open"",""Waiting"")",The next thing they need to get the result faster or keep it.,an attraction offer with a price and a cost
+Upsell: Menu upsell,"=IF(AND(ISNUMBER($F$34),$F$34<0.3),""Open"",""Waiting"")","Several add-ons, they pick. People say yes to something more often than to one thing.","an upsell take rate under 30%, where choice tends to help"
+Upsell: Anchor upsell,"=IF(AND(ISNUMBER($F$32),$F$32>=1000.0),""Open"",""Waiting"")",Show the biggest option first. The one you want to sell looks reasonable next to it.,"an upsell of $1,000 or more, where the anchor has room above it"
+Upsell: Rollover upsell,"=IF(AND(AND(ISNUMBER($F$21),$F$21>0.0),$F$32<>""""),""Open"",""Waiting"")",Credit what they just paid toward the bigger thing. The first purchase becomes a deposit.,a paid attraction offer to roll over; an upsell price
+Downsell: Payment plan,"=IF(AND(ISNUMBER($F$32),$F$32>=300.0),""Open"",""Waiting"")",The same offer split over time. Usually the first thing to try.,"an upsell of $300 or more, where splitting helps"
+Downsell: Trial with a string,"=IF($F$55<>"""",""Open"",""Waiting"")","Try it, and pay if you keep it, or pay a penalty if you do not do the work.",a continuity offer for the trial to lead into
+Downsell: Lighter version,"=IF(AND(ISNUMBER($F$33),$F$33>0.0),""Open"",""Waiting"")","Fewer parts, less access, less support, same result more slowly. Keep the promise, shrink the package.",an upsell with a delivery cost you can shrink
+Downsell: Deposit and decide,"=IF($F$31<>"""",""Open"",""Waiting"")","A small payment to hold the price or the spot, decided later. Cash today, and a reason to come back.","a cap per run, so holding a spot means something"
+Continuity: Bonus for committing,"=IF(AND(ISNUMBER($F$57),$F$57<0.7),""Open"",""Waiting"")","A gift, worth a lot to them and little to you, for joining the ongoing plan today.","a continuity join rate under 70%, so the first no is the problem"
+Continuity: Discount for a longer term,"=IF(AND(ISNUMBER($B$95),$B$95>=6),""Open"",""Waiting"")","Pay for a year, get it cheaper. Cash forward, churn removed.","members staying six months or more on average, so a year is believable"
+Continuity: Waived fee,"=IF(AND(ISNUMBER($B$93),$B$93>0.0),""Open"",""Waiting"")",The setup or first month is free if they join now. The fee exists so waiving it means something.,a continuity offer that makes a gross profit each month
+Continuity: Bonuses over time,"=IF(AND(ISNUMBER($F$58),$F$58>=0.05),""Open"",""Waiting"")","Something new arrives in month two, three and six. Reasons to stay, not just reasons to join.","monthly churn of 5% or more, so staying is the problem"
+Continuity: The default,"=IF($F$55<>"""",""Open"",""Waiting"")",The ongoing plan is the normal thing to buy; the one-off is the exception you have to ask for.,a continuity price
+
+A companion to $100M Money Models in this sheet's own words. The example is a made-up business. Not financial or business advice.

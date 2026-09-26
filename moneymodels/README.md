@@ -47,6 +47,7 @@ next). A planet moves out an orbit for every band it finishes.
 | `data/plays.json` | The 19 plays: what each is, when it opens, five steps |
 | `data/demo.json` | The example numbers |
 | `Money-Models-Workbook.xlsx`, `tools/workbook.py` | The same workbook as a spreadsheet: one sheet per planet, a Dashboard of live formulas, Plays, Your Model; built from the tables by `python3 moneymodels/tools/workbook.py` |
+| `Money-Models-Sheet.csv`, `tools/gsheet.py` | A one-tab edition for Google Sheets: every input, the dashboard formulas and the plays' status; Drive converts the CSV into a Sheet with the formulas live |
 | `test/run.js` | This app's tests (`node moneymodels/test/run.js`, also in CI) |
 | `DECISIONS.md`, `STATUS.md` | This lane's log (`MM-###`) and where it stands |
 
