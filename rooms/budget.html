@@ -462,6 +462,7 @@
 <script src="../engines/budget.js"></script>
 <script src="../engines/variance.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../shared/chartbox.js"></script>
 <script src="../shared/suggest.js"></script>
 <script src="../engines/hourly.js"></script>
 <script src="../engines/foo.js"></script>
@@ -910,7 +911,7 @@
 /* ---- READING view-every-month, from rooms/variance.html (D-276) ---- */
 (function () {
   'use strict';
-  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Variance = SLAF.Variance, Budget = SLAF.Budget, Charts = SLAF.Charts;
+  var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Variance = SLAF.Variance, Budget = SLAF.Budget, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox;
   var ROOM_ID = 'budget';   /* the room this reading lives in */
   var picked = null;       /* the month shown in the single view */
   var trendBucket = 'expenses';
@@ -955,7 +956,7 @@
     if (!Money.isOk(t)) { el('trend-chart').innerHTML = ''; el('trend-why').textContent = t.reason; return; }
     var s = t.series[trendBucket];
     var clean = function (pts) { return pts.filter(function (p) { return Money.isEntered(p[1]); }); };
-    el('trend-chart').innerHTML = Charts.area({
+    ChartBox.draw(el('trend-chart'), { id: 'budget-trend-chart', kind: 'series', render: function () { return Charts.area({
       title: Variance.LABELS[trendBucket] + ', estimated and actual, month by month',
       series: [
         { label: 'Actual', color: Charts.COLORS.growth, fill: true, points: clean(s.actual) },
@@ -963,7 +964,7 @@
       ],
       x: { label: 'month', format: function (v) { var m = t.months[Math.round(v)]; return m && m.label ? m.label.slice(0, 3) + ' ’' + m.id.slice(2, 4) : ''; } },
       y: { min: 0 }
-    });
+    }); } });
     var misses = s.variance.filter(function (v) { return v.share !== null; });
     var last = misses[misses.length - 1], first = misses[0];
     el('trend-why').textContent = misses.length < 2 ? 'Two months with both columns are needed to say whether the guess is closing in.'
@@ -1015,7 +1016,7 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      Charts = SLAF.Charts, Room = SLAF.Room, History = SLAF.History, Instruments = SLAF.Instruments;
+      Charts = SLAF.Charts, ChartBox = SLAF.ChartBox, Room = SLAF.Room, History = SLAF.History, Instruments = SLAF.Instruments;
 
   function review(h, T) { return History.review(h, Spine.listSnapshots(), T, {}); }
   function pct(v) { return v === null || v === undefined ? '' : ' (' + (v >= 0 ? '+' : '−') + Math.round(Math.abs(v) * 1000) / 10 + '%)'; }

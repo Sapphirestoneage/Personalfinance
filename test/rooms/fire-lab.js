@@ -43,8 +43,16 @@ module.exports = function (t) {
   checkTrue('… and says what to categorise when it cannot be', /to see which slices it is made of/.test(code));
 
   /* ---- The charts are the shared ones ------------------------------------ */
+  /* The shapes are the shared library's, drawn through shared/chartbox.js so
+     the reader can change the shape and the colours (D-347). Either call is
+     the same drawing code; what this holds is that the room never hand-rolls
+     an SVG of its own. */
   checkTrue('donut, bars and area all come from shared/charts.js',
-    /Charts\.donut\(/.test(code) && /Charts\.bars\(/.test(code) && /Charts\.area\(/.test(code));
+    (/Charts\.donut\(/.test(code) || /kind: 'breakdown'/.test(code))
+    && (/Charts\.bars\(/.test(code) || /kind: 'compare'/.test(code))
+    && /Charts\.area\(/.test(code));
+  checkTrue('...and every one of them is a picture the reader can re-shape',
+    /ChartBox\.draw\(/.test(code));
   /* Charts.area takes [x, y] pairs; objects render as NaN and the SVG throws. */
   checkTrue('the path feeds area the pair format it expects', /pts\.push\(\[i, fut\(Math\.round\(bal\), i\)\]\)/.test(code));
   checkTrue('… and formats its x axis through x.format', /x: \{ format: function/.test(code));

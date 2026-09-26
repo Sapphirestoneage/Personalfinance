@@ -506,6 +506,7 @@
 <script src="../shared/lens.js"></script>
 <script src="../shared/bands.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../shared/chartbox.js"></script>
 <script src="../shared/suggest.js"></script>
 <script src="../shared/rating.js"></script>
 <script src="../engines/cashflow.js"></script>
@@ -774,7 +775,7 @@
      Projection.pathCents; nothing is computed here. */
   function renderPath(h, target, prog) {
     var host = el('out-path'), why = el('path-why');
-    var Charts = SLAF.Charts;
+    var Charts = SLAF.Charts, ChartBox = SLAF.ChartBox;
     var age = Schema.primaryAge(h);
     if (!Money.isOk(target) || !Money.isOk(prog) || !Money.isEntered(age) || target.variant.mode === 'coast') {
       host.innerHTML = ''; why.textContent = ''; return;
@@ -940,7 +941,7 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership, Registry = SLAF.Registry,
-      Enough = SLAF.Enough, Fulfillment = SLAF.Fulfillment, Charts = SLAF.Charts, Room = SLAF.Room;
+      Enough = SLAF.Enough, Fulfillment = SLAF.Fulfillment, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox, Room = SLAF.Room;
 
   /* ---- writes: this room owns household.enough ------------------------------ */
   /* The figure and where it came from move together, as one undo entry:
@@ -1195,7 +1196,7 @@
       Reference = SLAF.Reference, Ownership = SLAF.Ownership,
       Fire = SLAF.Fire, Tier0 = SLAF.Tier0, Projection = SLAF.Projection,
       CashFlow = SLAF.CashFlow,
-      Charts = SLAF.Charts;
+      Charts = SLAF.Charts, ChartBox = SLAF.ChartBox;
 
   var ROOM_ID = 'fire';   /* the room this reading lives in */
   var TABLES = null;
@@ -1251,7 +1252,7 @@
     if (Money.isOk(prog)) {
       var share = Math.max(0, Math.min(1, prog.value));
       var gap = Math.max(0, prog.targetCents - prog.investmentsCents);
-      el('progress-ring').innerHTML = Charts.donut({
+      ChartBox.draw(el('progress-ring'), { id: 'fire-progress-ring', kind: 'breakdown', 
         title: 'Progress toward the FIRE number',
         centre: Math.round(share * 100) + '%',
         centreLabel: 'of the way',
@@ -1321,7 +1322,7 @@
       var cats = (sum && Money.isOk(sum) ? (sum.categories || []) : [])
         .filter(function (c) { return c.monthlyCents > 0; });
       if (cats.length > 1) {
-        el('spend-donut').innerHTML = Charts.donut({
+        ChartBox.draw(el('spend-donut'), { id: 'fire-spend-donut', kind: 'breakdown', 
           title: 'A year of spending, by kind',
           centre: Money.formatCents(monthly.value * 12),
           centreLabel: 'a year',
@@ -1360,7 +1361,7 @@
             note: reached ? 'reached' : (Money.isOk(y) ? yearsLabel(y.value) : 'not reachable at this rate')
           };
         });
-        el('milestone-chart').innerHTML = Charts.bars({ title: 'Years to each milestone', rows: mrows, format: yearsLabel });
+        ChartBox.draw(el('milestone-chart'), { id: 'fire-milestone-chart', kind: 'compare',  title: 'Years to each milestone', rows: mrows, format: yearsLabel });
       } else {
         el('milestone-chart').innerHTML = waiting(basis);
       }
@@ -1390,14 +1391,14 @@
           pts = pts.slice(0, stop + 1);
           line = line.slice(0, stop + 1);
         }
-        el('path-chart').innerHTML = Charts.area({
+        ChartBox.draw(el('path-chart'), { id: 'fire-path-chart', kind: 'series', render: function () { return Charts.area({
           title: 'Portfolio against the FIRE number, year by year',
           series: [
             { label: 'What you would hold', color: Charts.COLORS.growth, points: pts, fill: true, width: 2 },
             { label: 'The number', color: Charts.COLORS.debt, points: line, fill: false, width: 1 }
           ],
           x: { format: function (v) { return v === 0 ? 'now' : '+' + Math.round(v) + 'y'; } }
-        });
+        }); } });
       } else {
         el('path-chart').innerHTML = waiting(b2);
       }

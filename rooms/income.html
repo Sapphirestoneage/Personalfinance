@@ -783,6 +783,7 @@
 <script src="../shared/money.js"></script>
 <script src="../shared/schema.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../shared/chartbox.js"></script>
 <script src="../shared/registry.js"></script>
 <script src="../shared/reference.js"></script>
 <script src="../shared/spine-v2.js"></script>
@@ -1118,7 +1119,7 @@
      Three charts off Ledger.month, one call per month of a twelve-month
      window: colour follows the kind of money everywhere, so a bar in the
      year chart and a bar in the source chart mean the same thing. */
-  var Charts = SLAF.Charts;
+  var Charts = SLAF.Charts, ChartBox = SLAF.ChartBox;
   var KIND_COLOR = (function () {
     var m = {};
     Schema.INCOME_KINDS.forEach(function (k, i) { m[k] = k === 'other' ? Charts.COLORS.muted : Charts.COLORS.series[i % Charts.COLORS.series.length]; });
@@ -1177,8 +1178,8 @@
         + (Money.isOk(nextNet) && nextNet.count && aheadSame ? ', <b>' + esc(Money.formatCents(nextNet.netCents)) + '</b> after tax' : '') + '.';
     } else if (soFar > 0) sum += 'Nothing is expected ahead: every entry has ended or was one time.';
     el('pic-sum').innerHTML = sum || 'Nothing has landed yet. Add a date to an entry and it appears here.';
-    el('pic-months').innerHTML = Charts.columns({ columns: rows, divider: 7, captions: ['so far', 'ahead, assumed'], title: 'A year of it, month by month',
-      empty: 'Nothing lands in these twelve months. Give an entry a first date and it appears here.' });
+    ChartBox.draw(el('pic-months'), { id: 'income-pic-months', kind: 'series', render: function () { return Charts.columns({ columns: rows, divider: 7, captions: ['so far', 'ahead, assumed'], title: 'A year of it, month by month',
+      empty: 'Nothing lands in these twelve months. Give an entry a first date and it appears here.' }); } });
     /* The two assumptions worth questioning. No first date: nothing of it
        can count as come in, and a weekly amount is being averaged. No last
        date on a benefit: drawn as if it never ends, and it does. Ask. */
@@ -1196,7 +1197,7 @@
     var withheld = t.withheldCents, owed = t.owedCents, costs = t.costsCents;
     var gross = t.rows.filter(function (x) { return x.net; }).reduce(function (a, x) { return a + x.grossCents; }, 0);
     var kept = gross - withheld - owed - costs;
-    el('pic-goes').innerHTML = Charts.donut({
+    ChartBox.draw(el('pic-goes'), { id: 'income-pic-goes', kind: 'breakdown', 
       title: 'Where this month’s gross goes',
       slices: [
         { label: 'Yours to keep', value: kept, color: Charts.COLORS.target },
@@ -1214,7 +1215,7 @@
       return { label: e.label || KINDS[e.kind].label, value: perEntry[e.id] ? perEntry[e.id] : null, empty: 'nothing in these months', color: KIND_COLOR[e.kind],
         note: KINDS[e.kind].label + (whose ? ' · ' + whose : '') + (e.endsOn ? ' · until ' + e.endsOn : '') + (e.dateKind === 'potential' ? ' · potential, not counted' : '') };
     });
-    el('pic-sources').innerHTML = Charts.bars({ rows: srcRows });
+    ChartBox.draw(el('pic-sources'), { id: 'income-pic-sources', kind: 'compare',  rows: srcRows });
 
     /* Yours and theirs: only for a household of two. */
     var two = Schema.householdOfTwo(h);
@@ -1222,7 +1223,7 @@
     if (two) {
       var pRows = Schema.adults(h).map(function (p, i) { return { label: Schema.personTag(h, p) || Schema.personName(p, 'You'), value: perPerson[p.id] || 0, color: Charts.COLORS.series[i % Charts.COLORS.series.length] }; });
       if (perPerson.joint) pRows.push({ label: 'No one named', value: perPerson.joint, color: Charts.COLORS.muted, note: 'set whose under More' });
-      el('pic-people').innerHTML = Charts.bars({ rows: pRows });
+      ChartBox.draw(el('pic-people'), { id: 'income-pic-people', kind: 'compare',  rows: pRows });
     }
   }
 
@@ -1360,7 +1361,7 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      VI = SLAF.VariableIncome, Charts = SLAF.Charts, Room = SLAF.Room;
+      VI = SLAF.VariableIncome, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox, Room = SLAF.Room;
 
   /* ---- writes: this room owns the low and high month on the variable
      source, and variableIncome.bufferMonths --------------------------------- */
@@ -1523,7 +1524,7 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      Hourly = SLAF.Hourly, Charts = SLAF.Charts, Room = SLAF.Room;
+      Hourly = SLAF.Hourly, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox, Room = SLAF.Room;
 
   /* ---- writes: this room owns person.work ------------------------------------ */
   function writeWork(key, value) {
@@ -1954,7 +1955,7 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
-      Ownership = SLAF.Ownership, Progress = SLAF.Progress, Charts = SLAF.Charts,
+      Ownership = SLAF.Ownership, Progress = SLAF.Progress, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox,
       Timeline = SLAF.Timeline;
 
   function esc(s) {

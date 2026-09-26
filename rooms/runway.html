@@ -642,6 +642,7 @@
 <script src="../engines/runway.js"></script>
 <script src="../engines/swan.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../shared/chartbox.js"></script>
 <script src="../engines/hourly.js"></script>
 <script src="../engines/betweenjobs.js"></script>
 <script src="../shared/lens.js"></script>
@@ -702,7 +703,7 @@
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
       Reference = SLAF.Reference, Ownership = SLAF.Ownership, Runway = SLAF.Runway,
-      CashFlow = SLAF.CashFlow, Swan = SLAF.Swan, Charts = SLAF.Charts;
+      CashFlow = SLAF.CashFlow, Swan = SLAF.Swan, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox;
 
   var ROOM_ID = 'runway';
   var TABLES = null;
@@ -976,13 +977,13 @@
     if (!r.sustainable && r.ranOutInMonth <= last) vLines.push({ x: r.ranOutInMonth, label: 'runs out' });
     if (r.benefitEndsAfterMonth && r.benefitEndsAfterMonth <= last) vLines.push({ x: r.benefitEndsAfterMonth, label: 'benefit ends' });
 
-    el('path').innerHTML = Charts.area({
+    ChartBox.draw(el('path'), { id: 'runway-path', kind: 'series', render: function () { return Charts.area({
       title: 'Cash balance, month by month',
       series: series,
       hLines: hLines,
       vLines: vLines,
       x: { label: 'months' }
-    });
+    }); } });
 
     el('path-desc').textContent = r.sustainable
       ? 'The balance holds or grows: nothing here ends it.'
@@ -1150,7 +1151,7 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      BetweenJobs = SLAF.BetweenJobs, Charts = SLAF.Charts, Room = SLAF.Room;
+      BetweenJobs = SLAF.BetweenJobs, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox, Room = SLAF.Room;
 
   /* ---- writes: this room owns two fields of person.unemployment ------------- */
   function writeUnemployment(patch) {

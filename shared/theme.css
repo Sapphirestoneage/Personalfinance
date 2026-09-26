@@ -1127,6 +1127,43 @@ html.slaf-menu-pinned .slaf-menu-head { padding-top: var(--space-4); }
    a phone, scrolling the whole page sideways. A reason is a sentence and
    wraps like one; a figure is still a figure. */
 .slaf-bars .row > * { min-width: 0; }
+
+/* ---- A picture you can re-shape (shared/chartbox.js, D-347) ----------------
+   The drawing, then a fold holding the shapes this number set can honestly
+   take, the eight colour orders, and the table twin. Shut at rest: a room with
+   nine pictures would otherwise carry nine rows of chrome before a number. */
+.cbx { display: block; }
+.cbx-title { margin: 0 0 var(--space-2); font-size: var(--text-sm); color: var(--color-text-muted); max-width: var(--measure); }
+.cbx-art { margin-bottom: var(--space-2); }
+.cbx-tools { font-size: var(--text-xs); }
+.cbx-tools > summary { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; color: var(--color-text-muted); cursor: pointer; list-style: none; }
+.cbx-tools > summary::-webkit-details-marker { display: none; }
+.cbx-tools > summary::before { content: '\25A4'; font-size: 13px; }
+.cbx-tools > summary:hover { color: var(--color-text); }
+.cbx-tool { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-2); margin-top: var(--space-2); }
+.cbx-tool-lbl { flex: 0 0 4.5em; color: var(--color-text-faint); text-transform: uppercase; letter-spacing: .06em; }
+.cbx-chips { display: flex; flex-wrap: wrap; gap: var(--space-1); }
+.cbx-chip {
+  min-height: 32px; padding: 0 10px; border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border); background: transparent;
+  color: var(--color-text-muted); font-size: var(--text-xs); cursor: pointer;
+}
+.cbx-chip:hover { border-color: var(--color-border-active); color: var(--color-text); }
+.cbx-chip[aria-pressed="true"] { background: var(--color-surface-active); border-color: var(--color-accent); color: var(--color-text); }
+.cbx-swatch {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 10px 0 6px;
+  border: 1px solid var(--color-border); border-radius: var(--radius-pill);
+  background: transparent; color: var(--color-text-muted); font-size: var(--text-xs); cursor: pointer;
+}
+.cbx-swatch i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+.cbx-swatch i + i { margin-left: -3px; }
+.cbx-swatch[aria-pressed="true"] { border-color: var(--color-accent); color: var(--color-text); background: var(--color-surface-active); }
+.cbx-twin { margin-top: var(--space-3); overflow-x: auto; }
+.cbx-table { width: 100%; border-collapse: collapse; font-size: var(--text-xs); }
+.cbx-table th, .cbx-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--color-border); }
+.cbx-table thead th { color: var(--color-text-faint); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+.cbx-table td { font-variant-numeric: tabular-nums; color: var(--color-text); }
+
 /* A phone has no room for a third of the row of label, a bar and a figure:
    "Retirement saving" came out as "Retirement s...". The name takes the
    whole first line, the bar and its figure the second, so nothing is cut and

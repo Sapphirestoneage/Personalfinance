@@ -384,6 +384,7 @@
 <script src="../engines/decumulation.js"></script>
 <script src="../shared/lens.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../shared/chartbox.js"></script>
 <script src="../engines/selfemployed.js"></script>
 <script src="../engines/tax.js"></script>
 <script src="../engines/reachable.js"></script>
@@ -460,7 +461,7 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      Decumulation = SLAF.Decumulation, Charts = SLAF.Charts, Room = SLAF.Room;
+      Decumulation = SLAF.Decumulation, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox, Room = SLAF.Room;
 
   /* ---- writes: this room owns household.decumulation ------------------------- */
   function readDec(h) { return (h && h.decumulation) || {}; }
@@ -717,7 +718,7 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference, Features = SLAF.Features,
-      RothAca = SLAF.RothAca, Charts = SLAF.Charts;
+      RothAca = SLAF.RothAca, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox;
   var ROOM_ID = 'decumulation';   /* the room this reading lives in */
   var TABLES = null;
   function el(id) { return document.getElementById(id); }
@@ -759,12 +760,12 @@
       if (r.yearsOverCliff) sub += ' Over the cliff in ' + r.yearsOverCliff + ' of the ' + r.years + ' years: with the ceiling in force, the whole premium is yours those years.';
     } else sub += ' Type a conversion a year to see what it adds.';
     el('r-sub').textContent = sub;
-    el('r-chart').innerHTML = Charts.stacked({
+    ChartBox.draw(el('r-chart'), { id: 'decumulation-r-chart', kind: 'breakdown', render: function () { return Charts.stacked({
       title: 'Year by year', rows: r.rows.map(function (y) {
         return { label: String(y.age), note: y.overCliff ? 'over the cliff' : Money.formatRate(y.fplMultiple, { decimals: 0 }) + ' of the poverty level',
           parts: [{ label: 'Federal tax', value: y.taxCents, color: Charts.COLORS.spend }, { label: 'Premium, cliff on', value: y.premiumOnCents, color: Charts.COLORS.target }] };
       })
-    });
+    }); } });
     el('r-rows').innerHTML = r.rows.map(function (y) {
       return '<li' + (y.overCliff ? ' class="is-over"' : '') + '><span>' + y.age + '</span><span>income ' + esc(Money.formatCents(y.magiCents)) + (y.overCliff ? ', over the cliff' : ', ' + esc(Money.formatCents(y.roomBeforeCliffCents)) + ' under it') + '</span><span class="r">' + esc(Money.formatCents(y.taxCents + y.premiumOnCents)) + '</span></li>';
     }).join('');

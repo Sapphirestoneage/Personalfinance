@@ -356,7 +356,9 @@
     }
     var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(o.title || 'columns over time') + '">'
       + grid + '<line class="axis" x1="' + PL + '" x2="' + (W - PR) + '" y1="' + (PT + plotH).toFixed(1) + '" y2="' + (PT + plotH).toFixed(1) + '"/>' + body + divider + '</svg>';
-    var legend = Object.keys(seen).map(function (k) { return '<li><i style="background:' + seen[k] + '"></i>' + esc(k) + '</li>'; }).join('');
+    /* One series needs no legend: the column already wears its own name on
+       the axis, and repeating it is chrome (D-347, the dataviz rule). */
+    var legend = o.legend === false ? '' : Object.keys(seen).map(function (k) { return '<li><i style="background:' + seen[k] + '"></i>' + esc(k) + '</li>'; }).join('');
     return '<div class="slaf-chart slaf-columns">' + svg + (legend ? '<ul class="slaf-legend">' + legend + '</ul>' : '') + '</div>';
   }
 

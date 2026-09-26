@@ -1180,6 +1180,7 @@
 <script src="../shared/sketch.js"></script>
 <script src="../shared/levelstore.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../shared/chartbox.js"></script>
 <script src="../shared/showmath.js"></script>
 <script src="../engines/sincelast.js"></script>
 <script src="../engines/selfemployed.js"></script>
@@ -3508,7 +3509,7 @@
   'use strict';
   var Solar = SLAF.Solar, Spine = SLAF.Spine, Reference = SLAF.Reference;
   var Ownership = SLAF.Ownership, LedgerRows = SLAF.LedgerRows, Ask = SLAF.Ask, Money = SLAF.Money, LiveForm = SLAF.LiveForm;
-  var Recipes = SLAF.Recipes, Sketch = SLAF.Sketch, Suggest = SLAF.Suggest, LevelStore = SLAF.LevelStore, Charts = SLAF.Charts, Ratios = SLAF.Ratios;
+  var Recipes = SLAF.Recipes, Sketch = SLAF.Sketch, Suggest = SLAF.Suggest, LevelStore = SLAF.LevelStore, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox, Ratios = SLAF.Ratios;
   var TABLES = {};
   var host = document.getElementById('view-sky');
   if (!host || !Solar) return;
@@ -4160,17 +4161,14 @@
 
     /* 2. Per planet, and per band: where the ground is thin. */
     out.push('<h3 class="u-head">Answered, by planet</h3>');
-    out.push(Charts.bars({ rows: planetRows(), max: 1, format: function (v) { return Math.round(v * 100) + '%'; },
-      empty: 'Answer a level and this fills in.' }));
+    out.push('<div id="dash-planets"></div>');
     out.push('<h3 class="u-head">Answered, by band</h3>');
     out.push('<p class="dash-sub">A band is the same depth on every planet. Band 1 is a sketch; band 10 is the horizon.</p>');
-    out.push(Charts.bars({ rows: bandRows(), max: 1, format: function (v) { return Math.round(v * 100) + '%'; },
-      empty: 'Answer a level and this fills in.' }));
+    out.push('<div id="dash-bands"></div>');
 
     /* 3. The readings themselves, with their own figures. */
     out.push('<h3 class="u-head">Readings, by tier</h3>');
-    out.push(Charts.bars({ rows: tierRows(h), max: 1, format: function (v) { return Math.round(v * 100) + '%'; },
-      empty: 'Readings arrive as levels are answered.' }));
+    out.push('<div id="dash-tiers"></div>');
     out.push('<h3 class="u-head">What the app can tell you now (' + ready.length + ')</h3>');
     if (ready.length) {
       out.push('<ul class="dash-reads">' + ready.map(function (r) {
@@ -4189,7 +4187,7 @@
     if (ratios.length) {
       out.push('<h3 class="u-head">Where each reading sits against its normal range (' + ratios.length + ')</h3>');
       out.push('<p class="dash-sub">The bar is how far you are from the edge of the healthy range; the marker is the edge itself. Your own figure is on the right.</p>');
-      out.push(Charts.bars({ rows: ratios, max: 2, format: function (v) { return v.toFixed(2); } }));
+      out.push('<div id="dash-ratios"></div>');
     }
 
     /* 5. The same shape the Scorecard draws, so a reading never looks like
@@ -4228,6 +4226,36 @@
     }
 
     box.innerHTML = out.join('');
+
+    /* ---- The pictures, each one the reader's to re-shape (D-347) -----------
+       Every number set on this screen is handed to shared/chartbox.js with
+       the kind it is, so the reader can choose among the shapes that are
+       honest for that kind, choose a colour order, or read it as a table.
+       The choice is kept on this device and never touches the household. */
+    var pct = function (v) { return Math.round(v * 100) + '%'; };
+    ChartBox.draw(el('dash-planets'), {
+      id: 'planets-by-planet', kind: 'compare', rows: planetRows(), format: pct, max: 1,
+      title: 'How much of each planet is answered.',
+      empty: 'Answer a level and this fills in.'
+    });
+    ChartBox.draw(el('dash-bands'), {
+      id: 'planets-by-band', kind: 'compare', rows: bandRows(), format: pct, max: 1,
+      title: 'How much of each band is answered, across all six planets.',
+      empty: 'Answer a level and this fills in.'
+    });
+    ChartBox.draw(el('dash-tiers'), {
+      id: 'planets-by-tier', kind: 'compare', rows: tierRows(h), format: pct, max: 1,
+      title: 'How many readings each tier can make yet.',
+      empty: 'Readings arrive as levels are answered.'
+    });
+    if (el('dash-ratios')) {
+      ChartBox.draw(el('dash-ratios'), {
+        id: 'planets-ratios', kind: 'meter', rows: ratioRows(h), max: 2, keepColors: true,
+        format: function (v) { return v.toFixed(2); },
+        title: 'Each reading against the edge of its own healthy range.',
+        empty: 'A reading appears here once the app can work it out.'
+      });
+    }
   }
   function planetLabel(id) {
     var p = PLANETS.filter(function (x) { return x.id === id; })[0];

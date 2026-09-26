@@ -4,7 +4,7 @@ paths:
   - "engines/studentloans.js"
 ---
 # Debt (`debt-payoff`)
-File: rooms/debt-payoff.html · 2942 lines
+File: rooms/debt-payoff.html · 2943 lines
 Engines: projection, debt, tier0, income, selfemployed, ledger, studentloans, hourly, foo, cashflow, fire, statement, benchmarks, ratios
 Reference data: confidence_weights.json, credit_factors.json, debt_rules.json, effective_tax_rates_2026.json, expense_categories.json, fire_variants.json, +8 more
 Owns: loanPlan, loanExtra, idrShare, forgivenessYears, totalDebt, monthlyDebtPayments, debtBalance, debtRate, debtMinPayment

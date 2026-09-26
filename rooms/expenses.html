@@ -588,6 +588,7 @@
 <script src="../engines/income.js"></script>
 <script src="../engines/selfemployed.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../shared/chartbox.js"></script>
 <script src="../engines/tax.js"></script>
 <script src="../engines/hourly.js"></script>
 <script src="../engines/subscriptions.js"></script>
@@ -641,7 +642,7 @@
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
       Reference = SLAF.Reference, Demo = SLAF.DemoPersona, CashFlow = SLAF.CashFlow,
-      Ownership = SLAF.Ownership, Charts = SLAF.Charts, Income = SLAF.Income, Tier0 = SLAF.Tier0;
+      Ownership = SLAF.Ownership, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox, Income = SLAF.Income, Tier0 = SLAF.Tier0;
 
   var ROOM_ID = 'expenses';   /* the room this reading lives in */
   var TABLES = null;
@@ -1061,7 +1062,7 @@
       return { label: p[1], value: r && Money.isOk(r) ? r.value : 0, color: C[i] };
     });
     if (f.therapyTracked && f.therapy && Money.isOk(f.therapy)) slices.push({ label: 'Therapy', value: f.therapy.value, color: C[4] });
-    el('fat-donut').innerHTML = Charts.donut({
+    ChartBox.draw(el('fat-donut'), { id: 'expenses-fat-donut', kind: 'breakdown', 
       title: 'The month, by bucket',
       slices: slices,
       center: { big: Money.isOk(f.totalCents) ? Money.formatCents(f.totalCents.value) : 'not yet', small: 'a month' },
@@ -1552,7 +1553,7 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine, Reference = SLAF.Reference,
-      Merchants = SLAF.Merchants, Charts = SLAF.Charts, BankIntake = SLAF.BankIntake;
+      Merchants = SLAF.Merchants, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox, BankIntake = SLAF.BankIntake;
   var TABLES = null;
   var MONTH = Schema.localDay().slice(0, 7);
   var BUILT = '';            /* the merchant set the list was built for */
@@ -1634,7 +1635,7 @@
     var words = windowWords(w);
     document.querySelectorAll('#merchants [data-window]').forEach(function (b) { b.setAttribute('aria-pressed', String(+b.getAttribute('data-window') === WINDOW)); });
     el('where-all-title').textContent = w.count ? 'Where all the money went, ' + words : 'Where all the money went';
-    el('where-all').innerHTML = Charts.bars({
+    ChartBox.draw(el('where-all'), { id: 'expenses-where-all', kind: 'compare', 
       rows: placeRows(w.rows, function (r) { return r.totalCents; }, w.totalCents),
       empty: WINDOW === 1 ? 'Nothing dated in this month yet. Log what went out in Cash Flow, or bring a statement in above.' : 'Nothing dated in this window yet.'
     });
@@ -1644,7 +1645,7 @@
         ? Money.formatCents(w.discretionaryCents) + ' of the ' + Money.formatCents(w.totalCents) + ', ' + Math.round(w.discretionaryCents / Math.max(1, w.totalCents) * 100) + '%, was money you chose to spend: the wants, and nothing marked fixed.'
         : 'Nothing in this window files under wants, so nothing here was discretionary.')
       : '';
-    el('where-disc').innerHTML = Charts.bars({
+    ChartBox.draw(el('where-disc'), { id: 'expenses-where-disc', kind: 'compare', 
       rows: placeRows(w.rows, function (r) { return r.discretionaryCents; }, w.discretionaryCents),
       empty: w.count ? 'Every line in this window is a need, a saving or a payment; nothing to draw.' : 'The discretionary part draws once something is dated.'
     });
@@ -1664,7 +1665,7 @@
   function renderSlope(h) {
     var s = Merchants.slope(h, { month: MONTH });
     el('slope-month').textContent = Schema.monthLabel ? Schema.monthLabel(MONTH) : MONTH;
-    el('slope-chart').innerHTML = Charts.area({
+    ChartBox.draw(el('slope-chart'), { id: 'expenses-slope-chart', kind: 'series', render: function () { return Charts.area({
       title: 'Spending, cumulated through the month',
       series: [
         { id: 'paid', label: 'As it left the account', points: s.days.map(function (d, i) { return [i + 1, d.cumPaidCents]; }) },
@@ -1672,7 +1673,7 @@
       ],
       x: { label: 'day of the month', format: function (v) { return String(Math.round(v)); } },
       empty: 'Nothing dated in this month yet. Bring a statement in, or log spending by date in Cash Flow.'
-    });
+    }); } });
     var none = !s.count && !s.forCents;
     el('sl-paid').textContent = none ? 'not yet' : Money.formatCents(s.paidCents);
     el('sl-for').textContent = none ? 'not yet' : Money.formatCents(s.forCents);

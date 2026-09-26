@@ -833,7 +833,7 @@ const RULES = TABLES.debtRules;
   const page = fs.readFileSync(path.join(ROOT, 'rooms/expenses.html'), 'utf8');
   const at = id => page.indexOf('id="' + id + '"');
   checkTrue('the picture sits above the four numbers, the lines under them, the readings last', at('picture') < at('spending') && at('spending') < at('lines') && at('lines') < at('out-summary'));
-  checkTrue('the ring and the bars are drawn from the engine, never typed', /Charts\.donut\(\{\s*title: 'The month, by bucket'/.test(page) && /CashFlow\.logByFatBucket\(h, TABLES\.expenseCategories, m\)/.test(page));
+  checkTrue('the ring and the bars are drawn from the engine, never typed', /title: 'The month, by bucket'/.test(page) && /CashFlow\.logByFatBucket\(h, TABLES\.expenseCategories, m\)/.test(page));
   checkTrue('the bars carry a legend and both figures', /class="eva-legend"/.test(page) && /<small>of ' \+ \(hasEst/.test(page));
   checkTrue('a form for a named line: what, how much, every, which kind', /id="line-form"/.test(page) && /id="n-every"/.test(page) && /<option value="subscriptions">Subscription<\/option>/.test(page) && /value="fortnightly"/.test(page));
   checkTrue('...written through the spine as a month, remembering how it was known', /everyCents: amount/.test(page) && /amountCents: monthly, period: 'monthly', source: 'manual'/.test(page) && /Spine\.upsertExpenseEntry\(Schema\.createExpenseEntry\(Object\.assign\(\{\}, was \|\| \{\}, \{\s*id: EDITING \|\| \('ln_'/.test(page));
@@ -17020,7 +17020,8 @@ section('The planets dashboard (D-341)');
   checkTrue('the headline is a ring with the share in the middle',
     /Charts\.donut\(/.test(page) && /of the questions/.test(page));
   checkTrue('every planet and every band gets a labelled bar',
-    /function planetRows/.test(page) && /function bandRows/.test(page) && /Charts\.bars\(/.test(page));
+    /function planetRows/.test(page) && /function bandRows/.test(page)
+    && /ChartBox\.draw\(el\('dash-planets'\)/.test(page) && /ChartBox\.draw\(el\('dash-bands'\)/.test(page));
   checkTrue('the readings the app can already make are listed with their figures',
     /function readyReadings/.test(page) && /dash-reads/.test(page));
   checkTrue('each ratio is drawn against its own band, indexed to the edge',
@@ -17166,6 +17167,64 @@ section('The standard the app is held to (D-342)');
   checkTrue('the standard is written down', design.length > 2000);
   checkTrue('and every rule in it says how it is checked',
     /test\/render\.js/.test(design) && /test\/alignment\.js/.test(design) && /node test\/run\.js/.test(design));
+})();
+
+section('Every number set is a picture the reader can re-shape (D-347)');
+
+(function () {
+  /* The owner: "I want there to be a ton of data visualisations for each
+     number set possible as well as the ability to change the type of chart
+     and colors of each." shared/chartbox.js is that layer: the shapes that
+     are honest for a kind, eight validated colour orders, and a table twin. */
+  const CB = require(path.join(ROOT, 'shared/chartbox.js'));
+
+  checkTrue('a kind only offers shapes that cannot lie about it',
+    CB.typesFor('breakdown').some(t => t.id === 'donut')
+    && !CB.typesFor('breakdown').some(t => t.id === 'area')
+    && CB.typesFor('series').some(t => t.id === 'area'));
+  check('a room with its own drawing keeps it, and still gets the colours',
+    CB.typesFor('series', { render: function () { return ''; } })[0].id, 'native');
+  check('there are eight colour orders', CB.THEMES.length, 8);
+  check('...each one a different hue first',
+    new Set(CB.THEMES.map(t => t.order[0])).size, 8);
+  check('...and each one eight hues long',
+    CB.THEMES.filter(t => t.order.length !== 8).map(t => t.id).join(', '), '');
+  check('the hues are the eight the palette was validated with',
+    Object.keys(CB.HUES).length, 8);
+
+  /* The palette is not a matter of taste: these eight and every order of them
+     were run through the dataviz skill's validator against this app's own
+     panel (#12151B) for the lightness band, the chroma floor, colour-vision
+     separation on adjacent pairs, the normal-vision floor and contrast. This
+     check holds the values that passed, so a later edit that changes a hue
+     has to run the validator again rather than guess. */
+  const PASSED = { blue: '#3987e5', orange: '#d95926', aqua: '#199e70', yellow: '#c98500',
+                   magenta: '#d55181', green: '#008300', violet: '#9085e9', red: '#e66767' };
+  Object.keys(PASSED).forEach(k => check(`the ${k} step is the validated one`, CB.HUES[k], PASSED[k]));
+
+  /* A reader's pick is a display choice, not a fact about the household. */
+  const box = fs.readFileSync(path.join(ROOT, 'shared/chartbox.js'), 'utf8');
+  checkTrue('a pick is kept on the device, never in the household',
+    /Prefs\.set\('chart\.' \+ id/.test(box) && !/Spine\./.test(box));
+  checkTrue('nothing is computed in the chart layer',
+    !/\* 12|\/ 100|reduce\(function \(t, p\) \{ return t \+ p\.value/.test(box.replace(/[\s\S]*rowsOf[\s\S]*?\n  \}/, '')));
+  checkTrue('every picture carries a table of the same figures',
+    /function tableHtml/.test(box) && /cbx-twin/.test(box));
+  checkTrue('...and the controls are a fold, so a room of pictures is not a room of chrome',
+    /<details class="cbx-tools"/.test(box));
+
+  /* The rooms that draw a number set use it. */
+  const wired = ['rooms/ledger.html', 'rooms/financial-snapshot.html', 'rooms/expenses.html',
+                 'rooms/income.html', 'rooms/fire.html', 'rooms/debt-payoff.html',
+                 'rooms/budget.html', 'rooms/runway.html', 'rooms/what-if-life.html',
+                 'rooms/decumulation.html', 'rooms/foo-ladder.html'];
+  wired.forEach(f => {
+    const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
+    checkTrue(`${f.replace('rooms/', '')} draws through the chart layer`,
+      /ChartBox\.draw\(/.test(src) && /shared\/chartbox\.js/.test(src));
+  });
+  const theme = fs.readFileSync(path.join(ROOT, 'shared/theme.css'), 'utf8');
+  checkTrue('the chrome has one style, in the theme, not per room', /\.cbx-tools \{/.test(theme) && /\.cbx-swatch \{/.test(theme));
 })();
 
 section('Every box says what it is, in words anyone can read (D-346)');

@@ -17578,6 +17578,44 @@ Flesch-Kincaid grade 3.8. `node test/forms.js` 125 on the Ledger: the fold
 changes no control and typing still survives. Read at 390px with the fold open.
 
 
+## D-347 — Every number set is a picture, and the reader owns its shape and its colours
+
+**Why.** The owner: "I want there to be a ton of data visualisations for each
+number set possible as well as the ability to change the type of chart and
+colors of each." The app drew about a hundred charts already, every one in a
+shape the room had chosen, in one blue palette, with no way to read the figures
+as a table.
+
+**Decision.** `shared/chartbox.js` wraps a number set. A room hands it the set
+and says what KIND it is (a share of a whole, a comparison, a series, one figure
+against a band); the layer offers only the shapes that cannot lie about that
+kind, eight colour orders, and a "Show as a table" twin, and keeps the reader's
+pick on the device under `chart.<id>.*`. A room with a drawing this layer has no
+shape for (a drawdown path, a Sankey) hands in its own render and still gets the
+colours and the table.
+
+The eight hues are the dataviz reference palette's dark steps, and every order
+was run through that skill's validator against this app's panel (#12151B): the
+lightness band, the chroma floor, colour-vision separation on adjacent pairs,
+the normal-vision floor and contrast. Only passing orders ship, so a reader can
+recolour any chart in the app and never make one that cannot be read. Coach Mode
+uses the same eight (CD-010), so a client sees one palette across both apps.
+Verdict colours are not in the palette: in range, watch and outside stay
+reserved and keep their word beside them.
+
+**Replaces or removes.** The fixed shape and the single palette. A chart that
+repeated its own labels in a legend loses the legend. No new screen, field or
+figure: every number drawn was already on the page.
+
+**Stored shape.** No change. A shape or a colour is a device preference.
+
+**Verified.** `node test/run.js` 36224, with a section that holds the honest
+shapes per kind, the eight validated hues, the table twin, and the rooms that
+draw through the layer; `node test/render.js` 302 across every room, empty and
+with data; the Planets Overview and the Scorecard re-shaped and recoloured by
+hand at 390px.
+
+
 ---
 
 # The Dungeons & Dividends entries

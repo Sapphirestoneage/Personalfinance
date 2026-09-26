@@ -6,7 +6,7 @@ paths:
   - "engines/timeline.js"
 ---
 # Income (`income`)
-File: rooms/income.html · 2276 lines
+File: rooms/income.html · 2277 lines
 Engines: income, selfemployed, tax, ledger, projection, tier0, cashflow, budget, variableincome, hourly, hassle, timeline
 Reference data: effective_tax_rates_2026.json, expense_categories.json, federal_brackets_2026.json, hassle_defaults.json, milestones.json, se_tax_2026.json, +1 more
 Owns: incomeLow, incomeHigh, bufferMonths, variableWindow, ledgerIncome, futureIncome, incomeType, paySurvives

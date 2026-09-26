@@ -792,6 +792,7 @@
 <script src="../engines/projection.js"></script>
 <script src="../engines/debt.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../shared/chartbox.js"></script>
 <script src="../shared/suggest.js"></script>
 <script src="../engines/tier0.js"></script>
 <script src="../engines/income.js"></script>
@@ -876,7 +877,7 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
-      Reference = SLAF.Reference, Demo = SLAF.DemoPersona, Debt = SLAF.Debt, Charts = SLAF.Charts, CashFlow = SLAF.CashFlow;
+      Reference = SLAF.Reference, Demo = SLAF.DemoPersona, Debt = SLAF.Debt, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox, CashFlow = SLAF.CashFlow;
 
   var ROOM_ID = 'debt-payoff';   /* the room this reading lives in */
   var RULES = null;
@@ -2215,7 +2216,7 @@
           parts: ids.filter(function (id) { return ph.perDebtCents[id] > 0; }).map(function (id) { return { label: plan.debtLabels[id] || 'Debt', value: ph.perDebtCents[id], color: colourOf[id] }; }) };
       });
       cols.push({ label: monthLabel(cas.doneMonth), mark: true, parts: [{ label: 'Yours again', value: cas.freeCents, color: Charts.COLORS.target }] });
-      el('cascade-chart').innerHTML = Charts.columns({ title: 'Where the payment goes as each debt falls', columns: cols, divider: cas.phases.length, captions: ['paying it down', 'free'] });
+      ChartBox.draw(el('cascade-chart'), { id: 'debt-payoff-cascade-chart', kind: 'series', render: function () { return Charts.columns({ title: 'Where the payment goes as each debt falls', columns: cols, divider: cas.phases.length, captions: ['paying it down', 'free'] }); } });
       var first = cas.phases[0];
       el('cascade-why').textContent = first.rollsOntoLabel
         ? 'First payoff: ' + first.fallsLabel + ', ' + longMonth(first.toMonth) + '. Its ' + Money.formatCents(first.freedCents) + ' a month then goes to ' + first.rollsOntoLabel + '. The monthly total stays ' + Money.formatCents(plan.monthlyBudgetCents) + ' until ' + longMonth(cas.doneMonth) + ', when all debts are paid.'
@@ -2493,7 +2494,7 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Spine = SLAF.Spine, Ownership = SLAF.Ownership,
-      StudentLoans = SLAF.StudentLoans, Charts = SLAF.Charts, Room = SLAF.Room;
+      StudentLoans = SLAF.StudentLoans, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox, Room = SLAF.Room;
 
   /* ---- writes: this room owns household.studentLoans ------------------------- */
   function readPlan(h) { return (h && h.studentLoans) || {}; }
@@ -2678,7 +2679,7 @@
   /* No SLAF.Spine here on purpose: this room reads the household through the
      template and writes nothing at all, so it never needs the handle. */
   var Money = SLAF.Money, Schema = SLAF.Schema, Ownership = SLAF.Ownership,
-      Ratios = SLAF.Ratios, Charts = SLAF.Charts, Room = SLAF.Room;
+      Ratios = SLAF.Ratios, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox, Room = SLAF.Room;
 
   function esc(s) {
     return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) {

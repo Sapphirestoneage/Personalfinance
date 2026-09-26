@@ -369,6 +369,7 @@
 <script src="../shared/lens.js"></script>
 <script src="../shared/bands.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../shared/chartbox.js"></script>
 <script src="../shared/levers.js"></script>
 <script src="../shared/scenarios.js"></script>
 <script src="../engines/foo.js"></script>
@@ -378,7 +379,7 @@
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
       Reference = SLAF.Reference, Ownership = SLAF.Ownership, Events = SLAF.Events, Suggest = SLAF.Suggest,
-      Charts = SLAF.Charts;
+      Charts = SLAF.Charts, ChartBox = SLAF.ChartBox;
 
   var ROOM_ID = 'what-if-life';
   var TABLES = null, EVENTS = null, lastThree = null;
@@ -619,20 +620,20 @@
 
     var worthLines = [];
     if (Money.isEntered(ctx.fireNumberCents)) worthLines.push({ y: ctx.fireNumberCents, label: 'FI number', color: Charts.COLORS.growth });
-    el('worth-chart').innerHTML = Charts.area({
+    ChartBox.draw(el('worth-chart'), { id: 'what-if-life-worth-chart', kind: 'series', render: function () { return Charts.area({
       title: 'Net worth over the horizon, three ways',
       series: series('netWorthCents', true), hLines: worthLines, x: x
-    });
+    }); } });
     el('worth-why').textContent = 'Net worth, ' + (byYear ? 'year by year' : 'month by month') + ' over ' + years
       + ' years: blue is the default, green the dream, red the disaster; the dotted line is doing nothing.'
       + (worthLines.length ? ' The FI number is the line to cross.' : '');
 
     var cashLines = [];
     if (Money.isEntered(ctx.efFloorCents)) cashLines.push({ y: ctx.efFloorCents, label: 'cushion floor', color: Charts.COLORS.spend });
-    el('cash-chart').innerHTML = Charts.area({
+    ChartBox.draw(el('cash-chart'), { id: 'what-if-life-cash-chart', kind: 'series', render: function () { return Charts.area({
       title: 'Cash over the horizon, three ways',
       series: series('cashCents', true), hLines: cashLines, x: x
-    });
+    }); } });
     el('plot-why').textContent = 'Cash on hand, the same three ways.'
       + (cashLines.length ? ' The amber line is the cushion floor, your sleep-at-night number when you have set one, else three months of spending; the question is whether any line dips under it.' : '')
       + ' Below zero the cash is gone.';
@@ -807,7 +808,7 @@
   'use strict';
   var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference, Schema = SLAF.Schema,
       Ownership = SLAF.Ownership, Adventure = SLAF.Adventure, Scenarios = SLAF.Scenarios,
-      Bands = SLAF.Bands, Charts = SLAF.Charts;
+      Bands = SLAF.Bands, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox;
 
   var ROOM_ID = 'what-if-life';   /* the room this reading lives in */
   var TABLES = null;
@@ -1011,13 +1012,13 @@
     });
     /* 15.9: the age milestones inside the five years, faint. D-181. */
     var milestones = Schema.milestoneMarks(h(), TABLES.milestones, { axis: 'years', from: 0, to: 5 });
-    el('chart').innerHTML = Charts.area({
+    ChartBox.draw(el('chart'), { id: 'what-if-life-chart', kind: 'series', render: function () { return Charts.area({
       title: 'Every way through five years, the chosen one bold',
       series: series, bands: bands, vLines: milestones.concat(marks),
       hLines: [{ y: chosen.value.targetCents, label: 'the target' }],
       x: { label: 'year', format: function (v) { return String(Math.round(v)); } },
       width: 360, height: 230
-    });
+    }); } });
   }
 
   function paintWinds() {

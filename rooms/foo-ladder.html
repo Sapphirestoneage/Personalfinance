@@ -313,6 +313,7 @@
 <script src="../shared/lens.js"></script>
 <script src="../shared/bands.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../shared/chartbox.js"></script>
 <script>
 /* ---- The three amounts: one question, one strip (D-231) -------------------
    Which reading is on screen is read off the hash and nothing else, so every
@@ -412,7 +413,7 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
-      Reference = SLAF.Reference, Windfall = SLAF.Windfall, Charts = SLAF.Charts;
+      Reference = SLAF.Reference, Windfall = SLAF.Windfall, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox;
 
 
   /* Page-local, never stored. A windfall you are thinking about is not a
@@ -590,7 +591,7 @@
        dollars of difference on a five-figure sum is a single flat line. */
     var lows = r.path.map(function (p) { return Math.min(p.lumpCents, p.spreadCents); });
     var bottom = Math.min.apply(null, lows.concat([r.amountCents]));
-    el('path').innerHTML = Charts.area({
+    ChartBox.draw(el('path'), { id: 'foo-ladder-path', kind: 'series', render: function () { return Charts.area({
       title: 'What the money is worth, month by month, both ways',
       series: [
         { id: 'lump', label: 'all at once', color: Charts.COLORS.growth, fill: true,
@@ -601,7 +602,7 @@
       hLines: [{ y: r.amountCents, label: 'what you started with', color: Charts.COLORS.muted }],
       y: { min: bottom },
       x: { label: 'months' }
-    });
+    }); } });
 
     el('path-desc').textContent = 'Both lines end the window with every dollar invested; only the '
       + 'route differs. On average across the ' + r.months + ' months, spreading leaves '

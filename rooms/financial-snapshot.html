@@ -1086,6 +1086,7 @@
 <script src="../shared/lens.js"></script>
 <script src="../shared/bands.js"></script>
 <script src="../shared/charts.js"></script>
+<script src="../shared/chartbox.js"></script>
 <script src="../shared/liveform.js"></script>
 <script src="../engines/statement.js"></script>
 <script src="../engines/ratios.js"></script>
@@ -1338,7 +1339,7 @@
 
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
       Reference = SLAF.Reference, Ownership = SLAF.Ownership,
-      Tier0 = SLAF.Tier0, Foo = SLAF.Foo, Charts = SLAF.Charts;
+      Tier0 = SLAF.Tier0, Foo = SLAF.Foo, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox;
 
   var ROOM_ID = 'financial-snapshot';
 
@@ -1423,7 +1424,7 @@
         empty: ok ? null : (row.share.reason || Money.NOT_YET)
       };
     });
-    return Charts.bars({ rows: bars, format: function (v) { return pct(v); }, max: top > 0 ? top : null });
+    return { rows: bars, format: function (v) { return pct(v); }, max: top > 0 ? top : null };
   }
 
   /* ---- Whose bands, asked once (D-344) -------------------------------------
@@ -1455,7 +1456,14 @@
       ? 'Take-home ' + Money.formatCents(r.takeHomeMonthlyCents.value) + ' a month, gross ' + Money.formatCents(r.grossMonthlyCents.value) + '. A band stated on gross is shown here converted to take-home, and says so.'
       : 'Add your income and filing status in Start Here and the shares appear.';
     drafttWhose(r);
-    el('draftt-chart').innerHTML = drafttChart(r);
+    /* The reader's own picture (D-347): the shape is theirs to change, the
+       verdict colours are not, because in range and outside mean something. */
+    var dr = drafttChart(r);
+    ChartBox.draw(el('draftt-chart'), {
+      id: 'scorecard-draftt', kind: 'meter', keepColors: true,
+      rows: dr.rows, format: dr.format, max: dr.max,
+      empty: 'Add your pay and your spending and the seven shares appear.'
+    });
     el('draftt-rows').innerHTML = r.rows.map(function (row) {
       var ok = Money.isOk(row.share);
       var srcs = Draftt.sourcesFor(TABLES, row.id);
@@ -1953,7 +1961,7 @@
   'use strict';
   var Money = SLAF.Money, Schema = SLAF.Schema, Spine = SLAF.Spine,
       Reference = SLAF.Reference, Ownership = SLAF.Ownership,
-      Tier0 = SLAF.Tier0, Foo = SLAF.Foo, Charts = SLAF.Charts;
+      Tier0 = SLAF.Tier0, Foo = SLAF.Foo, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox;
 
   var ROOM_ID = 'financial-snapshot';   /* the room this reading lives in (D-233) */
   var TABLES = null;
@@ -2158,7 +2166,7 @@
        projection can run they fall back to the rate itself. A row whose
        projection never arrives is an empty bar, not a zero. */
     var anyYears = rows.some(function (row) { return Money.isOk(row.years); });
-    el('wi-chart').innerHTML = Charts.bars({
+    ChartBox.draw(el('wi-chart'), { id: 'financial-snapshot-wi-chart', kind: 'compare', 
       title: anyYears ? 'Work-optional in' : 'Savings rate',
       rows: rows.map(function (row) {
         return {
@@ -2253,7 +2261,7 @@
 (function () {
   'use strict';
   var Money = SLAF.Money, Spine = SLAF.Spine, Reference = SLAF.Reference,
-      Ownership = SLAF.Ownership, Ratios = SLAF.Ratios, Charts = SLAF.Charts, Explain = SLAF.Explain;
+      Ownership = SLAF.Ownership, Ratios = SLAF.Ratios, Charts = SLAF.Charts, ChartBox = SLAF.ChartBox, Explain = SLAF.Explain;
 
   var ROOM_ID = 'financial-snapshot';   /* the room this reading lives in (D-233) */
   var TABLES = null;
