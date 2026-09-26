@@ -20,7 +20,7 @@ from openpyxl.comments import Comment
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(HERE, '..')
 BOOK = json.load(open(os.path.join(ROOT, 'data', 'book.json')))
-OUT = os.path.join(ROOT, 'Leads-Ladder.xlsx')
+OUT = os.environ.get('OUT') or os.path.join(ROOT, 'Leads-Ladder.xlsx')
 
 FONT = 'Arial'
 def f(bold=False, size=10, color='000000', italic=False): return Font(name=FONT, bold=bold, size=size, color=color, italic=italic)
@@ -348,7 +348,7 @@ for i, cnt in enumerate(example):
     c = ws.cell(row=r, column=2, value='Warm outreach' if cnt is not None else None); inp(c); dvp.add(c)
     c = ws.cell(row=r, column=3, value=cnt); inp(c, 'count')
     r += 1
-for _ in range(200):
+for _ in range(int(os.environ.get('LOG_ROWS', '200'))):
     c = ws.cell(row=r, column=1); inp(c); c.number_format = 'yyyy-mm-dd'
     c = ws.cell(row=r, column=2); inp(c); dvp.add(c)
     c = ws.cell(row=r, column=3); inp(c, 'count')
