@@ -5,16 +5,16 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
-<title>The rooms · SPARKS</title>
-<meta name="description" content="Every SPARKS room by the question it answers: the number, the next dollar, the month, the debt, the house, the kids, the back half."/>
-<meta property="og:title" content="The rooms · SPARKS"/>
-<meta property="og:description" content="Thirty-seven money rooms that share one household, listed by the question each one answers."/>
+<title>Free tools · Stress Less About Money</title>
+<meta name="description" content="Free money tools that store nothing: your FIRE number, how FIRE works, a glossary, and thirty-seven money rooms by the question each answers. The same tools Eli uses on a call."/>
+<meta property="og:title" content="Free tools · Stress Less About Money"/>
+<meta property="og:description" content="Your FIRE number, how FIRE works, a glossary, and thirty-seven money rooms. Free, nothing stored."/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <link rel="stylesheet" href="site.css"/>
 <!--
-  THE ROOMS, the directory for someone who has not been inside. SD-004.
+  FREE TOOLS, the directory for someone who has not been inside. SD-004, SD-007.
 
   1. READS   shared/registry.js, the same list the app's Map and menu read,
              so a room renamed or merged there is renamed or gone here.
@@ -30,14 +30,21 @@
 <header class="site-head" id="site-head"></header>
 <main id="main" class="site-wrap">
   <section class="site-hero" aria-labelledby="h-rooms" style="padding-bottom: var(--space-4)">
-    <span class="slaf-eyebrow">The rooms</span>
-    <h1 id="h-rooms">Every room, by the question it answers.</h1>
-    <p class="lede">A room is one screen for one question. They all read the same household, so you never type a number twice. Pick the question you have today.</p>
+    <span class="slaf-eyebrow">Free tools · no sign-up · nothing stored</span>
+    <h1 id="h-rooms">The tools Eli uses on a call, free, for you.</h1>
+    <p class="lede">Everything here runs in your browser and keeps your numbers there. No account, no server, no list to be added to. Start with the number, read how it works, then open the rooms.</p>
+    <ul class="site-grid">
+      <li><a class="site-card" href="number.html"><h3>Your FIRE number</h3><p>Three numbers in, six sizes out, the years to each, and how sure it is.</p><span class="site-go">Work it out</span></a></li>
+      <li><a class="site-card" href="learn.html"><h3>How FIRE works</h3><p>The multiplication, the savings rate, the order money goes in, the back half. One page.</p><span class="site-go">Read it</span></a></li>
+      <li><a class="site-card" href="glossary.html"><h3>The glossary</h3><p>Every money word in one plain sentence each. Nearly four hundred of them.</p><span class="site-go">Look one up</span></a></li>
+      <li><a class="site-card" href="../rooms/ledger.html#round-1"><h3>The first round</h3><p>Five questions and your first FI date as a band. The way into the full app.</p><span class="site-go">Start</span></a></li>
+    </ul>
   </section>
 
   <section class="site-section" id="questions" aria-labelledby="h-q">
-    <span class="slaf-eyebrow">Start from a question</span>
-    <h2 id="h-q">What do you want to know?</h2>
+    <span class="slaf-eyebrow">Thirty-seven money rooms</span>
+    <h2 id="h-q">Start from the question you have today</h2>
+    <p class="lede">A room is one screen for one question. They all read the same household, so you never type a number twice.</p>
     <ul class="site-grid" id="questions-list"></ul>
   </section>
 
@@ -49,6 +56,7 @@
     <p class="site-count">The app's own map, with filters and the next unfinished room first, is at <a href="../map.html">map.html</a>.</p>
   </section>
 </main>
+<div class="site-cta" id="site-cta"></div>
 <footer class="site-foot" id="site-foot"></footer>
 
 <script src="../shared/registry.js"></script>
@@ -56,7 +64,7 @@
 <script>
 (function () {
   'use strict';
-  Site.head('tools'); Site.foot();
+  Site.head('tools'); Site.foot(); Site.cta('Thirty-seven rooms is a lot to walk alone. Thirty minutes with Eli finds the two or three that matter for you.');
   var R = window.SLAF.Registry, esc = Site.esc;
 
   /* The questions a person in the community arrives with, each to the one

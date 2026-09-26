@@ -4,93 +4,127 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
-<title>SPARKS · Financial planning for the FIRE community</title>
-<meta name="description" content="Work out your FIRE number, see the order your money should go in, and plan the whole road to financial independence. Free, private, nothing leaves your browser."/>
-<meta property="og:title" content="SPARKS · Financial planning for the FIRE community"/>
-<meta property="og:description" content="Your FIRE number in six sizes, the order money should go in, and 37 rooms that share one household. No account. Nothing leaves your browser."/>
+<script src="../shared/errlog.js"></script>
+<title>Stress Less About Money · Money coaching for the road to financial independence</title>
+<meta name="description" content="Money coaching with Eli Saperstein: one call, your whole picture on one screen, and a plan you can see. Book a free thirty-minute call, or start with the free FIRE tools."/>
+<meta property="og:title" content="Stress Less About Money · Money coaching"/>
+<meta property="og:description" content="Get to financial independence with a plan you can actually see. A free call to start, and free tools that keep your numbers in your own browser."/>
 <meta property="og:type" content="website"/>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
 <link rel="stylesheet" href="../shared/fonts.css"/>
 <link rel="stylesheet" href="../shared/theme.css"/>
 <link rel="stylesheet" href="site.css"/>
 <!--
-  THE COMMUNITY FRONT, home. site/README.md, SD-001.
+  THE LANDING PAGE. site/README.md, SD-007.
 
-  1. READS   nothing of the household. The three doors lead into the app,
-             the calculator and Coach Mode.
+  1. READS   data/coach.json (the offers and the call) and
+             ../coach/data/session_paths.json (the nine stops a session
+             walks, so the page describes the real session, not a brochure).
   2. WRITES  nothing.
-  3. CALLS   no engine. Every figure on this page is a rule of thumb the
-             Learn page derives from the engines; this page only points.
+  3. CALLS   no engine.
 
-  LIVE-FORM: built once. There are no inputs on this page.
+  LIVE-FORM: built once. No inputs on this page.
 -->
 </head>
 <body class="slaf site">
 <header class="site-head" id="site-head"></header>
 <main id="main">
-  <section class="site-hero site-wrap" aria-labelledby="h-hero">
-    <span class="slaf-eyebrow">Free · private · no account</span>
-    <h1 id="h-hero">Plan the whole road to financial independence.</h1>
-    <p class="lede">SPARKS is a set of small money rooms that all read one household: your number in six sizes, the order your next dollar should go in, the month, the debt, the back half. Type a figure once and every room already knows it.</p>
+  <section class="site-hero site-hero--big site-wrap" aria-labelledby="h-hero">
+    <span class="slaf-eyebrow">Money coaching · for the road to financial independence</span>
+    <h1 id="h-hero">Stress less about money. See the whole road.</h1>
+    <p class="lede">One call, and your whole picture is on one screen: what comes in, what goes out, what you owe, what you own, and the date work becomes optional. Then a plan you can open on your phone, and a person who checks it with you every month.</p>
     <div class="site-doors">
-      <a class="slaf-btn slaf-btn--primary" href="number.html">Work out my number</a>
-      <a class="slaf-btn" href="../rooms/ledger.html#round-1">Start with five questions</a>
-      <a class="slaf-btn slaf-btn--quiet" href="learn.html">How FIRE works</a>
+      <a class="slaf-btn slaf-btn--primary" href="book.html">Book a free call</a>
+      <a class="slaf-btn" href="tools.html">Try the free tools first</a>
     </div>
+    <p class="site-proof">Thirty minutes, no charge, no pitch. You leave with one number you did not have before.</p>
   </section>
 
-  <section class="site-section site-wrap" id="what" aria-labelledby="h-what">
-    <span class="slaf-eyebrow">What it is</span>
-    <h2 id="h-what">One household, thirty-seven rooms</h2>
-    <p class="lede">Most FIRE calculators ask the same five numbers over and over and forget them when you close the tab. Here the numbers live in one place in your browser, each one owned by exactly one room, and every other room reads it.</p>
-    <ul class="site-grid">
-      <li><a class="site-card" href="../rooms/fire.html"><h3>The Number</h3><p>Coast, Lean, FIRE, Chubby, Fat and Barista, as rungs of one ladder, with the rung you are on and the years to the next.</p><span class="site-go">Open the room</span></a></li>
-      <li><a class="site-card" href="../rooms/foo-ladder.html"><h3>What The Next Dollar Does</h3><p>The order money should go in, ten steps, and the step you are standing on right now.</p><span class="site-go">Open the room</span></a></li>
-      <li><a class="site-card" href="../rooms/financial-snapshot.html"><h3>The Scorecard</h3><p>Everything you have entered, read back six ways: the nine numbers, the savings rate, every ratio, where you rank.</p><span class="site-go">Open the room</span></a></li>
-      <li><a class="site-card" href="../rooms/decumulation.html"><h3>The Back Half</h3><p>How the money comes down: the withdrawal, the order accounts are drawn, the age it lasts to.</p><span class="site-go">Open the room</span></a></li>
-      <li><a class="site-card" href="../rooms/debt-payoff.html"><h3>Debt</h3><p>Every balance, the rate, the payoff order, the date it is gone, and what that frees up.</p><span class="site-go">Open the room</span></a></li>
-      <li><a class="site-card" href="tools.html"><h3>All thirty-seven</h3><p>Every room by the question it answers, from the first paycheque to the estate.</p><span class="site-go">See the rooms</span></a></li>
+  <section class="site-section site-wrap" id="who" aria-labelledby="h-who">
+    <span class="slaf-eyebrow">Who this is for</span>
+    <h2 id="h-who">You know you should do something. You are not sure what first.</h2>
+    <ul class="site-personas">
+      <li><p class="say">"I earn decent money and I still do not know where it goes."</p><h3>The leaky month</h3><p>We find the typical month, name the leak, and set the one number that decides everything after it: what is left at the end.</p></li>
+      <li><p class="say">"I have a spreadsheet. I do not trust it."</p><h3>The DIY planner</h3><p>We put your numbers through one set of formulas that never contradict each other, and you see the assumptions written on the page.</p></li>
+      <li><p class="say">"We want out of the nine-to-five by fifty. Is that real?"</p><h3>The FIRE couple</h3><p>One household, two people, one plan: the number in six sizes, the years to each, and the decisions between here and there.</p></li>
     </ul>
   </section>
 
   <section class="site-section site-wrap" id="how" aria-labelledby="h-how">
-    <span class="slaf-eyebrow">How it goes</span>
-    <h2 id="h-how">Three ways in, one road</h2>
-    <ol class="site-steps">
-      <li><b>Five questions, one answer.</b><p>Age, what comes in, what goes out, what you have saved, what you owe. That is enough for a first FI date, shown as a band rather than a single false-precise year. <a href="../rooms/ledger.html#round-1">The first round</a>.</p></li>
-      <li><b>Every room fills in.</b><p>Each number has one owner. Change your spending in Expenses and the Number, the Scorecard and the Back Half all move. Nothing is asked twice.</p></li>
-      <li><b>The next thing money should do.</b><p>The ladder says which step you are on and what it takes to climb. The dashboard says the date it all points to. <a href="../index.html">The dashboard</a>.</p></li>
-    </ol>
+    <span class="slaf-eyebrow">What a session is</span>
+    <h2 id="h-how">Nine stops, one road, your numbers on the screen</h2>
+    <p class="lede">Eli drives the software live while you talk. Every stop has plain questions, and a stop is done when a real number comes out of it: your monthly surplus, your debt-free date, your cushion in months, your savings rate. Nothing is guessed in for you.</p>
+    <ol class="site-stops" id="stops"><li><b>Loading the path.</b></li></ol>
     <div class="site-callout">
-      <p><b>Not sure yet?</b> Every room has a "Try with example numbers" button. Robin Sparks is a made-up household on a $72,000 salary; use them to see the shape of a plan before you type your own.</p>
+      <p><b>You leave every session with a recap the same day:</b> what we covered, every number that changed, the date it all points to, and homework with dates. Coach notes stay private; your recap is yours.</p>
     </div>
   </section>
 
-  <section class="site-section site-wrap" id="rules" aria-labelledby="h-rules">
-    <span class="slaf-eyebrow">The rules it keeps</span>
-    <h2 id="h-rules">Built for people who count</h2>
-    <ul class="site-rules">
-      <li><b>Nothing leaves your browser.</b> No account, no server, no analytics, no network call after the page loads. Your data lives in this browser and leaves only as a file you make.</li>
-      <li><b>Empty is not zero.</b> A blank box means "not entered yet". A number you have not given is never quietly treated as nothing.</li>
-      <li><b>One formula, one function.</b> The FIRE number on this site, in the room and on the coach's console is the same calculation, run from the same file.</li>
-      <li><b>Every number says how old it is.</b> A reading from a figure you typed six months ago says so.</li>
-      <li><b>Example numbers only, on purpose.</b> This is a public project. No real household's figures are anywhere in it.</li>
+  <section class="site-section site-wrap" id="offers" aria-labelledby="h-offers">
+    <span class="slaf-eyebrow">Ways to work together</span>
+    <h2 id="h-offers">Start with one call. Keep going if it helps.</h2>
+    <ul class="site-offers" id="offers-list"></ul>
+    <p class="site-count">Every engagement starts with the free call. <a href="coaching.html">The full detail of each.</a></p>
+  </section>
+
+  <section class="site-section site-wrap" id="eli" aria-labelledby="h-eli">
+    <span class="slaf-eyebrow">Who you would be talking to</span>
+    <div class="site-about">
+      <div class="site-portrait" aria-hidden="true">E</div>
+      <div>
+        <h2 id="h-eli">Eli Saperstein, money coach</h2>
+        <p>Eli coaches people toward financial independence and built the software he coaches with. Every number a client sees on a call comes from SPARKS, a set of small money rooms he wrote so that one household's figures would follow a person from the first conversation to the last, with the assumptions on the page and nothing invented in.</p>
+        <p>The rules he coaches by are the rules the software is built on: a blank is not a zero, one number has one owner, one formula lives in one place, and no real household's figures ever leave the device they were typed on.</p>
+        <p><a href="about.html">More about Eli and how he works.</a></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-section site-wrap" id="tools" aria-labelledby="h-tools">
+    <span class="slaf-eyebrow">Free, no sign-up, nothing stored</span>
+    <h2 id="h-tools">The tools Eli uses on a call, for you to use alone</h2>
+    <ul class="site-grid">
+      <li><a class="site-card" href="number.html"><h3>Your FIRE number</h3><p>Three numbers in, six numbers out, and the years to each.</p><span class="site-go">Work it out</span></a></li>
+      <li><a class="site-card" href="learn.html"><h3>How FIRE works</h3><p>The whole idea on one page: the multiplication, the savings rate, the order money goes in.</p><span class="site-go">Read it</span></a></li>
+      <li><a class="site-card" href="tools.html"><h3>Thirty-seven money rooms</h3><p>The full app, by the question each room answers. Your numbers stay in your browser.</p><span class="site-go">See the rooms</span></a></li>
     </ul>
-    <p><a href="about.html">More about the rules, and who made this.</a></p>
   </section>
 
-  <section class="site-section site-wrap" id="coach" aria-labelledby="h-coach">
-    <span class="slaf-eyebrow">For coaches</span>
-    <h2 id="h-coach">Sitting beside someone?</h2>
-    <p class="lede">Coach Mode is a console for a money coach: a roster of clients, a live session down a path of stops, and a view the client sees. Each client's numbers stay apart, sealed, on the coach's own device.</p>
-    <div class="site-doors">
-      <a class="slaf-btn" href="../coach/index.html">Open Coach Mode</a>
-      <a class="slaf-btn slaf-btn--quiet" href="../coach/session.html?client=demo">Try it with the example client</a>
-    </div>
+  <section class="site-section site-wrap" id="faq" aria-labelledby="h-faq">
+    <span class="slaf-eyebrow">Questions people ask first</span>
+    <h2 id="h-faq">Before you book</h2>
+    <div class="site-faq" id="faq-list"></div>
   </section>
 </main>
+<div class="site-cta" id="site-cta"></div>
 <footer class="site-foot" id="site-foot"></footer>
 <script src="site.js"></script>
-<script>Site.head('home'); Site.foot();</script>
+<script>
+(function () {
+  'use strict';
+  Site.head('home'); Site.foot(); Site.cta();
+  var esc = Site.esc;
+  Site.load(function (c) {
+    if (!c) return;
+    document.getElementById('offers-list').innerHTML = c.offers.map(function (o, i) {
+      return '<li class="site-offer' + (i === 1 ? ' is-featured' : '') + '"><h3>' + esc(o.name) + '</h3><p class="who">' + esc(o.who) + '</p><p class="what">' + esc(o.what) + '</p>' +
+        '<p class="price">' + (o.price ? esc(o.price) : 'Price on the call') + '<small>' + (o.price ? '' : 'Free call first, always.') + '</small></p></li>';
+    }).join('');
+    document.getElementById('faq-list').innerHTML = c.faq.map(function (q, i) {
+      return '<details' + (i === 0 ? ' open' : '') + '><summary>' + esc(q[0]) + '</summary><p>' + esc(q[1]) + '</p></details>';
+    }).join('');
+  });
+  fetch('../coach/data/session_paths.json').then(function (r) { if (!r.ok) throw new Error('paths ' + r.status); return r.json(); }).then(function (p) {
+    var order = (p.paths || []).filter(function (x) { return x.id === 'default'; })[0];
+    var ids = order ? order.stops : Object.keys(p.stops);
+    document.getElementById('stops').innerHTML = ids.map(function (id) {
+      var s = p.stops[id]; if (!s) return '';
+      var q = (s.questions || [])[0];
+      var ask = !q ? '' : typeof q === 'string' ? q : (q.say || q.text || '');
+      return '<li><b>' + esc(s.title) + '</b><span>' + esc(s.covers) + '</span>' + (ask ? '<q>' + esc(ask) + '</q>' : '') + '</li>';
+    }).join('');
+  }).catch(function (e) { if (window.ErrLog) window.ErrLog.record('load', String(e && e.message), 'site/index'); });
+})();
+</script>
 </body>
 </html>

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
-<title>Your FIRE number · SPARKS</title>
+<title>Your FIRE number · Stress Less About Money</title>
 <meta name="description" content="Three numbers in, six FIRE numbers out: Coast, Lean, FIRE, Chubby, Fat and Barista, the years to each, and how the answer moves with the return and the withdrawal rate."/>
 <meta property="og:title" content="Your FIRE number · SPARKS"/>
 <meta property="og:description" content="Three numbers in, six FIRE numbers out, and the years to each. Nothing leaves your browser."/>
@@ -67,14 +67,15 @@
 
   <section class="site-section" id="next" aria-labelledby="h-next">
     <span class="slaf-eyebrow">Then</span>
-    <h2 id="h-next">Carry it into the rooms</h2>
-    <p class="lede">This page keeps nothing. The app does, in your browser, and the same three numbers plus your age and income open every room: the ladder, the scorecard, the debt, the back half.</p>
+    <h2 id="h-next">Carry it further</h2>
+    <p class="lede">This page keeps nothing. The free app does, in your browser, and the same three numbers plus your age and income open every room: the ladder, the scorecard, the debt, the back half. Or bring the number to a call and find out what it means for your actual month.</p>
     <div class="site-doors">
       <a class="slaf-btn slaf-btn--primary" href="../rooms/ledger.html#round-1">Start with five questions</a>
       <a class="slaf-btn slaf-btn--quiet" href="../rooms/fire.html">The Number, the full room</a>
     </div>
   </section>
 </main>
+<div class="site-cta" id="site-cta"></div>
 <footer class="site-foot" id="site-foot"></footer>
 
 <script src="../shared/money.js"></script>
@@ -88,7 +89,7 @@
 <script>
 (function () {
   'use strict';
-  Site.head('number'); Site.foot();
+  Site.head('tools'); Site.foot(); Site.cta('Want to know what the number means for your actual month, your debt and your plan? Thirty minutes with Eli, free.');
   var S = window.SLAF, Money = S.Money, Schema = S.Schema, Fire = S.Fire, Projection = S.Projection;
   var esc = Site.esc;
   var $ = function (id) { return document.getElementById(id); };

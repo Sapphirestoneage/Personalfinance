@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
-<title>How FIRE works · SPARKS</title>
+<title>How FIRE works · Stress Less About Money</title>
 <meta name="description" content="The whole idea of financial independence in one page: the multiplication, the savings rate, the order money should go in, the six sizes of the number, and how the money comes back down."/>
 <meta property="og:title" content="How FIRE works · SPARKS"/>
 <meta property="og:description" content="The multiplication, the savings rate, the order money goes in, the six sizes, the back half. One page, plain words."/>
@@ -110,6 +110,7 @@
     </div>
   </section>
 </main>
+<div class="site-cta" id="site-cta"></div>
 <footer class="site-foot" id="site-foot"></footer>
 
 <script src="../shared/money.js"></script>
@@ -122,7 +123,7 @@
 <script>
 (function () {
   'use strict';
-  Site.head('learn'); Site.foot();
+  Site.head('learn'); Site.foot(); Site.cta('Read it, then talk it through. Thirty minutes with Eli puts your own figures through the same ideas.');
   var S = window.SLAF, Money = S.Money, Schema = S.Schema, Fire = S.Fire, Projection = S.Projection;
   var esc = Site.esc;
   var RATE = Schema.resolveAssumptions(null).expectedReturnRate;   /* the app's default, real */

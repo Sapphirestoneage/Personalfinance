@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Coaching · Stress Less About Money</title>
+<meta name="description" content="How money coaching with Eli works: the free call, the first session, the full path, and monthly check-ins. What each one is, who it is for, and what you leave with."/>
+<meta property="og:title" content="Coaching · Stress Less About Money"/>
+<meta property="og:description" content="The free call, the first session, the full path, monthly check-ins. What each is and what you leave with."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<link rel="stylesheet" href="site.css"/>
+<!--
+  COACHING, the services page. SD-007.
+  1. READS   data/coach.json (the call, the offers, the questions) and
+             ../coach/data/session_paths.json (the stops and their done-when).
+  2. WRITES  nothing.   3. CALLS  no engine.
+  LIVE-FORM: built once. No inputs on this page.
+-->
+</head>
+<body class="slaf site">
+<header class="site-head" id="site-head"></header>
+<main id="main" class="site-wrap">
+  <section class="site-hero" aria-labelledby="h-c" style="padding-bottom: var(--space-4)">
+    <span class="slaf-eyebrow">Coaching</span>
+    <h1 id="h-c">A plan you can see, and a person who checks it with you.</h1>
+    <p class="lede">Money coaching is not a lecture and not a product. It is your figures, one set of formulas, plain questions, and someone who holds you to the answers. Here is exactly what that looks like.</p>
+    <div class="site-doors"><a class="slaf-btn slaf-btn--primary" href="book.html">Book the free call</a></div>
+  </section>
+
+  <section class="site-section" id="call" aria-labelledby="h-call">
+    <span class="slaf-eyebrow">Step one, always</span>
+    <h2 id="h-call">The free call</h2>
+    <p class="lede" id="call-blurb"></p>
+    <ol class="site-steps">
+      <li><b>You talk.</b><p>Where you are, what is on your mind this year, what "sorted" would feel like.</p></li>
+      <li><b>Eli asks.</b><p>Roughly what comes in, roughly what goes out, roughly what is saved. Rough is fine; the call is about finding which numbers matter.</p></li>
+      <li><b>One number.</b><p>Your first reading: the work-optional date as a band, or the month's surplus, or how long the cushion lasts. Whichever your situation needs first.</p></li>
+      <li><b>You decide.</b><p>If a session would help, we book it. If a free tool is enough, Eli says so and points you at it.</p></li>
+    </ol>
+  </section>
+
+  <section class="site-section" id="offers" aria-labelledby="h-offers">
+    <span class="slaf-eyebrow">Ways to work together</span>
+    <h2 id="h-offers">Three shapes, one path</h2>
+    <ul class="site-offers" id="offers-list"></ul>
+  </section>
+
+  <section class="site-section" id="path" aria-labelledby="h-path">
+    <span class="slaf-eyebrow">What a session walks</span>
+    <h2 id="h-path">The nine stops</h2>
+    <p class="lede">Each stop asks plain questions and is done when a real reading comes out. Eli can reorder or skip stops for you; a returning client walks a shorter check-up path of four.</p>
+    <ol class="site-stops" id="stops"><li><b>Loading the path.</b></li></ol>
+  </section>
+
+  <section class="site-section" id="between" aria-labelledby="h-between">
+    <span class="slaf-eyebrow">Between calls</span>
+    <h2 id="h-between">The plan stays alive</h2>
+    <p>Most plans die in the drawer. Yours lives on a screen you can open on your phone: a life map from today to the work-optional date with every goal placed on it, each goal's monthly number and status, what changed since last time, and your homework. Once a month you send what moved, and Eli updates the map and writes back.</p>
+    <div class="site-callout"><p><b>Where your numbers live.</b> In Eli's coaching console on his own device, sealed with a passphrase, one file per client. Never in a shared spreadsheet, never on a server. When you stop coaching, you get your file and Eli deletes his copy.</p></div>
+  </section>
+
+  <section class="site-section" id="faq" aria-labelledby="h-faq">
+    <span class="slaf-eyebrow">Questions</span>
+    <h2 id="h-faq">Before you book</h2>
+    <div class="site-faq" id="faq-list"></div>
+  </section>
+</main>
+<div class="site-cta" id="site-cta"></div>
+<footer class="site-foot" id="site-foot"></footer>
+<script src="site.js"></script>
+<script>
+(function () {
+  'use strict';
+  Site.head('coaching'); Site.foot(); Site.cta('Start with the free call. No preparation needed, no charge, and no pressure to book anything after.');
+  var esc = Site.esc;
+  Site.load(function (c) {
+    if (!c) return;
+    document.getElementById('call-blurb').textContent = c.call.blurb;
+    document.getElementById('offers-list').innerHTML = c.offers.map(function (o, i) {
+      return '<li class="site-offer' + (i === 1 ? ' is-featured' : '') + '"><h3>' + esc(o.name) + '</h3><p class="who">' + esc(o.who) + '</p><p class="what">' + esc(o.what) + '</p>' +
+        '<p class="leave"><b>You leave with</b>' + esc(o.leave) + '</p>' +
+        '<p class="price">' + (o.price ? esc(o.price) : 'Price on the call') + '<small>' + (o.price ? '' : 'Free call first, always.') + '</small></p></li>';
+    }).join('');
+    document.getElementById('faq-list').innerHTML = c.faq.map(function (q) {
+      return '<details><summary>' + esc(q[0]) + '</summary><p>' + esc(q[1]) + '</p></details>';
+    }).join('');
+  });
+  fetch('../coach/data/session_paths.json').then(function (r) { if (!r.ok) throw new Error('paths ' + r.status); return r.json(); }).then(function (p) {
+    var order = (p.paths || []).filter(function (x) { return x.id === 'default'; })[0];
+    var ids = order ? order.stops : Object.keys(p.stops);
+    document.getElementById('stops').innerHTML = ids.map(function (id) {
+      var s = p.stops[id]; if (!s) return '';
+      return '<li><b>' + esc(s.title) + '</b><span>' + esc(s.covers) + '</span><q>Done when: ' + esc(s.doneLabel) + '</q></li>';
+    }).join('');
+  }).catch(function (e) { if (window.ErrLog) window.ErrLog.record('load', String(e && e.message), 'site/coaching'); });
+})();
+</script>
+</body>
+</html>

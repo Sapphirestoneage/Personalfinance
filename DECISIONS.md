@@ -17352,12 +17352,14 @@ SPARKS device backup neither carries nor removes `coach.` keys.
 ## D-340 — The community front is its own app in site/, a lane beside SPARKS like coach/
 
 **Why.** The owner: a complete financial planning website for the SPARKS /
-FIRE community. The app's root is the dashboard, a screen that reads a
+FIRE community, to sell coaching, send people to book a call, and share the
+free tools. The app's root is the dashboard, a screen that reads a
 household; a visitor with nothing typed met "not yet" and no page that said
-what this is, what FIRE is, or where to begin.
+what this is, who Eli is, or where to begin.
 
-**Decision.** `site/` is a separate app in the D-339 pattern: six pages
-(Home, Your number, Learn, The rooms, Glossary, About), its own stylesheet on
+**Decision.** `site/` is a separate app in the D-339 pattern: the owner's
+coaching site, Stress Less About Money, eight pages (the landing, Coaching,
+Book, About Eli, Free tools, Your number, Learn, Glossary), its own stylesheet on
 the theme tokens, its own tests (`node site/test/run.js`, `node
 site/test/browser.js`, both in CI) and its own log (`site/DECISIONS.md`,
 `SD-###`). It loads `../shared`, `../engines` and `../data` directly, so the

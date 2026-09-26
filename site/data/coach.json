@@ -1,0 +1,58 @@
+{
+  "id": "coach",
+  "version": "1.0",
+  "asOf": "2026-09-26",
+  "source": "The coach's own details. Edited by hand; nothing here is a figure.",
+  "confidence": "owner",
+  "confidenceNote": "Names, links and offers as the owner set them. The site reads this file at load; change it here, never in a page.",
+  "note": "bookingUrl is the one value the site cannot work without: the link people follow to book the free call (a HubSpot Meetings link, Calendly, or any page). Empty means the Book page says the link is not set yet. Offers with price null read 'we talk about it on the call'.",
+  "brand": "Stress Less About Money",
+  "name": "Eli Saperstein",
+  "firstName": "Eli",
+  "title": "Money coach",
+  "tagline": "Get to financial independence with a plan you can actually see.",
+  "timezone": "US/Eastern",
+  "bookingUrl": "",
+  "call": {
+    "label": "Book a free call",
+    "minutes": 30,
+    "blurb": "Thirty minutes, no charge, no pitch deck. You talk, Eli asks the questions, and you leave with one number you did not have before."
+  },
+  "offers": [
+    {
+      "id": "first-session",
+      "name": "The first session",
+      "who": "You want to know where you stand and what to do first.",
+      "what": "Ninety minutes on a call. We walk the full path together: the life picture, what comes in, what goes out, what you owe, the cushion, what you own, taxes, goals, the decisions on your mind. You watch your numbers and your work-optional date appear as we go.",
+      "leave": "A written recap the same day: every number we settled, what moved, the one thing to do next, and homework with dates.",
+      "price": null
+    },
+    {
+      "id": "full-path",
+      "name": "The full path",
+      "who": "You want the plan built, not just sketched.",
+      "what": "Four sessions over about eight weeks. The first walks the whole path; the next three go deep on the stops that matter for you, price your goals, and put a verdict on each big decision: go, wait, or no.",
+      "leave": "A plan you can open on your phone: the life map, every goal with a monthly number and a date, the debt-free date, the cushion target, and a check-in rhythm.",
+      "price": null
+    },
+    {
+      "id": "check-ins",
+      "name": "Monthly check-ins",
+      "who": "You have a plan and want to keep it alive.",
+      "what": "Once a month you send what moved: balances, income if it changed, how you feel about money on a scale of one to five, and the homework ticked. Eli reads it, updates the plan, and writes back. A short call whenever a decision comes up.",
+      "leave": "A plan that stays true, a progress photo every month, and someone who notices when a number drifts.",
+      "price": null
+    }
+  ],
+  "faq": [
+    ["Is this financial advice?", "No. Eli is a coach, not an investment adviser or a tax preparer. Coaching is arithmetic with your figures in it and a person who asks the right questions and holds you to the answers. Anything that needs a licensed professional, Eli will say so."],
+    ["Do I need to be on the FIRE path already?", "No. Most people who book are somewhere between 'I should probably do something' and 'I have a spreadsheet and I do not trust it'. The path is the same; you just start on a different stop."],
+    ["What do I need to bring to the first call?", "Nothing. If you have a rough idea of what you spend in a month and what you have saved, that is a head start. Every box can be rough; the point of the first call is to find out which ones matter."],
+    ["Where do my numbers live?", "In Eli's coaching console on his own device, sealed with a passphrase, one file per client. Never in a shared spreadsheet, never on a server. The free tools on this site keep your numbers in your own browser and nowhere else."],
+    ["Can we do this as a couple?", "Yes, and it usually goes better. One household, two people, one plan. The tools already treat it that way."]
+  ],
+  "links": {
+    "app": "../index.html",
+    "repo": "https://github.com/sapphirestoneage/Personalfinance"
+  }
+}

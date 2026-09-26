@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<title>Book a free call · Stress Less About Money</title>
+<meta name="description" content="Book a free thirty-minute money call with Eli Saperstein. No preparation, no charge. You talk, Eli asks, and you leave with one number you did not have before."/>
+<meta property="og:title" content="Book a free call · Stress Less About Money"/>
+<meta property="og:description" content="Thirty minutes, free. You leave with one number you did not have before."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<link rel="stylesheet" href="site.css"/>
+<!--
+  BOOK, the one page every button lands on. SD-007.
+  1. READS   data/coach.json: bookingUrl is the outside link (a meetings
+             page); empty, the page says so instead of a dead button.
+  2. WRITES  nothing.   3. CALLS  no engine.
+  The booking itself happens on the outside page, in a new tab: this site's
+  policy forbids embedding and posting, so the link is the whole mechanism.
+  LIVE-FORM: built once. No inputs on this page.
+-->
+</head>
+<body class="slaf site">
+<header class="site-head" id="site-head"></header>
+<main id="main" class="site-wrap">
+  <section class="site-hero" aria-labelledby="h-b" style="padding-bottom: var(--space-4)">
+    <span class="slaf-eyebrow">The free call</span>
+    <h1 id="h-b">Thirty minutes. One number. No charge.</h1>
+    <p class="lede" id="call-blurb"></p>
+    <div id="book-out"><p class="site-empty">Loading.</p></div>
+  </section>
+
+  <section class="site-section" id="bring" aria-labelledby="h-bring">
+    <span class="slaf-eyebrow">What to bring</span>
+    <h2 id="h-bring">Nothing, honestly. But if you want a head start:</h2>
+    <ul class="site-rules">
+      <li><b>What you spend in a typical month,</b> roughly. Rent or mortgage, food, getting around, everything else.</li>
+      <li><b>What you have saved and invested,</b> roughly. One total is fine.</li>
+      <li><b>What you owe,</b> if anything, and the rate on the one that bothers you most.</li>
+      <li><b>The question on your mind this year.</b> A house, a job change, a kid, a sabbatical, "can we stop at fifty".</li>
+    </ul>
+    <p class="site-count">Want to see a number before the call? <a href="number.html">Your FIRE number</a> takes three figures and stores nothing.</p>
+  </section>
+
+  <section class="site-section" id="after" aria-labelledby="h-after">
+    <span class="slaf-eyebrow">What happens after</span>
+    <h2 id="h-after">Either a session, or a tool, or nothing</h2>
+    <p>If a session would help, we book it on the call. If a free tool is enough for where you are, Eli says so and points you at it. If it is not a fit, you still leave with your number. There is no follow-up sequence and no list you get added to.</p>
+  </section>
+</main>
+<footer class="site-foot" id="site-foot"></footer>
+<script src="site.js"></script>
+<script>
+(function () {
+  'use strict';
+  Site.head('book'); Site.foot();
+  var esc = Site.esc;
+  Site.load(function (c) {
+    var out = document.getElementById('book-out');
+    if (!c) { out.innerHTML = '<p class="site-empty">The details did not load. Open this page over http.</p>'; return; }
+    document.getElementById('call-blurb').textContent = c.call.blurb;
+    var url = (c.bookingUrl || '').trim();
+    if (/^https:\/\//.test(url)) {
+      out.innerHTML = '<div class="site-doors"><a class="slaf-btn slaf-btn--primary" href="' + esc(url) + '" rel="noopener" target="_blank">Pick a time</a></div>' +
+        '<p class="site-proof">Opens the booking page in a new tab. Times are shown in your own time zone; Eli is on ' + esc(c.timezone) + '.</p>';
+    } else {
+      out.innerHTML = '<div class="site-book-note"><b>The booking link is not set yet.</b> Put the address of your meetings page in <code>site/data/coach.json</code> as <code>bookingUrl</code> and this button comes alive.</div>';
+    }
+  });
+})();
+</script>
+</body>
+</html>

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
 <script src="../shared/errlog.js"></script>
-<title>Glossary · SPARKS</title>
+<title>Glossary · Stress Less About Money</title>
 <meta name="description" content="Every term the FIRE community and the SPARKS rooms use, in one plain sentence each, written for someone who has never had a finance conversation."/>
 <meta property="og:title" content="Glossary · SPARKS"/>
 <meta property="og:description" content="Nearly four hundred money terms, one plain sentence each."/>
@@ -37,12 +37,13 @@
   </section>
   <div class="site-gloss" id="gloss"><p class="site-empty">Loading the dictionary.</p></div>
 </main>
+<div class="site-cta" id="site-cta"></div>
 <footer class="site-foot" id="site-foot"></footer>
 <script src="site.js"></script>
 <script>
 (function () {
   'use strict';
-  Site.head('glossary'); Site.foot();
+  Site.head('tools'); Site.foot(); Site.cta('A word is one thing; your number is another. Thirty minutes with Eli, free, and you leave with one.');
   var esc = Site.esc;
   var ORDER = ['fi', 'basics', 'income', 'budgeting', 'safety', 'debt', 'assets', 'investing', 'retirement', 'taxes', 'health', 'insurance', 'housing', 'transportation', 'student loans', 'kids', 'estate', 'giving', 'benchmarks', 'app'];
   var NAMES = { fi: 'Financial independence', basics: 'The basics', income: 'Income', budgeting: 'The month', safety: 'Safety', debt: 'Debt', assets: 'Assets', investing: 'Investing', retirement: 'Retirement accounts', taxes: 'Taxes', health: 'Health', insurance: 'Insurance', housing: 'Housing', transportation: 'Getting around', 'student loans': 'Student loans', kids: 'Kids', estate: 'The estate', giving: 'Giving', benchmarks: 'Benchmarks', app: 'Words this app uses' };

@@ -22,7 +22,8 @@ function check(name, ok, detail) { if (ok) pass++; else fails.push(name + (detai
 
 (async () => {
   const browser = await chromium.launch(fs.existsSync(EXE) ? { executablePath: EXE } : {});
-  const pages = ['index.html', 'number.html', 'learn.html', 'tools.html', 'glossary.html', 'about.html'];
+  const pages = ['index.html', 'coaching.html', 'book.html', 'number.html', 'learn.html', 'tools.html', 'glossary.html', 'about.html'];
+  const coach = JSON.parse(fs.readFileSync(path.join(ROOT, 'site/data/coach.json'), 'utf8'));
   for (const width of [390, 1100]) {
     const ctx = await browser.newContext({ viewport: { width, height: 900 } });
     for (const p of pages) {
@@ -33,11 +34,24 @@ function check(name, ok, detail) { if (ok) pass++; else fails.push(name + (detai
       await page.goto(BASE + p, { waitUntil: 'networkidle' });
       await page.waitForTimeout(150);
       check(p + ' @' + width + ' clean console', errors.length === 0, errors.join(' | ').slice(0, 200));
-      check(p + ' @' + width + ' header mounted', await page.$eval('#site-head .site-nav', n => n.children.length === 6));
-      check(p + ' @' + width + ' footer mounted', await page.$eval('#site-foot', n => /leaves your browser/.test(n.textContent)));
+      check(p + ' @' + width + ' header mounted with the booking button', await page.$eval('#site-head .site-nav', n => n.children.length === 6 && /Book a free call/.test(n.textContent)));
+      check(p + ' @' + width + ' footer mounted', await page.$eval('#site-foot', n => /leaves your browser/.test(n.textContent) && /not investment/.test(n.textContent)));
+      if (p !== 'book.html') check(p + ' @' + width + ' the call to action drew', await page.$eval('#site-cta', n => /Book a free call/.test(n.textContent)));
       const wide = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth + 1);
       check(p + ' @' + width + ' no sideways scroll', !wide);
-      check(p + ' @' + width + ' the current page is marked', await page.$eval('#site-head a[aria-current="page"]', a => !!a));
+      check(p + ' @' + width + ' nothing on screen reads as an object or undefined', await page.evaluate(() => !/\[object Object\]|undefined|NaN|null\b/.test(document.body.innerText)));
+      if (p !== 'book.html') check(p + ' @' + width + ' the current page is marked', await page.$eval('#site-head a[aria-current="page"]', a => !!a));
+      if (p === 'index.html' || p === 'coaching.html') {
+        check(p + ': nine stops drew from the session path', await page.$$eval('#stops li', r => r.length === 9));
+        check(p + ': three offers drew', await page.$$eval('#offers-list .site-offer', r => r.length === 3));
+        check(p + ': the questions drew', await page.$$eval('#faq-list details', r => r.length) === coach.faq.length);
+        check(p + ': no price is invented', await page.$eval('#offers-list', n => (n.textContent.match(/Price on the call/g) || []).length === 3));
+      }
+      if (p === 'book.html') {
+        const set = /^https:\/\//.test(coach.bookingUrl);
+        check('book: the button is live or the page says the link is not set', await page.$eval('#book-out', (n, live) => live ? /Pick a time/.test(n.textContent) : /not set yet/.test(n.textContent), set));
+        check('book: the blurb drew', await page.$eval('#call-blurb', n => n.textContent.length > 20));
+      }
       if (p === 'learn.html') {
         check('learn: the savings-rate table filled', await page.$$eval('#rate-table tbody tr', r => r.length === 11));
         check('learn: the ladder has ten steps', await page.$$eval('#ladder li', r => r.length === 10));

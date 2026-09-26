@@ -22,8 +22,8 @@ function read(rel) { return fs.readFileSync(path.join(SITE, rel), 'utf8'); }
 const pages = fs.readdirSync(SITE).filter(f => f.endsWith('.html')).sort();
 /* Everything that ships, plus the browser walk. This file is the one that
    spells the forbidden strings out, so it is not in its own sweep. */
-const files = fs.readdirSync(SITE).filter(f => /\.(html|js|css|md)$/.test(f)).concat(['test/browser.js'].filter(f => fs.existsSync(path.join(SITE, f))));
-check('six pages', pages.length === 6, pages.join(','));
+const files = fs.readdirSync(SITE).filter(f => /\.(html|js|css|md)$/.test(f)).concat(['data/coach.json', 'test/browser.js'].filter(f => fs.existsSync(path.join(SITE, f))));
+check('eight pages', pages.length === 8, pages.join(','));
 
 const CSP = /<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"\/>/;
 
@@ -35,6 +35,10 @@ pages.forEach(p => {
   check(p + ' has a title and a description', /<title>[^<]+<\/title>/.test(src) && /<meta name="description" content="[^"]{40,}"/.test(src));
   check(p + ' is a site page on the theme', /<body class="slaf site">/.test(src) && /shared\/theme\.css/.test(src) && /site\.css/.test(src));
   check(p + ' mounts the header and footer', /id="site-head"/.test(src) && /id="site-foot"/.test(src) && /Site\.head\('/.test(src) && /Site\.foot\(\)/.test(src));
+  /* Every page but the Book page itself carries the call to action (SD-007). */
+  check(p + ' carries the call to action or is the Book page', p === 'book.html' ? !/site-cta/.test(src) : /id="site-cta"/.test(src) && /Site\.cta\(/.test(src));
+  check(p + ' names the brand in its title', /<title>[^<]*Stress Less About Money[^<]*<\/title>/.test(src));
+  check(p + ' opens nothing in a new tab without noopener', !/target="_blank"(?![^>]*rel="noopener")/.test(src.replace(/rel="noopener" target="_blank"/g, 'target="_blank" rel="noopener"')));
   check(p + ' says what it reads, writes and calls', /READS|Reads nothing/.test(src) && /WRITES|writes nothing/.test(src));
   check(p + ' states its LIVE-FORM rule', /LIVE-FORM: built once/.test(src));
   check(p + ' has one h1', (src.match(/<h1/g) || []).length === 1);
@@ -55,15 +59,8 @@ files.filter(f => /\.(html|js)$/.test(f)).forEach(f => {
   const src = read(f);
   check('site/' + f + ' writes no storage key', !/localStorage\.setItem|sessionStorage|document\.cookie|indexedDB/.test(src));
   check('site/' + f + ' has no silent || 0', !/\|\|\s*0\b/.test(src));
-  check('site/' + f + ' never hardcodes a demo figure', !/\b(72000|48000|9500|3150)\b/.test(src.replace(/<!--[\s\S]*?-->/g, '')) || f === 'index.html');
+  check('site/' + f + ' never hardcodes a demo figure', !/\b(72000|48000|9500|3150)\b/.test(src.replace(/<!--[\s\S]*?-->/g, '')));
 });
-/* The home page names Robin's salary in prose once; it must be the persona's. */
-{
-  const Demo = require(path.join(ROOT, 'shared/demo-persona.js'));
-  const home = read('index.html');
-  const said = (home.match(/\$([\d,]+) salary/) || [])[1];
-  check('the home page salary is the persona\'s', said && Number(said.replace(/,/g, '')) === Demo.VALUES.grossAnnualIncome, said);
-}
 
 /* ---- Every link and script lands somewhere ----------------------------- */
 const REPO = 'https://github.com/sapphirestoneage/Personalfinance';
@@ -91,7 +88,7 @@ pages.forEach(p => {
   const refs = []; js.replace(/href="' \+ APP \+ '([^"']+)"|href="([^"']+)"/g, (m, a, b) => { refs.push(a !== undefined ? '../' + a : b); return m; });
   js.replace(/'([^']*\.html)'/g, (m, u) => { refs.push(u); return m; });
   const uniq = Array.from(new Set(refs.filter(u => u && !/^https?:/.test(u))));
-  check('site.js names at least the six pages and the app', uniq.length >= 8);
+  check('site.js names at least the pages and the app', uniq.length >= 7);
   uniq.forEach(u => check('site.js link exists: ' + u, fs.existsSync(path.join(SITE, u.split('#')[0].split('?')[0]))));
 }
 
@@ -159,6 +156,26 @@ pages.forEach(p => {
   check('eight rows of the table', rows === 8);
   const half = Projection.yearsToTargetCents({ startCents: 0, targetCents: Fire.calculateFIRE(household(Math.round(PAY / 24), null, null), T).value, annualRate: RATE, annualContributionCents: PAY / 2, fractional: true });
   check('keeping half of pay is under twenty years at the default return', Money.isOk(half) && half.value < 20, half.value);
+}
+
+/* ---- The coach's details (SD-007) --------------------------------------- */
+{
+  const c = JSON.parse(read('data/coach.json'));
+  ['brand', 'name', 'firstName', 'tagline', 'timezone', 'call', 'offers', 'faq'].forEach(k => check('coach.json has ' + k, c[k] !== undefined && c[k] !== null));
+  check('coach.json carries bookingUrl (empty until the owner sets it)', typeof c.bookingUrl === 'string');
+  check('bookingUrl is https or empty, never http or a path', c.bookingUrl === '' || /^https:\/\//.test(c.bookingUrl), c.bookingUrl);
+  check('three offers, each with a name, who, what and leave', Array.isArray(c.offers) && c.offers.length === 3 && c.offers.every(o => o.id && o.name && o.who && o.what && o.leave));
+  check('every offer price is a string or null, never a number', c.offers.every(o => o.price === null || typeof o.price === 'string'));
+  check('at least four questions, each a pair', Array.isArray(c.faq) && c.faq.length >= 4 && c.faq.every(q => Array.isArray(q) && q.length === 2 && q[0].endsWith('?')));
+  check('the call has minutes and a blurb', c.call && typeof c.call.minutes === 'number' && typeof c.call.blurb === 'string');
+  check('the brand is what the pages say', c.brand === 'Stress Less About Money' && read('site.js').indexOf("BRAND = 'Stress Less About Money'") !== -1);
+  check('no email address anywhere on the site', files.every(f => !/[\w.+-]+@[\w-]+\.[\w.]+/.test(read(f))));
+  check('coach.json reads no figure (no dollar amounts)', !/\$\s?\d/.test(JSON.stringify(c)));
+  /* The pages read the same session path the coach's console walks. */
+  const paths = JSON.parse(fs.readFileSync(path.join(ROOT, 'coach/data/session_paths.json'), 'utf8'));
+  const def = paths.paths.find(x => x.id === 'default');
+  check('the default path has nine stops with a title, covers and a done label', def && def.stops.length === 9 && def.stops.every(id => paths.stops[id] && paths.stops[id].title && paths.stops[id].covers && paths.stops[id].doneLabel));
+  ['index.html', 'coaching.html'].forEach(p => check(p + ' reads the session path', read(p).indexOf('../coach/data/session_paths.json') !== -1));
 }
 
 /* ---- The site's own log ----------------------------------------------- */

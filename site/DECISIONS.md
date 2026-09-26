@@ -107,3 +107,33 @@ what D-339 records: a money coach.
 **Stored shape.** No change.
 
 **Verified.** As SD-001.
+
+## SD-007 The site sells coaching; the tools are the free half of the offer
+
+**Why.** The owner: the site is for selling coaching and services, landing
+pages that send people to book a call, with the free tools and resources
+beside them and information about him for the community.
+
+**Decision.** The brand is Stress Less About Money (the owner's HubSpot
+portal); the coach is Eli Saperstein (the same account). Eight pages: Home
+is the landing (who it is for, what a session is, the offers, Eli, the free
+tools, the questions); Coaching is the services page; Book is the one page
+every "Book a free call" button lands on; About Eli; Free tools gathers the
+calculator, Learn, the glossary and the rooms; Your number, Learn and the
+glossary stay as free tools, each ending in the call to action. The
+coach's details live in `data/coach.json`: name, brand, the booking link,
+the offers, the questions. A page reads it; nothing about Eli is typed in
+a page. The offers carry no price until the owner sets one ("Price on the
+call"). The nine stops on Home and Coaching are read from
+`coach/data/session_paths.json`, the path the console walks, so the site
+describes the real session. Booking is a link to the owner's meetings page
+in a new tab (the policy forbids embeds and posts); empty, the Book page
+says so.
+
+**Replaces or removes.** The rooms page (folded into Free tools) and the
+first About (rewritten around Eli).
+
+**Stored shape.** No change. The site still writes no key. No email
+address anywhere on the site; the test checks.
+
+**Verified.** As SD-001, with eight pages.
