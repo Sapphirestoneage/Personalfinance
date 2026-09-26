@@ -1026,12 +1026,12 @@
     },
 
     inputs: [
-      { ctl: 'monthlyCents', label: 'Enough, a month', kind: 'money', placeholder: 'e.g. 2,600',
+      { ctl: 'monthlyCents', label: 'Enough, a month', plain: 'How much a month would be enough to live on?', where: 'Your own spending is the honest starting point.', roughly: 'Today\'s spending, or a little less if the mortgage would be gone.', unsure: 'Use what you spend now. The room shows what changing it does.', kind: 'money', placeholder: 'e.g. 2,600',
         hint: 'What you would live on by choice, a month, the life you would pick, priced.',
         read: function (h) { return readEnough(h).monthlyCents; },
         write: function (v) { writeEnough(v === null || v < 0 ? null : v, 'entered'); },
         propose: function (h, T) { var p = Enough.propose(h, T); return Money.isOk(p) ? { value: p.value, source: p.source } : null; } },
-      { ctl: 'source', label: 'Where it came from', kind: 'choice', options: [['curve', 'From the joy curve'], ['entered', 'Typed']],
+      { ctl: 'source', label: 'Where it came from', plain: 'Where did that figure come from?', unsure: 'Pick the closest. It only marks how firm the number is.', kind: 'choice', options: [['curve', 'From the joy curve'], ['entered', 'Typed']],
         hint: 'Typed is whatever is in the box. From the joy curve writes the curve’s figure, spending less the low-joy lines, once a month is categorised and rated; until then it writes nothing.',
         read: function (h) { return readEnough(h).source; },
         write: function (v) {

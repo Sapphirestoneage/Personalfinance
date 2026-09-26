@@ -1128,6 +1128,18 @@ html.slaf-menu-pinned .slaf-menu-head { padding-top: var(--space-4); }
    wraps like one; a figure is still a figure. */
 .slaf-bars .row > * { min-width: 0; }
 
+/* ---- What is this? (D-351) ------------------------------------------------
+   A box's own words, folded. The Ledger has carried these since D-347; this
+   is the same fold for every room built on shared/room.js. */
+.slaf-help { grid-column: 1 / -1; margin-top: var(--space-1); font-size: var(--text-xs); }
+.slaf-help > summary { display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 2px; color: var(--color-accent-hover); cursor: pointer; list-style: none; }
+.slaf-help > summary::-webkit-details-marker { display: none; }
+.slaf-help > summary::before { content: '?'; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border: 1px solid currentColor; border-radius: 50%; font-size: 10px; font-weight: 700; }
+.slaf-help[open] > summary::before { content: '\2212'; }
+.slaf-help-plain { margin: var(--space-1) 0 var(--space-2); color: var(--color-text); font-size: var(--text-sm); line-height: var(--leading-normal); }
+.slaf-help-line { margin: 0 0 var(--space-1); color: var(--color-text-muted); line-height: var(--leading-normal); max-width: var(--measure); }
+.slaf-help-line b { color: var(--color-text-faint); font-weight: 600; }
+
 /* ---- A picture you can re-shape (shared/chartbox.js, D-348) ----------------
    The drawing, then a fold holding the shapes this number set can honestly
    take, the eight colour orders, and the table twin. Shut at rest: a room with

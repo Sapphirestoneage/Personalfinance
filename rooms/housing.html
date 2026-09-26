@@ -574,11 +574,11 @@
     },
 
     inputs: [
-      { ctl: 'rent', label: 'Rent instead, a month', kind: 'money', placeholder: 'e.g. 1,900', hint: 'The rent you pay is the housing line in Expenses, read here on its own. Type a figure only to weigh the place against a different rent. Blank with a "no rent" answer in Start Here means no rent.',
+      { ctl: 'rent', label: 'Rent instead, a month', plain: 'What would renting something similar cost each month?', where: 'A listing site for the same size of place in the same area.', roughly: 'What a neighbour pays is close enough.', unsure: 'Use your current rent if you are renting now.', kind: 'money', placeholder: 'e.g. 1,900', hint: 'The rent you pay is the housing line in Expenses, read here on its own. Type a figure only to weigh the place against a different rent. Blank with a "no rent" answer in Start Here means no rent.',
         read: function (h) { return plan(h).rentMonthlyCents; },
         write: function (v) { Spine.set('housing.rentMonthlyCents', v); },
         propose: function (h) { var r = Schema.rentMonthlyCents(h); return r.source === 'expenses' ? { value: r.cents, source: 'the housing line in Expenses (what you pay now)' } : rentGuess(h); } },
-      { ctl: 'price', label: 'The place, its price', kind: 'money', placeholder: 'e.g. 300,000',
+      { ctl: 'price', label: 'The place, its price', plain: 'What does the place cost to buy?', where: 'The listing, or the estimate on a property site.', roughly: 'To the nearest ten thousand.', unsure: 'Use the asking price of a place you have actually looked at.', kind: 'money', placeholder: 'e.g. 300,000',
         read: function (h) { return plan(h).priceCents; },
         write: function (v) { Spine.set('housing.priceCents', v); },
         propose: function (h, T) {
@@ -588,11 +588,11 @@
           if (!rent) return null;
           return { value: Math.round(rent.value * MONTHS * ptr.ratio), source: ptr.ratio + '× a year of ' + rent.source + ' (data/price_to_rent.json, ' + ptr.confidence + ')' };
         } },
-      { ctl: 'downPct', label: 'Down payment, share of price', kind: 'pct', placeholder: 'e.g. 20',
+      { ctl: 'downPct', label: 'Down payment, share of price', plain: 'What share of the price would you put down?', roughly: '20% avoids mortgage insurance in the United States; 3% to 10% is common for a first home.', unsure: 'Put 20 to see the case with no insurance on top.', kind: 'pct', placeholder: 'e.g. 20',
         read: function (h) { return plan(h).downPct; },
         write: function (v) { Spine.set('housing.downPct', v === null ? null : Math.max(0, Math.min(1, v))); },
         propose: function () { return { value: DOWN_CONVENTION, source: 'the 20% convention' }; } },
-      { ctl: 'rate', label: 'Mortgage rate', kind: 'pct', placeholder: 'e.g. 6.5', hint: 'A 30-year fixed. The proposal is a dated average, not a quote.',
+      { ctl: 'rate', label: 'Mortgage rate', plain: 'What mortgage rate would you be offered?', where: 'A lender\'s page, or the average rate in the news this week.', roughly: 'Within half a point is close enough.', unsure: 'Leave it blank and the room uses this year\'s average.', kind: 'pct', placeholder: 'e.g. 6.5', hint: 'A 30-year fixed. The proposal is a dated average, not a quote.',
         read: function (h) { return plan(h).rate; },
         write: function (v) { Spine.set('housing.rate', v === null ? null : Math.max(0, v)); },
         propose: function (h, T) {

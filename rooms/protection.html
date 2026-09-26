@@ -311,11 +311,11 @@
     },
 
     inputs: [
-      { ctl: 'healthType', label: 'Health cover', kind: 'select',
+      { ctl: 'healthType', label: 'Health cover', plain: 'Where does your health cover come from?', where: 'Your insurance card, or the deduction on your payslip.', unsure: 'If it comes out of your pay, it is through a job.', kind: 'select',
         options: [['', 'Not answered']].concat(HEALTH_TYPES.map(function (v) { return [v, HEALTH_LABELS[v] || v]; })),
         read: function (h) { return health(h).type; },
         write: function (v) { Spine.set('insurance.health.type', v === null || v === '' ? null : v); } },
-      { ctl: 'healthMonthly', label: 'Health cover, a month', kind: 'money', placeholder: 'e.g. 350', hint: 'What you pay for the plan, not what it pays out. Leave it blank if the plan costs you nothing.',
+      { ctl: 'healthMonthly', label: 'Health cover, a month', plain: 'What does that cover cost you each month?', where: 'Your payslip, or the bill from the insurer.', roughly: 'Multiply a weekly deduction by 4.3.', unsure: 'Put what leaves your pocket, not what the plan is worth.', kind: 'money', placeholder: 'e.g. 350', hint: 'What you pay for the plan, not what it pays out. Leave it blank if the plan costs you nothing.',
         read: function (h) { return health(h).monthlyCents; },
         write: function (v) { Spine.set('insurance.health.monthlyCents', v); } }
     ],

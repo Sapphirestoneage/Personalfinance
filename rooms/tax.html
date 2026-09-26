@@ -275,10 +275,10 @@
     },
 
     inputs: [
-      { ctl: 'otherPreTaxAnnualCents', label: 'Other pre-tax, a year', kind: 'money', placeholder: 'e.g. 3000',
+      { ctl: 'otherPreTaxAnnualCents', label: 'Other pre-tax, a year', plain: 'What else comes out of your pay before tax, in a year?', where: 'Your payslip lists them: health premiums, an FSA, transit, union dues.', roughly: 'Add the ones that are not retirement money, then multiply for a year.', unsure: 'Leave it blank; the room says what it could not count.', kind: 'money', placeholder: 'e.g. 3000',
         hint: 'Beyond the workplace plan: an HSA, a traditional IRA, pre-tax premiums. Blank is none.',
         read: function (h) { return readTax(h, 'otherPreTaxAnnualCents'); }, write: function (v) { writeTax('otherPreTaxAnnualCents', v); } },
-      { ctl: 'withheldAnnualCents', label: 'Withheld this year', kind: 'money', placeholder: 'e.g. 9000',
+      { ctl: 'withheldAnnualCents', label: 'Withheld this year', plain: 'How much tax has been taken out of your pay so far this year?', where: 'Your payslip\'s year-to-date column, federal tax withheld.', roughly: 'To the nearest hundred.', unsure: 'Leave it blank unless you are checking whether too much is coming out.', kind: 'money', placeholder: 'e.g. 9000',
         hint: 'Federal and state income tax withheld or paid in estimates, for the whole year. Leave blank to skip the refund line.',
         read: function (h) { return readTax(h, 'withheldAnnualCents'); }, write: function (v) { writeTax('withheldAnnualCents', v); } }
     ],

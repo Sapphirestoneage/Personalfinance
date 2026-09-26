@@ -1611,7 +1611,7 @@
     },
 
     inputs: [
-      { ctl: 'pctOfIncome', label: 'Share of income given', kind: 'pct', placeholder: 'e.g. 2', hint: 'Of gross income, before tax.',
+      { ctl: 'pctOfIncome', label: 'Share of income given', plain: 'What share of what you earn do you want to give away?', roughly: 'People who give to a plan often pick between 1% and 10%.', unsure: 'Leave it blank and answer in dollars instead.', kind: 'pct', placeholder: 'e.g. 2', hint: 'Of gross income, before tax.',
         read: function (h) { return readGiving(h).pctOfIncome; },
         write: function (v) { writeGiving('pctOfIncome', v === null ? null : (v < 0 ? 0 : v)); },
         propose: function (h, T) {
@@ -1623,7 +1623,7 @@
           var s = Giving.proposedShare(T);
           return s ? { value: s.value, source: s.note.replace(/ \(rounded\)$/, '') + ' (convention)' } : null;
         } },
-      { ctl: 'annualTargetCents', label: 'A year’s target', kind: 'money', placeholder: 'e.g. 1,200', hint: 'Dollars a year. When typed, this wins over the share.',
+      { ctl: 'annualTargetCents', label: 'A year’s target', plain: 'How much do you want to give away this year?', roughly: 'Last year\'s giving is a fair starting point.', unsure: 'Leave it blank and answer as a share of income instead.', kind: 'money', placeholder: 'e.g. 1,200', hint: 'Dollars a year. When typed, this wins over the share.',
         read: function (h) { return readGiving(h).annualTargetCents; },
         write: function (v) { writeGiving('annualTargetCents', v === null ? null : (v < 0 ? 0 : v)); },
         propose: function (h, T) {

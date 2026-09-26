@@ -537,11 +537,11 @@
 
     /* Two boxes. Neither is written anywhere, see whatIf above. */
     inputs: [
-      { ctl: 'balance', label: 'What is in the old plan', kind: 'money', placeholder: 'e.g. 40,000',
+      { ctl: 'balance', label: 'What is in the old plan', plain: 'How much is in the plan you left behind?', where: 'The last statement from that provider, or their website.', roughly: 'To the nearest thousand.', unsure: 'Log in once and read the balance; it is the only number this room needs.', kind: 'money', placeholder: 'e.g. 40,000',
         hint: 'Not saved, not shared, gone on reload. Starts from a plan tagged as at a former employer in the Ledger, if there is one.',
         read: function () { return Money.isEntered(whatIf.balanceCents) ? whatIf.balanceCents : taggedBalance(); },
         write: function (v) { whatIf.balanceCents = Money.isEntered(v) && v >= 0 ? v : null; } },
-      { ctl: 'leftAtAge', label: 'The age you turned in the year you left', kind: 'number', placeholder: 'e.g. 56', affix: 'yrs',
+      { ctl: 'leftAtAge', label: 'The age you turned in the year you left', plain: 'How old were you in the year you left that job?', roughly: 'The age you turned that year, not on the day you left.', unsure: 'Your birth year subtracted from the year you left.', kind: 'number', placeholder: 'e.g. 56', affix: 'yrs',
         hint: 'Only changes the answer if you are 55 or over now, that is the band where the age-55 rule decides the penalty.',
         read: function () { return whatIf.leftAtAge; },
         write: function (v) { whatIf.leftAtAge = Money.isEntered(v) && v >= 0 && v <= 120 ? Math.round(v) : null; } }

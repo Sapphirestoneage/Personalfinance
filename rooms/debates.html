@@ -519,11 +519,11 @@
     },
 
     inputs: [
-      { ctl: 'ruleId', label: 'A rule', kind: 'select', options: [],
+      { ctl: 'ruleId', label: 'A rule', plain: 'Which piece of money advice do you want to look at?', unsure: 'Pick any. Each one shows what it means for your numbers, and who it is not for.', kind: 'select', options: [],
         read: function (h) { return currentId(h); },
         /* Page-local. Sets which rule the choice below acts on; touches nothing in the spine. */
         write: function (v) { selectedId = v || null; } },
-      { ctl: 'letGo', label: 'Have you let it go?', kind: 'choice', options: [['yes', 'Let go'], ['no', 'Still holding it']],
+      { ctl: 'letGo', label: 'Have you let it go?', plain: 'Have you stopped believing this one?', unsure: 'Answer no if you are not sure. Nothing depends on it.', kind: 'choice', options: [['yes', 'Let go'], ['no', 'Still holding it']],
         hint: 'Letting a rule go is remembered with your household. If it still applies, the room says so rather than hiding it.',
         read: function (h) { var id = currentId(h); return id && Unlearning.droppedIds(h).indexOf(id) >= 0 ? 'yes' : 'no'; },
         write: function (v) { writeDropped(currentId(Spine.getProfile()), v === 'yes'); } }

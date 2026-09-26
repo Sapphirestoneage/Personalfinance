@@ -1072,9 +1072,9 @@
     },
 
     inputs: [
-      { ctl: 'compareTo', label: 'Compare against', kind: 'select', options: [['', 'The first snapshot']],
+      { ctl: 'compareTo', label: 'Compare against', plain: 'What should this month be measured against?', unsure: 'Leave it on the first one. It compares this month with your usual.', kind: 'select', options: [['', 'The first snapshot']],
         read: function (h) { return Schema.createHistoryPlan(h.history).compareTo; }, write: function (v) { Spine.set('history.compareTo', v || null); } },
-      { ctl: 'freeze', label: 'Freeze today’s numbers', kind: 'choice', options: [['now', 'Freeze now']], hint: 'A snapshot cannot be undone; it can be ignored.',
+      { ctl: 'freeze', label: 'Freeze today’s numbers', plain: 'Do you want today\'s numbers held still while you look?', unsure: 'Leave it off. Nothing is saved either way.', kind: 'choice', options: [['now', 'Freeze now']], hint: 'A snapshot cannot be undone; it can be ignored.',
         read: function () { return null; }, write: function () { Instruments.snapshot(Spine.getProfile(), TABLESNOW()); } }
     ],
 

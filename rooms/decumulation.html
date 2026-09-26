@@ -540,11 +540,11 @@
     },
 
     inputs: [
-      { ctl: 'stockShare', label: 'Share in stocks', kind: 'pct', placeholder: 'e.g. 60', hint: 'Of the investments. The VPW table has a 60% and a 40% column; the nearer one is used.',
+      { ctl: 'stockShare', label: 'Share in stocks', plain: 'What share of the pot would stay in stocks once you are drawing from it?', roughly: 'Many people hold 40% to 60% in stocks in retirement.', unsure: 'Put 50 to see the middle case.', kind: 'pct', placeholder: 'e.g. 60', hint: 'Of the investments. The VPW table has a 60% and a 40% column; the nearer one is used.',
         read: function (h) { return readDec(h).stockShare; },
         write: function (v) { set('stockShare', v === null ? null : Decumulation.clamp01(v)); },
         propose: function () { return { value: Decumulation.DEFAULT_STOCK_SHARE, source: 'the VPW table’s middle column (convention)' }; } },
-      { ctl: 'plannedAnnualDrawCents', label: 'Planned draw, a year', kind: 'money', placeholder: 'e.g. 20,000', hint: 'What you mean to take from investments in a year. Blank uses the spending your income does not cover.',
+      { ctl: 'plannedAnnualDrawCents', label: 'Planned draw, a year', plain: 'How much would you take out each year?', roughly: 'Four percent of the pot is the usual starting point.', unsure: 'Leave it blank and the room will show what the usual rule would take.', kind: 'money', placeholder: 'e.g. 20,000', hint: 'What you mean to take from investments in a year. Blank uses the spending your income does not cover.',
         read: function (h) { return readDec(h).plannedAnnualDrawCents; },
         write: function (v) { set('plannedAnnualDrawCents', v === null ? null : Math.max(0, Math.round(v))); },
         propose: function (h, T) {
@@ -552,7 +552,7 @@
           if (!row || !row.ok || !(row.result.annualDrawCents > 0)) return null;
           return { value: row.result.annualDrawCents, source: 'spending not covered by income' };
         } },
-      { ctl: 'socialSecurityAt', label: 'Social Security from', kind: 'number', placeholder: 'e.g. 67', hint: 'The age you claim, or claimed. Only a note about timing, no benefit is estimated here.',
+      { ctl: 'socialSecurityAt', label: 'Social Security from', plain: 'At what age would you start Social Security?', where: 'ssa.gov shows your own figures once you have an account.', roughly: '62 is the earliest, 67 is full for most people now, 70 pays the most.', unsure: 'Put 67.', kind: 'number', placeholder: 'e.g. 67', hint: 'The age you claim, or claimed. Only a note about timing, no benefit is estimated here.',
         read: function (h) { return readDec(h).socialSecurityAt; },
         write: function (v) { set('socialSecurityAt', v === null || v <= 0 ? null : Math.round(v)); },
         propose: function (h, T) {

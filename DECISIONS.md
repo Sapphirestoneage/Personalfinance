@@ -17701,6 +17701,31 @@ rows of chrome around one sentence is worse than the sentence alone.
 rooms opened with the example household, the controls appearing exactly where
 there is something to re-shape.
 
+## D-351 — The decision rooms ask in plain words too
+
+**Why.** D-347 gave every box in the Ledger five sentences, because that is
+where a fact is typed. It left the other boxes: the what-ifs a decision room
+asks for, fifty-one of them across the rooms built on `shared/room.js`. A box
+asking for "Other pre-tax, a year" with a one-line hint is the same wall the
+audit found in the Ledger.
+
+**Decision.** The shell draws the same "What is this?" fold on any box whose
+spec carries help, and every one of the fifty-one now carries it: the question
+in plain words, what counts, where to find it, what a good enough answer looks
+like, and what to do when you do not know. A box that already had a `hint`
+reads it as "what it means" rather than repeating itself, and stops printing
+the bare hint line underneath.
+
+**Replaces or removes.** The bare hint as a box's only explanation. Nothing is
+added to a screen at rest: the fold is one line until it is opened.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js` 36356, with a check that fails when any box a
+decision room asks for has no plain question: 51 of 51 carry one. Five rooms
+opened at 390px with a fold open.
+
+
 ---
 
 # The Dungeons & Dividends entries

@@ -323,16 +323,16 @@
     },
 
     inputs: [
-      { ctl: 'price', label: 'The price', kind: 'money', placeholder: 'e.g. 1,200',
+      { ctl: 'price', label: 'The price', plain: 'What does the thing cost, all in?', where: 'The listing, the quote, or the sticker. Include tax and delivery if you know them.', roughly: 'To the nearest hundred is fine.', unsure: 'Use the price you have seen advertised. You can sharpen it later.', kind: 'money', placeholder: 'e.g. 1,200',
         read: function (h) { return readPlan(h).priceCents; },
         write: function (v) { Spine.set('purchase.priceCents', v === null || v < 0 ? null : v); } },
-      { ctl: 'months', label: 'Months until you buy', kind: 'number', placeholder: 'e.g. 6', affix: 'mo', hint: '0 is now; blank is no date yet.',
+      { ctl: 'months', label: 'Months until you buy', plain: 'How many months away is this?', roughly: '0 means you are buying now. 6 means about half a year.', unsure: 'Leave it blank if there is no date yet.', kind: 'number', placeholder: 'e.g. 6', affix: 'mo', hint: '0 is now; blank is no date yet.',
         read: function (h) { return readPlan(h).monthsAway; },
         write: function (v) { Spine.set('purchase.monthsAway', v === null ? null : Math.max(0, Math.round(v))); } },
-      { ctl: 'rate', label: 'Financing rate', kind: 'pct', placeholder: 'blank = cash', hint: 'The APR if you would borrow for it. Blank means paid in cash.',
+      { ctl: 'rate', label: 'Financing rate', plain: 'If you borrowed for it, what rate would you pay?', where: 'The finance offer, or the rate on the card you would use.', roughly: 'Car finance is often 6% to 10%; a card is more like 24%.', unsure: 'Leave it blank if you would pay cash.', kind: 'pct', placeholder: 'blank = cash', hint: 'The APR if you would borrow for it. Blank means paid in cash.',
         read: function (h) { return readPlan(h).financeRate; },
         write: function (v) { Spine.set('purchase.financeRate', v === null || v < 0 ? null : v); } },
-      { ctl: 'kind', label: 'What it is', kind: 'select', options: [['', 'Not said']].concat(Purchase.KINDS),
+      { ctl: 'kind', label: 'What it is', plain: 'What sort of thing is it?', unsure: 'Pick the closest. It only changes the rules of thumb the room compares you with.', kind: 'select', options: [['', 'Not said']].concat(Purchase.KINDS),
         read: function (h) { return readPlan(h).label; },
         write: function (v) { Spine.set('purchase.label', v === null || v === '' ? null : v); } }
     ],

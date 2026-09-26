@@ -452,11 +452,11 @@
       /* 15.7: the second adult's name and birth year live here, on the
          person record (people[1]), never in a room of their own. Their pay
          and working situation stay with Start Here, which owns pay. */
-      { ctl: 'partnerName', label: 'What to call them', kind: 'text', placeholder: 'e.g. Sam',
+      { ctl: 'partnerName', label: 'What to call them', plain: 'What should the app call them?', unsure: 'A first name is plenty, and you can leave it blank.', kind: 'text', placeholder: 'e.g. Sam',
         hint: 'Shown beside every figure that is theirs, once there are two of you.',
         read: function (h) { var p = Schema.adults(h)[1]; return p ? Schema.personName(p, null) : null; },
         write: function (v) { var p = Schema.adults(Spine.getProfile())[1]; if (p) Spine.upsertPerson({ id: p.id, label: v ? String(v).trim() : 'The other of you' }); } },
-      { ctl: 'partnerBirthYear', label: 'The year they were born', kind: 'number', placeholder: 'e.g. 1993',
+      { ctl: 'partnerBirthYear', label: 'The year they were born', plain: 'What year were they born?', roughly: 'The year is all the app asks for.', unsure: 'Ask them, or leave it blank; your own dates still work.', kind: 'number', placeholder: 'e.g. 1993',
         hint: 'The year is enough: it sets their milestones (catch-up at 50, Medicare at 65, Social Security).',
         read: function (h) { var p = Schema.adults(h)[1]; return p ? Schema.birthYearOf(p) : null; },
         write: function (v) {
@@ -466,12 +466,12 @@
           var keep = /^\d{4}(-\d{2}-\d{2})$/.exec(p.dob || '');
           Spine.upsertPerson({ id: p.id, dob: y === null ? null : y + (keep ? keep[1] : '-07-01') });
         } },
-      { ctl: 'splitMode', label: 'How you split the shared month', kind: 'choice',
+      { ctl: 'splitMode', label: 'How you split the shared month', plain: 'How do the two of you split the shared bills?', unsure: 'Pick half and half. You can change it when you see the numbers.', kind: 'choice',
         options: [['equal', 'Equal halves'], ['proportional', 'In proportion to income'], ['pooled', 'One pool']],
         hint: 'Halves, each in proportion to what they earn, or everything into one pool.',
         read: function (h) { return plan(h).splitMode; },
         write: function (v) { Spine.set('partner.splitMode', Partner.MODES.indexOf(v) >= 0 ? v : null); } },
-      { ctl: 'sharedMonthlyCents', label: 'Shared costs, a month', kind: 'money', placeholder: 'e.g. 3,000',
+      { ctl: 'sharedMonthlyCents', label: 'Shared costs, a month', plain: 'How much of the month is shared between you?', where: 'The bills you both live on: rent, power, food.', roughly: 'Rent plus power plus food gets you most of the way.', unsure: 'Add rent and food. That is close enough to start.', kind: 'money', placeholder: 'e.g. 3,000',
         hint: 'Rent or mortgage, bills, food, the things you pay for together. Leave it blank to use the household month from Start Here.',
         read: function (h) { return plan(h).sharedMonthlyCents; },
         write: function (v) { Spine.set('partner.sharedMonthlyCents', v); },
@@ -600,13 +600,13 @@
     },
 
     inputs: [
-      { ctl: 'tuitionTargetCents', label: 'Tuition target, per child', kind: 'money', placeholder: 'e.g. 50,000',
+      { ctl: 'tuitionTargetCents', label: 'Tuition target, per child', plain: 'How much do you want saved for each child\'s schooling?', where: 'A college\'s own site lists a year\'s cost; multiply by four.', roughly: 'Many families aim at half the cost of a state school.', unsure: 'Leave it blank until you have a figure in mind.', kind: 'money', placeholder: 'e.g. 50,000',
         hint: 'What you want to have for each child when they turn 18. The child-cost table’s convention is $250 a month from birth for half an in-state degree; it gives no lump sum, so nothing is proposed here.',
         read: function (h) { return readKids(h).tuitionTargetCents; }, write: function (v) { Spine.set('kids.tuitionTargetCents', v); } },
-      { ctl: 'tuitionSavedCents', label: 'Saved for tuition so far', kind: 'money', placeholder: 'e.g. 5,000',
+      { ctl: 'tuitionSavedCents', label: 'Saved for tuition so far', plain: 'How much is saved for that already?', where: 'The balance of a 529 or whatever account holds it.', roughly: 'Today\'s balance.', unsure: 'Put 0 if you have not started.', kind: 'money', placeholder: 'e.g. 5,000',
         hint: 'One pot for the household. It goes to the oldest child’s bill first.',
         read: function (h) { return readKids(h).tuitionSavedCents; }, write: function (v) { Spine.set('kids.tuitionSavedCents', v); } },
-      { ctl: 'tuitionMonthlyCents', label: 'Going to tuition, a month', kind: 'money', placeholder: 'e.g. 200',
+      { ctl: 'tuitionMonthlyCents', label: 'Going to tuition, a month', plain: 'How much goes towards it each month?', where: 'The standing transfer, if you have one.', roughly: 'To the nearest ten dollars.', unsure: 'Put 0 and the room shows what starting would do.', kind: 'money', placeholder: 'e.g. 200',
         hint: 'Across all the children. Measured against what is needed to land every target by 18.',
         read: function (h) { return readKids(h).tuitionMonthlyCents; }, write: function (v) { Spine.set('kids.tuitionMonthlyCents', v); } }
     ],

@@ -77,10 +77,9 @@ carries it. Coach Mode has its own audit at `coach/AUDIT.md`; this one is the
 
 ## Still open, and why
 
-- **The rooms' own explanations.** D-347 covers every box in the Ledger, which
-  is where facts are typed. A handful of rooms ask for a what-if figure of
-  their own (a house price, a career move's new pay); those boxes carry their
-  room's own hint but not the five sentences. They are next.
+- ~~The rooms' own explanations.~~ Done, D-351: the fifty-one what-if boxes the
+  decision rooms ask for carry the same five sentences, drawn by the same fold.
+  Every box in the app that takes an answer now says what it is in plain words.
 - **Charts inside string builders.** Twenty-three rooms draw through the new
   layer, including every room built on `shared/room.js` (D-350). What is left
   is the handful of pictures built inside a bigger HTML string, mostly in Debt

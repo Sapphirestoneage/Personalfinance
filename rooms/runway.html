@@ -1256,12 +1256,12 @@
     },
 
     inputs: [
-      { ctl: 'expectedSearchMonths', label: 'Expected search, months', kind: 'number', placeholder: 'e.g. 3', affix: 'mo',
+      { ctl: 'expectedSearchMonths', label: 'Expected search, months', plain: 'How long do you think finding work would take?', roughly: 'Three to six months is usual for a professional job.', unsure: 'Put 6. It is the careful answer.', kind: 'number', placeholder: 'e.g. 3', affix: 'mo',
         hint: 'Your best guess at how long until the next pay cheque. The typical search is proposed until you type yours.',
         read: function (h) { return readUnemployment(h).expectedSearchMonths; },
         write: function (v) { writeUnemployment({ expectedSearchMonths: v === null || v <= 0 ? null : v }); },
         propose: function (h, T) { return BetweenJobs.proposeSearchMonths(T); } },
-      { ctl: 'floorMonthlyCents', label: 'The floor, a month', kind: 'money', placeholder: 'e.g. 2,100',
+      { ctl: 'floorMonthlyCents', label: 'The floor, a month', plain: 'If money got tight, what is the least a month could cost?', where: 'Take your normal month and cross off anything you could stop within a month.', roughly: 'Half to three quarters of normal spending for most people.', unsure: 'Leave it blank and the room uses two thirds of your spending, and says so.', kind: 'money', placeholder: 'e.g. 2,100',
         hint: 'The bare-minimum month: rent, food, the lights, the minimums, what it costs if everything cuttable is cut.',
         read: function (h) { return readUnemployment(h).floorMonthlyCents; },
         write: function (v) { writeUnemployment({ floorMonthlyCents: v === null || v < 0 ? null : v }); },

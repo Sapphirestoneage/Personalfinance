@@ -560,7 +560,7 @@
         options: [['new', 'New'], ['used', 'Used']], hint: 'Used: say how old below, and the drop is read from there on the curve, not from the top.',
         read: function () { return car.condition; },
         write: function (v) { car.condition = v || null; } },
-      { ctl: 'age', label: 'How old it is, in years', placeholder: '3', affix: 'yrs',
+      { ctl: 'age', label: 'How old it is, in years', plain: 'How many years old is the car?', where: 'The registration document, or the year on the listing.', roughly: 'Today\'s year minus the year it was built.', unsure: 'A guess to the nearest year is fine.', placeholder: '3', affix: 'yrs',
         hint: 'For a used car. A three-year-old car has already lost the steep part.',
         read: function () { return car.ageYears; },
         write: function (v) { car.ageYears = v === null ? null : Math.max(0, v); } },

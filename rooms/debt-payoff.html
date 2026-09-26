@@ -2611,15 +2611,15 @@
     },
 
     inputs: [
-      { ctl: 'plan', label: 'The plan', kind: 'select',
+      { ctl: 'plan', label: 'The plan', plain: 'Which order do you want to pay your debts in?', unsure: 'Highest rate first costs the least. Smallest balance first feels the best. Both are here.', kind: 'select',
         options: [['', 'Not chosen yet'], ['standard', 'Standard, the minimums, level over the term'], ['income_driven', 'Income-driven, a share of what you earn, the rest forgiven'], ['aggressive', 'Aggressive, standard plus an extra a month']],
         read: function (h) { return readPlan(h).plan; }, write: function (v) { write('plan', v); } },
-      { ctl: 'extraMonthlyCents', label: 'Extra a month', kind: 'money', placeholder: 'e.g. 200', hint: 'On top of the standard payments, the aggressive plan. Blank or zero is the standard plan again.',
+      { ctl: 'extraMonthlyCents', label: 'Extra a month', plain: 'How much more than the minimums could you put in each month?', roughly: 'Even $50 changes the finish date. Try a number you could keep up.', unsure: 'Put 0 to see how long the minimums alone take.', kind: 'money', placeholder: 'e.g. 200', hint: 'On top of the standard payments, the aggressive plan. Blank or zero is the standard plan again.',
         read: function (h) { return readPlan(h).extraMonthlyCents; }, write: function (v) { write('extraMonthlyCents', v === null ? null : Math.max(0, v)); } },
-      { ctl: 'idrShare', label: 'Income-driven share', kind: 'pct', placeholder: 'e.g. 10', hint: 'Of discretionary income, what you earn above 1.5× a poverty line.',
+      { ctl: 'idrShare', label: 'Income-driven share', plain: 'What share of your income does your loan plan take?', where: 'Your loan servicer\'s website, on the page that names your plan.', roughly: '10% is the most common.', unsure: 'Leave it blank unless you are on an income-driven plan.', kind: 'pct', placeholder: 'e.g. 10', hint: 'Of discretionary income, what you earn above 1.5× a poverty line.',
         read: function (h) { return readPlan(h).idrShare; }, write: function (v) { write('idrShare', v === null ? null : Math.max(0, Math.min(1, v))); },
         propose: function (h, T) { return { value: conv(T).idrShareOfDiscretionary, source: 'the usual share (convention)' }; } },
-      { ctl: 'forgivenessYears', label: 'Forgiveness after', kind: 'number', affix: 'years', placeholder: 'e.g. 20', hint: 'When an income-driven balance is written off. Zero means never.',
+      { ctl: 'forgivenessYears', label: 'Forgiveness after', plain: 'How many years until the rest of the loan is written off?', where: 'The plan\'s rules on your servicer\'s site.', roughly: 'Twenty years is common, ten for public service.', unsure: 'Leave it blank if no plan of yours mentions forgiveness.', kind: 'number', affix: 'years', placeholder: 'e.g. 20', hint: 'When an income-driven balance is written off. Zero means never.',
         read: function (h) { return readPlan(h).forgivenessYears; }, write: function (v) { write('forgivenessYears', v === null ? null : Math.max(0, v)); },
         propose: function (h, T) { return { value: conv(T).forgivenessYears, source: 'the usual horizon; ' + conv(T).forgivenessYearsGraduate + ' for graduate loans (convention)' }; } }
     ],

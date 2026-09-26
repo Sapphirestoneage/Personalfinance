@@ -908,9 +908,9 @@
     chart: function (h, T) { return calendarHtml(h, T); },
 
     inputs: [
-      { ctl: 'cadence', label: 'Paid', kind: 'select', options: [['', 'How often?'], ['weekly', 'Every week'], ['fortnightly', 'Every two weeks'], ['semimonthly', 'Twice a month'], ['monthly', 'Monthly']],
+      { ctl: 'cadence', label: 'Paid', plain: 'How often does your pay arrive?', where: 'Your bank statement: count how many times your employer paid you last month.', unsure: 'Every two weeks is the most common in the United States.', kind: 'select', options: [['', 'How often?'], ['weekly', 'Every week'], ['fortnightly', 'Every two weeks'], ['semimonthly', 'Twice a month'], ['monthly', 'Monthly']],
         read: function (h) { return cal(h).cadence; }, write: function (v) { Spine.set('calendar.cadence', v || null); } },
-      { ctl: 'nextPaydayDay', label: 'Next payday, day of the month', kind: 'number', placeholder: 'e.g. 5', hint: 'Both are used only while Income has no entry landing this month; once it does, those landings are the paydays.',
+      { ctl: 'nextPaydayDay', label: 'Next payday, day of the month', plain: 'Which day of the month is your next payday?', where: 'Your last payslip usually shows the next date.', roughly: 'A day either way will not change much.', unsure: 'Leave it blank and the calendar spreads the month evenly.', kind: 'number', placeholder: 'e.g. 5', hint: 'Both are used only while Income has no entry landing this month; once it does, those landings are the paydays.',
         read: function (h) { return cal(h).nextPaydayDay; }, write: function (v) { Spine.set('calendar.nextPaydayDay', day(v)); } }
     ],
 

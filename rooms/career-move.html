@@ -906,22 +906,22 @@
     },
 
     inputs: [
-      { ctl: 'grossAnnualCents', label: 'The offer, a year', kind: 'money', placeholder: 'e.g. 80,000', hint: 'Base pay before tax. Bonuses and equity are not weighed here.',
+      { ctl: 'grossAnnualCents', label: 'The offer, a year', plain: 'What would the new job pay in a year, before tax?', where: 'The offer letter, or the range in the advert.', roughly: 'The middle of the advertised range.', unsure: 'Use the number you would tell a friend. It is a what-if, not a record.', kind: 'money', placeholder: 'e.g. 80,000', hint: 'Base pay before tax. Bonuses and equity are not weighed here.',
         read: function (h) { return offer(h).grossAnnualCents; }, write: function (v) { Spine.set('career.offer.grossAnnualCents', v); },
         propose: function (h, T) { return leverOffer(h, T); } },
-      { ctl: 'hoursPerWeek', label: 'Its hours a week', kind: 'number', placeholder: 'e.g. 40', affix: 'h',
+      { ctl: 'hoursPerWeek', label: 'Its hours a week', plain: 'How many hours a week would it really take?', roughly: 'Count the hours you would actually work, not the hours in the contract.', unsure: 'Put 40 if it is a normal full-time job.', kind: 'number', placeholder: 'e.g. 40', affix: 'h',
         read: function (h) { return offer(h).hoursPerWeek; }, write: function (v) { Spine.set('career.offer.hoursPerWeek', v === null || v <= 0 ? null : v); },
         propose: function (h) {
           var c = currentWork(h).contractedHoursPerWeek;
           return Money.isEntered(c) && c > 0 ? { value: c, source: 'your current hours' } : { value: CareerMove.STANDARD_WEEK_HOURS, source: 'a standard week (convention)' };
         } },
-      { ctl: 'commuteHoursPerWeek', label: 'Its commute a week', kind: 'number', placeholder: 'e.g. 5', affix: 'h', hint: '0 for working from home.',
+      { ctl: 'commuteHoursPerWeek', label: 'Its commute a week', plain: 'How long would getting there and back take each week?', roughly: 'Door to door, both ways, times the days you would go in.', unsure: 'Put 0 if you would work from home.', kind: 'number', placeholder: 'e.g. 5', affix: 'h', hint: '0 for working from home.',
         read: function (h) { return offer(h).commuteHoursPerWeek; }, write: function (v) { Spine.set('career.offer.commuteHoursPerWeek', v === null ? null : Math.max(0, v)); },
         propose: function (h) { var c = currentWork(h).commuteHoursPerWeek; return Money.isEntered(c) ? { value: c, source: 'your current commute' } : null; } },
-      { ctl: 'workCostsMonthlyCents', label: 'Its costs of working, a month', kind: 'money', placeholder: 'e.g. 100', hint: 'Petrol, parking, transit, clothes, lunches the job makes you buy.',
+      { ctl: 'workCostsMonthlyCents', label: 'Its costs of working, a month', plain: 'What would the job itself cost you each month?', where: 'Think of parking, fuel, fares, lunches, childcare and clothes you would not otherwise buy.', roughly: 'Add the commute and the childcare; those are usually most of it.', unsure: 'Put 0 and the room will say the answer ignores the costs of working.', kind: 'money', placeholder: 'e.g. 100', hint: 'Petrol, parking, transit, clothes, lunches the job makes you buy.',
         read: function (h) { return offer(h).workCostsMonthlyCents; }, write: function (v) { Spine.set('career.offer.workCostsMonthlyCents', v); },
         propose: function (h) { var c = currentWork(h).workCostsMonthlyCents; return Money.isEntered(c) ? { value: c, source: 'your current costs of working' } : null; } },
-      { ctl: 'signOnCents', label: 'Sign-on', kind: 'money', placeholder: 'e.g. 5,000', hint: 'A one-off. Blank is none.',
+      { ctl: 'signOnCents', label: 'Sign-on', plain: 'Would they pay you anything up front?', where: 'The offer letter calls it a signing bonus or a relocation payment.', roughly: 'Before tax is fine; the room takes the tax off.', unsure: 'Put 0 if nothing was offered.', kind: 'money', placeholder: 'e.g. 5,000', hint: 'A one-off. Blank is none.',
         read: function (h) { return offer(h).signOnCents; }, write: function (v) { Spine.set('career.offer.signOnCents', v); } }
     ],
 

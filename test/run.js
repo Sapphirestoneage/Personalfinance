@@ -12577,7 +12577,10 @@ section('15.7: two people, one record each; the Partner room edits the second (D
   check('...and reads people[1]', Ownership.field('partnerName').read(two).value + '/' + Ownership.field('partnerDob').read(two).value, 'Sam/1993');
   check('...not applicable with one adult', Ownership.field('partnerName').applies(one), false);
   const partnerRoom = fs.readFileSync(path.join(ROOT, 'rooms/partner.html'), 'utf8');
-  checkTrue('the Partner room has a name box (text, not a number) and a birth-year box', /ctl: 'partnerName', label: 'What to call them', kind: 'text'/.test(partnerRoom) && /ctl: 'partnerBirthYear'/.test(partnerRoom));
+  /* The box's own help sits between its label and its kind now (D-351), so
+     this reads the keys rather than one fixed order of them. */
+  checkTrue('the Partner room has a name box (text, not a number) and a birth-year box',
+    /ctl: 'partnerName', label: 'What to call them'[\s\S]{0,800}?kind: 'text'/.test(partnerRoom) && /ctl: 'partnerBirthYear'/.test(partnerRoom));
   checkTrue('...writing the person record, not a room of their own', /Spine\.upsertPerson\(\{ id: p\.id, label:/.test(partnerRoom) && /Spine\.upsertPerson\(\{ id: p\.id, dob:/.test(partnerRoom) && partnerRoom.indexOf("Spine.set('partner.name") === -1);
   const start = fs.readFileSync(path.join(ROOT, 'rooms/start.html'), 'utf8');
   checkTrue('Start Here no longer names the second adult; it points at Partner', start.indexOf('data-ctl="partnerLabel"') === -1 && /partner\.html#inputs/.test(start));
@@ -17173,6 +17176,39 @@ section('The standard the app is held to (D-343)');
   checkTrue('the standard is written down', design.length > 2000);
   checkTrue('and every rule in it says how it is checked',
     /test\/render\.js/.test(design) && /test\/alignment\.js/.test(design) && /node test\/run\.js/.test(design));
+})();
+
+section('The rooms ask in plain words too (D-351)');
+
+(function () {
+  /* D-347 gave every box in the Ledger five sentences. These are the other
+     boxes: the what-ifs a decision room asks for, built by shared/room.js. */
+  const shell = fs.readFileSync(path.join(ROOT, 'shared/room.js'), 'utf8');
+  checkTrue('the shell draws the fold on a box that carries help',
+    /function helpHtml\(spec\)/.test(shell) && /<details class="slaf-help">/.test(shell));
+  checkTrue('...and a box with its own words does not also print the old bare hint',
+    /spec\.hint && !spec\.plain/.test(shell));
+  checkTrue('...reading the hint as "what it means" when nothing better is given',
+    /spec\.means \|\| spec\.hint/.test(shell));
+
+  const rooms = fs.readdirSync(path.join(ROOT, 'rooms'))
+    .filter(f => f.endsWith('.html'))
+    .filter(f => fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8').indexOf('shared/room.js') > -1);
+  let boxes = 0, helped = 0;
+  const bare = [];
+  rooms.forEach(f => {
+    const src = fs.readFileSync(path.join(ROOT, 'rooms', f), 'utf8');
+    const re = /\{ ctl: '([a-zA-Z0-9_]+)', label: '([^']*)'([\s\S]{0,900}?)(?=\n\s*\{ ctl: '|\n\s*\]|\n\s*\};)/g;
+    let m;
+    while ((m = re.exec(src))) {
+      boxes++;
+      if (/plain: '/.test(m[3])) helped++;
+      else bare.push(f.replace('.html', '') + ':' + m[1]);
+    }
+  });
+  checkTrue(`every room's own boxes were counted (${boxes})`, boxes > 40);
+  check('every box a decision room asks for says what it is in plain words', bare.join(', '), '');
+  console.log(`  note: ${helped} of ${boxes} room boxes carry the plain question`);
 })();
 
 section('Every number set is a picture the reader can re-shape (D-348)');

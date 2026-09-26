@@ -72,6 +72,30 @@
     });
   }
 
+  /* ---- What is this? (D-351) -----------------------------------------------
+     The same promise the Ledger makes on every box it takes an answer in
+     (D-347): the question in plain words, what counts, where to find it, what
+     a good enough answer looks like, and what to do when you do not know. A
+     room says as much of it as its box needs; `hint`, which many boxes already
+     carried, reads as "what it means" when nothing better is given.
+     It is a fold, shut at rest and opened by the person, so it costs a line
+     and never moves under a finger (D-344, D-349). */
+  function helpHtml(spec) {
+    var parts = [
+      ['What it means', spec.means || spec.hint],
+      ['Where to find it', spec.where],
+      ['Close enough', spec.roughly],
+      ['If you are not sure', spec.unsure]
+    ].filter(function (p) { return p[1]; });
+    if (!spec.plain && !parts.length) return '';
+    return '<details class="slaf-help"><summary>What is this?</summary>'
+      + (spec.plain ? '<p class="slaf-help-plain">' + esc(spec.plain) + '</p>' : '')
+      + parts.map(function (p) {
+          return '<p class="slaf-help-line"><b>' + esc(p[0]) + '.</b> ' + esc(p[1]) + '</p>';
+        }).join('')
+      + '</details>';
+  }
+
   function control(spec, prefix) {
     var id = (prefix || '') + 'ctl-' + spec.ctl;
     var label = '<span class="slaf-label">' + esc(spec.label) + '</span>';
@@ -81,16 +105,19 @@
     if (spec.kind === 'select') {
       box = '<select data-ctl="' + esc(spec.ctl) + '" id="' + id + '" aria-label="' + esc(spec.label) + '">'
         + (spec.options || []).map(function (o) { return '<option value="' + esc(o[0]) + '">' + esc(o[1]) + '</option>'; }).join('') + '</select>';
-      return '<label class="slaf-field">' + label + '<span class="slaf-input-shell">' + box + '</span></label>';
+      return '<label class="slaf-field">' + label + '<span class="slaf-input-shell">' + box + '</span>'
+        + helpHtml(spec) + '</label>';
     }
     if (spec.kind === 'choice') {
       return '<div class="slaf-field"><span class="slaf-label">' + esc(spec.label) + '</span><div class="choices" data-choices="' + esc(spec.ctl) + '">'
         + (spec.options || []).map(function (o) { return '<button type="button" class="choice" data-value="' + esc(o[0]) + '">' + esc(o[1]) + '</button>'; }).join('') + '</div>'
-        + (spec.hint ? '<span class="slaf-hint">' + esc(spec.hint) + '</span>' : '') + '</div>';
+        + (spec.hint && !spec.plain ? '<span class="slaf-hint">' + esc(spec.hint) + '</span>' : '')
+        + helpHtml(spec) + '</div>';
     }
     box = '<input type="text"' + (spec.kind === 'text' ? '' : ' inputmode="decimal"') + ' data-ctl="' + esc(spec.ctl) + '" id="' + id + '" placeholder="' + esc(spec.placeholder || '') + '" autocomplete="off" aria-label="' + esc(spec.label) + '"/>';
     return '<label class="slaf-field">' + label + '<span class="slaf-input-shell">' + affix + box + suffix + '</span>'
-      + (spec.hint ? '<span class="slaf-hint">' + esc(spec.hint) + '</span>' : '') + '</label>';
+      + (spec.hint && !spec.plain ? '<span class="slaf-hint">' + esc(spec.hint) + '</span>' : '')
+      + helpHtml(spec) + '</label>';
   }
 
   function display(spec, raw) {
