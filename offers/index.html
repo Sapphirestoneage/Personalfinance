@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<meta name="robots" content="noindex"/>
+<title>Offer Builder: The Sky</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="offers.css"/>
+<!--
+  THE SKY, the home of the Offer Builder (OD-001).
+
+  A walk through the exercises of "$100M Offers" as six planets by four
+  bands, the same dynamic as SPARKS' Solar System but over this app's own
+  levels (offers/data/levels.json). Nothing here reads a slaf.* key.
+
+  1. READS   the one offer in offers.offer.v1 (offers/shared/store.js).
+  2. WRITES  only from the buttons: example numbers, a blank start, export,
+             import, reset.
+  3. SHOWS   the orbit picture, the grid, the next level, the four rings,
+             the readings shelf, the six planets with what the book says,
+             the words.
+
+  LIVE-FORM: built once. There are no typed boxes on this screen; the
+  import file input sits outside every reprawn container.
+-->
+</head>
+<body class="slaf">
+<main class="ob" id="main">
+  <div id="head"></div>
+
+  <p class="ob-lede">The offer work from Alex Hormozi's <i>$100M Offers</i>, laid out as six planets: Crowd, Price, Value, Offer, Enhancers, Name. Each has four bands, and a band means the same depth on every planet: sketch it, build it, sharpen it, prove it. Finish a band on all six and a ring lights. Everything you type stays in this browser.</p>
+
+  <section class="slaf-card" id="start" hidden aria-label="How to start">
+    <h2>Two ways to start</h2>
+    <p class="ob-note">Try the walk with an example offer to see every picture lit, or start blank with your own. The example is made up: a strength program for new fathers, with invented numbers.</p>
+    <div class="ob-actions" style="margin-top:var(--space-3)">
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-demo">Try with example numbers</button>
+      <a class="slaf-btn" href="planet.html?p=crowd#C1">Start blank at Crowd 1</a>
+    </div>
+  </section>
+
+  <div class="ob-two">
+    <section class="slaf-card" aria-label="The Sky">
+      <h2>The Sky</h2>
+      <p class="ob-say-line" id="say"></p>
+      <div class="ob-sky-pic" id="sky"></div>
+      <div id="grid"></div>
+      <p class="ob-key"><b>The bands:</b> 1 Sketch, 2 Build, 3 Sharpen, 4 Prove. A filled dot is a level you have answered, a half one is started, a hollow one is not yet. A lit cell is a band you have finished on that planet. A planet moves outward as it levels; tap one to open it.</p>
+    </section>
+    <div>
+      <div id="next"></div>
+      <section class="slaf-card" aria-label="The rings">
+        <h2>The rings</h2>
+        <p class="ob-note">A ring lights when every planet has finished that band.</p>
+        <ul class="ob-rings" id="rings" style="margin-top:var(--space-3)"></ul>
+      </section>
+      <section class="slaf-card" aria-label="Readings">
+        <h2>Readings</h2>
+        <p class="ob-note">Nothing is locked. A reading simply cannot exist until its inputs do, and each one says what it is waiting on.</p>
+        <ul class="ob-shelf" id="shelf" style="margin-top:var(--space-3)"></ul>
+      </section>
+    </div>
+  </div>
+
+  <section class="slaf-card" aria-label="The planets">
+    <h2>The six planets</h2>
+    <ul class="ob-planets" id="planets"></ul>
+  </section>
+
+  <section class="slaf-card" aria-label="The words">
+    <h2>The words</h2>
+    <div class="ob-terms" id="terms"></div>
+  </section>
+
+  <details class="slaf-card ob-fold" id="keep">
+    <summary>Keep a copy, bring one back, or start over</summary>
+    <div class="ob-fold-body">
+      <p>A copy is one file with everything the planets hold. Nothing is sent anywhere.</p>
+      <div class="ob-actions">
+        <button type="button" class="slaf-btn" id="btn-export">Save a copy</button>
+        <label class="slaf-btn" for="imp-file" style="cursor:pointer">Load a copy</label>
+        <input type="file" id="imp-file" accept=".json,application/json" hidden/>
+        <button type="button" class="slaf-btn slaf-btn--quiet" id="btn-reset">Start over with a blank offer</button>
+      </div>
+      <p class="ob-say" id="keep-say" role="status"></p>
+    </div>
+  </details>
+</main>
+
+<script src="shared/money.js"></script>
+<script src="shared/store.js"></script>
+<script src="engines/offer.js"></script>
+<script src="shared/charts.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  'use strict';
+  var O = window.OFFERS, UI = O.UI, Store = O.Store, Offer = O.Offer, Charts = O.Charts, Money = window.SLAF.Money, el = UI.el, esc = UI.esc;
+  var DEMO = null;
+
+  /* The shelf: the readings a whole offer is judged by, in book order. */
+  var SHELF = [
+    ['marketScore', 'Starving crowd score', function (r) { return r.value + ' of 20'; }],
+    ['marginNow', 'Margin today', function (r) { return Money.formatRate(r.value, { decimals: 0 }); }],
+    ['valueGapNow', 'Worth to price, today', function (r) { return Money.formatMultiple(r.value); }],
+    ['clientsNeeded', 'Clients needed at the new price', function (r) { return r.value + ' a year'; }],
+    ['valueNow', 'Value score, before', function (r) { return (Math.round(r.value * 10) / 10).toString(); }],
+    ['valueChange', 'Value score, after', function (r) { return (Math.round(r.value * 10) / 10).toString(); }],
+    ['trimStack', 'Pieces kept after the trim', function (r) { return String(r.value); }],
+    ['stackVsPrice', 'The stack adds up to', function (r) { return Money.formatCents(r.value); }],
+    ['offerTotal', 'Stack and bonuses', function (r) { return Money.formatCents(r.value); }],
+    ['enhancerCoverage', 'Enhancers in play', function (r) { return r.value + ' of 4'; }],
+    ['nameChosenRead', 'The name', function (r) { return r.value; }],
+    ['results', 'Close rate at the new price', function (r) { return Money.formatRate(r.value, { decimals: 0 }); }]
+  ];
+
+  function draw() {
+    var a = Store.answers(), c = Store.confirmed();
+    var o = Offer.overall(a, c), n = Offer.next(a, c);
+    var empty = o.done === 0 && Object.keys(a).length === 0;
+    el('start').hidden = !empty && !Store.isDemo() ? true : false;
+    if (!empty && Store.isDemo()) el('start').querySelector('.ob-note').textContent = 'You are looking at the example offer: a made-up strength program for new fathers. Start blank whenever you like; the example is one click away again under Keep a copy.';
+    el('head').innerHTML = UI.header({ screen: 'The Sky', title: 'Your offer, planet by planet', sub: Store.isDemo() ? 'Example numbers. Nothing here is real.' : 'Six planets, four bands, ' + o.of + ' levels.',
+      actions: '<a class="slaf-btn slaf-btn--quiet" href="offer.html">The offer sheet</a>' });
+    el('say').innerHTML = '<b>' + o.done + '</b> of <b>' + o.of + '</b> levels answered. ' + (o.rings ? 'Ring <b>' + o.rings + '</b> of 4 lit on every planet.' : 'No ring lit on all six planets yet.');
+    el('sky').innerHTML = Charts.render({ kind: 'sky', planets: o.planets, rings: 4, ringsCleared: o.rings, sunOn: o.rings >= 1 });
+    el('grid').innerHTML = UI.gridHtml(o.planets);
+    el('next').innerHTML = UI.nextCard(n);
+    el('rings').innerHTML = o.allRings.map(function (r) {
+      var lit = o.rings >= r.n, extra = '';
+      if (lit && r.n === 1) { var ol = Offer.reading('oneLine', a); if (Money.isOk(ol)) extra = '<p class="ob-oneline">' + esc(ol.value) + '</p>'; }
+      return '<li class="ob-ring' + (lit ? ' is-lit' : '') + '"><span class="slaf-eyebrow">Ring ' + r.n + (lit ? ', lit' : '') + '</span><b>' + esc(r.title) + '</b>' + extra + esc(r.says) + '</li>';
+    }).join('');
+    el('shelf').innerHTML = SHELF.map(function (s) {
+      var r = Offer.reading(s[0], a);
+      if (Money.isOk(r)) return '<li><span>' + esc(s[1]) + '</span><span class="v">' + esc(s[2](r)) + '</span></li>';
+      var seen = {};
+      var waits = (r.missing || []).map(function (k) { var lv = Offer.levelOfKey(k); if (!lv || seen[lv.id]) return null; seen[lv.id] = true; return '<a href="' + UI.levelHref(lv) + '">' + esc(lv.planet.charAt(0).toUpperCase() + lv.planet.slice(1) + ' ' + lv.level) + '</a>'; }).filter(Boolean);
+      return '<li><span>' + esc(s[1]) + (waits.length ? '<span class="w">waiting on ' + waits.join(', ') + '</span>' : '') + '</span><span class="v is-notyet">' + esc(Money.NOT_YET) + '</span></li>';
+    }).join('');
+    el('planets').innerHTML = o.planets.map(function (p) {
+      var meta = Offer.planetById(p.id);
+      return '<li class="ob-planet"><h3><a href="planet.html?p=' + esc(p.id) + '">' + esc(p.label) + '</a><span class="n">' + p.done + ' of ' + p.of + '</span></h3><p>' + esc(meta.what) + '</p><span class="ch">' + esc(meta.chapters) + '</span></li>';
+    }).join('');
+  }
+
+  UI.boot(function (ctx) {
+    DEMO = ctx.demo;
+    el('terms').innerHTML = ctx.T.terms.map(function (t) { return '<div><b>' + esc(t.term) + '.</b> ' + esc(t.says) + '</div>'; }).join('');
+    draw();
+    el('btn-demo').addEventListener('click', function () { Store.loadDemo(DEMO); draw(); UI.say('keep-say', 'Example numbers loaded.', 'good'); });
+    el('btn-export').addEventListener('click', function () {
+      var blob = new Blob([Store.exportJson()], { type: 'application/json' }), url = URL.createObjectURL(blob), link = document.createElement('a');
+      link.href = url; link.download = 'offer-builder-' + new Date().toISOString().slice(0, 10) + '.json'; document.body.appendChild(link); link.click();
+      setTimeout(function () { URL.revokeObjectURL(url); link.remove(); }, 1000);
+      UI.say('keep-say', 'Saved.', 'good');
+    });
+    el('imp-file').addEventListener('change', function () {
+      var f = this.files && this.files[0]; if (!f) return;
+      var r = new FileReader();
+      r.onload = function () { try { Store.importJson(String(r.result)); draw(); UI.say('keep-say', 'Loaded.', 'good'); } catch (e) { UI.say('keep-say', e.message); } };
+      r.readAsText(f);
+    });
+    el('btn-reset').addEventListener('click', function () {
+      if (!window.confirm('Start over with a blank offer? Save a copy first if you want to keep this one.')) return;
+      Store.reset(); draw(); UI.say('keep-say', 'A blank offer.', 'good');
+    });
+    Store.onChange(function () { draw(); });
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<meta name="robots" content="noindex"/>
+<title>Offer Builder: a planet</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="offers.css"/>
+<!--
+  A PLANET (OD-001): its four bands, its levels, and the open level's boxes.
+
+  1. READS   ?p=<planet> and #<levelId>; the offer in offers.offer.v1.
+  2. WRITES  every answer, through offers/shared/store.js, on change.
+  3. SHOWS   the band list (output, redrawn on every change), the open
+             level (its prompt, the facts it reads from other planets, the
+             boxes, the payoff), and the next level overall.
+
+  LIVE-FORM: #open-form is built once per opened level and never rebuilt
+  while it is in use (D-034). #open-payoff, #bands and #next are output
+  and redraw on every change.
+-->
+</head>
+<body class="slaf">
+<main class="ob" id="main">
+  <div id="head"></div>
+  <section class="ob-intro" id="intro"></section>
+  <div class="ob-two">
+    <section class="slaf-card" id="bands" aria-label="Bands and levels"></section>
+    <div>
+      <section class="slaf-card ob-open" id="open" aria-label="The open level" aria-live="polite">
+        <div id="open-head"></div>
+        <div id="open-reads"></div>
+        <div id="open-form"></div>
+        <div id="open-payoff"></div>
+      </section>
+      <div id="next"></div>
+    </div>
+  </div>
+</main>
+
+<script src="shared/money.js"></script>
+<script src="shared/store.js"></script>
+<script src="engines/offer.js"></script>
+<script src="shared/charts.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  'use strict';
+  var O = window.OFFERS, UI = O.UI, Store = O.Store, Offer = O.Offer, el = UI.el, esc = UI.esc;
+  var pid = UI.param('p') || 'crowd', openId = null;
+  var TAG = { E: 'Enter', C: 'Confirm', S: 'Sharpen' };
+
+  function levelFromHash() {
+    var h = decodeURIComponent((location.hash || '').replace(/^#/, ''));
+    var lv = h ? Offer.byId(h) : null;
+    return lv && lv.planet === pid ? lv.id : null;
+  }
+  function firstOpen(p) {
+    for (var b = 0; b < p.bands.length; b++) { var x = p.bands[b].levels.filter(function (l) { return l.state !== 'done'; })[0]; if (x) return x.level.id; }
+    return p.levels.length ? p.levels[0].level.id : null;
+  }
+
+  function drawBands(p) {
+    el('bands').innerHTML = '<h2>' + esc(p.label) + ': ' + p.done + ' of ' + p.of + '</h2>' + p.bands.map(function (b) {
+      var meta = Offer.bands()[b.band - 1];
+      return '<div class="ob-band"><div class="ob-band-head"><b>Band ' + b.band + ', ' + esc(b.name) + '</b><span class="m">' + esc(meta.meaning) + '</span><span class="state' + (b.cleared ? ' is-clear' : '') + '">' + (b.cleared ? 'finished' : b.done + ' of ' + b.of) + '</span></div>'
+        + '<ul class="ob-levels">' + b.levels.map(function (x) {
+          var lv = x.level;
+          return '<li><button type="button" class="ob-lv is-' + x.state + (openId === lv.id ? ' is-open' : '') + '" data-open="' + esc(lv.id) + '" aria-expanded="' + (openId === lv.id ? 'true' : 'false') + '"><span class="tag" title="' + TAG[lv.tag] + '">' + lv.tag + '</span><span class="what">' + lv.level + '. ' + esc(lv.title) + '<small>' + esc(UI.minutes(lv.minutes)) + '</small></span><span class="mark">' + (x.state === 'done' ? 'answered' : x.state === 'part' ? x.filled + ' of ' + x.of : 'not yet') + '</span></button></li>';
+        }).join('') + '</ul></div>';
+    }).join('');
+  }
+
+  function drawOpen(lv, a) {
+    var p = Offer.planetById(lv.planet);
+    el('open-head').innerHTML = '<span class="slaf-eyebrow">' + esc(p.label) + ' ' + lv.level + ', band ' + lv.band + ' ' + esc(Offer.bands()[lv.band - 1].name) + ', ' + TAG[lv.tag] + '</span><h2>' + esc(lv.title) + '</h2><p class="ob-chapter">' + esc(lv.chapter) + '. ' + esc(UI.minutes(lv.minutes).charAt(0).toUpperCase() + UI.minutes(lv.minutes).slice(1)) + '.</p>'
+      + '<p class="ob-prompt">' + esc(lv.prompt) + '</p>' + UI.fold('Why this, and how to answer it', '<p>' + esc(lv.help) + '</p><p><b>You have leveled this when:</b> ' + esc(lv.checkpoint) + '</p>');
+    el('open-reads').innerHTML = UI.readsHtml(lv, a);
+    var form = el('open-form');
+    form.innerHTML = UI.formHtml(lv, a);
+    UI.bindForm(form, lv, function (a2) { drawOut(lv, a2); });
+    drawOut(lv, a);
+  }
+  /* Output only: the payoff, the confirm read, the band list, the next card. */
+  function drawOut(lv, a) {
+    var c = Store.confirmed();
+    UI.drawConfirm(el('open-form'), lv, a);
+    el('open-payoff').innerHTML = UI.payoff(lv, a);
+    drawBands(Offer.planet(pid, a, c));
+    el('next').innerHTML = UI.nextCard(Offer.next(a, c));
+  }
+
+  function openLevel(id, a) {
+    var lv = Offer.byId(id); if (!lv) return;
+    openId = id;
+    if (decodeURIComponent((location.hash || '').replace(/^#/, '')) !== id) history.replaceState(null, '', location.pathname + location.search + '#' + encodeURIComponent(id));
+    drawOpen(lv, a);
+  }
+
+  UI.boot(function () {
+    var meta = Offer.planetById(pid);
+    if (!meta) { el('main').innerHTML = '<p class="ob-say">No such planet. <a href="index.html">Back to the Sky.</a></p>'; return; }
+    var a = Store.answers(), c = Store.confirmed(), p = Offer.planet(pid, a, c);
+    el('head').innerHTML = UI.header({ screen: 'Planet ' + meta.order + ' of 6', title: meta.label + ': ' + meta.sub, sub: esc(meta.chapters) + (Store.isDemo() ? '. Example numbers.' : ''),
+      actions: '<a class="slaf-btn slaf-btn--quiet" href="index.html">The Sky</a><a class="slaf-btn slaf-btn--quiet" href="offer.html">The offer sheet</a>' });
+    el('intro').innerHTML = UI.fold('What the book says about this planet', '<p class="ob-what">' + esc(meta.what) + '</p>');
+    openLevel(levelFromHash() || firstOpen(p), a);
+    el('bands').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-open]'); if (!b) return;
+      openLevel(b.getAttribute('data-open'), Store.answers());
+      el('open').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    window.addEventListener('hashchange', function () { var id = levelFromHash(); if (id && id !== openId) openLevel(id, Store.answers()); });
+  });
+})();
+</script>
+</body>
+</html>

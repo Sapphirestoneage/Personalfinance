@@ -17351,6 +17351,34 @@ SPARKS device backup neither carries nor removes `coach.` keys.
 
 ---
 
+## D-340 — The Offer Builder is its own app in offers/, a walk through $100M Offers on the planets dynamic
+
+**Why.** The owner asked for a tool that runs a person through Alex Hormozi's
+"$100M Offers" (the starving crowd, pricing, the value equation, the offer
+stack, the enhancers, naming), with every exercise, checklists, and pictures,
+using the levels and planets dynamic of the Solar System. It is not a money
+room: no household number is read, so under the freeze it is a lane beside
+SPARKS like `dnd/` and `coach/` (D-339).
+
+**Decision.** `offers/` is a separate app with three screens (the Sky, a
+planet, the offer sheet). Six planets (Crowd, Price, Value, Offer, Enhancers,
+Name) by four bands (Sketch, Build, Sharpen, Prove), 50 levels in
+`offers/data/levels.json`, a ring per band cleared on every planet. Its own
+storage (`offers.` keys, never `slaf.`), byte-identical copies of
+`shared/money.js` and `shared/theme.css` (`offers/tools/vendor.js`), its own
+tests (`node offers/test/run.js`, in CI) and its own log (`offers/DECISIONS.md`,
+`OD-###`). Nothing in `rooms/`, `shared/`, `engines/` or `data/` changes for it.
+
+**Replaces or removes.** Nothing in SPARKS; the app has no screen for this
+work and the freeze forbids a room for it, which is why it is a lane.
+
+**Stored shape.** No change to `slaf.household.v2` or any SPARKS key.
+
+**Verified.** `node test/run.js`; `node offers/test/run.js`; the three pages
+served and clicked through with the example numbers, console clean.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

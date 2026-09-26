@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<meta name="robots" content="noindex"/>
+<title>Offer Builder: the offer sheet</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="offers.css"/>
+<!--
+  THE OFFER SHEET (OD-001): everything the six planets hold, on one page,
+  in the order a prospect hears it. The sun of this small solar system.
+
+  1. READS   the offer in offers.offer.v1. Every line names the level it
+             came from; a missing line says which level would fill it.
+  2. WRITES  nothing.
+  3. SHOWS   name, the one line, who it is for, the dream outcome, the
+             stack, the bonuses, the price against the worth, the guarantee,
+             scarcity and urgency, the value equation, and the refresh plan.
+             Prints on one or two pages.
+-->
+</head>
+<body class="slaf">
+<main class="ob" id="main">
+  <div id="head"></div>
+  <article class="sheet" id="sheet"></article>
+</main>
+
+<script src="shared/money.js"></script>
+<script src="shared/store.js"></script>
+<script src="engines/offer.js"></script>
+<script src="shared/charts.js"></script>
+<script src="app.js"></script>
+<script>
+(function () {
+  'use strict';
+  var O = window.OFFERS, UI = O.UI, Store = O.Store, Offer = O.Offer, Money = window.SLAF.Money, el = UI.el, esc = UI.esc;
+
+  function s(a, k) { var v = a[k]; return typeof v === 'string' && v.trim() ? v.trim() : null; }
+  function n(a, k) { var v = a[k]; return typeof v === 'number' && Number.isFinite(v) ? v : null; }
+  function rows(a, k) { return Offer.fullRows(Offer.fieldByKey(k), a); }
+  function miss(key, what) { var lv = Offer.levelOfKey(key); return '<p class="missing">' + esc(what) + ' is not written yet: <a href="' + UI.levelHref(lv) + '">' + esc(lv.planet.charAt(0).toUpperCase() + lv.planet.slice(1)) + ' ' + lv.level + ', ' + esc(lv.title) + '</a>.</p>'; }
+  function sec(title, body) { return '<section class="sheet-sec"><h2>' + esc(title) + '</h2>' + body + '</section>'; }
+  function opt(key, id) { var f = Offer.fieldByKey(key); var o = (f.options || []).filter(function (x) { return x.id === id; })[0]; return o ? o.label : id; }
+
+  function draw() {
+    var a = Store.answers();
+    el('head').innerHTML = UI.header({ screen: 'The offer sheet', title: 'One page, the way a prospect hears it', sub: Store.isDemo() ? 'Example numbers. Nothing here is real.' : 'Every line names the level it came from.',
+      actions: '<a class="slaf-btn slaf-btn--quiet" href="index.html">The Sky</a><button type="button" class="slaf-btn no-print" id="btn-print">Print or save as PDF</button>' });
+    var h = '';
+    var name = s(a, 'nameChosen') || (s(a, 'hasName') === 'yes' ? s(a, 'nameNow') : null);
+    h += name ? '<h1 class="sheet-name">' + esc(name) + '</h1>' : '<h1 class="sheet-name" style="color:var(--color-text-faint)">Unnamed offer</h1>' + miss('nameChosen', 'The name');
+    var one = s(a, 'oneLine'); h += one ? '<p class="ob-oneline">' + esc(one) + '</p>' : miss('oneLine', 'The offer in one line');
+
+    var who = s(a, 'nicheChosen') || s(a, 'marketWho');
+    h += sec('Who it is for', who ? '<p>' + esc(who) + (s(a, 'nicheChosen') ? '' : ' <span class="missing">(the starting avatar; band 3 of Crowd narrows it)</span>') + '</p>' : miss('nicheChosen', 'The niche'));
+    var dream = s(a, 'dreamOutcome');
+    h += sec('The dream outcome', (dream ? '<p>' + esc(dream) + '</p>' : miss('dreamOutcome', 'The dream outcome')) + (s(a, 'dreamStatus') ? '<p class="ob-note">They get to be ' + esc(s(a, 'dreamStatus')) + '.</p>' : '')
+      + (n(a, 'firstWinDays') !== null ? '<p class="ob-note">First win: ' + esc(s(a, 'firstWinWhat') || '') + ' in ' + n(a, 'firstWinDays') + ' days. Full result in ' + n(a, 'fullResultWeeks') + ' weeks.</p>' : ''));
+
+    var st = rows(a, 'stack');
+    h += sec('What you get', st.length ? '<table class="sheet-table"><thead><tr><th>Piece</th><th>What it solves</th><th class="n">Worth</th></tr></thead><tbody>' + st.map(function (r) { return '<tr><td>' + esc(r.name) + '</td><td>' + esc(r.solves) + '</td><td class="n">' + Money.formatCents(r.valueCents, { exact: true }) + '</td></tr>'; }).join('')
+      + '<tr class="sheet-total"><td colspan="2">The stack</td><td class="n">' + Money.formatCents(st.reduce(function (t, r) { return t + r.valueCents; }, 0), { exact: true }) + '</td></tr></tbody></table>' : miss('stack', 'The stack'));
+    var bo = rows(a, 'bonuses');
+    h += sec('Bonuses', bo.length ? '<table class="sheet-table"><thead><tr><th>Bonus</th><th>The worry it answers</th><th class="n">Worth</th></tr></thead><tbody>' + bo.map(function (r) { return '<tr><td>' + esc(r.name) + ' <span class="sheet-badge">' + esc(opt('bonuses', r.kind) || '') + '</span></td><td>' + esc(r.solves) + (r.proof ? '<br/><span class="ob-note">' + esc(r.proof) + '</span>' : '') + '</td><td class="n">' + Money.formatCents(r.valueCents, { exact: true }) + '</td></tr>'; }).join('')
+      + '<tr class="sheet-total"><td colspan="2">The bonuses</td><td class="n">' + Money.formatCents(bo.reduce(function (t, r) { return t + r.valueCents; }, 0), { exact: true }) + '</td></tr></tbody></table>' : miss('bonuses', 'The bonuses'));
+
+    var price = n(a, 'priceNew') !== null ? n(a, 'priceNew') : n(a, 'priceNow');
+    var period = s(a, 'pricePeriod');
+    var total = Offer.reading(bo.length ? 'offerTotal' : 'stackVsPrice', a);
+    var gapR = Offer.reading(n(a, 'priceNew') !== null ? 'valueGapNew' : 'valueGapNow', a);
+    h += sec('The price', (price !== null ? '<div class="sheet-price"><span class="big">' + Money.formatCents(price, { exact: true }) + '</span><span class="ob-note">' + esc({ once: 'one time', month: 'a month', year: 'a year' }[period] || '') + '</span>'
+      + (Money.isOk(total) ? '<span class="ob-note">Everything above adds up to ' + Money.formatCents(total.value, { exact: true }) + ', ' + Money.formatMultiple(Offer.multiple(total.value, price).value) + ' the price.</span>' : '')
+      + (Money.isOk(gapR) ? '<span class="ob-note">The outcome is worth about ' + Money.formatCents(n(a, 'outcomeWorth')) + ' a year to them, ' + Money.formatMultiple(gapR.value) + ' the price.</span>' : '') + '</div>' : miss('priceNew', 'The price'))
+      + (Money.isOk(total) && total.chart ? UI.chartFrame(total.chart) : ''));
+
+    var g = s(a, 'guaranteeText');
+    h += sec('The guarantee', g ? '<p><span class="sheet-badge">' + esc(opt('guaranteeKind', s(a, 'guaranteeKind'))) + '</span></p><p>' + esc(g) + '</p>' + (s(a, 'guaranteeCondition') ? '<p class="ob-note">It holds when the client ' + esc(s(a, 'guaranteeCondition')) + '.</p>' : '') : miss('guaranteeText', 'The guarantee'));
+    var sc = Offer.reading('scarcityLine', a), ur = Offer.reading('urgencyLine', a);
+    h += sec('Why now, and why not everyone', (Money.isOk(sc) && sc.value !== 'none' ? '<p>' + esc(sc.value) + '</p>' : miss('scarcityKind', 'Scarcity')) + (Money.isOk(ur) && ur.value !== 'none' ? '<p>' + esc(ur.say.split(' Because:')[0]) + '</p>' : miss('urgencyKind', 'Urgency')));
+
+    var vc = Offer.reading('valueChange', a), vn = Offer.reading('valueNow', a);
+    h += sec('The value equation', Money.isOk(vc) ? '<p>' + esc(vc.say) + '</p>' + UI.chartFrame(vc.chart) : Money.isOk(vn) ? '<p>' + esc(vn.say) + '</p>' + UI.chartFrame(vn.chart) + '<p class="missing">Rate it again after the Offer and Enhancers planets: <a href="planet.html?p=value#V7">Value 7</a>.</p>' : miss('dreamNow', 'The first rating'));
+    var rp = Offer.reading('refreshPlan', a);
+    h += sec('Keeping it fresh', Money.isOk(rp) ? '<p>' + esc(rp.say) + '</p>' : miss('wrapperRotations', 'The refresh plan'));
+    el('sheet').innerHTML = h;
+    var pb = el('btn-print'); if (pb) pb.addEventListener('click', function () { window.print(); });
+  }
+
+  UI.boot(function () { draw(); Store.onChange(draw); });
+})();
+</script>
+</body>
+</html>

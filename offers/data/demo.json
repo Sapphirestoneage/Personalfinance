@@ -1,0 +1,117 @@
+{
+  "version": "2026-09-26",
+  "note": "Example numbers only. A made-up strength program for new fathers, invented for the walk. Nothing here is a real person or business.",
+  "answers": {
+    "offerNow": "Online strength coaching for busy people, sold by the month.",
+    "commodityNow": "mostlyPrice",
+    "marketCore": "health",
+    "marketWho": "Men in their thirties who used to train",
+    "painScore": 4, "payScore": 4, "targetScore": 3, "growthScore": 4,
+    "painQuotes": [
+      { "quote": "I have not slept properly in eight months and I am too tired to train." },
+      { "quote": "I can barely lift the car seat without my back going." },
+      { "quote": "Every plan I try assumes I have an hour and a gym." }
+    ],
+    "nicheLadder": [
+      { "niche": "Anyone who wants to get strong", "price": 2900 },
+      { "niche": "Busy professionals in their thirties", "price": 9900 },
+      { "niche": "New fathers in the first year", "price": 39900 },
+      { "niche": "New fathers with a bad back and no gym", "price": 99700 }
+    ],
+    "nicheChosen": "New fathers in the first year, training at home with no gym",
+    "nicheCommit": { "gather": true, "pay": true, "grow": true, "stay": true },
+    "channels": [
+      { "where": "Two online groups for new dads", "count": 18000 },
+      { "where": "A prenatal class partner's mailing list", "count": 2400 },
+      { "where": "A podcast for expecting fathers", "count": 9000 }
+    ],
+    "crowdProof": { "talked": true, "spend": true },
+
+    "priceNow": 9900, "pricePeriod": "month", "costNow": 4200,
+    "pricePosition": "below", "closeRateNow": 0.2,
+    "cycleSigns": [ "discount", "chasing", "noService" ],
+    "cycleGood": [ "committed" ],
+    "outcomeWorth": 480000, "outcomeWorthWhy": "A private trainer twice a week is about $400 a month; a bad back cost one of them $1,800 in physio last year; the sleep and energy are worth more than either to them.",
+    "priceNew": 29700, "revenueGoal": 12000000,
+    "premiumChecks": { "noApology": true, "gap": true, "adds": true, "noCompare": true },
+    "priceTests": [ { "who": "M., from the dads group", "said": "yes" }, { "who": "J., a referral", "said": "notNow" }, { "who": "R., from the podcast", "said": "yes" } ],
+
+    "dreamNow": 6, "likelyNow": 4, "timeNow": 6, "effortNow": 7,
+    "dreamOutcome": "Strong enough to carry the baby, the bags and the stroller up the stairs without thinking about it, and to have energy left at the end of the day.",
+    "dreamStatus": "the dad who keeps up, not the one who is always tired",
+    "proof": [
+      { "kind": "client", "what": "Eleven new dads through the pilot; nine added twenty pounds to their carry test in six weeks" },
+      { "kind": "mine", "what": "Trained through my own first year on twenty minute sessions" },
+      { "kind": "credential", "what": "Certified strength coach, eight years coaching" },
+      { "kind": "guarantee", "what": "A conditional guarantee on the carry test" }
+    ],
+    "firstWinWhat": "less back pain lifting the car seat", "firstWinDays": 5, "fullResultWeeks": 6,
+    "sacrifices": [
+      { "what": "Finding an hour to train", "fix": "Every session is twenty minutes, three a week" },
+      { "what": "Getting to a gym", "fix": "One kettlebell and a doorway, nothing else" },
+      { "what": "Planning what to do", "fix": "The session card tells them, in order, with a timer" },
+      { "what": "Eating differently", "fix": "One rule a week, never a meal plan" }
+    ],
+    "bottomChecks": { "weekOne": true, "noNewTools": true, "hardestDone": true, "allFixed": true },
+    "dreamNew": 8, "likelyNew": 8, "timeNew": 3, "effortNew": 3,
+
+    "brickUses": [ { "use": "doorstop" }, { "use": "bookend" }, { "use": "kettlebell stand-in" }, { "use": "step for calf raises" }, { "use": "paperweight" }, { "use": "garden edging" }, { "use": "phone stand" }, { "use": "hot water bottle, warmed" }, { "use": "a weight for a pressed flower" } ],
+    "journeySteps": [ { "step": "Decide to start again" }, { "step": "Find a slot in the day" }, { "step": "Do the first session without hurting the back" }, { "step": "Keep going through a bad week of sleep" }, { "step": "Notice the carry gets easier" }, { "step": "Make it a habit that survives teething" } ],
+    "problems": [
+      { "problem": "I do not have an hour", "driver": "effort", "solution": "How to get strong in twenty minutes, three times a week" },
+      { "problem": "I will hurt my back", "driver": "likely", "solution": "How to train around a sore back with a movement screen first" },
+      { "problem": "I have no gym and no space", "driver": "effort", "solution": "How to do it with one kettlebell in a doorway" },
+      { "problem": "I will stop when the baby stops sleeping", "driver": "likely", "solution": "How to keep going in a bad week with the five minute fallback" },
+      { "problem": "It will take months before anything changes", "driver": "time", "solution": "How to feel the first change in five days with the carry test" },
+      { "problem": "I do not know what to do each day", "driver": "effort", "solution": "How to open the card and go, no planning" },
+      { "problem": "Programs are for people who are already fit", "driver": "dream", "solution": "How to start from zero with the first two weeks built for tired people" },
+      { "problem": "I will have nobody to ask when it hurts", "driver": "likely", "solution": "How to get an answer the same day from a coach" },
+      { "problem": "Eating right is impossible right now", "driver": "effort", "solution": "How to eat better with one rule a week" },
+      { "problem": "My partner will resent the time", "driver": "dream", "solution": "How to train with the baby in the room" }
+    ],
+    "vehicles": [
+      { "solution": "Twenty minute sessions on a card", "group": "many", "effort": "diy", "medium": "written", "speed": "scheduled", "value": "high", "cost": "low" },
+      { "solution": "Movement screen for the back", "group": "one", "effort": "dwy", "medium": "live", "speed": "week", "value": "high", "cost": "high" },
+      { "solution": "Same day answers from a coach", "group": "one", "effort": "dwy", "medium": "written", "speed": "sameDay", "value": "high", "cost": "high" },
+      { "solution": "Five minute fallback session", "group": "many", "effort": "diy", "medium": "recorded", "speed": "scheduled", "value": "high", "cost": "low" },
+      { "solution": "Weekly live group call", "group": "small", "effort": "dwy", "medium": "live", "speed": "scheduled", "value": "low", "cost": "high" },
+      { "solution": "Carry test tracker", "group": "many", "effort": "diy", "medium": "tool", "speed": "scheduled", "value": "high", "cost": "low" },
+      { "solution": "Printed poster of the program", "group": "many", "effort": "diy", "medium": "written", "speed": "scheduled", "value": "low", "cost": "low" },
+      { "solution": "One rule a week nutrition cards", "group": "many", "effort": "diy", "medium": "tool", "speed": "scheduled", "value": "high", "cost": "low" }
+    ],
+    "stack": [
+      { "name": "The Six Week Dad Strength Cards", "solves": "No time, no plan: twenty minutes, told what to do", "valueCents": 29700, "costCents": 500 },
+      { "name": "The Back Check", "solves": "Fear of getting hurt: a movement screen before day one", "valueCents": 15000, "costCents": 6000 },
+      { "name": "Same Day Coach Line", "solves": "Nobody to ask: an answer within the day", "valueCents": 19700, "costCents": 4000 },
+      { "name": "The Five Minute Fallback", "solves": "Bad weeks: a session you can always do", "valueCents": 4900, "costCents": 0 },
+      { "name": "The Carry Test Tracker", "solves": "Nothing changing: a number that moves in week one", "valueCents": 3900, "costCents": 0 }
+    ],
+    "offerChecks": { "everySolved": true, "noDeadWeight": true, "manyTimes": true, "hardestDone": true, "names": true },
+    "offerFeedback": [ { "who": "M., pilot client", "said": "The Back Check is the part I would pay for on its own", "changed": "Moved it to the top of the stack" } ],
+
+    "enhancersNow": [ "none" ],
+    "objections": [ { "objection": "What if I hurt my back doing it alone?" }, { "objection": "What if the baby stops sleeping and I fall off?" }, { "objection": "My partner will think I am being selfish with the time" }, { "objection": "I have paid for programs before and never used them" } ],
+    "scarcityKind": "seats", "scarcityCount": 12, "scarcityWhy": "Twelve is the most Back Checks and same day answers I can give properly in a month alongside the pilot group.",
+    "urgencyKind": "cohort", "urgencyDate": "2026-11-02", "urgencyWhy": "The group starts together so the weekly rule and the fallback land on the same days for everyone.",
+    "bonuses": [
+      { "name": "The Partner Page", "solves": "My partner will think I am being selfish", "kind": "tool", "valueCents": 2900, "proof": "A one page note that shows the twenty minute slot and what it gives back" },
+      { "name": "The Bad Week Checklist", "solves": "What if the baby stops sleeping", "kind": "checklist", "valueCents": 1900, "proof": "Nine of eleven pilot dads used it in week three" },
+      { "name": "The Kit Guide", "solves": "I do not know what to buy", "kind": "tool", "valueCents": 1500, "proof": "One kettlebell, one door, the exact weight for their carry test" },
+      { "name": "Pediatric Physio Back Session", "solves": "What if I hurt my back", "kind": "partner", "valueCents": 9000, "proof": "A recorded session from a physio who works with new parents" }
+    ],
+    "bonusChecks": { "named": true, "worry": true, "priced": true, "proof": true, "tool": true, "after": true },
+    "guaranteeKind": "conditional",
+    "guaranteeText": "Do the three sessions a week for six weeks and log your carry test. If it has not gone up by twenty pounds, I keep coaching you for free until it does.",
+    "guaranteeCondition": "does three sessions a week and logs the carry test",
+    "enhancerChecks": { "scarcityTrue": true, "deadlineHeld": true, "affordClaims": true, "bonusCost": true },
+
+    "hasName": "yes", "nameNow": "Strength Coaching",
+    "oneLine": "New fathers in their first year get strong enough to carry the baby, the bags and the stroller up the stairs without thinking about it, in six weeks, twenty minutes at a time, without a gym, or I keep coaching them for free until they do.",
+    "magicReason": "First Year", "magicAvatar": "New Dad", "magicGoal": "Carry Anything", "magicInterval": "6 Week", "magicContainer": "Challenge",
+    "nameChosen": "The 6 Week New Dad Carry Anything Challenge",
+    "nameChecks": { "who": true, "result": true, "when": true, "container": true, "pieces": true },
+    "wrapperRotations": [ { "what": "urgency", "whenNext": "every six weeks with each new group" }, { "what": "bonus", "whenNext": "swap one bonus each quarter" }, { "what": "name", "whenNext": "after the third group, if sign-ups slow" } ],
+    "launchChecks": { "sheet": true, "price": true, "words": true }
+  },
+  "confirmed": { "O6": "2026-09-20T10:00:00.000Z" }
+}
