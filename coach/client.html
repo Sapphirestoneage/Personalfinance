@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<meta name="robots" content="noindex"/>
+<title>Your plan</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="coach.css"/>
+<!--
+  CLIENT VIEW, presenter mode (CD-007, coach/SPEC.md 3.3).
+
+  1. READS   one client (?client=), or a frozen snapshot of them (?snap=,
+             read-only). Of the roster, only that client's name and next
+             date. coach/clientview.js keeps only shared notes, homework,
+             check-in dates and the decisions marked "show client" from the
+             coach record.
+  2. WRITES  a check-in: each reported balance to the field that holds it,
+             and the check-in record itself. Nothing else.
+  3. SHOWS   the life map, each goal and when it lands, what changed since
+             the last session, homework and the next session. Phone first.
+
+  Never on this page: coach notes, the path's scripts, the roster, another
+  client, a link to Coach Home in presenter mode.
+
+  LIVE-FORM: built once. The four sections are drawn into #view, which holds
+  no input. The check-in form is built on open and again only after a save,
+  never while it is being typed in.
+-->
+</head>
+<body class="slaf">
+<main class="client" id="main">
+  <div class="presenter-bar no-print" id="presenter-bar"></div>
+  <div id="view"></div>
+
+  <section class="slaf-card" id="checkin" hidden>
+    <h2>This month's check-in</h2>
+    <p class="coach-note">Only what moved. Leave a box empty if you do not know: empty is not zero.</p>
+    <form id="ci-form" autocomplete="off">
+      <div class="row"><label class="inline">Date<input type="date" id="ci-date"/></label>
+        <label class="inline">Filled in by<select id="ci-by"><option value="client">The client</option><option value="coach">The coach, from a message</option></select></label></div>
+      <div id="ci-balances" style="margin-top:var(--space-2)"></div>
+      <div class="row" style="margin-top:var(--space-2)"><label class="inline">Income this month, if it was different<input type="text" inputmode="decimal" id="ci-income"/></label></div>
+      <p class="slaf-label" style="margin:var(--space-3) 0 var(--space-1)">How are you feeling about money? (1 is awful, 5 is great)</p>
+      <div class="feel" id="ci-feel"></div>
+      <label class="inline" style="width:100%;margin-top:var(--space-2)">Anything to say<textarea id="ci-text" maxlength="2000"></textarea></label>
+      <div id="ci-homework" style="margin-top:var(--space-2)"></div>
+      <button type="submit" class="slaf-btn slaf-btn--primary" style="margin-top:var(--space-2)">Save the check-in</button>
+      <p class="coach-say" id="ci-say" role="status"></p>
+    </form>
+  </section>
+  <p class="disclaimer">Prepared with your coach. Not investment advice.</p>
+</main>
+
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/csv.js"></script>
+<script src="shared/vault.js"></script>
+<script src="shared/demo-persona.js"></script>
+<script src="shared/fields.js"></script>
+<script src="shared/coach.js"></script>
+<script src="shared/tables.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/tier0.js"></script>
+<script src="engines/debt.js"></script>
+<script src="engines/foo.js"></script>
+<script src="engines/cashflow.js"></script>
+<script src="engines/coast.js"></script>
+<script src="engines/opening.js"></script>
+<script src="engines/countdown.js"></script>
+<script src="engines/session.js"></script>
+<script src="engines/quickentry.js"></script>
+<script src="common.js"></script>
+<script src="clientview.js"></script>
+<script src="clientpage.js"></script>
+</body>
+</html>

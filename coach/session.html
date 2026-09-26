@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<meta name="robots" content="noindex"/>
+<title>Session</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="shared/fonts.css"/>
+<link rel="stylesheet" href="shared/theme.css"/>
+<link rel="stylesheet" href="coach.css"/>
+<!--
+  THE SESSION, the coach console (CD-006, coach/SPEC.md 3.2).
+
+  1. READS   the client named in ?client= (from the roster; an unknown id
+             draws nothing): the path, the stop's entries and read-outs, the
+             rail against the session's start snapshot, the notes.
+  2. WRITES  that client only, through coach/shared/coach.js: entries (the
+             middle form, quick entry), ticks, notes, homework, comments,
+             decisions, the session and its recap.
+  3. SHOWS   left the path, centre the stop's own entry form and read-outs,
+             right the rail; top the timer, Detour, Client view, End session.
+
+  There is no client picker here, on purpose: switching clients goes
+  through Coach Home, so another household never flashes on a shared screen.
+
+  LIVE-FORM: built once per stop. The entry form is built when the coach
+  moves to a stop (or adds or removes a line), never while a box in it is
+  in use; a saved box repaints the path, the read-outs and the rail only.
+  Every other text box (quick entry, the four note boxes, homework,
+  comments, the recap) is static markup and never rebuilt.
+-->
+</head>
+<body class="slaf">
+<main class="coach" id="main">
+  <div class="coach-top">
+    <div class="who"><span class="slaf-eyebrow">Session</span><h1 id="client-name">A client</h1></div>
+    <div class="coach-actions">
+      <span class="timer" id="timer" aria-live="off">not started</span>
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-start">Start session</button>
+      <button type="button" class="slaf-btn" id="btn-detour">Detour</button>
+      <button type="button" class="slaf-btn" id="btn-client-view">Client view</button>
+      <button type="button" class="slaf-btn" id="btn-end" hidden>End session</button>
+      <a class="slaf-btn slaf-btn--quiet" href="index.html" id="btn-home">Clients</a>
+    </div>
+  </div>
+  <p class="coach-say" id="top-say" role="status"></p>
+
+  <div class="console" id="console">
+    <aside class="pathcol" aria-label="The session path">
+      <div class="row" style="margin-bottom:var(--space-2)"><label class="inline">Path<select id="path-template"></select></label></div>
+      <div id="path"></div>
+    </aside>
+
+    <section class="workcol" aria-label="The work area">
+      <div class="crumbs" id="crumbs"></div>
+      <div class="slaf-card" id="work" aria-live="off">
+        <h2 id="work-title">This stop</h2>
+        <p class="coach-note" id="work-covers"></p>
+        <ul class="rail figures" id="figures"></ul>
+        <div id="form"></div>
+        <p class="coach-say" id="form-say" role="status"></p>
+      </div>
+      <div class="slaf-card" style="margin-top:var(--space-3)" id="notes">
+        <div class="notes-grid">
+          <div>
+            <h2>This stop</h2>
+            <label class="inline" style="width:100%">Coach notes (private, never shown to the client)<textarea id="note-stop-coach"></textarea></label>
+            <button type="button" class="slaf-btn slaf-btn--small" data-add-note="stop:coach">Add coach note</button>
+            <label class="inline" style="width:100%;margin-top:var(--space-2)">Shared notes (in the recap and the client view)<textarea id="note-stop-shared"></textarea></label>
+            <button type="button" class="slaf-btn slaf-btn--small" data-add-note="stop:shared">Add shared note</button>
+            <ul class="note-list" id="list-stop"></ul>
+          </div>
+          <div>
+            <h2>This session</h2>
+            <label class="inline" style="width:100%">Coach notes (private)<textarea id="note-session-coach"></textarea></label>
+            <button type="button" class="slaf-btn slaf-btn--small" data-add-note="session:coach">Add coach note</button>
+            <label class="inline" style="width:100%;margin-top:var(--space-2)">Shared notes<textarea id="note-session-shared"></textarea></label>
+            <button type="button" class="slaf-btn slaf-btn--small" data-add-note="session:shared">Add shared note</button>
+            <ul class="note-list" id="list-session"></ul>
+          </div>
+        </div>
+        <h2 style="margin-top:var(--space-3)">Homework</h2>
+        <div class="row">
+          <label class="inline" style="flex:1 1 16rem">Homework<input type="text" id="hw-text" maxlength="500"/></label>
+          <label class="inline">Due<input type="date" id="hw-due"/></label>
+          <button type="button" class="slaf-btn slaf-btn--small" id="btn-hw-add">Add homework</button>
+        </div>
+        <ul class="note-list" id="list-hw"></ul>
+        <h2 style="margin-top:var(--space-3)">Comments</h2>
+        <div class="row">
+          <label class="inline">On<select id="cm-target"></select></label>
+          <label class="inline" style="flex:1 1 16rem">Comment<input type="text" id="cm-text" maxlength="2000"/></label>
+          <label class="inline">Who said it<select id="cm-by"><option value="coach">Me</option><option value="client">The client (logged by me)</option></select></label>
+          <button type="button" class="slaf-btn slaf-btn--small" id="btn-cm-add">Add comment</button>
+        </div>
+        <ul class="note-list" id="list-cm"></ul>
+      </div>
+
+      <div class="quick" id="quick">
+        <label class="inline" style="width:100%">Quick entry: car 450/mo 5.9% 38 left, rent 2100, 401k 38k match 4%, hysa 12.5k
+          <input type="text" id="quick-in" autocomplete="off" spellcheck="false" aria-describedby="quick-preview"/></label>
+        <div class="preview" id="quick-preview" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <aside class="railcol" aria-label="The ratio rail">
+      <h2>Now, and at the start</h2>
+      <ul class="rail" id="rail"></ul>
+    </aside>
+  </div>
+
+  <section class="slaf-card" id="recap" style="margin-top:var(--space-4)" hidden>
+    <h2>The recap</h2>
+    <p class="coach-note">Written from the start and end snapshots. Edit it freely; coach notes are never in it.</p>
+    <textarea id="recap-text" style="min-height:22rem"></textarea>
+    <div class="row" style="margin-top:var(--space-2)">
+      <button type="button" class="slaf-btn slaf-btn--primary" id="btn-recap-save">Save the recap</button>
+      <button type="button" class="slaf-btn" id="btn-recap-print">One-page PDF (print)</button>
+      <button type="button" class="slaf-btn" id="btn-recap-copy">Copy as text</button>
+      <label class="inline">Passphrase<input type="password" id="recap-pass" autocomplete="new-password"/></label>
+      <button type="button" class="slaf-btn" id="btn-recap-seal">Sealed file</button>
+    </div>
+    <p class="coach-say" id="recap-say" role="status"></p>
+  </section>
+</main>
+
+<div class="print-page" id="print-page" hidden></div>
+
+<dialog class="coach-dialog" id="detour-dialog" aria-labelledby="detour-title">
+  <h2 id="detour-title">Detour to</h2>
+  <p class="coach-note">A chip at the top brings you back to exactly this stop and item. At most two deep.</p>
+  <div id="detour-list"></div>
+  <div class="row" style="margin-top:var(--space-2)"><button type="button" class="slaf-btn slaf-btn--quiet" id="detour-cancel">Cancel</button></div>
+</dialog>
+
+<script src="shared/money.js"></script>
+<script src="shared/schema.js"></script>
+<script src="shared/reference.js"></script>
+<script src="shared/csv.js"></script>
+<script src="shared/vault.js"></script>
+<script src="shared/demo-persona.js"></script>
+<script src="shared/fields.js"></script>
+<script src="shared/coach.js"></script>
+<script src="shared/tables.js"></script>
+<script src="engines/projection.js"></script>
+<script src="engines/tier0.js"></script>
+<script src="engines/debt.js"></script>
+<script src="engines/foo.js"></script>
+<script src="engines/cashflow.js"></script>
+<script src="engines/coast.js"></script>
+<script src="engines/opening.js"></script>
+<script src="engines/countdown.js"></script>
+<script src="engines/session.js"></script>
+<script src="engines/quickentry.js"></script>
+<script src="common.js"></script>
+<script src="console.js"></script>
+</body>
+</html>

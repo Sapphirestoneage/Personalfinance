@@ -1,0 +1,126 @@
+/* coach/coach.css, the three Coach Mode screens (D-339). Built on
+   shared/theme.css tokens; nothing here is used by a room. */
+.coach { max-width: 1400px; margin: 0 auto; padding: var(--space-4); }
+.coach h1 { font-family: var(--font-display); font-size: var(--text-2xl); margin: 0; }
+.coach h2 { font-family: var(--font-display); font-size: var(--text-lg); margin: 0 0 var(--space-2); }
+.coach-top { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-3); justify-content: space-between; margin-bottom: var(--space-4); }
+.coach-top .who { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.coach-actions { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+.coach-off { max-width: 40rem; margin: var(--space-7) auto; }
+.coach-note { color: var(--color-text-muted); font-size: var(--text-sm); }
+.coach-say { min-height: 1.4em; font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; }
+.coach-say.is-good { color: var(--color-positive); }
+.coach-say.is-bad { color: var(--color-critical-text); }
+.coach input[type="text"], .coach input[type="date"], .coach input[type="password"], .coach input[type="number"], .coach select, .coach textarea,
+.client input[type="text"], .client input[type="date"], .client select, .client textarea {
+  font: inherit; color: var(--color-text); background: var(--color-surface); border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm); padding: 6px 10px; min-height: 40px; max-width: 100%; box-sizing: border-box; }
+.coach textarea, .client textarea { width: 100%; min-height: 5rem; resize: vertical; }
+.coach label.inline, .client label.inline { max-width: 100%; min-width: 0; display: inline-flex; flex-direction: column; gap: 2px; font-size: var(--text-sm); color: var(--color-text-muted); }
+.coach .row, .client .row { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: flex-end; }
+
+/* The Session's entry form */
+.figures { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 0 var(--space-3); margin-bottom: var(--space-3); }
+.figures li { border-bottom: 1px solid var(--color-border); }
+.entry-row { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: flex-end; padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
+.entry-row .rough { min-height: 40px; font-size: var(--text-xs); }
+.entry-list { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3) var(--space-3); margin: var(--space-3) 0; min-width: 0; }
+.entry-list legend { font-weight: 600; padding: 0 4px; }
+.entry-line { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: flex-end; padding: var(--space-2) 0; border-bottom: 1px dashed var(--color-border); }
+.entry-line input[type="text"] { width: 9rem; }
+
+/* Coach Home: the roster */
+.roster { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+.roster th, .roster td { text-align: left; padding: var(--space-2); border-bottom: 1px solid var(--color-border); vertical-align: top; }
+.roster th { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: var(--tracking-eyebrow); color: var(--color-text-faint); font-weight: 600; }
+.roster td.name b { font-size: var(--text-base); }
+.roster .demo-tag { display: inline-block; font-size: var(--text-xs); color: var(--color-caution); border: 1px solid var(--color-caution); border-radius: var(--radius-pill); padding: 0 6px; margin-left: 4px; }
+.status { display: inline-block; border-radius: var(--radius-pill); padding: 1px 8px; font-size: var(--text-xs); border: 1px solid var(--color-border-strong); }
+.status.in { color: var(--color-positive); border-color: var(--color-positive); }
+.status.late { color: var(--color-caution); border-color: var(--color-caution); }
+.status.missing { color: var(--color-critical-text); border-color: var(--color-critical); }
+@media (max-width: 900px) {
+  .roster thead { display: none; }
+  .roster tr { display: block; border-bottom: 1px solid var(--color-border-strong); padding: var(--space-2) 0; }
+  .roster td { display: block; border: 0; padding: 2px var(--space-2); }
+  .roster td[data-label]::before { content: attr(data-label) ": "; color: var(--color-text-faint); font-size: var(--text-xs); }
+}
+.map-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
+.map-table td { padding: 4px var(--space-2); border-bottom: 1px solid var(--color-border); }
+.history { list-style: none; padding: 0; margin: 0; font-size: var(--text-sm); }
+.history li { padding: 4px 0; border-bottom: 1px solid var(--color-border); }
+
+/* The Session console */
+.console { display: grid; grid-template-columns: 300px minmax(0, 1fr) 280px; gap: var(--space-3); align-items: start; }
+@media (max-width: 1100px) { .console { grid-template-columns: 1fr; } }
+.pathcol, .railcol { position: sticky; top: var(--space-3); max-height: calc(100vh - 2 * var(--space-3)); overflow: auto; }
+@media (max-width: 1100px) { .pathcol, .railcol { position: static; max-height: none; } }
+.stop { border: 1px solid var(--color-border); border-radius: var(--radius-md); margin-bottom: var(--space-2); background: var(--color-surface); }
+.stop.is-current { border-color: var(--color-border-active); box-shadow: 0 0 0 1px var(--color-border-active); }
+.stop.is-skipped { opacity: .55; }
+.stop > button.stop-head { display: flex; width: 100%; gap: var(--space-2); align-items: center; justify-content: space-between; background: none; border: 0; color: inherit; font: inherit; text-align: left; padding: var(--space-2) var(--space-3); cursor: pointer; min-height: 44px; }
+.stop-head .n { color: var(--color-text-faint); font-variant-numeric: tabular-nums; }
+.stop-head .done { font-size: var(--text-xs); color: var(--color-positive); }
+.stop-body { padding: 0 var(--space-3) var(--space-3); font-size: var(--text-sm); }
+.stop-body .covers { color: var(--color-text-muted); margin: 0 0 var(--space-2); }
+.items { list-style: none; margin: 0; padding: 0; }
+.items li { display: flex; gap: var(--space-2); align-items: flex-start; padding: 3px 0; }
+.items li.is-here { background: var(--color-surface-active); border-radius: var(--radius-sm); }
+.items label.tick { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; min-height: 32px; flex: 0 0 auto; }
+.items input[type="checkbox"] { width: 20px; height: 20px; margin-top: 2px; flex: 0 0 auto; }
+.items .item-text { flex: 1 1 auto; min-width: 0; }
+.items .hw-btn { flex: 0 0 auto; font-size: var(--text-xs); }
+.tests { list-style: none; padding: 0; margin: var(--space-2) 0; font-size: var(--text-xs); }
+.tests li.pass { color: var(--color-positive); }
+.tests li.fail { color: var(--color-text-muted); }
+.workcol { min-width: 0; }
+.crumbs { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-2); }
+.crumb { border: 1px solid var(--color-caution); color: var(--color-caution); background: none; border-radius: var(--radius-pill); padding: 4px 12px; font: inherit; font-size: var(--text-sm); cursor: pointer; min-height: 36px; }
+.rail { list-style: none; margin: 0; padding: 0; }
+.rail li { padding: var(--space-2) 0; border-bottom: 1px solid var(--color-border); }
+.rail .lbl { font-size: var(--text-xs); color: var(--color-text-muted); display: block; }
+.rail .now { font-family: var(--font-display); font-size: var(--text-lg); font-variant-numeric: tabular-nums; }
+.rail .was { font-size: var(--text-xs); color: var(--color-text-faint); }
+.rail .zone-good .now { color: var(--color-positive); }
+.rail .zone-watch .now { color: var(--color-caution); }
+.rail .zone-out .now { color: var(--color-critical-text); }
+.rail li.unlocked { border-left: 2px solid var(--color-border-active); padding-left: var(--space-2); }
+.quick { position: sticky; bottom: 0; background: var(--color-panel, var(--color-bg)); border-top: 1px solid var(--color-border-strong); padding: var(--space-2) 0; margin-top: var(--space-3); z-index: 2; }
+.quick input { width: 100%; font-size: var(--text-md); }
+.quick .preview { font-size: var(--text-sm); margin-top: 4px; min-height: 1.3em; }
+.notes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+@media (max-width: 700px) { .notes-grid { grid-template-columns: 1fr; } }
+.note-list { list-style: none; padding: 0; margin: var(--space-2) 0 0; font-size: var(--text-sm); }
+.note-list li { padding: 4px 0; border-bottom: 1px solid var(--color-border); display: flex; gap: var(--space-2); justify-content: space-between; }
+.timer { font-variant-numeric: tabular-nums; font-family: var(--font-mono); }
+.privacy { color: var(--color-caution); font-size: var(--text-xs); }
+dialog.coach-dialog { max-width: 42rem; width: calc(100% - 2rem); background: var(--color-surface-raised); color: var(--color-text); border: 1px solid var(--color-border-strong); border-radius: var(--radius-lg); }
+dialog.coach-dialog::backdrop { background: rgba(0, 0, 0, .6); }
+
+/* Client View: phone first */
+.client { max-width: 56rem; margin: 0 auto; padding: var(--space-3); }
+.client section { margin-top: var(--space-4); }
+.lifemap { position: relative; width: 100%; overflow-x: auto; }
+.lifemap svg { display: block; width: 100%; height: auto; }
+.goal-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: var(--space-3); }
+.goal-card { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); background: var(--color-surface); }
+.goal-card .fig { font-family: var(--font-display); font-size: var(--text-xl); }
+.goal-card .st { font-size: var(--text-sm); }
+.goal-card .st.on-track { color: var(--color-positive); }
+.goal-card .st.short { color: var(--color-caution); }
+.goal-card .st.decide { color: var(--color-text-muted); }
+.changes { list-style: none; padding: 0; margin: 0; }
+.changes li { padding: 6px 0; border-bottom: 1px solid var(--color-border); }
+.feel { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.feel button[aria-pressed="true"] { border-color: var(--color-border-active); background: var(--color-surface-active); }
+.presenter-bar { display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); font-size: var(--text-xs); color: var(--color-text-faint); }
+@media print {
+  body.printing-recap main, body.printing-recap dialog { display: none !important; }
+  body.printing-recap .print-page { display: block !important; }
+  .no-print, .quick, .crumbs, .coach-actions { display: none !important; }
+  body { background: #fff !important; color: #000 !important; }
+  .print-page { color: #000; }
+}
+
+.coach select, .client select { width: auto; max-width: 100%; }
+#cm-target { width: 100%; }

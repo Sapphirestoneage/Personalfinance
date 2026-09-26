@@ -1,0 +1,390 @@
+{
+  "id": "session_paths",
+  "version": "2026.1",
+  "asOf": "2026-09-24",
+  "source": "The owner's Coach Mode spec, coach/SPEC.md section 4 (CD-004). The stops are the order the owner runs a first series of client sessions in; the questions are the owner's own plain words for each stop.",
+  "confidence": "convention",
+  "confidenceNote": "A coaching convention, not a sourced figure: no number in this file is money or a rate. Edit it without code; coach/engines/session.js evaluates each stop's doneWhen from the household, never from a typed answer.",
+  "note": "stops holds every stop once; a path is an ordered list of stop ids. Each stop: fields (ids in data/fields.json, one entry box each; 'list:debt', 'list:asset', 'list:goal' is the whole list), figures (read-outs the stop shows, ids in readouts), questions (each one item), doneWhen (tests coach/engines/session.js knows, all must pass), doneLabel (what done means, in words). rail is always shown.",
+  "rail": [
+    "savingsRate",
+    "debtToIncome",
+    "emergencyFundMonths",
+    "liquidityRatio",
+    "housingRatio",
+    "netWorth"
+  ],
+  "stops": {
+    "life": {
+      "title": "The life picture",
+      "covers": "What they want, when, values, big dates coming (wedding, move, kid, career change).",
+      "fields": [
+        "dob",
+        "dependents",
+        "list:goal"
+      ],
+      "figures": [],
+      "questions": [
+        {
+          "id": "want",
+          "text": "If money worked out, what would the next ten years look like?"
+        },
+        {
+          "id": "dates",
+          "text": "What big dates are coming: a wedding, a move, a kid, a career change?"
+        },
+        {
+          "id": "values",
+          "text": "What do you spend on that you never regret?"
+        }
+      ],
+      "doneWhen": [
+        {
+          "test": "goalsWithDates",
+          "min": 3
+        }
+      ],
+      "doneLabel": "At least three goals with rough dates"
+    },
+    "income": {
+      "title": "Income",
+      "covers": "Every source, take-home, pay frequency, variability.",
+      "fields": [
+        "grossAnnualIncome",
+        "takeHomeMonthly",
+        "payVaries"
+      ],
+      "figures": [
+        "takeHome",
+        "savingsRate"
+      ],
+      "questions": [
+        {
+          "id": "sources",
+          "text": "Every way money comes in, even small or irregular?"
+        },
+        {
+          "id": "paystub",
+          "text": "What lands in your account each payday?"
+        },
+        {
+          "id": "variability",
+          "text": "How much does a good month differ from a bad one?"
+        }
+      ],
+      "doneWhen": [
+        {
+          "test": "takeHomeKnown"
+        }
+      ],
+      "doneLabel": "Take-home monthly is known, or known roughly"
+    },
+    "spending": {
+      "title": "Spending and cash flow",
+      "covers": "Needs (food, housing, transport), wants, the typical month, surplus.",
+      "fields": [
+        "accommodationMonthly",
+        "foodMonthly",
+        "transportationMonthly",
+        "wantsMonthly"
+      ],
+      "figures": [
+        "spending",
+        "surplus",
+        "housingRatio"
+      ],
+      "questions": [
+        {
+          "id": "typical",
+          "text": "Walk me through a typical month: rent, food, getting around."
+        },
+        {
+          "id": "leaks",
+          "text": "Where does money go that you wish it did not?"
+        }
+      ],
+      "doneWhen": [
+        {
+          "test": "surplusComputes"
+        }
+      ],
+      "doneLabel": "Monthly surplus computes"
+    },
+    "debt": {
+      "title": "Debt",
+      "covers": "Every debt, rate, minimum, payoff order.",
+      "fields": [
+        "hasDebt",
+        "list:debt"
+      ],
+      "figures": [
+        "totalDebt",
+        "debtPayments",
+        "debtFree",
+        "debtToIncome"
+      ],
+      "questions": [
+        {
+          "id": "every",
+          "text": "Every debt: cards, car, student loans, anything owed to family?"
+        },
+        {
+          "id": "order",
+          "text": "Which one keeps you up at night? That can go first even if it is not the dearest."
+        }
+      ],
+      "doneWhen": [
+        {
+          "test": "debtFreeDate"
+        }
+      ],
+      "doneLabel": "Payoff plan chosen, debt-free date shows"
+    },
+    "safety": {
+      "title": "Safety",
+      "covers": "Emergency fund target, insurance, protection.",
+      "fields": [
+        "cashSavings",
+        "highestDeductible",
+        "termLife",
+        "disabilityMonthly"
+      ],
+      "figures": [
+        "cash",
+        "emergencyFundMonths",
+        "liquidityRatio"
+      ],
+      "questions": [
+        {
+          "id": "cushion",
+          "text": "If income stopped tomorrow, how long could you go?"
+        },
+        {
+          "id": "cover",
+          "text": "Who depends on your income, and what insurance do you have through work?"
+        }
+      ],
+      "doneWhen": [
+        {
+          "test": "emergencyMonths"
+        },
+        {
+          "test": "stopNoted"
+        }
+      ],
+      "doneLabel": "Emergency months computes, gap named in a shared note or homework"
+    },
+    "assets": {
+      "title": "Assets and accounts",
+      "covers": "Every account, tax type, contributions, match, fees.",
+      "fields": [
+        "list:asset",
+        "investments",
+        "employerMatch",
+        "contributionPercent"
+      ],
+      "figures": [
+        "invested",
+        "netWorth",
+        "savingsRate"
+      ],
+      "questions": [
+        {
+          "id": "accounts",
+          "text": "Every account with money in it, and roughly what is in each?"
+        },
+        {
+          "id": "match",
+          "text": "Does your employer match, and are you getting all of it?"
+        },
+        {
+          "id": "fees",
+          "text": "Do you know the fees on your retirement funds?"
+        }
+      ],
+      "doneWhen": [
+        {
+          "test": "netWorth"
+        },
+        {
+          "test": "savingsRate"
+        }
+      ],
+      "doneLabel": "Net worth and savings rate compute"
+    },
+    "taxes": {
+      "title": "Taxes",
+      "covers": "Filing status, state, pretax vs Roth, easy wins.",
+      "fields": [
+        "filingStatus",
+        "state",
+        "marginalRate"
+      ],
+      "figures": [
+        "marginalRate",
+        "takeHome"
+      ],
+      "questions": [
+        {
+          "id": "status",
+          "text": "How did you file last year, and did you get a refund or owe?"
+        },
+        {
+          "id": "roth",
+          "text": "Pretax or Roth: do you expect your tax rate to be higher now or later?"
+        }
+      ],
+      "doneWhen": [
+        {
+          "test": "marginalRate"
+        },
+        {
+          "test": "stopNoted"
+        }
+      ],
+      "doneLabel": "Marginal rate known and one tax move named"
+    },
+    "goals": {
+      "title": "Goals and the life map",
+      "covers": "Price each goal, place it, fund it.",
+      "fields": [
+        "list:goal"
+      ],
+      "figures": [
+        "goalsMonthly",
+        "surplus"
+      ],
+      "questions": [
+        {
+          "id": "price",
+          "text": "What would each goal cost, roughly, and by when?"
+        },
+        {
+          "id": "tradeoff",
+          "text": "If not everything fits, which goal moves first?"
+        }
+      ],
+      "doneWhen": [
+        {
+          "test": "goalsPlanned"
+        }
+      ],
+      "doneLabel": "Every goal has a monthly number and a status"
+    },
+    "decisions": {
+      "title": "Decisions",
+      "covers": "The big decisions: house, car, job, kid, sabbatical, a move. Each gets a verdict.",
+      "fields": [],
+      "figures": [],
+      "questions": [
+        {
+          "id": "which",
+          "text": "Which decision is on your mind this year?"
+        },
+        {
+          "id": "verdict",
+          "text": "Knowing what it costs, is it go, wait, or no?"
+        }
+      ],
+      "doneWhen": [
+        {
+          "test": "decisionVerdicts"
+        }
+      ],
+      "doneLabel": "Each decision has a verdict: go, wait, or no"
+    }
+  },
+  "paths": [
+    {
+      "id": "default",
+      "label": "The full path",
+      "stops": [
+        "life",
+        "income",
+        "spending",
+        "debt",
+        "safety",
+        "assets",
+        "taxes",
+        "goals",
+        "decisions"
+      ]
+    },
+    {
+      "id": "checkup",
+      "label": "A check-up (returning client)",
+      "stops": [
+        "income",
+        "spending",
+        "debt",
+        "goals"
+      ]
+    }
+  ],
+  "readouts": {
+    "savingsRate": {
+      "label": "Savings rate",
+      "unit": "rate"
+    },
+    "debtToIncome": {
+      "label": "Debt-to-income",
+      "unit": "rate"
+    },
+    "emergencyFundMonths": {
+      "label": "Emergency fund",
+      "unit": "months"
+    },
+    "liquidityRatio": {
+      "label": "Liquidity",
+      "unit": "months"
+    },
+    "housingRatio": {
+      "label": "Housing share of pay",
+      "unit": "rate"
+    },
+    "netWorth": {
+      "label": "Net worth",
+      "unit": "cents"
+    },
+    "takeHome": {
+      "label": "Take-home, a month",
+      "unit": "cents"
+    },
+    "surplus": {
+      "label": "Left over, a month",
+      "unit": "cents"
+    },
+    "spending": {
+      "label": "Spending, a month",
+      "unit": "cents"
+    },
+    "totalDebt": {
+      "label": "Total owed",
+      "unit": "cents"
+    },
+    "debtPayments": {
+      "label": "Debt payments, a month",
+      "unit": "cents"
+    },
+    "debtFree": {
+      "label": "Debt-free at the minimums",
+      "unit": "monthsText"
+    },
+    "cash": {
+      "label": "Cash",
+      "unit": "cents"
+    },
+    "invested": {
+      "label": "Invested",
+      "unit": "cents"
+    },
+    "marginalRate": {
+      "label": "Marginal tax rate",
+      "unit": "rate"
+    },
+    "goalsMonthly": {
+      "label": "All goals, a month",
+      "unit": "cents"
+    }
+  }
+}
