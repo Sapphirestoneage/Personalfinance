@@ -9,6 +9,9 @@ import { Big, Button, Card, Note } from '../shared/ui';
 import { useModel, useTotals } from '../shared/hooks';
 import { money } from '../shared/format';
 import { CheckIn } from './CheckIn';
+import { useLevels } from '../levels/useLevels';
+import { Rounds } from '../levels/Rounds';
+import { PLANETS } from '@/content/levels';
 
 export function Today() {
   const profile = useAppStore((s) => s.profile);
@@ -18,6 +21,9 @@ export function Today() {
   const model = useModel();
   const totals = useTotals();
   const step = useMemo(() => (model && profile ? nextStep(model.businesses, profile.pathway.completedSteps) : null), [model, profile]);
+  const { overview } = useLevels(step?.businessId ?? null);
+  /* after round 1, the next short level comes before the next long tool, while bands 2 and 3 are open */
+  const nextLevel = overview && overview.rounds[0]?.complete ? overview.next.find((l) => l.level.band >= 2 && l.level.band <= 3) ?? null : null;
   const flags = useMemo(() => budgetCheck(clients, sales, new Date().toISOString().slice(0, 7)), [clients, sales]);
   const milestones = useAppStore((s) => s.milestones);
   const addMilestone = useAppStore((s) => s.addMilestone);
@@ -61,11 +67,15 @@ export function Today() {
       )}
       <Card title={step.complete ? 'Pathway complete' : 'Do this next'} testId="next-card">
         <p className="text-lg font-semibold" data-testid="next-title">
-          {step.complete ? 'Every stage, every business.' : `${step.stage.title}${business ? ` for ${business.name}` : ''}`}
+          {step.complete ? 'Every stage, every business.' : nextLevel ? nextLevel.level.title : `${step.stage.title}${business ? ` for ${business.name}` : ''}`}
         </p>
-        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{step.complete ? 'From here it is the weekly check-in, and a fresh diagnosis whenever a month surprises you.' : step.stage.question}</p>
+        <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{step.complete ? 'From here it is the weekly check-in, and a fresh diagnosis whenever a month surprises you.' : nextLevel ? `Round ${nextLevel.level.band}, ${PLANETS.find((p) => p.id === nextLevel.level.planet)!.name}. ${nextLevel.level.question}` : step.stage.question}</p>
         <div className="mt-3">
-          {step.complete ? (
+          {nextLevel && !step.complete ? (
+            <Button to={`levels/${nextLevel.level.id}?business=${step.businessId ?? ''}`} testId="next-go">
+              Start (about {nextLevel.level.minutes} min)
+            </Button>
+          ) : step.complete ? (
             <Button to={`toolbox/diagnose?business=${model.businesses.filter((b) => b.active).sort((a, b) => a.priority - b.priority)[0]?.id ?? ''}`} testId="next-go" kind="secondary">
               Run the diagnosis again
             </Button>
@@ -75,15 +85,14 @@ export function Today() {
             </Button>
           )}
         </div>
-        <div className="mt-3">
-          <div className="h-2 w-full rounded-full bg-slate-200 dark:bg-slate-800">
-            <div className="h-2 rounded-full bg-sky-600" style={{ width: `${Math.round((step.business ? step.business.done / step.business.total : step.progress) * 100)}%` }} />
-          </div>
-          <p className="mt-1 text-xs text-slate-500" data-testid="progress">
-            {step.business && business ? `${business.name}: ${step.business.done} of ${step.business.total} stages done.` : `Pathway: ${step.done} of ${step.total} steps done.`}
-            {step.business && model.businesses.filter((b) => b.active).length > 1 ? ` All businesses: ${step.done} of ${step.total}.` : ''}
-          </p>
-        </div>
+        {overview && anyActive && (
+          <a href="#/levels" className="mt-4 block" data-testid="rounds-strip">
+            <Rounds rounds={overview.rounds} compact />
+            <p className="mt-1 text-center text-xs text-slate-500" data-testid="progress">
+              {overview.doneCount} of {overview.total} levels · {business ? `${business.name}: ${step.business?.done ?? 0} of ${step.business?.total ?? 0} stages` : 'tap for the map'}
+            </p>
+          </a>
+        )}
       </Card>
 
       {totals && totals.ok && anyActive && (

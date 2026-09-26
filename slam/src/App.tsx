@@ -17,6 +17,8 @@ import { Toolbox } from './features/toolbox/Toolbox';
 import { ToolShell } from './features/toolbox/ToolShell';
 import { Demo } from './features/demo/Demo';
 import { About } from './features/about/About';
+import { Levels } from './features/levels/Levels';
+import { LevelRun } from './features/levels/LevelRun';
 
 const TOOL_IDS: ToolId[] = ['diagnose', 'offer', 'presence', 'conversations', 'bookings', 'money', 'plan', 'strategy'];
 
@@ -47,6 +49,9 @@ function Page() {
       return <Demo />;
     case 'about':
       return <About />;
+    case 'levels':
+      if (second) return <LevelRun key={`${second}-${route.query.get('business')}`} levelId={second} businessId={route.query.get('business')} />;
+      return <Levels />;
     default:
       return <Today />;
   }

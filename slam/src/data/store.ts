@@ -42,9 +42,9 @@ export interface AppState {
   init(db?: SlamDB): Promise<void>;
   reload(): Promise<void>;
   setInput(businessId: string, key: string, value: number | null, label?: Label, source?: string): Promise<void>;
-  setOfferValue(offerId: string, key: string, value: number | null, label?: Label): Promise<void>;
+  setOfferValue(offerId: string, key: string, value: number | null, label?: Label, source?: string): Promise<void>;
   setOfferActive(offerId: string, active: boolean): Promise<void>;
-  setSetting(key: string, value: number | null, label?: Label): Promise<void>;
+  setSetting(key: string, value: number | null, label?: Label, source?: string): Promise<void>;
   applyValues(businessId: string, patch: ValuePatch, label?: Label, source?: string): Promise<void>;
   setBusinessActive(businessId: string, active: boolean): Promise<void>;
   setPriorityOrder(ids: string[]): Promise<void>;
@@ -170,12 +170,12 @@ export const useAppStore = create<AppState>((set, get) => {
       await saveBusiness({ ...b, inputs: setValue(b.inputs, key, value, label, src, now()), updatedAt: now() });
     },
 
-    async setOfferValue(offerId, key, value, label = 'Yours') {
+    async setOfferValue(offerId, key, value, label = 'Yours', source) {
       const o = get().offers.find((x) => x.id === offerId);
       if (!o) return;
       const field = key as 'priceCents';
       const prev = o[field];
-      await saveOffer({ ...o, [field]: { key, value, label, source: label === 'Yours' ? 'typed by you' : (prev?.source ?? ''), updated: now() } });
+      await saveOffer({ ...o, [field]: { key, value, label, source: source ?? (label === 'Yours' ? 'typed by you' : (prev?.source ?? '')), updated: now() } });
     },
 
     async setOfferActive(offerId, active) {
@@ -184,11 +184,11 @@ export const useAppStore = create<AppState>((set, get) => {
       await saveOffer({ ...o, active });
     },
 
-    async setSetting(key, value, label = 'Yours') {
+    async setSetting(key, value, label = 'Yours', source) {
       const p = get().profile;
       if (!p) return;
-      const source = label === 'Yours' ? 'typed by you' : (p.settings[key]?.source ?? '');
-      await saveProfile({ ...p, settings: setValue(p.settings, key, value, label, source, now()), updatedAt: now() });
+      const src = source ?? (label === 'Yours' ? 'typed by you' : (p.settings[key]?.source ?? ''));
+      await saveProfile({ ...p, settings: setValue(p.settings, key, value, label, src, now()), updatedAt: now() });
     },
 
     async applyValues(businessId, patch, label = 'Yours', source = 'typed by you') {

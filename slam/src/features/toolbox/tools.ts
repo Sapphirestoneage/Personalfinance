@@ -159,7 +159,7 @@ const diagnoseTool: ToolDef = {
     }
     if (t === 'content') return [F('inputs', 'followers', ctx), F('inputs', 'subscribers', ctx), F('subscription', 'priceCents', ctx)];
     if (t === 'calls') return [F('inputs', 'callsPerMonth', ctx), F('inputs', 'noShowRate', ctx), F('call', 'priceCents', ctx)];
-    return [F('inputs', 'activeRegulars', ctx), F('tribute', 'priceCents', ctx), F('inputs', 'chargebackRate', ctx)];
+    return [F('inputs', 'followers', ctx), F('inputs', 'activeRegulars', ctx), F('tribute', 'priceCents', ctx)];
   },
   derive(values, ctx) {
     if (ctx.business.type !== 'inPerson') return values;

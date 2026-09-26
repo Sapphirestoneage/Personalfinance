@@ -45,8 +45,24 @@ test.describe('first-time user', () => {
     await expect(page.getByTestId('tool-saved')).toBeVisible();
     await expect(page.getByTestId('tool-moved')).toContainText('Built on your numbers now');
     await open(page);
-    await expect(page.getByTestId('next-title')).toContainText('Your offer');
-    await expect(page.getByTestId('progress')).toContainText('In-person: 1 of 8 stages done');
+    /* round 1 is complete, so the next thing is a short round-2 level, not a long tool */
+    await expect(page.getByTestId('next-title')).toContainText('Screening');
+    await expect(page.getByTestId('progress')).toContainText('3 of');
+    await page.getByTestId('next-go').click();
+    await expect(page.getByTestId('level-head')).toContainText('Round 2 · Basics · Contacts');
+    await page.getByTestId('level-confirm').click();
+    await expect(page.getByTestId('unlock')).toBeVisible();
+    await page.getByTestId('unlock-next').click();
+    await expect(page.getByTestId('level-head')).toContainText('Show and rebook');
+    await page.getByTestId('lv-inputs-showRate').fill('90');
+    await page.getByTestId('lv-inputs-showRate').blur();
+    await page.getByTestId('level-next').click();
+    await page.getByTestId('level-confirm').click();
+    await expect(page.getByTestId('unlock')).toContainText('Round 2: 2 of 5 planets done');
+    await open(page, 'levels');
+    await expect(page.getByTestId('round-1')).toContainText('done');
+    await expect(page.getByTestId('round-2')).toContainText('2 of 5');
+    await expect(page.getByTestId('readings')).toContainText('The bottleneck');
   });
 
   test('her numbers are labeled yours and survive a reload', async ({ page }) => {

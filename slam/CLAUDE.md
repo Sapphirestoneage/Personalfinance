@@ -249,6 +249,18 @@ Changing a stored shape now means: bump `SCHEMA_VERSION`, add a rule to
 `migrate.ts`, add a Dexie version with `.upgrade`, and a test in
 `tests/unit/migrate.test.ts`.
 
+Levels (done): `src/content/levels.ts` holds five planets (Contacts,
+Bookings, Offers, Time, Money) by five bands (Sketch, Basics, Detail,
+Read, Power), with the levels per business type and the readings each
+tier unlocks; `src/engine/levels.ts` computes status, rounds (a band done
+on every planet that has a level in it), readings (yours when every level
+they rest on is done) and the next levels (never past band 2 until round
+1). A level is done when its fields are labeled Yours (typed or
+confirmed). Round 1 is the diagnosis run. Band 4 reads her records and
+the pathway; band 5 is the pathway's power tools. `#/levels` is the map,
+`#/levels/<id>` runs one level to its unlock card; Today offers the next
+short level ahead of the next long tool while bands 2 and 3 are open.
+
 Next (not started): v2 business types, guided-mode copy per label mode,
 and the owner's answers to `docs/OPEN-QUESTIONS.md`.
 

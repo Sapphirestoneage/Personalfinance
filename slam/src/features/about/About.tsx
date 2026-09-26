@@ -52,6 +52,10 @@ export function About() {
         </ol>
       </Card>
 
+      <Card title="Planets, bands and rounds">
+        <p className="text-sm text-slate-600 dark:text-slate-300">Your numbers sit on five planets (Contacts, Bookings, Offers, Time, Money) in five bands of depth (Sketch, Basics, Detail, Read, Power). A level is one short sitting: a number or two, or one confirmation. A round is a band finished on every planet. Nothing is locked; every reading exists from the first minute as an estimate and becomes yours as the levels that feed it are done. The Levels screen is the map.</p>
+      </Card>
+
       <Card title="Three futures">
         <p className="text-sm text-slate-600 dark:text-slate-300">Normal is your numbers as they stand. Dream and Disaster move contacts, audience and conversion by set amounts, and you can switch on events (a platform ban, a month off sick, a viral post) to see what they do to each business and to how long your cash lasts.</p>
       </Card>

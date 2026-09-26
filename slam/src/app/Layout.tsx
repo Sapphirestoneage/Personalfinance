@@ -7,6 +7,7 @@ import { href, useRoute } from './router';
 
 const MENU: Array<{ to: string; label: string; testId: string }> = [
   { to: 'today', label: 'Today', testId: 'nav-today' },
+  { to: 'levels', label: 'Levels', testId: 'nav-levels' },
   { to: 'numbers', label: 'My Numbers', testId: 'nav-numbers' },
   { to: 'clients', label: 'Clients', testId: 'nav-clients' },
   { to: 'businesses', label: 'My businesses', testId: 'nav-businesses' },

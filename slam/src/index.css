@@ -18,6 +18,12 @@
 html {
   color-scheme: light dark;
   -webkit-text-size-adjust: 100%;
+  --ring-rest: #e2e8f0;
+}
+@media (prefers-color-scheme: dark) {
+  html {
+    --ring-rest: #1e293b;
+  }
 }
 
 body {
