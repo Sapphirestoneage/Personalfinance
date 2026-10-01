@@ -64,8 +64,14 @@
         else { s.taxable.basis += Math.round(v * A.taxableBasisShare); s.taxable.basisAssumed = true; }
         return;
       }
-      /* 529, DAF, business, other: outside the plan, counted in net worth only. */
-      s.vehicles += 0;
+      if (o === null && a.category !== 'other' && !/^(529|daf|business)$/.test(a.taxCharacter || '')) {
+        /* No account type and no tax character: counted as taxable, and said so. */
+        s.taxable.value += v; s.taxable.basis += Math.round(v * A.taxableBasisShare); s.taxable.basisAssumed = true;
+        s.warnings.push((a.label || 'An account') + ' has no account type yet: counted as a taxable account.');
+        return;
+      }
+      /* 529, DAF, business, other: outside the plan, in net worth only. */
+      s.vehicles += v;
     });
     facts.debts.forEach(function (d) {
       s.debts.push({ id: d.id, label: d.label, type: d.type, balance: d.balanceCents, rate: d.rate, minPaymentCents: d.minPaymentCents, owner: d.owner });

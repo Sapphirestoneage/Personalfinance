@@ -55,12 +55,12 @@ Fields: 128. Traced: 119. No other room mentions it: **61**.
 
 - `stockShare` — Share in stocks · read by skill-tree
 - `plannedAnnualDraw` — Planned draw, a year · read by skill-tree
-- `socialSecurityAt` — Social Security from · read by skill-tree
+- `socialSecurityAt` — Social Security from · read by projection, skill-tree
 
 ## expenses (8)
 
 - `rentMonthly` — Rent or mortgage, a month · read by ledger, cash-flow, calendar, financial-snapshot, housing, debates
-- `monthlyExpenses` — Monthly expenses · read by ledger, start, income, cash-flow, calendar, statement, bridge, which-account, the-documents, dashboard, financial-snapshot, fire, skill-tree, values, goals, runway, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
+- `monthlyExpenses` — Monthly expenses · read by ledger, start, income, cash-flow, calendar, statement, bridge, which-account, the-documents, dashboard, financial-snapshot, fire, projection, skill-tree, values, goals, runway, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
 - `foodMonthly` — Food, a month · read by ledger, cash-flow, the-documents
 - `accommodationMonthly` — Rent or mortgage, a month · read by ledger, cash-flow, the-documents
 - `transportationMonthly` — Getting around, a month · read by ledger, cash-flow, the-documents
@@ -71,7 +71,7 @@ Fields: 128. Traced: 119. No other room mentions it: **61**.
 ## fire (3)
 
 - `enoughMonthly` — Enough, a month · **no other room mentions it**
-- `retireAge` — Stop working at · read by ledger, dashboard, left-behind, skill-tree, what-if-life, decumulation, career-move, week, debates, one-pager
+- `retireAge` — Stop working at · read by ledger, dashboard, projection, left-behind, skill-tree, what-if-life, decumulation, career-move, week, debates, one-pager
 - `coastAge` — Coast: arrive by · read by ledger
 
 ## goals (1)
@@ -103,7 +103,7 @@ Fields: 128. Traced: 119. No other room mentions it: **61**.
 - `hsaContributed` — HSA so far this year · read by which-account
 - `onHdhp` — On a high-deductible health plan · read by bridge, which-account
 - `hsaFamilyPlan` — Family coverage on that plan · read by which-account
-- `marginalRate` — Marginal tax rate · read by which-account, the-documents, debt-payoff, tax, left-behind, decumulation, career-move, housing, debates
+- `marginalRate` — Marginal tax rate · read by which-account, the-documents, debt-payoff, tax, projection, left-behind, decumulation, career-move, housing, debates
 - `totalSaved` — Saved and invested, total · **no other room mentions it**
 - `payVaries` — Pay swings month to month · **no other room mentions it**
 - `spendingIncludesDebt` — The spending total includes debt payments · **no other room mentions it**
@@ -167,24 +167,24 @@ Fields: 128. Traced: 119. No other room mentions it: **61**.
 - `age` — Age · too generic to trace
 - `state` — State · too generic to trace
 - `zip` — ZIP · too generic to trace
-- `filingStatus` — Filing status · read by ledger, income, expenses, which-account, debt-payoff, tax, dashboard, financial-snapshot, fire, left-behind, cant-pay, decumulation, career-move, partner, one-pager
-- `grossAnnualIncome` — Gross annual income · read by ledger, income, expenses, cash-flow, calendar, which-account, the-documents, debt-payoff, tax, dashboard, financial-snapshot, fire, left-behind, skill-tree, values, goals, runway, car, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
+- `filingStatus` — Filing status · read by ledger, income, expenses, which-account, debt-payoff, tax, dashboard, financial-snapshot, fire, projection, left-behind, cant-pay, decumulation, career-move, partner, one-pager
+- `grossAnnualIncome` — Gross annual income · read by ledger, income, expenses, cash-flow, calendar, which-account, the-documents, debt-payoff, tax, dashboard, financial-snapshot, fire, projection, left-behind, skill-tree, values, goals, runway, car, cant-pay, what-if-life, protection, decumulation, career-move, partner, housing, big-purchase, week, debates, one-pager
 - `unemployment` — Between jobs · too generic to trace
 - `lastPay` — Your last pay, a year · **no other room mentions it**
-- `cashSavings` — Cash & savings · read by ledger, income, cash-flow, calendar, budget, statement, bridge, the-documents, dashboard, financial-snapshot, skill-tree, goals, runway, cant-pay, what-if-life, protection, housing, big-purchase, debates, one-pager
+- `cashSavings` — Cash & savings · read by ledger, income, cash-flow, calendar, budget, statement, bridge, the-documents, dashboard, financial-snapshot, projection, skill-tree, goals, runway, cant-pay, what-if-life, protection, housing, big-purchase, debates, one-pager
 - `investments` — Investments + retirement · too generic to trace
 - `employmentStatus` — Working situation · read by ledger, which-account, debt-payoff, tax, runway, career-move, debates
-- `employerMatch` — Employer match · read by ledger, the-documents, financial-snapshot, foo-ladder, career-move, debates
+- `employerMatch` — Employer match · read by ledger, the-documents, financial-snapshot, foo-ladder, projection, career-move, debates
 - `capturingFullMatch` — Capturing the full match · read by expenses, dashboard, financial-snapshot, skill-tree, one-pager
 - `hasDebt` — Any debt · read by ledger, debt-payoff, dashboard, debates
-- `contributionPercent` — Workplace contribution · read by ledger, which-account, the-documents, tax, what-if-life
+- `contributionPercent` — Workplace contribution · read by ledger, which-account, the-documents, tax, projection, what-if-life
 - `highestDeductible` — Highest deductible · read by runway, protection
 - `dependents` — Anyone depending on your income · too generic to trace
 
 ## statement (2)
 
 - `confidenceWeightedNetWorth` — Confidence-weighted net worth · **no other room mentions it**
-- `netWorth` — Net worth · read by ledger, budget, the-documents, dashboard, financial-snapshot, fire, what-if-life, one-pager
+- `netWorth` — Net worth · read by ledger, budget, the-documents, dashboard, financial-snapshot, fire, projection, what-if-life, one-pager
 
 ## tax (2)
 

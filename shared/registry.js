@@ -20,6 +20,27 @@
 
   var ROOMS = [
     {
+      id: 'projection',
+      features: ['showNominal', 'showMilestones'],
+      group: 'home', aliases: ['projection', 'the projection', 'year by year', 'years', 'net worth over time', 'fi date', 'coast fi', 'show your work', 'tax breakdown', 'roth ladder', 'rmd', 'aca cliff', 'future dollars', 'today\'s dollars', 'engine'],
+      kind: 'read', sphere: 'jupiter', minutes: 4,
+      needs: ['dob', 'monthlyExpenses', 'grossAnnualIncome', 'investments'],
+      order: 4.45,
+      title: 'The Projection',
+      blurb: 'Every year from now to 95 on one page: what comes in, what goes out, what is taxed and why, and what each account holds. The one projection every room reads.',
+      href: 'rooms/projection.html',
+      tier: 1,
+      tags: ['cashflow'],
+      daite: { reads: ['assets', 'assets.cashCents', 'assets.invested', 'assets.items[].costBasisCents', 'assets.items[].accountType', 'debt.items', 'expenses', 'income.grossAnnualCents', 'income.sources[].employerMatch', 'income.future', 'taxes.filingStatus', 'taxes.state', 'you.dob', 'you.dependents'], writes: [] },
+      subsections: [
+        { id: 'headline',    label: 'Where this run lands' },
+        { id: 'chart',       label: 'Net worth over time' },
+        { id: 'years',       label: 'Year by year' },
+        { id: 'assumptions', label: 'Assumptions' },
+        { id: 'reading',     label: 'Reading from elsewhere' }
+      ]
+    },
+    {
       id: 'start',
       group: 'home', aliases: ['begin', 'setup', 'one-pager', 'situation', 'intake'],
       kind: 'core',
@@ -1140,7 +1161,7 @@
   /* The order the brief lists rooms within a group, where it differs from
      path order. Anything not named falls in after, in path order. */
   var GROUP_ORDER = {
-    home: ['dashboard', 'planner', 'start'],
+    home: ['dashboard', 'projection', 'planner', 'start'],
     numbers: ['debt-payoff', 'cant-pay', 'statement', 'bridge', 'which-account', 'the-mix', 'the-documents', 'income', 'tax', 'budget', 'expenses', 'cash-flow'],
     scorecard: ['financial-snapshot', 'foo-ladder', 'fire'],
     decisions: ['career-move', 'housing', 'big-purchase', 'car', 'worth', 'hassle', 'partner', 'protection', 'runway', 'left-behind', 'decumulation', 'adventure', 'what-if-life', 'timeline'],

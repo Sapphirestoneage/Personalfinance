@@ -2,7 +2,7 @@
   "version": 1,
   "decision": "D-229",
   "asOf": "2026-09-12",
-  "what": "The rooms the suite is merging down to, and what each one absorbs. The plan said thirty; it is thirty-one, and the extra one carries its reason in its own note (What If, D-296). Hand-authored, not generated. test/run.js checks it against shared/registry.js on every run, so the map cannot quietly drift from the app. Thirty-seven since D-313: the Statement gave up four readings to become four sections, and each reading became a room that reads the Ledger and writes nothing.",
+  "what": "The rooms the suite is merging down to, and what each one absorbs. The plan said thirty; it is thirty-one, and the extra one carries its reason in its own note (What If, D-296). Hand-authored, not generated. test/run.js checks it against shared/registry.js on every run, so the map cannot quietly drift from the app. Thirty-seven since D-313: the Statement gave up four readings to become four sections, and each reading became a room that reads the Ledger and writes nothing. Thirty-eight since D-342: the Projection, the screen the engine's rows live on.",
   "howToRead": {
     "survivors": "One entry per surviving room. 'id' is its registry id and stays its id; 'title' is what it is called after the merge (the registry may still carry the old title until that merge ships).",
     "absorbs": "Registry ids that become a view, a toggle, a block type or a card inside the survivor. Every one of them ends as a redirect file, never a deleted file: the links are out in the world.",
@@ -599,6 +599,15 @@
         "statements"
       ],
       "note": "Carved from the Statement (D-313): the three documents and the period in words that were Your Statements (D-278). Standalone and off the beginner path (tier 2)."
+    },
+    {
+      "n": 38,
+      "id": "projection",
+      "title": "The Projection",
+      "group": "way-in",
+      "absorbs": [],
+      "done": [],
+      "note": "The one year-by-year run every room reads (D-341, D-342). A freeze exception the owner granted: it is the screen the engine's rows live on, and Step 7 retires the private maths of FIRE Lab, Decumulation and The Long Way Round into it."
     }
   ]
 }

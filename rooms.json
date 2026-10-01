@@ -355,6 +355,21 @@
       "order": 4.4
     },
     {
+      "id": "projection",
+      "title": "The Projection",
+      "file": "rooms/projection.html",
+      "reads": [
+        "dob",
+        "monthlyExpenses",
+        "grossAnnualIncome",
+        "investments"
+      ],
+      "writes": [],
+      "requires": [],
+      "dashboardNumber": null,
+      "order": 4.45
+    },
+    {
       "id": "left-behind",
       "title": "Left Behind",
       "file": "rooms/left-behind.html",

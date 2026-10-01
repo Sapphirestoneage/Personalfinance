@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="slaf-build" content="2026-09-20 01:28Z"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; form-action 'none'; base-uri 'none'; object-src 'none'; frame-src 'none'; worker-src 'self' blob:"/>
+<script src="../shared/errlog.js"></script>
+<script src="../shared/size.js"></script>
+<title>The Projection · SPARKS</title>
+<meta name="description" content="Every year from now to 95 on one page: what comes in, what goes out, what is taxed and why, and what each account holds. The one projection every room reads."/>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml"/>
+<link rel="stylesheet" href="../shared/fonts.css"/>
+<link rel="stylesheet" href="../shared/theme.css"/>
+<!--
+  ROOM SPEC: SPEC.md section 11. DECISIONS.md D-341 (the engine), D-342 (this room).
+  Registry: projection.
+
+    #headline    the FI year and age, Coast FI, the bridge, in one line each
+    #chart       net worth over time stacked by account type, with the
+                 milestones marked: Coast FI, FI, 59 and a half, Social
+                 Security, RMDs, the ACA cliff years
+    #years       the year-by-year table, the key columns, every column on
+                 a toggle; each year opens a show-your-work drawer that
+                 says what was taxed, at what rate, and why
+    #assumptions every assumption the run used, with its note
+    #reading     the figures this page reads, each a link to its owner
+
+  1. READS   the whole household, through engine/facts.js, and the active
+             blocks from the scenarios store.
+  2. WRITES  nothing. The dollars toggle is the app-wide showNominal switch.
+  3. CALLS   engine/project.js, the one projection (D-341). No arithmetic
+             on this page beyond scales for the chart.
+  4. EMPTY   no date of birth or no spending: the hero says which, and
+             links. "Try with example numbers" writes the one demo persona.
+  5. CONFIG  data/tax/2026.json, fpl.json, aca-applicable-pct.json,
+             states/NY.json, through shared/reference.js.
+
+  LIVE-FORM: built once. The only controls are toggles and the drawers;
+  no typed input on this page.
+  STANDALONE: when self.SLAF_STANDALONE is set (the live preview bundle),
+  the page reads that household and those tables and skips the spine.
+-->
+<style>
+  section[id] { scroll-margin-top: var(--space-4); }
+  .notice.is-error { border-color: var(--color-critical); background: rgba(229,72,77,.08); }
+  .trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+  @media (max-width: 560px) { .trio { grid-template-columns: 1fr; } }
+  .figure-cell { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-3); display: flex; flex-direction: column; min-width: 0; }
+  .figure-cell .cap { font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
+  .figure-cell .big { font-family: var(--font-display); font-size: var(--text-xl); margin-top: var(--space-2); overflow-wrap: anywhere; }
+  .figure-cell .big.is-incomplete { font-family: var(--font-body); font-size: var(--text-sm); color: var(--color-text-faint); }
+  .figure-cell .sub { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: auto; padding-top: var(--space-2); }
+  .figure-cell a, .why a, .warn a, .reading a { color: var(--color-accent-hover); }
+  .why { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-3) 0 0; }
+  .toggles { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; margin-top: var(--space-3); }
+  .seg { display: inline-flex; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); overflow: hidden; }
+  .seg button { background: transparent; color: var(--color-text-muted); border: 0; padding: 4px 12px; font: inherit; font-size: var(--text-sm); cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--color-surface-active); color: var(--color-text); }
+  .seg button:focus-visible { outline: 2px solid var(--color-focus-ring); outline-offset: -2px; }
+  .seg-cap { font-size: var(--text-xs); color: var(--color-text-faint); text-transform: uppercase; letter-spacing: .08em; margin-right: var(--space-1); }
+  .actions { display: flex; gap: var(--space-2); margin-top: var(--space-3); }
+  /* The chart: tokens by role, validated on the panel surface (dataviz). */
+  .proj-chart { --s-cash: #3987e5; --s-taxable: #d95926; --s-pretax: #199e70; --s-roth: #c98500; --s-hsa: #d55181; --s-home: #008300; --s-line: #E6E9EE; --s-mark: rgba(230,233,238,.55); position: relative; margin-top: var(--space-3); }
+  .proj-chart svg { width: 100%; height: auto; display: block; }
+  .proj-chart .panel { fill: var(--color-panel); stroke: var(--color-border-strong); stroke-width: 1; }
+  .proj-chart .grid { stroke: rgba(166,176,189,.14); stroke-width: 1; }
+  .proj-chart .tick { font-family: var(--font-body); font-size: 10px; fill: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+  .proj-chart .area { opacity: .55; }
+  .proj-chart .nw { fill: none; stroke: var(--s-line); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .proj-chart .mark { stroke: var(--s-mark); stroke-width: 1; }
+  .proj-chart .mark-cap { font-family: var(--font-body); font-size: 9.5px; fill: var(--color-text); }
+  .proj-chart .mark-bg { fill: var(--color-panel); opacity: .9; }
+  .proj-chart .cross { stroke: var(--color-text); stroke-width: 1; opacity: .5; pointer-events: none; }
+  .proj-chart .hit { fill: transparent; cursor: crosshair; }
+  .proj-tip { position: absolute; pointer-events: none; background: var(--color-panel); border: 1px solid var(--color-border-strong); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); font-size: var(--text-xs); color: var(--color-text); min-width: 160px; box-shadow: var(--shadow-raised); z-index: 2; }
+  .proj-tip b { display: block; margin-bottom: 2px; }
+  .proj-tip .r { display: flex; justify-content: space-between; gap: var(--space-3); font-variant-numeric: tabular-nums; }
+  .proj-tip .r i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 6px; }
+  .proj-legend { list-style: none; display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-3); margin: var(--space-2) 0 0; padding: 0; font-size: var(--text-xs); color: var(--color-text-muted); }
+  .proj-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: -1px; }
+  .proj-legend i.is-line { height: 2px; vertical-align: 3px; }
+  /* The table. */
+  .tbl-wrap { overflow-x: auto; margin-top: var(--space-3); }
+  table.years { border-collapse: collapse; width: 100%; font-size: var(--text-xs); font-variant-numeric: tabular-nums; }
+  table.years th, table.years td { padding: 6px 8px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--color-border); }
+  table.years th { color: var(--color-text-faint); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; font-size: 10px; position: sticky; top: 0; background: var(--color-bg); }
+  table.years th:first-child, table.years td:first-child { text-align: left; position: sticky; left: 0; background: var(--color-bg); }
+  table.years tr.yr { cursor: pointer; }
+  table.years tr.yr:hover td { background: var(--color-surface); }
+  table.years tr.yr.is-open td { background: var(--color-surface-active); }
+  table.years tr.yr.is-fi td:first-child { color: var(--color-positive); font-weight: 600; }
+  table.years tr.yr.is-out td { color: var(--color-critical-text); }
+  table.years td.neg { color: var(--color-text-muted); }
+  table.years .flag { display: inline-block; font-size: 9px; text-transform: uppercase; letter-spacing: .05em; border: 1px solid var(--color-border-strong); border-radius: var(--radius-pill); padding: 0 5px; margin-left: 4px; color: var(--color-text-faint); }
+  table.years tr.work td { white-space: normal; text-align: left; background: var(--color-surface); padding: var(--space-3) var(--space-3) var(--space-4); }
+  .work-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-3); }
+  .work-grid h4 { margin: 0 0 var(--space-1); font-size: var(--text-xs); text-transform: uppercase; letter-spacing: .08em; color: var(--color-text-faint); }
+  .work-grid ul { margin: 0; padding-left: 1.1em; font-size: var(--text-sm); color: var(--color-text-muted); line-height: var(--leading-normal); }
+  .work-grid .sum { font-size: var(--text-sm); color: var(--color-text); margin: 0 0 var(--space-2); }
+  .warn { list-style: none; margin: var(--space-3) 0 0; padding: 0; font-size: var(--text-sm); color: var(--color-text-muted); }
+  .warn li { padding: var(--space-1) 0; border-top: 1px solid var(--color-border); }
+  .warn li:first-child { border-top: 0; }
+  .room-drawer ul { font-size: var(--text-sm); color: var(--color-text-muted); margin: var(--space-2) 0 0; padding-left: 1.2em; line-height: var(--leading-loose); }
+  .room-badge { font-size: var(--text-xs); color: var(--color-text-faint); margin: var(--space-1) 0 0; }
+</style>
+</head>
+<body class="slaf">
+
+<header class="room-head">
+  <a class="room-back" href="../map.html">← All rooms</a>
+  <h1>The Projection</h1>
+  <p class="room-lede">Every year from now to 95 on one page: what comes in, what goes out, what is taxed and why, and what each account holds. Every room reads this run.</p>
+  <p class="room-badge" id="room-badge"></p>
+</header>
+
+<main class="slaf-wrap">
+  <div class="notice" id="load-notice" hidden></div>
+
+  <section class="slaf-card" id="headline">
+    <span class="slaf-eyebrow">Where this run lands</span>
+    <div class="trio" style="margin-top:var(--space-3)">
+      <div class="figure-cell"><span class="cap">FI</span><span class="big" id="fi-big">not yet</span><span class="sub" id="fi-sub"></span></div>
+      <div class="figure-cell"><span class="cap">Coast FI</span><span class="big" id="coast-big">not yet</span><span class="sub" id="coast-sub"></span></div>
+      <div class="figure-cell"><span class="cap">The bridge to 59½</span><span class="big" id="bridge-big">not yet</span><span class="sub" id="bridge-sub"></span></div>
+    </div>
+    <p class="why" id="headline-why"></p>
+    <div class="actions" id="demo-actions" hidden>
+      <button type="button" class="slaf-btn" id="btn-demo">Try with example numbers</button>
+    </div>
+    <div class="toggles">
+      <span class="seg-cap">Dollars</span>
+      <div class="seg" role="group" aria-label="Dollars">
+        <button type="button" id="dollars-today" aria-pressed="true">Today's</button>
+        <button type="button" id="dollars-future" aria-pressed="false">Future</button>
+      </div>
+      <span class="slaf-hint" id="dollars-say" style="margin:0"></span>
+    </div>
+    <div id="proj-lens" style="margin-top:var(--space-3)"></div>
+    <ul class="warn" id="warnings"></ul>
+  </section>
+
+  <section class="slaf-card" id="chart" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Net worth over time, by account type</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Each band is what one kind of account holds at the end of the year; the line on top is net worth after debts. The marks are the years that change the rules.</p>
+    <div class="proj-chart" id="proj-chart"></div>
+  </section>
+
+  <section class="slaf-card" id="years" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Year by year</span>
+    <div class="toggles">
+      <span class="seg-cap">Columns</span>
+      <div class="seg" role="group" aria-label="Columns">
+        <button type="button" id="cols-key" aria-pressed="true">The key ones</button>
+        <button type="button" id="cols-all" aria-pressed="false">Every column</button>
+      </div>
+      <span class="slaf-hint" style="margin:0">Open a year to see the work: what was taxed, at what rate, and why.</span>
+    </div>
+    <div class="tbl-wrap"><table class="years" id="years-table"></table></div>
+  </section>
+
+  <details class="room-drawer" id="assumptions" style="margin-top:var(--space-4)">
+    <summary>Assumptions <small>Every setting this run used, declared once.</small></summary>
+    <ul id="assumptions-body"></ul>
+  </details>
+
+  <section class="slaf-card reading" id="reading" style="margin-top:var(--space-4)">
+    <span class="slaf-eyebrow">Reading from elsewhere</span>
+    <p class="slaf-hint" style="margin:var(--space-2) 0 0">Read here, entered in the Ledger and Settings. This room writes none of them.</p>
+    <div id="reading-list" style="margin-top:var(--space-3)"></div>
+  </section>
+
+  <p class="disclaimer">Educational tool, not financial advice. Tax figures follow the published 2026 tables and the rules named in the assumptions; a return and a tax professional decide what applies. Everything stays in this browser.</p>
+</main>
+
+<script src="../shared/money.js"></script>
+<script src="../shared/schema.js"></script>
+<script src="../shared/registry.js"></script>
+<script src="../shared/reference.js"></script>
+<script src="../shared/spine-v2.js"></script>
+<script src="../shared/staleness.js"></script>
+<script src="../shared/ownership.js"></script>
+<script src="../shared/gate.js"></script>
+<script src="../shared/guide.js"></script>
+<script src="../shared/prefs.js"></script>
+<script src="../shared/features.js"></script>
+<script src="../shared/progress.js"></script>
+<script src="../shared/roomexport.js"></script>
+<script src="../shared/undo.js"></script>
+<script src="../shared/expr.js"></script>
+<script src="../engines/projection.js"></script>
+<script src="../engines/tier0.js"></script>
+<script src="../engines/ledger.js"></script>
+<script src="../shared/blocks.js"></script>
+<script src="../shared/scenarios.js"></script>
+<script src="../shared/demo-persona.js"></script>
+<script src="../shared/charts.js"></script>
+<script src="../shared/lens.js"></script>
+<script src="../engine/tables.js"></script>
+<script src="../engine/tax/socialSecurityTax.js"></script>
+<script src="../engine/tax/federal.js"></script>
+<script src="../engine/tax/fica.js"></script>
+<script src="../engine/tax/state.js"></script>
+<script src="../engine/tax/aca.js"></script>
+<script src="../engine/assumptions.js"></script>
+<script src="../engine/facts.js"></script>
+<script src="../engine/accounts.js"></script>
+<script src="../engine/contributions.js"></script>
+<script src="../engine/withdrawals.js"></script>
+<script src="../engine/conversions.js"></script>
+<script src="../engine/project.js"></script>
+<script src="../engine/compare.js"></script>
+
+<script>
+(function () {
+  'use strict';
+  var STANDALONE = (typeof self !== 'undefined' && self.SLAF_STANDALONE) || null;
+  var Money = SLAF.Money, Schema = SLAF.Schema, Engine = SLAF.Engine, Charts = SLAF.Charts;
+  var Spine = SLAF.Spine, Reference = SLAF.Reference, Ownership = SLAF.Ownership, Scenarios = SLAF.Scenarios, Features = SLAF.Features;
+  var ROOM_ID = 'projection';
+  var TABLES = null, RUN = null;
+  var state = { nominal: false, allColumns: false, open: {} };
+  function el(id) { return document.getElementById(id); }
+  function esc(s) { return String(s === null || s === undefined ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function fmt(c) { return Money.formatCents(c); }
+  function short(c) { return Charts.shortMoney(c); }
+  function household() { return STANDALONE ? STANDALONE.household : Spine.getProfile(); }
+  function blocks() { return STANDALONE ? (STANDALONE.blocks || []) : (Scenarios ? Scenarios.activeBlocks() : []); }
+  /** A row's figure in the dollars the toggle says. */
+  function val(cents, row) { return cents === null || cents === undefined ? null : (state.nominal ? cents : Engine.Project.today(cents, row)); }
+  function setFig(id, subId, ok, text, subHtml) { var n = el(id); n.className = 'big' + (ok ? '' : ' is-incomplete'); n.textContent = text; el(subId).innerHTML = subHtml || ''; }
+  function fixLink(fieldId) {
+    if (STANDALONE || !Ownership.FIELDS[fieldId]) return '';
+    var d = Ownership.describe(fieldId, household(), ROOM_ID);
+    return d && d.href ? '<a href="' + esc(d.href) + '">Enter ' + esc(d.label.toLowerCase()) + ' →</a>' : '';
+  }
+  function badge() {
+    if (STANDALONE || !SLAF.Registry) return;
+    var r = SLAF.Registry.byId(ROOM_ID);
+    el('room-badge').textContent = 'about ' + r.minutes + ' minutes to read';
+  }
+
+  /* ---- The run ------------------------------------------------------------ */
+  function ready(h) {
+    var missing = [];
+    var you = Schema.primaryPerson(h);
+    if (!you || !you.dob) missing.push('dob');
+    var spend = Schema.monthlyExpensesCents(h);
+    if (!Money.isOk(spend)) missing.push('monthlyExpenses');
+    return missing;
+  }
+  function runNow() {
+    var h = household();
+    var missing = ready(h);
+    if (missing.length) { RUN = null; return missing; }
+    RUN = Engine.project(h, STANDALONE ? (STANDALONE.assumptions || {}) : {}, blocks(), {});
+    return [];
+  }
+
+  /* ---- The headline ------------------------------------------------------- */
+  function renderHeadline(missing) {
+    var why = el('headline-why');
+    if (missing.length) {
+      var what = missing.indexOf('dob') >= 0 ? 'your date of birth' : 'your monthly spending';
+      setFig('fi-big', 'fi-sub', false, 'Add ' + what + ' to run the years.', fixLink(missing[0]));
+      setFig('coast-big', 'coast-sub', false, Money.NOT_YET, '');
+      setFig('bridge-big', 'bridge-sub', false, Money.NOT_YET, '');
+      why.textContent = 'The projection needs an age to count from and a month to cover. Everything else it reads is optional and the assumptions say what stands in.';
+      el('warnings').innerHTML = '';
+      el('demo-actions').hidden = !!STANDALONE;
+      return;
+    }
+    el('demo-actions').hidden = true;
+    var m = RUN.milestones, s = RUN.summary;
+    if (m.fi === null) setFig('fi-big', 'fi-sub', false, 'Not reached', 'the plan does not survive to ' + RUN.assumptionsUsed.horizonAge + ' even working to ' + RUN.assumptionsUsed.retireAge);
+    else setFig('fi-big', 'fi-sub', true, String(m.fi), esc('age ' + m.fiAge + ': work is optional from here and the money lasts to ' + RUN.assumptionsUsed.horizonAge));
+    if (m.coastFI === null) setFig('coast-big', 'coast-sub', false, 'Not reached', 'contributions cannot stop before ' + RUN.assumptionsUsed.traditionalRetirementAge + ' at this pace');
+    else setFig('coast-big', 'coast-sub', true, String(m.coastFI), esc('age ' + m.coastFIAge + ': saving could stop and FI still arrives by ' + RUN.assumptionsUsed.traditionalRetirementAge));
+    if (m.bridgeGapYears === null) setFig('bridge-big', 'bridge-sub', false, Money.NOT_YET, '');
+    else if (m.bridgeGapYears === 0) setFig('bridge-big', 'bridge-sub', true, 'None', 'FI lands after 59½');
+    else {
+      var fiRow = RUN.years.filter(function (r) { return r.year === m.fi; })[0];
+      setFig('bridge-big', 'bridge-sub', true, m.bridgeGapYears + ' yrs', esc(fmt(val(m.bridgeAvailableCents, fiRow)) + ' reachable of ' + fmt(val(m.bridgeGapCents, fiRow)) + ' those years draw'));
+    }
+    var last = RUN.years[RUN.years.length - 1];
+    why.innerHTML = 'Lifetime tax ' + esc(fmt(state.nominal ? s.lifetimeTaxCents : s.lifetimeTaxTodayCents)) + '. Net worth at ' + esc(String(RUN.assumptionsUsed.horizonAge)) + ': ' + esc(fmt(val(last.netWorthCents, last)))
+      + (s.ranOutYear ? '. <strong>Money runs out in ' + esc(String(s.ranOutYear)) + '.</strong>' : '.');
+    el('warnings').innerHTML = RUN.warnings.slice(0, 8).map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('')
+      + (RUN.warnings.length > 8 ? '<li>' + esc(String(RUN.warnings.length - 8)) + ' more in the years below.</li>' : '');
+  }
+
+  /* ---- The chart ------------------------------------------------------------
+     A stacked area by account type, the net worth line on top, the
+     milestones as hairlines. Scales only; every figure is the engine's. */
+  var SERIES = [
+    { id: 'cash', label: 'Cash', key: 'cashCents' },
+    { id: 'taxable', label: 'Taxable', key: 'taxableCents' },
+    { id: 'pretax', label: 'Pretax (401k, IRA)', pick: function (b) { return b.pretax401kCents + b.pretaxIraCents; } },
+    { id: 'roth', label: 'Roth', pick: function (b) { return b.roth401kCents + b.rothIraCents; } },
+    { id: 'hsa', label: 'HSA', key: 'hsaCents' },
+    { id: 'home', label: 'Home equity', pick: function (b) { return Math.max(0, b.homeEquityCents); } }
+  ];
+  function seriesValue(s, b) { return s.pick ? s.pick(b) : b[s.key]; }
+  function milestoneMarks() {
+    var m = RUN.milestones, out = [];
+    if (m.coastFI !== null) out.push({ year: m.coastFI, label: 'Coast FI' });
+    if (m.fi !== null) out.push({ year: m.fi, label: 'FI' });
+    if (m.accessYear !== null) out.push({ year: m.accessYear, label: '59½' });
+    if (m.socialSecurityStart !== null) out.push({ year: m.socialSecurityStart, label: 'Social Security' });
+    if (m.rmdStart !== null) out.push({ year: m.rmdStart, label: 'RMDs' });
+    (m.acaCliffYears || []).slice(0, 1).forEach(function (y) { out.push({ year: y, label: 'ACA cliff' + (m.acaCliffYears.length > 1 ? ' (' + m.acaCliffYears.length + ' yrs)' : '') }); });
+    var first = RUN.years[0].year, last = RUN.years[RUN.years.length - 1].year;
+    return out.filter(function (k) { return k.year >= first && k.year <= last; }).sort(function (a, b) { return a.year - b.year; });
+  }
+  function renderChart() {
+    var host = el('proj-chart');
+    if (!RUN) { host.innerHTML = '<p class="slaf-reason">Nothing to draw until the years run.</p>'; return; }
+    var rows = RUN.years;
+    var W = 720, H = 300, PL = 54, PR = 14, PT = 30, PB = 26;
+    var stacks = rows.map(function (r) {
+      var acc = 0;
+      return SERIES.map(function (s) { var v = Math.max(0, val(seriesValue(s, r.balances), r)); var y0 = acc; acc += v; return { y0: y0, y1: acc, v: v }; });
+    });
+    var top = 0;
+    rows.forEach(function (r, i) { top = Math.max(top, stacks[i][SERIES.length - 1].y1, val(r.netWorthCents, r)); });
+    var low = Math.min(0, Math.min.apply(null, rows.map(function (r) { return val(r.netWorthCents, r); })));
+    var yt = Charts.ticks(low, top || 1, 5);
+    var yMin = Math.min(low, yt[0]), yMax = Math.max(top || 1, yt[yt.length - 1]);
+    var x0 = rows[0].year, x1 = rows[rows.length - 1].year;
+    var sx = function (y) { return PL + (y - x0) / ((x1 - x0) || 1) * (W - PL - PR); };
+    var sy = function (v) { return PT + (yMax - v) / ((yMax - yMin) || 1) * (H - PT - PB); };
+    var parts = ['<rect class="panel" x="0" y="0" width="' + W + '" height="' + H + '" rx="10"/>'];
+    yt.forEach(function (t) { parts.push('<line class="grid" x1="' + PL + '" x2="' + (W - PR) + '" y1="' + sy(t) + '" y2="' + sy(t) + '"/><text class="tick" x="' + (PL - 6) + '" y="' + (sy(t) + 3.5) + '" text-anchor="end">' + esc(short(t)) + '</text>'); });
+    Charts.ticks(x0, x1, 7).forEach(function (t) { if (t >= x0 && t <= x1) parts.push('<text class="tick" x="' + sx(t) + '" y="' + (H - 8) + '" text-anchor="middle">' + esc(String(Math.round(t))) + '</text>'); });
+    SERIES.forEach(function (s, k) {
+      var up = rows.map(function (r, i) { return sx(r.year).toFixed(1) + ',' + sy(stacks[i][k].y1).toFixed(1); });
+      var down = rows.map(function (r, i) { return sx(r.year).toFixed(1) + ',' + sy(stacks[i][k].y0).toFixed(1); }).reverse();
+      parts.push('<polygon class="area" style="fill:var(--s-' + s.id + ')" points="' + up.concat(down).join(' ') + '"/>');
+    });
+    parts.push('<polyline class="nw" points="' + rows.map(function (r) { return sx(r.year).toFixed(1) + ',' + sy(val(r.netWorthCents, r)).toFixed(1); }).join(' ') + '"/>');
+    milestoneMarks().forEach(function (k, i) {
+      var x = sx(k.year), ty = 12 + (i % 2) * 11;
+      parts.push('<line class="mark" x1="' + x + '" x2="' + x + '" y1="' + (PT - 4) + '" y2="' + (H - PB) + '"/>');
+      parts.push('<rect class="mark-bg" x="' + (x - 2) + '" y="' + (ty - 9) + '" width="' + (k.label.length * 5.4 + 6) + '" height="12" rx="2"/><text class="mark-cap" x="' + (x + 1) + '" y="' + ty + '">' + esc(k.label) + '</text>');
+    });
+    parts.push('<line class="cross" id="proj-cross" x1="0" x2="0" y1="' + PT + '" y2="' + (H - PB) + '" visibility="hidden"/>');
+    parts.push('<rect class="hit" x="' + PL + '" y="' + PT + '" width="' + (W - PL - PR) + '" height="' + (H - PT - PB) + '"/>');
+    host.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Net worth by account type, ' + x0 + ' to ' + x1 + '">' + parts.join('') + '</svg>'
+      + '<div class="proj-tip" id="proj-tip" hidden></div>'
+      + '<ul class="proj-legend">' + SERIES.map(function (s) { return '<li><i style="background:var(--s-' + s.id + ')"></i>' + esc(s.label) + '</li>'; }).join('') + '<li><i class="is-line" style="background:var(--s-line)"></i>Net worth after debts</li></ul>';
+    var svg = host.querySelector('svg'), tip = el('proj-tip'), cross = el('proj-cross');
+    function at(evt) {
+      var box = svg.getBoundingClientRect();
+      var px = (evt.clientX - box.left) / box.width * W;
+      var year = Math.round(x0 + (px - PL) / (W - PL - PR) * (x1 - x0));
+      year = Math.max(x0, Math.min(x1, year));
+      var i = year - x0, r = rows[i];
+      cross.setAttribute('x1', sx(year)); cross.setAttribute('x2', sx(year)); cross.setAttribute('visibility', 'visible');
+      tip.hidden = false;
+      tip.innerHTML = '<b>' + esc(String(r.year)) + ', age ' + esc(r.ages.join(' and ')) + '</b>' + SERIES.slice().reverse().map(function (s, k) {
+        var v = stacks[i][SERIES.length - 1 - k].v; return v ? '<div class="r"><span><i style="background:var(--s-' + s.id + ')"></i>' + esc(s.label) + '</span><span>' + esc(short(v)) + '</span></div>' : '';
+      }).join('') + (r.balances.debtTotalCents ? '<div class="r"><span>Debts</span><span>-' + esc(short(val(r.balances.debtTotalCents, r))) + '</span></div>' : '')
+        + '<div class="r"><span><strong>Net worth</strong></span><span><strong>' + esc(short(val(r.netWorthCents, r))) + '</strong></span></div>';
+      var left = (evt.clientX - box.left) + 14, w = tip.offsetWidth || 180;
+      if (left + w > box.width) left = (evt.clientX - box.left) - w - 14;
+      tip.style.left = Math.max(0, left) + 'px'; tip.style.top = Math.max(0, (evt.clientY - box.top) - 10) + 'px';
+    }
+    svg.addEventListener('mousemove', at);
+    svg.addEventListener('mouseleave', function () { tip.hidden = true; cross.setAttribute('visibility', 'hidden'); });
+  }
+
+  /* ---- The table ---------------------------------------------------------- */
+  var KEY = [
+    { h: 'Year', f: function (r) { return String(r.year); }, left: true },
+    { h: 'Age', f: function (r) { return r.ages.map(function (a) { return a === null ? '?' : a; }).join(' / '); } },
+    { h: 'Income', c: function (r) { return r.income.totalCents; } },
+    { h: 'Spending', c: function (r) { return r.spending.totalCents; } },
+    { h: 'Taxes', c: function (r) { return r.taxes.totalCents; } },
+    { h: 'Saved', c: function (r) { return r.contributions.investedCents + r.contributions.employerMatchCents; } },
+    { h: 'Drawn', c: function (r) { return r.withdrawals.totalCents; } },
+    { h: 'Net worth', c: function (r) { return r.netWorthCents; } },
+    { h: 'Flags', f: flagsOf, left: true }
+  ];
+  var ALL = [
+    KEY[0], KEY[1],
+    { h: 'Wages', c: function (r) { return r.income.wagesCents; } },
+    { h: 'Self-emp.', c: function (r) { return r.income.selfEmploymentCents; } },
+    { h: 'Side', c: function (r) { return r.income.sideHustleCents; } },
+    { h: 'Rental', c: function (r) { return r.income.rentalCents; } },
+    { h: 'Social Sec.', c: function (r) { return r.income.socialSecurityCents; } },
+    { h: 'Pension', c: function (r) { return r.income.pensionCents; } },
+    { h: 'Other', c: function (r) { return r.income.otherCents; } },
+    { h: 'Dividends', c: function (r) { return r.income.dividendsCents; } },
+    { h: 'RMD', c: function (r) { return r.income.rmdCents; } },
+    { h: 'FAT', c: function (r) { return r.spending.fatCents; } },
+    { h: 'Wants', c: function (r) { return r.spending.wantsCents; } },
+    { h: 'Healthcare', c: function (r) { return r.spending.healthcareCents; } },
+    { h: 'Debt pay', c: function (r) { return r.spending.debtPaymentsCents; } },
+    { h: '401k', c: function (r) { return r.contributions.pretax401kCents + r.contributions.roth401kCents; } },
+    { h: 'Match', c: function (r) { return r.contributions.employerMatchCents; } },
+    { h: 'HSA in', c: function (r) { return r.contributions.hsaCents; } },
+    { h: 'Roth IRA in', c: function (r) { return r.contributions.rothIraCents; } },
+    { h: 'Taxable in', c: function (r) { return r.contributions.taxableCents; } },
+    { h: 'From cash', c: function (r) { return r.withdrawals.cashCents; } },
+    { h: 'From taxable', c: function (r) { return r.withdrawals.taxableCents; } },
+    { h: 'From Roth', c: function (r) { return r.withdrawals.rothBasisCents + r.withdrawals.seasonedConversionsCents + r.withdrawals.unseasonedConversionsCents + r.withdrawals.rothEarningsCents; } },
+    { h: 'From pretax', c: function (r) { return r.withdrawals.pretax401kCents + r.withdrawals.pretaxIraCents + r.withdrawals.rmdCents; } },
+    { h: 'From HSA', c: function (r) { return r.withdrawals.hsaCents; } },
+    { h: 'Converted', c: function (r) { return r.conversions.cents; } },
+    { h: 'Fed. ordinary', c: function (r) { return r.taxes.federalOrdinaryCents; } },
+    { h: 'Fed. gains', c: function (r) { return r.taxes.federalCapitalGainsCents; } },
+    { h: 'NIIT', c: function (r) { return r.taxes.niitCents; } },
+    { h: 'FICA', c: function (r) { return r.taxes.ficaCents + r.taxes.additionalMedicareCents; } },
+    { h: 'SE tax', c: function (r) { return r.taxes.seTaxCents; } },
+    { h: 'State', c: function (r) { return r.taxes.stateCents; } },
+    { h: 'ACA credit', c: function (r) { return r.taxes.acaCreditCents; } },
+    { h: 'Penalties', c: function (r) { return r.taxes.penaltiesCents; } },
+    { h: 'MAGI', c: function (r) { return r.magiCents; } },
+    { h: 'Cash', c: function (r) { return r.balances.cashCents; } },
+    { h: 'Taxable', c: function (r) { return r.balances.taxableCents; } },
+    { h: 'Basis', c: function (r) { return r.balances.taxableBasisCents; } },
+    { h: 'Pretax', c: function (r) { return r.balances.pretax401kCents + r.balances.pretaxIraCents; } },
+    { h: 'Roth', c: function (r) { return r.balances.roth401kCents + r.balances.rothIraCents; } },
+    { h: 'Roth basis', c: function (r) { return r.balances.rothIraBasisCents; } },
+    { h: 'Ladder', c: function (r) { return r.balances.rothConversionLayers.reduce(function (t, l) { return t + l.cents; }, 0); } },
+    { h: 'HSA', c: function (r) { return r.balances.hsaCents; } },
+    { h: 'Home equity', c: function (r) { return r.balances.homeEquityCents; } },
+    { h: 'Debts', c: function (r) { return r.balances.debtTotalCents; } },
+    { h: 'Net worth', c: function (r) { return r.netWorthCents; } },
+    { h: 'FI ratio', f: function (r) { return r.fiRatio === null ? '' : (Math.round(r.fiRatio * 100) / 100).toFixed(2); } },
+    { h: 'Flags', f: flagsOf, left: true }
+  ];
+  function flagsOf(r) {
+    var f = r.flags, out = [];
+    if (r.year === RUN.milestones.fi) out.push('FI');
+    if (r.year === RUN.milestones.coastFI) out.push('Coast');
+    if (f.conversion) out.push('Roth conv.');
+    if (f.rmd) out.push('RMD');
+    if (f.acaCliff) out.push('ACA cliff');
+    if (f.medicaidTerritory) out.push('Medicaid');
+    if (f.penalty) out.push('Penalty');
+    if (f.ranOut) out.push('Ran out');
+    if (f.didNotConverge) out.push('Unsettled');
+    if (f.blocks) out.push(r.activeBlocks.map(function (b) { return b.label; }).join(', '));
+    return out.map(function (t) { return '<span class="flag">' + esc(t) + '</span>'; }).join('');
+  }
+  function cell(col, r) {
+    if (col.f) return '<td' + (col.left ? ' style="text-align:left"' : '') + '>' + (col.h === 'Flags' ? col.f(r) : esc(col.f(r))) + '</td>';
+    var v = val(col.c(r), r);
+    return '<td class="' + (v < 0 ? 'neg' : '') + '">' + (v ? esc(short(v)) : '<span style="color:var(--color-text-faint)">·</span>') + '</td>';
+  }
+  function workHtml(r) {
+    var t = r.taxes, e = r.explain;
+    function list(items) { return items.length ? '<ul>' + items.map(function (s) { return '<li>' + esc(s) + '</li>'; }).join('') + '</ul>' : '<ul><li>Nothing this year.</li></ul>'; }
+    var money = function (c) { return esc(fmt(val(c, r))); };
+    return '<td colspan="' + (state.allColumns ? ALL.length : KEY.length) + '"><div class="work-grid">'
+      + '<div><h4>Federal income tax, ' + money(t.federalTotalCents) + '</h4><p class="sum">Ordinary ' + money(t.federalOrdinaryCents) + ', gains ' + money(t.federalCapitalGainsCents) + (t.niitCents ? ', NIIT ' + money(t.niitCents) : '') + (t.penaltiesCents ? ', penalties ' + money(t.penaltiesCents) : '') + '. Top rate ' + esc(Math.round(t.marginalRate * 100)) + '%.</p>' + list(e.federal) + '</div>'
+      + '<div><h4>Payroll and self-employment tax, ' + money(t.ficaCents + t.seTaxCents + t.additionalMedicareCents) + '</h4>' + list(e.fica) + '</div>'
+      + '<div><h4>State tax, ' + money(t.stateCents) + '</h4>' + list(e.state) + '</div>'
+      + (r.aca ? '<div><h4>Marketplace cover, credit ' + money(t.acaCreditCents) + '</h4>' + list(e.aca) + '</div>' : (r.flags.medicare ? '<div><h4>Medicare</h4><ul><li>From 65, the Medicare allowance in the assumptions replaces marketplace cover.</li></ul></div>' : ''))
+      + '<div><h4>Where the money went</h4>' + list(e.contributions.concat(e.withdrawals, e.conversions)) + '</div>'
+      + (r.warnings.length ? '<div><h4>To know</h4>' + list(r.warnings) + '</div>' : '')
+      + '</div></td>';
+  }
+  function renderTable() {
+    var t = el('years-table');
+    if (!RUN) { t.innerHTML = ''; return; }
+    var cols = state.allColumns ? ALL : KEY;
+    var html = '<thead><tr>' + cols.map(function (c) { return '<th>' + esc(c.h) + '</th>'; }).join('') + '</tr></thead><tbody>';
+    RUN.years.forEach(function (r) {
+      var open = !!state.open[r.year];
+      html += '<tr class="yr' + (open ? ' is-open' : '') + (r.year === RUN.milestones.fi ? ' is-fi' : '') + (r.flags.ranOut ? ' is-out' : '') + '" data-year="' + r.year + '" tabindex="0" aria-expanded="' + open + '">' + cols.map(function (c) { return cell(c, r); }).join('') + '</tr>';
+      if (open) html += '<tr class="work">' + workHtml(r) + '</tr>';
+    });
+    t.innerHTML = html + '</tbody>';
+  }
+  el('years-table').addEventListener('click', function (evt) {
+    var tr = evt.target.closest('tr.yr');
+    if (!tr) return;
+    var y = tr.getAttribute('data-year');
+    state.open[y] = !state.open[y];
+    renderTable();
+  });
+  el('years-table').addEventListener('keydown', function (evt) {
+    if (evt.key !== 'Enter' && evt.key !== ' ') return;
+    var tr = evt.target.closest('tr.yr'); if (!tr) return;
+    evt.preventDefault(); var y = tr.getAttribute('data-year'); state.open[y] = !state.open[y]; renderTable();
+    var again = el('years-table').querySelector('tr[data-year="' + y + '"]'); if (again) again.focus();
+  });
+
+  /* ---- Assumptions and the reading list ------------------------------------ */
+  function renderAssumptions() {
+    var body = el('assumptions-body');
+    if (!RUN) { body.innerHTML = '<li>Run the years to see what they used.</li>'; return; }
+    var A = RUN.assumptionsUsed, notes = A.notes || {};
+    function show(v) {
+      if (v === null || v === undefined) return 'not set';
+      if (typeof v === 'number') return Math.abs(v) < 1 && v !== 0 ? (Math.round(v * 10000) / 100) + '%' : (Number.isInteger(v) && v > 1000 ? fmt(v) : String(v));
+      if (Array.isArray(v)) return v.map(function (x) { return typeof x === 'object' ? JSON.stringify(x) : String(x); }).join(', ');
+      if (typeof v === 'object') return Object.keys(v).map(function (k) { return k + ' ' + show(v[k]); }).join('; ');
+      return String(v);
+    }
+    body.innerHTML = Object.keys(notes).filter(function (k) { return k in A; }).map(function (k) {
+      return '<li><strong>' + esc(k) + '</strong>: ' + esc(show(A[k])) + '. <span style="color:var(--color-text-faint)">' + esc(notes[k]) + '</span></li>';
+    }).join('') + '<li><strong>Tables</strong>: data/tax/2026.json, fpl.json, aca-applicable-pct.json and states/NY.json (D-341), a source URL beside every value.</li>';
+  }
+  function renderReading() {
+    if (STANDALONE) { el('reading').hidden = true; return; }
+    var h = household();
+    el('reading-list').innerHTML = ['dob', 'filingStatus', 'state', 'grossAnnualIncome', 'monthlyExpenses', 'cashSavings', 'investments', 'contributionPercent', 'employerMatch', 'retireAge', 'socialSecurityAt']
+      .map(function (f) { return Ownership.chip(f, h, ROOM_ID); }).join('');
+  }
+
+  /* ---- Toggles ------------------------------------------------------------- */
+  function paintToggles() {
+    el('dollars-today').setAttribute('aria-pressed', String(!state.nominal));
+    el('dollars-future').setAttribute('aria-pressed', String(state.nominal));
+    var infl = RUN ? RUN.assumptionsUsed.inflation : Schema.resolveAssumptions(household()).inflation;
+    el('dollars-say').textContent = state.nominal ? 'Future dollars: each year at ' + (Math.round(infl * 1000) / 10) + '% inflation, as the tax tables see it.' : 'Today\'s dollars: every year brought back to what it buys now.';
+    el('cols-key').setAttribute('aria-pressed', String(!state.allColumns));
+    el('cols-all').setAttribute('aria-pressed', String(state.allColumns));
+  }
+  function setDollars(nominal) {
+    state.nominal = nominal;
+    if (!STANDALONE && Features) { try { Features.set('showNominal', nominal); } catch (e) { /* the switch is a preference; the page still toggles */ } }
+    paintAll();
+  }
+  el('dollars-today').addEventListener('click', function () { setDollars(false); });
+  el('dollars-future').addEventListener('click', function () { setDollars(true); });
+  el('cols-key').addEventListener('click', function () { state.allColumns = false; paintToggles(); renderTable(); });
+  el('cols-all').addEventListener('click', function () { state.allColumns = true; paintToggles(); renderTable(); });
+  el('btn-demo').addEventListener('click', function () {
+    if (STANDALONE) return;
+    Spine.updateProfile(SLAF.DemoPersona.build());
+    Spine.markDemo(true);
+    render();
+  });
+
+  function paintAll() {
+    var missing = RUN ? [] : ready(household());
+    paintToggles();
+    renderHeadline(missing);
+    renderChart();
+    renderTable();
+    renderAssumptions();
+    renderReading();
+  }
+  function renderNow() {
+    if (!TABLES) return;
+    if (!STANDALONE && Features) { try { state.nominal = !!Features.on('showNominal', household()); } catch (e) { /* default stays */ } }
+    runNow();
+    paintAll();
+  }
+  var queued = false;
+  function render() { if (queued) return; queued = true; setTimeout(function () { queued = false; renderNow(); }, 0); }
+
+  function boot(tables) {
+    TABLES = tables;
+    Engine.Tables.use({ tax: tables.tax2026, fpl: tables.fpl, acaPct: tables.acaApplicablePct, states: { NY: tables.stateTaxNY } });
+    badge();
+    if (!STANDALONE && SLAF.Lens) {
+      SLAF.Lens.mountStrip('proj-lens', function () {
+        if (!RUN) return [];
+        var m = RUN.milestones, last = RUN.years[RUN.years.length - 1];
+        var fiRow = m.fi !== null ? RUN.years.filter(function (r) { return r.year === m.fi; })[0] : null;
+        return [
+          fiRow ? { label: 'The FI number at ' + m.fi, cents: Engine.Project.today(fiRow.fiNumberCents, fiRow), href: '#headline' } : null,
+          { label: 'Lifetime tax, today\'s dollars', cents: RUN.summary.lifetimeTaxTodayCents, href: '#years' },
+          { label: 'Net worth at ' + RUN.assumptionsUsed.horizonAge + ', today\'s dollars', cents: Engine.Project.today(last.netWorthCents, last), href: '#chart' }
+        ].filter(Boolean);
+      }, function () { return TABLES; });
+    }
+    renderNow();
+  }
+
+  if (STANDALONE) {
+    boot(STANDALONE.tables);
+  } else {
+    Spine.onChange(render);
+    Spine.registerRoom(ROOM_ID);
+    if (SLAF.Progress) SLAF.Progress.mount(ROOM_ID);
+    Reference.load().then(boot).catch(function (err) {
+      var notice = el('load-notice');
+      notice.hidden = false; notice.className = 'notice is-error';
+      notice.textContent = 'Couldn’t load the reference tables in data/ (' + err.message + ').';
+    });
+  }
+})();
+</script>
+</body>
+</html>

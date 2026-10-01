@@ -11532,7 +11532,7 @@ section('The sidebar: grouped by purpose, not by kind (D-177)');
   /* Four doors stood side by side under Home and it was the single thing
      that lost people most (D-186). There is one now: the Ledger, which the
      First Round and Express became views of (D-230). */
-  check('Home: the Dashboard, the Ledger and Start Here, which is still to retire into it', Registry.inGroup('home', null).map(r => r.id).sort().join(','), 'dashboard,ledger,start');
+  check('Home: the Dashboard, the Ledger, the Projection (D-342) and Start Here, which is still to retire into it', Registry.inGroup('home', null).map(r => r.id).sort().join(','), 'dashboard,ledger,projection,start');
   check('Your Numbers: the DAITE owners, debt to expenses', Registry.inGroup('numbers', null).map(r => r.subgroup).filter((x, i, a) => a.indexOf(x) === i).join(','), 'debt,assets,income,taxes,expenses');
   /* Eight since D-290: The Account You Left Behind became The Statement's
      "a plan you left behind" reading, which is where an old workplace
@@ -15785,9 +15785,11 @@ section('The thirty (docs/room-map.json)');
   /* Thirty-seven: thirty-two with the Calendar (D-308), plus the five rooms
      carved from the Statement in D-313, each a reading that became a room
      and writes nothing (n 33 to 37). Same screens, one owner. */
-  check('the map lands on thirty-seven rooms', MAP.rooms.length, 37);
-  check('numbered 1 to 37', MAP.rooms.map(r => r.n).join(','),
-    Array.from({ length: 37 }, (_, i) => i + 1).join(','));
+  /* Thirty-eight: the Projection (D-342), the screen the engine's rows live
+     on, a freeze exception the owner granted. */
+  check('the map lands on thirty-eight rooms', MAP.rooms.length, 38);
+  check('numbered 1 to 38', MAP.rooms.map(r => r.n).join(','),
+    Array.from({ length: 38 }, (_, i) => i + 1).join(','));
 
   /* Every survivor is a room that exists now and keeps its id through the
      merge: the id is what ownership.js, the registry and every deep link
@@ -16027,7 +16029,7 @@ section('The thirty (docs/room-map.json)');
      never among the 93, and the Net Worth redirect. The Calendar's return
      (D-308) moves one file from merged to survivor and changes nothing here. */
   check('every room is accounted for: the survivors, plus what they absorb, plus the Net Worth redirect',
-    MAP.rooms.length + merged + toGo + 1, 99);
+    MAP.rooms.length + merged + toGo + 1, 100);
   check('and the registry holds exactly the survivors plus what has not merged yet',
     Object.keys(live).length, MAP.rooms.length + toGo);
 

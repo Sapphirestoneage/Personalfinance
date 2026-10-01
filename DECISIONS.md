@@ -17397,6 +17397,29 @@ Decumulation, The Long Way Round, the levers, the dashboard) replace their maths
 **Verified.** `node tests/engine/run.js` (198 checks), `node test/run.js`, `npm test` in `tests/`,
 `node tools/context/build.js --check`.
 
+## D-342 — The Projection room: the screen the engine's rows live on
+
+**Why.** The owner asked to see the engine's run live, in both dollar views. D-341 built the
+run; nothing showed it.
+
+**Decision.** `rooms/projection.html` (registry `projection`, group Home, after the Dashboard
+in the menu, after The Number on the path). It calls `engine/project.js` once per render and
+draws: the FI year, Coast FI and the bridge; net worth over time stacked by account type with
+the milestone marks (Coast FI, FI, 59 and a half, Social Security, RMDs, the first ACA cliff
+year); the year-by-year table, nine key columns or every column; a show-your-work drawer per
+year in plain English; the assumptions used. Two toggles: today's dollars or future dollars
+(the app-wide `showNominal` switch, D-prefs) and the lens strip. It writes nothing.
+Freeze exception granted by the owner (one more room, 38): it is the one screen the rows
+live on, and Step 7 retires the private maths of FIRE Lab, Decumulation and The Long Way
+Round into it.
+
+**Replaces or removes.** Nothing yet; Step 7 does, one room per commit.
+
+**Stored shape.** No change.
+
+**Verified.** `node test/run.js`, `node tests/engine/run.js`, the browser gates
+(`test/render.js`, `anchors.js`, `flow.js`, `xss.js`, `forms.js`), a Playwright screenshot.
+
 ---
 
 # The Dungeons & Dividends entries
