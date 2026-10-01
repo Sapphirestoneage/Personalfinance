@@ -1,3 +1,39 @@
+# House rules for this repo
+
+This repo should read like it was built by a careful human team, not generated in a hurry. Someone reviewing it on GitHub should understand what it does, where things live, and why, within 10 minutes.
+
+## Every session, before you finish
+- Leave the code you touched cleaner than you found it.
+- Delete dead code, commented-out blocks, unused files, and leftover debug logs in anything you edited. Don't comment code out "just in case." Git history keeps it.
+- If you notice mess outside your task, list it at the end of your reply under "Cleanup spotted." Don't fix it mid-task.
+
+## Commits
+- One logical change per commit. Never mix a feature and a cleanup.
+- Messages: short imperative summary (under 60 chars), blank line, then 1-3 lines on WHY.
+- No commits named "fix," "update," "changes," or "wip."
+
+## Code
+- Shared logic lives in one place. If the same math or helper appears in two rooms, move it to the shared core and import it.
+- Names say what things are. No temp, data2, newFunction, finalFinal.
+- Small functions that do one thing. If a function needs a comment to explain what it does, rename or split it first.
+- Comments explain WHY, not what. Delete comments that restate the code.
+- No new dependency without explaining why in the commit message.
+- Match the existing style of the file you're in.
+
+## Files and folders
+- Root holds only what a newcomer needs: README, CLAUDE.md, config, and top-level folders.
+- Planning docs and prompt files go in docs/. Superseded ones go in docs/archive/ with the date they were replaced in the filename.
+- Every folder with more than a few files gets a short README saying what's in it.
+
+## README
+- Keep README.md current: what this is (2 sentences), the live link, how to run it locally on Windows, a folder map, and how to run tests.
+- If a change makes any README line wrong, fix it in the same commit.
+
+## Safety
+- Cleanup must not change behavior. Run the Playwright tests before and after. If no tests cover what you're touching, say so.
+- Never rename or delete localStorage keys or saved data formats without a migration.
+- If a cleanup is risky or large, propose it and wait for my OK.
+
 # CLAUDE.md (kept under 100 lines on purpose; every line loads every session)
 
 SPARKS / SLAF: ~70 small personal-finance "rooms" sharing one household data
