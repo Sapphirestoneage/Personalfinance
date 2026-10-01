@@ -17370,6 +17370,33 @@ SPARKS device backup neither carries nor removes `mkt.` keys.
 
 **Verified.** `node test/run.js`; `node marketing/test/run.js`.
 
+## D-341 — One projection engine under every room: engine/ projects the household year by year
+
+**Why.** FIRE Lab, Decumulation, The Long Way Round and the lever rooms each ran their own
+arithmetic, so the app read as separate calculators. The owner asked for one year-by-year
+projection every room writes facts into, pulls levers on, or reads rows from.
+
+**Decision.** `engine/project.js` is the one projection: `project(household, assumptions, blocks)`
+returns `{ years, milestones, warnings, assumptionsUsed }`, pure, no DOM, no storage. Each year
+runs in a fixed order (ages and blocks, income, spending, debt, contributions or withdrawals,
+conversions, taxes, an iteration until taxes settle under a dollar, growth). `engine/tax/` holds
+federal (brackets, gains stacking, NIIT, Social Security taxation, penalties, the senior
+deduction), FICA and SE tax, state (NY schedule, flat rate elsewhere), ACA (cliff and enhanced
+rules). `withdrawals.js`, `conversions.js`, `contributions.js` carry the orders and strategies.
+`compare(runA, runB)` gives the FI date, Coast FI, net worth, lifetime tax and cash flow deltas and
+the one headline sentence. Every figure comes from `data/tax/` (2026 federal, FPL, ACA percentages,
+`states/NY.json`), one source URL per value. Dollars are nominal in rows with a `deflator`; rooms
+show today's dollars by default. No room computes its own projection once Step 7 rewires them.
+
+**Replaces or removes.** Nothing yet: Steps 6 and 7 (the Projection room, then FIRE Lab,
+Decumulation, The Long Way Round, the levers, the dashboard) replace their maths with the run.
+`data/*_2026.json` are the unverified copies the rooms still read until then.
+
+**Stored shape.** No change. The engine reads `slaf.household.v2` as is.
+
+**Verified.** `node tests/engine/run.js` (198 checks), `node test/run.js`, `npm test` in `tests/`,
+`node tools/context/build.js --check`.
+
 ---
 
 # The Dungeons & Dividends entries

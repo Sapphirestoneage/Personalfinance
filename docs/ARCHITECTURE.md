@@ -22,6 +22,9 @@ render; engines never write. Undo snapshots sit under `slaf.snapshots.v1`.
 
 - `rooms/` — 71 registered pages, one per room; markup + inline script.
 - `engines/` — 89 pure calculation modules; take a household, return Results.
+- `engine/` — the one year-by-year projection (D-341): `project(household, assumptions, blocks)`
+  returns rows, milestones, warnings; `compare(runA, runB)` the deltas; `tax/` the
+  federal, FICA, state, ACA and Social Security tax maths. Pure, no DOM, reads `data/tax/`.
 - `shared/spine-v2.js` — load/save/migrate the household; `onChange`; `householdAt`.
 - `shared/schema.js` — constructors and accessors; every stored shape starts here.
 - `shared/money.js` — integer cents, `ok`/`incomplete` Results, formatting.
@@ -31,11 +34,13 @@ render; engines never write. Undo snapshots sit under `slaf.snapshots.v1`.
 - `shared/blocks.js`, `shared/scenarios.js` — hypotheticals beside the facts.
 - `shared/liveform.js` — guard for containers of live inputs (D-034).
 - `shared/backup.js` — export/import of everything this browser holds (D-204).
-- `data/` — 80 reference files, year-versioned; `ledger-rows.json` (every
+- `data/` — 80 reference files, year-versioned; `data/tax/` the engine's verified
+  tables with a source URL per value; `ledger-rows.json` (every
   number the app can hold, 81 rows), `spheres.json`, `levers.json`,
   `lenses.json`, `blocks/<type>.json`; keys map to files in `shared/reference.js`.
 - `test/run.js` — 28k unit checks, node only; `test/forms.js` — phone form walk.
-- `tests/` — property, corpus, data and a11y suites with their reports.
+- `tests/` — property, corpus, data and a11y suites with their reports; `tests/engine/`
+  the projection engine's corpus, hand-worked tax cases, invariants and the golden slot.
 - `dnd/` — Dungeons & Dividends, a separate tool; `dnd/shared/*` are vendored copies.
 - `tools/context/` — `build.js` (indexes, room cards) and `pack.js` (per-task context).
 - `docs/context/` — generated indexes: ROOMS, FIELDS, DECISIONS-INDEX, DOC-MAP.

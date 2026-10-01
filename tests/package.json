@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "Lane 2 test harness: synthetic household corpus, property tests, data table checks, migration corpus. No build step; run each file with node.",
   "scripts": {
-    "test": "node corpus.test.js && node properties/run.js && node data.test.js && node glossary.test.js && node migration.test.js && node qr.test.js",
+    "test": "node corpus.test.js && node properties/run.js && node data.test.js && node glossary.test.js && node migration.test.js && node qr.test.js && node engine/run.js",
+    "engine": "node engine/run.js",
     "corpus": "node corpus.test.js",
     "properties": "node properties/run.js",
     "data": "node data.test.js",
