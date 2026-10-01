@@ -88,6 +88,8 @@
     blockHome: 'blocks/home.json', blockCar: 'blocks/car.json', blockKid: 'blocks/kid.json', blockJobchange: 'blocks/jobchange.json',
     blockSabbatical: 'blocks/sabbatical.json', blockGeo: 'blocks/geo.json', blockHustle: 'blocks/hustle.json', blockInheritance: 'blocks/inheritance.json', blockMarriage: 'blocks/marriage.json',
     events: 'events/index.json',
+    /* The projection engine's tables (D-341): one verified file per domain, read by engine/ only. */
+    tax2026: 'tax/2026.json', fpl: 'tax/fpl.json', acaApplicablePct: 'tax/aca-applicable-pct.json', stateTaxNY: 'tax/states/NY.json',
     cobraAca: 'cobra_aca_2024.json',
     travelBands: 'travel_bands.json',
     reentryGap: 'reentry_gap.json',

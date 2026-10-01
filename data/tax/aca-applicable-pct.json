@@ -1,0 +1,43 @@
+{
+  "id": "aca_applicable_pct",
+  "version": "2026.1",
+  "asOf": "2026-10-01",
+  "source": "IRS Rev. Proc. 2025-25 (https://www.irs.gov/pub/irs-drop/rp-25-25.pdf), the section 36B(b)(3)(A) applicable percentage table for taxable years beginning in 2026, and the ARPA/IRA enhanced table (Public Law 117-2 section 9661, extended by Public Law 117-169 section 12001) that applied 2021 through 2025.",
+  "confidence": "sourced",
+  "confidenceNote": "The 2026 table was checked 2026-10-01 against the Finance Buff, nationaltaxtools and Current Federal Tax Developments transcriptions of Rev. Proc. 2025-25 (irs.gov unreachable from the build session). Status of the enhanced credits checked the same day: they expired 31 December 2025 and no extension had been enacted (KFF, CNBC 6 January 2026, CRS R48290), so the cliff rule is current law.",
+  "note": "Read by engine/tax/aca.js (D-341). Expected contribution = applicable percentage times MAGI, where the percentage is interpolated linearly inside each band of MAGI as a share of the federal poverty line. Under the cliff rule there is no credit above 400% FPL (and none below 100% FPL, where Medicaid or nothing applies). Under the enhanced rule the contribution is capped at the top percentage with no ceiling. The engine's default follows `currentLaw`.",
+  "currentLaw": "cliff",
+  "currentLawCheckedOn": "2026-10-01",
+  "rules": {
+    "cliff": {
+      "label": "Current law for 2026: credit ends at 400% of the poverty line",
+      "source": "https://www.irs.gov/pub/irs-drop/rp-25-25.pdf",
+      "eligibleFrom": 1.0,
+      "eligibleUpTo": 4.0,
+      "bands": [
+        { "fromFpl": 1.00, "toFpl": 1.33, "initialPct": 0.0210, "finalPct": 0.0210 },
+        { "fromFpl": 1.33, "toFpl": 1.50, "initialPct": 0.0314, "finalPct": 0.0419 },
+        { "fromFpl": 1.50, "toFpl": 2.00, "initialPct": 0.0419, "finalPct": 0.0660 },
+        { "fromFpl": 2.00, "toFpl": 2.50, "initialPct": 0.0660, "finalPct": 0.0844 },
+        { "fromFpl": 2.50, "toFpl": 3.00, "initialPct": 0.0844, "finalPct": 0.0996 },
+        { "fromFpl": 3.00, "toFpl": 4.00, "initialPct": 0.0996, "finalPct": 0.0996 }
+      ],
+      "requiredContributionPercentage": 0.0996
+    },
+    "enhanced": {
+      "label": "The 2021 to 2025 enhanced table, no cliff, if Congress restores it",
+      "source": "https://www.congress.gov/bill/117th-congress/house-bill/1319/text",
+      "eligibleFrom": 1.0,
+      "eligibleUpTo": null,
+      "bands": [
+        { "fromFpl": 1.00, "toFpl": 1.50, "initialPct": 0.0, "finalPct": 0.0 },
+        { "fromFpl": 1.50, "toFpl": 2.00, "initialPct": 0.0, "finalPct": 0.02 },
+        { "fromFpl": 2.00, "toFpl": 2.50, "initialPct": 0.02, "finalPct": 0.04 },
+        { "fromFpl": 2.50, "toFpl": 3.00, "initialPct": 0.04, "finalPct": 0.06 },
+        { "fromFpl": 3.00, "toFpl": 4.00, "initialPct": 0.06, "finalPct": 0.085 },
+        { "fromFpl": 4.00, "toFpl": null, "initialPct": 0.085, "finalPct": 0.085 }
+      ],
+      "requiredContributionPercentage": 0.085
+    }
+  }
+}

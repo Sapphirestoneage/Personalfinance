@@ -37,7 +37,7 @@ function check(name, ok, detail) { if (ok) out.passed++; else out.failures.push(
 check('the clock reads 2027', out.year === 2027, String(out.year));
 check('the local day reads 2027-01-01', out.localDay === '2027-01-01', out.localDay);
 const yearTables = Object.keys(T).filter(k => typeof T[k].taxYear === 'number');
-check('the tax-year tables are the ones named _2026 (brackets, limits, SE tax, ACA, bend points, state, effective rates)', yearTables.length >= 6 && yearTables.every(k => /_2026\.json$/.test(Reference.TABLE_FILES[k])), yearTables.join(','));
+check('the tax-year tables are the ones named _2026 (brackets, limits, SE tax, ACA, bend points, state, effective rates) or tax/2026 (the engine, D-341)', yearTables.length >= 6 && yearTables.every(k => /(_|\/)2026\.json$/.test(Reference.TABLE_FILES[k])), yearTables.join(','));
 check('every one carries its year', yearTables.every(k => Reference.yearOf(T[k]) === 2026), yearTables.filter(k => Reference.yearOf(T[k]) !== 2026).join(','));
 check('a survey year or a cost convention is not a limit that expires', Reference.yearNote(T.netWorthPercentiles) === null && Reference.yearNote(T.cobraAca) === null);
 check('every one says it is a year behind', yearTables.every(k => Reference.yearNote(T[k]) === 'using 2026 limits'), yearTables.map(k => k + '=' + Reference.yearNote(T[k])).join(' '));

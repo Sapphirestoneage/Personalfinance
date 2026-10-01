@@ -1,0 +1,18 @@
+{
+  "id": "fpl",
+  "version": "2026.1",
+  "asOf": "2026-10-01",
+  "source": "HHS poverty guidelines, published each January in the Federal Register by the Office of the Assistant Secretary for Planning and Evaluation. https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines",
+  "confidence": "sourced",
+  "confidenceNote": "Checked 2026-10-01 against secondary copies (KFF, healthinsurance.org, benefitsusa) because aspe.hhs.gov was unreachable from the build session. 2025: $15,650 plus $5,500 a person (90 FR 5327, January 17 2025). 2026: $15,960 plus $5,680 a person (January 2026). Alaska and Hawaii are higher and not carried.",
+  "note": "Read by engine/tax/aca.js (D-341). Marketplace coverage for a year uses the guidelines published the January BEFORE that year (the ones in force at open enrollment), so 2026 coverage reads the 2025 line and 2027 coverage the 2026 line (https://www.agentbrokerfaq.cms.gov/s/article/When-does-the-Marketplace-update-its-use-of-the-federal-poverty-level-FPL-tables-for-Marketplace-and-Medicaid-CHIP-eligibility-determinations). Years past the last line are indexed by the run's inflation assumption. Dollars, annual, 48 contiguous states and DC.",
+  "unit": "US dollars a year",
+  "coverageYearUsesGuidelineYear": -1,
+  "guidelines": {
+    "2024": { "firstPerson": 15060, "eachAdditionalPerson": 5380, "source": "https://www.federalregister.gov/documents/2024/01/17/2024-00796/annual-update-of-the-hhs-poverty-guidelines" },
+    "2025": { "firstPerson": 15650, "eachAdditionalPerson": 5500, "source": "https://www.federalregister.gov/documents/2025/01/17/2025-01377/annual-update-of-the-hhs-poverty-guidelines" },
+    "2026": { "firstPerson": 15960, "eachAdditionalPerson": 5680, "source": "https://aspe.hhs.gov/sites/default/files/documents/b1bfa16b20ae9b89d525bc35de7c1643/detailed-guidelines-2026.pdf" }
+  },
+  "medicaidExpansionShare": 1.38,
+  "medicaidExpansionNote": "Adults in expansion states (New York is one) qualify for Medicaid below 138% of FPL (133% plus the 5% income disregard, Social Security Act 1902(e)(14)); below that line there is no premium tax credit. https://www.medicaid.gov/medicaid/eligibility/index.html"
+}

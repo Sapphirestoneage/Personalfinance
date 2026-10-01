@@ -1,0 +1,63 @@
+{
+  "id": "state_tax_NY",
+  "version": "2026.1",
+  "asOf": "2026-10-01",
+  "state": "NY",
+  "label": "New York",
+  "source": "New York Tax Law section 601 as amended by the FY2026 budget (Chapter 59 of the Laws of 2025, Part A), which cut the first five rates by 0.1 point for 2026 and again for 2027; standard deduction section 614. https://www.tax.ny.gov/pit/file/tax-tables/",
+  "confidence": "sourced",
+  "confidenceNote": "Checked 2026-10-01 against taxmath.org, ustax.tools and the Tax Foundation's 2026 state table (tax.ny.gov unreachable from the build session). The tax benefit recapture (the supplemental tax that phases the lower rates out above $107,650 of NY AGI, section 601(d-1)) is NOT modelled; the engine warns when it would apply. New York City and Yonkers resident taxes are not modelled.",
+  "note": "Read by engine/tax/state.js (D-341). Shape every state file shares: `type` is `brackets`, `flat` or `none`; `standardDeduction` by filing status; `brackets` rows give the TOP of state taxable income taxed at that rate, null is no ceiling. State taxable income here is federal AGI less the state standard deduction: no NY-specific additions or subtractions, except that Social Security benefits and the first $20,000 of pension and IRA distributions at 59 and a half are subtracted (section 612(c)(3) and (3-a)), since those move a retiree's bill a lot. A state with no file uses `flatRate` from the run's assumptions.",
+  "type": "brackets",
+  "indexed": false,
+  "standardDeduction": { "single": 8000, "married_joint": 16050, "married_separate": 8000, "head_of_household": 11200 },
+  "subtractSocialSecurity": true,
+  "pensionAndIraExclusion": { "perPersonUpTo": 20000, "fromAge": 59.5, "source": "https://www.tax.ny.gov/pit/file/pension-and-annuity-income-exclusion.htm" },
+  "recaptureStartsAt": 107650,
+  "brackets": {
+    "single": [
+      { "upTo": 8500, "rate": 0.039 },
+      { "upTo": 11700, "rate": 0.044 },
+      { "upTo": 13900, "rate": 0.0515 },
+      { "upTo": 80650, "rate": 0.054 },
+      { "upTo": 215400, "rate": 0.059 },
+      { "upTo": 1077550, "rate": 0.0685 },
+      { "upTo": 5000000, "rate": 0.0965 },
+      { "upTo": 25000000, "rate": 0.103 },
+      { "upTo": null, "rate": 0.109 }
+    ],
+    "married_joint": [
+      { "upTo": 17150, "rate": 0.039 },
+      { "upTo": 23600, "rate": 0.044 },
+      { "upTo": 27900, "rate": 0.0515 },
+      { "upTo": 161550, "rate": 0.054 },
+      { "upTo": 323200, "rate": 0.059 },
+      { "upTo": 2155350, "rate": 0.0685 },
+      { "upTo": 5000000, "rate": 0.0965 },
+      { "upTo": 25000000, "rate": 0.103 },
+      { "upTo": null, "rate": 0.109 }
+    ],
+    "married_separate": [
+      { "upTo": 8500, "rate": 0.039 },
+      { "upTo": 11700, "rate": 0.044 },
+      { "upTo": 13900, "rate": 0.0515 },
+      { "upTo": 80650, "rate": 0.054 },
+      { "upTo": 215400, "rate": 0.059 },
+      { "upTo": 1077550, "rate": 0.0685 },
+      { "upTo": 5000000, "rate": 0.0965 },
+      { "upTo": 25000000, "rate": 0.103 },
+      { "upTo": null, "rate": 0.109 }
+    ],
+    "head_of_household": [
+      { "upTo": 12800, "rate": 0.039 },
+      { "upTo": 17650, "rate": 0.044 },
+      { "upTo": 20900, "rate": 0.0515 },
+      { "upTo": 107650, "rate": 0.054 },
+      { "upTo": 269300, "rate": 0.059 },
+      { "upTo": 1616450, "rate": 0.0685 },
+      { "upTo": 5000000, "rate": 0.0965 },
+      { "upTo": 25000000, "rate": 0.103 },
+      { "upTo": null, "rate": 0.109 }
+    ]
+  }
+}

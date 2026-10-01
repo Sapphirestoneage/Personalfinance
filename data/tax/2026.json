@@ -1,0 +1,203 @@
+{
+  "id": "tax_2026",
+  "version": "2026.1",
+  "asOf": "2026-10-01",
+  "taxYear": 2026,
+  "source": "Every federal figure the projection engine (engine/) needs for tax year 2026, one value per entry with the official release it comes from. IRS Rev. Proc. 2025-32 (brackets, standard deduction, capital gains bands), IRS Notice 2025-67 (plan limits), IRS Rev. Proc. 2025-19 (HSA), SSA 2026 fact sheet (wage base, COLA), IRC sections for the figures Congress does not index, IRS Publication 590-B (RMD table).",
+  "confidence": "sourced",
+  "confidenceNote": "Checked on 2026-10-01 against secondary transcriptions of the official releases (Tax Foundation, NerdWallet, KPMG, Mercer, the Finance Buff, Kitces) because irs.gov, ssa.gov and hhs.gov were unreachable from the build session. Every value agreed across at least two sources. Each entry's `source` is the official URL to re-check before relying on a figure to the dollar.",
+  "note": "Read only by engine/ (D-341). Dollars are whole dollars here; the engine converts to cents on load. Later years are indexed from these by the run's inflation assumption unless `indexed` is false (Congress fixed the figure). Rates are decimal fractions. Bracket rows give the TOP of taxable income taxed at that rate; null means no ceiling. The older data/*_2026.json files are the unverified copies the rooms still read until Step 7 rewires them; nothing in this file is read by a room.",
+  "unit": "US dollars, whole",
+  "checked": "2026-10-01",
+  "filingStatuses": ["single", "married_joint", "married_separate", "head_of_household"],
+  "federal": {
+    "ordinaryBrackets": {
+      "source": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+      "sourceNote": "Rev. Proc. 2025-32 section 3.01, the section 1(j)(2) rate tables for taxable years beginning in 2026.",
+      "indexed": true,
+      "single": [
+        { "upTo": 12400, "rate": 0.10 },
+        { "upTo": 50400, "rate": 0.12 },
+        { "upTo": 105700, "rate": 0.22 },
+        { "upTo": 201775, "rate": 0.24 },
+        { "upTo": 256225, "rate": 0.32 },
+        { "upTo": 640600, "rate": 0.35 },
+        { "upTo": null, "rate": 0.37 }
+      ],
+      "married_joint": [
+        { "upTo": 24800, "rate": 0.10 },
+        { "upTo": 100800, "rate": 0.12 },
+        { "upTo": 211400, "rate": 0.22 },
+        { "upTo": 403550, "rate": 0.24 },
+        { "upTo": 512450, "rate": 0.32 },
+        { "upTo": 768700, "rate": 0.35 },
+        { "upTo": null, "rate": 0.37 }
+      ],
+      "married_separate": [
+        { "upTo": 12400, "rate": 0.10 },
+        { "upTo": 50400, "rate": 0.12 },
+        { "upTo": 105700, "rate": 0.22 },
+        { "upTo": 201775, "rate": 0.24 },
+        { "upTo": 256225, "rate": 0.32 },
+        { "upTo": 384350, "rate": 0.35 },
+        { "upTo": null, "rate": 0.37 }
+      ],
+      "head_of_household": [
+        { "upTo": 17700, "rate": 0.10 },
+        { "upTo": 67450, "rate": 0.12 },
+        { "upTo": 105700, "rate": 0.22 },
+        { "upTo": 201750, "rate": 0.24 },
+        { "upTo": 256200, "rate": 0.32 },
+        { "upTo": 640600, "rate": 0.35 },
+        { "upTo": null, "rate": 0.37 }
+      ]
+    },
+    "standardDeduction": {
+      "source": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+      "sourceNote": "Rev. Proc. 2025-32 section 3.16, section 63(c)(2) as amended by Public Law 119-21 (the 2025 reconciliation act) section 70102.",
+      "indexed": true,
+      "single": 16100,
+      "married_joint": 32200,
+      "married_separate": 16100,
+      "head_of_household": 24150
+    },
+    "additionalStandardDeductionAged": {
+      "source": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+      "sourceNote": "Rev. Proc. 2025-32 section 3.16(2), section 63(f): the extra standard deduction for each person 65 or older (and again for blindness, not modelled). Married amounts are per qualifying spouse.",
+      "indexed": true,
+      "perPersonMarried": 1650,
+      "perPersonUnmarried": 2050
+    },
+    "seniorDeduction": {
+      "source": "https://www.congress.gov/bill/119th-congress/house-bill/1/text",
+      "sourceNote": "Public Law 119-21 section 70103, new section 151(d)(5): $6,000 per person 65 or older for tax years 2025 through 2028, reduced by 6% of MAGI above $75,000 (single) or $150,000 (joint). Not indexed. Gone after 2028.",
+      "indexed": false,
+      "perPerson": 6000,
+      "phaseOutRate": 0.06,
+      "phaseOutStart": { "single": 75000, "married_joint": 150000, "married_separate": 75000, "head_of_household": 75000 },
+      "firstYear": 2025,
+      "lastYear": 2028
+    },
+    "capitalGains": {
+      "source": "https://www.irs.gov/pub/irs-drop/rp-25-32.pdf",
+      "sourceNote": "Rev. Proc. 2025-32 section 3.03, section 1(h)(1): the maximum zero rate amount and the maximum 15 percent rate amount, measured on taxable income with gains stacked on top of ordinary income.",
+      "indexed": true,
+      "rates": [0.0, 0.15, 0.20],
+      "zeroRateUpTo": { "single": 49450, "married_joint": 98900, "married_separate": 49450, "head_of_household": 66200 },
+      "fifteenRateUpTo": { "single": 545500, "married_joint": 613700, "married_separate": 306850, "head_of_household": 579600 }
+    },
+    "netInvestmentIncomeTax": {
+      "source": "https://www.law.cornell.edu/uscode/text/26/1411",
+      "sourceNote": "IRC 1411: 3.8% of the lesser of net investment income or MAGI above the threshold. Thresholds are statutory and not indexed.",
+      "indexed": false,
+      "rate": 0.038,
+      "threshold": { "single": 200000, "married_joint": 250000, "married_separate": 125000, "head_of_household": 200000 }
+    },
+    "socialSecurityBenefitTaxation": {
+      "source": "https://www.law.cornell.edu/uscode/text/26/86",
+      "sourceNote": "IRC 86: provisional income = AGI (without benefits) + tax-exempt interest + half of benefits. Up to 50% of benefits taxable above the first threshold, up to 85% above the second. Thresholds fixed since 1984 and 1993, never indexed. Married filing separately (living together) is zero and zero.",
+      "indexed": false,
+      "firstThreshold": { "single": 25000, "married_joint": 32000, "married_separate": 0, "head_of_household": 25000 },
+      "secondThreshold": { "single": 34000, "married_joint": 44000, "married_separate": 0, "head_of_household": 34000 },
+      "firstTierShare": 0.50,
+      "secondTierShare": 0.85
+    },
+    "earlyWithdrawalPenalty": {
+      "source": "https://www.law.cornell.edu/uscode/text/26/72",
+      "sourceNote": "IRC 72(t)(1): 10% additional tax on distributions from qualified plans and IRAs before age 59 and a half. 72(t)(2)(A)(v): separation from service in or after the year of turning 55 exempts that employer's plan (the Rule of 55). 72(t)(2)(A)(iv): substantially equal periodic payments (72(t) SEPP). 408A(d)(3)(F): a converted amount withdrawn within five tax years of the conversion is penalised as if it were the original distribution.",
+      "indexed": false,
+      "rate": 0.10,
+      "accessAge": 59.5,
+      "ruleOf55Age": 55,
+      "conversionSeasoningYears": 5,
+      "rothEarningsFiveYearRule": 5
+    },
+    "fica": {
+      "source": "https://www.ssa.gov/oact/cola/cbb.html",
+      "sourceNote": "SSA 2026 contribution and benefit base $184,500 (announced October 2025, COLA fact sheet https://www.ssa.gov/news/press/factsheets/colafacts2026.pdf). Rates are IRC 3101 and 3111 (6.2% OASDI employee share, 1.45% Medicare employee share). Additional Medicare tax is IRC 3101(b)(2), 0.9% above a statutory, unindexed threshold.",
+      "indexed": true,
+      "socialSecurityRateEmployee": 0.062,
+      "socialSecurityWageBase": 184500,
+      "medicareRateEmployee": 0.0145,
+      "additionalMedicareRate": 0.009,
+      "additionalMedicareThreshold": { "single": 200000, "married_joint": 250000, "married_separate": 125000, "head_of_household": 200000 },
+      "additionalMedicareThresholdIndexed": false
+    },
+    "selfEmploymentTax": {
+      "source": "https://www.law.cornell.edu/uscode/text/26/1402",
+      "sourceNote": "IRC 1401 and 1402(a)(12): net earnings from self-employment are 92.35% of net profit; 12.4% OASDI up to the wage base (shared with wages), 2.9% Medicare on all; IRC 164(f) deducts half the SE tax from gross income.",
+      "indexed": false,
+      "netEarningsFactor": 0.9235,
+      "socialSecurityRate": 0.124,
+      "medicareRate": 0.029,
+      "deductibleShare": 0.5
+    },
+    "limits": {
+      "source": "https://www.irs.gov/newsroom/401k-limit-increases-to-24500-for-2026-ira-limit-increases-to-7500",
+      "sourceNote": "IRS Notice 2025-67 (https://www.irs.gov/pub/irs-drop/n-25-67.pdf): 402(g) elective deferral $24,500; 414(v) catch-up $8,000 at 50, $11,250 at 60 to 63 (SECURE 2.0 section 109); 415(c) annual additions $72,000; IRA $7,500 with $1,100 catch-up at 50. HSA from Rev. Proc. 2025-19 (https://www.irs.gov/pub/irs-drop/rp-25-19.pdf): $4,400 self-only, $8,750 family, $1,000 catch-up at 55 (IRC 223(b)(3), not indexed).",
+      "indexed": true,
+      "elective401k": 24500,
+      "catchup401kAge50": 8000,
+      "catchup401kAge60to63": 11250,
+      "annualAdditions415c": 72000,
+      "ira": 7500,
+      "iraCatchupAge50": 1100,
+      "hsaSelfOnly": 4400,
+      "hsaFamily": 8750,
+      "hsaCatchupAge55": 1000,
+      "hsaCatchupIndexed": false,
+      "rothIraPhaseOut": {
+        "sourceNote": "Notice 2025-67, IRC 408A(c)(3): the Roth IRA contribution phases out across this MAGI range. The engine applies it unless assumptions.backdoorRoth is true.",
+        "single": [153000, 168000],
+        "married_joint": [242000, 252000],
+        "married_separate": [0, 10000],
+        "head_of_household": [153000, 168000]
+      },
+      "traditionalIraDeductionPhaseOut": {
+        "sourceNote": "Notice 2025-67, IRC 219(g): deduction phases out across this MAGI range when covered by a workplace plan. The engine warns above the range; it does not track nondeductible basis.",
+        "single": [81000, 91000],
+        "married_joint": [129000, 149000],
+        "married_separate": [0, 10000],
+        "head_of_household": [81000, 91000]
+      }
+    },
+    "requiredMinimumDistributions": {
+      "source": "https://www.irs.gov/publications/p590b",
+      "sourceNote": "Starting age by birth year: IRC 401(a)(9)(C) as amended by SECURE 2.0 section 107 (73 for those born 1951 to 1959, 75 for those born 1960 or later; 72 for 1950 and before under SECURE 1.0, 70 and a half before that). Divisors are the Uniform Lifetime Table (Pub 590-B Appendix B, Table III), the 2022 revision, Treas. Reg. 1.401(a)(9)-9.",
+      "indexed": false,
+      "startAgeByBirthYear": [
+        { "bornUpTo": 1950, "age": 72 },
+        { "bornUpTo": 1959, "age": 73 },
+        { "bornUpTo": null, "age": 75 }
+      ],
+      "uniformLifetimeTable": {
+        "72": 27.4, "73": 26.5, "74": 25.5, "75": 24.6, "76": 23.7, "77": 22.9, "78": 22.0, "79": 21.1,
+        "80": 20.2, "81": 19.4, "82": 18.5, "83": 17.7, "84": 16.8, "85": 16.0, "86": 15.2, "87": 14.4,
+        "88": 13.7, "89": 12.9, "90": 12.2, "91": 11.5, "92": 10.8, "93": 10.1, "94": 9.5, "95": 8.9,
+        "96": 8.4, "97": 7.8, "98": 7.3, "99": 6.8, "100": 6.4, "101": 6.0, "102": 5.6, "103": 5.2,
+        "104": 4.9, "105": 4.6, "106": 4.3, "107": 4.1, "108": 3.9, "109": 3.7, "110": 3.5
+      }
+    },
+    "socialSecurity": {
+      "source": "https://www.ssa.gov/news/press/factsheets/colafacts2026.pdf",
+      "sourceNote": "2026 COLA 2.8%; full retirement age 67 for those born 1960 or later (Social Security Act section 216(l)); reduction of 5/9 of 1% a month for the first 36 months before full retirement age and 5/12 of 1% beyond; delayed retirement credit 8% a year to 70 (section 202(w)). The engine applies these to the benefit typed at full retirement age.",
+      "indexed": false,
+      "fullRetirementAge": 67,
+      "earliestClaimAge": 62,
+      "latestClaimAge": 70,
+      "earlyReductionPerMonthFirst36": 0.005556,
+      "earlyReductionPerMonthBeyond36": 0.004167,
+      "delayedCreditPerYear": 0.08,
+      "cola2026": 0.028
+    },
+    "medicare": {
+      "source": "https://www.cms.gov/newsroom/fact-sheets/2026-medicare-parts-b-premiums-and-deductibles",
+      "sourceNote": "CMS, November 2025: the 2026 standard Part B premium is $202.90 a month, the Part B deductible $283. The engine's default Medicare cost per person at 65 is this premium plus a Medigap and Part D allowance that assumptions.medicareMonthlyPerPerson can replace. Income-related surcharges (IRMAA) are not modelled; a warning says so when MAGI crosses the first tier.",
+      "indexed": true,
+      "partBMonthlyPremium": 202.90,
+      "partBDeductible": 283,
+      "irmaaFirstTierMagi": { "single": 109000, "married_joint": 218000, "married_separate": 109000, "head_of_household": 109000 },
+      "defaultMonthlyAllPartsPerPerson": 450
+    }
+  }
+}
