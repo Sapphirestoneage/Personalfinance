@@ -1,0 +1,16 @@
+import { chromium, devices } from '@playwright/test';
+const out = process.argv[2] ?? '.';
+const browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined });
+const ctx = await browser.newContext({ ...devices['Pixel 7'], colorScheme: 'light' });
+const page = await ctx.newPage();
+const shot = (name) => page.screenshot({ path: `${out}/${name}.png`, fullPage: true });
+const go = async (p) => { await page.goto(`http://127.0.0.1:4173/#/${p}`); await page.getByTestId('hide').waitFor(); await page.waitForTimeout(300); };
+await go('demo'); await page.getByTestId('sample-sample-inperson').click(); await page.getByTestId('today-numbers').waitFor();
+for (let i = 0; i < 12; i++) await page.getByTestId('ci-inquiries-plus').click();
+await page.getByTestId('ci-bookings-plus').click(); await page.getByTestId('ci-bookings-plus').click();
+await page.getByTestId('save-checkin').click(); await page.waitForTimeout(300);
+await go('today'); await shot('p3-today');
+await go('numbers'); await page.waitForTimeout(500); await shot('p3-numbers');
+await go('clients'); await page.getByTestId('new-client').click(); await page.getByTestId('cf-alias').fill('Blue'); await page.getByTestId('cf-save').click(); await page.waitForTimeout(300); await shot('p3-clients');
+await ctx.close(); await browser.close();
+console.log('done');

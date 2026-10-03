@@ -22,6 +22,11 @@ are archives. Use the index and the pack tool. Room cards in
 
 Shortcuts: `/start`, `/room <id>`, `/find <words>`, `/simplify`, `/drift`, `/wrap`.
 
+## Not SPARKS: `slam/`
+
+The SLAM Profit Engine is a separate app (React + Vite) in `slam/` with its
+own `slam/CLAUDE.md`. Read that instead when the task is in `slam/`.
+
 ## Non-negotiables
 
 - No real financial data, ever. Demo values only, behind "Try with example numbers".

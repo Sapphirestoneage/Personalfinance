@@ -47,3 +47,28 @@ jobs:
           node test/xss.js
           node test/comeback.js
           node test/alignment.js
+
+  # SLAM Profit Engine (slam/): a separate app with its own toolchain.
+  slam:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: slam
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: slam/package-lock.json
+      - run: npm ci
+      - name: Typecheck, engine and golden tests, build
+        run: |
+          npm run typecheck
+          npm test
+          npm run build
+      - name: Phone flows against the build
+        run: |
+          npx playwright install --with-deps chromium
+          npm run test:e2e

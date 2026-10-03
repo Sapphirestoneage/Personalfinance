@@ -1,0 +1,16 @@
+import { chromium, devices } from '@playwright/test';
+const out = process.argv[2] ?? '.';
+const browser = await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined });
+const ctx = await browser.newContext({ ...devices['Pixel 7'], colorScheme: 'light' });
+const page = await ctx.newPage();
+const shot = (name) => page.screenshot({ path: `${out}/${name}.png`, fullPage: true });
+const go = async (p) => { await page.goto(`http://127.0.0.1:4173/#/${p}`); await page.getByTestId('hide').waitFor(); await page.waitForTimeout(300); };
+await go('today'); await shot('p1-today-fresh');
+await go('demo'); await page.getByTestId('sample-sample-inperson').click(); await page.getByTestId('today-numbers').waitFor();
+await go('businesses/sample-inperson-inPerson'); await page.waitForTimeout(500); await shot('p1-tab-plain');
+await page.getByTestId('src-add').click(); await page.waitForTimeout(200); await shot('p1-sources-form');
+await go('businesses/settings'); await page.getByTestId('mode-pro').click(); await page.waitForTimeout(200);
+await go('businesses/sample-inperson-inPerson'); await page.waitForTimeout(500); await shot('p1-tab-pro');
+await go('businesses/sample-inperson-content'); await page.waitForTimeout(500); await shot('p1-tab-content-pro');
+await ctx.close(); await browser.close();
+console.log('done');

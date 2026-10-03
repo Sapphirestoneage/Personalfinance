@@ -1,0 +1,10 @@
+# The root .gitignore hides every package.json; this app's manifest and
+# lockfile belong in the repo. Build output and installed modules do not.
+!package.json
+!package-lock.json
+node_modules/
+dist/
+dev-dist/
+test-results/
+playwright-report/
+.vite/

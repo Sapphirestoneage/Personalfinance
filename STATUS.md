@@ -26,6 +26,7 @@ Updated: 2026-09-24
   a bonus target (Debt); The Close's `#on-cards` says the rate, reach and pace.
   **By place (D-338)**: the log's note is the place; Expenses `#merchants` draws
   where all the money went and where the discretionary part went.
+- **`slam/` (SLAM Profit Engine, phases 0 and 1)**: separate app, own CLAUDE.md and CI job; G1-G21 and the phone flows green.
 - **Main is worked on by another lane**: merge before every push. D-228's reframe has NOT shipped. Freeze holds (D-313).
   Coach Mode is its own lane in `coach/` (D-339, `coach/STATUS.md`).
   The Marketing Scoreboard is its own lane in `marketing/` (D-340, `marketing/STATUS.md`).
