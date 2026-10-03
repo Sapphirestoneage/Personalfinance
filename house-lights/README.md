@@ -14,7 +14,7 @@ test suite does not scan it. See `DECISIONS.md` D-090.
 
 | Tab | What it does |
 |---|---|
-| **Guide** | 55 ways to get a Broadway ticket — lotteries, rush, TKTS, memberships, credit-card presales, papering services, ushering — with effort, reliability, price and notes. Filter by category, sort by price or effort. |
+| **Guide** | 65 ways to get a Broadway ticket — lotteries, rush, TKTS, memberships, credit-card presales, papering services, ushering — with effort, reliability, price and notes. Filter by category, sort by price or effort. |
 | **Logbook** | Log a show. One tap on a current show fills the theatre, category and type; Quick-add logs it instantly. Details: price × tickets, face value (for savings), rating, who you went with, vibes, seat, standout performers, who recommended it, **souvenirs you took home**, merch spend, up to three compressed photos. Future dates go to an Upcoming countdown. |
 | **Shows** | A database of every Broadway production since 2006 plus what is running now. Tap once = seen; +1 for a repeat; ☆ to wishlist, ranked by priority. |
 | **Theatres** | All 41 Broadway houses and the notable Off-Broadway ones as a checklist, auto-ticked when you log a show there. 📜 opens twenty years of history for that house. |
