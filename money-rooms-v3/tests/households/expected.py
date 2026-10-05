@@ -70,20 +70,44 @@ def main(name):
     # ---- Income
     line(); line('## Income')
     gross = 0; take = 0; pretax = 0; roth = 0; hsa = 0; other = 0; wh = 0; bonus = 0; equity = 0; hours = 0.0; workcosts = 0
-    match_actual = 0; match_max = 0; match_formula = None
+    match_actual = 0; match_max = 0; match_formula = None; paystub = 0; self_monthly = 0; w2_gross_monthly = 0
     for r in rows('income'):
         t = r['type']
         if t in ('w2', 'c1099', 'side'):
             g = monthly(r, 'grossPay') or 0; th = monthly(r, 'takeHome')
+            paystub += g
+            if t == 'w2' and not w2_gross_monthly: w2_gross_monthly = g
+            if t in ('c1099', 'side'): self_monthly += g
+            if th is None and g:
+                # Enrich: infer take-home with the one tax function, this income on its own, before state tax
+                pr0 = monthly(r, 'pretaxRetirement') or 0; hs0 = monthly(r, 'hsaPayroll') or 0; ot0 = monthly(r, 'pretaxOther') or 0; ro0 = monthly(r, 'rothRetirement') or 0
+                pretax_a = (pr0 + hs0 + ot0) * 12
+                if t in ('c1099', 'side'):
+                    exp = (monthly(r, 'businessExpenses') or 0) * 12; net = max(0, g * 12 - exp)
+                    base = R(net * TAX['fica']['selfEmploymentNetFactor']); se_tax = R(min(base, TAX['fica']['socialSecurityWageBase']) * TAX['fica']['socialSecurityRate'] * 2) + R(base * TAX['fica']['medicareRate'] * 2); se_half = R(se_tax * 0.5)
+                    fed0, _ = federal(max(0, net - se_half - pretax_a - TAX['standardDeduction'][status]), status)
+                    th = R((g * 12 - fed0 - se_tax - exp - pretax_a - ro0 * 12) / 12)
+                    line('- %s (%s): take-home inferred = (%s x 12 - federal %s - self-employment tax %s - expenses %s) / 12 = %s a month (this income on its own, before state tax).' % (r['nickname'], t, dollars(g), dollars(fed0), dollars(se_tax), dollars(exp), dollars(th)))
+                else:
+                    fed0, _ = federal(max(0, g * 12 - pretax_a - TAX['standardDeduction'][status]), status)
+                    fw = g * 12 - (hs0 + ot0) * 12
+                    fica0 = R(min(fw, TAX['fica']['socialSecurityWageBase']) * TAX['fica']['socialSecurityRate']) + R(fw * TAX['fica']['medicareRate'])
+                    th = R((g * 12 - fed0 - fica0 - pretax_a - ro0 * 12) / 12)
+                    line('- %s (%s): take-home inferred = (%s x 12 - federal %s - FICA %s - pre-tax %s) / 12 = %s a month (before state tax).' % (r['nickname'], t, dollars(g), dollars(fed0), dollars(fica0), dollars(pretax_a), dollars(th)))
+                th = max(0, th)
             b = monthly(r, 'bonus') or 0; eq = monthly(r, 'equity') or 0
             pr = monthly(r, 'pretaxRetirement') or 0; ro = monthly(r, 'rothRetirement') or 0; hs = monthly(r, 'hsaPayroll') or 0; ot = monthly(r, 'pretaxOther') or 0
             wf = monthly(r, 'withholdingFederal') or 0
-            line('- %s (%s): gross %s per paycheck x 26 / 12 = %s a month; take-home %s x 26 / 12 = %s; bonus %s a year / 12 = %s; pre-tax retirement %s x 26 / 12 = %s; other pre-tax %s x 26 / 12 = %s.' % (
-                r['nickname'], t, dollars(val(r['f']['grossPay'])), dollars(g), dollars(val(r['f']['takeHome'])), dollars(th), dollars(val(r['f'].get('bonus')) or 0), dollars(b), dollars(val(r['f'].get('pretaxRetirement')) or 0), dollars(pr), dollars(val(r['f'].get('pretaxOther')) or 0), dollars(ot)))
+            n_pay = PAYCHECKS[val(r['f'].get('payFrequency')) or 'biweekly']
+            line('- %s (%s): gross %s per pay x %d / 12 = %s a month; take-home %s x %d / 12 = %s; bonus %s a year / 12 = %s; pre-tax retirement %s x %d / 12 = %s; other pre-tax %s x %d / 12 = %s.' % (
+                r['nickname'], t, dollars(val(r['f']['grossPay']) or 0), n_pay, dollars(g), dollars(val(r['f'].get('takeHome')) or 0) if 'takeHome' in r['f'] else 'inferred', n_pay, dollars(th or 0), dollars(val(r['f'].get('bonus')) or 0), dollars(b), dollars(val(r['f'].get('pretaxRetirement')) or 0), n_pay, dollars(pr), dollars(val(r['f'].get('pretaxOther')) or 0), n_pay, dollars(ot)))
             gross += g + b + eq; take += th or 0; pretax += pr; roth += ro; hsa += hs; other += ot; wh += wf; bonus += b; equity += eq
             hp = val(r['f'].get('hoursPaid')) or 0; hc = val(r['f'].get('hoursCommute')) or 0
             hours += (hp + hc) * 52 / 12; workcosts += monthly(r, 'workCosts') or 0
-            base_gross = g
+        if t == 'other':
+            o = monthly(r, 'otherIncome') or 0
+            gross += o; take += o
+            line('- %s (other): %s a month, counted in gross and take-home.' % (r['nickname'], dollars(o)))
         if t == 'benefits':
             rate = val(r['f']['matchRate']); upto = val(r['f']['matchUpTo'])
             match_formula = (rate, upto)
@@ -94,6 +118,7 @@ def main(name):
         w2 = rows('income', 'w2')[0]
         gp = val(w2['f']['grossPay']); pr = val(w2['f']['pretaxRetirement']) or 0
         share = pr / gp
+        base_gross = w2_gross_monthly
         match_actual = R(base_gross * rate * min(share, upto))
         match_max = R(base_gross * rate * upto)
         line('- Match: employee defers %s of %s = %s of pay; match %s of pay up to %s: actual = %s x %s x %s = %s a month; max = %s x %s x %s = %s a month.' % (dollars(pr), dollars(gp), pct(share), pct(rate), pct(upto), dollars(base_gross), pct(rate), pct(min(share, upto)), dollars(match_actual), dollars(base_gross), pct(rate), pct(upto), dollars(match_max)))
@@ -106,15 +131,30 @@ def main(name):
     E['matchMaxMonthly'] = match_max
     put('workHoursMonthly', hours_m, '- Work hours a month = (paid + commute) x 52 / 12 = %.1f.' % hours_m)
     put('workCostsMonthly', workcosts, '- Costs of working a month = %s.' % dollars(workcosts))
+    E['paystubGrossMonthly'] = paystub
 
     # ---- Spending
     line(); line('## Spending')
     cats = {}; fat = 0; fixed = 0; mistakes = 0; total = 0; rough_total = 0; savings_landing = 0; card_spend = {}
+    lo_total = 0; hi_total = 0
+    def spread_of(f):
+        if f['source'] == 'estimated': return ASM['roughSpread']['estimated']
+        if f['source'] == 'lookup-verify': return ASM['roughSpread']['lookup-verify']
+        return ASM['roughSpread'].get(f['state'], 0)
+    def row_range(r, fid, a):
+        f = r['f'][fid]; v = f['v']
+        if isinstance(v, dict) and 'low' in v:
+            cad = f.get('cad', 'month'); n = PAYCHECKS[val(r['f'].get('payFrequency')) or 'biweekly']
+            conv = lambda x: {'month': x, 'year': R(x / 12), 'paycheck': R(x * n / 12), 'oneoff': 0}[cad]
+            return conv(v['low']), conv(v['high'])
+        sp = spread_of(f)
+        return R(a * (1 - sp)), R(a * (1 + sp))
     for r in rows('spending', 'line'):
         a = monthly(r, 'amount')
         if a is None: continue
         cat = val(r['f']['category']); cats[cat] = cats.get(cat, 0) + a; total += a
         f = r['f']['amount']
+        lo, hi = row_range(r, 'amount', a); lo_total += lo; hi_total += hi
         if f['state'] in ('rough', 'will-send') or f['source'] in ('estimated',): rough_total += a
         if val(r['f'].get('fatFloor')): fat += a
         if val(r['f'].get('needWant')) == 'need': fixed += a
@@ -122,20 +162,25 @@ def main(name):
         card = val(r['f'].get('primaryCard'))
         if card: card_spend.setdefault(card, {}).__setitem__(r['nickname'], (cat, a))
         line('- %s: %s a month (%s%s).' % (r['nickname'], dollars(a), cat, ', rough' if f['state'] == 'rough' else ''))
+    for r in rows('spending', 'other'):
+        a = monthly(r, 'otherSpending')
+        if a is None: continue
+        cats['other'] = cats.get('other', 0) + a; total += a
+        lo, hi = row_range(r, 'otherSpending', a); lo_total += lo; hi_total += hi
+        line('- %s: %s a month (other).' % (r['nickname'], dollars(a)))
     for r in rows('spending', 'savings'):
         savings_landing += monthly(r, 'savingsLanding') or 0
-    premiums = 0
+    premiums = 0; prem_lo = 0; prem_hi = 0
     for r in rows('safety', 'insurance'):
         f = r['f'].get('premium')
         if f and val(f) is not None and f.get('cad') != 'paycheck':
-            premiums += monthly(r, 'premium'); line('- Insurance paid from the bank: %s %s a month (added to spending; paycheck premiums are already out of take-home).' % (r['nickname'], dollars(monthly(r, 'premium'))))
+            pm = monthly(r, 'premium'); premiums += pm; plo, phi = row_range(r, 'premium', pm); prem_lo += plo; prem_hi += phi; line('- Insurance paid from the bank: %s %s a month (added to spending; paycheck premiums are already out of take-home).' % (r['nickname'], dollars(monthly(r, 'premium'))))
     spending = total + premiums
     put('baselineMonthly', total, '- Spending lines total = %s a month.' % dollars(total))
     put('premiumsMonthly', premiums, '- Bank-paid premiums = %s a month.' % dollars(premiums))
     put('spending', spending, '- Monthly spending (metric 3) = %s + %s = %s.' % (dollars(total), dollars(premiums), dollars(spending)))
-    spread = R(rough_total * ASM['roughSpread']['rough'])
-    E['spendingRange'] = [spending - spread, spending + spread]
-    line('- Rough lines total %s; at the 20%% rough spread the range is %s to %s.' % (dollars(rough_total), dollars(spending - spread), dollars(spending + spread)))
+    E['spendingRange'] = [lo_total + prem_lo, hi_total + prem_hi]
+    line('- Range: each rough line at its spread (rough 20%%, estimated 25%%, will-send 30%%, a typed range as typed), summed: %s to %s.' % (dollars(lo_total + prem_lo), dollars(hi_total + prem_hi)))
     E['byCategory'] = cats
     put('fatFloor', fat, '- FAT floor (lines flagged) = %s.' % dollars(fat))
     put('fixedMonthly', fixed + premiums, '- Fixed costs (needs %s + bank premiums %s) = %s.' % (dollars(fixed), dollars(premiums), dollars(fixed + premiums)))
@@ -155,7 +200,7 @@ def main(name):
             limit = val(r['f'].get('creditLimit'))
             debts.append(dict(id=r['id'], name=r['nickname'], kind='card', bal=bal, rate=rate, promo=promo, promoEnd=pend, min=mn, full=(autopay == 'full'), limit=limit, stress=r.get('stress'), lib=r.get('lib'), fee=val(r['f'].get('annualFee')) or 0, credits=val(r['f'].get('creditsUsed'))))
         else:
-            rate = val(r['f'].get('rate')) or 0; mn = monthly(r, 'minimum') if 'minimum' in r['f'] else monthly(r, 'payment')
+            rate = val(r['f'].get('rate')) or 0; mn = monthly(r, 'minimum') if 'minimum' in r['f'] else (monthly(r, 'principalInterest') if r['type'] == 'mortgage' else monthly(r, 'payment'))
             debts.append(dict(id=r['id'], name=r['nickname'], kind=r['type'], bal=bal, rate=rate, promo=None, promoEnd=None, min=mn or 0, full=False, limit=None, stress=r.get('stress')))
     total_debt = sum(d['bal'] for d in debts); service = sum(d['min'] for d in debts)
     for d in debts: line('- %s: balance %s, rate %s%s, minimum %s a month%s.' % (d['name'], dollars(d['bal']), pct(d['rate']), (', promo %s until %s' % (pct(d['promo']), d['promoEnd'])) if d['promo'] is not None and d['promoEnd'] else '', dollars(d['min']), ', autopay full (no interest)' if d['full'] else ''))
@@ -221,16 +266,23 @@ def main(name):
     for k, v in sims.items():
         line('  - %s order %s: debt-free %s after %s payments, total interest %s. %s' % (k, ' > '.join(next(d['name'] for d in debts if d['id'] == i) for i in E['payoffOrders'][k]), v['debtFree'], v['months'], dollars(v['interest']), '; '.join(v['log'])))
     E['freedCashByMonth'] = [{'month': m, 'cents': sum(d['min'] for d in debts if sims['avalanche']['paid'].get(d['id']) and sims['avalanche']['paid'][d['id']] <= m)} for m in sorted(set(sims['avalanche']['paid'].values()))]
-    # wallet
+    # wallet (every card, with or without a limit)
+    import re as _re
+    def earn_cat(cat, nick):
+        n = (nick or '').lower()
+        if cat == 'food': return 'dining' if _re.search(r'restaurant|dining|takeout|take-out|eating out', n) else 'groceries'
+        if cat == 'transportation': return 'gas' if _re.search(r'gas|fuel', n) else 'travel'
+        if cat == 'utilities': return 'streaming' if 'stream' in n else 'other'
+        if cat == 'irregular': return 'travel' if _re.search(r'travel|flight|hotel|trip', n) else 'other'
+        return 'other'
     wallet = []
-    for d in cards:
+    all_cards = [d for d in debts if d['kind'] == 'card']
+    for d in all_cards:
         card = CARDS.get(d['lib']) if d.get('lib') else None
         spend = card_spend.get(d['name'], {})
         rewards = 0; parts = []
         for nick, (cat, amt) in spend.items():
-            ecat = {'food': 'groceries', 'transportation': 'travel', 'utilities': 'other', 'accommodation': 'other', 'wants': 'other', 'irregular': 'travel' if 'travel' in nick.lower() else 'other', 'mistakes': 'other', 'therapy': 'other', 'other': 'other'}[cat]
-            if cat == 'food' and any(w in nick.lower() for w in ('restaurant', 'dining', 'takeout')): ecat = 'dining'
-            if cat == 'utilities' and 'stream' in nick.lower(): ecat = 'streaming'
+            ecat = earn_cat(cat, nick)
             rate = card['earn'][ecat] if card else 0
             rw = R(amt * 12 * rate * card['pointValueCents'] / 100) if card else 0
             rewards += rw; parts.append('%s %s/mo at %sx %.2fc = %s' % (nick, dollars(amt), rate, card['pointValueCents'] if card else 0, dollars(rw)))
@@ -251,12 +303,10 @@ def main(name):
             v = min(rate, ASM['portalOnlyEarnCap']) * c['pointValueCents'] / 100
             best[cat] = max(best.get(cat, 0), v)
     left = 0
-    for d in cards:
+    for d in all_cards:
         card = CARDS.get(d['lib']) if d.get('lib') else None
         for nick, (cat, amt) in card_spend.get(d['name'], {}).items():
-            ecat = {'food': 'groceries', 'transportation': 'travel', 'utilities': 'other', 'accommodation': 'other', 'wants': 'other', 'irregular': 'travel' if 'travel' in nick.lower() else 'other', 'mistakes': 'other', 'therapy': 'other', 'other': 'other'}[cat]
-            if cat == 'food' and any(w in nick.lower() for w in ('restaurant', 'dining', 'takeout')): ecat = 'dining'
-            if cat == 'utilities' and 'stream' in nick.lower(): ecat = 'streaming'
+            ecat = earn_cat(cat, nick)
             actual = (card['earn'][ecat] * card['pointValueCents'] / 100) if card else 0
             left += R(amt * 12 * max(0, best[ecat] - actual))
     put('rewardsLeftAnnual', left, '- Rewards left on the table (best library rate per category, portal-only rates capped at 6x, minus actual) = %s a year. Best rates: %s.' % (dollars(left), ', '.join('%s %.1f%%' % (k, v * 100) for k, v in best.items())))
@@ -300,11 +350,15 @@ def main(name):
     E['annualContributions'] = {'employee': employee_annual, 'employer': employer_annual, 'total': employee_annual + employer_annual}
     line('- Annual contributions: employee (payroll %s x 12 + bank %s) = %s; employer %s; total %s.' % (dollars(pretax + roth + hsa), dollars(contrib_employee_annual), dollars(employee_annual), dollars(employer_annual), dollars(employee_annual + employer_annual)))
     room = []
-    k401 = (pretax + roth) * 12; room.append(dict(limitId='401k', limit=2450000, used=k401, left=2450000 - k401))
+    K401 = ('401k', 'roth401k', '403b', '457b', 'tsp', 'solo401k')
+    acct_types = [val(r['f']['accountType']) for r in rows('invest', 'account')]
+    k401 = (pretax + roth) * 12 + sum((monthly(r, 'contribAmount') or 0) * 12 for r in rows('invest', 'account') if val(r['f']['accountType']) in K401)
+    if k401 > 0 or any(t in K401 for t in acct_types): room.append(dict(limitId='401k', limit=2450000, used=k401, left=2450000 - k401))
     ira_used = sum((monthly(r, 'contribAmount') or 0) * 12 for r in rows('invest', 'account') if val(r['f']['accountType']) in ('tradIra', 'rothIra'))
-    room.append(dict(limitId='ira', limit=750000, used=ira_used, left=750000 - ira_used))
-    if any(val(r['f']['accountType']) == 'hsa' for r in rows('invest', 'account')) or hsa:
-        room.append(dict(limitId='hsa-self', limit=440000, used=hsa * 12, left=440000 - hsa * 12))
+    if any(t in ('tradIra', 'rothIra') for t in acct_types): room.append(dict(limitId='ira', limit=750000, used=ira_used, left=750000 - ira_used))
+    if 'hsa' in acct_types or hsa:
+        hsa_used = hsa * 12 + sum((monthly(r, 'contribAmount') or 0) * 12 for r in rows('invest', 'account') if val(r['f']['accountType']) == 'hsa')
+        room.append(dict(limitId='hsa-self', limit=440000, used=hsa_used, left=440000 - hsa_used))
     E['roomLeft'] = room
     line('- Room left: ' + '; '.join('%s limit %s, used %s, left %s' % (x['limitId'], dollars(x['limit']), dollars(x['used']), dollars(x['left'])) for x in room) + '.')
     mc = match_actual / match_max if match_max else None
@@ -349,17 +403,23 @@ def main(name):
     line('- 30 Tax-advantaged share = (%s + %s + %s) / %s = %s.' % (dollars(buckets['pretax']), dollars(buckets['roth']), dollars(buckets['hsa']), dollars(total_assets), pct(E['taxAdvantagedShare'])))
     # taxes
     gross_annual = gross * 12; ded = TAX['standardDeduction'][status]
-    taxable = max(0, gross_annual - (pretax + hsa + other) * 12 - ded)
+    self_annual = self_monthly * 12
+    se_base = R(self_annual * TAX['fica']['selfEmploymentNetFactor']) if self_annual else 0
+    se_tax = (R(min(se_base, TAX['fica']['socialSecurityWageBase']) * TAX['fica']['socialSecurityRate'] * 2) + R(se_base * TAX['fica']['medicareRate'] * 2)) if self_annual else 0
+    se_half = R(se_tax * 0.5)
+    taxable = max(0, gross_annual - se_half - (pretax + hsa + other) * 12 - ded)
     fed, marginal = federal(taxable, status)
+    if self_annual: line('- Self-employment income %s a year: SE tax = both halves on 92.35%% = %s; half (%s) is deducted before the federal calculation.' % (dollars(self_annual), dollars(se_tax), dollars(se_half)))
     E['federalAnnual'] = fed; E['marginalRate'] = marginal; E['effectiveRate'] = round(fed / gross_annual, 6)
     line('- 38 Federal: taxable = %s - pre-tax (%s + %s + %s) x 12 - standard deduction %s = %s; tax by bracket = %s; effective %s / %s = %s; marginal %s.' % (dollars(gross_annual), dollars(pretax), dollars(hsa), dollars(other), dollars(ded), dollars(taxable), dollars(fed), dollars(fed), dollars(gross_annual), pct(fed / gross_annual), pct(marginal)))
-    fica_wages = gross_annual - (hsa + other) * 12
+    fica_wages = max(0, gross_annual - self_annual - (hsa + other) * 12)
     ss = R(min(fica_wages, TAX['fica']['socialSecurityWageBase']) * TAX['fica']['socialSecurityRate']); med = R(fica_wages * TAX['fica']['medicareRate'])
-    E['ficaAnnual'] = ss + med
-    line('- 39 FICA: wages %s (gross less section 125 and HSA); Social Security 6.2%% = %s; Medicare 1.45%% = %s; total %s.' % (dollars(fica_wages), dollars(ss), dollars(med), dollars(ss + med)))
+    E['ficaAnnual'] = ss + med + se_tax
+    line('- 39 FICA: wages %s (gross less self-employment income, section 125 and HSA); Social Security 6.2%% = %s; Medicare 1.45%% = %s; plus SE tax %s; total %s.' % (dollars(fica_wages), dollars(ss), dollars(med), dollars(se_tax), dollars(ss + med + se_tax)))
     E['savedPer1000Pretax'] = R(100000 * marginal); line('- 40 Tax saved per $1,000 pre-tax = %s x $1,000 = %s.' % (pct(marginal), dollars(E['savedPer1000Pretax'])))
-    implied = (base_gross - take - (pretax + roth + hsa + other)) / base_gross
-    E['impliedRate'] = round(implied, 6); line('- 37 Implied tax rate = (%s - %s - %s) / %s = %s.' % (dollars(base_gross), dollars(take), dollars(pretax + roth + hsa + other), dollars(base_gross), pct(implied)))
+    implied = (paystub - take - (pretax + roth + hsa + other)) / paystub if paystub else None
+    E['impliedRate'] = round(implied, 6) if implied is not None else None
+    if implied is not None: line('- 37 Implied tax rate = (paystub gross %s - take-home %s - deductions %s) / %s = %s.' % (dollars(paystub), dollars(take), dollars(pretax + roth + hsa + other), dollars(paystub), pct(implied)))
     # FI
     annual_spend = spending * 12; wr = ASM['withdrawalRate']
     fi = R(annual_spend / wr); put('fiNumber', fi, '- 41 FI number = %s / %s = %s.' % (dollars(annual_spend), pct(wr), dollars(fi)))
@@ -436,10 +496,11 @@ def main(name):
     if leak / take > ASM['hiddenLeakShare'] and leak * 12 >= 10000: fires.append('hidden-leak')
     if sims['stress']['interest'] - sims['avalanche']['interest'] >= 10000: fires.append('wrong-debt-first')
     if util_total is not None and (util_total > ASM['utilizationTotalMax'] or any(v > ASM['utilizationCardMax'] for v in E['utilizationPerCard'].values())): fires.append('utilization-drag')
-    if leak > 0 and room[0]['left'] > 0 and R(min(leak * 12, room[0]['left']) * marginal) >= 10000: fires.append('tax-room')
+    r401 = next((x for x in room if x['limitId'] == '401k'), None)
+    if leak > 0 and r401 and r401['left'] > 0 and R(min(leak * 12, r401['left']) * marginal) >= 10000: fires.append('tax-room')
     if runway['fat'] < ASM['thinRunwayMonths']: fires.append('thin-runway')
     if E['liquidityRate'] < ASM['lockedLiquidityShare'] and ret_age < 59.5: fires.append('locked-up')
-    if stated and rhw < stated * ASM['realWageShare']: fires.append('real-hourly-wage')
+    if stated and hours_m and rhw < stated * ASM['realWageShare']: fires.append('real-hourly-wage')
     if interest >= 10000: fires.append('cost-in-hours')
     if paths['likely']['fiAge']: fires.append('one-more-point')
     if nw >= coast: fires.append('coast-check')

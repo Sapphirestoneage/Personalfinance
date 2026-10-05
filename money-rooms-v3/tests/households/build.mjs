@@ -19,6 +19,7 @@ export function buildHousehold(spec) {
   clock = new Date(spec.start || '2026-09-10T15:00:00.000Z');
   const rec = createRecord({ id: spec.id, now: clock.toISOString() });
   const sessionsSpec = spec.sessions || [{ facts: spec.sun, rows: spec.rows, label: 'Session 1' }];
+  if (spec.sessions && spec.sessions.length && !spec.sessions[0].facts) spec.sessions[0].facts = spec.sun;
   sessionsSpec.forEach((sess, si) => {
     if (si > 0) clock = new Date(sess.start || (clock.getTime() + 14 * 86400 * 1000));
     const sessionId = 's' + (si + 1);

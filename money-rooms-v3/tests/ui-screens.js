@@ -11,6 +11,12 @@ export const SCREENS = [
   { id: 'debt-cards', route: 'ledger/debt/card' },
   { id: 'invest-accounts', route: 'ledger/invest/account' },
   { id: 'life-goals', route: 'ledger/life/goal' },
+  { id: 'measure', route: 'measure' },
+  { id: 'onepager', route: 'onepager' },
+  { id: 'session', route: 'session' },
+  { id: 'scenarios', route: 'scenarios' },
+  { id: 'learn', route: 'learn' },
+  { id: 'assumptions', route: 'assumptions' },
 ];
 
 async function importHousehold(page, APP, name) {
@@ -30,4 +36,7 @@ export const HOUSEHOLDS = [
     },
   },
   { id: 'jordan', async load(page, { APP }) { await importHousehold(page, APP, 'jordan'); } },
+  { id: 'dev', async load(page, { APP }) { await importHousehold(page, APP, 'dev'); } },
+  { id: 'maya', async load(page, { APP }) { await importHousehold(page, APP, 'maya'); } },
+  { id: 'extreme', async load(page, { APP }) { await importHousehold(page, APP, 'extreme'); } },
 ];

@@ -83,7 +83,9 @@ export const app = {
 
   recompute() {
     if (!this.record) { this.result = null; return; }
+    const t0 = performance.now();
     this.result = this.compute ? this.compute(this.record, this.data) : null;
+    this.lastComputeMs = performance.now() - t0;
   },
   compute: null,
 
@@ -141,6 +143,7 @@ export const app = {
       this.mounted = def.mount(main, this);
     }
     this.renderNav();
+    if (this.focusAfterRender) { const f = this.focusAfterRender; this.focusAfterRender = null; const el = main.querySelector('tr[data-row="' + f.rowId + '"] [data-col="' + f.field + '"], .fieldrow[data-field="' + f.field + '"] .control input, .fieldrow[data-field="' + f.field + '"] .control select'); if (el) { el.focus(); if (el.scrollIntoView) el.scrollIntoView({ block: 'center' }); } }
     document.title = (def.title || 'Home') + (this.record ? ' - ' + (clientName(this.record) || 'Client') : '') + ' - Money Rooms';
     window.scrollTo(0, 0);
   },
@@ -257,9 +260,10 @@ function boot() {
     if (mod && e.key === '.') { e.preventDefault(); app.quickNoteBar(); return; }
     if (e.key === 'Escape') { closeOverlay(); return; }
     if (e.altKey && (e.key === 'n' || e.key === 'N') && app.mounted && app.mounted.addRow && !inInput(e)) { e.preventDefault(); app.mounted.addRow(); return; }
-    if (e.altKey && /^[1-8]$/.test(e.key)) {
-      const items = navItems(app).filter(i => !i.group || true);
-      const it = items[parseInt(e.key, 10) - 1];
+    if (e.altKey && /^[0-9]$/.test(e.key)) {
+      const items = navItems(app);
+      const n = e.key === '0' ? 10 : parseInt(e.key, 10);
+      const it = items[n - 1];
       if (it) { e.preventDefault(); location.hash = it.href; }
       return;
     }

@@ -1,8 +1,26 @@
 /* Print: only the one-pager prints, on exactly one page. */
-@page { size: letter; margin: 12mm; }
-body { background: #fff; font-size: 11px; line-height: 14px; }
-.topbar, .sidenav, #overlay, .no-print, .toolbar { display: none !important; }
-.layout { display: block; min-height: 0; }
+@page { size: letter; margin: 10mm 12mm; }
+html, body { background: #fff; font-size: 10px; line-height: 13px; }
+.topbar, .sidenav, #overlay, .no-print, .toolbar, .crumbs, main > header, .op-edit, .btn, .fieldbar { display: none !important; }
+.layout { display: block; min-height: 0; max-width: none; }
 main { padding: 0; }
-.panel { border: 0; padding: 0; break-inside: avoid; }
-a { color: inherit; }
+.onepager { border: 0; padding: 0; max-width: none; }
+.onepager section { margin-bottom: 6px; break-inside: avoid; }
+.onepager header.op-head { margin-bottom: 6px; padding-bottom: 4px; }
+.onepager header.op-head h1 { font-size: 16px; }
+.onepager h3 { font-size: 9px; margin-bottom: 2px; }
+.op-numbers { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; }
+.op-numbers .kpi { border: 1px solid #D5DCE8; padding: 2px 6px; }
+.op-numbers .kpi .label { font-size: 8px; line-height: 10px; }
+.op-numbers .kpi .value { font-size: 12px; line-height: 16px; }
+.op-numbers .kpi .range { font-size: 8px; line-height: 10px; }
+.kpi .label { -webkit-line-clamp: 2; min-height: 20px; }
+.op-grid { gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.chart { max-height: 150px; }
+.onepager ul { padding-left: 14px; }
+.onepager li { margin: 0; }
+table.data { font-size: 9px; }
+table.data th { font-size: 9px; height: 16px; }
+table.data th, table.data td { height: 16px; padding: 0 4px; }
+a { color: inherit; text-decoration: none; }
+.op-read { display: block !important; }

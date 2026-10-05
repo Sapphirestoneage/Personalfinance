@@ -11,7 +11,7 @@ export function run(ctx) {
   const { rows, reader, data, asm } = ctx;
   const out = {};
   const enriched = [];
-  const byType = { w2: 0, c1099: 0, side: 0, unemployment: 0, rental: 0, benefits: 0, other: 0 };
+  const byType = { w2: 0, c1099: 0, side: 0, unemployment: 0, rental: 0, benefits: 0, other: 0, paystub: 0 };
   let gross = q(0, U.monthlyPre), take = q(0, U.monthlyAfter);
   let pretax = q(0, U.monthlyPre), roth = q(0, U.monthlyAfter), hsa = q(0, U.monthlyPre), other = q(0, U.monthlyPre);
   let hours = 0, workCosts = q(0, U.monthlyAfter), anyTake = false, anyGross = false;
@@ -30,7 +30,7 @@ export function run(ctx) {
       const ro = fieldQ(r, 'rothRetirement', U.monthlyAfter, asm);
       const hs = fieldQ(r, 'hsaPayroll', U.monthlyPre, asm);
       const ot = fieldQ(r, 'pretaxOther', U.monthlyPre, asm);
-      if (g) { gross = add(gross, g); byType[t] += g.cents; anyGross = true; grossRows.push({ row: r, g }); if (t === 'w2' && !w2Primary) w2Primary = r; }
+      if (g) { gross = add(gross, g); byType[t] += g.cents; byType.paystub += g.cents; anyGross = true; grossRows.push({ row: r, g }); if (t === 'w2' && !w2Primary) w2Primary = r; }
       if (bonus) { gross = add(gross, bonus); byType[t] += bonus.cents; }
       if (equity) { gross = add(gross, equity); byType[t] += equity.cents; }
       if (pr) pretax = add(pretax, pr);
@@ -43,7 +43,7 @@ export function run(ctx) {
         const grossAnnual = g.cents * 12;
         const pretaxAnnual = ((pr ? pr.cents : 0) + (hs ? hs.cents : 0) + (ot ? ot.cents : 0)) * 12;
         let fed, payroll;
-        if (t === 'c1099') {
+        if (t === 'c1099' || t === 'side') {
           const exp = (monthlyCents(r, 'businessExpenses') || 0) * 12;
           const net = Math.max(0, grossAnnual - exp);
           const se = selfEmploymentTax(data.tax2026, net);
@@ -57,7 +57,7 @@ export function run(ctx) {
         const cents = Math.round(takeAnnual / 12);
         const conf = Math.min(g.confidence, 0.6);
         th = q(Math.max(0, cents), U.monthlyAfter, { confidence: conf, range: { low: Math.round(cents * 0.9), high: Math.round(cents * 1.02) }, rough: true });
-        enriched.push({ rowId: r.id, field: 'takeHome', value: th, note: 'Inferred from gross: federal tax and FICA only, before state tax', source: 'inferred' });
+        enriched.push({ rowId: r.id, field: 'takeHome', value: th, note: (t === 'w2' ? 'Inferred from gross: federal tax and FICA only, before state tax' : 'Inferred from gross: self-employment tax and federal tax on this income alone, before state tax'), source: 'inferred' });
       }
       if (th) { take = add(take, th); anyTake = true; }
       const hp = num(r, 'hoursPaid') || 0, hc = num(r, 'hoursCommute') || 0;

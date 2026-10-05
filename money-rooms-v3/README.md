@@ -32,12 +32,18 @@ repository root, `npx playwright install chromium`).
 | `engine/states.js` | Answer states, sources, confidence |
 | `engine/record.js`, `engine/journal.js`, `engine/store.js` | The client record, its append-only journal, storage and migrations |
 | `engine/sun.js` | The hub: Sun facts, planet slots, the contract |
+| `engine/planets/*.js` | The seven planets, five stations each; `common.js` turns facts into Quantities |
+| `engine/tax.js` | The one tax function: federal brackets, FICA, self-employment |
+| `engine/debtsim.js`, `engine/projection.js` | Payoff simulation; the year-by-year projection to 95 (Triple D) |
+| `engine/metrics.js`, `engine/lenses.js`, `engine/chartdata.js` | The 48 metrics with their math, the 19 lenses, data for the 8 charts |
+| `engine/leverage.js`, `engine/plates.js`, `engine/email.js` | What to ask next, the two plates, the follow-up email |
 | `engine/compute.js` | Runs the planets and returns one result for the views |
 | `ui/app.js` | The shell: routes, view toggle, autosave, undo, shortcuts |
 | `ui/tokens.css`, `ui/app.css`, `ui/print.css` | The design system and the one-pager print sheet |
-| `ui/views/` | One module per screen; views never do math |
+| `ui/views/` | One module per screen (home, ledger, measure, onepager, session); views never do math |
+| `ui/charts.js`, `ui/table.js`, `ui/orbit.js` | The D3 charts, the Ledger table, the orbit map |
 | `data/` | Libraries, each with asOf, source and a verify flag |
-| `tests/` | `run.js`, `ui.js`, engine tests, households and their expected workpapers |
+| `tests/` | `run.js`, `ui.js`, engine tests, households and their expected workpapers (`tests/households/expected.py` writes them from the fixtures, never from the engine) |
 | `CONTRACTS.md` | What each planet publishes, written before the code |
 | `DECISIONS.md`, `QUESTIONS.md`, `PROGRESS.md`, `BOARD.md`, `SPEC-COVERAGE.md`, `DONE.md` | The run's own records |
 

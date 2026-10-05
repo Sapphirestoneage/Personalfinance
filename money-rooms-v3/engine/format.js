@@ -32,7 +32,7 @@ export function dollars(cents, opts) {
   }
   if (abs === 0) body = '$0';
   const sign = neg ? '-' : '';
-  return (o.rough ? TILDE : '') + sign + body;
+  return (o.rough && abs !== 0 ? TILDE : '') + sign + body;
 }
 
 /* Whole dollars only, for dense tables and chart axes. */
@@ -61,8 +61,8 @@ export function percent(ratio, opts) {
   if (!guard(ratio, 'percent')) return '';
   const o = opts || {};
   const v = ratio * 100;
-  const s = (Math.round(v * 10) / 10).toFixed(1);
-  return (o.rough ? TILDE : '') + s + '%';
+  const s = (Math.round(Math.abs(v) * 10) / 10).toFixed(1);
+  return (o.rough && s !== '0.0' ? TILDE : '') + (v < 0 && s !== '0.0' ? '-' : '') + s + '%';
 }
 
 /* Whole months. */
@@ -175,4 +175,13 @@ export function parsePercent(text) {
   const n = Number(t);
   if (!Number.isFinite(n)) throw new Error('not a percent: ' + text);
   return n / 100;
+}
+
+/* Cut long text at a word boundary with one ellipsis character. */
+export function shorten(text, max) {
+  const t = String(text || '');
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max - 1);
+  const atWord = cut.lastIndexOf(' ');
+  return (atWord > max * 0.5 ? cut.slice(0, atWord) : cut).trim() + String.fromCharCode(0x2026);
 }

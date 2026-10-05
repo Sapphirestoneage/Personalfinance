@@ -86,13 +86,13 @@ export async function enterHousehold(page, spec, check) {
     await page.waitForSelector('.orbit');
     await tabTo(page, a => a.dataId === typeId);
     await press('Enter');
-    await page.waitForSelector('.ledger');
+    await page.waitForSelector('.ledger[data-type="' + typeId + '"]');
     for (const r of byType[key]) {
       if (!tdef.single) { await press('Alt+n'); }
       else { await tabTo(page, a => a.col === 'nickname'); }
       let a0 = null;
       for (let i = 0; i < 40; i++) { a0 = await active(page); if (a0 && a0.col === 'nickname') break; await page.waitForTimeout(50); }
-      if (!a0 || a0.col !== 'nickname') throw new Error('after Alt+N the focus is on ' + JSON.stringify(a0) + ' at ' + await page.evaluate(() => location.hash) + ' for ' + key + ' row ' + r.id);
+      if (!a0 || a0.col !== 'nickname') throw new Error('after Alt+N the focus is on ' + JSON.stringify(a0) + ' at ' + await page.evaluate(() => location.hash + ' rows=' + mr3.record.planets[location.hash.split('/')[2]].rows.map(x => x.type).join(',') + ' mounted=' + Object.keys(mr3.mounted || {}).join('/') + ' ledgers=' + document.querySelectorAll('.ledger').length + ' overlay=' + document.querySelector('#overlay').children.length) + ' for ' + key + ' row ' + r.id);
       const rowId = a0.row;
       rowIds[r.id] = rowId;
       if (r.nickname) { await type(r.nickname); }

@@ -107,6 +107,16 @@ function mountTable(host, app, planet, typeId) {
   }
   const summaryNote = h('div');
   host.appendChild(summaryNote);
+  const inferredNote = h('div');
+  host.appendChild(inferredNote);
+  function inferred() {
+    clear(inferredNote);
+    const list = ((app.result.enriched || {})[planet] || []).filter(e => app.record.planets[planet].rows.some(r => r.id === e.rowId && r.type === typeId));
+    if (!list.length) return;
+    inferredNote.appendChild(h('div', { class: 'panel', style: { marginTop: '16px' } }, h('h3', { style: { marginBottom: '8px' } }, 'Inferred by the engine (not stored, read-only)'),
+      h('div', { class: 'tablewrap' }, h('table', { class: 'data' }, h('tbody', null, list.map(e => { const row = app.record.planets[planet].rows.find(r => r.id === e.rowId); return h('tr', null, h('td', null, row ? row.nickname : ''), h('td', null, e.field === 'takeHome' ? 'Take-home a month' : e.field === 'matchMonthly' ? 'Match a month' : e.field === 'taxBucket' ? 'Tax bucket' : e.field === 'liquidity' ? 'Liquidity tier' : e.field), h('td', { class: 'num' }, typeof e.value === 'string' ? e.value : F.value(e.value)), h('td', null, h('span', { class: 'chip src src-inferred' }, 'Inferred')), h('td', { class: 'small muted' }, e.note)); }))))));
+  }
+  inferred();
   const tableHost = h('div');
   host.appendChild(tableHost);
   const table = ledgerTable(tableHost, app, planet, typeId, { emptyActions: planet === 'spending' && typeId === 'line' && app.view === 'coach' ? [h('button', { class: 'btn', onClick: () => useDefaults(app) }, 'Use national averages')] : [] });
@@ -121,7 +131,7 @@ function mountTable(host, app, planet, typeId) {
     }
   }
   note();
-  return { update(reason) { note(); if (reason === 'rows') table.render(); }, addRow: () => table.addRow() };
+  return { update(reason) { note(); inferred(); if (reason === 'rows') table.render(); }, addRow: () => table.addRow() };
 }
 
 function extraActions(app, planet, typeId) {

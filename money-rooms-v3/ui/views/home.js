@@ -22,10 +22,10 @@ const WORK_LABELS = { employed: 'Employed', 'self-employed': 'Self-employed', 'b
 export function mount(host, app) {
   const header = h('header', null, h('h1', null, app.record ? (clientName(app.record) || 'Household') : 'Home'), h('span', { class: 'sub' }, app.record ? 'Pick a planet to open it.' : 'Open a client to begin.'));
   const clients = h('section', { class: 'panel coach-only' });
-  const sun = h('section', { class: 'panel' });
+  const sun = h('section', { class: 'panel sun-panel' });
   const history = h('section', { class: 'panel coach-only' });
   const mapHost = h('div', { class: 'maphost' });
-  const bar = h('div');
+  const bar = h('div', { class: 'mapbar-host' });
   host.appendChild(header);
   host.appendChild(h('div', { class: 'grid home-grid' }, h('div', { class: 'stack' }, app.record ? mapHost : null, app.record ? bar : null, sun), h('div', { class: 'stack coach-only' }, clients, history)));
   renderClients(clients, app);
@@ -47,7 +47,7 @@ function renderMap(mapHost, bar, app) {
   if (!app.record) return;
   clear(mapHost); clear(bar);
   const r = app.result;
-  const items = PLANETS.map(p => ({ id: p, label: PLANET_LABELS[p], count: r.rowCounts[p], fill: r.fills[p] === null ? 0 : r.fills[p], attention: (r.needs[p] || []).length > 0, badge: r.fills[p] === null ? 'empty' : Math.round(r.fills[p] * 100) + '%' + ((r.needs[p] || []).length ? ', needs ' + r.needs[p].length : '') }));
+  const items = PLANETS.map(p => ({ id: p, label: PLANET_LABELS[p], count: r.rowCounts[p], fill: r.fills[p] === null ? 0 : r.fills[p], attention: (r.needs[p] || []).length > 0, badge: r.fills[p] === null ? 'no rows' : r.rowCounts[p] + (r.rowCounts[p] === 1 ? ' row, ' : ' rows, ') + Math.round(r.fills[p] * 100) + '%' }));
   const name = clientName(app.record) || 'Household';
   mapHost.appendChild(orbitMap({
     compact: mapHost.clientWidth > 0 && mapHost.clientWidth < 560,
@@ -93,6 +93,7 @@ function renderClients(panel, app) {
     nameInput,
     h('button', { class: 'btn primary', onClick: makeNew }, 'New client'),
     h('button', { class: 'btn', onClick: () => fileInput.click() }, 'Import'),
+    h('button', { class: 'btn', title: 'Maya: example numbers only', onClick: () => loadDemo(app) }, 'Load demo client'),
     fileInput));
   if (!list.length) {
     panel.appendChild(h('div', { class: 'empty' }, h('h2', null, 'No clients yet'), h('p', null, 'Type a first name and press Enter. Everything stays in this browser.')));
@@ -111,6 +112,18 @@ function renderClients(panel, app) {
           h('button', { class: 'btn small quiet', onClick: () => confirmRemove(app, c) }, 'Delete')));
     })));
   panel.appendChild(h('div', { class: 'tablewrap' }, tbl));
+}
+
+async function loadDemo(app) {
+  try {
+    const res = await fetch('tests/households/maya.json');
+    if (!res.ok) throw new Error('demo file not found');
+    const text = await res.text();
+    const { record } = app.store.importJson(text);
+    app.open(record.id);
+    app.toast('Loaded the demo client. Example numbers only.');
+    app.rerender();
+  } catch (e) { app.toast('Could not load the demo: ' + e.message); }
 }
 
 function confirmRemove(app, c) {

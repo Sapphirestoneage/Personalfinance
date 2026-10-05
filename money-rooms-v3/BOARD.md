@@ -4,7 +4,7 @@
 |---|---|---|---|
 | 0 | Skeleton | FROZEN | Level 0: Skeleton |
 | 1 | Capture | FROZEN | Level 1: Capture |
-| 2 | Measure + one-pager | in progress | |
+| 2 | Measure + one-pager | FROZEN | Level 2: Measure + one-pager |
 | 3 | Session engine | not started | |
 | 4 | Simulate | not started | |
 | 5 | Learn | not started | |

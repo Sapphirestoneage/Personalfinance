@@ -80,7 +80,7 @@ Publishes:
 
 ## 4. Safety Net
 
-Reads: `baselineMonthly`, `fatFloorMonthly`, `byCategory` (Spending slot),
+Reads: `baselineMonthly`, `fatFloorMonthly`, `fixedMonthly`, `byCategory` (Spending slot),
 `cashBalances` (Investments slot), `birthDate`, `takeHomeMonthly`, `workSituation`.
 Publishes:
 
@@ -92,8 +92,10 @@ Publishes:
 | `gap` | oneoff | target minus cash, floored at zero |
 | `monthlyToClose` | monthly | gap / 12 |
 | `insurance` | list | typed coverage rows |
+| `premiumsMonthly` | monthly, aftertax | premiums paid from the bank (paycheck premiums are already out of take-home) |
 | `unemploymentMonthly` | monthly | state estimate if typed |
 | `cutAbilityMonthly` | monthly | what the client says they could cut |
+| `spendingWithPremiums` | monthly, aftertax | baseline spending plus bank-paid premiums: the month the metrics use |
 
 ## 5. Investments and Accounts
 
@@ -127,7 +129,11 @@ Publishes:
 | `effectiveRate` | ratio | federal / gross |
 | `marginalRate` | ratio | bracket of the last dollar |
 | `savedPer1000Pretax` | oneoff | marginal rate x 1,000 (plus FICA where it applies) |
-| `impliedRate` | ratio | (gross - take-home) / gross, from Income |
+| `impliedRate` | ratio | (gross - take-home - payroll deductions) / gross, from Income |
+| `taxable` | annual, pretax | taxable income after pre-tax deductions and the standard deduction |
+| `standardDeduction` | oneoff | the standard deduction used |
+| `ficaParts` | parts | Social Security and Medicare split |
+| `selfEmployment` | parts | self-employment tax and its deductible half |
 
 ## 7. Life Plan
 

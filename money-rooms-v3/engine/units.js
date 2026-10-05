@@ -19,7 +19,7 @@ function isInt(n) { return typeof n === 'number' && Number.isFinite(n) && Math.r
    inventing a zero. */
 export function needs(list) {
   const arr = Array.isArray(list) ? list.slice() : [list];
-  return Object.freeze({ status: 'needs', needs: Object.freeze(arr.filter(Boolean)) });
+  return Object.freeze({ status: 'needs', needs: Object.freeze(Array.from(new Set(arr.filter(Boolean)))) });
 }
 export function isNeeds(x) { return !!x && x.status === 'needs'; }
 export function isQ(x) { return !!x && x.status === 'ok' && typeof x.cents === 'number'; }

@@ -4,7 +4,7 @@ Hand-computed from tests/households/jordan.json on 2026-10-05. Money in cents in
 Age at 2026-10-05: born 1999-03-14, so 27. Filing status single.
 
 ## Income
-- Analyst (w2): gross $3,000 per paycheck x 26 / 12 = $6,500 a month; take-home $2,061.47 x 26 / 12 = $4,466.52; bonus $3,000 a year / 12 = $250; pre-tax retirement $120 x 26 / 12 = $260; other pre-tax $95 x 26 / 12 = $205.83.
+- Analyst (w2): gross $3,000 per pay x 26 / 12 = $6,500 a month; take-home $2,061.47 x 26 / 12 = $4,466.52; bonus $3,000 a year / 12 = $250; pre-tax retirement $120 x 26 / 12 = $260; other pre-tax $95 x 26 / 12 = $205.83.
 - Match: employee defers $120 of $3,000 = 4.0% of pay; match 50.0% of pay up to 6.0%: actual = $6,500 x 50.0% x 4.0% = $130 a month; max = $6,500 x 50.0% x 6.0% = $195 a month.
 - Gross monthly (bonus and equity included) = $6,750.
 - Take-home monthly = $4,466.52 (bonus take-home is not typed, so it is not counted).
@@ -31,7 +31,7 @@ Age at 2026-10-05: born 1999-03-14, so 27. Filing status single.
 - Spending lines total = $3,842 a month.
 - Bank-paid premiums = $14 a month.
 - Monthly spending (metric 3) = $3,842 + $14 = $3,856.
-- Rough lines total $600; at the 20% rough spread the range is $3,736 to $3,976.
+- Range: each rough line at its spread (rough 20%, estimated 25%, will-send 30%, a typed range as typed), summed: $3,736 to $3,976.
 - FAT floor (lines flagged) = $2,844.
 - Fixed costs (needs $3,114 + bank premiums $14) = $3,128.
 - Mistakes = $35 a month = $420 a year.
@@ -87,9 +87,9 @@ Age at 2026-10-05: born 1999-03-14, so 27. Filing status single.
 - 24 Liquidity rate = $25,500 / $43,550 = 58.6%. 25 Bridge years = ($25,500 + $6,800) / $46,272 = 0.70.
 - 30 Tax-advantaged share = ($11,250 + $6,800 + $0) / $43,550 = 41.4%.
 - 38 Federal: taxable = $81,000 - pre-tax ($260 + $0 + $205.83) x 12 - standard deduction $16,100 = $59,310.04; tax by bracket = $7,760.21; effective $7,760.21 / $81,000 = 9.6%; marginal 22.0%.
-- 39 FICA: wages $78,530.04 (gross less section 125 and HSA); Social Security 6.2% = $4,868.86; Medicare 1.45% = $1,138.69; total $6,007.55.
+- 39 FICA: wages $78,530.04 (gross less self-employment income, section 125 and HSA); Social Security 6.2% = $4,868.86; Medicare 1.45% = $1,138.69; plus SE tax $0; total $6,007.55.
 - 40 Tax saved per $1,000 pre-tax = 22.0% x $1,000 = $220.
-- 37 Implied tax rate = ($6,500 - $4,466.52 - $465.83) / $6,500 = 24.1%.
+- 37 Implied tax rate = (paystub gross $6,500 - take-home $4,466.52 - deductions $465.83) / $6,500 = 24.1%.
 - 41 FI number = $46,272 / 4.0% = $1,156,800.
 - 42 % to FI = $21,900 / $1,156,800 = 1.9%.
 - 43 Coast FI = $1,156,800 / 1.05^33 (5.0032) = $231,212.55; $21,900 / $231,212.55 = 9.5%.

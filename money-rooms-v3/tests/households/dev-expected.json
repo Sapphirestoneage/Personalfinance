@@ -1,0 +1,355 @@
+{
+ "age": 31,
+ "grossMonthly": 800000,
+ "takeHomeMonthly": 540000,
+ "pretaxContribMonthly": 0,
+ "rothContribMonthly": 0,
+ "hsaPayrollMonthly": 0,
+ "pretaxOtherMonthly": 0,
+ "matchMonthly": 0,
+ "matchMaxMonthly": 0,
+ "workHoursMonthly": 182.0,
+ "workCostsMonthly": 22000,
+ "paystubGrossMonthly": 800000,
+ "baselineMonthly": 378667,
+ "premiumsMonthly": 42000,
+ "spending": 420667,
+ "spendingRange": [
+  395134,
+  446200
+ ],
+ "byCategory": {
+  "accommodation": 175000,
+  "utilities": 34500,
+  "food": 84000,
+  "transportation": 30500,
+  "therapy": 9500,
+  "wants": 19500,
+  "irregular": 24167,
+  "mistakes": 1500
+ },
+ "fatFloor": 272500,
+ "fixedMonthly": 330000,
+ "mistakesAnnual": 18000,
+ "savingsLandingMonthly": 120000,
+ "totalDebt": 1420000,
+ "debtServiceMonthly": 31800,
+ "weightedApr": 0.069,
+ "annualInterest": 97980,
+ "utilizationTotal": 0.0,
+ "utilizationPerCard": {
+  "d-dc": 0.0
+ },
+ "promoCliffs": [],
+ "payoffOrders": {
+  "avalanche": [
+   "d-dc",
+   "d-auto"
+  ],
+  "snowball": [
+   "d-dc",
+   "d-auto"
+  ],
+  "stress": [
+   "d-auto",
+   "d-dc"
+  ]
+ },
+ "debtFreeDate": "2031-02",
+ "payoffInterest": {
+  "avalanche": 225820,
+  "snowball": 225820,
+  "stress": 225820
+ },
+ "freedCashByMonth": [
+  {
+   "month": "2026-11",
+   "cents": 0
+  },
+  {
+   "month": "2031-02",
+   "cents": 31800
+  }
+ ],
+ "wallet": [
+  {
+   "rowId": "d-dc",
+   "rewardsAnnual": 48520,
+   "creditsUsedAnnual": 0,
+   "feeAnnual": 0,
+   "netAnnual": 48520,
+   "baselineAnnual": 48520,
+   "unusedCreditsAnnual": 0
+  }
+ ],
+ "rewardsLeftAnnual": 65772,
+ "creditScore": 742,
+ "totalAssets": 5595000,
+ "investedAssets": 4925000,
+ "cashBalances": 670000,
+ "balancesByBucket": {
+  "pretax": 2140000,
+  "roth": 0,
+  "taxable": 2475000,
+  "hsa": 310000,
+  "cash": 670000,
+  "other": 0
+ },
+ "balancesByLiquidity": {
+  "liquid": 3145000,
+  "semi": 310000,
+  "locked": 2140000
+ },
+ "allocation": {
+  "stocks": 0.842002,
+  "bonds": 0.038248,
+  "cash": 0.11975,
+  "other": 0.0
+ },
+ "allocationUsShare": 0.871524,
+ "weightedExpenseRatio": 0.00606,
+ "feeDragAnnual": 14999,
+ "annualContributions": {
+  "employee": 1440000,
+  "employer": 0,
+  "total": 1440000
+ },
+ "roomLeft": [
+  {
+   "limitId": "401k",
+   "limit": 2450000,
+   "used": 600000,
+   "left": 1850000
+  },
+  {
+   "limitId": "hsa-self",
+   "limit": 440000,
+   "used": 360000,
+   "left": 80000
+  }
+ ],
+ "matchCapture": null,
+ "matchDollarsLeftAnnual": null,
+ "ruleOf5Months": 6.2,
+ "ruleOf5Target": 2608135,
+ "runway": {
+  "full": 1.5927,
+  "draftt": 2.0303,
+  "fat": 2.4587
+ },
+ "gap": 1938135,
+ "monthlyToClose": 161511,
+ "cashDragAnnual": 0,
+ "surplus": 87533,
+ "savingsRateTakeHome": 0.220987,
+ "savingsRateGross": 0.149166,
+ "leakMonthly": -32467,
+ "leakRate": -0.060124,
+ "draftt": {
+  "debt": 0.058889,
+  "retirement": 0.15,
+  "accommodation": 0.387963,
+  "food": 0.155556,
+  "transportation": 0.056481,
+  "therapy": 0.017593
+ },
+ "shelterRate": 0.387963,
+ "fixedRate": 0.611111,
+ "realHourlyWage": 2846,
+ "statedHourlyWage": 4615,
+ "dti": 0.03975,
+ "debtToAssets": 0.253798,
+ "netWorth": 4175000,
+ "liquidityRate": 0.562109,
+ "bridgeYears": 0.6844,
+ "taxAdvantagedShare": 0.437891,
+ "federalAnnual": 1079792,
+ "marginalRate": 0.22,
+ "effectiveRate": 0.112478,
+ "ficaAnnual": 1356436,
+ "savedPer1000Pretax": 22000,
+ "impliedRate": 0.325,
+ "fiNumber": 126200100,
+ "pctToFi": 0.033082,
+ "coastFiNumber": 63739626,
+ "coastPct": 0.065501,
+ "retirementAge": 45,
+ "leanFi": 81750000,
+ "fatFi": 189300150,
+ "baristaFi": 66200100,
+ "feeDragLifetime": 759008,
+ "socialSecurityMonthly": 320132,
+ "projection": {
+  "likely": {
+   "fiAge": null,
+   "fiYear": null,
+   "first5": [
+    {
+     "year": 2027,
+     "age": 32,
+     "invested": 6611250,
+     "cash": 676700,
+     "debt": 1076454,
+     "netWorth": 6211496
+    },
+    {
+     "year": 2028,
+     "age": 33,
+     "invested": 8381813,
+     "cash": 683467,
+     "debt": 759220,
+     "netWorth": 8306060
+    },
+    {
+     "year": 2029,
+     "age": 34,
+     "invested": 10240904,
+     "cash": 690302,
+     "debt": 419395,
+     "netWorth": 10511811
+    },
+    {
+     "year": 2030,
+     "age": 35,
+     "invested": 12192949,
+     "cash": 697205,
+     "debt": 55365,
+     "netWorth": 12834789
+    },
+    {
+     "year": 2031,
+     "age": 36,
+     "invested": 14242596,
+     "cash": 1085777,
+     "debt": 0,
+     "netWorth": 15328373
+    }
+   ],
+   "at95": {
+    "year": 2090,
+    "age": 95,
+    "invested": -348489184,
+    "cash": 7832610,
+    "debt": 0,
+    "netWorth": -340656574
+   }
+  },
+  "best": {
+   "fiAge": null,
+   "fiYear": null,
+   "first5": [
+    {
+     "year": 2027,
+     "age": 32,
+     "invested": 6709750,
+     "cash": 676700,
+     "debt": 1076454,
+     "netWorth": 6309996
+    },
+    {
+     "year": 2028,
+     "age": 33,
+     "invested": 8619433,
+     "cash": 683467,
+     "debt": 759220,
+     "netWorth": 8543680
+    },
+    {
+     "year": 2029,
+     "age": 34,
+     "invested": 10662793,
+     "cash": 690302,
+     "debt": 419395,
+     "netWorth": 10933700
+    },
+    {
+     "year": 2030,
+     "age": 35,
+     "invested": 12849189,
+     "cash": 697205,
+     "debt": 55365,
+     "netWorth": 13491029
+    },
+    {
+     "year": 2031,
+     "age": 36,
+     "invested": 15188632,
+     "cash": 1085777,
+     "debt": 0,
+     "netWorth": 16274409
+    }
+   ],
+   "at95": {
+    "year": 2090,
+    "age": 95,
+    "invested": -344916071,
+    "cash": 7832610,
+    "debt": 0,
+    "netWorth": -337083461
+   }
+  },
+  "worst": {
+   "fiAge": null,
+   "fiYear": null,
+   "first5": [
+    {
+     "year": 2027,
+     "age": 32,
+     "invested": 6512750,
+     "cash": 676700,
+     "debt": 1076454,
+     "netWorth": 6112996
+    },
+    {
+     "year": 2028,
+     "age": 33,
+     "invested": 8148133,
+     "cash": 683467,
+     "debt": 759220,
+     "netWorth": 8072380
+    },
+    {
+     "year": 2029,
+     "age": 34,
+     "invested": 9832577,
+     "cash": 690302,
+     "debt": 419395,
+     "netWorth": 10103484
+    },
+    {
+     "year": 2030,
+     "age": 35,
+     "invested": 11567554,
+     "cash": 697205,
+     "debt": 55365,
+     "netWorth": 12209394
+    },
+    {
+     "year": 2031,
+     "age": 36,
+     "invested": 13354581,
+     "cash": 1085777,
+     "debt": 0,
+     "netWorth": 14440358
+    }
+   ],
+   "at95": {
+    "year": 2090,
+    "age": 95,
+    "invested": -227698766,
+    "cash": 7832610,
+    "debt": 0,
+    "netWorth": -219866156
+   }
+  }
+ },
+ "lensesFiring": [
+  "cost-in-hours",
+  "fee-drag",
+  "mistake-tax",
+  "real-hourly-wage",
+  "shelter-heavy",
+  "thin-runway",
+  "wrong-card"
+ ]
+}

@@ -85,3 +85,58 @@ Alternative: per-cell chip columns (thirty columns) or a modal state picker (no 
 Decision: typing 0 into a money, percent, hours or count cell stores a real zero with state None (confidence 1.0); an empty cell is Unknown.
 Why: "empty is not zero"; a client who says "no bonus" has answered.
 Alternative: a separate None keystroke only (slower while a client talks).
+
+## MR-013 2026-10-05 Whole dollars in table cells; cents in drawers and prose
+Decision: Ledger cells and metric tiles print whole dollars ($1,847); the formatting rule (cents below $1,000) applies in drawers, lenses and the one-pager's text.
+Why: the design critique found one column mixing "$2,150" and "$142.00"; a workpaper column keeps one precision.
+Alternative: cents everywhere in tables (noisy at $1,000 and above).
+
+## MR-014 2026-10-05 An empty Debt planet is "needs", not zero
+Decision: with no debt rows at all, total debt, debt service and interest publish "needs debt rows, or a rough total of 0 for none"; typing 0 (None) on the Rough total row says "no debts" and completes the moon.
+Why: empty is not zero; a surplus that assumes no debt before anyone said so is a confident lie.
+Alternative: assume zero (hides the gap).
+
+## MR-015 2026-10-05 Insurance premiums count as spending only when paid from the bank
+Decision: a Safety Net premium with cadence "per paycheck" is a payroll deduction already out of take-home and is not added to spending; any other cadence is added to monthly spending (metric 3) and to needs.
+Why: health premiums usually come off the paystub (and reduce FICA wages); counting them twice would overstate spending.
+Alternative: a separate "paid from" field (one more fact to ask).
+
+## MR-016 2026-10-05 Take-home is inferred when only gross is typed, on that income alone, before state tax
+Decision: Income's Enrich station infers a missing take-home with the one tax function (federal brackets, FICA or self-employment tax, payroll deductions), each income row on its own, with no state tax; confidence is capped at 0.6 and the figure prints with a tilde and the note "before state tax".
+Why: v1 has no state tax and a secondary income cannot see the primary's bracket; an honest rough figure beats a blank that breaks every downstream metric.
+Alternative: wait for a typed take-home (most metrics stay dark until then).
+
+## MR-017 2026-10-05 FI means the portfolio alone covers spending; Social Security is drawn on the chart, not in the test
+Decision: the FI date is the first projection year where net worth x withdrawal rate covers annual spending; Social Security (bend-point estimate from current gross, from 67, never zero) reduces withdrawals in the projection but does not bring the FI date forward. Retirement spending uses go-go, slow-go and no-go shares from 75 and 85.
+Why: that is how the FIRE sources named in the spec define it, and it keeps one definition across the gauge, the lenses and the one-pager.
+Alternative: FI when portfolio plus future Social Security covers spending (earlier dates, harder to explain).
+
+## MR-018 2026-10-05 Payroll contributions and the match formula are read by Investments from Income, and Solo 401k deposits count against the 401k limit
+Decision: room under the 401k limit = payroll deferrals (Income) plus deposits typed on 401k-type accounts (Investments); the IRA limit uses deposits on IRA accounts; the HSA limit uses payroll HSA plus HSA deposits.
+Why: a self-employed client's Solo 401k deferral lives on the account, not a paystub.
+Alternative: payroll only (shows Dev with $24,500 of room he does not have).
+
+## MR-019 2026-10-05 Materiality is the dollars a fact moves a year, borrowed from its row's headline when the fact is not money
+Decision: leverage = category x item x (1 - confidence) x materiality, where materiality is 0.1 under $100 a year (Small Wins), 0.5 under $1,000, 1.0 to $10,000 and 1.5 above; a non-money fact (a date, a rate, a choice) borrows its row's headline dollars; Sun facts count as large.
+Why: the spec names the formula and the $100 line but not the steps; dollars moved a year is the one scale every planet shares.
+Alternative: FI-date sensitivity (stubbed for v2 in the spec).
+
+## MR-020 2026-10-05 Closing a session is the only snapshot
+Decision: "Close this session" appends a session line to the journal and a snapshot to `sessions`; "since last time" and the one-pager's changes read from the last snapshot. Nothing snapshots on its own.
+Why: one deliberate marker per meeting keeps "since last time" meaningful.
+Alternative: a snapshot per day of activity (noisy between meetings).
+
+## MR-021 2026-10-05 A scenario block is a one-off cost in its start year plus a monthly change for its duration
+Decision: each block type declares an `oneOff`, a `monthly` and a `duration` formula over its answers and two live figures (take-home and spending a month); income shows as a negative cost. The sandbox folds the adjustments into a copy of the projection inputs and replays baseline, each block alone and all together at the likely return.
+Why: one shape covers all nine types and keeps the engine's single projection function.
+Alternative: a bespoke model per block (nine engines to keep honest).
+
+## MR-022 2026-10-05 The nominal toggle is stored but the engine stays in real dollars (v1)
+Decision: the Assumptions panel stores `basis` and `inflation`; every figure is still computed and shown in today's dollars. The toggle is labelled as such.
+Why: the spec's engine defaults are real dollars; inflating the view adds a second number for every figure and the critique rounds were already fighting density. Logged as partial in SPEC-COVERAGE.md.
+Alternative: compute both bases now (doubles the projection surface).
+
+## MR-023 2026-10-05 Levels 2 to 6 were built in one working tree and are committed by file ownership
+Decision: the six commits "Level 2" to "Level 6" split one working tree by which level owns each file (shared files such as app.css, routes.js and the sweep list go with Level 2). Only the Level 6 commit is guaranteed to pass both gates on its own; the earlier five are checkpoints of the same tree, and BOARD.md marks each FROZEN at the commit that carries its files.
+Why: the spec asks for one commit per level; the levels share one shell and were critiqued together, so an untangled history would have meant rebuilding the work in sequence for no gain.
+Alternative: one commit for Levels 2 to 6 (loses the per-level record the board asks for).

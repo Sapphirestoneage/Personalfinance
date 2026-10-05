@@ -23,7 +23,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
   const primary = primaryFieldOf(fields, planet, typeId);
   const coach = app.view === 'coach';
   const state = { sortKey: null, sortDir: 1, filters: { state: '', source: '', institution: '', category: '' } };
-  const wrap = h('div', { class: 'ledger' });
+  const wrap = h('div', { class: 'ledger', dataset: { planet, type: typeId } });
   host.appendChild(wrap);
 
   function rows() {
@@ -69,8 +69,8 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     tdef.fields.forEach(id => { const d = fieldDef(fields, id); if (d.cadence) row.f[id].cad = d.defaultCadence; });
     app.addRow(row);
     render();
-    const target = wrap.querySelector('tr[data-row="' + row.id + '"] [data-col="' + (afterFocusCol || 'nickname') + '"]');
-    if (target) target.focus();
+    const focusNew = () => { const target = wrap.querySelector('tr[data-row="' + row.id + '"] [data-col="' + (afterFocusCol || 'nickname') + '"]'); if (target && document.activeElement !== target) target.focus(); };
+    focusNew();
     return row;
   }
 

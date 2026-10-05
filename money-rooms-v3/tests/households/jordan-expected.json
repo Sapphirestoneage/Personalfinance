@@ -10,6 +10,7 @@
  "matchMaxMonthly": 19500,
  "workHoursMonthly": 205.8,
  "workCostsMonthly": 18000,
+ "paystubGrossMonthly": 650000,
  "baselineMonthly": 384200,
  "premiumsMonthly": 1400,
  "spending": 385600,
