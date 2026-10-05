@@ -104,6 +104,27 @@ export function contributionWaterfall(result) {
   return { steps, marginal };
 }
 
+/* 9 Tax ladder: salary, less pre-tax deductions and the standard deduction, taxed by bracket; FICA beside it. */
+export function taxLadder(result) {
+  const S = result.sun && result.sun.outputs; const T = S && S.taxes; const I = S && S.income; const table = result.taxTable;
+  if (!T || !I || !table || !T.taxable || T.taxable.status !== 'ok' || !I.grossMonthly || I.grossMonthly.status !== 'ok') return { needs: ['gross pay and a filing status'] };
+  const status = (result.record && result.record.sun && result.record.sun.f.filingStatus && result.record.sun.f.filingStatus.v) || 'single';
+  const gross = I.grossMonthly.cents * 12;
+  const pretax = (['pretaxContribMonthly', 'hsaPayrollMonthly', 'pretaxOtherMonthly'].reduce((s, k) => s + (I[k] && I[k].status === 'ok' ? I[k].cents : 0), 0)) * 12;
+  const std = T.standardDeduction; const taxable = T.taxable.cents;
+  const brackets = (table.brackets[status] || table.brackets.single); let lower = 0; const steps = [];
+  for (const [rate, upper] of brackets) {
+    if (taxable <= lower) break;
+    const top = upper === null ? taxable : Math.min(taxable, upper);
+    steps.push({ rate, from: lower, to: top, amount: top - lower, tax: Math.round((top - lower) * rate) });
+    lower = upper; if (upper === null || taxable <= upper) break;
+  }
+  const fed = steps.reduce((s, b) => s + b.tax, 0);
+  const fica = T.ficaParts || { socialSecurity: 0, medicare: 0, total: 0 };
+  const se = T.selfEmployment ? T.selfEmployment.tax : 0;
+  return { gross, pretax, standardDeduction: std, taxable, brackets: steps, federal: fed, fica, selfEmployment: se, takeHome: gross - pretax - fed - fica.total - se, marginal: T.marginalRate, effective: T.effectiveRate, rough: !!I.grossMonthly.rough };
+}
+
 export const CHARTS = [
   { id: 'sankey', name: 'Cash flow', client: 'Where the money goes each month', build: sankey },
   { id: 'netWorth', name: 'Net worth to 95', client: 'What you could have over time', build: netWorthProjection },
@@ -113,4 +134,5 @@ export const CHARTS = [
   { id: 'draftt', name: 'DRAFTT bands', client: 'Each share of your pay against a healthy range', build: drafttBands },
   { id: 'fiGauge', name: 'FI progress', client: 'How far along you are', build: fiGauge },
   { id: 'waterfall', name: 'Contribution waterfall', client: 'Where new savings go first', build: contributionWaterfall },
+  { id: 'taxes', name: 'Tax ladder', client: 'Where your pay goes before you see it', build: taxLadder },
 ];

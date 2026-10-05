@@ -70,6 +70,15 @@ export function run(ctx) {
       const b = fieldQ(r, 'benefitAmount', U.monthlyPre, asm);
       if (b) { gross = add(gross, b); take = add(take, asTax(b, 'aftertax')); byType.unemployment += b.cents; anyGross = true; anyTake = true; }
       stabilities.push('at-risk');
+      /* weeks left are worked out, never typed twice: total weeks less the weeks since the start month (MR-027) */
+      const total = num(r, 'weeksLeft'); const start = val(r, 'startDate');
+      if (total !== null && start && ctx.today) {
+        const t0 = new Date(start + '-01T00:00:00Z'), t1 = new Date(ctx.today + 'T00:00:00Z');
+        const elapsed = Math.max(0, Math.floor((t1 - t0) / (7 * 24 * 3600 * 1000)));
+        const left = Math.max(0, total - elapsed);
+        const end = new Date(t0.getTime() + total * 7 * 24 * 3600 * 1000);
+        enriched.push({ rowId: r.id, field: 'weeksLeft', value: left, endsOn: end.toISOString().slice(0, 7), note: 'Weeks of benefit less the weeks since ' + start, source: 'computed' });
+      }
     }
     if (t === 'rental') {
       const rent = fieldQ(r, 'rentCollected', U.monthlyPre, asm);

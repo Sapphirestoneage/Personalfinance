@@ -134,6 +134,15 @@ async function main() {
             check(label + ' console clean', consoleIssues.length === 0, consoleIssues.slice(0, 2).join(' | '));
             if (shotDir) { const vp = page.viewportSize(); await page.mouse.move(vp.width - 2, vp.height - 2); }
             if (shotDir) await page.screenshot({ path: path.join(shotDir, label + '.jpg'), fullPage: true, type: 'jpeg', quality: 70 });
+            /* the dark theme (MR-028): one household at desktop width, both views, checked for console errors and shot */
+            if (hh.id === 'maya' && width === 1440) {
+              consoleIssues.length = 0;
+              await page.evaluate(() => { document.documentElement.dataset.theme = 'dark'; });
+              await page.waitForTimeout(100);
+              check(label + '-dark console clean', consoleIssues.length === 0, consoleIssues.slice(0, 2).join(' | '));
+              if (shotDir) await page.screenshot({ path: path.join(shotDir, label + '-dark.jpg'), fullPage: true, type: 'jpeg', quality: 70 });
+              await page.evaluate(() => { delete document.documentElement.dataset.theme; });
+            }
           }
         }
         await context.close();

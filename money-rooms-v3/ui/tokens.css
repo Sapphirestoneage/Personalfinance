@@ -13,6 +13,8 @@
   --amber: #D98E04;          /* needs attention */
   --line: #D5DCE8;           /* 1px borders (MR-006) */
   --line-soft: #E6EBF3;      /* row dividers */
+  --bar: #0B1F4D;            /* the top bar and toasts, in both themes */
+  --on-bar: #FFFFFF;
 
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -45,4 +47,42 @@
 
   --max-w: 1440px;
   --sidebar-w: 208px;
+}
+
+/* Dark theme (MR-028): the same roles, remapped. Follows the system unless the top bar switch picks one. */
+:root[data-theme="dark"] {
+  --sapphire-900: #DCE7FA;
+  --sapphire-700: #7FAEF5;
+  --sapphire-500: #5B8FEA;
+  --sapphire-300: #3A5A92;
+  --sapphire-100: #16223B;
+  --ink: #E6EBF5;
+  --slate: #A3AFC4;
+  --paper: #0D1526;
+  --paper-2: #121C31;
+  --gold: #E3BD4A;
+  --amber: #F0A82A;
+  --line: #2A3650;
+  --line-soft: #1C2740;
+  --bar: #0B1F4D;
+  --on-bar: #FFFFFF;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --sapphire-900: #DCE7FA;
+    --sapphire-700: #7FAEF5;
+    --sapphire-500: #5B8FEA;
+    --sapphire-300: #3A5A92;
+    --sapphire-100: #16223B;
+    --ink: #E6EBF5;
+    --slate: #A3AFC4;
+    --paper: #0D1526;
+    --paper-2: #121C31;
+    --gold: #E3BD4A;
+    --amber: #F0A82A;
+    --line: #2A3650;
+    --line-soft: #1C2740;
+    --bar: #0B1F4D;
+    --on-bar: #FFFFFF;
+  }
 }

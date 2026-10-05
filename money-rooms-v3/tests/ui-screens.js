@@ -11,6 +11,7 @@ export const SCREENS = [
   { id: 'debt-cards', route: 'ledger/debt/card' },
   { id: 'invest-accounts', route: 'ledger/invest/account' },
   { id: 'life-goals', route: 'ledger/life/goal' },
+  { id: 'taxes', route: 'ledger/taxes' },
   { id: 'measure', route: 'measure' },
   { id: 'onepager', route: 'onepager' },
   { id: 'session', route: 'session' },

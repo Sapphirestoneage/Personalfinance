@@ -4,6 +4,8 @@
 import { h, clear } from '../dom.js';
 import { orbitMap, mapPanel } from '../orbit.js';
 import { mountStartingSoon } from '../startingsoon.js';
+import { CHARTS } from '../../engine/chartdata.js';
+import * as Charts from '../charts.js';
 import { ledgerTable } from '../table.js';
 import { PLANET_LABELS, PLANETS } from '../../engine/sun.js';
 import { typesFor, typeDef, primaryFieldOf, freshFacts, fieldDef, isNoneRow } from '../../engine/fields.js';
@@ -40,12 +42,22 @@ export function mount(host, app) {
   const soonHost = h('div', { style: { marginTop: '16px' } });
   host.appendChild(h('div', { class: 'planet-grid' }, h('div', null, mapHost, bar), h('div', null, side, soonHost)));
   const soon = mountStartingSoon(soonHost, app, planet);
+  const chartHost = planet === 'taxes' ? h('section', { class: 'panel tax-ladder', style: { marginTop: '16px' } }) : null;
+  if (chartHost) host.appendChild(chartHost);
+  function drawTaxes() {
+    if (!chartHost) return;
+    clear(chartHost);
+    const c = CHARTS.find(x => x.id === 'taxes');
+    chartHost.appendChild(h('h2', null, app.view === 'client' ? c.client : c.name, h('span', { class: 'tag' }, 'a year, federal only')));
+    const body = h('div'); chartHost.appendChild(body);
+    Charts.render('taxes', body, c.build(app.result), { client: app.view === 'client' });
+  }
   function draw() {
     clear(mapHost); clear(bar); clear(side);
-    soon.update();
+    soon.update(); drawTaxes();
     const types = typesFor(fields, planet, work);
     const rowsOf = t => app.record.planets[planet].rows.filter(r => r.type === t.id);
-    const items = types.map(t => ({ id: t.id, label: t.id === 'other' ? 'Other (optional)' : t.label, count: rowsOf(t).length, fill: app.result.typeFills[planet][t.id], dashed: t.id === 'other' && rowsOf(t).length === 0, attention: (app.result.needs[planet] || []).some(n => n.type === t.id), badge: rowsOf(t).length ? (rowsOf(t).every(r => isNoneRow(fields, r)) ? 'None' : Math.round((app.result.typeFills[planet][t.id] || 0) * 100) + '%') : null }));
+    const items = types.map(t => ({ id: t.id, label: t.id === 'other' ? 'Other (optional)' : t.label, count: rowsOf(t).length, fill: app.result.typeFills[planet][t.id], dashed: t.id === 'other' && rowsOf(t).length === 0, attention: (app.result.needs[planet] || []).some(n => n.type === t.id), badge: rowsOf(t).length ? (rowsOf(t).every(r => isNoneRow(fields, r)) ? 'None' : Math.round((app.result.typeFills[planet][t.id] || 0) * 100) + '%') : (t.assumeNone ? 'None (assumed)' : null) }));
     mapHost.appendChild(orbitMap({
       compact: mapHost.clientWidth > 0 && mapHost.clientWidth < 560,
       ariaLabel: PLANET_LABELS[planet] + ' and its row types',
@@ -61,7 +73,7 @@ export function mount(host, app) {
       h('thead', null, h('tr', null, h('th', null, 'Row type'), h('th', { class: 'num' }, 'Rows'), h('th', { class: 'num' }, 'Confidence'), anyNeeds ? h('th', null, 'Needs') : null)),
       h('tbody', null, types.map(t => { const rows = rowsOf(t); const needs = (app.result.needs[planet] || []).filter(n => n.type === t.id); return h('tr', null,
         h('td', null, h('a', { href: '#/ledger/' + planet + '/' + t.id }, t.id === 'other' ? 'Other (optional)' : t.plural || t.label)),
-        h('td', { class: 'num' }, rows.length ? String(rows.length) : h('span', { class: 'empty-token' }, 'No rows')),
+        h('td', { class: 'num' }, rows.length ? String(rows.length) : h('span', { class: 'empty-token' }, t.assumeNone ? 'None (assumed)' : 'No rows')),
         h('td', { class: 'num' }, rows.length ? Math.round((app.result.typeFills[planet][t.id] || 0) * 100) + '%' : ''),
         anyNeeds ? h('td', { class: 'small muted' }, needs.length ? needs.slice(0, 2).map(n => n.label).join(', ') + (needs.length > 2 ? ' and ' + (needs.length - 2) + ' more' : '') : '') : null); }))));
     side.appendChild(h('h3', { style: { marginBottom: '8px' } }, 'Row types'));
@@ -120,8 +132,8 @@ function mountTable(host, app, planet, typeId) {
     list.forEach(e => {
       const row = app.record.planets[planet].rows.find(r => r.id === e.rowId);
       const WORDS = { pretax: 'pre-tax', roth: 'Roth', hsa: 'HSA', taxable: 'taxable', cash: 'cash', now: 'reachable now', semi: 'reachable with care', locked: 'locked until 59.5' };
-      const what = e.field === 'takeHome' ? 'take-home a month' : e.field === 'matchMonthly' ? 'employer match a month' : e.field === 'taxBucket' ? 'tax bucket' : e.field === 'liquidity' ? 'reach' : e.field;
-      const shown = typeof e.value === 'number' ? F.dollarsWhole(e.value) : typeof e.value === 'string' ? (WORDS[e.value] || e.value) : F.value(e.value);
+      const what = e.field === 'takeHome' ? 'take-home a month' : e.field === 'matchMonthly' ? 'employer match a month' : e.field === 'taxBucket' ? 'tax bucket' : e.field === 'liquidity' ? 'reach' : e.field === 'weeksLeft' ? 'weeks left' : e.field;
+      const shown = e.field === 'weeksLeft' ? String(e.value) + (e.endsOn ? ' (benefit ends ' + F.date(e.endsOn) + ')' : '') : typeof e.value === 'number' ? F.dollarsWhole(e.value) : typeof e.value === 'string' ? (WORDS[e.value] || e.value) : F.value(e.value);
       inferredNote.appendChild(h('p', { class: 'hint', style: { marginBottom: '8px' }, title: e.note || '' }, 'Inferred, not stored: ' + (row ? row.nickname + ', ' : '') + what + ' ' + shown + (e.field === 'takeHome' ? ' (before state tax)' : '') + '.'));
     });
   }
@@ -143,7 +155,7 @@ function mountTable(host, app, planet, typeId) {
     }
   }
   note();
-  return { update(reason) { note(); inferred(); soon.update(); if (reason === 'rows') table.render(); }, addRow: () => table.addRow() };
+  return { update(reason) { note(); inferred(); soon.update(); if (reason === 'rows') table.render(); else table.refreshTotals(); }, addRow: () => table.addRow() };
 }
 
 function extraActions(app, planet, typeId) {

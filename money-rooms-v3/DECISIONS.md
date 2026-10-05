@@ -158,3 +158,15 @@ Decision: scenario blocks gain an optional startMonth and each block type names 
 Compatibility: startMonth is optional and null on old blocks (same behaviour as before); presets add ordinary rows. No stored shape changes otherwise.
 Why: the owner wants to see when a change starts and what it does from the room it belongs to, and to add a household's usual lines in one press.
 Alternative: a new "Upcoming" screen (adds a surface the freeze does not allow; Simulate already owns the math).
+
+## MR-027 2026-10-05 Rentals are assumed none, weeks of unemployment left are worked out, and the Taxes planet shows its ladder
+Decision: a row type can carry assumeNone (today: Income > Rentals); with no rows it counts as answered and shows "None (assumed)", and a row overrides that. The Unemployment row asks the weeks of benefit and the start month; weeks left and the end month are inferred from today's date and never typed. A ninth chart, the tax ladder (gross pay, pre-tax deductions, the standard deduction, each bracket, FICA, what is left), sits on the Taxes planet page and in Measure.
+Compatibility: no stored shape changes; weeksLeft keeps its id and now holds the total weeks (old records that typed weeks left are read as the total, which is wrong by the weeks already elapsed; the inferred line shows the arithmetic so a coach can correct it).
+Why: the owner asked for fewer questions, computed weeks, and a tax picture that starts from salary.
+Alternative: a separate weeksTotal field (one more question).
+
+## MR-028 2026-10-05 A dark theme from the same tokens, and totals that follow every keystroke
+Decision: tokens.css remaps every colour role for a dark theme, applied when the system prefers dark unless the top bar switch picks Light or Dark (stored in settings). The top bar and toasts use their own --bar token so they stay navy in both themes. Table totals are recomputed on every change by replacing only the footer, which holds no live inputs (D-034 kept).
+Compatibility: settings gain an optional theme key; no record shape changes.
+Why: the owner asked for a dark mode; the totals row went stale between row additions because field edits never rebuilt the table.
+Alternative: a second stylesheet (two places to keep every colour).

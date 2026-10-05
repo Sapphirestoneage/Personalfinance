@@ -24,7 +24,7 @@ function needsNote(host, needs) {
 export function render(id, host, data, opts) {
   host.innerHTML = '';
   if (!data || data.needs) { needsNote(host, (data && data.needs) || ['data']); return; }
-  const fn = { sankey, netWorth, balanceSheet, debtRace, runway, draftt, fiGauge, waterfall, paths }[id];
+  const fn = { sankey, netWorth, balanceSheet, debtRace, runway, draftt, fiGauge, waterfall, paths, taxes }[id];
   const o = Object.assign({}, opts || {}, { width: Math.max(320, host.clientWidth || 720) });
   if (fn) fn(host, data, o);
   const def = CHARTS.find(c => c.id === id);
@@ -77,6 +77,36 @@ function paths(host, d, o) {
   series.forEach(s => svg.append('path').datum(s.path).attr('class', 'line ' + s.cls).attr('d', d3.line().x(p => x(p.age)).y(p => y(p.netWorth))).append('title').text(s.name));
   svg.append('text').attr('class', 'chart-label muted').attr('x', m.l).attr('y', H - 4).text('Age. Net worth in today\'s dollars, growing ' + F.percent((d.asm || {}).returnLikely, { places: 0 }) + ' a year after inflation.');
   legend(host, [{ label: 'Today\'s path', text: '', cls: 'path-today' }, { label: 'Each alone', text: '', cls: 'path-alone' }, { label: 'All together', text: '', cls: 'path-together' }]);
+}
+
+/* Tax ladder: gross pay at the top, each deduction and each bracket a rung, what is left at the bottom. */
+function taxes(host, d, o) {
+  const d3 = d3g(); const W = o.width, rowH = 22, gap = 10, labelW = Math.min(220, Math.max(140, W * 0.3)), valueW = 120;
+  const pct = r => F.percent(r, { places: 0 });
+  const rows = [
+    { label: o.client ? 'Pay for the year' : 'Gross pay, a year', value: d.gross, cls: 'shade-0', kind: 'total' },
+    d.pretax ? { label: o.client ? 'Saved before tax (401k, HSA, benefits)' : 'Pre-tax deductions', value: -d.pretax, cls: 'room', kind: 'minus' } : null,
+    { label: 'Standard deduction', value: -Math.min(d.standardDeduction, Math.max(0, d.gross - d.pretax)), cls: 'room', kind: 'minus' },
+    { label: 'Taxable income', value: d.taxable, cls: 'shade-1', kind: 'total' },
+  ].filter(Boolean);
+  d.brackets.forEach(b => rows.push({ label: pct(b.rate) + ' on ' + F.dollarsCompact(b.amount) + (o.client ? '' : ' (' + F.dollarsCompact(b.from) + ' to ' + F.dollarsCompact(b.to) + ')'), value: b.tax, cls: 'shade-2', kind: 'tax', share: b.amount / Math.max(1, d.taxable) }));
+  rows.push({ label: o.client ? 'Federal income tax' : 'Federal tax (' + pct(d.effective) + ' of gross, ' + pct(d.marginal) + ' on the next dollar)', value: d.federal, cls: 'shade-3', kind: 'total' });
+  rows.push({ label: 'Social Security and Medicare' + (d.selfEmployment ? ', both halves on self-employment' : ''), value: d.fica.total + d.selfEmployment, cls: 'shade-3', kind: 'tax' });
+  rows.push({ label: o.client ? 'What reaches you (before state tax)' : 'Left after federal tax and FICA (before state tax)', value: d.takeHome, cls: 'shade-1', kind: 'total' });
+  const H = rows.length * (rowH + gap) + 12; const svg = svgIn(host, W, H);
+  const x = d3.scaleLinear().domain([0, Math.max(1, d.gross)]).range([labelW, W - valueW]);
+  let cursor = d.gross;
+  rows.forEach((r, i) => {
+    const g = svg.append('g').attr('transform', 'translate(0,' + (i * (rowH + gap) + 6) + ')');
+    g.append('text').attr('class', 'chart-label' + (r.kind === 'total' ? '' : ' muted')).attr('x', 0).attr('y', rowH / 2 + 4).text(F.shorten(r.label, Math.round(labelW / 6)));
+    let x0, x1;
+    if (r.kind === 'total') { x0 = x(0); x1 = x(Math.max(0, r.value)); cursor = Math.max(0, r.value); }
+    else if (r.kind === 'minus') { x1 = x(cursor); cursor = Math.max(0, cursor + r.value); x0 = x(cursor); }
+    else { x0 = x(0); x1 = x(Math.max(0, r.value)); }
+    g.append('rect').attr('x', Math.min(x0, x1)).attr('y', 2).attr('width', Math.max(1, Math.abs(x1 - x0))).attr('height', rowH - 4).attr('class', 'bar ' + r.cls).append('title').text(r.label + ': ' + F.dollarsWhole(Math.abs(r.value)));
+    g.append('text').attr('class', 'chart-label').attr('x', W - valueW + 8).attr('y', rowH / 2 + 4).text((r.kind === 'minus' ? '-' : '') + F.dollarsWhole(Math.abs(r.value), { rough: d.rough && r.kind === 'total' }));
+  });
+  svg.append('text').attr('class', 'chart-label muted').attr('x', 0).attr('y', H - 2).text(o.client ? 'Federal only, a year. Bars run against your pay for the year.' : 'Federal brackets and FICA for the year; no state tax (v1). Bars run against gross pay.');
 }
 
 function balanceSheet(host, d, o) {

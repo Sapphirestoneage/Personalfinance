@@ -64,8 +64,9 @@ export function compute(record, data, opts) {
       Object.keys(fieldsData.planets[p].types).forEach(tid => {
         const list = byType[tid] || []; const fs = [];
         list.forEach(r => Object.keys(r.f).forEach(k => fs.push(r.f[k])));
-        typeFills[p][tid] = list.length ? fillOf(fs) : null;
         const tdef = fieldsData.planets[p].types[tid];
+        /* a type assumed none (rentals) counts as answered until a row says otherwise (MR-027) */
+        typeFills[p][tid] = list.length ? fillOf(fs) : (tdef.assumeNone ? 1 : null);
         const primId = tdef.fields.find(fid => fieldsData.fields[fid].primary) || tdef.fields.find(fid => fieldsData.fields[fid].kind === 'money') || tdef.fields[0];
         list.forEach(r => { const f = r.f[primId]; if (!f || f.state === 'unknown' || f.state === 'will-send') needs[p].push({ type: tid, rowId: r.id, field: primId, label: (r.nickname ? r.nickname + ': ' : '') + fieldsData.fields[primId].label }); });
       });
@@ -88,7 +89,7 @@ export function compute(record, data, opts) {
   });
 
   /* The planets, hub and spoke. */
-  const result = { computedAt: new Date().toISOString(), today, fills, typeFills, needs, rowCounts, summaries, sun: null, metrics: null, lenses: [], projection: null, enriched: {}, debts: [] };
+  const result = { computedAt: new Date().toISOString(), today, fills, typeFills, needs, rowCounts, summaries, sun: null, metrics: null, lenses: [], projection: null, enriched: {}, debts: [], taxTable: data && data.tax2026, record };
   if (!data || !data.metrics) return Object.freeze(result);
   const asm = assumptionsFor(record, data);
   const sun = createSun(); sun.f = record.sun.f; sun.assumptions = asm;

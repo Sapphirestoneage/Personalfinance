@@ -124,6 +124,20 @@ export const app = {
   },
   toggleView() { this.setView(this.view === 'coach' ? 'client' : 'coach'); },
 
+  /* ---- theme (MR-028): follows the system until the switch picks one ---- */
+  applyTheme() {
+    const t = settings.theme === 'dark' || settings.theme === 'light' ? settings.theme : null;
+    if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+    const dark = t ? t === 'dark' : (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const btn = qs('#theme-btn'); if (btn) { btn.textContent = dark ? 'Light' : 'Dark'; btn.setAttribute('aria-pressed', String(dark)); }
+    return dark;
+  },
+  toggleTheme() {
+    const dark = this.applyTheme();
+    settings.theme = dark ? 'light' : 'dark'; store.saveSettings(settings);
+    this.applyTheme();
+  },
+
   /* ---- routing ---- */
   parseHash(hash) {
     const parts = (hash || '#/home').replace(/^#\/?/, '').split('/').filter(Boolean);
@@ -256,6 +270,8 @@ function boot() {
   qs('#view-client').setAttribute('aria-pressed', String(app.view === 'client'));
   qs('#view-coach').addEventListener('click', () => app.setView('coach'));
   qs('#view-client').addEventListener('click', () => app.setView('client'));
+  qs('#theme-btn').addEventListener('click', () => app.toggleTheme());
+  app.applyTheme();
   qs('#undo').addEventListener('click', () => app.undo());
   qs('#redo').addEventListener('click', () => app.redo());
   qs('#quicknote-btn').addEventListener('click', () => app.quickNoteBar());

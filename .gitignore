@@ -25,3 +25,4 @@ scoreboard-*
 *.client.json
 money-rooms-*.json
 money-rooms-v3/screenshots/.tmp-*
+money-rooms-v3/screenshots/level-stage/

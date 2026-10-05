@@ -108,7 +108,8 @@ export function ledgerTable(host, app, planet, typeId, opts) {
   function emptyState(total) {
     if (total) return h('div', { class: 'empty', style: { border: 0, borderRadius: 0 } }, h('p', null, 'No rows match these filters.'));
     return h('div', { class: 'empty', style: { border: 0, borderRadius: 0 } },
-      h('h2', null, 'No ' + (tdef.plural || tdef.label).toLowerCase() + ' yet'),
+      h('h2', null, tdef.assumeNone ? 'None, unless there is one' : 'No ' + (tdef.plural || tdef.label).toLowerCase() + ' yet'),
+      tdef.assumeNone ? h('p', null, 'Most households have no ' + (tdef.plural || tdef.label).toLowerCase() + ', so the planet counts this as answered. Add a row only if there is one.') : null,
       h('p', null, 'Start with ' + (tdef.nicknameLabel || 'a name').toLowerCase() + ' and ' + primary.label.toLowerCase() + '. Type ~ before a number for a rough figure, ? for unknown, a range like 1500-2000.'),
       coach ? h('p', { class: 'row', style: { marginTop: '8px' } }, h('button', { class: 'btn primary', onClick: () => addRow() }, 'Add ' + (tdef.single ? 'it' : 'a row')), h('span', { class: 'kbd' }, 'Alt+N'),
         tdef.single ? null : h('button', { class: 'btn', title: 'Marks this as none, so the planet counts it as answered', onClick: () => markNone() }, 'No ' + (tdef.plural || tdef.label).toLowerCase()),
@@ -137,7 +138,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
       if (any) totals[c.def.id] = { sum, rough };
     });
     if (!Object.keys(totals).length) return null;
-    return h('tfoot', null, h('tr', null, cols.map((c, i) => {
+    return h('tfoot', { class: 'totals' }, h('tr', null, cols.map((c, i) => {
       if (i === 0) return h('td', { class: 'sticky' }, primary.cadence ? 'Total a month' : 'Total');
       if (c.kind === 'field' && totals[c.def.id]) return h('td', { class: 'num' }, F.dollarsWhole(totals[c.def.id].sum, { rough: totals[c.def.id].rough }));
       return h('td', null, '');
@@ -445,7 +446,16 @@ export function ledgerTable(host, app, planet, typeId, opts) {
 
   ensureDatalists(app);
   render();
-  return { render, addRow };
+  /* Totals follow every keystroke without rebuilding the live inputs: only the footer is replaced. */
+  function refreshTotals() {
+    const table = wrap.querySelector('table.ledger-table, table.data');
+    if (!table) return;
+    const old = table.querySelector('tfoot.totals');
+    const fresh = totalsRow(rows(), columns());
+    if (old && fresh) old.replaceWith(fresh); else if (old) old.remove(); else if (fresh) table.appendChild(fresh);
+  }
+
+  return { render, addRow, refreshTotals };
 }
 
 /* A text input shows "Not entered" while empty (no browser hint text). */

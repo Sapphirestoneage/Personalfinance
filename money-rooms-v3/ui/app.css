@@ -35,7 +35,7 @@ input:focus, select:focus, textarea:focus, [contenteditable]:focus { outline: 2p
 
 /* Shell */
 .topbar {
-  height: 48px; background: var(--sapphire-900); color: var(--paper);
+  height: 48px; background: var(--bar); color: var(--on-bar);
   display: flex; align-items: center; gap: var(--s-3); padding: 0 var(--s-3);
   position: sticky; top: 0; z-index: 20;
 }
@@ -227,7 +227,7 @@ table.data tfoot td { background: var(--paper-2); font-weight: var(--w-semibold)
 .drawer table.data th { position: static; }
 
 /* Toast and notices */
-.toast { position: fixed; bottom: var(--s-3); left: 50%; transform: translateX(-50%); background: var(--sapphire-900); color: var(--paper); padding: var(--s-2) var(--s-3); border-radius: var(--r-field); font-size: var(--fs-13); z-index: 40; display: flex; gap: var(--s-3); align-items: center; }
+.toast { position: fixed; bottom: var(--s-3); left: 50%; transform: translateX(-50%); background: var(--bar); color: var(--on-bar); padding: var(--s-2) var(--s-3); border-radius: var(--r-field); font-size: var(--fs-13); z-index: 40; display: flex; gap: var(--s-3); align-items: center; }
 .toast button { all: unset; color: var(--sapphire-300); cursor: pointer; }
 .notice { border: 1px solid var(--amber); border-radius: var(--r-field); padding: var(--s-2) var(--s-3); color: var(--ink); background: var(--paper); font-size: var(--fs-13); }
 
@@ -346,8 +346,12 @@ body[data-view="client"] .kpi .value.list, body[data-view="client"] .kpi .value.
 .cell-money { display: inline-flex; align-items: center; gap: var(--s-2); }
 .ledger-table td + td, .ledger-table th + th { border-left: 1px solid var(--line-soft); }
 .ledger-table td { padding: 0 var(--s-2) 0 12px; }
-.ledger-table td.with-pick { display: flex; align-items: center; gap: var(--s-2); height: var(--row-h); }
-.ledger-table td.with-pick .pick { width: 16px; height: 16px; margin: 0; accent-color: var(--sapphire-700); flex: none; }
+.ledger-table td.with-pick { display: flex; align-items: center; gap: var(--s-2); height: var(--row-h); overflow: hidden; }
+.ledger-table td.with-pick .input { flex: 1 1 auto; min-width: 0; width: auto; margin-left: 0; }
+.pick { appearance: none; -webkit-appearance: none; width: 16px; height: 16px; margin: 0; flex: none; border: 1px solid var(--line); border-radius: 3px; background: var(--paper); cursor: pointer; position: relative; }
+.pick:checked { background: var(--sapphire-700); border-color: var(--sapphire-700); }
+.pick:checked::after { content: ''; position: absolute; left: 5px; top: 1px; width: 4px; height: 9px; border: solid var(--paper); border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.pick:focus-visible { outline: 2px solid var(--sapphire-500); outline-offset: 1px; }
 .cell-money .select.cad { width: 64px; height: 24px; border-color: var(--line-soft); background-color: var(--paper-2); border-radius: 12px; font-size: var(--fs-11); color: var(--slate); padding: 0 16px 0 8px; background-position: right 4px center; }
 .cell-money .select.cad:hover, .cell-money .select.cad:focus { border-color: var(--line); background-color: var(--paper); }
 .fieldbar { display: flex; align-items: center; gap: var(--s-2); margin-top: var(--s-2); padding: var(--s-2) var(--s-3); border: 1px solid var(--line); border-radius: var(--r-panel); background: var(--paper); min-height: 40px; flex-wrap: wrap; }
