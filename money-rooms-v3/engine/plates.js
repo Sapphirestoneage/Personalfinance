@@ -15,6 +15,7 @@ export function plateItems(record, fields) {
       const f = r.f[fid];
       if (!needsFollowUp(f)) return;
       const def = fields.fields[fid]; if (!def || def.tag || !askedOnRow(fields, r, fid)) return;
+      if (def.optional && f.state === 'unknown') return; /* an optional fact nobody has touched is not a question (MR-037) */
       items.push({ planet: p, rowId: r.id, field: fid, label: def.label, row: r.nickname || (planets[p].types[r.type] || {}).label || r.type, institution: r.institution || '', state: f.state, source: f.source, plate: plateOf(f), weight: def.weight });
     });
   }));

@@ -60,7 +60,7 @@ export function compute(record, data, opts) {
     const all = []; typeFills[p] = {}; needs[p] = [];
     const byType = {};
     /* a tag changes no number (MR-031); a cadence-tied field is only asked in that cadence (MR-032) */
-    const counts = (k, r) => !(fieldsData && fieldsData.fields[k] && fieldsData.fields[k].tag) && (!fieldsData || askedOnRow(fieldsData, r, k));
+    const counts = (k, r) => !(fieldsData && fieldsData.fields[k] && (fieldsData.fields[k].tag || fieldsData.fields[k].optional)) && (!fieldsData || askedOnRow(fieldsData, r, k));
     rows.forEach(r => { (byType[r.type] = byType[r.type] || []).push(r); Object.keys(r.f).forEach(k => { if (counts(k, r)) all.push(r.f[k]); }); });
     fills[p] = all.length ? fillOf(all) : null;
     if (fieldsData && fieldsData.planets[p]) {

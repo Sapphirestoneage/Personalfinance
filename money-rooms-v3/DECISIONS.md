@@ -218,3 +218,21 @@ Decision: "New job or pay change" split into Pay change (share of take-home, yea
 Compatibility: a stored job block keeps its id and payChange; its old gapMonths and matchChange answers are ignored. A stored raise block has no type and is skipped by Simulate.
 Why: the owner asked for a date picker that saves a date, a clear line between a new job and a pay change, a salary first and the questions behind a details tab.
 Alternative: one block with a mode switch (two meanings in one card).
+
+## MR-037 2026-10-05 Needed, Optional, Tag: three kinds of fact, and only the first is asked
+Decision: every field is one of three kinds. Needed facts change a number and are asked, counted in the planet's percentage, placed on plates and listed by the tracker. Optional facts (`optional: true`) sharpen a number when known and never hold anything up: not counted, not on the tracker, on a plate only once they have a value, grouped under "Optional" in the row's Details with the note "sharpens a number when known; never holds anything up". Tags (`tag: true`) are labels to filter by. `docs/MODULE-AUDIT.md` lists every row type's goal and its three groups.
+Compatibility: none; stored values are unchanged, only how they are counted.
+Why: the owner asked for every module to be audited and made much simpler to fill in, with the relevant fields where expected.
+Alternative: lower weights on the optional fields (still asked, still counted, still confusing).
+
+## MR-038 2026-10-05 One calendar for every date; one box selects every row
+Decision: every date in the app is the browser's own date input (`ui/datepicker.js`): birth date, As of, start and promo dates, target dates, and the start of a change on Starting soon and Simulate. A month field shows the first of the month and stores YYYY-MM; the value is read back from the record on every render, so what is picked sticks. The birth date keeps an age box beside the calendar for when only the age or the year is known. A word state (not applicable, will send) on a date comes from the state chip or Alt+S. The ledger header carries a checkbox that selects every row on the page, and the Delete button then says "Delete all N rows".
+Compatibility: none; dates were already stored as ISO strings.
+Why: typed dates were rejected in formats people use, the month input is not a calendar in every browser, and deleting a whole list took one click per row.
+Alternative: a hand-built calendar widget (another thing to maintain; the native one is what people already know).
+
+## MR-039 2026-10-05 Two hundred cards, business cards included
+Decision: the card library grew from 58 to 212 cards across 42 issuers: personal, business (`business: true`) and store cards, including co-brand airline and hotel cards, credit unions, regional banks and fintech charge cards. The card picker shows an issuer's personal and business cards in two groups. Every entry is written from memory and marked verify; the tie-out workpapers were regenerated because the best library rate per category moved.
+Compatibility: none; existing card ids are unchanged.
+Why: the owner asked for a far more comprehensive list with business cards.
+Alternative: a live feed from issuers (no public source; the library stays a starting point to verify).

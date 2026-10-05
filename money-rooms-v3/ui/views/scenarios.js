@@ -10,6 +10,7 @@ import { compare, newBlock, blockCosts, costSentence, startLabel, parseStart } f
 import { createRow } from '../../engine/record.js';
 import { freshFacts } from '../../engine/fields.js';
 import { questionField, liveFigures, startPicker } from '../startingsoon.js';
+import { setDateValue } from '../datepicker.js';
 
 export function mount(host, app) {
   const defs = app.data.scenarioBlocks;
@@ -118,7 +119,7 @@ export function mount(host, app) {
     const b = cur(editorFor); if (!b) return;
     const def = defs.types[b.type];
     costLine.textContent = costSentence(blockCosts(def, b, live()));
-    if (document.activeElement !== startInput) startInput.value = b.startYear + '-' + String(b.startMonth || 1).padStart(2, '0');
+    setDateValue(startInput, b.startYear + '-' + String(b.startMonth || 1).padStart(2, '0'));
     clear(actionHost);
     actionHost.appendChild(b.promoted ? h('span', { class: 'chip state-known' }, 'In the Life plan') : h('button', { class: 'btn primary', onClick: () => promote(b) }, 'Add to Life plan'));
     actionHost.appendChild(h('button', { class: 'btn quiet', onClick: () => { app.mutate(rec => { rec.scenarios = rec.scenarios.filter(s => s.id !== b.id); }, 'scenarios'); selected = null; app.toast('Block removed'); } }, 'Remove block'));

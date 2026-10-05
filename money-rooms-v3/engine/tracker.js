@@ -43,7 +43,7 @@ export function trackerSteps(record, fields) {
       const prim = primaryFieldOf(fields, p, r.type);
       const name = r.nickname || tdef.label;
       tdef.fields.forEach(id => {
-        const d = fields.fields[id]; if (!d || d.tag || !askedOnRow(fields, r, id)) return;
+        const d = fields.fields[id]; if (!d || d.tag || d.optional || !askedOnRow(fields, r, id)) return;
         const f = r.f[id];
         const step = { kind: prim && id === prim.id ? 'headline' : 'detail', label: name + ': ' + d.label.toLowerCase(), where: PLANET_LABELS[p], href: '#/ledger/' + p + '/' + r.type, rowId: r.id, field: id, done: !empty(f) };
         (step.kind === 'headline' ? headline : details).push(step);

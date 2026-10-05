@@ -94,7 +94,7 @@ are in the files. Scores under 4 that remain are listed there by fix id.
   and a compatibility note where a stored shape changed.
 - QUESTIONS.md: five questions for Eli; none blocked the build.
 - Written from memory and marked `verify: true` (shown as "Looked up
-  (verify)" at 0.7 confidence until confirmed): `data/cards.json` (58 cards),
+  (verify)" at 0.7 confidence until confirmed): `data/cards.json` (212 cards, personal, business and store),
   `data/funds.json` (35 funds), `data/tax-2026.json` (brackets, standard
   deduction, FICA), `data/limits-2026.json` (401k, IRA, HSA limits),
   `data/defaults.json` (national averages), `data/scenario-blocks.json`

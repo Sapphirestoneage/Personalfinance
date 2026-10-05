@@ -50,7 +50,7 @@ Age at 2026-10-05: born 1995-06-22, so 31. Filing status single.
   - snowball order Double Cash > 2022 Subaru Crosstrek: debt-free 2031-02 after 52 payments, total interest $2,258.20. 2026-11: Double Cash paid off (1 payments); 2031-02: 2022 Subaru Crosstrek paid off (52 payments)
   - stress order 2022 Subaru Crosstrek > Double Cash: debt-free 2031-02 after 52 payments, total interest $2,258.20. 2026-11: Double Cash paid off (1 payments); 2031-02: 2022 Subaru Crosstrek paid off (52 payments)
 - Card Double Cash: rewards $485.20 a year (Electric, water and internet $190/mo at 2x 1.00c = $45.60; Groceries $480/mo at 2x 1.00c = $115.20; Restaurants and takeout $360/mo at 2x 1.00c = $86.40; Gas and parking $160/mo at 2x 1.00c = $38.40; Car insurance $145/mo at 2x 1.00c = $34.80; Phone $70/mo at 2x 1.00c = $16.80; Software subscriptions $85/mo at 2x 1.00c = $20.40; Climbing gym $95/mo at 2x 1.00c = $22.80; Clothing and personal care $75/mo at 2x 1.00c = $18; Coffee shops $120/mo at 2x 1.00c = $28.80; Travel $200/mo at 2x 1.00c = $48; Gifts $41.67/mo at 2x 1.00c = $10); credits used $0; fee $0; net = $0 + $485.20 - $0 = $485.20. A no-fee 2% card on the same spend: $485.20; unused credits $0.
-- Rewards left on the table (best library rate per category, portal-only rates capped at 6x, minus actual) = $657.72 a year. Best rates: dining 5.0%, groceries 6.0%, travel 7.8%, gas 5.0%, streaming 6.0%, other 2.0%.
+- Rewards left on the table (best library rate per category, portal-only rates capped at 6x, minus actual) = $801.32 a year. Best rates: dining 6.0%, groceries 6.0%, travel 7.8%, gas 6.0%, streaming 6.0%, other 3.0%.
 
 ## Investments and accounts
 - HSA (hsa): $3,100, bucket hsa, tier semi, market returns

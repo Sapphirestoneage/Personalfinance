@@ -5,6 +5,7 @@
 import { h, clear } from './dom.js';
 import * as F from '../engine/format.js';
 import { parseTyped } from './typed.js';
+import { datePicker } from './datepicker.js';
 import { newBlock, blockCosts, costSentence, startLabel, parseStart } from '../engine/scenarios.js';
 
 /* One question of a block as an input: money, percent or a count. Shows the formatted value, edits the raw one. */
@@ -25,16 +26,14 @@ export function liveFigures(app) {
   const q = x => x && x.cents !== undefined ? x.cents : null;
   return { takeHomeMonthly: q(S && S.income.takeHomeMonthly), spendingMonthly: q(S && S.safety.spendingWithPremiums), grossMonthly: q(S && S.income.grossMonthly) };
 }
-/* A month picker that stores a real date (MR-036): year and month; the keyboard still accepts "Mar 2027". */
+/* The start of a change is picked on a calendar (MR-036, MR-038): the year and month are stored, the day is not. */
 export function startPicker(app, b, opts) {
   const cur = () => (app.record.scenarios || []).find(x => x.id === b.id);
-  const val = x => x.startYear + '-' + String(x.startMonth || 1).padStart(2, '0');
-  const input = h('input', { class: 'input start-picker', type: 'month', value: val(b), 'aria-label': (opts && opts.label) || 'Start of ' + b.name, min: '2000-01', max: '2100-12', onChange: e => {
-    const p = parseStart(e.target.value);
-    if (!p) { e.target.value = val(cur() || b); return; }
+  return datePicker({ value: b.startYear + '-' + String(b.startMonth || 1).padStart(2, '0'), precision: 'month', className: 'start-picker', label: (opts && opts.label) || 'Start of ' + b.name, min: '2000-01-01', max: '2100-12-01', onCommit: iso => {
+    const p = iso ? parseStart(iso) : null;
+    if (!p || !cur()) return;
     app.mutate(rec => { const x = rec.scenarios.find(y => y.id === b.id); x.startYear = p.startYear; x.startMonth = p.startMonth || 1; }, 'scenarios');
   } });
-  return input;
 }
 
 export function mountStartingSoon(host, app, planet) {

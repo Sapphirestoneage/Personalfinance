@@ -26,6 +26,12 @@ async function tabTo(page, pred, max) {
   throw new Error('could not Tab to the target (' + pred.toString().slice(0, 80) + '); last focus ' + JSON.stringify(a) + ' at ' + await page.evaluate(() => location.hash));
 }
 
+/* A calendar input (MR-038) takes its digits in US order: month, day, year. A month field gets day 01. */
+function dateKeys(iso) {
+  const m = /^(\d{4})-(\d{2})(?:-(\d{2}))?/.exec(String(iso));
+  return m ? m[2] + (m[3] || '01') + m[1] : String(iso);
+}
+
 function typedText(d, spec) {
   const [v, state] = Array.isArray(spec) ? spec : [spec, 'known'];
   if (state === 'unknown') return null;
@@ -38,7 +44,7 @@ function typedText(d, spec) {
     case 'money': return typeof v === 'object' ? (v.low / 100) + '-' + (v.high / 100) : pre + (v / 100);
     case 'percent': return pre + (Math.round(v * 10000) / 100);
     case 'int': case 'hours': return pre + String(v);
-    case 'month': return v;
+    case 'month': case 'date': return dateKeys(v);
     case 'text': return String(v);
     default: return String(v);
   }
@@ -69,6 +75,10 @@ export async function enterHousehold(page, spec, check) {
         const idx = lists[id].indexOf(v);
         await press('Home'); /* the state select starts on New York, so begin from the top */
         for (let i = 0; i <= idx; i++) await press('ArrowDown');
+      }
+      else if (id === 'birthDate') {
+        if (state === 'rough') { await press('Tab'); await type(String(v).slice(0, 4)); }
+        else await type(dateKeys(v));
       }
       else { await type(String(v)); }
       await press('Tab');
@@ -108,7 +118,10 @@ export async function enterHousehold(page, spec, check) {
       const prim = tdef.fields.find(f => fields.fields[f].primary) || tdef.fields.find(f => fields.fields[f].kind === 'money') || tdef.fields[0];
       const inTable = [prim].concat(tdef.tableFields || []);
       /* the drawer lists the facts first, then the row's own columns; the flow follows that order */
-      const order = inTable.concat(tdef.fields.filter(f => !inTable.includes(f))).concat(['institution']);
+      const rest = tdef.fields.filter(f => !inTable.includes(f));
+      const isOptional = f => fields.fields[f].optional || fields.fields[f].tag;
+      /* Needed facts come first in the drawer, then Optional and tags (MR-037), then the row's own columns */
+      const order = inTable.concat(rest.filter(f => !isOptional(f))).concat(rest.filter(isOptional)).concat(['institution']);
       /* facts outside the table live behind the row's Details button (MR-029) */
       const details = async () => {
         const open = await page.$('.drawer .row-details[data-row="' + rowId + '"]');
@@ -166,6 +179,11 @@ export async function enterHousehold(page, spec, check) {
             await press('Alt+s');
             await press(state === 'not-applicable' ? 'a' : 'x');
           }
+        } else if ((d.kind === 'month' || d.kind === 'date') && (state === 'not-applicable' || state === 'not-for-me' || state === 'will-send')) {
+          /* a calendar input takes no words: the state comes from Alt+S (MR-038) */
+          await press('Alt+s');
+          await press(state === 'not-applicable' ? 'a' : state === 'not-for-me' ? 'x' : 'w');
+          await tabTo(page, x => x.row === rowId && x.col === fid, 200);
         } else {
           const t = typedText(d, arr);
           if (t !== null) { await type(t); }
@@ -184,7 +202,7 @@ export async function enterHousehold(page, spec, check) {
           await press(source === 'estimated' ? 'e' : source === 'lookup-verify' ? 'y' : source === 'lookup-confirmed' ? 'l' : 'c');
         }
       }
-      if (r.asOf) { await details(); await tabTo(page, a => a.row === rowId && a.col === 'asOf'); await type(r.asOf); await press('Tab'); }
+      if (r.asOf) { await details(); await tabTo(page, a => a.row === rowId && a.col === 'asOf'); await type(dateKeys(r.asOf)); await press('Tab'); }
       if (r.stress !== undefined && r.stress !== null) { await details(); await tabTo(page, a => a.row === rowId && a.col === 'stress'); await type(String(r.stress)); }
       /* credits drawer */
       const creditsField = tdef.fields.find(f => fields.fields[f].kind === 'credits');

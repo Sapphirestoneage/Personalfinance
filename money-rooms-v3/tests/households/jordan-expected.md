@@ -53,7 +53,7 @@ Age at 2026-10-05: born 1999-03-14, so 27. Filing status single.
   - stress order Freedom Unlimited > Direct unsubsidized > Gold Card: debt-free 2033-09 after 83 payments, total interest $4,935.63. 2026-11: Gold Card paid off (1 payments); 2029-05: Freedom Unlimited paid off (31 payments); 2033-09: Direct unsubsidized paid off (83 payments)
 - Card Freedom Unlimited: rewards $143.10 a year (Electric and internet $142/mo at 1.5x 1.00c = $25.56; Subway and bus $132/mo at 5x 1.00c = $79.20; Phone $30/mo at 1.5x 1.00c = $5.40; Streaming $38/mo at 1.5x 1.00c = $6.84; Gym $55/mo at 1.5x 1.00c = $9.90; Clothing and personal care $90/mo at 1.5x 1.00c = $16.20); credits used $0; fee $0; net = $0 + $143.10 - $0 = $143.10. A no-fee 2% card on the same spend: $116.88; unused credits $0.
 - Card Gold Card: rewards $410.40 a year (Groceries $420/mo at 4x 1.00c = $201.60; Restaurants and takeout $310/mo at 4x 1.00c = $148.80; Travel $150/mo at 3x 1.00c = $54; Gifts $50/mo at 1x 1.00c = $6); credits used $0; fee $325; net = $0 + $410.40 - $325 = $85.40. A no-fee 2% card on the same spend: $223.20; unused credits $424.
-- Rewards left on the table (best library rate per category, portal-only rates capped at 6x, minus actual) = $314.29 a year. Best rates: dining 5.0%, groceries 6.0%, travel 7.8%, gas 5.0%, streaming 6.0%, other 2.0%.
+- Rewards left on the table (best library rate per category, portal-only rates capped at 6x, minus actual) = $395.53 a year. Best rates: dining 6.0%, groceries 6.0%, travel 7.8%, gas 6.0%, streaming 6.0%, other 3.0%.
 
 ## Investments and accounts
 - 401k (401k): $11,250, bucket pretax, tier locked, market returns

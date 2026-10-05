@@ -579,11 +579,12 @@
    "kind": "money",
    "owner": "income",
    "weight": 10,
-   "hint": "What lands in the bank, per paycheck or per month. Leave blank to infer from gross (before state tax)",
+   "hint": "Leave blank and it is inferred from gross pay (federal tax and FICA, before state tax)",
    "defaultSource": "client",
    "cadence": true,
    "infer": "takeHome",
-   "defaultCadence": "paycheck"
+   "defaultCadence": "paycheck",
+   "optional": true
   },
   "payFrequency": {
    "id": "payFrequency",
@@ -657,7 +658,8 @@
    "hint": "Roth 401k or Roth 403b deferral per paycheck",
    "defaultSource": "client",
    "cadence": true,
-   "defaultCadence": "paycheck"
+   "defaultCadence": "paycheck",
+   "optional": true
   },
   "hsaPayroll": {
    "id": "hsaPayroll",
@@ -668,7 +670,8 @@
    "hint": "HSA contribution taken from pay",
    "defaultSource": "client",
    "cadence": true,
-   "defaultCadence": "paycheck"
+   "defaultCadence": "paycheck",
+   "optional": true
   },
   "pretaxOther": {
    "id": "pretaxOther",
@@ -679,7 +682,8 @@
    "hint": "Health premiums, FSA, commuter and other pre-tax lines",
    "defaultSource": "client",
    "cadence": true,
-   "defaultCadence": "paycheck"
+   "defaultCadence": "paycheck",
+   "optional": true
   },
   "bonus": {
    "id": "bonus",
@@ -690,7 +694,8 @@
    "hint": "Expected this year, before tax",
    "defaultSource": "client",
    "cadence": true,
-   "defaultCadence": "year"
+   "defaultCadence": "year",
+   "optional": true
   },
   "equity": {
    "id": "equity",
@@ -701,7 +706,8 @@
    "hint": "RSUs or options vesting this year, before tax",
    "defaultSource": "client",
    "cadence": true,
-   "defaultCadence": "year"
+   "defaultCadence": "year",
+   "optional": true
   },
   "startDate": {
    "id": "startDate",
@@ -710,7 +716,8 @@
    "owner": "income",
    "weight": 2,
    "hint": "When this income began",
-   "defaultSource": "client"
+   "defaultSource": "client",
+   "optional": true
   },
   "hoursPaid": {
    "id": "hoursPaid",
@@ -718,8 +725,9 @@
    "kind": "hours",
    "owner": "income",
    "weight": 4,
-   "hint": "Paid hours per week",
-   "defaultSource": "client"
+   "hint": "For the real hourly wage lens",
+   "defaultSource": "client",
+   "optional": true
   },
   "hoursCommute": {
    "id": "hoursCommute",
@@ -727,8 +735,9 @@
    "kind": "hours",
    "owner": "income",
    "weight": 3,
-   "hint": "Commute, prep and unpaid work hours per week",
-   "defaultSource": "client"
+   "hint": "For the real hourly wage lens",
+   "defaultSource": "client",
+   "optional": true
   },
   "workCosts": {
    "id": "workCosts",
@@ -736,10 +745,11 @@
    "kind": "money",
    "owner": "income",
    "weight": 4,
-   "hint": "Commuting, clothes, lunches, childcare that exist because of this job, per month",
+   "hint": "Commuting, clothes, tools, childcare that only exist because of this job",
    "defaultSource": "client",
    "cadence": true,
-   "defaultCadence": "month"
+   "defaultCadence": "month",
+   "optional": true
   },
   "businessExpenses": {
    "id": "businessExpenses",
@@ -750,7 +760,8 @@
    "hint": "Costs of doing the work, before tax",
    "defaultSource": "client",
    "cadence": true,
-   "defaultCadence": "month"
+   "defaultCadence": "month",
+   "optional": true
   },
   "benefitAmount": {
    "id": "benefitAmount",
@@ -792,7 +803,8 @@
    "hint": "Taxes, insurance, repairs, management per month (not the mortgage)",
    "defaultSource": "client",
    "cadence": true,
-   "defaultCadence": "month"
+   "defaultCadence": "month",
+   "optional": true
   },
   "matchRate": {
    "id": "matchRate",
@@ -821,7 +833,8 @@
    "hint": "Stipends or reimbursements per month",
    "defaultSource": "client",
    "cadence": true,
-   "defaultCadence": "month"
+   "defaultCadence": "month",
+   "optional": true
   },
   "otherIncome": {
    "id": "otherIncome",
@@ -938,8 +951,9 @@
    "kind": "bool",
    "owner": "spending",
    "weight": 5,
-   "hint": "Part of the lean month: food, accommodation, transportation you would keep",
-   "defaultSource": "client"
+   "hint": "Tick the lines you would keep in a lean month: food, housing, getting around",
+   "defaultSource": "client",
+   "optional": true
   },
   "primaryCard": {
    "id": "primaryCard",
@@ -967,7 +981,8 @@
      "Other"
     ]
    ],
-   "dynamicOptions": "cards"
+   "dynamicOptions": "cards",
+   "optional": true
   },
   "summaryTotal": {
    "id": "summaryTotal",
@@ -1011,9 +1026,10 @@
    "kind": "text",
    "owner": "debt",
    "weight": 6,
-   "hint": "Pick from the library or type a name",
+   "hint": "Pick the issuer, then the card, to prefill the fee and credits",
    "defaultSource": "client",
-   "library": "cards"
+   "library": "cards",
+   "optional": true
   },
   "balance": {
    "id": "balance",
@@ -1041,7 +1057,8 @@
    "owner": "debt",
    "weight": 8,
    "hint": "0 for a 0% offer; blank if none",
-   "defaultSource": "client"
+   "defaultSource": "client",
+   "optional": true
   },
   "promoEnd": {
    "id": "promoEnd",
@@ -1050,7 +1067,8 @@
    "owner": "debt",
    "weight": 10,
    "hint": "When the promo rate stops",
-   "defaultSource": "client"
+   "defaultSource": "client",
+   "optional": true
   },
   "minimum": {
    "id": "minimum",
@@ -1078,8 +1096,9 @@
    "kind": "money",
    "owner": "debt",
    "weight": 6,
-   "hint": "Charged once a year",
-   "defaultSource": "lookup-verify"
+   "hint": "Filled from the card library when a card is picked",
+   "defaultSource": "lookup-verify",
+   "optional": true
   },
   "creditsUsed": {
    "id": "creditsUsed",
@@ -1087,8 +1106,9 @@
    "kind": "credits",
    "owner": "debt",
    "weight": 5,
-   "hint": "For each statement credit: yes, partly or no",
-   "defaultSource": "client"
+   "hint": "Filled from the card library when a card is picked",
+   "defaultSource": "client",
+   "optional": true
   },
   "autopay": {
    "id": "autopay",
@@ -1115,7 +1135,8 @@
      "full",
      "Full balance"
     ]
-   ]
+   ],
+   "optional": true
   },
   "rate": {
    "id": "rate",
@@ -1145,7 +1166,8 @@
    "owner": "debt",
    "weight": 6,
    "hint": "",
-   "defaultSource": "client"
+   "defaultSource": "client",
+   "optional": true
   },
   "principalInterest": {
    "id": "principalInterest",
@@ -1167,7 +1189,8 @@
    "hint": "Per month, escrowed or not",
    "defaultSource": "client",
    "cadence": true,
-   "defaultCadence": "month"
+   "defaultCadence": "month",
+   "optional": true
   },
   "escrowInsurance": {
    "id": "escrowInsurance",
@@ -1178,7 +1201,8 @@
    "hint": "Per month",
    "defaultSource": "client",
    "cadence": true,
-   "defaultCadence": "month"
+   "defaultCadence": "month",
+   "optional": true
   },
   "hoa": {
    "id": "hoa",
@@ -1189,7 +1213,8 @@
    "hint": "Per month",
    "defaultSource": "client",
    "cadence": true,
-   "defaultCadence": "month"
+   "defaultCadence": "month",
+   "optional": true
   },
   "pmi": {
    "id": "pmi",
@@ -1200,7 +1225,8 @@
    "hint": "Per month; 0 if none",
    "defaultSource": "client",
    "cadence": true,
-   "defaultCadence": "month"
+   "defaultCadence": "month",
+   "optional": true
   },
   "score": {
    "id": "score",
@@ -1315,7 +1341,8 @@
    "owner": "safety",
    "weight": 6,
    "hint": "The amount covered or the benefit",
-   "defaultSource": "client"
+   "defaultSource": "client",
+   "optional": true
   },
   "premium": {
    "id": "premium",
@@ -1336,7 +1363,8 @@
    "owner": "safety",
    "weight": 4,
    "hint": "",
-   "defaultSource": "client"
+   "defaultSource": "client",
+   "optional": true
   },
   "unemploymentWeekly": {
    "id": "unemploymentWeekly",
@@ -1490,8 +1518,9 @@
    "kind": "percent",
    "owner": "invest",
    "weight": 5,
-   "hint": "",
-   "defaultSource": "client"
+   "hint": "Optional: the mix inside the account",
+   "defaultSource": "client",
+   "optional": true
   },
   "allocBonds": {
    "id": "allocBonds",
@@ -1500,7 +1529,8 @@
    "owner": "invest",
    "weight": 5,
    "hint": "",
-   "defaultSource": "client"
+   "defaultSource": "client",
+   "optional": true
   },
   "allocCash": {
    "id": "allocCash",
@@ -1509,7 +1539,8 @@
    "owner": "invest",
    "weight": 4,
    "hint": "",
-   "defaultSource": "client"
+   "defaultSource": "client",
+   "optional": true
   },
   "allocOther": {
    "id": "allocOther",
@@ -1518,7 +1549,8 @@
    "owner": "invest",
    "weight": 3,
    "hint": "",
-   "defaultSource": "client"
+   "defaultSource": "client",
+   "optional": true
   },
   "usShare": {
    "id": "usShare",
@@ -1527,7 +1559,8 @@
    "owner": "invest",
    "weight": 3,
    "hint": "Of the stock part",
-   "defaultSource": "client"
+   "defaultSource": "client",
+   "optional": true
   },
   "beneficiary": {
    "id": "beneficiary",
@@ -1575,7 +1608,8 @@
    "owner": "invest",
    "weight": 5,
    "hint": "",
-   "defaultSource": "client"
+   "defaultSource": "client",
+   "optional": true
   },
   "investSummaryTotal": {
    "id": "investSummaryTotal",
@@ -1669,7 +1703,8 @@
    "owner": "life",
    "weight": 3,
    "hint": "Share of today's spending. 100% means no change.",
-   "defaultSource": "estimated"
+   "defaultSource": "estimated",
+   "optional": true
   },
   "slowgo": {
    "id": "slowgo",
@@ -1678,7 +1713,8 @@
    "owner": "life",
    "weight": 3,
    "hint": "Roughly 75 to 85",
-   "defaultSource": "estimated"
+   "defaultSource": "estimated",
+   "optional": true
   },
   "nogo": {
    "id": "nogo",
@@ -1687,7 +1723,8 @@
    "owner": "life",
    "weight": 3,
    "hint": "85 and after",
-   "defaultSource": "estimated"
+   "defaultSource": "estimated",
+   "optional": true
   },
   "otherLife": {
    "id": "otherLife",

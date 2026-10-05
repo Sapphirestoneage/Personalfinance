@@ -1,5 +1,6 @@
 /* Money Rooms v3 design tokens. Every screen uses only these. No red. */
 :root {
+  color-scheme: light;
   --sapphire-900: #0B1F4D;   /* headers */
   --sapphire-700: #0F52BA;   /* primary, active planet, links */
   --sapphire-500: #2E6FD8;   /* chart series 1, focus */
@@ -59,6 +60,7 @@
 
 /* Dark theme (MR-028): the same roles, remapped. Follows the system unless the top bar switch picks one. */
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --sapphire-900: #DCE7FA;
   --sapphire-700: #7FAEF5;
   --sapphire-500: #5B8FEA;

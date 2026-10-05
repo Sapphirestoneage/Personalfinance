@@ -7,6 +7,7 @@ import { SUN_FIELDS, SUN_ASKED, SUN_MORE, WORK_SITUATIONS, PLANETS, PLANET_LABEL
 import * as F from '../../engine/format.js';
 import { hasValue } from '../../engine/states.js';
 import { orbitMap, mapPanel } from '../orbit.js';
+import { datePicker } from '../datepicker.js';
 import { lowerFirst, holdsBack } from './ledger.js';
 import { overallConfidence } from './onepager.js';
 
@@ -34,7 +35,7 @@ export function parseBirthText(t, today) {
   return null;
 }
 function birthLabel(f, today) {
-  if (!f || !f.v) return ' (a year is enough)';
+  if (!f || !f.v) return '';
   return f.state === 'rough' ? ' (about ' + F.ageAt(f.v, today) + ')' : ' (age ' + F.ageAt(f.v, today) + ')';
 }
 
@@ -190,15 +191,17 @@ function renderSun(panel, app) {
       app.setField('sun', id, value === '' ? null : value, st, src);
     };
     if (id === 'birthDate') {
-      const shown = x => x.v ? (x.state === 'rough' ? x.v.slice(0, 4) : F.dateLong(x.v)) : '';
-      control = h('input', { class: 'input', type: 'text', inputmode: 'numeric', value: shown(f), 'aria-label': SUN_LABELS[id], title: 'A year (1999), an age (27), or a date (1999-03-14, 3/14/1999, 14 Mar 1999)', onChange: e => {
+      /* a calendar for the date (MR-038); an age box beside it when only the age or the year is known */
+      const picker = datePicker({ value: f.v && f.state !== 'rough' ? f.v : null, precision: 'day', label: SUN_LABELS[id], min: '1900-01-01', max: todayIso(), onCommit: iso => { if (iso === null) commit(null); else { commit(iso, 'known'); age.value = ''; } } });
+      const age = h('input', { class: 'input num age', type: 'text', inputmode: 'numeric', value: f.v && f.state === 'rough' ? String(F.ageAt(f.v, todayIso())) : '', 'aria-label': 'Age or birth year, if the date is unknown', title: 'An age (27) or a year (1999) is enough', onChange: e => {
         const t = e.target.value.trim();
-        if (t === '') return commit(null);
+        if (t === '') return;
         const p = parseBirthText(t, todayIso());
-        if (!p) { app.toast('A birth year is enough, for example 1999. Or a date: 1999-03-14, 3/14/1999, 14 Mar 1999.'); e.target.value = shown(f); return; }
-        e.target.value = p.state === 'rough' ? p.iso.slice(0, 4) : F.dateLong(p.iso); commit(p.iso, p.state);
+        if (!p) { app.toast('An age (27) or a birth year (1999) is enough here.'); e.target.value = ''; return; }
+        picker.value = ''; e.target.value = p.state === 'rough' ? String(F.ageAt(p.iso, todayIso())) : ''; commit(p.iso, p.state);
+        if (p.state === 'known') picker.value = p.iso;
       } });
-      control.addEventListener('focus', () => { const cur = rec.sun.f.birthDate; control.value = cur && cur.v ? (cur.state === 'rough' ? cur.v.slice(0, 4) : cur.v) : ''; });
+      control = h('span', { class: 'picker birth' }, picker, h('span', { class: 'or' }, 'or age'), age);
     } else if (id === 'state') {
       control = h('select', { class: 'select', 'aria-label': SUN_LABELS[id], onChange: e => commit(e.target.value) },
         h('option', { value: '' }, 'Not entered'), states.map(s => h('option', { value: s[0], selected: f.v === s[0] }, s[1])));

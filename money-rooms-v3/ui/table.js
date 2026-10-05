@@ -9,6 +9,7 @@ import { closeOverlay } from './app.js';
 import { h, clear } from './dom.js';
 import { stateChip, sourceChip } from './chips.js';
 import { parseTyped, rawOf } from './typed.js';
+import { datePicker, setDateValue } from './datepicker.js';
 import * as F from '../engine/format.js';
 import { confidenceOf, hasValue, isRough, STATES, SOURCES } from '../engine/states.js';
 import { typeDef, fieldDef, primaryFieldOf, freshFacts, noneRow, isNoneRow, askedOnRow } from '../engine/fields.js';
@@ -86,7 +87,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     const nSel = state.selected.size;
     const toolbar = h('div', { class: 'toolbar' },
       all.length ? h('span', { class: 'small muted' }, all.length + (all.length === 1 ? ' row' : ' rows')) : null,
-      coach && nSel ? h('button', { class: 'btn small', onClick: () => { const ids = Array.from(state.selected); state.selected.clear(); app.removeRows(ids); render(); } }, 'Delete ' + (nSel === 1 ? '1 row' : nSel + ' rows')) : null,
+      coach && nSel ? h('button', { class: 'btn small', onClick: () => { const ids = Array.from(state.selected); state.selected.clear(); app.removeRows(ids); render(); } }, 'Delete ' + (nSel === 1 ? '1 row' : nSel === all.length ? 'all ' + nSel + ' rows' : nSel + ' rows')) : null,
       showFilters ? filterSelect('State', 'state', Object.keys(STATES).map(id => [id, STATES[id].label])) : null,
       showFilters ? filterSelect('Source', 'source', Object.keys(SOURCES).map(id => [id, SOURCES[id].label])) : null,
       showFilters && catDef ? filterSelect('Category', 'category', catDef.options) : null,
@@ -94,11 +95,12 @@ export function ledgerTable(host, app, planet, typeId, opts) {
       h('span', { style: { flex: 1 } }),
       coach && all.length && !(tdef.single && all.length) ? h('span', { class: 'row' }, h('button', { class: 'btn small primary', onClick: () => addRow() }, 'Add row'), h('span', { class: 'kbd' }, 'Alt+N')) : null);
     const cols = columns();
+    const pickAll = coach && !tdef.single && list.length ? selectAllBox(list) : null;
     const thead = h('thead', null, h('tr', null, cols.map(c => h('th', {
-      class: (c.num ? 'num' : '') + (c.sticky ? ' sticky' : ''), 'aria-sort': state.sortKey === c.key ? (state.sortDir === 1 ? 'ascending' : 'descending') : null,
-      onClick: () => { if (!c.sortable) return; if (state.sortKey === c.key) state.sortDir = -state.sortDir; else { state.sortKey = c.key; state.sortDir = 1; } render(); },
+      class: (c.num ? 'num' : '') + (c.sticky ? ' sticky' : '') + (c.sticky && pickAll ? ' with-pick' : ''), 'aria-sort': state.sortKey === c.key ? (state.sortDir === 1 ? 'ascending' : 'descending') : null,
+      onClick: e => { if (!c.sortable || e.target.classList.contains('pick')) return; if (state.sortKey === c.key) state.sortDir = -state.sortDir; else { state.sortKey = c.key; state.sortDir = 1; } render(); },
       title: c.hint || null,
-    }, c.label))));
+    }, c.sticky && pickAll ? [pickAll, h('span', null, c.label)] : c.label))));
     const tbody = h('tbody', null, list.map(r => renderRow(r, cols)));
     const table = h('table', { class: 'data ledger-table' }, thead, tbody, totalsRow(list, cols));
     const tableWrap = h('div', { class: 'tablewrap' }, table);
@@ -113,6 +115,15 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     }
     wrap.appendChild(h('div', { class: 'panel ledger-panel', style: { padding: 0, overflow: 'hidden' } }, toolbar, list.length ? tableWrap : emptyState(all.length)));
     if (coach && all.length) wrap.appendChild(fieldBar());
+  }
+
+  /* One box selects every row on the page, so a whole list can go in one Delete. */
+  function selectAllBox(list) {
+    const n = list.filter(r => state.selected.has(r.id)).length;
+    const box = h('input', { type: 'checkbox', class: 'pick', 'aria-label': n === list.length ? 'Clear selection' : 'Select all rows', title: n === list.length ? 'Clear selection' : 'Select all ' + list.length + ' rows', checked: n === list.length,
+      onChange: e => { if (e.target.checked) list.forEach(r => state.selected.add(r.id)); else list.forEach(r => state.selected.delete(r.id)); render(); } });
+    box.indeterminate = n > 0 && n < list.length;
+    return box;
   }
 
   function emptyState(total) {
@@ -192,14 +203,14 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     const body = h('div', { class: 'row-details', dataset: { row: r.id } });
     body.appendChild(h('h2', null, r.nickname || (tdef.nicknameLabel || 'Row'), h('span', { class: 'tag' }, tdef.label)));
     const live = () => app.record.planets[planet].rows.find(x => x.id === r.id) || r;
-    const facts = h('div', { class: 'detail-group' }), about = h('div', { class: 'detail-group' });
-    let anyFact = false;
+    const facts = h('div', { class: 'detail-group' }), optional = h('div', { class: 'detail-group' }), about = h('div', { class: 'detail-group' });
+    let anyFact = false, anyOptional = false;
     detailColumns().forEach(c => {
       if (c.kind === 'field' && !askedOnRow(fields, r, c.def.id)) return; /* not asked in this cadence (MR-032) */
       const td = renderCell(r, c); if (!td) return;
       const control = h('div', { class: 'control' }); while (td.firstChild) control.appendChild(td.firstChild);
       const f0 = c.kind === 'field' ? r.f[c.def.id] : null;
-      const needed = c.kind === 'field' && !c.def.tag && (!f0 || f0.state === 'unknown' || f0.state === 'will-send');
+      const needed = c.kind === 'field' && !c.def.tag && !c.def.optional && (!f0 || f0.state === 'unknown' || f0.state === 'will-send');
       const row = h('div', { class: 'fieldrow detail' + (c.kind === 'field' && c.def.tag ? ' is-tag' : '') + (needed ? ' needed' : ''), dataset: { field: c.key } },
         h('label', { title: c.def && c.def.tag ? 'A tag: it filters and labels, it changes no number' : (c.hint || '') }, c.label, c.kind === 'field' && c.def.tag ? h('span', { class: 'small muted' }, ' tag') : null), control);
       if (c.kind === 'field' && coach) {
@@ -214,11 +225,12 @@ export function ledgerTable(host, app, planet, typeId, opts) {
         paint();
         control.querySelectorAll('input, select').forEach(el => el.addEventListener('change', () => setTimeout(paint, 0)));
         row.appendChild(st); row.appendChild(so);
-        facts.appendChild(row); anyFact = true;
-      } else if (c.kind === 'field') { facts.appendChild(row); anyFact = true; }
+        if (c.def.optional || c.def.tag) { optional.appendChild(row); anyOptional = true; } else { facts.appendChild(row); anyFact = true; }
+      } else if (c.kind === 'field') { if (c.def.optional || c.def.tag) { optional.appendChild(row); anyOptional = true; } else { facts.appendChild(row); anyFact = true; } }
       else about.appendChild(row);
     });
-    if (anyFact) { body.appendChild(h('h3', null, 'Facts')); body.appendChild(facts); }
+    if (anyFact) { body.appendChild(h('h3', null, 'Needed')); body.appendChild(facts); }
+    if (anyOptional) { body.appendChild(h('h3', null, 'Optional', h('span', { class: 'small muted', style: { fontWeight: 400, marginLeft: '6px' } }, 'sharpens a number when known; never holds anything up'))); body.appendChild(optional); }
     body.appendChild(h('h3', null, 'About this row')); body.appendChild(about);
     if (coach) body.appendChild(h('div', { class: 'row', style: { marginTop: '16px' } }, h('button', { class: 'btn quiet', onClick: () => { app.removeRow(r.id); closeOverlay(); render(); } }, 'Remove this row')));
     const back = wrap.querySelector('tr[data-row="' + r.id + '"] [data-col="details"]');
@@ -259,7 +271,8 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     const el = wrap.querySelector('tr[data-row="' + rowId + '"] [data-col="' + fieldId + '"]');
     if (!r || !el || el === document.activeElement) return;
     const d = fieldDef(fields, fieldId);
-    if (el.tagName === 'INPUT' && ['money', 'percent', 'int', 'hours', 'month', 'date'].includes(d.kind)) el.value = display(d, r.f[fieldId]);
+    if (el.tagName === 'INPUT' && el.type === 'date') { setDateValue(el, r.f[fieldId] && hasValue(r.f[fieldId]) ? r.f[fieldId].v : null); return; }
+    if (el.tagName === 'INPUT' && ['money', 'percent', 'int', 'hours'].includes(d.kind)) el.value = display(d, r.f[fieldId]);
   }
 
   function display(d, f) {
@@ -306,17 +319,12 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     if (c.kind === 'column') {
       if (!coach && c.key === 'notesPrivate') return null;
       if (!coach) return h('td', { class: (c.key === 'asOf' ? 'small muted' : '') + (c.sticky ? ' sticky' : '') }, c.key === 'asOf' ? (r.asOf ? F.date(r.asOf) : h('span', { class: 'empty-token' }, 'Not entered')) : (r[c.key] || h('span', { class: 'empty-token' }, 'Not entered')));
-      const input = h('input', { class: 'input' + (c.key === 'nickname' || c.key === 'notesPrivate' || c.key === 'notesShared' ? ' wide' : ''), type: 'text', value: c.key === 'asOf' ? (r.asOf ? F.date(r.asOf) : '') : (r[c.key] || ''), 'aria-label': c.label, dataset: { col: c.key },
-        onChange: e => {
-          if (c.key === 'asOf') {
-            const t = e.target.value.trim();
-            if (t === '') { app.setColumn(r.id, 'asOf', null); return; }
-            const m = parseTyped('month', t);
-            if (!m) return;
-            app.setColumn(r.id, 'asOf', m.v); e.target.value = F.date(m.v);
-          } else app.setColumn(r.id, c.key, e.target.value.trim());
-        } });
-      if (c.key === 'asOf') { input.style.width = '96px'; input.addEventListener('focus', () => { input.value = r.asOf || ''; }); input.addEventListener('blur', () => { const cur = app.record.planets[planet].rows.find(x => x.id === r.id); if (cur && cur.asOf) input.value = F.date(cur.asOf); }); }
+      if (c.key === 'asOf') {
+        const picker = datePicker({ value: r.asOf, precision: 'month', label: c.label, dataset: { col: 'asOf' }, onCommit: iso => app.setColumn(r.id, 'asOf', iso) });
+        return h('td', null, emptyWrap(picker, keyFlow(picker, r, 'asOf')));
+      }
+      const input = h('input', { class: 'input' + (c.key === 'nickname' || c.key === 'notesPrivate' || c.key === 'notesShared' ? ' wide' : ''), type: 'text', value: r[c.key] || '', 'aria-label': c.label, dataset: { col: c.key },
+        onChange: e => app.setColumn(r.id, c.key, e.target.value.trim()) });
       if (c.key === 'institution' && planet === 'debt' && typeId === 'card') input.setAttribute('list', 'mr3-issuers');
       if (c.sticky && coach && !tdef.single) {
         const box = h('input', { type: 'checkbox', class: 'pick', 'aria-label': 'Select row', checked: state.selected.has(r.id), onChange: e => { if (e.target.checked) state.selected.add(r.id); else state.selected.delete(r.id); render(); } });
@@ -353,7 +361,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
   /* Facts behind Details that change a number and are still empty; tags never count (MR-031). */
   function toFill(r) {
     const shown = [primary.id].concat(tdef.tableFields || []);
-    return tdef.fields.filter(id => !shown.includes(id) && askedOnRow(fields, r, id)).filter(id => { const d = fieldDef(fields, id); const f = r.f[id]; return !d.tag && (!f || f.state === 'unknown' || f.state === 'will-send'); }).length;
+    return tdef.fields.filter(id => !shown.includes(id) && askedOnRow(fields, r, id)).filter(id => { const d = fieldDef(fields, id); const f = r.f[id]; return !d.tag && !d.optional && (!f || f.state === 'unknown' || f.state === 'will-send'); }).length;
   }
   /* A choice can borrow options from the household: "How it is paid" lists the credit cards by name (MR-033). */
   function choiceOptions(d) {
@@ -405,6 +413,17 @@ export function ledgerTable(host, app, planet, typeId, opts) {
       return keyFlow(btn, r, d.id);
     }
     if (d.library === 'cards') return cardPicker(r, d);
+    if (d.kind === 'month' || d.kind === 'date') {
+      const picker = datePicker({ value: f && hasValue(f) ? f.v : null, precision: d.kind === 'month' ? 'month' : 'day', label: d.label, title: d.hint || null, dataset: { col: d.id }, onCommit: iso => {
+        const cur = r.f[d.id] || {};
+        const keep = cur.state === 'rough' || cur.state === 'verified' ? cur.state : 'known';
+        if (iso === null) app.setField(r.id, d.id, null, 'unknown', cur.source || d.defaultSource || 'client');
+        else app.setField(r.id, d.id, iso, keep, cur.source || d.defaultSource || 'client');
+        refreshDerived(r.id);
+        showFieldBar(r.id, d.id);
+      } });
+      return emptyWrap(picker, keyFlow(picker, r, d.id));
+    }
     const input = h('input', { class: 'input' + (['money', 'percent', 'int', 'hours'].includes(d.kind) ? ' num' : '') + (d.kind === 'text' ? ' wide' : ''), type: 'text', inputmode: ['money', 'percent', 'int', 'hours'].includes(d.kind) ? 'decimal' : null, value: display(d, f), 'aria-label': d.label, dataset: { col: d.id }, title: d.hint || null });
     if (d.kind === 'text') {
       input.addEventListener('change', e => {
@@ -427,7 +446,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     return keyFlow(input, r, d.id);
   }
 
-  /* Issuer first, then the card (MR-034): 58 cards are too many for one list. "Other" takes a typed name. */
+  /* Issuer first, then the card (MR-034): two hundred cards are too many for one list. Personal and business cards sit in two groups. "Other" takes a typed name. */
   function cardPicker(r, d) {
     const lib = app.data.cards.cards;
     const issuers = Array.from(new Set(lib.map(c => c.issuer))).sort((a, b) => a.localeCompare(b));
@@ -441,7 +460,13 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     const fillCards = () => {
       clear(cardSel);
       cardSel.appendChild(h('option', { value: '' }, issuer ? 'Pick the card' : 'Pick an issuer first'));
-      lib.filter(c => c.issuer === issuer).forEach(c => cardSel.appendChild(h('option', { value: c.id, selected: !!current && current.id === c.id }, c.name)));
+      const mine = lib.filter(c => c.issuer === issuer);
+      const groups = [['Personal', mine.filter(c => !c.business)], ['Business', mine.filter(c => c.business)]].filter(g => g[1].length);
+      groups.forEach(g => {
+        const host = groups.length > 1 ? h('optgroup', { label: g[0] }) : cardSel;
+        g[1].forEach(c => host.appendChild(h('option', { value: c.id, selected: !!current && current.id === c.id }, c.name)));
+        if (host !== cardSel) cardSel.appendChild(host);
+      });
       cardSel.disabled = !issuer || issuer === 'other';
       cardSel.style.display = issuer === 'other' ? 'none' : '';
       other.style.display = issuer === 'other' ? '' : 'none';

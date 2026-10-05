@@ -56,7 +56,7 @@ Age at 2026-10-05: born 2000-02-11, so 26. Filing status single.
   - stress order Direct unsubsidized > Sapphire Preferred > Bilt: debt-free 2034-05 after 91 payments, total interest $2,650.87. 2026-11: Bilt paid off (1 payments); 2028-06: Sapphire Preferred paid off (20 payments); 2034-05: Direct unsubsidized paid off (91 payments)
 - Card Sapphire Preferred: rewards $582.50 a year (PG&E and internet $165/mo at 1x 1.25c = $24.75; Groceries $520/mo at 3x 1.25c = $234; Restaurants and takeout $280/mo at 3x 1.25c = $126; BART and Lyft $190/mo at 2x 1.25c = $57; Phone $45/mo at 1x 1.25c = $6.75; Streaming and subscriptions $55/mo at 3x 1.25c = $24.75; Climbing gym $95/mo at 1x 1.25c = $14.25; Clothing and personal care $110/mo at 1x 1.25c = $16.50; Travel $216.67/mo at 2x 1.25c = $65; Gifts and giving $90/mo at 1x 1.25c = $13.50); credits used $50; fee $95; net = $50 + $582.50 - $95 = $537.50. A no-fee 2% card on the same spend: $424; unused credits $0.
 - Card Bilt: rewards $337.50 a year (Rent $2,250/mo at 1x 1.25c = $337.50); credits used $0; fee $0; net = $0 + $337.50 - $0 = $337.50. A no-fee 2% card on the same spend: $540; unused credits $0.
-- Rewards left on the table (best library rate per category, portal-only rates capped at 6x, minus actual) = $703.84 a year. Best rates: dining 5.0%, groceries 6.0%, travel 7.8%, gas 5.0%, streaming 6.0%, other 2.0%.
+- Rewards left on the table (best library rate per category, portal-only rates capped at 6x, minus actual) = $1,068.04 a year. Best rates: dining 6.0%, groceries 6.0%, travel 7.8%, gas 6.0%, streaming 6.0%, other 3.0%.
 
 ## Investments and accounts
 - 401k (401k): $28,400, bucket pretax, tier locked, market returns

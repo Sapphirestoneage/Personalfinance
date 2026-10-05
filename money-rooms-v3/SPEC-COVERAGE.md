@@ -41,7 +41,7 @@ plainly. Evidence is a file, a test name or a screenshot path.
 | Quick notes from any screen landing on my plate | done (capture) | ui/app.js quickNoteBar; my plate screen itself is Level 3 |
 | Summary-or-detail inputs: rough total, detail overrides, gap shown | done | engine/compute.js summaries; ui/views/ledger.js note(); spending, debt and investments "Rough total" row types |
 | Situation gate: income row types by work situation; absent not hidden | done | engine/fields.js typesFor; fields.test.js "the situation gate removes income types" |
-| Card library prefill (issuer, annual fee, credits yes/partly/no) | done | ui/table.js libraryPrefill, openCredits; data/cards.json (58 cards, verify: true) |
+| Card library prefill (issuer, annual fee, credits yes/partly/no) | done | ui/table.js libraryPrefill, openCredits; data/cards.json (212 cards incl. business, verify: true) |
 | Fund library prefill (ticker fills name, expense ratio, asset class) | done | ui/table.js libraryPrefill; data/funds.json (35 funds, verify: true) |
 | Defaults as estimates (national averages by household size, 0.5, shown with ~) | done | ui/views/ledger.js useDefaults; data/defaults.json |
 | Every field declares its default source | done | data/fields.json defaultSource; fields.test.js |
