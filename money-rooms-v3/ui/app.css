@@ -609,3 +609,5 @@ main > header:has(+ .onepager) { max-width: 816px; }
 .fieldrow.detail.needed > label::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 3px; background: var(--amber); margin-right: 6px; vertical-align: middle; }
 .fieldrow.detail.is-tag > label { color: var(--slate); }
 @media (max-width: 720px) { .ledger-table .details-btn .todo { position: absolute; margin: 0; transform: translate(-2px, -10px); } .ledger-table .details-btn { position: relative; } }
+.none-state p { margin: 0 0 var(--s-2); color: var(--slate); }
+.none-state strong { color: var(--ink); }

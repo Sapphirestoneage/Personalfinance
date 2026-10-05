@@ -2,6 +2,7 @@
    estimates and unfiled quick notes -> my plate. Level 3 ranks them by
    leverage; here they are listed and grouped. */
 import { needsFollowUp, plateOf } from './states.js';
+import { askedOnRow } from './fields.js';
 import * as F from './format.js';
 
 export function plateItems(record, fields) {
@@ -13,7 +14,7 @@ export function plateItems(record, fields) {
     Object.keys(r.f).forEach(fid => {
       const f = r.f[fid];
       if (!needsFollowUp(f)) return;
-      const def = fields.fields[fid]; if (!def || def.tag) return;
+      const def = fields.fields[fid]; if (!def || def.tag || !askedOnRow(fields, r, fid)) return;
       items.push({ planet: p, rowId: r.id, field: fid, label: def.label, row: r.nickname || (planets[p].types[r.type] || {}).label || r.type, institution: r.institution || '', state: f.state, source: f.source, plate: plateOf(f), weight: def.weight });
     });
   }));

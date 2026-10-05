@@ -5,6 +5,7 @@
    views read from it and never do math. */
 
 import { PLANETS, SUN_FIELDS, createSun, publish, readerFor } from './sun.js';
+import { askedOnRow } from './fields.js';
 import { confidenceOf, hasValue, numberOf } from './states.js';
 import { cadenceToMonthly, isNeeds, isQ } from './units.js';
 import { ageAt } from './format.js';
@@ -58,13 +59,14 @@ export function compute(record, data, opts) {
     rowCounts[p] = rows.length;
     const all = []; typeFills[p] = {}; needs[p] = [];
     const byType = {};
-    const counts = k => !(fieldsData && fieldsData.fields[k] && fieldsData.fields[k].tag); /* a tag changes no number (MR-031) */
-    rows.forEach(r => { (byType[r.type] = byType[r.type] || []).push(r); Object.keys(r.f).forEach(k => { if (counts(k)) all.push(r.f[k]); }); });
+    /* a tag changes no number (MR-031); a cadence-tied field is only asked in that cadence (MR-032) */
+    const counts = (k, r) => !(fieldsData && fieldsData.fields[k] && fieldsData.fields[k].tag) && (!fieldsData || askedOnRow(fieldsData, r, k));
+    rows.forEach(r => { (byType[r.type] = byType[r.type] || []).push(r); Object.keys(r.f).forEach(k => { if (counts(k, r)) all.push(r.f[k]); }); });
     fills[p] = all.length ? fillOf(all) : null;
     if (fieldsData && fieldsData.planets[p]) {
       Object.keys(fieldsData.planets[p].types).forEach(tid => {
         const list = byType[tid] || []; const fs = [];
-        list.forEach(r => Object.keys(r.f).forEach(k => { if (counts(k)) fs.push(r.f[k]); }));
+        list.forEach(r => Object.keys(r.f).forEach(k => { if (counts(k, r)) fs.push(r.f[k]); }));
         const tdef = fieldsData.planets[p].types[tid];
         /* a type assumed none (rentals) counts as answered until a row says otherwise (MR-027) */
         typeFills[p][tid] = list.length ? fillOf(fs) : (tdef.assumeNone ? 1 : null);

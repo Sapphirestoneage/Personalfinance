@@ -590,7 +590,7 @@
    "kind": "choice",
    "owner": "income",
    "weight": 6,
-   "hint": "How often a paycheck arrives",
+   "hint": "Asked only when the pay is typed per paycheck; the cadence pill already says per month, week or year",
    "defaultSource": "client",
    "options": [
     [
@@ -609,7 +609,8 @@
      "monthly",
      "Monthly"
     ]
-   ]
+   ],
+   "onlyWhenCadence": "paycheck"
   },
   "stability": {
    "id": "stability",

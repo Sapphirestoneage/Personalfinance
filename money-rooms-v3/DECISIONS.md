@@ -188,3 +188,9 @@ Decision: a field marked tag (stability, bureau, priority, beneficiary, insuranc
 Compatibility: none; tag is a data field.
 Why: Side income read 75% because an unfilled hours field and a stability choice dragged it down; the owner asked that only facts that affect other numbers be highlighted.
 Alternative: weights per field in the fill (hides the rule instead of stating it).
+
+## MR-032 2026-10-05 Pay frequency is asked only when pay is typed per paycheck
+Decision: a field can be tied to a cadence (payFrequency to "paycheck"); it is asked, counted and placed on a plate only while the row's headline figure is typed in that cadence. A side income typed per month never asks how often it is paid. "None" for a row type is one quiet line with Undo, not a row with details.
+Compatibility: none; stored values stay and are ignored while the cadence differs.
+Why: the cadence pill and the pay frequency field asked the same thing twice.
+Alternative: drop pay frequency and keep only the pill (loses the paycheck count that converts a paystub to a month).

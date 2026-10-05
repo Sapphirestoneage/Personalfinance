@@ -91,3 +91,12 @@ export function isNoneRow(fields, row) {
   const pf = prim && row.f[prim.id];
   return row.nickname === 'None' && !!pf && pf.state === 'none';
 }
+
+/* A field tied to a cadence (pay frequency) is asked only while the row's headline figure is typed in that cadence (MR-032). */
+export function askedOnRow(fields, row, fieldId) {
+  const def = fields.fields[fieldId]; if (!def || !def.onlyWhenCadence) return true;
+  const headId = Object.keys(row.f).find(k => fields.fields[k] && fields.fields[k].cadence);
+  if (!headId) return true;
+  const hf = row.f[headId]; const cad = (hf && hf.cad) || fields.fields[headId].defaultCadence || 'month';
+  return cad === def.onlyWhenCadence;
+}

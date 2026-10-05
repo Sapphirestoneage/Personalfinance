@@ -126,6 +126,10 @@ export async function enterHousehold(page, spec, check) {
         const d = fields.fields[fid];
         const sp = r.f && r.f[fid];
         if (sp === undefined) continue;
+        if (d.onlyWhenCadence) { /* asked only in that cadence (MR-032) */
+          const headSpec = r.f[prim]; const headCad = Array.isArray(headSpec) && headSpec[3] ? headSpec[3] : fields.fields[prim].defaultCadence;
+          if (headCad !== d.onlyWhenCadence) continue;
+        }
         const arr = Array.isArray(sp) ? sp : [sp, 'known', 'client'];
         const [v, state, source, cad] = arr;
         if (d.kind === 'credits') continue;

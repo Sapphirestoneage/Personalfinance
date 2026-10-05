@@ -11,7 +11,7 @@ import { stateChip, sourceChip } from './chips.js';
 import { parseTyped, rawOf } from './typed.js';
 import * as F from '../engine/format.js';
 import { confidenceOf, hasValue, isRough, STATES, SOURCES } from '../engine/states.js';
-import { typeDef, fieldDef, primaryFieldOf, freshFacts, noneRow } from '../engine/fields.js';
+import { typeDef, fieldDef, primaryFieldOf, freshFacts, noneRow, isNoneRow, askedOnRow } from '../engine/fields.js';
 import { createRow } from '../engine/record.js';
 import { monthlyOf } from '../engine/compute.js';
 
@@ -102,6 +102,15 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     const tbody = h('tbody', null, list.map(r => renderRow(r, cols)));
     const table = h('table', { class: 'data ledger-table' }, thead, tbody, totalsRow(list, cols));
     const tableWrap = h('div', { class: 'tablewrap' }, table);
+    /* "None" is one quiet line, not a row with details (MR-025) */
+    if (all.length && all.every(r => isNoneRow(fields, r))) {
+      wrap.appendChild(h('div', { class: 'panel ledger-panel none-state' },
+        h('p', null, h('strong', null, 'None.'), ' No ' + (tdef.plural || tdef.label).toLowerCase() + ' for this household.'),
+        coach ? h('div', { class: 'row' },
+          h('button', { class: 'btn small', onClick: () => { const ids = all.map(r => r.id); app.removeRows(ids); addRow(); } }, 'Actually, add one'),
+          h('button', { class: 'btn small quiet', onClick: () => { app.removeRows(all.map(r => r.id)); render(); } }, 'Undo')) : null));
+      return;
+    }
     wrap.appendChild(h('div', { class: 'panel ledger-panel', style: { padding: 0, overflow: 'hidden' } }, toolbar, list.length ? tableWrap : emptyState(all.length)));
     if (coach && all.length) wrap.appendChild(fieldBar());
   }
@@ -191,6 +200,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     const facts = h('div', { class: 'detail-group' }), about = h('div', { class: 'detail-group' });
     let anyFact = false;
     detailColumns().forEach(c => {
+      if (c.kind === 'field' && !askedOnRow(fields, r, c.def.id)) return; /* not asked in this cadence (MR-032) */
       const td = renderCell(r, c); if (!td) return;
       const control = h('div', { class: 'control' }); while (td.firstChild) control.appendChild(td.firstChild);
       const f0 = c.kind === 'field' ? r.f[c.def.id] : null;
@@ -348,7 +358,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
   /* Facts behind Details that change a number and are still empty; tags never count (MR-031). */
   function toFill(r) {
     const shown = [primary.id].concat(tdef.tableFields || []);
-    return tdef.fields.filter(id => !shown.includes(id)).filter(id => { const d = fieldDef(fields, id); const f = r.f[id]; return !d.tag && (!f || f.state === 'unknown' || f.state === 'will-send'); }).length;
+    return tdef.fields.filter(id => !shown.includes(id) && askedOnRow(fields, r, id)).filter(id => { const d = fieldDef(fields, id); const f = r.f[id]; return !d.tag && (!f || f.state === 'unknown' || f.state === 'will-send'); }).length;
   }
   function creditsSummary(r, f) {
     const v = f && f.v && typeof f.v === 'object' ? f.v : null;
