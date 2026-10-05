@@ -158,7 +158,6 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     const pushField = id => {
       const d = fieldDef(fields, id);
       cols.push({ key: id, label: d.label, sortable: true, kind: 'field', def: d, num: ['money', 'percent', 'int', 'hours'].includes(d.kind), hint: d.hint });
-      if (d.cadence) cols.push({ key: id + ':cad', label: 'Per', sortable: false, kind: 'cadence', def: d });
     };
     pushField(primary.id);
     (tdef.tableFields || []).filter(id => id !== primary.id).forEach(pushField);
@@ -174,7 +173,6 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     const pushField = id => {
       const d = fieldDef(fields, id);
       cols.push({ key: id, label: d.label, sortable: false, kind: 'field', def: d, num: ['money', 'percent', 'int', 'hours'].includes(d.kind), hint: d.hint });
-      if (d.cadence) cols.push({ key: id + ':cad', label: 'Per', sortable: false, kind: 'cadence', def: d });
     };
     cols.push({ key: 'institution', label: fields.planets[planet].institutionLabel, sortable: false, kind: 'column' });
     tdef.fields.filter(id => !shown.includes(id)).forEach(pushField);
@@ -190,14 +188,10 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     const body = h('div', { class: 'row-details', dataset: { row: r.id } });
     body.appendChild(h('h2', null, r.nickname || (tdef.nicknameLabel || 'Row'), h('span', { class: 'tag' }, tdef.label)));
     body.appendChild(h('p', { class: 'hint', style: { marginBottom: '8px' } }, 'The essentials stay in the table. Everything else about this row is here.'));
-    let cadHolder = null;
     detailColumns().forEach(c => {
       const td = renderCell(r, c); if (!td) return;
       const control = h('div', { class: 'control' }); while (td.firstChild) control.appendChild(td.firstChild);
-      if (c.kind === 'cadence') { if (cadHolder) cadHolder.appendChild(control.firstChild || control); return; }
-      const row = h('div', { class: 'fieldrow detail', dataset: { field: c.key } }, h('label', { title: c.hint || '' }, c.label), control);
-      cadHolder = c.kind === 'field' && c.def.cadence ? control : null;
-      body.appendChild(row);
+      body.appendChild(h('div', { class: 'fieldrow detail', dataset: { field: c.key } }, h('label', { title: c.hint || '' }, c.label), control));
     });
     if (coach) body.appendChild(h('div', { class: 'row', style: { marginTop: '16px' } }, h('button', { class: 'btn quiet', onClick: () => { app.removeRow(r.id); closeOverlay(); render(); } }, 'Remove this row')));
     const back = wrap.querySelector('tr[data-row="' + r.id + '"] [data-col="details"]');
@@ -265,17 +259,9 @@ export function ledgerTable(host, app, planet, typeId, opts) {
   function renderCell(r, c) {
     if (c.kind === 'state') return h('td', { class: 'cell-state' }, stateCell(r));
     if (c.kind === 'source') return h('td', { class: 'cell-source' }, sourceCell(r));
-    if (c.kind === 'cadence') {
-      const f = r.f[c.def.id];
-      if (!coach || (f && (f.state === 'not-applicable' || f.state === 'not-for-me'))) return h('td', { class: 'small muted' }, f && hasValue(f) && f.cad ? CADENCE_SHORT[f.cad] : '');
-      const cad = h('select', { class: 'select cad', 'aria-label': c.def.label + ' cadence', dataset: { col: c.def.id + ':cad' }, onChange: e => {
-        const cur = r.f[c.def.id] || { v: null, state: 'unknown', source: c.def.defaultSource || 'client' };
-        app.setField(r.id, c.def.id, cur.v, cur.state, cur.source, e.target.value);
-      } }, Object.keys(CADENCE_SHORT).map(k => h('option', { value: k, selected: (f && f.cad) === k || (!(f && f.cad) && c.def.defaultCadence === k) }, CADENCE_SHORT[k])));
-      return h('td', null, keyFlow(cad, r, c.def.id + ':cad'));
-    }
+    if (c.kind === 'cadence') return h('td', null, cadenceControl(r, c.def));
     if (c.kind === 'remove') return h('td', null, h('button', { class: 'btn small quiet', 'aria-label': 'Remove row', title: 'Remove row (Alt+Delete)', onClick: () => { app.removeRow(r.id); render(); } }, 'Remove'));
-    if (c.kind === 'details') return h('td', { class: 'cell-details' }, h('button', { class: 'btn small', dataset: { col: 'details' }, 'aria-label': 'Details for ' + (r.nickname || 'this row'), onClick: () => openDetails(r.id) }, 'Details'));
+    if (c.kind === 'details') return h('td', { class: 'cell-details' }, h('button', { class: 'btn small quiet details-btn', dataset: { col: 'details' }, 'aria-label': 'Details for ' + (r.nickname || 'this row'), onClick: () => openDetails(r.id) }, 'Details'));
     if (c.kind === 'followUp') {
       const btn = h('button', { class: 'chip toggle' + (r.followUp ? ' amber' : ''), 'aria-pressed': String(!!r.followUp), 'aria-label': 'Follow up flag', dataset: { col: 'followUp' }, onClick: e => { const next = !r.followUp; app.setColumn(r.id, 'followUp', next); e.target.textContent = next ? 'Flagged' : 'Not flagged'; e.target.classList.toggle('amber', next); e.target.setAttribute('aria-pressed', String(next)); } }, r.followUp ? 'Flagged' : 'Not flagged');
       return h('td', null, keyFlow(btn, r, 'followUp'));
@@ -317,11 +303,22 @@ export function ledgerTable(host, app, planet, typeId, opts) {
       if (d.kind === 'choice') { const o = (d.options || []).find(x => x[0] === (f && f.v)); return h('td', { class: c.num ? 'num' : null }, o ? o[1] : h('span', { class: 'empty-token' }, 'Not entered')); }
       if (d.kind === 'bool') return h('td', null, f && hasValue(f) ? (f.v ? 'Yes' : 'No') : h('span', { class: 'empty-token' }, 'Not entered'));
       if (d.kind === 'credits') return h('td', null, creditsSummary(r, f));
-      return h('td', { class: c.num ? 'num' : null }, txt === 'Not entered' || txt === '' ? h('span', { class: 'empty-token' }, 'Not entered') : h('span', { class: isRough(f) ? 'rough-value' : null }, txt));
+      return h('td', { class: c.num ? 'num' : null }, txt === 'Not entered' || txt === '' ? h('span', { class: 'empty-token' }, 'Not entered') : h('span', { class: isRough(f) ? 'rough-value' : null }, txt), d.cadence && f && hasValue(f) && f.cad ? h('span', { class: 'small muted cad-text' }, ' ' + CADENCE_SHORT[f.cad]) : null);
     }
+    if (d.cadence) return h('td', { class: 'num' }, h('span', { class: 'cell-money' }, editor(r, d), cadenceControl(r, d)));
     return h('td', { class: c.num ? 'num' : null }, editor(r, d));
   }
 
+  /* The cadence pill sits inside its amount cell: "$85 mo" reads as one fact. */
+  function cadenceControl(r, d) {
+    const f = r.f[d.id];
+    if (!coach || (f && (f.state === 'not-applicable' || f.state === 'not-for-me'))) return h('span', { class: 'small muted cad-text' }, f && hasValue(f) && f.cad ? CADENCE_SHORT[f.cad] : '');
+    const cad = h('select', { class: 'select cad', 'aria-label': d.label + ' cadence', dataset: { col: d.id + ':cad' }, onChange: e => {
+      const cur = r.f[d.id] || { v: null, state: 'unknown', source: d.defaultSource || 'client' };
+      app.setField(r.id, d.id, cur.v, cur.state, cur.source, e.target.value);
+    } }, Object.keys(CADENCE_SHORT).map(k => h('option', { value: k, selected: (f && f.cad) === k || (!(f && f.cad) && d.defaultCadence === k) }, CADENCE_SHORT[k])));
+    return keyFlow(cad, r, d.id + ':cad');
+  }
   function creditsSummary(r, f) {
     const v = f && f.v && typeof f.v === 'object' ? f.v : null;
     if (!v) return h('span', { class: 'empty-token' }, 'Not entered');
