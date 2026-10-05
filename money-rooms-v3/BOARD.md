@@ -5,7 +5,7 @@
 | 0 | Skeleton | FROZEN | Level 0: Skeleton |
 | 1 | Capture | FROZEN | Level 1: Capture |
 | 2 | Measure + one-pager | FROZEN | Level 2: Measure + one-pager |
-| 3 | Session engine | not started | |
+| 3 | Session engine | FROZEN | Level 3: Session engine |
 | 4 | Simulate | not started | |
 | 5 | Learn | not started | |
 | 6 | Depth | not started | |
