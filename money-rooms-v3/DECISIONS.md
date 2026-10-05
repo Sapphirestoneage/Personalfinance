@@ -200,3 +200,9 @@ Decision: the spending line's "Card used" text became "How it is paid", a choice
 Compatibility: primaryCard keeps its id; a stored card name is still a valid value. lineAutopay is new and optional.
 Why: the owner asked for the payment method, including the bank account, and manual versus autopay.
 Alternative: a free-text field (cannot be filtered and misspells card names).
+
+## MR-034 2026-10-05 Pick the issuer, then the card
+Decision: the Card field on a credit card row is two lists: the issuer, then that issuer's cards from the library; "Other" takes a typed name. Picking a card prefills the issuer, the annual fee and the statement credits as before.
+Compatibility: cardName keeps its id and stores "Issuer Name" as before.
+Why: one list of 58 cards was too many to scan.
+Alternative: type-ahead on one list (works on a desktop, poor on a phone).

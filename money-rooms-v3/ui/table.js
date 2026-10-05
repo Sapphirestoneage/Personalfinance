@@ -409,6 +409,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
       const btn = h('button', { class: 'btn small', dataset: { col: d.id }, onClick: () => openCredits(r, d) }, creditsSummary(r, f).textContent || 'Credits');
       return keyFlow(btn, r, d.id);
     }
+    if (d.library === 'cards') return cardPicker(r, d);
     const input = h('input', { class: 'input' + (['money', 'percent', 'int', 'hours'].includes(d.kind) ? ' num' : '') + (d.kind === 'text' ? ' wide' : ''), type: 'text', inputmode: ['money', 'percent', 'int', 'hours'].includes(d.kind) ? 'decimal' : null, value: display(d, f), 'aria-label': d.label, dataset: { col: d.id }, title: d.hint || null });
     if (d.kind === 'text') {
       input.addEventListener('change', e => {
@@ -429,6 +430,41 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     }
     if (d.kind === 'text') return emptyWrap(input, keyFlow(input, r, d.id));
     return keyFlow(input, r, d.id);
+  }
+
+  /* Issuer first, then the card (MR-034): 58 cards are too many for one list. "Other" takes a typed name. */
+  function cardPicker(r, d) {
+    const lib = app.data.cards.cards;
+    const issuers = Array.from(new Set(lib.map(c => c.issuer))).sort((a, b) => a.localeCompare(b));
+    const f = r.f[d.id];
+    const current = r.lib ? lib.find(c => c.id === r.lib) : null;
+    let issuer = current ? current.issuer : (issuers.find(i => (r.institution || '').toLowerCase() === i.toLowerCase()) || (f && hasValue(f) && !current ? 'other' : ''));
+    const wrap = h('span', { class: 'picker' });
+    const cardSel = h('select', { class: 'select', 'aria-label': 'Card', dataset: { col: d.id } });
+    const other = h('input', { class: 'input wide', type: 'text', 'aria-label': 'Card name', dataset: { col: d.id }, value: !current && f && hasValue(f) ? f.v : '' });
+    other.addEventListener('change', e => { const v = e.target.value.trim(); const cur = r.f[d.id] || {}; if (v) { app.setField(r.id, d.id, v, 'known', cur.source || 'client'); libraryPrefill(r, d, v); } else app.setField(r.id, d.id, null, 'unknown', cur.source || 'client'); refreshDerived(r.id); });
+    const fillCards = () => {
+      clear(cardSel);
+      cardSel.appendChild(h('option', { value: '' }, issuer ? 'Pick the card' : 'Pick an issuer first'));
+      lib.filter(c => c.issuer === issuer).forEach(c => cardSel.appendChild(h('option', { value: c.id, selected: !!current && current.id === c.id }, c.name)));
+      cardSel.disabled = !issuer || issuer === 'other';
+      cardSel.style.display = issuer === 'other' ? 'none' : '';
+      other.style.display = issuer === 'other' ? '' : 'none';
+    };
+    const issuerSel = h('select', { class: 'select', 'aria-label': 'Issuer', dataset: { col: d.id + ':issuer' }, onChange: e => { issuer = e.target.value; fillCards(); } },
+      h('option', { value: '', selected: !issuer }, 'Issuer'), issuers.map(i => h('option', { value: i, selected: issuer === i }, i)), h('option', { value: 'other', selected: issuer === 'other' }, 'Other'));
+    cardSel.addEventListener('change', e => {
+      const card = lib.find(c => c.id === e.target.value); const cur = r.f[d.id] || {};
+      if (!card) { app.setField(r.id, d.id, null, 'unknown', cur.source || 'client'); return; }
+      app.setField(r.id, d.id, card.issuer + ' ' + card.name, 'known', cur.source || 'client');
+      libraryPrefill(r, d, card.issuer + ' ' + card.name);
+      refreshDerived(r.id);
+    });
+    fillCards();
+    wrap.appendChild(keyFlow(issuerSel, r, d.id + ':issuer'));
+    wrap.appendChild(keyFlow(cardSel, r, d.id));
+    wrap.appendChild(keyFlow(other, r, d.id));
+    return wrap;
   }
 
   /* Library prefill: a card name or a ticker fills the row's lookup fields. */

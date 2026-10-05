@@ -137,6 +137,21 @@ export async function enterHousehold(page, spec, check) {
         if (d.kind === 'credits') continue;
         const hasLibrary = tdef.fields.some(f => fields.fields[f].library);
         if (hasLibrary && d.defaultSource === 'lookup-verify') continue; /* the library prefill fills these */
+        if (d.library === 'cards' && typeof v === 'string') {
+          /* issuer first, then the card (MR-034) */
+          const lib = JSON.parse(fs.readFileSync(new URL('../data/cards.json', import.meta.url), 'utf8')).cards;
+          const card = lib.find(c => (c.issuer + ' ' + c.name).toLowerCase() === v.toLowerCase() || c.name.toLowerCase() === v.toLowerCase());
+          if (card) {
+            const issuers = Array.from(new Set(lib.map(c => c.issuer))).sort((a, b) => a.localeCompare(b));
+            await tabTo(page, a => a.row === rowId && a.col === fid + ':issuer');
+            await press('Home'); for (let i = 0; i <= issuers.indexOf(card.issuer); i++) await press('ArrowDown');
+            await tabTo(page, a => a.row === rowId && a.col === fid && a.tag === 'SELECT');
+            const names = lib.filter(c => c.issuer === card.issuer).map(c => c.id);
+            await press('Home'); for (let i = 0; i <= names.indexOf(card.id); i++) await press('ArrowDown');
+            await press('Tab');
+            continue;
+          }
+        }
         await tabTo(page, a => a.row === rowId && a.col === fid).catch(e => { throw new Error(e.message + ' [row ' + r.id + ' field ' + fid + ' inTable ' + inTable.includes(fid) + ']'); });
         if (d.kind === 'choice' || d.kind === 'bool') {
           /* selects: Home, then ArrowDown to the option (typeahead is ambiguous: "No" also matches "Not entered") */

@@ -611,3 +611,6 @@ main > header:has(+ .onepager) { max-width: 816px; }
 @media (max-width: 720px) { .ledger-table .details-btn .todo { position: absolute; margin: 0; transform: translate(-2px, -10px); } .ledger-table .details-btn { position: relative; } }
 .none-state p { margin: 0 0 var(--s-2); color: var(--slate); }
 .none-state strong { color: var(--ink); }
+.picker { display: flex; gap: var(--s-1); width: 100%; min-width: 0; }
+.picker .select, .picker .input { flex: 1 1 50%; min-width: 0; }
+.drawer .row-details .fieldrow.detail .control > .picker { flex: 1 1 auto; }
