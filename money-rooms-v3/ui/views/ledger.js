@@ -6,7 +6,7 @@ import { orbitMap, mapPanel } from '../orbit.js';
 import { mountStartingSoon } from '../startingsoon.js';
 import { CHARTS } from '../../engine/chartdata.js';
 import * as Charts from '../charts.js';
-import { ledgerTable } from '../table.js';
+import { ledgerTable, markTypeNone } from '../table.js';
 import { PLANET_LABELS, PLANETS } from '../../engine/sun.js';
 import { typesFor, typeDef, primaryFieldOf, freshFacts, fieldDef, isNoneRow } from '../../engine/fields.js';
 import { createRow } from '../../engine/record.js';
@@ -73,7 +73,7 @@ export function mount(host, app) {
       h('thead', null, h('tr', null, h('th', null, 'Row type'), h('th', { class: 'num' }, 'Rows'), h('th', { class: 'num' }, 'Confidence'), anyNeeds ? h('th', null, 'Needs') : null)),
       h('tbody', null, types.map(t => { const rows = rowsOf(t); const needs = (app.result.needs[planet] || []).filter(n => n.type === t.id); return h('tr', null,
         h('td', null, h('a', { href: '#/ledger/' + planet + '/' + t.id }, t.id === 'other' ? 'Other (optional)' : t.plural || t.label)),
-        h('td', { class: 'num' }, rows.length ? String(rows.length) : h('span', { class: 'empty-token' }, t.assumeNone ? 'None (assumed)' : 'No rows')),
+        h('td', { class: 'num' }, rows.length ? String(rows.length) : (t.assumeNone ? h('span', { class: 'empty-token' }, 'None (assumed)') : (app.view === 'coach' && !t.single ? h('button', { class: 'btn small quiet', onClick: () => markTypeNone(app, planet, t.id) }, 'None') : h('span', { class: 'empty-token' }, 'No rows')))),
         h('td', { class: 'num' }, rows.length ? Math.round((app.result.typeFills[planet][t.id] || 0) * 100) + '%' : ''),
         anyNeeds ? h('td', { class: 'small muted' }, needs.length ? needs.slice(0, 2).map(n => n.label).join(', ') + (needs.length > 2 ? ' and ' + (needs.length - 2) + ' more' : '') : '') : null); }))));
     /* the orbit already shows every row type; the list stays for narrow screens where the orbit is compact */
@@ -92,7 +92,8 @@ export function mount(host, app) {
     const rows = app.record.planets[planet].rows.filter(r => r.type === id);
     const prim = primaryFieldOf(fields, planet, id);
     bar.appendChild(mapPanel({ title: t.label, status: (rows.length ? countText(rows.length) + '. ' : '') + 'Fields: ' + t.fields.map(fid => fieldDef(fields, fid).label.toLowerCase()).slice(0, 6).join(', ') + (t.fields.length > 6 ? ' and ' + (t.fields.length - 6) + ' more' : '') + '.',
-      actions: [h('a', { class: 'btn primary', href: '#/ledger/' + planet + '/' + id }, rows.length ? 'Open' : 'Add the first ' + (prim ? prim.label.toLowerCase() : 'row'))] }));
+      actions: [h('a', { class: 'btn primary', href: '#/ledger/' + planet + '/' + id }, rows.length ? 'Open' : 'Add the first ' + (prim ? prim.label.toLowerCase() : 'row'))].concat(
+        !rows.length && !t.single && app.view === 'coach' ? [h('button', { class: 'btn', title: 'No ' + (t.plural || t.label).toLowerCase() + ' for this household', onClick: () => markTypeNone(app, planet, id) }, t.assumeNone ? 'None (assumed)' : 'None')] : []) }));
   }
   draw();
   return { update() { draw(); } };
@@ -132,6 +133,7 @@ function mountTable(host, app, planet, typeId) {
     if (planet === 'invest') { inferredNote.appendChild(h('p', { class: 'hint', style: { marginBottom: '8px' } }, 'Tax bucket and reach come from the account type.')); return; }
     list.forEach(e => {
       const row = app.record.planets[planet].rows.find(r => r.id === e.rowId);
+      if (row && isNoneRow(fields, row)) return;
       const WORDS = { pretax: 'pre-tax', roth: 'Roth', hsa: 'HSA', taxable: 'taxable', cash: 'cash', now: 'reachable now', semi: 'reachable with care', locked: 'locked until 59.5' };
       const what = e.field === 'takeHome' ? 'take-home a month' : e.field === 'matchMonthly' ? 'employer match a month' : e.field === 'taxBucket' ? 'tax bucket' : e.field === 'liquidity' ? 'reach' : e.field === 'weeksLeft' ? 'weeks left' : e.field;
       const shown = e.field === 'weeksLeft' ? String(e.value) + (e.endsOn ? ' (benefit ends ' + F.date(e.endsOn) + ')' : '') : typeof e.value === 'number' ? F.dollarsWhole(e.value) : typeof e.value === 'string' ? (WORDS[e.value] || e.value) : (e.value && e.value.cents !== undefined ? F.dollarsWhole(e.value.cents, { rough: e.value.rough || e.value.confidence < 0.7 }) : F.value(e.value));

@@ -9,7 +9,7 @@ import * as Charts from '../charts.js';
 import { compare, newBlock, blockCosts, costSentence, startLabel, parseStart } from '../../engine/scenarios.js';
 import { createRow } from '../../engine/record.js';
 import { freshFacts } from '../../engine/fields.js';
-import { questionField } from '../startingsoon.js';
+import { questionField, liveFigures, startPicker } from '../startingsoon.js';
 
 export function mount(host, app) {
   const defs = app.data.scenarioBlocks;
@@ -25,16 +25,12 @@ export function mount(host, app) {
   body.appendChild(emptyHost); body.appendChild(panel); body.appendChild(cmpHost);
   let selected = null, editorFor = null, costLine = null, startInput = null, actionHost = null;
 
-  function live() {
-    const S = app.result.sun && app.result.sun.outputs;
-    const th = S && S.income.takeHomeMonthly, sp = S && S.safety.spendingWithPremiums;
-    return { takeHomeMonthly: th && th.cents !== undefined ? th.cents : null, spendingMonthly: sp && sp.cents !== undefined ? sp.cents : null };
-  }
+  const live = () => liveFigures(app);
   const cur = id => (app.record.scenarios || []).find(s => s.id === id);
   function draw() {
     clear(emptyHost); clear(laneHost); clear(noteHost); clear(headRow); clear(cmpHost);
     const inp = app.result.projectionInputs;
-    const blocks = (app.record.scenarios || []).slice();
+    const blocks = (app.record.scenarios || []).filter(b => defs.types[b.type]); /* a block whose type is gone is skipped */
     panel.style.display = 'none'; cmpHost.style.display = 'none';
     if (!inp) {
       emptyHost.appendChild(h('div', { class: 'empty' }, h('h2', null, coach ? 'Nothing to simulate yet' : 'Nothing to try yet'), h('p', null, 'Needs income, spending, account balances and a birth date.'),
@@ -109,7 +105,7 @@ export function mount(host, app) {
     const ed = h('div', { class: 'block-editor' });
     ed.appendChild(h('h3', { title: def.note }, b.name, h('span', { class: 'tag' }, def.label)));
     ed.appendChild(h('div', { class: 'fieldrow' }, h('label', null, 'Name'), h('div', { class: 'control' }, h('input', { class: 'input', value: b.name, 'aria-label': 'Block name', onChange: e => app.mutate(rec => { rec.scenarios.find(s => s.id === b.id).name = e.target.value.trim() || def.label; }, 'scenarios') }))));
-    startInput = h('input', { class: 'input', value: startLabel(b), 'aria-label': 'Start year', title: 'A year, or a month and year such as Mar 2027', onChange: e => { const p = parseStart(e.target.value); if (p) app.mutate(rec => { const x = rec.scenarios.find(s => s.id === b.id); x.startYear = Math.min(yearN, Math.max(year0, p.startYear)); x.startMonth = p.startMonth; }, 'scenarios'); else { app.toast('A year, or a month and year such as Mar 2027.'); e.target.value = startLabel(cur(b.id)); } } });
+    startInput = startPicker(app, b, { label: 'Start year' });
     ed.appendChild(h('div', { class: 'fieldrow' }, h('label', null, 'Starts in'), h('div', { class: 'control' }, startInput)));
     def.questions.forEach(qd => ed.appendChild(h('div', { class: 'fieldrow' }, h('label', { title: qd.hint || '' }, qd.label), h('div', { class: 'control' }, questionField(app, b, qd)))));
     costLine = h('p', { class: 'hint', style: { marginTop: '8px' } });
@@ -122,7 +118,7 @@ export function mount(host, app) {
     const b = cur(editorFor); if (!b) return;
     const def = defs.types[b.type];
     costLine.textContent = costSentence(blockCosts(def, b, live()));
-    if (document.activeElement !== startInput) startInput.value = startLabel(b);
+    if (document.activeElement !== startInput) startInput.value = b.startYear + '-' + String(b.startMonth || 1).padStart(2, '0');
     clear(actionHost);
     actionHost.appendChild(b.promoted ? h('span', { class: 'chip state-known' }, 'In the Life plan') : h('button', { class: 'btn primary', onClick: () => promote(b) }, 'Add to Life plan'));
     actionHost.appendChild(h('button', { class: 'btn quiet', onClick: () => { app.mutate(rec => { rec.scenarios = rec.scenarios.filter(s => s.id !== b.id); }, 'scenarios'); selected = null; app.toast('Block removed'); } }, 'Remove block'));

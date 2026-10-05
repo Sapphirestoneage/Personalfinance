@@ -623,3 +623,5 @@ main > header:has(+ .onepager) { max-width: 816px; }
 .tracker-row { gap: var(--s-2) var(--s-3); flex-wrap: wrap; align-items: center; }
 .tracker .count { font-weight: var(--w-semibold); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .tracker .next { flex: 1 1 200px; min-width: 0; font-size: var(--fs-13); }
+.start-picker { width: 100%; max-width: 200px; }
+.change-more { margin-top: var(--s-1); }

@@ -125,12 +125,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
         tdef.single ? null : h('button', { class: 'btn', title: 'Marks this as none, so the planet counts it as answered', onClick: () => markNone() }, 'No ' + (tdef.plural || tdef.label).toLowerCase()),
         (opts.emptyActions || [])) : null);
   }
-  function markNone() {
-    const n = noneRow(fields, planet, typeId);
-    const row = createRow(planet, typeId, { nickname: n.nickname, f: n.f });
-    app.addRow(row);
-    app.toast('Marked as none. Add a row if that changes.');
-  }
+  function markNone() { markTypeNone(app, planet, typeId); }
 
   /* Totals: every money column, normalised to a month when it has a cadence; balances otherwise. Two or more rows only. */
   function totalsRow(list, cols) {
@@ -588,4 +583,13 @@ function ensureDatalists(app) {
   const issuers = h('datalist', { id: 'mr3-issuers' }, Array.from(new Set(app.data.cards.cards.map(c => c.issuer))).map(i => h('option', { value: i })));
   const funds = h('datalist', { id: 'mr3-funds' }, app.data.funds.funds.map(f => h('option', { value: f.ticker }, f.name)));
   document.body.appendChild(cards); document.body.appendChild(issuers); document.body.appendChild(funds);
+}
+
+/* "None" for a row type, from anywhere: one None row through the record API (MR-025). */
+export function markTypeNone(app, planet, typeId) {
+  const fields = app.data.fields;
+  const n = noneRow(fields, planet, typeId);
+  const row = createRow(planet, typeId, { nickname: n.nickname, f: n.f });
+  app.addRow(row);
+  app.toast('Marked as none. Add a row if that changes.');
 }

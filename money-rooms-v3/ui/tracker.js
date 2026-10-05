@@ -2,6 +2,7 @@
    do now with a Go button that lands in that cell. Coach view only. */
 import { h, clear } from './dom.js';
 import { trackerSteps } from '../engine/tracker.js';
+import { markTypeNone } from './table.js';
 
 export function renderTracker(host, app) {
   clear(host);
@@ -14,5 +15,6 @@ export function renderTracker(host, app) {
       h('span', { class: 'count' }, t.done + ' of ' + t.total + ' in'),
       t.next ? h('span', { class: 'next' }, h('span', { class: 'muted' }, 'Now: '), t.next.label, h('span', { class: 'muted small' }, ' (' + t.next.where + ')')) : h('span', { class: 'next' }, 'Everything the numbers need is in.'),
       t.next ? h('a', { class: 'btn small primary', href: t.next.href, onClick: () => { if (t.next.rowId && t.next.field) app.focusAfterRender = { rowId: t.next.rowId, field: t.next.field }; } }, 'Go') : null,
+      t.next && t.next.kind === 'rows' ? h('button', { class: 'btn small', title: 'None of these for this household', onClick: () => markTypeNone(app, t.next.planet, t.next.typeId) }, 'None') : null,
       t.next && t.headlineOpen + t.detailOpen ? h('span', { class: 'small muted hide-narrow' }, (t.headlineOpen ? t.headlineOpen + ' headline' + (t.headlineOpen === 1 ? '' : 's') : '') + (t.headlineOpen && t.detailOpen ? ', ' : '') + (t.detailOpen ? t.detailOpen + ' detail' + (t.detailOpen === 1 ? '' : 's') : '') + ' left') : null)));
 }

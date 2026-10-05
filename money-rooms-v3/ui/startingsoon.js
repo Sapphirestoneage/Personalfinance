@@ -19,14 +19,29 @@ export function questionField(app, b, qd) {
   return input;
 }
 
+/* The household's live figures a block can read: take-home, spending and gross pay a month; null when not known. */
+export function liveFigures(app) {
+  const S = app.result.sun && app.result.sun.outputs;
+  const q = x => x && x.cents !== undefined ? x.cents : null;
+  return { takeHomeMonthly: q(S && S.income.takeHomeMonthly), spendingMonthly: q(S && S.safety.spendingWithPremiums), grossMonthly: q(S && S.income.grossMonthly) };
+}
+/* A month picker that stores a real date (MR-036): year and month; the keyboard still accepts "Mar 2027". */
+export function startPicker(app, b, opts) {
+  const cur = () => (app.record.scenarios || []).find(x => x.id === b.id);
+  const val = x => x.startYear + '-' + String(x.startMonth || 1).padStart(2, '0');
+  const input = h('input', { class: 'input start-picker', type: 'month', value: val(b), 'aria-label': (opts && opts.label) || 'Start of ' + b.name, min: '2000-01', max: '2100-12', onChange: e => {
+    const p = parseStart(e.target.value);
+    if (!p) { e.target.value = val(cur() || b); return; }
+    app.mutate(rec => { const x = rec.scenarios.find(y => y.id === b.id); x.startYear = p.startYear; x.startMonth = p.startMonth || 1; }, 'scenarios');
+  } });
+  return input;
+}
+
 export function mountStartingSoon(host, app, planet) {
   const defs = app.data.scenarioBlocks;
   const types = Object.keys(defs.types).filter(t => (defs.types[t].planets || []).includes(planet));
-  function live() {
-    const S = app.result.sun && app.result.sun.outputs;
-    const th = S && S.income.takeHomeMonthly, sp = S && S.safety.spendingWithPremiums;
-    return { takeHomeMonthly: th && th.cents !== undefined ? th.cents : null, spendingMonthly: sp && sp.cents !== undefined ? sp.cents : null };
-  }
+  const live = () => liveFigures(app);
+  const openDetails = {};
   function draw() {
     clear(host);
     if (!types.length) return;
@@ -47,18 +62,22 @@ export function mountStartingSoon(host, app, planet) {
       blocks.forEach(b => {
         const def = defs.types[b.type]; const c = blockCosts(def, b, L);
         const card = h('div', { class: 'change', dataset: { block: b.id } });
-        const startInput = h('input', { class: 'input', value: startLabel(b), 'aria-label': 'Start of ' + b.name, title: 'A month and year, for example Mar 2027, or a year', onChange: e => {
-          const p = parseStart(e.target.value);
-          if (!p) { app.toast('Type a month and year, for example Mar 2027, or a year.'); e.target.value = startLabel(b); return; }
-          app.mutate(rec => { const x = rec.scenarios.find(y => y.id === b.id); x.startYear = p.startYear; x.startMonth = p.startMonth; }, 'scenarios');
-        } });
         card.appendChild(h('div', { class: 'row change-head' },
           h('a', { class: 'change-name', href: '#/scenarios' }, b.name),
           b.promoted ? h('span', { class: 'chip state-known' }, 'In the Life plan') : null,
           h('span', { style: { flex: 1 } }),
           coach ? h('button', { class: 'btn small quiet', onClick: () => { app.mutate(rec => { rec.scenarios = rec.scenarios.filter(y => y.id !== b.id); }, 'scenarios'); app.toast('Change removed'); } }, 'Remove') : null));
-        card.appendChild(h('div', { class: 'fieldrow detail' }, h('label', null, 'Starts'), h('div', { class: 'control' }, coach ? startInput : h('span', { class: 'value' }, startLabel(b)))));
-        if (coach) def.questions.forEach(qd => card.appendChild(h('div', { class: 'fieldrow detail' }, h('label', { title: qd.hint || '' }, qd.label), h('div', { class: 'control' }, questionField(app, b, qd)))));
+        card.appendChild(h('div', { class: 'fieldrow detail' }, h('label', null, 'Starts'), h('div', { class: 'control' }, coach ? startPicker(app, b) : h('span', { class: 'value' }, startLabel(b)))));
+        if (coach) {
+          const head = def.questions.filter(q => !q.detail), rest = def.questions.filter(q => q.detail);
+          head.forEach(qd => card.appendChild(h('div', { class: 'fieldrow detail' }, h('label', { title: qd.hint || '' }, qd.label), h('div', { class: 'control' }, questionField(app, b, qd)))));
+          if (rest.length) {
+            const more = h('div', { class: 'change-more', style: { display: openDetails[b.id] ? '' : 'none' } });
+            rest.forEach(qd => more.appendChild(h('div', { class: 'fieldrow detail' }, h('label', { title: qd.hint || '' }, qd.label), h('div', { class: 'control' }, questionField(app, b, qd)))));
+            const btn = h('button', { class: 'btn small quiet', 'aria-expanded': String(!!openDetails[b.id]), onClick: () => { openDetails[b.id] = !openDetails[b.id]; more.style.display = openDetails[b.id] ? '' : 'none'; btn.setAttribute('aria-expanded', String(!!openDetails[b.id])); btn.textContent = (openDetails[b.id] ? 'Hide details' : 'Details') + ' (' + rest.length + ')'; } }, (openDetails[b.id] ? 'Hide details' : 'Details') + ' (' + rest.length + ')');
+            card.appendChild(btn); card.appendChild(more);
+          }
+        }
         card.appendChild(h('p', { class: 'hint change-sum' }, costSentence(c)));
         panel.appendChild(card);
       });

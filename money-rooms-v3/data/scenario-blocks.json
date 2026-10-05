@@ -17,20 +17,23 @@
      "id": "downPct",
      "label": "Down payment share",
      "kind": "percent",
-     "default": 0.2
+     "default": 0.2,
+     "detail": true
     },
     {
      "id": "rateNote",
      "label": "Monthly cost versus rent",
      "kind": "money",
      "default": 40000,
-     "hint": "Use a negative number if owning costs less than rent."
+     "hint": "Use a negative number if owning costs less than rent.",
+     "detail": true
     },
     {
      "id": "years",
      "label": "Years you would stay",
      "kind": "int",
-     "default": 30
+     "default": 30,
+     "detail": true
     }
    ],
    "oneOff": "price * downPct + 1500000",
@@ -57,19 +60,22 @@
      "id": "tradeIn",
      "label": "Trade-in or sale",
      "kind": "money",
-     "default": 800000
+     "default": 800000,
+     "detail": true
     },
     {
      "id": "financed",
      "label": "Financed share",
      "kind": "percent",
-     "default": 0.6
+     "default": 0.6,
+     "detail": true
     },
     {
      "id": "years",
      "label": "Loan years",
      "kind": "int",
-     "default": 5
+     "default": 5,
+     "detail": true
     }
    ],
    "oneOff": "(price - tradeIn) * (1 - financed)",
@@ -96,19 +102,22 @@
      "id": "everyday",
      "label": "Everyday extra a month, to 18",
      "kind": "money",
-     "default": 60000
+     "default": 60000,
+     "detail": true
     },
     {
      "id": "upfront",
      "label": "First-year one-offs",
      "kind": "money",
-     "default": 800000
+     "default": 800000,
+     "detail": true
     },
     {
      "id": "leave",
      "label": "Unpaid leave, months",
      "kind": "int",
-     "default": 2
+     "default": 2,
+     "detail": true
     }
    ],
    "oneOff": "upfront + leave * takeHomeMonthly",
@@ -121,43 +130,76 @@
    ]
   },
   "job": {
-   "label": "New job or pay change",
-   "glyph": "J",
+   "label": "Pay change",
+   "glyph": "P",
+   "planets": [
+    "income",
+    "taxes",
+    "life"
+   ],
    "questions": [
     {
      "id": "payChange",
-     "label": "Pay change",
+     "label": "Pay change, share of take-home",
      "kind": "percent",
-     "default": -0.1
+     "default": 0.05,
+     "hint": "Negative for a cut, for example -20% for a four-day week"
+    },
+    {
+     "id": "years",
+     "label": "Years it lasts",
+     "kind": "int",
+     "default": 30,
+     "detail": true
+    }
+   ],
+   "oneOff": 0,
+   "monthly": "-(payChange * takeHomeMonthly)",
+   "duration": "years",
+   "note": "A raise or a cut on the current job; the share is of take-home."
+  },
+  "newjob": {
+   "label": "New job",
+   "glyph": "N",
+   "planets": [
+    "income",
+    "taxes",
+    "life"
+   ],
+   "questions": [
+    {
+     "id": "salary",
+     "label": "New salary, a year (gross)",
+     "kind": "money",
+     "default": 9000000
     },
     {
      "id": "gapMonths",
-     "label": "Months without pay",
+     "label": "Months without pay before it starts",
      "kind": "int",
-     "default": 1
+     "default": 0,
+     "detail": true
     },
     {
      "id": "matchChange",
-     "label": "Match change a month",
+     "label": "Employer match change, a month",
      "kind": "money",
-     "default": 0
+     "default": 0,
+     "detail": true,
+     "hint": "Negative if the new job matches less"
     },
     {
      "id": "years",
      "label": "Years in the new role",
      "kind": "int",
-     "default": 10
+     "default": 10,
+     "detail": true
     }
    ],
    "oneOff": "gapMonths * takeHomeMonthly",
-   "monthly": "-(payChange * takeHomeMonthly + matchChange)",
+   "monthly": "-((salary / 12 - grossMonthly) * takeHomeMonthly / grossMonthly + matchChange)",
    "duration": "years",
-   "note": "A pay cut shows as an ongoing cost; a raise as a negative cost (more saved).",
-   "planets": [
-    "income",
-    "taxes",
-    "life"
-   ]
+   "note": "The salary is compared with today's gross pay; the change is scaled to take-home at today's ratio."
   },
   "sabbatical": {
    "label": "Sabbatical",
@@ -173,13 +215,15 @@
      "id": "spendShare",
      "label": "Spending while away, share of today",
      "kind": "percent",
-     "default": 0.8
+     "default": 0.8,
+     "detail": true
     },
     {
      "id": "travel",
      "label": "Travel and setup",
      "kind": "money",
-     "default": 600000
+     "default": 600000,
+     "detail": true
     }
    ],
    "oneOff": "months * (takeHomeMonthly - spendingMonthly * (1 - spendShare)) + travel",
@@ -205,19 +249,22 @@
      "id": "payChange",
      "label": "Pay change",
      "kind": "percent",
-     "default": -0.2
+     "default": -0.2,
+     "detail": true
     },
     {
      "id": "moveCost",
      "label": "Move and setup",
      "kind": "money",
-     "default": 1500000
+     "default": 1500000,
+     "detail": true
     },
     {
      "id": "years",
      "label": "Years there",
      "kind": "int",
-     "default": 10
+     "default": 10,
+     "detail": true
     }
    ],
    "oneOff": "moveCost",
@@ -244,13 +291,15 @@
      "id": "startup",
      "label": "Startup cost",
      "kind": "money",
-     "default": 300000
+     "default": 300000,
+     "detail": true
     },
     {
      "id": "years",
      "label": "Years it runs",
      "kind": "int",
-     "default": 5
+     "default": 5,
+     "detail": true
     }
    ],
    "oneOff": "startup",
@@ -297,13 +346,15 @@
      "id": "sharedSavings",
      "label": "Shared household saving change a month",
      "kind": "money",
-     "default": 50000
+     "default": 50000,
+     "detail": true
     },
     {
      "id": "years",
      "label": "Years to model",
      "kind": "int",
-     "default": 30
+     "default": 30,
+     "detail": true
     }
    ],
    "oneOff": "wedding",
@@ -314,32 +365,6 @@
     "life",
     "spending"
    ]
-  },
-  "raise": {
-   "label": "Raise",
-   "glyph": "R",
-   "planets": [
-    "income",
-    "taxes"
-   ],
-   "questions": [
-    {
-     "id": "payChange",
-     "label": "Pay change, share of take-home",
-     "kind": "percent",
-     "default": 0.05
-    },
-    {
-     "id": "years",
-     "label": "Years it lasts",
-     "kind": "int",
-     "default": 30
-    }
-   ],
-   "oneOff": 0,
-   "monthly": "-(payChange * takeHomeMonthly)",
-   "duration": "years",
-   "note": "A raise is money in: a negative monthly cost."
   },
   "incomeEnd": {
    "label": "Income ending",
@@ -359,7 +384,8 @@
      "id": "years",
      "label": "Years until it is replaced",
      "kind": "int",
-     "default": 1
+     "default": 1,
+     "detail": true
     }
    ],
    "oneOff": 0,
@@ -385,7 +411,8 @@
      "id": "years",
      "label": "Years it lasts",
      "kind": "int",
-     "default": 5
+     "default": 5,
+     "detail": true
     }
    ],
    "oneOff": 0,
@@ -411,7 +438,8 @@
      "id": "years",
      "label": "Years of savings to count",
      "kind": "int",
-     "default": 30
+     "default": 30,
+     "detail": true
     }
    ],
    "oneOff": 0,

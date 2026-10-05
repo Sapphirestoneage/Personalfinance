@@ -31,7 +31,7 @@ export function trackerSteps(record, fields) {
       if (tdef.assumeNone) return;
       if (have.length) return;
       if (SUMMARY[p] && summaryIn) return; /* a rough total stands in for the detail rows */
-      steps.push({ kind: 'rows', label: 'Add ' + (tdef.plural || tdef.label).toLowerCase() + ', or mark none', where: PLANET_LABELS[p], href: '#/ledger/' + p + '/' + t, done: false });
+      steps.push({ kind: 'rows', label: 'Add ' + (tdef.plural || tdef.label).toLowerCase() + ', or none', where: PLANET_LABELS[p], href: '#/ledger/' + p + '/' + t, planet: p, typeId: t, done: false });
     });
   });
   /* stage 2: every row's headline figure, then its other counted facts */

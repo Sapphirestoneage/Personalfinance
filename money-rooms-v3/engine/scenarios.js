@@ -32,7 +32,7 @@ export function blockCosts(def, block, live) {
   const monthly = evalFormula(def.monthly, answers, live);
   const duration = typeof def.duration === 'number' ? def.duration : (answers[def.duration] || 0);
   if (oneOff === null || monthly === null) {
-    const LIVE_WORDS = { takeHomeMonthly: 'take-home pay', spendingMonthly: 'monthly spending' };
+    const LIVE_WORDS = { takeHomeMonthly: 'take-home pay', spendingMonthly: 'monthly spending', grossMonthly: 'gross pay' };
     const names = Object.keys(LIVE_WORDS).filter(k => (live[k] === null || live[k] === undefined) && (String(def.oneOff) + ' ' + String(def.monthly)).indexOf(k) !== -1).map(k => LIVE_WORDS[k]);
     return { oneOff: null, monthly: null, duration, answers, needs: names.length ? names : ['take-home pay'] };
   }
@@ -95,7 +95,8 @@ export function projectWith(inp, rate, adj) {
 }
 
 /* The comparison: baseline, each block alone, all together. */
-export function compare(inp, blocks, defs, live) {
+export function compare(inp, allBlocks, defs, live) {
+  const blocks = allBlocks.filter(b => defs.types[b.type]);
   const rate = inp.asm.returnLikely;
   const baseline = projectWith(inp, rate, {});
   const alone = blocks.map(b => ({ block: b, result: projectWith(inp, rate, adjustments([b], defs, live)), costs: blockCosts(defs.types[b.type], b, live) }));

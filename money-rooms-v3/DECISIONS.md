@@ -212,3 +212,9 @@ Decision: a strip at the top of Home and every Ledger page (coach view) shows on
 Compatibility: none; computed from the record.
 Why: the owner felt they were going in circles and asked to be told what is needed now until everything is filled.
 Alternative: per-planet percentages only (say how much, never what).
+
+## MR-036 2026-10-05 A pay change and a new job are two blocks; a month picker; one headline question, the rest behind Details
+Decision: "New job or pay change" split into Pay change (share of take-home, years) and New job (new gross salary a year, then months without pay, match change and years behind Details); Raise is gone since Pay change covers it. The new salary is compared with today's gross pay and scaled to take-home at today's ratio; gross pay joins the live figures a block can read. The start is a month picker that stores year and month. On every change card the first question shows and the rest wait behind "Details (n)".
+Compatibility: a stored job block keeps its id and payChange; its old gapMonths and matchChange answers are ignored. A stored raise block has no type and is skipped by Simulate.
+Why: the owner asked for a date picker that saves a date, a clear line between a new job and a pay change, a salary first and the questions behind a details tab.
+Alternative: one block with a mode switch (two meanings in one card).

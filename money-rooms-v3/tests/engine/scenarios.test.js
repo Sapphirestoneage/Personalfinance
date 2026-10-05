@@ -18,16 +18,16 @@ test('every block type has 3 or 4 questions with defaults and its formulas evalu
     const def = defs.types[t];
     assert.ok(def.questions.length >= 1 && def.questions.length <= 4, t + ' questions');
     def.questions.forEach(q => assert.ok(q.default !== undefined, t + '.' + q.id));
-    const c = blockCosts(def, { answers: {} }, { takeHomeMonthly: 400000, spendingMonthly: 350000 });
+    const c = blockCosts(def, { answers: {} }, { takeHomeMonthly: 400000, spendingMonthly: 350000, grossMonthly: 550000 });
     assert.ok(Number.isFinite(c.oneOff) && Number.isFinite(c.monthly) && Number.isFinite(c.duration), t);
   });
-  assert.equal(Object.keys(defs.types).length, 13); /* nine from the spec plus four Starting soon types (MR-026) */
+  assert.equal(Object.keys(defs.types).length, 13); /* nine from the spec, New job, Income ending, New expense, Expense ending (MR-026, MR-036) */
 });
 
 test('Jordan + kid + Portugal: each alone and together, baseline untouched', () => {
   const rec = loadHousehold('jordan');
   const R = compute(rec, data, { today: '2026-10-05' });
-  const live = { takeHomeMonthly: R.sun.outputs.income.takeHomeMonthly.cents, spendingMonthly: R.sun.outputs.safety.spendingWithPremiums.cents };
+  const live = { takeHomeMonthly: R.sun.outputs.income.takeHomeMonthly.cents, spendingMonthly: R.sun.outputs.safety.spendingWithPremiums.cents, grossMonthly: R.sun.outputs.income.grossMonthly.cents };
   const kid = newBlock('kid', defs, 2030); const geo = newBlock('geo', defs, 2031); geo.name = 'Portugal';
   const inp = R.projectionInputs;
   assert.ok(inp, 'the engine exposes its projection inputs for the sandbox');
@@ -45,7 +45,7 @@ test('Jordan + kid + Portugal: each alone and together, baseline untouched', () 
 test('a start month pro-rates the first year and parses in four spellings', async () => {
   const { adjustments, parseStart, startLabel } = await import('../../engine/scenarios.js');
   const defs = { types: { x: { questions: [{ id: 'amount', kind: 'money', default: 120000 }], oneOff: 0, monthly: 'amount', duration: 1 } } };
-  const live = { takeHomeMonthly: 500000, spendingMonthly: 300000 };
+  const live = { takeHomeMonthly: 500000, spendingMonthly: 300000, grossMonthly: 650000 };
   const full = adjustments([{ type: 'x', startYear: 2030, answers: {} }], defs, live);
   assert.equal(full[2030].monthly, 120000);
   const oct = adjustments([{ type: 'x', startYear: 2030, startMonth: 10, answers: {} }], defs, live);
@@ -68,4 +68,14 @@ test('every scenario block names the planets it touches, and presets name real c
     assert.ok(nw === 'need' || nw === 'want', name + ' need or want');
     assert.equal(typeof fat, 'boolean', name + ' fat flag');
   }));
+});
+
+test('a new job compares its salary with today\'s gross and scales to take-home', async () => {
+  const def = defs.types.newjob;
+  const live = { takeHomeMonthly: 400000, spendingMonthly: 300000, grossMonthly: 500000 };
+  const c = blockCosts(def, { answers: { salary: 7200000, gapMonths: 1 } }, live);
+  assert.equal(c.oneOff, 400000);
+  /* 72,000 a year is 6,000 a month gross, 1,000 more than today; at today's 80% take-home ratio that is 800 a month in */
+  assert.equal(c.monthly, -80000);
+  assert.ok(blockCosts(def, { answers: {} }, { takeHomeMonthly: 400000, spendingMonthly: null, grossMonthly: null }).needs.includes('gross pay'));
 });
