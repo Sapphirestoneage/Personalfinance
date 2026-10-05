@@ -14,7 +14,7 @@ function s(tag, attrs, ...children) {
 
 const GEOM = {
   wide: { w: 760, h: 620, cx: 380, cy: 300, centerR: 104, ring: 218, satR: 46, outer: 282, label: 13, count: 18, title: 22, sub: 12 },
-  compact: { w: 390, h: 440, cx: 195, cy: 206, centerR: 66, ring: 140, satR: 32, outer: 182, label: 11, count: 14, title: 16, sub: 10 },
+  compact: { w: 390, h: 456, cx: 195, cy: 212, centerR: 66, ring: 142, satR: 32, outer: 184, label: 12, count: 14, title: 16, sub: 11 },
 };
 
 function arc(cx, cy, r, fraction) {
@@ -55,7 +55,7 @@ export function orbitMap(opts) {
   centre.appendChild(s('circle', { cx: g.cx, cy: g.cy, r: g.centerR, class: 'orbit-centre-disc' }));
   if (typeof opts.center.fill === 'number') {
     centre.appendChild(s('circle', { cx: g.cx, cy: g.cy, r: g.centerR + 5, class: 'orbit-track' }));
-    centre.appendChild(s('path', { d: arc(g.cx, g.cy, g.centerR + 5, opts.center.fill), class: 'orbit-fill' + (opts.center.fill >= 0.9 ? ' gold' : '') }));
+    centre.appendChild(s('path', { d: arc(g.cx, g.cy, g.centerR + 5, opts.center.fill), class: 'orbit-fill' + (Math.round(opts.center.fill * 100) >= 90 ? ' gold' : '') }));
   }
   const titleLines = wrapLabel(opts.center.title, opts.compact ? 12 : 16);
   titleLines.forEach((line, i) => centre.appendChild(s('text', { x: g.cx, y: g.cy - (titleLines.length - 1) * (g.title * 0.6) + i * g.title * 1.2 - (opts.center.sub ? g.sub * 0.6 : 0) + g.title * 0.35, 'text-anchor': 'middle', class: 'orbit-title', style: 'font-size:' + g.title + 'px' }, line)));
@@ -69,7 +69,7 @@ export function orbitMap(opts) {
     grp.appendChild(s('circle', { cx: p.x, cy: p.y, r: g.satR, class: 'orbit-disc' }));
     if (typeof it.fill === 'number' && !it.dashed) {
       grp.appendChild(s('circle', { cx: p.x, cy: p.y, r: g.satR + 4, class: 'orbit-track' }));
-      grp.appendChild(s('path', { d: arc(p.x, p.y, g.satR + 4, it.fill), class: 'orbit-fill' + (it.fill >= 0.9 ? ' gold' : '') + (it.attention ? ' amber' : '') }));
+      grp.appendChild(s('path', { d: arc(p.x, p.y, g.satR + 4, it.fill), class: 'orbit-fill' + (Math.round(it.fill * 100) >= 90 ? ' gold' : '') + (it.attention ? ' amber' : '') }));
     }
     const inner = it.count !== undefined && it.count !== null ? String(it.count) : (it.glyph || '');
     grp.appendChild(s('text', { x: p.x, y: p.y + g.count * 0.36, 'text-anchor': 'middle', class: 'orbit-count', style: 'font-size:' + g.count + 'px' }, inner));

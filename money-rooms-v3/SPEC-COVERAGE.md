@@ -27,3 +27,28 @@ plainly. Evidence is a file, a test name or a screenshot path.
 | Browser gate: console clean, no NaN/undefined/null/Infinity/[object Object]/$-0, no overflow, at 1440/1024/390 in both views | done | tests/ui.js sweep; screenshots/level-0/ |
 | Design critique with every screen at 4 or above | see critique | screenshots/level-0/critique.md (round 2), critique-round1.md |
 | A household loads, saves, exports, re-imports, undo/redo works, all tested | done | flow level0-load-save-export-import-undo |
+
+## Level 1 Capture
+
+| Requirement | Status | Evidence |
+|---|---|---|
+| Ledger with field tables for all seven planets, every row type from data/fields.json | done | ui/table.js, ui/views/ledger.js; sweep screens income-w2, spending-lines, debt-cards, invest-accounts, life-goals |
+| Other row type on every planet | done | fields.test.js "every planet has an Other row type" |
+| Universal columns: id, nickname, institution, amount, cadence, asOf, state, source, confidence, followUp, stress (debts and accounts), notesPrivate, notesShared | done | ui/table.js columns(); engine/record.js createRow |
+| Sortable by any column; filters by state, source, institution | done | ui/table.js rows()/filterSelect; header aria-sort |
+| Keyboard entry: Enter down a column, Tab across, Alt+N new row, Alt+Delete remove (undoable), Alt+S / Alt+O state and source | done | ui/table.js keyFlow; flow level1-jordan-keyboard-only (1,966 keystrokes, no mouse) |
+| One keystroke per answer state and source; typed prefixes (~ ? v send none n/a x, ranges) | done | ui/typed.js; ui/chips.js; flow "one key sets Rough" |
+| Quick notes from any screen landing on my plate | done (capture) | ui/app.js quickNoteBar; my plate screen itself is Level 3 |
+| Summary-or-detail inputs: rough total, detail overrides, gap shown | done | engine/compute.js summaries; ui/views/ledger.js note(); spending, debt and investments "Rough total" row types |
+| Situation gate: income row types by work situation; absent not hidden | done | engine/fields.js typesFor; fields.test.js "the situation gate removes income types" |
+| Card library prefill (issuer, annual fee, credits yes/partly/no) | done | ui/table.js libraryPrefill, openCredits; data/cards.json (58 cards, verify: true) |
+| Fund library prefill (ticker fills name, expense ratio, asset class) | done | ui/table.js libraryPrefill; data/funds.json (35 funds, verify: true) |
+| Defaults as estimates (national averages by household size, 0.5, shown with ~) | done | ui/views/ledger.js useDefaults; data/defaults.json |
+| Every field declares its default source | done | data/fields.json defaultSource; fields.test.js |
+| Lint: every field id has exactly one owner | done | fields.test.js "every field id has exactly one owner" |
+| Journey: entering Jordan never asks for the same fact twice | done | fields.test.js "journey: no fact is asked twice"; MR-009 (payroll contributions live once, on Income) |
+| Jordan fully entered keyboard-only; round-trips through export and import | done | tests/ui-keyboard.js; flow level1-jordan-keyboard-only compares 247 facts twice |
+| Home as an orbit map you step inside (owner's reference, MR-010) | done | ui/orbit.js; screenshots/level-1/jordan-home-*.jpg |
+| Jordan fixture built through the real record API with a journal | done | tests/households/build.mjs, specs.mjs, jordan.json (33 rows, 248 journal lines) |
+| Browser gate on empty and Jordan, every screen, both views, three widths | done | tests/ui.js: 862 checks |
+| Design critique with every screen at 4 or above | see critique | screenshots/level-1/critique.md |

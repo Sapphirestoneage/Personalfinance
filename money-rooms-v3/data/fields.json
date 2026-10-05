@@ -56,7 +56,8 @@
       "stability": "steady"
      },
      "nicknameLabel": "Job",
-     "stress": false
+     "stress": false,
+     "plural": "W-2 jobs"
     },
     "c1099": {
      "label": "1099 work",
@@ -85,7 +86,8 @@
       "stability": "variable"
      },
      "nicknameLabel": "Work",
-     "stress": false
+     "stress": false,
+     "plural": "1099 work"
     },
     "side": {
      "label": "Side income",
@@ -101,7 +103,8 @@
       "stability": "variable"
      },
      "nicknameLabel": "What it is",
-     "stress": false
+     "stress": false,
+     "plural": "Side income"
     },
     "unemployment": {
      "label": "Unemployment",
@@ -116,7 +119,8 @@
       "mixed"
      ],
      "nicknameLabel": "Program",
-     "stress": false
+     "stress": false,
+     "plural": "Unemployment"
     },
     "rental": {
      "label": "Rental",
@@ -127,7 +131,8 @@
       "stability"
      ],
      "nicknameLabel": "Property",
-     "stress": false
+     "stress": false,
+     "plural": "Rentals"
     },
     "benefits": {
      "label": "Benefits and match",
@@ -145,7 +150,8 @@
       "retired"
      ],
      "nicknameLabel": "Employer",
-     "stress": false
+     "stress": false,
+     "plural": "Benefits and match"
     },
     "other": {
      "label": "Other",
@@ -158,7 +164,8 @@
       "payFrequency": "monthly"
      },
      "nicknameLabel": "What it is",
-     "stress": false
+     "stress": false,
+     "plural": "Other"
     }
    },
    "institutionLabel": "Employer or payer"
@@ -174,7 +181,8 @@
      ],
      "single": true,
      "nicknameLabel": "Label",
-     "stress": false
+     "stress": false,
+     "plural": "Rough total"
     },
     "line": {
      "label": "Spending line",
@@ -195,7 +203,8 @@
       "shared": "no"
      },
      "nicknameLabel": "Name",
-     "stress": false
+     "stress": false,
+     "plural": "Spending lines"
     },
     "savings": {
      "label": "Savings transfer",
@@ -205,7 +214,8 @@
       "savingsLanding"
      ],
      "nicknameLabel": "Transfer",
-     "stress": false
+     "stress": false,
+     "plural": "Savings transfers"
     },
     "other": {
      "label": "Other",
@@ -214,7 +224,8 @@
       "otherSpending"
      ],
      "nicknameLabel": "What it is",
-     "stress": false
+     "stress": false,
+     "plural": "Other"
     }
    },
    "institutionLabel": "Paid to"
@@ -230,7 +241,8 @@
      ],
      "single": true,
      "nicknameLabel": "Label",
-     "stress": true
+     "stress": true,
+     "plural": "Rough total"
     },
     "card": {
      "label": "Credit card",
@@ -255,7 +267,8 @@
       "promoType": "purchase"
      },
      "nicknameLabel": "Nickname",
-     "stress": true
+     "stress": true,
+     "plural": "Credit cards"
     },
     "student": {
      "label": "Student loan",
@@ -277,7 +290,8 @@
       "repaymentPlan": "standard"
      },
      "nicknameLabel": "Loan",
-     "stress": true
+     "stress": true,
+     "plural": "Student loans"
     },
     "auto": {
      "label": "Auto loan",
@@ -290,7 +304,8 @@
       "vehicleValue"
      ],
      "nicknameLabel": "Vehicle",
-     "stress": true
+     "stress": true,
+     "plural": "Auto loans"
     },
     "mortgage": {
      "label": "Mortgage or HELOC",
@@ -311,7 +326,8 @@
       "fixedVariable": "fixed"
      },
      "nicknameLabel": "Property",
-     "stress": true
+     "stress": true,
+     "plural": "Mortgages and HELOCs"
     },
     "personal": {
      "label": "Personal, family, medical, BNPL",
@@ -328,7 +344,8 @@
       "debtKind": "personal"
      },
      "nicknameLabel": "Nickname",
-     "stress": true
+     "stress": true,
+     "plural": "Personal, family, medical, BNPL"
     },
     "score": {
      "label": "Credit score",
@@ -339,7 +356,8 @@
      ],
      "single": true,
      "nicknameLabel": "Label",
-     "stress": true
+     "stress": true,
+     "plural": "Credit score"
     },
     "other": {
      "label": "Other",
@@ -350,7 +368,8 @@
       "payment"
      ],
      "nicknameLabel": "What it is",
-     "stress": true
+     "stress": true,
+     "plural": "Other"
     }
    },
    "institutionLabel": "Lender or issuer"
@@ -368,7 +387,8 @@
       "deductible"
      ],
      "nicknameLabel": "Policy",
-     "stress": false
+     "stress": false,
+     "plural": "Insurance"
     },
     "unemployment": {
      "label": "Unemployment estimate",
@@ -379,7 +399,8 @@
      ],
      "single": true,
      "nicknameLabel": "Label",
-     "stress": false
+     "stress": false,
+     "plural": "Unemployment"
     },
     "cut": {
      "label": "Ability to cut",
@@ -389,7 +410,8 @@
      ],
      "single": true,
      "nicknameLabel": "Label",
-     "stress": false
+     "stress": false,
+     "plural": "Ability to cut"
     },
     "other": {
      "label": "Other",
@@ -398,7 +420,8 @@
       "otherSafety"
      ],
      "nicknameLabel": "What it is",
-     "stress": false
+     "stress": false,
+     "plural": "Other"
     }
    },
    "institutionLabel": "Carrier"
@@ -414,7 +437,8 @@
      ],
      "single": true,
      "nicknameLabel": "Label",
-     "stress": true
+     "stress": true,
+     "plural": "Rough total"
     },
     "account": {
      "label": "Account",
@@ -435,7 +459,8 @@
       "beneficiary"
      ],
      "nicknameLabel": "Nickname",
-     "stress": true
+     "stress": true,
+     "plural": "Accounts"
     },
     "holding": {
      "label": "Holding",
@@ -449,7 +474,8 @@
       "pctOfAccount"
      ],
      "nicknameLabel": "Holding",
-     "stress": true
+     "stress": true,
+     "plural": "Holdings"
     },
     "other": {
      "label": "Other",
@@ -458,7 +484,8 @@
       "otherAsset"
      ],
      "nicknameLabel": "What it is",
-     "stress": true
+     "stress": true,
+     "plural": "Other"
     }
    },
    "institutionLabel": "Institution"
@@ -475,7 +502,8 @@
      ],
      "single": true,
      "nicknameLabel": "Label",
-     "stress": false
+     "stress": false,
+     "plural": "Tax facts"
     },
     "other": {
      "label": "Other",
@@ -484,7 +512,8 @@
       "otherTax"
      ],
      "nicknameLabel": "What it is",
-     "stress": false
+     "stress": false,
+     "plural": "Other"
     }
    },
    "institutionLabel": "Agency"
@@ -504,7 +533,8 @@
       "priority": "2"
      },
      "nicknameLabel": "Goal",
-     "stress": false
+     "stress": false,
+     "plural": "Goals"
     },
     "retirement": {
      "label": "Retirement",
@@ -522,7 +552,8 @@
       "nogo": 0.75
      },
      "nicknameLabel": "Label",
-     "stress": false
+     "stress": false,
+     "plural": "Retirement"
     },
     "other": {
      "label": "Other",
@@ -531,7 +562,8 @@
       "otherLife"
      ],
      "nicknameLabel": "What it is",
-     "stress": false
+     "stress": false,
+     "plural": "Other"
     }
    },
    "institutionLabel": "Who or where"

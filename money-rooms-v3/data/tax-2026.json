@@ -1,0 +1,120 @@
+{
+ "asOf": "2026-10-05",
+ "source": "IRS Rev. Proc. 2025-32 (2026 inflation adjustments) and SSA 2026 wage base, as remembered by the builder; every figure marked verify",
+ "verify": true,
+ "year": 2026,
+ "standardDeduction": {
+  "single": 1610000,
+  "mfj": 3220000,
+  "hoh": 2415000
+ },
+ "brackets": {
+  "single": [
+   [
+    0.1,
+    1240000
+   ],
+   [
+    0.12,
+    5040000
+   ],
+   [
+    0.22,
+    10570000
+   ],
+   [
+    0.24,
+    20177500
+   ],
+   [
+    0.32,
+    25622500
+   ],
+   [
+    0.35,
+    64060000
+   ],
+   [
+    0.37,
+    null
+   ]
+  ],
+  "mfj": [
+   [
+    0.1,
+    2480000
+   ],
+   [
+    0.12,
+    10080000
+   ],
+   [
+    0.22,
+    21140000
+   ],
+   [
+    0.24,
+    40355000
+   ],
+   [
+    0.32,
+    51245000
+   ],
+   [
+    0.35,
+    76870000
+   ],
+   [
+    0.37,
+    null
+   ]
+  ],
+  "hoh": [
+   [
+    0.1,
+    1770000
+   ],
+   [
+    0.12,
+    6745000
+   ],
+   [
+    0.22,
+    10570000
+   ],
+   [
+    0.24,
+    20177500
+   ],
+   [
+    0.32,
+    25620000
+   ],
+   [
+    0.35,
+    64060000
+   ],
+   [
+    0.37,
+    null
+   ]
+  ]
+ },
+ "fica": {
+  "socialSecurityRate": 0.062,
+  "socialSecurityWageBase": 18450000,
+  "medicareRate": 0.0145,
+  "additionalMedicareRate": 0.009,
+  "additionalMedicareThreshold": {
+   "single": 20000000,
+   "mfj": 25000000,
+   "hoh": 20000000
+  },
+  "selfEmploymentNetFactor": 0.9235,
+  "selfEmploymentDeductionShare": 0.5
+ },
+ "notes": [
+  "Federal brackets and FICA only (v1). No state tax, no credits, no itemizing.",
+  "Bracket upper bounds are taxable income in cents; null means no upper bound."
+ ]
+}

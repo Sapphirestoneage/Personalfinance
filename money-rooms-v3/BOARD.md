@@ -3,8 +3,8 @@
 | Level | Name | State | Commit |
 |---|---|---|---|
 | 0 | Skeleton | FROZEN | Level 0: Skeleton |
-| 1 | Capture | in progress | |
-| 2 | Measure + one-pager | not started | |
+| 1 | Capture | FROZEN | Level 1: Capture |
+| 2 | Measure + one-pager | in progress | |
 | 3 | Session engine | not started | |
 | 4 | Simulate | not started | |
 | 5 | Learn | not started | |

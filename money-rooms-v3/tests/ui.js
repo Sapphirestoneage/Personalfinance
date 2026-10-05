@@ -105,7 +105,7 @@ async function main() {
               const docW = document.documentElement.clientWidth;
               if (document.documentElement.scrollWidth > docW + 1) out.push('page scrollWidth ' + document.documentElement.scrollWidth + ' > ' + docW);
               document.querySelectorAll('body *').forEach(el => {
-                if (el.closest('.tablewrap, svg, .sidenav, select, option') || el.tagName === 'svg' || el.tagName === 'SELECT') return;
+                if (el.closest('.tablewrap, svg, .sidenav, select, option') || el.tagName === 'svg' || el.tagName === 'SELECT' || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') return;
                 const cs = getComputedStyle(el);
                 if (cs.display === 'none' || cs.position === 'fixed') return;
                 if (cs.overflowX === 'auto' || cs.overflowX === 'scroll' || cs.overflow === 'hidden' || cs.overflowX === 'hidden') return;

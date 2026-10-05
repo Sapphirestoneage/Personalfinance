@@ -1,0 +1,38 @@
+{
+ "asOf": "2026-10-05",
+ "source": "Money Rooms v3 spec, Leverage engine",
+ "verify": false,
+ "formula": "leverage = categoryWeight x itemWeight x (1 - confidence) x materiality",
+ "categories": {
+  "sun": 10,
+  "income": 10,
+  "accommodation": 9,
+  "debt": 9,
+  "safety": 8,
+  "invest": 7,
+  "transportation": 7,
+  "food": 6,
+  "taxes": 6,
+  "life": 5,
+  "utilities": 3,
+  "spending": 6
+ },
+ "materiality": {
+  "trivialBelowAnnualCents": 10000,
+  "trivial": 0.1,
+  "small": 0.5,
+  "normal": 1.0,
+  "large": 1.5,
+  "largeAboveAnnualCents": 1000000
+ },
+ "sunItems": {
+  "name": 2,
+  "birthDate": 10,
+  "state": 6,
+  "city": 2,
+  "workSituation": 9,
+  "dependents": 7,
+  "filingStatus": 7,
+  "bigGoal": 4
+ }
+}

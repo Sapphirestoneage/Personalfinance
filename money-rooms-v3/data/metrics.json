@@ -1,0 +1,1010 @@
+{
+ "asOf": "2026-10-05",
+ "source": "Money Rooms v3 spec, Metric registry; bands cite their source in each row",
+ "verify": false,
+ "metrics": [
+  {
+   "n": 1,
+   "id": "takeHome",
+   "name": "Take-home monthly",
+   "clientLabel": "What lands in the bank each month",
+   "definition": "Pay after taxes and payroll deductions, per month.",
+   "formula": "sum(income.takeHome, monthly)",
+   "inputs": [
+    "income.takeHomeMonthly"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "monthly",
+    "basis": "real",
+    "tax": "aftertax"
+   },
+   "owner": "income",
+   "group": "cash flow",
+   "stage": 1,
+   "range": null
+  },
+  {
+   "n": 2,
+   "id": "gross",
+   "name": "Gross monthly",
+   "clientLabel": "Pay before anything comes out",
+   "definition": "Pay before taxes and deductions, per month, bonus and equity included.",
+   "formula": "sum(income.grossPay, monthly) + bonus/12 + equity/12",
+   "inputs": [
+    "income.grossMonthly"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "monthly",
+    "basis": "real",
+    "tax": "pretax"
+   },
+   "owner": "income",
+   "group": "cash flow",
+   "stage": 1,
+   "range": null
+  },
+  {
+   "n": 3,
+   "id": "spending",
+   "name": "Monthly spending",
+   "clientLabel": "What a month costs",
+   "definition": "Every spending line per month, plus insurance premiums paid from the bank. Line items override a rough total.",
+   "formula": "sum(spending lines, monthly) + sum(safety premiums not via payroll)",
+   "inputs": [
+    "spending.baselineMonthly",
+    "safety.premiumsMonthly"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "monthly",
+    "basis": "real",
+    "tax": "aftertax"
+   },
+   "owner": "spending",
+   "group": "cash flow",
+   "stage": 1,
+   "range": null
+  },
+  {
+   "n": 4,
+   "id": "surplus",
+   "name": "Surplus",
+   "clientLabel": "Left over each month",
+   "definition": "Take-home minus spending minus debt minimums.",
+   "formula": "takeHome - spending - debtServiceMonthly",
+   "inputs": [
+    "m.takeHome",
+    "m.spending",
+    "debt.debtServiceMonthly"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "monthly",
+    "basis": "real",
+    "tax": "aftertax"
+   },
+   "owner": "engine",
+   "group": "cash flow",
+   "stage": 1,
+   "range": null
+  },
+  {
+   "n": 5,
+   "id": "savingsRateTakeHome",
+   "name": "Savings rate (take-home)",
+   "clientLabel": "Share of take-home saved",
+   "definition": "(take-home minus spending) divided by take-home.",
+   "formula": "(takeHome - spending) / takeHome",
+   "inputs": [
+    "m.takeHome",
+    "m.spending"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "engine",
+   "group": "cash flow",
+   "stage": 1,
+   "range": {
+    "low": 0.1,
+    "high": 0.2,
+    "source": "Common personal-finance guidance: 10% floor, 20% strong"
+   }
+  },
+  {
+   "n": 6,
+   "id": "savingsRateGross",
+   "name": "Savings rate (gross, FIRE style)",
+   "clientLabel": "Share of total pay saved, match included",
+   "definition": "(pre-tax contributions + match + take-home minus spending) divided by (gross + match).",
+   "formula": "(pretaxContrib + roth + hsa + match + takeHome - spending) / (gross + match)",
+   "inputs": [
+    "income.pretaxContribMonthly",
+    "income.rothContribMonthly",
+    "income.hsaPayrollMonthly",
+    "income.matchMonthly",
+    "m.takeHome",
+    "m.spending",
+    "income.grossMonthly"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "engine",
+   "group": "cash flow",
+   "stage": 1,
+   "range": {
+    "low": 0.15,
+    "high": 0.5,
+    "source": "Mr. Money Mustache, The Shockingly Simple Math"
+   }
+  },
+  {
+   "n": 7,
+   "id": "leak",
+   "name": "Leak rate",
+   "clientLabel": "Money the math says is left but does not land in savings",
+   "definition": "Surplus the math says, minus savings actually landing in accounts, as a share of take-home.",
+   "formula": "(surplus - savingsLanding) / takeHome",
+   "inputs": [
+    "m.surplus",
+    "spending.savingsLandingMonthly",
+    "m.takeHome"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "engine",
+   "group": "cash flow",
+   "stage": 1,
+   "range": null
+  },
+  {
+   "n": 8,
+   "id": "draftt",
+   "name": "DRAFTT shares",
+   "clientLabel": "Where each dollar goes",
+   "definition": "Debt, Retirement, Accommodation, Food, Transportation, Therapy as shares of take-home (Retirement over gross).",
+   "formula": "each line / takeHome; retirement / gross",
+   "inputs": [
+    "debt.debtServiceMonthly",
+    "income.pretaxContribMonthly",
+    "income.matchMonthly",
+    "spending.byCategory",
+    "m.takeHome",
+    "income.grossMonthly"
+   ],
+   "units": {
+    "kind": "shares"
+   },
+   "owner": "engine",
+   "group": "cash flow",
+   "stage": 1,
+   "range": null
+  },
+  {
+   "n": 9,
+   "id": "fatFloor",
+   "name": "FAT floor",
+   "clientLabel": "The lean month",
+   "definition": "Food, accommodation and transportation lines kept in a lean month.",
+   "formula": "sum(spending lines flagged in FAT floor)",
+   "inputs": [
+    "spending.fatFloorMonthly"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "monthly",
+    "basis": "real",
+    "tax": "aftertax"
+   },
+   "owner": "spending",
+   "group": "cash flow",
+   "stage": 1,
+   "range": null
+  },
+  {
+   "n": 10,
+   "id": "shelterRate",
+   "name": "Shelter rate",
+   "clientLabel": "Housing share of take-home",
+   "definition": "Accommodation (rent or mortgage plus utilities) divided by take-home.",
+   "formula": "accommodation / takeHome",
+   "inputs": [
+    "spending.byCategory",
+    "m.takeHome"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "engine",
+   "group": "cash flow",
+   "stage": 1,
+   "range": {
+    "low": 0.25,
+    "high": 0.35,
+    "source": "The 30% rule of thumb, widened for high-cost cities"
+   }
+  },
+  {
+   "n": 11,
+   "id": "fixedRate",
+   "name": "Fixed-cost rate",
+   "clientLabel": "Share of take-home already spoken for",
+   "definition": "Spending lines marked need, plus bank-paid premiums, divided by take-home.",
+   "formula": "fixedMonthly / takeHome",
+   "inputs": [
+    "spending.fixedMonthly",
+    "safety.premiumsMonthly",
+    "m.takeHome"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "engine",
+   "group": "cash flow",
+   "stage": 1,
+   "range": {
+    "low": 0.5,
+    "high": 0.6,
+    "source": "Ramit Sethi conscious-spending plan: fixed costs 50 to 60%"
+   }
+  },
+  {
+   "n": 12,
+   "id": "realHourlyWage",
+   "name": "Real hourly wage",
+   "clientLabel": "What an hour of work really pays",
+   "definition": "(take-home minus costs of working) divided by (paid plus commute and prep hours).",
+   "formula": "(takeHome - workCosts) / workHoursMonthly",
+   "inputs": [
+    "m.takeHome",
+    "income.workCostsMonthly",
+    "income.workHoursMonthly"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "oneoff",
+    "basis": "real",
+    "tax": "aftertax"
+   },
+   "owner": "engine",
+   "group": "cash flow",
+   "stage": 1,
+   "range": null
+  },
+  {
+   "n": 13,
+   "id": "debtService",
+   "name": "Monthly debt service",
+   "clientLabel": "Debt payments each month",
+   "definition": "Sum of minimum payments.",
+   "formula": "sum(debt minimums, monthly)",
+   "inputs": [
+    "debt.debtServiceMonthly"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "monthly",
+    "basis": "real",
+    "tax": "aftertax"
+   },
+   "owner": "debt",
+   "group": "debt",
+   "stage": 2,
+   "range": null
+  },
+  {
+   "n": 14,
+   "id": "totalDebt",
+   "name": "Total debt",
+   "clientLabel": "Everything owed",
+   "definition": "Sum of balances.",
+   "formula": "sum(debt balances)",
+   "inputs": [
+    "debt.totalDebt"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "oneoff",
+    "basis": "real",
+    "tax": "na"
+   },
+   "owner": "debt",
+   "group": "debt",
+   "stage": 2,
+   "range": null
+  },
+  {
+   "n": 15,
+   "id": "dti",
+   "name": "Debt-to-income",
+   "clientLabel": "Debt payments as a share of pay",
+   "definition": "Monthly debt service divided by gross monthly.",
+   "formula": "debtService / gross",
+   "inputs": [
+    "m.debtService",
+    "m.gross"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "engine",
+   "group": "debt",
+   "stage": 2,
+   "range": {
+    "low": 0.0,
+    "high": 0.36,
+    "source": "Mortgage underwriting back-end ratio, 36%"
+   }
+  },
+  {
+   "n": 16,
+   "id": "debtToAssets",
+   "name": "Debt-to-assets",
+   "clientLabel": "Owed versus owned",
+   "definition": "Total debt divided by total assets.",
+   "formula": "totalDebt / totalAssets",
+   "inputs": [
+    "m.totalDebt",
+    "invest.totalAssets"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "engine",
+   "group": "debt",
+   "stage": 2,
+   "range": null
+  },
+  {
+   "n": 17,
+   "id": "weightedApr",
+   "name": "Weighted APR",
+   "clientLabel": "Average interest rate, by balance",
+   "definition": "Balance-weighted interest rate, promo rate while a promo runs.",
+   "formula": "sum(balance x rate) / totalDebt",
+   "inputs": [
+    "debt.weightedApr"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "debt",
+   "group": "debt",
+   "stage": 2,
+   "range": null
+  },
+  {
+   "n": 18,
+   "id": "annualInterest",
+   "name": "Annual interest cost",
+   "clientLabel": "Interest over the next year",
+   "definition": "Interest on today's balances over the next 12 months, promo rate until the promo ends; a card on full autopay carries none.",
+   "formula": "sum(balance x rate x months/12)",
+   "inputs": [
+    "debt.annualInterest"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "annual",
+    "basis": "real",
+    "tax": "aftertax"
+   },
+   "owner": "debt",
+   "group": "debt",
+   "stage": 2,
+   "range": null
+  },
+  {
+   "n": 19,
+   "id": "utilization",
+   "name": "Credit utilization",
+   "clientLabel": "How full the cards are",
+   "definition": "Card balances over credit limits, total and per card.",
+   "formula": "balances / limits",
+   "inputs": [
+    "debt.utilization"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "debt",
+   "group": "debt",
+   "stage": 2,
+   "range": {
+    "low": 0.0,
+    "high": 0.3,
+    "source": "CFPB and FICO guidance: under 30%, under 10% best"
+   }
+  },
+  {
+   "n": 20,
+   "id": "promoCliff",
+   "name": "Promo cliff",
+   "clientLabel": "When a 0% offer ends",
+   "definition": "For each promo: months left and what the balance costs a year at the standard rate.",
+   "formula": "balance x standardApr; months until promoEnd",
+   "inputs": [
+    "debt.promoCliffs"
+   ],
+   "units": {
+    "kind": "list"
+   },
+   "owner": "debt",
+   "group": "debt",
+   "stage": 2,
+   "range": null
+  },
+  {
+   "n": 21,
+   "id": "debtFree",
+   "name": "Debt-free date and freed cash flow",
+   "clientLabel": "When the last payment lands",
+   "definition": "Month the last debt is paid at current minimums, freed payments rolled to the next debt (avalanche), and the cash freed by month.",
+   "formula": "simulate minimums with avalanche rollover",
+   "inputs": [
+    "debt.debtFreeDate",
+    "debt.freedCashByMonth"
+   ],
+   "units": {
+    "kind": "date"
+   },
+   "owner": "debt",
+   "group": "debt",
+   "stage": 2,
+   "range": null
+  },
+  {
+   "n": 22,
+   "id": "netWorth",
+   "name": "Net worth",
+   "clientLabel": "Owned minus owed",
+   "definition": "Total assets minus total debt.",
+   "formula": "totalAssets - totalDebt",
+   "inputs": [
+    "invest.totalAssets",
+    "m.totalDebt"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "oneoff",
+    "basis": "real",
+    "tax": "na"
+   },
+   "owner": "engine",
+   "group": "balance sheet",
+   "stage": 3,
+   "range": null
+  },
+  {
+   "n": 23,
+   "id": "assets",
+   "name": "Total, invested and liquid assets",
+   "clientLabel": "What is owned, and how much of it moves",
+   "definition": "Total assets; the part that takes market returns; the part reachable without penalty.",
+   "formula": "sum by account type",
+   "inputs": [
+    "invest.totalAssets",
+    "invest.investedAssets",
+    "invest.balancesByLiquidity"
+   ],
+   "units": {
+    "kind": "list"
+   },
+   "owner": "invest",
+   "group": "balance sheet",
+   "stage": 3,
+   "range": null
+  },
+  {
+   "n": 24,
+   "id": "liquidityRate",
+   "name": "Liquidity rate",
+   "clientLabel": "Share of assets reachable now",
+   "definition": "Liquid assets divided by total assets.",
+   "formula": "liquid / totalAssets",
+   "inputs": [
+    "invest.balancesByLiquidity",
+    "invest.totalAssets"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "engine",
+   "group": "balance sheet",
+   "stage": 3,
+   "range": null
+  },
+  {
+   "n": 25,
+   "id": "bridgeYears",
+   "name": "Bridge years",
+   "clientLabel": "Years the reachable money covers",
+   "definition": "Liquid plus semi-liquid assets divided by annual spending.",
+   "formula": "(liquid + semi) / (spending x 12)",
+   "inputs": [
+    "invest.balancesByLiquidity",
+    "m.spending"
+   ],
+   "units": {
+    "kind": "count"
+   },
+   "owner": "engine",
+   "group": "balance sheet",
+   "stage": 3,
+   "range": null
+  },
+  {
+   "n": 26,
+   "id": "runway",
+   "name": "Runway months",
+   "clientLabel": "How long cash lasts",
+   "definition": "Cash divided by monthly spending at full spending, at needs only, and at the FAT floor.",
+   "formula": "cash / spending at each level",
+   "inputs": [
+    "safety.runway"
+   ],
+   "units": {
+    "kind": "list"
+   },
+   "owner": "safety",
+   "group": "safety",
+   "stage": 3,
+   "range": null
+  },
+  {
+   "n": 27,
+   "id": "ruleOf5Target",
+   "name": "Rule of 5 target",
+   "clientLabel": "Cash to keep on hand",
+   "definition": "Age divided by five, in months of spending.",
+   "formula": "(age / 5) x spending",
+   "inputs": [
+    "safety.ruleOf5Target"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "oneoff",
+    "basis": "real",
+    "tax": "na"
+   },
+   "owner": "safety",
+   "group": "safety",
+   "stage": 3,
+   "range": null
+  },
+  {
+   "n": 28,
+   "id": "emergencyGap",
+   "name": "Emergency gap and monthly to close",
+   "clientLabel": "Cash still to set aside",
+   "definition": "Rule of 5 target minus cash, floored at zero, and a twelfth of it.",
+   "formula": "max(0, target - cash); gap / 12",
+   "inputs": [
+    "safety.gap",
+    "safety.monthlyToClose"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "oneoff",
+    "basis": "real",
+    "tax": "na"
+   },
+   "owner": "safety",
+   "group": "safety",
+   "stage": 3,
+   "range": null
+  },
+  {
+   "n": 29,
+   "id": "cashDrag",
+   "name": "Excess cash drag",
+   "clientLabel": "What idle cash costs a year",
+   "definition": "Cash above the Rule of 5 target times the gap between the likely real return and the cash real return.",
+   "formula": "(cash - target) x (returnLikely - cashRealReturn)",
+   "inputs": [
+    "invest.cashBalances",
+    "safety.ruleOf5Target",
+    "assumptions"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "annual",
+    "basis": "real",
+    "tax": "na"
+   },
+   "owner": "engine",
+   "group": "safety",
+   "stage": 3,
+   "range": null
+  },
+  {
+   "n": 30,
+   "id": "taxAdvantagedShare",
+   "name": "Tax-advantaged share",
+   "clientLabel": "Assets inside tax shelters",
+   "definition": "Pre-tax, Roth and HSA balances divided by total assets.",
+   "formula": "(pretax + roth + hsa) / totalAssets",
+   "inputs": [
+    "invest.balancesByBucket",
+    "invest.totalAssets"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "engine",
+   "group": "balance sheet",
+   "stage": 3,
+   "range": null
+  },
+  {
+   "n": 31,
+   "id": "bucketMix",
+   "name": "Tax bucket mix",
+   "clientLabel": "Pre-tax, Roth, taxable, cash",
+   "definition": "Balances by tax bucket as shares of total assets.",
+   "formula": "each bucket / totalAssets",
+   "inputs": [
+    "invest.balancesByBucket",
+    "invest.totalAssets"
+   ],
+   "units": {
+    "kind": "shares"
+   },
+   "owner": "invest",
+   "group": "balance sheet",
+   "stage": 3,
+   "range": null
+  },
+  {
+   "n": 32,
+   "id": "matchCapture",
+   "name": "Match capture and match left",
+   "clientLabel": "Free money taken, and left",
+   "definition": "Match received divided by match available, and the dollars left a year.",
+   "formula": "matchMonthly / maxMatchMonthly; (max - actual) x 12",
+   "inputs": [
+    "invest.matchCapture"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "invest",
+   "group": "retirement",
+   "stage": 3,
+   "range": null
+  },
+  {
+   "n": 33,
+   "id": "roomLeft",
+   "name": "Room left under limits",
+   "clientLabel": "Space left in each account this year",
+   "definition": "Each limit minus this year's contributions.",
+   "formula": "limit - annual contributions",
+   "inputs": [
+    "invest.roomLeft"
+   ],
+   "units": {
+    "kind": "list"
+   },
+   "owner": "invest",
+   "group": "retirement",
+   "stage": 3,
+   "range": null
+  },
+  {
+   "n": 34,
+   "id": "weightedEr",
+   "name": "Weighted expense ratio",
+   "clientLabel": "Average fund fee",
+   "definition": "Dollar-weighted expense ratio across holdings.",
+   "formula": "sum(balance x ER) / invested",
+   "inputs": [
+    "invest.weightedExpenseRatio"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "invest",
+   "group": "retirement",
+   "stage": 3,
+   "range": {
+    "low": 0.0,
+    "high": 0.0025,
+    "source": "JL Collins: index funds under 0.25%"
+   }
+  },
+  {
+   "n": 35,
+   "id": "feeDragLifetime",
+   "name": "Fee drag, lifetime",
+   "clientLabel": "What fund fees cost by retirement",
+   "definition": "Today's invested balance grown to retirement age at the likely return, minus the same at the return less fees.",
+   "formula": "invested x ((1+r)^n - (1+r-ER)^n)",
+   "inputs": [
+    "invest.investedAssets",
+    "invest.weightedExpenseRatio",
+    "life.retirementAge",
+    "assumptions"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "oneoff",
+    "basis": "real",
+    "tax": "na"
+   },
+   "owner": "engine",
+   "group": "retirement",
+   "stage": 3,
+   "range": null
+  },
+  {
+   "n": 36,
+   "id": "allocation",
+   "name": "Allocation",
+   "clientLabel": "Stocks, bonds, cash",
+   "definition": "Dollar-weighted stocks, bonds, cash and other across accounts, and the US share of stocks.",
+   "formula": "sum(balance x share) / total",
+   "inputs": [
+    "invest.allocation"
+   ],
+   "units": {
+    "kind": "shares"
+   },
+   "owner": "invest",
+   "group": "balance sheet",
+   "stage": 3,
+   "range": null
+  },
+  {
+   "n": 37,
+   "id": "impliedTaxRate",
+   "name": "Implied tax rate",
+   "clientLabel": "Share of pay that goes to taxes",
+   "definition": "(gross minus take-home minus payroll deductions) divided by gross, from the paystub.",
+   "formula": "(gross - takeHome - deductions) / gross",
+   "inputs": [
+    "taxes.impliedRate"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "taxes",
+   "group": "taxes",
+   "stage": 4,
+   "range": null
+  },
+  {
+   "n": 38,
+   "id": "federalRates",
+   "name": "Effective and marginal federal rate",
+   "clientLabel": "Federal tax, average and on the next dollar",
+   "definition": "Estimated federal tax divided by gross, and the bracket of the last dollar.",
+   "formula": "federalAnnual / grossAnnual; bracket",
+   "inputs": [
+    "taxes.effectiveRate",
+    "taxes.marginalRate"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "taxes",
+   "group": "taxes",
+   "stage": 4,
+   "range": null
+  },
+  {
+   "n": 39,
+   "id": "fica",
+   "name": "FICA",
+   "clientLabel": "Social Security and Medicare tax",
+   "definition": "Social Security and Medicare on wages; both halves for self-employment.",
+   "formula": "wages x 7.65% up to the wage base, plus Medicare above",
+   "inputs": [
+    "taxes.ficaAnnual"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "annual",
+    "basis": "real",
+    "tax": "na"
+   },
+   "owner": "taxes",
+   "group": "taxes",
+   "stage": 4,
+   "range": null
+  },
+  {
+   "n": 40,
+   "id": "taxSavedPer1000",
+   "name": "Tax saved per $1,000 pre-tax",
+   "clientLabel": "What each $1,000 into a 401k saves",
+   "definition": "The marginal rate times 1,000 (plus FICA where the deduction avoids it).",
+   "formula": "marginalRate x 1000",
+   "inputs": [
+    "taxes.savedPer1000Pretax"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "oneoff",
+    "basis": "real",
+    "tax": "na"
+   },
+   "owner": "taxes",
+   "group": "taxes",
+   "stage": 4,
+   "range": null
+  },
+  {
+   "n": 41,
+   "id": "fiNumber",
+   "name": "FI number",
+   "clientLabel": "The portfolio that pays for life",
+   "definition": "Annual spending divided by the withdrawal rate.",
+   "formula": "spending x 12 / withdrawalRate",
+   "inputs": [
+    "m.spending",
+    "assumptions"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "oneoff",
+    "basis": "real",
+    "tax": "na"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null
+  },
+  {
+   "n": 42,
+   "id": "pctToFi",
+   "name": "% to FI",
+   "clientLabel": "How far along",
+   "definition": "Net worth divided by the FI number.",
+   "formula": "netWorth / fiNumber",
+   "inputs": [
+    "m.netWorth",
+    "m.fiNumber"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null
+  },
+  {
+   "n": 43,
+   "id": "coastFi",
+   "name": "Coast FI number and %",
+   "clientLabel": "Enough today to coast",
+   "definition": "The FI number discounted to today at the likely return over the years to retirement age, and net worth against it.",
+   "formula": "fiNumber / (1+r)^years; netWorth / coast",
+   "inputs": [
+    "m.fiNumber",
+    "life.retirementAge",
+    "assumptions",
+    "m.netWorth"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "oneoff",
+    "basis": "real",
+    "tax": "na"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null
+  },
+  {
+   "n": 44,
+   "id": "fiDate",
+   "name": "FI date and years to FI",
+   "clientLabel": "When the portfolio could carry the household",
+   "definition": "First projection year where net worth times the withdrawal rate covers spending, at the likely, best and worst returns.",
+   "formula": "projection, year by year to 95",
+   "inputs": [
+    "projection"
+   ],
+   "units": {
+    "kind": "date"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null
+  },
+  {
+   "n": 45,
+   "id": "fiLevels",
+   "name": "Lean, Fat and Barista FI",
+   "clientLabel": "Three sizes of enough",
+   "definition": "Lean: the FAT floor over the withdrawal rate. Fat: spending times the fat multiplier. Barista: spending less part-time income.",
+   "formula": "fatFloor x 12 / wr; spending x 12 x fat / wr; (spending x 12 - barista) / wr",
+   "inputs": [
+    "m.fatFloor",
+    "m.spending",
+    "assumptions"
+   ],
+   "units": {
+    "kind": "list"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null
+  },
+  {
+   "n": 46,
+   "id": "oneMorePoint",
+   "name": "Value of one more point",
+   "clientLabel": "What one more percent saved buys",
+   "definition": "Months the FI date moves earlier when the savings rate rises by one point of take-home.",
+   "formula": "projection with +1% of take-home saved",
+   "inputs": [
+    "projection",
+    "m.takeHome"
+   ],
+   "units": {
+    "kind": "count"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null
+  },
+  {
+   "n": 47,
+   "id": "cardNetValue",
+   "name": "Card net value",
+   "clientLabel": "Is each card worth its fee",
+   "definition": "Credits actually used plus rewards on actual spending minus the annual fee, per card.",
+   "formula": "credits used + rewards - fee",
+   "inputs": [
+    "debt.wallet"
+   ],
+   "units": {
+    "kind": "list"
+   },
+   "owner": "debt",
+   "group": "cards",
+   "stage": 2,
+   "range": null
+  },
+  {
+   "n": 48,
+   "id": "rewardsLeft",
+   "name": "Rewards left on the table",
+   "clientLabel": "Rewards the spending could earn elsewhere",
+   "definition": "For each spending line with a card, the best library earn rate for its category minus the actual, a year.",
+   "formula": "sum((best rate - actual rate) x spend x 12)",
+   "inputs": [
+    "debt.wallet"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "annual",
+    "basis": "real",
+    "tax": "na"
+   },
+   "owner": "debt",
+   "group": "cards",
+   "stage": 2,
+   "range": null
+  }
+ ],
+ "stages": {
+  "1": "Sun + Income + Spending",
+  "2": "+ Debt and Credit",
+  "3": "+ Safety Net + Investments",
+  "4": "+ Taxes",
+  "5": "everything sharpens as it fills"
+ }
+}

@@ -6,9 +6,11 @@
 export const PLANETS = Object.freeze(['income', 'spending', 'debt', 'safety', 'invest', 'taxes', 'life']);
 
 export const PLANET_LABELS = Object.freeze({
-  income: 'Income', spending: 'Spending', debt: 'Debt and Credit', safety: 'Safety Net',
-  invest: 'Investments and Accounts', taxes: 'Taxes', life: 'Life Plan',
+  income: 'Income', spending: 'Spending', debt: 'Debt and credit', safety: 'Safety net',
+  invest: 'Investments and accounts', taxes: 'Taxes', life: 'Life plan',
 });
+
+export const PLANET_SHORT = Object.freeze({ income: 'Income', spending: 'Spending', debt: 'Debt', safety: 'Safety net', invest: 'Investments', taxes: 'Taxes', life: 'Life plan' });
 
 export const SUN_FIELDS = Object.freeze(['name', 'birthDate', 'state', 'city', 'workSituation', 'dependents', 'filingStatus', 'bigGoal']);
 export const FILING_STATUSES = Object.freeze([['single', 'Single'], ['mfj', 'Married filing jointly'], ['hoh', 'Head of household']]);

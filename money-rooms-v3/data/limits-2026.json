@@ -1,0 +1,94 @@
+{
+ "asOf": "2026-10-05",
+ "source": "IRS Notice 2025-67 and Rev. Proc. 2025-19 (HSA), as remembered by the builder; every figure marked verify",
+ "verify": true,
+ "year": 2026,
+ "limits": [
+  {
+   "id": "401k",
+   "label": "401(k), 403(b), 457(b), TSP employee deferral",
+   "cents": 2450000,
+   "catchUp50": 800000,
+   "catchUp60to63": 1125000,
+   "accountTypes": [
+    "401k",
+    "roth401k",
+    "403b",
+    "457b",
+    "tsp",
+    "solo401k"
+   ],
+   "incomeFields": [
+    "pretaxRetirement",
+    "rothRetirement"
+   ]
+  },
+  {
+   "id": "ira",
+   "label": "IRA (traditional and Roth together)",
+   "cents": 750000,
+   "catchUp50": 110000,
+   "accountTypes": [
+    "tradIra",
+    "rothIra"
+   ]
+  },
+  {
+   "id": "hsa-self",
+   "label": "HSA, self-only coverage",
+   "cents": 440000,
+   "catchUp55": 100000,
+   "accountTypes": [
+    "hsa"
+   ],
+   "incomeFields": [
+    "hsaPayroll"
+   ]
+  },
+  {
+   "id": "hsa-family",
+   "label": "HSA, family coverage",
+   "cents": 875000,
+   "catchUp55": 100000,
+   "accountTypes": [
+    "hsa"
+   ],
+   "incomeFields": [
+    "hsaPayroll"
+   ],
+   "whenDependents": true
+  },
+  {
+   "id": "sep",
+   "label": "SEP IRA (25% of compensation, capped)",
+   "cents": 7200000,
+   "accountTypes": [
+    "sep"
+   ]
+  },
+  {
+   "id": "total-dc",
+   "label": "Total defined-contribution additions (employee plus employer)",
+   "cents": 7200000,
+   "accountTypes": [
+    "401k",
+    "roth401k",
+    "403b",
+    "solo401k"
+   ]
+  }
+ ],
+ "socialSecurity": {
+  "fullRetirementAge": 67,
+  "bendPoints2026Cents": [
+   124700,
+   751800
+  ],
+  "pia": [
+   0.9,
+   0.32,
+   0.15
+  ],
+  "note": "Bend points are 2026 figures as remembered; a simple estimate from current gross as the career average; verify"
+ }
+}

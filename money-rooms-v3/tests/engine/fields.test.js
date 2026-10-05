@@ -67,3 +67,14 @@ test('every row type has one primary money field (or a numeric headline)', () =>
     assert.ok(primaries.length <= 1, p + '/' + tid + ' has two primaries');
   }));
 });
+
+test('journey: no fact is asked twice (Sun fields and planet fields never share an id or a label)', () => {
+  const sunIds = ['name', 'birthDate', 'state', 'city', 'workSituation', 'dependents', 'filingStatus', 'bigGoal'];
+  sunIds.forEach(id => assert.ok(!fields.fields[id], id + ' is both a Sun fact and a planet field'));
+  const labelsByPlanet = {};
+  Object.values(fields.fields).forEach(d => {
+    labelsByPlanet[d.owner] = labelsByPlanet[d.owner] || {};
+    assert.ok(!labelsByPlanet[d.owner][d.label] || ['Amount', 'What it is', 'Label'].includes(d.label), d.owner + ' asks "' + d.label + '" twice (' + d.id + ' and ' + labelsByPlanet[d.owner][d.label] + ')');
+    labelsByPlanet[d.owner][d.label] = d.id;
+  });
+});

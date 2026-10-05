@@ -1,0 +1,102 @@
+{
+ "asOf": "2026-10-05",
+ "source": "Well-known public titles named in the Money Rooms v3 spec; titles only, no quotes",
+ "verify": false,
+ "readings": [
+  {
+   "id": "jl-collins",
+   "title": "JL Collins, The Simple Path to Wealth (the Stock Series)",
+   "topics": [
+    "fee-drag",
+    "allocation",
+    "coast",
+    "fi-number",
+    "cash-drag"
+   ]
+  },
+  {
+   "id": "mmm-shockingly-simple",
+   "title": "Mr. Money Mustache, The Shockingly Simple Math Behind Early Retirement",
+   "topics": [
+    "savings-rate",
+    "fi-date",
+    "one-more-point",
+    "hidden-leak"
+   ]
+  },
+  {
+   "id": "mmm-car",
+   "title": "Mr. Money Mustache, on commuting and car costs",
+   "topics": [
+    "transportation",
+    "real-hourly-wage",
+    "cost-in-hours"
+   ]
+  },
+  {
+   "id": "big-ern-swr",
+   "title": "Big ERN (Early Retirement Now), the Safe Withdrawal Rate series",
+   "topics": [
+    "withdrawal-rate",
+    "fi-number",
+    "bridge",
+    "locked-up"
+   ]
+  },
+  {
+   "id": "money-guy-foo",
+   "title": "The Money Guy Show, Financial Order of Operations",
+   "topics": [
+    "match",
+    "promo-cliff",
+    "emergency-fund",
+    "tax-room",
+    "debt-order",
+    "thin-runway"
+   ]
+  },
+  {
+   "id": "ymoyl",
+   "title": "Vicki Robin and Joe Dominguez, Your Money or Your Life",
+   "topics": [
+    "real-hourly-wage",
+    "cost-in-hours",
+    "mistake-tax",
+    "shelter"
+   ]
+  },
+  {
+   "id": "die-with-zero",
+   "title": "Bill Perkins, Die With Zero",
+   "topics": [
+    "go-go",
+    "goals",
+    "coast"
+   ]
+  },
+  {
+   "id": "choosefi-travel",
+   "title": "ChooseFI, the travel rewards episodes",
+   "topics": [
+    "card-fee",
+    "wrong-card",
+    "utilization"
+   ]
+  },
+  {
+   "id": "fed-student-aid",
+   "title": "Federal Student Aid, repayment plan comparison",
+   "topics": [
+    "student-loans",
+    "debt-order"
+   ]
+  },
+  {
+   "id": "cfpb-credit",
+   "title": "Consumer Financial Protection Bureau, how credit utilization affects your score",
+   "topics": [
+    "utilization"
+   ]
+  }
+ ]
+}

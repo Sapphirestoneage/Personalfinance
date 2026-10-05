@@ -43,7 +43,7 @@ export const flows = [
       await page.waitForTimeout(100);
       check('redo re-applies it', (await page.textContent('.fieldrow[data-field="city"] .chip')) === 'Rough');
       await page.keyboard.press('Escape');
-      await page.click('body', { position: { x: 5, y: 300 } });
+      await page.click('main > header h1');
       await page.keyboard.press('Control+z');
       await page.waitForTimeout(100);
       check('Ctrl+Z undoes too', (await page.textContent('.fieldrow[data-field="city"] .chip')) === 'Known');
@@ -92,3 +92,36 @@ export const flows = [
     },
   },
 ];
+
+import { enterHousehold, compareToSpec } from './ui-keyboard.js';
+import { specs } from './households/specs.mjs';
+
+flows.push({
+  name: 'level1-jordan-keyboard-only',
+  async run(page, { base, check, APP }) {
+    await page.goto(base + 'index.html#/home');
+    await page.waitForSelector('text=No clients yet');
+    const t0 = Date.now();
+    const { keys, rowIds } = await enterHousehold(page, specs.jordan, check);
+    const seconds = Math.round((Date.now() - t0) / 1000);
+    const record = await page.evaluate(() => JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k => k.startsWith('mr3:client:')))));
+    compareToSpec(record, specs.jordan, rowIds, check, 'keyboard');
+    fs.mkdirSync(path.join(APP, 'screenshots'), { recursive: true });
+    fs.writeFileSync(path.join(APP, 'screenshots', '.tmp-keyboard-timing.json'), JSON.stringify({ seconds, keys, rows: Object.keys(rowIds).length }));
+    /* round trip: export, wipe, import, compare again */
+    await page.goto(base + 'index.html#/home');
+    await page.waitForSelector('table.data button:has-text("Export")');
+    const [download] = await Promise.all([page.waitForEvent('download'), page.click('table.data button:has-text("Export")')]);
+    const tmp = path.join(APP, 'screenshots', '.tmp-jordan-export.json');
+    await download.saveAs(tmp);
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await page.waitForSelector('text=No clients yet');
+    await page.setInputFiles('input[aria-label="Import a client file"]', tmp);
+    await page.waitForSelector('.orbit');
+    const back = await page.evaluate(() => JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k => k.startsWith('mr3:client:')))));
+    compareToSpec(back, specs.jordan, rowIds, check, 'round trip');
+    check('round trip keeps the journal', back.journal.length >= record.journal.length);
+    fs.unlinkSync(tmp);
+  },
+});

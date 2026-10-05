@@ -158,10 +158,9 @@ export const app = {
     items.forEach(it => {
       if (it.group && it.group !== group) { group = it.group; nav.appendChild(h('h3', { class: 'group' }, group)); }
       const a = h('a', { href: it.href, 'aria-current': it.active(this.route) ? 'page' : null, class: it.coachOnly ? 'coach-only' : null },
-        it.label,
-        it.fill !== undefined && it.fill !== null ? h('span', { class: 'fill', title: Math.round(it.fill * 100) + '% confidence' }, h('span', { style: { width: Math.round(it.fill * 100) + '%' } })) : null,
-        it.fill !== undefined && it.fill !== null ? h('span', { class: 'fill-text' }, Math.round(it.fill * 100) + '%') : null,
-        it.key ? h('span', { class: 'kbd' }, it.key) : null);
+        h('span', { class: 'navlabel' }, it.label),
+        h('span', { class: 'fill-text', title: 'confidence' }, it.fill !== undefined && it.fill !== null ? Math.round(it.fill * 100) + '%' : '-'),
+        it.key ? h('span', { class: 'kbd coach-only' }, it.key) : h('span'));
       nav.appendChild(a);
     });
   },
@@ -225,6 +224,7 @@ const SHORTCUTS = [
   ['Alt+1 to Alt+8', 'Go to a screen'],
   ['Enter', 'In a table: move down a row'], ['Tab', 'Next field'],
   ['Alt+N', 'Add a row to the open table'],
+  ['Alt+S / Alt+O', 'In a cell: set its state / its source with one more key'],
   ['Alt+Delete', 'Remove the row you are in (undoable)'],
   ['Esc', 'Close a drawer or note bar'],
   ['?', 'This panel'],
@@ -256,6 +256,7 @@ function boot() {
     if (mod && e.shiftKey && e.key.toLowerCase() === 'z') { e.preventDefault(); app.redo(); return; }
     if (mod && e.key === '.') { e.preventDefault(); app.quickNoteBar(); return; }
     if (e.key === 'Escape') { closeOverlay(); return; }
+    if (e.altKey && (e.key === 'n' || e.key === 'N') && app.mounted && app.mounted.addRow && !inInput(e)) { e.preventDefault(); app.mounted.addRow(); return; }
     if (e.altKey && /^[1-8]$/.test(e.key)) {
       const items = navItems(app).filter(i => !i.group || true);
       const it = items[parseInt(e.key, 10) - 1];
@@ -293,4 +294,5 @@ export async function importFile(file) {
   return record;
 }
 
+globalThis.mr3 = app;
 import('./compute-bridge.js').then(m => { m.attach(app); boot(); });

@@ -1,0 +1,245 @@
+{
+ "asOf": "2026-10-05",
+ "source": "Money Rooms v3 spec, Lenses; sentences are information, never instructions",
+ "verify": false,
+ "skipBelowAnnualCents": 10000,
+ "lenses": [
+  {
+   "n": 1,
+   "id": "saving-at-a-loss",
+   "name": "Saving at a loss",
+   "trigger": "cash above the Rule of 5 target while a debt charges more than cash earns",
+   "template": "Keeping {excess} in cash while {debt} charges {apr} costs about {cost} a year.",
+   "inputs": [
+    "invest.cashBalances",
+    "safety.ruleOf5Target",
+    "debt.weightedApr"
+   ],
+   "reading": "money-guy-foo",
+   "metric": "cashDrag"
+  },
+  {
+   "n": 2,
+   "id": "match-left",
+   "name": "Match left on the table",
+   "trigger": "match captured below 100%",
+   "template": "The employer match not taken is about {cost} a year.",
+   "inputs": [
+    "invest.matchCapture"
+   ],
+   "reading": "money-guy-foo",
+   "metric": "matchCapture"
+  },
+  {
+   "n": 3,
+   "id": "promo-cliff",
+   "name": "Promo cliff",
+   "trigger": "a promo APR ends within 12 months",
+   "template": "{card} goes from {promo} to {apr} in {months}; at today's balance that is about {cost} a year.",
+   "inputs": [
+    "debt.promoCliffs"
+   ],
+   "reading": "money-guy-foo",
+   "metric": "promoCliff"
+  },
+  {
+   "n": 4,
+   "id": "cash-drag",
+   "name": "Cash drag",
+   "trigger": "cash above the Rule of 5 target",
+   "template": "Cash above the Rule of 5 target, about {excess}, earns about {cost} a year less than invested money would.",
+   "inputs": [
+    "invest.cashBalances",
+    "safety.ruleOf5Target"
+   ],
+   "reading": "jl-collins",
+   "metric": "cashDrag"
+  },
+  {
+   "n": 5,
+   "id": "fee-drag",
+   "name": "Fee drag",
+   "trigger": "weighted expense ratio above 0.25%",
+   "template": "Fund fees at {er} cost about {cost} a year, about {lifetime} by retirement.",
+   "inputs": [
+    "invest.weightedExpenseRatio",
+    "invest.feeDragAnnual"
+   ],
+   "reading": "jl-collins",
+   "metric": "feeDragLifetime"
+  },
+  {
+   "n": 6,
+   "id": "shelter-heavy",
+   "name": "Shelter heavy",
+   "trigger": "accommodation above 35% of take-home",
+   "template": "Housing takes {share} of take-home, about {cost} a year above the 35% line.",
+   "inputs": [
+    "spending.byCategory",
+    "income.takeHomeMonthly"
+   ],
+   "reading": "ymoyl",
+   "metric": "shelterRate"
+  },
+  {
+   "n": 7,
+   "id": "hidden-leak",
+   "name": "Hidden leak",
+   "trigger": "leak above 5% of take-home",
+   "template": "About {cost} a year is left by the math but does not land in savings.",
+   "inputs": [
+    "m.leak"
+   ],
+   "reading": "mmm-shockingly-simple",
+   "metric": "leak"
+  },
+  {
+   "n": 8,
+   "id": "wrong-debt-first",
+   "name": "Wrong debt first",
+   "trigger": "the stress-weighted order costs more than avalanche",
+   "template": "Paying the most stressful debt first costs about {cost} more in interest than the highest rate first; sometimes relief is worth it.",
+   "inputs": [
+    "debt.payoffOrders"
+   ],
+   "reading": "money-guy-foo",
+   "metric": "debtFree"
+  },
+  {
+   "n": 9,
+   "id": "utilization-drag",
+   "name": "Utilization drag",
+   "trigger": "any card above 30% or total above 10%",
+   "template": "{card} is at {utilization} of its limit; scores tend to lift under 30% and most under 10%.",
+   "inputs": [
+    "debt.utilization"
+   ],
+   "reading": "cfpb-credit",
+   "metric": "utilization"
+  },
+  {
+   "n": 10,
+   "id": "tax-room",
+   "name": "Tax room unused",
+   "trigger": "room under a pre-tax limit while surplus leaks",
+   "template": "Putting the {leak} a year that leaks into the 401k would save about {cost} in federal tax.",
+   "inputs": [
+    "invest.roomLeft",
+    "m.leak",
+    "taxes.marginalRate"
+   ],
+   "reading": "money-guy-foo",
+   "metric": "taxSavedPer1000"
+  },
+  {
+   "n": 11,
+   "id": "thin-runway",
+   "name": "Thin runway",
+   "trigger": "FAT runway under 3 months",
+   "template": "Cash covers {months} of the lean month; the gap to three months is about {cost}.",
+   "inputs": [
+    "safety.runway"
+   ],
+   "reading": "money-guy-foo",
+   "metric": "runway"
+  },
+  {
+   "n": 12,
+   "id": "locked-up",
+   "name": "Locked up",
+   "trigger": "liquid share under 30% with a retirement age before 59.5",
+   "template": "Only {share} of assets are reachable before 59.5, with retirement planned at {age}.",
+   "inputs": [
+    "invest.balancesByLiquidity",
+    "life.retirementAge"
+   ],
+   "reading": "big-ern-swr",
+   "metric": "liquidityRate"
+  },
+  {
+   "n": 13,
+   "id": "real-hourly-wage",
+   "name": "Real hourly wage",
+   "trigger": "real hourly wage under 70% of the stated wage",
+   "template": "After taxes, commuting and the costs of working, an hour pays {real}, not {stated}.",
+   "inputs": [
+    "m.realHourlyWage"
+   ],
+   "reading": "ymoyl",
+   "metric": "realHourlyWage"
+  },
+  {
+   "n": 14,
+   "id": "cost-in-hours",
+   "name": "Cost in hours",
+   "trigger": "annual interest above the materiality line",
+   "template": "This year's interest, about {cost}, is {hours} of work at the real hourly wage.",
+   "inputs": [
+    "debt.annualInterest",
+    "m.realHourlyWage"
+   ],
+   "reading": "ymoyl",
+   "metric": "annualInterest"
+  },
+  {
+   "n": 15,
+   "id": "one-more-point",
+   "name": "One more point",
+   "trigger": "a FI date exists",
+   "template": "One more point of take-home saved, about {amount} a month, moves the FI date about {months} earlier.",
+   "inputs": [
+    "m.oneMorePoint"
+   ],
+   "reading": "mmm-shockingly-simple",
+   "metric": "oneMorePoint"
+  },
+  {
+   "n": 16,
+   "id": "coast-check",
+   "name": "Coast check",
+   "trigger": "net worth at or above the Coast FI number",
+   "template": "Today's {netWorth} could grow to the FI number by {age} with no more saving.",
+   "inputs": [
+    "m.coastFi"
+   ],
+   "reading": "die-with-zero",
+   "metric": "coastFi"
+  },
+  {
+   "n": 17,
+   "id": "mistake-tax",
+   "name": "Mistake tax",
+   "trigger": "spending lines marked mistake above the materiality line",
+   "template": "Fees, penalties and regretted purchases add up to about {cost} a year.",
+   "inputs": [
+    "spending.mistakesAnnual"
+   ],
+   "reading": "ymoyl",
+   "metric": "spending"
+  },
+  {
+   "n": 18,
+   "id": "card-fee",
+   "name": "Card not paying its fee",
+   "trigger": "a card's fee exceeds credits used plus rewards above a no-fee card",
+   "template": "{card} costs about {cost} a year more than a no-fee card would on the same spending; {credits} of its credits go unused.",
+   "inputs": [
+    "debt.wallet"
+   ],
+   "reading": "choosefi-travel",
+   "metric": "cardNetValue"
+  },
+  {
+   "n": 19,
+   "id": "wrong-card",
+   "name": "Wrong card for the category",
+   "trigger": "rewards left on the table above the materiality line",
+   "template": "The same spending on the best library card for each category would earn about {cost} more a year.",
+   "inputs": [
+    "debt.wallet"
+   ],
+   "reading": "choosefi-travel",
+   "metric": "rewardsLeft"
+  }
+ ]
+}

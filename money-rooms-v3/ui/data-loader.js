@@ -1,5 +1,5 @@
 /* Fetches every data/ library by relative path (case-sensitive, works on Pages). */
-export const DATA_FILES = ['us-states'];
+export const DATA_FILES = ['us-states', 'fields', 'cards', 'funds', 'defaults'];
 
 export async function loadAllData() {
   const out = {};

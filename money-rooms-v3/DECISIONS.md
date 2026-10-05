@@ -75,3 +75,13 @@ Alternative: contributions on the account row (double entry with the paystub).
 Decision: the owner sent three screenshots of a life-map app (a large centre circle, satellites on a ring with spokes, a dashed outer orbit, labels under the circles, counts inside nested circles, a breadcrumb on top, a panel for the selected circle below, tap to step inside). Home follows that structure in the spec's light sapphire palette: the Sun in the centre with the seven planets around it; stepping into a planet shows its moons (row types) with row counts; stepping into a moon opens that Ledger table. The confidence fill is the ring stroke.
 Why: the owner asked for it mid-run; it also makes the map the Ledger's navigation instead of a second menu.
 Alternative: a static illustration on Home and a separate Ledger menu (two ways to the same table).
+
+## MR-011 2026-10-05 Alt+S and Alt+O from a cell; selects by arrow keys in the keyboard test
+Decision: in a Ledger cell, Alt+S jumps to that field's state chip and Alt+O to its source chip (one more key sets it and focus returns to the cell). The keyboard-only test drives selects with Home and arrow keys, not typeahead.
+Why: the field bar follows the last focused cell, so Tabbing to it always shows the row's last field; and Chromium's typeahead makes "No" land on "Not entered".
+Alternative: per-cell chip columns (thirty columns) or a modal state picker (no modals for data entry).
+
+## MR-012 2026-10-05 A typed plain 0 is None
+Decision: typing 0 into a money, percent, hours or count cell stores a real zero with state None (confidence 1.0); an empty cell is Unknown.
+Why: "empty is not zero"; a client who says "no bonus" has answered.
+Alternative: a separate None keystroke only (slower while a client talks).
