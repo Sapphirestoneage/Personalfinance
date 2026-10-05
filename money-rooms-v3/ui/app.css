@@ -582,3 +582,23 @@ main > header:has(+ .onepager) { max-width: 816px; }
 .ledger-table .cell-state .chip, .ledger-table .cell-source .chip { height: var(--row-h); line-height: var(--row-h); display: inline-flex; align-items: center; }
 .ledger-table .pick { margin-right: var(--s-1); }
 .ledger-table tbody td .empty-token { padding: 0 var(--s-2); }
+
+/* Phones: the ledger fits the screen. Name, figure and a chevron; State and Source live in Details. */
+.ledger-table .details-btn .glyph { display: none; font-size: var(--fs-20); line-height: 1; }
+@media (max-width: 720px) {
+  table.ledger-table { width: 100%; min-width: 0; table-layout: auto; }
+  .ledger-table th.sticky, .ledger-table td.sticky { position: static; min-width: 0; max-width: none; border-right: 0; width: auto; }
+  .ledger-table th.num, .ledger-table td.num { min-width: 0; width: 136px; }
+  .ledger-table .cell-state, .ledger-table .cell-source, .ledger-table th:nth-last-child(2), .ledger-table th:nth-last-child(3), .ledger-table tfoot td:nth-last-child(2), .ledger-table tfoot td:nth-last-child(3) { display: none; }
+  .ledger-table td.with-pick { padding-left: var(--s-1); }
+  .ledger-table .cell-details, .ledger-table th:last-child { width: 40px; padding: 0; }
+  .ledger-table .details-btn { padding: 0; width: 40px; text-align: center; }
+  .ledger-table .details-btn .word { display: none; }
+  .ledger-table .details-btn .glyph { display: inline; }
+  .ledger-table td.sticky .input { text-overflow: ellipsis; }
+  .ledger-table td.with-pick .pick { opacity: 1; }
+  .cell-money .input { min-width: 56px; }
+  .cell-money .select.cad { width: 52px; padding: 0 12px 0 6px; }
+  .toolbar .kbd, .ledger-panel .empty .kbd { display: none; }
+  .ledger-panel .tablewrap { overflow-x: visible; }
+}

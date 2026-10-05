@@ -280,7 +280,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     if (c.kind === 'source') return h('td', { class: 'cell-source' }, sourceCell(r));
     if (c.kind === 'cadence') return h('td', null, cadenceControl(r, c.def));
     if (c.kind === 'remove') return h('td', null, h('button', { class: 'btn small quiet', 'aria-label': 'Remove row', title: 'Remove row (Alt+Delete)', onClick: () => { app.removeRow(r.id); render(); } }, 'Remove'));
-    if (c.kind === 'details') return h('td', { class: 'cell-details' }, h('button', { class: 'btn small quiet details-btn', dataset: { col: 'details' }, 'aria-label': 'Details for ' + (r.nickname || 'this row'), onClick: () => openDetails(r.id) }, 'Details'));
+    if (c.kind === 'details') return h('td', { class: 'cell-details' }, h('button', { class: 'btn small quiet details-btn', dataset: { col: 'details' }, 'aria-label': 'Details for ' + (r.nickname || 'this row'), onClick: () => openDetails(r.id) }, h('span', { class: 'word' }, 'Details'), h('span', { class: 'glyph', 'aria-hidden': 'true' }, String.fromCharCode(0x203A))));
     if (c.kind === 'followUp') {
       const btn = h('button', { class: 'chip toggle' + (r.followUp ? ' amber' : ''), 'aria-pressed': String(!!r.followUp), 'aria-label': 'Follow up flag', dataset: { col: 'followUp' }, onClick: e => { const next = !r.followUp; app.setColumn(r.id, 'followUp', next); e.target.textContent = next ? 'Flagged' : 'Not flagged'; e.target.classList.toggle('amber', next); e.target.setAttribute('aria-pressed', String(next)); } }, r.followUp ? 'Flagged' : 'Not flagged');
       return h('td', null, keyFlow(btn, r, 'followUp'));
