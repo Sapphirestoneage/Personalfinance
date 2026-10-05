@@ -1,11 +1,11 @@
 {
  "app": "money-rooms-v3",
- "exportedAt": "2026-10-01T12:36:52.000Z",
+ "exportedAt": "2026-10-01T12:27:18.000Z",
  "record": {
   "schemaVersion": 2,
   "id": "extreme",
   "createdAt": "2026-10-01T12:00:00.000Z",
-  "updatedAt": "2026-10-01T12:36:52.000Z",
+  "updatedAt": "2026-10-01T12:27:18.000Z",
   "sun": {
    "f": {
     "name": {
@@ -116,12 +116,6 @@
         "source": "client",
         "cad": "paycheck"
        },
-       "withholdingFederal": {
-        "v": 0,
-        "state": "none",
-        "source": "client",
-        "cad": "paycheck"
-       },
        "bonus": {
         "v": 0,
         "state": "none",
@@ -195,22 +189,12 @@
         "state": "known",
         "source": "client"
        },
-       "shared": {
-        "v": "no",
-        "state": "known",
-        "source": "client"
-       },
        "fatFloor": {
         "v": true,
         "state": "known",
         "source": "client"
        },
        "primaryCard": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "linkedIncome": {
         "v": null,
         "state": "not-applicable",
         "source": "client"
@@ -254,11 +238,6 @@
         "state": "known",
         "source": "client"
        },
-       "shared": {
-        "v": "no",
-        "state": "known",
-        "source": "client"
-       },
        "fatFloor": {
         "v": true,
         "state": "known",
@@ -267,11 +246,6 @@
        "primaryCard": {
         "v": "Debt number 1 with a very long nickname",
         "state": "known",
-        "source": "client"
-       },
-       "linkedIncome": {
-        "v": null,
-        "state": "not-applicable",
         "source": "client"
        }
       }
@@ -310,22 +284,12 @@
         "state": "known",
         "source": "client"
        },
-       "shared": {
-        "v": "no",
-        "state": "known",
-        "source": "client"
-       },
        "fatFloor": {
         "v": false,
         "state": "known",
         "source": "client"
        },
        "primaryCard": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "linkedIncome": {
         "v": null,
         "state": "not-applicable",
         "source": "client"
@@ -366,22 +330,12 @@
         "state": "known",
         "source": "client"
        },
-       "shared": {
-        "v": "no",
-        "state": "known",
-        "source": "client"
-       },
        "fatFloor": {
         "v": true,
         "state": "known",
         "source": "client"
        },
        "primaryCard": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "linkedIncome": {
         "v": null,
         "state": "not-applicable",
         "source": "client"
@@ -401,11 +355,6 @@
       "notesShared": "",
       "lib": null,
       "f": {
-       "savingsDestination": {
-        "v": null,
-        "state": "unknown",
-        "source": "client"
-       },
        "savingsLanding": {
         "v": 0,
         "state": "none",
@@ -456,16 +405,6 @@
         "state": "known",
         "source": "client"
        },
-       "promoType": {
-        "v": "purchase",
-        "state": "known",
-        "source": "client"
-       },
-       "btFee": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
        "minimum": {
         "v": 12000,
         "state": "known",
@@ -474,11 +413,6 @@
        },
        "creditLimit": {
         "v": 900000,
-        "state": "known",
-        "source": "client"
-       },
-       "dueDay": {
-        "v": 5,
         "state": "known",
         "source": "client"
        },
@@ -512,16 +446,6 @@
       "notesShared": "",
       "lib": null,
       "f": {
-       "federalPrivate": {
-        "v": "private",
-        "state": "known",
-        "source": "client"
-       },
-       "loanType": {
-        "v": "private",
-        "state": "known",
-        "source": "client"
-       },
        "balance": {
         "v": 3800000,
         "state": "rough",
@@ -537,31 +461,6 @@
         "state": "known",
         "source": "client",
         "cad": "month"
-       },
-       "repaymentPlan": {
-        "v": "standard",
-        "state": "known",
-        "source": "client"
-       },
-       "pslfEligible": {
-        "v": false,
-        "state": "known",
-        "source": "client"
-       },
-       "pslfPayments": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "forbearance": {
-        "v": false,
-        "state": "known",
-        "source": "client"
-       },
-       "interestDeductible": {
-        "v": false,
-        "state": "known",
-        "source": "client"
        }
       }
      },
@@ -598,11 +497,6 @@
         "v": 60,
         "state": "known",
         "source": "client"
-       },
-       "vehicleValue": {
-        "v": 4100000,
-        "state": "known",
-        "source": "lookup-confirmed"
        }
       }
      },
@@ -619,11 +513,6 @@
       "notesShared": "",
       "lib": null,
       "f": {
-       "debtKind": {
-        "v": "medical",
-        "state": "known",
-        "source": "client"
-       },
        "balance": {
         "v": 1850000,
         "state": "will-send",
@@ -639,16 +528,6 @@
         "state": "known",
         "source": "client",
         "cad": "month"
-       },
-       "terms": {
-        "v": "Payment plan with the hospital billing o",
-        "state": "known",
-        "source": "client"
-       },
-       "reasonsToKeep": {
-        "v": "Zero interest",
-        "state": "known",
-        "source": "client"
        }
       }
      },
@@ -673,16 +552,6 @@
        "rate": {
         "v": 0.0675,
         "state": "verified",
-        "source": "client"
-       },
-       "fixedVariable": {
-        "v": "fixed",
-        "state": "known",
-        "source": "client"
-       },
-       "termLeftMonths": {
-        "v": 324,
-        "state": "known",
         "source": "client"
        },
        "principalInterest": {
@@ -714,11 +583,6 @@
         "state": "none",
         "source": "client",
         "cad": "month"
-       },
-       "homeValue": {
-        "v": 195000000,
-        "state": "known",
-        "source": "lookup-confirmed"
        }
       }
      },
@@ -760,16 +624,6 @@
         "state": "not-applicable",
         "source": "client"
        },
-       "promoType": {
-        "v": "purchase",
-        "state": "known",
-        "source": "client"
-       },
-       "btFee": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
        "minimum": {
         "v": 17000,
         "state": "known",
@@ -778,11 +632,6 @@
        },
        "creditLimit": {
         "v": 1400000,
-        "state": "known",
-        "source": "client"
-       },
-       "dueDay": {
-        "v": 5,
         "state": "known",
         "source": "client"
        },
@@ -841,16 +690,6 @@
         "state": "known",
         "source": "client"
        },
-       "promoType": {
-        "v": "purchase",
-        "state": "known",
-        "source": "client"
-       },
-       "btFee": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
        "minimum": {
         "v": 18000,
         "state": "known",
@@ -859,11 +698,6 @@
        },
        "creditLimit": {
         "v": 1500000,
-        "state": "known",
-        "source": "client"
-       },
-       "dueDay": {
-        "v": 5,
         "state": "known",
         "source": "client"
        },
@@ -922,16 +756,6 @@
         "state": "not-applicable",
         "source": "client"
        },
-       "promoType": {
-        "v": "purchase",
-        "state": "known",
-        "source": "client"
-       },
-       "btFee": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
        "minimum": {
         "v": 19000,
         "state": "known",
@@ -940,11 +764,6 @@
        },
        "creditLimit": {
         "v": 1600000,
-        "state": "known",
-        "source": "client"
-       },
-       "dueDay": {
-        "v": 5,
         "state": "known",
         "source": "client"
        },
@@ -978,16 +797,6 @@
       "notesShared": "",
       "lib": null,
       "f": {
-       "federalPrivate": {
-        "v": "private",
-        "state": "known",
-        "source": "client"
-       },
-       "loanType": {
-        "v": "private",
-        "state": "known",
-        "source": "client"
-       },
        "balance": {
         "v": 3800000,
         "state": "rough",
@@ -1003,31 +812,6 @@
         "state": "known",
         "source": "client",
         "cad": "month"
-       },
-       "repaymentPlan": {
-        "v": "standard",
-        "state": "known",
-        "source": "client"
-       },
-       "pslfEligible": {
-        "v": false,
-        "state": "known",
-        "source": "client"
-       },
-       "pslfPayments": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "forbearance": {
-        "v": false,
-        "state": "known",
-        "source": "client"
-       },
-       "interestDeductible": {
-        "v": false,
-        "state": "known",
-        "source": "client"
        }
       }
      },
@@ -1064,11 +848,6 @@
         "v": 60,
         "state": "known",
         "source": "client"
-       },
-       "vehicleValue": {
-        "v": 4100000,
-        "state": "known",
-        "source": "lookup-confirmed"
        }
       }
      },
@@ -1085,11 +864,6 @@
       "notesShared": "",
       "lib": null,
       "f": {
-       "debtKind": {
-        "v": "medical",
-        "state": "known",
-        "source": "client"
-       },
        "balance": {
         "v": 1850000,
         "state": "will-send",
@@ -1105,16 +879,6 @@
         "state": "known",
         "source": "client",
         "cad": "month"
-       },
-       "terms": {
-        "v": "Payment plan with the hospital billing o",
-        "state": "known",
-        "source": "client"
-       },
-       "reasonsToKeep": {
-        "v": "Zero interest",
-        "state": "known",
-        "source": "client"
        }
       }
      },
@@ -1139,16 +903,6 @@
        "rate": {
         "v": 0.0675,
         "state": "verified",
-        "source": "client"
-       },
-       "fixedVariable": {
-        "v": "fixed",
-        "state": "known",
-        "source": "client"
-       },
-       "termLeftMonths": {
-        "v": 324,
-        "state": "known",
         "source": "client"
        },
        "principalInterest": {
@@ -1180,11 +934,6 @@
         "state": "none",
         "source": "client",
         "cad": "month"
-       },
-       "homeValue": {
-        "v": 195000000,
-        "state": "known",
-        "source": "lookup-confirmed"
        }
       }
      },
@@ -1226,16 +975,6 @@
         "state": "known",
         "source": "client"
        },
-       "promoType": {
-        "v": "purchase",
-        "state": "known",
-        "source": "client"
-       },
-       "btFee": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
        "minimum": {
         "v": 24000,
         "state": "known",
@@ -1244,11 +983,6 @@
        },
        "creditLimit": {
         "v": 2100000,
-        "state": "known",
-        "source": "client"
-       },
-       "dueDay": {
-        "v": 5,
         "state": "known",
         "source": "client"
        },
@@ -1307,16 +1041,6 @@
         "state": "not-applicable",
         "source": "client"
        },
-       "promoType": {
-        "v": "purchase",
-        "state": "known",
-        "source": "client"
-       },
-       "btFee": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
        "minimum": {
         "v": 25000,
         "state": "known",
@@ -1325,11 +1049,6 @@
        },
        "creditLimit": {
         "v": 2200000,
-        "state": "known",
-        "source": "client"
-       },
-       "dueDay": {
-        "v": 5,
         "state": "known",
         "source": "client"
        },
@@ -1407,11 +1126,6 @@
         "v": 27500,
         "state": "known",
         "source": "lookup-verify"
-       },
-       "unemploymentWeeks": {
-        "v": 12,
-        "state": "known",
-        "source": "lookup-verify"
        }
       }
      },
@@ -1469,16 +1183,6 @@
         "source": "client",
         "cad": "month"
        },
-       "contribPct": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "ytdContrib": {
-        "v": 0,
-        "state": "none",
-        "source": "client"
-       },
        "allocStocks": {
         "v": 0.7,
         "state": "known",
@@ -1502,16 +1206,6 @@
        "usShare": {
         "v": 0.8,
         "state": "known",
-        "source": "client"
-       },
-       "targetYear": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "costBasis": {
-        "v": null,
-        "state": "not-applicable",
         "source": "client"
        },
        "beneficiary": {
@@ -1550,16 +1244,6 @@
         "source": "client",
         "cad": "month"
        },
-       "contribPct": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "ytdContrib": {
-        "v": 0,
-        "state": "none",
-        "source": "client"
-       },
        "allocStocks": {
         "v": 1,
         "state": "known",
@@ -1583,16 +1267,6 @@
        "usShare": {
         "v": 1,
         "state": "known",
-        "source": "client"
-       },
-       "targetYear": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "costBasis": {
-        "v": 41000000,
-        "state": "rough",
         "source": "client"
        },
        "beneficiary": {
@@ -1631,16 +1305,6 @@
         "source": "client",
         "cad": "month"
        },
-       "contribPct": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "ytdContrib": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
        "allocStocks": {
         "v": 0,
         "state": "none",
@@ -1662,16 +1326,6 @@
         "source": "client"
        },
        "usShare": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "targetYear": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "costBasis": {
         "v": null,
         "state": "not-applicable",
         "source": "client"
@@ -1712,16 +1366,6 @@
         "source": "client",
         "cad": "month"
        },
-       "contribPct": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "ytdContrib": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
        "allocStocks": {
         "v": 0,
         "state": "none",
@@ -1743,16 +1387,6 @@
         "source": "client"
        },
        "usShare": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "targetYear": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "costBasis": {
         "v": null,
         "state": "not-applicable",
         "source": "client"
@@ -1793,16 +1427,6 @@
         "source": "client",
         "cad": "month"
        },
-       "contribPct": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "ytdContrib": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
        "allocStocks": {
         "v": 0,
         "state": "none",
@@ -1824,16 +1448,6 @@
         "source": "client"
        },
        "usShare": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "targetYear": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "costBasis": {
         "v": null,
         "state": "not-applicable",
         "source": "client"
@@ -1863,11 +1477,6 @@
         "state": "known",
         "source": "client"
        },
-       "ticker": {
-        "v": "AGTHX",
-        "state": "known",
-        "source": "client"
-       },
        "fundName": {
         "v": "American Funds Growth Fund of America A",
         "state": "known",
@@ -1875,11 +1484,6 @@
        },
        "expenseRatio": {
         "v": 0.0061,
-        "state": "known",
-        "source": "lookup-verify"
-       },
-       "assetClass": {
-        "v": "us-stock",
         "state": "known",
         "source": "lookup-verify"
        },
@@ -1893,33 +1497,7 @@
     ]
    },
    "taxes": {
-    "rows": [
-     {
-      "id": "x-tax",
-      "planet": "taxes",
-      "type": "note",
-      "nickname": "Last return",
-      "institution": "IRS",
-      "asOf": null,
-      "followUp": false,
-      "stress": null,
-      "notesPrivate": "",
-      "notesShared": "",
-      "lib": null,
-      "f": {
-       "lastRefund": {
-        "v": -1240000,
-        "state": "known",
-        "source": "client"
-       },
-       "taxNote": {
-        "v": "Large balance due after the severance pa",
-        "state": "known",
-        "source": "client"
-       }
-      }
-     }
-    ]
+    "rows": []
    },
    "life": {
     "rows": [
@@ -2236,12 +1814,6 @@
        "source": "client",
        "cad": "paycheck"
       },
-      "withholdingFederal": {
-       "v": null,
-       "state": "unknown",
-       "source": "client",
-       "cad": "paycheck"
-      },
       "bonus": {
        "v": null,
        "state": "unknown",
@@ -2453,19 +2025,19 @@
     "kind": "set",
     "planet": "income",
     "rowId": "x-inc",
-    "field": "withholdingFederal",
+    "field": "bonus",
     "owner": "income",
     "old": {
      "v": null,
      "state": "unknown",
      "source": "client",
-     "cad": "paycheck"
+     "cad": "year"
     },
     "new": {
      "v": 0,
      "state": "none",
      "source": "client",
-     "cad": "paycheck"
+     "cad": "year"
     },
     "source": "client",
     "state": "none",
@@ -2477,7 +2049,7 @@
     "kind": "set",
     "planet": "income",
     "rowId": "x-inc",
-    "field": "bonus",
+    "field": "equity",
     "owner": "income",
     "old": {
      "v": null,
@@ -2501,30 +2073,6 @@
     "kind": "set",
     "planet": "income",
     "rowId": "x-inc",
-    "field": "equity",
-    "owner": "income",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client",
-     "cad": "year"
-    },
-    "new": {
-     "v": 0,
-     "state": "none",
-     "source": "client",
-     "cad": "year"
-    },
-    "source": "client",
-    "state": "none",
-    "session": "s1"
-   },
-   {
-    "seq": 20,
-    "ts": "2026-10-01T12:02:27.000Z",
-    "kind": "set",
-    "planet": "income",
-    "rowId": "x-inc",
     "field": "startDate",
     "owner": "income",
     "old": {
@@ -2542,8 +2090,8 @@
     "session": "s1"
    },
    {
-    "seq": 21,
-    "ts": "2026-10-01T12:02:34.000Z",
+    "seq": 20,
+    "ts": "2026-10-01T12:02:27.000Z",
     "kind": "set",
     "planet": "income",
     "rowId": "x-inc",
@@ -2564,8 +2112,8 @@
     "session": "s1"
    },
    {
-    "seq": 22,
-    "ts": "2026-10-01T12:02:41.000Z",
+    "seq": 21,
+    "ts": "2026-10-01T12:02:34.000Z",
     "kind": "set",
     "planet": "income",
     "rowId": "x-inc",
@@ -2586,8 +2134,8 @@
     "session": "s1"
    },
    {
-    "seq": 23,
-    "ts": "2026-10-01T12:02:48.000Z",
+    "seq": 22,
+    "ts": "2026-10-01T12:02:41.000Z",
     "kind": "set",
     "planet": "income",
     "rowId": "x-inc",
@@ -2610,8 +2158,8 @@
     "session": "s1"
    },
    {
-    "seq": 24,
-    "ts": "2026-10-01T12:02:55.000Z",
+    "seq": 23,
+    "ts": "2026-10-01T12:02:48.000Z",
     "kind": "add-row",
     "planet": "spending",
     "rowId": "x-rent",
@@ -2652,22 +2200,12 @@
        "state": "known",
        "source": "client"
       },
-      "shared": {
-       "v": "no",
-       "state": "known",
-       "source": "client"
-      },
       "fatFloor": {
        "v": null,
        "state": "unknown",
        "source": "client"
       },
       "primaryCard": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "linkedIncome": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -2679,8 +2217,8 @@
     "session": "s1"
    },
    {
-    "seq": 25,
-    "ts": "2026-10-01T12:03:02.000Z",
+    "seq": 24,
+    "ts": "2026-10-01T12:02:55.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "x-rent",
@@ -2701,8 +2239,8 @@
     "session": "s1"
    },
    {
-    "seq": 26,
-    "ts": "2026-10-01T12:03:09.000Z",
+    "seq": 25,
+    "ts": "2026-10-01T12:03:02.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "x-rent",
@@ -2725,8 +2263,8 @@
     "session": "s1"
    },
    {
-    "seq": 27,
-    "ts": "2026-10-01T12:03:37.000Z",
+    "seq": 26,
+    "ts": "2026-10-01T12:03:23.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "x-rent",
@@ -2747,8 +2285,8 @@
     "session": "s1"
    },
    {
-    "seq": 28,
-    "ts": "2026-10-01T12:03:44.000Z",
+    "seq": 27,
+    "ts": "2026-10-01T12:03:30.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "x-rent",
@@ -2769,30 +2307,8 @@
     "session": "s1"
    },
    {
-    "seq": 29,
-    "ts": "2026-10-01T12:03:51.000Z",
-    "kind": "set",
-    "planet": "spending",
-    "rowId": "x-rent",
-    "field": "linkedIncome",
-    "owner": "spending",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 30,
-    "ts": "2026-10-01T12:03:58.000Z",
+    "seq": 28,
+    "ts": "2026-10-01T12:03:37.000Z",
     "kind": "add-row",
     "planet": "spending",
     "rowId": "x-food",
@@ -2833,22 +2349,12 @@
        "state": "known",
        "source": "client"
       },
-      "shared": {
-       "v": "no",
-       "state": "known",
-       "source": "client"
-      },
       "fatFloor": {
        "v": null,
        "state": "unknown",
        "source": "client"
       },
       "primaryCard": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "linkedIncome": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -2860,8 +2366,8 @@
     "session": "s1"
    },
    {
-    "seq": 31,
-    "ts": "2026-10-01T12:04:05.000Z",
+    "seq": 29,
+    "ts": "2026-10-01T12:03:44.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "x-food",
@@ -2882,8 +2388,8 @@
     "session": "s1"
    },
    {
-    "seq": 32,
-    "ts": "2026-10-01T12:04:12.000Z",
+    "seq": 30,
+    "ts": "2026-10-01T12:03:51.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "x-food",
@@ -2909,8 +2415,8 @@
     "session": "s1"
    },
    {
-    "seq": 33,
-    "ts": "2026-10-01T12:04:40.000Z",
+    "seq": 31,
+    "ts": "2026-10-01T12:04:12.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "x-food",
@@ -2931,8 +2437,8 @@
     "session": "s1"
    },
    {
-    "seq": 34,
-    "ts": "2026-10-01T12:04:47.000Z",
+    "seq": 32,
+    "ts": "2026-10-01T12:04:19.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "x-food",
@@ -2953,30 +2459,8 @@
     "session": "s1"
    },
    {
-    "seq": 35,
-    "ts": "2026-10-01T12:04:54.000Z",
-    "kind": "set",
-    "planet": "spending",
-    "rowId": "x-food",
-    "field": "linkedIncome",
-    "owner": "spending",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 36,
-    "ts": "2026-10-01T12:05:01.000Z",
+    "seq": 33,
+    "ts": "2026-10-01T12:04:26.000Z",
     "kind": "add-row",
     "planet": "spending",
     "rowId": "x-school",
@@ -3017,22 +2501,12 @@
        "state": "known",
        "source": "client"
       },
-      "shared": {
-       "v": "no",
-       "state": "known",
-       "source": "client"
-      },
       "fatFloor": {
        "v": null,
        "state": "unknown",
        "source": "client"
       },
       "primaryCard": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "linkedIncome": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -3044,8 +2518,8 @@
     "session": "s1"
    },
    {
-    "seq": 37,
-    "ts": "2026-10-01T12:05:08.000Z",
+    "seq": 34,
+    "ts": "2026-10-01T12:04:33.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "x-school",
@@ -3066,8 +2540,8 @@
     "session": "s1"
    },
    {
-    "seq": 38,
-    "ts": "2026-10-01T12:05:15.000Z",
+    "seq": 35,
+    "ts": "2026-10-01T12:04:40.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "x-school",
@@ -3090,8 +2564,8 @@
     "session": "s1"
    },
    {
-    "seq": 39,
-    "ts": "2026-10-01T12:05:43.000Z",
+    "seq": 36,
+    "ts": "2026-10-01T12:05:01.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "x-school",
@@ -3112,8 +2586,8 @@
     "session": "s1"
    },
    {
-    "seq": 40,
-    "ts": "2026-10-01T12:05:50.000Z",
+    "seq": 37,
+    "ts": "2026-10-01T12:05:08.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "x-school",
@@ -3134,30 +2608,8 @@
     "session": "s1"
    },
    {
-    "seq": 41,
-    "ts": "2026-10-01T12:05:57.000Z",
-    "kind": "set",
-    "planet": "spending",
-    "rowId": "x-school",
-    "field": "linkedIncome",
-    "owner": "spending",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 42,
-    "ts": "2026-10-01T12:06:04.000Z",
+    "seq": 38,
+    "ts": "2026-10-01T12:05:15.000Z",
     "kind": "add-row",
     "planet": "spending",
     "rowId": "x-car",
@@ -3198,22 +2650,12 @@
        "state": "known",
        "source": "client"
       },
-      "shared": {
-       "v": "no",
-       "state": "known",
-       "source": "client"
-      },
       "fatFloor": {
        "v": null,
        "state": "unknown",
        "source": "client"
       },
       "primaryCard": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "linkedIncome": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -3225,8 +2667,8 @@
     "session": "s1"
    },
    {
-    "seq": 43,
-    "ts": "2026-10-01T12:06:11.000Z",
+    "seq": 39,
+    "ts": "2026-10-01T12:05:22.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "x-car",
@@ -3247,8 +2689,8 @@
     "session": "s1"
    },
    {
-    "seq": 44,
-    "ts": "2026-10-01T12:06:18.000Z",
+    "seq": 40,
+    "ts": "2026-10-01T12:05:29.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "x-car",
@@ -3271,8 +2713,8 @@
     "session": "s1"
    },
    {
-    "seq": 45,
-    "ts": "2026-10-01T12:06:46.000Z",
+    "seq": 41,
+    "ts": "2026-10-01T12:05:50.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "x-car",
@@ -3293,8 +2735,8 @@
     "session": "s1"
    },
    {
-    "seq": 46,
-    "ts": "2026-10-01T12:06:53.000Z",
+    "seq": 42,
+    "ts": "2026-10-01T12:05:57.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "x-car",
@@ -3315,30 +2757,8 @@
     "session": "s1"
    },
    {
-    "seq": 47,
-    "ts": "2026-10-01T12:07:00.000Z",
-    "kind": "set",
-    "planet": "spending",
-    "rowId": "x-car",
-    "field": "linkedIncome",
-    "owner": "spending",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 48,
-    "ts": "2026-10-01T12:07:07.000Z",
+    "seq": 43,
+    "ts": "2026-10-01T12:06:04.000Z",
     "kind": "add-row",
     "planet": "spending",
     "rowId": "x-save",
@@ -3358,11 +2778,6 @@
      "notesShared": "",
      "lib": null,
      "f": {
-      "savingsDestination": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "savingsLanding": {
        "v": null,
        "state": "unknown",
@@ -3376,8 +2791,8 @@
     "session": "s1"
    },
    {
-    "seq": 49,
-    "ts": "2026-10-01T12:07:21.000Z",
+    "seq": 44,
+    "ts": "2026-10-01T12:06:11.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "x-save",
@@ -3400,8 +2815,8 @@
     "session": "s1"
    },
    {
-    "seq": 50,
-    "ts": "2026-10-01T12:07:28.000Z",
+    "seq": 45,
+    "ts": "2026-10-01T12:06:18.000Z",
     "kind": "add-row",
     "planet": "debt",
     "rowId": "x-d0",
@@ -3446,16 +2861,6 @@
        "state": "unknown",
        "source": "client"
       },
-      "promoType": {
-       "v": "purchase",
-       "state": "known",
-       "source": "client"
-      },
-      "btFee": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "minimum": {
        "v": null,
        "state": "unknown",
@@ -3463,11 +2868,6 @@
        "cad": "month"
       },
       "creditLimit": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "dueDay": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -3494,8 +2894,8 @@
     "session": "s1"
    },
    {
-    "seq": 51,
-    "ts": "2026-10-01T12:07:35.000Z",
+    "seq": 46,
+    "ts": "2026-10-01T12:06:25.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d0",
@@ -3516,8 +2916,8 @@
     "session": "s1"
    },
    {
-    "seq": 52,
-    "ts": "2026-10-01T12:07:42.000Z",
+    "seq": 47,
+    "ts": "2026-10-01T12:06:32.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d0",
@@ -3538,8 +2938,8 @@
     "session": "s1"
    },
    {
-    "seq": 53,
-    "ts": "2026-10-01T12:07:49.000Z",
+    "seq": 48,
+    "ts": "2026-10-01T12:06:39.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d0",
@@ -3560,8 +2960,8 @@
     "session": "s1"
    },
    {
-    "seq": 54,
-    "ts": "2026-10-01T12:07:56.000Z",
+    "seq": 49,
+    "ts": "2026-10-01T12:06:46.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d0",
@@ -3582,8 +2982,8 @@
     "session": "s1"
    },
    {
-    "seq": 55,
-    "ts": "2026-10-01T12:08:03.000Z",
+    "seq": 50,
+    "ts": "2026-10-01T12:06:53.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d0",
@@ -3604,30 +3004,8 @@
     "session": "s1"
    },
    {
-    "seq": 56,
-    "ts": "2026-10-01T12:08:17.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d0",
-    "field": "btFee",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 57,
-    "ts": "2026-10-01T12:08:24.000Z",
+    "seq": 51,
+    "ts": "2026-10-01T12:07:00.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d0",
@@ -3650,8 +3028,8 @@
     "session": "s1"
    },
    {
-    "seq": 58,
-    "ts": "2026-10-01T12:08:31.000Z",
+    "seq": 52,
+    "ts": "2026-10-01T12:07:07.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d0",
@@ -3672,30 +3050,8 @@
     "session": "s1"
    },
    {
-    "seq": 59,
-    "ts": "2026-10-01T12:08:38.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d0",
-    "field": "dueDay",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 5,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 60,
-    "ts": "2026-10-01T12:08:45.000Z",
+    "seq": 53,
+    "ts": "2026-10-01T12:07:14.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d0",
@@ -3716,8 +3072,8 @@
     "session": "s1"
    },
    {
-    "seq": 61,
-    "ts": "2026-10-01T12:08:52.000Z",
+    "seq": 54,
+    "ts": "2026-10-01T12:07:21.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d0",
@@ -3738,8 +3094,8 @@
     "session": "s1"
    },
    {
-    "seq": 62,
-    "ts": "2026-10-01T12:08:59.000Z",
+    "seq": 55,
+    "ts": "2026-10-01T12:07:28.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d0",
@@ -3760,8 +3116,8 @@
     "session": "s1"
    },
    {
-    "seq": 63,
-    "ts": "2026-10-01T12:09:06.000Z",
+    "seq": 56,
+    "ts": "2026-10-01T12:07:35.000Z",
     "kind": "add-row",
     "planet": "debt",
     "rowId": "x-d1",
@@ -3781,16 +3137,6 @@
      "notesShared": "",
      "lib": null,
      "f": {
-      "federalPrivate": {
-       "v": "federal",
-       "state": "known",
-       "source": "client"
-      },
-      "loanType": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "balance": {
        "v": null,
        "state": "unknown",
@@ -3806,31 +3152,6 @@
        "state": "unknown",
        "source": "client",
        "cad": "month"
-      },
-      "repaymentPlan": {
-       "v": "standard",
-       "state": "known",
-       "source": "client"
-      },
-      "pslfEligible": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "pslfPayments": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "forbearance": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "interestDeductible": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
       }
      }
     },
@@ -3839,52 +3160,8 @@
     "session": "s1"
    },
    {
-    "seq": 64,
-    "ts": "2026-10-01T12:09:13.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d1",
-    "field": "federalPrivate",
-    "owner": "debt",
-    "old": {
-     "v": "federal",
-     "state": "known",
-     "source": "client"
-    },
-    "new": {
-     "v": "private",
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 65,
-    "ts": "2026-10-01T12:09:20.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d1",
-    "field": "loanType",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": "private",
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 66,
-    "ts": "2026-10-01T12:09:27.000Z",
+    "seq": 57,
+    "ts": "2026-10-01T12:07:42.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d1",
@@ -3905,8 +3182,8 @@
     "session": "s1"
    },
    {
-    "seq": 67,
-    "ts": "2026-10-01T12:09:34.000Z",
+    "seq": 58,
+    "ts": "2026-10-01T12:07:49.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d1",
@@ -3927,8 +3204,8 @@
     "session": "s1"
    },
    {
-    "seq": 68,
-    "ts": "2026-10-01T12:09:41.000Z",
+    "seq": 59,
+    "ts": "2026-10-01T12:07:56.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d1",
@@ -3951,96 +3228,8 @@
     "session": "s1"
    },
    {
-    "seq": 69,
-    "ts": "2026-10-01T12:09:55.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d1",
-    "field": "pslfEligible",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": false,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 70,
-    "ts": "2026-10-01T12:10:02.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d1",
-    "field": "pslfPayments",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 71,
-    "ts": "2026-10-01T12:10:09.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d1",
-    "field": "forbearance",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": false,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 72,
-    "ts": "2026-10-01T12:10:16.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d1",
-    "field": "interestDeductible",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": false,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 73,
-    "ts": "2026-10-01T12:10:23.000Z",
+    "seq": 60,
+    "ts": "2026-10-01T12:08:03.000Z",
     "kind": "add-row",
     "planet": "debt",
     "rowId": "x-d2",
@@ -4080,11 +3269,6 @@
        "v": null,
        "state": "unknown",
        "source": "client"
-      },
-      "vehicleValue": {
-       "v": null,
-       "state": "unknown",
-       "source": "lookup-confirmed"
       }
      }
     },
@@ -4093,8 +3277,8 @@
     "session": "s1"
    },
    {
-    "seq": 74,
-    "ts": "2026-10-01T12:10:30.000Z",
+    "seq": 61,
+    "ts": "2026-10-01T12:08:10.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d2",
@@ -4115,8 +3299,8 @@
     "session": "s1"
    },
    {
-    "seq": 75,
-    "ts": "2026-10-01T12:10:37.000Z",
+    "seq": 62,
+    "ts": "2026-10-01T12:08:17.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d2",
@@ -4137,8 +3321,8 @@
     "session": "s1"
    },
    {
-    "seq": 76,
-    "ts": "2026-10-01T12:10:44.000Z",
+    "seq": 63,
+    "ts": "2026-10-01T12:08:24.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d2",
@@ -4161,8 +3345,8 @@
     "session": "s1"
    },
    {
-    "seq": 77,
-    "ts": "2026-10-01T12:10:51.000Z",
+    "seq": 64,
+    "ts": "2026-10-01T12:08:31.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d2",
@@ -4183,30 +3367,8 @@
     "session": "s1"
    },
    {
-    "seq": 78,
-    "ts": "2026-10-01T12:10:58.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d2",
-    "field": "vehicleValue",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "lookup-confirmed"
-    },
-    "new": {
-     "v": 4100000,
-     "state": "known",
-     "source": "lookup-confirmed"
-    },
-    "source": "lookup-confirmed",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 79,
-    "ts": "2026-10-01T12:11:05.000Z",
+    "seq": 65,
+    "ts": "2026-10-01T12:08:38.000Z",
     "kind": "add-row",
     "planet": "debt",
     "rowId": "x-d3",
@@ -4226,11 +3388,6 @@
      "notesShared": "",
      "lib": null,
      "f": {
-      "debtKind": {
-       "v": "personal",
-       "state": "known",
-       "source": "client"
-      },
       "balance": {
        "v": null,
        "state": "unknown",
@@ -4246,16 +3403,6 @@
        "state": "unknown",
        "source": "client",
        "cad": "month"
-      },
-      "terms": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "reasonsToKeep": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
       }
      }
     },
@@ -4264,30 +3411,8 @@
     "session": "s1"
    },
    {
-    "seq": 80,
-    "ts": "2026-10-01T12:11:12.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d3",
-    "field": "debtKind",
-    "owner": "debt",
-    "old": {
-     "v": "personal",
-     "state": "known",
-     "source": "client"
-    },
-    "new": {
-     "v": "medical",
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 81,
-    "ts": "2026-10-01T12:11:19.000Z",
+    "seq": 66,
+    "ts": "2026-10-01T12:08:45.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d3",
@@ -4308,8 +3433,8 @@
     "session": "s1"
    },
    {
-    "seq": 82,
-    "ts": "2026-10-01T12:11:26.000Z",
+    "seq": 67,
+    "ts": "2026-10-01T12:08:52.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d3",
@@ -4330,8 +3455,8 @@
     "session": "s1"
    },
    {
-    "seq": 83,
-    "ts": "2026-10-01T12:11:33.000Z",
+    "seq": 68,
+    "ts": "2026-10-01T12:08:59.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d3",
@@ -4354,52 +3479,8 @@
     "session": "s1"
    },
    {
-    "seq": 84,
-    "ts": "2026-10-01T12:11:40.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d3",
-    "field": "terms",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": "Payment plan with the hospital billing o",
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 85,
-    "ts": "2026-10-01T12:11:47.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d3",
-    "field": "reasonsToKeep",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": "Zero interest",
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 86,
-    "ts": "2026-10-01T12:11:54.000Z",
+    "seq": 69,
+    "ts": "2026-10-01T12:09:06.000Z",
     "kind": "add-row",
     "planet": "debt",
     "rowId": "x-d4",
@@ -4425,16 +3506,6 @@
        "source": "client"
       },
       "rate": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "fixedVariable": {
-       "v": "fixed",
-       "state": "known",
-       "source": "client"
-      },
-      "termLeftMonths": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -4468,11 +3539,6 @@
        "state": "unknown",
        "source": "client",
        "cad": "month"
-      },
-      "homeValue": {
-       "v": null,
-       "state": "unknown",
-       "source": "lookup-confirmed"
       }
      }
     },
@@ -4481,8 +3547,8 @@
     "session": "s1"
    },
    {
-    "seq": 87,
-    "ts": "2026-10-01T12:12:01.000Z",
+    "seq": 70,
+    "ts": "2026-10-01T12:09:13.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d4",
@@ -4503,8 +3569,8 @@
     "session": "s1"
    },
    {
-    "seq": 88,
-    "ts": "2026-10-01T12:12:08.000Z",
+    "seq": 71,
+    "ts": "2026-10-01T12:09:20.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d4",
@@ -4525,30 +3591,8 @@
     "session": "s1"
    },
    {
-    "seq": 89,
-    "ts": "2026-10-01T12:12:22.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d4",
-    "field": "termLeftMonths",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 324,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 90,
-    "ts": "2026-10-01T12:12:29.000Z",
+    "seq": 72,
+    "ts": "2026-10-01T12:09:27.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d4",
@@ -4571,8 +3615,8 @@
     "session": "s1"
    },
    {
-    "seq": 91,
-    "ts": "2026-10-01T12:12:36.000Z",
+    "seq": 73,
+    "ts": "2026-10-01T12:09:34.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d4",
@@ -4595,8 +3639,8 @@
     "session": "s1"
    },
    {
-    "seq": 92,
-    "ts": "2026-10-01T12:12:43.000Z",
+    "seq": 74,
+    "ts": "2026-10-01T12:09:41.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d4",
@@ -4619,8 +3663,8 @@
     "session": "s1"
    },
    {
-    "seq": 93,
-    "ts": "2026-10-01T12:12:50.000Z",
+    "seq": 75,
+    "ts": "2026-10-01T12:09:48.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d4",
@@ -4643,8 +3687,8 @@
     "session": "s1"
    },
    {
-    "seq": 94,
-    "ts": "2026-10-01T12:12:57.000Z",
+    "seq": 76,
+    "ts": "2026-10-01T12:09:55.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d4",
@@ -4667,30 +3711,8 @@
     "session": "s1"
    },
    {
-    "seq": 95,
-    "ts": "2026-10-01T12:13:04.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d4",
-    "field": "homeValue",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "lookup-confirmed"
-    },
-    "new": {
-     "v": 195000000,
-     "state": "known",
-     "source": "lookup-confirmed"
-    },
-    "source": "lookup-confirmed",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 96,
-    "ts": "2026-10-01T12:13:11.000Z",
+    "seq": 77,
+    "ts": "2026-10-01T12:10:02.000Z",
     "kind": "add-row",
     "planet": "debt",
     "rowId": "x-d5",
@@ -4735,16 +3757,6 @@
        "state": "unknown",
        "source": "client"
       },
-      "promoType": {
-       "v": "purchase",
-       "state": "known",
-       "source": "client"
-      },
-      "btFee": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "minimum": {
        "v": null,
        "state": "unknown",
@@ -4752,11 +3764,6 @@
        "cad": "month"
       },
       "creditLimit": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "dueDay": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -4783,8 +3790,8 @@
     "session": "s1"
    },
    {
-    "seq": 97,
-    "ts": "2026-10-01T12:13:18.000Z",
+    "seq": 78,
+    "ts": "2026-10-01T12:10:09.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d5",
@@ -4805,8 +3812,8 @@
     "session": "s1"
    },
    {
-    "seq": 98,
-    "ts": "2026-10-01T12:13:25.000Z",
+    "seq": 79,
+    "ts": "2026-10-01T12:10:16.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d5",
@@ -4827,8 +3834,8 @@
     "session": "s1"
    },
    {
-    "seq": 99,
-    "ts": "2026-10-01T12:13:32.000Z",
+    "seq": 80,
+    "ts": "2026-10-01T12:10:23.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d5",
@@ -4849,8 +3856,8 @@
     "session": "s1"
    },
    {
-    "seq": 100,
-    "ts": "2026-10-01T12:13:39.000Z",
+    "seq": 81,
+    "ts": "2026-10-01T12:10:30.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d5",
@@ -4871,8 +3878,8 @@
     "session": "s1"
    },
    {
-    "seq": 101,
-    "ts": "2026-10-01T12:13:46.000Z",
+    "seq": 82,
+    "ts": "2026-10-01T12:10:37.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d5",
@@ -4893,30 +3900,8 @@
     "session": "s1"
    },
    {
-    "seq": 102,
-    "ts": "2026-10-01T12:14:00.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d5",
-    "field": "btFee",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 103,
-    "ts": "2026-10-01T12:14:07.000Z",
+    "seq": 83,
+    "ts": "2026-10-01T12:10:44.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d5",
@@ -4939,8 +3924,8 @@
     "session": "s1"
    },
    {
-    "seq": 104,
-    "ts": "2026-10-01T12:14:14.000Z",
+    "seq": 84,
+    "ts": "2026-10-01T12:10:51.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d5",
@@ -4961,30 +3946,8 @@
     "session": "s1"
    },
    {
-    "seq": 105,
-    "ts": "2026-10-01T12:14:21.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d5",
-    "field": "dueDay",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 5,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 106,
-    "ts": "2026-10-01T12:14:28.000Z",
+    "seq": 85,
+    "ts": "2026-10-01T12:10:58.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d5",
@@ -5005,8 +3968,8 @@
     "session": "s1"
    },
    {
-    "seq": 107,
-    "ts": "2026-10-01T12:14:35.000Z",
+    "seq": 86,
+    "ts": "2026-10-01T12:11:05.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d5",
@@ -5027,8 +3990,8 @@
     "session": "s1"
    },
    {
-    "seq": 108,
-    "ts": "2026-10-01T12:14:42.000Z",
+    "seq": 87,
+    "ts": "2026-10-01T12:11:12.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d5",
@@ -5049,8 +4012,8 @@
     "session": "s1"
    },
    {
-    "seq": 109,
-    "ts": "2026-10-01T12:14:49.000Z",
+    "seq": 88,
+    "ts": "2026-10-01T12:11:19.000Z",
     "kind": "add-row",
     "planet": "debt",
     "rowId": "x-d6",
@@ -5095,16 +4058,6 @@
        "state": "unknown",
        "source": "client"
       },
-      "promoType": {
-       "v": "purchase",
-       "state": "known",
-       "source": "client"
-      },
-      "btFee": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "minimum": {
        "v": null,
        "state": "unknown",
@@ -5112,11 +4065,6 @@
        "cad": "month"
       },
       "creditLimit": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "dueDay": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -5143,8 +4091,8 @@
     "session": "s1"
    },
    {
-    "seq": 110,
-    "ts": "2026-10-01T12:14:56.000Z",
+    "seq": 89,
+    "ts": "2026-10-01T12:11:26.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d6",
@@ -5165,8 +4113,8 @@
     "session": "s1"
    },
    {
-    "seq": 111,
-    "ts": "2026-10-01T12:15:03.000Z",
+    "seq": 90,
+    "ts": "2026-10-01T12:11:33.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d6",
@@ -5187,8 +4135,8 @@
     "session": "s1"
    },
    {
-    "seq": 112,
-    "ts": "2026-10-01T12:15:10.000Z",
+    "seq": 91,
+    "ts": "2026-10-01T12:11:40.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d6",
@@ -5209,8 +4157,8 @@
     "session": "s1"
    },
    {
-    "seq": 113,
-    "ts": "2026-10-01T12:15:17.000Z",
+    "seq": 92,
+    "ts": "2026-10-01T12:11:47.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d6",
@@ -5231,8 +4179,8 @@
     "session": "s1"
    },
    {
-    "seq": 114,
-    "ts": "2026-10-01T12:15:24.000Z",
+    "seq": 93,
+    "ts": "2026-10-01T12:11:54.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d6",
@@ -5253,30 +4201,8 @@
     "session": "s1"
    },
    {
-    "seq": 115,
-    "ts": "2026-10-01T12:15:38.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d6",
-    "field": "btFee",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 116,
-    "ts": "2026-10-01T12:15:45.000Z",
+    "seq": 94,
+    "ts": "2026-10-01T12:12:01.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d6",
@@ -5299,8 +4225,8 @@
     "session": "s1"
    },
    {
-    "seq": 117,
-    "ts": "2026-10-01T12:15:52.000Z",
+    "seq": 95,
+    "ts": "2026-10-01T12:12:08.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d6",
@@ -5321,30 +4247,8 @@
     "session": "s1"
    },
    {
-    "seq": 118,
-    "ts": "2026-10-01T12:15:59.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d6",
-    "field": "dueDay",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 5,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 119,
-    "ts": "2026-10-01T12:16:06.000Z",
+    "seq": 96,
+    "ts": "2026-10-01T12:12:15.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d6",
@@ -5365,8 +4269,8 @@
     "session": "s1"
    },
    {
-    "seq": 120,
-    "ts": "2026-10-01T12:16:13.000Z",
+    "seq": 97,
+    "ts": "2026-10-01T12:12:22.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d6",
@@ -5387,8 +4291,8 @@
     "session": "s1"
    },
    {
-    "seq": 121,
-    "ts": "2026-10-01T12:16:20.000Z",
+    "seq": 98,
+    "ts": "2026-10-01T12:12:29.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d6",
@@ -5409,8 +4313,8 @@
     "session": "s1"
    },
    {
-    "seq": 122,
-    "ts": "2026-10-01T12:16:27.000Z",
+    "seq": 99,
+    "ts": "2026-10-01T12:12:36.000Z",
     "kind": "add-row",
     "planet": "debt",
     "rowId": "x-d7",
@@ -5455,16 +4359,6 @@
        "state": "unknown",
        "source": "client"
       },
-      "promoType": {
-       "v": "purchase",
-       "state": "known",
-       "source": "client"
-      },
-      "btFee": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "minimum": {
        "v": null,
        "state": "unknown",
@@ -5472,11 +4366,6 @@
        "cad": "month"
       },
       "creditLimit": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "dueDay": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -5503,8 +4392,8 @@
     "session": "s1"
    },
    {
-    "seq": 123,
-    "ts": "2026-10-01T12:16:34.000Z",
+    "seq": 100,
+    "ts": "2026-10-01T12:12:43.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d7",
@@ -5525,8 +4414,8 @@
     "session": "s1"
    },
    {
-    "seq": 124,
-    "ts": "2026-10-01T12:16:41.000Z",
+    "seq": 101,
+    "ts": "2026-10-01T12:12:50.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d7",
@@ -5547,8 +4436,8 @@
     "session": "s1"
    },
    {
-    "seq": 125,
-    "ts": "2026-10-01T12:16:48.000Z",
+    "seq": 102,
+    "ts": "2026-10-01T12:12:57.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d7",
@@ -5569,8 +4458,8 @@
     "session": "s1"
    },
    {
-    "seq": 126,
-    "ts": "2026-10-01T12:16:55.000Z",
+    "seq": 103,
+    "ts": "2026-10-01T12:13:04.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d7",
@@ -5591,8 +4480,8 @@
     "session": "s1"
    },
    {
-    "seq": 127,
-    "ts": "2026-10-01T12:17:02.000Z",
+    "seq": 104,
+    "ts": "2026-10-01T12:13:11.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d7",
@@ -5613,30 +4502,8 @@
     "session": "s1"
    },
    {
-    "seq": 128,
-    "ts": "2026-10-01T12:17:16.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d7",
-    "field": "btFee",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 129,
-    "ts": "2026-10-01T12:17:23.000Z",
+    "seq": 105,
+    "ts": "2026-10-01T12:13:18.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d7",
@@ -5659,8 +4526,8 @@
     "session": "s1"
    },
    {
-    "seq": 130,
-    "ts": "2026-10-01T12:17:30.000Z",
+    "seq": 106,
+    "ts": "2026-10-01T12:13:25.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d7",
@@ -5681,30 +4548,8 @@
     "session": "s1"
    },
    {
-    "seq": 131,
-    "ts": "2026-10-01T12:17:37.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d7",
-    "field": "dueDay",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 5,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 132,
-    "ts": "2026-10-01T12:17:44.000Z",
+    "seq": 107,
+    "ts": "2026-10-01T12:13:32.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d7",
@@ -5725,8 +4570,8 @@
     "session": "s1"
    },
    {
-    "seq": 133,
-    "ts": "2026-10-01T12:17:51.000Z",
+    "seq": 108,
+    "ts": "2026-10-01T12:13:39.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d7",
@@ -5747,8 +4592,8 @@
     "session": "s1"
    },
    {
-    "seq": 134,
-    "ts": "2026-10-01T12:17:58.000Z",
+    "seq": 109,
+    "ts": "2026-10-01T12:13:46.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d7",
@@ -5769,8 +4614,8 @@
     "session": "s1"
    },
    {
-    "seq": 135,
-    "ts": "2026-10-01T12:18:05.000Z",
+    "seq": 110,
+    "ts": "2026-10-01T12:13:53.000Z",
     "kind": "add-row",
     "planet": "debt",
     "rowId": "x-d8",
@@ -5790,16 +4635,6 @@
      "notesShared": "",
      "lib": null,
      "f": {
-      "federalPrivate": {
-       "v": "federal",
-       "state": "known",
-       "source": "client"
-      },
-      "loanType": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "balance": {
        "v": null,
        "state": "unknown",
@@ -5815,31 +4650,6 @@
        "state": "unknown",
        "source": "client",
        "cad": "month"
-      },
-      "repaymentPlan": {
-       "v": "standard",
-       "state": "known",
-       "source": "client"
-      },
-      "pslfEligible": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "pslfPayments": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "forbearance": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "interestDeductible": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
       }
      }
     },
@@ -5848,52 +4658,8 @@
     "session": "s1"
    },
    {
-    "seq": 136,
-    "ts": "2026-10-01T12:18:12.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d8",
-    "field": "federalPrivate",
-    "owner": "debt",
-    "old": {
-     "v": "federal",
-     "state": "known",
-     "source": "client"
-    },
-    "new": {
-     "v": "private",
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 137,
-    "ts": "2026-10-01T12:18:19.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d8",
-    "field": "loanType",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": "private",
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 138,
-    "ts": "2026-10-01T12:18:26.000Z",
+    "seq": 111,
+    "ts": "2026-10-01T12:14:00.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d8",
@@ -5914,8 +4680,8 @@
     "session": "s1"
    },
    {
-    "seq": 139,
-    "ts": "2026-10-01T12:18:33.000Z",
+    "seq": 112,
+    "ts": "2026-10-01T12:14:07.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d8",
@@ -5936,8 +4702,8 @@
     "session": "s1"
    },
    {
-    "seq": 140,
-    "ts": "2026-10-01T12:18:40.000Z",
+    "seq": 113,
+    "ts": "2026-10-01T12:14:14.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d8",
@@ -5960,96 +4726,8 @@
     "session": "s1"
    },
    {
-    "seq": 141,
-    "ts": "2026-10-01T12:18:54.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d8",
-    "field": "pslfEligible",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": false,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 142,
-    "ts": "2026-10-01T12:19:01.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d8",
-    "field": "pslfPayments",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 143,
-    "ts": "2026-10-01T12:19:08.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d8",
-    "field": "forbearance",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": false,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 144,
-    "ts": "2026-10-01T12:19:15.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d8",
-    "field": "interestDeductible",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": false,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 145,
-    "ts": "2026-10-01T12:19:22.000Z",
+    "seq": 114,
+    "ts": "2026-10-01T12:14:21.000Z",
     "kind": "add-row",
     "planet": "debt",
     "rowId": "x-d9",
@@ -6089,11 +4767,6 @@
        "v": null,
        "state": "unknown",
        "source": "client"
-      },
-      "vehicleValue": {
-       "v": null,
-       "state": "unknown",
-       "source": "lookup-confirmed"
       }
      }
     },
@@ -6102,8 +4775,8 @@
     "session": "s1"
    },
    {
-    "seq": 146,
-    "ts": "2026-10-01T12:19:29.000Z",
+    "seq": 115,
+    "ts": "2026-10-01T12:14:28.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d9",
@@ -6124,8 +4797,8 @@
     "session": "s1"
    },
    {
-    "seq": 147,
-    "ts": "2026-10-01T12:19:36.000Z",
+    "seq": 116,
+    "ts": "2026-10-01T12:14:35.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d9",
@@ -6146,8 +4819,8 @@
     "session": "s1"
    },
    {
-    "seq": 148,
-    "ts": "2026-10-01T12:19:43.000Z",
+    "seq": 117,
+    "ts": "2026-10-01T12:14:42.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d9",
@@ -6170,8 +4843,8 @@
     "session": "s1"
    },
    {
-    "seq": 149,
-    "ts": "2026-10-01T12:19:50.000Z",
+    "seq": 118,
+    "ts": "2026-10-01T12:14:49.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d9",
@@ -6192,30 +4865,8 @@
     "session": "s1"
    },
    {
-    "seq": 150,
-    "ts": "2026-10-01T12:19:57.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d9",
-    "field": "vehicleValue",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "lookup-confirmed"
-    },
-    "new": {
-     "v": 4100000,
-     "state": "known",
-     "source": "lookup-confirmed"
-    },
-    "source": "lookup-confirmed",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 151,
-    "ts": "2026-10-01T12:20:04.000Z",
+    "seq": 119,
+    "ts": "2026-10-01T12:14:56.000Z",
     "kind": "add-row",
     "planet": "debt",
     "rowId": "x-d10",
@@ -6235,11 +4886,6 @@
      "notesShared": "",
      "lib": null,
      "f": {
-      "debtKind": {
-       "v": "personal",
-       "state": "known",
-       "source": "client"
-      },
       "balance": {
        "v": null,
        "state": "unknown",
@@ -6255,16 +4901,6 @@
        "state": "unknown",
        "source": "client",
        "cad": "month"
-      },
-      "terms": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "reasonsToKeep": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
       }
      }
     },
@@ -6273,30 +4909,8 @@
     "session": "s1"
    },
    {
-    "seq": 152,
-    "ts": "2026-10-01T12:20:11.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d10",
-    "field": "debtKind",
-    "owner": "debt",
-    "old": {
-     "v": "personal",
-     "state": "known",
-     "source": "client"
-    },
-    "new": {
-     "v": "medical",
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 153,
-    "ts": "2026-10-01T12:20:18.000Z",
+    "seq": 120,
+    "ts": "2026-10-01T12:15:03.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d10",
@@ -6317,8 +4931,8 @@
     "session": "s1"
    },
    {
-    "seq": 154,
-    "ts": "2026-10-01T12:20:25.000Z",
+    "seq": 121,
+    "ts": "2026-10-01T12:15:10.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d10",
@@ -6339,8 +4953,8 @@
     "session": "s1"
    },
    {
-    "seq": 155,
-    "ts": "2026-10-01T12:20:32.000Z",
+    "seq": 122,
+    "ts": "2026-10-01T12:15:17.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d10",
@@ -6363,52 +4977,8 @@
     "session": "s1"
    },
    {
-    "seq": 156,
-    "ts": "2026-10-01T12:20:39.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d10",
-    "field": "terms",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": "Payment plan with the hospital billing o",
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 157,
-    "ts": "2026-10-01T12:20:46.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d10",
-    "field": "reasonsToKeep",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": "Zero interest",
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 158,
-    "ts": "2026-10-01T12:20:53.000Z",
+    "seq": 123,
+    "ts": "2026-10-01T12:15:24.000Z",
     "kind": "add-row",
     "planet": "debt",
     "rowId": "x-d11",
@@ -6434,16 +5004,6 @@
        "source": "client"
       },
       "rate": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "fixedVariable": {
-       "v": "fixed",
-       "state": "known",
-       "source": "client"
-      },
-      "termLeftMonths": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -6477,11 +5037,6 @@
        "state": "unknown",
        "source": "client",
        "cad": "month"
-      },
-      "homeValue": {
-       "v": null,
-       "state": "unknown",
-       "source": "lookup-confirmed"
       }
      }
     },
@@ -6490,8 +5045,8 @@
     "session": "s1"
    },
    {
-    "seq": 159,
-    "ts": "2026-10-01T12:21:00.000Z",
+    "seq": 124,
+    "ts": "2026-10-01T12:15:31.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d11",
@@ -6512,8 +5067,8 @@
     "session": "s1"
    },
    {
-    "seq": 160,
-    "ts": "2026-10-01T12:21:07.000Z",
+    "seq": 125,
+    "ts": "2026-10-01T12:15:38.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d11",
@@ -6534,30 +5089,8 @@
     "session": "s1"
    },
    {
-    "seq": 161,
-    "ts": "2026-10-01T12:21:21.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d11",
-    "field": "termLeftMonths",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 324,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 162,
-    "ts": "2026-10-01T12:21:28.000Z",
+    "seq": 126,
+    "ts": "2026-10-01T12:15:45.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d11",
@@ -6580,8 +5113,8 @@
     "session": "s1"
    },
    {
-    "seq": 163,
-    "ts": "2026-10-01T12:21:35.000Z",
+    "seq": 127,
+    "ts": "2026-10-01T12:15:52.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d11",
@@ -6604,8 +5137,8 @@
     "session": "s1"
    },
    {
-    "seq": 164,
-    "ts": "2026-10-01T12:21:42.000Z",
+    "seq": 128,
+    "ts": "2026-10-01T12:15:59.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d11",
@@ -6628,8 +5161,8 @@
     "session": "s1"
    },
    {
-    "seq": 165,
-    "ts": "2026-10-01T12:21:49.000Z",
+    "seq": 129,
+    "ts": "2026-10-01T12:16:06.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d11",
@@ -6652,8 +5185,8 @@
     "session": "s1"
    },
    {
-    "seq": 166,
-    "ts": "2026-10-01T12:21:56.000Z",
+    "seq": 130,
+    "ts": "2026-10-01T12:16:13.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d11",
@@ -6676,30 +5209,8 @@
     "session": "s1"
    },
    {
-    "seq": 167,
-    "ts": "2026-10-01T12:22:03.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d11",
-    "field": "homeValue",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "lookup-confirmed"
-    },
-    "new": {
-     "v": 195000000,
-     "state": "known",
-     "source": "lookup-confirmed"
-    },
-    "source": "lookup-confirmed",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 168,
-    "ts": "2026-10-01T12:22:10.000Z",
+    "seq": 131,
+    "ts": "2026-10-01T12:16:20.000Z",
     "kind": "add-row",
     "planet": "debt",
     "rowId": "x-d12",
@@ -6744,16 +5255,6 @@
        "state": "unknown",
        "source": "client"
       },
-      "promoType": {
-       "v": "purchase",
-       "state": "known",
-       "source": "client"
-      },
-      "btFee": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "minimum": {
        "v": null,
        "state": "unknown",
@@ -6761,11 +5262,6 @@
        "cad": "month"
       },
       "creditLimit": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "dueDay": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -6792,8 +5288,8 @@
     "session": "s1"
    },
    {
-    "seq": 169,
-    "ts": "2026-10-01T12:22:17.000Z",
+    "seq": 132,
+    "ts": "2026-10-01T12:16:27.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d12",
@@ -6814,8 +5310,8 @@
     "session": "s1"
    },
    {
-    "seq": 170,
-    "ts": "2026-10-01T12:22:24.000Z",
+    "seq": 133,
+    "ts": "2026-10-01T12:16:34.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d12",
@@ -6836,8 +5332,8 @@
     "session": "s1"
    },
    {
-    "seq": 171,
-    "ts": "2026-10-01T12:22:31.000Z",
+    "seq": 134,
+    "ts": "2026-10-01T12:16:41.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d12",
@@ -6858,8 +5354,8 @@
     "session": "s1"
    },
    {
-    "seq": 172,
-    "ts": "2026-10-01T12:22:38.000Z",
+    "seq": 135,
+    "ts": "2026-10-01T12:16:48.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d12",
@@ -6880,8 +5376,8 @@
     "session": "s1"
    },
    {
-    "seq": 173,
-    "ts": "2026-10-01T12:22:45.000Z",
+    "seq": 136,
+    "ts": "2026-10-01T12:16:55.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d12",
@@ -6902,30 +5398,8 @@
     "session": "s1"
    },
    {
-    "seq": 174,
-    "ts": "2026-10-01T12:22:59.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d12",
-    "field": "btFee",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 175,
-    "ts": "2026-10-01T12:23:06.000Z",
+    "seq": 137,
+    "ts": "2026-10-01T12:17:02.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d12",
@@ -6948,8 +5422,8 @@
     "session": "s1"
    },
    {
-    "seq": 176,
-    "ts": "2026-10-01T12:23:13.000Z",
+    "seq": 138,
+    "ts": "2026-10-01T12:17:09.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d12",
@@ -6970,30 +5444,8 @@
     "session": "s1"
    },
    {
-    "seq": 177,
-    "ts": "2026-10-01T12:23:20.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d12",
-    "field": "dueDay",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 5,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 178,
-    "ts": "2026-10-01T12:23:27.000Z",
+    "seq": 139,
+    "ts": "2026-10-01T12:17:16.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d12",
@@ -7014,8 +5466,8 @@
     "session": "s1"
    },
    {
-    "seq": 179,
-    "ts": "2026-10-01T12:23:34.000Z",
+    "seq": 140,
+    "ts": "2026-10-01T12:17:23.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d12",
@@ -7036,8 +5488,8 @@
     "session": "s1"
    },
    {
-    "seq": 180,
-    "ts": "2026-10-01T12:23:41.000Z",
+    "seq": 141,
+    "ts": "2026-10-01T12:17:30.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d12",
@@ -7058,8 +5510,8 @@
     "session": "s1"
    },
    {
-    "seq": 181,
-    "ts": "2026-10-01T12:23:48.000Z",
+    "seq": 142,
+    "ts": "2026-10-01T12:17:37.000Z",
     "kind": "add-row",
     "planet": "debt",
     "rowId": "x-d13",
@@ -7104,16 +5556,6 @@
        "state": "unknown",
        "source": "client"
       },
-      "promoType": {
-       "v": "purchase",
-       "state": "known",
-       "source": "client"
-      },
-      "btFee": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "minimum": {
        "v": null,
        "state": "unknown",
@@ -7121,11 +5563,6 @@
        "cad": "month"
       },
       "creditLimit": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "dueDay": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -7152,8 +5589,8 @@
     "session": "s1"
    },
    {
-    "seq": 182,
-    "ts": "2026-10-01T12:23:55.000Z",
+    "seq": 143,
+    "ts": "2026-10-01T12:17:44.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d13",
@@ -7174,8 +5611,8 @@
     "session": "s1"
    },
    {
-    "seq": 183,
-    "ts": "2026-10-01T12:24:02.000Z",
+    "seq": 144,
+    "ts": "2026-10-01T12:17:51.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d13",
@@ -7196,8 +5633,8 @@
     "session": "s1"
    },
    {
-    "seq": 184,
-    "ts": "2026-10-01T12:24:09.000Z",
+    "seq": 145,
+    "ts": "2026-10-01T12:17:58.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d13",
@@ -7218,8 +5655,8 @@
     "session": "s1"
    },
    {
-    "seq": 185,
-    "ts": "2026-10-01T12:24:16.000Z",
+    "seq": 146,
+    "ts": "2026-10-01T12:18:05.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d13",
@@ -7240,8 +5677,8 @@
     "session": "s1"
    },
    {
-    "seq": 186,
-    "ts": "2026-10-01T12:24:23.000Z",
+    "seq": 147,
+    "ts": "2026-10-01T12:18:12.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d13",
@@ -7262,30 +5699,8 @@
     "session": "s1"
    },
    {
-    "seq": 187,
-    "ts": "2026-10-01T12:24:37.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d13",
-    "field": "btFee",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 188,
-    "ts": "2026-10-01T12:24:44.000Z",
+    "seq": 148,
+    "ts": "2026-10-01T12:18:19.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d13",
@@ -7308,8 +5723,8 @@
     "session": "s1"
    },
    {
-    "seq": 189,
-    "ts": "2026-10-01T12:24:51.000Z",
+    "seq": 149,
+    "ts": "2026-10-01T12:18:26.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d13",
@@ -7330,30 +5745,8 @@
     "session": "s1"
    },
    {
-    "seq": 190,
-    "ts": "2026-10-01T12:24:58.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "x-d13",
-    "field": "dueDay",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 5,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 191,
-    "ts": "2026-10-01T12:25:05.000Z",
+    "seq": 150,
+    "ts": "2026-10-01T12:18:33.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d13",
@@ -7374,8 +5767,8 @@
     "session": "s1"
    },
    {
-    "seq": 192,
-    "ts": "2026-10-01T12:25:12.000Z",
+    "seq": 151,
+    "ts": "2026-10-01T12:18:40.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d13",
@@ -7396,8 +5789,8 @@
     "session": "s1"
    },
    {
-    "seq": 193,
-    "ts": "2026-10-01T12:25:19.000Z",
+    "seq": 152,
+    "ts": "2026-10-01T12:18:47.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "x-d13",
@@ -7418,8 +5811,8 @@
     "session": "s1"
    },
    {
-    "seq": 194,
-    "ts": "2026-10-01T12:25:26.000Z",
+    "seq": 153,
+    "ts": "2026-10-01T12:18:54.000Z",
     "kind": "add-row",
     "planet": "safety",
     "rowId": "x-ins",
@@ -7467,8 +5860,8 @@
     "session": "s1"
    },
    {
-    "seq": 195,
-    "ts": "2026-10-01T12:25:33.000Z",
+    "seq": 154,
+    "ts": "2026-10-01T12:19:01.000Z",
     "kind": "set",
     "planet": "safety",
     "rowId": "x-ins",
@@ -7489,8 +5882,8 @@
     "session": "s1"
    },
    {
-    "seq": 196,
-    "ts": "2026-10-01T12:25:47.000Z",
+    "seq": 155,
+    "ts": "2026-10-01T12:19:15.000Z",
     "kind": "set",
     "planet": "safety",
     "rowId": "x-ins",
@@ -7513,8 +5906,8 @@
     "session": "s1"
    },
    {
-    "seq": 197,
-    "ts": "2026-10-01T12:25:54.000Z",
+    "seq": 156,
+    "ts": "2026-10-01T12:19:22.000Z",
     "kind": "set",
     "planet": "safety",
     "rowId": "x-ins",
@@ -7535,8 +5928,8 @@
     "session": "s1"
    },
    {
-    "seq": 198,
-    "ts": "2026-10-01T12:26:01.000Z",
+    "seq": 157,
+    "ts": "2026-10-01T12:19:29.000Z",
     "kind": "add-row",
     "planet": "safety",
     "rowId": "x-ui",
@@ -7560,11 +5953,6 @@
        "v": null,
        "state": "unknown",
        "source": "lookup-verify"
-      },
-      "unemploymentWeeks": {
-       "v": null,
-       "state": "unknown",
-       "source": "lookup-verify"
       }
      }
     },
@@ -7573,8 +5961,8 @@
     "session": "s1"
    },
    {
-    "seq": 199,
-    "ts": "2026-10-01T12:26:08.000Z",
+    "seq": 158,
+    "ts": "2026-10-01T12:19:36.000Z",
     "kind": "set",
     "planet": "safety",
     "rowId": "x-ui",
@@ -7595,30 +5983,8 @@
     "session": "s1"
    },
    {
-    "seq": 200,
-    "ts": "2026-10-01T12:26:15.000Z",
-    "kind": "set",
-    "planet": "safety",
-    "rowId": "x-ui",
-    "field": "unemploymentWeeks",
-    "owner": "safety",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "lookup-verify"
-    },
-    "new": {
-     "v": 12,
-     "state": "known",
-     "source": "lookup-verify"
-    },
-    "source": "lookup-verify",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 201,
-    "ts": "2026-10-01T12:26:22.000Z",
+    "seq": 159,
+    "ts": "2026-10-01T12:19:43.000Z",
     "kind": "add-row",
     "planet": "safety",
     "rowId": "x-cut",
@@ -7651,8 +6017,8 @@
     "session": "s1"
    },
    {
-    "seq": 202,
-    "ts": "2026-10-01T12:26:29.000Z",
+    "seq": 160,
+    "ts": "2026-10-01T12:19:50.000Z",
     "kind": "set",
     "planet": "safety",
     "rowId": "x-cut",
@@ -7675,8 +6041,8 @@
     "session": "s1"
    },
    {
-    "seq": 203,
-    "ts": "2026-10-01T12:26:36.000Z",
+    "seq": 161,
+    "ts": "2026-10-01T12:19:57.000Z",
     "kind": "add-row",
     "planet": "invest",
     "rowId": "x-a1",
@@ -7712,16 +6078,6 @@
        "source": "client",
        "cad": "month"
       },
-      "contribPct": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "ytdContrib": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "allocStocks": {
        "v": null,
        "state": "unknown",
@@ -7747,16 +6103,6 @@
        "state": "unknown",
        "source": "client"
       },
-      "targetYear": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "costBasis": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "beneficiary": {
        "v": null,
        "state": "unknown",
@@ -7769,8 +6115,8 @@
     "session": "s1"
    },
    {
-    "seq": 204,
-    "ts": "2026-10-01T12:26:43.000Z",
+    "seq": 162,
+    "ts": "2026-10-01T12:20:04.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a1",
@@ -7791,8 +6137,8 @@
     "session": "s1"
    },
    {
-    "seq": 205,
-    "ts": "2026-10-01T12:26:50.000Z",
+    "seq": 163,
+    "ts": "2026-10-01T12:20:11.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a1",
@@ -7813,8 +6159,8 @@
     "session": "s1"
    },
    {
-    "seq": 206,
-    "ts": "2026-10-01T12:26:57.000Z",
+    "seq": 164,
+    "ts": "2026-10-01T12:20:18.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a1",
@@ -7837,52 +6183,8 @@
     "session": "s1"
    },
    {
-    "seq": 207,
-    "ts": "2026-10-01T12:27:04.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "x-a1",
-    "field": "contribPct",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 208,
-    "ts": "2026-10-01T12:27:11.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "x-a1",
-    "field": "ytdContrib",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 0,
-     "state": "none",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "none",
-    "session": "s1"
-   },
-   {
-    "seq": 209,
-    "ts": "2026-10-01T12:27:18.000Z",
+    "seq": 165,
+    "ts": "2026-10-01T12:20:25.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a1",
@@ -7903,8 +6205,8 @@
     "session": "s1"
    },
    {
-    "seq": 210,
-    "ts": "2026-10-01T12:27:25.000Z",
+    "seq": 166,
+    "ts": "2026-10-01T12:20:32.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a1",
@@ -7925,8 +6227,8 @@
     "session": "s1"
    },
    {
-    "seq": 211,
-    "ts": "2026-10-01T12:27:32.000Z",
+    "seq": 167,
+    "ts": "2026-10-01T12:20:39.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a1",
@@ -7947,8 +6249,8 @@
     "session": "s1"
    },
    {
-    "seq": 212,
-    "ts": "2026-10-01T12:27:39.000Z",
+    "seq": 168,
+    "ts": "2026-10-01T12:20:46.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a1",
@@ -7969,8 +6271,8 @@
     "session": "s1"
    },
    {
-    "seq": 213,
-    "ts": "2026-10-01T12:27:46.000Z",
+    "seq": 169,
+    "ts": "2026-10-01T12:20:53.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a1",
@@ -7991,52 +6293,8 @@
     "session": "s1"
    },
    {
-    "seq": 214,
-    "ts": "2026-10-01T12:27:53.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "x-a1",
-    "field": "targetYear",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 215,
-    "ts": "2026-10-01T12:28:00.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "x-a1",
-    "field": "costBasis",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 216,
-    "ts": "2026-10-01T12:28:07.000Z",
+    "seq": 170,
+    "ts": "2026-10-01T12:21:00.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a1",
@@ -8057,8 +6315,8 @@
     "session": "s1"
    },
    {
-    "seq": 217,
-    "ts": "2026-10-01T12:28:14.000Z",
+    "seq": 171,
+    "ts": "2026-10-01T12:21:07.000Z",
     "kind": "add-row",
     "planet": "invest",
     "rowId": "x-a2",
@@ -8094,16 +6352,6 @@
        "source": "client",
        "cad": "month"
       },
-      "contribPct": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "ytdContrib": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "allocStocks": {
        "v": null,
        "state": "unknown",
@@ -8129,16 +6377,6 @@
        "state": "unknown",
        "source": "client"
       },
-      "targetYear": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "costBasis": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "beneficiary": {
        "v": null,
        "state": "unknown",
@@ -8151,8 +6389,8 @@
     "session": "s1"
    },
    {
-    "seq": 218,
-    "ts": "2026-10-01T12:28:21.000Z",
+    "seq": 172,
+    "ts": "2026-10-01T12:21:14.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a2",
@@ -8173,8 +6411,8 @@
     "session": "s1"
    },
    {
-    "seq": 219,
-    "ts": "2026-10-01T12:28:28.000Z",
+    "seq": 173,
+    "ts": "2026-10-01T12:21:21.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a2",
@@ -8195,8 +6433,8 @@
     "session": "s1"
    },
    {
-    "seq": 220,
-    "ts": "2026-10-01T12:28:35.000Z",
+    "seq": 174,
+    "ts": "2026-10-01T12:21:28.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a2",
@@ -8219,52 +6457,8 @@
     "session": "s1"
    },
    {
-    "seq": 221,
-    "ts": "2026-10-01T12:28:42.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "x-a2",
-    "field": "contribPct",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 222,
-    "ts": "2026-10-01T12:28:49.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "x-a2",
-    "field": "ytdContrib",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 0,
-     "state": "none",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "none",
-    "session": "s1"
-   },
-   {
-    "seq": 223,
-    "ts": "2026-10-01T12:28:56.000Z",
+    "seq": 175,
+    "ts": "2026-10-01T12:21:35.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a2",
@@ -8285,8 +6479,8 @@
     "session": "s1"
    },
    {
-    "seq": 224,
-    "ts": "2026-10-01T12:29:03.000Z",
+    "seq": 176,
+    "ts": "2026-10-01T12:21:42.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a2",
@@ -8307,8 +6501,8 @@
     "session": "s1"
    },
    {
-    "seq": 225,
-    "ts": "2026-10-01T12:29:10.000Z",
+    "seq": 177,
+    "ts": "2026-10-01T12:21:49.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a2",
@@ -8329,8 +6523,8 @@
     "session": "s1"
    },
    {
-    "seq": 226,
-    "ts": "2026-10-01T12:29:17.000Z",
+    "seq": 178,
+    "ts": "2026-10-01T12:21:56.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a2",
@@ -8351,8 +6545,8 @@
     "session": "s1"
    },
    {
-    "seq": 227,
-    "ts": "2026-10-01T12:29:24.000Z",
+    "seq": 179,
+    "ts": "2026-10-01T12:22:03.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a2",
@@ -8373,52 +6567,8 @@
     "session": "s1"
    },
    {
-    "seq": 228,
-    "ts": "2026-10-01T12:29:31.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "x-a2",
-    "field": "targetYear",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 229,
-    "ts": "2026-10-01T12:29:38.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "x-a2",
-    "field": "costBasis",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 41000000,
-     "state": "rough",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "rough",
-    "session": "s1"
-   },
-   {
-    "seq": 230,
-    "ts": "2026-10-01T12:29:45.000Z",
+    "seq": 180,
+    "ts": "2026-10-01T12:22:10.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a2",
@@ -8439,8 +6589,8 @@
     "session": "s1"
    },
    {
-    "seq": 231,
-    "ts": "2026-10-01T12:29:52.000Z",
+    "seq": 181,
+    "ts": "2026-10-01T12:22:17.000Z",
     "kind": "add-row",
     "planet": "invest",
     "rowId": "x-a3",
@@ -8476,16 +6626,6 @@
        "source": "client",
        "cad": "month"
       },
-      "contribPct": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "ytdContrib": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "allocStocks": {
        "v": null,
        "state": "unknown",
@@ -8511,16 +6651,6 @@
        "state": "unknown",
        "source": "client"
       },
-      "targetYear": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "costBasis": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "beneficiary": {
        "v": null,
        "state": "unknown",
@@ -8533,8 +6663,8 @@
     "session": "s1"
    },
    {
-    "seq": 232,
-    "ts": "2026-10-01T12:29:59.000Z",
+    "seq": 182,
+    "ts": "2026-10-01T12:22:24.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a3",
@@ -8555,8 +6685,8 @@
     "session": "s1"
    },
    {
-    "seq": 233,
-    "ts": "2026-10-01T12:30:06.000Z",
+    "seq": 183,
+    "ts": "2026-10-01T12:22:31.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a3",
@@ -8577,8 +6707,8 @@
     "session": "s1"
    },
    {
-    "seq": 234,
-    "ts": "2026-10-01T12:30:13.000Z",
+    "seq": 184,
+    "ts": "2026-10-01T12:22:38.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a3",
@@ -8601,52 +6731,8 @@
     "session": "s1"
    },
    {
-    "seq": 235,
-    "ts": "2026-10-01T12:30:20.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "x-a3",
-    "field": "contribPct",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 236,
-    "ts": "2026-10-01T12:30:27.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "x-a3",
-    "field": "ytdContrib",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 237,
-    "ts": "2026-10-01T12:30:34.000Z",
+    "seq": 185,
+    "ts": "2026-10-01T12:22:45.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a3",
@@ -8667,8 +6753,8 @@
     "session": "s1"
    },
    {
-    "seq": 238,
-    "ts": "2026-10-01T12:30:41.000Z",
+    "seq": 186,
+    "ts": "2026-10-01T12:22:52.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a3",
@@ -8689,8 +6775,8 @@
     "session": "s1"
    },
    {
-    "seq": 239,
-    "ts": "2026-10-01T12:30:48.000Z",
+    "seq": 187,
+    "ts": "2026-10-01T12:22:59.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a3",
@@ -8711,8 +6797,8 @@
     "session": "s1"
    },
    {
-    "seq": 240,
-    "ts": "2026-10-01T12:30:55.000Z",
+    "seq": 188,
+    "ts": "2026-10-01T12:23:06.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a3",
@@ -8733,8 +6819,8 @@
     "session": "s1"
    },
    {
-    "seq": 241,
-    "ts": "2026-10-01T12:31:02.000Z",
+    "seq": 189,
+    "ts": "2026-10-01T12:23:13.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a3",
@@ -8755,52 +6841,8 @@
     "session": "s1"
    },
    {
-    "seq": 242,
-    "ts": "2026-10-01T12:31:09.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "x-a3",
-    "field": "targetYear",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 243,
-    "ts": "2026-10-01T12:31:16.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "x-a3",
-    "field": "costBasis",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 244,
-    "ts": "2026-10-01T12:31:23.000Z",
+    "seq": 190,
+    "ts": "2026-10-01T12:23:20.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a3",
@@ -8821,8 +6863,8 @@
     "session": "s1"
    },
    {
-    "seq": 245,
-    "ts": "2026-10-01T12:31:30.000Z",
+    "seq": 191,
+    "ts": "2026-10-01T12:23:27.000Z",
     "kind": "add-row",
     "planet": "invest",
     "rowId": "x-a4",
@@ -8858,16 +6900,6 @@
        "source": "client",
        "cad": "month"
       },
-      "contribPct": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "ytdContrib": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "allocStocks": {
        "v": null,
        "state": "unknown",
@@ -8893,16 +6925,6 @@
        "state": "unknown",
        "source": "client"
       },
-      "targetYear": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "costBasis": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "beneficiary": {
        "v": null,
        "state": "unknown",
@@ -8915,8 +6937,8 @@
     "session": "s1"
    },
    {
-    "seq": 246,
-    "ts": "2026-10-01T12:31:37.000Z",
+    "seq": 192,
+    "ts": "2026-10-01T12:23:34.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a4",
@@ -8937,8 +6959,8 @@
     "session": "s1"
    },
    {
-    "seq": 247,
-    "ts": "2026-10-01T12:31:44.000Z",
+    "seq": 193,
+    "ts": "2026-10-01T12:23:41.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a4",
@@ -8959,8 +6981,8 @@
     "session": "s1"
    },
    {
-    "seq": 248,
-    "ts": "2026-10-01T12:31:51.000Z",
+    "seq": 194,
+    "ts": "2026-10-01T12:23:48.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a4",
@@ -8983,52 +7005,8 @@
     "session": "s1"
    },
    {
-    "seq": 249,
-    "ts": "2026-10-01T12:31:58.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "x-a4",
-    "field": "contribPct",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 250,
-    "ts": "2026-10-01T12:32:05.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "x-a4",
-    "field": "ytdContrib",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 251,
-    "ts": "2026-10-01T12:32:12.000Z",
+    "seq": 195,
+    "ts": "2026-10-01T12:23:55.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a4",
@@ -9049,8 +7027,8 @@
     "session": "s1"
    },
    {
-    "seq": 252,
-    "ts": "2026-10-01T12:32:19.000Z",
+    "seq": 196,
+    "ts": "2026-10-01T12:24:02.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a4",
@@ -9071,8 +7049,8 @@
     "session": "s1"
    },
    {
-    "seq": 253,
-    "ts": "2026-10-01T12:32:26.000Z",
+    "seq": 197,
+    "ts": "2026-10-01T12:24:09.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a4",
@@ -9093,8 +7071,8 @@
     "session": "s1"
    },
    {
-    "seq": 254,
-    "ts": "2026-10-01T12:32:33.000Z",
+    "seq": 198,
+    "ts": "2026-10-01T12:24:16.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a4",
@@ -9115,8 +7093,8 @@
     "session": "s1"
    },
    {
-    "seq": 255,
-    "ts": "2026-10-01T12:32:40.000Z",
+    "seq": 199,
+    "ts": "2026-10-01T12:24:23.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a4",
@@ -9137,52 +7115,8 @@
     "session": "s1"
    },
    {
-    "seq": 256,
-    "ts": "2026-10-01T12:32:47.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "x-a4",
-    "field": "targetYear",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 257,
-    "ts": "2026-10-01T12:32:54.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "x-a4",
-    "field": "costBasis",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 258,
-    "ts": "2026-10-01T12:33:01.000Z",
+    "seq": 200,
+    "ts": "2026-10-01T12:24:30.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a4",
@@ -9203,8 +7137,8 @@
     "session": "s1"
    },
    {
-    "seq": 259,
-    "ts": "2026-10-01T12:33:08.000Z",
+    "seq": 201,
+    "ts": "2026-10-01T12:24:37.000Z",
     "kind": "add-row",
     "planet": "invest",
     "rowId": "x-a5",
@@ -9240,16 +7174,6 @@
        "source": "client",
        "cad": "month"
       },
-      "contribPct": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "ytdContrib": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "allocStocks": {
        "v": null,
        "state": "unknown",
@@ -9275,16 +7199,6 @@
        "state": "unknown",
        "source": "client"
       },
-      "targetYear": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "costBasis": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "beneficiary": {
        "v": null,
        "state": "unknown",
@@ -9297,8 +7211,8 @@
     "session": "s1"
    },
    {
-    "seq": 260,
-    "ts": "2026-10-01T12:33:15.000Z",
+    "seq": 202,
+    "ts": "2026-10-01T12:24:44.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a5",
@@ -9319,8 +7233,8 @@
     "session": "s1"
    },
    {
-    "seq": 261,
-    "ts": "2026-10-01T12:33:22.000Z",
+    "seq": 203,
+    "ts": "2026-10-01T12:24:51.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a5",
@@ -9341,8 +7255,8 @@
     "session": "s1"
    },
    {
-    "seq": 262,
-    "ts": "2026-10-01T12:33:29.000Z",
+    "seq": 204,
+    "ts": "2026-10-01T12:24:58.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a5",
@@ -9365,52 +7279,8 @@
     "session": "s1"
    },
    {
-    "seq": 263,
-    "ts": "2026-10-01T12:33:36.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "x-a5",
-    "field": "contribPct",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 264,
-    "ts": "2026-10-01T12:33:43.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "x-a5",
-    "field": "ytdContrib",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 265,
-    "ts": "2026-10-01T12:33:50.000Z",
+    "seq": 205,
+    "ts": "2026-10-01T12:25:05.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a5",
@@ -9431,8 +7301,8 @@
     "session": "s1"
    },
    {
-    "seq": 266,
-    "ts": "2026-10-01T12:33:57.000Z",
+    "seq": 206,
+    "ts": "2026-10-01T12:25:12.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a5",
@@ -9453,8 +7323,8 @@
     "session": "s1"
    },
    {
-    "seq": 267,
-    "ts": "2026-10-01T12:34:04.000Z",
+    "seq": 207,
+    "ts": "2026-10-01T12:25:19.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a5",
@@ -9475,8 +7345,8 @@
     "session": "s1"
    },
    {
-    "seq": 268,
-    "ts": "2026-10-01T12:34:11.000Z",
+    "seq": 208,
+    "ts": "2026-10-01T12:25:26.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a5",
@@ -9497,8 +7367,8 @@
     "session": "s1"
    },
    {
-    "seq": 269,
-    "ts": "2026-10-01T12:34:18.000Z",
+    "seq": 209,
+    "ts": "2026-10-01T12:25:33.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a5",
@@ -9519,52 +7389,8 @@
     "session": "s1"
    },
    {
-    "seq": 270,
-    "ts": "2026-10-01T12:34:25.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "x-a5",
-    "field": "targetYear",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 271,
-    "ts": "2026-10-01T12:34:32.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "x-a5",
-    "field": "costBasis",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 272,
-    "ts": "2026-10-01T12:34:39.000Z",
+    "seq": 210,
+    "ts": "2026-10-01T12:25:40.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-a5",
@@ -9585,8 +7411,8 @@
     "session": "s1"
    },
    {
-    "seq": 273,
-    "ts": "2026-10-01T12:34:46.000Z",
+    "seq": 211,
+    "ts": "2026-10-01T12:25:47.000Z",
     "kind": "add-row",
     "planet": "invest",
     "rowId": "x-h1",
@@ -9611,22 +7437,12 @@
        "state": "unknown",
        "source": "client"
       },
-      "ticker": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "fundName": {
        "v": null,
        "state": "unknown",
        "source": "lookup-verify"
       },
       "expenseRatio": {
-       "v": null,
-       "state": "unknown",
-       "source": "lookup-verify"
-      },
-      "assetClass": {
        "v": null,
        "state": "unknown",
        "source": "lookup-verify"
@@ -9643,8 +7459,8 @@
     "session": "s1"
    },
    {
-    "seq": 274,
-    "ts": "2026-10-01T12:34:53.000Z",
+    "seq": 212,
+    "ts": "2026-10-01T12:25:54.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-h1",
@@ -9665,30 +7481,8 @@
     "session": "s1"
    },
    {
-    "seq": 275,
-    "ts": "2026-10-01T12:35:00.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "x-h1",
-    "field": "ticker",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": "AGTHX",
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 276,
-    "ts": "2026-10-01T12:35:07.000Z",
+    "seq": 213,
+    "ts": "2026-10-01T12:26:01.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-h1",
@@ -9709,8 +7503,8 @@
     "session": "s1"
    },
    {
-    "seq": 277,
-    "ts": "2026-10-01T12:35:14.000Z",
+    "seq": 214,
+    "ts": "2026-10-01T12:26:08.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-h1",
@@ -9731,30 +7525,8 @@
     "session": "s1"
    },
    {
-    "seq": 278,
-    "ts": "2026-10-01T12:35:21.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "x-h1",
-    "field": "assetClass",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "lookup-verify"
-    },
-    "new": {
-     "v": "us-stock",
-     "state": "known",
-     "source": "lookup-verify"
-    },
-    "source": "lookup-verify",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 279,
-    "ts": "2026-10-01T12:35:28.000Z",
+    "seq": 215,
+    "ts": "2026-10-01T12:26:15.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "x-h1",
@@ -9775,90 +7547,8 @@
     "session": "s1"
    },
    {
-    "seq": 280,
-    "ts": "2026-10-01T12:35:35.000Z",
-    "kind": "add-row",
-    "planet": "taxes",
-    "rowId": "x-tax",
-    "field": null,
-    "owner": "taxes",
-    "old": null,
-    "new": {
-     "id": "x-tax",
-     "planet": "taxes",
-     "type": "note",
-     "nickname": "Last return",
-     "institution": "IRS",
-     "asOf": null,
-     "followUp": false,
-     "stress": null,
-     "notesPrivate": "",
-     "notesShared": "",
-     "lib": null,
-     "f": {
-      "lastRefund": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "taxNote": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      }
-     }
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 281,
-    "ts": "2026-10-01T12:35:42.000Z",
-    "kind": "set",
-    "planet": "taxes",
-    "rowId": "x-tax",
-    "field": "lastRefund",
-    "owner": "taxes",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": -1240000,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 282,
-    "ts": "2026-10-01T12:35:49.000Z",
-    "kind": "set",
-    "planet": "taxes",
-    "rowId": "x-tax",
-    "field": "taxNote",
-    "owner": "taxes",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": "Large balance due after the severance pa",
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 283,
-    "ts": "2026-10-01T12:35:56.000Z",
+    "seq": 216,
+    "ts": "2026-10-01T12:26:22.000Z",
     "kind": "add-row",
     "planet": "life",
     "rowId": "x-goal",
@@ -9900,8 +7590,8 @@
     "session": "s1"
    },
    {
-    "seq": 284,
-    "ts": "2026-10-01T12:36:03.000Z",
+    "seq": 217,
+    "ts": "2026-10-01T12:26:29.000Z",
     "kind": "set",
     "planet": "life",
     "rowId": "x-goal",
@@ -9922,8 +7612,8 @@
     "session": "s1"
    },
    {
-    "seq": 285,
-    "ts": "2026-10-01T12:36:10.000Z",
+    "seq": 218,
+    "ts": "2026-10-01T12:26:36.000Z",
     "kind": "set",
     "planet": "life",
     "rowId": "x-goal",
@@ -9944,8 +7634,8 @@
     "session": "s1"
    },
    {
-    "seq": 286,
-    "ts": "2026-10-01T12:36:17.000Z",
+    "seq": 219,
+    "ts": "2026-10-01T12:26:43.000Z",
     "kind": "set",
     "planet": "life",
     "rowId": "x-goal",
@@ -9966,8 +7656,8 @@
     "session": "s1"
    },
    {
-    "seq": 287,
-    "ts": "2026-10-01T12:36:24.000Z",
+    "seq": 220,
+    "ts": "2026-10-01T12:26:50.000Z",
     "kind": "add-row",
     "planet": "life",
     "rowId": "x-ret",
@@ -10014,8 +7704,8 @@
     "session": "s1"
    },
    {
-    "seq": 288,
-    "ts": "2026-10-01T12:36:31.000Z",
+    "seq": 221,
+    "ts": "2026-10-01T12:26:57.000Z",
     "kind": "set",
     "planet": "life",
     "rowId": "x-ret",

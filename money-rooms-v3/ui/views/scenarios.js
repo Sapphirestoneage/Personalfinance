@@ -9,7 +9,7 @@ import * as Charts from '../charts.js';
 import { compare, newBlock, blockCosts, costSentence, startLabel, parseStart } from '../../engine/scenarios.js';
 import { createRow } from '../../engine/record.js';
 import { freshFacts } from '../../engine/fields.js';
-import { parseTyped } from '../typed.js';
+import { questionField } from '../startingsoon.js';
 
 export function mount(host, app) {
   const defs = app.data.scenarioBlocks;
@@ -111,15 +111,7 @@ export function mount(host, app) {
     ed.appendChild(h('div', { class: 'fieldrow' }, h('label', null, 'Name'), h('div', { class: 'control' }, h('input', { class: 'input', value: b.name, 'aria-label': 'Block name', onChange: e => app.mutate(rec => { rec.scenarios.find(s => s.id === b.id).name = e.target.value.trim() || def.label; }, 'scenarios') }))));
     startInput = h('input', { class: 'input', value: startLabel(b), 'aria-label': 'Start year', title: 'A year, or a month and year such as Mar 2027', onChange: e => { const p = parseStart(e.target.value); if (p) app.mutate(rec => { const x = rec.scenarios.find(s => s.id === b.id); x.startYear = Math.min(yearN, Math.max(year0, p.startYear)); x.startMonth = p.startMonth; }, 'scenarios'); else { app.toast('A year, or a month and year such as Mar 2027.'); e.target.value = startLabel(cur(b.id)); } } });
     ed.appendChild(h('div', { class: 'fieldrow' }, h('label', null, 'Starts in'), h('div', { class: 'control' }, startInput)));
-    def.questions.forEach(qd => {
-      const show = v => qd.kind === 'money' ? F.dollarsWhole(v) : qd.kind === 'percent' ? F.percent(v) : String(v);
-      const v0 = b.answers[qd.id] !== undefined ? b.answers[qd.id] : qd.default;
-      const input = h('input', { class: 'input' + (qd.kind === 'text' ? '' : ' num'), value: show(v0), 'aria-label': qd.label, title: qd.hint || '' });
-      input.addEventListener('focus', () => { const v = cur(b.id).answers[qd.id]; input.value = qd.kind === 'money' ? String(v / 100) : qd.kind === 'percent' ? String(Math.round(v * 10000) / 100) : String(v); input.select(); });
-      input.addEventListener('change', e => { try { const p = parseTyped(qd.kind === 'int' ? 'int' : qd.kind, e.target.value); if (p && p.v !== null) app.mutate(rec => { rec.scenarios.find(s => s.id === b.id).answers[qd.id] = p.v; }, 'scenarios'); } catch (err) { app.toast(err.message); } });
-      input.addEventListener('blur', () => { input.value = show(cur(b.id).answers[qd.id]); });
-      ed.appendChild(h('div', { class: 'fieldrow' }, h('label', { title: qd.hint || '' }, qd.label), h('div', { class: 'control' }, input)));
-    });
+    def.questions.forEach(qd => ed.appendChild(h('div', { class: 'fieldrow' }, h('label', { title: qd.hint || '' }, qd.label), h('div', { class: 'control' }, questionField(app, b, qd)))));
     costLine = h('p', { class: 'hint', style: { marginTop: '8px' } });
     ed.appendChild(costLine);
     actionHost = h('div', { class: 'row', style: { marginTop: '8px' } });

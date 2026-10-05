@@ -17,7 +17,8 @@ test('every planet has an Other row type and at least one typed row type', () =>
   PLANETS.forEach(p => {
     assert.ok(fields.planets[p], p);
     assert.ok(fields.planets[p].types.other, p + ' has Other');
-    assert.ok(Object.keys(fields.planets[p].types).length >= 2, p);
+    /* a derived planet (Taxes) has no typed rows of its own: its numbers come from the others (MR-029) */
+    if (!fields.planets[p].derived) assert.ok(Object.keys(fields.planets[p].types).length >= 2, p);
   });
 });
 

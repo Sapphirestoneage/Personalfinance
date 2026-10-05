@@ -170,3 +170,9 @@ Decision: tokens.css remaps every colour role for a dark theme, applied when the
 Compatibility: settings gain an optional theme key; no record shape changes.
 Why: the owner asked for a dark mode; the totals row went stale between row additions because field edits never rebuilt the table.
 Alternative: a second stylesheet (two places to keep every colour).
+
+## MR-029 2026-10-05 Fewer facts, and the rest behind Details
+Decision: 32 fields nothing in the engine read were removed, and the Tax facts row type with them (the tax ladder replaces it); fields.json now carries 85 fields in 31 row types. Each row type names its tableFields: the table shows the name, the headline figure and at most three essentials, then State, Source and a Details button; every other fact, the institution, the as-of month, the flag, stress and notes live in a drawer opened from that button. Ask it opens the drawer when the fact lives there.
+Compatibility: removed fields stay on old rows as ignored keys; a stored taxes/note row is kept in the record but has no screen. tableFields is a data field, not a stored one.
+Why: the owner saw too many details and did not want to scroll sideways to reach a fact.
+Alternative: hide columns behind a toggle (keeps the width problem and every question).

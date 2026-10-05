@@ -155,7 +155,7 @@ function mountTable(host, app, planet, typeId) {
     }
   }
   note();
-  return { update(reason) { note(); inferred(); soon.update(); if (reason === 'rows') table.render(); else table.refreshTotals(); }, addRow: () => table.addRow() };
+  return { update(reason) { note(); inferred(); soon.update(); if (reason === 'rows') table.render(); else table.refreshTotals(); }, addRow: () => table.addRow(), openDetails: (id, col) => table.openDetails(id, col) };
 }
 
 function extraActions(app, planet, typeId) {

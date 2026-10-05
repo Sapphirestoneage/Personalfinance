@@ -165,7 +165,7 @@ export const app = {
       this.mounted = def.mount(main, this);
     }
     this.renderNav();
-    if (this.focusAfterRender) { const f = this.focusAfterRender; this.focusAfterRender = null; const el = main.querySelector('tr[data-row="' + f.rowId + '"] [data-col="' + f.field + '"], .fieldrow[data-field="' + f.field + '"] .control input, .fieldrow[data-field="' + f.field + '"] .control select'); if (el) { el.focus(); if (el.scrollIntoView) el.scrollIntoView({ block: 'center' }); } }
+    if (this.focusAfterRender) { const f = this.focusAfterRender; this.focusAfterRender = null; const el = main.querySelector('tr[data-row="' + f.rowId + '"] [data-col="' + f.field + '"], .fieldrow[data-field="' + f.field + '"] .control input, .fieldrow[data-field="' + f.field + '"] .control select'); if (el) { el.focus(); if (el.scrollIntoView) el.scrollIntoView({ block: 'center' }); } else if (this.mounted && this.mounted.openDetails) this.mounted.openDetails(f.rowId, f.field); }
     document.title = (def.title || 'Home') + (this.record ? ' - ' + (clientName(this.record) || 'Client') : '') + ' - Money Rooms';
     window.scrollTo(0, 0);
   },
@@ -205,9 +205,12 @@ export const app = {
     overlay.appendChild(t);
     setTimeout(() => { if (t.parentNode) t.remove(); }, opts && opts.ms ? opts.ms : 4000);
   },
-  openDrawer(node) {
+  openDrawer(node, opts) {
     closeOverlay();
-    const d = h('aside', { class: 'drawer', role: 'dialog', 'aria-label': 'Details' },
+    const o = opts || {};
+    const before = document.activeElement;
+    overlayOnClose = () => { if (o.onClose) o.onClose(); else if (before && before.isConnected && before.focus) before.focus(); };
+    const d = h('aside', { class: 'drawer', role: 'dialog', 'aria-label': o.label || 'Details' },
       h('div', { class: 'row', style: { justifyContent: 'flex-end' } }, h('button', { class: 'btn small', onClick: closeOverlay }, 'Close')),
       node);
     qs('#overlay').appendChild(d);
@@ -257,7 +260,13 @@ const SHORTCUTS = [
 
 export function clientName(rec) { return rec && rec.sun && rec.sun.f.name ? (rec.sun.f.name.v || '') : ''; }
 
-export function closeOverlay() { clear(qs('#overlay')); }
+let overlayOnClose = null;
+export function closeOverlay() {
+  const had = qs('#overlay').firstChild;
+  clear(qs('#overlay'));
+  const fn = overlayOnClose; overlayOnClose = null;
+  if (had && fn) fn();
+}
 
 function inInput(e) {
   const t = e.target;

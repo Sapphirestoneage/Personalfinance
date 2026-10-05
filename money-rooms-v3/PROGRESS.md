@@ -19,7 +19,7 @@ Updated: 2026-10-05
   with show-the-math; 19 lenses; 8 D3 charts; Coach/Client glossary; one-pager that prints to one
   page; Jordan, Dev and Maya tie out to independent workpapers; invariants on 200 random households;
   Maya demo with two sessions and scenarios; Load demo client.
-- Level 1 Capture: data/fields.json (117 fields, 32 row types, one owner each), the Ledger
+- Level 1 Capture: data/fields.json (85 fields after MR-029, 31 row types, one owner each), the Ledger
   table (inline editing, typed prefixes, sort, filters, keyboard flow, field bar, card and
   fund prefill, credits drawer), summary-or-detail, situation gate, national-average defaults,
   the orbit map on Home and per planet (MR-010), Jordan built through the record API and

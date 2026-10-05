@@ -12,7 +12,7 @@ const usStates = JSON.parse(fs.readFileSync(new URL('../data/us-states.json', im
 async function active(page) {
   return page.evaluate(() => {
     const a = document.activeElement; if (!a) return null;
-    const tr = a.closest('tr');
+    const tr = a.closest('[data-row]');
     return { tag: a.tagName, col: a.dataset.col || null, aria: a.getAttribute('aria-label'), row: tr ? tr.dataset.row : null, field: a.closest('.fieldrow') ? a.closest('.fieldrow').dataset.field : null, id: a.id || null, dataId: a.getAttribute('data-id') };
   });
 }
@@ -104,12 +104,16 @@ export async function enterHousehold(page, spec, check) {
       await press('Tab');
       /* fields in table order: primary, per, state, source, institution, rest */
       const prim = tdef.fields.find(f => fields.fields[f].primary) || tdef.fields.find(f => fields.fields[f].kind === 'money') || tdef.fields[0];
-      const order = [prim, 'institution'].concat(tdef.fields.filter(f => f !== prim));
+      const inTable = [prim].concat(tdef.tableFields || []);
+      const order = inTable.concat(['institution']).concat(tdef.fields.filter(f => !inTable.includes(f)));
+      /* facts outside the table live behind the row's Details button (MR-029) */
+      const details = async () => { if (await page.$('.drawer .row-details[data-row="' + rowId + '"]')) return; await tabTo(page, a => a.row === rowId && a.col === 'details', 200); await press('Enter'); await page.waitForSelector('.drawer .row-details'); };
       for (const fid of order) {
         if (fid === 'institution') {
-          if (r.institution) { await tabTo(page, a => a.row === rowId && a.col === 'institution'); await type(r.institution); await press('Tab'); }
+          if (r.institution) { await details(); await tabTo(page, a => a.row === rowId && a.col === 'institution'); await type(r.institution); await press('Tab'); }
           continue;
         }
+        if (!inTable.includes(fid) && r.f && r.f[fid] !== undefined) await details();
         const d = fields.fields[fid];
         const sp = r.f && r.f[fid];
         if (sp === undefined) continue;
@@ -150,11 +154,12 @@ export async function enterHousehold(page, spec, check) {
           await press(source === 'estimated' ? 'e' : source === 'lookup-verify' ? 'y' : source === 'lookup-confirmed' ? 'l' : 'c');
         }
       }
-      if (r.asOf) { await tabTo(page, a => a.row === rowId && a.col === 'asOf'); await type(r.asOf); await press('Tab'); }
-      if (r.stress !== undefined && r.stress !== null) { await tabTo(page, a => a.row === rowId && a.col === 'stress'); await type(String(r.stress)); }
+      if (r.asOf) { await details(); await tabTo(page, a => a.row === rowId && a.col === 'asOf'); await type(r.asOf); await press('Tab'); }
+      if (r.stress !== undefined && r.stress !== null) { await details(); await tabTo(page, a => a.row === rowId && a.col === 'stress'); await type(String(r.stress)); }
       /* credits drawer */
       const creditsField = tdef.fields.find(f => fields.fields[f].kind === 'credits');
       if (creditsField && r.f[creditsField] && Array.isArray(r.f[creditsField]) && r.f[creditsField][0] && typeof r.f[creditsField][0] === 'object') {
+        await details();
         await tabTo(page, a => a.row === rowId && a.col === creditsField);
         await press('Enter');
         await page.waitForSelector('.drawer select');
@@ -162,10 +167,12 @@ export async function enterHousehold(page, spec, check) {
         for (const n of names) { await tabTo(page, a => a.aria === 'Uses ' + n, 40); const want = ['no', 'partly', 'yes'].indexOf(r.f[creditsField][0][n]); for (let i = 0; i < want; i++) await press('ArrowDown'); }
         await press('Escape');
         /* confirming the prefilled list makes it the client's known answer */
+        await details();
         await tabTo(page, a => a.row === rowId && a.col === creditsField, 200);
         await press('Alt+s'); await press(r.f[creditsField][1] === 'known' ? 'k' : 'r');
         await press('Alt+o'); await press('c');
       }
+      if (await page.$('.drawer')) { await press('Escape'); await page.waitForTimeout(50); }
     }
   }
   await page.waitForTimeout(600);

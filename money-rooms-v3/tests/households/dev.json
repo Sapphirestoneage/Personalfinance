@@ -1,11 +1,11 @@
 {
  "app": "money-rooms-v3",
- "exportedAt": "2026-09-18T17:32:26.000Z",
+ "exportedAt": "2026-09-18T17:25:12.000Z",
  "record": {
   "schemaVersion": 2,
   "id": "dev",
   "createdAt": "2026-09-18T17:00:00.000Z",
-  "updatedAt": "2026-09-18T17:32:26.000Z",
+  "updatedAt": "2026-09-18T17:25:12.000Z",
   "sun": {
    "f": {
     "name": {
@@ -101,12 +101,6 @@
         "source": "client",
         "cad": "month"
        },
-       "quarterlyTaxPaid": {
-        "v": 1680000,
-        "state": "known",
-        "source": "client",
-        "cad": "year"
-       },
        "hsaPayroll": {
         "v": null,
         "state": "not-applicable",
@@ -174,22 +168,12 @@
         "state": "known",
         "source": "client"
        },
-       "shared": {
-        "v": "no",
-        "state": "known",
-        "source": "client"
-       },
        "fatFloor": {
         "v": true,
         "state": "known",
         "source": "client"
        },
        "primaryCard": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "linkedIncome": {
         "v": null,
         "state": "not-applicable",
         "source": "client"
@@ -230,11 +214,6 @@
         "state": "known",
         "source": "client"
        },
-       "shared": {
-        "v": "no",
-        "state": "known",
-        "source": "client"
-       },
        "fatFloor": {
         "v": true,
         "state": "known",
@@ -243,11 +222,6 @@
        "primaryCard": {
         "v": "Double Cash",
         "state": "known",
-        "source": "client"
-       },
-       "linkedIncome": {
-        "v": null,
-        "state": "not-applicable",
         "source": "client"
        }
       }
@@ -286,11 +260,6 @@
         "state": "known",
         "source": "client"
        },
-       "shared": {
-        "v": "no",
-        "state": "known",
-        "source": "client"
-       },
        "fatFloor": {
         "v": true,
         "state": "known",
@@ -299,11 +268,6 @@
        "primaryCard": {
         "v": "Double Cash",
         "state": "known",
-        "source": "client"
-       },
-       "linkedIncome": {
-        "v": null,
-        "state": "not-applicable",
         "source": "client"
        }
       }
@@ -342,11 +306,6 @@
         "state": "known",
         "source": "client"
        },
-       "shared": {
-        "v": "no",
-        "state": "known",
-        "source": "client"
-       },
        "fatFloor": {
         "v": false,
         "state": "known",
@@ -355,11 +314,6 @@
        "primaryCard": {
         "v": "Double Cash",
         "state": "known",
-        "source": "client"
-       },
-       "linkedIncome": {
-        "v": null,
-        "state": "not-applicable",
         "source": "client"
        }
       }
@@ -398,11 +352,6 @@
         "state": "known",
         "source": "client"
        },
-       "shared": {
-        "v": "no",
-        "state": "known",
-        "source": "client"
-       },
        "fatFloor": {
         "v": true,
         "state": "known",
@@ -411,11 +360,6 @@
        "primaryCard": {
         "v": "Double Cash",
         "state": "known",
-        "source": "client"
-       },
-       "linkedIncome": {
-        "v": null,
-        "state": "not-applicable",
         "source": "client"
        }
       }
@@ -454,11 +398,6 @@
         "state": "known",
         "source": "client"
        },
-       "shared": {
-        "v": "no",
-        "state": "known",
-        "source": "client"
-       },
        "fatFloor": {
         "v": true,
         "state": "known",
@@ -467,11 +406,6 @@
        "primaryCard": {
         "v": "Double Cash",
         "state": "known",
-        "source": "client"
-       },
-       "linkedIncome": {
-        "v": null,
-        "state": "not-applicable",
         "source": "client"
        }
       }
@@ -510,11 +444,6 @@
         "state": "known",
         "source": "client"
        },
-       "shared": {
-        "v": "no",
-        "state": "known",
-        "source": "client"
-       },
        "fatFloor": {
         "v": false,
         "state": "known",
@@ -523,11 +452,6 @@
        "primaryCard": {
         "v": "Double Cash",
         "state": "known",
-        "source": "client"
-       },
-       "linkedIncome": {
-        "v": null,
-        "state": "not-applicable",
         "source": "client"
        }
       }
@@ -566,11 +490,6 @@
         "state": "known",
         "source": "client"
        },
-       "shared": {
-        "v": "reimbursed",
-        "state": "known",
-        "source": "client"
-       },
        "fatFloor": {
         "v": false,
         "state": "known",
@@ -578,11 +497,6 @@
        },
        "primaryCard": {
         "v": "Double Cash",
-        "state": "known",
-        "source": "client"
-       },
-       "linkedIncome": {
-        "v": "Design consulting",
         "state": "known",
         "source": "client"
        }
@@ -622,11 +536,6 @@
         "state": "known",
         "source": "client"
        },
-       "shared": {
-        "v": "no",
-        "state": "known",
-        "source": "client"
-       },
        "fatFloor": {
         "v": false,
         "state": "known",
@@ -635,11 +544,6 @@
        "primaryCard": {
         "v": "Double Cash",
         "state": "known",
-        "source": "client"
-       },
-       "linkedIncome": {
-        "v": null,
-        "state": "not-applicable",
         "source": "client"
        }
       }
@@ -678,11 +582,6 @@
         "state": "known",
         "source": "client"
        },
-       "shared": {
-        "v": "no",
-        "state": "known",
-        "source": "client"
-       },
        "fatFloor": {
         "v": false,
         "state": "known",
@@ -691,11 +590,6 @@
        "primaryCard": {
         "v": "Double Cash",
         "state": "known",
-        "source": "client"
-       },
-       "linkedIncome": {
-        "v": null,
-        "state": "not-applicable",
         "source": "client"
        }
       }
@@ -734,11 +628,6 @@
         "state": "known",
         "source": "client"
        },
-       "shared": {
-        "v": "no",
-        "state": "known",
-        "source": "client"
-       },
        "fatFloor": {
         "v": false,
         "state": "known",
@@ -747,11 +636,6 @@
        "primaryCard": {
         "v": "Double Cash",
         "state": "known",
-        "source": "client"
-       },
-       "linkedIncome": {
-        "v": null,
-        "state": "not-applicable",
         "source": "client"
        }
       }
@@ -790,11 +674,6 @@
         "state": "known",
         "source": "client"
        },
-       "shared": {
-        "v": "no",
-        "state": "known",
-        "source": "client"
-       },
        "fatFloor": {
         "v": false,
         "state": "known",
@@ -803,11 +682,6 @@
        "primaryCard": {
         "v": "Double Cash",
         "state": "known",
-        "source": "client"
-       },
-       "linkedIncome": {
-        "v": null,
-        "state": "not-applicable",
         "source": "client"
        }
       }
@@ -846,11 +720,6 @@
         "state": "known",
         "source": "client"
        },
-       "shared": {
-        "v": "no",
-        "state": "known",
-        "source": "client"
-       },
        "fatFloor": {
         "v": false,
         "state": "known",
@@ -859,11 +728,6 @@
        "primaryCard": {
         "v": "Double Cash",
         "state": "known",
-        "source": "client"
-       },
-       "linkedIncome": {
-        "v": null,
-        "state": "not-applicable",
         "source": "client"
        }
       }
@@ -902,22 +766,12 @@
         "state": "known",
         "source": "client"
        },
-       "shared": {
-        "v": "no",
-        "state": "known",
-        "source": "client"
-       },
        "fatFloor": {
         "v": false,
         "state": "known",
         "source": "client"
        },
        "primaryCard": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "linkedIncome": {
         "v": null,
         "state": "not-applicable",
         "source": "client"
@@ -937,11 +791,6 @@
       "notesShared": "",
       "lib": null,
       "f": {
-       "savingsDestination": {
-        "v": "Taxable brokerage, HSA, Solo 401k",
-        "state": "known",
-        "source": "client"
-       },
        "savingsLanding": {
         "v": 120000,
         "state": "known",
@@ -987,11 +836,6 @@
         "v": 51,
         "state": "known",
         "source": "client"
-       },
-       "vehicleValue": {
-        "v": 1750000,
-        "state": "known",
-        "source": "lookup-confirmed"
        }
       }
      },
@@ -1033,16 +877,6 @@
         "state": "not-applicable",
         "source": "client"
        },
-       "promoType": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "btFee": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
        "minimum": {
         "v": 0,
         "state": "none",
@@ -1051,11 +885,6 @@
        },
        "creditLimit": {
         "v": 800000,
-        "state": "known",
-        "source": "client"
-       },
-       "dueDay": {
-        "v": 21,
         "state": "known",
         "source": "client"
        },
@@ -1159,11 +988,6 @@
         "v": null,
         "state": "not-applicable",
         "source": "lookup-verify"
-       },
-       "unemploymentWeeks": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "lookup-verify"
        }
       }
      },
@@ -1221,16 +1045,6 @@
         "source": "client",
         "cad": "month"
        },
-       "contribPct": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "ytdContrib": {
-        "v": 270000,
-        "state": "known",
-        "source": "client"
-       },
        "allocStocks": {
         "v": 1,
         "state": "known",
@@ -1254,16 +1068,6 @@
        "usShare": {
         "v": 1,
         "state": "known",
-        "source": "client"
-       },
-       "targetYear": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "costBasis": {
-        "v": null,
-        "state": "not-applicable",
         "source": "client"
        },
        "beneficiary": {
@@ -1302,16 +1106,6 @@
         "source": "client",
         "cad": "month"
        },
-       "contribPct": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "ytdContrib": {
-        "v": 450000,
-        "state": "known",
-        "source": "client"
-       },
        "allocStocks": {
         "v": 0.9,
         "state": "known",
@@ -1335,16 +1129,6 @@
        "usShare": {
         "v": 0.75,
         "state": "known",
-        "source": "client"
-       },
-       "targetYear": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "costBasis": {
-        "v": null,
-        "state": "not-applicable",
         "source": "client"
        },
        "beneficiary": {
@@ -1383,16 +1167,6 @@
         "source": "client",
         "cad": "month"
        },
-       "contribPct": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "ytdContrib": {
-        "v": 360000,
-        "state": "known",
-        "source": "client"
-       },
        "allocStocks": {
         "v": 1,
         "state": "known",
@@ -1415,16 +1189,6 @@
        },
        "usShare": {
         "v": 0.95,
-        "state": "known",
-        "source": "client"
-       },
-       "targetYear": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "costBasis": {
-        "v": 1980000,
         "state": "known",
         "source": "client"
        },
@@ -1464,16 +1228,6 @@
         "source": "client",
         "cad": "month"
        },
-       "contribPct": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "ytdContrib": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
        "allocStocks": {
         "v": 0,
         "state": "none",
@@ -1495,16 +1249,6 @@
         "source": "client"
        },
        "usShare": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "targetYear": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "costBasis": {
         "v": null,
         "state": "not-applicable",
         "source": "client"
@@ -1545,16 +1289,6 @@
         "source": "client",
         "cad": "month"
        },
-       "contribPct": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "ytdContrib": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
        "allocStocks": {
         "v": 0,
         "state": "none",
@@ -1576,16 +1310,6 @@
         "source": "client"
        },
        "usShare": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "targetYear": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "costBasis": {
         "v": null,
         "state": "not-applicable",
         "source": "client"
@@ -1615,11 +1339,6 @@
         "state": "known",
         "source": "client"
        },
-       "ticker": {
-        "v": "ARKK",
-        "state": "known",
-        "source": "client"
-       },
        "fundName": {
         "v": "ARK Innovation ETF",
         "state": "known",
@@ -1627,11 +1346,6 @@
        },
        "expenseRatio": {
         "v": 0.0075,
-        "state": "known",
-        "source": "lookup-verify"
-       },
-       "assetClass": {
-        "v": "us-stock",
         "state": "known",
         "source": "lookup-verify"
        },
@@ -1660,11 +1374,6 @@
         "state": "known",
         "source": "client"
        },
-       "ticker": {
-        "v": "VTI",
-        "state": "known",
-        "source": "client"
-       },
        "fundName": {
         "v": "Vanguard Total Stock Market ETF",
         "state": "known",
@@ -1672,11 +1381,6 @@
        },
        "expenseRatio": {
         "v": 0.0003,
-        "state": "known",
-        "source": "lookup-verify"
-       },
-       "assetClass": {
-        "v": "us-stock",
         "state": "known",
         "source": "lookup-verify"
        },
@@ -1690,33 +1394,7 @@
     ]
    },
    "taxes": {
-    "rows": [
-     {
-      "id": "d-tax",
-      "planet": "taxes",
-      "type": "note",
-      "nickname": "Last return",
-      "institution": "IRS",
-      "asOf": null,
-      "followUp": false,
-      "stress": null,
-      "notesPrivate": "",
-      "notesShared": "",
-      "lib": null,
-      "f": {
-       "lastRefund": {
-        "v": -210000,
-        "state": "known",
-        "source": "client"
-       },
-       "taxNote": {
-        "v": "Owed at filing; quarterlies may be light",
-        "state": "known",
-        "source": "client"
-       }
-      }
-     }
-    ]
+    "rows": []
    },
    "life": {
     "rows": [
@@ -2015,12 +1693,6 @@
        "source": "client",
        "cad": "month"
       },
-      "quarterlyTaxPaid": {
-       "v": null,
-       "state": "unknown",
-       "source": "client",
-       "cad": "year"
-      },
       "hsaPayroll": {
        "v": null,
        "state": "unknown",
@@ -2135,30 +1807,6 @@
     "kind": "set",
     "planet": "income",
     "rowId": "d-1099",
-    "field": "quarterlyTaxPaid",
-    "owner": "income",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client",
-     "cad": "year"
-    },
-    "new": {
-     "v": 1680000,
-     "state": "known",
-     "source": "client",
-     "cad": "year"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 14,
-    "ts": "2026-09-18T17:01:52.000Z",
-    "kind": "set",
-    "planet": "income",
-    "rowId": "d-1099",
     "field": "hsaPayroll",
     "owner": "income",
     "old": {
@@ -2178,8 +1826,8 @@
     "session": "s1"
    },
    {
-    "seq": 15,
-    "ts": "2026-09-18T17:01:59.000Z",
+    "seq": 14,
+    "ts": "2026-09-18T17:01:52.000Z",
     "kind": "set",
     "planet": "income",
     "rowId": "d-1099",
@@ -2200,8 +1848,8 @@
     "session": "s1"
    },
    {
-    "seq": 16,
-    "ts": "2026-09-18T17:02:06.000Z",
+    "seq": 15,
+    "ts": "2026-09-18T17:01:59.000Z",
     "kind": "set",
     "planet": "income",
     "rowId": "d-1099",
@@ -2222,8 +1870,8 @@
     "session": "s1"
    },
    {
-    "seq": 17,
-    "ts": "2026-09-18T17:02:13.000Z",
+    "seq": 16,
+    "ts": "2026-09-18T17:02:06.000Z",
     "kind": "set",
     "planet": "income",
     "rowId": "d-1099",
@@ -2244,8 +1892,8 @@
     "session": "s1"
    },
    {
-    "seq": 18,
-    "ts": "2026-09-18T17:02:20.000Z",
+    "seq": 17,
+    "ts": "2026-09-18T17:02:13.000Z",
     "kind": "set",
     "planet": "income",
     "rowId": "d-1099",
@@ -2268,8 +1916,8 @@
     "session": "s1"
    },
    {
-    "seq": 19,
-    "ts": "2026-09-18T17:02:27.000Z",
+    "seq": 18,
+    "ts": "2026-09-18T17:02:20.000Z",
     "kind": "add-row",
     "planet": "spending",
     "rowId": "d-rent",
@@ -2310,22 +1958,12 @@
        "state": "known",
        "source": "client"
       },
-      "shared": {
-       "v": "no",
-       "state": "known",
-       "source": "client"
-      },
       "fatFloor": {
        "v": null,
        "state": "unknown",
        "source": "client"
       },
       "primaryCard": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "linkedIncome": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -2337,8 +1975,8 @@
     "session": "s1"
    },
    {
-    "seq": 20,
-    "ts": "2026-09-18T17:02:34.000Z",
+    "seq": 19,
+    "ts": "2026-09-18T17:02:27.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-rent",
@@ -2359,8 +1997,8 @@
     "session": "s1"
    },
    {
-    "seq": 21,
-    "ts": "2026-09-18T17:02:41.000Z",
+    "seq": 20,
+    "ts": "2026-09-18T17:02:34.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-rent",
@@ -2383,8 +2021,8 @@
     "session": "s1"
    },
    {
-    "seq": 22,
-    "ts": "2026-09-18T17:03:09.000Z",
+    "seq": 21,
+    "ts": "2026-09-18T17:02:55.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-rent",
@@ -2405,8 +2043,8 @@
     "session": "s1"
    },
    {
-    "seq": 23,
-    "ts": "2026-09-18T17:03:16.000Z",
+    "seq": 22,
+    "ts": "2026-09-18T17:03:02.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-rent",
@@ -2427,30 +2065,8 @@
     "session": "s1"
    },
    {
-    "seq": 24,
-    "ts": "2026-09-18T17:03:23.000Z",
-    "kind": "set",
-    "planet": "spending",
-    "rowId": "d-rent",
-    "field": "linkedIncome",
-    "owner": "spending",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 25,
-    "ts": "2026-09-18T17:03:30.000Z",
+    "seq": 23,
+    "ts": "2026-09-18T17:03:09.000Z",
     "kind": "add-row",
     "planet": "spending",
     "rowId": "d-util",
@@ -2491,22 +2107,12 @@
        "state": "known",
        "source": "client"
       },
-      "shared": {
-       "v": "no",
-       "state": "known",
-       "source": "client"
-      },
       "fatFloor": {
        "v": null,
        "state": "unknown",
        "source": "client"
       },
       "primaryCard": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "linkedIncome": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -2518,8 +2124,8 @@
     "session": "s1"
    },
    {
-    "seq": 26,
-    "ts": "2026-09-18T17:03:37.000Z",
+    "seq": 24,
+    "ts": "2026-09-18T17:03:16.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-util",
@@ -2540,8 +2146,8 @@
     "session": "s1"
    },
    {
-    "seq": 27,
-    "ts": "2026-09-18T17:03:44.000Z",
+    "seq": 25,
+    "ts": "2026-09-18T17:03:23.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-util",
@@ -2564,8 +2170,8 @@
     "session": "s1"
    },
    {
-    "seq": 28,
-    "ts": "2026-09-18T17:04:12.000Z",
+    "seq": 26,
+    "ts": "2026-09-18T17:03:44.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-util",
@@ -2586,8 +2192,8 @@
     "session": "s1"
    },
    {
-    "seq": 29,
-    "ts": "2026-09-18T17:04:19.000Z",
+    "seq": 27,
+    "ts": "2026-09-18T17:03:51.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-util",
@@ -2608,30 +2214,8 @@
     "session": "s1"
    },
    {
-    "seq": 30,
-    "ts": "2026-09-18T17:04:26.000Z",
-    "kind": "set",
-    "planet": "spending",
-    "rowId": "d-util",
-    "field": "linkedIncome",
-    "owner": "spending",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 31,
-    "ts": "2026-09-18T17:04:33.000Z",
+    "seq": 28,
+    "ts": "2026-09-18T17:03:58.000Z",
     "kind": "add-row",
     "planet": "spending",
     "rowId": "d-groc",
@@ -2672,22 +2256,12 @@
        "state": "known",
        "source": "client"
       },
-      "shared": {
-       "v": "no",
-       "state": "known",
-       "source": "client"
-      },
       "fatFloor": {
        "v": null,
        "state": "unknown",
        "source": "client"
       },
       "primaryCard": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "linkedIncome": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -2699,8 +2273,8 @@
     "session": "s1"
    },
    {
-    "seq": 32,
-    "ts": "2026-09-18T17:04:40.000Z",
+    "seq": 29,
+    "ts": "2026-09-18T17:04:05.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-groc",
@@ -2721,8 +2295,8 @@
     "session": "s1"
    },
    {
-    "seq": 33,
-    "ts": "2026-09-18T17:04:47.000Z",
+    "seq": 30,
+    "ts": "2026-09-18T17:04:12.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-groc",
@@ -2745,8 +2319,8 @@
     "session": "s1"
    },
    {
-    "seq": 34,
-    "ts": "2026-09-18T17:05:15.000Z",
+    "seq": 31,
+    "ts": "2026-09-18T17:04:33.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-groc",
@@ -2767,8 +2341,8 @@
     "session": "s1"
    },
    {
-    "seq": 35,
-    "ts": "2026-09-18T17:05:22.000Z",
+    "seq": 32,
+    "ts": "2026-09-18T17:04:40.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-groc",
@@ -2789,30 +2363,8 @@
     "session": "s1"
    },
    {
-    "seq": 36,
-    "ts": "2026-09-18T17:05:29.000Z",
-    "kind": "set",
-    "planet": "spending",
-    "rowId": "d-groc",
-    "field": "linkedIncome",
-    "owner": "spending",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 37,
-    "ts": "2026-09-18T17:05:36.000Z",
+    "seq": 33,
+    "ts": "2026-09-18T17:04:47.000Z",
     "kind": "add-row",
     "planet": "spending",
     "rowId": "d-rest",
@@ -2853,22 +2405,12 @@
        "state": "known",
        "source": "client"
       },
-      "shared": {
-       "v": "no",
-       "state": "known",
-       "source": "client"
-      },
       "fatFloor": {
        "v": null,
        "state": "unknown",
        "source": "client"
       },
       "primaryCard": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "linkedIncome": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -2880,8 +2422,8 @@
     "session": "s1"
    },
    {
-    "seq": 38,
-    "ts": "2026-09-18T17:05:43.000Z",
+    "seq": 34,
+    "ts": "2026-09-18T17:04:54.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-rest",
@@ -2902,8 +2444,8 @@
     "session": "s1"
    },
    {
-    "seq": 39,
-    "ts": "2026-09-18T17:05:50.000Z",
+    "seq": 35,
+    "ts": "2026-09-18T17:05:01.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-rest",
@@ -2926,8 +2468,8 @@
     "session": "s1"
    },
    {
-    "seq": 40,
-    "ts": "2026-09-18T17:05:57.000Z",
+    "seq": 36,
+    "ts": "2026-09-18T17:05:08.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-rest",
@@ -2948,8 +2490,8 @@
     "session": "s1"
    },
    {
-    "seq": 41,
-    "ts": "2026-09-18T17:06:18.000Z",
+    "seq": 37,
+    "ts": "2026-09-18T17:05:22.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-rest",
@@ -2970,8 +2512,8 @@
     "session": "s1"
    },
    {
-    "seq": 42,
-    "ts": "2026-09-18T17:06:25.000Z",
+    "seq": 38,
+    "ts": "2026-09-18T17:05:29.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-rest",
@@ -2992,30 +2534,8 @@
     "session": "s1"
    },
    {
-    "seq": 43,
-    "ts": "2026-09-18T17:06:32.000Z",
-    "kind": "set",
-    "planet": "spending",
-    "rowId": "d-rest",
-    "field": "linkedIncome",
-    "owner": "spending",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 44,
-    "ts": "2026-09-18T17:06:39.000Z",
+    "seq": 39,
+    "ts": "2026-09-18T17:05:36.000Z",
     "kind": "add-row",
     "planet": "spending",
     "rowId": "d-gas",
@@ -3056,22 +2576,12 @@
        "state": "known",
        "source": "client"
       },
-      "shared": {
-       "v": "no",
-       "state": "known",
-       "source": "client"
-      },
       "fatFloor": {
        "v": null,
        "state": "unknown",
        "source": "client"
       },
       "primaryCard": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "linkedIncome": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -3083,8 +2593,8 @@
     "session": "s1"
    },
    {
-    "seq": 45,
-    "ts": "2026-09-18T17:06:46.000Z",
+    "seq": 40,
+    "ts": "2026-09-18T17:05:43.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-gas",
@@ -3105,8 +2615,8 @@
     "session": "s1"
    },
    {
-    "seq": 46,
-    "ts": "2026-09-18T17:06:53.000Z",
+    "seq": 41,
+    "ts": "2026-09-18T17:05:50.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-gas",
@@ -3129,8 +2639,8 @@
     "session": "s1"
    },
    {
-    "seq": 47,
-    "ts": "2026-09-18T17:07:21.000Z",
+    "seq": 42,
+    "ts": "2026-09-18T17:06:11.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-gas",
@@ -3151,8 +2661,8 @@
     "session": "s1"
    },
    {
-    "seq": 48,
-    "ts": "2026-09-18T17:07:28.000Z",
+    "seq": 43,
+    "ts": "2026-09-18T17:06:18.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-gas",
@@ -3173,30 +2683,8 @@
     "session": "s1"
    },
    {
-    "seq": 49,
-    "ts": "2026-09-18T17:07:35.000Z",
-    "kind": "set",
-    "planet": "spending",
-    "rowId": "d-gas",
-    "field": "linkedIncome",
-    "owner": "spending",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 50,
-    "ts": "2026-09-18T17:07:42.000Z",
+    "seq": 44,
+    "ts": "2026-09-18T17:06:25.000Z",
     "kind": "add-row",
     "planet": "spending",
     "rowId": "d-carins",
@@ -3237,22 +2725,12 @@
        "state": "known",
        "source": "client"
       },
-      "shared": {
-       "v": "no",
-       "state": "known",
-       "source": "client"
-      },
       "fatFloor": {
        "v": null,
        "state": "unknown",
        "source": "client"
       },
       "primaryCard": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "linkedIncome": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -3264,8 +2742,8 @@
     "session": "s1"
    },
    {
-    "seq": 51,
-    "ts": "2026-09-18T17:07:49.000Z",
+    "seq": 45,
+    "ts": "2026-09-18T17:06:32.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-carins",
@@ -3286,8 +2764,8 @@
     "session": "s1"
    },
    {
-    "seq": 52,
-    "ts": "2026-09-18T17:07:56.000Z",
+    "seq": 46,
+    "ts": "2026-09-18T17:06:39.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-carins",
@@ -3310,8 +2788,8 @@
     "session": "s1"
    },
    {
-    "seq": 53,
-    "ts": "2026-09-18T17:08:24.000Z",
+    "seq": 47,
+    "ts": "2026-09-18T17:07:00.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-carins",
@@ -3332,8 +2810,8 @@
     "session": "s1"
    },
    {
-    "seq": 54,
-    "ts": "2026-09-18T17:08:31.000Z",
+    "seq": 48,
+    "ts": "2026-09-18T17:07:07.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-carins",
@@ -3354,30 +2832,8 @@
     "session": "s1"
    },
    {
-    "seq": 55,
-    "ts": "2026-09-18T17:08:38.000Z",
-    "kind": "set",
-    "planet": "spending",
-    "rowId": "d-carins",
-    "field": "linkedIncome",
-    "owner": "spending",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 56,
-    "ts": "2026-09-18T17:08:45.000Z",
+    "seq": 49,
+    "ts": "2026-09-18T17:07:14.000Z",
     "kind": "add-row",
     "planet": "spending",
     "rowId": "d-phone",
@@ -3418,22 +2874,12 @@
        "state": "known",
        "source": "client"
       },
-      "shared": {
-       "v": "no",
-       "state": "known",
-       "source": "client"
-      },
       "fatFloor": {
        "v": null,
        "state": "unknown",
        "source": "client"
       },
       "primaryCard": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "linkedIncome": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -3445,8 +2891,8 @@
     "session": "s1"
    },
    {
-    "seq": 57,
-    "ts": "2026-09-18T17:08:52.000Z",
+    "seq": 50,
+    "ts": "2026-09-18T17:07:21.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-phone",
@@ -3467,8 +2913,8 @@
     "session": "s1"
    },
    {
-    "seq": 58,
-    "ts": "2026-09-18T17:08:59.000Z",
+    "seq": 51,
+    "ts": "2026-09-18T17:07:28.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-phone",
@@ -3491,8 +2937,8 @@
     "session": "s1"
    },
    {
-    "seq": 59,
-    "ts": "2026-09-18T17:09:27.000Z",
+    "seq": 52,
+    "ts": "2026-09-18T17:07:49.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-phone",
@@ -3513,8 +2959,8 @@
     "session": "s1"
    },
    {
-    "seq": 60,
-    "ts": "2026-09-18T17:09:34.000Z",
+    "seq": 53,
+    "ts": "2026-09-18T17:07:56.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-phone",
@@ -3535,30 +2981,8 @@
     "session": "s1"
    },
    {
-    "seq": 61,
-    "ts": "2026-09-18T17:09:41.000Z",
-    "kind": "set",
-    "planet": "spending",
-    "rowId": "d-phone",
-    "field": "linkedIncome",
-    "owner": "spending",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 62,
-    "ts": "2026-09-18T17:09:48.000Z",
+    "seq": 54,
+    "ts": "2026-09-18T17:08:03.000Z",
     "kind": "add-row",
     "planet": "spending",
     "rowId": "d-soft",
@@ -3599,22 +3023,12 @@
        "state": "known",
        "source": "client"
       },
-      "shared": {
-       "v": "no",
-       "state": "known",
-       "source": "client"
-      },
       "fatFloor": {
        "v": null,
        "state": "unknown",
        "source": "client"
       },
       "primaryCard": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "linkedIncome": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -3626,8 +3040,8 @@
     "session": "s1"
    },
    {
-    "seq": 63,
-    "ts": "2026-09-18T17:09:55.000Z",
+    "seq": 55,
+    "ts": "2026-09-18T17:08:10.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-soft",
@@ -3648,8 +3062,8 @@
     "session": "s1"
    },
    {
-    "seq": 64,
-    "ts": "2026-09-18T17:10:02.000Z",
+    "seq": 56,
+    "ts": "2026-09-18T17:08:17.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-soft",
@@ -3672,30 +3086,8 @@
     "session": "s1"
    },
    {
-    "seq": 65,
-    "ts": "2026-09-18T17:10:23.000Z",
-    "kind": "set",
-    "planet": "spending",
-    "rowId": "d-soft",
-    "field": "shared",
-    "owner": "spending",
-    "old": {
-     "v": "no",
-     "state": "known",
-     "source": "client"
-    },
-    "new": {
-     "v": "reimbursed",
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 66,
-    "ts": "2026-09-18T17:10:30.000Z",
+    "seq": 57,
+    "ts": "2026-09-18T17:08:38.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-soft",
@@ -3716,8 +3108,8 @@
     "session": "s1"
    },
    {
-    "seq": 67,
-    "ts": "2026-09-18T17:10:37.000Z",
+    "seq": 58,
+    "ts": "2026-09-18T17:08:45.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-soft",
@@ -3738,30 +3130,8 @@
     "session": "s1"
    },
    {
-    "seq": 68,
-    "ts": "2026-09-18T17:10:44.000Z",
-    "kind": "set",
-    "planet": "spending",
-    "rowId": "d-soft",
-    "field": "linkedIncome",
-    "owner": "spending",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": "Design consulting",
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 69,
-    "ts": "2026-09-18T17:10:51.000Z",
+    "seq": 59,
+    "ts": "2026-09-18T17:08:52.000Z",
     "kind": "add-row",
     "planet": "spending",
     "rowId": "d-gym",
@@ -3802,22 +3172,12 @@
        "state": "known",
        "source": "client"
       },
-      "shared": {
-       "v": "no",
-       "state": "known",
-       "source": "client"
-      },
       "fatFloor": {
        "v": null,
        "state": "unknown",
        "source": "client"
       },
       "primaryCard": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "linkedIncome": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -3829,8 +3189,8 @@
     "session": "s1"
    },
    {
-    "seq": 70,
-    "ts": "2026-09-18T17:10:58.000Z",
+    "seq": 60,
+    "ts": "2026-09-18T17:08:59.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-gym",
@@ -3851,8 +3211,8 @@
     "session": "s1"
    },
    {
-    "seq": 71,
-    "ts": "2026-09-18T17:11:05.000Z",
+    "seq": 61,
+    "ts": "2026-09-18T17:09:06.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-gym",
@@ -3875,8 +3235,8 @@
     "session": "s1"
    },
    {
-    "seq": 72,
-    "ts": "2026-09-18T17:11:12.000Z",
+    "seq": 62,
+    "ts": "2026-09-18T17:09:13.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-gym",
@@ -3897,8 +3257,8 @@
     "session": "s1"
    },
    {
-    "seq": 73,
-    "ts": "2026-09-18T17:11:33.000Z",
+    "seq": 63,
+    "ts": "2026-09-18T17:09:27.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-gym",
@@ -3919,8 +3279,8 @@
     "session": "s1"
    },
    {
-    "seq": 74,
-    "ts": "2026-09-18T17:11:40.000Z",
+    "seq": 64,
+    "ts": "2026-09-18T17:09:34.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-gym",
@@ -3941,30 +3301,8 @@
     "session": "s1"
    },
    {
-    "seq": 75,
-    "ts": "2026-09-18T17:11:47.000Z",
-    "kind": "set",
-    "planet": "spending",
-    "rowId": "d-gym",
-    "field": "linkedIncome",
-    "owner": "spending",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 76,
-    "ts": "2026-09-18T17:11:54.000Z",
+    "seq": 65,
+    "ts": "2026-09-18T17:09:41.000Z",
     "kind": "add-row",
     "planet": "spending",
     "rowId": "d-cloth",
@@ -4005,22 +3343,12 @@
        "state": "known",
        "source": "client"
       },
-      "shared": {
-       "v": "no",
-       "state": "known",
-       "source": "client"
-      },
       "fatFloor": {
        "v": null,
        "state": "unknown",
        "source": "client"
       },
       "primaryCard": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "linkedIncome": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -4032,8 +3360,8 @@
     "session": "s1"
    },
    {
-    "seq": 77,
-    "ts": "2026-09-18T17:12:01.000Z",
+    "seq": 66,
+    "ts": "2026-09-18T17:09:48.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-cloth",
@@ -4054,8 +3382,8 @@
     "session": "s1"
    },
    {
-    "seq": 78,
-    "ts": "2026-09-18T17:12:08.000Z",
+    "seq": 67,
+    "ts": "2026-09-18T17:09:55.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-cloth",
@@ -4078,8 +3406,8 @@
     "session": "s1"
    },
    {
-    "seq": 79,
-    "ts": "2026-09-18T17:12:15.000Z",
+    "seq": 68,
+    "ts": "2026-09-18T17:10:02.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-cloth",
@@ -4100,8 +3428,8 @@
     "session": "s1"
    },
    {
-    "seq": 80,
-    "ts": "2026-09-18T17:12:36.000Z",
+    "seq": 69,
+    "ts": "2026-09-18T17:10:16.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-cloth",
@@ -4122,8 +3450,8 @@
     "session": "s1"
    },
    {
-    "seq": 81,
-    "ts": "2026-09-18T17:12:43.000Z",
+    "seq": 70,
+    "ts": "2026-09-18T17:10:23.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-cloth",
@@ -4144,30 +3472,8 @@
     "session": "s1"
    },
    {
-    "seq": 82,
-    "ts": "2026-09-18T17:12:50.000Z",
-    "kind": "set",
-    "planet": "spending",
-    "rowId": "d-cloth",
-    "field": "linkedIncome",
-    "owner": "spending",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 83,
-    "ts": "2026-09-18T17:12:57.000Z",
+    "seq": 71,
+    "ts": "2026-09-18T17:10:30.000Z",
     "kind": "add-row",
     "planet": "spending",
     "rowId": "d-coffee",
@@ -4208,22 +3514,12 @@
        "state": "known",
        "source": "client"
       },
-      "shared": {
-       "v": "no",
-       "state": "known",
-       "source": "client"
-      },
       "fatFloor": {
        "v": null,
        "state": "unknown",
        "source": "client"
       },
       "primaryCard": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "linkedIncome": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -4235,8 +3531,8 @@
     "session": "s1"
    },
    {
-    "seq": 84,
-    "ts": "2026-09-18T17:13:04.000Z",
+    "seq": 72,
+    "ts": "2026-09-18T17:10:37.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-coffee",
@@ -4257,8 +3553,8 @@
     "session": "s1"
    },
    {
-    "seq": 85,
-    "ts": "2026-09-18T17:13:11.000Z",
+    "seq": 73,
+    "ts": "2026-09-18T17:10:44.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-coffee",
@@ -4281,8 +3577,8 @@
     "session": "s1"
    },
    {
-    "seq": 86,
-    "ts": "2026-09-18T17:13:18.000Z",
+    "seq": 74,
+    "ts": "2026-09-18T17:10:51.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-coffee",
@@ -4303,8 +3599,8 @@
     "session": "s1"
    },
    {
-    "seq": 87,
-    "ts": "2026-09-18T17:13:39.000Z",
+    "seq": 75,
+    "ts": "2026-09-18T17:11:05.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-coffee",
@@ -4325,8 +3621,8 @@
     "session": "s1"
    },
    {
-    "seq": 88,
-    "ts": "2026-09-18T17:13:46.000Z",
+    "seq": 76,
+    "ts": "2026-09-18T17:11:12.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-coffee",
@@ -4347,30 +3643,8 @@
     "session": "s1"
    },
    {
-    "seq": 89,
-    "ts": "2026-09-18T17:13:53.000Z",
-    "kind": "set",
-    "planet": "spending",
-    "rowId": "d-coffee",
-    "field": "linkedIncome",
-    "owner": "spending",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 90,
-    "ts": "2026-09-18T17:14:00.000Z",
+    "seq": 77,
+    "ts": "2026-09-18T17:11:19.000Z",
     "kind": "add-row",
     "planet": "spending",
     "rowId": "d-travel",
@@ -4411,22 +3685,12 @@
        "state": "known",
        "source": "client"
       },
-      "shared": {
-       "v": "no",
-       "state": "known",
-       "source": "client"
-      },
       "fatFloor": {
        "v": null,
        "state": "unknown",
        "source": "client"
       },
       "primaryCard": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "linkedIncome": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -4438,8 +3702,8 @@
     "session": "s1"
    },
    {
-    "seq": 91,
-    "ts": "2026-09-18T17:14:07.000Z",
+    "seq": 78,
+    "ts": "2026-09-18T17:11:26.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-travel",
@@ -4460,8 +3724,8 @@
     "session": "s1"
    },
    {
-    "seq": 92,
-    "ts": "2026-09-18T17:14:14.000Z",
+    "seq": 79,
+    "ts": "2026-09-18T17:11:33.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-travel",
@@ -4484,8 +3748,8 @@
     "session": "s1"
    },
    {
-    "seq": 93,
-    "ts": "2026-09-18T17:14:21.000Z",
+    "seq": 80,
+    "ts": "2026-09-18T17:11:40.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-travel",
@@ -4506,8 +3770,8 @@
     "session": "s1"
    },
    {
-    "seq": 94,
-    "ts": "2026-09-18T17:14:42.000Z",
+    "seq": 81,
+    "ts": "2026-09-18T17:11:54.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-travel",
@@ -4528,8 +3792,8 @@
     "session": "s1"
    },
    {
-    "seq": 95,
-    "ts": "2026-09-18T17:14:49.000Z",
+    "seq": 82,
+    "ts": "2026-09-18T17:12:01.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-travel",
@@ -4550,30 +3814,8 @@
     "session": "s1"
    },
    {
-    "seq": 96,
-    "ts": "2026-09-18T17:14:56.000Z",
-    "kind": "set",
-    "planet": "spending",
-    "rowId": "d-travel",
-    "field": "linkedIncome",
-    "owner": "spending",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 97,
-    "ts": "2026-09-18T17:15:03.000Z",
+    "seq": 83,
+    "ts": "2026-09-18T17:12:08.000Z",
     "kind": "add-row",
     "planet": "spending",
     "rowId": "d-gifts",
@@ -4614,22 +3856,12 @@
        "state": "known",
        "source": "client"
       },
-      "shared": {
-       "v": "no",
-       "state": "known",
-       "source": "client"
-      },
       "fatFloor": {
        "v": null,
        "state": "unknown",
        "source": "client"
       },
       "primaryCard": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "linkedIncome": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -4641,8 +3873,8 @@
     "session": "s1"
    },
    {
-    "seq": 98,
-    "ts": "2026-09-18T17:15:10.000Z",
+    "seq": 84,
+    "ts": "2026-09-18T17:12:15.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-gifts",
@@ -4663,8 +3895,8 @@
     "session": "s1"
    },
    {
-    "seq": 99,
-    "ts": "2026-09-18T17:15:17.000Z",
+    "seq": 85,
+    "ts": "2026-09-18T17:12:22.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-gifts",
@@ -4687,8 +3919,8 @@
     "session": "s1"
    },
    {
-    "seq": 100,
-    "ts": "2026-09-18T17:15:24.000Z",
+    "seq": 86,
+    "ts": "2026-09-18T17:12:29.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-gifts",
@@ -4709,8 +3941,8 @@
     "session": "s1"
    },
    {
-    "seq": 101,
-    "ts": "2026-09-18T17:15:45.000Z",
+    "seq": 87,
+    "ts": "2026-09-18T17:12:43.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-gifts",
@@ -4731,8 +3963,8 @@
     "session": "s1"
    },
    {
-    "seq": 102,
-    "ts": "2026-09-18T17:15:52.000Z",
+    "seq": 88,
+    "ts": "2026-09-18T17:12:50.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-gifts",
@@ -4753,30 +3985,8 @@
     "session": "s1"
    },
    {
-    "seq": 103,
-    "ts": "2026-09-18T17:15:59.000Z",
-    "kind": "set",
-    "planet": "spending",
-    "rowId": "d-gifts",
-    "field": "linkedIncome",
-    "owner": "spending",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 104,
-    "ts": "2026-09-18T17:16:06.000Z",
+    "seq": 89,
+    "ts": "2026-09-18T17:12:57.000Z",
     "kind": "add-row",
     "planet": "spending",
     "rowId": "d-late",
@@ -4817,22 +4027,12 @@
        "state": "known",
        "source": "client"
       },
-      "shared": {
-       "v": "no",
-       "state": "known",
-       "source": "client"
-      },
       "fatFloor": {
        "v": null,
        "state": "unknown",
        "source": "client"
       },
       "primaryCard": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "linkedIncome": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -4844,8 +4044,8 @@
     "session": "s1"
    },
    {
-    "seq": 105,
-    "ts": "2026-09-18T17:16:13.000Z",
+    "seq": 90,
+    "ts": "2026-09-18T17:13:04.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-late",
@@ -4866,8 +4066,8 @@
     "session": "s1"
    },
    {
-    "seq": 106,
-    "ts": "2026-09-18T17:16:20.000Z",
+    "seq": 91,
+    "ts": "2026-09-18T17:13:11.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-late",
@@ -4890,8 +4090,8 @@
     "session": "s1"
    },
    {
-    "seq": 107,
-    "ts": "2026-09-18T17:16:27.000Z",
+    "seq": 92,
+    "ts": "2026-09-18T17:13:18.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-late",
@@ -4912,8 +4112,8 @@
     "session": "s1"
    },
    {
-    "seq": 108,
-    "ts": "2026-09-18T17:16:34.000Z",
+    "seq": 93,
+    "ts": "2026-09-18T17:13:25.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-late",
@@ -4934,8 +4134,8 @@
     "session": "s1"
    },
    {
-    "seq": 109,
-    "ts": "2026-09-18T17:16:48.000Z",
+    "seq": 94,
+    "ts": "2026-09-18T17:13:32.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-late",
@@ -4956,8 +4156,8 @@
     "session": "s1"
    },
    {
-    "seq": 110,
-    "ts": "2026-09-18T17:16:55.000Z",
+    "seq": 95,
+    "ts": "2026-09-18T17:13:39.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-late",
@@ -4978,30 +4178,8 @@
     "session": "s1"
    },
    {
-    "seq": 111,
-    "ts": "2026-09-18T17:17:02.000Z",
-    "kind": "set",
-    "planet": "spending",
-    "rowId": "d-late",
-    "field": "linkedIncome",
-    "owner": "spending",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 112,
-    "ts": "2026-09-18T17:17:09.000Z",
+    "seq": 96,
+    "ts": "2026-09-18T17:13:46.000Z",
     "kind": "add-row",
     "planet": "spending",
     "rowId": "d-save",
@@ -5021,11 +4199,6 @@
      "notesShared": "",
      "lib": null,
      "f": {
-      "savingsDestination": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "savingsLanding": {
        "v": null,
        "state": "unknown",
@@ -5039,30 +4212,8 @@
     "session": "s1"
    },
    {
-    "seq": 113,
-    "ts": "2026-09-18T17:17:16.000Z",
-    "kind": "set",
-    "planet": "spending",
-    "rowId": "d-save",
-    "field": "savingsDestination",
-    "owner": "spending",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": "Taxable brokerage, HSA, Solo 401k",
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 114,
-    "ts": "2026-09-18T17:17:23.000Z",
+    "seq": 97,
+    "ts": "2026-09-18T17:13:53.000Z",
     "kind": "set",
     "planet": "spending",
     "rowId": "d-save",
@@ -5085,8 +4236,8 @@
     "session": "s1"
    },
    {
-    "seq": 115,
-    "ts": "2026-09-18T17:17:30.000Z",
+    "seq": 98,
+    "ts": "2026-09-18T17:14:00.000Z",
     "kind": "add-row",
     "planet": "debt",
     "rowId": "d-auto",
@@ -5126,11 +4277,6 @@
        "v": null,
        "state": "unknown",
        "source": "client"
-      },
-      "vehicleValue": {
-       "v": null,
-       "state": "unknown",
-       "source": "lookup-confirmed"
       }
      }
     },
@@ -5139,8 +4285,8 @@
     "session": "s1"
    },
    {
-    "seq": 116,
-    "ts": "2026-09-18T17:17:37.000Z",
+    "seq": 99,
+    "ts": "2026-09-18T17:14:07.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "d-auto",
@@ -5161,8 +4307,8 @@
     "session": "s1"
    },
    {
-    "seq": 117,
-    "ts": "2026-09-18T17:17:44.000Z",
+    "seq": 100,
+    "ts": "2026-09-18T17:14:14.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "d-auto",
@@ -5183,8 +4329,8 @@
     "session": "s1"
    },
    {
-    "seq": 118,
-    "ts": "2026-09-18T17:17:51.000Z",
+    "seq": 101,
+    "ts": "2026-09-18T17:14:21.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "d-auto",
@@ -5207,8 +4353,8 @@
     "session": "s1"
    },
    {
-    "seq": 119,
-    "ts": "2026-09-18T17:17:58.000Z",
+    "seq": 102,
+    "ts": "2026-09-18T17:14:28.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "d-auto",
@@ -5229,30 +4375,8 @@
     "session": "s1"
    },
    {
-    "seq": 120,
-    "ts": "2026-09-18T17:18:05.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "d-auto",
-    "field": "vehicleValue",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "lookup-confirmed"
-    },
-    "new": {
-     "v": 1750000,
-     "state": "known",
-     "source": "lookup-confirmed"
-    },
-    "source": "lookup-confirmed",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 121,
-    "ts": "2026-09-18T17:18:12.000Z",
+    "seq": 103,
+    "ts": "2026-09-18T17:14:35.000Z",
     "kind": "add-row",
     "planet": "debt",
     "rowId": "d-dc",
@@ -5297,16 +4421,6 @@
        "state": "unknown",
        "source": "client"
       },
-      "promoType": {
-       "v": "purchase",
-       "state": "known",
-       "source": "client"
-      },
-      "btFee": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "minimum": {
        "v": null,
        "state": "unknown",
@@ -5314,11 +4428,6 @@
        "cad": "month"
       },
       "creditLimit": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "dueDay": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -5345,8 +4454,8 @@
     "session": "s1"
    },
    {
-    "seq": 122,
-    "ts": "2026-09-18T17:18:19.000Z",
+    "seq": 104,
+    "ts": "2026-09-18T17:14:42.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "d-dc",
@@ -5367,8 +4476,8 @@
     "session": "s1"
    },
    {
-    "seq": 123,
-    "ts": "2026-09-18T17:18:26.000Z",
+    "seq": 105,
+    "ts": "2026-09-18T17:14:49.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "d-dc",
@@ -5389,8 +4498,8 @@
     "session": "s1"
    },
    {
-    "seq": 124,
-    "ts": "2026-09-18T17:18:33.000Z",
+    "seq": 106,
+    "ts": "2026-09-18T17:14:56.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "d-dc",
@@ -5411,8 +4520,8 @@
     "session": "s1"
    },
    {
-    "seq": 125,
-    "ts": "2026-09-18T17:18:40.000Z",
+    "seq": 107,
+    "ts": "2026-09-18T17:15:03.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "d-dc",
@@ -5433,8 +4542,8 @@
     "session": "s1"
    },
    {
-    "seq": 126,
-    "ts": "2026-09-18T17:18:47.000Z",
+    "seq": 108,
+    "ts": "2026-09-18T17:15:10.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "d-dc",
@@ -5455,52 +4564,8 @@
     "session": "s1"
    },
    {
-    "seq": 127,
-    "ts": "2026-09-18T17:18:54.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "d-dc",
-    "field": "promoType",
-    "owner": "debt",
-    "old": {
-     "v": "purchase",
-     "state": "known",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 128,
-    "ts": "2026-09-18T17:19:01.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "d-dc",
-    "field": "btFee",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 129,
-    "ts": "2026-09-18T17:19:08.000Z",
+    "seq": 109,
+    "ts": "2026-09-18T17:15:17.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "d-dc",
@@ -5523,8 +4588,8 @@
     "session": "s1"
    },
    {
-    "seq": 130,
-    "ts": "2026-09-18T17:19:15.000Z",
+    "seq": 110,
+    "ts": "2026-09-18T17:15:24.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "d-dc",
@@ -5545,30 +4610,8 @@
     "session": "s1"
    },
    {
-    "seq": 131,
-    "ts": "2026-09-18T17:19:22.000Z",
-    "kind": "set",
-    "planet": "debt",
-    "rowId": "d-dc",
-    "field": "dueDay",
-    "owner": "debt",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 21,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 132,
-    "ts": "2026-09-18T17:19:29.000Z",
+    "seq": 111,
+    "ts": "2026-09-18T17:15:31.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "d-dc",
@@ -5590,8 +4633,8 @@
     "session": "s1"
    },
    {
-    "seq": 133,
-    "ts": "2026-09-18T17:19:36.000Z",
+    "seq": 112,
+    "ts": "2026-09-18T17:15:38.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "d-dc",
@@ -5612,8 +4655,8 @@
     "session": "s1"
    },
    {
-    "seq": 134,
-    "ts": "2026-09-18T17:19:43.000Z",
+    "seq": 113,
+    "ts": "2026-09-18T17:15:45.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "d-dc",
@@ -5634,8 +4677,8 @@
     "session": "s1"
    },
    {
-    "seq": 135,
-    "ts": "2026-09-18T17:19:50.000Z",
+    "seq": 114,
+    "ts": "2026-09-18T17:15:52.000Z",
     "kind": "add-row",
     "planet": "debt",
     "rowId": "d-score",
@@ -5672,8 +4715,8 @@
     "session": "s1"
    },
    {
-    "seq": 136,
-    "ts": "2026-09-18T17:19:57.000Z",
+    "seq": 115,
+    "ts": "2026-09-18T17:15:59.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "d-score",
@@ -5694,8 +4737,8 @@
     "session": "s1"
    },
    {
-    "seq": 137,
-    "ts": "2026-09-18T17:20:04.000Z",
+    "seq": 116,
+    "ts": "2026-09-18T17:16:06.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "d-score",
@@ -5716,8 +4759,8 @@
     "session": "s1"
    },
    {
-    "seq": 138,
-    "ts": "2026-09-18T17:20:11.000Z",
+    "seq": 117,
+    "ts": "2026-09-18T17:16:13.000Z",
     "kind": "add-row",
     "planet": "safety",
     "rowId": "d-health",
@@ -5765,8 +4808,8 @@
     "session": "s1"
    },
    {
-    "seq": 139,
-    "ts": "2026-09-18T17:20:18.000Z",
+    "seq": 118,
+    "ts": "2026-09-18T17:16:20.000Z",
     "kind": "set",
     "planet": "safety",
     "rowId": "d-health",
@@ -5787,8 +4830,8 @@
     "session": "s1"
    },
    {
-    "seq": 140,
-    "ts": "2026-09-18T17:20:32.000Z",
+    "seq": 119,
+    "ts": "2026-09-18T17:16:34.000Z",
     "kind": "set",
     "planet": "safety",
     "rowId": "d-health",
@@ -5811,8 +4854,8 @@
     "session": "s1"
    },
    {
-    "seq": 141,
-    "ts": "2026-09-18T17:20:39.000Z",
+    "seq": 120,
+    "ts": "2026-09-18T17:16:41.000Z",
     "kind": "set",
     "planet": "safety",
     "rowId": "d-health",
@@ -5833,8 +4876,8 @@
     "session": "s1"
    },
    {
-    "seq": 142,
-    "ts": "2026-09-18T17:20:46.000Z",
+    "seq": 121,
+    "ts": "2026-09-18T17:16:48.000Z",
     "kind": "add-row",
     "planet": "safety",
     "rowId": "d-ui",
@@ -5858,11 +4901,6 @@
        "v": null,
        "state": "unknown",
        "source": "lookup-verify"
-      },
-      "unemploymentWeeks": {
-       "v": null,
-       "state": "unknown",
-       "source": "lookup-verify"
       }
      }
     },
@@ -5871,8 +4909,8 @@
     "session": "s1"
    },
    {
-    "seq": 143,
-    "ts": "2026-09-18T17:20:53.000Z",
+    "seq": 122,
+    "ts": "2026-09-18T17:16:55.000Z",
     "kind": "set",
     "planet": "safety",
     "rowId": "d-ui",
@@ -5893,30 +4931,8 @@
     "session": "s1"
    },
    {
-    "seq": 144,
-    "ts": "2026-09-18T17:21:00.000Z",
-    "kind": "set",
-    "planet": "safety",
-    "rowId": "d-ui",
-    "field": "unemploymentWeeks",
-    "owner": "safety",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "lookup-verify"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "lookup-verify"
-    },
-    "source": "lookup-verify",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 145,
-    "ts": "2026-09-18T17:21:07.000Z",
+    "seq": 123,
+    "ts": "2026-09-18T17:17:02.000Z",
     "kind": "add-row",
     "planet": "safety",
     "rowId": "d-cut",
@@ -5949,8 +4965,8 @@
     "session": "s1"
    },
    {
-    "seq": 146,
-    "ts": "2026-09-18T17:21:14.000Z",
+    "seq": 124,
+    "ts": "2026-09-18T17:17:09.000Z",
     "kind": "set",
     "planet": "safety",
     "rowId": "d-cut",
@@ -5973,8 +4989,8 @@
     "session": "s1"
    },
    {
-    "seq": 147,
-    "ts": "2026-09-18T17:21:21.000Z",
+    "seq": 125,
+    "ts": "2026-09-18T17:17:16.000Z",
     "kind": "add-row",
     "planet": "invest",
     "rowId": "d-hsa",
@@ -6010,16 +5026,6 @@
        "source": "client",
        "cad": "month"
       },
-      "contribPct": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "ytdContrib": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "allocStocks": {
        "v": null,
        "state": "unknown",
@@ -6045,16 +5051,6 @@
        "state": "unknown",
        "source": "client"
       },
-      "targetYear": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "costBasis": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "beneficiary": {
        "v": null,
        "state": "unknown",
@@ -6067,8 +5063,8 @@
     "session": "s1"
    },
    {
-    "seq": 148,
-    "ts": "2026-09-18T17:21:28.000Z",
+    "seq": 126,
+    "ts": "2026-09-18T17:17:23.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-hsa",
@@ -6089,8 +5085,8 @@
     "session": "s1"
    },
    {
-    "seq": 149,
-    "ts": "2026-09-18T17:21:35.000Z",
+    "seq": 127,
+    "ts": "2026-09-18T17:17:30.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-hsa",
@@ -6111,8 +5107,8 @@
     "session": "s1"
    },
    {
-    "seq": 150,
-    "ts": "2026-09-18T17:21:42.000Z",
+    "seq": 128,
+    "ts": "2026-09-18T17:17:37.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-hsa",
@@ -6135,52 +5131,8 @@
     "session": "s1"
    },
    {
-    "seq": 151,
-    "ts": "2026-09-18T17:21:49.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-hsa",
-    "field": "contribPct",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 152,
-    "ts": "2026-09-18T17:21:56.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-hsa",
-    "field": "ytdContrib",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 270000,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 153,
-    "ts": "2026-09-18T17:22:03.000Z",
+    "seq": 129,
+    "ts": "2026-09-18T17:17:44.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-hsa",
@@ -6201,8 +5153,8 @@
     "session": "s1"
    },
    {
-    "seq": 154,
-    "ts": "2026-09-18T17:22:10.000Z",
+    "seq": 130,
+    "ts": "2026-09-18T17:17:51.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-hsa",
@@ -6223,8 +5175,8 @@
     "session": "s1"
    },
    {
-    "seq": 155,
-    "ts": "2026-09-18T17:22:17.000Z",
+    "seq": 131,
+    "ts": "2026-09-18T17:17:58.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-hsa",
@@ -6245,8 +5197,8 @@
     "session": "s1"
    },
    {
-    "seq": 156,
-    "ts": "2026-09-18T17:22:24.000Z",
+    "seq": 132,
+    "ts": "2026-09-18T17:18:05.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-hsa",
@@ -6267,8 +5219,8 @@
     "session": "s1"
    },
    {
-    "seq": 157,
-    "ts": "2026-09-18T17:22:31.000Z",
+    "seq": 133,
+    "ts": "2026-09-18T17:18:12.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-hsa",
@@ -6289,52 +5241,8 @@
     "session": "s1"
    },
    {
-    "seq": 158,
-    "ts": "2026-09-18T17:22:38.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-hsa",
-    "field": "targetYear",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 159,
-    "ts": "2026-09-18T17:22:45.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-hsa",
-    "field": "costBasis",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 160,
-    "ts": "2026-09-18T17:22:52.000Z",
+    "seq": 134,
+    "ts": "2026-09-18T17:18:19.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-hsa",
@@ -6355,8 +5263,8 @@
     "session": "s1"
    },
    {
-    "seq": 161,
-    "ts": "2026-09-18T17:22:59.000Z",
+    "seq": 135,
+    "ts": "2026-09-18T17:18:26.000Z",
     "kind": "add-row",
     "planet": "invest",
     "rowId": "d-solo",
@@ -6392,16 +5300,6 @@
        "source": "client",
        "cad": "month"
       },
-      "contribPct": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "ytdContrib": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "allocStocks": {
        "v": null,
        "state": "unknown",
@@ -6427,16 +5325,6 @@
        "state": "unknown",
        "source": "client"
       },
-      "targetYear": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "costBasis": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "beneficiary": {
        "v": null,
        "state": "unknown",
@@ -6449,8 +5337,8 @@
     "session": "s1"
    },
    {
-    "seq": 162,
-    "ts": "2026-09-18T17:23:06.000Z",
+    "seq": 136,
+    "ts": "2026-09-18T17:18:33.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-solo",
@@ -6471,8 +5359,8 @@
     "session": "s1"
    },
    {
-    "seq": 163,
-    "ts": "2026-09-18T17:23:13.000Z",
+    "seq": 137,
+    "ts": "2026-09-18T17:18:40.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-solo",
@@ -6493,8 +5381,8 @@
     "session": "s1"
    },
    {
-    "seq": 164,
-    "ts": "2026-09-18T17:23:20.000Z",
+    "seq": 138,
+    "ts": "2026-09-18T17:18:47.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-solo",
@@ -6517,52 +5405,8 @@
     "session": "s1"
    },
    {
-    "seq": 165,
-    "ts": "2026-09-18T17:23:27.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-solo",
-    "field": "contribPct",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 166,
-    "ts": "2026-09-18T17:23:34.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-solo",
-    "field": "ytdContrib",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 450000,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 167,
-    "ts": "2026-09-18T17:23:41.000Z",
+    "seq": 139,
+    "ts": "2026-09-18T17:18:54.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-solo",
@@ -6583,8 +5427,8 @@
     "session": "s1"
    },
    {
-    "seq": 168,
-    "ts": "2026-09-18T17:23:48.000Z",
+    "seq": 140,
+    "ts": "2026-09-18T17:19:01.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-solo",
@@ -6605,8 +5449,8 @@
     "session": "s1"
    },
    {
-    "seq": 169,
-    "ts": "2026-09-18T17:23:55.000Z",
+    "seq": 141,
+    "ts": "2026-09-18T17:19:08.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-solo",
@@ -6627,8 +5471,8 @@
     "session": "s1"
    },
    {
-    "seq": 170,
-    "ts": "2026-09-18T17:24:02.000Z",
+    "seq": 142,
+    "ts": "2026-09-18T17:19:15.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-solo",
@@ -6649,8 +5493,8 @@
     "session": "s1"
    },
    {
-    "seq": 171,
-    "ts": "2026-09-18T17:24:09.000Z",
+    "seq": 143,
+    "ts": "2026-09-18T17:19:22.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-solo",
@@ -6671,52 +5515,8 @@
     "session": "s1"
    },
    {
-    "seq": 172,
-    "ts": "2026-09-18T17:24:16.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-solo",
-    "field": "targetYear",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 173,
-    "ts": "2026-09-18T17:24:23.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-solo",
-    "field": "costBasis",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 174,
-    "ts": "2026-09-18T17:24:30.000Z",
+    "seq": 144,
+    "ts": "2026-09-18T17:19:29.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-solo",
@@ -6737,8 +5537,8 @@
     "session": "s1"
    },
    {
-    "seq": 175,
-    "ts": "2026-09-18T17:24:37.000Z",
+    "seq": 145,
+    "ts": "2026-09-18T17:19:36.000Z",
     "kind": "add-row",
     "planet": "invest",
     "rowId": "d-brk",
@@ -6774,16 +5574,6 @@
        "source": "client",
        "cad": "month"
       },
-      "contribPct": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "ytdContrib": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "allocStocks": {
        "v": null,
        "state": "unknown",
@@ -6809,16 +5599,6 @@
        "state": "unknown",
        "source": "client"
       },
-      "targetYear": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "costBasis": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "beneficiary": {
        "v": null,
        "state": "unknown",
@@ -6831,8 +5611,8 @@
     "session": "s1"
    },
    {
-    "seq": 176,
-    "ts": "2026-09-18T17:24:44.000Z",
+    "seq": 146,
+    "ts": "2026-09-18T17:19:43.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-brk",
@@ -6853,8 +5633,8 @@
     "session": "s1"
    },
    {
-    "seq": 177,
-    "ts": "2026-09-18T17:24:51.000Z",
+    "seq": 147,
+    "ts": "2026-09-18T17:19:50.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-brk",
@@ -6875,8 +5655,8 @@
     "session": "s1"
    },
    {
-    "seq": 178,
-    "ts": "2026-09-18T17:24:58.000Z",
+    "seq": 148,
+    "ts": "2026-09-18T17:19:57.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-brk",
@@ -6899,52 +5679,8 @@
     "session": "s1"
    },
    {
-    "seq": 179,
-    "ts": "2026-09-18T17:25:05.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-brk",
-    "field": "contribPct",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 180,
-    "ts": "2026-09-18T17:25:12.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-brk",
-    "field": "ytdContrib",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 360000,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 181,
-    "ts": "2026-09-18T17:25:19.000Z",
+    "seq": 149,
+    "ts": "2026-09-18T17:20:04.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-brk",
@@ -6965,8 +5701,8 @@
     "session": "s1"
    },
    {
-    "seq": 182,
-    "ts": "2026-09-18T17:25:26.000Z",
+    "seq": 150,
+    "ts": "2026-09-18T17:20:11.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-brk",
@@ -6987,8 +5723,8 @@
     "session": "s1"
    },
    {
-    "seq": 183,
-    "ts": "2026-09-18T17:25:33.000Z",
+    "seq": 151,
+    "ts": "2026-09-18T17:20:18.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-brk",
@@ -7009,8 +5745,8 @@
     "session": "s1"
    },
    {
-    "seq": 184,
-    "ts": "2026-09-18T17:25:40.000Z",
+    "seq": 152,
+    "ts": "2026-09-18T17:20:25.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-brk",
@@ -7031,8 +5767,8 @@
     "session": "s1"
    },
    {
-    "seq": 185,
-    "ts": "2026-09-18T17:25:47.000Z",
+    "seq": 153,
+    "ts": "2026-09-18T17:20:32.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-brk",
@@ -7053,52 +5789,8 @@
     "session": "s1"
    },
    {
-    "seq": 186,
-    "ts": "2026-09-18T17:25:54.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-brk",
-    "field": "targetYear",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 187,
-    "ts": "2026-09-18T17:26:01.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-brk",
-    "field": "costBasis",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 1980000,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 188,
-    "ts": "2026-09-18T17:26:08.000Z",
+    "seq": 154,
+    "ts": "2026-09-18T17:20:39.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-brk",
@@ -7119,8 +5811,8 @@
     "session": "s1"
    },
    {
-    "seq": 189,
-    "ts": "2026-09-18T17:26:15.000Z",
+    "seq": 155,
+    "ts": "2026-09-18T17:20:46.000Z",
     "kind": "add-row",
     "planet": "invest",
     "rowId": "d-chk",
@@ -7156,16 +5848,6 @@
        "source": "client",
        "cad": "month"
       },
-      "contribPct": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "ytdContrib": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "allocStocks": {
        "v": null,
        "state": "unknown",
@@ -7191,16 +5873,6 @@
        "state": "unknown",
        "source": "client"
       },
-      "targetYear": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "costBasis": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "beneficiary": {
        "v": null,
        "state": "unknown",
@@ -7213,8 +5885,8 @@
     "session": "s1"
    },
    {
-    "seq": 190,
-    "ts": "2026-09-18T17:26:22.000Z",
+    "seq": 156,
+    "ts": "2026-09-18T17:20:53.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-chk",
@@ -7235,8 +5907,8 @@
     "session": "s1"
    },
    {
-    "seq": 191,
-    "ts": "2026-09-18T17:26:29.000Z",
+    "seq": 157,
+    "ts": "2026-09-18T17:21:00.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-chk",
@@ -7257,8 +5929,8 @@
     "session": "s1"
    },
    {
-    "seq": 192,
-    "ts": "2026-09-18T17:26:36.000Z",
+    "seq": 158,
+    "ts": "2026-09-18T17:21:07.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-chk",
@@ -7281,52 +5953,8 @@
     "session": "s1"
    },
    {
-    "seq": 193,
-    "ts": "2026-09-18T17:26:43.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-chk",
-    "field": "contribPct",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 194,
-    "ts": "2026-09-18T17:26:50.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-chk",
-    "field": "ytdContrib",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 195,
-    "ts": "2026-09-18T17:26:57.000Z",
+    "seq": 159,
+    "ts": "2026-09-18T17:21:14.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-chk",
@@ -7347,8 +5975,8 @@
     "session": "s1"
    },
    {
-    "seq": 196,
-    "ts": "2026-09-18T17:27:04.000Z",
+    "seq": 160,
+    "ts": "2026-09-18T17:21:21.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-chk",
@@ -7369,8 +5997,8 @@
     "session": "s1"
    },
    {
-    "seq": 197,
-    "ts": "2026-09-18T17:27:11.000Z",
+    "seq": 161,
+    "ts": "2026-09-18T17:21:28.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-chk",
@@ -7391,8 +6019,8 @@
     "session": "s1"
    },
    {
-    "seq": 198,
-    "ts": "2026-09-18T17:27:18.000Z",
+    "seq": 162,
+    "ts": "2026-09-18T17:21:35.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-chk",
@@ -7413,8 +6041,8 @@
     "session": "s1"
    },
    {
-    "seq": 199,
-    "ts": "2026-09-18T17:27:25.000Z",
+    "seq": 163,
+    "ts": "2026-09-18T17:21:42.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-chk",
@@ -7435,52 +6063,8 @@
     "session": "s1"
    },
    {
-    "seq": 200,
-    "ts": "2026-09-18T17:27:32.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-chk",
-    "field": "targetYear",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 201,
-    "ts": "2026-09-18T17:27:39.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-chk",
-    "field": "costBasis",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 202,
-    "ts": "2026-09-18T17:27:46.000Z",
+    "seq": 164,
+    "ts": "2026-09-18T17:21:49.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-chk",
@@ -7501,8 +6085,8 @@
     "session": "s1"
    },
    {
-    "seq": 203,
-    "ts": "2026-09-18T17:27:53.000Z",
+    "seq": 165,
+    "ts": "2026-09-18T17:21:56.000Z",
     "kind": "add-row",
     "planet": "invest",
     "rowId": "d-hysa",
@@ -7538,16 +6122,6 @@
        "source": "client",
        "cad": "month"
       },
-      "contribPct": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "ytdContrib": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "allocStocks": {
        "v": null,
        "state": "unknown",
@@ -7573,16 +6147,6 @@
        "state": "unknown",
        "source": "client"
       },
-      "targetYear": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "costBasis": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "beneficiary": {
        "v": null,
        "state": "unknown",
@@ -7595,8 +6159,8 @@
     "session": "s1"
    },
    {
-    "seq": 204,
-    "ts": "2026-09-18T17:28:00.000Z",
+    "seq": 166,
+    "ts": "2026-09-18T17:22:03.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-hysa",
@@ -7617,8 +6181,8 @@
     "session": "s1"
    },
    {
-    "seq": 205,
-    "ts": "2026-09-18T17:28:07.000Z",
+    "seq": 167,
+    "ts": "2026-09-18T17:22:10.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-hysa",
@@ -7639,8 +6203,8 @@
     "session": "s1"
    },
    {
-    "seq": 206,
-    "ts": "2026-09-18T17:28:14.000Z",
+    "seq": 168,
+    "ts": "2026-09-18T17:22:17.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-hysa",
@@ -7663,52 +6227,8 @@
     "session": "s1"
    },
    {
-    "seq": 207,
-    "ts": "2026-09-18T17:28:21.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-hysa",
-    "field": "contribPct",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 208,
-    "ts": "2026-09-18T17:28:28.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-hysa",
-    "field": "ytdContrib",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 209,
-    "ts": "2026-09-18T17:28:35.000Z",
+    "seq": 169,
+    "ts": "2026-09-18T17:22:24.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-hysa",
@@ -7729,8 +6249,8 @@
     "session": "s1"
    },
    {
-    "seq": 210,
-    "ts": "2026-09-18T17:28:42.000Z",
+    "seq": 170,
+    "ts": "2026-09-18T17:22:31.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-hysa",
@@ -7751,8 +6271,8 @@
     "session": "s1"
    },
    {
-    "seq": 211,
-    "ts": "2026-09-18T17:28:49.000Z",
+    "seq": 171,
+    "ts": "2026-09-18T17:22:38.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-hysa",
@@ -7773,8 +6293,8 @@
     "session": "s1"
    },
    {
-    "seq": 212,
-    "ts": "2026-09-18T17:28:56.000Z",
+    "seq": 172,
+    "ts": "2026-09-18T17:22:45.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-hysa",
@@ -7795,8 +6315,8 @@
     "session": "s1"
    },
    {
-    "seq": 213,
-    "ts": "2026-09-18T17:29:03.000Z",
+    "seq": 173,
+    "ts": "2026-09-18T17:22:52.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-hysa",
@@ -7817,52 +6337,8 @@
     "session": "s1"
    },
    {
-    "seq": 214,
-    "ts": "2026-09-18T17:29:10.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-hysa",
-    "field": "targetYear",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 215,
-    "ts": "2026-09-18T17:29:17.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-hysa",
-    "field": "costBasis",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s1"
-   },
-   {
-    "seq": 216,
-    "ts": "2026-09-18T17:29:24.000Z",
+    "seq": 174,
+    "ts": "2026-09-18T17:22:59.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-hysa",
@@ -7883,8 +6359,8 @@
     "session": "s1"
    },
    {
-    "seq": 217,
-    "ts": "2026-09-18T17:29:31.000Z",
+    "seq": 175,
+    "ts": "2026-09-18T17:23:06.000Z",
     "kind": "add-row",
     "planet": "invest",
     "rowId": "d-arkk",
@@ -7909,22 +6385,12 @@
        "state": "unknown",
        "source": "client"
       },
-      "ticker": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "fundName": {
        "v": null,
        "state": "unknown",
        "source": "lookup-verify"
       },
       "expenseRatio": {
-       "v": null,
-       "state": "unknown",
-       "source": "lookup-verify"
-      },
-      "assetClass": {
        "v": null,
        "state": "unknown",
        "source": "lookup-verify"
@@ -7941,8 +6407,8 @@
     "session": "s1"
    },
    {
-    "seq": 218,
-    "ts": "2026-09-18T17:29:38.000Z",
+    "seq": 176,
+    "ts": "2026-09-18T17:23:13.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-arkk",
@@ -7963,30 +6429,8 @@
     "session": "s1"
    },
    {
-    "seq": 219,
-    "ts": "2026-09-18T17:29:45.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-arkk",
-    "field": "ticker",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": "ARKK",
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 220,
-    "ts": "2026-09-18T17:29:52.000Z",
+    "seq": 177,
+    "ts": "2026-09-18T17:23:20.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-arkk",
@@ -8007,8 +6451,8 @@
     "session": "s1"
    },
    {
-    "seq": 221,
-    "ts": "2026-09-18T17:29:59.000Z",
+    "seq": 178,
+    "ts": "2026-09-18T17:23:27.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-arkk",
@@ -8029,30 +6473,8 @@
     "session": "s1"
    },
    {
-    "seq": 222,
-    "ts": "2026-09-18T17:30:06.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-arkk",
-    "field": "assetClass",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "lookup-verify"
-    },
-    "new": {
-     "v": "us-stock",
-     "state": "known",
-     "source": "lookup-verify"
-    },
-    "source": "lookup-verify",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 223,
-    "ts": "2026-09-18T17:30:13.000Z",
+    "seq": 179,
+    "ts": "2026-09-18T17:23:34.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-arkk",
@@ -8073,8 +6495,8 @@
     "session": "s1"
    },
    {
-    "seq": 224,
-    "ts": "2026-09-18T17:30:20.000Z",
+    "seq": 180,
+    "ts": "2026-09-18T17:23:41.000Z",
     "kind": "add-row",
     "planet": "invest",
     "rowId": "d-vti",
@@ -8099,22 +6521,12 @@
        "state": "unknown",
        "source": "client"
       },
-      "ticker": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
       "fundName": {
        "v": null,
        "state": "unknown",
        "source": "lookup-verify"
       },
       "expenseRatio": {
-       "v": null,
-       "state": "unknown",
-       "source": "lookup-verify"
-      },
-      "assetClass": {
        "v": null,
        "state": "unknown",
        "source": "lookup-verify"
@@ -8131,8 +6543,8 @@
     "session": "s1"
    },
    {
-    "seq": 225,
-    "ts": "2026-09-18T17:30:27.000Z",
+    "seq": 181,
+    "ts": "2026-09-18T17:23:48.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-vti",
@@ -8153,30 +6565,8 @@
     "session": "s1"
    },
    {
-    "seq": 226,
-    "ts": "2026-09-18T17:30:34.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-vti",
-    "field": "ticker",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": "VTI",
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 227,
-    "ts": "2026-09-18T17:30:41.000Z",
+    "seq": 182,
+    "ts": "2026-09-18T17:23:55.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-vti",
@@ -8197,8 +6587,8 @@
     "session": "s1"
    },
    {
-    "seq": 228,
-    "ts": "2026-09-18T17:30:48.000Z",
+    "seq": 183,
+    "ts": "2026-09-18T17:24:02.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-vti",
@@ -8219,30 +6609,8 @@
     "session": "s1"
    },
    {
-    "seq": 229,
-    "ts": "2026-09-18T17:30:55.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "d-vti",
-    "field": "assetClass",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "lookup-verify"
-    },
-    "new": {
-     "v": "us-stock",
-     "state": "known",
-     "source": "lookup-verify"
-    },
-    "source": "lookup-verify",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 230,
-    "ts": "2026-09-18T17:31:02.000Z",
+    "seq": 184,
+    "ts": "2026-09-18T17:24:09.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "d-vti",
@@ -8263,90 +6631,8 @@
     "session": "s1"
    },
    {
-    "seq": 231,
-    "ts": "2026-09-18T17:31:09.000Z",
-    "kind": "add-row",
-    "planet": "taxes",
-    "rowId": "d-tax",
-    "field": null,
-    "owner": "taxes",
-    "old": null,
-    "new": {
-     "id": "d-tax",
-     "planet": "taxes",
-     "type": "note",
-     "nickname": "Last return",
-     "institution": "IRS",
-     "asOf": null,
-     "followUp": false,
-     "stress": null,
-     "notesPrivate": "",
-     "notesShared": "",
-     "lib": null,
-     "f": {
-      "lastRefund": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "taxNote": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      }
-     }
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 232,
-    "ts": "2026-09-18T17:31:16.000Z",
-    "kind": "set",
-    "planet": "taxes",
-    "rowId": "d-tax",
-    "field": "lastRefund",
-    "owner": "taxes",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": -210000,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 233,
-    "ts": "2026-09-18T17:31:23.000Z",
-    "kind": "set",
-    "planet": "taxes",
-    "rowId": "d-tax",
-    "field": "taxNote",
-    "owner": "taxes",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": "Owed at filing; quarterlies may be light",
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s1"
-   },
-   {
-    "seq": 234,
-    "ts": "2026-09-18T17:31:30.000Z",
+    "seq": 185,
+    "ts": "2026-09-18T17:24:16.000Z",
     "kind": "add-row",
     "planet": "life",
     "rowId": "d-goal",
@@ -8388,8 +6674,8 @@
     "session": "s1"
    },
    {
-    "seq": 235,
-    "ts": "2026-09-18T17:31:37.000Z",
+    "seq": 186,
+    "ts": "2026-09-18T17:24:23.000Z",
     "kind": "set",
     "planet": "life",
     "rowId": "d-goal",
@@ -8410,8 +6696,8 @@
     "session": "s1"
    },
    {
-    "seq": 236,
-    "ts": "2026-09-18T17:31:44.000Z",
+    "seq": 187,
+    "ts": "2026-09-18T17:24:30.000Z",
     "kind": "set",
     "planet": "life",
     "rowId": "d-goal",
@@ -8432,8 +6718,8 @@
     "session": "s1"
    },
    {
-    "seq": 237,
-    "ts": "2026-09-18T17:31:51.000Z",
+    "seq": 188,
+    "ts": "2026-09-18T17:24:37.000Z",
     "kind": "set",
     "planet": "life",
     "rowId": "d-goal",
@@ -8454,8 +6740,8 @@
     "session": "s1"
    },
    {
-    "seq": 238,
-    "ts": "2026-09-18T17:31:58.000Z",
+    "seq": 189,
+    "ts": "2026-09-18T17:24:44.000Z",
     "kind": "add-row",
     "planet": "life",
     "rowId": "d-ret",
@@ -8502,8 +6788,8 @@
     "session": "s1"
    },
    {
-    "seq": 239,
-    "ts": "2026-09-18T17:32:05.000Z",
+    "seq": 190,
+    "ts": "2026-09-18T17:24:51.000Z",
     "kind": "set",
     "planet": "life",
     "rowId": "d-ret",

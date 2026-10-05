@@ -223,6 +223,13 @@ table.data tfoot td { background: var(--paper-2); font-weight: var(--w-semibold)
 /* Drawer (show the math) */
 .drawer { position: fixed; top: 48px; right: 0; bottom: 0; width: 420px; max-width: 100vw; background: var(--paper); border-left: 1px solid var(--line); z-index: 30; overflow: auto; padding: var(--s-3) var(--s-4); }
 .drawer header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: var(--s-3); }
+.drawer { width: 480px; }
+.drawer .row-details .fieldrow.detail { grid-template-columns: 160px minmax(0, 1fr); grid-template-areas: "label input"; }
+.drawer .row-details .fieldrow.detail .control { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.drawer .row-details .fieldrow.detail .input, .drawer .row-details .fieldrow.detail .select { margin-left: 0; border-color: var(--line); background: var(--paper); }
+.drawer .row-details .fieldrow.detail .input.wide { width: 100%; max-width: 280px; }
+.drawer .row-details h2 { margin-bottom: var(--s-1); }
+.cell-details .btn { white-space: nowrap; }
 .drawer .formula { font-family: var(--mono); font-size: var(--fs-12); background: var(--paper-2); border: 1px solid var(--line); border-radius: var(--r-field); padding: var(--s-2); white-space: pre-wrap; }
 .drawer table.data th { position: static; }
 
@@ -483,7 +490,13 @@ tr.muted td { color: var(--slate); }
 table.data td.wrap { white-space: normal; min-width: 200px; padding-top: var(--s-1); padding-bottom: var(--s-1); }
 table.data tr.group td { background: var(--paper-2); color: var(--sapphire-900); font-weight: var(--w-semibold); }
 .learn { max-width: 960px; }
-.starting-soon table.data td.wrap { min-width: 0; white-space: normal; }
+
+.starting-soon .change { border: 1px solid var(--line-soft); border-radius: var(--r-field); padding: var(--s-2) var(--s-3); margin-top: var(--s-2); background: var(--paper); }
+.starting-soon .change-head { margin-bottom: var(--s-1); }
+.starting-soon .change-name { font-weight: var(--w-semibold); }
+.starting-soon .change .fieldrow.detail { grid-template-columns: 160px minmax(0, 1fr); grid-template-areas: "label input"; min-height: 36px; border-bottom: 0; }
+.starting-soon .change .fieldrow.detail .input { border-color: var(--line); background: var(--paper); margin-left: 0; }
+.starting-soon .change-sum { margin-top: var(--s-1); }
 .starting-soon .add-block { margin-left: auto; width: var(--field-w-wide); font-weight: var(--w-regular); }
 .assumptions { max-width: 760px; }
 .assumptions .fieldrow { grid-template-columns: minmax(0, 1fr) var(--field-w) 200px; grid-template-areas: "label input src"; }

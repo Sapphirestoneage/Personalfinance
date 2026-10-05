@@ -44,7 +44,6 @@
       "rothRetirement",
       "hsaPayroll",
       "pretaxOther",
-      "withholdingFederal",
       "bonus",
       "equity",
       "startDate",
@@ -65,7 +64,11 @@
      },
      "nicknameLabel": "Job",
      "stress": false,
-     "plural": "W-2 jobs"
+     "plural": "W-2 jobs",
+     "tableFields": [
+      "takeHome",
+      "payFrequency"
+     ]
     },
     "c1099": {
      "label": "1099 work",
@@ -76,7 +79,6 @@
       "payFrequency",
       "stability",
       "businessExpenses",
-      "quarterlyTaxPaid",
       "hsaPayroll",
       "startDate",
       "hoursPaid",
@@ -95,7 +97,11 @@
      },
      "nicknameLabel": "Work",
      "stress": false,
-     "plural": "1099 work"
+     "plural": "1099 work",
+     "tableFields": [
+      "takeHome",
+      "payFrequency"
+     ]
     },
     "side": {
      "label": "Side income",
@@ -112,7 +118,10 @@
      },
      "nicknameLabel": "What it is",
      "stress": false,
-     "plural": "Side income"
+     "plural": "Side income",
+     "tableFields": [
+      "payFrequency"
+     ]
     },
     "unemployment": {
      "label": "Unemployment",
@@ -128,7 +137,11 @@
      ],
      "nicknameLabel": "Program",
      "stress": false,
-     "plural": "Unemployment"
+     "plural": "Unemployment",
+     "tableFields": [
+      "weeksLeft",
+      "startDate"
+     ]
     },
     "rental": {
      "label": "Rental",
@@ -141,7 +154,10 @@
      "nicknameLabel": "Property",
      "stress": false,
      "plural": "Rentals",
-     "assumeNone": true
+     "assumeNone": true,
+     "tableFields": [
+      "rentalExpenses"
+     ]
     },
     "benefits": {
      "label": "Benefits and match",
@@ -149,7 +165,6 @@
      "fields": [
       "matchRate",
       "matchUpTo",
-      "vestingPct",
       "otherBenefit"
      ],
      "situations": [
@@ -160,7 +175,11 @@
      ],
      "nicknameLabel": "Employer",
      "stress": false,
-     "plural": "Benefits and match"
+     "plural": "Benefits and match",
+     "tableFields": [
+      "matchRate",
+      "matchUpTo"
+     ]
     },
     "other": {
      "label": "Other",
@@ -174,7 +193,10 @@
      },
      "nicknameLabel": "What it is",
      "stress": false,
-     "plural": "Other"
+     "plural": "Other",
+     "tableFields": [
+      "payFrequency"
+     ]
     }
    },
    "institutionLabel": "Employer or payer"
@@ -191,7 +213,8 @@
      "single": true,
      "nicknameLabel": "Label",
      "stress": false,
-     "plural": "Rough total"
+     "plural": "Rough total",
+     "tableFields": []
     },
     "line": {
      "label": "Spending line",
@@ -201,30 +224,30 @@
       "amount",
       "needWant",
       "mistake",
-      "shared",
       "fatFloor",
-      "primaryCard",
-      "linkedIncome"
+      "primaryCard"
      ],
      "defaults": {
       "needWant": "need",
-      "mistake": "unavoidable",
-      "shared": "no"
+      "mistake": "unavoidable"
      },
      "nicknameLabel": "Name",
      "stress": false,
-     "plural": "Spending lines"
+     "plural": "Spending lines",
+     "tableFields": [
+      "category"
+     ]
     },
     "savings": {
      "label": "Savings transfer",
      "moon": "Savings",
      "fields": [
-      "savingsDestination",
       "savingsLanding"
      ],
      "nicknameLabel": "Transfer",
      "stress": false,
-     "plural": "Savings transfers"
+     "plural": "Savings transfers",
+     "tableFields": []
     },
     "other": {
      "label": "Other",
@@ -234,7 +257,8 @@
      ],
      "nicknameLabel": "What it is",
      "stress": false,
-     "plural": "Other"
+     "plural": "Other",
+     "tableFields": []
     }
    },
    "institutionLabel": "Paid to"
@@ -251,7 +275,8 @@
      "single": true,
      "nicknameLabel": "Label",
      "stress": true,
-     "plural": "Rough total"
+     "plural": "Rough total",
+     "tableFields": []
     },
     "card": {
      "label": "Credit card",
@@ -262,45 +287,40 @@
       "apr",
       "promoApr",
       "promoEnd",
-      "promoType",
-      "btFee",
       "minimum",
       "creditLimit",
-      "dueDay",
       "annualFee",
       "creditsUsed",
       "autopay"
      ],
      "defaults": {
-      "autopay": "none",
-      "promoType": "purchase"
+      "autopay": "none"
      },
      "nicknameLabel": "Nickname",
      "stress": true,
-     "plural": "Credit cards"
+     "plural": "Credit cards",
+     "tableFields": [
+      "apr",
+      "minimum",
+      "creditLimit"
+     ]
     },
     "student": {
      "label": "Student loan",
      "moon": "Student loans",
      "fields": [
-      "federalPrivate",
-      "loanType",
       "balance",
       "rate",
-      "minimum",
-      "repaymentPlan",
-      "pslfEligible",
-      "pslfPayments",
-      "forbearance",
-      "interestDeductible"
+      "minimum"
      ],
-     "defaults": {
-      "federalPrivate": "federal",
-      "repaymentPlan": "standard"
-     },
+     "defaults": {},
      "nicknameLabel": "Loan",
      "stress": true,
-     "plural": "Student loans"
+     "plural": "Student loans",
+     "tableFields": [
+      "rate",
+      "minimum"
+     ]
     },
     "auto": {
      "label": "Auto loan",
@@ -309,12 +329,15 @@
       "balance",
       "rate",
       "payment",
-      "monthsLeft",
-      "vehicleValue"
+      "monthsLeft"
      ],
      "nicknameLabel": "Vehicle",
      "stress": true,
-     "plural": "Auto loans"
+     "plural": "Auto loans",
+     "tableFields": [
+      "rate",
+      "payment"
+     ]
     },
     "mortgage": {
      "label": "Mortgage or HELOC",
@@ -322,39 +345,37 @@
      "fields": [
       "balance",
       "rate",
-      "fixedVariable",
-      "termLeftMonths",
       "principalInterest",
       "escrowTaxes",
       "escrowInsurance",
       "hoa",
-      "pmi",
-      "homeValue"
+      "pmi"
      ],
-     "defaults": {
-      "fixedVariable": "fixed"
-     },
+     "defaults": {},
      "nicknameLabel": "Property",
      "stress": true,
-     "plural": "Mortgages and HELOCs"
+     "plural": "Mortgages and HELOCs",
+     "tableFields": [
+      "rate",
+      "principalInterest"
+     ]
     },
     "personal": {
      "label": "Personal, family, medical, BNPL",
      "moon": "Other debts",
      "fields": [
-      "debtKind",
       "balance",
       "rate",
-      "payment",
-      "terms",
-      "reasonsToKeep"
+      "payment"
      ],
-     "defaults": {
-      "debtKind": "personal"
-     },
+     "defaults": {},
      "nicknameLabel": "Nickname",
      "stress": true,
-     "plural": "Personal, family, medical, BNPL"
+     "plural": "Personal, family, medical, BNPL",
+     "tableFields": [
+      "rate",
+      "payment"
+     ]
     },
     "score": {
      "label": "Credit score",
@@ -366,7 +387,10 @@
      "single": true,
      "nicknameLabel": "Label",
      "stress": true,
-     "plural": "Credit score"
+     "plural": "Credit score",
+     "tableFields": [
+      "bureau"
+     ]
     },
     "other": {
      "label": "Other",
@@ -378,7 +402,11 @@
      ],
      "nicknameLabel": "What it is",
      "stress": true,
-     "plural": "Other"
+     "plural": "Other",
+     "tableFields": [
+      "rate",
+      "payment"
+     ]
     }
    },
    "institutionLabel": "Lender or issuer"
@@ -397,19 +425,23 @@
      ],
      "nicknameLabel": "Policy",
      "stress": false,
-     "plural": "Insurance"
+     "plural": "Insurance",
+     "tableFields": [
+      "insuranceType",
+      "coverage"
+     ]
     },
     "unemployment": {
      "label": "Unemployment estimate",
      "moon": "If work stopped",
      "fields": [
-      "unemploymentWeekly",
-      "unemploymentWeeks"
+      "unemploymentWeekly"
      ],
      "single": true,
      "nicknameLabel": "Label",
      "stress": false,
-     "plural": "Unemployment"
+     "plural": "Unemployment",
+     "tableFields": []
     },
     "cut": {
      "label": "Ability to cut",
@@ -420,7 +452,8 @@
      "single": true,
      "nicknameLabel": "Label",
      "stress": false,
-     "plural": "Ability to cut"
+     "plural": "Ability to cut",
+     "tableFields": []
     },
     "other": {
      "label": "Other",
@@ -430,7 +463,8 @@
      ],
      "nicknameLabel": "What it is",
      "stress": false,
-     "plural": "Other"
+     "plural": "Other",
+     "tableFields": []
     }
    },
    "institutionLabel": "Carrier"
@@ -447,7 +481,8 @@
      "single": true,
      "nicknameLabel": "Label",
      "stress": true,
-     "plural": "Rough total"
+     "plural": "Rough total",
+     "tableFields": []
     },
     "account": {
      "label": "Account",
@@ -456,35 +491,37 @@
       "accountType",
       "accountBalance",
       "contribAmount",
-      "contribPct",
-      "ytdContrib",
       "allocStocks",
       "allocBonds",
       "allocCash",
       "allocOther",
       "usShare",
-      "targetYear",
-      "costBasis",
       "beneficiary"
      ],
      "nicknameLabel": "Nickname",
      "stress": true,
-     "plural": "Accounts"
+     "plural": "Accounts",
+     "tableFields": [
+      "accountType",
+      "contribAmount"
+     ]
     },
     "holding": {
      "label": "Holding",
      "moon": "Holdings",
      "fields": [
       "accountRef",
-      "ticker",
       "fundName",
       "expenseRatio",
-      "assetClass",
       "pctOfAccount"
      ],
      "nicknameLabel": "Holding",
      "stress": true,
-     "plural": "Holdings"
+     "plural": "Holdings",
+     "tableFields": [
+      "fundName",
+      "expenseRatio"
+     ]
     },
     "other": {
      "label": "Other",
@@ -494,7 +531,8 @@
      ],
      "nicknameLabel": "What it is",
      "stress": true,
-     "plural": "Other"
+     "plural": "Other",
+     "tableFields": []
     }
    },
    "institutionLabel": "Institution"
@@ -502,18 +540,6 @@
   "taxes": {
    "label": "Taxes",
    "types": {
-    "note": {
-     "label": "Tax facts",
-     "moon": "Facts",
-     "fields": [
-      "lastRefund",
-      "taxNote"
-     ],
-     "single": true,
-     "nicknameLabel": "Label",
-     "stress": false,
-     "plural": "Tax facts"
-    },
     "other": {
      "label": "Other",
      "moon": "Other",
@@ -522,10 +548,12 @@
      ],
      "nicknameLabel": "What it is",
      "stress": false,
-     "plural": "Other"
+     "plural": "Other",
+     "tableFields": []
     }
    },
-   "institutionLabel": "Agency"
+   "institutionLabel": "Agency",
+   "derived": true
   },
   "life": {
    "label": "Life Plan",
@@ -543,7 +571,11 @@
      },
      "nicknameLabel": "Goal",
      "stress": false,
-     "plural": "Goals"
+     "plural": "Goals",
+     "tableFields": [
+      "targetDate",
+      "priority"
+     ]
     },
     "retirement": {
      "label": "Retirement",
@@ -562,7 +594,8 @@
      },
      "nicknameLabel": "Label",
      "stress": false,
-     "plural": "Retirement"
+     "plural": "Retirement",
+     "tableFields": []
     },
     "other": {
      "label": "Other",
@@ -572,7 +605,8 @@
      ],
      "nicknameLabel": "What it is",
      "stress": false,
-     "plural": "Other"
+     "plural": "Other",
+     "tableFields": []
     }
    },
    "institutionLabel": "Who or where"
@@ -652,17 +686,6 @@
      "At risk"
     ]
    ]
-  },
-  "withholdingFederal": {
-   "id": "withholdingFederal",
-   "label": "Federal withheld",
-   "kind": "money",
-   "owner": "income",
-   "weight": 4,
-   "hint": "Federal income tax withheld per paycheck (box on the stub)",
-   "defaultSource": "client",
-   "cadence": true,
-   "defaultCadence": "paycheck"
   },
   "pretaxRetirement": {
    "id": "pretaxRetirement",
@@ -779,17 +802,6 @@
    "cadence": true,
    "defaultCadence": "month"
   },
-  "quarterlyTaxPaid": {
-   "id": "quarterlyTaxPaid",
-   "label": "Estimated tax paid",
-   "kind": "money",
-   "owner": "income",
-   "weight": 5,
-   "hint": "Quarterly estimated payments",
-   "defaultSource": "client",
-   "cadence": true,
-   "defaultCadence": "year"
-  },
   "benefitAmount": {
    "id": "benefitAmount",
    "label": "Benefit",
@@ -848,15 +860,6 @@
    "owner": "income",
    "weight": 9,
    "hint": "Percent of pay the employer matches up to",
-   "defaultSource": "client"
-  },
-  "vestingPct": {
-   "id": "vestingPct",
-   "label": "Vested",
-   "kind": "percent",
-   "owner": "income",
-   "weight": 4,
-   "hint": "Share of the match that is yours today",
    "defaultSource": "client"
   },
   "otherBenefit": {
@@ -979,38 +982,6 @@
     ]
    ]
   },
-  "shared": {
-   "id": "shared",
-   "label": "Shared or reimbursed",
-   "kind": "choice",
-   "owner": "spending",
-   "weight": 3,
-   "hint": "Split with someone or paid back",
-   "defaultSource": "client",
-   "options": [
-    [
-     "no",
-     "No"
-    ],
-    [
-     "shared",
-     "Shared"
-    ],
-    [
-     "reimbursed",
-     "Reimbursed"
-    ]
-   ]
-  },
-  "linkedIncome": {
-   "id": "linkedIncome",
-   "label": "Paid from",
-   "kind": "text",
-   "owner": "spending",
-   "weight": 2,
-   "hint": "Which income pays this, if it matters",
-   "defaultSource": "client"
-  },
   "fatFloor": {
    "id": "fatFloor",
    "label": "In the FAT floor",
@@ -1052,15 +1023,6 @@
    "cadence": true,
    "primary": true,
    "defaultCadence": "month"
-  },
-  "savingsDestination": {
-   "id": "savingsDestination",
-   "label": "Goes to",
-   "kind": "text",
-   "owner": "spending",
-   "weight": 2,
-   "hint": "Which account it lands in",
-   "defaultSource": "client"
   },
   "otherSpending": {
    "id": "otherSpending",
@@ -1121,38 +1083,6 @@
    "hint": "When the promo rate stops",
    "defaultSource": "client"
   },
-  "promoType": {
-   "id": "promoType",
-   "label": "Promo type",
-   "kind": "choice",
-   "owner": "debt",
-   "weight": 4,
-   "hint": "",
-   "defaultSource": "client",
-   "options": [
-    [
-     "purchase",
-     "Purchases"
-    ],
-    [
-     "bt",
-     "Balance transfer"
-    ],
-    [
-     "both",
-     "Both"
-    ]
-   ]
-  },
-  "btFee": {
-   "id": "btFee",
-   "label": "Transfer fee",
-   "kind": "percent",
-   "owner": "debt",
-   "weight": 4,
-   "hint": "Balance transfer fee as a percent",
-   "defaultSource": "client"
-  },
   "minimum": {
    "id": "minimum",
    "label": "Minimum payment",
@@ -1171,15 +1101,6 @@
    "owner": "debt",
    "weight": 6,
    "hint": "",
-   "defaultSource": "client"
-  },
-  "dueDay": {
-   "id": "dueDay",
-   "label": "Due day",
-   "kind": "int",
-   "owner": "debt",
-   "weight": 3,
-   "hint": "Day of the month",
    "defaultSource": "client"
   },
   "annualFee": {
@@ -1227,64 +1148,6 @@
     ]
    ]
   },
-  "federalPrivate": {
-   "id": "federalPrivate",
-   "label": "Federal or private",
-   "kind": "choice",
-   "owner": "debt",
-   "weight": 6,
-   "hint": "",
-   "defaultSource": "client",
-   "options": [
-    [
-     "federal",
-     "Federal"
-    ],
-    [
-     "private",
-     "Private"
-    ]
-   ]
-  },
-  "loanType": {
-   "id": "loanType",
-   "label": "Loan type",
-   "kind": "choice",
-   "owner": "debt",
-   "weight": 4,
-   "hint": "",
-   "defaultSource": "client",
-   "options": [
-    [
-     "direct-sub",
-     "Direct subsidized"
-    ],
-    [
-     "direct-unsub",
-     "Direct unsubsidized"
-    ],
-    [
-     "grad-plus",
-     "Grad PLUS"
-    ],
-    [
-     "parent-plus",
-     "Parent PLUS"
-    ],
-    [
-     "consolidation",
-     "Consolidation"
-    ],
-    [
-     "private",
-     "Private"
-    ],
-    [
-     "other",
-     "Other"
-    ]
-   ]
-  },
   "rate": {
    "id": "rate",
    "label": "Interest rate",
@@ -1294,89 +1157,6 @@
    "hint": "",
    "defaultSource": "client",
    "primaryRate": true
-  },
-  "repaymentPlan": {
-   "id": "repaymentPlan",
-   "label": "Repayment plan",
-   "kind": "choice",
-   "owner": "debt",
-   "weight": 5,
-   "hint": "",
-   "defaultSource": "client",
-   "options": [
-    [
-     "standard",
-     "Standard"
-    ],
-    [
-     "graduated",
-     "Graduated"
-    ],
-    [
-     "extended",
-     "Extended"
-    ],
-    [
-     "save",
-     "SAVE"
-    ],
-    [
-     "paye",
-     "PAYE"
-    ],
-    [
-     "ibr",
-     "IBR"
-    ],
-    [
-     "icr",
-     "ICR"
-    ],
-    [
-     "rap",
-     "RAP"
-    ],
-    [
-     "other",
-     "Other"
-    ]
-   ]
-  },
-  "pslfEligible": {
-   "id": "pslfEligible",
-   "label": "PSLF eligible",
-   "kind": "bool",
-   "owner": "debt",
-   "weight": 6,
-   "hint": "Public Service Loan Forgiveness",
-   "defaultSource": "client"
-  },
-  "pslfPayments": {
-   "id": "pslfPayments",
-   "label": "PSLF qualifying payments",
-   "kind": "int",
-   "owner": "debt",
-   "weight": 5,
-   "hint": "Out of 120",
-   "defaultSource": "client"
-  },
-  "forbearance": {
-   "id": "forbearance",
-   "label": "In forbearance",
-   "kind": "bool",
-   "owner": "debt",
-   "weight": 5,
-   "hint": "",
-   "defaultSource": "client"
-  },
-  "interestDeductible": {
-   "id": "interestDeductible",
-   "label": "Interest deductible",
-   "kind": "bool",
-   "owner": "debt",
-   "weight": 2,
-   "hint": "Student loan interest deduction likely applies",
-   "defaultSource": "client"
   },
   "payment": {
    "id": "payment",
@@ -1396,43 +1176,6 @@
    "owner": "debt",
    "weight": 6,
    "hint": "",
-   "defaultSource": "client"
-  },
-  "vehicleValue": {
-   "id": "vehicleValue",
-   "label": "Vehicle value",
-   "kind": "money",
-   "owner": "debt",
-   "weight": 4,
-   "hint": "Private-party value today",
-   "defaultSource": "lookup-confirmed"
-  },
-  "fixedVariable": {
-   "id": "fixedVariable",
-   "label": "Fixed or variable",
-   "kind": "choice",
-   "owner": "debt",
-   "weight": 5,
-   "hint": "",
-   "defaultSource": "client",
-   "options": [
-    [
-     "fixed",
-     "Fixed"
-    ],
-    [
-     "variable",
-     "Variable"
-    ]
-   ]
-  },
-  "termLeftMonths": {
-   "id": "termLeftMonths",
-   "label": "Term left",
-   "kind": "int",
-   "owner": "debt",
-   "weight": 6,
-   "hint": "Months left on the loan",
    "defaultSource": "client"
   },
   "principalInterest": {
@@ -1489,64 +1232,6 @@
    "defaultSource": "client",
    "cadence": true,
    "defaultCadence": "month"
-  },
-  "homeValue": {
-   "id": "homeValue",
-   "label": "Home value",
-   "kind": "money",
-   "owner": "debt",
-   "weight": 6,
-   "hint": "Today's estimate",
-   "defaultSource": "lookup-confirmed"
-  },
-  "terms": {
-   "id": "terms",
-   "label": "Terms",
-   "kind": "text",
-   "owner": "debt",
-   "weight": 3,
-   "hint": "What was agreed: when, how much, any interest",
-   "defaultSource": "client"
-  },
-  "reasonsToKeep": {
-   "id": "reasonsToKeep",
-   "label": "Reasons to keep it",
-   "kind": "text",
-   "owner": "debt",
-   "weight": 3,
-   "hint": "Why this debt may be worth keeping for now",
-   "defaultSource": "client"
-  },
-  "debtKind": {
-   "id": "debtKind",
-   "label": "Kind",
-   "kind": "choice",
-   "owner": "debt",
-   "weight": 4,
-   "hint": "",
-   "defaultSource": "client",
-   "options": [
-    [
-     "personal",
-     "Personal loan"
-    ],
-    [
-     "family",
-     "Family or friend"
-    ],
-    [
-     "medical",
-     "Medical"
-    ],
-    [
-     "bnpl",
-     "Buy now pay later"
-    ],
-    [
-     "other",
-     "Other"
-    ]
-   ]
   },
   "score": {
    "id": "score",
@@ -1692,15 +1377,6 @@
    "defaultSource": "lookup-verify",
    "primary": true
   },
-  "unemploymentWeeks": {
-   "id": "unemploymentWeeks",
-   "label": "Weeks of benefit",
-   "kind": "int",
-   "owner": "safety",
-   "weight": 4,
-   "hint": "Usually 26",
-   "defaultSource": "lookup-verify"
-  },
   "cutAbility": {
    "id": "cutAbility",
    "label": "Could cut per month",
@@ -1837,24 +1513,6 @@
    "cadence": true,
    "defaultCadence": "month"
   },
-  "contribPct": {
-   "id": "contribPct",
-   "label": "Contribution %",
-   "kind": "percent",
-   "owner": "invest",
-   "weight": 5,
-   "hint": "If contributions are a percent of pay",
-   "defaultSource": "client"
-  },
-  "ytdContrib": {
-   "id": "ytdContrib",
-   "label": "Contributed this year",
-   "kind": "money",
-   "owner": "invest",
-   "weight": 5,
-   "hint": "Year to date",
-   "defaultSource": "client"
-  },
   "allocStocks": {
    "id": "allocStocks",
    "label": "Stocks %",
@@ -1900,24 +1558,6 @@
    "hint": "Of the stock part",
    "defaultSource": "client"
   },
-  "targetYear": {
-   "id": "targetYear",
-   "label": "Target-date year",
-   "kind": "int",
-   "owner": "invest",
-   "weight": 3,
-   "hint": "If a target-date fund",
-   "defaultSource": "client"
-  },
-  "costBasis": {
-   "id": "costBasis",
-   "label": "Cost basis",
-   "kind": "money",
-   "owner": "invest",
-   "weight": 5,
-   "hint": "Taxable accounts only",
-   "defaultSource": "client"
-  },
   "beneficiary": {
    "id": "beneficiary",
    "label": "Beneficiary named",
@@ -1936,16 +1576,6 @@
    "hint": "Which account holds it",
    "defaultSource": "client"
   },
-  "ticker": {
-   "id": "ticker",
-   "label": "Ticker",
-   "kind": "text",
-   "owner": "invest",
-   "weight": 5,
-   "hint": "Type a ticker to prefill from the fund library",
-   "defaultSource": "client",
-   "library": "funds"
-  },
   "fundName": {
    "id": "fundName",
    "label": "Fund",
@@ -1963,45 +1593,6 @@
    "weight": 7,
    "hint": "Annual fee as a percent",
    "defaultSource": "lookup-verify"
-  },
-  "assetClass": {
-   "id": "assetClass",
-   "label": "Asset class",
-   "kind": "choice",
-   "owner": "invest",
-   "weight": 4,
-   "hint": "",
-   "defaultSource": "lookup-verify",
-   "options": [
-    [
-     "us-stock",
-     "US stocks"
-    ],
-    [
-     "intl-stock",
-     "International stocks"
-    ],
-    [
-     "bond",
-     "Bonds"
-    ],
-    [
-     "target-date",
-     "Target date"
-    ],
-    [
-     "cash",
-     "Cash"
-    ],
-    [
-     "real-estate",
-     "Real estate"
-    ],
-    [
-     "other",
-     "Other"
-    ]
-   ]
   },
   "pctOfAccount": {
    "id": "pctOfAccount",
@@ -2029,25 +1620,6 @@
    "owner": "invest",
    "weight": 5,
    "hint": "",
-   "defaultSource": "client",
-   "primary": true
-  },
-  "taxNote": {
-   "id": "taxNote",
-   "label": "Note",
-   "kind": "text",
-   "owner": "taxes",
-   "weight": 2,
-   "hint": "Anything the client said about taxes (refund size, a letter, a side gig)",
-   "defaultSource": "client"
-  },
-  "lastRefund": {
-   "id": "lastRefund",
-   "label": "Last refund or balance due",
-   "kind": "money",
-   "owner": "taxes",
-   "weight": 4,
-   "hint": "Positive for a refund, negative for a balance due",
    "defaultSource": "client",
    "primary": true
   },

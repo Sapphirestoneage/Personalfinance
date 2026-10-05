@@ -5,6 +5,7 @@
    prefill for cards and funds. Cells commit on change and update their own
    derived cells in place; the table is rebuilt only on sort, filter, add or
    remove, never while a cell is being typed in. */
+import { closeOverlay } from './app.js';
 import { h, clear } from './dom.js';
 import { stateChip, sourceChip } from './chips.js';
 import { parseTyped, rawOf } from './typed.js';
@@ -160,17 +161,49 @@ export function ledgerTable(host, app, planet, typeId, opts) {
       if (d.cadence) cols.push({ key: id + ':cad', label: 'Per', sortable: false, kind: 'cadence', def: d });
     };
     pushField(primary.id);
+    (tdef.tableFields || []).filter(id => id !== primary.id).forEach(pushField);
     cols.push({ key: 'state', label: 'State', sortable: true, kind: 'state' });
     if (coach) cols.push({ key: 'source', label: 'Source', sortable: true, kind: 'source' });
-    cols.push({ key: 'institution', label: fields.planets[planet].institutionLabel, sortable: true, kind: 'column' });
-    tdef.fields.filter(id => id !== primary.id).forEach(pushField);
-    cols.push({ key: 'asOf', label: 'As of', sortable: true, kind: 'column' });
-    if (coach) cols.push({ key: 'followUp', label: 'Flag', sortable: true, kind: 'followUp' });
-    if (tdef.stress) cols.push({ key: 'stress', label: 'Stress', sortable: true, kind: 'stress', hint: '1 calm to 5 keeps them up at night' });
+    cols.push({ key: 'details', label: '', sortable: false, kind: 'details' });
+    return cols;
+  }
+  /* Everything else about a row lives behind Details (MR-029): no sideways scrolling to reach a fact. */
+  function detailColumns() {
+    const cols = [];
+    const shown = [primary.id].concat(tdef.tableFields || []);
+    const pushField = id => {
+      const d = fieldDef(fields, id);
+      cols.push({ key: id, label: d.label, sortable: false, kind: 'field', def: d, num: ['money', 'percent', 'int', 'hours'].includes(d.kind), hint: d.hint });
+      if (d.cadence) cols.push({ key: id + ':cad', label: 'Per', sortable: false, kind: 'cadence', def: d });
+    };
+    cols.push({ key: 'institution', label: fields.planets[planet].institutionLabel, sortable: false, kind: 'column' });
+    tdef.fields.filter(id => !shown.includes(id)).forEach(pushField);
+    cols.push({ key: 'asOf', label: 'As of', sortable: false, kind: 'column' });
+    if (coach) cols.push({ key: 'followUp', label: 'Flag for follow-up', sortable: false, kind: 'followUp' });
+    if (tdef.stress) cols.push({ key: 'stress', label: 'Stress', sortable: false, kind: 'stress', hint: '1 calm to 5 keeps them up at night' });
     if (coach) cols.push({ key: 'notesPrivate', label: 'Private note', sortable: false, kind: 'column' });
     cols.push({ key: 'notesShared', label: 'Shared note', sortable: false, kind: 'column' });
-    if (coach) cols.push({ key: 'remove', label: '', sortable: false, kind: 'remove' });
     return cols;
+  }
+  function openDetails(rowId, focusCol) {
+    const r = app.record.planets[planet].rows.find(x => x.id === rowId); if (!r) return;
+    const body = h('div', { class: 'row-details', dataset: { row: r.id } });
+    body.appendChild(h('h2', null, r.nickname || (tdef.nicknameLabel || 'Row'), h('span', { class: 'tag' }, tdef.label)));
+    body.appendChild(h('p', { class: 'hint', style: { marginBottom: '8px' } }, 'The essentials stay in the table. Everything else about this row is here.'));
+    let cadHolder = null;
+    detailColumns().forEach(c => {
+      const td = renderCell(r, c); if (!td) return;
+      const control = h('div', { class: 'control' }); while (td.firstChild) control.appendChild(td.firstChild);
+      if (c.kind === 'cadence') { if (cadHolder) cadHolder.appendChild(control.firstChild || control); return; }
+      const row = h('div', { class: 'fieldrow detail', dataset: { field: c.key } }, h('label', { title: c.hint || '' }, c.label), control);
+      cadHolder = c.kind === 'field' && c.def.cadence ? control : null;
+      body.appendChild(row);
+    });
+    if (coach) body.appendChild(h('div', { class: 'row', style: { marginTop: '16px' } }, h('button', { class: 'btn quiet', onClick: () => { app.removeRow(r.id); closeOverlay(); render(); } }, 'Remove this row')));
+    const back = wrap.querySelector('tr[data-row="' + r.id + '"] [data-col="details"]');
+    app.openDrawer(body, { label: 'Details for ' + (r.nickname || tdef.label), onClose: () => { if (back && back.isConnected) back.focus(); } });
+    const target = focusCol ? body.querySelector('[data-col="' + focusCol + '"]') : body.querySelector('input, select, button');
+    if (target) target.focus();
   }
 
   function renderRow(r, cols) {
@@ -242,6 +275,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
       return h('td', null, keyFlow(cad, r, c.def.id + ':cad'));
     }
     if (c.kind === 'remove') return h('td', null, h('button', { class: 'btn small quiet', 'aria-label': 'Remove row', title: 'Remove row (Alt+Delete)', onClick: () => { app.removeRow(r.id); render(); } }, 'Remove'));
+    if (c.kind === 'details') return h('td', { class: 'cell-details' }, h('button', { class: 'btn small', dataset: { col: 'details' }, 'aria-label': 'Details for ' + (r.nickname || 'this row'), onClick: () => openDetails(r.id) }, 'Details'));
     if (c.kind === 'followUp') {
       const btn = h('button', { class: 'chip toggle' + (r.followUp ? ' amber' : ''), 'aria-pressed': String(!!r.followUp), 'aria-label': 'Follow up flag', dataset: { col: 'followUp' }, onClick: e => { const next = !r.followUp; app.setColumn(r.id, 'followUp', next); e.target.textContent = next ? 'Flagged' : 'Not flagged'; e.target.classList.toggle('amber', next); e.target.setAttribute('aria-pressed', String(next)); } }, r.followUp ? 'Flagged' : 'Not flagged');
       return h('td', null, keyFlow(btn, r, 'followUp'));
@@ -374,8 +408,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
       app.setColumn(r.id, 'lib', fund.ticker);
       app.setField(r.id, 'fundName', fund.name, 'known', 'lookup-verify');
       app.setField(r.id, 'expenseRatio', fund.expenseRatio, 'known', 'lookup-verify');
-      app.setField(r.id, 'assetClass', fund.assetClass, 'known', 'lookup-verify');
-      if (!r.nickname) app.setColumn(r.id, 'nickname', fund.ticker);
+            if (!r.nickname) app.setColumn(r.id, 'nickname', fund.ticker);
       app.toast('Prefilled from the fund library: ' + fund.ticker + ' (verify)');
       render();
     }
@@ -436,7 +469,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     const f = r.f[fieldId] || { v: null, state: 'unknown', source: d.defaultSource || 'client' };
     bar.appendChild(h('strong', null, d.label));
     bar.appendChild(h('span', { class: 'small muted', style: { flex: 1 } }, d.hint || ''));
-    const back = () => { const cell = wrap.querySelector('tr[data-row="' + r.id + '"] [data-col="' + d.id + '"]'); if (cell) cell.focus(); };
+    const back = () => { const cell = wrap.querySelector('tr[data-row="' + r.id + '"] [data-col="' + d.id + '"]') || document.querySelector('.row-details[data-row="' + r.id + '"] [data-col="' + d.id + '"]'); if (cell) cell.focus(); };
     bar.appendChild(stateChip(f, s => { app.setField(r.id, d.id, f.v, s, f.source); refreshDerived(r.id); refreshCell(r.id, d.id); showFieldBar(r.id, d.id); back(); }, { label: 'State of ' + d.label.toLowerCase() }));
     bar.appendChild(sourceChip(f, s => { app.setField(r.id, d.id, f.v, f.state, s); refreshDerived(r.id); showFieldBar(r.id, d.id); back(); }, { label: 'Source of ' + d.label.toLowerCase() }));
     bar.appendChild(h('span', { class: 'small muted' }, h('span', { class: 'kbd' }, 'Alt+S'), ' state ', h('span', { class: 'kbd' }, 'Alt+O'), ' source'));
@@ -455,7 +488,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     if (old && fresh) old.replaceWith(fresh); else if (old) old.remove(); else if (fresh) table.appendChild(fresh);
   }
 
-  return { render, addRow, refreshTotals };
+  return { render, addRow, refreshTotals, openDetails };
 }
 
 /* A text input shows "Not entered" while empty (no browser hint text). */
