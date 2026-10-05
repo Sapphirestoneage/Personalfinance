@@ -207,7 +207,8 @@
       "needWant",
       "mistake",
       "fatFloor",
-      "primaryCard"
+      "primaryCard",
+      "lineAutopay"
      ],
      "defaults": {
       "needWant": "need",
@@ -942,12 +943,31 @@
   },
   "primaryCard": {
    "id": "primaryCard",
-   "label": "Card used",
-   "kind": "text",
+   "label": "How it is paid",
+   "kind": "choice",
    "owner": "spending",
    "weight": 3,
-   "hint": "The card this usually goes on (from Debt and Credit)",
-   "defaultSource": "client"
+   "hint": "Pick the credit card by name when one is used; the rewards lenses read it",
+   "defaultSource": "client",
+   "options": [
+    [
+     "checking",
+     "Bank or checking account"
+    ],
+    [
+     "debit",
+     "Debit card"
+    ],
+    [
+     "cash",
+     "Cash"
+    ],
+    [
+     "other",
+     "Other"
+    ]
+   ],
+   "dynamicOptions": "cards"
   },
   "summaryTotal": {
    "id": "summaryTotal",
@@ -1680,6 +1700,26 @@
    "cadence": true,
    "primary": true,
    "defaultCadence": "oneoff"
+  },
+  "lineAutopay": {
+   "id": "lineAutopay",
+   "label": "Paid automatically or by hand",
+   "kind": "choice",
+   "owner": "spending",
+   "weight": 3,
+   "options": [
+    [
+     "auto",
+     "Automatic"
+    ],
+    [
+     "manual",
+     "By hand"
+    ]
+   ],
+   "tag": true,
+   "hint": "A tag: it changes no number",
+   "defaultSource": "client"
   }
  }
 }

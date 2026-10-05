@@ -84,7 +84,9 @@ export async function enterHousehold(page, spec, check) {
   const rowIds = {};
   const byType = {};
   spec.rows.forEach(r => { (byType[r.planet + '/' + r.type] = byType[r.planet + '/' + r.type] || []).push(r); });
-  for (const key of Object.keys(byType)) {
+  /* debt before spending, so "How it is paid" can name a card that already exists (MR-033) */
+  const typeKeys = Object.keys(byType).sort((x, y) => (x.startsWith('debt/') ? 0 : 1) - (y.startsWith('debt/') ? 0 : 1));
+  for (const key of typeKeys) {
     const [planet, typeId] = key.split('/');
     const tdef = fields.planets[planet].types[typeId];
     await press(PLANET_KEY[planet]);
@@ -138,7 +140,7 @@ export async function enterHousehold(page, spec, check) {
         await tabTo(page, a => a.row === rowId && a.col === fid).catch(e => { throw new Error(e.message + ' [row ' + r.id + ' field ' + fid + ' inTable ' + inTable.includes(fid) + ']'); });
         if (d.kind === 'choice' || d.kind === 'bool') {
           /* selects: Home, then ArrowDown to the option (typeahead is ambiguous: "No" also matches "Not entered") */
-          const ids = d.kind === 'bool' ? ['yes', 'no'] : d.options.map(o => o[0]);
+          const ids = d.kind === 'bool' ? ['yes', 'no'] : d.options.map(o => o[0]).concat(d.dynamicOptions === 'cards' ? spec.rows.filter(x => x.planet === 'debt' && x.type === 'card').map(x => x.nickname) : []);
           const target = state === 'not-applicable' || state === 'unknown' || state === 'not-for-me' ? -1 : ids.indexOf(d.kind === 'bool' ? (v ? 'yes' : 'no') : v);
           const current = tdef.defaults && tdef.defaults[fid] !== undefined ? ids.indexOf(String(tdef.defaults[fid])) : -1;
           if (target !== current) {

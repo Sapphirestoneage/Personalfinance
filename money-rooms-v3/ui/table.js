@@ -336,7 +336,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
       if (f && f.state === 'not-applicable') return h('td', { class: c.num ? 'num' : null }, h('span', { class: 'empty-token', title: 'Not applicable' }, String.fromCharCode(0x2013)));
       if (f && f.state === 'will-send') return h('td', { class: c.num ? 'num' : null }, h('span', { class: 'empty-token' }, 'Will send'));
       const txt = display(d, f) || (f && f.state === 'unknown' ? 'Not entered' : '');
-      if (d.kind === 'choice') { const o = (d.options || []).find(x => x[0] === (f && f.v)); return h('td', { class: c.num ? 'num' : null }, o ? o[1] : h('span', { class: 'empty-token' }, 'Not entered')); }
+      if (d.kind === 'choice') { const o = choiceOptions(d).find(x => x[0] === (f && f.v)); return h('td', { class: c.num ? 'num' : null }, o ? o[1] : h('span', { class: 'empty-token' }, 'Not entered')); }
       if (d.kind === 'bool') return h('td', null, f && hasValue(f) ? (f.v ? 'Yes' : 'No') : h('span', { class: 'empty-token' }, 'Not entered'));
       if (d.kind === 'credits') return h('td', null, creditsSummary(r, f));
       return h('td', { class: c.num ? 'num' : null }, txt === 'Not entered' || txt === '' ? h('span', { class: 'empty-token' }, 'Not entered') : h('span', { class: isRough(f) ? 'rough-value' : null }, txt), d.cadence && f && hasValue(f) && f.cad ? h('span', { class: 'small muted cad-text' }, ' ' + CADENCE_SHORT[f.cad]) : null);
@@ -359,6 +359,13 @@ export function ledgerTable(host, app, planet, typeId, opts) {
   function toFill(r) {
     const shown = [primary.id].concat(tdef.tableFields || []);
     return tdef.fields.filter(id => !shown.includes(id) && askedOnRow(fields, r, id)).filter(id => { const d = fieldDef(fields, id); const f = r.f[id]; return !d.tag && (!f || f.state === 'unknown' || f.state === 'will-send'); }).length;
+  }
+  /* A choice can borrow options from the household: "How it is paid" lists the credit cards by name (MR-033). */
+  function choiceOptions(d) {
+    const base = d.options || [];
+    if (d.dynamicOptions !== 'cards') return base;
+    const cards = app.record.planets.debt.rows.filter(x => x.type === 'card' && x.nickname).map(x => [x.nickname, 'Credit card: ' + x.nickname]);
+    return base.concat(cards);
   }
   function creditsSummary(r, f) {
     const v = f && f.v && typeof f.v === 'object' ? f.v : null;
@@ -386,7 +393,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
         const cur = r.f[d.id] || {};
         if (v === '') app.setField(r.id, d.id, null, 'unknown', cur.source || 'client'); else app.setField(r.id, d.id, v, 'known', cur.source || 'client');
         e.target.classList.toggle('is-empty', v === ''); refreshDerived(r.id);
-      } }, h('option', { value: '' }, 'Not entered'), (d.options || []).map(o => h('option', { value: o[0], selected: f && f.v === o[0] }, o[1])));
+      } }, h('option', { value: '' }, 'Not entered'), choiceOptions(d).map(o => h('option', { value: o[0], selected: f && f.v === o[0] }, o[1])));
       return keyFlow(sel, r, d.id);
     }
     if (d.kind === 'bool') {

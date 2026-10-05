@@ -194,3 +194,9 @@ Decision: a field can be tied to a cadence (payFrequency to "paycheck"); it is a
 Compatibility: none; stored values stay and are ignored while the cadence differs.
 Why: the cadence pill and the pay frequency field asked the same thing twice.
 Alternative: drop pay frequency and keep only the pill (loses the paycheck count that converts a paystub to a month).
+
+## MR-033 2026-10-05 A spending line says how it is paid
+Decision: the spending line's "Card used" text became "How it is paid", a choice of bank or checking account, debit card, cash, other, or one of the household's credit cards by name (the options come from the Debt planet's card rows). A second choice, "Paid automatically or by hand", is a tag. The rewards lenses still match the card by its name.
+Compatibility: primaryCard keeps its id; a stored card name is still a valid value. lineAutopay is new and optional.
+Why: the owner asked for the payment method, including the bank account, and manual versus autopay.
+Alternative: a free-text field (cannot be filtered and misspells card names).
