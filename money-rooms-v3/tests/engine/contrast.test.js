@@ -28,7 +28,7 @@ const TEXT_PAIRS = [
   ['ink', 'paper'], ['ink', 'paper-2'], ['ink', 'sapphire-100'],
   ['slate', 'paper'], ['slate', 'paper-2'], ['slate', 'sapphire-100'],
   ['sapphire-700', 'paper'], ['sapphire-700', 'sapphire-100'], ['sapphire-900', 'paper'],
-  ['paper', 'sapphire-700'], ['paper', 'sapphire-900'], ['sapphire-300', 'sapphire-900'], ['on-bar', 'bar'],
+  ['paper', 'sapphire-700'], ['paper', 'sapphire-900'], ['sapphire-300', 'sapphire-900'], ['on-bar', 'bar'], ['on-bar-muted', 'bar'], ['on-sun', 'sun'], ['bar', 'on-bar-muted'],
 ];
 
 function darkHex() {
@@ -41,7 +41,7 @@ test('every text and background token pair meets 4.5:1 in the dark theme too', (
   const dark = darkHex();
   const lum = h => { const c = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(v => (v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4))); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
   const cr = (a, b) => { const la = lum(dark[a]), lb = lum(dark[b]); return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05); };
-  [['ink', 'paper'], ['ink', 'paper-2'], ['ink', 'sapphire-100'], ['slate', 'paper'], ['slate', 'paper-2'], ['slate', 'sapphire-100'], ['sapphire-700', 'paper'], ['sapphire-700', 'sapphire-100'], ['sapphire-900', 'paper'], ['paper', 'sapphire-700'], ['on-bar', 'bar']].forEach(([fg, bg]) => {
+  [['ink', 'paper'], ['ink', 'paper-2'], ['ink', 'sapphire-100'], ['slate', 'paper'], ['slate', 'paper-2'], ['slate', 'sapphire-100'], ['sapphire-700', 'paper'], ['sapphire-700', 'sapphire-100'], ['sapphire-900', 'paper'], ['paper', 'sapphire-700'], ['on-bar', 'bar'], ['on-bar-muted', 'bar'], ['on-sun', 'sun']].forEach(([fg, bg]) => {
     const r = cr(fg, bg); assert.ok(r >= 4.5, 'dark ' + fg + ' on ' + bg + ' is ' + r.toFixed(2) + ':1');
   });
 });

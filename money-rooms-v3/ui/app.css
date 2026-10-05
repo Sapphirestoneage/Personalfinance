@@ -39,19 +39,19 @@ input:focus, select:focus, textarea:focus, [contenteditable]:focus { outline: 2p
   display: flex; align-items: center; gap: var(--s-3); padding: 0 var(--s-3);
   position: sticky; top: 0; z-index: 20;
 }
-.topbar .brand { font-weight: var(--w-semibold); font-size: var(--fs-14); color: var(--paper); letter-spacing: 0.01em; white-space: nowrap; }
-.topbar .client { color: var(--sapphire-300); font-size: var(--fs-13); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
+.topbar .brand { font-weight: var(--w-semibold); font-size: var(--fs-14); color: var(--on-bar); letter-spacing: 0.01em; white-space: nowrap; }
+.topbar .client { color: var(--on-bar-muted); font-size: var(--fs-13); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
 .topbar .spacer { flex: 1; }
-.topbar .saved { font-size: var(--fs-12); color: var(--sapphire-300); min-width: 56px; text-align: right; }
-.topbar .saved[data-state="saving"] { color: var(--paper); }
-.topbar .saved[data-state="unsaved"] { color: var(--sapphire-300); }
-.topbar .view-toggle { display: inline-flex; border: 1px solid var(--sapphire-700); border-radius: var(--r-field); overflow: hidden; }
+.topbar .saved { font-size: var(--fs-12); color: var(--on-bar-muted); min-width: 56px; text-align: right; }
+.topbar .saved[data-state="saving"] { color: var(--on-bar); }
+.topbar .saved[data-state="unsaved"] { color: var(--on-bar-muted); }
+.topbar .view-toggle { display: inline-flex; border: 1px solid var(--on-bar-muted); border-radius: var(--r-field); overflow: hidden; }
 .topbar .view-toggle button {
-  background: transparent; color: var(--sapphire-300); border: 0; padding: 0 var(--s-2); height: 24px; font-size: var(--fs-12); cursor: pointer;
+  background: transparent; color: var(--on-bar-muted); border: 0; padding: 0 var(--s-2); height: 24px; font-size: var(--fs-12); cursor: pointer;
 }
-.topbar .view-toggle button[aria-pressed="true"] { background: var(--sapphire-700); color: var(--paper); }
-.topbar .ghost { background: transparent; border: 1px solid var(--sapphire-700); color: var(--paper); border-radius: var(--r-field); height: 24px; padding: 0 var(--s-2); font-size: var(--fs-12); cursor: pointer; }
-.topbar .ghost:disabled { color: var(--slate); border-color: var(--slate); cursor: default; }
+.topbar .view-toggle button[aria-pressed="true"] { background: var(--on-bar-muted); color: var(--bar); font-weight: var(--w-semibold); }
+.topbar .ghost { background: transparent; border: 1px solid var(--on-bar-muted); color: var(--on-bar); border-radius: var(--r-field); height: 24px; padding: 0 var(--s-2); font-size: var(--fs-12); cursor: pointer; }
+.topbar .ghost:disabled { opacity: 0.45; cursor: default; }
 
 .layout { display: grid; grid-template-columns: var(--sidebar-w) minmax(0, 1fr); min-height: calc(100vh - 48px); max-width: var(--max-w); margin: 0 auto; }
 .sidenav { border-right: 1px solid var(--line); background: var(--paper); padding: var(--s-3) 0; }
@@ -228,7 +228,7 @@ table.data tfoot td { background: var(--paper-2); font-weight: var(--w-semibold)
 
 /* Toast and notices */
 .toast { position: fixed; bottom: var(--s-3); left: 50%; transform: translateX(-50%); background: var(--bar); color: var(--on-bar); padding: var(--s-2) var(--s-3); border-radius: var(--r-field); font-size: var(--fs-13); z-index: 40; display: flex; gap: var(--s-3); align-items: center; }
-.toast button { all: unset; color: var(--sapphire-300); cursor: pointer; }
+.toast button { all: unset; color: var(--on-bar-muted); cursor: pointer; }
 .notice { border: 1px solid var(--amber); border-radius: var(--r-field); padding: var(--s-2) var(--s-3); color: var(--ink); background: var(--paper); font-size: var(--fs-13); }
 
 /* Quick note bar */
@@ -297,7 +297,7 @@ body[data-view="client"] .kpi .value.list, body[data-view="client"] .kpi .value.
   .tablewrap { scrollbar-width: thin; }
   .topbar { gap: var(--s-2); padding: 0 var(--s-2); }
   .topbar .client { display: none; }
-  .topbar #redo, .topbar #help-btn, .topbar #quicknote-btn { display: none; }
+  .topbar #redo, .topbar #help-btn, .topbar #quicknote-btn, .topbar .saved { display: none; }
   .hide-narrow { display: none !important; }
   .timeline { margin: var(--s-2) 0 0; }
   :root { --row-h: 40px; --field-h: 32px; }
@@ -312,9 +312,9 @@ body[data-view="client"] .kpi .value.list, body[data-view="client"] .kpi .value.
 .orbit-outer { fill: none; stroke: var(--line); stroke-dasharray: 4 6; }
 .orbit-ring { fill: none; stroke: var(--line); }
 .orbit-spoke { stroke: var(--line-soft); }
-.orbit-centre-disc { fill: var(--sapphire-900); }
-.orbit-title { fill: var(--paper); font-weight: var(--w-semibold); }
-.orbit-sub { fill: var(--sapphire-300); }
+.orbit-centre-disc { fill: var(--sun); }
+.orbit-title { fill: var(--on-sun); font-weight: var(--w-semibold); }
+.orbit-sub { fill: var(--on-bar-muted); }
 .orbit-sat { cursor: pointer; outline: none; }
 .orbit-disc { fill: var(--paper); stroke: var(--sapphire-300); stroke-width: 1.5; }
 .orbit-sat:hover .orbit-disc, .orbit-sat:focus-visible .orbit-disc { fill: var(--sapphire-100); stroke: var(--sapphire-700); }
