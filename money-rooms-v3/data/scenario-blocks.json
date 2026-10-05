@@ -36,7 +36,12 @@
    "oneOff": "price * downPct + 1500000",
    "monthly": "rateNote",
    "duration": "years",
-   "note": "One-off: the down payment plus about $15,000 of closing and moving. Ongoing: the change against rent."
+   "note": "One-off: the down payment plus about $15,000 of closing and moving. Ongoing: the change against rent.",
+   "planets": [
+    "spending",
+    "debt",
+    "life"
+   ]
   },
   "car": {
    "label": "Replace the car",
@@ -70,7 +75,12 @@
    "oneOff": "(price - tradeIn) * (1 - financed)",
    "monthly": "(price - tradeIn) * financed / (years * 12) * 1.08",
    "duration": "years",
-   "note": "One-off: the cash part. Ongoing: the loan payment with about 8% of interest spread over the term."
+   "note": "One-off: the cash part. Ongoing: the loan payment with about 8% of interest spread over the term.",
+   "planets": [
+    "spending",
+    "debt",
+    "life"
+   ]
   },
   "kid": {
    "label": "A child",
@@ -104,10 +114,14 @@
    "oneOff": "upfront + leave * takeHomeMonthly",
    "monthly": "everyday + childcare * 5 / 18",
    "duration": 18,
-   "note": "USDA-style cost of raising a child, spread evenly over 18 years; childcare front-loaded in the one-off and the average."
+   "note": "USDA-style cost of raising a child, spread evenly over 18 years; childcare front-loaded in the one-off and the average.",
+   "planets": [
+    "spending",
+    "life"
+   ]
   },
   "job": {
-   "label": "Job change",
+   "label": "New job or pay change",
    "glyph": "J",
    "questions": [
     {
@@ -138,7 +152,12 @@
    "oneOff": "gapMonths * takeHomeMonthly",
    "monthly": "-(payChange * takeHomeMonthly + matchChange)",
    "duration": "years",
-   "note": "A pay cut shows as an ongoing cost; a raise as a negative cost (more saved)."
+   "note": "A pay cut shows as an ongoing cost; a raise as a negative cost (more saved).",
+   "planets": [
+    "income",
+    "taxes",
+    "life"
+   ]
   },
   "sabbatical": {
    "label": "Sabbatical",
@@ -166,7 +185,11 @@
    "oneOff": "months * (takeHomeMonthly - spendingMonthly * (1 - spendShare)) + travel",
    "monthly": 0,
    "duration": 0,
-   "note": "Lost take-home for the months away, less what is not spent at home, plus travel."
+   "note": "Lost take-home for the months away, less what is not spent at home, plus travel.",
+   "planets": [
+    "income",
+    "life"
+   ]
   },
   "geo": {
    "label": "Move somewhere cheaper",
@@ -200,10 +223,15 @@
    "oneOff": "moveCost",
    "monthly": "spendChange * spendingMonthly - payChange * takeHomeMonthly",
    "duration": "years",
-   "note": "Geo arbitrage: cheaper living against a smaller paycheck."
+   "note": "Geo arbitrage: cheaper living against a smaller paycheck.",
+   "planets": [
+    "spending",
+    "income",
+    "life"
+   ]
   },
   "side": {
-   "label": "Side hustle",
+   "label": "New side income",
    "glyph": "+",
    "questions": [
     {
@@ -228,7 +256,12 @@
    "oneOff": "startup",
    "monthly": "-netMonthly",
    "duration": "years",
-   "note": "Income shows as a negative cost."
+   "note": "Income shows as a negative cost.",
+   "planets": [
+    "income",
+    "taxes",
+    "life"
+   ]
   },
   "inheritance": {
    "label": "Inheritance or windfall",
@@ -244,7 +277,11 @@
    "oneOff": "-amount",
    "monthly": 0,
    "duration": 0,
-   "note": "A windfall is a negative one-off cost: money in."
+   "note": "A windfall is a negative one-off cost: money in.",
+   "planets": [
+    "invest",
+    "life"
+   ]
   },
   "marriage": {
    "label": "Marriage",
@@ -272,7 +309,115 @@
    "oneOff": "wedding",
    "monthly": "-sharedSavings",
    "duration": "years",
-   "note": "One-off wedding cost; two incomes under one roof usually save more, shown as a negative cost."
+   "note": "One-off wedding cost; two incomes under one roof usually save more, shown as a negative cost.",
+   "planets": [
+    "life",
+    "spending"
+   ]
+  },
+  "raise": {
+   "label": "Raise",
+   "glyph": "R",
+   "planets": [
+    "income",
+    "taxes"
+   ],
+   "questions": [
+    {
+     "id": "payChange",
+     "label": "Pay change, share of take-home",
+     "kind": "percent",
+     "default": 0.05
+    },
+    {
+     "id": "years",
+     "label": "Years it lasts",
+     "kind": "int",
+     "default": 30
+    }
+   ],
+   "oneOff": 0,
+   "monthly": "-(payChange * takeHomeMonthly)",
+   "duration": "years",
+   "note": "A raise is money in: a negative monthly cost."
+  },
+  "incomeEnd": {
+   "label": "Income ending",
+   "glyph": "E",
+   "planets": [
+    "income",
+    "safety"
+   ],
+   "questions": [
+    {
+     "id": "amount",
+     "label": "Amount a month that stops",
+     "kind": "money",
+     "default": 100000
+    },
+    {
+     "id": "years",
+     "label": "Years until it is replaced",
+     "kind": "int",
+     "default": 1
+    }
+   ],
+   "oneOff": 0,
+   "monthly": "amount",
+   "duration": "years",
+   "note": "A benefit, a contract or a job that ends: the missing amount is a monthly cost until it is replaced."
+  },
+  "newExpense": {
+   "label": "New expense",
+   "glyph": "X",
+   "planets": [
+    "spending",
+    "safety"
+   ],
+   "questions": [
+    {
+     "id": "amount",
+     "label": "Amount a month",
+     "kind": "money",
+     "default": 30000
+    },
+    {
+     "id": "years",
+     "label": "Years it lasts",
+     "kind": "int",
+     "default": 5
+    }
+   ],
+   "oneOff": 0,
+   "monthly": "amount",
+   "duration": "years",
+   "note": "Something new to pay for each month, from its start date."
+  },
+  "expenseEnd": {
+   "label": "Expense ending",
+   "glyph": "D",
+   "planets": [
+    "spending",
+    "debt"
+   ],
+   "questions": [
+    {
+     "id": "amount",
+     "label": "Amount a month that stops",
+     "kind": "money",
+     "default": 30000
+    },
+    {
+     "id": "years",
+     "label": "Years of savings to count",
+     "kind": "int",
+     "default": 30
+    }
+   ],
+   "oneOff": 0,
+   "monthly": "-amount",
+   "duration": "years",
+   "note": "A payment that ends, a lease that is up: money freed each month."
   }
  }
 }

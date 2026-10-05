@@ -1,0 +1,235 @@
+{
+ "asOf": "2026-10-05",
+ "source": "Owner request 2026-10-05: FAT groups (Food, Accommodation, Transportation) with the lines that usually travel with each; names only, every amount is asked",
+ "verify": false,
+ "groups": [
+  {
+   "id": "food",
+   "label": "Food",
+   "lines": [
+    [
+     "Groceries",
+     "food",
+     "need",
+     true
+    ],
+    [
+     "Restaurants and takeout",
+     "food",
+     "want",
+     false
+    ],
+    [
+     "Coffee and snacks",
+     "food",
+     "want",
+     false
+    ],
+    [
+     "Food delivery",
+     "food",
+     "want",
+     false
+    ],
+    [
+     "Alcohol and bars",
+     "food",
+     "want",
+     false
+    ]
+   ]
+  },
+  {
+   "id": "housing",
+   "label": "Housing",
+   "lines": [
+    [
+     "Rent or mortgage",
+     "accommodation",
+     "need",
+     true
+    ],
+    [
+     "Renters or home insurance",
+     "accommodation",
+     "need",
+     true
+    ],
+    [
+     "Electricity",
+     "accommodation",
+     "need",
+     true
+    ],
+    [
+     "Gas and heating",
+     "accommodation",
+     "need",
+     true
+    ],
+    [
+     "Water and sewer",
+     "accommodation",
+     "need",
+     true
+    ],
+    [
+     "Internet",
+     "utilities",
+     "need",
+     true
+    ],
+    [
+     "Phone",
+     "utilities",
+     "need",
+     false
+    ],
+    [
+     "Trash and recycling",
+     "accommodation",
+     "need",
+     true
+    ],
+    [
+     "HOA or building fees",
+     "accommodation",
+     "need",
+     true
+    ],
+    [
+     "Repairs and upkeep",
+     "accommodation",
+     "need",
+     false
+    ]
+   ]
+  },
+  {
+   "id": "transportation",
+   "label": "Transportation",
+   "lines": [
+    [
+     "Car payment",
+     "transportation",
+     "need",
+     true
+    ],
+    [
+     "Car insurance",
+     "transportation",
+     "need",
+     true
+    ],
+    [
+     "Gas and charging",
+     "transportation",
+     "need",
+     true
+    ],
+    [
+     "Parking",
+     "transportation",
+     "need",
+     true
+    ],
+    [
+     "Tolls",
+     "transportation",
+     "need",
+     false
+    ],
+    [
+     "Registration and inspection",
+     "transportation",
+     "need",
+     false
+    ],
+    [
+     "Maintenance and repairs",
+     "transportation",
+     "need",
+     false
+    ],
+    [
+     "Public transportation",
+     "transportation",
+     "need",
+     true
+    ],
+    [
+     "Rideshare and taxis",
+     "transportation",
+     "want",
+     false
+    ]
+   ]
+  },
+  {
+   "id": "everything-else",
+   "label": "Everything else",
+   "lines": [
+    [
+     "Health copays and prescriptions",
+     "therapy",
+     "need",
+     false
+    ],
+    [
+     "Therapy and counseling",
+     "therapy",
+     "need",
+     false
+    ],
+    [
+     "Gym and fitness",
+     "wants",
+     "want",
+     false
+    ],
+    [
+     "Streaming and subscriptions",
+     "utilities",
+     "want",
+     false
+    ],
+    [
+     "Clothing and personal care",
+     "wants",
+     "want",
+     false
+    ],
+    [
+     "Childcare and kids",
+     "other",
+     "need",
+     false
+    ],
+    [
+     "Pets",
+     "other",
+     "need",
+     false
+    ],
+    [
+     "Gifts and giving",
+     "irregular",
+     "want",
+     false
+    ],
+    [
+     "Travel",
+     "irregular",
+     "want",
+     false
+    ],
+    [
+     "Annual fees and memberships",
+     "irregular",
+     "want",
+     false
+    ]
+   ]
+  }
+ ]
+}

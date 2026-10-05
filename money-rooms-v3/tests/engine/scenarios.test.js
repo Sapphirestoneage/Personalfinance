@@ -21,7 +21,7 @@ test('every block type has 3 or 4 questions with defaults and its formulas evalu
     const c = blockCosts(def, { answers: {} }, { takeHomeMonthly: 400000, spendingMonthly: 350000 });
     assert.ok(Number.isFinite(c.oneOff) && Number.isFinite(c.monthly) && Number.isFinite(c.duration), t);
   });
-  assert.equal(Object.keys(defs.types).length, 9);
+  assert.equal(Object.keys(defs.types).length, 13); /* nine from the spec plus four Starting soon types (MR-026) */
 });
 
 test('Jordan + kid + Portugal: each alone and together, baseline untouched', () => {
@@ -40,4 +40,32 @@ test('Jordan + kid + Portugal: each alone and together, baseline untouched', () 
   const R2 = compute(rec, data, { today: '2026-10-05' });
   assert.deepEqual(R2.projection.likely.fiAge, R.projection.likely.fiAge, 'reality is never written');
   assert.equal(rec.scenarios.length, 0);
+});
+
+test('a start month pro-rates the first year and parses in four spellings', async () => {
+  const { adjustments, parseStart, startLabel } = await import('../../engine/scenarios.js');
+  const defs = { types: { x: { questions: [{ id: 'amount', kind: 'money', default: 120000 }], oneOff: 0, monthly: 'amount', duration: 1 } } };
+  const live = { takeHomeMonthly: 500000, spendingMonthly: 300000 };
+  const full = adjustments([{ type: 'x', startYear: 2030, answers: {} }], defs, live);
+  assert.equal(full[2030].monthly, 120000);
+  const oct = adjustments([{ type: 'x', startYear: 2030, startMonth: 10, answers: {} }], defs, live);
+  assert.equal(oct[2030].monthly, 30000);
+  assert.equal(oct[2031].monthly, 90000);
+  assert.deepEqual(parseStart('Mar 2027'), { startYear: 2027, startMonth: 3 });
+  assert.deepEqual(parseStart('2027-03'), { startYear: 2027, startMonth: 3 });
+  assert.deepEqual(parseStart('3/2027'), { startYear: 2027, startMonth: 3 });
+  assert.deepEqual(parseStart('2027'), { startYear: 2027, startMonth: null });
+  assert.equal(parseStart('soon'), null);
+  assert.equal(startLabel({ startYear: 2027, startMonth: 3 }), 'Mar 2027');
+});
+
+test('every scenario block names the planets it touches, and presets name real categories', async () => {
+  const data = loadData();
+  Object.keys(data.scenarioBlocks.types).forEach(t => assert.ok(Array.isArray(data.scenarioBlocks.types[t].planets) && data.scenarioBlocks.types[t].planets.length, t + ' planets'));
+  const cats = data.fields.fields.category.options.map(o => o[0]);
+  data.presets.groups.forEach(g => g.lines.forEach(([name, cat, nw, fat]) => {
+    assert.ok(name && cats.includes(cat), name + ' category ' + cat);
+    assert.ok(nw === 'need' || nw === 'want', name + ' need or want');
+    assert.equal(typeof fat, 'boolean', name + ' fat flag');
+  }));
 });

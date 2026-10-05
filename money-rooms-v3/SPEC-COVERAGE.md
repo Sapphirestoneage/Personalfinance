@@ -101,7 +101,7 @@ plainly. Evidence is a file, a test name or a screenshot path.
 
 | Requirement | Status | Evidence |
 |---|---|---|
-| Nine scenario block types with default costs and 3-4 questions each | done | data/scenario-blocks.json; scenarios.test.js; Inheritance asks one question after critique R10 (MR-024), the rest 3 or 4 |
+| Nine scenario block types with default costs and 3-4 questions each | done | data/scenario-blocks.json: the nine from the spec plus Raise, Income ending, New expense and Expense ending (MR-026); Inheritance asks one question after critique R10 (MR-024) |
 | Blocks read reality live and never write to it | done | engine/scenarios.js compare(); scenarios.test.js "reality is never written" |
 | Timeline with drag-and-drop (and keyboard arrows) | done | ui/views/scenarios.js; flow level4-jordan-kid-portugal "a block moves along the timeline" |
 | Each alone versus together, whole life replayed | done | engine/scenarios.js compare(); flow "the table shows today, each block alone and all together" |

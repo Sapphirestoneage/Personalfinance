@@ -3,6 +3,7 @@
    shows that moon's table. Facts enter here and nowhere else. */
 import { h, clear } from '../dom.js';
 import { orbitMap, mapPanel } from '../orbit.js';
+import { mountStartingSoon } from '../startingsoon.js';
 import { ledgerTable } from '../table.js';
 import { PLANET_LABELS, PLANETS } from '../../engine/sun.js';
 import { typesFor, typeDef, primaryFieldOf, freshFacts, fieldDef, isNoneRow } from '../../engine/fields.js';
@@ -36,9 +37,12 @@ export function mount(host, app) {
   const mapHost = h('div', { class: 'maphost' });
   const bar = h('div');
   const side = h('div');
-  host.appendChild(h('div', { class: 'planet-grid' }, h('div', null, mapHost, bar), side));
+  const soonHost = h('div', { style: { marginTop: '16px' } });
+  host.appendChild(h('div', { class: 'planet-grid' }, h('div', null, mapHost, bar), h('div', null, side, soonHost)));
+  const soon = mountStartingSoon(soonHost, app, planet);
   function draw() {
     clear(mapHost); clear(bar); clear(side);
+    soon.update();
     const types = typesFor(fields, planet, work);
     const rowsOf = t => app.record.planets[planet].rows.filter(r => r.type === t.id);
     const items = types.map(t => ({ id: t.id, label: t.id === 'other' ? 'Other (optional)' : t.label, count: rowsOf(t).length, fill: app.result.typeFills[planet][t.id], dashed: t.id === 'other' && rowsOf(t).length === 0, attention: (app.result.needs[planet] || []).some(n => n.type === t.id), badge: rowsOf(t).length ? (rowsOf(t).every(r => isNoneRow(fields, r)) ? 'None' : Math.round((app.result.typeFills[planet][t.id] || 0) * 100) + '%') : null }));
@@ -124,7 +128,10 @@ function mountTable(host, app, planet, typeId) {
   inferred();
   const tableHost = h('div');
   host.appendChild(tableHost);
-  const table = ledgerTable(tableHost, app, planet, typeId, { emptyActions: planet === 'spending' && typeId === 'line' && app.view === 'coach' ? [h('button', { class: 'btn', onClick: () => useDefaults(app) }, 'Use national averages')] : [] });
+  const table = ledgerTable(tableHost, app, planet, typeId, { emptyActions: planet === 'spending' && typeId === 'line' && app.view === 'coach' ? [h('button', { class: 'btn', onClick: () => useDefaults(app) }, 'Use national averages')].concat(presetButtons(app)) : [] });
+  const soonHost = h('div', { style: { marginTop: '16px' } });
+  host.appendChild(soonHost);
+  const soon = mountStartingSoon(soonHost, app, planet);
   function note() {
     clear(summaryNote);
     const s = app.result.summaries[planet];
@@ -136,15 +143,37 @@ function mountTable(host, app, planet, typeId) {
     }
   }
   note();
-  return { update(reason) { note(); inferred(); if (reason === 'rows') table.render(); }, addRow: () => table.addRow() };
+  return { update(reason) { note(); inferred(); soon.update(); if (reason === 'rows') table.render(); }, addRow: () => table.addRow() };
 }
 
 function extraActions(app, planet, typeId) {
   const out = [];
   if (planet === 'spending' && typeId === 'line' && app.view === 'coach' && app.record.planets.spending.rows.some(r => r.type === 'line')) {
     out.push(h('button', { class: 'btn', title: 'Adds one line per category at national-average amounts, marked Estimated and Rough', onClick: () => useDefaults(app) }, 'Use national averages'));
+    presetButtons(app).forEach(b => out.push(b));
   }
   return out;
+}
+
+/* Preset groups (data/presets.json): the FAT groups with the lines that travel with each, names only; every amount is asked. */
+function presetButtons(app) {
+  const groups = (app.data.presets && app.data.presets.groups) || [];
+  return groups.map(g => h('button', { class: 'btn small', title: g.lines.length + ' lines: ' + g.lines.map(x => x[0]).join(', '), onClick: () => addPreset(app, g.id) }, '+ ' + g.label));
+}
+export function addPreset(app, groupId) {
+  const g = (app.data.presets.groups || []).find(x => x.id === groupId); if (!g) return;
+  const existing = app.record.planets.spending.rows.filter(r => r.type === 'line');
+  let added = 0;
+  g.lines.forEach(([name, cat, needWant, fat]) => {
+    if (existing.some(r => r.nickname.toLowerCase() === name.toLowerCase())) return;
+    const row = createRow('spending', 'line', { nickname: name, f: freshFacts(app.data.fields, 'spending', 'line') });
+    row.f.category = { v: cat, state: 'known', source: 'client' };
+    row.f.needWant = { v: needWant, state: 'known', source: 'client' };
+    row.f.fatFloor = { v: !!fat, state: 'known', source: 'client' };
+    row.f.amount.cad = 'month';
+    app.addRow(row); added++;
+  });
+  app.toast(added ? 'Added ' + added + (added === 1 ? ' line' : ' lines') + ' under ' + g.label + '. Amounts are still to enter; delete any that do not apply.' : 'Every ' + g.label.toLowerCase() + ' line is already here.');
 }
 
 /* Defaults as estimates: one line per category for the household size, source Estimated (0.5), shown with ~. */

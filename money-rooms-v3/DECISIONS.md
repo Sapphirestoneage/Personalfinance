@@ -152,3 +152,9 @@ Decision: Home asks birth date, state, work situation and filing status; name, d
 Compatibility: no stored shape changes; city stays in sun.f and old records keep it. The Sun fill no longer counts city.
 Why: the owner asked for as few questions as possible at the start; a coach can get a year and a state in the first minute.
 Alternative: ask all eight facts up front (what Levels 0 to 7 did).
+
+## MR-026 2026-10-05 Starting soon: changes with a start month, shown where they belong, costed by Simulate
+Decision: scenario blocks gain an optional startMonth and each block type names the planets it touches; every planet page and row-type page shows a "Starting soon" panel of its blocks with a typed start ("Mar 2027"), what each costs, and a link to Simulate. Four block types were added (Raise, Income ending, New expense, Expense ending). The first and last year of a block are pro-rated by its start month. Spending lines gain preset groups (Food, Housing, Transportation, Everything else) from data/presets.json: names, category, need or want and the FAT flag; every amount is asked.
+Compatibility: startMonth is optional and null on old blocks (same behaviour as before); presets add ordinary rows. No stored shape changes otherwise.
+Why: the owner wants to see when a change starts and what it does from the room it belongs to, and to add a household's usual lines in one press.
+Alternative: a new "Upcoming" screen (adds a surface the freeze does not allow; Simulate already owns the math).

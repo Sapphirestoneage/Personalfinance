@@ -6,7 +6,7 @@
 import { h, clear } from '../dom.js';
 import * as F from '../../engine/format.js';
 import * as Charts from '../charts.js';
-import { compare, newBlock, blockCosts } from '../../engine/scenarios.js';
+import { compare, newBlock, blockCosts, costSentence, startLabel, parseStart } from '../../engine/scenarios.js';
 import { createRow } from '../../engine/record.js';
 import { freshFacts } from '../../engine/fields.js';
 import { parseTyped } from '../typed.js';
@@ -31,13 +31,6 @@ export function mount(host, app) {
     return { takeHomeMonthly: th && th.cents !== undefined ? th.cents : null, spendingMonthly: sp && sp.cents !== undefined ? sp.cents : null };
   }
   const cur = id => (app.record.scenarios || []).find(s => s.id === id);
-  function costText(c) {
-    if (c.needs) return 'Needs ' + c.needs.join(' and ') + ' to cost this block.';
-    const one = c.oneOff < 0 ? F.dollarsWhole(-c.oneOff) + ' in' : F.dollarsWhole(c.oneOff);
-    if (!c.monthly) return 'One-off ' + one + ', nothing ongoing.';
-    return 'One-off ' + one + ', then ' + F.dollarsWhole(Math.abs(c.monthly)) + ' a month ' + (c.monthly > 0 ? 'more' : 'saved') + ' for ' + c.duration + (c.duration === 1 ? ' year.' : ' years.');
-  }
-
   function draw() {
     clear(emptyHost); clear(laneHost); clear(noteHost); clear(headRow); clear(cmpHost);
     const inp = app.result.projectionInputs;
@@ -89,7 +82,7 @@ export function mount(host, app) {
     tl.style.height = (blocks.length ? 8 + laneEnd.length * 32 + 24 : 40) + 'px';
     sorted.forEach(b => {
       const def = defs.types[b.type]; const c = blockCosts(def, b, L);
-      const attrs = { class: 'block' + (selected === b.id ? ' selected' : '') + (b.promoted ? ' promoted' : ''), role: 'listitem', title: b.name + ' from ' + b.startYear, dataset: { block: b.id },
+      const attrs = { class: 'block' + (selected === b.id ? ' selected' : '') + (b.promoted ? ' promoted' : ''), role: 'listitem', title: b.name + ' from ' + startLabel(b), dataset: { block: b.id },
         style: { left: pct(b.startYear) + '%', width: Math.max(4, pct(b.startYear + Math.max(1, c.duration)) - pct(b.startYear)) + '%', top: (8 + lanes.get(b.id) * 32) + 'px' } };
       if (coach) {
         attrs.tabindex = '0'; attrs.draggable = 'true';
@@ -99,7 +92,7 @@ export function mount(host, app) {
       const el = h('div', attrs);
       if (coach) el.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', b.id); e.dataTransfer.effectAllowed = 'move'; });
       el.appendChild(h('span', { class: 'block-glyph' }, def.glyph));
-      el.appendChild(h('span', { class: 'block-label' }, b.name + ', ' + b.startYear));
+      el.appendChild(h('span', { class: 'block-label' }, b.name + ', ' + startLabel(b)));
       tl.appendChild(el);
     });
     if (coach) {
@@ -116,7 +109,7 @@ export function mount(host, app) {
     const ed = h('div', { class: 'block-editor' });
     ed.appendChild(h('h3', { title: def.note }, b.name, h('span', { class: 'tag' }, def.label)));
     ed.appendChild(h('div', { class: 'fieldrow' }, h('label', null, 'Name'), h('div', { class: 'control' }, h('input', { class: 'input', value: b.name, 'aria-label': 'Block name', onChange: e => app.mutate(rec => { rec.scenarios.find(s => s.id === b.id).name = e.target.value.trim() || def.label; }, 'scenarios') }))));
-    startInput = h('input', { class: 'input num', inputmode: 'numeric', value: String(b.startYear), 'aria-label': 'Start year', onChange: e => { const y = parseInt(e.target.value, 10); if (Number.isFinite(y)) app.mutate(rec => { rec.scenarios.find(s => s.id === b.id).startYear = Math.min(yearN, Math.max(year0, y)); }, 'scenarios'); else e.target.value = String(cur(b.id).startYear); } });
+    startInput = h('input', { class: 'input', value: startLabel(b), 'aria-label': 'Start year', title: 'A year, or a month and year such as Mar 2027', onChange: e => { const p = parseStart(e.target.value); if (p) app.mutate(rec => { const x = rec.scenarios.find(s => s.id === b.id); x.startYear = Math.min(yearN, Math.max(year0, p.startYear)); x.startMonth = p.startMonth; }, 'scenarios'); else { app.toast('A year, or a month and year such as Mar 2027.'); e.target.value = startLabel(cur(b.id)); } } });
     ed.appendChild(h('div', { class: 'fieldrow' }, h('label', null, 'Starts in'), h('div', { class: 'control' }, startInput)));
     def.questions.forEach(qd => {
       const show = v => qd.kind === 'money' ? F.dollarsWhole(v) : qd.kind === 'percent' ? F.percent(v) : String(v);
@@ -136,8 +129,8 @@ export function mount(host, app) {
   function refreshEditor() {
     const b = cur(editorFor); if (!b) return;
     const def = defs.types[b.type];
-    costLine.textContent = costText(blockCosts(def, b, live()));
-    if (document.activeElement !== startInput) startInput.value = String(b.startYear);
+    costLine.textContent = costSentence(blockCosts(def, b, live()));
+    if (document.activeElement !== startInput) startInput.value = startLabel(b);
     clear(actionHost);
     actionHost.appendChild(b.promoted ? h('span', { class: 'chip state-known' }, 'In the Life plan') : h('button', { class: 'btn primary', onClick: () => promote(b) }, 'Promote to the Ledger'));
     actionHost.appendChild(h('button', { class: 'btn quiet', onClick: () => { app.mutate(rec => { rec.scenarios = rec.scenarios.filter(s => s.id !== b.id); }, 'scenarios'); selected = null; app.toast('Block removed'); } }, 'Remove block'));
@@ -147,7 +140,7 @@ export function mount(host, app) {
     if (c.needs) { app.toast('Needs ' + c.needs.join(' and ') + ' before this block can be promoted.'); return; }
     const row = createRow('life', 'goal', { nickname: b.name, notesShared: 'Promoted from a scenario block (' + def.label + ')', f: freshFacts(app.data.fields, 'life', 'goal') });
     row.f.goalCost = { v: Math.max(0, c.oneOff), state: 'rough', source: 'client' };
-    row.f.targetDate = { v: String(b.startYear) + '-01', state: 'known', source: 'client' };
+    row.f.targetDate = { v: String(b.startYear) + '-' + String(b.startMonth || 1).padStart(2, '0'), state: 'known', source: 'client' };
     row.f.priority = { v: '2', state: 'known', source: 'client' };
     app.addRow(row);
     app.mutate(rec => { const x = rec.scenarios.find(s => s.id === b.id); x.promoted = true; x.rowId = row.id; }, 'scenarios');

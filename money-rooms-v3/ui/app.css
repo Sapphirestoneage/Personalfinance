@@ -479,6 +479,8 @@ tr.muted td { color: var(--slate); }
 table.data td.wrap { white-space: normal; min-width: 200px; padding-top: var(--s-1); padding-bottom: var(--s-1); }
 table.data tr.group td { background: var(--paper-2); color: var(--sapphire-900); font-weight: var(--w-semibold); }
 .learn { max-width: 960px; }
+.starting-soon table.data td.wrap { min-width: 0; white-space: normal; }
+.starting-soon .add-block { margin-left: auto; width: var(--field-w-wide); font-weight: var(--w-regular); }
 .assumptions { max-width: 760px; }
 .assumptions .fieldrow { grid-template-columns: minmax(0, 1fr) var(--field-w) 200px; grid-template-areas: "label input src"; }
 .assumptions .fieldrow.readonly .value { font-size: var(--fs-13); line-height: var(--field-h); white-space: nowrap; }

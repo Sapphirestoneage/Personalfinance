@@ -4,6 +4,7 @@
    projection inputs. Replays the whole life for the baseline, each block
    alone, and all together. Promote is the only bridge into the Ledger. */
 import { project } from './projection.js';
+import * as F from './format.js';
 
 /* Evaluate a block's cost formula from its answers and the household's live figures. */
 export function evalFormula(expr, answers, live) {
@@ -48,7 +49,15 @@ export function adjustments(blocks, defs, live) {
     const y0 = b.startYear;
     by[y0] = by[y0] || { oneOff: 0, monthly: 0 };
     by[y0].oneOff += c.oneOff;
-    for (let y = y0; y < y0 + Math.max(0, c.duration); y++) { by[y] = by[y] || { oneOff: 0, monthly: 0 }; by[y].monthly += c.monthly; }
+    /* a start month pro-rates the first and last year (MR-026): a change from October touches 3 of 12 months */
+    const m0 = b.startMonth && b.startMonth >= 1 && b.startMonth <= 12 ? b.startMonth : 1;
+    let left = Math.max(0, c.duration) * 12;
+    for (let y = y0; left > 0; y++) {
+      const months = Math.min(left, y === y0 ? 13 - m0 : 12);
+      by[y] = by[y] || { oneOff: 0, monthly: 0 };
+      by[y].monthly += Math.round(c.monthly * months / 12);
+      left -= months;
+    }
   });
   return by;
 }
@@ -95,13 +104,37 @@ export function compare(inp, blocks, defs, live) {
   return {
     asm: { returnLikely: rate },
     baseline: { fiAge: baseline.fiAge, at95: at95(baseline), path: baseline.path },
-    alone: alone.map(x => ({ id: x.block.id, name: x.block.name, type: x.block.type, startYear: x.block.startYear, costs: x.costs, fiAge: x.result.fiAge, at95: at95(x.result), fiDelta: x.result.fiAge !== null && baseline.fiAge !== null ? x.result.fiAge - baseline.fiAge : null, at95Delta: at95(x.result) - at95(baseline), path: x.result.path })),
+    alone: alone.map(x => ({ id: x.block.id, name: x.block.name, type: x.block.type, startYear: x.block.startYear, startMonth: x.block.startMonth || null, costs: x.costs, fiAge: x.result.fiAge, at95: at95(x.result), fiDelta: x.result.fiAge !== null && baseline.fiAge !== null ? x.result.fiAge - baseline.fiAge : null, at95Delta: at95(x.result) - at95(baseline), path: x.result.path })),
     together: { fiAge: together.fiAge, at95: at95(together), fiDelta: together.fiAge !== null && baseline.fiAge !== null ? together.fiAge - baseline.fiAge : null, at95Delta: at95(together) - at95(baseline), path: together.path },
   };
 }
 
-export function newBlock(type, defs, startYear) {
+export function newBlock(type, defs, startYear, startMonth) {
   const def = defs.types[type];
   const answers = {}; def.questions.forEach(q => { answers[q.id] = q.default; });
-  return { id: 'sc' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), type, name: def.label, startYear, answers, promoted: false, createdAt: new Date().toISOString() };
+  return { id: 'sc' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), type, name: def.label, startYear, startMonth: startMonth || null, answers, promoted: false, createdAt: new Date().toISOString() };
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+/* "Mar 2027" when a month is set, else the year. */
+export function startLabel(b) {
+  return b.startMonth ? MONTHS[b.startMonth - 1] + ' ' + b.startYear : String(b.startYear);
+}
+/* Accepts "2027", "2027-03", "3/2027", "Mar 2027" or "March 2027"; null when it is none of those. */
+export function parseStart(text) {
+  const t = String(text || '').trim();
+  let m = /^(\d{4})$/.exec(t); if (m) return { startYear: +m[1], startMonth: null };
+  m = /^(\d{4})-(\d{1,2})$/.exec(t); if (m && +m[2] >= 1 && +m[2] <= 12) return { startYear: +m[1], startMonth: +m[2] };
+  m = /^(\d{1,2})\/(\d{4})$/.exec(t); if (m && +m[1] >= 1 && +m[1] <= 12) return { startYear: +m[2], startMonth: +m[1] };
+  m = /^([A-Za-z]{3,})\.?,?\s+(\d{4})$/.exec(t);
+  if (m) { const i = MONTHS.findIndex(x => x.toLowerCase() === m[1].slice(0, 3).toLowerCase()); if (i !== -1) return { startYear: +m[2], startMonth: i + 1 }; }
+  return null;
+}
+/* One sentence for a block's cost, shared by Simulate and the Starting soon panels. */
+export function costSentence(c) {
+  if (c.needs) return 'Needs ' + c.needs.join(' and ') + ' to cost this block.';
+  const one = c.oneOff < 0 ? F.dollarsWhole(-c.oneOff) + ' in' : F.dollarsWhole(c.oneOff);
+  if (!c.monthly) return c.oneOff ? 'One-off ' + one + ', nothing ongoing.' : 'Nothing one-off, nothing ongoing.';
+  const ongoing = F.dollarsWhole(Math.abs(c.monthly)) + ' a month ' + (c.monthly > 0 ? 'more' : 'in') + ' for ' + c.duration + (c.duration === 1 ? ' year' : ' years');
+  return c.oneOff ? 'One-off ' + one + ', then ' + ongoing + '.' : ongoing.charAt(0).toUpperCase() + ongoing.slice(1) + '.';
 }
