@@ -206,3 +206,9 @@ Decision: the Card field on a credit card row is two lists: the issuer, then tha
 Compatibility: cardName keeps its id and stores "Issuer Name" as before.
 Why: one list of 58 cards was too many to scan.
 Alternative: type-ahead on one list (works on a desktop, poor on a phone).
+
+## MR-035 2026-10-05 One tracker from the first fact to the last
+Decision: a strip at the top of Home and every Ledger page (coach view) shows one bar and one count, "N of M in", over an ordered list: the four household facts, then a row (or a rough total, or none) for every row type the situation asks for, then every row's headline figure, then every other counted fact. The first open step is "Now:" with a Go button that lands in that cell. Tags and cadence-hidden fields never count; a type assumed none counts as answered.
+Compatibility: none; computed from the record.
+Why: the owner felt they were going in circles and asked to be told what is needed now until everything is filled.
+Alternative: per-planet percentages only (say how much, never what).

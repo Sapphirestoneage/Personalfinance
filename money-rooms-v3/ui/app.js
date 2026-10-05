@@ -7,6 +7,7 @@ import { createStore } from '../engine/store.js';
 import * as Rec from '../engine/record.js';
 import { h, clear, qs, debounce, download, readFile } from './dom.js';
 import { routes, navItems } from './routes.js';
+import { renderTracker } from './tracker.js';
 
 const store = createStore();
 const settings = store.settings();
@@ -163,6 +164,7 @@ export const app = {
       this.mounted = null;
     } else {
       this.mounted = def.mount(main, this);
+      if (this.record && this.view === 'coach' && (this.route.name === 'home' || this.route.name === 'ledger')) { const tr = h('div', { id: 'tracker' }); main.prepend(tr); renderTracker(tr, this); }
     }
     this.renderNav();
     if (this.focusAfterRender) { const f = this.focusAfterRender; this.focusAfterRender = null; const el = main.querySelector('tr[data-row="' + f.rowId + '"] [data-col="' + f.field + '"], .fieldrow[data-field="' + f.field + '"] .control input, .fieldrow[data-field="' + f.field + '"] .control select'); if (el) { el.focus(); if (el.scrollIntoView) el.scrollIntoView({ block: 'center' }); } else if (this.mounted && this.mounted.openDetails) this.mounted.openDetails(f.rowId, f.field); }
@@ -172,6 +174,7 @@ export const app = {
   rerender() { this.render(); },
   update(reason) {
     if (this.mounted && this.mounted.update) this.mounted.update(reason);
+    const tr = qs('#tracker'); if (tr) renderTracker(tr, this);
     this.renderNav();
     this.renderChrome();
   },
