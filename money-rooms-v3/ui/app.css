@@ -226,12 +226,26 @@ table.data tfoot td { background: var(--paper-2); font-weight: var(--w-semibold)
 /* Drawer (show the math) */
 .drawer { position: fixed; top: 48px; right: 0; bottom: 0; width: 420px; max-width: 100vw; background: var(--paper); border-left: 1px solid var(--line); z-index: 30; overflow: auto; padding: var(--s-3) var(--s-4); }
 .drawer header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: var(--s-3); }
-.drawer { width: 480px; }
-.drawer .row-details .fieldrow.detail { grid-template-columns: 160px minmax(0, 1fr); grid-template-areas: "label input"; }
-.drawer .row-details .fieldrow.detail .control { display: flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
-.drawer .row-details .fieldrow.detail .input, .drawer .row-details .fieldrow.detail .select { margin-left: 0; border-color: var(--line); background: var(--paper); }
-.drawer .row-details .fieldrow.detail .input.wide { width: 100%; max-width: 280px; }
+.drawer { width: 520px; container-type: inline-size; }
 .drawer .row-details h2 { margin-bottom: var(--s-1); }
+.drawer .row-details h2 .tag { font-size: var(--fs-12); color: var(--slate); font-weight: var(--w-regular); margin-left: var(--s-2); }
+.drawer .row-details h3 { font-size: var(--fs-12); font-weight: var(--w-semibold); color: var(--sapphire-900); text-transform: none; margin: var(--s-3) 0 var(--s-1); }
+.drawer .row-details .fieldrow.detail { grid-template-columns: 136px minmax(0, 1fr) auto auto; grid-template-areas: "label input state src"; min-height: 44px; gap: 0 var(--s-2); }
+.drawer .row-details .fieldrow.detail .control { display: flex; align-items: center; gap: var(--s-1); min-width: 0; }
+.drawer .row-details .fieldrow.detail .control > * { flex: 1 1 auto; min-width: 0; }
+.drawer .row-details .fieldrow.detail .control > .chip, .drawer .row-details .fieldrow.detail .control > .btn { flex: 0 0 auto; }
+.drawer .row-details .fieldrow.detail .input, .drawer .row-details .fieldrow.detail .select { height: var(--field-h); border: 1px solid var(--line); border-radius: var(--r-field); background: var(--paper); padding: 0 var(--s-2); width: 100%; margin: 0; flex: 1 1 auto; min-width: 0; }
+.drawer .row-details .fieldrow.detail .select { padding-right: 24px; }
+.drawer .row-details .fieldrow.detail .cell-money { width: 100%; }
+.drawer .row-details .fieldrow.detail .cell-money .select.cad { width: 60px; margin: 0; }
+.drawer .row-details .fieldrow.detail .chip.toggle, .drawer .row-details .fieldrow.detail .btn { height: var(--field-h); }
+.drawer .row-details .fieldrow.detail .state .chip, .drawer .row-details .fieldrow.detail .src .chip { height: var(--field-h); }
+.drawer .row-details .fieldrow.detail .empty-token { padding: 0; }
+.drawer .row-details .fieldrow.detail .control .input.wide, .drawer .row-details .fieldrow.detail .control .input.num { max-width: none; width: 100%; }
+@container (max-width: 480px) {
+  .drawer .row-details .fieldrow.detail { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "label state src" "input input input"; padding: var(--s-1) 0 var(--s-2); row-gap: var(--s-1); }
+  .drawer .row-details .fieldrow.detail .control { grid-area: input; }
+}
 .cell-details .btn { white-space: nowrap; }
 .drawer .formula { font-family: var(--mono); font-size: var(--fs-12); background: var(--paper-2); border: 1px solid var(--line); border-radius: var(--r-field); padding: var(--s-2); white-space: pre-wrap; }
 .drawer table.data th { position: static; }

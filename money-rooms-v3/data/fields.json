@@ -65,10 +65,7 @@
      "nicknameLabel": "Job",
      "stress": false,
      "plural": "W-2 jobs",
-     "tableFields": [
-      "takeHome",
-      "payFrequency"
-     ]
+     "tableFields": []
     },
     "c1099": {
      "label": "1099 work",
@@ -98,10 +95,7 @@
      "nicknameLabel": "Work",
      "stress": false,
      "plural": "1099 work",
-     "tableFields": [
-      "takeHome",
-      "payFrequency"
-     ]
+     "tableFields": []
     },
     "side": {
      "label": "Side income",
@@ -119,9 +113,7 @@
      "nicknameLabel": "What it is",
      "stress": false,
      "plural": "Side income",
-     "tableFields": [
-      "payFrequency"
-     ]
+     "tableFields": []
     },
     "unemployment": {
      "label": "Unemployment",
@@ -138,10 +130,7 @@
      "nicknameLabel": "Program",
      "stress": false,
      "plural": "Unemployment",
-     "tableFields": [
-      "weeksLeft",
-      "startDate"
-     ]
+     "tableFields": []
     },
     "rental": {
      "label": "Rental",
@@ -155,9 +144,7 @@
      "stress": false,
      "plural": "Rentals",
      "assumeNone": true,
-     "tableFields": [
-      "rentalExpenses"
-     ]
+     "tableFields": []
     },
     "benefits": {
      "label": "Benefits and match",
@@ -176,10 +163,7 @@
      "nicknameLabel": "Employer",
      "stress": false,
      "plural": "Benefits and match",
-     "tableFields": [
-      "matchRate",
-      "matchUpTo"
-     ]
+     "tableFields": []
     },
     "other": {
      "label": "Other",
@@ -194,9 +178,7 @@
      "nicknameLabel": "What it is",
      "stress": false,
      "plural": "Other",
-     "tableFields": [
-      "payFrequency"
-     ]
+     "tableFields": []
     }
    },
    "institutionLabel": "Employer or payer"
@@ -234,9 +216,7 @@
      "nicknameLabel": "Name",
      "stress": false,
      "plural": "Spending lines",
-     "tableFields": [
-      "category"
-     ]
+     "tableFields": []
     },
     "savings": {
      "label": "Savings transfer",
@@ -299,11 +279,7 @@
      "nicknameLabel": "Nickname",
      "stress": true,
      "plural": "Credit cards",
-     "tableFields": [
-      "apr",
-      "minimum",
-      "creditLimit"
-     ]
+     "tableFields": []
     },
     "student": {
      "label": "Student loan",
@@ -317,10 +293,7 @@
      "nicknameLabel": "Loan",
      "stress": true,
      "plural": "Student loans",
-     "tableFields": [
-      "rate",
-      "minimum"
-     ]
+     "tableFields": []
     },
     "auto": {
      "label": "Auto loan",
@@ -334,10 +307,7 @@
      "nicknameLabel": "Vehicle",
      "stress": true,
      "plural": "Auto loans",
-     "tableFields": [
-      "rate",
-      "payment"
-     ]
+     "tableFields": []
     },
     "mortgage": {
      "label": "Mortgage or HELOC",
@@ -355,10 +325,7 @@
      "nicknameLabel": "Property",
      "stress": true,
      "plural": "Mortgages and HELOCs",
-     "tableFields": [
-      "rate",
-      "principalInterest"
-     ]
+     "tableFields": []
     },
     "personal": {
      "label": "Personal, family, medical, BNPL",
@@ -372,10 +339,7 @@
      "nicknameLabel": "Nickname",
      "stress": true,
      "plural": "Personal, family, medical, BNPL",
-     "tableFields": [
-      "rate",
-      "payment"
-     ]
+     "tableFields": []
     },
     "score": {
      "label": "Credit score",
@@ -388,9 +352,7 @@
      "nicknameLabel": "Label",
      "stress": true,
      "plural": "Credit score",
-     "tableFields": [
-      "bureau"
-     ]
+     "tableFields": []
     },
     "other": {
      "label": "Other",
@@ -403,10 +365,7 @@
      "nicknameLabel": "What it is",
      "stress": true,
      "plural": "Other",
-     "tableFields": [
-      "rate",
-      "payment"
-     ]
+     "tableFields": []
     }
    },
    "institutionLabel": "Lender or issuer"
@@ -426,10 +385,7 @@
      "nicknameLabel": "Policy",
      "stress": false,
      "plural": "Insurance",
-     "tableFields": [
-      "insuranceType",
-      "coverage"
-     ]
+     "tableFields": []
     },
     "unemployment": {
      "label": "Unemployment estimate",
@@ -501,10 +457,7 @@
      "nicknameLabel": "Nickname",
      "stress": true,
      "plural": "Accounts",
-     "tableFields": [
-      "accountType",
-      "contribAmount"
-     ]
+     "tableFields": []
     },
     "holding": {
      "label": "Holding",
@@ -518,10 +471,7 @@
      "nicknameLabel": "Holding",
      "stress": true,
      "plural": "Holdings",
-     "tableFields": [
-      "fundName",
-      "expenseRatio"
-     ]
+     "tableFields": []
     },
     "other": {
      "label": "Other",
@@ -572,10 +522,7 @@
      "nicknameLabel": "Goal",
      "stress": false,
      "plural": "Goals",
-     "tableFields": [
-      "targetDate",
-      "priority"
-     ]
+     "tableFields": []
     },
     "retirement": {
      "label": "Retirement",

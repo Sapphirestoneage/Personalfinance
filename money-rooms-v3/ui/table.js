@@ -187,12 +187,31 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     const r = app.record.planets[planet].rows.find(x => x.id === rowId); if (!r) return;
     const body = h('div', { class: 'row-details', dataset: { row: r.id } });
     body.appendChild(h('h2', null, r.nickname || (tdef.nicknameLabel || 'Row'), h('span', { class: 'tag' }, tdef.label)));
-    body.appendChild(h('p', { class: 'hint', style: { marginBottom: '8px' } }, 'The essentials stay in the table. Everything else about this row is here.'));
+    const live = () => app.record.planets[planet].rows.find(x => x.id === r.id) || r;
+    const facts = h('div', { class: 'detail-group' }), about = h('div', { class: 'detail-group' });
+    let anyFact = false;
     detailColumns().forEach(c => {
       const td = renderCell(r, c); if (!td) return;
       const control = h('div', { class: 'control' }); while (td.firstChild) control.appendChild(td.firstChild);
-      body.appendChild(h('div', { class: 'fieldrow detail', dataset: { field: c.key } }, h('label', { title: c.hint || '' }, c.label), control));
+      const row = h('div', { class: 'fieldrow detail', dataset: { field: c.key } }, h('label', { title: c.hint || '' }, c.label), control);
+      if (c.kind === 'field' && coach) {
+        /* state and source beside every fact, patched in place after a change (D-034) */
+        const st = h('span', { class: 'state' }), so = h('span', { class: 'src' });
+        const paint = () => {
+          const f = live().f[c.def.id] || { v: null, state: 'unknown', source: c.def.defaultSource || 'client' };
+          clear(st); clear(so);
+          st.appendChild(stateChip(f, s => { app.setField(r.id, c.def.id, f.v, s, f.source || 'client'); paint(); refreshDerived(r.id); }, { label: 'State of ' + c.def.label.toLowerCase(), exclude: c.def.id === primary.id ? [] : undefined }));
+          so.appendChild(sourceChip(f, s => { app.setField(r.id, c.def.id, f.v, f.state || 'unknown', s); paint(); refreshDerived(r.id); }, { label: 'Source of ' + c.def.label.toLowerCase() }));
+        };
+        paint();
+        control.querySelectorAll('input, select').forEach(el => el.addEventListener('change', () => setTimeout(paint, 0)));
+        row.appendChild(st); row.appendChild(so);
+        facts.appendChild(row); anyFact = true;
+      } else if (c.kind === 'field') { facts.appendChild(row); anyFact = true; }
+      else about.appendChild(row);
     });
+    if (anyFact) { body.appendChild(h('h3', null, 'Facts')); body.appendChild(facts); }
+    body.appendChild(h('h3', null, 'About this row')); body.appendChild(about);
     if (coach) body.appendChild(h('div', { class: 'row', style: { marginTop: '16px' } }, h('button', { class: 'btn quiet', onClick: () => { app.removeRow(r.id); closeOverlay(); render(); } }, 'Remove this row')));
     const back = wrap.querySelector('tr[data-row="' + r.id + '"] [data-col="details"]');
     app.openDrawer(body, { label: 'Details for ' + (r.nickname || tdef.label), onClose: () => { if (back && back.isConnected) back.focus(); } });
@@ -244,7 +263,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
       return '';
     }
     const rough = isRough(f);
-    if (f.state === 'none') return d.kind === 'money' ? '$0' : '0';
+    if (f.state === 'none') return d.kind === 'money' ? '$0' : d.kind === 'percent' ? '0.0%' : '0';
     switch (d.kind) {
       case 'money': return (f.v && typeof f.v === 'object') ? F.dollarsWhole(f.v.low, { rough: true }) + ' to ' + F.dollarsWhole(f.v.high) : F.dollarsWhole(f.v, { rough });
       case 'percent': return F.percent(f.v, { rough });
@@ -440,6 +459,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
         else if (!tdef.single) addRow(colKey);
       }
       if (e.altKey && (e.key === 'n' || e.key === 'N')) { e.preventDefault(); addRow(); }
+      if (e.altKey && (e.key === 'd' || e.key === 'D')) { e.preventDefault(); openDetails(r.id); }
       if (e.altKey && (e.key === 'Delete' || e.key === 'Backspace')) { e.preventDefault(); app.removeRow(r.id); render(); }
       if (e.altKey && (e.key === 's' || e.key === 'S' || e.key === 'o' || e.key === 'O') && fields.fields[colKey]) {
         e.preventDefault();

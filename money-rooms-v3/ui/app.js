@@ -246,6 +246,7 @@ export const app = {
 };
 
 const SHORTCUTS = [
+  ['Alt+D', 'Open the Details of the row you are in'],
   ['~ ? send 0', 'Typed before a number in any cell: ~ rough, ? unknown, send (the client will send it), 0 is a real zero, 1500-2000 is a range'],
   ['`', 'Toggle Coach and Client view'],
   ['Ctrl+Z', 'Undo'], ['Ctrl+Shift+Z', 'Redo'],

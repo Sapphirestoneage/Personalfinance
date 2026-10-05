@@ -105,9 +105,18 @@ export async function enterHousehold(page, spec, check) {
       /* fields in table order: primary, per, state, source, institution, rest */
       const prim = tdef.fields.find(f => fields.fields[f].primary) || tdef.fields.find(f => fields.fields[f].kind === 'money') || tdef.fields[0];
       const inTable = [prim].concat(tdef.tableFields || []);
-      const order = inTable.concat(['institution']).concat(tdef.fields.filter(f => !inTable.includes(f)));
+      /* the drawer lists the facts first, then the row's own columns; the flow follows that order */
+      const order = inTable.concat(tdef.fields.filter(f => !inTable.includes(f))).concat(['institution']);
       /* facts outside the table live behind the row's Details button (MR-029) */
-      const details = async () => { if (await page.$('.drawer .row-details[data-row="' + rowId + '"]')) return; await tabTo(page, a => a.row === rowId && a.col === 'details', 200); await press('Enter'); await page.waitForSelector('.drawer .row-details'); };
+      const details = async () => {
+        const open = await page.$('.drawer .row-details[data-row="' + rowId + '"]');
+        const inDrawer = await page.evaluate(() => !!(document.activeElement && document.activeElement.closest('.drawer')));
+        if (open && inDrawer) return;
+        const a = await active(page);
+        if (a && a.row === rowId && a.col && a.col !== 'details' && !inDrawer) await press('Alt+d'); /* from a cell of this row */
+        else { await tabTo(page, x => x.row === rowId && x.col === 'details', 200); await press('Enter'); }
+        await page.waitForSelector('.drawer .row-details[data-row="' + rowId + '"]');
+      };
       for (const fid of order) {
         if (fid === 'institution') {
           if (r.institution) { await details(); await tabTo(page, a => a.row === rowId && a.col === 'institution'); await type(r.institution); await press('Tab'); }
@@ -122,7 +131,7 @@ export async function enterHousehold(page, spec, check) {
         if (d.kind === 'credits') continue;
         const hasLibrary = tdef.fields.some(f => fields.fields[f].library);
         if (hasLibrary && d.defaultSource === 'lookup-verify') continue; /* the library prefill fills these */
-        await tabTo(page, a => a.row === rowId && a.col === fid);
+        await tabTo(page, a => a.row === rowId && a.col === fid).catch(e => { throw new Error(e.message + ' [row ' + r.id + ' field ' + fid + ' inTable ' + inTable.includes(fid) + ']'); });
         if (d.kind === 'choice' || d.kind === 'bool') {
           /* selects: Home, then ArrowDown to the option (typeahead is ambiguous: "No" also matches "Not entered") */
           const ids = d.kind === 'bool' ? ['yes', 'no'] : d.options.map(o => o[0]);
