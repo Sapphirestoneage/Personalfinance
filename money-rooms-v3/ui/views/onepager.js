@@ -7,7 +7,7 @@ import * as F from '../../engine/format.js';
 import { CHARTS } from '../../engine/chartdata.js';
 import * as Charts from '../charts.js';
 import { kpi, openMath } from './measure.js';
-import { theirPlate, byInstitution, sinceLastSession } from '../../engine/plates.js';
+import { theirPlate, byInstitution, sinceLastSession, changeText } from '../../engine/plates.js';
 import { clientName } from '../app.js';
 import { translator } from '../glossary.js';
 import { PLANET_SHORT } from '../../engine/sun.js';
@@ -28,8 +28,8 @@ export function mount(host, app) {
     const R = app.result; const M = R.metrics; const rec = app.record;
     const op = rec.sun.onepager;
     const conf = overallConfidence(R);
-    page.appendChild(h('header', { class: 'op-head' }, h('div', null, h('h1', null, clientName(rec) || 'Household'), h('div', { class: 'muted small' }, rec.sun.f.bigGoal && rec.sun.f.bigGoal.v ? rec.sun.f.bigGoal.v : '')),
-      h('div', { class: 'op-meta' }, F.dateLong(R.today), h('br'), 'Session ' + ((rec.sessions || []).length + 1), h('br'), 'Overall confidence ' + Math.round(conf * 100) + '%')));
+    page.appendChild(h('header', { class: 'op-head' }, h('div', null, h('h2', { class: 'op-title' }, clientName(rec) || 'Household'), h('div', { class: 'muted small' }, rec.sun.f.bigGoal && rec.sun.f.bigGoal.v ? rec.sun.f.bigGoal.v : '')),
+      h('div', { class: 'op-meta' }, F.dateLong(R.today), h('br'), ((rec.sessions || []).length ? 'After session ' + rec.sessions.length : 'Before the first session'), h('br'), 'Overall confidence ' + Math.round(conf * 100) + '%')));
     /* key numbers */
     const nums = h('div', { class: 'op-numbers' });
     /* the one-pager is the client's page: client labels whatever the view */
@@ -61,7 +61,7 @@ export function mount(host, app) {
     /* charts picked */
     const pickedIds = (op.charts && op.charts.length) ? op.charts : ['netWorth', 'sankey'];
     const picked = pickedIds.map(id => CHARTS.find(c => c.id === id)).filter(Boolean).slice(0, 2);
-    if (picked.length) { const g2 = h('div', { class: 'op-grid' }); const bodies = []; picked.forEach(c => { const body = h('div'); bodies.push([c, body]); g2.appendChild(h('section', null, h('h3', null, c.client), body)); }); page.appendChild(g2); bodies.forEach(([c, body]) => Charts.render(c.id, body, c.build(R), { client: true })); }
+    if (picked.length) { const g2 = h('div', { class: 'op-grid' }); const bodies = []; picked.forEach(c => { const body = h('div'); bodies.push([c, body]); g2.appendChild(h('section', null, h('h3', null, c.client), body)); }); page.appendChild(g2); page.appendChild(assumptionsLine(R, rec)); bodies.forEach(([c, body]) => Charts.render(c.id, body, c.build(R), { client: true })); }
     page.classList.toggle('editing', editing);
   }
   function listSection(title, items, key, max, suggestions) {
@@ -93,12 +93,6 @@ function bringText(i) {
   return row + ' (' + (trimmed || label) + ')';
 }
 
-function changeText(def, o, n, l) {
-  if (l.kind === 'add-row') return 'added';
-  if (l.kind === 'remove-row') return 'removed';
-  const fmt = v => { if (v === null || v === undefined) return 'not entered'; if (def && def.kind === 'money') return typeof v === 'object' ? F.dollarsWhole(v.low) + ' to ' + F.dollarsWhole(v.high) : F.dollarsWhole(v); if (def && def.kind === 'percent') return F.percent(v); if (def && def.kind === 'month') return F.date(v); return String(v); };
-  return 'was ' + fmt(o) + ', now ' + fmt(n);
-}
 
 function suggestImportant(R) {
   const M = R.metrics; if (!M) return [];
@@ -112,4 +106,11 @@ function suggestImportant(R) {
 export function overallConfidence(R) {
   const fills = Object.keys(R.fills).map(k => R.fills[k]).filter(v => v !== null);
   return fills.length ? fills.reduce((s, v) => s + v, 0) / fills.length : 0;
+}
+
+/* One line under the charts: the assumptions every projection on the page rests on. */
+function assumptionsLine(R, rec) {
+  const a = R.asm; const pct = v => F.percent(v, { places: 0 });
+  const set = Object.keys(rec.sun.assumptions || {}).length > 0;
+  return h('p', { class: 'small muted op-asm' }, 'Assumes ' + pct(a.returnLikely) + ' a year after inflation (' + pct(a.returnWorst) + ' to ' + pct(a.returnBest) + '), a ' + F.percent(a.withdrawalRate, { places: a.withdrawalRate * 1000 % 10 ? 2 : 1 }) + ' withdrawal rate and Social Security from ' + a.socialSecurityAge + ', in today\'s dollars.' + (set ? ' Set for this client.' : ''));
 }

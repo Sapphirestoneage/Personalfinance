@@ -14,7 +14,7 @@ export function run(ctx) {
   const need = [];
   if (!status || !status.v) need.push('filing status');
   if (!gross || isNeeds(gross)) need.push('gross pay');
-  else if (gross.cents === 0) need.push('gross pay above zero');
+  else if (gross.cents === 0) need.push('gross pay');
   if (need.length) {
     const n = needs(need);
     return { outputs: { federalAnnual: n, ficaAnnual: n, effectiveRate: n, marginalRate: n, savedPer1000Pretax: n, impliedRate: take && !isNeeds(take) && gross && !isNeeds(gross) ? impliedRate(gross, take, pretax, hsa, other, byType) : n, taxable: n, standardDeduction: null, ficaParts: null, selfEmployment: null }, enriched: [] };
@@ -47,6 +47,6 @@ export function run(ctx) {
 function impliedRate(gross, take, pretax, hsa, other, byType) {
   const deductions = (pretax ? pretax.cents : 0) + (hsa ? hsa.cents : 0) + (other ? other.cents : 0);
   const base = byType && byType.paystub ? byType.paystub : gross.cents;
-  if (!base) return needs(['gross pay above zero']);
+  if (!base) return needs(['gross pay']);
   return (base - take.cents - deductions) / base;
 }

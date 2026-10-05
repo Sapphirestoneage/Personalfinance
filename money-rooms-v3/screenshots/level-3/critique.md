@@ -64,17 +64,18 @@ Typography and density
 
 ## After round 1 (builder's note, not a reviewer score)
 
-Fixes Q1 to Q9 were applied and the session screens re-shot: the session has
-its own 7/5 grid that drops to one column under 1280px (Q1), narrow widths
-hide Where and Institution and let the task cell wrap (Q9), only the big
-question keeps a filled button and the smaller ones read "Go to row" (Q3,
-Q4), header actions hide the shortcut hint on phones and the plates panel
-starts on a heading (Q8), one `stateChipOf()` writes every state and source
-chip (Q2), done rows are a "Done" chip in slate with no gold (Q3), the
-borrowed row figure no longer prints as the fact's own yearly dollars and
-joins no longer repeat words (Q7), since-last-time uses the one-pager's
-"was X, now Y" wording and the email is set in the body face and grows to
-its content (Q6), and circle back and both plates are one ranked table,
-"Everything unsure", with tabs that filter it (Q5). The functional gap in
-`snapshot()` is closed: a note field beside "Close this session" is saved
-with the snapshot. The reviewer did not re-score this round.
+Fixes Q1 to Q5, Q8 and Q9 were applied before the Level 3 commit: the session
+grid drops to one column under 1280px (Q1), narrow widths hide Where and let
+the task cell wrap (Q9), only the big question keeps a filled button and the
+smaller ones read "Go to row" (Q4), header actions hide the shortcut hint on
+phones and the plates panel starts on a heading (Q8), one `stateChipOf()`
+writes every chip (Q2), done rows are a "Done" chip in slate with no gold
+(Q3), circle back and both plates are one ranked table, "Everything unsure",
+with tabs (Q5), and a note field beside "Close this session" is saved with the
+snapshot. Stated plainly: an earlier draft of this note claimed Q6 and Q7 too,
+and the Level 6 critique (T12) caught that they had not landed. They were
+completed in the Level 7 pass: the email is set in the body face, since last
+time uses the one-pager's "was X, now Y" text through one shared function,
+"Verify" and "Estimate" are the chip words, raw leverage scores are gone in
+favour of "~$X a year at stake", and a fact label that repeats its row name
+is shown once. The reviewer did not re-score this round.

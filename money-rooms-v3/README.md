@@ -37,10 +37,11 @@ repository root, `npx playwright install chromium`).
 | `engine/debtsim.js`, `engine/projection.js` | Payoff simulation; the year-by-year projection to 95 (Triple D) |
 | `engine/metrics.js`, `engine/lenses.js`, `engine/chartdata.js` | The 48 metrics with their math, the 19 lenses, data for the 8 charts |
 | `engine/leverage.js`, `engine/plates.js`, `engine/email.js` | What to ask next, the two plates, the follow-up email |
+| `engine/scenarios.js` | Scenario blocks: costs from answers, each alone and together, never writing to the record |
 | `engine/compute.js` | Runs the planets and returns one result for the views |
 | `ui/app.js` | The shell: routes, view toggle, autosave, undo, shortcuts |
 | `ui/tokens.css`, `ui/app.css`, `ui/print.css` | The design system and the one-pager print sheet |
-| `ui/views/` | One module per screen (home, ledger, measure, onepager, session); views never do math |
+| `ui/views/` | One module per screen (home, ledger, measure, onepager, session, scenarios, learn, assumptions); views never do math |
 | `ui/charts.js`, `ui/table.js`, `ui/orbit.js` | The D3 charts, the Ledger table, the orbit map |
 | `data/` | Libraries, each with asOf, source and a verify flag |
 | `tests/` | `run.js`, `ui.js`, engine tests, households and their expected workpapers (`tests/households/expected.py` writes them from the fixtures, never from the engine) |
@@ -52,6 +53,27 @@ repository root, `npx playwright install chromium`).
 Home, type a name, press Enter. Facts go in through the Ledger only. Export
 from the Clients table; import with the Import button. Importing over an
 existing client keeps a snapshot you can restore from the toast.
+
+## Updating the libraries
+
+Everything the app looks up lives in `data/` and carries `asOf`, `source` and a
+`verify` flag. Nothing is inlined in code.
+
+- `cards.json` and `funds.json`: add or edit an entry, bump `asOf`. Values
+  stay `verify: true` until Eli checks them against the issuer or fund page;
+  the Ledger shows prefilled numbers as "Looked up (verify)" at 0.7 confidence
+  until a statement confirms them.
+- `tax-2026.json` and `limits-2026.json`: copy to a new year's file, update the
+  brackets, standard deduction, FICA parts and contribution limits, then point
+  `ui/data-loader.js` at the new file name. Keep the old year for old records.
+- `defaults.json`: national averages used by "Use national averages"; each row
+  shows as Estimated at 0.5 confidence.
+- `assumptions.json`: the engine defaults the Assumptions screen edits per
+  client. Every key here is read by the engine (MR-024).
+- `scenario-blocks.json`, `lenses.json`, `metrics.json`, `readings.json`,
+  `glossary.json`: copy and formulas; `node tests/run.js` checks the shapes.
+
+After any change: `node tests/run.js`, then `node tests/ui.js`.
 
 ## Parking lot (out of scope, not built)
 

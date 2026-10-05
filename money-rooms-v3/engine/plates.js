@@ -2,6 +2,7 @@
    estimates and unfiled quick notes -> my plate. Level 3 ranks them by
    leverage; here they are listed and grouped. */
 import { needsFollowUp, plateOf } from './states.js';
+import * as F from './format.js';
 
 export function plateItems(record, fields) {
   const items = [];
@@ -53,4 +54,12 @@ export function sinceLastSession(record, fields, formatValue) {
     out.push({ rowId: l.rowId, planet: l.planet, field: l.field, kind: l.kind, label: def ? def.label : (l.field || 'row'), row: row ? row.nickname : 'Household', old: oldV, new: newV, delta, text: formatValue ? formatValue(def, oldV, newV, l) : '' });
   });
   return { since: last, changes: out.sort((a, b) => Math.abs(b.delta || 0) - Math.abs(a.delta || 0)) };
+}
+
+/* One wording for a change, shared by the one-pager and the session screen: "was X, now Y". */
+export function changeText(def, o, n, l) {
+  if (l.kind === 'add-row') return 'added';
+  if (l.kind === 'remove-row') return 'removed';
+  const fmt = v => { if (v === null || v === undefined) return 'not entered'; if (def && def.kind === 'money') return typeof v === 'object' ? F.dollarsWhole(v.low) + ' to ' + F.dollarsWhole(v.high) : F.dollarsWhole(v); if (def && def.kind === 'percent') return F.percent(v); if (def && def.kind === 'month') return F.date(v); return String(v); };
+  return 'was ' + fmt(o) + ', now ' + fmt(n);
 }

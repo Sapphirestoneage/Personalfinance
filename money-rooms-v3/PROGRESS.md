@@ -3,6 +3,15 @@
 Updated: 2026-10-05
 
 ## Done
+- Level 7 Polish: critique rounds for Simulate, Learn and Depth applied (26 fixes plus the Level 3
+  leftovers), contrast test and accessible-names sweep check, Dev end-to-end mock session,
+  README library section, FINAL-REPORT.md.
+- Level 6 Depth: Assumptions per client (22 settings in three groups, each read by the engine),
+  Triple D on every date, go-go / slow-go / no-go, value of one more point, captions that state the
+  return, band and withdrawal rate.
+- Level 5 Learn: one readings table ranked by the money behind each title; gaps table.
+- Level 4 Simulate: nine block types, timeline with keyboard and drag, each alone and together
+  with one shared paths chart, Promote as the only bridge; Jordan + kid + Portugal flow.
 - Level 3 Session: leverage engine, next-question card, circle-back, my and their plates with
   Small wins, follow-up email, session snapshots, since last time; the Jordan mock session runs
   start to finish in Playwright (12 checks).
@@ -23,10 +32,10 @@ Updated: 2026-10-05
 - Design critique round 1 found 17 fixes; all applied; round 2 in screenshots/level-0/critique.md.
 
 ## Next
-- Levels 4 to 6 are built (Simulate, Learn, Depth) and their first design critique rounds are
-  running; fixes land, screens are re-shot, then each level gets its commit.
-- Level 7: full design pass, accessibility basics, end-to-end mock session for Dev, final Maya
-  screenshots, README, final report.
+- Merge the branch so GitHub Pages serves the app, then a live timing of Jordan's keyboard entry
+  with Eli.
+- Open critique items: Sankey label spacing (T14), Measure regrouping at 390 (T19), a row drawer
+  for low-use ledger columns (M14, M22).
 
 ## Open issues
 - The root SPARKS suite has one date-dependent failure that predates this lane

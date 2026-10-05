@@ -8,6 +8,7 @@ import * as F from '../../engine/format.js';
 import { hasValue } from '../../engine/states.js';
 import { orbitMap, mapPanel } from '../orbit.js';
 import { lowerFirst, holdsBack } from './ledger.js';
+import { overallConfidence } from './onepager.js';
 
 export function parseDateText(t) {
   let m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(t);
@@ -52,7 +53,7 @@ function renderMap(mapHost, bar, app) {
   mapHost.appendChild(orbitMap({
     compact: mapHost.clientWidth > 0 && mapHost.clientWidth < 560,
     ariaLabel: 'The household and its seven planets',
-    center: { title: name, sub: Math.round(r.fills.sun * 100) + '% complete', fill: r.fills.sun },
+    center: { title: name, sub: Math.round(overallConfidence(r) * 100) + '% confident', fill: r.fills.sun },
     items,
     onOpen: id => { location.hash = '#/ledger/' + id; },
     onFocus: id => describePlanet(bar, app, id),
@@ -255,7 +256,7 @@ function renderHistory(panel, app) {
   panel.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data history' },
     h('thead', null, h('tr', null, h('th', null, 'When'), h('th', { class: 'where' }, 'Where'), h('th', null, 'What'), h('th', null, 'Now'))),
     h('tbody', null, lines.map(l => h('tr', null,
-      h('td', { class: 'muted small when' }, l.ts.slice(0, 10) === todayIso() ? l.ts.slice(11, 16) : F.dateLong(l.ts.slice(0, 10))),
+      h('td', { class: 'muted small when', title: l.ts.slice(11, 16) }, F.dateLong(l.ts.slice(0, 10))),
       h('td', { class: 'where' }, whereChip(l)),
       h('td', null, describe(l, fieldsData)),
       h('td', { class: 'small now' }, side(l.new, l, fieldsData))))))));
@@ -293,7 +294,7 @@ function side(v, l, fieldsData) {
     if (inner === null || inner === undefined) return h('span', { class: 'empty-token' }, v.state === 'unknown' ? 'Not entered' : (STATE_LABELS[v.state] || v.state));
     const rough = v.state === 'rough';
     if (typeof inner === 'object' && typeof inner.low === 'number') return F.range(inner.low, inner.high, { rough: true });
-    if (def && def.kind === 'money' && typeof inner === 'number') return F.dollars(inner, { rough });
+    if (def && def.kind === 'money' && typeof inner === 'number') return F.dollarsWhole(inner, { rough });
     if (def && def.kind === 'percent' && typeof inner === 'number') return F.percent(inner, { rough });
     if (def && def.kind === 'month' && typeof inner === 'string') return F.date(inner);
     if (def && def.kind === 'choice') { const o = (def.options || []).find(x => x[0] === inner); return o ? o[1] : String(inner); }

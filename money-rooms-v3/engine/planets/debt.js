@@ -35,9 +35,9 @@ export function run(ctx) {
   const summaryQ = summaryRow ? fieldQ(summaryRow, 'debtSummaryTotal', U.oneoff, asm) : null;
   /* Empty is not zero: with no debt rows at all (not even a None total) the planet says what it needs. */
   const nothingTyped = !debts.length && !summaryQ;
-  const totalDebt = debts.length ? sum(debts.map(d => d.balanceQ), U.oneoff) : (summaryQ || needs(['debt rows, or a rough total of 0 for none']));
+  const totalDebt = debts.length ? sum(debts.map(d => d.balanceQ), U.oneoff) : (summaryQ || needs(['debts, or a rough total (0 if none)']));
   const serviceCents = debts.reduce((s, d) => s + d.minimum, 0);
-  const service = nothingTyped ? needs(['debt rows, or a rough total of 0 for none']) : q(serviceCents, U.monthlyAfter, { confidence: debts.length ? Math.min(...debts.map(d => d.minimumKnown ? 1 : 0.3)) : 1 });
+  const service = nothingTyped ? needs(['debts, or a rough total (0 if none)']) : q(serviceCents, U.monthlyAfter, { confidence: debts.length ? Math.min(...debts.map(d => d.minimumKnown ? 1 : 0.3)) : 1 });
   const total = debts.reduce((s, d) => s + d.balance, 0);
   const effRate = d => (d.promoApr !== null && d.promoApr !== undefined && d.promoEnd && thisMonth < d.promoEnd) ? d.promoApr : d.rate;
   const weightedApr = total ? debts.reduce((s, d) => s + d.balance * effRate(d), 0) / total : 0;

@@ -44,7 +44,7 @@ export function netWorthProjection(result) {
   const pj = result.projection; if (!pj) return { needs: ['income, spending, account balances and a birth date'] };
   const years = pj.likely.path.map((p, i) => ({ year: p.year, age: p.age, likely: p.netWorth, best: pj.best.path[i].netWorth, worst: pj.worst.path[i].netWorth, working: p.working }));
   const fi = result.metrics.fiNumber && result.metrics.fiNumber.status === 'ok' ? result.metrics.fiNumber.value.cents : null;
-  return { years, fiNumber: fi, fiAges: { likely: pj.likely.fiAge, best: pj.best.fiAge, worst: pj.worst.fiAge }, retirementAge: result.sun.outputs.life.retirementAge || result.asm.retirementAgeDefault };
+  return { years, fiNumber: fi, fiAges: { likely: pj.likely.fiAge, best: pj.best.fiAge, worst: pj.worst.fiAge }, retirementAge: result.sun.outputs.life.retirementAge || result.asm.retirementAgeDefault, asm: { returnLikely: result.asm.returnLikely, returnBest: result.asm.returnBest, returnWorst: result.asm.returnWorst } };
 }
 
 /* 3 Balance sheet: assets by bucket and liquidity tier against debts. */

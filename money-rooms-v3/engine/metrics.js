@@ -55,14 +55,14 @@ export function computeMetrics(ctx) {
     const num = pre.cents + ro.cents + hs.cents + match.cents + take.cents - spending.cents; const den = gross.cents + match.cents;
     const r = pct(num / den, weightedConfidence([take, spending, gross]), null);
     put(ok('savingsRateGross', Object.assign({}, r, { rough: take.rough || spending.rough || gross.rough }), { formula: '(pre-tax + Roth + HSA + match + take-home - spending) / (gross + match)', inputs: [inputOf('Pre-tax retirement', pre), inputOf('Roth', ro), inputOf('HSA', hs), inputOf('Match', match), inputOf('Take-home', take), inputOf('Spending', spending), inputOf('Gross', gross)], result: r }));
-  } else put(gross && gross.cents === 0 ? need('savingsRateGross', ['gross pay above zero']) : fromNeeds('savingsRateGross', '(contributions + match + take-home - spending) / (gross + match)', take || (inc && inc.takeHomeMonthly), spending || (sp && sp.baselineMonthly), gross || (inc && inc.grossMonthly)));
+  } else put(gross && gross.cents === 0 ? need('savingsRateGross', ['gross pay']) : fromNeeds('savingsRateGross', '(contributions + match + take-home - spending) / (gross + match)', take || (inc && inc.takeHomeMonthly), spending || (sp && sp.baselineMonthly), gross || (inc && inc.grossMonthly)));
   /* 7 */
   const surplus = out.surplus.status === 'ok' ? out.surplus.value : null;
   if (surplus && take && take.cents > 0) {
     const landing = Q(sp.savingsLandingMonthly) || q(0, U.monthlyAfter);
     const leak = sub(surplus, landing); const r = pct(leak.cents / take.cents, leak.confidence); 
     put(ok('leak', Object.assign({}, r, { rough: leak.rough }), { formula: '(surplus - savings landing) / take-home', inputs: [inputOf('Surplus', surplus), inputOf('Savings landing', landing), inputOf('Take-home', take)], result: r }, { leakMonthly: leak }));
-  } else put(take && take.cents === 0 ? need('leak', ['take-home above zero']) : fromNeeds('leak', '(surplus - savings landing) / take-home', surplus || out.surplus));
+  } else put(take && take.cents === 0 ? need('leak', ['take-home pay']) : fromNeeds('leak', '(surplus - savings landing) / take-home', surplus || out.surplus));
   /* 8 */
   if (take && take.cents > 0 && gross && gross.cents > 0 && spending && sp.byCategory && Object.keys(sp.byCategory).length) {
     const cat = sp.byCategory; const pre = Q(inc.pretaxContribMonthly) || q(0, U.monthlyPre), ro = Q(inc.rothContribMonthly) || q(0, U.monthlyAfter), match = Q(inc.matchMonthly) || q(0, U.monthlyPre);
@@ -74,7 +74,7 @@ export function computeMetrics(ctx) {
       food: cat.food.cents / take.cents, transportation: cat.transportation.cents / take.cents, therapy: cat.therapy.cents / take.cents,
     };
     put(ok('draftt', { status: 'ok', kind: 'shares', value: shares, confidence: take.confidence, rough: take.rough || spending.rough }, { formula: 'debt / take-home; retirement / gross; accommodation (+ utilities), food, transportation, therapy / take-home', inputs: [inputOf('Debt minimums', service), inputOf('Retirement a month', q(pre.cents + ro.cents + match.cents + bank, U.monthlyPre)), inputOf('Accommodation', cat.accommodation), inputOf('Utilities', cat.utilities), inputOf('Food', cat.food), inputOf('Transportation', cat.transportation), inputOf('Therapy', cat.therapy), inputOf('Take-home', take), inputOf('Gross', gross)], result: null }));
-  } else put(take && take.cents === 0 ? need('draftt', ['take-home above zero']) : fromNeeds('draftt', 'each DRAFTT line / take-home', take || (inc && inc.takeHomeMonthly), gross || (inc && inc.grossMonthly), sp && sp.baselineMonthly));
+  } else put(take && take.cents === 0 ? need('draftt', ['take-home pay']) : fromNeeds('draftt', 'each DRAFTT line / take-home', take || (inc && inc.takeHomeMonthly), gross || (inc && inc.grossMonthly), sp && sp.baselineMonthly));
   /* 9 */
   const fat = sp && Q(sp.fatFloorMonthly);
   put(fat ? ok('fatFloor', fat, { formula: 'sum of spending lines flagged in the FAT floor', inputs: [inputOf('Flagged lines', fat)], result: fat }) : fromNeeds('fatFloor', 'flagged lines', sp && sp.fatFloorMonthly));
@@ -134,7 +134,7 @@ export function computeMetrics(ctx) {
   } else { put(fromNeeds('taxAdvantagedShare', 'sheltered / total', inv && inv.totalAssets)); put(fromNeeds('bucketMix', 'bucket / total', inv && inv.totalAssets)); }
   /* 32, 33 */
   if (inv && inv.matchCapture && inv.matchCapture.ratio !== null) { const r = pct(inv.matchCapture.ratio); put(ok('matchCapture', r, { formula: 'match received / match available; (available - received) x 12', inputs: [inputOf('Match a month', q(inv.matchCapture.actualMonthly, U.monthlyPre)), inputOf('Most available', q(inv.matchCapture.maxMonthly, U.monthlyPre))], result: r }, { dollarsLeftAnnual: inv.matchCapture.dollarsLeftAnnual })); }
-  else put(need('matchCapture', ['a match formula (Benefits and match row) and the pre-tax deferral']));
+  else put(need('matchCapture', ['a match formula and the pre-tax deferral (Benefits and match row)']));
   put(inv && inv.roomLeft && inv.roomLeft.length ? ok('roomLeft', { status: 'ok', kind: 'list', value: inv.roomLeft, confidence: 1 }, { formula: 'limit - this year\'s contributions, per limit', inputs: inv.roomLeft.map(r => inputOf(r.label, q(r.used, U.annualNa))), result: null }) : need('roomLeft', ['a retirement or HSA account']));
   /* 34, 35, 36 */
   const wer = inv && inv.weightedExpenseRatio;
@@ -173,7 +173,7 @@ export function computeMetrics(ctx) {
     put(ok('fiDate', Object.assign({}, v, { rough: true }), { formula: 'projection year by year to 95 at the likely, best and worst real returns; first year net worth x withdrawal rate covers spending', inputs: [inputOf('Likely return', pct(asm.returnLikely)), inputOf('Best', pct(asm.returnBest)), inputOf('Worst', pct(asm.returnWorst)), inputOf('Annual spending', spending ? scale(spending, 12) : null), inputOf('Contributions a year', q(ctx.contribAnnual || 0, U.annualNa))], result: v }, { ages: { likely: pj.likely.fiAge, best: pj.best.fiAge, worst: pj.worst.fiAge }, yearsToFi: pj.likely.fiAge - ctx.age }));
   } else put(need('fiDate', pj ? ['a savings rate that reaches the FI number before 95 at the likely return'] : ['income, spending and account balances']));
   if (pj && pj.likely && ctx.oneMorePoint !== null && ctx.oneMorePoint !== undefined) { const c = count(ctx.oneMorePoint.months, 'months'); put(ok('oneMorePoint', c, { formula: 'FI date with 1% more of take-home saved each month, minus the FI date today', inputs: [inputOf('One more point a month', q(ctx.oneMorePoint.monthly, U.monthlyAfter)), inputOf('FI age today', count(pj.likely.fiAge, 'years')), inputOf('FI age with one more point', count(ctx.oneMorePoint.fiAge, 'years'))], result: c }, { monthly: ctx.oneMorePoint.monthly })); }
-  else put(need('oneMorePoint', ['a FI date']));
+  else put(need('oneMorePoint', ['an FI date']));
   /* 47, 48 */
   put(dt && dt.wallet && dt.wallet.cards.length ? ok('cardNetValue', { status: 'ok', kind: 'list', value: dt.wallet.cards, confidence: 0.7, rough: true }, { formula: 'credits actually used + rewards on actual spending - annual fee, per card (library rates, verify)', inputs: dt.wallet.cards.map(c => inputOf(c.name, q(c.netAnnual, U.annualAfter))), result: null }) : need('cardNetValue', ['a credit card row from the library and spending lines that name it']));
   put(dt && dt.wallet && dt.wallet.cards.length ? ok('rewardsLeft', q(dt.wallet.rewardsLeftAnnual, U.annualAfter, { confidence: 0.7, rough: true }), { formula: 'for each spending line with a card: (best library rate for its category - actual rate) x spend x 12', inputs: Object.keys(dt.wallet.bestRates).map(k => inputOf('Best ' + k, pct(dt.wallet.bestRates[k]))), result: q(dt.wallet.rewardsLeftAnnual, U.annualAfter) }) : need('rewardsLeft', ['spending lines that name a card']));

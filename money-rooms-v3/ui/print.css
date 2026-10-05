@@ -7,7 +7,7 @@ main { padding: 0; }
 .onepager { border: 0; padding: 0; max-width: none; }
 .onepager section { margin-bottom: 6px; break-inside: avoid; }
 .onepager header.op-head { margin-bottom: 6px; padding-bottom: 4px; }
-.onepager header.op-head h1 { font-size: 16px; }
+.onepager header.op-head h2 { font-size: 16px; }
 .onepager h3 { font-size: 9px; margin-bottom: 2px; }
 .op-numbers { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 4px; }
 .op-numbers .kpi { border: 1px solid #D5DCE8; padding: 2px 6px; }

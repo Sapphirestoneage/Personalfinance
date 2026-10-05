@@ -2112,7 +2112,7 @@
    "kind": "percent",
    "owner": "life",
    "weight": 3,
-   "hint": "Spending as a percent of today's, roughly 60 to 75",
+   "hint": "Share of today's spending. 100% means no change.",
    "defaultSource": "estimated"
   },
   "slowgo": {

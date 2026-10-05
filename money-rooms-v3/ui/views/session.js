@@ -6,18 +6,13 @@ import { h, clear, qs } from '../dom.js';
 import * as F from '../../engine/format.js';
 import { session as leverage } from '../../engine/leverage.js';
 import { followUpEmail } from '../../engine/email.js';
-import { sinceLastSession } from '../../engine/plates.js';
+import { sinceLastSession, changeText } from '../../engine/plates.js';
 import { PLANET_LABELS, PLANET_SHORT } from '../../engine/sun.js';
 import { clientName } from '../app.js';
 import { append } from '../../engine/journal.js';
 import { STATES, SOURCES } from '../../engine/states.js';
 
 export function mount(host, app) {
-  if (app.view !== 'coach') {
-    host.appendChild(h('header', null, h('h1', null, 'Session')));
-    host.appendChild(h('div', { class: 'empty' }, h('h2', null, 'Coach only'), h('p', null, 'The session screen stays with the coach. Switch back to Coach view to see it.')));
-    return null;
-  }
   const noteInput = h('input', { class: 'input session-note', type: 'text', 'aria-label': 'Session note' });
   const header = h('header', null, h('h1', null, 'Session'), h('span', { class: 'sub' }, 'The next question is the unsure fact that moves the most money.'), h('div', { class: 'actions' },
     h('label', { class: 'small muted' }, 'Note for this session'), noteInput,
@@ -46,6 +41,12 @@ function isDone(app, i) { const plate = i.plate === 'mine' ? app.record.myPlate 
 function markDone(app, i, done) {
   app.mutate(rec => { const plate = i.plate === 'mine' ? rec.myPlate : rec.theirPlate; plate.done = plate.done || {}; if (done) plate.done[itemKey(i)] = new Date().toISOString(); else delete plate.done[itemKey(i)]; if (i.note) { const n = rec.quickNotes.find(x => x.id === i.rowId); if (n) n.filed = done; } }, 'plates');
 }
+/* "Could cut: could cut per month" reads badly; when the fact label already starts with the row name, show the label alone. */
+function factLabel(i) {
+  const label = i.label.toLowerCase();
+  if (i.row && label.indexOf(i.row.toLowerCase()) === 0) return i.label.charAt(0).toUpperCase() + i.label.slice(1);
+  return (i.row ? i.row + ': ' : '') + label;
+}
 function hrefFor(i) { return i.rowId === 'sun' ? '#/home' : '#/ledger/' + i.planet + '/' + (i.rowType || ''); }
 function askLink(app, i, label, primary) {
   const row = i.rowId === 'sun' ? null : Object.values(app.record.planets).flatMap(p => p.rows).find(r => r.id === i.rowId);
@@ -54,7 +55,7 @@ function askLink(app, i, label, primary) {
 }
 function stateChipOf(i) {
   if (i.note) return h('span', { class: 'chip src' }, 'Note');
-  if (i.source === 'estimated' || i.source === 'lookup-verify') return h('span', { class: 'chip src src-' + i.source }, SOURCES[i.source].label);
+  if (i.source === 'estimated' || i.source === 'lookup-verify') return h('span', { class: 'chip src src-' + i.source }, i.source === 'estimated' ? 'Estimate' : 'Verify');
   return h('span', { class: 'chip state-' + i.state }, STATES[i.state].label);
 }
 
@@ -63,8 +64,9 @@ function nextCard(app, s) {
   panel.appendChild(h('h2', null, 'Next question'));
   if (!s.next.length) { panel.appendChild(h('p', { class: 'muted' }, 'Nothing unsure is left above the materiality line. Open Small wins or the Ledger to add facts.')); return panel; }
   const [big, ...rest] = s.next;
-  panel.appendChild(h('div', { class: 'ask big' }, h('div', { class: 'ask-text' }, big.question), h('div', { class: 'ask-meta' }, h('span', { class: 'chip src' }, PLANET_SHORT[big.planet] || 'Household'), stateChipOf(big), h('span', { class: 'small muted' }, 'leverage ' + big.leverage + (big.moneyFact ? ', about ' + F.dollarsWhole(Math.abs(big.dollarsAnnual)) + ' a year' : '')), askLink(app, big, 'Ask it', true))));
-  rest.forEach(i => panel.appendChild(h('div', { class: 'ask' }, h('div', { class: 'ask-text' }, i.question), h('div', { class: 'ask-meta' }, h('span', { class: 'chip src' }, PLANET_SHORT[i.planet] || 'Household'), h('span', { class: 'small muted' }, 'leverage ' + i.leverage), askLink(app, i, 'Open')))));
+  const stake = i => i.moneyFact && i.dollarsAnnual ? h('span', { class: 'small muted' }, F.dollarsWhole(Math.abs(i.dollarsAnnual), { rough: true }) + ' a year at stake') : null;
+  panel.appendChild(h('div', { class: 'ask big' }, h('div', { class: 'ask-text' }, big.question), h('div', { class: 'ask-meta' }, h('span', { class: 'chip src' }, PLANET_SHORT[big.planet] || 'Household'), stateChipOf(big), stake(big), askLink(app, big, 'Ask it', true))));
+  rest.forEach(i => panel.appendChild(h('div', { class: 'ask' }, h('div', { class: 'ask-text' }, i.question), h('div', { class: 'ask-meta' }, h('span', { class: 'chip src' }, PLANET_SHORT[i.planet] || 'Household'), stake(i), askLink(app, i, 'Go to row')))));
   return panel;
 }
 
@@ -75,14 +77,13 @@ function plates(app, s, tab, setTab) {
   panel.appendChild(h('div', { class: 'row', style: { marginBottom: '8px' } }, tabs.map(t => h('button', { class: 'btn small' + (tab === t[0] ? ' primary' : ''), 'aria-pressed': String(tab === t[0]), onClick: () => setTab(t[0]) }, t[1] + ' (' + t[2].filter(i => !isDone(app, i)).length + ')'))));
   const list = tabs.find(t => t[0] === tab)[2];
   if (!list.length) { panel.appendChild(h('p', { class: 'muted small' }, tab === 'theirs' ? 'Nothing for the client to bring.' : tab === 'mine' ? 'Nothing to look up. Quick notes you have not filed land here.' : tab === 'small' ? 'No small items.' : 'Nothing else above the line.')); return panel; }
-  panel.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data plates' }, h('thead', null, h('tr', null, h('th', null, 'Done'), h('th', null, 'Fact'), h('th', { class: 'hide-narrow' }, 'Where'), h('th', null, 'State'), h('th', { class: 'num' }, 'A year'), h('th', { class: 'num hide-narrow' }, 'Leverage'), h('th', null, ''))),
+  panel.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data plates' }, h('thead', null, h('tr', null, h('th', null, 'Done'), h('th', null, 'Fact'), h('th', { class: 'hide-narrow' }, 'Where'), h('th', null, 'State'), h('th', { class: 'num' }, 'A year'), h('th', null, ''))),
     h('tbody', null, list.slice(0, 40).map(i => { const done = isDone(app, i); return h('tr', { class: done ? 'muted' : null },
       h('td', null, h('button', { class: 'chip toggle' + (done ? ' state-known' : ''), 'aria-pressed': String(done), onClick: () => markDone(app, i, !done) }, done ? 'Done' : 'Mark done')),
-      h('td', { class: 'wrap', style: done ? { textDecoration: 'line-through' } : null }, i.note ? i.label : (i.row ? i.row + ': ' : '') + i.label.toLowerCase()),
+      h('td', { class: 'wrap', style: done ? { textDecoration: 'line-through' } : null }, i.note ? i.label : factLabel(i)),
       h('td', { class: 'small muted hide-narrow' }, (PLANET_SHORT[i.planet] || 'Household') + (i.institution ? ', ' + i.institution : '')),
       h('td', null, stateChipOf(i)),
       h('td', { class: 'num' }, i.moneyFact ? F.dollarsWhole(Math.abs(i.dollarsAnnual)) : ''),
-      h('td', { class: 'num hide-narrow' }, String(i.leverage)),
       h('td', null, i.note ? '' : askLink(app, i, 'Go', false))); })))));
   return panel;
 }
@@ -90,7 +91,7 @@ function plates(app, s, tab, setTab) {
 function emailPanel(app, s) {
   const panel = h('section', { class: 'panel' });
   const text = followUpEmail(app.record, app.data.fields, s.theirPlate.filter(i => !isDone(app, i)));
-  panel.appendChild(h('h2', null, 'Follow-up email', h('span', { class: 'tag' }, 'their plate by institution, with where to find each number')));
+  panel.appendChild(h('h2', null, 'Follow-up email', h('span', { class: 'tag' }, 'by institution')));
   const ta = h('textarea', { class: 'input email', readOnly: true, 'aria-label': 'Follow-up email draft', value: text });
   panel.appendChild(ta);
   panel.appendChild(h('div', { class: 'row', style: { marginTop: '8px' } }, h('button', { class: 'btn', onClick: () => { ta.select(); document.execCommand('copy'); app.toast('Email copied'); } }, 'Copy')));
@@ -108,10 +109,10 @@ function sessionsPanel(app) {
 
 function sinceLast(app) {
   const panel = h('section', { class: 'panel' });
-  const r = sinceLastSession(app.record, app.data.fields, (def, o, n, l) => l.kind === 'set' ? 'changed' : l.kind);
+  const r = sinceLastSession(app.record, app.data.fields, changeText);
   panel.appendChild(h('h2', null, 'Since last time', r.since ? h('span', { class: 'tag' }, F.dateLong(r.since.slice(0, 10))) : null));
   if (!r.changes.length) { panel.appendChild(h('p', { class: 'muted small' }, r.since ? 'No changes since the last session.' : 'No session closed yet.')); return panel; }
-  panel.appendChild(h('ul', { class: 'small', style: { paddingLeft: '18px', margin: 0 } }, r.changes.slice(0, 8).map(c => h('li', null, c.row + ': ' + c.label.toLowerCase() + (c.delta !== null ? ' ' + (c.delta >= 0 ? 'up ' : 'down ') + F.dollarsWhole(Math.abs(c.delta)) : ' ' + c.text)))));
+  panel.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data' }, h('tbody', null, r.changes.slice(0, 8).map(c => h('tr', null, h('td', { class: 'wrap' }, c.row + ': ' + c.label.toLowerCase()), h('td', { class: 'small muted' }, c.text)))))));
   return panel;
 }
 

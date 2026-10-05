@@ -234,7 +234,7 @@
    "id": "wrong-card",
    "name": "Wrong card for the category",
    "trigger": "rewards left on the table above the materiality line",
-   "template": "The same spending on the best library card for each category would earn about {cost} more a year.",
+   "template": "The same spending on the best card already in the wallet for each category would earn about {cost} more a year.",
    "inputs": [
     "debt.wallet"
    ],

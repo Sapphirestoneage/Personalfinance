@@ -140,3 +140,9 @@ Alternative: compute both bases now (doubles the projection surface).
 Decision: the six commits "Level 2" to "Level 6" split one working tree by which level owns each file (shared files such as app.css, routes.js and the sweep list go with Level 2). Only the Level 6 commit is guaranteed to pass both gates on its own; the earlier five are checkpoints of the same tree, and BOARD.md marks each FROZEN at the commit that carries its files.
 Why: the spec asks for one commit per level; the levels share one shell and were critiqued together, so an untangled history would have meant rebuilding the work in sequence for no gain.
 Alternative: one commit for Levels 2 to 6 (loses the per-level record the board asks for).
+
+## MR-024 2026-10-05 Assumptions that nothing reads are gone, and a windfall asks one question
+Decision: the Assumptions screen drops basis, inflation, bond return, the two withdrawal-rate range ends and the materiality line (no engine code read them; the materiality line lives in data/weights.json), and shows the go-go, slow-go and no-go shares read-only because the Life plan owns them. The Inheritance block asks only "Amount after tax and fees". Slate darkens from #6B7891 to #5F6C85 so 12px labels meet 4.5:1.
+Compatibility: overrides stored under the six removed keys on rec.sun.assumptions are ignored by assumptionsFor() and dropped on the next save; a stored answers.taxShare is ignored by blockCosts(). No other stored shape changes.
+Why: a setting that changes nothing teaches the coach the screen cannot be trusted (critique T1, T2, R10). Closes MR-022's "partial": there is no nominal view in v1.
+Alternative: wire a nominal mode (doubles every figure on every screen under the freeze).

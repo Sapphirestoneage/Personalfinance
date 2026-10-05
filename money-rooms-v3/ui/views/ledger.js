@@ -113,8 +113,13 @@ function mountTable(host, app, planet, typeId) {
     clear(inferredNote);
     const list = ((app.result.enriched || {})[planet] || []).filter(e => app.record.planets[planet].rows.some(r => r.id === e.rowId && r.type === typeId));
     if (!list.length) return;
-    inferredNote.appendChild(h('div', { class: 'panel', style: { marginTop: '16px' } }, h('h3', { style: { marginBottom: '8px' } }, 'Inferred by the engine (not stored, read-only)'),
-      h('div', { class: 'tablewrap' }, h('table', { class: 'data' }, h('tbody', null, list.map(e => { const row = app.record.planets[planet].rows.find(r => r.id === e.rowId); return h('tr', null, h('td', null, row ? row.nickname : ''), h('td', null, e.field === 'takeHome' ? 'Take-home a month' : e.field === 'matchMonthly' ? 'Match a month' : e.field === 'taxBucket' ? 'Tax bucket' : e.field === 'liquidity' ? 'Liquidity tier' : e.field), h('td', { class: 'num' }, typeof e.value === 'string' ? e.value : F.value(e.value)), h('td', null, h('span', { class: 'chip src src-inferred' }, 'Inferred')), h('td', { class: 'small muted' }, e.note)); }))))));
+    list.forEach(e => {
+      const row = app.record.planets[planet].rows.find(r => r.id === e.rowId);
+      const WORDS = { pretax: 'pre-tax', roth: 'Roth', hsa: 'HSA', taxable: 'taxable', cash: 'cash', now: 'reachable now', semi: 'reachable with care', locked: 'locked until 59.5' };
+      const what = e.field === 'takeHome' ? 'take-home a month' : e.field === 'matchMonthly' ? 'employer match a month' : e.field === 'taxBucket' ? 'tax bucket' : e.field === 'liquidity' ? 'reach' : e.field;
+      const shown = typeof e.value === 'number' ? F.dollarsWhole(e.value) : typeof e.value === 'string' ? (WORDS[e.value] || e.value) : F.value(e.value);
+      inferredNote.appendChild(h('p', { class: 'hint', style: { marginBottom: '8px' }, title: e.note || '' }, 'Inferred, not stored: ' + (row ? row.nickname + ', ' : '') + what + ' ' + shown + (e.field === 'takeHome' ? ' (before state tax)' : '') + '.'));
+    });
   }
   inferred();
   const tableHost = h('div');
@@ -125,9 +130,9 @@ function mountTable(host, app, planet, typeId) {
     const s = app.result.summaries[planet];
     if (!s) return;
     if (typeId === 'summary' && s.detailCents !== null) {
-      summaryNote.appendChild(h('p', { class: 'notice', style: { marginBottom: '16px' } }, 'Line items exist (' + F.dollars(s.detailCents) + ' a month), so they override this rough total' + (s.totalCents !== null ? '; the gap is ' + F.dollars(s.detailCents - s.totalCents) : '') + '.'));
+      summaryNote.appendChild(h('p', { class: 'notice', style: { marginBottom: '16px' } }, 'Line items exist (' + F.dollarsWhole(s.detailCents) + ' a month), so they override this rough total' + (s.totalCents !== null ? '; the gap is ' + F.dollars(s.detailCents - s.totalCents) : '') + '.'));
     } else if (typeId !== 'summary' && s.totalCents !== null && s.detailCents !== null) {
-      summaryNote.appendChild(h('p', { class: 'hint', style: { marginBottom: '16px' } }, 'Rough total typed: ' + F.dollars(s.totalCents) + '. Detail so far: ' + F.dollars(s.detailCents) + '. Gap: ' + F.dollars(s.detailCents - s.totalCents) + '.'));
+      summaryNote.appendChild(h('p', { class: 'hint', style: { marginBottom: '16px' } }, 'Rough total typed: ' + F.dollarsWhole(s.totalCents) + '. Detail so far: ' + F.dollarsWhole(s.detailCents) + '. Gap: ' + F.dollars(s.detailCents - s.totalCents) + '.'));
     }
   }
   note();

@@ -15,10 +15,10 @@ export const routes = {
   ledger: { title: 'Ledger', mount: Ledger.mount, needsClient: true },
   measure: { title: 'Measure', mount: Measure.mount, needsClient: true },
   onepager: { title: 'One-pager', mount: OnePager.mount, needsClient: true },
-  session: { title: 'Session', mount: Session.mount, needsClient: true },
+  session: { title: 'Session', mount: Session.mount, needsClient: true, coachOnly: true },
   scenarios: { title: 'Simulate', mount: Scenarios.mount, needsClient: true },
   learn: { title: 'Learn', mount: Learn.mount, needsClient: true },
-  assumptions: { title: 'Assumptions', mount: Assumptions.mount, needsClient: true },
+  assumptions: { title: 'Assumptions', mount: Assumptions.mount, needsClient: true, coachOnly: true },
 };
 
 export function navItems(app) {

@@ -9,7 +9,7 @@
 | 4 | Simulate | FROZEN | Level 4: Simulate |
 | 5 | Learn | FROZEN | Level 5: Learn |
 | 6 | Depth | FROZEN | Level 6: Depth |
-| 7 | Polish and audit | not started | |
+| 7 | Polish and audit | FROZEN | Level 7: Polish and audit |
 
 A frozen level reopens only for a failing test or a decision logged in
 DECISIONS.md.

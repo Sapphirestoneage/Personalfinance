@@ -267,16 +267,17 @@ flows.push({
     await importFixture(page, APP, 'jordan');
     await page.goto(base + 'index.html#/scenarios');
     await page.waitForSelector('.timeline');
-    await page.click('button:has-text("A child")');
+    await page.selectOption('select[aria-label="Add a block"]', 'kid');
     await page.waitForSelector('.timeline .block');
-    await page.click('button:has-text("Move somewhere cheaper")');
+    await page.selectOption('select[aria-label="Add a block"]', 'geo');
     await page.waitForTimeout(200);
     check('two blocks sit on the timeline', (await page.locator('.timeline .block').count()) === 2);
     await page.fill('input[aria-label="Block name"]', 'Portugal');
     await page.press('input[aria-label="Block name"]', 'Tab');
     await page.waitForTimeout(200);
     const rows = await page.locator('.panel:has(h2:has-text("Each alone and together")) tbody tr').allInnerTexts();
-    check('the table shows today, each block alone and all together', rows.length === 4 && rows[1].indexOf('A child alone') !== -1 && rows[2].indexOf('Portugal alone') !== -1 && rows[3].indexOf('All together') !== -1, rows.join(' / '));
+    const foot = await page.locator('.panel:has(h2:has-text("Each alone and together")) tfoot tr').allInnerTexts();
+    check('the table shows today, each block alone and all together', rows.length === 3 && rows[1].indexOf('A child alone') !== -1 && rows[2].indexOf('Portugal alone') !== -1 && foot.length === 1 && foot[0].indexOf('All together') !== -1, rows.join(' / ') + ' // ' + foot.join(''));
     /* drag with the keyboard: focus the block and move it two years */
     const block = page.locator('.timeline .block').first();
     await block.focus();
@@ -291,7 +292,58 @@ flows.push({
     await page.waitForTimeout(200);
     const goalsAfter = await page.evaluate(() => mr3.record.planets.life.rows.length);
     check('Promote adds exactly one Life plan goal through the Ledger', goalsAfter === goalsBefore + 1);
-    const promotedChips = await page.locator('.chip:has-text("Promoted")').allInnerTexts();
+    const promotedChips = await page.locator('.chip:has-text("In the Life plan")').allInnerTexts();
     check('the block is marked promoted', promotedChips.length === 1, JSON.stringify(promotedChips));
+  },
+});
+
+/* Level 7: an end-to-end mock session for Dev (self-employed, Solo 401k, HSA, the
+   harder household): open, ask, answer, mark done, note, close, read the one-pager. */
+flows.push({
+  name: 'level7-dev-mock-session',
+  async run(page, { base, check, APP }) {
+    await page.goto(base + 'index.html#/home');
+    await page.waitForSelector('text=No clients yet');
+    await importFixture(page, APP, 'dev');
+    await page.goto(base + 'index.html#/measure');
+    await page.waitForSelector('.kpi');
+    const kpis = await page.locator('.kpi').count();
+    check('Dev opens on a full Measure screen', kpis >= 40, String(kpis));
+    await page.goto(base + 'index.html#/session');
+    await page.waitForSelector('.next-card');
+    const q1 = await page.textContent('.ask.big .ask-text');
+    check('Dev gets a plain question first', /\?$/.test(q1.trim()), q1);
+    const unsure = await page.locator('.panel:has(h2:has-text("Everything unsure")) tbody tr').count();
+    check('Dev has a ranked list of unsure facts', unsure >= 3, String(unsure));
+    const email = await page.inputValue('textarea.email');
+    check('the email asks Dev by institution and carries no balances', email.indexOf('Where:') !== -1 && !/\$\d/.test(email.split('\n').slice(4).join('\n')), email.slice(0, 100));
+    /* answer the big question in the Ledger */
+    await page.click('.ask.big a.btn');
+    await page.waitForTimeout(300);
+    const focused = await page.evaluate(() => { const a = document.activeElement; return a && (a.dataset.col || a.getAttribute('aria-label')); });
+    check('Ask it lands in a Ledger cell for Dev', !!focused, String(focused));
+    await page.keyboard.press('Control+a');
+    await page.keyboard.type('v1200');
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(200);
+    await page.goto(base + 'index.html#/session');
+    await page.waitForSelector('.next-card');
+    const q2 = await page.textContent('.ask.big .ask-text');
+    check('the answered fact leaves the next-question card', q2 !== q1, q2);
+    /* a note, then close */
+    await page.fill('input[aria-label="Session note"]', 'Confirmed the Solo 401k deposit; HSA statement to come.');
+    await page.click('text=Close this session');
+    await page.waitForTimeout(200);
+    const saved = await page.evaluate(() => mr3.record.sessions.map(s => s.note || s.summary || ''));
+    check('closing saves the typed note with the snapshot', saved.length === 1 && saved[0].indexOf('Solo 401k') !== -1, JSON.stringify(saved));
+    await page.waitForSelector('text=Since last time');
+    await page.goto(base + 'index.html#/onepager');
+    await page.waitForSelector('.onepager');
+    await page.emulateMedia({ media: 'print' });
+    const pages = pdfPages(await page.pdf({ format: 'Letter', printBackground: true }));
+    await page.emulateMedia({ media: 'screen' });
+    check('the one-pager still prints to one page after the session', pages === 1, pages + ' pages');
+    const op = await page.textContent('.onepager');
+    check('the one-pager carries no private notes', op.indexOf('HSA statement to come') === -1);
   },
 });

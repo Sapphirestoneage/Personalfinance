@@ -149,7 +149,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     };
     pushField(primary.id);
     cols.push({ key: 'state', label: 'State', sortable: true, kind: 'state' });
-    cols.push({ key: 'source', label: 'Source', sortable: true, kind: 'source' });
+    if (coach) cols.push({ key: 'source', label: 'Source', sortable: true, kind: 'source' });
     cols.push({ key: 'institution', label: fields.planets[planet].institutionLabel, sortable: true, kind: 'column' });
     tdef.fields.filter(id => id !== primary.id).forEach(pushField);
     cols.push({ key: 'asOf', label: 'As of', sortable: true, kind: 'column' });
@@ -261,7 +261,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     const d = c.def;
     const f = r.f[d.id];
     if (!coach) {
-      if (f && f.state === 'not-applicable') return h('td', { class: c.num ? 'num' : null }, h('span', { class: 'empty-token' }, 'Not applicable'));
+      if (f && f.state === 'not-applicable') return h('td', { class: c.num ? 'num' : null }, h('span', { class: 'empty-token', title: 'Not applicable' }, '-'));
       if (f && f.state === 'will-send') return h('td', { class: c.num ? 'num' : null }, h('span', { class: 'empty-token' }, 'Will send'));
       const txt = display(d, f) || (f && f.state === 'unknown' ? 'Not entered' : '');
       if (d.kind === 'choice') { const o = (d.options || []).find(x => x[0] === (f && f.v)); return h('td', { class: c.num ? 'num' : null }, o ? o[1] : h('span', { class: 'empty-token' }, 'Not entered')); }

@@ -3,6 +3,7 @@
    and Client variants differ in density only (opts.client). Colours come
    from the tokens through CSS classes; no colour alone carries meaning. */
 import * as F from '../engine/format.js';
+import { CHARTS } from '../engine/chartdata.js';
 import { h } from './dom.js';
 
 const CLIENT_WORDS = { 'FAT floor': 'Lean month', 'Rule of 5': 'Cash target', 'FI number': 'Enough to live on', 'FI at': 'Could stop working at', 'Lean': 'Lean', 'Fat': 'Fat', 'FI': 'Enough', 'Coast FI': 'coast target', 'Accommodation': 'Housing', 'Needs only': 'Needs only' };
@@ -23,9 +24,12 @@ function needsNote(host, needs) {
 export function render(id, host, data, opts) {
   host.innerHTML = '';
   if (!data || data.needs) { needsNote(host, (data && data.needs) || ['data']); return; }
-  const fn = { sankey, netWorth, balanceSheet, debtRace, runway, draftt, fiGauge, waterfall }[id];
+  const fn = { sankey, netWorth, balanceSheet, debtRace, runway, draftt, fiGauge, waterfall, paths }[id];
   const o = Object.assign({}, opts || {}, { width: Math.max(320, host.clientWidth || 720) });
   if (fn) fn(host, data, o);
+  const def = CHARTS.find(c => c.id === id);
+  const name = (opts && opts.title) || (def ? (opts && opts.client ? def.client : def.name) : id);
+  host.querySelectorAll('svg[role="img"]:not([aria-label])').forEach(el => el.setAttribute('aria-label', name + ' chart'));
 }
 
 function sankey(host, d, o) {
@@ -51,7 +55,28 @@ function netWorth(host, d, o) {
   svg.append('path').datum(d.years).attr('class', 'line series-1').attr('d', d3.line().x(p => x(p.age)).y(p => y(p.likely)));
   if (d.fiNumber) { svg.append('line').attr('class', 'marker').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(d.fiNumber)).attr('y2', y(d.fiNumber)); svg.append('text').attr('class', 'chart-label').attr('x', W - m.r).attr('y', y(d.fiNumber) - 4).attr('text-anchor', 'end').text(wordFor(o, 'FI number') + ' ' + F.dollarsCompact(d.fiNumber)); }
   if (d.fiAges.likely) { svg.append('line').attr('class', 'marker').attr('x1', x(d.fiAges.likely)).attr('x2', x(d.fiAges.likely)).attr('y1', m.t).attr('y2', H - m.b); svg.append('text').attr('class', 'chart-label').attr('x', x(d.fiAges.likely) + 4).attr('y', m.t + 10).text(wordFor(o, 'FI at') + ' ' + d.fiAges.likely); }
-  svg.append('text').attr('class', 'chart-label muted').attr('x', m.l).attr('y', H - 4).text('Age. Band: worst to best real return; line: likely.');
+  const asm = d.asm || {};
+  const pct = v => F.percent(v, { places: 0 });
+  svg.append('text').attr('class', 'chart-label muted').attr('x', m.l).attr('y', H - 4).text(o.client
+    ? 'Age. In today\'s dollars, growing about ' + pct(asm.returnLikely) + ' a year after inflation.'
+    : 'Age. Today\'s dollars. Line ' + pct(asm.returnLikely) + ' a year after inflation; band ' + pct(asm.returnWorst) + ' to ' + pct(asm.returnBest) + '.');
+}
+
+/* Scenario paths: today's path, each block alone, all together (one chart module, no private copies). */
+function paths(host, d, o) {
+  const d3 = d3g(); const W = o.width, H = W < 480 ? 200 : 240, m = { t: 16, r: 24, b: 32, l: 64 };
+  const svg = svgIn(host, W, H);
+  const series = [{ cls: 'path-today', path: d.baseline.path, name: 'Today\'s path' }]
+    .concat(d.alone.map(a => ({ cls: 'path-alone', path: a.path, name: a.name + ' alone' })))
+    .concat([{ cls: 'path-together', path: d.together.path, name: 'All together' }]);
+  const all = series.flatMap(s => s.path.map(p => p.netWorth));
+  const x = d3.scaleLinear().domain(d3.extent(d.baseline.path, p => p.age)).range([m.l, W - m.r]);
+  const y = d3.scaleLinear().domain([Math.min(0, d3.min(all)), d3.max(all)]).nice().range([H - m.b, m.t]);
+  svg.append('g').attr('transform', 'translate(0,' + (H - m.b) + ')').attr('class', 'axis').call(d3.axisBottom(x).ticks(8).tickFormat(v => String(v)));
+  svg.append('g').attr('transform', 'translate(' + m.l + ',0)').attr('class', 'axis').call(d3.axisLeft(y).ticks(5).tickFormat(v => F.dollarsCompact(v)));
+  series.forEach(s => svg.append('path').datum(s.path).attr('class', 'line ' + s.cls).attr('d', d3.line().x(p => x(p.age)).y(p => y(p.netWorth))).append('title').text(s.name));
+  svg.append('text').attr('class', 'chart-label muted').attr('x', m.l).attr('y', H - 4).text('Age. Net worth in today\'s dollars, growing ' + F.percent((d.asm || {}).returnLikely, { places: 0 }) + ' a year after inflation.');
+  legend(host, [{ label: 'Today\'s path', text: '', cls: 'path-today' }, { label: 'Each alone', text: '', cls: 'path-alone' }, { label: 'All together', text: '', cls: 'path-together' }]);
 }
 
 function balanceSheet(host, d, o) {

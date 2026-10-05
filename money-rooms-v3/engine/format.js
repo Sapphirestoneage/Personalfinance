@@ -25,7 +25,9 @@ export function dollars(cents, opts) {
   const abs = Math.abs(cents);
   let body;
   if (abs >= 100000 || o.whole) {
-    body = '$' + withCommas(String(Math.round(abs / 100)));
+    /* a rough figure above $100,000 is rounded to the nearest $1,000: a tilde and dollar-level digits contradict each other */
+    const whole = o.rough && abs >= 10000000 ? Math.round(abs / 100000) * 1000 : Math.round(abs / 100);
+    body = '$' + withCommas(String(whole));
   } else {
     const d = Math.floor(abs / 100), c = abs % 100;
     body = '$' + withCommas(String(d)) + '.' + String(c).padStart(2, '0');
@@ -61,8 +63,10 @@ export function percent(ratio, opts) {
   if (!guard(ratio, 'percent')) return '';
   const o = opts || {};
   const v = ratio * 100;
-  const s = (Math.round(Math.abs(v) * 10) / 10).toFixed(1);
-  return (o.rough && s !== '0.0' ? TILDE : '') + (v < 0 && s !== '0.0' ? '-' : '') + s + '%';
+  const pl = o.whole ? 0 : (o.places === undefined ? 1 : o.places);
+  const s = (Math.round(Math.abs(v) * Math.pow(10, pl)) / Math.pow(10, pl)).toFixed(pl);
+  const zero = Number(s) === 0;
+  return (o.rough && !zero ? TILDE : '') + (v < 0 && !zero ? '-' : '') + s + '%';
 }
 
 /* Whole months. */
@@ -105,6 +109,14 @@ export function integer(n, opts) {
   return ((opts && opts.rough) ? TILDE : '') + withCommas(String(Math.round(n)));
 }
 
+/* 24 months and up read as years ("about 2 years", "2.5 years"); under that, months. */
+export function monthsOrYears(n, opts) {
+  if (!guard(n, 'months')) return '';
+  if (Math.abs(n) < 24) return months(n, opts);
+  const y = Math.round(n / 12 * 2) / 2;
+  const body = (Number.isInteger(y) ? String(y) : y.toFixed(1)) + ' years';
+  return (opts && opts.rough ? TILDE : '') + body;
+}
 export function hours(n, opts) {
   if (!guard(n, 'hours')) return '';
   const v = Math.round(n * 10) / 10;

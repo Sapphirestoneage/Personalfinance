@@ -101,7 +101,7 @@ plainly. Evidence is a file, a test name or a screenshot path.
 
 | Requirement | Status | Evidence |
 |---|---|---|
-| Nine scenario block types with default costs and 3-4 questions each | done | data/scenario-blocks.json; scenarios.test.js "every block type has 3 or 4 questions" (two types carry 2 questions: inheritance, sabbatical has 3) |
+| Nine scenario block types with default costs and 3-4 questions each | done | data/scenario-blocks.json; scenarios.test.js; Inheritance asks one question after critique R10 (MR-024), the rest 3 or 4 |
 | Blocks read reality live and never write to it | done | engine/scenarios.js compare(); scenarios.test.js "reality is never written" |
 | Timeline with drag-and-drop (and keyboard arrows) | done | ui/views/scenarios.js; flow level4-jordan-kid-portugal "a block moves along the timeline" |
 | Each alone versus together, whole life replayed | done | engine/scenarios.js compare(); flow "the table shows today, each block alone and all together" |
@@ -120,9 +120,21 @@ plainly. Evidence is a file, a test name or a screenshot path.
 
 | Requirement | Status | Evidence |
 |---|---|---|
-| Full Assumptions panel, per client, stored on the Sun | done | ui/views/assumptions.js; engine/compute.js assumptionsFor() |
-| Real dollars by default with a nominal toggle | partial | the basis switch is stored and shown; the engine computes in real dollars and does not yet inflate figures for the nominal view |
+| Full Assumptions panel, per client, stored on the Sun | done | ui/views/assumptions.js (22 settings in three groups, each one read by the engine); engine/compute.js assumptionsFor() |
+| Real dollars by default with a nominal toggle | not built (by design, MR-024) | everything is in today's dollars and says so on the Assumptions header, the chart captions and the one-pager; the dead toggle was removed after critique T1 |
 | Triple D everywhere a date appears | done | FI date tile shows best and worst ages; projection chart band; scenarios compare at the likely return |
 | Go-go / slow-go / no-go spending | done | engine/projection.js; Life plan retirement row; tieout (projection first five years and age 95) |
 | Value of one more point | done | engine/compute.js oneMorePoint; metric 46; lens 15 |
 | No state tax, ACA, Roth conversions | done (by design) | README parking lot |
+
+## Level 7 Polish and audit
+
+| Requirement | Status | Evidence |
+|---|---|---|
+| Full design pass across every screen with a separate critique | done | screenshots/level-4, level-5, level-6 critique.md (R1-R10, S1-S7, T1-T19) with builder's notes; Level 3 leftovers Q6, Q7 closed |
+| Accessibility basics: labels, focus states, contrast | done | tests/engine/contrast.test.js (every text token pair at 4.5:1 or better, slate darkened, gold and amber never text); tests/ui.js "accessible names" check on every screen (inputs, buttons, chart svgs, one h1) |
+| Full regression | done locally | node tests/run.js (833 checks) and node tests/ui.js (every household x screen x view x width, 4,047 checks); the live URL exists only after merge |
+| End-to-end mock session for Dev | done | tests/ui-flows.js level7-dev-mock-session (10 checks: Measure, question, ranked table, email, Ask it, answer, note, close, one page, no private notes) |
+| Final screenshots of every screen with Maya | done | screenshots/level-6/maya-*.jpg (13 screens x 2 views x 3 widths); screenshots/level-2/maya-onepager.pdf |
+| README: run, add a client, update libraries | done | README.md |
+| Final report | done | FINAL-REPORT.md |

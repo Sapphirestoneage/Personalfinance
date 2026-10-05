@@ -19,7 +19,7 @@ export function computeLenses(ctx) {
     let text = def.template;
     Object.keys(fills).forEach(k => { text = text.split('{' + k + '}').join(fills[k]); });
     const rough = !!(extra && extra.rough);
-    if (rough) text = text.replace(/ about /g, ' roughly ').replace(/costs about/, 'costs roughly');
+    if (rough) text = text.replace(/ about /g, ' roughly ').replace(/costs about/, 'costs roughly').replace(/^About /, 'Roughly ');
     out.push(Object.assign({ id, name: def.name, text, impactAnnual: impact, inputs, reading: readings.find(r => r.id === def.reading) || null, metric: def.metric, rough }, extra || {}));
   };
   const inc = S.income, dt = S.debt, inv = S.invest, sf = S.safety, tx = S.taxes, lf = S.life;
@@ -37,9 +37,9 @@ export function computeLenses(ctx) {
   /* 2 match */
   if (M.matchCapture && M.matchCapture.status === 'ok' && M.matchCapture.dollarsLeftAnnual > 0) push('match-left', M.matchCapture.dollarsLeftAnnual, { cost: dollars(M.matchCapture.dollarsLeftAnnual) }, [['Match captured', F.percent(M.matchCapture.value.value)], ['Left a year', dollars(M.matchCapture.dollarsLeftAnnual)]]);
   /* 3 promo cliff */
-  if (M.promoCliff && M.promoCliff.status === 'ok') M.promoCliff.value.value.filter(c => c.monthsLeft <= 12).forEach(c => push('promo-cliff', c.costAfterAnnual, { card: c.name, promo: F.percent(c.promoApr), apr: F.percent(c.standardApr), months: F.months(c.monthsLeft), cost: dollars(c.costAfterAnnual) }, [['Balance', dollars(c.balance)], ['Promo ends', F.date(c.promoEnd)], ['Standard APR', F.percent(c.standardApr)]], { rowId: c.rowId }));
+  if (M.promoCliff && M.promoCliff.status === 'ok') M.promoCliff.value.value.filter(c => c.monthsLeft <= 12).forEach(c => push('promo-cliff', c.costAfterAnnual, { card: c.name, promo: F.percent(c.promoApr, { whole: true }), apr: F.percent(c.standardApr, { whole: true }), months: F.months(c.monthsLeft), cost: dollars(c.costAfterAnnual) }, [['Balance', dollars(c.balance)], ['Promo ends', F.date(c.promoEnd)], ['Standard APR', F.percent(c.standardApr)]], { rowId: c.rowId }));
   /* 4 cash drag */
-  if (M.cashDrag && M.cashDrag.status === 'ok' && M.cashDrag.excess > 0) push('cash-drag', M.cashDrag.value.cents, { excess: dollars(M.cashDrag.excess), cost: dollars(M.cashDrag.value.cents) }, [['Cash', F.value(val('ruleOf5Target') ? S.invest.cashBalances : null)], ['Rule of 5 target', F.value(val('ruleOf5Target'))], ['Return gap', F.percent(asm.returnLikely - asm.cashRealReturn)]], { rough: roughOf('cashDrag') });
+  if (M.cashDrag && M.cashDrag.status === 'ok' && M.cashDrag.excess > 0 && !out.some(l => l.id === 'saving-at-a-loss')) push('cash-drag', M.cashDrag.value.cents, { excess: dollars(M.cashDrag.excess), cost: dollars(M.cashDrag.value.cents) }, [['Cash', F.value(val('ruleOf5Target') ? S.invest.cashBalances : null)], ['Rule of 5 target', F.value(val('ruleOf5Target'))], ['Return gap', F.percent(asm.returnLikely - asm.cashRealReturn)]], { rough: roughOf('cashDrag') });
   /* 5 fee drag */
   if (M.weightedEr && M.weightedEr.status === 'ok' && inv.weightedExpenseRatio > asm.feeDragEr && inv.feeDragAnnual) push('fee-drag', inv.feeDragAnnual.cents, { er: F.percent(inv.weightedExpenseRatio), cost: dollars(inv.feeDragAnnual.cents), lifetime: M.feeDragLifetime.status === 'ok' ? dollars(M.feeDragLifetime.value.cents) : 'more' }, [['Weighted expense ratio', F.percent(inv.weightedExpenseRatio)], ['Invested', F.value(inv.investedAssets)]]);
   /* 6 shelter */
@@ -71,21 +71,21 @@ export function computeLenses(ctx) {
   /* 10 tax room */
   if (M.leak && M.leak.status === 'ok' && M.leak.leakMonthly.cents > 0 && M.roomLeft && M.roomLeft.status === 'ok' && tx && typeof tx.marginalRate === 'number') {
     const room = M.roomLeft.value.value.find(r => r.limitId === '401k');
-    if (room && room.left > 0) { const amt = Math.min(M.leak.leakMonthly.cents * 12, room.left); const saved = Math.round(amt * tx.marginalRate); push('tax-room', saved, { leak: dollars(amt), cost: dollars(saved) }, [['Leak a year', dollars(M.leak.leakMonthly.cents * 12)], ['401k room', dollars(room.left)], ['Marginal rate', F.percent(tx.marginalRate)]], { rough: roughOf('leak') }); }
+    if (room && room.left > 0) { const amt = Math.min(M.leak.leakMonthly.cents * 12, room.left); const saved = Math.round(amt * tx.marginalRate); push('tax-room', saved, { leak: dollars(amt, M.leak.rough), cost: dollars(saved, M.leak.rough) }, [['Leak a year', dollars(M.leak.leakMonthly.cents * 12)], ['401k room', dollars(room.left)], ['Marginal rate', F.percent(tx.marginalRate)]], { rough: roughOf('leak') }); }
   }
   /* 11 thin runway */
   if (M.runway && M.runway.status === 'ok' && M.runway.value.value.fat !== null && M.runway.value.value.fat < asm.thinRunwayMonths && val('fatFloor') && inv && inv.cashBalances && inv.cashBalances.cents !== undefined) {
     const fat = val('fatFloor'); const gap = Math.round(fat.cents * asm.thinRunwayMonths - inv.cashBalances.cents);
-    push('thin-runway', gap, { months: F.months(M.runway.value.value.fat), cost: dollars(Math.max(0, gap)) }, [['Cash', F.value(inv.cashBalances)], ['FAT floor a month', F.value(fat)]], { rough: roughOf('fatFloor') });
+    push('thin-runway', gap, { months: F.months(M.runway.value.value.fat), cost: dollars(Math.max(0, gap)) }, [['Cash', F.value(inv.cashBalances)], ['FAT floor a month', F.value(fat)]], { rough: roughOf('fatFloor'), impactAnnual: null });
   }
   /* 12 locked up */
   if (M.liquidityRate && M.liquidityRate.status === 'ok' && M.liquidityRate.value.value < asm.lockedLiquidityShare && lf && lf.retirementAge && lf.retirementAge < 59.5) push('locked-up', null, { share: F.percent(M.liquidityRate.value.value), age: String(lf.retirementAge) }, [['Liquid share', F.percent(M.liquidityRate.value.value)], ['Retirement age', String(lf.retirementAge)]], { figure: F.percent(M.liquidityRate.value.value) + ' reachable' });
   /* 13 real hourly wage */
   if (M.realHourlyWage && M.realHourlyWage.status === 'ok' && M.realHourlyWage.statedHourly && M.realHourlyWage.value.cents < M.realHourlyWage.statedHourly * asm.realWageShare) push('real-hourly-wage', null, { real: F.dollars(M.realHourlyWage.value.cents), stated: F.dollars(M.realHourlyWage.statedHourly) }, [['Real hourly wage', F.dollars(M.realHourlyWage.value.cents)], ['Stated gross hourly', F.dollars(M.realHourlyWage.statedHourly)]], { rough: roughOf('realHourlyWage'), figure: F.dollars(M.realHourlyWage.value.cents) + ' an hour' });
   /* 14 cost in hours */
-  if (M.annualInterest && M.annualInterest.status === 'ok' && M.realHourlyWage && M.realHourlyWage.status === 'ok' && M.realHourlyWage.value.cents > 0) { const hours = M.annualInterest.value.cents / M.realHourlyWage.value.cents; push('cost-in-hours', M.annualInterest.value.cents, { cost: dollars(M.annualInterest.value.cents), hours: F.hours(hours) }, [['Interest this year', F.value(M.annualInterest.value)], ['Real hourly wage', F.dollars(M.realHourlyWage.value.cents)]], { rough: roughOf('annualInterest', 'realHourlyWage') }); }
+  if (M.annualInterest && M.annualInterest.status === 'ok' && M.realHourlyWage && M.realHourlyWage.status === 'ok' && M.realHourlyWage.value.cents > 0) { const hours = M.annualInterest.value.cents / M.realHourlyWage.value.cents; push('cost-in-hours', M.annualInterest.value.cents, { cost: dollars(M.annualInterest.value.cents), hours: F.hours(hours).replace(/ h$/, ' hours') }, [['Interest this year', F.value(M.annualInterest.value)], ['Real hourly wage', F.dollars(M.realHourlyWage.value.cents)]], { rough: roughOf('annualInterest', 'realHourlyWage') }); }
   /* 15 one more point */
-  if (M.oneMorePoint && M.oneMorePoint.status === 'ok' && M.oneMorePoint.value.value > 0) push('one-more-point', null, { amount: dollars(M.oneMorePoint.monthly), months: F.months(M.oneMorePoint.value.value) }, [['One point of take-home', dollars(M.oneMorePoint.monthly)], ['FI date today', F.value(val('fiDate'))]], { rough: true, figure: F.months(M.oneMorePoint.value.value) + ' sooner' });
+  if (M.oneMorePoint && M.oneMorePoint.status === 'ok' && M.oneMorePoint.value.value > 0) push('one-more-point', null, { amount: dollars(M.oneMorePoint.monthly), months: F.monthsOrYears(M.oneMorePoint.value.value) }, [['One point of take-home', dollars(M.oneMorePoint.monthly)], ['FI date today', F.value(val('fiDate'))]], { rough: true, figure: F.months(M.oneMorePoint.value.value) + ' sooner' });
   /* 16 coast */
   if (M.coastFi && M.coastFi.status === 'ok' && M.coastFi.coastPct !== null && M.coastFi.coastPct >= 1) push('coast-check', null, { netWorth: F.value(val('netWorth')), age: String(M.coastFi.retirementAge) }, [['Coast FI number', F.value(M.coastFi.value)], ['Net worth', F.value(val('netWorth'))]], { figure: F.percent(M.coastFi.coastPct) + ' of coast' });
   /* 17 mistake tax */

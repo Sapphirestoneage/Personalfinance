@@ -129,7 +129,8 @@ export const app = {
   },
   render() {
     this.route = this.parseHash(location.hash);
-    const def = routes[this.route.name];
+    let def = routes[this.route.name];
+    if (def.coachOnly && this.view === 'client') { history.replaceState(null, '', '#/measure'); this.route = this.parseHash('#/measure'); def = routes.measure; }
     const main = qs('#main');
     clear(main);
     closeOverlay();
@@ -162,8 +163,8 @@ export const app = {
       if (it.group && it.group !== group) { group = it.group; nav.appendChild(h('h3', { class: 'group' }, group)); }
       const a = h('a', { href: it.href, 'aria-current': it.active(this.route) ? 'page' : null, class: it.coachOnly ? 'coach-only' : null },
         h('span', { class: 'navlabel' }, it.label),
-        h('span', { class: 'fill-text', title: 'confidence' }, it.fill !== undefined && it.fill !== null ? Math.round(it.fill * 100) + '%' : '-'),
-        it.key ? h('span', { class: 'kbd coach-only' }, it.key) : h('span'));
+        it.fill !== undefined && it.fill !== null ? h('span', { class: 'fill-text', title: 'confidence' }, Math.round(it.fill * 100) + '%') : null,
+        it.key ? h('span', { class: 'kbd coach-only' }, it.key) : null);
       nav.appendChild(a);
     });
   },
