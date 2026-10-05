@@ -1,0 +1,177 @@
+/* Simulate: scenario blocks on a timeline over the real facts. Each block
+   answers a few questions; the chart shows today's path, each block alone and
+   all together; Promote is the only way a block reaches the Ledger (as a Life
+   plan goal, through the record API). The editor is built once per selected
+   block and patched in place (D-034). */
+import { h, clear } from '../dom.js';
+import * as F from '../../engine/format.js';
+import * as Charts from '../charts.js';
+import { compare, newBlock, blockCosts } from '../../engine/scenarios.js';
+import { createRow } from '../../engine/record.js';
+import { freshFacts } from '../../engine/fields.js';
+import { parseTyped } from '../typed.js';
+
+export function mount(host, app) {
+  const defs = app.data.scenarioBlocks;
+  const coach = app.view === 'coach';
+  host.appendChild(h('header', null, h('h1', null, coach ? 'Simulate' : 'What if'),
+    coach ? h('span', { class: 'sub' }, 'Each block runs on a copy of the real numbers. Only Promote writes one to the Life plan.') : null));
+  const body = h('div', { class: 'stack' }); host.appendChild(body);
+  const emptyHost = h('div');
+  const panel = h('section', { class: 'panel' });
+  const headRow = h('h2', { class: 'row' }); const laneHost = h('div'); const noteHost = h('div'); const editorHost = h('div');
+  panel.appendChild(headRow); panel.appendChild(laneHost); panel.appendChild(noteHost); panel.appendChild(editorHost);
+  const cmpHost = h('div');
+  body.appendChild(emptyHost); body.appendChild(panel); body.appendChild(cmpHost);
+  let selected = null, editorFor = null, costLine = null, startInput = null, actionHost = null;
+
+  function live() {
+    const S = app.result.sun && app.result.sun.outputs;
+    const th = S && S.income.takeHomeMonthly, sp = S && S.safety.spendingWithPremiums;
+    return { takeHomeMonthly: th && th.cents !== undefined ? th.cents : null, spendingMonthly: sp && sp.cents !== undefined ? sp.cents : null };
+  }
+  const cur = id => (app.record.scenarios || []).find(s => s.id === id);
+  function costText(c) {
+    if (c.needs) return 'Needs ' + c.needs.join(' and ') + ' to cost this block.';
+    const one = c.oneOff < 0 ? F.dollarsWhole(-c.oneOff) + ' in' : F.dollarsWhole(c.oneOff);
+    if (!c.monthly) return 'One-off ' + one + ', nothing ongoing.';
+    return 'One-off ' + one + ', then ' + F.dollarsWhole(Math.abs(c.monthly)) + ' a month ' + (c.monthly > 0 ? 'more' : 'saved') + ' for ' + c.duration + (c.duration === 1 ? ' year.' : ' years.');
+  }
+
+  function draw() {
+    clear(emptyHost); clear(laneHost); clear(noteHost); clear(headRow); clear(cmpHost);
+    const inp = app.result.projectionInputs;
+    const blocks = (app.record.scenarios || []).slice();
+    panel.style.display = 'none'; cmpHost.style.display = 'none';
+    if (!inp) {
+      emptyHost.appendChild(h('div', { class: 'empty' }, h('h2', null, coach ? 'Nothing to simulate yet' : 'Nothing to try yet'), h('p', null, 'Needs income, spending, account balances and a birth date.'),
+        h('p', null, [['Income', '#/ledger/income'], ['Spending', '#/ledger/spending'], ['Investments', '#/ledger/invest'], ['Birth date', '#/home']].flatMap(([t, href], i) => [i ? ' ' : null, h('a', { class: 'next', href }, t)]))));
+      return;
+    }
+    if (!coach && !blocks.length) {
+      emptyHost.appendChild(h('div', { class: 'empty' }, h('h2', null, 'No what-ifs yet'), h('p', null, 'Your coach adds these in a session, for example a home, a child or a job change. Each one runs on a copy of your numbers.')));
+      return;
+    }
+    panel.style.display = '';
+    const year0 = inp.year + 1, yearN = inp.year + (inp.asm.projectionEndAge - inp.age);
+    if (coach && selected && !cur(selected)) selected = null;
+    if (coach && !selected && blocks.length) selected = blocks[0].id;
+    headRow.appendChild(document.createTextNode('Timeline'));
+    if (coach) headRow.appendChild(h('span', { class: 'tag hide-narrow' }, 'drag, or use the arrow keys'));
+    if (coach) headRow.appendChild(h('select', { class: 'select add-block', 'aria-label': 'Add a block', onChange: e => { const t = e.target.value; e.target.value = ''; if (!t) return; const b = newBlock(t, defs, year0 + 3); selected = b.id; app.mutate(rec => { rec.scenarios.push(b); }, 'scenarios'); } },
+      h('option', { value: '' }, 'Add a block'), Object.keys(defs.types).map(t => h('option', { value: t }, defs.types[t].label))));
+    laneHost.appendChild(lane(blocks, inp, year0, yearN));
+    if (coach && !blocks.length) noteHost.appendChild(h('p', { class: 'muted small', style: { marginTop: '8px' } }, 'No blocks yet. Pick one from Add a block; it starts three years out.'));
+    if (coach && selected) {
+      if (editorFor !== selected || !editorHost.firstChild) { clear(editorHost); editorHost.appendChild(buildEditor(cur(selected), year0, yearN)); }
+      refreshEditor();
+    } else { clear(editorHost); editorFor = null; }
+    if (blocks.length) { cmpHost.style.display = ''; comparison(blocks, inp); }
+  }
+
+  function lane(blocks, inp, year0, yearN) {
+    const tl = h('div', { class: 'timeline', role: 'list', 'aria-label': 'Timeline' });
+    const span = yearN - year0; const pct = y => ((y - year0) / span * 100);
+    const endAge = inp.asm.projectionEndAge, firstAge = Math.ceil((inp.age + 1) / 10) * 10;
+    for (let a = firstAge; a <= endAge; a += 10) {
+      const y = inp.year + (a - inp.age);
+      tl.appendChild(h('div', { class: 'tick', style: { left: pct(y) + '%' } }, h('span', null, a === firstAge ? 'age ' + a : String(a))));
+    }
+    const L = live();
+    const sorted = blocks.slice().sort((a, b) => a.startYear - b.startYear);
+    const laneEnd = []; const lanes = new Map();
+    sorted.forEach(b => {
+      const c = blockCosts(defs.types[b.type], b, L); const end = b.startYear + Math.max(1, c.duration);
+      let k = laneEnd.findIndex(e => e <= b.startYear);
+      if (k === -1) { k = laneEnd.length; laneEnd.push(end); } else laneEnd[k] = end;
+      lanes.set(b.id, k);
+    });
+    tl.style.height = (blocks.length ? 8 + laneEnd.length * 32 + 24 : 40) + 'px';
+    sorted.forEach(b => {
+      const def = defs.types[b.type]; const c = blockCosts(def, b, L);
+      const attrs = { class: 'block' + (selected === b.id ? ' selected' : '') + (b.promoted ? ' promoted' : ''), role: 'listitem', title: b.name + ' from ' + b.startYear, dataset: { block: b.id },
+        style: { left: pct(b.startYear) + '%', width: Math.max(4, pct(b.startYear + Math.max(1, c.duration)) - pct(b.startYear)) + '%', top: (8 + lanes.get(b.id) * 32) + 'px' } };
+      if (coach) {
+        attrs.tabindex = '0'; attrs.draggable = 'true';
+        attrs.onClick = () => { selected = b.id; draw(); };
+        attrs.onKeyDown = e => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { e.preventDefault(); const d = e.key === 'ArrowLeft' ? -1 : 1; selected = b.id; app.mutate(rec => { const x = rec.scenarios.find(s => s.id === b.id); x.startYear = Math.min(yearN, Math.max(year0, x.startYear + d)); }, 'scenarios'); } };
+      }
+      const el = h('div', attrs);
+      if (coach) el.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', b.id); e.dataTransfer.effectAllowed = 'move'; });
+      el.appendChild(h('span', { class: 'block-glyph' }, def.glyph));
+      el.appendChild(h('span', { class: 'block-label' }, b.name + ', ' + b.startYear));
+      tl.appendChild(el);
+    });
+    if (coach) {
+      tl.addEventListener('dragover', e => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+      tl.addEventListener('drop', e => { e.preventDefault(); const id = e.dataTransfer.getData('text/plain'); const rect = tl.getBoundingClientRect(); const year = Math.round(year0 + (e.clientX - rect.left) / rect.width * span); selected = id; app.mutate(rec => { const x = rec.scenarios.find(s => s.id === id); if (x) x.startYear = Math.min(yearN, Math.max(year0, year)); }, 'scenarios'); });
+    }
+    return tl;
+  }
+
+  /* LIVE-FORM: built once per selected block; draw() patches the cost line, start year and actions in place. */
+  function buildEditor(b, year0, yearN) {
+    editorFor = b.id;
+    const def = defs.types[b.type];
+    const ed = h('div', { class: 'block-editor' });
+    ed.appendChild(h('h3', { title: def.note }, b.name, h('span', { class: 'tag' }, def.label)));
+    ed.appendChild(h('div', { class: 'fieldrow' }, h('label', null, 'Name'), h('div', { class: 'control' }, h('input', { class: 'input', value: b.name, 'aria-label': 'Block name', onChange: e => app.mutate(rec => { rec.scenarios.find(s => s.id === b.id).name = e.target.value.trim() || def.label; }, 'scenarios') }))));
+    startInput = h('input', { class: 'input num', inputmode: 'numeric', value: String(b.startYear), 'aria-label': 'Start year', onChange: e => { const y = parseInt(e.target.value, 10); if (Number.isFinite(y)) app.mutate(rec => { rec.scenarios.find(s => s.id === b.id).startYear = Math.min(yearN, Math.max(year0, y)); }, 'scenarios'); else e.target.value = String(cur(b.id).startYear); } });
+    ed.appendChild(h('div', { class: 'fieldrow' }, h('label', null, 'Starts in'), h('div', { class: 'control' }, startInput)));
+    def.questions.forEach(qd => {
+      const show = v => qd.kind === 'money' ? F.dollarsWhole(v) : qd.kind === 'percent' ? F.percent(v) : String(v);
+      const v0 = b.answers[qd.id] !== undefined ? b.answers[qd.id] : qd.default;
+      const input = h('input', { class: 'input' + (qd.kind === 'text' ? '' : ' num'), value: show(v0), 'aria-label': qd.label, title: qd.hint || '' });
+      input.addEventListener('focus', () => { const v = cur(b.id).answers[qd.id]; input.value = qd.kind === 'money' ? String(v / 100) : qd.kind === 'percent' ? String(Math.round(v * 10000) / 100) : String(v); input.select(); });
+      input.addEventListener('change', e => { try { const p = parseTyped(qd.kind === 'int' ? 'int' : qd.kind, e.target.value); if (p && p.v !== null) app.mutate(rec => { rec.scenarios.find(s => s.id === b.id).answers[qd.id] = p.v; }, 'scenarios'); } catch (err) { app.toast(err.message); } });
+      input.addEventListener('blur', () => { input.value = show(cur(b.id).answers[qd.id]); });
+      ed.appendChild(h('div', { class: 'fieldrow' }, h('label', { title: qd.hint || '' }, qd.label), h('div', { class: 'control' }, input)));
+    });
+    costLine = h('p', { class: 'hint', style: { marginTop: '8px' } });
+    ed.appendChild(costLine);
+    actionHost = h('div', { class: 'row', style: { marginTop: '8px' } });
+    ed.appendChild(actionHost);
+    return ed;
+  }
+  function refreshEditor() {
+    const b = cur(editorFor); if (!b) return;
+    const def = defs.types[b.type];
+    costLine.textContent = costText(blockCosts(def, b, live()));
+    if (document.activeElement !== startInput) startInput.value = String(b.startYear);
+    clear(actionHost);
+    actionHost.appendChild(b.promoted ? h('span', { class: 'chip state-known' }, 'In the Life plan') : h('button', { class: 'btn primary', onClick: () => promote(b) }, 'Promote to the Ledger'));
+    actionHost.appendChild(h('button', { class: 'btn quiet', onClick: () => { app.mutate(rec => { rec.scenarios = rec.scenarios.filter(s => s.id !== b.id); }, 'scenarios'); selected = null; app.toast('Block removed'); } }, 'Remove block'));
+  }
+  function promote(b) {
+    const def = defs.types[b.type]; const c = blockCosts(def, b, live());
+    if (c.needs) { app.toast('Needs ' + c.needs.join(' and ') + ' before this block can be promoted.'); return; }
+    const row = createRow('life', 'goal', { nickname: b.name, notesShared: 'Promoted from a scenario block (' + def.label + ')', f: freshFacts(app.data.fields, 'life', 'goal') });
+    row.f.goalCost = { v: Math.max(0, c.oneOff), state: 'rough', source: 'client' };
+    row.f.targetDate = { v: String(b.startYear) + '-01', state: 'known', source: 'client' };
+    row.f.priority = { v: '2', state: 'known', source: 'client' };
+    app.addRow(row);
+    app.mutate(rec => { const x = rec.scenarios.find(s => s.id === b.id); x.promoted = true; x.rowId = row.id; }, 'scenarios');
+    app.toast('Promoted: a Life plan goal now carries the one-off cost and the year.');
+  }
+
+  function comparison(blocks, inp) {
+    const c = compare(inp, blocks, defs, live());
+    const sec = h('section', { class: 'panel' }, h('h2', null, 'Each alone and together'));
+    cmpHost.appendChild(sec);
+    const chartHost = h('div'); sec.appendChild(chartHost);
+    Charts.render('paths', chartHost, c, { client: !coach, title: 'Net worth paths' });
+    const fmtAge = a => a === null ? 'never by 95' : 'age ' + a;
+    const moved = (age, d) => d === null ? fmtAge(age) : fmtAge(age) + ', ' + (d === 0 ? 'same' : d > 0 ? d + (d === 1 ? ' year later' : ' years later') : (-d) + (d === -1 ? ' year earlier' : ' years earlier'));
+    const worth = (v, d) => F.dollarsCompact(v) + (d === null || d === undefined ? '' : ' (' + (d >= 0 ? '+' : '-') + F.dollarsCompact(Math.abs(d)) + ')');
+    const row = (name, age, worthText, cls) => h('tr', null, h('td', { class: cls || null }, name), h('td', null, age), h('td', { class: 'num' }, worthText));
+    const rows = [row('Today\'s path', fmtAge(c.baseline.fiAge), worth(c.baseline.at95))].concat(c.alone.map(a => a.costs.needs
+      ? row(a.name + ' alone', 'needs ' + a.costs.needs.join(' and '), 'needs')
+      : row(a.name + ' alone', moved(a.fiAge, a.fiDelta), worth(a.at95, a.at95Delta))));
+    const foot = h('tfoot', null, h('tr', null, h('td', null, 'All together'), h('td', null, moved(c.together.fiAge, c.together.fiDelta)), h('td', { class: 'num' }, worth(c.together.at95, c.together.at95Delta))));
+    sec.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data' }, h('thead', null, h('tr', null, h('th', null, 'Path'), h('th', null, coach ? 'FI age' : 'Could stop working at'), h('th', { class: 'num' }, 'Net worth at 95'))), h('tbody', null, rows), foot)));
+    if (c.alone.some(a => a.fiDelta > 0 && a.at95Delta > 0)) sec.appendChild(h('p', { class: 'hint', style: { marginTop: '8px' } }, 'A later FI age means more working years, so net worth at 95 can rise even when a block costs money.'));
+  }
+
+  draw();
+  return { update() { draw(); } };
+}

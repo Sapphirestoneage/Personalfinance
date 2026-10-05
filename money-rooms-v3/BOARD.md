@@ -6,7 +6,7 @@
 | 1 | Capture | FROZEN | Level 1: Capture |
 | 2 | Measure + one-pager | FROZEN | Level 2: Measure + one-pager |
 | 3 | Session engine | FROZEN | Level 3: Session engine |
-| 4 | Simulate | not started | |
+| 4 | Simulate | FROZEN | Level 4: Simulate |
 | 5 | Learn | not started | |
 | 6 | Depth | not started | |
 | 7 | Polish and audit | not started | |

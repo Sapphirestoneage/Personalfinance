@@ -1,0 +1,107 @@
+/* Scenario sandbox: what-if blocks sit on top of real facts, read reality
+   live and never write to it. Each block becomes a one-off cost in its start
+   year and a monthly change for its duration, applied to a copy of the
+   projection inputs. Replays the whole life for the baseline, each block
+   alone, and all together. Promote is the only bridge into the Ledger. */
+import { project } from './projection.js';
+
+/* Evaluate a block's cost formula from its answers and the household's live figures. */
+export function evalFormula(expr, answers, live) {
+  if (typeof expr === 'number') return expr;
+  const scope = Object.assign({}, live, answers);
+  let missing = false;
+  const safe = expr.replace(/[A-Za-z_][A-Za-z0-9_]*/g, name => {
+    if (!(name in scope)) return '0';
+    if (scope[name] === null || scope[name] === undefined) { missing = true; return '0'; }
+    return '(' + Number(scope[name]) + ')';
+  });
+  if (missing) return null;
+  if (!/^[\d\s()+\-*/.]+$/.test(safe)) throw new Error('bad formula ' + expr);
+  return Math.round(Function('"use strict"; return (' + safe + ');')());
+}
+
+export function blockCosts(def, block, live) {
+  const answers = {};
+  def.questions.forEach(qd => {
+    const a = block.answers ? block.answers[qd.id] : undefined;
+    const usable = qd.kind === 'text' ? typeof a === 'string' : typeof a === 'number' && Number.isFinite(a);
+    answers[qd.id] = usable ? a : qd.default;
+  });
+  const oneOff = evalFormula(def.oneOff, answers, live);
+  const monthly = evalFormula(def.monthly, answers, live);
+  const duration = typeof def.duration === 'number' ? def.duration : (answers[def.duration] || 0);
+  if (oneOff === null || monthly === null) {
+    const LIVE_WORDS = { takeHomeMonthly: 'take-home pay', spendingMonthly: 'monthly spending' };
+    const names = Object.keys(LIVE_WORDS).filter(k => (live[k] === null || live[k] === undefined) && (String(def.oneOff) + ' ' + String(def.monthly)).indexOf(k) !== -1).map(k => LIVE_WORDS[k]);
+    return { oneOff: null, monthly: null, duration, answers, needs: names.length ? names : ['take-home pay'] };
+  }
+  return { oneOff, monthly, duration, answers };
+}
+
+/* Build year-indexed adjustments: { [year]: { oneOff, monthlyDelta } } */
+export function adjustments(blocks, defs, live) {
+  const by = {};
+  blocks.forEach(b => {
+    const def = defs.types[b.type]; if (!def) return;
+    const c = blockCosts(def, b, live);
+    if (c.needs) return; /* a block that cannot be costed changes nothing */
+    const y0 = b.startYear;
+    by[y0] = by[y0] || { oneOff: 0, monthly: 0 };
+    by[y0].oneOff += c.oneOff;
+    for (let y = y0; y < y0 + Math.max(0, c.duration); y++) { by[y] = by[y] || { oneOff: 0, monthly: 0 }; by[y].monthly += c.monthly; }
+  });
+  return by;
+}
+
+/* Run the projection with adjustments folded in year by year. */
+export function projectWith(inp, rate, adj) {
+  const years = inp.asm.projectionEndAge - inp.age;
+  const base = project(inp, rate);
+  /* re-run with a per-year hook: fold the adjustments into contributions and spending */
+  let inv = inp.invested, csh = inp.cash, year = inp.year, a = inp.age, fiAge = null;
+  const path = [];
+  const debtByYear = {}; base.path.forEach(p => { debtByYear[p.year] = p.debt; });
+  for (let y = 1; y <= years; y++) {
+    year++; a++;
+    const ad = adj[year] || { oneOff: 0, monthly: 0 };
+    const working = a <= inp.retirementAge && (fiAge === null || a <= fiAge);
+    const debtNow = debtByYear[year] || 0;
+    const extraAnnual = -ad.monthly * 12; /* a positive monthly cost reduces what is saved */
+    if (working) {
+      inv = Math.round(inv * (1 + rate)) + inp.employeeAnnual + inp.employerAnnual;
+      const freed = debtNow === 0 && inp.debts.length ? inp.debtServiceAnnual : 0;
+      csh = Math.round(csh * (1 + inp.asm.cashRealReturn)) + Math.max(0, inp.leakAnnual) + freed + extraAnnual - ad.oneOff;
+      if (csh < 0) { inv += csh; csh = 0; }
+    } else {
+      const mult = a < inp.asm.slowgoAge ? inp.mult.gogo : a < inp.asm.nogoAge ? inp.mult.slowgo : inp.mult.nogo;
+      const need = Math.round(inp.annualSpend * mult) + ad.monthly * 12 + ad.oneOff - (a >= inp.asm.socialSecurityAge ? inp.ssMonthly * 12 : 0);
+      inv = Math.round(inv * (1 + rate)) - Math.max(0, need);
+      csh = Math.round(csh * (1 + inp.asm.cashRealReturn));
+    }
+    const nw = inv + csh - debtNow;
+    if (fiAge === null && nw * inp.asm.withdrawalRate >= inp.annualSpend + (ad.monthly > 0 ? ad.monthly * 12 : 0)) fiAge = a;
+    path.push({ year, age: a, invested: inv, cash: csh, debt: debtNow, netWorth: nw, working });
+  }
+  return { fiAge, fiYear: fiAge !== null ? year - (a - fiAge) : null, path, rate };
+}
+
+/* The comparison: baseline, each block alone, all together. */
+export function compare(inp, blocks, defs, live) {
+  const rate = inp.asm.returnLikely;
+  const baseline = projectWith(inp, rate, {});
+  const alone = blocks.map(b => ({ block: b, result: projectWith(inp, rate, adjustments([b], defs, live)), costs: blockCosts(defs.types[b.type], b, live) }));
+  const together = projectWith(inp, rate, adjustments(blocks, defs, live));
+  const at95 = r => r.path.length ? r.path[r.path.length - 1].netWorth : null;
+  return {
+    asm: { returnLikely: rate },
+    baseline: { fiAge: baseline.fiAge, at95: at95(baseline), path: baseline.path },
+    alone: alone.map(x => ({ id: x.block.id, name: x.block.name, type: x.block.type, startYear: x.block.startYear, costs: x.costs, fiAge: x.result.fiAge, at95: at95(x.result), fiDelta: x.result.fiAge !== null && baseline.fiAge !== null ? x.result.fiAge - baseline.fiAge : null, at95Delta: at95(x.result) - at95(baseline), path: x.result.path })),
+    together: { fiAge: together.fiAge, at95: at95(together), fiDelta: together.fiAge !== null && baseline.fiAge !== null ? together.fiAge - baseline.fiAge : null, at95Delta: at95(together) - at95(baseline), path: together.path },
+  };
+}
+
+export function newBlock(type, defs, startYear) {
+  const def = defs.types[type];
+  const answers = {}; def.questions.forEach(q => { answers[q.id] = q.default; });
+  return { id: 'sc' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), type, name: def.label, startYear, answers, promoted: false, createdAt: new Date().toISOString() };
+}

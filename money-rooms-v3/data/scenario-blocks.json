@@ -1,0 +1,278 @@
+{
+ "asOf": "2026-10-05",
+ "source": "Money Rooms v3 spec, Life Plan scenario blocks; default costs are round national figures written from memory and marked verify",
+ "verify": true,
+ "types": {
+  "home": {
+   "label": "Buy a home",
+   "glyph": "H",
+   "questions": [
+    {
+     "id": "price",
+     "label": "Price",
+     "kind": "money",
+     "default": 45000000
+    },
+    {
+     "id": "downPct",
+     "label": "Down payment share",
+     "kind": "percent",
+     "default": 0.2
+    },
+    {
+     "id": "rateNote",
+     "label": "Monthly cost versus rent",
+     "kind": "money",
+     "default": 40000,
+     "hint": "Use a negative number if owning costs less than rent."
+    },
+    {
+     "id": "years",
+     "label": "Years you would stay",
+     "kind": "int",
+     "default": 30
+    }
+   ],
+   "oneOff": "price * downPct + 1500000",
+   "monthly": "rateNote",
+   "duration": "years",
+   "note": "One-off: the down payment plus about $15,000 of closing and moving. Ongoing: the change against rent."
+  },
+  "car": {
+   "label": "Replace the car",
+   "glyph": "C",
+   "questions": [
+    {
+     "id": "price",
+     "label": "Price",
+     "kind": "money",
+     "default": 3200000
+    },
+    {
+     "id": "tradeIn",
+     "label": "Trade-in or sale",
+     "kind": "money",
+     "default": 800000
+    },
+    {
+     "id": "financed",
+     "label": "Financed share",
+     "kind": "percent",
+     "default": 0.6
+    },
+    {
+     "id": "years",
+     "label": "Loan years",
+     "kind": "int",
+     "default": 5
+    }
+   ],
+   "oneOff": "(price - tradeIn) * (1 - financed)",
+   "monthly": "(price - tradeIn) * financed / (years * 12) * 1.08",
+   "duration": "years",
+   "note": "One-off: the cash part. Ongoing: the loan payment with about 8% of interest spread over the term."
+  },
+  "kid": {
+   "label": "A child",
+   "glyph": "K",
+   "questions": [
+    {
+     "id": "childcare",
+     "label": "Childcare a month, first five years",
+     "kind": "money",
+     "default": 150000
+    },
+    {
+     "id": "everyday",
+     "label": "Everyday extra a month, to 18",
+     "kind": "money",
+     "default": 60000
+    },
+    {
+     "id": "upfront",
+     "label": "First-year one-offs",
+     "kind": "money",
+     "default": 800000
+    },
+    {
+     "id": "leave",
+     "label": "Unpaid leave, months",
+     "kind": "int",
+     "default": 2
+    }
+   ],
+   "oneOff": "upfront + leave * takeHomeMonthly",
+   "monthly": "everyday + childcare * 5 / 18",
+   "duration": 18,
+   "note": "USDA-style cost of raising a child, spread evenly over 18 years; childcare front-loaded in the one-off and the average."
+  },
+  "job": {
+   "label": "Job change",
+   "glyph": "J",
+   "questions": [
+    {
+     "id": "payChange",
+     "label": "Pay change",
+     "kind": "percent",
+     "default": -0.1
+    },
+    {
+     "id": "gapMonths",
+     "label": "Months without pay",
+     "kind": "int",
+     "default": 1
+    },
+    {
+     "id": "matchChange",
+     "label": "Match change a month",
+     "kind": "money",
+     "default": 0
+    },
+    {
+     "id": "years",
+     "label": "Years in the new role",
+     "kind": "int",
+     "default": 10
+    }
+   ],
+   "oneOff": "gapMonths * takeHomeMonthly",
+   "monthly": "-(payChange * takeHomeMonthly + matchChange)",
+   "duration": "years",
+   "note": "A pay cut shows as an ongoing cost; a raise as a negative cost (more saved)."
+  },
+  "sabbatical": {
+   "label": "Sabbatical",
+   "glyph": "S",
+   "questions": [
+    {
+     "id": "months",
+     "label": "Months away",
+     "kind": "int",
+     "default": 6
+    },
+    {
+     "id": "spendShare",
+     "label": "Spending while away, share of today",
+     "kind": "percent",
+     "default": 0.8
+    },
+    {
+     "id": "travel",
+     "label": "Travel and setup",
+     "kind": "money",
+     "default": 600000
+    }
+   ],
+   "oneOff": "months * (takeHomeMonthly - spendingMonthly * (1 - spendShare)) + travel",
+   "monthly": 0,
+   "duration": 0,
+   "note": "Lost take-home for the months away, less what is not spent at home, plus travel."
+  },
+  "geo": {
+   "label": "Move somewhere cheaper",
+   "glyph": "G",
+   "questions": [
+    {
+     "id": "spendChange",
+     "label": "Spending change",
+     "kind": "percent",
+     "default": -0.3
+    },
+    {
+     "id": "payChange",
+     "label": "Pay change",
+     "kind": "percent",
+     "default": -0.2
+    },
+    {
+     "id": "moveCost",
+     "label": "Move and setup",
+     "kind": "money",
+     "default": 1500000
+    },
+    {
+     "id": "years",
+     "label": "Years there",
+     "kind": "int",
+     "default": 10
+    }
+   ],
+   "oneOff": "moveCost",
+   "monthly": "spendChange * spendingMonthly - payChange * takeHomeMonthly",
+   "duration": "years",
+   "note": "Geo arbitrage: cheaper living against a smaller paycheck."
+  },
+  "side": {
+   "label": "Side hustle",
+   "glyph": "+",
+   "questions": [
+    {
+     "id": "netMonthly",
+     "label": "Net a month after tax and costs",
+     "kind": "money",
+     "default": 100000
+    },
+    {
+     "id": "startup",
+     "label": "Startup cost",
+     "kind": "money",
+     "default": 300000
+    },
+    {
+     "id": "years",
+     "label": "Years it runs",
+     "kind": "int",
+     "default": 5
+    }
+   ],
+   "oneOff": "startup",
+   "monthly": "-netMonthly",
+   "duration": "years",
+   "note": "Income shows as a negative cost."
+  },
+  "inheritance": {
+   "label": "Inheritance or windfall",
+   "glyph": "W",
+   "questions": [
+    {
+     "id": "amount",
+     "label": "Amount after tax and fees",
+     "kind": "money",
+     "default": 5000000
+    }
+   ],
+   "oneOff": "-amount",
+   "monthly": 0,
+   "duration": 0,
+   "note": "A windfall is a negative one-off cost: money in."
+  },
+  "marriage": {
+   "label": "Marriage",
+   "glyph": "M",
+   "questions": [
+    {
+     "id": "wedding",
+     "label": "Wedding and honeymoon",
+     "kind": "money",
+     "default": 3000000
+    },
+    {
+     "id": "sharedSavings",
+     "label": "Shared household saving change a month",
+     "kind": "money",
+     "default": 50000
+    },
+    {
+     "id": "years",
+     "label": "Years to model",
+     "kind": "int",
+     "default": 30
+    }
+   ],
+   "oneOff": "wedding",
+   "monthly": "-sharedSavings",
+   "duration": "years",
+   "note": "One-off wedding cost; two incomes under one roof usually save more, shown as a negative cost."
+  }
+ }
+}
