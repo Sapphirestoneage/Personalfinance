@@ -79,7 +79,7 @@ function plates(app, s, tab, setTab) {
   if (!list.length) { panel.appendChild(h('p', { class: 'muted small' }, tab === 'theirs' ? 'Nothing for the client to bring.' : tab === 'mine' ? 'Nothing to look up. Quick notes you have not filed land here.' : tab === 'small' ? 'No small items.' : 'Nothing else above the line.')); return panel; }
   panel.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data plates' }, h('thead', null, h('tr', null, h('th', null, 'Done'), h('th', null, 'Fact'), h('th', { class: 'hide-narrow' }, 'Where'), h('th', null, 'State'), h('th', { class: 'num' }, 'A year'), h('th', null, ''))),
     h('tbody', null, list.slice(0, 40).map(i => { const done = isDone(app, i); return h('tr', { class: done ? 'muted' : null },
-      h('td', null, h('button', { class: 'chip toggle' + (done ? ' state-known' : ''), 'aria-pressed': String(done), onClick: () => markDone(app, i, !done) }, done ? 'Done' : 'Mark done')),
+      h('td', null, h('input', { type: 'checkbox', class: 'pick', 'aria-label': 'Mark done: ' + (i.note ? i.label : factLabel(i)), checked: done, onChange: e => markDone(app, i, e.target.checked) })),
       h('td', { class: 'wrap', style: done ? { textDecoration: 'line-through' } : null }, i.note ? i.label : factLabel(i)),
       h('td', { class: 'small muted hide-narrow' }, (PLANET_SHORT[i.planet] || 'Household') + (i.institution ? ', ' + i.institution : '')),
       h('td', null, stateChipOf(i)),

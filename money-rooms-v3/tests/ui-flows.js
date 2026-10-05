@@ -251,9 +251,9 @@ flows.push({
     check('answering moves the next question on', q2 !== q1, q2);
     /* mark a plate item done, then close the session */
     await page.click('button:has-text("Their plate")');
-    await page.click('tbody tr:first-child button.chip');
+    await page.click('tbody tr:first-child input.pick');
     await page.waitForTimeout(150);
-    check('a plate item can be marked done', (await page.textContent('tbody tr:first-child button.chip')) === 'Done');
+    check('a plate item can be marked done', await page.isChecked('tbody tr:first-child input.pick'));
     await page.click('text=Close this session');
     await page.waitForTimeout(200);
     const sessions = await page.evaluate(() => mr3.record.sessions.length);
@@ -300,7 +300,7 @@ flows.push({
     check('a block moves along the timeline', after !== before, before + ' then ' + after);
     /* reality untouched until Promote */
     const goalsBefore = await page.evaluate(() => mr3.record.planets.life.rows.length);
-    await page.click('button:has-text("Promote to the Ledger")');
+    await page.click('button:has-text("Add to Life plan")');
     await page.waitForTimeout(200);
     const goalsAfter = await page.evaluate(() => mr3.record.planets.life.rows.length);
     check('Promote adds exactly one Life plan goal through the Ledger', goalsAfter === goalsBefore + 1);

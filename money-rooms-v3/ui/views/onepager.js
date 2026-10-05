@@ -41,9 +41,9 @@ export function mount(host, app) {
     page.appendChild(h('section', null, h('h3', null, 'Changes since last time' + (since.since ? ' (' + F.dateLong(since.since.slice(0, 10)) + ')' : '')), since.changes.length ? h('ul', null, since.changes.slice(0, 3).map(c => h('li', null, c.row + ': ' + c.label.toLowerCase() + ' ' + c.text))) : h('p', { class: 'muted small' }, since.since ? 'No changes since the last session.' : 'First session.')));
     const grid = h('div', { class: 'op-grid' });
     grid.appendChild(listSection('Most important to know', op.important || suggestImportant(R), 'important', 3, suggestImportant(R)));
-    grid.appendChild(listSection('Where you are amazing', op.amazing || [], 'amazing', 3));
+    grid.appendChild(listSection('What is working', op.amazing || [], 'amazing', 3));
     grid.appendChild(strugglingSection(R, op));
-    grid.appendChild(h('section', null, h('h3', null, 'Do more of / do less of'), h('div', { class: 'op-read' }, h('p', null, h('strong', null, 'More: '), op.doMore || h('span', { class: 'empty-token' }, 'Not written yet')), h('p', null, h('strong', null, 'Less: '), op.doLess || h('span', { class: 'empty-token' }, 'Not written yet'))),
+    grid.appendChild(h('section', null, h('h3', null, 'Do more, do less'), h('div', { class: 'op-read' }, h('p', null, h('strong', null, 'More: '), op.doMore || h('span', { class: 'empty-token' }, 'Not written yet')), h('p', null, h('strong', null, 'Less: '), op.doLess || h('span', { class: 'empty-token' }, 'Not written yet'))),
       h('div', { class: 'op-edit' }, h('textarea', { class: 'input', 'aria-label': 'Do more of', value: op.doMore || '', onChange: e => app.mutate(r => { r.sun.onepager.doMore = e.target.value; }, 'onepager') }), h('textarea', { class: 'input', 'aria-label': 'Do less of', style: { marginTop: '8px' }, value: op.doLess || '', onChange: e => app.mutate(r => { r.sun.onepager.doLess = e.target.value; }, 'onepager') }))));
     page.appendChild(grid);
     /* to-dos */
@@ -76,7 +76,7 @@ export function mount(host, app) {
     const lenses = (R.lenses || []).filter(l => app.view === 'coach' || picks.includes(l.id));
     /* a reading is shown only when the bullet is a lens sentence; coach-written bullets carry none */
     const items = op.struggling && op.struggling.length ? op.struggling.map(s => { const l = (R.lenses || []).find(x => x.text === s); return { text: s, reading: l ? l.reading : null }; }) : lenses.slice(0, 3).map(l => ({ text: l.text, reading: l.reading }));
-    return h('section', null, h('h3', null, 'Where you are struggling'),
+    return h('section', null, h('h3', null, 'What needs work'),
       h('div', { class: 'op-read' }, items.length ? h('ul', null, items.map(i => h('li', null, i.text, i.reading ? h('span', { class: 'muted' }, ' Read: ' + i.reading.title) : null))) : h('p', { class: 'muted small' }, 'Nothing flagged.')),
       h('div', { class: 'op-edit' }, h('textarea', { class: 'input', 'aria-label': 'Where you are struggling, one per line', value: (op.struggling || items.map(i => i.text)).join('\n'), onChange: e => app.mutate(r => { r.sun.onepager.struggling = e.target.value.split('\n').map(s => s.trim()).filter(Boolean); }, 'onepager') })));
   }

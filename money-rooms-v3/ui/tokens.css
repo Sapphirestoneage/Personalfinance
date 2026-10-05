@@ -18,6 +18,11 @@
   --on-bar-muted: #8FB3EE;   /* quiet text and outlines on the bar */
   --sun: #0B1F4D;            /* the centre disc of the orbit map */
   --on-sun: #FFFFFF;
+  --chart-1: #0F52BA;        /* chart series, so navy fills never flip in the dark theme */
+  --chart-2: #2E6FD8;
+  --chart-3: #8FB3EE;
+  --chart-4: #0B1F4D;
+  --chart-node: #0B1F4D;
 
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
@@ -44,7 +49,7 @@
   --r-panel: 8px;
 
   --field-w: 112px;          /* same width for every field in a column */
-  --field-w-wide: 176px;
+  --field-w-wide: 160px;
   --field-h: 28px;
   --row-h: 32px;
 
@@ -57,12 +62,12 @@
   --sapphire-900: #DCE7FA;
   --sapphire-700: #7FAEF5;
   --sapphire-500: #5B8FEA;
-  --sapphire-300: #3A5A92;
+  --sapphire-300: #4F74B8;
   --sapphire-100: #16223B;
   --ink: #E6EBF5;
   --slate: #A3AFC4;
-  --paper: #0D1526;
-  --paper-2: #121C31;
+  --paper: #131D33;
+  --paper-2: #0B1222;
   --gold: #E3BD4A;
   --amber: #F0A82A;
   --line: #2A3650;
@@ -72,18 +77,23 @@
   --on-bar-muted: #8FB3EE;
   --sun: #1E3F80;
   --on-sun: #FFFFFF;
+  --chart-1: #7FAEF5;
+  --chart-2: #5B8FEA;
+  --chart-3: #4F74B8;
+  --chart-4: #3A5A92;
+  --chart-node: #5F6C85;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --sapphire-900: #DCE7FA;
     --sapphire-700: #7FAEF5;
     --sapphire-500: #5B8FEA;
-    --sapphire-300: #3A5A92;
+    --sapphire-300: #4F74B8;
     --sapphire-100: #16223B;
     --ink: #E6EBF5;
     --slate: #A3AFC4;
-    --paper: #0D1526;
-    --paper-2: #121C31;
+    --paper: #131D33;
+    --paper-2: #0B1222;
     --gold: #E3BD4A;
     --amber: #F0A82A;
     --line: #2A3650;
@@ -93,5 +103,10 @@
     --on-bar-muted: #8FB3EE;
     --sun: #1E3F80;
     --on-sun: #FFFFFF;
+    --chart-1: #7FAEF5;
+    --chart-2: #5B8FEA;
+    --chart-3: #4F74B8;
+    --chart-4: #3A5A92;
+    --chart-node: #5F6C85;
   }
 }

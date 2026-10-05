@@ -42,7 +42,7 @@ let moreOpen = false;
 const WORK_LABELS = { employed: 'Employed', 'self-employed': 'Self-employed', 'between-jobs': 'Between jobs', student: 'Student', retired: 'Retired', mixed: 'Mixed' };
 
 export function mount(host, app) {
-  const header = h('header', null, h('h1', null, app.record ? (clientName(app.record) || 'Household') : 'Home'), h('span', { class: 'sub' }, app.record ? 'Pick a planet to open it.' : 'Open a client to begin.'));
+  const header = h('header', null, h('h1', null, app.record ? (clientName(app.record) || 'Household') : 'Home'), h('span', { class: 'sub' }, app.record ? 'Tap a planet to open it.' : 'Open a client to begin.'));
   const clients = h('section', { class: 'panel coach-only' });
   const sun = h('section', { class: 'panel sun-panel' });
   const history = h('section', { class: 'panel coach-only' });
@@ -166,11 +166,12 @@ function renderSun(panel, app) {
   }
   const rec = app.record;
   panel.appendChild(h('h2', null, 'Household facts'));
-  panel.appendChild(h('p', { class: 'hint coach-only', style: { marginBottom: '8px' } }, 'Four facts to start. A birth year is enough; the state is New York until the client says otherwise.'));
+  const stateDefault = rec.sun.f.state && rec.sun.f.state.source === 'estimated';
+  panel.appendChild(h('p', { class: 'hint coach-only', style: { marginBottom: '8px' } }, 'Four facts to start. A birth year is enough.' + (stateDefault ? ' The state is New York until the client says otherwise.' : '')));
   const states = app.data && app.data.usStates ? app.data.usStates.states : [];
   const readOnly = app.view === 'client';
   const moreHost = h('div', { class: 'more-facts', style: { display: moreOpen ? '' : 'none' } });
-  const moreBtn = h('button', { class: 'btn quiet small', 'aria-label': 'More facts', 'aria-expanded': String(moreOpen), style: { marginTop: '8px' }, onClick: () => { moreOpen = !moreOpen; moreHost.style.display = moreOpen ? '' : 'none'; moreBtn.setAttribute('aria-expanded', String(moreOpen)); moreBtn.textContent = moreOpen ? 'Fewer facts' : 'More facts'; } }, moreOpen ? 'Fewer facts' : 'More facts');
+  const moreBtn = h('button', { class: 'btn quiet small more-facts-btn', 'aria-label': 'More facts', 'aria-expanded': String(moreOpen), style: { marginTop: '8px' }, onClick: () => { moreOpen = !moreOpen; moreHost.style.display = moreOpen ? '' : 'none'; moreBtn.setAttribute('aria-expanded', String(moreOpen)); moreBtn.textContent = moreOpen ? 'Fewer facts' : 'More facts'; } }, moreOpen ? 'Fewer facts' : 'More facts');
   SUN_ASKED.concat(SUN_MORE).forEach(id => {
     const into = SUN_MORE.indexOf(id) === -1 ? panel : moreHost;
     const f = rec.sun.f[id] || { v: null, state: 'unknown', source: 'client' };
@@ -229,7 +230,8 @@ function renderSun(panel, app) {
   panel.appendChild(moreHost);
   const fill = app.result ? app.result.fills.sun : 0;
   const withRows = PLANETS.filter(p => app.result.rowCounts[p] > 0).length;
-  panel.appendChild(h('p', { class: 'hint coach-only sun-confidence', style: { marginTop: '8px' } }, 'Confidence ', h('strong', null, Math.round(fill * 100) + '%'), ' across the facts. ', withRows + ' of 7 planets have rows.'));
+  const asked = SUN_ASKED.filter(id => rec.sun.f[id] && rec.sun.f[id].v !== null && rec.sun.f[id].v !== undefined && rec.sun.f[id].v !== '').length;
+  panel.appendChild(h('p', { class: 'hint coach-only sun-confidence', style: { marginTop: '8px' } }, asked + ' of ' + SUN_ASKED.length + ' facts in. ' + withRows + ' of 7 planets have rows.'));
 }
 
 function updateSunValues(panel, app) {
@@ -261,9 +263,8 @@ function updateSunValues(panel, app) {
   if (hint && app.result) {
     const withRows = PLANETS.filter(p => app.result.rowCounts[p] > 0).length;
     clear(hint);
-    hint.appendChild(document.createTextNode('Confidence '));
-    hint.appendChild(h('strong', null, Math.round(app.result.fills.sun * 100) + '%'));
-    hint.appendChild(document.createTextNode(' across the facts. ' + withRows + ' of 7 planets have rows.'));
+    const asked = SUN_ASKED.filter(id => rec.sun.f[id] && rec.sun.f[id].v !== null && rec.sun.f[id].v !== undefined && rec.sun.f[id].v !== '').length;
+    hint.appendChild(document.createTextNode(asked + ' of ' + SUN_ASKED.length + ' facts in. ' + withRows + ' of 7 planets have rows.'));
   }
 }
 

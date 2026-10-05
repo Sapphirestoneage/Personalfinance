@@ -48,7 +48,7 @@ export function mount(host, app) {
         (list.length ? list : [OTHER]).forEach(n => { needs[n] = (needs[n] || 0) + 1; });
       });
       const keys = Object.keys(needs).sort((a, b) => (a === OTHER) - (b === OTHER) || needs[b] - needs[a]).slice(0, 10);
-      body.appendChild(h('section', { class: 'panel' }, h('h2', null, 'Gaps in the numbers', h('span', { class: 'tag' }, needing.length + ' of ' + Object.keys(M).length + ' numbers waiting')),
+      body.appendChild(h('section', { class: 'panel' }, h('h2', null, 'Gaps in the numbers', h('span', { class: 'tag' }, needing.length + (needing.length === 1 ? ' number waiting' : ' numbers waiting'))),
         h('div', { class: 'tablewrap' }, h('table', { class: 'data' }, h('thead', null, h('tr', null, h('th', null, 'Needs'), h('th', { class: 'num' }, 'Unlocks'))), h('tbody', null, keys.map(n => h('tr', null, h('td', { class: 'wrap' }, n), h('td', { class: 'num' }, String(needs[n])))))))));
     }
   }

@@ -35,23 +35,23 @@ export function render(id, host, data, opts) {
 function sankey(host, d, o) {
   const d3 = d3g(); const W = o.width, H = Math.max(360, d.nodes.length * 28);
   const svg = svgIn(host, W, H);
-  const gen = d3.sankey().nodeWidth(12).nodePadding(12).extent([[1, 8], [W - 1, H - 8]]).nodeSort(null);
+  const gen = d3.sankey().nodeWidth(12).nodePadding(14).extent([[1, 8], [W - 1, H - 8]]).nodeSort(null);
   const graph = gen({ nodes: d.nodes.map(n => ({ name: n.name })), links: d.links.map(l => ({ source: l.source, target: l.target, value: l.value, kind: l.kind })) });
   svg.append('g').selectAll('path').data(graph.links).join('path').attr('class', l => 'sankey-link kind-' + l.kind).attr('d', d3.sankeyLinkHorizontal()).attr('stroke-width', l => Math.max(1, l.width)).append('title').text(l => l.source.name + ' to ' + l.target.name + ': ' + F.dollarsWhole(l.value) + ' a month');
   const node = svg.append('g').selectAll('g').data(graph.nodes).join('g');
   node.append('rect').attr('x', n => n.x0).attr('y', n => n.y0).attr('height', n => Math.max(1, n.y1 - n.y0)).attr('width', n => n.x1 - n.x0).attr('class', 'sankey-node');
-  node.append('text').attr('x', n => n.x0 < W / 2 ? n.x1 + 6 : n.x0 - 6).attr('y', n => (n.y0 + n.y1) / 2).attr('dy', '0.35em').attr('text-anchor', n => n.x0 < W / 2 ? 'start' : 'end').attr('class', 'chart-label').text(n => n.name + ' ' + F.dollarsWhole(n.value));
+  node.append('text').attr('x', n => n.x0 < W / 2 ? n.x1 + 6 : n.x0 - 6).attr('y', n => (n.y0 + n.y1) / 2).attr('dy', '0.35em').attr('text-anchor', n => n.x0 < W / 2 ? 'start' : 'end').attr('class', 'chart-label').text(n => (n.y1 - n.y0) >= 12 ? n.name + ' ' + F.dollarsWhole(n.value) : '').append('title').text(n => n.name + ' ' + F.dollarsWhole(n.value));
 }
 
 function netWorth(host, d, o) {
   const d3 = d3g(); const W = o.width, H = 320, m = { t: 16, r: 24, b: 32, l: 64 };
   const svg = svgIn(host, W, H);
   const x = d3.scaleLinear().domain(d3.extent(d.years, y => y.age)).range([m.l, W - m.r]);
-  const lo = Math.min(0, d3.min(d.years, y => y.worst)); const hi = Math.max(d3.max(d.years, y => y.best), d.fiNumber || 0);
+  const lo = Math.min(0, d3.min(d.years, y => y.worst)); const hi = Math.max(d3.max(d.years, y => y.likely) * 1.25, (d.fiNumber || 0) * 1.1);
   const y = d3.scaleLinear().domain([lo, hi]).nice().range([H - m.b, m.t]);
   svg.append('g').attr('transform', 'translate(0,' + (H - m.b) + ')').attr('class', 'axis').call(d3.axisBottom(x).ticks(8).tickFormat(v => String(v)));
   svg.append('g').attr('transform', 'translate(' + m.l + ',0)').attr('class', 'axis').call(d3.axisLeft(y).ticks(5).tickFormat(v => F.dollarsCompact(v)));
-  svg.append('path').datum(d.years).attr('class', 'band').attr('d', d3.area().x(p => x(p.age)).y0(p => y(p.worst)).y1(p => y(p.best)));
+  svg.append('path').datum(d.years).attr('class', 'band').attr('d', d3.area().x(p => x(p.age)).y0(p => y(Math.max(lo, Math.min(hi, p.worst)))).y1(p => y(Math.max(lo, Math.min(hi, p.best)))));
   svg.append('path').datum(d.years).attr('class', 'line series-1').attr('d', d3.line().x(p => x(p.age)).y(p => y(p.likely)));
   if (d.fiNumber) { svg.append('line').attr('class', 'marker').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(d.fiNumber)).attr('y2', y(d.fiNumber)); svg.append('text').attr('class', 'chart-label').attr('x', W - m.r).attr('y', y(d.fiNumber) - 4).attr('text-anchor', 'end').text(wordFor(o, 'FI number') + ' ' + F.dollarsCompact(d.fiNumber)); }
   if (d.fiAges.likely) { svg.append('line').attr('class', 'marker').attr('x1', x(d.fiAges.likely)).attr('x2', x(d.fiAges.likely)).attr('y1', m.t).attr('y2', H - m.b); svg.append('text').attr('class', 'chart-label').attr('x', x(d.fiAges.likely) + 4).attr('y', m.t + 10).text(wordFor(o, 'FI at') + ' ' + d.fiAges.likely); }
@@ -106,7 +106,7 @@ function taxes(host, d, o) {
     g.append('rect').attr('x', Math.min(x0, x1)).attr('y', 2).attr('width', Math.max(1, Math.abs(x1 - x0))).attr('height', rowH - 4).attr('class', 'bar ' + r.cls).append('title').text(r.label + ': ' + F.dollarsWhole(Math.abs(r.value)));
     g.append('text').attr('class', 'chart-label').attr('x', W - valueW + 8).attr('y', rowH / 2 + 4).text((r.kind === 'minus' ? '-' : '') + F.dollarsWhole(Math.abs(r.value), { rough: d.rough && r.kind === 'total' }));
   });
-  svg.append('text').attr('class', 'chart-label muted').attr('x', 0).attr('y', H - 2).text(o.client ? 'Federal only, a year. Bars run against your pay for the year.' : 'Federal brackets and FICA for the year; no state tax (v1). Bars run against gross pay.');
+  svg.append('text').attr('class', 'chart-label muted').attr('x', 0).attr('y', H - 2).text(o.client ? 'Federal only, a year. Bars run against your pay for the year.' : 'Federal brackets and FICA for the year; no state tax. Bars run against gross pay.');
 }
 
 function balanceSheet(host, d, o) {

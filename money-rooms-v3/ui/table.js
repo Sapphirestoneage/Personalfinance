@@ -311,7 +311,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     const d = c.def;
     const f = r.f[d.id];
     if (!coach) {
-      if (f && f.state === 'not-applicable') return h('td', { class: c.num ? 'num' : null }, h('span', { class: 'empty-token', title: 'Not applicable' }, '-'));
+      if (f && f.state === 'not-applicable') return h('td', { class: c.num ? 'num' : null }, h('span', { class: 'empty-token', title: 'Not applicable' }, String.fromCharCode(0x2013)));
       if (f && f.state === 'will-send') return h('td', { class: c.num ? 'num' : null }, h('span', { class: 'empty-token' }, 'Will send'));
       const txt = display(d, f) || (f && f.state === 'unknown' ? 'Not entered' : '');
       if (d.kind === 'choice') { const o = (d.options || []).find(x => x[0] === (f && f.v)); return h('td', { class: c.num ? 'num' : null }, o ? o[1] : h('span', { class: 'empty-token' }, 'Not entered')); }
@@ -461,6 +461,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
   function showFieldBar(rowId, fieldId, colKey) {
     const bar = wrap.querySelector('.fieldbar');
     if (!bar) return;
+    bar.classList.add('active');
     clear(bar);
     const r = app.record.planets[planet].rows.find(x => x.id === rowId);
     if (!r) return;

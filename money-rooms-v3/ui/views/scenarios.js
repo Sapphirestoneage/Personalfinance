@@ -15,7 +15,7 @@ export function mount(host, app) {
   const defs = app.data.scenarioBlocks;
   const coach = app.view === 'coach';
   host.appendChild(h('header', null, h('h1', null, coach ? 'Simulate' : 'What if'),
-    coach ? h('span', { class: 'sub' }, 'Each block runs on a copy of the real numbers. Only Promote writes one to the Life plan.') : null));
+    coach ? h('span', { class: 'sub' }, 'Each block runs on a copy of the real numbers. Only Add to Life plan writes one to the record.') : null));
   const body = h('div', { class: 'stack' }); host.appendChild(body);
   const emptyHost = h('div');
   const panel = h('section', { class: 'panel' });
@@ -124,7 +124,7 @@ export function mount(host, app) {
     costLine.textContent = costSentence(blockCosts(def, b, live()));
     if (document.activeElement !== startInput) startInput.value = startLabel(b);
     clear(actionHost);
-    actionHost.appendChild(b.promoted ? h('span', { class: 'chip state-known' }, 'In the Life plan') : h('button', { class: 'btn primary', onClick: () => promote(b) }, 'Promote to the Ledger'));
+    actionHost.appendChild(b.promoted ? h('span', { class: 'chip state-known' }, 'In the Life plan') : h('button', { class: 'btn primary', onClick: () => promote(b) }, 'Add to Life plan'));
     actionHost.appendChild(h('button', { class: 'btn quiet', onClick: () => { app.mutate(rec => { rec.scenarios = rec.scenarios.filter(s => s.id !== b.id); }, 'scenarios'); selected = null; app.toast('Block removed'); } }, 'Remove block'));
   }
   function promote(b) {

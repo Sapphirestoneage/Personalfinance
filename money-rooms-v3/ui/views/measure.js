@@ -15,7 +15,7 @@ const STAGE_PLANETS = { 1: ['income', 'spending'], 2: ['debt'], 3: ['safety', 'i
 
 export function mount(host, app) {
   const t = translator(app);
-  host.appendChild(h('header', null, h('h1', null, t('Measure')), h('span', { class: 'sub' }, app.view === 'coach' ? 'Every number opens its math. Labels come from the metric registry.' : '')));
+  host.appendChild(h('header', null, h('h1', null, t('Measure')), h('span', { class: 'sub' }, app.view === 'coach' ? 'Every number opens its math.' : '')));
   const stage = h('div', { class: 'stage-row' });
   const kpis = h('div');
   const lenses = h('section', { class: 'panel' });

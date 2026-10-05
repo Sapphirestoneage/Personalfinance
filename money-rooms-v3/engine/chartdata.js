@@ -26,7 +26,7 @@ export function sankey(result) {
   link('Gross pay', 'Benefits from pay', other, 'spend');
   link('Gross pay', 'Take-home', take - (diff < 0 ? -diff : 0), 'flow');
   let placed = 0; let smaller = 0;
-  if (sp.byCategory) Object.keys(sp.byCategory).forEach(c => { const v = isQ(sp.byCategory[c]) ? sp.byCategory[c].cents : 0; if (v > 0 && v < take * 0.02) { smaller += v; placed += v; return; } link('Take-home', CAT_LABELS[c] || c, v, 'spend'); placed += v; });
+  if (sp.byCategory) Object.keys(sp.byCategory).forEach(c => { const v = isQ(sp.byCategory[c]) ? sp.byCategory[c].cents : 0; if (v > 0 && v < take * 0.03) { smaller += v; placed += v; return; } link('Take-home', CAT_LABELS[c] || c, v, 'spend'); placed += v; });
   if (smaller > 0) link('Take-home', 'Smaller lines', smaller, 'spend');
   const prem = sf && isQ(sf.premiumsMonthly) ? sf.premiumsMonthly.cents : 0; link('Take-home', 'Insurance', prem, 'spend'); placed += prem;
   const service = dt && isQ(dt.debtServiceMonthly) ? dt.debtServiceMonthly.cents : 0; link('Take-home', 'Debt payments', service, 'debt'); placed += service;
@@ -131,8 +131,8 @@ export const CHARTS = [
   { id: 'balanceSheet', name: 'Balance sheet', client: 'What you own and owe', build: balanceSheet },
   { id: 'debtRace', name: 'Debt payoff', client: 'When each debt is gone', build: debtRace },
   { id: 'runway', name: 'Runway ladder', client: 'How long your cash lasts', build: runwayLadder },
-  { id: 'draftt', name: 'DRAFTT bands', client: 'Each share of your pay against a healthy range', build: drafttBands },
   { id: 'fiGauge', name: 'FI progress', client: 'How far along you are', build: fiGauge },
+  { id: 'draftt', name: 'DRAFTT bands', client: 'Each share of your pay against a healthy range', build: drafttBands },
   { id: 'waterfall', name: 'Contribution waterfall', client: 'Where new savings go first', build: contributionWaterfall },
   { id: 'taxes', name: 'Tax ladder', client: 'Where your pay goes before you see it', build: taxLadder },
 ];

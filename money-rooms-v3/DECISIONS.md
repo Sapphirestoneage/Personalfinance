@@ -176,3 +176,9 @@ Decision: 32 fields nothing in the engine read were removed, and the Tax facts r
 Compatibility: removed fields stay on old rows as ignored keys; a stored taxes/note row is kept in the record but has no screen. tableFields is a data field, not a stored one.
 Why: the owner saw too many details and did not want to scroll sideways to reach a fact.
 Alternative: hide columns behind a toggle (keeps the width problem and every question).
+
+## MR-030 2026-10-05 The aesthetic audit: quieter chrome, one meaning per colour
+Decision: from screenshots/audit-2026-10-05.md: chart series use their own tokens so navy never flips in the dark theme and dark panels sit above the page; rough figures are ink (the tilde and range carry "rough"); Known, Verified and source chips have no border; legends are unbordered; the sidebar shows names only (shortcuts stay in the ? sheet); gold rings are gone; the cell shorthand bar shows only once a cell is picked and its legend lives in the ? sheet; planet pages show the Row types list only where the orbit is compact and Starting soon in the main column; Session's Done is a checkbox; "Promote to the Ledger" reads "Add to Life plan"; one-pager headings read "What is working", "What needs work", "Do more, do less"; Measure tiles share a row height and the chart order pairs short with short.
+Compatibility: none; presentation only.
+Why: the audit scored the coach tables and Measure at 2 to 3 for boxes inside boxes, repeated figures and colour that meant four things.
+Alternative: borderless table inputs (declined: the owner asked for fields that look separate).
