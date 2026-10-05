@@ -120,7 +120,7 @@ textarea.input { height: auto; min-height: 56px; padding: var(--s-1) var(--s-2);
 .select { padding-right: var(--s-4); appearance: none; background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' fill='none' stroke='%236B7891' stroke-width='1.5'/></svg>"); background-repeat: no-repeat; background-position: right 8px center; }
 .panel { container-type: inline-size; }
 .fieldrow {
-  display: grid; grid-template-columns: 128px var(--field-w-wide) 80px 64px; justify-content: start; gap: 0 var(--s-2); align-items: center;
+  display: grid; grid-template-columns: 128px var(--field-w-wide) 80px 88px; justify-content: start; gap: 0 var(--s-2); align-items: center;
   min-height: 40px; border-bottom: 1px solid var(--line-soft); padding: 0;
   grid-template-areas: "label input state src";
 }
@@ -185,7 +185,7 @@ table.data tr:last-child td { border-bottom: 0; }
 table.data tr.selected td { background: var(--paper); }
 table.data tr.selected td:first-child { box-shadow: inset 2px 0 0 var(--sapphire-700); }
 table.data tr:hover td { background: var(--paper-2); }
-table.data td .input, table.data td .select { height: 24px; border-color: transparent; background: transparent; padding: 0 4px; width: var(--field-w); margin-left: -5px; }
+table.data td .input, table.data td .select { height: 24px; border-color: var(--line-soft); background: var(--paper); padding: 0 6px; width: var(--field-w); margin-left: -5px; }
 table.data td .input.num { margin-left: 0; margin-right: -5px; }
 table.data td .select { width: 144px; padding-right: 20px; text-overflow: ellipsis; }
 .ledger-table td .input:not(.num), .ledger-table td .input.wide { width: var(--field-w-wide); text-overflow: ellipsis; }
@@ -300,6 +300,9 @@ body[data-view="client"] .kpi .value.list, body[data-view="client"] .kpi .value.
   .topbar #redo, .topbar #help-btn, .topbar #quicknote-btn { display: none; }
   .hide-narrow { display: none !important; }
   .timeline { margin: var(--s-2) 0 0; }
+  :root { --row-h: 40px; --field-h: 32px; }
+  table.data td .input, table.data td .select { height: 30px; }
+  .cell-money .select.cad { height: 28px; }
   .drawer { width: 100vw; }
   .kpi.big .value { font-size: var(--fs-24); line-height: 32px; }
 }
@@ -340,8 +343,12 @@ body[data-view="client"] .kpi .value.list, body[data-view="client"] .kpi .value.
 .ledger-table td .input.num { width: var(--field-w); }
 .history td { white-space: normal; }
 .history td.when { white-space: nowrap; }
-.cell-money { display: inline-flex; align-items: center; gap: 2px; }
-.cell-money .select.cad { width: 64px; height: 24px; border-color: transparent; background-color: transparent; font-size: var(--fs-11); color: var(--slate); padding: 0 16px 0 4px; background-position: right 4px center; }
+.cell-money { display: inline-flex; align-items: center; gap: var(--s-2); }
+.ledger-table td + td, .ledger-table th + th { border-left: 1px solid var(--line-soft); }
+.ledger-table td { padding: 0 var(--s-2) 0 12px; }
+.ledger-table td.with-pick { display: flex; align-items: center; gap: var(--s-2); height: var(--row-h); }
+.ledger-table td.with-pick .pick { width: 16px; height: 16px; margin: 0; accent-color: var(--sapphire-700); flex: none; }
+.cell-money .select.cad { width: 64px; height: 24px; border-color: var(--line-soft); background-color: var(--paper-2); border-radius: 12px; font-size: var(--fs-11); color: var(--slate); padding: 0 16px 0 8px; background-position: right 4px center; }
 .cell-money .select.cad:hover, .cell-money .select.cad:focus { border-color: var(--line); background-color: var(--paper); }
 .fieldbar { display: flex; align-items: center; gap: var(--s-2); margin-top: var(--s-2); padding: var(--s-2) var(--s-3); border: 1px solid var(--line); border-radius: var(--r-panel); background: var(--paper); min-height: 40px; flex-wrap: wrap; }
 .rough-value, table.data td .input.rough { color: var(--sapphire-700); }

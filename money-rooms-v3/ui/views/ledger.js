@@ -5,7 +5,7 @@ import { h, clear } from '../dom.js';
 import { orbitMap, mapPanel } from '../orbit.js';
 import { ledgerTable } from '../table.js';
 import { PLANET_LABELS, PLANETS } from '../../engine/sun.js';
-import { typesFor, typeDef, primaryFieldOf, freshFacts, fieldDef } from '../../engine/fields.js';
+import { typesFor, typeDef, primaryFieldOf, freshFacts, fieldDef, isNoneRow } from '../../engine/fields.js';
 import { createRow } from '../../engine/record.js';
 import { hasValue } from '../../engine/states.js';
 import * as F from '../../engine/format.js';
@@ -41,7 +41,7 @@ export function mount(host, app) {
     clear(mapHost); clear(bar); clear(side);
     const types = typesFor(fields, planet, work);
     const rowsOf = t => app.record.planets[planet].rows.filter(r => r.type === t.id);
-    const items = types.map(t => ({ id: t.id, label: t.id === 'other' ? 'Other (optional)' : t.label, count: rowsOf(t).length, fill: app.result.typeFills[planet][t.id], dashed: t.id === 'other' && rowsOf(t).length === 0, attention: (app.result.needs[planet] || []).some(n => n.type === t.id), badge: rowsOf(t).length ? Math.round((app.result.typeFills[planet][t.id] || 0) * 100) + '%' : null }));
+    const items = types.map(t => ({ id: t.id, label: t.id === 'other' ? 'Other (optional)' : t.label, count: rowsOf(t).length, fill: app.result.typeFills[planet][t.id], dashed: t.id === 'other' && rowsOf(t).length === 0, attention: (app.result.needs[planet] || []).some(n => n.type === t.id), badge: rowsOf(t).length ? (rowsOf(t).every(r => isNoneRow(fields, r)) ? 'None' : Math.round((app.result.typeFills[planet][t.id] || 0) * 100) + '%') : null }));
     mapHost.appendChild(orbitMap({
       compact: mapHost.clientWidth > 0 && mapHost.clientWidth < 560,
       ariaLabel: PLANET_LABELS[planet] + ' and its row types',

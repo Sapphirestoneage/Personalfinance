@@ -30,9 +30,10 @@ export const HOUSEHOLDS = [
   {
     id: 'empty',
     async load(page) {
+      await page.click('button[aria-label="New client"]');
       await page.fill('input[aria-label="New client name"]', 'Example household');
-      await page.click('text=New client');
-      await page.waitForSelector('.fieldrow[data-field="name"]');
+      await page.press('input[aria-label="New client name"]', 'Enter');
+      await page.waitForSelector('.fieldrow[data-field="birthDate"]');
     },
   },
   { id: 'jordan', async load(page, { APP }) { await importHousehold(page, APP, 'jordan'); } },

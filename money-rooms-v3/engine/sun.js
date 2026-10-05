@@ -13,6 +13,9 @@ export const PLANET_LABELS = Object.freeze({
 export const PLANET_SHORT = Object.freeze({ income: 'Income', spending: 'Spending', debt: 'Debt', safety: 'Safety net', invest: 'Investments', taxes: 'Taxes', life: 'Life plan' });
 
 export const SUN_FIELDS = Object.freeze(['name', 'birthDate', 'state', 'city', 'workSituation', 'dependents', 'filingStatus', 'bigGoal']);
+/* Onboarding asks four facts (MR-025); name, dependents and the big goal sit behind "More facts"; city is stored but not asked. */
+export const SUN_ASKED = Object.freeze(['birthDate', 'state', 'workSituation', 'filingStatus']);
+export const SUN_MORE = Object.freeze(['name', 'dependents', 'bigGoal']);
 export const FILING_STATUSES = Object.freeze([['single', 'Single'], ['mfj', 'Married filing jointly'], ['hoh', 'Head of household']]);
 
 export const WORK_SITUATIONS = Object.freeze(['employed', 'self-employed', 'between-jobs', 'student', 'retired', 'mixed']);

@@ -10,11 +10,11 @@ import { stateChip, sourceChip } from './chips.js';
 import { parseTyped, rawOf } from './typed.js';
 import * as F from '../engine/format.js';
 import { confidenceOf, hasValue, isRough, STATES, SOURCES } from '../engine/states.js';
-import { typeDef, fieldDef, primaryFieldOf, freshFacts } from '../engine/fields.js';
+import { typeDef, fieldDef, primaryFieldOf, freshFacts, noneRow } from '../engine/fields.js';
 import { createRow } from '../engine/record.js';
 import { monthlyOf } from '../engine/compute.js';
 
-const CADENCE_SHORT = { paycheck: 'pay', month: 'mo', year: 'yr', oneoff: 'once' };
+const CADENCE_SHORT = { paycheck: 'pay', week: 'wk', month: 'mo', quarter: 'qtr', year: 'yr', oneoff: 'once' };
 
 export function ledgerTable(host, app, planet, typeId, opts) {
   opts = opts || {};
@@ -22,7 +22,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
   const tdef = typeDef(fields, planet, typeId);
   const primary = primaryFieldOf(fields, planet, typeId);
   const coach = app.view === 'coach';
-  const state = { sortKey: null, sortDir: 1, filters: { state: '', source: '', institution: '', category: '' } };
+  const state = { sortKey: null, sortDir: 1, filters: { state: '', source: '', institution: '', category: '' }, selected: new Set() };
   const wrap = h('div', { class: 'ledger', dataset: { planet, type: typeId } });
   host.appendChild(wrap);
 
@@ -81,8 +81,11 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     const institutions = Array.from(new Set(all.map(r => r.institution).filter(Boolean))).sort();
     const showFilters = all.length > 5;
     const catDef = tdef.fields.includes('category') ? fieldDef(fields, 'category') : null;
+    state.selected.forEach(id => { if (!all.some(r => r.id === id)) state.selected.delete(id); });
+    const nSel = state.selected.size;
     const toolbar = h('div', { class: 'toolbar' },
       all.length ? h('span', { class: 'small muted' }, all.length + (all.length === 1 ? ' row' : ' rows')) : null,
+      coach && nSel ? h('button', { class: 'btn small', onClick: () => { const ids = Array.from(state.selected); state.selected.clear(); app.removeRows(ids); render(); } }, 'Delete ' + (nSel === 1 ? '1 row' : nSel + ' rows')) : null,
       showFilters ? filterSelect('State', 'state', Object.keys(STATES).map(id => [id, STATES[id].label])) : null,
       showFilters ? filterSelect('Source', 'source', Object.keys(SOURCES).map(id => [id, SOURCES[id].label])) : null,
       showFilters && catDef ? filterSelect('Category', 'category', catDef.options) : null,
@@ -107,7 +110,15 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     return h('div', { class: 'empty', style: { border: 0, borderRadius: 0 } },
       h('h2', null, 'No ' + (tdef.plural || tdef.label).toLowerCase() + ' yet'),
       h('p', null, 'Start with ' + (tdef.nicknameLabel || 'a name').toLowerCase() + ' and ' + primary.label.toLowerCase() + '. Type ~ before a number for a rough figure, ? for unknown, a range like 1500-2000.'),
-      coach ? h('p', { class: 'row', style: { marginTop: '8px' } }, h('button', { class: 'btn primary', onClick: () => addRow() }, 'Add ' + (tdef.single ? 'it' : 'a row')), h('span', { class: 'kbd' }, 'Alt+N'), (opts.emptyActions || [])) : null);
+      coach ? h('p', { class: 'row', style: { marginTop: '8px' } }, h('button', { class: 'btn primary', onClick: () => addRow() }, 'Add ' + (tdef.single ? 'it' : 'a row')), h('span', { class: 'kbd' }, 'Alt+N'),
+        tdef.single ? null : h('button', { class: 'btn', title: 'Marks this as none, so the planet counts it as answered', onClick: () => markNone() }, 'No ' + (tdef.plural || tdef.label).toLowerCase()),
+        (opts.emptyActions || [])) : null);
+  }
+  function markNone() {
+    const n = noneRow(fields, planet, typeId);
+    const row = createRow(planet, typeId, { nickname: n.nickname, f: n.f });
+    app.addRow(row);
+    app.toast('Marked as none. Add a row if that changes.');
   }
 
   /* Totals: every money column, normalised to a month when it has a cadence; balances otherwise. Two or more rows only. */
@@ -255,6 +266,10 @@ export function ledgerTable(host, app, planet, typeId, opts) {
         } });
       if (c.key === 'asOf') { input.style.width = '96px'; input.addEventListener('focus', () => { input.value = r.asOf || ''; }); input.addEventListener('blur', () => { const cur = app.record.planets[planet].rows.find(x => x.id === r.id); if (cur && cur.asOf) input.value = F.date(cur.asOf); }); }
       if (c.key === 'institution' && planet === 'debt' && typeId === 'card') input.setAttribute('list', 'mr3-issuers');
+      if (c.sticky && coach && !tdef.single) {
+        const box = h('input', { type: 'checkbox', class: 'pick', 'aria-label': 'Select row', checked: state.selected.has(r.id), onChange: e => { if (e.target.checked) state.selected.add(r.id); else state.selected.delete(r.id); render(); } });
+        return h('td', { class: 'sticky with-pick' }, box, emptyWrap(input, keyFlow(input, r, c.key)));
+      }
       return h('td', { class: c.sticky ? 'sticky' : null }, emptyWrap(input, keyFlow(input, r, c.key)));
     }
     /* a typed field */

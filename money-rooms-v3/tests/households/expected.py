@@ -32,7 +32,7 @@ def monthly(row, fid):
     cad = f.get('cad', 'month')
     pf = val(row['f'].get('payFrequency')) or 'biweekly'
     n = PAYCHECKS[pf]
-    return {'month': v, 'year': R(v / 12), 'paycheck': R(v * n / 12), 'oneoff': 0}[cad]
+    return {'month': v, 'week': R(v * 52 / 12), 'quarter': R(v / 3), 'year': R(v / 12), 'paycheck': R(v * n / 12), 'oneoff': 0}[cad]
 def months_between(a, b):  # 'YYYY-MM' strings, b - a
     return (int(b[:4]) - int(a[:4])) * 12 + int(b[5:7]) - int(a[5:7])
 def add_months(ym, n):
@@ -145,7 +145,7 @@ def main(name):
         f = r['f'][fid]; v = f['v']
         if isinstance(v, dict) and 'low' in v:
             cad = f.get('cad', 'month'); n = PAYCHECKS[val(r['f'].get('payFrequency')) or 'biweekly']
-            conv = lambda x: {'month': x, 'year': R(x / 12), 'paycheck': R(x * n / 12), 'oneoff': 0}[cad]
+            conv = lambda x: {'month': x, 'week': R(x * 52 / 12), 'quarter': R(x / 3), 'year': R(x / 12), 'paycheck': R(x * n / 12), 'oneoff': 0}[cad]
             return conv(v['low']), conv(v['high'])
         sp = spread_of(f)
         return R(a * (1 - sp)), R(a * (1 + sp))

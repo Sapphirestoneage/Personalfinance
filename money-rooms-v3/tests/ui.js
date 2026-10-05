@@ -71,7 +71,7 @@ async function main() {
         await flow.run(page, { base, check, APP });
         check('flow ' + flow.name + ': console clean', consoleIssues.length === 0, consoleIssues.slice(0, 3).join(' | '));
       } catch (e) {
-        check('flow ' + flow.name, false, e.message.split('\n')[0]);
+        check('flow ' + flow.name, false, e.message.split('\n').filter(l => l.trim()).slice(0, 3).join(' | '));
       }
       await context.close();
     }

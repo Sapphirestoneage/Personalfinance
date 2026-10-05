@@ -3,7 +3,7 @@
 import { h, clear, qs, todayIso } from '../dom.js';
 import { stateChip, sourceChip } from '../chips.js';
 import { exportClient, importFile, clientName } from '../app.js';
-import { SUN_FIELDS, WORK_SITUATIONS, PLANETS, PLANET_LABELS, PLANET_SHORT, FILING_STATUSES } from '../../engine/sun.js';
+import { SUN_FIELDS, SUN_ASKED, SUN_MORE, WORK_SITUATIONS, PLANETS, PLANET_LABELS, PLANET_SHORT, FILING_STATUSES } from '../../engine/sun.js';
 import * as F from '../../engine/format.js';
 import { hasValue } from '../../engine/states.js';
 import { orbitMap, mapPanel } from '../orbit.js';
@@ -15,9 +15,30 @@ export function parseDateText(t) {
   if (m) return m[1] + '-' + m[2].padStart(2, '0') + '-' + m[3].padStart(2, '0');
   m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(t);
   if (m) return m[3] + '-' + m[1].padStart(2, '0') + '-' + m[2].padStart(2, '0');
+  const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+  m = /^(\d{1,2})\s+([A-Za-z]{3,})\.?,?\s+(\d{4})$/.exec(t) || /^([A-Za-z]{3,})\.?\s+(\d{1,2}),?\s+(\d{4})$/.exec(t);
+  if (m) {
+    const dayFirst = /^\d/.test(m[1]);
+    const day = dayFirst ? m[1] : m[2], mon = MONTHS.indexOf((dayFirst ? m[2] : m[1]).slice(0, 3).toLowerCase());
+    if (mon !== -1) return m[3] + '-' + String(mon + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+  }
   return null;
 }
+/* A birth date the easy way (MR-025): a full date is Known; a year alone, or an age, is Rough and stored as 1 July of that year. */
+export function parseBirthText(t, today) {
+  const iso = parseDateText(t);
+  if (iso) return { iso, state: 'known' };
+  const y = parseInt(today.slice(0, 4), 10);
+  if (/^\d{4}$/.test(t) && +t > y - 120 && +t <= y) return { iso: t + '-07-01', state: 'rough' };
+  if (/^\d{1,3}$/.test(t) && +t > 0 && +t < 120) return { iso: String(y - +t) + '-07-01', state: 'rough' };
+  return null;
+}
+function birthLabel(f, today) {
+  if (!f || !f.v) return ' (a year is enough)';
+  return f.state === 'rough' ? ' (about ' + F.ageAt(f.v, today) + ')' : ' (age ' + F.ageAt(f.v, today) + ')';
+}
 
+let moreOpen = false;
 const WORK_LABELS = { employed: 'Employed', 'self-employed': 'Self-employed', 'between-jobs': 'Between jobs', student: 'Student', retired: 'Retired', mixed: 'Mixed' };
 
 export function mount(host, app) {
@@ -80,8 +101,10 @@ function renderClients(panel, app) {
   const list = app.store.list();
   panel.appendChild(h('h2', null, 'Clients'));
   const nameInput = h('input', { class: 'input', type: 'text', id: 'new-client-name', 'aria-label': 'New client name' });
-  const makeNew = () => { const n = nameInput.value.trim(); app.newClient(n || null); };
-  nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') makeNew(); });
+  const makeNew = () => { const n = nameInput.value.trim(); if (!n) { nameInput.focus(); return; } app.newClient(n); };
+  nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') makeNew(); if (e.key === 'Escape') { newRow.style.display = 'none'; newBtn.focus(); } });
+  const newRow = h('div', { class: 'row new-client', style: { marginBottom: '8px', display: 'none' } }, nameInput, h('button', { class: 'btn primary', onClick: makeNew }, 'Create'));
+  const newBtn = h('button', { class: 'btn primary', 'aria-label': 'New client', onClick: () => { newRow.style.display = ''; nameInput.focus(); } }, 'New client');
   const fileInput = h('input', { type: 'file', accept: 'application/json,.json', class: 'sr-only', 'aria-label': 'Import a client file', onChange: async e => {
     const f = e.target.files[0]; if (!f) return;
     try { await importFile(f); } catch (err) { app.toast(err.message); }
@@ -90,14 +113,13 @@ function renderClients(panel, app) {
   nameInput.style.width = '176px';
   nameInput.style.flex = 'none';
   panel.appendChild(h('div', { class: 'row', style: { marginBottom: '8px' } },
-    h('label', { class: 'small muted', for: 'new-client-name' }, 'Name'),
-    nameInput,
-    h('button', { class: 'btn primary', onClick: makeNew }, 'New client'),
+    newBtn,
     h('button', { class: 'btn', onClick: () => fileInput.click() }, 'Import'),
     h('button', { class: 'btn', title: 'Maya: example numbers only', onClick: () => loadDemo(app) }, 'Load demo client'),
     fileInput));
+  panel.appendChild(newRow);
   if (!list.length) {
-    panel.appendChild(h('div', { class: 'empty' }, h('h2', null, 'No clients yet'), h('p', null, 'Type a first name and press Enter. Everything stays in this browser.')));
+    panel.appendChild(h('div', { class: 'empty' }, h('h2', null, 'No clients yet'), h('p', null, 'Press New client and type a first name. Everything stays in this browser.')));
     return;
   }
   const tbl = h('table', { class: 'data' },
@@ -139,36 +161,43 @@ const SUN_LABELS = { name: 'Name', birthDate: 'Birth date', state: 'State', city
 function renderSun(panel, app) {
   clear(panel);
   if (!app.record) {
-    panel.appendChild(h('div', { class: 'empty' }, h('h2', null, 'Household facts'), h('p', null, 'Name, birth date, state, work situation, dependents and the big goal live here. Open a client first.')));
+    panel.appendChild(h('div', { class: 'empty' }, h('h2', null, 'Household facts'), h('p', null, 'Birth date, state, work situation and filing status live here. Open a client first.')));
     return;
   }
   const rec = app.record;
   panel.appendChild(h('h2', null, 'Household facts'));
-  panel.appendChild(h('p', { class: 'hint coach-only', style: { marginBottom: '8px' } }, 'Birth date, not age. Fields that do not fit the work situation are absent.'));
+  panel.appendChild(h('p', { class: 'hint coach-only', style: { marginBottom: '8px' } }, 'Four facts to start. A birth year is enough; the state is New York until the client says otherwise.'));
   const states = app.data && app.data.usStates ? app.data.usStates.states : [];
   const readOnly = app.view === 'client';
-  SUN_FIELDS.forEach(id => {
+  const moreHost = h('div', { class: 'more-facts', style: { display: moreOpen ? '' : 'none' } });
+  const moreBtn = h('button', { class: 'btn quiet small', 'aria-label': 'More facts', 'aria-expanded': String(moreOpen), style: { marginTop: '8px' }, onClick: () => { moreOpen = !moreOpen; moreHost.style.display = moreOpen ? '' : 'none'; moreBtn.setAttribute('aria-expanded', String(moreOpen)); moreBtn.textContent = moreOpen ? 'Fewer facts' : 'More facts'; } }, moreOpen ? 'Fewer facts' : 'More facts');
+  SUN_ASKED.concat(SUN_MORE).forEach(id => {
+    const into = SUN_MORE.indexOf(id) === -1 ? panel : moreHost;
     const f = rec.sun.f[id] || { v: null, state: 'unknown', source: 'client' };
     if (readOnly) {
-      panel.appendChild(h('div', { class: 'fieldrow sun', dataset: { field: id } },
+      into.appendChild(h('div', { class: 'fieldrow sun', dataset: { field: id } },
         h('label', null, SUN_LABELS[id]),
         h('div', { class: 'control' }, displayValue(id, f, states))));
       return;
     }
     let control;
     const commit = (value, state) => {
-      const st = state || (value === null || value === '' ? 'unknown' : (f.state === 'unknown' ? 'known' : f.state));
-      app.setField('sun', id, value === '' ? null : value, st, f.source || 'client');
+      const live = rec.sun.f[id] || f;
+      const st = state || (value === null || value === '' ? 'unknown' : (live.state === 'unknown' ? 'known' : live.state));
+      /* a typed value replaces a default: the source becomes the client */
+      const src = value !== live.v && live.source === 'estimated' ? 'client' : (live.source || 'client');
+      app.setField('sun', id, value === '' ? null : value, st, src);
     };
     if (id === 'birthDate') {
-      control = h('input', { class: 'input', type: 'text', inputmode: 'numeric', value: f.v ? F.dateLong(f.v) : '', 'aria-label': SUN_LABELS[id], title: 'YYYY-MM-DD', onChange: e => {
+      const shown = x => x.v ? (x.state === 'rough' ? x.v.slice(0, 4) : F.dateLong(x.v)) : '';
+      control = h('input', { class: 'input', type: 'text', inputmode: 'numeric', value: shown(f), 'aria-label': SUN_LABELS[id], title: 'A year (1999), an age (27), or a date (1999-03-14, 3/14/1999, 14 Mar 1999)', onChange: e => {
         const t = e.target.value.trim();
         if (t === '') return commit(null);
-        const iso = parseDateText(t);
-        if (!iso) { app.toast('Birth date as YYYY-MM-DD, for example 1999-03-14'); e.target.value = f.v ? F.dateLong(f.v) : ''; return; }
-        e.target.value = F.dateLong(iso); commit(iso);
+        const p = parseBirthText(t, todayIso());
+        if (!p) { app.toast('A birth year is enough, for example 1999. Or a date: 1999-03-14, 3/14/1999, 14 Mar 1999.'); e.target.value = shown(f); return; }
+        e.target.value = p.state === 'rough' ? p.iso.slice(0, 4) : F.dateLong(p.iso); commit(p.iso, p.state);
       } });
-      control.addEventListener('focus', () => { control.value = (rec.sun.f.birthDate && rec.sun.f.birthDate.v) || ''; });
+      control.addEventListener('focus', () => { const cur = rec.sun.f.birthDate; control.value = cur && cur.v ? (cur.state === 'rough' ? cur.v.slice(0, 4) : cur.v) : ''; });
     } else if (id === 'state') {
       control = h('select', { class: 'select', 'aria-label': SUN_LABELS[id], onChange: e => commit(e.target.value) },
         h('option', { value: '' }, 'Not entered'), states.map(s => h('option', { value: s[0], selected: f.v === s[0] }, s[1])));
@@ -190,15 +219,17 @@ function renderSun(panel, app) {
     control.addEventListener('input', () => { control.classList.toggle('is-empty', control.value === ''); wrap.classList.toggle('is-empty', control.value === '' && control.tagName !== 'SELECT'); });
     control.addEventListener('change', () => { control.classList.toggle('is-empty', control.value === ''); wrap.classList.toggle('is-empty', control.value === '' && control.tagName !== 'SELECT'); });
     const row = h('div', { class: 'fieldrow sun', dataset: { field: id } },
-      h('label', null, SUN_LABELS[id], id === 'birthDate' ? h('span', { class: 'muted small' }, f.v ? ' (age ' + F.ageAt(f.v, todayIso()) + ')' : ' (YYYY-MM-DD)') : null),
+      h('label', null, SUN_LABELS[id], id === 'birthDate' ? h('span', { class: 'muted small' }, birthLabel(f, todayIso())) : null),
       wrap,
       h('span', { class: 'state coach-only' }, stateChip(f, s => app.setField('sun', id, f.v, s, f.source || 'client'), { exclude: ['not-for-me'] })),
       h('span', { class: 'src coach-only' }, sourceChip(f, s => app.setField('sun', id, f.v, f.state, s))));
-    panel.appendChild(row);
+    into.appendChild(row);
   });
+  if (!readOnly) panel.appendChild(moreBtn);
+  panel.appendChild(moreHost);
   const fill = app.result ? app.result.fills.sun : 0;
   const withRows = PLANETS.filter(p => app.result.rowCounts[p] > 0).length;
-  panel.appendChild(h('p', { class: 'hint coach-only sun-confidence', style: { marginTop: '8px' } }, 'Confidence ', h('strong', null, Math.round(fill * 100) + '%'), ' across the eight facts. ', withRows + ' of 7 planets have rows.'));
+  panel.appendChild(h('p', { class: 'hint coach-only sun-confidence', style: { marginTop: '8px' } }, 'Confidence ', h('strong', null, Math.round(fill * 100) + '%'), ' across the facts. ', withRows + ' of 7 planets have rows.'));
 }
 
 function updateSunValues(panel, app) {
@@ -211,7 +242,7 @@ function updateSunValues(panel, app) {
     if (!row) return;
     const f = rec.sun.f[id] || { v: null, state: 'unknown', source: 'client' };
     const label = row.querySelector('label span');
-    if (label && id === 'birthDate') label.textContent = f.v ? ' (age ' + F.ageAt(f.v, todayIso()) + ')' : ' (YYYY-MM-DD)';
+    if (label && id === 'birthDate') label.textContent = birthLabel(f, todayIso());
     const st = row.querySelector('.state'); const src = row.querySelector('.src');
     if (st) { clear(st); st.appendChild(stateChip(f, s => app.setField('sun', id, f.v, s, f.source || 'client'), { exclude: ['not-for-me'] })); }
     if (src) { clear(src); src.appendChild(sourceChip(f, s => app.setField('sun', id, f.v, f.state, s))); }
@@ -232,14 +263,14 @@ function updateSunValues(panel, app) {
     clear(hint);
     hint.appendChild(document.createTextNode('Confidence '));
     hint.appendChild(h('strong', null, Math.round(app.result.fills.sun * 100) + '%'));
-    hint.appendChild(document.createTextNode(' across the eight facts. ' + withRows + ' of 7 planets have rows.'));
+    hint.appendChild(document.createTextNode(' across the facts. ' + withRows + ' of 7 planets have rows.'));
   }
 }
 
 function displayValue(id, f, states) {
   const v = f.v;
   if (!hasValue(f) || v === '' ) return h('span', { class: 'value empty-token' }, 'Not entered');
-  if (id === 'birthDate') return h('span', { class: 'value' }, F.dateLong(v) + ' (age ' + F.ageAt(v, todayIso()) + ')');
+  if (id === 'birthDate') return h('span', { class: 'value' }, f.state === 'rough' ? v.slice(0, 4) + ' (about ' + F.ageAt(v, todayIso()) + ')' : F.dateLong(v) + ' (age ' + F.ageAt(v, todayIso()) + ')');
   if (id === 'state') { const s = states.find(x => x[0] === v); return h('span', { class: 'value' }, s ? s[1] : v); }
   if (id === 'workSituation') return h('span', { class: 'value' }, WORK_LABELS[v] || v);
   if (id === 'filingStatus') { const s = FILING_STATUSES.find(x => x[0] === v); return h('span', { class: 'value' }, s ? s[1] : v); }

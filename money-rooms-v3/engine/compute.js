@@ -52,7 +52,7 @@ export function compute(record, data, opts) {
   const today = (opts && opts.today) || new Date().toISOString().slice(0, 10);
   const fills = {}; const typeFills = {}; const needs = {}; const rowCounts = {};
   const fieldsData = data && data.fields;
-  fills.sun = fillOf(SUN_FIELDS.map(id => record.sun.f[id]));
+  fills.sun = fillOf(SUN_FIELDS.filter(id => id !== 'city').map(id => record.sun.f[id]));
   PLANETS.forEach(p => {
     const rows = record.planets[p].rows;
     rowCounts[p] = rows.length;

@@ -72,3 +72,22 @@ export function ownershipProblems(fields) {
 }
 
 export const KINDS = Object.freeze(['money', 'percent', 'int', 'text', 'date', 'month', 'choice', 'bool', 'hours', 'credits']);
+
+/* "I do not have this" (MR-025): one row named None whose primary figure is a typed zero in the
+   None state and whose other facts are not applicable. Fills count it as answered; totals read 0. */
+export function noneRow(fields, planet, typeId) {
+  const tdef = typeDef(fields, planet, typeId);
+  const prim = primaryFieldOf(fields, planet, typeId);
+  const f = freshFacts(fields, planet, typeId);
+  tdef.fields.forEach(id => {
+    const def = fieldDef(fields, id);
+    if (prim && id === prim.id && def.kind === 'money') f[id] = { v: 0, state: 'none', source: 'client' };
+    else f[id] = { v: null, state: 'not-applicable', source: 'client' };
+  });
+  return { nickname: 'None', f };
+}
+export function isNoneRow(fields, row) {
+  const prim = primaryFieldOf(fields, row.planet, row.type);
+  const pf = prim && row.f[prim.id];
+  return row.nickname === 'None' && !!pf && pf.state === 'none';
+}

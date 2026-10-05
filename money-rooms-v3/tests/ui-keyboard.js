@@ -51,18 +51,23 @@ export async function enterHousehold(page, spec, check) {
   const type = async t => { keys += t.length; await page.keyboard.type(t); };
 
   /* Sun facts */
-  await tabTo(page, a => a.aria === 'New client name');
+  await tabTo(page, a => a.aria === 'New client');
+  await press('Enter');
   await type(spec.sun.name[0]); await press('Enter');
   await page.waitForSelector('.fieldrow[data-field="birthDate"]');
   const SUN_TYPES = { birthDate: 'text', state: 'select', city: 'text', workSituation: 'select', dependents: 'int', filingStatus: 'select', bigGoal: 'text' };
   const SUN_OPTIONS = { state: { NY: 'New York' }, workSituation: { employed: 'Employed', 'self-employed': 'Self-employed' }, filingStatus: { single: 'Single', mfj: 'Married', hoh: 'Head' } };
+  /* name, dependents and the big goal sit behind More facts (MR-025) */
+  await tabTo(page, a => a.aria === 'More facts'); await press('Enter');
   for (const id of Object.keys(spec.sun)) {
     const [v, state] = spec.sun[id];
+    if (id === 'city') continue; /* not asked (MR-025) */
     if (id !== 'name') {
       await tabTo(page, a => a.field === id && (a.tag === 'INPUT' || a.tag === 'SELECT') && a.aria !== 'Answer state' && a.aria !== 'Source');
       if (SUN_TYPES[id] === 'select') {
         const lists = { state: usStates.map(x => x[0]), workSituation: ['employed', 'self-employed', 'between-jobs', 'student', 'retired', 'mixed'], filingStatus: ['single', 'mfj', 'hoh'] };
         const idx = lists[id].indexOf(v);
+        await press('Home'); /* the state select starts on New York, so begin from the top */
         for (let i = 0; i <= idx; i++) await press('ArrowDown');
       }
       else { await type(String(v)); }
@@ -135,7 +140,7 @@ export async function enterHousehold(page, spec, check) {
         if (d.cadence && cad && cad !== d.defaultCadence) {
           const a = await active(page);
           if (a.col !== fid + ':cad') await tabTo(page, x => x.row === rowId && x.col === fid + ':cad');
-          const order2 = ['paycheck', 'month', 'year', 'oneoff'];
+          const order2 = ['paycheck', 'week', 'month', 'quarter', 'year', 'oneoff'];
           const from = order2.indexOf(d.defaultCadence), to = order2.indexOf(cad);
           for (let i = 0; i < Math.abs(to - from); i++) await press(to > from ? 'ArrowDown' : 'ArrowUp');
         }
@@ -170,6 +175,7 @@ export async function enterHousehold(page, spec, check) {
 /* Compare the stored record against the spec: every typed fact must match value, state, source and cadence. */
 export function compareToSpec(record, spec, rowIds, check, label) {
   Object.keys(spec.sun).forEach(id => {
+    if (id === 'city') return;
     const [v, state] = spec.sun[id];
     const f = record.sun.f[id];
     check(label + ' sun.' + id, f && JSON.stringify(f.v) === JSON.stringify(v) && f.state === (state || 'known'), f ? JSON.stringify(f.v) + '/' + f.state : 'missing');

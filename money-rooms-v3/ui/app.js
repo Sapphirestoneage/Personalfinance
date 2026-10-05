@@ -44,6 +44,7 @@ export const app = {
   newClient(name) {
     const rec = store.newRecord();
     if (name) Rec.setField(rec, 'sun', 'name', name, 'known', 'client');
+    Rec.setField(rec, 'sun', 'state', 'NY', 'known', 'estimated'); /* MR-025: New York until the client says otherwise */
     store.save(rec);
     this.open(rec.id);
     return rec;
@@ -71,6 +72,12 @@ export const app = {
     return this.change(rec => Rec.setColumn(rec, rowId, column, value, { session: this.session }));
   },
   addRow(row) { return this.change(rec => Rec.addRow(rec, row, { session: this.session }), { reason: 'rows' }); },
+  removeRows(ids) {
+    let n = 0;
+    const line = this.change(rec => { let last = null; ids.forEach(id => { const l = Rec.removeRow(rec, id, { session: this.session }); if (l) { last = l; n++; } }); return last; }, { reason: 'rows' });
+    if (line) this.toast(n + (n === 1 ? ' row removed' : ' rows removed'), { label: 'Undo', action: () => { for (let i = 0; i < n; i++) this.undo(); } });
+    return line;
+  },
   removeRow(rowId) {
     const line = this.change(rec => Rec.removeRow(rec, rowId, { session: this.session }), { reason: 'rows' });
     if (line) this.toast('Row removed', { label: 'Undo', action: () => this.undo() });

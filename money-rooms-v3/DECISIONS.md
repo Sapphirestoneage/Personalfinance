@@ -146,3 +146,9 @@ Decision: the Assumptions screen drops basis, inflation, bond return, the two wi
 Compatibility: overrides stored under the six removed keys on rec.sun.assumptions are ignored by assumptionsFor() and dropped on the next save; a stored answers.taxShare is ignored by blockCosts(). No other stored shape changes.
 Why: a setting that changes nothing teaches the coach the screen cannot be trusted (critique T1, T2, R10). Closes MR-022's "partial": there is no nominal view in v1.
 Alternative: wire a nominal mode (doubles every figure on every screen under the freeze).
+
+## MR-025 2026-10-05 Onboarding asks four facts, New York is the default state, a birth year is enough
+Decision: Home asks birth date, state, work situation and filing status; name, dependents and the big goal sit behind "More facts"; city is stored but not asked. A new client starts with state New York as an Estimate the coach confirms by changing it. The birth date accepts a year or an age (stored as 1 July of that year, Rough) as well as a full date (Known). "New client" is one button that reveals the name field. Money cadences gain "per week" (x52/12).
+Compatibility: no stored shape changes; city stays in sun.f and old records keep it. The Sun fill no longer counts city.
+Why: the owner asked for as few questions as possible at the start; a coach can get a year and a state in the first minute.
+Alternative: ask all eight facts up front (what Levels 0 to 7 did).

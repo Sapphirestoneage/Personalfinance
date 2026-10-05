@@ -8,8 +8,16 @@
    "per paycheck"
   ],
   [
+   "week",
+   "per week"
+  ],
+  [
    "month",
    "per month"
+  ],
+  [
+   "quarter",
+   "per quarter"
   ],
   [
    "year",

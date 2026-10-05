@@ -8,45 +8,51 @@ export const flows = [
     async run(page, { base, check, APP }) {
       await page.goto(base + 'index.html#/home');
       await page.waitForSelector('text=No clients yet');
+      await page.click('button[aria-label="New client"]');
       await page.fill('input[aria-label="New client name"]', 'Jordan');
       await page.press('input[aria-label="New client name"]', 'Enter');
-      await page.waitForSelector('.fieldrow[data-field="name"]');
+      await page.waitForSelector('.fieldrow[data-field="birthDate"]');
+      await openMore(page);
       check('new client opens with its name', (await page.inputValue('.fieldrow[data-field="name"] input')) === 'Jordan');
+      check('the state starts on New York as an estimate', (await page.inputValue('.fieldrow[data-field="state"] select.select')) === 'NY' && (await page.textContent('.fieldrow[data-field="state"] .src .chip')) === 'Estimated');
       check('topbar names the client', (await page.textContent('#topbar-client')) === 'Jordan');
 
-      await page.fill('.fieldrow[data-field="city"] input', 'Brooklyn');
-      await page.press('.fieldrow[data-field="city"] input', 'Tab');
+      await page.fill('.fieldrow[data-field="bigGoal"] input', 'Brooklyn');
+      await page.press('.fieldrow[data-field="bigGoal"] input', 'Tab');
       await page.fill('.fieldrow[data-field="birthDate"] input', '1999-03-14');
       await page.press('.fieldrow[data-field="birthDate"] input', 'Tab');
+      await page.selectOption('.fieldrow[data-field="state"] select.select', 'NJ');
       await page.selectOption('.fieldrow[data-field="state"] select.select', 'NY');
       await page.waitForTimeout(500);
+      check('changing the state makes the client its source', (await page.textContent('.fieldrow[data-field="state"] .src .chip')) === 'Client');
       check('saved indicator shows Saved', (await page.textContent('#saved')) === 'Saved');
       check('age shows beside the birth date', (await page.textContent('.fieldrow[data-field="birthDate"] label')).indexOf('age 27') !== -1);
 
       await page.reload();
-      await page.waitForSelector('.fieldrow[data-field="city"] input');
-      check('a reload keeps the client and the city', (await page.inputValue('.fieldrow[data-field="city"] input')) === 'Brooklyn');
+      await page.waitForSelector('.fieldrow[data-field="birthDate"]');
+      await openMore(page);
+      check('a reload keeps the client and the big goal', (await page.inputValue('.fieldrow[data-field="bigGoal"] input')) === 'Brooklyn');
       check('state persisted', (await page.inputValue('.fieldrow[data-field="state"] select.select')) === 'NY');
 
       /* state chip by keystroke: focus the chip select for city and press r */
-      const chip = page.locator('.fieldrow[data-field="city"] select[aria-label="Answer state"]');
+      const chip = page.locator('.fieldrow[data-field="bigGoal"] select[aria-label="Answer state"]');
       await chip.focus();
       await page.keyboard.press('r');
       await page.waitForTimeout(100);
-      check('one key sets Rough', (await page.textContent('.fieldrow[data-field="city"] .chip')) === 'Rough');
+      check('one key sets Rough', (await page.textContent('.fieldrow[data-field="bigGoal"] .chip')) === 'Rough');
 
       /* undo and redo */
       await page.click('#undo');
       await page.waitForTimeout(100);
-      check('undo reverts the state', (await page.textContent('.fieldrow[data-field="city"] .chip')) === 'Known');
+      check('undo reverts the state', (await page.textContent('.fieldrow[data-field="bigGoal"] .chip')) === 'Known');
       await page.click('#redo');
       await page.waitForTimeout(100);
-      check('redo re-applies it', (await page.textContent('.fieldrow[data-field="city"] .chip')) === 'Rough');
+      check('redo re-applies it', (await page.textContent('.fieldrow[data-field="bigGoal"] .chip')) === 'Rough');
       await page.keyboard.press('Escape');
       await page.click('main > header h1');
       await page.keyboard.press('Control+z');
       await page.waitForTimeout(100);
-      check('Ctrl+Z undoes too', (await page.textContent('.fieldrow[data-field="city"] .chip')) === 'Known');
+      check('Ctrl+Z undoes too', (await page.textContent('.fieldrow[data-field="bigGoal"] .chip')) === 'Known');
 
       /* export */
       const [download] = await Promise.all([page.waitForEvent('download'), page.click('table.data button:has-text("Export")')]);
@@ -54,21 +60,22 @@ export const flows = [
       fs.mkdirSync(path.dirname(tmp), { recursive: true });
       await download.saveAs(tmp);
       const exported = JSON.parse(fs.readFileSync(tmp, 'utf8'));
-      check('export carries the record and its journal', exported.record && exported.record.sun.f.city.v === 'Brooklyn' && Array.isArray(exported.record.journal) && exported.record.journal.length > 3);
+      check('export carries the record and its journal', exported.record && exported.record.sun.f.bigGoal.v === 'Brooklyn' && Array.isArray(exported.record.journal) && exported.record.journal.length > 3);
       const journalLen = exported.record.journal.length;
 
       /* change, then import the file over it: the import wins and can be undone */
-      await page.fill('.fieldrow[data-field="city"] input', 'Queens');
-      await page.press('.fieldrow[data-field="city"] input', 'Tab');
+      await openMore(page);
+      await page.fill('.fieldrow[data-field="bigGoal"] input', 'Queens');
+      await page.press('.fieldrow[data-field="bigGoal"] input', 'Tab');
       await page.waitForTimeout(400);
       await page.setInputFiles('input[aria-label="Import a client file"]', tmp);
       await page.waitForSelector('.toast');
       await page.waitForTimeout(200);
-      check('import restores the exported city', (await page.inputValue('.fieldrow[data-field="city"] input')) === 'Brooklyn');
+      check('import restores the exported big goal', (await page.inputValue('.fieldrow[data-field="bigGoal"] input')) === 'Brooklyn');
       check('import offers undo', (await page.textContent('.toast')).indexOf('Undo import') !== -1);
       await page.click('.toast button');
       await page.waitForTimeout(200);
-      check('undo import brings back the newer copy', (await page.inputValue('.fieldrow[data-field="city"] input')) === 'Queens');
+      check('undo import brings back the newer copy', (await page.inputValue('.fieldrow[data-field="bigGoal"] input')) === 'Queens');
       fs.unlinkSync(tmp);
 
       /* client view hides the coach panels */
@@ -130,6 +137,11 @@ flows.push({
 async function importFixture(page, APP, name) {
   await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', name + '.json'));
   await page.waitForSelector('.orbit');
+}
+/* The extra household facts sit behind a disclosure; open it only when it is closed. */
+async function openMore(page) {
+  const btn = page.locator('button[aria-label="More facts"]');
+  if ((await btn.getAttribute('aria-expanded')) !== 'true') await btn.click();
 }
 function pdfPages(buf) {
   const text = buf.toString('latin1');
