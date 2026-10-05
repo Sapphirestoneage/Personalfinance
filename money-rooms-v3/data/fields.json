@@ -632,7 +632,8 @@
      "at-risk",
      "At risk"
     ]
-   ]
+   ],
+   "tag": true
   },
   "pretaxRetirement": {
    "id": "pretaxRetirement",
@@ -1219,7 +1220,8 @@
      "vantage",
      "VantageScore"
     ]
-   ]
+   ],
+   "tag": true
   },
   "debtSummaryTotal": {
    "id": "debtSummaryTotal",
@@ -1282,7 +1284,8 @@
      "other",
      "Other"
     ]
-   ]
+   ],
+   "tag": true
   },
   "coverage": {
    "id": "coverage",
@@ -1512,7 +1515,8 @@
    "owner": "invest",
    "weight": 5,
    "hint": "",
-   "defaultSource": "client"
+   "defaultSource": "client",
+   "tag": true
   },
   "accountRef": {
    "id": "accountRef",
@@ -1521,7 +1525,8 @@
    "owner": "invest",
    "weight": 4,
    "hint": "Which account holds it",
-   "defaultSource": "client"
+   "defaultSource": "client",
+   "tag": true
   },
   "fundName": {
    "id": "fundName",
@@ -1530,7 +1535,8 @@
    "owner": "invest",
    "weight": 3,
    "hint": "",
-   "defaultSource": "lookup-verify"
+   "defaultSource": "lookup-verify",
+   "tag": true
   },
   "expenseRatio": {
    "id": "expenseRatio",
@@ -1622,7 +1628,8 @@
      "3",
      "Nice"
     ]
-   ]
+   ],
+   "tag": true
   },
   "retirementAge": {
    "id": "retirementAge",

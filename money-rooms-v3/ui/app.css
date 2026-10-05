@@ -602,3 +602,10 @@ main > header:has(+ .onepager) { max-width: 816px; }
   .toolbar .kbd, .ledger-panel .empty .kbd { display: none; }
   .ledger-panel .tablewrap { overflow-x: visible; }
 }
+
+/* Facts to fill versus tags (MR-031) */
+.details-btn .todo { display: inline-block; min-width: 16px; height: 16px; line-height: 16px; border-radius: 8px; background: var(--amber); color: var(--paper); font-size: var(--fs-11); text-align: center; padding: 0 4px; margin-left: 4px; }
+.fieldrow.detail.needed > label { color: var(--ink); }
+.fieldrow.detail.needed > label::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 3px; background: var(--amber); margin-right: 6px; vertical-align: middle; }
+.fieldrow.detail.is-tag > label { color: var(--slate); }
+@media (max-width: 720px) { .ledger-table .details-btn .todo { position: absolute; margin: 0; transform: translate(-2px, -10px); } .ledger-table .details-btn { position: relative; } }

@@ -134,7 +134,7 @@ function mountTable(host, app, planet, typeId) {
       const row = app.record.planets[planet].rows.find(r => r.id === e.rowId);
       const WORDS = { pretax: 'pre-tax', roth: 'Roth', hsa: 'HSA', taxable: 'taxable', cash: 'cash', now: 'reachable now', semi: 'reachable with care', locked: 'locked until 59.5' };
       const what = e.field === 'takeHome' ? 'take-home a month' : e.field === 'matchMonthly' ? 'employer match a month' : e.field === 'taxBucket' ? 'tax bucket' : e.field === 'liquidity' ? 'reach' : e.field === 'weeksLeft' ? 'weeks left' : e.field;
-      const shown = e.field === 'weeksLeft' ? String(e.value) + (e.endsOn ? ' (benefit ends ' + F.date(e.endsOn) + ')' : '') : typeof e.value === 'number' ? F.dollarsWhole(e.value) : typeof e.value === 'string' ? (WORDS[e.value] || e.value) : F.value(e.value);
+      const shown = e.field === 'weeksLeft' ? String(e.value) + (e.endsOn ? ' (benefit ends ' + F.date(e.endsOn) + ')' : '') : typeof e.value === 'number' ? F.dollarsWhole(e.value) : typeof e.value === 'string' ? (WORDS[e.value] || e.value) : (e.value && e.value.cents !== undefined ? F.dollarsWhole(e.value.cents, { rough: e.value.rough || e.value.confidence < 0.7 }) : F.value(e.value));
       inferredNote.appendChild(h('p', { class: 'hint', style: { marginBottom: '8px' }, title: e.note || '' }, 'Inferred, not stored: ' + (row ? row.nickname + ', ' : '') + what + ' ' + shown + (e.field === 'takeHome' ? ' (before state tax)' : '') + '.'));
     });
   }

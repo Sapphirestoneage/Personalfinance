@@ -193,7 +193,10 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     detailColumns().forEach(c => {
       const td = renderCell(r, c); if (!td) return;
       const control = h('div', { class: 'control' }); while (td.firstChild) control.appendChild(td.firstChild);
-      const row = h('div', { class: 'fieldrow detail', dataset: { field: c.key } }, h('label', { title: c.hint || '' }, c.label), control);
+      const f0 = c.kind === 'field' ? r.f[c.def.id] : null;
+      const needed = c.kind === 'field' && !c.def.tag && (!f0 || f0.state === 'unknown' || f0.state === 'will-send');
+      const row = h('div', { class: 'fieldrow detail' + (c.kind === 'field' && c.def.tag ? ' is-tag' : '') + (needed ? ' needed' : ''), dataset: { field: c.key } },
+        h('label', { title: c.def && c.def.tag ? 'A tag: it filters and labels, it changes no number' : (c.hint || '') }, c.label, c.kind === 'field' && c.def.tag ? h('span', { class: 'small muted' }, ' tag') : null), control);
       if (c.kind === 'field' && coach) {
         /* state and source beside every fact, patched in place after a change (D-034) */
         const st = h('span', { class: 'state' }), so = h('span', { class: 'src' });
@@ -280,7 +283,11 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     if (c.kind === 'source') return h('td', { class: 'cell-source' }, sourceCell(r));
     if (c.kind === 'cadence') return h('td', null, cadenceControl(r, c.def));
     if (c.kind === 'remove') return h('td', null, h('button', { class: 'btn small quiet', 'aria-label': 'Remove row', title: 'Remove row (Alt+Delete)', onClick: () => { app.removeRow(r.id); render(); } }, 'Remove'));
-    if (c.kind === 'details') return h('td', { class: 'cell-details' }, h('button', { class: 'btn small quiet details-btn', dataset: { col: 'details' }, 'aria-label': 'Details for ' + (r.nickname || 'this row'), onClick: () => openDetails(r.id) }, h('span', { class: 'word' }, 'Details'), h('span', { class: 'glyph', 'aria-hidden': 'true' }, String.fromCharCode(0x203A))));
+    if (c.kind === 'details') {
+      const missing = toFill(r);
+      return h('td', { class: 'cell-details' }, h('button', { class: 'btn small quiet details-btn' + (missing ? ' has-todo' : ''), dataset: { col: 'details' }, 'aria-label': 'Details for ' + (r.nickname || 'this row') + (missing ? ', ' + missing + ' to fill' : ''), title: missing ? missing + (missing === 1 ? ' fact that changes a number is still empty' : ' facts that change numbers are still empty') : '', onClick: () => openDetails(r.id) },
+        h('span', { class: 'word' }, 'Details'), missing ? h('span', { class: 'todo' }, String(missing)) : null, h('span', { class: 'glyph', 'aria-hidden': 'true' }, String.fromCharCode(0x203A))));
+    }
     if (c.kind === 'followUp') {
       const btn = h('button', { class: 'chip toggle' + (r.followUp ? ' amber' : ''), 'aria-pressed': String(!!r.followUp), 'aria-label': 'Follow up flag', dataset: { col: 'followUp' }, onClick: e => { const next = !r.followUp; app.setColumn(r.id, 'followUp', next); e.target.textContent = next ? 'Flagged' : 'Not flagged'; e.target.classList.toggle('amber', next); e.target.setAttribute('aria-pressed', String(next)); } }, r.followUp ? 'Flagged' : 'Not flagged');
       return h('td', null, keyFlow(btn, r, 'followUp'));
@@ -337,6 +344,11 @@ export function ledgerTable(host, app, planet, typeId, opts) {
       app.setField(r.id, d.id, cur.v, cur.state, cur.source, e.target.value);
     } }, Object.keys(CADENCE_SHORT).map(k => h('option', { value: k, selected: (f && f.cad) === k || (!(f && f.cad) && d.defaultCadence === k) }, CADENCE_SHORT[k])));
     return keyFlow(cad, r, d.id + ':cad');
+  }
+  /* Facts behind Details that change a number and are still empty; tags never count (MR-031). */
+  function toFill(r) {
+    const shown = [primary.id].concat(tdef.tableFields || []);
+    return tdef.fields.filter(id => !shown.includes(id)).filter(id => { const d = fieldDef(fields, id); const f = r.f[id]; return !d.tag && (!f || f.state === 'unknown' || f.state === 'will-send'); }).length;
   }
   function creditsSummary(r, f) {
     const v = f && f.v && typeof f.v === 'object' ? f.v : null;

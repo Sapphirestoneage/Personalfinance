@@ -13,7 +13,7 @@ export function plateItems(record, fields) {
     Object.keys(r.f).forEach(fid => {
       const f = r.f[fid];
       if (!needsFollowUp(f)) return;
-      const def = fields.fields[fid]; if (!def) return;
+      const def = fields.fields[fid]; if (!def || def.tag) return;
       items.push({ planet: p, rowId: r.id, field: fid, label: def.label, row: r.nickname || (planets[p].types[r.type] || {}).label || r.type, institution: r.institution || '', state: f.state, source: f.source, plate: plateOf(f), weight: def.weight });
     });
   }));

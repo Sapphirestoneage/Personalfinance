@@ -182,3 +182,9 @@ Decision: from screenshots/audit-2026-10-05.md: chart series use their own token
 Compatibility: none; presentation only.
 Why: the audit scored the coach tables and Measure at 2 to 3 for boxes inside boxes, repeated figures and colour that meant four things.
 Alternative: borderless table inputs (declined: the owner asked for fields that look separate).
+
+## MR-031 2026-10-05 Completeness counts the facts that change a number; a tag is a label to filter by
+Decision: a field marked tag (stability, bureau, priority, beneficiary, insurance type, fund name, account link) changes no number: it is left out of every fill and confidence figure, never lands on a plate or in the next question, and shows as a quiet "tag" in Details. The Details link carries an amber count of the empty facts that do change numbers, and those rows are marked in the drawer.
+Compatibility: none; tag is a data field.
+Why: Side income read 75% because an unfilled hours field and a stability choice dragged it down; the owner asked that only facts that affect other numbers be highlighted.
+Alternative: weights per field in the fill (hides the rule instead of stating it).
