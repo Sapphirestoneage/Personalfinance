@@ -18,3 +18,10 @@ money-rooms-recap-*
 # repository. Saves are made on the owner's device and stay there.
 scoreboard-*
 *.mkt.json
+
+# Money Rooms v3 (D-341): a client's numbers never enter this public
+# repository. Exports are made on the coach's device and stay there.
+/clients
+*.client.json
+money-rooms-*.json
+money-rooms-v3/screenshots/.tmp-*

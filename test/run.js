@@ -10159,11 +10159,17 @@ section('No CSS variable is used without being defined');
   checkTrue('the shared theme defines a healthy number of tokens', globalDefs.size > 40,
     'found ' + globalDefs.size);
 
+  /* Money Rooms v3 (D-341) is a separate app with its own design tokens in
+     money-rooms-v3/ui/tokens.css; its files resolve against those. */
+  const mr3Css = fs.existsSync(path.join(ROOT, 'money-rooms-v3/ui/tokens.css')) ? fs.readFileSync(path.join(ROOT, 'money-rooms-v3/ui/tokens.css'), 'utf8') : '';
+  const mr3Defs = new Set((mr3Css.match(/^\s*(--[a-z0-9-]+)\s*:/gim) || []).map(m => m.trim().replace(/\s*:$/, '')));
+
   const orphans = [];
   files.forEach(f => {
     const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
     const local = new Set((src.match(/(--[a-z0-9-]+)\s*:/gi) || [])
       .map(m => m.replace(/\s*:$/, '')));
+    if (f.indexOf('money-rooms-v3/') === 0) mr3Defs.forEach(t => local.add(t));
     /* Two things are NOT orphans and must not be reported as such, or the
        check cries wolf and gets ignored:
          · `var(--x, 1.35)` — a fallback IS a definition at the use site.

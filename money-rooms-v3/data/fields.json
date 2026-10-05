@@ -1,0 +1,2117 @@
+{
+ "asOf": "2026-10-05",
+ "source": "Money Rooms v3 spec, data model and planets sections",
+ "verify": false,
+ "cadences": [
+  [
+   "paycheck",
+   "per paycheck"
+  ],
+  [
+   "month",
+   "per month"
+  ],
+  [
+   "year",
+   "per year"
+  ],
+  [
+   "oneoff",
+   "one-off"
+  ]
+ ],
+ "planets": {
+  "income": {
+   "label": "Income",
+   "types": {
+    "w2": {
+     "label": "W-2 job",
+     "moon": "W-2",
+     "fields": [
+      "grossPay",
+      "takeHome",
+      "payFrequency",
+      "stability",
+      "pretaxRetirement",
+      "rothRetirement",
+      "hsaPayroll",
+      "pretaxOther",
+      "withholdingFederal",
+      "bonus",
+      "equity",
+      "startDate",
+      "hoursPaid",
+      "hoursCommute",
+      "workCosts"
+     ],
+     "situations": [
+      "employed",
+      "mixed",
+      "student",
+      "between-jobs",
+      "retired"
+     ],
+     "defaults": {
+      "payFrequency": "biweekly",
+      "stability": "steady"
+     },
+     "nicknameLabel": "Job",
+     "stress": false
+    },
+    "c1099": {
+     "label": "1099 work",
+     "moon": "1099",
+     "fields": [
+      "grossPay",
+      "takeHome",
+      "payFrequency",
+      "stability",
+      "businessExpenses",
+      "quarterlyTaxPaid",
+      "hsaPayroll",
+      "startDate",
+      "hoursPaid",
+      "hoursCommute",
+      "workCosts"
+     ],
+     "situations": [
+      "self-employed",
+      "mixed",
+      "student",
+      "retired"
+     ],
+     "defaults": {
+      "payFrequency": "monthly",
+      "stability": "variable"
+     },
+     "nicknameLabel": "Work",
+     "stress": false
+    },
+    "side": {
+     "label": "Side income",
+     "moon": "Side",
+     "fields": [
+      "grossPay",
+      "payFrequency",
+      "stability",
+      "hoursPaid"
+     ],
+     "defaults": {
+      "payFrequency": "monthly",
+      "stability": "variable"
+     },
+     "nicknameLabel": "What it is",
+     "stress": false
+    },
+    "unemployment": {
+     "label": "Unemployment",
+     "moon": "Unemployment",
+     "fields": [
+      "benefitAmount",
+      "weeksLeft",
+      "startDate"
+     ],
+     "situations": [
+      "between-jobs",
+      "mixed"
+     ],
+     "nicknameLabel": "Program",
+     "stress": false
+    },
+    "rental": {
+     "label": "Rental",
+     "moon": "Rental",
+     "fields": [
+      "rentCollected",
+      "rentalExpenses",
+      "stability"
+     ],
+     "nicknameLabel": "Property",
+     "stress": false
+    },
+    "benefits": {
+     "label": "Benefits and match",
+     "moon": "Benefits",
+     "fields": [
+      "matchRate",
+      "matchUpTo",
+      "vestingPct",
+      "otherBenefit"
+     ],
+     "situations": [
+      "employed",
+      "mixed",
+      "student",
+      "retired"
+     ],
+     "nicknameLabel": "Employer",
+     "stress": false
+    },
+    "other": {
+     "label": "Other",
+     "moon": "Other",
+     "fields": [
+      "otherIncome",
+      "payFrequency"
+     ],
+     "defaults": {
+      "payFrequency": "monthly"
+     },
+     "nicknameLabel": "What it is",
+     "stress": false
+    }
+   },
+   "institutionLabel": "Employer or payer"
+  },
+  "spending": {
+   "label": "Spending",
+   "types": {
+    "summary": {
+     "label": "Rough total",
+     "moon": "Total",
+     "fields": [
+      "summaryTotal"
+     ],
+     "single": true,
+     "nicknameLabel": "Label",
+     "stress": false
+    },
+    "line": {
+     "label": "Spending line",
+     "moon": "DRAFTT",
+     "fields": [
+      "category",
+      "amount",
+      "needWant",
+      "mistake",
+      "shared",
+      "fatFloor",
+      "primaryCard",
+      "linkedIncome"
+     ],
+     "defaults": {
+      "needWant": "need",
+      "mistake": "unavoidable",
+      "shared": "no"
+     },
+     "nicknameLabel": "Name",
+     "stress": false
+    },
+    "savings": {
+     "label": "Savings transfer",
+     "moon": "Savings",
+     "fields": [
+      "savingsDestination",
+      "savingsLanding"
+     ],
+     "nicknameLabel": "Transfer",
+     "stress": false
+    },
+    "other": {
+     "label": "Other",
+     "moon": "Other",
+     "fields": [
+      "otherSpending"
+     ],
+     "nicknameLabel": "What it is",
+     "stress": false
+    }
+   },
+   "institutionLabel": "Paid to"
+  },
+  "debt": {
+   "label": "Debt and Credit",
+   "types": {
+    "summary": {
+     "label": "Rough total",
+     "moon": "Total",
+     "fields": [
+      "debtSummaryTotal"
+     ],
+     "single": true,
+     "nicknameLabel": "Label",
+     "stress": true
+    },
+    "card": {
+     "label": "Credit card",
+     "moon": "Cards",
+     "fields": [
+      "cardName",
+      "balance",
+      "apr",
+      "promoApr",
+      "promoEnd",
+      "promoType",
+      "btFee",
+      "minimum",
+      "creditLimit",
+      "dueDay",
+      "annualFee",
+      "creditsUsed",
+      "autopay"
+     ],
+     "defaults": {
+      "autopay": "none",
+      "promoType": "purchase"
+     },
+     "nicknameLabel": "Nickname",
+     "stress": true
+    },
+    "student": {
+     "label": "Student loan",
+     "moon": "Student loans",
+     "fields": [
+      "federalPrivate",
+      "loanType",
+      "balance",
+      "rate",
+      "minimum",
+      "repaymentPlan",
+      "pslfEligible",
+      "pslfPayments",
+      "forbearance",
+      "interestDeductible"
+     ],
+     "defaults": {
+      "federalPrivate": "federal",
+      "repaymentPlan": "standard"
+     },
+     "nicknameLabel": "Loan",
+     "stress": true
+    },
+    "auto": {
+     "label": "Auto loan",
+     "moon": "Auto",
+     "fields": [
+      "balance",
+      "rate",
+      "payment",
+      "monthsLeft",
+      "vehicleValue"
+     ],
+     "nicknameLabel": "Vehicle",
+     "stress": true
+    },
+    "mortgage": {
+     "label": "Mortgage or HELOC",
+     "moon": "Home",
+     "fields": [
+      "balance",
+      "rate",
+      "fixedVariable",
+      "termLeftMonths",
+      "principalInterest",
+      "escrowTaxes",
+      "escrowInsurance",
+      "hoa",
+      "pmi",
+      "homeValue"
+     ],
+     "defaults": {
+      "fixedVariable": "fixed"
+     },
+     "nicknameLabel": "Property",
+     "stress": true
+    },
+    "personal": {
+     "label": "Personal, family, medical, BNPL",
+     "moon": "Other debts",
+     "fields": [
+      "debtKind",
+      "balance",
+      "rate",
+      "payment",
+      "terms",
+      "reasonsToKeep"
+     ],
+     "defaults": {
+      "debtKind": "personal"
+     },
+     "nicknameLabel": "Nickname",
+     "stress": true
+    },
+    "score": {
+     "label": "Credit score",
+     "moon": "Score",
+     "fields": [
+      "score",
+      "bureau"
+     ],
+     "single": true,
+     "nicknameLabel": "Label",
+     "stress": true
+    },
+    "other": {
+     "label": "Other",
+     "moon": "Other",
+     "fields": [
+      "otherDebt",
+      "rate",
+      "payment"
+     ],
+     "nicknameLabel": "What it is",
+     "stress": true
+    }
+   },
+   "institutionLabel": "Lender or issuer"
+  },
+  "safety": {
+   "label": "Safety Net",
+   "types": {
+    "insurance": {
+     "label": "Insurance",
+     "moon": "Insurance",
+     "fields": [
+      "insuranceType",
+      "coverage",
+      "premium",
+      "deductible"
+     ],
+     "nicknameLabel": "Policy",
+     "stress": false
+    },
+    "unemployment": {
+     "label": "Unemployment estimate",
+     "moon": "If work stopped",
+     "fields": [
+      "unemploymentWeekly",
+      "unemploymentWeeks"
+     ],
+     "single": true,
+     "nicknameLabel": "Label",
+     "stress": false
+    },
+    "cut": {
+     "label": "Ability to cut",
+     "moon": "Ability to cut",
+     "fields": [
+      "cutAbility"
+     ],
+     "single": true,
+     "nicknameLabel": "Label",
+     "stress": false
+    },
+    "other": {
+     "label": "Other",
+     "moon": "Other",
+     "fields": [
+      "otherSafety"
+     ],
+     "nicknameLabel": "What it is",
+     "stress": false
+    }
+   },
+   "institutionLabel": "Carrier"
+  },
+  "invest": {
+   "label": "Investments and Accounts",
+   "types": {
+    "summary": {
+     "label": "Rough total",
+     "moon": "Total",
+     "fields": [
+      "investSummaryTotal"
+     ],
+     "single": true,
+     "nicknameLabel": "Label",
+     "stress": true
+    },
+    "account": {
+     "label": "Account",
+     "moon": "Accounts",
+     "fields": [
+      "accountType",
+      "accountBalance",
+      "contribAmount",
+      "contribPct",
+      "ytdContrib",
+      "allocStocks",
+      "allocBonds",
+      "allocCash",
+      "allocOther",
+      "usShare",
+      "targetYear",
+      "costBasis",
+      "beneficiary"
+     ],
+     "nicknameLabel": "Nickname",
+     "stress": true
+    },
+    "holding": {
+     "label": "Holding",
+     "moon": "Holdings",
+     "fields": [
+      "accountRef",
+      "ticker",
+      "fundName",
+      "expenseRatio",
+      "assetClass",
+      "pctOfAccount"
+     ],
+     "nicknameLabel": "Holding",
+     "stress": true
+    },
+    "other": {
+     "label": "Other",
+     "moon": "Other",
+     "fields": [
+      "otherAsset"
+     ],
+     "nicknameLabel": "What it is",
+     "stress": true
+    }
+   },
+   "institutionLabel": "Institution"
+  },
+  "taxes": {
+   "label": "Taxes",
+   "types": {
+    "note": {
+     "label": "Tax facts",
+     "moon": "Facts",
+     "fields": [
+      "lastRefund",
+      "taxNote"
+     ],
+     "single": true,
+     "nicknameLabel": "Label",
+     "stress": false
+    },
+    "other": {
+     "label": "Other",
+     "moon": "Other",
+     "fields": [
+      "otherTax"
+     ],
+     "nicknameLabel": "What it is",
+     "stress": false
+    }
+   },
+   "institutionLabel": "Agency"
+  },
+  "life": {
+   "label": "Life Plan",
+   "types": {
+    "goal": {
+     "label": "Goal",
+     "moon": "Goals",
+     "fields": [
+      "goalCost",
+      "targetDate",
+      "priority"
+     ],
+     "defaults": {
+      "priority": "2"
+     },
+     "nicknameLabel": "Goal",
+     "stress": false
+    },
+    "retirement": {
+     "label": "Retirement",
+     "moon": "Retirement",
+     "fields": [
+      "retirementAge",
+      "gogo",
+      "slowgo",
+      "nogo"
+     ],
+     "single": true,
+     "defaults": {
+      "gogo": 1.0,
+      "slowgo": 0.85,
+      "nogo": 0.75
+     },
+     "nicknameLabel": "Label",
+     "stress": false
+    },
+    "other": {
+     "label": "Other",
+     "moon": "Other",
+     "fields": [
+      "otherLife"
+     ],
+     "nicknameLabel": "What it is",
+     "stress": false
+    }
+   },
+   "institutionLabel": "Who or where"
+  }
+ },
+ "fields": {
+  "grossPay": {
+   "id": "grossPay",
+   "label": "Gross pay",
+   "kind": "money",
+   "owner": "income",
+   "weight": 10,
+   "hint": "Before taxes and deductions, per paycheck or per year",
+   "defaultSource": "client",
+   "cadence": true,
+   "primary": true,
+   "defaultCadence": "paycheck"
+  },
+  "takeHome": {
+   "id": "takeHome",
+   "label": "Take-home",
+   "kind": "money",
+   "owner": "income",
+   "weight": 10,
+   "hint": "What lands in the bank, per paycheck or per month. Leave blank to infer from gross (before state tax)",
+   "defaultSource": "client",
+   "cadence": true,
+   "infer": "takeHome",
+   "defaultCadence": "paycheck"
+  },
+  "payFrequency": {
+   "id": "payFrequency",
+   "label": "Pay frequency",
+   "kind": "choice",
+   "owner": "income",
+   "weight": 6,
+   "hint": "How often a paycheck arrives",
+   "defaultSource": "client",
+   "options": [
+    [
+     "weekly",
+     "Weekly"
+    ],
+    [
+     "biweekly",
+     "Every two weeks"
+    ],
+    [
+     "semimonthly",
+     "Twice a month"
+    ],
+    [
+     "monthly",
+     "Monthly"
+    ]
+   ]
+  },
+  "stability": {
+   "id": "stability",
+   "label": "Stability",
+   "kind": "choice",
+   "owner": "income",
+   "weight": 6,
+   "hint": "Steady, variable or at risk",
+   "defaultSource": "client",
+   "options": [
+    [
+     "steady",
+     "Steady"
+    ],
+    [
+     "variable",
+     "Variable"
+    ],
+    [
+     "at-risk",
+     "At risk"
+    ]
+   ]
+  },
+  "withholdingFederal": {
+   "id": "withholdingFederal",
+   "label": "Federal withheld",
+   "kind": "money",
+   "owner": "income",
+   "weight": 4,
+   "hint": "Federal income tax withheld per paycheck (box on the stub)",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "paycheck"
+  },
+  "pretaxRetirement": {
+   "id": "pretaxRetirement",
+   "label": "Pre-tax retirement",
+   "kind": "money",
+   "owner": "income",
+   "weight": 8,
+   "hint": "401k, 403b, 457b or TSP deferral per paycheck (the stub line). Investments reads this",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "paycheck"
+  },
+  "rothRetirement": {
+   "id": "rothRetirement",
+   "label": "Roth retirement",
+   "kind": "money",
+   "owner": "income",
+   "weight": 6,
+   "hint": "Roth 401k or Roth 403b deferral per paycheck",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "paycheck"
+  },
+  "hsaPayroll": {
+   "id": "hsaPayroll",
+   "label": "HSA via payroll",
+   "kind": "money",
+   "owner": "income",
+   "weight": 6,
+   "hint": "HSA contribution taken from pay",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "paycheck"
+  },
+  "pretaxOther": {
+   "id": "pretaxOther",
+   "label": "Other pre-tax",
+   "kind": "money",
+   "owner": "income",
+   "weight": 4,
+   "hint": "Health premiums, FSA, commuter and other pre-tax lines",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "paycheck"
+  },
+  "bonus": {
+   "id": "bonus",
+   "label": "Bonus",
+   "kind": "money",
+   "owner": "income",
+   "weight": 6,
+   "hint": "Expected this year, before tax",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "year"
+  },
+  "equity": {
+   "id": "equity",
+   "label": "Equity",
+   "kind": "money",
+   "owner": "income",
+   "weight": 5,
+   "hint": "RSUs or options vesting this year, before tax",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "year"
+  },
+  "startDate": {
+   "id": "startDate",
+   "label": "Start date",
+   "kind": "month",
+   "owner": "income",
+   "weight": 2,
+   "hint": "When this income began",
+   "defaultSource": "client"
+  },
+  "hoursPaid": {
+   "id": "hoursPaid",
+   "label": "Paid hours",
+   "kind": "hours",
+   "owner": "income",
+   "weight": 4,
+   "hint": "Paid hours per week",
+   "defaultSource": "client"
+  },
+  "hoursCommute": {
+   "id": "hoursCommute",
+   "label": "Commute and prep hours",
+   "kind": "hours",
+   "owner": "income",
+   "weight": 3,
+   "hint": "Commute, prep and unpaid work hours per week",
+   "defaultSource": "client"
+  },
+  "workCosts": {
+   "id": "workCosts",
+   "label": "Costs of working",
+   "kind": "money",
+   "owner": "income",
+   "weight": 4,
+   "hint": "Commuting, clothes, lunches, childcare that exist because of this job, per month",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "month"
+  },
+  "businessExpenses": {
+   "id": "businessExpenses",
+   "label": "Business expenses",
+   "kind": "money",
+   "owner": "income",
+   "weight": 6,
+   "hint": "Costs of doing the work, before tax",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "month"
+  },
+  "quarterlyTaxPaid": {
+   "id": "quarterlyTaxPaid",
+   "label": "Estimated tax paid",
+   "kind": "money",
+   "owner": "income",
+   "weight": 5,
+   "hint": "Quarterly estimated payments",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "year"
+  },
+  "benefitAmount": {
+   "id": "benefitAmount",
+   "label": "Benefit",
+   "kind": "money",
+   "owner": "income",
+   "weight": 8,
+   "hint": "Weekly or monthly benefit",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "paycheck"
+  },
+  "weeksLeft": {
+   "id": "weeksLeft",
+   "label": "Weeks left",
+   "kind": "int",
+   "owner": "income",
+   "weight": 6,
+   "hint": "Weeks of benefit remaining",
+   "defaultSource": "client"
+  },
+  "rentCollected": {
+   "id": "rentCollected",
+   "label": "Rent collected",
+   "kind": "money",
+   "owner": "income",
+   "weight": 8,
+   "hint": "Gross rent per month",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "month"
+  },
+  "rentalExpenses": {
+   "id": "rentalExpenses",
+   "label": "Rental expenses",
+   "kind": "money",
+   "owner": "income",
+   "weight": 6,
+   "hint": "Taxes, insurance, repairs, management per month (not the mortgage)",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "month"
+  },
+  "matchRate": {
+   "id": "matchRate",
+   "label": "Match rate",
+   "kind": "percent",
+   "owner": "income",
+   "weight": 9,
+   "hint": "Cents matched per dollar, as a percent: 100 means dollar for dollar, 50 means half",
+   "defaultSource": "client"
+  },
+  "matchUpTo": {
+   "id": "matchUpTo",
+   "label": "Match up to",
+   "kind": "percent",
+   "owner": "income",
+   "weight": 9,
+   "hint": "Percent of pay the employer matches up to",
+   "defaultSource": "client"
+  },
+  "vestingPct": {
+   "id": "vestingPct",
+   "label": "Vested",
+   "kind": "percent",
+   "owner": "income",
+   "weight": 4,
+   "hint": "Share of the match that is yours today",
+   "defaultSource": "client"
+  },
+  "otherBenefit": {
+   "id": "otherBenefit",
+   "label": "Other benefit",
+   "kind": "money",
+   "owner": "income",
+   "weight": 3,
+   "hint": "Stipends or reimbursements per month",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "month"
+  },
+  "otherIncome": {
+   "id": "otherIncome",
+   "label": "Amount",
+   "kind": "money",
+   "owner": "income",
+   "weight": 5,
+   "hint": "Before tax",
+   "defaultSource": "client",
+   "cadence": true,
+   "primary": true,
+   "defaultCadence": "month"
+  },
+  "category": {
+   "id": "category",
+   "label": "Category",
+   "kind": "choice",
+   "owner": "spending",
+   "weight": 5,
+   "hint": "Where this line sits",
+   "defaultSource": "client",
+   "options": [
+    [
+     "accommodation",
+     "Accommodation"
+    ],
+    [
+     "food",
+     "Food"
+    ],
+    [
+     "transportation",
+     "Transportation"
+    ],
+    [
+     "therapy",
+     "Therapy and health"
+    ],
+    [
+     "utilities",
+     "Utilities and subscriptions"
+    ],
+    [
+     "wants",
+     "Wants"
+    ],
+    [
+     "irregular",
+     "Irregular and annual"
+    ],
+    [
+     "mistakes",
+     "Mistakes"
+    ],
+    [
+     "other",
+     "Other"
+    ]
+   ]
+  },
+  "amount": {
+   "id": "amount",
+   "label": "Amount",
+   "kind": "money",
+   "owner": "spending",
+   "weight": 8,
+   "hint": "What it costs, per month or per year",
+   "defaultSource": "client",
+   "cadence": true,
+   "primary": true,
+   "defaultCadence": "month"
+  },
+  "needWant": {
+   "id": "needWant",
+   "label": "Need or want",
+   "kind": "choice",
+   "owner": "spending",
+   "weight": 4,
+   "hint": "",
+   "defaultSource": "client",
+   "options": [
+    [
+     "need",
+     "Need"
+    ],
+    [
+     "want",
+     "Want"
+    ]
+   ]
+  },
+  "mistake": {
+   "id": "mistake",
+   "label": "Unavoidable or mistake",
+   "kind": "choice",
+   "owner": "spending",
+   "weight": 3,
+   "hint": "A mistake is a fee, a penalty or a purchase the client regrets",
+   "defaultSource": "client",
+   "options": [
+    [
+     "unavoidable",
+     "Unavoidable"
+    ],
+    [
+     "mistake",
+     "Mistake"
+    ]
+   ]
+  },
+  "shared": {
+   "id": "shared",
+   "label": "Shared or reimbursed",
+   "kind": "choice",
+   "owner": "spending",
+   "weight": 3,
+   "hint": "Split with someone or paid back",
+   "defaultSource": "client",
+   "options": [
+    [
+     "no",
+     "No"
+    ],
+    [
+     "shared",
+     "Shared"
+    ],
+    [
+     "reimbursed",
+     "Reimbursed"
+    ]
+   ]
+  },
+  "linkedIncome": {
+   "id": "linkedIncome",
+   "label": "Paid from",
+   "kind": "text",
+   "owner": "spending",
+   "weight": 2,
+   "hint": "Which income pays this, if it matters",
+   "defaultSource": "client"
+  },
+  "fatFloor": {
+   "id": "fatFloor",
+   "label": "In the FAT floor",
+   "kind": "bool",
+   "owner": "spending",
+   "weight": 5,
+   "hint": "Part of the lean month: food, accommodation, transportation you would keep",
+   "defaultSource": "client"
+  },
+  "primaryCard": {
+   "id": "primaryCard",
+   "label": "Card used",
+   "kind": "text",
+   "owner": "spending",
+   "weight": 3,
+   "hint": "The card this usually goes on (from Debt and Credit)",
+   "defaultSource": "client"
+  },
+  "summaryTotal": {
+   "id": "summaryTotal",
+   "label": "Rough monthly total",
+   "kind": "money",
+   "owner": "spending",
+   "weight": 9,
+   "hint": "One number for the month while lines are still coming. Detail overrides it once lines exist",
+   "defaultSource": "client",
+   "cadence": true,
+   "primary": true,
+   "defaultCadence": "month"
+  },
+  "savingsLanding": {
+   "id": "savingsLanding",
+   "label": "Savings landing",
+   "kind": "money",
+   "owner": "spending",
+   "weight": 7,
+   "hint": "Transfers that actually reach savings or investments each month",
+   "defaultSource": "client",
+   "cadence": true,
+   "primary": true,
+   "defaultCadence": "month"
+  },
+  "savingsDestination": {
+   "id": "savingsDestination",
+   "label": "Goes to",
+   "kind": "text",
+   "owner": "spending",
+   "weight": 2,
+   "hint": "Which account it lands in",
+   "defaultSource": "client"
+  },
+  "otherSpending": {
+   "id": "otherSpending",
+   "label": "Amount",
+   "kind": "money",
+   "owner": "spending",
+   "weight": 5,
+   "hint": "",
+   "defaultSource": "client",
+   "cadence": true,
+   "primary": true,
+   "defaultCadence": "month"
+  },
+  "cardName": {
+   "id": "cardName",
+   "label": "Card",
+   "kind": "text",
+   "owner": "debt",
+   "weight": 6,
+   "hint": "Pick from the library or type a name",
+   "defaultSource": "client",
+   "library": "cards"
+  },
+  "balance": {
+   "id": "balance",
+   "label": "Balance",
+   "kind": "money",
+   "owner": "debt",
+   "weight": 10,
+   "hint": "What is owed today",
+   "defaultSource": "client",
+   "primary": true
+  },
+  "apr": {
+   "id": "apr",
+   "label": "Standard APR",
+   "kind": "percent",
+   "owner": "debt",
+   "weight": 9,
+   "hint": "The rate after any promo",
+   "defaultSource": "client"
+  },
+  "promoApr": {
+   "id": "promoApr",
+   "label": "Promo APR",
+   "kind": "percent",
+   "owner": "debt",
+   "weight": 8,
+   "hint": "0 for a 0% offer; blank if none",
+   "defaultSource": "client"
+  },
+  "promoEnd": {
+   "id": "promoEnd",
+   "label": "Promo ends",
+   "kind": "month",
+   "owner": "debt",
+   "weight": 10,
+   "hint": "When the promo rate stops",
+   "defaultSource": "client"
+  },
+  "promoType": {
+   "id": "promoType",
+   "label": "Promo type",
+   "kind": "choice",
+   "owner": "debt",
+   "weight": 4,
+   "hint": "",
+   "defaultSource": "client",
+   "options": [
+    [
+     "purchase",
+     "Purchases"
+    ],
+    [
+     "bt",
+     "Balance transfer"
+    ],
+    [
+     "both",
+     "Both"
+    ]
+   ]
+  },
+  "btFee": {
+   "id": "btFee",
+   "label": "Transfer fee",
+   "kind": "percent",
+   "owner": "debt",
+   "weight": 4,
+   "hint": "Balance transfer fee as a percent",
+   "defaultSource": "client"
+  },
+  "minimum": {
+   "id": "minimum",
+   "label": "Minimum payment",
+   "kind": "money",
+   "owner": "debt",
+   "weight": 8,
+   "hint": "This month's minimum",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "month"
+  },
+  "creditLimit": {
+   "id": "creditLimit",
+   "label": "Credit limit",
+   "kind": "money",
+   "owner": "debt",
+   "weight": 6,
+   "hint": "",
+   "defaultSource": "client"
+  },
+  "dueDay": {
+   "id": "dueDay",
+   "label": "Due day",
+   "kind": "int",
+   "owner": "debt",
+   "weight": 3,
+   "hint": "Day of the month",
+   "defaultSource": "client"
+  },
+  "annualFee": {
+   "id": "annualFee",
+   "label": "Annual fee",
+   "kind": "money",
+   "owner": "debt",
+   "weight": 6,
+   "hint": "Charged once a year",
+   "defaultSource": "lookup-verify"
+  },
+  "creditsUsed": {
+   "id": "creditsUsed",
+   "label": "Credits used",
+   "kind": "credits",
+   "owner": "debt",
+   "weight": 5,
+   "hint": "For each statement credit: yes, partly or no",
+   "defaultSource": "client"
+  },
+  "autopay": {
+   "id": "autopay",
+   "label": "Autopay",
+   "kind": "choice",
+   "owner": "debt",
+   "weight": 3,
+   "hint": "",
+   "defaultSource": "client",
+   "options": [
+    [
+     "none",
+     "Off"
+    ],
+    [
+     "minimum",
+     "Minimum"
+    ],
+    [
+     "statement",
+     "Statement balance"
+    ],
+    [
+     "full",
+     "Full balance"
+    ]
+   ]
+  },
+  "federalPrivate": {
+   "id": "federalPrivate",
+   "label": "Federal or private",
+   "kind": "choice",
+   "owner": "debt",
+   "weight": 6,
+   "hint": "",
+   "defaultSource": "client",
+   "options": [
+    [
+     "federal",
+     "Federal"
+    ],
+    [
+     "private",
+     "Private"
+    ]
+   ]
+  },
+  "loanType": {
+   "id": "loanType",
+   "label": "Loan type",
+   "kind": "choice",
+   "owner": "debt",
+   "weight": 4,
+   "hint": "",
+   "defaultSource": "client",
+   "options": [
+    [
+     "direct-sub",
+     "Direct subsidized"
+    ],
+    [
+     "direct-unsub",
+     "Direct unsubsidized"
+    ],
+    [
+     "grad-plus",
+     "Grad PLUS"
+    ],
+    [
+     "parent-plus",
+     "Parent PLUS"
+    ],
+    [
+     "consolidation",
+     "Consolidation"
+    ],
+    [
+     "private",
+     "Private"
+    ],
+    [
+     "other",
+     "Other"
+    ]
+   ]
+  },
+  "rate": {
+   "id": "rate",
+   "label": "Interest rate",
+   "kind": "percent",
+   "owner": "debt",
+   "weight": 9,
+   "hint": "",
+   "defaultSource": "client",
+   "primaryRate": true
+  },
+  "repaymentPlan": {
+   "id": "repaymentPlan",
+   "label": "Repayment plan",
+   "kind": "choice",
+   "owner": "debt",
+   "weight": 5,
+   "hint": "",
+   "defaultSource": "client",
+   "options": [
+    [
+     "standard",
+     "Standard"
+    ],
+    [
+     "graduated",
+     "Graduated"
+    ],
+    [
+     "extended",
+     "Extended"
+    ],
+    [
+     "save",
+     "SAVE"
+    ],
+    [
+     "paye",
+     "PAYE"
+    ],
+    [
+     "ibr",
+     "IBR"
+    ],
+    [
+     "icr",
+     "ICR"
+    ],
+    [
+     "rap",
+     "RAP"
+    ],
+    [
+     "other",
+     "Other"
+    ]
+   ]
+  },
+  "pslfEligible": {
+   "id": "pslfEligible",
+   "label": "PSLF eligible",
+   "kind": "bool",
+   "owner": "debt",
+   "weight": 6,
+   "hint": "Public Service Loan Forgiveness",
+   "defaultSource": "client"
+  },
+  "pslfPayments": {
+   "id": "pslfPayments",
+   "label": "PSLF qualifying payments",
+   "kind": "int",
+   "owner": "debt",
+   "weight": 5,
+   "hint": "Out of 120",
+   "defaultSource": "client"
+  },
+  "forbearance": {
+   "id": "forbearance",
+   "label": "In forbearance",
+   "kind": "bool",
+   "owner": "debt",
+   "weight": 5,
+   "hint": "",
+   "defaultSource": "client"
+  },
+  "interestDeductible": {
+   "id": "interestDeductible",
+   "label": "Interest deductible",
+   "kind": "bool",
+   "owner": "debt",
+   "weight": 2,
+   "hint": "Student loan interest deduction likely applies",
+   "defaultSource": "client"
+  },
+  "payment": {
+   "id": "payment",
+   "label": "Payment",
+   "kind": "money",
+   "owner": "debt",
+   "weight": 8,
+   "hint": "Regular payment",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "month"
+  },
+  "monthsLeft": {
+   "id": "monthsLeft",
+   "label": "Months left",
+   "kind": "int",
+   "owner": "debt",
+   "weight": 6,
+   "hint": "",
+   "defaultSource": "client"
+  },
+  "vehicleValue": {
+   "id": "vehicleValue",
+   "label": "Vehicle value",
+   "kind": "money",
+   "owner": "debt",
+   "weight": 4,
+   "hint": "Private-party value today",
+   "defaultSource": "lookup-confirmed"
+  },
+  "fixedVariable": {
+   "id": "fixedVariable",
+   "label": "Fixed or variable",
+   "kind": "choice",
+   "owner": "debt",
+   "weight": 5,
+   "hint": "",
+   "defaultSource": "client",
+   "options": [
+    [
+     "fixed",
+     "Fixed"
+    ],
+    [
+     "variable",
+     "Variable"
+    ]
+   ]
+  },
+  "termLeftMonths": {
+   "id": "termLeftMonths",
+   "label": "Term left",
+   "kind": "int",
+   "owner": "debt",
+   "weight": 6,
+   "hint": "Months left on the loan",
+   "defaultSource": "client"
+  },
+  "principalInterest": {
+   "id": "principalInterest",
+   "label": "Principal and interest",
+   "kind": "money",
+   "owner": "debt",
+   "weight": 8,
+   "hint": "The P and I part of the payment per month",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "month"
+  },
+  "escrowTaxes": {
+   "id": "escrowTaxes",
+   "label": "Property taxes",
+   "kind": "money",
+   "owner": "debt",
+   "weight": 6,
+   "hint": "Per month, escrowed or not",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "month"
+  },
+  "escrowInsurance": {
+   "id": "escrowInsurance",
+   "label": "Home insurance",
+   "kind": "money",
+   "owner": "debt",
+   "weight": 5,
+   "hint": "Per month",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "month"
+  },
+  "hoa": {
+   "id": "hoa",
+   "label": "HOA",
+   "kind": "money",
+   "owner": "debt",
+   "weight": 4,
+   "hint": "Per month",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "month"
+  },
+  "pmi": {
+   "id": "pmi",
+   "label": "PMI",
+   "kind": "money",
+   "owner": "debt",
+   "weight": 6,
+   "hint": "Per month; 0 if none",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "month"
+  },
+  "homeValue": {
+   "id": "homeValue",
+   "label": "Home value",
+   "kind": "money",
+   "owner": "debt",
+   "weight": 6,
+   "hint": "Today's estimate",
+   "defaultSource": "lookup-confirmed"
+  },
+  "terms": {
+   "id": "terms",
+   "label": "Terms",
+   "kind": "text",
+   "owner": "debt",
+   "weight": 3,
+   "hint": "What was agreed: when, how much, any interest",
+   "defaultSource": "client"
+  },
+  "reasonsToKeep": {
+   "id": "reasonsToKeep",
+   "label": "Reasons to keep it",
+   "kind": "text",
+   "owner": "debt",
+   "weight": 3,
+   "hint": "Why this debt may be worth keeping for now",
+   "defaultSource": "client"
+  },
+  "debtKind": {
+   "id": "debtKind",
+   "label": "Kind",
+   "kind": "choice",
+   "owner": "debt",
+   "weight": 4,
+   "hint": "",
+   "defaultSource": "client",
+   "options": [
+    [
+     "personal",
+     "Personal loan"
+    ],
+    [
+     "family",
+     "Family or friend"
+    ],
+    [
+     "medical",
+     "Medical"
+    ],
+    [
+     "bnpl",
+     "Buy now pay later"
+    ],
+    [
+     "other",
+     "Other"
+    ]
+   ]
+  },
+  "score": {
+   "id": "score",
+   "label": "Score",
+   "kind": "int",
+   "owner": "debt",
+   "weight": 5,
+   "hint": "300 to 850",
+   "defaultSource": "client",
+   "primary": true
+  },
+  "bureau": {
+   "id": "bureau",
+   "label": "Bureau",
+   "kind": "choice",
+   "owner": "debt",
+   "weight": 2,
+   "hint": "",
+   "defaultSource": "client",
+   "options": [
+    [
+     "experian",
+     "Experian"
+    ],
+    [
+     "equifax",
+     "Equifax"
+    ],
+    [
+     "transunion",
+     "TransUnion"
+    ],
+    [
+     "fico",
+     "FICO"
+    ],
+    [
+     "vantage",
+     "VantageScore"
+    ]
+   ]
+  },
+  "debtSummaryTotal": {
+   "id": "debtSummaryTotal",
+   "label": "Rough total debt",
+   "kind": "money",
+   "owner": "debt",
+   "weight": 9,
+   "hint": "One number while the list is still coming. Detail overrides it",
+   "defaultSource": "client",
+   "primary": true
+  },
+  "otherDebt": {
+   "id": "otherDebt",
+   "label": "Amount owed",
+   "kind": "money",
+   "owner": "debt",
+   "weight": 6,
+   "hint": "",
+   "defaultSource": "client",
+   "primary": true
+  },
+  "insuranceType": {
+   "id": "insuranceType",
+   "label": "Type",
+   "kind": "choice",
+   "owner": "safety",
+   "weight": 6,
+   "hint": "",
+   "defaultSource": "client",
+   "options": [
+    [
+     "health",
+     "Health"
+    ],
+    [
+     "disability",
+     "Disability"
+    ],
+    [
+     "life",
+     "Life"
+    ],
+    [
+     "renters",
+     "Renters"
+    ],
+    [
+     "home",
+     "Homeowners"
+    ],
+    [
+     "auto",
+     "Auto"
+    ],
+    [
+     "umbrella",
+     "Umbrella"
+    ],
+    [
+     "other",
+     "Other"
+    ]
+   ]
+  },
+  "coverage": {
+   "id": "coverage",
+   "label": "Coverage",
+   "kind": "money",
+   "owner": "safety",
+   "weight": 6,
+   "hint": "The amount covered or the benefit",
+   "defaultSource": "client"
+  },
+  "premium": {
+   "id": "premium",
+   "label": "Premium",
+   "kind": "money",
+   "owner": "safety",
+   "weight": 6,
+   "hint": "What it costs",
+   "defaultSource": "client",
+   "cadence": true,
+   "primary": true,
+   "defaultCadence": "month"
+  },
+  "deductible": {
+   "id": "deductible",
+   "label": "Deductible",
+   "kind": "money",
+   "owner": "safety",
+   "weight": 4,
+   "hint": "",
+   "defaultSource": "client"
+  },
+  "unemploymentWeekly": {
+   "id": "unemploymentWeekly",
+   "label": "Weekly benefit estimate",
+   "kind": "money",
+   "owner": "safety",
+   "weight": 6,
+   "hint": "Your state's weekly unemployment benefit if work stopped",
+   "defaultSource": "lookup-verify",
+   "primary": true
+  },
+  "unemploymentWeeks": {
+   "id": "unemploymentWeeks",
+   "label": "Weeks of benefit",
+   "kind": "int",
+   "owner": "safety",
+   "weight": 4,
+   "hint": "Usually 26",
+   "defaultSource": "lookup-verify"
+  },
+  "cutAbility": {
+   "id": "cutAbility",
+   "label": "Could cut per month",
+   "kind": "money",
+   "owner": "safety",
+   "weight": 6,
+   "hint": "What the client says they could stop spending in a pinch",
+   "defaultSource": "client",
+   "cadence": true,
+   "primary": true,
+   "defaultCadence": "month"
+  },
+  "otherSafety": {
+   "id": "otherSafety",
+   "label": "Amount",
+   "kind": "money",
+   "owner": "safety",
+   "weight": 4,
+   "hint": "",
+   "defaultSource": "client",
+   "cadence": true,
+   "primary": true,
+   "defaultCadence": "month"
+  },
+  "accountType": {
+   "id": "accountType",
+   "label": "Account type",
+   "kind": "choice",
+   "owner": "invest",
+   "weight": 8,
+   "hint": "Decides the tax bucket and liquidity tier",
+   "defaultSource": "client",
+   "options": [
+    [
+     "401k",
+     "401(k)"
+    ],
+    [
+     "roth401k",
+     "Roth 401(k)"
+    ],
+    [
+     "403b",
+     "403(b)"
+    ],
+    [
+     "457b",
+     "457(b)"
+    ],
+    [
+     "tsp",
+     "TSP"
+    ],
+    [
+     "tradIra",
+     "Traditional IRA"
+    ],
+    [
+     "rothIra",
+     "Roth IRA"
+    ],
+    [
+     "sep",
+     "SEP IRA"
+    ],
+    [
+     "solo401k",
+     "Solo 401(k)"
+    ],
+    [
+     "hsa",
+     "HSA"
+    ],
+    [
+     "529",
+     "529"
+    ],
+    [
+     "taxable",
+     "Taxable brokerage"
+    ],
+    [
+     "hysa",
+     "High-yield savings"
+    ],
+    [
+     "checking",
+     "Checking"
+    ],
+    [
+     "cd",
+     "CD"
+    ],
+    [
+     "ibonds",
+     "I bonds"
+    ],
+    [
+     "crypto",
+     "Crypto"
+    ],
+    [
+     "realEstate",
+     "Real estate equity"
+    ],
+    [
+     "pension",
+     "Pension"
+    ],
+    [
+     "other",
+     "Other"
+    ]
+   ]
+  },
+  "accountBalance": {
+   "id": "accountBalance",
+   "label": "Balance",
+   "kind": "money",
+   "owner": "invest",
+   "weight": 10,
+   "hint": "As of the statement date",
+   "defaultSource": "client",
+   "primary": true
+  },
+  "contribAmount": {
+   "id": "contribAmount",
+   "label": "Contribution",
+   "kind": "money",
+   "owner": "invest",
+   "weight": 7,
+   "hint": "What goes in from the bank (payroll deferrals live on the Income row)",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "month"
+  },
+  "contribPct": {
+   "id": "contribPct",
+   "label": "Contribution %",
+   "kind": "percent",
+   "owner": "invest",
+   "weight": 5,
+   "hint": "If contributions are a percent of pay",
+   "defaultSource": "client"
+  },
+  "ytdContrib": {
+   "id": "ytdContrib",
+   "label": "Contributed this year",
+   "kind": "money",
+   "owner": "invest",
+   "weight": 5,
+   "hint": "Year to date",
+   "defaultSource": "client"
+  },
+  "allocStocks": {
+   "id": "allocStocks",
+   "label": "Stocks %",
+   "kind": "percent",
+   "owner": "invest",
+   "weight": 5,
+   "hint": "",
+   "defaultSource": "client"
+  },
+  "allocBonds": {
+   "id": "allocBonds",
+   "label": "Bonds %",
+   "kind": "percent",
+   "owner": "invest",
+   "weight": 5,
+   "hint": "",
+   "defaultSource": "client"
+  },
+  "allocCash": {
+   "id": "allocCash",
+   "label": "Cash %",
+   "kind": "percent",
+   "owner": "invest",
+   "weight": 4,
+   "hint": "",
+   "defaultSource": "client"
+  },
+  "allocOther": {
+   "id": "allocOther",
+   "label": "Other %",
+   "kind": "percent",
+   "owner": "invest",
+   "weight": 3,
+   "hint": "",
+   "defaultSource": "client"
+  },
+  "usShare": {
+   "id": "usShare",
+   "label": "US share %",
+   "kind": "percent",
+   "owner": "invest",
+   "weight": 3,
+   "hint": "Of the stock part",
+   "defaultSource": "client"
+  },
+  "targetYear": {
+   "id": "targetYear",
+   "label": "Target-date year",
+   "kind": "int",
+   "owner": "invest",
+   "weight": 3,
+   "hint": "If a target-date fund",
+   "defaultSource": "client"
+  },
+  "costBasis": {
+   "id": "costBasis",
+   "label": "Cost basis",
+   "kind": "money",
+   "owner": "invest",
+   "weight": 5,
+   "hint": "Taxable accounts only",
+   "defaultSource": "client"
+  },
+  "beneficiary": {
+   "id": "beneficiary",
+   "label": "Beneficiary named",
+   "kind": "bool",
+   "owner": "invest",
+   "weight": 5,
+   "hint": "",
+   "defaultSource": "client"
+  },
+  "accountRef": {
+   "id": "accountRef",
+   "label": "Account",
+   "kind": "text",
+   "owner": "invest",
+   "weight": 4,
+   "hint": "Which account holds it",
+   "defaultSource": "client"
+  },
+  "ticker": {
+   "id": "ticker",
+   "label": "Ticker",
+   "kind": "text",
+   "owner": "invest",
+   "weight": 5,
+   "hint": "Type a ticker to prefill from the fund library",
+   "defaultSource": "client",
+   "library": "funds"
+  },
+  "fundName": {
+   "id": "fundName",
+   "label": "Fund",
+   "kind": "text",
+   "owner": "invest",
+   "weight": 3,
+   "hint": "",
+   "defaultSource": "lookup-verify"
+  },
+  "expenseRatio": {
+   "id": "expenseRatio",
+   "label": "Expense ratio",
+   "kind": "percent",
+   "owner": "invest",
+   "weight": 7,
+   "hint": "Annual fee as a percent",
+   "defaultSource": "lookup-verify"
+  },
+  "assetClass": {
+   "id": "assetClass",
+   "label": "Asset class",
+   "kind": "choice",
+   "owner": "invest",
+   "weight": 4,
+   "hint": "",
+   "defaultSource": "lookup-verify",
+   "options": [
+    [
+     "us-stock",
+     "US stocks"
+    ],
+    [
+     "intl-stock",
+     "International stocks"
+    ],
+    [
+     "bond",
+     "Bonds"
+    ],
+    [
+     "target-date",
+     "Target date"
+    ],
+    [
+     "cash",
+     "Cash"
+    ],
+    [
+     "real-estate",
+     "Real estate"
+    ],
+    [
+     "other",
+     "Other"
+    ]
+   ]
+  },
+  "pctOfAccount": {
+   "id": "pctOfAccount",
+   "label": "% of account",
+   "kind": "percent",
+   "owner": "invest",
+   "weight": 5,
+   "hint": "",
+   "defaultSource": "client"
+  },
+  "investSummaryTotal": {
+   "id": "investSummaryTotal",
+   "label": "Rough total assets",
+   "kind": "money",
+   "owner": "invest",
+   "weight": 9,
+   "hint": "One number while the list is still coming. Detail overrides it",
+   "defaultSource": "client",
+   "primary": true
+  },
+  "otherAsset": {
+   "id": "otherAsset",
+   "label": "Value",
+   "kind": "money",
+   "owner": "invest",
+   "weight": 5,
+   "hint": "",
+   "defaultSource": "client",
+   "primary": true
+  },
+  "taxNote": {
+   "id": "taxNote",
+   "label": "Note",
+   "kind": "text",
+   "owner": "taxes",
+   "weight": 2,
+   "hint": "Anything the client said about taxes (refund size, a letter, a side gig)",
+   "defaultSource": "client"
+  },
+  "lastRefund": {
+   "id": "lastRefund",
+   "label": "Last refund or balance due",
+   "kind": "money",
+   "owner": "taxes",
+   "weight": 4,
+   "hint": "Positive for a refund, negative for a balance due",
+   "defaultSource": "client",
+   "primary": true
+  },
+  "otherTax": {
+   "id": "otherTax",
+   "label": "Amount",
+   "kind": "money",
+   "owner": "taxes",
+   "weight": 3,
+   "hint": "",
+   "defaultSource": "client",
+   "cadence": true,
+   "primary": true,
+   "defaultCadence": "year"
+  },
+  "goalCost": {
+   "id": "goalCost",
+   "label": "Cost",
+   "kind": "money",
+   "owner": "life",
+   "weight": 7,
+   "hint": "In today's dollars",
+   "defaultSource": "client",
+   "primary": true
+  },
+  "targetDate": {
+   "id": "targetDate",
+   "label": "Target date",
+   "kind": "month",
+   "owner": "life",
+   "weight": 6,
+   "hint": "",
+   "defaultSource": "client"
+  },
+  "priority": {
+   "id": "priority",
+   "label": "Priority",
+   "kind": "choice",
+   "owner": "life",
+   "weight": 5,
+   "hint": "",
+   "defaultSource": "client",
+   "options": [
+    [
+     "1",
+     "Must"
+    ],
+    [
+     "2",
+     "Should"
+    ],
+    [
+     "3",
+     "Nice"
+    ]
+   ]
+  },
+  "retirementAge": {
+   "id": "retirementAge",
+   "label": "Retirement age",
+   "kind": "int",
+   "owner": "life",
+   "weight": 7,
+   "hint": "Target age to stop needing to work",
+   "defaultSource": "client",
+   "primary": true
+  },
+  "gogo": {
+   "id": "gogo",
+   "label": "Go-go years",
+   "kind": "percent",
+   "owner": "life",
+   "weight": 3,
+   "hint": "Spending as a percent of today's, roughly 60 to 75",
+   "defaultSource": "estimated"
+  },
+  "slowgo": {
+   "id": "slowgo",
+   "label": "Slow-go years",
+   "kind": "percent",
+   "owner": "life",
+   "weight": 3,
+   "hint": "Roughly 75 to 85",
+   "defaultSource": "estimated"
+  },
+  "nogo": {
+   "id": "nogo",
+   "label": "No-go years",
+   "kind": "percent",
+   "owner": "life",
+   "weight": 3,
+   "hint": "85 and after",
+   "defaultSource": "estimated"
+  },
+  "otherLife": {
+   "id": "otherLife",
+   "label": "Amount",
+   "kind": "money",
+   "owner": "life",
+   "weight": 4,
+   "hint": "",
+   "defaultSource": "client",
+   "cadence": true,
+   "primary": true,
+   "defaultCadence": "oneoff"
+  }
+ }
+}

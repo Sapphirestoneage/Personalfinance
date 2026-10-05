@@ -1,0 +1,48 @@
+/* Money Rooms v3 design tokens. Every screen uses only these. No red. */
+:root {
+  --sapphire-900: #0B1F4D;   /* headers */
+  --sapphire-700: #0F52BA;   /* primary, active planet, links */
+  --sapphire-500: #2E6FD8;   /* chart series 1, focus */
+  --sapphire-300: #8FB3EE;   /* rough values, series 2 */
+  --sapphire-100: #E8F0FC;   /* table header, selected row */
+  --ink: #1A2233;
+  --slate: #6B7891;          /* labels, asOf */
+  --paper: #FFFFFF;
+  --paper-2: #F7F9FC;
+  --gold: #C9A227;           /* wins and unlocks only */
+  --amber: #D98E04;          /* needs attention */
+  --line: #D5DCE8;           /* 1px borders (MR-006) */
+  --line-soft: #E6EBF3;      /* row dividers */
+
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --w-regular: 400;
+  --w-semibold: 600;
+
+  --fs-11: 11px;
+  --fs-12: 12px;
+  --fs-13: 13px;
+  --fs-14: 14px;
+  --fs-16: 16px;
+  --fs-20: 20px;
+  --fs-24: 24px;
+  --fs-32: 32px;
+
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 16px;
+  --s-4: 24px;
+  --s-5: 32px;
+  --s-6: 48px;
+
+  --r-field: 4px;
+  --r-panel: 8px;
+
+  --field-w: 112px;          /* same width for every field in a column */
+  --field-w-wide: 176px;
+  --field-h: 28px;
+  --row-h: 32px;
+
+  --max-w: 1440px;
+  --sidebar-w: 208px;
+}

@@ -45,6 +45,7 @@ Shortcuts: `/start`, `/room <id>`, `/find <words>`, `/simplify`, `/drift`, `/wra
 - Exception (D-339): `coach/` is a separate app (like `dnd/`), three screens, its own
   tests and log (`coach/README.md`). Nothing outside `coach/` changes for it.
 - Exception (D-340): `marketing/` is a separate app the same way (`marketing/README.md`).
+- Exception (D-341): `money-rooms-v3/` is a separate app the same way (`money-rooms-v3/README.md`).
 
 ## Stop and ask instead of guessing
 

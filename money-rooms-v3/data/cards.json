@@ -1,0 +1,1592 @@
+{
+ "asOf": "2026-10-05",
+ "source": "Issuer public card pages as remembered by the builder; every entry written from memory and marked verify",
+ "verify": true,
+ "earnCategories": [
+  "dining",
+  "groceries",
+  "travel",
+  "gas",
+  "streaming",
+  "other"
+ ],
+ "cards": [
+  {
+   "id": "chase-sapphire-preferred",
+   "issuer": "Chase",
+   "name": "Sapphire Preferred",
+   "network": "Visa",
+   "annualFeeCents": 9500,
+   "earn": {
+    "dining": 3,
+    "groceries": 3,
+    "travel": 2,
+    "gas": 1,
+    "streaming": 3,
+    "other": 1
+   },
+   "credits": [
+    {
+     "name": "Hotel credit (Chase Travel)",
+     "annualValueCents": 5000
+    }
+   ],
+   "perks": [
+    "Points worth 25% more through Chase Travel",
+    "Primary rental car coverage"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "20.99% to 27.99%",
+   "pointValueCents": 1.25,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "chase-sapphire-reserve",
+   "issuer": "Chase",
+   "name": "Sapphire Reserve",
+   "network": "Visa",
+   "annualFeeCents": 79500,
+   "earn": {
+    "dining": 3,
+    "groceries": 1,
+    "travel": 4,
+    "gas": 1,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [
+    {
+     "name": "Travel credit",
+     "annualValueCents": 30000
+    },
+    {
+     "name": "The Edit hotel credit",
+     "annualValueCents": 50000
+    },
+    {
+     "name": "Dining credit",
+     "annualValueCents": 30000
+    },
+    {
+     "name": "StubHub credit",
+     "annualValueCents": 30000
+    },
+    {
+     "name": "DoorDash credits",
+     "annualValueCents": 30000
+    },
+    {
+     "name": "Lyft credit",
+     "annualValueCents": 12000
+    }
+   ],
+   "perks": [
+    "Priority Pass lounge access",
+    "Chase Sapphire Lounges"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "20.99% to 27.99%",
+   "pointValueCents": 1.5,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "chase-freedom-unlimited",
+   "issuer": "Chase",
+   "name": "Freedom Unlimited",
+   "network": "Visa",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 3,
+    "groceries": 1.5,
+    "travel": 5,
+    "gas": 1.5,
+    "streaming": 1.5,
+    "other": 1.5
+   },
+   "credits": [],
+   "perks": [
+    "1.5% everywhere, 3% dining and drugstores, 5% Chase Travel"
+   ],
+   "foreignTransactionFee": 3,
+   "aprRange": "19.99% to 28.74%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "chase-freedom-flex",
+   "issuer": "Chase",
+   "name": "Freedom Flex",
+   "network": "Mastercard",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 3,
+    "groceries": 1,
+    "travel": 5,
+    "gas": 1,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [],
+   "perks": [
+    "5% rotating categories up to $1,500 a quarter"
+   ],
+   "foreignTransactionFee": 3,
+   "aprRange": "19.99% to 28.74%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "chase-freedom-rise",
+   "issuer": "Chase",
+   "name": "Freedom Rise",
+   "network": "Visa",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 1.5,
+    "groceries": 1.5,
+    "travel": 1.5,
+    "gas": 1.5,
+    "streaming": 1.5,
+    "other": 1.5
+   },
+   "credits": [],
+   "perks": [
+    "Starter card, 1.5% everywhere"
+   ],
+   "foreignTransactionFee": 3,
+   "aprRange": "26.99%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "chase-ink-business-preferred",
+   "issuer": "Chase",
+   "name": "Ink Business Preferred",
+   "network": "Visa",
+   "annualFeeCents": 9500,
+   "earn": {
+    "dining": 1,
+    "groceries": 1,
+    "travel": 3,
+    "gas": 1,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [],
+   "perks": [
+    "3x on shipping, advertising, internet and phone"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "20.49% to 26.49%",
+   "pointValueCents": 1.25,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "chase-ink-business-cash",
+   "issuer": "Chase",
+   "name": "Ink Business Cash",
+   "network": "Visa",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 2,
+    "groceries": 1,
+    "travel": 1,
+    "gas": 2,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [],
+   "perks": [
+    "5% office supplies and internet, cable, phone"
+   ],
+   "foreignTransactionFee": 3,
+   "aprRange": "17.49% to 25.49%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "chase-ink-business-unlimited",
+   "issuer": "Chase",
+   "name": "Ink Business Unlimited",
+   "network": "Visa",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 1.5,
+    "groceries": 1.5,
+    "travel": 1.5,
+    "gas": 1.5,
+    "streaming": 1.5,
+    "other": 1.5
+   },
+   "credits": [],
+   "perks": [
+    "1.5% everywhere"
+   ],
+   "foreignTransactionFee": 3,
+   "aprRange": "17.49% to 25.49%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "chase-united-explorer",
+   "issuer": "Chase",
+   "name": "United Explorer",
+   "network": "Visa",
+   "annualFeeCents": 15000,
+   "earn": {
+    "dining": 2,
+    "groceries": 1,
+    "travel": 2,
+    "gas": 1,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [
+    {
+     "name": "United travel credit",
+     "annualValueCents": 10000
+    },
+    {
+     "name": "Rideshare credit",
+     "annualValueCents": 6000
+    },
+    {
+     "name": "Hotel credit",
+     "annualValueCents": 10000
+    }
+   ],
+   "perks": [
+    "Free checked bag on United",
+    "Two United Club passes a year"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "20.99% to 27.99%",
+   "pointValueCents": 1.2,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "chase-amazon-prime-visa",
+   "issuer": "Chase",
+   "name": "Amazon Prime Visa",
+   "network": "Visa",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 2,
+    "groceries": 2,
+    "travel": 1,
+    "gas": 2,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [],
+   "perks": [
+    "5% at Amazon and Whole Foods with Prime"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "19.99% to 28.74%",
+   "pointValueCents": 1.0,
+   "store": true,
+   "verify": true
+  },
+  {
+   "id": "chase-marriott-bonvoy-boundless",
+   "issuer": "Chase",
+   "name": "Marriott Bonvoy Boundless",
+   "network": "Visa",
+   "annualFeeCents": 9500,
+   "earn": {
+    "dining": 2,
+    "groceries": 2,
+    "travel": 2,
+    "gas": 2,
+    "streaming": 2,
+    "other": 2
+   },
+   "credits": [],
+   "perks": [
+    "Free night award each year (up to 35,000 points)"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "20.99% to 27.99%",
+   "pointValueCents": 0.7,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "american-express-gold-card",
+   "issuer": "American Express",
+   "name": "Gold Card",
+   "network": "Amex",
+   "annualFeeCents": 32500,
+   "earn": {
+    "dining": 4,
+    "groceries": 4,
+    "travel": 3,
+    "gas": 1,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [
+    {
+     "name": "Dining credit",
+     "annualValueCents": 12000
+    },
+    {
+     "name": "Uber Cash",
+     "annualValueCents": 12000
+    },
+    {
+     "name": "Resy credit",
+     "annualValueCents": 10000
+    },
+    {
+     "name": "Dunkin credit",
+     "annualValueCents": 8400
+    }
+   ],
+   "perks": [
+    "4x restaurants up to $50,000 a year",
+    "4x US supermarkets up to $25,000 a year"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "20.24% to 29.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "american-express-platinum-card",
+   "issuer": "American Express",
+   "name": "Platinum Card",
+   "network": "Amex",
+   "annualFeeCents": 89500,
+   "earn": {
+    "dining": 1,
+    "groceries": 1,
+    "travel": 5,
+    "gas": 1,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [
+    {
+     "name": "Hotel credit",
+     "annualValueCents": 60000
+    },
+    {
+     "name": "Airline fee credit",
+     "annualValueCents": 20000
+    },
+    {
+     "name": "Uber Cash",
+     "annualValueCents": 20000
+    },
+    {
+     "name": "Digital entertainment",
+     "annualValueCents": 30000
+    },
+    {
+     "name": "Resy credit",
+     "annualValueCents": 40000
+    },
+    {
+     "name": "Lululemon credit",
+     "annualValueCents": 30000
+    },
+    {
+     "name": "Equinox credit",
+     "annualValueCents": 30000
+    },
+    {
+     "name": "Walmart+ credit",
+     "annualValueCents": 15500
+    },
+    {
+     "name": "Oura credit",
+     "annualValueCents": 20000
+    },
+    {
+     "name": "Saks credit",
+     "annualValueCents": 10000
+    },
+    {
+     "name": "CLEAR credit",
+     "annualValueCents": 20900
+    }
+   ],
+   "perks": [
+    "Centurion Lounges",
+    "Hotel elite status"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "20.24% to 29.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "american-express-blue-cash-preferred",
+   "issuer": "American Express",
+   "name": "Blue Cash Preferred",
+   "network": "Amex",
+   "annualFeeCents": 9500,
+   "earn": {
+    "dining": 1,
+    "groceries": 6,
+    "travel": 3,
+    "gas": 3,
+    "streaming": 6,
+    "other": 1
+   },
+   "credits": [
+    {
+     "name": "Disney Bundle credit",
+     "annualValueCents": 8400
+    }
+   ],
+   "perks": [
+    "6% US supermarkets up to $6,000 a year",
+    "6% select streaming",
+    "3% transit and US gas"
+   ],
+   "foreignTransactionFee": 2.7,
+   "aprRange": "19.24% to 29.99%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "american-express-blue-cash-everyday",
+   "issuer": "American Express",
+   "name": "Blue Cash Everyday",
+   "network": "Amex",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 1,
+    "groceries": 3,
+    "travel": 1,
+    "gas": 3,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [
+    {
+     "name": "Disney Bundle credit",
+     "annualValueCents": 8400
+    },
+    {
+     "name": "Home Chef credit",
+     "annualValueCents": 18000
+    }
+   ],
+   "perks": [
+    "3% US supermarkets, US gas and US online retail up to $6,000 each"
+   ],
+   "foreignTransactionFee": 2.7,
+   "aprRange": "19.24% to 29.99%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "american-express-green-card",
+   "issuer": "American Express",
+   "name": "Green Card",
+   "network": "Amex",
+   "annualFeeCents": 15000,
+   "earn": {
+    "dining": 3,
+    "groceries": 1,
+    "travel": 3,
+    "gas": 1,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [
+    {
+     "name": "CLEAR credit",
+     "annualValueCents": 20900
+    }
+   ],
+   "perks": [
+    "3x restaurants, transit and travel"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "20.24% to 29.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "american-express-delta-skymiles-gold",
+   "issuer": "American Express",
+   "name": "Delta SkyMiles Gold",
+   "network": "Amex",
+   "annualFeeCents": 15000,
+   "earn": {
+    "dining": 2,
+    "groceries": 2,
+    "travel": 2,
+    "gas": 1,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [
+    {
+     "name": "Delta flight credit",
+     "annualValueCents": 20000
+    }
+   ],
+   "perks": [
+    "Free checked bag on Delta"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "20.24% to 29.24%",
+   "pointValueCents": 1.2,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "american-express-hilton-honors",
+   "issuer": "American Express",
+   "name": "Hilton Honors",
+   "network": "Amex",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 5,
+    "groceries": 5,
+    "travel": 3,
+    "gas": 5,
+    "streaming": 3,
+    "other": 3
+   },
+   "credits": [],
+   "perks": [
+    "Hilton Silver status"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "20.24% to 29.24%",
+   "pointValueCents": 0.5,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "american-express-everyday-card",
+   "issuer": "American Express",
+   "name": "Everyday Card",
+   "network": "Amex",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 1,
+    "groceries": 2,
+    "travel": 2,
+    "gas": 1,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [],
+   "perks": [
+    "20% bonus with 20 purchases a month"
+   ],
+   "foreignTransactionFee": 2.7,
+   "aprRange": "19.24% to 29.99%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "american-express-business-gold",
+   "issuer": "American Express",
+   "name": "Business Gold",
+   "network": "Amex",
+   "annualFeeCents": 37500,
+   "earn": {
+    "dining": 1,
+    "groceries": 1,
+    "travel": 3,
+    "gas": 1,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [
+    {
+     "name": "Flexible business credit",
+     "annualValueCents": 24000
+    },
+    {
+     "name": "Walmart+ credit",
+     "annualValueCents": 15500
+    }
+   ],
+   "perks": [
+    "4x on top two business categories each month"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "18.49% to 27.49%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "capital-one-venture-rewards",
+   "issuer": "Capital One",
+   "name": "Venture Rewards",
+   "network": "Visa",
+   "annualFeeCents": 9500,
+   "earn": {
+    "dining": 2,
+    "groceries": 2,
+    "travel": 5,
+    "gas": 2,
+    "streaming": 2,
+    "other": 2
+   },
+   "credits": [],
+   "perks": [
+    "2x everywhere, 5x hotels and cars through Capital One Travel",
+    "Global Entry or TSA PreCheck credit"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "19.99% to 29.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "capital-one-venture-x",
+   "issuer": "Capital One",
+   "name": "Venture X",
+   "network": "Visa",
+   "annualFeeCents": 39500,
+   "earn": {
+    "dining": 2,
+    "groceries": 2,
+    "travel": 10,
+    "gas": 2,
+    "streaming": 2,
+    "other": 2
+   },
+   "credits": [
+    {
+     "name": "Capital One Travel credit",
+     "annualValueCents": 30000
+    }
+   ],
+   "perks": [
+    "10,000 anniversary miles",
+    "Priority Pass and Capital One Lounges"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "19.99% to 29.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "capital-one-ventureone",
+   "issuer": "Capital One",
+   "name": "VentureOne",
+   "network": "Visa",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 1.25,
+    "groceries": 1.25,
+    "travel": 5,
+    "gas": 1.25,
+    "streaming": 1.25,
+    "other": 1.25
+   },
+   "credits": [],
+   "perks": [
+    "1.25x everywhere"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "19.24% to 29.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "capital-one-savorone",
+   "issuer": "Capital One",
+   "name": "SavorOne",
+   "network": "Mastercard",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 3,
+    "groceries": 3,
+    "travel": 1,
+    "gas": 1,
+    "streaming": 3,
+    "other": 1
+   },
+   "credits": [],
+   "perks": [
+    "3% dining, groceries, entertainment and streaming"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "19.24% to 29.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "capital-one-savor",
+   "issuer": "Capital One",
+   "name": "Savor",
+   "network": "Mastercard",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 3,
+    "groceries": 3,
+    "travel": 5,
+    "gas": 1,
+    "streaming": 3,
+    "other": 1
+   },
+   "credits": [],
+   "perks": [
+    "3% dining, groceries, entertainment, streaming; 5% Capital One Travel"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "19.24% to 29.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "capital-one-quicksilver",
+   "issuer": "Capital One",
+   "name": "Quicksilver",
+   "network": "Mastercard",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 1.5,
+    "groceries": 1.5,
+    "travel": 5,
+    "gas": 1.5,
+    "streaming": 1.5,
+    "other": 1.5
+   },
+   "credits": [],
+   "perks": [
+    "1.5% everywhere"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "19.24% to 29.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "capital-one-platinum",
+   "issuer": "Capital One",
+   "name": "Platinum",
+   "network": "Mastercard",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 0,
+    "groceries": 0,
+    "travel": 0,
+    "gas": 0,
+    "streaming": 0,
+    "other": 0
+   },
+   "credits": [],
+   "perks": [
+    "No rewards; builds credit"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "29.74%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "capital-one-spark-cash-plus",
+   "issuer": "Capital One",
+   "name": "Spark Cash Plus",
+   "network": "Visa",
+   "annualFeeCents": 15000,
+   "earn": {
+    "dining": 2,
+    "groceries": 2,
+    "travel": 5,
+    "gas": 2,
+    "streaming": 2,
+    "other": 2
+   },
+   "credits": [
+    {
+     "name": "Annual fee refunded at $150,000 spend",
+     "annualValueCents": 15000
+    }
+   ],
+   "perks": [
+    "2% everywhere for business"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "Charge card, pay in full",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "citi-double-cash",
+   "issuer": "Citi",
+   "name": "Double Cash",
+   "network": "Mastercard",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 2,
+    "groceries": 2,
+    "travel": 2,
+    "gas": 2,
+    "streaming": 2,
+    "other": 2
+   },
+   "credits": [],
+   "perks": [
+    "1% when you buy, 1% when you pay"
+   ],
+   "foreignTransactionFee": 3,
+   "aprRange": "18.24% to 28.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "citi-strata-premier",
+   "issuer": "Citi",
+   "name": "Strata Premier",
+   "network": "Mastercard",
+   "annualFeeCents": 9500,
+   "earn": {
+    "dining": 3,
+    "groceries": 3,
+    "travel": 3,
+    "gas": 3,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [
+    {
+     "name": "Hotel credit (Citi Travel)",
+     "annualValueCents": 10000
+    }
+   ],
+   "perks": [
+    "3x restaurants, supermarkets, gas, EV charging, air travel and hotels"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "20.24% to 28.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "citi-custom-cash",
+   "issuer": "Citi",
+   "name": "Custom Cash",
+   "network": "Mastercard",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 5,
+    "groceries": 5,
+    "travel": 5,
+    "gas": 5,
+    "streaming": 5,
+    "other": 1
+   },
+   "credits": [],
+   "perks": [
+    "5% on your top eligible category each billing cycle up to $500"
+   ],
+   "foreignTransactionFee": 3,
+   "aprRange": "18.24% to 28.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "citi-simplicity",
+   "issuer": "Citi",
+   "name": "Simplicity",
+   "network": "Mastercard",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 0,
+    "groceries": 0,
+    "travel": 0,
+    "gas": 0,
+    "streaming": 0,
+    "other": 0
+   },
+   "credits": [],
+   "perks": [
+    "No late fees, long 0% intro period"
+   ],
+   "foreignTransactionFee": 3,
+   "aprRange": "18.24% to 28.99%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "citi-costco-anywhere-visa",
+   "issuer": "Citi",
+   "name": "Costco Anywhere Visa",
+   "network": "Visa",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 3,
+    "groceries": 1,
+    "travel": 3,
+    "gas": 4,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [],
+   "perks": [
+    "4% gas up to $7,000, 3% restaurants and travel, 2% Costco"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "20.24%",
+   "pointValueCents": 1.0,
+   "store": true,
+   "verify": true
+  },
+  {
+   "id": "citi-aadvantage-platinum-select",
+   "issuer": "Citi",
+   "name": "AAdvantage Platinum Select",
+   "network": "Mastercard",
+   "annualFeeCents": 9900,
+   "earn": {
+    "dining": 2,
+    "groceries": 2,
+    "travel": 2,
+    "gas": 2,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [],
+   "perks": [
+    "Free checked bag on American",
+    "Preferred boarding"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "20.24% to 28.99%",
+   "pointValueCents": 1.3,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "discover-it-cash-back",
+   "issuer": "Discover",
+   "name": "it Cash Back",
+   "network": "Discover",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 1,
+    "groceries": 1,
+    "travel": 1,
+    "gas": 1,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [],
+   "perks": [
+    "5% rotating categories up to $1,500 a quarter",
+    "Cashback Match first year"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "17.24% to 27.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "discover-it-miles",
+   "issuer": "Discover",
+   "name": "it Miles",
+   "network": "Discover",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 1.5,
+    "groceries": 1.5,
+    "travel": 1.5,
+    "gas": 1.5,
+    "streaming": 1.5,
+    "other": 1.5
+   },
+   "credits": [],
+   "perks": [
+    "1.5x everywhere, miles matched first year"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "17.24% to 27.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "discover-it-chrome",
+   "issuer": "Discover",
+   "name": "it Chrome",
+   "network": "Discover",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 2,
+    "groceries": 1,
+    "travel": 1,
+    "gas": 2,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [],
+   "perks": [
+    "2% gas and restaurants up to $1,000 a quarter"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "17.24% to 27.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "discover-it-student-cash-back",
+   "issuer": "Discover",
+   "name": "it Student Cash Back",
+   "network": "Discover",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 1,
+    "groceries": 1,
+    "travel": 1,
+    "gas": 1,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [],
+   "perks": [
+    "5% rotating categories, no credit history needed"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "17.24% to 26.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "bank-of-america-customized-cash-rewards",
+   "issuer": "Bank of America",
+   "name": "Customized Cash Rewards",
+   "network": "Visa",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 2,
+    "groceries": 2,
+    "travel": 1,
+    "gas": 3,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [],
+   "perks": [
+    "3% in a category you choose up to $2,500 a quarter, 2% grocery and wholesale"
+   ],
+   "foreignTransactionFee": 3,
+   "aprRange": "18.24% to 28.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "bank-of-america-unlimited-cash-rewards",
+   "issuer": "Bank of America",
+   "name": "Unlimited Cash Rewards",
+   "network": "Visa",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 1.5,
+    "groceries": 1.5,
+    "travel": 1.5,
+    "gas": 1.5,
+    "streaming": 1.5,
+    "other": 1.5
+   },
+   "credits": [],
+   "perks": [
+    "1.5% everywhere, more with Preferred Rewards"
+   ],
+   "foreignTransactionFee": 3,
+   "aprRange": "18.24% to 28.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "bank-of-america-travel-rewards",
+   "issuer": "Bank of America",
+   "name": "Travel Rewards",
+   "network": "Visa",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 1.5,
+    "groceries": 1.5,
+    "travel": 1.5,
+    "gas": 1.5,
+    "streaming": 1.5,
+    "other": 1.5
+   },
+   "credits": [],
+   "perks": [
+    "1.5 points everywhere, no foreign fee"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "18.24% to 28.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "bank-of-america-premium-rewards",
+   "issuer": "Bank of America",
+   "name": "Premium Rewards",
+   "network": "Visa",
+   "annualFeeCents": 9500,
+   "earn": {
+    "dining": 2,
+    "groceries": 2,
+    "travel": 2,
+    "gas": 1.5,
+    "streaming": 1.5,
+    "other": 1.5
+   },
+   "credits": [
+    {
+     "name": "Airline incidental credit",
+     "annualValueCents": 10000
+    }
+   ],
+   "perks": [
+    "2x travel and dining"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "20.24% to 28.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "wells-fargo-active-cash",
+   "issuer": "Wells Fargo",
+   "name": "Active Cash",
+   "network": "Visa",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 2,
+    "groceries": 2,
+    "travel": 2,
+    "gas": 2,
+    "streaming": 2,
+    "other": 2
+   },
+   "credits": [],
+   "perks": [
+    "2% everywhere"
+   ],
+   "foreignTransactionFee": 3,
+   "aprRange": "19.24% to 29.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "wells-fargo-autograph",
+   "issuer": "Wells Fargo",
+   "name": "Autograph",
+   "network": "Visa",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 3,
+    "groceries": 1,
+    "travel": 3,
+    "gas": 3,
+    "streaming": 3,
+    "other": 1
+   },
+   "credits": [],
+   "perks": [
+    "3x restaurants, travel, gas, transit, streaming, phone plans"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "19.24% to 29.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "wells-fargo-autograph-journey",
+   "issuer": "Wells Fargo",
+   "name": "Autograph Journey",
+   "network": "Visa",
+   "annualFeeCents": 9500,
+   "earn": {
+    "dining": 3,
+    "groceries": 1,
+    "travel": 5,
+    "gas": 1,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [
+    {
+     "name": "Airline credit",
+     "annualValueCents": 5000
+    }
+   ],
+   "perks": [
+    "5x hotels, 4x airlines, 3x restaurants"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "20.24% to 29.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "wells-fargo-reflect",
+   "issuer": "Wells Fargo",
+   "name": "Reflect",
+   "network": "Visa",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 0,
+    "groceries": 0,
+    "travel": 0,
+    "gas": 0,
+    "streaming": 0,
+    "other": 0
+   },
+   "credits": [],
+   "perks": [
+    "Long 0% intro APR, no rewards"
+   ],
+   "foreignTransactionFee": 3,
+   "aprRange": "17.24% to 28.99%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "wells-fargo-bilt-mastercard",
+   "issuer": "Wells Fargo",
+   "name": "Bilt Mastercard",
+   "network": "Mastercard",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 3,
+    "groceries": 1,
+    "travel": 2,
+    "gas": 1,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [],
+   "perks": [
+    "Points on rent with no fee (five purchases a month)"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "20.24% to 29.24%",
+   "pointValueCents": 1.25,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "u.s.-bank-altitude-go",
+   "issuer": "U.S. Bank",
+   "name": "Altitude Go",
+   "network": "Visa",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 4,
+    "groceries": 2,
+    "travel": 1,
+    "gas": 2,
+    "streaming": 2,
+    "other": 1
+   },
+   "credits": [
+    {
+     "name": "Streaming credit",
+     "annualValueCents": 1500
+    }
+   ],
+   "perks": [
+    "4x dining, 2x grocery, gas and streaming"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "18.24% to 29.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "u.s.-bank-altitude-connect",
+   "issuer": "U.S. Bank",
+   "name": "Altitude Connect",
+   "network": "Visa",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 1,
+    "groceries": 2,
+    "travel": 4,
+    "gas": 4,
+    "streaming": 2,
+    "other": 1
+   },
+   "credits": [],
+   "perks": [
+    "4x travel and gas, 2x grocery, dining and streaming"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "18.24% to 29.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "u.s.-bank-cash+",
+   "issuer": "U.S. Bank",
+   "name": "Cash+",
+   "network": "Visa",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 1,
+    "groceries": 2,
+    "travel": 1,
+    "gas": 1,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [],
+   "perks": [
+    "5% on two categories you choose up to $2,000 a quarter"
+   ],
+   "foreignTransactionFee": 3,
+   "aprRange": "18.24% to 29.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "u.s.-bank-smartly-visa",
+   "issuer": "U.S. Bank",
+   "name": "Smartly Visa",
+   "network": "Visa",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 2,
+    "groceries": 2,
+    "travel": 2,
+    "gas": 2,
+    "streaming": 2,
+    "other": 2
+   },
+   "credits": [],
+   "perks": [
+    "2% everywhere, up to 4% with large U.S. Bank balances"
+   ],
+   "foreignTransactionFee": 3,
+   "aprRange": "18.24% to 29.24%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "barclays-jetblue-plus",
+   "issuer": "Barclays",
+   "name": "JetBlue Plus",
+   "network": "Mastercard",
+   "annualFeeCents": 9900,
+   "earn": {
+    "dining": 2,
+    "groceries": 2,
+    "travel": 6,
+    "gas": 1,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [],
+   "perks": [
+    "Free checked bag on JetBlue",
+    "5,000 anniversary points"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "20.24% to 29.24%",
+   "pointValueCents": 1.3,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "barclays-aadvantage-aviator-red",
+   "issuer": "Barclays",
+   "name": "AAdvantage Aviator Red",
+   "network": "Mastercard",
+   "annualFeeCents": 9900,
+   "earn": {
+    "dining": 1,
+    "groceries": 1,
+    "travel": 2,
+    "gas": 1,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [
+    {
+     "name": "Wi-Fi credit",
+     "annualValueCents": 2500
+    }
+   ],
+   "perks": [
+    "Free checked bag on American"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "20.24% to 29.24%",
+   "pointValueCents": 1.3,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "barclays-wyndham-rewards-earner",
+   "issuer": "Barclays",
+   "name": "Wyndham Rewards Earner",
+   "network": "Visa",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 1,
+    "groceries": 2,
+    "travel": 1,
+    "gas": 4,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [],
+   "perks": [
+    "4x gas and Wyndham stays"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "20.24% to 29.24%",
+   "pointValueCents": 0.9,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "apple-apple-card",
+   "issuer": "Apple",
+   "name": "Apple Card",
+   "network": "Mastercard",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 1,
+    "groceries": 1,
+    "travel": 1,
+    "gas": 1,
+    "streaming": 1,
+    "other": 1
+   },
+   "credits": [],
+   "perks": [
+    "2% with Apple Pay, 3% at Apple and select partners, 1% with the card"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "18.24% to 28.49%",
+   "pointValueCents": 1.0,
+   "store": false,
+   "verify": true
+  },
+  {
+   "id": "target-target-circle-card",
+   "issuer": "Target",
+   "name": "Target Circle Card",
+   "network": "Store",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 0,
+    "groceries": 0,
+    "travel": 0,
+    "gas": 0,
+    "streaming": 0,
+    "other": 0
+   },
+   "credits": [],
+   "perks": [
+    "5% off at Target"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "29.95%",
+   "pointValueCents": 1.0,
+   "store": true,
+   "verify": true
+  },
+  {
+   "id": "synchrony-amazon-store-card",
+   "issuer": "Synchrony",
+   "name": "Amazon Store Card",
+   "network": "Store",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 0,
+    "groceries": 0,
+    "travel": 0,
+    "gas": 0,
+    "streaming": 0,
+    "other": 0
+   },
+   "credits": [],
+   "perks": [
+    "5% back at Amazon with Prime, or deferred-interest financing"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "29.99%",
+   "pointValueCents": 1.0,
+   "store": true,
+   "verify": true
+  },
+  {
+   "id": "comenity-kohls-card",
+   "issuer": "Comenity",
+   "name": "Kohls Card",
+   "network": "Store",
+   "annualFeeCents": 0,
+   "earn": {
+    "dining": 0,
+    "groceries": 0,
+    "travel": 0,
+    "gas": 0,
+    "streaming": 0,
+    "other": 0
+   },
+   "credits": [],
+   "perks": [
+    "Kohls-only discounts"
+   ],
+   "foreignTransactionFee": 0,
+   "aprRange": "31.99%",
+   "pointValueCents": 1.0,
+   "store": true,
+   "verify": true
+  }
+ ]
+}

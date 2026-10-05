@@ -1,0 +1,252 @@
+{
+ "asOf": "2026-10-05",
+ "source": "Fund prospectus expense ratios as remembered by the builder; every entry marked verify",
+ "verify": true,
+ "funds": [
+  {
+   "ticker": "VTSAX",
+   "name": "Vanguard Total Stock Market Index Admiral",
+   "expenseRatio": 0.0004,
+   "assetClass": "us-stock",
+   "verify": true
+  },
+  {
+   "ticker": "VTI",
+   "name": "Vanguard Total Stock Market ETF",
+   "expenseRatio": 0.0003,
+   "assetClass": "us-stock",
+   "verify": true
+  },
+  {
+   "ticker": "VFIAX",
+   "name": "Vanguard 500 Index Admiral",
+   "expenseRatio": 0.0004,
+   "assetClass": "us-stock",
+   "verify": true
+  },
+  {
+   "ticker": "VOO",
+   "name": "Vanguard S&P 500 ETF",
+   "expenseRatio": 0.0003,
+   "assetClass": "us-stock",
+   "verify": true
+  },
+  {
+   "ticker": "VTIAX",
+   "name": "Vanguard Total International Stock Index Admiral",
+   "expenseRatio": 0.0009,
+   "assetClass": "intl-stock",
+   "verify": true
+  },
+  {
+   "ticker": "VXUS",
+   "name": "Vanguard Total International Stock ETF",
+   "expenseRatio": 0.0005,
+   "assetClass": "intl-stock",
+   "verify": true
+  },
+  {
+   "ticker": "VBTLX",
+   "name": "Vanguard Total Bond Market Index Admiral",
+   "expenseRatio": 0.0004,
+   "assetClass": "bond",
+   "verify": true
+  },
+  {
+   "ticker": "BND",
+   "name": "Vanguard Total Bond Market ETF",
+   "expenseRatio": 0.0003,
+   "assetClass": "bond",
+   "verify": true
+  },
+  {
+   "ticker": "VT",
+   "name": "Vanguard Total World Stock ETF",
+   "expenseRatio": 0.0006,
+   "assetClass": "us-stock",
+   "verify": true
+  },
+  {
+   "ticker": "VNQ",
+   "name": "Vanguard Real Estate ETF",
+   "expenseRatio": 0.0013,
+   "assetClass": "real-estate",
+   "verify": true
+  },
+  {
+   "ticker": "VFFVX",
+   "name": "Vanguard Target Retirement 2055",
+   "expenseRatio": 0.0008,
+   "assetClass": "target-date",
+   "verify": true
+  },
+  {
+   "ticker": "VTTSX",
+   "name": "Vanguard Target Retirement 2060",
+   "expenseRatio": 0.0008,
+   "assetClass": "target-date",
+   "verify": true
+  },
+  {
+   "ticker": "VLXVX",
+   "name": "Vanguard Target Retirement 2065",
+   "expenseRatio": 0.0008,
+   "assetClass": "target-date",
+   "verify": true
+  },
+  {
+   "ticker": "FXAIX",
+   "name": "Fidelity 500 Index",
+   "expenseRatio": 0.00015,
+   "assetClass": "us-stock",
+   "verify": true
+  },
+  {
+   "ticker": "FSKAX",
+   "name": "Fidelity Total Market Index",
+   "expenseRatio": 0.00015,
+   "assetClass": "us-stock",
+   "verify": true
+  },
+  {
+   "ticker": "FZROX",
+   "name": "Fidelity ZERO Total Market Index",
+   "expenseRatio": 0.0,
+   "assetClass": "us-stock",
+   "verify": true
+  },
+  {
+   "ticker": "FZILX",
+   "name": "Fidelity ZERO International Index",
+   "expenseRatio": 0.0,
+   "assetClass": "intl-stock",
+   "verify": true
+  },
+  {
+   "ticker": "FTIHX",
+   "name": "Fidelity Total International Index",
+   "expenseRatio": 0.0006,
+   "assetClass": "intl-stock",
+   "verify": true
+  },
+  {
+   "ticker": "FXNAX",
+   "name": "Fidelity US Bond Index",
+   "expenseRatio": 0.00025,
+   "assetClass": "bond",
+   "verify": true
+  },
+  {
+   "ticker": "FFIJX",
+   "name": "Fidelity Freedom Index 2055",
+   "expenseRatio": 0.0012,
+   "assetClass": "target-date",
+   "verify": true
+  },
+  {
+   "ticker": "FDEWX",
+   "name": "Fidelity Freedom Index 2060",
+   "expenseRatio": 0.0012,
+   "assetClass": "target-date",
+   "verify": true
+  },
+  {
+   "ticker": "SWTSX",
+   "name": "Schwab Total Stock Market Index",
+   "expenseRatio": 0.0003,
+   "assetClass": "us-stock",
+   "verify": true
+  },
+  {
+   "ticker": "SWPPX",
+   "name": "Schwab S&P 500 Index",
+   "expenseRatio": 0.0002,
+   "assetClass": "us-stock",
+   "verify": true
+  },
+  {
+   "ticker": "SCHB",
+   "name": "Schwab US Broad Market ETF",
+   "expenseRatio": 0.0003,
+   "assetClass": "us-stock",
+   "verify": true
+  },
+  {
+   "ticker": "SCHD",
+   "name": "Schwab US Dividend Equity ETF",
+   "expenseRatio": 0.0006,
+   "assetClass": "us-stock",
+   "verify": true
+  },
+  {
+   "ticker": "SPY",
+   "name": "SPDR S&P 500 ETF",
+   "expenseRatio": 0.000945,
+   "assetClass": "us-stock",
+   "verify": true
+  },
+  {
+   "ticker": "IVV",
+   "name": "iShares Core S&P 500 ETF",
+   "expenseRatio": 0.0003,
+   "assetClass": "us-stock",
+   "verify": true
+  },
+  {
+   "ticker": "ITOT",
+   "name": "iShares Core S&P Total US Stock Market ETF",
+   "expenseRatio": 0.0003,
+   "assetClass": "us-stock",
+   "verify": true
+  },
+  {
+   "ticker": "AGG",
+   "name": "iShares Core US Aggregate Bond ETF",
+   "expenseRatio": 0.0003,
+   "assetClass": "bond",
+   "verify": true
+  },
+  {
+   "ticker": "QQQ",
+   "name": "Invesco QQQ Trust",
+   "expenseRatio": 0.002,
+   "assetClass": "us-stock",
+   "verify": true
+  },
+  {
+   "ticker": "ARKK",
+   "name": "ARK Innovation ETF",
+   "expenseRatio": 0.0075,
+   "assetClass": "us-stock",
+   "verify": true
+  },
+  {
+   "ticker": "AGTHX",
+   "name": "American Funds Growth Fund of America A",
+   "expenseRatio": 0.0061,
+   "assetClass": "us-stock",
+   "verify": true
+  },
+  {
+   "ticker": "FCNTX",
+   "name": "Fidelity Contrafund",
+   "expenseRatio": 0.0039,
+   "assetClass": "us-stock",
+   "verify": true
+  },
+  {
+   "ticker": "TRRNX",
+   "name": "T. Rowe Price Retirement 2055",
+   "expenseRatio": 0.0064,
+   "assetClass": "target-date",
+   "verify": true
+  },
+  {
+   "ticker": "GBIL",
+   "name": "Goldman Sachs Access Treasury 0-1 Year ETF",
+   "expenseRatio": 0.0012,
+   "assetClass": "cash",
+   "verify": true
+  }
+ ]
+}

@@ -20,6 +20,7 @@ jobs:
           node test/solar.js
           node dnd/test/run.js
           node coach/test/run.js
+          node money-rooms-v3/tests/run.js
           node marketing/test/run.js
           node test/export.js
           node test/xlsx.js
@@ -47,3 +48,4 @@ jobs:
           node test/xss.js
           node test/comeback.js
           node test/alignment.js
+          node money-rooms-v3/tests/ui.js

@@ -17372,6 +17372,32 @@ SPARKS device backup neither carries nor removes `mkt.` keys.
 
 ---
 
+## D-341 — Money Rooms v3 (Coach Edition) is its own app in money-rooms-v3/, a lane beside SPARKS like coach/
+
+**Why.** The owner wants planning software a coach drives live in client
+sessions: a hub-and-spoke data model (Sun and seven planets), answer states
+and sources on every fact, a journal, metrics, lenses, a one-pager. It is a
+full build, not a room, and the freeze holds.
+
+**Decision.** `money-rooms-v3/` is a separate app (plain HTML, CSS, ES modules,
+D3 vendored), its own storage (`mr3:` keys, never `slaf.`, `coach.` or `mkt.`),
+its own tests (`node money-rooms-v3/tests/run.js` and `tests/ui.js`, in CI),
+its own design tokens (`money-rooms-v3/ui/tokens.css`) and its own log
+(`money-rooms-v3/DECISIONS.md`, `MR-###`). Nothing in `rooms/`, `shared/`,
+`engines/` or `data/` changes for it. The root suite's CSS token check learns
+that files under `money-rooms-v3/` resolve against that app's tokens.
+
+**Replaces or removes.** Nothing in SPARKS. The app is the coach's live
+instrument; SPARKS stays the household's self-serve rooms.
+
+**Stored shape.** No change to `slaf.household.v2` or any SPARKS key. The
+SPARKS device backup neither carries nor removes `mr3:` keys.
+
+**Verified.** `node test/run.js`; `node money-rooms-v3/tests/run.js`;
+`node money-rooms-v3/tests/ui.js`.
+
+---
+
 # The Dungeons & Dividends entries
 
 Everything below this line is about the `dnd/` tool, and **these entries have

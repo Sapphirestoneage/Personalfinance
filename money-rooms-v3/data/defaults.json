@@ -1,0 +1,307 @@
+{
+ "asOf": "2026-10-05",
+ "source": "Shaped like the BLS Consumer Expenditure Survey 2024 tables by consumer unit size, scaled by the builder from memory; confidence 0.5; every figure marked verify",
+ "verify": true,
+ "confidence": 0.5,
+ "categories": {
+  "accommodation": {
+   "label": "Housing (rent or mortgage, utilities)",
+   "lines": {
+    "1": [
+     [
+      "Rent or mortgage",
+      165000
+     ],
+     [
+      "Utilities and internet",
+      24000
+     ]
+    ],
+    "2": [
+     [
+      "Rent or mortgage",
+      195000
+     ],
+     [
+      "Utilities and internet",
+      30000
+     ]
+    ],
+    "3": [
+     [
+      "Rent or mortgage",
+      215000
+     ],
+     [
+      "Utilities and internet",
+      34000
+     ]
+    ],
+    "4": [
+     [
+      "Rent or mortgage",
+      235000
+     ],
+     [
+      "Utilities and internet",
+      38000
+     ]
+    ]
+   }
+  },
+  "food": {
+   "label": "Food",
+   "lines": {
+    "1": [
+     [
+      "Groceries",
+      42000
+     ],
+     [
+      "Restaurants and takeout",
+      28000
+     ]
+    ],
+    "2": [
+     [
+      "Groceries",
+      68000
+     ],
+     [
+      "Restaurants and takeout",
+      42000
+     ]
+    ],
+    "3": [
+     [
+      "Groceries",
+      84000
+     ],
+     [
+      "Restaurants and takeout",
+      48000
+     ]
+    ],
+    "4": [
+     [
+      "Groceries",
+      102000
+     ],
+     [
+      "Restaurants and takeout",
+      54000
+     ]
+    ]
+   }
+  },
+  "transportation": {
+   "label": "Transportation",
+   "lines": {
+    "1": [
+     [
+      "Transit, fuel and parking",
+      32000
+     ],
+     [
+      "Car insurance",
+      12000
+     ]
+    ],
+    "2": [
+     [
+      "Transit, fuel and parking",
+      48000
+     ],
+     [
+      "Car insurance",
+      18000
+     ]
+    ],
+    "3": [
+     [
+      "Transit, fuel and parking",
+      56000
+     ],
+     [
+      "Car insurance",
+      20000
+     ]
+    ],
+    "4": [
+     [
+      "Transit, fuel and parking",
+      62000
+     ],
+     [
+      "Car insurance",
+      22000
+     ]
+    ]
+   }
+  },
+  "therapy": {
+   "label": "Health",
+   "lines": {
+    "1": [
+     [
+      "Health insurance and care",
+      38000
+     ]
+    ],
+    "2": [
+     [
+      "Health insurance and care",
+      62000
+     ]
+    ],
+    "3": [
+     [
+      "Health insurance and care",
+      74000
+     ]
+    ],
+    "4": [
+     [
+      "Health insurance and care",
+      86000
+     ]
+    ]
+   }
+  },
+  "utilities": {
+   "label": "Phone and subscriptions",
+   "lines": {
+    "1": [
+     [
+      "Phone",
+      8000
+     ],
+     [
+      "Streaming and subscriptions",
+      4500
+     ]
+    ],
+    "2": [
+     [
+      "Phone",
+      14000
+     ],
+     [
+      "Streaming and subscriptions",
+      5500
+     ]
+    ],
+    "3": [
+     [
+      "Phone",
+      17000
+     ],
+     [
+      "Streaming and subscriptions",
+      6500
+     ]
+    ],
+    "4": [
+     [
+      "Phone",
+      20000
+     ],
+     [
+      "Streaming and subscriptions",
+      7500
+     ]
+    ]
+   }
+  },
+  "wants": {
+   "label": "Wants",
+   "lines": {
+    "1": [
+     [
+      "Entertainment and hobbies",
+      22000
+     ],
+     [
+      "Clothing and personal care",
+      16000
+     ]
+    ],
+    "2": [
+     [
+      "Entertainment and hobbies",
+      34000
+     ],
+     [
+      "Clothing and personal care",
+      26000
+     ]
+    ],
+    "3": [
+     [
+      "Entertainment and hobbies",
+      40000
+     ],
+     [
+      "Clothing and personal care",
+      32000
+     ]
+    ],
+    "4": [
+     [
+      "Entertainment and hobbies",
+      46000
+     ],
+     [
+      "Clothing and personal care",
+      38000
+     ]
+    ]
+   }
+  },
+  "irregular": {
+   "label": "Irregular and annual",
+   "lines": {
+    "1": [
+     [
+      "Travel",
+      18000
+     ],
+     [
+      "Gifts and giving",
+      9000
+     ]
+    ],
+    "2": [
+     [
+      "Travel",
+      28000
+     ],
+     [
+      "Gifts and giving",
+      14000
+     ]
+    ],
+    "3": [
+     [
+      "Travel",
+      32000
+     ],
+     [
+      "Gifts and giving",
+      16000
+     ]
+    ],
+    "4": [
+     [
+      "Travel",
+      36000
+     ],
+     [
+      "Gifts and giving",
+      18000
+     ]
+    ]
+   }
+  }
+ }
+}

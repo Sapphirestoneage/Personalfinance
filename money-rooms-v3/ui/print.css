@@ -1,0 +1,8 @@
+/* Print: only the one-pager prints, on exactly one page. */
+@page { size: letter; margin: 12mm; }
+body { background: #fff; font-size: 11px; line-height: 14px; }
+.topbar, .sidenav, #overlay, .no-print, .toolbar { display: none !important; }
+.layout { display: block; min-height: 0; }
+main { padding: 0; }
+.panel { border: 0; padding: 0; break-inside: avoid; }
+a { color: inherit; }

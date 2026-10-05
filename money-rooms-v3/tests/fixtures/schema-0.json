@@ -1,0 +1,16 @@
+{
+  "id": "old0",
+  "createdAt": "2026-09-01T00:00:00.000Z",
+  "updatedAt": "2026-09-01T00:00:00.000Z",
+  "sun": { "f": { "name": { "v": "Old zero", "state": "known", "source": "client" } }, "outputs": {} },
+  "planets": {
+    "income": { "rows": [ { "id": "r1", "planet": "income", "type": "w2", "nickname": "Job", "institution": "", "asOf": null, "notesPrivate": "", "notesShared": "", "f": { "gross": { "v": 600000, "state": "known", "source": "client" } } } ] },
+    "spending": { "rows": [] },
+    "debt": { "rows": [] },
+    "safety": { "rows": [] },
+    "invest": { "rows": [] },
+    "taxes": { "rows": [] },
+    "life": { "rows": [] }
+  },
+  "journal": []
+}
