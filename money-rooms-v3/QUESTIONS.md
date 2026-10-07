@@ -66,18 +66,12 @@ Collected during the run; none blocked the build. Answer whenever.
 16. Guesses scale by tier and household, not by income. A $68k household and
     a $168k household in the same city get the same guess for food. Do you
     want an income band in defaults.json?
-17. The existing demo household is also called Maya (Maya Lindqvist, Oakland).
-    The discovery household is a different Maya (Jersey City, one roommate)
-    and lives in tests/households/maya-discovery.json. Should one of them be
-    renamed?
-18. A partner who shares income and bills is out of scope; a roommate shares
-    bills only. Couples stay in the parking lot?
+17. Answered: one Maya Lindqvist, in Jersey City (MR-050).
+18. Answered: partners are in (MR-050). Together or just mine is a household switch.
 19. The gentle mode is set from the mindset chips (avoids accounts, avoiding)
     and can be switched on the call screen. Should it also soften the
     Session page and the one-pager, or only the call?
-20. Confirm swaps a guess for their number through "Use mine"; the discovery
-    form itself has no undo past the browser's. Is the form's own Clear button
-    worth having?
-21. A target saved in Your targets is a planned move, not a fact; nothing in
-    the Ledger changes. Should a target also set the line's state to "will
-    change" so the next session asks about it?
+20. The discovery form keeps what was typed until Save. There is no button to
+    blank it and start a fresh call; today you reload the page. Worth a
+    "Start over" button?
+21. Answered: every saved target is a to-do for next session (MR-050).

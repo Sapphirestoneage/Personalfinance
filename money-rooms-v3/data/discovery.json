@@ -33,9 +33,9 @@
   },
   {
    "id": "partnered",
-   "label": "Partnered",
+   "label": "Partner",
    "writes": {
-    "note": "partnered (couples are out of scope; noted)"
+    "household.partner": true
    }
   },
   {
@@ -267,7 +267,9 @@
   "goals": "What would you like to be different a year from now?",
   "stuck": "Where do you feel most stuck?",
   "struggle": "What is the biggest struggle with money right now?",
-  "avoids": "Do you tend to avoid looking at your accounts?"
+  "avoids": "Do you tend to avoid looking at your accounts?",
+  "partner": "Is there a partner whose money is part of this picture?",
+  "partnerTakeHome": "And what lands in their account each time they are paid?"
  },
  "gentleWords": {
   "reveal": "We will look at how the real numbers compare once you have gathered them yourself.",

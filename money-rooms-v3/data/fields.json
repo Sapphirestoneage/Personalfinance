@@ -49,7 +49,8 @@
       "startDate",
       "hoursPaid",
       "hoursCommute",
-      "workCosts"
+      "workCosts",
+      "whose"
      ],
      "situations": [
       "employed",
@@ -80,7 +81,8 @@
       "startDate",
       "hoursPaid",
       "hoursCommute",
-      "workCosts"
+      "workCosts",
+      "whose"
      ],
      "situations": [
       "self-employed",
@@ -104,7 +106,8 @@
       "grossPay",
       "payFrequency",
       "stability",
-      "hoursPaid"
+      "hoursPaid",
+      "whose"
      ],
      "defaults": {
       "payFrequency": "monthly",
@@ -121,7 +124,8 @@
      "fields": [
       "benefitAmount",
       "weeksLeft",
-      "startDate"
+      "startDate",
+      "whose"
      ],
      "situations": [
       "between-jobs",
@@ -138,7 +142,8 @@
      "fields": [
       "rentCollected",
       "rentalExpenses",
-      "stability"
+      "stability",
+      "whose"
      ],
      "nicknameLabel": "Property",
      "stress": false,
@@ -152,7 +157,8 @@
      "fields": [
       "matchRate",
       "matchUpTo",
-      "otherBenefit"
+      "otherBenefit",
+      "whose"
      ],
      "situations": [
       "employed",
@@ -170,7 +176,8 @@
      "moon": "Other",
      "fields": [
       "otherIncome",
-      "payFrequency"
+      "payFrequency",
+      "whose"
      ],
      "defaults": {
       "payFrequency": "monthly"
@@ -1812,11 +1819,11 @@
   },
   "shared": {
    "id": "shared",
-   "label": "Shared with a roommate",
+   "label": "Shared bill",
    "kind": "bool",
    "owner": "spending",
    "weight": 4,
-   "hint": "The bill is split with a roommate; the amount is the full bill and Your share is what you pay",
+   "hint": "The bill is split; the amount is the full bill and Your share is what you pay",
    "defaultSource": "client",
    "optional": true
   },
@@ -1826,9 +1833,29 @@
    "kind": "percent",
    "owner": "spending",
    "weight": 4,
-   "hint": "Your part of a shared bill. One roommate means 50%.",
+   "hint": "Your part of a shared bill. One roommate means 50%. With a partner the picture counts the two of you together unless the household says just mine.",
    "defaultSource": "client",
    "optional": true
+  },
+  "whose": {
+   "id": "whose",
+   "label": "Whose income",
+   "kind": "choice",
+   "owner": "income",
+   "weight": 2,
+   "hint": "Mine, or a partner whose money is in the picture",
+   "defaultSource": "client",
+   "optional": true,
+   "options": [
+    [
+     "me",
+     "Mine"
+    ],
+    [
+     "partner",
+     "Partner's"
+    ]
+   ]
   }
  }
 }

@@ -60,7 +60,7 @@ export function mount(host, app) {
     body.appendChild(say(gentle() ? 'Let us start with what you told me. Nothing to look up; just whether it still feels right.' : def.intro));
     const said = h('div', { class: 'confirm-list' });
     if (!c.tierConfirmed) said.appendChild(confirmLine('You live in ' + (app.record.sun.f.city && app.record.sun.f.city.v || 'your city') + ', a ' + tierLabel(tier.tier, 'client', tiers) + '.', [['Still right', () => app.confirmDiscovery('tier')]], h('span', { class: 'row tierchips' }, ['HCOL', 'MCOL', 'LCOL'].map(tt => h('button', { class: 'chip toggle' + (tier.tier === tt ? ' on' : ''), 'aria-pressed': String(tier.tier === tt), onClick: () => { app.colTier({ tier: tt, source: 'client' }); app.confirmDiscovery('tier'); } }, tt)))));
-    if (!c.householdConfirmed) said.appendChild(confirmLine(hh.roommates.length ? 'You live with ' + (hh.roommates.map(r => r.nickname).filter(Boolean).join(' and ') || (hh.roommates.length === 1 ? 'a roommate' : hh.roommates.length + ' roommates')) + ', lease ' + ({ mine: 'in your name', both: 'in both names', theirs: 'in their name', none: 'with no lease' }[hh.lease]) + '.' : 'You live alone.', [['Still right', () => app.confirmDiscovery('household')], ['Change it', () => app.openDrawer(householdEditor(app))]]));
+    if (!c.householdConfirmed) said.appendChild(confirmLine(householdSentence(hh), [['Still right', () => app.confirmDiscovery('household')], ['Change it', () => app.openDrawer(householdEditor(app))]]));
     c.said.forEach(i => said.appendChild(confirmLine(i.sentence, [['Still right', () => { if (i.rowId !== 'sun') app.setFieldWhy(i.rowId, i.field, i.value, i.state === 'unknown' ? 'unknown' : i.state === 'will-send' ? 'will-send' : 'known', 'client', i.cad || undefined, null); app.confirmDiscovery(i.rowId + '|' + i.field); }], ['Change it', () => editInline(i)], ["Don't know", () => { if (i.rowId !== 'sun') app.setFieldWhy(i.rowId, i.field, null, 'unknown', 'client', undefined, 'correction'); app.confirmDiscovery(i.rowId + '|' + i.field); }]])));
     body.appendChild(h('h3', null, 'What you told me', h('span', { class: 'tag' }, said.children.length ? said.children.length + ' to confirm' : 'all confirmed')));
     body.appendChild(said.children.length ? said : h('p', { class: 'muted small' }, 'Everything from the first call is confirmed.'));
@@ -174,18 +174,31 @@ export function mount(host, app) {
   function drawDecide(def) {
     body.appendChild(say(def.intro));
     body.appendChild(targetsPanel(app));
+    body.appendChild(nextSessionTodos(app));
     body.appendChild(h('div', { class: 'row', style: { marginTop: '12px' } }, h('button', { class: 'btn primary', onClick: () => { done('done'); app.toast('Targets saved. Close the session on the Session page when you are done.'); } }, 'Done for today'), h('a', { class: 'btn', href: '#/session' }, 'Session page')));
   }
   draw();
   return { update() { draw(); } };
 }
 
+/* One sentence for who they live with and whose money counts (MR-050). */
+export function householdSentence(hh) {
+  const who = [];
+  if (hh.partner) who.push(hh.partner.nickname || 'your partner');
+  if (hh.roommates.length) who.push(hh.roommates.map(r => r.nickname).filter(Boolean).join(' and ') || (hh.roommates.length === 1 ? 'a roommate' : hh.roommates.length + ' roommates'));
+  let t = who.length ? 'You live with ' + who.join(' and ') : 'You live alone';
+  if (hh.roommates.length) t += ', lease ' + ({ mine: 'in your name', both: 'in both names', theirs: 'in their name', none: 'with no lease' }[hh.lease] || 'unknown');
+  if (hh.partner) t += (hh.basis || 'together') === 'together' ? '; we count your money together' : '; we count just yours';
+  return t + '.';
+}
 /* The household editor, shared with Confirm. */
 export function householdEditor(app) {
-  const hh = JSON.parse(JSON.stringify(app.record.household || { roommates: [], lease: 'none' }));
+  const hh = JSON.parse(JSON.stringify(app.record.household || { roommates: [], lease: 'none', partner: null, basis: 'together' }));
   const box = h('div', null, h('h2', null, 'Who you live with'));
   const draw = () => { clear(box); box.appendChild(h('h2', null, 'Who you live with'));
     box.appendChild(h('div', { class: 'fieldrow' }, h('label', null, 'Roommates'), h('div', { class: 'control' }, h('div', { class: 'view-toggle', role: 'group', 'aria-label': 'Roommates' }, [0, 1, 2, 3].map(n => h('button', { 'aria-pressed': String(hh.roommates.length === n), onClick: () => { hh.roommates = Array.from({ length: n }, (_, i) => hh.roommates[i] || { id: 'rm' + (i + 1), nickname: '' }); draw(); } }, n === 0 ? 'None' : String(n)))))));
+    box.appendChild(h('div', { class: 'fieldrow' }, h('label', null, 'Partner'), h('div', { class: 'control row' }, h('div', { class: 'view-toggle', role: 'group', 'aria-label': 'Partner' }, [[false, 'No'], [true, 'Yes']].map(([v, l]) => h('button', { 'aria-pressed': String(!!hh.partner === v), onClick: () => { hh.partner = v ? (hh.partner || { nickname: '' }) : null; draw(); } }, l))), hh.partner ? h('input', { class: 'input', style: { width: '140px' }, 'aria-label': 'Partner nickname', value: hh.partner.nickname || '', onChange: e => { hh.partner.nickname = e.target.value.trim(); } }) : null)));
+    if (hh.partner) box.appendChild(h('div', { class: 'fieldrow' }, h('label', null, 'Whose money counts'), h('div', { class: 'control' }, h('div', { class: 'view-toggle', role: 'group', 'aria-label': 'Whose money counts' }, [['together', 'Together'], ['mine', 'Just mine']].map(([v, l]) => h('button', { 'aria-pressed': String((hh.basis || 'together') === v), onClick: () => { hh.basis = v; draw(); } }, l))), h('div', { class: 'small muted' }, "Together adds their pay and counts shared bills in full. Just mine counts your pay and your share."))));
     hh.roommates.forEach((r, i) => box.appendChild(h('div', { class: 'fieldrow' }, h('label', null, 'Roommate ' + (i + 1)), h('div', { class: 'control' }, h('input', { class: 'input', 'aria-label': 'Roommate ' + (i + 1) + ' nickname', value: r.nickname || '', onChange: e => { r.nickname = e.target.value.trim(); } })))));
     if (hh.roommates.length) box.appendChild(h('div', { class: 'fieldrow' }, h('label', null, 'Lease'), h('div', { class: 'control' }, h('div', { class: 'view-toggle', role: 'group', 'aria-label': 'Lease' }, app.data.discovery.lease.map(l => h('button', { 'aria-pressed': String(hh.lease === l[0]), onClick: () => { hh.lease = l[0]; draw(); } }, l[1]))))));
     box.appendChild(h('p', { style: { marginTop: '12px' } }, h('button', { class: 'btn primary', onClick: () => { const moved = (app.record.household.roommates || []).length > hh.roommates.length && app.record.discovery && app.record.discovery.confirmed && app.record.discovery.confirmed.household; app.household(hh, moved ? 'move' : null); app.confirmDiscovery('household'); app.toast(moved ? 'A roommate moved out: counted as a real change' : 'Household updated; the guesses were recomputed'); }, }, 'Save'))); };
@@ -228,6 +241,14 @@ function tierCmp(app, r) {
   const c = tierComparison(r.actual, Math.round(avg)); if (!c) return null;
   return c.word + (people > 1 ? ' sharing a place' : '') + ' in a ' + tierLabel(tier.tier, 'client', app.data.colTiers);
 }
+/* To do next session (MR-050): every saved target is a to-do with the client's name on it; Keep it as is takes it off. */
+export function nextSessionTodos(app) {
+  const todos = ((app.record.sun.onepager || {}).todos || []).filter(t => t.target);
+  const box = h('div', { class: 'panel sofar next-session' }, h('h3', null, 'To do next session', h('span', { class: 'tag' }, todos.length ? todos.length + (todos.length === 1 ? ' item' : ' items') : 'nothing yet')));
+  if (!todos.length) box.appendChild(h('p', { class: 'small muted' }, 'Pick a target above and it lands here, and on the one-pager.'));
+  else box.appendChild(h('ul', null, todos.map(t => h('li', null, t.task, h('span', { class: 'small muted' }, ' (' + t.owner + ')')))));
+  return box;
+}
 /* ---- the targets panel, shared by Your targets and the Session page ---- */
 export function targetsPanel(app, opts) {
   const o = opts || {}; const money = c => F.dollarsWhole(c);
@@ -237,8 +258,8 @@ export function targetsPanel(app, opts) {
   const table = h('table', { class: 'data targets-table' }, h('thead', null, h('tr', null, h('th', null, 'Area'), h('th', { class: 'num' }, 'Now'), h('th', null, 'Aim for'), h('th', { class: 'num' }, 'A month'), h('th', { class: 'num' }, 'FI number'), h('th', { class: 'num' }, 'FI date'))));
   const tb = h('tbody'); table.appendChild(tb);
   P.rows.forEach(t => {
-    const choice = h('div', { class: 'view-toggle wrap', role: 'group', 'aria-label': 'Target for ' + t.label }, t.options.map(op => { const lbl = (CP.targetChoices.find(x => x[0] === (op.choice === 'room' ? 'dream' : op.choice)) || [])[1] || op.choice; return h('button', { 'aria-pressed': String((t.choice === 'room' ? 'dream' : t.choice) === op.choice), title: op.value !== null ? money(op.value) + ' a month' : '', onClick: () => app.target(t.key, op.choice, op.value, t.actual) }, lbl + (op.value !== null && op.choice !== 'keep' ? ' ' + F.dollarsCompact(op.value) : '')); }));
-    const custom = t.choice === 'middle' && !o.readOnly ? h('input', { class: 'input num', style: { width: '96px' }, 'aria-label': 'Middle figure for ' + t.label, value: F.dollarsWhole(t.value), onChange: e => { const p = parseSaid(e.target.value); if (p && p.cents !== null) app.target(t.key, 'middle', p.cents, t.actual); } }) : null;
+    const choice = h('div', { class: 'view-toggle wrap', role: 'group', 'aria-label': 'Target for ' + t.label }, t.options.map(op => { const lbl = (CP.targetChoices.find(x => x[0] === (op.choice === 'room' ? 'dream' : op.choice)) || [])[1] || op.choice; return h('button', { 'aria-pressed': String((t.choice === 'room' ? 'dream' : t.choice) === op.choice), title: op.value !== null ? money(op.value) + ' a month' : '', onClick: () => app.target(t.key, op.choice, op.value, t.actual, t.label) }, lbl + (op.value !== null && op.choice !== 'keep' ? ' ' + F.dollarsCompact(op.value) : '')); }));
+    const custom = t.choice === 'middle' && !o.readOnly ? h('input', { class: 'input num', style: { width: '96px' }, 'aria-label': 'Middle figure for ' + t.label, value: F.dollarsWhole(t.value), onChange: e => { const p = parseSaid(e.target.value); if (p && p.cents !== null) app.target(t.key, 'middle', p.cents, t.actual, t.label); } }) : null;
     tb.appendChild(h('tr', null, h('td', null, t.label), h('td', { class: 'num' }, money(t.actual)), h('td', null, o.readOnly ? ((CP.targetChoices.find(x => x[0] === (t.choice === 'room' ? 'dream' : t.choice)) || [])[1] || t.choice) : h('div', null, choice, custom)), h('td', { class: 'num' }, money(t.value) + (t.deltaMonthly ? ' (' + (t.deltaMonthly > 0 ? '+' : '') + money(t.deltaMonthly) + ')' : '')), h('td', { class: 'num' }, (t.fiNumberDelta > 0 ? '+' : '') + F.dollarsCompact(t.fiNumberDelta)), h('td', { class: 'num' }, t.fiMonths === null ? 'past 95' : t.fiMonths === 0 ? 'same' : Math.abs(t.fiMonths) + ' mo ' + (t.fiMonths < 0 ? 'earlier' : 'later'))));
   });
   table.appendChild(h('tfoot', null, h('tr', null, h('td', null, 'Total'), h('td'), h('td'), h('td', { class: 'num' }, (P.total.deltaMonthly > 0 ? '+' : '') + money(P.total.deltaMonthly)), h('td', { class: 'num' }, (P.total.fiNumberDelta > 0 ? '+' : '') + F.dollarsCompact(P.total.fiNumberDelta)), h('td', { class: 'num' }, P.total.fiMonths === null ? 'past 95' : P.total.fiMonths === 0 ? 'same' : Math.abs(P.total.fiMonths) + ' mo ' + (P.total.fiMonths < 0 ? 'earlier' : 'later')))));

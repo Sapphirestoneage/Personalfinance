@@ -3,7 +3,7 @@
    dream anchors against real lines. The expected numbers live in
    tests/households/expected-discovery.py, typed from these facts by hand. */
 export const MAYA_DISCOVERY = {
-  snapshot: { name: 'Maya', birth: '27', city: 'Jersey City', workSituation: 'employed', employerType: 'company', roommates: 1, roommateNames: ['Dani'], lease: 'both' },
+  snapshot: { name: 'Maya Lindqvist', birth: '2000-02-11', city: 'Jersey City', workSituation: 'employed', employerType: 'company', roommates: 1, roommateNames: ['Dani'], lease: 'both' },
   whyNow: 'A wedding next year and a card that never goes down. I want to stop guessing.',
   money: { gross: '68k', takeHome: '1900 every two weeks', contribPct: '4%', matchKnown: true, match: '',
     cash: [{ name: 'Savings', said: '2,500ish' }, { name: 'Venmo', said: '300' }, { name: 'Old credit union account', said: '40' }],

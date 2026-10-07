@@ -74,7 +74,7 @@ test('every schema version has a migration and each fixture lifts to the current
   /* Level 8 (MR-046): a schema-2 record gains anchors backfilled from its first values, a household and a session mode */
   const two = migrate(fixture('schema-2.json'));
   assert.equal(two.schemaVersion, SCHEMA_VERSION);
-  assert.deepEqual(two.household, { roommates: [], lease: 'none', unitSize: null });
+  assert.deepEqual(two.household, { roommates: [], lease: 'none', unitSize: null, partner: null, basis: 'together' });
   assert.equal(two.sessionMode, 'standard');
   assert.ok(two.anchors && two.anchors.gut && two.anchors.dream && Array.isArray(two.anchors.history));
   assert.deepEqual(two.anchors.dream, {}, 'no dream backfill');

@@ -24,9 +24,16 @@ export const flows = [
     await page.click('[aria-label="Roommates"] button:has-text("1")');
     await page.waitForSelector('[aria-label="Lease"]');
     await page.click('[aria-label="Lease"] button:has-text("Both")');
+    /* a partner (MR-050): their take-home joins the picture */
+    await page.click('[aria-label="Partner"] button:has-text("Yes")');
+    await page.waitForSelector('input[aria-label="Partner nickname, optional"]');
+    await page.fill('input[aria-label="Partner nickname, optional"]', 'Sam');
+    await page.press('input[aria-label="Partner nickname, optional"]', 'Tab');
     await page.fill('input[aria-label="Take-home"]', '1900 every two weeks');
     await page.press('input[aria-label="Take-home"]', 'Tab');
-    check('the take-home hint converts a paycheck to a month', (await page.textContent('.saidbox .heard >> nth=1')).indexOf('a month') !== -1);
+    check('the take-home hint converts a paycheck to a month', (await page.textContent('.disc-q:has(input[aria-label="Take-home"]) .heard')).indexOf('a month') !== -1);
+    await page.fill('input[aria-label="Partner\'s take-home"]', '2000 every two weeks');
+    await page.press('input[aria-label="Partner\'s take-home"]', 'Tab');
     await page.fill('input[aria-label="Pay before tax"]', '68k');
     await page.press('input[aria-label="Pay before tax"]', 'Tab');
     await page.fill('input[aria-label="Spending a month, their guess"]', '2,500ish');
@@ -36,6 +43,7 @@ export const flows = [
     await page.waitForSelector('.discovery-summary');
     const summary = await page.textContent('.discovery-summary');
     check('the summary names the tier and counts the guesses', summary.indexOf('HCOL') !== -1 && /Includes \d+ guesses/.test(summary));
+    check('the summary names the partner and counts the money together', summary.indexOf('partner (Sam), money counted together') !== -1 && summary.indexOf("Sam's job") !== -1);
     check('the summary never says estimated', !/estimated/i.test(summary));
     /* 2. the built fixture: twelve guesses, a roommate, the call path */
     await page.goto(base + 'index.html#/home');
@@ -93,6 +101,8 @@ export const flows = [
     await page.click('.targets-table tbody tr >> nth=0 >> button:has-text("Meet in the middle")');
     await page.waitForTimeout(300);
     check('a target is saved', (await page.getAttribute('.targets-table tbody tr >> nth=0 >> button:has-text("Meet in the middle")', 'aria-pressed')) === 'true');
+    const todo = await page.textContent('.next-session');
+    check('the target is a to-do for next session with her name on it', /1 item/.test(todo) && todo.indexOf('Aim for') !== -1 && todo.indexOf('(Maya)') !== -1);
     /* 3. the session page: meters, progress versus paperwork, the targets email */
     await page.goto(base + 'index.html#/session');
     await page.waitForSelector('.meter-row');
@@ -124,6 +134,7 @@ export const flows = [
     await page.waitForSelector('.onepager');
     const op = await page.textContent('.onepager');
     check('the one-pager carries what you said, your targets, the guesses and the worst case', op.indexOf("What you said, what it really is, what you'd want") !== -1 && op.indexOf('Your targets') !== -1 && /Includes \d+ guesses/.test(op) && op.indexOf('If it all falls on you') !== -1);
+    check('the one-pager to-dos carry the target', op.indexOf('Aim for') !== -1);
     await page.click('#view-coach');
   },
 },

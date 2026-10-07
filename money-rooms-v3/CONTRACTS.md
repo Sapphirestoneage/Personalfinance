@@ -22,7 +22,7 @@ Sessions: `sessions[]` (snapshots). Slots: `outputs.<planet>`.
 
 ## 1. Income
 
-Reads from the Sun: `workSituation`, `birthDate`.
+Reads from the Sun: `workSituation`, `birthDate`, and the household (whose money counts, MR-050).
 Publishes:
 
 | key | units | meaning |
@@ -39,6 +39,7 @@ Publishes:
 | `stability` | flag | steady, variable, at-risk, needs |
 | `workHoursMonthly` | hours | paid + commute + prep hours, monthly (for real hourly wage) |
 | `workCostsMonthly` | monthly, aftertax | costs of working as stated on income rows |
+| `partnerTakeHomeMonthly` | monthly, aftertax | take-home on rows marked Partner's (MR-050); counted in `takeHomeMonthly` when the household counts together, left out under just mine |
 
 ## 2. Spending
 

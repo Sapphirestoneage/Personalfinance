@@ -102,7 +102,7 @@ export const app = {
   reanchor(set, key, value, meta) { return this.change(rec => { anchorAgain(rec, set, key, value, Object.assign({ session: this.session, source: 'call' }, meta || {})); return true; }, { reason: 'anchors' }); },
   callStop(stopId, status) { return this.change(rec => { markStop(rec, this.session || 'current', stopId, status); return true; }, { reason: 'call', silent: true }); },
   confirmDiscovery(key) { return this.change(rec => { rec.discovery = rec.discovery || { confirmed: {} }; rec.discovery.confirmed = rec.discovery.confirmed || {}; rec.discovery.confirmed[key] = new Date().toISOString(); return true; }, { reason: 'call', silent: true }); },
-  target(key, choice, cents, actualAt) { return this.change(rec => { targetSet(rec, key, choice, cents, { session: this.session, actualAt }); return true; }, { reason: 'targets' }); },
+  target(key, choice, cents, actualAt, label) { return this.change(rec => { targetSet(rec, key, choice, cents, { session: this.session, actualAt, label, owner: (clientName(rec) || 'Client').split(' ')[0] }); return true; }, { reason: 'targets' }); },
   setMode(mode) { return this.change(rec => { rec.sessionMode = mode; return true; }, { reason: 'mode' }); },
 
   recompute() {

@@ -87,7 +87,7 @@ After any change: `node tests/run.js`, then `node tests/ui.js`.
 
 ## Parking lot (out of scope, not built)
 
-Couples and joint accounts, a multi-client picker beyond load and save, cloud
+Joint accounts, a multi-client picker beyond load and save, cloud
 sync or encryption, Google Sheet CSV import, session templates, a compliance
 footer or consent flow, refresh cadence, state tax, ACA, Roth conversions,
 72(t), the rule of 55, live card or fund feeds. (FI-date-sensitivity leverage shipped in Level 9.)
@@ -112,7 +112,8 @@ gut, "Area 3 of 7", "I don't know" in one tap), What you'd want (the dream,
 with what they said hidden until the coach reveals it), The real numbers,
 How far off (what you said against what it really is, in groups, with the
 FI effect of each gap), and Your targets (What you said, What you'd want,
-Meet in the middle, Keep it as is). A roommate marks lines as shared; every
+Meet in the middle, Keep it as is). A partner's pay joins the picture (counted together, or just the client's,
+from the household editor). A roommate marks lines as shared; every
 figure uses the client's share, and runway, the cushion target, Simulate
 ("Roommate moves out") and the worst case say what happens if it all falls
 on them. The Session page carries two meters (Picture completeness, Goal

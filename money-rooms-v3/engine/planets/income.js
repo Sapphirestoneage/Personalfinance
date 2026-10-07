@@ -6,6 +6,7 @@ import { q, U, add, sum, scale, needs, asTax, isNeeds } from '../units.js';
 import { fieldQ, monthlyCents, num, val, isNa, paychecksPerYear } from './common.js';
 import { federalTax, taxableIncome, fica, selfEmploymentTax } from '../tax.js';
 import { confidenceOf, hasValue } from '../states.js';
+import { hasPartner, countsTogether } from '../household.js';
 
 export function run(ctx) {
   const { rows, reader, data, asm } = ctx;
@@ -19,9 +20,14 @@ export function run(ctx) {
   const grossRows = [];
   let w2Primary = null;
   const filing = ctx.filingStatus || 'single';
+  /* a partner's rows (MR-050): counted with the client's under "together", left out under "mine"; their take-home is published either way */
+  const hh = ctx.record && ctx.record.household; const mineOnly = hasPartner(hh) && !countsTogether(hh);
+  let partnerTake = q(0, U.monthlyAfter);
 
   rows.forEach(r => {
     const t = r.type;
+    const partnerRow = val(r, 'whose') === 'partner';
+    if (partnerRow && mineOnly) { const pth = fieldQ(r, 'takeHome', U.monthlyAfter, asm); if (pth) partnerTake = add(partnerTake, pth); return; }
     if (t === 'w2' || t === 'c1099' || t === 'side') {
       const g = fieldQ(r, 'grossPay', U.monthlyPre, asm);
       const bonus = fieldQ(r, 'bonus', U.monthlyPre, asm);
@@ -59,6 +65,7 @@ export function run(ctx) {
         th = q(Math.max(0, cents), U.monthlyAfter, { confidence: conf, range: { low: Math.round(cents * 0.9), high: Math.round(cents * 1.02) }, rough: true });
         enriched.push({ rowId: r.id, field: 'takeHome', value: th, note: (t === 'w2' ? 'Inferred from gross: federal tax and FICA only, before state tax' : 'Inferred from gross: self-employment tax and federal tax on this income alone, before state tax'), source: 'inferred' });
       }
+      if (th && partnerRow) partnerTake = add(partnerTake, th);
       if (th) { take = add(take, th); anyTake = true; }
       const hp = num(r, 'hoursPaid') || 0, hc = num(r, 'hoursCommute') || 0;
       hours += (hp + hc) * 52 / 12;
@@ -136,5 +143,6 @@ export function run(ctx) {
   out.stability = stability;
   out.workHoursMonthly = Math.round(hours * 10) / 10;
   out.workCostsMonthly = workCosts;
+  out.partnerTakeHomeMonthly = partnerTake;
   return { outputs: out, enriched };
 }

@@ -6,6 +6,7 @@
 import { q, U, add, sum, needs, ratio, isNeeds } from '../units.js';
 import { fieldQ, monthlyCents, val, num } from './common.js';
 import { isGuessRow, realCategories } from '../guesses.js';
+import { shareOf, peopleOf } from '../household.js';
 import { AREAS } from '../anchors.js';
 import { scale } from '../units.js';
 
@@ -30,7 +31,7 @@ export function run(ctx) {
   const cardSpend = {};
   const gut = (ctx.record && ctx.record.anchors && ctx.record.anchors.gut) || {};
   const guessesOn = !(asm && asm.fillGapsWithGuesses === false);
-  const people = 1 + (((ctx.record && ctx.record.household) || {}).roommates || []).length;
+  const hh = (ctx.record && ctx.record.household) || {};
   const realIn = ctx.record ? realCategories(ctx.record) : {};
   let sharedFull = q(0, U.monthlyAfter), sharedShare = q(0, U.monthlyAfter);
   const standIns = {}; const anchorGap = {};
@@ -42,7 +43,7 @@ export function run(ctx) {
       const full = fieldQ(r, 'amount', U.monthlyAfter, asm);
       if (!full) return;
       const shared = val(r, 'shared') === true;
-      const share = shared ? (num(r, 'myShare') !== null ? num(r, 'myShare') : Math.round(10000 / people) / 10000) : 1;
+      const share = shared ? shareOf(hh, num(r, 'myShare')) : 1;
       const a = shared ? scale(full, share) : full;
       if (shared) { sharedFull = add(sharedFull, full); sharedShare = add(sharedShare, a); }
       lines++;

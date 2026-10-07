@@ -2,7 +2,7 @@
  "app": "money-rooms-v3",
  "exportedAt": "2026-10-01T12:27:18.000Z",
  "record": {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "extreme",
   "createdAt": "2026-10-01T12:00:00.000Z",
   "updatedAt": "2026-10-01T12:27:18.000Z",
@@ -148,6 +148,11 @@
         "state": "none",
         "source": "client",
         "cad": "month"
+       },
+       "whose": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
        }
       }
      }
@@ -198,6 +203,21 @@
         "v": null,
         "state": "not-applicable",
         "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
        }
       }
      },
@@ -247,6 +267,21 @@
         "v": "Debt number 1 with a very long nickname",
         "state": "known",
         "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
        }
       }
      },
@@ -293,6 +328,21 @@
         "v": null,
         "state": "not-applicable",
         "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
        }
       }
      },
@@ -338,6 +388,21 @@
        "primaryCard": {
         "v": null,
         "state": "not-applicable",
+        "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
         "source": "client"
        }
       }
@@ -1563,6 +1628,29 @@
         "v": 0.75,
         "state": "known",
         "source": "estimated"
+       },
+       "baristaIncome": {
+        "v": null,
+        "state": "unknown",
+        "source": "client",
+        "cad": "month"
+       },
+       "dreamFiAge": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "dreamSpending": {
+        "v": null,
+        "state": "unknown",
+        "source": "client",
+        "cad": "month"
+       },
+       "gutSpending": {
+        "v": null,
+        "state": "unknown",
+        "source": "client",
+        "cad": "month"
        }
       }
      }
@@ -1590,7 +1678,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 2,
@@ -1612,7 +1701,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 3,
@@ -1634,7 +1724,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 4,
@@ -1656,7 +1747,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 5,
@@ -1678,7 +1770,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 6,
@@ -1700,7 +1793,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 7,
@@ -1722,7 +1816,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 8,
@@ -1744,7 +1839,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 9,
@@ -1846,6 +1942,11 @@
        "state": "unknown",
        "source": "client",
        "cad": "month"
+      },
+      "whose": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
       }
      }
     },
@@ -1875,7 +1976,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 11,
@@ -1899,7 +2001,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 12,
@@ -1921,7 +2024,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "move"
    },
    {
     "seq": 13,
@@ -1945,7 +2049,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 14,
@@ -1969,7 +2074,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 15,
@@ -1993,7 +2099,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 16,
@@ -2017,7 +2124,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 17,
@@ -2041,7 +2149,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 18,
@@ -2065,7 +2174,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 19,
@@ -2087,7 +2197,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 20,
@@ -2109,7 +2220,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 21,
@@ -2131,7 +2243,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 22,
@@ -2155,7 +2268,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 23,
@@ -2209,6 +2323,21 @@
        "v": null,
        "state": "unknown",
        "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
       }
      }
     },
@@ -2236,7 +2365,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 25,
@@ -2260,7 +2390,8 @@
     },
     "source": "client",
     "state": "rough",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 26,
@@ -2282,7 +2413,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 27,
@@ -2304,7 +2436,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s1"
+    "session": "s1",
+    "why": null
    },
    {
     "seq": 28,
@@ -2358,6 +2491,21 @@
        "v": null,
        "state": "unknown",
        "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
       }
      }
     },
@@ -2385,7 +2533,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 30,
@@ -2412,7 +2561,8 @@
     },
     "source": "client",
     "state": "rough",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 31,
@@ -2434,7 +2584,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 32,
@@ -2456,7 +2607,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 33,
@@ -2510,6 +2662,21 @@
        "v": null,
        "state": "unknown",
        "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
       }
      }
     },
@@ -2537,7 +2704,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 35,
@@ -2561,7 +2729,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 36,
@@ -2583,7 +2752,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 37,
@@ -2605,7 +2775,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s1"
+    "session": "s1",
+    "why": null
    },
    {
     "seq": 38,
@@ -2659,6 +2830,21 @@
        "v": null,
        "state": "unknown",
        "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
       }
      }
     },
@@ -2686,7 +2872,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 40,
@@ -2710,7 +2897,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 41,
@@ -2732,7 +2920,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 42,
@@ -2754,7 +2943,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s1"
+    "session": "s1",
+    "why": null
    },
    {
     "seq": 43,
@@ -2812,7 +3002,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 45,
@@ -2913,7 +3104,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 47,
@@ -2935,7 +3127,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 48,
@@ -2957,7 +3150,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 49,
@@ -2979,7 +3173,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 50,
@@ -3001,7 +3196,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 51,
@@ -3025,7 +3221,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 52,
@@ -3047,7 +3244,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 53,
@@ -3069,7 +3267,8 @@
     },
     "source": "lookup-verify",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 54,
@@ -3091,7 +3290,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 55,
@@ -3113,7 +3313,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "move"
    },
    {
     "seq": 56,
@@ -3179,7 +3380,8 @@
     },
     "source": "client",
     "state": "rough",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 58,
@@ -3201,7 +3403,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 59,
@@ -3225,7 +3428,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 60,
@@ -3296,7 +3500,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 62,
@@ -3318,7 +3523,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 63,
@@ -3342,7 +3548,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 64,
@@ -3364,7 +3571,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 65,
@@ -3430,7 +3638,8 @@
     },
     "source": "client",
     "state": "will-send",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 67,
@@ -3452,7 +3661,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 68,
@@ -3476,7 +3686,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 69,
@@ -3566,7 +3777,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 71,
@@ -3588,7 +3800,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 72,
@@ -3612,7 +3825,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 73,
@@ -3636,7 +3850,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 74,
@@ -3660,7 +3875,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 75,
@@ -3684,7 +3900,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 76,
@@ -3708,7 +3925,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 77,
@@ -3809,7 +4027,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 79,
@@ -3831,7 +4050,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 80,
@@ -3853,7 +4073,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 81,
@@ -3875,7 +4096,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s1"
+    "session": "s1",
+    "why": null
    },
    {
     "seq": 82,
@@ -3897,7 +4119,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s1"
+    "session": "s1",
+    "why": null
    },
    {
     "seq": 83,
@@ -3921,7 +4144,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 84,
@@ -3943,7 +4167,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 85,
@@ -3965,7 +4190,8 @@
     },
     "source": "lookup-verify",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 86,
@@ -3987,7 +4213,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 87,
@@ -4009,7 +4236,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "move"
    },
    {
     "seq": 88,
@@ -4110,7 +4338,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 90,
@@ -4132,7 +4361,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 91,
@@ -4154,7 +4384,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 92,
@@ -4176,7 +4407,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 93,
@@ -4198,7 +4430,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 94,
@@ -4222,7 +4455,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 95,
@@ -4244,7 +4478,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 96,
@@ -4266,7 +4501,8 @@
     },
     "source": "lookup-verify",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 97,
@@ -4288,7 +4524,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 98,
@@ -4310,7 +4547,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "move"
    },
    {
     "seq": 99,
@@ -4411,7 +4649,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 101,
@@ -4433,7 +4672,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 102,
@@ -4455,7 +4695,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 103,
@@ -4477,7 +4718,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s1"
+    "session": "s1",
+    "why": null
    },
    {
     "seq": 104,
@@ -4499,7 +4741,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s1"
+    "session": "s1",
+    "why": null
    },
    {
     "seq": 105,
@@ -4523,7 +4766,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 106,
@@ -4545,7 +4789,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 107,
@@ -4567,7 +4812,8 @@
     },
     "source": "lookup-verify",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 108,
@@ -4589,7 +4835,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 109,
@@ -4611,7 +4858,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "move"
    },
    {
     "seq": 110,
@@ -4677,7 +4925,8 @@
     },
     "source": "client",
     "state": "rough",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 112,
@@ -4699,7 +4948,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 113,
@@ -4723,7 +4973,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 114,
@@ -4794,7 +5045,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 116,
@@ -4816,7 +5068,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 117,
@@ -4840,7 +5093,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 118,
@@ -4862,7 +5116,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 119,
@@ -4928,7 +5183,8 @@
     },
     "source": "client",
     "state": "will-send",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 121,
@@ -4950,7 +5206,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 122,
@@ -4974,7 +5231,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 123,
@@ -5064,7 +5322,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 125,
@@ -5086,7 +5345,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 126,
@@ -5110,7 +5370,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 127,
@@ -5134,7 +5395,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 128,
@@ -5158,7 +5420,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 129,
@@ -5182,7 +5445,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 130,
@@ -5206,7 +5470,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 131,
@@ -5307,7 +5572,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 133,
@@ -5329,7 +5595,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 134,
@@ -5351,7 +5618,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 135,
@@ -5373,7 +5641,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 136,
@@ -5395,7 +5664,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 137,
@@ -5419,7 +5689,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 138,
@@ -5441,7 +5712,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 139,
@@ -5463,7 +5735,8 @@
     },
     "source": "lookup-verify",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 140,
@@ -5485,7 +5758,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 141,
@@ -5507,7 +5781,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "move"
    },
    {
     "seq": 142,
@@ -5608,7 +5883,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 144,
@@ -5630,7 +5906,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 145,
@@ -5652,7 +5929,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 146,
@@ -5674,7 +5952,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s1"
+    "session": "s1",
+    "why": null
    },
    {
     "seq": 147,
@@ -5696,7 +5975,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s1"
+    "session": "s1",
+    "why": null
    },
    {
     "seq": 148,
@@ -5720,7 +6000,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 149,
@@ -5742,7 +6023,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 150,
@@ -5764,7 +6046,8 @@
     },
     "source": "lookup-verify",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 151,
@@ -5786,7 +6069,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 152,
@@ -5808,7 +6092,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "move"
    },
    {
     "seq": 153,
@@ -5879,7 +6164,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 155,
@@ -5903,7 +6189,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 156,
@@ -5925,7 +6212,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 157,
@@ -5980,7 +6268,8 @@
     },
     "source": "lookup-verify",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 159,
@@ -6038,7 +6327,8 @@
     },
     "source": "client",
     "state": "rough",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 161,
@@ -6134,7 +6424,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 163,
@@ -6156,7 +6447,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 164,
@@ -6180,7 +6472,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 165,
@@ -6202,7 +6495,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 166,
@@ -6224,7 +6518,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 167,
@@ -6246,7 +6541,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 168,
@@ -6268,7 +6564,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 169,
@@ -6290,7 +6587,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 170,
@@ -6312,7 +6610,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 171,
@@ -6408,7 +6707,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 173,
@@ -6430,7 +6730,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 174,
@@ -6454,7 +6755,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 175,
@@ -6476,7 +6778,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 176,
@@ -6498,7 +6801,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 177,
@@ -6520,7 +6824,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 178,
@@ -6542,7 +6847,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 179,
@@ -6564,7 +6870,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 180,
@@ -6586,7 +6893,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 181,
@@ -6682,7 +6990,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 183,
@@ -6704,7 +7013,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 184,
@@ -6728,7 +7038,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 185,
@@ -6750,7 +7061,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 186,
@@ -6772,7 +7084,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 187,
@@ -6794,7 +7107,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 188,
@@ -6816,7 +7130,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 189,
@@ -6838,7 +7153,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s1"
+    "session": "s1",
+    "why": null
    },
    {
     "seq": 190,
@@ -6860,7 +7176,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 191,
@@ -6956,7 +7273,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 193,
@@ -6978,7 +7296,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 194,
@@ -7002,7 +7321,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s1"
+    "session": "s1",
+    "why": null
    },
    {
     "seq": 195,
@@ -7024,7 +7344,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 196,
@@ -7046,7 +7367,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 197,
@@ -7068,7 +7390,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 198,
@@ -7090,7 +7413,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 199,
@@ -7112,7 +7436,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s1"
+    "session": "s1",
+    "why": null
    },
    {
     "seq": 200,
@@ -7134,7 +7459,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s1"
+    "session": "s1",
+    "why": null
    },
    {
     "seq": 201,
@@ -7230,7 +7556,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 203,
@@ -7252,7 +7579,8 @@
     },
     "source": "client",
     "state": "rough",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 204,
@@ -7276,7 +7604,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s1"
+    "session": "s1",
+    "why": null
    },
    {
     "seq": 205,
@@ -7298,7 +7627,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 206,
@@ -7320,7 +7650,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 207,
@@ -7342,7 +7673,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 208,
@@ -7364,7 +7696,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 209,
@@ -7386,7 +7719,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s1"
+    "session": "s1",
+    "why": null
    },
    {
     "seq": 210,
@@ -7408,7 +7742,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s1"
+    "session": "s1",
+    "why": null
    },
    {
     "seq": 211,
@@ -7478,7 +7813,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 213,
@@ -7500,7 +7836,8 @@
     },
     "source": "lookup-verify",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 214,
@@ -7522,7 +7859,8 @@
     },
     "source": "lookup-verify",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 215,
@@ -7544,7 +7882,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 216,
@@ -7609,7 +7948,8 @@
     },
     "source": "client",
     "state": "rough",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 218,
@@ -7631,7 +7971,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 219,
@@ -7653,7 +7994,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "move"
    },
    {
     "seq": 220,
@@ -7696,6 +8038,29 @@
        "v": 0.75,
        "state": "known",
        "source": "estimated"
+      },
+      "baristaIncome": {
+       "v": null,
+       "state": "unknown",
+       "source": "client",
+       "cad": "month"
+      },
+      "dreamFiAge": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "dreamSpending": {
+       "v": null,
+       "state": "unknown",
+       "source": "client",
+       "cad": "month"
+      },
+      "gutSpending": {
+       "v": null,
+       "state": "unknown",
+       "source": "client",
+       "cad": "month"
       }
      }
     },
@@ -7723,7 +8088,8 @@
     },
     "source": "client",
     "state": "rough",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    }
   ],
   "scenarios": [],
@@ -7737,6 +8103,23 @@
   "theirPlate": {
    "done": {},
    "snoozed": {}
-  }
+  },
+  "anchors": {
+   "gut": {},
+   "dream": {},
+   "history": []
+  },
+  "household": {
+   "roommates": [],
+   "lease": "none",
+   "unitSize": null,
+   "partner": null,
+   "basis": "together"
+  },
+  "colTier": null,
+  "sessionMode": "standard",
+  "discovery": null,
+  "targets": {},
+  "callProgress": {}
  }
 }

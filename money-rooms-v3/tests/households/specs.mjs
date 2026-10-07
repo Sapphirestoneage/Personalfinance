@@ -173,12 +173,12 @@ const mayaS2Rows = [
 export const maya = {
   id: 'maya',
   sun: {
-    name: ['Maya Lindqvist', 'verified'], birthDate: ['2000-02-11', 'verified'], state: ['CA', 'verified'], city: ['Oakland'],
+    name: ['Maya Lindqvist', 'verified'], birthDate: ['2000-02-11', 'verified'], state: ['NJ', 'verified'], city: ['Jersey City'],
     workSituation: ['mixed', 'verified'], dependents: [0, 'none'], filingStatus: ['single', 'verified'], bigGoal: ['A small home by 35 and a four-day week']
   },
   rows: mayaS1Rows.concat(mayaS2Rows),
   sessions: [
-    { start: '2026-08-20T16:00:00.000Z', label: 'Session 1', facts: { name: ['Maya Lindqvist', 'verified'], birthDate: ['2000-02-11', 'verified'], state: ['CA', 'verified'], city: ['Oakland'], workSituation: ['mixed', 'verified'], dependents: [0, 'none'], filingStatus: ['single', 'verified'], bigGoal: ['A small home by 35 and a four-day week'] }, rows: mayaS1Rows, snapshot: true, note: 'First meeting. Income and debts in; spending as one rough number.' },
+    { start: '2026-08-20T16:00:00.000Z', label: 'Session 1', facts: { name: ['Maya Lindqvist', 'verified'], birthDate: ['2000-02-11', 'verified'], state: ['NJ', 'verified'], city: ['Jersey City'], workSituation: ['mixed', 'verified'], dependents: [0, 'none'], filingStatus: ['single', 'verified'], bigGoal: ['A small home by 35 and a four-day week'] }, rows: mayaS1Rows, snapshot: true, note: 'First meeting. Income and debts in; spending as one rough number.' },
     { start: '2026-09-17T16:00:00.000Z', label: 'Session 2', rows: mayaS2Rows, edits: [
       { rowId: 'm-csp', field: 'balance', value: 98000, state: 'known' },
       { rowId: 'm-loan', field: 'balance', value: 1177000, state: 'verified' },

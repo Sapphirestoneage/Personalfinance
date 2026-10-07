@@ -17,6 +17,7 @@ import { proposals, setTarget, defaultChoice, middleValue } from '../../engine/t
 import { progress } from '../../engine/progress.js';
 import { roommateOutcome } from '../../engine/scenarios.js';
 import { createRecord, createRow, addRow, setField, setHousehold, setColTier, whyOf } from '../../engine/record.js';
+import { shareOf, peopleOf } from '../../engine/household.js';
 import { freshFacts } from '../../engine/fields.js';
 import { loadData } from './load-data.js';
 import { MAYA_DISCOVERY, VARIANCE_HOUSEHOLD } from '../households/discovery-specs.mjs';
@@ -74,7 +75,7 @@ test('a tier override is the coach\'s word and stops auto-updates', () => {
 const { rec: maya, out: mayaOut } = buildMaya();
 const R = compute(maya, data, { today: TODAY }); const S = R.sun.outputs; const M = R.metrics; const X = E.maya;
 test('Maya: the discovery call fills the Sun, the household, the job and the accounts as What you said', () => {
-  assert.equal(maya.sun.f.name.v, 'Maya'); assert.equal(R.age, 27); assert.equal(maya.sun.f.state.v, X.state); assert.equal(maya.sun.f.state.source, 'inferred');
+  assert.equal(maya.sun.f.name.v, 'Maya Lindqvist'); assert.equal(R.age, 26); assert.equal(maya.sun.f.state.v, X.state); assert.equal(maya.sun.f.state.source, 'inferred');
   assert.deepEqual(maya.household.roommates.map(r => r.nickname), ['Dani']); assert.equal(maya.household.lease, 'both');
   assert.equal(S.income.takeHomeMonthly.cents, X.takeHomeMonthly); assert.equal(S.income.grossMonthly.cents, X.grossMonthly);
   const job = maya.planets.income.rows.find(r => r.type === 'w2'); assert.equal(job.f.takeHome.source, 'discovery'); assert.equal(job.f.takeHome.cad, 'paycheck'); assert.equal(job.f.payFrequency.v, 'biweekly'); assert.equal(job.f.grossPay.cad, 'year');
@@ -223,4 +224,52 @@ test('gentle mode switches both ways and follows the mindset', () => {
   const rec = createRecord({ id: 'g' }); applyDiscovery(rec, { snapshot: { name: 'Al', city: 'Austin' }, mindset: { avoidsAccounts: false, struggles: ['overspending'] } }, data, { now: NOW, today: TODAY }); assert.equal(rec.sessionMode, 'standard');
   const rec2 = createRecord({ id: 'g2' }); applyDiscovery(rec2, { snapshot: { name: 'Bo', city: 'Austin' }, mindset: { avoidsAccounts: false, struggles: ['avoiding'] } }, data, { now: NOW, today: TODAY }); assert.equal(rec2.sessionMode, 'gentle');
   rec2.sessionMode = 'standard'; assert.equal(compute(rec2, data, { today: TODAY }).sessionMode, 'standard');
+});
+
+/* ---- partners (MR-050) ---- */
+function couple(basis) {
+  const rec = createRecord({ id: 'couple', now: NOW });
+  const set = (rowId, fid, v, state, cad) => setField(rec, rowId, fid, v, state || 'known', 'client', { now: NOW, cad });
+  set('sun', 'birthDate', '1995-05-05'); set('sun', 'workSituation', 'employed'); set('sun', 'filingStatus', 'mfj');
+  const me = createRow('income', 'w2', { nickname: 'My job', f: freshFacts(data.fields, 'income', 'w2') }); addRow(rec, me, { now: NOW }); set(me.id, 'takeHome', 400000, 'known', 'month');
+  const them = createRow('income', 'w2', { nickname: "Sam's job", f: freshFacts(data.fields, 'income', 'w2') }); addRow(rec, them, { now: NOW }); set(them.id, 'whose', 'partner'); set(them.id, 'takeHome', 300000, 'known', 'month');
+  const rent = createRow('spending', 'line', { nickname: 'Rent', f: freshFacts(data.fields, 'spending', 'line') }); addRow(rec, rent, { now: NOW }); set(rent.id, 'category', 'accommodation'); set(rent.id, 'amount', 300000, 'known', 'month'); set(rent.id, 'shared', true);
+  setHousehold(rec, { roommates: [], lease: 'both', partner: { nickname: 'Sam' }, basis }, { now: NOW });
+  return rec;
+}
+test('a partner counts together by default: both incomes, the full shared bill; just mine counts one income and half', () => {
+  const R = compute(couple('together'), data, { today: TODAY }); const S = R.sun.outputs;
+  assert.equal(S.income.takeHomeMonthly.cents, 700000); assert.equal(S.income.partnerTakeHomeMonthly.cents, 300000);
+  assert.equal(S.spending.baselineMonthly.cents, 300000); assert.equal(S.spending.sharedShareMonthly.cents, 300000);
+  assert.ok(!S.safety.roommateGap || S.safety.roommateGap.cents === 0, 'a partner is not a roommate gap');
+  const R2 = compute(couple('mine'), data, { today: TODAY }); const S2 = R2.sun.outputs;
+  assert.equal(S2.income.takeHomeMonthly.cents, 400000); assert.equal(S2.income.partnerTakeHomeMonthly.cents, 300000, 'their pay is still published');
+  assert.equal(S2.spending.baselineMonthly.cents, 150000);
+});
+test('a partner and a roommate: together counts two thirds of a shared bill; people counts everyone', () => {
+  const hh = { roommates: [{ id: 'rm1', nickname: 'Dani' }], partner: { nickname: 'Sam' }, basis: 'together' };
+  assert.equal(peopleOf(hh), 3); assert.equal(shareOf(hh, null), 0.6667);
+  assert.equal(shareOf(Object.assign({}, hh, { basis: 'mine' }), null), 0.3333); assert.equal(shareOf(Object.assign({}, hh, { basis: 'mine' }), 0.4), 0.4);
+});
+test('the discovery form with a partner builds the partner income row and the household', () => {
+  const rec = createRecord({ id: 'disc-couple', now: NOW });
+  const form = JSON.parse(JSON.stringify(MAYA_DISCOVERY)); form.snapshot.partner = true; form.snapshot.partnerName = 'Sam'; form.snapshot.roommates = 0; form.money.partnerTakeHome = '2000 every two weeks';
+  applyDiscovery(rec, form, data, { now: NOW, today: TODAY, session: 'discovery' });
+  assert.deepEqual(rec.household.partner, { nickname: 'Sam' }); assert.equal(rec.household.basis, 'together');
+  const prow = rec.planets.income.rows.find(r => r.f.whose && r.f.whose.v === 'partner'); assert.ok(prow); assert.equal(prow.nickname, "Sam's job");
+  const R = compute(rec, data, { today: TODAY });
+  assert.equal(R.sun.outputs.income.partnerTakeHomeMonthly.cents, Math.round(200000 * 26 / 12));
+  assert.equal(R.sun.outputs.income.takeHomeMonthly.cents, 411667 + Math.round(200000 * 26 / 12));
+  const food = guessRows(rec).filter(r => r.f.category.v === 'food'); assert.ok(food.length, 'guesses still fill the gaps');
+  const solo = buildMaya().rec; const soloFood = guessRows(solo).filter(r => r.f.category.v === 'food').reduce((s, r) => s + r.f.amount.v, 0);
+  assert.ok(food.reduce((s, r) => s + r.f.amount.v, 0) > soloFood, 'a partner counted together is one more mouth');
+});
+test('a saved target is a to-do for next session; keep it as is takes it off', () => {
+  const rec = buildMaya().rec;
+  setTarget(rec, 'food', 'middle', 60000, { now: NOW, actualAt: 79100, label: 'Food', owner: 'Maya' });
+  let todos = rec.sun.onepager.todos.filter(t => t.target); assert.equal(todos.length, 1); assert.equal(todos[0].task, 'Aim for $600 a month on food (now $791)'); assert.equal(todos[0].owner, 'Maya');
+  setTarget(rec, 'food', 'gut', 50000, { now: NOW, actualAt: 79100, label: 'Food', owner: 'Maya' });
+  todos = rec.sun.onepager.todos.filter(t => t.target); assert.equal(todos.length, 1, 'one to-do per area'); assert.equal(todos[0].task, 'Aim for $500 a month on food (now $791)');
+  setTarget(rec, 'food', 'keep', 79100, { now: NOW, actualAt: 79100, label: 'Food' });
+  assert.equal(rec.sun.onepager.todos.filter(t => t.target).length, 0);
 });

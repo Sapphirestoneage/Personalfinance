@@ -444,6 +444,11 @@
    "spending.sharedFullMonthly",
    "spending.sharedShareMonthly",
    "asm.roommateMonthsToReplace"
+  ],
+  "income.partnerTakeHomeMonthly": [
+   "takeHome",
+   "grossPay",
+   "whose"
   ]
  },
  "projectionInputs": [
@@ -619,7 +624,8 @@
   "otherAsset": "total assets only",
   "life.events": "promoted blocks are read by Simulate, not the engine",
   "asm.callTargetRoomFraction": "how a target is proposed",
-  "asm.roommateMonthsToReplace": "the cushion target and the roommate scenario only"
+  "asm.roommateMonthsToReplace": "the cushion target and the roommate scenario only",
+  "whose": "a label for whose pay a row is; the household basis decides what counts"
  },
  "signNote": "An edge sign is the derivative: +1 when the upstream value rising raises the downstream value, -1 when it lowers it. The projection node stands for the FI date, so a later date is higher.",
  "extraEdges": {

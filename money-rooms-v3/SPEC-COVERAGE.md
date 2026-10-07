@@ -167,6 +167,8 @@ Built after Level 9. The Level 9 stand-ins (dream FI age, dream and gut spending
 | New Maya discovery household and a variance household with hand-typed expected numbers | done | tests/households/discovery-specs.mjs; build-discovery.mjs writes maya-discovery.json; discovery-expected.json |
 | tests/ui.js: #/discovery, the summary, #/call, the roommate scenario in both views at three widths | done | tests/ui-screens.js (three screens, the maya-discovery household); ui-flows.js level8-maya-discovery-to-targets (29 checks) |
 | Design rules: no internal words on screen; client words; HCOL/MCOL/LCOL coach, "high cost area" client | done | data/col-tiers.json labels; flow check "the client view never says HCOL, anchor, variance or estimated" |
+| Partners (owner follow-up, MR-050): a partner whose money counts together or just mine; the discovery form asks; Confirm reads it back | done | engine/household.js; planets/income.js partnerTakeHomeMonthly; discovery.test.js "a partner counts together" |
+| A saved target is a to-do for next session (owner follow-up, MR-050) | done | engine/targets.js setTarget; call.js nextSessionTodos; one-pager to-dos |
 | Screenshots and a critique round for the new screens | not done | the sweep ran at three widths in both views; a critique round is owed (PROGRESS.md) |
 
 ## Level 9 What Moves the FI Date

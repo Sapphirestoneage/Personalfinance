@@ -158,7 +158,7 @@ export function compute(record, data, opts) {
   result.sun = sun; result.metrics = metrics; result.lenses = lenses; result.projection = projection; result.debts = debts; result.asm = asm; result.age = age;
   /* Level 8: the cost-of-living tier, the household, the guesses and the two meters */
   result.colTier = data.colTiers ? colTierOf(record, data.colTiers) : null;
-  result.household = record.household || { roommates: [], lease: 'none' };
+  result.household = record.household || { roommates: [], lease: 'none', partner: null, basis: 'together' };
   const gRows = guessRows(record);
   const given = realCategories(record);
   result.guesses = { on: asm.fillGapsWithGuesses !== false, count: asm.fillGapsWithGuesses === false ? 0 : gRows.filter(r => { const c = r.f.category && r.f.category.v; return !(record.anchors && record.anchors.gut && record.anchors.gut['spending:' + c]) && !given[c]; }).length, rows: gRows.map(r => ({ rowId: r.id, name: r.nickname, category: r.f.category ? r.f.category.v : null, cents: r.f.amount ? r.f.amount.v : null, shared: !!(r.f.shared && r.f.shared.v), tier: r.guessTier || null })) };

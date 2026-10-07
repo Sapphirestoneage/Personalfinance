@@ -70,7 +70,7 @@ export const MIGRATIONS = [
     note: 'Level 8: anchors (gut backfilled from the earliest non-guess values), household, cost-of-living tier, session mode, discovery, targets and call progress',
     up(rec) {
       backfillAnchors(rec);
-      rec.household = rec.household || { roommates: [], lease: 'none', unitSize: null };
+      rec.household = rec.household || { roommates: [], lease: 'none', unitSize: null, partner: null, basis: 'together' };
       if (rec.colTier === undefined) rec.colTier = null; /* inferred from the Sun on every compute until the coach overrides it */
       rec.sessionMode = rec.sessionMode || 'standard';
       if (rec.discovery === undefined) rec.discovery = null;

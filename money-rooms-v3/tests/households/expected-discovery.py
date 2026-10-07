@@ -28,7 +28,7 @@ guess_rows = 2 + (len(size1('utilities')) - 1) + sum(len(size1(c)) for c in ('fo
 E['maya'] = dict(tier='HCOL', allItems=ny['allItems'], housing=ny['housing'], metro='new-york', state='NJ', takeHomeMonthly=take_monthly, grossMonthly=gross_monthly,
   guesses=guess, guessRows=guess_rows, guessAreas=7, spendingMonthly=spending_guessed, cash=cash, sharedFull=shared_full, sharedShare=shared_share, gapMonthly=gap_monthly,
   bridge2=gap_monthly * 2, cushionNow=round(cash / spending_guessed, 1), cushionAlone=round(cash / (spending_guessed + gap_monthly), 1),
-  ruleOf5Months=27 / 5, ruleOf5Target=R(spending_guessed * 27 / 5) + gap_monthly * 2, fiNumber=R(spending_guessed * 12 / 0.04), gentle=True,
+  ruleOf5Months=26 / 5, ruleOf5Target=R(spending_guessed * 26 / 5) + gap_monthly * 2, fiNumber=R(spending_guessed * 12 / 0.04), gentle=True,
   anchorsGut=['income:gross', 'income:takeHome', 'safety:cash'], noAnchorFor=['spending:accommodation', 'spending:food', 'debt:total'])
 # tier scaling checks: the same 2-bed guess in MCOL and LCOL
 E['tiers'] = {t: R(unit['rent'] * col['tierAverages'][t]['housing'] / 100 * 0.5) for t in ('HCOL', 'MCOL', 'LCOL')}

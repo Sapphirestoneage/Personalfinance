@@ -11,7 +11,8 @@ Updated: 2026-10-07
   migration, the six-stop call path (#/call), variance with FI effects and the three-marker chart,
   the four target choices, the journal "why", two header meters and Progress vs paperwork on the
   Session page, the one-pager sections, 22 engine tests with a hand-typed workpaper
-  (tests/households/expected-discovery.py) and a 29-check browser flow.
+  (tests/households/expected-discovery.py) and a browser flow. Owner follow-ups (MR-050): partners
+  (together or just mine), a to-do for next session from every target, one Maya in Jersey City.
 - Level 9 What Moves the FI Date: the FI ladder (engine/fiLadder.js, five rungs plus Coast, percent
   there, date reached, required monthly to the dream FI age, the barista rule and the reverse), 26 new
   metrics with direction and levers on all 74, the dependency graph (data/graph.json, engine/graph.js,

@@ -32,7 +32,7 @@ export function createRecord(opts) {
     myPlate: { done: {}, snoozed: {} },
     theirPlate: { done: {}, snoozed: {} },
     anchors: { gut: {}, dream: {}, history: [] },
-    household: { roommates: [], lease: 'none', unitSize: null },
+    household: { roommates: [], lease: 'none', unitSize: null, partner: null, basis: 'together' },
     colTier: null,
     sessionMode: 'standard',
     discovery: null,
@@ -216,11 +216,11 @@ export function fileQuickNote(record, noteId, meta) {
   return n;
 }
 
-/* The household (Level 8, MR-047): roommates and whose name is on the lease. Partners are out of scope. */
+/* The household (Level 8, MR-047, MR-050): roommates, whose name is on the lease, a partner whose money is in the picture, and whether the picture counts the two of them together. */
 export function setHousehold(record, household, meta) {
   const m = meta || {};
   const old = record.household ? JSON.parse(JSON.stringify(record.household)) : null;
-  const next = { roommates: (household.roommates || []).map((r, i) => ({ id: r.id || ('rm' + (i + 1)), nickname: r.nickname || '', shareDefault: typeof r.shareDefault === 'number' ? r.shareDefault : Math.round(10000 / ((household.roommates || []).length + 1)) / 10000 })), lease: household.lease || 'none', unitSize: household.unitSize || null };
+  const next = { roommates: (household.roommates || []).map((r, i) => ({ id: r.id || ('rm' + (i + 1)), nickname: r.nickname || '', shareDefault: typeof r.shareDefault === 'number' ? r.shareDefault : Math.round(10000 / ((household.roommates || []).length + 1)) / 10000 })), lease: household.lease || 'none', unitSize: household.unitSize || null , partner: household.partner ? { nickname: (household.partner.nickname || '').trim() } : null, basis: household.basis === 'mine' ? 'mine' : 'together' };
   if (JSON.stringify(old) === JSON.stringify(next)) return null;
   record.household = next;
   const line = append(record.journal, { kind: 'household', planet: 'sun', rowId: 'household', field: 'household', owner: 'sun', old, new: JSON.parse(JSON.stringify(next)), source: 'client', state: 'known', session: m.session || null, why: m.why === undefined ? null : m.why }, m.now);

@@ -2,7 +2,7 @@
  "app": "money-rooms-v3",
  "exportedAt": "2026-10-03T16:00:21.000Z",
  "record": {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "id": "maya",
   "createdAt": "2026-09-10T15:00:00.000Z",
   "updatedAt": "2026-10-03T16:00:21.000Z",
@@ -19,12 +19,12 @@
      "source": "client"
     },
     "state": {
-     "v": "CA",
+     "v": "NJ",
      "state": "verified",
      "source": "client"
     },
     "city": {
-     "v": "Oakland",
+     "v": "Jersey City",
      "state": "known",
      "source": "client"
     },
@@ -181,6 +181,11 @@
         "state": "rough",
         "source": "client",
         "cad": "month"
+       },
+       "whose": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
        }
       }
      },
@@ -212,6 +217,11 @@
         "state": "known",
         "source": "client",
         "cad": "month"
+       },
+       "whose": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
        }
       }
      },
@@ -248,6 +258,11 @@
         "v": 6,
         "state": "known",
         "source": "client"
+       },
+       "whose": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
        }
       }
      },
@@ -273,6 +288,11 @@
        "payFrequency": {
         "v": "monthly",
         "state": "known",
+        "source": "client"
+       },
+       "whose": {
+        "v": null,
+        "state": "unknown",
         "source": "client"
        }
       }
@@ -345,6 +365,21 @@
         "v": "Bilt",
         "state": "known",
         "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
        }
       }
      },
@@ -391,6 +426,21 @@
         "v": "Sapphire Preferred",
         "state": "known",
         "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
        }
       }
      },
@@ -436,6 +486,21 @@
        "primaryCard": {
         "v": "Sapphire Preferred",
         "state": "known",
+        "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
         "source": "client"
        }
       }
@@ -486,6 +551,21 @@
         "v": "Sapphire Preferred",
         "state": "known",
         "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
        }
       }
      },
@@ -531,6 +611,21 @@
        "primaryCard": {
         "v": "Sapphire Preferred",
         "state": "known",
+        "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
         "source": "client"
        }
       }
@@ -578,6 +673,21 @@
         "v": "Sapphire Preferred",
         "state": "known",
         "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
        }
       }
      },
@@ -623,6 +733,21 @@
        "primaryCard": {
         "v": "Sapphire Preferred",
         "state": "known",
+        "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
         "source": "client"
        }
       }
@@ -670,6 +795,21 @@
         "v": "Sapphire Preferred",
         "state": "known",
         "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
        }
       }
      },
@@ -715,6 +855,21 @@
        "primaryCard": {
         "v": null,
         "state": "not-applicable",
+        "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
         "source": "client"
        }
       }
@@ -762,6 +917,21 @@
         "v": "Sapphire Preferred",
         "state": "known",
         "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
        }
       }
      },
@@ -807,6 +977,21 @@
        "primaryCard": {
         "v": "Sapphire Preferred",
         "state": "known",
+        "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
         "source": "client"
        }
       }
@@ -854,6 +1039,21 @@
         "v": "Sapphire Preferred",
         "state": "known",
         "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
        }
       }
      },
@@ -899,6 +1099,21 @@
        "primaryCard": {
         "v": null,
         "state": "not-applicable",
+        "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
         "source": "client"
        }
       }
@@ -1889,6 +2104,29 @@
         "v": 0.75,
         "state": "known",
         "source": "estimated"
+       },
+       "baristaIncome": {
+        "v": null,
+        "state": "unknown",
+        "source": "client",
+        "cad": "month"
+       },
+       "dreamFiAge": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "dreamSpending": {
+        "v": null,
+        "state": "unknown",
+        "source": "client",
+        "cad": "month"
+       },
+       "gutSpending": {
+        "v": null,
+        "state": "unknown",
+        "source": "client",
+        "cad": "month"
        }
       }
      }
@@ -1916,7 +2154,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 2,
@@ -1938,7 +2177,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 3,
@@ -1954,13 +2194,14 @@
      "source": "client"
     },
     "new": {
-     "v": "CA",
+     "v": "NJ",
      "state": "verified",
      "source": "client"
     },
     "source": "client",
     "state": "verified",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 4,
@@ -1976,13 +2217,14 @@
      "source": "client"
     },
     "new": {
-     "v": "Oakland",
+     "v": "Jersey City",
      "state": "known",
      "source": "client"
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 5,
@@ -2004,7 +2246,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 6,
@@ -2026,7 +2269,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 7,
@@ -2048,7 +2292,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 8,
@@ -2070,7 +2315,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 9,
@@ -2172,6 +2418,11 @@
        "state": "unknown",
        "source": "client",
        "cad": "month"
+      },
+      "whose": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
       }
      }
     },
@@ -2201,7 +2452,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 11,
@@ -2225,7 +2477,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 12,
@@ -2249,7 +2502,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 13,
@@ -2273,7 +2527,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 14,
@@ -2297,7 +2552,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 15,
@@ -2321,7 +2577,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 16,
@@ -2345,7 +2602,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 17,
@@ -2369,7 +2627,8 @@
     },
     "source": "client",
     "state": "not-for-me",
-    "session": "s1"
+    "session": "s1",
+    "why": null
    },
    {
     "seq": 18,
@@ -2391,7 +2650,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 19,
@@ -2413,7 +2673,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 20,
@@ -2435,7 +2696,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 21,
@@ -2459,7 +2721,8 @@
     },
     "source": "client",
     "state": "rough",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 22,
@@ -2498,6 +2761,11 @@
        "state": "unknown",
        "source": "client",
        "cad": "month"
+      },
+      "whose": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
       }
      }
     },
@@ -2525,7 +2793,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 24,
@@ -2547,7 +2816,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 25,
@@ -2571,7 +2841,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 26,
@@ -2615,6 +2886,11 @@
        "v": null,
        "state": "unknown",
        "source": "client"
+      },
+      "whose": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
       }
      }
     },
@@ -2644,7 +2920,8 @@
     },
     "source": "client",
     "state": "rough",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 28,
@@ -2666,7 +2943,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 29,
@@ -2700,6 +2978,11 @@
        "v": "monthly",
        "state": "known",
        "source": "client"
+      },
+      "whose": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
       }
      }
     },
@@ -2729,7 +3012,8 @@
     },
     "source": "client",
     "state": "rough",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 31,
@@ -2787,7 +3071,8 @@
     },
     "source": "client",
     "state": "rough",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 33,
@@ -2888,7 +3173,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 35,
@@ -2910,7 +3196,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 36,
@@ -2932,7 +3219,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 37,
@@ -2954,7 +3242,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s1"
+    "session": "s1",
+    "why": null
    },
    {
     "seq": 38,
@@ -2976,7 +3265,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s1"
+    "session": "s1",
+    "why": null
    },
    {
     "seq": 39,
@@ -3000,7 +3290,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 40,
@@ -3022,7 +3313,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 41,
@@ -3045,7 +3337,8 @@
     },
     "source": "lookup-verify",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 42,
@@ -3069,7 +3362,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 43,
@@ -3091,7 +3385,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "move"
    },
    {
     "seq": 44,
@@ -3192,7 +3487,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 46,
@@ -3214,7 +3510,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 47,
@@ -3236,7 +3533,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 48,
@@ -3258,7 +3556,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s1"
+    "session": "s1",
+    "why": null
    },
    {
     "seq": 49,
@@ -3280,7 +3579,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s1"
+    "session": "s1",
+    "why": null
    },
    {
     "seq": 50,
@@ -3304,7 +3604,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 51,
@@ -3327,7 +3628,8 @@
     },
     "source": "lookup-verify",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 52,
@@ -3349,7 +3651,8 @@
     },
     "source": "lookup-verify",
     "state": "none",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 53,
@@ -3371,7 +3674,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "move"
    },
    {
     "seq": 54,
@@ -3437,7 +3741,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 56,
@@ -3459,7 +3764,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 57,
@@ -3483,7 +3789,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 58,
@@ -3543,7 +3850,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 60,
@@ -3565,7 +3873,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s1"
+    "session": "s1",
+    "why": "correction"
    },
    {
     "seq": 61,
@@ -3633,6 +3942,21 @@
        "v": null,
        "state": "unknown",
        "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
       }
      }
     },
@@ -3660,7 +3984,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 64,
@@ -3684,7 +4009,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 65,
@@ -3706,7 +4032,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 66,
@@ -3728,7 +4055,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 67,
@@ -3782,6 +4110,21 @@
        "v": null,
        "state": "unknown",
        "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
       }
      }
     },
@@ -3809,7 +4152,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 69,
@@ -3833,7 +4177,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 70,
@@ -3855,7 +4200,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 71,
@@ -3877,7 +4223,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 72,
@@ -3931,6 +4278,21 @@
        "v": null,
        "state": "unknown",
        "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
       }
      }
     },
@@ -3958,7 +4320,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 74,
@@ -3982,7 +4345,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 75,
@@ -4004,7 +4368,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 76,
@@ -4026,7 +4391,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 77,
@@ -4080,6 +4446,21 @@
        "v": null,
        "state": "unknown",
        "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
       }
      }
     },
@@ -4107,7 +4488,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 79,
@@ -4134,7 +4516,8 @@
     },
     "source": "client",
     "state": "rough",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 80,
@@ -4156,7 +4539,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "move"
    },
    {
     "seq": 81,
@@ -4178,7 +4562,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 82,
@@ -4200,7 +4585,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 83,
@@ -4254,6 +4640,21 @@
        "v": null,
        "state": "unknown",
        "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
       }
      }
     },
@@ -4281,7 +4682,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 85,
@@ -4305,7 +4707,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 86,
@@ -4327,7 +4730,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 87,
@@ -4349,7 +4753,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 88,
@@ -4403,6 +4808,21 @@
        "v": null,
        "state": "unknown",
        "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
       }
      }
     },
@@ -4430,7 +4850,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 90,
@@ -4454,7 +4875,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 91,
@@ -4476,7 +4898,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 92,
@@ -4498,7 +4921,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 93,
@@ -4552,6 +4976,21 @@
        "v": null,
        "state": "unknown",
        "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
       }
      }
     },
@@ -4579,7 +5018,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 95,
@@ -4603,7 +5043,8 @@
     },
     "source": "estimated",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 96,
@@ -4625,7 +5066,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "move"
    },
    {
     "seq": 97,
@@ -4647,7 +5089,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 98,
@@ -4669,7 +5112,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 99,
@@ -4723,6 +5167,21 @@
        "v": null,
        "state": "unknown",
        "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
       }
      }
     },
@@ -4750,7 +5209,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 101,
@@ -4774,7 +5234,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 102,
@@ -4796,7 +5257,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "move"
    },
    {
     "seq": 103,
@@ -4818,7 +5280,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 104,
@@ -4840,7 +5303,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 105,
@@ -4894,6 +5358,21 @@
        "v": null,
        "state": "unknown",
        "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
       }
      }
     },
@@ -4921,7 +5400,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 107,
@@ -4945,7 +5425,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 108,
@@ -4967,7 +5448,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 109,
@@ -4989,7 +5471,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s2"
+    "session": "s2",
+    "why": null
    },
    {
     "seq": 110,
@@ -5043,6 +5526,21 @@
        "v": null,
        "state": "unknown",
        "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
       }
      }
     },
@@ -5070,7 +5568,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 112,
@@ -5094,7 +5593,8 @@
     },
     "source": "client",
     "state": "rough",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 113,
@@ -5116,7 +5616,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "move"
    },
    {
     "seq": 114,
@@ -5138,7 +5639,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 115,
@@ -5160,7 +5662,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 116,
@@ -5214,6 +5717,21 @@
        "v": null,
        "state": "unknown",
        "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
       }
      }
     },
@@ -5241,7 +5759,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 118,
@@ -5265,7 +5784,8 @@
     },
     "source": "client",
     "state": "rough",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 119,
@@ -5287,7 +5807,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "move"
    },
    {
     "seq": 120,
@@ -5309,7 +5830,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 121,
@@ -5331,7 +5853,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 122,
@@ -5385,6 +5908,21 @@
        "v": null,
        "state": "unknown",
        "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
       }
      }
     },
@@ -5412,7 +5950,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 124,
@@ -5436,7 +5975,8 @@
     },
     "source": "estimated",
     "state": "rough",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 125,
@@ -5458,7 +5998,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "move"
    },
    {
     "seq": 126,
@@ -5480,7 +6021,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 127,
@@ -5502,7 +6044,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 128,
@@ -5556,6 +6099,21 @@
        "v": null,
        "state": "unknown",
        "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
       }
      }
     },
@@ -5583,7 +6141,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 130,
@@ -5607,7 +6166,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 131,
@@ -5629,7 +6189,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "move"
    },
    {
     "seq": 132,
@@ -5651,7 +6212,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "move"
    },
    {
     "seq": 133,
@@ -5673,7 +6235,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 134,
@@ -5695,7 +6258,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s2"
+    "session": "s2",
+    "why": null
    },
    {
     "seq": 135,
@@ -5753,7 +6317,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 137,
@@ -5811,7 +6376,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 139,
@@ -5869,7 +6435,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 141,
@@ -5940,7 +6507,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 143,
@@ -5962,7 +6530,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 144,
@@ -5986,7 +6555,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 145,
@@ -6008,7 +6578,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 146,
@@ -6079,7 +6650,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 148,
@@ -6103,7 +6675,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 149,
@@ -6125,7 +6698,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 150,
@@ -6196,7 +6770,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 152,
@@ -6218,7 +6793,8 @@
     },
     "source": "client",
     "state": "will-send",
-    "session": "s2"
+    "session": "s2",
+    "why": null
    },
    {
     "seq": 153,
@@ -6242,7 +6818,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 154,
@@ -6264,7 +6841,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s2"
+    "session": "s2",
+    "why": null
    },
    {
     "seq": 155,
@@ -6319,7 +6897,8 @@
     },
     "source": "lookup-verify",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 157,
@@ -6377,7 +6956,8 @@
     },
     "source": "client",
     "state": "rough",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 159,
@@ -6473,7 +7053,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 161,
@@ -6495,7 +7076,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 162,
@@ -6519,7 +7101,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s2"
+    "session": "s2",
+    "why": null
    },
    {
     "seq": 163,
@@ -6541,7 +7124,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 164,
@@ -6563,7 +7147,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 165,
@@ -6585,7 +7170,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 166,
@@ -6607,7 +7193,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 167,
@@ -6629,7 +7216,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 168,
@@ -6651,7 +7239,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 169,
@@ -6747,7 +7336,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 171,
@@ -6769,7 +7359,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 172,
@@ -6793,7 +7384,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 173,
@@ -6815,7 +7407,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 174,
@@ -6837,7 +7430,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 175,
@@ -6859,7 +7453,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 176,
@@ -6881,7 +7476,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 177,
@@ -6903,7 +7499,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 178,
@@ -6925,7 +7522,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 179,
@@ -7021,7 +7619,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 181,
@@ -7043,7 +7642,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 182,
@@ -7067,7 +7667,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s2"
+    "session": "s2",
+    "why": null
    },
    {
     "seq": 183,
@@ -7089,7 +7690,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 184,
@@ -7111,7 +7713,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 185,
@@ -7133,7 +7736,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 186,
@@ -7155,7 +7759,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 187,
@@ -7177,7 +7782,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 188,
@@ -7199,7 +7805,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 189,
@@ -7295,7 +7902,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 191,
@@ -7317,7 +7925,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 192,
@@ -7341,7 +7950,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 193,
@@ -7363,7 +7973,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 194,
@@ -7385,7 +7996,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 195,
@@ -7407,7 +8019,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 196,
@@ -7429,7 +8042,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 197,
@@ -7451,7 +8065,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 198,
@@ -7473,7 +8088,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s2"
+    "session": "s2",
+    "why": null
    },
    {
     "seq": 199,
@@ -7569,7 +8185,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 201,
@@ -7591,7 +8208,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 202,
@@ -7615,7 +8233,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 203,
@@ -7637,7 +8256,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 204,
@@ -7659,7 +8279,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 205,
@@ -7681,7 +8302,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 206,
@@ -7703,7 +8325,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 207,
@@ -7725,7 +8348,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s2"
+    "session": "s2",
+    "why": null
    },
    {
     "seq": 208,
@@ -7747,7 +8371,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 209,
@@ -7843,7 +8468,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 211,
@@ -7865,7 +8491,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 212,
@@ -7889,7 +8516,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s2"
+    "session": "s2",
+    "why": null
    },
    {
     "seq": 213,
@@ -7911,7 +8539,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 214,
@@ -7933,7 +8562,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 215,
@@ -7955,7 +8585,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 216,
@@ -7977,7 +8608,8 @@
     },
     "source": "client",
     "state": "none",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 217,
@@ -7999,7 +8631,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s2"
+    "session": "s2",
+    "why": null
    },
    {
     "seq": 218,
@@ -8021,7 +8654,8 @@
     },
     "source": "client",
     "state": "not-applicable",
-    "session": "s2"
+    "session": "s2",
+    "why": null
    },
    {
     "seq": 219,
@@ -8091,7 +8725,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 221,
@@ -8113,7 +8748,8 @@
     },
     "source": "lookup-verify",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 222,
@@ -8135,7 +8771,8 @@
     },
     "source": "lookup-verify",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 223,
@@ -8157,7 +8794,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 224,
@@ -8227,7 +8865,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 226,
@@ -8249,7 +8888,8 @@
     },
     "source": "lookup-verify",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 227,
@@ -8271,7 +8911,8 @@
     },
     "source": "lookup-verify",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 228,
@@ -8293,7 +8934,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 229,
@@ -8363,7 +9005,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 231,
@@ -8385,7 +9028,8 @@
     },
     "source": "lookup-verify",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 232,
@@ -8407,7 +9051,8 @@
     },
     "source": "lookup-verify",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 233,
@@ -8429,7 +9074,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 234,
@@ -8494,7 +9140,8 @@
     },
     "source": "client",
     "state": "rough",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 236,
@@ -8516,7 +9163,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 237,
@@ -8538,7 +9186,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "move"
    },
    {
     "seq": 238,
@@ -8603,7 +9252,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 240,
@@ -8625,7 +9275,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 241,
@@ -8647,7 +9298,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "move"
    },
    {
     "seq": 242,
@@ -8690,6 +9342,29 @@
        "v": 0.75,
        "state": "known",
        "source": "estimated"
+      },
+      "baristaIncome": {
+       "v": null,
+       "state": "unknown",
+       "source": "client",
+       "cad": "month"
+      },
+      "dreamFiAge": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "dreamSpending": {
+       "v": null,
+       "state": "unknown",
+       "source": "client",
+       "cad": "month"
+      },
+      "gutSpending": {
+       "v": null,
+       "state": "unknown",
+       "source": "client",
+       "cad": "month"
       }
      }
     },
@@ -8717,7 +9392,8 @@
     },
     "source": "client",
     "state": "rough",
-    "session": "s2"
+    "session": "s2",
+    "why": "correction"
    },
    {
     "seq": 244,
@@ -8739,7 +9415,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s2"
+    "session": "s2",
+    "why": "move"
    },
    {
     "seq": 245,
@@ -8761,7 +9438,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s2"
+    "session": "s2",
+    "why": "move"
    },
    {
     "seq": 246,
@@ -8797,7 +9475,8 @@
     },
     "source": "client",
     "state": "known",
-    "session": "s3"
+    "session": "s3",
+    "why": "move"
    },
    {
     "seq": 248,
@@ -8819,7 +9498,8 @@
     },
     "source": "client",
     "state": "verified",
-    "session": "s3"
+    "session": "s3",
+    "why": "move"
    },
    {
     "seq": 249,
@@ -8849,7 +9529,8 @@
     },
     "source": "client",
     "state": "rough",
-    "session": "s3"
+    "session": "s3",
+    "why": "correction"
    }
   ],
   "scenarios": [
@@ -8928,6 +9609,23 @@
   "theirPlate": {
    "done": {},
    "snoozed": {}
-  }
+  },
+  "anchors": {
+   "gut": {},
+   "dream": {},
+   "history": []
+  },
+  "household": {
+   "roommates": [],
+   "lease": "none",
+   "unitSize": null,
+   "partner": null,
+   "basis": "together"
+  },
+  "colTier": null,
+  "sessionMode": "standard",
+  "discovery": null,
+  "targets": {},
+  "callProgress": {}
  }
 }

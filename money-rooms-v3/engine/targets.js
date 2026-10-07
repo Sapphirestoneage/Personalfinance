@@ -49,5 +49,11 @@ export function setTarget(record, key, choice, cents, meta) {
   const m = meta || {};
   record.targets = record.targets || {};
   record.targets[key] = { choice, cents, actualAt: m.actualAt === undefined ? null : m.actualAt, at: m.now || new Date().toISOString(), session: m.session || null };
+  /* the to-do for next session (MR-050): one per target, on the one-pager list; Keep it as is takes it off */
+  record.sun.onepager = record.sun.onepager || {};
+  const todos = (record.sun.onepager.todos || []).filter(t => t.target !== key);
+  const dollars = c => '$' + Math.round(c / 100).toLocaleString('en-US');
+  if (choice !== 'keep' && typeof cents === 'number') todos.push({ task: 'Aim for ' + dollars(cents) + ' a month on ' + (m.label || key).toLowerCase() + (typeof m.actualAt === 'number' ? ' (now ' + dollars(m.actualAt) + ')' : ''), owner: m.owner || 'Client', due: m.due || '', target: key });
+  record.sun.onepager.todos = todos;
   return record.targets[key];
 }

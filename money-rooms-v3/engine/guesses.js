@@ -6,6 +6,7 @@
    "Guess", never an anchor, never counted as complete. Rows carry
    guess: true so a tier or household change can recompute the ones still
    untouched. Pure builders; the record API applies them. */
+import { peopleOf, countsTogether } from './household.js';
 import { createRow } from './record.js';
 import { freshFacts } from './fields.js';
 import { multiplierFor } from './col.js';
@@ -31,9 +32,10 @@ export function unitFor(record) {
 /* The guess lines a record needs: one per area the client has not given (no real line, no gut anchor), as plain row objects. */
 export function buildGuesses(record, data, tierInfo) {
   const d = data.defaults; const tiers = data.colTiers; const fields = data.fields;
-  const hh = record.household || { roommates: [] }; const people = 1 + (hh.roommates || []).length;
+  const hh = record.household || { roommates: [] }; const people = peopleOf(hh);
   const dep = record.sun.f.dependents && hasValue(record.sun.f.dependents) ? record.sun.f.dependents.v : 0;
-  const size = String(Math.min(4, Math.max(1, 1 + (dep || 0))));
+  /* a partner counted together is one more mouth in every area; a roommate is not (their food is theirs) */
+  const size = String(Math.min(4, Math.max(1, 1 + (dep || 0) + (countsTogether(hh) ? 1 : 0))));
   const gut = (record.anchors && record.anchors.gut) || {};
   const real = record.planets.spending.rows.filter(r => r.type === 'line' && !isGuessRow(r) && r.f.category && hasValue(r.f.category));
   const given = realCategories(record);

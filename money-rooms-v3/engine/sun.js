@@ -21,7 +21,7 @@ export const FILING_STATUSES = Object.freeze([['single', 'Single'], ['mfj', 'Mar
 export const WORK_SITUATIONS = Object.freeze(['employed', 'self-employed', 'between-jobs', 'student', 'retired', 'mixed']);
 
 export const CONTRACT = Object.freeze({
-  income: Object.freeze(['grossMonthly', 'takeHomeMonthly', 'pretaxContribMonthly', 'rothContribMonthly', 'hsaPayrollMonthly', 'pretaxOtherMonthly', 'matchMonthly', 'matchFormula', 'byType', 'stability', 'workHoursMonthly', 'workCostsMonthly']),
+  income: Object.freeze(['grossMonthly', 'takeHomeMonthly', 'pretaxContribMonthly', 'rothContribMonthly', 'hsaPayrollMonthly', 'pretaxOtherMonthly', 'matchMonthly', 'matchFormula', 'byType', 'stability', 'workHoursMonthly', 'workCostsMonthly', 'partnerTakeHomeMonthly']),
   spending: Object.freeze(['baselineMonthly', 'summaryTotalMonthly', 'detailGapMonthly', 'byCategory', 'drafttShares', 'fatFloorMonthly', 'fixedMonthly', 'mistakesAnnual', 'savingsLandingMonthly', 'cardSpendByCategory', 'sharedFullMonthly', 'sharedShareMonthly', 'standIns', 'anchorGapByCategory']),
   debt: Object.freeze(['totalDebt', 'debtServiceMonthly', 'weightedApr', 'annualInterest', 'utilization', 'promoCliffs', 'payoffOrders', 'debtFreeDate', 'freedCashByMonth', 'wallet', 'creditScore', 'byType']),
   safety: Object.freeze(['ruleOf5Months', 'ruleOf5Target', 'runway', 'gap', 'monthlyToClose', 'insurance', 'premiumsMonthly', 'unemploymentMonthly', 'cutAbilityMonthly', 'spendingWithPremiums', 'roommateGap']),

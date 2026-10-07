@@ -40,15 +40,24 @@ export function applyDiscovery(record, form, data, meta) {
   /* ---- household */
   const n = parseInt(snap.roommates, 10) || 0;
   const names = snap.roommateNames || [];
-  setHousehold(record, { roommates: Array.from({ length: n }, (_, i) => ({ id: 'rm' + (i + 1), nickname: names[i] || '' })), lease: snap.lease || (n ? 'both' : 'none'), unitSize: snap.unitSize || null }, { session: m.session, now, why: null });
+  setHousehold(record, { roommates: Array.from({ length: n }, (_, i) => ({ id: 'rm' + (i + 1), nickname: names[i] || '' })), lease: snap.lease || (n ? 'both' : 'none'), unitSize: snap.unitSize || null, partner: snap.partner ? { nickname: snap.partnerName || '' } : null, basis: 'together' }, { session: m.session, now, why: null });
   /* ---- tier: an override is the coach's word */
   if (form.tierOverride) setColTier(record, { tier: form.tierOverride, source: 'client', basis: 'override', allItems: tiers.tierAverages[form.tierOverride].allItems, housing: tiers.tierAverages[form.tierOverride].housing }, { session: m.session, now });
   const tier = colTierOf(record, tiers);
   /* ---- money */
   const money = form.money || {};
+  /* a partner's pay (MR-050): one W-2 row marked Partner's, counted with the client's under "together" */
+  const pt = snap.partner ? parseSaid(money.partnerTakeHome, { kind: 'income' }) : null;
+  if (pt && pt.cents !== null) {
+    const prow = createRow('income', 'w2', { nickname: (snap.partnerName || 'Partner') + "'s job", institution: '', f: freshFacts(fields, 'income', 'w2') });
+    addRow(record, prow, { session: m.session, now });
+    set(prow.id, 'whose', 'partner', 'known', undefined, 'client');
+    set(prow.id, 'takeHome', pt.cents, stateOf(pt, false), pt.cadence);
+    if (pt.cadence === 'paycheck') set(prow.id, 'payFrequency', pt.payFrequency || 'biweekly', 'known', undefined, 'inferred');
+  }
   const selfEmployed = snap.workSituation === 'self-employed';
   const jobType = selfEmployed ? 'c1099' : 'w2';
-  let job = record.planets.income.rows.find(r => r.type === jobType);
+  let job = record.planets.income.rows.find(r => r.type === jobType && !(r.f.whose && r.f.whose.v === 'partner'));
   const gross = parseSaid(money.gross, { kind: 'income' }); const take = parseSaid(money.takeHome, { kind: 'income' });
   if ((gross && gross.cents !== null) || (take && take.cents !== null)) {
     if (!job) { job = createRow('income', jobType, { nickname: snap.employer || 'Job', institution: snap.employer || '', f: freshFacts(fields, 'income', jobType) }); addRow(record, job, { session: m.session, now }); }
