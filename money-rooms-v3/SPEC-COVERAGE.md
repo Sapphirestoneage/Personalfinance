@@ -221,3 +221,33 @@ Level 10 (savings buckets, curricula, the session 5 curriculum) was never built.
 | tests/ui.js: #/goals in both views at three widths, the already-met celebration, a what-if, a cushion withdrawal, the mode comparison | done | tests/ui-screens.js goals; ui-flows.js level11-maya-goal-timeline |
 | Design rules: one sentence on top, no internal words, soft wording in gentle mode, no red | done | gtl-sentence; client words in goals.js; flow check "no internal words" |
 | Screenshots and a critique round | not done | the sweep ran at three widths in both views; a critique round is owed |
+
+## Level 10 The Program (session curricula, account setup, transactions, outcomes)
+
+| Requirement | Status | Evidence |
+|---|---|---|
+| Curricula as data: discovery plus sessions 1 to 12, blocks with priority, minutes, questions, outputs, skip rule, movesTo | done | data/curricula.json; engine/curriculum.js validateCurricula; program.test.js |
+| Session 1 blocks as briefed; session 2 opens with the dream lap then the remaining accounts after the debts | done | data/curricula.json s1, s2 |
+| Sessions 2 to 12 block lists proposed in DECISIONS.md | done | MR-053 |
+| Three steps with done items shown, never more than three open | done | curriculum.js threeSteps; run.js drawSteps |
+| #/call session-aware: timeline, elapsed, markers; Level 8 stops as blocks of sessions 1 and 2 | done | ui/views/run.js; call.js mountStop |
+| Bending: protect the close at 48, behind at 35, ahead offers one could block, go deeper swaps a should | done | curriculum.js bend, goDeeper, pickCould; program.test.js |
+| Urgent mode with chips; urgent sessions take no number; Flex absorbs overflow | done | curriculum.js urgentPlan; program.js startUrgent, moveBlock; programRows |
+| Parking lot on every call screen; carries into prep and open loops | done | program.js park; run.js Park it; prep.js |
+| Detours: urgent, emotional (pause), deeper, tangent (park) | done | run.js header controls |
+| Session state: blocks done, skipped, moved; minutes per block; coach-only report across clients | done | program.js blockStatus; curriculum.js blockTimes; program.js view |
+| Account checklist: seven items in order over two sessions, statuses, who, notes, triggers, homework max three, roll to session 2 | done | data/accounts-checklist.json; program.js checklistFor, homework, triggers, cardVariant |
+| Screen-share reminder, gentle mode note, plain copy, coach provider note, order of operations as information | done | run.js checklistCard |
+| Cushion steps on the first accounts block | done | run.js checklistCard bucketsFromGoals |
+| Transactions: CSV import, mapper remembered per institution, clean, categorize with remembered overrides | done | engine/transactions.js; ui/views/transactions.js |
+| Detect recurring, subscriptions annual vs monthly with renewal, one-time, fees, BNPL, price creep, duplicates | done | transactions.js detect; transactions.test.js |
+| Patterns: top five, small vs big, weeknight delivery, paycheck vs bills calendar | done | transactions.js patterns |
+| Outputs feed spending lines as verified actuals and the variance; ratio per area, blind spot percent, correction factor | done | transactions.js actuals, compareToGut, applyActuals |
+| Session 4 reveal with one found-money win as the first step | done | transactions.js foundMoney; run.js drawSteps |
+| Knowledge targets per session and readiness line; unmet rolls forward | done | data/knowledge-targets.json; program.js readiness; run.js drawClose |
+| Prep screen | done | ui/views/prep.js |
+| Stress score at discovery, 4, 9, 12; scorecard; blind guess test; before and after; testimonial prompt | done | engine/outcomes.js; run.js drawStress, drawBlind, drawScorecard, drawTestimonial |
+| #/program view; Session N of 12 on Home | done | ui/views/program.js; home.js sessionCell |
+| Tests: curriculum, bending, urgent, parking, readiness, checklist, three steps, CSV, cleaning, netting, detection, patterns, ratio, blind spot, found money, apply, stress, scorecard | done | tests/engine/program.test.js, transactions.test.js; tests/households/maya-transactions.mjs |
+| tests/ui.js: #/program, prep, a session 1 run with first accounts and bending at 35, urgent mode, session 2 checklist, session 4 reveal, three widths | done | tests/ui-screens.js; ui-flows.js level10-maya-program |
+| Screenshots and a critique round | not done | the sweep ran; a critique round is owed |

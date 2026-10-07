@@ -1,0 +1,308 @@
+{
+ "asOf": "2026-10-07",
+ "source": "The owner's knowledge targets per session (MR-053)",
+ "verify": false,
+ "sessions": {
+  "discovery": {
+   "label": "Everything rough or a guess",
+   "targets": [
+    {
+     "id": "income",
+     "what": "income",
+     "state": "rough",
+     "kind": "field",
+     "field": "income.takeHome"
+    },
+    {
+     "id": "areas",
+     "what": "every spending area",
+     "state": "rough",
+     "kind": "areas"
+    },
+    {
+     "id": "goals",
+     "what": "goals in her words",
+     "state": "any",
+     "kind": "goals"
+    }
+   ]
+  },
+  "1": {
+   "label": "The picture in her words and the first accounts",
+   "targets": [
+    {
+     "id": "income-cross",
+     "what": "income cross-checked",
+     "kind": "crosscheck"
+    },
+    {
+     "id": "household",
+     "what": "the household",
+     "kind": "household"
+    },
+    {
+     "id": "goals",
+     "what": "goals confirmed",
+     "kind": "goals"
+    },
+    {
+     "id": "gut",
+     "what": "a gut figure for every area",
+     "kind": "anchors",
+     "set": "gut",
+     "areas": "all"
+    },
+    {
+     "id": "debt-range",
+     "what": "a debt range",
+     "kind": "anchorOrSlot",
+     "anchor": "debt:total",
+     "slot": "debt.totalDebt"
+    },
+    {
+     "id": "rocket",
+     "what": "tracking app linked",
+     "kind": "checklist",
+     "item": "rocket",
+     "status": [
+      "linked",
+      "done",
+      "not-for-me"
+     ]
+    },
+    {
+     "id": "hysa",
+     "what": "savings buckets open",
+     "kind": "checklist",
+     "item": "hysa",
+     "status": [
+      "opened",
+      "done",
+      "not-for-me"
+     ]
+    }
+   ]
+  },
+  "2": {
+   "label": "The big numbers locked and the accounts finished",
+   "targets": [
+    {
+     "id": "dream",
+     "what": "a dream figure for every area",
+     "kind": "anchors",
+     "set": "dream",
+     "areas": "all"
+    },
+    {
+     "id": "income",
+     "what": "income from the paystub",
+     "kind": "fieldState",
+     "planet": "income",
+     "type": "w2",
+     "field": "takeHome",
+     "state": [
+      "known",
+      "verified"
+     ]
+    },
+    {
+     "id": "rent",
+     "what": "rent",
+     "kind": "categoryState",
+     "category": "accommodation",
+     "state": [
+      "known",
+      "verified"
+     ]
+    },
+    {
+     "id": "debts",
+     "what": "every debt balance and APR",
+     "kind": "debtsKnown"
+    },
+    {
+     "id": "balances",
+     "what": "every account balance",
+     "kind": "balancesKnown"
+    },
+    {
+     "id": "k401bal",
+     "what": "the 401k balance",
+     "kind": "accountTypeKnown",
+     "accountType": "401k"
+    },
+    {
+     "id": "roth",
+     "what": "Roth opened",
+     "kind": "checklist",
+     "item": "roth",
+     "status": [
+      "opened",
+      "done",
+      "not-for-me"
+     ]
+    },
+    {
+     "id": "card",
+     "what": "card decided",
+     "kind": "checklist",
+     "item": "card",
+     "status": [
+      "opened",
+      "done",
+      "not-for-me"
+     ]
+    },
+    {
+     "id": "freeze",
+     "what": "credit frozen",
+     "kind": "checklist",
+     "item": "freeze",
+     "status": [
+      "done",
+      "not-for-me"
+     ]
+    },
+    {
+     "id": "guesses",
+     "what": "guesses gone",
+     "kind": "noGuesses"
+    }
+   ]
+  },
+  "3": {
+   "label": "Recurring spending verified",
+   "targets": [
+    {
+     "id": "recurring",
+     "what": "recurring spending verified",
+     "kind": "transactions",
+     "what2": "recurring"
+    }
+   ]
+  },
+  "4": {
+   "label": "All spending verified and the blind spot measured",
+   "targets": [
+    {
+     "id": "all",
+     "what": "all spending verified",
+     "kind": "allVerified"
+    },
+    {
+     "id": "blindspot",
+     "what": "blind spot percent measured",
+     "kind": "blindSpot"
+    },
+    {
+     "id": "stress",
+     "what": "stress score taken",
+     "kind": "stress",
+     "session": 4
+    }
+   ]
+  },
+  "5": {
+   "label": "Targets and automation",
+   "targets": [
+    {
+     "id": "targets",
+     "what": "a target per area",
+     "kind": "targets"
+    },
+    {
+     "id": "automation",
+     "what": "automation set",
+     "kind": "checklist",
+     "item": "automation",
+     "status": [
+      "done",
+      "not-for-me"
+     ]
+    }
+   ]
+  },
+  "6": {
+   "label": "Safety and debt",
+   "targets": [
+    {
+     "id": "cushion",
+     "what": "cushion steps on the timeline",
+     "kind": "goalsPlan"
+    }
+   ]
+  },
+  "7": {
+   "label": "The first real FI number",
+   "targets": [
+    {
+     "id": "fi",
+     "what": "first real FI number",
+     "kind": "metricOk",
+     "metric": "fiNumber",
+     "noGuesses": true
+    }
+   ]
+  },
+  "8": {
+   "label": "Grow",
+   "targets": [
+    {
+     "id": "levers",
+     "what": "one income move chosen",
+     "kind": "program",
+     "key": "incomeLever"
+    }
+   ]
+  },
+  "9": {
+   "label": "The blind guess test",
+   "targets": [
+    {
+     "id": "blind",
+     "what": "blind guess test done",
+     "kind": "anchors",
+     "set": "blind",
+     "areas": "all"
+    },
+    {
+     "id": "stress",
+     "what": "stress score taken",
+     "kind": "stress",
+     "session": 9
+    }
+   ]
+  },
+  "10": {
+   "label": "Life simulator",
+   "targets": [
+    {
+     "id": "blocks",
+     "what": "at least one scenario block",
+     "kind": "scenarios"
+    }
+   ]
+  },
+  "11": {
+   "label": "Flex",
+   "targets": []
+  },
+  "12": {
+   "label": "Graduation",
+   "targets": [
+    {
+     "id": "stress",
+     "what": "stress score taken",
+     "kind": "stress",
+     "session": 12
+    },
+    {
+     "id": "routine",
+     "what": "her routine written",
+     "kind": "program",
+     "key": "routine"
+    }
+   ]
+  }
+ }
+}

@@ -18,7 +18,7 @@ async function active(page) {
 }
 async function tabTo(page, pred, max) {
   let a = null;
-  for (let i = 0; i < (max || 80); i++) {
+  for (let i = 0; i < (max || 120); i++) { /* a details drawer with a date picker and three chips per field needs more than 80 stops */
     a = await active(page);
     if (a && pred(a)) return a;
     await page.keyboard.press('Tab');

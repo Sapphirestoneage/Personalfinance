@@ -1,0 +1,2798 @@
+{
+ "asOf": "2026-10-07",
+ "source": "The owner's program: a discovery call and 12 sessions over about three months; block lists proposed by the builder (MR-053)",
+ "verify": true,
+ "priorities": [
+  "must",
+  "should",
+  "could",
+  "never-cut"
+ ],
+ "defaultMarkers": {
+  "behindAt": 35,
+  "closeAt": 48
+ },
+ "urgentKinds": [
+  [
+   "due",
+   "Something due or overdue within 7 days"
+  ],
+  [
+   "collections",
+   "Collections calls"
+  ],
+  [
+   "overdraft",
+   "An overdraft"
+  ],
+  [
+   "rent",
+   "Cannot cover rent"
+  ],
+  [
+   "deadline",
+   "A decision with a deadline"
+  ],
+  [
+   "other",
+   "Something else"
+  ]
+ ],
+ "urgentBlocks": [
+  "checkin",
+  "urgent",
+  "steps",
+  "close"
+ ],
+ "urgentBlock": {
+  "id": "urgent",
+  "name": "The urgent thing",
+  "priority": "must",
+  "minutes": {
+   "min": 15,
+   "target": 25,
+   "max": 38
+  },
+  "questions": [
+   {
+    "text": "Tell me what is going on.",
+    "fills": "program.urgentNotes"
+   }
+  ],
+  "outputs": [
+   "notes, the relevant room opened, a step"
+  ],
+  "kind": "urgent"
+ },
+ "flexSession": 11,
+ "graduationSession": 12,
+ "skipRules": {
+  "noDebt": "no debt rows at all",
+  "noRoommate": "no roommate in the household",
+  "noCards": "no credit card row"
+ },
+ "words": {
+  "moved": "{block} moved to next time",
+  "deeper": "Going deeper here; {block} moved to next time",
+  "protect": "Time to land it: on to your three steps",
+  "ahead": "There is room for one more: {block}",
+  "behind": "Running long; the rest of today moves to next time",
+  "urgent": "Today is about {thing}; everything else moves to next time"
+ },
+ "sessions": [
+  {
+   "id": "discovery",
+   "n": 0,
+   "name": "Discovery call",
+   "goal": "Hear her story in her words and leave with a first draft.",
+   "markers": {
+    "behindAt": 20,
+    "closeAt": 27
+   },
+   "blocks": [
+    {
+     "id": "story",
+     "name": "Her story",
+     "priority": "must",
+     "minutes": {
+      "min": 8,
+      "target": 10,
+      "max": 15
+     },
+     "questions": [
+      {
+       "text": "What made you reach out now?",
+       "fills": "discovery.whyNow"
+      }
+     ],
+     "outputs": [
+      "why now, her words"
+     ],
+     "kind": "discovery"
+    },
+    {
+     "id": "snapshot",
+     "name": "The snapshot",
+     "priority": "must",
+     "minutes": {
+      "min": 8,
+      "target": 10,
+      "max": 14
+     },
+     "questions": [],
+     "outputs": [
+      "name, age, city, work, household, money in rough numbers"
+     ],
+     "kind": "discovery"
+    },
+    {
+     "id": "stress",
+     "name": "Money stress",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 1,
+      "max": 2
+     },
+     "questions": [
+      {
+       "text": "On a scale of one to ten, how stressed do you feel about money right now?",
+       "fills": "program.stress"
+      }
+     ],
+     "outputs": [
+      "the first stress score"
+     ],
+     "kind": "stress"
+    },
+    {
+     "id": "goals",
+     "name": "What would be different",
+     "priority": "should",
+     "minutes": {
+      "min": 3,
+      "target": 4,
+      "max": 6
+     },
+     "questions": [],
+     "outputs": [
+      "goals in her words"
+     ],
+     "kind": "discovery"
+    },
+    {
+     "id": "firstdraft",
+     "name": "The first draft",
+     "priority": "should",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 4
+     },
+     "questions": [],
+     "outputs": [
+      "the summary sheet, the email"
+     ],
+     "kind": "summary"
+    }
+   ]
+  },
+  {
+   "id": "s1",
+   "n": 1,
+   "name": "Get the picture and first accounts",
+   "goal": "Her gut on every area, her debts in ranges, and the first two accounts open before we hang up.",
+   "markers": {
+    "behindAt": 35,
+    "closeAt": 48
+   },
+   "blocks": [
+    {
+     "id": "checkin",
+     "name": "Check-in and urgent check",
+     "priority": "must",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 5
+     },
+     "questions": [
+      {
+       "text": "How are you doing with money this week? Anything on fire?",
+       "fills": "program.urgent"
+      }
+     ],
+     "outputs": [
+      "the urgent flag, or a clear start"
+     ],
+     "kind": "checkin"
+    },
+    {
+     "id": "loops",
+     "name": "Close open loops",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 2,
+      "max": 4
+     },
+     "questions": [
+      {
+       "text": "Last time you were going to look at a few things. How did it go?",
+       "fills": "program.homework"
+      }
+     ],
+     "outputs": [
+      "homework marked done, parked items picked up"
+     ],
+     "kind": "loops"
+    },
+    {
+     "id": "plan",
+     "name": "Today's plan",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 1,
+      "max": 2
+     },
+     "questions": [],
+     "outputs": [
+      "the session goal said aloud"
+     ],
+     "kind": "plan"
+    },
+    {
+     "id": "confirm",
+     "name": "Confirm",
+     "priority": "must",
+     "minutes": {
+      "min": 3,
+      "target": 5,
+      "max": 10
+     },
+     "questions": [
+      {
+       "text": "Let us start with what you told me. Still right?",
+       "fills": "discovery.confirmed"
+      }
+     ],
+     "outputs": [
+      "what she said, confirmed or corrected; guesses swapped"
+     ],
+     "kind": "confirm"
+    },
+    {
+     "id": "housing",
+     "name": "Housing and roommate",
+     "priority": "must",
+     "minutes": {
+      "min": 3,
+      "target": 4,
+      "max": 6
+     },
+     "questions": [
+      {
+       "text": "About how much goes to your home each month, and is that your part or the whole bill?",
+       "fills": "anchor.spending:accommodation"
+      },
+      {
+       "text": "Whose name is on the lease?",
+       "fills": "household.lease"
+      },
+      {
+       "text": "Do you have a car?",
+       "fills": "spending.transportation"
+      }
+     ],
+     "outputs": [
+      "rent and share, lease, car or no car"
+     ],
+     "kind": "housing"
+    },
+    {
+     "id": "gut",
+     "name": "Gut lap",
+     "priority": "must",
+     "minutes": {
+      "min": 8,
+      "target": 12,
+      "max": 20
+     },
+     "questions": [
+      {
+       "text": "Without looking anything up: about how much goes to {area} each month?",
+       "fills": "anchor.spending:*"
+      }
+     ],
+     "outputs": [
+      "a gut figure for every area"
+     ],
+     "kind": "gut"
+    },
+    {
+     "id": "debtcheck",
+     "name": "Debt check",
+     "priority": "must",
+     "minutes": {
+      "min": 3,
+      "target": 5,
+      "max": 10
+     },
+     "questions": [
+      {
+       "text": "Roughly, what do you owe in total? A range is fine.",
+       "fills": "anchor.debt:total"
+      },
+      {
+       "text": "And what goes to those debts each month, the minimums?",
+       "fills": "anchor.debt:minimums"
+      }
+     ],
+     "outputs": [
+      "debt ranges, minimums"
+     ],
+     "skipRule": "noDebt",
+     "kind": "debtcheck"
+    },
+    {
+     "id": "accounts1",
+     "name": "First accounts",
+     "priority": "must",
+     "minutes": {
+      "min": 8,
+      "target": 10,
+      "max": 14
+     },
+     "questions": [],
+     "outputs": [
+      "tracking app linked, high-yield savings open with buckets named after her goals"
+     ],
+     "uses": [
+      "rocket",
+      "hysa"
+     ],
+     "kind": "checklist"
+    },
+    {
+     "id": "picture",
+     "name": "First picture",
+     "priority": "should",
+     "minutes": {
+      "min": 3,
+      "target": 4,
+      "max": 6
+     },
+     "questions": [],
+     "outputs": [
+      "one card: what a month costs, the cushion target, the first draft of her FI number"
+     ],
+     "movesTo": 2,
+     "kind": "picture"
+    },
+    {
+     "id": "dream",
+     "name": "Dream lap",
+     "priority": "could",
+     "minutes": {
+      "min": 6,
+      "target": 8,
+      "max": 12
+     },
+     "questions": [
+      {
+       "text": "Forget what it costs now. What would you want to spend on {area}?",
+       "fills": "anchor.dream:*"
+      }
+     ],
+     "outputs": [
+      "a dream figure for every area"
+     ],
+     "movesTo": 2,
+     "kind": "dream"
+    },
+    {
+     "id": "match",
+     "name": "Confirm the 401k match",
+     "priority": "could",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 4
+     },
+     "questions": [
+      {
+       "text": "Does your employer match your 401k, and up to how much?",
+       "fills": "income.match"
+      }
+     ],
+     "outputs": [
+      "the match, confirmed"
+     ],
+     "movesTo": 2,
+     "kind": "field"
+    },
+    {
+     "id": "roommateworst",
+     "name": "Roommate worst case",
+     "priority": "could",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 4
+     },
+     "questions": [],
+     "outputs": [
+      "the if-it-all-falls-on-you card"
+     ],
+     "skipRule": "noRoommate",
+     "movesTo": 6,
+     "uses": [
+      "roommateOutcome"
+     ],
+     "kind": "card"
+    },
+    {
+     "id": "forgotten",
+     "name": "Close a forgotten account",
+     "priority": "could",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 5
+     },
+     "questions": [
+      {
+       "text": "Is there an old account you have not looked at in a while?",
+       "fills": "program.forgotten"
+      }
+     ],
+     "outputs": [
+      "the account named and a step to close or move it"
+     ],
+     "movesTo": 2,
+     "kind": "field"
+    },
+    {
+     "id": "steps",
+     "name": "Three steps",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 4,
+      "target": 5,
+      "max": 7
+     },
+     "questions": [],
+     "outputs": [
+      "three steps, some already done today"
+     ],
+     "kind": "steps"
+    },
+    {
+     "id": "close",
+     "name": "Close and book",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 2,
+      "target": 2,
+      "max": 3
+     },
+     "questions": [
+      {
+       "text": "When works for next time?",
+       "fills": "program.nextDate"
+      }
+     ],
+     "outputs": [
+      "the next date, the snapshot, the follow-up email"
+     ],
+     "kind": "close"
+    }
+   ]
+  },
+  {
+   "id": "s2",
+   "n": 2,
+   "name": "Lock the big numbers and finish accounts",
+   "goal": "Every big number from a document, the dream in her words, and the rest of the accounts open.",
+   "markers": {
+    "behindAt": 35,
+    "closeAt": 48
+   },
+   "blocks": [
+    {
+     "id": "checkin",
+     "name": "Check-in and urgent check",
+     "priority": "must",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 5
+     },
+     "questions": [
+      {
+       "text": "How are you doing with money this week? Anything on fire?",
+       "fills": "program.urgent"
+      }
+     ],
+     "outputs": [
+      "the urgent flag, or a clear start"
+     ],
+     "kind": "checkin"
+    },
+    {
+     "id": "loops",
+     "name": "Close open loops",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 2,
+      "max": 4
+     },
+     "questions": [
+      {
+       "text": "Last time you were going to look at a few things. How did it go?",
+       "fills": "program.homework"
+      }
+     ],
+     "outputs": [
+      "homework marked done, parked items picked up"
+     ],
+     "kind": "loops"
+    },
+    {
+     "id": "plan",
+     "name": "Today's plan",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 1,
+      "max": 2
+     },
+     "questions": [],
+     "outputs": [
+      "the session goal said aloud"
+     ],
+     "kind": "plan"
+    },
+    {
+     "id": "dream",
+     "name": "Dream lap",
+     "priority": "must",
+     "minutes": {
+      "min": 6,
+      "target": 8,
+      "max": 12
+     },
+     "questions": [
+      {
+       "text": "Forget what it costs now. What would you want to spend on {area}?",
+       "fills": "anchor.dream:*"
+      }
+     ],
+     "outputs": [
+      "a dream figure for every area"
+     ],
+     "kind": "dream"
+    },
+    {
+     "id": "paystub",
+     "name": "Paystub",
+     "priority": "must",
+     "minutes": {
+      "min": 4,
+      "target": 6,
+      "max": 9
+     },
+     "questions": [
+      {
+       "text": "Open your most recent paystub. What is the gross, and what landed?",
+       "fills": "income.grossPay,income.takeHome"
+      }
+     ],
+     "outputs": [
+      "gross, take-home, pre-tax deductions, match, all known"
+     ],
+     "uses": [
+      "income"
+     ],
+     "kind": "lock"
+    },
+    {
+     "id": "rent",
+     "name": "Rent and the lease",
+     "priority": "must",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 4
+     },
+     "questions": [
+      {
+       "text": "What does the lease say the rent is?",
+       "fills": "spending.accommodation"
+      }
+     ],
+     "outputs": [
+      "rent known, share known"
+     ],
+     "uses": [
+      "spending"
+     ],
+     "kind": "lock"
+    },
+    {
+     "id": "debts",
+     "name": "Every debt",
+     "priority": "must",
+     "minutes": {
+      "min": 5,
+      "target": 7,
+      "max": 12
+     },
+     "questions": [
+      {
+       "text": "For each debt: the balance today, the APR, the minimum.",
+       "fills": "debt.balance,debt.apr,debt.minimum"
+      }
+     ],
+     "outputs": [
+      "every debt balance and APR known"
+     ],
+     "skipRule": "noDebt",
+     "uses": [
+      "debt"
+     ],
+     "kind": "lock"
+    },
+    {
+     "id": "balances",
+     "name": "Account balances",
+     "priority": "must",
+     "minutes": {
+      "min": 3,
+      "target": 5,
+      "max": 8
+     },
+     "questions": [
+      {
+       "text": "What is in checking and savings today? And the 401k?",
+       "fills": "invest.accountBalance"
+      }
+     ],
+     "outputs": [
+      "every balance known, 401k balance known"
+     ],
+     "uses": [
+      "invest"
+     ],
+     "kind": "lock"
+    },
+    {
+     "id": "accounts2",
+     "name": "The rest of the accounts",
+     "priority": "must",
+     "minutes": {
+      "min": 8,
+      "target": 10,
+      "max": 14
+     },
+     "questions": [],
+     "outputs": [
+      "401k portal checked, Roth opened, card decided, credit frozen"
+     ],
+     "uses": [
+      "k401",
+      "roth",
+      "card",
+      "freeze"
+     ],
+     "kind": "checklist"
+    },
+    {
+     "id": "guesses",
+     "name": "Guesses gone",
+     "priority": "should",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 5
+     },
+     "questions": [],
+     "outputs": [
+      "no guess rows left; every area has her number"
+     ],
+     "movesTo": 3,
+     "kind": "guesses"
+    },
+    {
+     "id": "picture2",
+     "name": "The picture, locked",
+     "priority": "should",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 4
+     },
+     "questions": [],
+     "outputs": [
+      "the headline numbers at known or verified"
+     ],
+     "movesTo": 3,
+     "kind": "picture"
+    },
+    {
+     "id": "transactionsprep",
+     "name": "Export for next time",
+     "priority": "could",
+     "minutes": {
+      "min": 2,
+      "target": 2,
+      "max": 3
+     },
+     "questions": [],
+     "outputs": [
+      "how to export the transactions before session 3"
+     ],
+     "movesTo": 3,
+     "kind": "homework"
+    },
+    {
+     "id": "steps",
+     "name": "Three steps",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 4,
+      "target": 5,
+      "max": 7
+     },
+     "questions": [],
+     "outputs": [
+      "three steps, some already done today"
+     ],
+     "kind": "steps"
+    },
+    {
+     "id": "close",
+     "name": "Close and book",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 2,
+      "target": 2,
+      "max": 3
+     },
+     "questions": [
+      {
+       "text": "When works for next time?",
+       "fills": "program.nextDate"
+      }
+     ],
+     "outputs": [
+      "the next date, the snapshot, the follow-up email"
+     ],
+     "kind": "close"
+    }
+   ]
+  },
+  {
+   "id": "s3",
+   "n": 3,
+   "name": "Transactions I",
+   "goal": "Recurring bills and subscriptions from the real transactions, area by area against her gut.",
+   "markers": {
+    "behindAt": 35,
+    "closeAt": 48
+   },
+   "blocks": [
+    {
+     "id": "checkin",
+     "name": "Check-in and urgent check",
+     "priority": "must",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 5
+     },
+     "questions": [
+      {
+       "text": "How are you doing with money this week? Anything on fire?",
+       "fills": "program.urgent"
+      }
+     ],
+     "outputs": [
+      "the urgent flag, or a clear start"
+     ],
+     "kind": "checkin"
+    },
+    {
+     "id": "loops",
+     "name": "Close open loops",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 2,
+      "max": 4
+     },
+     "questions": [
+      {
+       "text": "Last time you were going to look at a few things. How did it go?",
+       "fills": "program.homework"
+      }
+     ],
+     "outputs": [
+      "homework marked done, parked items picked up"
+     ],
+     "kind": "loops"
+    },
+    {
+     "id": "plan",
+     "name": "Today's plan",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 1,
+      "max": 2
+     },
+     "questions": [],
+     "outputs": [
+      "the session goal said aloud"
+     ],
+     "kind": "plan"
+    },
+    {
+     "id": "import",
+     "name": "Bring in the transactions",
+     "priority": "must",
+     "minutes": {
+      "min": 4,
+      "target": 6,
+      "max": 10
+     },
+     "questions": [],
+     "outputs": [
+      "the export imported and cleaned: card payments and transfers out, refunds netted"
+     ],
+     "uses": [
+      "import",
+      "clean"
+     ],
+     "kind": "transactions"
+    },
+    {
+     "id": "recurring",
+     "name": "Recurring bills",
+     "priority": "must",
+     "minutes": {
+      "min": 6,
+      "target": 8,
+      "max": 12
+     },
+     "questions": [
+      {
+       "text": "These show up every month. Each one still yours?",
+       "fills": "transactions.recurring"
+      }
+     ],
+     "outputs": [
+      "recurring lines verified as actuals"
+     ],
+     "uses": [
+      "recurring"
+     ],
+     "kind": "transactions"
+    },
+    {
+     "id": "subscriptions",
+     "name": "Subscriptions",
+     "priority": "must",
+     "minutes": {
+      "min": 5,
+      "target": 7,
+      "max": 10
+     },
+     "questions": [
+      {
+       "text": "Annual or monthly? Keep, cancel or shrink?",
+       "fills": "transactions.subscriptions"
+      }
+     ],
+     "outputs": [
+      "every subscription with its cadence and next renewal; cancellations as steps"
+     ],
+     "uses": [
+      "subscriptions"
+     ],
+     "kind": "transactions"
+    },
+    {
+     "id": "areas",
+     "name": "Gut against actual, area by area",
+     "priority": "must",
+     "minutes": {
+      "min": 6,
+      "target": 8,
+      "max": 12
+     },
+     "questions": [],
+     "outputs": [
+      "estimated against actual ratio per area for the recurring part"
+     ],
+     "kind": "variance"
+    },
+    {
+     "id": "merchants",
+     "name": "Where it goes",
+     "priority": "should",
+     "minutes": {
+      "min": 3,
+      "target": 4,
+      "max": 6
+     },
+     "questions": [],
+     "outputs": [
+      "top five merchants and their share"
+     ],
+     "movesTo": 4,
+     "uses": [
+      "merchants"
+     ],
+     "kind": "transactions"
+    },
+    {
+     "id": "priceCreep",
+     "name": "Prices creeping up",
+     "priority": "could",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 4
+     },
+     "questions": [],
+     "outputs": [
+      "merchants whose amounts rise"
+     ],
+     "movesTo": 4,
+     "uses": [
+      "priceCreep"
+     ],
+     "kind": "transactions"
+    },
+    {
+     "id": "steps",
+     "name": "Three steps",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 4,
+      "target": 5,
+      "max": 7
+     },
+     "questions": [],
+     "outputs": [
+      "three steps, some already done today"
+     ],
+     "kind": "steps"
+    },
+    {
+     "id": "close",
+     "name": "Close and book",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 2,
+      "target": 2,
+      "max": 3
+     },
+     "questions": [
+      {
+       "text": "When works for next time?",
+       "fills": "program.nextDate"
+      }
+     ],
+     "outputs": [
+      "the next date, the snapshot, the follow-up email"
+     ],
+     "kind": "close"
+    }
+   ]
+  },
+  {
+   "id": "s4",
+   "n": 4,
+   "name": "Transactions II",
+   "goal": "The irregular and the one-off, the fees, the Venmo netting, the timing, and the full reveal.",
+   "markers": {
+    "behindAt": 35,
+    "closeAt": 48
+   },
+   "blocks": [
+    {
+     "id": "checkin",
+     "name": "Check-in and urgent check",
+     "priority": "must",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 5
+     },
+     "questions": [
+      {
+       "text": "How are you doing with money this week? Anything on fire?",
+       "fills": "program.urgent"
+      }
+     ],
+     "outputs": [
+      "the urgent flag, or a clear start"
+     ],
+     "kind": "checkin"
+    },
+    {
+     "id": "loops",
+     "name": "Close open loops",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 2,
+      "max": 4
+     },
+     "questions": [
+      {
+       "text": "Last time you were going to look at a few things. How did it go?",
+       "fills": "program.homework"
+      }
+     ],
+     "outputs": [
+      "homework marked done, parked items picked up"
+     ],
+     "kind": "loops"
+    },
+    {
+     "id": "plan",
+     "name": "Today's plan",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 1,
+      "max": 2
+     },
+     "questions": [],
+     "outputs": [
+      "the session goal said aloud"
+     ],
+     "kind": "plan"
+    },
+    {
+     "id": "irregular",
+     "name": "Irregular and one-time",
+     "priority": "must",
+     "minutes": {
+      "min": 5,
+      "target": 7,
+      "max": 10
+     },
+     "questions": [
+      {
+       "text": "These were one-offs. Which ones come back every year?",
+       "fills": "transactions.irregular"
+      }
+     ],
+     "outputs": [
+      "irregular lines as actuals with a yearly cadence"
+     ],
+     "uses": [
+      "irregular"
+     ],
+     "kind": "transactions"
+    },
+    {
+     "id": "fees",
+     "name": "Fees and buy now pay later",
+     "priority": "must",
+     "minutes": {
+      "min": 3,
+      "target": 4,
+      "max": 6
+     },
+     "questions": [],
+     "outputs": [
+      "fees on the mistakes line; BNPL flagged as debt"
+     ],
+     "uses": [
+      "fees",
+      "bnpl"
+     ],
+     "kind": "transactions"
+    },
+    {
+     "id": "venmo",
+     "name": "Venmo and Zelle",
+     "priority": "must",
+     "minutes": {
+      "min": 3,
+      "target": 4,
+      "max": 6
+     },
+     "questions": [
+      {
+       "text": "These transfers match your shared bills. Right?",
+       "fills": "transactions.netting"
+      }
+     ],
+     "outputs": [
+      "reimbursements netted against shared lines"
+     ],
+     "skipRule": "noRoommate",
+     "uses": [
+      "netting"
+     ],
+     "kind": "transactions"
+    },
+    {
+     "id": "timing",
+     "name": "Paycheck against bills",
+     "priority": "should",
+     "minutes": {
+      "min": 3,
+      "target": 4,
+      "max": 6
+     },
+     "questions": [],
+     "outputs": [
+      "the cash flow calendar with its low days"
+     ],
+     "movesTo": 5,
+     "uses": [
+      "calendar"
+     ],
+     "kind": "transactions"
+    },
+    {
+     "id": "reveal",
+     "name": "The full reveal",
+     "priority": "must",
+     "minutes": {
+      "min": 6,
+      "target": 8,
+      "max": 12
+     },
+     "questions": [],
+     "outputs": [
+      "what you said against what it really is, the blind spot percent, one found-money win as the first step"
+     ],
+     "kind": "reveal"
+    },
+    {
+     "id": "stress",
+     "name": "Money stress",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 1,
+      "max": 2
+     },
+     "questions": [
+      {
+       "text": "On a scale of one to ten, how stressed do you feel about money right now?",
+       "fills": "program.stress"
+      }
+     ],
+     "outputs": [
+      "the second stress score"
+     ],
+     "kind": "stress"
+    },
+    {
+     "id": "patterns",
+     "name": "Patterns",
+     "priority": "could",
+     "minutes": {
+      "min": 3,
+      "target": 4,
+      "max": 6
+     },
+     "questions": [],
+     "outputs": [
+      "small and frequent against big and rare; weeknight delivery"
+     ],
+     "movesTo": 5,
+     "uses": [
+      "patterns"
+     ],
+     "kind": "transactions"
+    },
+    {
+     "id": "steps",
+     "name": "Three steps",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 4,
+      "target": 5,
+      "max": 7
+     },
+     "questions": [],
+     "outputs": [
+      "three steps, some already done today"
+     ],
+     "kind": "steps"
+    },
+    {
+     "id": "close",
+     "name": "Close and book",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 2,
+      "target": 2,
+      "max": 3
+     },
+     "questions": [
+      {
+       "text": "When works for next time?",
+       "fills": "program.nextDate"
+      }
+     ],
+     "outputs": [
+      "the next date, the snapshot, the follow-up email"
+     ],
+     "kind": "close"
+    }
+   ]
+  },
+  {
+   "id": "s5",
+   "n": 5,
+   "name": "The plan",
+   "goal": "Targets in her words, automation set, buckets funded, debts in order.",
+   "markers": {
+    "behindAt": 35,
+    "closeAt": 48
+   },
+   "blocks": [
+    {
+     "id": "checkin",
+     "name": "Check-in and urgent check",
+     "priority": "must",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 5
+     },
+     "questions": [
+      {
+       "text": "How are you doing with money this week? Anything on fire?",
+       "fills": "program.urgent"
+      }
+     ],
+     "outputs": [
+      "the urgent flag, or a clear start"
+     ],
+     "kind": "checkin"
+    },
+    {
+     "id": "loops",
+     "name": "Close open loops",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 2,
+      "max": 4
+     },
+     "questions": [
+      {
+       "text": "Last time you were going to look at a few things. How did it go?",
+       "fills": "program.homework"
+      }
+     ],
+     "outputs": [
+      "homework marked done, parked items picked up"
+     ],
+     "kind": "loops"
+    },
+    {
+     "id": "plan",
+     "name": "Today's plan",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 1,
+      "max": 2
+     },
+     "questions": [],
+     "outputs": [
+      "the session goal said aloud"
+     ],
+     "kind": "plan"
+    },
+    {
+     "id": "targets",
+     "name": "Your targets",
+     "priority": "must",
+     "minutes": {
+      "min": 8,
+      "target": 10,
+      "max": 14
+     },
+     "questions": [
+      {
+       "text": "For {area}: what you said, what you would want, meet in the middle, or keep it as is?",
+       "fills": "targets.*"
+      }
+     ],
+     "outputs": [
+      "a target per area, in her words"
+     ],
+     "kind": "targets"
+    },
+    {
+     "id": "automation",
+     "name": "Automation",
+     "priority": "must",
+     "minutes": {
+      "min": 5,
+      "target": 7,
+      "max": 10
+     },
+     "questions": [
+      {
+       "text": "What day does your pay land, and what day should the savings move?",
+       "fills": "program.automation"
+      }
+     ],
+     "outputs": [
+      "transfers set the day after payday"
+     ],
+     "uses": [
+      "automation"
+     ],
+     "kind": "checklist"
+    },
+    {
+     "id": "buckets",
+     "name": "Buckets funded",
+     "priority": "must",
+     "minutes": {
+      "min": 4,
+      "target": 5,
+      "max": 8
+     },
+     "questions": [],
+     "outputs": [
+      "each bucket with its monthly amount from the goal timeline"
+     ],
+     "room": "#/goals",
+     "kind": "goals"
+    },
+    {
+     "id": "debtorder",
+     "name": "Debt order",
+     "priority": "must",
+     "minutes": {
+      "min": 4,
+      "target": 5,
+      "max": 8
+     },
+     "questions": [],
+     "outputs": [
+      "avalanche, snowball or stress order chosen"
+     ],
+     "skipRule": "noDebt",
+     "room": "#/ledger/debt",
+     "kind": "room"
+    },
+    {
+     "id": "timeline",
+     "name": "When each goal lands",
+     "priority": "should",
+     "minutes": {
+      "min": 3,
+      "target": 4,
+      "max": 6
+     },
+     "questions": [],
+     "outputs": [
+      "the goal timeline, with the next win"
+     ],
+     "movesTo": 6,
+     "room": "#/goals",
+     "kind": "goals"
+    },
+    {
+     "id": "leak",
+     "name": "The leak",
+     "priority": "could",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 4
+     },
+     "questions": [],
+     "outputs": [
+      "the hidden-leak reading"
+     ],
+     "movesTo": 6,
+     "uses": [
+      "hidden-leak"
+     ],
+     "kind": "lens"
+    },
+    {
+     "id": "steps",
+     "name": "Three steps",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 4,
+      "target": 5,
+      "max": 7
+     },
+     "questions": [],
+     "outputs": [
+      "three steps, some already done today"
+     ],
+     "kind": "steps"
+    },
+    {
+     "id": "close",
+     "name": "Close and book",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 2,
+      "target": 2,
+      "max": 3
+     },
+     "questions": [
+      {
+       "text": "When works for next time?",
+       "fills": "program.nextDate"
+      }
+     ],
+     "outputs": [
+      "the next date, the snapshot, the follow-up email"
+     ],
+     "kind": "close"
+    }
+   ]
+  },
+  {
+   "id": "s6",
+   "n": 6,
+   "name": "Safety and debt",
+   "goal": "The cushion on its way, sinking funds named, the worst case faced, the payoff dated.",
+   "markers": {
+    "behindAt": 35,
+    "closeAt": 48
+   },
+   "blocks": [
+    {
+     "id": "checkin",
+     "name": "Check-in and urgent check",
+     "priority": "must",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 5
+     },
+     "questions": [
+      {
+       "text": "How are you doing with money this week? Anything on fire?",
+       "fills": "program.urgent"
+      }
+     ],
+     "outputs": [
+      "the urgent flag, or a clear start"
+     ],
+     "kind": "checkin"
+    },
+    {
+     "id": "loops",
+     "name": "Close open loops",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 2,
+      "max": 4
+     },
+     "questions": [
+      {
+       "text": "Last time you were going to look at a few things. How did it go?",
+       "fills": "program.homework"
+      }
+     ],
+     "outputs": [
+      "homework marked done, parked items picked up"
+     ],
+     "kind": "loops"
+    },
+    {
+     "id": "plan",
+     "name": "Today's plan",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 1,
+      "max": 2
+     },
+     "questions": [],
+     "outputs": [
+      "the session goal said aloud"
+     ],
+     "kind": "plan"
+    },
+    {
+     "id": "cushion",
+     "name": "Cushion progress",
+     "priority": "must",
+     "minutes": {
+      "min": 4,
+      "target": 5,
+      "max": 8
+     },
+     "questions": [],
+     "outputs": [
+      "lean month, full month, full cushion against their targets"
+     ],
+     "room": "#/goals",
+     "kind": "goals"
+    },
+    {
+     "id": "sinking",
+     "name": "Sinking funds",
+     "priority": "must",
+     "minutes": {
+      "min": 4,
+      "target": 6,
+      "max": 9
+     },
+     "questions": [
+      {
+       "text": "Which once-a-year things should have their own bucket?",
+       "fills": "spending.irregular"
+      }
+     ],
+     "outputs": [
+      "sinking funds as buckets"
+     ],
+     "kind": "field"
+    },
+    {
+     "id": "roommateworst",
+     "name": "Roommate worst case",
+     "priority": "must",
+     "minutes": {
+      "min": 3,
+      "target": 4,
+      "max": 6
+     },
+     "questions": [],
+     "outputs": [
+      "the if-it-all-falls-on-you card and the lease note"
+     ],
+     "skipRule": "noRoommate",
+     "uses": [
+      "roommateOutcome"
+     ],
+     "kind": "card"
+    },
+    {
+     "id": "payoff",
+     "name": "Payoff timeline",
+     "priority": "must",
+     "minutes": {
+      "min": 5,
+      "target": 7,
+      "max": 10
+     },
+     "questions": [],
+     "outputs": [
+      "the debt-free date, the promo cliffs, interest saved by order"
+     ],
+     "skipRule": "noDebt",
+     "room": "#/ledger/debt",
+     "kind": "room"
+    },
+    {
+     "id": "utilization",
+     "name": "Utilization",
+     "priority": "should",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 5
+     },
+     "questions": [],
+     "outputs": [
+      "utilization per card and in total; the drag reading"
+     ],
+     "skipRule": "noCards",
+     "movesTo": 8,
+     "uses": [
+      "utilization-drag"
+     ],
+     "kind": "lens"
+    },
+    {
+     "id": "insurance",
+     "name": "Insurance check",
+     "priority": "could",
+     "minutes": {
+      "min": 3,
+      "target": 4,
+      "max": 6
+     },
+     "questions": [
+      {
+       "text": "Health, renters, disability: which do you have?",
+       "fills": "safety.insurance"
+      }
+     ],
+     "outputs": [
+      "coverage rows typed"
+     ],
+     "movesTo": 8,
+     "room": "#/ledger/safety",
+     "kind": "room"
+    },
+    {
+     "id": "steps",
+     "name": "Three steps",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 4,
+      "target": 5,
+      "max": 7
+     },
+     "questions": [],
+     "outputs": [
+      "three steps, some already done today"
+     ],
+     "kind": "steps"
+    },
+    {
+     "id": "close",
+     "name": "Close and book",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 2,
+      "target": 2,
+      "max": 3
+     },
+     "questions": [
+      {
+       "text": "When works for next time?",
+       "fills": "program.nextDate"
+      }
+     ],
+     "outputs": [
+      "the next date, the snapshot, the follow-up email"
+     ],
+     "kind": "close"
+    }
+   ]
+  },
+  {
+   "id": "s7",
+   "n": 7,
+   "name": "The future",
+   "goal": "The 401k and Roth decided, the first real FI number, every goal sized and dated.",
+   "markers": {
+    "behindAt": 35,
+    "closeAt": 48
+   },
+   "blocks": [
+    {
+     "id": "checkin",
+     "name": "Check-in and urgent check",
+     "priority": "must",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 5
+     },
+     "questions": [
+      {
+       "text": "How are you doing with money this week? Anything on fire?",
+       "fills": "program.urgent"
+      }
+     ],
+     "outputs": [
+      "the urgent flag, or a clear start"
+     ],
+     "kind": "checkin"
+    },
+    {
+     "id": "loops",
+     "name": "Close open loops",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 2,
+      "max": 4
+     },
+     "questions": [
+      {
+       "text": "Last time you were going to look at a few things. How did it go?",
+       "fills": "program.homework"
+      }
+     ],
+     "outputs": [
+      "homework marked done, parked items picked up"
+     ],
+     "kind": "loops"
+    },
+    {
+     "id": "plan",
+     "name": "Today's plan",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 1,
+      "max": 2
+     },
+     "questions": [],
+     "outputs": [
+      "the session goal said aloud"
+     ],
+     "kind": "plan"
+    },
+    {
+     "id": "k401",
+     "name": "401k decision",
+     "priority": "must",
+     "minutes": {
+      "min": 5,
+      "target": 7,
+      "max": 10
+     },
+     "questions": [
+      {
+       "text": "The match is {match}. How much do you want to put in?",
+       "fills": "income.pretaxRetirement"
+      }
+     ],
+     "outputs": [
+      "the deferral decided; the order of operations as information"
+     ],
+     "uses": [
+      "match-left",
+      "order"
+     ],
+     "kind": "decision"
+    },
+    {
+     "id": "rothfund",
+     "name": "Roth funding",
+     "priority": "must",
+     "minutes": {
+      "min": 4,
+      "target": 6,
+      "max": 9
+     },
+     "questions": [
+      {
+       "text": "The Roth is open. Monthly or yearly, and how much?",
+       "fills": "invest.contribAmount"
+      }
+     ],
+     "outputs": [
+      "the Roth funded or dated"
+     ],
+     "uses": [
+      "order"
+     ],
+     "kind": "decision"
+    },
+    {
+     "id": "ladder",
+     "name": "The FI ladder",
+     "priority": "must",
+     "minutes": {
+      "min": 5,
+      "target": 7,
+      "max": 10
+     },
+     "questions": [],
+     "outputs": [
+      "the first real FI number and date, the rungs explained"
+     ],
+     "room": "#/levers",
+     "kind": "room"
+    },
+    {
+     "id": "goalsize",
+     "name": "Goals sized and dated",
+     "priority": "must",
+     "minutes": {
+      "min": 5,
+      "target": 6,
+      "max": 9
+     },
+     "questions": [],
+     "outputs": [
+      "every goal with an amount and a month on the timeline"
+     ],
+     "room": "#/goals",
+     "kind": "goals"
+    },
+    {
+     "id": "ssa",
+     "name": "Social Security account",
+     "priority": "could",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 4
+     },
+     "questions": [],
+     "outputs": [
+      "my Social Security account opened"
+     ],
+     "movesTo": 8,
+     "uses": [
+      "ssa"
+     ],
+     "kind": "checklist"
+    },
+    {
+     "id": "coast",
+     "name": "Coast check",
+     "priority": "could",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 4
+     },
+     "questions": [],
+     "outputs": [
+      "the coast reading"
+     ],
+     "movesTo": 8,
+     "uses": [
+      "coast-check"
+     ],
+     "kind": "lens"
+    },
+    {
+     "id": "steps",
+     "name": "Three steps",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 4,
+      "target": 5,
+      "max": 7
+     },
+     "questions": [],
+     "outputs": [
+      "three steps, some already done today"
+     ],
+     "kind": "steps"
+    },
+    {
+     "id": "close",
+     "name": "Close and book",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 2,
+      "target": 2,
+      "max": 3
+     },
+     "questions": [
+      {
+       "text": "When works for next time?",
+       "fills": "program.nextDate"
+      }
+     ],
+     "outputs": [
+      "the next date, the snapshot, the follow-up email"
+     ],
+     "kind": "close"
+    }
+   ]
+  },
+  {
+   "id": "s8",
+   "n": 8,
+   "name": "Grow",
+   "goal": "The income levers, the tax check, the benefits she is not using.",
+   "markers": {
+    "behindAt": 35,
+    "closeAt": 48
+   },
+   "blocks": [
+    {
+     "id": "checkin",
+     "name": "Check-in and urgent check",
+     "priority": "must",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 5
+     },
+     "questions": [
+      {
+       "text": "How are you doing with money this week? Anything on fire?",
+       "fills": "program.urgent"
+      }
+     ],
+     "outputs": [
+      "the urgent flag, or a clear start"
+     ],
+     "kind": "checkin"
+    },
+    {
+     "id": "loops",
+     "name": "Close open loops",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 2,
+      "max": 4
+     },
+     "questions": [
+      {
+       "text": "Last time you were going to look at a few things. How did it go?",
+       "fills": "program.homework"
+      }
+     ],
+     "outputs": [
+      "homework marked done, parked items picked up"
+     ],
+     "kind": "loops"
+    },
+    {
+     "id": "plan",
+     "name": "Today's plan",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 1,
+      "max": 2
+     },
+     "questions": [],
+     "outputs": [
+      "the session goal said aloud"
+     ],
+     "kind": "plan"
+    },
+    {
+     "id": "levers",
+     "name": "What moves the date",
+     "priority": "must",
+     "minutes": {
+      "min": 6,
+      "target": 8,
+      "max": 12
+     },
+     "questions": [],
+     "outputs": [
+      "the top three levers by months of FI date"
+     ],
+     "room": "#/levers",
+     "kind": "room"
+    },
+    {
+     "id": "income",
+     "name": "Income levers",
+     "priority": "must",
+     "minutes": {
+      "min": 5,
+      "target": 7,
+      "max": 10
+     },
+     "questions": [
+      {
+       "text": "A raise, a side income, a job change: which is realistic this year?",
+       "fills": "program.incomeLever"
+      }
+     ],
+     "outputs": [
+      "one income move chosen with its FI effect"
+     ],
+     "kind": "field"
+    },
+    {
+     "id": "tax",
+     "name": "Tax check",
+     "priority": "must",
+     "minutes": {
+      "min": 4,
+      "target": 6,
+      "max": 9
+     },
+     "questions": [],
+     "outputs": [
+      "the implied rate against the brackets, tax room, saved per 1,000 pre-tax"
+     ],
+     "room": "#/ledger/taxes",
+     "kind": "room"
+    },
+    {
+     "id": "benefits",
+     "name": "Benefits",
+     "priority": "should",
+     "minutes": {
+      "min": 3,
+      "target": 5,
+      "max": 7
+     },
+     "questions": [
+      {
+       "text": "HSA, EAP, commuter, legal: what does work offer that you do not use?",
+       "fills": "program.benefits"
+      }
+     ],
+     "outputs": [
+      "benefits turned on; HSA if eligible"
+     ],
+     "movesTo": 9,
+     "uses": [
+      "hsa",
+      "eap"
+     ],
+     "kind": "checklist"
+    },
+    {
+     "id": "realwage",
+     "name": "Your real hourly wage",
+     "priority": "could",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 4
+     },
+     "questions": [],
+     "outputs": [
+      "the real-hourly-wage reading"
+     ],
+     "movesTo": 9,
+     "uses": [
+      "real-hourly-wage"
+     ],
+     "kind": "lens"
+    },
+    {
+     "id": "steps",
+     "name": "Three steps",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 4,
+      "target": 5,
+      "max": 7
+     },
+     "questions": [],
+     "outputs": [
+      "three steps, some already done today"
+     ],
+     "kind": "steps"
+    },
+    {
+     "id": "close",
+     "name": "Close and book",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 2,
+      "target": 2,
+      "max": 3
+     },
+     "questions": [
+      {
+       "text": "When works for next time?",
+       "fills": "program.nextDate"
+      }
+     ],
+     "outputs": [
+      "the next date, the snapshot, the follow-up email"
+     ],
+     "kind": "close"
+    }
+   ]
+  },
+  {
+   "id": "s9",
+   "n": 9,
+   "name": "Revisit",
+   "goal": "Guess again without looking, see how far she has come, and ask for her words.",
+   "markers": {
+    "behindAt": 35,
+    "closeAt": 48
+   },
+   "blocks": [
+    {
+     "id": "checkin",
+     "name": "Check-in and urgent check",
+     "priority": "must",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 5
+     },
+     "questions": [
+      {
+       "text": "How are you doing with money this week? Anything on fire?",
+       "fills": "program.urgent"
+      }
+     ],
+     "outputs": [
+      "the urgent flag, or a clear start"
+     ],
+     "kind": "checkin"
+    },
+    {
+     "id": "loops",
+     "name": "Close open loops",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 2,
+      "max": 4
+     },
+     "questions": [
+      {
+       "text": "Last time you were going to look at a few things. How did it go?",
+       "fills": "program.homework"
+      }
+     ],
+     "outputs": [
+      "homework marked done, parked items picked up"
+     ],
+     "kind": "loops"
+    },
+    {
+     "id": "plan",
+     "name": "Today's plan",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 1,
+      "max": 2
+     },
+     "questions": [],
+     "outputs": [
+      "the session goal said aloud"
+     ],
+     "kind": "plan"
+    },
+    {
+     "id": "blind",
+     "name": "Blind guess test",
+     "priority": "must",
+     "minutes": {
+      "min": 8,
+      "target": 10,
+      "max": 14
+     },
+     "questions": [
+      {
+       "text": "Without looking: about how much goes to {area} now?",
+       "fills": "anchor.blind:*"
+      }
+     ],
+     "outputs": [
+      "a blind guess per area against the actuals; the ratio against session 4"
+     ],
+     "kind": "blind"
+    },
+    {
+     "id": "progress",
+     "name": "Progress against paperwork",
+     "priority": "must",
+     "minutes": {
+      "min": 4,
+      "target": 5,
+      "max": 8
+     },
+     "questions": [],
+     "outputs": [
+      "corrections, moves and paperwork since session 1; the FI date then and now"
+     ],
+     "room": "#/session",
+     "kind": "room"
+    },
+    {
+     "id": "goalsvswords",
+     "name": "Goals against her words",
+     "priority": "must",
+     "minutes": {
+      "min": 4,
+      "target": 5,
+      "max": 8
+     },
+     "questions": [],
+     "outputs": [
+      "each discovery goal: hit, on the way, or changed"
+     ],
+     "kind": "goalsvswords"
+    },
+    {
+     "id": "stress",
+     "name": "Money stress",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 1,
+      "max": 2
+     },
+     "questions": [
+      {
+       "text": "On a scale of one to ten, how stressed do you feel about money right now?",
+       "fills": "program.stress"
+      }
+     ],
+     "outputs": [
+      "the third stress score"
+     ],
+     "kind": "stress"
+    },
+    {
+     "id": "testimonial",
+     "name": "Her words and a referral",
+     "priority": "could",
+     "minutes": {
+      "min": 3,
+      "target": 4,
+      "max": 6
+     },
+     "questions": [
+      {
+       "text": "If a friend asked what changed, what would you say?",
+       "fills": "program.testimonial"
+      }
+     ],
+     "outputs": [
+      "a testimonial in her words; one referral asked"
+     ],
+     "movesTo": 12,
+     "kind": "testimonial"
+    },
+    {
+     "id": "steps",
+     "name": "Three steps",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 4,
+      "target": 5,
+      "max": 7
+     },
+     "questions": [],
+     "outputs": [
+      "three steps, some already done today"
+     ],
+     "kind": "steps"
+    },
+    {
+     "id": "close",
+     "name": "Close and book",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 2,
+      "target": 2,
+      "max": 3
+     },
+     "questions": [
+      {
+       "text": "When works for next time?",
+       "fills": "program.nextDate"
+      }
+     ],
+     "outputs": [
+      "the next date, the snapshot, the follow-up email"
+     ],
+     "kind": "close"
+    }
+   ]
+  },
+  {
+   "id": "s10",
+   "n": 10,
+   "name": "Life simulator",
+   "goal": "Her big decisions as what-ifs, each alone and together.",
+   "markers": {
+    "behindAt": 35,
+    "closeAt": 48
+   },
+   "blocks": [
+    {
+     "id": "checkin",
+     "name": "Check-in and urgent check",
+     "priority": "must",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 5
+     },
+     "questions": [
+      {
+       "text": "How are you doing with money this week? Anything on fire?",
+       "fills": "program.urgent"
+      }
+     ],
+     "outputs": [
+      "the urgent flag, or a clear start"
+     ],
+     "kind": "checkin"
+    },
+    {
+     "id": "loops",
+     "name": "Close open loops",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 2,
+      "max": 4
+     },
+     "questions": [
+      {
+       "text": "Last time you were going to look at a few things. How did it go?",
+       "fills": "program.homework"
+      }
+     ],
+     "outputs": [
+      "homework marked done, parked items picked up"
+     ],
+     "kind": "loops"
+    },
+    {
+     "id": "plan",
+     "name": "Today's plan",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 1,
+      "max": 2
+     },
+     "questions": [],
+     "outputs": [
+      "the session goal said aloud"
+     ],
+     "kind": "plan"
+    },
+    {
+     "id": "decisions",
+     "name": "Her big decisions",
+     "priority": "must",
+     "minutes": {
+      "min": 5,
+      "target": 6,
+      "max": 9
+     },
+     "questions": [
+      {
+       "text": "What are the two or three big decisions in the next few years?",
+       "fills": "program.decisions"
+      }
+     ],
+     "outputs": [
+      "the decisions named as scenario blocks"
+     ],
+     "room": "#/scenarios",
+     "kind": "room"
+    },
+    {
+     "id": "simulate",
+     "name": "Each alone and together",
+     "priority": "must",
+     "minutes": {
+      "min": 10,
+      "target": 12,
+      "max": 18
+     },
+     "questions": [],
+     "outputs": [
+      "the paths chart; FI age and net worth at 95 for each"
+     ],
+     "room": "#/scenarios",
+     "kind": "room"
+    },
+    {
+     "id": "promote",
+     "name": "Promote one",
+     "priority": "should",
+     "minutes": {
+      "min": 3,
+      "target": 4,
+      "max": 6
+     },
+     "questions": [],
+     "outputs": [
+      "one block promoted into the Life plan"
+     ],
+     "movesTo": 11,
+     "room": "#/scenarios",
+     "kind": "room"
+    },
+    {
+     "id": "timeline10",
+     "name": "Goals after the decisions",
+     "priority": "could",
+     "minutes": {
+      "min": 3,
+      "target": 4,
+      "max": 6
+     },
+     "questions": [],
+     "outputs": [
+      "the goal timeline with the promoted block"
+     ],
+     "movesTo": 11,
+     "room": "#/goals",
+     "kind": "goals"
+    },
+    {
+     "id": "steps",
+     "name": "Three steps",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 4,
+      "target": 5,
+      "max": 7
+     },
+     "questions": [],
+     "outputs": [
+      "three steps, some already done today"
+     ],
+     "kind": "steps"
+    },
+    {
+     "id": "close",
+     "name": "Close and book",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 2,
+      "target": 2,
+      "max": 3
+     },
+     "questions": [
+      {
+       "text": "When works for next time?",
+       "fills": "program.nextDate"
+      }
+     ],
+     "outputs": [
+      "the next date, the snapshot, the follow-up email"
+     ],
+     "kind": "close"
+    }
+   ]
+  },
+  {
+   "id": "s11",
+   "n": 11,
+   "name": "Flex",
+   "goal": "Whatever she needs most, and everything the program moved here.",
+   "markers": {
+    "behindAt": 35,
+    "closeAt": 48
+   },
+   "blocks": [
+    {
+     "id": "checkin",
+     "name": "Check-in and urgent check",
+     "priority": "must",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 5
+     },
+     "questions": [
+      {
+       "text": "How are you doing with money this week? Anything on fire?",
+       "fills": "program.urgent"
+      }
+     ],
+     "outputs": [
+      "the urgent flag, or a clear start"
+     ],
+     "kind": "checkin"
+    },
+    {
+     "id": "loops",
+     "name": "Close open loops",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 2,
+      "max": 4
+     },
+     "questions": [
+      {
+       "text": "Last time you were going to look at a few things. How did it go?",
+       "fills": "program.homework"
+      }
+     ],
+     "outputs": [
+      "homework marked done, parked items picked up"
+     ],
+     "kind": "loops"
+    },
+    {
+     "id": "plan",
+     "name": "Today's plan",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 1,
+      "max": 2
+     },
+     "questions": [],
+     "outputs": [
+      "the session goal said aloud"
+     ],
+     "kind": "plan"
+    },
+    {
+     "id": "absorbed",
+     "name": "What moved here",
+     "priority": "must",
+     "minutes": {
+      "min": 10,
+      "target": 15,
+      "max": 25
+     },
+     "questions": [],
+     "outputs": [
+      "every block the earlier sessions moved to Flex, run in order"
+     ],
+     "kind": "absorbed"
+    },
+    {
+     "id": "herpick",
+     "name": "Her pick",
+     "priority": "should",
+     "minutes": {
+      "min": 8,
+      "target": 10,
+      "max": 15
+     },
+     "questions": [
+      {
+       "text": "If we had today to spend on one thing, what would it be?",
+       "fills": "program.flexPick"
+      }
+     ],
+     "outputs": [
+      "one room, opened"
+     ],
+     "kind": "field"
+    },
+    {
+     "id": "maintenance",
+     "name": "How she will keep this up",
+     "priority": "could",
+     "minutes": {
+      "min": 3,
+      "target": 4,
+      "max": 6
+     },
+     "questions": [],
+     "outputs": [
+      "the weekly routine drafted"
+     ],
+     "movesTo": 12,
+     "kind": "routine"
+    },
+    {
+     "id": "steps",
+     "name": "Three steps",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 4,
+      "target": 5,
+      "max": 7
+     },
+     "questions": [],
+     "outputs": [
+      "three steps, some already done today"
+     ],
+     "kind": "steps"
+    },
+    {
+     "id": "close",
+     "name": "Close and book",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 2,
+      "target": 2,
+      "max": 3
+     },
+     "questions": [
+      {
+       "text": "When works for next time?",
+       "fills": "program.nextDate"
+      }
+     ],
+     "outputs": [
+      "the next date, the snapshot, the follow-up email"
+     ],
+     "kind": "close"
+    }
+   ]
+  },
+  {
+   "id": "s12",
+   "n": 12,
+   "name": "Graduation",
+   "goal": "Before and after, her routine, what comes next.",
+   "markers": {
+    "behindAt": 35,
+    "closeAt": 48
+   },
+   "blocks": [
+    {
+     "id": "checkin",
+     "name": "Check-in and urgent check",
+     "priority": "must",
+     "minutes": {
+      "min": 2,
+      "target": 3,
+      "max": 5
+     },
+     "questions": [
+      {
+       "text": "How are you doing with money this week? Anything on fire?",
+       "fills": "program.urgent"
+      }
+     ],
+     "outputs": [
+      "the urgent flag, or a clear start"
+     ],
+     "kind": "checkin"
+    },
+    {
+     "id": "loops",
+     "name": "Close open loops",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 2,
+      "max": 4
+     },
+     "questions": [
+      {
+       "text": "Last time you were going to look at a few things. How did it go?",
+       "fills": "program.homework"
+      }
+     ],
+     "outputs": [
+      "homework marked done, parked items picked up"
+     ],
+     "kind": "loops"
+    },
+    {
+     "id": "plan",
+     "name": "Today's plan",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 1,
+      "max": 2
+     },
+     "questions": [],
+     "outputs": [
+      "the session goal said aloud"
+     ],
+     "kind": "plan"
+    },
+    {
+     "id": "beforeafter",
+     "name": "Before and after",
+     "priority": "must",
+     "minutes": {
+      "min": 8,
+      "target": 10,
+      "max": 14
+     },
+     "questions": [],
+     "outputs": [
+      "the scorecard, discovery against now, in her words"
+     ],
+     "kind": "scorecard"
+    },
+    {
+     "id": "routine",
+     "name": "Her routine",
+     "priority": "must",
+     "minutes": {
+      "min": 5,
+      "target": 7,
+      "max": 10
+     },
+     "questions": [
+      {
+       "text": "Which day each month will you look, and what will you look at?",
+       "fills": "program.routine"
+      }
+     ],
+     "outputs": [
+      "the monthly routine written down"
+     ],
+     "kind": "routine"
+    },
+    {
+     "id": "stress",
+     "name": "Money stress",
+     "priority": "must",
+     "minutes": {
+      "min": 1,
+      "target": 1,
+      "max": 2
+     },
+     "questions": [
+      {
+       "text": "On a scale of one to ten, how stressed do you feel about money right now?",
+       "fills": "program.stress"
+      }
+     ],
+     "outputs": [
+      "the fourth stress score"
+     ],
+     "kind": "stress"
+    },
+    {
+     "id": "maintenance",
+     "name": "What comes next",
+     "priority": "must",
+     "minutes": {
+      "min": 3,
+      "target": 4,
+      "max": 6
+     },
+     "questions": [],
+     "outputs": [
+      "the maintenance offer, as information"
+     ],
+     "kind": "offer"
+    },
+    {
+     "id": "testimonial",
+     "name": "Her words and a referral",
+     "priority": "could",
+     "minutes": {
+      "min": 3,
+      "target": 4,
+      "max": 6
+     },
+     "questions": [
+      {
+       "text": "If a friend asked what changed, what would you say?",
+       "fills": "program.testimonial"
+      }
+     ],
+     "outputs": [
+      "a testimonial with her numbers; one referral asked"
+     ],
+     "kind": "testimonial"
+    },
+    {
+     "id": "steps",
+     "name": "Three steps",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 4,
+      "target": 5,
+      "max": 7
+     },
+     "questions": [],
+     "outputs": [
+      "three steps, some already done today"
+     ],
+     "kind": "steps"
+    },
+    {
+     "id": "close",
+     "name": "Close and book",
+     "priority": "never-cut",
+     "minutes": {
+      "min": 2,
+      "target": 2,
+      "max": 3
+     },
+     "questions": [
+      {
+       "text": "When works for next time?",
+       "fills": "program.nextDate"
+      }
+     ],
+     "outputs": [
+      "the next date, the snapshot, the follow-up email"
+     ],
+     "kind": "close"
+    }
+   ]
+  }
+ ]
+}

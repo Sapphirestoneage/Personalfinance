@@ -1,0 +1,182 @@
+{
+ "asOf": "2026-10-07",
+ "source": "Builder's merchant patterns for US bank descriptions; coach overrides are remembered per client (MR-055)",
+ "verify": true,
+ "rules": [
+  {
+   "match": "rent|apartments|property|realty|landlord|zillow rent",
+   "category": "accommodation",
+   "label": "Rent"
+  },
+  {
+   "match": "con ?ed|pse&g|pseg|national grid|duke energy|electric|gas co|water",
+   "category": "utilities",
+   "label": "Utilities"
+  },
+  {
+   "match": "verizon|at&t|t-mobile|tmobile|mint mobile|xfinity|comcast|spectrum|optimum|fios",
+   "category": "utilities",
+   "label": "Phone and internet"
+  },
+  {
+   "match": "netflix|hulu|disney|hbo|max\\b|spotify|apple\\.com/bill|apple music|youtube|peacock|paramount|audible|kindle unlimited|nyt|new york times|substack|patreon|adobe|icloud|google storage|dropbox|chatgpt|openai",
+   "category": "utilities",
+   "label": "Subscriptions"
+  },
+  {
+   "match": "planet fitness|equinox|crunch|blink fitness|classpass|peloton|gym",
+   "category": "wants",
+   "label": "Gym"
+  },
+  {
+   "match": "trader joe|whole foods|wegmans|shoprite|stop & shop|kroger|safeway|aldi|costco|h mart|key food|instacart|fresh direct|grocery",
+   "category": "food",
+   "label": "Groceries"
+  },
+  {
+   "match": "doordash|uber eats|ubereats|grubhub|caviar|postmates",
+   "category": "food",
+   "label": "Delivery"
+  },
+  {
+   "match": "starbucks|dunkin|blue bottle|cafe|coffee|bagel|deli|pizza|sushi|taco|chipotle|sweetgreen|cava|restaurant|bar\\b|grill|kitchen|bistro|diner",
+   "category": "food",
+   "label": "Restaurants and takeout"
+  },
+  {
+   "match": "uber(?! eats)|lyft|mta|nj transit|path|metro|amtrak|citi bike|parking|ezpass|e-zpass|shell|exxon|mobil|bp\\b|sunoco|chevron|gas station|geico|progressive|allstate|state farm",
+   "category": "transportation",
+   "label": "Getting around"
+  },
+  {
+   "match": "cvs|walgreens|rite aid|duane reade|pharmacy|dr\\.|md\\b|dentist|therapy|betterhelp|talkspace|one medical|urgent care|labcorp|quest diag|optum|aetna|cigna|united health",
+   "category": "therapy",
+   "label": "Health and therapy"
+  },
+  {
+   "match": "amazon|amzn|target|walmart|best buy|ikea|home depot|sephora|ulta|zara|h&m|uniqlo|nordstrom|macys|nike|lululemon|etsy|shein",
+   "category": "wants",
+   "label": "Shopping"
+  },
+  {
+   "match": "amc|regal|cinema|ticketmaster|stubhub|eventbrite|steam|playstation|nintendo|xbox|bowling|museum",
+   "category": "wants",
+   "label": "Entertainment"
+  },
+  {
+   "match": "airbnb|vrbo|delta|united|jetblue|american air|southwest|spirit|frontier|expedia|booking\\.com|hotels\\.com|marriott|hilton|hyatt|hertz|avis",
+   "category": "irregular",
+   "label": "Travel"
+  },
+  {
+   "match": "overdraft|od fee|late fee|nsf|insufficient|atm fee|foreign transaction|intl fee|interest charge|finance charge|annual fee|returned item",
+   "category": "mistakes",
+   "label": "Fees"
+  },
+  {
+   "match": "afterpay|klarna|affirm|sezzle|zip\\.co|paypal credit|pay in 4",
+   "category": "bnpl",
+   "label": "Buy now pay later"
+  },
+  {
+   "match": "venmo|zelle|cash app|cashapp|paypal",
+   "category": "transfer",
+   "label": "Person to person"
+  },
+  {
+   "match": "payment thank you|autopay payment|online payment|card payment|chase credit crd|amex epayment|capital one.*pymt|citi.*payment|discover.*payment|bk of amer.*payment",
+   "category": "cardPayment",
+   "label": "Card payment"
+  },
+  {
+   "match": "transfer to|transfer from|online transfer|xfer|internal transfer|ally bank|marcus|wealthfront|betterment|vanguard|fidelity|schwab|robinhood",
+   "category": "ownTransfer",
+   "label": "Transfer between your accounts"
+  },
+  {
+   "match": "payroll|direct dep|direct deposit|dir dep|salary|adp|gusto|paychex|workday",
+   "category": "income",
+   "label": "Paycheck"
+  },
+  {
+   "match": "refund|reversal|credit adj|return",
+   "category": "refund",
+   "label": "Refund"
+  }
+ ],
+ "bnplMerchants": [
+  "afterpay",
+  "klarna",
+  "affirm",
+  "sezzle",
+  "zip.co",
+  "pay in 4"
+ ],
+ "p2p": [
+  "venmo",
+  "zelle",
+  "cash app",
+  "cashapp",
+  "paypal"
+ ],
+ "feeWords": [
+  "overdraft",
+  "od fee",
+  "late fee",
+  "nsf",
+  "insufficient",
+  "atm fee",
+  "foreign transaction",
+  "intl fee",
+  "interest charge",
+  "finance charge",
+  "annual fee",
+  "returned item"
+ ],
+ "columnGuesses": {
+  "date": [
+   "date",
+   "posted",
+   "transaction date",
+   "posting date"
+  ],
+  "description": [
+   "description",
+   "name",
+   "merchant",
+   "payee",
+   "memo",
+   "details"
+  ],
+  "amount": [
+   "amount",
+   "amt"
+  ],
+  "debit": [
+   "debit",
+   "withdrawal",
+   "outflow"
+  ],
+  "credit": [
+   "credit",
+   "deposit",
+   "inflow"
+  ],
+  "account": [
+   "account",
+   "account name",
+   "institution"
+  ],
+  "category": [
+   "category"
+  ]
+ },
+ "rocketMoney": {
+  "date": "Date",
+  "description": "Name",
+  "amount": "Amount",
+  "account": "Account Name",
+  "category": "Category",
+  "note": "Rocket Money exports spending as positive amounts and income as negative"
+ }
+}

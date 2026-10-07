@@ -314,3 +314,156 @@ Decision: the owner re-briefed Level 11 with the cushion as three goals, so the 
 Compatibility: `record.goals` keeps schema 4; `starter` is dropped and `cushion` ({ step1Cents, step2Months }), `celebrated` and `links` arrive with defaults. The finish map stores 'done' for a covered step so Since last time can say "you covered a full month". The assumption `starterCushionMonths` is replaced by `cushionStep1` and `cushionStep2Months`; the workpaper and tests were rewritten.
 Why: the owner asked; three small wins beat one big one, and the lean month is reachable soonest.
 Alternative: three separate buckets (three balances to keep in step for one savings account).
+
+## MR-053 2026-10-07 The program as data: a discovery call and twelve sessions of blocks that bend
+Decision: `data/curricula.json` holds the discovery call and sessions 1 to 12: id, name, goal sentence, markers (behind at minute 35, close at minute 48) and blocks in order, each with a priority (must, should, could, never-cut), minutes (min, target, max), read-aloud questions with what they fill, outputs, a skip rule (no debt, no roommate, no cards) and the session that inherits it when skipped or moved. Every session opens with Check-in and urgent check, Close open loops and Today's plan and ends with Three steps and Close and book, both never cut. `engine/curriculum.js` plans a session for one client (skip rules, blocks moved in from earlier sessions placed before the close), bends it (at the close marker jump to Three steps and move every unstarted block except the standing ones; at the behind marker move the unstarted should blocks when the clock is past the plan; when five minutes ahead and before the behind marker offer one could block picked by her goals and the leverage engine; Go deeper moves the next unstarted should block, never a must), switches to urgent mode (check-in, the urgent thing, three steps, close; everything else to the next session) and builds the three steps (what she already did today shown done, at most three open). `engine/program.js` keeps the state on `record.program` (sessions with status, dates, blocks done, skipped or moved with their minutes; moves; the parking lot; the account checklist; stress scores; CSV mappers; merchant overrides; the baseline) and journals every write as kind `program`. Urgent sessions are stored as u1, u2 and never take a program number unless the coach says so; a block moved to session 11 is listed as absorbed by Flex, so graduation stays at 12. The Level 8 call path stops render inside the Confirm, Gut lap, Dream lap, lock, reveal and targets blocks (`mountStop`). The runner's clock has a rehearsal control (five minutes on) so the bending can be practised and tested. The session 1 block list is the owner's; sessions 2 to 12 below are the builder's proposal for review:
+
+Session 2, Lock the big numbers and finish accounts: Every big number from a document, the dream in her words, and the rest of the accounts open.
+  - Check-in and urgent check (must, 2/3/5): the urgent flag, or a clear start
+  - Close open loops (must, 1/2/4): homework marked done, parked items picked up
+  - Today's plan (must, 1/1/2): the session goal said aloud
+  - Dream lap (must, 6/8/12): a dream figure for every area
+  - Paystub (must, 4/6/9): gross, take-home, pre-tax deductions, match, all known
+  - Rent and the lease (must, 2/3/4): rent known, share known
+  - Every debt (must, 5/7/12, skipped when no debt row with a balance): every debt balance and APR known
+  - Account balances (must, 3/5/8): every balance known, 401k balance known
+  - The rest of the accounts (must, 8/10/14): 401k portal checked, Roth opened, card decided, credit frozen
+  - Guesses gone (should, 2/3/5, moves to session 3): no guess rows left; every area has her number
+  - The picture, locked (should, 2/3/4, moves to session 3): the headline numbers at known or verified
+  - Export for next time (could, 2/2/3, moves to session 3): how to export the transactions before session 3
+  - Three steps (never-cut, 4/5/7): three steps, some already done today
+  - Close and book (never-cut, 2/2/3): the next date, the snapshot, the follow-up email
+Session 3, Transactions I: Recurring bills and subscriptions from the real transactions, area by area against her gut.
+  - Check-in and urgent check (must, 2/3/5): the urgent flag, or a clear start
+  - Close open loops (must, 1/2/4): homework marked done, parked items picked up
+  - Today's plan (must, 1/1/2): the session goal said aloud
+  - Bring in the transactions (must, 4/6/10): the export imported and cleaned: card payments and transfers out, refunds netted
+  - Recurring bills (must, 6/8/12): recurring lines verified as actuals
+  - Subscriptions (must, 5/7/10): every subscription with its cadence and next renewal; cancellations as steps
+  - Gut against actual, area by area (must, 6/8/12): estimated against actual ratio per area for the recurring part
+  - Where it goes (should, 3/4/6, moves to session 4): top five merchants and their share
+  - Prices creeping up (could, 2/3/4, moves to session 4): merchants whose amounts rise
+  - Three steps (never-cut, 4/5/7): three steps, some already done today
+  - Close and book (never-cut, 2/2/3): the next date, the snapshot, the follow-up email
+Session 4, Transactions II: The irregular and the one-off, the fees, the Venmo netting, the timing, and the full reveal.
+  - Check-in and urgent check (must, 2/3/5): the urgent flag, or a clear start
+  - Close open loops (must, 1/2/4): homework marked done, parked items picked up
+  - Today's plan (must, 1/1/2): the session goal said aloud
+  - Irregular and one-time (must, 5/7/10): irregular lines as actuals with a yearly cadence
+  - Fees and buy now pay later (must, 3/4/6): fees on the mistakes line; BNPL flagged as debt
+  - Venmo and Zelle (must, 3/4/6, skipped when no roommate in the household): reimbursements netted against shared lines
+  - Paycheck against bills (should, 3/4/6, moves to session 5): the cash flow calendar with its low days
+  - The full reveal (must, 6/8/12): what you said against what it really is, the blind spot percent, one found-money win as the first step
+  - Money stress (must, 1/1/2): the second stress score
+  - Patterns (could, 3/4/6, moves to session 5): small and frequent against big and rare; weeknight delivery
+  - Three steps (never-cut, 4/5/7): three steps, some already done today
+  - Close and book (never-cut, 2/2/3): the next date, the snapshot, the follow-up email
+Session 5, The plan: Targets in her words, automation set, buckets funded, debts in order.
+  - Check-in and urgent check (must, 2/3/5): the urgent flag, or a clear start
+  - Close open loops (must, 1/2/4): homework marked done, parked items picked up
+  - Today's plan (must, 1/1/2): the session goal said aloud
+  - Your targets (must, 8/10/14): a target per area, in her words
+  - Automation (must, 5/7/10): transfers set the day after payday
+  - Buckets funded (must, 4/5/8): each bucket with its monthly amount from the goal timeline
+  - Debt order (must, 4/5/8, skipped when no debt row with a balance): avalanche, snowball or stress order chosen
+  - When each goal lands (should, 3/4/6, moves to session 6): the goal timeline, with the next win
+  - The leak (could, 2/3/4, moves to session 6): the hidden-leak reading
+  - Three steps (never-cut, 4/5/7): three steps, some already done today
+  - Close and book (never-cut, 2/2/3): the next date, the snapshot, the follow-up email
+Session 6, Safety and debt: The cushion on its way, sinking funds named, the worst case faced, the payoff dated.
+  - Check-in and urgent check (must, 2/3/5): the urgent flag, or a clear start
+  - Close open loops (must, 1/2/4): homework marked done, parked items picked up
+  - Today's plan (must, 1/1/2): the session goal said aloud
+  - Cushion progress (must, 4/5/8): lean month, full month, full cushion against their targets
+  - Sinking funds (must, 4/6/9): sinking funds as buckets
+  - Roommate worst case (must, 3/4/6, skipped when no roommate in the household): the if-it-all-falls-on-you card and the lease note
+  - Payoff timeline (must, 5/7/10, skipped when no debt row with a balance): the debt-free date, the promo cliffs, interest saved by order
+  - Utilization (should, 2/3/5, skipped when no credit card row, moves to session 8): utilization per card and in total; the drag reading
+  - Insurance check (could, 3/4/6, moves to session 8): coverage rows typed
+  - Three steps (never-cut, 4/5/7): three steps, some already done today
+  - Close and book (never-cut, 2/2/3): the next date, the snapshot, the follow-up email
+Session 7, The future: The 401k and Roth decided, the first real FI number, every goal sized and dated.
+  - Check-in and urgent check (must, 2/3/5): the urgent flag, or a clear start
+  - Close open loops (must, 1/2/4): homework marked done, parked items picked up
+  - Today's plan (must, 1/1/2): the session goal said aloud
+  - 401k decision (must, 5/7/10): the deferral decided; the order of operations as information
+  - Roth funding (must, 4/6/9): the Roth funded or dated
+  - The FI ladder (must, 5/7/10): the first real FI number and date, the rungs explained
+  - Goals sized and dated (must, 5/6/9): every goal with an amount and a month on the timeline
+  - Social Security account (could, 2/3/4, moves to session 8): my Social Security account opened
+  - Coast check (could, 2/3/4, moves to session 8): the coast reading
+  - Three steps (never-cut, 4/5/7): three steps, some already done today
+  - Close and book (never-cut, 2/2/3): the next date, the snapshot, the follow-up email
+Session 8, Grow: The income levers, the tax check, the benefits she is not using.
+  - Check-in and urgent check (must, 2/3/5): the urgent flag, or a clear start
+  - Close open loops (must, 1/2/4): homework marked done, parked items picked up
+  - Today's plan (must, 1/1/2): the session goal said aloud
+  - What moves the date (must, 6/8/12): the top three levers by months of FI date
+  - Income levers (must, 5/7/10): one income move chosen with its FI effect
+  - Tax check (must, 4/6/9): the implied rate against the brackets, tax room, saved per 1,000 pre-tax
+  - Benefits (should, 3/5/7, moves to session 9): benefits turned on; HSA if eligible
+  - Your real hourly wage (could, 2/3/4, moves to session 9): the real-hourly-wage reading
+  - Three steps (never-cut, 4/5/7): three steps, some already done today
+  - Close and book (never-cut, 2/2/3): the next date, the snapshot, the follow-up email
+Session 9, Revisit: Guess again without looking, see how far she has come, and ask for her words.
+  - Check-in and urgent check (must, 2/3/5): the urgent flag, or a clear start
+  - Close open loops (must, 1/2/4): homework marked done, parked items picked up
+  - Today's plan (must, 1/1/2): the session goal said aloud
+  - Blind guess test (must, 8/10/14): a blind guess per area against the actuals; the ratio against session 4
+  - Progress against paperwork (must, 4/5/8): corrections, moves and paperwork since session 1; the FI date then and now
+  - Goals against her words (must, 4/5/8): each discovery goal: hit, on the way, or changed
+  - Money stress (must, 1/1/2): the third stress score
+  - Her words and a referral (could, 3/4/6, moves to session 12): a testimonial in her words; one referral asked
+  - Three steps (never-cut, 4/5/7): three steps, some already done today
+  - Close and book (never-cut, 2/2/3): the next date, the snapshot, the follow-up email
+Session 10, Life simulator: Her big decisions as what-ifs, each alone and together.
+  - Check-in and urgent check (must, 2/3/5): the urgent flag, or a clear start
+  - Close open loops (must, 1/2/4): homework marked done, parked items picked up
+  - Today's plan (must, 1/1/2): the session goal said aloud
+  - Her big decisions (must, 5/6/9): the decisions named as scenario blocks
+  - Each alone and together (must, 10/12/18): the paths chart; FI age and net worth at 95 for each
+  - Promote one (should, 3/4/6, moves to session 11): one block promoted into the Life plan
+  - Goals after the decisions (could, 3/4/6, moves to session 11): the goal timeline with the promoted block
+  - Three steps (never-cut, 4/5/7): three steps, some already done today
+  - Close and book (never-cut, 2/2/3): the next date, the snapshot, the follow-up email
+Session 11, Flex: Whatever she needs most, and everything the program moved here.
+  - Check-in and urgent check (must, 2/3/5): the urgent flag, or a clear start
+  - Close open loops (must, 1/2/4): homework marked done, parked items picked up
+  - Today's plan (must, 1/1/2): the session goal said aloud
+  - What moved here (must, 10/15/25): every block the earlier sessions moved to Flex, run in order
+  - Her pick (should, 8/10/15): one room, opened
+  - How she will keep this up (could, 3/4/6, moves to session 12): the weekly routine drafted
+  - Three steps (never-cut, 4/5/7): three steps, some already done today
+  - Close and book (never-cut, 2/2/3): the next date, the snapshot, the follow-up email
+Session 12, Graduation: Before and after, her routine, what comes next.
+  - Check-in and urgent check (must, 2/3/5): the urgent flag, or a clear start
+  - Close open loops (must, 1/2/4): homework marked done, parked items picked up
+  - Today's plan (must, 1/1/2): the session goal said aloud
+  - Before and after (must, 8/10/14): the scorecard, discovery against now, in her words
+  - Her routine (must, 5/7/10): the monthly routine written down
+  - Money stress (must, 1/1/2): the fourth stress score
+  - What comes next (must, 3/4/6): the maintenance offer, as information
+  - Her words and a referral (could, 3/4/6): a testimonial with her numbers; one referral asked
+  - Three steps (never-cut, 4/5/7): three steps, some already done today
+  - Close and book (never-cut, 2/2/3): the next date, the snapshot, the follow-up email
+Compatibility: `record.program` is new and optional (older files read as no program); the journal gains kind `program`; `#/call` now runs a session and the Level 8 call path moved to `#/callpath`.
+Why: the brief; and the coach never decides what to cut during a call, the rules do, in one line.
+Alternative: a fixed script per session (no room for the client who goes deeper or arrives on fire).
+
+## MR-054 2026-10-07 The account checklist: seven items in order over two sessions, triggers for the rest, homework capped at three
+Decision: `data/accounts-checklist.json` lists the items in order with their session: the tracking app linked and the high-yield savings with buckets (session 1); the Roth opened, the 401k portal, a card only if it fits, and the credit freeze (session 2, after the debts are locked); optional items by trigger (second checking when timing or structure is a struggle, HSA when the paystub shows one, employee assistance for a company or nonprofit employer, password manager and IRS PIN always offered, unclaimed property when she moved states or named a forgotten account, IRS account for self-employed or side income or a tax issue, my Social Security from session 7). Each item carries status (not started, opened, linked, done, not for me), who (on the call, homework, me), notes and a provider note the coach types per client; copy is plain and names no provider. "We are linking, not looking": the client logs in herself off screen share; in gentle mode nothing linked is reviewed on the call. The card shows the balance transfer wording when a card carries a balance at 10% or more, the rewards wording when nothing is carried, and "does not fit" otherwise; Roth funding and the card show the order of operations as information with "your choice". Linked is the end state for the tracking app. Anything unfinished in session 1 rolls to session 2; homework items go on her plate, at most three a session, the rest wait. The cushion steps from Level 11 appear on the savings card so the buckets are named in her words.
+Compatibility: none beyond `record.program.checklist`.
+Why: the brief; results in the first session come from accounts that exist, not from a plan.
+Alternative: a free text to-do list (nothing would roll, trigger or cap).
+
+## MR-055 2026-10-07 Transactions from a CSV: cleaned, categorized, read, and written back as verified actuals
+Decision: `engine/transactions.js` parses a CSV (quotes honoured), guesses the columns (a Rocket Money export is recognised by its headers; a bank export by column names; debit and credit columns as two columns), remembers the mapping per institution on the record, and normalises amounts so spending is positive. Cleaning takes out card payments and transfers between her own accounts (a merchant rule, or the same amount with the opposite sign within three days across accounts), nets refunds against the merchant within thirty days, matches person-to-person money in to a shared line's other share within ten percent and seven days (the coach confirms; a confirmed match comes off that area), flags money in that says reimburse or expense as work money and money out by Venmo or Zelle with no bill behind it. `data/merchant-rules.json` maps merchants to the spending areas; coach overrides are remembered per client. Detection: recurring by interval and steady amount (weekly, every two weeks, monthly, quarterly, annual) with the next date by the calendar; subscriptions with annual against monthly; one-offs; fees to the mistakes line; buy now pay later flagged as debt; price creep (three charges and the last ten percent above the first); same-day duplicates. Patterns: top five merchants and their share, small and frequent against big and rare, weeknight takeout, paydays against bill days. Outputs: monthly actuals per area, the ratio of actual to her gut per area, the blind spot (the share of actual spending her gut did not cover), a correction factor per area, and one found-money win (the largest of a cancellable subscription counted for a year, the fees in the window, the unexplained Venmo in the window). Applying writes one verified line per repeating merchant in an area plus one for the rest, keeps her shared lines, and removes the guesses and her other typed lines in that area as corrections. The CSV itself is never stored; only what it taught us.
+Compatibility: `record.program.transactions`, `mappers`, `merchantOverrides` and `blindSpot` are new; spending lines gain verified actuals.
+Why: the brief; and no bank connection in this level.
+Alternative: a bank connection (out of scope; a CSV every client can produce).
+
+## MR-056 2026-10-07 Outcomes: a stress score four times, a scorecard, the blind guess test, before and after
+Decision: the money stress score (1 to 10) is asked on the discovery form and in sessions 4, 9 and 12 as a block, stored with its date. `engine/outcomes.js` reads one result into the scorecard values (stress, blind spot, picture completeness, card balances, months of cash, cushion saved as a share of the full cushion, savings rate, FI date, goals reached of the ones she named); the discovery save or the start of session 1 captures the baseline once; the scorecard compares the baseline with now and says better, not yet or the same per line. Session 9 asks a blind guess per area into `anchors.blind` and compares the ratio with session 4. Graduation shows before and after on the program view (printable) and on the one-pager once session 12 is closed. The testimonial and referral prompt in sessions 9 and 12 reads her own improvements out ("your stress went from 8 to 6"), with a box for her words.
+Compatibility: `anchors.blind` is a new anchor set; `record.program.stress`, `baseline`, `blindSpot` and `testimonial` are new.
+Why: the brief; a program that cannot show its results is a plan.
+Alternative: a satisfaction survey (tells us how she felt about the coach, not about her money).

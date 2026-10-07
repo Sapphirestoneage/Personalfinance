@@ -12,6 +12,8 @@ import { renderShelf } from '../shelf.js';
 import { lowerFirst, holdsBack } from './ledger.js';
 import { overallConfidence } from './onepager.js';
 import { nextWins } from './goals.js';
+import { programOf, nextSessionNumber } from '../../engine/program.js';
+import { sessionCount } from '../../engine/curriculum.js';
 
 /* One line under the shelf (Level 11, MR-051): the next win, with the timeline a tap away. */
 function goalsLine(app) {
@@ -48,6 +50,13 @@ function birthLabel(f, today) {
 }
 
 let moreOpen = false;
+/* Level 10 (MR-053): where each client is in the program, and the next date. */
+function sessionCell(app, c) {
+  const rec = app.record && app.record.id === c.id ? app.record : app.store.load(c.id); if (!rec) return '';
+  const total = sessionCount(app.data); const n = nextSessionNumber(rec); const P = programOf(rec);
+  const where = n > total ? 'Graduated' : rec.discovery || Object.keys(P.sessions).length ? 'Session ' + n + ' of ' + total : 'Before the first call';
+  return h('span', null, where, P.nextDate ? h('span', { class: 'muted' }, ', next ' + F.dateLong(P.nextDate)) : null);
+}
 const WORK_LABELS = { employed: 'Employed', 'self-employed': 'Self-employed', 'between-jobs': 'Between jobs', student: 'Student', retired: 'Retired', mixed: 'Mixed' };
 
 export function mount(host, app) {
@@ -137,11 +146,12 @@ function renderClients(panel, app) {
     return;
   }
   const tbl = h('table', { class: 'data' },
-    h('thead', null, h('tr', null, h('th', null, 'Client'), h('th', { class: 'hide-narrow' }, 'Last saved'), h('th', null, ''))),
+    h('thead', null, h('tr', null, h('th', null, 'Client'), h('th', null, 'Session'), h('th', { class: 'hide-narrow' }, 'Last saved'), h('th', null, ''))),
     h('tbody', null, list.map(c => {
       const open = app.record && app.record.id === c.id;
       return h('tr', { class: open ? 'selected' : null },
         h('td', null, h('a', { href: '#/home', onClick: e => { e.preventDefault(); app.open(c.id); app.rerender(); } }, c.name || 'Unnamed client'), open ? h('span', { class: 'chip src', style: { marginLeft: '8px' } }, 'Open') : null),
+        h('td', { class: 'small' }, sessionCell(app, c)),
         h('td', { class: 'muted small hide-narrow' }, F.dateLong(c.updatedAt.slice(0, 10))),
         h('td', { class: 'num' },
           h('button', { class: 'btn small', onClick: () => { const r = app.store.load(c.id); if (r) exportClient(r); } }, 'Export'),

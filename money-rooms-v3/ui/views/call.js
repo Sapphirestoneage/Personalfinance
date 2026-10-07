@@ -19,19 +19,23 @@ import { isGuessRow } from '../../engine/guesses.js';
 import { guessList } from './discovery.js';
 import * as Charts from '../charts.js';
 
-export function mount(host, app) {
+export function mount(host, app) { return build(host, app, {}); }
+/* Level 10 (MR-053): one Level 8 stop rendered on its own inside a session block; onDone fires when its own next button is pressed. */
+export function mountStop(host, app, stopId, onDone) { return build(host, app, { only: stopId, onDone }); }
+function build(host, app, opts) {
+  const O = opts || {};
   const CP = app.data.callpath; const sid = () => app.session || 'current';
   let stop = null; let qi = 0; let reveal = false; let pendingShare = null;
   const header = h('header', null, h('h1', null, 'Session'), h('span', { class: 'sub' }, 'One question at a time. Read it out loud; type what they say.'), h('div', { class: 'actions' },
     h('div', { class: 'view-toggle', role: 'group', 'aria-label': 'Session mode' }, ['standard', 'gentle'].map(m => h('button', { 'aria-pressed': String((app.record.sessionMode || 'standard') === m), onClick: () => app.setMode(m) }, m === 'gentle' ? 'Gentle' : 'Standard'))),
     h('a', { class: 'btn', href: '#/session' }, 'Session page')));
-  host.appendChild(header);
-  const progress = h('nav', { class: 'callpath', 'aria-label': 'Stops' }); const body = h('section', { class: 'panel call-body' });
-  host.appendChild(progress); host.appendChild(body);
+  const progress = h('nav', { class: 'callpath', 'aria-label': 'Stops' }); const body = h('section', { class: 'panel call-body' + (O.only ? ' embedded' : '') });
+  if (!O.only) { host.appendChild(header); host.appendChild(progress); }
+  host.appendChild(body);
   const gentle = () => (app.record.sessionMode || 'standard') === 'gentle';
   function firstStop() { const c = confirmQuestions(app.record, app.result, app.data); return (c.said.length || c.guesses.length) ? 'confirm' : 'gut'; }
   function draw() {
-    if (!stop) stop = firstStop();
+    if (!stop) stop = O.only || firstStop();
     clear(progress); clear(body);
     const prog = progressOf(app.record, sid());
     stopDefs(app.data).forEach((s, i) => { const st = prog[s.id] || 'untouched'; progress.appendChild(h('button', { class: 'stop' + (stop === s.id ? ' current' : '') + ' st-' + st, 'aria-current': stop === s.id ? 'step' : null, onClick: () => { stop = s.id; qi = 0; draw(); } }, h('span', { class: 'stop-n' }, String(i + 1)), h('span', { class: 'stop-label' }, s.label), h('span', { class: 'stop-state small muted' }, st === 'done' ? 'done' : st === 'partly' ? 'partly' : ''))); });
@@ -41,7 +45,7 @@ export function mount(host, app) {
   }
   const say = text => h('p', { class: 'readaloud big' }, text);
   const next = (label) => h('button', { class: 'btn', onClick: () => { qi++; draw(); } }, label || 'Next');
-  const done = (status) => { app.callStop(stop, status || 'done'); };
+  const done = (status) => { app.callStop(stop, status || 'done'); if (O.onDone) O.onDone(status || 'done'); };
   const money = c => F.dollarsWhole(c);
   function answerBox(label, onAnswer, opts) {
     const o = opts || {}; const input = h('input', { class: 'input wide big', type: 'text', 'aria-label': label, title: o.title || 'Type it the way they say it: 1900 every two weeks, like 100 a week, 2,500ish, my half is 1,650' });

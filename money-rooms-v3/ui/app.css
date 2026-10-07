@@ -848,3 +848,39 @@ table.compare tr.current td { font-weight: var(--w-semibold); }
 .cheer .big { font-size: var(--fs-20); font-weight: var(--w-semibold); margin: var(--s-1) 0; }
 .gtl-row.starter .gtl-name::after { content: ' first'; }
 .gtl-row.starter.type-floor .gtl-cell.after { background: var(--paper-2); }
+
+/* ---- Level 10: the program (MR-053 to MR-056) ---- */
+.runner-tl { margin-bottom: var(--s-1); }
+.tl-head { justify-content: space-between; align-items: baseline; }
+.tl-clock { font-size: var(--fs-16); font-weight: var(--w-semibold); }
+.tl-bar { display: flex; gap: 2px; height: 28px; margin-top: 4px; }
+.tl-seg { position: relative; background: var(--sapphire-100); border-radius: 4px; overflow: hidden; min-width: 6px; cursor: pointer; }
+.tl-seg.current { background: var(--sapphire-700); }
+.tl-seg.current .tl-name { color: var(--paper); }
+.tl-seg.done { background: var(--sapphire-300); }
+.tl-seg.prio-could { border: 1px dashed var(--line); background: var(--paper-2); }
+.tl-seg.prio-never-cut { background: var(--sapphire-900); } .tl-seg.prio-never-cut .tl-name { color: var(--paper); }
+.tl-name { position: absolute; left: 6px; top: 6px; font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 8px); color: var(--sapphire-900); }
+.tl-marks { position: relative; height: 10px; }
+.tl-mark { position: absolute; top: 0; width: 2px; height: 10px; background: var(--amber); }
+.tl-mark.close { background: var(--sapphire-900); }
+.tl-now { position: absolute; top: 0; width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 8px solid var(--sapphire-700); transform: translateX(-5px); }
+.runner-note { min-height: 20px; font-weight: var(--w-semibold); color: var(--sapphire-900); }
+.runner-foot { margin-top: var(--s-2); flex-wrap: wrap; }
+.run-body .call-body.embedded { border: 0; padding: 0; }
+.checklist-card { margin-top: var(--s-2); }
+.checklist-card.finished { background: var(--paper-2); }
+.checklist-card .callout { border-left: 3px solid var(--amber); padding-left: 8px; }
+.stress-scale { flex-wrap: wrap; gap: 4px; }
+.steps-list li { padding: 4px 0; } .steps-list li.done { color: var(--slate); }
+.steps-list .chip { margin-left: 8px; }
+.plan-list li { padding: 3px 0; }
+.plan-list li.prio-could { color: var(--slate); }
+.plan-list li.moved-in .plan-name { font-weight: var(--w-semibold); }
+.readiness li { padding: 3px 0; }
+table.program tr.urgent-row td { background: var(--paper-2); }
+.map-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--s-1) var(--s-3); }
+.blind-spot { margin: var(--s-2) 0; }
+.found-money { border-color: var(--gold); margin-top: var(--s-2); }
+.beforeafter .better { color: var(--sapphire-700); font-weight: var(--w-semibold); }
+@media (max-width: 720px) { .tl-name { display: none; } .tl-bar { height: 16px; } }

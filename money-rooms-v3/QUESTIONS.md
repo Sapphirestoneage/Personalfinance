@@ -101,3 +101,21 @@ Collected during the run; none blocked the build. Answer whenever.
 29. Both floors are met for the demo Maya at creation, so her timeline shows
     the celebration and the Full cushion is her first open cushion goal. For
     a client who has both floors the first session starts at step 3: fine?
+30. Sessions 2 to 12 block lists are the builder's proposal (MR-053); the
+    session 1 list is yours. Please mark what to cut, move or rename.
+31. Urgent sessions take no program number unless you say so; the switch is
+    there in the record but not yet on the screen. Should the runner ask?
+32. The found-money pick counts a subscription for a year but the fees and
+    the Venmo leak only for the window the export covers (one overdraft is not
+    a yearly habit until it repeats). Right rule?
+33. The CSV is read and then dropped; only what it taught us stays on the
+    record. Do you want the transactions kept for session 9 or a re-import?
+34. Rocket Money and Empower exports: I wrote the Rocket Money shape from
+    memory (Date, Name, Amount, Account Name, Category; spending positive).
+    Please check one real export against the mapper before a client uses it.
+35. Session 1 captures the baseline for the scorecard when discovery was not
+    saved in the app. For a client who started before Level 10, the "first
+    call" column is whatever the record held when session 1 started. OK?
+36. The lean month reads the FAT floor; the first accounts block names
+    buckets from the goal timeline. Should the hysa card also create the
+    bucket rows in Investments?

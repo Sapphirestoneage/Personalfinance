@@ -16,7 +16,7 @@ export function getAnchor(record, set, key) { const a = record.anchors && record
 export function setAnchor(record, set, key, value, meta) {
   const m = meta || {};
   if (m.source === 'estimated') return null;
-  const A = ensureAnchors(record);
+  const A = ensureAnchors(record); A[set] = A[set] || {}; /* Level 10 adds the blind set (MR-056) */
   if (A[set][key]) return null;
   const a = { cents: value && typeof value === 'object' && 'cents' in value ? value.cents : (typeof value === 'number' ? value : null), value: value && typeof value === 'object' && 'value' in value ? value.value : undefined, cadence: m.cadence || 'month', at: m.now || new Date().toISOString(), session: m.session || null, source: m.source || 'call', note: m.note || '', shared: !!m.shared, backfilled: !!m.backfilled };
   if (a.value === undefined) delete a.value;

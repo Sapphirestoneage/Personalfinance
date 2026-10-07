@@ -1,0 +1,225 @@
+{
+ "asOf": "2026-10-07",
+ "source": "The owner's account setup list (MR-054); copy is plain and names no provider; the coach adds a provider note per client",
+ "verify": false,
+ "statuses": [
+  [
+   "not-started",
+   "Not started"
+  ],
+  [
+   "opened",
+   "Opened"
+  ],
+  [
+   "linked",
+   "Linked"
+  ],
+  [
+   "done",
+   "Done"
+  ],
+  [
+   "not-for-me",
+   "Not for me"
+  ]
+ ],
+ "who": [
+  [
+   "call",
+   "On the call"
+  ],
+  [
+   "homework",
+   "Homework"
+  ],
+  [
+   "me",
+   "Me"
+  ]
+ ],
+ "homeworkMax": 3,
+ "items": [
+  {
+   "id": "rocket",
+   "name": "Tracking app linked",
+   "session": 1,
+   "order": 1,
+   "copy": "We are linking, not looking. You log into each bank yourself; I will look away and we stop sharing the screen while you do.",
+   "gentle": "Nothing linked gets reviewed on this call.",
+   "screenShare": true,
+   "statusWords": [
+    "not started",
+    "opened",
+    "linked",
+    "done",
+    "not for me"
+   ],
+   "who": "on the call",
+   "steps": [
+    "Make the account",
+    "Link checking, savings and every card",
+    "Stop sharing your screen while you log in"
+   ]
+  },
+  {
+   "id": "hysa",
+   "name": "High-yield savings with buckets",
+   "session": 1,
+   "order": 2,
+   "copy": "One savings account with a bucket for the cushion and one for each goal, named in your words.",
+   "who": "on the call",
+   "steps": [
+    "Open the account",
+    "Make the buckets",
+    "Name each one after a goal"
+   ],
+   "bucketsFromGoals": true
+  },
+  {
+   "id": "roth",
+   "name": "Roth IRA opened",
+   "session": 2,
+   "order": 3,
+   "copy": "Opening it today; how much goes in is a session 7 decision.",
+   "who": "on the call",
+   "info": "order",
+   "steps": [
+    "Open the account",
+    "Fund it later, your choice"
+   ]
+  },
+  {
+   "id": "k401",
+   "name": "401k portal",
+   "session": 2,
+   "order": 4,
+   "copy": "Log in, check the beneficiary, confirm the match.",
+   "who": "on the call",
+   "steps": [
+    "Log in",
+    "Name a beneficiary",
+    "Confirm the match"
+   ],
+   "with": "paystub"
+  },
+  {
+   "id": "card",
+   "name": "Credit card, only if it fits",
+   "session": 2,
+   "order": 5,
+   "copy": "A balance transfer when there is a balance at a high rate; a rewards card only when nothing is carried. Your choice.",
+   "who": "on the call",
+   "info": "order",
+   "afterBlock": "debts",
+   "variants": {
+    "balanceTransfer": "A balance at {apr} could move to a card with a promo rate.",
+    "rewards": "Nothing carried: a rewards card earns on what you already spend.",
+    "none": "A card does not fit today."
+   }
+  },
+  {
+   "id": "freeze",
+   "name": "Credit freeze",
+   "session": 2,
+   "order": 6,
+   "copy": "Freeze at all three bureaus after any card application. Free, ten minutes.",
+   "who": "homework",
+   "afterItem": "card",
+   "steps": [
+    "Equifax",
+    "Experian",
+    "TransUnion"
+   ]
+  },
+  {
+   "id": "checking2",
+   "name": "Second checking for bills",
+   "session": 2,
+   "order": 7,
+   "optional": true,
+   "trigger": "timingStruggle",
+   "copy": "One account for bills, one for everything else.",
+   "who": "homework"
+  },
+  {
+   "id": "hsa",
+   "name": "HSA",
+   "session": 2,
+   "order": 8,
+   "optional": true,
+   "trigger": "hsaEligible",
+   "copy": "The paystub shows an HSA-eligible plan.",
+   "who": "homework"
+  },
+  {
+   "id": "eap",
+   "name": "Employee assistance check",
+   "session": 2,
+   "order": 9,
+   "optional": true,
+   "trigger": "employerBenefits",
+   "copy": "Free sessions through work, if offered.",
+   "who": "homework"
+  },
+  {
+   "id": "password",
+   "name": "Password manager",
+   "session": 1,
+   "order": 10,
+   "optional": true,
+   "trigger": "always",
+   "copy": "One place for every login, optional.",
+   "who": "homework"
+  },
+  {
+   "id": "ippin",
+   "name": "IRS identity PIN",
+   "session": 2,
+   "order": 11,
+   "optional": true,
+   "trigger": "always",
+   "copy": "Stops someone filing in your name, optional.",
+   "who": "homework"
+  },
+  {
+   "id": "unclaimed",
+   "name": "Unclaimed property search",
+   "session": 2,
+   "order": 12,
+   "optional": true,
+   "trigger": "movedOrForgotten",
+   "copy": "Moved states or a forgotten account: a two-minute search.",
+   "who": "homework"
+  },
+  {
+   "id": "irs",
+   "name": "IRS online account",
+   "session": 2,
+   "order": 13,
+   "optional": true,
+   "trigger": "taxOrSelfEmployed",
+   "copy": "Balance, refund status and transcripts in one place.",
+   "who": "homework"
+  },
+  {
+   "id": "ssa",
+   "name": "my Social Security account",
+   "session": 7,
+   "order": 14,
+   "optional": true,
+   "trigger": "always",
+   "copy": "Your record and your estimate, from session 7 on.",
+   "who": "homework"
+  }
+ ],
+ "triggers": {
+  "always": "always offered",
+  "timingStruggle": "struggles with timing or structure (mindset)",
+  "hsaEligible": "HSA contributions on the paystub or an HSA-eligible plan",
+  "employerBenefits": "employed by a company or nonprofit",
+  "movedOrForgotten": "moved states or mentioned a forgotten account",
+  "taxOrSelfEmployed": "owes taxes, a refund issue, self-employed or side income"
+ },
+ "orderInfo": "The order of operations many coaches teach: the match first, then high-interest debt, then the cushion, then the Roth, then the rest of the 401k. Information, not advice; your choice."
+}

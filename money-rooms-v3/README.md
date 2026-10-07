@@ -39,13 +39,14 @@ repository root, `npx playwright install chromium`).
 | `engine/fiLadder.js`, `engine/graph.js`, `engine/sensitivity.js` | Level 9: the FI ladder (Lean, Barista, FI, Fat, Coast), the dependency graph from inputs to the FI date, and what moves the FI date (impact and ask priority) |
 | `engine/parse.js`, `engine/col.js`, `engine/guesses.js`, `engine/discovery.js` | Level 8: numbers the way people say them ("1900 every two weeks", "my half is 1,650"), the cost-of-living tier from the city (`data/col-tiers.json`), the guesses that fill empty areas, and the discovery call applied to a record |
 | `engine/anchors.js`, `engine/callpath.js`, `engine/variance.js`, `engine/targets.js`, `engine/progress.js` | Level 8: what they said and what they would want (write-once anchors), the six stops of the call, what you said against what it really is, the four target choices, and progress versus paperwork |
+| `engine/curriculum.js`, `engine/program.js`, `engine/transactions.js`, `engine/outcomes.js` | Level 10: the program (curricula as data, bending rules, urgent mode, the parking lot, the account checklist, readiness), transactions from a CSV, and the outcomes (stress, scorecard, blind guess test) |
 | `engine/goals.js`, `engine/ics.js` | Level 11: the goal timeline (every goal funded at once from the surplus, the cushion in three steps with the first two before anything else, three ways to split, rollover, shortfalls with the step named) and the calendar export |
 | `engine/leverage.js`, `engine/plates.js`, `engine/email.js` | What to ask next, the two plates, the follow-up, discovery and targets emails |
 | `engine/scenarios.js` | Scenario blocks: costs from answers, each alone and together, never writing to the record |
 | `engine/compute.js` | Runs the planets and returns one result for the views |
 | `ui/app.js` | The shell: routes, view toggle, autosave, undo, shortcuts |
 | `ui/tokens.css`, `ui/app.css`, `ui/print.css` | The design system and the one-pager print sheet |
-| `ui/views/` | One module per screen (home, ledger, measure, onepager, session, scenarios, learn, assumptions, levers, discovery, call, goals); views never do math |
+| `ui/views/` | One module per screen (home, ledger, measure, onepager, session, scenarios, learn, assumptions, levers, discovery, call, callpath, run, prep, program, transactions, goals); views never do math |
 | `ui/shelf.js`, `ui/metricdrawer.js`, `ui/levers-bridge.js`, `ui/levers-worker.js` | The headline metrics shelf, the one drawer every metric opens (math, inputs, levers, lens), and the memoised sensitivity runner (a module Worker when the browser has one) |
 | `ui/charts.js`, `ui/table.js`, `ui/orbit.js` | The D3 charts, the Ledger table, the orbit map |
 | `data/` | Libraries, each with asOf, source and a verify flag |
@@ -119,6 +120,20 @@ figure uses the client's share, and runway, the cushion target, Simulate
 ("Roommate moves out") and the worst case say what happens if it all falls
 on them. The Session page carries two meters (Picture completeness, Goal
 progress) and Progress vs paperwork.
+
+## Level 10: The program
+
+Program in the side nav shows one row per session, discovery first, with
+status, date, targets met, accounts opened, homework done and the stress
+score where it was asked; urgent sessions sit between the numbered ones.
+Prepare the next session shows her words, parked items, open loops, the
+account steps, what the session should leave known and the plan. Run session
+runs it one part at a time with the clock on top: the app moves parts to next
+time when the call runs long, protects the last ten minutes, offers one more
+when there is room, and switches to urgent mode from the first chip. Park it
+holds a thought for next time; Pause holds the clock. Transactions takes a
+CSV export, cleans it, reads it and writes the real numbers into the Ledger
+for the session 4 reveal.
 
 ## Level 11: Goal timeline
 

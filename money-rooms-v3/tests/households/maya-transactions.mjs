@@ -1,0 +1,27 @@
+/* Maya's synthetic 60-day transaction export (Level 10, MR-055), written by hand, never from the engine: rent split with a roommate by Venmo, weeknight delivery, an annual subscription, two forgotten monthly subscriptions, an overdraft fee, a buy now pay later purchase, and a card payment that must not double count. Rocket Money shape: Date, Name, Amount (spending positive), Account Name, Category. */
+export const ROWS = [
+  ['2026-08-14', 'ACME CORP PAYROLL', -1900.00, 'Checking', 'Paycheck'], ['2026-08-28', 'ACME CORP PAYROLL', -1900.00, 'Checking', 'Paycheck'], ['2026-09-11', 'ACME CORP PAYROLL', -1900.00, 'Checking', 'Paycheck'], ['2026-09-25', 'ACME CORP PAYROLL', -1900.00, 'Checking', 'Paycheck'],
+  ['2026-09-01', 'HUDSON REALTY RENT', 3300.00, 'Checking', 'Rent'], ['2026-10-01', 'HUDSON REALTY RENT', 3300.00, 'Checking', 'Rent'],
+  ['2026-09-02', 'VENMO FROM DANI', -1650.00, 'Checking', 'Transfer'], ['2026-10-02', 'VENMO FROM DANI', -1650.00, 'Checking', 'Transfer'],
+  ['2026-08-20', 'PSE&G ELECTRIC', 92.40, 'Checking', 'Utilities'], ['2026-09-20', 'PSE&G ELECTRIC', 98.10, 'Checking', 'Utilities'],
+  ['2026-08-11', 'VERIZON WIRELESS', 0.00, 'Checking', 'Phone'],
+  ['2026-08-15', 'NETFLIX.COM', 15.49, 'Sapphire', 'Subscriptions'], ['2026-09-15', 'NETFLIX.COM', 15.49, 'Sapphire', 'Subscriptions'],
+  ['2026-08-18', 'SPOTIFY USA', 11.99, 'Sapphire', 'Subscriptions'], ['2026-09-18', 'SPOTIFY USA', 11.99, 'Sapphire', 'Subscriptions'],
+  ['2026-08-22', 'HULU', 17.99, 'Sapphire', 'Subscriptions'], ['2026-09-22', 'HULU', 17.99, 'Sapphire', 'Subscriptions'],
+  ['2026-09-05', 'ADOBE ANNUAL PLAN', 299.88, 'Sapphire', 'Subscriptions'],
+  ['2026-08-12', 'TRADER JOES 552', 84.20, 'Sapphire', 'Groceries'], ['2026-08-19', 'TRADER JOES 552', 91.05, 'Sapphire', 'Groceries'], ['2026-08-26', 'TRADER JOES 552', 77.80, 'Sapphire', 'Groceries'], ['2026-09-02', 'TRADER JOES 552', 88.15, 'Sapphire', 'Groceries'], ['2026-09-09', 'TRADER JOES 552', 95.60, 'Sapphire', 'Groceries'], ['2026-09-16', 'TRADER JOES 552', 82.30, 'Sapphire', 'Groceries'], ['2026-09-23', 'TRADER JOES 552', 90.00, 'Sapphire', 'Groceries'], ['2026-09-30', 'TRADER JOES 552', 86.45, 'Sapphire', 'Groceries'],
+  ['2026-08-11', 'DOORDASH*THAI PLACE', 34.50, 'Sapphire', 'Delivery'], ['2026-08-13', 'DOORDASH*SUSHI', 41.20, 'Sapphire', 'Delivery'], ['2026-08-18', 'DOORDASH*THAI PLACE', 36.10, 'Sapphire', 'Delivery'], ['2026-08-25', 'DOORDASH*PIZZA', 29.90, 'Sapphire', 'Delivery'], ['2026-08-27', 'DOORDASH*THAI PLACE', 35.00, 'Sapphire', 'Delivery'], ['2026-09-01', 'DOORDASH*BURGERS', 31.75, 'Sapphire', 'Delivery'], ['2026-09-08', 'DOORDASH*THAI PLACE', 37.20, 'Sapphire', 'Delivery'], ['2026-09-10', 'DOORDASH*SUSHI', 44.60, 'Sapphire', 'Delivery'], ['2026-09-15', 'DOORDASH*PIZZA', 30.40, 'Sapphire', 'Delivery'], ['2026-09-22', 'DOORDASH*THAI PLACE', 38.00, 'Sapphire', 'Delivery'], ['2026-09-29', 'DOORDASH*BURGERS', 33.10, 'Sapphire', 'Delivery'],
+  ['2026-08-16', 'NJ TRANSIT', 126.00, 'Checking', 'Transit'], ['2026-09-16', 'NJ TRANSIT', 126.00, 'Checking', 'Transit'],
+  ['2026-08-23', 'UBER TRIP', 18.40, 'Sapphire', 'Transit'], ['2026-09-06', 'UBER TRIP', 22.10, 'Sapphire', 'Transit'],
+  ['2026-08-29', 'CVS PHARMACY', 24.99, 'Sapphire', 'Health'], ['2026-09-19', 'BETTERHELP', 260.00, 'Sapphire', 'Health'],
+  ['2026-08-30', 'TARGET 1234', 64.30, 'Sapphire', 'Shopping'], ['2026-09-13', 'SEPHORA', 58.00, 'Sapphire', 'Shopping'], ['2026-09-27', 'ZARA', 89.00, 'Sapphire', 'Shopping'],
+  ['2026-09-04', 'AFTERPAY US INC', 62.50, 'Sapphire', 'Shopping'], ['2026-09-18', 'AFTERPAY US INC', 62.50, 'Sapphire', 'Shopping'],
+  ['2026-09-03', 'OVERDRAFT FEE', 35.00, 'Checking', 'Fees'],
+  ['2026-09-12', 'CHASE CREDIT CRD AUTOPAY PAYMENT THANK YOU', 450.00, 'Checking', 'Credit Card Payment'],
+  ['2026-09-12', 'PAYMENT THANK YOU', -450.00, 'Sapphire', 'Credit Card Payment'],
+  ['2026-09-26', 'ONLINE TRANSFER TO SAVINGS', 200.00, 'Checking', 'Transfer'], ['2026-09-26', 'ONLINE TRANSFER FROM CHECKING', -200.00, 'Savings', 'Transfer'],
+  ['2026-09-14', 'TARGET 1234', -20.00, 'Sapphire', 'Shopping'],
+  ['2026-08-24', 'VENMO TO SAM', 60.00, 'Checking', 'Transfer'],
+  ['2026-09-20', 'DELTA AIR LINES', 318.00, 'Sapphire', 'Travel'],
+];
+export const CSV = ['Date,Name,Amount,Account Name,Category'].concat(ROWS.map(r => [r[0], '"' + r[1] + '"', r[2].toFixed(2), r[3], r[4]].join(','))).join('\n');

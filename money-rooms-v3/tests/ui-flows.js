@@ -1,8 +1,113 @@
 /* Scripted journeys. Each flow gets a fresh page and asserts behaviour with check(). */
 import fs from 'node:fs';
 import path from 'node:path';
+import { CSV as MAYA_CSV } from './households/maya-transactions.mjs';
 
 export const flows = [
+{
+  name: 'level10-maya-program',
+  async run(page, { base, check, APP }) {
+    await page.goto(base + 'index.html#/home');
+    await page.waitForSelector('#main h1, #main .empty');
+    await importFixture(page, APP, 'maya-discovery');
+    /* the program view and the prep screen */
+    await page.goto(base + 'index.html#/program');
+    await page.waitForSelector('table.program');
+    check('the program view lists discovery and twelve sessions', (await page.$$('table.program tbody tr')).length === 13);
+    check('the clients table on Home will say Session 1 of 12', (await page.textContent('header .sub')).indexOf('session 1 of 12') !== -1);
+    await page.goto(base + 'index.html#/prep');
+    await page.waitForSelector('.plan-list');
+    const prep = await page.textContent('#main');
+    check('the prep screen carries her words, the accounts and the plan', prep.indexOf('Her words') !== -1 && prep.indexOf('Tracking app linked') !== -1 && prep.indexOf('Gut lap') !== -1 && prep.indexOf('What this session leaves known') !== -1);
+    check('no internal words on the prep screen', !/\bblock\b|curricul|priorit|\bmust\b|\bshould\b|\bcould\b|knowledge target/i.test(prep), (prep.match(/.{0,20}(block|curricul|priorit|\bmust\b|\bshould\b|\bcould\b|knowledge target).{0,20}/i) || [])[0]);
+    /* session 1 */
+    await page.click('a:has-text("Start session 1")');
+    await page.waitForSelector('.runner-tl .tl-seg');
+    check('the timeline has one segment per part and the first is lit', (await page.$$('.tl-seg')).length >= 12 && (await page.$$('.tl-seg.current')).length === 1);
+    check('the urgent check offers chips', (await page.$$('.run-body .chipbar .chip')).length === 6);
+    await page.click('.runner-foot button:has-text("All clear")');
+    await page.waitForSelector('.run-body h2:has-text("Close open loops")');
+    await page.click('.runner-foot button:has-text("Next")');
+    await page.waitForSelector('.run-body h2:has-text("plan")');
+    await page.click('.runner-foot button:has-text("Let\'s go")');
+    await page.waitForSelector('.run-body h2:has-text("Confirm")');
+    check('Confirm renders the Level 8 stop inside its part', (await page.$$('.run-body .confirm-list')).length >= 1);
+    await page.click('.runner-foot button:has-text("Done with this part")');
+    await page.waitForSelector('.run-body h2:has-text("Housing and roommate")');
+    await page.click('.runner-foot button:has-text("Next")');
+    await page.waitForSelector('.run-body h2:has-text("Gut lap")');
+    check('the gut lap asks one question at a time', (await page.$$('.run-body .answer input')).length >= 1);
+    await page.click('.runner-foot button:has-text("Done with this part")');
+    await page.waitForSelector('.run-body h2:has-text("Debt check")');
+    await page.click('.runner-foot button:has-text("Next")');
+    await page.waitForSelector('.run-body h2:has-text("First accounts")');
+    check('first accounts shows the tracking app and the savings with buckets in her words', (await page.$$('.checklist-card')).length >= 2 && (await page.textContent('.run-body')).indexOf('We are linking, not looking') !== -1 && (await page.textContent('.run-body')).indexOf('Buckets, in your words') !== -1);
+    await page.click('.checklist-card[data-item="rocket"] button:has-text("Linked")');
+    await page.waitForSelector('.checklist-card[data-item="rocket"] button[aria-pressed="true"]:has-text("Linked")');
+    await page.click('.checklist-card[data-item="hysa"] button:has-text("Opened")');
+    await page.waitForSelector('.checklist-card[data-item="hysa"] button[aria-pressed="true"]:has-text("Opened")');
+    /* behind at minute 35: the rehearsal clock jumps and the app moves First picture */
+    for (let k = 0; k < 8; k++) await page.click('button[aria-label="Rehearsal: five minutes on"]');
+    await page.waitForFunction(() => (document.querySelector('.runner-note') || {}).textContent.indexOf('moved to next time') !== -1);
+    check('behind at minute 35, the app moves the should part and says so', (await page.textContent('.runner-note')).indexOf('First picture moved to next time') !== -1);
+    check('the clock reads the rehearsal minute', /Minute 4\d/.test(await page.textContent('.tl-clock')));
+    await page.click('.runner-foot button:has-text("Next")');
+    await page.waitForSelector('.run-body h2:has-text("Three steps")');
+    const steps = await page.textContent('.run-body');
+    check('three steps shows what she did today as done and at most three open items', steps.indexOf('Today you linked your accounts, opened high-yield savings with buckets') !== -1 && (await page.$$('.steps-list li:not(.done)')).length <= 3);
+    await page.click('.runner-foot button:has-text("On to booking")');
+    await page.waitForSelector('.readiness-line');
+    check('the close shows the readiness line', /Session 1 targets: \d of 7 met/.test(await page.textContent('.readiness-line')));
+    await page.fill('input[aria-label="Next session date"]', '2026-10-21');
+    await page.click('.runner-foot button:has-text("Close the session")');
+    await page.waitForSelector('.next-card');
+    check('closing the session lands on the Session page', true);
+    await page.goto(base + 'index.html#/program');
+    await page.waitForSelector('table.program');
+    const row1 = await page.textContent('table.program tr[data-session="1"]');
+    check('the program view marks session 1 done with its date and targets', row1.indexOf('Done') !== -1 && /\d of 7/.test(row1));
+    check('the next date shows', (await page.textContent('header .sub')).indexOf('21 Oct 2026') !== -1);
+    /* urgent mode in session 2 */
+    await page.goto(base + 'index.html#/call/2');
+    await page.waitForSelector('.run-body .chipbar .chip');
+    await page.click('.run-body .chipbar .chip:has-text("An overdraft")');
+    await page.waitForFunction(() => document.querySelectorAll('.tl-seg').length === 4);
+    check('urgent mode keeps four parts and says what today is about', (await page.textContent('.runner-note')).indexOf('Today is about an overdraft') !== -1 && (await page.textContent('.run-body h2')).indexOf('The urgent thing') !== -1);
+    await page.goto(base + 'index.html#/program');
+    await page.waitForSelector('table.program');
+    check('the urgent session shows between sessions without taking a number', (await page.$$('table.program tr.urgent-row')).length === 1 && (await page.$$('table.program tbody tr')).length === 14);
+    /* session 2 checklist: the urgent session moved every session 2 part to session 3, so that is where the accounts are now */
+    await page.goto(base + 'index.html#/call/3');
+    await page.waitForSelector('.tl-seg');
+    await page.click('.tl-seg[title^="The rest of the accounts"]');
+    await page.waitForSelector('.checklist-card[data-item="roth"]');
+    const c2 = await page.$$eval('.checklist-card', els => els.map(e => e.dataset.item));
+    check('the rest of the accounts come in order, with the rolled savings and the triggered search, in the session they moved to', c2.indexOf('roth') < c2.indexOf('k401') && c2.indexOf('k401') < c2.indexOf('card') && c2.indexOf('card') < c2.indexOf('freeze') && c2.includes('hysa') && c2.includes('unclaimed'));
+    check('the card copy is plain and the order of operations reads as information', (await page.textContent('.checklist-card[data-item="card"]')).indexOf('your choice') !== -1);
+    /* session 4: the transactions and the reveal */
+    await page.goto(base + 'index.html#/transactions');
+    await page.waitForSelector('textarea[aria-label="Or paste the CSV"]');
+    await page.fill('input[aria-label="Institution or app"]', 'Rocket Money');
+    await page.fill('textarea[aria-label="Or paste the CSV"]', MAYA_CSV);
+    await page.click('button:has-text("Use the pasted text")');
+    await page.waitForSelector('button:has-text("Read the transactions")');
+    check('the mapper recognises the export', (await page.textContent('#main')).indexOf('a Rocket Money export') !== -1);
+    await page.click('button:has-text("Read the transactions")');
+    await page.waitForSelector('.reveal');
+    const tx = await page.textContent('#main');
+    check('card payments and transfers are taken out and the roommate Venmo is set aside for the coach', tx.indexOf('card payment') !== -1 && tx.indexOf('VENMO FROM DANI') !== -1 && tx.indexOf('transfer between your accounts') !== -1);
+    check('subscriptions and the fee show', tx.indexOf('ADOBE ANNUAL PLAN') !== -1 && tx.indexOf('OVERDRAFT FEE') !== -1 && tx.indexOf('Buy now, pay later') !== -1);
+    check('the reveal gives the blind spot and one found-money win', /\d+% of what goes out was not in your picture/.test(tx) && tx.indexOf('Found money') !== -1 && tx.indexOf('Cancel ADOBE ANNUAL PLAN') !== -1);
+    await page.click('button:has-text("Write these into the Ledger")');
+    await page.waitForSelector('.toast');
+    await page.goto(base + 'index.html#/program');
+    await page.waitForSelector('table.program');
+    check('the program view now shows session 4 targets moving', /\d of 3/.test(await page.textContent('table.program tr[data-session="4"]')));
+    await page.goto(base + 'index.html#/ledger/spending/line');
+    await page.waitForSelector('table.ledger-table');
+    check('the Ledger carries verified lines from the transactions', (await page.textContent('#main')).indexOf('Everything else') !== -1);
+  },
+},
 {
   name: 'level11-maya-goal-timeline',
   async run(page, { base, check, APP }) {
@@ -126,7 +231,7 @@ export const flows = [
     await page.goto(base + 'index.html#/ledger/spending/line');
     await page.waitForSelector('tr.guess-row');
     check('guess rows are marked in the ledger with the tier', (await page.$$('tr.guess-row')).length === 12 && (await page.textContent('tr.guess-row .guess-chip')).indexOf('Guess, HCOL') !== -1);
-    await page.goto(base + 'index.html#/call');
+    await page.goto(base + 'index.html#/callpath');
     await page.waitForSelector('.callpath .stop');
     check('the call path has six stops and opens on Confirm', (await page.$$('.callpath .stop')).length === 6 && (await page.textContent('.callpath .stop.current')).indexOf('Confirm') !== -1);
     const confirmText = await page.textContent('.call-body');

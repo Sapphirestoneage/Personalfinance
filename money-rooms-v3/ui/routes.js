@@ -11,6 +11,10 @@ import * as Levers from './views/levers.js';
 import * as Discovery from './views/discovery.js';
 import * as Call from './views/call.js';
 import * as Goals from './views/goals.js';
+import * as Run from './views/run.js';
+import * as Program from './views/program.js';
+import * as Prep from './views/prep.js';
+import * as Transactions from './views/transactions.js';
 import { PLANETS, PLANET_LABELS, PLANET_SHORT } from '../engine/sun.js';
 import { translator } from './glossary.js';
 
@@ -26,7 +30,11 @@ export const routes = {
   levers: { title: 'Levers', mount: Levers.mount, needsClient: true },
   goals: { title: 'Goals', mount: Goals.mount, needsClient: true },
   discovery: { title: 'Discovery call', mount: Discovery.mount, needsClient: false, coachOnly: true },
-  call: { title: 'Call', mount: Call.mount, needsClient: true, coachOnly: true },
+  call: { title: 'Session', mount: Run.mount, needsClient: true, coachOnly: true },
+  callpath: { title: 'Call path', mount: Call.mount, needsClient: true, coachOnly: true },
+  program: { title: 'Program', mount: Program.mount, needsClient: true, coachOnly: true },
+  prep: { title: 'Prepare', mount: Prep.mount, needsClient: true, coachOnly: true },
+  transactions: { title: 'Transactions', mount: Transactions.mount, needsClient: true, coachOnly: true },
 };
 
 export function navItems(app) {
@@ -41,7 +49,9 @@ export function navItems(app) {
   items.push({ group: 'Read', label: app.view === 'client' ? 'What matters most' : 'Levers', href: '#/levers', active: r => r.name === 'levers', key: null });
   items.push({ group: 'Read', label: app.view === 'client' ? 'Your goals' : 'Goals', href: '#/goals', active: r => r.name === 'goals', key: null });
   items.push({ group: 'Read', label: 'Session', href: '#/session', active: r => r.name === 'session', key: null, coachOnly: true });
-  items.push({ group: 'Read', label: 'Call', href: '#/call', active: r => r.name === 'call', key: null, coachOnly: true });
+  items.push({ group: 'Read', label: 'Program', href: '#/program', active: r => r.name === 'program' || r.name === 'prep', key: null, coachOnly: true });
+  items.push({ group: 'Read', label: 'Run session', href: '#/call', active: r => r.name === 'call' || r.name === 'callpath', key: null, coachOnly: true });
+  items.push({ group: 'Read', label: 'Transactions', href: '#/transactions', active: r => r.name === 'transactions', key: null, coachOnly: true });
   items.push({ group: 'Read', label: 'Discovery', href: '#/discovery', active: r => r.name === 'discovery', key: null, coachOnly: true });
   items.push({ group: 'Read', label: app.view === 'client' ? 'What if' : 'Simulate', href: '#/scenarios', active: r => r.name === 'scenarios', key: null });
   items.push({ group: 'Read', label: 'Learn', href: '#/learn', active: r => r.name === 'learn', key: null });

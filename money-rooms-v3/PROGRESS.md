@@ -3,6 +3,14 @@
 Updated: 2026-10-07
 
 ## Done
+- Level 10 The Program: curricula as data (discovery and twelve sessions of blocks with priorities and
+  time ranges), engine/curriculum.js (plan, bend at 35 and 48, offer one more when ahead, go deeper,
+  urgent mode, three steps), engine/program.js (state, moves, parking lot, checklist with triggers and
+  the session split, stress, readiness against data/knowledge-targets.json, the program rows),
+  engine/transactions.js (CSV, mapper, clean, categorize, detect, patterns, actuals, blind spot,
+  found money, apply), engine/outcomes.js (scorecard, blind guess test, before and after, testimonial),
+  the session runner at #/call, #/prep, #/program, #/transactions, the stress question on the discovery
+  form, Session N of 12 on Home, 25 engine tests with a hand-written 60-day CSV, a browser flow.
 - Level 11 Goal Timeline: engine/goals.js (goals derived from the record and the result, the cushion in
   three steps on one pot with the first two as floors in every mode, a celebration for a step already covered, three modes, rollover, debt goals through debtsim, shortfalls with
   the floor named, earliest dates, the comparison), engine/ics.js, the #/goals screen with the timeline,
@@ -55,8 +63,7 @@ Updated: 2026-10-07
 - Design critique round 1 found 17 fixes; all applied; round 2 in screenshots/level-0/critique.md.
 
 ## Next
-- Level 10 (savings buckets, curricula) is missing; the goal timeline is ready to link buckets and the
-  session 5 curriculum when it arrives.
+- Savings bucket rows in Investments from the first accounts block (QUESTIONS 36).
 - A design critique round for #/goals.
 - A design critique round for #/levers and the shelf (every other screen before Level 8 has one).
 - A design critique round for #/discovery, the summary and #/call.

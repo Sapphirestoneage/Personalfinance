@@ -16,6 +16,8 @@ import { variance, AREA_LABELS } from '../../engine/variance.js';
 import { proposals } from '../../engine/targets.js';
 import { actualsOf } from './call.js';
 import { nextWins } from './goals.js';
+import { programOf } from '../../engine/program.js';
+import { beforeAfter } from '../../engine/outcomes.js';
 
 
 export function mount(host, app) {
@@ -48,6 +50,8 @@ export function mount(host, app) {
     /* Level 11: the next wins, the starter cushion first until it is full */
     const wins = nextWins(clientApp, 3);
     if (wins.length) page.appendChild(h('section', { class: 'op-wins' }, h('h3', null, 'Your next wins'), h('ul', null, wins.map(w => h('li', null, w.text)))));
+    /* Level 10 (MR-056): at graduation the one-pager carries before and after */
+    const PG = programOf(rec); if (PG.sessions['12'] && PG.sessions['12'].status === 'closed') { const rows = beforeAfter(rec, R, { money: c => F.dollarsWhole(c), date: d => F.date(d) }); page.appendChild(h('section', { class: 'op-beforeafter' }, h('h3', null, 'Before and after'), h('table', { class: 'data' }, h('tbody', null, rows.map(r => h('tr', null, h('td', null, r.label), h('td', { class: 'num' }, r.beforeText), h('td', { class: 'num' }, r.nowText))))))); }
     const grid = h('div', { class: 'op-grid' });
     grid.appendChild(listSection('Most important to know', op.important || suggestImportant(R), 'important', 3, suggestImportant(R)));
     grid.appendChild(listSection('What is working', op.amazing || [], 'amazing', 3));

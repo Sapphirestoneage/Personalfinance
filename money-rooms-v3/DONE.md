@@ -25,3 +25,8 @@ form, the summary and the call path is owed (PROGRESS.md).
 Level 11 met every line above except the screenshot folder and the critique:
 the sweep ran at 1440, 1024 and 390 in both views for #/goals and every
 household (tests/ui.js); a critique round is owed (PROGRESS.md).
+
+Level 10 met every line above except the screenshot folder and the critique:
+the sweep ran at 1440, 1024 and 390 in both views for #/program, #/prep,
+#/transactions and the session runner for every household (tests/ui.js); a
+critique round is owed (PROGRESS.md).

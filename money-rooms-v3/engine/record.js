@@ -34,6 +34,7 @@ export function createRecord(opts) {
     anchors: { gut: {}, dream: {}, history: [] },
     household: { roommates: [], lease: 'none', unitSize: null, partner: null, basis: 'together' },
     goals: defaultGoals(),
+    program: null,
     colTier: null,
     sessionMode: 'standard',
     discovery: null,

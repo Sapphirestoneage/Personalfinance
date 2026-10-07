@@ -176,5 +176,5 @@ would want, write-once, under `record.anchors`), `engine/variance.js`,
 `firstDraft`. Level 11 adds `engine/goals.js` (reads the finished result:
 the surplus metric, the Safety Net's Rule of 5 target, the debts, the Life
 plan goals and the FI ladder; writes nothing) and returns `goalPlan`, which
-the sensitivity reruns skip (`opts.light`). It returns one frozen result object; views read from it and
+the sensitivity reruns skip (`opts.light`). Level 10 adds `engine/curriculum.js`, `engine/program.js`, `engine/transactions.js` and `engine/outcomes.js`, which read the result and the record and write only through the record API (`record.program`, journal kind `program`; spending lines as verified actuals). It returns one frozen result object; views read from it and
 never do math.

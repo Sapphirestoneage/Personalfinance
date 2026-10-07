@@ -15,7 +15,7 @@ import { PLANET_SHORT } from '../../engine/sun.js';
 const AREAS = [['accommodation', 'Home (rent or mortgage)'], ['utilities', 'Phone, internet, subscriptions'], ['food', 'Food'], ['transportation', 'Getting around'], ['therapy', 'Health and therapy'], ['wants', 'Fun and wants'], ['irregular', 'Once-a-year things']];
 const WORK = [['employed', 'Employed'], ['self-employed', 'Self-employed'], ['between-jobs', 'Between jobs'], ['student', 'Student'], ['retired', 'Retired'], ['mixed', 'A mix']];
 
-function blankForm() { return { snapshot: { name: '', birth: '', city: '', workSituation: 'employed', employerType: 'company', employer: '', roommates: 0, roommateNames: [], lease: 'none', partner: false, partnerName: '' }, whyNow: '', money: { gross: '', takeHome: '', partnerTakeHome: '', contribPct: '', matchKnown: false, match: '', cash: [], invest: [], debt: [] }, spending: { gutTotal: '', areas: {}, phoneFamilyPlan: false }, goals: [], mindset: { stuck: [], avoidsAccounts: false, struggles: [] }, words: [], tierOverride: null }; }
+function blankForm() { return { snapshot: { name: '', birth: '', city: '', workSituation: 'employed', employerType: 'company', employer: '', roommates: 0, roommateNames: [], lease: 'none', partner: false, partnerName: '' }, whyNow: '', money: { gross: '', takeHome: '', partnerTakeHome: '', contribPct: '', matchKnown: false, match: '', cash: [], invest: [], debt: [] }, spending: { gutTotal: '', areas: {}, phoneFamilyPlan: false }, goals: [], mindset: { stuck: [], avoidsAccounts: false, struggles: [], stress: null }, words: [], tierOverride: null }; }
 
 export function mount(host, app) {
   const D = app.data.discovery; const tiers = app.data.colTiers;
@@ -64,7 +64,8 @@ export function mount(host, app) {
     sec(D.sections.mindset, h('div', null,
       row(D.questions.stuck, chipset(D.stuck, form.mindset.stuck)),
       row(D.questions.avoids, h('div', { class: 'view-toggle', role: 'group', 'aria-label': 'Avoids accounts' }, [[true, 'Yes'], [false, 'No']].map(([v, l]) => h('button', { 'aria-pressed': String(form.mindset.avoidsAccounts === v), onClick: () => { form.mindset.avoidsAccounts = v; draw(); } }, l)))),
-      row(D.questions.struggle, chipset(D.struggles, form.mindset.struggles))));
+      row(D.questions.struggle, chipset(D.struggles, form.mindset.struggles)),
+      row('On a scale of one to ten, how stressed do you feel about money right now?', h('div', { class: 'row taps stress-scale', role: 'group', 'aria-label': 'Money stress, one to ten' }, Array.from({ length: 10 }, (_, k) => h('button', { class: 'btn small' + (form.mindset.stress === k + 1 ? ' primary' : ''), 'aria-pressed': String(form.mindset.stress === k + 1), onClick: () => { form.mindset.stress = k + 1; draw(); } }, String(k + 1)))))));
     sec(D.sections.words, h('div', null, h('p', { class: 'small muted' }, 'Verbatim, one line each. Saved as-is.'), form.words.map((w, i) => h('div', { class: 'row', style: { marginBottom: '4px' } }, h('input', { class: 'input wide', 'aria-label': 'Their words', value: w, onChange: e => { form.words[i] = e.target.value; } }), h('button', { class: 'btn small quiet', onClick: () => { form.words.splice(i, 1); draw(); } }, 'Remove'))), h('button', { class: 'btn small', onClick: () => { form.words.push(''); draw(); } }, 'Add a quote')));
   }
   function row(q, control) { return h('div', { class: 'disc-q' }, h('p', { class: 'readaloud' }, q), control); }
