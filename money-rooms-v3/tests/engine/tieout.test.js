@@ -110,6 +110,13 @@ for (const name of ['jordan', 'dev', 'maya']) {
     close(M.coastFi.coastPct, E.coastPct, 1e-6, 'coast %');
     assert.deepEqual([v('fiLevels').value.lean, v('fiLevels').value.fat, v('fiLevels').value.barista], [E.leanFi, E.fatFi, E.baristaFi]);
     assert.equal(v('feeDragLifetime').cents, E.feeDragLifetime);
+    /* Level 9 (MR-040): the ladder rungs, the rule of thumb and the ratios */
+    Object.keys(E.ladder).forEach(id => assert.equal(v(id).cents, E.ladder[id], id));
+    assert.equal(v('baristaRule').cents, E.baristaRule);
+    assert.equal(v('baristaIncomeNeededToday').cents, E.baristaIncomeNeededToday);
+    close(v('yearsOfExpenses').value, E.yearsOfExpenses, 1e-9, 'years of expenses');
+    close(v('daysOfFreedom').value, E.daysOfFreedom, 1e-9, 'days of freedom');
+    close(v('fiRatio').value, E.fiRatio, 1e-6, 'FI ratio');
     assert.equal(R.projection.ssMonthly, E.socialSecurityMonthly);
     ['likely', 'best', 'worst'].forEach(k => {
       assert.equal(R.projection[k].fiAge, E.projection[k].fiAge, k + ' FI age');
@@ -120,6 +127,11 @@ for (const name of ['jordan', 'dev', 'maya']) {
     assert.equal(M.fiDate.status, E.projection.likely.fiAge === null ? 'needs' : 'ok');
   });
   test(name + ': the lenses that fire match the workpaper', () => {
-    assert.deepEqual(R.lenses.map(l => l.id).sort(), E.lensesFiring);
+    const level9 = new Set(data.lenses.lenses.filter(l => l.level === 9).map(l => l.id));
+    assert.deepEqual(R.lenses.map(l => l.id).filter(id => !level9.has(id)).sort(), E.lensesFiring);
+    /* the Level 9 lenses the workpaper can state simply */
+    const fired = R.lenses.map(l => l.id);
+    (E.lensesFiringLevel9 || []).forEach(id => assert.ok(fired.includes(id), id + ' should fire'));
+    (E.lensesSilentLevel9 || []).forEach(id => assert.ok(!fired.includes(id), id + ' should not fire'));
   });
 }

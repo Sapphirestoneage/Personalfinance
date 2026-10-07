@@ -11,6 +11,8 @@ import { PLANET_LABELS, PLANET_SHORT } from '../../engine/sun.js';
 import { clientName } from '../app.js';
 import { append } from '../../engine/journal.js';
 import { STATES, SOURCES } from '../../engine/states.js';
+import { renderShelf } from '../shelf.js';
+import { getSensitivity } from '../levers-bridge.js';
 
 export function mount(host, app) {
   const noteInput = h('input', { class: 'input session-note', type: 'text', 'aria-label': 'Session note' });
@@ -22,10 +24,13 @@ export function mount(host, app) {
   const left = h('div', { class: 'stack' }); const right = h('div', { class: 'stack' });
   grid.appendChild(left); grid.appendChild(right);
   host.appendChild(grid);
-  let tab = 'all';
+  const shelf = h('section', { class: 'panel shelf-panel' }); host.insertBefore(shelf, grid);
+  let tab = 'all'; let sens = null;
   function draw() {
     clear(left); clear(right);
-    const s = leverage({ record: app.record, fields: app.data.fields, weights: app.data.weights });
+    renderShelf(shelf, app, { compact: true, ladder: false });
+    getSensitivity(app, r => { if (r !== sens) { sens = r; setTimeout(draw, 0); } }); /* redraw on the next tick, never inside this draw */
+    const s = leverage({ record: app.record, fields: app.data.fields, weights: app.data.weights, sensitivity: sens });
     left.appendChild(nextCard(app, s));
     left.appendChild(plates(app, s, tab, t => { tab = t; draw(); }));
     right.appendChild(sinceLast(app));
@@ -64,8 +69,9 @@ function nextCard(app, s) {
   panel.appendChild(h('h2', null, 'Next question'));
   if (!s.next.length) { panel.appendChild(h('p', { class: 'muted' }, 'Nothing unsure is left above the materiality line. Open Small wins or the Ledger to add facts.')); return panel; }
   const [big, ...rest] = s.next;
-  const stake = i => i.moneyFact && i.dollarsAnnual ? h('span', { class: 'small muted' }, F.dollarsWhole(Math.abs(i.dollarsAnnual), { rough: true }) + ' a year at stake') : null;
-  panel.appendChild(h('div', { class: 'ask big' }, h('div', { class: 'ask-text' }, big.question), h('div', { class: 'ask-meta' }, h('span', { class: 'chip src' }, PLANET_SHORT[big.planet] || 'Household'), stateChipOf(big), stake(big), askLink(app, big, 'Ask it', true))));
+  const stake = i => i.monthsAtStake !== null && i.monthsAtStake !== undefined ? h('span', { class: 'small muted', title: i.why }, 'about ' + monthsWord(i.monthsAtStake) + ' of FI date at stake') : (i.moneyFact && i.dollarsAnnual ? h('span', { class: 'small muted', title: i.why }, F.dollarsWhole(Math.abs(i.dollarsAnnual), { rough: true }) + ' a year at stake') : null);
+  panel.appendChild(h('p', { class: 'small muted' }, s.rankedBy === 'ask' ? 'Ranked by ask priority: the months of FI date each unsure figure could move (Level 9).' : 'Ranked by leverage: weight x (1 - confidence) x dollars a year. A FI date switches this to months of FI date at stake.'));
+  panel.appendChild(h('div', { class: 'ask big' }, h('div', { class: 'ask-text' }, big.question), h('div', { class: 'ask-meta' }, h('span', { class: 'chip src' }, PLANET_SHORT[big.planet] || 'Household'), stateChipOf(big), stake(big), askLink(app, big, 'Ask it', true)), h('div', { class: 'small muted why' }, big.why || '')));
   rest.forEach(i => panel.appendChild(h('div', { class: 'ask' }, h('div', { class: 'ask-text' }, i.question), h('div', { class: 'ask-meta' }, h('span', { class: 'chip src' }, PLANET_SHORT[i.planet] || 'Household'), stake(i), askLink(app, i, 'Go to row')))));
   return panel;
 }
@@ -125,3 +131,5 @@ export function snapshot(app, note) {
   }, 'sessions');
   app.toast('Session ' + n + ' closed. The one-pager now compares against it.');
 }
+
+function monthsWord(m) { const a = Math.abs(m); return a >= 12 ? (Math.round(a / 12 * 10) / 10) + ' years' : (Math.round(a * 10) / 10) + (a === 1 ? ' month' : ' months'); }

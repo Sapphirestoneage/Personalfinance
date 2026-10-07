@@ -146,11 +146,19 @@ Publishes:
 | `events` | list | scenario blocks promoted into facts |
 | `retirementMultipliers` | ratio | `{ gogo, slowgo, nogo }` applied by age band |
 | `retirementAge` | int | target age if typed |
+| `baristaIncomeMonthly` | monthly, aftertax | part-time income once the main job stops, if typed (Level 9, MR-040) |
+| `dreamFiAge` | int | the age the household would love to be FI, if typed (Level 8 stand-in) |
+| `dreamSpendingMonthly` | monthly, aftertax | spending in the life the household wants, if typed (Level 8 stand-in) |
+| `gutSpendingMonthly` | monthly, aftertax | the household's gut guess of monthly spending, if typed (Level 8 stand-in) |
 
 ## The engine (reads every slot, writes none)
 
 `engine/compute.js` runs Capture -> Enrich -> Analyze -> Recommend -> Publish
 for each planet in order (Income, Spending, Debt, Investments, Safety Net,
-Taxes, Life Plan), then the projection, the 48 metrics, the 19 lenses and the
-leverage ranking. It returns one frozen result object; views read from it and
+Taxes, Life Plan), then the projection, the 74 metrics, the 39 lenses and the
+leverage ranking. Level 9 adds three pure modules that read the result and
+write nothing: `engine/fiLadder.js` (the rungs, from the slots and the
+projection path), `engine/graph.js` (built from `data/graph.json`, the
+contracts and the metric inputs) and `engine/sensitivity.js` (which copies the
+record, nudges one value and runs `compute` again). It returns one frozen result object; views read from it and
 never do math.

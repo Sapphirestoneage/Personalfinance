@@ -3,7 +3,9 @@
    Weights live in data/weights.json. Materiality comes from the dollars the
    fact moves a year; under the $100 line it is a Small Win. Outputs: the
    next-question card (one big, two smaller), the ranked circle-back list,
-   my plate and their plate. v2 (not built): leverage by FI-date sensitivity. */
+   my plate and their plate. v2 (Level 9, MR-042): when a FI date exists the
+   next-question card ranks by ask priority, the months of FI date an unsure
+   fact could move (engine/sensitivity.js); the v1 formula stays the fallback. */
 import { plateItems } from './plates.js';
 import { confidenceOf, hasValue, numberOf } from './states.js';
 import { cadenceToMonthly } from './units.js';
@@ -72,9 +74,18 @@ function describe(row, fid, def) {
 
 /* The next-question card: one big, two smaller; plates; circle-back list; small wins. */
 export function session(ctx) {
-  const ranked = rankLeverage(ctx);
+  let ranked = rankLeverage(ctx);
+  const sens = ctx.sensitivity && ctx.sensitivity.hasFiDate ? ctx.sensitivity : null;
+  if (sens) {
+    const byKey = {}; sens.items.forEach(it => { if (it.rowId) byKey[it.rowId + '|' + it.field] = it; });
+    sens.items.forEach(it => { if (it.rowId && it.id) byKey[it.id] = it; });
+    ranked = ranked.map(i => { const s = byKey[i.rowId + '|' + i.field]; const months = s && s.askRange !== null && s.askRange !== undefined ? s.askRange : null; return Object.assign({}, i, { monthsAtStake: months, why: months !== null ? 'This ' + (i.state === 'rough' ? 'rough' : i.source === 'estimated' ? 'estimated' : 'unverified') + ' figure could move the FI date about ' + monthsText(months) + ' across its plausible range.' : 'No FI date effect measured; ranked by weight x (1 - confidence) x dollars.' }); });
+    /* months first, then the v1 score for everything the shocks cannot reach (unknowns, words, dates) */
+    ranked.sort((a, b) => (b.monthsAtStake === null ? -1 : b.monthsAtStake) - (a.monthsAtStake === null ? -1 : a.monthsAtStake) || b.leverage - a.leverage);
+  } else ranked = ranked.map(i => Object.assign({}, i, { monthsAtStake: null, why: 'No FI date yet; ranked by weight x (1 - confidence) x dollars a year.' }));
   const big = ranked.filter(i => !i.small);
   return {
+    rankedBy: sens ? 'ask' : 'leverage',
     next: big.slice(0, 3),
     circleBack: big.slice(3),
     smallWins: ranked.filter(i => i.small),
@@ -83,3 +94,5 @@ export function session(ctx) {
     all: ranked,
   };
 }
+
+function monthsText(m) { const a = Math.abs(m); return a >= 12 ? (Math.round(a / 12 * 10) / 10) + ' years' : (Math.round(a * 10) / 10) + (a === 1 ? ' month' : ' months'); }

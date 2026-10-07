@@ -236,3 +236,33 @@ Decision: the card library grew from 58 to 212 cards across 42 issuers: personal
 Compatibility: none; existing card ids are unchanged.
 Why: the owner asked for a far more comprehensive list with business cards.
 Alternative: a live feed from issuers (no public source; the library stays a starting point to verify).
+
+## MR-040 2026-10-07 The FI ladder: five rungs, one module, progress counts invested assets, dates follow net worth
+Decision: `engine/fiLadder.js` computes Lean, Barista Lean, Barista, FI and Fat FI with Coast as a marker. Percent there uses invested assets by default (`fiProgressBasis`, switchable to net worth). Every rung's date is read from the projection's net worth line, the same line the FI date comes from, so the FI rung lands on the FI date whatever counts as progress today. Lean falls back to food, accommodation and transportation when no line is flagged, marked rough; Fat falls back to spending times the fat multiplier; Barista uses the typed part-time income or the assumption, marked rough. `fiLevels` stays as an alias. Level 8 is not built: `dreamFiAge`, `dreamSpending` and `gutSpending` ship as optional Life plan fields and `fiSpendingBasis` as an Assumptions switch, as stand-ins.
+Compatibility: `pctToFi` and `coastPct` change for every record with cash or real estate (they counted net worth); the workpapers were regenerated. The Life planet publishes four new slots.
+Why: the brief; and two definitions of "reached" on one ladder would contradict each other.
+Alternative: dates on the invested line (the FI rung would then disagree with the FI date by decades for a household whose surplus pools in cash).
+
+## MR-041 2026-10-07 One graph from inputs to the FI date, edges as derivatives
+Decision: `data/graph.json` hand-lists which fields and Sun facts feed each planet slot, the slot-to-slot reads, the projection inputs, the negative edges and the roots that do not move the FI date (with the reason). `engine/graph.js` generates the metric edges from `metrics.json` inputs (now naming assumption keys as `asm.<key>`) and gives upstream, downstream, roots of a metric, paths to the FI date and a net sign. An edge sign is the derivative: +1 when the upstream value rising raises the downstream value. The projection node stands for the FI date, so a later date is higher. Each root has one lever family: spend, earn, keep, grow, protect, assume. Labels with no number behind them sit under one sink node so nothing is an orphan.
+Compatibility: none.
+Why: every "which way" sentence and every path highlight reads the same sign table.
+Alternative: good or bad as the sign (confuses a bigger FI number with a worse one).
+
+## MR-042 2026-10-07 Sensitivity by re-running the whole engine; ask priority by answer state
+Decision: `engine/sensitivity.js` copies the record, nudges one value and runs `compute` again for every typed money, rate and age root that reaches the FI date, plus all spending lines at once, the return, the withdrawal rate at 3.5%, inflation (as real return minus one point), part-time income at FI and a $1,000 windfall. The FI crossing is read to a tenth of a month by interpolating inside the crossing year. Impact is months per standard shock; ask priority is months across the plausible range by state (`weights.json` uncertainty: verified 2%, known 5%, rough 20% or the typed range, will send 30%, estimated 35%). When a FI date exists the Session card ranks by ask priority and says "about N months of FI date at stake" with a why line; unknowns and non-money facts keep the v1 score below them. The browser runs it in a module Worker, memoised per record version, debounced 250 ms, capped at 40 roots. Two synthetic households tie out to independent Python to the month.
+Compatibility: none; nothing is written to the record.
+Why: perturbing the projection inputs alone would skip the planets (tax inference, premiums, debt payoff), and the brief asked for `projection.js` to be used.
+Alternative: closed-form derivatives (fast, but a second copy of every formula).
+
+## MR-043 2026-10-07 Twenty FI lenses, two alternative paths, a coach flag for a move
+Decision: the lens library grows to 39. `compute` runs two cheap alternative projections the lenses read (3.5% instead of 4%, and 80% of spending) and keeps the months in `projection.alt`. Geographic arbitrage fires only when the coach ticks "Considering a move" on the levers screen (stored as `sun.flags.geoArbitrage`). The tie-out compares the Level 1 to 5 lenses to the workpaper as before and states the simple Level 9 ones; the rest have a test that trips each one.
+Compatibility: `sun.flags` is new and optional.
+Why: the brief; and a "coach-triggered" lens needs one explicit switch.
+Alternative: fire geo-arbitrage for everyone (noise for a household that is not moving).
+
+## MR-044 2026-10-07 One drawer for every metric; a headline shelf; the levers screen
+Decision: every metric drawer in the app (Measure tiles, the shelf, the levers screen) is `ui/metricdrawer.js`: the math as before, then direction, levers with their family and which way, the inputs that feed it from the graph, and the lens that reads it. The shelf (`ui/shelf.js`) sits on Home and the Session page in coach view and replaces Key numbers on the one-pager with client labels, compact, with the ladder hidden in print so the page stays one page. `#/levers` is the ladder as a staircase, the part-time income inline with its two live lines, the one-sentence top card, the ranked list by family with Impact and Ask priority, a root drawer with the shocks table and every number the root feeds, and a graph view that is hidden under 720 px. The client view keeps the ladder, the sentence and the top three levers in gentle words; benchmarks stay coach-only unless Assumptions says otherwise.
+Compatibility: none.
+Why: the brief asked for one place, linked everywhere.
+Alternative: a separate drawer per screen (three places to keep in step).

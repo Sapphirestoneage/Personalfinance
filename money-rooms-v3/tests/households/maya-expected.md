@@ -97,9 +97,10 @@ Age at 2026-10-05: born 2000-02-11, so 26. Filing status single.
 - 40 Tax saved per $1,000 pre-tax = 22.0% x $1,000 = $220.
 - 37 Implied tax rate = (paystub gross $8,558.33 - take-home $6,151.63 - deductions $990.16) / $8,558.33 = 16.6%.
 - 41 FI number = $51,836.04 / 4.0% = $1,295,901.
-- 42 % to FI = $54,840 / $1,295,901 = 4.2%.
-- 43 Coast FI = $1,295,901 / 1.05^29 (4.1161) = $314,834.38; $54,840 / $314,834.38 = 17.4%.
+- 42 % to FI = invested $53,750 / $1,295,901 = 4.1% (FI progress basis: invested assets).
+- 43 Coast FI = $1,295,901 / 1.05^29 (4.1161) = $314,834.38; invested $53,750 / $314,834.38 = 17.1%.
 - 45 Lean FI = $3,125 x 12 / 4% = $937,500; Fat FI = $51,836.04 x 1.5 / 4% = $1,943,851.50; Barista FI = ($51,836.04 - $24,000) / 4% = $695,901.
+- L9 Ladder: Lean $937,500; Barista Lean = ($3,125 - $2,000) x 12 / 4% = $337,500; Barista FI = ($4,319.67 - $2,000) x 12 / 4% = $695,901; FI $1,295,901; Fat $1,943,851.50. Rule: $100 a month = $30,000. Part-time income to be Barista FI today = max(0, $4,319.67 - $53,750 x 4% / 12) = $4,140.50. Years of expenses 1.04; days of freedom 378.5; FI ratio 4.1%.
 - 35 Fee drag lifetime = $53,750 x (1.05^29 - (1.05 - 0.00060)^29) = $3,626.19.
 
 ## Projection (year by year, real dollars, likely return)
@@ -111,4 +112,5 @@ Rules: invested x (1 + r) + contributions (payroll + match + bank + the leak and
 - First five years (likely): 2027 age 27 invested $77,187.42 cash $25,226.52 debt $10,870.05 net worth $91,543.89; 2028 age 28 invested $101,796.71 cash $37,070.31 debt $9,398.67 net worth $129,468.35; 2029 age 29 invested $127,636.47 cash $49,032.53 debt $7,840.35 net worth $168,828.65; 2030 age 30 invested $154,768.21 cash $61,114.38 debt $6,202.46 net worth $209,680.13; 2031 age 31 invested $183,256.54 cash $73,317.04 debt $4,480.95 net worth $252,092.63.
 
 ## Lenses expected to fire (impact at or above $100 a year)
+- Level 9 lenses stated here: fire big-three, double-lever, guardrails-room, healthcare-bridge, purchase-in-fi-days, withdrawal-sensitivity; silent house-hack.
 - cost-in-hours, hidden-leak, locked-up, mistake-tax, one-more-point, real-hourly-wage, shelter-heavy, tax-room, wrong-card (9 lenses).

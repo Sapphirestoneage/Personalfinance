@@ -21,3 +21,36 @@ Collected during the run; none blocked the build. Answer whenever.
    through payroll (MR-015). Is that the convention you want?
 5. The FI date ignores Social Security (MR-017); the chart draws it from 67.
    Do you want a second "with Social Security" date on the one-pager?
+
+## Level 9 (2026-10-07)
+
+6. Level 8 (gut and dream anchors, variance, targets) was not on the board
+   when Level 9 started. I shipped stand-ins: Dream FI age, Dream spending
+   and Gut spending as optional fields on the Life plan's Retirement and FI
+   row, and an Assumptions switch for the FI spending basis (actual, gut,
+   dream). Do you want Level 8 built properly, with anchors per category and
+   variance, before more is layered on these?
+7. Every rung's date now follows the projection's net worth line, the same
+   as the FI date (MR-040), while percent there counts invested assets by
+   default. For a household whose surplus pools in cash, the two tell
+   different stories (Maya: 4% of the FI number invested, FI in 2049). Is
+   that the reading you want, or should progress count net worth by default?
+8. Ask priority: an unknown input with a national default should range 50%
+   around that default. Today unknowns keep the v1 leverage score and sit
+   below every measured fact. Worth building, or is the v1 order fine for
+   unknowns?
+9. The true FI number taxes withdrawals from the pre-tax share as ordinary
+   income with the standard deduction and no FICA (FICA does not apply to
+   withdrawals). Capital gains on the taxable share are ignored. Fine for v1?
+10. "Inflation plus one point" is modelled as the real return minus one point,
+    since everything is in today's dollars. Do you want a nominal view first?
+11. Social Security in the FI number with a floor: the bridge years are funded
+    from the portfolio at face value (benefit x years), and the benefit is the
+    bend-point estimate scaled by the Assumptions share. Should it discount?
+12. Benchmarks (Fidelity and T. Rowe Price salary multiples, Millionaire Next
+    Door) are from memory and marked verify; coach view only by default.
+    Should the client ever see them?
+13. The sensitivity run re-runs the whole engine 70 to 300 times (60 to 800
+    ms). It runs in a Worker and is cached per record version. If a client
+    file is much bigger than Maya's, the cap of 40 roots will drop the small
+    ones. Is 40 the right cap?

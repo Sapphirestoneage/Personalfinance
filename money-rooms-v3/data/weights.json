@@ -1,5 +1,5 @@
 {
- "asOf": "2026-10-05",
+ "asOf": "2026-10-07",
  "source": "Money Rooms v3 spec, Leverage engine",
  "verify": false,
  "formula": "leverage = categoryWeight x itemWeight x (1 - confidence) x materiality",
@@ -34,5 +34,14 @@
   "dependents": 7,
   "filingStatus": 7,
   "bigGoal": 4
+ },
+ "uncertainty": {
+  "verified": 0.02,
+  "known": 0.05,
+  "rough": 0.2,
+  "will-send": 0.3,
+  "estimated": 0.35,
+  "unknown": 0.5,
+  "note": "Share of the value the fact could plausibly move, by answer state. Rough uses the typed low and high when there is one. Unknown applies around the national default."
  }
 }

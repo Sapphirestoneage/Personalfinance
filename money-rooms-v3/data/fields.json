@@ -1,5 +1,5 @@
 {
- "asOf": "2026-10-05",
+ "asOf": "2026-10-07",
  "source": "Money Rooms v3 spec, data model and planets sections",
  "verify": false,
  "cadences": [
@@ -526,13 +526,17 @@
      "tableFields": []
     },
     "retirement": {
-     "label": "Retirement",
+     "label": "Retirement and FI",
      "moon": "Retirement",
      "fields": [
       "retirementAge",
       "gogo",
       "slowgo",
-      "nogo"
+      "nogo",
+      "baristaIncome",
+      "dreamFiAge",
+      "dreamSpending",
+      "gutSpending"
      ],
      "single": true,
      "defaults": {
@@ -542,7 +546,7 @@
      },
      "nicknameLabel": "Label",
      "stress": false,
-     "plural": "Retirement",
+     "plural": "Retirement and FI",
      "tableFields": []
     },
     "other": {
@@ -1757,6 +1761,52 @@
    "tag": true,
    "hint": "A tag: it changes no number",
    "defaultSource": "client"
+  },
+  "baristaIncome": {
+   "id": "baristaIncome",
+   "label": "Part-time income at FI",
+   "kind": "money",
+   "owner": "life",
+   "weight": 5,
+   "hint": "Pay after tax from part-time or passion work once the main job stops. Empty means none is counted.",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "month",
+   "optional": true
+  },
+  "dreamFiAge": {
+   "id": "dreamFiAge",
+   "label": "Dream FI age",
+   "kind": "int",
+   "owner": "life",
+   "weight": 5,
+   "hint": "The age the household would love to be financially independent. Drives the monthly investing needed on each FI rung.",
+   "defaultSource": "client",
+   "optional": true
+  },
+  "dreamSpending": {
+   "id": "dreamSpending",
+   "label": "Dream spending",
+   "kind": "money",
+   "owner": "life",
+   "weight": 4,
+   "hint": "Monthly spending in the life the household wants, in today's dollars. Sets the Fat FI rung.",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "month",
+   "optional": true
+  },
+  "gutSpending": {
+   "id": "gutSpending",
+   "label": "Gut spending",
+   "kind": "money",
+   "owner": "life",
+   "weight": 3,
+   "hint": "The household's gut guess of monthly spending before the lines are entered. A check against the lines, and a basis the Assumptions screen can switch to.",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "month",
+   "optional": true
   }
  }
 }

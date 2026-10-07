@@ -24,3 +24,13 @@ table.data th { font-size: 9px; height: 16px; }
 table.data th, table.data td { height: 16px; padding: 0 4px; }
 a { color: inherit; text-decoration: none; }
 .op-read { display: block !important; }
+
+/* Level 9: the headline shelf on the one-pager prints as one tight row of small tiles */
+.op-shelf .shelf-head h2 { font-size: 9px; margin-bottom: 2px; }
+.op-shelf .shelf-head a { display: none; }
+.op-shelf .shelf-grid.compact { grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 3px; }
+.op-shelf .shelf-grid.compact .kpi { border: 1px solid #D5DCE8; padding: 2px 4px; }
+.op-shelf .shelf-grid.compact .kpi .label { font-size: 7px; line-height: 9px; min-height: 9px; }
+.op-shelf .shelf-grid.compact .kpi .value { font-size: 10px; line-height: 13px; }
+.op-shelf .shelf-grid.compact .kpi .range { font-size: 7px; line-height: 9px; }
+.mini-ladder { display: none; }

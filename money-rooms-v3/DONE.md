@@ -11,3 +11,8 @@
 - [ ] PROGRESS.md updated (done, next, open issues)
 - [ ] DECISIONS.md carries every choice made without asking; QUESTIONS.md carries every question
 - [ ] One commit "Level N: <name>", pushed; BOARD.md marks the level FROZEN
+
+Level 9 met every line above except the screenshot folder and the critique: the
+sweep ran at 1440, 1024 and 390 in both views (tests/ui.js) and the levers
+screenshots used for the builder's own check live outside the repo; a
+critique round for the levers screen is owed (PROGRESS.md).

@@ -423,14 +423,23 @@ def main(name):
     # FI
     annual_spend = spending * 12; wr = ASM['withdrawalRate']
     fi = R(annual_spend / wr); put('fiNumber', fi, '- 41 FI number = %s / %s = %s.' % (dollars(annual_spend), pct(wr), dollars(fi)))
-    E['pctToFi'] = round(nw / fi, 6); line('- 42 %% to FI = %s / %s = %s.' % (dollars(nw), dollars(fi), pct(nw / fi)))
+    basis = invested if ASM.get('fiProgressBasis', 'invested') == 'invested' else nw  # Level 9 (MR-040): invested assets by default
+    E['pctToFi'] = round(basis / fi, 6); line('- 42 %% to FI = invested %s / %s = %s (FI progress basis: invested assets).' % (dollars(basis), dollars(fi), pct(basis / fi)))
     ret_rows = rows('life', 'retirement'); ret_age = val(ret_rows[0]['f']['retirementAge']) if ret_rows else ASM['retirementAgeDefault']
     years = ret_age - age; growth = (1 + ASM['returnLikely']) ** years
-    coast = R(fi / growth); E['coastFiNumber'] = coast; E['coastPct'] = round(nw / coast, 6); E['retirementAge'] = ret_age
-    line('- 43 Coast FI = %s / 1.05^%d (%.4f) = %s; %s / %s = %s.' % (dollars(fi), years, growth, dollars(coast), dollars(nw), dollars(coast), pct(nw / coast)))
+    coast = R(fi / growth); E['coastFiNumber'] = coast; E['coastPct'] = round(basis / coast, 6); E['retirementAge'] = ret_age
+    line('- 43 Coast FI = %s / 1.05^%d (%.4f) = %s; invested %s / %s = %s.' % (dollars(fi), years, growth, dollars(coast), dollars(basis), dollars(coast), pct(basis / coast)))
     lean = R(fat * 12 / wr); fatfi = R(annual_spend * ASM['fatFiMultiplier'] / wr); barista = R(max(0, annual_spend - ASM['baristaIncomeAnnualCents']) / wr)
     E['leanFi'] = lean; E['fatFi'] = fatfi; E['baristaFi'] = barista
     line('- 45 Lean FI = %s x 12 / 4%% = %s; Fat FI = %s x 1.5 / 4%% = %s; Barista FI = (%s - %s) / 4%% = %s.' % (dollars(fat), dollars(lean), dollars(annual_spend), dollars(fatfi), dollars(annual_spend), dollars(ASM['baristaIncomeAnnualCents']), dollars(barista)))
+    # Level 9 ladder (MR-040): the five rungs with the assumption's part-time income (none typed in these fixtures), the rule of thumb, ratios
+    bar_m = R(ASM['baristaIncomeAnnualCents'] / 12)
+    E['ladder'] = {'leanFi': lean, 'baristaLeanFi': R(max(0, fat - bar_m) * 12 / wr), 'baristaRegularFi': R(max(0, spending - bar_m) * 12 / wr), 'regularFi': fi, 'fatFi': fatfi}
+    E['baristaRule'] = R(10000 * 12 / wr); E['baristaIncomeNeededToday'] = max(0, spending - R(basis * wr / 12))
+    E['yearsOfExpenses'] = round(invested / annual_spend, 2); E['daysOfFreedom'] = round(invested / (annual_spend / 365), 1)
+    rental_m = sum((monthly(r, 'rentCollected') or 0) for r in rows('income', 'rental'))
+    E['fiRatio'] = round((invested * wr + rental_m * 12) / annual_spend, 6)
+    line('- L9 Ladder: Lean %s; Barista Lean = (%s - %s) x 12 / 4%% = %s; Barista FI = (%s - %s) x 12 / 4%% = %s; FI %s; Fat %s. Rule: $100 a month = %s. Part-time income to be Barista FI today = max(0, %s - %s x 4%% / 12) = %s. Years of expenses %.2f; days of freedom %.1f; FI ratio %s.' % (dollars(lean), dollars(fat), dollars(bar_m), dollars(E['ladder']['baristaLeanFi']), dollars(spending), dollars(bar_m), dollars(E['ladder']['baristaRegularFi']), dollars(fi), dollars(fatfi), dollars(E['baristaRule']), dollars(spending), dollars(basis), dollars(E['baristaIncomeNeededToday']), E['yearsOfExpenses'], E['daysOfFreedom'], pct(E['fiRatio'])))
     fee_life = R(invested * (growth - (1 + ASM['returnLikely'] - (wer or 0)) ** years)) if wer is not None else None
     E['feeDragLifetime'] = fee_life
     if fee_life is not None: line('- 35 Fee drag lifetime = %s x (1.05^%d - (1.05 - %.5f)^%d) = %s.' % (dollars(invested), years, wer, years, dollars(fee_life)))
@@ -503,13 +512,25 @@ def main(name):
     if stated and hours_m and rhw < stated * ASM['realWageShare']: fires.append('real-hourly-wage')
     if interest >= 10000: fires.append('cost-in-hours')
     if paths['likely']['fiAge']: fires.append('one-more-point')
-    if nw >= coast: fires.append('coast-check')
+    if basis >= coast: fires.append('coast-check')
     if mistakes * 12 >= 10000: fires.append('mistake-tax')
     for w in wallet:
         if w['feeAnnual'] > 0 and w['feeAnnual'] - (w['creditsUsedAnnual'] + max(0, w['rewardsAnnual'] - w['baselineAnnual'])) >= 10000: fires.append('card-fee')
     if left >= 10000: fires.append('wrong-card')
     if excess > 0 and any(not d['full'] and d['rate'] > ASM['cashRealReturn'] + 0.02 for d in debts) and R(excess * (max(eff_rate(d, this_month) for d in debts if not d['full']) - 0.04)) >= 10000: fires.append('saving-at-a-loss')
     E['lensesFiring'] = sorted(set(fires))
+    # Level 9 lenses the workpaper can state in one line each (MR-043); the rest are covered by tests/engine/lenses9.test.js
+    nine = []; silent = []
+    nine.append('double-lever')
+    big3 = (E['byCategory']['accommodation'] + E['byCategory']['transportation'] + E['byCategory']['food']) / take
+    (nine if big3 > 0.5 else silent).append('big-three')
+    (nine if E['byCategory']['accommodation'] / take > 0.4 else silent).append('house-hack')
+    has_fi = paths['likely']['fiAge'] is not None
+    for lid in ('withdrawal-sensitivity', 'guardrails-room', 'purchase-in-fi-days'): (nine if has_fi else silent).append(lid)
+    fi_age_for_bridge = paths['likely']['fiAge'] if has_fi else ret_age
+    (nine if fi_age_for_bridge < 65 else silent).append('healthcare-bridge')
+    E['lensesFiringLevel9'] = sorted(nine); E['lensesSilentLevel9'] = sorted(silent)
+    line('- Level 9 lenses stated here: fire ' + ', '.join(E['lensesFiringLevel9']) + '; silent ' + (', '.join(E['lensesSilentLevel9']) or 'none') + '.')
     line('- ' + ', '.join(E['lensesFiring']) + ' (%d lenses).' % len(set(fires)))
 
     open(os.path.join(HERE, name + '-expected.md'), 'w').write('\n'.join(L) + '\n')

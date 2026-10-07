@@ -3,6 +3,76 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 export const flows = [
+{
+  name: 'level9-maya-levers-and-shelf',
+  async run(page, { base, check, APP }) {
+    await page.goto(base + 'index.html#/home');
+    await page.waitForSelector('#main h1');
+    await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', 'maya.json'));
+    await page.waitForSelector('.toast'); await page.waitForSelector('.orbit');
+    /* the headline shelf on Home: tiles open the metric drawer with levers and the lens that reads it */
+    await page.waitForSelector('.shelf-panel .shelf-tile[data-metric="fiDate"]');
+    check('the Home shelf shows the FI date tile', (await page.textContent('.shelf-tile[data-metric="fiDate"] .value')).indexOf('2049') !== -1);
+    check('the Home shelf carries the compact ladder', (await page.$$('.mini-ladder .mini-step')).length === 5);
+    await page.click('.shelf-tile[data-metric="fiNumber"]');
+    await page.waitForSelector('.drawer .metric-drawer');
+    const drawerText = await page.textContent('.drawer');
+    check('the metric drawer shows the math, the levers and the lens', drawerText.indexOf('Formula') !== -1 && drawerText.indexOf('Levers') !== -1 && drawerText.indexOf('Inputs that feed it') !== -1 && /lens/i.test(drawerText));
+    await page.keyboard.press('Escape');
+    /* the levers page */
+    await page.goto(base + 'index.html#/levers');
+    await page.waitForSelector('.stairs .stair');
+    check('the ladder has five rungs', (await page.$$('.stairs .stair')).length === 5);
+    const ladderText = await page.textContent('.ladder-panel');
+    check('the rungs run Lean, Barista Lean, Barista, FI, Fat with Coast as a line', ['Lean FI', 'Barista Lean FI', 'Barista FI', 'Fat FI', 'Coast FI'].every(w => ladderText.indexOf(w) !== -1));
+    check('the barista rule is live and not hard-coded', ladderText.indexOf('$30,000 at 4.0%') !== -1 && ladderText.indexOf('$34,286 at 3.5%') !== -1);
+    check('the reverse barista line is there', ladderText.indexOf('Barista FI today') !== -1);
+    await page.waitForSelector('.top-card .headline', { timeout: 15000 });
+    check('the one-sentence card names the biggest lever', (await page.textContent('.top-card .headline')).indexOf('Your biggest lever is') === 0);
+    await page.waitForSelector('.lever-row');
+    const groups = await page.$$eval('.lever-group h3', els => els.map(e => e.textContent.trim()));
+    check('the list is grouped by lever family', groups.length >= 3 && groups[0].indexOf('Spend less') === 0);
+    /* the Ask toggle */
+    await page.click('.levers-head button:has-text("Ask priority")');
+    await page.waitForSelector('.lever-row');
+    const askText = await page.textContent('.levers-panel');
+    check('ask priority shows months at stake and a why line', askText.indexOf('at stake') !== -1 && askText.indexOf('This figure is') !== -1);
+    /* a root opens every metric it feeds */
+    await page.click('.lever-row');
+    await page.waitForSelector('.drawer .root-drawer');
+    const rootText = await page.textContent('.drawer');
+    check('the root drawer lists the numbers it feeds with a direction', rootText.indexOf('Every number it feeds') !== -1 && /raises it|lowers it/.test(rootText) && rootText.indexOf('Shock') !== -1);
+    await page.keyboard.press('Escape');
+    /* the graph view */
+    await page.click('.levers-head button:has-text("Graph")');
+    await page.waitForSelector('svg.graph');
+    check('the graph draws nodes and edges', (await page.$$('svg.graph circle')).length > 30 && (await page.$$('svg.graph path')).length > 30);
+    /* typing a part-time income moves the Barista rungs by the rule */
+    await page.click('.levers-head button:has-text("List")');
+    const before = await page.textContent('.stair:nth-child(3) .stair-number');
+    await page.fill('input[aria-label="Part-time income at FI, a month"]', '1500');
+    await page.press('input[aria-label="Part-time income at FI, a month"]', 'Tab');
+    await page.waitForTimeout(400);
+    const after = await page.textContent('.stair:nth-child(3) .stair-number');
+    check('part-time income lowers the Barista rung', before !== after);
+    check('the FI rung does not move with part-time income', (await page.textContent('.stair:nth-child(4) .stair-number')).indexOf('$1.3M') !== -1);
+    /* the client view: ladder, three levers, gentle words, no benchmarks */
+    await page.click('#view-client');
+    await page.waitForSelector('.stairs .stair');
+    await page.waitForSelector('.lever-row', { timeout: 15000 });
+    const client = await page.textContent('#main');
+    check('client view keeps the ladder and three levers', (await page.$$('.lever-row')).length === 3 && client.indexOf('The number that matters most is') !== -1);
+    check('client view hides Ask priority and the graph', client.indexOf('Ask priority') === -1 && client.indexOf('Graph') === -1 && client.indexOf('Millionaire') === -1);
+    await page.click('#view-coach');
+    /* the session: ranked by ask priority with months at stake */
+    await page.goto(base + 'index.html#/session');
+    await page.waitForSelector('.next-card');
+    await page.waitForFunction(() => (document.querySelector('.next-card') || {}).textContent.indexOf('of FI date at stake') !== -1, null, { timeout: 15000 });
+    const next = await page.textContent('.next-card');
+    check('the next question card says about N months of FI date at stake and why', next.indexOf('of FI date at stake') !== -1 && next.indexOf('Ranked by ask priority') !== -1);
+    check('the session carries the shelf', (await page.$$('.shelf-panel .shelf-tile')).length >= 8);
+  },
+},
   {
     name: 'level0-load-save-export-import-undo',
     async run(page, { base, check, APP }) {

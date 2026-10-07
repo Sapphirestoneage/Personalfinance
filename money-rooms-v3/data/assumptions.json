@@ -1,5 +1,5 @@
 {
- "asOf": "2026-10-05",
+ "asOf": "2026-10-07",
  "source": "Money Rooms v3 spec, Engine defaults",
  "verify": false,
  "defaults": {
@@ -37,7 +37,15 @@
   "slowgo": 0.85,
   "nogo": 0.75,
   "slowgoAge": 75,
-  "nogoAge": 85
+  "nogoAge": 85,
+  "fiProgressBasis": "invested",
+  "fiSpendingBasis": "actual",
+  "healthcarePremiumMonthlyCents": 65000,
+  "inflation": 0.03,
+  "guardrailsBand": 0.2,
+  "ssBridgeFromPortfolio": true,
+  "benchmarkSource": "fidelity",
+  "showBenchmarksToClient": false
  },
  "labels": {
   "returnLikely": "Return after inflation, likely",
@@ -61,6 +69,70 @@
   "baristaIncomeAnnualCents": "Barista FI part-time income a year",
   "noFeeBaselineRate": "No-fee card baseline earn rate",
   "slowgoAge": "Slow-go years start at",
-  "nogoAge": "No-go years start at"
+  "nogoAge": "No-go years start at",
+  "fiProgressBasis": "FI progress counts: invested assets or net worth",
+  "fiSpendingBasis": "FI spending basis: actual lines, gut guess or dream",
+  "healthcarePremiumMonthlyCents": "Health premium a month before 65, estimate",
+  "inflation": "Inflation assumed (returns above are already after it)",
+  "guardrailsBand": "Guardrails: withdrawal rate may drift this share of its start",
+  "ssBridgeFromPortfolio": "Social Security floor: bridge years come from the portfolio",
+  "benchmarkSource": "Salary multiple benchmark source",
+  "showBenchmarksToClient": "Show benchmarks in the client view"
+ },
+ "options": {
+  "fiProgressBasis": [
+   [
+    "invested",
+    "Invested assets"
+   ],
+   [
+    "netWorth",
+    "Net worth"
+   ]
+  ],
+  "fiSpendingBasis": [
+   [
+    "actual",
+    "Actual lines"
+   ],
+   [
+    "gut",
+    "Gut guess"
+   ],
+   [
+    "dream",
+    "Dream spending"
+   ]
+  ],
+  "benchmarkSource": [
+   [
+    "fidelity",
+    "Fidelity salary multiples"
+   ],
+   [
+    "tRowe",
+    "T. Rowe Price salary multiples"
+   ]
+  ],
+  "ssBridgeFromPortfolio": [
+   [
+    "true",
+    "Yes"
+   ],
+   [
+    "false",
+    "No"
+   ]
+  ],
+  "showBenchmarksToClient": [
+   [
+    "true",
+    "Yes"
+   ],
+   [
+    "false",
+    "No"
+   ]
+  ]
  }
 }

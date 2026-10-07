@@ -1,5 +1,5 @@
 {
- "asOf": "2026-10-05",
+ "asOf": "2026-10-07",
  "source": "Well-known public titles named in the Money Rooms v3 spec; titles only, no quotes",
  "verify": false,
  "readings": [
@@ -34,6 +34,71 @@
   {
    "id": "cfpb-credit",
    "title": "Consumer Financial Protection Bureau, how credit utilization affects your score"
+  },
+  {
+   "id": "choosefi-pillars",
+   "title": "ChooseFI, the pillars of FI and the FI ladder (Lean, Barista, Coast, Fat)",
+   "verify": true
+  },
+  {
+   "id": "money-guy-wealth-multiplier",
+   "title": "The Money Guy Show, the wealth multiplier by age",
+   "verify": true
+  },
+  {
+   "id": "ymoyl-crossover",
+   "title": "Your Money or Your Life, the crossover point",
+   "verify": true
+  },
+  {
+   "id": "mmm-double-lever",
+   "title": "Mr. Money Mustache, every dollar cut is a dollar saved and a smaller target",
+   "verify": true
+  },
+  {
+   "id": "big-ern-guardrails",
+   "title": "Big ERN, flexible withdrawals and guardrails",
+   "verify": true
+  },
+  {
+   "id": "die-with-zero-underspending",
+   "title": "Die With Zero, spending on experiences while they are worth most",
+   "verify": true
+  },
+  {
+   "id": "millionaire-next-door",
+   "title": "Stanley and Danko, The Millionaire Next Door",
+   "verify": true
+  },
+  {
+   "id": "jl-collins-first-100k",
+   "title": "JL Collins, the first $100,000 and F-you money",
+   "verify": true
+  },
+  {
+   "id": "choosefi-house-hack",
+   "title": "ChooseFI, the house hacking episodes",
+   "verify": true
+  },
+  {
+   "id": "choosefi-geo-arbitrage",
+   "title": "ChooseFI, geographic arbitrage",
+   "verify": true
+  },
+  {
+   "id": "big-ern-healthcare",
+   "title": "Big ERN, health insurance before 65 in early retirement",
+   "verify": true
+  },
+  {
+   "id": "big-ern-social-security",
+   "title": "Big ERN, Social Security and the safe withdrawal rate",
+   "verify": true
+  },
+  {
+   "id": "mmm-side-hustle",
+   "title": "Mr. Money Mustache, the real hourly wage of a side hustle",
+   "verify": true
   }
  ]
 }

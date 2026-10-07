@@ -193,13 +193,25 @@
  "savedPer1000Pretax": 22000,
  "impliedRate": 0.241177,
  "fiNumber": 115680000,
- "pctToFi": 0.018932,
+ "pctToFi": 0.015603,
  "coastFiNumber": 23121255,
- "coastPct": 0.094718,
+ "coastPct": 0.078067,
  "retirementAge": 60,
  "leanFi": 85320000,
  "fatFi": 173520000,
  "baristaFi": 55680000,
+ "ladder": {
+  "leanFi": 85320000,
+  "baristaLeanFi": 25320000,
+  "baristaRegularFi": 55680000,
+  "regularFi": 115680000,
+  "fatFi": 173520000
+ },
+ "baristaRule": 3000000,
+ "baristaIncomeNeededToday": 379583,
+ "yearsOfExpenses": 0.39,
+ "daysOfFreedom": 142.4,
+ "fiRatio": 0.015603,
  "feeDragLifetime": 251587,
  "socialSecurityMonthly": 288326,
  "projection": {
@@ -379,5 +391,16 @@
   "tax-room",
   "utilization-drag",
   "wrong-card"
+ ],
+ "lensesFiringLevel9": [
+  "big-three",
+  "double-lever",
+  "guardrails-room",
+  "house-hack",
+  "purchase-in-fi-days",
+  "withdrawal-sensitivity"
+ ],
+ "lensesSilentLevel9": [
+  "healthcare-bridge"
  ]
 }

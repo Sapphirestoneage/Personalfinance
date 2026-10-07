@@ -1,4 +1,4 @@
-/* Measure: the 48 metrics by stage with a show-the-math drawer on every
+/* Measure: the 74 metrics by stage with a show-the-math drawer on every
    number, the lenses that fire (coach picks which the client sees), and the
    eight charts, each with a switch onto the one-pager. Views never do math. */
 import { h, clear } from '../dom.js';
@@ -7,10 +7,11 @@ import { CHARTS } from '../../engine/chartdata.js';
 import * as Charts from '../charts.js';
 import { translator, metricLabel } from '../glossary.js';
 import { PLANET_LABELS } from '../../engine/sun.js';
+import { registerMath, openMetric } from '../metricdrawer.js';
 
 const SHARE_LABELS = { debt: 'Debt', retirement: 'Retirement', accommodation: 'Accommodation', food: 'Food', transportation: 'Transportation', therapy: 'Therapy', pretax: 'Pre-tax', roth: 'Roth', taxable: 'Taxable', hsa: 'HSA', cash: 'Cash', other: 'Other', stocks: 'Stocks', bonds: 'Bonds' };
 const KEY_METRICS = ['takeHome', 'spending', 'surplus', 'savingsRateTakeHome', 'netWorth', 'totalDebt', 'runway', 'pctToFi'];
-const GROUPS = [['cash flow', 'Cash flow'], ['debt', 'Debt and credit'], ['cards', 'Cards'], ['balance sheet', 'Balance sheet'], ['safety', 'Safety net'], ['retirement', 'Retirement'], ['taxes', 'Taxes'], ['FI', 'Financial independence']];
+const GROUPS = [['cash flow', 'Cash flow'], ['debt', 'Debt and credit'], ['cards', 'Cards'], ['balance sheet', 'Balance sheet'], ['safety', 'Safety net'], ['retirement', 'Retirement'], ['taxes', 'Taxes'], ['FI', 'Financial independence'], ['benchmarks', 'Benchmarks (verify)']];
 const STAGE_PLANETS = { 1: ['income', 'spending'], 2: ['debt'], 3: ['safety', 'invest'], 4: ['taxes'], 5: ['life'] };
 
 export function mount(host, app) {
@@ -42,7 +43,8 @@ export function mount(host, app) {
       kpis.appendChild(rest);
     } else GROUPS.forEach(([key, label]) => groupInto(kpis, key, label));
     function groupInto(host2, key, label) {
-      const defs = app.data.metrics.metrics.filter(m => m.group === key);
+      const defs = app.data.metrics.metrics.filter(m => m.group === key && (app.view === 'coach' || !m.coachOnly || (app.result.asm && app.result.asm.showBenchmarksToClient)));
+      if (!defs.length) return;
       const allNeed = defs.every(def => !M[def.id] || M[def.id].status !== 'ok');
       if (allNeed) {
         const needs = Array.from(new Set(defs.flatMap(def => (M[def.id] && M[def.id].needs) || []))).slice(0, 2);
@@ -106,7 +108,10 @@ function listRows(id, v, m, app) {
   }
 }
 
-export function openMath(app, m, def) {
+/* Every metric drawer now carries its levers, inputs and lens (MR-044); the math body is built here and handed to the shared drawer. */
+export function openMath(app, m, def) { openMetric(app, def.id); }
+registerMath((app, m, def) => mathBody(app, m, def));
+export function mathBody(app, m, def) {
   const body = h('div', null,
     h('h2', null, metricLabel(app, def)),
     h('p', { class: 'muted small', style: { margin: '4px 0 12px' } }, def.definition),
@@ -121,7 +126,7 @@ export function openMath(app, m, def) {
   }
   if (def.range) body.appendChild(h('p', { class: 'small muted', style: { marginTop: '12px' } }, 'Band ' + F.percent(def.range.low) + ' to ' + F.percent(def.range.high) + '. Source: ' + def.range.source + '.'));
   body.appendChild(h('p', { class: 'small muted', style: { marginTop: '12px' } }, 'Owner: ' + (PLANET_LABELS[def.owner] || 'the engine') + '. Units: ' + Object.values(def.units).join(', ') + '.'));
-  app.openDrawer(body);
+  return body;
 }
 
 export function drawLenses(panel, app, t) {

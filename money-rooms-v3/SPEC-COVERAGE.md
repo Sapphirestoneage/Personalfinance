@@ -94,7 +94,7 @@ plainly. Evidence is a file, a test name or a screenshot path.
 | Session snapshots and since last time | done | session.js snapshot(); plates.js sinceLastSession; flow "closing takes a session snapshot", "the one-pager shows what changed" |
 | Ask it jumps to the Ledger cell | done | app.js focusAfterRender; flow "Ask it lands in the right cell" |
 | Scripted mock session for Jordan runs start to finish | done | tests/ui-flows.js level3-jordan-mock-session (12 checks) |
-| Stub, not built: leverage by FI-date sensitivity | not done (by design) | README parking lot |
+| Stub, not built: leverage by FI-date sensitivity | done in Level 9 | engine/sensitivity.js; leverage.js session() ranks by ask priority when a FI date exists (MR-042) |
 | Design critique with every screen at 4 or above | see critique | screenshots/level-3/critique.md |
 
 ## Level 4 Simulate
@@ -138,3 +138,33 @@ plainly. Evidence is a file, a test name or a screenshot path.
 | Final screenshots of every screen with Maya | done | screenshots/level-6/maya-*.jpg (13 screens x 2 views x 3 widths); screenshots/level-2/maya-onepager.pdf |
 | README: run, add a client, update libraries | done | README.md |
 | Final report | done | FINAL-REPORT.md |
+
+## Level 8 Gut and dream anchors, variance, targets
+
+Not built before Level 9. Level 9 ships stand-ins and says so (MR-040): `dreamFiAge`, `dreamSpending` and `gutSpending` as optional fields on the Life plan retirement row; `fiSpendingBasis` (actual, gut, dream) on the Assumptions screen; Lean FI falls back to food, accommodation and transportation when no line is flagged. Variance and per-category anchors are not built.
+
+## Level 9 What Moves the FI Date
+
+| Requirement | Status | Evidence |
+|---|---|---|
+| FI ladder: Lean, Regular, Fat, Barista Lean, Barista Regular, each with number, percent there, date and required monthly to the dream FI age | done | engine/fiLadder.js; metrics leanFi, baristaLeanFi, baristaRegularFi, regularFi, fatFi; sensitivity.test.js "the ladder, the barista rule and the progress basis"; tieout.test.js ladder rows |
+| Lean FI from the FAT floor, categories as a stand-in marked rough | done | fiLadder.js (source fatFloor or categories, rough) |
+| Fat FI from dream spending, fallback spending x multiplier marked rough | done | fiLadder.js; tieout fatFi |
+| Barista field "Part-time income at FI" on the Life planet, any cadence, default empty | done | data/fields.json baristaIncome; life.js baristaIncomeMonthly; levers.js inline input |
+| Barista rule live, never hard-coded ($30,000 at 4%, $34,286 at 3.5%) | done | fiLadder.js baristaRule(wr); metric baristaRule with at35; flow "the barista rule is live and not hard-coded" |
+| Reverse Barista: part-time income needed today, Regular and Lean | done | metric baristaIncomeNeededToday (lean in extra); tieout |
+| Coast FI routed through the module, percent and date | done | fiLadder.js coast; metric coastFi reads the basis; lens coast-reached |
+| fiProgressBasis invested or netWorth, pctToFi follows it | done | assumptions.json; metrics.js pctToFi basis; sensitivity.test.js "net worth basis by assumption" |
+| fiLevels replaced by the ladder, id kept as alias | done | metrics.js fiLevels built from the same inputs; chart fiGauge unchanged |
+| Headline shelf on Home, Session and the one-pager with inputs, levers, lens per tile; unlocked-metrics pattern | done | ui/shelf.js; ui/metricdrawer.js; flow level9 "the Home shelf", "the metric drawer shows the math, the levers and the lens"; one-pager still prints to one page (flow level2) |
+| Dependency graph: nodes, generated edges, hand-listed rest, signs, lever families | done | data/graph.json; engine/graph.js; graph.test.js (no cycles, no orphans, every metric reaches a root, every root reaches fiDate or is marked) |
+| Sensitivity: shocks by kind, spending both ways, impact rank by family, ask priority by state ranges | done | engine/sensitivity.js; data/weights.json uncertainty; sensitivity.test.js (two households tie out to the month; a cut beats a raise both ways) |
+| Leverage v2 on the Session card with "about N months of FI date at stake" and "why it ranks here" | done | leverage.js session(); session.js; flow level9 "the next question card says about N months" |
+| Unknown inputs with a national default use the 50% band | partial | unknowns fall back to the v1 score (QUESTIONS.md Q8) |
+| Performance: memoise per record version, debounce, cap, Worker | done | ui/levers-bridge.js (versionKey, 250 ms, 40 roots, module Worker with a sync fallback) |
+| Independent expected deltas for starter and mid-career households | done | tests/households/expected-levers.py and levers-expected.json; sensitivity.test.js |
+| Metrics: direction, levers and graph links on every metric; the 26 new metrics | done | data/metrics.json (74); metrics.js levelNine(); graph.test.js "every metric reaches at least one root" |
+| expectedNetWorth and salaryMultiple coach view only by default, benchmark source selectable | done | metrics coachOnly; measure.js filter; assumptions benchmarkSource and showBenchmarksToClient; data/benchmarks.json verify |
+| 20 new lenses with readings | done | data/lenses.json (39); lenses.js levelNineLenses; lenses9.test.js (each fires on a household built to trip it) |
+| UI #/levers: staircase, barista inline, ranked list with Impact and Ask toggle, top sentence, root and metric drawers, graph toggle (list at phone width), client view | done | ui/views/levers.js; sweep screen levers at three widths in both views; flow level9 |
+| Gates: engine tests, ui sweep, docs | done | node tests/run.js (1,064 checks); node tests/ui.js (flows plus the sweep with the levers screen) |

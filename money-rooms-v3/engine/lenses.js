@@ -1,4 +1,4 @@
-/* The 19 lenses: each fires on a condition, fills its sentence with figures,
+/* The 39 lenses (19 through Level 5, 20 more in Level 9): each fires on a condition, fills its sentence with figures,
    says its yearly impact, shows its math and points at a reading. Phrased
    as information, never instructions. Under the materiality line it is
    skipped. Rough inputs make it say "roughly". */
@@ -99,5 +99,84 @@ export function computeLenses(ctx) {
   });
   /* 19 wrong card */
   if (M.rewardsLeft && M.rewardsLeft.status === 'ok' && M.rewardsLeft.value.cents > 0) push('wrong-card', M.rewardsLeft.value.cents, { cost: dollars(M.rewardsLeft.value.cents) }, Object.keys(dt.wallet.bestRates).map(k => ['Best ' + k, F.percent(dt.wallet.bestRates[k])]), { rough: true });
+  levelNineLenses(ctx, out, push, val, roughOf);
   return out.sort((a, b) => (b.impactAnnual || 0) - (a.impactAnnual || 0));
+}
+
+/* Level 9 (MR-043): the FI lenses. Information, never instructions. */
+function levelNineLenses(ctx, out, push, val, roughOf) {
+  const { metrics: M, sun, asm } = ctx; const S = sun.outputs; const pj = ctx.projection;
+  const okM = id => M[id] && M[id].status === 'ok' ? M[id] : null;
+  const months = m => { const a = Math.abs(m); return a >= 12 ? (Math.round(a / 12 * 10) / 10) + ' years' : (Math.round(a) || 1) + (Math.round(a) === 1 ? ' month' : ' months'); };
+  const when = m => m === 0 ? 'already here' : m === null ? 'not in the projection' : 'about ' + months(m) + ' away';
+  const fi = okM('fiNumber'); const take = val('takeHome');
+  /* 20 the double lever */
+  if (fi) push('double-lever', null, { perHundred: dollars(Math.round(10000 * 12 / asm.withdrawalRate)), perHundredYear: dollars(120000) }, [['FI number', F.value(fi.value)], ['Withdrawal rate', F.percent(asm.withdrawalRate)]], { figure: dollars(Math.round(10000 * 12 / asm.withdrawalRate)) + ' per $100 a month' });
+  /* 21 the big three */
+  if (take && S.spending && S.spending.byCategory && take.cents > 0) {
+    const c = S.spending.byCategory; const big = ['accommodation', 'transportation', 'food'].reduce((s2, k) => s2 + (c[k] && c[k].cents ? c[k].cents : 0), 0);
+    const share = big / take.cents;
+    if (big > 0 && share > 0.5) push('big-three', null, { share: F.percent(share), dollars: dollars(big) }, [['Housing', F.value(c.accommodation)], ['Transportation', F.value(c.transportation)], ['Food', F.value(c.food)], ['Take-home', F.value(take)]], { figure: F.percent(share) + ' of take-home', rough: roughOf('takeHome', 'spending') });
+    /* 33 house hack */
+    const housing = c.accommodation && c.accommodation.cents ? c.accommodation.cents / take.cents : 0;
+    if (housing > 0.4) push('house-hack', null, { share: F.percent(housing) }, [['Housing', F.value(c.accommodation)], ['Take-home', F.value(take)]], { figure: F.percent(housing) + ' of take-home', rough: roughOf('takeHome', 'spending') });
+  }
+  /* 22 lean FI close */
+  const lean = okM('leanFi');
+  if (lean && lean.months !== null && lean.months <= 36) push('lean-fi-close', null, { number: dollars(lean.value.cents), when: when(lean.months) }, [['Lean FI number', F.value(lean.value)], ['Percent there', F.percent(lean.pct)]], { figure: when(lean.months), rough: lean.rough });
+  /* 23 the barista option */
+  const bn = okM('baristaIncomeNeededToday');
+  if (bn && take && bn.value.cents > 0 && bn.value.cents < take.cents * 0.5) push('barista-option', null, { needed: dollars(bn.value.cents), wr: F.percent(asm.withdrawalRate) }, [['Part-time income needed a month', F.value(bn.value)], ['Take-home today', F.value(take)]], { figure: dollars(bn.value.cents) + ' a month', rough: bn.rough });
+  /* 24 coast reached */
+  const coast = okM('coastFi');
+  if (coast && coast.coastPct !== null && coast.coastPct >= 1 && S.invest && S.invest.annualContributions && S.invest.annualContributions.total > 0) push('coast-reached', null, { basis: asm.fiProgressBasis === 'netWorth' ? 'Net worth' : 'What is invested', age: String(coast.retirementAge), ret: F.percent(asm.returnLikely) }, [['Coast FI number', F.value(coast.value)], ['Percent of coast', F.percent(coast.coastPct)]], { figure: F.percent(coast.coastPct) + ' of coast' });
+  /* 25 crossover in sight */
+  const cross = okM('crossoverDate');
+  if (cross && cross.months !== null && cross.months > 0 && cross.months <= 60) push('crossover-in-sight', null, { wr: F.percent(asm.withdrawalRate), date: F.date(cross.value.value), when: months(cross.months) }, [['Crossover date', F.value(cross.value)]], { figure: months(cross.months) + ' away', rough: true });
+  /* 26 the flip */
+  const flip = okM('theFlip'); const inv = S.invest && S.invest.investedAssets && S.invest.investedAssets.cents !== undefined ? S.invest.investedAssets.cents : null;
+  if (flip && inv !== null) {
+    const yrs = flip.value.value ? parseInt(flip.value.value.slice(0, 4), 10) - parseInt(ctx.today.slice(0, 4), 10) : 0;
+    if (flip.already || yrs <= 3) push('the-flip', null, { when: flip.already ? 'Already' : 'From ' + flip.value.value.slice(0, 4), growth: dollars(Math.round(inv * asm.returnLikely)), contrib: dollars(ctx.contribAnnual || (S.invest.annualContributions ? S.invest.annualContributions.total : 0)) }, [['Invested', dollars(inv)], ['Likely return', F.percent(asm.returnLikely)], ['Contributions a year', dollars(S.invest.annualContributions ? S.invest.annualContributions.total : 0)]], { figure: flip.already ? 'growth leads' : 'in ' + yrs + (yrs === 1 ? ' year' : ' years') });
+  }
+  /* 27 first 100k */
+  const k = okM('first100kDate');
+  if (k && inv !== null && inv < 10000000 && k.months !== null && k.months > 0) push('first-100k', null, { date: F.date(k.value.value) }, [['Invested today', dollars(inv)], ['Projected date', F.value(k.value)]], { figure: months(k.months) + ' away', rough: true });
+  /* 28 true FI gap */
+  const tf = okM('trueFiNumber');
+  if (tf && fi && tf.value.cents >= fi.value.cents * 1.05) push('true-fi-gap', null, { gap: dollars(tf.value.cents - fi.value.cents), trueFi: dollars(tf.value.cents), fi: dollars(fi.value.cents) }, [['FI number', F.value(fi.value)], ['After-tax FI number', F.value(tf.value)], ['Pre-tax share', F.percent(tf.pretaxShare)]], { figure: dollars(tf.value.cents - fi.value.cents) + ' more', rough: true });
+  /* 29 health care bridge */
+  const hc = okM('healthcareBridge');
+  if (hc && hc.years > 0 && hc.value.cents > 0) push('healthcare-bridge', null, { cost: dollars(hc.value.cents), years: hc.years + (hc.years === 1 ? ' year' : ' years'), premium: dollars(asm.healthcarePremiumMonthlyCents) }, [['FI age', String(hc.fiAge)], ['Years to 65', String(hc.years)], ['Premium a month (assumption)', dollars(asm.healthcarePremiumMonthlyCents)]], { figure: F.value(hc.value) + ' to 65', rough: true });
+  /* 30 Social Security floor */
+  const ssn = okM('ssAdjustedFiNumber');
+  if (ssn && fi && ssn.value.cents <= fi.value.cents * 0.9) push('ss-floor', null, { age: String(asm.socialSecurityAge), number: dollars(ssn.value.cents), saving: dollars(fi.value.cents - ssn.value.cents) }, [['FI number', F.value(fi.value)], ['With Social Security', F.value(ssn.value)], ['Bridge years', String(ssn.bridgeYears)]], { figure: dollars(fi.value.cents - ssn.value.cents) + ' less', rough: true });
+  /* 31 withdrawal sensitivity, 34 geo arbitrage, 37 purchase in FI days, 32 guardrails: a FI date exists */
+  const alt = pj && pj.alt; const fiDate = okM('fiDate');
+  if (fiDate && alt && alt.baseMonths !== null && fi) {
+    const n35 = Math.round(fi.value.cents * asm.withdrawalRate / 0.035);
+    push('withdrawal-sensitivity', null, { number: dollars(n35), months: alt.wr35Months === null ? 'past the projection' : months(alt.wr35Months - alt.baseMonths) + ' later' }, [['FI number at 4%', F.value(fi.value)], ['FI number at 3.5%', dollars(n35)], ['FI date today', F.value(fiDate.value)]], { figure: alt.wr35Months === null ? 'never at 3.5%' : months(alt.wr35Months - alt.baseMonths) + ' later', rough: true });
+    const flags = (ctx.record && ctx.record.sun && ctx.record.sun.flags) || {};
+    if (flags.geoArbitrage) push('geo-arbitrage', null, { number: dollars(fi.value.cents - alt.geoFiNumber), months: alt.geoMonths === null ? 'a lot' : months(alt.baseMonths - alt.geoMonths) + ' earlier' }, [['FI number', F.value(fi.value)], ['At 80% of spending', dollars(alt.geoFiNumber)], ['FI date today', F.value(fiDate.value)]], { figure: alt.geoMonths === null ? '' : months(alt.baseMonths - alt.geoMonths) + ' earlier', rough: true });
+    const pd = okM('purchaseInFiDays');
+    if (pd) push('purchase-in-fi-days', null, { days: (Math.round(pd.perThousandDays) || 1) + ' days', number: dollars(pd.perHundredMonthly) }, [['Growth near FI, a year', dollars(pd.growthAnnual)], ['$1,000 once', (Math.round(pd.perThousandDays) || 1) + ' days'], ['$100 a month', dollars(pd.perHundredMonthly) + ' of FI number']], { figure: (Math.round(pd.perThousandDays) || 1) + ' days per $1,000', rough: true });
+    const gb = okM('guardrailsBand');
+    if (gb && gb.value.range) push('guardrails-room', null, { low: dollars(gb.value.range.low), high: dollars(gb.value.range.high), band: F.percent(gb.band, { places: 0 }) }, [['Spending a month', F.value(gb.value)], ['Band', F.percent(gb.band)]], { figure: dollars(gb.value.range.low) + ' to ' + dollars(gb.value.range.high), rough: gb.rough });
+    /* 36 room to spend more, 39 underspending */
+    const at95 = pj.likely.path[pj.likely.path.length - 1].netWorth;
+    const dream = S.life && S.life.dreamSpendingMonthly && S.life.dreamSpendingMonthly.cents !== undefined ? S.life.dreamSpendingMonthly.cents : null; const sp = val('spending');
+    if (at95 > fi.value.cents * 3 || (dream !== null && sp && dream > sp.cents)) push('room-to-spend-more', null, { at95: dollars(at95) }, [['Net worth at 95', dollars(at95)], ['FI number', F.value(fi.value)], dream !== null ? ['Dream spending', dollars(dream)] : ['Dream spending', 'not typed']], { figure: dollars(at95) + ' at 95', rough: true });
+    const sr = okM('savingsRateTakeHome');
+    if (sr && sr.value.value > 0.5 && at95 > fi.value.cents * 3) push('underspending', null, { rate: F.percent(sr.value.value), at95: dollars(at95) }, [['Savings rate', F.percent(sr.value.value)], ['Net worth at 95', dollars(at95)]], { figure: F.percent(sr.value.value) + ' saved', rough: true });
+  }
+  /* 35 gut gap */
+  const gg = okM('gutGap');
+  const spend = val('spending');
+  if (gg && spend && Math.abs(gg.diffMonthly) >= spend.cents * 0.1) push('gut-gap', null, { gut: dollars(spend.cents + gg.diffMonthly), direction: gg.diffMonthly > 0 ? 'above' : 'below', lines: F.value(spend), diff: dollars(Math.abs(gg.diffMonthly)), months: months(gg.value.value) }, [['Gut spending', dollars(spend.cents + gg.diffMonthly)], ['The lines', F.value(spend)], ['FI number change', dollars(gg.fiNumberDelta)]], { figure: months(gg.value.value) + ' of FI date', rough: true });
+  /* 38 side hustle real wage */
+  const rh = okM('realHourlyWage'); const by = S.income && S.income.byType;
+  if (by && by.side > 0 && by.sideHours > 0 && rh && rh.statedHourly) {
+    const sideHourly = Math.round(by.side / by.sideHours);
+    if (sideHourly < rh.statedHourly) push('side-hustle-real-wage', null, { side: F.dollars(sideHourly), main: F.dollars(rh.statedHourly) }, [['Side income a month', dollars(by.side)], ['Side hours a month', String(by.sideHours)], ['Main job, gross an hour', F.dollars(rh.statedHourly)]], { figure: F.dollars(sideHourly) + ' an hour' });
+  }
 }

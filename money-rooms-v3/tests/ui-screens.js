@@ -18,6 +18,7 @@ export const SCREENS = [
   { id: 'scenarios', route: 'scenarios' },
   { id: 'learn', route: 'learn' },
   { id: 'assumptions', route: 'assumptions' },
+  { id: 'levers', route: 'levers' },
 ];
 
 async function importHousehold(page, APP, name) {

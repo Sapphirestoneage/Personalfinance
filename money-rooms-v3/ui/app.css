@@ -638,3 +638,85 @@ main > header:has(+ .onepager) { max-width: 816px; }
 .tracker .next { flex: 1 1 200px; min-width: 0; font-size: var(--fs-13); }
 .start-picker { width: 100%; max-width: 200px; }
 .change-more { margin-top: var(--s-1); }
+
+/* ---- Level 9 (MR-044): the headline shelf, the FI ladder, the levers and the graph ---- */
+.shelf-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s-2); margin-bottom: var(--s-2); }
+.shelf-head h2 { margin: 0; }
+.shelf-grid.compact { grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: var(--s-1); }
+.shelf-grid.compact .kpi { padding: var(--s-1) var(--s-2); }
+.shelf-grid.compact .kpi .label { min-height: 16px; -webkit-line-clamp: 1; }
+.shelf-grid.compact .kpi .value, body[data-view="client"] .shelf-grid.compact .kpi .value { font-size: var(--fs-16); line-height: 24px; }
+.shelf-tile .value.needs { font-size: var(--fs-12); }
+.mini-ladder { display: flex; align-items: flex-end; gap: 4px; margin-top: var(--s-2); min-height: 72px; }
+.mini-step, .mini-coast { all: unset; position: relative; flex: 1 1 0; min-width: 0; border: 1px solid var(--line); border-radius: 4px 4px 0 0; background: var(--paper-2, var(--line-soft)); cursor: pointer; display: flex; flex-direction: column; justify-content: flex-end; padding: 2px 4px; overflow: hidden; }
+.mini-step .fill { position: absolute; left: 0; right: 0; bottom: 0; background: var(--sapphire-100); z-index: 0; }
+.mini-step.reached { border-color: var(--sapphire-500); }
+.mini-step .mini-label, .mini-step .mini-num, .mini-coast .mini-label, .mini-coast .mini-num { position: relative; z-index: 1; font-size: var(--fs-11); line-height: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-step .mini-num, .mini-coast .mini-num { font-variant-numeric: tabular-nums; color: var(--ink); }
+.mini-step .mini-label, .mini-coast .mini-label { color: var(--slate); }
+.mini-coast { height: 28px; border-style: dashed; flex: 0 0 72px; }
+.mini-step:focus-visible, .mini-coast:focus-visible, .stair-box:focus-visible, .lever-row:focus-visible { outline: 2px solid var(--sapphire-500); outline-offset: 1px; }
+.op-shelf .shelf-head a { display: none; }
+.op-shelf .mini-ladder { min-height: 56px; }
+.op-shelf .mini-step { max-height: 48px; }
+
+.stairs { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--s-2); align-items: end; margin-top: var(--s-2); }
+.stair { display: flex; flex-direction: column; justify-content: flex-end; min-width: 0; }
+.stair-box { all: unset; display: block; box-sizing: border-box; width: 100%; border: 1px solid var(--line); border-radius: var(--r-panel); padding: var(--s-2); background: var(--paper); cursor: pointer; min-width: 0; }
+.stair-box:hover { border-color: var(--sapphire-300); }
+.stair.reached .stair-box { border-color: var(--sapphire-500); background: var(--sapphire-50, var(--paper)); }
+.stair-label { font-size: var(--fs-12); color: var(--slate); line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stair-number { font-size: var(--fs-20); line-height: 28px; font-weight: var(--w-semibold); color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stair-number.rough { color: var(--sapphire-700); }
+.stair-number.needs { font-size: var(--fs-12); font-weight: var(--w-regular); color: var(--slate); white-space: normal; }
+.stair-bar { height: 6px; border-radius: 3px; background: var(--line-soft); overflow: hidden; margin: 4px 0; }
+.stair-bar span { display: block; height: 100%; background: var(--sapphire-500); }
+.stair-meta { font-size: var(--fs-11); color: var(--slate); line-height: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.coast-line { margin-top: var(--s-2); }
+.linklike { all: unset; cursor: pointer; color: var(--sapphire-700); text-decoration: underline; text-underline-offset: 2px; }
+.barista-row { margin-top: var(--s-3); border-top: 1px solid var(--line-soft); padding-top: var(--s-2); }
+.barista-row .fieldrow { grid-template-columns: 180px var(--field-w-wide) minmax(0, 1fr); grid-template-areas: "label input src"; }
+.barista-rule, .barista-reverse { margin-top: var(--s-1); }
+.top-card .headline { font-size: var(--fs-20); line-height: 28px; font-weight: var(--w-semibold); color: var(--ink); margin: 0 0 4px; }
+body[data-view="client"] .top-card .headline { font-size: var(--fs-24); line-height: 32px; }
+.levers-head { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); flex-wrap: wrap; margin-bottom: var(--s-2); }
+.levers-head h2 { margin: 0; }
+.lever-group { margin-top: var(--s-2); }
+.lever-group h3 .tag { font-size: var(--fs-12); color: var(--slate); font-weight: var(--w-regular); margin-left: var(--s-2); }
+.lever-row { all: unset; display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) 150px; grid-template-areas: "name bar months" "why why why"; gap: 2px var(--s-2); align-items: center; width: 100%; box-sizing: border-box; padding: 6px 0; border-bottom: 1px solid var(--line-soft); cursor: pointer; }
+.lever-row:hover .lever-name strong { color: var(--sapphire-700); }
+.lever-name { grid-area: name; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: var(--fs-13); }
+.lever-bar { grid-area: bar; height: 10px; border-radius: 5px; background: var(--line-soft); overflow: hidden; }
+.lever-bar .fill { display: block; height: 100%; background: var(--sapphire-500); min-width: 2px; }
+.lever-bar .fill.fam-spend { background: var(--chart-1); } .lever-bar .fill.fam-earn { background: var(--chart-2); } .lever-bar .fill.fam-keep { background: var(--chart-3); } .lever-bar .fill.fam-grow { background: var(--sapphire-300); } .lever-bar .fill.fam-protect { background: var(--slate); } .lever-bar .fill.fam-assume { background: var(--chart-4); }
+.lever-months { grid-area: months; text-align: right; font-size: var(--fs-13); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lever-why { grid-area: why; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip.fam-spend, .chip.fam-earn, .chip.fam-keep, .chip.fam-grow, .chip.fam-protect, .chip.fam-assume { background: var(--sapphire-50, var(--line-soft)); color: var(--sapphire-900); }
+.levers-list { padding-left: 0; list-style: none; }
+.levers-list li { padding: 4px 0; border-bottom: 1px solid var(--line-soft); font-size: var(--fs-13); }
+.big-value { font-size: var(--fs-24); font-weight: var(--w-semibold); margin: 4px 0; }
+.graph-host { overflow: hidden; }
+.graph-edge { fill: none; stroke: var(--line); stroke-width: 1; opacity: 0.9; }
+.graph-edge.neg { stroke-dasharray: 3 3; }
+.graph-edge.lit { stroke: var(--sapphire-500); stroke-width: 1.5; opacity: 1; }
+.graph-edge.dim { opacity: 0.15; }
+.graph-node { fill: var(--sapphire-300); stroke: var(--paper); stroke-width: 1; }
+.graph-node.kind-metric { fill: var(--chart-4); } .graph-node.kind-slot { fill: var(--slate); } .graph-node.kind-projection { fill: var(--gold); }
+.graph-node.lit { fill: var(--sapphire-700); } .graph-node.dim { opacity: 0.2; }
+.graph-label { font-size: 10px; } .graph-label.strong { font-weight: var(--w-semibold); } .graph-label.dim { opacity: 0.25; }
+.working::after { content: ''; display: inline-block; width: 10px; height: 10px; margin-left: 6px; border: 2px solid var(--line); border-top-color: var(--sapphire-500); border-radius: 50%; animation: spin 0.9s linear infinite; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (max-width: 720px) {
+  .stairs { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; }
+  .stair { padding-top: 0 !important; }
+  .lever-row { grid-template-columns: minmax(0, 1fr) 128px; grid-template-areas: "name months" "bar bar" "why why"; }
+  .lever-months { white-space: normal; }
+  .lever-months .small { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .barista-row .fieldrow { grid-template-columns: minmax(0, 1fr); grid-template-areas: "label" "input" "src"; }
+  .mini-coast { flex: 0 0 56px; }
+}
+
+.op-shelf .shelf-grid.compact { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--s-1); }
+.op-shelf .shelf-head h2 { font-size: var(--fs-16); }
+@media (max-width: 720px) { .op-shelf .shelf-grid.compact { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.metric-drawer h3 .tag, .root-drawer h2 .tag, .root-drawer h3 .tag, .ladder-panel h2 .tag, .top-card h2 .tag { font-size: var(--fs-12); color: var(--slate); font-weight: var(--w-regular); margin-left: var(--s-2); }

@@ -23,6 +23,8 @@ merged; until then run it locally (README, "Run the gates").
 | 5 | Learn | FROZEN | readings are titles only; two titles were removed because no lens pointed at them |
 | 6 | Depth | FROZEN | no nominal view (MR-024); state tax, ACA and Roth conversions are out of scope |
 | 7 | Polish and audit | FROZEN | a live timing of Jordan's entry with Eli at the keyboard is still owed |
+| 8 | Gut and dream anchors | NOT BUILT | stand-ins inside Level 9: dream FI age, dream and gut spending, the FI spending basis switch |
+| 9 | What Moves the FI Date | FROZEN | no critique round yet; unknown inputs keep the v1 leverage score in ask priority |
 
 BOARD.md carries the commit names. DONE.md is the checklist every level met.
 
@@ -34,7 +36,7 @@ it. The rows marked other than "done":
 
 - Real dollars with a nominal toggle: not built by design (MR-024); every
   figure is in today's dollars and the screens say so.
-- Leverage by FI-date sensitivity: stubbed (spec says v2).
+- Leverage by FI-date sensitivity: shipped in Level 9 (engine/sensitivity.js, MR-042).
 - State tax, ACA, Roth conversions, couples, cloud sync, CSV import: out of
   scope, listed in the README parking lot.
 - Low-use ledger columns in a row drawer (critique M14/M22): not done; the

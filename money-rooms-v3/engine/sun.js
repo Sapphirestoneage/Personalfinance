@@ -27,7 +27,7 @@ export const CONTRACT = Object.freeze({
   safety: Object.freeze(['ruleOf5Months', 'ruleOf5Target', 'runway', 'gap', 'monthlyToClose', 'insurance', 'premiumsMonthly', 'unemploymentMonthly', 'cutAbilityMonthly', 'spendingWithPremiums']),
   invest: Object.freeze(['balancesByBucket', 'balancesByLiquidity', 'cashBalances', 'totalAssets', 'investedAssets', 'annualContributions', 'roomLeft', 'allocation', 'weightedExpenseRatio', 'feeDragAnnual', 'matchCapture', 'beneficiariesMissing']),
   taxes: Object.freeze(['federalAnnual', 'ficaAnnual', 'effectiveRate', 'marginalRate', 'savedPer1000Pretax', 'impliedRate', 'taxable', 'standardDeduction', 'ficaParts', 'selfEmployment']),
-  life: Object.freeze(['goals', 'events', 'retirementMultipliers', 'retirementAge']),
+  life: Object.freeze(['goals', 'events', 'retirementMultipliers', 'retirementAge', 'baristaIncomeMonthly', 'dreamFiAge', 'dreamSpendingMonthly', 'gutSpendingMonthly']),
 });
 
 /* Which Sun slots each planet may read (CONTRACTS.md "Reads"). Enforced by

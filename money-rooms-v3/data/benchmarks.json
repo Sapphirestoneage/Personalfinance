@@ -1,0 +1,92 @@
+{
+ "asOf": "2026-10-07",
+ "source": "Fidelity Viewpoints salary multiple milestones and T. Rowe Price savings benchmarks, as remembered by the builder; Stanley and Danko, The Millionaire Next Door, expected net worth formula; every figure marked verify",
+ "verify": true,
+ "salaryMultiples": {
+  "fidelity": {
+   "label": "Fidelity salary multiples",
+   "verify": true,
+   "points": [
+    [
+     30,
+     1
+    ],
+    [
+     35,
+     2
+    ],
+    [
+     40,
+     3
+    ],
+    [
+     45,
+     4
+    ],
+    [
+     50,
+     6
+    ],
+    [
+     55,
+     7
+    ],
+    [
+     60,
+     8
+    ],
+    [
+     67,
+     10
+    ]
+   ]
+  },
+  "tRowe": {
+   "label": "T. Rowe Price salary multiples",
+   "verify": true,
+   "points": [
+    [
+     30,
+     0.5
+    ],
+    [
+     35,
+     1.5
+    ],
+    [
+     40,
+     2.5
+    ],
+    [
+     45,
+     4
+    ],
+    [
+     50,
+     6
+    ],
+    [
+     55,
+     8.5
+    ],
+    [
+     60,
+     11
+    ],
+    [
+     65,
+     13.5
+    ]
+   ]
+  }
+ },
+ "expectedNetWorth": {
+  "label": "Millionaire Next Door expected net worth",
+  "formula": "age x annual gross income / 10",
+  "verify": true,
+  "ratios": {
+   "underAccumulator": 0.5,
+   "prodigious": 2.0
+  }
+ }
+}

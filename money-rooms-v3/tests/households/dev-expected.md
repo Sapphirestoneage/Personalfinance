@@ -90,9 +90,10 @@ Age at 2026-10-05: born 1995-06-22, so 31. Filing status single.
 - 40 Tax saved per $1,000 pre-tax = 22.0% x $1,000 = $220.
 - 37 Implied tax rate = (paystub gross $8,000 - take-home $5,400 - deductions $0) / $8,000 = 32.5%.
 - 41 FI number = $50,480.04 / 4.0% = $1,262,001.
-- 42 % to FI = $41,750 / $1,262,001 = 3.3%.
-- 43 Coast FI = $1,262,001 / 1.05^14 (1.9799) = $637,396.26; $41,750 / $637,396.26 = 6.6%.
+- 42 % to FI = invested $49,250 / $1,262,001 = 3.9% (FI progress basis: invested assets).
+- 43 Coast FI = $1,262,001 / 1.05^14 (1.9799) = $637,396.26; invested $49,250 / $637,396.26 = 7.7%.
 - 45 Lean FI = $2,725 x 12 / 4% = $817,500; Fat FI = $50,480.04 x 1.5 / 4% = $1,893,001.50; Barista FI = ($50,480.04 - $24,000) / 4% = $662,001.
+- L9 Ladder: Lean $817,500; Barista Lean = ($2,725 - $2,000) x 12 / 4% = $217,500; Barista FI = ($4,206.67 - $2,000) x 12 / 4% = $662,001; FI $1,262,001; Fat $1,893,001.50. Rule: $100 a month = $30,000. Part-time income to be Barista FI today = max(0, $4,206.67 - $49,250 x 4% / 12) = $4,042.50. Years of expenses 0.98; days of freedom 356.1; FI ratio 3.9%.
 - 35 Fee drag lifetime = $49,250 x (1.05^14 - (1.05 - 0.00606)^14) = $7,590.08.
 
 ## Projection (year by year, real dollars, likely return)
@@ -104,4 +105,5 @@ Rules: invested x (1 + r) + contributions (payroll + match + bank + the leak and
 - First five years (likely): 2027 age 32 invested $66,112.50 cash $6,767 debt $10,764.54 net worth $62,114.96; 2028 age 33 invested $83,818.13 cash $6,834.67 debt $7,592.20 net worth $83,060.60; 2029 age 34 invested $102,409.04 cash $6,903.02 debt $4,193.95 net worth $105,118.11; 2030 age 35 invested $121,929.49 cash $6,972.05 debt $553.65 net worth $128,347.89; 2031 age 36 invested $142,425.96 cash $10,857.77 debt $0 net worth $153,283.73.
 
 ## Lenses expected to fire (impact at or above $100 a year)
+- Level 9 lenses stated here: fire big-three, double-lever, healthcare-bridge; silent guardrails-room, house-hack, purchase-in-fi-days, withdrawal-sensitivity.
 - cost-in-hours, fee-drag, mistake-tax, real-hourly-wage, shelter-heavy, thin-runway, wrong-card (7 lenses).

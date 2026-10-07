@@ -1,0 +1,649 @@
+{
+ "asOf": "2026-10-07",
+ "source": "Money Rooms v3 Level 9 (MR-041): hand-listed edges from fields and Sun facts into planet slots, slot-to-slot reads, and the projection; metric edges are generated from data/metrics.json inputs",
+ "verify": false,
+ "families": {
+  "spend": "Spend less",
+  "earn": "Earn more",
+  "keep": "Keep more (taxes, fees, leaks)",
+  "grow": "Grow (balances and returns)",
+  "protect": "Protect (debt, cash, insurance)",
+  "assume": "Assume (rates, ages, Social Security)"
+ },
+ "familyByPlanet": {
+  "income": "earn",
+  "spending": "spend",
+  "debt": "protect",
+  "safety": "protect",
+  "invest": "grow",
+  "taxes": "keep",
+  "life": "assume",
+  "sun": "assume",
+  "asm": "assume"
+ },
+ "familyOverrides": {
+  "expenseRatio": "keep",
+  "pctOfAccount": "keep",
+  "annualFee": "keep",
+  "creditsUsed": "keep",
+  "primaryCard": "keep",
+  "cardName": "keep",
+  "workCosts": "spend",
+  "hoursCommute": "spend",
+  "hoursPaid": "earn",
+  "savingsLanding": "keep",
+  "mistake": "spend",
+  "businessExpenses": "spend",
+  "rentalExpenses": "spend",
+  "pretaxRetirement": "keep",
+  "rothRetirement": "grow",
+  "hsaPayroll": "keep",
+  "pretaxOther": "keep",
+  "contribAmount": "grow",
+  "allocStocks": "grow",
+  "allocBonds": "grow",
+  "allocCash": "grow",
+  "allocOther": "grow",
+  "usShare": "grow",
+  "baristaIncome": "earn",
+  "dreamSpending": "spend",
+  "gutSpending": "spend",
+  "asm.returnLikely": "grow",
+  "asm.returnBest": "grow",
+  "asm.returnWorst": "grow",
+  "asm.cashRealReturn": "grow",
+  "asm.feeDragEr": "keep",
+  "asm.healthcarePremiumMonthlyCents": "protect",
+  "premium": "protect",
+  "coverage": "protect",
+  "deductible": "protect",
+  "cutAbility": "spend",
+  "unemploymentWeekly": "protect"
+ },
+ "slotInputs": {
+  "income.grossMonthly": [
+   "grossPay",
+   "bonus",
+   "equity",
+   "payFrequency",
+   "otherIncome",
+   "rentCollected",
+   "benefitAmount",
+   "weeksLeft",
+   "sun.workSituation"
+  ],
+  "income.takeHomeMonthly": [
+   "takeHome",
+   "grossPay",
+   "payFrequency",
+   "pretaxRetirement",
+   "rothRetirement",
+   "hsaPayroll",
+   "pretaxOther",
+   "businessExpenses",
+   "otherIncome",
+   "rentCollected",
+   "rentalExpenses",
+   "benefitAmount",
+   "weeksLeft",
+   "sun.filingStatus",
+   "sun.workSituation"
+  ],
+  "income.pretaxContribMonthly": [
+   "pretaxRetirement",
+   "payFrequency"
+  ],
+  "income.rothContribMonthly": [
+   "rothRetirement",
+   "payFrequency"
+  ],
+  "income.hsaPayrollMonthly": [
+   "hsaPayroll",
+   "payFrequency"
+  ],
+  "income.pretaxOtherMonthly": [
+   "pretaxOther",
+   "payFrequency"
+  ],
+  "income.matchMonthly": [
+   "matchRate",
+   "matchUpTo",
+   "pretaxRetirement",
+   "rothRetirement",
+   "grossPay"
+  ],
+  "income.matchFormula": [
+   "matchRate",
+   "matchUpTo"
+  ],
+  "income.byType": [
+   "grossPay",
+   "otherIncome",
+   "rentCollected",
+   "benefitAmount",
+   "businessExpenses"
+  ],
+  "income.stability": [
+   "stability"
+  ],
+  "income.workHoursMonthly": [
+   "hoursPaid",
+   "hoursCommute"
+  ],
+  "income.workCostsMonthly": [
+   "workCosts"
+  ],
+  "spending.baselineMonthly": [
+   "amount",
+   "otherSpending",
+   "summaryTotal"
+  ],
+  "spending.summaryTotalMonthly": [
+   "summaryTotal"
+  ],
+  "spending.detailGapMonthly": [
+   "summaryTotal",
+   "amount"
+  ],
+  "spending.byCategory": [
+   "amount",
+   "category",
+   "otherSpending"
+  ],
+  "spending.drafttShares": [
+   "amount",
+   "category",
+   "income.takeHomeMonthly"
+  ],
+  "spending.fatFloorMonthly": [
+   "amount",
+   "fatFloor"
+  ],
+  "spending.fixedMonthly": [
+   "amount",
+   "needWant"
+  ],
+  "spending.mistakesAnnual": [
+   "amount",
+   "mistake"
+  ],
+  "spending.savingsLandingMonthly": [
+   "savingsLanding"
+  ],
+  "spending.cardSpendByCategory": [
+   "amount",
+   "category",
+   "primaryCard"
+  ],
+  "debt.totalDebt": [
+   "balance",
+   "otherDebt",
+   "debtSummaryTotal"
+  ],
+  "debt.debtServiceMonthly": [
+   "minimum",
+   "payment",
+   "principalInterest",
+   "escrowTaxes",
+   "escrowInsurance",
+   "hoa",
+   "pmi",
+   "balance"
+  ],
+  "debt.weightedApr": [
+   "balance",
+   "apr",
+   "rate",
+   "promoApr",
+   "promoEnd"
+  ],
+  "debt.annualInterest": [
+   "balance",
+   "apr",
+   "rate",
+   "promoApr",
+   "promoEnd",
+   "autopay"
+  ],
+  "debt.utilization": [
+   "balance",
+   "creditLimit"
+  ],
+  "debt.promoCliffs": [
+   "balance",
+   "apr",
+   "promoApr",
+   "promoEnd"
+  ],
+  "debt.payoffOrders": [
+   "balance",
+   "apr",
+   "rate",
+   "minimum",
+   "payment",
+   "principalInterest",
+   "monthsLeft"
+  ],
+  "debt.debtFreeDate": [
+   "debt.payoffOrders"
+  ],
+  "debt.freedCashByMonth": [
+   "debt.payoffOrders"
+  ],
+  "debt.wallet": [
+   "cardName",
+   "annualFee",
+   "creditsUsed",
+   "spending.cardSpendByCategory"
+  ],
+  "debt.creditScore": [
+   "score"
+  ],
+  "debt.byType": [
+   "balance",
+   "otherDebt"
+  ],
+  "safety.ruleOf5Months": [
+   "sun.birthDate",
+   "sun.workSituation"
+  ],
+  "safety.ruleOf5Target": [
+   "safety.ruleOf5Months",
+   "safety.spendingWithPremiums"
+  ],
+  "safety.runway": [
+   "invest.cashBalances",
+   "safety.spendingWithPremiums",
+   "spending.fixedMonthly",
+   "spending.fatFloorMonthly"
+  ],
+  "safety.gap": [
+   "safety.ruleOf5Target",
+   "invest.cashBalances"
+  ],
+  "safety.monthlyToClose": [
+   "safety.gap"
+  ],
+  "safety.insurance": [
+   "premium",
+   "coverage",
+   "deductible"
+  ],
+  "safety.premiumsMonthly": [
+   "premium"
+  ],
+  "safety.unemploymentMonthly": [
+   "unemploymentWeekly",
+   "income.takeHomeMonthly"
+  ],
+  "safety.cutAbilityMonthly": [
+   "cutAbility"
+  ],
+  "safety.spendingWithPremiums": [
+   "spending.baselineMonthly",
+   "safety.premiumsMonthly"
+  ],
+  "invest.balancesByBucket": [
+   "accountBalance",
+   "accountType"
+  ],
+  "invest.balancesByLiquidity": [
+   "accountBalance",
+   "accountType"
+  ],
+  "invest.cashBalances": [
+   "accountBalance",
+   "accountType"
+  ],
+  "invest.totalAssets": [
+   "accountBalance",
+   "otherAsset",
+   "investSummaryTotal"
+  ],
+  "invest.investedAssets": [
+   "accountBalance",
+   "accountType"
+  ],
+  "invest.annualContributions": [
+   "contribAmount",
+   "income.pretaxContribMonthly",
+   "income.rothContribMonthly",
+   "income.hsaPayrollMonthly",
+   "income.matchMonthly"
+  ],
+  "invest.roomLeft": [
+   "contribAmount",
+   "accountType",
+   "income.pretaxContribMonthly",
+   "income.rothContribMonthly",
+   "income.hsaPayrollMonthly",
+   "sun.birthDate",
+   "sun.dependents"
+  ],
+  "invest.allocation": [
+   "accountBalance",
+   "allocStocks",
+   "allocBonds",
+   "allocCash",
+   "allocOther",
+   "usShare"
+  ],
+  "invest.weightedExpenseRatio": [
+   "expenseRatio",
+   "pctOfAccount",
+   "accountBalance"
+  ],
+  "invest.feeDragAnnual": [
+   "invest.weightedExpenseRatio",
+   "invest.investedAssets"
+  ],
+  "invest.matchCapture": [
+   "income.matchMonthly",
+   "income.matchFormula"
+  ],
+  "invest.beneficiariesMissing": [
+   "beneficiary"
+  ],
+  "taxes.federalAnnual": [
+   "income.grossMonthly",
+   "income.pretaxContribMonthly",
+   "income.hsaPayrollMonthly",
+   "income.pretaxOtherMonthly",
+   "income.byType",
+   "sun.filingStatus"
+  ],
+  "taxes.ficaAnnual": [
+   "income.grossMonthly",
+   "income.hsaPayrollMonthly",
+   "income.pretaxOtherMonthly",
+   "income.byType"
+  ],
+  "taxes.effectiveRate": [
+   "taxes.federalAnnual",
+   "income.grossMonthly"
+  ],
+  "taxes.marginalRate": [
+   "taxes.federalAnnual"
+  ],
+  "taxes.savedPer1000Pretax": [
+   "taxes.marginalRate"
+  ],
+  "taxes.impliedRate": [
+   "income.grossMonthly",
+   "income.takeHomeMonthly",
+   "income.pretaxContribMonthly",
+   "income.pretaxOtherMonthly"
+  ],
+  "taxes.taxable": [
+   "income.grossMonthly",
+   "income.pretaxContribMonthly",
+   "sun.filingStatus"
+  ],
+  "taxes.standardDeduction": [
+   "sun.filingStatus"
+  ],
+  "taxes.ficaParts": [
+   "taxes.ficaAnnual"
+  ],
+  "taxes.selfEmployment": [
+   "income.byType"
+  ],
+  "life.goals": [
+   "goalCost",
+   "targetDate",
+   "priority"
+  ],
+  "life.events": [],
+  "life.retirementMultipliers": [
+   "gogo",
+   "slowgo",
+   "nogo"
+  ],
+  "life.retirementAge": [
+   "retirementAge"
+  ],
+  "life.baristaIncomeMonthly": [
+   "baristaIncome"
+  ],
+  "life.dreamFiAge": [
+   "dreamFiAge"
+  ],
+  "life.dreamSpendingMonthly": [
+   "dreamSpending"
+  ],
+  "life.gutSpendingMonthly": [
+   "gutSpending"
+  ]
+ },
+ "projectionInputs": [
+  "sun.birthDate",
+  "income.takeHomeMonthly",
+  "income.grossMonthly",
+  "safety.spendingWithPremiums",
+  "invest.investedAssets",
+  "invest.cashBalances",
+  "invest.annualContributions",
+  "debt.debtServiceMonthly",
+  "debt.payoffOrders",
+  "spending.savingsLandingMonthly",
+  "life.retirementAge",
+  "life.retirementMultipliers",
+  "asm.returnLikely",
+  "asm.returnBest",
+  "asm.returnWorst",
+  "asm.cashRealReturn",
+  "asm.withdrawalRate",
+  "asm.socialSecurityAge",
+  "asm.socialSecurityScale",
+  "asm.retirementAgeDefault",
+  "asm.slowgoAge",
+  "asm.nogoAge",
+  "asm.projectionEndAge",
+  "asm.gogo",
+  "asm.slowgo",
+  "asm.nogo"
+ ],
+ "negativeEdges": [
+  "asm.returnLikely>m.coastFi",
+  "asm.returnLikely>m.doublingTime",
+  "asm.returnLikely>projection",
+  "asm.socialSecurityScale>m.ssAdjustedFiNumber",
+  "asm.withdrawalRate>m.baristaLeanFi",
+  "asm.withdrawalRate>m.baristaRegularFi",
+  "asm.withdrawalRate>m.baristaRule",
+  "asm.withdrawalRate>m.fatFi",
+  "asm.withdrawalRate>m.fiNumber",
+  "asm.withdrawalRate>m.leanFi",
+  "asm.withdrawalRate>m.purchaseInFiDays",
+  "asm.withdrawalRate>m.regularFi",
+  "asm.withdrawalRate>m.ssAdjustedFiNumber",
+  "asm.withdrawalRate>m.trueFiNumber",
+  "asm.withdrawalRate>projection",
+  "businessExpenses>income.takeHomeMonthly",
+  "hsaPayroll>income.takeHomeMonthly",
+  "hsaPayroll>taxes.federalAnnual",
+  "hsaPayroll>taxes.ficaAnnual",
+  "income.grossMonthly>projection",
+  "income.takeHomeMonthly>projection",
+  "income.workCostsMonthly>m.realHourlyWage",
+  "income.workHoursMonthly>m.realHourlyWage",
+  "invest.annualContributions>projection",
+  "invest.cashBalances>m.emergencyGap",
+  "invest.cashBalances>projection",
+  "invest.investedAssets>projection",
+  "invest.totalAssets>m.debtToAssets",
+  "life.baristaIncomeMonthly>m.baristaLeanFi",
+  "life.baristaIncomeMonthly>m.baristaRegularFi",
+  "life.dreamFiAge>m.requiredMonthly",
+  "life.retirementAge>m.coastFi",
+  "m.fiNumber>m.pctToFi",
+  "m.gross>m.dti",
+  "m.gross>m.expectedNetWorth",
+  "m.gross>m.salaryMultiple",
+  "m.spending>m.bridgeYears",
+  "m.spending>m.daysOfFreedom",
+  "m.spending>m.dreamGap",
+  "m.spending>m.fiRatio",
+  "m.spending>m.gutGap",
+  "m.spending>m.savingsRateGross",
+  "m.spending>m.savingsRateTakeHome",
+  "m.spending>m.surplus",
+  "m.spending>m.yearsOfExpenses",
+  "m.takeHome>m.leak",
+  "m.takeHome>m.savingsRateNeeded",
+  "m.totalDebt>m.netWorth",
+  "premium>safety.spendingWithPremiums",
+  "pretaxOther>income.takeHomeMonthly",
+  "pretaxOther>taxes.federalAnnual",
+  "pretaxOther>taxes.ficaAnnual",
+  "pretaxRetirement>income.takeHomeMonthly",
+  "pretaxRetirement>taxes.federalAnnual",
+  "pretaxRetirement>taxes.taxable",
+  "projection>m.healthcareBridge",
+  "rentalExpenses>income.takeHomeMonthly",
+  "rothRetirement>income.takeHomeMonthly",
+  "safety.premiumsMonthly>safety.spendingWithPremiums",
+  "safety.ruleOf5Target>m.cashDrag",
+  "safety.spendingWithPremiums>m.surplus",
+  "safety.spendingWithPremiums>safety.runway",
+  "spending.savingsLandingMonthly>m.leak",
+  "sun.birthDate>projection"
+ ],
+ "noFiEffect": {
+  "stability": "a label",
+  "bureau": "a label",
+  "priority": "a label",
+  "beneficiary": "a label",
+  "insuranceType": "a label",
+  "fundName": "a label",
+  "accountRef": "a label",
+  "lineAutopay": "a label",
+  "cardName": "feeds the card lenses only",
+  "annualFee": "feeds the card lenses only",
+  "creditsUsed": "feeds the card lenses only",
+  "primaryCard": "feeds the rewards lenses only",
+  "category": "shapes the categories and the FAT floor, not the total",
+  "needWant": "shapes needs-only runway, not the total",
+  "mistake": "shapes the mistake lens, not the total",
+  "coverage": "insurance detail, not a flow",
+  "deductible": "insurance detail, not a flow",
+  "cutAbility": "a what-if, not a flow",
+  "unemploymentWeekly": "an estimate for the safety net only",
+  "score": "a score, not a flow",
+  "creditLimit": "utilization only",
+  "promoEnd": "interest timing within a year",
+  "promoApr": "interest timing within a year",
+  "autopay": "interest only",
+  "startDate": "a date, not a flow",
+  "targetDate": "a goal date",
+  "goalCost": "a goal, not a flow until promoted",
+  "otherBenefit": "a note of a benefit",
+  "otherTax": "a note",
+  "otherLife": "a note",
+  "otherSafety": "a note",
+  "hoursPaid": "the real hourly wage only",
+  "hoursCommute": "the real hourly wage only",
+  "workCosts": "the real hourly wage only",
+  "allocStocks": "allocation only",
+  "allocBonds": "allocation only",
+  "allocCash": "allocation only",
+  "allocOther": "allocation only",
+  "usShare": "allocation only",
+  "expenseRatio": "fee drag only (the projection does not net fees)",
+  "pctOfAccount": "fee drag only",
+  "gutSpending": "a check against the lines",
+  "dreamSpending": "the Fat rung and the dream gap",
+  "dreamFiAge": "the required monthly, not the date",
+  "baristaIncome": "the Barista rungs, not the projected date",
+  "sun.name": "a name",
+  "sun.city": "a place",
+  "sun.state": "a place (no state tax in v1)",
+  "sun.bigGoal": "words",
+  "sun.dependents": "limits only",
+  "asm.fatFiMultiplier": "the Fat rung only",
+  "asm.baristaIncomeAnnualCents": "the Barista rungs only",
+  "asm.shelterHeavyShare": "a flag line",
+  "asm.hiddenLeakShare": "a flag line",
+  "asm.utilizationCardMax": "a flag line",
+  "asm.utilizationTotalMax": "a flag line",
+  "asm.feeDragEr": "a flag line",
+  "asm.thinRunwayMonths": "a flag line",
+  "asm.lockedLiquidityShare": "a flag line",
+  "asm.realWageShare": "a flag line",
+  "asm.noFeeBaselineRate": "the card lenses",
+  "asm.portalOnlyEarnCap": "the card lenses",
+  "asm.roughSpread": "ranges, not values",
+  "asm.fiProgressBasis": "how progress is counted, not the date",
+  "asm.fiSpendingBasis": "which spending the rungs use",
+  "asm.healthcarePremiumMonthlyCents": "the bridge metric only",
+  "asm.inflation": "returns are already real; used for the inflation shock only",
+  "asm.guardrailsBand": "the guardrails band only",
+  "asm.ssBridgeFromPortfolio": "how the SS floor is read",
+  "asm.benchmarkSource": "benchmarks only",
+  "asm.showBenchmarksToClient": "a view switch",
+  "fatFloor": "the Lean rung only",
+  "debtSummaryTotal": "net worth only; the projection follows the typed debts",
+  "otherDebt": "net worth only; the projection follows the typed debts",
+  "investSummaryTotal": "total assets only; the projection follows invested and cash balances",
+  "otherAsset": "total assets only",
+  "life.events": "promoted blocks are read by Simulate, not the engine"
+ },
+ "signNote": "An edge sign is the derivative: +1 when the upstream value rising raises the downstream value, -1 when it lowers it. The projection node stands for the FI date, so a later date is higher.",
+ "extraEdges": {
+  "tags": [
+   "startDate",
+   "otherBenefit",
+   "otherSafety",
+   "otherTax",
+   "otherLife",
+   "sun.name",
+   "sun.state",
+   "sun.city",
+   "sun.bigGoal",
+   "asm.roughSpread",
+   "asm.inflation",
+   "asm.showBenchmarksToClient",
+   "life.events"
+  ],
+  "m.shelterRate": [
+   "asm.shelterHeavyShare"
+  ],
+  "m.leak": [
+   "asm.hiddenLeakShare"
+  ],
+  "m.utilization": [
+   "asm.utilizationCardMax",
+   "asm.utilizationTotalMax"
+  ],
+  "m.weightedEr": [
+   "asm.feeDragEr"
+  ],
+  "m.runway": [
+   "asm.thinRunwayMonths"
+  ],
+  "m.liquidityRate": [
+   "asm.lockedLiquidityShare"
+  ],
+  "m.realHourlyWage": [
+   "asm.realWageShare"
+  ],
+  "m.baristaRegularFi": [
+   "asm.baristaIncomeAnnualCents"
+  ],
+  "m.baristaLeanFi": [
+   "asm.baristaIncomeAnnualCents"
+  ],
+  "m.fiLevels": [
+   "asm.baristaIncomeAnnualCents"
+  ],
+  "m.cardNetValue": [
+   "asm.noFeeBaselineRate"
+  ],
+  "m.rewardsLeft": [
+   "asm.portalOnlyEarnCap"
+  ],
+  "m.ssAdjustedFiNumber": [
+   "asm.ssBridgeFromPortfolio"
+  ]
+ }
+}

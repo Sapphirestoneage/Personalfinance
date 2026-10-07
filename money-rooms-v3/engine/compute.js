@@ -19,6 +19,7 @@ import * as Life from './planets/life.js';
 import { computeMetrics } from './metrics.js';
 import { computeLenses } from './lenses.js';
 import { tripleD, project, socialSecurityMonthly } from './projection.js';
+import { monthsToReach } from './fiLadder.js';
 
 export function fillOf(fields) {
   const list = fields.filter(f => f && f.state !== 'not-applicable' && f.state !== 'not-for-me');
@@ -136,9 +137,18 @@ export function compute(record, data, opts) {
     }
     projection.ssMonthly = ssMonthly;
     result.projectionInputs = inp;
+    /* Level 9 (MR-043): two alternative paths the lenses read, to the month: 3.5% instead of 4%, and a 20% lower cost of living */
+    const debt0 = debts.reduce((s2, d) => s2 + (d.balance || 0), 0);
+    const monthsOf = (pr, annualSpend, wr) => monthsToReach(annualSpend / wr, inp.invested + inp.cash - debt0, pr.path.map(p => ({ year: p.year, age: p.age, value: p.netWorth })));
+    const baseMonths = monthsOf(projection.likely, inp.annualSpend, asm.withdrawalRate);
+    const wr35 = project(Object.assign({}, inp, { asm: Object.assign({}, asm, { withdrawalRate: 0.035 }) }), asm.returnLikely);
+    const geo = project(Object.assign({}, inp, { annualSpend: Math.round(inp.annualSpend * 0.8), leakAnnual: inp.leakAnnual + Math.round(inp.annualSpend * 0.2) }), asm.returnLikely);
+    projection.alt = { baseMonths, wr35Months: monthsOf(wr35, inp.annualSpend, 0.035), geoMonths: monthsOf(geo, Math.round(inp.annualSpend * 0.8), asm.withdrawalRate), geoFiNumber: Math.round(Math.round(inp.annualSpend * 0.8) / asm.withdrawalRate) };
   }
-  const metrics = computeMetrics({ sun, facts, asm, data, today, age, birthMonth: birth ? birth.slice(5, 7) : '01', projection, debts, interestParts, oneMorePoint, contribAnnual });
-  const lenses = computeLenses({ metrics, sun, asm, data, age, debts, today });
+  const mctx = { sun, facts, asm, data, today, age, birthMonth: birth ? birth.slice(5, 7) : '01', projection, debts, interestParts, oneMorePoint, contribAnnual };
+  const metrics = computeMetrics(mctx);
+  result.ladder = mctx.ladderOut || null;
+  const lenses = computeLenses({ metrics, sun, asm, data, age, debts, today, record, projection, contribAnnual });
   result.sun = sun; result.metrics = metrics; result.lenses = lenses; result.projection = projection; result.debts = debts; result.asm = asm; result.age = age;
   return Object.freeze(result);
 }

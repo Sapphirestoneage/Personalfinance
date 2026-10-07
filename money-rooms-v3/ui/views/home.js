@@ -8,6 +8,7 @@ import * as F from '../../engine/format.js';
 import { hasValue } from '../../engine/states.js';
 import { orbitMap, mapPanel } from '../orbit.js';
 import { datePicker } from '../datepicker.js';
+import { renderShelf } from '../shelf.js';
 import { lowerFirst, holdsBack } from './ledger.js';
 import { overallConfidence } from './onepager.js';
 
@@ -49,8 +50,10 @@ export function mount(host, app) {
   const history = h('section', { class: 'panel coach-only' });
   const mapHost = h('div', { class: 'maphost' });
   const bar = h('div', { class: 'mapbar-host' });
+  const shelf = h('section', { class: 'panel shelf-panel' });
   host.appendChild(header);
-  host.appendChild(h('div', { class: 'grid home-grid' }, h('div', { class: 'stack' }, app.record ? mapHost : null, app.record ? bar : null, sun), h('div', { class: 'stack coach-only' }, clients, history)));
+  host.appendChild(h('div', { class: 'grid home-grid' }, h('div', { class: 'stack' }, app.record ? mapHost : null, app.record ? bar : null, sun, app.record ? shelf : null), h('div', { class: 'stack coach-only' }, clients, history)));
+  if (app.record) renderShelf(shelf, app, { compact: true });
   renderClients(clients, app);
   renderMap(mapHost, bar, app);
   renderSun(sun, app);
@@ -61,6 +64,7 @@ export function mount(host, app) {
       renderMap(mapHost, bar, app);
       renderHistory(history, app);
       updateSunValues(sun, app);
+      if (app.record) renderShelf(shelf, app, { compact: true });
       if (reason === 'clients') renderClients(clients, app);
     },
   };

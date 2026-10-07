@@ -1,8 +1,15 @@
 # Progress
 
-Updated: 2026-10-05
+Updated: 2026-10-07
 
 ## Done
+- Level 9 What Moves the FI Date: the FI ladder (engine/fiLadder.js, five rungs plus Coast, percent
+  there, date reached, required monthly to the dream FI age, the barista rule and the reverse), 26 new
+  metrics with direction and levers on all 74, the dependency graph (data/graph.json, engine/graph.js,
+  integrity tests), sensitivity (engine/sensitivity.js: impact and ask priority, two synthetic households
+  tied out to the month in tests/households/expected-levers.py), leverage v2 on the Session card, 20 new
+  lenses and 13 readings, the headline shelf on Home, Session and the one-pager, the #/levers screen with
+  the graph view, and Level 8 stand-ins (dream FI age, dream and gut spending, the FI spending basis).
 - Level 7 Polish: critique rounds for Simulate, Learn and Depth applied (26 fixes plus the Level 3
   leftovers), contrast test and accessible-names sweep check, Dev end-to-end mock session,
   README library section, FINAL-REPORT.md.
@@ -32,6 +39,11 @@ Updated: 2026-10-05
 - Design critique round 1 found 17 fixes; all applied; round 2 in screenshots/level-0/critique.md.
 
 ## Next
+- A design critique round for #/levers and the shelf (every other screen has one).
+- Build Level 8 proper (gut and dream anchors per category, variance, targets); the Level 9 stand-ins
+  are three optional fields on the Life plan and one Assumptions switch.
+- Unknown inputs with a national default should get the 50% band in ask priority; today they fall back
+  to the v1 leverage score (MR-042).
 - Merge the branch so GitHub Pages serves the app, then a live timing of Jordan's keyboard entry
   with Eli.
 - Open critique items: Sankey label spacing (T14), Measure regrouping at 390 (T19), a row drawer
@@ -43,6 +55,8 @@ Updated: 2026-10-05
   Not this lane's to fix; noted for the owner in QUESTIONS.md.
 
 ## Timings
+- Sensitivity run (Maya, 288 re-runs of the whole engine, 40 roots): about 800 ms in Node; it runs in
+  a module Worker in the browser, memoised per record version, debounced 250 ms.
 - Maya recompute after a keystroke: 3.1 ms (flow level2-maya-recompute-under-100ms).
 - Keyboard-only Jordan entry (flow level1-jordan-keyboard-only): 33 rows and 8 household
   facts in 1,966 keystrokes, 12 seconds of machine time. At a brisk human pace of two

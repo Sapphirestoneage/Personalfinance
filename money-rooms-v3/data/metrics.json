@@ -1,6 +1,6 @@
 {
- "asOf": "2026-10-05",
- "source": "Money Rooms v3 spec, Metric registry; bands cite their source in each row",
+ "asOf": "2026-10-07",
+ "source": "Money Rooms v3 spec, Measure, plus Level 9 (What Moves the FI Date): standard FI metrics with direction, levers and graph links",
  "verify": false,
  "metrics": [
   {
@@ -22,7 +22,26 @@
    "owner": "income",
    "group": "cash flow",
    "stage": 1,
-   "range": null
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "takeHome",
+     "sign": 1,
+     "text": "Raise pay or cut payroll deductions that do not come back."
+    },
+    {
+     "root": "grossPay",
+     "sign": 1,
+     "text": "A raise or a second income lifts take-home."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "grossPay",
+     "takeHome"
+    ]
+   }
   },
   {
    "n": 2,
@@ -43,7 +62,20 @@
    "owner": "income",
    "group": "cash flow",
    "stage": 1,
-   "range": null
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "grossPay",
+     "sign": 1,
+     "text": "A raise, a bonus or a second income."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "grossPay"
+    ]
+   }
   },
   {
    "n": 3,
@@ -65,7 +97,26 @@
    "owner": "spending",
    "group": "cash flow",
    "stage": 1,
-   "range": null
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Lower any spending line, the big three first: housing, transportation, food."
+    },
+    {
+     "root": "premium",
+     "sign": -1,
+     "text": "Shop insurance premiums paid from the bank."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "premium"
+    ]
+   }
   },
   {
    "n": 4,
@@ -88,7 +139,32 @@
    "owner": "engine",
    "group": "cash flow",
    "stage": 1,
-   "range": null
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "takeHome",
+     "sign": 1,
+     "text": "More take-home."
+    },
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Less spending."
+    },
+    {
+     "root": "minimum",
+     "sign": -1,
+     "text": "A paid-off debt frees its minimum."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "minimum",
+     "takeHome"
+    ]
+   }
   },
   {
    "n": 5,
@@ -111,6 +187,25 @@
     "low": 0.1,
     "high": 0.2,
     "source": "Common personal-finance guidance: 10% floor, 20% strong"
+   },
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Cut spending: each dollar raises the rate twice as fast as a dollar earned."
+    },
+    {
+     "root": "takeHome",
+     "sign": 1,
+     "text": "Earn more and keep the spending flat."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "takeHome"
+    ]
    }
   },
   {
@@ -139,6 +234,31 @@
     "low": 0.15,
     "high": 0.5,
     "source": "Mr. Money Mustache, The Shockingly Simple Math"
+   },
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "pretaxRetirement",
+     "sign": 1,
+     "text": "Raise the 401k deferral."
+    },
+    {
+     "root": "matchRate",
+     "sign": 1,
+     "text": "Capture the full match."
+    },
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Spend less."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "matchRate",
+     "pretaxRetirement"
+    ]
    }
   },
   {
@@ -159,7 +279,26 @@
    "owner": "engine",
    "group": "cash flow",
    "stage": 1,
-   "range": null
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "savingsLanding",
+     "sign": 1,
+     "text": "Give the surplus a landing: an automatic transfer the day after payday."
+    },
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Find the lines the leak hides in."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "savingsLanding"
+    ]
+   }
   },
   {
    "n": 8,
@@ -182,7 +321,26 @@
    "owner": "engine",
    "group": "cash flow",
    "stage": 1,
-   "range": null
+   "range": null,
+   "direction": "neutral",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Each share falls when its lines fall."
+    },
+    {
+     "root": "pretaxRetirement",
+     "sign": 1,
+     "text": "Retirement share rises with deferrals."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "pretaxRetirement"
+    ]
+   }
   },
   {
    "n": 9,
@@ -203,7 +361,26 @@
    "owner": "spending",
    "group": "cash flow",
    "stage": 1,
-   "range": null
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Lower the flagged lines: rent, groceries, transit."
+    },
+    {
+     "root": "fatFloor",
+     "sign": -1,
+     "text": "Flag only what a lean month truly needs."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "fatFloor"
+    ]
+   }
   },
   {
    "n": 10,
@@ -226,6 +403,19 @@
     "low": 0.25,
     "high": 0.35,
     "source": "The 30% rule of thumb, widened for high-cost cities"
+   },
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "A cheaper place, a roommate or a house hack."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount"
+    ]
    }
   },
   {
@@ -250,6 +440,25 @@
     "low": 0.5,
     "high": 0.6,
     "source": "Ramit Sethi conscious-spending plan: fixed costs 50 to 60%"
+   },
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Turn a fixed need into a flexible want where you can."
+    },
+    {
+     "root": "needWant",
+     "sign": -1,
+     "text": "Mark lines honestly as needs or wants."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "needWant"
+    ]
    }
   },
   {
@@ -273,7 +482,32 @@
    "owner": "engine",
    "group": "cash flow",
    "stage": 1,
-   "range": null
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "workCosts",
+     "sign": -1,
+     "text": "Cut the costs of working: commute, clothes, convenience food."
+    },
+    {
+     "root": "hoursCommute",
+     "sign": -1,
+     "text": "A shorter commute raises the real wage."
+    },
+    {
+     "root": "takeHome",
+     "sign": 1,
+     "text": "More pay for the same hours."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "hoursCommute",
+     "takeHome",
+     "workCosts"
+    ]
+   }
   },
   {
    "n": 13,
@@ -294,7 +528,26 @@
    "owner": "debt",
    "group": "debt",
    "stage": 2,
-   "range": null
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "minimum",
+     "sign": -1,
+     "text": "Pay a debt off and its minimum goes away."
+    },
+    {
+     "root": "balance",
+     "sign": -1,
+     "text": "Lower balances carry lower minimums."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "balance",
+     "minimum"
+    ]
+   }
   },
   {
    "n": 14,
@@ -315,7 +568,20 @@
    "owner": "debt",
    "group": "debt",
    "stage": 2,
-   "range": null
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "balance",
+     "sign": -1,
+     "text": "Pay balances down, highest rate first."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "balance"
+    ]
+   }
   },
   {
    "n": 15,
@@ -338,6 +604,25 @@
     "low": 0.0,
     "high": 0.36,
     "source": "Mortgage underwriting back-end ratio, 36%"
+   },
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "minimum",
+     "sign": -1,
+     "text": "Lower minimums."
+    },
+    {
+     "root": "grossPay",
+     "sign": 1,
+     "text": "Higher gross pay."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "grossPay",
+     "minimum"
+    ]
    }
   },
   {
@@ -357,7 +642,26 @@
    "owner": "engine",
    "group": "debt",
    "stage": 2,
-   "range": null
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "balance",
+     "sign": -1,
+     "text": "Pay debt down."
+    },
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Grow assets."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "balance"
+    ]
+   }
   },
   {
    "n": 17,
@@ -375,7 +679,26 @@
    "owner": "debt",
    "group": "debt",
    "stage": 2,
-   "range": null
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "apr",
+     "sign": -1,
+     "text": "Refinance or move the highest-rate balance first."
+    },
+    {
+     "root": "rate",
+     "sign": -1,
+     "text": "A lower loan rate."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "apr",
+     "rate"
+    ]
+   }
   },
   {
    "n": 18,
@@ -396,7 +719,26 @@
    "owner": "debt",
    "group": "debt",
    "stage": 2,
-   "range": null
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "apr",
+     "sign": -1,
+     "text": "Pay the highest APR first; a promo or a transfer lowers it."
+    },
+    {
+     "root": "balance",
+     "sign": -1,
+     "text": "Lower balances pay less interest."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "apr",
+     "balance"
+    ]
+   }
   },
   {
    "n": 19,
@@ -418,6 +760,25 @@
     "low": 0.0,
     "high": 0.3,
     "source": "CFPB and FICO guidance: under 30%, under 10% best"
+   },
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "balance",
+     "sign": -1,
+     "text": "Pay the card down before the statement closes."
+    },
+    {
+     "root": "creditLimit",
+     "sign": 1,
+     "text": "A higher limit lowers utilization."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "balance",
+     "creditLimit"
+    ]
    }
   },
   {
@@ -436,7 +797,26 @@
    "owner": "debt",
    "group": "debt",
    "stage": 2,
-   "range": null
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "balance",
+     "sign": -1,
+     "text": "Clear the promo balance before the cliff."
+    },
+    {
+     "root": "promoEnd",
+     "sign": 1,
+     "text": "A later promo end buys time."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "balance",
+     "promoEnd"
+    ]
+   }
   },
   {
    "n": 21,
@@ -455,7 +835,26 @@
    "owner": "debt",
    "group": "debt",
    "stage": 2,
-   "range": null
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "minimum",
+     "sign": 1,
+     "text": "Pay more than the minimum, highest rate first."
+    },
+    {
+     "root": "apr",
+     "sign": -1,
+     "text": "A lower rate finishes sooner."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "apr",
+     "minimum"
+    ]
+   }
   },
   {
    "n": 22,
@@ -477,7 +876,26 @@
    "owner": "engine",
    "group": "balance sheet",
    "stage": 3,
-   "range": null
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Invest the surplus."
+    },
+    {
+     "root": "balance",
+     "sign": -1,
+     "text": "Pay debt down."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "balance"
+    ]
+   }
   },
   {
    "n": 23,
@@ -497,7 +915,20 @@
    "owner": "invest",
    "group": "balance sheet",
    "stage": 3,
-   "range": null
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Contributions and growth."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance"
+    ]
+   }
   },
   {
    "n": 24,
@@ -516,7 +947,26 @@
    "owner": "engine",
    "group": "balance sheet",
    "stage": 3,
-   "range": null
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Hold some savings in a taxable account or cash."
+    },
+    {
+     "root": "accountType",
+     "sign": 1,
+     "text": "Reachable account types raise the share."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "accountType"
+    ]
+   }
   },
   {
    "n": 25,
@@ -535,7 +985,26 @@
    "owner": "engine",
    "group": "balance sheet",
    "stage": 3,
-   "range": null
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Taxable and Roth balances bridge the years before 59.5."
+    },
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Lower spending stretches the bridge."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "amount"
+    ]
+   }
   },
   {
    "n": 26,
@@ -553,7 +1022,26 @@
    "owner": "safety",
    "group": "safety",
    "stage": 3,
-   "range": null
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Build cash to the Rule of 5 target."
+    },
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "A lower FAT floor stretches the runway."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "amount"
+    ]
+   }
   },
   {
    "n": 27,
@@ -574,7 +1062,26 @@
    "owner": "safety",
    "group": "safety",
    "stage": 3,
-   "range": null
+   "range": null,
+   "direction": "neutral",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Lower spending lowers the target."
+    },
+    {
+     "root": "birthDate",
+     "sign": 1,
+     "text": "The target grows with age."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "birthDate"
+    ]
+   }
   },
   {
    "n": 28,
@@ -596,7 +1103,26 @@
    "owner": "safety",
    "group": "safety",
    "stage": 3,
-   "range": null
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Send the surplus to cash until the gap closes."
+    },
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Lower spending lowers the target."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "amount"
+    ]
+   }
   },
   {
    "n": 29,
@@ -608,7 +1134,8 @@
    "inputs": [
     "invest.cashBalances",
     "safety.ruleOf5Target",
-    "assumptions"
+    "asm.returnLikely",
+    "asm.cashRealReturn"
    ],
    "units": {
     "kind": "money",
@@ -619,7 +1146,26 @@
    "owner": "engine",
    "group": "safety",
    "stage": 3,
-   "range": null
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "accountBalance",
+     "sign": -1,
+     "text": "Move cash above the target into investments."
+    },
+    {
+     "root": "returnLikely",
+     "sign": 1,
+     "text": "The gap between returns sets the drag."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "returnLikely"
+    ]
+   }
   },
   {
    "n": 30,
@@ -638,7 +1184,26 @@
    "owner": "engine",
    "group": "balance sheet",
    "stage": 3,
-   "range": null
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "pretaxRetirement",
+     "sign": 1,
+     "text": "Fill pre-tax room first."
+    },
+    {
+     "root": "contribAmount",
+     "sign": 1,
+     "text": "Roth and HSA contributions."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "contribAmount",
+     "pretaxRetirement"
+    ]
+   }
   },
   {
    "n": 31,
@@ -657,7 +1222,20 @@
    "owner": "invest",
    "group": "balance sheet",
    "stage": 3,
-   "range": null
+   "range": null,
+   "direction": "neutral",
+   "levers": [
+    {
+     "root": "contribAmount",
+     "sign": 1,
+     "text": "Direct new money to the bucket that is thin."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "contribAmount"
+    ]
+   }
   },
   {
    "n": 32,
@@ -675,7 +1253,26 @@
    "owner": "invest",
    "group": "retirement",
    "stage": 3,
-   "range": null
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "pretaxRetirement",
+     "sign": 1,
+     "text": "Defer at least up to the match."
+    },
+    {
+     "root": "matchUpTo",
+     "sign": 1,
+     "text": "The plan sets how much is matched."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "matchUpTo",
+     "pretaxRetirement"
+    ]
+   }
   },
   {
    "n": 33,
@@ -693,7 +1290,26 @@
    "owner": "invest",
    "group": "retirement",
    "stage": 3,
-   "range": null
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "pretaxRetirement",
+     "sign": 1,
+     "text": "Raise the deferral."
+    },
+    {
+     "root": "contribAmount",
+     "sign": 1,
+     "text": "IRA and HSA contributions use the room."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "contribAmount",
+     "pretaxRetirement"
+    ]
+   }
   },
   {
    "n": 34,
@@ -715,6 +1331,19 @@
     "low": 0.0,
     "high": 0.0025,
     "source": "JL Collins: index funds under 0.25%"
+   },
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "expenseRatio",
+     "sign": -1,
+     "text": "Swap to a lower-cost fund in the same account."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "expenseRatio"
+    ]
    }
   },
   {
@@ -728,7 +1357,7 @@
     "invest.investedAssets",
     "invest.weightedExpenseRatio",
     "life.retirementAge",
-    "assumptions"
+    "asm.returnLikely"
    ],
    "units": {
     "kind": "money",
@@ -739,7 +1368,26 @@
    "owner": "engine",
    "group": "retirement",
    "stage": 3,
-   "range": null
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "expenseRatio",
+     "sign": -1,
+     "text": "A lower expense ratio compounds for decades."
+    },
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "More invested means more fee."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "expenseRatio"
+    ]
+   }
   },
   {
    "n": 36,
@@ -757,7 +1405,20 @@
    "owner": "invest",
    "group": "balance sheet",
    "stage": 3,
-   "range": null
+   "range": null,
+   "direction": "neutral",
+   "levers": [
+    {
+     "root": "allocStocks",
+     "sign": 1,
+     "text": "Rebalance toward the target mix."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "allocStocks"
+    ]
+   }
   },
   {
    "n": 37,
@@ -775,7 +1436,26 @@
    "owner": "taxes",
    "group": "taxes",
    "stage": 4,
-   "range": null
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "pretaxRetirement",
+     "sign": 1,
+     "text": "Pre-tax deferrals lower the implied rate."
+    },
+    {
+     "root": "takeHome",
+     "sign": 1,
+     "text": "Check the paystub for over-withholding."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "pretaxRetirement",
+     "takeHome"
+    ]
+   }
   },
   {
    "n": 38,
@@ -794,7 +1474,32 @@
    "owner": "taxes",
    "group": "taxes",
    "stage": 4,
-   "range": null
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "pretaxRetirement",
+     "sign": 1,
+     "text": "Pre-tax deferrals lower taxable income."
+    },
+    {
+     "root": "hsaPayroll",
+     "sign": 1,
+     "text": "HSA contributions are pre-tax."
+    },
+    {
+     "root": "filingStatus",
+     "sign": 1,
+     "text": "Filing status sets the brackets."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "filingStatus",
+     "hsaPayroll",
+     "pretaxRetirement"
+    ]
+   }
   },
   {
    "n": 39,
@@ -815,7 +1520,26 @@
    "owner": "taxes",
    "group": "taxes",
    "stage": 4,
-   "range": null
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "hsaPayroll",
+     "sign": 1,
+     "text": "HSA and section 125 lines skip FICA."
+    },
+    {
+     "root": "grossPay",
+     "sign": 1,
+     "text": "FICA follows wages."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "grossPay",
+     "hsaPayroll"
+    ]
+   }
   },
   {
    "n": 40,
@@ -836,7 +1560,20 @@
    "owner": "taxes",
    "group": "taxes",
    "stage": 4,
-   "range": null
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "grossPay",
+     "sign": 1,
+     "text": "A higher bracket saves more per pre-tax dollar."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "grossPay"
+    ]
+   }
   },
   {
    "n": 41,
@@ -847,7 +1584,7 @@
    "formula": "spending x 12 / withdrawalRate",
    "inputs": [
     "m.spending",
-    "assumptions"
+    "asm.withdrawalRate"
    ],
    "units": {
     "kind": "money",
@@ -858,18 +1595,39 @@
    "owner": "engine",
    "group": "FI",
    "stage": 5,
-   "range": null
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Every $100 a month cut lowers the number by 12 / withdrawal rate x 100."
+    },
+    {
+     "root": "withdrawalRate",
+     "sign": -1,
+     "text": "A higher withdrawal rate lowers the number and raises the risk."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "withdrawalRate"
+    ]
+   }
   },
   {
    "n": 42,
    "id": "pctToFi",
    "name": "% to FI",
    "clientLabel": "How far along",
-   "definition": "Net worth divided by the FI number.",
-   "formula": "netWorth / fiNumber",
+   "definition": "Invested assets (or net worth, by the FI progress basis assumption) divided by the FI number.",
+   "formula": "invested / fiNumber (basis switchable)",
    "inputs": [
+    "invest.investedAssets",
     "m.netWorth",
-    "m.fiNumber"
+    "m.fiNumber",
+    "asm.fiProgressBasis"
    ],
    "units": {
     "kind": "ratio"
@@ -877,20 +1635,41 @@
    "owner": "engine",
    "group": "FI",
    "stage": 5,
-   "range": null
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Invest more."
+    },
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Lower spending lowers the target."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "amount"
+    ]
+   }
   },
   {
    "n": 43,
    "id": "coastFi",
    "name": "Coast FI number and %",
    "clientLabel": "Enough today to coast",
-   "definition": "The FI number discounted to today at the likely return over the years to retirement age, and net worth against it.",
+   "definition": "The FI number discounted to today at the likely return over the years to retirement age, and the FI progress basis against it.",
    "formula": "fiNumber / (1+r)^years; netWorth / coast",
    "inputs": [
     "m.fiNumber",
     "life.retirementAge",
-    "assumptions",
-    "m.netWorth"
+    "asm.returnLikely",
+    "invest.investedAssets",
+    "m.netWorth",
+    "asm.fiProgressBasis"
    ],
    "units": {
     "kind": "money",
@@ -901,7 +1680,32 @@
    "owner": "engine",
    "group": "FI",
    "stage": 5,
-   "range": null
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "retirementAge",
+     "sign": -1,
+     "text": "A later retirement age lowers the coast number."
+    },
+    {
+     "root": "returnLikely",
+     "sign": -1,
+     "text": "A higher return assumption lowers it."
+    },
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Lower spending lowers it."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "retirementAge",
+     "returnLikely"
+    ]
+   }
   },
   {
    "n": 44,
@@ -919,19 +1723,52 @@
    "owner": "engine",
    "group": "FI",
    "stage": 5,
-   "range": null
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Spending cuts move the date twice: a smaller target and more saved."
+    },
+    {
+     "root": "contribAmount",
+     "sign": 1,
+     "text": "Invest more each month."
+    },
+    {
+     "root": "takeHome",
+     "sign": 1,
+     "text": "Earn more and invest the difference."
+    },
+    {
+     "root": "returnLikely",
+     "sign": 1,
+     "text": "Returns are not a lever, only an assumption."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "contribAmount",
+     "returnLikely",
+     "takeHome"
+    ]
+   }
   },
   {
    "n": 45,
    "id": "fiLevels",
    "name": "Lean, Fat and Barista FI",
    "clientLabel": "Three sizes of enough",
-   "definition": "Lean: the FAT floor over the withdrawal rate. Fat: spending times the fat multiplier. Barista: spending less part-time income.",
+   "definition": "Alias of the FI ladder (MR-040): Lean, FI, Fat and Barista as one list for the gauge and older records.",
    "formula": "fatFloor x 12 / wr; spending x 12 x fat / wr; (spending x 12 - barista) / wr",
    "inputs": [
     "m.fatFloor",
     "m.spending",
-    "assumptions"
+    "asm.withdrawalRate",
+    "asm.fatFiMultiplier",
+    "life.baristaIncomeMonthly"
    ],
    "units": {
     "kind": "list"
@@ -939,7 +1776,26 @@
    "owner": "engine",
    "group": "FI",
    "stage": 5,
-   "range": null
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Lower spending lowers every rung."
+    },
+    {
+     "root": "baristaIncome",
+     "sign": 1,
+     "text": "Part-time income lowers the Barista rungs."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "baristaIncome"
+    ]
+   }
   },
   {
    "n": 46,
@@ -958,7 +1814,20 @@
    "owner": "engine",
    "group": "FI",
    "stage": 5,
-   "range": null
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "contribAmount",
+     "sign": 1,
+     "text": "One more point of take-home saved."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "contribAmount"
+    ]
+   }
   },
   {
    "n": 47,
@@ -976,7 +1845,26 @@
    "owner": "debt",
    "group": "cards",
    "stage": 2,
-   "range": null
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "cardName",
+     "sign": 1,
+     "text": "A card that fits the spending."
+    },
+    {
+     "root": "creditsUsed",
+     "sign": 1,
+     "text": "Use the credits you pay for."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "cardName",
+     "creditsUsed"
+    ]
+   }
   },
   {
    "n": 48,
@@ -997,7 +1885,1155 @@
    "owner": "debt",
    "group": "cards",
    "stage": 2,
-   "range": null
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "primaryCard",
+     "sign": 1,
+     "text": "Pay each category with the card that earns most there."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "primaryCard"
+    ]
+   }
+  },
+  {
+   "n": 49,
+   "id": "leanFi",
+   "name": "Lean FI number",
+   "clientLabel": "The floor",
+   "definition": "The FAT floor (food, accommodation, transportation) a year over the withdrawal rate. Percent there, the date the projection reaches it, and the monthly investing that reaches it by the dream FI age.",
+   "formula": "fatFloor x 12 / withdrawalRate",
+   "inputs": [
+    "m.fatFloor",
+    "asm.withdrawalRate",
+    "invest.investedAssets",
+    "projection"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "oneoff",
+    "basis": "real",
+    "tax": "na"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
+    },
+    {
+     "root": "fatFloor",
+     "sign": -1,
+     "text": "Flag only what a lean month truly needs."
+    },
+    {
+     "root": "withdrawalRate",
+     "sign": -1,
+     "text": "A higher withdrawal rate lowers every number and raises the risk."
+    },
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Invested balances count toward every rung."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "amount",
+     "fatFloor",
+     "withdrawalRate"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 50,
+   "id": "baristaLeanFi",
+   "name": "Barista Lean FI number",
+   "clientLabel": "The floor, with part-time work",
+   "definition": "Lean FI minus part-time income a year over the withdrawal rate.",
+   "formula": "leanFi - baristaIncome x 12 / withdrawalRate",
+   "inputs": [
+    "m.leanFi",
+    "life.baristaIncomeMonthly",
+    "asm.withdrawalRate"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "oneoff",
+    "basis": "real",
+    "tax": "na"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "baristaIncome",
+     "sign": -1,
+     "text": "Every $100 a month of part-time income lowers the target by 12 / withdrawal rate x 100."
+    },
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
+    },
+    {
+     "root": "withdrawalRate",
+     "sign": -1,
+     "text": "A higher withdrawal rate lowers every number and raises the risk."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "baristaIncome",
+     "withdrawalRate"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 51,
+   "id": "baristaRegularFi",
+   "name": "Barista FI number",
+   "clientLabel": "Enough, with part-time work",
+   "definition": "The FI number minus part-time income a year over the withdrawal rate.",
+   "formula": "regularFi - baristaIncome x 12 / withdrawalRate",
+   "inputs": [
+    "m.regularFi",
+    "life.baristaIncomeMonthly",
+    "asm.withdrawalRate"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "oneoff",
+    "basis": "real",
+    "tax": "na"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "baristaIncome",
+     "sign": -1,
+     "text": "Every $100 a month of part-time income lowers the target by 12 / withdrawal rate x 100."
+    },
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
+    },
+    {
+     "root": "withdrawalRate",
+     "sign": -1,
+     "text": "A higher withdrawal rate lowers every number and raises the risk."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "baristaIncome",
+     "withdrawalRate"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 52,
+   "id": "regularFi",
+   "name": "FI number (ladder rung)",
+   "clientLabel": "Enough",
+   "definition": "Spending a year on the chosen basis (actual, gut or dream) over the withdrawal rate; the same number as the FI number, with percent there, date and required monthly.",
+   "formula": "spending x 12 / withdrawalRate",
+   "inputs": [
+    "m.spending",
+    "asm.withdrawalRate",
+    "asm.fiSpendingBasis",
+    "invest.investedAssets",
+    "projection"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "oneoff",
+    "basis": "real",
+    "tax": "na"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
+    },
+    {
+     "root": "withdrawalRate",
+     "sign": -1,
+     "text": "A higher withdrawal rate lowers every number and raises the risk."
+    },
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Invested balances count toward every rung."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "amount",
+     "withdrawalRate"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 53,
+   "id": "fatFi",
+   "name": "Fat FI number",
+   "clientLabel": "The dream",
+   "definition": "Dream spending a year over the withdrawal rate; spending times the fat multiplier when no dream is typed.",
+   "formula": "dreamSpending x 12 / withdrawalRate",
+   "inputs": [
+    "life.dreamSpendingMonthly",
+    "m.spending",
+    "asm.fatFiMultiplier",
+    "asm.withdrawalRate"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "oneoff",
+    "basis": "real",
+    "tax": "na"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "dreamSpending",
+     "sign": -1,
+     "text": "A more modest dream is a closer rung."
+    },
+    {
+     "root": "withdrawalRate",
+     "sign": -1,
+     "text": "A higher withdrawal rate lowers every number and raises the risk."
+    },
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Invested balances count toward every rung."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "dreamSpending",
+     "withdrawalRate"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 54,
+   "id": "baristaRule",
+   "name": "Barista rule of thumb",
+   "clientLabel": "What part-time work is worth",
+   "definition": "Every $100 a month of part-time income lowers the FI target by 100 x 12 over the withdrawal rate: $30,000 at 4%, $34,286 at 3.5%.",
+   "formula": "100 x 12 / withdrawalRate",
+   "inputs": [
+    "asm.withdrawalRate"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "oneoff",
+    "basis": "real",
+    "tax": "na"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "neutral",
+   "levers": [
+    {
+     "root": "withdrawalRate",
+     "sign": -1,
+     "text": "A higher withdrawal rate lowers every number and raises the risk."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "withdrawalRate"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 55,
+   "id": "baristaIncomeNeededToday",
+   "name": "Part-time income to be Barista FI today",
+   "clientLabel": "Part-time pay that would make today enough",
+   "definition": "Spending a month minus what invested assets pay at the withdrawal rate; the same for the Lean floor.",
+   "formula": "max(0, spending - invested x withdrawalRate / 12)",
+   "inputs": [
+    "m.spending",
+    "invest.investedAssets",
+    "asm.withdrawalRate"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "monthly",
+    "basis": "real",
+    "tax": "aftertax"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "neutral",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
+    },
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Invested balances count toward every rung."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "amount"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 56,
+   "id": "fiRatio",
+   "name": "FI ratio",
+   "clientLabel": "Share of spending the portfolio already covers",
+   "definition": "Investment income at the withdrawal rate plus rental income over annual spending. 1.0 is FI.",
+   "formula": "(invested x withdrawalRate + rental x 12) / (spending x 12)",
+   "inputs": [
+    "invest.investedAssets",
+    "income.byType",
+    "m.spending",
+    "asm.withdrawalRate"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Invested balances count toward every rung."
+    },
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
+    },
+    {
+     "root": "rentCollected",
+     "sign": 1,
+     "text": "Rental income counts toward the ratio."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "amount",
+     "rentCollected"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 57,
+   "id": "crossoverDate",
+   "name": "Crossover date",
+   "clientLabel": "When investments start paying for life",
+   "definition": "The first month investment income at the withdrawal rate covers spending, on the projection.",
+   "formula": "first month invested x withdrawalRate >= spending x 12",
+   "inputs": [
+    "projection",
+    "m.spending",
+    "asm.withdrawalRate"
+   ],
+   "units": {
+    "kind": "date"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "neutral",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
+    },
+    {
+     "root": "contribAmount",
+     "sign": 1,
+     "text": "More invested each month pulls the crossover closer."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "contribAmount"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 58,
+   "id": "daysOfFreedom",
+   "name": "Days of freedom",
+   "clientLabel": "Days the portfolio could pay for",
+   "definition": "Invested assets divided by one day of spending.",
+   "formula": "invested / (spending x 12 / 365)",
+   "inputs": [
+    "invest.investedAssets",
+    "m.spending"
+   ],
+   "units": {
+    "kind": "count"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Invested balances count toward every rung."
+    },
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "amount"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 59,
+   "id": "yearsOfExpenses",
+   "name": "Years of expenses",
+   "clientLabel": "Years the portfolio could pay for",
+   "definition": "Invested assets divided by annual spending. 25 is FI at 4%.",
+   "formula": "invested / (spending x 12)",
+   "inputs": [
+    "invest.investedAssets",
+    "m.spending"
+   ],
+   "units": {
+    "kind": "count"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Invested balances count toward every rung."
+    },
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "amount"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 60,
+   "id": "theFlip",
+   "name": "The flip",
+   "clientLabel": "When growth beats what you add",
+   "definition": "The first projection year the portfolio grows more from returns than from contributions.",
+   "formula": "first year invested x return > contributions",
+   "inputs": [
+    "projection",
+    "invest.annualContributions",
+    "asm.returnLikely"
+   ],
+   "units": {
+    "kind": "date"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "neutral",
+   "levers": [
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Invested balances count toward every rung."
+    },
+    {
+     "root": "contribAmount",
+     "sign": 1,
+     "text": "Odd but true: more contributions push the flip later and FI closer."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "contribAmount"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 61,
+   "id": "first100kDate",
+   "name": "First $100,000",
+   "clientLabel": "When the first $100,000 lands",
+   "definition": "The projected month invested assets reach $100,000.",
+   "formula": "first month invested >= 100,000",
+   "inputs": [
+    "projection",
+    "invest.investedAssets"
+   ],
+   "units": {
+    "kind": "date"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "neutral",
+   "levers": [
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Invested balances count toward every rung."
+    },
+    {
+     "root": "contribAmount",
+     "sign": 1,
+     "text": "More invested each month."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "contribAmount"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 62,
+   "id": "trueFiNumber",
+   "name": "True FI number (after tax)",
+   "clientLabel": "Enough, after tax",
+   "definition": "The invested amount whose withdrawals, taxed as ordinary income on the pre-tax share of the bucket mix, cover spending after tax.",
+   "formula": "withdrawals W where W - federalTax(W x pretaxShare) = spending x 12; W / withdrawalRate",
+   "inputs": [
+    "m.spending",
+    "invest.balancesByBucket",
+    "taxes.standardDeduction",
+    "asm.withdrawalRate"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "oneoff",
+    "basis": "real",
+    "tax": "na"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
+    },
+    {
+     "root": "contribAmount",
+     "sign": 1,
+     "text": "Roth and taxable dollars need no tax room at withdrawal."
+    },
+    {
+     "root": "withdrawalRate",
+     "sign": -1,
+     "text": "A higher withdrawal rate lowers every number and raises the risk."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "contribAmount",
+     "withdrawalRate"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 63,
+   "id": "ssAdjustedFiNumber",
+   "name": "FI number with Social Security",
+   "clientLabel": "Enough, counting Social Security",
+   "definition": "The FI number with Social Security as an income floor from the claim age; the bridge years before it are funded from the portfolio.",
+   "formula": "(spending - ss) x 12 / withdrawalRate + ss x 12 x bridgeYears",
+   "inputs": [
+    "m.spending",
+    "projection",
+    "asm.socialSecurityAge",
+    "asm.socialSecurityScale",
+    "asm.withdrawalRate"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "oneoff",
+    "basis": "real",
+    "tax": "na"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
+    },
+    {
+     "root": "socialSecurityScale",
+     "sign": 1,
+     "text": "The share of the scheduled benefit you count on."
+    },
+    {
+     "root": "socialSecurityAge",
+     "sign": -1,
+     "text": "Claiming later raises the benefit and lengthens the bridge."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "socialSecurityAge",
+     "socialSecurityScale"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 64,
+   "id": "healthcareBridge",
+   "name": "Health care bridge to 65",
+   "clientLabel": "Health insurance before Medicare",
+   "definition": "The pre-65 premium estimate times the years from the FI date to 65.",
+   "formula": "premium x 12 x (65 - fiAge)",
+   "inputs": [
+    "projection",
+    "asm.healthcarePremiumMonthlyCents"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "oneoff",
+    "basis": "real",
+    "tax": "na"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "healthcarePremiumMonthlyCents",
+     "sign": 1,
+     "text": "A lower premium estimate, or a plan with subsidies."
+    },
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "healthcarePremiumMonthlyCents"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 65,
+   "id": "wealthMultiplier",
+   "name": "Wealth multiplier",
+   "clientLabel": "What a dollar invested today becomes",
+   "definition": "(1 + real return) to the years until retirement age: what one dollar invested today is worth then.",
+   "formula": "(1 + returnLikely) ^ (retirementAge - age)",
+   "inputs": [
+    "asm.returnLikely",
+    "life.retirementAge",
+    "sun.birthDate"
+   ],
+   "units": {
+    "kind": "count"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "retirementAge",
+     "sign": 1,
+     "text": "More years to compound."
+    },
+    {
+     "root": "returnLikely",
+     "sign": 1,
+     "text": "An assumption, not a lever."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "retirementAge",
+     "returnLikely"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 66,
+   "id": "purchaseInFiDays",
+   "name": "A purchase in FI days",
+   "clientLabel": "What a purchase costs in time",
+   "definition": "A $1,000 one-time cost as days of FI date delay, and $100 a month recurring as FI number cost.",
+   "formula": "1000 / (fiNumber x return + contributions) x 365; 100 x 12 / withdrawalRate",
+   "inputs": [
+    "m.fiNumber",
+    "invest.annualContributions",
+    "asm.returnLikely",
+    "asm.withdrawalRate"
+   ],
+   "units": {
+    "kind": "count"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
+    },
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Invested balances count toward every rung."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "amount"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 67,
+   "id": "expectedNetWorth",
+   "name": "Expected net worth (Millionaire Next Door)",
+   "clientLabel": "Expected net worth",
+   "definition": "Age times annual gross income over ten, and actual net worth against it. Coach view by default.",
+   "formula": "age x gross x 12 / 10; netWorth / that",
+   "inputs": [
+    "sun.birthDate",
+    "m.gross",
+    "m.netWorth"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "engine",
+   "group": "benchmarks",
+   "stage": 5,
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Invest the surplus."
+    },
+    {
+     "root": "balance",
+     "sign": -1,
+     "text": "Pay debt down."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "balance"
+    ]
+   },
+   "level": 9,
+   "coachOnly": true
+  },
+  {
+   "n": 68,
+   "id": "salaryMultiple",
+   "name": "Salary multiple vs benchmark",
+   "clientLabel": "Saved, in years of pay",
+   "definition": "Invested assets over annual gross pay against the age benchmark from the chosen source. Coach view by default.",
+   "formula": "invested / (gross x 12) vs benchmark(age)",
+   "inputs": [
+    "invest.investedAssets",
+    "m.gross",
+    "sun.birthDate",
+    "asm.benchmarkSource"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "engine",
+   "group": "benchmarks",
+   "stage": 5,
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Invested balances count toward every rung."
+    },
+    {
+     "root": "contribAmount",
+     "sign": 1,
+     "text": "More invested each month."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "contribAmount"
+    ]
+   },
+   "level": 9,
+   "coachOnly": true
+  },
+  {
+   "n": 69,
+   "id": "savingsRateNeeded",
+   "name": "Savings rate needed for the dream FI age",
+   "clientLabel": "Share of take-home to save for the dream",
+   "definition": "The monthly investing that reaches the FI number by the dream FI age, as a share of take-home.",
+   "formula": "requiredMonthly / takeHome",
+   "inputs": [
+    "m.requiredMonthly",
+    "m.takeHome"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
+    },
+    {
+     "root": "dreamFiAge",
+     "sign": 1,
+     "text": "A later dream age needs a lower rate."
+    },
+    {
+     "root": "takeHome",
+     "sign": 1,
+     "text": "More take-home."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "dreamFiAge",
+     "takeHome"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 70,
+   "id": "requiredMonthly",
+   "name": "Monthly investing for the dream FI age",
+   "clientLabel": "Monthly investing for the dream",
+   "definition": "The monthly investing that takes invested assets to the FI number by the dream FI age at the likely return.",
+   "formula": "(fiNumber - invested x g) x r / (12 x (g - 1)), g = (1 + r) ^ years",
+   "inputs": [
+    "m.regularFi",
+    "invest.investedAssets",
+    "life.dreamFiAge",
+    "asm.returnLikely"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "monthly",
+    "basis": "real",
+    "tax": "aftertax"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
+    },
+    {
+     "root": "dreamFiAge",
+     "sign": 1,
+     "text": "A later dream age needs less each month."
+    },
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Invested balances count toward every rung."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "amount",
+     "dreamFiAge"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 71,
+   "id": "guardrailsBand",
+   "name": "Guardrails spending band",
+   "clientLabel": "Room to spend in retirement",
+   "definition": "The spending range in retirement that keeps the withdrawal rate within the band of its starting rate.",
+   "formula": "spending x (1 - band) to spending x (1 + band)",
+   "inputs": [
+    "m.spending",
+    "asm.guardrailsBand"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "monthly",
+    "basis": "real",
+    "tax": "aftertax"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "neutral",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
+    },
+    {
+     "root": "guardrailsBand",
+     "sign": 1,
+     "text": "A wider band means more flex and more risk."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "guardrailsBand"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 72,
+   "id": "gutGap",
+   "name": "Gut gap as FI date",
+   "clientLabel": "Gut guess against the lines",
+   "definition": "The gut guess of monthly spending against the lines, expressed as FI number and months of FI date.",
+   "formula": "(gut - spending) x 12 / withdrawalRate; / annual growth near FI x 12",
+   "inputs": [
+    "life.gutSpendingMonthly",
+    "m.spending",
+    "m.fiNumber",
+    "asm.withdrawalRate"
+   ],
+   "units": {
+    "kind": "count"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "gutSpending",
+     "sign": 1,
+     "text": "The gut guess itself."
+    },
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "gutSpending"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 73,
+   "id": "dreamGap",
+   "name": "Dream gap as FI date",
+   "clientLabel": "Dream against today",
+   "definition": "Dream spending against the lines, expressed as FI number and months of FI date.",
+   "formula": "(dream - spending) x 12 / withdrawalRate; / annual growth near FI x 12",
+   "inputs": [
+    "life.dreamSpendingMonthly",
+    "m.spending",
+    "m.fiNumber",
+    "asm.withdrawalRate"
+   ],
+   "units": {
+    "kind": "count"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "dreamSpending",
+     "sign": 1,
+     "text": "The dream itself."
+    },
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "dreamSpending"
+    ]
+   },
+   "level": 9
+  },
+  {
+   "n": 74,
+   "id": "doublingTime",
+   "name": "Doubling time",
+   "clientLabel": "Years for money to double",
+   "definition": "72 over the real return in percent.",
+   "formula": "72 / (returnLikely x 100)",
+   "inputs": [
+    "asm.returnLikely"
+   ],
+   "units": {
+    "kind": "count"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "returnLikely",
+     "sign": -1,
+     "text": "An assumption, not a lever."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "returnLikely"
+    ]
+   },
+   "level": 9
   }
  ],
  "stages": {
@@ -1006,5 +3042,8 @@
   "3": "+ Safety Net + Investments",
   "4": "+ Taxes",
   "5": "everything sharpens as it fills"
+ },
+ "levels": {
+  "9": "FI ladder, headline shelf, sensitivity"
  }
 }

@@ -62,6 +62,7 @@ export function run(ctx) {
       if (th) { take = add(take, th); anyTake = true; }
       const hp = num(r, 'hoursPaid') || 0, hc = num(r, 'hoursCommute') || 0;
       hours += (hp + hc) * 52 / 12;
+      if (t === 'side') byType.sideHours = (byType.sideHours || 0) + Math.round((hp + hc) * 52 / 12); /* the side hustle lens (MR-043) */
       const wc = fieldQ(r, 'workCosts', U.monthlyAfter, asm);
       if (wc) workCosts = add(workCosts, wc);
       const st = val(r, 'stability'); if (st) stabilities.push(st);

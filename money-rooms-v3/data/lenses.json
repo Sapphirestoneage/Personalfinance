@@ -1,5 +1,5 @@
 {
- "asOf": "2026-10-05",
+ "asOf": "2026-10-07",
  "source": "Money Rooms v3 spec, Lenses; sentences are information, never instructions",
  "verify": false,
  "skipBelowAnnualCents": 10000,
@@ -240,6 +240,279 @@
    ],
    "reading": "choosefi-travel",
    "metric": "rewardsLeft"
+  },
+  {
+   "n": 20,
+   "id": "double-lever",
+   "name": "The double lever",
+   "trigger": "a FI number exists",
+   "template": "Every $100 a month cut lowers the FI number by {perHundred} and adds {perHundredYear} a year to savings; the same $100 earned only does the second.",
+   "inputs": [
+    "m.fiNumber",
+    "asm.withdrawalRate"
+   ],
+   "reading": "mmm-double-lever",
+   "metric": "purchaseInFiDays",
+   "level": 9
+  },
+  {
+   "n": 21,
+   "id": "big-three",
+   "name": "The big three",
+   "trigger": "housing, transportation and food together above 50% of take-home",
+   "template": "Housing, transportation and food take {share} of take-home ({dollars} a month); the rest of the budget is working around them.",
+   "inputs": [
+    "spending.byCategory",
+    "income.takeHomeMonthly"
+   ],
+   "reading": "choosefi-pillars",
+   "metric": "draftt",
+   "level": 9
+  },
+  {
+   "n": 22,
+   "id": "lean-fi-close",
+   "name": "Lean FI is close",
+   "trigger": "Lean FI reached or within 3 years",
+   "template": "The floor ({number}) is {when}: a lean month is already paid for by the portfolio, or nearly.",
+   "inputs": [
+    "m.leanFi"
+   ],
+   "reading": "choosefi-pillars",
+   "metric": "leanFi",
+   "level": 9
+  },
+  {
+   "n": 23,
+   "id": "barista-option",
+   "name": "The Barista option",
+   "trigger": "part-time income needed to be Barista FI today is under half of take-home",
+   "template": "{needed} a month of part-time income would make today Barista FI: the portfolio covers the rest at {wr}.",
+   "inputs": [
+    "m.baristaIncomeNeededToday",
+    "income.takeHomeMonthly"
+   ],
+   "reading": "choosefi-pillars",
+   "metric": "baristaIncomeNeededToday",
+   "level": 9
+  },
+  {
+   "n": 24,
+   "id": "coast-reached",
+   "name": "Coast reached",
+   "trigger": "the FI progress basis is at or above the Coast FI number",
+   "template": "{basis} already coasts to the FI number by {age} at {ret}; new contributions buy an earlier date, not the retirement itself.",
+   "inputs": [
+    "m.coastFi"
+   ],
+   "reading": "money-guy-wealth-multiplier",
+   "metric": "coastFi",
+   "level": 9
+  },
+  {
+   "n": 25,
+   "id": "crossover-in-sight",
+   "name": "Crossover in sight",
+   "trigger": "the crossover date is within 5 years",
+   "template": "Investment income at {wr} covers spending from {date}: about {when} away.",
+   "inputs": [
+    "m.crossoverDate"
+   ],
+   "reading": "ymoyl-crossover",
+   "metric": "crossoverDate",
+   "level": 9
+  },
+  {
+   "n": 26,
+   "id": "the-flip",
+   "name": "The flip",
+   "trigger": "the portfolio already grows more from returns than from contributions, or will within 3 years",
+   "template": "{when} the portfolio grows more from returns ({growth} a year) than from what goes in ({contrib}).",
+   "inputs": [
+    "m.theFlip",
+    "invest.annualContributions"
+   ],
+   "reading": "jl-collins-first-100k",
+   "metric": "theFlip",
+   "level": 9
+  },
+  {
+   "n": 27,
+   "id": "first-100k",
+   "name": "The first $100,000",
+   "trigger": "invested assets under $100,000 with a projected date",
+   "template": "The first $100,000 lands about {date}; after that the market does more of the lifting.",
+   "inputs": [
+    "m.first100kDate"
+   ],
+   "reading": "jl-collins-first-100k",
+   "metric": "first100kDate",
+   "level": 9
+  },
+  {
+   "n": 28,
+   "id": "true-fi-gap",
+   "name": "The after-tax gap",
+   "trigger": "the true FI number exceeds the FI number by 5% or more",
+   "template": "Taxes on withdrawals from pre-tax accounts add {gap} to the FI number: {trueFi} instead of {fi}.",
+   "inputs": [
+    "m.trueFiNumber",
+    "m.fiNumber"
+   ],
+   "reading": "big-ern-swr",
+   "metric": "trueFiNumber",
+   "level": 9
+  },
+  {
+   "n": 29,
+   "id": "healthcare-bridge",
+   "name": "The health care bridge",
+   "trigger": "the FI date is before 65",
+   "template": "Health insurance from the FI date to 65 is about {cost}: {years} at {premium} a month.",
+   "inputs": [
+    "m.healthcareBridge"
+   ],
+   "reading": "big-ern-healthcare",
+   "metric": "healthcareBridge",
+   "level": 9
+  },
+  {
+   "n": 30,
+   "id": "ss-floor",
+   "name": "The Social Security floor",
+   "trigger": "Social Security lowers the FI number by 10% or more",
+   "template": "Counting Social Security from {age} lowers the FI number to {number} ({saving} less), with the bridge years funded from the portfolio.",
+   "inputs": [
+    "m.ssAdjustedFiNumber",
+    "m.fiNumber"
+   ],
+   "reading": "big-ern-social-security",
+   "metric": "ssAdjustedFiNumber",
+   "level": 9
+  },
+  {
+   "n": 31,
+   "id": "withdrawal-sensitivity",
+   "name": "3.5% instead of 4%",
+   "trigger": "a FI date exists",
+   "template": "A 3.5% withdrawal rate instead of 4% raises the FI number to {number} and moves the FI date about {months}.",
+   "inputs": [
+    "m.fiNumber",
+    "projection"
+   ],
+   "reading": "big-ern-swr",
+   "metric": "fiNumber",
+   "level": 9
+  },
+  {
+   "n": 32,
+   "id": "guardrails-room",
+   "name": "Guardrails room",
+   "trigger": "a FI date exists",
+   "template": "In retirement, spending between {low} and {high} a month keeps the withdrawal rate within {band} of its start.",
+   "inputs": [
+    "m.guardrailsBand"
+   ],
+   "reading": "big-ern-guardrails",
+   "metric": "guardrailsBand",
+   "level": 9
+  },
+  {
+   "n": 33,
+   "id": "house-hack",
+   "name": "House hack",
+   "trigger": "accommodation above 40% of take-home",
+   "template": "Housing takes {share} of take-home; a roommate, a rental unit or a cheaper place is the single biggest lever here.",
+   "inputs": [
+    "spending.byCategory",
+    "income.takeHomeMonthly"
+   ],
+   "reading": "choosefi-house-hack",
+   "metric": "shelterRate",
+   "level": 9
+  },
+  {
+   "n": 34,
+   "id": "geo-arbitrage",
+   "name": "Geographic arbitrage",
+   "trigger": "coach-triggered: the coach has flagged a move",
+   "template": "A 20% lower cost of living would lower the FI number by {number} and move the FI date about {months}.",
+   "inputs": [
+    "m.fiNumber",
+    "projection"
+   ],
+   "reading": "choosefi-geo-arbitrage",
+   "metric": "fiNumber",
+   "level": 9
+  },
+  {
+   "n": 35,
+   "id": "gut-gap",
+   "name": "Gut against the lines",
+   "trigger": "gut spending differs from the lines by 10% or more",
+   "template": "The gut guess ({gut}) is {direction} the lines ({lines}) by {diff} a month: about {months} of FI date.",
+   "inputs": [
+    "m.gutGap"
+   ],
+   "reading": "ymoyl",
+   "metric": "gutGap",
+   "level": 9
+  },
+  {
+   "n": 36,
+   "id": "room-to-spend-more",
+   "name": "Room to spend more",
+   "trigger": "projected net worth at 95 is above three times the FI number, or dream spending is above actual and the FI date still lands",
+   "template": "The projection ends at {at95}, well above the FI number: there is room to spend on what matters now.",
+   "inputs": [
+    "projection",
+    "m.fiNumber"
+   ],
+   "reading": "die-with-zero-underspending",
+   "metric": "fiDate",
+   "level": 9
+  },
+  {
+   "n": 37,
+   "id": "purchase-in-fi-days",
+   "name": "A purchase in FI days",
+   "trigger": "a FI date exists",
+   "template": "Here, $1,000 spent once costs about {days} of FI date, and $100 a month costs {number} of FI number.",
+   "inputs": [
+    "m.purchaseInFiDays"
+   ],
+   "reading": "ymoyl",
+   "metric": "purchaseInFiDays",
+   "level": 9
+  },
+  {
+   "n": 38,
+   "id": "side-hustle-real-wage",
+   "name": "The side hustle, by the hour",
+   "trigger": "side income with hours typed earns under the main job per hour",
+   "template": "Side income earns {side} an hour against {main} at the main job; the hours may be worth more elsewhere.",
+   "inputs": [
+    "income.byType",
+    "income.workHoursMonthly"
+   ],
+   "reading": "mmm-side-hustle",
+   "metric": "realHourlyWage",
+   "level": 9
+  },
+  {
+   "n": 39,
+   "id": "underspending",
+   "name": "Underspending",
+   "trigger": "savings rate above 50% with projected net worth at 95 above three times the FI number",
+   "template": "Saving {rate} of take-home with a projection that ends at {at95}: some of this money could buy experiences now.",
+   "inputs": [
+    "m.savingsRateTakeHome",
+    "projection",
+    "m.fiNumber"
+   ],
+   "reading": "die-with-zero-underspending",
+   "metric": "savingsRateTakeHome",
+   "level": 9
   }
  ]
 }

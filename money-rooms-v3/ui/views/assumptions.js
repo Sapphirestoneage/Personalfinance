@@ -8,9 +8,11 @@ import { parseTyped } from '../typed.js';
 const GROUPS = [
   ['Growth', ['returnLikely', 'returnBest', 'returnWorst', 'cashRealReturn']],
   ['Retirement and independence', ['withdrawalRate', 'retirementAgeDefault', 'socialSecurityAge', 'socialSecurityScale', 'slowgoAge', 'nogoAge', 'projectionEndAge', 'fatFiMultiplier', 'baristaIncomeAnnualCents']],
+  ['Financial independence (Level 9)', ['fiProgressBasis', 'fiSpendingBasis', 'healthcarePremiumMonthlyCents', 'inflation', 'guardrailsBand', 'ssBridgeFromPortfolio', 'benchmarkSource', 'showBenchmarksToClient']],
   ['Flags', ['shelterHeavyShare', 'hiddenLeakShare', 'utilizationCardMax', 'utilizationTotalMax', 'feeDragEr', 'thinRunwayMonths', 'lockedLiquidityShare', 'realWageShare', 'noFeeBaselineRate']],
 ];
 const KIND = k => /Cents$/.test(k) ? 'money' : /Age$|Months$|AgeDefault$|EndAge$/.test(k) ? 'int' : k === 'fatFiMultiplier' ? 'multiple' : 'percent';
+const isChoice = (app, k) => !!(app.data.assumptions.options && app.data.assumptions.options[k]);
 const places = v => Math.abs(v * 1000 - Math.round(v * 1000)) > 1e-9 ? 2 : 1;
 const fmt = (kind, v) => kind === 'money' ? F.dollarsWhole(v) : kind === 'percent' ? F.percent(v, { places: places(v) }) : kind === 'multiple' ? String(v) + 'x' : String(v);
 const raw = (kind, v) => kind === 'money' ? String(v / 100) : kind === 'percent' ? String(Math.round(v * 10000) / 100) : String(v);
@@ -36,6 +38,13 @@ export function mount(host, app) {
       keys.forEach(k => {
         const kind = KIND(k); const set = over[k] !== undefined; const v = set ? over[k] : defaults[k];
         const commit = val => app.mutate(rec => { if (val === null || val === defaults[k]) delete rec.sun.assumptions[k]; else rec.sun.assumptions[k] = val; }, 'assumptions');
+        if (isChoice(app, k)) {
+          /* a choice (MR-040): the FI progress basis, the spending basis, the benchmark source, yes or no switches */
+          const opts = app.data.assumptions.options[k]; const cur = String(v);
+          const sel = h('select', { class: 'select', 'aria-label': labels[k] || k, onChange: e => { const raw = e.target.value; commit(raw === 'true' ? true : raw === 'false' ? false : raw); } }, opts.map(o => h('option', { value: o[0], selected: cur === o[0] }, o[1])));
+          panel.appendChild(h('div', { class: 'fieldrow', dataset: { field: k } }, h('label', null, labels[k] || k), h('div', { class: 'control' }, sel), h('span', { class: 'src small muted' }, set ? ['Default ' + (opts.find(o => o[0] === String(defaults[k])) || [])[1] + ' ', h('button', { class: 'btn quiet small', onClick: () => commit(null) }, 'Use default')] : '')));
+          return;
+        }
         const control = h('input', { class: 'input num', value: fmt(kind, v), 'aria-label': labels[k] || k });
         control.addEventListener('focus', () => { control.value = raw(kind, v); control.select(); });
         control.addEventListener('change', e => { try { const p = parseTyped(kind === 'multiple' ? 'hours' : kind, e.target.value); commit(p ? p.v : null); } catch (err) { app.toast(err.message); } });

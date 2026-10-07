@@ -1,10 +1,12 @@
-/* The 48 metrics. Each is computed from the Sun's slots, carries units and
+/* The 74 metrics (48 through Level 7, 26 more in Level 9). Each is computed from the Sun's slots, carries units and
    a show-the-math record (formula, inputs with state and source, result),
    and says what it needs when an input is missing. Labels come only from
    data/metrics.json so one number never has two names. */
 import { q, U, add, sub, ratio, pct, count, dateValue, needs, isNeeds, isQ, scale, weightedConfidence } from './units.js';
 import * as F from './format.js';
 import { ageAt } from './format.js';
+import { fiLadder, baristaRule, monthsToReach, RUNGS, RUNG_LABELS } from './fiLadder.js';
+import { federalTax, standardDeduction } from './tax.js';
 
 function inputOf(label, value, meta) { return Object.assign({ label, value }, meta || {}); }
 function describe(v) {
@@ -159,13 +161,17 @@ export function computeMetrics(ctx) {
   if (spending && spending.cents > 0) {
     const annual = scale(spending, 12); const fi = q(Math.round(annual.cents / asm.withdrawalRate), U.oneoff, { confidence: spending.confidence, rough: spending.rough, range: spending.range ? { low: Math.round(spending.range.low * 12 / asm.withdrawalRate), high: Math.round(spending.range.high * 12 / asm.withdrawalRate) } : null });
     put(ok('fiNumber', fi, { formula: 'annual spending / withdrawal rate', inputs: [inputOf('Annual spending', annual), inputOf('Withdrawal rate', pct(asm.withdrawalRate))], result: fi }));
-    if (nw && fi.cents > 0) { const r = ratio(nw, fi); put(ok('pctToFi', r, { formula: 'net worth / FI number', inputs: [inputOf('Net worth', nw), inputOf('FI number', fi)], result: r })); } else put(fromNeeds('pctToFi', 'net worth / FI number', nw || out.netWorth));
+    /* the FI progress basis (MR-040): invested assets by default, net worth by assumption */
+    const basisQ = asm.fiProgressBasis === 'netWorth' ? nw : (inv && Q(inv.investedAssets));
+    const basisLabel = asm.fiProgressBasis === 'netWorth' ? 'Net worth' : 'Invested assets';
+    if (basisQ && fi.cents > 0) { const r = ratio(basisQ, fi); put(ok('pctToFi', r, { formula: basisLabel.toLowerCase() + ' / FI number', inputs: [inputOf(basisLabel, basisQ), inputOf('FI number', fi)], result: r }, { basis: asm.fiProgressBasis === 'netWorth' ? 'netWorth' : 'invested' })); } else put(fromNeeds('pctToFi', 'invested / FI number', basisQ || (asm.fiProgressBasis === 'netWorth' ? out.netWorth : (inv && inv.investedAssets))));
     if (ctx.age !== null) {
       const years = retAge - ctx.age; const g = Math.pow(1 + asm.returnLikely, years); const coast = q(Math.round(fi.cents / g), U.oneoff, { confidence: fi.confidence, rough: fi.rough });
-      put(ok('coastFi', coast, { formula: 'FI number / (1 + likely return)^(years to retirement age); net worth / that', inputs: [inputOf('FI number', fi), inputOf('Years to ' + retAge, count(years, 'years')), inputOf('Likely return', pct(asm.returnLikely)), inputOf('Net worth', nw)], result: coast }, { coastPct: nw && coast.cents > 0 ? nw.cents / coast.cents : null, retirementAge: retAge }));
+      put(ok('coastFi', coast, { formula: 'FI number / (1 + likely return)^(years to retirement age); ' + basisLabel.toLowerCase() + ' / that', inputs: [inputOf('FI number', fi), inputOf('Years to ' + retAge, count(years, 'years')), inputOf('Likely return', pct(asm.returnLikely)), inputOf(basisLabel, basisQ)], result: coast }, { coastPct: basisQ && coast.cents > 0 ? basisQ.cents / coast.cents : null, retirementAge: retAge }));
     } else put(need('coastFi', ['birth date']));
     const lean = fat ? q(Math.round(fat.cents * 12 / asm.withdrawalRate), U.oneoff, { confidence: fat.confidence, rough: fat.rough }) : null;
-    put(ok('fiLevels', { status: 'ok', kind: 'list', value: { lean: lean ? lean.cents : null, fi: fi.cents, fat: Math.round(annual.cents * asm.fatFiMultiplier / asm.withdrawalRate), barista: Math.round(Math.max(0, annual.cents - asm.baristaIncomeAnnualCents) / asm.withdrawalRate) }, confidence: fi.confidence, rough: fi.rough }, { formula: 'Lean: FAT floor x 12 / wr; Fat: spending x 12 x fat multiplier / wr; Barista: (spending x 12 - part-time income) / wr', inputs: [inputOf('FAT floor', fat), inputOf('Annual spending', annual), inputOf('Fat multiplier', count(asm.fatFiMultiplier, 'x')), inputOf('Part-time income a year', q(asm.baristaIncomeAnnualCents, U.annualAfter))], result: null }));
+    const baristaAnnual = lf && Q(lf.baristaIncomeMonthly) ? Q(lf.baristaIncomeMonthly).cents * 12 : asm.baristaIncomeAnnualCents;
+    put(ok('fiLevels', { status: 'ok', kind: 'list', value: { lean: lean ? lean.cents : null, fi: fi.cents, fat: lf && Q(lf.dreamSpendingMonthly) ? Math.round(Q(lf.dreamSpendingMonthly).cents * 12 / asm.withdrawalRate) : Math.round(annual.cents * asm.fatFiMultiplier / asm.withdrawalRate), barista: Math.round(Math.max(0, annual.cents - baristaAnnual) / asm.withdrawalRate) }, confidence: fi.confidence, rough: fi.rough }, { formula: 'Lean: FAT floor x 12 / wr; Fat: dream spending x 12 / wr (or spending x fat multiplier); Barista: (spending x 12 - part-time income) / wr', inputs: [inputOf('FAT floor', fat), inputOf('Annual spending', annual), inputOf('Fat multiplier', count(asm.fatFiMultiplier, 'x')), inputOf('Part-time income a year', q(baristaAnnual, U.annualAfter))], result: null }));
   } else { ['fiNumber', 'pctToFi', 'coastFi', 'fiLevels'].forEach(id => put(fromNeeds(id, 'annual spending / withdrawal rate', spending || (sp && sp.baselineMonthly)))); }
   const pj = ctx.projection;
   if (pj && pj.likely && pj.likely.fiAge !== null) {
@@ -174,8 +180,146 @@ export function computeMetrics(ctx) {
   } else put(need('fiDate', pj ? ['a savings rate that reaches the FI number before 95 at the likely return'] : ['income, spending and account balances']));
   if (pj && pj.likely && ctx.oneMorePoint !== null && ctx.oneMorePoint !== undefined) { const c = count(ctx.oneMorePoint.months, 'months'); put(ok('oneMorePoint', c, { formula: 'FI date with 1% more of take-home saved each month, minus the FI date today', inputs: [inputOf('One more point a month', q(ctx.oneMorePoint.monthly, U.monthlyAfter)), inputOf('FI age today', count(pj.likely.fiAge, 'years')), inputOf('FI age with one more point', count(ctx.oneMorePoint.fiAge, 'years'))], result: c }, { monthly: ctx.oneMorePoint.monthly })); }
   else put(need('oneMorePoint', ['an FI date']));
+  /* Level 9 (MR-040): the FI ladder, the headline FI metrics and the benchmarks. One formula each; the ladder math lives in fiLadder.js. */
+  levelNine(ctx, out, put, { take, gross, spending, fat, nw, inv, lf, retAge, pj: ctx.projection, asm });
   /* 47, 48 */
   put(dt && dt.wallet && dt.wallet.cards.length ? ok('cardNetValue', { status: 'ok', kind: 'list', value: dt.wallet.cards, confidence: 0.7, rough: true }, { formula: 'credits actually used + rewards on actual spending - annual fee, per card (library rates, verify)', inputs: dt.wallet.cards.map(c => inputOf(c.name, q(c.netAnnual, U.annualAfter))), result: null }) : need('cardNetValue', ['a credit card row from the library and spending lines that name it']));
   put(dt && dt.wallet && dt.wallet.cards.length ? ok('rewardsLeft', q(dt.wallet.rewardsLeftAnnual, U.annualAfter, { confidence: 0.7, rough: true }), { formula: 'for each spending line with a card: (best library rate for its category - actual rate) x spend x 12', inputs: Object.keys(dt.wallet.bestRates).map(k => inputOf('Best ' + k, pct(dt.wallet.bestRates[k]))), result: q(dt.wallet.rewardsLeftAnnual, U.annualAfter) }) : need('rewardsLeft', ['spending lines that name a card']));
   return out;
+}
+
+/* ---- Level 9 ---- */
+function levelNine(ctx, out, put, v) {
+  const { take, gross, spending, fat, nw, inv, lf, retAge, pj, asm } = v;
+  const Q = (x) => x && x.status === 'ok' && typeof x.cents === 'number' ? x : null;
+  const S = ctx.sun.outputs; const sp = S.spending;
+  const invested = inv && Q(inv.investedAssets);
+  const path = pj && pj.likely ? pj.likely.path : null;
+  const wr = asm.withdrawalRate, r = asm.returnLikely;
+  const todayYear = parseInt(ctx.today.slice(0, 4), 10);
+  const monthDate = months => { if (months === null) return null; const m0 = todayYear * 12 + parseInt(ctx.today.slice(5, 7), 10) - 1 + Math.round(months); return String(Math.floor(m0 / 12)) + '-' + String(m0 % 12 + 1).padStart(2, '0'); };
+  const L = fiLadder({ spending, fatFloor: fat, byCategory: sp && sp.byCategory, gut: lf && lf.gutSpendingMonthly, dream: lf && lf.dreamSpendingMonthly, barista: lf && lf.baristaIncomeMonthly, invested, netWorth: nw, asm, age: ctx.age, retirementAge: retAge, dreamFiAge: lf && lf.dreamFiAge, path, today: ctx.today });
+  ctx.ladderOut = L;
+  const baseNeeds = spending ? [] : ['monthly spending'];
+  /* the five rungs */
+  L.rungs.forEach(rg => {
+    if (rg.number === null) { put(need(rg.id, rg.needs || baseNeeds)); return; }
+    const val = q(rg.number, U.oneoff, { confidence: spending ? spending.confidence : 0.6, rough: rg.rough });
+    const inputs = [inputOf('Spending a month on this rung', q(rg.monthlySpend, U.monthlyAfter)), inputOf('Withdrawal rate', pct(wr)), inputOf(L.basis === 'netWorth' ? 'Net worth' : 'Invested assets', L.basisCents === null ? null : q(L.basisCents, U.oneoff))];
+    if (rg.id === 'baristaLeanFi' || rg.id === 'baristaRegularFi') inputs.push(inputOf('Part-time income a month' + (L.barista.typed ? '' : ' (assumption)'), q(L.barista.monthly, U.monthlyAfter)));
+    if (rg.id === 'fatFi') inputs.push(inputOf(rg.source === 'dream' ? 'Dream spending' : 'Fat multiplier', rg.source === 'dream' ? q(rg.monthlySpend, U.monthlyAfter) : count(asm.fatFiMultiplier, 'x')));
+    put(ok(rg.id, val, { formula: (ctx.data.metrics.metrics.find(m => m.id === rg.id) || {}).formula, inputs, result: val }, { pct: rg.pct, months: rg.months, reachedYear: rg.reachedYear, reachedAge: rg.reachedAge, requiredMonthly: rg.requiredMonthly, targetAge: L.targetAge, source: rg.source || null, date: monthDate(rg.months), rungLabel: RUNG_LABELS[rg.id] }));
+  });
+  /* the rule of thumb and the reverse */
+  if (spending) put(ok('baristaRule', q(L.baristaRule, U.oneoff), { formula: '$100 x 12 / withdrawal rate', inputs: [inputOf('Withdrawal rate', pct(wr))], result: q(L.baristaRule, U.oneoff) }, { perHundred: L.baristaRule, at35: baristaRule(0.035) }));
+  else put(need('baristaRule', ['monthly spending']));
+  if (L.baristaIncomeNeeded.regular !== null) put(ok('baristaIncomeNeededToday', q(L.baristaIncomeNeeded.regular, U.monthlyAfter, { confidence: spending.confidence, rough: spending.rough }), { formula: 'max(0, spending a month - invested x withdrawal rate / 12)', inputs: [inputOf('Spending a month', spending), inputOf(L.basis === 'netWorth' ? 'Net worth' : 'Invested assets', q(L.basisCents, U.oneoff)), inputOf('Withdrawal rate', pct(wr))], result: q(L.baristaIncomeNeeded.regular, U.monthlyAfter) }, { lean: L.baristaIncomeNeeded.lean }));
+  else put(need('baristaIncomeNeededToday', spending ? ['account balances'] : ['monthly spending']));
+  /* ratios of invested to spending */
+  if (invested && spending && spending.cents > 0) {
+    const annual = spending.cents * 12;
+    const rental = S.income && S.income.byType && S.income.byType.rental ? S.income.byType.rental * 12 : 0;
+    const fr = pct((invested.cents * wr + rental) / annual, weightedConfidence([invested, spending]));
+    put(ok('fiRatio', Object.assign({}, fr, { rough: invested.rough || spending.rough }), { formula: '(invested x withdrawal rate + rental income a year) / annual spending', inputs: [inputOf('Invested', invested), inputOf('Withdrawal rate', pct(wr)), inputOf('Rental income a year', q(rental, U.annualPre)), inputOf('Annual spending', q(annual, U.annualAfter))], result: fr }));
+    const days = count(Math.round(invested.cents / (annual / 365) * 10) / 10, 'days', weightedConfidence([invested, spending]));
+    put(ok('daysOfFreedom', Object.assign({}, days, { rough: invested.rough || spending.rough }), { formula: 'invested / (annual spending / 365)', inputs: [inputOf('Invested', invested), inputOf('Spending a day', q(Math.round(annual / 365), U.oneoffAfter))], result: days }));
+    const yrs = count(Math.round(invested.cents / annual * 100) / 100, 'years', weightedConfidence([invested, spending]));
+    put(ok('yearsOfExpenses', Object.assign({}, yrs, { rough: invested.rough || spending.rough }), { formula: 'invested / annual spending', inputs: [inputOf('Invested', invested), inputOf('Annual spending', q(annual, U.annualAfter))], result: yrs }, { fiAt: Math.round(1 / wr * 10) / 10 }));
+    /* true FI: withdrawals taxed as ordinary income on the pre-tax share */
+    const b = inv.balancesByBucket; const total = Object.values(b).reduce((s2, x) => s2 + x, 0);
+    const pretaxShare = total > 0 ? b.pretax / total : 0;
+    const table = ctx.data.tax2026; const status = (ctx.facts.filingStatus && ctx.facts.filingStatus.v) || 'single';
+    const afterTax = W => W - federalTax(table, Math.max(0, Math.round(W * pretaxShare) - standardDeduction(table, status)), status).tax;
+    let lo = annual, hi = annual * 2;
+    for (let i = 0; i < 60; i++) { const mid = Math.round((lo + hi) / 2); if (afterTax(mid) >= annual) hi = mid; else lo = mid; if (hi - lo <= 100) break; }
+    const W = hi; const trueFi = q(Math.round(W / wr), U.oneoff, { confidence: Math.min(spending.confidence, 0.85), rough: true });
+    put(ok('trueFiNumber', trueFi, { formula: 'withdrawals W where W - federal tax on (W x pre-tax share - standard deduction) = annual spending; W / withdrawal rate', inputs: [inputOf('Annual spending', q(annual, U.annualAfter)), inputOf('Pre-tax share of balances', pct(pretaxShare)), inputOf('Gross withdrawals a year', q(W, U.annualPre)), inputOf('Tax on them', q(W - afterTax(W), U.annualNa))], result: trueFi }, { grossWithdrawal: W, taxAnnual: W - afterTax(W), pretaxShare }));
+  } else ['fiRatio', 'daysOfFreedom', 'yearsOfExpenses', 'trueFiNumber'].forEach(id => put(fromNeeds(id, 'invested / spending', invested || (inv && inv.investedAssets), spending || (sp && sp.baselineMonthly))));
+  /* projection-based dates */
+  const fiAge = pj && pj.likely ? pj.likely.fiAge : null;
+  if (path && invested && spending && spending.cents > 0) {
+    const regular = L.rungs.find(x => x.id === 'regularFi');
+    const invSeries = path.map(p => ({ year: p.year, age: p.age, value: p.invested }));
+    const cross = monthsToReach(regular.number, invested.cents, invSeries);
+    put(cross === null ? need('crossoverDate', ['a savings rate that reaches the FI number before 95']) : ok('crossoverDate', Object.assign({}, dateValue(monthDate(cross)), { rough: true }), { formula: 'first projected month invested x withdrawal rate covers spending', inputs: [inputOf('FI number', q(regular.number, U.oneoff)), inputOf('Invested today', invested)], result: dateValue(monthDate(cross)) }, { months: cross }));
+    const m100 = monthsToReach(10000000, invested.cents, invSeries);
+    put(m100 === null ? need('first100kDate', ['contributions that reach $100,000 before 95']) : ok('first100kDate', Object.assign({}, dateValue(monthDate(m100)), { rough: true }), { formula: 'first projected month invested assets reach $100,000', inputs: [inputOf('Invested today', invested)], result: dateValue(monthDate(m100)) }, { months: m100, reached: m100 === 0 }));
+    const contrib = ctx.contribAnnual || 0;
+    let flip = null; let prev = invested.cents;
+    for (let i = 0; i < path.length; i++) { if (!path[i].working) break; if (Math.round(prev * r) > contrib) { flip = path[i]; break; } prev = path[i].invested; }
+    put(flip ? ok('theFlip', Object.assign({}, dateValue(String(flip.year) + '-' + ctx.birthMonth), { rough: true }), { formula: 'first projected year invested x return exceeds contributions', inputs: [inputOf('Contributions a year', q(contrib, U.annualNa)), inputOf('Likely return', pct(r)), inputOf('Invested today', invested)], result: dateValue(String(flip.year) + '-' + ctx.birthMonth) }, { age: flip.age, already: Math.round(invested.cents * r) > contrib }) : need('theFlip', ['contributions that growth can overtake before retirement']));
+  } else ['crossoverDate', 'first100kDate', 'theFlip'].forEach(id => put(need(id, ['income, spending and account balances'])));
+  /* Social Security floor and the health care bridge */
+  if (spending && spending.cents > 0 && pj && pj.ssMonthly !== undefined) {
+    const ss = pj.ssMonthly * 12; const annual = spending.cents * 12;
+    const fiA = fiAge !== null ? fiAge : retAge;
+    const bridge = Math.max(0, asm.socialSecurityAge - fiA);
+    const n = Math.round(Math.max(0, annual - ss) / wr + ss * bridge);
+    const val = q(n, U.oneoff, { confidence: Math.min(spending.confidence, 0.7), rough: true });
+    put(ok('ssAdjustedFiNumber', val, { formula: '(annual spending - Social Security a year) / withdrawal rate + Social Security a year x bridge years', inputs: [inputOf('Annual spending', q(annual, U.annualAfter)), inputOf('Social Security a year from ' + asm.socialSecurityAge, q(ss, U.annualNa)), inputOf('Bridge years from FI at ' + fiA, count(bridge, 'years'))], result: val }, { bridgeYears: bridge, ssAnnual: ss, fiAge: fiA }));
+    const years65 = Math.max(0, 65 - fiA);
+    const hc = q(Math.round(asm.healthcarePremiumMonthlyCents * 12 * years65), U.oneoff, { confidence: 0.5, rough: true });
+    put(ok('healthcareBridge', hc, { formula: 'premium a month x 12 x years from the FI date to 65', inputs: [inputOf('Premium a month (assumption)', q(asm.healthcarePremiumMonthlyCents, U.monthlyAfter)), inputOf('Years from FI at ' + fiA + ' to 65', count(years65, 'years'))], result: hc }, { years: years65, fiAge: fiA }));
+  } else { put(fromNeeds('ssAdjustedFiNumber', 'FI number with Social Security', spending || (sp && sp.baselineMonthly), pj ? q(1, U.oneoff) : needs(['income, spending and account balances']))); put(fromNeeds('healthcareBridge', 'premium x years to 65', spending || (sp && sp.baselineMonthly), pj ? q(1, U.oneoff) : needs(['income, spending and account balances']))); }
+  /* multipliers */
+  if (ctx.age !== null) {
+    const yrs = retAge - ctx.age; const wm = count(Math.round(Math.pow(1 + r, yrs) * 100) / 100, 'x');
+    put(ok('wealthMultiplier', wm, { formula: '(1 + likely return) ^ (retirement age - age)', inputs: [inputOf('Likely return', pct(r)), inputOf('Years to ' + retAge, count(yrs, 'years'))], result: wm }, { years: yrs }));
+  } else put(need('wealthMultiplier', ['birth date']));
+  const dt = count(Math.round(72 / (r * 100) * 10) / 10, 'years');
+  if (invested) put(ok('doublingTime', dt, { formula: '72 / (real return x 100)', inputs: [inputOf('Likely return', pct(r)), inputOf('Invested today', invested)], result: dt }, { doubled: invested.cents * 2 }));
+  else put(need('doublingTime', ['account balances']));
+  /* a purchase in FI days */
+  if (out.fiNumber.status === 'ok') {
+    const growth = Math.round(out.fiNumber.value.cents * r) + (ctx.contribAnnual || 0);
+    if (growth > 0) {
+      const days = count(Math.round(100000 / growth * 365 * 10) / 10, 'days', 0.7);
+      put(ok('purchaseInFiDays', Object.assign({}, days, { rough: true }), { formula: '$1,000 / (FI number x return + contributions a year) x 365 days; $100 a month x 12 / withdrawal rate', inputs: [inputOf('FI number', out.fiNumber.value), inputOf('Growth near FI, a year', q(growth, U.annualNa)), inputOf('Withdrawal rate', pct(wr))], result: days }, { perThousandDays: days.value, perHundredMonthly: baristaRule(wr, 10000), growthAnnual: growth }));
+    } else put(need('purchaseInFiDays', ['contributions or a return above zero']));
+  } else put(need('purchaseInFiDays', out.fiNumber.needs));
+  /* the dream FI age */
+  const regular = L.rungs.find(x => x.id === 'regularFi');
+  if (regular.number !== null && regular.requiredMonthly !== null) {
+    const req = q(regular.requiredMonthly, U.monthlyAfter, { confidence: spending.confidence, rough: true });
+    put(ok('requiredMonthly', req, { formula: '(FI number - invested x g) x r / (12 x (g - 1)), g = (1 + r)^years to the dream FI age', inputs: [inputOf('FI number', q(regular.number, U.oneoff)), inputOf(L.basis === 'netWorth' ? 'Net worth' : 'Invested', q(L.basisCents, U.oneoff)), inputOf('Years to ' + L.targetAge + (lf && lf.dreamFiAge ? ' (dream FI age)' : ' (retirement age)'), count(L.years, 'years')), inputOf('Likely return', pct(r))], result: req }, { targetAge: L.targetAge, years: L.years, dream: !!(lf && lf.dreamFiAge) }));
+    if (take && take.cents > 0) { const sr = pct(regular.requiredMonthly / take.cents, take.confidence); put(ok('savingsRateNeeded', Object.assign({}, sr, { rough: true }), { formula: 'required monthly / take-home', inputs: [inputOf('Required a month', req), inputOf('Take-home', take)], result: sr }, { targetAge: L.targetAge })); }
+    else put(need('savingsRateNeeded', ['take-home pay']));
+  } else { put(need('requiredMonthly', regular.number === null ? ['monthly spending'] : ['account balances', 'birth date'])); put(need('savingsRateNeeded', regular.number === null ? ['monthly spending'] : ['account balances', 'birth date'])); }
+  /* guardrails */
+  if (spending && spending.cents > 0) {
+    const band = asm.guardrailsBand; const g = q(spending.cents, U.monthlyAfter, { confidence: spending.confidence, rough: spending.rough, range: { low: Math.round(spending.cents * (1 - band)), high: Math.round(spending.cents * (1 + band)) } });
+    put(ok('guardrailsBand', g, { formula: 'spending x (1 - band) to spending x (1 + band); the withdrawal rate stays within the band of its start', inputs: [inputOf('Spending a month', spending), inputOf('Band', pct(band))], result: g }, { band }));
+  } else put(fromNeeds('guardrailsBand', 'spending band', spending || (sp && sp.baselineMonthly)));
+  /* gut and dream gaps as FI date */
+  const gapMetric = (id, other, label) => {
+    const o = Q(other);
+    if (!o) { put(need(id, [label.toLowerCase() + ' on the Life plan'])); return; }
+    if (!spending || out.fiNumber.status !== 'ok') { put(need(id, ['monthly spending'])); return; }
+    const diff = o.cents - spending.cents; const dN = Math.round(diff * 12 / wr);
+    const growth = Math.round(out.fiNumber.value.cents * r) + (ctx.contribAnnual || 0);
+    const months = growth > 0 ? Math.round(dN / growth * 12 * 10) / 10 : null;
+    const c = count(months === null ? 0 : months, 'months', 0.6);
+    put(ok(id, Object.assign({}, c, { rough: true }), { formula: '(' + label.toLowerCase() + ' - spending) x 12 / withdrawal rate; that / growth near FI x 12 months', inputs: [inputOf(label, o), inputOf('Spending a month', spending), inputOf('FI number change', q(dN, U.oneoff)), inputOf('Growth near FI, a year', q(growth, U.annualNa))], result: c }, { diffMonthly: diff, fiNumberDelta: dN }));
+  };
+  gapMetric('gutGap', lf && lf.gutSpendingMonthly, 'Gut spending');
+  gapMetric('dreamGap', lf && lf.dreamSpendingMonthly, 'Dream spending');
+  /* benchmarks (coach view by default) */
+  if (ctx.age !== null && gross && gross.cents > 0 && nw) {
+    const expected = Math.round(ctx.age * gross.cents * 12 / 10);
+    const rr = pct(expected > 0 ? nw.cents / expected : 0, Math.min(gross.confidence, nw.confidence));
+    put(ok('expectedNetWorth', Object.assign({}, rr, { rough: gross.rough || nw.rough }), { formula: 'age x annual gross / 10; net worth / that', inputs: [inputOf('Age', count(ctx.age, 'years')), inputOf('Gross a year', scale(gross, 12)), inputOf('Expected net worth', q(expected, U.oneoff)), inputOf('Net worth', nw)], result: rr }, { expectedCents: expected }));
+  } else put(need('expectedNetWorth', [ctx.age === null ? 'birth date' : null, !gross ? 'gross pay' : null, !nw ? 'account balances' : null].filter(Boolean)));
+  if (ctx.age !== null && gross && gross.cents > 0 && invested) {
+    const src = ctx.data.benchmarks && ctx.data.benchmarks.salaryMultiples[asm.benchmarkSource] ? ctx.data.benchmarks.salaryMultiples[asm.benchmarkSource] : null;
+    const bench = src ? interpolate(src.points, ctx.age) : null;
+    const mult = invested.cents / (gross.cents * 12);
+    const rr = pct(Math.round(mult * 100) / 100, Math.min(gross.confidence, invested.confidence));
+    put(ok('salaryMultiple', Object.assign({}, rr, { rough: gross.rough || invested.rough }), { formula: 'invested / annual gross, against the benchmark for this age', inputs: [inputOf('Invested', invested), inputOf('Gross a year', scale(gross, 12)), inputOf('Benchmark at ' + ctx.age + (src ? ' (' + src.label + ', verify)' : ''), bench === null ? null : count(bench, 'x'))], result: rr }, { benchmark: bench, source: src ? src.label : null, verify: true }));
+  } else put(need('salaryMultiple', [ctx.age === null ? 'birth date' : null, !gross ? 'gross pay' : null, !invested ? 'account balances' : null].filter(Boolean)));
+}
+function interpolate(points, x) {
+  if (!points || !points.length) return null;
+  if (x <= points[0][0]) return points[0][1] * Math.max(0, x / points[0][0]);
+  for (let i = 1; i < points.length; i++) { if (x <= points[i][0]) { const [x0, y0] = points[i - 1]; const [x1, y1] = points[i]; return Math.round((y0 + (y1 - y0) * (x - x0) / (x1 - x0)) * 100) / 100; } }
+  return points[points.length - 1][1];
 }

@@ -1,0 +1,50 @@
+{
+ "starter": {
+  "baseMonths": 294.8,
+  "deltas": {
+   "spendingMinus10pct": -37.5,
+   "takeHomePlus10pct": -27.6,
+   "spendingMinus100": -9.9,
+   "takeHomePlus100": -5.1,
+   "investedPlus10pct": -2.2,
+   "returnPlus1pt": -23.7,
+   "withdrawal35": 24.2,
+   "windfall1000": -0.5
+  },
+  "ladder": {
+   "leanFi": 78000000,
+   "baristaLeanFi": 33000000,
+   "baristaRegularFi": 69000000,
+   "regularFi": 114000000,
+   "fatFi": 171000000
+  },
+  "baristaRule": 3000000,
+  "baristaRuleAt35": 3428571,
+  "pctToFiInvested": 0.036842,
+  "pctToFiNetWorth": 0.036842
+ },
+ "mid": {
+  "baseMonths": 203.1,
+  "deltas": {
+   "spendingMinus10pct": -26.8,
+   "takeHomePlus10pct": -18.5,
+   "spendingMinus100": -4.9,
+   "takeHomePlus100": -2.0,
+   "investedPlus10pct": -3.9,
+   "returnPlus1pt": -15.0,
+   "withdrawal35": 21.3,
+   "windfall1000": -0.2
+  },
+  "ladder": {
+   "leanFi": 108000000,
+   "baristaLeanFi": 48000000,
+   "baristaRegularFi": 105000000,
+   "regularFi": 165000000,
+   "fatFi": 247500000
+  },
+  "baristaRule": 3000000,
+  "baristaRuleAt35": 3428571,
+  "pctToFiInvested": 0.109091,
+  "pctToFiNetWorth": 0.112121
+ }
+}

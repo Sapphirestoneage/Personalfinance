@@ -6,13 +6,13 @@ import { h, clear } from '../dom.js';
 import * as F from '../../engine/format.js';
 import { CHARTS } from '../../engine/chartdata.js';
 import * as Charts from '../charts.js';
-import { kpi, openMath } from './measure.js';
+import { openMath } from './measure.js';
 import { theirPlate, byInstitution, sinceLastSession, changeText } from '../../engine/plates.js';
 import { clientName } from '../app.js';
 import { translator } from '../glossary.js';
 import { PLANET_SHORT } from '../../engine/sun.js';
+import { renderShelf } from '../shelf.js';
 
-const KEY_METRICS = ['takeHome', 'spending', 'surplus', 'savingsRateTakeHome', 'netWorth', 'totalDebt', 'runway', 'pctToFi'];
 
 export function mount(host, app) {
   const t = translator(app);
@@ -31,11 +31,11 @@ export function mount(host, app) {
     page.appendChild(h('header', { class: 'op-head' }, h('div', null, h('h2', { class: 'op-title' }, clientName(rec) || 'Household'), h('div', { class: 'muted small' }, rec.sun.f.bigGoal && rec.sun.f.bigGoal.v ? rec.sun.f.bigGoal.v : '')),
       h('div', { class: 'op-meta' }, F.dateLong(R.today), h('br'), ((rec.sessions || []).length ? 'After session ' + rec.sessions.length : 'Before the first session'), h('br'), 'Overall confidence ' + Math.round(conf * 100) + '%')));
     /* key numbers */
-    const nums = h('div', { class: 'op-numbers' });
+    const nums = h('div', { class: 'op-shelf-host' });
     /* the one-pager is the client's page: client labels whatever the view */
     const clientApp = Object.assign(Object.create(Object.getPrototypeOf(app)), app, { view: 'client' });
-    KEY_METRICS.forEach(id => { const def = app.data.metrics.metrics.find(m => m.id === id); if (M && M[id]) nums.appendChild(kpi(clientApp, M[id], def, t)); });
-    page.appendChild(h('section', null, h('h3', null, 'Key numbers'), M ? nums : h('p', { class: 'muted small' }, 'Numbers appear as income and spending come in.')));
+    if (M) renderShelf(nums, clientApp, { compact: true, title: 'Key numbers', ladder: false });
+    page.appendChild(h('section', { class: 'op-shelf' }, M ? nums : h('p', { class: 'muted small' }, 'Numbers appear as income and spending come in.')));
     /* since last time */
     const since = sinceLastSession(rec, app.data.fields, (def, o, n, l) => changeText(def, o, n, l));
     page.appendChild(h('section', null, h('h3', null, 'Changes since last time' + (since.since ? ' (' + F.dateLong(since.since.slice(0, 10)) + ')' : '')), since.changes.length ? h('ul', null, since.changes.slice(0, 3).map(c => h('li', null, c.row + ': ' + c.label.toLowerCase() + ' ' + c.text))) : h('p', { class: 'muted small' }, since.since ? 'No changes since the last session.' : 'First session.')));
