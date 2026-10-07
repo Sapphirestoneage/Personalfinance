@@ -21,3 +21,7 @@ Level 8 met every line above except the screenshot folder and the critique:
 the sweep ran at 1440, 1024 and 390 in both views for the three new screens
 and the new household (tests/ui.js), and a critique round for the discovery
 form, the summary and the call path is owed (PROGRESS.md).
+
+Level 11 met every line above except the screenshot folder and the critique:
+the sweep ran at 1440, 1024 and 390 in both views for #/goals and every
+household (tests/ui.js); a critique round is owed (PROGRESS.md).

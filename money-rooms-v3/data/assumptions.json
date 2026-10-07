@@ -48,7 +48,8 @@
   "showBenchmarksToClient": false,
   "callTargetRoomFraction": 0.5,
   "fillGapsWithGuesses": true,
-  "roommateMonthsToReplace": 2
+  "roommateMonthsToReplace": 2,
+  "starterCushionMonths": 1
  },
  "labels": {
   "returnLikely": "Return after inflation, likely",
@@ -83,7 +84,8 @@
   "showBenchmarksToClient": "Show benchmarks in the client view",
   "callTargetRoomFraction": "Meet in the middle: share of the way from actual toward the nearer of gut and dream",
   "fillGapsWithGuesses": "Fill gaps with guesses (averages for the cost area)",
-  "roommateMonthsToReplace": "Months until a roommate is replaced (cushion and worst case)"
+  "roommateMonthsToReplace": "Months until a roommate is replaced (cushion and worst case)",
+  "starterCushionMonths": "Starter cushion, months of spending (the floor every goal waits for)"
  },
  "options": {
   "fiProgressBasis": [

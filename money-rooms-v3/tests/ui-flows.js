@@ -4,6 +4,69 @@ import path from 'node:path';
 
 export const flows = [
 {
+  name: 'level11-maya-goal-timeline',
+  async run(page, { base, check, APP }) {
+    await page.goto(base + 'index.html#/home');
+    await page.waitForSelector('#main h1');
+    await importFixture(page, APP, 'maya');
+    await page.waitForSelector('.goals-line');
+    check('Home carries the next win and a link to the timeline', (await page.textContent('.goals-line')).indexOf('Goal timeline') !== -1);
+    await page.goto(base + 'index.html#/goals');
+    await page.waitForSelector('.gtl');
+    const sentence = await page.textContent('.gtl-sentence');
+    check('the top of the screen is one sentence: your next win', /^Your next win is .+, in [A-Z][a-z]{2} \d{4}\.$/.test(sentence.trim()), sentence);
+    check('the starter cushion is the first row and locked', (await page.getAttribute('.gtl-row:not(.gtl-head) >> nth=0', 'data-goal')) === 'starter' && (await page.$$('.gtl-row.starter .gtl-move button')).length === 0);
+    check('long-term goals sit at the right edge with their dates', (await page.$$('.gtl-row.type-long-term .gtl-edge')).length === 3);
+    check('the three ways are compared in a small table', (await page.$$('table.compare tbody tr')).length === 3);
+    const landsBefore = await page.textContent('tr[data-goal="full"] td:nth-child(3)');
+    /* a what-if: 100 more a month; the dates move and nothing is saved */
+    await page.click('button[aria-label="More: 100 dollars a month more"]');
+    await page.waitForSelector('.whatif-moves');
+    check('plus 100 a month says what moved', /moved up/.test(await page.textContent('.whatif-moves')));
+    check('the allocation table follows the what-if', (await page.textContent('tr[data-goal="full"] td:nth-child(3)')) !== landsBefore);
+    check('the what-if is not saved', (await page.textContent('.whatif .tag')).indexOf('nothing is saved') !== -1);
+    await page.click('.whatif button:has-text("Reset")');
+    /* using the cushion: the floor comes first again and the month is marked */
+    await page.selectOption('select[aria-label="Use the cushion month"]', { index: 3 });
+    await page.fill('input[aria-label="Amount used"]', '20000');
+    await page.press('input[aria-label="Amount used"]', 'Enter');
+    await page.waitForSelector('.gtl-cell.refill');
+    check('using the cushion marks the refill on the starter row', (await page.$$('.gtl-row.starter .gtl-cell.refill')).length === 1 && (await page.$$('.gtl-row.starter .gtl-cell.fill')).length >= 1);
+    check('the what-if chip names it', (await page.textContent('.whatif')).indexOf('Used $20,000') !== -1);
+    await page.click('.whatif button:has-text("Reset")');
+    /* the mode comparison: switch, then confirm writes the mode */
+    await page.click('.mode-switch button:has-text("One at a time")');
+    await page.waitForSelector('table.compare tr.current[data-mode="one-at-a-time"]');
+    check('the switch changes the run and highlights its row', (await page.textContent('.whatif')).indexOf('Confirm') !== -1);
+    await page.click('.whatif button:has-text("Confirm")');
+    await page.waitForFunction(() => (document.querySelector('.whatif .tag') || {}).textContent === 'nothing changed');
+    check('confirm saves the mode to the record', (await page.getAttribute('.mode-switch button:has-text("One at a time")', 'aria-pressed')) === 'true');
+    /* reorder with the arrows, then confirm */
+    const second = await page.getAttribute('.gtl-row:not(.gtl-head) >> nth=1', 'data-goal');
+    await page.click('.gtl-row:not(.gtl-head) >> nth=2 >> button[aria-label^="Move"][aria-label$="up"]');
+    await page.waitForFunction(id => document.querySelectorAll('.gtl-row:not(.gtl-head)')[1].dataset.goal !== id, second);
+    check('a goal moves up the list', (await page.getAttribute('.gtl-row:not(.gtl-head) >> nth=0', 'data-goal')) === 'starter');
+    await page.click('.whatif button:has-text("Confirm")');
+    await page.waitForFunction(() => (document.querySelector('.whatif .tag') || {}).textContent === 'nothing changed');
+    /* the calendar file */
+    const [dl] = await Promise.all([page.waitForEvent('download'), page.click('button:has-text("Add to calendar")')]);
+    check('add to calendar downloads an ics file', /\.ics$/.test(dl.suggestedFilename()));
+    /* the client view: client words only */
+    await page.click('#view-client');
+    await page.waitForSelector('.gtl');
+    const client = await page.textContent('#main');
+    check('the client view keeps the sentence and the timeline', /Your next win is/.test(client) && (await page.$$('.gtl-row')).length > 4);
+    check('the client view has no internal words', !/\bHCOL\b|\banchor\b|\bvariance\b|\bestimated\b|allocation|\bmode\b|override|surplus/i.test(client), (client.match(/.{0,20}(allocation|mode|override|surplus).{0,20}/i) || [])[0]);
+    await page.goto(base + 'index.html#/onepager');
+    await page.waitForSelector('.onepager');
+    check('the one-pager lists the next wins', (await page.textContent('.onepager')).indexOf('Your next wins') !== -1);
+    await page.click('#view-coach');
+    await page.goto(base + 'index.html#/session');
+    await page.waitForSelector('.next-card');
+    check('the follow-up email names the next win', (await page.inputValue('textarea.email')).indexOf('Your next win') !== -1);
+  },
+},
+{
   name: 'level8-maya-discovery-to-targets',
   async run(page, { base, check, APP }) {
     /* 1. the discovery form: Jersey City reads as HCOL before anything is saved */

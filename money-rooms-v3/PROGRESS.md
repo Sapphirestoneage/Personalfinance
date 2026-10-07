@@ -3,6 +3,12 @@
 Updated: 2026-10-07
 
 ## Done
+- Level 11 Goal Timeline: engine/goals.js (goals derived from the record and the result, the starter
+  cushion as a floor in every mode, three modes, rollover, debt goals through debtsim, shortfalls with
+  the floor named, earliest dates, the comparison), engine/ics.js, the #/goals screen with the timeline,
+  the allocation table, the mode switch, live what-ifs and Confirm, Home, Session and one-pager tie-ins,
+  the follow-up email's next win, 18 engine tests tied to tests/households/expected-goals.py and a
+  browser flow. Level 10 was never built; the cushion goals read cash and goals can link to accounts.
 - Level 8 Discovery, Confirm, and the Call Path: the discovery form and chip bar (#/discovery), the
   cost-of-living tier from the city (data/col-tiers.json, BEA RPP, marked verify), guesses that fill
   empty spending areas and never count as facts, the summary sheet and its email, roommates and shared
@@ -49,6 +55,9 @@ Updated: 2026-10-07
 - Design critique round 1 found 17 fixes; all applied; round 2 in screenshots/level-0/critique.md.
 
 ## Next
+- Level 10 (savings buckets, curricula) is missing; the goal timeline is ready to link buckets and the
+  session 5 curriculum when it arrives.
+- A design critique round for #/goals.
 - A design critique round for #/levers and the shelf (every other screen before Level 8 has one).
 - A design critique round for #/discovery, the summary and #/call.
 - The RPP figures in data/col-tiers.json are from memory (verify: true); check them against BEA's

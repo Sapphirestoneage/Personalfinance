@@ -625,7 +625,8 @@
   "life.events": "promoted blocks are read by Simulate, not the engine",
   "asm.callTargetRoomFraction": "how a target is proposed",
   "asm.roommateMonthsToReplace": "the cushion target and the roommate scenario only",
-  "whose": "a label for whose pay a row is; the household basis decides what counts"
+  "whose": "a label for whose pay a row is; the household basis decides what counts",
+  "asm.starterCushionMonths": "sets the first goal on the timeline, not the FI date"
  },
  "signNote": "An edge sign is the derivative: +1 when the upstream value rising raises the downstream value, -1 when it lowers it. The projection node stands for the FI date, so a later date is higher.",
  "extraEdges": {
@@ -643,7 +644,8 @@
    "asm.inflation",
    "asm.showBenchmarksToClient",
    "life.events",
-   "asm.callTargetRoomFraction"
+   "asm.callTargetRoomFraction",
+   "asm.starterCushionMonths"
   ],
   "m.shelterRate": [
    "asm.shelterHeavyShare"

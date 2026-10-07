@@ -15,6 +15,7 @@ import { renderShelf } from '../shelf.js';
 import { variance, AREA_LABELS } from '../../engine/variance.js';
 import { proposals } from '../../engine/targets.js';
 import { actualsOf } from './call.js';
+import { nextWins } from './goals.js';
 
 
 export function mount(host, app) {
@@ -44,6 +45,9 @@ export function mount(host, app) {
     page.appendChild(h('section', null, h('h3', null, 'Changes since last time' + (since.since ? ' (' + F.dateLong(since.since.slice(0, 10)) + ')' : '')), since.changes.length ? h('ul', null, since.changes.slice(0, 3).map(c => h('li', null, c.row + ': ' + c.label.toLowerCase() + ' ' + c.text))) : h('p', { class: 'muted small' }, since.since ? 'No changes since the last session.' : 'First session.')));
     /* Level 8: what you said, what it really is, what you'd want; your targets; guesses; if it all falls on you */
     saidSection(page, R, rec);
+    /* Level 11: the next wins, the starter cushion first until it is full */
+    const wins = nextWins(clientApp, 3);
+    if (wins.length) page.appendChild(h('section', { class: 'op-wins' }, h('h3', null, 'Your next wins'), h('ul', null, wins.map(w => h('li', null, w.text)))));
     const grid = h('div', { class: 'op-grid' });
     grid.appendChild(listSection('Most important to know', op.important || suggestImportant(R), 'important', 3, suggestImportant(R)));
     grid.appendChild(listSection('What is working', op.amazing || [], 'amazing', 3));

@@ -39,12 +39,13 @@ repository root, `npx playwright install chromium`).
 | `engine/fiLadder.js`, `engine/graph.js`, `engine/sensitivity.js` | Level 9: the FI ladder (Lean, Barista, FI, Fat, Coast), the dependency graph from inputs to the FI date, and what moves the FI date (impact and ask priority) |
 | `engine/parse.js`, `engine/col.js`, `engine/guesses.js`, `engine/discovery.js` | Level 8: numbers the way people say them ("1900 every two weeks", "my half is 1,650"), the cost-of-living tier from the city (`data/col-tiers.json`), the guesses that fill empty areas, and the discovery call applied to a record |
 | `engine/anchors.js`, `engine/callpath.js`, `engine/variance.js`, `engine/targets.js`, `engine/progress.js` | Level 8: what they said and what they would want (write-once anchors), the six stops of the call, what you said against what it really is, the four target choices, and progress versus paperwork |
+| `engine/goals.js`, `engine/ics.js` | Level 11: the goal timeline (every goal funded at once from the surplus, the starter cushion first, three ways to split, rollover, shortfalls with the floor named) and the calendar export |
 | `engine/leverage.js`, `engine/plates.js`, `engine/email.js` | What to ask next, the two plates, the follow-up, discovery and targets emails |
 | `engine/scenarios.js` | Scenario blocks: costs from answers, each alone and together, never writing to the record |
 | `engine/compute.js` | Runs the planets and returns one result for the views |
 | `ui/app.js` | The shell: routes, view toggle, autosave, undo, shortcuts |
 | `ui/tokens.css`, `ui/app.css`, `ui/print.css` | The design system and the one-pager print sheet |
-| `ui/views/` | One module per screen (home, ledger, measure, onepager, session, scenarios, learn, assumptions, levers, discovery, call); views never do math |
+| `ui/views/` | One module per screen (home, ledger, measure, onepager, session, scenarios, learn, assumptions, levers, discovery, call, goals); views never do math |
 | `ui/shelf.js`, `ui/metricdrawer.js`, `ui/levers-bridge.js`, `ui/levers-worker.js` | The headline metrics shelf, the one drawer every metric opens (math, inputs, levers, lens), and the memoised sensitivity runner (a module Worker when the browser has one) |
 | `ui/charts.js`, `ui/table.js`, `ui/orbit.js` | The D3 charts, the Ledger table, the orbit map |
 | `data/` | Libraries, each with asOf, source and a verify flag |
@@ -118,6 +119,26 @@ figure uses the client's share, and runway, the cushion target, Simulate
 ("Roommate moves out") and the worst case say what happens if it all falls
 on them. The Session page carries two meters (Picture completeness, Goal
 progress) and Progress vs paperwork.
+
+## Level 11: Goal timeline
+
+`#/goals` (Goals in the side nav; "Your goals" in the client view, and a line
+under the Home shelf). The top of the screen is one sentence: "Your next win
+is the wedding, in September 2027." Below it, months run across the top and
+every goal has a row: the starter cushion first, always, then each debt, each
+Life plan goal and each hand-typed goal, with the long-term rungs (Lean FI,
+Coast FI, FI) at the right edge with their projected dates. Filled months are
+funded; the flag is the date she wants it by; the arrow is money arriving from
+a finished goal; a dashed month is the cushion refilling after she used it.
+Under the timeline: where the money goes each month, and the three ways to
+split it (dates first, one at a time, all at once) compared on goals on time
+and interest paid. What-ifs (100 more or less a month, a windfall, using the
+cushion, a new order, a locked amount) update the timeline live and say what
+moved; Confirm saves the order, mode, split or lock; surplus, windfall and
+cushion what-ifs never reach the record. Add to calendar downloads an .ics
+with each finish month and each closed session. Level 10 (savings buckets,
+curricula) was not built before this level: cushion goals read the cash
+balances and a goal can link to an account row instead of a bucket.
 
 ## Level 9: What moves the FI date
 

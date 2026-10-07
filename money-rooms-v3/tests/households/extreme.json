@@ -2,7 +2,7 @@
  "app": "money-rooms-v3",
  "exportedAt": "2026-10-01T12:27:18.000Z",
  "record": {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "id": "extreme",
   "createdAt": "2026-10-01T12:00:00.000Z",
   "updatedAt": "2026-10-01T12:27:18.000Z",
@@ -8115,6 +8115,19 @@
    "unitSize": null,
    "partner": null,
    "basis": "together"
+  },
+  "goals": {
+   "mode": "deadlines-first",
+   "order": [],
+   "overrides": {},
+   "splits": {},
+   "extras": [],
+   "starter": {
+    "months": null,
+    "fixedCents": null
+   },
+   "lastFinish": null,
+   "hidden": []
   },
   "colTier": null,
   "sessionMode": "standard",

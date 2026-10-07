@@ -18,12 +18,15 @@ import { variancePanel, targetsPanel, actualsOf } from './call.js';
 import { variance, AREA_LABELS } from '../../engine/variance.js';
 import { proposals } from '../../engine/targets.js';
 import { targetsEmail } from '../../engine/email.js';
+import { finishChanges, finishMonths } from '../../engine/goals.js';
+import { nextWins } from './goals.js';
 
 export function mount(host, app) {
   const noteInput = h('input', { class: 'input session-note', type: 'text', 'aria-label': 'Session note' });
   const header = h('header', null, h('h1', null, 'Session'), h('span', { class: 'sub' }, 'The next question is the unsure fact that moves the most money.'), h('div', { class: 'actions' },
     h('label', { class: 'small muted' }, 'Note for this session'), noteInput,
     h('a', { class: 'btn primary', href: '#/call' }, 'Run the call'),
+    h('a', { class: 'btn', href: '#/goals' }, 'Goals'),
     h('button', { class: 'btn', onClick: () => { snapshot(app, noteInput.value.trim()); noteInput.value = ''; } }, 'Close this session')));
   host.appendChild(header);
   const meters = h('div', { class: 'meters' }); host.appendChild(meters);
@@ -150,7 +153,7 @@ function plates(app, s, tab, setTab) {
 function emailPanel(app, s) {
   const panel = h('section', { class: 'panel' });
   const hasTargets = Object.keys(app.record.targets || {}).length > 0;
-  const text = hasTargets ? targetsEmail(app.record, proposals(variance(app.record, actualsOf(app)).rows, app.record, app.result).rows.map(t => Object.assign({}, t, { saved: !!app.record.targets[t.key] })), AREA_LABELS) : followUpEmail(app.record, app.data.fields, s.theirPlate.filter(i => !isDone(app, i)));
+  const text = hasTargets ? targetsEmail(app.record, proposals(variance(app.record, actualsOf(app)).rows, app.record, app.result).rows.map(t => Object.assign({}, t, { saved: !!app.record.targets[t.key] })), AREA_LABELS) : followUpEmail(app.record, app.data.fields, s.theirPlate.filter(i => !isDone(app, i)), { nextWin: (nextWins(Object.assign(Object.create(Object.getPrototypeOf(app)), app, { view: 'client' }), 1)[0] || {}).text || null });
   panel.appendChild(h('h2', null, hasTargets ? 'Targets email' : 'Follow-up email', h('span', { class: 'tag' }, hasTargets ? 'what they said, in their words' : 'by institution')));
   const ta = h('textarea', { class: 'input email', readOnly: true, 'aria-label': 'Follow-up email draft', value: text });
   panel.appendChild(ta);
@@ -171,16 +174,20 @@ function sinceLast(app) {
   const panel = h('section', { class: 'panel' });
   const r = sinceLastSession(app.record, app.data.fields, changeText);
   panel.appendChild(h('h2', null, 'Since last time', r.since ? h('span', { class: 'tag' }, F.dateLong(r.since.slice(0, 10))) : null));
-  if (!r.changes.length) { panel.appendChild(h('p', { class: 'muted small' }, r.since ? 'No changes since the last session.' : 'No session closed yet.')); return panel; }
-  panel.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data' }, h('tbody', null, r.changes.slice(0, 8).map(c => h('tr', null, h('td', { class: 'wrap' }, c.row + ': ' + c.label.toLowerCase()), h('td', { class: 'small muted' }, c.text)))))));
+  const moves = app.result.goalPlan && app.record.goals && app.record.goals.lastFinish ? finishChanges(app.record.goals.lastFinish, finishMonths(app.result.goalPlan), app.result.goalPlan.input.items) : [];
+  if (!r.changes.length && !moves.length) { panel.appendChild(h('p', { class: 'muted small' }, r.since ? 'No changes since the last session.' : 'No session closed yet.')); return panel; }
+  if (moves.length) panel.appendChild(h('p', { class: 'small goal-moves' }, 'Since last time, ' + moves.slice(0, 3).map(m => m.text.charAt(0).toLowerCase() + m.text.slice(1)).join('; ') + '.'));
+  if (r.changes.length) panel.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data' }, h('tbody', null, r.changes.slice(0, 8).map(c => h('tr', null, h('td', { class: 'wrap' }, c.row + ': ' + c.label.toLowerCase()), h('td', { class: 'small muted' }, c.text)))))));
   return panel;
 }
 
 export function snapshot(app, note) {
   const n = (app.record.sessions || []).length + 1;
+  const finish = app.result && app.result.goalPlan ? finishMonths(app.result.goalPlan) : null;
   app.mutate(rec => {
     const at = new Date().toISOString();
     rec.sessions.push({ id: 's' + n, label: 'Session ' + n, at, note: note || '' });
+    if (finish) { rec.goals = rec.goals || {}; rec.goals.lastFinish = finish; }
     append(rec.journal, { kind: 'session', planet: 'sun', rowId: 'sun', field: null, owner: 'sun', old: null, new: 's' + n, source: 'client', state: 'known', session: 's' + n }, at);
   }, 'sessions');
   app.toast('Session ' + n + ' closed. The one-pager now compares against it.');

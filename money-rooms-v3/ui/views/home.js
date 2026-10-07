@@ -11,6 +11,13 @@ import { datePicker } from '../datepicker.js';
 import { renderShelf } from '../shelf.js';
 import { lowerFirst, holdsBack } from './ledger.js';
 import { overallConfidence } from './onepager.js';
+import { nextWins } from './goals.js';
+
+/* One line under the shelf (Level 11, MR-051): the next win, with the timeline a tap away. */
+function goalsLine(app) {
+  const wins = nextWins(app, 1); const first = wins[0];
+  return h('p', { class: 'small goals-line' }, first ? first.text + '. ' : 'Your goals, all at once. ', h('a', { class: 'next', href: '#/goals' }, app.view === 'coach' ? 'Goal timeline' : 'See your goals'));
+}
 
 export function parseDateText(t) {
   let m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(t);
@@ -53,7 +60,7 @@ export function mount(host, app) {
   const shelf = h('section', { class: 'panel shelf-panel' });
   host.appendChild(header);
   host.appendChild(h('div', { class: 'grid home-grid' }, h('div', { class: 'stack' }, app.record ? mapHost : null, app.record ? bar : null, sun, app.record ? shelf : null), h('div', { class: 'stack coach-only' }, clients, history)));
-  if (app.record) renderShelf(shelf, app, { compact: true });
+  if (app.record) { renderShelf(shelf, app, { compact: true }); shelf.appendChild(goalsLine(app)); }
   renderClients(clients, app);
   renderMap(mapHost, bar, app);
   renderSun(sun, app);
@@ -64,7 +71,7 @@ export function mount(host, app) {
       renderMap(mapHost, bar, app);
       renderHistory(history, app);
       updateSunValues(sun, app);
-      if (app.record) renderShelf(shelf, app, { compact: true });
+      if (app.record) { renderShelf(shelf, app, { compact: true }); shelf.appendChild(goalsLine(app)); }
       if (reason === 'clients') renderClients(clients, app);
     },
   };

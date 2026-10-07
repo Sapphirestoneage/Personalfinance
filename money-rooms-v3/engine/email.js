@@ -31,6 +31,7 @@ export function followUpEmail(record, fields, theirItems, opts) {
     });
     lines.push('');
   });
+  if (o.nextWin) { lines.push('Your next win: ' + o.nextWin.charAt(0).toLowerCase() + o.nextWin.slice(1) + '.'); lines.push(''); }
   if (o.nextDate) lines.push('See you ' + o.nextDate + '.');
   lines.push('');
   lines.push(o.coachName || 'Eli');
@@ -51,6 +52,7 @@ export function discoveryEmail(record, summary, opts) {
   lines.push('');
   const bring = (summary.numbers || []).filter(n => n.status === 'unknown' || n.status === 'will-send').slice(0, 3);
   if (bring.length) { lines.push(gentle ? 'If it is easy, before we meet:' : 'Before we meet, if you can:'); bring.forEach(b => lines.push('  - ' + b.item + (b.status === 'will-send' ? ' (you said you would send it)' : ''))); lines.push(''); }
+  if (o.nextWin) { lines.push('Your next win: ' + o.nextWin.charAt(0).toLowerCase() + o.nextWin.slice(1) + '.'); lines.push(''); }
   if (o.nextDate) lines.push('See you ' + o.nextDate + '.'); lines.push(''); lines.push(o.coachName || 'Eli');
   return lines.join('\n');
 }

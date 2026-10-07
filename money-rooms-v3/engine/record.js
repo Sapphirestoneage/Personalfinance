@@ -6,7 +6,7 @@ import { createSun, PLANETS, SUN_FIELDS } from './sun.js';
 import { append, undoTarget, redoTarget } from './journal.js';
 import { field as mkField, isState, isSource } from './states.js';
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export function newId() {
   return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -33,6 +33,7 @@ export function createRecord(opts) {
     theirPlate: { done: {}, snoozed: {} },
     anchors: { gut: {}, dream: {}, history: [] },
     household: { roommates: [], lease: 'none', unitSize: null, partner: null, basis: 'together' },
+    goals: defaultGoals(),
     colTier: null,
     sessionMode: 'standard',
     discovery: null,
@@ -224,6 +225,18 @@ export function setHousehold(record, household, meta) {
   if (JSON.stringify(old) === JSON.stringify(next)) return null;
   record.household = next;
   const line = append(record.journal, { kind: 'household', planet: 'sun', rowId: 'household', field: 'household', owner: 'sun', old, new: JSON.parse(JSON.stringify(next)), source: 'client', state: 'known', session: m.session || null, why: m.why === undefined ? null : m.why }, m.now);
+  touch(record, m.now);
+  return line;
+}
+/* The goal timeline's own settings (Level 11, MR-051): the mode, the order, locked monthly amounts, the all-at-once split, goals typed by hand, the starter cushion's months or fixed amount, and the finish months saved at the last session close. Derived goals (cushions, debts, Life plan goals, the ladder) are never stored. */
+export function defaultGoals() { return { mode: 'deadlines-first', order: [], overrides: {}, splits: {}, extras: [], starter: { months: null, fixedCents: null }, lastFinish: null, hidden: [] }; }
+export function setGoals(record, patch, meta) {
+  const m = meta || {};
+  const old = JSON.parse(JSON.stringify(record.goals || defaultGoals()));
+  const next = Object.assign({}, old, patch || {});
+  if (JSON.stringify(old) === JSON.stringify(next)) return null;
+  record.goals = next;
+  const line = append(record.journal, { kind: 'goals', planet: 'sun', rowId: 'goals', field: Object.keys(patch || {}).join(','), owner: 'sun', old, new: JSON.parse(JSON.stringify(next)), source: 'client', state: 'known', session: m.session || null, why: m.why === undefined ? null : m.why }, m.now);
   touch(record, m.now);
   return line;
 }

@@ -22,6 +22,7 @@ import { tripleD, project, socialSecurityMonthly } from './projection.js';
 import { monthsToReach } from './fiLadder.js';
 import { isGuessRow, guessRows, realCategories } from './guesses.js';
 import { colTierOf } from './col.js';
+import { planGoals } from './goals.js';
 
 export function fillOf(fields) {
   const list = fields.filter(f => f && f.state !== 'not-applicable' && f.state !== 'not-for-me');
@@ -156,6 +157,8 @@ export function compute(record, data, opts) {
   result.ladder = mctx.ladderOut || null;
   const lenses = computeLenses({ metrics, sun, asm, data, age, debts, today, record, projection, contribAnnual });
   result.sun = sun; result.metrics = metrics; result.lenses = lenses; result.projection = projection; result.debts = debts; result.asm = asm; result.age = age;
+  /* Level 11 (MR-051): the goal timeline reads the finished result; the sensitivity reruns skip it */
+  result.goalPlan = opts && opts.light ? null : planGoals(record, result);
   /* Level 8: the cost-of-living tier, the household, the guesses and the two meters */
   result.colTier = data.colTiers ? colTierOf(record, data.colTiers) : null;
   result.household = record.household || { roommates: [], lease: 'none', partner: null, basis: 'together' };

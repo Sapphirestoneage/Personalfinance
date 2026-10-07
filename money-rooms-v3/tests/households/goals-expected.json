@@ -1,0 +1,179 @@
+{
+ "deadlines-first": {
+  "finish": {
+   "starter": "2026-11",
+   "card": "2027-08",
+   "full": "2029-05",
+   "bach": "2027-04",
+   "wedding": "2027-09",
+   "trip": "2029-07"
+  },
+  "interest": 60785,
+  "onTime": 2,
+  "starterFills": "2026-11",
+  "fundedBachApril": 24000,
+  "fundedBachMay": 0,
+  "fundedMonth1": {
+   "starter": 70000,
+   "card": 0,
+   "full": 0,
+   "bach": 0,
+   "wedding": 0,
+   "trip": 0
+  },
+  "fundedDec": {
+   "starter": 0,
+   "card": 26000,
+   "full": 0,
+   "bach": 24000,
+   "wedding": 20000,
+   "trip": 0
+  }
+ },
+ "one-at-a-time": {
+  "finish": {
+   "starter": "2026-11",
+   "card": "2027-05",
+   "full": "2029-01",
+   "bach": "2029-02",
+   "wedding": "2029-05",
+   "trip": "2029-06"
+  },
+  "interest": 40099,
+  "onTime": 0,
+  "starterFills": "2026-11",
+  "fundedBachApril": 0,
+  "fundedBachMay": 0,
+  "fundedMonth1": {
+   "starter": 70000,
+   "card": 0,
+   "full": 0,
+   "bach": 0,
+   "wedding": 0,
+   "trip": 0
+  },
+  "fundedDec": {
+   "starter": 0,
+   "card": 70000,
+   "full": 0,
+   "bach": 0,
+   "wedding": 0,
+   "trip": 0
+  }
+ },
+ "all-at-once": {
+  "finish": {
+   "starter": "2026-11",
+   "card": "2028-02",
+   "full": "2029-07",
+   "bach": "2027-08",
+   "wedding": "2027-12",
+   "trip": "2027-10"
+  },
+  "interest": 89020,
+  "onTime": 0,
+  "starterFills": "2026-11",
+  "fundedBachApril": 14000,
+  "fundedBachMay": 14000,
+  "fundedMonth1": {
+   "starter": 70000,
+   "card": 0,
+   "full": 0,
+   "bach": 0,
+   "wedding": 0,
+   "trip": 0
+  },
+  "fundedDec": {
+   "starter": 0,
+   "card": 14000,
+   "full": 14000,
+   "bach": 14000,
+   "wedding": 14000,
+   "trip": 14000
+  }
+ },
+ "withdraw": {
+  "finish": {
+   "starter": "2027-04",
+   "card": "2027-10",
+   "full": "2029-06",
+   "bach": "2027-05",
+   "wedding": "2027-09",
+   "trip": "2029-08"
+  },
+  "starterMarch": 70000,
+  "bachMarch": 0
+ },
+ "windfall": {
+  "finish": {
+   "starter": "2026-11",
+   "card": "2027-05",
+   "full": "2029-02",
+   "bach": "2027-04",
+   "wedding": "2027-09",
+   "trip": "2029-04"
+  }
+ },
+ "plus100": {
+  "finish": {
+   "starter": "2026-11",
+   "card": "2027-07",
+   "full": "2029-01",
+   "bach": "2027-04",
+   "wedding": "2027-09",
+   "trip": "2029-03"
+  }
+ },
+ "inputs": {
+  "from_": "2026-10",
+  "surplus": 70000,
+  "cash": 250000,
+  "spending": 390000,
+  "starter": 390000,
+  "rule5": 2028000,
+  "full": 1638000,
+  "card": {
+   "balance": 400000,
+   "apr": 0.24,
+   "minimum": 12000
+  },
+  "goals": [
+   {
+    "id": "starter",
+    "type": "floor",
+    "target": 390000,
+    "date": null
+   },
+   {
+    "id": "card",
+    "type": "debt",
+    "target": 400000,
+    "date": null
+   },
+   {
+    "id": "full",
+    "type": "amount",
+    "target": 1638000,
+    "date": null
+   },
+   {
+    "id": "bach",
+    "type": "dated",
+    "target": 120000,
+    "date": "2027-04"
+   },
+   {
+    "id": "wedding",
+    "type": "dated",
+    "target": 200000,
+    "date": "2027-09"
+   },
+   {
+    "id": "trip",
+    "type": "amount",
+    "target": 150000,
+    "date": null
+   }
+  ]
+ }
+}

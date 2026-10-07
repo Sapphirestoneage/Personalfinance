@@ -173,5 +173,8 @@ completeness or variance), `engine/anchors.js` (what they said and what they
 would want, write-once, under `record.anchors`), `engine/variance.js`,
 `engine/targets.js` and `engine/progress.js`. `compute` also returns
 `colTier`, `household`, `guesses`, `completeness`, `sessionMode` and
-`firstDraft`. It returns one frozen result object; views read from it and
+`firstDraft`. Level 11 adds `engine/goals.js` (reads the finished result:
+the surplus metric, the Safety Net's Rule of 5 target, the debts, the Life
+plan goals and the FI ladder; writes nothing) and returns `goalPlan`, which
+the sensitivity reruns skip (`opts.light`). It returns one frozen result object; views read from it and
 never do math.

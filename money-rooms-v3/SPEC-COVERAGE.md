@@ -196,3 +196,26 @@ Built after Level 9. The Level 9 stand-ins (dream FI age, dream and gut spending
 | 20 new lenses with readings | done | data/lenses.json (39); lenses.js levelNineLenses; lenses9.test.js (each fires on a household built to trip it) |
 | UI #/levers: staircase, barista inline, ranked list with Impact and Ask toggle, top sentence, root and metric drawers, graph toggle (list at phone width), client view | done | ui/views/levers.js; sweep screen levers at three widths in both views; flow level9 |
 | Gates: engine tests, ui sweep, docs | done | node tests/run.js (1,064 checks); node tests/ui.js (flows plus the sweep with the levers screen) |
+
+## Level 11 Goal Timeline (when each goal happens, all at once)
+
+Level 10 (savings buckets, curricula, the session 5 curriculum) was never built. The cushion goals read the cash balances; a goal links to an Investments account row in place of a bucket; the curriculum link is not there.
+
+| Requirement | Status | Evidence |
+|---|---|---|
+| Goals model: id, name in her words, type (floor, dated, amount, debt, long-term), target or link, date, priority, linked bucket, balance, status | done | engine/goals.js goalsOf (derived from the record and the result; settings in record.goals, MR-051) |
+| Two cushion goals for every client; starter = one month of spending (starterCushionMonths, or a fixed amount), always first; full = Rule of 5 target with the roommate gap minus the starter | done | goalsOf; data/assumptions.json starterCushionMonths; goals.test.js "long-term goals read the FI ladder and the full cushion reads the Rule of 5 target" |
+| Long-term goals read the FI ladder and take no monthly amount | done | goalsOf LONG_RUNGS; assess "projected" |
+| Allocation engine, pure, month by month: floor rule in every mode, refill after a withdrawal, three modes, rollover the next month, debt goals through debtsim with freed minimums, shortfall with the floor named, earliest dates, locked amounts never on the floor | done | engine/goals.js allocate, assess; engine/debtsim.js stepDebt; goals.test.js (18 tests) tied to tests/households/expected-goals.py |
+| Compare: all three modes, goals on time, finish dates, interest | done | planGoals compare; ui/views/goals.js drawCompare |
+| `#/goals` in both views, linked from Home and the Session screen | done | ui/routes.js; ui/views/home.js goalsLine; ui/views/session.js |
+| Link from the session 5 curriculum | not done | Level 10 is missing; noted in QUESTIONS.md |
+| Timeline: months across the top, 24 months by default, zoom to 5 years and until FI, starter first, bars, flags, rollover arrows, refill marks, long-term goals at the right edge | done | ui/views/goals.js drawTimeline; CSS .gtl |
+| Allocation table and mode switch with the comparison | done | drawAlloc, drawCompare |
+| What if: surplus plus or minus 100, a windfall in a month, use the cushion in a month, reorder; live; "the wedding moves up"; nothing written until Confirm | done | whatIf state; finishChanges; Confirm writes order, mode, splits, overrides through app.goals |
+| Session tie-ins: Since last time shows date moves; one-pager compact next wins with the starter first; follow-up email lists the next win | done | session.js sinceLast and snapshot (lastFinish); onepager.js op-wins; email.js nextWin |
+| Add to calendar: .ics with finish dates and session dates, all-day, plain titles | done | engine/ics.js; goals.test.js "the calendar file is valid ics" |
+| Maya fixture written in tests, never from the engine; starter fills within two months; deadlines first lands both dated goals; bachelorette money rolls forward in May | done | tests/households/expected-goals.py; goals.test.js |
+| tests/ui.js: #/goals in both views at three widths, a what-if, a cushion withdrawal, the mode comparison | done | tests/ui-screens.js goals; ui-flows.js level11-maya-goal-timeline |
+| Design rules: one sentence on top, no internal words, soft wording in gentle mode, no red | done | gtl-sentence; client words in goals.js; flow check "no internal words" |
+| Screenshots and a critique round | not done | the sweep ran at three widths in both views; a critique round is owed |

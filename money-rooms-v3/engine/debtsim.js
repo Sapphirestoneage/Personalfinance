@@ -17,6 +17,16 @@ export function effectiveRate(d, ym) {
   return d.rate;
 }
 
+/* One month of one debt (Level 11 hook, MR-051): interest on the balance, the minimum plus any extra paid. Returns the new balance, the interest, and the overflow when the payment clears it. The same arithmetic simulate() uses. */
+export function stepDebt(d, balance, ym, extra) {
+  if (d.full) return { balance: 0, interest: 0, paid: true, overflow: 0 };
+  const i = Math.round(balance * effectiveRate(d, ym) / 12);
+  const pay = d.minimum + (extra || 0);
+  const nb = balance + i - pay;
+  if (nb <= 0) return { balance: 0, interest: i, paid: true, overflow: -nb };
+  return { balance: nb, interest: i, paid: false, overflow: 0 };
+}
+
 /* debts: [{ id, balance, rate, promoApr, promoEnd, minimum, full, stress }]; order: array of ids; from: 'YYYY-MM'. */
 export function simulate(debts, order, from, maxMonths, series) {
   const bal = {}; debts.forEach(d => { bal[d.id] = d.balance; });

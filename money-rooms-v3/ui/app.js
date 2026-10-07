@@ -104,6 +104,7 @@ export const app = {
   confirmDiscovery(key) { return this.change(rec => { rec.discovery = rec.discovery || { confirmed: {} }; rec.discovery.confirmed = rec.discovery.confirmed || {}; rec.discovery.confirmed[key] = new Date().toISOString(); return true; }, { reason: 'call', silent: true }); },
   target(key, choice, cents, actualAt, label) { return this.change(rec => { targetSet(rec, key, choice, cents, { session: this.session, actualAt, label, owner: (clientName(rec) || 'Client').split(' ')[0] }); return true; }, { reason: 'targets' }); },
   setMode(mode) { return this.change(rec => { rec.sessionMode = mode; return true; }, { reason: 'mode' }); },
+  goals(patch) { return this.change(rec => Rec.setGoals(rec, patch, { session: this.session }), { reason: 'goals' }); },
 
   recompute() {
     if (!this.record) { this.result = null; return; }

@@ -4,7 +4,7 @@
    tests run against a Map. Every record that comes out of here has been
    migrated to the current schema. */
 
-import { SCHEMA_VERSION, createRecord } from './record.js';
+import { SCHEMA_VERSION, createRecord, defaultGoals } from './record.js';
 import { append } from './journal.js';
 import { PLANETS } from './sun.js';
 
@@ -76,6 +76,15 @@ export const MIGRATIONS = [
       if (rec.discovery === undefined) rec.discovery = null;
       rec.targets = rec.targets || {};
       rec.callProgress = rec.callProgress || {};
+      return rec;
+    },
+  },
+  {
+    from: 3, to: 4,
+    note: 'Level 11: goals (the timeline mode, order, locked amounts, splits, hand-typed goals, the starter cushion setting); derived goals are not stored',
+    up(rec) {
+      rec.goals = Object.assign(defaultGoals(), rec.goals || {});
+      if (!rec.goals.starter) rec.goals.starter = { months: null, fixedCents: null };
       return rec;
     },
   },

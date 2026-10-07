@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createStore, memoryStorage, migrate, MIGRATIONS, KEY_PREFIX } from '../../engine/store.js';
-import { createRecord, createRow, addRow, setField, SCHEMA_VERSION, undo, findRow } from '../../engine/record.js';
+import { createRecord, createRow, addRow, setField, SCHEMA_VERSION, undo, findRow, defaultGoals } from '../../engine/record.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fixture = n => JSON.parse(fs.readFileSync(path.join(here, '..', 'fixtures', n), 'utf8'));
@@ -75,6 +75,7 @@ test('every schema version has a migration and each fixture lifts to the current
   const two = migrate(fixture('schema-2.json'));
   assert.equal(two.schemaVersion, SCHEMA_VERSION);
   assert.deepEqual(two.household, { roommates: [], lease: 'none', unitSize: null, partner: null, basis: 'together' });
+  assert.deepEqual(two.goals, defaultGoals(), 'Level 11: the goal settings arrive with their defaults');
   assert.equal(two.sessionMode, 'standard');
   assert.ok(two.anchors && two.anchors.gut && two.anchors.dream && Array.isArray(two.anchors.history));
   assert.deepEqual(two.anchors.dream, {}, 'no dream backfill');
