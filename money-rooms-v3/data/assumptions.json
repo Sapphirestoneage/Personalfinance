@@ -49,7 +49,8 @@
   "callTargetRoomFraction": 0.5,
   "fillGapsWithGuesses": true,
   "roommateMonthsToReplace": 2,
-  "starterCushionMonths": 1
+  "cushionStep1": "fatMonth",
+  "cushionStep2Months": 1
  },
  "labels": {
   "returnLikely": "Return after inflation, likely",
@@ -85,7 +86,8 @@
   "callTargetRoomFraction": "Meet in the middle: share of the way from actual toward the nearer of gut and dream",
   "fillGapsWithGuesses": "Fill gaps with guesses (averages for the cost area)",
   "roommateMonthsToReplace": "Months until a roommate is replaced (cushion and worst case)",
-  "starterCushionMonths": "Starter cushion, months of spending (the floor every goal waits for)"
+  "cushionStep1": "Cushion step 1, the lean month: one month of food, housing and getting around, or a fixed amount set on the Goals screen",
+  "cushionStep2Months": "Cushion step 2, the full month: months of all spending"
  },
  "options": {
   "fiProgressBasis": [
@@ -150,6 +152,16 @@
    [
     "false",
     "No"
+   ]
+  ],
+  "cushionStep1": [
+   [
+    "fatMonth",
+    "One month of food, housing and getting around"
+   ],
+   [
+    "fixed",
+    "A fixed amount (Goals screen)"
    ]
   ]
  }

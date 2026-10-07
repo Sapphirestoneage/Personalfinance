@@ -3,8 +3,8 @@
 Updated: 2026-10-07
 
 ## Done
-- Level 11 Goal Timeline: engine/goals.js (goals derived from the record and the result, the starter
-  cushion as a floor in every mode, three modes, rollover, debt goals through debtsim, shortfalls with
+- Level 11 Goal Timeline: engine/goals.js (goals derived from the record and the result, the cushion in
+  three steps on one pot with the first two as floors in every mode, a celebration for a step already covered, three modes, rollover, debt goals through debtsim, shortfalls with
   the floor named, earliest dates, the comparison), engine/ics.js, the #/goals screen with the timeline,
   the allocation table, the mode switch, live what-ifs and Confirm, Home, Session and one-pager tie-ins,
   the follow-up email's next win, 18 engine tests tied to tests/households/expected-goals.py and a

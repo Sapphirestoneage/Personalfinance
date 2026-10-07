@@ -228,8 +228,8 @@ export function setHousehold(record, household, meta) {
   touch(record, m.now);
   return line;
 }
-/* The goal timeline's own settings (Level 11, MR-051): the mode, the order, locked monthly amounts, the all-at-once split, goals typed by hand, the starter cushion's months or fixed amount, and the finish months saved at the last session close. Derived goals (cushions, debts, Life plan goals, the ladder) are never stored. */
-export function defaultGoals() { return { mode: 'deadlines-first', order: [], overrides: {}, splits: {}, extras: [], starter: { months: null, fixedCents: null }, lastFinish: null, hidden: [] }; }
+/* The goal timeline's own settings (Level 11, MR-051): the mode, the order, locked monthly amounts, the all-at-once split, goals typed by hand, the cushion settings (a fixed lean-month amount, the full month's months), the celebrations already shown, and the finish months saved at the last session close. Derived goals (cushions, debts, Life plan goals, the ladder) are never stored. */
+export function defaultGoals() { return { mode: 'deadlines-first', order: [], overrides: {}, splits: {}, extras: [], cushion: { step1Cents: null, step2Months: null }, celebrated: {}, lastFinish: null, hidden: [], links: {} }; }
 export function setGoals(record, patch, meta) {
   const m = meta || {};
   const old = JSON.parse(JSON.stringify(record.goals || defaultGoals()));

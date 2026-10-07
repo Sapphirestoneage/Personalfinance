@@ -23,7 +23,7 @@ export function icsOf(events, opts) {
 /* The timeline's events: each goal with a finish month (the first of that month), each closed session. words: id to the title words. */
 export function goalEvents(plan, sessions, words) {
   const out = [];
-  plan.input.items.forEach(i => { const a = plan.assessment[i.id]; if (!a || !a.finishMonth) return; out.push({ date: a.finishMonth + '-01', title: (words && words[i.id]) || (i.name + ' complete'), uid: 'goal-' + i.id.replace(/[^a-z0-9]+/gi, '-') }); });
+  plan.input.items.forEach(i => { const a = plan.assessment[i.id]; if (!a || !a.finishMonth) return; out.push({ date: a.finishMonth + '-01', title: (words && words[i.id]) || (i.clientName && i.step ? i.clientName : i.name + ' complete'), uid: 'goal-' + i.id.replace(/[^a-z0-9]+/gi, '-') }); });
   (sessions || []).forEach(s => { if (s && s.at) out.push({ date: s.at.slice(0, 10), title: s.label || 'Session', uid: 'session-' + s.id }); });
   return out.sort((a, b) => a.date < b.date ? -1 : 1);
 }

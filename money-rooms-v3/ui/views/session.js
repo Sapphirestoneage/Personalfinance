@@ -18,7 +18,7 @@ import { variancePanel, targetsPanel, actualsOf } from './call.js';
 import { variance, AREA_LABELS } from '../../engine/variance.js';
 import { proposals } from '../../engine/targets.js';
 import { targetsEmail } from '../../engine/email.js';
-import { finishChanges, finishMonths } from '../../engine/goals.js';
+import { finishChanges, finishMonths, celebrations } from '../../engine/goals.js';
 import { nextWins } from './goals.js';
 
 export function mount(host, app) {
@@ -43,6 +43,7 @@ export function mount(host, app) {
     getSensitivity(app, r => { if (r !== sens) { sens = r; setTimeout(draw, 0); } }); /* redraw on the next tick, never inside this draw */
     const s = leverage({ record: app.record, fields: app.data.fields, weights: app.data.weights, sensitivity: sens });
     left.appendChild(nextCard(app, s));
+    left.appendChild(cheerPanel(app));
     left.appendChild(progressPanel(app));
     left.appendChild(plates(app, s, tab, t => { tab = t; draw(); }));
     right.appendChild(sinceLast(app));
@@ -64,6 +65,14 @@ function meterRow(app) {
   return h('div', { class: 'meter-row' },
     bar('Picture completeness', c ? c.share : null, c && c.share !== null ? Math.round(c.share * 100) + '%' : 'Needs inputs', (c && c.share !== null ? 'of the dollars in the picture are known or verified' : 'No amounts yet') + (guesses ? '. Includes ' + guesses + (guesses === 1 ? ' guess' : ' guesses') : '')),
     bar('Goal progress', g ? g.share : null, g && g.share !== null ? Math.round(g.share * 100) + '%' : 'Needs inputs', g && g.share !== null ? 'of the FI number is invested' + (g.fiAge ? '; FI at ' + g.fiAge : '') + (g.monthlyGap ? '; ' + F.dollarsWhole(g.monthlyGap) + ' a month short of on track' : '') : 'Needs invested balances and spending'));
+}
+
+/* A cushion step the pot already covers (MR-052): the card shows in the session that creates it until Got it. */
+function cheerPanel(app) {
+  const GP = app.result.goalPlan; if (!GP) return h('div');
+  const won = celebrations(GP, app.record); if (!won.length) return h('div');
+  return h('section', { class: 'panel cheer', role: 'status' }, h('h2', null, 'Already there'), h('p', { class: 'big' }, won.map(i => 'You already have ' + (i.step === 1 ? 'a lean month' : i.step === 2 ? 'a full month' : 'the full cushion') + ' covered.').join(' ')),
+    h('div', { class: 'row' }, h('button', { class: 'btn primary', onClick: () => { const c = Object.assign({}, app.record.goals.celebrated || {}); won.forEach(i => { c[i.id] = new Date().toISOString(); }); app.goals({ celebrated: c }); } }, 'Got it'), h('a', { class: 'btn', href: '#/goals' }, 'Goals')));
 }
 
 /* Progress versus paperwork (MR-048): what moved since the last closed session, by why. */
@@ -176,7 +185,7 @@ function sinceLast(app) {
   panel.appendChild(h('h2', null, 'Since last time', r.since ? h('span', { class: 'tag' }, F.dateLong(r.since.slice(0, 10))) : null));
   const moves = app.result.goalPlan && app.record.goals && app.record.goals.lastFinish ? finishChanges(app.record.goals.lastFinish, finishMonths(app.result.goalPlan), app.result.goalPlan.input.items) : [];
   if (!r.changes.length && !moves.length) { panel.appendChild(h('p', { class: 'muted small' }, r.since ? 'No changes since the last session.' : 'No session closed yet.')); return panel; }
-  if (moves.length) panel.appendChild(h('p', { class: 'small goal-moves' }, 'Since last time, ' + moves.slice(0, 3).map(m => m.text.charAt(0).toLowerCase() + m.text.slice(1)).join('; ') + '.'));
+  if (moves.length) panel.appendChild(h('p', { class: 'small goal-moves' }, 'Since last time, ' + moves.slice(0, 3).map(m => /^you /.test(m.text) ? m.text : m.text.charAt(0).toLowerCase() + m.text.slice(1)).join('; ') + '.'));
   if (r.changes.length) panel.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data' }, h('tbody', null, r.changes.slice(0, 8).map(c => h('tr', null, h('td', { class: 'wrap' }, c.row + ': ' + c.label.toLowerCase()), h('td', { class: 'small muted' }, c.text)))))));
   return panel;
 }

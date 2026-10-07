@@ -10,10 +10,10 @@ const GROUPS = [
   ['Retirement and independence', ['withdrawalRate', 'retirementAgeDefault', 'socialSecurityAge', 'socialSecurityScale', 'slowgoAge', 'nogoAge', 'projectionEndAge', 'fatFiMultiplier', 'baristaIncomeAnnualCents']],
   ['Financial independence (Level 9)', ['fiProgressBasis', 'fiSpendingBasis', 'healthcarePremiumMonthlyCents', 'inflation', 'guardrailsBand', 'ssBridgeFromPortfolio', 'benchmarkSource', 'showBenchmarksToClient']],
   ['Discovery and the call (Level 8)', ['fillGapsWithGuesses', 'callTargetRoomFraction', 'roommateMonthsToReplace']],
-  ['Goal timeline (Level 11)', ['starterCushionMonths']],
+  ['Goal timeline (Level 11)', ['cushionStep1', 'cushionStep2Months']],
   ['Flags', ['shelterHeavyShare', 'hiddenLeakShare', 'utilizationCardMax', 'utilizationTotalMax', 'feeDragEr', 'thinRunwayMonths', 'lockedLiquidityShare', 'realWageShare', 'noFeeBaselineRate']],
 ];
-const KIND = k => /Cents$/.test(k) ? 'money' : /Age$|Months$|AgeDefault$|EndAge$|MonthsToReplace$|CushionMonths$/.test(k) ? 'int' : k === 'fatFiMultiplier' ? 'multiple' : 'percent';
+const KIND = k => /Cents$/.test(k) ? 'money' : /Age$|Months$|AgeDefault$|EndAge$|MonthsToReplace$|Step2Months$/.test(k) ? 'int' : k === 'fatFiMultiplier' ? 'multiple' : 'percent';
 const isChoice = (app, k) => !!(app.data.assumptions.options && app.data.assumptions.options[k]);
 const places = v => Math.abs(v * 1000 - Math.round(v * 1000)) > 1e-9 ? 2 : 1;
 const fmt = (kind, v) => kind === 'money' ? F.dollarsWhole(v) : kind === 'percent' ? F.percent(v, { places: places(v) }) : kind === 'multiple' ? String(v) + 'x' : String(v);

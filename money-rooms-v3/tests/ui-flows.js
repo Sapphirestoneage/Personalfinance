@@ -15,7 +15,15 @@ export const flows = [
     await page.waitForSelector('.gtl');
     const sentence = await page.textContent('.gtl-sentence');
     check('the top of the screen is one sentence: your next win', /^Your next win is .+, in [A-Z][a-z]{2} \d{4}\.$/.test(sentence.trim()), sentence);
-    check('the starter cushion is the first row and locked', (await page.getAttribute('.gtl-row:not(.gtl-head) >> nth=0', 'data-goal')) === 'starter' && (await page.$$('.gtl-row.starter .gtl-move button')).length === 0);
+    check('the lean month and the full month are the first rows and locked', (await page.getAttribute('.gtl-row:not(.gtl-head) >> nth=0', 'data-goal')) === 'lean' && (await page.getAttribute('.gtl-row:not(.gtl-head) >> nth=1', 'data-goal')) === 'fullmonth' && (await page.$$('.gtl-row.starter .gtl-move button')).length === 0);
+    /* already met: Maya's savings already cover both floors; the card shows once */
+    await page.waitForSelector('.cheer');
+    const cheer = await page.textContent('.cheer');
+    check('the celebration says what is already covered', cheer.indexOf('You already have a lean month covered') !== -1 && cheer.indexOf('a full month covered') !== -1);
+    await page.click('.cheer button:has-text("Got it")');
+    await page.waitForFunction(() => !document.querySelector('.cheer'));
+    check('the celebration is shown once', (await page.$$('.cheer')).length === 0);
+    check('covered steps read as covered in the table', (await page.textContent('tr[data-goal="lean"]')).indexOf('Covered already') !== -1);
     check('long-term goals sit at the right edge with their dates', (await page.$$('.gtl-row.type-long-term .gtl-edge')).length === 3);
     check('the three ways are compared in a small table', (await page.$$('table.compare tbody tr')).length === 3);
     const landsBefore = await page.textContent('tr[data-goal="full"] td:nth-child(3)');
@@ -31,7 +39,7 @@ export const flows = [
     await page.fill('input[aria-label="Amount used"]', '20000');
     await page.press('input[aria-label="Amount used"]', 'Enter');
     await page.waitForSelector('.gtl-cell.refill');
-    check('using the cushion marks the refill on the starter row', (await page.$$('.gtl-row.starter .gtl-cell.refill')).length === 1 && (await page.$$('.gtl-row.starter .gtl-cell.fill')).length >= 1);
+    check('using the cushion marks the refill on the cushion rows, the lean month first', (await page.$$('.gtl-row[data-goal="lean"] .gtl-cell.refill')).length === 1 && (await page.$$('.gtl-row[data-goal="lean"] .gtl-cell.fill')).length >= 1 && (await page.$$('.gtl-row[data-goal="fullmonth"] .gtl-cell.refill')).length === 1);
     check('the what-if chip names it', (await page.textContent('.whatif')).indexOf('Used $20,000') !== -1);
     await page.click('.whatif button:has-text("Reset")');
     /* the mode comparison: switch, then confirm writes the mode */
@@ -42,10 +50,10 @@ export const flows = [
     await page.waitForFunction(() => (document.querySelector('.whatif .tag') || {}).textContent === 'nothing changed');
     check('confirm saves the mode to the record', (await page.getAttribute('.mode-switch button:has-text("One at a time")', 'aria-pressed')) === 'true');
     /* reorder with the arrows, then confirm */
-    const second = await page.getAttribute('.gtl-row:not(.gtl-head) >> nth=1', 'data-goal');
-    await page.click('.gtl-row:not(.gtl-head) >> nth=2 >> button[aria-label^="Move"][aria-label$="up"]');
-    await page.waitForFunction(id => document.querySelectorAll('.gtl-row:not(.gtl-head)')[1].dataset.goal !== id, second);
-    check('a goal moves up the list', (await page.getAttribute('.gtl-row:not(.gtl-head) >> nth=0', 'data-goal')) === 'starter');
+    const second = await page.getAttribute('.gtl-row:not(.gtl-head) >> nth=2', 'data-goal');
+    await page.click('.gtl-row:not(.gtl-head) >> nth=3 >> button[aria-label^="Move"][aria-label$="up"]');
+    await page.waitForFunction(id => document.querySelectorAll('.gtl-row:not(.gtl-head)')[2].dataset.goal !== id, second);
+    check('a goal moves up the list but never above the floors', (await page.getAttribute('.gtl-row:not(.gtl-head) >> nth=0', 'data-goal')) === 'lean');
     await page.click('.whatif button:has-text("Confirm")');
     await page.waitForFunction(() => (document.querySelector('.whatif .tag') || {}).textContent === 'nothing changed');
     /* the calendar file */
@@ -56,7 +64,7 @@ export const flows = [
     await page.waitForSelector('.gtl');
     const client = await page.textContent('#main');
     check('the client view keeps the sentence and the timeline', /Your next win is/.test(client) && (await page.$$('.gtl-row')).length > 4);
-    check('the client view has no internal words', !/\bHCOL\b|\banchor\b|\bvariance\b|\bestimated\b|allocation|\bmode\b|override|surplus/i.test(client), (client.match(/.{0,20}(allocation|mode|override|surplus).{0,20}/i) || [])[0]);
+    check('the client view has no internal words', !/\bHCOL\b|\banchor\b|\bvariance\b|\bestimated\b|allocation|\bmode\b|override|surplus|\bfloor\b|FAT/.test(client), (client.match(/.{0,20}(allocation|mode|override|surplus|floor|FAT).{0,20}/) || [])[0]);
     await page.goto(base + 'index.html#/onepager');
     await page.waitForSelector('.onepager');
     check('the one-pager lists the next wins', (await page.textContent('.onepager')).indexOf('Your next wins') !== -1);

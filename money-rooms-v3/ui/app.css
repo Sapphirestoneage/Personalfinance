@@ -843,3 +843,8 @@ table.compare tr.current td { font-weight: var(--w-semibold); }
   .gtl-sentence { font-size: var(--fs-20); }
   .gtl-move { display: none; }
 }
+
+.cheer { border-color: var(--gold); }
+.cheer .big { font-size: var(--fs-20); font-weight: var(--w-semibold); margin: var(--s-1) 0; }
+.gtl-row.starter .gtl-name::after { content: ' first'; }
+.gtl-row.starter.type-floor .gtl-cell.after { background: var(--paper-2); }

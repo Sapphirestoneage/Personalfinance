@@ -79,9 +79,9 @@ Collected during the run; none blocked the build. Answer whenever.
     built, so the timeline reads the cash balances for both cushions and lets
     a goal link to an Investments account row in place of a bucket. The
     curriculum link is missing. Build Level 10 next, or keep going?
-23. The starter cushion is one month of spending (starterCushionMonths, in
-    Assumptions) and the full cushion is the Rule of 5 target minus it. Is
-    one month the floor you teach?
+23. Answered: the cushion is three steps (MR-052). Step 1 is one month of
+    the FAT floor by default; Assumptions can switch it to a fixed amount
+    typed on the Goals screen. Is one month of all spending the right step 2?
 24. High-interest debt sits above the full cushion in the default order at
     10% APR and up (the order of operations reading). Is 10% the line?
 25. "Rolls over the next month" is a whole month: the timeline cannot say
@@ -94,3 +94,10 @@ Collected during the run; none blocked the build. Answer whenever.
 27. Surplus, windfall and cushion what-ifs are never saved, even on Confirm
     (Confirm saves the order, mode, split and locks). Should a windfall be
     saveable as a planned event?
+28. The lean month reads the FAT floor (lines flagged food, housing and
+    getting around). When nothing is flagged it takes those three categories
+    whole, marked rough. Should the guess rows count toward it, or only real
+    lines?
+29. Both floors are met for the demo Maya at creation, so her timeline shows
+    the celebration and the Full cushion is her first open cushion goal. For
+    a client who has both floors the first session starts at step 3: fine?

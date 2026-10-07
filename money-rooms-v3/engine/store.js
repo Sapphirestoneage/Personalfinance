@@ -81,10 +81,10 @@ export const MIGRATIONS = [
   },
   {
     from: 3, to: 4,
-    note: 'Level 11: goals (the timeline mode, order, locked amounts, splits, hand-typed goals, the starter cushion setting); derived goals are not stored',
+    note: 'Level 11: goals (the timeline mode, order, locked amounts, splits, hand-typed goals, the cushion settings); derived goals are not stored',
     up(rec) {
       rec.goals = Object.assign(defaultGoals(), rec.goals || {});
-      if (!rec.goals.starter) rec.goals.starter = { months: null, fixedCents: null };
+      delete rec.goals.starter;
       return rec;
     },
   },

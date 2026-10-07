@@ -6,7 +6,7 @@
    engine/goals.js through the result or planGoals(). */
 import { h, clear, download } from '../dom.js';
 import * as F from '../../engine/format.js';
-import { planGoals, finishChanges, finishMonths, MODES, MODE_LABELS, MODE_HELP } from '../../engine/goals.js';
+import { planGoals, finishChanges, finishMonths, celebrations, MODES, MODE_LABELS, MODE_HELP, FLOOR_IDS } from '../../engine/goals.js';
 import { addMonths, monthsBetween } from '../../engine/debtsim.js';
 import { icsOf, goalEvents } from '../../engine/ics.js';
 import { parseSaid } from '../../engine/parse.js';
@@ -17,12 +17,13 @@ const ZOOMS = [['24', '2 years', 24], ['60', '5 years', 60], ['fi', 'Until FI', 
 export function mount(host, app) {
   const coach = () => app.view === 'coach'; const gentle = () => (app.record.sessionMode || 'standard') === 'gentle';
   let zoom = '24'; let whatIf = { surplusDelta: 0, events: [], order: null, mode: null, splits: null, overrides: null };
-  const header = h('header', null, h('h1', null, coach() ? 'Goals' : 'Your goals'), h('span', { class: 'sub' }, coach() ? 'Every goal funded at once from the monthly surplus; the starter cushion always first.' : 'Everything you are saving for, all at the same time.'), h('div', { class: 'actions' },
+  const header = h('header', null, h('h1', null, coach() ? 'Goals' : 'Your goals'), h('span', { class: 'sub' }, coach() ? 'Every goal funded at once from the monthly surplus; the lean month and the full month always first.' : 'Everything you are saving for, all at the same time.'), h('div', { class: 'actions' },
     h('div', { class: 'view-toggle', role: 'group', 'aria-label': 'How far to look' }, ZOOMS.map(([id, label]) => h('button', { 'aria-pressed': String(zoom === id), onClick: () => { zoom = id; draw(); } }, label))),
     h('button', { class: 'btn', onClick: () => addToCalendar() }, 'Add to calendar'),
     h('button', { class: 'btn coach-only', onClick: () => addGoal() }, 'Add a goal')));
   host.appendChild(header);
   const sentence = h('p', { class: 'gtl-sentence big' }); host.appendChild(sentence);
+  const cheer = h('div', { class: 'cheer-host' }); host.appendChild(cheer);
   const whatifPanel = h('section', { class: 'panel whatif' }); host.appendChild(whatifPanel);
   const tlPanel = h('section', { class: 'panel' }); host.appendChild(tlPanel);
   const grid = h('div', { class: 'grid grid-2' }); const allocPanel = h('section', { class: 'panel' }); const cmpPanel = h('section', { class: 'panel' }); grid.appendChild(allocPanel); grid.appendChild(cmpPanel); host.appendChild(grid);
@@ -31,13 +32,13 @@ export function mount(host, app) {
   const plan = () => isWhatIf() ? planGoals(app.record, app.result, whatIf) : app.result.goalPlan;
   const money = c => F.dollarsWhole(c);
   const monthWord = ym => ym ? F.date(ym) : '';
-  const nameOf = i => coach() ? i.name : (i.id === 'starter' ? 'Starter cushion' : i.id === 'full' ? 'Full cushion' : i.type === 'debt' ? 'Pay off ' + i.name : i.clientName || i.name);
-  const lowerName = i => { const n = nameOf(i); if (i.type === 'debt') return 'paying off ' + i.name; return /^(Starter|Full) cushion$/.test(n) ? 'your ' + n.toLowerCase() : n; };
+  const nameOf = i => typeof i.step === 'number' ? i.clientName : coach() ? i.name : (i.type === 'debt' ? 'Pay off ' + i.name : i.clientName || i.name);
+  const lowerName = i => { if (i.type === 'debt') return 'paying off ' + i.name; if (i.step === 1) return 'a lean month covered'; if (i.step === 2) return 'a full month covered'; if (i.step === 3) return 'your full cushion'; return nameOf(i); };
 
   function draw() {
     header.querySelectorAll('.view-toggle button').forEach((b, k) => b.setAttribute('aria-pressed', String(ZOOMS[k][0] === zoom)));
     const P = plan(); const base = app.result.goalPlan;
-    drawSentence(P); drawWhatIf(P, base); drawTimeline(P); drawAlloc(P); drawCompare(P);
+    drawSentence(P); drawCheer(base); drawWhatIf(P, base); drawTimeline(P); drawAlloc(P); drawCompare(P);
   }
   function drawSentence(P) {
     clear(sentence);
@@ -46,6 +47,15 @@ export function mount(host, app) {
     if (!P.next) { sentence.textContent = 'Every goal here is done.'; return; }
     const it = P.input.items.find(i => i.id === P.next.id);
     sentence.textContent = 'Your next win is ' + lowerName(it) + ', in ' + monthWord(P.next.month) + '.';
+  }
+  /* already met (MR-052): a step the pot already covers gets its card once; Got it writes the celebration */
+  function drawCheer(base) {
+    clear(cheer);
+    const won = celebrations(base, app.record); if (!won.length) return;
+    cheer.appendChild(h('section', { class: 'panel cheer', role: 'status' }, h('h2', null, won.length === 1 ? 'Already there' : 'Already there, twice'),
+      h('p', { class: 'big' }, won.map(i => 'You already have ' + lowerName(i) + '.').join(' ')),
+      h('p', { class: 'small muted' }, 'Nothing to do for ' + (won.length === 1 ? 'this one' : 'these') + '; the money is in your savings today.'),
+      h('button', { class: 'btn primary', onClick: () => { const c = Object.assign({}, app.record.goals.celebrated || {}); won.forEach(i => { c[i.id] = new Date().toISOString(); }); app.goals({ celebrated: c }); draw(); } }, 'Got it')));
   }
   function drawWhatIf(P, base) {
     clear(whatifPanel);
@@ -65,6 +75,7 @@ export function mount(host, app) {
       const ch = finishChanges(finishMonths(base), finishMonths(P), P.input.items.map(i => Object.assign({}, i, { name: nameOf(i) })));
       whatifPanel.appendChild(h('p', { class: 'small whatif-moves' }, ch.length ? ch.slice(0, 4).map(c => c.text).join('. ') + '.' : 'No date moves.'));
     }
+    if (coach() && app.result.asm.cushionStep1 === 'fixed') { const cur = (app.record.goals.cushion || {}).step1Cents; whatifPanel.appendChild(h('div', { class: 'row small' }, h('label', null, 'Lean month, fixed amount'), h('input', { class: 'input num', style: { width: '110px' }, 'aria-label': 'Lean month fixed amount', value: cur ? money(cur) : '', onChange: e => { const p = parseSaid(e.target.value); app.goals({ cushion: Object.assign({}, app.record.goals.cushion || {}, { step1Cents: p && p.cents > 0 ? p.cents : null }) }); draw(); } }), h('span', { class: 'muted' }, 'Assumptions says a fixed amount; blank falls back to one month of food, housing and getting around.'))); }
     whatifPanel.appendChild(h('p', { class: 'small muted' }, coach() ? 'Surplus, windfall and cushion what-ifs stay here. Confirm saves a new order, mode, split or locked amount to the record.' : 'Nothing here changes your plan until your coach confirms it.'));
   }
   function eventControl(kind, label, amountLabel, go) {
@@ -77,7 +88,7 @@ export function mount(host, app) {
   }
   function confirm() {
     const patch = {};
-    if (whatIf.order) patch.order = whatIf.order.filter(id => id !== 'starter');
+    if (whatIf.order) patch.order = whatIf.order.filter(id => !FLOOR_IDS.includes(id));
     if (whatIf.mode) patch.mode = whatIf.mode;
     if (whatIf.splits) patch.splits = whatIf.splits;
     if (whatIf.overrides) patch.overrides = whatIf.overrides;
@@ -133,20 +144,23 @@ export function mount(host, app) {
         if (fin && finK >= n) bar.appendChild(h('div', { class: 'gtl-edge small' }, monthWord(fin)));
         if (!fin && !g.doneAtStart) bar.appendChild(h('div', { class: 'gtl-edge small muted' }, gentle() ? 'not yet' : 'not reached'));
       }
-      tl.appendChild(h('div', { class: 'gtl-row type-' + i.type + (i.id === 'starter' ? ' starter' : ''), dataset: { goal: i.id } }, label, bar));
+      tl.appendChild(h('div', { class: 'gtl-row type-' + i.type + (FLOOR_IDS.includes(i.id) ? ' starter' : ''), dataset: { goal: i.id } }, label, bar));
     });
     tlPanel.appendChild(h('div', { class: 'tablewrap gtl-wrap' }, tl));
-    tlPanel.appendChild(h('p', { class: 'small muted' }, 'Filled months are funded. ' + String.fromCharCode(0x2691) + ' is the date you want it by. ' + String.fromCharCode(0x21B3) + ' is money arriving from a finished goal. A dashed month is the cushion refilling after you used it.'));
+    tlPanel.appendChild(h('p', { class: 'small muted' }, 'The lean month and the full month come first; a light row was covered already. Filled months are funded. ' + String.fromCharCode(0x2691) + ' is the date you want it by. ' + String.fromCharCode(0x21B3) + ' is money arriving from a finished goal. A dashed month is the cushion refilling after you used it.'));
   }
   function subOf(i, a) {
     if (i.type === 'long-term') return typeof i.pct === 'number' ? Math.round(i.pct * 100) + '% there' : '';
     if (typeof i.targetCents !== 'number') return 'needs ' + (i.needs || []).join(', ');
+    if (i.step === 2) return money(i.targetCents) + (i.aboveCents ? ', ' + money(i.aboveCents) + ' above the lean month' : '') + (i.rough ? ', rough' : '');
+    if (i.step === 1) return money(i.targetCents) + (i.rough ? ', rough' : '') + (a && a.status === 'done' ? ', covered' : '');
+    if (i.step === 3) return money(i.targetCents) + (a && a.status === 'done' ? ', covered' : '');
     if (i.type === 'debt') return money(i.remainingCents) + ' at ' + F.percent(i.rate || 0, { places: 0 });
     return money(i.targetCents) + (i.targetDate ? ' by ' + monthWord(i.targetDate) : '');
   }
   function reorderControls(i, idx, order) {
-    if (i.id === 'starter' || i.type === 'long-term') return null;
-    const movable = order.filter(x => x.id !== 'starter' && x.type !== 'long-term'); const pos = movable.findIndex(x => x.id === i.id);
+    if (FLOOR_IDS.includes(i.id) || i.type === 'long-term') return null;
+    const movable = order.filter(x => !FLOOR_IDS.includes(x.id) && x.type !== 'long-term'); const pos = movable.findIndex(x => x.id === i.id);
     const move = d => { const ids = movable.map(x => x.id); const j = pos + d; if (j < 0 || j >= ids.length) return; ids.splice(pos, 1); ids.splice(j, 0, i.id); whatIf.order = ids; draw(); };
     return h('span', { class: 'gtl-move' }, h('button', { class: 'btn small quiet', 'aria-label': 'Move ' + nameOf(i) + ' up', disabled: pos === 0, onClick: () => move(-1) }, String.fromCharCode(0x2191)), h('button', { class: 'btn small quiet', 'aria-label': 'Move ' + nameOf(i) + ' down', disabled: pos === movable.length - 1, onClick: () => move(1) }, String.fromCharCode(0x2193)));
   }
@@ -155,7 +169,7 @@ export function mount(host, app) {
   function statusText(i, a) {
     if (!a) return '';
     switch (a.status) {
-      case 'done': return 'Done';
+      case 'done': return typeof i.step === 'number' ? 'Covered already' : 'Done';
       case 'needs': return 'Needs ' + (a.needs || i.needs || []).join(', ');
       case 'projected': return 'Projected ' + monthWord(a.finishMonth);
       case 'on-time': return 'On track for ' + monthWord(a.finishMonth);
@@ -163,7 +177,7 @@ export function mount(host, app) {
       case 'never': return gentle() ? 'Not yet reachable at this pace' : 'Not reached at this pace';
       case 'behind': {
         const name = lowerName(i);
-        if (a.floorReason) return (gentle() ? 'Your starter cushion comes first, so ' : 'Your starter cushion comes first, so ') + name + ' needs ' + money(a.shortfallMonthly) + ' more a month after ' + monthWord(a.after) + (a.earliestMonth ? ', or lands ' + monthWord(a.earliestMonth) + ' as is' : '');
+        if (a.floorReason) return 'Your ' + (a.floorStep === 'lean' ? 'lean month' : 'full month') + ' comes first, so ' + name + ' needs ' + money(a.shortfallMonthly) + ' more a month after ' + monthWord(a.after) + (a.earliestMonth ? ', or lands ' + monthWord(a.earliestMonth) + ' as is' : '');
         return (gentle() ? 'A little more gets there on time: ' : 'Needs ') + money(a.shortfallMonthly) + ' more a month' + (a.earliestMonth ? ', or ' + monthWord(a.earliestMonth) + ' as is' : '');
       }
       default: return '';
@@ -176,8 +190,8 @@ export function mount(host, app) {
     const tb = h('tbody');
     P.input.items.forEach(i => {
       const g = P.run.goals[i.id]; const a = P.assessment[i.id];
-      const lock = showLock && i.type !== 'long-term' && i.id !== 'starter' && typeof i.targetCents === 'number' ? h('input', { class: 'input num', style: { width: '84px' }, 'aria-label': 'Lock a monthly amount for ' + nameOf(i), title: 'A fixed amount each month; the rest flows around it', value: (P.input.overrides || {})[i.id] ? money((P.input.overrides || {})[i.id]) : '', onChange: e => { const p = parseSaid(e.target.value); const o = Object.assign({}, P.input.overrides || {}); if (p && p.cents > 0) o[i.id] = p.cents; else delete o[i.id]; whatIf.overrides = o; draw(); } }) : null;
-      const split = showSplit && i.type !== 'long-term' && i.id !== 'starter' && typeof i.targetCents === 'number' ? h('input', { class: 'input num', style: { width: '64px' }, 'aria-label': 'Share for ' + nameOf(i), value: (P.input.splits || {})[i.id] !== undefined ? Math.round(P.input.splits[i.id] * 100) + '%' : '', title: 'Percent of the monthly money; blank means an even share', onChange: e => { const v = parseFloat(String(e.target.value).replace('%', '')); const sp = Object.assign({}, P.input.splits || {}); if (v > 0) sp[i.id] = v / 100; else delete sp[i.id]; whatIf.splits = sp; draw(); } }) : null;
+      const lock = showLock && i.type !== 'long-term' && !FLOOR_IDS.includes(i.id) && typeof i.targetCents === 'number' ? h('input', { class: 'input num', style: { width: '84px' }, 'aria-label': 'Lock a monthly amount for ' + nameOf(i), title: 'A fixed amount each month; the rest flows around it', value: (P.input.overrides || {})[i.id] ? money((P.input.overrides || {})[i.id]) : '', onChange: e => { const p = parseSaid(e.target.value); const o = Object.assign({}, P.input.overrides || {}); if (p && p.cents > 0) o[i.id] = p.cents; else delete o[i.id]; whatIf.overrides = o; draw(); } }) : null;
+      const split = showSplit && i.type !== 'long-term' && !FLOOR_IDS.includes(i.id) && typeof i.targetCents === 'number' ? h('input', { class: 'input num', style: { width: '64px' }, 'aria-label': 'Share for ' + nameOf(i), value: (P.input.splits || {})[i.id] !== undefined ? Math.round(P.input.splits[i.id] * 100) + '%' : '', title: 'Percent of the monthly money; blank means an even share', onChange: e => { const v = parseFloat(String(e.target.value).replace('%', '')); const sp = Object.assign({}, P.input.splits || {}); if (v > 0) sp[i.id] = v / 100; else delete sp[i.id]; whatIf.splits = sp; draw(); } }) : null;
       tb.appendChild(h('tr', { dataset: { goal: i.id } }, h('td', null, nameOf(i)), h('td', { class: 'num' }, g ? money(g.monthlyNow) : ''), h('td', null, a && a.finishMonth ? monthWord(a.finishMonth) : ''), h('td', { class: 'wrap small' }, statusText(i, a)), showLock ? h('td', null, lock) : null, showSplit ? h('td', null, split) : null));
     });
     allocPanel.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data alloc' }, h('thead', null, h('tr', null, h('th', null, 'Goal'), h('th', { class: 'num' }, 'A month now'), h('th', null, 'Lands'), h('th', null, 'Where it stands'), showLock ? h('th', null, 'Locked') : null, showSplit ? h('th', null, 'Share') : null)), tb)));
@@ -186,7 +200,7 @@ export function mount(host, app) {
     clear(cmpPanel);
     cmpPanel.appendChild(h('h2', null, coach() ? 'Ways to split it' : 'Three ways to do it'));
     cmpPanel.appendChild(h('div', { class: 'view-toggle wrap mode-switch', role: 'group', 'aria-label': 'How to split the money' }, MODES.map(m => h('button', { 'aria-pressed': String(P.input.mode === m), title: MODE_HELP[m], onClick: () => { whatIf.mode = m; draw(); } }, MODE_LABELS[m]))));
-    cmpPanel.appendChild(h('p', { class: 'small muted' }, MODE_HELP[P.input.mode] + ' The starter cushion comes first in all three.'));
+    cmpPanel.appendChild(h('p', { class: 'small muted' }, MODE_HELP[P.input.mode] + ' The lean month and the full month come first in all three.'));
     const dated = P.input.items.filter(i => i.type === 'dated' && i.targetDate && typeof i.targetCents === 'number');
     const debts = P.input.items.filter(i => i.type === 'debt');
     const rows = P.compare.map(c => h('tr', { class: c.mode === P.input.mode ? 'current' : null, dataset: { mode: c.mode } }, h('td', null, MODE_LABELS[c.mode]), h('td', { class: 'num' }, dated.length ? c.onTime + ' of ' + dated.length : 'no dates'), h('td', { class: 'small wrap' }, dated.slice(0, 3).map(i => nameOf(i) + ' ' + (c.finish[i.id] ? monthWord(c.finish[i.id]) : 'not reached')).join('; ')), h('td', { class: 'num' }, debts.length ? money(c.interest) : '')));
@@ -202,7 +216,7 @@ export function mount(host, app) {
     app.openDrawer(h('div', null, h('h2', null, 'Add a goal'), h('div', { class: 'stack' }, name, h('div', { class: 'row' }, amount, when), h('div', { class: 'row' }, h('button', { class: 'btn primary', onClick: save }, 'Add'), h('button', { class: 'btn', onClick: closeOverlay }, 'Cancel')))), { label: 'Add a goal' });
   }
   function addToCalendar() {
-    const P = plan(); const words = {}; P.input.items.forEach(i => { words[i.id] = nameOf(i) + (i.type === 'debt' ? ' done' : ' complete'); });
+    const P = plan(); const words = {}; P.input.items.forEach(i => { words[i.id] = typeof i.step === 'number' ? i.clientName : nameOf(i) + (i.type === 'debt' ? ' done' : ' complete'); });
     const text = icsOf(goalEvents(P, app.record.sessions || [], words), { name: (clientName(app.record) || 'Client') + ': goals' });
     download('money-rooms-goals-' + (clientName(app.record) || 'client').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.ics', text, 'text/calendar');
     app.toast('Calendar file ready');
@@ -215,10 +229,9 @@ export function mount(host, app) {
 export function nextWins(app, max) {
   const P = app.result.goalPlan; if (!P || !P.surplusKnown) return [];
   const coach = app.view === 'coach';
-  const nameOf = i => coach ? i.name : (i.id === 'starter' ? 'Starter cushion' : i.id === 'full' ? 'Full cushion' : i.type === 'debt' ? 'Pay off ' + i.name : i.clientName || i.name);
+  const nameOf = i => typeof i.step === 'number' ? i.clientName : coach ? i.name : (i.type === 'debt' ? 'Pay off ' + i.name : i.clientName || i.name);
   const rows = [];
-  const starter = P.input.items.find(i => i.id === 'starter'); const sa = P.assessment.starter;
-  if (starter && sa && sa.status !== 'done') rows.push({ id: 'starter', name: nameOf(starter), month: sa.finishMonth, text: sa.finishMonth ? 'Starter cushion full in ' + F.date(sa.finishMonth) : 'Starter cushion first' });
-  P.input.items.filter(i => i.id !== 'starter' && P.assessment[i.id] && P.assessment[i.id].finishMonth && P.assessment[i.id].status !== 'done').sort((a, b) => P.assessment[a.id].finishMonth < P.assessment[b.id].finishMonth ? -1 : 1).slice(0, max || 3).forEach(i => rows.push({ id: i.id, name: nameOf(i), month: P.assessment[i.id].finishMonth, text: nameOf(i) + ' in ' + F.date(P.assessment[i.id].finishMonth) }));
-  return rows.slice(0, (max || 3) + 1);
+  P.input.items.filter(i => FLOOR_IDS.includes(i.id)).forEach(f => { const a = P.assessment[f.id]; if (a && a.status === 'done' && (P.alreadyMet || []).includes(f.id) && !((app.record.goals || {}).celebrated || {})[f.id]) rows.push({ id: f.id, name: f.clientName, month: null, text: 'You already have ' + (f.step === 1 ? 'a lean month' : 'a full month') + ' covered' }); else if (a && a.status !== 'done') rows.push({ id: f.id, name: f.clientName, month: a.finishMonth, text: a.finishMonth ? f.clientName + ' in ' + F.date(a.finishMonth) : f.clientName + ' first' }); });
+  P.input.items.filter(i => !FLOOR_IDS.includes(i.id) && P.assessment[i.id] && P.assessment[i.id].finishMonth && P.assessment[i.id].status !== 'done').sort((a, b) => P.assessment[a.id].finishMonth < P.assessment[b.id].finishMonth ? -1 : 1).slice(0, max || 3).forEach(i => rows.push({ id: i.id, name: nameOf(i), month: P.assessment[i.id].finishMonth, text: nameOf(i) + ' in ' + F.date(P.assessment[i.id].finishMonth) }));
+  return rows.slice(0, (max || 3) + 2);
 }

@@ -9628,12 +9628,14 @@
    "overrides": {},
    "splits": {},
    "extras": [],
-   "starter": {
-    "months": null,
-    "fixedCents": null
+   "cushion": {
+    "step1Cents": null,
+    "step2Months": null
    },
+   "celebrated": {},
    "lastFinish": null,
-   "hidden": []
+   "hidden": [],
+   "links": {}
   },
   "colTier": null,
   "sessionMode": "standard",

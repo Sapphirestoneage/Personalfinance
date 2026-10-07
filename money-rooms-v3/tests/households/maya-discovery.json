@@ -58,7 +58,7 @@
    "income": {
     "rows": [
      {
-      "id": "rmuyfvczlbo6f",
+      "id": "rmuyncur5wtm7",
       "planet": "income",
       "type": "w2",
       "nickname": "Job",
@@ -151,7 +151,7 @@
       }
      },
      {
-      "id": "rmuyfvczm2qho",
+      "id": "rmuyncur6fw5r",
       "planet": "income",
       "type": "benefits",
       "nickname": "Employer match",
@@ -190,7 +190,7 @@
    "spending": {
     "rows": [
      {
-      "id": "rmuyfvcznpza1",
+      "id": "rmuyncur71g7y",
       "planet": "spending",
       "type": "line",
       "nickname": "Phone",
@@ -251,7 +251,7 @@
       }
      },
      {
-      "id": "rmuyfvczoacqf",
+      "id": "rmuyncur875gn",
       "planet": "spending",
       "type": "line",
       "nickname": "Rent (2 bed)",
@@ -315,7 +315,7 @@
       "guessUnit": "2bed"
      },
      {
-      "id": "rmuyfvczoezfy",
+      "id": "rmuyncur8lkov",
       "planet": "spending",
       "type": "line",
       "nickname": "Utilities and internet",
@@ -379,7 +379,7 @@
       "guessUnit": "2bed"
      },
      {
-      "id": "rmuyfvczobisj",
+      "id": "rmuyncur8om4s",
       "planet": "spending",
       "type": "line",
       "nickname": "Streaming and subscriptions",
@@ -442,7 +442,7 @@
       "guessTier": "HCOL"
      },
      {
-      "id": "rmuyfvczopp3a",
+      "id": "rmuyncur9insp",
       "planet": "spending",
       "type": "line",
       "nickname": "Groceries",
@@ -506,7 +506,7 @@
       "guessUnit": null
      },
      {
-      "id": "rmuyfvczo0ttl",
+      "id": "rmuyncur9212t",
       "planet": "spending",
       "type": "line",
       "nickname": "Restaurants and takeout",
@@ -570,7 +570,7 @@
       "guessUnit": null
      },
      {
-      "id": "rmuyfvczobhy7",
+      "id": "rmuyncur9camz",
       "planet": "spending",
       "type": "line",
       "nickname": "Transit, fuel and parking",
@@ -634,7 +634,7 @@
       "guessUnit": null
      },
      {
-      "id": "rmuyfvczovrhn",
+      "id": "rmuyncur950kv",
       "planet": "spending",
       "type": "line",
       "nickname": "Car insurance",
@@ -698,7 +698,7 @@
       "guessUnit": null
      },
      {
-      "id": "rmuyfvczovxpo",
+      "id": "rmuyncur95vh7",
       "planet": "spending",
       "type": "line",
       "nickname": "Health insurance and care",
@@ -762,7 +762,7 @@
       "guessUnit": null
      },
      {
-      "id": "rmuyfvczolpcq",
+      "id": "rmuyncur9vy8x",
       "planet": "spending",
       "type": "line",
       "nickname": "Entertainment and hobbies",
@@ -826,7 +826,7 @@
       "guessUnit": null
      },
      {
-      "id": "rmuyfvczondzx",
+      "id": "rmuyncur9fovr",
       "planet": "spending",
       "type": "line",
       "nickname": "Clothing and personal care",
@@ -890,7 +890,7 @@
       "guessUnit": null
      },
      {
-      "id": "rmuyfvczokw7g",
+      "id": "rmuyncur9y6dg",
       "planet": "spending",
       "type": "line",
       "nickname": "Travel",
@@ -954,7 +954,7 @@
       "guessUnit": null
      },
      {
-      "id": "rmuyfvczo4ymv",
+      "id": "rmuyncur9mjtx",
       "planet": "spending",
       "type": "line",
       "nickname": "Gifts and giving",
@@ -1022,7 +1022,7 @@
    "debt": {
     "rows": [
      {
-      "id": "rmuyfvcznlm9x",
+      "id": "rmuyncur72koc",
       "planet": "debt",
       "type": "card",
       "nickname": "Credit card",
@@ -1094,7 +1094,7 @@
    "invest": {
     "rows": [
      {
-      "id": "rmuyfvczmsj46",
+      "id": "rmuyncur694pm",
       "planet": "invest",
       "type": "account",
       "nickname": "Savings",
@@ -1155,7 +1155,7 @@
       }
      },
      {
-      "id": "rmuyfvczmk1n0",
+      "id": "rmuyncur64ejt",
       "planet": "invest",
       "type": "account",
       "nickname": "Venmo",
@@ -1216,7 +1216,7 @@
       }
      },
      {
-      "id": "rmuyfvczmkr0p",
+      "id": "rmuyncur72g5a",
       "planet": "invest",
       "type": "account",
       "nickname": "Old credit union account",
@@ -1277,7 +1277,7 @@
       }
      },
      {
-      "id": "rmuyfvcznphrp",
+      "id": "rmuyncur77rfw",
       "planet": "invest",
       "type": "account",
       "nickname": "401k",
@@ -1345,7 +1345,7 @@
    "life": {
     "rows": [
      {
-      "id": "rmuyfvczndjiz",
+      "id": "rmuyncur7d04z",
       "planet": "life",
       "type": "goal",
       "nickname": "Credit card going down",
@@ -1375,7 +1375,7 @@
       }
      },
      {
-      "id": "rmuyfvczndty2",
+      "id": "rmuyncur79xjc",
       "planet": "life",
       "type": "goal",
       "nickname": "Know where the money goes",
@@ -1405,7 +1405,7 @@
       }
      },
      {
-      "id": "rmuyfvcznlxyz",
+      "id": "rmuyncur7jr1t",
       "planet": "life",
       "type": "goal",
       "nickname": "Bachelorette in April",
@@ -1435,7 +1435,7 @@
       }
      },
      {
-      "id": "rmuyfvczn0q2l",
+      "id": "rmuyncur8f3v3",
       "planet": "life",
       "type": "goal",
       "nickname": "Wedding next September",
@@ -1465,7 +1465,7 @@
       }
      },
      {
-      "id": "rmuyfvczn8rok",
+      "id": "rmuyncur81py1",
       "planet": "life",
       "type": "goal",
       "nickname": "A cash cushion",
@@ -1495,7 +1495,7 @@
       }
      },
      {
-      "id": "rmuyfvczn824b",
+      "id": "rmuyncur8y6r1",
       "planet": "life",
       "type": "goal",
       "nickname": "One trip paid in cash",
@@ -1704,12 +1704,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "income",
-    "rowId": "rmuyfvczlbo6f",
+    "rowId": "rmuyncur5wtm7",
     "field": null,
     "owner": "income",
     "old": null,
     "new": {
-     "id": "rmuyfvczlbo6f",
+     "id": "rmuyncur5wtm7",
      "planet": "income",
      "type": "w2",
      "nickname": "Job",
@@ -1807,7 +1807,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "income",
-    "rowId": "rmuyfvczlbo6f",
+    "rowId": "rmuyncur5wtm7",
     "field": "grossPay",
     "owner": "income",
     "old": {
@@ -1854,7 +1854,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "income",
-    "rowId": "rmuyfvczlbo6f",
+    "rowId": "rmuyncur5wtm7",
     "field": "takeHome",
     "owner": "income",
     "old": {
@@ -1901,7 +1901,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "income",
-    "rowId": "rmuyfvczlbo6f",
+    "rowId": "rmuyncur5wtm7",
     "field": "payFrequency",
     "owner": "income",
     "old": {
@@ -1924,7 +1924,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "income",
-    "rowId": "rmuyfvczlbo6f",
+    "rowId": "rmuyncur5wtm7",
     "field": "pretaxRetirement",
     "owner": "income",
     "old": {
@@ -1948,12 +1948,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "income",
-    "rowId": "rmuyfvczm2qho",
+    "rowId": "rmuyncur6fw5r",
     "field": null,
     "owner": "income",
     "old": null,
     "new": {
-     "id": "rmuyfvczm2qho",
+     "id": "rmuyncur6fw5r",
      "planet": "income",
      "type": "benefits",
      "nickname": "Employer match",
@@ -1996,7 +1996,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "income",
-    "rowId": "rmuyfvczm2qho",
+    "rowId": "rmuyncur6fw5r",
     "field": "matchRate",
     "owner": "income",
     "old": {
@@ -2019,7 +2019,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "income",
-    "rowId": "rmuyfvczm2qho",
+    "rowId": "rmuyncur6fw5r",
     "field": "matchUpTo",
     "owner": "income",
     "old": {
@@ -2042,12 +2042,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "invest",
-    "rowId": "rmuyfvczmsj46",
+    "rowId": "rmuyncur694pm",
     "field": null,
     "owner": "invest",
     "old": null,
     "new": {
-     "id": "rmuyfvczmsj46",
+     "id": "rmuyncur694pm",
      "planet": "invest",
      "type": "account",
      "nickname": "Savings",
@@ -2115,7 +2115,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "invest",
-    "rowId": "rmuyfvczmsj46",
+    "rowId": "rmuyncur694pm",
     "field": "accountType",
     "owner": "invest",
     "old": {
@@ -2138,7 +2138,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "invest",
-    "rowId": "rmuyfvczmsj46",
+    "rowId": "rmuyncur694pm",
     "field": "accountBalance",
     "owner": "invest",
     "old": {
@@ -2161,7 +2161,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "invest",
-    "rowId": "rmuyfvczmsj46",
+    "rowId": "rmuyncur694pm",
     "field": "contribAmount",
     "owner": "invest",
     "old": {
@@ -2185,12 +2185,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "invest",
-    "rowId": "rmuyfvczmk1n0",
+    "rowId": "rmuyncur64ejt",
     "field": null,
     "owner": "invest",
     "old": null,
     "new": {
-     "id": "rmuyfvczmk1n0",
+     "id": "rmuyncur64ejt",
      "planet": "invest",
      "type": "account",
      "nickname": "Venmo",
@@ -2258,7 +2258,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "invest",
-    "rowId": "rmuyfvczmk1n0",
+    "rowId": "rmuyncur64ejt",
     "field": "accountType",
     "owner": "invest",
     "old": {
@@ -2281,7 +2281,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "invest",
-    "rowId": "rmuyfvczmk1n0",
+    "rowId": "rmuyncur64ejt",
     "field": "accountBalance",
     "owner": "invest",
     "old": {
@@ -2304,7 +2304,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "invest",
-    "rowId": "rmuyfvczmk1n0",
+    "rowId": "rmuyncur64ejt",
     "field": "contribAmount",
     "owner": "invest",
     "old": {
@@ -2328,12 +2328,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "invest",
-    "rowId": "rmuyfvczmkr0p",
+    "rowId": "rmuyncur72g5a",
     "field": null,
     "owner": "invest",
     "old": null,
     "new": {
-     "id": "rmuyfvczmkr0p",
+     "id": "rmuyncur72g5a",
      "planet": "invest",
      "type": "account",
      "nickname": "Old credit union account",
@@ -2401,7 +2401,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "invest",
-    "rowId": "rmuyfvczmkr0p",
+    "rowId": "rmuyncur72g5a",
     "field": "accountType",
     "owner": "invest",
     "old": {
@@ -2424,7 +2424,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "invest",
-    "rowId": "rmuyfvczmkr0p",
+    "rowId": "rmuyncur72g5a",
     "field": "accountBalance",
     "owner": "invest",
     "old": {
@@ -2447,7 +2447,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "invest",
-    "rowId": "rmuyfvczmkr0p",
+    "rowId": "rmuyncur72g5a",
     "field": "contribAmount",
     "owner": "invest",
     "old": {
@@ -2471,12 +2471,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "invest",
-    "rowId": "rmuyfvcznphrp",
+    "rowId": "rmuyncur77rfw",
     "field": null,
     "owner": "invest",
     "old": null,
     "new": {
-     "id": "rmuyfvcznphrp",
+     "id": "rmuyncur77rfw",
      "planet": "invest",
      "type": "account",
      "nickname": "401k",
@@ -2544,7 +2544,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "invest",
-    "rowId": "rmuyfvcznphrp",
+    "rowId": "rmuyncur77rfw",
     "field": "accountType",
     "owner": "invest",
     "old": {
@@ -2567,7 +2567,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "invest",
-    "rowId": "rmuyfvcznphrp",
+    "rowId": "rmuyncur77rfw",
     "field": "accountBalance",
     "owner": "invest",
     "old": {
@@ -2590,7 +2590,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "invest",
-    "rowId": "rmuyfvcznphrp",
+    "rowId": "rmuyncur77rfw",
     "field": "contribAmount",
     "owner": "invest",
     "old": {
@@ -2614,12 +2614,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "debt",
-    "rowId": "rmuyfvcznlm9x",
+    "rowId": "rmuyncur72koc",
     "field": null,
     "owner": "debt",
     "old": null,
     "new": {
-     "id": "rmuyfvcznlm9x",
+     "id": "rmuyncur72koc",
      "planet": "debt",
      "type": "card",
      "nickname": "Credit card",
@@ -2692,7 +2692,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "debt",
-    "rowId": "rmuyfvcznlm9x",
+    "rowId": "rmuyncur72koc",
     "field": "balance",
     "owner": "debt",
     "old": {
@@ -2738,12 +2738,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "spending",
-    "rowId": "rmuyfvcznpza1",
+    "rowId": "rmuyncur71g7y",
     "field": null,
     "owner": "spending",
     "old": null,
     "new": {
-     "id": "rmuyfvcznpza1",
+     "id": "rmuyncur71g7y",
      "planet": "spending",
      "type": "line",
      "nickname": "Phone",
@@ -2811,7 +2811,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "spending",
-    "rowId": "rmuyfvcznpza1",
+    "rowId": "rmuyncur71g7y",
     "field": "category",
     "owner": "spending",
     "old": {
@@ -2834,7 +2834,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "spending",
-    "rowId": "rmuyfvcznpza1",
+    "rowId": "rmuyncur71g7y",
     "field": "amount",
     "owner": "spending",
     "old": {
@@ -2858,7 +2858,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "spending",
-    "rowId": "rmuyfvcznpza1",
+    "rowId": "rmuyncur71g7y",
     "field": "needWant",
     "owner": "spending",
     "old": {
@@ -2881,12 +2881,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "life",
-    "rowId": "rmuyfvczndjiz",
+    "rowId": "rmuyncur7d04z",
     "field": null,
     "owner": "life",
     "old": null,
     "new": {
-     "id": "rmuyfvczndjiz",
+     "id": "rmuyncur7d04z",
      "planet": "life",
      "type": "goal",
      "nickname": "Credit card going down",
@@ -2924,12 +2924,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "life",
-    "rowId": "rmuyfvczndty2",
+    "rowId": "rmuyncur79xjc",
     "field": null,
     "owner": "life",
     "old": null,
     "new": {
-     "id": "rmuyfvczndty2",
+     "id": "rmuyncur79xjc",
      "planet": "life",
      "type": "goal",
      "nickname": "Know where the money goes",
@@ -2967,12 +2967,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "life",
-    "rowId": "rmuyfvcznlxyz",
+    "rowId": "rmuyncur7jr1t",
     "field": null,
     "owner": "life",
     "old": null,
     "new": {
-     "id": "rmuyfvcznlxyz",
+     "id": "rmuyncur7jr1t",
      "planet": "life",
      "type": "goal",
      "nickname": "Bachelorette in April",
@@ -3010,7 +3010,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "life",
-    "rowId": "rmuyfvcznlxyz",
+    "rowId": "rmuyncur7jr1t",
     "field": "targetDate",
     "owner": "life",
     "old": {
@@ -3033,12 +3033,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "life",
-    "rowId": "rmuyfvczn0q2l",
+    "rowId": "rmuyncur8f3v3",
     "field": null,
     "owner": "life",
     "old": null,
     "new": {
-     "id": "rmuyfvczn0q2l",
+     "id": "rmuyncur8f3v3",
      "planet": "life",
      "type": "goal",
      "nickname": "Wedding next September",
@@ -3076,7 +3076,7 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "set",
     "planet": "life",
-    "rowId": "rmuyfvczn0q2l",
+    "rowId": "rmuyncur8f3v3",
     "field": "targetDate",
     "owner": "life",
     "old": {
@@ -3099,12 +3099,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "life",
-    "rowId": "rmuyfvczn8rok",
+    "rowId": "rmuyncur81py1",
     "field": null,
     "owner": "life",
     "old": null,
     "new": {
-     "id": "rmuyfvczn8rok",
+     "id": "rmuyncur81py1",
      "planet": "life",
      "type": "goal",
      "nickname": "A cash cushion",
@@ -3142,12 +3142,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "life",
-    "rowId": "rmuyfvczn824b",
+    "rowId": "rmuyncur8y6r1",
     "field": null,
     "owner": "life",
     "old": null,
     "new": {
-     "id": "rmuyfvczn824b",
+     "id": "rmuyncur8y6r1",
      "planet": "life",
      "type": "goal",
      "nickname": "One trip paid in cash",
@@ -3185,12 +3185,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "spending",
-    "rowId": "rmuyfvczoacqf",
+    "rowId": "rmuyncur875gn",
     "field": null,
     "owner": "spending",
     "old": null,
     "new": {
-     "id": "rmuyfvczoacqf",
+     "id": "rmuyncur875gn",
      "planet": "spending",
      "type": "line",
      "nickname": "Rent (2 bed)",
@@ -3262,12 +3262,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "spending",
-    "rowId": "rmuyfvczoezfy",
+    "rowId": "rmuyncur8lkov",
     "field": null,
     "owner": "spending",
     "old": null,
     "new": {
-     "id": "rmuyfvczoezfy",
+     "id": "rmuyncur8lkov",
      "planet": "spending",
      "type": "line",
      "nickname": "Utilities and internet",
@@ -3339,12 +3339,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "spending",
-    "rowId": "rmuyfvczobisj",
+    "rowId": "rmuyncur8om4s",
     "field": null,
     "owner": "spending",
     "old": null,
     "new": {
-     "id": "rmuyfvczobisj",
+     "id": "rmuyncur8om4s",
      "planet": "spending",
      "type": "line",
      "nickname": "Streaming and subscriptions",
@@ -3415,12 +3415,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "spending",
-    "rowId": "rmuyfvczopp3a",
+    "rowId": "rmuyncur9insp",
     "field": null,
     "owner": "spending",
     "old": null,
     "new": {
-     "id": "rmuyfvczopp3a",
+     "id": "rmuyncur9insp",
      "planet": "spending",
      "type": "line",
      "nickname": "Groceries",
@@ -3492,12 +3492,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "spending",
-    "rowId": "rmuyfvczo0ttl",
+    "rowId": "rmuyncur9212t",
     "field": null,
     "owner": "spending",
     "old": null,
     "new": {
-     "id": "rmuyfvczo0ttl",
+     "id": "rmuyncur9212t",
      "planet": "spending",
      "type": "line",
      "nickname": "Restaurants and takeout",
@@ -3569,12 +3569,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "spending",
-    "rowId": "rmuyfvczobhy7",
+    "rowId": "rmuyncur9camz",
     "field": null,
     "owner": "spending",
     "old": null,
     "new": {
-     "id": "rmuyfvczobhy7",
+     "id": "rmuyncur9camz",
      "planet": "spending",
      "type": "line",
      "nickname": "Transit, fuel and parking",
@@ -3646,12 +3646,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "spending",
-    "rowId": "rmuyfvczovrhn",
+    "rowId": "rmuyncur950kv",
     "field": null,
     "owner": "spending",
     "old": null,
     "new": {
-     "id": "rmuyfvczovrhn",
+     "id": "rmuyncur950kv",
      "planet": "spending",
      "type": "line",
      "nickname": "Car insurance",
@@ -3723,12 +3723,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "spending",
-    "rowId": "rmuyfvczovxpo",
+    "rowId": "rmuyncur95vh7",
     "field": null,
     "owner": "spending",
     "old": null,
     "new": {
-     "id": "rmuyfvczovxpo",
+     "id": "rmuyncur95vh7",
      "planet": "spending",
      "type": "line",
      "nickname": "Health insurance and care",
@@ -3800,12 +3800,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "spending",
-    "rowId": "rmuyfvczolpcq",
+    "rowId": "rmuyncur9vy8x",
     "field": null,
     "owner": "spending",
     "old": null,
     "new": {
-     "id": "rmuyfvczolpcq",
+     "id": "rmuyncur9vy8x",
      "planet": "spending",
      "type": "line",
      "nickname": "Entertainment and hobbies",
@@ -3877,12 +3877,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "spending",
-    "rowId": "rmuyfvczondzx",
+    "rowId": "rmuyncur9fovr",
     "field": null,
     "owner": "spending",
     "old": null,
     "new": {
-     "id": "rmuyfvczondzx",
+     "id": "rmuyncur9fovr",
      "planet": "spending",
      "type": "line",
      "nickname": "Clothing and personal care",
@@ -3954,12 +3954,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "spending",
-    "rowId": "rmuyfvczokw7g",
+    "rowId": "rmuyncur9y6dg",
     "field": null,
     "owner": "spending",
     "old": null,
     "new": {
-     "id": "rmuyfvczokw7g",
+     "id": "rmuyncur9y6dg",
      "planet": "spending",
      "type": "line",
      "nickname": "Travel",
@@ -4031,12 +4031,12 @@
     "ts": "2026-10-01T15:05:00.000Z",
     "kind": "add-row",
     "planet": "spending",
-    "rowId": "rmuyfvczo4ymv",
+    "rowId": "rmuyncur9mjtx",
     "field": null,
     "owner": "spending",
     "old": null,
     "new": {
-     "id": "rmuyfvczo4ymv",
+     "id": "rmuyncur9mjtx",
      "planet": "spending",
      "type": "line",
      "nickname": "Gifts and giving",
@@ -4171,12 +4171,14 @@
    "overrides": {},
    "splits": {},
    "extras": [],
-   "starter": {
-    "months": null,
-    "fixedCents": null
+   "cushion": {
+    "step1Cents": null,
+    "step2Months": null
    },
+   "celebrated": {},
    "lastFinish": null,
-   "hidden": []
+   "hidden": [],
+   "links": {}
   },
   "colTier": null,
   "sessionMode": "gentle",

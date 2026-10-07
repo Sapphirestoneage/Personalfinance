@@ -13,7 +13,7 @@
 | 8 | Discovery, Confirm, and the Call Path (Gut, Dream, Actual) | FROZEN | Level 8: Discovery, Confirm, and the Call Path |
 | 9 | What Moves the FI Date | FROZEN | Level 9: What Moves the FI Date |
 | 10 | Savings buckets and curricula | NOT BUILT | never briefed; Level 11 reads cash in place of buckets and notes the missing curriculum link |
-| 11 | Goal Timeline (when each goal happens, all at once) | FROZEN | Level 11: Goal Timeline |
+| 11 | Goal Timeline (when each goal happens, all at once) | FROZEN | Level 11: Goal Timeline; reopened for MR-052 (the cushion in three steps) |
 
 A frozen level reopens only for a failing test or a decision logged in
 DECISIONS.md.
