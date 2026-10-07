@@ -15,6 +15,7 @@ import { confidenceOf, hasValue, isRough, STATES, SOURCES } from '../engine/stat
 import { typeDef, fieldDef, primaryFieldOf, freshFacts, noneRow, isNoneRow, askedOnRow } from '../engine/fields.js';
 import { createRow } from '../engine/record.js';
 import { monthlyOf } from '../engine/compute.js';
+import { isGuessRow } from '../engine/guesses.js';
 
 const CADENCE_SHORT = { paycheck: 'pay', week: 'wk', month: 'mo', quarter: 'qtr', year: 'yr', oneoff: 'once' };
 
@@ -240,7 +241,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
   }
 
   function renderRow(r, cols) {
-    const tr = h('tr', { dataset: { row: r.id } });
+    const tr = h('tr', { dataset: { row: r.id }, class: isGuessRow(r) ? 'guess-row' : null, title: isGuessRow(r) ? 'Guess: an average for this cost area, not this household. Type the real number to replace it.' : null });
     cols.forEach(c => tr.appendChild(renderCell(r, c)));
     return tr;
   }
@@ -318,7 +319,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     }
     if (c.kind === 'column') {
       if (!coach && c.key === 'notesPrivate') return null;
-      if (!coach) return h('td', { class: (c.key === 'asOf' ? 'small muted' : '') + (c.sticky ? ' sticky' : '') }, c.key === 'asOf' ? (r.asOf ? F.date(r.asOf) : h('span', { class: 'empty-token' }, 'Not entered')) : (r[c.key] || h('span', { class: 'empty-token' }, 'Not entered')));
+      if (!coach) return h('td', { class: (c.key === 'asOf' ? 'small muted' : '') + (c.sticky ? ' sticky' : '') }, c.key === 'asOf' ? (r.asOf ? F.date(r.asOf) : h('span', { class: 'empty-token' }, 'Not entered')) : (r[c.key] || h('span', { class: 'empty-token' }, 'Not entered')), c.sticky && isGuessRow(r) ? h('span', { class: 'chip src-estimated guess-chip', title: 'An average for your cost area, not your number' }, 'Guess') : null);
       if (c.key === 'asOf') {
         const picker = datePicker({ value: r.asOf, precision: 'month', label: c.label, dataset: { col: 'asOf' }, onCommit: iso => app.setColumn(r.id, 'asOf', iso) });
         return h('td', null, emptyWrap(picker, keyFlow(picker, r, 'asOf')));
@@ -326,11 +327,13 @@ export function ledgerTable(host, app, planet, typeId, opts) {
       const input = h('input', { class: 'input' + (c.key === 'nickname' || c.key === 'notesPrivate' || c.key === 'notesShared' ? ' wide' : ''), type: 'text', value: r[c.key] || '', 'aria-label': c.label, dataset: { col: c.key },
         onChange: e => app.setColumn(r.id, c.key, e.target.value.trim()) });
       if (c.key === 'institution' && planet === 'debt' && typeId === 'card') input.setAttribute('list', 'mr3-issuers');
+      /* a guess row (Level 8, MR-045) wears its chip on the name: coach sees the tier, client sees Guess */
+      const guessChip = c.sticky && isGuessRow(r) ? h('span', { class: 'chip src-estimated guess-chip', title: 'An average for this cost area, not this household' }, coach && r.guessTier ? 'Guess, ' + r.guessTier : 'Guess') : null;
       if (c.sticky && coach && !tdef.single) {
         const box = h('input', { type: 'checkbox', class: 'pick', 'aria-label': 'Select row', checked: state.selected.has(r.id), onChange: e => { if (e.target.checked) state.selected.add(r.id); else state.selected.delete(r.id); render(); } });
-        return h('td', { class: 'sticky with-pick' }, box, emptyWrap(input, keyFlow(input, r, c.key)));
+        return h('td', { class: 'sticky with-pick' }, box, emptyWrap(input, keyFlow(input, r, c.key)), guessChip);
       }
-      return h('td', { class: c.sticky ? 'sticky' : null }, emptyWrap(input, keyFlow(input, r, c.key)));
+      return h('td', { class: c.sticky ? 'sticky' : null }, emptyWrap(input, keyFlow(input, r, c.key)), guessChip);
     }
     /* a typed field */
     const d = c.def;

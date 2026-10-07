@@ -13,13 +13,20 @@ import { append } from '../../engine/journal.js';
 import { STATES, SOURCES } from '../../engine/states.js';
 import { renderShelf } from '../shelf.js';
 import { getSensitivity } from '../levers-bridge.js';
+import { progress, goalProgress } from '../../engine/progress.js';
+import { variancePanel, targetsPanel, actualsOf } from './call.js';
+import { variance, AREA_LABELS } from '../../engine/variance.js';
+import { proposals } from '../../engine/targets.js';
+import { targetsEmail } from '../../engine/email.js';
 
 export function mount(host, app) {
   const noteInput = h('input', { class: 'input session-note', type: 'text', 'aria-label': 'Session note' });
   const header = h('header', null, h('h1', null, 'Session'), h('span', { class: 'sub' }, 'The next question is the unsure fact that moves the most money.'), h('div', { class: 'actions' },
     h('label', { class: 'small muted' }, 'Note for this session'), noteInput,
+    h('a', { class: 'btn primary', href: '#/call' }, 'Run the call'),
     h('button', { class: 'btn', onClick: () => { snapshot(app, noteInput.value.trim()); noteInput.value = ''; } }, 'Close this session')));
   host.appendChild(header);
+  const meters = h('div', { class: 'meters' }); host.appendChild(meters);
   const grid = h('div', { class: 'grid grid-2' });
   const left = h('div', { class: 'stack' }); const right = h('div', { class: 'stack' });
   grid.appendChild(left); grid.appendChild(right);
@@ -27,18 +34,64 @@ export function mount(host, app) {
   const shelf = h('section', { class: 'panel shelf-panel' }); host.insertBefore(shelf, grid);
   let tab = 'all'; let sens = null;
   function draw() {
-    clear(left); clear(right);
+    clear(left); clear(right); clear(meters);
+    meters.appendChild(meterRow(app));
     renderShelf(shelf, app, { compact: true, ladder: false });
     getSensitivity(app, r => { if (r !== sens) { sens = r; setTimeout(draw, 0); } }); /* redraw on the next tick, never inside this draw */
     const s = leverage({ record: app.record, fields: app.data.fields, weights: app.data.weights, sensitivity: sens });
     left.appendChild(nextCard(app, s));
+    left.appendChild(progressPanel(app));
     left.appendChild(plates(app, s, tab, t => { tab = t; draw(); }));
     right.appendChild(sinceLast(app));
+    right.appendChild(variancePanelCompact(app));
     right.appendChild(emailPanel(app, s));
     right.appendChild(sessionsPanel(app));
   }
   draw();
   return { update() { draw(); } };
+}
+
+/* Two header meters (MR-048): Picture completeness moves with paperwork, Goal progress moves with real life. */
+function meterRow(app) {
+  const c = app.result.completeness; const g = goalProgress(app.result); const guesses = app.result.guesses ? app.result.guesses.count : 0;
+  const bar = (label, share, text, sub) => h('div', { class: 'meter', role: 'group', 'aria-label': label + (share !== null ? ' ' + Math.round(share * 100) + '%' : ' needs inputs') },
+    h('div', { class: 'meter-head' }, h('span', { class: 'meter-label' }, label), h('span', { class: 'meter-value' }, text)),
+    h('div', { class: 'meter-track' }, share !== null ? h('div', { class: 'meter-fill', style: { width: Math.round(Math.max(0, Math.min(1, share)) * 100) + '%' } }) : null),
+    h('div', { class: 'small muted' }, sub));
+  return h('div', { class: 'meter-row' },
+    bar('Picture completeness', c ? c.share : null, c && c.share !== null ? Math.round(c.share * 100) + '%' : 'Needs inputs', (c && c.share !== null ? 'of the dollars in the picture are known or verified' : 'No amounts yet') + (guesses ? '. Includes ' + guesses + (guesses === 1 ? ' guess' : ' guesses') : '')),
+    bar('Goal progress', g ? g.share : null, g && g.share !== null ? Math.round(g.share * 100) + '%' : 'Needs inputs', g && g.share !== null ? 'of the FI number is invested' + (g.fiAge ? '; FI at ' + g.fiAge : '') + (g.monthlyGap ? '; ' + F.dollarsWhole(g.monthlyGap) + ' a month short of on track' : '') : 'Needs invested balances and spending'));
+}
+
+/* Progress versus paperwork (MR-048): what moved since the last closed session, by why. */
+function progressPanel(app) {
+  const panel = h('section', { class: 'panel progress-panel' });
+  const P = progress(app.record, app.result, app.data.fields);
+  panel.appendChild(h('h2', null, 'Progress vs paperwork', P.since ? h('span', { class: 'tag' }, 'since ' + F.dateLong(P.since.slice(0, 10))) : h('span', { class: 'tag' }, 'since the start')));
+  const total = P.counts.correction + P.counts.move + P.counts.paperwork;
+  if (!total) { panel.appendChild(h('p', { class: 'muted small' }, 'Nothing has changed yet.')); return panel; }
+  const months = e => e.months === null ? '' : e.months === 0 ? 'FI date unchanged' : Math.abs(e.months) + (Math.abs(e.months) === 1 ? ' month' : ' months') + ' of FI date ' + (e.months < 0 ? 'earlier' : 'later');
+  const rows = [
+    ['Corrections', P.counts.correction - P.counts.guessReplaced, 'we learned what it really is', months(P.corrections)],
+    ['Guesses replaced', P.counts.guessReplaced, 'a guess became a real number', months(P.guessesReplaced)],
+    ['Moves', P.counts.move, 'real life changed', months(P.moves)],
+    ['Paperwork', P.counts.paperwork, 'confidence only; no number moved', ''],
+  ];
+  panel.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data' }, h('tbody', null, rows.map(r => h('tr', null, h('td', null, r[0]), h('td', { class: 'num' }, String(r[1])), h('td', { class: 'small muted' }, r[2]), h('td', { class: 'small' }, r[3])))))));
+  if (P.plannedMonthly) panel.appendChild(h('p', { class: 'small' }, 'Planned moves (targets): ' + (P.plannedMonthly > 0 ? '+' : '') + F.dollarsWhole(P.plannedMonthly) + ' a month' + (P.planned.months !== null ? ', ' + months(P.planned) : '') + '.'));
+  if (P.moveList.length) panel.appendChild(h('ul', { class: 'small move-list' }, P.moveList.slice(0, 5).map(m => h('li', null, h('span', { class: 'chip ' + (m.direction === 'Forward' ? 'state-known' : m.direction === 'Backward' ? 'amber' : 'src') }, m.direction), ' ' + (m.line.rowId === 'sun' ? 'Household' : (Object.values(app.record.planets).flatMap(p => p.rows).find(r => r.id === m.line.rowId) || {}).nickname || m.line.rowId) + ', ' + m.field + (m.deltaMonthly ? ' ' + (m.deltaMonthly > 0 ? '+' : '') + F.dollarsWhole(m.deltaMonthly) + ' a month' : '')))));
+  return panel;
+}
+
+function variancePanelCompact(app) {
+  const panel = h('section', { class: 'panel' });
+  panel.appendChild(h('h2', null, 'What you said, what it really is', h('a', { class: 'small', href: '#/call', style: { marginLeft: '8px' } }, 'Open the call')));
+  const gut = app.record.anchors && app.record.anchors.gut && Object.keys(app.record.anchors.gut).length;
+  if (!gut) { panel.appendChild(h('p', { class: 'muted small' }, 'Nothing to compare yet. The call path asks what they think each area costs before the real lines come in.')); return panel; }
+  panel.appendChild(variancePanel(app, { coach: true }));
+  const targets = Object.keys(app.record.targets || {}).length;
+  if (targets) { panel.appendChild(h('h3', null, 'Your targets')); panel.appendChild(targetsPanel(app, { readOnly: true })); }
+  return panel;
 }
 
 function itemKey(i) { return i.rowId + '|' + i.field; }
@@ -60,7 +113,7 @@ function askLink(app, i, label, primary) {
 }
 function stateChipOf(i) {
   if (i.note) return h('span', { class: 'chip src' }, 'Note');
-  if (i.source === 'estimated' || i.source === 'lookup-verify') return h('span', { class: 'chip src src-' + i.source }, i.source === 'estimated' ? 'Estimate' : 'Verify');
+  if (i.source === 'estimated' || i.source === 'lookup-verify') return h('span', { class: 'chip src src-' + i.source }, i.source === 'estimated' ? 'Guess' : 'Verify');
   return h('span', { class: 'chip state-' + i.state }, STATES[i.state].label);
 }
 
@@ -96,8 +149,9 @@ function plates(app, s, tab, setTab) {
 
 function emailPanel(app, s) {
   const panel = h('section', { class: 'panel' });
-  const text = followUpEmail(app.record, app.data.fields, s.theirPlate.filter(i => !isDone(app, i)));
-  panel.appendChild(h('h2', null, 'Follow-up email', h('span', { class: 'tag' }, 'by institution')));
+  const hasTargets = Object.keys(app.record.targets || {}).length > 0;
+  const text = hasTargets ? targetsEmail(app.record, proposals(variance(app.record, actualsOf(app)).rows, app.record, app.result).rows.map(t => Object.assign({}, t, { saved: !!app.record.targets[t.key] })), AREA_LABELS) : followUpEmail(app.record, app.data.fields, s.theirPlate.filter(i => !isDone(app, i)));
+  panel.appendChild(h('h2', null, hasTargets ? 'Targets email' : 'Follow-up email', h('span', { class: 'tag' }, hasTargets ? 'what they said, in their words' : 'by institution')));
   const ta = h('textarea', { class: 'input email', readOnly: true, 'aria-label': 'Follow-up email draft', value: text });
   panel.appendChild(ta);
   panel.appendChild(h('div', { class: 'row', style: { marginTop: '8px' } }, h('button', { class: 'btn', onClick: () => { ta.select(); document.execCommand('copy'); app.toast('Email copied'); } }, 'Copy')));

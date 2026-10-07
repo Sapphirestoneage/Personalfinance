@@ -24,7 +24,7 @@ function needsNote(host, needs) {
 export function render(id, host, data, opts) {
   host.innerHTML = '';
   if (!data || data.needs) { needsNote(host, (data && data.needs) || ['data']); return; }
-  const fn = { sankey, netWorth, balanceSheet, debtRace, runway, draftt, fiGauge, waterfall, paths, taxes }[id];
+  const fn = { sankey, netWorth, balanceSheet, debtRace, runway, draftt, fiGauge, waterfall, paths, taxes, markers }[id];
   const o = Object.assign({}, opts || {}, { width: Math.max(320, host.clientWidth || 720) });
   if (fn) fn(host, data, o);
   const def = CHARTS.find(c => c.id === id);
@@ -124,6 +124,27 @@ function balanceSheet(host, d, o) {
     });
   });
   legend(host, rows.flatMap(([title, parts]) => parts.filter(p => p.cents > 0).map((p, j) => ({ label: (title === 'Debts' ? '' : '') + p.label, text: F.dollarsWhole(p.cents), cls: 'shade-' + (j % 4) }))));
+}
+
+/* Three markers on one line per area: what they said, what it really is, what they'd want (Level 8, MR-049). */
+function markers(host, d, o) {
+  const d3 = d3g(); const W = o.width, rowH = 30, m = { t: 8, r: 24, b: 28, l: Math.min(140, Math.round(W * 0.28)) };
+  const rows = d.rows.filter(r => r.gut !== null || r.dream !== null || r.actual !== null);
+  const H = m.t + rows.length * rowH + m.b;
+  const svg = svgIn(host, W, H);
+  const hi = d3.max(rows.flatMap(r => [r.gut, r.dream, r.actual].filter(v => v !== null && v !== undefined))) || 1;
+  const x = d3.scaleLinear().domain([0, hi * 1.08]).range([m.l, W - m.r]);
+  const kinds = [['gut', 'What you said', 'mark-gut'], ['actual', 'What it really is', 'mark-actual'], ['dream', "What you'd want", 'mark-dream']];
+  rows.forEach((r, i) => {
+    const y = m.t + i * rowH + rowH / 2;
+    const g = svg.append('g');
+    g.append('line').attr('class', 'grid').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y).attr('y2', y);
+    if (r.gut !== null && r.actual !== null) g.append('line').attr('class', 'mark-span').attr('x1', x(Math.min(r.gut, r.actual))).attr('x2', x(Math.max(r.gut, r.actual))).attr('y1', y).attr('y2', y);
+    g.append('text').attr('class', 'chart-label').attr('x', m.l - 8).attr('y', y).attr('dy', '0.35em').attr('text-anchor', 'end').text(cut(r.label));
+    kinds.forEach(([k, name, cls]) => { if (r[k] === null || r[k] === undefined) return; g.append('circle').attr('class', cls).attr('cx', x(r[k])).attr('cy', y).attr('r', k === 'actual' ? 7 : 5).append('title').text(r.label + ', ' + name + ': ' + F.dollarsWhole(r[k]) + ' a month'); });
+  });
+  svg.append('g').attr('transform', 'translate(0,' + (H - m.b + 4) + ')').attr('class', 'axis').call(d3.axisBottom(x).ticks(5).tickFormat(v => F.dollarsCompact(v)));
+  legend(host, kinds.map(([k, name, cls]) => ({ label: name, text: '', cls })));
 }
 
 function legend(host, items) {

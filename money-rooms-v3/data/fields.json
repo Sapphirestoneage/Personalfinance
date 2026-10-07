@@ -208,7 +208,9 @@
       "mistake",
       "fatFloor",
       "primaryCard",
-      "lineAutopay"
+      "lineAutopay",
+      "shared",
+      "myShare"
      ],
      "defaults": {
       "needWant": "need",
@@ -1806,6 +1808,26 @@
    "defaultSource": "client",
    "cadence": true,
    "defaultCadence": "month",
+   "optional": true
+  },
+  "shared": {
+   "id": "shared",
+   "label": "Shared with a roommate",
+   "kind": "bool",
+   "owner": "spending",
+   "weight": 4,
+   "hint": "The bill is split with a roommate; the amount is the full bill and Your share is what you pay",
+   "defaultSource": "client",
+   "optional": true
+  },
+  "myShare": {
+   "id": "myShare",
+   "label": "Your share",
+   "kind": "percent",
+   "owner": "spending",
+   "weight": 4,
+   "hint": "Your part of a shared bill. One roommate means 50%.",
+   "defaultSource": "client",
    "optional": true
   }
  }

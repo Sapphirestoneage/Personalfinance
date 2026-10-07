@@ -20,6 +20,8 @@ import { computeMetrics } from './metrics.js';
 import { computeLenses } from './lenses.js';
 import { tripleD, project, socialSecurityMonthly } from './projection.js';
 import { monthsToReach } from './fiLadder.js';
+import { isGuessRow, guessRows, realCategories } from './guesses.js';
+import { colTierOf } from './col.js';
 
 export function fillOf(fields) {
   const list = fields.filter(f => f && f.state !== 'not-applicable' && f.state !== 'not-for-me');
@@ -62,17 +64,17 @@ export function compute(record, data, opts) {
     const byType = {};
     /* a tag changes no number (MR-031); a cadence-tied field is only asked in that cadence (MR-032) */
     const counts = (k, r) => !(fieldsData && fieldsData.fields[k] && (fieldsData.fields[k].tag || fieldsData.fields[k].optional)) && (!fieldsData || askedOnRow(fieldsData, r, k));
-    rows.forEach(r => { (byType[r.type] = byType[r.type] || []).push(r); Object.keys(r.f).forEach(k => { if (counts(k, r)) all.push(r.f[k]); }); });
+    rows.forEach(r => { (byType[r.type] = byType[r.type] || []).push(r); if (isGuessRow(r)) return; /* a guess is not the client's fact (MR-045) */ Object.keys(r.f).forEach(k => { if (counts(k, r)) all.push(r.f[k]); }); });
     fills[p] = all.length ? fillOf(all) : null;
     if (fieldsData && fieldsData.planets[p]) {
       Object.keys(fieldsData.planets[p].types).forEach(tid => {
         const list = byType[tid] || []; const fs = [];
-        list.forEach(r => Object.keys(r.f).forEach(k => { if (counts(k, r)) fs.push(r.f[k]); }));
+        list.forEach(r => { if (isGuessRow(r)) return; Object.keys(r.f).forEach(k => { if (counts(k, r)) fs.push(r.f[k]); }); });
         const tdef = fieldsData.planets[p].types[tid];
         /* a type assumed none (rentals) counts as answered until a row says otherwise (MR-027) */
         typeFills[p][tid] = list.length ? fillOf(fs) : (tdef.assumeNone ? 1 : null);
         const primId = tdef.fields.find(fid => fieldsData.fields[fid].primary) || tdef.fields.find(fid => fieldsData.fields[fid].kind === 'money') || tdef.fields[0];
-        list.forEach(r => { const f = r.f[primId]; if (!f || f.state === 'unknown' || f.state === 'will-send') needs[p].push({ type: tid, rowId: r.id, field: primId, label: (r.nickname ? r.nickname + ': ' : '') + fieldsData.fields[primId].label }); });
+        list.forEach(r => { if (isGuessRow(r)) return; const f = r.f[primId]; if (!f || f.state === 'unknown' || f.state === 'will-send') needs[p].push({ type: tid, rowId: r.id, field: primId, label: (r.nickname ? r.nickname + ': ' : '') + fieldsData.fields[primId].label }); });
       });
     }
   });
@@ -117,16 +119,20 @@ export function compute(record, data, opts) {
   const spending = isQ(S.safety.spendingWithPremiums) ? S.safety.spendingWithPremiums : null;
   const invested = isQ(S.invest.investedAssets) ? S.invest.investedAssets : null;
   const cash = isQ(S.invest.cashBalances) ? S.invest.cashBalances : null;
-  if (age !== null && take && spending && invested && cash && isQ(S.income.grossMonthly) && isQ(S.debt.debtServiceMonthly)) {
-    const service = S.debt.debtServiceMonthly.cents;
+  /* a first draft after a discovery call (MR-045): a debt whose balance was not given does not block the projection; its service counts as zero and the draft says so */
+  const debtUnknown = !isQ(S.debt.debtServiceMonthly) && !!record.discovery;
+  result.firstDraft = record.discovery ? { unknownDebts: debtUnknown, guesses: 0 } : null;
+  if (age !== null && take && spending && invested && cash && isQ(S.income.grossMonthly) && (isQ(S.debt.debtServiceMonthly) || debtUnknown)) {
+    const service = isQ(S.debt.debtServiceMonthly) ? S.debt.debtServiceMonthly.cents : 0;
     const landing = isQ(S.spending.savingsLandingMonthly) ? S.spending.savingsLandingMonthly.cents : 0;
     const surplus = take.cents - spending.cents - service;
     const leak = surplus - landing;
     ssMonthly = socialSecurityMonthly(S.income.grossMonthly.cents, data.limits2026, asm.socialSecurityScale);
     const inp = {
-      age, year: parseInt(today.slice(0, 4), 10), today, invested: invested.cents, cash: cash.cents, debts, debtOrder: S.debt.payoffOrders.orders.avalanche,
+      age, year: parseInt(today.slice(0, 4), 10), today, invested: invested.cents, cash: cash.cents, debts, debtOrder: (S.debt.payoffOrders && S.debt.payoffOrders.orders && S.debt.payoffOrders.orders.avalanche) || [],
       annualSpend: spending.cents * 12, employeeAnnual: S.invest.annualContributions.employee, employerAnnual: S.invest.annualContributions.employer,
       leakAnnual: leak * 12, debtServiceAnnual: service * 12, retirementAge: S.life.retirementAge || asm.retirementAgeDefault, ssMonthly, asm, mult: S.life.retirementMultipliers,
+      worstExtraAnnualSpend: (record.household && (record.household.roommates || []).length && S.safety.runway && S.safety.runway.gapMonthly) ? S.safety.runway.gapMonthly * 12 : 0,
     };
     contribAnnual = inp.employeeAnnual + inp.employerAnnual;
     projection = tripleD(inp);
@@ -150,5 +156,29 @@ export function compute(record, data, opts) {
   result.ladder = mctx.ladderOut || null;
   const lenses = computeLenses({ metrics, sun, asm, data, age, debts, today, record, projection, contribAnnual });
   result.sun = sun; result.metrics = metrics; result.lenses = lenses; result.projection = projection; result.debts = debts; result.asm = asm; result.age = age;
+  /* Level 8: the cost-of-living tier, the household, the guesses and the two meters */
+  result.colTier = data.colTiers ? colTierOf(record, data.colTiers) : null;
+  result.household = record.household || { roommates: [], lease: 'none' };
+  const gRows = guessRows(record);
+  const given = realCategories(record);
+  result.guesses = { on: asm.fillGapsWithGuesses !== false, count: asm.fillGapsWithGuesses === false ? 0 : gRows.filter(r => { const c = r.f.category && r.f.category.v; return !(record.anchors && record.anchors.gut && record.anchors.gut['spending:' + c]) && !given[c]; }).length, rows: gRows.map(r => ({ rowId: r.id, name: r.nickname, category: r.f.category ? r.f.category.v : null, cents: r.f.amount ? r.f.amount.v : null, shared: !!(r.f.shared && r.f.shared.v), tier: r.guessTier || null })) };
+  result.completeness = completenessOf(record, data, S);
+  if (result.firstDraft) result.firstDraft.guesses = result.guesses.count;
+  result.sessionMode = record.sessionMode || 'standard';
   return Object.freeze(result);
+}
+
+/* Picture completeness (MR-048): the share of spending, income and balance dollars at verified or known. A guess counts as not complete; a stand-in anchor counts as rough. */
+export function completenessOf(record, data, S) {
+  let total = 0, sure = 0; const parts = [];
+  const take = (planet, type, fid, mult) => record.planets[planet].rows.filter(r => r.type === type && r.f[fid] && hasValue(r.f[fid])).forEach(r => {
+    const n = Math.abs(numberOf(r.f[fid]) || 0) * (mult || 1); const f = r.f[fid];
+    const ok = !isGuessRow(r) && (f.state === 'verified' || f.state === 'known') && f.source !== 'estimated';
+    total += n; if (ok) sure += n; parts.push({ planet, rowId: r.id, field: fid, cents: n, sure: ok, guess: isGuessRow(r) });
+  });
+  take('spending', 'line', 'amount', 12); take('income', 'w2', 'takeHome', 12); take('income', 'w2', 'grossPay', 12); take('income', 'c1099', 'grossPay', 12); take('income', 'side', 'grossPay', 12);
+  take('invest', 'account', 'accountBalance', 1); take('debt', 'card', 'balance', 1); take('debt', 'student', 'balance', 1); take('debt', 'auto', 'balance', 1); take('debt', 'personal', 'balance', 1); take('debt', 'mortgage', 'balance', 1);
+  /* a stand-in anchor is money in the picture but not known */
+  if (S && S.spending && S.spending.standIns) Object.keys(S.spending.standIns).forEach(cat => { if (S.spending.standIns[cat] === 'anchor' && S.spending.byCategory[cat]) total += S.spending.byCategory[cat].cents * 12; });
+  return { share: total ? Math.round(sure / total * 1000) / 1000 : null, sureCents: sure, totalCents: total, parts };
 }

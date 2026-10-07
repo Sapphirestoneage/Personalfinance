@@ -4,6 +4,130 @@ import path from 'node:path';
 
 export const flows = [
 {
+  name: 'level8-maya-discovery-to-targets',
+  async run(page, { base, check, APP }) {
+    /* 1. the discovery form: Jersey City reads as HCOL before anything is saved */
+    await page.goto(base + 'index.html#/home');
+    await page.waitForSelector('#main h1, #main .empty');
+    await page.goto(base + 'index.html#/discovery');
+    await page.waitForSelector('.chipbar');
+    check('the listening chips are there', (await page.$$('.chipbar .chip.toggle')).length >= 8);
+    await page.fill('input[aria-label="Name"]', 'Maya');
+    await page.press('input[aria-label="Name"]', 'Tab');
+    await page.fill('input[aria-label="Birth date or age"]', '27');
+    await page.press('input[aria-label="Birth date or age"]', 'Tab');
+    await page.fill('input[aria-label="City"]', 'Jersey City');
+    await page.press('input[aria-label="City"]', 'Tab');
+    await page.waitForFunction(() => (document.querySelector('.tierline') || {}).textContent.indexOf('HCOL') !== -1);
+    check('Jersey City is New York metro and HCOL', (await page.textContent('.tierline')).indexOf('New York') !== -1);
+    check('the HCOL chip is pressed', (await page.getAttribute('.tierchips button:has-text("HCOL")', 'aria-pressed')) === 'true');
+    await page.click('[aria-label="Roommates"] button:has-text("1")');
+    await page.waitForSelector('[aria-label="Lease"]');
+    await page.click('[aria-label="Lease"] button:has-text("Both")');
+    await page.fill('input[aria-label="Take-home"]', '1900 every two weeks');
+    await page.press('input[aria-label="Take-home"]', 'Tab');
+    check('the take-home hint converts a paycheck to a month', (await page.textContent('.saidbox .heard >> nth=1')).indexOf('a month') !== -1);
+    await page.fill('input[aria-label="Pay before tax"]', '68k');
+    await page.press('input[aria-label="Pay before tax"]', 'Tab');
+    await page.fill('input[aria-label="Spending a month, their guess"]', '2,500ish');
+    await page.press('input[aria-label="Spending a month, their guess"]', 'Tab');
+    check('2,500ish is rough', (await page.textContent('.disc-q:has(input[aria-label="Spending a month, their guess"]) .heard')).indexOf('rough') !== -1);
+    await page.click('button[aria-label="Save the discovery call"]');
+    await page.waitForSelector('.discovery-summary');
+    const summary = await page.textContent('.discovery-summary');
+    check('the summary names the tier and counts the guesses', summary.indexOf('HCOL') !== -1 && /Includes \d+ guesses/.test(summary));
+    check('the summary never says estimated', !/estimated/i.test(summary));
+    /* 2. the built fixture: twelve guesses, a roommate, the call path */
+    await page.goto(base + 'index.html#/home');
+    await page.waitForSelector('#main h1');
+    await importFixture(page, APP, 'maya-discovery');
+    await page.goto(base + 'index.html#/discovery/summary');
+    await page.waitForSelector('.discovery-summary');
+    check('Maya starts with 12 guesses', (await page.textContent('.discovery-summary')).indexOf('Includes 12 guesses') !== -1);
+    await page.goto(base + 'index.html#/ledger/spending/line');
+    await page.waitForSelector('tr.guess-row');
+    check('guess rows are marked in the ledger with the tier', (await page.$$('tr.guess-row')).length === 12 && (await page.textContent('tr.guess-row .guess-chip')).indexOf('Guess, HCOL') !== -1);
+    await page.goto(base + 'index.html#/call');
+    await page.waitForSelector('.callpath .stop');
+    check('the call path has six stops and opens on Confirm', (await page.$$('.callpath .stop')).length === 6 && (await page.textContent('.callpath .stop.current')).indexOf('Confirm') !== -1);
+    const confirmText = await page.textContent('.call-body');
+    check('Confirm reads back what they said and the guesses', confirmText.indexOf('Still right?') !== -1 && confirmText.indexOf('Is yours close?') !== -1 && confirmText.indexOf('Guess, HCOL') !== -1);
+    check('Confirm shows the roommate worst case', confirmText.indexOf('If it all falls on you') !== -1);
+    /* rent is the first guess for a household with a roommate; their half replaces it */
+    await page.click('.confirm-list .confirm-line:has-text("rent") button:has-text("Use mine")');
+    await page.waitForSelector('.drawer input.input.big');
+    await page.fill('.drawer input.input.big', 'my half is 1,650');
+    await page.press('.drawer input.input.big', 'Enter');
+    await page.waitForFunction(() => (document.querySelector('.sofar') || {}).textContent.indexOf('Includes 11 guesses') !== -1);
+    check('their rent replaces the guess: 11 left', true);
+    /* what you spend: one question at a time, area N of M */
+    await page.click('.call-body button:has-text("On to what you spend")');
+    await page.waitForSelector('.qcount');
+    check('the gut stop opens on the total, one question at a time', /Question 1 of \d+/.test(await page.textContent('.qcount')));
+    await page.fill('.answer input.input.big', '2,500ish');
+    await page.press('.answer input.input.big', 'Enter');
+    await page.waitForFunction(() => /Area 1 of 7/.test((document.querySelector('.qcount') || {}).textContent || ''));
+    /* the areas a guess still fills come first; home, now theirs, waits its turn */
+    const area1 = await page.textContent('.call-body .readaloud.big');
+    check('the first area is one a guess still fills, asked as a shared bill', area1.indexOf('phone, internet') !== -1 && (await page.textContent('.call-body')).indexOf('whole bill or your part') !== -1);
+    await page.fill('.answer input.input.big', 'like 400 a month');
+    await page.press('.answer input.input.big', 'Enter');
+    await page.waitForFunction(() => /Area 2 of 7/.test((document.querySelector('.qcount') || {}).textContent || ''));
+    check('a rough answer moves to the next area', true);
+    await page.click('.answer button:has-text("I don\'t know")');
+    await page.waitForFunction(() => /Area 3 of 7/.test((document.querySelector('.qcount') || {}).textContent || ''));
+    check('I don\'t know moves on in one tap', true);
+    /* what you'd want: jump there by the stop nav */
+    await page.click('.callpath .stop:has-text("want")');
+    await page.waitForSelector('.qcount');
+    const dreamText = await page.textContent('.call-body');
+    check('the dream stop hides what they said until asked', dreamText.indexOf('They said:') === -1 && dreamText.indexOf('Show what they said') !== -1);
+    await page.fill('.answer input.input.big', '350');
+    await page.press('.answer input.input.big', 'Enter');
+    await page.waitForTimeout(200);
+    /* your targets */
+    await page.click('.callpath .stop:has-text("targets")');
+    await page.waitForSelector('.targets-table');
+    const tt = await page.textContent('.targets');
+    check('targets offer the four choices', ['What you said', "What you'd want", 'Meet in the middle', 'Keep it as is'].every(w => tt.indexOf(w) !== -1));
+    await page.click('.targets-table tbody tr >> nth=0 >> button:has-text("Meet in the middle")');
+    await page.waitForTimeout(300);
+    check('a target is saved', (await page.getAttribute('.targets-table tbody tr >> nth=0 >> button:has-text("Meet in the middle")', 'aria-pressed')) === 'true');
+    /* 3. the session page: meters, progress versus paperwork, the targets email */
+    await page.goto(base + 'index.html#/session');
+    await page.waitForSelector('.meter-row');
+    const meters = await page.textContent('.meter-row');
+    check('two meters: picture completeness and goal progress', meters.indexOf('Picture completeness') !== -1 && meters.indexOf('Goal progress') !== -1 && /Includes \d+ guesses/.test(meters));
+    const prog = await page.textContent('.progress-panel');
+    check('progress versus paperwork counts the rent correction as a guess replaced', prog.indexOf('Guesses replaced') !== -1 && /Guesses replaced\s*1/.test(prog.replace(/\n/g, ' ')));
+    check('the email turns into the targets email', (await page.textContent('#main')).indexOf('Targets email') !== -1);
+    /* 4. runway shows two numbers; the roommate what-if has its card */
+    await page.goto(base + 'index.html#/measure');
+    await page.waitForSelector('.kpi');
+    check('runway says if it all falls on you', (await page.textContent('#main')).indexOf('If it all falls on you') !== -1);
+    await page.goto(base + 'index.html#/scenarios');
+    await page.waitForSelector('select.add-block');
+    await page.selectOption('select.add-block', 'roommate');
+    await page.waitForSelector('.fallsonyou-card');
+    const card = await page.textContent('.fallsonyou-card');
+    check('the roommate card gives the new bill, the bridge and the cushion', card.indexOf('Shared bills become') !== -1 && card.indexOf('Bridge for 2 months') !== -1 && card.indexOf('Cash covers') !== -1 && card.indexOf('Lease in both names') !== -1);
+    /* 5. the client view: client words only */
+    await page.click('#view-client');
+    await page.goto(base + 'index.html#/measure');
+    await page.waitForSelector('.kpi');
+    const client = await page.textContent('#main');
+    check('the client view never says HCOL, anchor, variance or estimated', !/\bHCOL\b|\banchor\b|\bvariance\b|\bestimated\b|stand-in|\bRPP\b/i.test(client));
+    await page.goto(base + 'index.html#/ledger/spending/line');
+    await page.waitForSelector('tr.guess-row');
+    check('the client sees Guess, not the tier', (await page.textContent('tr.guess-row .guess-chip')) === 'Guess');
+    await page.goto(base + 'index.html#/onepager');
+    await page.waitForSelector('.onepager');
+    const op = await page.textContent('.onepager');
+    check('the one-pager carries what you said, your targets, the guesses and the worst case', op.indexOf("What you said, what it really is, what you'd want") !== -1 && op.indexOf('Your targets') !== -1 && /Includes \d+ guesses/.test(op) && op.indexOf('If it all falls on you') !== -1);
+    await page.click('#view-coach');
+  },
+},
+{
   name: 'level9-maya-levers-and-shelf',
   async run(page, { base, check, APP }) {
     await page.goto(base + 'index.html#/home');
@@ -84,7 +208,7 @@ export const flows = [
       await page.waitForSelector('.fieldrow[data-field="birthDate"]');
       await openMore(page);
       check('new client opens with its name', (await page.inputValue('.fieldrow[data-field="name"] input')) === 'Jordan');
-      check('the state starts on New York as an estimate', (await page.inputValue('.fieldrow[data-field="state"] select.select')) === 'NY' && (await page.textContent('.fieldrow[data-field="state"] .src .chip')) === 'Estimated');
+      check('the state starts on New York as an estimate', (await page.inputValue('.fieldrow[data-field="state"] select.select')) === 'NY' && (await page.textContent('.fieldrow[data-field="state"] .src .chip')) === 'Guess');
       check('topbar names the client', (await page.textContent('#topbar-client')) === 'Jordan');
 
       await page.fill('.fieldrow[data-field="bigGoal"] input', 'Brooklyn');

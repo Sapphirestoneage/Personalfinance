@@ -65,7 +65,45 @@ export const MIGRATIONS = [
       return rec;
     },
   },
+  {
+    from: 2, to: 3,
+    note: 'Level 8: anchors (gut backfilled from the earliest non-guess values), household, cost-of-living tier, session mode, discovery, targets and call progress',
+    up(rec) {
+      backfillAnchors(rec);
+      rec.household = rec.household || { roommates: [], lease: 'none', unitSize: null };
+      if (rec.colTier === undefined) rec.colTier = null; /* inferred from the Sun on every compute until the coach overrides it */
+      rec.sessionMode = rec.sessionMode || 'standard';
+      if (rec.discovery === undefined) rec.discovery = null;
+      rec.targets = rec.targets || {};
+      rec.callProgress = rec.callProgress || {};
+      return rec;
+    },
+  },
 ];
+
+/* Level 8 (MR-046): anchors backfilled from the earliest journal value whose source is not a guess; household and tier defaults; discovery slots. */
+function backfillAnchors(rec) {
+  rec.anchors = rec.anchors || { gut: {}, dream: {}, history: [] };
+  if (!rec.anchors.history) rec.anchors.history = [];
+  const first = {}; /* key -> earliest set line */
+  const rows = {}; PLANETS.forEach(p => (rec.planets[p] ? rec.planets[p].rows : []).forEach(r => { rows[r.id] = r; }));
+  const monthly = (line) => { const v = line.new && line.new.v; const n = typeof v === 'number' ? v : (v && typeof v === 'object' && 'low' in v ? Math.round((v.low + v.high) / 2) : null); if (n === null) return null; const cad = line.new.cad || 'month'; const pf = (rows[line.rowId] && rows[line.rowId].f.payFrequency && rows[line.rowId].f.payFrequency.v) || 'biweekly'; const n26 = { weekly: 52, biweekly: 26, semimonthly: 24, monthly: 12 }[pf] || 26; return cad === 'month' ? n : cad === 'week' ? Math.round(n * 52 / 12) : cad === 'quarter' ? Math.round(n / 3) : cad === 'year' ? Math.round(n / 12) : cad === 'paycheck' ? Math.round(n * n26 / 12) : cad === 'oneoff' ? 0 : n; };
+  (rec.journal || []).forEach(l => {
+    if (l.kind !== 'set' || l.column || !l.new || l.new.source === 'estimated' || l.new.v === null || l.new.v === undefined) return;
+    const row = rows[l.rowId]; if (!row) return;
+    let key = null;
+    if (l.planet === 'spending' && row.type === 'line' && l.field === 'amount') { const cat = row.f.category && row.f.category.v; if (cat && ['accommodation', 'utilities', 'food', 'transportation', 'therapy', 'wants', 'irregular'].includes(cat)) key = 'spending:' + cat; }
+    if (l.planet === 'spending' && row.type === 'summary' && l.field === 'summaryTotal') key = 'spending:total';
+    if (l.planet === 'income' && l.field === 'takeHome') key = 'income:takeHome';
+    if (l.planet === 'income' && l.field === 'grossPay') key = 'income:gross';
+    if (!key) return;
+    const m = monthly(l); if (m === null) return;
+    if (!first[key]) first[key] = { cents: 0, at: l.ts, session: l.session || null };
+    first[key].cents += m; /* several lines in one area add up to the area's first figure */
+  });
+  Object.keys(first).forEach(key => { if (!rec.anchors.gut[key]) rec.anchors.gut[key] = { cents: first[key].cents, cadence: 'month', at: first[key].at, session: first[key].session, source: 'call', note: 'Backfilled from the first value entered', backfilled: true }; });
+  return rec;
+}
 
 export function migrate(rec) {
   let r = rec;

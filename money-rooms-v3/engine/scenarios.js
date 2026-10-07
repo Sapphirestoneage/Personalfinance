@@ -32,7 +32,7 @@ export function blockCosts(def, block, live) {
   const monthly = evalFormula(def.monthly, answers, live);
   const duration = typeof def.duration === 'number' ? def.duration : (answers[def.duration] || 0);
   if (oneOff === null || monthly === null) {
-    const LIVE_WORDS = { takeHomeMonthly: 'take-home pay', spendingMonthly: 'monthly spending', grossMonthly: 'gross pay' };
+    const LIVE_WORDS = { takeHomeMonthly: 'take-home pay', spendingMonthly: 'monthly spending', grossMonthly: 'gross pay', sharedGapMonthly: 'a shared bill with a roommate' };
     const names = Object.keys(LIVE_WORDS).filter(k => (live[k] === null || live[k] === undefined) && (String(def.oneOff) + ' ' + String(def.monthly)).indexOf(k) !== -1).map(k => LIVE_WORDS[k]);
     return { oneOff: null, monthly: null, duration, answers, needs: names.length ? names : ['take-home pay'] };
   }
@@ -138,4 +138,23 @@ export function costSentence(c) {
   if (!c.monthly) return c.oneOff ? 'One-off ' + one + ', nothing ongoing.' : 'Nothing one-off, nothing ongoing.';
   const ongoing = F.dollarsWhole(Math.abs(c.monthly)) + ' a month ' + (c.monthly > 0 ? 'more' : 'in') + ' for ' + c.duration + (c.duration === 1 ? ' year' : ' years');
   return c.oneOff ? 'One-off ' + one + ', then ' + ongoing + '.' : ongoing.charAt(0).toUpperCase() + ongoing.slice(1) + '.';
+}
+
+/* The roommate block's own outputs (Level 8, MR-047): what the shared bills become, the jump, the cushion at the new cost, the bridge, and the permanent case. Never writes to the record. */
+export function roommateOutcome(result, block, def) {
+  const S = result.sun && result.sun.outputs; if (!S) return null;
+  const full = S.spending.sharedFullMonthly, share = S.spending.sharedShareMonthly;
+  if (!full || full.status !== 'ok' || !share || share.status !== 'ok') return { needs: ['a spending line marked shared'] };
+  const live = { takeHomeMonthly: S.income.takeHomeMonthly && S.income.takeHomeMonthly.cents, spendingMonthly: S.safety.spendingWithPremiums && S.safety.spendingWithPremiums.cents, grossMonthly: S.income.grossMonthly && S.income.grossMonthly.cents, sharedGapMonthly: full.cents - share.cents };
+  const c = blockCosts(def, block, live);
+  const jump = full.cents - share.cents; const months = c.answers.monthsToReplace; const oneTime = c.answers.oneTime || 0;
+  const cash = S.invest.cashBalances && S.invest.cashBalances.status === 'ok' ? S.invest.cashBalances.cents : null;
+  const spend = live.spendingMonthly || null; const take = live.takeHomeMonthly || null;
+  const permanent = c.answers.keepAlone === 1;
+  const wr = result.asm.withdrawalRate;
+  const lease = (result.household || {}).lease || 'none';
+  const leaseNote = lease === 'mine' ? 'Lease in your name only: this is fully on you.' : lease === 'both' ? 'Lease in both names: shared responsibility.' : lease === 'theirs' ? 'Lease in their name: they decide what happens to the place.' : 'No lease: they can leave any time.';
+  const out = { newSharedMonthly: full.cents, jumpMonthly: jump, months, bridge: jump * months + oneTime, oneTime, cushionMonthsNow: cash !== null && spend ? Math.round(cash / spend * 10) / 10 : null, cushionMonthsAtNewCost: cash !== null && spend ? Math.round(cash / (spend + jump) * 10) / 10 : null, permanent, leaseNote, lease };
+  if (permanent && spend && take) { out.newSavingsRate = Math.round((take - (spend + jump)) / take * 1000) / 1000; out.oldSavingsRate = Math.round((take - spend) / take * 1000) / 1000; out.newFiNumber = Math.round((spend + jump) * 12 / wr); out.oldFiNumber = Math.round(spend * 12 / wr); }
+  return out;
 }

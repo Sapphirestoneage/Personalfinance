@@ -12,6 +12,9 @@ import { clientName } from '../app.js';
 import { translator } from '../glossary.js';
 import { PLANET_SHORT } from '../../engine/sun.js';
 import { renderShelf } from '../shelf.js';
+import { variance, AREA_LABELS } from '../../engine/variance.js';
+import { proposals } from '../../engine/targets.js';
+import { actualsOf } from './call.js';
 
 
 export function mount(host, app) {
@@ -39,6 +42,8 @@ export function mount(host, app) {
     /* since last time */
     const since = sinceLastSession(rec, app.data.fields, (def, o, n, l) => changeText(def, o, n, l));
     page.appendChild(h('section', null, h('h3', null, 'Changes since last time' + (since.since ? ' (' + F.dateLong(since.since.slice(0, 10)) + ')' : '')), since.changes.length ? h('ul', null, since.changes.slice(0, 3).map(c => h('li', null, c.row + ': ' + c.label.toLowerCase() + ' ' + c.text))) : h('p', { class: 'muted small' }, since.since ? 'No changes since the last session.' : 'First session.')));
+    /* Level 8: what you said, what it really is, what you'd want; your targets; guesses; if it all falls on you */
+    saidSection(page, R, rec);
     const grid = h('div', { class: 'op-grid' });
     grid.appendChild(listSection('Most important to know', op.important || suggestImportant(R), 'important', 3, suggestImportant(R)));
     grid.appendChild(listSection('What is working', op.amazing || [], 'amazing', 3));
@@ -70,6 +75,28 @@ export function mount(host, app) {
       h('div', { class: 'op-read' }, items.length ? h('ul', null, items.slice(0, max).map(x => h('li', null, x))) : h('p', { class: 'muted small' }, 'Not written yet.')),
       h('div', { class: 'op-edit' }, h('textarea', { class: 'input', 'aria-label': title + ', one per line', value: (op[key] || items).join('\n'), onChange: e => app.mutate(r => { r.sun.onepager[key] = e.target.value.split('\n').map(s => s.trim()).filter(Boolean); }, 'onepager') }),
         suggestions && suggestions.length ? h('p', { class: 'suggest' }, 'The app suggests, from today\'s numbers: ' + suggestions.join(' | ')) : null));
+  }
+  function saidSection(page, R, rec) {
+    const gut = rec.anchors && rec.anchors.gut ? Object.keys(rec.anchors.gut).length : 0;
+    const S = R.sun && R.sun.outputs; const money = c => F.dollarsWhole(c);
+    const bits = [];
+    if (R.guesses && R.guesses.count) bits.push('Includes ' + R.guesses.count + (R.guesses.count === 1 ? ' guess' : ' guesses') + ' (averages for a ' + (R.colTier ? (app.data.colTiers.labels.client[R.colTier.tier] || '') : 'typical') + ', not your numbers).');
+    if (S && S.safety.runway && S.safety.runway.fullAlone !== null && S.safety.runway.fullAlone !== undefined && S.spending.sharedFullMonthly && S.spending.sharedFullMonthly.status === 'ok') bits.push('If it all falls on you: the shared bills become ' + money(S.spending.sharedFullMonthly.cents) + ' a month and cash covers ' + F.months(S.safety.runway.fullAlone) + '.');
+    if (!gut && !bits.length) return;
+    const sec = h('section', { class: 'op-said' }, h('h3', null, "What you said, what it really is, what you'd want"));
+    let shown = 0;
+    if (gut) {
+      /* a row earns its place when what they said or what they would want differs from what it is; a backfilled anchor equal to the lines says nothing */
+      const v = variance(rec, actualsOf(app)); const rows = v.rows.filter(r => r.key !== 'total' && r.actual !== null && ((r.gut !== null && r.gut !== r.actual) || (r.dream !== null && r.dream !== r.actual))).sort((a, b) => Math.abs((b.awareness && b.awareness.monthly) || 0) - Math.abs((a.awareness && a.awareness.monthly) || 0)).slice(0, 3);
+      shown += rows.length;
+      if (rows.length) sec.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data' }, h('thead', null, h('tr', null, h('th', null, 'Area'), h('th', { class: 'num' }, 'What you said'), h('th', { class: 'num' }, 'What it really is'), h('th', { class: 'num' }, "What you'd want"))), h('tbody', null, rows.map(r => h('tr', null, h('td', null, r.label), h('td', { class: 'num' }, r.gut !== null ? money(r.gut) : h('span', { class: 'empty-token' }, 'Not asked')), h('td', { class: 'num' }, money(r.actual)), h('td', { class: 'num' }, r.dream !== null ? money(r.dream) : h('span', { class: 'empty-token' }, 'Not asked'))))))));
+      const T = rec.targets || {}; const keys = Object.keys(T);
+      if (keys.length) { const P = proposals(v.rows, rec, R); const picked = P.rows.filter(t => T[t.key]); shown += picked.length; const word = c => c === 'dream' || c === 'room' ? "what you'd want" : c === 'gut' ? 'what you said' : c === 'middle' ? 'meet in the middle' : 'keep it as is'; sec.appendChild(h('h3', null, 'Your targets')); sec.appendChild(h('ul', null, picked.map(t => h('li', null, t.label + ': ' + money(t.value) + ' a month (' + word(t.choice) + ', now ' + money(t.actual) + ')')))); }
+    }
+    bits.forEach(b => sec.appendChild(h('p', { class: 'small' }, b)));
+    if (!shown && !bits.length) return;
+    if (!shown) sec.querySelector('h3').textContent = 'Good to know';
+    page.appendChild(sec);
   }
   function strugglingSection(R, op) {
     const picks = app.record.sun.clientPicks || [];

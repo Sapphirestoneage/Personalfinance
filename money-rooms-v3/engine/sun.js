@@ -22,9 +22,9 @@ export const WORK_SITUATIONS = Object.freeze(['employed', 'self-employed', 'betw
 
 export const CONTRACT = Object.freeze({
   income: Object.freeze(['grossMonthly', 'takeHomeMonthly', 'pretaxContribMonthly', 'rothContribMonthly', 'hsaPayrollMonthly', 'pretaxOtherMonthly', 'matchMonthly', 'matchFormula', 'byType', 'stability', 'workHoursMonthly', 'workCostsMonthly']),
-  spending: Object.freeze(['baselineMonthly', 'summaryTotalMonthly', 'detailGapMonthly', 'byCategory', 'drafttShares', 'fatFloorMonthly', 'fixedMonthly', 'mistakesAnnual', 'savingsLandingMonthly', 'cardSpendByCategory']),
+  spending: Object.freeze(['baselineMonthly', 'summaryTotalMonthly', 'detailGapMonthly', 'byCategory', 'drafttShares', 'fatFloorMonthly', 'fixedMonthly', 'mistakesAnnual', 'savingsLandingMonthly', 'cardSpendByCategory', 'sharedFullMonthly', 'sharedShareMonthly', 'standIns', 'anchorGapByCategory']),
   debt: Object.freeze(['totalDebt', 'debtServiceMonthly', 'weightedApr', 'annualInterest', 'utilization', 'promoCliffs', 'payoffOrders', 'debtFreeDate', 'freedCashByMonth', 'wallet', 'creditScore', 'byType']),
-  safety: Object.freeze(['ruleOf5Months', 'ruleOf5Target', 'runway', 'gap', 'monthlyToClose', 'insurance', 'premiumsMonthly', 'unemploymentMonthly', 'cutAbilityMonthly', 'spendingWithPremiums']),
+  safety: Object.freeze(['ruleOf5Months', 'ruleOf5Target', 'runway', 'gap', 'monthlyToClose', 'insurance', 'premiumsMonthly', 'unemploymentMonthly', 'cutAbilityMonthly', 'spendingWithPremiums', 'roommateGap']),
   invest: Object.freeze(['balancesByBucket', 'balancesByLiquidity', 'cashBalances', 'totalAssets', 'investedAssets', 'annualContributions', 'roomLeft', 'allocation', 'weightedExpenseRatio', 'feeDragAnnual', 'matchCapture', 'beneficiariesMissing']),
   taxes: Object.freeze(['federalAnnual', 'ficaAnnual', 'effectiveRate', 'marginalRate', 'savedPer1000Pretax', 'impliedRate', 'taxable', 'standardDeduction', 'ficaParts', 'selfEmployment']),
   life: Object.freeze(['goals', 'events', 'retirementMultipliers', 'retirementAge', 'baristaIncomeMonthly', 'dreamFiAge', 'dreamSpendingMonthly', 'gutSpendingMonthly']),
@@ -37,7 +37,7 @@ export const READS = Object.freeze({
   spending: Object.freeze({ sun: ['dependents'], slots: ['income.takeHomeMonthly', 'income.grossMonthly'] }),
   debt: Object.freeze({ sun: [], slots: ['income.takeHomeMonthly', 'income.grossMonthly', 'spending.cardSpendByCategory'] }),
   invest: Object.freeze({ sun: ['birthDate'], slots: ['income.grossMonthly', 'income.matchMonthly', 'income.matchFormula', 'income.pretaxContribMonthly', 'income.rothContribMonthly', 'income.hsaPayrollMonthly'] }),
-  safety: Object.freeze({ sun: ['birthDate', 'workSituation'], slots: ['spending.baselineMonthly', 'spending.fatFloorMonthly', 'spending.fixedMonthly', 'spending.byCategory', 'invest.cashBalances', 'income.takeHomeMonthly'] }),
+  safety: Object.freeze({ sun: ['birthDate', 'workSituation'], slots: ['spending.baselineMonthly', 'spending.fatFloorMonthly', 'spending.fixedMonthly', 'spending.byCategory', 'invest.cashBalances', 'income.takeHomeMonthly', 'spending.sharedFullMonthly', 'spending.sharedShareMonthly'] }),
   taxes: Object.freeze({ sun: ['filingStatus'], slots: ['income.grossMonthly', 'income.pretaxContribMonthly', 'income.hsaPayrollMonthly', 'income.pretaxOtherMonthly', 'income.byType', 'income.takeHomeMonthly'] }),
   life: Object.freeze({ sun: ['birthDate'], slots: ['spending.baselineMonthly'] }),
 });

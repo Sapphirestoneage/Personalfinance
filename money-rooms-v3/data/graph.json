@@ -136,7 +136,10 @@
   "spending.baselineMonthly": [
    "amount",
    "otherSpending",
-   "summaryTotal"
+   "summaryTotal",
+   "shared",
+   "myShare",
+   "asm.fillGapsWithGuesses"
   ],
   "spending.summaryTotalMonthly": [
    "summaryTotal"
@@ -148,7 +151,9 @@
   "spending.byCategory": [
    "amount",
    "category",
-   "otherSpending"
+   "otherSpending",
+   "shared",
+   "myShare"
   ],
   "spending.drafttShares": [
    "amount",
@@ -157,7 +162,9 @@
   ],
   "spending.fatFloorMonthly": [
    "amount",
-   "fatFloor"
+   "fatFloor",
+   "shared",
+   "myShare"
   ],
   "spending.fixedMonthly": [
    "amount",
@@ -249,13 +256,15 @@
   ],
   "safety.ruleOf5Target": [
    "safety.ruleOf5Months",
-   "safety.spendingWithPremiums"
+   "safety.spendingWithPremiums",
+   "safety.roommateGap"
   ],
   "safety.runway": [
    "invest.cashBalances",
    "safety.spendingWithPremiums",
    "spending.fixedMonthly",
-   "spending.fatFloorMonthly"
+   "spending.fatFloorMonthly",
+   "safety.roommateGap"
   ],
   "safety.gap": [
    "safety.ruleOf5Target",
@@ -413,6 +422,28 @@
   ],
   "life.gutSpendingMonthly": [
    "gutSpending"
+  ],
+  "spending.sharedFullMonthly": [
+   "amount",
+   "shared"
+  ],
+  "spending.sharedShareMonthly": [
+   "amount",
+   "shared",
+   "myShare"
+  ],
+  "spending.standIns": [
+   "amount",
+   "category"
+  ],
+  "spending.anchorGapByCategory": [
+   "amount",
+   "category"
+  ],
+  "safety.roommateGap": [
+   "spending.sharedFullMonthly",
+   "spending.sharedShareMonthly",
+   "asm.roommateMonthsToReplace"
   ]
  },
  "projectionInputs": [
@@ -586,7 +617,9 @@
   "otherDebt": "net worth only; the projection follows the typed debts",
   "investSummaryTotal": "total assets only; the projection follows invested and cash balances",
   "otherAsset": "total assets only",
-  "life.events": "promoted blocks are read by Simulate, not the engine"
+  "life.events": "promoted blocks are read by Simulate, not the engine",
+  "asm.callTargetRoomFraction": "how a target is proposed",
+  "asm.roommateMonthsToReplace": "the cushion target and the roommate scenario only"
  },
  "signNote": "An edge sign is the derivative: +1 when the upstream value rising raises the downstream value, -1 when it lowers it. The projection node stands for the FI date, so a later date is higher.",
  "extraEdges": {
@@ -603,7 +636,8 @@
    "asm.roughSpread",
    "asm.inflation",
    "asm.showBenchmarksToClient",
-   "life.events"
+   "life.events",
+   "asm.callTargetRoomFraction"
   ],
   "m.shelterRate": [
    "asm.shelterHeavyShare"

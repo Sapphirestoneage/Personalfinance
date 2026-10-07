@@ -24,7 +24,8 @@ export function questionField(app, b, qd) {
 export function liveFigures(app) {
   const S = app.result.sun && app.result.sun.outputs;
   const q = x => x && x.cents !== undefined ? x.cents : null;
-  return { takeHomeMonthly: q(S && S.income.takeHomeMonthly), spendingMonthly: q(S && S.safety.spendingWithPremiums), grossMonthly: q(S && S.income.grossMonthly) };
+  const gap = S && S.spending.sharedFullMonthly && S.spending.sharedFullMonthly.cents !== undefined && S.spending.sharedShareMonthly ? S.spending.sharedFullMonthly.cents - S.spending.sharedShareMonthly.cents : null;
+  return { takeHomeMonthly: q(S && S.income.takeHomeMonthly), spendingMonthly: q(S && S.safety.spendingWithPremiums), grossMonthly: q(S && S.income.grossMonthly), sharedGapMonthly: gap };
 }
 /* The start of a change is picked on a calendar (MR-036, MR-038): the year and month are stored, the day is not. */
 export function startPicker(app, b, opts) {

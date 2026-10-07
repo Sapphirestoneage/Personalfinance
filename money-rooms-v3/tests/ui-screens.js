@@ -19,6 +19,9 @@ export const SCREENS = [
   { id: 'learn', route: 'learn' },
   { id: 'assumptions', route: 'assumptions' },
   { id: 'levers', route: 'levers' },
+  { id: 'discovery', route: 'discovery' },
+  { id: 'discovery-summary', route: 'discovery/summary' },
+  { id: 'call', route: 'call' },
 ];
 
 async function importHousehold(page, APP, name) {
@@ -42,4 +45,5 @@ export const HOUSEHOLDS = [
   { id: 'dev', async load(page, { APP }) { await importHousehold(page, APP, 'dev'); } },
   { id: 'maya', async load(page, { APP }) { await importHousehold(page, APP, 'maya'); } },
   { id: 'extreme', async load(page, { APP }) { await importHousehold(page, APP, 'extreme'); } },
+  { id: 'maya-discovery', async load(page, { APP }) { await importHousehold(page, APP, 'maya-discovery'); } },
 ];

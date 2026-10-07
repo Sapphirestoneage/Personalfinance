@@ -19,10 +19,12 @@ export const SOURCES = Object.freeze({
   'lookup-confirmed': Object.freeze({ id: 'lookup-confirmed', key: 'l', label: 'Looked up', long: 'Coach looked up (confirmed)', cap: 0.85, plate: 'mine' }),
   'lookup-verify': Object.freeze({ id: 'lookup-verify', key: 'y', label: 'Looked up (verify)', long: 'Coach looked up (verify)', cap: 0.7, plate: 'mine', rough: false }),
   inferred: Object.freeze({ id: 'inferred', key: 'i', label: 'Inferred', long: 'Inferred from other facts', cap: 1.0, plate: null }),
-  estimated: Object.freeze({ id: 'estimated', key: 'e', label: 'Estimated', long: 'Estimated default (national average)', cap: 0.5, plate: 'mine', rough: true }),
+  /* Level 8 (MR-045): a guess is an average for the cost area, never the client's number; a discovery value is what the client said on the first call */
+  estimated: Object.freeze({ id: 'estimated', key: 'e', label: 'Guess', long: 'Guess (an average for this cost area, not yours)', cap: 0.5, plate: 'mine', rough: true, guess: true }),
+  discovery: Object.freeze({ id: 'discovery', key: 'd', label: 'What you said', long: 'Said on the discovery call', cap: 0.6, plate: 'theirs' }),
   computed: Object.freeze({ id: 'computed', key: 'p', label: 'Computed', long: 'Computed by the engine', cap: 1.0, plate: null }),
 });
-export const SOURCE_ORDER = Object.freeze(['client', 'lookup-confirmed', 'lookup-verify', 'inferred', 'estimated', 'computed']);
+export const SOURCE_ORDER = Object.freeze(['client', 'discovery', 'lookup-confirmed', 'lookup-verify', 'inferred', 'estimated', 'computed']);
 
 export function stateByKey(k) { return STATE_ORDER.map(id => STATES[id]).find(s => s.key === k) || null; }
 export function sourceByKey(k) { return SOURCE_ORDER.map(id => SOURCES[id]).find(s => s.key === k) || null; }

@@ -8,6 +8,10 @@ import * as Rec from '../engine/record.js';
 import { h, clear, qs, debounce, download, readFile } from './dom.js';
 import { routes, navItems } from './routes.js';
 import { renderTracker } from './tracker.js';
+import { applyDiscovery, applyGuesses } from '../engine/discovery.js';
+import { setAnchor as anchorSet, reanchor as anchorAgain } from '../engine/anchors.js';
+import { markStop } from '../engine/callpath.js';
+import { setTarget as targetSet } from '../engine/targets.js';
 
 const store = createStore();
 const settings = store.settings();
@@ -88,6 +92,18 @@ export const app = {
   redo() { const l = this.change(rec => Rec.redo(rec), { reason: 'rows' }); if (l) this.toast('Redone'); return l; },
   addQuickNote(text) { return this.change(rec => Rec.addQuickNote(rec, text, { screen: this.route.name, session: this.session }), { reason: 'notes' }); },
   mutate(fn, reason) { return this.change(rec => { fn(rec); return true; }, { reason }); },
+  /* ---- Level 8 (MR-045 to MR-049): the discovery call, the household, the tier, anchors, call progress and targets ---- */
+  setFieldWhy(rowId, fieldId, value, state, source, cad, why) { return this.change(rec => Rec.setField(rec, rowId, fieldId, value, state, source, { session: this.session, cad, why })); },
+  discovery(form) { return this.change(rec => { applyDiscovery(rec, form, this.data, { session: this.session || 'discovery' }); return true; }, { reason: 'rows' }); },
+  household(hh, why) { return this.change(rec => { Rec.setHousehold(rec, hh, { session: this.session, why: why === undefined ? null : why }); applyGuesses(rec, this.data, { session: this.session }); return true; }, { reason: 'rows' }); },
+  colTier(tier) { return this.change(rec => { Rec.setColTier(rec, tier, { session: this.session }); applyGuesses(rec, this.data, { session: this.session }); return true; }, { reason: 'rows' }); },
+  refillGuesses() { return this.change(rec => { applyGuesses(rec, this.data, { session: this.session }); return true; }, { reason: 'rows' }); },
+  anchor(set, key, value, meta) { return this.change(rec => { const a = anchorSet(rec, set, key, value, Object.assign({ session: this.session, source: 'call' }, meta || {})); return a ? true : null; }, { reason: 'anchors' }); },
+  reanchor(set, key, value, meta) { return this.change(rec => { anchorAgain(rec, set, key, value, Object.assign({ session: this.session, source: 'call' }, meta || {})); return true; }, { reason: 'anchors' }); },
+  callStop(stopId, status) { return this.change(rec => { markStop(rec, this.session || 'current', stopId, status); return true; }, { reason: 'call', silent: true }); },
+  confirmDiscovery(key) { return this.change(rec => { rec.discovery = rec.discovery || { confirmed: {} }; rec.discovery.confirmed = rec.discovery.confirmed || {}; rec.discovery.confirmed[key] = new Date().toISOString(); return true; }, { reason: 'call', silent: true }); },
+  target(key, choice, cents, actualAt) { return this.change(rec => { targetSet(rec, key, choice, cents, { session: this.session, actualAt }); return true; }, { reason: 'targets' }); },
+  setMode(mode) { return this.change(rec => { rec.sessionMode = mode; return true; }, { reason: 'mode' }); },
 
   recompute() {
     if (!this.record) { this.result = null; return; }
@@ -244,7 +260,7 @@ export const app = {
       h('h2', { style: { marginTop: '16px' } }, 'Answer states (one key in a state chip)'),
       h('p', { class: 'small muted' }, 'v Verified, k Known, r Rough, w Will send, u Unknown, n None, a Not applicable, x Not for me'),
       h('h2', { style: { marginTop: '16px' } }, 'Sources'),
-      h('p', { class: 'small muted' }, 'c Client, l Looked up, y Looked up (verify), i Inferred, e Estimated')));
+      h('p', { class: 'small muted' }, 'c Client, l Looked up, y Looked up (verify), i Inferred, e Guess, d What you said')));
   },
 };
 

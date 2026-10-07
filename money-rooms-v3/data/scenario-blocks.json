@@ -1,5 +1,5 @@
 {
- "asOf": "2026-10-05",
+ "asOf": "2026-10-07",
  "source": "Money Rooms v3 spec, Life Plan scenario blocks; default costs are round national figures written from memory and marked verify",
  "verify": true,
  "types": {
@@ -446,6 +446,51 @@
    "monthly": "-amount",
    "duration": "years",
    "note": "A payment that ends, a lease that is up: money freed each month."
+  },
+  "roommate": {
+   "label": "Roommate moves out",
+   "glyph": "R",
+   "questions": [
+    {
+     "id": "monthsToReplace",
+     "label": "Months until replaced",
+     "kind": "int",
+     "default": 2,
+     "hint": "How long the shared bills fall on you before someone new moves in"
+    },
+    {
+     "id": "oneTime",
+     "label": "One-time costs",
+     "kind": "money",
+     "default": 0,
+     "hint": "Listing fees, a month of overlap, a deposit that comes back late",
+     "detail": true
+    },
+    {
+     "id": "keepAlone",
+     "label": "Keep the place alone (1 = yes)",
+     "kind": "int",
+     "default": 0,
+     "hint": "1 means the shared bills stay fully yours from now on",
+     "detail": true
+    },
+    {
+     "id": "yearsAlone",
+     "label": "Years alone",
+     "kind": "int",
+     "default": 30,
+     "detail": true
+    }
+   ],
+   "oneOff": "sharedGapMonthly * monthsToReplace + oneTime",
+   "monthly": "sharedGapMonthly * keepAlone",
+   "duration": "yearsAlone",
+   "note": "One-off: the roommate's share of the shared bills for the months until someone new moves in, plus any one-time costs. Ongoing only if you keep the place alone.",
+   "planets": [
+    "spending",
+    "safety"
+   ],
+   "roommate": true
   }
  }
 }

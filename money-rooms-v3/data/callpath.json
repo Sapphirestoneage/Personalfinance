@@ -1,0 +1,109 @@
+{
+ "asOf": "2026-10-07",
+ "source": "Money Rooms v3 Level 8 spec: the call path",
+ "verify": false,
+ "stops": [
+  {
+   "id": "confirm",
+   "label": "Confirm",
+   "title": "What you told me",
+   "intro": "Let us start with what you told me on our first call. Still right, or has anything changed?",
+   "guessIntro": "These are averages for your area, not your numbers. Want to swap any for yours?"
+  },
+  {
+   "id": "gut",
+   "label": "What you spend",
+   "title": "What you spend",
+   "intro": "Without looking anything up: what do you think goes out in a normal month?",
+   "areaPrompt": "About how much a month goes to {area}?",
+   "sharedPrompt": "Is that the whole bill or your part?"
+  },
+  {
+   "id": "dream",
+   "label": "What you'd want",
+   "title": "What you'd want",
+   "intro": "Forget what it costs today. If this part of your life were working the way you want, what would it cost a month?",
+   "areaPrompt": "If {area} were working the way you want, what would it cost a month?",
+   "housingChoice": "For home: with a roommate, or on your own?",
+   "fiAge": "At what age would you want work to be optional?"
+  },
+  {
+   "id": "actual",
+   "label": "The real numbers",
+   "title": "The real numbers",
+   "intro": "Now the real numbers, one line at a time. Statements or the app home screen are enough.",
+   "homework": "Before next time, gather one month of statements. We will walk through them together next session."
+  },
+  {
+   "id": "reconcile",
+   "label": "How far off",
+   "title": "How far off",
+   "intro": "Here is what you said, what it really is, and what you would want.",
+   "gentleHold": "We will look at this once you have gathered the real numbers yourself."
+  },
+  {
+   "id": "decide",
+   "label": "Your targets",
+   "title": "Your targets",
+   "intro": "For each area, pick the number you want to aim for. Your words, not mine."
+  }
+ ],
+ "areas": [
+  [
+   "accommodation",
+   "your home"
+  ],
+  [
+   "utilities",
+   "phone, internet and subscriptions"
+  ],
+  [
+   "food",
+   "food"
+  ],
+  [
+   "transportation",
+   "getting around"
+  ],
+  [
+   "therapy",
+   "health and therapy"
+  ],
+  [
+   "wants",
+   "fun and wants"
+  ],
+  [
+   "irregular",
+   "the once-a-year things"
+  ]
+ ],
+ "targetChoices": [
+  [
+   "gut",
+   "What you said"
+  ],
+  [
+   "dream",
+   "What you'd want"
+  ],
+  [
+   "middle",
+   "Meet in the middle"
+  ],
+  [
+   "keep",
+   "Keep it as is"
+  ]
+ ],
+ "gutOrder": [
+  "sun",
+  "takeHome",
+  "gutTotal",
+  "areas",
+  "debt",
+  "cash",
+  "invest",
+  "firstDraft"
+ ]
+}

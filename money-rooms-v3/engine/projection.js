@@ -45,5 +45,7 @@ export function project(inp, rate) {
 
 export function tripleD(inp) {
   const asm = inp.asm;
-  return { likely: project(inp, asm.returnLikely), best: project(inp, asm.returnBest), worst: project(inp, asm.returnWorst) };
+  /* Level 8 (MR-047): the worst case also carries a roommate leaving for good when there is one */
+  const worstInp = inp.worstExtraAnnualSpend ? Object.assign({}, inp, { annualSpend: inp.annualSpend + inp.worstExtraAnnualSpend, leakAnnual: inp.leakAnnual - inp.worstExtraAnnualSpend }) : inp;
+  return { likely: project(inp, asm.returnLikely), best: project(inp, asm.returnBest), worst: project(worstInp, asm.returnWorst) };
 }

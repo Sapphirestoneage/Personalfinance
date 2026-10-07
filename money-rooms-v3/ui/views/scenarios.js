@@ -6,7 +6,7 @@
 import { h, clear } from '../dom.js';
 import * as F from '../../engine/format.js';
 import * as Charts from '../charts.js';
-import { compare, newBlock, blockCosts, costSentence, startLabel, parseStart } from '../../engine/scenarios.js';
+import { compare, newBlock, blockCosts, costSentence, startLabel, parseStart, roommateOutcome } from '../../engine/scenarios.js';
 import { createRow } from '../../engine/record.js';
 import { freshFacts } from '../../engine/fields.js';
 import { questionField, liveFigures, startPicker } from '../startingsoon.js';
@@ -24,7 +24,7 @@ export function mount(host, app) {
   panel.appendChild(headRow); panel.appendChild(laneHost); panel.appendChild(noteHost); panel.appendChild(editorHost);
   const cmpHost = h('div');
   body.appendChild(emptyHost); body.appendChild(panel); body.appendChild(cmpHost);
-  let selected = null, editorFor = null, costLine = null, startInput = null, actionHost = null;
+  let selected = null, editorFor = null, costLine = null, startInput = null, actionHost = null, roommateHost = null;
 
   const live = () => liveFigures(app);
   const cur = id => (app.record.scenarios || []).find(s => s.id === id);
@@ -111,6 +111,8 @@ export function mount(host, app) {
     def.questions.forEach(qd => ed.appendChild(h('div', { class: 'fieldrow' }, h('label', { title: qd.hint || '' }, qd.label), h('div', { class: 'control' }, questionField(app, b, qd)))));
     costLine = h('p', { class: 'hint', style: { marginTop: '8px' } });
     ed.appendChild(costLine);
+    roommateHost = def.roommate ? h('div', { class: 'fallsonyou' }) : null;
+    if (roommateHost) ed.appendChild(roommateHost);
     actionHost = h('div', { class: 'row', style: { marginTop: '8px' } });
     ed.appendChild(actionHost);
     return ed;
@@ -119,6 +121,7 @@ export function mount(host, app) {
     const b = cur(editorFor); if (!b) return;
     const def = defs.types[b.type];
     costLine.textContent = costSentence(blockCosts(def, b, live()));
+    if (roommateHost) { clear(roommateHost); roommateHost.appendChild(roommateCard(roommateOutcome(app.result, b, def))); }
     setDateValue(startInput, b.startYear + '-' + String(b.startMonth || 1).padStart(2, '0'));
     clear(actionHost);
     actionHost.appendChild(b.promoted ? h('span', { class: 'chip state-known' }, 'In the Life plan') : h('button', { class: 'btn primary', onClick: () => promote(b) }, 'Add to Life plan'));
@@ -134,6 +137,20 @@ export function mount(host, app) {
     app.addRow(row);
     app.mutate(rec => { const x = rec.scenarios.find(s => s.id === b.id); x.promoted = true; x.rowId = row.id; }, 'scenarios');
     app.toast('Promoted: a Life plan goal now carries the one-off cost and the year.');
+  }
+
+  /* If it all falls on you (MR-047): the roommate block's own card, from roommateOutcome; no math here. */
+  function roommateCard(o) {
+    const money = c => F.dollarsWhole(c); const months = m => m === null ? 'needs cash' : F.months(m);
+    if (!o) return h('p', { class: 'muted small' }, 'Needs the real numbers first.');
+    if (o.needs) return h('p', { class: 'muted small' }, 'Needs ' + o.needs.join(' and ') + '. Mark a spending line as shared in the Ledger.');
+    return h('div', { class: 'fallsonyou-card' }, h('h4', null, 'If it all falls on you'),
+      h('div', { class: 'kpis compact' },
+        h('div', { class: 'kpi' }, h('div', { class: 'label' }, 'Shared bills become'), h('div', { class: 'value' }, money(o.newSharedMonthly) + ' a month'), h('div', { class: 'range' }, 'a jump of ' + money(o.jumpMonthly))),
+        h('div', { class: 'kpi' }, h('div', { class: 'label' }, 'Bridge for ' + o.months + (o.months === 1 ? ' month' : ' months')), h('div', { class: 'value' }, money(o.bridge)), h('div', { class: 'range' }, o.oneTime ? 'includes ' + money(o.oneTime) + ' one-time' : 'the gap until someone new moves in')),
+        h('div', { class: 'kpi' }, h('div', { class: 'label' }, 'Cash covers'), h('div', { class: 'value' }, months(o.cushionMonthsAtNewCost)), h('div', { class: 'range' }, 'now ' + months(o.cushionMonthsNow)))),
+      o.permanent && o.newFiNumber ? h('p', { class: 'small' }, 'Keeping the place alone: savings rate ' + F.percent(o.oldSavingsRate, { places: 0 }) + ' becomes ' + F.percent(o.newSavingsRate, { places: 0 }) + '; FI number ' + F.dollarsCompact(o.oldFiNumber) + ' becomes ' + F.dollarsCompact(o.newFiNumber) + '.') : null,
+      h('p', { class: 'small muted' }, o.leaseNote));
   }
 
   function comparison(blocks, inp) {

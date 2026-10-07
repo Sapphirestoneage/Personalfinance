@@ -100,6 +100,15 @@ export function computeLenses(ctx) {
   /* 19 wrong card */
   if (M.rewardsLeft && M.rewardsLeft.status === 'ok' && M.rewardsLeft.value.cents > 0) push('wrong-card', M.rewardsLeft.value.cents, { cost: dollars(M.rewardsLeft.value.cents) }, Object.keys(dt.wallet.bestRates).map(k => ['Best ' + k, F.percent(dt.wallet.bestRates[k])]), { rough: true });
   levelNineLenses(ctx, out, push, val, roughOf);
+  /* roommate risk (Level 8, MR-047): shared lines above a quarter of take-home, or the lease in the client's name only */
+  const hh = (ctx.record && ctx.record.household) || { roommates: [], lease: 'none' };
+  const sfull = S.spending && S.spending.sharedFullMonthly, sshare = S.spending && S.spending.sharedShareMonthly, take0 = val('takeHome');
+  if (hh.roommates && hh.roommates.length && sfull && sfull.cents > 0 && take0 && (sfull.cents > take0.cents * 0.25 || hh.lease === 'mine')) {
+    const gapM = sfull.cents - sshare.cents; const months = asm.roommateMonthsToReplace || 2; const bridge = gapM * months;
+    const names = ctx.record.planets.spending.rows.filter(r => r.type === 'line' && r.f.shared && r.f.shared.v).map(r => r.nickname.toLowerCase()).slice(0, 3).join(', ');
+    const nick = hh.roommates[0].nickname || 'your roommate';
+    push('roommate-risk', null, { nickname: nick, lines: names || 'the shared bills', share: dollars(sshare.cents), full: dollars(sfull.cents), months: String(months), bridge: dollars(bridge) }, [['Shared bills, full', dollars(sfull.cents)], ['Your share', dollars(sshare.cents)], ['Months to replace', String(months)], ['Lease', hh.lease === 'mine' ? 'in your name only' : hh.lease === 'both' ? 'in both names' : hh.lease === 'theirs' ? 'in their name' : 'none']], { figure: dollars(bridge) + ' to bridge', rough: sfull.rough });
+  }
   return out.sort((a, b) => (b.impactAnnual || 0) - (a.impactAnnual || 0));
 }
 

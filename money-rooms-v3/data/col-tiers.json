@@ -1,0 +1,940 @@
+{
+ "asOf": "2026-10-07",
+ "source": "BEA Regional Price Parities 2023 (released December 2024), all items and the rents/housing component, by state and by metropolitan area, as remembered by the builder; every figure marked verify. National = 100.",
+ "verify": true,
+ "cutPoints": {
+  "hcolAtOrAbove": 110,
+  "mcolAtOrAbove": 95,
+  "note": "All-items RPP: 110 and above HCOL, 95 to under 110 MCOL, under 95 LCOL. The housing component sets the housing multiplier."
+ },
+ "tierAverages": {
+  "HCOL": {
+   "allItems": 113,
+   "housing": 150
+  },
+  "MCOL": {
+   "allItems": 100,
+   "housing": 100
+  },
+  "LCOL": {
+   "allItems": 90,
+   "housing": 75
+  },
+  "note": "Used when a place has no RPP of its own; the tier is the label and the fallback."
+ },
+ "componentByCategory": {
+  "accommodation": "housing",
+  "utilities": "housing",
+  "food": "allItems",
+  "transportation": "allItems",
+  "therapy": "allItems",
+  "wants": "allItems",
+  "irregular": "allItems",
+  "mistakes": "allItems",
+  "other": "allItems"
+ },
+ "labels": {
+  "coach": {
+   "HCOL": "HCOL",
+   "MCOL": "MCOL",
+   "LCOL": "LCOL"
+  },
+  "client": {
+   "HCOL": "high cost area",
+   "MCOL": "average cost area",
+   "LCOL": "lower cost area"
+  }
+ },
+ "states": {
+  "AL": {
+   "allItems": 88,
+   "housing": 66,
+   "nonMetroAllItems": 84
+  },
+  "AK": {
+   "allItems": 103,
+   "housing": 107,
+   "nonMetroAllItems": 100
+  },
+  "AZ": {
+   "allItems": 101,
+   "housing": 104,
+   "nonMetroAllItems": 93
+  },
+  "AR": {
+   "allItems": 87,
+   "housing": 64,
+   "nonMetroAllItems": 84
+  },
+  "CA": {
+   "allItems": 113,
+   "housing": 160,
+   "nonMetroAllItems": 100
+  },
+  "CO": {
+   "allItems": 104,
+   "housing": 118,
+   "nonMetroAllItems": 96
+  },
+  "CT": {
+   "allItems": 105,
+   "housing": 113,
+   "nonMetroAllItems": 100
+  },
+  "DE": {
+   "allItems": 98,
+   "housing": 98,
+   "nonMetroAllItems": 95
+  },
+  "DC": {
+   "allItems": 112,
+   "housing": 172,
+   "nonMetroAllItems": null
+  },
+  "FL": {
+   "allItems": 101,
+   "housing": 113,
+   "nonMetroAllItems": 94
+  },
+  "GA": {
+   "allItems": 95,
+   "housing": 88,
+   "nonMetroAllItems": 88
+  },
+  "HI": {
+   "allItems": 113,
+   "housing": 170,
+   "nonMetroAllItems": 108
+  },
+  "ID": {
+   "allItems": 94,
+   "housing": 92,
+   "nonMetroAllItems": 90
+  },
+  "IL": {
+   "allItems": 100,
+   "housing": 98,
+   "nonMetroAllItems": 88
+  },
+  "IN": {
+   "allItems": 91,
+   "housing": 74,
+   "nonMetroAllItems": 87
+  },
+  "IA": {
+   "allItems": 89,
+   "housing": 72,
+   "nonMetroAllItems": 86
+  },
+  "KS": {
+   "allItems": 90,
+   "housing": 73,
+   "nonMetroAllItems": 86
+  },
+  "KY": {
+   "allItems": 88,
+   "housing": 71,
+   "nonMetroAllItems": 85
+  },
+  "LA": {
+   "allItems": 90,
+   "housing": 75,
+   "nonMetroAllItems": 86
+  },
+  "ME": {
+   "allItems": 97,
+   "housing": 95,
+   "nonMetroAllItems": 94
+  },
+  "MD": {
+   "allItems": 105,
+   "housing": 124,
+   "nonMetroAllItems": 96
+  },
+  "MA": {
+   "allItems": 108,
+   "housing": 133,
+   "nonMetroAllItems": 100
+  },
+  "MI": {
+   "allItems": 93,
+   "housing": 79,
+   "nonMetroAllItems": 89
+  },
+  "MN": {
+   "allItems": 97,
+   "housing": 91,
+   "nonMetroAllItems": 90
+  },
+  "MS": {
+   "allItems": 86,
+   "housing": 62,
+   "nonMetroAllItems": 84
+  },
+  "MO": {
+   "allItems": 91,
+   "housing": 76,
+   "nonMetroAllItems": 86
+  },
+  "MT": {
+   "allItems": 94,
+   "housing": 91,
+   "nonMetroAllItems": 91
+  },
+  "NE": {
+   "allItems": 90,
+   "housing": 76,
+   "nonMetroAllItems": 86
+  },
+  "NV": {
+   "allItems": 98,
+   "housing": 104,
+   "nonMetroAllItems": 92
+  },
+  "NH": {
+   "allItems": 104,
+   "housing": 116,
+   "nonMetroAllItems": 100
+  },
+  "NJ": {
+   "allItems": 109,
+   "housing": 133,
+   "nonMetroAllItems": null
+  },
+  "NM": {
+   "allItems": 92,
+   "housing": 82,
+   "nonMetroAllItems": 88
+  },
+  "NY": {
+   "allItems": 110,
+   "housing": 142,
+   "nonMetroAllItems": 92
+  },
+  "NC": {
+   "allItems": 93,
+   "housing": 85,
+   "nonMetroAllItems": 88
+  },
+  "ND": {
+   "allItems": 90,
+   "housing": 76,
+   "nonMetroAllItems": 87
+  },
+  "OH": {
+   "allItems": 91,
+   "housing": 75,
+   "nonMetroAllItems": 87
+  },
+  "OK": {
+   "allItems": 88,
+   "housing": 68,
+   "nonMetroAllItems": 85
+  },
+  "OR": {
+   "allItems": 101,
+   "housing": 113,
+   "nonMetroAllItems": 95
+  },
+  "PA": {
+   "allItems": 97,
+   "housing": 89,
+   "nonMetroAllItems": 90
+  },
+  "RI": {
+   "allItems": 101,
+   "housing": 107,
+   "nonMetroAllItems": null
+  },
+  "SC": {
+   "allItems": 92,
+   "housing": 82,
+   "nonMetroAllItems": 88
+  },
+  "SD": {
+   "allItems": 89,
+   "housing": 74,
+   "nonMetroAllItems": 86
+  },
+  "TN": {
+   "allItems": 91,
+   "housing": 80,
+   "nonMetroAllItems": 87
+  },
+  "TX": {
+   "allItems": 97,
+   "housing": 92,
+   "nonMetroAllItems": 89
+  },
+  "UT": {
+   "allItems": 99,
+   "housing": 107,
+   "nonMetroAllItems": 93
+  },
+  "VT": {
+   "allItems": 100,
+   "housing": 104,
+   "nonMetroAllItems": 98
+  },
+  "VA": {
+   "allItems": 101,
+   "housing": 108,
+   "nonMetroAllItems": 90
+  },
+  "WA": {
+   "allItems": 108,
+   "housing": 130,
+   "nonMetroAllItems": 97
+  },
+  "WV": {
+   "allItems": 87,
+   "housing": 63,
+   "nonMetroAllItems": 85
+  },
+  "WI": {
+   "allItems": 93,
+   "housing": 82,
+   "nonMetroAllItems": 89
+  },
+  "WY": {
+   "allItems": 92,
+   "housing": 82,
+   "nonMetroAllItems": 90
+  }
+ },
+ "metros": [
+  {
+   "id": "new-york",
+   "label": "New York-Newark-Jersey City",
+   "state": "NY",
+   "allItems": 113,
+   "housing": 150
+  },
+  {
+   "id": "los-angeles",
+   "label": "Los Angeles-Long Beach-Anaheim",
+   "state": "CA",
+   "allItems": 112,
+   "housing": 160
+  },
+  {
+   "id": "chicago",
+   "label": "Chicago-Naperville-Elgin",
+   "state": "IL",
+   "allItems": 100,
+   "housing": 100
+  },
+  {
+   "id": "dallas",
+   "label": "Dallas-Fort Worth-Arlington",
+   "state": "TX",
+   "allItems": 100,
+   "housing": 98
+  },
+  {
+   "id": "houston",
+   "label": "Houston-The Woodlands-Sugar Land",
+   "state": "TX",
+   "allItems": 98,
+   "housing": 93
+  },
+  {
+   "id": "washington",
+   "label": "Washington-Arlington-Alexandria",
+   "state": "DC",
+   "allItems": 111,
+   "housing": 145
+  },
+  {
+   "id": "miami",
+   "label": "Miami-Fort Lauderdale-West Palm Beach",
+   "state": "FL",
+   "allItems": 108,
+   "housing": 135
+  },
+  {
+   "id": "philadelphia",
+   "label": "Philadelphia-Camden-Wilmington",
+   "state": "PA",
+   "allItems": 100,
+   "housing": 100
+  },
+  {
+   "id": "atlanta",
+   "label": "Atlanta-Sandy Springs-Roswell",
+   "state": "GA",
+   "allItems": 98,
+   "housing": 92
+  },
+  {
+   "id": "phoenix",
+   "label": "Phoenix-Mesa-Chandler",
+   "state": "AZ",
+   "allItems": 102,
+   "housing": 108
+  },
+  {
+   "id": "boston",
+   "label": "Boston-Cambridge-Newton",
+   "state": "MA",
+   "allItems": 109,
+   "housing": 140
+  },
+  {
+   "id": "san-francisco",
+   "label": "San Francisco-Oakland-Berkeley",
+   "state": "CA",
+   "allItems": 117,
+   "housing": 185
+  },
+  {
+   "id": "riverside",
+   "label": "Riverside-San Bernardino-Ontario",
+   "state": "CA",
+   "allItems": 103,
+   "housing": 115
+  },
+  {
+   "id": "detroit",
+   "label": "Detroit-Warren-Dearborn",
+   "state": "MI",
+   "allItems": 95,
+   "housing": 80
+  },
+  {
+   "id": "seattle",
+   "label": "Seattle-Tacoma-Bellevue",
+   "state": "WA",
+   "allItems": 111,
+   "housing": 145
+  },
+  {
+   "id": "minneapolis",
+   "label": "Minneapolis-St. Paul-Bloomington",
+   "state": "MN",
+   "allItems": 99,
+   "housing": 95
+  },
+  {
+   "id": "tampa",
+   "label": "Tampa-St. Petersburg-Clearwater",
+   "state": "FL",
+   "allItems": 101,
+   "housing": 105
+  },
+  {
+   "id": "san-diego",
+   "label": "San Diego-Chula Vista-Carlsbad",
+   "state": "CA",
+   "allItems": 113,
+   "housing": 165
+  },
+  {
+   "id": "denver",
+   "label": "Denver-Aurora-Lakewood",
+   "state": "CO",
+   "allItems": 105,
+   "housing": 122
+  },
+  {
+   "id": "baltimore",
+   "label": "Baltimore-Columbia-Towson",
+   "state": "MD",
+   "allItems": 102,
+   "housing": 105
+  },
+  {
+   "id": "st-louis",
+   "label": "St. Louis",
+   "state": "MO",
+   "allItems": 93,
+   "housing": 78
+  },
+  {
+   "id": "orlando",
+   "label": "Orlando-Kissimmee-Sanford",
+   "state": "FL",
+   "allItems": 101,
+   "housing": 108
+  },
+  {
+   "id": "charlotte",
+   "label": "Charlotte-Concord-Gastonia",
+   "state": "NC",
+   "allItems": 96,
+   "housing": 90
+  },
+  {
+   "id": "san-antonio",
+   "label": "San Antonio-New Braunfels",
+   "state": "TX",
+   "allItems": 95,
+   "housing": 87
+  },
+  {
+   "id": "portland",
+   "label": "Portland-Vancouver-Hillsboro",
+   "state": "OR",
+   "allItems": 104,
+   "housing": 118
+  },
+  {
+   "id": "sacramento",
+   "label": "Sacramento-Roseville-Folsom",
+   "state": "CA",
+   "allItems": 106,
+   "housing": 125
+  },
+  {
+   "id": "pittsburgh",
+   "label": "Pittsburgh",
+   "state": "PA",
+   "allItems": 94,
+   "housing": 80
+  },
+  {
+   "id": "austin",
+   "label": "Austin-Round Rock-Georgetown",
+   "state": "TX",
+   "allItems": 102,
+   "housing": 110
+  },
+  {
+   "id": "las-vegas",
+   "label": "Las Vegas-Henderson-Paradise",
+   "state": "NV",
+   "allItems": 99,
+   "housing": 102
+  },
+  {
+   "id": "cincinnati",
+   "label": "Cincinnati",
+   "state": "OH",
+   "allItems": 92,
+   "housing": 76
+  },
+  {
+   "id": "kansas-city",
+   "label": "Kansas City",
+   "state": "MO",
+   "allItems": 92,
+   "housing": 78
+  },
+  {
+   "id": "columbus",
+   "label": "Columbus",
+   "state": "OH",
+   "allItems": 93,
+   "housing": 80
+  },
+  {
+   "id": "indianapolis",
+   "label": "Indianapolis-Carmel-Anderson",
+   "state": "IN",
+   "allItems": 92,
+   "housing": 76
+  },
+  {
+   "id": "cleveland",
+   "label": "Cleveland-Elyria",
+   "state": "OH",
+   "allItems": 91,
+   "housing": 72
+  },
+  {
+   "id": "san-jose",
+   "label": "San Jose-Sunnyvale-Santa Clara",
+   "state": "CA",
+   "allItems": 118,
+   "housing": 195
+  },
+  {
+   "id": "nashville",
+   "label": "Nashville-Davidson-Murfreesboro-Franklin",
+   "state": "TN",
+   "allItems": 97,
+   "housing": 92
+  },
+  {
+   "id": "virginia-beach",
+   "label": "Virginia Beach-Norfolk-Newport News",
+   "state": "VA",
+   "allItems": 96,
+   "housing": 90
+  },
+  {
+   "id": "providence",
+   "label": "Providence-Warwick",
+   "state": "RI",
+   "allItems": 101,
+   "housing": 105
+  },
+  {
+   "id": "jacksonville",
+   "label": "Jacksonville",
+   "state": "FL",
+   "allItems": 97,
+   "housing": 93
+  },
+  {
+   "id": "milwaukee",
+   "label": "Milwaukee-Waukesha",
+   "state": "WI",
+   "allItems": 94,
+   "housing": 82
+  },
+  {
+   "id": "oklahoma-city",
+   "label": "Oklahoma City",
+   "state": "OK",
+   "allItems": 89,
+   "housing": 70
+  },
+  {
+   "id": "raleigh",
+   "label": "Raleigh-Cary",
+   "state": "NC",
+   "allItems": 97,
+   "housing": 92
+  },
+  {
+   "id": "memphis",
+   "label": "Memphis",
+   "state": "TN",
+   "allItems": 90,
+   "housing": 72
+  },
+  {
+   "id": "richmond",
+   "label": "Richmond",
+   "state": "VA",
+   "allItems": 97,
+   "housing": 92
+  },
+  {
+   "id": "louisville",
+   "label": "Louisville/Jefferson County",
+   "state": "KY",
+   "allItems": 90,
+   "housing": 74
+  },
+  {
+   "id": "new-orleans",
+   "label": "New Orleans-Metairie",
+   "state": "LA",
+   "allItems": 94,
+   "housing": 82
+  },
+  {
+   "id": "salt-lake-city",
+   "label": "Salt Lake City",
+   "state": "UT",
+   "allItems": 101,
+   "housing": 108
+  },
+  {
+   "id": "hartford",
+   "label": "Hartford-East Hartford-Middletown",
+   "state": "CT",
+   "allItems": 102,
+   "housing": 105
+  },
+  {
+   "id": "buffalo",
+   "label": "Buffalo-Cheektowaga",
+   "state": "NY",
+   "allItems": 94,
+   "housing": 80
+  },
+  {
+   "id": "birmingham",
+   "label": "Birmingham-Hoover",
+   "state": "AL",
+   "allItems": 89,
+   "housing": 70
+  }
+ ],
+ "cityToMetro": {
+  "new york": "new-york",
+  "nyc": "new-york",
+  "manhattan": "new-york",
+  "brooklyn": "new-york",
+  "queens": "new-york",
+  "bronx": "new-york",
+  "staten island": "new-york",
+  "newark": "new-york",
+  "jersey city": "new-york",
+  "hoboken": "new-york",
+  "yonkers": "new-york",
+  "white plains": "new-york",
+  "elizabeth": "new-york",
+  "paterson": "new-york",
+  "new rochelle": "new-york",
+  "long island city": "new-york",
+  "astoria": "new-york",
+  "williamsburg": "new-york",
+  "bayonne": "new-york",
+  "union city": "new-york",
+  "weehawken": "new-york",
+  "edison": "new-york",
+  "new brunswick": "new-york",
+  "stamford": "new-york",
+  "los angeles": "los-angeles",
+  "la": "los-angeles",
+  "long beach": "los-angeles",
+  "anaheim": "los-angeles",
+  "santa monica": "los-angeles",
+  "pasadena": "los-angeles",
+  "glendale": "los-angeles",
+  "burbank": "los-angeles",
+  "irvine": "los-angeles",
+  "santa ana": "los-angeles",
+  "torrance": "los-angeles",
+  "inglewood": "los-angeles",
+  "culver city": "los-angeles",
+  "west hollywood": "los-angeles",
+  "huntington beach": "los-angeles",
+  "chicago": "chicago",
+  "naperville": "chicago",
+  "elgin": "chicago",
+  "evanston": "chicago",
+  "oak park": "chicago",
+  "aurora": "chicago",
+  "joliet": "chicago",
+  "schaumburg": "chicago",
+  "dallas": "dallas",
+  "fort worth": "dallas",
+  "arlington": "dallas",
+  "plano": "dallas",
+  "irving": "dallas",
+  "frisco": "dallas",
+  "mckinney": "dallas",
+  "denton": "dallas",
+  "garland": "dallas",
+  "houston": "houston",
+  "the woodlands": "houston",
+  "sugar land": "houston",
+  "pasadena tx": "houston",
+  "katy": "houston",
+  "pearland": "houston",
+  "washington": "washington",
+  "washington dc": "washington",
+  "arlington va": "washington",
+  "alexandria": "washington",
+  "bethesda": "washington",
+  "silver spring": "washington",
+  "fairfax": "washington",
+  "reston": "washington",
+  "rockville": "washington",
+  "miami": "miami",
+  "fort lauderdale": "miami",
+  "west palm beach": "miami",
+  "miami beach": "miami",
+  "hialeah": "miami",
+  "boca raton": "miami",
+  "hollywood fl": "miami",
+  "coral gables": "miami",
+  "philadelphia": "philadelphia",
+  "camden": "philadelphia",
+  "wilmington": "philadelphia",
+  "cherry hill": "philadelphia",
+  "king of prussia": "philadelphia",
+  "atlanta": "atlanta",
+  "sandy springs": "atlanta",
+  "roswell": "atlanta",
+  "marietta": "atlanta",
+  "decatur": "atlanta",
+  "alpharetta": "atlanta",
+  "phoenix": "phoenix",
+  "mesa": "phoenix",
+  "chandler": "phoenix",
+  "scottsdale": "phoenix",
+  "tempe": "phoenix",
+  "glendale az": "phoenix",
+  "gilbert": "phoenix",
+  "boston": "boston",
+  "cambridge": "boston",
+  "newton": "boston",
+  "somerville": "boston",
+  "quincy": "boston",
+  "brookline": "boston",
+  "medford": "boston",
+  "waltham": "boston",
+  "san francisco": "san-francisco",
+  "oakland": "san-francisco",
+  "berkeley": "san-francisco",
+  "sf": "san-francisco",
+  "daly city": "san-francisco",
+  "richmond ca": "san-francisco",
+  "alameda": "san-francisco",
+  "san mateo": "san-francisco",
+  "redwood city": "san-francisco",
+  "hayward": "san-francisco",
+  "fremont": "san-francisco",
+  "riverside": "riverside",
+  "san bernardino": "riverside",
+  "ontario ca": "riverside",
+  "fontana": "riverside",
+  "moreno valley": "riverside",
+  "temecula": "riverside",
+  "detroit": "detroit",
+  "warren": "detroit",
+  "dearborn": "detroit",
+  "royal oak": "detroit",
+  "ann arbor": "detroit",
+  "seattle": "seattle",
+  "tacoma": "seattle",
+  "bellevue": "seattle",
+  "redmond": "seattle",
+  "kirkland": "seattle",
+  "everett": "seattle",
+  "renton": "seattle",
+  "minneapolis": "minneapolis",
+  "st. paul": "minneapolis",
+  "saint paul": "minneapolis",
+  "bloomington mn": "minneapolis",
+  "edina": "minneapolis",
+  "tampa": "tampa",
+  "st. petersburg": "tampa",
+  "saint petersburg": "tampa",
+  "clearwater": "tampa",
+  "san diego": "san-diego",
+  "chula vista": "san-diego",
+  "carlsbad": "san-diego",
+  "la jolla": "san-diego",
+  "oceanside": "san-diego",
+  "denver": "denver",
+  "aurora co": "denver",
+  "lakewood": "denver",
+  "boulder": "denver",
+  "littleton": "denver",
+  "baltimore": "baltimore",
+  "columbia md": "baltimore",
+  "towson": "baltimore",
+  "st. louis": "st-louis",
+  "saint louis": "st-louis",
+  "clayton mo": "st-louis",
+  "orlando": "orlando",
+  "kissimmee": "orlando",
+  "sanford": "orlando",
+  "winter park": "orlando",
+  "charlotte": "charlotte",
+  "concord nc": "charlotte",
+  "gastonia": "charlotte",
+  "san antonio": "san-antonio",
+  "new braunfels": "san-antonio",
+  "portland": "portland",
+  "vancouver wa": "portland",
+  "hillsboro": "portland",
+  "beaverton": "portland",
+  "sacramento": "sacramento",
+  "roseville": "sacramento",
+  "folsom": "sacramento",
+  "davis": "sacramento",
+  "pittsburgh": "pittsburgh",
+  "austin": "austin",
+  "round rock": "austin",
+  "georgetown tx": "austin",
+  "cedar park": "austin",
+  "las vegas": "las-vegas",
+  "henderson": "las-vegas",
+  "paradise": "las-vegas",
+  "north las vegas": "las-vegas",
+  "cincinnati": "cincinnati",
+  "covington ky": "cincinnati",
+  "kansas city": "kansas-city",
+  "overland park": "kansas-city",
+  "olathe": "kansas-city",
+  "columbus": "columbus",
+  "dublin oh": "columbus",
+  "indianapolis": "indianapolis",
+  "carmel": "indianapolis",
+  "fishers": "indianapolis",
+  "cleveland": "cleveland",
+  "elyria": "cleveland",
+  "lakewood oh": "cleveland",
+  "san jose": "san-jose",
+  "sunnyvale": "san-jose",
+  "santa clara": "san-jose",
+  "palo alto": "san-jose",
+  "mountain view": "san-jose",
+  "cupertino": "san-jose",
+  "nashville": "nashville",
+  "murfreesboro": "nashville",
+  "franklin tn": "nashville",
+  "virginia beach": "virginia-beach",
+  "norfolk": "virginia-beach",
+  "newport news": "virginia-beach",
+  "chesapeake": "virginia-beach",
+  "providence": "providence",
+  "warwick": "providence",
+  "cranston": "providence",
+  "pawtucket": "providence",
+  "jacksonville": "jacksonville",
+  "milwaukee": "milwaukee",
+  "waukesha": "milwaukee",
+  "oklahoma city": "oklahoma-city",
+  "norman": "oklahoma-city",
+  "edmond": "oklahoma-city",
+  "raleigh": "raleigh",
+  "cary": "raleigh",
+  "durham": "raleigh",
+  "chapel hill": "raleigh",
+  "memphis": "memphis",
+  "richmond": "richmond",
+  "louisville": "louisville",
+  "new orleans": "new-orleans",
+  "metairie": "new-orleans",
+  "salt lake city": "salt-lake-city",
+  "sandy ut": "salt-lake-city",
+  "west valley city": "salt-lake-city",
+  "hartford": "hartford",
+  "east hartford": "hartford",
+  "middletown ct": "hartford",
+  "new britain": "hartford",
+  "buffalo": "buffalo",
+  "cheektowaga": "buffalo",
+  "birmingham": "birmingham",
+  "hoover": "birmingham"
+ },
+ "cityState": {
+  "jersey city": "NJ",
+  "newark": "NJ",
+  "hoboken": "NJ",
+  "bayonne": "NJ",
+  "union city": "NJ",
+  "weehawken": "NJ",
+  "edison": "NJ",
+  "new brunswick": "NJ",
+  "elizabeth": "NJ",
+  "paterson": "NJ",
+  "camden": "NJ",
+  "cherry hill": "NJ",
+  "wilmington": "DE",
+  "arlington va": "VA",
+  "alexandria": "VA",
+  "fairfax": "VA",
+  "reston": "VA",
+  "bethesda": "MD",
+  "silver spring": "MD",
+  "rockville": "MD",
+  "vancouver wa": "WA",
+  "covington ky": "KY",
+  "overland park": "KS",
+  "olathe": "KS",
+  "fort worth": "TX",
+  "fort lauderdale": "FL",
+  "west palm beach": "FL",
+  "boca raton": "FL",
+  "hollywood fl": "FL",
+  "coral gables": "FL",
+  "miami beach": "FL",
+  "hialeah": "FL",
+  "cambridge": "MA",
+  "somerville": "MA",
+  "st. petersburg": "FL",
+  "saint petersburg": "FL",
+  "clearwater": "FL"
+ },
+ "cityStateNote": "Cities whose state differs from their metro's principal city, for the state derived from a city."
+}

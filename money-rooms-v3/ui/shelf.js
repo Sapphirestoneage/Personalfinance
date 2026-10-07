@@ -18,7 +18,7 @@ function text(app, id, m) {
     case 'surplus': return [v.cents < 0 ? 'Short ' + F.dollarsWhole(-v.cents, { rough: v.rough }) : F.dollarsWhole(v.cents, { rough: v.rough }) + ' a month', ''];
     case 'leak': return [F.percent(v.value, { rough: v.rough }), m.leakMonthly ? F.dollarsWhole(m.leakMonthly.cents) + ' a month' : ''];
     case 'assets': return [F.dollarsWhole(v.value.invested), 'invested of ' + F.dollarsCompact(v.value.total)];
-    case 'runway': return [F.months(v.value.full, { rough: v.rough }), v.value.fat !== null ? F.months(v.value.fat) + ' at the floor' : ''];
+    case 'runway': return [F.months(v.value.full, { rough: v.rough }), v.value.fullAlone !== null && v.value.fullAlone !== undefined ? F.months(v.value.fullAlone) + ' if it all falls on you' : v.value.fat !== null ? F.months(v.value.fat) + ' at the floor' : ''];
     case 'emergencyGap': return [v.cents === 0 ? 'Covered' : F.dollarsWhole(v.cents, { rough: v.rough }), m.monthlyToClose && m.monthlyToClose.cents ? F.dollarsWhole(m.monthlyToClose.cents) + ' a month to close' : 'Rule of 5 met'];
     case 'fiDate': return [F.date(v.value), m.ages ? 'age ' + m.ages.likely + ', best ' + (m.ages.best || 'never') + ', worst ' + (m.ages.worst || 'never') : ''];
     case 'pctToFi': return [F.percent(v.value, { rough: v.rough }), m.basis === 'netWorth' ? 'of net worth' : 'invested assets'];

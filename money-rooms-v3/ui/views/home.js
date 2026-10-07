@@ -119,6 +119,8 @@ function renderClients(panel, app) {
   nameInput.style.flex = 'none';
   panel.appendChild(h('div', { class: 'row', style: { marginBottom: '8px' } },
     newBtn,
+    h('a', { class: 'btn', href: '#/discovery', title: 'A one-screen form for the first call; it opens a new client' }, 'New discovery call'),
+    app.record ? h('a', { class: 'btn', href: '#/call' }, 'Run the call') : null,
     h('button', { class: 'btn', onClick: () => fileInput.click() }, 'Import'),
     h('button', { class: 'btn', title: 'Maya: example numbers only', onClick: () => loadDemo(app) }, 'Load demo client'),
     fileInput));

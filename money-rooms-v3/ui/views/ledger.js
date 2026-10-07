@@ -164,7 +164,7 @@ function mountTable(host, app, planet, typeId) {
 function extraActions(app, planet, typeId) {
   const out = [];
   if (planet === 'spending' && typeId === 'line' && app.view === 'coach' && app.record.planets.spending.rows.some(r => r.type === 'line')) {
-    out.push(h('button', { class: 'btn', title: 'Adds one line per category at national-average amounts, marked Estimated and Rough', onClick: () => useDefaults(app) }, 'Use national averages'));
+    out.push(h('button', { class: 'btn', title: 'Adds one line per category at national-average amounts, marked Guess and Rough', onClick: () => useDefaults(app) }, 'Use national averages'));
     presetButtons(app).forEach(b => out.push(b));
   }
   return out;
@@ -191,7 +191,7 @@ export function addPreset(app, groupId) {
   app.toast(added ? 'Added ' + added + (added === 1 ? ' line' : ' lines') + ' under ' + g.label + '. Amounts are still to enter; delete any that do not apply.' : 'Every ' + g.label.toLowerCase() + ' line is already here.');
 }
 
-/* Defaults as estimates: one line per category for the household size, source Estimated (0.5), shown with ~. */
+/* Defaults as estimates: one line per category for the household size, source Guess (0.5), shown with ~. */
 export function useDefaults(app) {
   const d = app.data.defaults;
   const dep = app.record.sun.f.dependents && hasValue(app.record.sun.f.dependents) ? app.record.sun.f.dependents.v : 0;

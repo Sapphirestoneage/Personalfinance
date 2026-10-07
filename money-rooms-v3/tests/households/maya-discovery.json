@@ -1,0 +1,4298 @@
+{
+ "app": "money-rooms-v3",
+ "exportedAt": "2026-10-01T15:06:00.000Z",
+ "record": {
+  "schemaVersion": 3,
+  "id": "maya-discovery",
+  "createdAt": "2026-10-01T15:00:00.000Z",
+  "updatedAt": "2026-10-01T15:05:00.000Z",
+  "sun": {
+   "f": {
+    "name": {
+     "v": "Maya",
+     "state": "known",
+     "source": "discovery"
+    },
+    "birthDate": {
+     "v": "1999-07-01",
+     "state": "rough",
+     "source": "discovery"
+    },
+    "state": {
+     "v": "NJ",
+     "state": "known",
+     "source": "inferred"
+    },
+    "city": {
+     "v": "Jersey City",
+     "state": "known",
+     "source": "discovery"
+    },
+    "workSituation": {
+     "v": "employed",
+     "state": "known",
+     "source": "discovery"
+    },
+    "dependents": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "filingStatus": {
+     "v": "single",
+     "state": "rough",
+     "source": "inferred"
+    },
+    "bigGoal": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    }
+   },
+   "outputs": {},
+   "assumptions": {},
+   "clientPicks": [],
+   "onepager": {}
+  },
+  "planets": {
+   "income": {
+    "rows": [
+     {
+      "id": "rmuy7k0fqfzmv",
+      "planet": "income",
+      "type": "w2",
+      "nickname": "Job",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "grossPay": {
+        "v": 6800000,
+        "state": "rough",
+        "source": "discovery",
+        "cad": "year"
+       },
+       "takeHome": {
+        "v": 190000,
+        "state": "rough",
+        "source": "discovery",
+        "cad": "paycheck"
+       },
+       "payFrequency": {
+        "v": "biweekly",
+        "state": "known",
+        "source": "inferred"
+       },
+       "stability": {
+        "v": "steady",
+        "state": "known",
+        "source": "client"
+       },
+       "pretaxRetirement": {
+        "v": 272000,
+        "state": "rough",
+        "source": "discovery",
+        "cad": "year"
+       },
+       "rothRetirement": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "hsaPayroll": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "pretaxOther": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "bonus": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "equity": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "startDate": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "hoursPaid": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "hoursCommute": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "workCosts": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       }
+      }
+     },
+     {
+      "id": "rmuy7k0frcn07",
+      "planet": "income",
+      "type": "benefits",
+      "nickname": "Employer match",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "matchRate": {
+        "v": null,
+        "state": "unknown",
+        "source": "discovery"
+       },
+       "matchUpTo": {
+        "v": null,
+        "state": "unknown",
+        "source": "discovery"
+       },
+       "otherBenefit": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       }
+      }
+     }
+    ]
+   },
+   "spending": {
+    "rows": [
+     {
+      "id": "rmuy7k0fth24c",
+      "planet": "spending",
+      "type": "line",
+      "nickname": "Phone",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "category": {
+        "v": "utilities",
+        "state": "known",
+        "source": "discovery"
+       },
+       "amount": {
+        "v": 0,
+        "state": "none",
+        "source": "discovery",
+        "cad": "month"
+       },
+       "needWant": {
+        "v": "need",
+        "state": "known",
+        "source": "discovery"
+       },
+       "mistake": {
+        "v": "unavoidable",
+        "state": "known",
+        "source": "client"
+       },
+       "fatFloor": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "primaryCard": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       }
+      }
+     },
+     {
+      "id": "rmuy7k0fujcoj",
+      "planet": "spending",
+      "type": "line",
+      "nickname": "Rent (2 bed)",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "category": {
+        "v": "accommodation",
+        "state": "known",
+        "source": "estimated"
+       },
+       "amount": {
+        "v": 262500,
+        "state": "rough",
+        "source": "estimated",
+        "cad": "month"
+       },
+       "needWant": {
+        "v": "need",
+        "state": "known",
+        "source": "estimated"
+       },
+       "mistake": {
+        "v": "unavoidable",
+        "state": "known",
+        "source": "estimated"
+       },
+       "fatFloor": {
+        "v": true,
+        "state": "known",
+        "source": "estimated"
+       },
+       "primaryCard": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": true,
+        "state": "known",
+        "source": "estimated"
+       },
+       "myShare": {
+        "v": 0.5,
+        "state": "known",
+        "source": "estimated"
+       }
+      },
+      "guess": true,
+      "guessTier": "HCOL",
+      "guessUnit": "2bed"
+     },
+     {
+      "id": "rmuy7k0fulc98",
+      "planet": "spending",
+      "type": "line",
+      "nickname": "Utilities and internet",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "category": {
+        "v": "utilities",
+        "state": "known",
+        "source": "estimated"
+       },
+       "amount": {
+        "v": 36000,
+        "state": "rough",
+        "source": "estimated",
+        "cad": "month"
+       },
+       "needWant": {
+        "v": "need",
+        "state": "known",
+        "source": "estimated"
+       },
+       "mistake": {
+        "v": "unavoidable",
+        "state": "known",
+        "source": "estimated"
+       },
+       "fatFloor": {
+        "v": false,
+        "state": "known",
+        "source": "estimated"
+       },
+       "primaryCard": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": true,
+        "state": "known",
+        "source": "estimated"
+       },
+       "myShare": {
+        "v": 0.5,
+        "state": "known",
+        "source": "estimated"
+       }
+      },
+      "guess": true,
+      "guessTier": "HCOL",
+      "guessUnit": "2bed"
+     },
+     {
+      "id": "rmuy7k0fu0oad",
+      "planet": "spending",
+      "type": "line",
+      "nickname": "Streaming and subscriptions",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "category": {
+        "v": "utilities",
+        "state": "known",
+        "source": "estimated"
+       },
+       "amount": {
+        "v": 6750,
+        "state": "rough",
+        "source": "estimated",
+        "cad": "month"
+       },
+       "needWant": {
+        "v": "need",
+        "state": "known",
+        "source": "estimated"
+       },
+       "mistake": {
+        "v": "unavoidable",
+        "state": "known",
+        "source": "estimated"
+       },
+       "fatFloor": {
+        "v": false,
+        "state": "known",
+        "source": "estimated"
+       },
+       "primaryCard": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       }
+      },
+      "guess": true,
+      "guessTier": "HCOL"
+     },
+     {
+      "id": "rmuy7k0fud975",
+      "planet": "spending",
+      "type": "line",
+      "nickname": "Groceries",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "category": {
+        "v": "food",
+        "state": "known",
+        "source": "estimated"
+       },
+       "amount": {
+        "v": 47460,
+        "state": "rough",
+        "source": "estimated",
+        "cad": "month"
+       },
+       "needWant": {
+        "v": "need",
+        "state": "known",
+        "source": "estimated"
+       },
+       "mistake": {
+        "v": "unavoidable",
+        "state": "known",
+        "source": "estimated"
+       },
+       "fatFloor": {
+        "v": true,
+        "state": "known",
+        "source": "estimated"
+       },
+       "primaryCard": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       }
+      },
+      "guess": true,
+      "guessTier": "HCOL",
+      "guessUnit": null
+     },
+     {
+      "id": "rmuy7k0fuuh1m",
+      "planet": "spending",
+      "type": "line",
+      "nickname": "Restaurants and takeout",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "category": {
+        "v": "food",
+        "state": "known",
+        "source": "estimated"
+       },
+       "amount": {
+        "v": 31640,
+        "state": "rough",
+        "source": "estimated",
+        "cad": "month"
+       },
+       "needWant": {
+        "v": "need",
+        "state": "known",
+        "source": "estimated"
+       },
+       "mistake": {
+        "v": "unavoidable",
+        "state": "known",
+        "source": "estimated"
+       },
+       "fatFloor": {
+        "v": true,
+        "state": "known",
+        "source": "estimated"
+       },
+       "primaryCard": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       }
+      },
+      "guess": true,
+      "guessTier": "HCOL",
+      "guessUnit": null
+     },
+     {
+      "id": "rmuy7k0fu3g8n",
+      "planet": "spending",
+      "type": "line",
+      "nickname": "Transit, fuel and parking",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "category": {
+        "v": "transportation",
+        "state": "known",
+        "source": "estimated"
+       },
+       "amount": {
+        "v": 36160,
+        "state": "rough",
+        "source": "estimated",
+        "cad": "month"
+       },
+       "needWant": {
+        "v": "need",
+        "state": "known",
+        "source": "estimated"
+       },
+       "mistake": {
+        "v": "unavoidable",
+        "state": "known",
+        "source": "estimated"
+       },
+       "fatFloor": {
+        "v": true,
+        "state": "known",
+        "source": "estimated"
+       },
+       "primaryCard": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       }
+      },
+      "guess": true,
+      "guessTier": "HCOL",
+      "guessUnit": null
+     },
+     {
+      "id": "rmuy7k0fu13r2",
+      "planet": "spending",
+      "type": "line",
+      "nickname": "Car insurance",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "category": {
+        "v": "transportation",
+        "state": "known",
+        "source": "estimated"
+       },
+       "amount": {
+        "v": 13560,
+        "state": "rough",
+        "source": "estimated",
+        "cad": "month"
+       },
+       "needWant": {
+        "v": "need",
+        "state": "known",
+        "source": "estimated"
+       },
+       "mistake": {
+        "v": "unavoidable",
+        "state": "known",
+        "source": "estimated"
+       },
+       "fatFloor": {
+        "v": true,
+        "state": "known",
+        "source": "estimated"
+       },
+       "primaryCard": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       }
+      },
+      "guess": true,
+      "guessTier": "HCOL",
+      "guessUnit": null
+     },
+     {
+      "id": "rmuy7k0fu3jc1",
+      "planet": "spending",
+      "type": "line",
+      "nickname": "Health insurance and care",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "category": {
+        "v": "therapy",
+        "state": "known",
+        "source": "estimated"
+       },
+       "amount": {
+        "v": 42940,
+        "state": "rough",
+        "source": "estimated",
+        "cad": "month"
+       },
+       "needWant": {
+        "v": "need",
+        "state": "known",
+        "source": "estimated"
+       },
+       "mistake": {
+        "v": "unavoidable",
+        "state": "known",
+        "source": "estimated"
+       },
+       "fatFloor": {
+        "v": false,
+        "state": "known",
+        "source": "estimated"
+       },
+       "primaryCard": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       }
+      },
+      "guess": true,
+      "guessTier": "HCOL",
+      "guessUnit": null
+     },
+     {
+      "id": "rmuy7k0fumkcs",
+      "planet": "spending",
+      "type": "line",
+      "nickname": "Entertainment and hobbies",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "category": {
+        "v": "wants",
+        "state": "known",
+        "source": "estimated"
+       },
+       "amount": {
+        "v": 24860,
+        "state": "rough",
+        "source": "estimated",
+        "cad": "month"
+       },
+       "needWant": {
+        "v": "want",
+        "state": "known",
+        "source": "estimated"
+       },
+       "mistake": {
+        "v": "unavoidable",
+        "state": "known",
+        "source": "estimated"
+       },
+       "fatFloor": {
+        "v": false,
+        "state": "known",
+        "source": "estimated"
+       },
+       "primaryCard": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       }
+      },
+      "guess": true,
+      "guessTier": "HCOL",
+      "guessUnit": null
+     },
+     {
+      "id": "rmuy7k0fundvv",
+      "planet": "spending",
+      "type": "line",
+      "nickname": "Clothing and personal care",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "category": {
+        "v": "wants",
+        "state": "known",
+        "source": "estimated"
+       },
+       "amount": {
+        "v": 18080,
+        "state": "rough",
+        "source": "estimated",
+        "cad": "month"
+       },
+       "needWant": {
+        "v": "want",
+        "state": "known",
+        "source": "estimated"
+       },
+       "mistake": {
+        "v": "unavoidable",
+        "state": "known",
+        "source": "estimated"
+       },
+       "fatFloor": {
+        "v": false,
+        "state": "known",
+        "source": "estimated"
+       },
+       "primaryCard": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       }
+      },
+      "guess": true,
+      "guessTier": "HCOL",
+      "guessUnit": null
+     },
+     {
+      "id": "rmuy7k0fu82ap",
+      "planet": "spending",
+      "type": "line",
+      "nickname": "Travel",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "category": {
+        "v": "irregular",
+        "state": "known",
+        "source": "estimated"
+       },
+       "amount": {
+        "v": 20340,
+        "state": "rough",
+        "source": "estimated",
+        "cad": "month"
+       },
+       "needWant": {
+        "v": "want",
+        "state": "known",
+        "source": "estimated"
+       },
+       "mistake": {
+        "v": "unavoidable",
+        "state": "known",
+        "source": "estimated"
+       },
+       "fatFloor": {
+        "v": false,
+        "state": "known",
+        "source": "estimated"
+       },
+       "primaryCard": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       }
+      },
+      "guess": true,
+      "guessTier": "HCOL",
+      "guessUnit": null
+     },
+     {
+      "id": "rmuy7k0fugnba",
+      "planet": "spending",
+      "type": "line",
+      "nickname": "Gifts and giving",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "category": {
+        "v": "irregular",
+        "state": "known",
+        "source": "estimated"
+       },
+       "amount": {
+        "v": 10170,
+        "state": "rough",
+        "source": "estimated",
+        "cad": "month"
+       },
+       "needWant": {
+        "v": "want",
+        "state": "known",
+        "source": "estimated"
+       },
+       "mistake": {
+        "v": "unavoidable",
+        "state": "known",
+        "source": "estimated"
+       },
+       "fatFloor": {
+        "v": false,
+        "state": "known",
+        "source": "estimated"
+       },
+       "primaryCard": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "lineAutopay": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "shared": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "myShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       }
+      },
+      "guess": true,
+      "guessTier": "HCOL",
+      "guessUnit": null
+     }
+    ]
+   },
+   "debt": {
+    "rows": [
+     {
+      "id": "rmuy7k0fs3p0r",
+      "planet": "debt",
+      "type": "card",
+      "nickname": "Credit card",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "cardName": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "balance": {
+        "v": null,
+        "state": "unknown",
+        "source": "discovery"
+       },
+       "apr": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "promoApr": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "promoEnd": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "minimum": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "creditLimit": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "annualFee": {
+        "v": null,
+        "state": "unknown",
+        "source": "lookup-verify"
+       },
+       "creditsUsed": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "autopay": {
+        "v": "none",
+        "state": "known",
+        "source": "client"
+       }
+      }
+     }
+    ]
+   },
+   "safety": {
+    "rows": []
+   },
+   "invest": {
+    "rows": [
+     {
+      "id": "rmuy7k0fra3ix",
+      "planet": "invest",
+      "type": "account",
+      "nickname": "Savings",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "accountType": {
+        "v": "hysa",
+        "state": "known",
+        "source": "inferred"
+       },
+       "accountBalance": {
+        "v": 250000,
+        "state": "rough",
+        "source": "discovery"
+       },
+       "contribAmount": {
+        "v": 0,
+        "state": "none",
+        "source": "discovery",
+        "cad": "month"
+       },
+       "allocStocks": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "allocBonds": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "allocCash": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "allocOther": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "usShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "beneficiary": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       }
+      }
+     },
+     {
+      "id": "rmuy7k0fsliyj",
+      "planet": "invest",
+      "type": "account",
+      "nickname": "Venmo",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "accountType": {
+        "v": "checking",
+        "state": "known",
+        "source": "inferred"
+       },
+       "accountBalance": {
+        "v": 30000,
+        "state": "rough",
+        "source": "discovery"
+       },
+       "contribAmount": {
+        "v": 0,
+        "state": "none",
+        "source": "discovery",
+        "cad": "month"
+       },
+       "allocStocks": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "allocBonds": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "allocCash": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "allocOther": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "usShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "beneficiary": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       }
+      }
+     },
+     {
+      "id": "rmuy7k0fsnmbl",
+      "planet": "invest",
+      "type": "account",
+      "nickname": "Old credit union account",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "accountType": {
+        "v": "checking",
+        "state": "known",
+        "source": "inferred"
+       },
+       "accountBalance": {
+        "v": 4000,
+        "state": "rough",
+        "source": "discovery"
+       },
+       "contribAmount": {
+        "v": 0,
+        "state": "none",
+        "source": "discovery",
+        "cad": "month"
+       },
+       "allocStocks": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "allocBonds": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "allocCash": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "allocOther": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "usShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "beneficiary": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       }
+      }
+     },
+     {
+      "id": "rmuy7k0fsji40",
+      "planet": "invest",
+      "type": "account",
+      "nickname": "401k",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "accountType": {
+        "v": "401k",
+        "state": "known",
+        "source": "inferred"
+       },
+       "accountBalance": {
+        "v": null,
+        "state": "will-send",
+        "source": "discovery"
+       },
+       "contribAmount": {
+        "v": 0,
+        "state": "none",
+        "source": "discovery",
+        "cad": "month"
+       },
+       "allocStocks": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "allocBonds": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "allocCash": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "allocOther": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "usShare": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "beneficiary": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       }
+      }
+     }
+    ]
+   },
+   "taxes": {
+    "rows": []
+   },
+   "life": {
+    "rows": [
+     {
+      "id": "rmuy7k0ftvqs7",
+      "planet": "life",
+      "type": "goal",
+      "nickname": "Credit card going down",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "goalCost": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "targetDate": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "priority": {
+        "v": "2",
+        "state": "known",
+        "source": "client"
+       }
+      }
+     },
+     {
+      "id": "rmuy7k0ft4u2n",
+      "planet": "life",
+      "type": "goal",
+      "nickname": "Know where the money goes",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "goalCost": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "targetDate": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "priority": {
+        "v": "2",
+        "state": "known",
+        "source": "client"
+       }
+      }
+     },
+     {
+      "id": "rmuy7k0ftac20",
+      "planet": "life",
+      "type": "goal",
+      "nickname": "Bachelorette in April",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "goalCost": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "targetDate": {
+        "v": "2027-04",
+        "state": "rough",
+        "source": "discovery"
+       },
+       "priority": {
+        "v": "2",
+        "state": "known",
+        "source": "client"
+       }
+      }
+     },
+     {
+      "id": "rmuy7k0ftlkwv",
+      "planet": "life",
+      "type": "goal",
+      "nickname": "Wedding next September",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "goalCost": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "targetDate": {
+        "v": "2027-09",
+        "state": "rough",
+        "source": "discovery"
+       },
+       "priority": {
+        "v": "2",
+        "state": "known",
+        "source": "client"
+       }
+      }
+     },
+     {
+      "id": "rmuy7k0ftlo6j",
+      "planet": "life",
+      "type": "goal",
+      "nickname": "A cash cushion",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "goalCost": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "targetDate": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "priority": {
+        "v": "2",
+        "state": "known",
+        "source": "client"
+       }
+      }
+     },
+     {
+      "id": "rmuy7k0ftlcuw",
+      "planet": "life",
+      "type": "goal",
+      "nickname": "One trip paid in cash",
+      "institution": "",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "goalCost": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "targetDate": {
+        "v": null,
+        "state": "unknown",
+        "source": "client"
+       },
+       "priority": {
+        "v": "2",
+        "state": "known",
+        "source": "client"
+       }
+      }
+     }
+    ]
+   }
+  },
+  "journal": [
+   {
+    "seq": 1,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "sun",
+    "rowId": "sun",
+    "field": "name",
+    "owner": "sun",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": "Maya",
+     "state": "known",
+     "source": "discovery"
+    },
+    "source": "discovery",
+    "state": "known",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 2,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "sun",
+    "rowId": "sun",
+    "field": "birthDate",
+    "owner": "sun",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": "1999-07-01",
+     "state": "rough",
+     "source": "discovery"
+    },
+    "source": "discovery",
+    "state": "rough",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 3,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "sun",
+    "rowId": "sun",
+    "field": "city",
+    "owner": "sun",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": "Jersey City",
+     "state": "known",
+     "source": "discovery"
+    },
+    "source": "discovery",
+    "state": "known",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 4,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "sun",
+    "rowId": "sun",
+    "field": "state",
+    "owner": "sun",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": "NJ",
+     "state": "known",
+     "source": "inferred"
+    },
+    "source": "inferred",
+    "state": "known",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 5,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "sun",
+    "rowId": "sun",
+    "field": "workSituation",
+    "owner": "sun",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": "employed",
+     "state": "known",
+     "source": "discovery"
+    },
+    "source": "discovery",
+    "state": "known",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 6,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "sun",
+    "rowId": "sun",
+    "field": "filingStatus",
+    "owner": "sun",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": "single",
+     "state": "rough",
+     "source": "inferred"
+    },
+    "source": "inferred",
+    "state": "rough",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 7,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "household",
+    "planet": "sun",
+    "rowId": "household",
+    "field": "household",
+    "owner": "sun",
+    "old": {
+     "roommates": [],
+     "lease": "none",
+     "unitSize": null
+    },
+    "new": {
+     "roommates": [
+      {
+       "id": "rm1",
+       "nickname": "Dani",
+       "shareDefault": 0.5
+      }
+     ],
+     "lease": "both",
+     "unitSize": null
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 8,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "income",
+    "rowId": "rmuy7k0fqfzmv",
+    "field": null,
+    "owner": "income",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0fqfzmv",
+     "planet": "income",
+     "type": "w2",
+     "nickname": "Job",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "grossPay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "takeHome": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "payFrequency": {
+       "v": "biweekly",
+       "state": "known",
+       "source": "client"
+      },
+      "stability": {
+       "v": "steady",
+       "state": "known",
+       "source": "client"
+      },
+      "pretaxRetirement": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "rothRetirement": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "hsaPayroll": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "pretaxOther": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "bonus": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "equity": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "startDate": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "hoursPaid": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "hoursCommute": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "workCosts": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      }
+     }
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 9,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "income",
+    "rowId": "rmuy7k0fqfzmv",
+    "field": "grossPay",
+    "owner": "income",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": 6800000,
+     "state": "rough",
+     "source": "discovery",
+     "cad": "year"
+    },
+    "source": "discovery",
+    "state": "rough",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 10,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "anchor",
+    "planet": "income",
+    "rowId": "anchors",
+    "field": "gut:income:gross",
+    "owner": "sun",
+    "old": null,
+    "new": {
+     "cents": 566667,
+     "cadence": "month",
+     "at": "2026-10-01T15:05:00.000Z",
+     "session": "discovery",
+     "source": "discovery",
+     "note": "",
+     "shared": false,
+     "backfilled": false
+    },
+    "source": "discovery",
+    "state": "rough",
+    "session": "discovery"
+   },
+   {
+    "seq": 11,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "income",
+    "rowId": "rmuy7k0fqfzmv",
+    "field": "takeHome",
+    "owner": "income",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": 190000,
+     "state": "rough",
+     "source": "discovery",
+     "cad": "paycheck"
+    },
+    "source": "discovery",
+    "state": "rough",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 12,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "anchor",
+    "planet": "income",
+    "rowId": "anchors",
+    "field": "gut:income:takeHome",
+    "owner": "sun",
+    "old": null,
+    "new": {
+     "cents": 411667,
+     "cadence": "month",
+     "at": "2026-10-01T15:05:00.000Z",
+     "session": "discovery",
+     "source": "discovery",
+     "note": "",
+     "shared": false,
+     "backfilled": false
+    },
+    "source": "discovery",
+    "state": "rough",
+    "session": "discovery"
+   },
+   {
+    "seq": 13,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "income",
+    "rowId": "rmuy7k0fqfzmv",
+    "field": "payFrequency",
+    "owner": "income",
+    "old": {
+     "v": "biweekly",
+     "state": "known",
+     "source": "client"
+    },
+    "new": {
+     "v": "biweekly",
+     "state": "known",
+     "source": "inferred"
+    },
+    "source": "inferred",
+    "state": "known",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 14,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "income",
+    "rowId": "rmuy7k0fqfzmv",
+    "field": "pretaxRetirement",
+    "owner": "income",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": 272000,
+     "state": "rough",
+     "source": "discovery",
+     "cad": "year"
+    },
+    "source": "discovery",
+    "state": "rough",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 15,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "income",
+    "rowId": "rmuy7k0frcn07",
+    "field": null,
+    "owner": "income",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0frcn07",
+     "planet": "income",
+     "type": "benefits",
+     "nickname": "Employer match",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "matchRate": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "matchUpTo": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "otherBenefit": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      }
+     }
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 16,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "income",
+    "rowId": "rmuy7k0frcn07",
+    "field": "matchRate",
+    "owner": "income",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": null,
+     "state": "unknown",
+     "source": "discovery"
+    },
+    "source": "discovery",
+    "state": "unknown",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 17,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "income",
+    "rowId": "rmuy7k0frcn07",
+    "field": "matchUpTo",
+    "owner": "income",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": null,
+     "state": "unknown",
+     "source": "discovery"
+    },
+    "source": "discovery",
+    "state": "unknown",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 18,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "invest",
+    "rowId": "rmuy7k0fra3ix",
+    "field": null,
+    "owner": "invest",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0fra3ix",
+     "planet": "invest",
+     "type": "account",
+     "nickname": "Savings",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "accountType": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "accountBalance": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "contribAmount": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "allocStocks": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "allocBonds": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "allocCash": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "allocOther": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "usShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "beneficiary": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      }
+     }
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 19,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "invest",
+    "rowId": "rmuy7k0fra3ix",
+    "field": "accountType",
+    "owner": "invest",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": "hysa",
+     "state": "known",
+     "source": "inferred"
+    },
+    "source": "inferred",
+    "state": "known",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 20,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "invest",
+    "rowId": "rmuy7k0fra3ix",
+    "field": "accountBalance",
+    "owner": "invest",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": 250000,
+     "state": "rough",
+     "source": "discovery"
+    },
+    "source": "discovery",
+    "state": "rough",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 21,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "invest",
+    "rowId": "rmuy7k0fra3ix",
+    "field": "contribAmount",
+    "owner": "invest",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": 0,
+     "state": "none",
+     "source": "discovery",
+     "cad": "month"
+    },
+    "source": "discovery",
+    "state": "none",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 22,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "invest",
+    "rowId": "rmuy7k0fsliyj",
+    "field": null,
+    "owner": "invest",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0fsliyj",
+     "planet": "invest",
+     "type": "account",
+     "nickname": "Venmo",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "accountType": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "accountBalance": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "contribAmount": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "allocStocks": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "allocBonds": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "allocCash": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "allocOther": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "usShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "beneficiary": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      }
+     }
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 23,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "invest",
+    "rowId": "rmuy7k0fsliyj",
+    "field": "accountType",
+    "owner": "invest",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": "checking",
+     "state": "known",
+     "source": "inferred"
+    },
+    "source": "inferred",
+    "state": "known",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 24,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "invest",
+    "rowId": "rmuy7k0fsliyj",
+    "field": "accountBalance",
+    "owner": "invest",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": 30000,
+     "state": "rough",
+     "source": "discovery"
+    },
+    "source": "discovery",
+    "state": "rough",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 25,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "invest",
+    "rowId": "rmuy7k0fsliyj",
+    "field": "contribAmount",
+    "owner": "invest",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": 0,
+     "state": "none",
+     "source": "discovery",
+     "cad": "month"
+    },
+    "source": "discovery",
+    "state": "none",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 26,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "invest",
+    "rowId": "rmuy7k0fsnmbl",
+    "field": null,
+    "owner": "invest",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0fsnmbl",
+     "planet": "invest",
+     "type": "account",
+     "nickname": "Old credit union account",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "accountType": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "accountBalance": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "contribAmount": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "allocStocks": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "allocBonds": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "allocCash": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "allocOther": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "usShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "beneficiary": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      }
+     }
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 27,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "invest",
+    "rowId": "rmuy7k0fsnmbl",
+    "field": "accountType",
+    "owner": "invest",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": "checking",
+     "state": "known",
+     "source": "inferred"
+    },
+    "source": "inferred",
+    "state": "known",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 28,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "invest",
+    "rowId": "rmuy7k0fsnmbl",
+    "field": "accountBalance",
+    "owner": "invest",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": 4000,
+     "state": "rough",
+     "source": "discovery"
+    },
+    "source": "discovery",
+    "state": "rough",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 29,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "invest",
+    "rowId": "rmuy7k0fsnmbl",
+    "field": "contribAmount",
+    "owner": "invest",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": 0,
+     "state": "none",
+     "source": "discovery",
+     "cad": "month"
+    },
+    "source": "discovery",
+    "state": "none",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 30,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "invest",
+    "rowId": "rmuy7k0fsji40",
+    "field": null,
+    "owner": "invest",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0fsji40",
+     "planet": "invest",
+     "type": "account",
+     "nickname": "401k",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "accountType": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "accountBalance": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "contribAmount": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "allocStocks": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "allocBonds": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "allocCash": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "allocOther": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "usShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "beneficiary": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      }
+     }
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 31,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "invest",
+    "rowId": "rmuy7k0fsji40",
+    "field": "accountType",
+    "owner": "invest",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": "401k",
+     "state": "known",
+     "source": "inferred"
+    },
+    "source": "inferred",
+    "state": "known",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 32,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "invest",
+    "rowId": "rmuy7k0fsji40",
+    "field": "accountBalance",
+    "owner": "invest",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": null,
+     "state": "will-send",
+     "source": "discovery"
+    },
+    "source": "discovery",
+    "state": "will-send",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 33,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "invest",
+    "rowId": "rmuy7k0fsji40",
+    "field": "contribAmount",
+    "owner": "invest",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": 0,
+     "state": "none",
+     "source": "discovery",
+     "cad": "month"
+    },
+    "source": "discovery",
+    "state": "none",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 34,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "debt",
+    "rowId": "rmuy7k0fs3p0r",
+    "field": null,
+    "owner": "debt",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0fs3p0r",
+     "planet": "debt",
+     "type": "card",
+     "nickname": "Credit card",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "cardName": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "balance": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "apr": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "promoApr": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "promoEnd": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "minimum": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "creditLimit": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "annualFee": {
+       "v": null,
+       "state": "unknown",
+       "source": "lookup-verify"
+      },
+      "creditsUsed": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "autopay": {
+       "v": "none",
+       "state": "known",
+       "source": "client"
+      }
+     }
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 35,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "debt",
+    "rowId": "rmuy7k0fs3p0r",
+    "field": "balance",
+    "owner": "debt",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": null,
+     "state": "unknown",
+     "source": "discovery"
+    },
+    "source": "discovery",
+    "state": "unknown",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 36,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "anchor",
+    "planet": "safety",
+    "rowId": "anchors",
+    "field": "gut:safety:cash",
+    "owner": "sun",
+    "old": null,
+    "new": {
+     "cents": 284000,
+     "cadence": "oneoff",
+     "at": "2026-10-01T15:05:00.000Z",
+     "session": "discovery",
+     "source": "discovery",
+     "note": "",
+     "shared": false,
+     "backfilled": false
+    },
+    "source": "discovery",
+    "state": "rough",
+    "session": "discovery"
+   },
+   {
+    "seq": 37,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "spending",
+    "rowId": "rmuy7k0fth24c",
+    "field": null,
+    "owner": "spending",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0fth24c",
+     "planet": "spending",
+     "type": "line",
+     "nickname": "Phone",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "category": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "amount": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "needWant": {
+       "v": "need",
+       "state": "known",
+       "source": "client"
+      },
+      "mistake": {
+       "v": "unavoidable",
+       "state": "known",
+       "source": "client"
+      },
+      "fatFloor": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "primaryCard": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      }
+     }
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 38,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "spending",
+    "rowId": "rmuy7k0fth24c",
+    "field": "category",
+    "owner": "spending",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": "utilities",
+     "state": "known",
+     "source": "discovery"
+    },
+    "source": "discovery",
+    "state": "known",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 39,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "spending",
+    "rowId": "rmuy7k0fth24c",
+    "field": "amount",
+    "owner": "spending",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": 0,
+     "state": "none",
+     "source": "discovery",
+     "cad": "month"
+    },
+    "source": "discovery",
+    "state": "none",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 40,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "spending",
+    "rowId": "rmuy7k0fth24c",
+    "field": "needWant",
+    "owner": "spending",
+    "old": {
+     "v": "need",
+     "state": "known",
+     "source": "client"
+    },
+    "new": {
+     "v": "need",
+     "state": "known",
+     "source": "discovery"
+    },
+    "source": "discovery",
+    "state": "known",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 41,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "life",
+    "rowId": "rmuy7k0ftvqs7",
+    "field": null,
+    "owner": "life",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0ftvqs7",
+     "planet": "life",
+     "type": "goal",
+     "nickname": "Credit card going down",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "goalCost": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "targetDate": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "priority": {
+       "v": "2",
+       "state": "known",
+       "source": "client"
+      }
+     }
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 42,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "life",
+    "rowId": "rmuy7k0ft4u2n",
+    "field": null,
+    "owner": "life",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0ft4u2n",
+     "planet": "life",
+     "type": "goal",
+     "nickname": "Know where the money goes",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "goalCost": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "targetDate": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "priority": {
+       "v": "2",
+       "state": "known",
+       "source": "client"
+      }
+     }
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 43,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "life",
+    "rowId": "rmuy7k0ftac20",
+    "field": null,
+    "owner": "life",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0ftac20",
+     "planet": "life",
+     "type": "goal",
+     "nickname": "Bachelorette in April",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "goalCost": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "targetDate": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "priority": {
+       "v": "2",
+       "state": "known",
+       "source": "client"
+      }
+     }
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 44,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "life",
+    "rowId": "rmuy7k0ftac20",
+    "field": "targetDate",
+    "owner": "life",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": "2027-04",
+     "state": "rough",
+     "source": "discovery"
+    },
+    "source": "discovery",
+    "state": "rough",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 45,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "life",
+    "rowId": "rmuy7k0ftlkwv",
+    "field": null,
+    "owner": "life",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0ftlkwv",
+     "planet": "life",
+     "type": "goal",
+     "nickname": "Wedding next September",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "goalCost": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "targetDate": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "priority": {
+       "v": "2",
+       "state": "known",
+       "source": "client"
+      }
+     }
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 46,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "set",
+    "planet": "life",
+    "rowId": "rmuy7k0ftlkwv",
+    "field": "targetDate",
+    "owner": "life",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "new": {
+     "v": "2027-09",
+     "state": "rough",
+     "source": "discovery"
+    },
+    "source": "discovery",
+    "state": "rough",
+    "session": "discovery",
+    "why": null
+   },
+   {
+    "seq": 47,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "life",
+    "rowId": "rmuy7k0ftlo6j",
+    "field": null,
+    "owner": "life",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0ftlo6j",
+     "planet": "life",
+     "type": "goal",
+     "nickname": "A cash cushion",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "goalCost": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "targetDate": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "priority": {
+       "v": "2",
+       "state": "known",
+       "source": "client"
+      }
+     }
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 48,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "life",
+    "rowId": "rmuy7k0ftlcuw",
+    "field": null,
+    "owner": "life",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0ftlcuw",
+     "planet": "life",
+     "type": "goal",
+     "nickname": "One trip paid in cash",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "goalCost": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "targetDate": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "priority": {
+       "v": "2",
+       "state": "known",
+       "source": "client"
+      }
+     }
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 49,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "spending",
+    "rowId": "rmuy7k0fujcoj",
+    "field": null,
+    "owner": "spending",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0fujcoj",
+     "planet": "spending",
+     "type": "line",
+     "nickname": "Rent (2 bed)",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "category": {
+       "v": "accommodation",
+       "state": "known",
+       "source": "estimated"
+      },
+      "amount": {
+       "v": 262500,
+       "state": "rough",
+       "source": "estimated",
+       "cad": "month"
+      },
+      "needWant": {
+       "v": "need",
+       "state": "known",
+       "source": "estimated"
+      },
+      "mistake": {
+       "v": "unavoidable",
+       "state": "known",
+       "source": "estimated"
+      },
+      "fatFloor": {
+       "v": true,
+       "state": "known",
+       "source": "estimated"
+      },
+      "primaryCard": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": true,
+       "state": "known",
+       "source": "estimated"
+      },
+      "myShare": {
+       "v": 0.5,
+       "state": "known",
+       "source": "estimated"
+      }
+     },
+     "guess": true,
+     "guessTier": "HCOL",
+     "guessUnit": "2bed"
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 50,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "spending",
+    "rowId": "rmuy7k0fulc98",
+    "field": null,
+    "owner": "spending",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0fulc98",
+     "planet": "spending",
+     "type": "line",
+     "nickname": "Utilities and internet",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "category": {
+       "v": "utilities",
+       "state": "known",
+       "source": "estimated"
+      },
+      "amount": {
+       "v": 36000,
+       "state": "rough",
+       "source": "estimated",
+       "cad": "month"
+      },
+      "needWant": {
+       "v": "need",
+       "state": "known",
+       "source": "estimated"
+      },
+      "mistake": {
+       "v": "unavoidable",
+       "state": "known",
+       "source": "estimated"
+      },
+      "fatFloor": {
+       "v": false,
+       "state": "known",
+       "source": "estimated"
+      },
+      "primaryCard": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": true,
+       "state": "known",
+       "source": "estimated"
+      },
+      "myShare": {
+       "v": 0.5,
+       "state": "known",
+       "source": "estimated"
+      }
+     },
+     "guess": true,
+     "guessTier": "HCOL",
+     "guessUnit": "2bed"
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 51,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "spending",
+    "rowId": "rmuy7k0fu0oad",
+    "field": null,
+    "owner": "spending",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0fu0oad",
+     "planet": "spending",
+     "type": "line",
+     "nickname": "Streaming and subscriptions",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "category": {
+       "v": "utilities",
+       "state": "known",
+       "source": "estimated"
+      },
+      "amount": {
+       "v": 6750,
+       "state": "rough",
+       "source": "estimated",
+       "cad": "month"
+      },
+      "needWant": {
+       "v": "need",
+       "state": "known",
+       "source": "estimated"
+      },
+      "mistake": {
+       "v": "unavoidable",
+       "state": "known",
+       "source": "estimated"
+      },
+      "fatFloor": {
+       "v": false,
+       "state": "known",
+       "source": "estimated"
+      },
+      "primaryCard": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      }
+     },
+     "guess": true,
+     "guessTier": "HCOL"
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 52,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "spending",
+    "rowId": "rmuy7k0fud975",
+    "field": null,
+    "owner": "spending",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0fud975",
+     "planet": "spending",
+     "type": "line",
+     "nickname": "Groceries",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "category": {
+       "v": "food",
+       "state": "known",
+       "source": "estimated"
+      },
+      "amount": {
+       "v": 47460,
+       "state": "rough",
+       "source": "estimated",
+       "cad": "month"
+      },
+      "needWant": {
+       "v": "need",
+       "state": "known",
+       "source": "estimated"
+      },
+      "mistake": {
+       "v": "unavoidable",
+       "state": "known",
+       "source": "estimated"
+      },
+      "fatFloor": {
+       "v": true,
+       "state": "known",
+       "source": "estimated"
+      },
+      "primaryCard": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      }
+     },
+     "guess": true,
+     "guessTier": "HCOL",
+     "guessUnit": null
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 53,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "spending",
+    "rowId": "rmuy7k0fuuh1m",
+    "field": null,
+    "owner": "spending",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0fuuh1m",
+     "planet": "spending",
+     "type": "line",
+     "nickname": "Restaurants and takeout",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "category": {
+       "v": "food",
+       "state": "known",
+       "source": "estimated"
+      },
+      "amount": {
+       "v": 31640,
+       "state": "rough",
+       "source": "estimated",
+       "cad": "month"
+      },
+      "needWant": {
+       "v": "need",
+       "state": "known",
+       "source": "estimated"
+      },
+      "mistake": {
+       "v": "unavoidable",
+       "state": "known",
+       "source": "estimated"
+      },
+      "fatFloor": {
+       "v": true,
+       "state": "known",
+       "source": "estimated"
+      },
+      "primaryCard": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      }
+     },
+     "guess": true,
+     "guessTier": "HCOL",
+     "guessUnit": null
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 54,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "spending",
+    "rowId": "rmuy7k0fu3g8n",
+    "field": null,
+    "owner": "spending",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0fu3g8n",
+     "planet": "spending",
+     "type": "line",
+     "nickname": "Transit, fuel and parking",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "category": {
+       "v": "transportation",
+       "state": "known",
+       "source": "estimated"
+      },
+      "amount": {
+       "v": 36160,
+       "state": "rough",
+       "source": "estimated",
+       "cad": "month"
+      },
+      "needWant": {
+       "v": "need",
+       "state": "known",
+       "source": "estimated"
+      },
+      "mistake": {
+       "v": "unavoidable",
+       "state": "known",
+       "source": "estimated"
+      },
+      "fatFloor": {
+       "v": true,
+       "state": "known",
+       "source": "estimated"
+      },
+      "primaryCard": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      }
+     },
+     "guess": true,
+     "guessTier": "HCOL",
+     "guessUnit": null
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 55,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "spending",
+    "rowId": "rmuy7k0fu13r2",
+    "field": null,
+    "owner": "spending",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0fu13r2",
+     "planet": "spending",
+     "type": "line",
+     "nickname": "Car insurance",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "category": {
+       "v": "transportation",
+       "state": "known",
+       "source": "estimated"
+      },
+      "amount": {
+       "v": 13560,
+       "state": "rough",
+       "source": "estimated",
+       "cad": "month"
+      },
+      "needWant": {
+       "v": "need",
+       "state": "known",
+       "source": "estimated"
+      },
+      "mistake": {
+       "v": "unavoidable",
+       "state": "known",
+       "source": "estimated"
+      },
+      "fatFloor": {
+       "v": true,
+       "state": "known",
+       "source": "estimated"
+      },
+      "primaryCard": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      }
+     },
+     "guess": true,
+     "guessTier": "HCOL",
+     "guessUnit": null
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 56,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "spending",
+    "rowId": "rmuy7k0fu3jc1",
+    "field": null,
+    "owner": "spending",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0fu3jc1",
+     "planet": "spending",
+     "type": "line",
+     "nickname": "Health insurance and care",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "category": {
+       "v": "therapy",
+       "state": "known",
+       "source": "estimated"
+      },
+      "amount": {
+       "v": 42940,
+       "state": "rough",
+       "source": "estimated",
+       "cad": "month"
+      },
+      "needWant": {
+       "v": "need",
+       "state": "known",
+       "source": "estimated"
+      },
+      "mistake": {
+       "v": "unavoidable",
+       "state": "known",
+       "source": "estimated"
+      },
+      "fatFloor": {
+       "v": false,
+       "state": "known",
+       "source": "estimated"
+      },
+      "primaryCard": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      }
+     },
+     "guess": true,
+     "guessTier": "HCOL",
+     "guessUnit": null
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 57,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "spending",
+    "rowId": "rmuy7k0fumkcs",
+    "field": null,
+    "owner": "spending",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0fumkcs",
+     "planet": "spending",
+     "type": "line",
+     "nickname": "Entertainment and hobbies",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "category": {
+       "v": "wants",
+       "state": "known",
+       "source": "estimated"
+      },
+      "amount": {
+       "v": 24860,
+       "state": "rough",
+       "source": "estimated",
+       "cad": "month"
+      },
+      "needWant": {
+       "v": "want",
+       "state": "known",
+       "source": "estimated"
+      },
+      "mistake": {
+       "v": "unavoidable",
+       "state": "known",
+       "source": "estimated"
+      },
+      "fatFloor": {
+       "v": false,
+       "state": "known",
+       "source": "estimated"
+      },
+      "primaryCard": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      }
+     },
+     "guess": true,
+     "guessTier": "HCOL",
+     "guessUnit": null
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 58,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "spending",
+    "rowId": "rmuy7k0fundvv",
+    "field": null,
+    "owner": "spending",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0fundvv",
+     "planet": "spending",
+     "type": "line",
+     "nickname": "Clothing and personal care",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "category": {
+       "v": "wants",
+       "state": "known",
+       "source": "estimated"
+      },
+      "amount": {
+       "v": 18080,
+       "state": "rough",
+       "source": "estimated",
+       "cad": "month"
+      },
+      "needWant": {
+       "v": "want",
+       "state": "known",
+       "source": "estimated"
+      },
+      "mistake": {
+       "v": "unavoidable",
+       "state": "known",
+       "source": "estimated"
+      },
+      "fatFloor": {
+       "v": false,
+       "state": "known",
+       "source": "estimated"
+      },
+      "primaryCard": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      }
+     },
+     "guess": true,
+     "guessTier": "HCOL",
+     "guessUnit": null
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 59,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "spending",
+    "rowId": "rmuy7k0fu82ap",
+    "field": null,
+    "owner": "spending",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0fu82ap",
+     "planet": "spending",
+     "type": "line",
+     "nickname": "Travel",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "category": {
+       "v": "irregular",
+       "state": "known",
+       "source": "estimated"
+      },
+      "amount": {
+       "v": 20340,
+       "state": "rough",
+       "source": "estimated",
+       "cad": "month"
+      },
+      "needWant": {
+       "v": "want",
+       "state": "known",
+       "source": "estimated"
+      },
+      "mistake": {
+       "v": "unavoidable",
+       "state": "known",
+       "source": "estimated"
+      },
+      "fatFloor": {
+       "v": false,
+       "state": "known",
+       "source": "estimated"
+      },
+      "primaryCard": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      }
+     },
+     "guess": true,
+     "guessTier": "HCOL",
+     "guessUnit": null
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   },
+   {
+    "seq": 60,
+    "ts": "2026-10-01T15:05:00.000Z",
+    "kind": "add-row",
+    "planet": "spending",
+    "rowId": "rmuy7k0fugnba",
+    "field": null,
+    "owner": "spending",
+    "old": null,
+    "new": {
+     "id": "rmuy7k0fugnba",
+     "planet": "spending",
+     "type": "line",
+     "nickname": "Gifts and giving",
+     "institution": "",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "category": {
+       "v": "irregular",
+       "state": "known",
+       "source": "estimated"
+      },
+      "amount": {
+       "v": 10170,
+       "state": "rough",
+       "source": "estimated",
+       "cad": "month"
+      },
+      "needWant": {
+       "v": "want",
+       "state": "known",
+       "source": "estimated"
+      },
+      "mistake": {
+       "v": "unavoidable",
+       "state": "known",
+       "source": "estimated"
+      },
+      "fatFloor": {
+       "v": false,
+       "state": "known",
+       "source": "estimated"
+      },
+      "primaryCard": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "lineAutopay": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "shared": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      },
+      "myShare": {
+       "v": null,
+       "state": "unknown",
+       "source": "client"
+      }
+     },
+     "guess": true,
+     "guessTier": "HCOL",
+     "guessUnit": null
+    },
+    "source": "client",
+    "state": "known",
+    "session": "discovery"
+   }
+  ],
+  "scenarios": [],
+  "sessions": [],
+  "coachNotes": [],
+  "quickNotes": [],
+  "myPlate": {
+   "done": {},
+   "snoozed": {}
+  },
+  "theirPlate": {
+   "done": {},
+   "snoozed": {}
+  },
+  "anchors": {
+   "gut": {
+    "income:gross": {
+     "cents": 566667,
+     "cadence": "month",
+     "at": "2026-10-01T15:05:00.000Z",
+     "session": "discovery",
+     "source": "discovery",
+     "note": "",
+     "shared": false,
+     "backfilled": false
+    },
+    "income:takeHome": {
+     "cents": 411667,
+     "cadence": "month",
+     "at": "2026-10-01T15:05:00.000Z",
+     "session": "discovery",
+     "source": "discovery",
+     "note": "",
+     "shared": false,
+     "backfilled": false
+    },
+    "safety:cash": {
+     "cents": 284000,
+     "cadence": "oneoff",
+     "at": "2026-10-01T15:05:00.000Z",
+     "session": "discovery",
+     "source": "discovery",
+     "note": "",
+     "shared": false,
+     "backfilled": false
+    }
+   },
+   "dream": {},
+   "history": []
+  },
+  "household": {
+   "roommates": [
+    {
+     "id": "rm1",
+     "nickname": "Dani",
+     "shareDefault": 0.5
+    }
+   ],
+   "lease": "both",
+   "unitSize": null
+  },
+  "colTier": null,
+  "sessionMode": "gentle",
+  "discovery": {
+   "at": "2026-10-01T15:05:00.000Z",
+   "form": {
+    "snapshot": {
+     "name": "Maya",
+     "birth": "27",
+     "city": "Jersey City",
+     "workSituation": "employed",
+     "employerType": "company",
+     "roommates": 1,
+     "roommateNames": [
+      "Dani"
+     ],
+     "lease": "both"
+    },
+    "whyNow": "A wedding next year and a card that never goes down. I want to stop guessing.",
+    "money": {
+     "gross": "68k",
+     "takeHome": "1900 every two weeks",
+     "contribPct": "4%",
+     "matchKnown": true,
+     "match": "",
+     "cash": [
+      {
+       "name": "Savings",
+       "said": "2,500ish"
+      },
+      {
+       "name": "Venmo",
+       "said": "300"
+      },
+      {
+       "name": "Old credit union account",
+       "said": "40"
+      }
+     ],
+     "invest": [
+      {
+       "name": "401k",
+       "said": "will send",
+       "type": "401k"
+      }
+     ],
+     "debt": [
+      {
+       "name": "Credit card",
+       "said": "not given",
+       "type": "card"
+      }
+     ]
+    },
+    "spending": {
+     "gutTotal": "",
+     "areas": {},
+     "phoneFamilyPlan": true
+    },
+    "goals": [
+     {
+      "text": "Credit card going down"
+     },
+     {
+      "text": "Know where the money goes"
+     },
+     {
+      "text": "Bachelorette in April",
+      "when": "April"
+     },
+     {
+      "text": "Wedding next September",
+      "when": "next September"
+     },
+     {
+      "text": "A cash cushion"
+     },
+     {
+      "text": "One trip paid in cash"
+     }
+    ],
+    "mindset": {
+     "stuck": [
+      "start",
+      "organization"
+     ],
+     "avoidsAccounts": true,
+     "struggles": [
+      "avoiding",
+      "consistency"
+     ]
+    },
+    "words": [
+     "I just do not look at the card.",
+     "If I knew what I actually spend I think I would feel better.",
+     "Is 4% enough for the 401k?"
+    ]
+   },
+   "whyNow": "A wedding next year and a card that never goes down. I want to stop guessing.",
+   "words": [
+    "I just do not look at the card.",
+    "If I knew what I actually spend I think I would feel better.",
+    "Is 4% enough for the 401k?"
+   ],
+   "mindset": {
+    "stuck": [
+     "start",
+     "organization"
+    ],
+    "avoidsAccounts": true,
+    "struggles": [
+     "avoiding",
+     "consistency"
+    ]
+   },
+   "goals": [
+    {
+     "text": "Credit card going down"
+    },
+    {
+     "text": "Know where the money goes"
+    },
+    {
+     "text": "Bachelorette in April",
+     "when": "April"
+    },
+    {
+     "text": "Wedding next September",
+     "when": "next September"
+    },
+    {
+     "text": "A cash cushion"
+    },
+    {
+     "text": "One trip paid in cash"
+    }
+   ],
+   "checks": {
+    "takeHome": {
+     "said": 411667,
+     "inferred": 453537,
+     "pretaxAnnual": 272000,
+     "agree": true,
+     "gap": -41870,
+     "pct": 0.092
+    }
+   },
+   "notes": [
+    "Match said to exist but not confirmed: on their plate.",
+    "Credit card: balance not given."
+   ],
+   "confirmed": {},
+   "applied": true
+  },
+  "targets": {},
+  "callProgress": {}
+ }
+}

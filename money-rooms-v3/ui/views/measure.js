@@ -100,7 +100,7 @@ function listRows(id, v, m, app) {
   switch (id) {
     case 'promoCliff': return cap(v, c => [short(c.name), F.months(c.monthsLeft)]);
     case 'assets': return [['Total', F.dollarsWhole(v.total)], ['Invested', F.dollarsWhole(v.invested)], [client ? 'Reachable now' : 'Liquid', F.dollarsWhole(v.liquid)]];
-    case 'runway': return [[client ? 'Full spending' : 'Full', F.months(v.full)], v.draftt !== null ? ['Needs only', F.months(v.draftt)] : null, v.fat !== null ? [client ? 'Lean month' : 'FAT floor', F.months(v.fat)] : null].filter(Boolean);
+    case 'runway': return [[client ? 'Full spending' : 'Full', F.months(v.full)], v.fullAlone !== null && v.fullAlone !== undefined ? ['If it all falls on you', F.months(v.fullAlone)] : null, v.draftt !== null ? ['Needs only', F.months(v.draftt)] : null, v.fat !== null ? [client ? 'Lean month' : 'FAT floor', F.months(v.fat)] : null].filter(Boolean);
     case 'roomLeft': return cap(v, r => [limitLabel(r.limitId), F.dollarsWhole(r.left)]);
     case 'fiLevels': return [['Lean', v.lean !== null ? F.dollarsCompact(v.lean) : 'needs'], [client ? 'Enough' : 'FI', F.dollarsCompact(v.fi)], ['Fat', F.dollarsCompact(v.fat)], ['Barista', F.dollarsCompact(v.barista)]];
     case 'cardNetValue': return cap(v, c => [short(c.name), F.dollarsWhole(c.netAnnual)]);

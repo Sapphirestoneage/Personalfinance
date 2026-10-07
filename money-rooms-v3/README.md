@@ -37,12 +37,14 @@ repository root, `npx playwright install chromium`).
 | `engine/debtsim.js`, `engine/projection.js` | Payoff simulation; the year-by-year projection to 95 (Triple D) |
 | `engine/metrics.js`, `engine/lenses.js`, `engine/chartdata.js` | The 74 metrics with their math, direction and levers; the 39 lenses; data for the 8 charts |
 | `engine/fiLadder.js`, `engine/graph.js`, `engine/sensitivity.js` | Level 9: the FI ladder (Lean, Barista, FI, Fat, Coast), the dependency graph from inputs to the FI date, and what moves the FI date (impact and ask priority) |
-| `engine/leverage.js`, `engine/plates.js`, `engine/email.js` | What to ask next, the two plates, the follow-up email |
+| `engine/parse.js`, `engine/col.js`, `engine/guesses.js`, `engine/discovery.js` | Level 8: numbers the way people say them ("1900 every two weeks", "my half is 1,650"), the cost-of-living tier from the city (`data/col-tiers.json`), the guesses that fill empty areas, and the discovery call applied to a record |
+| `engine/anchors.js`, `engine/callpath.js`, `engine/variance.js`, `engine/targets.js`, `engine/progress.js` | Level 8: what they said and what they would want (write-once anchors), the six stops of the call, what you said against what it really is, the four target choices, and progress versus paperwork |
+| `engine/leverage.js`, `engine/plates.js`, `engine/email.js` | What to ask next, the two plates, the follow-up, discovery and targets emails |
 | `engine/scenarios.js` | Scenario blocks: costs from answers, each alone and together, never writing to the record |
 | `engine/compute.js` | Runs the planets and returns one result for the views |
 | `ui/app.js` | The shell: routes, view toggle, autosave, undo, shortcuts |
 | `ui/tokens.css`, `ui/app.css`, `ui/print.css` | The design system and the one-pager print sheet |
-| `ui/views/` | One module per screen (home, ledger, measure, onepager, session, scenarios, learn, assumptions, levers); views never do math |
+| `ui/views/` | One module per screen (home, ledger, measure, onepager, session, scenarios, learn, assumptions, levers, discovery, call); views never do math |
 | `ui/shelf.js`, `ui/metricdrawer.js`, `ui/levers-bridge.js`, `ui/levers-worker.js` | The headline metrics shelf, the one drawer every metric opens (math, inputs, levers, lens), and the memoised sensitivity runner (a module Worker when the browser has one) |
 | `ui/charts.js`, `ui/table.js`, `ui/orbit.js` | The D3 charts, the Ledger table, the orbit map |
 | `data/` | Libraries, each with asOf, source and a verify flag |
@@ -89,6 +91,32 @@ Couples and joint accounts, a multi-client picker beyond load and save, cloud
 sync or encryption, Google Sheet CSV import, session templates, a compliance
 footer or consent flow, refresh cadence, state tax, ACA, Roth conversions,
 72(t), the rule of 55, live card or fund feeds. (FI-date-sensitivity leverage shipped in Level 9.)
+
+## Level 8: Discovery, Confirm and the call path
+
+Home, "New discovery call" (coach only). One scrolling table for the first
+call: snapshot, why now, money, spending, goals, mindset, their words, with
+a chip bar for the things people say ("I have a roommate", "Phone on a family
+plan"). Type what they say the way they say it; the hint under each box shows
+what was heard. The city sets the cost-of-living tier (HCOL, MCOL, LCOL from
+BEA regional price parities; the client reads "high cost area"); tap a tier
+chip to overrule it. Save builds a new client with everything they said as
+"What you said", a guess (an average for the tier, scaled for roommates and
+the unit size) in every spending area they did not mention, and a first draft
+with "Includes N guesses". The summary sheet prints, and its email asks for
+at most three things.
+
+`#/call` runs session 1 one question at a time: Confirm (what they said, my
+guesses, "Use mine" to swap a guess for their number), What you spend (their
+gut, "Area 3 of 7", "I don't know" in one tap), What you'd want (the dream,
+with what they said hidden until the coach reveals it), The real numbers,
+How far off (what you said against what it really is, in groups, with the
+FI effect of each gap), and Your targets (What you said, What you'd want,
+Meet in the middle, Keep it as is). A roommate marks lines as shared; every
+figure uses the client's share, and runway, the cushion target, Simulate
+("Roommate moves out") and the worst case say what happens if it all falls
+on them. The Session page carries two meters (Picture completeness, Goal
+progress) and Progress vs paperwork.
 
 ## Level 9: What moves the FI date
 

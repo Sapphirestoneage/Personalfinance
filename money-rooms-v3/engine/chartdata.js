@@ -85,7 +85,11 @@ export function drafttBands(result) {
 /* 7 FI progress gauge. */
 export function fiGauge(result) {
   const M = result.metrics; if (!M || M.pctToFi.status !== 'ok') return { needs: (M && M.pctToFi.needs) || ['net worth and spending'] };
-  return { pct: M.pctToFi.value.value, coastPct: M.coastFi.status === 'ok' ? M.coastFi.coastPct : null, levels: M.fiLevels.status === 'ok' ? M.fiLevels.value.value : null, netWorth: M.netWorth.value.cents, fiNumber: M.fiNumber.value.cents, rough: M.fiNumber.value.rough };
+  /* the bar is whatever the progress basis counts: net worth, or invested assets when debts are still unknown (a Level 8 first draft) */
+  const inv = result.sun.outputs.invest.investedAssets;
+  const have = M.pctToFi.basis === 'netWorth' && M.netWorth.status === 'ok' ? M.netWorth.value.cents : inv && inv.status === 'ok' ? inv.cents : M.netWorth.status === 'ok' ? M.netWorth.value.cents : null;
+  if (have === null) return { needs: ['invested balances'] };
+  return { pct: M.pctToFi.value.value, coastPct: M.coastFi.status === 'ok' ? M.coastFi.coastPct : null, levels: M.fiLevels.status === 'ok' ? M.fiLevels.value.value : null, netWorth: have, fiNumber: M.fiNumber.value.cents, rough: M.fiNumber.value.rough };
 }
 
 /* 8 Contribution waterfall: match, HSA, Roth or IRA, 401k to the limit, taxable, with tax saved. */

@@ -1,5 +1,5 @@
 {
- "asOf": "2026-10-05",
+ "asOf": "2026-10-07",
  "source": "Shaped like the BLS Consumer Expenditure Survey 2024 tables by consumer unit size, scaled by the builder from memory; confidence 0.5; every figure marked verify",
  "verify": true,
  "confidence": 0.5,
@@ -302,6 +302,26 @@
      ]
     ]
    }
+  }
+ },
+ "housingByUnit": {
+  "note": "National average rent and utilities a month by unit size, shaped like HUD Fair Market Rent medians for 2026 as remembered by the builder; verify",
+  "verify": true,
+  "studio": {
+   "rent": 125000,
+   "utilities": 15000
+  },
+  "1bed": {
+   "rent": 145000,
+   "utilities": 18000
+  },
+  "2bed": {
+   "rent": 175000,
+   "utilities": 24000
+  },
+  "3bed": {
+   "rent": 215000,
+   "utilities": 30000
   }
  }
 }

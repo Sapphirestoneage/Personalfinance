@@ -6,7 +6,7 @@ import { createSun, PLANETS, SUN_FIELDS } from './sun.js';
 import { append, undoTarget, redoTarget } from './journal.js';
 import { field as mkField, isState, isSource } from './states.js';
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export function newId() {
   return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -31,6 +31,13 @@ export function createRecord(opts) {
     quickNotes: [],
     myPlate: { done: {}, snoozed: {} },
     theirPlate: { done: {}, snoozed: {} },
+    anchors: { gut: {}, dream: {}, history: [] },
+    household: { roommates: [], lease: 'none', unitSize: null },
+    colTier: null,
+    sessionMode: 'standard',
+    discovery: null,
+    targets: {},
+    callProgress: {},
   };
 }
 
@@ -77,13 +84,24 @@ export function setField(record, rowId, fieldId, value, state, source, meta) {
   if (old && old.state === next.state && old.source === next.source && old.cad === next.cad
       && JSON.stringify(old.v) === JSON.stringify(next.v)) return null;
   target.f[fieldId] = next;
+  const why = m.why !== undefined ? m.why : whyOf(old, next);
   const line = append(record.journal, {
     kind: 'set', planet: rowId === 'sun' ? 'sun' : target.planet, rowId, field: fieldId,
     owner: rowId === 'sun' ? 'sun' : target.planet,
-    old, new: Object.assign({}, next), source, state, session: m.session || null,
+    old, new: Object.assign({}, next), source, state, session: m.session || null, why,
   }, m.now);
   touch(record, m.now);
   return line;
+}
+
+/* Why a value changed (Level 8, MR-048): "correction" means we learned the truth, "move" means real life changed, null is paperwork (confidence only). The default needs no coach input: a value change on a rough, unknown, will-send, guessed or discovery figure is a correction; on a known or verified figure a move; a state change alone is paperwork. */
+export function whyOf(old, next) {
+  if (!old) return null;
+  const changed = JSON.stringify(old.v) !== JSON.stringify(next.v) || (old.cad || null) !== (next.cad || null);
+  if (!changed) return null;
+  if (['rough', 'unknown', 'will-send', 'none'].includes(old.state) || old.source === 'estimated' || old.source === 'discovery') return 'correction';
+  if (old.state === 'known' || old.state === 'verified') return 'move';
+  return null;
 }
 
 /* Set a row's own column (nickname, institution, asOf, followUp, stress, notes). */
@@ -196,4 +214,26 @@ export function fileQuickNote(record, noteId, meta) {
   n.filed = true;
   touch(record, meta && meta.now);
   return n;
+}
+
+/* The household (Level 8, MR-047): roommates and whose name is on the lease. Partners are out of scope. */
+export function setHousehold(record, household, meta) {
+  const m = meta || {};
+  const old = record.household ? JSON.parse(JSON.stringify(record.household)) : null;
+  const next = { roommates: (household.roommates || []).map((r, i) => ({ id: r.id || ('rm' + (i + 1)), nickname: r.nickname || '', shareDefault: typeof r.shareDefault === 'number' ? r.shareDefault : Math.round(10000 / ((household.roommates || []).length + 1)) / 10000 })), lease: household.lease || 'none', unitSize: household.unitSize || null };
+  if (JSON.stringify(old) === JSON.stringify(next)) return null;
+  record.household = next;
+  const line = append(record.journal, { kind: 'household', planet: 'sun', rowId: 'household', field: 'household', owner: 'sun', old, new: JSON.parse(JSON.stringify(next)), source: 'client', state: 'known', session: m.session || null, why: m.why === undefined ? null : m.why }, m.now);
+  touch(record, m.now);
+  return line;
+}
+export function setColTier(record, tier, meta) {
+  const m = meta || {};
+  const old = record.colTier ? Object.assign({}, record.colTier) : null;
+  const next = tier ? { tier: tier.tier, source: tier.source || 'client', basis: tier.basis || 'override', allItems: tier.allItems, housing: tier.housing, metro: tier.metro || null, metroLabel: tier.metroLabel || null, outsideMetro: !!tier.outsideMetro } : null;
+  if (JSON.stringify(old) === JSON.stringify(next)) return null;
+  record.colTier = next;
+  const line = append(record.journal, { kind: 'set', planet: 'sun', rowId: 'sun', field: 'colTier', owner: 'sun', old, new: next ? Object.assign({}, next) : null, source: next ? next.source : 'client', state: 'known', session: m.session || null, column: true, why: null }, m.now);
+  touch(record, m.now);
+  return line;
 }

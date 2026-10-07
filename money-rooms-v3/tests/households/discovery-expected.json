@@ -1,0 +1,125 @@
+{
+ "maya": {
+  "tier": "HCOL",
+  "allItems": 113,
+  "housing": 150,
+  "metro": "new-york",
+  "state": "NJ",
+  "takeHomeMonthly": 411667,
+  "grossMonthly": 566667,
+  "guesses": {
+   "accommodation": 131250,
+   "utilities": 24750,
+   "food": 79100,
+   "transportation": 49720,
+   "therapy": 42940,
+   "wants": 42940,
+   "irregular": 30510
+  },
+  "guessRows": 12,
+  "guessAreas": 7,
+  "spendingMonthly": 401210,
+  "cash": 284000,
+  "sharedFull": 298500,
+  "sharedShare": 149250,
+  "gapMonthly": 149250,
+  "bridge2": 298500,
+  "cushionNow": 0.7,
+  "cushionAlone": 0.5,
+  "ruleOf5Months": 5.4,
+  "ruleOf5Target": 2465034,
+  "fiNumber": 120363000,
+  "gentle": true,
+  "anchorsGut": [
+   "income:gross",
+   "income:takeHome",
+   "safety:cash"
+  ],
+  "noAnchorFor": [
+   "spending:accommodation",
+   "spending:food",
+   "debt:total"
+  ]
+ },
+ "tiers": {
+  "HCOL": 131250,
+  "MCOL": 87500,
+  "LCOL": 65625,
+  "hcolMetro": 131250
+ },
+ "variance": {
+  "rows": {
+   "accommodation": {
+    "actual": 150000,
+    "gut": 150000,
+    "dream": 150000,
+    "awareness": 0,
+    "dreamGap": 0,
+    "wish": 0
+   },
+   "food": {
+    "actual": 65000,
+    "gut": 50000,
+    "dream": 45000,
+    "awareness": 15000,
+    "dreamGap": 20000,
+    "wish": -5000
+   },
+   "transportation": {
+    "actual": 45000,
+    "gut": 30000,
+    "dream": null,
+    "awareness": 15000
+   },
+   "wants": {
+    "actual": 20000,
+    "gut": 30000,
+    "dream": 40000,
+    "awareness": -10000,
+    "dreamGap": -20000,
+    "wish": 10000
+   },
+   "utilities": {
+    "actual": 15000,
+    "gut": 15000,
+    "dream": null,
+    "awareness": 0
+   }
+  },
+  "totalActual": 295000,
+  "totalGut": 240000,
+  "totalAwareness": 55000,
+  "totalAwarenessPct": 0.229,
+  "bigger": [
+   "food",
+   "transportation"
+  ],
+  "smaller": [
+   "wants"
+  ],
+  "roomToSpend": [
+   "wants"
+  ],
+  "aboveDream": [
+   "food"
+  ],
+  "rankedFirst": "food",
+  "top2": [
+   "food",
+   "transportation"
+  ],
+  "top2Share": 0.75,
+  "targetDefault": {
+   "food": "dream",
+   "wants": "room",
+   "transportation": "middle",
+   "accommodation": "middle",
+   "utilities": "middle"
+  },
+  "middle": {
+   "transportation": 37500,
+   "accommodation": 150000,
+   "utilities": 15000
+  }
+ }
+}

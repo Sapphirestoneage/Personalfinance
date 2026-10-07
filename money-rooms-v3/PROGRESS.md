@@ -3,6 +3,15 @@
 Updated: 2026-10-07
 
 ## Done
+- Level 8 Discovery, Confirm, and the Call Path: the discovery form and chip bar (#/discovery), the
+  cost-of-living tier from the city (data/col-tiers.json, BEA RPP, marked verify), guesses that fill
+  empty spending areas and never count as facts, the summary sheet and its email, roommates and shared
+  bills (every figure uses the client's share; runway, the cushion target, the roommate block and the
+  worst case say what happens if it all falls on them), gut and dream anchors with a schema 2 to 3
+  migration, the six-stop call path (#/call), variance with FI effects and the three-marker chart,
+  the four target choices, the journal "why", two header meters and Progress vs paperwork on the
+  Session page, the one-pager sections, 22 engine tests with a hand-typed workpaper
+  (tests/households/expected-discovery.py) and a 29-check browser flow.
 - Level 9 What Moves the FI Date: the FI ladder (engine/fiLadder.js, five rungs plus Coast, percent
   there, date reached, required monthly to the dream FI age, the barista rule and the reverse), 26 new
   metrics with direction and levers on all 74, the dependency graph (data/graph.json, engine/graph.js,
@@ -39,9 +48,10 @@ Updated: 2026-10-07
 - Design critique round 1 found 17 fixes; all applied; round 2 in screenshots/level-0/critique.md.
 
 ## Next
-- A design critique round for #/levers and the shelf (every other screen has one).
-- Build Level 8 proper (gut and dream anchors per category, variance, targets); the Level 9 stand-ins
-  are three optional fields on the Life plan and one Assumptions switch.
+- A design critique round for #/levers and the shelf (every other screen before Level 8 has one).
+- A design critique round for #/discovery, the summary and #/call.
+- The RPP figures in data/col-tiers.json are from memory (verify: true); check them against BEA's
+  latest release and the unit-size rent averages against HUD fair market rents before a client sees them.
 - Unknown inputs with a national default should get the 50% band in ask priority; today they fall back
   to the v1 leverage score (MR-042).
 - Merge the branch so GitHub Pages serves the app, then a live timing of Jordan's keyboard entry

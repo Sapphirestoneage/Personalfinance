@@ -139,9 +139,35 @@ plainly. Evidence is a file, a test name or a screenshot path.
 | README: run, add a client, update libraries | done | README.md |
 | Final report | done | FINAL-REPORT.md |
 
-## Level 8 Gut and dream anchors, variance, targets
+## Level 8 Discovery, Confirm, and the Call Path (Gut, Dream, Actual)
 
-Not built before Level 9. Level 9 ships stand-ins and says so (MR-040): `dreamFiAge`, `dreamSpending` and `gutSpending` as optional fields on the Life plan retirement row; `fiSpendingBasis` (actual, gut, dream) on the Assumptions screen; Lean FI falls back to food, accommodation and transportation when no line is flagged. Variance and per-category anchors are not built.
+Built after Level 9. The Level 9 stand-ins (dream FI age, dream and gut spending on the Life plan; the FI spending basis switch) stay; the dream FI age is now written by the call path, and `fiSpendingBasis` reads the anchors first (MR-046).
+
+| Requirement | Status | Evidence |
+|---|---|---|
+| `#/discovery` route, coach only; Home gets "New discovery call" | done | ui/routes.js; ui/views/discovery.js; ui/views/home.js |
+| One scrolling table: Snapshot, Why now, Money, Spending, Goals, Mindset, Their words | done | ui/views/discovery.js (sections from data/discovery.json) |
+| Listening chip bar from `data/discovery.json`, each chip writes facts | done | data/discovery.json chips; chipOn/applyChip in discovery.js |
+| Source "discovery" (cap 0.6, plate theirs), label "What you said" | done | engine/states.js SOURCES.discovery; states.test.js |
+| Discovery money values become gut anchors (client share for shared) | done | engine/discovery.js applyDiscovery; discovery.test.js "a discovery call becomes a record" |
+| Derivations: take-home/gross cross-check silent under 10%, state from city, tier from city, share math, Rule of 5 with the roommate gap, runway | done | engine/parse.js crossCheck; engine/col.js; planets/safety.js; discovery.test.js |
+| `data/col-tiers.json`: BEA RPP, HCOL at or above 110, MCOL 95 to 110, LCOL under 95, top 50 metros, states, city to metro, non-metro fallback, override stops auto-updates | done | data/col-tiers.json (verify: true); col.js tierFor/colTierOf; discovery.test.js "tier inference", "override" |
+| Guesses from `data/defaults.json` scaled by tier, household and sharing, with unit-size rows | done | data/defaults.json housingByUnit; engine/guesses.js buildGuesses; discovery.test.js "guess scaling HCOL > MCOL > LCOL", "household scaling" |
+| "Guess" label everywhere; never an anchor, never completeness, never variance; recomputed on tier or household change as paperwork; "Includes N guesses"; per-client switch "Fill gaps with guesses" | done | states.js estimated label Guess; compute.js completenessOf and result.guesses; discovery.js applyGuesses; assumptions fillGapsWithGuesses; tests "guesses are excluded", "the switch" |
+| Gentle session mode from mindset; Confirm "Already said" hints | done | record.sessionMode; discovery.js applyDiscovery sets gentle when avoiding; call.js gentle copy; confirmQuestions |
+| Discovery summary sheet, print, `engine/discovery.js` | done | discoverySummary, session1Agenda; ui/views/discovery.js mountSummary; print.css |
+| Shared costs: `record.household`, fields `shared` and `myShare`, "Roommate moves out" block with lease notes, `roommateGapCents` in the Rule of 5 target, runway two numbers, roommate-risk lens, worst case includes the roommate leaving | done | engine/record.js setHousehold; data/fields.json; data/scenario-blocks.json roommate; planets/safety.js roommateGap and runway.fullAlone; data/lenses.json roommate-risk; projection.js worstExtraAnnualSpend; scenarios.js roommateOutcome |
+| Anchors: `record.anchors` gut and dream, write-once, Re-anchor journals kind "anchor", migration 2 to 3 with gut backfill, stand-in rule, dream total, FI spending basis switch, "living alone" housing dream | done | engine/anchors.js; engine/store.js MIGRATIONS 2 to 3; planets/spending.js stand-ins; callpath.js housingChoice; tests "anchors are write-once", "schema 2 migrates" |
+| Call path `#/call`: six stops from `data/callpath.json`, one read-aloud question at a time, "Area 3 of 7", I don't know and None in one tap, progress per session | done | ui/views/call.js; engine/callpath.js; record.callProgress; ui-flows level8 |
+| Variance engine: awareness, dream and wish gaps, groups, FI effects, coach tier comparison, headline, three-marker chart | done | engine/variance.js; ui/charts.js markers; variance household tied out in tests/households/expected-discovery.py |
+| Targets: What you said, What you'd want, Meet in the middle, Keep it as is; default rules; planned moves; `callTargetRoomFraction` 0.5 | done | engine/targets.js; record.targets; assumptions callTargetRoomFraction |
+| Journal "why" (correction, move, paperwork by default rule); Session "Progress vs paperwork"; two header meters | done | record.js whyOf; engine/progress.js; ui/views/session.js meterRow and progressPanel |
+| One-pager and emails: discovery follow-up at most three items; targets email | done | engine/email.js discoveryEmail, targetsEmail; ui/views/onepager.js saidSection |
+| Tests: parsing, cross-check, share math, anchors, tier inference (Jersey City to New York to HCOL), override, guess scaling, household scaling, paperwork recompute, guesses excluded, switch, correction, roommate scenario, gap and runway, lens, gentle mode, Confirm why tags, variance, stand-in, dream basis, targets | done | tests/engine/discovery.test.js (22 tests); workpaper tests/households/expected-discovery.py |
+| New Maya discovery household and a variance household with hand-typed expected numbers | done | tests/households/discovery-specs.mjs; build-discovery.mjs writes maya-discovery.json; discovery-expected.json |
+| tests/ui.js: #/discovery, the summary, #/call, the roommate scenario in both views at three widths | done | tests/ui-screens.js (three screens, the maya-discovery household); ui-flows.js level8-maya-discovery-to-targets (29 checks) |
+| Design rules: no internal words on screen; client words; HCOL/MCOL/LCOL coach, "high cost area" client | done | data/col-tiers.json labels; flow check "the client view never says HCOL, anchor, variance or estimated" |
+| Screenshots and a critique round for the new screens | not done | the sweep ran at three widths in both views; a critique round is owed (PROGRESS.md) |
 
 ## Level 9 What Moves the FI Date
 

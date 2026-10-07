@@ -45,7 +45,10 @@
   "guardrailsBand": 0.2,
   "ssBridgeFromPortfolio": true,
   "benchmarkSource": "fidelity",
-  "showBenchmarksToClient": false
+  "showBenchmarksToClient": false,
+  "callTargetRoomFraction": 0.5,
+  "fillGapsWithGuesses": true,
+  "roommateMonthsToReplace": 2
  },
  "labels": {
   "returnLikely": "Return after inflation, likely",
@@ -77,7 +80,10 @@
   "guardrailsBand": "Guardrails: withdrawal rate may drift this share of its start",
   "ssBridgeFromPortfolio": "Social Security floor: bridge years come from the portfolio",
   "benchmarkSource": "Salary multiple benchmark source",
-  "showBenchmarksToClient": "Show benchmarks in the client view"
+  "showBenchmarksToClient": "Show benchmarks in the client view",
+  "callTargetRoomFraction": "Meet in the middle: share of the way from actual toward the nearer of gut and dream",
+  "fillGapsWithGuesses": "Fill gaps with guesses (averages for the cost area)",
+  "roommateMonthsToReplace": "Months until a roommate is replaced (cushion and worst case)"
  },
  "options": {
   "fiProgressBasis": [
@@ -125,6 +131,16 @@
    ]
   ],
   "showBenchmarksToClient": [
+   [
+    "true",
+    "Yes"
+   ],
+   [
+    "false",
+    "No"
+   ]
+  ],
+  "fillGapsWithGuesses": [
    [
     "true",
     "Yes"

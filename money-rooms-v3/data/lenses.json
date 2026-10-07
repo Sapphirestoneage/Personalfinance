@@ -513,6 +513,21 @@
    "reading": "die-with-zero-underspending",
    "metric": "savingsRateTakeHome",
    "level": 9
+  },
+  {
+   "n": 40,
+   "id": "roommate-risk",
+   "name": "If it all falls on you",
+   "trigger": "shared lines above 25% of take-home, or the lease in the client's name only",
+   "template": "If {nickname} moved out, your share of {lines} would go from {share} to {full} a month. Covering {months} months while you find someone takes about {bridge}.",
+   "inputs": [
+    "spending.sharedFullMonthly",
+    "spending.sharedShareMonthly",
+    "safety.roommateGap"
+   ],
+   "reading": "money-guy-foo",
+   "metric": "emergencyGap",
+   "level": 8
   }
  ]
 }

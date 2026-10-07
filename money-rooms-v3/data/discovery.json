@@ -1,0 +1,277 @@
+{
+ "asOf": "2026-10-07",
+ "source": "Money Rooms v3 Level 8 spec: the discovery call",
+ "verify": false,
+ "chips": [
+  {
+   "id": "employed",
+   "label": "Employed",
+   "writes": {
+    "sun.workSituation": "employed"
+   }
+  },
+  {
+   "id": "self-employed",
+   "label": "Self-employed",
+   "writes": {
+    "sun.workSituation": "self-employed"
+   }
+  },
+  {
+   "id": "between-jobs",
+   "label": "Between jobs",
+   "writes": {
+    "sun.workSituation": "between-jobs"
+   }
+  },
+  {
+   "id": "single",
+   "label": "Single",
+   "writes": {
+    "sun.filingStatus": "single"
+   }
+  },
+  {
+   "id": "partnered",
+   "label": "Partnered",
+   "writes": {
+    "note": "partnered (couples are out of scope; noted)"
+   }
+  },
+  {
+   "id": "no-dependents",
+   "label": "No dependents",
+   "writes": {
+    "sun.dependents": 0
+   }
+  },
+  {
+   "id": "roommate",
+   "label": "Roommate",
+   "writes": {
+    "household.roommates": 1
+   }
+  },
+  {
+   "id": "two-roommates",
+   "label": "Two roommates",
+   "writes": {
+    "household.roommates": 2
+   }
+  },
+  {
+   "id": "lease-mine",
+   "label": "Lease in my name",
+   "writes": {
+    "household.lease": "mine"
+   }
+  },
+  {
+   "id": "lease-both",
+   "label": "Lease in both names",
+   "writes": {
+    "household.lease": "both"
+   }
+  },
+  {
+   "id": "lease-theirs",
+   "label": "Lease in their name",
+   "writes": {
+    "household.lease": "theirs"
+   }
+  },
+  {
+   "id": "no-lease",
+   "label": "No lease",
+   "writes": {
+    "household.lease": "none"
+   }
+  },
+  {
+   "id": "family-phone",
+   "label": "Phone on family plan",
+   "writes": {
+    "spending.phone": 0
+   }
+  },
+  {
+   "id": "401k-match",
+   "label": "Has a 401k match",
+   "writes": {
+    "income.matchKnown": true
+   }
+  },
+  {
+   "id": "avoids-accounts",
+   "label": "Avoids looking at accounts",
+   "writes": {
+    "mindset.avoidsAccounts": true
+   }
+  },
+  {
+   "id": "goal-travel",
+   "label": "Goal: travel",
+   "writes": {
+    "goal": "A trip paid in cash"
+   }
+  },
+  {
+   "id": "goal-home",
+   "label": "Goal: own a home",
+   "writes": {
+    "goal": "Own a home"
+   }
+  },
+  {
+   "id": "goal-cushion",
+   "label": "Goal: cushion",
+   "writes": {
+    "goal": "A cash cushion"
+   }
+  },
+  {
+   "id": "goal-card",
+   "label": "Goal: pay off card",
+   "writes": {
+    "goal": "Credit card going down"
+   }
+  },
+  {
+   "id": "goal-know",
+   "label": "Goal: know my spending",
+   "writes": {
+    "goal": "Know where the money goes"
+   }
+  },
+  {
+   "id": "goal-wedding",
+   "label": "Goal: a wedding",
+   "writes": {
+    "goal": "A wedding"
+   }
+  }
+ ],
+ "employerTypes": [
+  [
+   "company",
+   "Company"
+  ],
+  [
+   "nonprofit",
+   "Nonprofit"
+  ],
+  [
+   "government",
+   "Government or school"
+  ],
+  [
+   "self",
+   "Self or contract"
+  ],
+  [
+   "other",
+   "Other"
+  ]
+ ],
+ "lease": [
+  [
+   "mine",
+   "Mine"
+  ],
+  [
+   "both",
+   "Both"
+  ],
+  [
+   "theirs",
+   "Theirs"
+  ],
+  [
+   "none",
+   "No lease"
+  ]
+ ],
+ "stuck": [
+  [
+   "investing",
+   "Investing"
+  ],
+  [
+   "budgeting",
+   "Budgeting"
+  ],
+  [
+   "organization",
+   "Organization"
+  ],
+  [
+   "decisions",
+   "Making decisions"
+  ],
+  [
+   "start",
+   "Not knowing where to start"
+  ]
+ ],
+ "struggles": [
+  [
+   "overspending",
+   "Overspending"
+  ],
+  [
+   "avoiding",
+   "Avoiding"
+  ],
+  [
+   "confusion",
+   "Confusion"
+  ],
+  [
+   "investing",
+   "Investing"
+  ],
+  [
+   "structure",
+   "Structure"
+  ],
+  [
+   "consistency",
+   "Consistency"
+  ]
+ ],
+ "sections": {
+  "snapshot": "Snapshot",
+  "why": "Why now",
+  "money": "Money",
+  "spending": "Spending",
+  "goals": "Goals",
+  "mindset": "Mindset",
+  "words": "Their words"
+ },
+ "questions": {
+  "name": "What should I call you?",
+  "birth": "When were you born, or how old are you?",
+  "city": "Where do you live?",
+  "work": "How would you describe work right now?",
+  "employerType": "What kind of employer is it?",
+  "roommates": "Do you live with anyone, roommates I mean?",
+  "lease": "Whose name is on the lease?",
+  "whyNow": "What made you reach out now?",
+  "gross": "What do you make before tax, roughly?",
+  "takeHome": "And what lands in your account each time you are paid?",
+  "cash": "Any cash or savings accounts? Rough balances are fine.",
+  "invest": "Any retirement or investment accounts?",
+  "debt": "Anything you owe: cards, loans?",
+  "contrib": "Do you put anything into a 401k, and does your employer match it?",
+  "gutTotal": "If you had to guess, what goes out in a normal month?",
+  "goals": "What would you like to be different a year from now?",
+  "stuck": "Where do you feel most stuck?",
+  "struggle": "What is the biggest struggle with money right now?",
+  "avoids": "Do you tend to avoid looking at your accounts?"
+ },
+ "gentleWords": {
+  "reveal": "We will look at how the real numbers compare once you have gathered them yourself.",
+  "guess": "These are averages for your area, not your numbers. Want to swap any for yours?",
+  "homework": "Before next time, a photo of each statement is plenty. No logins needed on the call."
+ }
+}

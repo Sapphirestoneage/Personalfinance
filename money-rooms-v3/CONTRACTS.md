@@ -57,6 +57,10 @@ Publishes:
 | `mistakesAnnual` | annual, aftertax | rows marked mistake |
 | `savingsLandingMonthly` | monthly, aftertax | savings actually landing in accounts, typed as a Spending row of type `savings-transfer` |
 | `cardSpendByCategory` | monthly, aftertax | per card id: spend by earn category (for Debt's wallet math) |
+| `sharedFullMonthly` | monthly, aftertax | the full bills of lines shared with a roommate (Level 8, MR-047) |
+| `sharedShareMonthly` | monthly, aftertax | the client's share of those bills; every other figure uses the share |
+| `standIns` | map | per area, "anchor" when the gut anchor stands in for missing lines, "guess" when a guess does (MR-046) |
+| `anchorGapByCategory` | monthly, aftertax | per area with lines and a gut anchor: lines minus the anchor |
 
 ## 3. Debt and Credit
 
@@ -80,7 +84,7 @@ Publishes:
 
 ## 4. Safety Net
 
-Reads: `baselineMonthly`, `fatFloorMonthly`, `fixedMonthly`, `byCategory` (Spending slot),
+Reads: `baselineMonthly`, `fatFloorMonthly`, `fixedMonthly`, `byCategory`, `sharedFullMonthly`, `sharedShareMonthly` (Spending slot),
 `cashBalances` (Investments slot), `birthDate`, `takeHomeMonthly`, `workSituation`.
 Publishes:
 
@@ -96,6 +100,7 @@ Publishes:
 | `unemploymentMonthly` | monthly | state estimate if typed |
 | `cutAbilityMonthly` | monthly | what the client says they could cut |
 | `spendingWithPremiums` | monthly, aftertax | baseline spending plus bank-paid premiums: the month the metrics use |
+| `roommateGap` | oneoff | (full shared bills minus the client's share) x months until a roommate is replaced; a line of the Rule of 5 target (MR-047) |
 
 ## 5. Investments and Accounts
 
@@ -160,5 +165,12 @@ leverage ranking. Level 9 adds three pure modules that read the result and
 write nothing: `engine/fiLadder.js` (the rungs, from the slots and the
 projection path), `engine/graph.js` (built from `data/graph.json`, the
 contracts and the metric inputs) and `engine/sensitivity.js` (which copies the
-record, nudges one value and runs `compute` again). It returns one frozen result object; views read from it and
+record, nudges one value and runs `compute` again). Level 8 adds the same
+kind of pure modules: `engine/col.js` (the cost-of-living tier from the city),
+`engine/guesses.js` (guess rows, flagged `row.guess`, never counted toward
+completeness or variance), `engine/anchors.js` (what they said and what they
+would want, write-once, under `record.anchors`), `engine/variance.js`,
+`engine/targets.js` and `engine/progress.js`. `compute` also returns
+`colTier`, `household`, `guesses`, `completeness`, `sessionMode` and
+`firstDraft`. It returns one frozen result object; views read from it and
 never do math.

@@ -8,6 +8,8 @@ import * as Scenarios from './views/scenarios.js';
 import * as Learn from './views/learn.js';
 import * as Assumptions from './views/assumptions.js';
 import * as Levers from './views/levers.js';
+import * as Discovery from './views/discovery.js';
+import * as Call from './views/call.js';
 import { PLANETS, PLANET_LABELS, PLANET_SHORT } from '../engine/sun.js';
 import { translator } from './glossary.js';
 
@@ -21,6 +23,8 @@ export const routes = {
   learn: { title: 'Learn', mount: Learn.mount, needsClient: true },
   assumptions: { title: 'Assumptions', mount: Assumptions.mount, needsClient: true, coachOnly: true },
   levers: { title: 'Levers', mount: Levers.mount, needsClient: true },
+  discovery: { title: 'Discovery call', mount: Discovery.mount, needsClient: false, coachOnly: true },
+  call: { title: 'Call', mount: Call.mount, needsClient: true, coachOnly: true },
 };
 
 export function navItems(app) {
@@ -34,6 +38,8 @@ export function navItems(app) {
   items.push({ group: 'Read', label: t('One-pager'), href: '#/onepager', active: r => r.name === 'onepager', key: 'Alt+0' });
   items.push({ group: 'Read', label: app.view === 'client' ? 'What matters most' : 'Levers', href: '#/levers', active: r => r.name === 'levers', key: null });
   items.push({ group: 'Read', label: 'Session', href: '#/session', active: r => r.name === 'session', key: null, coachOnly: true });
+  items.push({ group: 'Read', label: 'Call', href: '#/call', active: r => r.name === 'call', key: null, coachOnly: true });
+  items.push({ group: 'Read', label: 'Discovery', href: '#/discovery', active: r => r.name === 'discovery', key: null, coachOnly: true });
   items.push({ group: 'Read', label: app.view === 'client' ? 'What if' : 'Simulate', href: '#/scenarios', active: r => r.name === 'scenarios', key: null });
   items.push({ group: 'Read', label: 'Learn', href: '#/learn', active: r => r.name === 'learn', key: null });
   items.push({ group: 'Read', label: 'Assumptions', href: '#/assumptions', active: r => r.name === 'assumptions', key: null, coachOnly: true });

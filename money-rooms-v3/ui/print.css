@@ -34,3 +34,10 @@ a { color: inherit; text-decoration: none; }
 .op-shelf .shelf-grid.compact .kpi .value { font-size: 10px; line-height: 13px; }
 .op-shelf .shelf-grid.compact .kpi .range { font-size: 7px; line-height: 9px; }
 .mini-ladder { display: none; }
+
+/* Level 8: the discovery summary prints on its own; everything else on that screen hides */
+.discovery-summary { border: 0; padding: 0; }
+.discovery-summary section { break-inside: avoid; margin-bottom: 6px; }
+.discovery-summary .tierchips, .discovery-summary textarea, .discovery-summary .email-panel { display: none !important; }
+.op-said table.data { font-size: 9px; }
+.guess-row td { color: var(--slate); }

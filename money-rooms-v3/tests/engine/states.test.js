@@ -2,13 +2,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { STATES, SOURCES, STATE_ORDER, SOURCE_ORDER, confidenceOf, hasValue, numberOf, rangeOf, isRough, needsFollowUp, plateOf, field, stateByKey, sourceByKey } from '../../engine/states.js';
 
-test('eight states, six sources, one keystroke each and no key shared', () => {
+test('eight states, seven sources, one keystroke each and no key shared', () => {
   assert.equal(STATE_ORDER.length, 8);
-  assert.equal(SOURCE_ORDER.length, 6);
+  assert.equal(SOURCE_ORDER.length, 7); /* discovery joined in Level 8 (MR-045) */
   const keys = STATE_ORDER.map(s => STATES[s].key);
   assert.equal(new Set(keys).size, 8);
   const skeys = SOURCE_ORDER.map(s => SOURCES[s].key);
-  assert.equal(new Set(skeys).size, 6);
+  assert.equal(new Set(skeys).size, 7);
   assert.equal(stateByKey('r').id, 'rough');
   assert.equal(sourceByKey('e').id, 'estimated');
 });

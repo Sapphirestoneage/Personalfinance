@@ -1,0 +1,75 @@
+{
+ "schemaVersion": 2,
+ "id": "old1",
+ "createdAt": "2026-09-15T00:00:00.000Z",
+ "updatedAt": "2026-09-15T00:00:00.000Z",
+ "sun": {
+  "f": {
+   "name": {
+    "v": "Old one",
+    "state": "known",
+    "source": "client"
+   }
+  },
+  "outputs": {},
+  "assumptions": {},
+  "clientPicks": [],
+  "onepager": {}
+ },
+ "planets": {
+  "income": {
+   "rows": []
+  },
+  "spending": {
+   "rows": [
+    {
+     "id": "s1",
+     "planet": "spending",
+     "type": "line",
+     "nickname": "Rent",
+     "institution": "",
+     "asOf": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "f": {
+      "amount": {
+       "v": 210000,
+       "state": "known",
+       "source": "client"
+      }
+     },
+     "stress": null,
+     "followUp": false
+    }
+   ]
+  },
+  "debt": {
+   "rows": []
+  },
+  "safety": {
+   "rows": []
+  },
+  "invest": {
+   "rows": []
+  },
+  "taxes": {
+   "rows": []
+  },
+  "life": {
+   "rows": []
+  }
+ },
+ "journal": [],
+ "scenarios": [],
+ "sessions": [],
+ "coachNotes": [],
+ "quickNotes": [],
+ "myPlate": {
+  "done": {},
+  "snoozed": {}
+ },
+ "theirPlate": {
+  "done": {},
+  "snoozed": {}
+ }
+}
