@@ -86,3 +86,4 @@
 .reveal-item, .reveal-item:hover, .reveal-item * { text-decoration: none; }
 .reveal-item:hover .reveal-name { text-decoration: underline; }
 @media (max-width: 720px) { .mtabs { gap: 2px; } .mtabs a { padding: 6px 8px; font-size: var(--fs-12); } }
+.chart-thumb .legend, .chart-thumb .suggest, .chart-thumb .chart-needs, .chart-thumb .chart-sub { display: none; }

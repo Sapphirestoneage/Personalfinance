@@ -277,5 +277,5 @@ Level 10 (savings buckets, curricula, the session 5 curriculum) was never built.
 | C3 22 new charts from engine output | done | engine/chartdata-more.js, ui/charts-more.js, engine/charts-all.js; charts-more.test.js |
 | C4 One palette, both themes, 390px | done | charts-more.css; tokens only; sweep at 1440, 1024, 390 |
 | D1 Browser flow for the unlock loop from Start demo from zero; map clicks; tabs; new chart screens in the sweep | done | ui-flows.js `partB-unlock-loop-from-zero`; ui-screens.js measure-* screens |
-| D2 Screenshots | done | screenshots/level-12/ |
+| D2 Screenshots | done | screenshots/demo-brief/ |
 | D3 README map, DECISIONS, QUESTIONS | done | MR-057 to MR-061; questions 37 to 48 |
