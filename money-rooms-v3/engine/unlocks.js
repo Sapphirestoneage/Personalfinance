@@ -94,7 +94,7 @@ export function targetFor(needText, record, data) {
   return describeTarget(pick[0], pick[1], pick[2], record, data);
 }
 function describeTarget(planet, type, field, record, data) {
-  if (planet === 'call') return { planet: 'call', type: null, field, rowId: null, label: field === 'gut' ? 'Her gut guess per area' : 'Her dream spending per area', where: 'Call path', href: '#/callpath', addRow: false };
+  if (planet === 'call') return { planet: 'call', type: null, field, rowId: null, label: field === 'gut' ? 'Her gut number per area' : 'Her dream spending per area', where: 'Call path', href: '#/callpath', addRow: false };
   if (planet === 'transactions') return { planet: 'transactions', type: null, field, rowId: null, label: 'A transactions import', where: 'Transactions', href: '#/transactions', addRow: false };
   if (planet === 'discovery') return { planet: 'discovery', type: null, field, rowId: null, label: 'The stress score', where: 'Discovery form or a session', href: '#/discovery', addRow: false };
   if (planet === 'session') return { planet: 'session', type: null, field, rowId: null, label: field === 'snapshot' ? 'A closed session or a money date' : field === 'satisfaction' ? 'A satisfaction score' : field === 'worthIt' ? 'Worth-it scores per area' : 'A session close', where: 'Session or money date', href: '#/money-date', addRow: false };

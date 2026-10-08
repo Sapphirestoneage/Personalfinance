@@ -91,10 +91,10 @@ Age at 2026-10-05: born 1999-03-14, so 27. Filing status single.
 - 40 Tax saved per $1,000 pre-tax = 22.0% x $1,000 = $220.
 - 37 Implied tax rate = (paystub gross $6,500 - take-home $4,466.52 - deductions $465.83) / $6,500 = 24.1%.
 - 41 FI number = $46,272 / 4.0% = $1,156,800.
-- 42 % to FI = net worth $21,900 / $1,156,800 = 1.9% (FI progress basis: net worth).
-- 43 Coast FI = $1,156,800 / 1.05^33 (5.0032) = $231,212.55; invested $21,900 / $231,212.55 = 9.5%.
+- 42 % to FI = invested $18,050 / $1,156,800 = 1.6% (FI progress basis: invested assets).
+- 43 Coast FI = $1,156,800 / 1.05^33 (5.0032) = $231,212.55; invested $18,050 / $231,212.55 = 7.8%.
 - 45 Lean FI = $2,844 x 12 / 4% = $853,200; Fat FI = $46,272 x 1.5 / 4% = $1,735,200; Barista FI = ($46,272 - $24,000) / 4% = $556,800.
-- L9 Ladder: Lean $853,200; Barista Lean = ($2,844 - $2,000) x 12 / 4% = $253,200; Barista FI = ($3,856 - $2,000) x 12 / 4% = $556,800; FI $1,156,800; Fat $1,735,200. Rule: $100 a month = $30,000. Part-time income to be Barista FI today = max(0, $3,856 - $21,900 x 4% / 12) = $3,783. Years of expenses 0.39; days of freedom 142.4; FI ratio 1.6%.
+- L9 Ladder: Lean $853,200; Barista Lean = ($2,844 - $2,000) x 12 / 4% = $253,200; Barista FI = ($3,856 - $2,000) x 12 / 4% = $556,800; FI $1,156,800; Fat $1,735,200. Rule: $100 a month = $30,000. Part-time income to be Barista FI today = max(0, $3,856 - $18,050 x 4% / 12) = $3,795.83. Years of expenses 0.39; days of freedom 142.4; FI ratio 1.6%.
 - 35 Fee drag lifetime = $18,050 x (1.05^33 - (1.05 - 0.00090)^33) = $2,515.87.
 
 ## Projection (year by year, real dollars, likely return)

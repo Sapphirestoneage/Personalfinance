@@ -80,9 +80,9 @@ test('a new job compares its salary with today\'s gross and scales to take-home'
   assert.ok(blockCosts(def, { answers: {} }, { takeHomeMonthly: 400000, spendingMonthly: null, grossMonthly: null }).needs.includes('gross pay'));
 });
 
-/* MR-057: the Simulate audit. Maya's condo and four-day week, each alone and together. */
-test('Maya: a pay cut stops with work and never raises the FI target; together is worse than the sum, and the notes say why', () => {
-  const rec = loadHousehold('maya');
+/* MR-057: the Simulate audit. Leah's condo and four-day week, each alone and together. */
+test('Leah: a pay cut stops with work and never raises the FI target; together is worse than the sum, and the notes say why', () => {
+  const rec = loadHousehold('leah');
   const R = compute(rec, data, { today: '2026-10-08' });
   const live = { takeHomeMonthly: R.sun.outputs.income.takeHomeMonthly.cents, spendingMonthly: R.sun.outputs.safety.spendingWithPremiums.cents, grossMonthly: R.sun.outputs.income.grossMonthly.cents };
   const inp = R.projectionInputs;

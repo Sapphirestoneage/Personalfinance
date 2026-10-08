@@ -40,7 +40,7 @@ export function scoreMetrics(record, result, data) {
   /* blind spot */
   const P = programOf(record); const bs = P.blindSpot && (P.blindSpot.s9 || P.blindSpot.s4);
   if (bs && typeof bs.pct === 'number') { const r = ratio(bs.pct, 0.8, true); put(ok(def('blindSpot'), r, { formula: 'actual spending the gut did not cover / actual spending, from the transactions', inputs: [inputOf('Session', count(P.blindSpot.s9 ? 9 : 4, 'session'))], result: r })); }
-  else put(need(def('blindSpot'), ['transactions compared with the gut guesses (session 4)']));
+  else put(need(def('blindSpot'), ['transactions compared with the gut numbers (session 4)']));
   /* guesses left */
   const g = result.guesses;
   if (g && record.planets.spending.rows.length) { const c = count(g.count || 0, 'guesses'); put(ok(def('guessesLeft'), c, { formula: 'count of spending areas filled by a national-average guess', inputs: [inputOf('Guess rows', count((g.rows || []).length, 'rows'))], result: c })); }

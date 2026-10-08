@@ -114,13 +114,14 @@ export function chartThumb(app, chartId, o) {
 
 /* ---- the next unlock ---- */
 let nextCache = { key: null, list: null };
-export function nextUnlocksFor(app) {
+export function nextUnlocksFor(app, cb) {
   if (!app.record || !app.result) return [];
-  const key = versionKey(app.record, app.result.today) + ':' + app.view;
+  const key = versionKey(app.record, app.result.today); /* the same list in both views, so switching to Client view does not rebuild every chart (MR-072) */
   if (nextCache.key === key) return nextCache.list;
-  const list = U.nextUnlocks(app.record, app.result, app.data, { top: 3 });
-  nextCache = { key, list };
-  return list;
+  const compute = () => { if (nextCache.key !== key) nextCache = { key, list: U.nextUnlocks(app.record, app.result, app.data, { top: 3 }) }; return nextCache.list; };
+  if (!cb) return compute();
+  setTimeout(() => cb(compute()), 0); /* the list builds every chart once per record version; with a callback the screen paints first */
+  return null;
 }
 export function describeProbe(app, probe) {
   if (probe.kind === 'sun') return 'Add the ' + probe.label.toLowerCase() + ' under Household facts';
@@ -140,10 +141,15 @@ export function goToProbe(app, probe, from) {
 }
 export function nextUnlockCard(app, o) {
   o = o || {};
-  const list = nextUnlocksFor(app);
   const coach = app.view === 'coach';
   const card = h('section', { class: 'panel next-unlock' + (o.compact ? ' compact' : '') });
-  card.appendChild(h('h3', null, coach ? 'Next unlock' : 'What would open the most next'));
+  const paint = list => { clear(card); card.classList.remove('updating'); card.appendChild(h('h3', null, coach ? 'Next unlock' : 'What would open the most next')); fillNextUnlock(card, app, o, list, coach); };
+  const ready = nextUnlocksFor(app, list => { if (card.isConnected) paint(list); });
+  if (ready) paint(ready);
+  else { card.classList.add('updating'); card.appendChild(h('h3', null, coach ? 'Next unlock' : 'What would open the most next')); card.appendChild(h('p', { class: 'small muted' }, 'Looking at what one more input would open.')); }
+  return card;
+}
+function fillNextUnlock(card, app, o, list, coach) {
   if (!list.length) { card.appendChild(h('p', { class: 'small muted' }, 'Nothing left that one input would open. Every number has what it needs.')); return card; }
   const big = list[0];
   const names = big.unlocks.charts.map(c => nameOf(app, c)).concat(big.unlocks.metrics.map(m => nameOf(app, m)), big.unlocks.lenses.map(l => nameOf(app, l)));
@@ -255,7 +261,7 @@ export function chartInputs(app, chartId) {
     if (m && m.status !== 'ok' && m.needs) m.needs.forEach(n => { if (!seen.has('need:' + n)) { seen.add('need:' + n); sharpen.push({ text: 'Needs ' + n, target: U.targetFor(n, app.record, app.data) }); } });
     rootsOf(g, 'm.' + mid).forEach(node => {
       if (node.kind !== 'field' && node.kind !== 'sun') return;
-      if (node.kind === 'sun') { const id = node.id.replace('sun.', ''); const f = app.record.sun.f[id]; if (f && f.v !== null && f.v !== undefined && !seen.has(node.id)) { seen.add(node.id); fed.push({ label: node.label, value: String(f.v), href: '#/home', rowId: 'sun', field: id, rough: f.state === 'rough' }); } return; }
+      if (node.kind === 'sun') { const id = node.id.replace('sun.', ''); const f = app.record.sun.f[id]; if (f && f.v !== null && f.v !== undefined && !seen.has(node.id)) { seen.add(node.id); fed.push({ label: node.label, value: id === 'birthDate' && /^\d{4}-\d{2}-\d{2}$/.test(String(f.v)) ? F.dateLong(f.v) : String(f.v), href: '#/home', rowId: 'sun', field: id, rough: f.state === 'rough' }); } return; }
       app.record.planets[node.planet] && app.record.planets[node.planet].rows.forEach(r => {
         const f = r.f[node.id]; if (!f || f.v === null || f.v === undefined || f.state === 'unknown') return;
         const key = r.id + ':' + node.id; if (seen.has(key)) return; seen.add(key);
@@ -263,7 +269,7 @@ export function chartInputs(app, chartId) {
         const text = typeof f.v === 'number' && d.kind === 'money' ? F.dollarsWhole(f.v, { rough: f.state === 'rough' }) : typeof f.v === 'number' && d.kind === 'percent' ? F.percent(f.v) : (f.v && typeof f.v === 'object' && 'low' in f.v ? F.dollarsWhole(f.v.low) + ' to ' + F.dollarsWhole(f.v.high) : String(f.v));
         const item = { label: (r.nickname ? r.nickname + ': ' : '') + d.label, value: text, href: '#/ledger/' + node.planet + '/' + r.type, rowId: r.id, field: node.id, rough: f.state === 'rough' || f.source === 'estimated' || f.source === 'lookup-verify', planet: node.planet };
         fed.push(item);
-        if (item.rough) sharpen.push({ text: 'Confirm ' + item.label.toLowerCase() + ' (' + (f.source === 'estimated' ? 'a guess' : f.state === 'rough' ? 'rough' : 'looked up, verify') + ')', target: { href: item.href, rowId: r.id, field: node.id, label: d.label, planet: node.planet, type: r.type } });
+        if (item.rough) sharpen.push({ text: 'Confirm ' + item.label.toLowerCase() + ' (' + (f.source === 'estimated' ? (app.view === 'client' ? 'an average' : 'a guess') : f.state === 'rough' ? 'rough' : 'looked up, verify') + ')', target: { href: item.href, rowId: r.id, field: node.id, label: d.label, planet: node.planet, type: r.type } });
       });
     });
   });

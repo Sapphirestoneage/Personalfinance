@@ -18,6 +18,7 @@
 | 11c | Charts first (demo brief Part C) | FROZEN | MR-061: Measure as Overview, Charts, Numbers, Lenses, Unlocks; 31 charts; screenshots/demo-brief |
 | 12 | The Scoreboard (every metric, its graph, the dependency map, satisfaction, momentum) | FROZEN | MR-063, MR-065: the registry, graph explain, the chart catalog with seven new charts, snapshots and momentum, #/scoreboard, #/map, #/money-date; screenshots/level-12 |
 | 13 | Calculators (cash flow calendar, How much home, House, Car, Retirement for two) | FROZEN | MR-067, MR-068 (v44 parity): engine/cashcal.js, home.js, house.js, car.js, retire.js, loanmath.js, fieffect.js, calculators.js; #/calculators, #/calendar, #/calc/*; ten charts; three metrics; data/housing-costs.json, auto-costs.json, calendar.json, life-events.json, calculators.json; screenshots/level-13 |
+| 14 | Don't Make Me Think (usability pass: 35 fixes) | FROZEN | MR-072: Today and the client Home, six nav groups with search, Progress tabs, Presenting mode, ledger read mode, one label per number, US dates, the Leah rename, levers by realistic movement; audit/USABILITY.md, audit/HALLWAY-TEST.md; screenshots/level-before14 and level-after14 |
 
 A frozen level reopens only for a failing test or a decision logged in
 DECISIONS.md.

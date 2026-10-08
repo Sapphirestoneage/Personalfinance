@@ -44,7 +44,7 @@ const STAGE_PLANETS = { 1: ['income', 'spending'], 2: ['debt'], 3: ['safety', 'i
 export function mount(host, app) {
   const t = translator(app);
   const tab = tabOf(app); const sub = app.route.params.sub || null;
-  host.appendChild(h('header', null, h('h1', null, t('Measure')), h('span', { class: 'sub' }, app.view === 'coach' ? 'Every number opens its math.' : '')));
+  host.appendChild(h('header', null, h('h1', null, app.view === 'coach' ? 'Charts and numbers' : 'Your charts and numbers')));
   host.appendChild(tabBar(app, tab));
   const stage = h('div', { class: 'stage-row' });
   const kpis = h('div');
@@ -64,11 +64,6 @@ export function mount(host, app) {
     if (tab === 'unlocks') { if (!M) { unlocks.appendChild(h('div', { class: 'empty' }, h('h2', null, 'Nothing to map yet'), h('p', null, 'Enter income first, then spending. The map fills as numbers open.'))); return; } renderUnlockMap(unlocks, app); return; }
     if (tab === 'charts' && sub) { if (!M) { charts.appendChild(h('div', { class: 'empty' }, h('h2', null, 'Nothing to chart yet'), h('p', null, 'Enter income first, then spending.'))); return; } renderFocusedChart(charts, app, sub, app.unlockBack); return; }
     if (!M) { (tab === 'numbers' ? kpis : tab === 'lenses' ? lenses : charts).appendChild(h('div', { class: 'empty' }, h('h2', null, 'Nothing to measure yet'), h('p', null, 'Enter income first, then spending. Numbers appear as their inputs arrive.'))); return; }
-    if (app.view === 'coach') Object.keys(STAGE_PLANETS).forEach(s => {
-      const planets = STAGE_PLANETS[s]; const filled = planets.every(p => R.rowCounts[p] > 0);
-      stage.appendChild(h('span', { class: 'chip stage' + (filled ? '' : ' waiting') }, 'Stage ' + s + ': ' + planets.map(p => PLANET_LABELS[p].toLowerCase()).join(' and ') + (filled ? ', has rows' : ', needs rows')));
-    });
-    if (app.view === 'coach') { const filledStages = Object.keys(STAGE_PLANETS).filter(s => STAGE_PLANETS[s].every(p => R.rowCounts[p] > 0)); stage.appendChild(h('span', { class: 'chip stage stage-summary' }, filledStages.length === 5 ? 'Stages 1 to 5 have rows' : filledStages.length + ' of 5 stages have rows')); }
     if (tab !== 'numbers') { if (tab === 'lenses') { drawLenses(lenses, app, t, phone); if (sub) revealItem(lenses, '.lens[data-lens="' + sub + '"]'); } if (tab === 'charts') drawCharts(charts, app, t, phone); return; }
     if (app.view === 'client') {
       /* Client view starts from the key numbers; the rest sits behind one switch */

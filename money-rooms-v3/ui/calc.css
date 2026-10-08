@@ -61,7 +61,7 @@ table.data.calc-table tr.is-under td { background: var(--sapphire-100); }
 .calc-card.locked .calc-card-live strong { font-size: var(--fs-13); font-weight: var(--w-regular); color: var(--slate); }
 .calc-card p { margin: 0; color: var(--slate); }
 /* the calendar */
-.calc-tabs { display: flex; flex-wrap: wrap; gap: var(--s-1); margin-top: var(--s-3); border-bottom: 1px solid var(--line); padding-bottom: var(--s-2); }
+.calc-tabs { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: var(--s-1); margin-top: var(--s-3); border-bottom: 1px solid var(--line); padding-bottom: var(--s-2); }
 .calc-tabs .tab { height: 28px; padding: 0 var(--s-3); border-radius: var(--r-field); border: 1px solid transparent; background: transparent; color: var(--slate); cursor: pointer; font-size: var(--fs-13); }
 .calc-tabs .tab.active { background: var(--sapphire-900); color: var(--on-bar); }
 .calc-tabs .tab:hover:not(.active) { background: var(--sapphire-100); color: var(--ink); }
@@ -83,7 +83,7 @@ table.data.calc-table tr.is-under td { background: var(--sapphire-100); }
 .cal-cell.is-today b { text-decoration: underline; text-underline-offset: 3px; color: var(--sapphire-700); }
 .cal-cell:hover:not(.blank):not(.past), .cal-cell:focus-visible { border-color: var(--sapphire-500); outline: none; }
 .cal-icons { display: flex; flex-wrap: wrap; gap: 2px; }
-.ci { font-style: normal; font-size: 10px; line-height: 14px; padding: 0 4px; border-radius: 3px; border: 1px solid var(--line); color: var(--slate); white-space: nowrap; }
+.ci { font-style: normal; font-size: var(--fs-11); line-height: 14px; padding: 0 4px; border-radius: 3px; border: 1px solid var(--line); color: var(--slate); white-space: nowrap; }
 .ci-pay { border-color: var(--sapphire-500); color: var(--sapphire-700); }
 .ci-card { border-color: var(--sapphire-300); }
 .ci-later { border-style: dashed; }
@@ -123,7 +123,7 @@ body[data-view="client"] .chart .bar-tight, body[data-view="client"] .chart .dot
   .calc-fields { grid-template-columns: minmax(0, 1fr); }
   .calc-control .input, .calc-control .select { max-width: none; flex: 1 1 140px; }
   .cal-cell { min-height: 56px; padding: 3px 4px; }
-  .cal-cell small { font-size: 10px; }
+  .cal-cell small { font-size: var(--fs-11); }
   .ci { display: none; } .cal-icons .ci:first-child { display: inline; }
   .cal-ev { grid-template-columns: minmax(0, 1fr) auto; } .cal-ev .ev-kind { grid-column: 1 / -1; }
   .calc-tabs .tab { padding: 0 var(--s-2); }

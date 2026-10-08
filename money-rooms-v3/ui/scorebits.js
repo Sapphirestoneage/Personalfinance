@@ -41,7 +41,7 @@ export function sparkOf(app, id) {
 
 /* one trend line: arrow, change, since when; the client's words never alarm */
 export function trendLine(app, id) {
-  const t = trend(app.record, app.result, app.data, id); if (!t || !t.sinceLast) return h('span', { class: 'small muted trend' }, isClient(app) ? 'First reading. The next check adds the trend.' : 'No earlier reading yet.');
+  const t = trend(app.record, app.result, app.data, id); if (!t || !t.sinceLast) return h('span', { class: 'small muted trend' }, ''); /* MR-072: the first-reading note is said once per screen, in the heading, not on every tile */
   const leg = t.sinceLast; const cls = 'trend ' + (leg.verdict === 'better' ? 'better' : leg.verdict === 'worse' ? 'softer' : 'same');
   return h('span', { class: 'small ' + cls }, h('span', { class: 'arrow', 'aria-hidden': 'true' }, ARROWS[leg.arrow]), ' ', leg.delta ? leg.text : (isClient(app) ? 'steady since last time' : 'unchanged since last time'));
 }
@@ -95,7 +95,7 @@ export function nextActionCard(app, opts) {
   const card = h('section', { class: 'panel next-action' });
   const paint = s => {
     const a = overallNextAction(s, app.record, app.result);
-    if (!a) { card.appendChild(h('h2', null, client ? 'Your next step' : 'Next action')); card.appendChild(h('p', { class: 'muted small' }, app.result.metrics.fiDate && app.result.metrics.fiDate.status === 'ok' ? 'Working out what moves the most.' : (client ? 'Once income, spending and balances are in, this names the one thing that helps most.' : 'Needs an FI date: income, spending, account balances and a birth date.'))); return; }
+    if (!a) { card.appendChild(h('h2', null, client ? 'Your next step' : 'Next action')); const fi = app.result.metrics.fiDate && app.result.metrics.fiDate.status === 'ok'; card.appendChild(h('p', { class: fi ? 'big' : 'muted small' }, fi ? (client ? 'Keep doing what you are doing; the one thing shows in a moment.' : 'The one action arrives with the levers run.') : (client ? 'Your first step shows once your coach has your income and spending in.' : 'Needs a FI date: income, spending and balances that reach the FI number.'))); if (fi) card.appendChild(h('p', { class: 'small muted updating' }, 'updating')); return; }
     card.appendChild(h('h2', null, client ? 'Your next step' : 'Next action'));
     card.appendChild(h('p', { class: 'big-number' }, a.months !== null ? F.months(Math.abs(a.months)) : 'Soon', h('span', { class: 'big-unit' }, a.months !== null ? (client ? ' sooner to work being a choice' : ' on the FI date') + (a.impactLabel ? ' ' + a.impactLabel.replace(/^per /, 'for every ') : '') : '')));
     card.appendChild(h('p', { class: 'read-aloud' }, a.sentence));

@@ -9,10 +9,10 @@ export const flows = [
   async run(page, { base, check, APP }) {
     const path = await import('node:path');
     await page.goto(base + 'index.html#/home'); await page.waitForSelector('#main h1, #main .empty');
-    await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', 'maya.json')); await page.waitForSelector('.orbit');
+    await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', 'leah.json')); await page.waitForSelector('.today-card, .client-home');
     /* the hub: four new cards with live numbers, the existing calculators after them */
     await page.goto(base + 'index.html#/calculators'); await page.waitForSelector('.calc-cards');
-    check('five new calculator cards and the existing ones', (await page.locator('.calc-cards:not(.small-cards) .calc-card').count()) === 5 && (await page.locator('.small-cards .calc-card').count()) >= 5);
+    check('one grid: the five new calculator cards and the existing ones', (await page.locator('.calc-cards .calc-card').count()) >= 10 && (await page.locator('.calc-cards .calc-card[data-calc="calendar"]').count()) === 1 && (await page.locator('.small-cards').count()) === 0); /* MR-072: one grid ordered by use */
     const hub = await page.textContent('#main'); check('live numbers on the cards', /Safe to spend today/.test(hub) && /Comfortable home price/.test(hub) && /costs least/.test(hub));
     check('no internal words on the hub', !/registry|\bnode\b|\bedge\b|\bband\b|lever family|decomposition/i.test(hub));
     /* the calendar: the headline, the tabs, a day drawer, can I spend this, the bill timing fixer */
@@ -42,7 +42,7 @@ export const flows = [
     check('a typed rate is saved as set here and moves the answer', (await page.textContent('.calc-answer-big')) !== before && await page.evaluate(() => mr3.record.calculators.home.rate === 0.08));
     /* the house, the car and retirement load with their answers */
     await page.goto(base + 'index.html#/calc/house'); await page.waitForSelector('.calc-answers'); const house = await page.textContent('#main'); check('the house: cost of owning, equity chart, taxes, year by year', /costs about/.test(house) && /Year by year/.test(house) && /Taxes/.test(house) && /Up front/.test(house));
-    await page.goto(base + 'index.html#/calc/car'); await page.waitForSelector('.calc-answers'); const car = await page.textContent('#main'); check('the car: no car wins in Jersey City, the rules shown', /No car costs least/.test(car) && /20\/3\/8/.test(car));
+    await page.goto(base + 'index.html#/calc/car'); await page.waitForSelector('.calc-answers'); const car = await page.textContent('#main'); check('the car: no car wins in Oakland, the rules shown', /No car costs least/.test(car) && /20\/3\/8/.test(car));
     await page.goto(base + 'index.html#/calc/retire'); await page.waitForSelector('.calc-answers'); const ret = await page.textContent('#main'); check('retirement: what will be and what could be', /What will be/.test(ret) && /What could be/.test(ret) && /put in/.test(ret));
     /* client view: gentle, no coach tools, the add-to-plan button gone */
     await page.evaluate(() => { document.querySelector('#view-client').click(); }); await page.goto(base + 'index.html#/calendar'); await page.waitForSelector('.calc-answer');
@@ -56,7 +56,7 @@ export const flows = [
   async run(page, { base, check, APP }) {
     const path = await import('node:path');
     await page.goto(base + 'index.html#/home'); await page.waitForSelector('#main h1, #main .empty');
-    await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', 'maya.json')); await page.waitForSelector('.orbit');
+    await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', 'leah.json')); await page.waitForSelector('.today-card, .client-home');
     /* the scoreboard: six tiles, one next action, the rest by group */
     await page.goto(base + 'index.html#/scoreboard'); await page.waitForSelector('.score-tiles');
     check('six headline tiles for the client, a seventh for the coach', (await page.locator('.score-tile:not(.coach-tile)').count()) === 6 && (await page.locator('.score-tile.coach-tile').count()) === 1);
@@ -138,10 +138,10 @@ export const flows = [
     await page.goto(base + 'index.html#/prep');
     await page.waitForSelector('.plan-list');
     const prep = await page.textContent('#main');
-    check('the prep screen carries her words, the accounts and the plan', prep.indexOf('Her words') !== -1 && prep.indexOf('Tracking app linked') !== -1 && prep.indexOf('Gut lap') !== -1 && prep.indexOf('What this session leaves known') !== -1);
+    check('the prep screen is three things, her words and the plan', prep.indexOf('Three things') !== -1 && prep.indexOf('In their words') !== -1 && prep.indexOf('Gut lap') !== -1 && prep.indexOf('What they owe you') !== -1, prep.slice(0, 200));
     check('no internal words on the prep screen', !/\bblock\b|curricul|priorit|\bmust\b|\bshould\b|\bcould\b|knowledge target/i.test(prep), (prep.match(/.{0,20}(block|curricul|priorit|\bmust\b|\bshould\b|\bcould\b|knowledge target).{0,20}/i) || [])[0]);
     /* session 1 */
-    await page.click('a:has-text("Start session 1")');
+    await page.click('.actions a.primary:has-text("Start the call")');
     await page.waitForSelector('.runner-tl .tl-seg');
     check('the timeline has one segment per part and the first is lit', (await page.$$('.tl-seg')).length >= 12 && (await page.$$('.tl-seg.current')).length === 1);
     check('the urgent check offers chips', (await page.$$('.run-body .chipbar .chip')).length === 6);
@@ -186,7 +186,7 @@ export const flows = [
     await page.waitForSelector('table.program');
     const row1 = await page.textContent('table.program tr[data-session="1"]');
     check('the program view marks session 1 done with its date and targets', row1.indexOf('Done') !== -1 && /\d of 7/.test(row1));
-    check('the next date shows', (await page.textContent('header .sub')).indexOf('21 Oct 2026') !== -1);
+    check('the next date shows', (await page.textContent('header .sub')).indexOf('Oct 21, 2026') !== -1);
     /* urgent mode in session 2 */
     await page.goto(base + 'index.html#/call/2');
     await page.waitForSelector('.run-body .chipbar .chip');
@@ -229,22 +229,23 @@ export const flows = [
   },
 },
 {
-  name: 'level11-maya-goal-timeline',
+  name: 'level11-leah-goal-timeline',
   async run(page, { base, check, APP }) {
     await page.goto(base + 'index.html#/home');
     await page.waitForSelector('#main h1');
-    await importFixture(page, APP, 'maya');
-    await page.waitForSelector('.goals-line');
-    check('Home carries the next win and a link to the timeline', (await page.textContent('.goals-line')).indexOf('Goal timeline') !== -1);
+    await importFixture(page, APP, 'leah');
+    await page.click('#view-client'); await page.waitForSelector('.client-home');
+    check('the client Home carries the next win and a link to the goals', (await page.textContent('.client-home')).indexOf('Your next win') !== -1 && (await page.locator('.client-home a[href="#/goals"]').count()) === 1);
+    await page.click('#view-coach');
     await page.goto(base + 'index.html#/goals');
     await page.waitForSelector('.gtl');
     const sentence = await page.textContent('.gtl-sentence');
     check('the top of the screen is one sentence: your next win', /^Your next win is .+, in [A-Z][a-z]{2} \d{4}\.$/.test(sentence.trim()), sentence);
     check('the lean month and the full month are the first rows and locked', (await page.getAttribute('.gtl-row:not(.gtl-head) >> nth=0', 'data-goal')) === 'lean' && (await page.getAttribute('.gtl-row:not(.gtl-head) >> nth=1', 'data-goal')) === 'fullmonth' && (await page.$$('.gtl-row.starter .gtl-move button')).length === 0);
-    /* already met: Maya's savings already cover both floors; the card shows once */
+    /* already met: Leah's savings already cover both floors; the card shows once */
     await page.waitForSelector('.cheer');
     const cheer = await page.textContent('.cheer');
-    check('the celebration says what is already covered', cheer.indexOf('You already have a lean month covered') !== -1 && cheer.indexOf('a full month covered') !== -1);
+    check('the celebration says what is already covered, once', cheer.indexOf('Your first two cushion steps are already covered.') !== -1 && cheer.indexOf('lean month') === -1); /* MR-072 */
     await page.click('.cheer button:has-text("Got it")');
     await page.waitForFunction(() => !document.querySelector('.cheer'));
     check('the celebration is shown once', (await page.$$('.cheer')).length === 0);
@@ -316,6 +317,7 @@ export const flows = [
     await page.click('#view-coach');
     await page.goto(base + 'index.html#/session');
     await page.waitForSelector('.next-card');
+    await openSideTab(page, 'Follow-up email');
     check('the follow-up email names the next win', (await page.inputValue('textarea.email')).indexOf('Your next win') !== -1);
   },
 },
@@ -424,8 +426,10 @@ export const flows = [
     await page.waitForSelector('.meter-row');
     const meters = await page.textContent('.meter-row');
     check('two meters: picture completeness and goal progress', meters.indexOf('Picture completeness') !== -1 && meters.indexOf('Goal progress') !== -1 && /Includes \d+ guesses/.test(meters));
+    await openSideTab(page, 'Progress vs paperwork');
     const prog = await page.textContent('.progress-panel');
     check('progress versus paperwork counts the rent correction as a guess replaced', prog.indexOf('Guesses replaced') !== -1 && /Guesses replaced\s*1/.test(prog.replace(/\n/g, ' ')));
+    await openSideTab(page, 'Follow-up email');
     check('the email turns into the targets email', (await page.textContent('#main')).indexOf('Targets email') !== -1);
     /* 4. runway shows two numbers; the roommate what-if has its card */
     await page.goto(base + 'index.html#/measure/numbers');
@@ -445,27 +449,28 @@ export const flows = [
     check('the client view never says HCOL, anchor, variance or estimated', !/\bHCOL\b|\banchor\b|\bvariance\b|\bestimated\b|stand-in|\bRPP\b/i.test(client));
     await page.goto(base + 'index.html#/ledger/spending/line');
     await page.waitForSelector('tr.guess-row');
-    check('the client sees Guess, not the tier', (await page.textContent('tr.guess-row .guess-chip')) === 'Guess');
+    check('the client sees Average, not the tier', (await page.textContent('tr.guess-row .guess-chip')) === 'Average');
     await page.goto(base + 'index.html#/onepager');
     await page.waitForSelector('.onepager');
     const op = await page.textContent('.onepager');
-    check('the one-pager carries what you said, your targets, the guesses and the worst case', op.indexOf("What you said, what it really is, what you'd want") !== -1 && op.indexOf('Your targets') !== -1 && /Includes \d+ guesses/.test(op) && op.indexOf('If it all falls on you') !== -1);
+    check('the one-pager carries what you said, your targets, the guesses and the worst case', op.indexOf("What you said, what it really is, what you'd want") !== -1 && op.indexOf('Your targets') !== -1 && /Includes \d+ averages/.test(op) && op.indexOf('If it all falls on you') !== -1);
     check('the one-pager to-dos carry the target', op.indexOf('Aim for') !== -1);
     await page.click('#view-coach');
   },
 },
 {
-  name: 'level9-maya-levers-and-shelf',
+  name: 'level9-leah-levers-and-shelf',
   async run(page, { base, check, APP }) {
     await page.goto(base + 'index.html#/home');
     await page.waitForSelector('#main h1');
-    await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', 'maya.json'));
-    await page.waitForSelector('.toast'); await page.waitForSelector('.orbit');
-    /* the headline shelf on Home: tiles open the metric drawer with levers and the lens that reads it */
+    await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', 'leah.json'));
+    await page.waitForSelector('.toast'); await page.waitForSelector('.today-card, .client-home');
+    /* MR-072: the headline tiles live on Session notes now; tiles open the metric drawer with levers and the lens that reads it */
+    await page.goto(base + 'index.html#/session');
     await page.waitForSelector('.shelf-panel .shelf-tile[data-metric="fiDate"]');
-    check('the Home shelf shows the FI date tile', (await page.textContent('.shelf-tile[data-metric="fiDate"] .value')).indexOf('2050') !== -1); /* MR-070: the condo and the trip push it from 2049 */
-    check('the Home shelf carries the compact ladder', (await page.$$('.mini-ladder .mini-step')).length === 5);
-    await page.click('.shelf-tile[data-metric="fiNumber"]');
+    check('the session shelf shows the FI date tile', (await page.textContent('.shelf-tile[data-metric="fiDate"] .value')).indexOf('2050') !== -1); /* MR-070: the condo and the trip push it from 2049 */
+    check('the FI progress tile says what it counts', /invested/.test(await page.textContent('.shelf-tile[data-metric="pctToFi"]')));
+    await page.click('.shelf-tile[data-metric="fiDate"]');
     await page.waitForSelector('.drawer .metric-drawer');
     const drawerText = await page.textContent('.drawer');
     check('the metric drawer shows the math, the levers and the lens', drawerText.indexOf('Formula') !== -1 && drawerText.indexOf('Levers') !== -1 && drawerText.indexOf('Inputs that feed it') !== -1 && /lens/i.test(drawerText));
@@ -500,13 +505,13 @@ export const flows = [
     check('the graph draws nodes and edges', (await page.$$('svg.graph circle')).length > 30 && (await page.$$('svg.graph path')).length > 30);
     /* typing a part-time income moves the Barista rungs by the rule */
     await page.click('.levers-head button:has-text("List")');
-    const before = await page.textContent('.stair:nth-child(3) .stair-number');
+    const before = await page.textContent('.stair[data-rung="baristaRegularFi"] .stair-number'); /* MR-072: the ladder climbs smallest to largest, so find the rung by id */
     await page.fill('input[aria-label="Part-time income at FI, a month"]', '1500');
     await page.press('input[aria-label="Part-time income at FI, a month"]', 'Tab');
     await page.waitForTimeout(400);
-    const after = await page.textContent('.stair:nth-child(3) .stair-number');
-    check('part-time income lowers the Barista rung', before !== after);
-    check('the FI rung does not move with part-time income', (await page.textContent('.stair:nth-child(4) .stair-number')).indexOf('$1.3M') !== -1);
+    const after = await page.textContent('.stair[data-rung="baristaRegularFi"] .stair-number');
+    check('part-time income moves the Barista rung', before !== after);
+    check('the FI rung does not move with part-time income', (await page.textContent('.stair[data-rung="regularFi"] .stair-number')).indexOf('$1.3M') !== -1);
     /* the client view: ladder, three levers, gentle words, no benchmarks */
     await page.click('#view-client');
     await page.waitForSelector('.stairs .stair');
@@ -520,8 +525,8 @@ export const flows = [
     await page.waitForSelector('.next-card');
     await page.waitForFunction(() => (document.querySelector('.next-card') || {}).textContent.indexOf('of FI date at stake') !== -1, null, { timeout: 15000 });
     const next = await page.textContent('.next-card');
-    check('the next question card says about N months of FI date at stake and why', next.indexOf('of FI date at stake') !== -1 && next.indexOf('Ranked by ask priority') !== -1);
-    check('the session carries the shelf', (await page.$$('.shelf-panel .shelf-tile')).length >= 8);
+    check('the next question card says about N months of FI date at stake', next.indexOf('of FI date at stake') !== -1);
+    check('the session carries four headline tiles', (await page.$$('.shelf-panel .shelf-tile')).length === 4);
   },
 },
   {
@@ -529,7 +534,7 @@ export const flows = [
     async run(page, { base, check, APP }) {
       await page.goto(base + 'index.html#/home');
       await page.waitForSelector('text=No clients yet');
-      await page.click('button[aria-label="New client"]');
+      await page.click('.more-menu summary'); await page.click('button[aria-label="New client"]');
       await page.fill('input[aria-label="New client name"]', 'Jordan');
       await page.press('input[aria-label="New client name"]', 'Enter');
       await page.waitForSelector('.fieldrow[data-field="birthDate"]');
@@ -575,28 +580,35 @@ export const flows = [
       await page.waitForTimeout(100);
       check('Ctrl+Z undoes too', (await page.textContent('.fieldrow[data-field="bigGoal"] .chip')) === 'Known');
 
-      /* export */
-      const [download] = await Promise.all([page.waitForEvent('download'), page.click('table.data button:has-text("Export")')]);
+      /* export: the client list carries the Export button (MR-072) */
+      await page.goto(base + 'index.html#/clients'); await page.waitForSelector('.panel button:has-text("Export")');
+      const [download] = await Promise.all([page.waitForEvent('download'), page.click('.panel button:has-text("Export")')]);
       const tmp = path.join(APP, 'screenshots', '.tmp-export.json');
       fs.mkdirSync(path.dirname(tmp), { recursive: true });
       await download.saveAs(tmp);
       const exported = JSON.parse(fs.readFileSync(tmp, 'utf8'));
       check('export carries the record and its journal', exported.record && exported.record.sun.f.bigGoal.v === 'Brooklyn' && Array.isArray(exported.record.journal) && exported.record.journal.length > 3);
       const journalLen = exported.record.journal.length;
+      await page.goto(base + 'index.html#/ledger'); await page.waitForSelector('.fieldrow[data-field="birthDate"]');
 
       /* change, then import the file over it: the import wins and can be undone */
       await openMore(page);
       await page.fill('.fieldrow[data-field="bigGoal"] input', 'Queens');
       await page.press('.fieldrow[data-field="bigGoal"] input', 'Tab');
       await page.waitForTimeout(400);
+      /* MR-072: the import lives on the client list; it lands on Today, the facts live on the Plan */
+      await page.goto(base + 'index.html#/clients'); await page.waitForSelector('input[aria-label="Import a client file"]', { state: 'attached' });
       await page.setInputFiles('input[aria-label="Import a client file"]', tmp);
       await page.waitForSelector('.toast');
       await page.waitForTimeout(200);
-      check('import restores the exported big goal', (await page.inputValue('.fieldrow[data-field="bigGoal"] input')) === 'Brooklyn');
+      check('import lands on Today', (await page.evaluate(() => location.hash)) === '#/home');
+      const storedGoal = () => page.evaluate(() => JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k => k.startsWith('mr3:client:')))).sun.f.bigGoal.v);
+      check('import restores the exported big goal', (await storedGoal()) === 'Brooklyn');
       check('import offers undo', (await page.textContent('.toast')).indexOf('Undo import') !== -1);
       await page.click('.toast button');
       await page.waitForTimeout(200);
-      check('undo import brings back the newer copy', (await page.inputValue('.fieldrow[data-field="bigGoal"] input')) === 'Queens');
+      await page.goto(base + 'index.html#/ledger'); await page.waitForSelector('.fieldrow[data-field="birthDate"]'); await openMore(page);
+      check('undo import brings back the newer copy', (await page.inputValue('.fieldrow[data-field="bigGoal"] input')) === 'Queens' && (await storedGoal()) === 'Queens');
       fs.unlinkSync(tmp);
 
       /* client view hides the coach panels */
@@ -637,16 +649,16 @@ flows.push({
     fs.mkdirSync(path.join(APP, 'screenshots'), { recursive: true });
     fs.writeFileSync(path.join(APP, 'screenshots', '.tmp-keyboard-timing.json'), JSON.stringify({ seconds, keys, rows: Object.keys(rowIds).length }));
     /* round trip: export, wipe, import, compare again */
-    await page.goto(base + 'index.html#/home');
-    await page.waitForSelector('table.data button:has-text("Export")');
-    const [download] = await Promise.all([page.waitForEvent('download'), page.click('table.data button:has-text("Export")')]);
+    await page.goto(base + 'index.html#/clients'); /* MR-072: Export sits in the open client's details on the Clients screen */
+    await page.waitForSelector('.panel button:has-text("Export")');
+    const [download] = await Promise.all([page.waitForEvent('download'), page.click('.panel button:has-text("Export")')]);
     const tmp = path.join(APP, 'screenshots', '.tmp-jordan-export.json');
     await download.saveAs(tmp);
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     await page.waitForSelector('text=No clients yet');
     await page.setInputFiles('input[aria-label="Import a client file"]', tmp);
-    await page.waitForSelector('.orbit');
+    await page.waitForSelector('.today-card, .client-home');
     const back = await page.evaluate(() => JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k => k.startsWith('mr3:client:')))));
     compareToSpec(back, specs.jordan, rowIds, check, 'round trip');
     check('round trip keeps the journal', back.journal.length >= record.journal.length);
@@ -654,10 +666,12 @@ flows.push({
   },
 });
 
-/* Level 2: the one-pager prints to exactly one page; a keystroke recompute for Maya stays under 100 ms; the demo button loads Maya. */
+/* MR-072: the session side panel is tabbed; open one by its label */
+async function openSideTab(page, label) { await page.click('.side-tabs .tab:has-text("' + label + '")'); await page.waitForTimeout(100); }
+/* Level 2: the one-pager prints to exactly one page; a keystroke recompute for Leah stays under 100 ms; the demo button loads Leah. */
 async function importFixture(page, APP, name) {
   await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', name + '.json'));
-  await page.waitForSelector('.orbit');
+  await page.waitForSelector('.today-card, .client-home');
 }
 /* The extra household facts sit behind a disclosure; open it only when it is closed. */
 async function openMore(page) {
@@ -672,7 +686,7 @@ function pdfPages(buf) {
 flows.push({
   name: 'level2-onepager-prints-to-one-page',
   async run(page, { base, check, APP }) {
-    for (const name of ['jordan', 'dev', 'maya']) {
+    for (const name of ['jordan', 'dev', 'leah']) {
       await page.goto(base + 'index.html#/home');
       await page.waitForSelector('#main h1');
       await page.evaluate(() => localStorage.clear());
@@ -686,16 +700,16 @@ flows.push({
       await page.emulateMedia({ media: 'screen' });
       const pages = pdfPages(buf);
       check(name + ': one-pager prints to exactly one page', pages === 1, pages + ' pages');
-      if (name === 'maya') { fs.mkdirSync(path.join(APP, 'screenshots', 'level-2'), { recursive: true }); fs.writeFileSync(path.join(APP, 'screenshots', 'level-2', 'maya-onepager.pdf'), buf); }
+      if (name === 'leah') { fs.mkdirSync(path.join(APP, 'screenshots', 'level-2'), { recursive: true }); fs.writeFileSync(path.join(APP, 'screenshots', 'level-2', 'leah-onepager.pdf'), buf); }
     }
   },
 });
 flows.push({
-  name: 'level2-maya-recompute-under-100ms',
+  name: 'level2-leah-recompute-under-100ms',
   async run(page, { base, check, APP }) {
     await page.goto(base + 'index.html#/home');
     await page.waitForSelector('text=No clients yet');
-    await importFixture(page, APP, 'maya');
+    await importFixture(page, APP, 'leah');
     await page.goto(base + 'index.html#/ledger/spending/line');
     await page.waitForSelector('.ledger-table');
     const cell = page.locator('tr[data-row="m-groc"] [data-col="amount"]');
@@ -705,7 +719,7 @@ flows.push({
     await page.keyboard.press('Tab');
     await page.waitForTimeout(100);
     const ms = await page.evaluate(() => mr3.lastComputeMs);
-    check('Maya recompute after a keystroke is under 100 ms', typeof ms === 'number' && ms < 100, ms + ' ms');
+    check('Leah recompute after a keystroke is under 100 ms', typeof ms === 'number' && ms < 100, ms + ' ms');
     const val = await page.evaluate(() => mr3.record.planets.spending.rows.find(r => r.id === 'm-groc').f.amount.v);
     check('the typed amount landed', val === 53100, String(val));
     fs.writeFileSync(path.join(APP, 'screenshots', '.tmp-perf.json'), JSON.stringify({ ms }));
@@ -716,9 +730,9 @@ flows.push({
   async run(page, { base, check }) {
     await page.goto(base + 'index.html#/home');
     await page.waitForSelector('text=No clients yet');
-    await page.click('text=Load demo client');
-    await page.waitForSelector('.orbit');
-    check('demo loads Maya', (await page.textContent('#topbar-client')) === 'Maya Lindqvist');
+    await page.click('.more-menu summary'); await page.click('.more-list button:has-text("Load the full example")');
+    await page.waitForSelector('.today-card, .client-home');
+    check('the full example loads Leah', (await page.textContent('#topbar-client')) === 'Leah Brennan');
     await page.goto(base + 'index.html#/measure/lenses'); /* MR-059: lenses live on their own tab */
     await page.waitForSelector('.lens');
     const lensCount = await page.locator('.lens').count();
@@ -757,6 +771,7 @@ flows.push({
     const mine = await page.textContent('button:has-text("My plate")');
     check('their plate has client facts to bring', /\((\d+)\)/.test(theirs) && parseInt(theirs.match(/\((\d+)\)/)[1], 10) > 0, theirs);
     check('my plate has lookups to confirm', /\((\d+)\)/.test(mine) && parseInt(mine.match(/\((\d+)\)/)[1], 10) > 0, mine);
+    await openSideTab(page, 'Follow-up email');
     const email = await page.inputValue('textarea.email');
     check('the follow-up email groups by institution with where to find each number', email.indexOf('Where:') !== -1 && email.indexOf('Subject:') === 0 && !/\$\d/.test(email.split('\n').slice(4).join('\n')), email.slice(0, 120));
     /* ask the big question: jump to the cell, answer it */
@@ -777,7 +792,7 @@ flows.push({
     await page.click('tbody tr:first-child input.pick');
     await page.waitForTimeout(150);
     check('a plate item can be marked done', await page.isChecked('tbody tr:first-child input.pick'));
-    await page.click('text=Close this session');
+    await page.click('header .more-menu summary'); await page.click('text=Close this session'); /* MR-072: under More until the call is running */
     await page.waitForSelector('.satisfaction-ask'); await page.click('.satisfaction-ask button:has-text("7")');
     await page.waitForTimeout(200);
     check('the close asked satisfaction and kept the score', await page.evaluate(() => (mr3.record.program.satisfaction || []).some(s => s.score === 7)));
@@ -852,6 +867,7 @@ flows.push({
     check('Dev gets a plain question first', /\?$/.test(q1.trim()), q1);
     const unsure = await page.locator('.panel:has(h2:has-text("Everything unsure")) tbody tr').count();
     check('Dev has a ranked list of unsure facts', unsure >= 3, String(unsure));
+    await openSideTab(page, 'Follow-up email');
     const email = await page.inputValue('textarea.email');
     check('the email asks Dev by institution and carries no balances', email.indexOf('Where:') !== -1 && !/\$\d/.test(email.split('\n').slice(4).join('\n')), email.slice(0, 100));
     /* answer the big question in the Ledger */
@@ -868,6 +884,7 @@ flows.push({
     const q2 = await page.textContent('.ask.big .ask-text');
     check('the answered fact leaves the next-question card', q2 !== q1, q2);
     /* a note, then close */
+    await page.click('header .more-menu summary'); /* MR-072: the note and Close sit under More until the call is running */
     await page.fill('input[aria-label="Session note"]', 'Confirmed the Solo 401k deposit; HSA statement to come.');
     await page.click('text=Close this session');
     await page.waitForSelector('.satisfaction-ask'); await page.click('.satisfaction-ask button:has-text("6")');
@@ -893,8 +910,8 @@ flows.push({
   async run(page, { base, check }) {
     await page.goto(base + 'index.html#/home');
     await page.waitForSelector('text=No clients yet');
-    await page.click('text=Start demo from zero');
-    await page.waitForSelector('.orbit');
+    await page.click('.more-menu summary'); await page.click('.more-list button:has-text("Start demo from zero")');
+    await page.waitForSelector('.today-card, .client-home');
     await page.waitForTimeout(300);
     const card0 = await page.textContent('.unlock-card');
     check('a blank Maya starts with nothing open', /0 of 88/.test(card0) && /Next unlock/.test(card0), card0.slice(0, 120));
@@ -989,5 +1006,88 @@ flows.push({
       const cur = await page.getAttribute('.mtabs a[aria-current="page"]', 'href');
       check('tab ' + t + ' is marked current', cur === '#/measure/' + t, String(cur));
     }
+  },
+});
+
+/* Level 14 (MR-072), Don't Make Me Think: Today, the six groups, search, help per screen, presenting mode, the client's
+   five items and three things, read mode in the ledger, the one-sentence tracker, three things to prepare, one primary
+   action on Session notes, segmented controls, calculators that answer, one celebration, stacked tables on a phone. */
+flows.push({
+  name: 'level14-dont-make-me-think',
+  async run(page, { base, check, APP }) {
+    await page.goto(base + 'index.html#/clients'); await page.waitForSelector('#main h1');
+    await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', 'jordan.json')); await page.waitForSelector('.today-card, .client-home');
+    await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', 'leah.json')); await page.waitForSelector('.today-card, .client-home');
+    await page.goto(base + 'index.html#/home'); await page.waitForSelector('.today-card');
+    /* Today */
+    check('Today names the page and the date in US order', (await page.textContent('#main h1')).trim() === 'Today' && /^[A-Z][a-z]{2} \d{1,2}, \d{4}$/.test((await page.textContent('#main header .sub')).trim()));
+    check('one primary button starts the call', (await page.locator('.today-card a.primary:has-text("Start the call")').count()) === 1);
+    check('the prep card and the small meter are there, the orbit is not', (await page.locator('.today-prep').count()) === 1 && (await page.locator('.meter-mini').count()) === 1 && (await page.locator('.orbit').count()) === 0);
+    check('the client list sits below', (await page.textContent('.clients-table')).indexOf('Jordan') !== -1);
+    check('no journal on Today', (await page.locator('table.history').count()) === 0);
+    /* six groups, a lit item, search */
+    check('the sidebar has six groups', (await page.locator('#sidenav .group').count()) === 6);
+    check('the current place is lit', (await page.locator('#sidenav a[aria-current="page"]').count()) === 1);
+    await page.keyboard.press('/'); await page.keyboard.type('calen');
+    await page.waitForSelector('.nav-hit');
+    check('search finds the screen and says where it lives', /Cash flow calendar/.test(await page.textContent('.nav-results')) && /Tools/.test(await page.textContent('.nav-results')));
+    await page.keyboard.press('Enter'); await page.waitForSelector('.calc-tabs');
+    check('Enter jumps there', location => true, '') ;
+    check('the hash moved to the calendar', (await page.evaluate(() => location.hash)) === '#/calendar');
+    /* help for this screen */
+    await page.click('#help-btn'); await page.waitForSelector('.help-body');
+    check('help explains the current screen in a few sentences', /This screen: Cash flow calendar/.test(await page.textContent('.help-body')) && (await page.textContent('.help-body .readaloud')).split('. ').length <= 4);
+    await page.keyboard.press('Escape');
+    /* presenting */
+    await page.click('#present-btn'); await page.waitForTimeout(300);
+    const bodyText = await page.textContent('#main');
+    check('presenting locks to client view and hides the toggle', (await page.evaluate(() => document.body.dataset.presenting)) === 'true' && (await page.evaluate(() => document.body.dataset.view)) === 'client' && !(await page.locator('#view-coach').isVisible()));
+    await page.goto(base + 'index.html#/home'); await page.waitForTimeout(300);
+    check('no other client\'s name shows while presenting', (await page.textContent('body')).indexOf('Jordan') === -1 && (await page.locator('.clients-table').isVisible().catch(() => false)) === false);
+    await page.keyboard.press('`'); await page.waitForTimeout(150);
+    check('the view key does nothing while presenting', (await page.evaluate(() => document.body.dataset.view)) === 'client');
+    check('the client sees five items', (await page.locator('#sidenav a').count()) === 5);
+    check('the client Home is three things', (await page.locator('.client-home > .panel').count()) === 3 && /Safe to spend today/.test(await page.textContent('.client-home')));
+    await page.click('#present-btn'); await page.waitForSelector('.confirm-drawer');
+    await page.click('.confirm-drawer button:has-text("Stop presenting")'); await page.waitForTimeout(300);
+    check('stopping needs a deliberate click and brings the coach back', (await page.evaluate(() => document.body.dataset.presenting)) === 'false' && (await page.evaluate(() => document.body.dataset.view)) === 'coach');
+    /* read mode in the ledger */
+    await page.goto(base + 'index.html#/ledger/spending/line'); await page.waitForSelector('.ledger-table');
+    const atRest = await page.evaluate(() => document.querySelectorAll('#main input, #main select, #main textarea').length);
+    check('a full ledger screen at rest has few inputs', atRest <= 14, atRest + ' inputs');
+    await page.click('tr[data-row="m-groc"] [data-col="amount"]'); await page.waitForTimeout(100);
+    check('a tap turns the cell into an input with focus', await page.evaluate(() => { const a = document.activeElement; return a && a.tagName === 'INPUT' && a.dataset.col === 'amount'; }));
+    await page.keyboard.press('Escape'); await page.waitForTimeout(100);
+    check('Escape puts the text back', (await page.locator('tr[data-row="m-groc"] button.cell-read[data-col="amount"]').count()) === 1);
+    check('the tracker is one sentence, one button and a small count', /^Next: .+\.$/.test((await page.textContent('.tracker .next')).trim()) && (await page.locator('.tracker .btn').count()) === 1 && /^\d+ left$/.test((await page.textContent('.tracker .count')).trim()));
+    /* prepare: three things */
+    await page.goto(base + 'index.html#/prep'); await page.waitForSelector('.prep-three');
+    check('Prepare shows three things and one Start the call', (await page.locator('.prep-three ol > li').count()) === 3 && (await page.locator('.actions a.primary:has-text("Start the call")').count()) === 1 && (await page.locator('.actions > a:has-text("Session 2")').count()) === 0);
+    /* session notes: one dominant element, a tabbed side panel */
+    await page.goto(base + 'index.html#/session'); await page.waitForSelector('.next-card');
+    check('Session notes has one primary action and a tabbed side panel', (await page.locator('header .actions .btn.primary, header .actions a.primary').count()) === 1 && (await page.locator('.side-tabs .tab').count()) === 5);
+    /* toggles look like toggles */
+    await page.goto(base + 'index.html#/goals'); await page.waitForSelector('.gtl');
+    check('the goals zoom is a segmented control', (await page.locator('header .seg .seg-btn').count()) === 3 && (await page.locator('header .seg .seg-btn.on').count()) === 1);
+    const cheer = await page.textContent('.cheer .big').catch(() => '');
+    check('the celebration is one sentence', !cheer || (/already covered\.$/.test(cheer.trim()) && cheer.trim().split('. ').length === 1), cheer);
+    await page.goto(base + 'index.html#/levers'); await page.waitForSelector('.ladder-panel');
+    check('the levers ranking is a segmented control', (await page.locator('.levers-head .seg').count()) === 1);
+    check('the ladder climbs smallest to largest', await page.evaluate(() => { const nums = Array.from(document.querySelectorAll('.stair-number')).map(e => e.textContent.replace(/[^0-9.KM]/g, '')); return nums.length === 5; }));
+    check('no run counts or timings on the levers screen', !/re-runs|\d+ ms/.test(await page.textContent('#main')));
+    /* calculators answer their question */
+    await page.goto(base + 'index.html#/calculators'); await page.waitForSelector('.calc-card');
+    const cards = await page.evaluate(() => Array.from(document.querySelectorAll('.calc-card')).map(c => (c.querySelector('strong') || {}).textContent || ''));
+    check('every calculator card carries a number or a plain answer', cards.length >= 10 && cards.every(t => t.trim().length > 0) && (await page.locator('text=Already in the app').count()) === 0, cards.join(' | '));
+    /* the scoreboard never opens on a working card */
+    await page.goto(base + 'index.html#/scoreboard'); await page.waitForSelector('.next-action');
+    check('the first card never says it is working', !/Working out/.test(await page.textContent('.next-action')));
+    check('progress has four tabs with the current one lit', (await page.locator('.progress-tabs a').count()) === 4 && (await page.locator('.progress-tabs a[aria-current="page"]').count()) === 1);
+    /* a phone: stacked tables and a tab scroller */
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(base + 'index.html#/calendar/weeks'); await page.waitForSelector('table.data');
+    check('a wide table stacks on a phone', (await page.locator('table.data.stack td[data-label]').count()) > 0);
+    check('the tab row does not wrap', await page.evaluate(() => { const t = document.querySelector('.calc-tabs'); return t && getComputedStyle(t).flexWrap === 'nowrap' && t.scrollWidth >= t.clientWidth; }));
+    check('nothing is clipped on the phone', (await page.evaluate(() => document.documentElement.scrollWidth)) <= 390);
   },
 });

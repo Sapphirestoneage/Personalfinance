@@ -98,7 +98,7 @@ function checkInvariants(name, rec) {
   return R;
 }
 
-for (const name of ['jordan', 'dev', 'maya', 'extreme']) {
+for (const name of ['jordan', 'dev', 'leah', 'extreme']) {
   test('invariants: ' + name, () => { const R = checkInvariants(name, loadHousehold(name)); assert.ok(R.metrics); });
 }
 test('invariants: an empty record computes without a single number invented', () => {

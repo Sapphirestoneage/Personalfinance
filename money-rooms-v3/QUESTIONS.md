@@ -251,3 +251,17 @@ Collected during the run; none blocked the build. Answer whenever.
     row). Jordan's $400 a month into savings grows at the market rate there.
     Should a bank deposit grow at the cash rate instead, or drop out because
     the surplus already lands in cash?
+75. The Jersey City Maya (the demo client) has no FI date yet: her savings
+    rate after the first call does not reach the FI number before 95, so
+    "Find what moves your FI date most" in the hallway test shows what the
+    levers need instead of a ranking. Give demo Maya her session 1 facts
+    (balances and a contribution) so the FI tasks work, or test those two
+    tasks on Leah?
+76. The ledger's row checkboxes now live behind "Select rows" so a table at
+    rest is text. Bulk delete takes one more click. Fine?
+77. Presenting turns itself on when the call screen is shown in Client view
+    and never turns itself off; stopping is a deliberate click. Should closing
+    the session also stop presenting?
+78. The old Home shelf of ten headline tiles is gone; Session notes shows four
+    (savings rate, net worth, FI date, FI progress) and the Scoreboard shows
+    the six. Is four the right number there?

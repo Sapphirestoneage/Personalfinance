@@ -19,7 +19,7 @@ test('spending reaches the FI date through both the FI number and the surplus', 
 });
 
 test('a single spending change explains the whole move of the FI number and the savings rate', () => {
-  const before = loadHousehold('maya'); const after = JSON.parse(JSON.stringify(before));
+  const before = loadHousehold('leah'); const after = JSON.parse(JSON.stringify(before));
   const rent = after.planets.spending.rows.find(r => r.nickname === 'Rent');
   setField(after, rent.id, 'amount', rent.f.amount.v + 20000, 'known', 'client', { cad: 'month', now: '2026-10-07T10:00:00.000Z' });
   const ex = explain(g, 'fiNumber', before, after, { compute: run, numOf });
@@ -32,7 +32,7 @@ test('a single spending change explains the whole move of the FI number and the 
 });
 
 test('two roots share a move, each put back on its own; an added row lands in other', () => {
-  const before = loadHousehold('maya'); const after = JSON.parse(JSON.stringify(before));
+  const before = loadHousehold('leah'); const after = JSON.parse(JSON.stringify(before));
   const rent = after.planets.spending.rows.find(r => r.nickname === 'Rent'); const job = after.planets.income.rows.find(r => r.type === 'w2');
   setField(after, rent.id, 'amount', rent.f.amount.v + 10000, 'known', 'client', { cad: 'month' });
   setField(after, job.id, 'takeHome', job.f.takeHome.v + 10000, 'known', 'client', { cad: job.f.takeHome.cad });

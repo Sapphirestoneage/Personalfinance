@@ -8,7 +8,8 @@ import * as Rec from '../engine/record.js';
 import { h, clear, qs, debounce, download, readFile } from './dom.js';
 import { getSensitivity } from './levers-bridge.js';
 import { installUnlockWatch } from './unlocks.js';
-import { routes, navItems } from './routes.js';
+import { routes, navItems, searchTargets } from './routes.js';
+import { progressTabs } from './progress.js';
 import { renderTracker } from './tracker.js';
 import { applyDiscovery, applyGuesses } from '../engine/discovery.js';
 import { setAnchor as anchorSet, reanchor as anchorAgain } from '../engine/anchors.js';
@@ -17,6 +18,7 @@ import { setTarget as targetSet } from '../engine/targets.js';
 import { recordStress, captureBaseline } from '../engine/program.js';
 import { snapshotValues } from '../engine/outcomes.js';
 import { takeSnapshot, seedCelebrations } from '../engine/momentum.js';
+import { setRough } from '../engine/format.js';
 
 const store = createStore();
 const settings = store.settings();
@@ -25,7 +27,8 @@ export const app = {
   store,
   record: null,
   result: null,
-  view: settings.view === 'client' ? 'client' : 'coach',
+  view: settings.presenting || settings.view === 'client' ? 'client' : 'coach',
+  presenting: !!settings.presenting, /* MR-072: locked to Client view while sharing a screen */
   route: { name: 'home', params: {} },
   mounted: null,
   listeners: new Set(),
@@ -45,7 +48,7 @@ export const app = {
     /* MR-057: the levers' sensitivity run starts now, off the main thread, so #/levers opens with its numbers */
     if (this.result && this.result.metrics && this.result.metrics.fiDate && this.result.metrics.fiDate.status === 'ok') getSensitivity(this, () => {});
     this.renderChrome();
-    this.go(this.route.name === 'home' ? '#/home' : location.hash || '#/home', true);
+    this.go(this.parseHash(location.hash).name === 'home' ? '#/home' : location.hash, true); /* stay where the address bar says, a reload on the Plan included */
     return true;
   },
   close() {
@@ -141,7 +144,9 @@ export const app = {
 
   /* ---- view toggle ---- */
   setView(v) {
+    if (this.presenting && v !== 'client') { this.toast('Presenting is on. Turn it off first.'); return; }
     this.view = v === 'client' ? 'client' : 'coach';
+    setRough(this.view === 'client' ? 'about' : 'tilde');
     document.body.dataset.view = this.view;
     settings.view = this.view; store.saveSettings(settings);
     qs('#view-coach').setAttribute('aria-pressed', String(this.view === 'coach'));
@@ -149,6 +154,25 @@ export const app = {
     this.rerender();
   },
   toggleView() { this.setView(this.view === 'coach' ? 'client' : 'coach'); },
+
+  /* ---- Presenting (MR-072): one switch locks the app to Client view and hides every other client's name, notes and coach-only panel ---- */
+  setPresenting(on, opts) {
+    const o = opts || {};
+    if (!on && this.presenting && !o.confirmed) { this.confirm('Stop presenting? The coach view, the client list and your notes come back on screen.', { label: 'Stop presenting', onConfirm: () => this.setPresenting(false, { confirmed: true }) }); return; }
+    this.presenting = !!on;
+    settings.presenting = this.presenting; store.saveSettings(settings);
+    document.body.dataset.presenting = String(this.presenting);
+    const btn = qs('#present-btn'); if (btn) { btn.setAttribute('aria-pressed', String(this.presenting)); btn.textContent = this.presenting ? 'Presenting' : 'Present'; btn.title = this.presenting ? 'Presenting: locked to Client view. Click to stop.' : 'Presenting mode: lock the app to Client view while you share the screen'; }
+    if (this.presenting) { this.setView('client'); if (!o.quiet) this.toast('Presenting: only the client view shows until you turn it off.'); }
+    else { this.setView('coach'); if (!o.quiet) this.toast('Presenting is off.'); }
+  },
+  /* an in-page confirmation (MR-072): no browser dialogs; the big actions ask here and offer Undo after */
+  confirm(text, opts) {
+    const o = opts || {};
+    const body = h('div', { class: 'confirm-body' }, h('h2', null, o.title || 'Are you sure?'), h('p', { class: 'readaloud' }, text),
+      h('div', { class: 'row', style: { marginTop: '12px' } }, h('button', { class: 'btn primary', onClick: () => { closeOverlay(); o.onConfirm(); } }, o.label || 'Yes, do it'), h('button', { class: 'btn', onClick: closeOverlay }, 'Cancel')));
+    this.openDrawer(body, { label: o.title || 'Confirm', cls: 'confirm-drawer' });
+  },
 
   /* ---- theme (MR-028): follows the system until the switch picks one ---- */
   applyTheme() {
@@ -177,28 +201,36 @@ export const app = {
   render() {
     this.route = this.parseHash(location.hash);
     let def = routes[this.route.name];
-    if (def.coachOnly && this.view === 'client') { history.replaceState(null, '', '#/measure'); this.route = this.parseHash('#/measure'); def = routes.measure; }
+    if (this.presenting && this.view !== 'client') { this.view = 'client'; setRough('about'); }
+    if (def.coachOnly && this.view === 'client') { history.replaceState(null, '', '#/scoreboard'); this.route = this.parseHash('#/scoreboard'); def = routes.scoreboard; }
     const main = qs('#main');
     clear(main);
     closeOverlay();
+    document.body.dataset.section = def.section || '';
+    const t0 = performance.now();
     if (def.needsClient && !this.record) {
       main.appendChild(h('div', { class: 'empty' },
-        h('h2', null, 'No client open'),
-        h('p', null, 'Open a client or make a new one on the home screen first.'),
-        h('p', null, h('a', { class: 'next', href: '#/home' }, 'Go to home'))));
+        h('h1', null, def.title),
+        h('p', null, 'Open a client first.'),
+        h('p', null, h('a', { class: 'btn primary', href: this.view === 'coach' ? '#/clients' : '#/home' }, this.view === 'coach' ? 'Open a client' : 'Home'))));
       this.mounted = null;
     } else {
       this.mounted = def.mount(main, this);
-      if (this.record && this.view === 'coach' && (this.route.name === 'home' || this.route.name === 'ledger')) { const tr = h('div', { id: 'tracker' }); main.prepend(tr); renderTracker(tr, this); }
+      if (this.record && this.view === 'coach' && this.route.name === 'ledger') { const tr = h('div', { id: 'tracker' }); main.prepend(tr); renderTracker(tr, this); }
+      if (this.record && ['scoreboard', 'measure', 'map', 'onepager'].includes(this.route.name)) main.prepend(progressTabs(this, this.route.name));
     }
+    this.lastRenderMs = performance.now() - t0;
+    stackTables(main);
+    if (this.route.name === 'call' && this.view === 'client' && !this.presenting) this.setPresenting(true, { quiet: true });
     this.renderNav();
     if (this.focusAfterRender) { const f = this.focusAfterRender; this.focusAfterRender = null; const el = main.querySelector('tr[data-row="' + f.rowId + '"] [data-col="' + f.field + '"], .fieldrow[data-field="' + f.field + '"] .control input, .fieldrow[data-field="' + f.field + '"] .control select'); if (el) { el.focus(); if (el.scrollIntoView) el.scrollIntoView({ block: 'center' }); } else if (this.mounted && this.mounted.openDetails) this.mounted.openDetails(f.rowId, f.field); }
-    document.title = (def.title || 'Home') + (this.record ? ' - ' + (clientName(this.record) || 'Client') : '') + ' - Money Rooms';
+    document.title = (def.title || 'Today') + (this.record ? ' - ' + (clientName(this.record) || 'Client') : '') + ' - Money Rooms';
     window.scrollTo(0, 0);
   },
   rerender() { this.render(); },
   update(reason) {
     if (this.mounted && this.mounted.update) this.mounted.update(reason);
+    stackTables(qs('#main'));
     const tr = qs('#tracker'); if (tr) renderTracker(tr, this);
     this.renderNav();
     this.renderChrome();
@@ -207,6 +239,22 @@ export const app = {
     const nav = qs('#sidenav');
     clear(nav);
     const items = navItems(this);
+    /* MR-072: type to jump anywhere; slash focuses the box */
+    const q = h('input', { class: 'input nav-search', type: 'search', 'aria-label': 'Search screens, rows, numbers and calculators', title: 'Type to jump (/)', value: this.navQuery || '' });
+    const results = h('div', { class: 'nav-results', hidden: 'hidden' });
+    const paintResults = () => {
+      clear(results); const text = q.value.trim().toLowerCase(); this.navQuery = q.value;
+      if (!text) { results.setAttribute('hidden', 'hidden'); nav.querySelectorAll('.group, .group-items').forEach(el => { el.style.display = ''; }); return; }
+      results.removeAttribute('hidden'); nav.querySelectorAll('.group, .group-items').forEach(el => { el.style.display = 'none'; });
+      const hits = searchTargets(this).filter(t => t.label.toLowerCase().indexOf(text) !== -1).slice(0, 12);
+      if (!hits.length) { results.appendChild(h('p', { class: 'small muted nav-none' }, 'Nothing called that.')); return; }
+      hits.forEach(t => results.appendChild(h('a', { href: t.href, class: 'nav-hit', onClick: () => { q.value = ''; this.navQuery = ''; document.body.classList.remove('nav-open'); } }, h('span', { class: 'navlabel' }, t.label), h('span', { class: 'small muted nav-where' }, t.where))));
+    };
+    q.addEventListener('input', paintResults);
+    q.addEventListener('keydown', e => { if (e.key === 'Escape') { q.value = ''; paintResults(); q.blur(); } if (e.key === 'Enter') { const first = results.querySelector('a'); if (first) { location.hash = first.getAttribute('href'); q.value = ''; paintResults(); } } });
+    nav.appendChild(h('div', { class: 'nav-search-wrap' }, h('label', { class: 'small muted nav-search-label', for: 'nav-search' }, 'Jump to'), q));
+    q.id = 'nav-search';
+    nav.appendChild(results);
     const folded = settings.navFolded || {};
     let group = null; let box = nav;
     items.forEach(it => {
@@ -222,6 +270,7 @@ export const app = {
         it.key ? h('span', { class: 'kbd coach-only' }, it.key) : null);
       box.appendChild(a);
     });
+    if (this.navQuery) paintResults();
   },
   toggleNav(force) {
     const open = force === undefined ? !document.body.classList.contains('nav-open') : !!force;
@@ -230,6 +279,8 @@ export const app = {
   },
   renderChrome() {
     qs('#topbar-client').textContent = this.record ? (clientName(this.record) || 'Unnamed client') : '';
+    document.body.dataset.presenting = String(!!this.presenting);
+    const pb = qs('#present-btn'); if (pb) { pb.setAttribute('aria-pressed', String(!!this.presenting)); pb.textContent = this.presenting ? 'Presenting' : 'Present'; }
     qs('#undo').disabled = !this.record || !Rec.canUndo(this.record);
     qs('#redo').disabled = !this.record || !Rec.canRedo(this.record);
     this.renderSaved();
@@ -273,14 +324,21 @@ export const app = {
     input.focus();
   },
   helpPanel() {
-    this.openDrawer(h('div', null,
-      h('h2', null, 'Keyboard'),
-      h('table', { class: 'data', style: { marginTop: '8px' } },
-        h('tbody', null, SHORTCUTS.map(s => h('tr', null, h('td', null, h('span', { class: 'kbd' }, s[0])), h('td', null, s[1]))))),
-      h('h2', { style: { marginTop: '16px' } }, 'Answer states (one key in a state chip)'),
-      h('p', { class: 'small muted' }, 'v Verified, k Known, r Rough, w Will send, u Unknown, n None, a Not applicable, x Not for me'),
-      h('h2', { style: { marginTop: '16px' } }, 'Sources'),
-      h('p', { class: 'small muted' }, 'c Client, l Looked up, y Looked up (verify), i Inferred, e Guess, d What you said')));
+    const def = routes[this.route.name] || routes.home;
+    const keys = h('div', { class: 'help-keys', hidden: 'hidden' });
+    const more = h('button', { class: 'btn small', 'aria-expanded': 'false', onClick: () => { const open = keys.hasAttribute('hidden'); if (open) keys.removeAttribute('hidden'); else keys.setAttribute('hidden', 'hidden'); more.setAttribute('aria-expanded', String(open)); more.textContent = open ? 'Hide the keyboard shortcuts' : 'Keyboard shortcuts'; } }, 'Keyboard shortcuts');
+    keys.appendChild(h('h2', { style: { marginTop: '16px' } }, 'Keyboard'));
+    keys.appendChild(h('table', { class: 'data', style: { marginTop: '8px' } },
+      h('tbody', null, SHORTCUTS.map(s => h('tr', null, h('td', null, h('span', { class: 'kbd' }, s[0])), h('td', null, s[1]))))));
+    keys.appendChild(h('h2', { style: { marginTop: '16px' } }, 'Answer states (one key in a state chip)'));
+    keys.appendChild(h('p', { class: 'small muted' }, 'v Verified, k Known, r Rough, w Will send, u Unknown, n None, a Not applicable, x Not for me'));
+    keys.appendChild(h('h2', { style: { marginTop: '16px' } }, 'Sources'));
+    keys.appendChild(h('p', { class: 'small muted' }, 'c Client, l Looked up, y Looked up (verify), i Inferred, e Guess, d What you said'));
+    this.openDrawer(h('div', { class: 'help-body' },
+      h('h2', null, 'This screen: ' + def.title),
+      h('p', { class: 'readaloud' }, def.help || 'One screen of the money picture.'),
+      h('p', { class: 'small' }, h('a', { href: '#/learn', onClick: closeOverlay }, 'The full guide'), this.view === 'coach' ? [' ', String.fromCharCode(0xb7), ' ', more] : null),
+      this.view === 'coach' ? keys : null), { label: 'Help for this screen', title: 'Help' });
   },
 };
 
@@ -290,7 +348,7 @@ const SHORTCUTS = [
   ['`', 'Toggle Coach and Client view'],
   ['Ctrl+Z', 'Undo'], ['Ctrl+Shift+Z', 'Redo'],
   ['Ctrl+.', 'Quick note'],
-  ['Alt+1 to Alt+8', 'Go to a screen'],
+  ['Alt+1 to Alt+9', 'Today, the seven rooms, Progress'],
   ['Enter', 'In a table: move down a row'], ['Tab', 'Next field'],
   ['Alt+N', 'Add a row to the open table'],
   ['Alt+S / Alt+O', 'In a cell: set its state / its source with one more key'],
@@ -299,12 +357,24 @@ const SHORTCUTS = [
   ['?', 'This panel'],
 ];
 
+/* MR-072: a data table with more than three columns stacks its rows on a phone; each cell learns its header's name */
+export function stackTables(root) {
+  if (!root) return;
+  root.querySelectorAll('table.data').forEach(t => {
+    const heads = Array.from(t.querySelectorAll('thead th')).map(th => th.textContent.trim());
+    if (heads.length <= 3) { t.classList.remove('stack'); return; }
+    t.classList.add('stack');
+    t.querySelectorAll('tbody tr').forEach(tr => Array.from(tr.children).forEach((td, i) => { if (heads[i] && !td.dataset.label) td.dataset.label = heads[i]; }));
+  });
+}
 export function clientName(rec) { return rec && rec.sun && rec.sun.f.name ? (rec.sun.f.name.v || '') : ''; }
 
 let overlayOnClose = null;
 export function closeOverlay() {
-  const had = qs('#overlay').firstChild;
-  clear(qs('#overlay'));
+  /* drawers and bars close; a toast stays, so an Undo offered just before a screen change survives it (MR-072) */
+  const kids = Array.from(qs('#overlay').children).filter(k => !k.classList.contains('toast'));
+  const had = kids.length > 0;
+  kids.forEach(k => k.remove());
   const fn = overlayOnClose; overlayOnClose = null;
   if (had && fn) fn();
 }
@@ -317,11 +387,14 @@ function inInput(e) {
 function boot() {
   installUnlockWatch(app); /* MR-059: every save is compared before and after for what it opened up */
   document.body.dataset.view = app.view;
+  setRough(app.view === 'client' ? 'about' : 'tilde');
   qs('#view-coach').setAttribute('aria-pressed', String(app.view === 'coach'));
   qs('#view-client').setAttribute('aria-pressed', String(app.view === 'client'));
   qs('#view-coach').addEventListener('click', () => app.setView('coach'));
   qs('#view-client').addEventListener('click', () => app.setView('client'));
   qs('#theme-btn').addEventListener('click', () => app.toggleTheme());
+  qs('#present-btn').addEventListener('click', () => app.setPresenting(!app.presenting));
+  document.body.dataset.presenting = String(app.presenting);
   qs('#nav-btn').addEventListener('click', () => app.toggleNav());
   document.addEventListener('click', e => { if (document.body.classList.contains('nav-open') && !e.target.closest('#sidenav') && !e.target.closest('#nav-btn')) app.toggleNav(false); });
   app.applyTheme();
@@ -338,13 +411,12 @@ function boot() {
     if (e.key === 'Escape') { closeOverlay(); app.toggleNav(false); return; }
     if (e.altKey && (e.key === 'n' || e.key === 'N') && app.mounted && app.mounted.addRow && !inInput(e)) { e.preventDefault(); app.mounted.addRow(); return; }
     if (e.altKey && /^[0-9]$/.test(e.key)) {
-      const items = navItems(app);
-      const n = e.key === '0' ? 10 : parseInt(e.key, 10);
-      const it = items[n - 1];
+      const it = navItems(app).find(i => i.key === 'Alt+' + e.key); /* MR-072: the shortcut is the item's own key, not its position in the grouped list */
       if (it) { e.preventDefault(); location.hash = it.href; }
       return;
     }
     if (inInput(e)) return;
+    if (e.key === '/') { const box = qs('#sidenav .nav-search'); if (box) { e.preventDefault(); if (window.innerWidth < 1100) app.toggleNav(true); box.focus(); } return; }
     if (e.key === '`') { e.preventDefault(); app.toggleView(); return; }
     if (e.key === '?') { e.preventDefault(); app.helpPanel(); }
   });
@@ -367,6 +439,7 @@ export async function importFile(file) {
   const text = await readFile(file);
   const { record, snapshotKey } = store.importJson(text);
   app.open(record.id);
+  if (location.hash !== '#/home') location.hash = '#/home'; /* MR-072: an import opens the client's Today */
   if (snapshotKey) {
     app.toast('Imported over the saved copy', { label: 'Undo import', ms: 10000, action: () => { const r = store.undoImport(snapshotKey); if (r) app.open(r.id); } });
   } else {

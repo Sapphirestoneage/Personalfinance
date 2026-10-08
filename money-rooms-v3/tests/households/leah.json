@@ -3,13 +3,13 @@
  "exportedAt": "2026-10-03T16:00:21.000Z",
  "record": {
   "schemaVersion": 5,
-  "id": "maya",
+  "id": "leah",
   "createdAt": "2026-09-10T15:00:00.000Z",
   "updatedAt": "2026-10-03T16:00:21.000Z",
   "sun": {
    "f": {
     "name": {
-     "v": "Maya Lindqvist",
+     "v": "Leah Brennan",
      "state": "verified",
      "source": "client"
     },
@@ -19,12 +19,12 @@
      "source": "client"
     },
     "state": {
-     "v": "NJ",
+     "v": "CA",
      "state": "verified",
      "source": "client"
     },
     "city": {
-     "v": "Jersey City",
+     "v": "Oakland",
      "state": "known",
      "source": "client"
     },
@@ -76,7 +76,7 @@
     "todos": [
      {
       "task": "Send the 401k statement",
-      "owner": "Maya",
+      "owner": "Leah",
       "due": "2026-10-20"
      },
      {
@@ -1974,8 +1974,8 @@
       "id": "m-njest",
       "planet": "taxes",
       "type": "other",
-      "nickname": "NJ estimated tax",
-      "institution": "NJ Division of Taxation",
+      "nickname": "CA estimated tax",
+      "institution": "California Franchise Tax Board",
       "asOf": null,
       "followUp": false,
       "stress": null,
@@ -2131,7 +2131,7 @@
      "source": "client"
     },
     "new": {
-     "v": "Maya Lindqvist",
+     "v": "Leah Brennan",
      "state": "verified",
      "source": "client"
     },
@@ -2177,7 +2177,7 @@
      "source": "client"
     },
     "new": {
-     "v": "NJ",
+     "v": "CA",
      "state": "verified",
      "source": "client"
     },
@@ -2200,7 +2200,7 @@
      "source": "client"
     },
     "new": {
-     "v": "Jersey City",
+     "v": "Oakland",
      "state": "known",
      "source": "client"
     },
@@ -8819,8 +8819,8 @@
      "id": "m-njest",
      "planet": "taxes",
      "type": "other",
-     "nickname": "NJ estimated tax",
-     "institution": "NJ Division of Taxation",
+     "nickname": "CA estimated tax",
+     "institution": "California Franchise Tax Board",
      "asOf": null,
      "followUp": false,
      "stress": null,

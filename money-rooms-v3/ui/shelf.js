@@ -21,13 +21,13 @@ function text(app, id, m) {
     case 'runway': return [F.months(v.value.full, { rough: v.rough }), v.value.fullAlone !== null && v.value.fullAlone !== undefined ? F.months(v.value.fullAlone) + ' if it all falls on you' : v.value.fat !== null ? F.months(v.value.fat) + ' at the floor' : ''];
     case 'emergencyGap': return [v.cents === 0 ? 'Covered' : F.dollarsWhole(v.cents, { rough: v.rough }), m.monthlyToClose && m.monthlyToClose.cents ? F.dollarsWhole(m.monthlyToClose.cents) + ' a month to close' : 'Rule of 5 met'];
     case 'fiDate': return [F.date(v.value), m.ages ? 'age ' + m.ages.likely + ', best ' + (m.ages.best || 'never') + ', worst ' + (m.ages.worst || 'never') : ''];
-    case 'pctToFi': return [F.percent(v.value, { rough: v.rough }), m.basis === 'netWorth' ? 'of net worth' : 'invested assets'];
+    case 'pctToFi': return [F.percent(v.value, { rough: v.rough }), 'of the FI number invested'];
     default:
       if (typeof v.cents === 'number') return [F.dollarsWhole(v.cents, { rough: v.rough }), v.range ? F.dollarsWhole(v.range.low) + ' to ' + F.dollarsWhole(v.range.high) : ''];
       return [F.value(v), v.range ? F.rangeOfValue(v) : ''];
   }
 }
-const SHELF_LABELS = { assets: ['Invested assets', 'What you own and invest'], federalRates: ['Effective federal rate', 'Federal tax rate'], emergencyGap: ['Rule of 5 gap', 'Cash cushion gap'], fiDate: ['FI date', 'When the portfolio could carry you'] };
+const SHELF_LABELS = { assets: ['Invested assets', 'Invested'], federalRates: ['Effective federal rate', 'Federal tax rate'], emergencyGap: ['Rule of 5 gap', 'Cushion gap'], fiDate: ['FI date', 'FI date'], pctToFi: ['FI progress (invested)', 'FI progress'] };
 
 export function tile(app, id) {
   const def = app.data.metrics.metrics.find(x => x.id === id); const m = app.result.metrics[id];
@@ -69,9 +69,9 @@ export function renderShelf(host, app, opts) {
   clear(host);
   const o = opts || {}; const coach = app.view === 'coach';
   if (!app.record || !app.result || !app.result.metrics) return;
-  const ids = o.compact ? SHELF_COMPACT : SHELF;
+  const ids = o.ids || (o.compact ? SHELF_COMPACT : SHELF);
   host.classList.add('shelf');
-  host.appendChild(h('div', { class: 'shelf-head' }, h('h2', null, o.title || (coach ? 'Headline numbers' : 'Your numbers')), coach ? h('a', { class: 'small', href: '#/levers' }, 'What moves the FI date') : null));
+  host.appendChild(h('div', { class: 'shelf-head' }, h('h2', null, o.title || (coach ? 'Headline numbers' : 'Your numbers')), o.more ? h('a', { class: 'small', href: o.more }, 'All numbers') : coach ? h('a', { class: 'small', href: '#/levers' }, 'What moves the FI date') : null));
   const grid = h('div', { class: 'kpis shelf-grid' + (o.compact ? ' compact' : '') });
   ids.forEach(id => grid.appendChild(tile(app, id)));
   host.appendChild(grid);

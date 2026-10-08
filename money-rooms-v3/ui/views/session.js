@@ -26,34 +26,36 @@ import { cachedSensitivity } from '../levers-bridge.js';
 
 export function mount(host, app) {
   const noteInput = h('input', { class: 'input session-note', type: 'text', 'aria-label': 'Session note' });
-  const header = h('header', null, h('h1', null, 'Session'), h('span', { class: 'sub' }, 'The next question is the unsure fact that moves the most money. ', h('a', { href: '#/calculators' }, 'Calculators')), h('div', { class: 'actions' },
-    h('label', { class: 'small muted' }, 'Note for this session'), noteInput,
-    h('a', { class: 'btn primary', href: '#/prep' }, 'Prepare the next session'),
-    h('a', { class: 'btn', href: '#/call' }, 'Run it'),
-    h('a', { class: 'btn', href: '#/goals' }, 'Goals'),
-    h('button', { class: 'btn', onClick: () => askSatisfactionThenClose(app, () => { snapshot(app, noteInput.value.trim()); noteInput.value = ''; }) }, 'Close this session')));
+  const running = !!(programOf(app.record).sessions && Object.values(programOf(app.record).sessions).some(x => x.status === 'running'));
+  const primary = running ? h('button', { class: 'btn primary', onClick: () => askSatisfactionThenClose(app, () => { snapshot(app, noteInput.value.trim()); noteInput.value = ''; }) }, 'Close this session') : h('a', { class: 'btn primary', href: '#/call' }, 'Start the call');
+  const more = h('details', { class: 'more-menu' }, h('summary', { class: 'btn' }, 'More'), h('div', { class: 'more-list' },
+    h('a', { class: 'btn', href: '#/prep' }, 'Prepare'), h('a', { class: 'btn', href: '#/goals' }, 'Goals'), h('a', { class: 'btn', href: '#/calculators' }, 'Calculators'),
+    running ? null : h('button', { class: 'btn', onClick: () => askSatisfactionThenClose(app, () => { snapshot(app, noteInput.value.trim()); noteInput.value = ''; }) }, 'Close this session'),
+    h('label', { class: 'small muted', style: { padding: '4px 8px' } }, 'Note for this session', noteInput)));
+  const header = h('header', null, h('h1', null, 'Session notes'), h('span', { class: 'sub' }, 'The next question is the unsure fact that moves the most.'), h('div', { class: 'actions' }, primary, more));
   host.appendChild(header);
-  const meters = h('div', { class: 'meters' }); host.appendChild(meters);
-  const grid = h('div', { class: 'grid grid-2' });
+  const grid = h('div', { class: 'grid grid-2 session-grid' });
   const left = h('div', { class: 'stack' }); const right = h('div', { class: 'stack' });
   grid.appendChild(left); grid.appendChild(right);
   host.appendChild(grid);
-  const shelf = h('section', { class: 'panel shelf-panel' }); host.insertBefore(shelf, grid);
-  let tab = 'all'; let sens = null;
+  let tab = 'all'; let side = 'since'; let sens = null;
   function draw() {
-    clear(left); clear(right); clear(meters);
-    meters.appendChild(meterRow(app));
-    renderShelf(shelf, app, { compact: true, ladder: false });
+    clear(left); clear(right);
     getSensitivity(app, r => { if (r !== sens) { sens = r; setTimeout(draw, 0); } }); /* redraw on the next tick, never inside this draw */
     const s = leverage({ record: app.record, fields: app.data.fields, weights: app.data.weights, sensitivity: sens });
+    /* order: the next question (big), the two meters, four headline tiles, then the rest behind one switch */
     left.appendChild(nextCard(app, s));
+    left.appendChild(meterRow(app));
+    const shelf = h('section', { class: 'panel shelf-panel' }); renderShelf(shelf, app, { compact: true, ladder: false, ids: ['savingsRateTakeHome', 'netWorth', 'fiDate', 'pctToFi'], more: '#/scoreboard' }); left.appendChild(shelf);
     left.appendChild(cheerPanel(app));
-    left.appendChild(progressPanel(app));
     left.appendChild(plates(app, s, tab, t => { tab = t; draw(); }));
-    right.appendChild(sinceLast(app));
-    right.appendChild(variancePanelCompact(app));
-    right.appendChild(emailPanel(app, s));
-    right.appendChild(sessionsPanel(app));
+    /* the side panel: Since last time, What you said, Follow-up email, Progress, Sessions as tabs */
+    const tabs = [['since', 'Since last time'], ['said', 'What you said'], ['email', 'Follow-up email'], ['progress', 'Progress vs paperwork'], ['sessions', 'Sessions']];
+    const panel = h('section', { class: 'panel side-tabs' });
+    panel.appendChild(h('nav', { class: 'mtabs', 'aria-label': 'Session side panel' }, tabs.map(([id, label]) => h('button', { class: 'linklike tab' + (side === id ? ' active' : ''), 'aria-pressed': String(side === id), onClick: () => { side = id; draw(); } }, label))));
+    const body = ({ since: sinceLast, said: variancePanelCompact, email: p => emailPanel(p, s), progress: progressPanel, sessions: sessionsPanel }[side])(app);
+    body.classList.remove('panel'); panel.appendChild(body);
+    right.appendChild(panel);
   }
   draw();
   return { update() { draw(); } };
@@ -75,7 +77,7 @@ function meterRow(app) {
 function cheerPanel(app) {
   const GP = app.result.goalPlan; if (!GP) return h('div');
   const won = celebrations(GP, app.record); if (!won.length) return h('div');
-  return h('section', { class: 'panel cheer', role: 'status' }, h('h2', null, 'Already there'), h('p', { class: 'big' }, won.map(i => 'You already have ' + (i.step === 1 ? 'a lean month' : i.step === 2 ? 'a full month' : 'the full cushion') + ' covered.').join(' ')),
+  return h('section', { class: 'panel cheer', role: 'status' }, h('h2', null, 'Already there'), h('p', { class: 'big' }, cheerSentence(won)),
     h('div', { class: 'row' }, h('button', { class: 'btn primary', onClick: () => { const c = Object.assign({}, app.record.goals.celebrated || {}); won.forEach(i => { c[i.id] = new Date().toISOString(); }); app.goals({ celebrated: c }); } }, 'Got it'), h('a', { class: 'btn', href: '#/goals' }, 'Goals')));
 }
 
@@ -139,7 +141,6 @@ function nextCard(app, s) {
   if (!s.next.length) { panel.appendChild(h('p', { class: 'muted' }, 'Nothing unsure is left above the materiality line. Open Small wins or the Ledger to add facts.')); return panel; }
   const [big, ...rest] = s.next;
   const stake = i => i.monthsAtStake !== null && i.monthsAtStake !== undefined ? h('span', { class: 'small muted', title: i.why }, 'about ' + monthsWord(i.monthsAtStake) + ' of FI date at stake') : (i.moneyFact && i.dollarsAnnual ? h('span', { class: 'small muted', title: i.why }, F.dollarsWhole(Math.abs(i.dollarsAnnual), { rough: true }) + ' a year at stake') : null);
-  panel.appendChild(h('p', { class: 'small muted' }, s.rankedBy === 'ask' ? 'Ranked by ask priority: the months of FI date each unsure figure could move (Level 9).' : 'Ranked by leverage: weight x (1 - confidence) x dollars a year. A FI date switches this to months of FI date at stake.'));
   panel.appendChild(h('div', { class: 'ask big' }, h('div', { class: 'ask-text' }, big.question), h('div', { class: 'ask-meta' }, h('span', { class: 'chip src' }, PLANET_SHORT[big.planet] || 'Household'), stateChipOf(big), stake(big), askLink(app, big, 'Ask it', true)), h('div', { class: 'small muted why' }, big.why || '')));
   rest.forEach(i => panel.appendChild(h('div', { class: 'ask' }, h('div', { class: 'ask-text' }, i.question), h('div', { class: 'ask-meta' }, h('span', { class: 'chip src' }, PLANET_SHORT[i.planet] || 'Household'), stake(i), askLink(app, i, 'Go to row')))));
   return panel;
@@ -219,4 +220,11 @@ export function snapshot(app, note) {
   app.toast('Session ' + n + ' closed. ' + (cheers.length ? cheers[0].text + '. ' : '') + 'The scoreboard now compares against it.', { label: 'Scoreboard', action: () => { location.hash = '#/scoreboard'; } });
 }
 
+/* MR-072: one sentence however many steps are already covered */
+export function cheerSentence(won) {
+  const steps = won.map(i => i.step).sort();
+  if (steps.length >= 3) return 'Your whole cushion is already covered.';
+  if (steps.length === 2 && steps[0] === 1 && steps[1] === 2) return 'Your first two cushion steps are already covered.';
+  return 'You already have ' + won.map(i => i.step === 1 ? 'a lean month' : i.step === 2 ? 'a full month' : 'the full cushion').join(' and ') + ' covered.';
+}
 function monthsWord(m) { const a = Math.abs(m); return a >= 12 ? (Math.round(a / 12 * 10) / 10) + ' years' : (Math.round(a * 10) / 10) + (a === 1 ? ' month' : ' months'); }

@@ -46,8 +46,6 @@ function openQueue(app, t) {
 }
 
 export function renderTracker(host, app) {
-  const fillOpens = () => { const el = host.querySelector('.opens'); if (!el || !app.record) return; const tt = trackerSteps(app.record, app.data.fields); if (!tt.next) return; const txt = opensText(app, tt.next); if (txt) el.textContent = txt; else el.remove(); };
-  setTimeout(fillOpens, 0);
   clear(host);
   if (!app.record || app.view !== 'coach') return;
   const t = trackerSteps(app.record, app.data.fields);
@@ -56,11 +54,8 @@ export function renderTracker(host, app) {
   host.appendChild(h('div', { class: 'tracker' + (t.next ? '' : ' complete'), role: 'status' },
     h('div', { class: 'bar', 'aria-hidden': 'true' }, h('div', { class: 'fill', style: { width: pct + '%' } })),
     h('div', { class: 'row tracker-row' },
-      h('button', { class: 'count linklike', title: 'See everything still to enter', 'aria-label': t.done + ' of ' + t.total + ' facts in, see the whole list', onClick: () => openQueue(app, t) }, t.done + ' of ' + t.total + ' facts in'),
-      t.next ? h('span', { class: 'next' }, h('span', { class: 'muted' }, 'Next: '), t.next.label, h('span', { class: 'muted small' }, ' (' + t.next.where + ')')) : h('span', { class: 'next' }, 'Everything the numbers need is in.'),
+      t.next ? h('span', { class: 'next' }, 'Next: ' + t.next.label + ' (' + t.next.where + ').') : h('span', { class: 'next' }, 'Everything the numbers need is in.'),
       t.next ? h('a', { class: 'btn small primary', href: t.next.href, onClick: () => { if (t.next.rowId && t.next.field) app.focusAfterRender = { rowId: t.next.rowId, field: t.next.field }; } }, 'Go') : null,
-      t.next && t.next.kind === 'rows' ? h('button', { class: 'btn small', title: 'None of these for this household', onClick: () => markTypeNone(app, t.next.planet, t.next.typeId) }, 'None') : null,
-      t.next ? h('button', { class: 'btn small quiet', onClick: () => openQueue(app, t) }, 'See all ' + left + ' left') : null,
-      t.next ? h('a', { class: 'small opens', href: '#/measure/unlocks', title: 'What this fact opens up on Measure' }) : null,
-      t.next && t.headlineOpen + t.detailOpen ? h('span', { class: 'small muted hide-narrow' }, (t.headlineOpen ? t.headlineOpen + ' headline' + (t.headlineOpen === 1 ? '' : 's') : '') + (t.headlineOpen && t.detailOpen ? ', ' : '') + (t.detailOpen ? t.detailOpen + ' detail' + (t.detailOpen === 1 ? '' : 's') : '') + ' left') : null)));
+      h('span', { class: 'spacer' }),
+      left ? h('button', { class: 'linklike small count', title: t.done + ' of ' + t.total + ' facts in; see everything still to enter', 'aria-label': left + ' left, see the whole list', onClick: () => openQueue(app, t) }, left + ' left') : null)));
 }

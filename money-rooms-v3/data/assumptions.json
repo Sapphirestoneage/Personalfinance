@@ -38,7 +38,7 @@
   "nogo": 0.75,
   "slowgoAge": 75,
   "nogoAge": 85,
-  "fiProgressBasis": "netWorth",
+  "fiProgressBasis": "invested",
   "fiSpendingBasis": "actual",
   "healthcarePremiumMonthlyCents": 65000,
   "inflation": 0.03,
@@ -84,7 +84,7 @@
   "benchmarkSource": "Salary multiple benchmark source",
   "showBenchmarksToClient": "Show benchmarks in the client view",
   "callTargetRoomFraction": "Meet in the middle: share of the way from actual toward the nearer of gut and dream",
-  "fillGapsWithGuesses": "Fill gaps with guesses (averages for the cost area)",
+  "fillGapsWithGuesses": "Fill gaps with averages for the cost area",
   "roommateMonthsToReplace": "Months until a roommate is replaced (cushion and worst case)",
   "cushionStep1": "Cushion step 1, the lean month: one month of food, housing and getting around, or a fixed amount set on the Goals screen",
   "cushionStep2Months": "Cushion step 2, the full month: months of all spending"

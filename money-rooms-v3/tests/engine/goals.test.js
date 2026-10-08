@@ -110,7 +110,7 @@ test('a shortfall is never silent: one at a time says what the dated goals need 
 });
 
 test('the comparison runs all three modes with the floors identical in each', () => {
-  const rec = loadHousehold('maya'); const R = compute(rec, data, { today: TODAY }); const P = R.goalPlan;
+  const rec = loadHousehold('leah'); const R = compute(rec, data, { today: TODAY }); const P = R.goalPlan;
   assert.equal(P.compare.length, 3); assert.deepEqual(P.compare.map(c => c.mode), MODES);
   assert.ok(P.compare.every(c => c.floorsFull === P.compare[0].floorsFull));
   assert.ok(P.compare.every(c => typeof c.interest === 'number' && typeof c.onTime === 'number'));
@@ -125,26 +125,26 @@ test('cushion targets: step 1 from the FAT floor, step 2 one month of spending, 
   /* no flagged lines: the three categories stand in, marked rough */
   const rec2 = createRecord({ id: 'nofat', now: TODAY + 'T00:00:00Z' }); rec2.sun.f.birthDate = { v: '1995-05-05', state: 'known', source: 'client' };
   const R2 = compute(rec2, data, { today: TODAY }); const T2 = cushionTargets(rec2, R2); assert.equal(T2.step1, null, 'nothing to read yet');
-  const demo = compute(loadHousehold('maya'), data, { today: TODAY }); const TD = cushionTargets(loadHousehold('maya'), demo); assert.equal(TD.step1Source, 'fatFloor'); assert.equal(TD.step1Rough, false);
+  const demo = compute(loadHousehold('leah'), data, { today: TODAY }); const TD = cushionTargets(loadHousehold('leah'), demo); assert.equal(TD.step1Source, 'fatFloor'); assert.equal(TD.step1Rough, false);
 });
 
 test('a fixed lean month and a two-month full month come from the settings', () => {
-  const rec = loadHousehold('maya'); rec.sun.assumptions = Object.assign({}, rec.sun.assumptions || {}, { cushionStep1: 'fixed' }); setGoals(rec, { cushion: { step1Cents: 200000, step2Months: 2 } }, { now: TODAY + 'T00:00:00Z' });
+  const rec = loadHousehold('leah'); rec.sun.assumptions = Object.assign({}, rec.sun.assumptions || {}, { cushionStep1: 'fixed' }); setGoals(rec, { cushion: { step1Cents: 200000, step2Months: 2 } }, { now: TODAY + 'T00:00:00Z' });
   const R = compute(rec, data, { today: TODAY }); const T = cushionTargets(rec, R);
   assert.equal(T.step1, 200000); assert.equal(T.step1Source, 'fixed'); assert.equal(T.step2, R.sun.outputs.safety.spendingWithPremiums.cents * 2);
 });
 
 test('long-term goals read the FI ladder', () => {
-  const demo = compute(loadHousehold('maya'), data, { today: TODAY }); const items = goalsOf(loadHousehold('maya'), demo).items;
+  const demo = compute(loadHousehold('leah'), data, { today: TODAY }); const items = goalsOf(loadHousehold('leah'), demo).items;
   const fi = items.find(i => i.id === 'rung:regularFi'); assert.equal(fi.type, 'long-term'); assert.equal(fi.monthsAway, demo.ladder.rungs.find(r => r.id === 'regularFi').months);
   assert.equal(demo.goalPlan.assessment['rung:regularFi'].status, 'projected');
   assert.ok(Math.abs(parseInt(demo.goalPlan.assessment['rung:regularFi'].finishMonth.slice(0, 4), 10) - parseInt(String(demo.metrics.fiDate.value.value).slice(0, 4), 10)) <= 1, 'the FI rung lands within a year of the FI date');
 });
 
 test('the order of operations is the default priority; the two floors are fixed first; step 3 moves like any goal', () => {
-  const rec = loadHousehold('maya'); const R = compute(rec, data, { today: TODAY }); const G = goalsOf(rec, R);
+  const rec = loadHousehold('leah'); const R = compute(rec, data, { today: TODAY }); const G = goalsOf(rec, R);
   assert.deepEqual(G.items.slice(0, 2).map(i => i.id), ['lean', 'fullmonth']); assert.ok(G.items[0].locked && G.items[1].locked);
-  /* MR-071: Maya's Sapphire is on statement autopay, so it is no debt goal; with no high-interest debt the full cushion comes right after the floors, then the dated goals, then the student loan */
+  /* MR-071: Leah's Sapphire is on statement autopay, so it is no debt goal; with no high-interest debt the full cushion comes right after the floors, then the dated goals, then the student loan */
   assert.ok(!G.items.some(i => i.id === 'debt:m-csp'), 'a card paid by autopay is not a debt to pay down');
   assert.equal(G.items[2].id, 'full');
   assert.equal(G.items[3].type, 'dated'); assert.equal(G.items[4].type, 'dated');
@@ -158,8 +158,8 @@ test('the order of operations is the default priority; the two floors are fixed 
 });
 
 test('already met at creation: the celebration shows once and what-ifs never touch the record', () => {
-  const rec = loadHousehold('maya'); const R = compute(rec, data, { today: TODAY }); const P = R.goalPlan;
-  assert.ok(P.alreadyMet.includes('lean') && P.alreadyMet.includes('fullmonth'), 'the demo Maya has both floors covered');
+  const rec = loadHousehold('leah'); const R = compute(rec, data, { today: TODAY }); const P = R.goalPlan;
+  assert.ok(P.alreadyMet.includes('lean') && P.alreadyMet.includes('fullmonth'), 'the demo Leah has both floors covered');
   const c1 = celebrations(P, rec); assert.ok(c1.length >= 2 && c1[0].clientName === 'Lean month covered');
   setGoals(rec, { celebrated: Object.fromEntries(c1.map(i => [i.id, TODAY])) }, { now: TODAY + 'T00:00:00Z' });
   assert.equal(celebrations(compute(rec, data, { today: TODAY }).goalPlan, rec).length, 0, 'shown once');
@@ -228,8 +228,8 @@ test('goalDraws: a goal on time spends on its date, a late one when it lands, on
   assert.equal(d.byYear[2027], 120000 + 200000 + 50000); assert.equal(d.total, 370000 + 150000);
 });
 
-test('Maya: the headline FI date carries her two Life plan goals; a goal moved in a what-if moves the draws and the FI months, and nothing is saved', () => {
-  const rec = loadHousehold('maya'); const r = compute(rec, data, { today: TODAY });
+test('Leah: the headline FI date carries her two Life plan goals; a goal moved in a what-if moves the draws and the FI months, and nothing is saved', () => {
+  const rec = loadHousehold('leah'); const r = compute(rec, data, { today: TODAY });
   const P = r.goalPlan; const draws = P.draws;
   assert.deepEqual(Object.keys(draws.byGoal).sort(), ['life:m-goal1', 'life:m-goal2']);
   assert.deepEqual(r.projectionInputs.oneOffs, draws.byYear, 'the projection spends what the timeline lands');
@@ -250,7 +250,7 @@ test('Maya: the headline FI date carries her two Life plan goals; a goal moved i
   /* dropping the date makes it an amount goal; the record is untouched by any of this */
   const U = planGoals(rec, r, { goals: { 'life:m-goal1': { targetDate: null } } });
   assert.equal(U.input.items.find(i => i.id === 'life:m-goal1').type, 'amount');
-  assert.equal(rec.planets.life.rows.find(x => x.id === 'm-goal1').f.goalCost.v, 8000000); assert.equal(rec.journal.length, loadHousehold('maya').journal.length);
+  assert.equal(rec.planets.life.rows.find(x => x.id === 'm-goal1').f.goalCost.v, 8000000); assert.equal(rec.journal.length, loadHousehold('leah').journal.length);
   /* a cushion step or a debt never moves this way */
   const N = planGoals(rec, r, { goals: { full: { targetCents: 1 }, 'debt:m-loan': { targetDate: '2030-01' } } });
   assert.ok(N.input.items.find(i => i.id === 'full').targetCents > 1); assert.equal(N.input.items.find(i => i.id === 'debt:m-loan').targetDate, null);

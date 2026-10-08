@@ -34,7 +34,7 @@ test('under $100 a year is a small win, not a question; client facts go on their
 });
 
 test('an unfiled quick note lands on my plate at zero confidence', () => {
-  const rec = loadHousehold('maya');
+  const rec = loadHousehold('leah');
   const s = session({ record: rec, fields: data.fields, weights: data.weights });
   const note = s.all.find(i => i.note);
   assert.ok(note && note.plate === 'mine' && note.confidence === 0);

@@ -3,14 +3,14 @@
 fixtures' facts and the data libraries, never the engine, and writes
 calculators-expected.json for tests/engine/calculators.test.js.
 Covers: the brief's household (gross 68,000, take-home 1,900 biweekly, Jersey
-City) and Maya for How much home; the Buy vs Rent workbook's default inputs
-through the corrected model; Maya's used car against no car; Maya's cash flow
+City) and Leah Brennan (Oakland, CA) for How much home; the Buy vs Rent workbook's default inputs
+through the corrected model; Leah's used car against no car; Leah's cash flow
 calendar day by day (low point, safe to spend, the first paycheck's map).
 Run: python3 money-rooms-v3/tests/households/expected-calculators.py"""
 import json, math, os, datetime as dt
 HERE = os.path.dirname(os.path.abspath(__file__)); DATA = os.path.join(HERE, '..', '..', 'data')
 H = json.load(open(os.path.join(DATA, 'housing-costs.json'))); A = json.load(open(os.path.join(DATA, 'auto-costs.json')))
-MAYA = json.load(open(os.path.join(HERE, 'maya.json')))['record']; MX = json.load(open(os.path.join(HERE, 'maya-expected.json')))
+LEAH = json.load(open(os.path.join(HERE, 'leah.json')))['record']; MX = json.load(open(os.path.join(HERE, 'leah-expected.json')))
 def R(x): return int(math.floor(x + 0.5))
 def pay(principal, rate, months):
     r = rate / 12
@@ -38,20 +38,24 @@ def home(i):
     lp = price_for(lender_budget, i, 'lender'); cp = price_for(comfortable_budget, i, 'total')
     return dict(lenderPrice=lp, lenderBudget=lender_budget, binding='front' if front <= back else 'back', comfortablePrice=cp, comfortableBudget=comfortable_budget, comfortableMonthly=cost(cp, i)['total'], lenderMonthly=cost(lp, i)['lender'])
 nj = dict(state='NJ', credit='760+', rate=0.065, termYears=30, downPct=0.10, taxRate=H['countyOverrides']['Hudson County, NJ'], insuranceAnnual=H['insuranceAnnualByState']['NJ'], maintenanceShare=0.01)
+ca = dict(state='CA', city='Oakland', credit='760+', rate=0.065, termYears=30, downPct=0.10, taxRate=H['countyOverrides']['Alameda County, CA'], insuranceAnnual=H['insuranceAnnualByState']['CA'], maintenanceShare=0.01)
 brief = dict(nj, grossMonthly=R(6800000 / 12), takeHomeMonthly=R(190000 * 26 / 12), debtMinimumsMonthly=0)
 E['brief'] = home(brief); E['brief']['inputs'] = brief
-maya_in = dict(nj, grossMonthly=MX['grossMonthly'], takeHomeMonthly=MX['takeHomeMonthly'], debtMinimumsMonthly=MX['debtServiceMonthly'])
-E['mayaHome'] = home(maya_in); E['mayaHome']['inputs'] = maya_in
+leah_in = dict(ca, grossMonthly=MX['grossMonthly'], takeHomeMonthly=MX['takeHomeMonthly'], debtMinimumsMonthly=MX['debtServiceMonthly'])
+E['leahHome'] = home(leah_in); E['leahHome']['inputs'] = leah_in
 # the ladder at the comfortable answer: price by down payment, cash to close
 def cash_to_close(price, i):
-    c = cost(price, i); share = (H['closingCostShareByState']['NJ']['low'] + H['closingCostShareByState']['NJ']['high']) / 2
+    c = cost(price, i); cs = H['closingCostShareByState'][i['state']]; share = (cs['low'] + cs['high']) / 2
     closing = R(price * share); prepaid = c['tax'] * H['prepaids']['escrowMonthsTaxes'] + c['ins'] * 12 + R(c['loan'] * i['rate'] / 365 * H['prepaids']['prepaidInterestDays'])
     escrow = c['tax'] * 2 + c['ins'] * H['prepaids']['escrowMonthsInsurance']; moving = H['oneOffs']['movingCents']; repairs = R(price * H['oneOffs']['firstYearRepairsShare'])
-    return c['down'] + closing + prepaid + escrow + moving + repairs
-E['mayaLadder'] = []
+    # the buyer side of transfer taxes: the state rate, plus the city rate where the city has one (Oakland does, Jersey City does not)
+    st = H['transferTaxes']['byState'][i['state']]; ct = H['transferTaxes']['cities'].get(i.get('city', '').lower())
+    transfer = R(price * st.get('buyerRate', 0)) + (R(price * ct.get('buyerRate', 0)) if ct and (not ct.get('buyerAbove') or price >= ct['buyerAbove']) else 0)
+    return c['down'] + closing + transfer + prepaid + escrow + moving + repairs
+E['leahLadder'] = []
 for d in [0.03, 0.035, 0.05, 0.10, 0.20]:
-    i2 = dict(maya_in, downPct=d); p = min(price_for(E['mayaHome']['lenderBudget'], i2, 'lender'), price_for(E['mayaHome']['comfortableBudget'], i2, 'total'))
-    E['mayaLadder'].append(dict(downPct=d, price=p, cashToClose=cash_to_close(p, i2)))
+    i2 = dict(leah_in, downPct=d); p = min(price_for(E['leahHome']['lenderBudget'], i2, 'lender'), price_for(E['leahHome']['comfortableBudget'], i2, 'total'))
+    E['leahLadder'].append(dict(downPct=d, price=p, cashToClose=cash_to_close(p, i2)))
 
 # ---- the workbook's defaults through the corrected model ----
 def rent_vs_buy(i, q):
@@ -86,10 +90,10 @@ W = rent_vs_buy(wb_i, wb_q)
 E['workbook'] = dict(inputs=wb_i, q=wb_q, payment=W['payment'], upfront=W['upfront'], deposit=W['deposit'], breakEvenYear=W['breakEvenYear'], year1=W['years'][0], year10=W['years'][9], year30=W['years'][29],
     workbookSaid=dict(monthlyPI=266121, note='The workbook counted taxes, insurance, maintenance and PMI inside cumulative interest, never stopped PMI, kept insurance flat, and multiplied the buyer FI savings by 0.8; this file holds the corrected arithmetic'))
 
-# ---- Maya's car: a used car against no car ----
+# ---- Leah's car: a used car against no car ----
 def car_used():
     price = R(A['newPriceCents'] * A['usedDefaults']['priceShareOfNew'] / 10000) * 10000; age = A['usedDefaults']['ageYears']; keep = 5; months = keep * 12; miles = A['milesPerYearDefault']
-    st = A['salesTaxByState']['NJ']; tax = R(price * st['rate']); doc = A['docFeeCapByState']['NJ']['typicalCents']; reg = A['titleAndRegistrationByState']['NJ']
+    st = A['salesTaxByState']['CA']; tax = R(price * st['rate']); doc = A['docFeeCapByState']['CA']['typicalCents']; reg = A['titleAndRegistrationByState']['CA']
     down = R(price * 0.1); financed = price + tax + doc + reg['titleCents'] - down; payment = pay(financed, A['loan']['usedRate'], 48)
     bal = financed; interest = 0
     for m in range(48):
@@ -97,21 +101,21 @@ def car_used():
     curve = A['depreciation']['newByYear']; floor = R(price * A['depreciation']['floorShareOfPrice']); v = price; values = [price]
     for y in range(keep):
         v = max(floor, R(v * (1 - min(0.6, curve[min(len(curve) - 1, age + y)])))); values.append(v)
-    ins = A['insuranceAnnualByState']['NJ']; fuel = R(miles / A['fuel']['defaultMpg'] * A['fuel']['gasPricePerGallonCents'])
+    ins = A['insuranceAnnualByState']['CA']; fuel = R(miles / A['fuel']['defaultMpg'] * A['fuel']['gasPricePerGallonCents'])
     mt = A['maintenanceAnnualByAge']; maint = R(sum(mt[min(len(mt) - 1, age + y)] for y in range(keep)) / keep); tires = R(miles / A['tires']['everyMiles'] * A['tires']['setCents'])
-    regr = reg['registrationAnnualCents'] + reg['inspectionAnnualCents']; parking = A['parkingMonthlyByTier']['HCOL'] * 12; tolls = A['tollsMonthlyByTier']['HCOL'] * 12
+    regr = reg['registrationAnnualCents'] + reg['inspectionAnnualCents']; parking = A['parkingMonthlyByTier']['HCOL'] * 12; tolls = A['tollsMonthlyByTier']['HCOL'] * 12  # Oakland is in the San Francisco metro, HCOL
     running = ins + fuel + maint + tires + regr + parking + tolls
     upfront = down + tax + doc + reg['titleCents'] + reg['registrationAnnualCents']
     total = upfront + payment * 48 + running * keep - values[keep]
     return dict(price=price, financed=financed, payment=payment, interest=interest, upfront=upfront, runningMonthly=R(running / 12), endValue=values[keep], totalCost=total, costPerMonth=R(total / months), costPerMile=R(total / (miles * keep)))
-E['mayaUsedCar'] = car_used()
-nc = A['noCar']; E['mayaNoCar'] = dict(costPerMonth=nc['transitPassByMetro']['jersey city'] + nc['rideshareMonthlyCents'] + R(nc['rentalDaysPerYear'] * nc['rentalDayCents'] / 12) + nc['carShareMonthlyCents'])
+E['leahUsedCar'] = car_used()
+nc = A['noCar']; E['leahNoCar'] = dict(costPerMonth=nc['transitPassByMetro']['oakland'] + nc['rideshareMonthlyCents'] + R(nc['rentalDaysPerYear'] * nc['rentalDayCents'] / 12) + nc['carShareMonthlyCents'])
 
-# ---- Maya's calendar, day by day for 60 days from 2026-10-05 ----
+# ---- Leah's calendar, day by day for 60 days from 2026-10-05 ----
 def ymd(d): return d.strftime('%Y-%m-%d')
 def dim(y, m): return (dt.date(y + (m // 12), m % 12 + 1, 1) - dt.timedelta(days=1)).day
 START = dt.date(2026, 10, 5); DAYS = 60
-rows = {r['id']: r for p in MAYA['planets'].values() for r in p['rows']}; cal = MAYA['calendar']
+rows = {r['id']: r for p in LEAH['planets'].values() for r in p['rows']}; cal = LEAH['calendar']
 def monthly(rid, fid):
     f = rows[rid]['f'][fid]; v = f['v']; v = R((v['low'] + v['high']) / 2) if isinstance(v, dict) else v; cad = f.get('cad', 'month')
     return {'month': v, 'year': R(v / 12), 'paycheck': R(v * 26 / 12)}[cad]
@@ -155,10 +159,10 @@ next_pay = min(p for p in paydays if p > START)
 committed = sum(-c for dday in days if START < dt.date.fromisoformat(dday['date']) < next_pay for k, c in dday['events'] if c < 0)
 first_pay_idx = next(i for i, dd in enumerate(days) if dt.date.fromisoformat(dd['date']) in paydays); second_pay = next_pay + dt.timedelta(days=14)
 bills_first = sum(-c for dd in days[first_pay_idx:] if dt.date.fromisoformat(dd['date']) < second_pay for k, c in dd['events'] if c < 0)
-E['mayaCalendar'] = dict(start=ymd(START), days=DAYS, low=low, safeToSpendToday=days[0]['checking'] - committed, committed=committed, nextIncome=ymd(next_pay), firstPaycheck=dict(date=ymd(next_pay), cents=take_biweekly, left=take_biweekly - bills_first), endChecking=days[-1]['checking'], interest=0, shortfalls=0, floor=0, note='Both cards are paid in full by autopay, so no interest; the cushion sits in savings, so the floor on checking is zero')
+E['leahCalendar'] = dict(start=ymd(START), days=DAYS, low=low, safeToSpendToday=days[0]['checking'] - committed, committed=committed, nextIncome=ymd(next_pay), firstPaycheck=dict(date=ymd(next_pay), cents=take_biweekly, left=take_biweekly - bills_first), endChecking=days[-1]['checking'], interest=0, shortfalls=0, floor=0, note='Both cards are paid in full by autopay, so no interest; the cushion sits in savings, so the floor on checking is zero')
 json.dump(E, open(os.path.join(HERE, 'calculators-expected.json'), 'w'), indent=1)
 print('brief', E['brief']['lenderPrice'], E['brief']['comfortablePrice'], E['brief']['comfortableMonthly'])
-print('maya home', E['mayaHome']['lenderPrice'], E['mayaHome']['comfortablePrice'])
+print('leah home', E['leahHome']['lenderPrice'], E['leahHome']['comfortablePrice'])
 print('workbook', W['payment'], W['breakEvenYear'], E['workbook']['year30']['buyerNetWorth'], E['workbook']['year30']['renterNetWorth'])
-print('car', E['mayaUsedCar']['costPerMonth'], E['mayaNoCar']['costPerMonth'])
-print('calendar', E['mayaCalendar']['low'], E['mayaCalendar']['safeToSpendToday'], E['mayaCalendar']['firstPaycheck'])
+print('car', E['leahUsedCar']['costPerMonth'], E['leahNoCar']['costPerMonth'])
+print('calendar', E['leahCalendar']['low'], E['leahCalendar']['safeToSpendToday'], E['leahCalendar']['firstPaycheck'])

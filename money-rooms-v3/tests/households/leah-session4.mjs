@@ -1,4 +1,4 @@
-/* Maya through session 4 (Level 12, MR-063), built from the maya fixture through the engine API:
+/* Leah through session 4 (Level 12, MR-063), built from the leah fixture through the engine API:
    snapshots at the close of sessions 1 and 2 (rewound to those moments), then session 3 (a correction:
    restaurants confirmed; a move: the card paid down) and session 4 (a move: the HYSA up; the market:
    the Roth IRA down more than its contributions explain; satisfaction 4, 5, 6, 7 and worth-it scores in sessions 3 and 4; a stress score). The engine is never read for
@@ -11,8 +11,8 @@ import { recordStress, recordSatisfaction, recordWorthIt } from '../../engine/pr
 /* a close is timestamped after the session's edits, as in the app */
 export const S3 = '2026-10-15T16:30:00.000Z'; export const S4 = '2026-11-12T16:30:00.000Z'; export const TODAY4 = '2026-11-12';
 
-export function mayaThroughSession4(maya, data) {
-  const rec = JSON.parse(JSON.stringify(maya));
+export function leahThroughSession4(leah, data) {
+  const rec = JSON.parse(JSON.stringify(leah));
   const sessions = rec.sessions || [];
   /* the two closes already in the fixture: snapshot what the engine said at each moment */
   rec.snapshots = [];

@@ -32,7 +32,7 @@ test('percent one decimal, months whole, dates like Oct 2026', () => {
   assert.equal(F.months(7.6, { bare: true }), '8');
   assert.equal(F.date('2026-10'), 'Oct 2026');
   assert.equal(F.date('2027-03-15'), 'Mar 2027');
-  assert.equal(F.dateLong('2026-10-05'), '5 Oct 2026');
+  assert.equal(F.dateLong('2026-10-05'), 'Oct 5, 2026'); assert.equal(F.dateShort('2026-10-09'), 'Oct 9');
 });
 
 test('null is empty, NaN throws', () => {
@@ -77,8 +77,8 @@ test('value formats any engine shape', () => {
 
 test('journal timestamps show in the browser\'s local time, whatever the zone (MR-057)', () => {
   const local = new Date(2026, 9, 7, 21, 45); /* 7 Oct 2026, 9:45 pm where this test runs */
-  assert.equal(F.dateTimeLocal(local.toISOString()), '7 Oct 2026, 9:45 pm');
-  assert.equal(F.dateLocal(local.toISOString()), '7 Oct 2026');
-  assert.equal(F.dateTimeLocal(new Date(2026, 0, 3, 0, 5).toISOString()), '3 Jan 2026, 12:05 am');
+  assert.equal(F.dateTimeLocal(local.toISOString()), 'Oct 7, 2026, 9:45 pm');
+  assert.equal(F.dateLocal(local.toISOString()), 'Oct 7, 2026');
+  assert.equal(F.dateTimeLocal(new Date(2026, 0, 3, 0, 5).toISOString()), 'Jan 3, 2026, 12:05 am');
   assert.equal(F.dateTimeLocal(''), ''); assert.equal(F.dateLocal('nope'), '');
 });

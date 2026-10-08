@@ -7,7 +7,7 @@
    "n": 1,
    "id": "takeHome",
    "name": "Take-home monthly",
-   "clientLabel": "What lands in the bank each month",
+   "clientLabel": "Take-home pay",
    "definition": "Pay after taxes and payroll deductions, per month.",
    "formula": "sum(income.takeHome, monthly)",
    "inputs": [
@@ -52,7 +52,7 @@
     "takeHome"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your what lands in the bank each month: {value}. Up is the direction we want, and it has been moving since you started.",
+   "gentleCopy": "Your take-home pay: {value}. Up is the direction we want, and it has been moving since you started.",
    "firstSession": 1,
    "headline": false
   },
@@ -60,7 +60,7 @@
    "n": 2,
    "id": "gross",
    "name": "Gross monthly",
-   "clientLabel": "Pay before anything comes out",
+   "clientLabel": "Pay before deductions",
    "definition": "Pay before taxes and deductions, per month, bonus and equity included.",
    "formula": "sum(income.grossPay, monthly) + bonus/12 + equity/12",
    "inputs": [
@@ -98,7 +98,7 @@
     "grossPay"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your pay before anything comes out: {value}. Up is the direction we want, and it has been moving since you started.",
+   "gentleCopy": "Your pay before deductions: {value}. Up is the direction we want, and it has been moving since you started.",
    "firstSession": 1,
    "headline": false
   },
@@ -106,7 +106,7 @@
    "n": 3,
    "id": "spending",
    "name": "Monthly spending",
-   "clientLabel": "What a month costs",
+   "clientLabel": "Monthly spending",
    "definition": "Every spending line per month, plus insurance premiums paid from the bank. Line items override a rough total.",
    "formula": "sum(spending lines, monthly) + sum(safety premiums not via payroll)",
    "inputs": [
@@ -152,7 +152,7 @@
     "premium"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your what a month costs: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "Your monthly spending: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 1,
    "headline": false
   },
@@ -222,7 +222,7 @@
    "n": 5,
    "id": "savingsRateTakeHome",
    "name": "Savings rate (take-home)",
-   "clientLabel": "Share of take-home saved",
+   "clientLabel": "Savings rate",
    "definition": "(take-home minus spending) divided by take-home.",
    "formula": "(takeHome - spending) / takeHome",
    "inputs": [
@@ -329,7 +329,7 @@
     "takeHome"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your share of take-home saved: {value}. Up is the direction we want, and it has been moving since you started.",
+   "gentleCopy": "Your savings rate: {value}. Up is the direction we want, and it has been moving since you started.",
    "firstSession": 1,
    "headline": true
   },
@@ -337,7 +337,7 @@
    "n": 6,
    "id": "savingsRateGross",
    "name": "Savings rate (gross, FIRE style)",
-   "clientLabel": "Share of total pay saved, match included",
+   "clientLabel": "Savings rate with match",
    "definition": "(pre-tax contributions + match + take-home minus spending) divided by (gross + match).",
    "formula": "(pretaxContrib + roth + hsa + match + takeHome - spending) / (gross + match)",
    "inputs": [
@@ -440,7 +440,7 @@
     "pretaxRetirement"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your share of total pay saved, match included: {value}. Up is the direction we want, and it has been moving since you started.",
+   "gentleCopy": "Your savings rate with match: {value}. Up is the direction we want, and it has been moving since you started.",
    "firstSession": 1,
    "headline": false
   },
@@ -448,7 +448,7 @@
    "n": 7,
    "id": "leak",
    "name": "Leak rate",
-   "clientLabel": "Money the math says is left but does not land in savings",
+   "clientLabel": "Money that goes missing",
    "definition": "Surplus the math says, minus savings actually landing in accounts, as a share of take-home.",
    "formula": "(surplus - savingsLanding) / takeHome",
    "inputs": [
@@ -496,7 +496,7 @@
     "savingsLanding"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your money the math says is left but does not land in savings: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "Your money that goes missing: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 1,
    "headline": false
   },
@@ -551,7 +551,7 @@
     "pretaxRetirement"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your where each dollar goes: {value}. This one is a shape to read, not a score to beat.",
+   "gentleCopy": "Where each dollar goes: {value}. This one is a shape to read, not a score to beat.",
    "firstSession": 1,
    "headline": false
   },
@@ -604,7 +604,7 @@
     "fatFloor"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your the lean month: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "The lean month: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 1,
    "headline": false
   },
@@ -826,7 +826,7 @@
     "workCosts"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your what an hour of work really pays: {value}. Up is the direction we want, and it has been moving since you started.",
+   "gentleCopy": "What an hour of work really pays: {value}. Up is the direction we want, and it has been moving since you started.",
    "firstSession": 3,
    "headline": false
   },
@@ -887,7 +887,7 @@
    "n": 14,
    "id": "totalDebt",
    "name": "Total debt",
-   "clientLabel": "Everything owed",
+   "clientLabel": "Total debt",
    "definition": "Sum of balances.",
    "formula": "sum(debt balances)",
    "inputs": [
@@ -927,7 +927,7 @@
     "balance"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your everything owed: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "Your total debt: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 2,
    "headline": false
   },
@@ -1239,7 +1239,7 @@
     "creditLimit"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your how full the cards are: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "How full the cards are: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 2,
    "headline": false
   },
@@ -1289,7 +1289,7 @@
     "promoEnd"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your when a 0% offer ends: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "When a 0% offer ends: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 2,
    "headline": false
   },
@@ -1297,7 +1297,7 @@
    "n": 21,
    "id": "debtFree",
    "name": "Debt-free date and freed cash flow",
-   "clientLabel": "When the last payment lands",
+   "clientLabel": "Debt-free date",
    "definition": "Month the last debt is paid at current minimums, freed payments rolled to the next debt (avalanche), and the cash freed by month.",
    "formula": "simulate minimums with avalanche rollover",
    "inputs": [
@@ -1340,7 +1340,7 @@
     "minimum"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your when the last payment lands: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "Your debt-free date: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 2,
    "headline": true
   },
@@ -1348,7 +1348,7 @@
    "n": 22,
    "id": "netWorth",
    "name": "Net worth",
-   "clientLabel": "Owned minus owed",
+   "clientLabel": "Net worth",
    "definition": "Total assets minus total debt.",
    "formula": "totalAssets - totalDebt",
    "inputs": [
@@ -1403,7 +1403,7 @@
     "balance"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your owned minus owed: {value}. Up is the direction we want, and it has been moving since you started.",
+   "gentleCopy": "Your net worth: {value}. Up is the direction we want, and it has been moving since you started.",
    "firstSession": 3,
    "headline": false
   },
@@ -1411,7 +1411,7 @@
    "n": 23,
    "id": "assets",
    "name": "Total, invested and liquid assets",
-   "clientLabel": "What is owned, and how much of it moves",
+   "clientLabel": "What you own",
    "definition": "Total assets; the part that takes market returns; the part reachable without penalty.",
    "formula": "sum by account type",
    "inputs": [
@@ -1448,7 +1448,7 @@
     "accountBalance"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your what is owned, and how much of it moves: {value}. Up is the direction we want, and it has been moving since you started.",
+   "gentleCopy": "What you own: {value}. Up is the direction we want, and it has been moving since you started.",
    "firstSession": 3,
    "headline": false
   },
@@ -1582,7 +1582,7 @@
    "n": 26,
    "id": "runway",
    "name": "Runway months",
-   "clientLabel": "How long cash lasts",
+   "clientLabel": "Runway",
    "definition": "Cash divided by monthly spending at full spending, at needs only, and at the FAT floor.",
    "formula": "cash / spending at each level",
    "inputs": [
@@ -1649,7 +1649,7 @@
     "amount"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your how long cash lasts: {value}. Up is the direction we want, and it has been moving since you started.",
+   "gentleCopy": "Your runway: {value}. Up is the direction we want, and it has been moving since you started.",
    "firstSession": 3,
    "headline": true
   },
@@ -1657,7 +1657,7 @@
    "n": 27,
    "id": "ruleOf5Target",
    "name": "Rule of 5 target",
-   "clientLabel": "Cash to keep on hand",
+   "clientLabel": "Cushion target",
    "definition": "Age divided by five, in months of spending.",
    "formula": "(age / 5) x spending",
    "inputs": [
@@ -1702,7 +1702,7 @@
     "sun.birthDate"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your cash to keep on hand: {value}. This one is a shape to read, not a score to beat.",
+   "gentleCopy": "Your cushion target: {value}. This one is a shape to read, not a score to beat.",
    "firstSession": 3,
    "headline": false
   },
@@ -1710,7 +1710,7 @@
    "n": 28,
    "id": "emergencyGap",
    "name": "Emergency gap and monthly to close",
-   "clientLabel": "Cash still to set aside",
+   "clientLabel": "Cushion gap",
    "definition": "Rule of 5 target minus cash, floored at zero, and a twelfth of it.",
    "formula": "max(0, target - cash); gap / 12",
    "inputs": [
@@ -1758,7 +1758,7 @@
     "amount"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your cash still to set aside: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "Your cushion gap: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 3,
    "headline": false
   },
@@ -1814,7 +1814,7 @@
     "asm.returnLikely"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your what idle cash costs a year: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "What idle cash costs a year: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 3,
    "headline": false
   },
@@ -1917,7 +1917,7 @@
    "n": 32,
    "id": "matchCapture",
    "name": "Match capture and match left",
-   "clientLabel": "Free money taken, and left",
+   "clientLabel": "Free money taken",
    "definition": "Match received divided by match available, and the dollars left a year.",
    "formula": "matchMonthly / maxMatchMonthly; (max - actual) x 12",
    "inputs": [
@@ -1961,7 +1961,7 @@
     "pretaxRetirement"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your free money taken, and left: {value}. Up is the direction we want, and it has been moving since you started.",
+   "gentleCopy": "Your free money taken: {value}. Up is the direction we want, and it has been moving since you started.",
    "firstSession": 2,
    "headline": false
   },
@@ -1969,7 +1969,7 @@
    "n": 33,
    "id": "roomLeft",
    "name": "Room left under limits",
-   "clientLabel": "Space left in each account this year",
+   "clientLabel": "Room left this year",
    "definition": "Each limit minus this year's contributions.",
    "formula": "limit - annual contributions",
    "inputs": [
@@ -2011,7 +2011,7 @@
     "pretaxRetirement"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your space left in each account this year: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "Your room left this year: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 8,
    "headline": false
   },
@@ -2137,7 +2137,7 @@
     "expenseRatio"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your what fund fees cost by retirement: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "What fund fees cost by retirement: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 8,
    "headline": false
   },
@@ -2238,7 +2238,7 @@
    "n": 38,
    "id": "federalRates",
    "name": "Effective and marginal federal rate",
-   "clientLabel": "Federal tax, average and on the next dollar",
+   "clientLabel": "Federal tax rate",
    "definition": "Estimated federal tax divided by gross, and the bracket of the last dollar.",
    "formula": "federalAnnual / grossAnnual; bracket",
    "inputs": [
@@ -2288,7 +2288,7 @@
     "pretaxRetirement"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your federal tax, average and on the next dollar: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "Your federal tax rate: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 6,
    "headline": false
   },
@@ -2349,7 +2349,7 @@
    "n": 40,
    "id": "taxSavedPer1000",
    "name": "Tax saved per $1,000 pre-tax",
-   "clientLabel": "What each $1,000 into a 401k saves",
+   "clientLabel": "Tax saved per $1,000 pre-tax",
    "definition": "The marginal rate times 1,000 (plus FICA where the deduction avoids it).",
    "formula": "marginalRate x 1000",
    "inputs": [
@@ -2387,7 +2387,7 @@
     "grossPay"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your what each $1,000 into a 401k saves: {value}. Up is the direction we want, and it has been moving since you started.",
+   "gentleCopy": "Your tax saved per $1,000 pre-tax: {value}. Up is the direction we want, and it has been moving since you started.",
    "firstSession": 6,
    "headline": false
   },
@@ -2395,7 +2395,7 @@
    "n": 41,
    "id": "fiNumber",
    "name": "FI number",
-   "clientLabel": "The portfolio that pays for life",
+   "clientLabel": "FI number",
    "definition": "Annual spending divided by the withdrawal rate.",
    "formula": "spending x 12 / withdrawalRate",
    "inputs": [
@@ -2441,7 +2441,7 @@
     "asm.withdrawalRate"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your the portfolio that pays for life: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "Your FI number: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 4,
    "headline": false
   },
@@ -2449,7 +2449,7 @@
    "n": 42,
    "id": "pctToFi",
    "name": "% to FI",
-   "clientLabel": "How far along",
+   "clientLabel": "FI progress",
    "definition": "Net worth (or invested assets, by the FI progress basis assumption) divided by the FI number, on the same line as the FI date.",
    "formula": "netWorth / fiNumber (basis switchable)",
    "inputs": [
@@ -2522,7 +2522,7 @@
     "amount"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your how far along: {value}. Up is the direction we want, and it has been moving since you started.",
+   "gentleCopy": "Your FI progress: {value}. Up is the direction we want, and it has been moving since you started.",
    "firstSession": 4,
    "headline": true
   },
@@ -2530,7 +2530,7 @@
    "n": 43,
    "id": "coastFi",
    "name": "Coast FI number and %",
-   "clientLabel": "Enough today to coast",
+   "clientLabel": "Coast FI",
    "definition": "The FI number discounted to today at the likely return over the years to retirement age, and the FI progress basis against it.",
    "formula": "fiNumber / (1+r)^years; netWorth / coast",
    "inputs": [
@@ -2587,7 +2587,7 @@
     "asm.returnLikely"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your enough today to coast: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "Your coast FI: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 4,
    "headline": false
   },
@@ -2595,7 +2595,7 @@
    "n": 44,
    "id": "fiDate",
    "name": "FI date and years to FI",
-   "clientLabel": "When the portfolio could carry the household",
+   "clientLabel": "FI date",
    "definition": "First projection year where net worth times the withdrawal rate covers spending, at the likely, best and worst returns. Goals spend their cost in the year they land, so a goal moved or resized moves this date.",
    "formula": "projection, year by year to 95, with the goals spent along the way",
    "inputs": [
@@ -2651,7 +2651,7 @@
     "takeHome"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your when the portfolio could carry the household: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "Your FI date: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 4,
    "headline": true
   },
@@ -2749,7 +2749,7 @@
     "contribAmount"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your what one more percent saved buys: {value}. Up is the direction we want, and it has been moving since you started.",
+   "gentleCopy": "What one more percent saved buys: {value}. Up is the direction we want, and it has been moving since you started.",
    "firstSession": 4,
    "headline": false
   },
@@ -2853,7 +2853,7 @@
    "n": 49,
    "id": "leanFi",
    "name": "Lean FI number",
-   "clientLabel": "The floor",
+   "clientLabel": "Lean FI number",
    "definition": "The FAT floor (food, accommodation, transportation) a year over the withdrawal rate. Percent there, the date the projection reaches it, and the monthly investing that reaches it by the dream FI age.",
    "formula": "fatFloor x 12 / withdrawalRate",
    "inputs": [
@@ -2916,7 +2916,7 @@
     "asm.withdrawalRate"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your the floor: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "Your lean FI number: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 4,
    "headline": false
   },
@@ -2924,7 +2924,7 @@
    "n": 50,
    "id": "baristaLeanFi",
    "name": "Barista Lean FI number",
-   "clientLabel": "The floor, with part-time work",
+   "clientLabel": "Lean FI with part-time work",
    "definition": "Lean FI minus part-time income a year over the withdrawal rate.",
    "formula": "leanFi - baristaIncome x 12 / withdrawalRate",
    "inputs": [
@@ -2979,7 +2979,7 @@
     "asm.withdrawalRate"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your the floor, with part-time work: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "Your lean FI with part-time work: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 4,
    "headline": false
   },
@@ -2987,7 +2987,7 @@
    "n": 51,
    "id": "baristaRegularFi",
    "name": "Barista FI number",
-   "clientLabel": "Enough, with part-time work",
+   "clientLabel": "FI with part-time work",
    "definition": "The FI number minus part-time income a year over the withdrawal rate.",
    "formula": "regularFi - baristaIncome x 12 / withdrawalRate",
    "inputs": [
@@ -3042,7 +3042,7 @@
     "asm.withdrawalRate"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your enough, with part-time work: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "Your FI with part-time work: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 4,
    "headline": false
   },
@@ -3050,7 +3050,7 @@
    "n": 52,
    "id": "regularFi",
    "name": "FI number (ladder rung)",
-   "clientLabel": "Enough",
+   "clientLabel": "FI number",
    "definition": "Spending a year on the chosen basis (actual, gut or dream) over the withdrawal rate; the same number as the FI number, with percent there, date and required monthly.",
    "formula": "spending x 12 / withdrawalRate",
    "inputs": [
@@ -3107,7 +3107,7 @@
     "asm.withdrawalRate"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your enough: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "Your FI number: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 4,
    "headline": false
   },
@@ -3115,7 +3115,7 @@
    "n": 53,
    "id": "fatFi",
    "name": "Fat FI number",
-   "clientLabel": "The dream",
+   "clientLabel": "Fat FI number",
    "definition": "Dream spending a year over the withdrawal rate; spending times the fat multiplier when no dream is typed.",
    "formula": "dreamSpending x 12 / withdrawalRate",
    "inputs": [
@@ -3171,7 +3171,7 @@
     "asm.withdrawalRate"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your the dream: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "Your fat FI number: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 4,
    "headline": false
   },
@@ -3218,7 +3218,7 @@
     "asm.withdrawalRate"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your what part-time work is worth: {value}. This one is a shape to read, not a score to beat.",
+   "gentleCopy": "What part-time work is worth: {value}. This one is a shape to read, not a score to beat.",
    "firstSession": 4,
    "headline": false
   },
@@ -3226,7 +3226,7 @@
    "n": 55,
    "id": "baristaIncomeNeededToday",
    "name": "Part-time income to be Barista FI today",
-   "clientLabel": "Part-time pay that would make today enough",
+   "clientLabel": "Part-time pay that makes today enough",
    "definition": "Spending a month minus what invested assets pay at the withdrawal rate; the same for the Lean floor.",
    "formula": "max(0, spending - invested x withdrawalRate / 12)",
    "inputs": [
@@ -3274,7 +3274,7 @@
     "amount"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your part-time pay that would make today enough: {value}. This one is a shape to read, not a score to beat.",
+   "gentleCopy": "Your part-time pay that makes today enough: {value}. This one is a shape to read, not a score to beat.",
    "firstSession": 4,
    "headline": false
   },
@@ -3393,7 +3393,7 @@
     "contribAmount"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your when the money starts paying for life: {value}. This one is a shape to read, not a score to beat.",
+   "gentleCopy": "When the money starts paying for life: {value}. This one is a shape to read, not a score to beat.",
    "firstSession": 4,
    "headline": false
   },
@@ -3515,7 +3515,7 @@
    "n": 60,
    "id": "theFlip",
    "name": "The flip (invested only)",
-   "clientLabel": "When growth beats what you add (invested only)",
+   "clientLabel": "When growth beats what you add",
    "definition": "The first projection year the portfolio grows more from returns than from contributions. Counts invested assets only, not cash or debt, so it can sit far from the FI date.",
    "formula": "first year invested x return > contributions",
    "inputs": [
@@ -3560,7 +3560,7 @@
     "contribAmount"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your when growth beats what you add (invested only): {value}. This one is a shape to read, not a score to beat.",
+   "gentleCopy": "When growth beats what you add: {value}. This one is a shape to read, not a score to beat.",
    "firstSession": 4,
    "headline": false
   },
@@ -3612,7 +3612,7 @@
     "contribAmount"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your when the first $100,000 lands: {value}. This one is a shape to read, not a score to beat.",
+   "gentleCopy": "When the first $100,000 lands: {value}. This one is a shape to read, not a score to beat.",
    "firstSession": 4,
    "headline": false
   },
@@ -3849,7 +3849,7 @@
     "asm.returnLikely"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your what a dollar invested today becomes: {value}. Up is the direction we want, and it has been moving since you started.",
+   "gentleCopy": "What a dollar invested today becomes: {value}. Up is the direction we want, and it has been moving since you started.",
    "firstSession": 4,
    "headline": false
   },
@@ -3903,7 +3903,7 @@
     "amount"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your what a purchase costs in time: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "What a purchase costs in time: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 4,
    "headline": false
   },
@@ -4020,7 +4020,7 @@
    "n": 69,
    "id": "savingsRateNeeded",
    "name": "Savings rate needed for the dream FI age",
-   "clientLabel": "Share of take-home to save for the dream",
+   "clientLabel": "Savings rate for the dream",
    "definition": "The monthly investing that reaches the FI number by the dream FI age, as a share of take-home.",
    "formula": "requiredMonthly / takeHome",
    "inputs": [
@@ -4071,7 +4071,7 @@
     "takeHome"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your share of take-home to save for the dream: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "Your savings rate for the dream: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 4,
    "headline": false
   },
@@ -4198,7 +4198,7 @@
    "n": 72,
    "id": "gutGap",
    "name": "Gut gap as FI date",
-   "clientLabel": "Gut guess against the lines",
+   "clientLabel": "Gut feel against the lines",
    "definition": "The gut guess of monthly spending against the lines, expressed as FI number and months of FI date.",
    "formula": "(gut - spending) x 12 / withdrawalRate; / annual growth near FI x 12",
    "inputs": [
@@ -4244,7 +4244,7 @@
     "gutSpending"
    ],
    "clientVisible": "coach",
-   "gentleCopy": "Your gut guess against the lines: {value}. Down is the direction we want, and every step counts.",
+   "gentleCopy": "Your gut feel against the lines: {value}. Down is the direction we want, and every step counts.",
    "firstSession": 1,
    "headline": false
   },
@@ -4349,7 +4349,7 @@
   {
    "id": "bigThreeShare",
    "name": "Big three share",
-   "clientLabel": "Housing, food and getting around as a share of pay",
+   "clientLabel": "Housing, food and getting around",
    "definition": "Housing, food and transportation together, divided by take-home.",
    "formula": "(accommodation + food + transportation) / takeHome",
    "inputs": [
@@ -4420,12 +4420,12 @@
     "verify": true
    },
    "milestones": null,
-   "gentleCopy": "Your housing, food and getting around as a share of pay: {value}. Down is the direction we want, and every step counts."
+   "gentleCopy": "Your housing, food and getting around: {value}. Down is the direction we want, and every step counts."
   },
   {
    "id": "costInHours",
    "name": "A month of spending in hours of work",
-   "clientLabel": "Hours of work a month of life costs",
+   "clientLabel": "Hours of work a month costs",
    "definition": "Monthly spending divided by the real hourly wage.",
    "formula": "spending / realHourlyWage",
    "inputs": [
@@ -4473,7 +4473,7 @@
    "headline": false,
    "bands": null,
    "milestones": null,
-   "gentleCopy": "Your hours of work a month of life costs: {value}. Down is the direction we want, and every step counts."
+   "gentleCopy": "Your hours of work a month costs: {value}. Down is the direction we want, and every step counts."
   },
   {
    "id": "completeness",
@@ -4552,12 +4552,12 @@
     0.9,
     1
    ],
-   "gentleCopy": "Your how much of the picture is in: {value}. Up is the direction we want, and it has been moving since you started."
+   "gentleCopy": "How much of the picture is in: {value}. Up is the direction we want, and it has been moving since you started."
   },
   {
    "id": "blindSpot",
    "name": "Blind spot",
-   "clientLabel": "The share of spending your gut did not see",
+   "clientLabel": "What your gut did not see",
    "definition": "Of actual spending, the share that the gut guesses did not cover, from the transactions compared with what was said.",
    "formula": "uncovered actual / actual",
    "inputs": [
@@ -4621,12 +4621,12 @@
     0.1,
     0.05
    ],
-   "gentleCopy": "Your the share of spending your gut did not see: {value}. Down is the direction we want, and every step counts."
+   "gentleCopy": "What your gut did not see: {value}. Down is the direction we want, and every step counts."
   },
   {
    "id": "guessesLeft",
    "name": "Guesses left",
-   "clientLabel": "Lines still standing in for yours",
+   "clientLabel": "Estimates still standing in",
    "definition": "Spending areas still filled by a national-average guess instead of her own lines.",
    "formula": "count of guess rows",
    "inputs": [
@@ -4670,7 +4670,7 @@
     2,
     0
    ],
-   "gentleCopy": "Your lines still standing in for yours: {value}. Down is the direction we want, and every step counts."
+   "gentleCopy": "Your estimates still standing in: {value}. Down is the direction we want, and every step counts."
   },
   {
    "id": "cushionSteps",
@@ -4777,7 +4777,7 @@
     5,
     3
    ],
-   "gentleCopy": "Your how money feels, 1 to 10: {value}. Down is the direction we want, and every step counts."
+   "gentleCopy": "How money feels, 1 to 10: {value}. Down is the direction we want, and every step counts."
   },
   {
    "id": "goalsOnTrack",
@@ -4836,7 +4836,7 @@
    "n": 83,
    "id": "satisfaction",
    "name": "Satisfaction with where the money goes",
-   "clientLabel": "How satisfied you are with where your money goes",
+   "clientLabel": "How satisfied you are",
    "definition": "The latest answer to \"how satisfied are you with where your money is going right now\", 1 to 10, asked at every session close and money date.",
    "formula": "latest score given",
    "inputs": [
@@ -4907,7 +4907,7 @@
     "program.satisfaction"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your satisfaction with where your money goes: {value}. This is the one number that can go up while spending goes up.",
+   "gentleCopy": "How satisfied you are: {value}. This is the one number that can go up while spending goes up.",
    "firstSession": 1,
    "headline": true
   },
@@ -4915,7 +4915,7 @@
    "n": 84,
    "id": "areaWorthIt",
    "name": "Worth-it score per area",
-   "clientLabel": "How much each area was worth to you",
+   "clientLabel": "What each area was worth",
    "definition": "Per spending area, \"was this worth it\" from 1 to 10, with the area's share of spending beside it.",
    "formula": "latest worth-it score per area, with the area's monthly cost and share",
    "inputs": [
@@ -4945,7 +4945,7 @@
     "program.worthIt"
    ],
    "clientVisible": true,
-   "gentleCopy": "What each area was worth to you: {value}.",
+   "gentleCopy": "What each area was worth: {value}.",
    "firstSession": 3,
    "headline": false
   },
@@ -4953,7 +4953,7 @@
    "n": 85,
    "id": "valuePerDollar",
    "name": "Value per dollar by area",
-   "clientLabel": "Where the money buys the most for you",
+   "clientLabel": "Where money buys the most",
    "definition": "Each area's worth-it score against its share of spending. High spend with a low score is the easy place to cut; low spend with a high score is where there is room to spend more.",
    "formula": "worth-it score per $1,000 a month; flags: share above 10% with score 4 or lower, share under 10% with score 8 or higher",
    "inputs": [
@@ -4983,7 +4983,7 @@
     "program.worthIt"
    ],
    "clientVisible": true,
-   "gentleCopy": "Where the money buys the most for you: {value}.",
+   "gentleCopy": "Where money buys the most: {value}.",
    "firstSession": 3,
    "headline": false
   },
@@ -4991,7 +4991,7 @@
    "n": 86,
    "id": "safeToSpend",
    "name": "Safe to spend today",
-   "clientLabel": "Safe to spend today",
+   "clientLabel": "Safe to spend",
    "definition": "Cash outside the cushion, minus everything due before the next paycheck, minus the floor, from the cash flow calendar's day-by-day run.",
    "formula": "cash (not the cushion) - committed before next income - floor",
    "inputs": [
@@ -5058,7 +5058,7 @@
     "accountBalance"
    ],
    "clientVisible": true,
-   "gentleCopy": "Safe to spend today: {value}. Everything due before your next paycheck is already set aside.",
+   "gentleCopy": "Your safe to spend: {value}. Everything due before your next paycheck is already set aside.",
    "firstSession": 4,
    "headline": false
   },
@@ -5066,7 +5066,7 @@
    "n": 87,
    "id": "lowPoint",
    "name": "Lowest point in the next two months",
-   "clientLabel": "Your tightest day",
+   "clientLabel": "Tightest day",
    "definition": "The lowest the checking balance gets over the next sixty days, and the day it happens, from the cash flow calendar.",
    "formula": "min over days of the checking balance",
    "inputs": [
@@ -5133,7 +5133,7 @@
     "accountBalance"
    ],
    "clientVisible": true,
-   "gentleCopy": "Your tightest day in the next two months lands at {value}. The calendar shows which bill makes it tight.",
+   "gentleCopy": "Your tightest day: {value}. The calendar shows which bill makes it tight.",
    "firstSession": 4,
    "headline": false
   },
@@ -5217,7 +5217,7 @@
     "amount"
    ],
    "clientVisible": true,
-   "gentleCopy": "Getting around takes {value} of your pay. The Car calculator shows what each choice would make it.",
+   "gentleCopy": "Your getting around, share of pay: {value}.",
    "firstSession": 3,
    "headline": false
   }

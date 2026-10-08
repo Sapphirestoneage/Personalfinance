@@ -57,8 +57,11 @@ export async function enterHousehold(page, spec, check) {
   const type = async t => { keys += t.length; await page.keyboard.type(t); };
 
   /* Sun facts */
+  await tabTo(page, a => a.aria === 'More client actions'); /* MR-072: New client sits under More on the client list */
+  await press('Enter');
   await tabTo(page, a => a.aria === 'New client');
   await press('Enter');
+  await page.waitForFunction(() => document.activeElement && document.activeElement.getAttribute('aria-label') === 'New client name'); /* the drawer focuses its name box on the next tick */
   await type(spec.sun.name[0]); await press('Enter');
   await page.waitForSelector('.fieldrow[data-field="birthDate"]');
   const SUN_TYPES = { birthDate: 'text', state: 'select', city: 'text', workSituation: 'select', dependents: 'int', filingStatus: 'select', bigGoal: 'text' };

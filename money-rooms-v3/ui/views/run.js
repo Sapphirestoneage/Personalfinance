@@ -67,14 +67,14 @@ export function mount(host, app) {
   function drawTimeline() {
     clear(tl); const m = minute(); const blocks = plan.blocks; const tot = blocks.reduce((s, b) => s + b.minutes.target, 0) || 1;
     const bar = h('div', { class: 'tl-bar' });
-    blocks.forEach((b, k) => { const done = doneIds().includes(b.id); bar.appendChild(h('div', { class: 'tl-seg' + (k === idx ? ' current' : '') + (done ? ' done' : '') + ' prio-' + b.priority, style: { flex: String(b.minutes.target) }, title: b.name + ', about ' + b.minutes.target + ' minutes', onClick: () => { idx = k; blockStartedAt = Date.now(); draw(); } }, h('span', { class: 'tl-num' }, String(k + 1)), h('span', { class: 'tl-name' }, b.name))); });
+    blocks.forEach((b, k) => { const done = doneIds().includes(b.id); bar.appendChild(h('div', { class: 'tl-seg' + (k === idx ? ' current' : '') + (done ? ' done' : '') + ' prio-' + b.priority, style: { flex: String(b.minutes.target) }, title: b.name + ', about ' + b.minutes.target + ' minutes', role: 'button', tabindex: '0', 'aria-label': b.name, onClick: () => { idx = k; blockStartedAt = Date.now(); draw(); }, onKeydown: e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); idx = k; blockStartedAt = Date.now(); draw(); } } }, h('span', { class: 'tl-num' }, String(k + 1)), h('span', { class: 'tl-name' }, b.name))); });
     /* MR-057: a name that does not fit its segment is never cut short; the segment shows its number and the legend below carries the names */
-    const legend = h('ol', { class: 'tl-legend small muted', style: { display: 'none' } }, blocks.map((b, k) => h('li', { class: k === idx ? 'current' : null }, b.name)));
-    requestAnimationFrame(() => { let tight = false; bar.querySelectorAll('.tl-seg').forEach(seg => { const nm = seg.querySelector('.tl-name'); if (nm && (nm.offsetWidth === 0 || nm.scrollWidth > nm.clientWidth + 1)) { seg.classList.add('tight'); tight = true; } }); legend.style.display = tight ? '' : 'none'; });
+    /* MR-072: every segment carries a short label; the full name sits on hover and in the current block card */
+    requestAnimationFrame(() => { bar.querySelectorAll('.tl-seg').forEach(seg => { const nm = seg.querySelector('.tl-name'); if (nm && (nm.offsetWidth === 0 || nm.scrollWidth > nm.clientWidth + 1)) { seg.classList.add('tight'); if (seg.clientWidth < 28) seg.classList.add('narrow'); } if (seg.clientWidth < 16) seg.classList.add('micro'); /* too thin even for a number; the title still names it */ }); });
     const pct = v => Math.min(100, v / Math.max(tot, plan.markers.closeAt + 7) * 100) + '%';
     const marks = h('div', { class: 'tl-marks' }, h('span', { class: 'tl-mark', style: { left: pct(plan.markers.behindAt) }, title: 'Minute ' + plan.markers.behindAt }), h('span', { class: 'tl-mark close', style: { left: pct(plan.markers.closeAt) }, title: 'Minute ' + plan.markers.closeAt }), h('span', { class: 'tl-now', style: { left: pct(m) } }));
     tl.appendChild(h('div', { class: 'tl-head row' }, h('span', { class: 'tl-clock', 'aria-live': 'polite' }, 'Minute ' + Math.floor(m) + (paused ? ', paused' : '')), h('span', { class: 'small muted' }, 'Part ' + (idx + 1) + ' of ' + blocks.length + ': ' + (blocks[idx] ? blocks[idx].name : ''))));
-    tl.appendChild(bar); tl.appendChild(marks); tl.appendChild(legend);
+    tl.appendChild(bar); tl.appendChild(marks);
   }
   function applyBend() {
     if (!plan.blocks[idx]) return;

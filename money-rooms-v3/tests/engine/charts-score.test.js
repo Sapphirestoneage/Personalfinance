@@ -1,5 +1,5 @@
 /* The seven Scoreboard charts (Level 12, MR-063): each builder needs the right inputs on a blank client and returns
-   plain numbers on Maya; the calendar helper reads paydays and bills from the hand-written CSV. */
+   plain numbers on Leah; the calendar helper reads paydays and bills from the hand-written CSV. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { compute } from '../../engine/compute.js';
@@ -25,16 +25,16 @@ test('on a blank client every one of the seven says what it needs, in words the 
   SCORE_CHARTS.forEach(c => { const d = c.build(R, {}); assert.ok(d.needs && d.needs.length, c.id + ' should need inputs'); d.needs.forEach(n => assert.ok(data.unlocks.needsMap[n], c.id + ' needs phrase unmapped: ' + n)); });
 });
 
-test('on Maya with a snapshot, a stress score and a market move, the builders return drawable shapes', () => {
-  const maya = loadHousehold('maya');
-  let R = compute(maya, data, { today: '2026-09-20' });
-  takeSnapshot(maya, R, 'session', { now: '2026-09-20T16:00:00.000Z', session: 's2' });
-  maya.program = Object.assign(maya.program || {}, {}); recordStress(maya, 'discovery', 7, { now: '2026-08-20T16:00:00.000Z' }); recordStress(maya, 's4', 5, { now: '2026-10-05T16:00:00.000Z' });
-  recordSatisfaction(maya, 's1', 4, { now: '2026-09-10T15:00:00.000Z' }); recordSatisfaction(maya, 's4', 7, { now: '2026-10-05T16:05:00.000Z' });
-  recordWorthIt(maya, 's3', { food: 3, irregular: 9, accommodation: 7 }, { now: '2026-10-01T16:00:00.000Z' });
-  const b = maya.planets.invest.rows.find(r => r.f.accountBalance && r.f.accountBalance.v > 1000000);
-  setField(maya, b.id, 'accountBalance', b.f.accountBalance.v - 150000, 'known', 'client', { now: '2026-10-05T10:00:00.000Z', why: 'move' });
-  R = compute(maya, data, { today: TODAY });
+test('on Leah with a snapshot, a stress score and a market move, the builders return drawable shapes', () => {
+  const leah = loadHousehold('leah');
+  let R = compute(leah, data, { today: '2026-09-20' });
+  takeSnapshot(leah, R, 'session', { now: '2026-09-20T16:00:00.000Z', session: 's2' });
+  leah.program = Object.assign(leah.program || {}, {}); recordStress(leah, 'discovery', 7, { now: '2026-08-20T16:00:00.000Z' }); recordStress(leah, 's4', 5, { now: '2026-10-05T16:00:00.000Z' });
+  recordSatisfaction(leah, 's1', 4, { now: '2026-09-10T15:00:00.000Z' }); recordSatisfaction(leah, 's4', 7, { now: '2026-10-05T16:05:00.000Z' });
+  recordWorthIt(leah, 's3', { food: 3, irregular: 9, accommodation: 7 }, { now: '2026-10-01T16:00:00.000Z' });
+  const b = leah.planets.invest.rows.find(r => r.f.accountBalance && r.f.accountBalance.v > 1000000);
+  setField(leah, b.id, 'accountBalance', b.f.accountBalance.v - 150000, 'known', 'client', { now: '2026-10-05T10:00:00.000Z', why: 'move' });
+  R = compute(leah, data, { today: TODAY });
   const by = {}; SCORE_CHARTS.forEach(c => { by[c.id] = c.build(R, {}); });
   const cr = by.crossover; assert.ok(cr.years.length > 30 && cr.years[0].spending > 0 && cr.years[0].assetIncome >= 0, 'crossover years');
   assert.ok(cr.crossYear === null || cr.crossAge >= 30, 'crossover age');
@@ -57,7 +57,7 @@ test('the calendar reads paydays with their amounts and bills with their days fr
   assert.ok(cal.bills.length >= 2, 'bills'); cal.bills.forEach(b => assert.ok(b.cents > 0 && b.day >= 1 && b.day <= 31 && b.label, JSON.stringify(b)));
   assert.ok(cal.bills.every((b, i, a) => i === 0 || a[i - 1].day <= b.day), 'bills in day order');
   /* stored on the program, the calendar chart draws it */
-  const maya = loadHousehold('maya'); maya.program = { stress: [], transactions: { calendar: cal } };
-  const R = compute(maya, data, { today: TODAY }); const d = SCORE_CHARTS.find(c => c.id === 'cashflowCalendar').build(R, {});
+  const leah = loadHousehold('leah'); leah.program = { stress: [], transactions: { calendar: cal } };
+  const R = compute(leah, data, { today: TODAY }); const d = SCORE_CHARTS.find(c => c.id === 'cashflowCalendar').build(R, {});
   assert.equal(d.days.length, 31); assert.ok(d.totalIn > 0 && d.totalOut > 0); assert.ok(typeof d.low.day === 'number');
 });

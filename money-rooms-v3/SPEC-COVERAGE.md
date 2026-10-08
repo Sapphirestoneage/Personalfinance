@@ -135,7 +135,7 @@ plainly. Evidence is a file, a test name or a screenshot path.
 | Accessibility basics: labels, focus states, contrast | done | tests/engine/contrast.test.js (every text token pair at 4.5:1 or better, slate darkened, gold and amber never text); tests/ui.js "accessible names" check on every screen (inputs, buttons, chart svgs, one h1) |
 | Full regression | done locally | node tests/run.js (833 checks) and node tests/ui.js (every household x screen x view x width, 4,047 checks); the live URL exists only after merge |
 | End-to-end mock session for Dev | done | tests/ui-flows.js level7-dev-mock-session (10 checks: Measure, question, ranked table, email, Ask it, answer, note, close, one page, no private notes) |
-| Final screenshots of every screen with Maya | done | screenshots/level-6/maya-*.jpg (13 screens x 2 views x 3 widths); screenshots/level-2/maya-onepager.pdf |
+| Final screenshots of every screen with Maya | done | screenshots/level-6/maya-*.jpg (13 screens x 2 views x 3 widths); screenshots/level-2/leah-onepager.pdf (the household became Leah in MR-072) |
 | README: run, add a client, update libraries | done | README.md |
 | Final report | done | FINAL-REPORT.md |
 
@@ -319,3 +319,45 @@ Level 10 (savings buckets, curricula, the session 5 curriculum) was never built.
 | 7 Data libraries with asOf, source, verify | done | data/housing-costs.json, auto-costs.json, calendar.json, life-events.json; assumptions housingShareOfTakeHome 0.35 |
 | 8 Integration: Add this to my plan; scoreboard drawers (safe to spend, tightest day, car share, shelter rate bands at 35%); chart catalog; curricula (session 4 timing, session 10 could block, money date refresh); one-pager line | done | ui/calcbits.js `addToPlan`; data/metrics.json; data/charts.json; data/curricula.json; ui/views/onepager.js |
 | 9 Tests and gates: engine tests, fixtures from the workpaper, ui screens in both views at three widths and dark, the flow; docs | done | tests/engine/cashcal.test.js, calculators.test.js; tests/households/expected-calculators.py; tests/ui-screens.js; tests/ui-flows.js |
+
+## Level 14 Don't Make Me Think (usability pass: 35 fixes)
+
+| Requirement | Status | Where |
+|---|---|---|
+| A1 FI progress counts invested assets, one label everywhere | done | data/assumptions.json fiProgressBasis; ui/shelf.js; engine/metrics.js; tests/engine/sensitivity.test.js |
+| A2 Session copy matches the FI date state | done | engine/leverage.js session() why text |
+| A3 One Maya: the Bay Area household is Leah Brennan, Oakland | done | tests/households/leah.json, specs.mjs, leah-expected.*, calculators-expected.json; ui/views/clients.js demo loaders |
+| A4 One READ section | done | ui/routes.js navItems (six groups) |
+| A5 Levers ranked by realistic movement; ladder smallest to largest, Coast its own line | done | engine/sensitivity.js addRealistic, rank, headlineFor; ui/views/levers.js |
+| B6 Coach Home is Today; journal moved to Clients | done | ui/views/home.js mountToday; ui/views/clients.js |
+| B7 Client Home: safe to spend, next win, three steps, two links | done | ui/views/home.js mountClient, stepsFor |
+| C8 Six coach groups, five client items, Progress tabs, old routes work | done | ui/routes.js; ui/progress.js; ui/app.js render |
+| C9 Sidebar search with slash | done | ui/app.js renderNav; ui/routes.js searchTargets |
+| C10 Trunk test | done | tests/ui.js (page name, section, lit nav item) |
+| D11 One name per number, coach and client, with a test | done | data/glossary.json metrics; data/metrics.json clientLabel; tests/engine/glossary.test.js |
+| D12 No instructions or narration on screen | done | ui/views/home.js, measure.js, levers.js, calendar.js, session.js, tracker.js |
+| D13 "about" for rough values in Client view, a quiet marker for the coach | done | engine/format.js TILDE handling via ui/app.css .tilde; ui/views/* copy |
+| D14 Client view forbidden words, with a test | done | tests/ui.js CLIENT_FORBIDDEN |
+| D15 US dates everywhere, with a test | done | engine/format.js dateLong, dateLocal, dateTimeLocal, dateShort; tests/ui.js DATE_FORBIDDEN |
+| D16 Celebrate once in one sentence | done | ui/views/session.js cheerSentence; ui/views/goals.js |
+| E17 Session: one dominant element, four tiles, tabbed side panel, one primary action | done | ui/views/session.js |
+| E18 "Start the call" everywhere | done | ui/views/home.js, prep.js, session.js, routes.js |
+| E19 Clients panel: two buttons and More | done | ui/views/clients.js renderList |
+| E20 Next-step bar: one sentence, one button, "N left" | done | ui/tracker.js |
+| E21 Call timeline: every segment labelled, no second list | done | ui/views/run.js drawTimeline |
+| E22 Prepare: three things, counts behind, no Session N button | done | ui/views/prep.js |
+| E23 One segmented control | done | ui/seg.js; ui/app.css .seg; goals, levers |
+| E24 Calculator cards answer their question; one grid | done | ui/views/calculators.js |
+| E25 Sankey labels fold small flows into Other and never collide; collision test | done | ui/charts.js sankey; tests/ui.js chart label check |
+| F26 Presenting mode, with a test | done | ui/app.js setPresenting; index.html; ui/app.css; tests/ui-flows.js level14 |
+| F27 Ledger read and edit modes; inputs at rest drop by 80 percent | done | ui/table.js readable; tests/ui.js ledger at rest |
+| F28 Contrast and size, with a test | done | ui/app.css tokens; tests/ui.js text size and contrast |
+| F29 Phones: stacked tables, tab scrollers, nothing clipped | done | ui/app.js stackTables; ui/app.css |
+| F30 Client what-ifs behind one button | done | ui/views/goals.js drawWhatIf |
+| F31 Speed: levers run remembered per record version, no working card first, timing check | done | ui/levers-bridge.js; ui/scorebits.js; tests/ui.js render budget |
+| F32 Big actions confirm in the page with Undo | done | ui/app.js confirm; ui/views/ledger.js confirmDefaults; ui/views/clients.js confirmRemove, resetDemo |
+| F33 Empty states say the one action | done | ui/views/home.js Today first visit; ui/views/clients.js |
+| F34 "?" explains the current screen | done | ui/app.js helpPanel; ui/routes.js help |
+| F35 Every clickable thing has a role, with a check | done | tests/ui.js clickable roles |
+| G Hallway test kit | done | audit/HALLWAY-TEST.md |
+| Before and after | done | screenshots/level-before14, screenshots/level-after14; audit/USABILITY.md |

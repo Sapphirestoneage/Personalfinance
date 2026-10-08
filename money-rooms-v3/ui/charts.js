@@ -20,6 +20,29 @@ function svgIn(host, w, hgt) {
   const svg = d3.select(host).append('svg').attr('viewBox', '0 0 ' + w + ' ' + hgt).attr('class', 'chart').attr('role', 'img');
   return svg;
 }
+/* MR-072 (fix 25): after a chart draws, no two labels sit on top of each other. The later label slides
+   down while there is room inside the drawing; when there is none, it hides. Axis ticks are left alone. */
+export function decollide(svg) {
+  const texts = Array.from(svg.querySelectorAll('text')).filter(t => (t.textContent || '').trim().length && !t.closest('.axis, .tick'));
+  if (texts.length < 2) return;
+  const box = t => t.getBoundingClientRect();
+  const overlap = (a, b) => { const ox = Math.min(a.right, b.right) - Math.max(a.left, b.left), oy = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top); return ox > 2 && oy > 2 ? oy : 0; };
+  const frame = box(svg); const vb = svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.height ? svg.viewBox.baseVal.height : frame.height;
+  const scale = frame.height / (vb || 1);
+  const hitFor = (t, j) => texts.slice(0, j).find(p => p.style.display !== 'none' && overlap(box(p), box(t)));
+  for (let j = 1; j < texts.length; j++) {
+    const t = texts[j]; let hit = hitFor(t, j);
+    for (let tries = 0; hit && tries < 8; tries++) {
+      const oy = overlap(box(hit), box(t));
+      const y = parseFloat(t.getAttribute('y'));
+      const plain = !t.getAttribute('transform') && !isNaN(y);
+      if (!(plain && box(t).bottom + oy + 2 <= frame.bottom)) break;
+      t.setAttribute('y', y + (oy + 2) / (scale || 1));
+      hit = hitFor(t, j);
+    }
+    if (hit) t.style.display = 'none';
+  }
+}
 function needsNote(host, needs) {
   host.appendChild(h('div', { class: 'chart-needs' }, 'Needs ' + needs.join(', ') + '.'));
 }
@@ -30,6 +53,7 @@ export function render(id, host, data, opts) {
   const fn = Object.assign({ sankey, netWorth, balanceSheet, debtRace, runway, draftt, fiGauge, waterfall, paths, taxes, markers }, MORE_RENDERERS, SCORE_RENDERERS, CALC_RENDERERS)[id];
   const o = Object.assign({}, opts || {}, { width: Math.max(320, host.clientWidth || 720) });
   if (fn) fn(host, data, o);
+  requestAnimationFrame(() => host.querySelectorAll('svg').forEach(decollide));
   const def = CHARTS.find(c => c.id === id);
   const name = (opts && opts.title) || (def ? (opts && opts.client ? def.client : def.name) : id);
   host.querySelectorAll('svg[role="img"]:not([aria-label])').forEach(el => el.setAttribute('aria-label', name + ' chart'));
@@ -39,11 +63,26 @@ function sankey(host, d, o) {
   const d3 = d3g(); const W = o.width, H = Math.max(360, d.nodes.length * 28);
   const svg = svgIn(host, W, H);
   const gen = d3.sankey().nodeWidth(12).nodePadding(14).extent([[1, 8], [W - 1, H - 8]]).nodeSort(null);
-  const graph = gen({ nodes: d.nodes.map(n => ({ name: n.name })), links: d.links.map(l => ({ source: l.source, target: l.target, value: l.value, kind: l.kind })) });
+  /* MR-072: flows under 4% of the total fold into one "Other" node on their side, so labels have room */
+  const total = d.links.reduce((s2, l) => s2 + l.value, 0) || 1;
+  const nodes = d.nodes.map(n => ({ name: n.name })); const links = [];
+  const otherIdx = {};
+  d.links.forEach(l => {
+    if (l.value / total >= 0.04 || d.links.length <= 6) { links.push({ source: l.source, target: l.target, value: l.value, kind: l.kind }); return; }
+    const sideKey = 'target:' + l.source;
+    if (otherIdx[sideKey] === undefined) { otherIdx[sideKey] = nodes.length; nodes.push({ name: 'Other' }); }
+    const prev = links.find(x => x.source === l.source && x.target === otherIdx[sideKey]);
+    if (prev) prev.value += l.value; else links.push({ source: l.source, target: otherIdx[sideKey], value: l.value, kind: l.kind });
+  });
+  const used = new Set(); links.forEach(l => { used.add(l.source); used.add(l.target); });
+  const keep = nodes.map((n, i) => used.has(i) ? i : -1); const remap = {}; let k = 0; keep.forEach((v, i) => { if (v !== -1) remap[i] = k++; });
+  const graph = gen({ nodes: nodes.filter((n, i) => used.has(i)), links: links.map(l => ({ source: remap[l.source], target: remap[l.target], value: l.value, kind: l.kind })) });
   svg.append('g').selectAll('path').data(graph.links).join('path').attr('class', l => 'sankey-link kind-' + l.kind).attr('d', d3.sankeyLinkHorizontal()).attr('stroke-width', l => Math.max(1, l.width)).append('title').text(l => l.source.name + ' to ' + l.target.name + ': ' + F.dollarsWhole(l.value) + ' a month');
   const node = svg.append('g').selectAll('g').data(graph.nodes).join('g');
   node.append('rect').attr('x', n => n.x0).attr('y', n => n.y0).attr('height', n => Math.max(1, n.y1 - n.y0)).attr('width', n => n.x1 - n.x0).attr('class', 'sankey-node');
-  node.append('text').attr('x', n => n.x0 < W / 2 ? n.x1 + 6 : n.x0 - 6).attr('y', n => (n.y0 + n.y1) / 2).attr('dy', '0.35em').attr('text-anchor', n => n.x0 < W / 2 ? 'start' : 'end').attr('class', 'chart-label').text(n => (n.y1 - n.y0) >= 12 ? n.name + ' ' + F.dollarsWhole(n.value) : '').append('title').text(n => n.name + ' ' + F.dollarsWhole(n.value));
+  /* a label only where there is 14px of room, and never on top of the one above it on the same side */
+  const lastY = {};
+  node.append('text').attr('x', n => n.x0 < W / 2 ? n.x1 + 6 : n.x0 - 6).attr('y', n => (n.y0 + n.y1) / 2).attr('dy', '0.35em').attr('text-anchor', n => n.x0 < W / 2 ? 'start' : 'end').attr('class', 'chart-label').text(n => { const side = n.x0 < W / 2 ? 'l' : 'r'; const y = (n.y0 + n.y1) / 2; if ((n.y1 - n.y0) < 14 || (lastY[side] !== undefined && y - lastY[side] < 15)) return ''; lastY[side] = y; return n.name + ' ' + F.dollarsWhole(n.value); }).append('title').text(n => n.name + ' ' + F.dollarsWhole(n.value));
 }
 
 function netWorth(host, d, o) {

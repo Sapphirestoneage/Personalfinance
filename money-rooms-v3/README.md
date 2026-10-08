@@ -45,7 +45,9 @@ repository root, `npx playwright install chromium`).
 | `engine/scenarios.js` | Scenario blocks: costs from answers, each alone and together, never writing to the record |
 | `engine/scoremetrics.js`, `engine/momentum.js`, `engine/chartdata-score.js` | Level 12: the eight Scoreboard metrics (a second pass over the result), snapshots and momentum (trends, why a number moved, milestones, bests, the next action, the headline six, bands), and the seven Scoreboard charts |
 | `engine/compute.js` | Runs the planets and returns one result for the views |
-| `ui/app.js` | The shell: routes, view toggle, autosave, undo, shortcuts |
+| `ui/app.js` | The shell: routes, view toggle, Presenting mode, sidebar search, per-screen help, in-page confirm, autosave, undo, shortcuts |
+| `ui/seg.js`, `ui/progress.js`, `ui/sunpanel.js` | Level 14: the one segmented control, the Progress tab bar, the household facts form (on the Plan overview) |
+| `ui/views/clients.js` | Level 14: the client list, More menu, demo loaders and each client's history |
 | `ui/tokens.css`, `ui/app.css`, `ui/print.css` | The design system and the one-pager print sheet |
 | `ui/views/` | One module per screen (home, ledger, measure, onepager, session, scenarios, learn, assumptions, levers, discovery, call, callpath, run, prep, program, transactions, goals, scoreboard, map, moneydate); views never do math |
 | `ui/scorebits.js`, `ui/charts-score.js`, `ui/scoreboard.css` | Level 12: the shared tile, trend, band-word and milestone pieces; the seven chart renderers; the Scoreboard, Map and money date styles |
@@ -55,6 +57,25 @@ repository root, `npx playwright install chromium`).
 | `tests/` | `run.js`, `ui.js`, engine tests, households and their expected workpapers (`tests/households/expected.py` writes them from the fixtures, never from the engine) |
 | `CONTRACTS.md` | What each planet publishes, written before the code |
 | `DECISIONS.md`, `QUESTIONS.md`, `PROGRESS.md`, `BOARD.md`, `SPEC-COVERAGE.md`, `DONE.md` | The run's own records |
+
+## Level 14: Don't Make Me Think (MR-072)
+
+One usability pass, no new features: every screen says what it is, what to do
+next and why it matters. The coach starts on Today (the next session, what to
+bring, one "Start the call" button, then the clients) and the client's Home is
+three things (safe to spend today, the next win, the three steps). The sidebar
+is six groups: Today, Clients, Call, Plan (the rooms), Progress (Scoreboard,
+Charts and numbers, Map, One page as tabs) and Tools; the client sees five
+items; a search box jumps anywhere (press slash). Presenting locks the app to
+Client view and hides every other client's name until it is turned off with a
+deliberate click. Ledger tables read as text until a cell is tapped. Every
+number has one coach label and one client label (data/glossary.json), dates
+read US style, rough numbers say "about" to the client, and the levers rank by
+a realistic move (the gap to her own target, a raise, the standard shock).
+The "?" button explains the current screen. The audit folder holds the fix
+list with before and after screenshots (audit/USABILITY.md) and a one-page
+hallway test script (audit/HALLWAY-TEST.md). The Bay Area example household is
+Leah Brennan (Oakland); Maya is only ever the Jersey City client.
 
 ## Bank accounts beside investing accounts (MR-071)
 

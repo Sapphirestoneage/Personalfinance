@@ -13,13 +13,13 @@ import { scorecard } from '../../engine/outcomes.js';
 import { moneyDateEmail } from '../../engine/email.js';
 import { variance } from '../../engine/variance.js';
 import { loadData, loadHousehold } from './load-data.js';
-import { mayaThroughSession4, TODAY4 } from '../households/maya-session4.mjs';
+import { leahThroughSession4, TODAY4 } from '../households/leah-session4.mjs';
 
 const data = loadData(); const TODAY = '2026-10-08';
 const run = (r, today) => compute(r, data, { today: today || TODAY, light: true });
 
 test('satisfaction is stored once per ask, sorted by date; worth-it keeps the latest score per area', () => {
-  const rec = loadHousehold('maya');
+  const rec = loadHousehold('leah');
   assert.equal(P.recordWorthIt(rec, 's3', {}), null, 'nothing to store');
   P.recordSatisfaction(rec, 's2', 5, { now: '2026-09-17T16:00:00.000Z' }); P.recordSatisfaction(rec, 's1', 4, { now: '2026-09-10T15:00:00.000Z' }); P.recordSatisfaction(rec, 's2', 6, { now: '2026-09-17T16:30:00.000Z' });
   const sat = P.programOf(rec).satisfaction; assert.deepEqual(sat.map(s => s.session + ':' + s.score), ['s1:4', 's2:6'], 'one per ask, in date order, the later answer wins');
@@ -31,7 +31,7 @@ test('satisfaction is stored once per ask, sorted by date; worth-it keeps the la
 });
 
 test('the three outcome metrics: satisfaction, worth-it per area and value per dollar with its two flags', () => {
-  const rec = loadHousehold('maya'); let R = run(rec);
+  const rec = loadHousehold('leah'); let R = run(rec);
   assert.equal(R.metrics.satisfaction.status, 'needs'); assert.deepEqual(R.metrics.satisfaction.needs, ['a satisfaction score from a session close or a money date']);
   assert.deepEqual(R.metrics.valuePerDollar.needs, ['worth-it scores for the spending areas']);
   P.recordSatisfaction(rec, 's2', 6, { now: '2026-09-17T16:00:00.000Z' }); P.recordWorthIt(rec, 's3', { accommodation: 7, food: 3, irregular: 9, therapy: 8 }, { now: '2026-10-01T00:00:00.000Z' });
@@ -51,7 +51,7 @@ test('worth-it scores steer the target defaults: rated low aims at what she woul
   const up = { key: 'irregular', label: 'Irregular', actual: 20000, gut: null, dream: 30000 }; assert.equal(defaultChoice(up, 0.5, 9), 'room'); assert.equal(defaultChoice(up, 0.5, 2), 'middle');
   const flat = { key: 'wants', label: 'Wants', actual: 30000, gut: null, dream: null }; assert.equal(defaultChoice(flat, 0.5, 2), 'keep'); assert.equal(defaultChoice(flat, 0.5, 9), 'keep');
   /* through proposals, from the record */
-  const rec = loadHousehold('maya'); const R = run(rec); const S = R.sun.outputs;
+  const rec = loadHousehold('leah'); const R = run(rec); const S = R.sun.outputs;
   const areas = {}; Object.keys(S.spending.byCategory).forEach(c => { areas[c] = S.spending.byCategory[c].status === 'ok' ? S.spending.byCategory[c].cents : null; });
   rec.anchors.dream['spending:food'] = { cents: 40000, cadence: 'month', at: '2026-10-01T00:00:00.000Z', session: 's3', source: 'call' };
   P.recordWorthIt(rec, 's3', { food: 2 }, { now: '2026-10-01T00:00:00.000Z' });
@@ -60,7 +60,7 @@ test('worth-it scores steer the target defaults: rated low aims at what she woul
 });
 
 test('the next action for satisfaction moves money between areas and never says spend less; a cut in an area rated high carries a note', () => {
-  const { rec, result: R } = mayaThroughSession4(loadHousehold('maya'), data);
+  const { rec, result: R } = leahThroughSession4(loadHousehold('leah'), data);
   const def = data.metrics.metrics.find(m => m.id === 'satisfaction');
   const a = Mo.nextActionFor(def, null, R); assert.ok(a && a.sentence, 'an action'); assert.ok(!/spend less|cut spending|spending less/i.test(a.sentence), a.sentence); assert.equal(a.from, 'food'); assert.equal(a.to, 'irregular');
   assert.ok(/food/.test(a.sentence) && /rated 4/.test(a.sentence), a.sentence);
@@ -80,12 +80,12 @@ test('the money date is a curriculum of about fifteen minutes with the action an
   assert.ok(md.blocks.find(b => b.id === 'satisfaction').questions.some(q => q.fills === 'program.satisfaction'));
   data.curricula.sessions.filter(s => s.n > 0).forEach(s => assert.ok(s.blocks.find(b => b.id === 'close').questions.some(q => q.fills === 'program.satisfaction'), s.id));
   [3, 4].forEach(n => { const b = data.curricula.sessions.find(s => s.n === n).blocks.find(x => x.id === 'worthit'); assert.ok(b && b.priority === 'could' && b.questions[0].fills === 'program.worthIt', 'session ' + n); });
-  const rec = loadHousehold('maya'); const R = run(rec); const plan = planMoneyDate(rec, R, data, 'md-2026-11');
+  const rec = loadHousehold('leah'); const R = run(rec); const plan = planMoneyDate(rec, R, data, 'md-2026-11');
   assert.equal(plan.blocks.length, 7); assert.ok(plan.blocks.every(b => b.key.startsWith('md-2026-11:'))); assert.equal(plan.key, 'md-2026-11');
 });
 
 test('maintenance begins when session 12 closes; money dates are sessions keyed by month; snapshots and trends run across the boundary', () => {
-  const rec = loadHousehold('maya'); let R = run(rec);
+  const rec = loadHousehold('leah'); let R = run(rec);
   assert.equal(P.programMode(rec), 'program'); assert.equal(P.moneyDates(rec).length, 0);
   Mo.takeSnapshot(rec, R, 'session', { now: '2026-10-01T00:00:00.000Z', session: 's11' });
   P.closeSession(rec, 12, { note: 'Graduation' }, { now: '2026-10-20T16:00:00.000Z' });

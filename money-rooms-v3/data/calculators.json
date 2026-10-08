@@ -13,6 +13,6 @@
   { "id": "real-wage", "name": "Real hourly wage", "client": "What an hour of work is really worth", "purpose": "Pay after taxes and work costs, over every hour work takes, and what a month costs in hours.", "route": "#/measure/numbers/realHourlyWage", "liveMetric": "realHourlyWage", "firstSession": 3, "clientVisible": true, "group": "existing" },
   { "id": "simulate", "name": "What-if blocks", "client": "What if", "purpose": "A home, a child, a job change or a move, each alone and all together, replayed over the whole life.", "route": "#/scenarios", "liveMetric": "fiDate", "firstSession": 10, "clientVisible": true, "group": "existing" },
   { "id": "fi-ladder", "name": "FI ladder", "client": "The kinds of enough", "purpose": "Lean, Barista, Coast, FI and Fat: how far along each rung is and when it lands.", "route": "#/measure/charts/fiLadderLines", "liveMetric": "pctToFi", "firstSession": 4, "clientVisible": true, "group": "existing" },
-  { "id": "levers", "name": "Levers", "client": "What matters most", "purpose": "Which numbers move the FI date most, and which guesses are worth pinning down.", "route": "#/levers", "liveMetric": "fiDate", "firstSession": 8, "clientVisible": true, "group": "existing" }
+  { "id": "levers", "name": "Levers", "client": "What matters most", "purpose": "Which numbers move the FI date most, and which unknowns are worth pinning down.", "route": "#/levers", "liveMetric": "fiDate", "firstSession": 8, "clientVisible": true, "group": "existing" }
  ]
 }

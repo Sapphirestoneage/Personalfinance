@@ -1,0 +1,15 @@
+# Level 14 (MR-072): the before and after sweeps write about 4,000 screenshots (450 MB).
+# Only the five pairs named in audit/USABILITY.md are checked in; both folders regenerate with
+# `node tests/ui.js --shots before14` and `--shots after14`.
+level-before14/*
+level-after14/*
+!level-before14/jordan-home-coach-1440.jpg
+!level-before14/empty-home-client-390.jpg
+!level-before14/jordan-spending-lines-coach-1440.jpg
+!level-before14/jordan-session-coach-1440.jpg
+!level-before14/jordan-prep-coach-1440.jpg
+!level-after14/jordan-home-coach-1440.jpg
+!level-after14/empty-home-client-390.jpg
+!level-after14/jordan-spending-lines-coach-1440.jpg
+!level-after14/jordan-session-coach-1440.jpg
+!level-after14/jordan-prep-coach-1440.jpg

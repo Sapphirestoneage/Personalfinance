@@ -10,7 +10,7 @@ const data = loadData();
 const TODAY = '2026-10-05';
 const close = (a, b, tol, what) => assert.ok(Math.abs(a - b) <= (tol || 0), what + ': engine ' + a + ' vs workpaper ' + b);
 
-for (const name of ['jordan', 'dev', 'maya']) {
+for (const name of ['jordan', 'dev', 'leah']) {
   const rec = loadHousehold(name); const E = loadExpected(name);
   const R = compute(rec, data, { today: TODAY });
   const M = R.metrics; const S = R.sun.outputs;

@@ -15,13 +15,14 @@ import { parseTyped } from '../typed.js';
 import { createRow } from '../../engine/record.js';
 import { freshFacts } from '../../engine/fields.js';
 import { PLANET_SHORT } from '../../engine/sun.js';
+import { segmented } from '../seg.js';
 
 const FAMILY_ORDER = ['spend', 'earn', 'keep', 'grow', 'protect', 'assume', 'value'];
 
 export function mount(host, app) {
   const coach = app.view === 'coach';
   let mode = 'impact'; let graphOn = false; let sens = null;
-  const header = h('header', null, h('h1', null, coach ? 'What moves the FI date' : 'What matters most'), h('span', { class: 'sub' }, coach ? 'The ladder, then the levers ranked by how far each moves the date.' : ''));
+  const header = h('header', null, h('h1', null, coach ? 'What moves the FI date' : 'What matters most'), h('span', { class: 'sub' }, coach ? 'Each lever is ranked by how far a realistic change in it moves the date.' : ''));
   host.appendChild(header);
   const ladderHost = h('section', { class: 'panel ladder-panel' });
   const topHost = h('section', { class: 'panel top-card' });
@@ -41,13 +42,15 @@ export function mount(host, app) {
 function drawLadder(panel, app) {
   clear(panel);
   const coach = app.view === 'coach'; const M = app.result.metrics; const L = app.result.ladder;
-  panel.appendChild(h('h2', null, coach ? 'The FI ladder' : 'Kinds of enough', coach && L && L.baseSpending ? h('span', { class: 'tag' }, 'spending basis: ' + L.baseSpending.source + (L.basis === 'netWorth' ? '; progress counts net worth' : '; progress counts invested assets')) : null));
+  panel.appendChild(h('h2', null, coach ? 'The FI ladder' : 'Kinds of enough', coach ? h('span', { class: 'tag' }, 'progress counts invested assets') : null));
   if (!L || !M.regularFi || M.regularFi.status !== 'ok') { panel.appendChild(h('p', { class: 'muted' }, 'The ladder needs monthly spending' + (M.regularFi && M.regularFi.needs ? ' (' + M.regularFi.needs.join(', ') + ')' : '') + '. Account balances place you on it; a birth date gives each rung a date.')); return; }
   const stairs = h('div', { class: 'stairs', role: 'list' });
-  RUNGS.forEach((id, i) => {
+  /* MR-072: smallest rung first, so the staircase climbs left to right; Coast is its own line below */
+  const order = RUNGS.slice().sort((a, b) => { const ra = L.rungs.find(x => x.id === a), rb = L.rungs.find(x => x.id === b); return ((ra && ra.number) || 0) - ((rb && rb.number) || 0); });
+  order.forEach((id, i) => {
     const m = M[id]; const r = L.rungs.find(x => x.id === id); const ok = m && m.status === 'ok';
     const label = coach ? RUNG_LABELS[id] : RUNG_CLIENT[id];
-    const step = h('div', { class: 'stair' + (ok && r.pct >= 1 ? ' reached' : ''), role: 'listitem', style: { paddingTop: (8 + (4 - i) * 14) + 'px' } });
+    const step = h('div', { class: 'stair' + (ok && r.pct >= 1 ? ' reached' : ''), role: 'listitem', dataset: { rung: id }, style: { paddingTop: (8 + (4 - i) * 14) + 'px' } });
     const box = h('button', { class: 'stair-box', 'aria-label': label + (ok ? ' ' + F.dollarsWhole(m.value.cents) : ''), onClick: () => openMetric(app, id) },
       h('div', { class: 'stair-label' }, label),
       ok ? h('div', { class: 'stair-number' + (m.value.rough ? ' rough' : '') }, F.dollarsCompact(m.value.cents)) : h('div', { class: 'stair-number needs' }, 'Needs ' + ((m && m.needs) || ['inputs'])[0]),
@@ -104,7 +107,7 @@ function drawTop(panel, app, sens) {
   if (!sens.ranked || !sens.ranked.headline) { panel.appendChild(h('p', { class: 'muted' }, 'No lever measured yet.')); return; }
   const top = sens.ranked.top;
   panel.appendChild(h('p', { class: 'headline' }, coach ? sens.ranked.headline : sens.ranked.headline.replace('Your biggest lever is', 'The number that matters most is')));
-  if (top) panel.appendChild(h('p', { class: 'small muted' }, whyFor(top) + (coach ? ' Measured on ' + (sens.computes - 1) + ' re-runs of the whole engine, ' + Math.round(sens.ms) + ' ms.' : '')));
+  if (top) panel.appendChild(h('p', { class: 'small muted' }, whyFor(top)));
 }
 
 /* ---- the ranked list and the graph ---- */
@@ -115,30 +118,31 @@ function drawList(panel, app, sens, st) {
   const narrow = panel.clientWidth > 0 && panel.clientWidth < 700;
   const head = h('div', { class: 'levers-head' }, h('h2', null, coach ? 'What moves your FI date' : 'The three things that move it most'));
   if (coach) head.appendChild(h('div', { class: 'row' },
-    h('div', { class: 'view-toggle', role: 'group', 'aria-label': 'Ranking' }, h('button', { 'aria-pressed': String(st.mode === 'impact'), onClick: () => st.setMode('impact') }, 'Impact'), h('button', { 'aria-pressed': String(st.mode === 'ask'), onClick: () => st.setMode('ask') }, 'Ask priority')),
+    segmented([['impact', 'Impact'], ['ask', 'Ask priority']], st.mode, m => st.setMode(m), { label: 'Ranking' }),
     narrow ? null : h('button', { class: 'btn small' + (st.graphOn ? ' primary' : ''), 'aria-pressed': String(st.graphOn), onClick: () => st.setGraph(!st.graphOn) }, st.graphOn ? 'List' : 'Graph'),
     h('label', { class: 'small muted', style: { display: 'inline-flex', gap: '4px', alignItems: 'center' } }, h('input', { type: 'checkbox', checked: !!(app.record.sun.flags && app.record.sun.flags.geoArbitrage), onChange: e => app.mutate(rec => { rec.sun.flags = Object.assign({}, rec.sun.flags || {}, { geoArbitrage: e.target.checked }); }, 'flags') }), 'Considering a move')));
   panel.appendChild(head);
   if (!sens) { panel.appendChild(skeleton('list')); return; }
   if (coach && st.graphOn && !narrow) { drawGraph(panel, app, sens); return; }
-  const list = st.mode === 'ask' && coach ? sens.ranked.ask : sens.ranked.impact;
-  const live = list.filter(i => (st.mode === 'ask' && coach ? i.askRange : i.impact) > 0);
+  const monthsOf = i => st.mode === 'ask' && coach ? i.askRange : (i.realistic && i.realistic.months !== null && i.realistic.months !== undefined ? i.realistic.months : i.impact);
+  const list = st.mode === 'ask' && coach ? sens.ranked.ask : sens.ranked.impact.slice().sort((a, b) => (monthsOf(b) || 0) - (monthsOf(a) || 0));
+  const live = list.filter(i => monthsOf(i) > 0);
   const shown = coach ? live : live.filter(i => !i.assumption && !i.windfall).slice(0, 3);
   if (!shown.length) { panel.appendChild(h('p', { class: 'muted' }, st.mode === 'ask' ? 'Nothing unsure moves the date: every money fact is verified or has no range.' : 'No lever measured.')); return; }
-  const max = Math.max(...shown.map(i => st.mode === 'ask' ? i.askRange : i.impact), 0.1);
-  if (coach) panel.appendChild(h('p', { class: 'small muted' }, st.mode === 'ask' ? 'Ask priority: how far the FI date moves across each figure’s plausible range by its answer state (verified 2%, known 5%, rough 20% or the typed range, will send 30%, estimated 35%).' : 'Impact: months of FI date per standard shock ($100 a month, 10% of a balance, one point of a rate, one year of an age), grouped by lever family.'));
+  const max = Math.max(...shown.map(i => monthsOf(i)), 0.1);
+  if (coach) panel.appendChild(h('p', { class: 'small muted' }, st.mode === 'ask' ? 'Ask priority: how far the FI date could move across each unsure figure\u2019s plausible range.' : 'Impact: months of FI date for a realistic change in each one (the gap to her own target, the raise or side income entered, or the standard shock). Every $100 a month of spending is worth about the same months; the gap to the target is what tells them apart.'));
   const families = coach ? FAMILY_ORDER.filter(f => shown.some(i => i.family === f)) : [null];
   families.forEach(fam => {
     const items = fam ? shown.filter(i => i.family === fam) : shown;
     const group = h('div', { class: 'lever-group' });
     if (fam) group.appendChild(h('h3', null, familyLabel(fam), app.data.graph.families[fam] !== familyLabel(fam) ? h('span', { class: 'tag' }, app.data.graph.families[fam]) : null));
     items.forEach(i => {
-      const months = st.mode === 'ask' && coach ? i.askRange : i.impact;
+      const months = monthsOf(i); const real = st.mode !== 'ask' && i.realistic && i.realistic.months !== null && i.realistic.months !== undefined ? i.realistic : null;
       const row = h('button', { class: 'lever-row', 'aria-label': leverLabel(app, i) + ', ' + fmtMonths(months), onClick: () => openLever(app, i, sens) },
-        h('span', { class: 'lever-name' }, h('strong', null, leverLabel(app, i)), coach ? h('span', { class: 'small muted' }, ' ' + (i.aggregate ? '' : i.assumption ? 'assumption' : (PLANET_SHORT[i.planet] || i.planet) + (i.state ? ', ' + i.state : ''))) : null),
+        h('span', { class: 'lever-name' }, h('strong', null, leverLabel(app, i)), coach ? h('span', { class: 'small muted' }, ' ' + (i.aggregate ? '' : i.assumption ? 'assumption' : (PLANET_SHORT[i.planet] || i.planet))) : null),
         h('span', { class: 'lever-bar' }, h('span', { class: 'fill fam-' + i.family, style: { width: Math.round(months / max * 100) + '%' } })),
-        h('span', { class: 'lever-months num' }, fmtMonths(months), h('span', { class: 'small muted' }, ' ' + (st.mode === 'ask' && coach ? 'at stake' : i.impactLabel.replace('per $100 a month', 'per $100/mo')))),
-        coach ? h('span', { class: 'lever-why small muted' }, whyFor(st.mode === 'ask' ? i : Object.assign({}, i, { askRange: null }))) : null);
+        h('span', { class: 'lever-months num' }, fmtMonths(months), h('span', { class: 'small muted' }, ' ' + (st.mode === 'ask' && coach ? 'at stake' : real ? real.label : i.impactLabel.replace('per $100 a month', 'per $100/mo')))),
+        coach ? h('span', { class: 'lever-why small muted' }, real ? real.why : whyFor(st.mode === 'ask' ? i : Object.assign({}, i, { askRange: null }))) : null);
       group.appendChild(row);
     });
     panel.appendChild(group);

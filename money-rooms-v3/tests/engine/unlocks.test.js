@@ -6,8 +6,8 @@ import * as U from '../../engine/unlocks.js';
 import { loadData, loadHousehold } from './load-data.js';
 
 const data = loadData(); const TODAY = '2026-10-08';
-const maya = loadHousehold('maya');
-const R = compute(maya, data, { today: TODAY });
+const leah = loadHousehold('leah');
+const R = compute(leah, data, { today: TODAY });
 
 function blankMaya() {
   const rec = createRecord();
@@ -33,13 +33,13 @@ test('a save never unlocks anything when nothing changed, and the diff lists onl
   assert.ok(up.metrics[0].value && up.metrics[0].takeaway && up.metrics[0].href === '#/measure/numbers/takeHome');
 });
 
-test('Maya from zero, one row at a time: the first income row opens numbers, nothing ever locks again, and the end state is full Maya', () => {
+test('Leah from zero, one row at a time: the first income row opens numbers, nothing ever locks again, and the end state is full Leah', () => {
   const rec = blankMaya();
-  ['birthDate', 'state', 'workSituation', 'filingStatus'].forEach(id => setField(rec, 'sun', id, maya.sun.f[id].v, 'known', 'client'));
+  ['birthDate', 'state', 'workSituation', 'filingStatus'].forEach(id => setField(rec, 'sun', id, leah.sun.f[id].v, 'known', 'client'));
   let prev = compute(rec, data, { today: TODAY }); let prevState = U.stateOf(prev, data);
   let opened = 0; let firstIncome = null;
   const rank = { locked: 0, quiet: 1, rough: 2, solid: 3 };
-  maya.planets && Object.keys(maya.planets).forEach(p => maya.planets[p].rows.forEach(row => {
+  leah.planets && Object.keys(leah.planets).forEach(p => leah.planets[p].rows.forEach(row => {
     addRow(rec, JSON.parse(JSON.stringify(row)));
     const next = compute(rec, data, { today: TODAY }); const st = U.stateOf(next, data);
     const u = U.unlocksBetween(prevState, st, next, data);
@@ -55,21 +55,21 @@ test('Maya from zero, one row at a time: the first income row opens numbers, not
   assert.equal(walked.metrics.open, full.metrics.open); assert.equal(walked.charts.open, full.charts.open);
 });
 
-test('the next unlock: on an empty client it is a first row with a real count; on Maya it is a confirmation; every probe names where to go', () => {
+test('the next unlock: on an empty client it is a first row with a real count; on Leah it is a confirmation; every probe names where to go', () => {
   const blank = blankMaya(); const R0 = compute(blank, data, { today: TODAY });
   const nx = U.nextUnlocks(blank, R0, data);
   assert.equal(nx.length, 3);
   assert.ok(nx[0].unlocks.count >= nx[1].unlocks.count && nx[1].unlocks.count >= nx[2].unlocks.count || nx[0].score >= nx[1].score, 'ranked');
   assert.ok(nx[0].probe.addRow && nx[0].probe.href.indexOf('#/ledger/') === 0 && nx[0].probe.field, JSON.stringify(nx[0].probe));
   assert.ok(nx[0].unlocks.count >= 5, 'the best first input opens at least five things: ' + nx[0].unlocks.count);
-  const nm = U.nextUnlocks(maya, R, data);
-  assert.ok(nm.length >= 1, 'Maya still has a rough figure to confirm');
+  const nm = U.nextUnlocks(leah, R, data);
+  assert.ok(nm.length >= 1, 'Leah still has a rough figure to confirm');
   nm.forEach(x => { assert.ok(x.probe.label && x.probe.where && x.probe.href, JSON.stringify(x.probe)); assert.ok(x.unlocks.count > 0); });
   assert.ok(nm[0].probe.kind === 'confirm' || nm[0].probe.kind === 'field', nm[0].probe.kind);
 });
 
 test('the map: every item sits in one of five stages; a locked item names the exact input and where it lives', () => {
-  const map = U.unlockMap(maya, R, data);
+  const map = U.unlockMap(leah, R, data);
   assert.equal(map.stages.length, 5);
   assert.equal(map.stages.reduce((s, st) => s + st.items.length, 0), map.items.length);
   assert.equal(map.items.length, data.metrics.metrics.length + data.lenses.lenses.length + 49);

@@ -1,6 +1,6 @@
 /* Momentum (Level 12, MR-063): snapshots, trends, why a number moved (learned, did, market, time), milestones
    crossed once, personal bests and the next action. The lever households tie out to
-   tests/households/expected-momentum.py; Maya runs through session 4 via the engine API. */
+   tests/households/expected-momentum.py; Leah runs through session 4 via the engine API. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -13,7 +13,7 @@ import { sensitivity } from '../../engine/sensitivity.js';
 import { loadData, loadHousehold } from './load-data.js';
 import { LEVER_SPECS } from '../households/levers-specs.mjs';
 import { buildLevers } from '../households/build-levers.mjs';
-import { mayaThroughSession4, TODAY4 } from '../households/maya-session4.mjs';
+import { leahThroughSession4, TODAY4 } from '../households/leah-session4.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const data = loadData(); const E = JSON.parse(fs.readFileSync(path.join(here, '..', 'households', 'momentum-expected.json'), 'utf8'));
@@ -98,8 +98,8 @@ test('personal bests, the headline six, bands with their sources, and the next a
   assert.ok(a.months === null || a.months <= top.months + 1e-9, 'the overall action moves the date at least as much as any one metric\'s lever');
 });
 
-test('Maya through session 4: six tiles, milestones crossed, why her FI date moved, and what the market did is not hers', () => {
-  const { rec, result: R, cheers, beforeClose } = mayaThroughSession4(loadHousehold('maya'), data);
+test('Leah through session 4: six tiles, milestones crossed, why her FI date moved, and what the market did is not hers', () => {
+  const { rec, result: R, cheers, beforeClose } = leahThroughSession4(loadHousehold('leah'), data);
   assert.equal(rec.snapshots.length, 4); assert.deepEqual(rec.snapshots.map(s => s.session), ['s1', 's2', 's3', 's4']);
   const ids = Mo.headlineIds(rec, R, data); assert.equal(ids.length, 6); assert.ok(ids.includes('debtFree') && ids.includes('satisfaction') && !ids.includes('completeness'), ids.join(','));
   ids.forEach(id => { const t = Mo.trend(rec, R, data, id); assert.ok(t && t.sinceLast, id + ' has a trend since last time'); });

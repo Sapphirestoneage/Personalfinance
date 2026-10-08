@@ -1,6 +1,6 @@
 {
- "asOf": "2026-10-05",
- "source": "Money Rooms v3 spec, Client view: plain-English labels",
+ "asOf": "2026-10-08",
+ "source": "Money Rooms v3 spec, Client view: plain-English labels. MR-072: one name per number, the coach label and the client label, mirrored from data/metrics.json; a test keeps them equal.",
  "verify": false,
  "terms": {
   "Household facts": "About you",
@@ -12,7 +12,7 @@
   "Investments and accounts": "What you own",
   "Taxes": "Taxes",
   "Life plan": "Your plans",
-  "Measure": "Where you stand",
+  "Measure": "Charts and numbers",
   "Lenses": "Things worth knowing",
   "One-pager": "Your one page",
   "Verified": "Checked against a statement",
@@ -26,7 +26,7 @@
   "DRAFTT": "Debt, Retirement, Accommodation, Food, Transportation, Therapy: the six shares of your pay",
   "FAT floor": "The lean month: food, housing and getting around",
   "Rule of 5": "Cash to keep on hand: your age divided by five, in months of spending",
-  "FI": "Financial independence: when what you own could pay for life",
+  "FI": "When your investments could cover your spending",
   "Coast FI": "Enough saved today to coast to retirement without adding more",
   "Triple D": "Three paths: likely, best and worst returns",
   "Take-home": "What lands in the bank",
@@ -37,6 +37,373 @@
   "Promo cliff": "When a 0% offer ends",
   "Expense ratio": "The fund's yearly fee",
   "Match": "Free money from your employer",
-  "Real hourly wage": "What an hour of work really pays after everything"
+  "Real hourly wage": "What an hour of work really pays after everything",
+  "FI date": "When your investments could cover your spending",
+  "Safe to spend": "What you can spend today and still pay every bill before the next paycheck",
+  "Cushion": "Cash set aside for a lean month, a full month, then the rule of 5",
+  "Net worth": "What you own minus what you owe",
+  "Savings rate": "The share of your pay that stays with you",
+  "Levers": "What matters most"
+ },
+ "removed": [
+  "Owned minus owed",
+  "When the portfolio could carry the household",
+  "When the portfolio could carry you",
+  "The portfolio that pays for life",
+  "How far along"
+ ],
+ "metrics": {
+  "takeHome": {
+   "coach": "Take-home monthly",
+   "client": "Take-home pay"
+  },
+  "gross": {
+   "coach": "Gross monthly",
+   "client": "Pay before deductions"
+  },
+  "spending": {
+   "coach": "Monthly spending",
+   "client": "Monthly spending"
+  },
+  "surplus": {
+   "coach": "Surplus",
+   "client": "Left over each month"
+  },
+  "savingsRateTakeHome": {
+   "coach": "Savings rate (take-home)",
+   "client": "Savings rate"
+  },
+  "savingsRateGross": {
+   "coach": "Savings rate (gross, FIRE style)",
+   "client": "Savings rate with match"
+  },
+  "leak": {
+   "coach": "Leak rate",
+   "client": "Money that goes missing"
+  },
+  "draftt": {
+   "coach": "DRAFTT shares",
+   "client": "Where each dollar goes"
+  },
+  "fatFloor": {
+   "coach": "FAT floor",
+   "client": "The lean month"
+  },
+  "shelterRate": {
+   "coach": "Shelter rate",
+   "client": "Housing share of take-home"
+  },
+  "fixedRate": {
+   "coach": "Fixed-cost rate",
+   "client": "Share of take-home already spoken for"
+  },
+  "realHourlyWage": {
+   "coach": "Real hourly wage",
+   "client": "What an hour of work really pays"
+  },
+  "debtService": {
+   "coach": "Monthly debt service",
+   "client": "Debt payments each month"
+  },
+  "totalDebt": {
+   "coach": "Total debt",
+   "client": "Total debt"
+  },
+  "dti": {
+   "coach": "Debt-to-income",
+   "client": "Debt payments as a share of pay"
+  },
+  "debtToAssets": {
+   "coach": "Debt-to-assets",
+   "client": "Owed versus owned"
+  },
+  "weightedApr": {
+   "coach": "Weighted APR",
+   "client": "Average interest rate, by balance"
+  },
+  "annualInterest": {
+   "coach": "Annual interest cost",
+   "client": "Interest over the next year"
+  },
+  "utilization": {
+   "coach": "Credit utilization",
+   "client": "How full the cards are"
+  },
+  "promoCliff": {
+   "coach": "Promo cliff",
+   "client": "When a 0% offer ends"
+  },
+  "debtFree": {
+   "coach": "Debt-free date and freed cash flow",
+   "client": "Debt-free date"
+  },
+  "netWorth": {
+   "coach": "Net worth",
+   "client": "Net worth"
+  },
+  "assets": {
+   "coach": "Total, invested and liquid assets",
+   "client": "What you own"
+  },
+  "liquidityRate": {
+   "coach": "Liquidity rate",
+   "client": "Share of assets reachable now"
+  },
+  "bridgeYears": {
+   "coach": "Bridge years",
+   "client": "Years the reachable money covers"
+  },
+  "runway": {
+   "coach": "Runway months",
+   "client": "Runway"
+  },
+  "ruleOf5Target": {
+   "coach": "Rule of 5 target",
+   "client": "Cushion target"
+  },
+  "emergencyGap": {
+   "coach": "Emergency gap and monthly to close",
+   "client": "Cushion gap"
+  },
+  "cashDrag": {
+   "coach": "Excess cash drag",
+   "client": "What idle cash costs a year"
+  },
+  "taxAdvantagedShare": {
+   "coach": "Tax-advantaged share",
+   "client": "Assets inside tax shelters"
+  },
+  "bucketMix": {
+   "coach": "Tax bucket mix",
+   "client": "Pre-tax, Roth, taxable, cash"
+  },
+  "matchCapture": {
+   "coach": "Match capture and match left",
+   "client": "Free money taken"
+  },
+  "roomLeft": {
+   "coach": "Room left under limits",
+   "client": "Room left this year"
+  },
+  "weightedEr": {
+   "coach": "Weighted expense ratio",
+   "client": "Average fund fee"
+  },
+  "feeDragLifetime": {
+   "coach": "Fee drag, lifetime",
+   "client": "What fund fees cost by retirement"
+  },
+  "allocation": {
+   "coach": "Allocation",
+   "client": "Stocks, bonds, cash"
+  },
+  "impliedTaxRate": {
+   "coach": "Implied tax rate",
+   "client": "Share of pay that goes to taxes"
+  },
+  "federalRates": {
+   "coach": "Effective and marginal federal rate",
+   "client": "Federal tax rate"
+  },
+  "fica": {
+   "coach": "FICA",
+   "client": "Social Security and Medicare tax"
+  },
+  "taxSavedPer1000": {
+   "coach": "Tax saved per $1,000 pre-tax",
+   "client": "Tax saved per $1,000 pre-tax"
+  },
+  "fiNumber": {
+   "coach": "FI number",
+   "client": "FI number"
+  },
+  "pctToFi": {
+   "coach": "% to FI",
+   "client": "FI progress"
+  },
+  "coastFi": {
+   "coach": "Coast FI number and %",
+   "client": "Coast FI"
+  },
+  "fiDate": {
+   "coach": "FI date and years to FI",
+   "client": "FI date"
+  },
+  "fiLevels": {
+   "coach": "Lean, Fat and Barista FI",
+   "client": "Three sizes of enough"
+  },
+  "oneMorePoint": {
+   "coach": "Value of one more point",
+   "client": "What one more percent saved buys"
+  },
+  "cardNetValue": {
+   "coach": "Card net value",
+   "client": "Is each card worth its fee"
+  },
+  "rewardsLeft": {
+   "coach": "Rewards left on the table",
+   "client": "Rewards the spending could earn elsewhere"
+  },
+  "leanFi": {
+   "coach": "Lean FI number",
+   "client": "Lean FI number"
+  },
+  "baristaLeanFi": {
+   "coach": "Barista Lean FI number",
+   "client": "Lean FI with part-time work"
+  },
+  "baristaRegularFi": {
+   "coach": "Barista FI number",
+   "client": "FI with part-time work"
+  },
+  "regularFi": {
+   "coach": "FI number (ladder rung)",
+   "client": "FI number"
+  },
+  "fatFi": {
+   "coach": "Fat FI number",
+   "client": "Fat FI number"
+  },
+  "baristaRule": {
+   "coach": "Barista rule of thumb",
+   "client": "What part-time work is worth"
+  },
+  "baristaIncomeNeededToday": {
+   "coach": "Part-time income to be Barista FI today",
+   "client": "Part-time pay that makes today enough"
+  },
+  "fiRatio": {
+   "coach": "FI ratio",
+   "client": "Share of spending the portfolio already covers"
+  },
+  "crossoverDate": {
+   "coach": "Crossover date",
+   "client": "When the money starts paying for life"
+  },
+  "daysOfFreedom": {
+   "coach": "Days of freedom",
+   "client": "Days the portfolio could pay for"
+  },
+  "yearsOfExpenses": {
+   "coach": "Years of expenses",
+   "client": "Years the portfolio could pay for"
+  },
+  "theFlip": {
+   "coach": "The flip (invested only)",
+   "client": "When growth beats what you add"
+  },
+  "first100kDate": {
+   "coach": "First $100,000",
+   "client": "When the first $100,000 lands"
+  },
+  "trueFiNumber": {
+   "coach": "True FI number (after tax)",
+   "client": "Enough, after tax"
+  },
+  "ssAdjustedFiNumber": {
+   "coach": "FI number with Social Security",
+   "client": "Enough, counting Social Security"
+  },
+  "healthcareBridge": {
+   "coach": "Health care bridge to 65",
+   "client": "Health insurance before Medicare"
+  },
+  "wealthMultiplier": {
+   "coach": "Wealth multiplier",
+   "client": "What a dollar invested today becomes"
+  },
+  "purchaseInFiDays": {
+   "coach": "A purchase in FI days",
+   "client": "What a purchase costs in time"
+  },
+  "expectedNetWorth": {
+   "coach": "Expected net worth (Millionaire Next Door)",
+   "client": "Expected net worth"
+  },
+  "salaryMultiple": {
+   "coach": "Salary multiple vs benchmark",
+   "client": "Saved, in years of pay"
+  },
+  "savingsRateNeeded": {
+   "coach": "Savings rate needed for the dream FI age",
+   "client": "Savings rate for the dream"
+  },
+  "requiredMonthly": {
+   "coach": "Monthly investing for the dream FI age",
+   "client": "Monthly investing for the dream"
+  },
+  "guardrailsBand": {
+   "coach": "Guardrails spending band",
+   "client": "Room to spend in retirement"
+  },
+  "gutGap": {
+   "coach": "Gut gap as FI date",
+   "client": "Gut feel against the lines"
+  },
+  "dreamGap": {
+   "coach": "Dream gap as FI date",
+   "client": "Dream against today"
+  },
+  "doublingTime": {
+   "coach": "Doubling time",
+   "client": "Years for money to double"
+  },
+  "bigThreeShare": {
+   "coach": "Big three share",
+   "client": "Housing, food and getting around"
+  },
+  "costInHours": {
+   "coach": "A month of spending in hours of work",
+   "client": "Hours of work a month costs"
+  },
+  "completeness": {
+   "coach": "Picture completeness",
+   "client": "How much of the picture is in"
+  },
+  "blindSpot": {
+   "coach": "Blind spot",
+   "client": "What your gut did not see"
+  },
+  "guessesLeft": {
+   "coach": "Guesses left",
+   "client": "Estimates still standing in"
+  },
+  "cushionSteps": {
+   "coach": "Cushion steps covered",
+   "client": "Steps of the cushion covered"
+  },
+  "stressScore": {
+   "coach": "Money stress score",
+   "client": "How money feels, 1 to 10"
+  },
+  "goalsOnTrack": {
+   "coach": "Goals on track",
+   "client": "Goals that land by their date"
+  },
+  "satisfaction": {
+   "coach": "Satisfaction with where the money goes",
+   "client": "How satisfied you are"
+  },
+  "areaWorthIt": {
+   "coach": "Worth-it score per area",
+   "client": "What each area was worth"
+  },
+  "valuePerDollar": {
+   "coach": "Value per dollar by area",
+   "client": "Where money buys the most"
+  },
+  "safeToSpend": {
+   "coach": "Safe to spend today",
+   "client": "Safe to spend"
+  },
+  "lowPoint": {
+   "coach": "Lowest point in the next two months",
+   "client": "Tightest day"
+  },
+  "carCostShare": {
+   "coach": "Car and transport share of gross",
+   "client": "Getting around, share of pay"
+  }
  }
 }

@@ -25,7 +25,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
   const tdef = typeDef(fields, planet, typeId);
   const primary = primaryFieldOf(fields, planet, typeId);
   const coach = app.view === 'coach';
-  const state = { sortKey: null, sortDir: 1, filters: { state: '', source: '', institution: '', category: '' }, selected: new Set() };
+  const state = { sortKey: null, sortDir: 1, filters: { state: '', source: '', institution: '', category: '' }, selected: new Set(), selecting: false }; /* MR-072: pick boxes show only in Select mode, so a table at rest is text */
   const wrap = h('div', { class: 'ledger', dataset: { planet, type: typeId } });
   if (!opts.formOnly) host.appendChild(wrap); /* MR-060: formOnly builds the details form for a host of its own and shows no table */
 
@@ -87,18 +87,19 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     state.selected.forEach(id => { if (!all.some(r => r.id === id)) state.selected.delete(id); });
     const nSel = state.selected.size;
     const toolbar = h('div', { class: 'toolbar' },
-      all.length ? h('span', { class: 'small muted' }, all.length + (all.length === 1 ? ' row' : ' rows')) : null,
+      all.length ? h('span', { class: 'small muted' }, all.length + (coach ? (all.length === 1 ? ' row' : ' rows') : (all.length === 1 ? ' item' : ' items'))) : null,
+      coach && all.length > 1 && !tdef.single ? h('button', { class: 'btn small' + (state.selecting ? ' primary' : ''), 'aria-pressed': String(state.selecting), onClick: () => { state.selecting = !state.selecting; if (!state.selecting) state.selected.clear(); render(); } }, state.selecting ? 'Done selecting' : 'Select rows') : null,
       coach && nSel ? h('button', { class: 'btn small', onClick: () => { const ids = Array.from(state.selected); state.selected.clear(); app.removeRows(ids); render(); } }, 'Delete ' + (nSel === 1 ? '1 row' : nSel === all.length ? 'all ' + nSel + ' rows' : nSel + ' rows')) : null,
       showFilters ? filterSelect('State', 'state', Object.keys(STATES).map(id => [id, STATES[id].label])) : null,
-      showFilters ? filterSelect('Source', 'source', Object.keys(SOURCES).map(id => [id, SOURCES[id].label])) : null,
+      showFilters ? filterSelect('Source', 'source', Object.keys(SOURCES).map(id => [id, id === 'estimated' && !coach ? 'Average' : SOURCES[id].label])) : null, /* the client reads an average, never a guess */
       showFilters && catDef ? filterSelect('Category', 'category', catDef.options) : null,
       showFilters && !catDef && institutions.length ? filterSelect(fields.planets[planet].institutionLabel, 'institution', institutions.map(i => [i, i])) : null,
       h('span', { style: { flex: 1 } }),
       coach && all.length && !(tdef.single && all.length) ? h('span', { class: 'row' }, h('button', { class: 'btn small primary', onClick: () => addRow() }, 'Add row'), h('span', { class: 'kbd' }, 'Alt+N')) : null);
     const cols = columns();
-    const pickAll = coach && !tdef.single && list.length ? selectAllBox(list) : null;
+    const pickAll = coach && state.selecting && !tdef.single && list.length ? selectAllBox(list) : null;
     const thead = h('thead', null, h('tr', null, cols.map(c => h('th', {
-      class: (c.num ? 'num' : '') + (c.sticky ? ' sticky' : '') + (c.sticky && pickAll ? ' with-pick' : ''), 'aria-sort': state.sortKey === c.key ? (state.sortDir === 1 ? 'ascending' : 'descending') : null,
+      class: (c.num ? 'num' : '') + (c.sticky ? ' sticky' : '') + (c.sticky && pickAll ? ' with-pick' : ''), 'aria-sort': state.sortKey === c.key ? (state.sortDir === 1 ? 'ascending' : 'descending') : (c.sortable ? 'none' : null),
       onClick: e => { if (!c.sortable || e.target.classList.contains('pick')) return; if (state.sortKey === c.key) state.sortDir = -state.sortDir; else { state.sortKey = c.key; state.sortDir = 1; } render(); },
       title: c.hint || null,
     }, c.sticky && pickAll ? [pickAll, h('span', null, c.label)] : c.label))));
@@ -277,19 +278,24 @@ export function ledgerTable(host, app, planet, typeId, opts) {
   function stateCell(r) {
     const f = r.f[primary.id];
     if (!coach) return h('span', { class: 'chip state-' + ((f && f.state) || 'unknown') }, STATES[(f && f.state) || 'unknown'].label);
-    return stateChip(f, s => { app.setField(r.id, primary.id, f ? f.v : null, s, (f && f.source) || primary.defaultSource || 'client'); refreshDerived(r.id); refreshCell(r.id, primary.id); }, { label: 'State of ' + primary.label.toLowerCase() });
+    /* MR-072: a chip at rest, the select on a tap */
+    const live = () => (app.record.planets[planet].rows.find(x => x.id === r.id) || r).f[primary.id];
+    return readable(() => stateChip(live(), s => { const f2 = live(); app.setField(r.id, primary.id, f2 ? f2.v : null, s, (f2 && f2.source) || primary.defaultSource || 'client'); refreshDerived(r.id); refreshCell(r.id, primary.id); }, { label: 'State of ' + primary.label.toLowerCase() }), () => { const f2 = live(); return { text: STATES[(f2 && f2.state) || 'unknown'].label, empty: !f2 || f2.state === 'unknown' }; }, primary.id + ':state', 'State of ' + primary.label.toLowerCase());
   }
   function sourceCell(r) {
     const f = r.f[primary.id];
     if (!coach) return h('span', { class: 'chip src src-' + ((f && f.source) || 'client') }, SOURCES[(f && f.source) || 'client'].label);
-    return sourceChip(f, s => { app.setField(r.id, primary.id, f ? f.v : null, (f && f.state) || 'unknown', s); refreshDerived(r.id); }, { label: 'Source of ' + primary.label.toLowerCase() });
+    const live = () => (app.record.planets[planet].rows.find(x => x.id === r.id) || r).f[primary.id];
+    return readable(() => sourceChip(live(), s => { const f2 = live(); app.setField(r.id, primary.id, f2 ? f2.v : null, (f2 && f2.state) || 'unknown', s); refreshDerived(r.id); }, { label: 'Source of ' + primary.label.toLowerCase() }), () => { const f2 = live(); return { text: SOURCES[(f2 && f2.source) || 'client'].label }; }, primary.id + ':source', 'Source of ' + primary.label.toLowerCase());
   }
+
 
   function refreshCell(rowId, fieldId) {
     const r = app.record.planets[planet].rows.find(x => x.id === rowId);
     const el = wrap.querySelector('tr[data-row="' + rowId + '"] [data-col="' + fieldId + '"]');
     if (!r || !el || el === document.activeElement) return;
     const d = fieldDef(fields, fieldId);
+    if (el.classList.contains('cell-read')) { const f = r.f[fieldId]; const txt = readText(d, f); el.textContent = txt.text || 'Not entered'; el.classList.toggle('empty', !!txt.empty); el.classList.toggle('rough-value', !!txt.rough); return; }
     if (el.tagName === 'INPUT' && el.type === 'date') { setDateValue(el, r.f[fieldId] && hasValue(r.f[fieldId]) ? r.f[fieldId].v : null); return; }
     if (el.tagName === 'INPUT' && ['money', 'percent', 'int', 'hours'].includes(d.kind)) el.value = display(d, r.f[fieldId]);
   }
@@ -315,6 +321,14 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     }
   }
 
+  /* what a cell says at rest */
+  function readText(d, f) {
+    if (!f || !hasValue(f)) { const t = display(d, f); return { text: t || '', empty: !t }; }
+    if (d.kind === 'choice') { const o = choiceOptions(d).find(x => x[0] === f.v); return { text: o ? o[1] : String(f.v) }; }
+    if (d.kind === 'bool') return { text: f.v ? 'Yes' : 'No' };
+    if (d.kind === 'credits') return { text: creditsSummary({ }, f).textContent || '' };
+    return { text: display(d, f) + (d.cadence && f.cad ? ' ' + CADENCE_SHORT[f.cad] : ''), rough: isRough(f) };
+  }
   function renderCell(r, c) {
     if (c.kind === 'state') return h('td', { class: 'cell-state' }, stateCell(r));
     if (c.kind === 'source') return h('td', { class: 'cell-source' }, sourceCell(r));
@@ -333,32 +347,38 @@ export function ledgerTable(host, app, planet, typeId, opts) {
       const sel = h('select', { class: 'select', 'aria-label': 'Stress', dataset: { col: 'stress' }, onChange: e => app.setColumn(r.id, 'stress', e.target.value === '' ? null : parseInt(e.target.value, 10)) },
         h('option', { value: '' }, '-'), [1, 2, 3, 4, 5].map(n => h('option', { value: String(n), selected: r.stress === n }, String(n))));
       sel.style.width = '56px';
-      return h('td', null, keyFlow(sel, r, 'stress'));
+      return h('td', null, readable(() => keyFlow(sel, r, 'stress'), () => ({ text: r.stress === null || r.stress === undefined ? '' : String(r.stress), empty: r.stress === null || r.stress === undefined }), 'stress', 'Stress'));
     }
     if (c.kind === 'column') {
       if (!coach && c.key === 'notesPrivate') return null;
-      if (!coach) return h('td', { class: (c.key === 'asOf' ? 'small muted' : '') + (c.sticky ? ' sticky' : '') }, c.key === 'asOf' ? (r.asOf ? F.date(r.asOf) : h('span', { class: 'empty-token' }, 'Not entered')) : (r[c.key] || h('span', { class: 'empty-token' }, 'Not entered')), c.sticky && isGuessRow(r) ? h('span', { class: 'chip src-estimated guess-chip', title: 'An average for your cost area, not your number' }, 'Guess') : null);
+      if (!coach) return h('td', { class: (c.key === 'asOf' ? 'small muted' : '') + (c.sticky ? ' sticky' : '') }, c.key === 'asOf' ? (r.asOf ? F.date(r.asOf) : h('span', { class: 'empty-token' }, 'Not entered')) : (r[c.key] || h('span', { class: 'empty-token' }, 'Not entered')), c.sticky && isGuessRow(r) ? h('span', { class: 'chip src-estimated guess-chip', title: 'An average for your cost area, not your number' }, 'Average') : null);
+      const liveRow = () => app.record.planets[planet].rows.find(x => x.id === r.id) || r;
       if (c.key === 'asOf') {
-        const picker = datePicker({ value: r.asOf, precision: 'month', label: c.label, dataset: { col: 'asOf' }, onCommit: iso => app.setColumn(r.id, 'asOf', iso) });
-        return h('td', null, emptyWrap(picker, keyFlow(picker, r, 'asOf')));
+        const buildPicker = () => { const picker = datePicker({ value: liveRow().asOf, precision: 'month', label: c.label, dataset: { col: 'asOf' }, onCommit: iso => app.setColumn(r.id, 'asOf', iso) }); return emptyWrap(picker, keyFlow(picker, r, 'asOf')); };
+        return h('td', null, readable(buildPicker, () => ({ text: liveRow().asOf ? F.date(liveRow().asOf) : '', empty: !liveRow().asOf }), 'asOf', c.label));
       }
-      const input = h('input', { class: 'input' + (c.key === 'nickname' || c.key === 'notesPrivate' || c.key === 'notesShared' ? ' wide' : ''), type: 'text', value: r[c.key] || '', 'aria-label': c.label, dataset: { col: c.key },
-        onChange: e => app.setColumn(r.id, c.key, e.target.value.trim()) });
-      if (c.key === 'institution' && planet === 'debt' && typeId === 'card') input.setAttribute('list', 'mr3-issuers');
+      const buildInput = () => {
+        const input = h('input', { class: 'input' + (c.key === 'nickname' || c.key === 'notesPrivate' || c.key === 'notesShared' ? ' wide' : ''), type: 'text', value: liveRow()[c.key] || '', 'aria-label': c.label, dataset: { col: c.key },
+          onChange: e => app.setColumn(r.id, c.key, e.target.value.trim()) });
+        if (c.key === 'institution' && planet === 'debt' && typeId === 'card') input.setAttribute('list', 'mr3-issuers');
+        return emptyWrap(input, keyFlow(input, r, c.key));
+      };
+      const cellText = () => ({ text: liveRow()[c.key] || '', empty: !liveRow()[c.key] });
       /* a guess row (Level 8, MR-045) wears its chip on the name: coach sees the tier, client sees Guess */
-      const guessChip = c.sticky && isGuessRow(r) ? h('span', { class: 'chip src-estimated guess-chip', title: 'An average for this cost area, not this household' }, coach && r.guessTier ? 'Guess, ' + r.guessTier : 'Guess') : null;
-      if (c.sticky && coach && !tdef.single) {
+      const guessChip = c.sticky && isGuessRow(r) ? h('span', { class: 'chip src-estimated guess-chip', title: 'An average for this cost area, not this household' }, coach ? (r.guessTier ? 'Guess, ' + r.guessTier : 'Guess') : 'Average') : null; /* the client reads an average, never a guess (MR-072) */
+      if (c.sticky && coach && state.selecting && !tdef.single) {
         const box = h('input', { type: 'checkbox', class: 'pick', 'aria-label': 'Select row', checked: state.selected.has(r.id), onChange: e => { if (e.target.checked) state.selected.add(r.id); else state.selected.delete(r.id); render(); } });
-        return h('td', { class: 'sticky with-pick' }, box, emptyWrap(input, keyFlow(input, r, c.key)), guessChip);
+        return h('td', { class: 'sticky with-pick' }, box, readable(buildInput, cellText, c.key, c.label), guessChip);
       }
-      return h('td', { class: c.sticky ? 'sticky' : null }, emptyWrap(input, keyFlow(input, r, c.key)), guessChip);
+      return h('td', { class: c.sticky ? 'sticky' : null }, readable(buildInput, cellText, c.key, c.label), guessChip);
     }
     /* a typed field */
     const d = c.def;
     const f = r.f[d.id];
+    const liveF = () => (app.record.planets[planet].rows.find(x => x.id === r.id) || r).f[d.id];
     if (c.sticky) {
-      const cell = coach ? editor(r, d) : (() => { const o = choiceOptions(d).find(x => x[0] === (f && f.v)); return o ? h('span', null, o[1]) : h('span', { class: 'empty-token' }, 'Not entered'); })();
-      if (coach && !tdef.single) {
+      const cell = coach ? readable(() => editor(r, d), () => readText(d, liveF()), d.id, d.label) : (() => { const o = choiceOptions(d).find(x => x[0] === (f && f.v)); return o ? h('span', null, o[1]) : h('span', { class: 'empty-token' }, 'Not entered'); })();
+      if (coach && state.selecting && !tdef.single) {
         const box = h('input', { type: 'checkbox', class: 'pick', 'aria-label': 'Select row', checked: state.selected.has(r.id), onChange: e => { if (e.target.checked) state.selected.add(r.id); else state.selected.delete(r.id); render(); } });
         return h('td', { class: 'sticky with-pick' }, box, cell);
       }
@@ -373,8 +393,8 @@ export function ledgerTable(host, app, planet, typeId, opts) {
       if (d.kind === 'credits') return h('td', null, creditsSummary(r, f));
       return h('td', { class: c.num ? 'num' : null }, txt === 'Not entered' || txt === '' ? h('span', { class: 'empty-token' }, 'Not entered') : h('span', { class: isRough(f) ? 'rough-value' : null }, txt), d.cadence && f && hasValue(f) && f.cad ? h('span', { class: 'small muted cad-text' }, ' ' + CADENCE_SHORT[f.cad]) : null);
     }
-    if (d.cadence) return h('td', { class: 'num' }, h('span', { class: 'cell-money' }, editor(r, d), cadenceControl(r, d)));
-    return h('td', { class: c.num ? 'num' : null }, editor(r, d));
+    if (d.cadence) return h('td', { class: 'num' }, readable(() => h('span', { class: 'cell-money' }, editor(r, d), cadenceControl(r, d)), () => readText(d, liveF()), d.id, d.label));
+    return h('td', { class: c.num ? 'num' : null }, readable(() => editor(r, d), () => readText(d, liveF()), d.id, d.label));
   }
 
   /* The cadence pill sits inside its amount cell: "$85 mo" reads as one fact. */
@@ -621,6 +641,32 @@ export function ledgerTable(host, app, planet, typeId, opts) {
   }
 
   return { render, addRow, refreshTotals, openDetails, detailsBody };
+}
+
+/* Read mode (Level 14, MR-072): a cell is plain text until it is tapped or focused; then the live control takes its
+   place, Escape puts the text back, and leaving the cell paints the fresh value. Keyboard flow is unchanged: Enter
+   still moves down the column and Tab to the next cell, which opens as it is reached. */
+export function readable(build, textOf, colKey, label) {
+  const host = h('span', { class: 'cellwrap readhost' });
+  let live = null; let opening = false;
+  const paint = () => {
+    clear(host); live = null;
+    const t = textOf() || {};
+    const btn = h('button', { type: 'button', class: 'cell-read' + (t.empty ? ' empty' : '') + (t.rough ? ' rough-value' : ''), dataset: { col: colKey }, 'aria-label': (label || colKey) + ': ' + (t.text || 'not entered') + '. Tap to change', title: 'Tap to change' }, t.text || 'Not entered');
+    btn.addEventListener('focus', () => { if (!opening) open(); });
+    btn.addEventListener('click', () => open());
+    host.appendChild(btn);
+  };
+  const open = () => {
+    opening = true; clear(host); live = build(); host.appendChild(live);
+    const focusEl = live.matches && live.matches('input, select, button') ? live : live.querySelector('input, select, button');
+    if (focusEl) { focusEl.focus(); if (focusEl.select && focusEl.tagName === 'INPUT' && focusEl.type !== 'checkbox') focusEl.select(); }
+    live.addEventListener('focusout', e => { if (host.contains(e.relatedTarget)) return; setTimeout(() => { if (live && !host.contains(document.activeElement)) paint(); }, 0); });
+    live.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); e.preventDefault(); if (live.tagName === 'INPUT') live.blur(); paint(); } });
+    setTimeout(() => { opening = false; }, 0);
+  };
+  paint();
+  return host;
 }
 
 /* A text input shows "Not entered" while empty (no browser hint text). */

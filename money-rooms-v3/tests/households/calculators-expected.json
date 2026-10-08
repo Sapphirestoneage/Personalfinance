@@ -21,53 +21,54 @@
    "debtMinimumsMonthly": 0
   }
  },
- "mayaHome": {
-  "lenderPrice": 31300000,
+ "leahHome": {
+  "lenderPrice": 35200000,
   "lenderBudget": 243833,
   "binding": "front",
-  "comfortablePrice": 24700000,
+  "comfortablePrice": 27400000,
   "comfortableBudget": 215307,
-  "comfortableMonthly": 215562,
-  "lenderMonthly": 244184,
+  "comfortableMonthly": 215633,
+  "lenderMonthly": 244126,
   "inputs": {
-   "state": "NJ",
+   "state": "CA",
+   "city": "Oakland",
    "credit": "760+",
    "rate": 0.065,
    "termYears": 30,
    "downPct": 0.1,
-   "taxRate": 0.0185,
-   "insuranceAnnual": 130000,
+   "taxRate": 0.008,
+   "insuranceAnnual": 150000,
    "maintenanceShare": 0.01,
    "grossMonthly": 870833,
    "takeHomeMonthly": 615163,
    "debtMinimumsMonthly": 16600
   }
  },
- "mayaLadder": [
+ "leahLadder": [
   {
    "downPct": 0.03,
-   "price": 22800000,
-   "cashToClose": 2296489
+   "price": 25100000,
+   "cashToClose": 2343452
   },
   {
    "downPct": 0.035,
-   "price": 22900000,
-   "cashToClose": 2419212
+   "price": 25200000,
+   "cashToClose": 2476959
   },
   {
    "downPct": 0.05,
-   "price": 23600000,
-   "cashToClose": 2835466
+   "price": 26000000,
+   "cashToClose": 2932644
   },
   {
    "downPct": 0.1,
-   "price": 24700000,
-   "cashToClose": 4182939
+   "price": 27400000,
+   "cashToClose": 4436708
   },
   {
    "downPct": 0.2,
-   "price": 27500000,
-   "cashToClose": 7359909
+   "price": 30900000,
+   "cashToClose": 8037283
   }
  ],
  "workbook": {
@@ -132,22 +133,22 @@
    "note": "The workbook counted taxes, insurance, maintenance and PMI inside cumulative interest, never stopped PMI, kept insurance flat, and multiplied the buyer FI savings by 0.8; this file holds the corrected arithmetic"
   }
  },
- "mayaUsedCar": {
+ "leahUsedCar": {
   "price": 2640000,
-  "financed": 2626800,
-  "payment": 65243,
-  "interest": 504885,
-  "upfront": 523300,
-  "runningMonthly": 77741,
+  "financed": 2578400,
+  "payment": 64041,
+  "interest": 495582,
+  "upfront": 511400,
+  "runningMonthly": 84324,
   "endValue": 1701948,
-  "totalCost": 6617461,
-  "costPerMonth": 110291,
-  "costPerMile": 120
+  "totalCost": 6942865,
+  "costPerMonth": 115714,
+  "costPerMile": 126
  },
- "mayaNoCar": {
-  "costPerMonth": 34400
+ "leahNoCar": {
+  "costPerMonth": 30800
  },
- "mayaCalendar": {
+ "leahCalendar": {
   "start": "2026-10-05",
   "days": 60,
   "low": {

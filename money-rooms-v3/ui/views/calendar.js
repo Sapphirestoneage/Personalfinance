@@ -27,7 +27,7 @@ export function mount(host, app) {
   const client = app.view === 'client'; const conv = app.data.calendar; const name = (clientName(app.record) || 'Household').split(' ')[0];
   if (!state.tab) state.tab = window.innerWidth < 720 ? 'weeks' : 'grid';
   if (app.route.params.id && TABS.some(t => t[0] === app.route.params.id)) state.tab = app.route.params.id;
-  const header = h('header', null, h('h1', null, client ? 'Your month, day by day' : 'Cash flow calendar'), h('span', { class: 'sub' }, client ? 'Paydays against bills, and what is safe to spend.' : 'One day-by-day run; every tab reads it.'));
+  const header = h('header', null, h('h1', null, client ? 'Your month, day by day' : 'Cash flow calendar'), h('span', { class: 'sub' }, client ? 'Paydays against bills, and what is safe to spend.' : 'Paydays against bills, day by day.'));
   const actions = h('div', { class: 'actions' }); header.appendChild(actions); host.appendChild(header);
   const top = h('div', { class: 'calc-top' }); const tabs = h('nav', { class: 'calc-tabs', 'aria-label': 'Views' }); const body = h('div', { class: 'stack cal-body' });
   host.appendChild(top); host.appendChild(tabs); host.appendChild(body);
@@ -40,7 +40,7 @@ export function mount(host, app) {
     if (!client) actions.appendChild(h('select', { class: 'select', 'aria-label': 'Tools', onChange: e => { const v = e.target.value; e.target.value = ''; if (v) TOOLS[v](ctx, draw); } }, h('option', { value: '' }, 'Tools'), Object.keys(TOOLS).map(k => h('option', { value: k }, TOOL_LABELS[k]))));
     else actions.appendChild(h('button', { class: 'btn', onClick: () => TOOLS.spend(ctx, draw) }, 'Can I spend this?'));
     if (!m.accounts.length || !m.incomes.length) {
-      top.appendChild(h('section', { class: 'panel calc-needs' }, h('h2', null, client ? 'A few facts first' : 'Needs'), h('p', null, 'The calendar needs a checking or savings balance and an income with its pay frequency.'), h('ul', null, [!m.accounts.length ? h('li', null, h('a', { href: '#/ledger/invest/account' }, 'A checking account balance')) : null, !m.incomes.length ? h('li', null, h('a', { href: '#/ledger/income' }, 'An income with how often it is paid')) : null].concat(m.needs.map(n => h('li', null, h('a', { href: '#/ledger/' + (n.rowId ? 'spending' : 'invest') }, n.what)))).filter(Boolean))));
+      top.appendChild(h('section', { class: 'panel calc-needs' }, h('h2', null, client ? 'A few facts first' : 'Needs'), h('p', null, 'The calendar needs a checking or savings balance and an income with its pay frequency.'), h('ul', null, [!m.accounts.length ? h('li', null, h('a', { href: '#/ledger/invest/bank' }, 'A checking account balance')) : null, !m.incomes.length ? h('li', null, h('a', { href: '#/ledger/income' }, 'An income with how often it is paid')) : null].concat(m.needs.map(n => h('li', null, h('a', { href: '#/ledger/' + (n.rowId ? 'spending' : 'invest') }, n.what)))).filter(Boolean))));
       return;
     }
     const run = C.simulate(m, { maybeMode: state.maybe }); ctx.run = run;
@@ -49,7 +49,8 @@ export function mount(host, app) {
     const notes = []; if (m.floorSource === 'cushion-account') notes.push('The cushion sits in savings, so the floor on checking is zero.'); else if (m.floorSource === 'lean') notes.push('Floor: the lean month, ' + money(m.floor) + '.'); else if (m.floorSource === 'fixed') notes.push('Floor: ' + money(m.floor) + ', set by the coach.'); else if (m.floorSource === 'lean-unfunded') notes.push('No floor yet: the lean month step is not funded.');
     if (m.incomes.some(i => i.estimated) || m.bills.some(b => b.estimated) || m.cards.some(c => c.estimated)) notes.push(client ? 'Some dates are estimates until your coach sets them.' : 'Some dates are estimates: Tools, then Dates and the floor.');
     if (m.maybe.length) notes.push('Maybe money counted: ' + ({ ignore: 'none of it', likely: 'the likely items (60% and up)', weighted: 'weighted by likelihood' }[state.maybe]) + '.');
-    if (notes.length) top.appendChild(h('p', { class: 'small muted calc-notes' }, notes.join(' ')));
+    if (notes.length && !client) top.appendChild(h('p', { class: 'small muted calc-notes' }, notes.join(' ')));
+    else if (client && m.incomes.some(i => i.estimated) || (client && m.bills.some(b => b.estimated))) top.appendChild(h('p', { class: 'small muted calc-notes' }, 'Some dates are estimates until your coach sets them.'));
     TABS.forEach(([id, label]) => { if (id === 'cards' && !m.cards.length) return; tabs.appendChild(h('button', { class: 'tab' + (state.tab === id ? ' active' : ''), 'aria-pressed': String(state.tab === id), onClick: () => { state.tab = id; history.replaceState(null, '', '#/calendar/' + id); draw(); } }, label)); });
     ({ grid: drawGrid, weeks: drawWeeks, line: drawLine, paychecks: drawPaychecks, year: drawYear, agenda: drawAgenda, cards: drawCards }[state.tab] || drawGrid)(body, ctx, draw);
   }

@@ -109,9 +109,9 @@ export const dev = {
   ]
 };
 
-/* Maya: 26, the showcase. Every answer state and source, a range, Other rows,
+/* Leah: 26, the showcase. Every answer state and source, a range, Other rows,
    two saved scenarios, two past sessions in the journal. */
-const mayaS1Rows = [
+const leahS1Rows = [
   { id: 'm-w2', planet: 'income', type: 'w2', nickname: 'Product designer', institution: 'Lumen Health', asOf: '2026-08', f: {
     grossPay: [365000, 'verified', 'client', 'paycheck'], takeHome: [251237, 'verified', 'client', 'paycheck'], payFrequency: 'biweekly', stability: 'steady',
     pretaxRetirement: [21900, 'verified', 'client', 'paycheck'], rothRetirement: [0, 'none'], hsaPayroll: [11000, 'verified', 'client', 'paycheck'], pretaxOther: [12800, 'verified', 'client', 'paycheck'],
@@ -129,7 +129,7 @@ const mayaS1Rows = [
     balance: [1190000, 'verified'], rate: [0.0499, 'verified'], minimum: [12600, 'verified', 'client', 'month'] } },
   { id: 'm-score', planet: 'debt', type: 'score', nickname: 'Credit score', institution: 'TransUnion', asOf: '2026-08', f: { score: 761, bureau: 'transunion' } },
 ];
-const mayaS2Rows = [
+const leahS2Rows = [
   { id: 'm-rent', planet: 'spending', type: 'line', nickname: 'Rent', institution: 'Temescal Commons', f: { category: 'accommodation', amount: [225000, 'verified', 'client', 'month'], needWant: 'need', mistake: 'unavoidable', fatFloor: true, primaryCard: 'Bilt' } },
   { id: 'm-util', planet: 'spending', type: 'line', nickname: 'PG&E and internet', institution: 'PG&E, Sonic', f: { category: 'utilities', amount: [16500, 'known', 'client', 'month'], needWant: 'need', mistake: 'unavoidable', fatFloor: true, primaryCard: 'Sapphire Preferred' } },
   { id: 'm-groc', planet: 'spending', type: 'line', nickname: 'Groceries', institution: 'Berkeley Bowl', f: { category: 'food', amount: [52000, 'known', 'client', 'month'], needWant: 'need', mistake: 'unavoidable', fatFloor: true, primaryCard: 'Sapphire Preferred' } },
@@ -167,21 +167,21 @@ const mayaS2Rows = [
   { id: 'm-vttsx', planet: 'invest', type: 'holding', nickname: 'Target 2060', institution: 'Fidelity', lib: 'VTTSX', f: { accountRef: '401k', fundName: ['Vanguard Target Retirement 2060', 'known', 'lookup-verify'], expenseRatio: [0.0008, 'known', 'lookup-verify'], pctOfAccount: 1 } },
   { id: 'm-vtsax', planet: 'invest', type: 'holding', nickname: 'VTSAX', institution: 'Vanguard', lib: 'VTSAX', f: { accountRef: 'Roth IRA', fundName: ['Vanguard Total Stock Market Index Admiral', 'known', 'lookup-verify'], expenseRatio: [0.0004, 'known', 'lookup-verify'], pctOfAccount: 1 } },
   { id: 'm-est', planet: 'taxes', type: 'other', nickname: 'Quarterly estimated tax', institution: 'IRS', f: { otherTax: [240000, 'known', 'client', 'year'] } },
-  { id: 'm-njest', planet: 'taxes', type: 'other', nickname: 'NJ estimated tax', institution: 'NJ Division of Taxation', f: { otherTax: [60000, 'rough', 'client', 'year'] } },
+  { id: 'm-njest', planet: 'taxes', type: 'other', nickname: 'CA estimated tax', institution: 'California Franchise Tax Board', f: { otherTax: [60000, 'rough', 'client', 'year'] } },
   { id: 'm-goal1', planet: 'life', type: 'goal', nickname: 'Condo down payment', f: { goalCost: [8000000, 'rough'], targetDate: '2035-06', priority: '1' } },
   { id: 'm-goal2', planet: 'life', type: 'goal', nickname: 'Japan with my sister', f: { goalCost: [600000, 'known'], targetDate: '2027-10', priority: '3' } },
   { id: 'm-ret', planet: 'life', type: 'retirement', nickname: 'Retirement', f: { retirementAge: [55, 'rough'], gogo: [1, 'known', 'estimated'], slowgo: [0.85, 'known', 'estimated'], nogo: [0.75, 'known', 'estimated'] } },
 ];
-export const maya = {
-  id: 'maya',
+export const leah = {
+  id: 'leah',
   sun: {
-    name: ['Maya Lindqvist', 'verified'], birthDate: ['2000-02-11', 'verified'], state: ['NJ', 'verified'], city: ['Jersey City'],
+    name: ['Leah Brennan', 'verified'], birthDate: ['2000-02-11', 'verified'], state: ['CA', 'verified'], city: ['Oakland'],
     workSituation: ['mixed', 'verified'], dependents: [0, 'none'], filingStatus: ['single', 'verified'], bigGoal: ['A small home by 35 and a four-day week']
   },
-  rows: mayaS1Rows.concat(mayaS2Rows),
+  rows: leahS1Rows.concat(leahS2Rows),
   sessions: [
-    { start: '2026-08-20T16:00:00.000Z', label: 'Session 1', facts: { name: ['Maya Lindqvist', 'verified'], birthDate: ['2000-02-11', 'verified'], state: ['NJ', 'verified'], city: ['Jersey City'], workSituation: ['mixed', 'verified'], dependents: [0, 'none'], filingStatus: ['single', 'verified'], bigGoal: ['A small home by 35 and a four-day week'] }, rows: mayaS1Rows, snapshot: true, note: 'First meeting. Income and debts in; spending as one rough number.' },
-    { start: '2026-09-17T16:00:00.000Z', label: 'Session 2', rows: mayaS2Rows, edits: [
+    { start: '2026-08-20T16:00:00.000Z', label: 'Session 1', facts: { name: ['Leah Brennan', 'verified'], birthDate: ['2000-02-11', 'verified'], state: ['CA', 'verified'], city: ['Oakland'], workSituation: ['mixed', 'verified'], dependents: [0, 'none'], filingStatus: ['single', 'verified'], bigGoal: ['A small home by 35 and a four-day week'] }, rows: leahS1Rows, snapshot: true, note: 'First meeting. Income and debts in; spending as one rough number.' },
+    { start: '2026-09-17T16:00:00.000Z', label: 'Session 2', rows: leahS2Rows, edits: [
       { rowId: 'm-csp', field: 'balance', value: 98000, state: 'known' },
       { rowId: 'm-loan', field: 'balance', value: 1177000, state: 'verified' },
     ], snapshot: true, note: 'Spending detail replaced the rough total. Accounts and safety net in.' },
@@ -201,11 +201,11 @@ export const maya = {
   ],
   coachNotes: [{ id: 'cn1', ts: '2026-09-17T17:30:00.000Z', text: 'Wants the condo but is nervous about the side income drying up. Lead with runway, not FI.' }],
   clientPicks: ['match-left', 'card-fee', 'cash-drag', 'shelter-heavy'],
-  onepager: { important: ['Housing takes about two fifths of take-home', 'The 401k match is fully taken; the Roth IRA fills about half of its room', 'Cash covers about three months of full spending'], amazing: ['Four accounts, all with named beneficiaries except the HSA', 'Savings land every month without fail'], struggling: ['Restaurants and clothing are still rough numbers', 'Parking tickets are a $480 a year habit'], doMore: 'Keep the Roth transfer automatic; move the gifts line to a known figure after the holidays.', doLess: 'Street parking downtown on Thursdays.', todos: [{ task: 'Send the 401k statement', owner: 'Maya', due: '2026-10-20' }, { task: 'Confirm the Sapphire hotel credit posted', owner: 'Eli', due: '2026-10-12' }] }
+  onepager: { important: ['Housing takes about two fifths of take-home', 'The 401k match is fully taken; the Roth IRA fills about half of its room', 'Cash covers about three months of full spending'], amazing: ['Four accounts, all with named beneficiaries except the HSA', 'Savings land every month without fail'], struggling: ['Restaurants and clothing are still rough numbers', 'Parking tickets are a $480 a year habit'], doMore: 'Keep the Roth transfer automatic; move the gifts line to a known figure after the holidays.', doLess: 'Street parking downtown on Thursdays.', todos: [{ task: 'Send the 401k statement', owner: 'Leah', due: '2026-10-20' }, { task: 'Confirm the Sapphire hotel credit posted', owner: 'Eli', due: '2026-10-12' }] }
 };
 
 specs.dev = dev;
-specs.maya = maya;
+specs.leah = leah;
 
 /* Extreme: zero income, $3.2M of assets, a negative surplus, 14 debts, 40-character names. */
 const long = (s) => (s + ' ' + 'x'.repeat(40)).slice(0, 40);

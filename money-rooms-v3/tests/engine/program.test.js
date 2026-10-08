@@ -46,7 +46,7 @@ test('ahead: one could block is offered, picked by her goals; go deeper swaps a 
   const { rec, R } = maya(); const p = planSession(rec, R, data, 1);
   const ahead = bend(p, { current: 'accounts1', started: [], done: [] }, 20, { words: W, record: rec });
   assert.equal(ahead.action, 'ahead'); assert.equal(ahead.offer, 'forgotten', 'Maya mentioned an old account');
-  const rec2 = loadHousehold('maya'); rec2.discovery = { goals: [{ text: 'A life that feels different' }], form: { money: {} }, words: [] };
+  const rec2 = loadHousehold('leah'); rec2.discovery = { goals: [{ text: 'A life that feels different' }], form: { money: {} }, words: [] };
   assert.equal(pickCould(p, rec2, null).id, 'dream', 'a wish for something different points at the dream lap');
   const deeper = goDeeper(p, { started: ['gut'], done: [] }, 'gut', W);
   assert.deepEqual(deeper.moved.map(m => m.id), ['picture']); assert.ok(!deeper.moved.some(m => p.blocks.find(b => b.id === m.id).priority === 'must'));
@@ -120,7 +120,7 @@ test('three steps shows what she already did today and never more than three ope
 
 test('block minutes feed the coach-only report across clients', () => {
   const { rec } = maya(); startSession(rec, 1, { now: NOW }); blockStatus(rec, 1, 'gut', 'done', 14.2, { now: NOW }); blockStatus(rec, 1, 'confirm', 'done', 6, { now: NOW });
-  const rec2 = loadHousehold('maya'); startSession(rec2, 1, { now: NOW }); blockStatus(rec2, 1, 'gut', 'done', 10, { now: NOW });
+  const rec2 = loadHousehold('leah'); startSession(rec2, 1, { now: NOW }); blockStatus(rec2, 1, 'gut', 'done', 10, { now: NOW });
   const rep = blockTimes([rec, rec2], data); const gut = rep.find(r => r.id === 'gut'); assert.equal(gut.n, 2); assert.equal(gut.target, 12); assert.equal(gut.max, 14.2);
 });
 

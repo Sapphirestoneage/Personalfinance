@@ -3,7 +3,10 @@
    string so a view can show its own "needs" chip; a NaN or non-finite input
    throws, because that is a bug upstream, never something to print. */
 
-const TILDE = '~';
+let TILDE = '~';
+/* MR-072: the client reads "about $4,320"; the coach keeps the tilde. The views set this with the view. */
+export function setRough(mode) { TILDE = mode === 'about' ? 'about ' : '~'; }
+export function roughMarker() { return TILDE; }
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function guard(n, what) {
@@ -98,21 +101,30 @@ export function date(iso, opts) {
 
 /* "5 Oct 2026" for journal lines and asOf. */
 /* MR-057: a journal timestamp in the browser's local time, "7 Oct 2026, 9:45 pm". Empty for anything that is not a date. */
+/* MR-072: US order everywhere, "Oct 8, 2026, 4:25 pm". */
 export function dateTimeLocal(ts) {
   const d = new Date(ts); if (!ts || isNaN(d.getTime())) return '';
   const hour = d.getHours(); const h12 = hour % 12 || 12;
-  return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear() + ', ' + h12 + ':' + String(d.getMinutes()).padStart(2, '0') + (hour < 12 ? ' am' : ' pm');
+  return MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear() + ', ' + h12 + ':' + String(d.getMinutes()).padStart(2, '0') + (hour < 12 ? ' am' : ' pm');
 }
-/* The local calendar day of a timestamp, "7 Oct 2026". */
+/* The local calendar day of a timestamp, "Oct 8, 2026". */
 export function dateLocal(ts) {
   const d = new Date(ts); if (!ts || isNaN(d.getTime())) return '';
-  return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+  return MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
 }
+/* "Oct 8, 2026" from YYYY-MM-DD; a month alone falls back to "Oct 2026". */
 export function dateLong(iso) {
   if (!iso) return '';
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));
   if (!m) return date(iso);
-  return String(parseInt(m[3], 10)) + ' ' + MONTHS[parseInt(m[2], 10) - 1] + ' ' + m[1];
+  return MONTHS[parseInt(m[2], 10) - 1] + ' ' + String(parseInt(m[3], 10)) + ', ' + m[1];
+}
+/* "Oct 9" from YYYY-MM-DD, for days inside the current year on a calendar. */
+export function dateShort(iso) {
+  if (!iso) return '';
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));
+  if (!m) return date(iso);
+  return MONTHS[parseInt(m[2], 10) - 1] + ' ' + String(parseInt(m[3], 10));
 }
 
 export function integer(n, opts) {

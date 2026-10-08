@@ -41,7 +41,7 @@ const LINES = [
   ['cushionMonths', 'Months your cash covers', 'months', 'higher'],
   ['bucketPct', 'Cushion saved, share of the full cushion', 'pct', 'higher'],
   ['savingsRate', 'Share of take-home saved', 'pct', 'higher'],
-  ['fiDate', 'When the portfolio could carry you', 'date', 'earlier'],
+  ['fiDate', 'FI date', 'date', 'earlier'],
   ['goalsHit', 'Goals reached, of the ones you named', 'count', 'higher'],
 ];
 /* The scorecard: before (the discovery baseline) against now, with a direction word per line. */

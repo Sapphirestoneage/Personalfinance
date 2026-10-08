@@ -40,3 +40,5 @@ Level 13 met every line above; the sweep ran at 1440, 1024 and 390 in both
 views for the hub, the calendar's seven tabs, the four calculators and the ten
 new chart pages for every household, and the dark theme on the main screens;
 screenshots live in screenshots/level-13/ with critique.md and its fixes.
+
+Level 14 met every line above; the sweep ran at 1440, 1024 and 390 in both views for every screen and household with the new checks (trunk, client words, dates, contrast and size, render budget, roles, inputs at rest, chart labels); screenshots live in screenshots/level-before14 and screenshots/level-after14, with the pairs that changed most listed in audit/USABILITY.md.

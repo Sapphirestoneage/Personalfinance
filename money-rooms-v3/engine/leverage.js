@@ -82,7 +82,7 @@ export function session(ctx) {
     ranked = ranked.map(i => { const s = byKey[i.rowId + '|' + i.field]; const months = s && s.askRange !== null && s.askRange !== undefined ? s.askRange : null; return Object.assign({}, i, { monthsAtStake: months, why: months !== null ? 'This ' + (i.state === 'rough' ? 'rough' : i.source === 'estimated' ? 'estimated' : 'unverified') + ' figure could move the FI date about ' + monthsText(months) + ' across its plausible range.' : 'No FI date effect measured; ranked by weight x (1 - confidence) x dollars.' }); });
     /* months first, then the v1 score for everything the shocks cannot reach (unknowns, words, dates) */
     ranked.sort((a, b) => (b.monthsAtStake === null ? -1 : b.monthsAtStake) - (a.monthsAtStake === null ? -1 : a.monthsAtStake) || b.leverage - a.leverage);
-  } else ranked = ranked.map(i => Object.assign({}, i, { monthsAtStake: null, why: 'No FI date yet; ranked by weight x (1 - confidence) x dollars a year.' }));
+  } else ranked = ranked.map(i => Object.assign({}, i, { monthsAtStake: null, why: ctx.hasFiDate ? 'Ranked by how much money the answer moves; the months of FI date arrive with the next run.' : 'No FI date yet; ranked by how much money the answer moves.' }));
   const big = ranked.filter(i => !i.small);
   return {
     rankedBy: sens ? 'ask' : 'leverage',

@@ -15,6 +15,8 @@ import { icsOf, goalEvents } from '../../engine/ics.js';
 import { goalFi, fiMonthOf } from '../../engine/fieffect.js';
 import { parseSaid } from '../../engine/parse.js';
 import { clientName, closeOverlay } from '../app.js';
+import { segmented } from '../seg.js';
+import { cheerSentence } from './session.js';
 
 const ZOOMS = [['24', '2 years', 24], ['60', '5 years', 60], ['fi', 'Until FI', null]];
 
@@ -23,7 +25,7 @@ export function mount(host, app) {
   let zoom = '24'; let whatIf = { surplusDelta: 0, events: [], order: null, mode: null, splits: null, overrides: null, goals: null };
   let fiNow = null; /* goalFi for the plan being drawn */
   const header = h('header', null, h('h1', null, coach() ? 'Goals' : 'Your goals'), h('span', { class: 'sub' }, coach() ? 'Every goal funded at once from the monthly surplus; the lean month and the full month always first.' : 'Everything you are saving for, all at the same time.'), h('div', { class: 'actions' },
-    h('div', { class: 'view-toggle', role: 'group', 'aria-label': 'How far to look' }, ZOOMS.map(([id, label]) => h('button', { 'aria-pressed': String(zoom === id), onClick: () => { zoom = id; draw(); } }, label))),
+    segmented(ZOOMS.map(([id, label]) => [id, label]), zoom, id => { zoom = id; draw(); }, { label: 'How far to look' }),
     h('button', { class: 'btn', onClick: () => addToCalendar() }, 'Add to calendar'),
     h('button', { class: 'btn coach-only', onClick: () => addGoal() }, 'Add a goal')));
   host.appendChild(header);
@@ -44,7 +46,7 @@ export function mount(host, app) {
   const lowerName = i => { if (i.type === 'debt') return 'paying off ' + i.name; if (i.step === 1) return 'a lean month covered'; if (i.step === 2) return 'a full month covered'; if (i.step === 3) return 'your full cushion'; return nameOf(i); };
 
   function draw() {
-    header.querySelectorAll('.view-toggle button').forEach((b, k) => b.setAttribute('aria-pressed', String(ZOOMS[k][0] === zoom)));
+    header.querySelectorAll('.seg .seg-btn').forEach((b, k) => { b.setAttribute('aria-pressed', String(ZOOMS[k][0] === zoom)); b.classList.toggle('on', ZOOMS[k][0] === zoom); });
     const P = plan(); const base = app.result.goalPlan;
     fiNow = isWhatIf() ? goalFi(app.result, P.draws) : app.result.goalFi;
     drawSentence(P); drawFi(P); drawCheer(base); drawWhatIf(P, base); drawTimeline(P); drawAlloc(P); drawCompare(P);
@@ -76,13 +78,15 @@ export function mount(host, app) {
   function drawCheer(base) {
     clear(cheer);
     const won = celebrations(base, app.record); if (!won.length) return;
-    cheer.appendChild(h('section', { class: 'panel cheer', role: 'status' }, h('h2', null, won.length === 1 ? 'Already there' : 'Already there, twice'),
-      h('p', { class: 'big' }, won.map(i => 'You already have ' + lowerName(i) + '.').join(' ')),
-      h('p', { class: 'small muted' }, 'Nothing to do for ' + (won.length === 1 ? 'this one' : 'these') + '; the money is in your savings today.'),
+    cheer.appendChild(h('section', { class: 'panel cheer', role: 'status' }, h('h2', null, 'Already there'),
+      h('p', { class: 'big' }, cheerSentence(won)),
+      h('p', { class: 'small muted' }, 'The money is in your savings today.'),
       h('button', { class: 'btn primary', onClick: () => { const c = Object.assign({}, app.record.goals.celebrated || {}); won.forEach(i => { c[i.id] = new Date().toISOString(); }); app.goals({ celebrated: c }); draw(); } }, 'Got it')));
   }
+  let whatIfOpen = false;
   function drawWhatIf(P, base) {
     clear(whatifPanel);
+    if (!coach() && !whatIfOpen && !isWhatIf()) { whatifPanel.appendChild(h('div', { class: 'row' }, h('button', { class: 'btn', 'aria-expanded': 'false', onClick: () => { whatIfOpen = true; draw(); } }, 'Try a what-if'))); return; }
     whatifPanel.appendChild(h('h2', null, coach() ? 'What if' : 'Try something', h('span', { class: 'tag' }, isWhatIf() ? 'trying; nothing is saved yet' : 'nothing changed')));
     const surplusNow = P.input.surplusMonthly; const surplusBase = base.input.surplusMonthly;
     whatifPanel.appendChild(h('div', { class: 'row whatif-row' },

@@ -41,7 +41,7 @@ export function mount(host, app) {
     const op = rec.sun.onepager;
     const conf = overallConfidence(R);
     page.appendChild(h('header', { class: 'op-head' }, h('div', null, h('h2', { class: 'op-title' }, clientName(rec) || 'Household'), h('div', { class: 'muted small' }, rec.sun.f.bigGoal && rec.sun.f.bigGoal.v ? rec.sun.f.bigGoal.v : '')),
-      h('div', { class: 'op-meta' }, F.dateLong(R.today), h('br'), ((rec.sessions || []).length ? 'After session ' + rec.sessions.length : 'Before the first session'), h('br'), 'Overall confidence ' + Math.round(conf * 100) + '%')));
+      h('div', { class: 'op-meta' }, F.dateLong(R.today), coach ? h('span', { class: 'coach-only' }, h('br'), ((rec.sessions || []).length ? 'After session ' + rec.sessions.length : 'Before the first session') + ', ' + Math.round(conf * 100) + '% of the picture in') : null)));
     /* key numbers */
     const nums = h('div', { class: 'op-shelf-host' });
     /* the one-pager is the client's page: client labels whatever the view */
@@ -106,7 +106,7 @@ export function mount(host, app) {
     const gut = rec.anchors && rec.anchors.gut ? Object.keys(rec.anchors.gut).length : 0;
     const S = R.sun && R.sun.outputs; const money = c => F.dollarsWhole(c);
     const bits = [];
-    if (R.guesses && R.guesses.count) bits.push('Includes ' + R.guesses.count + (R.guesses.count === 1 ? ' guess' : ' guesses') + ' (averages for a ' + (R.colTier ? (app.data.colTiers.labels.client[R.colTier.tier] || '') : 'typical') + ', not your numbers).');
+    if (R.guesses && R.guesses.count) bits.push('Includes ' + R.guesses.count + (R.guesses.count === 1 ? ' average' : ' averages') + ' for a ' + (R.colTier ? (app.data.colTiers.labels.client[R.colTier.tier] || '') : 'typical') + ', not your numbers.');
     if (S && S.safety.runway && S.safety.runway.fullAlone !== null && S.safety.runway.fullAlone !== undefined && S.spending.sharedFullMonthly && S.spending.sharedFullMonthly.status === 'ok') bits.push('If it all falls on you: the shared bills become ' + money(S.spending.sharedFullMonthly.cents) + ' a month and cash covers ' + F.months(S.safety.runway.fullAlone) + '.');
     if (!gut && !bits.length) return;
     const sec = h('section', { class: 'op-said' }, h('h3', null, "What you said, what it really is, what you'd want"));

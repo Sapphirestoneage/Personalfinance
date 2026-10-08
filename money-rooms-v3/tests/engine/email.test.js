@@ -21,8 +21,8 @@ test('the follow-up email groups their plate by institution, says where to find 
 });
 
 test('plates: client facts are theirs, lookups and estimates are mine, superseded rough totals drop out', () => {
-  const maya = loadHousehold('maya');
-  const theirs = theirPlate(maya, data.fields), mine = myPlate(maya, data.fields);
+  const leah = loadHousehold('leah');
+  const theirs = theirPlate(leah, data.fields), mine = myPlate(leah, data.fields);
   assert.ok(theirs.every(i => i.source === 'client'));
   assert.ok(mine.every(i => i.source !== 'client' || i.note));
   assert.ok(!theirs.some(i => i.field === 'summaryTotal'), 'the rough total is superseded by lines');
@@ -30,8 +30,8 @@ test('plates: client facts are theirs, lookups and estimates are mine, supersede
 });
 
 test('since last time collapses the journal after the last snapshot into one line per fact', () => {
-  const maya = loadHousehold('maya');
-  const r = sinceLastSession(maya, data.fields, () => '');
+  const leah = loadHousehold('leah');
+  const r = sinceLastSession(leah, data.fields, () => '');
   assert.ok(r.since);
   const sapphire = r.changes.find(c => c.rowId === 'm-csp' && c.field === 'balance');
   assert.ok(sapphire && sapphire.old === 98000 && sapphire.new === 64000, JSON.stringify(sapphire));

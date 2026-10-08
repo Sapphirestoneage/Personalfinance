@@ -31,8 +31,8 @@ test('a row removes its type step and adds its headline and counted details; tag
   assert.ok(!t2.steps.some(s => s.field === 'payFrequency'), 'pay frequency is hidden once pay is per month');
 });
 
-test('Maya has far more in than open, and the next step points somewhere real', () => {
-  const t = trackerSteps(loadHousehold('maya'), data.fields);
+test('Leah has far more in than open, and the next step points somewhere real', () => {
+  const t = trackerSteps(loadHousehold('leah'), data.fields);
   assert.ok(t.done > t.total * 0.6, t.done + ' of ' + t.total);
   if (t.next) assert.ok(t.next.href.indexOf('#/') === 0);
 });

@@ -54,6 +54,7 @@ export const SCREENS = [
   { id: 'discovery-summary', route: 'discovery/summary' },
   { id: 'call', route: 'call' },
   { id: 'goals', route: 'goals' },
+  { id: 'clients', route: 'clients' },
   { id: 'program', route: 'program' },
   { id: 'prep', route: 'prep' },
   { id: 'transactions', route: 'transactions' },
@@ -100,23 +101,26 @@ export const SCREENS = [
 async function importHousehold(page, APP, name) {
   await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', name + '.json'));
   await page.waitForSelector('.toast');
-  await page.waitForSelector('.orbit');
+  await page.waitForSelector('.today-card, .client-home');
 }
 
 /* Each household knows how to load itself into the page. */
 export const HOUSEHOLDS = [
   {
     id: 'empty',
-    async load(page) {
-      await page.click('button[aria-label="New client"]');
+    async load(page, { base }) {
+      /* MR-072: a client without a call lives under More on the Clients screen */
+      await page.goto(base + 'index.html#/clients'); await page.waitForSelector('.more-menu summary');
+      await page.click('.more-menu summary');
+      await page.click('.more-list button:has-text("New client without a call")');
       await page.fill('input[aria-label="New client name"]', 'Example household');
       await page.press('input[aria-label="New client name"]', 'Enter');
-      await page.waitForSelector('.fieldrow[data-field="birthDate"]');
+      await page.waitForSelector('.sun-panel .fieldrow'); /* a client without a call opens on the Plan, where the household facts live */
     },
   },
   { id: 'jordan', async load(page, { APP }) { await importHousehold(page, APP, 'jordan'); } },
   { id: 'dev', async load(page, { APP }) { await importHousehold(page, APP, 'dev'); } },
-  { id: 'maya', async load(page, { APP }) { await importHousehold(page, APP, 'maya'); } },
+  { id: 'leah', async load(page, { APP }) { await importHousehold(page, APP, 'leah'); } },
   { id: 'extreme', async load(page, { APP }) { await importHousehold(page, APP, 'extreme'); } },
   { id: 'maya-discovery', async load(page, { APP }) { await importHousehold(page, APP, 'maya-discovery'); } },
 ];

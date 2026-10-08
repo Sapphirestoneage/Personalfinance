@@ -49,7 +49,10 @@ for (const name of Object.keys(LEVER_SPECS)) {
     assert.ok(Math.abs(shock(all, 'minus10pct')) > Math.abs(shock(take, 'plus10pct')), '10%');
     assert.ok(Math.abs(shock(all, 'minus100')) > Math.abs(shock(take, 'plus100')), '$100');
     const rk = rank(S); assert.ok(rk.impact.length > 3 && rk.headline && rk.headline.indexOf('Your biggest lever is') === 0);
-    rk.impact.forEach((i, k) => { if (k) assert.ok(rk.impact[k - 1].impact >= i.impact, 'impact sorted'); assert.ok(whyFor(i).length > 20); });
+    /* MR-072: the list ranks by realistic movement when an item has one, else by the standard shock */
+    const realOf = i => i.realistic && i.realistic.months !== null && i.realistic.months !== undefined ? i.realistic.months : i.impact;
+    rk.impact.forEach((i, k) => { if (k) assert.ok(realOf(rk.impact[k - 1]) >= realOf(i), 'impact sorted by realistic movement'); assert.ok(whyFor(i).length > 20); });
+    const spendLine = rk.impact.find(i => i.planet === 'spending' && !i.aggregate && i.realistic); if (spendLine) { assert.ok(spendLine.realistic.cents > 0 && spendLine.realistic.months >= 0 && /a month/.test(spendLine.realistic.label) && spendLine.realistic.why.length > 20, 'a spending line carries its realistic move'); assert.ok(Math.abs(spendLine.realistic.months - spendLine.impact * spendLine.realistic.cents / 10000) < 0.11, 'realistic months scale the per-$100 impact'); }
     assert.ok(S.items.every(i => i.family && ['spend', 'earn', 'keep', 'grow', 'protect', 'assume'].includes(i.family)));
     const bar = byId('barista|10000'); assert.ok(bar && bar.shocks[0].rungs.baristaRegularFi === -baristaRule(0.04), 'part-time income moves the rungs by the rule, never the date');
     assert.equal(bar.shocks[0].months, 0);
@@ -59,17 +62,17 @@ for (const name of Object.keys(LEVER_SPECS)) {
     Object.keys(X.ladder).forEach(id => assert.equal(M[id].value.cents, X.ladder[id], id));
     assert.equal(M.baristaRule.value.cents, X.baristaRule); assert.equal(M.baristaRule.at35, X.baristaRuleAt35);
     assert.equal(baristaRule(0.04), 3000000); assert.equal(baristaRule(0.035), 3428571);
-    assert.ok(Math.abs(M.pctToFi.value.value - X.pctToFiNetWorth) < 1e-6, 'net worth basis by default (MR-057)');
-    assert.equal(M.pctToFi.basis, 'netWorth');
-    const rec2 = JSON.parse(JSON.stringify(rec)); rec2.sun.assumptions = { fiProgressBasis: 'invested' };
+    assert.ok(Math.abs(M.pctToFi.value.value - X.pctToFiInvested) < 1e-6, 'invested basis by default (MR-072, the owner\'s decision)');
+    assert.equal(M.pctToFi.basis, 'invested');
+    const rec2 = JSON.parse(JSON.stringify(rec)); rec2.sun.assumptions = { fiProgressBasis: 'netWorth' };
     const R2 = compute(rec2, data, { today: TODAY });
-    assert.ok(Math.abs(R2.metrics.pctToFi.value.value - X.pctToFiInvested) < 1e-6, 'invested basis by assumption');
-    assert.equal(R2.metrics.pctToFi.basis, 'invested');
+    assert.ok(Math.abs(R2.metrics.pctToFi.value.value - X.pctToFiNetWorth) < 1e-6, 'net worth basis by assumption');
+    assert.equal(R2.metrics.pctToFi.basis, 'netWorth');
     const rec3 = JSON.parse(JSON.stringify(rec)); rec3.sun.assumptions = { withdrawalRate: 0.035 };
     assert.equal(compute(rec3, data, { today: TODAY }).metrics.baristaRule.value.cents, X.baristaRuleAt35);
     /* the reverse: part-time income that would make the household Barista FI today */
     const spend = LEVER_SPECS[name].lines.reduce((s, l) => s + l[2], 0);
-    const basis = LEVER_SPECS[name].invested + (LEVER_SPECS[name].cash || 0); /* MR-057: progress counts net worth */
+    const basis = LEVER_SPECS[name].invested; /* MR-072: progress counts invested assets, the owner's decision */
     assert.equal(M.baristaIncomeNeededToday.value.cents, Math.max(0, spend - Math.round(basis * 0.04 / 12)));
     /* every rung carries a percent, a required monthly and a date */
     ['leanFi', 'baristaRegularFi', 'regularFi', 'fatFi'].forEach(id => { assert.ok(M[id].pct > 0 && M[id].requiredMonthly >= 0 && typeof M[id].months === 'number', id); });

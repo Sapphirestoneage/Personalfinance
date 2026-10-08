@@ -12,6 +12,7 @@ import { typesFor, typeDef, primaryFieldOf, freshFacts, fieldDef, isNoneRow } fr
 import { createRow } from '../../engine/record.js';
 import { hasValue } from '../../engine/states.js';
 import * as F from '../../engine/format.js';
+import { renderSun, updateSunValues } from '../sunpanel.js';
 
 export function crumbs(parts) {
   const out = h('nav', { class: 'crumbs', 'aria-label': 'Where you are' });
@@ -26,15 +27,18 @@ export function mount(host, app) {
   const planet = app.route.params.id;
   const typeId = app.route.params.sub;
   if (!planet || PLANETS.indexOf(planet) === -1) {
-    host.appendChild(h('header', null, h('h1', null, 'Ledger'), h('span', { class: 'sub' }, 'Pick a planet.')));
-    host.appendChild(h('div', { class: 'empty' }, h('p', null, PLANETS.map(p => h('a', { href: '#/ledger/' + p, style: { marginRight: '16px' } }, PLANET_LABELS[p])))));
-    return null;
+    /* MR-072: the Plan overview carries the household facts (moved from Home) and the seven rooms */
+    host.appendChild(h('header', null, h('h1', null, app.view === 'client' ? 'Your numbers' : 'Plan'), h('span', { class: 'sub' }, 'The facts behind every number, one room each.')));
+    const grid = h('div', { class: 'grid grid-2' }); const sun = h('section', { class: 'panel sun-panel' }); const rooms = h('section', { class: 'panel' }); grid.appendChild(sun); grid.appendChild(rooms); host.appendChild(grid);
+    const drawRooms = () => { clear(rooms); rooms.appendChild(h('h2', null, 'Rooms')); rooms.appendChild(h('ul', { class: 'rooms-list' }, PLANETS.map(p => { const R = app.result; const n = R.rowCounts[p]; const fill = R.fills[p]; return h('li', null, h('a', { href: '#/ledger/' + p }, PLANET_LABELS[p]), h('span', { class: 'small muted' }, ' ' + (n ? n + (n === 1 ? ' row' : ' rows') + (fill !== null ? ', ' + Math.round(fill * 100) + '% in' : '') : 'nothing yet'))); }))); };
+    renderSun(sun, app); drawRooms();
+    return { update(reason) { if (reason === 'rows' || reason === 'clients') renderSun(sun, app); else updateSunValues(sun, app); drawRooms(); } };
   }
   const fields = app.data.fields;
   const work = app.record.sun.f.workSituation ? app.record.sun.f.workSituation.v : null;
   if (typeId) return mountTable(host, app, planet, typeId);
 
-  host.appendChild(crumbs([{ label: 'Household', href: '#/home' }]));
+  host.appendChild(crumbs([{ label: 'Plan', href: '#/ledger' }]));
   host.appendChild(h('header', null, h('h1', null, PLANET_LABELS[planet])));
   const mapHost = h('div', { class: 'maphost' });
   const bar = h('div');
@@ -61,7 +65,7 @@ export function mount(host, app) {
     mapHost.appendChild(orbitMap({
       compact: mapHost.clientWidth > 0 && mapHost.clientWidth < 560,
       ariaLabel: PLANET_LABELS[planet] + ' and its row types',
-      center: { title: PLANET_LABELS[planet], sub: countText(app.record.planets[planet].rows.length) + ', ' + Math.round((app.result.fills[planet] || 0) * 100) + '%', fill: app.result.fills[planet] || 0 },
+      center: { title: PLANET_LABELS[planet], sub: countText(app.record.planets[planet].rows.length, app.view === 'coach') + ', ' + Math.round((app.result.fills[planet] || 0) * 100) + '%', fill: app.result.fills[planet] || 0 },
       items,
       onOpen: id => { location.hash = '#/ledger/' + planet + '/' + id; },
       onFocus: id => describe(id),
@@ -70,11 +74,11 @@ export function mount(host, app) {
     /* the same row types as a scannable list under the map */
     const anyNeeds = (app.result.needs[planet] || []).length > 0;
     const list = h('div', { class: 'tablewrap' }, h('table', { class: 'data' },
-      h('thead', null, h('tr', null, h('th', null, 'Row type'), h('th', { class: 'num' }, 'Rows'), h('th', { class: 'num' }, 'Confidence'), anyNeeds ? h('th', null, 'Needs') : null)),
+      h('thead', null, h('tr', null, h('th', null, 'Row type'), h('th', { class: 'num' }, app.view === 'coach' ? 'Rows' : 'Items'), app.view === 'coach' ? h('th', { class: 'num' }, 'Confidence') : null, anyNeeds ? h('th', null, 'Needs') : null)),
       h('tbody', null, types.map(t => { const rows = rowsOf(t); const needs = (app.result.needs[planet] || []).filter(n => n.type === t.id); return h('tr', null,
         h('td', null, h('a', { href: '#/ledger/' + planet + '/' + t.id }, t.id === 'other' ? 'Other (optional)' : t.plural || t.label)),
-        h('td', { class: 'num' }, rows.length ? String(rows.length) : (t.assumeNone ? h('span', { class: 'empty-token' }, 'None (assumed)') : (app.view === 'coach' && !t.single ? h('button', { class: 'btn small quiet', onClick: () => markTypeNone(app, planet, t.id) }, 'None') : h('span', { class: 'empty-token' }, 'No rows')))),
-        h('td', { class: 'num' }, rows.length ? Math.round((app.result.typeFills[planet][t.id] || 0) * 100) + '%' : ''),
+        h('td', { class: 'num' }, rows.length ? String(rows.length) : (t.assumeNone ? h('span', { class: 'empty-token' }, 'None (assumed)') : (app.view === 'coach' && !t.single ? h('button', { class: 'btn small quiet', onClick: () => markTypeNone(app, planet, t.id) }, 'None') : h('span', { class: 'empty-token' }, app.view === 'coach' ? 'No rows' : 'None yet')))),
+        app.view === 'coach' ? h('td', { class: 'num' }, rows.length ? Math.round((app.result.typeFills[planet][t.id] || 0) * 100) + '%' : '') : null,
         anyNeeds ? h('td', { class: 'small muted' }, needs.length ? needs.slice(0, 2).map(n => n.label).join(', ') + (needs.length > 2 ? ' and ' + (needs.length - 2) + ' more' : '') : '') : null); }))));
     /* the orbit already shows every row type; the list stays for narrow screens where the orbit is compact */
     side.appendChild(h('div', { class: 'row-types-list' }, h('h2', null, 'Row types'), list));
@@ -85,13 +89,13 @@ export function mount(host, app) {
       const needs = app.result.needs[planet] || [];
       const types = typesFor(fields, planet, work);
       const first = types.find(t => needs.some(n => n.type === t.id)) || types.find(t => app.record.planets[planet].rows.some(r => r.type === t.id)) || types[0];
-      bar.appendChild(mapPanel({ title: PLANET_LABELS[planet] + (app.record.planets[planet].rows.length ? ' is at ' + Math.round((app.result.fills[planet] || 0) * 100) + '%' : ' is empty'), status: needs.length ? 'Needs ' + needs.slice(0, 3).map(n => n.label.toLowerCase()).join(', ') + (needs.length > 3 ? ' and ' + (needs.length - 3) + ' more' : '') + '.' : (app.record.planets[planet].rows.length ? holdsBack(app, planet) : 'Nothing entered yet. Pick a circle to add the first row.'), actions: [h('a', { class: 'btn primary', href: '#/ledger/' + planet + '/' + first.id }, 'Open ' + lowerFirst(first.label)), h('a', { class: 'btn', href: '#/home' }, 'Back')] }));
+      bar.appendChild(mapPanel({ title: PLANET_LABELS[planet] + (app.record.planets[planet].rows.length ? ' is at ' + Math.round((app.result.fills[planet] || 0) * 100) + '%' : ' is empty'), status: needs.length ? 'Needs ' + needs.slice(0, 3).map(n => n.label.toLowerCase()).join(', ') + (needs.length > 3 ? ' and ' + (needs.length - 3) + ' more' : '') + '.' : (app.record.planets[planet].rows.length ? holdsBack(app, planet) : 'Nothing entered yet. Pick a circle to add the first row.'), actions: [h('a', { class: 'btn primary', href: '#/ledger/' + planet + '/' + first.id }, 'Open ' + lowerFirst(first.label)), h('a', { class: 'btn', href: '#/ledger' }, 'Back')] }));
       return;
     }
     const t = typeDef(fields, planet, id);
     const rows = app.record.planets[planet].rows.filter(r => r.type === id);
     const prim = primaryFieldOf(fields, planet, id);
-    bar.appendChild(mapPanel({ title: t.label, status: (rows.length ? countText(rows.length) + '. ' : '') + 'Fields: ' + t.fields.map(fid => fieldDef(fields, fid).label.toLowerCase()).slice(0, 6).join(', ') + (t.fields.length > 6 ? ' and ' + (t.fields.length - 6) + ' more' : '') + '.',
+    bar.appendChild(mapPanel({ title: t.label, status: (rows.length ? countText(rows.length, app.view === 'coach') + '. ' : '') + 'Fields: ' + t.fields.map(fid => fieldDef(fields, fid).label.toLowerCase()).slice(0, 6).join(', ') + (t.fields.length > 6 ? ' and ' + (t.fields.length - 6) + ' more' : '') + '.',
       actions: [h('a', { class: 'btn primary', href: '#/ledger/' + planet + '/' + id }, rows.length ? 'Open' : 'Add the first ' + (prim ? prim.label.toLowerCase() : 'row'))].concat(
         !rows.length && !t.single && app.view === 'coach' ? [h('button', { class: 'btn', title: 'No ' + (t.plural || t.label).toLowerCase() + ' for this household', onClick: () => markTypeNone(app, planet, id) }, t.assumeNone ? 'None (assumed)' : 'None')] : []) }));
   }
@@ -99,7 +103,7 @@ export function mount(host, app) {
   return { update() { draw(); } };
 }
 
-function countText(n) { return n + (n === 1 ? ' row' : ' rows'); }
+function countText(n, coach) { return n + (coach === false ? (n === 1 ? ' item' : ' items') : (n === 1 ? ' row' : ' rows')); }
 export function lowerFirst(t) { return t && t.length > 1 && t[1] === t[1].toLowerCase() && /[a-z]/.test(t[1]) ? t[0].toLowerCase() + t.slice(1) : t; }
 export function holdsBack(app, planet, typeId) {
   const rows = app.record.planets[planet].rows.filter(r => !typeId || r.type === typeId);
@@ -115,7 +119,7 @@ function mountTable(host, app, planet, typeId) {
   const fields = app.data.fields;
   let tdef;
   try { tdef = typeDef(fields, planet, typeId); } catch (e) { location.hash = '#/ledger/' + planet; return null; }
-  host.appendChild(crumbs([{ label: 'Household', href: '#/home' }, { label: PLANET_LABELS[planet], href: '#/ledger/' + planet }]));
+  host.appendChild(crumbs([{ label: 'Plan', href: '#/ledger' }, { label: PLANET_LABELS[planet], href: '#/ledger/' + planet }]));
   host.appendChild(h('header', null, h('h1', null, tdef.plural || tdef.label), h('div', { class: 'actions' }, extraActions(app, planet, typeId))));
   if (tdef.single && !app.record.planets[planet].rows.some(r => r.type === typeId) && app.view === 'coach') {
     const row = createRow(planet, typeId, { f: freshFacts(fields, planet, typeId) });
@@ -153,7 +157,7 @@ function mountTable(host, app, planet, typeId) {
     if (!row) { formHost.appendChild(h('p', { class: 'muted' }, 'Nothing entered yet.')); return; }
     formHost.appendChild(table.detailsBody(row, { inline: true }));
   }
-  const table = ledgerTable(tableHost, app, planet, typeId, { emptyActions: planet === 'spending' && typeId === 'line' && app.view === 'coach' ? [h('button', { class: 'btn', onClick: () => useDefaults(app) }, 'Use national averages')].concat(presetButtons(app)) : [] });
+  const table = ledgerTable(tableHost, app, planet, typeId, { emptyActions: planet === 'spending' && typeId === 'line' && app.view === 'coach' ? [h('button', { class: 'btn', onClick: () => confirmDefaults(app) }, 'Use national averages')].concat(presetButtons(app)) : [] });
   const soonHost = h('div', { style: { marginTop: '16px' } });
   host.appendChild(soonHost);
   const soon = mountStartingSoon(soonHost, app, planet);
@@ -185,7 +189,7 @@ function mountTable(host, app, planet, typeId) {
 function extraActions(app, planet, typeId) {
   const out = [];
   if (planet === 'spending' && typeId === 'line' && app.view === 'coach' && app.record.planets.spending.rows.some(r => r.type === 'line')) {
-    out.push(h('button', { class: 'btn', title: 'Adds one line per category at national-average amounts, marked Guess and Rough', onClick: () => useDefaults(app) }, 'Use national averages'));
+    out.push(h('button', { class: 'btn', title: 'Adds one line per category at national-average amounts, marked Guess and Rough', onClick: () => confirmDefaults(app) }, 'Use national averages'));
     presetButtons(app).forEach(b => out.push(b));
   }
   return out;
@@ -212,6 +216,10 @@ export function addPreset(app, groupId) {
   app.toast(added ? 'Added ' + added + (added === 1 ? ' line' : ' lines') + ' under ' + g.label + '. Amounts are still to enter; delete any that do not apply.' : 'Every ' + g.label.toLowerCase() + ' line is already here.');
 }
 
+/* MR-072: a bulk change asks first, in the page, and can be undone for ten seconds. */
+export function confirmDefaults(app) {
+  app.confirm('Add one estimated line per spending category at national averages? Each is marked a guess and stays rough until the client confirms it. Lines already here are kept.', { title: 'Use national averages', label: 'Add the estimates', onConfirm: () => { const before = app.record.planets.spending.rows.length; useDefaults(app); const added = app.record.planets.spending.rows.length - before; if (added) app.toast('Added ' + added + ' estimated lines.', { label: 'Undo', ms: 10000, action: () => { for (let i = 0; i < added; i++) app.undo(); } }); } });
+}
 /* Defaults as estimates: one line per category for the household size, source Guess (0.5), shown with ~. */
 export function useDefaults(app) {
   const d = app.data.defaults;
@@ -230,6 +238,6 @@ export function useDefaults(app) {
       app.addRow(row); added++;
     });
   });
-  app.toast(added ? 'Added ' + added + ' estimated lines for a household of ' + size + '. Each is rough until the client confirms.' : 'Every default line is already here.');
+  if (!added) app.toast('Every default line is already here.');
   app.rerender();
 }

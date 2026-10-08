@@ -3,6 +3,11 @@
 Updated: 2026-10-08
 
 ## Done
+- Level 14 Don't Make Me Think (MR-072): the 35-fix usability pass. Today and the client Home, six navigation
+  groups with search and a trunk test, Progress as one place, Presenting mode, ledger read mode, one label per
+  number, US dates, the Leah rename, levers by realistic movement, segmented controls, confirmed big actions,
+  per-screen help; new checks in tests/ui.js (client words, dates, contrast and size, timing, roles, inputs at
+  rest, chart label collisions); audit/USABILITY.md and audit/HALLWAY-TEST.md; before and after screenshots.
 - Level 13 Calculators (MR-067): the cash flow calendar engine and screen, How much home, House, Car and
   Retirement for two, the hub, ten charts, three metrics, five data libraries; gates green; screenshots/level-13.
 - Level 12 amended (MR-065): satisfaction on the client's six (asked at every close and money date),

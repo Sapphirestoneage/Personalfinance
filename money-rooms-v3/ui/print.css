@@ -1,7 +1,8 @@
 /* Print: only the one-pager prints, on exactly one page. */
 @page { size: letter; margin: 10mm 12mm; }
 html, body { background: #fff; font-size: 10px; line-height: 13px; }
-.topbar, .sidenav, #overlay, .no-print, .toolbar, .crumbs, main > header, .op-edit, .btn, .fieldbar { display: none !important; }
+.topbar, .sidenav, #overlay, .no-print, .toolbar, .crumbs, main > header, .op-edit, .btn, .fieldbar, .progress-tabs, .help-panel, .confirm-drawer, .tracker { display: none !important; }
+:root { --fs-11: 8px; --fs-12: 9px; --fs-13: 10px; } /* MR-072 raised the screen minimums; print keeps its own */
 .layout { display: block; min-height: 0; max-width: none; }
 main { padding: 0; }
 .onepager { border: 0; padding: 0; max-width: none; }

@@ -135,7 +135,7 @@ export const CHARTS = [
   { id: 'balanceSheet', name: 'Balance sheet', client: 'What you own and owe', build: balanceSheet },
   { id: 'debtRace', name: 'Debt payoff', client: 'When each debt is gone', build: debtRace },
   { id: 'runway', name: 'Runway ladder', client: 'How long your cash lasts', build: runwayLadder },
-  { id: 'fiGauge', name: 'FI progress', client: 'How far along you are', build: fiGauge },
+  { id: 'fiGauge', name: 'FI progress', client: 'FI progress', build: fiGauge },
   { id: 'draftt', name: 'DRAFTT bands', client: 'Each share of your pay against a healthy range', build: drafttBands },
   { id: 'waterfall', name: 'Contribution waterfall', client: 'Where new savings go first', build: contributionWaterfall },
   { id: 'taxes', name: 'Tax ladder', client: 'Where your pay goes before you see it', build: taxLadder },

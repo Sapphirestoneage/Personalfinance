@@ -1,5 +1,5 @@
 /* The cash flow calendar (Level 13, MR-067): the self-test assertions from the reference spec (section 7) and the
-   brief's own, on hand-built models, plus the Maya fixture through buildModel. */
+   brief's own, on hand-built models, plus the Leah fixture through buildModel. */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as C from '../../engine/cashcal.js';
@@ -35,9 +35,9 @@ test('the balance walks day by day: paydays in, bills out, everyday spread; the 
   assert.ok(run.totals.in > 0 && run.totals.out > 0);
 });
 test('null is never zero: a line with no amount is left out and named in needs, not counted as 0', () => {
-  const maya = loadHousehold('maya'); const R = compute(maya, data, { today: TODAY });
-  const row = maya.planets.spending.rows.find(r => r.id === 'm-phone'); row.f.amount = { v: null, state: 'unknown', source: 'client' };
-  const m = C.buildModel(maya, R, data, { days: 30 });
+  const leah = loadHousehold('leah'); const R = compute(leah, data, { today: TODAY });
+  const row = leah.planets.spending.rows.find(r => r.id === 'm-phone'); row.f.amount = { v: null, state: 'unknown', source: 'client' };
+  const m = C.buildModel(leah, R, data, { days: 30 });
   assert.ok(!m.bills.some(b => b.id === 'm-phone')); assert.ok(m.needs.some(n => n.rowId === 'm-phone'));
 });
 test('interest accrues on a carried balance at the statement, on the average daily balance, and never on a pay-in-full card', () => {
@@ -151,13 +151,13 @@ test('an income shock shows the runway and the bills at risk first', () => {
 test('life event items land from the event date, with repeats and likelihoods, and never touch the record until confirmed', () => {
   const t = data.lifeEvents.templates.find(x => x.id === 'move'); const items = C.lifeEventItems(t, '2026-11-01');
   assert.equal(items.length, t.items.length); assert.equal(items[0].date, '2026-11-01'); assert.equal(items.find(i => /deposit returned/i.test(i.label)).date, '2026-12-06');
-  const maya = loadHousehold('maya'); assert.equal(JSON.stringify(maya.calendar.extras), '[]');
+  const leah = loadHousehold('leah'); assert.equal(JSON.stringify(leah.calendar.extras), '[]');
 });
 test('the spend logger feeds the run and the pace: a log today lowers safe to spend, the pace reads budget, spent, left and a day to stay inside', () => {
   const m = model(); const logged = Object.assign({}, m, { logs: [{ id: 'l1', date: TODAY, cents: 4000, what: 'Lunch', tag: 'food', paidWith: 'cash' }] });
   assert.equal(C.simulate(logged).safeToSpend.today, C.simulate(m).safeToSpend.today - 4000);
-  const maya = loadHousehold('maya'); const R = compute(maya, data, { today: TODAY }); const cal = Object.assign(C.calendarOf(maya), { logs: [{ id: 'a', date: '2026-10-03', cents: 12000, tag: 'food' }, { id: 'b', date: '2026-09-02', cents: 9000, tag: 'food' }] });
-  const pace = C.spendPace(C.buildModel(maya, R, data), R, cal, TODAY); const food = pace.find(p => p.tag === 'food'); assert.equal(food.spent, 12000); assert.equal(food.lastBySameDay, 9000); assert.equal(food.left, food.budget - 12000); assert.equal(food.perDay, Math.round(food.left / 27));
+  const leah = loadHousehold('leah'); const R = compute(leah, data, { today: TODAY }); const cal = Object.assign(C.calendarOf(leah), { logs: [{ id: 'a', date: '2026-10-03', cents: 12000, tag: 'food' }, { id: 'b', date: '2026-09-02', cents: 9000, tag: 'food' }] });
+  const pace = C.spendPace(C.buildModel(leah, R, data), R, cal, TODAY); const food = pace.find(p => p.tag === 'food'); assert.equal(food.spent, 12000); assert.equal(food.lastBySameDay, 9000); assert.equal(food.left, food.budget - 12000); assert.equal(food.perDay, Math.round(food.left / 27));
 });
 test('card helpers: utilization before the report, which card nets rewards against interest, the balance transfer check', () => {
   const m = model({ cards: [card({ reportDay: 12, limit: 200000 }), card({ id: 'c2', name: 'Sapphire Preferred', balance: 0, revolving: false, payInFull: true })] }); const run = C.simulate(m);
@@ -170,8 +170,8 @@ test('the weekly check-in: what was due since, and drift read as a lean or as no
   assert.equal(C.drift([{ actual: { chk: 90000 }, forecast: { chk: 110000 } }, { actual: { chk: 80000 }, forecast: { chk: 99000 } }, { actual: { chk: 70000 }, forecast: { chk: 91000 } }]).kind, 'bias');
   assert.equal(C.drift([{ actual: { chk: 90000 }, forecast: { chk: 110000 } }, { actual: { chk: 120000 }, forecast: { chk: 99000 } }, { actual: { chk: 70000 }, forecast: { chk: 71000 } }]).kind, 'noise');
 });
-test('Maya through buildModel: paydays from the anchor, dated bills on their days, cards with statement and due days, the pay-later plan, the cushion in savings, no shortfalls', () => {
-  const maya = loadHousehold('maya'); const R = compute(maya, data, { today: TODAY }); const m = C.buildModel(maya, R, data, { days: 60 });
+test('Leah through buildModel: paydays from the anchor, dated bills on their days, cards with statement and due days, the pay-later plan, the cushion in savings, no shortfalls', () => {
+  const leah = loadHousehold('leah'); const R = compute(leah, data, { today: TODAY }); const m = C.buildModel(leah, R, data, { days: 60 });
   assert.equal(m.incomes.find(i => i.id === 'm-w2').anchor, '2026-10-09'); assert.equal(m.incomes.find(i => i.id === 'm-w2').cents, 251237);
   assert.equal(m.bills.find(b => b.id === 'm-rent').day, 1); assert.equal(m.bills.find(b => b.id === 'm-rent').paidWith, 'm-bilt', 'rent rides on the Bilt card');
   assert.equal(m.cards.find(c => c.id === 'm-csp').stmtDay, 18); assert.equal(m.cards.find(c => c.id === 'm-csp').dueDay, 13);
@@ -180,10 +180,10 @@ test('Maya through buildModel: paydays from the anchor, dated bills on their day
   const y = C.yearStrip(m); assert.equal(y.months.length, 13);
 });
 test('the calendar section is journaled through the record API and amounts never live in it', () => {
-  const maya = loadHousehold('maya'); const n = maya.journal.length; const line = C.setCalendar(maya, cal => { cal.dueDays['m-phone'] = 22; }, { session: 's4' });
-  assert.ok(line && line.kind === 'section'); assert.equal(maya.journal.length, n + 1); assert.equal(C.calendarOf(maya).dueDays['m-phone'], 22);
-  assert.equal(C.setCalendar(maya, cal => { cal.dueDays['m-phone'] = 22; }), null, 'no change, no line');
-  Object.keys(C.calendarOf(maya).dueDays).forEach(k => assert.ok(typeof C.calendarOf(maya).dueDays[k] !== 'object'));
+  const leah = loadHousehold('leah'); const n = leah.journal.length; const line = C.setCalendar(leah, cal => { cal.dueDays['m-phone'] = 22; }, { session: 's4' });
+  assert.ok(line && line.kind === 'section'); assert.equal(leah.journal.length, n + 1); assert.equal(C.calendarOf(leah).dueDays['m-phone'], 22);
+  assert.equal(C.setCalendar(leah, cal => { cal.dueDays['m-phone'] = 22; }), null, 'no change, no line');
+  Object.keys(C.calendarOf(leah).dueDays).forEach(k => assert.ok(typeof C.calendarOf(leah).dueDays[k] !== 'object'));
 });
 
 /* ---- v44 parity (MR-068): the rules read out of the pasted cashflow-v44 engine ---- */
@@ -218,8 +218,8 @@ test('v44: why it is taking so long names the reason, and the target solver find
   const already = C.solvePayoff(Object.assign({}, m, { extra: { cents: 100000, day: 14, strategy: 'avalanche', stopAtHi: false, hiRate: 0.1, rollFreed: true } }), 'card', '2027-04-01'); assert.ok(already.already);
   const never = C.solvePayoff(m, 'card', '2026-10-20'); assert.ok(never.impossible);
 });
-test('v44: the dry date on total cash, and Maya\'s extra comes from the goal timeline when the coach sets none', () => {
+test('v44: the dry date on total cash, and Leah\'s extra comes from the goal timeline when the coach sets none', () => {
   const run = C.simulate(model({ accounts: [{ id: 'chk', name: 'Checking', type: 'checking', balance: 80000, primary: true }], incomes: [], floor: 0, guard: false })); assert.ok(run.firstDryTotal && run.firstDryTotal === run.firstBelowZero);
-  const maya = loadHousehold('maya'); const R = compute(maya, data, { today: TODAY }); const m = C.buildModel(maya, R, data, { days: 60 }); assert.ok(m.extra && ['goal-plan', 'none'].includes(m.extra.source)); assert.equal(m.extra.day, 14);
+  const leah = loadHousehold('leah'); const R = compute(leah, data, { today: TODAY }); const m = C.buildModel(leah, R, data, { days: 60 }); assert.ok(m.extra && ['goal-plan', 'none'].includes(m.extra.source)); assert.equal(m.extra.day, 14);
   assert.equal(m.cards.find(c => c.id === 'm-csp').reportDay, 18, 'the report day defaults to the statement day');
 });

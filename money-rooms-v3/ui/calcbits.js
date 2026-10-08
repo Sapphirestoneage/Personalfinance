@@ -12,7 +12,7 @@ import { parseTyped } from './typed.js';
 import { setCalculator } from '../engine/calculators.js';
 import { newBlock } from '../engine/scenarios.js';
 
-export const STATE_WORDS = { hers: 'Hers', known: 'Known', rough: 'Rough', guess: 'Guess', set: 'Set here', missing: 'Missing' };
+export const STATE_WORDS = { hers: 'Hers', known: 'Known', rough: 'Rough', guess: 'Average', set: 'Set here', missing: 'Missing' };
 export function stateChip(state, name) { const w = state === 'hers' && name ? name + '’s' : STATE_WORDS[state] || state; return h('span', { class: 'chip calc-state state-' + state }, w); }
 
 /* The answer at the top: one big number, one read-aloud sentence. */
