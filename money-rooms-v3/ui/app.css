@@ -577,7 +577,7 @@ main > header:has(+ .onepager) { max-width: 816px; }
 /* Cells are the fields: the grid lines separate facts, the field fills its cell, focus is an inset ring. */
 .ledger-table th.num, .ledger-table td.num { min-width: 128px; }
 .ledger-table th.sticky, .ledger-table td.sticky { min-width: 200px; }
-.ledger-table td.sticky .input { width: 100%; }
+.ledger-table td.sticky .input, .ledger-table td.sticky .select { width: 100%; }
 .ledger-table .details-btn { color: var(--sapphire-700); border: 0; background: transparent; padding: 0 var(--s-2); height: var(--row-h); }
 .ledger-table .details-btn:hover { text-decoration: underline; background: transparent; }
 .ledger-table .cell-state .chip, .ledger-table .cell-source .chip { height: var(--row-h); line-height: var(--row-h); display: inline-flex; align-items: center; }

@@ -473,3 +473,9 @@ Decision: every FI date is read from the projection's net worth line. The crosso
 Compatibility: `fiProgressBasis` default changes from invested to netWorth (a record that never set it now reads net worth); `adjustments` entries gain `pay`; `compare` gains `notes`; block types gain `income`; no stored shape changes.
 Why: the demo brief; four FI numbers telling two stories, a sandbox that charged a pay cut to retirement, and labels ending in dots are what a friend notices first.
 Alternative: keep invested-only progress and explain the gap in a note (two stories with a footnote is still two stories).
+
+## MR-058 2026-10-08 Investments name rows by account type; holdings are optional and say what they are
+Decision: a row type can name its rows by a field instead of a typed nickname (`nameField` in `data/fields.json`); Investments accounts use the account type select as the first, sticky column, and the nickname moves behind Details. Picking a type fills an empty nickname (or one that was itself a type label) with the type's label, so holdings' account reference and the engine's account map keep a name. Holdings are flagged `optionalType`: the fill tracker never asks for them, and the empty screen explains that a holding is a fund inside an account with its expense ratio, read only by the fee numbers.
+Compatibility: none; nicknames stay stored and older rows keep theirs.
+Why: the owner's note from the phone: "instead of nickname in investments it should be the type of account", and "what is a holding, can it just be removed".
+Alternative: delete the holding type (fee drag to 95, the cheapest-fund lens and the allocation would go with it).

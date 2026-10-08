@@ -72,7 +72,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     tdef.fields.forEach(id => { const d = fieldDef(fields, id); if (d.cadence) row.f[id].cad = d.defaultCadence; });
     app.addRow(row);
     render();
-    const focusNew = () => { const target = wrap.querySelector('tr[data-row="' + row.id + '"] [data-col="' + (afterFocusCol || 'nickname') + '"]'); if (target && document.activeElement !== target) target.focus(); };
+    const focusNew = () => { const target = wrap.querySelector('tr[data-row="' + row.id + '"] [data-col="' + (afterFocusCol || nameField || 'nickname') + '"]'); if (target && document.activeElement !== target) target.focus(); };
     focusNew();
     return row;
   }
@@ -132,7 +132,9 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     return h('div', { class: 'empty', style: { border: 0, borderRadius: 0 } },
       h('h2', null, tdef.assumeNone ? 'None, unless there is one' : 'No ' + (tdef.plural || tdef.label).toLowerCase() + ' yet'),
       tdef.assumeNone ? h('p', null, 'Most households have no ' + (tdef.plural || tdef.label).toLowerCase() + ', so the planet counts this as answered. Add a row only if there is one.') : null,
-      h('p', null, 'Start with ' + (tdef.nicknameLabel || 'a name').toLowerCase() + ' and ' + primary.label.toLowerCase() + '. Type ~ before a number for a rough figure, ? for unknown, a range like 1500-2000.'),
+      tdef.explain ? h('p', null, tdef.explain) : null,
+      tdef.optionalType ? h('p', { class: 'small muted' }, 'Optional: nothing waits on this.') : null,
+      h('p', null, 'Start with ' + (nameField ? 'the ' + fieldDef(fields, nameField).label.toLowerCase() : (tdef.nicknameLabel || 'a name').toLowerCase()) + ' and ' + primary.label.toLowerCase() + '. Type ~ before a number for a rough figure, ? for unknown, a range like 1500-2000.'),
       coach ? h('p', { class: 'row', style: { marginTop: '8px' } }, h('button', { class: 'btn primary', onClick: () => addRow() }, 'Add ' + (tdef.single ? 'it' : 'a row')), h('span', { class: 'kbd' }, 'Alt+N'),
         tdef.single ? null : h('button', { class: 'btn', title: 'Marks this as none, so the planet counts it as answered', onClick: () => markNone() }, 'No ' + (tdef.plural || tdef.label).toLowerCase()),
         (opts.emptyActions || [])) : null);
@@ -168,15 +170,18 @@ export function ledgerTable(host, app, planet, typeId, opts) {
         h('option', { value: '' }, 'All'), options.map(o => h('option', { value: o[0], selected: state.filters[key] === o[0] }, o[1]))));
   }
 
+  /* MR-058: a type can name its rows by a field instead of a typed nickname (Investments: the account type select comes first) */
+  const nameField = tdef.nameField || null;
   function columns() {
     const cols = [];
-    cols.push({ key: 'nickname', label: tdef.nicknameLabel || 'Nickname', sortable: true, kind: 'column', sticky: true });
+    if (nameField) { const d = fieldDef(fields, nameField); cols.push({ key: nameField, label: d.label, sortable: true, kind: 'field', def: d, num: false, hint: d.hint, sticky: true }); }
+    else cols.push({ key: 'nickname', label: tdef.nicknameLabel || 'Nickname', sortable: true, kind: 'column', sticky: true });
     const pushField = id => {
       const d = fieldDef(fields, id);
       cols.push({ key: id, label: d.label, sortable: true, kind: 'field', def: d, num: ['money', 'percent', 'int', 'hours'].includes(d.kind), hint: d.hint });
     };
     pushField(primary.id);
-    (tdef.tableFields || []).filter(id => id !== primary.id).forEach(pushField);
+    (tdef.tableFields || []).filter(id => id !== primary.id && id !== nameField).forEach(pushField);
     cols.push({ key: 'state', label: 'State', sortable: true, kind: 'state' });
     if (coach) cols.push({ key: 'source', label: 'Source', sortable: true, kind: 'source' });
     cols.push({ key: 'details', label: '', sortable: false, kind: 'details' });
@@ -185,11 +190,12 @@ export function ledgerTable(host, app, planet, typeId, opts) {
   /* Everything else about a row lives behind Details (MR-029): no sideways scrolling to reach a fact. */
   function detailColumns() {
     const cols = [];
-    const shown = [primary.id].concat(tdef.tableFields || []);
+    const shown = [primary.id].concat(tdef.tableFields || [], nameField ? [nameField] : []);
     const pushField = id => {
       const d = fieldDef(fields, id);
       cols.push({ key: id, label: d.label, sortable: false, kind: 'field', def: d, num: ['money', 'percent', 'int', 'hours'].includes(d.kind), hint: d.hint });
     };
+    if (nameField) cols.push({ key: 'nickname', label: tdef.nicknameLabel || 'Nickname', sortable: false, kind: 'column' });
     cols.push({ key: 'institution', label: fields.planets[planet].institutionLabel, sortable: false, kind: 'column' });
     tdef.fields.filter(id => !shown.includes(id)).forEach(pushField);
     cols.push({ key: 'asOf', label: 'As of', sortable: false, kind: 'column' });
@@ -338,6 +344,14 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     /* a typed field */
     const d = c.def;
     const f = r.f[d.id];
+    if (c.sticky) {
+      const cell = coach ? editor(r, d) : (() => { const o = choiceOptions(d).find(x => x[0] === (f && f.v)); return o ? h('span', null, o[1]) : h('span', { class: 'empty-token' }, 'Not entered'); })();
+      if (coach && !tdef.single) {
+        const box = h('input', { type: 'checkbox', class: 'pick', 'aria-label': 'Select row', checked: state.selected.has(r.id), onChange: e => { if (e.target.checked) state.selected.add(r.id); else state.selected.delete(r.id); render(); } });
+        return h('td', { class: 'sticky with-pick' }, box, cell);
+      }
+      return h('td', { class: 'sticky' }, cell);
+    }
     if (!coach) {
       if (f && f.state === 'not-applicable') return h('td', { class: c.num ? 'num' : null }, h('span', { class: 'empty-token', title: 'Not applicable' }, String.fromCharCode(0x2013)));
       if (f && f.state === 'will-send') return h('td', { class: c.num ? 'num' : null }, h('span', { class: 'empty-token' }, 'Will send'));
@@ -398,6 +412,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
         const v = e.target.value;
         const cur = r.f[d.id] || {};
         if (v === '') app.setField(r.id, d.id, null, 'unknown', cur.source || 'client'); else app.setField(r.id, d.id, v, 'known', cur.source || 'client');
+        if (d.id === nameField && v !== '') { const o = choiceOptions(d).find(x => x[0] === v); const auto = !r.nickname || choiceOptions(d).some(x => x[1] === r.nickname); if (o && auto) app.setColumn(r.id, 'nickname', o[1]); }
         e.target.classList.toggle('is-empty', v === ''); refreshDerived(r.id);
       } }, h('option', { value: '' }, 'Not entered'), choiceOptions(d).map(o => h('option', { value: o[0], selected: f && f.v === o[0] }, o[1])));
       return keyFlow(sel, r, d.id);

@@ -453,6 +453,7 @@
     "account": {
      "label": "Account",
      "moon": "Accounts",
+     "nameField": "accountType",
      "fields": [
       "accountType",
       "accountBalance",
@@ -472,6 +473,8 @@
     "holding": {
      "label": "Holding",
      "moon": "Holdings",
+     "optionalType": true,
+     "explain": "A holding is a fund inside an account, like VTSAX inside the Roth IRA, with its expense ratio. Only the fee numbers read it (fee drag to 95, the cheapest-fund lens, the stock and bond mix). Skip it unless fees are the question.",
      "fields": [
       "accountRef",
       "fundName",

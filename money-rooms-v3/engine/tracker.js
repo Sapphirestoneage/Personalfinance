@@ -28,7 +28,7 @@ export function trackerSteps(record, fields) {
     types.forEach(t => {
       const tdef = fields.planets[p].types[t];
       const have = rows.filter(r => r.type === t);
-      if (tdef.assumeNone) return;
+      if (tdef.assumeNone || tdef.optionalType) return; /* MR-058: an optional type (holdings) is never a step */
       if (have.length) return;
       if (SUMMARY[p] && summaryIn) return; /* a rough total stands in for the detail rows */
       steps.push({ kind: 'rows', label: 'Add ' + (tdef.plural || tdef.label).toLowerCase() + ', or none', where: PLANET_LABELS[p], href: '#/ledger/' + p + '/' + t, planet: p, typeId: t, done: false });
