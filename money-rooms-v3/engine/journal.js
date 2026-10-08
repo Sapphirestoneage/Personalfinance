@@ -3,7 +3,7 @@
    kind, session }. Undo and redo append lines too; nothing is ever deleted.
    History and "since last session" read from here. */
 
-export const KINDS = Object.freeze(['set', 'add-row', 'remove-row', 'undo', 'redo', 'session', 'import', 'note', 'anchor', 'household', 'goals', 'program', 'snapshot', 'celebration']);
+export const KINDS = Object.freeze(['set', 'add-row', 'remove-row', 'undo', 'redo', 'session', 'import', 'note', 'anchor', 'household', 'goals', 'program', 'snapshot', 'celebration', 'section']); /* section (MR-067): record.calendar and record.calculators set whole */
 
 export function createJournal() { return []; }
 

@@ -56,6 +56,30 @@ repository root, `npx playwright install chromium`).
 | `CONTRACTS.md` | What each planet publishes, written before the code |
 | `DECISIONS.md`, `QUESTIONS.md`, `PROGRESS.md`, `BOARD.md`, `SPEC-COVERAGE.md`, `DONE.md` | The run's own records |
 
+## Level 13: Calculators (MR-067)
+
+`#/calculators` is the hub: a card per calculator with one live number from
+the record. `#/calendar` is the cash flow calendar, one day-by-day run
+(`engine/cashcal.js`) read seven ways: month grid, weeks (the phone default),
+balance line with the floor and the outlook band, paycheck map, year strip,
+agenda and cards. The headline is "Safe to spend today", then the tightest
+day. The coach's tools are drawers: can I spend this, fix bill timing, if
+income stopped, a life event, log a spend, weekly check-in, dates and the
+floor, maybe money and pay-later. Amounts come from the Ledger; the calendar
+stores only timing under `record.calendar`. `#/calc/home-afford` gives three
+answers (a lender, comfortable at 35% of take-home, keeps the FI date), the
+down payment ladder, cash to close, buy now or wait. `#/calc/house` is the
+full cost of owning, the loan, rent against buy for thirty years (the Buy vs
+Rent workbook with its fixes), taxes, a house hack. `#/calc/car` compares
+new, used, lease and no car with the 20/3/8 and 20/4/10 rules. `#/calc/retire`
+is the investment-growth calculator for one or two people, with the potential
+beside it. Every calculator ends with "Add this to my plan" (a scenario block
+and a goal). Libraries: `data/housing-costs.json`, `data/auto-costs.json`,
+`data/calendar.json`, `data/life-events.json`, `data/calculators.json`; every
+value is flagged verify. `tests/households/expected-calculators.py` is the
+independent workpaper (the brief's household, Maya, the workbook's defaults,
+Maya's car and Maya's calendar day by day).
+
 ## Level 12: The Scoreboard (MR-063)
 
 `#/scoreboard` shows six numbers, each with its value, its trend since the

@@ -243,6 +243,66 @@
    "firstSession": 3,
    "clientVisible": true,
    "gentle": "What the money buys for you"
+  },
+  "calendarBalance": {
+   "question": "Where does cash dip before payday, and how far?",
+   "firstSession": 4,
+   "clientVisible": true,
+   "gentle": "Your cash, day by day"
+  },
+  "paycheckMap": {
+   "question": "Which bills does each paycheck cover, and what is left?",
+   "firstSession": 4,
+   "clientVisible": true,
+   "gentle": "What each paycheck pays for"
+  },
+  "yearStrip": {
+   "question": "Which months of the year run tight?",
+   "firstSession": 4,
+   "clientVisible": true,
+   "gentle": "Your year, month by month"
+  },
+  "homeAnswers": {
+   "question": "What could a lender approve, what is comfortable, and what keeps the FI date?",
+   "firstSession": 10,
+   "clientVisible": true,
+   "gentle": "Three answers on how much home"
+  },
+  "downPaymentLadder": {
+   "question": "What does each down payment buy, and when could it be saved?",
+   "firstSession": 10,
+   "clientVisible": true,
+   "gentle": "The down payment ladder"
+  },
+  "rentVsBuy": {
+   "question": "Renting or buying: who is worth more in each year?",
+   "firstSession": 10,
+   "clientVisible": true,
+   "gentle": "Renting against buying, year by year"
+  },
+  "equityVsLoan": {
+   "question": "How does the home's value pull away from the loan?",
+   "firstSession": 10,
+   "clientVisible": true,
+   "gentle": "Home value against the loan"
+  },
+  "carTco": {
+   "question": "What does each way of getting around really cost over the years?",
+   "firstSession": 10,
+   "clientVisible": true,
+   "gentle": "What each car choice costs"
+  },
+  "carValueVsLoan": {
+   "question": "When would the car be worth less than the loan on it?",
+   "firstSession": 10,
+   "clientVisible": true,
+   "gentle": "The car's value against its loan"
+  },
+  "retireGrowth": {
+   "question": "What does today's investing become, and what would investing more add?",
+   "firstSession": 7,
+   "clientVisible": true,
+   "gentle": "What your investing becomes"
   }
  }
 }

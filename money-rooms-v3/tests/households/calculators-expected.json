@@ -1,0 +1,172 @@
+{
+ "brief": {
+  "lenderPrice": 19800000,
+  "lenderBudget": 158667,
+  "binding": "front",
+  "comfortablePrice": 16100000,
+  "comfortableBudget": 144083,
+  "comfortableMonthly": 144281,
+  "lenderMonthly": 158448,
+  "inputs": {
+   "state": "NJ",
+   "credit": "760+",
+   "rate": 0.065,
+   "termYears": 30,
+   "downPct": 0.1,
+   "taxRate": 0.0185,
+   "insuranceAnnual": 130000,
+   "maintenanceShare": 0.01,
+   "grossMonthly": 566667,
+   "takeHomeMonthly": 411667,
+   "debtMinimumsMonthly": 0
+  }
+ },
+ "mayaHome": {
+  "lenderPrice": 31300000,
+  "lenderBudget": 243833,
+  "binding": "front",
+  "comfortablePrice": 24700000,
+  "comfortableBudget": 215307,
+  "comfortableMonthly": 215562,
+  "lenderMonthly": 244184,
+  "inputs": {
+   "state": "NJ",
+   "credit": "760+",
+   "rate": 0.065,
+   "termYears": 30,
+   "downPct": 0.1,
+   "taxRate": 0.0185,
+   "insuranceAnnual": 130000,
+   "maintenanceShare": 0.01,
+   "grossMonthly": 870833,
+   "takeHomeMonthly": 615163,
+   "debtMinimumsMonthly": 16600
+  }
+ },
+ "mayaLadder": [
+  {
+   "downPct": 0.03,
+   "price": 22800000,
+   "cashToClose": 2296489
+  },
+  {
+   "downPct": 0.035,
+   "price": 22900000,
+   "cashToClose": 2419212
+  },
+  {
+   "downPct": 0.05,
+   "price": 23600000,
+   "cashToClose": 2835466
+  },
+  {
+   "downPct": 0.1,
+   "price": 24700000,
+   "cashToClose": 4182939
+  },
+  {
+   "downPct": 0.2,
+   "price": 27500000,
+   "cashToClose": 7359909
+  }
+ ],
+ "workbook": {
+  "inputs": {
+   "price": 50000000,
+   "downPct": 0.2,
+   "rate": 0.07,
+   "termYears": 30,
+   "taxRate": 0.012,
+   "insuranceAnnual": 180000,
+   "maintenanceShare": 0.01,
+   "appreciation": 0.035,
+   "inflation": 0.03,
+   "closingShare": 0.03
+  },
+  "q": {
+   "rent": 250000,
+   "rentGrowth": 0.03,
+   "rentersIns": 2000,
+   "depositMonths": 2,
+   "stockReturn": 0.08,
+   "cg": 0.15,
+   "sellingShare": 0.06,
+   "years": 30
+  },
+  "payment": 266121,
+  "upfront": 11500000,
+  "deposit": 500000,
+  "breakEvenYear": null,
+  "year1": {
+   "year": 1,
+   "buyerNetWorth": 8912068,
+   "renterNetWorth": 13789563,
+   "annualBuyerCost": 4490990,
+   "interest": 2787129,
+   "cumInterest": 2787129,
+   "loanBalance": 39593677,
+   "homeValue": 51601856
+  },
+  "year10": {
+   "year": 10,
+   "buyerNetWorth": 31783392,
+   "renterNetWorth": 41319258,
+   "annualBuyerCost": 4951404,
+   "interest": 2431930,
+   "cumInterest": 26259479,
+   "loanBalance": 34324959,
+   "homeValue": 70328033
+  },
+  "year30": {
+   "year": 30,
+   "buyerNetWorth": 133293332,
+   "renterNetWorth": 210230655,
+   "annualBuyerCost": 6648279,
+   "interest": 117861,
+   "cumInterest": 55803591,
+   "loanBalance": 0,
+   "homeValue": 139937938
+  },
+  "workbookSaid": {
+   "monthlyPI": 266121,
+   "note": "The workbook counted taxes, insurance, maintenance and PMI inside cumulative interest, never stopped PMI, kept insurance flat, and multiplied the buyer FI savings by 0.8; this file holds the corrected arithmetic"
+  }
+ },
+ "mayaUsedCar": {
+  "price": 2640000,
+  "financed": 2626800,
+  "payment": 65243,
+  "interest": 504885,
+  "upfront": 523300,
+  "runningMonthly": 77741,
+  "endValue": 1701948,
+  "totalCost": 6617461,
+  "costPerMonth": 110291,
+  "costPerMile": 120
+ },
+ "mayaNoCar": {
+  "costPerMonth": 34400
+ },
+ "mayaCalendar": {
+  "start": "2026-10-05",
+  "days": 60,
+  "low": {
+   "date": "2026-10-08",
+   "cents": 328388,
+   "index": 3
+  },
+  "safeToSpendToday": 328388,
+  "committed": 1209,
+  "nextIncome": "2026-10-09",
+  "firstPaycheck": {
+   "date": "2026-10-09",
+   "cents": 251237,
+   "left": 169595
+  },
+  "endChecking": 916846,
+  "interest": 0,
+  "shortfalls": 0,
+  "floor": 0,
+  "note": "Both cards are paid in full by autopay, so no interest; the cushion sits in savings, so the floor on checking is zero"
+ }
+}

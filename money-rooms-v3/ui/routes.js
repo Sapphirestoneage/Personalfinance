@@ -18,6 +18,9 @@ import * as Transactions from './views/transactions.js';
 import * as Scoreboard from './views/scoreboard.js';
 import * as MapView from './views/map.js';
 import * as MoneyDate from './views/moneydate.js';
+import * as Calculators from './views/calculators.js';
+import * as Calendar from './views/calendar.js';
+import * as Calc from './views/calc.js';
 import { PLANETS, PLANET_LABELS, PLANET_SHORT } from '../engine/sun.js';
 import { translator } from './glossary.js';
 
@@ -42,6 +45,10 @@ export const routes = {
   scoreboard: { title: 'Scoreboard', mount: Scoreboard.mount, needsClient: true },
   map: { title: 'Map', mount: MapView.mount, needsClient: true },
   'money-date': { title: 'Money date', mount: MoneyDate.mount, needsClient: true, coachOnly: true },
+  /* Level 13 (MR-067) */
+  calculators: { title: 'Calculators', mount: Calculators.mount, needsClient: true },
+  calendar: { title: 'Cash flow calendar', mount: Calendar.mount, needsClient: true },
+  calc: { title: 'Calculator', mount: Calc.mount, needsClient: true },
 };
 
 export function navItems(app) {
@@ -56,6 +63,13 @@ export function navItems(app) {
   items.push({ group: 'Read', label: 'Money date', href: '#/money-date', active: r => r.name === 'money-date', key: null, coachOnly: true });
   items.push({ group: 'Read', label: app.view === 'client' ? 'How it connects' : 'Map', href: '#/map', active: r => r.name === 'map', key: null });
   items.push({ group: 'Read', label: t('One-pager'), href: '#/onepager', active: r => r.name === 'onepager', key: 'Alt+0' });
+  /* Level 13 (MR-067): the calculators as their own group */
+  items.push({ group: 'Calculators', label: 'All calculators', href: '#/calculators', active: r => r.name === 'calculators', key: null });
+  items.push({ group: 'Calculators', label: app.view === 'client' ? 'Day by day' : 'Cash flow calendar', href: '#/calendar', active: r => r.name === 'calendar', key: null });
+  items.push({ group: 'Calculators', label: 'How much home', href: '#/calc/home-afford', active: r => r.name === 'calc' && r.params.id === 'home-afford', key: null });
+  items.push({ group: 'Calculators', label: app.view === 'client' ? 'Owning a home' : 'House', href: '#/calc/house', active: r => r.name === 'calc' && r.params.id === 'house', key: null });
+  items.push({ group: 'Calculators', label: 'Car', href: '#/calc/car', active: r => r.name === 'calc' && r.params.id === 'car', key: null });
+  items.push({ group: 'Calculators', label: app.view === 'client' ? 'What investing becomes' : 'Retirement for two', href: '#/calc/retire', active: r => r.name === 'calc' && r.params.id === 'retire', key: null });
   items.push({ group: 'Read', label: app.view === 'client' ? 'What matters most' : 'Levers', href: '#/levers', active: r => r.name === 'levers', key: null });
   items.push({ group: 'Read', label: app.view === 'client' ? 'Your goals' : 'Goals', href: '#/goals', active: r => r.name === 'goals', key: null });
   items.push({ group: 'Read', label: 'Session', href: '#/session', active: r => r.name === 'session', key: null, coachOnly: true });

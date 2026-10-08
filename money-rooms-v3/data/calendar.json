@@ -1,0 +1,31 @@
+{
+ "asOf": "2026-10-08",
+ "source": "Cash flow calendar conventions, from the reference spec (cashflow v9 to v44) and Eli's corrections; card terms from the CFPB and issuer agreements as remembered by the builder",
+ "verify": true,
+ "windows": [30, 60, 90, 365],
+ "defaultWindowDays": 60,
+ "likelyThreshold": 0.6,
+ "outlook": { "runs": 200, "amountWobble": 0.15, "dateShiftDays": 2, "seed": 13 },
+ "cards": {
+  "minPct": 0.02,
+  "minFloorCents": 2500,
+  "lateFeeCents": 3000,
+  "penaltyApr": 0.2999,
+  "penaltyMonths": 6,
+  "graceDaysDefault": 24,
+  "statementDayDefault": 15,
+  "reportDaysAfterStatement": 2,
+  "utilizationWarn": 0.3,
+  "note": "A card with no statement day is assumed to close on the 15th and be due 24 days later. The minimum is the larger of 2% of the statement and $25. A missed payment costs the late fee and the penalty rate for six months."
+ },
+ "payLater": { "installmentsDefault": 4, "freqDefault": "biweekly" },
+ "floor": { "mode": "lean", "note": "The cash floor is the lean month step of the cushion when it is funded, else zero; the coach can set a fixed amount." },
+ "sweep": { "on": false, "keepCents": 10000 },
+ "checkin": { "staleDays": 10, "biasRuleShare": 1.0, "note": "Across check-ins, a mean miss larger than the spread of the misses reads as a steady lean, not noise." },
+ "spendLogger": { "tags": ["food", "transportation", "wants", "utilities", "therapy", "irregular", "mistakes", "other"] },
+ "words": {
+  "yes": "Yes, that fits.",
+  "tight": "It fits, but it makes a tight day tighter.",
+  "no": "Not this time. It would push a day under the floor."
+ }
+}

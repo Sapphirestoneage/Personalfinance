@@ -278,7 +278,7 @@ export function mount(host, app) {
   }
   function drawWorthIt(b) { worthItGrid(b.questions[0].text); foot.appendChild(nextBtn()); foot.appendChild(skipBtn()); }
   function drawSatisfaction(b) { satisfactionScale(b.questions[0].text); if (b.questions[1]) { const fold = h('details', { class: 'worthit-fold' }, h('summary', { class: 'small' }, b.questions[1].text), h('div')); body.appendChild(fold); worthItGrid('', fold.querySelector('div')); } foot.appendChild(nextBtn()); }
-  function drawRefresh(b) {
+  function drawRefresh(b) { body.appendChild(h('p', { class: 'small' }, h('a', { class: 'btn small', href: '#/calendar' }, 'Open the cash flow calendar'), ' ', h('span', { class: 'muted' }, 'Safe to spend and the next tight day, from the day-by-day run.')));
     body.appendChild(say(b.questions[0].text));
     const rows = []; const F2 = { debt: 'balance', invest: 'accountBalance' };
     Object.keys(F2).forEach(p => app.record.planets[p].rows.forEach(r => { const f = r.f[F2[p]]; if (!f || ['none', 'not-applicable', 'not-for-me'].includes(f.state)) return; rows.push({ planet: p, row: r, field: F2[p], f }); }));

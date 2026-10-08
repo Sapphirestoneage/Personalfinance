@@ -5,6 +5,53 @@ import { CSV as MAYA_CSV } from './households/maya-transactions.mjs';
 
 export const flows = [
 {
+  name: 'level13-calculators',
+  async run(page, { base, check, APP }) {
+    const path = await import('node:path');
+    await page.goto(base + 'index.html#/home'); await page.waitForSelector('#main h1, #main .empty');
+    await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', 'maya.json')); await page.waitForSelector('.orbit');
+    /* the hub: four new cards with live numbers, the existing calculators after them */
+    await page.goto(base + 'index.html#/calculators'); await page.waitForSelector('.calc-cards');
+    check('five new calculator cards and the existing ones', (await page.locator('.calc-cards:not(.small-cards) .calc-card').count()) === 5 && (await page.locator('.small-cards .calc-card').count()) >= 5);
+    const hub = await page.textContent('#main'); check('live numbers on the cards', /Safe to spend today/.test(hub) && /Comfortable home price/.test(hub) && /costs least/.test(hub));
+    check('no internal words on the hub', !/registry|\bnode\b|\bedge\b|\bband\b|lever family|decomposition/i.test(hub));
+    /* the calendar: the headline, the tabs, a day drawer, can I spend this, the bill timing fixer */
+    await page.click('.calc-card[data-calc="calendar"]'); await page.waitForSelector('.calc-answer');
+    const head = await page.textContent('.calc-answer'); check('safe to spend and the tightest day read aloud', /Safe to spend today/.test(head) && /tightest day is the 8th/.test(head), head.slice(0, 120));
+    check('the month grid draws with a low day marked', (await page.locator('.cal-cell.is-low').count()) >= 1 && (await page.locator('.cal-cell:not(.blank):not(.past)').count()) >= 60);
+    await page.click('.cal-cell.is-low'); await page.waitForSelector('.drawer .cal-day'); const dd = await page.textContent('.drawer'); check('the day drawer lists what lands and the balance after', /Balance after this day/.test(dd)); await page.keyboard.press('Escape');
+    await page.click('.calc-tabs .tab:has-text("Weeks")'); await page.waitForSelector('table.calc-table'); check('weeks: in, out, ending balance', /Ending balance/.test(await page.textContent('#main')));
+    await page.click('.calc-tabs .tab:has-text("Paychecks")'); await page.waitForTimeout(300); check('the paycheck map draws', (await page.locator('.calc-chart svg').count()) >= 1 && /Left after these/.test(await page.textContent('#main')));
+    await page.click('.calc-tabs .tab:has-text("Year")'); await page.waitForTimeout(300); check('the year strip draws twelve months', (await page.locator('table.calc-table tbody tr').count()) >= 12);
+    await page.selectOption('select[aria-label="Tools"]', 'spend'); await page.waitForSelector('.drawer .calc-tool'); await page.fill('.drawer input[aria-label="How much"]', '400'); await page.click('.drawer button:has-text("Check")'); await page.waitForTimeout(200);
+    const spend = await page.textContent('.drawer'); check('can I spend this answers yes, tight or no with the new low point', /(Yes|Tight|Not this time)/.test(spend) && /tightest day goes from/.test(spend), spend.slice(0, 160)); await page.keyboard.press('Escape');
+    await page.selectOption('select[aria-label="Tools"]', 'timing'); await page.waitForSelector('.drawer'); const fix = await page.textContent('.drawer'); check('the bill timing fixer reports', /raise the lowest point|Lowest point/.test(fix)); await page.keyboard.press('Escape');
+    await page.selectOption('select[aria-label="Tools"]', 'dates'); await page.waitForSelector('.drawer'); await page.fill('.drawer input[aria-label="Due day for Phone"]', '22'); await page.press('.drawer input[aria-label="Due day for Phone"]', 'Tab'); await page.waitForTimeout(300);
+    check('a due day is written to record.calendar through the record API, journaled', await page.evaluate(() => mr3.record.calendar.dueDays['m-phone'] === 22 && mr3.record.journal.some(l => l.kind === 'section' && l.field === 'calendar')));
+    await page.keyboard.press('Escape');
+    /* how much home: three answers, add to the plan makes a block and a goal */
+    await page.goto(base + 'index.html#/calc/home-afford'); await page.waitForSelector('.calc-answers');
+    const home = await page.textContent('#main'); check('three answers: lender, comfortable, keeps the FI date', /A lender might approve/.test(home) && /Comfortable/.test(home) && /Keeps the FI date/.test(home) && /35% of take-home/.test(home));
+    check('every input shows where it came from', (await page.locator('.chip.calc-state').count()) >= 20 && (await page.locator('.chip.calc-state.state-guess').count()) >= 5 && (await page.locator('.chip.calc-state.state-hers, .chip.calc-state.state-known').count()) >= 3);
+    const blocks0 = await page.evaluate(() => mr3.record.scenarios.length); const goals0 = await page.evaluate(() => (mr3.record.goals.extras || []).length);
+    await page.click('button:has-text("Add this to my plan")'); await page.waitForTimeout(300);
+    check('add to my plan: a home block and a down payment goal', await page.evaluate((a) => mr3.record.scenarios.length === a[0] + 1 && mr3.record.scenarios[mr3.record.scenarios.length - 1].type === 'home' && (mr3.record.goals.extras || []).length === a[1] + 1, [blocks0, goals0]));
+    /* a slider changes the rate and the answer follows */
+    const before = await page.textContent('.calc-answer-big'); await page.evaluate(() => { const d = document.querySelector('.calc-group[open] summary'); }); await page.evaluate(() => { document.querySelectorAll('.calc-group').forEach(d => { d.open = true; }); });
+    await page.fill('input[aria-label="Mortgage rate"]', '8'); await page.press('input[aria-label="Mortgage rate"]', 'Tab'); await page.waitForTimeout(400);
+    check('a typed rate is saved as set here and moves the answer', (await page.textContent('.calc-answer-big')) !== before && await page.evaluate(() => mr3.record.calculators.home.rate === 0.08));
+    /* the house, the car and retirement load with their answers */
+    await page.goto(base + 'index.html#/calc/house'); await page.waitForSelector('.calc-answers'); const house = await page.textContent('#main'); check('the house: cost of owning, equity chart, taxes, year by year', /costs about/.test(house) && /Year by year/.test(house) && /Taxes/.test(house) && /Up front/.test(house));
+    await page.goto(base + 'index.html#/calc/car'); await page.waitForSelector('.calc-answers'); const car = await page.textContent('#main'); check('the car: no car wins in Jersey City, the rules shown', /No car costs least/.test(car) && /20\/3\/8/.test(car));
+    await page.goto(base + 'index.html#/calc/retire'); await page.waitForSelector('.calc-answers'); const ret = await page.textContent('#main'); check('retirement: what will be and what could be', /What will be/.test(ret) && /What could be/.test(ret) && /put in/.test(ret));
+    /* client view: gentle, no coach tools, the add-to-plan button gone */
+    await page.evaluate(() => { document.querySelector('#view-client').click(); }); await page.goto(base + 'index.html#/calendar'); await page.waitForSelector('.calc-answer');
+    check('client view keeps can I spend this and drops the coach tools', (await page.locator('button:has-text("Can I spend this?")').count()) === 1 && (await page.locator('select[aria-label="Tools"]').count()) === 0);
+    await page.goto(base + 'index.html#/calc/home-afford'); await page.waitForSelector('.calc-answers'); check('no add to plan in client view', (await page.locator('button:has-text("Add this to my plan")').count()) === 0);
+    const ctext = await page.textContent('#main'); check('no internal words for the client', !/registry|\bnode\b|\bedge\b|\bband\b|lever family|decomposition/i.test(ctext));
+  },
+},
+{
   name: 'level12-scoreboard-money-date',
   async run(page, { base, check, APP }) {
     const path = await import('node:path');
@@ -830,7 +877,7 @@ flows.push({
     await page.waitForSelector('.orbit');
     await page.waitForTimeout(300);
     const card0 = await page.textContent('.unlock-card');
-    check('a blank Maya starts with nothing open', /0 of 85/.test(card0) && /Next unlock/.test(card0), card0.slice(0, 120));
+    check('a blank Maya starts with nothing open', /0 of 88/.test(card0) && /Next unlock/.test(card0), card0.slice(0, 120));
     /* the Home card's Go lands in the field that opens the most */
     await page.click('.unlock-card .linklike');
     await page.waitForTimeout(700);

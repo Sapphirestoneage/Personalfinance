@@ -502,7 +502,7 @@ def main(name):
     if cliffs and any(c['costAfterAnnual'] >= 10000 for c in cliffs): fires.append('promo-cliff')
     if drag >= 10000: fires.append('cash-drag')
     if wer is not None and wer > ASM['feeDragEr'] and E['feeDragAnnual'] >= 10000: fires.append('fee-drag')
-    if draftt['accommodation'] > ASM['shelterHeavyShare']: fires.append('shelter-heavy')
+    if draftt['accommodation'] > ASM['housingShareOfTakeHome']: fires.append('shelter-heavy')
     if leak / take > ASM['hiddenLeakShare'] and leak * 12 >= 10000: fires.append('hidden-leak')
     if sims['stress']['interest'] - sims['avalanche']['interest'] >= 10000: fires.append('wrong-debt-first')
     if util_total is not None and (util_total > ASM['utilizationTotalMax'] or any(v > ASM['utilizationCardMax'] for v in E['utilizationPerCard'].values())): fires.append('utilization-drag')

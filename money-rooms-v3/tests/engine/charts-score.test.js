@@ -15,7 +15,7 @@ import { CSV } from '../households/maya-transactions.mjs';
 const data = loadData(); const TODAY = '2026-10-08';
 
 test('eight charts join the list, each with a coach name, a client sentence, a planet, a stage and real metric ids', () => {
-  assert.equal(SCORE_CHARTS.length, 8); assert.equal(ALL_CHARTS.length, 39);
+  assert.equal(SCORE_CHARTS.length, 8); assert.equal(ALL_CHARTS.length, 49);
   SCORE_CHARTS.forEach(c => { assert.ok(c.id && c.name && c.client && c.planet && c.stage >= 1 && c.stage <= 5 && typeof c.build === 'function', c.id); c.metrics.forEach(m => assert.ok(data.metrics.metrics.some(x => x.id === m), c.id + ' metric ' + m)); assert.equal(chartMeta(c.id, data).stage, c.stage); });
 });
 

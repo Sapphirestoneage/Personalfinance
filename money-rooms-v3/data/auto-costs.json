@@ -1,0 +1,982 @@
+{
+  "asOf": "2026-10-08",
+  "source": "State revenue department vehicle sales tax pages, state DMV title and registration fee pages, Edmunds and Kelley Blue Book doc fee and depreciation surveys, AAA Your Driving Costs, Bankrate and Insurance Information Institute auto premium surveys, Experian and Bankrate auto loan rate reports, transit agency fare pages, as remembered by the builder",
+  "verify": true,
+  "salesTaxByState": {
+    "AL": {
+      "rate": 0.02,
+      "tradeInCredit": true,
+      "note": "State vehicle rate 2%; local adds about 1% to 3%"
+    },
+    "AK": {
+      "rate": 0,
+      "tradeInCredit": true,
+      "note": "No state sales tax; a few boroughs levy a local tax"
+    },
+    "AZ": {
+      "rate": 0.056,
+      "tradeInCredit": true,
+      "note": "State rate; city and county add 1% to 4%"
+    },
+    "AR": {
+      "rate": 0.065,
+      "tradeInCredit": true,
+      "note": "State rate; local adds 1% to 5%; cars under 4,000 dollars are exempt"
+    },
+    "CA": {
+      "rate": 0.0725,
+      "tradeInCredit": false,
+      "note": "State rate; district taxes add 0.25% to 3%"
+    },
+    "CO": {
+      "rate": 0.029,
+      "tradeInCredit": true,
+      "note": "State rate; local adds 2% to 6%"
+    },
+    "CT": {
+      "rate": 0.0635,
+      "tradeInCredit": true
+    },
+    "DE": {
+      "rate": 0,
+      "tradeInCredit": true,
+      "note": "No sales tax; a 4.25% document fee on the price (less trade-in) acts like one and is not in this rate"
+    },
+    "DC": {
+      "rate": 0.06,
+      "tradeInCredit": false,
+      "note": "Excise tax by weight and fuel efficiency, 6% to 8% of price (1% for very efficient cars)"
+    },
+    "FL": {
+      "rate": 0.06,
+      "tradeInCredit": true
+    },
+    "GA": {
+      "rate": 0.07,
+      "tradeInCredit": true,
+      "note": "Title tax (TAVT) of 7% replaces sales tax; paid once at titling"
+    },
+    "HI": {
+      "rate": 0.04,
+      "tradeInCredit": false
+    },
+    "ID": {
+      "rate": 0.06,
+      "tradeInCredit": true
+    },
+    "IL": {
+      "rate": 0.0625,
+      "tradeInCredit": true,
+      "note": "State rate; Chicago adds about 1.25% plus a city use tax"
+    },
+    "IN": {
+      "rate": 0.07,
+      "tradeInCredit": true
+    },
+    "IA": {
+      "rate": 0.05,
+      "tradeInCredit": true,
+      "note": "One-time registration fee of 5% replaces sales tax"
+    },
+    "KS": {
+      "rate": 0.065,
+      "tradeInCredit": true,
+      "note": "State rate; local adds 1% to 3%"
+    },
+    "KY": {
+      "rate": 0.06,
+      "tradeInCredit": false
+    },
+    "LA": {
+      "rate": 0.0445,
+      "tradeInCredit": true,
+      "note": "State rate; parish taxes add 4% to 6%"
+    },
+    "ME": {
+      "rate": 0.055,
+      "tradeInCredit": true
+    },
+    "MD": {
+      "rate": 0.06,
+      "tradeInCredit": false
+    },
+    "MA": {
+      "rate": 0.0625,
+      "tradeInCredit": true
+    },
+    "MI": {
+      "rate": 0.06,
+      "tradeInCredit": false,
+      "note": "No trade-in credit above a yearly cap; the cap was fully phased in by 2029 so most trades now get full credit, check"
+    },
+    "MN": {
+      "rate": 0.06875,
+      "tradeInCredit": true,
+      "note": "Motor vehicle sales tax; no local add"
+    },
+    "MS": {
+      "rate": 0.05,
+      "tradeInCredit": true
+    },
+    "MO": {
+      "rate": 0.04225,
+      "tradeInCredit": true,
+      "note": "State rate; local adds 2% to 5%"
+    },
+    "MT": {
+      "rate": 0,
+      "tradeInCredit": false,
+      "note": "No sales tax; a luxury vehicle fee applies above 150,000"
+    },
+    "NE": {
+      "rate": 0.055,
+      "tradeInCredit": true,
+      "note": "State rate; local adds up to 2%"
+    },
+    "NV": {
+      "rate": 0.0685,
+      "tradeInCredit": true,
+      "note": "Clark County combined rate 8.375%; this is the state portion"
+    },
+    "NH": {
+      "rate": 0,
+      "tradeInCredit": true,
+      "note": "No sales tax"
+    },
+    "NJ": {
+      "rate": 0.06625,
+      "tradeInCredit": true
+    },
+    "NM": {
+      "rate": 0.04,
+      "tradeInCredit": true,
+      "note": "Motor vehicle excise tax of 4%"
+    },
+    "NY": {
+      "rate": 0.04,
+      "tradeInCredit": true,
+      "note": "State rate; local adds 4% to 4.875% (8.875% in NYC)"
+    },
+    "NC": {
+      "rate": 0.03,
+      "tradeInCredit": true,
+      "note": "Highway use tax of 3% replaces sales tax, capped for some transfers"
+    },
+    "ND": {
+      "rate": 0.05,
+      "tradeInCredit": true
+    },
+    "OH": {
+      "rate": 0.0575,
+      "tradeInCredit": true,
+      "note": "State rate; county adds 0.75% to 2.25%"
+    },
+    "OK": {
+      "rate": 0.045,
+      "tradeInCredit": true,
+      "note": "1.25% excise plus 3.25% sales tax on new cars"
+    },
+    "OR": {
+      "rate": 0,
+      "tradeInCredit": true,
+      "note": "No sales tax; a 0.5% vehicle privilege tax is paid by the dealer and usually passed through"
+    },
+    "PA": {
+      "rate": 0.06,
+      "tradeInCredit": true
+    },
+    "RI": {
+      "rate": 0.07,
+      "tradeInCredit": true
+    },
+    "SC": {
+      "rate": 0.05,
+      "tradeInCredit": true,
+      "note": "5% infrastructure maintenance fee capped at 500 dollars"
+    },
+    "SD": {
+      "rate": 0.04,
+      "tradeInCredit": true
+    },
+    "TN": {
+      "rate": 0.07,
+      "tradeInCredit": true
+    },
+    "TX": {
+      "rate": 0.0625,
+      "tradeInCredit": true,
+      "note": "Motor vehicle sales tax; no local add for vehicles"
+    },
+    "UT": {
+      "rate": 0.0485,
+      "tradeInCredit": true,
+      "note": "State rate; local adds 1% to 3%"
+    },
+    "VT": {
+      "rate": 0.06,
+      "tradeInCredit": true
+    },
+    "VA": {
+      "rate": 0.0415,
+      "tradeInCredit": false,
+      "note": "Motor vehicle sales and use tax of 4.15%, minimum 75 dollars"
+    },
+    "WA": {
+      "rate": 0.065,
+      "tradeInCredit": true,
+      "note": "State rate plus 0.3% motor vehicle tax; local adds 1% to 4%"
+    },
+    "WV": {
+      "rate": 0.06,
+      "tradeInCredit": true
+    },
+    "WI": {
+      "rate": 0.05,
+      "tradeInCredit": true
+    },
+    "WY": {
+      "rate": 0.04,
+      "tradeInCredit": true,
+      "note": "State rate; county adds 1% to 2%"
+    },
+    "note": "State-level rate applied to the price less trade-in where credit is allowed; local add-ons are noted but not included"
+  },
+  "docFeeCapByState": {
+    "AL": {
+      "capCents": null,
+      "typicalCents": 59900
+    },
+    "AK": {
+      "capCents": null,
+      "typicalCents": 29900
+    },
+    "AZ": {
+      "capCents": null,
+      "typicalCents": 49900
+    },
+    "AR": {
+      "capCents": 12900,
+      "typicalCents": 12900,
+      "note": "Cap of 129 dollars"
+    },
+    "CA": {
+      "capCents": 8500,
+      "typicalCents": 8500,
+      "note": "Statutory cap of 85 dollars"
+    },
+    "CO": {
+      "capCents": null,
+      "typicalCents": 69900
+    },
+    "CT": {
+      "capCents": null,
+      "typicalCents": 69900
+    },
+    "DE": {
+      "capCents": null,
+      "typicalCents": 49900
+    },
+    "DC": {
+      "capCents": null,
+      "typicalCents": 49900
+    },
+    "FL": {
+      "capCents": null,
+      "typicalCents": 99500,
+      "note": "Uncapped; among the highest in the country"
+    },
+    "GA": {
+      "capCents": null,
+      "typicalCents": 79900
+    },
+    "HI": {
+      "capCents": null,
+      "typicalCents": 39900
+    },
+    "ID": {
+      "capCents": null,
+      "typicalCents": 39900
+    },
+    "IL": {
+      "capCents": 35800,
+      "typicalCents": 35800,
+      "note": "Indexed cap, about 358 dollars in 2026"
+    },
+    "IN": {
+      "capCents": null,
+      "typicalCents": 25000
+    },
+    "IA": {
+      "capCents": 18000,
+      "typicalCents": 18000,
+      "note": "Cap of 180 dollars"
+    },
+    "KS": {
+      "capCents": null,
+      "typicalCents": 49900
+    },
+    "KY": {
+      "capCents": null,
+      "typicalCents": 49900
+    },
+    "LA": {
+      "capCents": 42500,
+      "typicalCents": 42500,
+      "note": "Cap of 425 dollars"
+    },
+    "ME": {
+      "capCents": null,
+      "typicalCents": 49900
+    },
+    "MD": {
+      "capCents": 50000,
+      "typicalCents": 50000,
+      "note": "Cap of 500 dollars"
+    },
+    "MA": {
+      "capCents": null,
+      "typicalCents": 45000
+    },
+    "MI": {
+      "capCents": 26000,
+      "typicalCents": 26000,
+      "note": "Cap is the lesser of 5% of price or about 260 dollars, indexed"
+    },
+    "MN": {
+      "capCents": 12500,
+      "typicalCents": 12500,
+      "note": "Cap of 125 dollars plus 75 for electronic transfer"
+    },
+    "MS": {
+      "capCents": null,
+      "typicalCents": 49900
+    },
+    "MO": {
+      "capCents": 56500,
+      "typicalCents": 50000,
+      "note": "Indexed cap, about 565 dollars"
+    },
+    "MT": {
+      "capCents": null,
+      "typicalCents": 29900
+    },
+    "NE": {
+      "capCents": null,
+      "typicalCents": 29900
+    },
+    "NV": {
+      "capCents": null,
+      "typicalCents": 49900
+    },
+    "NH": {
+      "capCents": null,
+      "typicalCents": 49900
+    },
+    "NJ": {
+      "capCents": null,
+      "typicalCents": 69900
+    },
+    "NM": {
+      "capCents": null,
+      "typicalCents": 39900
+    },
+    "NY": {
+      "capCents": 17500,
+      "typicalCents": 17500,
+      "note": "Statutory cap of 175 dollars"
+    },
+    "NC": {
+      "capCents": null,
+      "typicalCents": 80000
+    },
+    "ND": {
+      "capCents": null,
+      "typicalCents": 29900
+    },
+    "OH": {
+      "capCents": 25000,
+      "typicalCents": 25000,
+      "note": "Cap is the lesser of 250 dollars or 10% of price"
+    },
+    "OK": {
+      "capCents": null,
+      "typicalCents": 39900
+    },
+    "OR": {
+      "capCents": 25000,
+      "typicalCents": 25000,
+      "note": "Cap of 250 dollars with electronic filing"
+    },
+    "PA": {
+      "capCents": 47700,
+      "typicalCents": 46000,
+      "note": "Indexed cap, about 477 dollars with electronic processing"
+    },
+    "RI": {
+      "capCents": null,
+      "typicalCents": 49900
+    },
+    "SC": {
+      "capCents": null,
+      "typicalCents": 45000
+    },
+    "SD": {
+      "capCents": null,
+      "typicalCents": 25000
+    },
+    "TN": {
+      "capCents": null,
+      "typicalCents": 69900
+    },
+    "TX": {
+      "capCents": null,
+      "typicalCents": 20000,
+      "note": "No fixed cap; fees above about 225 dollars draw regulator scrutiny"
+    },
+    "UT": {
+      "capCents": null,
+      "typicalCents": 39900
+    },
+    "VT": {
+      "capCents": null,
+      "typicalCents": 29900
+    },
+    "VA": {
+      "capCents": null,
+      "typicalCents": 89900,
+      "note": "Uncapped; processing fees near 900 dollars are common"
+    },
+    "WA": {
+      "capCents": 20000,
+      "typicalCents": 20000,
+      "note": "Cap of 200 dollars"
+    },
+    "WV": {
+      "capCents": 17500,
+      "typicalCents": 17500,
+      "note": "Cap of 175 dollars"
+    },
+    "WI": {
+      "capCents": null,
+      "typicalCents": 29900
+    },
+    "WY": {
+      "capCents": null,
+      "typicalCents": 29900
+    },
+    "note": "Dealer documentation fee; capCents is null where the state sets no limit"
+  },
+  "titleAndRegistrationByState": {
+    "AL": {
+      "titleCents": 1800,
+      "registrationAnnualCents": 2300,
+      "inspectionAnnualCents": 0
+    },
+    "AK": {
+      "titleCents": 1500,
+      "registrationAnnualCents": 5000,
+      "inspectionAnnualCents": 0,
+      "note": "Registration is paid every two years"
+    },
+    "AZ": {
+      "titleCents": 400,
+      "registrationAnnualCents": 30000,
+      "inspectionAnnualCents": 0,
+      "note": "Registration is mostly a vehicle license tax on assessed value; falls as the car ages"
+    },
+    "AR": {
+      "titleCents": 1000,
+      "registrationAnnualCents": 2500,
+      "inspectionAnnualCents": 0
+    },
+    "CA": {
+      "titleCents": 2500,
+      "registrationAnnualCents": 45000,
+      "inspectionAnnualCents": 2500,
+      "note": "Registration includes the 0.65% vehicle license fee; smog check every two years outside the first eight model years"
+    },
+    "CO": {
+      "titleCents": 750,
+      "registrationAnnualCents": 50000,
+      "inspectionAnnualCents": 1250,
+      "note": "Registration includes specific ownership tax on value; emissions test every two years along the Front Range"
+    },
+    "CT": {
+      "titleCents": 2500,
+      "registrationAnnualCents": 6000,
+      "inspectionAnnualCents": 1000,
+      "note": "Registration is paid every two years; emissions every two years; towns bill property tax on cars separately"
+    },
+    "DE": {
+      "titleCents": 3500,
+      "registrationAnnualCents": 4500,
+      "inspectionAnnualCents": 0
+    },
+    "DC": {
+      "titleCents": 2600,
+      "registrationAnnualCents": 11500,
+      "inspectionAnnualCents": 1750,
+      "note": "Inspection every two years"
+    },
+    "FL": {
+      "titleCents": 7775,
+      "registrationAnnualCents": 4600,
+      "inspectionAnnualCents": 0
+    },
+    "GA": {
+      "titleCents": 1800,
+      "registrationAnnualCents": 2000,
+      "inspectionAnnualCents": 2500,
+      "note": "Emissions test only in the Atlanta metro counties"
+    },
+    "HI": {
+      "titleCents": 500,
+      "registrationAnnualCents": 25000,
+      "inspectionAnnualCents": 2500
+    },
+    "ID": {
+      "titleCents": 1400,
+      "registrationAnnualCents": 6000,
+      "inspectionAnnualCents": 0
+    },
+    "IL": {
+      "titleCents": 16500,
+      "registrationAnnualCents": 15100,
+      "inspectionAnnualCents": 0,
+      "note": "Illinois title fee is among the highest in the country"
+    },
+    "IN": {
+      "titleCents": 1500,
+      "registrationAnnualCents": 5000,
+      "inspectionAnnualCents": 0
+    },
+    "IA": {
+      "titleCents": 2500,
+      "registrationAnnualCents": 30000,
+      "inspectionAnnualCents": 0,
+      "note": "Registration is 1% of value plus a weight fee"
+    },
+    "KS": {
+      "titleCents": 1000,
+      "registrationAnnualCents": 30000,
+      "inspectionAnnualCents": 0,
+      "note": "Registration includes county property tax on the car"
+    },
+    "KY": {
+      "titleCents": 900,
+      "registrationAnnualCents": 2100,
+      "inspectionAnnualCents": 0,
+      "note": "Counties bill property tax on cars separately with the registration"
+    },
+    "LA": {
+      "titleCents": 6850,
+      "registrationAnnualCents": 2000,
+      "inspectionAnnualCents": 1000
+    },
+    "ME": {
+      "titleCents": 3300,
+      "registrationAnnualCents": 3500,
+      "inspectionAnnualCents": 1250
+    },
+    "MD": {
+      "titleCents": 10000,
+      "registrationAnnualCents": 6750,
+      "inspectionAnnualCents": 0,
+      "note": "Registration is paid every two years; inspection only when a used car changes hands"
+    },
+    "MA": {
+      "titleCents": 7500,
+      "registrationAnnualCents": 3000,
+      "inspectionAnnualCents": 3500,
+      "note": "Registration every two years; towns bill excise tax of 2.5% of depreciated value separately"
+    },
+    "MI": {
+      "titleCents": 1500,
+      "registrationAnnualCents": 15000,
+      "inspectionAnnualCents": 0
+    },
+    "MN": {
+      "titleCents": 850,
+      "registrationAnnualCents": 25000,
+      "inspectionAnnualCents": 0,
+      "note": "Registration is value-based and falls with age"
+    },
+    "MS": {
+      "titleCents": 900,
+      "registrationAnnualCents": 1400,
+      "inspectionAnnualCents": 0
+    },
+    "MO": {
+      "titleCents": 850,
+      "registrationAnnualCents": 5000,
+      "inspectionAnnualCents": 1200,
+      "note": "Safety and emissions every two years in the St. Louis and Kansas City areas"
+    },
+    "MT": {
+      "titleCents": 1200,
+      "registrationAnnualCents": 21700,
+      "inspectionAnnualCents": 0,
+      "note": "Registration is age-based and permanent after 11 years"
+    },
+    "NE": {
+      "titleCents": 1000,
+      "registrationAnnualCents": 30000,
+      "inspectionAnnualCents": 0,
+      "note": "Registration includes motor vehicle tax and wheel tax"
+    },
+    "NV": {
+      "titleCents": 2900,
+      "registrationAnnualCents": 25000,
+      "inspectionAnnualCents": 3000,
+      "note": "Registration includes the governmental services tax on value; smog check yearly in Clark and Washoe"
+    },
+    "NH": {
+      "titleCents": 2500,
+      "registrationAnnualCents": 30000,
+      "inspectionAnnualCents": 0,
+      "note": "Town registration fee is value-based; the state safety inspection requirement ended in 2026"
+    },
+    "NJ": {
+      "titleCents": 6000,
+      "registrationAnnualCents": 8500,
+      "inspectionAnnualCents": 0,
+      "note": "Emissions test is free at state stations every two years once the car is five model years old"
+    },
+    "NM": {
+      "titleCents": 1000,
+      "registrationAnnualCents": 5000,
+      "inspectionAnnualCents": 1250,
+      "note": "Emissions test every two years in Bernalillo County only"
+    },
+    "NY": {
+      "titleCents": 5000,
+      "registrationAnnualCents": 3000,
+      "inspectionAnnualCents": 2100,
+      "note": "Registration is paid every two years by weight; inspection yearly"
+    },
+    "NC": {
+      "titleCents": 5600,
+      "registrationAnnualCents": 3800,
+      "inspectionAnnualCents": 3000,
+      "note": "Counties bill property tax with the registration; inspection yearly"
+    },
+    "ND": {
+      "titleCents": 500,
+      "registrationAnnualCents": 8000,
+      "inspectionAnnualCents": 0
+    },
+    "OH": {
+      "titleCents": 1500,
+      "registrationAnnualCents": 3100,
+      "inspectionAnnualCents": 0
+    },
+    "OK": {
+      "titleCents": 1100,
+      "registrationAnnualCents": 9600,
+      "inspectionAnnualCents": 0
+    },
+    "OR": {
+      "titleCents": 10100,
+      "registrationAnnualCents": 7600,
+      "inspectionAnnualCents": 1250,
+      "note": "Registration every two years; DEQ test every two years in Portland and Medford"
+    },
+    "PA": {
+      "titleCents": 6700,
+      "registrationAnnualCents": 4500,
+      "inspectionAnnualCents": 5500,
+      "note": "Safety inspection yearly plus emissions in most counties"
+    },
+    "RI": {
+      "titleCents": 5250,
+      "registrationAnnualCents": 7000,
+      "inspectionAnnualCents": 2750,
+      "note": "Inspection every two years"
+    },
+    "SC": {
+      "titleCents": 1500,
+      "registrationAnnualCents": 4000,
+      "inspectionAnnualCents": 0,
+      "note": "Counties bill property tax on cars yearly before registration"
+    },
+    "SD": {
+      "titleCents": 1000,
+      "registrationAnnualCents": 7000,
+      "inspectionAnnualCents": 0
+    },
+    "TN": {
+      "titleCents": 1400,
+      "registrationAnnualCents": 2900,
+      "inspectionAnnualCents": 0
+    },
+    "TX": {
+      "titleCents": 3300,
+      "registrationAnnualCents": 7500,
+      "inspectionAnnualCents": 1850,
+      "note": "Safety inspection ended in 2025; emissions test still required yearly in the large metros and a 7.50 fee remains"
+    },
+    "UT": {
+      "titleCents": 600,
+      "registrationAnnualCents": 15000,
+      "inspectionAnnualCents": 1500,
+      "note": "Registration includes an age-based uniform fee; emissions every two years in the Wasatch Front counties"
+    },
+    "VT": {
+      "titleCents": 3500,
+      "registrationAnnualCents": 7600,
+      "inspectionAnnualCents": 5000
+    },
+    "VA": {
+      "titleCents": 1500,
+      "registrationAnnualCents": 4075,
+      "inspectionAnnualCents": 2000,
+      "note": "Localities bill personal property tax on cars separately; safety inspection yearly"
+    },
+    "WA": {
+      "titleCents": 1500,
+      "registrationAnnualCents": 10000,
+      "inspectionAnnualCents": 0,
+      "note": "Registration includes the Sound Transit RTA tax in the Seattle area"
+    },
+    "WV": {
+      "titleCents": 1500,
+      "registrationAnnualCents": 5150,
+      "inspectionAnnualCents": 1400
+    },
+    "WI": {
+      "titleCents": 16450,
+      "registrationAnnualCents": 8500,
+      "inspectionAnnualCents": 0,
+      "note": "Title fee includes a surcharge; registration includes wheel taxes in many cities"
+    },
+    "WY": {
+      "titleCents": 1500,
+      "registrationAnnualCents": 30000,
+      "inspectionAnnualCents": 0,
+      "note": "Registration is mostly a county fee on factory price"
+    },
+    "note": "Title is one-time at purchase; registration and inspection are yearly averages for a mid-priced car, with two-year fees halved"
+  },
+  "insuranceAnnualByState": {
+    "AL": 210000,
+    "AK": 240000,
+    "AZ": 260000,
+    "AR": 230000,
+    "CA": 290000,
+    "CO": 290000,
+    "CT": 230000,
+    "DE": 250000,
+    "DC": 250000,
+    "FL": 390000,
+    "GA": 270000,
+    "HI": 150000,
+    "ID": 130000,
+    "IL": 220000,
+    "IN": 170000,
+    "IA": 180000,
+    "KS": 250000,
+    "KY": 280000,
+    "LA": 380000,
+    "ME": 130000,
+    "MD": 280000,
+    "MA": 200000,
+    "MI": 320000,
+    "MN": 230000,
+    "MS": 210000,
+    "MO": 270000,
+    "MT": 260000,
+    "NE": 250000,
+    "NV": 330000,
+    "NH": 150000,
+    "NJ": 250000,
+    "NM": 230000,
+    "NY": 380000,
+    "NC": 200000,
+    "ND": 190000,
+    "OH": 150000,
+    "OK": 270000,
+    "OR": 190000,
+    "PA": 260000,
+    "RI": 270000,
+    "SC": 230000,
+    "SD": 240000,
+    "TN": 190000,
+    "TX": 280000,
+    "UT": 200000,
+    "VT": 140000,
+    "VA": 200000,
+    "WA": 200000,
+    "WV": 240000,
+    "WI": 170000,
+    "WY": 180000,
+    "note": "Cents per year for full coverage on one car with a clean record and good credit; minimum coverage runs about a third of this"
+  },
+  "depreciation": {
+    "newByYear": [
+      0.2,
+      0.15,
+      0.13,
+      0.11,
+      0.1,
+      0.09,
+      0.08,
+      0.08,
+      0.07,
+      0.07,
+      0.06,
+      0.06,
+      0.05,
+      0.05,
+      0.05
+    ],
+    "note": "Share of the value lost in each year of the car's life, year 1 first; a used car of age a starts at index a",
+    "evAdjustment": 1.15,
+    "floorShareOfPrice": 0.05
+  },
+  "maintenanceAnnualByAge": [
+    60000,
+    70000,
+    85000,
+    100000,
+    120000,
+    140000,
+    160000,
+    180000,
+    200000,
+    210000,
+    220000,
+    230000,
+    240000,
+    250000,
+    260000
+  ],
+  "maintenanceNote": "Cents per year of maintenance and repairs at each year of age, year 1 first; beyond the list use the last value",
+  "tires": {
+    "setCents": 80000,
+    "everyMiles": 45000
+  },
+  "fuel": {
+    "gasPricePerGallonCents": 335,
+    "defaultMpg": 30,
+    "evKwhPerMile": 0.3,
+    "homeKwhPriceCents": 17,
+    "publicKwhPriceCents": 45,
+    "publicChargingShare": 0.2
+  },
+  "milesPerYearDefault": 11000,
+  "parkingMonthlyByTier": {
+    "HCOL": 25000,
+    "MCOL": 8000,
+    "LCOL": 2000
+  },
+  "tollsMonthlyByTier": {
+    "HCOL": 6000,
+    "MCOL": 2000,
+    "LCOL": 500
+  },
+  "lease": {
+    "moneyFactorDefault": 0.0025,
+    "residualShare36": 0.57,
+    "residualShare24": 0.65,
+    "acquisitionFeeCents": 69500,
+    "dispositionFeeCents": 39500,
+    "milesPerYear": 12000,
+    "overageCentsPerMile": 25,
+    "note": "Money factor times 2400 is the interest rate"
+  },
+  "loan": {
+    "newRate": 0.069,
+    "usedRate": 0.089,
+    "termMonthsDefault": 60,
+    "note": "Average rates for good credit; subprime runs 12% to 20%"
+  },
+  "usedDefaults": {
+    "ageYears": 4,
+    "miles": 48000,
+    "priceShareOfNew": 0.55
+  },
+  "newPriceCents": 4800000,
+  "noCar": {
+    "transitPassByMetro": {
+      "new york": 13400,
+      "jersey city": 13400,
+      "hoboken": 13400,
+      "newark": 13400,
+      "san francisco": 9800,
+      "oakland": 9800,
+      "san jose": 9000,
+      "chicago": 7500,
+      "boston": 9000,
+      "washington": 7200,
+      "arlington": 7200,
+      "philadelphia": 9600,
+      "seattle": 9900,
+      "los angeles": 10000,
+      "denver": 8800,
+      "atlanta": 9500,
+      "miami": 11250,
+      "fort lauderdale": 11250,
+      "dallas": 9600,
+      "fort worth": 9600,
+      "houston": 9000,
+      "phoenix": 6400,
+      "minneapolis": 8500,
+      "detroit": 7000,
+      "tampa": 6500,
+      "orlando": 5000,
+      "st. louis": 7800,
+      "baltimore": 7700,
+      "charlotte": 8800,
+      "portland": 10000,
+      "san antonio": 3800,
+      "sacramento": 10000,
+      "pittsburgh": 9750,
+      "las vegas": 6500,
+      "austin": 4125,
+      "cincinnati": 9500,
+      "kansas city": 5000,
+      "columbus": 6200,
+      "indianapolis": 6000,
+      "cleveland": 9500,
+      "nashville": 6500,
+      "virginia beach": 7000,
+      "providence": 7000,
+      "milwaukee": 7200,
+      "jacksonville": 5000,
+      "oklahoma city": 5000,
+      "memphis": 5000,
+      "louisville": 5000,
+      "richmond": 0,
+      "raleigh": 4000,
+      "new orleans": 4500,
+      "salt lake city": 8500,
+      "hartford": 6300,
+      "buffalo": 7500,
+      "birmingham": 4400,
+      "riverside": 7500,
+      "honolulu": 8000,
+      "san diego": 7200
+    },
+    "transitPassDefaultCents": 7500,
+    "rideshareMonthlyCents": 12000,
+    "rentalDaysPerYear": 8,
+    "rentalDayCents": 7500,
+    "carShareMonthlyCents": 4000,
+    "note": "Monthly unlimited pass in cents; 0 means the system is fare-free (Richmond); Kansas City ended fare-free service and the pass figure is an estimate"
+  },
+  "rules": {
+    "moneyGuy": {
+      "downShare": 0.2,
+      "maxTermMonths": 36,
+      "maxShareOfGross": 0.08,
+      "label": "20/3/8"
+    },
+    "common": {
+      "downShare": 0.2,
+      "maxTermMonths": 48,
+      "maxShareOfGross": 0.1,
+      "label": "20/4/10"
+    }
+  },
+  "addOnsNote": "Dealer add-ons (paint protection, nitrogen, VIN etching) are optional; decline them"
+}

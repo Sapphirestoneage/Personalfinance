@@ -187,3 +187,43 @@ Collected during the run; none blocked the build. Answer whenever.
     Trim "what changed" or "refresh" to land on 15 exactly?
 57. A money date between sessions (before graduation) is allowed from the
     Money date screen. Keep that, or only after session 12?
+58. The brief describes Maya as gross 68,000 with 1,900 biweekly take-home. The
+    fixture every test ties out to has her at 3,650 gross biweekly (about 94,900
+    a year) plus freelance and tutoring, take-home 2,512 biweekly. I kept the
+    fixture and tested the brief's numbers as a second household (lender about
+    198,000, comfortable about 161,000). Should Maya's income change to match
+    the brief, which would move every other expected value?
+59. The calendar's floor is the lean month step when it is funded, but zero
+    when the cushion already sits in a savings account (Maya's case), because
+    the cushion account is excluded from safe to spend and a floor on checking
+    would count it twice. Right call, or always keep a floor on checking?
+60. A card with autopay set to "full balance" pays everything owed on the due
+    date, including charges after the statement; "statement" pays the statement.
+    Both avoid interest. Keep both options, or collapse to one?
+61. Cash flow calendar bills the Ledger does not date: accommodation lands on
+    the 1st, utilities on the 15th, therapy and insurance on the 1st, and every
+    other line is spread evenly across the month until a due day is set in
+    Dates and the floor. Fine as the starting guess?
+62. The lender answer uses 28% front and 36% back, with a 43% looser toggle.
+    FHA allows up to 50% back in practice. Should the toggle go to 50%?
+63. The comfortable answer counts 1% of value a year for maintenance. Older
+    homes run nearer 2%. Keep 1% as the default, or 1.5%?
+64. Rent vs buy at the workbook's own inputs (8% stocks, 3.5% appreciation,
+    7% rate) now has renting ahead for all 30 years, where the workbook leaned
+    buying because it never grew the renter's upfront investment correctly.
+    That is the corrected arithmetic; does the default stock return stay at 7%
+    (the library) or should it match the household's after-inflation return?
+65. The car's no-car option prices a transit pass, a few rideshares a week,
+    eight rental days a year and a car share. For Maya it wins by a wide
+    margin. Should the FI effect of each option be shown on the scoreboard?
+66. Retirement for two runs in real dollars at the household's after-inflation
+    return (5%), where the Personal Finance Club page uses a nominal 7% to 10%.
+    The totals look smaller than that page's. Keep real dollars?
+67. The 2026 SALT cap in the library is 40,400 (the 2025 law's 40,000 indexed
+    1%). Verify before a client reads the house calculator's tax line.
+68. Every figure in data/housing-costs.json and data/auto-costs.json was
+    written from memory with verify on (county property tax rates, insurance
+    averages, closing cost ranges, transfer taxes, PMI, FHA and VA fees, loan
+    limits, sales tax and trade-in rules, doc fees, registration, depreciation,
+    maintenance by age, transit passes). The report lists them; which do you
+    want checked first?

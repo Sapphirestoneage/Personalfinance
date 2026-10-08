@@ -35,3 +35,8 @@ Level 12 met every line above; the sweep ran at 1440, 1024 and 390 in both
 views for #/scoreboard, #/map, #/money-date, the drawer deep link and the seven
 new chart pages for every household, and the dark theme on the three screens;
 screenshots live in screenshots/level-12/. A critique round is owed (PROGRESS.md).
+
+Level 13 met every line above; the sweep ran at 1440, 1024 and 390 in both
+views for the hub, the calendar's seven tabs, the four calculators and the ten
+new chart pages for every household, and the dark theme on the main screens;
+screenshots live in screenshots/level-13/ with critique.md and its fixes.

@@ -1,0 +1,1588 @@
+{
+  "asOf": "2026-10-08",
+  "source": "Tax Foundation and Census ACS effective property tax tables, Insurance Information Institute and Bankrate homeowners premium surveys, NerdWallet and ClosingCorp closing cost surveys, state and city revenue department transfer tax pages, MGIC and Radian PMI rate cards, HUD and FHFA 2026 loan limits, Freddie Mac PMMS rates, as remembered by the builder",
+  "verify": true,
+  "baseRates": {
+    "fixed30": 0.065,
+    "fixed15": 0.058,
+    "arm5": 0.06,
+    "note": "Check today's rate; these are late 2026 stand-ins"
+  },
+  "rateAdjustmentByCredit": {
+    "760+": 0,
+    "740-759": 0.00125,
+    "720-739": 0.0025,
+    "700-719": 0.00375,
+    "680-699": 0.005,
+    "660-679": 0.00625,
+    "640-659": 0.0075,
+    "620-639": 0.01,
+    "note": "Added to the base rate; approximates how loan-level price adjustments show up in the quoted rate for a 20% down conventional loan"
+  },
+  "creditRanges": [
+    "760+",
+    "740-759",
+    "720-739",
+    "700-719",
+    "680-699",
+    "660-679",
+    "640-659",
+    "620-639"
+  ],
+  "propertyTaxRateByState": {
+    "AL": 0.004,
+    "AK": 0.0119,
+    "AZ": 0.0062,
+    "AR": 0.0062,
+    "CA": 0.0075,
+    "CO": 0.0051,
+    "CT": 0.0215,
+    "DE": 0.0057,
+    "DC": 0.0056,
+    "FL": 0.0089,
+    "GA": 0.0092,
+    "HI": 0.0028,
+    "ID": 0.0063,
+    "IL": 0.0227,
+    "IN": 0.0085,
+    "IA": 0.0157,
+    "KS": 0.0141,
+    "KY": 0.0086,
+    "LA": 0.0055,
+    "ME": 0.0128,
+    "MD": 0.0109,
+    "MA": 0.0123,
+    "MI": 0.0154,
+    "MN": 0.0112,
+    "MS": 0.0081,
+    "MO": 0.0097,
+    "MT": 0.0084,
+    "NE": 0.0173,
+    "NV": 0.006,
+    "NH": 0.0218,
+    "NJ": 0.0249,
+    "NM": 0.008,
+    "NY": 0.0172,
+    "NC": 0.0082,
+    "ND": 0.0098,
+    "OH": 0.0156,
+    "OK": 0.009,
+    "OR": 0.0097,
+    "PA": 0.0158,
+    "RI": 0.0163,
+    "SC": 0.0057,
+    "SD": 0.0122,
+    "TN": 0.0071,
+    "TX": 0.018,
+    "UT": 0.0063,
+    "VT": 0.019,
+    "VA": 0.0082,
+    "WA": 0.0098,
+    "WV": 0.0059,
+    "WI": 0.0185,
+    "WY": 0.0061,
+    "note": "Effective tax as a share of home value per year, statewide median; county overrides are more accurate where present"
+  },
+  "countyOverrides": {
+    "New York County, NY": 0.009,
+    "Kings County, NY": 0.0075,
+    "Queens County, NY": 0.009,
+    "Bronx County, NY": 0.0095,
+    "Richmond County, NY": 0.01,
+    "Westchester County, NY": 0.0195,
+    "Nassau County, NY": 0.0215,
+    "Suffolk County, NY": 0.02,
+    "Erie County, NY": 0.022,
+    "Monroe County, NY": 0.025,
+    "Onondaga County, NY": 0.024,
+    "Albany County, NY": 0.02,
+    "Hudson County, NJ": 0.0185,
+    "Bergen County, NJ": 0.022,
+    "Essex County, NJ": 0.026,
+    "Middlesex County, NJ": 0.023,
+    "Monmouth County, NJ": 0.0195,
+    "Morris County, NJ": 0.0215,
+    "Union County, NJ": 0.0245,
+    "Passaic County, NJ": 0.0275,
+    "Somerset County, NJ": 0.021,
+    "Camden County, NJ": 0.032,
+    "Burlington County, NJ": 0.026,
+    "Mercer County, NJ": 0.027,
+    "Los Angeles County, CA": 0.0072,
+    "Orange County, CA": 0.0068,
+    "San Diego County, CA": 0.0072,
+    "San Francisco County, CA": 0.007,
+    "Alameda County, CA": 0.008,
+    "Santa Clara County, CA": 0.0072,
+    "San Mateo County, CA": 0.0065,
+    "Contra Costa County, CA": 0.0085,
+    "Riverside County, CA": 0.0095,
+    "San Bernardino County, CA": 0.0085,
+    "Sacramento County, CA": 0.008,
+    "Fresno County, CA": 0.0085,
+    "Cook County, IL": 0.0205,
+    "DuPage County, IL": 0.021,
+    "Lake County, IL": 0.026,
+    "Will County, IL": 0.023,
+    "Kane County, IL": 0.024,
+    "Dallas County, TX": 0.0175,
+    "Tarrant County, TX": 0.0185,
+    "Collin County, TX": 0.0165,
+    "Denton County, TX": 0.0175,
+    "Harris County, TX": 0.018,
+    "Fort Bend County, TX": 0.02,
+    "Montgomery County, TX": 0.016,
+    "Travis County, TX": 0.0165,
+    "Williamson County, TX": 0.0175,
+    "Bexar County, TX": 0.0185,
+    "El Paso County, TX": 0.0225,
+    "Philadelphia County, PA": 0.014,
+    "Montgomery County, PA": 0.015,
+    "Bucks County, PA": 0.0145,
+    "Delaware County, PA": 0.019,
+    "Chester County, PA": 0.0135,
+    "Allegheny County, PA": 0.0195,
+    "District of Columbia, DC": 0.0056,
+    "Montgomery County, MD": 0.0095,
+    "Prince George's County, MD": 0.0125,
+    "Baltimore City, MD": 0.015,
+    "Baltimore County, MD": 0.0105,
+    "Anne Arundel County, MD": 0.0085,
+    "Howard County, MD": 0.0105,
+    "Fairfax County, VA": 0.0105,
+    "Arlington County, VA": 0.0095,
+    "Loudoun County, VA": 0.0085,
+    "Prince William County, VA": 0.01,
+    "Alexandria City, VA": 0.0105,
+    "Virginia Beach City, VA": 0.0085,
+    "Richmond City, VA": 0.0105,
+    "Henrico County, VA": 0.008,
+    "Miami-Dade County, FL": 0.0095,
+    "Broward County, FL": 0.0105,
+    "Palm Beach County, FL": 0.01,
+    "Hillsborough County, FL": 0.01,
+    "Pinellas County, FL": 0.009,
+    "Orange County, FL": 0.0095,
+    "Duval County, FL": 0.0095,
+    "Fulton County, GA": 0.0105,
+    "Cobb County, GA": 0.0085,
+    "Gwinnett County, GA": 0.0105,
+    "DeKalb County, GA": 0.0115,
+    "Suffolk County, MA": 0.007,
+    "Middlesex County, MA": 0.0115,
+    "Norfolk County, MA": 0.0115,
+    "Essex County, MA": 0.012,
+    "Worcester County, MA": 0.014,
+    "Maricopa County, AZ": 0.0055,
+    "Pima County, AZ": 0.009,
+    "Wayne County, MI": 0.02,
+    "Oakland County, MI": 0.015,
+    "Macomb County, MI": 0.016,
+    "King County, WA": 0.009,
+    "Snohomish County, WA": 0.0095,
+    "Pierce County, WA": 0.0105,
+    "Hennepin County, MN": 0.012,
+    "Ramsey County, MN": 0.013,
+    "Denver County, CO": 0.0055,
+    "Arapahoe County, CO": 0.0055,
+    "Jefferson County, CO": 0.005,
+    "El Paso County, CO": 0.0045,
+    "Multnomah County, OR": 0.0105,
+    "Washington County, OR": 0.01,
+    "Clackamas County, OR": 0.0095,
+    "Clark County, NV": 0.0055,
+    "Washoe County, NV": 0.006,
+    "Cuyahoga County, OH": 0.0225,
+    "Franklin County, OH": 0.0185,
+    "Hamilton County, OH": 0.017,
+    "Marion County, IN": 0.01,
+    "Hamilton County, IN": 0.0085,
+    "Davidson County, TN": 0.0065,
+    "Shelby County, TN": 0.0135,
+    "Knox County, TN": 0.006,
+    "Hamilton County, TN": 0.0085,
+    "Mecklenburg County, NC": 0.009,
+    "Wake County, NC": 0.0075,
+    "Durham County, NC": 0.01,
+    "Jackson County, MO": 0.0125,
+    "St. Louis County, MO": 0.012,
+    "St. Louis City, MO": 0.0135,
+    "Johnson County, KS": 0.012,
+    "Sedgwick County, KS": 0.0135,
+    "Jefferson County, KY": 0.0095,
+    "Oklahoma County, OK": 0.0105,
+    "Tulsa County, OK": 0.011,
+    "Salt Lake County, UT": 0.006,
+    "Hartford County, CT": 0.021,
+    "New Haven County, CT": 0.0215,
+    "Fairfield County, CT": 0.0175,
+    "Providence County, RI": 0.017,
+    "Milwaukee County, WI": 0.0225,
+    "Dane County, WI": 0.0175,
+    "Honolulu County, HI": 0.003,
+    "Bernalillo County, NM": 0.0105,
+    "Orleans Parish, LA": 0.008,
+    "Jefferson Parish, LA": 0.0065,
+    "Polk County, IA": 0.017,
+    "Douglas County, NE": 0.0195,
+    "Pulaski County, AR": 0.007,
+    "Jefferson County, AL": 0.0055,
+    "Greenville County, SC": 0.006,
+    "Charleston County, SC": 0.005,
+    "Richland County, SC": 0.007,
+    "Ada County, ID": 0.006,
+    "Anchorage Municipality, AK": 0.0125,
+    "New Castle County, DE": 0.0065
+  },
+  "cityToCounty": {
+    "new york": "New York County, NY",
+    "manhattan": "New York County, NY",
+    "brooklyn": "Kings County, NY",
+    "queens": "Queens County, NY",
+    "bronx": "Bronx County, NY",
+    "staten island": "Richmond County, NY",
+    "yonkers": "Westchester County, NY",
+    "white plains": "Westchester County, NY",
+    "new rochelle": "Westchester County, NY",
+    "scarsdale": "Westchester County, NY",
+    "hempstead": "Nassau County, NY",
+    "long beach": "Nassau County, NY",
+    "garden city": "Nassau County, NY",
+    "huntington": "Suffolk County, NY",
+    "babylon": "Suffolk County, NY",
+    "buffalo": "Erie County, NY",
+    "rochester": "Monroe County, NY",
+    "syracuse": "Onondaga County, NY",
+    "albany": "Albany County, NY",
+    "jersey city": "Hudson County, NJ",
+    "hoboken": "Hudson County, NJ",
+    "bayonne": "Hudson County, NJ",
+    "union city": "Hudson County, NJ",
+    "west new york": "Hudson County, NJ",
+    "weehawken": "Hudson County, NJ",
+    "secaucus": "Hudson County, NJ",
+    "kearny": "Hudson County, NJ",
+    "harrison": "Hudson County, NJ",
+    "north bergen": "Hudson County, NJ",
+    "newark": "Essex County, NJ",
+    "montclair": "Essex County, NJ",
+    "west orange": "Essex County, NJ",
+    "maplewood": "Essex County, NJ",
+    "bloomfield": "Essex County, NJ",
+    "livingston": "Essex County, NJ",
+    "millburn": "Essex County, NJ",
+    "hackensack": "Bergen County, NJ",
+    "fort lee": "Bergen County, NJ",
+    "paramus": "Bergen County, NJ",
+    "ridgewood": "Bergen County, NJ",
+    "teaneck": "Bergen County, NJ",
+    "englewood": "Bergen County, NJ",
+    "edgewater": "Bergen County, NJ",
+    "edison": "Middlesex County, NJ",
+    "new brunswick": "Middlesex County, NJ",
+    "woodbridge": "Middlesex County, NJ",
+    "piscataway": "Middlesex County, NJ",
+    "elizabeth": "Union County, NJ",
+    "summit": "Union County, NJ",
+    "westfield": "Union County, NJ",
+    "cranford": "Union County, NJ",
+    "paterson": "Passaic County, NJ",
+    "clifton": "Passaic County, NJ",
+    "morristown": "Morris County, NJ",
+    "parsippany": "Morris County, NJ",
+    "red bank": "Monmouth County, NJ",
+    "asbury park": "Monmouth County, NJ",
+    "long branch": "Monmouth County, NJ",
+    "princeton": "Mercer County, NJ",
+    "trenton": "Mercer County, NJ",
+    "cherry hill": "Camden County, NJ",
+    "camden": "Camden County, NJ",
+    "somerville": "Somerset County, NJ",
+    "bridgewater": "Somerset County, NJ",
+    "los angeles": "Los Angeles County, CA",
+    "long beach ca": "Los Angeles County, CA",
+    "pasadena": "Los Angeles County, CA",
+    "santa monica": "Los Angeles County, CA",
+    "glendale": "Los Angeles County, CA",
+    "burbank": "Los Angeles County, CA",
+    "torrance": "Los Angeles County, CA",
+    "anaheim": "Orange County, CA",
+    "irvine": "Orange County, CA",
+    "santa ana": "Orange County, CA",
+    "huntington beach": "Orange County, CA",
+    "newport beach": "Orange County, CA",
+    "san diego": "San Diego County, CA",
+    "chula vista": "San Diego County, CA",
+    "carlsbad": "San Diego County, CA",
+    "oceanside": "San Diego County, CA",
+    "san francisco": "San Francisco County, CA",
+    "oakland": "Alameda County, CA",
+    "berkeley": "Alameda County, CA",
+    "fremont": "Alameda County, CA",
+    "hayward": "Alameda County, CA",
+    "san jose": "Santa Clara County, CA",
+    "sunnyvale": "Santa Clara County, CA",
+    "palo alto": "Santa Clara County, CA",
+    "mountain view": "Santa Clara County, CA",
+    "santa clara": "Santa Clara County, CA",
+    "cupertino": "Santa Clara County, CA",
+    "san mateo": "San Mateo County, CA",
+    "redwood city": "San Mateo County, CA",
+    "daly city": "San Mateo County, CA",
+    "walnut creek": "Contra Costa County, CA",
+    "concord": "Contra Costa County, CA",
+    "richmond ca": "Contra Costa County, CA",
+    "riverside": "Riverside County, CA",
+    "temecula": "Riverside County, CA",
+    "san bernardino": "San Bernardino County, CA",
+    "ontario": "San Bernardino County, CA",
+    "sacramento": "Sacramento County, CA",
+    "elk grove": "Sacramento County, CA",
+    "fresno": "Fresno County, CA",
+    "chicago": "Cook County, IL",
+    "evanston": "Cook County, IL",
+    "oak park": "Cook County, IL",
+    "skokie": "Cook County, IL",
+    "cicero": "Cook County, IL",
+    "naperville": "DuPage County, IL",
+    "wheaton": "DuPage County, IL",
+    "downers grove": "DuPage County, IL",
+    "waukegan": "Lake County, IL",
+    "highland park": "Lake County, IL",
+    "joliet": "Will County, IL",
+    "aurora": "Kane County, IL",
+    "elgin": "Kane County, IL",
+    "dallas": "Dallas County, TX",
+    "irving": "Dallas County, TX",
+    "garland": "Dallas County, TX",
+    "richardson": "Dallas County, TX",
+    "fort worth": "Tarrant County, TX",
+    "arlington": "Tarrant County, TX",
+    "plano": "Collin County, TX",
+    "frisco": "Collin County, TX",
+    "mckinney": "Collin County, TX",
+    "denton": "Denton County, TX",
+    "lewisville": "Denton County, TX",
+    "houston": "Harris County, TX",
+    "pasadena tx": "Harris County, TX",
+    "katy": "Harris County, TX",
+    "sugar land": "Fort Bend County, TX",
+    "the woodlands": "Montgomery County, TX",
+    "austin": "Travis County, TX",
+    "round rock": "Williamson County, TX",
+    "cedar park": "Williamson County, TX",
+    "san antonio": "Bexar County, TX",
+    "el paso": "El Paso County, TX",
+    "philadelphia": "Philadelphia County, PA",
+    "king of prussia": "Montgomery County, PA",
+    "norristown": "Montgomery County, PA",
+    "doylestown": "Bucks County, PA",
+    "levittown": "Bucks County, PA",
+    "media": "Delaware County, PA",
+    "upper darby": "Delaware County, PA",
+    "west chester": "Chester County, PA",
+    "pittsburgh": "Allegheny County, PA",
+    "washington": "District of Columbia, DC",
+    "bethesda": "Montgomery County, MD",
+    "silver spring": "Montgomery County, MD",
+    "rockville": "Montgomery County, MD",
+    "gaithersburg": "Montgomery County, MD",
+    "hyattsville": "Prince George's County, MD",
+    "bowie": "Prince George's County, MD",
+    "college park": "Prince George's County, MD",
+    "baltimore": "Baltimore City, MD",
+    "towson": "Baltimore County, MD",
+    "columbia": "Howard County, MD",
+    "annapolis": "Anne Arundel County, MD",
+    "arlington va": "Arlington County, VA",
+    "alexandria": "Alexandria City, VA",
+    "fairfax": "Fairfax County, VA",
+    "reston": "Fairfax County, VA",
+    "mclean": "Fairfax County, VA",
+    "tysons": "Fairfax County, VA",
+    "ashburn": "Loudoun County, VA",
+    "leesburg": "Loudoun County, VA",
+    "manassas": "Prince William County, VA",
+    "woodbridge va": "Prince William County, VA",
+    "virginia beach": "Virginia Beach City, VA",
+    "richmond": "Richmond City, VA",
+    "henrico": "Henrico County, VA",
+    "miami": "Miami-Dade County, FL",
+    "miami beach": "Miami-Dade County, FL",
+    "coral gables": "Miami-Dade County, FL",
+    "hialeah": "Miami-Dade County, FL",
+    "fort lauderdale": "Broward County, FL",
+    "hollywood": "Broward County, FL",
+    "pembroke pines": "Broward County, FL",
+    "west palm beach": "Palm Beach County, FL",
+    "boca raton": "Palm Beach County, FL",
+    "tampa": "Hillsborough County, FL",
+    "st. petersburg": "Pinellas County, FL",
+    "clearwater": "Pinellas County, FL",
+    "orlando": "Orange County, FL",
+    "winter park": "Orange County, FL",
+    "jacksonville": "Duval County, FL",
+    "atlanta": "Fulton County, GA",
+    "sandy springs": "Fulton County, GA",
+    "roswell": "Fulton County, GA",
+    "alpharetta": "Fulton County, GA",
+    "marietta": "Cobb County, GA",
+    "smyrna": "Cobb County, GA",
+    "lawrenceville": "Gwinnett County, GA",
+    "duluth": "Gwinnett County, GA",
+    "decatur": "DeKalb County, GA",
+    "brookhaven": "DeKalb County, GA",
+    "boston": "Suffolk County, MA",
+    "cambridge": "Middlesex County, MA",
+    "somerville ma": "Middlesex County, MA",
+    "newton": "Middlesex County, MA",
+    "medford": "Middlesex County, MA",
+    "waltham": "Middlesex County, MA",
+    "quincy": "Norfolk County, MA",
+    "brookline": "Norfolk County, MA",
+    "lynn": "Essex County, MA",
+    "salem": "Essex County, MA",
+    "worcester": "Worcester County, MA",
+    "phoenix": "Maricopa County, AZ",
+    "scottsdale": "Maricopa County, AZ",
+    "mesa": "Maricopa County, AZ",
+    "tempe": "Maricopa County, AZ",
+    "chandler": "Maricopa County, AZ",
+    "gilbert": "Maricopa County, AZ",
+    "glendale az": "Maricopa County, AZ",
+    "tucson": "Pima County, AZ",
+    "detroit": "Wayne County, MI",
+    "dearborn": "Wayne County, MI",
+    "livonia": "Wayne County, MI",
+    "troy": "Oakland County, MI",
+    "royal oak": "Oakland County, MI",
+    "southfield": "Oakland County, MI",
+    "warren": "Macomb County, MI",
+    "sterling heights": "Macomb County, MI",
+    "seattle": "King County, WA",
+    "bellevue": "King County, WA",
+    "redmond": "King County, WA",
+    "kirkland": "King County, WA",
+    "kent": "King County, WA",
+    "everett": "Snohomish County, WA",
+    "lynnwood": "Snohomish County, WA",
+    "tacoma": "Pierce County, WA",
+    "minneapolis": "Hennepin County, MN",
+    "bloomington": "Hennepin County, MN",
+    "edina": "Hennepin County, MN",
+    "st. paul": "Ramsey County, MN",
+    "denver": "Denver County, CO",
+    "aurora co": "Arapahoe County, CO",
+    "littleton": "Arapahoe County, CO",
+    "lakewood": "Jefferson County, CO",
+    "golden": "Jefferson County, CO",
+    "colorado springs": "El Paso County, CO",
+    "portland": "Multnomah County, OR",
+    "gresham": "Multnomah County, OR",
+    "beaverton": "Washington County, OR",
+    "hillsboro": "Washington County, OR",
+    "lake oswego": "Clackamas County, OR",
+    "las vegas": "Clark County, NV",
+    "henderson": "Clark County, NV",
+    "north las vegas": "Clark County, NV",
+    "reno": "Washoe County, NV",
+    "cleveland": "Cuyahoga County, OH",
+    "parma": "Cuyahoga County, OH",
+    "columbus": "Franklin County, OH",
+    "dublin": "Franklin County, OH",
+    "cincinnati": "Hamilton County, OH",
+    "indianapolis": "Marion County, IN",
+    "carmel": "Hamilton County, IN",
+    "fishers": "Hamilton County, IN",
+    "nashville": "Davidson County, TN",
+    "memphis": "Shelby County, TN",
+    "knoxville": "Knox County, TN",
+    "chattanooga": "Hamilton County, TN",
+    "charlotte": "Mecklenburg County, NC",
+    "raleigh": "Wake County, NC",
+    "cary": "Wake County, NC",
+    "durham": "Durham County, NC",
+    "kansas city": "Jackson County, MO",
+    "independence": "Jackson County, MO",
+    "overland park": "Johnson County, KS",
+    "olathe": "Johnson County, KS",
+    "wichita": "Sedgwick County, KS",
+    "st. louis": "St. Louis City, MO",
+    "clayton": "St. Louis County, MO",
+    "chesterfield": "St. Louis County, MO",
+    "louisville": "Jefferson County, KY",
+    "oklahoma city": "Oklahoma County, OK",
+    "tulsa": "Tulsa County, OK",
+    "salt lake city": "Salt Lake County, UT",
+    "sandy": "Salt Lake County, UT",
+    "hartford": "Hartford County, CT",
+    "west hartford": "Hartford County, CT",
+    "new haven": "New Haven County, CT",
+    "stamford": "Fairfield County, CT",
+    "greenwich": "Fairfield County, CT",
+    "norwalk": "Fairfield County, CT",
+    "bridgeport": "Fairfield County, CT",
+    "providence": "Providence County, RI",
+    "cranston": "Providence County, RI",
+    "milwaukee": "Milwaukee County, WI",
+    "madison": "Dane County, WI",
+    "honolulu": "Honolulu County, HI",
+    "albuquerque": "Bernalillo County, NM",
+    "new orleans": "Orleans Parish, LA",
+    "metairie": "Jefferson Parish, LA",
+    "des moines": "Polk County, IA",
+    "omaha": "Douglas County, NE",
+    "little rock": "Pulaski County, AR",
+    "birmingham": "Jefferson County, AL",
+    "greenville": "Greenville County, SC",
+    "charleston": "Charleston County, SC",
+    "columbia sc": "Richland County, SC",
+    "boise": "Ada County, ID",
+    "anchorage": "Anchorage Municipality, AK",
+    "wilmington": "New Castle County, DE"
+  },
+  "insuranceAnnualByState": {
+    "AL": 240000,
+    "AK": 130000,
+    "AZ": 200000,
+    "AR": 320000,
+    "CA": 150000,
+    "CO": 340000,
+    "CT": 170000,
+    "DE": 100000,
+    "DC": 140000,
+    "FL": 550000,
+    "GA": 230000,
+    "HI": 60000,
+    "ID": 150000,
+    "IL": 210000,
+    "IN": 190000,
+    "IA": 220000,
+    "KS": 380000,
+    "KY": 290000,
+    "LA": 540000,
+    "ME": 130000,
+    "MD": 170000,
+    "MA": 180000,
+    "MI": 200000,
+    "MN": 260000,
+    "MS": 330000,
+    "MO": 280000,
+    "MT": 270000,
+    "NE": 480000,
+    "NV": 110000,
+    "NH": 120000,
+    "NJ": 130000,
+    "NM": 200000,
+    "NY": 180000,
+    "NC": 250000,
+    "ND": 250000,
+    "OH": 150000,
+    "OK": 520000,
+    "OR": 120000,
+    "PA": 140000,
+    "RI": 200000,
+    "SC": 250000,
+    "SD": 280000,
+    "TN": 250000,
+    "TX": 410000,
+    "UT": 130000,
+    "VT": 100000,
+    "VA": 170000,
+    "WA": 140000,
+    "WV": 150000,
+    "WI": 140000,
+    "WY": 150000,
+    "note": "Cents per year for an average homeowners policy on a home near 300,000 of dwelling coverage; coastal and wildfire areas run higher"
+  },
+  "closingCostShareByState": {
+    "AL": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "AK": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "AZ": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "AR": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "CA": {
+      "low": 0.015,
+      "high": 0.035
+    },
+    "CO": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "CT": {
+      "low": 0.02,
+      "high": 0.05
+    },
+    "DE": {
+      "low": 0.04,
+      "high": 0.06
+    },
+    "DC": {
+      "low": 0.03,
+      "high": 0.06
+    },
+    "FL": {
+      "low": 0.02,
+      "high": 0.05
+    },
+    "GA": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "HI": {
+      "low": 0.015,
+      "high": 0.035
+    },
+    "ID": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "IL": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "IN": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "IA": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "KS": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "KY": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "LA": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "ME": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "MD": {
+      "low": 0.03,
+      "high": 0.06
+    },
+    "MA": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "MI": {
+      "low": 0.02,
+      "high": 0.045
+    },
+    "MN": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "MS": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "MO": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "MT": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "NE": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "NV": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "NH": {
+      "low": 0.03,
+      "high": 0.05
+    },
+    "NJ": {
+      "low": 0.02,
+      "high": 0.05
+    },
+    "NM": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "NY": {
+      "low": 0.03,
+      "high": 0.06
+    },
+    "NC": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "ND": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "OH": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "OK": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "OR": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "PA": {
+      "low": 0.03,
+      "high": 0.06
+    },
+    "RI": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "SC": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "SD": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "TN": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "TX": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "UT": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "VT": {
+      "low": 0.03,
+      "high": 0.05
+    },
+    "VA": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "WA": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "WV": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "WI": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "WY": {
+      "low": 0.02,
+      "high": 0.04
+    },
+    "note": "Buyer closing costs excluding the down payment and prepaids, as a share of price; transfer taxes push the high end up in NY, DE, PA, MD and DC"
+  },
+  "transferTaxes": {
+    "byState": {
+      "AL": {
+        "buyerRate": 0,
+        "sellerRate": 0.001,
+        "note": "Deed tax of 50 cents per 500 dollars, customarily seller"
+      },
+      "AK": {
+        "buyerRate": 0,
+        "sellerRate": 0
+      },
+      "AZ": {
+        "buyerRate": 0,
+        "sellerRate": 0,
+        "note": "Flat 2 dollar affidavit fee only"
+      },
+      "AR": {
+        "buyerRate": 0,
+        "sellerRate": 0.0033
+      },
+      "CA": {
+        "buyerRate": 0,
+        "sellerRate": 0.0011,
+        "note": "County documentary transfer tax of 1.10 per 1,000; some cities add their own, see cities"
+      },
+      "CO": {
+        "buyerRate": 0.0001,
+        "sellerRate": 0,
+        "note": "Documentary fee of 1 cent per 100 dollars, paid by the buyer"
+      },
+      "CT": {
+        "buyerRate": 0,
+        "sellerRate": 0.01,
+        "note": "State conveyance tax 0.75% to 800,000 and 1.25% above, plus 0.25% municipal; seller pays"
+      },
+      "DE": {
+        "buyerRate": 0.02,
+        "sellerRate": 0.02,
+        "note": "4% total (2.5% state, 1.5% local), customarily split; first-time buyers get a state reduction"
+      },
+      "DC": {
+        "buyerRate": 0.011,
+        "sellerRate": 0.011,
+        "note": "Recordation tax (buyer) and transfer tax (seller) are each 1.1% under 400,000 and 1.45% at or above"
+      },
+      "FL": {
+        "buyerRate": 0.0055,
+        "sellerRate": 0.007,
+        "note": "Seller pays doc stamps of 0.70 per 100 on the deed; the buyer rate here approximates doc stamps (0.35%) and intangible tax (0.2%) on the mortgage"
+      },
+      "GA": {
+        "buyerRate": 0.003,
+        "sellerRate": 0.001,
+        "note": "Seller pays 0.1% transfer tax; buyer rate approximates the 0.3% intangible tax on the loan amount"
+      },
+      "HI": {
+        "buyerRate": 0,
+        "sellerRate": 0.002,
+        "note": "Conveyance tax is graduated from 0.1% to 1.25% by price and owner-occupancy"
+      },
+      "ID": {
+        "buyerRate": 0,
+        "sellerRate": 0
+      },
+      "IL": {
+        "buyerRate": 0,
+        "sellerRate": 0.0015,
+        "note": "State 0.1% plus county 0.05%; Chicago adds its own, see cities"
+      },
+      "IN": {
+        "buyerRate": 0,
+        "sellerRate": 0
+      },
+      "IA": {
+        "buyerRate": 0,
+        "sellerRate": 0.0016
+      },
+      "KS": {
+        "buyerRate": 0,
+        "sellerRate": 0,
+        "note": "Mortgage registration tax was phased out"
+      },
+      "KY": {
+        "buyerRate": 0,
+        "sellerRate": 0.001
+      },
+      "LA": {
+        "buyerRate": 0,
+        "sellerRate": 0,
+        "note": "Orleans Parish charges a flat documentary fee"
+      },
+      "ME": {
+        "buyerRate": 0.0022,
+        "sellerRate": 0.0022,
+        "note": "4.40 per 1,000 total, split evenly"
+      },
+      "MD": {
+        "buyerRate": 0.0075,
+        "sellerRate": 0.0075,
+        "note": "State transfer 0.5% plus county transfer and recordation taxes; customarily split, and first-time buyers are exempt from the state half"
+      },
+      "MA": {
+        "buyerRate": 0,
+        "sellerRate": 0.00456,
+        "note": "Deed excise of 4.56 per 1,000; higher in Barnstable County"
+      },
+      "MI": {
+        "buyerRate": 0,
+        "sellerRate": 0.0086,
+        "note": "State 0.75% plus county 0.11%"
+      },
+      "MN": {
+        "buyerRate": 0,
+        "sellerRate": 0.0033,
+        "note": "Deed tax 0.33%; the buyer also pays a 0.23% mortgage registry tax on the loan"
+      },
+      "MS": {
+        "buyerRate": 0,
+        "sellerRate": 0
+      },
+      "MO": {
+        "buyerRate": 0,
+        "sellerRate": 0
+      },
+      "MT": {
+        "buyerRate": 0,
+        "sellerRate": 0
+      },
+      "NE": {
+        "buyerRate": 0,
+        "sellerRate": 0.00225
+      },
+      "NV": {
+        "buyerRate": 0,
+        "sellerRate": 0.0051,
+        "note": "Clark County rate; other counties are 0.39% to 0.41%"
+      },
+      "NH": {
+        "buyerRate": 0.0075,
+        "sellerRate": 0.0075,
+        "note": "1.5% total, split evenly"
+      },
+      "NJ": {
+        "buyerRate": 0,
+        "sellerRate": 0.01,
+        "note": "Realty transfer fee is graduated and paid by the seller; a 1% mansion tax is paid by the buyer above $1,000,000"
+      },
+      "NM": {
+        "buyerRate": 0,
+        "sellerRate": 0
+      },
+      "NY": {
+        "buyerRate": 0,
+        "sellerRate": 0.004,
+        "note": "State transfer tax 0.4% (0.65% above 3,000,000 in NYC); a buyer mansion tax of 1% applies statewide above 1,000,000, graduated higher in NYC"
+      },
+      "NC": {
+        "buyerRate": 0,
+        "sellerRate": 0.002
+      },
+      "ND": {
+        "buyerRate": 0,
+        "sellerRate": 0
+      },
+      "OH": {
+        "buyerRate": 0,
+        "sellerRate": 0.003,
+        "note": "County conveyance fee of 1 to 4 dollars per 1,000"
+      },
+      "OK": {
+        "buyerRate": 0,
+        "sellerRate": 0.0015
+      },
+      "OR": {
+        "buyerRate": 0,
+        "sellerRate": 0,
+        "note": "Only Washington County charges 0.1%"
+      },
+      "PA": {
+        "buyerRate": 0.01,
+        "sellerRate": 0.01,
+        "note": "2% total (1% state, 1% local) split evenly; Philadelphia and Pittsburgh are higher, see cities"
+      },
+      "RI": {
+        "buyerRate": 0,
+        "sellerRate": 0.0046
+      },
+      "SC": {
+        "buyerRate": 0,
+        "sellerRate": 0.0037
+      },
+      "SD": {
+        "buyerRate": 0,
+        "sellerRate": 0.001
+      },
+      "TN": {
+        "buyerRate": 0.0037,
+        "sellerRate": 0,
+        "note": "Transfer tax is customarily paid by the buyer; the buyer also pays a 0.115% mortgage tax on the loan"
+      },
+      "TX": {
+        "buyerRate": 0,
+        "sellerRate": 0
+      },
+      "UT": {
+        "buyerRate": 0,
+        "sellerRate": 0
+      },
+      "VT": {
+        "buyerRate": 0.0125,
+        "sellerRate": 0,
+        "note": "Buyer pays 1.25%, with 0.5% on the first 100,000 of a primary home"
+      },
+      "VA": {
+        "buyerRate": 0.0033,
+        "sellerRate": 0.001,
+        "note": "Buyer recordation tax 0.25% state plus one third local; seller grantor tax 0.1%"
+      },
+      "WA": {
+        "buyerRate": 0,
+        "sellerRate": 0.0128,
+        "note": "Real estate excise tax is graduated: 1.1% to 525,000, 1.28% to 1,525,000, 2.75% to 3,025,000, 3% above; cities add 0.25% to 0.5%"
+      },
+      "WV": {
+        "buyerRate": 0,
+        "sellerRate": 0.0066,
+        "note": "1.10 state plus 2.20 county per 500 dollars"
+      },
+      "WI": {
+        "buyerRate": 0,
+        "sellerRate": 0.003
+      },
+      "WY": {
+        "buyerRate": 0,
+        "sellerRate": 0
+      }
+    },
+    "cities": {
+      "new york": {
+        "buyerRate": 0.01,
+        "buyerAbove": 100000000,
+        "sellerRate": 0.01425,
+        "mortgageRecordingTaxRate": 0.018,
+        "note": "Mansion tax starts at 1% above 1,000,000 and steps up to 3.9% above 25,000,000; NYC transfer tax is 1% under 500,000 and 1.425% above, plus state 0.4%; mortgage recording tax is 1.8% under 500,000 and 1.925% above, paid by the borrower"
+      },
+      "jersey city": {
+        "buyerRate": 0,
+        "buyerAbove": 0,
+        "mortgageRecordingTaxRate": 0,
+        "note": "No city transfer tax; the NJ realty transfer fee and mansion tax apply"
+      },
+      "hoboken": {
+        "buyerRate": 0,
+        "buyerAbove": 0,
+        "mortgageRecordingTaxRate": 0,
+        "note": "No city transfer tax; the NJ realty transfer fee and mansion tax apply"
+      },
+      "philadelphia": {
+        "buyerRate": 0.02139,
+        "sellerRate": 0.02139,
+        "mortgageRecordingTaxRate": 0,
+        "note": "4.278% total (3.278% city plus 1% state), customarily split evenly"
+      },
+      "pittsburgh": {
+        "buyerRate": 0.025,
+        "sellerRate": 0.025,
+        "mortgageRecordingTaxRate": 0,
+        "note": "5% total (3% city, 1% school district, 1% state), customarily split evenly"
+      },
+      "chicago": {
+        "buyerRate": 0.0075,
+        "sellerRate": 0.0045,
+        "mortgageRecordingTaxRate": 0,
+        "note": "City transfer tax 0.75% paid by the buyer; seller pays 0.3% CTA portion plus 0.15% state and county"
+      },
+      "washington": {
+        "buyerRate": 0.011,
+        "sellerRate": 0.011,
+        "mortgageRecordingTaxRate": 0,
+        "note": "Recordation tax 1.1% (buyer) and transfer tax 1.1% (seller); both rise to 1.45% at 400,000 and above"
+      },
+      "baltimore": {
+        "buyerRate": 0.015,
+        "sellerRate": 0.015,
+        "mortgageRecordingTaxRate": 0,
+        "note": "City transfer 1.5% plus recordation 1% plus state 0.5%, customarily split; first-time buyers are exempt from the state half"
+      },
+      "wilmington": {
+        "buyerRate": 0.02,
+        "sellerRate": 0.02,
+        "mortgageRecordingTaxRate": 0,
+        "note": "Delaware 4% total (2.5% state plus 1.5% city), split evenly"
+      },
+      "san francisco": {
+        "buyerRate": 0,
+        "sellerRate": 0.0068,
+        "mortgageRecordingTaxRate": 0,
+        "note": "City transfer tax is graduated: 0.5% to 250,000, 0.68% to 1,000,000, 0.75% to 5,000,000, 2.25% to 10,000,000, higher above; customarily seller"
+      },
+      "los angeles": {
+        "buyerRate": 0,
+        "sellerRate": 0.0056,
+        "mortgageRecordingTaxRate": 0,
+        "note": "City 0.45% plus county 0.11%; Measure ULA adds 4% above about 5,300,000 and 5.5% above about 10,600,000 (thresholds indexed)"
+      },
+      "oakland": {
+        "buyerRate": 0.0075,
+        "sellerRate": 0.0075,
+        "mortgageRecordingTaxRate": 0,
+        "note": "City transfer tax is graduated from 1% to 2.5%; 1.5% between 300,000 and 2,000,000, customarily split"
+      },
+      "san jose": {
+        "buyerRate": 0,
+        "sellerRate": 0.0033,
+        "mortgageRecordingTaxRate": 0,
+        "note": "City 0.33% plus Measure E of 0.75% to 1.5% above 2,000,000"
+      },
+      "seattle": {
+        "buyerRate": 0,
+        "sellerRate": 0.0153,
+        "mortgageRecordingTaxRate": 0,
+        "note": "State graduated excise tax plus 0.25% local; 1.1% below 525,000 and 1.28% to 1,525,000 before the local add"
+      },
+      "boston": {
+        "buyerRate": 0,
+        "sellerRate": 0.00456,
+        "mortgageRecordingTaxRate": 0,
+        "note": "Massachusetts deed excise only; no city transfer tax"
+      },
+      "miami": {
+        "buyerRate": 0.0055,
+        "sellerRate": 0.0066,
+        "mortgageRecordingTaxRate": 0,
+        "note": "Miami-Dade doc stamps are 0.60 per 100 plus 0.45 surtax on non-single-family; buyer pays mortgage doc stamps and intangible tax on the loan"
+      },
+      "denver": {
+        "buyerRate": 0.0001,
+        "sellerRate": 0,
+        "mortgageRecordingTaxRate": 0,
+        "note": "Colorado documentary fee only"
+      },
+      "portland": {
+        "buyerRate": 0,
+        "sellerRate": 0,
+        "mortgageRecordingTaxRate": 0,
+        "note": "No transfer tax in Multnomah County; Washington County charges 0.1%"
+      },
+      "atlanta": {
+        "buyerRate": 0.003,
+        "sellerRate": 0.001,
+        "mortgageRecordingTaxRate": 0,
+        "note": "Georgia transfer tax (seller) and intangible tax on the loan (buyer)"
+      },
+      "houston": {
+        "buyerRate": 0,
+        "sellerRate": 0,
+        "mortgageRecordingTaxRate": 0,
+        "note": "Texas has no transfer tax"
+      },
+      "yonkers": {
+        "buyerRate": 0.01,
+        "buyerAbove": 100000000,
+        "sellerRate": 0.015,
+        "mortgageRecordingTaxRate": 0.013,
+        "note": "City transfer tax 1.5% plus state 0.4%; state mansion tax applies to the buyer above 1,000,000"
+      }
+    },
+    "attorneyCustomaryStates": [
+      "NJ",
+      "NY",
+      "CT",
+      "MA",
+      "GA",
+      "SC",
+      "NC",
+      "DE",
+      "WV",
+      "VT",
+      "NH",
+      "ME",
+      "RI"
+    ],
+    "note": "Rates are the usual allocation; who pays is negotiable in most states"
+  },
+  "pmi": {
+    "note": "Annual premium as a share of the loan, by loan-to-value band and credit range; borrower-paid monthly, 30 year fixed, 30% coverage at 90% LTV and above",
+    "bands": [
+      {
+        "maxLtv": 0.85,
+        "rates": {
+          "760+": 0.0019,
+          "740-759": 0.002,
+          "720-739": 0.0023,
+          "700-719": 0.0027,
+          "680-699": 0.0034,
+          "660-679": 0.0049,
+          "640-659": 0.0058,
+          "620-639": 0.0066
+        }
+      },
+      {
+        "maxLtv": 0.9,
+        "rates": {
+          "760+": 0.003,
+          "740-759": 0.0038,
+          "720-739": 0.0049,
+          "700-719": 0.0059,
+          "680-699": 0.0075,
+          "660-679": 0.0095,
+          "640-659": 0.011,
+          "620-639": 0.0125
+        }
+      },
+      {
+        "maxLtv": 0.95,
+        "rates": {
+          "760+": 0.0038,
+          "740-759": 0.0049,
+          "720-739": 0.0062,
+          "700-719": 0.008,
+          "680-699": 0.01,
+          "660-679": 0.012,
+          "640-659": 0.0135,
+          "620-639": 0.015
+        }
+      },
+      {
+        "maxLtv": 0.97,
+        "rates": {
+          "760+": 0.0055,
+          "740-759": 0.0068,
+          "720-739": 0.0085,
+          "700-719": 0.0105,
+          "680-699": 0.0125,
+          "660-679": 0.015,
+          "640-659": 0.017,
+          "620-639": 0.019
+        }
+      }
+    ]
+  },
+  "fha": {
+    "upfront": 0.0175,
+    "annual": {
+      "ltvAtOrUnder95": 0.005,
+      "ltvOver95": 0.0055
+    },
+    "minDown": 0.035,
+    "mipLifeIfDownUnder10": true,
+    "mipYearsIfDown10OrMore": 11,
+    "note": "Upfront premium is usually financed into the loan; annual rates are for 30 year loans at or under the FHA floor, slightly higher above 726,200"
+  },
+  "va": {
+    "fundingFee": {
+      "firstUse": {
+        "0": 0.0215,
+        "0.05": 0.015,
+        "0.10": 0.0125
+      },
+      "subsequentUse": {
+        "0": 0.033,
+        "0.05": 0.015,
+        "0.10": 0.0125
+      }
+    },
+    "note": "Keys are the down payment share at or above which the rate applies; exempt with a service-connected disability"
+  },
+  "loanLimits": {
+    "conforming": 80650000,
+    "conformingHighCost": 120975000,
+    "fhaFloor": 52425000,
+    "fhaCeiling": 120975000,
+    "byMetro": {
+      "new york": {
+        "conforming": 120975000,
+        "fha": 120975000
+      },
+      "jersey city": {
+        "conforming": 120975000,
+        "fha": 120975000
+      },
+      "hoboken": {
+        "conforming": 120975000,
+        "fha": 120975000
+      },
+      "newark": {
+        "conforming": 120975000,
+        "fha": 120975000
+      },
+      "long island": {
+        "conforming": 120975000,
+        "fha": 120975000
+      },
+      "westchester": {
+        "conforming": 120975000,
+        "fha": 120975000
+      },
+      "los angeles": {
+        "conforming": 120975000,
+        "fha": 120975000
+      },
+      "orange county": {
+        "conforming": 120975000,
+        "fha": 120975000
+      },
+      "san francisco": {
+        "conforming": 120975000,
+        "fha": 120975000
+      },
+      "oakland": {
+        "conforming": 120975000,
+        "fha": 120975000
+      },
+      "san jose": {
+        "conforming": 120975000,
+        "fha": 120975000
+      },
+      "san diego": {
+        "conforming": 111000000,
+        "fha": 111000000
+      },
+      "seattle": {
+        "conforming": 110500000,
+        "fha": 110500000
+      },
+      "boston": {
+        "conforming": 113500000,
+        "fha": 113500000
+      },
+      "washington": {
+        "conforming": 120975000,
+        "fha": 120975000
+      },
+      "arlington": {
+        "conforming": 120975000,
+        "fha": 120975000
+      },
+      "bethesda": {
+        "conforming": 120975000,
+        "fha": 120975000
+      },
+      "denver": {
+        "conforming": 85800000,
+        "fha": 85800000
+      },
+      "boulder": {
+        "conforming": 94000000,
+        "fha": 94000000
+      },
+      "sacramento": {
+        "conforming": 80650000,
+        "fha": 78700000
+      },
+      "riverside": {
+        "conforming": 80650000,
+        "fha": 69300000
+      },
+      "portland": {
+        "conforming": 80650000,
+        "fha": 70100000
+      },
+      "salt lake city": {
+        "conforming": 80650000,
+        "fha": 63800000
+      },
+      "miami": {
+        "conforming": 80650000,
+        "fha": 67400000
+      },
+      "fort lauderdale": {
+        "conforming": 80650000,
+        "fha": 67400000
+      },
+      "west palm beach": {
+        "conforming": 80650000,
+        "fha": 67400000
+      },
+      "tampa": {
+        "conforming": 80650000,
+        "fha": 54000000
+      },
+      "orlando": {
+        "conforming": 80650000,
+        "fha": 54000000
+      },
+      "jacksonville": {
+        "conforming": 80650000,
+        "fha": 54000000
+      },
+      "chicago": {
+        "conforming": 80650000,
+        "fha": 56300000
+      },
+      "philadelphia": {
+        "conforming": 80650000,
+        "fha": 57500000
+      },
+      "dallas": {
+        "conforming": 80650000,
+        "fha": 58000000
+      },
+      "fort worth": {
+        "conforming": 80650000,
+        "fha": 58000000
+      },
+      "houston": {
+        "conforming": 80650000,
+        "fha": 52425000
+      },
+      "austin": {
+        "conforming": 80650000,
+        "fha": 58900000
+      },
+      "san antonio": {
+        "conforming": 80650000,
+        "fha": 52425000
+      },
+      "atlanta": {
+        "conforming": 80650000,
+        "fha": 57500000
+      },
+      "phoenix": {
+        "conforming": 80650000,
+        "fha": 55700000
+      },
+      "minneapolis": {
+        "conforming": 80650000,
+        "fha": 54400000
+      },
+      "detroit": {
+        "conforming": 80650000,
+        "fha": 52425000
+      },
+      "st. louis": {
+        "conforming": 80650000,
+        "fha": 52425000
+      },
+      "baltimore": {
+        "conforming": 80650000,
+        "fha": 65200000
+      },
+      "charlotte": {
+        "conforming": 80650000,
+        "fha": 52425000
+      },
+      "raleigh": {
+        "conforming": 80650000,
+        "fha": 52425000
+      },
+      "las vegas": {
+        "conforming": 80650000,
+        "fha": 52425000
+      },
+      "nashville": {
+        "conforming": 80650000,
+        "fha": 62000000
+      },
+      "pittsburgh": {
+        "conforming": 80650000,
+        "fha": 52425000
+      },
+      "cincinnati": {
+        "conforming": 80650000,
+        "fha": 52425000
+      },
+      "cleveland": {
+        "conforming": 80650000,
+        "fha": 52425000
+      },
+      "columbus": {
+        "conforming": 80650000,
+        "fha": 52425000
+      },
+      "indianapolis": {
+        "conforming": 80650000,
+        "fha": 52425000
+      },
+      "kansas city": {
+        "conforming": 80650000,
+        "fha": 52425000
+      },
+      "milwaukee": {
+        "conforming": 80650000,
+        "fha": 52425000
+      },
+      "oklahoma city": {
+        "conforming": 80650000,
+        "fha": 52425000
+      },
+      "memphis": {
+        "conforming": 80650000,
+        "fha": 52425000
+      },
+      "louisville": {
+        "conforming": 80650000,
+        "fha": 52425000
+      },
+      "richmond": {
+        "conforming": 80650000,
+        "fha": 56000000
+      },
+      "virginia beach": {
+        "conforming": 80650000,
+        "fha": 54000000
+      },
+      "new orleans": {
+        "conforming": 80650000,
+        "fha": 52425000
+      },
+      "hartford": {
+        "conforming": 80650000,
+        "fha": 52425000
+      },
+      "providence": {
+        "conforming": 80650000,
+        "fha": 71700000
+      },
+      "buffalo": {
+        "conforming": 80650000,
+        "fha": 52425000
+      },
+      "birmingham": {
+        "conforming": 80650000,
+        "fha": 52425000
+      },
+      "honolulu": {
+        "conforming": 120975000,
+        "fha": 120975000
+      },
+      "anchorage": {
+        "conforming": 120975000,
+        "fha": 60000000
+      }
+    },
+    "note": "2026 one-unit limits, as remembered; metros not listed use the conforming baseline and the FHA floor"
+  },
+  "maintenance": {
+    "shareOfValueYear": 0.01,
+    "low": 0.01,
+    "high": 0.02,
+    "note": "Older homes, large lots and cold climates sit nearer the high end; new construction and condos (which carry HOA dues instead) nearer the low end"
+  },
+  "prepaids": {
+    "escrowMonthsTaxes": 3,
+    "escrowMonthsInsurance": 2,
+    "prepaidInterestDays": 15,
+    "insuranceFirstYearUpfront": true
+  },
+  "oneOffs": {
+    "appraisalCents": 55000,
+    "inspectionCents": 50000,
+    "attorneyCents": 150000,
+    "recordingCents": 25000,
+    "titleShareOfPrice": 0.005,
+    "lenderFeesCents": 150000,
+    "movingCents": 200000,
+    "firstYearRepairsShare": 0.01,
+    "furnishingCents": 300000
+  },
+  "comparison": {
+    "rentGrowth": 0.03,
+    "appreciationLikely": 0.035,
+    "appreciationLow": 0.01,
+    "appreciationHigh": 0.05,
+    "sellingCostShare": 0.06,
+    "securityDepositMonths": 1,
+    "rentersInsuranceMonthlyCents": 2000,
+    "stockReturn": 0.07,
+    "capitalGainsRate": 0.15,
+    "utilitiesDiffMonthlyCents": 15000,
+    "floodInsuranceAnnualCents": 90000,
+    "inflation": 0.03
+  },
+  "tax": {
+    "saltCapCents": 4040000,
+    "mortgageInterestLimitCents": 75000000,
+    "note": "2026 SALT cap after the 2025 law (40,000 indexed 1% a year), mortgage interest deductible on the first 750,000 of acquisition debt"
+  },
+  "rental": {
+    "lenderCountsShareOfRent": 0.75,
+    "vacancyShare": 0.08,
+    "note": "Lenders often count 75% of documented rental income; check with a lender"
+  }
+}

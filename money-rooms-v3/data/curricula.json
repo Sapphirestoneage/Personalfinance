@@ -1171,13 +1171,14 @@
      },
      "questions": [],
      "outputs": [
-      "the cash flow calendar with its low days"
+      "the cash flow calendar with its low days, safe to spend and the paycheck map"
      ],
      "movesTo": 5,
      "uses": [
       "calendar"
      ],
-     "kind": "transactions"
+     "kind": "transactions",
+     "room": "#/calendar"
     },
     {
      "id": "reveal",
@@ -2481,6 +2482,23 @@
      "kind": "room"
     },
     {
+     "id": "calculators",
+     "name": "Home and car, with numbers",
+     "priority": "could",
+     "minutes": {
+      "min": 3,
+      "target": 4,
+      "max": 6
+     },
+     "questions": [],
+     "outputs": [
+      "how much home, the house and the car calculators, each prefilled, with the FI date effect"
+     ],
+     "movesTo": 11,
+     "room": "#/calculators",
+     "kind": "room"
+    },
+    {
      "id": "timeline10",
      "name": "Goals after the decisions",
      "priority": "could",
@@ -2942,7 +2960,8 @@
     "outputs": [
      "balances re-typed as moves; the month's transactions imported where there is an export"
     ],
-    "kind": "refresh"
+    "kind": "refresh",
+    "room": "#/calendar"
    },
    {
     "id": "changed",

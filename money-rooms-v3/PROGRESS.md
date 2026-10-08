@@ -3,6 +3,8 @@
 Updated: 2026-10-08
 
 ## Done
+- Level 13 Calculators (MR-067): the cash flow calendar engine and screen, How much home, House, Car and
+  Retirement for two, the hub, ten charts, three metrics, five data libraries; gates green; screenshots/level-13.
 - Level 12 amended (MR-065): satisfaction on the client's six (asked at every close and money date),
   worth-it per area with value-per-dollar flags steering the targets, the worth-it lens and chart, the
   satisfaction trend with the stress checkpoints, and the money date as a coach-run fifteen-minute

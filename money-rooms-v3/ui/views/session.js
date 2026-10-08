@@ -26,7 +26,7 @@ import { cachedSensitivity } from '../levers-bridge.js';
 
 export function mount(host, app) {
   const noteInput = h('input', { class: 'input session-note', type: 'text', 'aria-label': 'Session note' });
-  const header = h('header', null, h('h1', null, 'Session'), h('span', { class: 'sub' }, 'The next question is the unsure fact that moves the most money.'), h('div', { class: 'actions' },
+  const header = h('header', null, h('h1', null, 'Session'), h('span', { class: 'sub' }, 'The next question is the unsure fact that moves the most money. ', h('a', { href: '#/calculators' }, 'Calculators')), h('div', { class: 'actions' },
     h('label', { class: 'small muted' }, 'Note for this session'), noteInput,
     h('a', { class: 'btn primary', href: '#/prep' }, 'Prepare the next session'),
     h('a', { class: 'btn', href: '#/call' }, 'Run it'),

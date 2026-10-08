@@ -21,6 +21,9 @@ import { beforeAfter } from '../../engine/outcomes.js';
 import { headlineIds, trend, textOf, overallNextAction, lastSnapshot } from '../../engine/momentum.js';
 import { cachedSensitivity } from '../levers-bridge.js';
 import { ARROWS } from '../scorebits.js';
+import { blockCosts } from '../../engine/scenarios.js';
+import { liveFigures } from '../startingsoon.js';
+const blockCostsFor = (def, b, app) => { try { return blockCosts(def, b, liveFigures(app)); } catch (e) { return null; } };
 
 
 export function mount(host, app) {
@@ -56,6 +59,10 @@ export function mount(host, app) {
     /* since last time */
     const since = sinceLastSession(rec, app.data.fields, (def, o, n, l) => changeText(def, o, n, l));
     page.appendChild(h('section', null, h('h3', null, 'Changes since last time' + (since.since ? ' (' + F.dateLocal(since.since) + ')' : '')), since.changes.length ? h('ul', null, since.changes.slice(0, 3).map(c => h('li', null, c.row + ': ' + c.label.toLowerCase() + ' ' + c.text))) : h('p', { class: 'muted small' }, since.since ? 'No changes since the last session.' : 'First session.')));
+    /* Level 13 (MR-067): safe to spend and the next tight day when the calendar has data; any home or car block with its monthly cost */
+    if (M && M.safeToSpend && M.safeToSpend.status === 'ok' && M.lowPoint && M.lowPoint.status === 'ok') page.appendChild(h('p', { class: 'small op-cal' }, h('strong', null, 'Safe to spend today: '), F.dollarsWhole(M.safeToSpend.value.cents) + '. ', h('strong', null, 'Tightest day: '), F.date(M.lowPoint.date) + ', ' + F.dollarsWhole(M.lowPoint.value.cents) + '.'));
+    const decided = (rec.scenarios || []).filter(b => ['home', 'car'].includes(b.type) && app.data.scenarioBlocks.types[b.type]);
+    if (decided.length) page.appendChild(h('p', { class: 'small op-cal' }, h('strong', null, 'Decisions on the table: '), decided.map(b => { const def = app.data.scenarioBlocks.types[b.type]; const c = blockCostsFor(def, b, app); return b.name + (c && !c.needs ? ' (' + F.dollarsWhole(Math.abs(c.monthly)) + ' a month ' + (c.monthly > 0 ? 'more' : 'less') + ')' : ''); }).join('; ') + '.'));
     /* Level 8: what you said, what it really is, what you'd want; your targets; guesses; if it all falls on you */
     saidSection(page, R, rec);
     /* Level 11: the next wins, the starter cushion first until it is full */

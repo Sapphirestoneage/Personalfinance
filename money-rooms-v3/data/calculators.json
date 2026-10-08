@@ -1,0 +1,18 @@
+{
+ "asOf": "2026-10-08",
+ "source": "Money Rooms v3 Level 13 brief",
+ "verify": false,
+ "calculators": [
+  { "id": "calendar", "name": "Cash flow calendar", "client": "Your month, day by day", "purpose": "Paydays against bills, the tightest day, and what is safe to spend today.", "route": "#/calendar", "liveMetric": "safeToSpend", "firstSession": 4, "clientVisible": true, "group": "new" },
+  { "id": "home-afford", "name": "How much home", "client": "How much home", "purpose": "What a lender might approve, what is comfortable at 35% of take-home, and what keeps your FI date.", "route": "#/calc/home-afford", "liveMetric": "homeComfortable", "firstSession": 10, "clientVisible": true, "group": "new" },
+  { "id": "house", "name": "House", "client": "Owning a home", "purpose": "The full cost of owning, the loan, renting against buying year by year, and a house hack.", "route": "#/calc/house", "liveMetric": "houseMonthly", "firstSession": 10, "clientVisible": true, "group": "new" },
+  { "id": "car", "name": "Car", "client": "A car, or no car", "purpose": "New, used, lease or no car, side by side: true cost a month, cost a mile, and the FI date effect.", "route": "#/calc/car", "liveMetric": "carBest", "firstSession": 10, "clientVisible": true, "group": "new" },
+  { "id": "retire", "name": "Retirement for two", "client": "What your investing becomes", "purpose": "What today's investing becomes by retirement, for one or two people, and what investing more would add.", "route": "#/calc/retire", "liveMetric": "retireNestEgg", "firstSession": 7, "clientVisible": true, "group": "new" },
+  { "id": "debt-payoff", "name": "Debt payoff", "client": "When each debt is gone", "purpose": "Highest rate first, smallest first or least stressful first, with the debt-free date and the interest each costs.", "route": "#/ledger/debt", "liveMetric": "debtFree", "firstSession": 2, "clientVisible": true, "group": "existing" },
+  { "id": "cushion", "name": "Rule of 5 and the cushion", "client": "Your cushion", "purpose": "The three cushion steps and the Rule of 5 target, and when each is reached.", "route": "#/goals", "liveMetric": "runway", "firstSession": 3, "clientVisible": true, "group": "existing" },
+  { "id": "real-wage", "name": "Real hourly wage", "client": "What an hour of work is really worth", "purpose": "Pay after taxes and work costs, over every hour work takes, and what a month costs in hours.", "route": "#/measure/numbers/realHourlyWage", "liveMetric": "realHourlyWage", "firstSession": 3, "clientVisible": true, "group": "existing" },
+  { "id": "simulate", "name": "What-if blocks", "client": "What if", "purpose": "A home, a child, a job change or a move, each alone and all together, replayed over the whole life.", "route": "#/scenarios", "liveMetric": "fiDate", "firstSession": 10, "clientVisible": true, "group": "existing" },
+  { "id": "fi-ladder", "name": "FI ladder", "client": "The kinds of enough", "purpose": "Lean, Barista, Coast, FI and Fat: how far along each rung is and when it lands.", "route": "#/measure/charts/fiLadderLines", "liveMetric": "pctToFi", "firstSession": 4, "clientVisible": true, "group": "existing" },
+  { "id": "levers", "name": "Levers", "client": "What matters most", "purpose": "Which numbers move the FI date most, and which guesses are worth pinning down.", "route": "#/levers", "liveMetric": "fiDate", "firstSession": 8, "clientVisible": true, "group": "existing" }
+ ]
+}

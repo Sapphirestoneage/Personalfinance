@@ -101,3 +101,5 @@ body[data-view="client"] .chip.zone-watch { border-color: var(--line); color: va
 .satisfaction-ask .stress-scale { margin: var(--s-2) 0; }
 .md-prep .score-list li { padding: 6px 0; }
 .md-summary { white-space: pre-wrap; font-family: var(--mono); font-size: var(--fs-12); background: var(--paper-2); padding: var(--s-2); border-radius: var(--r-field); }
+/* MR-067: a locked row's needs phrase can be a sentence; let it wrap on a phone */
+@media (max-width: 720px) { .score-list li.locked .row-value { white-space: normal; text-align: left; } }

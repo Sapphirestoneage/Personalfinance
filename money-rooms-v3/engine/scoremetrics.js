@@ -5,6 +5,7 @@
 import { q, U } from './units.js';
 import { programOf, latestSatisfaction, latestWorthIt } from './program.js';
 import { AREAS } from './anchors.js';
+import { buildModel, simulate } from './cashcal.js';
 
 export const AREA_LABELS = { accommodation: 'Housing', utilities: 'Utilities and subscriptions', food: 'Food', transportation: 'Transportation', therapy: 'Health and therapy', wants: 'Wants', irregular: 'Irregular and annual' };
 /* the quadrant rules: an area above a tenth of spending rated 4 or lower is the easy place to cut; one under a tenth rated 8 or higher has room */
@@ -79,5 +80,17 @@ export function scoreMetrics(record, result, data) {
     put(ok(def('valuePerDollar'), vlist, { formula: 'worth-it score per $1,000 a month; flags: share above 10% rated 4 or lower (easy to cut), share under 10% rated 8 or higher (room to spend more)', inputs: areas.map(x => inputOf(x.label, { status: 'ok', kind: 'text', value: x.perThousand === null ? 'no cost yet' : x.perThousand + ' points per $1,000' })), result: vlist }, { areas, easyCut, room }));
   } else if (wiAreas.length) { put(need(def('areaWorthIt'), ['worth-it scores and monthly spending'])); put(need(def('valuePerDollar'), ['worth-it scores and monthly spending'])); }
   else { put(need(def('areaWorthIt'), ['worth-it scores for the spending areas'])); put(need(def('valuePerDollar'), ['worth-it scores for the spending areas'])); }
+  /* Level 13 (MR-067): safe to spend and the tightest day from the calendar's run (skipped on the light reruns, which have no goal plan), and the car share */
+  if (result.goalPlan !== null && result.goalPlan !== undefined) {
+    const model = buildModel(record, result, data, { days: 60 });
+    if (model.accounts.length && model.incomes.length) {
+      const run = simulate(model);
+      const sv = q(run.safeToSpend.today, U.oneoffAfter); put(ok(def('safeToSpend'), sv, { formula: 'cash (not the cushion) - committed before the next income - floor', inputs: [inputOf('Cash outside the cushion', q(run.safeToSpend.today + run.safeToSpend.committed + model.floor, U.oneoffAfter)), inputOf('Due before ' + (run.safeToSpend.nextIncome || 'the window ends'), q(run.safeToSpend.committed, U.oneoffAfter)), inputOf('Floor (' + model.floorSource + ')', q(model.floor, U.oneoffAfter))], result: sv }, { nextIncome: run.safeToSpend.nextIncome, floor: model.floor, estimated: model.incomes.some(i => i.estimated) || model.bills.some(b => b.estimated) }));
+      const lv = q(run.low.cents, U.oneoffAfter); put(ok(def('lowPoint'), lv, { formula: 'the lowest checking balance over 60 days', inputs: [inputOf('On', { status: 'ok', kind: 'text', value: run.low.date }), inputOf('Floor', q(model.floor, U.oneoffAfter)), inputOf('Bills that could not be paid', { status: 'ok', kind: 'text', value: String(run.shortfalls.length) })], result: lv }, { date: run.low.date, floor: model.floor, shortfalls: run.shortfalls.length, estimated: model.incomes.some(i => i.estimated) || model.bills.some(b => b.estimated) }));
+    } else { put(need(def('safeToSpend'), ['a checking account balance and an income'])); put(need(def('lowPoint'), ['a checking account balance and an income'])); }
+  } else { put(need(def('safeToSpend'), ['a checking account balance and an income'])); put(need(def('lowPoint'), ['a checking account balance and an income'])); }
+  const gross = S && okQ(S.income.grossMonthly) ? S.income.grossMonthly : null; const tr = S && S.spending.byCategory && okQ(S.spending.byCategory.transportation) ? S.spending.byCategory.transportation : null;
+  if (gross && tr && gross.cents > 0) { const r = ratio(tr.cents / gross.cents, Math.min(gross.confidence, tr.confidence), tr.rough); put(ok(def('carCostShare'), r, { formula: 'transportation / gross', inputs: [inputOf('Transportation', tr), inputOf('Gross pay', gross)], result: r })); }
+  else put(need(def('carCostShare'), ['gross pay', 'spending lines']));
   return out;
 }

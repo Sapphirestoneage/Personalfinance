@@ -21,7 +21,7 @@
    "verified": 0.0,
    "none": 0.0
   },
-  "shelterHeavyShare": 0.35,
+  "housingShareOfTakeHome": 0.35,
   "hiddenLeakShare": 0.05,
   "utilizationCardMax": 0.3,
   "utilizationTotalMax": 0.1,
@@ -62,7 +62,7 @@
   "retirementAgeDefault": "Retirement age if Life plan is blank",
   "socialSecurityAge": "Social Security starts at",
   "socialSecurityScale": "Social Security, share of scheduled benefit",
-  "shelterHeavyShare": "Shelter heavy above this share of take-home",
+  "housingShareOfTakeHome": "Housing share of take-home: the comfortable line for rent or the full cost of owning, and the shelter-heavy flag (my default)",
   "hiddenLeakShare": "Hidden leak above this share of take-home",
   "utilizationCardMax": "Utilization drag above this on one card",
   "utilizationTotalMax": "Utilization drag above this in total",

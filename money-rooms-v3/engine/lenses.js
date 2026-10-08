@@ -49,9 +49,9 @@ export function computeLenses(ctx) {
   /* 5 fee drag */
   if (M.weightedEr && M.weightedEr.status === 'ok' && inv.weightedExpenseRatio > asm.feeDragEr && inv.feeDragAnnual) push('fee-drag', inv.feeDragAnnual.cents, { er: F.percent(inv.weightedExpenseRatio), cost: dollars(inv.feeDragAnnual.cents), lifetime: M.feeDragLifetime.status === 'ok' ? dollars(M.feeDragLifetime.value.cents) : 'more' }, [['Weighted expense ratio', F.percent(inv.weightedExpenseRatio)], ['Invested', F.value(inv.investedAssets)]]);
   /* 6 shelter */
-  if (M.shelterRate && M.shelterRate.status === 'ok' && M.shelterRate.value.value > asm.shelterHeavyShare) {
-    const take = val('takeHome'); const over = Math.round((M.shelterRate.value.value - asm.shelterHeavyShare) * take.cents * 12);
-    push('shelter-heavy', over, { share: F.percent(M.shelterRate.value.value), cost: dollars(over) }, [['Accommodation and utilities', dollars(Math.round(M.shelterRate.value.value * take.cents))], ['Take-home', F.value(take)], ['Line', F.percent(asm.shelterHeavyShare)]], { rough: roughOf('shelterRate') });
+  if (M.shelterRate && M.shelterRate.status === 'ok' && M.shelterRate.value.value > asm.housingShareOfTakeHome) {
+    const take = val('takeHome'); const over = Math.round((M.shelterRate.value.value - asm.housingShareOfTakeHome) * take.cents * 12);
+    push('shelter-heavy', over, { share: F.percent(M.shelterRate.value.value), cost: dollars(over) }, [['Accommodation and utilities', dollars(Math.round(M.shelterRate.value.value * take.cents))], ['Take-home', F.value(take)], ['Line', F.percent(asm.housingShareOfTakeHome)]], { rough: roughOf('shelterRate') });
   }
   /* 7 hidden leak */
   if (M.leak && M.leak.status === 'ok' && M.leak.value.value > asm.hiddenLeakShare) push('hidden-leak', M.leak.leakMonthly.cents * 12, { cost: dollars(M.leak.leakMonthly.cents * 12) }, [['Surplus', F.value(val('surplus'))], ['Savings landing', F.value(S.spending.savingsLandingMonthly)]], { rough: roughOf('leak') });

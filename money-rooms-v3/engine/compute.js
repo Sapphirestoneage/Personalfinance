@@ -51,7 +51,11 @@ const ORDER = ['income', 'spending', 'debt', 'invest', 'safety', 'taxes', 'life'
 
 export function assumptionsFor(record, data) {
   const base = data && data.assumptions ? data.assumptions.defaults : {};
-  return Object.assign({}, base, (record.sun && record.sun.assumptions) || {});
+  const over = Object.assign({}, (record.sun && record.sun.assumptions) || {});
+  /* Level 13 (MR-067): one number rules housing; a record that overrode the old shelter flag keeps its line */
+  if (over.shelterHeavyShare !== undefined && over.housingShareOfTakeHome === undefined) over.housingShareOfTakeHome = over.shelterHeavyShare;
+  delete over.shelterHeavyShare;
+  return Object.assign({}, base, over);
 }
 
 export function compute(record, data, opts) {

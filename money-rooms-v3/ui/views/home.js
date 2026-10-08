@@ -104,7 +104,7 @@ function renderMap(mapHost, bar, app) {
     onOpen: id => { location.hash = '#/ledger/' + id; },
     onFocus: id => describePlanet(bar, app, id),
   }));
-  mapHost.appendChild(h('p', { class: 'small orbit-caption' }, h('a', { href: '#/scoreboard' }, 'Open the scoreboard'), ' \u00b7 ', h('a', { href: '#/money-date' }, app.view === 'client' ? 'Monthly check' : 'Money date')));
+  mapHost.appendChild(h('p', { class: 'small orbit-caption' }, h('a', { href: '#/scoreboard' }, 'Open the scoreboard'), ' \u00b7 ', h('a', { href: '#/calculators' }, 'Calculators'), app.view === 'client' ? null : ' \u00b7 ', app.view === 'client' ? null : h('a', { href: '#/money-date' }, 'Money date')));
   mapHost.appendChild(h('p', { class: 'small muted orbit-caption' }, 'Each circle is a room. The number is how many rows it holds, the ring is how sure those numbers are. Tap one to open it.'));
   describePlanet(bar, app, null);
 }

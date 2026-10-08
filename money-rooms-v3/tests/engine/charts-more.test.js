@@ -12,11 +12,11 @@ const jordan = compute(loadHousehold('jordan'), data, { today: TODAY });
 const blank = (() => { const r = createRecord(); setField(r, 'sun', 'name', 'x', 'known', 'client'); return compute(r, data, { today: TODAY }); })();
 const walk = (o, seen) => { seen = seen || new Set(); if (o === null || typeof o !== 'object' || seen.has(o)) return; seen.add(o); Object.keys(o).forEach(k => { const v = o[k]; if (typeof v === 'number') assert.ok(Number.isFinite(v), k + ' is finite'); else walk(v, seen); }); };
 
-test('22 new charts, each with a coach name, a client sentence, a planet, a stage, its metrics and a builder; 39 in all with no duplicate ids', () => {
+test('22 new charts, each with a coach name, a client sentence, a planet, a stage, its metrics and a builder; 49 in all with no duplicate ids', () => {
   assert.equal(MORE_CHARTS.length, 22);
   MORE_CHARTS.forEach(c => { assert.ok(c.id && c.name && c.client && c.planet && c.stage >= 1 && c.stage <= 5 && Array.isArray(c.metrics) && typeof c.build === 'function', c.id); c.metrics.forEach(m => assert.ok(data.metrics.metrics.some(x => x.id === m), c.id + ' metric ' + m)); });
-  assert.equal(ALL_CHARTS.length, 39);
-  assert.equal(new Set(ALL_CHARTS.map(c => c.id)).size, 39);
+  assert.equal(ALL_CHARTS.length, 49);
+  assert.equal(new Set(ALL_CHARTS.map(c => c.id)).size, 49);
   HERO_ORDER.forEach(id => assert.ok(ALL_CHARTS.some(c => c.id === id), 'hero ' + id));
   assert.equal(chartMeta('sankey', data).stage, 1); assert.equal(chartMeta('coastCurve', data).stage, 5);
 });

@@ -518,6 +518,27 @@
     "line",
     "amount"
    ]
+  ],
+  "a checking account balance and an income": [
+   [
+    "invest",
+    "account",
+    "accountBalance"
+   ]
+  ],
+  "gross pay and take-home pay": [
+   [
+    "income",
+    "w2",
+    "takeHome"
+   ]
+  ],
+  "an age, a retirement age, a balance and a monthly amount": [
+   [
+    "sun",
+    null,
+    "birthDate"
+   ]
   ]
  },
  "probeTypes": [

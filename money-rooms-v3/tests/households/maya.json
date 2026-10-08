@@ -9803,6 +9803,74 @@
   "sessionMode": "standard",
   "discovery": null,
   "targets": {},
-  "callProgress": {}
+  "callProgress": {},
+  "calendar": {
+   "version": 1,
+   "anchor": {
+    "m-w2": "2026-10-09",
+    "m-side": "2026-10-01",
+    "m-oth": "2026-10-01"
+   },
+   "dueDays": {
+    "m-rent": 1,
+    "m-util": 15,
+    "m-phone": 20,
+    "m-stream": 7,
+    "m-climb": 1,
+    "m-ther": 3,
+    "m-save1": 10,
+    "m-save2": 10,
+    "m-loan": 1,
+    "m-rentins": 1,
+    "m-travel": "03-15"
+   },
+   "cards": {
+    "m-csp": {
+     "stmtDay": 18,
+     "dueDay": 13
+    },
+    "m-bilt": {
+     "stmtDay": 25,
+     "dueDay": 20
+    }
+   },
+   "reimb": {},
+   "payLater": [
+    {
+     "id": "pl-shoes",
+     "label": "Climbing shoes, four payments",
+     "total": 24000,
+     "installment": 6000,
+     "nextDate": "2026-10-12",
+     "freq": "biweekly",
+     "paid": 6000
+    }
+   ],
+   "maybe": [
+    {
+     "id": "mb-tutor",
+     "label": "Tutoring, a second family",
+     "cents": 30000,
+     "date": "2026-10-28",
+     "likelihood": 0.6,
+     "direction": "in"
+    }
+   ],
+   "transfers": [],
+   "extras": [],
+   "overrides": {},
+   "floorMode": "lean",
+   "floorCents": null,
+   "guard": true,
+   "sweep": false,
+   "sweepTo": null,
+   "logs": [],
+   "checkins": [],
+   "shock": null,
+   "movable": {
+    "m-util": true
+   },
+   "window": null
+  }
  }
 }

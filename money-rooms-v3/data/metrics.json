@@ -648,7 +648,7 @@
     "sources": [
      {
       "id": "default",
-      "label": "The 30% rule, widened for high-cost cities",
+      "label": "My default: housing at or under 35% of take-home (Assumptions)",
       "healthy": [
        0,
        0.3
@@ -661,9 +661,25 @@
        0.35,
        1
       ]
+     },
+     {
+      "id": "thirty",
+      "label": "The 30% rule",
+      "healthy": [
+       0,
+       0.3
+      ],
+      "ok": [
+       0.3,
+       0.33
+      ],
+      "watch": [
+       0.33,
+       1
+      ]
      }
     ],
-    "verify": true
+    "verify": false
    },
    "milestones": null,
    "lens": "shelter-heavy",
@@ -4968,6 +4984,240 @@
    ],
    "clientVisible": true,
    "gentleCopy": "Where the money buys the most for you: {value}.",
+   "firstSession": 3,
+   "headline": false
+  },
+  {
+   "n": 86,
+   "id": "safeToSpend",
+   "name": "Safe to spend today",
+   "clientLabel": "Safe to spend today",
+   "definition": "Cash outside the cushion, minus everything due before the next paycheck, minus the floor, from the cash flow calendar's day-by-day run.",
+   "formula": "cash (not the cushion) - committed before next income - floor",
+   "inputs": [
+    "invest.cashBalances",
+    "spending.byCategory",
+    "income.takeHomeMonthly"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "oneoff",
+    "basis": "real",
+    "tax": "aftertax"
+   },
+   "owner": "engine",
+   "group": "cash flow",
+   "stage": 1,
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "A bill moved past payday, or a smaller everyday spend before it."
+    },
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "More in checking at the start of the month."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "accountBalance"
+    ]
+   },
+   "scoreGroup": "cashflow",
+   "bands": {
+    "sources": [
+     {
+      "id": "default",
+      "label": "Above zero",
+      "healthy": [
+       0,
+       10000000000000
+      ],
+      "ok": [
+       -1,
+       0
+      ],
+      "watch": [
+       -10000000000000,
+       -1
+      ]
+     }
+    ],
+    "verify": false
+   },
+   "milestones": null,
+   "lens": null,
+   "chart": "calendarBalance",
+   "unlock": [
+    "amount",
+    "accountBalance"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Safe to spend today: {value}. Everything due before your next paycheck is already set aside.",
+   "firstSession": 4,
+   "headline": false
+  },
+  {
+   "n": 87,
+   "id": "lowPoint",
+   "name": "Lowest point in the next two months",
+   "clientLabel": "Your tightest day",
+   "definition": "The lowest the checking balance gets over the next sixty days, and the day it happens, from the cash flow calendar.",
+   "formula": "min over days of the checking balance",
+   "inputs": [
+    "invest.cashBalances",
+    "spending.byCategory",
+    "income.takeHomeMonthly"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "oneoff",
+    "basis": "real",
+    "tax": "aftertax"
+   },
+   "owner": "engine",
+   "group": "cash flow",
+   "stage": 1,
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Move a due date past payday; the bill timing fixer finds the best move."
+    },
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "A bigger starting balance lifts every day."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "accountBalance"
+    ]
+   },
+   "scoreGroup": "cashflow",
+   "bands": {
+    "sources": [
+     {
+      "id": "default",
+      "label": "Above the floor",
+      "healthy": [
+       0,
+       10000000000000
+      ],
+      "ok": [
+       -1,
+       0
+      ],
+      "watch": [
+       -10000000000000,
+       -1
+      ]
+     }
+    ],
+    "verify": false
+   },
+   "milestones": null,
+   "lens": null,
+   "chart": "calendarBalance",
+   "unlock": [
+    "amount",
+    "accountBalance"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your tightest day in the next two months lands at {value}. The calendar shows which bill makes it tight.",
+   "firstSession": 4,
+   "headline": false
+  },
+  {
+   "n": 88,
+   "id": "carCostShare",
+   "name": "Car and transport share of gross",
+   "clientLabel": "Getting around, share of pay",
+   "definition": "Transportation spending divided by gross pay, read against the 20/3/8 rule (under 8%) and the common 20/4/10 (under 10%).",
+   "formula": "transportation / gross",
+   "inputs": [
+    "spending.byCategory",
+    "income.grossMonthly"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "engine",
+   "group": "cash flow",
+   "stage": 1,
+   "range": {
+    "low": 0,
+    "high": 0.1,
+    "source": "Money Guy 20/3/8 and the common 20/4/10"
+   },
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "A cheaper car, a shorter loan, or no car in a transit city."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount"
+    ]
+   },
+   "scoreGroup": "cashflow",
+   "bands": {
+    "sources": [
+     {
+      "id": "default",
+      "label": "Money Guy 20/3/8: car costs under 8% of gross",
+      "healthy": [
+       0,
+       0.08
+      ],
+      "ok": [
+       0.08,
+       0.1
+      ],
+      "watch": [
+       0.1,
+       1
+      ]
+     },
+     {
+      "id": "common",
+      "label": "The common 20/4/10: under 10% of gross",
+      "healthy": [
+       0,
+       0.1
+      ],
+      "ok": [
+       0.1,
+       0.15
+      ],
+      "watch": [
+       0.15,
+       1
+      ]
+     }
+    ],
+    "verify": true
+   },
+   "milestones": null,
+   "lens": null,
+   "chart": "carTco",
+   "unlock": [
+    "amount"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Getting around takes {value} of your pay. The Car calculator shows what each choice would make it.",
    "firstSession": 3,
    "headline": false
   }

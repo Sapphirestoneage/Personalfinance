@@ -188,4 +188,15 @@ only through its two append functions) and `engine/chartdata-score.js`; the
 dependency graph gains `through()` and `explain()`, which copy a record, put
 one root back at a time and run `compute` again. The result carries a hidden
 (non-enumerable) reference to the data libraries for builders that rerun the
-engine.
+engine. Level 13 adds
+`engine/loanmath.js` (one level-payment formula), `engine/cashcal.js` (the
+day-by-day run, reading the record and the finished result, writing only
+`record.calendar` through `setSection`), `engine/home.js`, `engine/house.js`,
+`engine/car.js`, `engine/retire.js`, `engine/fieffect.js` (a one-off and a
+monthly change folded into the projection like a scenario block),
+`engine/calculators.js` (each calculator's inputs from the record, the
+libraries and `record.calculators`, with where every value came from) and
+`engine/chartdata-calc.js`. Three metrics (safe to spend, the tightest day,
+car share of gross) are computed in the second pass from the calendar's run
+and skipped on the light reruns. `housingShareOfTakeHome` replaces
+`shelterHeavyShare` as the one housing line.

@@ -1,0 +1,45 @@
+{
+ "asOf": "2026-10-08",
+ "source": "Starter sets for life events, from the reference spec (v26 life event templates) and the builder's own estimates; every amount marked verify and meant to be edited",
+ "verify": true,
+ "templates": [
+  { "id": "lose-job", "label": "Lose my job", "summary": "Income pauses from a date; unemployment lands after a wait; health cover costs more.", "shock": { "months": 3 }, "items": [
+   { "label": "Unemployment benefit", "direction": "in", "cents": 180000, "cadence": "biweekly", "offsetDays": 21, "count": 6, "likelihood": 0.8 },
+   { "label": "COBRA or marketplace premium", "direction": "out", "cents": 55000, "cadence": "month", "offsetDays": 30, "count": 3 },
+   { "label": "Job search costs", "direction": "out", "cents": 20000, "cadence": "once", "offsetDays": 7 } ] },
+  { "id": "new-job", "label": "Start a new job", "summary": "A gap before the first paycheck, then a new pay cadence.", "items": [
+   { "label": "First paycheck of the new job", "direction": "in", "cents": 250000, "cadence": "once", "offsetDays": 28 },
+   { "label": "Work clothes and commute setup", "direction": "out", "cents": 40000, "cadence": "once", "offsetDays": 3 } ] },
+  { "id": "move", "label": "Moving", "summary": "Deposit and first month up front, movers, the old deposit back later.", "items": [
+   { "label": "Security deposit on the new place", "direction": "out", "cents": 250000, "cadence": "once", "offsetDays": 0 },
+   { "label": "First month at the new place", "direction": "out", "cents": 250000, "cadence": "once", "offsetDays": 0 },
+   { "label": "Movers and truck", "direction": "out", "cents": 90000, "cadence": "once", "offsetDays": 2 },
+   { "label": "Old deposit returned", "direction": "in", "cents": 220000, "cadence": "once", "offsetDays": 35, "likelihood": 0.7 } ] },
+  { "id": "buy-car", "label": "Buy a car", "summary": "Down payment and fees up front, then a loan payment and insurance every month.", "items": [
+   { "label": "Down payment and fees", "direction": "out", "cents": 600000, "cadence": "once", "offsetDays": 0 },
+   { "label": "Car payment", "direction": "out", "cents": 48000, "cadence": "month", "offsetDays": 30, "count": 12 },
+   { "label": "Car insurance", "direction": "out", "cents": 18000, "cadence": "month", "offsetDays": 0, "count": 12 } ] },
+  { "id": "wedding", "label": "Wedding", "summary": "Deposits months ahead, the big bills the week of, gifts after.", "items": [
+   { "label": "Venue deposit", "direction": "out", "cents": 500000, "cadence": "once", "offsetDays": 0 },
+   { "label": "Vendors, final payments", "direction": "out", "cents": 1200000, "cadence": "once", "offsetDays": 150 },
+   { "label": "Rings and attire", "direction": "out", "cents": 350000, "cadence": "once", "offsetDays": 60 },
+   { "label": "Cash gifts", "direction": "in", "cents": 400000, "cadence": "once", "offsetDays": 165, "likelihood": 0.6 } ] },
+  { "id": "baby", "label": "New baby", "summary": "Setup costs, the hospital bill after insurance, then childcare if both work.", "items": [
+   { "label": "Nursery and gear", "direction": "out", "cents": 150000, "cadence": "once", "offsetDays": -30 },
+   { "label": "Hospital bill after insurance", "direction": "out", "cents": 300000, "cadence": "once", "offsetDays": 45 },
+   { "label": "Childcare", "direction": "out", "cents": 150000, "cadence": "month", "offsetDays": 90, "count": 12 },
+   { "label": "Diapers, formula, clothes", "direction": "out", "cents": 25000, "cadence": "month", "offsetDays": 0, "count": 12 } ] },
+  { "id": "roommate-leaves", "label": "Roommate moves out", "summary": "The full rent and utilities land on you until someone new moves in.", "items": [
+   { "label": "Roommate's share of rent, now yours", "direction": "out", "cents": 110000, "cadence": "month", "offsetDays": 0, "count": 2 },
+   { "label": "Roommate's share of utilities, now yours", "direction": "out", "cents": 9000, "cadence": "month", "offsetDays": 5, "count": 2 },
+   { "label": "Listing and screening", "direction": "out", "cents": 5000, "cadence": "once", "offsetDays": 1 } ] },
+  { "id": "pet", "label": "New pet", "summary": "Adoption and first vet visits, then food and a reserve for the vet.", "items": [
+   { "label": "Adoption fee and supplies", "direction": "out", "cents": 45000, "cadence": "once", "offsetDays": 0 },
+   { "label": "First vet visits and shots", "direction": "out", "cents": 30000, "cadence": "once", "offsetDays": 14 },
+   { "label": "Food and litter", "direction": "out", "cents": 7000, "cadence": "month", "offsetDays": 0, "count": 12 },
+   { "label": "Pet insurance", "direction": "out", "cents": 3500, "cadence": "month", "offsetDays": 0, "count": 12 } ] },
+  { "id": "medical", "label": "Medical bill", "summary": "A bill after insurance, often payable in installments at no interest if you ask.", "items": [
+   { "label": "Medical bill after insurance", "direction": "out", "cents": 180000, "cadence": "once", "offsetDays": 30 },
+   { "label": "Follow-up visits", "direction": "out", "cents": 15000, "cadence": "month", "offsetDays": 45, "count": 3, "likelihood": 0.7 } ] }
+ ]
+}

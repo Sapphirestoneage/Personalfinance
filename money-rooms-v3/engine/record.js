@@ -258,6 +258,17 @@ export function setGoals(record, patch, meta) {
   touch(record, m.now);
   return line;
 }
+/* Level 13 (MR-067): one optional section of the record set whole (record.calendar, record.calculators), journaled like the goals. */
+export function setSection(record, key, next, meta) {
+  const m = meta || {};
+  const old = record[key] === undefined ? null : JSON.parse(JSON.stringify(record[key]));
+  const nx = JSON.parse(JSON.stringify(next));
+  if (JSON.stringify(old) === JSON.stringify(nx)) return null;
+  record[key] = nx;
+  const line = append(record.journal, { kind: 'section', planet: 'sun', rowId: key, field: key, owner: 'sun', old, new: JSON.parse(JSON.stringify(nx)), source: 'client', state: 'known', session: m.session || null, why: m.why === undefined ? null : m.why }, m.now);
+  touch(record, m.now);
+  return line;
+}
 export function setColTier(record, tier, meta) {
   const m = meta || {};
   const old = record.colTier ? Object.assign({}, record.colTier) : null;
