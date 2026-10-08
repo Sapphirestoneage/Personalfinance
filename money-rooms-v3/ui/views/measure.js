@@ -3,16 +3,28 @@
    eight charts, each with a switch onto the one-pager. Views never do math. */
 import { h, clear } from '../dom.js';
 import * as F from '../../engine/format.js';
-import { CHARTS } from '../../engine/chartdata.js';
+import { ALL_CHARTS as CHARTS, HERO_ORDER } from '../../engine/charts-all.js';
+import { PLANETS } from '../../engine/sun.js';
+import { cachedSensitivity, getSensitivity } from '../levers-bridge.js';
+import { targetFor } from '../../engine/unlocks.js';
+import { sparkline } from '../charts-more.js';
 import * as Charts from '../charts.js';
 import { translator, metricLabel } from '../glossary.js';
 import { PLANET_LABELS } from '../../engine/sun.js';
 import { registerMath, openMetric } from '../metricdrawer.js';
-import { renderUnlockMap, renderFocusedChart, highlight, clientCharts } from '../unlocks.js';
+import { renderUnlockMap, renderFocusedChart, highlight, clientCharts, chartTakeaway, goToProbe } from '../unlocks.js';
 
 /* MR-059: Measure is tabs with stable deep links: #/measure/numbers/<metric>, #/measure/lenses/<lens>, #/measure/charts/<chart>, #/measure/unlocks */
-const TABS = [['numbers', 'Numbers'], ['lenses', 'Lenses'], ['charts', 'Charts'], ['unlocks', 'Unlocks']];
-export function tabOf(app) { const id = app.route.params.id; return TABS.some(t => t[0] === id) ? id : 'numbers'; }
+const TABS = [['overview', 'Overview'], ['charts', 'Charts'], ['numbers', 'Numbers'], ['lenses', 'Lenses'], ['unlocks', 'Unlocks']];
+export function tabOf(app) { const id = app.route.params.id; return TABS.some(t => t[0] === id) ? id : 'overview'; }
+/* tiles with a time dimension carry a sparkline of the path they are read from (MR-061) */
+const TIME_METRICS = { netWorth: 'netWorth', fiDate: 'netWorth', pctToFi: 'netWorth', crossoverDate: 'netWorth', first100kDate: 'netWorth', theFlip: 'invested', coastFi: 'invested', regularFi: 'netWorth', leanFi: 'netWorth', fatFi: 'netWorth', fiNumber: 'netWorth', totalDebt: 'debt', debtFree: 'debt', weightedApr: 'debt', annualInterest: 'debt', assets: 'invested' };
+function sparkFor(app, id) {
+  const key = TIME_METRICS[id]; const pj = app.result && app.result.projection; if (!key || !pj || !pj.likely) return null;
+  const vals = pj.likely.path.map(p => p[key]); if (key === 'debt' && !vals.some(v => v > 0)) return null;
+  const fi = pj.likely.fiAge !== null ? pj.likely.path.findIndex(p => p.age === pj.likely.fiAge) : null;
+  return sparkline(vals, { markX: fi !== null && fi >= 0 ? fi : null });
+}
 function tabBar(app, current) {
   return h('nav', { class: 'mtabs', 'aria-label': 'Measure sections' }, TABS.map(([id, label]) => h('a', { href: '#/measure/' + id, 'aria-current': id === current ? 'page' : null }, label)));
 }
@@ -39,13 +51,16 @@ export function mount(host, app) {
   const lenses = h('section', { class: 'panel' });
   const charts = h('section');
   const unlocks = h('section', { class: 'unlock-map' });
+  const overview = h('section', { class: 'overview' });
+  if (tab === 'overview') host.appendChild(overview);
   if (tab === 'numbers') { host.appendChild(stage); host.appendChild(kpis); }
   if (tab === 'lenses') host.appendChild(lenses);
   if (tab === 'charts') host.appendChild(charts);
   if (tab === 'unlocks') host.appendChild(unlocks);
   function draw() {
-    clear(stage); clear(kpis); clear(lenses); clear(charts); clear(unlocks);
+    clear(stage); clear(kpis); clear(lenses); clear(charts); clear(unlocks); clear(overview);
     const R = app.result; const M = R.metrics; const phone = isPhone(host);
+    if (tab === 'overview') { if (!M) { overview.appendChild(h('div', { class: 'empty' }, h('h2', null, 'Nothing to show yet'), h('p', null, 'Enter income first, then spending. The charts arrive as their inputs do.'))); return; } drawOverview(overview, app, t, phone); return; }
     if (tab === 'unlocks') { if (!M) { unlocks.appendChild(h('div', { class: 'empty' }, h('h2', null, 'Nothing to map yet'), h('p', null, 'Enter income first, then spending. The map fills as numbers open.'))); return; } renderUnlockMap(unlocks, app); return; }
     if (tab === 'charts' && sub) { if (!M) { charts.appendChild(h('div', { class: 'empty' }, h('h2', null, 'Nothing to chart yet'), h('p', null, 'Enter income first, then spending.'))); return; } renderFocusedChart(charts, app, sub, app.unlockBack); return; }
     if (!M) { (tab === 'numbers' ? kpis : tab === 'lenses' ? lenses : charts).appendChild(h('div', { class: 'empty' }, h('h2', null, 'Nothing to measure yet'), h('p', null, 'Enter income first, then spending. Numbers appear as their inputs arrive.'))); return; }
@@ -124,7 +139,7 @@ export function kpi(app, m, def, t) {
   if (def.id === 'emergencyGap' && m.monthlyToClose && m.monthlyToClose.cents) range = F.dollarsWhole(m.monthlyToClose.cents) + ' a month to close';
   if (def.id === 'coastFi' && m.coastPct !== null) range = F.percent(m.coastPct) + ' there';
   const isList = v.kind === 'shares' || v.kind === 'list';
-  const tile = h('div', { class: 'kpi', role: 'button', tabindex: '0', 'aria-label': label + ' ' + text, dataset: { metric: def.id } }, h('div', { class: 'label', title: def.definition }, label), h('div', { class: 'value' + (v.rough ? ' rough' : '') + (isList ? ' list' : ''), title: text }, node || text), range ? h('div', { class: 'range', title: range }, range) : null);
+  const tile = h('div', { class: 'kpi', role: 'button', tabindex: '0', 'aria-label': label + ' ' + text, dataset: { metric: def.id } }, h('div', { class: 'label', title: def.definition }, label), h('div', { class: 'value' + (v.rough ? ' rough' : '') + (isList ? ' list' : ''), title: text }, node || text), range ? h('div', { class: 'range', title: range }, range) : null, sparkFor(app, def.id));
   tile.addEventListener('click', () => openMath(app, m, def));
   tile.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openMath(app, m, def); } });
   return tile;
@@ -195,23 +210,62 @@ export function drawCharts(host, app, t, phone) {
   clear(host);
   const coach = app.view === 'coach';
   const onPage = app.record.sun.onepager.charts || [];
+  const visible = clientCharts(app);
+  const extra = { sensitivity: cachedSensitivity(app) };
+  const list = CHARTS.filter(c => (coach || (visible.includes(c.id) && !c.coachOnly)));
+  const built = {}; list.forEach(c => { built[c.id] = c.build(app.result, extra); });
+  const open = list.filter(c => built[c.id] && !built[c.id].needs).length;
+  host.appendChild(h('h2', { style: { margin: '16px 0 8px' } }, t('Charts'), h('span', { class: 'tag' }, open + ' of ' + list.length + ' open')));
+  /* filter by planet; a filter is remembered for the page */
+  const planetsHere = PLANETS.filter(p => list.some(c => c.planet === p));
+  const chips = h('div', { class: 'gallery-filter', role: 'group', 'aria-label': 'Filter charts by planet' });
+  const paintChips = () => { clear(chips); [['all', 'All']].concat(planetsHere.map(p => [p, PLANET_LABELS[p]])).forEach(([id, label]) => chips.appendChild(h('button', { 'aria-pressed': String(galleryFilter === id), onClick: () => { galleryFilter = id; drawCharts(host, app, t, phone); } }, label))); };
+  paintChips(); host.appendChild(chips);
   const grid = h('div', { class: 'grid grid-2' });
   let foldOpen = !phone;
-  const visible = clientCharts(app);
-  CHARTS.forEach(c => {
-    if (!coach && !visible.includes(c.id)) return; /* MR-059: the client sees the charts the coach marked */
-    const data = c.build(app.result);
-    const panel = h('section', { class: 'panel chart-panel', dataset: { chart: c.id } }, h('header', null, h('h3', null, h('a', { href: '#/measure/charts/' + c.id, class: 'chart-link', title: 'Open this chart on its own' }, coach ? c.name : c.client)), coach ? h('label', { class: 'small muted', style: { display: 'inline-flex', gap: '4px' } }, h('input', { type: 'checkbox', checked: visible.includes(c.id), 'aria-label': 'Client sees ' + c.name, onChange: e => { app.mutate(rec => { const set = new Set(clientCharts(app)); if (e.target.checked) set.add(c.id); else set.delete(c.id); rec.sun.clientCharts = Array.from(set); }, 'picks'); } }), 'Client sees') : null, coach ? h('label', { class: 'small muted', style: { display: 'inline-flex', gap: '4px' } }, h('input', { type: 'checkbox', checked: onPage.includes(c.id), onChange: e => { app.mutate(rec => { const set = new Set(rec.sun.onepager.charts || []); if (e.target.checked) set.add(c.id); else set.delete(c.id); rec.sun.onepager.charts = Array.from(set); }, 'picks'); } }), 'On the one-pager') : null));
+  list.filter(c => galleryFilter === 'all' || c.planet === galleryFilter).forEach(c => {
+    const data = built[c.id]; const locked = !data || data.needs;
+    const title = locked ? (coach ? c.name : c.client) : chartTakeaway(app, c.id);
+    const panel = h('section', { class: 'panel chart-panel' + (locked ? ' locked' : ''), dataset: { chart: c.id } }, h('header', null, h('h3', null, h('a', { href: '#/measure/charts/' + c.id, class: 'chart-link', title: 'Open this chart on its own' }, title)),
+      coach && !locked ? h('label', { class: 'small muted', style: { display: 'inline-flex', gap: '4px' } }, h('input', { type: 'checkbox', checked: visible.includes(c.id), 'aria-label': 'Client sees ' + c.name, onChange: e => { app.mutate(rec => { const set = new Set(clientCharts(app)); if (e.target.checked) set.add(c.id); else set.delete(c.id); rec.sun.clientCharts = Array.from(set); }, 'picks'); } }), 'Client sees') : null,
+      coach && !locked ? h('label', { class: 'small muted', style: { display: 'inline-flex', gap: '4px' } }, h('input', { type: 'checkbox', checked: onPage.includes(c.id), 'aria-label': 'On the one-pager: ' + c.name, onChange: e => { app.mutate(rec => { const set = new Set(rec.sun.onepager.charts || []); if (e.target.checked) set.add(c.id); else set.delete(c.id); rec.sun.onepager.charts = Array.from(set); }, 'picks'); } }), 'On the one-pager') : null));
+    if (!locked && title !== (coach ? c.name : c.client)) panel.appendChild(h('div', { class: 'small muted', style: { marginBottom: '6px' } }, coach ? c.name : c.client));
     const body = h('div', { dataset: { chartBody: c.id } });
     panel.appendChild(body);
+    if (locked) {
+      const target = data && data.needs ? data.needs.map(n => targetFor(n, app.record, app.data)).find(Boolean) : null;
+      panel.appendChild(h('div', { class: 'needs-row' }, h('span', { class: 'small muted' }, 'Needs ' + ((data && data.needs) || ['inputs']).join(', ') + '.'), target && coach && !(data && data.waiting) ? h('button', { class: 'btn small primary', onClick: () => goToProbe(app, Object.assign({ kind: target.planet === 'sun' ? 'sun' : 'field' }, target), '#/measure/charts') }, 'Add ' + target.label.toLowerCase()) : null));
+    }
     grid.appendChild(panel);
   });
-  host.appendChild(h('h2', { style: { margin: '16px 0 8px' } }, 'Charts'));
   host.appendChild(grid);
   const panels = Array.from(grid.children);
   const fold = () => panels.forEach((el, i) => { el.style.display = foldOpen || i < 2 ? '' : 'none'; });
   if (phone && panels.length > 2) { const btn = h('button', { class: 'btn small', 'aria-expanded': 'false', style: { margin: '8px 0' } }, (panels.length - 2) + ' more charts'); btn.addEventListener('click', () => { foldOpen = !foldOpen; fold(); btn.setAttribute('aria-expanded', String(foldOpen)); btn.textContent = foldOpen ? 'Fewer charts' : (panels.length - 2) + ' more charts'; paint(); }); host.appendChild(btn); fold(); }
-  const paint = () => CHARTS.forEach(c => { const body = grid.querySelector('[data-chart-body="' + c.id + '"]'); if (body && body.parentNode.style.display !== 'none') Charts.render(c.id, body, c.build(app.result), { client: !coach }); });
+  const paint = () => list.forEach(c => { const body = grid.querySelector('[data-chart-body="' + c.id + '"]'); if (body && body.parentNode.style.display !== 'none' && built[c.id] && !built[c.id].needs) Charts.render(c.id, body, built[c.id], { client: !coach }); });
   paint();
-  if (globalThis.ResizeObserver) { let t = null; let last = grid.clientWidth; const ro = new ResizeObserver(() => { if (Math.abs(grid.clientWidth - last) < 24) return; last = grid.clientWidth; clearTimeout(t); t = setTimeout(paint, 150); }); ro.observe(grid); }
+  if (list.some(c => built[c.id] && built[c.id].waiting)) getSensitivity(app, () => setTimeout(() => drawCharts(host, app, t, phone), 0));
+  if (globalThis.ResizeObserver) { let tm = null; let last = grid.clientWidth; const ro = new ResizeObserver(() => { if (Math.abs(grid.clientWidth - last) < 24) return; last = grid.clientWidth; clearTimeout(tm); tm = setTimeout(paint, 150); }); ro.observe(grid); }
+}
+let galleryFilter = 'all';
+
+/* The Overview (MR-061): the eight hero charts that have their inputs, each titled by its takeaway, each a link to its own page. */
+export function drawOverview(host, app, t, phone) {
+  clear(host);
+  const coach = app.view === 'coach'; const visible = clientCharts(app);
+  const extra = { sensitivity: cachedSensitivity(app) };
+  const heroes = []; const waiting = [];
+  HERO_ORDER.forEach(id => { if (heroes.length >= 8) return; const c = CHARTS.find(x => x.id === id); if (!c || (!coach && (!visible.includes(id) || c.coachOnly))) return; const d = c.build(app.result, extra); if (d && d.waiting) waiting.push(id); if (d && !d.needs) heroes.push({ c, d }); });
+  const total = CHARTS.filter(c => coach || (visible.includes(c.id) && !c.coachOnly)).length;
+  host.appendChild(h('div', { class: 'row', style: { justifyContent: 'space-between', margin: '0 0 8px' } }, h('h2', null, coach ? 'The picture' : 'Your picture'), h('span', { class: 'small muted' }, heroes.length + ' of ' + total + ' charts shown. ', h('a', { href: '#/measure/charts' }, 'All charts'), ' or ', h('a', { href: '#/measure/unlocks' }, coach ? 'the Unlock Map' : 'what more would show'))));
+  if (!heroes.length) { host.appendChild(h('div', { class: 'empty' }, h('h2', null, 'No chart has its inputs yet'), h('p', null, 'Income first, then spending; the first charts arrive with the first rows.'), h('p', null, h('a', { class: 'next', href: '#/measure/unlocks' }, 'See what would open them')))); return; }
+  const grid = h('div', { class: 'overview-grid' });
+  heroes.forEach(({ c }) => { grid.appendChild(h('section', { class: 'panel chart-panel hero', dataset: { chart: c.id } }, h('header', null, h('h3', null, h('a', { href: '#/measure/charts/' + c.id, class: 'chart-link' }, chartTakeaway(app, c.id)))), h('div', { class: 'small muted', style: { marginBottom: '6px' } }, coach ? c.name : c.client), h('div', { dataset: { chartBody: c.id } }))); });
+  host.appendChild(grid);
+  const shown = phone ? heroes.slice(0, 2) : heroes; let open = !phone;
+  const paint = () => heroes.forEach(({ c, d }, i) => { const body = grid.querySelector('[data-chart-body="' + c.id + '"]'); if (!body) return; body.parentNode.style.display = open || i < 2 ? '' : 'none'; if (open || i < 2) Charts.render(c.id, body, d, { client: !coach }); });
+  if (phone && heroes.length > 2) { const btn = h('button', { class: 'btn small', 'aria-expanded': 'false', style: { margin: '8px 0' } }, (heroes.length - 2) + ' more charts'); btn.addEventListener('click', () => { open = !open; btn.setAttribute('aria-expanded', String(open)); btn.textContent = open ? 'Fewer charts' : (heroes.length - 2) + ' more charts'; paint(); }); host.appendChild(btn); }
+  paint();
+  if (waiting.length) getSensitivity(app, () => setTimeout(() => drawOverview(host, app, t, phone), 0));
+  if (globalThis.ResizeObserver) { let tm = null; let last = grid.clientWidth; const ro = new ResizeObserver(() => { if (Math.abs(grid.clientWidth - last) < 24) return; last = grid.clientWidth; clearTimeout(tm); tm = setTimeout(paint, 150); }); ro.observe(grid); }
 }

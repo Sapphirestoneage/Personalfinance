@@ -1,0 +1,41 @@
+/* Part C (MR-061): the chart-first Measure. Token colours only; both themes. */
+.chart .grid { stroke: var(--line-soft); }
+.chart .dot { fill: var(--sapphire-700); stroke: var(--paper); stroke-width: 1.5; }
+.chart .dot.you { fill: var(--sapphire-900); }
+.chart .dot.done { fill: var(--sapphire-300); }
+.chart .dot.fixed { fill: var(--slate); }
+.chart .mark-gut { fill: var(--sapphire-300); } .chart .mark-actual { fill: var(--sapphire-900); } .chart .mark-dream { fill: var(--gold); }
+.chart .mark-span { stroke: var(--line); stroke-width: 3; }
+.chart .gauge-track { fill: var(--line-soft); } .chart .gauge-fill { fill: var(--sapphire-700); }
+.chart .chart-label.big { font-size: 16px; font-weight: 600; }
+.chart .area-layer { stroke: var(--paper); stroke-width: 0.5; }
+.legend .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; background: var(--sapphire-500); vertical-align: middle; }
+.legend .swatch.shade-0 { background: var(--chart-1); } .legend .swatch.shade-1 { background: var(--chart-2); } .legend .swatch.shade-2 { background: var(--chart-3); } .legend .swatch.shade-3 { background: var(--chart-4); }
+.legend .swatch.band { background: var(--sapphire-100); border: 1px solid var(--sapphire-300); }
+.legend .swatch.line-1 { background: var(--sapphire-500); height: 3px; } .legend .swatch.line-3 { background: var(--slate); height: 3px; }
+.legend .swatch.mark-gut { background: var(--sapphire-300); border-radius: 50%; } .legend .swatch.mark-actual { background: var(--sapphire-900); border-radius: 50%; } .legend .swatch.mark-dream { background: var(--gold); border-radius: 50%; }
+.legend .swatch.none { display: none; }
+.chart-sub { margin-top: var(--s-2); }
+
+/* sparklines on time tiles */
+.sparkline { width: 96px; height: 24px; display: block; margin-top: 4px; }
+.sparkline polyline { fill: none; stroke: var(--sapphire-500); stroke-width: 1.5; }
+.sparkline circle { fill: var(--sapphire-900); }
+.kpi .sparkline { margin-left: 0; }
+
+/* the overview grid and the chart gallery */
+.overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: var(--s-3); }
+.overview-grid .chart-panel { margin: 0; min-width: 0; }
+.chart-panel.hero header h3 { font-size: var(--fs-14); }
+.gallery-filter { display: flex; gap: var(--s-1); flex-wrap: wrap; margin-bottom: var(--s-3); }
+.gallery-filter button { border: 1px solid var(--line); background: var(--paper); border-radius: 999px; padding: 4px 12px; font: inherit; font-size: var(--fs-12); color: var(--ink); cursor: pointer; }
+.gallery-filter button[aria-pressed="true"] { background: var(--sapphire-100); border-color: var(--sapphire-500); color: var(--sapphire-900); font-weight: var(--w-semibold); }
+.chart-panel.locked { background: var(--paper-2); border-style: dashed; }
+.chart-panel.locked header h3 a { color: var(--slate); }
+.chart-panel .chart-link { color: inherit; text-decoration: none; }
+.chart-panel .chart-link:hover { text-decoration: underline; }
+.chart-panel header { flex-wrap: wrap; row-gap: 4px; }
+.chart-panel .needs-row { display: flex; gap: var(--s-2); align-items: center; flex-wrap: wrap; }
+.drawer .mini-chart { margin: var(--s-2) 0; }
+.drawer .mini-chart .chart-label { font-size: 10px; }
+@media (max-width: 720px) { .overview-grid { grid-template-columns: minmax(0, 1fr); } .legend { gap: 2px var(--s-2); } }

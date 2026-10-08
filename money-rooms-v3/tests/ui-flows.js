@@ -288,7 +288,7 @@ export const flows = [
     check('progress versus paperwork counts the rent correction as a guess replaced', prog.indexOf('Guesses replaced') !== -1 && /Guesses replaced\s*1/.test(prog.replace(/\n/g, ' ')));
     check('the email turns into the targets email', (await page.textContent('#main')).indexOf('Targets email') !== -1);
     /* 4. runway shows two numbers; the roommate what-if has its card */
-    await page.goto(base + 'index.html#/measure');
+    await page.goto(base + 'index.html#/measure/numbers');
     await page.waitForSelector('.kpi');
     check('runway says if it all falls on you', (await page.textContent('#main')).indexOf('If it all falls on you') !== -1);
     await page.goto(base + 'index.html#/scenarios');
@@ -299,7 +299,7 @@ export const flows = [
     check('the roommate card gives the new bill, the bridge and the cushion', card.indexOf('Shared bills become') !== -1 && card.indexOf('Bridge for 2 months') !== -1 && card.indexOf('Cash covers') !== -1 && card.indexOf('Lease in both names') !== -1);
     /* 5. the client view: client words only */
     await page.click('#view-client');
-    await page.goto(base + 'index.html#/measure');
+    await page.goto(base + 'index.html#/measure/numbers');
     await page.waitForSelector('.kpi');
     const client = await page.textContent('#main');
     check('the client view never says HCOL, anchor, variance or estimated', !/\bHCOL\b|\banchor\b|\bvariance\b|\bestimated\b|stand-in|\bRPP\b/i.test(client));
@@ -589,7 +589,7 @@ flows.push({
     check('client view shows only the picked lenses', clientLenses < lensCount && clientLenses >= 1, String(clientLenses));
     const text = await page.evaluate(() => document.body.innerText);
     check('client view hides private notes and my plate', text.indexOf('Private note') === -1);
-    await page.goto(base + 'index.html#/measure');
+    await page.goto(base + 'index.html#/measure/numbers');
     await page.waitForSelector('.kpis');
     await page.click('.kpi');
     await page.waitForSelector('.drawer');
@@ -700,7 +700,7 @@ flows.push({
     await page.goto(base + 'index.html#/home');
     await page.waitForSelector('text=No clients yet');
     await importFixture(page, APP, 'dev');
-    await page.goto(base + 'index.html#/measure');
+    await page.goto(base + 'index.html#/measure/numbers');
     await page.waitForSelector('.kpi');
     const kpis = await page.locator('.kpi').count();
     check('Dev opens on a full Measure screen', kpis >= 40, String(kpis));
@@ -760,22 +760,25 @@ flows.push({
     await page.waitForTimeout(700);
     const where1 = await page.evaluate(() => ({ hash: location.hash, col: document.activeElement && document.activeElement.dataset.col, tag: document.activeElement && document.activeElement.tagName }));
     check('Next unlock opens a Ledger row with the cursor in the field', /^#\/ledger\//.test(where1.hash) && !!where1.col, JSON.stringify(where1));
+    /* a row that names itself by a type (accounts) starts on the type select; pick one, then the figure */
+    if (where1.tag === 'SELECT') { await page.keyboard.press('ArrowDown'); await page.keyboard.press('Tab'); await page.waitForTimeout(200); }
     await page.keyboard.type('2250');
     await page.keyboard.press('Tab');
     await page.waitForTimeout(800);
-    /* a save while typing announces itself in a toast; the toast opens the panel */
-    const toast = await page.locator('.toast').count();
-    check('the first number announces what it opened', toast === 1, String(toast));
-    if (toast) await page.click('.toast button');
+    /* a save announces itself: a panel when a chart opened, else a toast whose button opens the panel */
+    const toast = await page.locator('.toast button').count(); const panel0 = await page.locator('.unlock-panel').count();
+    check('the first number announces what it opened', toast === 1 || panel0 === 1, 'toast ' + toast + ' panel ' + panel0);
+    if (!panel0 && toast) await page.click('.toast button');
     await page.waitForSelector('.unlock-panel');
     let panel = await page.textContent('.unlock-panel');
-    check('the reveal lists the numbers the first spending line opened', /Monthly spending/.test(panel) && /FI number/.test(panel), panel.slice(0, 160));
+    check('the reveal lists what the first row opened', /Numbers/.test(panel) && (await page.locator('.unlock-panel .reveal-item').count()) >= 3, panel.slice(0, 160));
     check('every item carries a takeaway', (await page.locator('.unlock-panel .reveal-take').count()) >= 3);
     /* tap a number: Measure scrolls to it and lights it up */
-    await page.click('.unlock-panel .reveal-item.kind-metric:has-text("FI number")');
+    const firstMetric = await page.getAttribute('.unlock-panel .reveal-item.kind-metric', 'href');
+    await page.click('.unlock-panel .reveal-item.kind-metric');
     await page.waitForSelector('.kpi.highlight');
     const lit = await page.$$eval('.kpi.highlight', e => e.map(x => x.dataset.metric));
-    check('a tapped number is highlighted on Measure', lit.includes('fiNumber') || lit.includes('regularFi'), lit.join(','));
+    check('a tapped number is highlighted on Measure', lit.length === 1 && firstMetric.endsWith('/' + lit[0]), lit.join(',') + ' from ' + firstMetric);
     check('the deep link is stable', /^#\/measure\/numbers\//.test(await page.evaluate(() => location.hash)));
     /* keep following Next unlock until a chart opens (at most six inputs) */
     let chartItem = null;

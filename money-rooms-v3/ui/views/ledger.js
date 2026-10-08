@@ -4,7 +4,7 @@
 import { h, clear } from '../dom.js';
 import { orbitMap, mapPanel } from '../orbit.js';
 import { mountStartingSoon } from '../startingsoon.js';
-import { CHARTS } from '../../engine/chartdata.js';
+import { ALL_CHARTS as CHARTS } from '../../engine/charts-all.js';
 import * as Charts from '../charts.js';
 import { ledgerTable, markTypeNone } from '../table.js';
 import { PLANET_LABELS, PLANETS } from '../../engine/sun.js';

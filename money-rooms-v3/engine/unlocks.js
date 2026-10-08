@@ -4,7 +4,7 @@
    module reads two results, lists what moved up, and finds the single missing
    input that would open the most by trying stand-in values and recomputing. */
 import { compute } from './compute.js';
-import { CHARTS } from './chartdata.js';
+import { ALL_CHARTS as CHARTS, chartMeta } from './charts-all.js';
 import { createRow, setField, addRow } from './record.js';
 import { freshFacts, typeDef, fieldDef } from './fields.js';
 import { SUN_ASKED, PLANETS, PLANET_LABELS } from './sun.js';
@@ -22,9 +22,9 @@ export function lensState(def, result) {
   return metricState(m) === 'locked' ? 'locked' : 'quiet';
 }
 export function chartState(def, result, data) {
-  const built = def.build(result);
-  if (!built || built.needs) return 'locked';
-  const meta = data && data.unlocks && data.unlocks.charts[def.id];
+  const built = def.build(result, {});
+  if (!built || built.needs) return built && built.waiting ? 'rough' : 'locked'; /* a chart waiting on the sensitivity run is open, just not drawn yet */
+  const meta = chartMeta(def.id, data);
   const rough = meta && meta.metrics.some(id => metricState(result.metrics && result.metrics[id]) === 'rough');
   return rough ? 'rough' : 'solid';
 }
@@ -67,7 +67,7 @@ export function unlocksBetween(before, after, result, data) {
   const defs = data.metrics.metrics;
   const metrics = d.metrics.map(x => { const def = defs.find(m => m.id === x.id); const m = result.metrics[x.id]; return { kind: 'metric', id: x.id, from: x.from, to: x.to, name: def.name, clientName: def.clientLabel, value: valueText(m), takeaway: takeawayOf(def), stage: def.stage, href: '#/measure/numbers/' + x.id }; });
   const lenses = d.lenses.map(x => { const def = data.lenses.lenses.find(l => l.id === x.id); const fired = (result.lenses || []).find(l => l.id === x.id); return { kind: 'lens', id: x.id, from: x.from, to: x.to, name: def.name, clientName: def.name, value: fired && fired.impactAnnual !== null && fired.impactAnnual !== undefined ? F.dollarsWhole(fired.impactAnnual) + ' a year' : (fired && fired.figure) || '', takeaway: fired ? fired.text : def.trigger, stage: stageOfLens(def, data), href: '#/measure/lenses/' + x.id }; });
-  const charts = d.charts.map(x => { const def = CHARTS.find(c => c.id === x.id); const meta = data.unlocks.charts[x.id] || { stage: 5 }; return { kind: 'chart', id: x.id, from: x.from, to: x.to, name: def.name, clientName: def.client, value: '', takeaway: def.client, stage: meta.stage, href: '#/measure/charts/' + x.id }; });
+  const charts = d.charts.map(x => { const def = CHARTS.find(c => c.id === x.id); const meta = chartMeta(x.id, data); return { kind: 'chart', id: x.id, from: x.from, to: x.to, name: def.name, clientName: def.client, value: '', takeaway: def.client, stage: meta.stage, href: '#/measure/charts/' + x.id }; });
   return { metrics, lenses, charts, count: metrics.length + lenses.length + charts.length };
 }
 export function stageOfLens(def, data) { const m = data.metrics.metrics.find(x => x.id === def.metric); return m ? m.stage : 5; }
@@ -104,7 +104,7 @@ function firstTarget(needsList, record, data) {
 export function inputFor(item, result, record, data) {
   if (item.kind === 'metric') { const m = result.metrics[item.id]; return firstTarget(m && m.needs, record, data); }
   if (item.kind === 'lens') { const def = data.lenses.lenses.find(l => l.id === item.id); const m = def && result.metrics[def.metric]; return firstTarget(m && m.needs, record, data); }
-  if (item.kind === 'chart') { const def = CHARTS.find(c => c.id === item.id); const b = def.build(result); return firstTarget(b && b.needs, record, data); }
+  if (item.kind === 'chart') { const def = CHARTS.find(c => c.id === item.id); const b = def.build(result, {}); return firstTarget(b && b.needs, record, data); }
   return null;
 }
 
@@ -114,7 +114,7 @@ export function unlockMap(record, result, data) {
   const items = [];
   data.metrics.metrics.forEach(def => items.push({ kind: 'metric', id: def.id, name: def.name, clientName: def.clientLabel, stage: def.stage, state: st.metrics[def.id], coachOnly: !!def.coachOnly, value: valueText(result.metrics && result.metrics[def.id]), href: '#/measure/numbers/' + def.id }));
   data.lenses.lenses.forEach(def => { const fired = (result.lenses || []).find(l => l.id === def.id); items.push({ kind: 'lens', id: def.id, name: def.name, clientName: def.name, stage: stageOfLens(def, data), state: st.lenses[def.id], value: fired && fired.impactAnnual !== null && fired.impactAnnual !== undefined ? F.dollarsWhole(fired.impactAnnual) + ' a year' : '', trigger: def.trigger, href: '#/measure/lenses/' + def.id }); });
-  CHARTS.forEach(def => { const meta = data.unlocks.charts[def.id] || { stage: 5 }; items.push({ kind: 'chart', id: def.id, name: def.name, clientName: def.client, stage: meta.stage, state: st.charts[def.id], value: '', href: '#/measure/charts/' + def.id }); });
+  CHARTS.forEach(def => { const meta = chartMeta(def.id, data); items.push({ kind: 'chart', id: def.id, name: def.name, clientName: def.client, stage: meta.stage, state: st.charts[def.id], value: '', coachOnly: !!def.coachOnly, href: '#/measure/charts/' + def.id }); });
   items.forEach(it => { if (it.state === 'locked') it.input = inputFor(it, result, record, data); });
   const stages = Object.keys(data.unlocks.stages).map(s => ({ stage: +s, label: data.unlocks.stages[s], items: items.filter(it => it.stage === +s) }));
   return { items, stages, totals: totals(st), state: st };
@@ -148,7 +148,7 @@ export function probes(record, data, cap) {
   data.unlocks.probeTypes.forEach(([p, type]) => {
     if (record.planets[p].rows.some(r => r.type === type)) return;
     const t = typeDef(data.fields, p, type); const prim = t.fields.find(fid => fieldDef(data.fields, fid).primary) || t.fields[0];
-    list.push({ id: 'type:' + p + ':' + type, kind: 'type', planet: p, type, field: prim, rowId: null, addRow: true, label: t.label + ': ' + fieldDef(data.fields, prim).label, where: PLANET_LABELS[p] + ': ' + t.label, href: '#/ledger/' + p + '/' + type });
+    list.push({ id: 'type:' + p + ':' + type, kind: 'type', planet: p, type, field: prim, firstField: t.nameField || null, rowId: null, addRow: true, label: t.label + ': ' + (t.nameField ? fieldDef(data.fields, t.nameField).label.toLowerCase() + ' and ' : '') + fieldDef(data.fields, prim).label.toLowerCase(), where: PLANET_LABELS[p] + ': ' + t.label, href: '#/ledger/' + p + '/' + type });
   });
   /* primaries first, then new rows, then the rest; the cap keeps the probing under a quarter second */
   const w = x => x.primary ? 0 : x.kind === 'confirm' ? 1 : x.kind === 'type' || x.kind === 'sun' ? 2 : 3;
@@ -163,7 +163,7 @@ export function applyProbe(record, probe, data) {
   const t = typeDef(data.fields, probe.planet, probe.type);
   const row = createRow(probe.planet, probe.type, { nickname: t.label, f: freshFacts(data.fields, probe.planet, probe.type) });
   addRow(rec, row);
-  t.fields.forEach(fid => { const d = fieldDef(data.fields, fid); if (d.tag || (d.optional && !d.primary)) return; setField(rec, row.id, fid, probeValue(data, fid), 'known', 'client', { cad: d.cadence ? d.defaultCadence : undefined }); });
+  t.fields.forEach(fid => { const d = fieldDef(data.fields, fid); if (d.tag || (d.optional && !d.primary) || (!d.primary && ['money', 'percent', 'int', 'hours', 'month'].includes(d.kind) && fid !== t.nameField)) return; setField(rec, row.id, fid, probeValue(data, fid), 'known', 'client', { cad: d.cadence ? d.defaultCadence : undefined }); });
   return rec;
 }
 /* Ranked: the inputs that open the most, with what each opens. opts.top (default 3), opts.cap probes. */

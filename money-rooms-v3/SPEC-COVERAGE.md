@@ -251,3 +251,31 @@ Level 10 (savings buckets, curricula, the session 5 curriculum) was never built.
 | Tests: curriculum, bending, urgent, parking, readiness, checklist, three steps, CSV, cleaning, netting, detection, patterns, ratio, blind spot, found money, apply, stress, scorecard | done | tests/engine/program.test.js, transactions.test.js; tests/households/maya-transactions.mjs |
 | tests/ui.js: #/program, prep, a session 1 run with first accounts and bending at 35, urgent mode, session 2 checklist, session 4 reveal, three widths | done | tests/ui-screens.js; ui-flows.js level10-maya-program |
 | Screenshots and a critique round | not done | the sweep ran; a critique round is owed |
+
+## Demo brief (Parts A to D): demo-safe fixes, the unlock loop, charts first
+
+| Brief line | Status | Where |
+|---|---|---|
+| A1 Crossover, % to FI and the ladder on the FI-date basis; invested-only metrics renamed with a note | done | metrics.js crossover and first $100k on the net worth line; assumptions.json `fiProgressBasis` netWorth; "The flip (invested only)"; MR-057 |
+| A2 Simulate audit: combined run and NW at 95, engine test, plain sentence under the table | done | scenarios.js `pay` adjustments, `compareNotes`; scenarios.test.js "Maya: a pay cut stops with work" |
+| A3 Maya Taxes rows; no "is empty" card for a planet that computes | done | specs.mjs m-est, m-njest; home.js `isDerived`, `computes` |
+| A4 No ellipsis truncation anywhere | done | app.css tiles, lists, history, clients, ladder, levers, goal names; run.js segment legend |
+| A5 Dates in browser local time | done | format.js `dateTimeLocal`, `dateLocal`; format.test.js |
+| A6 Levers skeleton, sensitivity run starts on open | done | levers.js `skeleton`; app.js `open` |
+| A7 First visit: Load demo client primary, Reset demo, Start demo from zero | done | home.js `loadDemo`, `resetDemo`, `startFromZero` |
+| A8 Client view hides "(verify)" and Benchmarks | done | chips.js, measure.js groupInto |
+| A9 Measure folds on a phone | done | measure.js `collapsible`, `isPhone` |
+| B1 Engine diff of locked, rough, solid with tests on Maya from zero | done | engine/unlocks.js `stateOf`, `unlocksBetween`; unlocks.test.js |
+| B2 Reveal panel (sheet on phone), grouped, thumbnails, takeaways, batching, toast for small unlocks | done | ui/unlocks.js `installUnlockWatch`, `reveal`, `openPanel`; unlocks.css |
+| B3 Deep links to chart, metric, lens; highlight; focused chart view | done | measure.js tabs and `revealItem`; ui/unlocks.js `renderFocusedChart` |
+| B4 Next unlock card, button into the Ledger field, Back to where I was | done | engine/unlocks.js `nextUnlocks`, `probes`; ui/unlocks.js `nextUnlockCard`, `goToProbe`; ledger.js `addRowAfterRender` |
+| B5 Unlock Map tab and Home card by five stages, locked tiles name the input | done | ui/unlocks.js `renderUnlockMap`, `renderHomeUnlockCard` |
+| B6 Completion rings apart from the FI progress ring | done | ui/unlocks.js `ringsRow` |
+| B7 Coach sees all; Client sees ticked lenses and marked charts | done | `visibleToClient`, `sun.clientCharts` |
+| C1 Measure as sticky tabs Overview, Charts, Numbers, Lenses, Unlocks; stable deep links | done | measure.js `TABS`, `drawOverview`, `drawCharts` |
+| C2 Takeaway titles; one-pager checkbox; locked charts offer the input | done | measure.js gallery; `chartTakeaway` |
+| C3 22 new charts from engine output | done | engine/chartdata-more.js, ui/charts-more.js, engine/charts-all.js; charts-more.test.js |
+| C4 One palette, both themes, 390px | done | charts-more.css; tokens only; sweep at 1440, 1024, 390 |
+| D1 Browser flow for the unlock loop from Start demo from zero; map clicks; tabs; new chart screens in the sweep | done | ui-flows.js `partB-unlock-loop-from-zero`; ui-screens.js measure-* screens |
+| D2 Screenshots | done | screenshots/level-12/ |
+| D3 README map, DECISIONS, QUESTIONS | done | MR-057 to MR-061; questions 37 to 48 |

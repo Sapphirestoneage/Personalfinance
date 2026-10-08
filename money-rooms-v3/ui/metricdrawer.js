@@ -6,6 +6,8 @@ import * as F from '../engine/format.js';
 import { buildGraph, rootsOf, metricsFed, netSign } from '../engine/graph.js';
 import { metricLabel } from './glossary.js';
 import { PLANET_LABELS } from '../engine/sun.js';
+import { ALL_CHARTS } from '../engine/charts-all.js';
+import * as Charts from './charts.js';
 
 let graphCache = null;
 export function graphOf(app) { if (!graphCache || graphCache.data !== app.data) graphCache = { data: app.data, g: buildGraph(app.data) }; return graphCache.g; }
@@ -35,6 +37,9 @@ export function metricBody(app, id, mathBody) {
   if (mathBody) body.appendChild(mathBody);
   else body.appendChild(h('div', null, h('h2', null, metricLabel(app, def)), h('p', { class: 'muted small' }, def.definition), m && m.status === 'ok' ? h('p', { class: 'big-value' }, valueText(m)) : h('p', { class: 'muted' }, 'Needs ' + ((m && m.needs) || ['inputs']).join(', '))));
   body.appendChild(h('p', { class: 'small muted', style: { marginTop: '8px' } }, dirWord(def.direction) + '.'));
+  /* MR-061: the chart this number sits behind, small, with a link to it on its own */
+  const chart = ALL_CHARTS.find(c => (c.metrics || []).includes(id) && !(c.coachOnly && !coach));
+  if (chart && m && m.status === 'ok') { const built = chart.build(app.result, {}); if (built && !built.needs) { const mini = h('div', { class: 'mini-chart', dataset: { chartBody: chart.id } }); body.appendChild(mini); body.appendChild(h('p', { class: 'small' }, h('a', { href: '#/measure/charts/' + chart.id }, (coach ? chart.name : chart.client) + ': open the chart'))); setTimeout(() => { mini.style.width = Math.min(460, (body.clientWidth || 460)) + 'px'; Charts.render(chart.id, mini, built, { client: !coach }); }, 0); } }
   /* levers */
   if (def.levers && def.levers.length) {
     body.appendChild(h('h3', { style: { marginTop: '12px' } }, coach ? 'Levers' : 'What moves it'));

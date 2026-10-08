@@ -6,7 +6,8 @@
 import { h, clear, qs } from './dom.js';
 import * as F from '../engine/format.js';
 import * as U from '../engine/unlocks.js';
-import { CHARTS } from '../engine/chartdata.js';
+import { ALL_CHARTS as CHARTS, chartMeta } from '../engine/charts-all.js';
+import { cachedSensitivity, getSensitivity } from './levers-bridge.js';
 import * as Charts from './charts.js';
 import { versionKey } from '../engine/sensitivity.js';
 import { buildGraph, rootsOf } from '../engine/graph.js';
@@ -107,7 +108,7 @@ export function chartThumb(app, chartId, o) {
   const def = CHARTS.find(c => c.id === chartId);
   const host = h('div', { class: 'chart-thumb' + (o.locked ? ' locked' : ''), 'aria-hidden': 'true' });
   if (o.locked || !def) { host.appendChild(h('div', { class: 'thumb-name' }, def ? (app.view === 'client' ? def.client : def.name) : chartId)); return host; }
-  setTimeout(() => { try { host.style.width = (o.width || 240) + 'px'; Charts.render(chartId, host, def.build(app.result), { client: app.view === 'client' }); } catch (e) { host.appendChild(h('div', { class: 'thumb-name' }, def.name)); } }, 0);
+  setTimeout(() => { try { host.style.width = (o.width || 240) + 'px'; Charts.render(chartId, host, def.build(app.result, { sensitivity: cachedSensitivity(app) }), { client: app.view === 'client' }); } catch (e) { host.appendChild(h('div', { class: 'thumb-name' }, def.name)); } }, 0);
   return host;
 }
 
@@ -123,7 +124,7 @@ export function nextUnlocksFor(app) {
 }
 export function describeProbe(app, probe) {
   if (probe.kind === 'sun') return 'Add the ' + probe.label.toLowerCase() + ' under Household facts';
-  if (probe.kind === 'type') return 'Add a first ' + probe.label.split(':')[0].toLowerCase() + ' row and its ' + probe.label.split(': ')[1].toLowerCase();
+  if (probe.kind === 'type') return 'Add a first ' + probe.label.split(':')[0].toLowerCase() + ' row: ' + probe.label.split(': ')[1];
   if (probe.kind === 'confirm') return probe.label + ' (it is rough today)';
   return 'Fill in ' + probe.label.toLowerCase();
 }
@@ -132,7 +133,7 @@ export function goToProbe(app, probe, from) {
   app.unlockBack = from || location.hash;
   closeOverlay();
   if (probe.kind === 'sun') { app.focusAfterRender = { rowId: 'sun', field: probe.field }; location.hash = '#/home'; return; }
-  if (probe.addRow) app.addRowAfterRender = { planet: probe.planet, type: probe.type, field: probe.field };
+  if (probe.addRow) app.addRowAfterRender = { planet: probe.planet, type: probe.type, field: probe.firstField || probe.field };
   else app.focusAfterRender = { rowId: probe.rowId, field: probe.field, details: true };
   location.hash = probe.href;
   setTimeout(() => app.toast('Cursor is in ' + probe.label.toLowerCase() + '.', { label: 'Back to where I was', ms: 8000, action: () => { location.hash = app.unlockBack || '#/measure'; } }), 350);
@@ -247,7 +248,7 @@ export function highlight(el) {
 let graphCache = null;
 function graphOf(app) { if (!graphCache || graphCache.data !== app.data) graphCache = { data: app.data, g: buildGraph(app.data) }; return graphCache.g; }
 export function chartInputs(app, chartId) {
-  const meta = app.data.unlocks.charts[chartId]; if (!meta) return { fed: [], sharpen: [] };
+  const meta = chartMeta(chartId, app.data); if (!meta) return { fed: [], sharpen: [] };
   const g = graphOf(app); const fed = []; const sharpen = []; const seen = new Set();
   meta.metrics.forEach(mid => {
     const m = app.result.metrics[mid];
@@ -269,7 +270,7 @@ export function chartInputs(app, chartId) {
   return { fed: fed.slice(0, 10), sharpen: sharpen.slice(0, 5) };
 }
 export function chartTakeaway(app, chartId) {
-  const def = CHARTS.find(c => c.id === chartId); const meta = app.data.unlocks.charts[chartId];
+  const def = CHARTS.find(c => c.id === chartId); const meta = chartMeta(chartId, app.data);
   const parts = [];
   (meta ? meta.metrics : []).forEach(mid => { const m = app.result.metrics[mid]; const d = app.data.metrics.metrics.find(x => x.id === mid); if (m && m.status === 'ok' && d) { const v = U.valueText(m); if (v) parts.push((app.view === 'client' ? d.clientLabel : d.name) + ' ' + v); } });
   return def.client + (parts.length ? '. ' + parts.slice(0, 2).join('; ') + '.' : '.');
@@ -279,7 +280,8 @@ export function renderFocusedChart(host, app, chartId, back) {
   const def = CHARTS.find(c => c.id === chartId);
   if (!def) { host.appendChild(h('p', { class: 'muted' }, 'No chart by that name.')); return; }
   const coach = app.view === 'coach';
-  const data = def.build(app.result);
+  const data = def.build(app.result, { sensitivity: cachedSensitivity(app) });
+  if (data && data.waiting) getSensitivity(app, () => setTimeout(() => renderFocusedChart(host, app, chartId, back), 0));
   host.appendChild(h('div', { class: 'row', style: { marginBottom: '8px' } }, h('a', { class: 'btn small', href: back || '#/measure/charts' }, 'Back to where I was')));
   const panel = h('section', { class: 'panel chart-panel focused', dataset: { chart: chartId } });
   panel.appendChild(h('header', null, h('h2', null, data && !data.needs ? chartTakeaway(app, chartId) : (coach ? def.name : def.client))));

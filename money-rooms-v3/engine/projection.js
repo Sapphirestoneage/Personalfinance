@@ -24,7 +24,8 @@ export function project(inp, rate) {
   const retireAge = inp.retirementAge;
   for (let y = 1; y <= years; y++) {
     year++; a++;
-    const working = a <= retireAge && (fiAge === null || a <= fiAge);
+    /* keepWorking (MR-061): work on to the retirement age even past FI, so two paths can be compared like for like */
+    const working = a <= retireAge && (fiAge === null || a <= fiAge || inp.keepWorking);
     const debtNow = debtByYear[year] || 0;
     if (working) {
       inv = Math.round(inv * (1 + rate)) + inp.employeeAnnual + inp.employerAnnual + (inp.extraContribAnnual || 0);

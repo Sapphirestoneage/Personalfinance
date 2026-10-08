@@ -54,6 +54,15 @@ repository root, `npx playwright install chromium`).
 | `CONTRACTS.md` | What each planet publishes, written before the code |
 | `DECISIONS.md`, `QUESTIONS.md`, `PROGRESS.md`, `BOARD.md`, `SPEC-COVERAGE.md`, `DONE.md` | The run's own records |
 
+## Charts first (MR-061)
+
+Measure opens on the Overview: up to eight hero charts with their takeaway
+as the title. The Charts tab holds all 31 (ten from Level 2 and Level 8 in
+`engine/chartdata.js`, twenty-two in `engine/chartdata-more.js`), filtered by
+planet; a locked chart says what it needs and offers the input. Numbers keeps
+the tile wall with sparklines on time tiles; a metric's drawer shows its chart
+small. `engine/charts-all.js` is the one list of charts.
+
 ## The unlock loop (MR-059)
 
 Every save is compared before and after. What moved from locked to rough or

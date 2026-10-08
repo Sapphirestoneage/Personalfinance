@@ -152,8 +152,8 @@ Collected during the run; none blocked the build. Answer whenever.
     Life plan planet and the Goal timeline?
 46. The next-unlock ranking weighs a chart at two, a solid number at one, a
     rough number at 0.6 and a lens at one. On an empty client that puts a
-    first spending line (13 items) ahead of the first job (fewer numbers
-    until spending exists). Keep the engine's answer, or pin Income first?
+    first account (balance sheet, allocation and bucket charts) ahead of the
+    first job or spending line. Keep the engine's answer, or pin Income first?
 47. The client sees every chart until the coach unticks "Client sees" on a
     chart. Start with none visible instead, like the lenses?
 48. The copy lint bans "unlock" as a marketing word; the brief names the

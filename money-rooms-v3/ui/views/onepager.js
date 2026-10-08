@@ -4,7 +4,7 @@
    to exactly one page. Every number links to its math. */
 import { h, clear } from '../dom.js';
 import * as F from '../../engine/format.js';
-import { CHARTS } from '../../engine/chartdata.js';
+import { ALL_CHARTS as CHARTS } from '../../engine/charts-all.js';
 import * as Charts from '../charts.js';
 import { openMath } from './measure.js';
 import { theirPlate, byInstitution, sinceLastSession, changeText } from '../../engine/plates.js';
