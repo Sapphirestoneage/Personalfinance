@@ -156,7 +156,8 @@
    "oneOff": 0,
    "monthly": "-(payChange * takeHomeMonthly)",
    "duration": "years",
-   "note": "A raise or a cut on the current job; the share is of take-home."
+   "note": "A raise or a cut on the current job; the share is of take-home.",
+   "income": true
   },
   "newjob": {
    "label": "New job",
@@ -199,7 +200,8 @@
    "oneOff": "gapMonths * takeHomeMonthly",
    "monthly": "-((salary / 12 - grossMonthly) * takeHomeMonthly / grossMonthly + matchChange)",
    "duration": "years",
-   "note": "The salary is compared with today's gross pay; the change is scaled to take-home at today's ratio."
+   "note": "The salary is compared with today's gross pay; the change is scaled to take-home at today's ratio.",
+   "income": true
   },
   "sabbatical": {
    "label": "Sabbatical",
@@ -310,7 +312,8 @@
     "income",
     "taxes",
     "life"
-   ]
+   ],
+   "income": true
   },
   "inheritance": {
    "label": "Inheritance or windfall",
@@ -391,7 +394,8 @@
    "oneOff": 0,
    "monthly": "amount",
    "duration": "years",
-   "note": "A benefit, a contract or a job that ends: the missing amount is a monthly cost until it is replaced."
+   "note": "A benefit, a contract or a job that ends: the missing amount is a monthly cost until it is replaced.",
+   "income": true
   },
   "newExpense": {
    "label": "New expense",

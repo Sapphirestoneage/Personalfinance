@@ -72,19 +72,21 @@ for (const name of Object.keys(LEVER_SPECS)) {
     Object.keys(X.ladder).forEach(id => assert.equal(M[id].value.cents, X.ladder[id], id));
     assert.equal(M.baristaRule.value.cents, X.baristaRule); assert.equal(M.baristaRule.at35, X.baristaRuleAt35);
     assert.equal(baristaRule(0.04), 3000000); assert.equal(baristaRule(0.035), 3428571);
-    assert.ok(Math.abs(M.pctToFi.value.value - X.pctToFiInvested) < 1e-6, 'invested basis by default');
-    const rec2 = JSON.parse(JSON.stringify(rec)); rec2.sun.assumptions = { fiProgressBasis: 'netWorth' };
+    assert.ok(Math.abs(M.pctToFi.value.value - X.pctToFiNetWorth) < 1e-6, 'net worth basis by default (MR-057)');
+    assert.equal(M.pctToFi.basis, 'netWorth');
+    const rec2 = JSON.parse(JSON.stringify(rec)); rec2.sun.assumptions = { fiProgressBasis: 'invested' };
     const R2 = compute(rec2, data, { today: TODAY });
-    assert.ok(Math.abs(R2.metrics.pctToFi.value.value - X.pctToFiNetWorth) < 1e-6, 'net worth basis by assumption');
-    assert.equal(R2.metrics.pctToFi.basis, 'netWorth');
+    assert.ok(Math.abs(R2.metrics.pctToFi.value.value - X.pctToFiInvested) < 1e-6, 'invested basis by assumption');
+    assert.equal(R2.metrics.pctToFi.basis, 'invested');
     const rec3 = JSON.parse(JSON.stringify(rec)); rec3.sun.assumptions = { withdrawalRate: 0.035 };
     assert.equal(compute(rec3, data, { today: TODAY }).metrics.baristaRule.value.cents, X.baristaRuleAt35);
     /* the reverse: part-time income that would make the household Barista FI today */
     const spend = LEVER_SPECS[name].lines.reduce((s, l) => s + l[2], 0);
-    assert.equal(M.baristaIncomeNeededToday.value.cents, Math.max(0, spend - Math.round(LEVER_SPECS[name].invested * 0.04 / 12)));
+    const basis = LEVER_SPECS[name].invested + (LEVER_SPECS[name].cash || 0); /* MR-057: progress counts net worth */
+    assert.equal(M.baristaIncomeNeededToday.value.cents, Math.max(0, spend - Math.round(basis * 0.04 / 12)));
     /* every rung carries a percent, a required monthly and a date */
     ['leanFi', 'baristaRegularFi', 'regularFi', 'fatFi'].forEach(id => { assert.ok(M[id].pct > 0 && M[id].requiredMonthly >= 0 && typeof M[id].months === 'number', id); });
-    assert.equal(M.leanFi.pct, LEVER_SPECS[name].invested / X.ladder.leanFi);
+    assert.equal(M.leanFi.pct, basis / X.ladder.leanFi);
     assert.equal(M.regularFi.months, fiMonths(R), 'the FI rung lands on the same month as the FI date');
   });
   test(name + ': the session ranks by ask priority when a FI date exists', () => {

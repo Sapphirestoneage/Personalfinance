@@ -6,6 +6,7 @@
 import { createStore } from '../engine/store.js';
 import * as Rec from '../engine/record.js';
 import { h, clear, qs, debounce, download, readFile } from './dom.js';
+import { getSensitivity } from './levers-bridge.js';
 import { routes, navItems } from './routes.js';
 import { renderTracker } from './tracker.js';
 import { applyDiscovery, applyGuesses } from '../engine/discovery.js';
@@ -38,6 +39,8 @@ export const app = {
     settings.lastClient = id;
     store.saveSettings(settings);
     this.recompute();
+    /* MR-057: the levers' sensitivity run starts now, off the main thread, so #/levers opens with its numbers */
+    if (this.result && this.result.metrics && this.result.metrics.fiDate && this.result.metrics.fiDate.status === 'ok') getSensitivity(this, () => {});
     this.renderChrome();
     this.go(this.route.name === 'home' ? '#/home' : location.hash || '#/home', true);
     return true;

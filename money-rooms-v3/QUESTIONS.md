@@ -119,3 +119,23 @@ Collected during the run; none blocked the build. Answer whenever.
 36. The lean month reads the FAT floor; the first accounts block names
     buckets from the goal timeline. Should the hysa card also create the
     bucket rows in Investments?
+37. Maya lives in Jersey City since the Partners follow-up, but her rows still
+    say Temescal Commons, PG&E, BART, Berkeley Bowl, City of Oakland parking
+    tickets, California EDD and "Condo in Oakland". Rename them for the demo
+    (Journal Square rent, PSE&G, PATH, ShopRite, Jersey City tickets, NJ DOL,
+    "Condo in Jersey City")? It touches the fixtures and the workpapers.
+38. The projection puts the surplus beyond retirement contributions into cash
+    at the cash return; that is why the invested-only crossover sat 24 years
+    behind the FI date. Should the projection invest the surplus instead?
+    That is a model change and moves every FI date earlier.
+39. The sandbox retires the household at the retirement age (55 for Maya) even
+    when FI is not reached, so "all together" shows FI at 76: she stops work
+    at 55 and the path spends from savings until Social Security and growth
+    catch up. Keep that, or let work run on until FI?
+40. "Start demo from zero" keeps only the name. Should it carry Maya's four
+    household facts (birth date, state, work situation, filing status) so the
+    unlock walk begins at the first Income row?
+41. Two places can still clip text: the client name in the top bar (one line,
+    240px) and native select boxes. Both are rare with real names. Leave them?
+42. "The flip" is now labelled "(invested only)". Prefer a client label like
+    "When growth beats what you add to investments"?

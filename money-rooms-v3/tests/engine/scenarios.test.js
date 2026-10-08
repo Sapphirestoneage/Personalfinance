@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { compute } from '../../engine/compute.js';
-import { evalFormula, blockCosts, compare, newBlock } from '../../engine/scenarios.js';
+import { evalFormula, blockCosts, compare, newBlock, adjustments } from '../../engine/scenarios.js';
 import { loadData, loadHousehold } from './load-data.js';
 
 const data = loadData();
@@ -78,4 +78,31 @@ test('a new job compares its salary with today\'s gross and scales to take-home'
   /* 72,000 a year is 6,000 a month gross, 1,000 more than today; at today's 80% take-home ratio that is 800 a month in */
   assert.equal(c.monthly, -80000);
   assert.ok(blockCosts(def, { answers: {} }, { takeHomeMonthly: 400000, spendingMonthly: null, grossMonthly: null }).needs.includes('gross pay'));
+});
+
+/* MR-057: the Simulate audit. Maya's condo and four-day week, each alone and together. */
+test('Maya: a pay cut stops with work and never raises the FI target; together is worse than the sum, and the notes say why', () => {
+  const rec = loadHousehold('maya');
+  const R = compute(rec, data, { today: '2026-10-08' });
+  const live = { takeHomeMonthly: R.sun.outputs.income.takeHomeMonthly.cents, spendingMonthly: R.sun.outputs.safety.spendingWithPremiums.cents, grossMonthly: R.sun.outputs.income.grossMonthly.cents };
+  const inp = R.projectionInputs;
+  const c = compare(inp, rec.scenarios, defs, live);
+  const condo = c.alone.find(a => a.id === 'sc-condo'); const four = c.alone.find(a => a.id === 'sc-fourday');
+  assert.equal(c.baseline.fiAge, R.projection.likely.fiAge);
+  assert.ok(condo.fiDelta > 0 && four.fiDelta > 0, 'each block alone delays FI');
+  assert.ok(condo.at95Delta > 0, 'the condo alone raises net worth at 95: more working years');
+  assert.ok(c.together.fiAge >= Math.max(condo.fiAge, four.fiAge), 'together is never earlier than the hardest block alone');
+  assert.ok(c.together.fiDelta > condo.fiDelta + four.fiDelta, 'together is worse than the blocks added up: savings are drawn down in the overlap');
+  assert.equal(c.together.at95, c.together.path[c.together.path.length - 1].netWorth, 'the net worth at 95 column is the last point of the path');
+  assert.ok(c.notes.length >= 2 && c.notes.some(n => n.indexOf('more working years') !== -1) && c.notes.some(n => n.indexOf('Together is worse') !== -1), 'the notes under the table');
+  /* a pay change is income: it ends with work and does not raise what retirement must cover */
+  const ad = adjustments([four.id ? rec.scenarios[1] : rec.scenarios[1]], defs, live);
+  assert.ok(ad[2029].pay > 0 && ad[2029].monthly === 0, 'a pay cut is recorded as pay, not spending');
+  const spendTwin = Object.assign({}, rec.scenarios[1], { id: 'twin', type: 'newExpense', answers: { amount: four.costs.monthly, years: 30 } });
+  const twin = compare(inp, [spendTwin], defs, live).alone[0];
+  assert.ok(twin.fiAge > four.fiAge, 'the same dollars as a new expense delay FI more: an expense runs on into retirement and raises the target');
+  /* nothing a pay cut does lands after the retirement age */
+  const late = Object.assign({}, rec.scenarios[1], { id: 'late', startYear: inp.year + (inp.retirementAge - inp.age) + 1 });
+  const lateRun = compare(inp, [late], defs, live).alone[0];
+  assert.equal(lateRun.fiAge, c.baseline.fiAge); assert.equal(lateRun.at95, c.baseline.at95);
 });

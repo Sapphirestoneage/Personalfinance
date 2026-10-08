@@ -74,3 +74,11 @@ test('value formats any engine shape', () => {
   assert.equal(F.value({ status: 'ok', kind: 'date', value: '2041-06' }), 'Jun 2041');
   assert.equal(F.value({ status: 'needs', needs: ['rent'] }), '');
 });
+
+test('journal timestamps show in the browser\'s local time, whatever the zone (MR-057)', () => {
+  const local = new Date(2026, 9, 7, 21, 45); /* 7 Oct 2026, 9:45 pm where this test runs */
+  assert.equal(F.dateTimeLocal(local.toISOString()), '7 Oct 2026, 9:45 pm');
+  assert.equal(F.dateLocal(local.toISOString()), '7 Oct 2026');
+  assert.equal(F.dateTimeLocal(new Date(2026, 0, 3, 0, 5).toISOString()), '3 Jan 2026, 12:05 am');
+  assert.equal(F.dateTimeLocal(''), ''); assert.equal(F.dateLocal('nope'), '');
+});

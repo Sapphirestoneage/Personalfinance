@@ -44,7 +44,7 @@ export function mount(host, app) {
     page.appendChild(h('section', { class: 'op-shelf' }, M ? nums : h('p', { class: 'muted small' }, 'Numbers appear as income and spending come in.')));
     /* since last time */
     const since = sinceLastSession(rec, app.data.fields, (def, o, n, l) => changeText(def, o, n, l));
-    page.appendChild(h('section', null, h('h3', null, 'Changes since last time' + (since.since ? ' (' + F.dateLong(since.since.slice(0, 10)) + ')' : '')), since.changes.length ? h('ul', null, since.changes.slice(0, 3).map(c => h('li', null, c.row + ': ' + c.label.toLowerCase() + ' ' + c.text))) : h('p', { class: 'muted small' }, since.since ? 'No changes since the last session.' : 'First session.')));
+    page.appendChild(h('section', null, h('h3', null, 'Changes since last time' + (since.since ? ' (' + F.dateLocal(since.since) + ')' : '')), since.changes.length ? h('ul', null, since.changes.slice(0, 3).map(c => h('li', null, c.row + ': ' + c.label.toLowerCase() + ' ' + c.text))) : h('p', { class: 'muted small' }, since.since ? 'No changes since the last session.' : 'First session.')));
     /* Level 8: what you said, what it really is, what you'd want; your targets; guesses; if it all falls on you */
     saidSection(page, R, rec);
     /* Level 11: the next wins, the starter cushion first until it is full */

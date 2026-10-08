@@ -13,6 +13,7 @@ import { lowerFirst, holdsBack } from './ledger.js';
 import { overallConfidence } from './onepager.js';
 import { nextWins } from './goals.js';
 import { programOf, nextSessionNumber } from '../../engine/program.js';
+import * as Rec from '../../engine/record.js';
 import { sessionCount } from '../../engine/curriculum.js';
 
 /* One line under the shelf (Level 11, MR-051): the next win, with the timeline a tap away. */
@@ -90,7 +91,7 @@ function renderMap(mapHost, bar, app) {
   if (!app.record) return;
   clear(mapHost); clear(bar);
   const r = app.result;
-  const items = PLANETS.map(p => ({ id: p, label: PLANET_LABELS[p], count: r.rowCounts[p], fill: r.fills[p] === null ? 0 : r.fills[p], attention: (r.needs[p] || []).length > 0, badge: r.fills[p] === null ? 'no rows' : r.rowCounts[p] + (r.rowCounts[p] === 1 ? ' row, ' : ' rows, ') + Math.round(r.fills[p] * 100) + '%' }));
+  const items = PLANETS.map(p => ({ id: p, label: PLANET_LABELS[p], count: r.rowCounts[p], fill: r.fills[p] === null ? 0 : r.fills[p], attention: (r.needs[p] || []).length > 0, badge: r.fills[p] === null ? (isDerived(app, p) && computes(app, p) ? 'computed' : 'no rows') : r.rowCounts[p] + (r.rowCounts[p] === 1 ? ' row, ' : ' rows, ') + Math.round(r.fills[p] * 100) + '%' }));
   const name = clientName(app.record) || 'Household';
   mapHost.appendChild(orbitMap({
     compact: mapHost.clientWidth > 0 && mapHost.clientWidth < 560,
@@ -103,6 +104,12 @@ function renderMap(mapHost, bar, app) {
   describePlanet(bar, app, null);
 }
 
+/* MR-057: a planet whose numbers come from other planets (Taxes from Income) is never "empty". */
+function isDerived(app, id) { return !!(app.data && app.data.fields && app.data.fields.planets[id] && app.data.fields.planets[id].derived); }
+function computes(app, id) {
+  const M = app.result && app.result.metrics; if (!M) return false;
+  return app.data.metrics.metrics.some(m => m.group === id && M[m.id] && M[m.id].status === 'ok');
+}
 function describePlanet(bar, app, id) {
   clear(bar);
   const r = app.result;
@@ -110,10 +117,16 @@ function describePlanet(bar, app, id) {
     const total = PLANETS.reduce((s, p) => s + r.rowCounts[p], 0);
     if (!total) { bar.appendChild(mapPanel({ title: 'Nothing entered yet', status: 'Income first: open the Income planet and add the first job.', actions: [h('a', { class: 'btn primary coach-only', href: '#/ledger/income' }, 'Open Income')] })); return; }
     /* default to the weakest planet, so the panel says something without a hover */
-    const weakest = PLANETS.slice().sort((a, b) => ((r.fills[a] === null ? -1 : r.fills[a]) - (r.fills[b] === null ? -1 : r.fills[b])))[0];
+    const score = p => (r.fills[p] === null ? (isDerived(app, p) && computes(app, p) ? 2 : -1) : r.fills[p]);
+    const weakest = PLANETS.slice().sort((a, b) => score(a) - score(b))[0];
     id = weakest;
   }
   const needs = r.needs[id] || [];
+  if (!r.rowCounts[id] && isDerived(app, id)) {
+    const ok = computes(app, id);
+    bar.appendChild(mapPanel({ title: PLANET_LABELS[id] + (ok ? ' is computed' : ' waits on Income'), status: ok ? 'Federal tax and FICA come from the Income rows. Add a row only for tax paid outside a paycheck, like quarterly estimates.' : 'Federal tax and FICA come from the Income rows once gross pay and the filing status are in.', actions: [h('a', { class: 'btn primary', href: '#/ledger/' + id }, 'Open ' + lowerFirst(PLANET_LABELS[id]))] }));
+    return;
+  }
   bar.appendChild(mapPanel({ title: PLANET_LABELS[id] + (r.rowCounts[id] ? ' is at ' + Math.round((r.fills[id] || 0) * 100) + '%' : ' is empty'), status: r.rowCounts[id] ? (r.rowCounts[id] + (r.rowCounts[id] === 1 ? ' row. ' : ' rows. ') + (needs.length ? 'Needs ' + needs.slice(0, 3).map(n => lowerFirst(n.label)).join(', ') + (needs.length > 3 ? ' and ' + (needs.length - 3) + ' more' : '') + '.' : holdsBack(app, id))) : 'No rows yet.', actions: [h('a', { class: 'btn primary', href: '#/ledger/' + id }, 'Open ' + lowerFirst(PLANET_LABELS[id]))] }));
 }
 
@@ -125,7 +138,7 @@ function renderClients(panel, app) {
   const makeNew = () => { const n = nameInput.value.trim(); if (!n) { nameInput.focus(); return; } app.newClient(n); };
   nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') makeNew(); if (e.key === 'Escape') { newRow.style.display = 'none'; newBtn.focus(); } });
   const newRow = h('div', { class: 'row new-client', style: { marginBottom: '8px', display: 'none' } }, nameInput, h('button', { class: 'btn primary', onClick: makeNew }, 'Create'));
-  const newBtn = h('button', { class: 'btn primary', 'aria-label': 'New client', onClick: () => { newRow.style.display = ''; nameInput.focus(); } }, 'New client');
+  const newBtn = h('button', { class: 'btn' + (list.length ? ' primary' : ''), 'aria-label': 'New client', onClick: () => { newRow.style.display = ''; nameInput.focus(); } }, 'New client');
   const fileInput = h('input', { type: 'file', accept: 'application/json,.json', class: 'sr-only', 'aria-label': 'Import a client file', onChange: async e => {
     const f = e.target.files[0]; if (!f) return;
     try { await importFile(f); } catch (err) { app.toast(err.message); }
@@ -138,21 +151,27 @@ function renderClients(panel, app) {
     h('a', { class: 'btn', href: '#/discovery', title: 'A one-screen form for the first call; it opens a new client' }, 'New discovery call'),
     app.record ? h('a', { class: 'btn', href: '#/call' }, 'Run the call') : null,
     h('button', { class: 'btn', onClick: () => fileInput.click() }, 'Import'),
-    h('button', { class: 'btn', title: 'Maya: example numbers only', onClick: () => loadDemo(app) }, 'Load demo client'),
+    list.length ? h('button', { class: 'btn', title: 'Maya: example numbers only', onClick: () => loadDemo(app) }, 'Load demo client') : null,
+    list.length ? h('button', { class: 'btn', title: 'A copy of Maya with nothing filled in', onClick: () => startFromZero(app) }, 'Start demo from zero') : null,
+    list.some(c => DEMO_IDS.includes(c.id)) ? h('button', { class: 'btn quiet', title: 'Wipe the demo client and load it fresh', onClick: () => resetDemo(app) }, 'Reset demo') : null,
     fileInput));
   panel.appendChild(newRow);
   if (!list.length) {
-    panel.appendChild(h('div', { class: 'empty' }, h('h2', null, 'No clients yet'), h('p', null, 'Press New client and type a first name. Everything stays in this browser.')));
+    /* the first visit (MR-057): one line on what this is, and the demo as the way in */
+    panel.appendChild(h('div', { class: 'empty first-visit' }, h('h2', null, 'No clients yet'),
+      h('p', null, 'Money Rooms is one household\'s money in one place: a coach and a client look at the same numbers, and every number opens its math.'),
+      h('div', { class: 'row', style: { marginTop: '12px' } }, h('button', { class: 'btn primary', title: 'Maya: example numbers only', onClick: () => loadDemo(app) }, 'Load demo client'), h('button', { class: 'btn', title: 'A copy of Maya with nothing filled in', onClick: () => startFromZero(app) }, 'Start demo from zero')),
+      h('p', { class: 'small', style: { marginTop: '12px' } }, 'Or press New client and type a first name. Example numbers only; everything stays in this browser.')));
     return;
   }
-  const tbl = h('table', { class: 'data' },
-    h('thead', null, h('tr', null, h('th', null, 'Client'), h('th', null, 'Session'), h('th', { class: 'hide-narrow' }, 'Last saved'), h('th', null, ''))),
+  /* MR-057: three columns so the table fits its card; the last save sits under the name, in local time */
+  const tbl = h('table', { class: 'data clients-table' },
+    h('thead', null, h('tr', null, h('th', null, 'Client'), h('th', null, 'Session'), h('th', null, ''))),
     h('tbody', null, list.map(c => {
       const open = app.record && app.record.id === c.id;
       return h('tr', { class: open ? 'selected' : null },
-        h('td', null, h('a', { href: '#/home', onClick: e => { e.preventDefault(); app.open(c.id); app.rerender(); } }, c.name || 'Unnamed client'), open ? h('span', { class: 'chip src', style: { marginLeft: '8px' } }, 'Open') : null),
+        h('td', null, h('a', { href: '#/home', onClick: e => { e.preventDefault(); app.open(c.id); app.rerender(); } }, c.name || 'Unnamed client'), open ? h('span', { class: 'chip src', style: { marginLeft: '8px' } }, 'Open') : null, h('div', { class: 'muted small' }, 'Saved ' + F.dateLocal(c.updatedAt))),
         h('td', { class: 'small' }, sessionCell(app, c)),
-        h('td', { class: 'muted small hide-narrow' }, F.dateLong(c.updatedAt.slice(0, 10))),
         h('td', { class: 'num' },
           h('button', { class: 'btn small', onClick: () => { const r = app.store.load(c.id); if (r) exportClient(r); } }, 'Export'),
           ' ',
@@ -161,6 +180,23 @@ function renderClients(panel, app) {
   panel.appendChild(h('div', { class: 'tablewrap' }, tbl));
 }
 
+const DEMO_IDS = ['maya', 'maya-zero'];
+/* Reset demo (MR-057): wipe the demo client, and the from-zero copy, then load Maya fresh. */
+function resetDemo(app) {
+  DEMO_IDS.forEach(id => { if (app.store.load(id)) app.remove(id); });
+  loadDemo(app);
+}
+/* Start demo from zero (MR-057): a copy of Maya with nothing filled in but her name, for the unlock walk. */
+function startFromZero(app) {
+  if (app.store.load('maya-zero')) app.remove('maya-zero');
+  const rec = app.store.newRecord(); const born = rec.id;
+  rec.id = 'maya-zero';
+  Rec.setField(rec, 'sun', 'name', 'Maya, from zero', 'known', 'client');
+  app.store.save(rec); app.store.remove(born);
+  app.open(rec.id);
+  app.toast('A blank copy of Maya. Enter her numbers one at a time.');
+  app.rerender();
+}
 async function loadDemo(app) {
   try {
     const res = await fetch('tests/households/maya.json');
@@ -312,11 +348,10 @@ function renderHistory(panel, app) {
   if (!lines.length) { panel.appendChild(h('p', { class: 'muted small' }, 'No changes yet. Every edit writes one line here; undo and redo read from it.')); return; }
   const fieldsData = app.data.fields;
   panel.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data history' },
-    h('thead', null, h('tr', null, h('th', null, 'When'), h('th', { class: 'where' }, 'Where'), h('th', null, 'What'), h('th', null, 'Now'))),
+    h('thead', null, h('tr', null, h('th', null, 'When'), h('th', null, 'What'), h('th', null, 'Now'))),
     h('tbody', null, lines.map(l => h('tr', null,
-      h('td', { class: 'muted small when', title: l.ts.slice(11, 16) }, F.dateLong(l.ts.slice(0, 10))),
-      h('td', { class: 'where' }, whereChip(l)),
-      h('td', null, describe(l, fieldsData)),
+      h('td', { class: 'muted small when' }, F.dateTimeLocal(l.ts)),
+      h('td', { class: 'what' }, whereChip(l), ' ', describe(l, fieldsData)),
       h('td', { class: 'small now' }, side(l.new, l, fieldsData))))))));
   const n = app.record.journal.length;
   panel.appendChild(h('p', { class: 'hint', style: { marginTop: '8px' } }, n + (n === 1 ? ' line' : ' lines') + ' in the journal. Export carries all of them.'));

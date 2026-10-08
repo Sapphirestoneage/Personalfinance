@@ -20,6 +20,7 @@ export function stateChip(fieldObj, onChange, opts) {
 export function sourceChip(fieldObj, onChange, opts) {
   const o = opts || {};
   const src = SOURCES[(fieldObj && fieldObj.source) || 'client'];
+  if (typeof document !== 'undefined' && document.body && document.body.dataset.view === 'client') return sourceChipStatic(src.id); /* MR-057 */
   const choices = SOURCE_ORDER.filter(id => id !== 'computed' && id !== 'inferred');
   const sel = h('select', { 'aria-label': (o.label || 'Source'), onChange: e => onChange(e.target.value) },
     choices.map(id => h('option', { value: id, selected: id === src.id }, SOURCES[id].long + ' (' + SOURCES[id].key + ')')));
@@ -39,6 +40,8 @@ export function stateChipStatic(stateId) {
 }
 export function sourceChipStatic(sourceId) {
   const s = SOURCES[sourceId || 'client'];
-  return h('span', { class: 'chip src src-' + s.id }, s.label);
+  /* MR-057: the client never sees a "(verify)" tag; that is the coach's reminder */
+  const client = typeof document !== 'undefined' && document.body && document.body.dataset.view === 'client';
+  return h('span', { class: 'chip src src-' + s.id }, client ? s.label.replace(' (verify)', '') : s.label);
 }
 export function needsChip(text) { return h('span', { class: 'chip needs' }, text); }

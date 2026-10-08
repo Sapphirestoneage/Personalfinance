@@ -39,23 +39,25 @@ export function blockCosts(def, block, live) {
   return { oneOff, monthly, duration, answers };
 }
 
-/* Build year-indexed adjustments: { [year]: { oneOff, monthlyDelta } } */
+/* Build year-indexed adjustments: { [year]: { oneOff, monthly, pay } }. `monthly` is a
+   spending change; `pay` is an income change (a pay cut is positive), kept apart because
+   pay stops with work (MR-057): it never runs on into retirement and never raises the FI target. */
 export function adjustments(blocks, defs, live) {
   const by = {};
+  const at = y => (by[y] = by[y] || { oneOff: 0, monthly: 0, pay: 0 });
   blocks.forEach(b => {
     const def = defs.types[b.type]; if (!def) return;
     const c = blockCosts(def, b, live);
     if (c.needs) return; /* a block that cannot be costed changes nothing */
     const y0 = b.startYear;
-    by[y0] = by[y0] || { oneOff: 0, monthly: 0 };
-    by[y0].oneOff += c.oneOff;
+    at(y0).oneOff += c.oneOff;
     /* a start month pro-rates the first and last year (MR-026): a change from October touches 3 of 12 months */
     const m0 = b.startMonth && b.startMonth >= 1 && b.startMonth <= 12 ? b.startMonth : 1;
     let left = Math.max(0, c.duration) * 12;
+    const key = def.income ? 'pay' : 'monthly';
     for (let y = y0; left > 0; y++) {
       const months = Math.min(left, y === y0 ? 13 - m0 : 12);
-      by[y] = by[y] || { oneOff: 0, monthly: 0 };
-      by[y].monthly += Math.round(c.monthly * months / 12);
+      at(y)[key] += Math.round(c.monthly * months / 12);
       left -= months;
     }
   });
@@ -72,10 +74,10 @@ export function projectWith(inp, rate, adj) {
   const debtByYear = {}; base.path.forEach(p => { debtByYear[p.year] = p.debt; });
   for (let y = 1; y <= years; y++) {
     year++; a++;
-    const ad = adj[year] || { oneOff: 0, monthly: 0 };
+    const ad = adj[year] || { oneOff: 0, monthly: 0, pay: 0 };
     const working = a <= inp.retirementAge && (fiAge === null || a <= fiAge);
     const debtNow = debtByYear[year] || 0;
-    const extraAnnual = -ad.monthly * 12; /* a positive monthly cost reduces what is saved */
+    const extraAnnual = -(ad.monthly + (ad.pay || 0)) * 12; /* a positive monthly cost, or a pay cut, reduces what is saved */
     if (working) {
       inv = Math.round(inv * (1 + rate)) + inp.employeeAnnual + inp.employerAnnual;
       const freed = debtNow === 0 && inp.debts.length ? inp.debtServiceAnnual : 0;
@@ -94,7 +96,8 @@ export function projectWith(inp, rate, adj) {
   return { fiAge, fiYear: fiAge !== null ? year - (a - fiAge) : null, path, rate };
 }
 
-/* The comparison: baseline, each block alone, all together. */
+/* The comparison: baseline, each block alone, all together. `notes` are the plain
+   sentences the Simulate table shows under itself (MR-057); the view only prints them. */
 export function compare(inp, allBlocks, defs, live) {
   const blocks = allBlocks.filter(b => defs.types[b.type]);
   const rate = inp.asm.returnLikely;
@@ -102,12 +105,25 @@ export function compare(inp, allBlocks, defs, live) {
   const alone = blocks.map(b => ({ block: b, result: projectWith(inp, rate, adjustments([b], defs, live)), costs: blockCosts(defs.types[b.type], b, live) }));
   const together = projectWith(inp, rate, adjustments(blocks, defs, live));
   const at95 = r => r.path.length ? r.path[r.path.length - 1].netWorth : null;
-  return {
-    asm: { returnLikely: rate },
-    baseline: { fiAge: baseline.fiAge, at95: at95(baseline), path: baseline.path },
-    alone: alone.map(x => ({ id: x.block.id, name: x.block.name, type: x.block.type, startYear: x.block.startYear, startMonth: x.block.startMonth || null, costs: x.costs, fiAge: x.result.fiAge, at95: at95(x.result), fiDelta: x.result.fiAge !== null && baseline.fiAge !== null ? x.result.fiAge - baseline.fiAge : null, at95Delta: at95(x.result) - at95(baseline), path: x.result.path })),
-    together: { fiAge: together.fiAge, at95: at95(together), fiDelta: together.fiAge !== null && baseline.fiAge !== null ? together.fiAge - baseline.fiAge : null, at95Delta: at95(together) - at95(baseline), path: together.path },
-  };
+  const aloneOut = alone.map(x => ({ id: x.block.id, name: x.block.name, type: x.block.type, startYear: x.block.startYear, startMonth: x.block.startMonth || null, costs: x.costs, fiAge: x.result.fiAge, at95: at95(x.result), fiDelta: x.result.fiAge !== null && baseline.fiAge !== null ? x.result.fiAge - baseline.fiAge : null, at95Delta: at95(x.result) - at95(baseline), path: x.result.path }));
+  const togetherOut = { fiAge: together.fiAge, at95: at95(together), fiDelta: together.fiAge !== null && baseline.fiAge !== null ? together.fiAge - baseline.fiAge : null, at95Delta: at95(together) - at95(baseline), path: together.path };
+  return { asm: { returnLikely: rate }, baseline: { fiAge: baseline.fiAge, at95: at95(baseline), path: baseline.path }, alone: aloneOut, together: togetherOut, notes: compareNotes(inp, baseline, aloneOut, togetherOut, adjustments(blocks, defs, live)) };
+}
+
+/* Why the table reads the way it does, in plain words. Each sentence fires only when its pattern holds. */
+export function compareNotes(inp, baseline, alone, together, adj) {
+  const notes = [];
+  const costed = alone.filter(a => !a.costs.needs);
+  if (costed.some(a => a.fiDelta > 0 && a.at95Delta > 0)) notes.push('A later FI age means more working years of contributions, and those extra years compound to 95. That is why a block that costs money can still raise net worth at 95. The sandbox does not count a home as an asset; it counts what the purchase takes out of savings.');
+  const worstAlone = costed.reduce((m, a) => (a.fiDelta === null ? m : Math.max(m, a.fiDelta)), 0);
+  const sumAlone = costed.reduce((s, a) => s + (a.fiDelta || 0), 0);
+  if (costed.length > 1 && together.fiDelta !== null && together.fiDelta > sumAlone) {
+    /* the surplus turns negative in some overlapping year: savings are drawn down, not just slowed */
+    const leak = Math.max(0, inp.leakAnnual || 0);
+    const drawn = Object.keys(adj).some(y => (adj[y].monthly + (adj[y].pay || 0)) * 12 > leak);
+    notes.push('Together is worse than the blocks added up' + (drawn ? ': in the years they overlap, the ongoing costs are bigger than what gets saved each year, so savings are drawn down instead of growing, and the lost compounding never comes back.' : ': the blocks overlap, so their costs land on the same years of saving.') + (together.fiAge !== null && together.fiAge > inp.retirementAge ? ' FI lands after the retirement age of ' + inp.retirementAge + ', so the path spends from savings before they can carry the household.' : ''));
+  } else if (costed.length > 1 && together.fiDelta !== null && together.fiDelta < worstAlone) notes.push('Together comes out better than the hardest block alone because one block pays for part of another.');
+  return notes;
 }
 
 export function newBlock(type, defs, startYear, startMonth) {

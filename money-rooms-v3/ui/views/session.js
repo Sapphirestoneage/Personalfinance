@@ -80,7 +80,7 @@ function cheerPanel(app) {
 function progressPanel(app) {
   const panel = h('section', { class: 'panel progress-panel' });
   const P = progress(app.record, app.result, app.data.fields);
-  panel.appendChild(h('h2', null, 'Progress vs paperwork', P.since ? h('span', { class: 'tag' }, 'since ' + F.dateLong(P.since.slice(0, 10))) : h('span', { class: 'tag' }, 'since the start')));
+  panel.appendChild(h('h2', null, 'Progress vs paperwork', P.since ? h('span', { class: 'tag' }, 'since ' + F.dateLocal(P.since)) : h('span', { class: 'tag' }, 'since the start')));
   const total = P.counts.correction + P.counts.move + P.counts.paperwork;
   if (!total) { panel.appendChild(h('p', { class: 'muted small' }, 'Nothing has changed yet.')); return panel; }
   const months = e => e.months === null ? '' : e.months === 0 ? 'FI date unchanged' : Math.abs(e.months) + (Math.abs(e.months) === 1 ? ' month' : ' months') + ' of FI date ' + (e.months < 0 ? 'earlier' : 'later');
@@ -183,7 +183,7 @@ function sessionsPanel(app) {
 function sinceLast(app) {
   const panel = h('section', { class: 'panel' });
   const r = sinceLastSession(app.record, app.data.fields, changeText);
-  panel.appendChild(h('h2', null, 'Since last time', r.since ? h('span', { class: 'tag' }, F.dateLong(r.since.slice(0, 10))) : null));
+  panel.appendChild(h('h2', null, 'Since last time', r.since ? h('span', { class: 'tag' }, F.dateLocal(r.since)) : null));
   const moves = app.result.goalPlan && app.record.goals && app.record.goals.lastFinish ? finishChanges(app.record.goals.lastFinish, finishMonths(app.result.goalPlan), app.result.goalPlan.input.items) : [];
   if (!r.changes.length && !moves.length) { panel.appendChild(h('p', { class: 'muted small' }, r.since ? 'No changes since the last session.' : 'No session closed yet.')); return panel; }
   if (moves.length) panel.appendChild(h('p', { class: 'small goal-moves' }, 'Since last time, ' + moves.slice(0, 3).map(m => /^you /.test(m.text) ? m.text : m.text.charAt(0).toLowerCase() + m.text.slice(1)).join('; ') + '.'));

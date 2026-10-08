@@ -54,6 +54,15 @@ repository root, `npx playwright install chromium`).
 | `CONTRACTS.md` | What each planet publishes, written before the code |
 | `DECISIONS.md`, `QUESTIONS.md`, `PROGRESS.md`, `BOARD.md`, `SPEC-COVERAGE.md`, `DONE.md` | The run's own records |
 
+## The demo (MR-057)
+
+A first visit shows one line on Money Rooms and three ways in: **Load demo
+client** (Maya, example numbers only), **Start demo from zero** (a copy of
+Maya holding only her name, for entering her numbers one at a time) and,
+once a demo client exists, **Reset demo** (wipes both and loads Maya fresh).
+Every FI date reads from the projection's net worth line; the one metric that
+counts invested assets only says so in its name.
+
 ## Adding a client
 
 Home, type a name, press Enter. Facts go in through the Ledger only. Export

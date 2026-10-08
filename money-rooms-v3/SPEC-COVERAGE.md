@@ -182,7 +182,7 @@ Built after Level 9. The Level 9 stand-ins (dream FI age, dream and gut spending
 | Barista rule live, never hard-coded ($30,000 at 4%, $34,286 at 3.5%) | done | fiLadder.js baristaRule(wr); metric baristaRule with at35; flow "the barista rule is live and not hard-coded" |
 | Reverse Barista: part-time income needed today, Regular and Lean | done | metric baristaIncomeNeededToday (lean in extra); tieout |
 | Coast FI routed through the module, percent and date | done | fiLadder.js coast; metric coastFi reads the basis; lens coast-reached |
-| fiProgressBasis invested or netWorth, pctToFi follows it | done | assumptions.json; metrics.js pctToFi basis; sensitivity.test.js "net worth basis by assumption" |
+| fiProgressBasis invested or netWorth, pctToFi follows it (net worth by default since MR-057) | done | assumptions.json; metrics.js pctToFi basis; sensitivity.test.js "invested basis by assumption" |
 | fiLevels replaced by the ladder, id kept as alias | done | metrics.js fiLevels built from the same inputs; chart fiGauge unchanged |
 | Headline shelf on Home, Session and the one-pager with inputs, levers, lens per tile; unlocked-metrics pattern | done | ui/shelf.js; ui/metricdrawer.js; flow level9 "the Home shelf", "the metric drawer shows the math, the levers and the lens"; one-pager still prints to one page (flow level2) |
 | Dependency graph: nodes, generated edges, hand-listed rest, signs, lever families | done | data/graph.json; engine/graph.js; graph.test.js (no cycles, no orphans, every metric reaches a root, every root reaches fiDate or is marked) |

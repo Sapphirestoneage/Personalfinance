@@ -161,7 +161,7 @@ export function computeMetrics(ctx) {
   if (spending && spending.cents > 0) {
     const annual = scale(spending, 12); const fi = q(Math.round(annual.cents / asm.withdrawalRate), U.oneoff, { confidence: spending.confidence, rough: spending.rough, range: spending.range ? { low: Math.round(spending.range.low * 12 / asm.withdrawalRate), high: Math.round(spending.range.high * 12 / asm.withdrawalRate) } : null });
     put(ok('fiNumber', fi, { formula: 'annual spending / withdrawal rate', inputs: [inputOf('Annual spending', annual), inputOf('Withdrawal rate', pct(asm.withdrawalRate))], result: fi }));
-    /* the FI progress basis (MR-040): invested assets by default, net worth by assumption */
+    /* the FI progress basis (MR-040, MR-057): net worth by default, the same line the FI date is read from; invested assets by assumption */
     const basisQ = asm.fiProgressBasis === 'netWorth' ? nw : (inv && Q(inv.investedAssets));
     const basisLabel = asm.fiProgressBasis === 'netWorth' ? 'Net worth' : 'Invested assets';
     if (basisQ && fi.cents > 0) { const r = ratio(basisQ, fi); put(ok('pctToFi', r, { formula: basisLabel.toLowerCase() + ' / FI number', inputs: [inputOf(basisLabel, basisQ), inputOf('FI number', fi)], result: r }, { basis: asm.fiProgressBasis === 'netWorth' ? 'netWorth' : 'invested' })); } else put(fromNeeds('pctToFi', 'invested / FI number', basisQ || (asm.fiProgressBasis === 'netWorth' ? out.netWorth : (inv && inv.investedAssets))));
@@ -239,11 +239,13 @@ function levelNine(ctx, out, put, v) {
   const fiAge = pj && pj.likely ? pj.likely.fiAge : null;
   if (path && invested && spending && spending.cents > 0) {
     const regular = L.rungs.find(x => x.id === 'regularFi');
-    const invSeries = path.map(p => ({ year: p.year, age: p.age, value: p.invested }));
-    const cross = monthsToReach(regular.number, invested.cents, invSeries);
-    put(cross === null ? need('crossoverDate', ['a savings rate that reaches the FI number before 95']) : ok('crossoverDate', Object.assign({}, dateValue(monthDate(cross)), { rough: true }), { formula: 'first projected month invested x withdrawal rate covers spending', inputs: [inputOf('FI number', q(regular.number, U.oneoff)), inputOf('Invested today', invested)], result: dateValue(monthDate(cross)) }, { months: cross }));
-    const m100 = monthsToReach(10000000, invested.cents, invSeries);
-    put(m100 === null ? need('first100kDate', ['contributions that reach $100,000 before 95']) : ok('first100kDate', Object.assign({}, dateValue(monthDate(m100)), { rough: true }), { formula: 'first projected month invested assets reach $100,000', inputs: [inputOf('Invested today', invested)], result: dateValue(monthDate(m100)) }, { months: m100, reached: m100 === 0 }));
+    /* MR-057: the crossover and the first $100,000 are read from the projection's net worth line, the same line the FI date and every ladder rung come from, so every FI date tells one story. The flip stays on invested assets by its nature and says so. */
+    const nwToday = nw ? nw.cents : invested.cents;
+    const nwSeries = path.map(p => ({ year: p.year, age: p.age, value: p.netWorth }));
+    const cross = monthsToReach(regular.number, nwToday, nwSeries);
+    put(cross === null ? need('crossoverDate', ['a savings rate that reaches the FI number before 95']) : ok('crossoverDate', Object.assign({}, dateValue(monthDate(cross)), { rough: true }), { formula: 'first projected month net worth x withdrawal rate covers spending (the FI date, to the month)', inputs: [inputOf('FI number', q(regular.number, U.oneoff)), inputOf('Net worth today', nw || invested)], result: dateValue(monthDate(cross)) }, { months: cross }));
+    const m100 = monthsToReach(10000000, nwToday, nwSeries);
+    put(m100 === null ? need('first100kDate', ['contributions that reach $100,000 before 95']) : ok('first100kDate', Object.assign({}, dateValue(monthDate(m100)), { rough: true }), { formula: 'first projected month net worth reaches $100,000', inputs: [inputOf('Net worth today', nw || invested)], result: dateValue(monthDate(m100)) }, { months: m100, reached: m100 === 0 }));
     const contrib = ctx.contribAnnual || 0;
     let flip = null; let prev = invested.cents;
     for (let i = 0; i < path.length; i++) { if (!path[i].working) break; if (Math.round(prev * r) > contrib) { flip = path[i]; break; } prev = path[i].invested; }

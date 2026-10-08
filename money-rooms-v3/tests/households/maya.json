@@ -2008,7 +2008,50 @@
     ]
    },
    "taxes": {
-    "rows": []
+    "rows": [
+     {
+      "id": "m-est",
+      "planet": "taxes",
+      "type": "other",
+      "nickname": "Quarterly estimated tax",
+      "institution": "IRS",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "otherTax": {
+        "v": 240000,
+        "state": "known",
+        "source": "client",
+        "cad": "year"
+       }
+      }
+     },
+     {
+      "id": "m-njest",
+      "planet": "taxes",
+      "type": "other",
+      "nickname": "NJ estimated tax",
+      "institution": "NJ Division of Taxation",
+      "asOf": null,
+      "followUp": false,
+      "stress": null,
+      "notesPrivate": "",
+      "notesShared": "",
+      "lib": null,
+      "f": {
+       "otherTax": {
+        "v": 60000,
+        "state": "rough",
+        "source": "client",
+        "cad": "year"
+       }
+      }
+     }
+    ]
    },
    "life": {
     "rows": [
@@ -9081,6 +9124,124 @@
     "seq": 234,
     "ts": "2026-09-17T16:22:24.000Z",
     "kind": "add-row",
+    "planet": "taxes",
+    "rowId": "m-est",
+    "field": null,
+    "owner": "taxes",
+    "old": null,
+    "new": {
+     "id": "m-est",
+     "planet": "taxes",
+     "type": "other",
+     "nickname": "Quarterly estimated tax",
+     "institution": "IRS",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "otherTax": {
+       "v": null,
+       "state": "unknown",
+       "source": "client",
+       "cad": "year"
+      }
+     }
+    },
+    "source": "client",
+    "state": "known",
+    "session": "s2"
+   },
+   {
+    "seq": 235,
+    "ts": "2026-09-17T16:22:31.000Z",
+    "kind": "set",
+    "planet": "taxes",
+    "rowId": "m-est",
+    "field": "otherTax",
+    "owner": "taxes",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client",
+     "cad": "year"
+    },
+    "new": {
+     "v": 240000,
+     "state": "known",
+     "source": "client",
+     "cad": "year"
+    },
+    "source": "client",
+    "state": "known",
+    "session": "s2",
+    "why": "correction"
+   },
+   {
+    "seq": 236,
+    "ts": "2026-09-17T16:22:38.000Z",
+    "kind": "add-row",
+    "planet": "taxes",
+    "rowId": "m-njest",
+    "field": null,
+    "owner": "taxes",
+    "old": null,
+    "new": {
+     "id": "m-njest",
+     "planet": "taxes",
+     "type": "other",
+     "nickname": "NJ estimated tax",
+     "institution": "NJ Division of Taxation",
+     "asOf": null,
+     "followUp": false,
+     "stress": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "lib": null,
+     "f": {
+      "otherTax": {
+       "v": null,
+       "state": "unknown",
+       "source": "client",
+       "cad": "year"
+      }
+     }
+    },
+    "source": "client",
+    "state": "known",
+    "session": "s2"
+   },
+   {
+    "seq": 237,
+    "ts": "2026-09-17T16:22:45.000Z",
+    "kind": "set",
+    "planet": "taxes",
+    "rowId": "m-njest",
+    "field": "otherTax",
+    "owner": "taxes",
+    "old": {
+     "v": null,
+     "state": "unknown",
+     "source": "client",
+     "cad": "year"
+    },
+    "new": {
+     "v": 60000,
+     "state": "rough",
+     "source": "client",
+     "cad": "year"
+    },
+    "source": "client",
+    "state": "rough",
+    "session": "s2",
+    "why": "correction"
+   },
+   {
+    "seq": 238,
+    "ts": "2026-09-17T16:22:52.000Z",
+    "kind": "add-row",
     "planet": "life",
     "rowId": "m-goal1",
     "field": null,
@@ -9121,8 +9282,8 @@
     "session": "s2"
    },
    {
-    "seq": 235,
-    "ts": "2026-09-17T16:22:31.000Z",
+    "seq": 239,
+    "ts": "2026-09-17T16:22:59.000Z",
     "kind": "set",
     "planet": "life",
     "rowId": "m-goal1",
@@ -9144,8 +9305,8 @@
     "why": "correction"
    },
    {
-    "seq": 236,
-    "ts": "2026-09-17T16:22:38.000Z",
+    "seq": 240,
+    "ts": "2026-09-17T16:23:06.000Z",
     "kind": "set",
     "planet": "life",
     "rowId": "m-goal1",
@@ -9167,8 +9328,8 @@
     "why": "correction"
    },
    {
-    "seq": 237,
-    "ts": "2026-09-17T16:22:45.000Z",
+    "seq": 241,
+    "ts": "2026-09-17T16:23:13.000Z",
     "kind": "set",
     "planet": "life",
     "rowId": "m-goal1",
@@ -9190,8 +9351,8 @@
     "why": "move"
    },
    {
-    "seq": 238,
-    "ts": "2026-09-17T16:22:52.000Z",
+    "seq": 242,
+    "ts": "2026-09-17T16:23:20.000Z",
     "kind": "add-row",
     "planet": "life",
     "rowId": "m-goal2",
@@ -9233,8 +9394,8 @@
     "session": "s2"
    },
    {
-    "seq": 239,
-    "ts": "2026-09-17T16:22:59.000Z",
+    "seq": 243,
+    "ts": "2026-09-17T16:23:27.000Z",
     "kind": "set",
     "planet": "life",
     "rowId": "m-goal2",
@@ -9256,8 +9417,8 @@
     "why": "correction"
    },
    {
-    "seq": 240,
-    "ts": "2026-09-17T16:23:06.000Z",
+    "seq": 244,
+    "ts": "2026-09-17T16:23:34.000Z",
     "kind": "set",
     "planet": "life",
     "rowId": "m-goal2",
@@ -9279,8 +9440,8 @@
     "why": "correction"
    },
    {
-    "seq": 241,
-    "ts": "2026-09-17T16:23:13.000Z",
+    "seq": 245,
+    "ts": "2026-09-17T16:23:41.000Z",
     "kind": "set",
     "planet": "life",
     "rowId": "m-goal2",
@@ -9302,8 +9463,8 @@
     "why": "move"
    },
    {
-    "seq": 242,
-    "ts": "2026-09-17T16:23:20.000Z",
+    "seq": 246,
+    "ts": "2026-09-17T16:23:48.000Z",
     "kind": "add-row",
     "planet": "life",
     "rowId": "m-ret",
@@ -9373,8 +9534,8 @@
     "session": "s2"
    },
    {
-    "seq": 243,
-    "ts": "2026-09-17T16:23:27.000Z",
+    "seq": 247,
+    "ts": "2026-09-17T16:23:55.000Z",
     "kind": "set",
     "planet": "life",
     "rowId": "m-ret",
@@ -9396,8 +9557,8 @@
     "why": "correction"
    },
    {
-    "seq": 244,
-    "ts": "2026-09-17T16:23:55.000Z",
+    "seq": 248,
+    "ts": "2026-09-17T16:24:23.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "m-csp",
@@ -9419,8 +9580,8 @@
     "why": "move"
    },
    {
-    "seq": 245,
-    "ts": "2026-09-17T16:24:02.000Z",
+    "seq": 249,
+    "ts": "2026-09-17T16:24:30.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "m-loan",
@@ -9442,8 +9603,8 @@
     "why": "move"
    },
    {
-    "seq": 246,
-    "ts": "2026-09-17T16:24:09.000Z",
+    "seq": 250,
+    "ts": "2026-09-17T16:24:37.000Z",
     "kind": "session",
     "planet": "sun",
     "rowId": "sun",
@@ -9456,7 +9617,7 @@
     "session": "s2"
    },
    {
-    "seq": 247,
+    "seq": 251,
     "ts": "2026-10-03T16:00:07.000Z",
     "kind": "set",
     "planet": "debt",
@@ -9479,7 +9640,7 @@
     "why": "move"
    },
    {
-    "seq": 248,
+    "seq": 252,
     "ts": "2026-10-03T16:00:14.000Z",
     "kind": "set",
     "planet": "invest",
@@ -9502,7 +9663,7 @@
     "why": "move"
    },
    {
-    "seq": 249,
+    "seq": 253,
     "ts": "2026-10-03T16:00:21.000Z",
     "kind": "set",
     "planet": "spending",
@@ -9575,7 +9736,7 @@
    {
     "id": "s2",
     "label": "Session 2",
-    "at": "2026-09-17T16:24:09.000Z",
+    "at": "2026-09-17T16:24:37.000Z",
     "note": "Spending detail replaced the rough total. Accounts and safety net in."
    }
   ],

@@ -166,6 +166,8 @@ const mayaS2Rows = [
   { id: 'm-fxaix', planet: 'invest', type: 'holding', nickname: 'FXAIX', institution: 'Fidelity', lib: 'FXAIX', f: { accountRef: 'Brokerage', fundName: ['Fidelity 500 Index', 'known', 'lookup-verify'], expenseRatio: [0.00015, 'known', 'lookup-verify'], pctOfAccount: 1 } },
   { id: 'm-vttsx', planet: 'invest', type: 'holding', nickname: 'Target 2060', institution: 'Fidelity', lib: 'VTTSX', f: { accountRef: '401k', fundName: ['Vanguard Target Retirement 2060', 'known', 'lookup-verify'], expenseRatio: [0.0008, 'known', 'lookup-verify'], pctOfAccount: 1 } },
   { id: 'm-vtsax', planet: 'invest', type: 'holding', nickname: 'VTSAX', institution: 'Vanguard', lib: 'VTSAX', f: { accountRef: 'Roth IRA', fundName: ['Vanguard Total Stock Market Index Admiral', 'known', 'lookup-verify'], expenseRatio: [0.0004, 'known', 'lookup-verify'], pctOfAccount: 1 } },
+  { id: 'm-est', planet: 'taxes', type: 'other', nickname: 'Quarterly estimated tax', institution: 'IRS', f: { otherTax: [240000, 'known', 'client', 'year'] } },
+  { id: 'm-njest', planet: 'taxes', type: 'other', nickname: 'NJ estimated tax', institution: 'NJ Division of Taxation', f: { otherTax: [60000, 'rough', 'client', 'year'] } },
   { id: 'm-goal1', planet: 'life', type: 'goal', nickname: 'Condo down payment', f: { goalCost: [8000000, 'rough'], targetDate: '2035-06', priority: '1' } },
   { id: 'm-goal2', planet: 'life', type: 'goal', nickname: 'Japan with my sister', f: { goalCost: [600000, 'known'], targetDate: '2027-10', priority: '3' } },
   { id: 'm-ret', planet: 'life', type: 'retirement', nickname: 'Retirement', f: { retirementAge: [55, 'rough'], gogo: [1, 'known', 'estimated'], slowgo: [0.85, 'known', 'estimated'], nogo: [0.75, 'known', 'estimated'] } },

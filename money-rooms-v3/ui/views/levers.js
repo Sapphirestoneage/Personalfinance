@@ -86,13 +86,21 @@ function baristaRow(app, L) {
 }
 function h2t(s) { return s; }
 
+/* MR-057: the shape of what is coming, not a spinner. Honours prefers-reduced-motion through CSS. */
+function skeleton(kind) {
+  const host = h('div', { class: 'skeleton-host', 'aria-busy': 'true' }, h('span', { class: 'sr-only' }, 'Working out the levers'));
+  if (kind === 'top') { host.appendChild(h('div', { class: 'skeleton line wide' })); host.appendChild(h('div', { class: 'skeleton line' })); return host; }
+  for (let i = 0; i < 6; i++) host.appendChild(h('div', { class: 'skeleton row' }, h('div', { class: 'skeleton name', style: { width: (34 + (i * 17) % 40) + '%' } }), h('div', { class: 'skeleton bar', style: { width: (70 - i * 9) + '%' } })));
+  return host;
+}
+
 /* ---- the top card ---- */
 function drawTop(panel, app, sens) {
   clear(panel);
   const coach = app.view === 'coach'; const M = app.result.metrics;
   if (!M.fiDate || M.fiDate.status !== 'ok') { panel.appendChild(h('h2', null, coach ? 'Your biggest lever' : 'What matters most')); panel.appendChild(h('p', { class: 'muted' }, 'The levers need a FI date: income, spending and account balances that reach the FI number before 95. ' + (M.fiDate && M.fiDate.needs ? 'Needs ' + M.fiDate.needs.join(', ') + '.' : ''))); return; }
   panel.appendChild(h('h2', null, coach ? 'Your biggest lever' : 'What matters most', h('span', { class: 'tag' }, 'FI ' + F.date(M.fiDate.value.value) + (M.fiDate.ages ? ', age ' + M.fiDate.ages.likely : ''))));
-  if (!sens) { panel.appendChild(h('p', { class: 'muted working' }, 'Working out the levers...')); return; }
+  if (!sens) { panel.appendChild(skeleton('top')); return; }
   if (!sens.ranked || !sens.ranked.headline) { panel.appendChild(h('p', { class: 'muted' }, 'No lever measured yet.')); return; }
   const top = sens.ranked.top;
   panel.appendChild(h('p', { class: 'headline' }, coach ? sens.ranked.headline : sens.ranked.headline.replace('Your biggest lever is', 'The number that matters most is')));
@@ -111,7 +119,7 @@ function drawList(panel, app, sens, st) {
     narrow ? null : h('button', { class: 'btn small' + (st.graphOn ? ' primary' : ''), 'aria-pressed': String(st.graphOn), onClick: () => st.setGraph(!st.graphOn) }, st.graphOn ? 'List' : 'Graph'),
     h('label', { class: 'small muted', style: { display: 'inline-flex', gap: '4px', alignItems: 'center' } }, h('input', { type: 'checkbox', checked: !!(app.record.sun.flags && app.record.sun.flags.geoArbitrage), onChange: e => app.mutate(rec => { rec.sun.flags = Object.assign({}, rec.sun.flags || {}, { geoArbitrage: e.target.checked }); }, 'flags') }), 'Considering a move')));
   panel.appendChild(head);
-  if (!sens) { panel.appendChild(h('p', { class: 'muted working' }, 'Working out the levers...')); return; }
+  if (!sens) { panel.appendChild(skeleton('list')); return; }
   if (coach && st.graphOn && !narrow) { drawGraph(panel, app, sens); return; }
   const list = st.mode === 'ask' && coach ? sens.ranked.ask : sens.ranked.impact;
   const live = list.filter(i => (st.mode === 'ask' && coach ? i.askRange : i.impact) > 0);

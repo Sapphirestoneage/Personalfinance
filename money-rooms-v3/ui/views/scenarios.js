@@ -168,7 +168,7 @@ export function mount(host, app) {
       : row(a.name + ' alone', moved(a.fiAge, a.fiDelta), worth(a.at95, a.at95Delta))));
     const foot = h('tfoot', null, h('tr', null, h('td', null, 'All together'), h('td', null, moved(c.together.fiAge, c.together.fiDelta)), h('td', { class: 'num' }, worth(c.together.at95, c.together.at95Delta))));
     sec.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data' }, h('thead', null, h('tr', null, h('th', null, 'Path'), h('th', null, coach ? 'FI age' : 'Could stop working at'), h('th', { class: 'num' }, 'Net worth at 95'))), h('tbody', null, rows), foot)));
-    if (c.alone.some(a => a.fiDelta > 0 && a.at95Delta > 0)) sec.appendChild(h('p', { class: 'hint', style: { marginTop: '8px' } }, 'A later FI age means more working years, so net worth at 95 can rise even when a block costs money.'));
+    (c.notes || []).forEach(text => sec.appendChild(h('p', { class: 'hint compare-note', style: { marginTop: '8px' } }, text)));
   }
 
   draw();

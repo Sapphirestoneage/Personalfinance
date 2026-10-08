@@ -423,8 +423,9 @@ def main(name):
     # FI
     annual_spend = spending * 12; wr = ASM['withdrawalRate']
     fi = R(annual_spend / wr); put('fiNumber', fi, '- 41 FI number = %s / %s = %s.' % (dollars(annual_spend), pct(wr), dollars(fi)))
-    basis = invested if ASM.get('fiProgressBasis', 'invested') == 'invested' else nw  # Level 9 (MR-040): invested assets by default
-    E['pctToFi'] = round(basis / fi, 6); line('- 42 %% to FI = invested %s / %s = %s (FI progress basis: invested assets).' % (dollars(basis), dollars(fi), pct(basis / fi)))
+    basis_key = ASM.get('fiProgressBasis', 'netWorth')  # MR-057: net worth by default, the same line the FI date is read from
+    basis = invested if basis_key == 'invested' else nw
+    E['pctToFi'] = round(basis / fi, 6); line('- 42 %% to FI = %s %s / %s = %s (FI progress basis: %s).' % ('invested' if basis_key == 'invested' else 'net worth', dollars(basis), dollars(fi), pct(basis / fi), 'invested assets' if basis_key == 'invested' else 'net worth'))
     ret_rows = rows('life', 'retirement'); ret_age = val(ret_rows[0]['f']['retirementAge']) if ret_rows else ASM['retirementAgeDefault']
     years = ret_age - age; growth = (1 + ASM['returnLikely']) ** years
     coast = R(fi / growth); E['coastFiNumber'] = coast; E['coastPct'] = round(basis / coast, 6); E['retirementAge'] = ret_age

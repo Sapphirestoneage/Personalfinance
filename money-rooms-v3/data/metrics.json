@@ -1621,8 +1621,8 @@
    "id": "pctToFi",
    "name": "% to FI",
    "clientLabel": "How far along",
-   "definition": "Invested assets (or net worth, by the FI progress basis assumption) divided by the FI number.",
-   "formula": "invested / fiNumber (basis switchable)",
+   "definition": "Net worth (or invested assets, by the FI progress basis assumption) divided by the FI number, on the same line as the FI date.",
+   "formula": "netWorth / fiNumber (basis switchable)",
    "inputs": [
     "invest.investedAssets",
     "m.netWorth",
@@ -2284,9 +2284,9 @@
    "n": 57,
    "id": "crossoverDate",
    "name": "Crossover date",
-   "clientLabel": "When investments start paying for life",
-   "definition": "The first month investment income at the withdrawal rate covers spending, on the projection.",
-   "formula": "first month invested x withdrawalRate >= spending x 12",
+   "clientLabel": "When the money starts paying for life",
+   "definition": "The first month net worth at the withdrawal rate covers spending, on the projection: the FI date, to the month.",
+   "formula": "first month netWorth x withdrawalRate >= spending x 12",
    "inputs": [
     "projection",
     "m.spending",
@@ -2401,9 +2401,9 @@
   {
    "n": 60,
    "id": "theFlip",
-   "name": "The flip",
-   "clientLabel": "When growth beats what you add",
-   "definition": "The first projection year the portfolio grows more from returns than from contributions.",
+   "name": "The flip (invested only)",
+   "clientLabel": "When growth beats what you add (invested only)",
+   "definition": "The first projection year the portfolio grows more from returns than from contributions. Counts invested assets only, not cash or debt, so it can sit far from the FI date.",
    "formula": "first year invested x return > contributions",
    "inputs": [
     "projection",
@@ -2443,8 +2443,8 @@
    "id": "first100kDate",
    "name": "First $100,000",
    "clientLabel": "When the first $100,000 lands",
-   "definition": "The projected month invested assets reach $100,000.",
-   "formula": "first month invested >= 100,000",
+   "definition": "The projected month net worth reaches $100,000, on the same line as the FI date.",
+   "formula": "first month netWorth >= 100,000",
    "inputs": [
     "projection",
     "invest.investedAssets"

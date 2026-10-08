@@ -35,7 +35,7 @@ export function mount(host, app) {
     upload.appendChild(h('div', { class: 'row' }, h('label', { class: 'small' }, 'From'), inst, file, h('button', { class: 'btn', onClick: () => { if (paste.value.trim()) load(paste.value); } }, 'Use the pasted text')));
     upload.appendChild(paste);
     const T = P().transactions;
-    if (T && T.importedAt) upload.appendChild(h('p', { class: 'small' }, 'Last import ' + F.dateLong(T.importedAt.slice(0, 10)) + ': ' + T.count + ' transactions over ' + Math.round(T.spanDays / 7) + ' weeks' + (T.blindSpotPct !== null && T.blindSpotPct !== undefined ? '; blind spot ' + Math.round(T.blindSpotPct * 100) + '%' : '') + '.'));
+    if (T && T.importedAt) upload.appendChild(h('p', { class: 'small' }, 'Last import ' + F.dateTimeLocal(T.importedAt) + ': ' + T.count + ' transactions over ' + Math.round(T.spanDays / 7) + ' weeks' + (T.blindSpotPct !== null && T.blindSpotPct !== undefined ? '; blind spot ' + Math.round(T.blindSpotPct * 100) + '%' : '') + '.'));
   }
   function load(text) {
     parsed = parseCsv(text); if (!parsed.headers.length) { app.toast('That file has no rows.'); return; }

@@ -38,7 +38,7 @@
   "nogo": 0.75,
   "slowgoAge": 75,
   "nogoAge": 85,
-  "fiProgressBasis": "invested",
+  "fiProgressBasis": "netWorth",
   "fiSpendingBasis": "actual",
   "healthcarePremiumMonthlyCents": 65000,
   "inflation": 0.03,

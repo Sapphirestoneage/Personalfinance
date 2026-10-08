@@ -97,6 +97,17 @@ export function date(iso, opts) {
 }
 
 /* "5 Oct 2026" for journal lines and asOf. */
+/* MR-057: a journal timestamp in the browser's local time, "7 Oct 2026, 9:45 pm". Empty for anything that is not a date. */
+export function dateTimeLocal(ts) {
+  const d = new Date(ts); if (!ts || isNaN(d.getTime())) return '';
+  const hour = d.getHours(); const h12 = hour % 12 || 12;
+  return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear() + ', ' + h12 + ':' + String(d.getMinutes()).padStart(2, '0') + (hour < 12 ? ' am' : ' pm');
+}
+/* The local calendar day of a timestamp, "7 Oct 2026". */
+export function dateLocal(ts) {
+  const d = new Date(ts); if (!ts || isNaN(d.getTime())) return '';
+  return d.getDate() + ' ' + MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+}
 export function dateLong(iso) {
   if (!iso) return '';
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));

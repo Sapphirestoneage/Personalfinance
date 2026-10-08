@@ -24,7 +24,7 @@ export function mount(host, app) {
   host.appendChild(stage); host.appendChild(kpis); host.appendChild(lenses); host.appendChild(charts);
   function draw() {
     clear(stage); clear(kpis); clear(lenses); clear(charts);
-    const R = app.result; const M = R.metrics;
+    const R = app.result; const M = R.metrics; const phone = isPhone(host);
     if (!M) { kpis.appendChild(h('div', { class: 'empty' }, h('h2', null, 'Nothing to measure yet'), h('p', null, 'Enter income first, then spending. Numbers appear as their inputs arrive.'))); return; }
     if (app.view === 'coach') Object.keys(STAGE_PLANETS).forEach(s => {
       const planets = STAGE_PLANETS[s]; const filled = planets.every(p => R.rowCounts[p] > 0);
@@ -43,7 +43,8 @@ export function mount(host, app) {
       kpis.appendChild(rest);
     } else GROUPS.forEach(([key, label]) => groupInto(kpis, key, label));
     function groupInto(host2, key, label) {
-      const defs = app.data.metrics.metrics.filter(m => m.group === key && (app.view === 'coach' || !m.coachOnly || (app.result.asm && app.result.asm.showBenchmarksToClient)));
+      if (key === 'benchmarks' && app.view === 'client') return; /* MR-057: benchmarks are the coach's, with their verify tag */
+      const defs = app.data.metrics.metrics.filter(m => m.group === key && (app.view === 'coach' || !m.coachOnly));
       if (!defs.length) return;
       const allNeed = defs.every(def => !M[def.id] || M[def.id].status !== 'ok');
       if (allNeed) {
@@ -53,15 +54,28 @@ export function mount(host, app) {
       }
       const grid = h('div', { class: 'kpis' });
       defs.forEach(def => grid.appendChild(kpi(app, M[def.id], def, t)));
-      host2.appendChild(h('div', { class: 'metric-group' }, h('h3', null, t(label)), grid));
+      host2.appendChild(collapsible(h('div', { class: 'metric-group' }), t(label), grid, phone, { count: defs.length, word: 'numbers' }));
     }
-    drawLenses(lenses, app, t);
-    drawCharts(charts, app, t);
+    drawLenses(lenses, app, t, phone);
+    drawCharts(charts, app, t, phone);
   }
   draw();
   return { update() { draw(); } };
 }
 
+/* MR-057: on a phone each Measure section folds to its header and its top two items; a tap opens the rest. */
+export function isPhone(host) { return (host && host.clientWidth > 0 ? host.clientWidth : (typeof window !== 'undefined' ? window.innerWidth : 1440)) < 600; }
+export function collapsible(section, label, grid, phone, o) {
+  const items = Array.from(grid.children);
+  if (!phone || items.length <= 2) { section.appendChild(h('h3', null, label)); section.appendChild(grid); return section; }
+  let open = false;
+  const more = items.length - 2;
+  const btn = h('button', { class: 'fold-head', 'aria-expanded': 'false' }, h('h3', null, label), h('span', { class: 'small muted fold-more' }, more + ' more'));
+  const paint = () => { items.forEach((el, i) => { el.style.display = open || i < 2 ? '' : 'none'; }); btn.setAttribute('aria-expanded', String(open)); btn.lastChild.textContent = open ? 'Fewer' : more + ' more ' + ((o && o.word) || 'items'); };
+  btn.addEventListener('click', () => { open = !open; paint(); });
+  section.classList.add('fold'); section.appendChild(btn); section.appendChild(grid); paint();
+  return section;
+}
 export function kpi(app, m, def, t) {
   const coach = app.view === 'coach';
   const label = metricLabel(app, def);
@@ -129,7 +143,7 @@ export function mathBody(app, m, def) {
   return body;
 }
 
-export function drawLenses(panel, app, t) {
+export function drawLenses(panel, app, t, phone) {
   clear(panel);
   const coach = app.view === 'coach';
   const picks = app.record.sun.clientPicks || [];
@@ -137,6 +151,8 @@ export function drawLenses(panel, app, t) {
   const list = coach ? all : all.filter(l => picks.includes(l.id));
   panel.appendChild(h('h2', null, t('Lenses'), coach ? h('span', { class: 'tag' }, all.length + ' firing; tick the ones the client should see') : null));
   if (!list.length) { panel.appendChild(h('p', { class: 'muted' }, coach ? 'No lens fires yet. Lenses need income, spending and the planets they read.' : 'Nothing to show here yet.')); return; }
+  const lensHost = h('div', { class: 'lens-list' }); panel.appendChild(lensHost);
+  if (phone && list.length > 2) { let open = false; const btn = h('button', { class: 'btn small', 'aria-expanded': 'false', style: { marginBottom: '8px' } }, (list.length - 2) + ' more lenses'); btn.addEventListener('click', () => { open = !open; Array.from(lensHost.children).forEach((el, i) => { el.style.display = open || i < 2 ? '' : 'none'; }); btn.setAttribute('aria-expanded', String(open)); btn.textContent = open ? 'Fewer lenses' : (list.length - 2) + ' more lenses'; }); panel.appendChild(btn); setTimeout(() => Array.from(lensHost.children).forEach((el, i) => { if (i >= 2) el.style.display = 'none'; }), 0); }
   list.forEach(l => {
     const el = h('div', { class: 'lens', dataset: { lens: l.id } },
       h('div', { class: 'text' }, l.text),
@@ -146,15 +162,16 @@ export function drawLenses(panel, app, t) {
         h('button', { class: 'btn small quiet', onClick: () => app.openDrawer(h('div', null, h('h2', null, l.name), h('p', { style: { margin: '8px 0 12px' } }, l.text), h('table', { class: 'data math-table' }, h('tbody', null, l.inputs.map(i => h('tr', null, h('td', null, i[0]), h('td', { class: 'num' }, i[1]))))), l.reading ? h('p', { class: 'small muted', style: { marginTop: '12px' } }, 'Reading: ' + l.reading.title) : null)) }, 'Show the math'),
         l.reading ? h('span', { class: 'muted' }, 'Read: ' + l.reading.title) : null,
         coach ? h('label', null, h('input', { type: 'checkbox', checked: picks.includes(l.id), onChange: e => { app.mutate(rec => { const set = new Set(rec.sun.clientPicks || []); if (e.target.checked) set.add(l.id); else set.delete(l.id); rec.sun.clientPicks = Array.from(set); }, 'picks'); } }), 'Show to client') : null));
-    panel.appendChild(el);
+    lensHost.appendChild(el);
   });
 }
 
-export function drawCharts(host, app, t) {
+export function drawCharts(host, app, t, phone) {
   clear(host);
   const coach = app.view === 'coach';
   const onPage = app.record.sun.onepager.charts || [];
   const grid = h('div', { class: 'grid grid-2' });
+  let foldOpen = !phone;
   CHARTS.forEach(c => {
     const data = c.build(app.result);
     const panel = h('section', { class: 'panel chart-panel', dataset: { chart: c.id } }, h('header', null, h('h3', null, coach ? c.name : c.client), coach ? h('label', { class: 'small muted', style: { display: 'inline-flex', gap: '4px' } }, h('input', { type: 'checkbox', checked: onPage.includes(c.id), onChange: e => { app.mutate(rec => { const set = new Set(rec.sun.onepager.charts || []); if (e.target.checked) set.add(c.id); else set.delete(c.id); rec.sun.onepager.charts = Array.from(set); }, 'picks'); } }), 'On the one-pager') : null));
@@ -164,7 +181,10 @@ export function drawCharts(host, app, t) {
   });
   host.appendChild(h('h2', { style: { margin: '16px 0 8px' } }, 'Charts'));
   host.appendChild(grid);
-  const paint = () => CHARTS.forEach(c => { const body = grid.querySelector('[data-chart-body="' + c.id + '"]'); if (body) Charts.render(c.id, body, c.build(app.result), { client: !coach }); });
+  const panels = Array.from(grid.children);
+  const fold = () => panels.forEach((el, i) => { el.style.display = foldOpen || i < 2 ? '' : 'none'; });
+  if (phone && panels.length > 2) { const btn = h('button', { class: 'btn small', 'aria-expanded': 'false', style: { margin: '8px 0' } }, (panels.length - 2) + ' more charts'); btn.addEventListener('click', () => { foldOpen = !foldOpen; fold(); btn.setAttribute('aria-expanded', String(foldOpen)); btn.textContent = foldOpen ? 'Fewer charts' : (panels.length - 2) + ' more charts'; paint(); }); host.appendChild(btn); fold(); }
+  const paint = () => CHARTS.forEach(c => { const body = grid.querySelector('[data-chart-body="' + c.id + '"]'); if (body && body.parentNode.style.display !== 'none') Charts.render(c.id, body, c.build(app.result), { client: !coach }); });
   paint();
   if (globalThis.ResizeObserver) { let t = null; let last = grid.clientWidth; const ro = new ResizeObserver(() => { if (Math.abs(grid.clientWidth - last) < 24) return; last = grid.clientWidth; clearTimeout(t); t = setTimeout(paint, 150); }); ro.observe(grid); }
 }
