@@ -59,7 +59,13 @@ input:focus, select:focus, textarea:focus, [contenteditable]:focus { outline: 2p
 .sidenav .navlabel { overflow: hidden; text-overflow: ellipsis; }
 .sidenav a:hover { background: var(--paper-2); text-decoration: none; }
 .sidenav a[aria-current="page"] { border-left-color: var(--sapphire-700); color: var(--sapphire-700); background: var(--sapphire-100); }
-.sidenav .group { padding: var(--s-3) var(--s-3) var(--s-1); }
+.sidenav .group { padding: var(--s-3) var(--s-3) var(--s-1); display: flex; justify-content: space-between; align-items: center; width: 100%; background: none; border: 0; font: inherit; font-size: var(--fs-11); text-transform: uppercase; letter-spacing: 0.06em; color: var(--slate); cursor: pointer; text-align: left; }
+.sidenav .group:hover { color: var(--ink); }
+.sidenav .group .caret { font-size: var(--fs-12); }
+.sidenav .group-items[hidden] { display: none; }
+.nav-btn { display: none; flex-direction: column; justify-content: center; gap: 4px; width: 36px; height: 32px; padding: 0 8px; }
+.nav-btn span { display: block; height: 2px; background: var(--on-bar); border-radius: 1px; }
+.nav-btn[aria-expanded="true"] span:nth-child(2) { opacity: 0.4; }
 .sidenav .fill { display: none; }
 .sidenav .fill-text, .sidenav .kbd { display: none; }
 .sidenav .fill span { display: block; height: 100%; background: var(--sapphire-500); }
@@ -323,16 +329,15 @@ body[data-view="client"] .kpi .value.list, body[data-view="client"] .kpi .value.
   :root { --sidebar-w: 168px; }
 }
 @media (max-width: 720px) {
-  .layout { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 1fr; }
-  .sidenav { display: flex; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 0; }
-  .sidenav .group { display: none; }
-  .sidenav a { border-left: 0; border-bottom: 2px solid transparent; white-space: nowrap; padding: var(--s-2) 12px; }
-  .sidenav a[aria-current="page"] { border-bottom-color: var(--sapphire-700); }
+  /* MR-066: on a narrow screen the screen list is a drawer on the left behind the three-line button, groups folding under their carets */
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .sidenav { position: fixed; top: 48px; left: 0; bottom: 0; width: 272px; max-width: 86vw; overflow-y: auto; z-index: 25; border-right: 1px solid var(--line); box-shadow: 0 8px 24px var(--line); transform: translateX(-100%); transition: transform 160ms ease; }
+  body.nav-open .sidenav { transform: none; }
+  body.nav-open .layout::before { content: ''; position: fixed; inset: 48px 0 0 0; background: var(--ink); opacity: 0.35; z-index: 24; }
+  .nav-btn { display: inline-flex; }
   .sidenav .fill-text, .sidenav .kbd { display: none; }
-  .sidenav a { display: flex; }
   .ledger-table th.sticky, .ledger-table td.sticky { max-width: 144px; overflow: hidden; text-overflow: ellipsis; }
   .sidenav { scrollbar-width: thin; }
-  .sidenav a { padding: var(--s-2) 12px; }
   .lens .foot { grid-template-columns: minmax(0, 1fr) auto; }
   .lens .foot .muted, .lens .foot > span:first-child { display: none; }
   .grid-2 { grid-template-columns: minmax(0, 1fr); }
@@ -593,7 +598,6 @@ main > header:has(+ .onepager) { max-width: 816px; }
   .ledger-table tr:hover .pick, .ledger-table .pick:checked, .ledger-table .pick:focus-visible { opacity: 1; }
 }
 @media (max-width: 720px) {
-  .sidenav { mask-image: linear-gradient(to right, #000 88%, transparent); -webkit-mask-image: linear-gradient(to right, #000 88%, transparent); }
   .learn table.data td.num { display: block; text-align: left; height: auto; padding: 0 var(--s-2) var(--s-1) 12px; border-bottom: 1px solid var(--line-soft); }
 }
 @media (max-width: 480px) {

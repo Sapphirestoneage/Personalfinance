@@ -207,15 +207,26 @@ export const app = {
     const nav = qs('#sidenav');
     clear(nav);
     const items = navItems(this);
-    let group = null;
+    const folded = settings.navFolded || {};
+    let group = null; let box = nav;
     items.forEach(it => {
-      if (it.group && it.group !== group) { group = it.group; nav.appendChild(h('h3', { class: 'group' }, group)); }
-      const a = h('a', { href: it.href, 'aria-current': it.active(this.route) ? 'page' : null, class: it.coachOnly ? 'coach-only' : null },
+      if (it.group && it.group !== group) {
+        group = it.group; const open = !folded[group] || items.some(x => x.group === group && x.active(this.route));
+        const btn = h('button', { class: 'group', 'aria-expanded': String(open), onClick: () => { settings.navFolded = Object.assign({}, settings.navFolded || {}, { [group]: open }); store.saveSettings(settings); this.renderNav(); } }, h('span', null, group), h('span', { class: 'caret', 'aria-hidden': 'true' }, open ? '\u25BE' : '\u25B8'));
+        box = h('div', { class: 'group-items', hidden: open ? null : 'hidden' });
+        nav.appendChild(btn); nav.appendChild(box);
+      }
+      const a = h('a', { href: it.href, 'aria-current': it.active(this.route) ? 'page' : null, class: it.coachOnly ? 'coach-only' : null, onClick: () => { document.body.classList.remove('nav-open'); const nb = qs('#nav-btn'); if (nb) nb.setAttribute('aria-expanded', 'false'); } },
         h('span', { class: 'navlabel' }, it.label),
         it.fill !== undefined && it.fill !== null ? h('span', { class: 'fill-text', title: 'confidence' }, Math.round(it.fill * 100) + '%') : null,
         it.key ? h('span', { class: 'kbd coach-only' }, it.key) : null);
-      nav.appendChild(a);
+      box.appendChild(a);
     });
+  },
+  toggleNav(force) {
+    const open = force === undefined ? !document.body.classList.contains('nav-open') : !!force;
+    document.body.classList.toggle('nav-open', open);
+    const nb = qs('#nav-btn'); if (nb) nb.setAttribute('aria-expanded', String(open));
   },
   renderChrome() {
     qs('#topbar-client').textContent = this.record ? (clientName(this.record) || 'Unnamed client') : '';
@@ -311,6 +322,8 @@ function boot() {
   qs('#view-coach').addEventListener('click', () => app.setView('coach'));
   qs('#view-client').addEventListener('click', () => app.setView('client'));
   qs('#theme-btn').addEventListener('click', () => app.toggleTheme());
+  qs('#nav-btn').addEventListener('click', () => app.toggleNav());
+  document.addEventListener('click', e => { if (document.body.classList.contains('nav-open') && !e.target.closest('#sidenav') && !e.target.closest('#nav-btn')) app.toggleNav(false); });
   app.applyTheme();
   qs('#undo').addEventListener('click', () => app.undo());
   qs('#redo').addEventListener('click', () => app.redo());
@@ -322,7 +335,7 @@ function boot() {
     if (mod && !e.shiftKey && e.key.toLowerCase() === 'z' && !inInput(e)) { e.preventDefault(); app.undo(); return; }
     if (mod && e.shiftKey && e.key.toLowerCase() === 'z') { e.preventDefault(); app.redo(); return; }
     if (mod && e.key === '.') { e.preventDefault(); app.quickNoteBar(); return; }
-    if (e.key === 'Escape') { closeOverlay(); return; }
+    if (e.key === 'Escape') { closeOverlay(); app.toggleNav(false); return; }
     if (e.altKey && (e.key === 'n' || e.key === 'N') && app.mounted && app.mounted.addRow && !inInput(e)) { e.preventDefault(); app.mounted.addRow(); return; }
     if (e.altKey && /^[0-9]$/.test(e.key)) {
       const items = navItems(app);

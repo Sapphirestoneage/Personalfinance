@@ -523,3 +523,9 @@ Compatibility: `program.satisfaction`, `program.worthIt` and money date sessions
 Why: the owner's two changes to the Level 12 brief: the one number that can go up while spending goes up, so the scoreboard rewards good spending and not only less of it ("satisfaction went from 4 to 8" is the testimonial line); and a maintenance tier the client never has to open the app alone for.
 Alternative: satisfaction per goal, or the client's view of the coaching (an NPS-style score): both answer a different question; the owner meant where the money goes.
 
+## MR-066 2026-10-08 The screen list is a left-hand list with folding groups; on a narrow screen it is a drawer behind a three-line button
+Decision: The side navigation's groups (Ledger, Read) are buttons with a caret; a tap folds the group's screens away and the choice is remembered in the browser settings, with the group that holds the current screen always open. Under 720px the horizontal scrolling strip is gone: the whole list is a drawer on the left, 272px wide, behind a three-line button in the top bar, with a dimmed page behind it; a tap on a screen, on the page, or Escape closes it. Nothing about the routes or the keyboard shortcuts changes.
+Compatibility: `settings.navFolded` is new in the browser's settings; absent means every group open.
+Why: the owner's comment on the artifact page: the strip of tabs across the top should be a list on the left with carets under a three-line menu.
+Alternative: a bottom tab bar (too many screens for five tabs).
+
