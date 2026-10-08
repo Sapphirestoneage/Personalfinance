@@ -699,5 +699,17 @@
   "m.ssAdjustedFiNumber": [
    "asm.ssBridgeFromPortfolio"
   ]
+ },
+ "recordRoots": {
+  "program.stress": {
+   "label": "Money stress score",
+   "family": "assume",
+   "noFiEffect": "how she feels, not a flow"
+  },
+  "program.blindSpot": {
+   "label": "Blind spot from the transactions",
+   "family": "spend",
+   "noFiEffect": "awareness, not a flow"
+  }
  }
 }

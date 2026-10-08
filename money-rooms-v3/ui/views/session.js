@@ -20,6 +20,8 @@ import { proposals } from '../../engine/targets.js';
 import { targetsEmail } from '../../engine/email.js';
 import { finishChanges, finishMonths, celebrations } from '../../engine/goals.js';
 import { nextWins } from './goals.js';
+import { takeSnapshot, celebrate, seedCelebrations, overallNextAction } from '../../engine/momentum.js';
+import { cachedSensitivity } from '../levers-bridge.js';
 
 export function mount(host, app) {
   const noteInput = h('input', { class: 'input session-note', type: 'text', 'aria-label': 'Session note' });
@@ -163,7 +165,7 @@ function plates(app, s, tab, setTab) {
 function emailPanel(app, s) {
   const panel = h('section', { class: 'panel' });
   const hasTargets = Object.keys(app.record.targets || {}).length > 0;
-  const text = hasTargets ? targetsEmail(app.record, proposals(variance(app.record, actualsOf(app)).rows, app.record, app.result).rows.map(t => Object.assign({}, t, { saved: !!app.record.targets[t.key] })), AREA_LABELS) : followUpEmail(app.record, app.data.fields, s.theirPlate.filter(i => !isDone(app, i)), { nextWin: (nextWins(Object.assign(Object.create(Object.getPrototypeOf(app)), app, { view: 'client' }), 1)[0] || {}).text || null });
+  const text = hasTargets ? targetsEmail(app.record, proposals(variance(app.record, actualsOf(app)).rows, app.record, app.result).rows.map(t => Object.assign({}, t, { saved: !!app.record.targets[t.key] })), AREA_LABELS) : followUpEmail(app.record, app.data.fields, s.theirPlate.filter(i => !isDone(app, i)), { nextWin: (nextWins(Object.assign(Object.create(Object.getPrototypeOf(app)), app, { view: 'client' }), 1)[0] || {}).text || null, milestone: ((app.record.celebrations || []).filter(c => !c.seeded).slice(-1)[0] || {}).text || null, action: (overallNextAction(cachedSensitivity(app)) || {}).sentence || null });
   panel.appendChild(h('h2', null, hasTargets ? 'Targets email' : 'Follow-up email', h('span', { class: 'tag' }, hasTargets ? 'what they said, in their words' : 'by institution')));
   const ta = h('textarea', { class: 'input email', readOnly: true, 'aria-label': 'Follow-up email draft', value: text });
   panel.appendChild(ta);
@@ -194,13 +196,16 @@ function sinceLast(app) {
 export function snapshot(app, note) {
   const n = (app.record.sessions || []).length + 1;
   const finish = app.result && app.result.goalPlan ? finishMonths(app.result.goalPlan) : null;
+  let cheers = [];
   app.mutate(rec => {
     const at = new Date().toISOString();
     rec.sessions.push({ id: 's' + n, label: 'Session ' + n, at, note: note || '' });
+    /* Level 12 (MR-063): every metric's value at the close, and any milestone crossed since the last one */
+    if (app.result) { const seeded = seedCelebrations(rec, app.result, app.data, { now: at, session: 's' + n }); cheers = seeded.length ? [] : celebrate(rec, app.result, app.data, { now: at, session: 's' + n }); takeSnapshot(rec, app.result, 'session', { now: at, session: 's' + n }); }
     if (finish) { rec.goals = rec.goals || {}; rec.goals.lastFinish = finish; }
     append(rec.journal, { kind: 'session', planet: 'sun', rowId: 'sun', field: null, owner: 'sun', old: null, new: 's' + n, source: 'client', state: 'known', session: 's' + n }, at);
   }, 'sessions');
-  app.toast('Session ' + n + ' closed. The one-pager now compares against it.');
+  app.toast('Session ' + n + ' closed. ' + (cheers.length ? cheers[0].text + '. ' : '') + 'The scoreboard now compares against it.', { label: 'Scoreboard', action: () => { location.hash = '#/scoreboard'; } });
 }
 
 function monthsWord(m) { const a = Math.abs(m); return a >= 12 ? (Math.round(a / 12 * 10) / 10) + ' years' : (Math.round(a * 10) / 10) + (a === 1 ? ' month' : ' months'); }

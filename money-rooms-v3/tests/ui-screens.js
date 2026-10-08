@@ -55,6 +55,20 @@ export const SCREENS = [
   { id: 'program', route: 'program' },
   { id: 'prep', route: 'prep' },
   { id: 'transactions', route: 'transactions' },
+  /* Level 12 (MR-063): the scoreboard, its drawer deep link, the map (index and one number), the money date */
+  { id: 'scoreboard', route: 'scoreboard' },
+  { id: 'scoreboard-drawer', route: 'scoreboard/m/savingsRateTakeHome' },
+  { id: 'scoreboard-group', route: 'scoreboard/safety' },
+  { id: 'map', route: 'map' },
+  { id: 'map-fidate', route: 'map/fiDate' },
+  { id: 'money-date', route: 'money-date' },
+  { id: 'chart-crossover', route: 'measure/charts/crossover' },
+  { id: 'chart-effortVsMarket', route: 'measure/charts/effortVsMarket' },
+  { id: 'chart-debtCurves', route: 'measure/charts/debtCurves' },
+  { id: 'chart-stressTrend', route: 'measure/charts/stressTrend' },
+  { id: 'chart-fiDateWaterfall', route: 'measure/charts/fiDateWaterfall' },
+  { id: 'chart-pictureVsProgress', route: 'measure/charts/pictureVsProgress' },
+  { id: 'chart-cashflowCalendar', route: 'measure/charts/cashflowCalendar' },
 ];
 
 async function importHousehold(page, APP, name) {

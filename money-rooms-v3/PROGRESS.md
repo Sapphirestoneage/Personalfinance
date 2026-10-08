@@ -1,8 +1,17 @@
 # Progress
 
-Updated: 2026-10-07
+Updated: 2026-10-08
 
 ## Done
+- Level 12 The Scoreboard (MR-063): data/metrics.json as the one registry (group, direction, bands with
+  sources, ladders, lens, chart, what opens it, visibility, gentle copy, first session, headline), eight
+  new metrics (engine/scoremetrics.js), the chart catalog (data/charts.json) with seven new charts,
+  graph explain, engine/momentum.js (snapshots, trends, why it moved as learned, did, market, time,
+  milestones celebrated once, personal bests, next action, the headline six), #/scoreboard, #/map,
+  #/money-date, the metric drawer's new section, prep, one-pager, email and Home tie-ins, five engine
+  test files with a workpaper for the did and market split and Maya through session 4, a browser flow
+  with both themes, 14 new screens in the sweep. Phone feedback (MR-062): the row drawer as a form,
+  visible empty numbers, the tracker says what a fact opens, an orbit caption.
 - Level 10 The Program: curricula as data (discovery and twelve sessions of blocks with priorities and
   time ranges), engine/curriculum.js (plan, bend at 35 and 48, offer one more when ahead, go deeper,
   urgent mode, three steps), engine/program.js (state, moves, parking lot, checklist with triggers and
@@ -63,6 +72,8 @@ Updated: 2026-10-07
 - Design critique round 1 found 17 fixes; all applied; round 2 in screenshots/level-0/critique.md.
 
 ## Next
+- A design critique round for #/scoreboard, #/map and #/money-date (screenshots/level-12).
+- Decide the default rule behind each band (QUESTIONS 53) and whether net worth joins the six (49).
 - Savings bucket rows in Investments from the first accounts block (QUESTIONS 36).
 - A design critique round for #/goals.
 - A design critique round for #/levers and the shelf (every other screen before Level 8 has one).

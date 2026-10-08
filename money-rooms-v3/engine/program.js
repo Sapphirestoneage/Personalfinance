@@ -68,7 +68,7 @@ export function recordStress(record, session, score, meta) {
   const m = meta || {}; const s = Math.max(1, Math.min(10, Math.round(score)));
   return setProgram(record, P => { P.stress = P.stress.filter(x => x.session !== session); P.stress.push({ session, score: s, date: (m.now || new Date().toISOString()).slice(0, 10) }); P.stress.sort((a, b) => order(a.session) - order(b.session)); return 'stress'; }, m);
 }
-const order = s => s === 'discovery' ? 0 : Number(String(s).replace(/^s/, '')) || 0;
+const order = s => s === 'discovery' ? 0 : /^s?\d+$/.test(String(s)) ? Number(String(s).replace(/^s/, '')) : 999;
 export function stressScores(record) { return programOf(record).stress.slice(); }
 
 /* ---- the account checklist ---- */

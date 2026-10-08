@@ -53,7 +53,10 @@ const UNLOCK_FILES = ['ui/unlocks.js', 'ui/unlocks.css', 'ui/views/measure.js', 
 const MARKETING_NO_UNLOCK = /\b(empower|journey|supercharge|seamless|take control|financial freedom awaits|dive in)\b/i;
 shipped.filter(f => f.startsWith('ui/') || f === 'index.html' || f.startsWith('data/')).forEach(f => {
   const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
-  const strings = src.match(/'[^'\n]*'|"[^"\n]*"/g) || [];
+  /* a JSON file's copy is its string values; its keys are field names (MR-063) */
+  const jsonStrings = []; const walk = v => { if (typeof v === 'string') jsonStrings.push('"' + v + '"'); else if (Array.isArray(v)) v.forEach(walk); else if (v && typeof v === 'object') Object.values(v).forEach(walk); };
+  if (f.endsWith('.json')) { try { walk(JSON.parse(src)); } catch (e) { /* the JSON validity check lives elsewhere */ } }
+  const strings = f.endsWith('.json') ? jsonStrings : (src.match(/'[^'\n]*'|"[^"\n]*"/g) || []);
   const marketing = UNLOCK_FILES.includes(f) ? MARKETING_NO_UNLOCK : MARKETING;
   /* Card names are proper nouns from the issuers, not our copy. */
   const bad = strings.filter(s => (marketing.test(s) && f !== 'data/cards.json') || (/!/.test(s) && !/^['"][^a-zA-Z]*['"]$/.test(s) && !/!==|!=|!\[|!important|\\!/.test(s) && !/^["']!/.test(s) && !/<[^>]*>/.test(s) && /[a-zA-Z]{3,} ?!/.test(s)));

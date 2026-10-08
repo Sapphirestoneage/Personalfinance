@@ -15,6 +15,9 @@ import * as Run from './views/run.js';
 import * as Program from './views/program.js';
 import * as Prep from './views/prep.js';
 import * as Transactions from './views/transactions.js';
+import * as Scoreboard from './views/scoreboard.js';
+import * as MapView from './views/map.js';
+import * as MoneyDate from './views/moneydate.js';
 import { PLANETS, PLANET_LABELS, PLANET_SHORT } from '../engine/sun.js';
 import { translator } from './glossary.js';
 
@@ -35,6 +38,10 @@ export const routes = {
   program: { title: 'Program', mount: Program.mount, needsClient: true, coachOnly: true },
   prep: { title: 'Prepare', mount: Prep.mount, needsClient: true, coachOnly: true },
   transactions: { title: 'Transactions', mount: Transactions.mount, needsClient: true, coachOnly: true },
+  /* Level 12 (MR-063) */
+  scoreboard: { title: 'Scoreboard', mount: Scoreboard.mount, needsClient: true },
+  map: { title: 'Map', mount: MapView.mount, needsClient: true },
+  'money-date': { title: 'Money date', mount: MoneyDate.mount, needsClient: true },
 };
 
 export function navItems(app) {
@@ -45,6 +52,9 @@ export function navItems(app) {
     items.push({ group: t('Ledger'), label: t(PLANET_LABELS[p]) === PLANET_LABELS[p] ? PLANET_SHORT[p] : t(PLANET_LABELS[p]), href: '#/ledger/' + p, active: r => r.name === 'ledger' && r.params.id === p, key: 'Alt+' + (i + 2), fill: app.result && app.result.fills[p] !== null ? app.result.fills[p] : null });
   });
   items.push({ group: 'Read', label: t('Measure'), href: '#/measure', active: r => r.name === 'measure', key: 'Alt+9' });
+  items.push({ group: 'Read', label: 'Scoreboard', href: '#/scoreboard', active: r => r.name === 'scoreboard', key: null });
+  items.push({ group: 'Read', label: app.view === 'client' ? 'Monthly check' : 'Money date', href: '#/money-date', active: r => r.name === 'money-date', key: null });
+  items.push({ group: 'Read', label: app.view === 'client' ? 'How it connects' : 'Map', href: '#/map', active: r => r.name === 'map', key: null });
   items.push({ group: 'Read', label: t('One-pager'), href: '#/onepager', active: r => r.name === 'onepager', key: 'Alt+0' });
   items.push({ group: 'Read', label: app.view === 'client' ? 'What matters most' : 'Levers', href: '#/levers', active: r => r.name === 'levers', key: null });
   items.push({ group: 'Read', label: app.view === 'client' ? 'Your goals' : 'Goals', href: '#/goals', active: r => r.name === 'goals', key: null });

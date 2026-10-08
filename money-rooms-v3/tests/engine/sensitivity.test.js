@@ -21,21 +21,8 @@ const data = loadData();
 const TODAY = '2026-10-07';
 const E = JSON.parse(fs.readFileSync(path.join(here, '..', 'households', 'levers-expected.json'), 'utf8'));
 
-export function buildLevers(spec, id) {
-  const rec = createRecord({ id, now: '2026-10-01T00:00:00.000Z' });
-  const set = (rowId, fid, v, st, src, cad) => setField(rec, rowId, fid, v, st || 'known', src || 'client', { cad });
-  set('sun', 'birthDate', spec.birthDate); set('sun', 'filingStatus', 'single'); set('sun', 'workSituation', 'employed'); set('sun', 'state', 'NY');
-  const add = (planet, type, nick, f) => { const row = createRow(planet, type, { nickname: nick, f: freshFacts(data.fields, planet, type) }); addRow(rec, row); Object.keys(f).forEach(fid => { const [v, st, src, cad] = f[fid]; set(row.id, fid, v, st, src, cad); }); return row; };
-  add('income', 'w2', 'Job', { grossPay: [spec.grossMonthly, 'known', 'client', 'month'], takeHome: [spec.takeHomeMonthly, 'known', 'client', 'month'] });
-  spec.lines.forEach(([nick, cat, cents, floor]) => add('spending', 'line', nick, { category: [cat], amount: [cents, 'known', 'client', 'month'], fatFloor: [floor], needWant: [floor ? 'need' : 'want'], mistake: ['unavoidable'] }));
-  const spend = spec.lines.reduce((s, l) => s + l[2], 0); const surplus = spec.takeHomeMonthly - spend;
-  add('spending', 'savings', 'To brokerage', { savingsLanding: [surplus, 'known', 'client', 'month'] });
-  add('debt', 'summary', 'No debt', { debtSummaryTotal: [0, 'none'] });
-  add('invest', 'account', 'Brokerage', { accountType: ['taxable'], accountBalance: [spec.invested, 'known'], contribAmount: [surplus, 'known', 'client', 'month'] });
-  if (spec.cash) add('invest', 'account', 'Checking', { accountType: ['checking'], accountBalance: [spec.cash, 'known'], contribAmount: [0, 'none', 'client', 'month'] });
-  if (spec.baristaIncome) add('life', 'retirement', 'Retirement', { baristaIncome: [spec.baristaIncome, 'known', 'client', 'month'] });
-  return rec;
-}
+import { buildLevers as buildLeversShared } from '../households/build-levers.mjs';
+export function buildLevers(spec, id) { return buildLeversShared(spec, id, data); }
 
 for (const name of Object.keys(LEVER_SPECS)) {
   const rec = buildLevers(LEVER_SPECS[name], 'lv-' + name); const X = E[name];

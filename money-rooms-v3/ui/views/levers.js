@@ -161,8 +161,8 @@ function openLever(app, i, sens) {
 }
 
 /* The graph: layered left to right, roots to the FI date; a tap highlights everything upstream and downstream. */
-function drawGraph(panel, app, sens) {
-  const g = graphOf(app); const d3 = globalThis.d3;
+export function drawGraph(panel, app, sens, opts) {
+  const g = graphOf(app); const d3 = globalThis.d3; sens = sens || { items: [] }; const o = opts || {};
   const keep = upstream(g, 'm.fiDate'); keep.add('m.fiDate'); ['m.leanFi', 'm.baristaLeanFi', 'm.baristaRegularFi', 'm.regularFi', 'm.fatFi', 'm.coastFi', 'm.fiNumber'].forEach(id => { keep.add(id); upstream(g, id).forEach(x => keep.add(x)); });
   const impactBy = {}; (sens.items || []).forEach(i => { if (i.rootId && (impactBy[i.rootId] === undefined || i.impact > impactBy[i.rootId])) impactBy[i.rootId] = i.impact || 0; });
   const nodes = Array.from(keep).map(id => g.nodes.get(id)).filter(n => n && (n.kind !== 'field' || !n.tag) && n.kind !== 'sink');
@@ -170,7 +170,7 @@ function drawGraph(panel, app, sens) {
   layers.forEach(l => l.sort((a, b) => (impactBy[b.id] || 0) - (impactBy[a.id] || 0) || a.label.localeCompare(b.label)));
   const W = Math.max(720, panel.clientWidth - 32), rowH = 16, H = Math.max(...layers.map(l => l.length)) * rowH + 40;
   const host = h('div', { class: 'graph-host' }); panel.appendChild(host);
-  panel.appendChild(h('p', { class: 'small muted' }, 'Left to right: inputs, planet outputs, the projection, metrics, the FI ladder, the FI date. Tap a node to light its paths; bolder inputs move the date more.'));
+  if (!o.quiet) panel.appendChild(h('p', { class: 'small muted' }, 'Left to right: inputs, planet outputs, the projection, metrics, the FI ladder, the FI date. Tap a node to light its paths; bolder inputs move the date more.'));
   const svg = d3.select(host).append('svg').attr('viewBox', '0 0 ' + W + ' ' + H).attr('class', 'chart graph').attr('role', 'img').attr('aria-label', 'Dependency graph from inputs to the FI date');
   const colX = i => 20 + i * ((W - 40) / 5);
   const pos = {}; layers.forEach((l, i) => l.forEach((n, j) => { pos[n.id] = { x: colX(i), y: 24 + j * rowH + (H - 40 - l.length * rowH) / 2 }; }));
@@ -185,6 +185,8 @@ function drawGraph(panel, app, sens) {
     lines.classed('lit', e => (up.has(e.from) && up.has(e.to)) || (down.has(e.from) && down.has(e.to))).classed('dim', e => !((up.has(e.from) && up.has(e.to)) || (down.has(e.from) && down.has(e.to))));
     dots.classed('lit', m => up.has(m.id) || down.has(m.id)).classed('dim', m => !(up.has(m.id) || down.has(m.id)));
     labelsG.selectAll('text').classed('dim', m => !(up.has(m.id) || down.has(m.id)));
+    if (o.onSelect) { o.onSelect(n); return; }
     if (n.kind === 'metric') openMetric(app, n.id.slice(2)); else if (isRoot(n)) { const item = (sens.items || []).find(i => i.rootId === n.id); if (item) openLever(app, item, sens); else openRoot(app, n.id); }
   }
+  if (o.focus && g.nodes.has(o.focus)) select(g.nodes.get(o.focus));
 }

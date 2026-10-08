@@ -7,5 +7,5 @@ export function attach(app) {
   app.loadData = async function () {
     app.data = await loadAllData();
   };
-  app.compute = function (record, data) { return compute(record, data); };
+  app.compute = function (record, data, opts) { return compute(record, data, opts); };
 }

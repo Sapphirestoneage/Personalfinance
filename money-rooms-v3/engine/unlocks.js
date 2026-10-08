@@ -84,6 +84,9 @@ export function targetFor(needText, record, data) {
   if (!map) return null;
   const has = ([planet, type, field]) => {
     if (planet === 'call') return !!(record.anchors && record.anchors[field] && Object.keys(record.anchors[field]).length);
+    if (planet === 'transactions' || planet === 'discovery') return false;
+    if (planet === 'session') return !!(record.snapshots && record.snapshots.length);
+    if (field === 'stress' && !data.fields.fields.stress) return record.planets[planet].rows.some(r => r.type === type && typeof r.stress === 'number');
     if (planet === 'sun') { const f = record.sun.f[field]; return !!(f && f.v !== null && f.v !== undefined && f.state !== 'unknown'); }
     return record.planets[planet].rows.some(r => r.type === type && r.f[field] && r.f[field].v !== null && r.f[field].v !== undefined && r.f[field].state !== 'unknown' && r.f[field].state !== 'will-send');
   };
@@ -92,6 +95,10 @@ export function targetFor(needText, record, data) {
 }
 function describeTarget(planet, type, field, record, data) {
   if (planet === 'call') return { planet: 'call', type: null, field, rowId: null, label: field === 'gut' ? 'Her gut guess per area' : 'Her dream spending per area', where: 'Call path', href: '#/callpath', addRow: false };
+  if (planet === 'transactions') return { planet: 'transactions', type: null, field, rowId: null, label: 'A transactions import', where: 'Transactions', href: '#/transactions', addRow: false };
+  if (planet === 'discovery') return { planet: 'discovery', type: null, field, rowId: null, label: 'The stress score', where: 'Discovery form or a session', href: '#/discovery', addRow: false };
+  if (planet === 'session') return { planet: 'session', type: null, field, rowId: null, label: field === 'snapshot' ? 'A closed session or a money date' : 'A session close', where: 'Session or money date', href: '#/money-date', addRow: false };
+  if (field === 'stress' && !data.fields.fields.stress) { const row = record.planets[planet].rows.find(r => r.type === type && (r.stress === null || r.stress === undefined)) || record.planets[planet].rows.find(r => r.type === type) || null; return { planet, type, field, rowId: row ? row.id : null, label: 'Stress rating (1 to 5)', where: PLANET_LABELS[planet] + ': ' + typeLabel(data, planet, type), href: '#/ledger/' + planet + '/' + type, addRow: !row }; }
   if (planet === 'sun') return { planet: 'sun', type: null, field, rowId: 'sun', label: fieldLabel(data, 'sun', null, field), where: 'Household facts', href: '#/home', addRow: false };
   const row = record.planets[planet].rows.find(r => r.type === type && !(r.f[field] && r.f[field].v !== null && r.f[field].v !== undefined && r.f[field].state !== 'unknown' && r.f[field].state !== 'will-send')) || null;
   return { planet, type, field, rowId: row ? row.id : null, label: fieldLabel(data, planet, type, field), where: PLANET_LABELS[planet] + ': ' + typeLabel(data, planet, type), href: '#/ledger/' + planet + '/' + type, addRow: !row };
@@ -175,6 +182,6 @@ export function nextUnlocks(record, result, data, opts) {
     const u = unlocksBetween(base, stateOf(R, data), R, data);
     const score = u.charts.length * 2 + u.metrics.reduce((s, m) => s + (m.to === 'solid' ? 1 : 0.6), 0) + u.lenses.length;
     return { probe, unlocks: u, score };
-  }).filter(x => x && x.unlocks.count > 0).sort((a, b) => b.score - a.score || a.probe.label.localeCompare(b.probe.label));
+  }).filter(x => x && x.unlocks.count > 0).sort((a, b) => b.score - a.score || b.unlocks.count - a.unlocks.count || a.probe.label.localeCompare(b.probe.label));
   return out.slice(0, o.top || 3);
 }

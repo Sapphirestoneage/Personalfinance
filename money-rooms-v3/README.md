@@ -35,7 +35,7 @@ repository root, `npx playwright install chromium`).
 | `engine/planets/*.js` | The seven planets, five stations each; `common.js` turns facts into Quantities |
 | `engine/tax.js` | The one tax function: federal brackets, FICA, self-employment |
 | `engine/debtsim.js`, `engine/projection.js` | Payoff simulation; the year-by-year projection to 95 (Triple D) |
-| `engine/metrics.js`, `engine/lenses.js`, `engine/chartdata.js` | The 74 metrics with their math, direction and levers; the 39 lenses; data for the 8 charts |
+| `engine/metrics.js`, `engine/lenses.js`, `engine/chartdata.js` | The 74 metrics with their math, direction and levers (the registry in `data/metrics.json` also carries each one's group, bands, ladder, chart, what opens it, visibility, gentle sentence and first session); the 40 lenses; data for the first charts |
 | `engine/fiLadder.js`, `engine/graph.js`, `engine/sensitivity.js` | Level 9: the FI ladder (Lean, Barista, FI, Fat, Coast), the dependency graph from inputs to the FI date, and what moves the FI date (impact and ask priority) |
 | `engine/parse.js`, `engine/col.js`, `engine/guesses.js`, `engine/discovery.js` | Level 8: numbers the way people say them ("1900 every two weeks", "my half is 1,650"), the cost-of-living tier from the city (`data/col-tiers.json`), the guesses that fill empty areas, and the discovery call applied to a record |
 | `engine/anchors.js`, `engine/callpath.js`, `engine/variance.js`, `engine/targets.js`, `engine/progress.js` | Level 8: what they said and what they would want (write-once anchors), the six stops of the call, what you said against what it really is, the four target choices, and progress versus paperwork |
@@ -43,16 +43,36 @@ repository root, `npx playwright install chromium`).
 | `engine/goals.js`, `engine/ics.js` | Level 11: the goal timeline (every goal funded at once from the surplus, the cushion in three steps with the first two before anything else, three ways to split, rollover, shortfalls with the step named) and the calendar export |
 | `engine/leverage.js`, `engine/plates.js`, `engine/email.js` | What to ask next, the two plates, the follow-up, discovery and targets emails |
 | `engine/scenarios.js` | Scenario blocks: costs from answers, each alone and together, never writing to the record |
+| `engine/scoremetrics.js`, `engine/momentum.js`, `engine/chartdata-score.js` | Level 12: the eight Scoreboard metrics (a second pass over the result), snapshots and momentum (trends, why a number moved, milestones, bests, the next action, the headline six, bands), and the seven Scoreboard charts |
 | `engine/compute.js` | Runs the planets and returns one result for the views |
 | `ui/app.js` | The shell: routes, view toggle, autosave, undo, shortcuts |
 | `ui/tokens.css`, `ui/app.css`, `ui/print.css` | The design system and the one-pager print sheet |
-| `ui/views/` | One module per screen (home, ledger, measure, onepager, session, scenarios, learn, assumptions, levers, discovery, call, callpath, run, prep, program, transactions, goals); views never do math |
+| `ui/views/` | One module per screen (home, ledger, measure, onepager, session, scenarios, learn, assumptions, levers, discovery, call, callpath, run, prep, program, transactions, goals, scoreboard, map, moneydate); views never do math |
+| `ui/scorebits.js`, `ui/charts-score.js`, `ui/scoreboard.css` | Level 12: the shared tile, trend, band-word and milestone pieces; the seven chart renderers; the Scoreboard, Map and money date styles |
 | `ui/shelf.js`, `ui/metricdrawer.js`, `ui/levers-bridge.js`, `ui/levers-worker.js` | The headline metrics shelf, the one drawer every metric opens (math, inputs, levers, lens), and the memoised sensitivity runner (a module Worker when the browser has one) |
 | `ui/charts.js`, `ui/table.js`, `ui/orbit.js` | The D3 charts, the Ledger table, the orbit map |
 | `data/` | Libraries, each with asOf, source and a verify flag |
 | `tests/` | `run.js`, `ui.js`, engine tests, households and their expected workpapers (`tests/households/expected.py` writes them from the fixtures, never from the engine) |
 | `CONTRACTS.md` | What each planet publishes, written before the code |
 | `DECISIONS.md`, `QUESTIONS.md`, `PROGRESS.md`, `BOARD.md`, `SPEC-COVERAGE.md`, `DONE.md` | The run's own records |
+
+## Level 12: The Scoreboard (MR-063)
+
+`#/scoreboard` shows six numbers, each with its value, its trend since the
+last snapshot, where it sits (and, for the coach, whose rule says so) and the
+next rung on its ladder; one next action with one big number; the rest of the
+metrics by group, one tap away; milestones crossed and personal bests. A
+tile opens the metric drawer (`#/scoreboard/m/<id>`), which now also shows
+confidence, the trend with a sparkline, why the number moved (learned, did,
+market, time) and the next action. `#/map` follows any number's chain: what
+feeds it, what it feeds, its way to the FI date, and since the last snapshot
+which inputs moved it. `#/money-date` is a ten-minute monthly check in five
+steps that ends in a snapshot. Snapshots are also taken at a session close,
+a discovery call and a transactions import (`engine/momentum.js`). The
+registry is `data/metrics.json`; the chart catalog is `data/charts.json`;
+`tests/households/expected-momentum.py` is the workpaper for the did and
+market split; `tests/households/maya-session4.mjs` runs Maya through session
+4 through the engine API.
 
 ## Charts first (MR-061)
 

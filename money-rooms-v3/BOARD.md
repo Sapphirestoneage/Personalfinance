@@ -16,7 +16,7 @@
 | 11 | Goal Timeline (when each goal happens, all at once) | FROZEN | Level 11: Goal Timeline; reopened for MR-052 (the cushion in three steps) |
 | 11b | The unlock loop (demo brief Part B) | FROZEN | MR-059: reveal panel, deep links, Next unlock, Unlock Map; screenshots/demo-brief |
 | 11c | Charts first (demo brief Part C) | FROZEN | MR-061: Measure as Overview, Charts, Numbers, Lenses, Unlocks; 31 charts; screenshots/demo-brief |
-| 12 | The Scoreboard (every metric, its graph, the dependency map, momentum) | OPEN | registry, graph explain, chart catalog, snapshots and momentum, #/scoreboard, #/map, #/money-date |
+| 12 | The Scoreboard (every metric, its graph, the dependency map, momentum) | FROZEN | MR-063: the registry, graph explain, the chart catalog with seven new charts, snapshots and momentum, #/scoreboard, #/map, #/money-date; screenshots/level-12 |
 
 A frozen level reopens only for a failing test or a decision logged in
 DECISIONS.md.

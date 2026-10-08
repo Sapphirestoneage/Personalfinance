@@ -231,3 +231,15 @@ export function applyActuals(record, data, det, act, meta) {
   });
   return touched;
 }
+
+/* Level 12 (MR-063): the month as a calendar, stored on the program at import so the calendar chart
+   can draw it without the CSV. The days come from patterns(); this adds what each payday is worth. */
+export function calendarOf(txs, det, pat) {
+  const cal = (pat || patterns(txs, { recurring: det.recurring })).calendar;
+  const dayOf = t => parseInt(t.date.slice(8, 10), 10) || 1;
+  const spanMonths = Math.max(1, (det.spanDays || 30) / 30.44);
+  const income = txs.filter(t => t.category === 'income' || t.amount < -50000 && t.category !== 'transfer');
+  const paydays = cal.payDays.map(day => { const list = income.filter(t => dayOf(t) === day); return { label: list[0] ? list[0].description : 'Pay', days: [day], cents: Math.round(list.reduce((s, t) => s - t.amount, 0) / spanMonths) }; }).filter(p => p.cents > 0);
+  const bills = cal.bills.map(b => { const r = (det.recurring || []).find(x => x.merchant === b.merchant); return { label: r && r.description ? r.description : b.merchant, day: b.day, cents: b.cents, category: r ? r.category : 'other' }; }).filter(b => b.cents > 0).sort((a, b) => a.day - b.day);
+  return { bills, paydays, spanDays: det.spanDays || null };
+}

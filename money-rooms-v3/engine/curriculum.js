@@ -17,6 +17,13 @@ export function sessionDef(data, n) {
   const list = data.curricula.sessions;
   return list.find(s => (n === 0 || n === 'discovery') ? s.id === 'discovery' : s.n === Number(n)) || null;
 }
+/* Level 12 (MR-063): what a session introduces, read from firstSession in data/metrics.json and data/charts.json; nothing is stored twice */
+export function introduces(data, n) {
+  const metrics = data.metrics.metrics.filter(m => m.firstSession === n).map(m => ({ id: m.id, name: m.name, clientLabel: m.clientLabel, headline: !!m.headline }));
+  const cat = (data.charts && data.charts.charts) || {};
+  const charts = Object.keys(cat).filter(id => cat[id].firstSession === n).map(id => ({ id, question: cat[id].question, gentle: cat[id].gentle }));
+  return { n, metrics, charts };
+}
 export function sessionCount(data) { return data.curricula.sessions.filter(s => s.n > 0).length; }
 
 /* Shape checks for the library, used by the tests and the lint. */

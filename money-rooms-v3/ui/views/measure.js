@@ -178,7 +178,7 @@ export function mathBody(app, m, def) {
   } else if (m && m.status === 'needs') {
     body.appendChild(h('h3', { style: { marginTop: '12px' } }, 'Needs')); body.appendChild(h('p', null, m.needs.join(', ')));
   }
-  if (def.range) body.appendChild(h('p', { class: 'small muted', style: { marginTop: '12px' } }, 'Band ' + F.percent(def.range.low) + ' to ' + F.percent(def.range.high) + '. Source: ' + def.range.source + '.'));
+  if (def.range) body.appendChild(h('p', { class: 'small muted', style: { marginTop: '12px' } }, 'Healthy range ' + F.percent(def.range.low) + ' to ' + F.percent(def.range.high) + '. Source: ' + def.range.source + '.'));
   body.appendChild(h('p', { class: 'small muted', style: { marginTop: '12px' } }, 'Owner: ' + (PLANET_LABELS[def.owner] || 'the engine') + '. Units: ' + Object.values(def.units).join(', ') + '.'));
   return body;
 }

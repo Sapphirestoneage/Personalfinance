@@ -30,3 +30,8 @@ Level 10 met every line above except the screenshot folder and the critique:
 the sweep ran at 1440, 1024 and 390 in both views for #/program, #/prep,
 #/transactions and the session runner for every household (tests/ui.js); a
 critique round is owed (PROGRESS.md).
+
+Level 12 met every line above; the sweep ran at 1440, 1024 and 390 in both
+views for #/scoreboard, #/map, #/money-date, the drawer deep link and the seven
+new chart pages for every household, and the dark theme on the three screens;
+screenshots live in screenshots/level-12/. A critique round is owed (PROGRESS.md).

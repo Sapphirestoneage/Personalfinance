@@ -159,3 +159,23 @@ Collected during the run; none blocked the build. Answer whenever.
 48. The copy lint bans "unlock" as a marketing word; the brief names the
     feature with it (Unlock Map, Next unlock). The files that draw it are now
     exempt; data copy is still checked. Fine, or pick another word?
+49. The headline six are savings rate, FI date, FI progress, runway, debt-free
+    date (net worth when there is no debt) and picture completeness. Net worth
+    stays off the six for someone starting below zero; Coach can swap any tile
+    with "Choose the six". Keep that default, or put net worth back?
+50. The money date is one screen both views can run: the client alone, or
+    the coach on a short call. After graduation (session 12) the app does not
+    push either way. Should the maintenance tier be "run it alone, call if a
+    tile slips" or always a 15-minute call?
+51. "Did" against "market": a balance move counts as what the client did up
+    to the contributions the row promises over the elapsed time (at the
+    row's own monthly contribution), and the rest as the market. A hand-saved
+    balance with no contribution behind it counts entirely as did. Fair rule,
+    or should the coach be able to mark a line as market?
+52. A session's "introduces" list is read from firstSession in the registry
+    and the chart catalog, not stored in curricula.json. Session 10 introduces
+    nothing new (it is the review before the flex session). Fine?
+53. The bands name their sources (common guidance, 50/30/20, Scott Trench,
+    Mr. Money Mustache, Money Guy, Ramit Sethi, the 30% rule, three to six
+    months) and every one is flagged verify. Which rule should be the default
+    for each number, and which sources to drop?

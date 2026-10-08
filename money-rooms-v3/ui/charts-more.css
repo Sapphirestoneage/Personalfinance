@@ -39,3 +39,17 @@
 .drawer .mini-chart { margin: var(--s-2) 0; }
 .drawer .mini-chart .chart-label { font-size: 10px; }
 @media (max-width: 720px) { .overview-grid { grid-template-columns: minmax(0, 1fr); } .legend { gap: 2px var(--s-2); } }
+
+/* Level 12 (MR-063): the Scoreboard charts */
+.chart .line-asset, .chart .line-path { stroke: var(--sapphire-500); stroke-width: 2; }
+.chart .line-spend { stroke: var(--gold); stroke-width: 2; }
+.chart .line-running { stroke: var(--ink); stroke-width: 1.5; stroke-dasharray: 4 3; }
+.chart .area-contrib { fill: var(--sapphire-500); opacity: 0.8; }
+.chart .area-growth { fill: var(--gold); opacity: 0.7; }
+.chart .wf-sooner { fill: var(--sapphire-500); }
+.chart .wf-later { fill: var(--amber); }
+.chart .dot-now { fill: var(--sapphire-700); }
+.chart .dot-then { fill: var(--sapphire-300); }
+.legend .sw-asset, .legend .sw-contrib { background: var(--sapphire-500); }
+.legend .sw-spend, .legend .sw-growth { background: var(--gold); }
+.legend .sw-running { background: var(--ink); }

@@ -8,6 +8,8 @@ import { metricLabel } from './glossary.js';
 import { PLANET_LABELS } from '../engine/sun.js';
 import { ALL_CHARTS } from '../engine/charts-all.js';
 import * as Charts from './charts.js';
+import { whyMoved, numOf, lastSnapshot } from '../engine/momentum.js';
+import { trendLine, bandLine, milestoneLine, actionLine, sparkOf, isClient } from './scorebits.js';
 
 let graphCache = null;
 export function graphOf(app) { if (!graphCache || graphCache.data !== app.data) graphCache = { data: app.data, g: buildGraph(app.data) }; return graphCache.g; }
@@ -37,6 +39,19 @@ export function metricBody(app, id, mathBody) {
   if (mathBody) body.appendChild(mathBody);
   else body.appendChild(h('div', null, h('h2', null, metricLabel(app, def)), h('p', { class: 'muted small' }, def.definition), m && m.status === 'ok' ? h('p', { class: 'big-value' }, valueText(m)) : h('p', { class: 'muted' }, 'Needs ' + ((m && m.needs) || ['inputs']).join(', '))));
   body.appendChild(h('p', { class: 'small muted', style: { marginTop: '8px' } }, dirWord(def.direction) + '.'));
+  /* Level 12 (MR-063): how sure, where it sits and whose rule says so, the path so far, why it moved, the next rung, the one action */
+  if (m && m.status === 'ok') {
+    const sec = h('div', { class: 'score-section' });
+    const conf = typeof m.confidence === 'number' ? Math.round(m.confidence * 100) : null;
+    sec.appendChild(h('p', { class: 'small' }, h('strong', null, coach ? 'Confidence: ' : 'How sure: '), conf !== null ? conf + '%' : 'not scored', m.rough ? (coach ? ' (a rough figure is behind it)' : ' (one of the numbers behind it is still rough)') : ''));
+    const band = bandLine(app, id); if (band) sec.appendChild(h('p', { class: 'small' }, h('strong', null, coach ? 'Where it sits: ' : 'How it reads: '), band));
+    const spark = sparkOf(app, id); sec.appendChild(h('div', { class: 'row' }, h('strong', { class: 'small' }, coach ? 'Trend: ' : 'Since last time: '), trendLine(app, id), spark));
+    const ms = milestoneLine(app, id); if (ms) sec.appendChild(h('p', { class: 'small' }, h('strong', null, coach ? 'Ladder: ' : 'Next: '), ms));
+    const act = actionLine(app, id); if (act) sec.appendChild(h('p', { class: 'small' }, h('strong', null, coach ? 'Next action: ' : 'What helps most: '), act));
+    if (lastSnapshot(app.record)) { const why = h('div', { class: 'small' }, h('strong', null, 'Why it moved: '), h('span', { class: 'muted' }, 'working it out')); sec.appendChild(why); setTimeout(() => { try { const w = whyMoved(app.record, app.result, app.data, id, { compute: (r, today) => app.compute(r, app.data, { today }) }); while (why.firstChild) why.removeChild(why.firstChild); why.appendChild(h('strong', null, 'Why it moved: ')); if (!w || w.total === null) why.appendChild(document.createTextNode('not enough history yet.')); else { why.appendChild(document.createTextNode(w.sentences.join(' ') + (w.marketNote ? ' ' + w.marketNote : ''))); if (coach && w.parts) why.appendChild(h('ul', { class: 'why-parts' }, ['learned', 'did', 'market', 'time', 'other'].filter(k => Math.abs(w.parts[k]) > 1e-9).map(k => h('li', null, h('span', null, { learned: 'Learned', did: 'Did', market: 'Market', time: 'Time', other: 'Other' }[k]), h('span', null, w.parts[k] > 0 ? '+' + String(Math.round(w.parts[k] * 100) / 100) : String(Math.round(w.parts[k] * 100) / 100)))))); } } catch (e) { while (why.firstChild) why.removeChild(why.firstChild); why.appendChild(h('strong', null, 'Why it moved: ')); why.appendChild(document.createTextNode('could not work it out.')); } }, 0); }
+    body.appendChild(sec);
+  }
+  if (!coach) body.appendChild(h('p', { class: 'small' }, h('a', { href: '#/map/' + id }, 'See what goes into it and what it changes')));
   /* MR-061: the chart this number sits behind, small, with a link to it on its own */
   const chart = ALL_CHARTS.find(c => (c.metrics || []).includes(id) && !(c.coachOnly && !coach));
   if (chart && m && m.status === 'ok') { const built = chart.build(app.result, {}); if (built && !built.needs) { const mini = h('div', { class: 'mini-chart', dataset: { chartBody: chart.id } }); body.appendChild(mini); body.appendChild(h('p', { class: 'small' }, h('a', { href: '#/measure/charts/' + chart.id }, (coach ? chart.name : chart.client) + ': open the chart'))); setTimeout(() => { mini.style.width = Math.min(460, (body.clientWidth || 460)) + 'px'; Charts.render(chart.id, mini, built, { client: !coach }); }, 0); } }

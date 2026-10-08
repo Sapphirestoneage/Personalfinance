@@ -6,7 +6,8 @@
    record; only what it taught us. Coach view only. Views never do math. */
 import { h, clear } from '../dom.js';
 import * as F from '../../engine/format.js';
-import { parseCsv, guessMapping, normalize, categorize, clean, detect, patterns, actuals, compareToGut, foundMoney, applyActuals } from '../../engine/transactions.js';
+import { parseCsv, guessMapping, normalize, categorize, clean, detect, patterns, actuals, compareToGut, foundMoney, applyActuals, calendarOf } from '../../engine/transactions.js';
+import { takeSnapshot, celebrate } from '../../engine/momentum.js';
 import { programOf } from '../../engine/program.js';
 import { variancePanel } from './call.js';
 import { CATEGORIES } from '../../engine/planets/spending.js';
@@ -104,8 +105,11 @@ export function mount(host, app) {
       const Pm = programOf(rec);
       Pm.transactions = { importedAt: new Date().toISOString(), count: txs.length, spanDays: det.spanDays, monthly: act.monthly, recurringVerified: true, allVerified: true, foundMoney: win, blindSpotPct: cmp.blindSpotPct, netted: cl.netted.filter(n => n.confirmed).length };
       Pm.blindSpot.s4 = { pct: cmp.blindSpotPct, perArea: cmp.perArea, correction: cmp.correction, at: new Date().toISOString() };
+      Pm.transactions.calendar = calendarOf(cl.kept || txs, det); /* MR-063: paydays and bills by day, for the calendar chart */
       rec.program = Pm;
     }, 'program');
+    /* MR-063: the import is a snapshot too; what it opened up is celebrated once */
+    app.mutate(rec => { if (app.result) { celebrate(rec, app.result, app.data, { session: app.session }); takeSnapshot(rec, app.result, 'import', { session: app.session }); } }, 'program');
     app.toast('Written: the spending lines are now real numbers.'); run();
   }
   drawUpload(); drawMapping();

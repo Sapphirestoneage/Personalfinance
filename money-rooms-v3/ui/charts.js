@@ -5,6 +5,7 @@
 import * as F from '../engine/format.js';
 import { ALL_CHARTS as CHARTS } from '../engine/charts-all.js';
 import { MORE_RENDERERS } from './charts-more.js';
+import { SCORE_RENDERERS } from './charts-score.js';
 import { h } from './dom.js';
 
 const CLIENT_WORDS = { 'FAT floor': 'Lean month', 'Rule of 5': 'Cash target', 'FI number': 'Enough to live on', 'FI at': 'Could stop working at', 'Lean': 'Lean', 'Fat': 'Fat', 'FI': 'Enough', 'Coast FI': 'coast target', 'Accommodation': 'Housing', 'Needs only': 'Needs only' };
@@ -25,7 +26,7 @@ function needsNote(host, needs) {
 export function render(id, host, data, opts) {
   host.innerHTML = '';
   if (!data || data.needs) { needsNote(host, (data && data.needs) || ['data']); if (data && data.waiting) host.lastChild.classList.add('waiting'); return; }
-  const fn = Object.assign({ sankey, netWorth, balanceSheet, debtRace, runway, draftt, fiGauge, waterfall, paths, taxes, markers }, MORE_RENDERERS)[id];
+  const fn = Object.assign({ sankey, netWorth, balanceSheet, debtRace, runway, draftt, fiGauge, waterfall, paths, taxes, markers }, MORE_RENDERERS, SCORE_RENDERERS)[id];
   const o = Object.assign({}, opts || {}, { width: Math.max(320, host.clientWidth || 720) });
   if (fn) fn(host, data, o);
   const def = CHARTS.find(c => c.id === id);

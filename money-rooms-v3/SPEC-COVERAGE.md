@@ -279,3 +279,22 @@ Level 10 (savings buckets, curricula, the session 5 curriculum) was never built.
 | D1 Browser flow for the unlock loop from Start demo from zero; map clicks; tabs; new chart screens in the sweep | done | ui-flows.js `partB-unlock-loop-from-zero`; ui-screens.js measure-* screens |
 | D2 Screenshots | done | screenshots/demo-brief/ |
 | D3 README map, DECISIONS, QUESTIONS | done | MR-057 to MR-061; questions 37 to 48 |
+
+## Level 12 The Scoreboard (every metric, its graph, the dependency map, momentum)
+
+| Requirement | Status | Evidence |
+|---|---|---|
+| 1 Registry: every metric with group, direction, bands and sources, ladder, lens, chart, what opens it, visibility, gentle copy, first session, headline flag; eight new metrics | done | data/metrics.json (`scoreGroups`, `headlineDefault`); engine/scoremetrics.js; tests/engine/registry.test.js |
+| 2 Dependency map with explain | done | engine/graph.js `through`, `explain`; tests/engine/graph-explain.test.js (spending reaches the FI date through the FI number and the surplus) |
+| 3 Chart catalog with question and first session; seven new charts (crossover, FI date waterfall, cash flow calendar, picture vs progress, effort vs market, stress trend, debt curves) | done | data/charts.json; engine/chartdata-score.js; ui/charts-score.js; tests/engine/charts-score.test.js |
+| 4 Snapshots at session close, money date, discovery, transactions import; trends since last and since start | done | engine/momentum.js `takeSnapshot`, `trend`; ui/views/session.js, moneydate.js, app.js `discovery`, transactions.js |
+| 5 Why it moved: learned, did, market, time; a down market month keeps did positive | done | momentum.js `whyMoved`, `groupLines`; tests/households/expected-momentum.py; momentum.test.js |
+| 6 Milestone ladders, celebrated once, seeded on first run; personal bests | done | momentum.js `milestone`, `celebrate`, `seedCelebrations`, `personalBests`; momentum.test.js |
+| 7 Next action per metric and overall, from the sensitivity run | done | momentum.js `nextActionFor`, `overallNextAction`; ui/scorebits.js `nextActionCard` |
+| 8 #/scoreboard: six tiles, one next action, rest by group, drawer with confidence, band and source, sparkline, why it moved, next rung, levers, chart, what feeds it | done | ui/views/scoreboard.js; ui/scorebits.js; ui/metricdrawer.js; flow `level12-scoreboard-money-date` |
+| 9 #/map: list at phone width, drawing on a wide Coach screen (shared with levers) | done | ui/views/map.js; ui/views/levers.js `drawGraph` |
+| 10 #/money-date: ten-minute guided check writing a snapshot | done | ui/views/moneydate.js; flow |
+| 11 Tie-ins: prep, one-pager, follow-up email, curricula introduces | done | prep.js, onepager.js, session.js, engine/curriculum.js `introduces`, engine/email.js |
+| 12 Design rules: no internal words, one big number, read-aloud sentences, gentle mode, six numbers and the rest one tap away, missing inputs say what opens them | done | flow checks for banned words and gentle words; `needsBlock` |
+| 13 Tests: registry, explain, momentum with starter and mid and a down market, Maya through session 4, charts, screens in both views, three widths, both themes | done | tests/engine/*.test.js; tests/ui-screens.js; ui-flows.js |
+| 14 Docs: README, CONTRACTS, SPEC-COVERAGE, PROGRESS, DONE, DECISIONS, BOARD, QUESTIONS | done | this file; MR-063; questions 49 to 53 |

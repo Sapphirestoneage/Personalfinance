@@ -362,6 +362,136 @@
     "line",
     "amount"
    ]
+  ],
+  "transactions compared with the gut guesses (session 4)": [
+   [
+    "transactions",
+    null,
+    "import"
+   ]
+  ],
+  "a stress score from the discovery form or a session": [
+   [
+    "discovery",
+    null,
+    "stress"
+   ]
+  ],
+  "a goal with a date on the Life plan": [
+   [
+    "life",
+    "goal",
+    "targetDate"
+   ]
+  ],
+  "spending lines for housing, food or transportation": [
+   [
+    "spending",
+    "line",
+    "amount"
+   ]
+  ],
+  "spending lines": [
+   [
+    "spending",
+    "line",
+    "amount"
+   ]
+  ],
+  "take-home pay and spending lines": [
+   [
+    "income",
+    "w2",
+    "takeHome"
+   ],
+   [
+    "spending",
+    "line",
+    "amount"
+   ]
+  ],
+  "take-home and spending lines": [
+   [
+    "income",
+    "w2",
+    "takeHome"
+   ],
+   [
+    "spending",
+    "line",
+    "amount"
+   ]
+  ],
+  "take-home pay, monthly spending": [
+   [
+    "income",
+    "w2",
+    "takeHome"
+   ],
+   [
+    "spending",
+    "line",
+    "amount"
+   ]
+  ],
+  "transactions imported": [
+   [
+    "transactions",
+    null,
+    "import"
+   ]
+  ],
+  "a closed session or a money date": [
+   [
+    "session",
+    null,
+    "snapshot"
+   ]
+  ],
+  "a second look after the first snapshot": [
+   [
+    "session",
+    null,
+    "snapshot"
+   ]
+  ],
+  "income, spending and account balances at two points in time": [
+   [
+    "session",
+    null,
+    "snapshot"
+   ]
+  ],
+  "a stress rating on at least one debt": [
+   [
+    "debt",
+    "card",
+    "stress"
+   ],
+   [
+    "debt",
+    "student",
+    "stress"
+   ],
+   [
+    "debt",
+    "personal",
+    "stress"
+   ]
+  ],
+  "a working year ahead of the retirement age": [
+   [
+    "life",
+    "retirement",
+    "retirementAge"
+   ]
+  ],
+  "a saved client": [
+   [
+    "sun",
+    null,
+    "name"
+   ]
   ]
  },
  "probeTypes": [

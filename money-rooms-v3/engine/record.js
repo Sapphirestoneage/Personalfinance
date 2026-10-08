@@ -40,6 +40,9 @@ export function createRecord(opts) {
     discovery: null,
     targets: {},
     callProgress: {},
+    snapshots: [],
+    celebrations: [],
+    scoreboard: null,
   };
 }
 

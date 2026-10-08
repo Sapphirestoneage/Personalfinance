@@ -262,6 +262,7 @@ function benchmarks(host, d, o) {
   host.appendChild(h('div', { class: 'suggest' }, 'Rules of thumb, not targets; the salary multiple is a looked-up table to verify.'));
 }
 
+export { svgIn, axes, legend, note };
 export const MORE_RENDERERS = { savingsRateCurve, fiLadderLines, netWorthStacked, milestones, tornado, paycheckWaterfall, spendingTreemap, drafttBullets, debtCompared, taxBucketMix, allocationDonut, runwayStaircase, ruleOf5Gauge, contributionRoom, incomeByType, feeDrag, guardrails, coastCurve, healthcareBridge, hoursOfWork, gutDreamActual, benchmarks };
 
 /* a tiny line for a tile: values in order, no axes */

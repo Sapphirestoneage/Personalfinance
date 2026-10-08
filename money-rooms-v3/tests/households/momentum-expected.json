@@ -1,0 +1,38 @@
+{
+ "starter": {
+  "savingsRate": 0.321429,
+  "netWorthBefore": 4200000,
+  "netWorthAfter": 3500000,
+  "netWorthDelta": -700000,
+  "did": 183311,
+  "market": -883311,
+  "time": 0,
+  "learned": 0,
+  "surplus": 180000,
+  "spend": 380000,
+  "runwayFullMonthsBefore": 0.0,
+  "ladderSavingsRateRung": 0.3,
+  "nextSavingsRateRung": 0.4,
+  "snapAt": "2026-10-01T00:00:00.000Z",
+  "moveAt": "2026-11-01T00:00:00.000Z",
+  "elapsedMonths": 1.0184
+ },
+ "mid": {
+  "savingsRate": 0.421053,
+  "netWorthBefore": 18500000,
+  "netWorthAfter": 16500000,
+  "netWorthDelta": -2000000,
+  "did": 407359,
+  "market": -2407359,
+  "time": 0,
+  "learned": 0,
+  "surplus": 400000,
+  "spend": 550000,
+  "runwayFullMonthsBefore": 0.909,
+  "ladderSavingsRateRung": 0.4,
+  "nextSavingsRateRung": 0.5,
+  "snapAt": "2026-10-01T00:00:00.000Z",
+  "moveAt": "2026-11-01T00:00:00.000Z",
+  "elapsedMonths": 1.0184
+ }
+}

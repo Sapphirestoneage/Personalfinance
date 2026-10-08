@@ -1,5 +1,5 @@
 /* Fetches every data/ library by relative path (case-sensitive, works on Pages). */
-export const DATA_FILES = ['us-states', 'fields', 'cards', 'funds', 'defaults', 'metrics', 'lenses', 'readings', 'assumptions', 'weights', 'tax-2026', 'limits-2026', 'glossary', 'scenario-blocks', 'presets', 'benchmarks', 'graph', 'col-tiers', 'discovery', 'callpath', 'curricula', 'accounts-checklist', 'merchant-rules', 'knowledge-targets', 'unlocks', 'unemployment-2026'];
+export const DATA_FILES = ['us-states', 'fields', 'cards', 'funds', 'defaults', 'metrics', 'lenses', 'readings', 'assumptions', 'weights', 'tax-2026', 'limits-2026', 'glossary', 'scenario-blocks', 'presets', 'benchmarks', 'graph', 'col-tiers', 'discovery', 'callpath', 'curricula', 'accounts-checklist', 'merchant-rules', 'knowledge-targets', 'unlocks', 'unemployment-2026', 'charts'];
 
 export async function loadAllData() {
   const out = {};

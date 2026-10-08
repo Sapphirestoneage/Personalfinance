@@ -20,6 +20,7 @@ import { computeMetrics } from './metrics.js';
 import { computeLenses } from './lenses.js';
 import { tripleD, project, socialSecurityMonthly } from './projection.js';
 import { monthsToReach } from './fiLadder.js';
+import { scoreMetrics } from './scoremetrics.js';
 import { isGuessRow, guessRows, realCategories } from './guesses.js';
 import { colTierOf } from './col.js';
 import { planGoals } from './goals.js';
@@ -156,6 +157,7 @@ export function compute(record, data, opts) {
   const metrics = computeMetrics(mctx);
   result.ladder = mctx.ladderOut || null;
   const lenses = computeLenses({ metrics, sun, asm, data, age, debts, today, record, projection, contribAnnual });
+  Object.defineProperty(result, 'data', { value: data, enumerable: false }); /* MR-063: builders that re-run the engine read the libraries from here */
   result.sun = sun; result.metrics = metrics; result.lenses = lenses; result.projection = projection; result.debts = debts; result.asm = asm; result.age = age;
   /* Level 11 (MR-051): the goal timeline reads the finished result; the sensitivity reruns skip it */
   result.goalPlan = opts && opts.light ? null : planGoals(record, result);
@@ -166,6 +168,8 @@ export function compute(record, data, opts) {
   const given = realCategories(record);
   result.guesses = { on: asm.fillGapsWithGuesses !== false, count: asm.fillGapsWithGuesses === false ? 0 : gRows.filter(r => { const c = r.f.category && r.f.category.v; return !(record.anchors && record.anchors.gut && record.anchors.gut['spending:' + c]) && !given[c]; }).length, rows: gRows.map(r => ({ rowId: r.id, name: r.nickname, category: r.f.category ? r.f.category.v : null, cents: r.f.amount ? r.f.amount.v : null, shared: !!(r.f.shared && r.f.shared.v), tier: r.guessTier || null })) };
   result.completeness = completenessOf(record, data, S);
+  /* Level 12 (MR-063): the eight scoreboard metrics read the finished result */
+  Object.assign(result.metrics, scoreMetrics(record, result, data));
   if (result.firstDraft) result.firstDraft.guesses = result.guesses.count;
   result.sessionMode = record.sessionMode || 'standard';
   return Object.freeze(result);

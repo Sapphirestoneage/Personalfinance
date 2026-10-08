@@ -18,6 +18,9 @@ import { actualsOf } from './call.js';
 import { nextWins } from './goals.js';
 import { programOf } from '../../engine/program.js';
 import { beforeAfter } from '../../engine/outcomes.js';
+import { headlineIds, trend, textOf, overallNextAction, lastSnapshot } from '../../engine/momentum.js';
+import { cachedSensitivity } from '../levers-bridge.js';
+import { ARROWS } from '../scorebits.js';
 
 
 export function mount(host, app) {
@@ -40,8 +43,16 @@ export function mount(host, app) {
     const nums = h('div', { class: 'op-shelf-host' });
     /* the one-pager is the client's page: client labels whatever the view */
     const clientApp = Object.assign(Object.create(Object.getPrototypeOf(app)), app, { view: 'client' });
-    if (M) renderShelf(nums, clientApp, { compact: true, title: 'Key numbers', ladder: false });
-    page.appendChild(h('section', { class: 'op-shelf' }, M ? nums : h('p', { class: 'muted small' }, 'Numbers appear as income and spending come in.')));
+    const snap = lastSnapshot(rec);
+    if (M && !snap) renderShelf(nums, clientApp, { compact: true, title: 'Key numbers', ladder: false });
+    if (!snap) page.appendChild(h('section', { class: 'op-shelf' }, M ? nums : h('p', { class: 'muted small' }, 'Numbers appear as income and spending come in.')));
+    /* Level 12 (MR-063): once a snapshot exists the six headline numbers with their arrows stand where the key numbers were, with what was crossed and the one next action */
+    if (snap) {
+      const ids = headlineIds(rec, R, app.data);
+      page.appendChild(h('section', { class: 'op-six' }, h('h3', null, 'Your six'), h('div', { class: 'op-numbers op-six-grid' }, ids.map(id => { const def = app.data.metrics.metrics.find(x => x.id === id); const m = M[id]; const ok = m && m.status === 'ok'; const t = ok ? trend(rec, R, app.data, id) : null; const leg = t && t.sinceLast; return h('div', { class: 'op-num' }, h('div', { class: 'small muted' }, def.clientLabel || def.name), h('div', { class: 'op-val' }, ok ? textOf(m) : 'not yet'), leg ? h('div', { class: 'small ' + (leg.verdict === 'better' ? 'better' : 'muted') }, ARROWS[leg.arrow] + ' ' + (leg.delta ? leg.text.replace(/ since .*$/, '') : 'steady')) : null); }))));
+      const crossed = (rec.celebrations || []).filter(c => !c.seeded && c.ts >= snap.ts).slice(-3); const act = overallNextAction(cachedSensitivity(app));
+      if (crossed.length || act) page.appendChild(h('p', { class: 'small op-marks' }, crossed.length ? h('span', null, h('strong', null, 'Worth marking: '), crossed.map(c => c.text).join('; ') + '. ') : null, act ? h('span', null, h('strong', null, 'The one thing: '), act.sentence) : null));
+    }
     /* since last time */
     const since = sinceLastSession(rec, app.data.fields, (def, o, n, l) => changeText(def, o, n, l));
     page.appendChild(h('section', null, h('h3', null, 'Changes since last time' + (since.since ? ' (' + F.dateLocal(since.since) + ')' : '')), since.changes.length ? h('ul', null, since.changes.slice(0, 3).map(c => h('li', null, c.row + ': ' + c.label.toLowerCase() + ' ' + c.text))) : h('p', { class: 'muted small' }, since.since ? 'No changes since the last session.' : 'First session.')));

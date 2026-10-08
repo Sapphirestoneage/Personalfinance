@@ -178,4 +178,12 @@ would want, write-once, under `record.anchors`), `engine/variance.js`,
 the surplus metric, the Safety Net's Rule of 5 target, the debts, the Life
 plan goals and the FI ladder; writes nothing) and returns `goalPlan`, which
 the sensitivity reruns skip (`opts.light`). Level 10 adds `engine/curriculum.js`, `engine/program.js`, `engine/transactions.js` and `engine/outcomes.js`, which read the result and the record and write only through the record API (`record.program`, journal kind `program`; spending lines as verified actuals). It returns one frozen result object; views read from it and
-never do math.
+never do math. Level 12 adds `engine/scoremetrics.js` (eight metrics as a
+second pass over the finished result), `engine/momentum.js` (snapshots under
+`record.snapshots`, celebrations under `record.celebrations`, the coach's six
+under `record.scoreboard`; it reads the result and the journal and writes
+only through its two append functions) and `engine/chartdata-score.js`; the
+dependency graph gains `through()` and `explain()`, which copy a record, put
+one root back at a time and run `compute` again. The result carries a hidden
+(non-enumerable) reference to the data libraries for builders that rerun the
+engine.

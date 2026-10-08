@@ -32,6 +32,9 @@ export function followUpEmail(record, fields, theirItems, opts) {
     lines.push('');
   });
   if (o.nextWin) { lines.push('Your next win: ' + o.nextWin.charAt(0).toLowerCase() + o.nextWin.slice(1) + '.'); lines.push(''); }
+  /* Level 12 (MR-063): one milestone crossed and the one action that moves the most */
+  if (o.milestone) { lines.push('Worth marking: ' + o.milestone.charAt(0).toLowerCase() + o.milestone.slice(1) + '.'); lines.push(''); }
+  if (o.action) { lines.push('The one thing that moves the most right now: ' + o.action.charAt(0).toLowerCase() + o.action.slice(1)); lines.push(''); }
   if (o.nextDate) lines.push('See you ' + o.nextDate + '.');
   lines.push('');
   lines.push(o.coachName || 'Eli');

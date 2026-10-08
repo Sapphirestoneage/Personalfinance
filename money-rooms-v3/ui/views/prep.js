@@ -8,6 +8,10 @@ import * as F from '../../engine/format.js';
 import { planSession, sessionCount, sessionDef } from '../../engine/curriculum.js';
 import { programOf, nextSessionNumber, readiness, checklistFor, homework, parkDone } from '../../engine/program.js';
 import { clientName } from '../app.js';
+import { introduces } from '../../engine/curriculum.js';
+import { headlineIds, lastSnapshot, textOf } from '../../engine/momentum.js';
+import { trendLine, defOf } from '../scorebits.js';
+import { metricLabel } from '../glossary.js';
 
 export function mount(host, app) {
   const total = sessionCount(app.data);
@@ -33,6 +37,17 @@ export function mount(host, app) {
       hw.now.length ? h('p', { class: 'small' }, 'Homework out: ' + hw.now.map(i => i.name).join(', ') + (hw.waiting.length ? '; waiting: ' + hw.waiting.map(i => i.name).join(', ') : '') + '.') : null));
     right.appendChild(h('section', { class: 'panel' }, h('h2', null, 'What this session leaves known', h('span', { class: 'tag' }, r.met + ' of ' + r.total + ' already there')),
       r.items.length ? h('ul', { class: 'small readiness' }, r.items.map(i => h('li', { class: i.met ? 'met' : 'open' }, h('span', { class: 'chip ' + (i.met ? 'state-known' : 'state-unknown') }, i.met ? 'Known' : 'Open'), ' ' + i.what))) : h('p', { class: 'muted small' }, 'No targets listed for this session.')));
+    /* Level 12 (MR-063): the scoreboard since the last snapshot, and what this session opens up */
+    const snap = lastSnapshot(app.record); const ids = headlineIds(app.record, app.result, app.data);
+    const crossed = (app.record.celebrations || []).filter(c => !c.seeded && (!snap || c.ts >= snap.ts)).slice(-4);
+    right.appendChild(h('section', { class: 'panel' }, h('h2', null, 'Scoreboard', h('span', { class: 'tag' }, snap ? 'since ' + F.dateLocal(snap.ts) : 'no snapshot yet')),
+      h('ul', { class: 'score-list' }, ids.map(id => { const m = app.result.metrics[id]; const ok = m && m.status === 'ok'; return h('li', { class: ok ? '' : 'locked' }, h('span', { class: 'row-label' }, metricLabel(app, defOf(app, id))), h('span', { class: 'row-value' }, ok ? textOf(m) : 'needs inputs'), ok ? h('span', { class: 'row-meta' }, trendLine(app, id)) : null); })),
+      crossed.length ? h('p', { class: 'small' }, 'Crossed: ' + crossed.map(c => c.text).join('; ') + '.') : null,
+      h('p', { class: 'small' }, h('a', { href: '#/scoreboard' }, 'Open the scoreboard'))));
+    const intro = introduces(app.data, n);
+    if (intro.metrics.length || intro.charts.length) right.appendChild(h('section', { class: 'panel' }, h('h2', null, 'New this session', h('span', { class: 'tag' }, (intro.metrics.length + intro.charts.length) + ' to show')),
+      intro.metrics.length ? h('p', { class: 'small' }, h('strong', null, 'Numbers: '), intro.metrics.map(m => m.name).join(', ') + '.') : null,
+      intro.charts.length ? h('p', { class: 'small' }, h('strong', null, 'Charts: '), intro.charts.map(c => c.question).join(' ') ) : null));
     right.appendChild(h('section', { class: 'panel' }, h('h2', null, 'The plan', h('span', { class: 'tag' }, plan.blocks.length + ' parts, about ' + plan.blocks.reduce((s, b) => s + b.minutes.target, 0) + ' minutes')),
       h('ol', { class: 'plan-list' }, plan.blocks.map(b => h('li', { class: 'prio-' + b.priority + (b.movedIn ? ' moved-in' : '') }, h('span', { class: 'plan-name' }, b.name), h('span', { class: 'small muted' }, ' ' + b.minutes.target + ' min' + (b.movedIn ? ', from session ' + b.from : '') + (b.priority === 'could' ? ', if there is time' : b.priority === 'should' ? ', if we are on time' : ''))))),
       plan.movedOut.length ? h('p', { class: 'small muted' }, 'Not today: ' + plan.movedOut.map(m => m.block.name + ' (session ' + m.to + ')').join(', ') + '.') : null));

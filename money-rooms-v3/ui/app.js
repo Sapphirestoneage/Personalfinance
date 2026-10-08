@@ -16,6 +16,7 @@ import { markStop } from '../engine/callpath.js';
 import { setTarget as targetSet } from '../engine/targets.js';
 import { recordStress, captureBaseline } from '../engine/program.js';
 import { snapshotValues } from '../engine/outcomes.js';
+import { takeSnapshot, seedCelebrations } from '../engine/momentum.js';
 
 const store = createStore();
 const settings = store.settings();
@@ -100,7 +101,7 @@ export const app = {
   mutate(fn, reason) { return this.change(rec => { fn(rec); return true; }, { reason }); },
   /* ---- Level 8 (MR-045 to MR-049): the discovery call, the household, the tier, anchors, call progress and targets ---- */
   setFieldWhy(rowId, fieldId, value, state, source, cad, why) { return this.change(rec => Rec.setField(rec, rowId, fieldId, value, state, source, { session: this.session, cad, why })); },
-  discovery(form) { const line = this.change(rec => { applyDiscovery(rec, form, this.data, { session: this.session || 'discovery' }); if (form.mindset && form.mindset.stress) recordStress(rec, 'discovery', form.mindset.stress, { session: 'discovery' }); return true; }, { reason: 'rows' }); /* the scorecard's first-call numbers (Level 10, MR-056) */ this.change(rec => { captureBaseline(rec, snapshotValues(rec, this.result), {}); return true; }, { reason: 'program', silent: true }); return line; },
+  discovery(form) { const line = this.change(rec => { applyDiscovery(rec, form, this.data, { session: this.session || 'discovery' }); if (form.mindset && form.mindset.stress) recordStress(rec, 'discovery', form.mindset.stress, { session: 'discovery' }); return true; }, { reason: 'rows' }); /* the scorecard's first-call numbers (Level 10, MR-056) */ this.change(rec => { captureBaseline(rec, snapshotValues(rec, this.result), {}); if (this.result && !(rec.snapshots || []).length) { seedCelebrations(rec, this.result, this.data, { session: 'discovery' }); takeSnapshot(rec, this.result, 'discovery', { session: 'discovery' }); } return true; }, { reason: 'program', silent: true }); return line; },
   household(hh, why) { return this.change(rec => { Rec.setHousehold(rec, hh, { session: this.session, why: why === undefined ? null : why }); applyGuesses(rec, this.data, { session: this.session }); return true; }, { reason: 'rows' }); },
   colTier(tier) { return this.change(rec => { Rec.setColTier(rec, tier, { session: this.session }); applyGuesses(rec, this.data, { session: this.session }); return true; }, { reason: 'rows' }); },
   refillGuesses() { return this.change(rec => { applyGuesses(rec, this.data, { session: this.session }); return true; }, { reason: 'rows' }); },

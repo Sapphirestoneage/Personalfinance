@@ -41,7 +41,20 @@
      "grossPay",
      "takeHome"
     ]
-   }
+   },
+   "scoreGroup": "cashflow",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "sankey",
+   "unlock": [
+    "grossPay",
+    "takeHome"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your what lands in the bank each month: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 1,
+   "headline": false
   },
   {
    "n": 2,
@@ -75,7 +88,19 @@
     "roots": [
      "grossPay"
     ]
-   }
+   },
+   "scoreGroup": "cashflow",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "incomeByType",
+   "unlock": [
+    "grossPay"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your pay before anything comes out: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 1,
+   "headline": false
   },
   {
    "n": 3,
@@ -116,7 +141,20 @@
      "amount",
      "premium"
     ]
-   }
+   },
+   "scoreGroup": "cashflow",
+   "bands": null,
+   "milestones": null,
+   "lens": "mistake-tax",
+   "chart": "sankey",
+   "unlock": [
+    "amount",
+    "premium"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your what a month costs: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 1,
+   "headline": false
   },
   {
    "n": 4,
@@ -164,7 +202,21 @@
      "minimum",
      "takeHome"
     ]
-   }
+   },
+   "scoreGroup": "cashflow",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "sankey",
+   "unlock": [
+    "amount",
+    "minimum",
+    "takeHome"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your left over each month: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 1,
+   "headline": false
   },
   {
    "n": 5,
@@ -206,7 +258,80 @@
      "amount",
      "takeHome"
     ]
-   }
+   },
+   "scoreGroup": "cashflow",
+   "bands": {
+    "sources": [
+     {
+      "id": "default",
+      "label": "Common guidance",
+      "healthy": [
+       0.2,
+       1
+      ],
+      "ok": [
+       0.1,
+       0.2
+      ],
+      "watch": [
+       0,
+       0.1
+      ]
+     },
+     {
+      "id": "fiftyThirtyTwenty",
+      "label": "50/30/20",
+      "healthy": [
+       0.2,
+       1
+      ],
+      "ok": [
+       0.15,
+       0.2
+      ],
+      "watch": [
+       0,
+       0.15
+      ]
+     },
+     {
+      "id": "scottTrench",
+      "label": "Scott Trench, Set for Life",
+      "healthy": [
+       0.5,
+       1
+      ],
+      "ok": [
+       0.3,
+       0.5
+      ],
+      "watch": [
+       0,
+       0.3
+      ]
+     }
+    ],
+    "verify": true
+   },
+   "milestones": [
+    0.05,
+    0.1,
+    0.15,
+    0.2,
+    0.3,
+    0.4,
+    0.5
+   ],
+   "lens": "underspending",
+   "chart": "savingsRateCurve",
+   "unlock": [
+    "amount",
+    "takeHome"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your share of take-home saved: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 1,
+   "headline": true
   },
   {
    "n": 6,
@@ -259,7 +384,65 @@
      "matchRate",
      "pretaxRetirement"
     ]
-   }
+   },
+   "scoreGroup": "cashflow",
+   "bands": {
+    "sources": [
+     {
+      "id": "default",
+      "label": "Mr. Money Mustache",
+      "healthy": [
+       0.5,
+       1
+      ],
+      "ok": [
+       0.15,
+       0.5
+      ],
+      "watch": [
+       0,
+       0.15
+      ]
+     },
+     {
+      "id": "moneyGuy",
+      "label": "Money Guy, 25% of gross",
+      "healthy": [
+       0.25,
+       1
+      ],
+      "ok": [
+       0.15,
+       0.25
+      ],
+      "watch": [
+       0,
+       0.15
+      ]
+     }
+    ],
+    "verify": true
+   },
+   "milestones": [
+    0.05,
+    0.1,
+    0.15,
+    0.2,
+    0.3,
+    0.4,
+    0.5
+   ],
+   "lens": null,
+   "chart": "savingsRateCurve",
+   "unlock": [
+    "amount",
+    "matchRate",
+    "pretaxRetirement"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your share of total pay saved, match included: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 1,
+   "headline": false
   },
   {
    "n": 7,
@@ -298,7 +481,24 @@
      "amount",
      "savingsLanding"
     ]
-   }
+   },
+   "scoreGroup": "cashflow",
+   "bands": null,
+   "milestones": [
+    0.1,
+    0.05,
+    0
+   ],
+   "lens": "hidden-leak",
+   "chart": "sankey",
+   "unlock": [
+    "amount",
+    "savingsLanding"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your money the math says is left but does not land in savings: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 1,
+   "headline": false
   },
   {
    "n": 8,
@@ -340,7 +540,20 @@
      "amount",
      "pretaxRetirement"
     ]
-   }
+   },
+   "scoreGroup": "cashflow",
+   "bands": null,
+   "milestones": null,
+   "lens": "big-three",
+   "chart": "draftt",
+   "unlock": [
+    "amount",
+    "pretaxRetirement"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your where each dollar goes: {value}. This one is a shape to read, not a score to beat.",
+   "firstSession": 1,
+   "headline": false
   },
   {
    "n": 9,
@@ -380,7 +593,20 @@
      "amount",
      "fatFloor"
     ]
-   }
+   },
+   "scoreGroup": "cashflow",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "spendingTreemap",
+   "unlock": [
+    "amount",
+    "fatFloor"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your the lean month: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 1,
+   "headline": false
   },
   {
    "n": 10,
@@ -416,7 +642,39 @@
     "roots": [
      "amount"
     ]
-   }
+   },
+   "scoreGroup": "cashflow",
+   "bands": {
+    "sources": [
+     {
+      "id": "default",
+      "label": "The 30% rule, widened for high-cost cities",
+      "healthy": [
+       0,
+       0.3
+      ],
+      "ok": [
+       0.3,
+       0.35
+      ],
+      "watch": [
+       0.35,
+       1
+      ]
+     }
+    ],
+    "verify": true
+   },
+   "milestones": null,
+   "lens": "shelter-heavy",
+   "chart": "drafttBullets",
+   "unlock": [
+    "amount"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your housing share of take-home: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 1,
+   "headline": false
   },
   {
    "n": 11,
@@ -459,7 +717,40 @@
      "amount",
      "needWant"
     ]
-   }
+   },
+   "scoreGroup": "cashflow",
+   "bands": {
+    "sources": [
+     {
+      "id": "default",
+      "label": "Ramit Sethi conscious spending",
+      "healthy": [
+       0,
+       0.5
+      ],
+      "ok": [
+       0.5,
+       0.6
+      ],
+      "watch": [
+       0.6,
+       1
+      ]
+     }
+    ],
+    "verify": true
+   },
+   "milestones": null,
+   "lens": null,
+   "chart": "spendingTreemap",
+   "unlock": [
+    "amount",
+    "needWant"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your share of take-home already spoken for: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 1,
+   "headline": false
   },
   {
    "n": 12,
@@ -507,7 +798,21 @@
      "takeHome",
      "workCosts"
     ]
-   }
+   },
+   "scoreGroup": "cashflow",
+   "bands": null,
+   "milestones": null,
+   "lens": "real-hourly-wage",
+   "chart": "hoursOfWork",
+   "unlock": [
+    "hoursCommute",
+    "takeHome",
+    "workCosts"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your what an hour of work really pays: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 3,
+   "headline": false
   },
   {
    "n": 13,
@@ -547,7 +852,20 @@
      "balance",
      "minimum"
     ]
-   }
+   },
+   "scoreGroup": "debt",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "debtRace",
+   "unlock": [
+    "balance",
+    "minimum"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your debt payments each month: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 2,
+   "headline": false
   },
   {
    "n": 14,
@@ -581,7 +899,21 @@
     "roots": [
      "balance"
     ]
-   }
+   },
+   "scoreGroup": "debt",
+   "bands": null,
+   "milestones": [
+    0
+   ],
+   "lens": null,
+   "chart": "debtRace",
+   "unlock": [
+    "balance"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your everything owed: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 2,
+   "headline": false
   },
   {
    "n": 15,
@@ -601,7 +933,7 @@
    "group": "debt",
    "stage": 2,
    "range": {
-    "low": 0.0,
+    "low": 0,
     "high": 0.36,
     "source": "Mortgage underwriting back-end ratio, 36%"
    },
@@ -623,7 +955,45 @@
      "grossPay",
      "minimum"
     ]
-   }
+   },
+   "scoreGroup": "debt",
+   "bands": {
+    "sources": [
+     {
+      "id": "default",
+      "label": "Mortgage back-end ratio",
+      "healthy": [
+       0,
+       0.2
+      ],
+      "ok": [
+       0.2,
+       0.36
+      ],
+      "watch": [
+       0.36,
+       1
+      ]
+     }
+    ],
+    "verify": true
+   },
+   "milestones": [
+    0.36,
+    0.2,
+    0.1,
+    0
+   ],
+   "lens": null,
+   "chart": "debtCompared",
+   "unlock": [
+    "grossPay",
+    "minimum"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your debt payments as a share of pay: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 2,
+   "headline": false
   },
   {
    "n": 16,
@@ -661,7 +1031,20 @@
      "accountBalance",
      "balance"
     ]
-   }
+   },
+   "scoreGroup": "debt",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "balanceSheet",
+   "unlock": [
+    "accountBalance",
+    "balance"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your owed versus owned: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 2,
+   "headline": false
   },
   {
    "n": 17,
@@ -698,7 +1081,20 @@
      "apr",
      "rate"
     ]
-   }
+   },
+   "scoreGroup": "debt",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "debtCompared",
+   "unlock": [
+    "apr",
+    "rate"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your average interest rate, by balance: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 2,
+   "headline": false
   },
   {
    "n": 18,
@@ -738,7 +1134,20 @@
      "apr",
      "balance"
     ]
-   }
+   },
+   "scoreGroup": "debt",
+   "bands": null,
+   "milestones": null,
+   "lens": "cost-in-hours",
+   "chart": "debtRace",
+   "unlock": [
+    "apr",
+    "balance"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your interest over the next year: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 2,
+   "headline": false
   },
   {
    "n": 19,
@@ -757,7 +1166,7 @@
    "group": "debt",
    "stage": 2,
    "range": {
-    "low": 0.0,
+    "low": 0,
     "high": 0.3,
     "source": "CFPB and FICO guidance: under 30%, under 10% best"
    },
@@ -779,7 +1188,44 @@
      "balance",
      "creditLimit"
     ]
-   }
+   },
+   "scoreGroup": "debt",
+   "bands": {
+    "sources": [
+     {
+      "id": "default",
+      "label": "CFPB and FICO",
+      "healthy": [
+       0,
+       0.1
+      ],
+      "ok": [
+       0.1,
+       0.3
+      ],
+      "watch": [
+       0.3,
+       1
+      ]
+     }
+    ],
+    "verify": true
+   },
+   "milestones": [
+    0.3,
+    0.1,
+    0
+   ],
+   "lens": "utilization-drag",
+   "chart": "debtRace",
+   "unlock": [
+    "balance",
+    "creditLimit"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your how full the cards are: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 2,
+   "headline": false
   },
   {
    "n": 20,
@@ -816,7 +1262,20 @@
      "balance",
      "promoEnd"
     ]
-   }
+   },
+   "scoreGroup": "debt",
+   "bands": null,
+   "milestones": null,
+   "lens": "promo-cliff",
+   "chart": "debtRace",
+   "unlock": [
+    "balance",
+    "promoEnd"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your when a 0% offer ends: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 2,
+   "headline": false
   },
   {
    "n": 21,
@@ -854,7 +1313,20 @@
      "apr",
      "minimum"
     ]
-   }
+   },
+   "scoreGroup": "debt",
+   "bands": null,
+   "milestones": null,
+   "lens": "wrong-debt-first",
+   "chart": "debtRace",
+   "unlock": [
+    "apr",
+    "minimum"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your when the last payment lands: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 2,
+   "headline": true
   },
   {
    "n": 22,
@@ -895,7 +1367,29 @@
      "accountBalance",
      "balance"
     ]
-   }
+   },
+   "scoreGroup": "wealth",
+   "bands": null,
+   "milestones": [
+    0,
+    1000000,
+    2500000,
+    5000000,
+    10000000,
+    25000000,
+    50000000,
+    100000000
+   ],
+   "lens": null,
+   "chart": "balanceSheet",
+   "unlock": [
+    "accountBalance",
+    "balance"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your owned minus owed: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 3,
+   "headline": false
   },
   {
    "n": 23,
@@ -928,7 +1422,19 @@
     "roots": [
      "accountBalance"
     ]
-   }
+   },
+   "scoreGroup": "wealth",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "balanceSheet",
+   "unlock": [
+    "accountBalance"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your what is owned, and how much of it moves: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 3,
+   "headline": false
   },
   {
    "n": 24,
@@ -966,7 +1472,44 @@
      "accountBalance",
      "accountType"
     ]
-   }
+   },
+   "scoreGroup": "wealth",
+   "bands": {
+    "sources": [
+     {
+      "id": "default",
+      "label": "A quarter reachable",
+      "healthy": [
+       0.25,
+       1
+      ],
+      "ok": [
+       0.1,
+       0.25
+      ],
+      "watch": [
+       0,
+       0.1
+      ]
+     }
+    ],
+    "verify": true
+   },
+   "milestones": [
+    0.1,
+    0.25,
+    0.5
+   ],
+   "lens": "locked-up",
+   "chart": "balanceSheet",
+   "unlock": [
+    "accountBalance",
+    "accountType"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your share of assets reachable now: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 3,
+   "headline": false
   },
   {
    "n": 25,
@@ -1004,7 +1547,20 @@
      "accountBalance",
      "amount"
     ]
-   }
+   },
+   "scoreGroup": "wealth",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "runwayStaircase",
+   "unlock": [
+    "accountBalance",
+    "amount"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your years the reachable money covers: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 3,
+   "headline": false
   },
   {
    "n": 26,
@@ -1041,7 +1597,45 @@
      "accountBalance",
      "amount"
     ]
-   }
+   },
+   "scoreGroup": "safety",
+   "bands": {
+    "sources": [
+     {
+      "id": "default",
+      "label": "Three to six months",
+      "healthy": [
+       6,
+       1200
+      ],
+      "ok": [
+       3,
+       6
+      ],
+      "watch": [
+       0,
+       3
+      ]
+     }
+    ],
+    "verify": true
+   },
+   "milestones": [
+    1,
+    3,
+    6,
+    12
+   ],
+   "lens": "thin-runway",
+   "chart": "runway",
+   "unlock": [
+    "accountBalance",
+    "amount"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your how long cash lasts: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 3,
+   "headline": true
   },
   {
    "n": 27,
@@ -1071,7 +1665,7 @@
      "text": "Lower spending lowers the target."
     },
     {
-     "root": "birthDate",
+     "root": "sun.birthDate",
      "sign": 1,
      "text": "The target grows with age."
     }
@@ -1081,7 +1675,20 @@
      "amount",
      "birthDate"
     ]
-   }
+   },
+   "scoreGroup": "safety",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "runway",
+   "unlock": [
+    "amount",
+    "sun.birthDate"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your cash to keep on hand: {value}. This one is a shape to read, not a score to beat.",
+   "firstSession": 3,
+   "headline": false
   },
   {
    "n": 28,
@@ -1122,7 +1729,22 @@
      "accountBalance",
      "amount"
     ]
-   }
+   },
+   "scoreGroup": "safety",
+   "bands": null,
+   "milestones": [
+    0
+   ],
+   "lens": "roommate-risk",
+   "chart": "ruleOf5Gauge",
+   "unlock": [
+    "accountBalance",
+    "amount"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your cash still to set aside: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 3,
+   "headline": false
   },
   {
    "n": 29,
@@ -1155,7 +1777,7 @@
      "text": "Move cash above the target into investments."
     },
     {
-     "root": "returnLikely",
+     "root": "asm.returnLikely",
      "sign": 1,
      "text": "The gap between returns sets the drag."
     }
@@ -1165,7 +1787,20 @@
      "accountBalance",
      "returnLikely"
     ]
-   }
+   },
+   "scoreGroup": "safety",
+   "bands": null,
+   "milestones": null,
+   "lens": "saving-at-a-loss",
+   "chart": "ruleOf5Gauge",
+   "unlock": [
+    "accountBalance",
+    "asm.returnLikely"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your what idle cash costs a year: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 3,
+   "headline": false
   },
   {
    "n": 30,
@@ -1203,7 +1838,20 @@
      "contribAmount",
      "pretaxRetirement"
     ]
-   }
+   },
+   "scoreGroup": "wealth",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "taxBucketMix",
+   "unlock": [
+    "contribAmount",
+    "pretaxRetirement"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your assets inside tax shelters: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 8,
+   "headline": false
   },
   {
    "n": 31,
@@ -1235,7 +1883,19 @@
     "roots": [
      "contribAmount"
     ]
-   }
+   },
+   "scoreGroup": "wealth",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "taxBucketMix",
+   "unlock": [
+    "contribAmount"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your pre-tax, Roth, taxable, cash: {value}. This one is a shape to read, not a score to beat.",
+   "firstSession": 8,
+   "headline": false
   },
   {
    "n": 32,
@@ -1272,7 +1932,22 @@
      "matchUpTo",
      "pretaxRetirement"
     ]
-   }
+   },
+   "scoreGroup": "wealth",
+   "bands": null,
+   "milestones": [
+    1
+   ],
+   "lens": "match-left",
+   "chart": "waterfall",
+   "unlock": [
+    "matchUpTo",
+    "pretaxRetirement"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your free money taken, and left: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 2,
+   "headline": false
   },
   {
    "n": 33,
@@ -1309,7 +1984,20 @@
      "contribAmount",
      "pretaxRetirement"
     ]
-   }
+   },
+   "scoreGroup": "wealth",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "contributionRoom",
+   "unlock": [
+    "contribAmount",
+    "pretaxRetirement"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your space left in each account this year: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 8,
+   "headline": false
   },
   {
    "n": 34,
@@ -1328,7 +2016,7 @@
    "group": "retirement",
    "stage": 3,
    "range": {
-    "low": 0.0,
+    "low": 0,
     "high": 0.0025,
     "source": "JL Collins: index funds under 0.25%"
    },
@@ -1344,7 +2032,42 @@
     "roots": [
      "expenseRatio"
     ]
-   }
+   },
+   "scoreGroup": "wealth",
+   "bands": {
+    "sources": [
+     {
+      "id": "default",
+      "label": "JL Collins, index funds",
+      "healthy": [
+       0,
+       0.001
+      ],
+      "ok": [
+       0.001,
+       0.0025
+      ],
+      "watch": [
+       0.0025,
+       1
+      ]
+     }
+    ],
+    "verify": true
+   },
+   "milestones": [
+    0.0025,
+    0.001
+   ],
+   "lens": null,
+   "chart": "feeDrag",
+   "unlock": [
+    "expenseRatio"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your average fund fee: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 8,
+   "headline": false
   },
   {
    "n": 35,
@@ -1387,7 +2110,20 @@
      "accountBalance",
      "expenseRatio"
     ]
-   }
+   },
+   "scoreGroup": "wealth",
+   "bands": null,
+   "milestones": null,
+   "lens": "fee-drag",
+   "chart": "feeDrag",
+   "unlock": [
+    "accountBalance",
+    "expenseRatio"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your what fund fees cost by retirement: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 8,
+   "headline": false
   },
   {
    "n": 36,
@@ -1418,7 +2154,19 @@
     "roots": [
      "allocStocks"
     ]
-   }
+   },
+   "scoreGroup": "wealth",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "allocationDonut",
+   "unlock": [
+    "allocStocks"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your stocks, bonds, cash: {value}. This one is a shape to read, not a score to beat.",
+   "firstSession": 8,
+   "headline": false
   },
   {
    "n": 37,
@@ -1455,7 +2203,20 @@
      "pretaxRetirement",
      "takeHome"
     ]
-   }
+   },
+   "scoreGroup": "tax",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "taxes",
+   "unlock": [
+    "pretaxRetirement",
+    "takeHome"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your share of pay that goes to taxes: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 6,
+   "headline": false
   },
   {
    "n": 38,
@@ -1488,7 +2249,7 @@
      "text": "HSA contributions are pre-tax."
     },
     {
-     "root": "filingStatus",
+     "root": "sun.filingStatus",
      "sign": 1,
      "text": "Filing status sets the brackets."
     }
@@ -1499,7 +2260,21 @@
      "hsaPayroll",
      "pretaxRetirement"
     ]
-   }
+   },
+   "scoreGroup": "tax",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "taxes",
+   "unlock": [
+    "sun.filingStatus",
+    "hsaPayroll",
+    "pretaxRetirement"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your federal tax, average and on the next dollar: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 6,
+   "headline": false
   },
   {
    "n": 39,
@@ -1539,7 +2314,20 @@
      "grossPay",
      "hsaPayroll"
     ]
-   }
+   },
+   "scoreGroup": "tax",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "taxes",
+   "unlock": [
+    "grossPay",
+    "hsaPayroll"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your social Security and Medicare tax: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 6,
+   "headline": false
   },
   {
    "n": 40,
@@ -1573,7 +2361,19 @@
     "roots": [
      "grossPay"
     ]
-   }
+   },
+   "scoreGroup": "tax",
+   "bands": null,
+   "milestones": null,
+   "lens": "tax-room",
+   "chart": "taxes",
+   "unlock": [
+    "grossPay"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your what each $1,000 into a 401k saves: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 6,
+   "headline": false
   },
   {
    "n": 41,
@@ -1604,7 +2404,7 @@
      "text": "Every $100 a month cut lowers the number by 12 / withdrawal rate x 100."
     },
     {
-     "root": "withdrawalRate",
+     "root": "asm.withdrawalRate",
      "sign": -1,
      "text": "A higher withdrawal rate lowers the number and raises the risk."
     }
@@ -1614,7 +2414,20 @@
      "amount",
      "withdrawalRate"
     ]
-   }
+   },
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": "withdrawal-sensitivity",
+   "chart": "netWorth",
+   "unlock": [
+    "amount",
+    "asm.withdrawalRate"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your the portfolio that pays for life: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 42,
@@ -1654,7 +2467,48 @@
      "accountBalance",
      "amount"
     ]
-   }
+   },
+   "scoreGroup": "fi",
+   "bands": {
+    "sources": [
+     {
+      "id": "default",
+      "label": "The ladder",
+      "healthy": [
+       0.25,
+       1
+      ],
+      "ok": [
+       0.05,
+       0.25
+      ],
+      "watch": [
+       0,
+       0.05
+      ]
+     }
+    ],
+    "verify": true
+   },
+   "milestones": [
+    0.01,
+    0.05,
+    0.1,
+    0.25,
+    0.5,
+    0.75,
+    1
+   ],
+   "lens": null,
+   "chart": "fiGauge",
+   "unlock": [
+    "accountBalance",
+    "amount"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your how far along: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 4,
+   "headline": true
   },
   {
    "n": 43,
@@ -1689,7 +2543,7 @@
      "text": "A later retirement age lowers the coast number."
     },
     {
-     "root": "returnLikely",
+     "root": "asm.returnLikely",
      "sign": -1,
      "text": "A higher return assumption lowers it."
     },
@@ -1705,7 +2559,21 @@
      "retirementAge",
      "returnLikely"
     ]
-   }
+   },
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": "coast-check",
+   "chart": "coastCurve",
+   "unlock": [
+    "amount",
+    "retirementAge",
+    "asm.returnLikely"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your enough today to coast: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 44,
@@ -1742,7 +2610,7 @@
      "text": "Earn more and invest the difference."
     },
     {
-     "root": "returnLikely",
+     "root": "asm.returnLikely",
      "sign": 1,
      "text": "Returns are not a lever, only an assumption."
     }
@@ -1754,7 +2622,22 @@
      "returnLikely",
      "takeHome"
     ]
-   }
+   },
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": "room-to-spend-more",
+   "chart": "netWorth",
+   "unlock": [
+    "amount",
+    "contribAmount",
+    "asm.returnLikely",
+    "takeHome"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your when the portfolio could carry the household: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 4,
+   "headline": true
   },
   {
    "n": 45,
@@ -1795,7 +2678,20 @@
      "amount",
      "baristaIncome"
     ]
-   }
+   },
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "fiLadderLines",
+   "unlock": [
+    "amount",
+    "baristaIncome"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your three sizes of enough: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 46,
@@ -1827,7 +2723,19 @@
     "roots": [
      "contribAmount"
     ]
-   }
+   },
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": "one-more-point",
+   "chart": "savingsRateCurve",
+   "unlock": [
+    "contribAmount"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your what one more percent saved buys: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 47,
@@ -1864,7 +2772,20 @@
      "cardName",
      "creditsUsed"
     ]
-   }
+   },
+   "scoreGroup": "debt",
+   "bands": null,
+   "milestones": null,
+   "lens": "card-fee",
+   "chart": "debtRace",
+   "unlock": [
+    "cardName",
+    "creditsUsed"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your is each card worth its fee: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 2,
+   "headline": false
   },
   {
    "n": 48,
@@ -1898,7 +2819,19 @@
     "roots": [
      "primaryCard"
     ]
-   }
+   },
+   "scoreGroup": "debt",
+   "bands": null,
+   "milestones": null,
+   "lens": "wrong-card",
+   "chart": "debtRace",
+   "unlock": [
+    "primaryCard"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your rewards the spending could earn elsewhere: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 2,
+   "headline": false
   },
   {
    "n": 49,
@@ -1936,7 +2869,7 @@
      "text": "Flag only what a lean month truly needs."
     },
     {
-     "root": "withdrawalRate",
+     "root": "asm.withdrawalRate",
      "sign": -1,
      "text": "A higher withdrawal rate lowers every number and raises the risk."
     },
@@ -1954,7 +2887,22 @@
      "withdrawalRate"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": "lean-fi-close",
+   "chart": "fiLadderLines",
+   "unlock": [
+    "accountBalance",
+    "amount",
+    "fatFloor",
+    "asm.withdrawalRate"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your the floor: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 50,
@@ -1991,7 +2939,7 @@
      "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
     },
     {
-     "root": "withdrawalRate",
+     "root": "asm.withdrawalRate",
      "sign": -1,
      "text": "A higher withdrawal rate lowers every number and raises the risk."
     }
@@ -2003,7 +2951,21 @@
      "withdrawalRate"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "fiLadderLines",
+   "unlock": [
+    "amount",
+    "baristaIncome",
+    "asm.withdrawalRate"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your the floor, with part-time work: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 51,
@@ -2040,7 +3002,7 @@
      "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
     },
     {
-     "root": "withdrawalRate",
+     "root": "asm.withdrawalRate",
      "sign": -1,
      "text": "A higher withdrawal rate lowers every number and raises the risk."
     }
@@ -2052,7 +3014,21 @@
      "withdrawalRate"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "fiLadderLines",
+   "unlock": [
+    "amount",
+    "baristaIncome",
+    "asm.withdrawalRate"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your enough, with part-time work: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 52,
@@ -2086,7 +3062,7 @@
      "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
     },
     {
-     "root": "withdrawalRate",
+     "root": "asm.withdrawalRate",
      "sign": -1,
      "text": "A higher withdrawal rate lowers every number and raises the risk."
     },
@@ -2103,7 +3079,21 @@
      "withdrawalRate"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "fiLadderLines",
+   "unlock": [
+    "accountBalance",
+    "amount",
+    "asm.withdrawalRate"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your enough: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 53,
@@ -2136,7 +3126,7 @@
      "text": "A more modest dream is a closer rung."
     },
     {
-     "root": "withdrawalRate",
+     "root": "asm.withdrawalRate",
      "sign": -1,
      "text": "A higher withdrawal rate lowers every number and raises the risk."
     },
@@ -2153,7 +3143,21 @@
      "withdrawalRate"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "fiLadderLines",
+   "unlock": [
+    "accountBalance",
+    "dreamSpending",
+    "asm.withdrawalRate"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your the dream: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 54,
@@ -2178,7 +3182,7 @@
    "direction": "neutral",
    "levers": [
     {
-     "root": "withdrawalRate",
+     "root": "asm.withdrawalRate",
      "sign": -1,
      "text": "A higher withdrawal rate lowers every number and raises the risk."
     }
@@ -2188,7 +3192,19 @@
      "withdrawalRate"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "fiLadderLines",
+   "unlock": [
+    "asm.withdrawalRate"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your what part-time work is worth: {value}. This one is a shape to read, not a score to beat.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 55,
@@ -2231,7 +3247,20 @@
      "amount"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": "barista-option",
+   "chart": "fiLadderLines",
+   "unlock": [
+    "accountBalance",
+    "amount"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your part-time pay that would make today enough: {value}. This one is a shape to read, not a score to beat.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 56,
@@ -2278,7 +3307,26 @@
      "rentCollected"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": [
+    1,
+    5,
+    10,
+    25
+   ],
+   "lens": null,
+   "chart": "crossover",
+   "unlock": [
+    "accountBalance",
+    "amount",
+    "rentCollected"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your share of spending the portfolio already covers: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 57,
@@ -2318,7 +3366,20 @@
      "contribAmount"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": "crossover-in-sight",
+   "chart": "milestones",
+   "unlock": [
+    "amount",
+    "contribAmount"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your when the money starts paying for life: {value}. This one is a shape to read, not a score to beat.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 58,
@@ -2357,7 +3418,25 @@
      "amount"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": [
+    30,
+    90,
+    365,
+    1825
+   ],
+   "lens": null,
+   "chart": "crossover",
+   "unlock": [
+    "accountBalance",
+    "amount"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your days the portfolio could pay for: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 59,
@@ -2396,7 +3475,25 @@
      "amount"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": [
+    1,
+    5,
+    10,
+    25
+   ],
+   "lens": null,
+   "chart": "crossover",
+   "unlock": [
+    "accountBalance",
+    "amount"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your years the portfolio could pay for: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 60,
@@ -2436,7 +3533,20 @@
      "contribAmount"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": "the-flip",
+   "chart": "milestones",
+   "unlock": [
+    "accountBalance",
+    "contribAmount"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your when growth beats what you add (invested only): {value}. This one is a shape to read, not a score to beat.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 61,
@@ -2475,7 +3585,20 @@
      "contribAmount"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": "first-100k",
+   "chart": "milestones",
+   "unlock": [
+    "accountBalance",
+    "contribAmount"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your when the first $100,000 lands: {value}. This one is a shape to read, not a score to beat.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 62,
@@ -2513,7 +3636,7 @@
      "text": "Roth and taxable dollars need no tax room at withdrawal."
     },
     {
-     "root": "withdrawalRate",
+     "root": "asm.withdrawalRate",
      "sign": -1,
      "text": "A higher withdrawal rate lowers every number and raises the risk."
     }
@@ -2525,7 +3648,21 @@
      "withdrawalRate"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": "true-fi-gap",
+   "chart": "taxBucketMix",
+   "unlock": [
+    "amount",
+    "contribAmount",
+    "asm.withdrawalRate"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your enough, after tax: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 63,
@@ -2559,12 +3696,12 @@
      "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
     },
     {
-     "root": "socialSecurityScale",
+     "root": "asm.socialSecurityScale",
      "sign": 1,
      "text": "The share of the scheduled benefit you count on."
     },
     {
-     "root": "socialSecurityAge",
+     "root": "asm.socialSecurityAge",
      "sign": -1,
      "text": "Claiming later raises the benefit and lengthens the bridge."
     }
@@ -2576,7 +3713,21 @@
      "socialSecurityScale"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": "ss-floor",
+   "chart": "netWorth",
+   "unlock": [
+    "amount",
+    "asm.socialSecurityAge",
+    "asm.socialSecurityScale"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your enough, counting Social Security: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 64,
@@ -2602,7 +3753,7 @@
    "direction": "lower",
    "levers": [
     {
-     "root": "healthcarePremiumMonthlyCents",
+     "root": "asm.healthcarePremiumMonthlyCents",
      "sign": 1,
      "text": "A lower premium estimate, or a plan with subsidies."
     },
@@ -2618,7 +3769,20 @@
      "healthcarePremiumMonthlyCents"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": "healthcare-bridge",
+   "chart": "healthcareBridge",
+   "unlock": [
+    "amount",
+    "asm.healthcarePremiumMonthlyCents"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your health insurance before Medicare: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 65,
@@ -2647,7 +3811,7 @@
      "text": "More years to compound."
     },
     {
-     "root": "returnLikely",
+     "root": "asm.returnLikely",
      "sign": 1,
      "text": "An assumption, not a lever."
     }
@@ -2658,7 +3822,20 @@
      "returnLikely"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "coastCurve",
+   "unlock": [
+    "retirementAge",
+    "asm.returnLikely"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your what a dollar invested today becomes: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 66,
@@ -2699,7 +3876,20 @@
      "amount"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": "double-lever",
+   "chart": "savingsRateCurve",
+   "unlock": [
+    "accountBalance",
+    "amount"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your what a purchase costs in time: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 67,
@@ -2740,7 +3930,20 @@
     ]
    },
    "level": 9,
-   "coachOnly": true
+   "coachOnly": true,
+   "scoreGroup": "outcomes",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "benchmarks",
+   "unlock": [
+    "accountBalance",
+    "balance"
+   ],
+   "clientVisible": false,
+   "gentleCopy": "Your expected net worth: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 9,
+   "headline": false
   },
   {
    "n": 68,
@@ -2782,7 +3985,20 @@
     ]
    },
    "level": 9,
-   "coachOnly": true
+   "coachOnly": true,
+   "scoreGroup": "outcomes",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "benchmarks",
+   "unlock": [
+    "accountBalance",
+    "contribAmount"
+   ],
+   "clientVisible": false,
+   "gentleCopy": "Your saved, in years of pay: {value}. Up is the direction we want, and it has been moving since you started.",
+   "firstSession": 9,
+   "headline": false
   },
   {
    "n": 69,
@@ -2827,7 +4043,21 @@
      "takeHome"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "savingsRateCurve",
+   "unlock": [
+    "amount",
+    "dreamFiAge",
+    "takeHome"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your share of take-home to save for the dream: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 70,
@@ -2877,7 +4107,21 @@
      "dreamFiAge"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "coastCurve",
+   "unlock": [
+    "accountBalance",
+    "amount",
+    "dreamFiAge"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your monthly investing for the dream: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 71,
@@ -2908,7 +4152,7 @@
      "text": "Every $100 a month cut lowers this rung by 12 / withdrawal rate x 100 and adds $100 to savings."
     },
     {
-     "root": "guardrailsBand",
+     "root": "asm.guardrailsBand",
      "sign": 1,
      "text": "A wider band means more flex and more risk."
     }
@@ -2919,7 +4163,20 @@
      "guardrailsBand"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": "guardrails-room",
+   "chart": "guardrails",
+   "unlock": [
+    "amount",
+    "asm.guardrailsBand"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your room to spend in retirement: {value}. This one is a shape to read, not a score to beat.",
+   "firstSession": 4,
+   "headline": false
   },
   {
    "n": 72,
@@ -2960,7 +4217,20 @@
      "gutSpending"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "awareness",
+   "bands": null,
+   "milestones": null,
+   "lens": "gut-gap",
+   "chart": "gutDreamActual",
+   "unlock": [
+    "amount",
+    "gutSpending"
+   ],
+   "clientVisible": "coach",
+   "gentleCopy": "Your gut guess against the lines: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 1,
+   "headline": false
   },
   {
    "n": 73,
@@ -3001,7 +4271,20 @@
      "dreamSpending"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "awareness",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "gutDreamActual",
+   "unlock": [
+    "amount",
+    "dreamSpending"
+   ],
+   "clientVisible": "coach",
+   "gentleCopy": "Your dream against today: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 1,
+   "headline": false
   },
   {
    "n": 74,
@@ -3023,7 +4306,7 @@
    "direction": "lower",
    "levers": [
     {
-     "root": "returnLikely",
+     "root": "asm.returnLikely",
      "sign": -1,
      "text": "An assumption, not a lever."
     }
@@ -3033,7 +4316,505 @@
      "returnLikely"
     ]
    },
-   "level": 9
+   "level": 9,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "feeDrag",
+   "unlock": [
+    "asm.returnLikely"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your years for money to double: {value}. Down is the direction we want, and every step counts.",
+   "firstSession": 4,
+   "headline": false
+  },
+  {
+   "id": "bigThreeShare",
+   "name": "Big three share",
+   "clientLabel": "Housing, food and getting around as a share of pay",
+   "definition": "Housing, food and transportation together, divided by take-home.",
+   "formula": "(accommodation + food + transportation) / takeHome",
+   "inputs": [
+    "spending.byCategory",
+    "income.takeHomeMonthly"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "group": "cash flow",
+   "stage": 1,
+   "range": {
+    "low": 0.4,
+    "high": 0.55,
+    "source": "The big three: under half of take-home leaves room to save"
+   },
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": 1,
+     "text": "Housing is the lever that moves this most; food and transport are the two you can move this month."
+    },
+    {
+     "root": "takeHome",
+     "sign": -1,
+     "text": "More take-home shrinks the share without touching a line."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "takeHome"
+    ]
+   },
+   "scoreGroup": "cashflow",
+   "chart": "drafttBullets",
+   "firstSession": 1,
+   "n": 75,
+   "owner": "engine",
+   "level": 12,
+   "lens": null,
+   "unlock": [
+    "amount",
+    "takeHome"
+   ],
+   "clientVisible": true,
+   "headline": false,
+   "bands": {
+    "sources": [
+     {
+      "id": "default",
+      "label": "The big three: under half of take-home leaves room to save",
+      "healthy": [
+       0,
+       0.4
+      ],
+      "ok": [
+       0.4,
+       0.55
+      ],
+      "watch": [
+       0.55,
+       1
+      ]
+     }
+    ],
+    "verify": true
+   },
+   "milestones": null,
+   "gentleCopy": "Your housing, food and getting around as a share of pay: {value}. Down is the direction we want, and every step counts."
+  },
+  {
+   "id": "costInHours",
+   "name": "A month of spending in hours of work",
+   "clientLabel": "Hours of work a month of life costs",
+   "definition": "Monthly spending divided by the real hourly wage.",
+   "formula": "spending / realHourlyWage",
+   "inputs": [
+    "m.spending",
+    "m.realHourlyWage"
+   ],
+   "units": {
+    "kind": "count",
+    "unit": "hours"
+   },
+   "group": "cash flow",
+   "stage": 1,
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": 1,
+     "text": "Every line costs hours; the big three cost the most."
+    },
+    {
+     "root": "hoursPaid",
+     "sign": -1,
+     "text": "Fewer unpaid hours raise the real wage and lower the count."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "hoursPaid"
+    ]
+   },
+   "scoreGroup": "cashflow",
+   "chart": "hoursOfWork",
+   "firstSession": 3,
+   "n": 76,
+   "owner": "engine",
+   "level": 12,
+   "lens": null,
+   "unlock": [
+    "amount",
+    "hoursPaid"
+   ],
+   "clientVisible": true,
+   "headline": false,
+   "bands": null,
+   "milestones": null,
+   "gentleCopy": "Your hours of work a month of life costs: {value}. Down is the direction we want, and every step counts."
+  },
+  {
+   "id": "completeness",
+   "name": "Picture completeness",
+   "clientLabel": "How much of the picture is in",
+   "definition": "The share of the dollars in the picture that are known or verified; a guess counts as not in.",
+   "formula": "sure dollars / all dollars",
+   "inputs": [
+    "m.spending",
+    "m.takeHome",
+    "m.netWorth"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "group": "cash flow",
+   "stage": 1,
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": 1,
+     "text": "Confirm the biggest rough spending lines first."
+    },
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "A statement balance replaces a rough one."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "accountBalance"
+    ]
+   },
+   "scoreGroup": "awareness",
+   "chart": "pictureVsProgress",
+   "firstSession": 1,
+   "headline": true,
+   "n": 77,
+   "owner": "engine",
+   "level": 12,
+   "lens": null,
+   "unlock": [
+    "amount",
+    "accountBalance"
+   ],
+   "clientVisible": true,
+   "bands": {
+    "sources": [
+     {
+      "id": "default",
+      "label": "Picture completeness",
+      "healthy": [
+       0.9,
+       1
+      ],
+      "ok": [
+       0.6,
+       0.9
+      ],
+      "watch": [
+       0,
+       0.6
+      ]
+     }
+    ],
+    "verify": true
+   },
+   "milestones": [
+    0.25,
+    0.5,
+    0.75,
+    0.9,
+    1
+   ],
+   "gentleCopy": "Your how much of the picture is in: {value}. Up is the direction we want, and it has been moving since you started."
+  },
+  {
+   "id": "blindSpot",
+   "name": "Blind spot",
+   "clientLabel": "The share of spending your gut did not see",
+   "definition": "Of actual spending, the share that the gut guesses did not cover, from the transactions compared with what was said.",
+   "formula": "uncovered actual / actual",
+   "inputs": [
+    "m.spending",
+    "program.blindSpot"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "group": "cash flow",
+   "stage": 1,
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Tracking the real lines closes it."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount"
+    ]
+   },
+   "scoreGroup": "awareness",
+   "chart": "gutDreamActual",
+   "firstSession": 4,
+   "clientVisible": "coach",
+   "n": 78,
+   "owner": "engine",
+   "level": 12,
+   "lens": null,
+   "unlock": [
+    "amount"
+   ],
+   "headline": false,
+   "bands": {
+    "sources": [
+     {
+      "id": "default",
+      "label": "Blind spot",
+      "healthy": [
+       0,
+       0.1
+      ],
+      "ok": [
+       0.1,
+       0.25
+      ],
+      "watch": [
+       0.25,
+       1
+      ]
+     }
+    ],
+    "verify": true
+   },
+   "milestones": [
+    0.2,
+    0.1,
+    0.05
+   ],
+   "gentleCopy": "Your the share of spending your gut did not see: {value}. Down is the direction we want, and every step counts."
+  },
+  {
+   "id": "guessesLeft",
+   "name": "Guesses left",
+   "clientLabel": "Lines still standing in for yours",
+   "definition": "Spending areas still filled by a national-average guess instead of her own lines.",
+   "formula": "count of guess rows",
+   "inputs": [
+    "spending.standIns"
+   ],
+   "units": {
+    "kind": "count",
+    "unit": "guesses"
+   },
+   "group": "cash flow",
+   "stage": 1,
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Type the real line and the guess leaves."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount"
+    ]
+   },
+   "scoreGroup": "awareness",
+   "chart": "spendingTreemap",
+   "firstSession": 1,
+   "clientVisible": "coach",
+   "n": 79,
+   "owner": "engine",
+   "level": 12,
+   "lens": null,
+   "unlock": [
+    "amount"
+   ],
+   "headline": false,
+   "bands": null,
+   "milestones": [
+    5,
+    2,
+    0
+   ],
+   "gentleCopy": "Your lines still standing in for yours: {value}. Down is the direction we want, and every step counts."
+  },
+  {
+   "id": "cushionSteps",
+   "name": "Cushion steps covered",
+   "clientLabel": "Steps of the cushion covered",
+   "definition": "How many of the three cushion steps the cash pot covers: a lean month, a full month, the full cushion.",
+   "formula": "steps covered of 3",
+   "inputs": [
+    "invest.cashBalances",
+    "spending.fatFloorMonthly",
+    "safety.ruleOf5Target"
+   ],
+   "units": {
+    "kind": "count",
+    "unit": "steps"
+   },
+   "group": "safety",
+   "stage": 3,
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Cash in the savings account covers the next step."
+    },
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "A lower lean month makes step one easier."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "amount"
+    ]
+   },
+   "scoreGroup": "safety",
+   "chart": "runwayStaircase",
+   "firstSession": 5,
+   "n": 80,
+   "owner": "engine",
+   "level": 12,
+   "lens": null,
+   "unlock": [
+    "accountBalance",
+    "amount"
+   ],
+   "clientVisible": true,
+   "headline": false,
+   "bands": null,
+   "milestones": [
+    1,
+    2,
+    3
+   ],
+   "gentleCopy": "Your steps of the cushion covered: {value}. Up is the direction we want, and it has been moving since you started."
+  },
+  {
+   "id": "stressScore",
+   "name": "Money stress score",
+   "clientLabel": "How money feels, 1 to 10",
+   "definition": "The latest money stress score the client gave, 1 calm to 10 keeps her up at night.",
+   "formula": "latest score",
+   "inputs": [
+    "program.stress"
+   ],
+   "units": {
+    "kind": "count",
+    "unit": "of 10"
+   },
+   "group": "safety",
+   "stage": 3,
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "accountBalance",
+     "sign": -1,
+     "text": "A cushion in the bank is the biggest calm."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance"
+    ]
+   },
+   "scoreGroup": "outcomes",
+   "chart": "stressTrend",
+   "firstSession": 4,
+   "n": 81,
+   "owner": "engine",
+   "level": 12,
+   "lens": null,
+   "unlock": [
+    "accountBalance"
+   ],
+   "clientVisible": true,
+   "headline": false,
+   "bands": null,
+   "milestones": [
+    7,
+    5,
+    3
+   ],
+   "gentleCopy": "Your how money feels, 1 to 10: {value}. Down is the direction we want, and every step counts."
+  },
+  {
+   "id": "goalsOnTrack",
+   "name": "Goals on track",
+   "clientLabel": "Goals that land by their date",
+   "definition": "Of the goals with a date, how many the timeline reaches by that date.",
+   "formula": "on time / dated goals",
+   "inputs": [
+    "life.goals",
+    "m.surplus"
+   ],
+   "units": {
+    "kind": "count",
+    "unit": "goals"
+   },
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "A smaller month frees money for the goals."
+    },
+    {
+     "root": "goalCost",
+     "sign": -1,
+     "text": "A smaller goal lands sooner."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "goalCost"
+    ]
+   },
+   "scoreGroup": "goals",
+   "chart": "goalTimeline",
+   "firstSession": 5,
+   "n": 82,
+   "owner": "engine",
+   "level": 12,
+   "lens": null,
+   "unlock": [
+    "amount",
+    "goalCost"
+   ],
+   "clientVisible": true,
+   "headline": false,
+   "bands": null,
+   "milestones": null,
+   "gentleCopy": "Your goals that land by their date: {value}. Up is the direction we want, and it has been moving since you started."
   }
  ],
  "stages": {
@@ -3044,6 +4825,26 @@
   "5": "everything sharpens as it fills"
  },
  "levels": {
-  "9": "FI ladder, headline shelf, sensitivity"
- }
+  "9": "FI ladder, headline shelf, sensitivity",
+  "12": "The Scoreboard: every metric with its bands, milestones, levers, chart, what opens it and its first session (MR-063)"
+ },
+ "scoreGroups": {
+  "cashflow": "Cash flow",
+  "awareness": "Awareness",
+  "safety": "Safety",
+  "debt": "Debt",
+  "wealth": "Wealth",
+  "tax": "Tax",
+  "fi": "Financial independence",
+  "goals": "Goals",
+  "outcomes": "Outcomes"
+ },
+ "headlineDefault": [
+  "savingsRateTakeHome",
+  "fiDate",
+  "pctToFi",
+  "runway",
+  "debtFree",
+  "completeness"
+ ]
 }

@@ -5,6 +5,67 @@ import { CSV as MAYA_CSV } from './households/maya-transactions.mjs';
 
 export const flows = [
 {
+  name: 'level12-scoreboard-money-date',
+  async run(page, { base, check, APP }) {
+    const path = await import('node:path');
+    await page.goto(base + 'index.html#/home'); await page.waitForSelector('#main h1, #main .empty');
+    await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', 'maya.json')); await page.waitForSelector('.orbit');
+    /* the scoreboard: six tiles, one next action, the rest by group */
+    await page.goto(base + 'index.html#/scoreboard'); await page.waitForSelector('.score-tiles');
+    check('six headline tiles', (await page.locator('.score-tile').count()) === 6);
+    check('one next action', (await page.locator('.next-action').count()) === 1);
+    const text0 = await page.textContent('#main');
+    check('no internal words on screen', !/registry|\bnode\b|\bedge\b|\bband\b|lever family|decomposition/i.test(text0), (text0.match(/.{0,20}(registry|\bnode\b|\bedge\b|\bband\b|lever family|decomposition).{0,20}/i) || [])[0]);
+    check('the first reading says the trend starts later', /No snapshot yet|first reading/i.test(text0));
+    /* a tile opens its drawer with the Level 12 section */
+    await page.click('.score-tile[data-metric="savingsRateTakeHome"]'); await page.waitForSelector('.drawer .metric-drawer .score-section');
+    const drawer = await page.textContent('.drawer');
+    check('the drawer carries confidence, where it sits, the ladder and the next action', /Confidence/.test(drawer) && /Where it sits/.test(drawer) && /Ladder/.test(drawer) && /Next action/.test(drawer), drawer.slice(0, 200));
+    check('the drawer deep link is stable', /^#\/scoreboard\/m\/savingsRateTakeHome$/.test(await page.evaluate(() => location.hash)));
+    await page.keyboard.press('Escape');
+    /* the money date: five steps, ends in a snapshot */
+    await page.goto(base + 'index.html#/money-date'); await page.waitForSelector('.md-steps');
+    await page.click('.md-scale button:nth-child(4)'); await page.waitForTimeout(150);
+    await page.keyboard.press('Escape'); await page.click('.md-foot .btn.primary'); await page.waitForSelector('.md-balances');
+    const first = await page.$('.md-balances input'); await first.fill('1200'); await first.press('Tab'); await page.waitForTimeout(500);
+    await page.keyboard.press('Escape'); await page.click('.md-foot .btn.primary'); await page.waitForTimeout(150);
+    await page.fill('input[aria-label="What is new"]', 'Raise coming in January'); await page.click('.md-body .row .btn'); await page.waitForTimeout(150);
+    await page.keyboard.press('Escape'); await page.click('.md-foot .btn.primary'); await page.waitForSelector('.md-moved');
+    check('what moved lists the six', (await page.locator('.md-moved li').count()) === 6);
+    await page.keyboard.press('Escape'); await page.click('.md-foot .btn.primary'); await page.waitForTimeout(700);
+    const snaps = await page.evaluate(() => (mr3.record.snapshots || []).map(s => s.kind));
+    check('the money date wrote one snapshot', snaps.length === 1 && snaps[0] === 'money-date', snaps.join(','));
+    check('the stress score is on the program', await page.evaluate(() => (mr3.record.program.stress || []).some(s => /^md-/.test(s.session) && s.score === 4)));
+    check('the balance move is a move, not a correction', await page.evaluate(() => mr3.record.journal.filter(l => l.kind === 'set' && l.field === 'balance' || l.field === 'accountBalance').slice(-1)[0].why === 'move'));
+    /* the scoreboard now compares against it; the client view speaks gently */
+    await page.goto(base + 'index.html#/scoreboard'); await page.waitForSelector('.score-tiles'); await page.waitForTimeout(300);
+    check('tiles carry a trend after the snapshot', (await page.locator('.score-tile .trend').count()) >= 4);
+    await page.click('#view-client'); await page.waitForTimeout(400);
+    const ct = await page.textContent('#main');
+    check('client words are gentle', /Your scoreboard/.test(ct) && !/Watch\b/.test(ct) && !/verify/.test(ct) && !/Needs inputs/.test(ct), ct.slice(0, 160));
+    check('the client has no Choose the six', (await page.locator('text=Choose the six').count()) === 0);
+    /* the map: a list at every width, the FI date's chain */
+    await page.goto(base + 'index.html#/map/fiDate'); await page.waitForSelector('.map-focus');
+    const mt = await page.textContent('#main');
+    check('the map names what goes in and the way to the date', /What goes into it/.test(mt) && /This is the date itself|way to work being a choice/.test(mt));
+    await page.click('#view-coach'); await page.waitForTimeout(400);
+    await page.goto(base + 'index.html#/map/surplus'); await page.waitForSelector('.map-focus'); await page.waitForTimeout(600);
+    const mc = await page.textContent('#main');
+    check('coach map explains the move since the snapshot', /Since the last snapshot/.test(mc) && !/working it out/i.test(mc), mc.slice(-200));
+    /* the dark theme on the three screens: no console errors, tokens only */
+    await page.click('#theme-btn'); await page.waitForTimeout(150);
+    for (const r of ['scoreboard', 'map', 'money-date']) { await page.goto(base + 'index.html#/' + r); await page.waitForTimeout(300); const bg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor); check('dark theme on ' + r + ' has a dark page', /rgb\((\d+), (\d+), (\d+)\)/.test(bg) && parseInt(bg.match(/\d+/)[0], 10) < 60, bg); }
+    await page.click('#theme-btn');
+    /* the one-pager carries the six and still prints to one page */
+    await page.goto(base + 'index.html#/onepager'); await page.waitForSelector('.onepager'); await page.waitForTimeout(300);
+    check('the one-pager shows the six', (await page.locator('.op-six .op-num').count()) === 6);
+    await page.emulateMedia({ media: 'print' }); await page.waitForTimeout(100);
+    const pages = await page.evaluate(() => Math.ceil(document.querySelector('.onepager').getBoundingClientRect().height / (11 * 96 - 2 * 48)));
+    await page.emulateMedia({ media: 'screen' });
+    check('one-pager still fits one printed page', pages <= 1, pages + ' pages');
+  },
+},
+{
   name: 'level10-maya-program',
   async run(page, { base, check, APP }) {
     await page.goto(base + 'index.html#/home');
@@ -754,7 +815,7 @@ flows.push({
     await page.waitForSelector('.orbit');
     await page.waitForTimeout(300);
     const card0 = await page.textContent('.unlock-card');
-    check('a blank Maya starts with nothing open', /0 of 74/.test(card0) && /Next unlock/.test(card0), card0.slice(0, 120));
+    check('a blank Maya starts with nothing open', /0 of 82/.test(card0) && /Next unlock/.test(card0), card0.slice(0, 120));
     /* the Home card's Go lands in the field that opens the most */
     await page.click('.unlock-card .linklike');
     await page.waitForTimeout(700);
