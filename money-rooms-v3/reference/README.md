@@ -19,3 +19,5 @@ the repo, so engine/cashcal.js was built from cashflow-calendar-spec.md; every
 difference is listed in DECISIONS.md. The Buy vs Rent workbook was ported into
 engine/house.js with the seven fixes from buy-vs-rent-model.md. If the v44 files
 arrive, port its 28 engine assertions into tests/engine/cashcal.test.js.
+
+Update: the owner pasted cashflow-v44.html into the chat on 8 Oct 2026 (cut off in the screen code, engine complete). The rule-by-rule comparison and what was ported is in cashflow-v44-parity.md (MR-068).

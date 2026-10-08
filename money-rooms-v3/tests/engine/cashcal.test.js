@@ -185,3 +185,41 @@ test('the calendar section is journaled through the record API and amounts never
   assert.equal(C.setCalendar(maya, cal => { cal.dueDays['m-phone'] = 22; }), null, 'no change, no line');
   Object.keys(C.calendarOf(maya).dueDays).forEach(k => assert.ok(typeof C.calendarOf(maya).dueDays[k] !== 'object'));
 });
+
+/* ---- v44 parity (MR-068): the rules read out of the pasted cashflow-v44 engine ---- */
+test('v44: a minimum that cannot be funded is not paid at all, costs the late fee and the penalty rate, and is listed as missed', () => {
+  const run = C.simulate(model({ accounts: [{ id: 'chk', name: 'Checking', type: 'checking', balance: 1000, primary: true }], incomes: [], bills: [], cards: [card({ autopay: 'minimum', balance: 200000 })] }));
+  const miss = run.shortfalls.find(s => s.missed); assert.ok(miss && miss.kind === 'card-payment'); assert.equal(run.cards.card.paid, 0, 'no partial payment'); assert.equal(run.lateFees, 3000); assert.ok(run.cards.card.penaltyUntil);
+});
+test('v44: charges the client already budgets for are paid with the minimum, so they never become debt', () => {
+  const bills = [{ id: 'gas', label: 'Gas', cents: 12000, cadence: 'month', day: 12, paidWith: 'card', category: 'transportation', budgeted: true }];
+  const a = C.simulate(model({ days: 90, bills, cards: [card({ autopay: 'minimum' })] })); const b = C.simulate(model({ days: 90, bills: bills.map(x => Object.assign({}, x, { budgeted: false })), cards: [card({ autopay: 'minimum' })] }));
+  assert.ok(a.cards.card.paid > b.cards.card.paid + 10000, 'the budgeted charges ride on the payment'); assert.ok(a.cards.card.balance < b.cards.card.balance);
+});
+test('v44: the extra at the debt lands on its day, aims by rate with a 0% promo last, student loans and the everyday card wait, and what finishes rolls in', () => {
+  const two = [card({ id: 'hi', name: 'High', balance: 100000, apr: 0.27, autopay: 'minimum' }), card({ id: 'promo', name: 'Promo', balance: 100000, apr: 0.29, promoApr: 0, promoEnd: '2027-06', autopay: 'minimum' })];
+  const run = C.simulate(model({ days: 40, accounts: [{ id: 'chk', name: 'Checking', type: 'checking', balance: 900000, primary: true }], cards: two, extra: { cents: 30000, day: 14, strategy: 'avalanche', stopAtHi: false, hiRate: 0.10, rollFreed: true } }));
+  const d14 = run.days.find(d => d.date === '2026-10-14'); const ev = d14.events.find(e => e.kind === 'extra-payment'); assert.ok(ev && /High/.test(ev.label), 'the promo card at 0% sorts last'); assert.equal(run.extraPaid, 30000);
+  const snow = C.simulate(model({ days: 40, accounts: [{ id: 'chk', name: 'Checking', type: 'checking', balance: 900000, primary: true }], cards: [card({ id: 'big', name: 'Big', balance: 300000, apr: 0.20, autopay: 'minimum' }), card({ id: 'small', name: 'Small', balance: 50000, apr: 0.15, autopay: 'minimum' })], extra: { cents: 30000, day: 14, strategy: 'snowball', stopAtHi: false, hiRate: 0.10, rollFreed: true } }));
+  assert.ok(/Small/.test(snow.days.find(d => d.date === '2026-10-14').events.find(e => e.kind === 'extra-payment').label));
+  const waits = C.simulate(model({ days: 40, accounts: [{ id: 'chk', name: 'Checking', type: 'checking', balance: 900000, primary: true }], cards: [card({ id: 'float', name: 'Everyday', balance: 100000, apr: 0.30, autopay: 'minimum', goalNoInterest: true }), card({ id: 'other', name: 'Other', balance: 100000, apr: 0.12, autopay: 'minimum' })], loans: [{ id: 'stu', name: 'Student', balance: 500000, rate: 0.05, payment: 10000, day: 1, payLast: true }], extra: { cents: 30000, day: 14, strategy: 'avalanche', stopAtHi: false, hiRate: 0.10, rollFreed: true } }));
+  assert.ok(/Other/.test(waits.days.find(d => d.date === '2026-10-14').events.find(e => e.kind === 'extra-payment').label), 'the everyday card and the student loan wait');
+  const hiOnly = C.simulate(model({ days: 40, accounts: [{ id: 'chk', name: 'Checking', type: 'checking', balance: 900000, primary: true }], cards: [card({ id: 'low', name: 'Low', balance: 100000, apr: 0.06, autopay: 'minimum' })], extra: { cents: 30000, day: 14, strategy: 'avalanche', stopAtHi: true, hiRate: 0.10, rollFreed: true } }));
+  assert.equal(hiOnly.extraPaid, 0, 'with stopAtHi the extra stops once nothing is above the high rate');
+  const roll = C.simulate(model({ days: 120, accounts: [{ id: 'chk', name: 'Checking', type: 'checking', balance: 900000, primary: true }], cards: [card({ id: 'c', name: 'Card', balance: 400000, apr: 0.24, autopay: 'minimum' })], payLater: [{ id: 'pl', label: 'Plan', total: 6000, installment: 6000, nextDate: '2026-10-06', freq: 'monthly', paid: 0 }], extra: { cents: 0, day: 14, strategy: 'avalanche', stopAtHi: false, hiRate: 0.10, rollFreed: true } }));
+  assert.equal(roll.extraPaid, 6000 * 4, 'a finished plan rolls its installment into the extra on every extra day that follows (Oct 14 to Jan 14)');
+});
+test('v44: why it is taking so long names the reason, and the target solver finds the extra a month', () => {
+  const m = model({ days: 365, accounts: [{ id: 'chk', name: 'Checking', type: 'checking', balance: 900000, primary: true }], cards: [card({ autopay: 'minimum', balance: 300000, minFloor: 2500, minPct: 0.01 })] });
+  const run = C.simulate(m); assert.equal(C.whyStuck(m, run, 'card').code, 'rate');
+  const spend = model({ days: 365, accounts: [{ id: 'chk', name: 'Checking', type: 'checking', balance: 900000, primary: true }], bills: model().bills.concat([{ id: 'gas', label: 'Gas', cents: 30000, cadence: 'spread', paidWith: 'card', category: 'transportation' }]), cards: [card({ autopay: 'minimum', balance: 100000, minPct: 0.05 })] });
+  assert.equal(C.whyStuck(spend, C.simulate(spend), 'card').code, 'spending');
+  const sv = C.solvePayoff(m, 'card', '2027-04-01'); assert.ok(sv.need > 0 && sv.need % 500 === 0 && sv.date <= '2027-04-01', JSON.stringify(sv));
+  const already = C.solvePayoff(Object.assign({}, m, { extra: { cents: 100000, day: 14, strategy: 'avalanche', stopAtHi: false, hiRate: 0.1, rollFreed: true } }), 'card', '2027-04-01'); assert.ok(already.already);
+  const never = C.solvePayoff(m, 'card', '2026-10-20'); assert.ok(never.impossible);
+});
+test('v44: the dry date on total cash, and Maya\'s extra comes from the goal timeline when the coach sets none', () => {
+  const run = C.simulate(model({ accounts: [{ id: 'chk', name: 'Checking', type: 'checking', balance: 80000, primary: true }], incomes: [], floor: 0, guard: false })); assert.ok(run.firstDryTotal && run.firstDryTotal === run.firstBelowZero);
+  const maya = loadHousehold('maya'); const R = compute(maya, data, { today: TODAY }); const m = C.buildModel(maya, R, data, { days: 60 }); assert.ok(m.extra && ['goal-plan', 'none'].includes(m.extra.source)); assert.equal(m.extra.day, 14);
+  assert.equal(m.cards.find(c => c.id === 'm-csp').reportDay, 18, 'the report day defaults to the statement day');
+});

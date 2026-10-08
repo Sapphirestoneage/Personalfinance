@@ -67,7 +67,7 @@ export function occurrences(item, startIso, endIso) {
 }
 
 /* ---- the record section: timing only, amounts stay in the Ledger ---- */
-export function defaultCalendar() { return { version: 1, anchor: {}, dueDays: {}, cards: {}, reimb: {}, payLater: [], maybe: [], transfers: [], extras: [], overrides: {}, floorMode: 'lean', floorCents: null, guard: true, sweep: false, sweepTo: null, logs: [], checkins: [], shock: null, movable: {}, window: null }; }
+export function defaultCalendar() { return { version: 1, anchor: {}, dueDays: {}, cards: {}, reimb: {}, budgeted: {}, payLater: [], maybe: [], transfers: [], extras: [], overrides: {}, floorMode: 'lean', floorCents: null, guard: true, sweep: false, sweepTo: null, logs: [], checkins: [], shock: null, movable: {}, window: null, extra: null }; }
 export function calendarOf(record) { return Object.assign(defaultCalendar(), JSON.parse(JSON.stringify((record && record.calendar) || {}))); }
 export function setCalendar(record, fn, meta) { const next = calendarOf(record); const r = fn(next); if (r === null) return null; return setSection(record, 'calendar', next, meta); }
 export function newId(prefix) { return (prefix || 'c') + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
@@ -122,9 +122,9 @@ export function buildModel(record, result, data, opts) {
     if (cad === 'year') { const [mm, dd] = typeof due === 'string' && /^\d{2}-\d{2}$/.test(due) ? due.split('-').map(Number) : [((mOf(start) + 1) % 12) + 1, 15]; model.bills.push({ id: r.id, label: nick(r, cat), cents: Math.round((numberOf(f) || monthly * 12) * share), cadence: 'year', month: mm, day: dd, paidWith, category: cat, estimated: typeof due !== 'string', variable: rough, shared }); }
     else if (typeof due === 'number' || DATED_CATEGORIES[cat] !== undefined) {
       const day = typeof due === 'number' ? due : DATED_CATEGORIES[cat];
-      model.bills.push({ id: r.id, label: nick(r, cat), cents: Math.round(monthly * (shared && !cal.reimb[r.id] ? share : 1)), cadence: 'month', day, paidWith, category: cat, estimated: typeof due !== 'number', variable: rough, shared, movable: !!cal.movable[r.id] || cat === 'utilities' });
+      model.bills.push({ id: r.id, label: nick(r, cat), cents: Math.round(monthly * (shared && !cal.reimb[r.id] ? share : 1)), cadence: 'month', day, paidWith, category: cat, estimated: typeof due !== 'number', variable: rough, shared, movable: !!cal.movable[r.id] || cat === 'utilities', budgeted: !!cal.budgeted[r.id] });
       if (shared && cal.reimb[r.id]) model.incomes.push({ id: r.id + ':reimb', label: nick(r, cat) + ', roommate share', cents: Math.round(monthly * (1 - share)), cadence: 'month', day, offsetDays: cal.reimb[r.id].days || 3, to: primaryId, source: 'reimb', variable: false });
-    } else model.bills.push({ id: r.id, label: nick(r, cat), cents: Math.round(monthly * share), cadence: 'spread', paidWith, category: cat, variable: rough, shared });
+    } else model.bills.push({ id: r.id, label: nick(r, cat), cents: Math.round(monthly * share), cadence: 'spread', paidWith, category: cat, variable: rough, shared, budgeted: !!cal.budgeted[r.id] });
   });
   P.safety.rows.forEach(r => { if (r.type !== 'insurance' || !r.f.premium || !hasValue(r.f.premium)) return; if ((r.f.premium.cad || 'month') === 'paycheck') return; const m = monthlyOf(r, 'premium'); if (m === null) return; model.bills.push({ id: r.id, label: nick(r, 'Insurance'), cents: m, cadence: r.f.premium.cad === 'year' ? 'year' : 'month', day: cal.dueDays[r.id] || 1, month: ((mOf(start) + 2) % 12) + 1, paidWith: 'cash', category: 'insurance', estimated: !cal.dueDays[r.id] }); });
   /* cards and loans */
@@ -134,14 +134,14 @@ export function buildModel(record, result, data, opts) {
       const c = cal.cards[r.id] || {}; const apr = r.f.apr && hasValue(r.f.apr) ? numberOf(r.f.apr) : 0.2;
       const autopay = r.f.autopay && hasValue(r.f.autopay) ? r.f.autopay.v : 'none';
       const stmtDay = c.stmtDay || cardConv.statementDayDefault || 15; const graceDays = c.graceDays || cardConv.graceDaysDefault || 24;
-      model.cards.push({ id: r.id, name: nick(r, 'Card'), balance: numberOf(bal), apr, promoApr: r.f.promoApr && hasValue(r.f.promoApr) ? numberOf(r.f.promoApr) : null, promoEnd: r.f.promoEnd && hasValue(r.f.promoEnd) ? r.f.promoEnd.v : null, limit: r.f.creditLimit && hasValue(r.f.creditLimit) ? numberOf(r.f.creditLimit) : null, minimum: r.f.minimum && hasValue(r.f.minimum) ? monthlyOf(r, 'minimum') : null, stmtDay, graceDays, dueDay: c.dueDay || null, payInFull: !!c.payInFull, autopay: c.autopay || autopay, goalNoInterest: !!c.goalNoInterest, lateFee: c.lateFee || cardConv.lateFeeCents || 3000, penaltyApr: c.penaltyApr || cardConv.penaltyApr || 0.2999, reportDay: c.reportDay || null, annualFee: r.f.annualFee && hasValue(r.f.annualFee) ? numberOf(r.f.annualFee) : 0, minPct: cardConv.minPct || 0.02, minFloor: cardConv.minFloorCents || 2500, revolving: c.revolving !== undefined ? !!c.revolving : (numberOf(bal) > 0 && autopay !== 'full' && autopay !== 'statement'), estimated: !c.stmtDay, movable: true });
+      model.cards.push({ id: r.id, name: nick(r, 'Card'), balance: numberOf(bal), apr, promoApr: r.f.promoApr && hasValue(r.f.promoApr) ? numberOf(r.f.promoApr) : null, promoEnd: r.f.promoEnd && hasValue(r.f.promoEnd) ? r.f.promoEnd.v : null, limit: r.f.creditLimit && hasValue(r.f.creditLimit) ? numberOf(r.f.creditLimit) : null, minimum: r.f.minimum && hasValue(r.f.minimum) ? monthlyOf(r, 'minimum') : null, stmtDay, graceDays, dueDay: c.dueDay || null, payInFull: !!c.payInFull, autopay: c.autopay || autopay, goalNoInterest: !!c.goalNoInterest, lateFee: c.lateFee || cardConv.lateFeeCents || 4000, penaltyApr: c.penaltyApr || cardConv.penaltyApr || 0.2999, reportDay: c.reportDay || stmtDay, payLast: !!c.payLast, annualFee: r.f.annualFee && hasValue(r.f.annualFee) ? numberOf(r.f.annualFee) : 0, minPct: cardConv.minPct || 0.02, minFloor: cardConv.minFloorCents || 3500, revolving: c.revolving !== undefined ? !!c.revolving : (numberOf(bal) > 0 && autopay !== 'full' && autopay !== 'statement'), estimated: !c.stmtDay, movable: true });
       return;
     }
     if (['student', 'auto', 'personal', 'mortgage', 'other'].includes(r.type)) {
       const bal = r.type === 'other' ? r.f.otherDebt : r.f.balance; const payF = r.f.minimum || r.f.payment || r.f.principalInterest; const payId = r.f.minimum ? 'minimum' : r.f.payment ? 'payment' : 'principalInterest';
       if (!bal || !hasValue(bal) || !payF || !hasValue(payF)) return;
       const extra = r.type === 'mortgage' ? ['escrowTaxes', 'escrowInsurance', 'hoa', 'pmi'].reduce((s, k) => s + (r.f[k] && hasValue(r.f[k]) ? (monthlyOf(r, k) || 0) : 0), 0) : 0;
-      model.loans.push({ id: r.id, name: nick(r, r.type), balance: numberOf(bal), rate: r.f.rate && hasValue(r.f.rate) ? numberOf(r.f.rate) : 0, payment: (monthlyOf(r, payId) || 0) + extra, day: cal.dueDays[r.id] || 1, estimated: !cal.dueDays[r.id], type: r.type });
+      model.loans.push({ id: r.id, name: nick(r, r.type), balance: numberOf(bal), rate: r.f.rate && hasValue(r.f.rate) ? numberOf(r.f.rate) : 0, payment: (monthlyOf(r, payId) || 0) + extra, day: cal.dueDays[r.id] || 1, estimated: !cal.dueDays[r.id], type: r.type, payLast: r.type === 'student' && (cal.studentLast !== false) });
     }
   });
   (cal.payLater || []).forEach(p => model.payLater.push(Object.assign({ paidWith: 'cash' }, p)));
@@ -156,6 +156,10 @@ export function buildModel(record, result, data, opts) {
     if (lean && typeof lean.targetCents === 'number' && (lean.balanceCents || 0) >= lean.targetCents) { if (cushionCash >= lean.targetCents) { model.floor = 0; model.floorSource = 'cushion-account'; model.leanTarget = lean.targetCents; } else { model.floor = lean.targetCents; model.floorSource = 'lean'; } }
     else model.floorSource = lean && typeof lean.targetCents === 'number' ? 'lean-unfunded' : 'none';
   }
+  /* v44 parity: the extra at the debt, on its day, aimed by strategy; the coach's figure wins, else the goal timeline's first-month debt funding */
+  const ex = (conv.extra || {}); const GP = result && result.goalPlan; let planExtra = 0;
+  if (GP && GP.run && GP.run.goals && GP.input) GP.input.items.filter(i => i.type === 'debt').forEach(i => { const g = GP.run.goals[i.id]; const f = g && g.funded ? g.funded[0] : 0; planExtra += f || 0; });
+  model.extra = { cents: cal.extra && typeof cal.extra.cents === 'number' ? cal.extra.cents : Math.max(0, Math.round(planExtra)), day: (cal.extra && cal.extra.day) || ex.day || 14, strategy: (cal.extra && cal.extra.strategy) || ex.strategy || 'avalanche', stopAtHi: cal.extra && cal.extra.stopAtHi !== undefined ? !!cal.extra.stopAtHi : ex.stopAtHi !== false, hiRate: ex.hiRate || 0.10, rollFreed: ex.rollFreed !== false, source: cal.extra && typeof cal.extra.cents === 'number' ? 'coach' : (planExtra > 0 ? 'goal-plan' : 'none') };
   model.everydayMonthly = model.bills.filter(b => b.cadence === 'spread').reduce((s, b) => s + b.cents, 0);
   model.realHourlyWage = result && result.metrics && result.metrics.realHourlyWage && result.metrics.realHourlyWage.status === 'ok' ? result.metrics.realHourlyWage.value.cents : null;
   model.surplusMonthly = result && result.metrics && result.metrics.surplus && result.metrics.surplus.status === 'ok' ? result.metrics.surplus.value.cents : null;
@@ -195,9 +199,10 @@ export function simulate(model, opts) {
   const items = schedule(model, o); const byDate = {}; items.forEach(it => { (byDate[it.date] = byDate[it.date] || []).push(it); });
   const acc = {}; model.accounts.forEach(a => { acc[a.id] = { balance: a.balance, floor: a.primary ? model.floor : 0, a }; });
   const primary = model.accounts.find(a => a.primary) || null; const pid = primary ? primary.id : null;
-  const cards = model.cards.map(c => Object.assign({}, c, { stmt: null, stmtDate: null, dueDate: null, cycleSum: 0, cycleDays: 0, cycleCharges: 0, interest: 0, interestByMonth: {}, lateFees: 0, penaltyUntil: null, cleared: null, everRevolved: c.revolving, statements: [], paidCycle: 0, chargedBack: 0, paid: 0, peakBeforeReport: 0 }));
+  const cards = model.cards.map(c => Object.assign({}, c, { stmt: null, stmtDate: null, dueDate: null, cycleSum: 0, cycleDays: 0, cycleCharges: 0, cycleBudgeted: 0, stmtBudgeted: 0, interest: 0, interestByMonth: {}, lateFees: 0, penaltyUntil: null, cleared: null, everRevolved: c.revolving, statements: [], paidCycle: 0, chargedBack: 0, paid: 0, peakBeforeReport: 0 }));
   const loans = model.loans.map(l => Object.assign({}, l, { interest: 0, paid: 0, paidOff: null }));
-  const out = { start, days: [], low: null, lowByMonth: {}, firstBelowFloor: null, firstBelowZero: null, shortfalls: [], lateFees: 0, interest: { total: 0, byCard: {}, byMonth: {} }, paychecks: [], cards: {}, loans: {}, monthly: {}, totals: { in: 0, out: 0 }, floor: model.floor, floorSource: model.floorSource, needs: model.needs, items };
+  let freed = 0; const planTotals = {}; model.payLater.forEach(p => { planTotals[p.id] = Math.max(0, (p.total || 0) - (p.paid || 0)); }); const extraLog = [];
+  const out = { start, days: [], low: null, lowByMonth: {}, firstBelowFloor: null, firstBelowZero: null, firstDryTotal: null, extra: model.extra || null, extraPaid: 0, shortfalls: [], lateFees: 0, interest: { total: 0, byCard: {}, byMonth: {} }, paychecks: [], cards: {}, loans: {}, monthly: {}, totals: { in: 0, out: 0 }, floor: model.floor, floorSource: model.floorSource, needs: model.needs, items };
   const everydayPerDay = {}; const spread = model.bills.filter(b => b.cadence === 'spread');
   let payLaterOwed = model.payLater.reduce((s, p) => s + Math.max(0, (p.total || 0) - (p.paid || 0)), 0);
   const take = (accountId, cents, label, kind, date, guarded, ev) => {
@@ -212,7 +217,9 @@ export function simulate(model, opts) {
     return part;
   };
   const give = (accountId, cents, label, kind, ev) => { const A = acc[accountId] || acc[pid]; if (A) A.balance += cents; ev.push({ kind, label, cents, account: accountId }); };
-  const charge = (card, cents, label, kind, ev) => { card.balance += cents; card.cycleCharges += cents; card.chargedBack += cents; ev.push({ kind, label, cents: -cents, card: card.id }); };
+  const charge = (card, cents, label, kind, ev, budgeted) => { card.balance += cents; card.cycleCharges += cents; card.chargedBack += cents; if (budgeted) card.cycleBudgeted += cents; ev.push({ kind, label, cents: -cents, card: card.id }); };
+  /* the target of an extra payment: by rate (a promo at 0% sorts last while it runs) or by balance; cards and loans marked pay-last wait while anything else is open; with stopAtHi only debts at or above the high rate */
+  const targetOf = (date) => { const open = cards.filter(c => c.balance > 0 && !c.payInFull && c.autopay !== 'statement' && c.autopay !== 'full' && (c.revolving || c.everRevolved)).map(c => ({ id: c.id, kind: 'card', rate: effRate(c, date), bal: c.balance, last: !!(c.payLast || c.goalNoInterest), base: c.apr })).concat(loans.filter(l => l.balance > 0 && !l.paidOff).map(l => ({ id: l.id, kind: 'loan', rate: l.rate, bal: l.balance, last: !!l.payLast, base: l.rate }))); let pool = open; if (model.extra && model.extra.stopAtHi) { const hi = open.filter(o => o.base >= model.extra.hiRate); if (!hi.length) return null; pool = hi; } const first = pool.filter(o => !o.last); if (first.length) pool = first; if (!pool.length) return null; return (model.extra && model.extra.strategy === 'snowball') ? pool.sort((a, b) => a.bal - b.bal)[0] : pool.sort((a, b) => b.rate - a.rate)[0]; };
   const cashTotal = () => model.accounts.reduce((s, a) => s + acc[a.id].balance, 0);
   for (let i = 0; i < days; i++) {
     const date = addDays(start, i); const ym = ymOf(date); const d = domOf(date); const n = dim(yOf(date), mOf(date)); const ev = [];
@@ -222,11 +229,11 @@ export function simulate(model, opts) {
       if (it.kind === 'income') { give(it.to || pid, it.cents, it.label, it.maybe ? 'maybe-in' : 'income', ev); out.totals.in += it.cents; return; }
       if (it.kind === 'transfer') { const moved = take(it.from || pid, it.cents, it.label, 'transfer', date, true, ev); if (moved > 0) { if (acc[it.to]) { acc[it.to].balance += moved; ev.push({ kind: 'transfer-in', label: it.label, cents: moved, account: it.to }); } else ev.push({ kind: 'to-goals', label: it.label, cents: moved, account: 'goals' }); } return; }
       const card = it.paidWith && it.paidWith !== 'cash' ? cards.find(c => c.id === it.paidWith) : null;
-      if (card) charge(card, it.cents, it.label, it.kind, ev); else { take(pid, it.cents, it.label, it.kind, date, it.kind !== 'log', ev); }
-      if (it.kind === 'paylater') payLaterOwed = Math.max(0, payLaterOwed - it.cents);
+      if (card) charge(card, it.cents, it.label, it.kind, ev, it.budgeted); else { take(pid, it.cents, it.label, it.kind, date, it.kind !== 'log', ev); }
+      if (it.kind === 'paylater') { payLaterOwed = Math.max(0, payLaterOwed - it.cents); planTotals[it.sourceId] = Math.max(0, (planTotals[it.sourceId] || 0) - it.cents); if (planTotals[it.sourceId] === 0 && model.extra && model.extra.rollFreed) { const p = model.payLater.find(x => x.id === it.sourceId); if (p && p.installment && !p.rolled) { p.rolled = true; freed += p.freq === 'biweekly' ? Math.round(p.installment * 26 / 12) : p.freq === 'weekly' ? Math.round(p.installment * 52 / 12) : p.installment; } } }
       out.totals.out += it.cents;
     });
-    everydayPerDay[ym].forEach(({ b, cents }) => { if (!cents) return; const card = b.paidWith !== 'cash' ? cards.find(c => c.id === b.paidWith) : null; if (card) charge(card, cents, b.label, 'everyday', ev); else take(pid, cents, b.label, 'everyday', date, false, ev); out.totals.out += cents; });
+    everydayPerDay[ym].forEach(({ b, cents }) => { if (!cents) return; const card = b.paidWith !== 'cash' ? cards.find(c => c.id === b.paidWith) : null; if (card) charge(card, cents, b.label, 'everyday', ev, b.budgeted); else take(pid, cents, b.label, 'everyday', date, false, ev); out.totals.out += cents; });
     /* 2. statement close */
     cards.forEach(c => {
       if (d !== clampDay(c.stmtDay, n)) return;
@@ -236,18 +243,25 @@ export function simulate(model, opts) {
       c.stmt = Math.max(0, c.balance); c.stmtDate = date; c.dueDate = c.dueDay ? (() => { let due = monthDay(yOf(date), mOf(date), c.dueDay); if (due <= date) { const nm = mOf(date) === 12 ? [yOf(date) + 1, 1] : [yOf(date), mOf(date) + 1]; due = monthDay(nm[0], nm[1], c.dueDay); } return due; })() : addDays(date, c.graceDays);
       c.statements.push({ date, balance: c.stmt, interest, due: c.dueDate, charges: c.cycleCharges, adb: Math.round(adb) });
       ev.push({ kind: 'statement', label: c.name + ' statement ' + (c.stmt / 100).toFixed(0), cents: 0, card: c.id, stmt: c.stmt, due: c.dueDate });
-      c.cycleSum = 0; c.cycleDays = 0; c.cycleCharges = 0; c.paidCycle = 0;
+      c.stmtBudgeted = c.cycleBudgeted; c.cycleSum = 0; c.cycleDays = 0; c.cycleCharges = 0; c.cycleBudgeted = 0; c.paidCycle = 0;
     });
     /* 3. due dates */
     cards.forEach(c => {
       if (!c.dueDate || c.dueDate !== date) return;
-      const stmt = c.stmt || 0; const min = minimumOf(c, stmt);
+      const stmt = c.stmt || 0; const min = Math.min(minimumOf(c, stmt), Math.max(0, c.balance)); /* an extra payment mid-cycle can leave less than the minimum owed */
       let planned = c.autopay === 'full' ? Math.max(0, c.balance) : c.payInFull || c.autopay === 'statement' ? stmt : typeof c.autopay === 'number' ? Math.min(c.autopay, Math.max(0, c.balance)) : c.goalNoInterest ? Math.max(min, Math.min(c.balance, (c.statements.length ? c.statements[c.statements.length - 1].charges + c.statements[c.statements.length - 1].interest : stmt))) : min;
+      /* v44: spending the client already budgets for is paid off with the minimum, so it never becomes debt */
+      if (!c.payInFull && c.autopay !== 'statement' && c.autopay !== 'full' && c.stmtBudgeted > 0) planned = Math.min(Math.max(0, c.balance), planned + c.stmtBudgeted);
       planned = Math.min(planned, Math.max(0, c.balance));
       let paid = 0;
-      if (planned > 0) { paid = take(pid, planned, c.name + ' payment', 'card-payment', date, true, ev); if (paid < planned && paid < min) { const more = take(pid, min - paid, c.name + ' minimum', 'card-payment', date, true, ev); paid += more; } }
+      if (planned > 0) {
+        const A = acc[pid]; const coverable = model.accounts.filter(a => a.autoCover && a.id !== pid).reduce((s, a) => s + Math.max(0, acc[a.id].balance), 0); const avail = A ? A.balance - (model.guard ? A.floor : -Infinity) + coverable : 0;
+        if (!model.guard || planned <= avail) paid = take(pid, planned, c.name + ' payment', 'card-payment', date, true, ev);
+        else if (min <= avail) paid = take(pid, min, c.name + ' minimum', 'card-payment', date, true, ev);
+        else out.shortfalls.push({ date, label: c.name + ' minimum', cents: min, kind: 'card-payment', missed: true }); /* v44: a payment that cannot be funded is not made at all */
+      }
       c.balance -= paid; c.paid += paid; c.paidCycle += paid;
-      const inFull = paid >= stmt - 1;
+      const inFull = paid >= stmt - 1 || c.balance <= 0;
       if (stmt > 0 && paid < min) { c.lateFees += c.lateFee; c.balance += c.lateFee; out.lateFees += c.lateFee; const until = addDays(date, Math.round(((o.penaltyMonths || 6)) * 30.44)); c.penaltyUntil = until; ev.push({ kind: 'late-fee', label: c.name + ' late fee', cents: -c.lateFee, card: c.id }); }
       const wasRevolving = c.revolving;
       c.revolving = !inFull && stmt > 0;
@@ -256,14 +270,19 @@ export function simulate(model, opts) {
       if (!c.everRevolved && c.cleared === null) c.cleared = start;
       c.dueDate = null;
     });
+    /* 4a. the extra at the debt on its day (v44): strategy target, guarded by the floor, with what finished plans freed */
+    if (model.extra && (model.extra.cents > 0 || freed > 0) && d === clampDay(model.extra.day, n)) {
+      let left = model.extra.cents + freed; let guard = 0;
+      while (left > 0 && guard++ < 20) { const t = targetOf(date); if (!t) break; const want = Math.min(left, t.bal); const paid = take(pid, want, 'Extra to ' + (t.kind === 'card' ? cards.find(c => c.id === t.id).name : loans.find(l => l.id === t.id).name), 'extra-payment', date, true, ev); if (paid <= 0) break; if (t.kind === 'card') { const c = cards.find(x => x.id === t.id); c.balance -= paid; c.paid += paid; c.paidCycle += paid; } else { const l = loans.find(x => x.id === t.id); l.balance -= paid; l.paid += paid; if (l.balance <= 0) { l.balance = 0; l.paidOff = date; if (model.extra.rollFreed) freed += l.payment; } } out.extraPaid += paid; extraLog.push({ date, to: t.id, cents: paid }); left -= paid; }
+    }
     /* 4. loans on their day */
-    loans.forEach(l => { if (l.paidOff || d !== clampDay(l.day, n)) return; const int = Math.round(l.balance * l.rate / 12); l.balance += int; l.interest += int; const pay = Math.min(l.payment, l.balance); const paid = take(pid, pay, l.name + ' payment', 'loan-payment', date, true, ev); l.balance -= paid; l.paid += paid; if (l.balance <= 0) { l.balance = 0; l.paidOff = date; } });
+    loans.forEach(l => { if (l.paidOff || d !== clampDay(l.day, n)) return; const int = Math.round(l.balance * l.rate / 12); l.balance += int; l.interest += int; const pay = Math.min(l.payment, l.balance); const paid = take(pid, pay, l.name + ' payment', 'loan-payment', date, true, ev); l.balance -= paid; l.paid += paid; if (l.balance <= 0) { l.balance = 0; l.paidOff = date; if (model.extra && model.extra.rollFreed && !l.rolled) { l.rolled = true; freed += l.payment; } } });
     /* 5. auto-cover: a spare account tops the primary back up to the floor */
     if (pid && acc[pid].balance < acc[pid].floor) { const cover = model.accounts.find(a => a.autoCover && acc[a.id].balance > 0); if (cover) { const need = Math.min(acc[pid].floor - acc[pid].balance, acc[cover.id].balance); if (need > 0) { acc[cover.id].balance -= need; acc[pid].balance += need; ev.push({ kind: 'auto-cover', label: 'From ' + cover.name, cents: need, account: pid }); } } }
     /* 6. month-end sweep */
     if (model.sweep && pid && date === lastDayOf(date)) { const excess = acc[pid].balance - acc[pid].floor - model.sweepKeep; if (excess > 0) { acc[pid].balance -= excess; const to = model.sweepTo && acc[model.sweepTo] ? model.sweepTo : null; if (to) acc[to].balance += excess; ev.push({ kind: 'sweep', label: 'Month-end sweep', cents: -excess, account: pid, to: to || 'goals' }); } }
     /* the day's record */
-    cards.forEach(c => { c.cycleSum += Math.max(0, c.balance); c.cycleDays++; if (c.reportDay && d <= c.reportDay && c.balance > c.peakBeforeReport) c.peakBeforeReport = c.balance; });
+    cards.forEach(c => { if (c.balance <= 0 && !c.zeroDate && i > 0) c.zeroDate = date; c.cycleSum += Math.max(0, c.balance); c.cycleDays++; if (c.reportDay && d <= c.reportDay && c.balance > c.peakBeforeReport) c.peakBeforeReport = c.balance; });
     const balances = {}; model.accounts.forEach(a => { balances[a.id] = acc[a.id].balance; });
     const cash = cashTotal(); const cardDebt = cards.reduce((s, c) => s + Math.max(0, c.balance), 0); const loanDebt = loans.reduce((s, l) => s + l.balance, 0);
     const day = { date, dom: d, index: i, balances, cash, primary: pid ? acc[pid].balance : cash, cardDebt, loanDebt, payLater: payLaterOwed, debt: cardDebt + loanDebt + payLaterOwed, events: ev, in: ev.filter(e => e.cents > 0 && e.kind !== 'transfer-in' && e.kind !== 'auto-cover').reduce((s, e) => s + e.cents, 0), out: ev.filter(e => e.cents < 0 && e.kind !== 'shortfall' && e.kind !== 'statement').reduce((s, e) => s - e.cents, 0) };
@@ -272,14 +291,15 @@ export function simulate(model, opts) {
     if (!out.lowByMonth[ym] || day.primary < out.lowByMonth[ym].cents) out.lowByMonth[ym] = { date, cents: day.primary };
     if (out.firstBelowFloor === null && day.primary < model.floor) out.firstBelowFloor = date;
     if (out.firstBelowZero === null && day.primary < 0) out.firstBelowZero = date;
+    if (out.firstDryTotal === null && cash < model.floor) out.firstDryTotal = date;
     const mo = out.monthly[ym] = out.monthly[ym] || { in: 0, out: 0, net: 0, low: null, interest: 0 }; mo.in += day.in; mo.out += day.out; mo.net = mo.in - mo.out; mo.low = out.lowByMonth[ym].cents; mo.interest = Object.values(out.interest.byMonth[ym] || {}).reduce((s, v) => s + v, 0);
   }
-  cards.forEach(c => { out.interest.byCard[c.id] = c.interest; out.cards[c.id] = { name: c.name, balance: c.balance, revolving: c.revolving, cleared: c.cleared, interest: c.interest, interestByMonth: c.interestByMonth, lateFees: c.lateFees, statements: c.statements, paid: c.paid, chargedBack: c.chargedBack, netPaydown: c.paid - c.chargedBack - c.interest, startBalance: model.cards.find(x => x.id === c.id).balance, limit: c.limit, peakBeforeReport: c.peakBeforeReport, penaltyUntil: c.penaltyUntil, payInFull: c.payInFull }; });
+  cards.forEach(c => { out.interest.byCard[c.id] = c.interest; out.cards[c.id] = { name: c.name, balance: c.balance, revolving: c.revolving, cleared: c.cleared, interest: c.interest, interestByMonth: c.interestByMonth, lateFees: c.lateFees, statements: c.statements, paid: c.paid, chargedBack: c.chargedBack, netPaydown: c.paid - c.chargedBack - c.interest, startBalance: model.cards.find(x => x.id === c.id).balance, limit: c.limit, peakBeforeReport: c.peakBeforeReport, penaltyUntil: c.penaltyUntil, payInFull: c.payInFull, zeroDate: c.zeroDate || null }; });
   loans.forEach(l => { out.loans[l.id] = { name: l.name, balance: l.balance, interest: l.interest, paid: l.paid, paidOff: l.paidOff }; });
   out.safeToSpend = safeToSpend(model, out);
   out.paychecks = paycheckMap(model, out);
   out.end = out.days.length ? out.days[out.days.length - 1] : null;
-  out.everydayPerDay = Math.round(model.everydayMonthly / 30.44);
+  out.everydayPerDay = Math.round(model.everydayMonthly / 30.44); out.extraLog = extraLog;
   return out;
 }
 
@@ -403,3 +423,28 @@ export function yearStrip(model, opts) { const m2 = Object.assign({}, model, { d
 /* The level-payment installment of a pay-later plan with interest, for the editor. */
 export function payLaterInstallment(total, apr, count) { return levelPayment(total, apr || 0, count || 4); }
 export { levelPayment };
+
+/* Why a card is taking so long (v44 stuckReason): the minimum under the interest, spending charged back on, payments starved by the floor, the everyday card paid last, or just slow. */
+export function whyStuck(model, run, cardId) {
+  const c = model.cards.find(x => x.id === cardId); const st = run.cards[cardId]; if (!c || !st) return null;
+  const monthlyInterest = Math.round(c.balance * effRate(c, model.start) / 12); const min = minimumOf(c, c.balance);
+  const months = Math.max(1, run.days.length / 30.44); const charged = st.chargedBack / months; const paid = st.paid / months;
+  if (!st.revolving && c.balance > 0 && !st.cleared) return { code: 'float', text: c.name + ' is paid in full every statement; nothing to fix.' };
+  if (st.cleared && st.cleared <= run.start) return { code: 'clear', text: c.name + ' is not revolving.' };
+  if (min <= monthlyInterest) return { code: 'rate', text: 'The minimum of ' + (min / 100).toFixed(0) + ' dollars is less than the ' + (monthlyInterest / 100).toFixed(0) + ' dollars of interest it charges a month, so the balance can only grow. Raise what goes to this card, or aim the extra at it.', minimum: min, interest: monthlyInterest };
+  if (charged > 50 && charged > paid - monthlyInterest) return { code: 'spending', text: 'About ' + Math.round(charged / 100) + ' dollars a month goes back on it and about ' + Math.round(paid / 100) + ' is paid. After ' + Math.round(monthlyInterest / 100) + ' of interest it goes backwards. If that spending is already in the budget, mark the lines as budgeted and the payment covers them.', charged, paid, interest: monthlyInterest };
+  if (run.shortfalls.some(s => s.kind === 'card-payment' || s.kind === 'extra-payment')) return { code: 'starved', text: 'Payments are being held back by the floor; see the shortfalls.' };
+  if (c.goalNoInterest || c.payLast) return { code: 'last', text: 'It is the everyday card, so it is paid last; nothing extra reaches it inside the window.' };
+  return { code: 'slow', text: 'Not enough reaches it to clear inside the window at this pace.', charged, paid, interest: monthlyInterest };
+}
+/* The target solver (v44 solvePayoff): the extra a month that clears one card, or every card, by a date; says when it already does, or when no amount up to $600 a month can. */
+export function solvePayoff(model, target, byDate, opts) {
+  const days = Math.max(model.days, daysBetween(model.start, byDate) + 31);
+  const run = extra => { const m2 = Object.assign({}, model, { days, extra: Object.assign({ day: 14, strategy: 'avalanche', hiRate: 0.10, rollFreed: true }, model.extra || {}, { cents: extra, stopAtHi: false }) }); const r = simulate(m2, opts); const clearedOf = id => { const c = r.cards[id]; if (c) return c.balance <= 0 && c.zeroDate ? c.zeroDate : (c.cleared && c.cleared > model.start ? c.cleared : null); const l = r.loans[id]; return l ? l.paidOff : null; }; /* paid off means the balance is gone, the day it goes */ const date = target === 'all' ? (() => { const ds = model.cards.filter(c => !c.payInFull && c.balance > 0).map(c => clearedOf(c.id)).concat(model.loans.map(l => clearedOf(l.id))); return ds.some(x => !x) ? null : ds.sort().pop(); })() : clearedOf(target); return { date, run: r }; };
+  const base = run(model.extra ? model.extra.cents : 0); const ok = x => x.date && x.date <= byDate;
+  if (ok(base)) return { already: true, need: model.extra ? model.extra.cents : 0, date: base.date, breaksCash: base.run.shortfalls.length > 0 };
+  const top = run(60000); if (!ok(top)) return { impossible: true, best: top.date, breaksCash: top.run.shortfalls.length > 0 };
+  let lo = model.extra ? model.extra.cents : 0, hi = 60000, best = top;
+  for (let i = 0; i < 14; i++) { const mid = Math.round((lo + hi) / 2 / 500) * 500; const r = run(mid); if (ok(r)) { hi = mid; best = r; } else lo = mid; if (hi - lo <= 500) break; }
+  return { need: hi, date: best.date, breaksCash: best.run.shortfalls.length > 0, shortfalls: best.run.shortfalls.length };
+}

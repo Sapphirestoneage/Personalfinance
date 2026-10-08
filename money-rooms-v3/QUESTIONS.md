@@ -227,3 +227,10 @@ Collected during the run; none blocked the build. Answer whenever.
     limits, sales tax and trade-in rules, doc fees, registration, depreciation,
     maintenance by age, transit passes). The report lists them; which do you
     want checked first?
+69. Safe to spend counts what is committed strictly before the next paycheck;
+    v44 also counted bills due on payday itself. Which reading do you want?
+70. v44 modelled student loan forgiveness after N months and income-driven
+    payments; the calendar does not. Worth adding, or leave to the Debt room?
+71. v44 swept each month's leftover budget per tag into the next goal; the
+    calendar's sweep moves what is left above the floor at month end instead.
+    Keep the floor version?
