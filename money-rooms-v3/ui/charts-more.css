@@ -59,3 +59,14 @@
 .chart-note { margin: 6px 0 0; font-size: var(--fs-12); line-height: 1.45; color: var(--slate); }
 .chart-panel header { margin-bottom: 4px; }
 .chart-panel.focused .takeaway { font-size: var(--fs-14); }
+
+.chart .dot-stress { fill: var(--paper); stroke: var(--gold); stroke-width: 2; }
+.chart .quad-cut { fill: var(--amber); opacity: 0.12; }
+.chart .quad-room { fill: var(--sapphire-500); opacity: 0.12; }
+body[data-view="client"] .chart .quad-cut { fill: var(--slate); }
+.chart .dot-cut { fill: var(--amber); }
+body[data-view="client"] .chart .dot-cut { fill: var(--slate); }
+.chart .dot-room { fill: var(--gold); }
+
+/* a locked chart's button names a long input on a narrow screen: it wraps instead of pushing the page wider */
+.chart-panel .needs-row .btn, .chart-panel .needs-row { white-space: normal; text-align: left; max-width: 100%; }

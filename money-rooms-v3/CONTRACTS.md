@@ -181,7 +181,9 @@ the sensitivity reruns skip (`opts.light`). Level 10 adds `engine/curriculum.js`
 never do math. Level 12 adds `engine/scoremetrics.js` (eight metrics as a
 second pass over the finished result), `engine/momentum.js` (snapshots under
 `record.snapshots`, celebrations under `record.celebrations`, the coach's six
-under `record.scoreboard`; it reads the result and the journal and writes
+under `record.scoreboard`, satisfaction and worth-it scores under
+`program.satisfaction` and `program.worthIt`, money dates as sessions keyed
+`md-YYYY-MM`; it reads the result and the journal and writes
 only through its two append functions) and `engine/chartdata-score.js`; the
 dependency graph gains `through()` and `explain()`, which copy a record, put
 one root back at a time and run `compute` again. The result carries a hidden

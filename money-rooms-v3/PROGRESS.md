@@ -3,6 +3,10 @@
 Updated: 2026-10-08
 
 ## Done
+- Level 12 amended (MR-065): satisfaction on the client's six (asked at every close and money date),
+  worth-it per area with value-per-dollar flags steering the targets, the worth-it lens and chart, the
+  satisfaction trend with the stress checkpoints, and the money date as a coach-run fifteen-minute
+  curriculum through the session runner with a prep card and the maintenance tier after session 12.
 - Level 12 The Scoreboard (MR-063): data/metrics.json as the one registry (group, direction, bands with
   sources, ladders, lens, chart, what opens it, visibility, gentle copy, first session, headline), eight
   new metrics (engine/scoremetrics.js), the chart catalog (data/charts.json) with seven new charts,

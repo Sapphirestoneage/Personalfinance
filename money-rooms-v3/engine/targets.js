@@ -6,8 +6,12 @@
    for X, now at Y". Pure. */
 import { fiEffect } from './variance.js';
 
-export function defaultChoice(row, fraction) {
+/* Level 12 (MR-065): a worth-it score steers the default. Rated low: aim at what she would want, or meet in the middle. Rated high: keep it, or room to spend more. */
+import { latestWorthIt } from './program.js';
+export function defaultChoice(row, fraction, worth) {
   if (row.actual === null) return null;
+  if (typeof worth === 'number' && worth <= 4) return row.dream !== null && row.dream < row.actual ? 'dream' : (row.gut !== null || row.dream !== null) ? 'middle' : 'keep';
+  if (typeof worth === 'number' && worth >= 8) return row.dream !== null && row.dream > row.actual ? 'room' : 'keep';
   if (row.dream !== null && row.dream < row.actual) return 'dream';
   if (row.dream !== null && row.dream > row.actual) return 'room';
   if (row.gut !== null || row.dream !== null) return 'middle';
@@ -31,10 +35,11 @@ export function targetValue(row, choice, fraction, custom) {
 /* proposals(varianceRows, record, result, asm) -> one line per area with the default choice, the value, and the FI effects */
 export function proposals(rows, record, result) {
   const fraction = result.asm.callTargetRoomFraction === undefined ? 0.5 : result.asm.callTargetRoomFraction;
-  const stored = record.targets || {};
+  const stored = record.targets || {}; const wi = latestWorthIt(record); const worthScores = {}; Object.keys(wi).forEach(a => { worthScores[a] = wi[a].score; });
   const out = rows.filter(r => r.key !== 'total' && r.actual !== null).map(r => {
     const saved = stored[r.key] || null;
-    const choice = saved ? saved.choice : defaultChoice(r, fraction);
+    const worth = worthScores[r.key] !== undefined ? worthScores[r.key] : undefined;
+    const choice = saved ? saved.choice : defaultChoice(r, fraction, worth);
     const value = saved && saved.cents !== undefined && saved.cents !== null ? saved.cents : targetValue(r, choice, fraction);
     const delta = value === null ? 0 : value - r.actual;
     const eff = fiEffect(result, delta);

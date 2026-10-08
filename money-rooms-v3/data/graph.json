@@ -8,7 +8,8 @@
   "keep": "Keep more (taxes, fees, leaks)",
   "grow": "Grow (balances and returns)",
   "protect": "Protect (debt, cash, insurance)",
-  "assume": "Assume (rates, ages, Social Security)"
+  "assume": "Assume (rates, ages, Social Security)",
+  "value": "Value (what the spending is worth to her)"
  },
  "familyByPlanet": {
   "income": "earn",
@@ -710,6 +711,16 @@
    "label": "Blind spot from the transactions",
    "family": "spend",
    "noFiEffect": "awareness, not a flow"
+  },
+  "program.satisfaction": {
+   "label": "Satisfaction with where the money goes",
+   "family": "value",
+   "noFiEffect": "how it feels, not a flow"
+  },
+  "program.worthIt": {
+   "label": "Worth-it scores per area",
+   "family": "value",
+   "noFiEffect": "what it is worth to her, not a flow"
   }
  }
 }

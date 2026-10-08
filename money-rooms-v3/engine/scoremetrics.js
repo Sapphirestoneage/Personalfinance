@@ -3,7 +3,12 @@
    program's stress scores and blind spot) so they run as a second pass after
    those exist. Same shapes as engine/metrics.js: ok with math, or needs. */
 import { q, U } from './units.js';
-import { programOf } from './program.js';
+import { programOf, latestSatisfaction, latestWorthIt } from './program.js';
+import { AREAS } from './anchors.js';
+
+export const AREA_LABELS = { accommodation: 'Housing', utilities: 'Utilities and subscriptions', food: 'Food', transportation: 'Transportation', therapy: 'Health and therapy', wants: 'Wants', irregular: 'Irregular and annual' };
+/* the quadrant rules: an area above a tenth of spending rated 4 or lower is the easy place to cut; one under a tenth rated 8 or higher has room */
+export const WORTH_IT = Object.freeze({ bigShare: 0.10, lowScore: 4, highScore: 8 });
 
 const okQ = v => v && v.status === 'ok';
 function ok(def, value, math, extra) { return Object.assign({ def, id: def.id, status: 'ok', value, math, rough: !!(value && value.rough), confidence: value && typeof value.confidence === 'number' ? value.confidence : 1 }, extra || {}); }
@@ -57,5 +62,22 @@ export function scoreMetrics(record, result, data) {
     if (dated.length) { const on = dated.filter(i => GP.assessment[i.id] && ['on-time', 'done'].includes(GP.assessment[i.id].status)).length; const c = count(on, 'goals'); put(ok(def('goalsOnTrack'), c, { formula: 'dated goals the timeline reaches by their date, of ' + dated.length, inputs: dated.map(i => inputOf(i.name, { status: 'ok', kind: 'text', value: (GP.assessment[i.id] || {}).status || 'needs' })), result: c }, { of: dated.length })); }
     else put(need(def('goalsOnTrack'), ['a goal with a date on the Life plan']));
   } else put(need(def('goalsOnTrack'), ['a goal with a date on the Life plan']));
+  /* satisfaction: the latest answer at a session close or a money date */
+  const sat = latestSatisfaction(record);
+  if (sat) { const c = count(sat.score, 'of 10'); put(ok(def('satisfaction'), c, { formula: 'the latest score given', inputs: [inputOf('Asked at', { status: 'ok', kind: 'text', value: /^md-/.test(String(sat.session)) ? 'money date ' + String(sat.session).slice(3) : sat.session === 'discovery' ? 'first call' : 'session ' + String(sat.session).replace(/^s/, '') })], result: c }, { session: sat.session, date: sat.date, history: (P.satisfaction || []).slice() })); }
+  else put(need(def('satisfaction'), ['a satisfaction score from a session close or a money date']));
+  /* worth-it per area, with each area's cost and share */
+  const wi = latestWorthIt(record); const wiAreas = Object.keys(wi);
+  if (wiAreas.length && by && S.spending.baselineMonthly && okQ(S.spending.baselineMonthly) && S.spending.baselineMonthly.cents > 0) {
+    const total = S.spending.baselineMonthly.cents;
+    const areas = AREAS.filter(a => wi[a]).map(a => { const cents = okQ(by[a]) ? by[a].cents : null; return { area: a, label: AREA_LABELS[a] || a, score: wi[a].score, cents, share: cents === null ? null : cents / total, perThousand: cents ? Math.round(wi[a].score / (cents / 100000) * 10) / 10 : null, session: wi[a].session }; });
+    const list = { status: 'ok', kind: 'list', value: { areas }, confidence: 0.8, rough: false };
+    put(ok(def('areaWorthIt'), list, { formula: 'latest worth-it score per area beside its monthly cost and share of spending', inputs: areas.map(x => inputOf(x.label, { status: 'ok', kind: 'text', value: x.score + ' of 10' + (x.cents !== null ? ', ' + Math.round(x.share * 100) + '% of spending' : '') })), result: list }, { areas }));
+    const easyCut = areas.filter(x => x.share !== null && x.share > WORTH_IT.bigShare && x.score <= WORTH_IT.lowScore).sort((p, q) => q.share - p.share);
+    const room = areas.filter(x => x.share !== null && x.share < WORTH_IT.bigShare && x.score >= WORTH_IT.highScore).sort((p, q) => q.score - p.score || p.share - q.share);
+    const vlist = { status: 'ok', kind: 'list', value: { areas, easyCut, room }, confidence: 0.8, rough: false };
+    put(ok(def('valuePerDollar'), vlist, { formula: 'worth-it score per $1,000 a month; flags: share above 10% rated 4 or lower (easy to cut), share under 10% rated 8 or higher (room to spend more)', inputs: areas.map(x => inputOf(x.label, { status: 'ok', kind: 'text', value: x.perThousand === null ? 'no cost yet' : x.perThousand + ' points per $1,000' })), result: vlist }, { areas, easyCut, room }));
+  } else if (wiAreas.length) { put(need(def('areaWorthIt'), ['worth-it scores and monthly spending'])); put(need(def('valuePerDollar'), ['worth-it scores and monthly spending'])); }
+  else { put(need(def('areaWorthIt'), ['worth-it scores for the spending areas'])); put(need(def('valuePerDollar'), ['worth-it scores for the spending areas'])); }
   return out;
 }

@@ -3,7 +3,7 @@
    now on every line, in client words); the session 9 blind guess test; the
    before-and-after for graduation; the testimonial prompt with her own
    numbers. Pure; stress and baselines are written through engine/program.js. */
-import { programOf } from './program.js';
+import { programOf, latestSatisfaction } from './program.js';
 import { AREAS } from './anchors.js';
 import { compareToGut } from './transactions.js';
 
@@ -20,6 +20,7 @@ export function snapshotValues(record, result) {
   const goalsTotal = GP ? GP.input.items.filter(i => i.type !== 'long-term' && typeof i.step !== 'number').length : 0;
   return {
     stress: (P.stress.slice(-1)[0] || {}).score || null,
+    satisfaction: (latestSatisfaction(record) || {}).score || null,
     blindSpot: P.blindSpot.s9 && num(P.blindSpot.s9.pct) !== null ? P.blindSpot.s9.pct : (P.blindSpot.s4 ? P.blindSpot.s4.pct : null),
     completeness: result.completeness ? result.completeness.share : null,
     cardBalance: cards,
@@ -33,6 +34,7 @@ export function snapshotValues(record, result) {
 
 const LINES = [
   ['stress', 'How stressed about money, 1 to 10', 'score', 'lower'],
+  ['satisfaction', 'How satisfied with where the money goes, 1 to 10', 'score', 'higher'],
   ['blindSpot', 'How much of your spending your gut missed', 'pct', 'lower'],
   ['completeness', 'How much of the picture is real numbers', 'pct', 'higher'],
   ['cardBalance', 'Credit card balances', 'money', 'lower'],

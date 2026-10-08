@@ -7,15 +7,15 @@ import { createRecord, setField } from '../../engine/record.js';
 import { SCORE_CHARTS } from '../../engine/chartdata-score.js';
 import { ALL_CHARTS, chartMeta } from '../../engine/charts-all.js';
 import { takeSnapshot } from '../../engine/momentum.js';
-import { recordStress } from '../../engine/program.js';
+import { recordStress, recordSatisfaction, recordWorthIt } from '../../engine/program.js';
 import { parseCsv, guessMapping, normalize, categorize, clean, detect, calendarOf } from '../../engine/transactions.js';
 import { loadData, loadHousehold } from './load-data.js';
 import { CSV } from '../households/maya-transactions.mjs';
 
 const data = loadData(); const TODAY = '2026-10-08';
 
-test('seven charts join the list, each with a coach name, a client sentence, a planet, a stage and real metric ids', () => {
-  assert.equal(SCORE_CHARTS.length, 7); assert.equal(ALL_CHARTS.length, 38);
+test('eight charts join the list, each with a coach name, a client sentence, a planet, a stage and real metric ids', () => {
+  assert.equal(SCORE_CHARTS.length, 8); assert.equal(ALL_CHARTS.length, 39);
   SCORE_CHARTS.forEach(c => { assert.ok(c.id && c.name && c.client && c.planet && c.stage >= 1 && c.stage <= 5 && typeof c.build === 'function', c.id); c.metrics.forEach(m => assert.ok(data.metrics.metrics.some(x => x.id === m), c.id + ' metric ' + m)); assert.equal(chartMeta(c.id, data).stage, c.stage); });
 });
 
@@ -30,6 +30,8 @@ test('on Maya with a snapshot, a stress score and a market move, the builders re
   let R = compute(maya, data, { today: '2026-09-20' });
   takeSnapshot(maya, R, 'session', { now: '2026-09-20T16:00:00.000Z', session: 's2' });
   maya.program = Object.assign(maya.program || {}, {}); recordStress(maya, 'discovery', 7, { now: '2026-08-20T16:00:00.000Z' }); recordStress(maya, 's4', 5, { now: '2026-10-05T16:00:00.000Z' });
+  recordSatisfaction(maya, 's1', 4, { now: '2026-09-10T15:00:00.000Z' }); recordSatisfaction(maya, 's4', 7, { now: '2026-10-05T16:05:00.000Z' });
+  recordWorthIt(maya, 's3', { food: 3, irregular: 9, accommodation: 7 }, { now: '2026-10-01T16:00:00.000Z' });
   const b = maya.planets.invest.rows.find(r => r.f.accountBalance && r.f.accountBalance.v > 1000000);
   setField(maya, b.id, 'accountBalance', b.f.accountBalance.v - 150000, 'known', 'client', { now: '2026-10-05T10:00:00.000Z', why: 'move' });
   R = compute(maya, data, { today: TODAY });
@@ -40,7 +42,8 @@ test('on Maya with a snapshot, a stress score and a market move, the builders re
   assert.deepEqual(by.cashflowCalendar.needs, ['transactions imported']);
   const pp = by.pictureVsProgress; assert.equal(pp.points.length, 2); assert.equal(pp.yId, 'pctToFi'); assert.ok(pp.points[1].label === 'Today' && pp.points[0].label === 'Session 2');
   const em = by.effortVsMarket; assert.ok(em.years.length > 20); assert.ok(em.years.every(y => y.contrib >= 0 && y.growth >= 0)); assert.ok(em.years[em.years.length - 1].cumContrib > 0);
-  const st = by.stressTrend; assert.equal(st.points.length, 2); assert.equal(st.first, 7); assert.equal(st.last, 5); assert.equal(st.change, -2); assert.equal(st.points[0].label, 'First call');
+  const st = by.satisfactionTrend; assert.ok(!st.needs, 'trend built'); assert.equal(st.points.length, 3, JSON.stringify(st.points)); assert.equal(st.satisfaction.first, 4); assert.equal(st.satisfaction.last, 7); assert.equal(st.satisfaction.change, 3); assert.equal(st.stress.change, -2); assert.equal(st.points[0].label, 'First call');
+  const wi = by.worthIt; assert.ok(!wi.needs, 'worth it built: ' + JSON.stringify(wi.needs)); assert.equal(wi.areas.length, 3); assert.deepEqual(wi.easyCut, ['food']); assert.deepEqual(wi.room, ['irregular']); assert.ok(wi.areas.every(a => a.cents > 0 && a.score >= 1));
   const dc = by.debtCurves; assert.ok(!dc.needs, 'debt curves built: ' + JSON.stringify(dc.needs)); assert.equal(dc.curves.length, 2); assert.ok(dc.curves[0].series.length > 6 && dc.curves[1].series.length > 6); assert.ok(dc.curves.every(c => c.debtFree && c.interest > 0)); assert.ok(typeof dc.reliefCostCents === 'number');
   /* the waterfall is memoised per record version: a second build is the same object */
   assert.equal(SCORE_CHARTS.find(c => c.id === 'fiDateWaterfall').build(R, {}), wf);

@@ -50,7 +50,7 @@ export function mount(host, app) {
     if (snap) {
       const ids = headlineIds(rec, R, app.data);
       page.appendChild(h('section', { class: 'op-six' }, h('h3', null, 'Your six'), h('div', { class: 'op-numbers op-six-grid' }, ids.map(id => { const def = app.data.metrics.metrics.find(x => x.id === id); const m = M[id]; const ok = m && m.status === 'ok'; const t = ok ? trend(rec, R, app.data, id) : null; const leg = t && t.sinceLast; return h('div', { class: 'op-num' }, h('div', { class: 'small muted' }, def.clientLabel || def.name), h('div', { class: 'op-val' }, ok ? textOf(m) : 'not yet'), leg ? h('div', { class: 'small ' + (leg.verdict === 'better' ? 'better' : 'muted') }, ARROWS[leg.arrow] + ' ' + (leg.delta ? leg.text.replace(/ since .*$/, '') : 'steady')) : null); }))));
-      const crossed = (rec.celebrations || []).filter(c => !c.seeded && c.ts >= snap.ts).slice(-3); const act = overallNextAction(cachedSensitivity(app));
+      const crossed = (rec.celebrations || []).filter(c => !c.seeded && c.ts >= snap.ts).slice(-3); const act = overallNextAction(cachedSensitivity(app), rec, R);
       if (crossed.length || act) page.appendChild(h('p', { class: 'small op-marks' }, crossed.length ? h('span', null, h('strong', null, 'Worth marking: '), crossed.map(c => c.text).join('; ') + '. ') : null, act ? h('span', null, h('strong', null, 'The one thing: '), act.sentence) : null));
     }
     /* since last time */

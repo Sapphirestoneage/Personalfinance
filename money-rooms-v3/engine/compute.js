@@ -17,7 +17,7 @@ import * as Safety from './planets/safety.js';
 import * as Taxes from './planets/taxes.js';
 import * as Life from './planets/life.js';
 import { computeMetrics } from './metrics.js';
-import { computeLenses } from './lenses.js';
+import { computeLenses, worthItLenses } from './lenses.js';
 import { tripleD, project, socialSecurityMonthly } from './projection.js';
 import { monthsToReach } from './fiLadder.js';
 import { scoreMetrics } from './scoremetrics.js';
@@ -170,6 +170,7 @@ export function compute(record, data, opts) {
   result.completeness = completenessOf(record, data, S);
   /* Level 12 (MR-063): the eight scoreboard metrics read the finished result */
   Object.assign(result.metrics, scoreMetrics(record, result, data));
+  result.lenses = result.lenses.concat(worthItLenses(result.metrics, data)); /* MR-065: reads the second pass */
   if (result.firstDraft) result.firstDraft.guesses = result.guesses.count;
   result.sessionMode = record.sessionMode || 'standard';
   return Object.freeze(result);

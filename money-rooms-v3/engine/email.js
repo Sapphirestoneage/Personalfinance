@@ -9,6 +9,19 @@ export function whereToFind(def, fieldsData) {
   return WHERE_BY_KIND[def.kind] || 'the statement';
 }
 
+/* Level 12 (MR-065): the short note after a money date: the six with arrows, one milestone, one action. Plain text, never a balance the client did not give. */
+export function moneyDateEmail(record, summary, opts) {
+  const o = opts || {}; const name = (record.sun.f.name && record.sun.f.name.v) ? record.sun.f.name.v.split(' ')[0] : 'there';
+  const lines = ['Subject: Your money date, in six lines', '', 'Hi ' + name + ',', '', 'Thanks for today. Where things stand:', ''];
+  (summary.lines || []).forEach(l => lines.push('  ' + l.arrow + ' ' + l.label + ': ' + l.value + (l.text ? ' (' + l.text + ')' : '')));
+  lines.push('');
+  if (summary.milestone) { lines.push('Worth marking: ' + summary.milestone.charAt(0).toLowerCase() + summary.milestone.slice(1) + '.'); lines.push(''); }
+  if (o.action || summary.action) { const a = o.action || summary.action; lines.push('The one thing this month: ' + a.charAt(0).toLowerCase() + a.slice(1)); lines.push(''); }
+  if (o.nextDate) { lines.push('Next money date: ' + o.nextDate + '.'); lines.push(''); }
+  lines.push(o.coachName || 'Eli');
+  return lines.join('\n');
+}
+
 export function followUpEmail(record, fields, theirItems, opts) {
   const o = opts || {};
   const name = (record.sun.f.name && record.sun.f.name.v) ? record.sun.f.name.v.split(' ')[0] : 'there';

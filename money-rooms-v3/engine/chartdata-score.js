@@ -8,6 +8,7 @@ import { isQ } from './units.js';
 import { simulate, addMonths } from './debtsim.js';
 import { programOf } from './program.js';
 import { whyMoved, snapshotsOf, numOf } from './momentum.js';
+import { WORTH_IT } from './scoremetrics.js';
 import { compute } from './compute.js';
 
 const ok = m => m && m.status === 'ok';
@@ -76,12 +77,29 @@ export function effortVsMarket(result) {
   return { years, flipYear: flip ? flip.year : null, flipAge: flip ? flip.age : null, rate, contribAnnual: inp.employeeAnnual + inp.employerAnnual };
 }
 
-/* f. How money has felt: the stress score at each ask. */
-export function stressTrend(result) {
-  const rec = result.record; const P = rec ? programOf(rec) : null; const scores = (P && P.stress || []).filter(s => typeof s.score === 'number').slice().sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')) || 0);
-  if (!scores.length) return { needs: ['a stress score from the discovery form or a session'] };
-  const points = scores.map(s => ({ session: s.session, label: s.session === 'discovery' ? 'First call' : /^s?\d+$/.test(String(s.session)) ? 'Session ' + String(s.session).replace(/^s/, '') : /^md-/.test(String(s.session)) ? 'Money date' : String(s.session), score: s.score, date: s.date || s.at || null }));
-  return { points, first: points[0].score, last: points[points.length - 1].score, change: points[points.length - 1].score - points[0].score };
+/* f. How it has felt: satisfaction at every session close and money date, with the stress score at its four checkpoints on the same timeline. */
+const askLabel = s => s === 'discovery' ? 'First call' : /^s?\d+$/.test(String(s)) ? 'Session ' + String(s).replace(/^s/, '') : /^md-/.test(String(s)) ? 'Money date ' + String(s).slice(3) : String(s);
+export function satisfactionTrend(result) {
+  const rec = result.record; const P = rec ? programOf(rec) : null;
+  const sat = (P && P.satisfaction || []).filter(s => typeof s.score === 'number').slice().sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
+  const stress = (P && P.stress || []).filter(s => typeof s.score === 'number').slice().sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')));
+  if (!sat.length && !stress.length) return { needs: ['a satisfaction score from a session close or a money date'] };
+  const keys = Array.from(new Set(sat.map(s => String(s.session)).concat(stress.map(s => String(s.session)))));
+  const dateOf = k => ((sat.find(s => String(s.session) === k) || stress.find(s => String(s.session) === k) || {}).date) || '';
+  keys.sort((a, b) => dateOf(a).localeCompare(dateOf(b)));
+  const points = keys.map(k => ({ session: k, label: askLabel(k), date: dateOf(k), satisfaction: (sat.find(s => String(s.session) === k) || {}).score ?? null, stress: (stress.find(s => String(s.session) === k) || {}).score ?? null }));
+  const satOnly = points.filter(p => p.satisfaction !== null); const stOnly = points.filter(p => p.stress !== null);
+  return { points, satisfaction: { first: satOnly.length ? satOnly[0].satisfaction : null, last: satOnly.length ? satOnly[satOnly.length - 1].satisfaction : null, change: satOnly.length >= 2 ? satOnly[satOnly.length - 1].satisfaction - satOnly[0].satisfaction : null }, stress: { first: stOnly.length ? stOnly[0].stress : null, last: stOnly.length ? stOnly[stOnly.length - 1].stress : null, change: stOnly.length >= 2 ? stOnly[stOnly.length - 1].stress - stOnly[0].stress : null } };
+}
+
+/* f2. Worth it: dollars a month per area (x) against how much she valued it (y); the two corners that matter are named. */
+export function worthIt(result) {
+  const M = result.metrics; const m = M.valuePerDollar;
+  if (!m || m.status !== 'ok') return { needs: (m && m.needs) || ['worth-it scores for the spending areas'] };
+  const areas = m.value.value.areas.filter(a => a.cents !== null);
+  if (!areas.length) return { needs: ['worth-it scores and monthly spending'] };
+  const total = areas.reduce((s, a) => s + a.cents, 0);
+  return { areas, easyCut: m.value.value.easyCut.map(a => a.area), room: m.value.value.room.map(a => a.area), total, bigShare: WORTH_IT.bigShare, lowScore: WORTH_IT.lowScore, highScore: WORTH_IT.highScore };
 }
 
 /* g. Two ways to pay the debts off: highest rate first against most stressful first, total balance month by month. */
@@ -102,6 +120,7 @@ export const SCORE_CHARTS = [
   { id: 'cashflowCalendar', name: 'Cash flow calendar', client: 'Paydays and bills across the month', planet: 'spending', stage: 1, metrics: ['spending', 'takeHome'], build: cashflowCalendar },
   { id: 'pictureVsProgress', name: 'Picture against progress', client: 'How much is in, and how far along', planet: 'life', stage: 1, metrics: ['completeness', 'pctToFi'], build: pictureVsProgress },
   { id: 'effortVsMarket', name: 'Effort against the market', client: 'What you added and what the market added', planet: 'invest', stage: 3, metrics: ['netWorth', 'theFlip'], build: effortVsMarket },
-  { id: 'stressTrend', name: 'Stress trend', client: 'How money has felt, session by session', planet: 'life', stage: 1, metrics: ['stressScore'], build: stressTrend },
+  { id: 'satisfactionTrend', name: 'Satisfaction and stress over time', client: 'How it has felt, session by session', planet: 'life', stage: 1, metrics: ['satisfaction', 'stressScore'], build: satisfactionTrend },
+  { id: 'worthIt', name: 'Worth it: cost against value', client: 'What the money buys for you', planet: 'spending', stage: 1, metrics: ['areaWorthIt', 'valuePerDollar'], build: worthIt },
   { id: 'debtCurves', name: 'Debt curves: rate against relief', client: 'Two ways to pay the debts off', planet: 'debt', stage: 2, metrics: ['debtFree', 'annualInterest'], build: debtCurves },
 ];

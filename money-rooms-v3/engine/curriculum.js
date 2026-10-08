@@ -24,6 +24,14 @@ export function introduces(data, n) {
   const charts = Object.keys(cat).filter(id => cat[id].firstSession === n).map(id => ({ id, question: cat[id].question, gentle: cat[id].gentle }));
   return { n, metrics, charts };
 }
+/* Level 12 (MR-065): the money date curriculum, about fifteen minutes, coach-run */
+export function moneyDateDef(data) { return data.curricula.moneyDate || null; }
+export function planMoneyDate(record, result, data, key) {
+  const def = moneyDateDef(data); if (!def) return null;
+  const ctx = contextOf(record, result);
+  const blocks = def.blocks.filter(b => applies(b, ctx)).map(b => Object.assign({}, b, { from: key, key: blockKey(key, b.id) }));
+  return { def, key, blocks, parked: programOf(record).parked.filter(p => !p.done), movedOut: [], markers: def.markers };
+}
 export function sessionCount(data) { return data.curricula.sessions.filter(s => s.n > 0).length; }
 
 /* Shape checks for the library, used by the tests and the lint. */
@@ -50,6 +58,15 @@ export function validateCurricula(data) {
       (s.blocks || []).filter(b => CLOSING.includes(b.id)).forEach(b => { if (b.priority !== 'never-cut') out.push(s.id + '.' + b.id + ': the close is never cut'); });
     }
   });
+  if (C.moneyDate) {
+    const md = C.moneyDate; const ids = new Set();
+    if (!md.name || !md.goal || !md.markers) out.push('moneyDate: name, goal or markers missing');
+    (md.blocks || []).forEach(b => { if (ids.has(b.id)) out.push('moneyDate: duplicate block ' + b.id); ids.add(b.id); if (!PRIORITIES.includes(b.priority)) out.push('moneyDate.' + b.id + ': bad priority'); const m = b.minutes || {}; if (!(m.min <= m.target && m.target <= m.max && m.min > 0)) out.push('moneyDate.' + b.id + ': bad minutes'); (b.questions || []).forEach(q => { if (!q.text || !q.fills) out.push('moneyDate.' + b.id + ': question without text or fills'); }); });
+    const total = (md.blocks || []).reduce((s, b) => s + b.minutes.target, 0); if (total < 12 || total > 18) out.push('moneyDate: target minutes ' + total + ' are not about fifteen');
+    const last = (md.blocks || []).slice(-2); if (!last.every(b => b.priority === 'never-cut')) out.push('moneyDate: the action and the close are never cut');
+    if (!(md.blocks || []).some(b => (b.questions || []).some(q => q.fills === 'program.satisfaction'))) out.push('moneyDate: no satisfaction question');
+  } else out.push('curricula.moneyDate missing');
+  C.sessions.filter(s => s.n > 0).forEach(s => { const close = (s.blocks || []).find(b => b.id === 'close'); if (!close || !(close.questions || []).some(q => q.fills === 'program.satisfaction')) out.push(s.id + ': the close does not ask satisfaction'); });
   return out;
 }
 

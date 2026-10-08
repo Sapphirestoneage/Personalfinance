@@ -41,7 +41,7 @@ export const routes = {
   /* Level 12 (MR-063) */
   scoreboard: { title: 'Scoreboard', mount: Scoreboard.mount, needsClient: true },
   map: { title: 'Map', mount: MapView.mount, needsClient: true },
-  'money-date': { title: 'Money date', mount: MoneyDate.mount, needsClient: true },
+  'money-date': { title: 'Money date', mount: MoneyDate.mount, needsClient: true, coachOnly: true },
 };
 
 export function navItems(app) {
@@ -53,7 +53,7 @@ export function navItems(app) {
   });
   items.push({ group: 'Read', label: t('Measure'), href: '#/measure', active: r => r.name === 'measure', key: 'Alt+9' });
   items.push({ group: 'Read', label: 'Scoreboard', href: '#/scoreboard', active: r => r.name === 'scoreboard', key: null });
-  items.push({ group: 'Read', label: app.view === 'client' ? 'Monthly check' : 'Money date', href: '#/money-date', active: r => r.name === 'money-date', key: null });
+  items.push({ group: 'Read', label: 'Money date', href: '#/money-date', active: r => r.name === 'money-date', key: null, coachOnly: true });
   items.push({ group: 'Read', label: app.view === 'client' ? 'How it connects' : 'Map', href: '#/map', active: r => r.name === 'map', key: null });
   items.push({ group: 'Read', label: t('One-pager'), href: '#/onepager', active: r => r.name === 'onepager', key: 'Alt+0' });
   items.push({ group: 'Read', label: app.view === 'client' ? 'What matters most' : 'Levers', href: '#/levers', active: r => r.name === 'levers', key: null });

@@ -94,7 +94,7 @@ export function nextActionCard(app, opts) {
   const o = opts || {}; const sens = cachedSensitivity(app); const client = isClient(app);
   const card = h('section', { class: 'panel next-action' });
   const paint = s => {
-    const a = overallNextAction(s);
+    const a = overallNextAction(s, app.record, app.result);
     if (!a) { card.appendChild(h('h2', null, client ? 'Your next step' : 'Next action')); card.appendChild(h('p', { class: 'muted small' }, app.result.metrics.fiDate && app.result.metrics.fiDate.status === 'ok' ? 'Working out what moves the most.' : (client ? 'Once income, spending and balances are in, this names the one thing that helps most.' : 'Needs an FI date: income, spending, account balances and a birth date.'))); return; }
     card.appendChild(h('h2', null, client ? 'Your next step' : 'Next action'));
     card.appendChild(h('p', { class: 'big-number' }, a.months !== null ? F.months(Math.abs(a.months)) : 'Soon', h('span', { class: 'big-unit' }, a.months !== null ? (client ? ' sooner to work being a choice' : ' on the FI date') + (a.impactLabel ? ' ' + a.impactLabel.replace(/^per /, 'for every ') : '') : '')));

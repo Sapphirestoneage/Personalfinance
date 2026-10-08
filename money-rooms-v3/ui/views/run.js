@@ -8,7 +8,16 @@
    math: engine/curriculum.js bends, engine/program.js writes. */
 import { h, clear } from '../dom.js';
 import * as F from '../../engine/format.js';
-import { planSession, bend, goDeeper, urgentPlan, threeSteps, sessionCount, CLOSING } from '../../engine/curriculum.js';
+import { planSession, planMoneyDate, bend, goDeeper, urgentPlan, threeSteps, sessionCount, CLOSING } from '../../engine/curriculum.js';
+import { recordSatisfaction, recordWorthIt, latestWorthIt, isMoneyDateKey, setMonthAction, programMode } from '../../engine/program.js';
+import { takeSnapshot, celebrate, seedCelebrations, headlineIds, textOf, personalBests, clientSummary, whyMoved, nextActionFor, overallNextAction } from '../../engine/momentum.js';
+import { moneyDateEmail } from '../../engine/email.js';
+import { trendLine, nextActionCard, defOf } from '../scorebits.js';
+import { metricLabel } from '../glossary.js';
+import { cachedSensitivity } from '../levers-bridge.js';
+import { AREAS } from '../../engine/anchors.js';
+import { AREA_LABELS } from '../../engine/scoremetrics.js';
+import { openMetric } from '../metricdrawer.js';
 import { programOf, nextSessionNumber, startSession, blockStatus, moveBlock, closeSession, startUrgent, setUrgentNotes, park, parkDone, recordStress, setChecklist, checklistFor, homework, readiness, setNote, captureBaseline, blockKey } from '../../engine/program.js';
 import { snapshotValues, beforeAfter, testimonialPrompt, blindGuessTest } from '../../engine/outcomes.js';
 import { parseSaid, toMonthly } from '../../engine/parse.js';
@@ -25,32 +34,35 @@ const AREA_WORDS = { accommodation: 'your home', utilities: 'phone, internet and
 
 export function mount(host, app) {
   const total = sessionCount(app.data); const C = app.data.curricula;
-  const n = app.route.params.id ? Math.max(1, Math.min(total, parseInt(app.route.params.id, 10) || 1)) : Math.min(total, nextSessionNumber(app.record));
+  /* Level 12 (MR-065): a money date runs through the same runner, keyed by month (md-YYYY-MM); the client never runs it alone */
+  const mdKey = isMoneyDateKey(app.route.params.id) ? app.route.params.id : null; const isMd = !!mdKey;
+  const n = isMd ? mdKey : (app.route.params.id ? Math.max(1, Math.min(total, parseInt(app.route.params.id, 10) || 1)) : Math.min(total, nextSessionNumber(app.record)));
   const sKey = () => urgentKey || String(n);
   let urgentKey = null; let plan = null; let idx = 0; let note = ''; let offered = null; const added = new Set(); let offsetMin = 0; let paused = null; let pausedMin = 0; let blockStartedAt = Date.now(); let stepsNote = '';
   const started = () => (programOf(app.record).sessions[sKey()] || {}).startedAt;
-  if (!programOf(app.record).sessions[String(n)] || programOf(app.record).sessions[String(n)].status !== 'running') app.mutate(rec => { startSession(rec, n, { session: 's' + n }); if (n === 1) captureBaseline(rec, snapshotValues(rec, app.result), {}); }, 'program');
-  app.session = 's' + n;
+  const sessId = isMd ? mdKey : 's' + n;
+  if (!programOf(app.record).sessions[String(n)] || programOf(app.record).sessions[String(n)].status !== 'running') app.mutate(rec => { startSession(rec, n, { session: sessId }); if (n === 1) captureBaseline(rec, snapshotValues(rec, app.result), {}); }, 'program');
+  app.session = sessId;
   const minute = () => { const s = started(); if (!s) return 0; const live = (Date.now() - Date.parse(s)) / 60000; return Math.max(0, Math.round((live + offsetMin - pausedMin - (paused ? (Date.now() - paused) / 60000 : 0)) * 10) / 10); };
   const doneIds = () => Object.keys((programOf(app.record).sessions[sKey()] || { blocks: {} }).blocks || {}).filter(k => (programOf(app.record).sessions[sKey()].blocks[k] || {}).status === 'done').map(k => k.split(':')[1]);
   const state = () => ({ current: plan.blocks[idx] ? plan.blocks[idx].id : null, done: doneIds(), started: plan.blocks.slice(0, idx + 1).map(b => b.id) });
 
-  const header = h('header', null, h('h1', null, 'Session ' + n), h('span', { class: 'sub' }), h('div', { class: 'actions' }));
+  const header = h('header', null, h('h1', null, isMd ? 'Money date, ' + F.date(mdKey.slice(3) + '-01') : 'Session ' + n), h('span', { class: 'sub' }), h('div', { class: 'actions' }));
   const tl = h('nav', { class: 'runner-tl', 'aria-label': 'Today' }); const noteLine = h('p', { class: 'runner-note small', role: 'status' }); const body = h('section', { class: 'panel call-body run-body' }); const foot = h('div', { class: 'row runner-foot' });
   host.appendChild(header); host.appendChild(tl); host.appendChild(noteLine); host.appendChild(body); host.appendChild(foot);
   const gentle = () => (app.record.sessionMode || 'standard') === 'gentle';
   const money = c => F.dollarsWhole(c);
 
-  function rebuild() { plan = planSession(app.record, app.result, app.data, n); if (urgentKey) { const u = urgentPlan(plan, app.data, programOf(app.record).sessions[urgentKey].urgent.kind); plan.blocks = u.blocks; } plan.blocks = plan.blocks.filter(b => b.status !== 'moved' && (b.status !== 'skipped' || added.has(b.id))); }
+  function rebuild() { plan = isMd ? planMoneyDate(app.record, app.result, app.data, mdKey) : planSession(app.record, app.result, app.data, n); if (plan && !plan.goal) plan.goal = plan.def ? plan.def.goal : ''; if (urgentKey) { const u = urgentPlan(plan, app.data, programOf(app.record).sessions[urgentKey].urgent.kind); plan.blocks = u.blocks; } plan.blocks = plan.blocks.filter(b => b.status !== 'moved' && (b.status !== 'skipped' || added.has(b.id))); }
   function drawHeader() {
     const sub = header.querySelector('.sub'); sub.textContent = plan.goal;
     const acts = header.querySelector('.actions'); clear(acts);
     acts.appendChild(h('button', { class: 'btn small', 'aria-label': 'Park something for next time', onClick: parkSomething }, 'Park it'));
     acts.appendChild(h('button', { class: 'btn small', 'aria-pressed': String(!!paused), onClick: () => { if (paused) { pausedMin += (Date.now() - paused) / 60000; paused = null; } else paused = Date.now(); draw(); } }, paused ? 'Resume' : 'Pause'));
     const cur = plan.blocks[idx];
-    if (cur && !CLOSING.includes(cur.id) && !urgentKey) acts.appendChild(h('button', { class: 'btn small', onClick: deeper }, 'Go deeper here'));
+    if (cur && !CLOSING.includes(cur.id) && !urgentKey && !isMd) acts.appendChild(h('button', { class: 'btn small', onClick: deeper }, 'Go deeper here'));
     acts.appendChild(h('span', { class: 'view-toggle', role: 'group', 'aria-label': 'Rehearsal clock' }, h('button', { title: 'Rehearsal: move the clock five minutes', 'aria-label': 'Rehearsal: five minutes on', onClick: () => { offsetMin += 5; tick(); } }, '+5 min')));
-    acts.appendChild(h('a', { class: 'btn small', href: '#/prep/' + n }, 'Prep'));
+    acts.appendChild(h('a', { class: 'btn small', href: isMd ? '#/money-date' : '#/prep/' + n }, 'Prep'));
   }
   function drawTimeline() {
     clear(tl); const m = minute(); const blocks = plan.blocks; const tot = blocks.reduce((s, b) => s + b.minutes.target, 0) || 1;
@@ -99,7 +111,7 @@ export function mount(host, app) {
     body.appendChild(h('h2', null, b.name, h('span', { class: 'tag' }, 'about ' + b.minutes.target + ' minutes')));
     const kind = b.kind || 'field';
     if (LEVEL8[kind]) { const sub = h('div'); body.appendChild(sub); mountStop(sub, app, LEVEL8[kind], () => advance('done')); foot.appendChild(nextBtn('Done with this part')); foot.appendChild(skipBtn()); return; }
-    ({ checkin: drawCheckin, loops: drawLoops, plan: drawPlan, housing: drawHousing, debtcheck: drawDebt, checklist: drawChecklist, picture: drawPicture, card: drawCard, stress: drawStress, steps: drawSteps, close: drawClose, transactions: drawTransactions, variance: drawVariance, blind: drawBlind, scorecard: drawScorecard, testimonial: drawTestimonial, urgent: drawUrgent, absorbed: drawAbsorbed, goals: drawRoom, room: drawRoom, lens: drawLens }[kind] || drawField)(b);
+    ({ checkin: drawCheckin, loops: drawLoops, plan: drawPlan, housing: drawHousing, debtcheck: drawDebt, checklist: drawChecklist, picture: drawPicture, card: drawCard, stress: drawStress, steps: drawSteps, close: drawClose, worthit: drawWorthIt, refresh: drawRefresh, changed: drawChanged, milestones: drawMilestones, satisfaction: drawSatisfaction, action: drawAction, mdclose: drawMdClose, transactions: drawTransactions, variance: drawVariance, blind: drawBlind, scorecard: drawScorecard, testimonial: drawTestimonial, urgent: drawUrgent, absorbed: drawAbsorbed, goals: drawRoom, room: drawRoom, lens: drawLens }[kind] || drawField)(b);
   }
 
   /* ---- blocks ---- */
@@ -211,7 +223,8 @@ export function mount(host, app) {
   }
   function drawClose(b) {
     const P = programOf(app.record); const r = readiness(app.record, app.result, app.data, n);
-    body.appendChild(say(b.questions[0].text));
+    const satQ = b.questions.find(q => q.fills === 'program.satisfaction'); if (satQ) satisfactionScale(satQ.text);
+    body.appendChild(say((b.questions.find(q => q.fills === 'program.nextDate') || b.questions[0]).text));
     const date = h('input', { class: 'input', type: 'date', 'aria-label': 'Next session date', value: P.nextDate || '' });
     const noteIn = h('input', { class: 'input wide', 'aria-label': 'Session note', value: '' });
     body.appendChild(h('div', { class: 'row' }, h('label', { class: 'small' }, 'Next time'), date, h('label', { class: 'small' }, 'Note'), noteIn));
@@ -246,9 +259,80 @@ export function mount(host, app) {
   function drawAbsorbed() { const abs = programOf(app.record).flexAbsorbed; body.appendChild(abs.length ? h('ul', null, abs.map(a => h('li', null, (app.data.curricula.sessions.flatMap(s => s.blocks).find(x => x.id === a.blockId) || { name: a.blockId }).name + ' (from session ' + a.from + ')'))) : h('p', { class: 'muted' }, 'Nothing was moved here.')); foot.appendChild(nextBtn()); }
   function drawRoom(b) { body.appendChild(say(b.outputs[0])); if (b.room) body.appendChild(h('p', null, h('a', { class: 'btn primary', href: b.room }, 'Open it'))); if (b.questions.length) drawQuestions(b); foot.appendChild(nextBtn()); }
   function drawLens(b) { const id = (b.uses || [])[0]; const lens = (app.result.lenses || []).find(l => l.id === id); body.appendChild(lens ? h('div', null, h('p', { class: 'big' }, lens.text), lens.reading ? h('p', { class: 'small muted' }, 'Read: ' + lens.reading.title) : null) : h('p', { class: 'muted' }, 'This reading does not apply today.')); foot.appendChild(nextBtn()); }
+  /* Level 12 (MR-065): the satisfaction scale, the worth-it grid, and the money date's own blocks */
+  function satisfactionScale(text) {
+    const cur = (programOf(app.record).satisfaction || []).find(s => s.session === sessId);
+    body.appendChild(say(text));
+    body.appendChild(h('div', { class: 'row taps stress-scale satisfaction-scale', role: 'group', 'aria-label': 'Satisfaction, one to ten' }, Array.from({ length: 10 }, (_, k) => h('button', { class: 'btn' + (cur && cur.score === k + 1 ? ' primary' : ''), 'aria-pressed': String(!!(cur && cur.score === k + 1)), onClick: () => { app.mutate(rec => { recordSatisfaction(rec, sessId, k + 1, { session: sessId }); }, 'program'); draw(); } }, String(k + 1)))));
+    const prev = (programOf(app.record).satisfaction || []).filter(s => s.session !== sessId).slice(-3);
+    if (prev.length) body.appendChild(h('p', { class: 'small muted' }, 'Before: ' + prev.map(s => (/^md-/.test(String(s.session)) ? 'money date ' + String(s.session).slice(3) : 'session ' + String(s.session).replace(/^s/, '')) + ' ' + s.score).join(', ')));
+  }
+  function worthItGrid(text, into) {
+    const host = into || body;
+    if (text) host.appendChild(say(text));
+    const S = app.result.sun && app.result.sun.outputs; const by = S && S.spending.byCategory ? S.spending.byCategory : {}; const latest = latestWorthIt(app.record);
+    const scores = {}; AREAS.forEach(a => { if (latest[a] && latest[a].session === sessId) scores[a] = latest[a].score; });
+    const table = h('table', { class: 'data worthit-grid' }, h('tbody', null, AREAS.filter(a => by[a] && by[a].status === 'ok' && by[a].cents > 0).map(a => h('tr', null, h('td', null, AREA_LABELS[a] || a, h('span', { class: 'small muted' }, ' ' + F.dollarsWhole(by[a].cents) + ' a month')), h('td', null, h('div', { class: 'row taps worthit-scale', role: 'group', 'aria-label': 'Worth it: ' + (AREA_LABELS[a] || a) }, Array.from({ length: 10 }, (_, k) => h('button', { class: 'btn small' + (scores[a] === k + 1 ? ' primary' : ''), 'aria-pressed': String(scores[a] === k + 1), onClick: () => { scores[a] = k + 1; app.mutate(rec => { recordWorthIt(rec, sessId, scores, { session: sessId }); }, 'program'); draw(); } }, String(k + 1)))))))));
+    host.appendChild(h('div', { class: 'tablewrap' }, table));
+    host.appendChild(h('p', { class: 'small muted' }, 'You rated it; nothing here says you spend wrong. Low scores point at the easy place to move money from, high scores at where there is room.'));
+  }
+  function drawWorthIt(b) { worthItGrid(b.questions[0].text); foot.appendChild(nextBtn()); foot.appendChild(skipBtn()); }
+  function drawSatisfaction(b) { satisfactionScale(b.questions[0].text); if (b.questions[1]) { const fold = h('details', { class: 'worthit-fold' }, h('summary', { class: 'small' }, b.questions[1].text), h('div')); body.appendChild(fold); worthItGrid('', fold.querySelector('div')); } foot.appendChild(nextBtn()); }
+  function drawRefresh(b) {
+    body.appendChild(say(b.questions[0].text));
+    const rows = []; const F2 = { debt: 'balance', invest: 'accountBalance' };
+    Object.keys(F2).forEach(p => app.record.planets[p].rows.forEach(r => { const f = r.f[F2[p]]; if (!f || ['none', 'not-applicable', 'not-for-me'].includes(f.state)) return; rows.push({ planet: p, row: r, field: F2[p], f }); }));
+    if (!rows.length) body.appendChild(h('p', { class: 'muted' }, 'No debts or accounts with a balance yet.'));
+    else body.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data md-balances' }, h('thead', null, h('tr', null, h('th', null, 'Account'), h('th', { class: 'num' }, 'Last'), h('th', null, 'Today'))), h('tbody', null, rows.map(x => { const cur = typeof x.f.v === 'number' ? x.f.v : null; return h('tr', null, h('td', null, x.row.nickname || x.planet, h('span', { class: 'small muted' }, ' ' + (x.row.institution || ''))), h('td', { class: 'num' }, cur !== null ? F.dollarsWhole(cur) : h('span', { class: 'empty-token' }, 'Not entered')), h('td', null, h('input', { class: 'input num', type: 'text', inputmode: 'decimal', 'aria-label': 'New balance for ' + (x.row.nickname || x.planet), title: 'Type the balance as of today', onChange: e => { const cents = F.parseMoney(e.target.value); if (cents === null || cents === undefined) return; app.setFieldWhy(x.row.id, x.field, cents, typeof cents === 'object' ? 'rough' : 'known', 'client', undefined, 'move'); e.target.value = ''; app.toast((x.row.nickname || 'Balance') + ' updated.'); } }))); })))));
+    body.appendChild(h('p', { class: 'small' }, h('a', { class: 'btn', href: '#/transactions' }, 'Import this month\'s transactions'), ' ', h('span', { class: 'muted' }, 'Each figure is logged as a move, not a correction.')));
+    foot.appendChild(nextBtn());
+  }
+  function drawChanged() {
+    const ids = headlineIds(app.record, app.result, app.data);
+    body.appendChild(say('Here is what moved since last time.'));
+    body.appendChild(h('ul', { class: 'score-list md-moved' }, ids.map(id => { const def = defOf(app, id); const m = app.result.metrics[id]; const ok = m && m.status === 'ok'; return h('li', { class: ok ? '' : 'locked' }, h('button', { class: 'linklike score-row', onClick: () => openMetric(app, id) }, h('span', { class: 'row-label' }, metricLabel(app, def)), h('span', { class: 'row-value' }, ok ? textOf(m) : 'needs inputs')), ok ? h('span', { class: 'row-meta' }, trendLine(app, id)) : null); })));
+    const run = (r, today) => app.compute(r, app.data, { today });
+    ['fiDate', 'netWorth'].forEach(id => { try { const w = whyMoved(app.record, app.result, app.data, id, { compute: run }); if (w && w.total !== null && w.total !== 0) body.appendChild(h('p', { class: 'small' }, h('strong', null, metricLabel(app, defOf(app, id)) + ': '), w.sentences.join(' ') + (w.marketNote ? ' ' + w.marketNote : ''))); } catch (e) { /* no history yet */ } });
+    foot.appendChild(nextBtn());
+  }
+  function drawMilestones() {
+    const last = app.record.snapshots && app.record.snapshots.length ? app.record.snapshots[app.record.snapshots.length - 1] : null;
+    const crossed = (app.record.celebrations || []).filter(c => !c.seeded && (!last || c.ts >= last.ts));
+    body.appendChild(say(crossed.length ? 'Worth marking: ' + crossed.map(c => c.text.charAt(0).toLowerCase() + c.text.slice(1)).join('; ') + '.' : 'No rung crossed this month; the ladders are in each number\'s drawer.'));
+    const bests = personalBests(app.record, app.result, app.data).filter(b => b.isNew);
+    if (bests.length) body.appendChild(h('p', { class: 'small' }, h('strong', null, 'New personal best: '), bests.map(b => b.label.toLowerCase() + ' ' + b.value).join('; ') + '.'));
+    foot.appendChild(nextBtn()); foot.appendChild(skipBtn());
+  }
+  function drawAction(b) {
+    body.appendChild(say(b.questions[0].text));
+    body.appendChild(nextActionCard(app, { noLink: true }));
+    const def = defOf(app, 'satisfaction'); const sa = nextActionFor(def, cachedSensitivity(app), app.result); if (sa) body.appendChild(h('p', { class: 'small' }, h('strong', null, 'For satisfaction: '), sa.sentence));
+    const cur = (programOf(app.record).sessions[sKey()] || {}).action || '';
+    const input = h('input', { class: 'input wide', 'aria-label': 'The one action for the month', value: cur, onChange: e => app.mutate(rec => { setMonthAction(rec, sKey(), e.target.value.trim(), { session: sessId }); }, 'program') });
+    body.appendChild(h('div', { class: 'row' }, h('label', { class: 'small' }, 'Written down'), input));
+    foot.appendChild(nextBtn('On to booking'));
+  }
+  function drawMdClose(b) {
+    const P = programOf(app.record);
+    body.appendChild(say(b.questions[0].text));
+    const date = h('input', { class: 'input', type: 'date', 'aria-label': 'Next money date', value: P.nextDate || '' });
+    body.appendChild(h('div', { class: 'row' }, h('label', { class: 'small' }, 'Next month'), date));
+    const sat = (P.satisfaction || []).find(s => s.session === sessId); if (!sat) body.appendChild(h('p', { class: 'small muted' }, 'The satisfaction score is still open; it can be asked here too.'));
+    if (!sat) satisfactionScale('How satisfied are you with where your money is going right now, one to ten?');
+    foot.appendChild(h('button', { class: 'btn primary', onClick: () => {
+      const key = sKey(); const cur = plan.blocks[idx]; const now = new Date().toISOString(); let cheers = [];
+      app.mutate(rec => { blockStatus(rec, key, cur.key || blockKey(key, cur.id), 'done', Math.round((Date.now() - blockStartedAt) / 6000) / 10, { session: sessId }); closeSession(rec, key, { nextDate: date.value || null }, { session: sessId, now }); const seeded = seedCelebrations(rec, app.result, app.data, { now, session: sessId }); cheers = seeded.length ? [] : celebrate(rec, app.result, app.data, { now, session: sessId }); takeSnapshot(rec, app.result, 'money-date', { now, session: sessId }); }, 'program');
+      const summary = clientSummary(app.record, app.result, app.data, cachedSensitivity(app)); const action = (programOf(app.record).sessions[key] || {}).action || summary.action;
+      app.lastMoneyDateEmail = moneyDateEmail(app.record, summary, { nextDate: date.value ? F.dateLong(date.value) : null, action });
+      app.toast('Money date saved. ' + (cheers.length ? cheers[0].text + '. ' : '') + 'The summary is on the Money date screen.', { label: 'Open', action: () => { location.hash = '#/money-date'; } });
+      app.session = null; location.hash = '#/money-date';
+    } }, 'Close the money date'));
+  }
   function drawQuestions(b) {
     b.questions.forEach(q => {
       body.appendChild(say(q.text));
+      if (q.fills === 'program.satisfaction') { body.removeChild(body.lastChild); satisfactionScale(q.text); return; }
+      if (q.fills === 'program.worthIt') { body.removeChild(body.lastChild); worthItGrid(q.text); return; }
       if (/^program\./.test(q.fills)) { const key = q.fills.replace('program.', ''); body.appendChild(h('textarea', { class: 'input wide', 'aria-label': q.text, value: programOf(app.record).notes[key] || '', onChange: e => app.mutate(rec => { setNote(rec, key, e.target.value.trim(), { session: 's' + n }); }, 'program') })); }
       else body.appendChild(h('p', { class: 'small muted' }, 'Type it where it lives: ', h('a', { href: b.room || '#/ledger/' + (q.fills.split('.')[0] === 'anchor' ? 'spending' : q.fills.split('.')[0]) }, 'open the room')));
     });

@@ -16,7 +16,7 @@ import { createRow } from '../../engine/record.js';
 import { freshFacts } from '../../engine/fields.js';
 import { PLANET_SHORT } from '../../engine/sun.js';
 
-const FAMILY_ORDER = ['spend', 'earn', 'keep', 'grow', 'protect', 'assume'];
+const FAMILY_ORDER = ['spend', 'earn', 'keep', 'grow', 'protect', 'assume', 'value'];
 
 export function mount(host, app) {
   const coach = app.view === 'coach';

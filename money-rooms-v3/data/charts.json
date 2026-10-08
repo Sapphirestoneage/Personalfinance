@@ -3,44 +3,246 @@
  "source": "The chart catalog (Level 12, MR-063): for every chart the one question it answers, the session it first appears in, who sees it, and the gentle title. Builders live in engine/chartdata.js and engine/chartdata-more.js; renderers in ui/charts.js and ui/charts-more.js.",
  "verify": false,
  "charts": {
-  "sankey": { "question": "Where does every dollar go?", "firstSession": 1, "clientVisible": true, "gentle": "Where the money goes each month" },
-  "netWorth": { "question": "Where is this heading?", "firstSession": 4, "clientVisible": true, "gentle": "What you could have over time" },
-  "balanceSheet": { "question": "What do I own and owe?", "firstSession": 2, "clientVisible": true, "gentle": "What you own and owe" },
-  "debtRace": { "question": "When is each debt gone?", "firstSession": 2, "clientVisible": true, "gentle": "When each debt is gone" },
-  "runway": { "question": "How long could I last, and on what?", "firstSession": 3, "clientVisible": true, "gentle": "How long your cash lasts" },
-  "fiGauge": { "question": "How far along am I?", "firstSession": 4, "clientVisible": true, "gentle": "How far along you are" },
-  "draftt": { "question": "Is each share of my pay in a healthy range?", "firstSession": 1, "clientVisible": true, "gentle": "Each share of your pay against a healthy range" },
-  "waterfall": { "question": "Where should new savings go first?", "firstSession": 8, "clientVisible": true, "gentle": "Where new savings go first" },
-  "taxes": { "question": "Where does my pay go before I see it?", "firstSession": 6, "clientVisible": true, "gentle": "Where your pay goes before you see it" },
-  "savingsRateCurve": { "question": "What does one more point of saving buy me?", "firstSession": 4, "clientVisible": true, "gentle": "How much saving changes when work becomes a choice" },
-  "fiLadderLines": { "question": "How close am I to each kind of freedom?", "firstSession": 4, "clientVisible": true, "gentle": "When each kind of enough arrives" },
-  "netWorthStacked": { "question": "Where will the money sit as it grows?", "firstSession": 8, "clientVisible": true, "gentle": "What you could have, and where it sits" },
-  "milestones": { "question": "Which dates matter, and in what order?", "firstSession": 4, "clientVisible": true, "gentle": "The dates that matter, in order" },
-  "tornado": { "question": "What moves my date most?", "firstSession": 5, "clientVisible": true, "gentle": "The things that move your date most" },
-  "paycheckWaterfall": { "question": "Where does each dollar of pay go?", "firstSession": 1, "clientVisible": true, "gentle": "Where each dollar of pay goes" },
-  "spendingTreemap": { "question": "What does a month buy, needs against wants?", "firstSession": 1, "clientVisible": true, "gentle": "What a month buys, needs and wants" },
-  "drafttBullets": { "question": "Which share of pay is out of range?", "firstSession": 1, "clientVisible": true, "gentle": "Each share of pay against its healthy range" },
-  "debtCompared": { "question": "Is relief worth the extra interest?", "firstSession": 6, "clientVisible": true, "gentle": "Three ways to pay the debts off" },
-  "taxBucketMix": { "question": "Which tax rules does my money sit under?", "firstSession": 8, "clientVisible": true, "gentle": "Which tax rules your money sits under" },
-  "allocationDonut": { "question": "How is the money invested?", "firstSession": 8, "clientVisible": true, "gentle": "Stocks, bonds and cash" },
-  "runwayStaircase": { "question": "How long could I last at each level of spending?", "firstSession": 3, "clientVisible": true, "gentle": "How long the cash lasts at each level of spending" },
-  "ruleOf5Gauge": { "question": "How far is the cash target, and what closes it?", "firstSession": 3, "clientVisible": true, "gentle": "Your cash target and the monthly amount that closes it" },
-  "contributionRoom": { "question": "How much room is left in the accounts this year?", "firstSession": 8, "clientVisible": true, "gentle": "Room left in the 401(k), IRA and HSA this year" },
-  "incomeByType": { "question": "Where does the income come from?", "firstSession": 1, "clientVisible": true, "gentle": "Where the income comes from" },
-  "feeDrag": { "question": "What are fees costing me?", "firstSession": 8, "clientVisible": true, "gentle": "What fund fees cost over a lifetime" },
-  "guardrails": { "question": "How much can spending move after work?", "firstSession": 7, "clientVisible": true, "gentle": "The band your spending can move in after work" },
-  "coastCurve": { "question": "What amount would coast to enough from each age?", "firstSession": 7, "clientVisible": true, "gentle": "The amount that would coast to enough from each age" },
-  "healthcareBridge": { "question": "What do health premiums cost between work and 65?", "firstSession": 7, "clientVisible": true, "gentle": "Health premiums between stopping work and 65" },
-  "hoursOfWork": { "question": "What do the biggest areas cost in hours of work?", "firstSession": 3, "clientVisible": true, "gentle": "What the biggest areas cost in hours worked" },
-  "gutDreamActual": { "question": "How far off was I?", "firstSession": 1, "clientVisible": true, "gentle": "What you said, what it is, what you would want" },
-  "benchmarks": { "question": "How does my net worth compare with two rules of thumb?", "firstSession": 9, "clientVisible": false, "gentle": "Net worth against two rules of thumb" },
-  "crossover": { "question": "When does my money earn more than I spend?", "firstSession": 4, "clientVisible": true, "gentle": "When the money starts paying for life" },
-  "fiDateWaterfall": { "question": "What moved my date since last time, and was it learning or doing?", "firstSession": 2, "clientVisible": true, "gentle": "What moved your date since last time" },
-  "cashflowCalendar": { "question": "Why am I short before payday?", "firstSession": 3, "clientVisible": true, "gentle": "Paydays and bills across the month" },
-  "pictureVsProgress": { "question": "Am I learning, or actually moving?", "firstSession": 2, "clientVisible": true, "gentle": "How much is in, and how far along" },
-  "effortVsMarket": { "question": "Did I do this, or did the market?", "firstSession": 8, "clientVisible": true, "gentle": "What you added and what the market added" },
-  "stressTrend": { "question": "Do I feel better?", "firstSession": 4, "clientVisible": true, "gentle": "How money has felt, session by session" },
-  "debtCurves": { "question": "Lowest rate first or most stress first: what does relief cost?", "firstSession": 6, "clientVisible": true, "gentle": "Two ways to pay the debts off" },
-  "goalTimeline": { "question": "When does each goal happen?", "firstSession": 5, "clientVisible": true, "gentle": "When each goal lands", "route": "#/goals" }
+  "sankey": {
+   "question": "Where does every dollar go?",
+   "firstSession": 1,
+   "clientVisible": true,
+   "gentle": "Where the money goes each month"
+  },
+  "netWorth": {
+   "question": "Where is this heading?",
+   "firstSession": 4,
+   "clientVisible": true,
+   "gentle": "What you could have over time"
+  },
+  "balanceSheet": {
+   "question": "What do I own and owe?",
+   "firstSession": 2,
+   "clientVisible": true,
+   "gentle": "What you own and owe"
+  },
+  "debtRace": {
+   "question": "When is each debt gone?",
+   "firstSession": 2,
+   "clientVisible": true,
+   "gentle": "When each debt is gone"
+  },
+  "runway": {
+   "question": "How long could I last, and on what?",
+   "firstSession": 3,
+   "clientVisible": true,
+   "gentle": "How long your cash lasts"
+  },
+  "fiGauge": {
+   "question": "How far along am I?",
+   "firstSession": 4,
+   "clientVisible": true,
+   "gentle": "How far along you are"
+  },
+  "draftt": {
+   "question": "Is each share of my pay in a healthy range?",
+   "firstSession": 1,
+   "clientVisible": true,
+   "gentle": "Each share of your pay against a healthy range"
+  },
+  "waterfall": {
+   "question": "Where should new savings go first?",
+   "firstSession": 8,
+   "clientVisible": true,
+   "gentle": "Where new savings go first"
+  },
+  "taxes": {
+   "question": "Where does my pay go before I see it?",
+   "firstSession": 6,
+   "clientVisible": true,
+   "gentle": "Where your pay goes before you see it"
+  },
+  "savingsRateCurve": {
+   "question": "What does one more point of saving buy me?",
+   "firstSession": 4,
+   "clientVisible": true,
+   "gentle": "How much saving changes when work becomes a choice"
+  },
+  "fiLadderLines": {
+   "question": "How close am I to each kind of freedom?",
+   "firstSession": 4,
+   "clientVisible": true,
+   "gentle": "When each kind of enough arrives"
+  },
+  "netWorthStacked": {
+   "question": "Where will the money sit as it grows?",
+   "firstSession": 8,
+   "clientVisible": true,
+   "gentle": "What you could have, and where it sits"
+  },
+  "milestones": {
+   "question": "Which dates matter, and in what order?",
+   "firstSession": 4,
+   "clientVisible": true,
+   "gentle": "The dates that matter, in order"
+  },
+  "tornado": {
+   "question": "What moves my date most?",
+   "firstSession": 5,
+   "clientVisible": true,
+   "gentle": "The things that move your date most"
+  },
+  "paycheckWaterfall": {
+   "question": "Where does each dollar of pay go?",
+   "firstSession": 1,
+   "clientVisible": true,
+   "gentle": "Where each dollar of pay goes"
+  },
+  "spendingTreemap": {
+   "question": "What does a month buy, needs against wants?",
+   "firstSession": 1,
+   "clientVisible": true,
+   "gentle": "What a month buys, needs and wants"
+  },
+  "drafttBullets": {
+   "question": "Which share of pay is out of range?",
+   "firstSession": 1,
+   "clientVisible": true,
+   "gentle": "Each share of pay against its healthy range"
+  },
+  "debtCompared": {
+   "question": "Is relief worth the extra interest?",
+   "firstSession": 6,
+   "clientVisible": true,
+   "gentle": "Three ways to pay the debts off"
+  },
+  "taxBucketMix": {
+   "question": "Which tax rules does my money sit under?",
+   "firstSession": 8,
+   "clientVisible": true,
+   "gentle": "Which tax rules your money sits under"
+  },
+  "allocationDonut": {
+   "question": "How is the money invested?",
+   "firstSession": 8,
+   "clientVisible": true,
+   "gentle": "Stocks, bonds and cash"
+  },
+  "runwayStaircase": {
+   "question": "How long could I last at each level of spending?",
+   "firstSession": 3,
+   "clientVisible": true,
+   "gentle": "How long the cash lasts at each level of spending"
+  },
+  "ruleOf5Gauge": {
+   "question": "How far is the cash target, and what closes it?",
+   "firstSession": 3,
+   "clientVisible": true,
+   "gentle": "Your cash target and the monthly amount that closes it"
+  },
+  "contributionRoom": {
+   "question": "How much room is left in the accounts this year?",
+   "firstSession": 8,
+   "clientVisible": true,
+   "gentle": "Room left in the 401(k), IRA and HSA this year"
+  },
+  "incomeByType": {
+   "question": "Where does the income come from?",
+   "firstSession": 1,
+   "clientVisible": true,
+   "gentle": "Where the income comes from"
+  },
+  "feeDrag": {
+   "question": "What are fees costing me?",
+   "firstSession": 8,
+   "clientVisible": true,
+   "gentle": "What fund fees cost over a lifetime"
+  },
+  "guardrails": {
+   "question": "How much can spending move after work?",
+   "firstSession": 7,
+   "clientVisible": true,
+   "gentle": "The band your spending can move in after work"
+  },
+  "coastCurve": {
+   "question": "What amount would coast to enough from each age?",
+   "firstSession": 7,
+   "clientVisible": true,
+   "gentle": "The amount that would coast to enough from each age"
+  },
+  "healthcareBridge": {
+   "question": "What do health premiums cost between work and 65?",
+   "firstSession": 7,
+   "clientVisible": true,
+   "gentle": "Health premiums between stopping work and 65"
+  },
+  "hoursOfWork": {
+   "question": "What do the biggest areas cost in hours of work?",
+   "firstSession": 3,
+   "clientVisible": true,
+   "gentle": "What the biggest areas cost in hours worked"
+  },
+  "gutDreamActual": {
+   "question": "How far off was I?",
+   "firstSession": 1,
+   "clientVisible": true,
+   "gentle": "What you said, what it is, what you would want"
+  },
+  "benchmarks": {
+   "question": "How does my net worth compare with two rules of thumb?",
+   "firstSession": 9,
+   "clientVisible": false,
+   "gentle": "Net worth against two rules of thumb"
+  },
+  "crossover": {
+   "question": "When does my money earn more than I spend?",
+   "firstSession": 4,
+   "clientVisible": true,
+   "gentle": "When the money starts paying for life"
+  },
+  "fiDateWaterfall": {
+   "question": "What moved my date since last time, and was it learning or doing?",
+   "firstSession": 2,
+   "clientVisible": true,
+   "gentle": "What moved your date since last time"
+  },
+  "cashflowCalendar": {
+   "question": "Why am I short before payday?",
+   "firstSession": 3,
+   "clientVisible": true,
+   "gentle": "Paydays and bills across the month"
+  },
+  "pictureVsProgress": {
+   "question": "Am I learning, or actually moving?",
+   "firstSession": 2,
+   "clientVisible": true,
+   "gentle": "How much is in, and how far along"
+  },
+  "effortVsMarket": {
+   "question": "Did I do this, or did the market?",
+   "firstSession": 8,
+   "clientVisible": true,
+   "gentle": "What you added and what the market added"
+  },
+  "debtCurves": {
+   "question": "Lowest rate first or most stress first: what does relief cost?",
+   "firstSession": 6,
+   "clientVisible": true,
+   "gentle": "Two ways to pay the debts off"
+  },
+  "goalTimeline": {
+   "question": "When does each goal happen?",
+   "firstSession": 5,
+   "clientVisible": true,
+   "gentle": "When each goal lands",
+   "route": "#/goals"
+  },
+  "satisfactionTrend": {
+   "question": "Do I feel better about where the money goes?",
+   "firstSession": 1,
+   "clientVisible": true,
+   "gentle": "How it has felt, session by session"
+  },
+  "worthIt": {
+   "question": "Which spending is worth it, and which is not?",
+   "firstSession": 3,
+   "clientVisible": true,
+   "gentle": "What the money buys for you"
+  }
  }
 }

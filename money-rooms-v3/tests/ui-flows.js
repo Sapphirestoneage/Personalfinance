@@ -12,7 +12,7 @@ export const flows = [
     await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', 'maya.json')); await page.waitForSelector('.orbit');
     /* the scoreboard: six tiles, one next action, the rest by group */
     await page.goto(base + 'index.html#/scoreboard'); await page.waitForSelector('.score-tiles');
-    check('six headline tiles', (await page.locator('.score-tile').count()) === 6);
+    check('six headline tiles for the client, a seventh for the coach', (await page.locator('.score-tile:not(.coach-tile)').count()) === 6 && (await page.locator('.score-tile.coach-tile').count()) === 1);
     check('one next action', (await page.locator('.next-action').count()) === 1);
     const text0 = await page.textContent('#main');
     check('no internal words on screen', !/registry|\bnode\b|\bedge\b|\bband\b|lever family|decomposition/i.test(text0), (text0.match(/.{0,20}(registry|\bnode\b|\bedge\b|\bband\b|lever family|decomposition).{0,20}/i) || [])[0]);
@@ -23,20 +23,32 @@ export const flows = [
     check('the drawer carries confidence, where it sits, the ladder and the next action', /Confidence/.test(drawer) && /Where it sits/.test(drawer) && /Ladder/.test(drawer) && /Next action/.test(drawer), drawer.slice(0, 200));
     check('the drawer deep link is stable', /^#\/scoreboard\/m\/savingsRateTakeHome$/.test(await page.evaluate(() => location.hash)));
     await page.keyboard.press('Escape');
-    /* the money date: five steps, ends in a snapshot */
-    await page.goto(base + 'index.html#/money-date'); await page.waitForSelector('.md-steps');
-    await page.click('.md-scale button:nth-child(4)'); await page.waitForTimeout(150);
-    await page.keyboard.press('Escape'); await page.click('.md-foot .btn.primary'); await page.waitForSelector('.md-balances');
-    const first = await page.$('.md-balances input'); await first.fill('1200'); await first.press('Tab'); await page.waitForTimeout(500);
-    await page.keyboard.press('Escape'); await page.click('.md-foot .btn.primary'); await page.waitForTimeout(150);
-    await page.fill('input[aria-label="What is new"]', 'Raise coming in January'); await page.click('.md-body .row .btn'); await page.waitForTimeout(150);
-    await page.keyboard.press('Escape'); await page.click('.md-foot .btn.primary'); await page.waitForSelector('.md-moved');
-    check('what moved lists the six', (await page.locator('.md-moved li').count()) === 6);
-    await page.keyboard.press('Escape'); await page.click('.md-foot .btn.primary'); await page.waitForTimeout(700);
+    /* the money date: a coach-run call through the session runner, ending in a snapshot and a summary */
+    await page.goto(base + 'index.html#/money-date'); await page.waitForSelector('.md-prep');
+    const prep = await page.textContent('#main');
+    check('the prep card says where the client is and what changed', /What changed/.test(prep) && /Before the call/.test(prep) && /Money dates/.test(prep));
+    await page.click('a:has-text("Start the money date")'); await page.waitForSelector('.runner-tl'); await page.waitForTimeout(300);
+    check('the runner opens the money date', /Money date,/.test(await page.textContent('#main h1')) && (await page.locator('.tl-seg').count()) === 7);
+    const step = async () => { await page.keyboard.press('Escape'); await page.click('.runner-foot .btn.primary'); await page.waitForTimeout(250); };
+    await step(); /* check-in */
+    await page.waitForSelector('.md-balances'); const first = await page.$('.md-balances input'); await first.fill('1200'); await first.press('Tab'); await page.waitForTimeout(500);
+    await step(); /* refresh */
+    check('what changed lists the six', (await page.locator('.md-moved li').count()) === 6);
+    await step(); /* changed */
+    await step(); /* milestones */
+    await page.click('.satisfaction-scale button:has-text("7")'); await page.waitForTimeout(200);
+    check('satisfaction is stored under the money date', await page.evaluate(() => (mr3.record.program.satisfaction || []).some(s => /^md-/.test(s.session) && s.score === 7)));
+    await step(); /* satisfaction */
+    await page.fill('input[aria-label="The one action for the month"]', 'Move $100 from food delivery to the travel fund'); await page.press('input[aria-label="The one action for the month"]', 'Tab'); await page.waitForTimeout(150);
+    await step(); /* action */
+    await page.keyboard.press('Escape'); await page.click('.runner-foot button:has-text("Close the money date")'); await page.waitForTimeout(800);
     const snaps = await page.evaluate(() => (mr3.record.snapshots || []).map(s => s.kind));
     check('the money date wrote one snapshot', snaps.length === 1 && snaps[0] === 'money-date', snaps.join(','));
-    check('the stress score is on the program', await page.evaluate(() => (mr3.record.program.stress || []).some(s => /^md-/.test(s.session) && s.score === 4)));
-    check('the balance move is a move, not a correction', await page.evaluate(() => mr3.record.journal.filter(l => l.kind === 'set' && l.field === 'balance' || l.field === 'accountBalance').slice(-1)[0].why === 'move'));
+    check('the money date is a closed session keyed by month with its action', await page.evaluate(() => Object.keys(mr3.record.program.sessions).some(k => /^md-\d{4}-\d{2}$/.test(k) && mr3.record.program.sessions[k].status === 'closed' && /food delivery/.test(mr3.record.program.sessions[k].action || ''))));
+    check('the balance move is a move, not a correction', await page.evaluate(() => mr3.record.journal.filter(l => l.kind === 'set' && (l.field === 'balance' || l.field === 'accountBalance')).slice(-1)[0].why === 'move'));
+    await page.waitForSelector('.md-summary');
+    const mail = await page.textContent('.md-summary');
+    check('the summary carries the six, the action and the next date line', /in six lines/.test(mail) && /The one thing this month: move \$100/.test(mail));
     /* the scoreboard now compares against it; the client view speaks gently */
     await page.goto(base + 'index.html#/scoreboard'); await page.waitForSelector('.score-tiles'); await page.waitForTimeout(300);
     check('tiles carry a trend after the snapshot', (await page.locator('.score-tile .trend').count()) >= 4);
@@ -699,7 +711,9 @@ flows.push({
     await page.waitForTimeout(150);
     check('a plate item can be marked done', await page.isChecked('tbody tr:first-child input.pick'));
     await page.click('text=Close this session');
+    await page.waitForSelector('.satisfaction-ask'); await page.click('.satisfaction-ask button:has-text("7")');
     await page.waitForTimeout(200);
+    check('the close asked satisfaction and kept the score', await page.evaluate(() => (mr3.record.program.satisfaction || []).some(s => s.score === 7)));
     const sessions = await page.evaluate(() => mr3.record.sessions.length);
     check('closing takes a session snapshot', sessions === 1, String(sessions));
     await page.goto(base + 'index.html#/ledger/spending/line');
@@ -789,6 +803,7 @@ flows.push({
     /* a note, then close */
     await page.fill('input[aria-label="Session note"]', 'Confirmed the Solo 401k deposit; HSA statement to come.');
     await page.click('text=Close this session');
+    await page.waitForSelector('.satisfaction-ask'); await page.click('.satisfaction-ask button:has-text("6")');
     await page.waitForTimeout(200);
     const saved = await page.evaluate(() => mr3.record.sessions.map(s => s.note || s.summary || ''));
     check('closing saves the typed note with the snapshot', saved.length === 1 && saved[0].indexOf('Solo 401k') !== -1, JSON.stringify(saved));
@@ -815,7 +830,7 @@ flows.push({
     await page.waitForSelector('.orbit');
     await page.waitForTimeout(300);
     const card0 = await page.textContent('.unlock-card');
-    check('a blank Maya starts with nothing open', /0 of 82/.test(card0) && /Next unlock/.test(card0), card0.slice(0, 120));
+    check('a blank Maya starts with nothing open', /0 of 85/.test(card0) && /Next unlock/.test(card0), card0.slice(0, 120));
     /* the Home card's Go lands in the field that opens the most */
     await page.click('.unlock-card .linklike');
     await page.waitForTimeout(700);

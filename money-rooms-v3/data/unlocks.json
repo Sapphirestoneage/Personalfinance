@@ -492,6 +492,32 @@
     null,
     "name"
    ]
+  ],
+  "a satisfaction score from a session close or a money date": [
+   [
+    "session",
+    null,
+    "satisfaction"
+   ]
+  ],
+  "worth-it scores for the spending areas": [
+   [
+    "session",
+    null,
+    "worthIt"
+   ]
+  ],
+  "worth-it scores and monthly spending": [
+   [
+    "session",
+    null,
+    "worthIt"
+   ],
+   [
+    "spending",
+    "line",
+    "amount"
+   ]
   ]
  },
  "probeTypes": [
@@ -594,7 +620,7 @@
    "accountType": "401k",
    "apr": 0.22,
    "rate": 0.06,
-   "promoApr": 0.0,
+   "promoApr": 0,
    "goalCost": 500000,
    "accountBalance": 1500000,
    "balance": 400000

@@ -90,3 +90,14 @@ body[data-view="client"] .chip.zone-watch { border-color: var(--line); color: va
 .op-six .op-val { font-weight: var(--w-semibold); font-size: var(--fs-16); overflow-wrap: anywhere; }
 .op-six .better { color: var(--sapphire-700); }
 @media (max-width: 720px) { .op-six-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* MR-065: satisfaction and worth-it in the runner and the session close; the coach's seventh tile */
+.satisfaction-scale .btn, .md-scale .btn { min-width: 40px; }
+.worthit-grid td { white-space: normal; }
+.worthit-grid .worthit-scale { gap: 4px; flex-wrap: wrap; }
+.worthit-grid .worthit-scale .btn.small { min-width: 30px; padding: 0 6px; }
+.worthit-fold { margin-top: var(--s-2); }
+.worthit-fold summary { cursor: pointer; color: var(--sapphire-700); }
+.score-tile.coach-tile { border-style: dashed; }
+.satisfaction-ask .stress-scale { margin: var(--s-2) 0; }
+.md-prep .score-list li { padding: 6px 0; }
+.md-summary { white-space: pre-wrap; font-family: var(--mono); font-size: var(--fs-12); background: var(--paper-2); padding: var(--s-2); border-radius: var(--r-field); }

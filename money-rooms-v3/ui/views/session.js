@@ -8,7 +8,7 @@ import { session as leverage } from '../../engine/leverage.js';
 import { followUpEmail } from '../../engine/email.js';
 import { sinceLastSession, changeText } from '../../engine/plates.js';
 import { PLANET_LABELS, PLANET_SHORT } from '../../engine/sun.js';
-import { clientName } from '../app.js';
+import { clientName, closeOverlay } from '../app.js';
 import { append } from '../../engine/journal.js';
 import { STATES, SOURCES } from '../../engine/states.js';
 import { renderShelf } from '../shelf.js';
@@ -21,6 +21,7 @@ import { targetsEmail } from '../../engine/email.js';
 import { finishChanges, finishMonths, celebrations } from '../../engine/goals.js';
 import { nextWins } from './goals.js';
 import { takeSnapshot, celebrate, seedCelebrations, overallNextAction } from '../../engine/momentum.js';
+import { recordSatisfaction, programOf } from '../../engine/program.js';
 import { cachedSensitivity } from '../levers-bridge.js';
 
 export function mount(host, app) {
@@ -30,7 +31,7 @@ export function mount(host, app) {
     h('a', { class: 'btn primary', href: '#/prep' }, 'Prepare the next session'),
     h('a', { class: 'btn', href: '#/call' }, 'Run it'),
     h('a', { class: 'btn', href: '#/goals' }, 'Goals'),
-    h('button', { class: 'btn', onClick: () => { snapshot(app, noteInput.value.trim()); noteInput.value = ''; } }, 'Close this session')));
+    h('button', { class: 'btn', onClick: () => askSatisfactionThenClose(app, () => { snapshot(app, noteInput.value.trim()); noteInput.value = ''; }) }, 'Close this session')));
   host.appendChild(header);
   const meters = h('div', { class: 'meters' }); host.appendChild(meters);
   const grid = h('div', { class: 'grid grid-2' });
@@ -165,7 +166,7 @@ function plates(app, s, tab, setTab) {
 function emailPanel(app, s) {
   const panel = h('section', { class: 'panel' });
   const hasTargets = Object.keys(app.record.targets || {}).length > 0;
-  const text = hasTargets ? targetsEmail(app.record, proposals(variance(app.record, actualsOf(app)).rows, app.record, app.result).rows.map(t => Object.assign({}, t, { saved: !!app.record.targets[t.key] })), AREA_LABELS) : followUpEmail(app.record, app.data.fields, s.theirPlate.filter(i => !isDone(app, i)), { nextWin: (nextWins(Object.assign(Object.create(Object.getPrototypeOf(app)), app, { view: 'client' }), 1)[0] || {}).text || null, milestone: ((app.record.celebrations || []).filter(c => !c.seeded).slice(-1)[0] || {}).text || null, action: (overallNextAction(cachedSensitivity(app)) || {}).sentence || null });
+  const text = hasTargets ? targetsEmail(app.record, proposals(variance(app.record, actualsOf(app)).rows, app.record, app.result).rows.map(t => Object.assign({}, t, { saved: !!app.record.targets[t.key] })), AREA_LABELS) : followUpEmail(app.record, app.data.fields, s.theirPlate.filter(i => !isDone(app, i)), { nextWin: (nextWins(Object.assign(Object.create(Object.getPrototypeOf(app)), app, { view: 'client' }), 1)[0] || {}).text || null, milestone: ((app.record.celebrations || []).filter(c => !c.seeded).slice(-1)[0] || {}).text || null, action: (overallNextAction(cachedSensitivity(app), app.record, app.result) || {}).sentence || null });
   panel.appendChild(h('h2', null, hasTargets ? 'Targets email' : 'Follow-up email', h('span', { class: 'tag' }, hasTargets ? 'what they said, in their words' : 'by institution')));
   const ta = h('textarea', { class: 'input email', readOnly: true, 'aria-label': 'Follow-up email draft', value: text });
   panel.appendChild(ta);
@@ -191,6 +192,16 @@ function sinceLast(app) {
   if (moves.length) panel.appendChild(h('p', { class: 'small goal-moves' }, 'Since last time, ' + moves.slice(0, 3).map(m => /^you /.test(m.text) ? m.text : m.text.charAt(0).toLowerCase() + m.text.slice(1)).join('; ') + '.'));
   if (r.changes.length) panel.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data' }, h('tbody', null, r.changes.slice(0, 8).map(c => h('tr', null, h('td', { class: 'wrap' }, c.row + ': ' + c.label.toLowerCase()), h('td', { class: 'small muted' }, c.text)))))));
   return panel;
+}
+
+/* Level 12 (MR-065): the ten-second satisfaction question sits inside every close; the score is stored on the program before the snapshot is taken */
+export function askSatisfactionThenClose(app, onClose) {
+  const n = (app.record.sessions || []).length + 1; const key = app.session && /^md-/.test(app.session) ? app.session : 's' + n;
+  const cur = (programOf(app.record).satisfaction || []).find(s => s.session === key);
+  const body = h('div', { class: 'satisfaction-ask' }, h('h2', null, 'Before we close'), h('p', { class: 'readaloud big' }, 'How satisfied are you with where your money is going right now, one to ten?'),
+    h('div', { class: 'row taps stress-scale', role: 'group', 'aria-label': 'Satisfaction, one to ten' }, Array.from({ length: 10 }, (_, k) => h('button', { class: 'btn' + (cur && cur.score === k + 1 ? ' primary' : ''), 'aria-pressed': String(!!(cur && cur.score === k + 1)), onClick: () => { app.mutate(rec => { recordSatisfaction(rec, key, k + 1, { session: key }); }, 'program'); closeOverlay(); onClose(); } }, String(k + 1)))),
+    h('p', { class: 'small muted' }, 'One tap closes the session. '), h('button', { class: 'btn quiet', onClick: () => { closeOverlay(); onClose(); } }, 'Skip this time'));
+  app.openDrawer(body, { label: 'Satisfaction', title: 'Close this session' });
 }
 
 export function snapshot(app, note) {

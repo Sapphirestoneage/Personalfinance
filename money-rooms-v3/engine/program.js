@@ -12,7 +12,7 @@ import { isGuessRow } from './guesses.js';
 
 export const HIGH_APR = 0.10;
 
-export function defaultProgram() { return { sessions: {}, moved: {}, parked: [], checklist: {}, stress: [], mappers: {}, merchantOverrides: {}, notes: {}, baseline: null, blindSpot: {}, urgentCount: 0, flexAbsorbed: [], homeworkSent: {}, routine: '', testimonial: '' }; }
+export function defaultProgram() { return { sessions: {}, moved: {}, parked: [], checklist: {}, stress: [], satisfaction: [], worthIt: [], mappers: {}, merchantOverrides: {}, notes: {}, baseline: null, blindSpot: {}, urgentCount: 0, flexAbsorbed: [], homeworkSent: {}, routine: '', testimonial: '' }; }
 export function programOf(record) { return Object.assign(defaultProgram(), record.program || {}); }
 export function blockKey(n, blockId) { return String(n) + ':' + blockId; }
 function touch(record, now) { record.updatedAt = now || new Date().toISOString(); }
@@ -69,6 +69,26 @@ export function recordStress(record, session, score, meta) {
   return setProgram(record, P => { P.stress = P.stress.filter(x => x.session !== session); P.stress.push({ session, score: s, date: (m.now || new Date().toISOString()).slice(0, 10) }); P.stress.sort((a, b) => order(a.session) - order(b.session)); return 'stress'; }, m);
 }
 const order = s => s === 'discovery' ? 0 : /^s?\d+$/.test(String(s)) ? Number(String(s).replace(/^s/, '')) : 999;
+/* Level 12 (MR-065): satisfaction at every session close and money date; worth-it per area in sessions 3 and 4 and on a money date */
+export function recordSatisfaction(record, session, score, meta) {
+  const m = meta || {}; const s = Math.max(1, Math.min(10, Math.round(score)));
+  return setProgram(record, P => { P.satisfaction = (P.satisfaction || []).filter(x => x.session !== session); P.satisfaction.push({ session, score: s, date: (m.now || new Date().toISOString()).slice(0, 10) }); P.satisfaction.sort((a, b) => a.date.localeCompare(b.date) || order(a.session) - order(b.session)); return 'satisfaction'; }, m);
+}
+export function recordWorthIt(record, session, scores, meta) {
+  const m = meta || {}; const clean = {}; Object.keys(scores || {}).forEach(a => { const v = scores[a]; if (typeof v === 'number' && v >= 1 && v <= 10) clean[a] = Math.round(v); });
+  if (!Object.keys(clean).length) return null;
+  return setProgram(record, P => { P.worthIt = (P.worthIt || []).filter(x => x.session !== session); P.worthIt.push({ session, date: (m.now || new Date().toISOString()).slice(0, 10), scores: clean }); P.worthIt.sort((a, b) => a.date.localeCompare(b.date)); return 'worthIt'; }, m);
+}
+export function latestSatisfaction(record) { const P = programOf(record); return (P.satisfaction || []).slice(-1)[0] || null; }
+/* the latest worth-it score per area, each from the most recent ask that rated it */
+export function latestWorthIt(record) { const P = programOf(record); const out = {}; (P.worthIt || []).forEach(w => Object.keys(w.scores).forEach(a => { out[a] = { score: w.scores[a], session: w.session, date: w.date }; })); return out; }
+/* the money date: a session keyed md-YYYY-MM, the maintenance tier after graduation (session 12 closed) */
+export function moneyDateKey(date) { return 'md-' + String(date || new Date().toISOString()).slice(0, 7); }
+export function isMoneyDateKey(k) { return /^md-\d{4}-\d{2}$/.test(String(k)); }
+export function isGraduated(record) { const P = programOf(record); return !!(P.sessions['12'] && P.sessions['12'].status === 'closed'); }
+export function programMode(record) { return isGraduated(record) ? 'maintenance' : 'program'; }
+export function moneyDates(record) { const P = programOf(record); return Object.keys(P.sessions).filter(isMoneyDateKey).sort().map(k => Object.assign({ key: k, month: k.slice(3) }, P.sessions[k])); }
+export function setMonthAction(record, key, text, meta) { return setProgram(record, P => { const s = P.sessions[key] = P.sessions[key] || { blocks: {} }; s.action = text; return 'sessions.' + key + '.action'; }, meta); }
 export function stressScores(record) { return programOf(record).stress.slice(); }
 
 /* ---- the account checklist ---- */
@@ -171,6 +191,8 @@ export function programRows(record, result, data) {
   pushSession('discovery', 'Discovery', 0);
   const urgents = Object.keys(P.sessions).filter(k => /^u/.test(k)).map(k => Object.assign({ key: k }, P.sessions[k]));
   for (let n = 1; n <= 12; n++) { pushSession(String(n), 'Session ' + n, n); urgents.filter(u => (u.afterSession || 0) === n).forEach(u => rows.push({ key: u.key, n: null, label: 'Urgent', name: 'Urgent: ' + ((data.curricula.urgentKinds.find(k => k[0] === u.urgent.kind) || [])[1] || u.urgent.kind), status: u.status, date: (u.startedAt || '').slice(0, 10), readiness: null, checklist: null, homeworkDone: 0, stress: null, urgent: u.urgent, absorbed: [] })); }
+  /* Level 12 (MR-065): money dates after the numbered sessions, newest last */
+  moneyDates(record).forEach(md => rows.push({ key: md.key, n: null, moneyDate: true, label: 'Money date', name: 'Money date, ' + md.month, status: md.status, date: md.date || (md.startedAt || '').slice(0, 10) || null, readiness: null, checklist: null, homeworkDone: 0, stress: null, action: md.action || null }));
   return rows;
 }
 

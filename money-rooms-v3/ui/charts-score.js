@@ -91,17 +91,41 @@ function effortVsMarket(host, d, o) {
   host.appendChild(h('div', { class: 'suggest' }, (d.flipYear ? (o.client ? 'From about age ' + d.flipAge + ' the market adds more each year than you do. Until then, what you add is the engine.' : 'Contributions of ' + F.dollarsWhole(d.contribAnnual) + ' a year carry the early years; growth takes the lead in ' + d.flipYear + '.') : (o.client ? 'What you put in does most of the work across the whole path.' : 'Contributions outpace growth every working year on the likely path.')) + ' Projected at the likely return; the real split shows on the scoreboard as snapshots build up.'));
 }
 
-/* f. The stress trend: a dot per ask, joined. */
-function stressTrend(host, d, o) {
-  const d3 = d3g(); const W = o.width, H = 200, m = { t: 16, r: 24, b: 30, l: 40 }; const svg = svgIn(host, W, H);
+/* f. Satisfaction over time, with the stress checkpoints as hollow dots on the same timeline. */
+function satisfactionTrend(host, d, o) {
+  const d3 = d3g(); const W = o.width, H = 220, m = { t: 16, r: 24, b: 30, l: 40 }; const svg = svgIn(host, W, H);
   const x = d3.scalePoint().domain(d.points.map((p, i) => i)).range([m.l, W - m.r]).padding(0.5);
   const y = d3.scaleLinear().domain([0, 10]).range([H - m.b, m.t]);
   svg.append('g').attr('transform', 'translate(' + m.l + ',0)').attr('class', 'axis').call(d3.axisLeft(y).ticks(5).tickFormat(v => String(v)));
   svg.append('g').attr('transform', 'translate(0,' + (H - m.b) + ')').attr('class', 'axis').call(d3.axisBottom(x).tickFormat(i => F.shorten(d.points[i].label, 12)));
-  svg.append('path').datum(d.points).attr('class', 'line-path').attr('fill', 'none').attr('d', d3.line().x((p, i) => x(i)).y(p => y(p.score)));
-  svg.append('g').selectAll('circle').data(d.points).join('circle').attr('class', 'dot dot-now').attr('cx', (p, i) => x(i)).attr('cy', p => y(p.score)).attr('r', 5).append('title').text(p => p.label + ': ' + p.score + ' of 10');
-  svg.append('g').selectAll('text').data(d.points).join('text').attr('class', 'chart-label').attr('x', (p, i) => x(i)).attr('y', p => y(p.score) - 9).attr('text-anchor', 'middle').text(p => String(p.score));
-  host.appendChild(h('div', { class: 'suggest' }, d.points.length === 1 ? (o.client ? 'One score so far: ' + d.first + ' of 10. The next session adds a dot.' : 'Asked once so far (' + d.first + ' of 10); the curriculum asks again at sessions 4, 9 and 12.') : d.change < 0 ? (o.client ? 'From ' + d.first + ' to ' + d.last + ' of 10. Lower is lighter.' : 'Down ' + Math.abs(d.change) + ' points from the first ask: ' + d.first + ' to ' + d.last + '.') : d.change > 0 ? (o.client ? 'From ' + d.first + ' to ' + d.last + ' of 10. Worth a word about what changed.' : 'Up ' + d.change + ' points since the first ask; worth asking what changed.') : 'Unchanged at ' + d.last + ' of 10.'));
+  const sat = d.points.map((p, i) => ({ i, v: p.satisfaction })).filter(p => p.v !== null); const st = d.points.map((p, i) => ({ i, v: p.stress })).filter(p => p.v !== null);
+  if (sat.length > 1) svg.append('path').datum(sat).attr('class', 'line-asset').attr('fill', 'none').attr('d', d3.line().x(p => x(p.i)).y(p => y(p.v)));
+  if (st.length > 1) svg.append('path').datum(st).attr('class', 'line-spend').attr('fill', 'none').attr('stroke-dasharray', '4 3').attr('d', d3.line().x(p => x(p.i)).y(p => y(p.v)));
+  svg.append('g').selectAll('circle').data(sat).join('circle').attr('class', 'dot dot-now').attr('cx', p => x(p.i)).attr('cy', p => y(p.v)).attr('r', 5).append('title').text(p => d.points[p.i].label + ': satisfaction ' + p.v + ' of 10');
+  svg.append('g').selectAll('circle').data(st).join('circle').attr('class', 'dot dot-stress').attr('cx', p => x(p.i)).attr('cy', p => y(p.v)).attr('r', 5).append('title').text(p => d.points[p.i].label + ': stress ' + p.v + ' of 10');
+  svg.append('g').selectAll('text').data(sat).join('text').attr('class', 'chart-label').attr('x', p => x(p.i)).attr('y', p => y(p.v) - 9).attr('text-anchor', 'middle').text(p => String(p.v));
+  legend(host, [{ label: o.client ? 'How satisfied you are with where the money goes' : 'Satisfaction (every close and money date)', cls: 'sw-asset' }, { label: o.client ? 'How stressed money feels' : 'Stress (discovery, sessions 4, 9, 12)', cls: 'sw-spend' }]);
+  const S = d.satisfaction, T = d.stress;
+  host.appendChild(h('div', { class: 'suggest' }, S.last === null ? (o.client ? 'The first satisfaction score lands at the next session close.' : 'No satisfaction score yet; the close of every session asks it.') : S.change === null ? (o.client ? 'One reading so far: ' + S.last + ' of 10. The next close adds a dot.' : 'Asked once so far (' + S.last + ' of 10).') : S.change > 0 ? (o.client ? 'Satisfaction went from ' + S.first + ' to ' + S.last + ' of 10.' + (T.change !== null && T.change < 0 ? ' Stress came down too, from ' + T.first + ' to ' + T.last + '.' : '') : 'Satisfaction up ' + S.change + ' points, ' + S.first + ' to ' + S.last + (T.change !== null ? '; stress ' + (T.change < 0 ? 'down ' + Math.abs(T.change) : T.change > 0 ? 'up ' + T.change : 'unchanged') + '.' : '.')) : S.change < 0 ? (o.client ? 'Satisfaction slipped from ' + S.first + ' to ' + S.last + '. Worth a word about what changed.' : 'Satisfaction down ' + Math.abs(S.change) + ' points; worth asking which area moved.') : 'Satisfaction steady at ' + S.last + ' of 10.'));
+}
+
+/* f2. Worth it: a dot per area, cost across, value up; the two corners that matter are named in plain words. */
+function worthIt(host, d, o) {
+  const d3 = d3g(); const W = o.width, H = 280, m = { t: 20, r: 24, b: 34, l: 48 }; const svg = svgIn(host, W, H);
+  const maxC = d3.max(d.areas, a => a.cents) || 1;
+  const x = d3.scaleLinear().domain([0, maxC * 1.15]).range([m.l, W - m.r]); const y = d3.scaleLinear().domain([0, 10.5]).range([H - m.b, m.t]);
+  const share = x(d.total * d.bigShare);
+  svg.append('rect').attr('class', 'quad quad-cut').attr('x', share).attr('y', m.t).attr('width', Math.max(0, W - m.r - share)).attr('height', y(d.lowScore + 0.5) - m.t);
+  svg.append('rect').attr('class', 'quad quad-room').attr('x', m.l).attr('y', y(d.highScore - 0.5)).attr('width', Math.max(0, share - m.l)).attr('height', H - m.b - y(d.highScore - 0.5));
+  svg.append('text').attr('class', 'chart-label muted').attr('x', W - m.r - 4).attr('y', m.t + 12).attr('text-anchor', 'end').text(o.client ? 'Costs a lot, rated low: easy to cut' : 'High spend, low value: easy cuts');
+  svg.append('text').attr('class', 'chart-label muted').attr('x', m.l + 4).attr('y', H - m.b - 6).text(o.client ? 'Costs little, rated high: room to spend more' : 'Low spend, high value: room to spend more');
+  svg.append('g').attr('transform', 'translate(0,' + (H - m.b) + ')').attr('class', 'axis').call(d3.axisBottom(x).ticks(5).tickFormat(v => F.dollarsCompact(v)));
+  svg.append('g').attr('transform', 'translate(' + m.l + ',0)').attr('class', 'axis').call(d3.axisLeft(y).ticks(5).tickFormat(v => String(v)));
+  const g = svg.append('g').selectAll('g').data(d.areas).join('g');
+  g.append('circle').attr('class', a => 'dot ' + (d.easyCut.includes(a.area) ? 'dot-cut' : d.room.includes(a.area) ? 'dot-room' : 'dot-now')).attr('cx', a => x(a.cents)).attr('cy', a => y(a.score)).attr('r', 7).append('title').text(a => a.label + ': ' + F.dollarsWhole(a.cents) + ' a month, rated ' + a.score + ' of 10');
+  g.append('text').attr('class', 'chart-label').attr('x', a => x(a.cents) + 10).attr('y', a => y(a.score) + 4).text(a => F.shorten(a.label, 18));
+  const cut = d.areas.filter(a => d.easyCut.includes(a.area)); const room = d.areas.filter(a => d.room.includes(a.area));
+  host.appendChild(h('div', { class: 'suggest' }, (cut.length ? (o.client ? 'You rated ' + cut.map(a => a.label.toLowerCase()).join(' and ') + ' low, and it costs ' + F.dollarsWhole(cut.reduce((s, a) => s + a.cents, 0)) + ' a month. That is the easy place to move money from.' : 'Easy cuts: ' + cut.map(a => a.label + ' (' + F.dollarsWhole(a.cents) + ', rated ' + a.score + ')').join(', ') + '.') : (o.client ? 'Nothing you rated low costs much. ' : 'No high-spend, low-value area. ')) + ' ' + (room.length ? (o.client ? 'You rated ' + room.map(a => a.label.toLowerCase()).join(' and ') + ' high; there is room to spend more there.' : 'Room to spend more: ' + room.map(a => a.label + ' (rated ' + a.score + ')').join(', ') + '.') : '')));
 }
 
 /* g. Two payoff orders as curves of total balance. */
@@ -119,4 +143,4 @@ function debtCurves(host, d, o) {
   host.appendChild(h('div', { class: 'suggest' }, d.reliefMonthsSooner !== null && d.reliefMonthsSooner > 0 ? (o.client ? 'Paying the most stressful one first clears ' + st.stressfulName + ' ' + F.months(d.reliefMonthsSooner) + ' sooner and costs about ' + F.dollarsWhole(Math.max(0, d.reliefCostCents)) + ' more in interest. Relief has a price; it is a fair one to choose.' : 'Most stressful first clears ' + st.stressfulName + ' ' + F.months(d.reliefMonthsSooner) + ' sooner for ' + F.dollarsWhole(Math.max(0, d.reliefCostCents)) + ' more interest.') : (o.client ? 'Here the two orders land close together; the highest rate first costs the least.' : 'The two orders differ by ' + F.dollarsWhole(Math.abs(d.reliefCostCents)) + ' of interest; the stressful debt is not reached sooner by going for it first.')));
 }
 
-export const SCORE_RENDERERS = { crossover, fiDateWaterfall, cashflowCalendar, pictureVsProgress, effortVsMarket, stressTrend, debtCurves };
+export const SCORE_RENDERERS = { crossover, fiDateWaterfall, cashflowCalendar, pictureVsProgress, effortVsMarket, satisfactionTrend, worthIt, debtCurves };

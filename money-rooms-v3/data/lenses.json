@@ -528,6 +528,20 @@
    "reading": "money-guy-foo",
    "metric": "emergencyGap",
    "level": 8
+  },
+  {
+   "n": 41,
+   "id": "worth-it",
+   "name": "Worth it",
+   "trigger": "an area above 10% of spending with a worth-it score of 4 or lower",
+   "template": "{area} takes {share} of your spending, and you rated it {score} out of 10.",
+   "inputs": [
+    "m.areaWorthIt",
+    "spending.byCategory"
+   ],
+   "reading": "ymoyl",
+   "metric": "areaWorthIt",
+   "level": 12
   }
  ]
 }

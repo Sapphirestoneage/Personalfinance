@@ -31,14 +31,14 @@ test('the headline six exist, are client visible, and the groups all have member
   six.forEach(id => { const m = M.find(x => x.id === id); assert.ok(m, id); assert.equal(m.clientVisible, true, id + ' client visible'); assert.ok(m.headline, id + ' flagged headline'); });
   assert.deepEqual(M.filter(m => m.headline).map(m => m.id).sort(), six.slice().sort());
   Object.keys(data.metrics.scoreGroups).forEach(gid => assert.ok(M.some(m => m.scoreGroup === gid), 'group ' + gid + ' has a metric'));
-  assert.equal(M.length, 82);
+  assert.equal(M.length, 85);
 });
 
 test('the chart catalog names every built chart with its question and first session; the unbuilt ones carry a route', () => {
   const cat = data.charts.charts;
   ALL_CHARTS.forEach(c => { const e = cat[c.id]; assert.ok(e, 'catalog has ' + c.id); assert.ok(e.question && e.question.endsWith('?'), c.id + ' question'); assert.ok(Number.isInteger(e.firstSession), c.id + ' firstSession'); assert.ok(typeof e.clientVisible === 'boolean'); assert.ok(e.gentle, c.id + ' gentle name'); });
   Object.keys(cat).forEach(id => { if (!ALL_CHARTS.some(c => c.id === id)) assert.ok(cat[id].route, id + ' is not built and has no route'); });
-  assert.equal(Object.keys(cat).length, 39);
+  assert.equal(Object.keys(cat).length, 40);
 });
 
 test('most sessions introduce something new, session 1 shows a headline number, and nothing is introduced twice', () => {

@@ -8,13 +8,13 @@ import { metricLabel } from './glossary.js';
 import { PLANET_LABELS } from '../engine/sun.js';
 import { ALL_CHARTS } from '../engine/charts-all.js';
 import * as Charts from './charts.js';
-import { whyMoved, numOf, lastSnapshot } from '../engine/momentum.js';
+import { whyMoved, numOf, lastSnapshot, satisfactionStory } from '../engine/momentum.js';
 import { trendLine, bandLine, milestoneLine, actionLine, sparkOf, isClient } from './scorebits.js';
 
 let graphCache = null;
 export function graphOf(app) { if (!graphCache || graphCache.data !== app.data) graphCache = { data: app.data, g: buildGraph(app.data) }; return graphCache.g; }
 
-const FAMILY_WORDS = { spend: 'Spend less', earn: 'Earn more', keep: 'Keep more', grow: 'Grow', protect: 'Protect', assume: 'Assume' };
+const FAMILY_WORDS = { spend: 'Spend less', earn: 'Earn more', keep: 'Keep more', grow: 'Grow', protect: 'Protect', assume: 'Assume', value: 'Value' };
 export function familyLabel(f) { return FAMILY_WORDS[f] || f; }
 const dirWord = d => d === 'higher' ? 'Higher is better' : d === 'lower' ? 'Lower is better' : 'A shape, not a score';
 export function signWord(sign, direction) {
@@ -48,7 +48,8 @@ export function metricBody(app, id, mathBody) {
     const spark = sparkOf(app, id); sec.appendChild(h('div', { class: 'row' }, h('strong', { class: 'small' }, coach ? 'Trend: ' : 'Since last time: '), trendLine(app, id), spark));
     const ms = milestoneLine(app, id); if (ms) sec.appendChild(h('p', { class: 'small' }, h('strong', null, coach ? 'Ladder: ' : 'Next: '), ms));
     const act = actionLine(app, id); if (act) sec.appendChild(h('p', { class: 'small' }, h('strong', null, coach ? 'Next action: ' : 'What helps most: '), act));
-    if (lastSnapshot(app.record)) { const why = h('div', { class: 'small' }, h('strong', null, 'Why it moved: '), h('span', { class: 'muted' }, 'working it out')); sec.appendChild(why); setTimeout(() => { try { const w = whyMoved(app.record, app.result, app.data, id, { compute: (r, today) => app.compute(r, app.data, { today }) }); while (why.firstChild) why.removeChild(why.firstChild); why.appendChild(h('strong', null, 'Why it moved: ')); if (!w || w.total === null) why.appendChild(document.createTextNode('not enough history yet.')); else { why.appendChild(document.createTextNode(w.sentences.join(' ') + (w.marketNote ? ' ' + w.marketNote : ''))); if (coach && w.parts) why.appendChild(h('ul', { class: 'why-parts' }, ['learned', 'did', 'market', 'time', 'other'].filter(k => Math.abs(w.parts[k]) > 1e-9).map(k => h('li', null, h('span', null, { learned: 'Learned', did: 'Did', market: 'Market', time: 'Time', other: 'Other' }[k]), h('span', null, w.parts[k] > 0 ? '+' + String(Math.round(w.parts[k] * 100) / 100) : String(Math.round(w.parts[k] * 100) / 100)))))); } } catch (e) { while (why.firstChild) why.removeChild(why.firstChild); why.appendChild(h('strong', null, 'Why it moved: ')); why.appendChild(document.createTextNode('could not work it out.')); } }, 0); }
+    if (id === 'satisfaction') { const st = satisfactionStory(app.record, app.result, app.data); sec.appendChild(h('p', { class: 'small' }, h('strong', null, coach ? 'What moved it: ' : 'What changed: '), st.sentences.join(' '))); }
+    else if (lastSnapshot(app.record)) { const why = h('div', { class: 'small' }, h('strong', null, 'Why it moved: '), h('span', { class: 'muted' }, 'working it out')); sec.appendChild(why); setTimeout(() => { try { const w = whyMoved(app.record, app.result, app.data, id, { compute: (r, today) => app.compute(r, app.data, { today }) }); while (why.firstChild) why.removeChild(why.firstChild); why.appendChild(h('strong', null, 'Why it moved: ')); if (!w || w.total === null) why.appendChild(document.createTextNode('not enough history yet.')); else { why.appendChild(document.createTextNode(w.sentences.join(' ') + (w.marketNote ? ' ' + w.marketNote : ''))); if (coach && w.parts) why.appendChild(h('ul', { class: 'why-parts' }, ['learned', 'did', 'market', 'time', 'other'].filter(k => Math.abs(w.parts[k]) > 1e-9).map(k => h('li', null, h('span', null, { learned: 'Learned', did: 'Did', market: 'Market', time: 'Time', other: 'Other' }[k]), h('span', null, w.parts[k] > 0 ? '+' + String(Math.round(w.parts[k] * 100) / 100) : String(Math.round(w.parts[k] * 100) / 100)))))); } } catch (e) { while (why.firstChild) why.removeChild(why.firstChild); why.appendChild(h('strong', null, 'Why it moved: ')); why.appendChild(document.createTextNode('could not work it out.')); } }, 0); }
     body.appendChild(sec);
   }
   if (!coach) body.appendChild(h('p', { class: 'small' }, h('a', { href: '#/map/' + id }, 'See what goes into it and what it changes')));

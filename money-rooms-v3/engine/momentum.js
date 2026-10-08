@@ -8,6 +8,8 @@
    own answer, never a guess. */
 import { append } from './journal.js';
 import { findRow } from './record.js';
+import { programOf, latestWorthIt } from './program.js';
+import { AREA_LABELS } from './scoremetrics.js';
 import * as F from './format.js';
 
 const okM = m => m && m.status === 'ok';
@@ -53,6 +55,7 @@ export function deltaText(def, delta) {
   if (u === 'cents') return sign + F.dollarsWhole(a);
   if (u === 'months') return (def.units && def.units.kind === 'date' ? (delta > 0 ? 'later by ' : 'sooner by ') : sign) + F.months(a);
   if (u === 'ratio') return sign + (Math.round(a * 1000) / 10) + ' points';
+  if (u === 'of 10') return sign + (Math.round(a * 10) / 10) + (a === 1 ? ' point' : ' points');
   return sign + (Math.round(a * 10) / 10) + ' ' + u;
 }
 /* better, worse or the same, by the metric's direction */
@@ -237,21 +240,53 @@ export function seedCelebrations(record, result, data, meta) { if (record.celebr
 /* ---- personal bests ---- */
 export function personalBests(record, result, data) {
   const snaps = snapshotsOf(record); const M = result.metrics;
-  const best = (id, pick) => { const vals = snaps.map(s => s.values[id]).filter(v => typeof v === 'number'); const now = numOf(M[id]); const prev = vals.length ? vals.reduce(pick) : null; const isNew = now !== null && (prev === null || pick(now, prev) === now && now !== prev); return { id, now, prev, isNew }; };
+  const best = (id, pick) => { const now = numOf(M[id]); const past = snaps.length > 1 && snaps[snaps.length - 1].values[id] === now ? snaps.slice(0, -1) : snaps; const vals = past.map(s => s.values[id]).filter(v => typeof v === 'number'); const prev = vals.length ? vals.reduce(pick) : null; const isNew = now !== null && (prev === null || pick(now, prev) === now && now !== prev); return { id, now, prev, isNew }; };
   const out = [];
   const sr = best('savingsRateTakeHome', (a, b) => (a >= b ? a : b)); if (sr.now !== null) out.push({ key: 'savingsRate', label: 'Best savings rate', value: F.percent(sr.now, { places: 1 }), isNew: sr.isNew && snaps.length > 0 });
   const sp = best('spending', (a, b) => (a <= b ? a : b)); if (sp.now !== null) out.push({ key: 'lowestSpending', label: 'Lowest month of spending', value: F.dollarsWhole(sp.now), isNew: sp.isNew && snaps.length > 0 });
   /* the largest single debt payoff, read from the journal */
   let payoff = null; record.journal.forEach(l => { if (l.kind === 'set' && l.planet === 'debt' && l.field === 'balance' && l.why === 'move') { const d = (num(l.old) || 0) - (num(l.new) || 0); if (d > 0 && (!payoff || d > payoff.cents)) payoff = { cents: d, ts: l.ts }; } });
   if (payoff) out.push({ key: 'payoff', label: 'Largest debt payment', value: F.dollarsWhole(payoff.cents), isNew: snaps.length > 0 && payoff.ts > (lastSnapshot(record) || { ts: '' }).ts });
+  /* the highest satisfaction score */
+  const sat = best('satisfaction', (a, b) => (a >= b ? a : b)); if (sat.now !== null) out.push({ key: 'satisfaction', label: 'Highest satisfaction', value: sat.now + ' of 10', isNew: sat.isNew && snaps.length > 0 });
   /* months without a fee: snapshots where the mistakes line is zero */
   const streak = snaps.reduce((acc, s) => { const v = s.values.leak; return v === 0 ? acc + 1 : 0; }, 0);
   if (snaps.length) out.push({ key: 'noFee', label: 'Snapshots in a row with no leak', value: String(streak), isNew: false });
   return out;
 }
 
+/* ---- satisfaction (MR-065) ---- */
+/* satisfaction shows its trend and the areas whose worth-it scores changed, never a money split */
+export function satisfactionStory(record, result, data) {
+  const t = trend(record, result, data, 'satisfaction'); const P = programOf(record); const asks = (P.worthIt || []).slice();
+  const changed = [];
+  if (asks.length >= 2) { const last = asks[asks.length - 1], prev = asks[asks.length - 2]; Object.keys(last.scores).forEach(a => { if (prev.scores[a] !== undefined && prev.scores[a] !== last.scores[a]) changed.push({ area: a, label: AREA_LABELS[a] || a, from: prev.scores[a], to: last.scores[a] }); }); }
+  const sentences = [];
+  if (t && t.sinceLast && t.sinceLast.delta) sentences.push('Satisfaction ' + t.sinceLast.text + '.'); else if (t && t.sinceLast) sentences.push('Satisfaction is where it was last time.'); else sentences.push('First satisfaction reading.');
+  changed.forEach(c => sentences.push(c.label + ' went from ' + c.from + ' to ' + c.to + ' out of 10.'));
+  if (!changed.length && asks.length >= 2) sentences.push('No area was rated differently.');
+  return { trend: t, changed, sentences };
+}
+/* the one action for satisfaction: move money from what she rated low toward what she rated high; never "spend less overall" */
+export function satisfactionAction(result) {
+  const m = result.metrics.valuePerDollar; if (!m || m.status !== 'ok') return { text: 'Rate each spending area once (sessions 3 and 4, or a money date) and the move shows itself.', root: 'program.worthIt', sign: 1, months: null, sentence: 'Rate each spending area once, and the move shows itself.' };
+  const cut = m.value.value.easyCut[0] || null; const room = m.value.value.room[0] || null;
+  if (cut && room) return { text: 'Move money from ' + cut.label.toLowerCase() + ' (rated ' + cut.score + ') toward ' + room.label.toLowerCase() + ' (rated ' + room.score + ').', root: 'program.worthIt', sign: 1, months: null, sentence: 'Move money from ' + cut.label.toLowerCase() + ', which you rated ' + cut.score + ', toward ' + room.label.toLowerCase() + ', which you rated ' + room.score + '.', from: cut.area, to: room.area };
+  if (cut) return { text: 'Shrink ' + cut.label.toLowerCase() + ' (rated ' + cut.score + ') and put the difference toward a goal.', root: 'program.worthIt', sign: 1, months: null, sentence: cut.label + ' costs a lot and you rated it ' + cut.score + '; that is the easy place to move money from, toward a goal.', from: cut.area };
+  if (room) return { text: 'Spend a little more on ' + room.label.toLowerCase() + ' (rated ' + room.score + ').', root: 'program.worthIt', sign: 1, months: null, sentence: 'You rated ' + room.label.toLowerCase() + ' ' + room.score + ' and it costs little; there is room to spend more there.', to: room.area };
+  return { text: 'Keep the money where you rated it high.', root: 'program.worthIt', sign: 1, months: null, sentence: 'Nothing you rated low costs much; keep the money where you rated it high.' };
+}
+/* the top lever lowers satisfaction without saying so when it cuts an area she rated high; the note says so */
+export function satisfactionNote(action, record, result) {
+  if (!action || !action.rowId || !record) return null;
+  const row = findRow(record, action.rowId); const cat = row && row.planet === 'spending' && row.f.category ? row.f.category.v : null; if (!cat) return null;
+  const wi = latestWorthIt(record)[cat]; if (!wi || wi.score < 8) return null;
+  return 'You rated ' + (AREA_LABELS[cat] || cat).toLowerCase() + ' ' + wi.score + ' out of 10; a cut there costs satisfaction, so weigh it.';
+}
+
 /* ---- next action ---- */
 export function nextActionFor(def, sens, result) {
+  if (def.id === 'satisfaction') return satisfactionAction(result);
   const items = sens && sens.items ? sens.items : [];
   const levers = (def.levers || []).map(l => { const hit = items.filter(i => i.rootId === l.root && i.impact !== null && !i.windfall).sort((a, b) => b.impact - a.impact)[0] || null; return { lever: l, hit }; });
   const picked = levers.sort((a, b) => ((b.hit && b.hit.impact) || 0) - ((a.hit && a.hit.impact) || 0))[0];
@@ -259,7 +294,17 @@ export function nextActionFor(def, sens, result) {
   const hit = picked.hit;
   return { text: picked.lever.text, root: picked.lever.root, sign: picked.lever.sign, months: hit ? hit.impact : null, impactLabel: hit ? hit.impactLabel : null, planet: hit ? hit.planet : null, rowId: hit ? hit.rowId : null, label: hit ? hit.label : null, sentence: picked.lever.text + (hit && hit.impact ? ' About ' + F.months(hit.impact) + ' on the FI date ' + (hit.impactLabel || '').replace(/^per /, 'for every ') + '.' : '') };
 }
-export function overallNextAction(sens) { if (!sens || !sens.ranked || !sens.ranked.top) return null; const t = sens.ranked.top; return { label: t.label, row: t.row, planet: t.planet, rowId: t.rowId, months: t.impact, impactLabel: t.impactLabel, sentence: sens.ranked.headline, family: t.family }; }
+export function overallNextAction(sens, record, result) { if (!sens || !sens.ranked || !sens.ranked.top) return null; const t = sens.ranked.top; const a = { label: t.label, row: t.row, planet: t.planet, rowId: t.rowId, months: t.impact, impactLabel: t.impactLabel, sentence: sens.ranked.headline, family: t.family }; const note = record ? satisfactionNote(a, record, result) : null; if (note) { a.note = note; a.sentence = a.sentence + ' ' + note; } return a; }
+
+/* ---- the short client summary (MR-065): the six with arrows, one milestone, one action; the money date email and the one-pager read it ---- */
+export function clientSummary(record, result, data, sens) {
+  const ids = headlineIds(record, result, data);
+  const lines = ids.map(id => { const def = defOf(result, data, id); const m = result.metrics[id]; const t = trend(record, result, data, id); const leg = t && t.sinceLast; return { id, label: def ? (def.clientLabel || def.name) : id, value: textOf(m) || 'not yet', arrow: leg ? (leg.arrow === 'up' ? '\u2191' : leg.arrow === 'down' ? '\u2193' : '\u2192') : '', text: leg && leg.delta ? leg.text.replace(/ since .*$/, '') : (leg ? 'steady' : '') }; });
+  const last = lastSnapshot(record); const cel = (record.celebrations || []).filter(c => !c.seeded && (!last || c.ts >= last.ts));
+  const milestone = cel.length ? cel[cel.length - 1].text : null;
+  const action = overallNextAction(sens, record, result);
+  return { lines, milestone, action: action ? action.sentence : null };
+}
 
 /* ---- the headline six ---- */
 export function headlineIds(record, result, data) {

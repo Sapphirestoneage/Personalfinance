@@ -6,6 +6,12 @@ import * as F from './format.js';
 
 function dollars(cents, rough) { return F.dollarsWhole(cents, { rough }); }
 
+/* Level 12 (MR-065): the worth-it lens reads a second-pass metric, so it runs after scoreMetrics; same shape as the others */
+export function worthItLenses(M, data) {
+  const def = data.lenses.lenses.find(l => l.id === 'worth-it'); const m = M.areaWorthIt; if (!def || !m || m.status !== 'ok') return [];
+  const readings = data.readings.readings;
+  return (m.value.value.areas || []).filter(a => a.share !== null && a.share > 0.10 && a.score <= 4).map(a => { const fills = { area: a.label, share: F.percent(a.share, { places: 0 }), score: String(a.score) }; let text = def.template; Object.keys(fills).forEach(k => { text = text.split('{' + k + '}').join(fills[k]); }); return { id: def.id, name: def.name, text, impactAnnual: null, inputs: [[a.label + ' a month', dollars(a.cents)], ['Worth-it score', a.score + ' of 10']], reading: readings.find(r => r.id === def.reading) || null, metric: def.metric, rough: false, figure: a.score + ' of 10', area: a.area }; });
+}
 export function computeLenses(ctx) {
   const { metrics: M, sun, asm, data, age } = ctx;
   const S = sun.outputs; const reg = data.lenses.lenses; const floor = data.lenses.skipBelowAnnualCents;

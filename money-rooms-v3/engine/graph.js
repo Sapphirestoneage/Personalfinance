@@ -6,7 +6,7 @@
    Pure: build once from the data libraries, then ask it questions. */
 import { CONTRACT, PLANETS, SUN_FIELDS } from './sun.js';
 
-export const FAMILIES = Object.freeze(['spend', 'earn', 'keep', 'grow', 'protect', 'assume']);
+export const FAMILIES = Object.freeze(['spend', 'earn', 'keep', 'grow', 'protect', 'assume', 'value']);
 
 export function buildGraph(data) {
   const G = data.graph; const fields = data.fields; const metrics = data.metrics.metrics; const asm = data.assumptions.defaults;

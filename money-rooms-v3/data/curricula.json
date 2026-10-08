@@ -479,11 +479,16 @@
      },
      "questions": [
       {
+       "text": "How satisfied are you with where your money is going right now, one to ten?",
+       "fills": "program.satisfaction"
+      },
+      {
        "text": "When works for next time?",
        "fills": "program.nextDate"
       }
      ],
      "outputs": [
+      "the satisfaction score",
       "the next date, the snapshot, the follow-up email"
      ],
      "kind": "close"
@@ -763,11 +768,16 @@
      },
      "questions": [
       {
+       "text": "How satisfied are you with where your money is going right now, one to ten?",
+       "fills": "program.satisfaction"
+      },
+      {
        "text": "When works for next time?",
        "fills": "program.nextDate"
       }
      ],
      "outputs": [
+      "the satisfaction score",
       "the next date, the snapshot, the follow-up email"
      ],
      "kind": "close"
@@ -958,6 +968,26 @@
      "kind": "transactions"
     },
     {
+     "id": "worthit",
+     "name": "Was this worth it?",
+     "priority": "could",
+     "minutes": {
+      "min": 1,
+      "target": 2,
+      "max": 4
+     },
+     "questions": [
+      {
+       "text": "Area by area: was this worth it, one to ten?",
+       "fills": "program.worthIt"
+      }
+     ],
+     "outputs": [
+      "a worth-it score per spending area, feeding the dream lap and the targets"
+     ],
+     "kind": "worthit"
+    },
+    {
      "id": "steps",
      "name": "Three steps",
      "priority": "never-cut",
@@ -983,11 +1013,16 @@
      },
      "questions": [
       {
+       "text": "How satisfied are you with where your money is going right now, one to ten?",
+       "fills": "program.satisfaction"
+      },
+      {
        "text": "When works for next time?",
        "fills": "program.nextDate"
       }
      ],
      "outputs": [
+      "the satisfaction score",
       "the next date, the snapshot, the follow-up email"
      ],
      "kind": "close"
@@ -1199,6 +1234,26 @@
      "kind": "transactions"
     },
     {
+     "id": "worthit",
+     "name": "Was this worth it?",
+     "priority": "could",
+     "minutes": {
+      "min": 1,
+      "target": 2,
+      "max": 4
+     },
+     "questions": [
+      {
+       "text": "Area by area: was this worth it, one to ten?",
+       "fills": "program.worthIt"
+      }
+     ],
+     "outputs": [
+      "a worth-it score per spending area, feeding the dream lap and the targets"
+     ],
+     "kind": "worthit"
+    },
+    {
      "id": "steps",
      "name": "Three steps",
      "priority": "never-cut",
@@ -1224,11 +1279,16 @@
      },
      "questions": [
       {
+       "text": "How satisfied are you with where your money is going right now, one to ten?",
+       "fills": "program.satisfaction"
+      },
+      {
        "text": "When works for next time?",
        "fills": "program.nextDate"
       }
      ],
      "outputs": [
+      "the satisfaction score",
       "the next date, the snapshot, the follow-up email"
      ],
      "kind": "close"
@@ -1438,11 +1498,16 @@
      },
      "questions": [
       {
+       "text": "How satisfied are you with where your money is going right now, one to ten?",
+       "fills": "program.satisfaction"
+      },
+      {
        "text": "When works for next time?",
        "fills": "program.nextDate"
       }
      ],
      "outputs": [
+      "the satisfaction score",
       "the next date, the snapshot, the follow-up email"
      ],
      "kind": "close"
@@ -1654,11 +1719,16 @@
      },
      "questions": [
       {
+       "text": "How satisfied are you with where your money is going right now, one to ten?",
+       "fills": "program.satisfaction"
+      },
+      {
        "text": "When works for next time?",
        "fills": "program.nextDate"
       }
      ],
      "outputs": [
+      "the satisfaction score",
       "the next date, the snapshot, the follow-up email"
      ],
      "kind": "close"
@@ -1873,11 +1943,16 @@
      },
      "questions": [
       {
+       "text": "How satisfied are you with where your money is going right now, one to ten?",
+       "fills": "program.satisfaction"
+      },
+      {
        "text": "When works for next time?",
        "fills": "program.nextDate"
       }
      ],
      "outputs": [
+      "the satisfaction score",
       "the next date, the snapshot, the follow-up email"
      ],
      "kind": "close"
@@ -2071,11 +2146,16 @@
      },
      "questions": [
       {
+       "text": "How satisfied are you with where your money is going right now, one to ten?",
+       "fills": "program.satisfaction"
+      },
+      {
        "text": "When works for next time?",
        "fills": "program.nextDate"
       }
      ],
      "outputs": [
+      "the satisfaction score",
       "the next date, the snapshot, the follow-up email"
      ],
      "kind": "close"
@@ -2265,11 +2345,16 @@
      },
      "questions": [
       {
+       "text": "How satisfied are you with where your money is going right now, one to ten?",
+       "fills": "program.satisfaction"
+      },
+      {
        "text": "When works for next time?",
        "fills": "program.nextDate"
       }
      ],
      "outputs": [
+      "the satisfaction score",
       "the next date, the snapshot, the follow-up email"
      ],
      "kind": "close"
@@ -2438,11 +2523,16 @@
      },
      "questions": [
       {
+       "text": "How satisfied are you with where your money is going right now, one to ten?",
+       "fills": "program.satisfaction"
+      },
+      {
        "text": "When works for next time?",
        "fills": "program.nextDate"
       }
      ],
      "outputs": [
+      "the satisfaction score",
       "the next date, the snapshot, the follow-up email"
      ],
      "kind": "close"
@@ -2591,11 +2681,16 @@
      },
      "questions": [
       {
+       "text": "How satisfied are you with where your money is going right now, one to ten?",
+       "fills": "program.satisfaction"
+      },
+      {
        "text": "When works for next time?",
        "fills": "program.nextDate"
       }
      ],
      "outputs": [
+      "the satisfaction score",
       "the next date, the snapshot, the follow-up email"
      ],
      "kind": "close"
@@ -2783,16 +2878,166 @@
      },
      "questions": [
       {
+       "text": "How satisfied are you with where your money is going right now, one to ten?",
+       "fills": "program.satisfaction"
+      },
+      {
        "text": "When works for next time?",
        "fills": "program.nextDate"
       }
      ],
      "outputs": [
+      "the satisfaction score",
       "the next date, the snapshot, the follow-up email"
      ],
      "kind": "close"
     }
    ]
   }
- ]
+ ],
+ "moneyDate": {
+  "id": "money-date",
+  "name": "Money date",
+  "goal": "Fifteen minutes a month, coach-run: what changed, what to do about it, and how it feels. The maintenance tier after graduation.",
+  "markers": {
+   "behindAt": 10,
+   "closeAt": 13
+  },
+  "blocks": [
+   {
+    "id": "checkin",
+    "name": "Check-in and urgent check",
+    "priority": "must",
+    "minutes": {
+     "min": 2,
+     "target": 2,
+     "max": 4
+    },
+    "questions": [
+     {
+      "text": "How has the month been with money? Anything on fire?",
+      "fills": "program.urgent"
+     }
+    ],
+    "outputs": [
+     "the urgent flag, or a clear start"
+    ],
+    "kind": "checkin"
+   },
+   {
+    "id": "refresh",
+    "name": "Refresh balances and import transactions",
+    "priority": "must",
+    "minutes": {
+     "min": 3,
+     "target": 4,
+     "max": 6
+    },
+    "questions": [
+     {
+      "text": "What do the accounts say today?",
+      "fills": "invest.accountBalance"
+     }
+    ],
+    "outputs": [
+     "balances re-typed as moves; the month's transactions imported where there is an export"
+    ],
+    "kind": "refresh"
+   },
+   {
+    "id": "changed",
+    "name": "What changed",
+    "priority": "must",
+    "minutes": {
+     "min": 3,
+     "target": 4,
+     "max": 6
+    },
+    "questions": [],
+    "outputs": [
+     "the headline trends and why each moved"
+    ],
+    "kind": "changed"
+   },
+   {
+    "id": "milestones",
+    "name": "Milestones and personal bests",
+    "priority": "should",
+    "minutes": {
+     "min": 1,
+     "target": 2,
+     "max": 3
+    },
+    "questions": [],
+    "outputs": [
+     "rungs crossed since last month, bests beaten"
+    ],
+    "kind": "milestones"
+   },
+   {
+    "id": "satisfaction",
+    "name": "Satisfaction and worth-it check",
+    "priority": "must",
+    "minutes": {
+     "min": 1,
+     "target": 1,
+     "max": 2
+    },
+    "questions": [
+     {
+      "text": "How satisfied are you with where your money is going right now, one to ten?",
+      "fills": "program.satisfaction"
+     },
+     {
+      "text": "Any area worth re-rating?",
+      "fills": "program.worthIt"
+     }
+    ],
+    "outputs": [
+     "the satisfaction score; worth-it scores where they changed"
+    ],
+    "kind": "satisfaction"
+   },
+   {
+    "id": "action",
+    "name": "One action for the month",
+    "priority": "never-cut",
+    "minutes": {
+     "min": 2,
+     "target": 2,
+     "max": 3
+    },
+    "questions": [
+     {
+      "text": "What is the one thing for this month?",
+      "fills": "program.monthAction"
+     }
+    ],
+    "outputs": [
+     "one action, written down"
+    ],
+    "kind": "action"
+   },
+   {
+    "id": "close",
+    "name": "Close and book next month",
+    "priority": "never-cut",
+    "minutes": {
+     "min": 1,
+     "target": 1,
+     "max": 2
+    },
+    "questions": [
+     {
+      "text": "Same time next month?",
+      "fills": "program.nextDate"
+     }
+    ],
+    "outputs": [
+     "the snapshot, the next date, the short summary for the email"
+    ],
+    "kind": "mdclose"
+   }
+  ]
+ }
 }

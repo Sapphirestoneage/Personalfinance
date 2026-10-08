@@ -101,7 +101,7 @@ test('personal bests, the headline six, bands with their sources, and the next a
 test('Maya through session 4: six tiles, milestones crossed, why her FI date moved, and what the market did is not hers', () => {
   const { rec, result: R, cheers, beforeClose } = mayaThroughSession4(loadHousehold('maya'), data);
   assert.equal(rec.snapshots.length, 4); assert.deepEqual(rec.snapshots.map(s => s.session), ['s1', 's2', 's3', 's4']);
-  const ids = Mo.headlineIds(rec, R, data); assert.equal(ids.length, 6); assert.ok(ids.includes('debtFree'));
+  const ids = Mo.headlineIds(rec, R, data); assert.equal(ids.length, 6); assert.ok(ids.includes('debtFree') && ids.includes('satisfaction') && !ids.includes('completeness'), ids.join(','));
   ids.forEach(id => { const t = Mo.trend(rec, R, data, id); assert.ok(t && t.sinceLast, id + ' has a trend since last time'); });
   assert.ok(Mo.trend(rec, R, data, 'spending').sinceStart, 'spending was in from session 1');
   /* between the session 3 close and the session 4 close: the HYSA move is hers, the Roth fall is the market's */

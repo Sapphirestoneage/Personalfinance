@@ -6,11 +6,13 @@
 import { h, clear } from '../dom.js';
 import * as F from '../../engine/format.js';
 import { headlineIds, personalBests, snapshotsOf, lastSnapshot, textOf, numOf, trend } from '../../engine/momentum.js';
+import { programMode } from '../../engine/program.js';
 import { openMetric } from '../metricdrawer.js';
 import { metricLabel } from '../glossary.js';
 import { clientName } from '../app.js';
 import { tile, nextActionCard, trendLine, bandLine, visible, defOf, isClient, gentleSentence, needsOf } from '../scorebits.js';
 
+let coachOnlyOn = false;
 export function mount(host, app) {
   const client = isClient(app); const groups = app.data.metrics.scoreGroups || {};
   const groupIds = Object.keys(groups);
@@ -18,9 +20,10 @@ export function mount(host, app) {
   const deepMetric = app.route.params.id === 'm' ? app.route.params.sub : null;
   const name = (clientName(app.record) || 'Household').split(' ')[0];
   host.appendChild(h('header', null, h('h1', null, client ? 'Your scoreboard' : 'Scoreboard'), h('span', { class: 'sub', id: 'score-sub' }), h('div', { class: 'actions' },
-    h('a', { class: 'btn primary', href: '#/money-date' }, client ? 'Monthly check' : 'Money date'),
+    client ? null : h('a', { class: 'btn primary', href: '#/money-date' }, programMode(app.record) === 'maintenance' ? 'Money date (maintenance)' : 'Money date'),
     h('a', { class: 'btn', href: '#/map' }, client ? 'How it connects' : 'Map'),
-    client ? null : h('button', { class: 'btn', onClick: () => chooseSix(app) }, 'Choose the six'))));
+    client ? null : h('button', { class: 'btn', onClick: () => chooseSix(app) }, 'Choose the six'),
+    client ? null : h('button', { class: 'btn', 'aria-pressed': String(coachOnlyOn), onClick: () => { coachOnlyOn = !coachOnlyOn; app.rerender(); } }, coachOnlyOn ? 'Hide coach-only numbers' : 'Show coach-only numbers'))));
   const hero = h('div', { class: 'score-hero' }); const tiles = h('div', { class: 'score-tiles' }); const rest = h('section', { class: 'panel score-rest' }); const lately = h('div', { class: 'grid grid-2 score-lately' });
   host.appendChild(hero); host.appendChild(tiles); host.appendChild(rest); host.appendChild(lately);
   const open = id => { location.hash = '#/scoreboard/m/' + id; };
@@ -33,12 +36,15 @@ export function mount(host, app) {
     sub.textContent = lead ? (client ? gentleSentence(app, lead.id) : metricLabel(app, defOf(app, lead.id)) + ': ' + lead.t.nowText + ', ' + lead.t.sinceLast.text + '.') : (snapshotsOf(app.record).length ? (client ? 'Steady since last time, ' + name + '.' : 'No headline number moved since the last snapshot.') : (client ? 'Your first reading. The trends start at the next check.' : 'No snapshot yet: a session close or a money date starts the trends.'));
     hero.appendChild(nextActionCard(app));
     ids.forEach(id => { const el = tile(app, id, open); if (el) tiles.appendChild(el); });
+    /* the coach's seventh tile: picture completeness, which also sits in the Session header */
+    if (!client && !ids.includes('completeness')) { const el = tile(app, 'completeness', open); if (el) { el.classList.add('coach-tile'); tiles.appendChild(el); } }
     /* the rest, by group */
     rest.appendChild(h('h2', null, client ? 'Everything else' : 'All numbers by group'));
-    const bar = h('nav', { class: 'group-chips', 'aria-label': 'Groups' }, groupIds.map(g => { const n = app.data.metrics.metrics.filter(m => m.scoreGroup === g && visible(app, m) && !ids.includes(m.id)).length; return n ? h('a', { href: '#/scoreboard/' + g, 'aria-current': g === pickedGroup ? 'page' : null, class: 'chip gchip' }, groups[g], h('span', { class: 'muted' }, ' ' + n)) : null; }));
+    const shown = m => visible(app, m) && (client || coachOnlyOn || m.clientVisible !== 'coach');
+    const bar = h('nav', { class: 'group-chips', 'aria-label': 'Groups' }, groupIds.map(g => { const n = app.data.metrics.metrics.filter(m => m.scoreGroup === g && shown(m) && !ids.includes(m.id)).length; return n ? h('a', { href: '#/scoreboard/' + g, 'aria-current': g === pickedGroup ? 'page' : null, class: 'chip gchip' }, groups[g], h('span', { class: 'muted' }, ' ' + n)) : null; }));
     rest.appendChild(bar);
-    const g = pickedGroup || groupIds.find(x => app.data.metrics.metrics.some(m => m.scoreGroup === x && visible(app, m) && !ids.includes(m.id)));
-    const list = app.data.metrics.metrics.filter(m => m.scoreGroup === g && visible(app, m) && !ids.includes(m.id));
+    const g = pickedGroup || groupIds.find(x => app.data.metrics.metrics.some(m => m.scoreGroup === x && shown(m) && !ids.includes(m.id)));
+    const list = app.data.metrics.metrics.filter(m => m.scoreGroup === g && shown(m) && !ids.includes(m.id));
     rest.appendChild(h('ul', { class: 'score-list' }, list.map(def => { const m = app.result.metrics[def.id]; const ok = m && m.status === 'ok'; return h('li', { class: ok ? '' : 'locked' }, h('button', { class: 'linklike score-row', onClick: () => open(def.id) }, h('span', { class: 'row-label' }, metricLabel(app, def)), h('span', { class: 'row-value' + (ok && m.rough ? ' rough-value' : '') }, ok ? textOf(m) : (client ? 'not yet' : 'needs ' + needsOf(m)[0]))), ok ? h('span', { class: 'row-meta' }, trendLine(app, def.id), ' ', bandLine(app, def.id)) : null); })));
     /* lately: crossings and bests */
     const cel = (app.record.celebrations || []).filter(c => !c.seeded).slice(-6).reverse();
@@ -57,7 +63,7 @@ export function mount(host, app) {
 function chooseSix(app) {
   const current = headlineIds(app.record, app.result, app.data); const picked = new Set(current);
   const list = app.data.metrics.metrics.filter(m => m.clientVisible !== false && m.scoreGroup);
-  const body = h('div', null, h('h2', null, 'Choose the six'), h('p', { class: 'small muted' }, 'Six tiles on the scoreboard, in this order. The default six are savings rate, FI date, FI progress, runway, debt-free date and picture completeness. Net worth can discourage someone starting below zero; keep it off the six unless the client asks.'));
+  const body = h('div', null, h('h2', null, 'Choose the six'), h('p', { class: 'small muted' }, 'Six tiles on the scoreboard, in this order. The default six are savings rate, FI date, FI progress, runway, debt-free date and satisfaction. Picture completeness stays on your Session header and as your seventh tile. Net worth can discourage someone starting below zero; keep it off the six unless the client asks.'));
   const count = h('p', { class: 'small' }); const paint = () => { count.textContent = picked.size + ' of 6 chosen.'; };
   body.appendChild(count); paint();
   body.appendChild(h('div', { class: 'choose-list' }, list.map(def => h('label', { class: 'choose-row' }, h('input', { type: 'checkbox', checked: picked.has(def.id), onChange: e => { if (e.target.checked) { if (picked.size >= 6) { e.target.checked = false; app.toast('Six is the limit; untick one first.'); return; } picked.add(def.id); } else picked.delete(def.id); paint(); } }), ' ', def.name, h('span', { class: 'small muted' }, ' ' + (app.data.metrics.scoreGroups[def.scoreGroup] || ''))))));

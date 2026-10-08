@@ -17,7 +17,7 @@ function blankMaya() {
 
 test('states: every metric, lens and chart is locked, quiet, rough or solid, and the totals add up', () => {
   const st = U.stateOf(R, data); const t = U.totals(st);
-  assert.equal(t.metrics.total, data.metrics.metrics.length); assert.equal(t.lenses.total, data.lenses.lenses.length); assert.equal(t.charts.total, 38);
+  assert.equal(t.metrics.total, data.metrics.metrics.length); assert.equal(t.lenses.total, data.lenses.lenses.length); assert.equal(t.charts.total, 39);
   Object.values(st.metrics).concat(Object.values(st.lenses), Object.values(st.charts)).forEach(s => assert.ok(['locked', 'quiet', 'rough', 'solid'].includes(s), s));
   assert.ok(t.metrics.open >= 70 && t.charts.open >= 29 && t.lenses.firing === R.lenses.length, JSON.stringify(t));
   const blank = compute(blankMaya(), data, { today: TODAY }); const t0 = U.totals(U.stateOf(blank, data));
@@ -72,7 +72,7 @@ test('the map: every item sits in one of five stages; a locked item names the ex
   const map = U.unlockMap(maya, R, data);
   assert.equal(map.stages.length, 5);
   assert.equal(map.stages.reduce((s, st) => s + st.items.length, 0), map.items.length);
-  assert.equal(map.items.length, data.metrics.metrics.length + data.lenses.lenses.length + 38);
+  assert.equal(map.items.length, data.metrics.metrics.length + data.lenses.lenses.length + 39);
   map.items.filter(i => i.state === 'locked').forEach(i => { assert.ok(i.input && i.input.label && i.input.href && i.input.where, i.kind + ':' + i.id + ' has no input'); });
   const blank = blankMaya(); const map0 = U.unlockMap(blank, compute(blank, data, { today: TODAY }), data);
   const unmapped = map0.items.filter(i => i.state === 'locked' && !i.input);

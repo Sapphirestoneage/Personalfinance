@@ -6,24 +6,28 @@
    engine/outcomes.js and engine/curriculum.js. */
 import { h, clear } from '../dom.js';
 import * as F from '../../engine/format.js';
-import { programRows, programOf, nextSessionNumber, checklistProgress } from '../../engine/program.js';
+import { programRows, programOf, nextSessionNumber, checklistProgress, programMode, moneyDates } from '../../engine/program.js';
 import { beforeAfter, testimonialPrompt } from '../../engine/outcomes.js';
 import { blockTimes, sessionCount } from '../../engine/curriculum.js';
 import { clientName } from '../app.js';
 
 export function mount(host, app) {
-  const n = nextSessionNumber(app.record); const total = sessionCount(app.data);
-  host.appendChild(h('header', { class: 'no-print' }, h('h1', null, 'Program'), h('span', { class: 'sub' }, (clientName(app.record) || 'This client') + ': session ' + Math.min(n, total) + ' of ' + total + (programOf(app.record).nextDate ? ', next on ' + F.dateLong(programOf(app.record).nextDate) : '')), h('div', { class: 'actions' },
-    h('a', { class: 'btn primary', href: '#/prep' }, n <= total ? 'Prepare session ' + n : 'Prepare a check-in'),
+  const n = nextSessionNumber(app.record); const total = sessionCount(app.data); const maintenance = programMode(app.record) === 'maintenance';
+  host.appendChild(h('header', { class: 'no-print' }, h('h1', null, maintenance ? 'Maintenance' : 'Program'), h('span', { class: 'sub' }, (clientName(app.record) || 'This client') + (maintenance ? ': graduated; monthly money dates' : ': session ' + Math.min(n, total) + ' of ' + total) + (programOf(app.record).nextDate ? ', next on ' + F.dateLong(programOf(app.record).nextDate) : '')), h('div', { class: 'actions' },
+    maintenance ? h('a', { class: 'btn primary', href: '#/money-date' }, 'Prepare the money date') : h('a', { class: 'btn primary', href: '#/prep' }, 'Prepare session ' + n),
     h('button', { class: 'btn', onClick: () => window.print() }, 'Print before and after'))));
   const table = h('section', { class: 'panel no-print' }); const sheet = h('article', { class: 'onepager beforeafter' }); const report = h('section', { class: 'panel no-print' });
   host.appendChild(table); host.appendChild(sheet); host.appendChild(report);
   function draw() {
     clear(table); clear(sheet); clear(report);
     const rows = programRows(app.record, app.result, app.data);
-    table.appendChild(h('h2', null, 'Sessions', h('span', { class: 'tag' }, rows.filter(r => r.n && r.status === 'closed').length + ' of ' + total + ' closed')));
+    /* MR-065: after graduation the money dates lead; the numbered sessions stay as the record */
+    const mds = rows.filter(r => r.moneyDate);
+    if (maintenance || mds.length) table.appendChild(h('section', { class: 'md-list' }, h('h2', null, 'Money dates', h('span', { class: 'tag' }, mds.filter(r => r.status === 'closed').length + ' done')), mds.length ? h('div', { class: 'tablewrap' }, h('table', { class: 'data program' }, h('thead', null, h('tr', null, h('th', null, 'Month'), h('th', null, 'Status'), h('th', null, 'The one action'))), h('tbody', null, mds.slice().reverse().map(r => h('tr', { dataset: { session: r.key } }, h('td', null, F.date(r.key.slice(3) + '-01')), h('td', null, h('span', { class: 'chip ' + (r.status === 'closed' ? 'state-known' : 'amber') }, r.status === 'closed' ? 'Done' : 'In progress')), h('td', { class: 'wrap small' }, r.action || '')))))) : h('p', { class: 'muted small' }, 'The first money date lands here. ', h('a', { href: '#/money-date' }, 'Prepare it'))));
+    const sessionRows = rows.filter(r => !r.moneyDate);
+    table.appendChild(h('h2', null, 'Sessions', h('span', { class: 'tag' }, sessionRows.filter(r => r.n && r.status === 'closed').length + ' of ' + total + ' closed')));
     table.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data program' }, h('thead', null, h('tr', null, h('th', null, 'Session'), h('th', null, 'Name'), h('th', null, 'Status'), h('th', { class: 'hide-narrow' }, 'Date'), h('th', null, 'Targets met'), h('th', { class: 'hide-narrow' }, 'Accounts'), h('th', { class: 'hide-narrow' }, 'Homework done'), h('th', { class: 'num' }, 'Stress'))),
-      h('tbody', null, rows.map(r => h('tr', { class: (r.n === null ? 'urgent-row' : '') + (r.status === 'running' ? ' selected' : ''), dataset: { session: r.key } },
+      h('tbody', null, sessionRows.map(r => h('tr', { class: (r.n === null ? 'urgent-row' : '') + (r.status === 'running' ? ' selected' : ''), dataset: { session: r.key } },
         h('td', null, r.label), h('td', { class: 'wrap' }, r.name, r.absorbed && r.absorbed.length ? h('div', { class: 'small muted' }, 'Absorbed: ' + r.absorbed.map(a => a.blockId + ' from session ' + a.from).join(', ')) : null, r.urgent ? h('div', { class: 'small muted' }, r.urgent.notes || '') : null),
         h('td', null, h('span', { class: 'chip ' + (r.status === 'closed' ? 'state-known' : r.status === 'running' ? 'amber' : 'src') }, r.status === 'closed' ? 'Done' : r.status === 'running' ? 'In progress' : 'Planned')),
         h('td', { class: 'small muted hide-narrow' }, r.date ? F.dateLong(r.date) : ''),

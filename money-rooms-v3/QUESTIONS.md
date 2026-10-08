@@ -163,10 +163,8 @@ Collected during the run; none blocked the build. Answer whenever.
     date (net worth when there is no debt) and picture completeness. Net worth
     stays off the six for someone starting below zero; Coach can swap any tile
     with "Choose the six". Keep that default, or put net worth back?
-50. The money date is one screen both views can run: the client alone, or
-    the coach on a short call. After graduation (session 12) the app does not
-    push either way. Should the maintenance tier be "run it alone, call if a
-    tile slips" or always a 15-minute call?
+50. Answered 8 Oct: the money date is a coach-run fifteen-minute call and the
+    maintenance tier after graduation (MR-065). The client never opens it alone.
 51. "Did" against "market": a balance move counts as what the client did up
     to the contributions the row promises over the elapsed time (at the
     row's own monthly contribution), and the rest as the market. A hand-saved
@@ -179,3 +177,13 @@ Collected during the run; none blocked the build. Answer whenever.
     Mr. Money Mustache, Money Guy, Ramit Sethi, the 30% rule, three to six
     months) and every one is flagged verify. Which rule should be the default
     for each number, and which sources to drop?
+54. The worth-it quadrants are fixed at a tenth of spending and scores of 4
+    and 8 (`WORTH_IT` in engine/scoremetrics.js). Keep those lines, or make
+    them assumptions the coach can move?
+55. Satisfaction's bands are "your own scale": 7 to 10 healthy, 5 to 7 ok,
+    under 5 worth a look; its ladder is 5, 6, 7, 8, 9. Fine, or should the
+    tile show no band at all and only the trend?
+56. The money date curriculum totals 16 target minutes (2, 4, 4, 2, 1, 2, 1).
+    Trim "what changed" or "refresh" to land on 15 exactly?
+57. A money date between sessions (before graduation) is allowed from the
+    Money date screen. Keep that, or only after session 12?

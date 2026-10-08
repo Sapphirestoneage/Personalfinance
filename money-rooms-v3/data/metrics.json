@@ -4498,7 +4498,7 @@
    "scoreGroup": "awareness",
    "chart": "pictureVsProgress",
    "firstSession": 1,
-   "headline": true,
+   "headline": false,
    "n": 77,
    "owner": "engine",
    "level": 12,
@@ -4744,7 +4744,7 @@
     ]
    },
    "scoreGroup": "outcomes",
-   "chart": "stressTrend",
+   "chart": "satisfactionTrend",
    "firstSession": 4,
    "n": 81,
    "owner": "engine",
@@ -4815,6 +4815,161 @@
    "bands": null,
    "milestones": null,
    "gentleCopy": "Your goals that land by their date: {value}. Up is the direction we want, and it has been moving since you started."
+  },
+  {
+   "n": 83,
+   "id": "satisfaction",
+   "name": "Satisfaction with where the money goes",
+   "clientLabel": "How satisfied you are with where your money goes",
+   "definition": "The latest answer to \"how satisfied are you with where your money is going right now\", 1 to 10, asked at every session close and money date.",
+   "formula": "latest score given",
+   "inputs": [
+    "program.satisfaction"
+   ],
+   "units": {
+    "kind": "count",
+    "unit": "of 10"
+   },
+   "owner": "engine",
+   "group": "outcomes",
+   "stage": 1,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "program.worthIt",
+     "sign": 1,
+     "text": "Move money from what you rated low to what you rated high; satisfaction can rise while spending rises."
+    },
+    {
+     "root": "targetDate",
+     "sign": 1,
+     "text": "Goals funded on time."
+    },
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Cushion steps reached."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "program.worthIt"
+    ]
+   },
+   "scoreGroup": "outcomes",
+   "bands": {
+    "sources": [
+     {
+      "id": "default",
+      "label": "Your own scale",
+      "healthy": [
+       7,
+       10
+      ],
+      "ok": [
+       5,
+       7
+      ],
+      "watch": [
+       1,
+       5
+      ]
+     }
+    ],
+    "verify": false
+   },
+   "milestones": [
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "lens": "worth-it",
+   "chart": "satisfactionTrend",
+   "unlock": [
+    "program.satisfaction"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your satisfaction with where your money goes: {value}. This is the one number that can go up while spending goes up.",
+   "firstSession": 1,
+   "headline": true
+  },
+  {
+   "n": 84,
+   "id": "areaWorthIt",
+   "name": "Worth-it score per area",
+   "clientLabel": "How much each area was worth to you",
+   "definition": "Per spending area, \"was this worth it\" from 1 to 10, with the area's share of spending beside it.",
+   "formula": "latest worth-it score per area, with the area's monthly cost and share",
+   "inputs": [
+    "program.worthIt",
+    "spending.byCategory"
+   ],
+   "units": {
+    "kind": "list"
+   },
+   "owner": "engine",
+   "group": "outcomes",
+   "stage": 1,
+   "direction": "neutral",
+   "levers": [],
+   "graph": {
+    "roots": [
+     "program.worthIt",
+     "amount"
+    ]
+   },
+   "scoreGroup": "outcomes",
+   "bands": null,
+   "milestones": null,
+   "lens": "worth-it",
+   "chart": "worthIt",
+   "unlock": [
+    "program.worthIt"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "What each area was worth to you: {value}.",
+   "firstSession": 3,
+   "headline": false
+  },
+  {
+   "n": 85,
+   "id": "valuePerDollar",
+   "name": "Value per dollar by area",
+   "clientLabel": "Where the money buys the most for you",
+   "definition": "Each area's worth-it score against its share of spending. High spend with a low score is the easy place to cut; low spend with a high score is where there is room to spend more.",
+   "formula": "worth-it score per $1,000 a month; flags: share above 10% with score 4 or lower, share under 10% with score 8 or higher",
+   "inputs": [
+    "program.worthIt",
+    "spending.byCategory"
+   ],
+   "units": {
+    "kind": "list"
+   },
+   "owner": "engine",
+   "group": "outcomes",
+   "stage": 1,
+   "direction": "neutral",
+   "levers": [],
+   "graph": {
+    "roots": [
+     "program.worthIt",
+     "amount"
+    ]
+   },
+   "scoreGroup": "outcomes",
+   "bands": null,
+   "milestones": null,
+   "lens": "worth-it",
+   "chart": "worthIt",
+   "unlock": [
+    "program.worthIt"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Where the money buys the most for you: {value}.",
+   "firstSession": 3,
+   "headline": false
   }
  ],
  "stages": {
@@ -4826,7 +4981,7 @@
  },
  "levels": {
   "9": "FI ladder, headline shelf, sensitivity",
-  "12": "The Scoreboard: every metric with its bands, milestones, levers, chart, what opens it and its first session (MR-063)"
+  "12": "The Scoreboard: every metric with its bands, milestones, levers, chart, what opens it and its first session; satisfaction and worth-it as outcomes (MR-063, MR-065)"
  },
  "scoreGroups": {
   "cashflow": "Cash flow",
@@ -4845,6 +5000,6 @@
   "pctToFi",
   "runway",
   "debtFree",
-  "completeness"
+  "satisfaction"
  ]
 }

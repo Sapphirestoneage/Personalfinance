@@ -66,8 +66,11 @@ tile opens the metric drawer (`#/scoreboard/m/<id>`), which now also shows
 confidence, the trend with a sparkline, why the number moved (learned, did,
 market, time) and the next action. `#/map` follows any number's chain: what
 feeds it, what it feeds, its way to the FI date, and since the last snapshot
-which inputs moved it. `#/money-date` is a ten-minute monthly check in five
-steps that ends in a snapshot. Snapshots are also taken at a session close,
+which inputs moved it. `#/money-date` is the coach's prep card for the money date, a fifteen-minute
+call run through the session runner (`#/call/md-YYYY-MM`) that ends in a
+snapshot and a six-line summary; after session 12 it is the maintenance tier.
+Satisfaction (1 to 10 at every close) is the sixth tile; worth-it scores per
+area steer the targets and the worth-it chart. Snapshots are also taken at a session close,
 a discovery call and a transactions import (`engine/momentum.js`). The
 registry is `data/metrics.json`; the chart catalog is `data/charts.json`;
 `tests/households/expected-momentum.py` is the workpaper for the did and
