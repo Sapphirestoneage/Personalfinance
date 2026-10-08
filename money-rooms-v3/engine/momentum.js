@@ -311,6 +311,9 @@ export function headlineIds(record, result, data) {
   const base = (record.scoreboard && Array.isArray(record.scoreboard.headline) && record.scoreboard.headline.length ? record.scoreboard.headline : data.metrics.headlineDefault || []).slice();
   /* no debt: net worth takes the debt-free tile */
   const i = base.indexOf('debtFree'); if (i !== -1 && !(result.debts && result.debts.length)) base[i] = 'netWorth';
+  /* owner's answer to question 49 (MR-069): net worth stays off the six while it is below zero, and joins once it is positive, in the place of FI progress */
+  const nw = result.metrics && result.metrics.netWorth; const custom = record.scoreboard && Array.isArray(record.scoreboard.headline) && record.scoreboard.headline.length;
+  if (!custom && nw && nw.status === 'ok' && nw.value.cents > 0 && !base.includes('netWorth')) { const j = base.indexOf('pctToFi'); if (j !== -1) base[j] = 'netWorth'; }
   return base;
 }
 

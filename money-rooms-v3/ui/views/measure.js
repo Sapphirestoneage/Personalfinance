@@ -214,8 +214,10 @@ export function drawCharts(host, app, t, phone) {
   const extra = { sensitivity: cachedSensitivity(app) };
   const list = CHARTS.filter(c => (coach || (visible.includes(c.id) && !c.coachOnly)));
   const built = {}; list.forEach(c => { built[c.id] = c.build(app.result, extra); });
+  /* owner's answer to question 47 (MR-069): the client sees charts as they unlock, one at a time; a locked chart is the coach's to see */
+  const shown = coach ? list : list.filter(c => built[c.id] && !built[c.id].needs);
   const open = list.filter(c => built[c.id] && !built[c.id].needs).length;
-  host.appendChild(h('h2', { style: { margin: '16px 0 8px' } }, t('Charts'), h('span', { class: 'tag' }, open + ' of ' + list.length + ' open')));
+  host.appendChild(h('h2', { style: { margin: '16px 0 8px' } }, t('Charts'), h('span', { class: 'tag' }, coach ? open + ' of ' + list.length + ' open' : open + (open === 1 ? ' chart so far' : ' charts so far'))));
   /* filter by planet; a filter is remembered for the page */
   const planetsHere = PLANETS.filter(p => list.some(c => c.planet === p));
   const chips = h('div', { class: 'gallery-filter', role: 'group', 'aria-label': 'Filter charts by planet' });
@@ -242,7 +244,7 @@ export function drawCharts(host, app, t, phone) {
   const panels = Array.from(grid.children);
   const fold = () => panels.forEach((el, i) => { el.style.display = foldOpen || i < 2 ? '' : 'none'; });
   if (phone && panels.length > 2) { const btn = h('button', { class: 'btn small', 'aria-expanded': 'false', style: { margin: '8px 0' } }, (panels.length - 2) + ' more charts'); btn.addEventListener('click', () => { foldOpen = !foldOpen; fold(); btn.setAttribute('aria-expanded', String(foldOpen)); btn.textContent = foldOpen ? 'Fewer charts' : (panels.length - 2) + ' more charts'; paint(); }); host.appendChild(btn); fold(); }
-  const paint = () => list.forEach(c => { const body = grid.querySelector('[data-chart-body="' + c.id + '"]'); if (body && body.parentNode.style.display !== 'none' && built[c.id] && !built[c.id].needs) Charts.render(c.id, body, built[c.id], { client: !coach }); });
+  const paint = () => shown.forEach(c => { const body = grid.querySelector('[data-chart-body="' + c.id + '"]'); if (body && body.parentNode.style.display !== 'none' && built[c.id] && !built[c.id].needs) Charts.render(c.id, body, built[c.id], { client: !coach }); });
   paint();
   if (list.some(c => built[c.id] && built[c.id].waiting)) getSensitivity(app, () => setTimeout(() => drawCharts(host, app, t, phone), 0));
   if (globalThis.ResizeObserver) { let tm = null; let last = grid.clientWidth; const ro = new ResizeObserver(() => { if (Math.abs(grid.clientWidth - last) < 24) return; last = grid.clientWidth; clearTimeout(tm); tm = setTimeout(paint, 150); }); ro.observe(grid); }

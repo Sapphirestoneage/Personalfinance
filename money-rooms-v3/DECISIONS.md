@@ -543,3 +543,9 @@ Decision: With the v44 engine in hand (pasted, engine complete), `engine/cashcal
 Compatibility: `record.calendar.budgeted` and `record.calendar.extra` are new and optional; `data/calendar.json` gains `extra` and changes two card defaults (minimum floor $35, late fee $40); a run gains `extraPaid`, `extraLog`, `firstDryTotal`; shortfalls can carry `missed`.
 Why: step 0 of the Level 13 brief: port the v44 engine when it arrives; the spec alone had left out the extra-at-debt targeting and the budgeted-charge rule, both of which change the payoff dates a client sees.
 Alternative: replace cashcal.js with the v44 engine wholesale (it carries its own data model beside the Ledger, which breaks one owner per field).
+
+## MR-069 2026-10-08 Two answers from the owner: charts unlock one at a time for the client; net worth joins the six once positive
+Decision: In Client view the Charts tab lists only the charts whose inputs are in, so each new fact reveals the next chart and a locked chart is never shown to the client (the coach still sees every chart with what it needs, and "Client sees" still hides a chart on purpose). The headline six: net worth stays off while it is below zero and takes the FI progress tile once it is positive; with no debt it also takes the debt-free tile, as before. A coach's own six (Choose the six) is untouched by both rules.
+Compatibility: none stored.
+Why: the owner's answers to questions 47 ("a mode that unlocks one at a time") and 49 ("yes unless it's positive"); question 46 keeps the engine's ranking ("whatever unlocks more").
+Alternative: reveal one chart per session (slower than the data allows).

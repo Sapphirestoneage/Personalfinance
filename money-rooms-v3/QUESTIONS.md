@@ -150,26 +150,29 @@ Collected during the run; none blocked the build. Answer whenever.
 45. Retirement and FI now sits under Household facts on Home. Should the
     goals (Condo, Japan) move into the profile the same way, or stay on the
     Life plan planet and the Goal timeline?
-46. The next-unlock ranking weighs a chart at two, a solid number at one, a
-    rough number at 0.6 and a lens at one. On an empty client that puts a
-    first account (balance sheet, allocation and bucket charts) ahead of the
-    first job or spending line. Keep the engine's answer, or pin Income first?
-47. The client sees every chart until the coach unticks "Client sees" on a
-    chart. Start with none visible instead, like the lenses?
+46. Answered 8 Oct: whatever unlocks more. The engine's ranking stands; Income
+    is not pinned first.
+47. Answered 8 Oct: a mode that unlocks one at a time. The client's Charts tab
+    shows only the charts that have their inputs, so each new fact reveals the
+    next chart; locked charts stay the coach's to see (MR-069). "Client sees"
+    still hides any chart on purpose.
 48. The copy lint bans "unlock" as a marketing word; the brief names the
     feature with it (Unlock Map, Next unlock). The files that draw it are now
     exempt; data copy is still checked. Fine, or pick another word?
-49. The headline six are savings rate, FI date, FI progress, runway, debt-free
-    date (net worth when there is no debt) and picture completeness. Net worth
-    stays off the six for someone starting below zero; Coach can swap any tile
-    with "Choose the six". Keep that default, or put net worth back?
+49. Answered 8 Oct: yes, unless it is positive. Net worth stays off the six
+    while it is below zero and takes the FI progress tile once it is positive
+    (MR-069); with no debt it also takes the debt-free tile.
 50. Answered 8 Oct: the money date is a coach-run fifteen-minute call and the
     maintenance tier after graduation (MR-065). The client never opens it alone.
-51. "Did" against "market": a balance move counts as what the client did up
-    to the contributions the row promises over the elapsed time (at the
-    row's own monthly contribution), and the rest as the market. A hand-saved
-    balance with no contribution behind it counts entirely as did. Fair rule,
-    or should the coach be able to mark a line as market?
+51. In plain words: when a balance changes between two check-ins, the app
+    splits the change into "what you did" and "what the market did". The
+    rule: the part you were expected to put in (your monthly contribution
+    times the months that passed) counts as yours; anything above or below
+    that counts as the market. Savings accounts count entirely as yours.
+    Example: Roth IRA at $14,900, you put in $300 a month, a month later it
+    reads $14,000: yours +$300, the market -$1,200. Question: should you be
+    able to override that on a line, for example mark a bonus deposit as
+    yours even though no contribution was promised?
 52. A session's "introduces" list is read from firstSession in the registry
     and the chart catalog, not stored in curricula.json. Session 10 introduces
     nothing new (it is the review before the flex session). Fine?
