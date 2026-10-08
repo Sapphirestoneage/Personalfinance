@@ -6,7 +6,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { allocate, assess, planGoals, goalsOf, nextWin, finishChanges, finishMonths, celebrations, cushionTargets, MODES, FLOOR_IDS } from '../../engine/goals.js';
+import { allocate, assess, planGoals, goalsOf, nextWin, finishChanges, finishMonths, celebrations, cushionTargets, goalDraws, quickDraws, MODES, FLOOR_IDS } from '../../engine/goals.js';
+import { goalFi, fiMonthOf } from '../../engine/fieffect.js';
+import { project } from '../../engine/projection.js';
+import { projectWith } from '../../engine/scenarios.js';
 import { icsOf, goalEvents } from '../../engine/ics.js';
 import { compute } from '../../engine/compute.js';
 import { setGoals, createRecord, defaultGoals } from '../../engine/record.js';
@@ -192,4 +195,60 @@ test('schema 4: a new record carries the goal settings and setGoals journals the
   const line = setGoals(rec, { mode: 'all-at-once' }, { now: '2026-10-07T00:00:01.000Z' });
   assert.equal(line.kind, 'goals'); assert.equal(rec.goals.mode, 'all-at-once');
   assert.equal(setGoals(rec, { mode: 'all-at-once' }, {}), null, 'no change, no line');
+});
+
+/* MR-070: the goals spend along the way and the FI date carries them */
+test('by hand: 12,000 a year saved toward a 25,000 target arrives in year three; spending 12,000 on a goal in year two makes it year four, cash first then invested', () => {
+  const asm = { projectionEndAge: 40, cashRealReturn: 0, withdrawalRate: 0.04, slowgoAge: 75, nogoAge: 85, socialSecurityAge: 67 };
+  const inp = { age: 30, year: 2026, today: '2026-10-07', invested: 0, cash: 0, debts: [], debtOrder: [], annualSpend: 100000, employeeAnnual: 0, employerAnnual: 0, leakAnnual: 1200000, debtServiceAnnual: 0, retirementAge: 65, ssMonthly: 0, asm, mult: { gogo: 1, slowgo: 0.85, nogo: 0.75 } };
+  assert.equal(project(inp, 0).fiAge, 33, 'without goals: 1.2M, 2.4M, 3.6M >= 2.5M in year three');
+  const withGoal = project(Object.assign({}, inp, { oneOffs: { 2028: 1200000 } }), 0);
+  assert.equal(withGoal.fiAge, 34); assert.equal(withGoal.path[1].cash, 1200000, 'year two: 2.4M saved less 1.2M spent');
+  /* the same draw through a scenario adjustment gives the same path, and a draw already on the inputs stays in every scenario */
+  assert.deepEqual(projectWith(inp, 0, { 2028: { oneOff: 1200000, monthly: 0, pay: 0 } }).path.map(p => p.netWorth), withGoal.path.map(p => p.netWorth));
+  assert.deepEqual(projectWith(Object.assign({}, inp, { oneOffs: { 2028: 1200000 } }), 0, {}).path.map(p => p.netWorth), withGoal.path.map(p => p.netWorth));
+  const big = project(Object.assign({}, inp, { invested: 1000000, leakAnnual: 0, oneOffs: { 2027: 300000 } }), 0);
+  assert.equal(big.path[0].cash, 0); assert.equal(big.path[0].invested, 700000, 'a draw bigger than cash comes out of invested');
+});
+
+test('goalDraws: a goal on time spends on its date, a late one when it lands, one already saved on its date, and one never reached is left out and named', () => {
+  const items = mayaItems().concat([
+    { id: 'saved', type: 'dated', name: 'Saved already', targetCents: 50000, balanceCents: 50000, targetDate: '2027-02', priority: 9 },
+    { id: 'moon', type: 'amount', name: 'A house in cash', targetCents: 10000000000, balanceCents: 0, priority: 10 },
+  ]);
+  const inp = input({ items }); const r = allocate(inp); const a = assess(inp, r);
+  const d = goalDraws(items, r, a, inp.from);
+  assert.equal(d.byGoal.bach.month, '2027-04', 'on time: the date'); assert.equal(d.byGoal.wedding.month, '2027-09');
+  assert.equal(d.byGoal.trip.month, r.goals.trip.finishMonth, 'no date: when it lands'); assert.equal(d.byGoal.saved.month, '2027-02', 'already saved: its date');
+  assert.deepEqual(d.left, ['moon']); assert.ok(!d.byGoal.moon);
+  assert.ok(!d.byGoal.lean && !d.byGoal.fullmonth && !d.byGoal.full && !d.byGoal.card && !d.byGoal['rung:regularFi'], 'the cushion, debts and the rungs never draw');
+  assert.equal(d.byYear[2027], 120000 + 200000 + 50000); assert.equal(d.total, 370000 + 150000);
+});
+
+test('Maya: the headline FI date carries her two Life plan goals; a goal moved in a what-if moves the draws and the FI months, and nothing is saved', () => {
+  const rec = loadHousehold('maya'); const r = compute(rec, data, { today: TODAY });
+  const P = r.goalPlan; const draws = P.draws;
+  assert.deepEqual(Object.keys(draws.byGoal).sort(), ['life:m-goal1', 'life:m-goal2']);
+  assert.deepEqual(r.projectionInputs.oneOffs, draws.byYear, 'the projection spends what the timeline lands');
+  assert.deepEqual(quickDraws(rec, { sun: r.sun, asm: r.asm, debts: r.debts, today: r.today, ladder: null, metrics: r.metrics }).byYear, draws.byYear, 'the pre-projection pass agrees with the full plan');
+  const fi = r.goalFi;
+  assert.ok(fi.deltaMonths > 0, 'the goals push the FI date out'); assert.equal(fi.fiYearWith, r.projection.likely.fiYear, 'the headline is the path with the goals');
+  assert.equal(fiMonthOf(r, fi.fiYearWith), r.metrics.fiDate.value.value, 'the FI month reads like the fiDate metric');
+  assert.ok(fi.byGoal['life:m-goal1'] > fi.byGoal['life:m-goal2'], 'the condo moves the date more than the trip');
+  assert.ok(Math.abs(fi.baseMonths - 265) < 2 && Math.abs(fi.withMonths - 278.9) < 2, 'about 265 months without, about 279 with');
+  /* a what-if: the condo at 40,000 by 2030-06 */
+  const W = planGoals(rec, r, { goals: { 'life:m-goal1': { targetDate: '2030-06', targetCents: 4000000 } } });
+  const it = W.input.items.find(i => i.id === 'life:m-goal1');
+  assert.equal(it.targetCents, 4000000); assert.equal(it.targetDate, '2030-06'); assert.equal(it.type, 'dated'); assert.ok(it.moved);
+  assert.equal(W.draws.byGoal['life:m-goal1'].year, 2030); assert.equal(W.draws.byYear[2030], 4000000); assert.equal(W.draws.byYear[2035], undefined);
+  const fiW = goalFi(r, W.draws);
+  assert.ok(fiW.withMonths < fi.withMonths, 'half the goal, sooner: the FI months fall');
+  assert.equal(fiW.baseMonths, fi.baseMonths, 'without goals is the same path either way');
+  /* dropping the date makes it an amount goal; the record is untouched by any of this */
+  const U = planGoals(rec, r, { goals: { 'life:m-goal1': { targetDate: null } } });
+  assert.equal(U.input.items.find(i => i.id === 'life:m-goal1').type, 'amount');
+  assert.equal(rec.planets.life.rows.find(x => x.id === 'm-goal1').f.goalCost.v, 8000000); assert.equal(rec.journal.length, loadHousehold('maya').journal.length);
+  /* a cushion step or a debt never moves this way */
+  const N = planGoals(rec, r, { goals: { full: { targetCents: 1 }, 'debt:m-csp': { targetDate: '2030-01' } } });
+  assert.ok(N.input.items.find(i => i.id === 'full').targetCents > 1); assert.equal(N.input.items.find(i => i.id === 'debt:m-csp').targetDate, null);
 });

@@ -549,3 +549,9 @@ Decision: In Client view the Charts tab lists only the charts whose inputs are i
 Compatibility: none stored.
 Why: the owner's answers to questions 47 ("a mode that unlocks one at a time") and 49 ("yes unless it's positive"); question 46 keeps the engine's ranking ("whatever unlocks more").
 Alternative: reveal one chart per session (slower than the data allows).
+
+## MR-070 2026-10-08 Goals are in the FI date: each one leaves cash in the month it is spent, and a goal moves on its own timeline
+Decision: The projection takes `oneOffs` by year: the Life plan goals and the hand-typed goals, each spent in the month the goal timeline lands it (its date when on time, the landing month when late, now when already saved; a goal never reached at this pace is left out and named). The headline FI date, the scoreboard, the calculators' base and every scenario carry the same draws; the goal timeline reads them back and shows one line under the sentence plus each goal's months. A goal moves a month at a time or through an Adjust drawer as a try; Confirm writes it back to the Life plan row (goalCost, targetDate) or the hand-typed goal, so no number gets a second home.
+Compatibility: none stored. Maya's FI date reads Feb 2050 instead of 2049 and Jordan's 2079 instead of 2077; the workpapers were regenerated with the allocation ported by hand (tests/households/expected.py).
+Why: the owner's brief: "once I have all the fields that could possibly affect the FI date incorporated into the equation", and "Goals should stay its own timeline that you can move and adjust and watch your FI number adjust with it".
+Alternative: spend every dated goal on its date whether or not the plan funds it (reads cleaner when you drag a date, but the timeline and the FI date would disagree about when the money leaves).

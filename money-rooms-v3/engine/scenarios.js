@@ -72,9 +72,11 @@ export function projectWith(inp, rate, adj) {
   let inv = inp.invested, csh = inp.cash, year = inp.year, a = inp.age, fiAge = null;
   const path = [];
   const debtByYear = {}; base.path.forEach(p => { debtByYear[p.year] = p.debt; });
+  const goalDraws = inp.oneOffs || {}; /* MR-070: the goals already in the headline path stay in every scenario */
   for (let y = 1; y <= years; y++) {
     year++; a++;
-    const ad = adj[year] || { oneOff: 0, monthly: 0, pay: 0 };
+    const a0 = adj[year] || { oneOff: 0, monthly: 0, pay: 0 };
+    const ad = goalDraws[year] ? Object.assign({}, a0, { oneOff: a0.oneOff + goalDraws[year] }) : a0;
     const working = a <= inp.retirementAge && (fiAge === null || a <= fiAge);
     const debtNow = debtByYear[year] || 0;
     const extraAnnual = -(ad.monthly + (ad.pay || 0)) * 12; /* a positive monthly cost, or a pay cut, reduces what is saved */

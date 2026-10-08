@@ -191,6 +191,12 @@
  "fiRatio": 0.039025,
  "feeDragLifetime": 759008,
  "socialSecurityMonthly": 320132,
+ "goalDraws": {
+  "2029": 2500000
+ },
+ "goalLanding": {
+  "life:d-goal": "2029-02"
+ },
  "projection": {
   "likely": {
    "fiAge": null,
@@ -215,35 +221,35 @@
     {
      "year": 2029,
      "age": 34,
-     "invested": 10240904,
-     "cash": 690302,
+     "invested": 8431206,
+     "cash": 0,
      "debt": 419395,
-     "netWorth": 10511811
+     "netWorth": 8011811
     },
     {
      "year": 2030,
      "age": 35,
-     "invested": 12192949,
-     "cash": 697205,
+     "invested": 10292766,
+     "cash": 0,
      "debt": 55365,
-     "netWorth": 12834789
+     "netWorth": 10237401
     },
     {
      "year": 2031,
      "age": 36,
-     "invested": 14242596,
-     "cash": 1085777,
+     "invested": 12247404,
+     "cash": 381600,
      "debt": 0,
-     "netWorth": 15328373
+     "netWorth": 12629004
     }
    ],
    "at95": {
     "year": 2090,
     "age": 95,
-    "invested": -348489184,
-    "cash": 7832610,
+    "invested": -383983047,
+    "cash": 6565998,
     "debt": 0,
-    "netWorth": -340656574
+    "netWorth": -377417049
    }
   },
   "best": {
@@ -269,35 +275,35 @@
     {
      "year": 2029,
      "age": 34,
-     "invested": 10662793,
-     "cash": 690302,
+     "invested": 8853095,
+     "cash": 0,
      "debt": 419395,
-     "netWorth": 10933700
+     "netWorth": 8433700
     },
     {
      "year": 2030,
      "age": 35,
-     "invested": 12849189,
-     "cash": 697205,
+     "invested": 10912812,
+     "cash": 0,
      "debt": 55365,
-     "netWorth": 13491029
+     "netWorth": 10857447
     },
     {
      "year": 2031,
      "age": 36,
-     "invested": 15188632,
-     "cash": 1085777,
+     "invested": 13116709,
+     "cash": 381600,
      "debt": 0,
-     "netWorth": 16274409
+     "netWorth": 13498309
     }
    ],
    "at95": {
     "year": 2090,
     "age": 95,
-    "invested": -344916071,
-    "cash": 7832610,
+    "invested": -457122189,
+    "cash": 6565998,
     "debt": 0,
-    "netWorth": -337083461
+    "netWorth": -450556191
    }
   },
   "worst": {
@@ -323,35 +329,35 @@
     {
      "year": 2029,
      "age": 34,
-     "invested": 9832577,
-     "cash": 690302,
+     "invested": 8022879,
+     "cash": 0,
      "debt": 419395,
-     "netWorth": 10103484
+     "netWorth": 7603484
     },
     {
      "year": 2030,
      "age": 35,
-     "invested": 11567554,
-     "cash": 697205,
+     "invested": 9703565,
+     "cash": 0,
      "debt": 55365,
-     "netWorth": 12209394
+     "netWorth": 9648200
     },
     {
      "year": 2031,
      "age": 36,
-     "invested": 13354581,
-     "cash": 1085777,
+     "invested": 11434672,
+     "cash": 381600,
      "debt": 0,
-     "netWorth": 14440358
+     "netWorth": 11816272
     }
    ],
    "at95": {
     "year": 2090,
     "age": 95,
-    "invested": -227698766,
-    "cash": 7832610,
+    "invested": -238680644,
+    "cash": 6565998,
     "debt": 0,
-    "netWorth": -219866156
+    "netWorth": -232114646
    }
   }
  },

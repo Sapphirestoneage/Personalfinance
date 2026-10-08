@@ -225,11 +225,54 @@ export function nextWin(input, run, assessment) {
   return lt.length ? { id: lt[0].id, month: assessment[lt[0].id].finishMonth } : null;
 }
 
-/* The whole plan for a record: goals, the run in the chosen mode, the assessment and the three-mode comparison. whatIf: { surplusDelta, events, order, mode, splits, overrides }. */
+/* A moved or adjusted goal (MR-070): whatIf.goals = { [id]: { targetDate: 'YYYY-MM' | null, targetCents } } laid over a Life plan goal or a hand-typed one. Cushion steps, debts and the long-term rungs never move this way. */
+function applyGoalMoves(items, moves) {
+  if (!moves) return items;
+  return items.map(i => {
+    const g = moves[i.id]; if (!g || typeof i.step === 'number' || i.type === 'debt' || i.type === 'long-term') return i;
+    const next = Object.assign({}, i);
+    if (g.targetDate !== undefined) next.targetDate = g.targetDate ? String(g.targetDate).slice(0, 7) : null;
+    if (typeof g.targetCents === 'number' && g.targetCents > 0) next.targetCents = Math.round(g.targetCents);
+    next.type = next.targetDate ? 'dated' : 'amount'; next.moved = true;
+    return next;
+  });
+}
+
+/* What the goals spend along the way (MR-070): one draw per Life plan goal or hand-typed goal, in the month it is
+   spent. A dated goal that lands on time is spent on its date; a late one when it lands; one already saved up on its
+   date, or now. A goal not reached at this pace is left out and named in `left`. The cushion is savings, debts are
+   in the projection already, and the long-term rungs are the destination, so none of those draw. */
+export function goalDraws(items, run, assessment, from) {
+  const byYear = {}; const byGoal = {}; const left = [];
+  items.forEach(i => {
+    if (typeof i.step === 'number' || i.type === 'debt' || i.type === 'long-term' || typeof i.targetCents !== 'number' || i.targetCents <= 0) return;
+    const g = run.goals[i.id]; const a = assessment[i.id] || {};
+    let month = null;
+    if (a.status === 'done' || (g && g.doneAtStart)) month = i.targetDate && i.targetDate >= from ? i.targetDate : from;
+    else if (g && g.finishMonth) month = i.targetDate && g.finishMonth <= i.targetDate ? i.targetDate : g.finishMonth;
+    if (!month) { left.push(i.id); return; }
+    const year = parseInt(month.slice(0, 4), 10);
+    byYear[year] = (byYear[year] || 0) + i.targetCents;
+    byGoal[i.id] = { month, year, cents: i.targetCents };
+  });
+  return { byYear, byGoal, left, total: Object.values(byYear).reduce((s, c) => s + c, 0) };
+}
+
+/* The draws before the projection runs (MR-070): the stored plan with no what-if, finite goals only. `partial` carries sun, asm, debts, today and a surplus. */
+export function quickDraws(record, partial) {
+  const base = goalsOf(record, partial);
+  if (!base.surplusKnown) return { byYear: {}, byGoal: {}, left: [], total: 0 };
+  const from = (partial.today || new Date().toISOString()).slice(0, 7);
+  const input = { from, surplusMonthly: base.surplus, items: base.items, mode: base.mode, splits: base.splits, overrides: base.overrides, events: [] };
+  const run = allocate(input);
+  return goalDraws(base.items, run, assess(input, run), from);
+}
+
+/* The whole plan for a record: goals, the run in the chosen mode, the assessment and the three-mode comparison. whatIf: { surplusDelta, events, order, mode, splits, overrides, goals }. */
 export function planGoals(record, result, whatIf) {
   const w = whatIf || {};
   const base = goalsOf(record, result);
-  let items = base.items;
+  let items = applyGoalMoves(base.items, w.goals);
   if (w.order && w.order.length) { const byId = {}; items.forEach(i => { byId[i.id] = i; }); const picked = w.order.filter(id => byId[id] && !FLOOR_IDS.includes(id)).map(id => byId[id]); const floors = items.filter(isFloor); items = floors.concat(picked, items.filter(i => !isFloor(i) && !w.order.includes(i.id))); items.forEach((it, k) => { it.priority = k + 1; }); }
   const from = (result.today || new Date().toISOString()).slice(0, 7);
   const surplus = (base.surplus || 0) + (w.surplusDelta || 0);
@@ -238,7 +281,8 @@ export function planGoals(record, result, whatIf) {
   const assessment = assess(input, run);
   if (!base.surplusKnown) Object.keys(assessment).forEach(id => { const it = items.find(i => i.id === id); if (it && it.type !== 'long-term' && assessment[id].status !== 'done') assessment[id] = { status: 'needs', finishMonth: null, needs: ['take-home, spending and debt minimums'] }; });
   const compare = MODES.map(mode => { const r = mode === input.mode ? run : allocate(Object.assign({}, input, { mode })); const a = mode === input.mode ? assessment : assess(Object.assign({}, input, { mode }), r); const dated = items.filter(i => i.type === 'dated' && i.targetDate && typeof i.targetCents === 'number'); return { mode, onTime: dated.filter(i => a[i.id] && a[i.id].status === 'on-time').length, dated: dated.length, finish: Object.fromEntries(items.map(i => [i.id, a[i.id] ? a[i.id].finishMonth : null])), interest: r.totalInterest, floorsFull: r.floorsFull }; });
-  return { input, base, run, assessment, compare, next: nextWin(input, run, assessment), surplusKnown: base.surplusKnown, cashKnown: base.cashKnown, alreadyMet: items.filter(i => isCushion(i) && assessment[i.id] && assessment[i.id].alreadyMet).map(i => i.id) };
+  const draws = base.surplusKnown ? goalDraws(items, run, assessment, from) : { byYear: {}, byGoal: {}, left: [], total: 0 };
+  return { input, base, run, assessment, compare, draws, next: nextWin(input, run, assessment), surplusKnown: base.surplusKnown, cashKnown: base.cashKnown, alreadyMet: items.filter(i => isCushion(i) && assessment[i.id] && assessment[i.id].alreadyMet).map(i => i.id) };
 }
 
 /* Cushion steps already covered that have not yet had their celebration (record.goals.celebrated). */

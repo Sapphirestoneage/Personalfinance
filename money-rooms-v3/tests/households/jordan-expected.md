@@ -100,9 +100,13 @@ Age at 2026-10-05: born 1999-03-14, so 27. Filing status single.
 ## Projection (year by year, real dollars, likely return)
 Rules: invested x (1 + r) + contributions (payroll + match + bank + the leak and freed debt payments go to cash); cash x (1 + 1%); debts follow the avalanche simulation; spending is baseline x go-go/slow-go/no-go after retirement; income stops at the later of retirement age and FI age; Social Security from 67 at the bend-point estimate; FI = first year net worth x withdrawal rate covers annual spending.
 - Social Security estimate: AIME $6,750; PIA = 0.9 x $1,247 + 0.32 x ($6,750 - $1,247) + 0.15 x max(0, $6,750 - $7,518) = $2,883.26 a month at 67.
-- likely return: FI at age 78 (2077); net worth at 95 $2,425,689.87.
-- best return: FI at age 59 (2058); net worth at 95 $8,222,231.46.
-- worst return: FI at age None (None); net worth at 95 $595,246.08.
+
+## Goals spent along the way
+- Apartment down payment: $60,000 lands 2039-07 (date 2031-06), so $60,000 leaves cash in 2039.
+- Cushion steps here: lean month $2,844, full month $3,856, full cushion $20,822.40; pot today $20,822.40; surplus $294.52 a month.
+- likely return: FI at age 80 (2079); net worth at 95 $2,321,978.37.
+- best return: FI at age 60 (2059); net worth at 95 $8,700,671.42.
+- worst return: FI at age None (None); net worth at 95 $491,534.58.
 - First five years (likely): 2027 age 28 invested $26,632.50 cash $26,289.24 debt $18,413.46 net worth $34,508.28; 2028 age 29 invested $35,644.13 cash $27,086.37 debt $15,787.15 net worth $46,943.35; 2029 age 30 invested $45,106.34 cash $27,891.47 debt $12,808.80 net worth $60,189.01; 2030 age 31 invested $55,041.66 cash $28,704.62 debt $9,642.26 net worth $74,104.02; 2031 age 32 invested $65,473.74 cash $29,525.91 debt $6,297.10 net worth $88,702.55.
 
 ## Lenses expected to fire (impact at or above $100 a year)

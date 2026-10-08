@@ -13,7 +13,8 @@ export function socialSecurityMonthly(aimeCents, limits, scale) {
   return Math.round(pia * (scale === undefined ? 1 : scale));
 }
 
-/* inputs: { age, year, invested, cash, debts, debtOrder, annualSpend, employeeAnnual, employerAnnual, leakAnnual, debtServiceAnnual, retirementAge, ssMonthly, asm, extraContribAnnual } */
+/* inputs: { age, year, invested, cash, debts, debtOrder, annualSpend, employeeAnnual, employerAnnual, leakAnnual, debtServiceAnnual, retirementAge, ssMonthly, asm, extraContribAnnual, oneOffs }
+   oneOffs (MR-070): { [year]: cents } the goals spend along the way; cash first, then invested while working; added to the year's need after. */
 export function project(inp, rate) {
   const asm = inp.asm;
   const end = asm.projectionEndAge;
@@ -22,18 +23,21 @@ export function project(inp, rate) {
   let inv = inp.invested, csh = inp.cash, year = inp.year, a = inp.age, fiAge = null;
   const path = [];
   const retireAge = inp.retirementAge;
+  const oneOffs = inp.oneOffs || {};
   for (let y = 1; y <= years; y++) {
     year++; a++;
     /* keepWorking (MR-061): work on to the retirement age even past FI, so two paths can be compared like for like */
     const working = a <= retireAge && (fiAge === null || a <= fiAge || inp.keepWorking);
     const debtNow = debtByYear[year] || 0;
+    const oneOff = oneOffs[year] || 0;
     if (working) {
       inv = Math.round(inv * (1 + rate)) + inp.employeeAnnual + inp.employerAnnual + (inp.extraContribAnnual || 0);
       const freed = debtNow === 0 && inp.debts.length ? inp.debtServiceAnnual : 0;
-      csh = Math.round(csh * (1 + asm.cashRealReturn)) + Math.max(0, inp.leakAnnual) + freed;
+      csh = Math.round(csh * (1 + asm.cashRealReturn)) + Math.max(0, inp.leakAnnual) + freed - oneOff;
+      if (csh < 0) { inv += csh; csh = 0; }
     } else {
       const mult = a < asm.slowgoAge ? inp.mult.gogo : a < asm.nogoAge ? inp.mult.slowgo : inp.mult.nogo;
-      const need = Math.round(inp.annualSpend * mult) - (a >= asm.socialSecurityAge ? inp.ssMonthly * 12 : 0);
+      const need = Math.round(inp.annualSpend * mult) + oneOff - (a >= asm.socialSecurityAge ? inp.ssMonthly * 12 : 0);
       inv = Math.round(inv * (1 + rate)) - Math.max(0, need);
       csh = Math.round(csh * (1 + asm.cashRealReturn));
     }

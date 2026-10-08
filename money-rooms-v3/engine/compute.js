@@ -23,7 +23,8 @@ import { monthsToReach } from './fiLadder.js';
 import { scoreMetrics } from './scoremetrics.js';
 import { isGuessRow, guessRows, realCategories } from './guesses.js';
 import { colTierOf } from './col.js';
-import { planGoals } from './goals.js';
+import { planGoals, quickDraws } from './goals.js';
+import { goalFi } from './fieffect.js';
 
 export function fillOf(fields) {
   const list = fields.filter(f => f && f.state !== 'not-applicable' && f.state !== 'not-for-me');
@@ -141,6 +142,8 @@ export function compute(record, data, opts) {
       worstExtraAnnualSpend: (record.household && (record.household.roommates || []).length && S.safety.runway && S.safety.runway.gapMonthly) ? S.safety.runway.gapMonthly * 12 : 0,
     };
     contribAnnual = inp.employeeAnnual + inp.employerAnnual;
+    /* MR-070: the goals spend along the way, so the headline FI date carries them; the goal timeline reads the same draws back */
+    inp.oneOffs = quickDraws(record, { sun: { outputs: S }, asm, debts, today, ladder: null, metrics: { surplus: { status: 'ok', value: { cents: surplus } } } }).byYear;
     projection = tripleD(inp);
     if (projection.likely.fiAge !== null) {
       const more = Math.round(take.cents * 0.01);
@@ -157,7 +160,7 @@ export function compute(record, data, opts) {
     const geo = project(Object.assign({}, inp, { annualSpend: Math.round(inp.annualSpend * 0.8), leakAnnual: inp.leakAnnual + Math.round(inp.annualSpend * 0.2) }), asm.returnLikely);
     projection.alt = { baseMonths, wr35Months: monthsOf(wr35, inp.annualSpend, 0.035), geoMonths: monthsOf(geo, Math.round(inp.annualSpend * 0.8), asm.withdrawalRate), geoFiNumber: Math.round(Math.round(inp.annualSpend * 0.8) / asm.withdrawalRate) };
   }
-  const mctx = { sun, facts, asm, data, today, age, birthMonth: birth ? birth.slice(5, 7) : '01', projection, debts, interestParts, oneMorePoint, contribAnnual };
+  const mctx = { sun, facts, asm, data, today, age, birthMonth: birth ? birth.slice(5, 7) : '01', projection, debts, interestParts, oneMorePoint, contribAnnual, goalDrawTotal: projection ? Object.values(projection.likely && result.projectionInputs ? result.projectionInputs.oneOffs || {} : {}).reduce((s2, c) => s2 + c, 0) : 0 };
   const metrics = computeMetrics(mctx);
   result.ladder = mctx.ladderOut || null;
   const lenses = computeLenses({ metrics, sun, asm, data, age, debts, today, record, projection, contribAnnual });
@@ -165,6 +168,7 @@ export function compute(record, data, opts) {
   result.sun = sun; result.metrics = metrics; result.lenses = lenses; result.projection = projection; result.debts = debts; result.asm = asm; result.age = age;
   /* Level 11 (MR-051): the goal timeline reads the finished result; the sensitivity reruns skip it */
   result.goalPlan = opts && opts.light ? null : planGoals(record, result);
+  result.goalFi = result.goalPlan ? goalFi(result, result.goalPlan.draws) : null;
   /* Level 8: the cost-of-living tier, the household, the guesses and the two meters */
   result.colTier = data.colTiers ? colTierOf(record, data.colTiers) : null;
   result.household = record.household || { roommates: [], lease: 'none', partner: null, basis: 'together' };

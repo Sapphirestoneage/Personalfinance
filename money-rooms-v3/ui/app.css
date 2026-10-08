@@ -976,3 +976,8 @@ table.data.clients-table td.num { white-space: nowrap; }
 .row-details .detail-group .fieldrow.detail:last-child { border-bottom: 0; }
 .row-details h3 { margin-top: var(--s-3); }
 
+/* MR-070: the FI line under the goal sentence; the move and adjust buttons wrap under a goal's name */
+.gtl-fi { margin: 0 0 var(--s-3); max-width: 72ch; color: var(--ink-2, inherit); }
+.gtl-ctl { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.gtl-when { display: flex; gap: 2px; flex-wrap: wrap; }
+.gtl-when .btn.small { padding: 0 6px; min-height: 20px; line-height: 20px; }

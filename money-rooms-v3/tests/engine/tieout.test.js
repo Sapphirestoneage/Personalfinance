@@ -125,6 +125,10 @@ for (const name of ['jordan', 'dev', 'maya']) {
       assert.equal(last.netWorth, E.projection[k].at95.netWorth, k + ' at 95');
     });
     assert.equal(M.fiDate.status, E.projection.likely.fiAge === null ? 'needs' : 'ok');
+    /* MR-070: the goals spend along the way; the workpaper lands each one by hand and the projection carries the same draws */
+    assert.deepEqual(R.projectionInputs.oneOffs, Object.fromEntries(Object.keys(E.goalDraws).map(y => [y, E.goalDraws[y]])), 'goal draws by year');
+    Object.keys(E.goalLanding).forEach(id => assert.equal(R.goalPlan.draws.byGoal[id] && R.goalPlan.draws.byGoal[id].month, E.goalLanding[id], id + ' lands'));
+    assert.deepEqual(R.goalPlan.draws.byYear, R.projectionInputs.oneOffs, 'the timeline and the headline agree');
   });
   test(name + ': the lenses that fire match the workpaper', () => {
     const level9 = new Set(data.lenses.lenses.filter(l => l.level === 9).map(l => l.id));

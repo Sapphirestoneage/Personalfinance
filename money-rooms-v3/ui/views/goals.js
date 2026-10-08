@@ -2,13 +2,17 @@
    one row per goal with the starter cushion first, the allocation table, the
    mode switch with the three-mode comparison, and the what-ifs (surplus up or
    down, a windfall, using the cushion, a new order) that never write to the
-   record until Confirm. Views never do math: every number comes from
-   engine/goals.js through the result or planGoals(). */
+   record until Confirm. MR-070: a goal moves along the timeline (a month
+   earlier or later, or a new amount and date in its drawer) as a try, the FI
+   line under the sentence follows, and Confirm writes it back to the Life
+   plan or the hand-typed goal. Views never do math: every number comes from
+   engine/goals.js and engine/fieffect.js through the result or planGoals(). */
 import { h, clear, download } from '../dom.js';
 import * as F from '../../engine/format.js';
 import { planGoals, finishChanges, finishMonths, celebrations, MODES, MODE_LABELS, MODE_HELP, FLOOR_IDS } from '../../engine/goals.js';
 import { addMonths, monthsBetween } from '../../engine/debtsim.js';
 import { icsOf, goalEvents } from '../../engine/ics.js';
+import { goalFi, fiMonthOf } from '../../engine/fieffect.js';
 import { parseSaid } from '../../engine/parse.js';
 import { clientName, closeOverlay } from '../app.js';
 
@@ -16,19 +20,23 @@ const ZOOMS = [['24', '2 years', 24], ['60', '5 years', 60], ['fi', 'Until FI', 
 
 export function mount(host, app) {
   const coach = () => app.view === 'coach'; const gentle = () => (app.record.sessionMode || 'standard') === 'gentle';
-  let zoom = '24'; let whatIf = { surplusDelta: 0, events: [], order: null, mode: null, splits: null, overrides: null };
+  let zoom = '24'; let whatIf = { surplusDelta: 0, events: [], order: null, mode: null, splits: null, overrides: null, goals: null };
+  let fiNow = null; /* goalFi for the plan being drawn */
   const header = h('header', null, h('h1', null, coach() ? 'Goals' : 'Your goals'), h('span', { class: 'sub' }, coach() ? 'Every goal funded at once from the monthly surplus; the lean month and the full month always first.' : 'Everything you are saving for, all at the same time.'), h('div', { class: 'actions' },
     h('div', { class: 'view-toggle', role: 'group', 'aria-label': 'How far to look' }, ZOOMS.map(([id, label]) => h('button', { 'aria-pressed': String(zoom === id), onClick: () => { zoom = id; draw(); } }, label))),
     h('button', { class: 'btn', onClick: () => addToCalendar() }, 'Add to calendar'),
     h('button', { class: 'btn coach-only', onClick: () => addGoal() }, 'Add a goal')));
   host.appendChild(header);
   const sentence = h('p', { class: 'gtl-sentence big' }); host.appendChild(sentence);
+  const fiLine = h('p', { class: 'gtl-fi' }); host.appendChild(fiLine);
   const cheer = h('div', { class: 'cheer-host' }); host.appendChild(cheer);
   const whatifPanel = h('section', { class: 'panel whatif' }); host.appendChild(whatifPanel);
   const tlPanel = h('section', { class: 'panel' }); host.appendChild(tlPanel);
   const grid = h('div', { class: 'grid grid-2' }); const allocPanel = h('section', { class: 'panel' }); const cmpPanel = h('section', { class: 'panel' }); grid.appendChild(allocPanel); grid.appendChild(cmpPanel); host.appendChild(grid);
 
-  const isWhatIf = () => whatIf.surplusDelta !== 0 || whatIf.events.length > 0 || whatIf.order !== null || whatIf.mode !== null || whatIf.splits !== null || whatIf.overrides !== null;
+  const isWhatIf = () => whatIf.surplusDelta !== 0 || whatIf.events.length > 0 || whatIf.order !== null || whatIf.mode !== null || whatIf.splits !== null || whatIf.overrides !== null || whatIf.goals !== null;
+  const adjustable = i => !FLOOR_IDS.includes(i.id) && typeof i.step !== 'number' && i.type !== 'debt' && i.type !== 'long-term';
+  const monthsWord = n => { const k = Math.round(Math.abs(n)); return k === 1 ? 'a month' : F.monthsOrYears(k); };
   const plan = () => isWhatIf() ? planGoals(app.record, app.result, whatIf) : app.result.goalPlan;
   const money = c => F.dollarsWhole(c);
   const monthWord = ym => ym ? F.date(ym) : '';
@@ -38,7 +46,8 @@ export function mount(host, app) {
   function draw() {
     header.querySelectorAll('.view-toggle button').forEach((b, k) => b.setAttribute('aria-pressed', String(ZOOMS[k][0] === zoom)));
     const P = plan(); const base = app.result.goalPlan;
-    drawSentence(P); drawCheer(base); drawWhatIf(P, base); drawTimeline(P); drawAlloc(P); drawCompare(P);
+    fiNow = isWhatIf() ? goalFi(app.result, P.draws) : app.result.goalFi;
+    drawSentence(P); drawFi(P); drawCheer(base); drawWhatIf(P, base); drawTimeline(P); drawAlloc(P); drawCompare(P);
   }
   function drawSentence(P) {
     clear(sentence);
@@ -47,6 +56,21 @@ export function mount(host, app) {
     if (!P.next) { sentence.textContent = 'Every goal here is done.'; return; }
     const it = P.input.items.find(i => i.id === P.next.id);
     sentence.textContent = 'Your next win is ' + lowerName(it) + ', in ' + monthWord(P.next.month) + '.';
+  }
+  /* MR-070: what the goals do to the FI date, one line; the headline date already carries them */
+  function drawFi(P) {
+    clear(fiLine);
+    const finite = P.input.items.filter(adjustable);
+    if (!finite.length) { fiLine.textContent = coach() ? 'Add a goal to see what it does to the FI date.' : 'A goal you add with your coach shows here with what it does to your FI date.'; return; }
+    const fi = fiNow;
+    if (!fi || (fi.withMonths === null && fi.baseMonths === null)) { fiLine.textContent = gentle() ? 'Your FI date needs more of the picture first.' : 'The FI date needs income, spending, account balances and a birth date first.'; return; }
+    const month = fiMonthOf(app.result, fi.fiYearWith); const d = fi.deltaMonths;
+    let text = month ? 'With these goals, FI lands ' + F.date(month) : 'With these goals, FI is not reached before 95';
+    text += d === null ? '.' : d >= 0.5 ? ', about ' + monthsWord(d) + ' later than without them.' : d <= -0.5 ? ', about ' + monthsWord(d) + ' sooner than without them.' : ', and they do not move it.';
+    if (fi.left && fi.left.length) { const names = fi.left.map(id => nameOf(P.input.items.find(i => i.id === id) || { name: id })); text += ' ' + names.join(', ') + (names.length === 1 ? ' is' : ' are') + ' not reached at this pace, so ' + (names.length === 1 ? 'it is' : 'they are') + ' not counted.'; }
+    const base = app.result.goalFi;
+    if (isWhatIf() && base && base.withMonths !== null && fi.withMonths !== null && Math.round(fi.withMonths - base.withMonths) !== 0) { const dm = Math.round(fi.withMonths - base.withMonths); text += ' This try moves it ' + monthsWord(dm) + (dm > 0 ? ' later.' : ' sooner.'); }
+    fiLine.textContent = text;
   }
   /* already met (MR-052): a step the pot already covers gets its card once; Got it writes the celebration */
   function drawCheer(base) {
@@ -68,15 +92,18 @@ export function mount(host, app) {
       eventControl('windfall', 'A windfall', 'Windfall amount', 'Add it'),
       eventControl('withdraw', 'Use the cushion', 'Amount used', 'Use it'),
       h('span', { class: 'spacer' }),
-      isWhatIf() ? h('button', { class: 'btn', onClick: () => { whatIf = { surplusDelta: 0, events: [], order: null, mode: null, splits: null, overrides: null }; draw(); } }, 'Reset') : null,
-      (whatIf.order || whatIf.mode || whatIf.splits || whatIf.overrides) ? h('button', { class: 'btn primary', onClick: confirm }, 'Confirm') : null));
+      isWhatIf() ? h('button', { class: 'btn', onClick: () => { whatIf = { surplusDelta: 0, events: [], order: null, mode: null, splits: null, overrides: null, goals: null }; draw(); } }, 'Reset') : null,
+      (whatIf.order || whatIf.mode || whatIf.splits || whatIf.overrides || whatIf.goals) ? h('button', { class: 'btn primary', onClick: confirm }, 'Confirm') : null));
     if (whatIf.events.length) whatifPanel.appendChild(h('div', { class: 'row small' }, whatIf.events.map((e, k) => h('span', { class: 'chip toggle' }, (e.kind === 'windfall' ? 'Windfall ' : 'Used ') + money(e.cents) + ' in ' + monthWord(e.month), ' ', h('button', { 'aria-label': 'Remove this what-if', onClick: () => { whatIf.events.splice(k, 1); draw(); } }, 'x')))));
     if (isWhatIf()) {
       const ch = finishChanges(finishMonths(base), finishMonths(P), P.input.items.map(i => Object.assign({}, i, { name: nameOf(i) })));
-      whatifPanel.appendChild(h('p', { class: 'small whatif-moves' }, ch.length ? ch.slice(0, 4).map(c => c.text).join('. ') + '.' : 'No date moves.'));
+      const tries = whatIf.goals ? Object.keys(whatIf.goals).map(id => P.input.items.find(i => i.id === id)).filter(Boolean).map(i => nameOf(i) + ' now ' + money(i.targetCents) + (i.targetDate ? ' by ' + monthWord(i.targetDate) : ', no date')) : [];
+      const dm = fiNow && app.result.goalFi && fiNow.withMonths !== null && app.result.goalFi.withMonths !== null ? Math.round(fiNow.withMonths - app.result.goalFi.withMonths) : 0;
+      const fiWords = whatIf.goals ? (dm ? 'The FI date moves ' + monthsWord(dm) + (dm > 0 ? ' later' : ' sooner') : 'The FI date does not move') : null;
+      whatifPanel.appendChild(h('p', { class: 'small whatif-moves' }, tries.concat(ch.slice(0, 4).map(c => c.text), fiWords ? [fiWords] : []).join('. ') + (tries.length || ch.length || fiWords ? '.' : 'No date moves.')));
     }
     if (coach() && app.result.asm.cushionStep1 === 'fixed') { const cur = (app.record.goals.cushion || {}).step1Cents; whatifPanel.appendChild(h('div', { class: 'row small' }, h('label', null, 'Lean month, fixed amount'), h('input', { class: 'input num', style: { width: '110px' }, 'aria-label': 'Lean month fixed amount', value: cur ? money(cur) : '', onChange: e => { const p = parseSaid(e.target.value); app.goals({ cushion: Object.assign({}, app.record.goals.cushion || {}, { step1Cents: p && p.cents > 0 ? p.cents : null }) }); draw(); } }), h('span', { class: 'muted' }, 'Assumptions says a fixed amount; blank falls back to one month of food, housing and getting around.'))); }
-    whatifPanel.appendChild(h('p', { class: 'small muted' }, coach() ? 'Surplus, windfall and cushion what-ifs stay here. Confirm saves a new order, mode, split or locked amount to the record.' : 'Nothing here changes your plan until your coach confirms it.'));
+    whatifPanel.appendChild(h('p', { class: 'small muted' }, coach() ? 'Surplus, windfall and cushion what-ifs stay here. Confirm saves a new order, mode, split, locked amount, or a goal moved or resized, to the record.' : 'Nothing here changes your plan until your coach confirms it.'));
   }
   function eventControl(kind, label, amountLabel, go) {
     const months = Array.from({ length: 24 }, (_, k) => addMonths((app.result.today || new Date().toISOString()).slice(0, 7), k));
@@ -92,8 +119,22 @@ export function mount(host, app) {
     if (whatIf.mode) patch.mode = whatIf.mode;
     if (whatIf.splits) patch.splits = whatIf.splits;
     if (whatIf.overrides) patch.overrides = whatIf.overrides;
-    app.goals(patch);
-    whatIf.order = null; whatIf.mode = null; whatIf.splits = null; whatIf.overrides = null;
+    /* MR-070: a moved goal goes back to where it lives: the Life plan row or the hand-typed list; the state of an untouched number is kept */
+    if (whatIf.goals) {
+      const extras = (app.record.goals.extras || []).slice(); let changed = false;
+      Object.keys(whatIf.goals).forEach(id => {
+        const g = whatIf.goals[id]; const k = extras.findIndex(x => x.id === id);
+        if (k !== -1) { extras[k] = Object.assign({}, extras[k], { targetCents: g.targetCents, targetDate: g.targetDate || null }); changed = true; return; }
+        if (id.indexOf('life:') !== 0) return;
+        const rowId = id.slice(5); const row = app.record.planets.life.rows.find(r => r.id === rowId); if (!row) return;
+        const cost = row.f.goalCost; const when = row.f.targetDate;
+        if (typeof g.targetCents === 'number' && !(cost && cost.v === g.targetCents)) app.setField(rowId, 'goalCost', g.targetCents, 'known', 'client');
+        if (g.targetDate !== undefined && !(when && when.v === g.targetDate) && !(!g.targetDate && !(when && when.v))) app.setField(rowId, 'targetDate', g.targetDate || null, g.targetDate ? 'known' : 'unknown', 'client');
+      });
+      if (changed) patch.extras = extras;
+    }
+    if (Object.keys(patch).length) app.goals(patch);
+    whatIf.order = null; whatIf.mode = null; whatIf.splits = null; whatIf.overrides = null; whatIf.goals = null;
     app.toast('Saved to the plan.'); draw();
   }
 
@@ -147,7 +188,7 @@ export function mount(host, app) {
       tl.appendChild(h('div', { class: 'gtl-row type-' + i.type + (FLOOR_IDS.includes(i.id) ? ' starter' : ''), dataset: { goal: i.id } }, label, bar));
     });
     tlPanel.appendChild(h('div', { class: 'tablewrap gtl-wrap' }, tl));
-    tlPanel.appendChild(h('p', { class: 'small muted' }, 'The lean month and the full month come first; a light row was covered already. Filled months are funded. ' + String.fromCharCode(0x2691) + ' is the date you want it by. ' + String.fromCharCode(0x21B3) + ' is money arriving from a finished goal. A dashed month is the cushion refilling after you used it.'));
+    tlPanel.appendChild(h('p', { class: 'small muted' }, 'The lean month and the full month come first; a light row was covered already. Filled months are funded. ' + String.fromCharCode(0x2691) + ' is the date you want it by; the arrows under a goal move that date a month, and the FI line above follows. ' + String.fromCharCode(0x21B3) + ' is money arriving from a finished goal. A dashed month is the cushion refilling after you used it.'));
   }
   function subOf(i, a) {
     if (i.type === 'long-term') return typeof i.pct === 'number' ? Math.round(i.pct * 100) + '% there' : '';
@@ -156,13 +197,42 @@ export function mount(host, app) {
     if (i.step === 1) return money(i.targetCents) + (i.rough ? ', rough' : '') + (a && a.status === 'done' ? ', covered' : '');
     if (i.step === 3) return money(i.targetCents) + (a && a.status === 'done' ? ', covered' : '');
     if (i.type === 'debt') return money(i.remainingCents) + ' at ' + F.percent(i.rate || 0, { places: 0 });
-    return money(i.targetCents) + (i.targetDate ? ' by ' + monthWord(i.targetDate) : '');
+    const fiAdd = fiNow && fiNow.byGoal && typeof fiNow.byGoal[i.id] === 'number' && fiNow.byGoal[i.id] >= 0.5 ? ', ' + monthsWord(fiNow.byGoal[i.id]) + ' on the FI date' : '';
+    return money(i.targetCents) + (i.targetDate ? ' by ' + monthWord(i.targetDate) : '') + fiAdd;
+  }
+  /* MR-070: move a goal along the timeline, or adjust its amount and date in a drawer; both are tries until Confirm */
+  function moveDate(i, delta) {
+    const from = (app.result.goalPlan && app.result.goalPlan.input.from) || (app.result.today || new Date().toISOString()).slice(0, 7);
+    const cur = i.targetDate || (app.result.goalPlan && app.result.goalPlan.assessment[i.id] && app.result.goalPlan.assessment[i.id].finishMonth) || addMonths(from, 12);
+    const next = i.targetDate ? addMonths(cur, delta) : cur;
+    if (next < from) { app.toast('That is already this month.'); return; }
+    whatIf.goals = Object.assign({}, whatIf.goals || {}, { [i.id]: { targetDate: next, targetCents: i.targetCents } }); draw();
+  }
+  function dateControls(i) {
+    if (!adjustable(i) || typeof i.targetCents !== 'number') return [];
+    const out = [];
+    if (i.targetDate) out.push(h('button', { class: 'btn small quiet', 'aria-label': 'Move ' + nameOf(i) + ' a month earlier', title: 'A month earlier', onClick: () => moveDate(i, -1) }, String.fromCharCode(0x2190)), h('button', { class: 'btn small quiet', 'aria-label': 'Move ' + nameOf(i) + ' a month later', title: 'A month later', onClick: () => moveDate(i, 1) }, String.fromCharCode(0x2192)));
+    else out.push(h('button', { class: 'btn small quiet', 'aria-label': 'Give ' + nameOf(i) + ' a date', onClick: () => moveDate(i, 0) }, 'Give it a date'));
+    out.push(h('button', { class: 'btn small quiet coach-only', 'aria-label': 'Adjust ' + nameOf(i), onClick: () => adjustGoal(i) }, 'Adjust'));
+    return out;
+  }
+  function adjustGoal(i) {
+    const amount = h('input', { class: 'input num', 'aria-label': 'Amount', title: 'like 20,000', value: money(i.targetCents) });
+    const when = h('input', { class: 'input', 'aria-label': 'By when (YYYY-MM)', title: '2028-06', value: i.targetDate || '' });
+    const tryIt = () => {
+      const p = parseSaid(amount.value); if (!p || !(p.cents > 0)) { app.toast('An amount first, like 20,000.'); return; }
+      const w = when.value.trim(); if (w && !/^\d{4}-\d{2}$/.test(w)) { app.toast('A month like 2028-06, or leave it blank.'); return; }
+      whatIf.goals = Object.assign({}, whatIf.goals || {}, { [i.id]: { targetDate: w || null, targetCents: p.cents } }); closeOverlay(); draw();
+    };
+    const remove = i.extra ? h('button', { class: 'btn', onClick: () => { app.goals({ extras: (app.record.goals.extras || []).filter(x => x.id !== i.id) }); if (whatIf.goals) { delete whatIf.goals[i.id]; if (!Object.keys(whatIf.goals).length) whatIf.goals = null; } closeOverlay(); app.toast('Goal removed'); draw(); } }, 'Remove this goal') : null;
+    app.openDrawer(h('div', null, h('h2', null, 'Adjust ' + nameOf(i)), h('p', { class: 'small muted' }, 'A new amount or date is a try until you press Confirm. The timeline and the FI line follow it.'), h('div', { class: 'stack' }, h('div', { class: 'row' }, h('span', { class: 'small muted' }, 'Amount'), amount, h('span', { class: 'small muted' }, 'By when'), when), h('div', { class: 'row' }, h('button', { class: 'btn primary', onClick: tryIt }, 'Try it'), remove, h('button', { class: 'btn', onClick: closeOverlay }, 'Cancel')))), { label: 'Adjust ' + nameOf(i) });
   }
   function reorderControls(i, idx, order) {
     if (FLOOR_IDS.includes(i.id) || i.type === 'long-term') return null;
     const movable = order.filter(x => !FLOOR_IDS.includes(x.id) && x.type !== 'long-term'); const pos = movable.findIndex(x => x.id === i.id);
     const move = d => { const ids = movable.map(x => x.id); const j = pos + d; if (j < 0 || j >= ids.length) return; ids.splice(pos, 1); ids.splice(j, 0, i.id); whatIf.order = ids; draw(); };
-    return h('span', { class: 'gtl-move' }, h('button', { class: 'btn small quiet', 'aria-label': 'Move ' + nameOf(i) + ' up', disabled: pos === 0, onClick: () => move(-1) }, String.fromCharCode(0x2191)), h('button', { class: 'btn small quiet', 'aria-label': 'Move ' + nameOf(i) + ' down', disabled: pos === movable.length - 1, onClick: () => move(1) }, String.fromCharCode(0x2193)));
+    const when = dateControls(i);
+    return h('span', { class: 'gtl-ctl' }, h('span', { class: 'gtl-move' }, h('button', { class: 'btn small quiet', 'aria-label': 'Move ' + nameOf(i) + ' up', disabled: pos === 0, onClick: () => move(-1) }, String.fromCharCode(0x2191)), h('button', { class: 'btn small quiet', 'aria-label': 'Move ' + nameOf(i) + ' down', disabled: pos === movable.length - 1, onClick: () => move(1) }, String.fromCharCode(0x2193))), when.length ? h('span', { class: 'gtl-when' }, when) : null);
   }
 
   /* ---- the allocation table and the mode switch ---- */

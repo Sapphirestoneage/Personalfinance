@@ -234,6 +234,19 @@ cover is celebrated once ("You already have a lean month covered"). Level 10 (sa
 curricula) was not built before this level: cushion goals read the cash
 balances and a goal can link to an account row instead of a bucket.
 
+MR-070: the goals are in the FI date. Each Life plan goal and hand-typed goal
+leaves cash in the month it is spent (its date when the plan lands it on
+time, the landing month when late, now when it is already saved); a goal not
+reached at this pace is left out and named. The headline FI date, the
+scoreboard, the calculators and every scenario carry the same draws. Under
+the sentence one line says what the goals do to the date ("With these goals,
+FI lands Feb 2050, about a year later than without them") and each goal's
+row says its share. The arrows under a goal move its date a month as a try,
+Adjust opens its amount and date, and the FI line follows; Confirm writes the
+goal back to the Life plan row or the hand-typed list. The cushion steps are
+savings, debts are in the projection already, and the long-term rungs are the
+destination, so none of those draw.
+
 ## Level 9: What moves the FI date
 
 Open `#/levers` (Levers in the side nav; "What matters most" in the client

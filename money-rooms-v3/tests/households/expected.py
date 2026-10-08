@@ -452,7 +452,83 @@ def main(name):
     pia = 0.9 * min(aime, bp[0]) + 0.32 * max(0, min(aime, bp[1]) - bp[0]) + 0.15 * max(0, aime - bp[1]); ss_monthly = R(pia * ASM['socialSecurityScale'])
     E['socialSecurityMonthly'] = ss_monthly
     line('- Social Security estimate: AIME %s; PIA = 0.9 x %s + 0.32 x (%s - %s) + 0.15 x max(0, %s - %s) = %s a month at 67.' % (dollars(aime), dollars(bp[0]), dollars(min(aime, bp[1])), dollars(bp[0]), dollars(aime), dollars(bp[1]), dollars(ss_monthly)))
-    def project(r):
+    # ---- Goals spent along the way (MR-070): the goal timeline's allocation in its default way (dates first), ported
+    # by hand; each Life plan goal leaves cash in the month it lands (its date when on time, the landing month when late).
+    line(); line('## Goals spent along the way')
+    lean_t = fat if fat > 0 else sum(cats.get(c, 0) for c in ('food', 'accommodation', 'transportation'))
+    full_t = max(R(spending * ASM.get('cushionStep2Months', 1)), lean_t); rule_t = max(target, full_t)
+    T = {'lean': lean_t, 'fullmonth': full_t, 'full': rule_t}
+    g_items = [dict(id='lean', kind='cushion'), dict(id='fullmonth', kind='cushion')]
+    rest = [dict(id='debt:' + d['id'], kind='debt', d=d, rate=d['rate']) for d in debts if not d['full'] and d['bal'] > 0]
+    rest.append(dict(id='full', kind='cushion'))
+    for r in sorted(rows('life', 'goal'), key=lambda r: val(r['f'].get('targetDate')) or '9999'):
+        c = val(r['f']['goalCost'])
+        if c is None: continue
+        rest.append(dict(id='life:' + r['id'], kind='goal', target=c, date=val(r['f'].get('targetDate')), name=r['nickname']))
+    def g_rank(it):
+        if it['kind'] == 'debt' and it['rate'] >= 0.10: return (1, -it['rate'], '')
+        if it['id'] == 'full': return (2, 0, '')
+        if it['kind'] == 'goal' and it.get('date'): return (3, 0, it['date'])
+        if it['kind'] == 'goal': return (4, 0, '')
+        return (5, -it['rate'], '')
+    g_items += sorted(rest, key=g_rank)
+    g_from = TODAY[:7]; pot = min(cash, rule_t)
+    g_rem = {it['id']: it['d']['bal'] for it in g_items if it['kind'] == 'debt'}; g_bal = {it['id']: 0 for it in g_items if it['kind'] == 'goal'}
+    g_done = {it['id']: False for it in g_items}; g_finish = {it['id']: None for it in g_items}; runaway = set()
+    for cid in ('lean', 'fullmonth', 'full'):
+        if pot >= T[cid]: g_done[cid] = True
+    def g_remaining(it):
+        if it['kind'] == 'debt': return g_rem[it['id']]
+        if it['kind'] == 'cushion': return T[it['id']] - pot
+        return it['target'] - g_bal[it['id']]
+    def g_give(it, cents):
+        nonlocal pot
+        pay = min(cents, max(0, g_remaining(it)))
+        if it['kind'] == 'debt': g_rem[it['id']] -= pay
+        elif it['kind'] == 'cushion': pot += pay
+        else: g_bal[it['id']] += pay
+        return pay
+    g_freed = 0; g_freed_next = 0
+    def g_fin(it, ym):
+        nonlocal g_freed_next
+        if not g_done[it['id']] and g_remaining(it) <= 0:
+            g_done[it['id']] = True; g_finish[it['id']] = ym
+            if it['kind'] == 'debt': g_freed_next += it['d']['min']
+    for m in range(600):
+        ym = add_months(g_from, m)
+        g_freed += g_freed_next; g_freed_next = 0
+        avail = max(0, surplus + g_freed)
+        for it in g_items:
+            if it['kind'] != 'debt' or g_done[it['id']] or it['id'] in runaway: continue
+            d = it['d']; i = R(g_rem[it['id']] * eff_rate(d, ym) / 12); nb = g_rem[it['id']] + i - d['min']
+            if nb <= 0: g_rem[it['id']] = 0; g_fin(it, ym)
+            else:
+                g_rem[it['id']] = nb
+                if nb > d['bal'] * 3: runaway.add(it['id'])
+        for it in g_items[:2]:
+            if not g_done[it['id']] and avail > 0: avail -= g_give(it, avail); g_fin(it, ym)
+        if not (g_done['lean'] and g_done['fullmonth']): continue
+        open_items = lambda: [it for it in g_items[2:] if not g_done[it['id']]]
+        for it in open_items():
+            if it['kind'] == 'goal' and it.get('date'):
+                g_left = months_between(ym, it['date']) + 1; rr = g_remaining(it)
+                need = rr if g_left <= 1 else math.ceil(rr / g_left)
+                avail -= g_give(it, min(avail, need))
+        for it in open_items():
+            if avail > 0: avail -= g_give(it, avail)
+        for it in open_items(): g_fin(it, ym)
+        if all(g_done.values()) and m + 1 >= 24: break
+    goal_draws = {}; goal_landing = {}
+    for it in g_items:
+        if it['kind'] != 'goal': continue
+        f = g_finish[it['id']]
+        if not f: line('- %s (%s by %s): not reached at this pace, so it is left out of the FI date.' % (it['name'], dollars(it['target']), it['date'] or 'no date')); continue
+        month = it['date'] if it.get('date') and f <= it['date'] else f
+        goal_landing[it['id']] = month; goal_draws[int(month[:4])] = goal_draws.get(int(month[:4]), 0) + it['target']
+        line('- %s: %s lands %s%s, so %s leaves cash in %s.' % (it['name'], dollars(it['target']), f, (' (date %s)' % it['date']) if it.get('date') else '', dollars(it['target']), month[:4]))
+    E['goalDraws'] = {str(k): v for k, v in goal_draws.items()}; E['goalLanding'] = goal_landing
+    line('- Cushion steps here: lean month %s, full month %s, full cushion %s; pot today %s; surplus %s a month.' % (dollars(lean_t), dollars(full_t), dollars(rule_t), dollars(pot if False else min(cash, rule_t)), dollars(surplus)))
+    def project(r, extra_annual=0):
         inv = invested; csh = cash; year = int(TODAY[:4]); a = age; nw_path = []; fi_age = None
         sim = sims['avalanche']
         debt_bal_by_year = {}
@@ -474,13 +550,15 @@ def main(name):
             year += 1; a += 1
             working = a <= retire_age and (fi_age is None or a <= fi_age)
             debt_now = debt_bal_by_year.get(year, 0)
+            one_off = goal_draws.get(year, 0)
             if working:
-                inv = R(inv * (1 + r)) + employee_annual + employer_annual
+                inv = R(inv * (1 + r)) + employee_annual + employer_annual + extra_annual
                 freed_cash = service * 12 if debt_now == 0 else 0
-                csh = R(csh * (1 + ASM['cashRealReturn'])) + max(0, leak * 12) + freed_cash
+                csh = R(csh * (1 + ASM['cashRealReturn'])) + max(0, leak * 12 - extra_annual) + freed_cash - one_off
+                if csh < 0: inv += csh; csh = 0
             else:
                 mult = ASM['gogo'] if a < ASM['slowgoAge'] else ASM['slowgo'] if a < ASM['nogoAge'] else ASM['nogo']
-                need = R(annual_spend * mult) - (ss_monthly * 12 if a >= ASM['socialSecurityAge'] else 0)
+                need = R(annual_spend * mult) + one_off - (ss_monthly * 12 if a >= ASM['socialSecurityAge'] else 0)
                 inv = R(inv * (1 + r)) - max(0, need)
                 csh = R(csh * (1 + ASM['cashRealReturn']))
             nw_y = inv + csh - debt_now
@@ -512,7 +590,9 @@ def main(name):
     if E['liquidityRate'] < ASM['lockedLiquidityShare'] and ret_age < 59.5: fires.append('locked-up')
     if stated and hours_m and rhw < stated * ASM['realWageShare']: fires.append('real-hourly-wage')
     if interest >= 10000: fires.append('cost-in-hours')
-    if paths['likely']['fiAge']: fires.append('one-more-point')
+    # one more point of take-home saved: fires only when it moves the FI year (the engine reads months > 0)
+    one_more_fi = project(ASM['returnLikely'], R(take * 0.01) * 12)[1] if paths['likely']['fiAge'] else None
+    if paths['likely']['fiAge'] and one_more_fi is not None and one_more_fi < paths['likely']['fiAge']: fires.append('one-more-point')
     if basis >= coast: fires.append('coast-check')
     if mistakes * 12 >= 10000: fires.append('mistake-tax')
     for w in wallet:

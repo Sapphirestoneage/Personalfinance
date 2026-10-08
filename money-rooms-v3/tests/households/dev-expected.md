@@ -99,10 +99,14 @@ Age at 2026-10-05: born 1995-06-22, so 31. Filing status single.
 ## Projection (year by year, real dollars, likely return)
 Rules: invested x (1 + r) + contributions (payroll + match + bank + the leak and freed debt payments go to cash); cash x (1 + 1%); debts follow the avalanche simulation; spending is baseline x go-go/slow-go/no-go after retirement; income stops at the later of retirement age and FI age; Social Security from 67 at the bend-point estimate; FI = first year net worth x withdrawal rate covers annual spending.
 - Social Security estimate: AIME $8,000; PIA = 0.9 x $1,247 + 0.32 x ($7,518 - $1,247) + 0.15 x max(0, $8,000 - $7,518) = $3,201.32 a month at 67.
-- likely return: FI at age None (None); net worth at 95 -$3,406,565.74.
-- best return: FI at age None (None); net worth at 95 -$3,370,834.61.
-- worst return: FI at age None (None); net worth at 95 -$2,198,661.56.
-- First five years (likely): 2027 age 32 invested $66,112.50 cash $6,767 debt $10,764.54 net worth $62,114.96; 2028 age 33 invested $83,818.13 cash $6,834.67 debt $7,592.20 net worth $83,060.60; 2029 age 34 invested $102,409.04 cash $6,903.02 debt $4,193.95 net worth $105,118.11; 2030 age 35 invested $121,929.49 cash $6,972.05 debt $553.65 net worth $128,347.89; 2031 age 36 invested $142,425.96 cash $10,857.77 debt $0 net worth $153,283.73.
+
+## Goals spent along the way
+- Six months of runway: $25,000 lands 2029-02 (date 2027-12), so $25,000 leaves cash in 2029.
+- Cushion steps here: lean month $2,725, full month $4,206.67, full cushion $26,081.35; pot today $6,700; surplus $875.33 a month.
+- likely return: FI at age None (None); net worth at 95 -$3,774,170.49.
+- best return: FI at age None (None); net worth at 95 -$4,505,561.91.
+- worst return: FI at age None (None); net worth at 95 -$2,321,146.46.
+- First five years (likely): 2027 age 32 invested $66,112.50 cash $6,767 debt $10,764.54 net worth $62,114.96; 2028 age 33 invested $83,818.13 cash $6,834.67 debt $7,592.20 net worth $83,060.60; 2029 age 34 invested $84,312.06 cash $0 debt $4,193.95 net worth $80,118.11; 2030 age 35 invested $102,927.66 cash $0 debt $553.65 net worth $102,374.01; 2031 age 36 invested $122,474.04 cash $3,816 debt $0 net worth $126,290.04.
 
 ## Lenses expected to fire (impact at or above $100 a year)
 - Level 9 lenses stated here: fire big-three, double-lever, healthcare-bridge; silent guardrails-room, house-hack, purchase-in-fi-days, withdrawal-sensitivity.

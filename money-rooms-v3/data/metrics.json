@@ -2596,8 +2596,8 @@
    "id": "fiDate",
    "name": "FI date and years to FI",
    "clientLabel": "When the portfolio could carry the household",
-   "definition": "First projection year where net worth times the withdrawal rate covers spending, at the likely, best and worst returns.",
-   "formula": "projection, year by year to 95",
+   "definition": "First projection year where net worth times the withdrawal rate covers spending, at the likely, best and worst returns. Goals spend their cost in the year they land, so a goal moved or resized moves this date.",
+   "formula": "projection, year by year to 95, with the goals spent along the way",
    "inputs": [
     "projection"
    ],

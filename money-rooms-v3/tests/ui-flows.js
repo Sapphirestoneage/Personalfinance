@@ -281,6 +281,26 @@ export const flows = [
     check('a goal moves up the list but never above the floors', (await page.getAttribute('.gtl-row:not(.gtl-head) >> nth=0', 'data-goal')) === 'lean');
     await page.click('.whatif button:has-text("Confirm")');
     await page.waitForFunction(() => (document.querySelector('.whatif .tag') || {}).textContent === 'nothing changed');
+    /* MR-070: a goal moves along the timeline and the FI line follows; Confirm writes it back to the Life plan */
+    await page.waitForSelector('.gtl-fi');
+    const fiBefore = await page.textContent('.gtl-fi');
+    check('one line says what the goals do to the FI date', /^With these goals, FI lands [A-Z][a-z]{2} \d{4}, about .+ later than without them\./.test(fiBefore.trim()), fiBefore);
+    check('a goal row says what it adds to the FI date', /on the FI date/.test(await page.textContent('.gtl-row[data-goal="life:m-goal1"] .gtl-sub')));
+    await page.click('button[aria-label="Move Condo down payment a month later"]');
+    await page.waitForSelector('.whatif-moves');
+    check('a month later is a try, not a save', (await page.textContent('.gtl-row[data-goal="life:m-goal1"] .gtl-sub')).indexOf('Jul 2035') !== -1 && (await page.textContent('.whatif .tag')).indexOf('nothing is saved') !== -1);
+    await page.click('button[aria-label="Adjust Condo down payment"]');
+    await page.waitForSelector('.drawer input[aria-label="Amount"]');
+    await page.fill('.drawer input[aria-label="Amount"]', '40,000'); await page.fill('.drawer input[aria-label="By when (YYYY-MM)"]', '2030-06');
+    await page.click('.drawer button:has-text("Try it")');
+    await page.waitForFunction(() => ((document.querySelector('.gtl-row[data-goal="life:m-goal1"] .gtl-sub') || {}).textContent || '').indexOf('$40,000') !== -1);
+    const fiTry = await page.textContent('.gtl-fi');
+    check('the FI line follows the try and says what moved', fiTry !== fiBefore && /This try moves it .+ sooner\./.test(fiTry), fiTry);
+    await page.click('.whatif button:has-text("Confirm")');
+    await page.waitForFunction(() => (document.querySelector('.whatif .tag') || {}).textContent === 'nothing changed');
+    const subAfter = await page.textContent('.gtl-row[data-goal="life:m-goal1"] .gtl-sub');
+    check('confirm writes the goal back to the Life plan', subAfter.indexOf('$40,000') !== -1 && subAfter.indexOf('Jun 2030') !== -1, subAfter);
+    check('the headline FI line now carries the saved goal', (await page.textContent('.gtl-fi')) !== fiBefore);
     /* the calendar file */
     const [dl] = await Promise.all([page.waitForEvent('download'), page.click('button:has-text("Add to calendar")')]);
     check('add to calendar downloads an ics file', /\.ics$/.test(dl.suggestedFilename()));
@@ -443,7 +463,7 @@ export const flows = [
     await page.waitForSelector('.toast'); await page.waitForSelector('.orbit');
     /* the headline shelf on Home: tiles open the metric drawer with levers and the lens that reads it */
     await page.waitForSelector('.shelf-panel .shelf-tile[data-metric="fiDate"]');
-    check('the Home shelf shows the FI date tile', (await page.textContent('.shelf-tile[data-metric="fiDate"] .value')).indexOf('2049') !== -1);
+    check('the Home shelf shows the FI date tile', (await page.textContent('.shelf-tile[data-metric="fiDate"] .value')).indexOf('2050') !== -1); /* MR-070: the condo and the trip push it from 2049 */
     check('the Home shelf carries the compact ladder', (await page.$$('.mini-ladder .mini-step')).length === 5);
     await page.click('.shelf-tile[data-metric="fiNumber"]');
     await page.waitForSelector('.drawer .metric-drawer');

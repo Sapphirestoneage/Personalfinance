@@ -214,10 +214,16 @@
  "fiRatio": 0.015603,
  "feeDragLifetime": 251587,
  "socialSecurityMonthly": 288326,
+ "goalDraws": {
+  "2039": 6000000
+ },
+ "goalLanding": {
+  "life:j-goal": "2039-07"
+ },
  "projection": {
   "likely": {
-   "fiAge": 78,
-   "fiYear": 2077,
+   "fiAge": 80,
+   "fiYear": 2079,
    "first5": [
     {
      "year": 2027,
@@ -264,14 +270,14 @@
     "year": 2094,
     "age": 95,
     "invested": 218054706,
-    "cash": 24514281,
+    "cash": 14143131,
     "debt": 0,
-    "netWorth": 242568987
+    "netWorth": 232197837
    }
   },
   "best": {
-   "fiAge": 59,
-   "fiYear": 2058,
+   "fiAge": 60,
+   "fiYear": 2059,
    "first5": [
     {
      "year": 2027,
@@ -317,10 +323,10 @@
    "at95": {
     "year": 2094,
     "age": 95,
-    "invested": 798321722,
-    "cash": 23901424,
+    "invested": 855924011,
+    "cash": 14143131,
     "debt": 0,
-    "netWorth": 822223146
+    "netWorth": 870067142
    }
   },
   "worst": {
@@ -372,9 +378,9 @@
     "year": 2094,
     "age": 95,
     "invested": 35010327,
-    "cash": 24514281,
+    "cash": 14143131,
     "debt": 0,
-    "netWorth": 59524608
+    "netWorth": 49153458
    }
   }
  },

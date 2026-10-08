@@ -237,3 +237,12 @@ Collected during the run; none blocked the build. Answer whenever.
 71. v44 swept each month's leftover budget per tag into the next goal; the
     calendar's sweep moves what is left above the floor at month end instead.
     Keep the floor version?
+72. A goal the plan funds late (Jordan's apartment down payment, due 2031,
+    lands 2039) is spent when it lands, so moving its date earlier does not
+    move the FI date until the plan can afford it; the row says what it needs
+    a month instead. Keep that, or spend every dated goal on its date even
+    when the money is not there yet?
+73. A down payment leaves cash and comes back as home equity, but the
+    projection has no home line yet, so today it counts as spent for good and
+    the FI date moves more than it should. Build the home equity line next
+    (one of the six FI-date gaps), or leave down payments as spent until then?
