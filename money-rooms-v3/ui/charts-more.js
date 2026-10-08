@@ -16,7 +16,9 @@ function axes(svg, x, y, W, H, m, o) {
   svg.append('g').attr('transform', 'translate(0,' + (H - m.b) + ')').attr('class', 'axis').call(d3g().axisBottom(x).ticks(o.xTicks || 8).tickFormat(o.xf || (v => String(v))));
   svg.append('g').attr('transform', 'translate(' + m.l + ',0)').attr('class', 'axis').call(d3g().axisLeft(y).ticks(o.yTicks || 5).tickFormat(o.yf || (v => F.dollarsCompact(v))));
 }
-function note(svg, W, H, m, text) { svg.append('text').attr('class', 'chart-label muted').attr('x', m.l).attr('y', H - 4).text(text); }
+/* a chart's note sits under the drawing as a caption that wraps (owner feedback, MR-064), never inside the svg where it clips */
+function note(svg, W, H, m, text) { const host = svg.node().parentNode; if (host) host.appendChild(h('p', { class: 'chart-note' }, text)); }
+export function caption(host, text) { host.appendChild(h('p', { class: 'chart-note' }, text)); }
 /* horizontal bars: rows [{ label, value, text, cls }] */
 function hbars(host, rows, o) {
   const d3 = d3g(); const W = o.width, rowH = o.rowH || 28;

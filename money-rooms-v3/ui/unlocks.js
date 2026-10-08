@@ -269,6 +269,13 @@ export function chartInputs(app, chartId) {
   });
   return { fed: fed.slice(0, 10), sharpen: sharpen.slice(0, 5) };
 }
+/* the title and the one-line takeaway of a chart, apart (owner feedback, MR-064): the name reads as a heading, the figures as a sentence under it */
+export function chartTakeawayParts(app, chartId) {
+  const def = CHARTS.find(c => c.id === chartId); const meta = chartMeta(chartId, app.data);
+  const parts = [];
+  (meta ? meta.metrics : []).forEach(mid => { const m = app.result.metrics[mid]; const d = app.data.metrics.metrics.find(x => x.id === mid); if (m && m.status === 'ok' && d) { const v = U.valueText(m); if (v) parts.push((app.view === 'client' ? d.clientLabel : d.name) + ': ' + v); } });
+  return { title: app.view === 'client' ? def.client : def.name, line: parts.slice(0, 2).join(' \u00b7 ') };
+}
 export function chartTakeaway(app, chartId) {
   const def = CHARTS.find(c => c.id === chartId); const meta = chartMeta(chartId, app.data);
   const parts = [];
@@ -284,7 +291,9 @@ export function renderFocusedChart(host, app, chartId, back) {
   if (data && data.waiting) getSensitivity(app, () => setTimeout(() => renderFocusedChart(host, app, chartId, back), 0));
   host.appendChild(h('div', { class: 'row', style: { marginBottom: '8px' } }, h('a', { class: 'btn small', href: back || '#/measure/charts' }, 'Back to where I was')));
   const panel = h('section', { class: 'panel chart-panel focused', dataset: { chart: chartId } });
-  panel.appendChild(h('header', null, h('h2', null, data && !data.needs ? chartTakeaway(app, chartId) : (coach ? def.name : def.client))));
+  const tk = chartTakeawayParts(app, chartId);
+  panel.appendChild(h('header', null, h('h2', null, tk.title)));
+  if (data && !data.needs && tk.line) panel.appendChild(h('p', { class: 'takeaway' }, tk.line));
   const body = h('div', { class: 'chart-big', dataset: { chartBody: chartId } });
   panel.appendChild(body);
   host.appendChild(panel);

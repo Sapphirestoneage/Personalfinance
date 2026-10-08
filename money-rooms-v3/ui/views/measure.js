@@ -12,7 +12,7 @@ import * as Charts from '../charts.js';
 import { translator, metricLabel } from '../glossary.js';
 import { PLANET_LABELS } from '../../engine/sun.js';
 import { registerMath, openMetric } from '../metricdrawer.js';
-import { renderUnlockMap, renderFocusedChart, highlight, clientCharts, chartTakeaway, goToProbe } from '../unlocks.js';
+import { renderUnlockMap, renderFocusedChart, highlight, clientCharts, chartTakeaway, chartTakeawayParts, goToProbe } from '../unlocks.js';
 
 /* MR-059: Measure is tabs with stable deep links: #/measure/numbers/<metric>, #/measure/lenses/<lens>, #/measure/charts/<chart>, #/measure/unlocks */
 const TABS = [['overview', 'Overview'], ['charts', 'Charts'], ['numbers', 'Numbers'], ['lenses', 'Lenses'], ['unlocks', 'Unlocks']];
@@ -225,11 +225,11 @@ export function drawCharts(host, app, t, phone) {
   let foldOpen = !phone;
   list.filter(c => galleryFilter === 'all' || c.planet === galleryFilter).forEach(c => {
     const data = built[c.id]; const locked = !data || data.needs;
-    const title = locked ? (coach ? c.name : c.client) : chartTakeaway(app, c.id);
+    const tk = chartTakeawayParts(app, c.id); const title = tk.title;
     const panel = h('section', { class: 'panel chart-panel' + (locked ? ' locked' : ''), dataset: { chart: c.id } }, h('header', null, h('h3', null, h('a', { href: '#/measure/charts/' + c.id, class: 'chart-link', title: 'Open this chart on its own' }, title)),
       coach && !locked ? h('label', { class: 'small muted', style: { display: 'inline-flex', gap: '4px' } }, h('input', { type: 'checkbox', checked: visible.includes(c.id), 'aria-label': 'Client sees ' + c.name, onChange: e => { app.mutate(rec => { const set = new Set(clientCharts(app)); if (e.target.checked) set.add(c.id); else set.delete(c.id); rec.sun.clientCharts = Array.from(set); }, 'picks'); } }), 'Client sees') : null,
       coach && !locked ? h('label', { class: 'small muted', style: { display: 'inline-flex', gap: '4px' } }, h('input', { type: 'checkbox', checked: onPage.includes(c.id), 'aria-label': 'On the one-pager: ' + c.name, onChange: e => { app.mutate(rec => { const set = new Set(rec.sun.onepager.charts || []); if (e.target.checked) set.add(c.id); else set.delete(c.id); rec.sun.onepager.charts = Array.from(set); }, 'picks'); } }), 'On the one-pager') : null));
-    if (!locked && title !== (coach ? c.name : c.client)) panel.appendChild(h('div', { class: 'small muted', style: { marginBottom: '6px' } }, coach ? c.name : c.client));
+    if (!locked && tk.line) panel.appendChild(h('p', { class: 'takeaway' }, tk.line));
     const body = h('div', { dataset: { chartBody: c.id } });
     panel.appendChild(body);
     if (locked) {
@@ -260,7 +260,7 @@ export function drawOverview(host, app, t, phone) {
   host.appendChild(h('div', { class: 'row', style: { justifyContent: 'space-between', margin: '0 0 8px' } }, h('h2', null, coach ? 'The picture' : 'Your picture'), h('span', { class: 'small muted' }, heroes.length + ' of ' + total + ' charts shown. ', h('a', { href: '#/measure/charts' }, 'All charts'), ' or ', h('a', { href: '#/measure/unlocks' }, coach ? 'the Unlock Map' : 'what more would show'))));
   if (!heroes.length) { host.appendChild(h('div', { class: 'empty' }, h('h2', null, 'No chart has its inputs yet'), h('p', null, 'Income first, then spending; the first charts arrive with the first rows.'), h('p', null, h('a', { class: 'next', href: '#/measure/unlocks' }, 'See what would open them')))); return; }
   const grid = h('div', { class: 'overview-grid' });
-  heroes.forEach(({ c }) => { grid.appendChild(h('section', { class: 'panel chart-panel hero', dataset: { chart: c.id } }, h('header', null, h('h3', null, h('a', { href: '#/measure/charts/' + c.id, class: 'chart-link' }, chartTakeaway(app, c.id)))), h('div', { class: 'small muted', style: { marginBottom: '6px' } }, coach ? c.name : c.client), h('div', { dataset: { chartBody: c.id } }))); });
+  heroes.forEach(({ c }) => { const tk = chartTakeawayParts(app, c.id); grid.appendChild(h('section', { class: 'panel chart-panel hero', dataset: { chart: c.id } }, h('header', null, h('h3', null, h('a', { href: '#/measure/charts/' + c.id, class: 'chart-link' }, tk.title))), tk.line ? h('p', { class: 'takeaway' }, tk.line) : null, h('div', { dataset: { chartBody: c.id } }))); });
   host.appendChild(grid);
   const shown = phone ? heroes.slice(0, 2) : heroes; let open = !phone;
   const paint = () => heroes.forEach(({ c, d }, i) => { const body = grid.querySelector('[data-chart-body="' + c.id + '"]'); if (!body) return; body.parentNode.style.display = open || i < 2 ? '' : 'none'; if (open || i < 2) Charts.render(c.id, body, d, { client: !coach }); });

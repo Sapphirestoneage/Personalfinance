@@ -231,7 +231,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
           so.appendChild(sourceChip(f, s => { app.setField(r.id, c.def.id, f.v, f.state || 'unknown', s); paint(); refreshDerived(r.id); }, { label: 'Source of ' + c.def.label.toLowerCase() }));
         };
         paint();
-        control.querySelectorAll('input, select').forEach(el => el.addEventListener('change', () => setTimeout(paint, 0)));
+        control.querySelectorAll('input, select').forEach(el => el.addEventListener('change', () => setTimeout(() => { paint(); refreshDerived(r.id); }, 0)));
         row.appendChild(h('span', { class: 'meta' }, st, h('span', { class: 'meta-sep', 'aria-hidden': 'true' }, '\u00b7'), so)); /* one quiet line: how sure, and where it came from */
         if (c.def.optional || c.def.tag) { optional.appendChild(row); anyOptional = true; } else { facts.appendChild(row); anyFact = true; }
       } else if (c.kind === 'field') { if (c.def.optional || c.def.tag) { optional.appendChild(row); anyOptional = true; } else { facts.appendChild(row); anyFact = true; } }
@@ -270,6 +270,8 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     if (conf) conf.textContent = Math.round(rowConfidence(r) * 100) + '%';
     const st = tr.querySelector('td.cell-state'); if (st) { clear(st); st.appendChild(stateCell(r)); }
     const so = tr.querySelector('td.cell-source'); if (so) { clear(so); so.appendChild(sourceCell(r)); }
+    /* the Details count drops the moment a fact behind it is filled (owner feedback, MR-064) */
+    const dt = tr.querySelector('td.cell-details'); if (dt) { const fresh = renderCell(r, { kind: 'details' }); dt.replaceWith(fresh); }
   }
 
   function stateCell(r) {

@@ -4,7 +4,7 @@
    from the tokens through CSS classes; no colour alone carries meaning. */
 import * as F from '../engine/format.js';
 import { ALL_CHARTS as CHARTS } from '../engine/charts-all.js';
-import { MORE_RENDERERS } from './charts-more.js';
+import { MORE_RENDERERS, caption } from './charts-more.js';
 import { SCORE_RENDERERS } from './charts-score.js';
 import { h } from './dom.js';
 
@@ -56,12 +56,12 @@ function netWorth(host, d, o) {
   svg.append('path').datum(d.years).attr('class', 'band').attr('d', d3.area().x(p => x(p.age)).y0(p => y(Math.max(lo, Math.min(hi, p.worst)))).y1(p => y(Math.max(lo, Math.min(hi, p.best)))));
   svg.append('path').datum(d.years).attr('class', 'line series-1').attr('d', d3.line().x(p => x(p.age)).y(p => y(p.likely)));
   if (d.fiNumber) { svg.append('line').attr('class', 'marker').attr('x1', m.l).attr('x2', W - m.r).attr('y1', y(d.fiNumber)).attr('y2', y(d.fiNumber)); svg.append('text').attr('class', 'chart-label').attr('x', W - m.r).attr('y', y(d.fiNumber) - 4).attr('text-anchor', 'end').text(wordFor(o, 'FI number') + ' ' + F.dollarsCompact(d.fiNumber)); }
-  if (d.fiAges.likely) { svg.append('line').attr('class', 'marker').attr('x1', x(d.fiAges.likely)).attr('x2', x(d.fiAges.likely)).attr('y1', m.t).attr('y2', H - m.b); svg.append('text').attr('class', 'chart-label').attr('x', x(d.fiAges.likely) + 4).attr('y', m.t + 10).text(wordFor(o, 'FI at') + ' ' + d.fiAges.likely); }
+  if (d.fiAges.likely) { svg.append('line').attr('class', 'marker').attr('x1', x(d.fiAges.likely)).attr('x2', x(d.fiAges.likely)).attr('y1', m.t).attr('y2', H - m.b); const nearEdge = x(d.fiAges.likely) > (W - m.r) * 0.62; svg.append('text').attr('class', 'chart-label').attr('x', x(d.fiAges.likely) + (nearEdge ? -4 : 4)).attr('y', m.t + 10).attr('text-anchor', nearEdge ? 'end' : 'start').text(wordFor(o, 'FI at') + ' ' + d.fiAges.likely); }
   const asm = d.asm || {};
   const pct = v => F.percent(v, { places: 0 });
-  svg.append('text').attr('class', 'chart-label muted').attr('x', m.l).attr('y', H - 4).text(o.client
-    ? 'Age. In today\'s dollars, growing about ' + pct(asm.returnLikely) + ' a year after inflation.'
-    : 'Age. Today\'s dollars. Line ' + pct(asm.returnLikely) + ' a year after inflation; band ' + pct(asm.returnWorst) + ' to ' + pct(asm.returnBest) + '.');
+  caption(host, o.client
+    ? 'By age, in today\'s dollars, growing about ' + pct(asm.returnLikely) + ' a year after inflation.'
+    : 'By age, in today\'s dollars. The line grows ' + pct(asm.returnLikely) + ' a year after inflation; the shaded range runs from ' + pct(asm.returnWorst) + ' to ' + pct(asm.returnBest) + '.');
 }
 
 /* Scenario paths: today's path, each block alone, all together (one chart module, no private copies). */
@@ -77,7 +77,7 @@ function paths(host, d, o) {
   svg.append('g').attr('transform', 'translate(0,' + (H - m.b) + ')').attr('class', 'axis').call(d3.axisBottom(x).ticks(8).tickFormat(v => String(v)));
   svg.append('g').attr('transform', 'translate(' + m.l + ',0)').attr('class', 'axis').call(d3.axisLeft(y).ticks(5).tickFormat(v => F.dollarsCompact(v)));
   series.forEach(s => svg.append('path').datum(s.path).attr('class', 'line ' + s.cls).attr('d', d3.line().x(p => x(p.age)).y(p => y(p.netWorth))).append('title').text(s.name));
-  svg.append('text').attr('class', 'chart-label muted').attr('x', m.l).attr('y', H - 4).text('Age. Net worth in today\'s dollars, growing ' + F.percent((d.asm || {}).returnLikely, { places: 0 }) + ' a year after inflation.');
+  caption(host, 'By age. Net worth in today\'s dollars, growing ' + F.percent((d.asm || {}).returnLikely, { places: 0 }) + ' a year after inflation.');
   legend(host, [{ label: 'Today\'s path', text: '', cls: 'path-today' }, { label: 'Each alone', text: '', cls: 'path-alone' }, { label: 'All together', text: '', cls: 'path-together' }]);
 }
 
@@ -108,7 +108,7 @@ function taxes(host, d, o) {
     g.append('rect').attr('x', Math.min(x0, x1)).attr('y', 2).attr('width', Math.max(1, Math.abs(x1 - x0))).attr('height', rowH - 4).attr('class', 'bar ' + r.cls).append('title').text(r.label + ': ' + F.dollarsWhole(Math.abs(r.value)));
     g.append('text').attr('class', 'chart-label').attr('x', W - valueW + 8).attr('y', rowH / 2 + 4).text((r.kind === 'minus' ? '-' : '') + F.dollarsWhole(Math.abs(r.value), { rough: d.rough && r.kind === 'total' }));
   });
-  svg.append('text').attr('class', 'chart-label muted').attr('x', 0).attr('y', H - 2).text(o.client ? 'Federal only, a year. Bars run against your pay for the year.' : 'Federal brackets and FICA for the year; no state tax. Bars run against gross pay.');
+  caption(host, o.client ? 'Federal only, for a year. The bars run against your pay for the year.' : 'Federal brackets and FICA for the year; no state tax. The bars run against gross pay.');
 }
 
 function balanceSheet(host, d, o) {
