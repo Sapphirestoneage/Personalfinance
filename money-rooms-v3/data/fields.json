@@ -461,8 +461,8 @@
      "tableFields": []
     },
     "account": {
-     "label": "Account",
-     "moon": "Accounts",
+     "label": "Investing account",
+     "moon": "Investing",
      "nameField": "accountType",
      "fields": [
       "accountType",
@@ -477,7 +477,23 @@
      ],
      "nicknameLabel": "Nickname",
      "stress": true,
-     "plural": "Accounts",
+     "plural": "Investing accounts",
+     "tableFields": [],
+     "explain": "Retirement, brokerage and other accounts that take market returns or sit in a tax bucket. Checking, savings and CDs live next door under Bank accounts."
+    },
+    "bank": {
+     "label": "Bank account",
+     "moon": "Bank accounts",
+     "nameField": "bankType",
+     "fields": [
+      "bankType",
+      "accountBalance",
+      "contribAmount"
+     ],
+     "nicknameLabel": "Nickname",
+     "stress": true,
+     "plural": "Bank accounts",
+     "explain": "Checking, savings, high-yield savings and CDs: the cash the cushion, the calendar and safe to spend read. Investing accounts live next door.",
      "tableFields": []
     },
     "holding": {
@@ -1436,7 +1452,7 @@
    "kind": "choice",
    "owner": "invest",
    "weight": 8,
-   "hint": "Decides the tax bucket and liquidity tier",
+   "hint": "Decides the tax bucket and liquidity tier; bank accounts have their own list",
    "defaultSource": "client",
    "options": [
     [
@@ -1488,18 +1504,6 @@
      "Taxable brokerage"
     ],
     [
-     "hysa",
-     "High-yield savings"
-    ],
-    [
-     "checking",
-     "Checking"
-    ],
-    [
-     "cd",
-     "CD"
-    ],
-    [
      "ibonds",
      "I bonds"
     ],
@@ -1518,6 +1522,33 @@
     [
      "other",
      "Other"
+    ]
+   ]
+  },
+  "bankType": {
+   "id": "bankType",
+   "label": "Bank account type",
+   "kind": "choice",
+   "owner": "invest",
+   "weight": 8,
+   "hint": "Checking, savings, high-yield savings or a CD",
+   "defaultSource": "client",
+   "options": [
+    [
+     "checking",
+     "Checking"
+    ],
+    [
+     "savings",
+     "Savings"
+    ],
+    [
+     "hysa",
+     "High-yield savings"
+    ],
+    [
+     "cd",
+     "CD"
     ]
    ]
   },

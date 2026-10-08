@@ -1,14 +1,20 @@
 /* Investments and accounts: account type infers the tax bucket and liquidity
    tier; balances by bucket and tier; contributions (payroll ones read from
-   Income); room left under limits; allocation; weighted fees; match capture. */
+   Income); room left under limits; allocation; weighted fees; match capture.
+   MR-071: two row types. An investing account carries accountType; a bank
+   account (checking, savings, high-yield savings, CD) carries bankType and
+   is all cash. typeOf() reads either. */
 import { q, U, needs, isNeeds, sum } from '../units.js';
 import { fieldQ, monthlyCents, num, val } from './common.js';
 import { ageAt } from '../format.js';
 
-export const BUCKET = { '401k': 'pretax', '403b': 'pretax', '457b': 'pretax', tsp: 'pretax', tradIra: 'pretax', sep: 'pretax', solo401k: 'pretax', pension: 'pretax', roth401k: 'roth', rothIra: 'roth', hsa: 'hsa', '529': 'other', taxable: 'taxable', crypto: 'taxable', hysa: 'cash', checking: 'cash', cd: 'cash', ibonds: 'cash', realEstate: 'other', other: 'other' };
-export const LIQUIDITY = { checking: 'liquid', hysa: 'liquid', cd: 'liquid', ibonds: 'liquid', taxable: 'liquid', crypto: 'liquid', rothIra: 'semi', hsa: 'semi', '529': 'semi', realEstate: 'locked', pension: 'locked' };
+export const BUCKET = { '401k': 'pretax', '403b': 'pretax', '457b': 'pretax', tsp: 'pretax', tradIra: 'pretax', sep: 'pretax', solo401k: 'pretax', pension: 'pretax', roth401k: 'roth', rothIra: 'roth', hsa: 'hsa', '529': 'other', taxable: 'taxable', crypto: 'taxable', hysa: 'cash', checking: 'cash', savings: 'cash', cd: 'cash', ibonds: 'cash', realEstate: 'other', other: 'other' };
+export const LIQUIDITY = { checking: 'liquid', hysa: 'liquid', savings: 'liquid', cd: 'liquid', ibonds: 'liquid', taxable: 'liquid', crypto: 'liquid', rothIra: 'semi', hsa: 'semi', '529': 'semi', realEstate: 'locked', pension: 'locked' };
+export const BANK_TYPES = Object.freeze(['checking', 'savings', 'hysa', 'cd']);
+export const isAccountRow = r => r.type === 'account' || r.type === 'bank';
+export const typeOf = r => r.type === 'bank' ? (r.f.bankType && r.f.bankType.v) : (r.f.accountType && r.f.accountType.v);
 export const INVESTED = new Set(['401k', 'roth401k', '403b', '457b', 'tsp', 'tradIra', 'rothIra', 'sep', 'solo401k', 'hsa', '529', 'taxable', 'crypto']);
-export const ACCOUNT_LABELS = { '401k': '401(k)', roth401k: 'Roth 401(k)', '403b': '403(b)', '457b': '457(b)', tsp: 'TSP', tradIra: 'Traditional IRA', rothIra: 'Roth IRA', sep: 'SEP IRA', solo401k: 'Solo 401(k)', hsa: 'HSA', '529': '529', taxable: 'Taxable brokerage', hysa: 'High-yield savings', checking: 'Checking', cd: 'CD', ibonds: 'I bonds', crypto: 'Crypto', realEstate: 'Real estate equity', pension: 'Pension', other: 'Other' };
+export const ACCOUNT_LABELS = { '401k': '401(k)', roth401k: 'Roth 401(k)', '403b': '403(b)', '457b': '457(b)', tsp: 'TSP', tradIra: 'Traditional IRA', rothIra: 'Roth IRA', sep: 'SEP IRA', solo401k: 'Solo 401(k)', hsa: 'HSA', '529': '529', taxable: 'Taxable brokerage', hysa: 'High-yield savings', checking: 'Checking', savings: 'Savings', cd: 'CD', ibonds: 'I bonds', crypto: 'Crypto', realEstate: 'Real estate equity', pension: 'Pension', other: 'Other' };
 
 export function run(ctx) {
   const { rows, reader, data, asm, today } = ctx;
@@ -20,8 +26,8 @@ export function run(ctx) {
   const accounts = {}; const missingBeneficiary = [];
   const enriched = [];
   rows.forEach(r => {
-    if (r.type !== 'account') return;
-    const t = val(r, 'accountType'); const bq = fieldQ(r, 'accountBalance', U.oneoff, asm);
+    if (!isAccountRow(r)) return;
+    const t = typeOf(r); const bq = fieldQ(r, 'accountBalance', U.oneoff, asm);
     if (!t || !bq) return;
     const b = bq.cents; const bucket = BUCKET[t] || 'other'; const tier = LIQUIDITY[t] || 'locked';
     enriched.push({ rowId: r.id, field: 'taxBucket', value: bucket, note: 'Tax bucket from the account type', source: 'inferred' });
@@ -29,12 +35,12 @@ export function run(ctx) {
     buckets[bucket] += b; tiers[tier] += b; total += b; qs.push(bq);
     if (INVESTED.has(t)) { invested += b; investedQs.push(bq); }
     if (bucket === 'cash') { cash += b; cashQs.push(bq); }
-    [['stocks', 'allocStocks'], ['bonds', 'allocBonds'], ['cash', 'allocCash'], ['other', 'allocOther']].forEach(([k, fid]) => { alloc[k] += Math.round(b * (num(r, fid) || 0)); });
-    us += Math.round(b * (num(r, 'allocStocks') || 0) * (num(r, 'usShare') || 0));
+    if (r.type === 'bank') alloc.cash += b; /* a bank account is all cash */
+    else { [['stocks', 'allocStocks'], ['bonds', 'allocBonds'], ['cash', 'allocCash'], ['other', 'allocOther']].forEach(([k, fid]) => { alloc[k] += Math.round(b * (num(r, fid) || 0)); }); us += Math.round(b * (num(r, 'allocStocks') || 0) * (num(r, 'usShare') || 0)); }
     const ca = monthlyCents(r, 'contribAmount') || 0; bankContribAnnual += ca * 12;
     if (t === 'tradIra' || t === 'rothIra') iraAnnual += ca * 12;
     accounts[r.nickname] = { type: t, balance: b, er: null, erWeight: 0 };
-    if (val(r, 'beneficiary') === false) missingBeneficiary.push(r.id);
+    if (r.type === 'account' && val(r, 'beneficiary') === false) missingBeneficiary.push(r.id);
   });
   rows.forEach(r => {
     if (r.type !== 'holding') return;

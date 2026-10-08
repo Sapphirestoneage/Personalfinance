@@ -24,7 +24,8 @@ export function run(ctx) {
       id: r.id, name: r.nickname || r.type, type: r.type, balance, balanceQ: balQ, rate: rate === null ? 0 : rate, rateKnown: rate !== null,
       promoApr: r.type === 'card' ? num(r, 'promoApr') : null, promoEnd: r.type === 'card' ? val(r, 'promoEnd') : null,
       minimum: minimum === null ? 0 : minimum, minimumKnown: minimum !== null,
-      full: r.type === 'card' && val(r, 'autopay') === 'full',
+      full: r.type === 'card' && ['full', 'statement'].includes(val(r, 'autopay')), /* MR-071: statement and full autopay both clear the balance before interest; the calendar keeps them apart */
+      autopay: r.type === 'card' ? val(r, 'autopay') || 'none' : null,
       limit: r.type === 'card' ? num(r, 'creditLimit') : null, stress: r.stress, lib: r.lib,
       fee: r.type === 'card' ? (num(r, 'annualFee') || 0) : 0, credits: r.type === 'card' ? val(r, 'creditsUsed') : null,
       escrow: r.type === 'mortgage' ? ['escrowTaxes', 'escrowInsurance', 'hoa', 'pmi'].reduce((s, k) => s + (monthlyCents(r, k) || 0), 0) : 0,

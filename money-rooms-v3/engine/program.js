@@ -158,7 +158,7 @@ export function readiness(record, result, data, n) {
       case 'fieldState': met = R.planets[t.planet].rows.filter(r => r.type === t.type).some(r => stateOk(r.f[t.field], t.state)); break;
       case 'categoryState': met = R.planets.spending.rows.some(r => r.f.category && r.f.category.v === t.category && !isGuessRow(r) && stateOk(r.f.amount, t.state)); break;
       case 'debtsKnown': { const rows = R.planets.debt.rows.filter(r => r.f.balance); met = rows.length === 0 || rows.every(r => stateOk(r.f.balance) && stateOk(r.f.apr || r.f.rate || { v: 0, state: 'known' })); break; }
-      case 'balancesKnown': { const rows = R.planets.invest.rows.filter(r => r.type === 'account'); met = rows.length > 0 && rows.every(r => stateOk(r.f.accountBalance)); break; }
+      case 'balancesKnown': { const rows = R.planets.invest.rows.filter(r => r.type === 'account' || r.type === 'bank'); met = rows.length > 0 && rows.every(r => stateOk(r.f.accountBalance)); break; }
       case 'accountTypeKnown': met = R.planets.invest.rows.some(r => r.f.accountType && r.f.accountType.v === t.accountType && stateOk(r.f.accountBalance)); break;
       case 'noGuesses': met = !R.planets.spending.rows.some(isGuessRow); break;
       case 'transactions': met = !!(P.transactions && P.transactions.recurringVerified); break;

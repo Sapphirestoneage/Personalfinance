@@ -45,7 +45,7 @@ Age at 2026-10-05: born 1995-06-22, so 31. Filing status single.
 - Weighted APR = sum(balance x rate today) / total = $979.80 / $14,200 = 6.9%.
 - Interest over the next 12 months on today's balances: 2022 Subaru Crosstrek: $14,200 x 0.0% x 0/12 + $14,200 x 6.9% x 12/12 = $979.80; Double Cash: paid in full, 0. Total $979.80.
 - Utilization: total $0 / $8,000 = 0.0%; per card Double Cash 0.0%.
-- Payoff simulation (monthly from 2026-11; interest = balance x rate / 12, promo rate while it runs; a paid-off debt's minimum rolls to the next in order; a full-autopay card is paid in month 1):
+- Payoff simulation (monthly from 2026-11; interest = balance x rate / 12, promo rate while it runs; a paid-off debt's minimum rolls to the next in order; a statement- or full-autopay card is paid in month 1):
   - avalanche order Double Cash > 2022 Subaru Crosstrek: debt-free 2031-02 after 52 payments, total interest $2,258.20. 2026-11: Double Cash paid off (1 payments); 2031-02: 2022 Subaru Crosstrek paid off (52 payments)
   - snowball order Double Cash > 2022 Subaru Crosstrek: debt-free 2031-02 after 52 payments, total interest $2,258.20. 2026-11: Double Cash paid off (1 payments); 2031-02: 2022 Subaru Crosstrek paid off (52 payments)
   - stress order 2022 Subaru Crosstrek > Double Cash: debt-free 2031-02 after 52 payments, total interest $2,258.20. 2026-11: Double Cash paid off (1 payments); 2031-02: 2022 Subaru Crosstrek paid off (52 payments)

@@ -193,7 +193,7 @@ export function completenessOf(record, data, S) {
     total += n; if (ok) sure += n; parts.push({ planet, rowId: r.id, field: fid, cents: n, sure: ok, guess: isGuessRow(r) });
   });
   take('spending', 'line', 'amount', 12); take('income', 'w2', 'takeHome', 12); take('income', 'w2', 'grossPay', 12); take('income', 'c1099', 'grossPay', 12); take('income', 'side', 'grossPay', 12);
-  take('invest', 'account', 'accountBalance', 1); take('debt', 'card', 'balance', 1); take('debt', 'student', 'balance', 1); take('debt', 'auto', 'balance', 1); take('debt', 'personal', 'balance', 1); take('debt', 'mortgage', 'balance', 1);
+  take('invest', 'account', 'accountBalance', 1); take('invest', 'bank', 'accountBalance', 1); take('debt', 'card', 'balance', 1); take('debt', 'student', 'balance', 1); take('debt', 'auto', 'balance', 1); take('debt', 'personal', 'balance', 1); take('debt', 'mortgage', 'balance', 1);
   /* a stand-in anchor is money in the picture but not known */
   if (S && S.spending && S.spending.standIns) Object.keys(S.spending.standIns).forEach(cat => { if (S.spending.standIns[cat] === 'anchor' && S.spending.byCategory[cat]) total += S.spending.byCategory[cat].cents * 12; });
   return { share: total ? Math.round(sure / total * 1000) / 1000 : null, sureCents: sure, totalCents: total, parts };

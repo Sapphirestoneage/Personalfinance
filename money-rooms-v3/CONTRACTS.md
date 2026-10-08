@@ -107,13 +107,14 @@ Publishes:
 ## 5. Investments and Accounts
 
 Reads: `grossMonthly`, `matchMonthly`, `matchFormula`, `pretaxContribMonthly`, `rothContribMonthly`, `hsaPayrollMonthly` (Income slot), `birthDate` (for limits by age).
+Rows (MR-071): an investing account (`account`, named by `accountType`: 401(k), Roth and traditional IRA, HSA, 529, brokerage, I bonds, crypto, real estate equity, pension) and a bank account (`bank`, named by `bankType`: checking, savings, high-yield savings, CD). A bank account is all cash: no allocation, no beneficiary.
 Publishes:
 
 | key | units | meaning |
 |---|---|---|
 | `balancesByBucket` | oneoff | `{ pretax, roth, taxable, hsa, cash, other }` |
 | `balancesByLiquidity` | oneoff | `{ liquid, semi, locked }` |
-| `cashBalances` | oneoff | sum of checking, HYSA, CD, I bonds, cash |
+| `cashBalances` | oneoff | sum of the bank accounts (checking, savings, HYSA, CD) and I bonds |
 | `totalAssets` | oneoff | every account balance plus real estate equity |
 | `investedAssets` | oneoff | balances that take market returns |
 | `annualContributions` | annual | `{ employee, employer, total }` |

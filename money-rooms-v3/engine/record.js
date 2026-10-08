@@ -7,7 +7,7 @@ import { append, undoTarget, redoTarget } from './journal.js';
 import { field as mkField, isState, isSource } from './states.js';
 
 import { freshFacts } from './fields.js';
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 export function newId() {
   return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);

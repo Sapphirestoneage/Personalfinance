@@ -42,18 +42,18 @@ Age at 2026-10-05: born 2000-02-11, so 26. Filing status single.
 - Savings landing in accounts = $700 a month.
 
 ## Debt and credit
-- Sapphire Preferred: balance $640, rate 24.5%, minimum $40 a month.
+- Sapphire Preferred: balance $640, rate 24.5%, minimum $40 a month, autopay full (no interest).
 - Bilt: balance $0, rate 24.7%, minimum $0 a month, autopay full (no interest).
 - Direct unsubsidized: balance $11,770, rate 5.0%, minimum $126 a month.
 - Total debt = $12,410.
 - Monthly debt service = $166.
 - Weighted APR = sum(balance x rate today) / total = $744.06 / $12,410 = 6.0%.
-- Interest over the next 12 months on today's balances: Sapphire Preferred: $640 x 0.0% x 0/12 + $640 x 24.5% x 12/12 = $156.74; Bilt: paid in full, 0; Direct unsubsidized: $11,770 x 0.0% x 0/12 + $11,770 x 5.0% x 12/12 = $587.32. Total $744.06.
+- Interest over the next 12 months on today's balances: Sapphire Preferred: paid in full, 0; Bilt: paid in full, 0; Direct unsubsidized: $11,770 x 0.0% x 0/12 + $11,770 x 5.0% x 12/12 = $587.32. Total $587.32.
 - Utilization: total $640 / $12,000 = 5.3%; per card Sapphire Preferred 5.3%.
-- Payoff simulation (monthly from 2026-11; interest = balance x rate / 12, promo rate while it runs; a paid-off debt's minimum rolls to the next in order; a full-autopay card is paid in month 1):
-  - avalanche order Bilt > Sapphire Preferred > Direct unsubsidized: debt-free 2034-05 after 91 payments, total interest $2,644.97. 2026-11: Bilt paid off (1 payments); 2028-06: Sapphire Preferred paid off (20 payments); 2034-05: Direct unsubsidized paid off (91 payments)
-  - snowball order Bilt > Sapphire Preferred > Direct unsubsidized: debt-free 2034-05 after 91 payments, total interest $2,644.97. 2026-11: Bilt paid off (1 payments); 2028-06: Sapphire Preferred paid off (20 payments); 2034-05: Direct unsubsidized paid off (91 payments)
-  - stress order Direct unsubsidized > Sapphire Preferred > Bilt: debt-free 2034-05 after 91 payments, total interest $2,650.87. 2026-11: Bilt paid off (1 payments); 2028-06: Sapphire Preferred paid off (20 payments); 2034-05: Direct unsubsidized paid off (91 payments)
+- Payoff simulation (monthly from 2026-11; interest = balance x rate / 12, promo rate while it runs; a paid-off debt's minimum rolls to the next in order; a statement- or full-autopay card is paid in month 1):
+  - avalanche order Bilt > Sapphire Preferred > Direct unsubsidized: debt-free 2033-11 after 85 payments, total interest $2,220.93. 2026-11: Bilt paid off (1 payments); 2026-11: Sapphire Preferred paid off (1 payments); 2033-11: Direct unsubsidized paid off (85 payments)
+  - snowball order Bilt > Sapphire Preferred > Direct unsubsidized: debt-free 2033-11 after 85 payments, total interest $2,220.93. 2026-11: Bilt paid off (1 payments); 2026-11: Sapphire Preferred paid off (1 payments); 2033-11: Direct unsubsidized paid off (85 payments)
+  - stress order Direct unsubsidized > Sapphire Preferred > Bilt: debt-free 2033-11 after 85 payments, total interest $2,220.93. 2026-11: Sapphire Preferred paid off (1 payments); 2026-11: Bilt paid off (1 payments); 2033-11: Direct unsubsidized paid off (85 payments)
 - Card Sapphire Preferred: rewards $582.50 a year (PG&E and internet $165/mo at 1x 1.25c = $24.75; Groceries $520/mo at 3x 1.25c = $234; Restaurants and takeout $280/mo at 3x 1.25c = $126; BART and Lyft $190/mo at 2x 1.25c = $57; Phone $45/mo at 1x 1.25c = $6.75; Streaming and subscriptions $55/mo at 3x 1.25c = $24.75; Climbing gym $95/mo at 1x 1.25c = $14.25; Clothing and personal care $110/mo at 1x 1.25c = $16.50; Travel $216.67/mo at 2x 1.25c = $65; Gifts and giving $90/mo at 1x 1.25c = $13.50); credits used $50; fee $95; net = $50 + $582.50 - $95 = $537.50. A no-fee 2% card on the same spend: $424; unused credits $0.
 - Card Bilt: rewards $337.50 a year (Rent $2,250/mo at 1x 1.25c = $337.50); credits used $0; fee $0; net = $0 + $337.50 - $0 = $337.50. A no-fee 2% card on the same spend: $540; unused credits $0.
 - Rewards left on the table (best library rate per category, portal-only rates capped at 6x, minus actual) = $1,068.04 a year. Best rates: dining 6.0%, groceries 6.0%, travel 7.8%, gas 6.0%, streaming 6.0%, other 3.0%.
@@ -109,12 +109,12 @@ Rules: invested x (1 + r) + contributions (payroll + match + bank + the leak and
 
 ## Goals spent along the way
 - Japan with my sister: $6,000 lands 2027-10 (date 2027-10), so $6,000 leaves cash in 2027.
-- Condo down payment: $80,000 lands 2031-06 (date 2035-06), so $80,000 leaves cash in 2035.
+- Condo down payment: $80,000 lands 2031-07 (date 2035-06), so $80,000 leaves cash in 2035.
 - Cushion steps here: lean month $3,125, full month $4,319.67, full cushion $22,462.28; pot today $13,500; surplus $1,665.96 a month.
-- likely return: FI at age 50 (2050); net worth at 95 $4,806,037.64.
-- best return: FI at age 47 (2047); net worth at 95 $15,602,934.24.
-- worst return: FI at age 54 (2054); net worth at 95 $1,901,680.25.
-- First five years (likely): 2027 age 27 invested $77,187.42 cash $19,226.52 debt $10,870.05 net worth $85,543.89; 2028 age 28 invested $101,796.71 cash $31,010.31 debt $9,398.67 net worth $123,408.35; 2029 age 29 invested $127,636.47 cash $42,911.93 debt $7,840.35 net worth $162,708.05; 2030 age 30 invested $154,768.21 cash $54,932.57 debt $6,202.46 net worth $203,498.32; 2031 age 31 invested $183,256.54 cash $67,073.42 debt $4,480.95 net worth $245,849.01.
+- likely return: FI at age 50 (2050); net worth at 95 $4,809,729.21.
+- best return: FI at age 47 (2047); net worth at 95 $15,606,625.85.
+- worst return: FI at age 54 (2054); net worth at 95 $1,905,371.83.
+- First five years (likely): 2027 age 27 invested $77,187.42 cash $19,226.52 debt $10,128.37 net worth $86,285.57; 2028 age 28 invested $101,796.71 cash $31,010.31 debt $8,607.30 net worth $124,199.72; 2029 age 29 invested $127,636.47 cash $42,911.93 debt $7,008.57 net worth $163,539.83; 2030 age 30 invested $154,768.21 cash $54,932.57 debt $5,328.19 net worth $204,372.59; 2031 age 31 invested $183,256.54 cash $67,073.42 debt $3,562.04 net worth $246,767.92.
 
 ## Lenses expected to fire (impact at or above $100 a year)
 - Level 9 lenses stated here: fire big-three, double-lever, guardrails-room, healthcare-bridge, purchase-in-fi-days, withdrawal-sensitivity; silent house-hack.

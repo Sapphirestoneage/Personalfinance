@@ -44,10 +44,10 @@ export const jordan = {
       accountType: '401k', accountBalance: [1125000, 'verified'], contribAmount: [null, 'not-applicable'], allocStocks: 0.9, allocBonds: 0.1, allocCash: [0, 'none'], allocOther: [0, 'none'], usShare: 0.7, beneficiary: true } },
     { id: 'j-roth', planet: 'invest', type: 'account', nickname: 'Roth IRA', institution: 'Vanguard', asOf: '2026-09', stress: 1, f: {
       accountType: 'rothIra', accountBalance: [680000, 'verified'], contribAmount: [25000, 'verified', 'client', 'month'], allocStocks: 1, allocBonds: [0, 'none'], allocCash: [0, 'none'], allocOther: [0, 'none'], usShare: 1, beneficiary: false } },
-    { id: 'j-hysa', planet: 'invest', type: 'account', nickname: 'Savings', institution: 'Ally', asOf: '2026-09', stress: 1, f: {
-      accountType: 'hysa', accountBalance: [2260000, 'verified'], contribAmount: [0, 'none'], allocStocks: [0, 'none'], allocBonds: [0, 'none'], allocCash: 1, allocOther: [0, 'none'], usShare: [null, 'not-applicable'], beneficiary: true } },
-    { id: 'j-chk', planet: 'invest', type: 'account', nickname: 'Checking', institution: 'Chase', asOf: '2026-09', stress: 2, f: {
-      accountType: 'checking', accountBalance: [290000, 'known'], contribAmount: [null, 'not-applicable'], allocStocks: [0, 'none'], allocBonds: [0, 'none'], allocCash: 1, allocOther: [0, 'none'], usShare: [null, 'not-applicable'], beneficiary: [null, 'not-applicable'] } },
+    { id: 'j-hysa', planet: 'invest', type: 'bank', nickname: 'Savings', institution: 'Ally', asOf: '2026-09', stress: 1, f: {
+      bankType: 'hysa', accountBalance: [2260000, 'verified'], contribAmount: [0, 'none']} },
+    { id: 'j-chk', planet: 'invest', type: 'bank', nickname: 'Checking', institution: 'Chase', asOf: '2026-09', stress: 2, f: {
+      bankType: 'checking', accountBalance: [290000, 'known'], contribAmount: [null, 'not-applicable']} },
     { id: 'j-vtsax', planet: 'invest', type: 'holding', nickname: 'VTSAX', institution: 'Vanguard', lib: 'VTSAX', f: { accountRef: 'Roth IRA', fundName: ['Vanguard Total Stock Market Index Admiral', 'known', 'lookup-verify'], expenseRatio: [0.0004, 'known', 'lookup-verify'], pctOfAccount: 1 } },
     { id: 'j-2060', planet: 'invest', type: 'holding', nickname: 'Target 2060', institution: 'Fidelity', lib: 'FDEWX', f: { accountRef: '401k', fundName: ['Fidelity Freedom Index 2060', 'known', 'lookup-verify'], expenseRatio: [0.0012, 'known', 'lookup-verify'], pctOfAccount: 1 } },
     { id: 'j-goal', planet: 'life', type: 'goal', nickname: 'Apartment down payment', f: { goalCost: [6000000, 'rough'], targetDate: '2031-06', priority: '1' } },
@@ -98,10 +98,10 @@ export const dev = {
       accountType: 'solo401k', accountBalance: [2140000, 'verified'], contribAmount: [50000, 'verified', 'client', 'month'], allocStocks: 0.9, allocBonds: 0.1, allocCash: [0, 'none'], allocOther: [0, 'none'], usShare: 0.75, beneficiary: true } },
     { id: 'd-brk', planet: 'invest', type: 'account', nickname: 'Brokerage', institution: 'Robinhood', asOf: '2026-09', stress: 3, f: {
       accountType: 'taxable', accountBalance: [2475000, 'verified'], contribAmount: [40000, 'known', 'client', 'month'], allocStocks: 1, allocBonds: [0, 'none'], allocCash: [0, 'none'], allocOther: [0, 'none'], usShare: 0.95, beneficiary: false } },
-    { id: 'd-chk', planet: 'invest', type: 'account', nickname: 'Checking', institution: 'Chase', asOf: '2026-09', stress: 4, f: {
-      accountType: 'checking', accountBalance: [410000, 'known'], contribAmount: [null, 'not-applicable'], allocStocks: [0, 'none'], allocBonds: [0, 'none'], allocCash: 1, allocOther: [0, 'none'], usShare: [null, 'not-applicable'], beneficiary: [null, 'not-applicable'] } },
-    { id: 'd-hysa', planet: 'invest', type: 'account', nickname: 'Savings', institution: 'Marcus', asOf: '2026-09', stress: 3, f: {
-      accountType: 'hysa', accountBalance: [260000, 'known'], contribAmount: [0, 'none'], allocStocks: [0, 'none'], allocBonds: [0, 'none'], allocCash: 1, allocOther: [0, 'none'], usShare: [null, 'not-applicable'], beneficiary: true } },
+    { id: 'd-chk', planet: 'invest', type: 'bank', nickname: 'Checking', institution: 'Chase', asOf: '2026-09', stress: 4, f: {
+      bankType: 'checking', accountBalance: [410000, 'known'], contribAmount: [null, 'not-applicable']} },
+    { id: 'd-hysa', planet: 'invest', type: 'bank', nickname: 'Savings', institution: 'Marcus', asOf: '2026-09', stress: 3, f: {
+      bankType: 'hysa', accountBalance: [260000, 'known'], contribAmount: [0, 'none']} },
     { id: 'd-arkk', planet: 'invest', type: 'holding', nickname: 'ARKK', institution: 'Robinhood', lib: 'ARKK', f: { accountRef: 'Brokerage', fundName: ['ARK Innovation ETF', 'known', 'lookup-verify'], expenseRatio: [0.0075, 'known', 'lookup-verify'], pctOfAccount: 0.8 } },
     { id: 'd-vti', planet: 'invest', type: 'holding', nickname: 'VTI', institution: 'Robinhood', lib: 'VTI', f: { accountRef: 'Brokerage', fundName: ['Vanguard Total Stock Market ETF', 'known', 'lookup-verify'], expenseRatio: [0.0003, 'known', 'lookup-verify'], pctOfAccount: 0.2 } },
     { id: 'd-goal', planet: 'life', type: 'goal', nickname: 'Six months of runway', f: { goalCost: [2500000, 'known'], targetDate: '2027-12', priority: '1' } },
@@ -159,10 +159,10 @@ const mayaS2Rows = [
     accountType: 'hsa', accountBalance: [425000, 'known'], contribAmount: [null, 'not-applicable'], allocStocks: 1, allocBonds: [0, 'none'], allocCash: [0, 'none'], allocOther: [0, 'none'], usShare: 1, beneficiary: false } },
   { id: 'm-brk', planet: 'invest', type: 'account', nickname: 'Brokerage', institution: 'Fidelity', asOf: '2026-09', stress: 2, f: {
     accountType: 'taxable', accountBalance: [620000, 'known'], contribAmount: [0, 'none'], allocStocks: 1, allocBonds: [0, 'none'], allocCash: [0, 'none'], allocOther: [0, 'none'], usShare: 1, beneficiary: [null, 'not-applicable'] } },
-  { id: 'm-hysa', planet: 'invest', type: 'account', nickname: 'Savings', institution: 'Marcus', asOf: '2026-09', stress: 1, f: {
-    accountType: 'hysa', accountBalance: [980000, 'verified'], contribAmount: [40000, 'verified', 'client', 'month'], allocStocks: [0, 'none'], allocBonds: [0, 'none'], allocCash: 1, allocOther: [0, 'none'], usShare: [null, 'not-applicable'], beneficiary: true } },
-  { id: 'm-chk', planet: 'invest', type: 'account', nickname: 'Checking', institution: 'Chase', asOf: '2026-09', stress: 2, f: {
-    accountType: 'checking', accountBalance: [330000, 'known'], contribAmount: [null, 'not-applicable'], allocStocks: [0, 'none'], allocBonds: [0, 'none'], allocCash: 1, allocOther: [0, 'none'], usShare: [null, 'not-applicable'], beneficiary: [null, 'not-applicable'] } },
+  { id: 'm-hysa', planet: 'invest', type: 'bank', nickname: 'Savings', institution: 'Marcus', asOf: '2026-09', stress: 1, f: {
+    bankType: 'hysa', accountBalance: [980000, 'verified'], contribAmount: [40000, 'verified', 'client', 'month']} },
+  { id: 'm-chk', planet: 'invest', type: 'bank', nickname: 'Checking', institution: 'Chase', asOf: '2026-09', stress: 2, f: {
+    bankType: 'checking', accountBalance: [330000, 'known'], contribAmount: [null, 'not-applicable']} },
   { id: 'm-fxaix', planet: 'invest', type: 'holding', nickname: 'FXAIX', institution: 'Fidelity', lib: 'FXAIX', f: { accountRef: 'Brokerage', fundName: ['Fidelity 500 Index', 'known', 'lookup-verify'], expenseRatio: [0.00015, 'known', 'lookup-verify'], pctOfAccount: 1 } },
   { id: 'm-vttsx', planet: 'invest', type: 'holding', nickname: 'Target 2060', institution: 'Fidelity', lib: 'VTTSX', f: { accountRef: '401k', fundName: ['Vanguard Target Retirement 2060', 'known', 'lookup-verify'], expenseRatio: [0.0008, 'known', 'lookup-verify'], pctOfAccount: 1 } },
   { id: 'm-vtsax', planet: 'invest', type: 'holding', nickname: 'VTSAX', institution: 'Vanguard', lib: 'VTSAX', f: { accountRef: 'Roth IRA', fundName: ['Vanguard Total Stock Market Index Admiral', 'known', 'lookup-verify'], expenseRatio: [0.0004, 'known', 'lookup-verify'], pctOfAccount: 1 } },
@@ -236,8 +236,8 @@ export const extreme = {
     { id: 'x-cut', planet: 'safety', type: 'cut', nickname: 'Could cut', f: { cutAbility: [120000, 'rough', 'client', 'month'] } },
     { id: 'x-a1', planet: 'invest', type: 'account', nickname: long('Rollover IRA from three former employers'), institution: 'Vanguard', asOf: '2026-09', stress: 2, f: { accountType: 'tradIra', accountBalance: [142000000, 'verified'], contribAmount: [0, 'none'], allocStocks: 0.7, allocBonds: 0.3, allocCash: [0, 'none'], allocOther: [0, 'none'], usShare: 0.8, beneficiary: true } },
     { id: 'x-a2', planet: 'invest', type: 'account', nickname: long('Taxable brokerage, inherited, concentrated'), institution: 'Schwab', asOf: '2026-09', stress: 4, f: { accountType: 'taxable', accountBalance: [116000000, 'known'], contribAmount: [0, 'none'], allocStocks: 1, allocBonds: [0, 'none'], allocCash: [0, 'none'], allocOther: [0, 'none'], usShare: 1, beneficiary: false } },
-    { id: 'x-a3', planet: 'invest', type: 'account', nickname: 'Savings', institution: 'Ally', asOf: '2026-09', stress: 1, f: { accountType: 'hysa', accountBalance: [38000000, 'verified'], contribAmount: [0, 'none'], allocStocks: [0, 'none'], allocBonds: [0, 'none'], allocCash: 1, allocOther: [0, 'none'], usShare: [null, 'not-applicable'], beneficiary: true } },
-    { id: 'x-a4', planet: 'invest', type: 'account', nickname: 'Checking', institution: 'Chase', asOf: '2026-09', stress: 5, f: { accountType: 'checking', accountBalance: [2400000, 'known'], contribAmount: [null, 'not-applicable'], allocStocks: [0, 'none'], allocBonds: [0, 'none'], allocCash: 1, allocOther: [0, 'none'], usShare: [null, 'not-applicable'], beneficiary: [null, 'not-applicable'] } },
+    { id: 'x-a3', planet: 'invest', type: 'bank', nickname: 'Savings', institution: 'Ally', asOf: '2026-09', stress: 1, f: { bankType: 'hysa', accountBalance: [38000000, 'verified'], contribAmount: [0, 'none']} },
+    { id: 'x-a4', planet: 'invest', type: 'bank', nickname: 'Checking', institution: 'Chase', asOf: '2026-09', stress: 5, f: { bankType: 'checking', accountBalance: [2400000, 'known'], contribAmount: [null, 'not-applicable']} },
     { id: 'x-a5', planet: 'invest', type: 'account', nickname: long('Home equity, the Saint Augustine house'), institution: '', asOf: '2026-09', stress: 3, f: { accountType: 'realEstate', accountBalance: [21600000, 'rough'], contribAmount: [null, 'not-applicable'], allocStocks: [0, 'none'], allocBonds: [0, 'none'], allocCash: [0, 'none'], allocOther: 1, usShare: [null, 'not-applicable'], beneficiary: [null, 'not-applicable'] } },
     { id: 'x-h1', planet: 'invest', type: 'holding', nickname: 'AGTHX', institution: 'Vanguard', lib: 'AGTHX', f: { accountRef: long('Rollover IRA from three former employers'), fundName: ['American Funds Growth Fund of America A', 'known', 'lookup-verify'], expenseRatio: [0.0061, 'known', 'lookup-verify'], pctOfAccount: 1 } },
     { id: 'x-goal', planet: 'life', type: 'goal', nickname: long('Three college educations, starting 2029'), f: { goalCost: [45000000, 'rough'], targetDate: '2029-08', priority: '1' } },

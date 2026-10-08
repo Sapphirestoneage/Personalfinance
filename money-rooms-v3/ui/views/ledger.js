@@ -130,7 +130,7 @@ function mountTable(host, app, planet, typeId) {
     clear(inferredNote);
     const list = ((app.result.enriched || {})[planet] || []).filter(e => app.record.planets[planet].rows.some(r => r.id === e.rowId && r.type === typeId));
     if (!list.length) return;
-    if (planet === 'invest') { inferredNote.appendChild(h('p', { class: 'hint', style: { marginBottom: '8px' } }, 'Tax bucket and reach come from the account type.')); return; }
+    if (planet === 'invest') { inferredNote.appendChild(h('p', { class: 'hint', style: { marginBottom: '8px' } }, typeId === 'bank' ? 'All cash: the cushion, the calendar and safe to spend read these.' : 'Tax bucket and reach come from the account type.')); return; }
     list.forEach(e => {
       const row = app.record.planets[planet].rows.find(r => r.id === e.rowId);
       if (row && isNoneRow(fields, row)) return;

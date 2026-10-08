@@ -1,0 +1,258 @@
+{
+ "schemaVersion": 4,
+ "id": "old4",
+ "createdAt": "2026-09-15T00:00:00.000Z",
+ "updatedAt": "2026-09-15T00:00:00.000Z",
+ "sun": {
+  "f": {
+   "name": {
+    "v": "Old one",
+    "state": "known",
+    "source": "client"
+   }
+  },
+  "outputs": {},
+  "assumptions": {},
+  "clientPicks": [],
+  "onepager": {}
+ },
+ "planets": {
+  "income": {
+   "rows": []
+  },
+  "spending": {
+   "rows": [
+    {
+     "id": "s1",
+     "planet": "spending",
+     "type": "line",
+     "nickname": "Rent",
+     "institution": "",
+     "asOf": null,
+     "notesPrivate": "",
+     "notesShared": "",
+     "f": {
+      "amount": {
+       "v": 210000,
+       "state": "known",
+       "source": "client"
+      }
+     },
+     "stress": null,
+     "followUp": false
+    }
+   ]
+  },
+  "debt": {
+   "rows": []
+  },
+  "safety": {
+   "rows": []
+  },
+  "invest": {
+   "rows": [
+    {
+     "id": "o4-hysa",
+     "planet": "invest",
+     "type": "account",
+     "nickname": "Savings",
+     "institution": "Ally",
+     "asOf": null,
+     "stress": null,
+     "followUp": false,
+     "f": {
+      "accountType": {
+       "v": "hysa",
+       "state": "known",
+       "source": "client"
+      },
+      "accountBalance": {
+       "v": 500000,
+       "state": "known",
+       "source": "client"
+      },
+      "contribAmount": {
+       "v": 20000,
+       "state": "known",
+       "source": "client",
+       "cad": "month"
+      },
+      "allocStocks": {
+       "v": 0,
+       "state": "none",
+       "source": "client"
+      },
+      "allocBonds": {
+       "v": 0,
+       "state": "none",
+       "source": "client"
+      },
+      "allocCash": {
+       "v": 1,
+       "state": "known",
+       "source": "client"
+      },
+      "allocOther": {
+       "v": 0,
+       "state": "none",
+       "source": "client"
+      },
+      "usShare": {
+       "v": null,
+       "state": "not-applicable",
+       "source": "client"
+      },
+      "beneficiary": {
+       "v": true,
+       "state": "known",
+       "source": "client"
+      }
+     }
+    },
+    {
+     "id": "o4-chk",
+     "planet": "invest",
+     "type": "account",
+     "nickname": "Checking",
+     "institution": "Chase",
+     "asOf": null,
+     "stress": null,
+     "followUp": false,
+     "f": {
+      "accountType": {
+       "v": "checking",
+       "state": "known",
+       "source": "client"
+      },
+      "accountBalance": {
+       "v": 120000,
+       "state": "known",
+       "source": "client"
+      },
+      "contribAmount": {
+       "v": null,
+       "state": "not-applicable",
+       "source": "client"
+      },
+      "allocCash": {
+       "v": 1,
+       "state": "known",
+       "source": "client"
+      },
+      "beneficiary": {
+       "v": null,
+       "state": "not-applicable",
+       "source": "client"
+      }
+     }
+    },
+    {
+     "id": "o4-roth",
+     "planet": "invest",
+     "type": "account",
+     "nickname": "Roth IRA",
+     "institution": "Vanguard",
+     "asOf": null,
+     "stress": null,
+     "followUp": false,
+     "f": {
+      "accountType": {
+       "v": "rothIra",
+       "state": "known",
+       "source": "client"
+      },
+      "accountBalance": {
+       "v": 900000,
+       "state": "known",
+       "source": "client"
+      },
+      "contribAmount": {
+       "v": 30000,
+       "state": "known",
+       "source": "client",
+       "cad": "month"
+      },
+      "allocStocks": {
+       "v": 1,
+       "state": "known",
+       "source": "client"
+      },
+      "allocBonds": {
+       "v": 0,
+       "state": "none",
+       "source": "client"
+      },
+      "allocCash": {
+       "v": 0,
+       "state": "none",
+       "source": "client"
+      },
+      "allocOther": {
+       "v": 0,
+       "state": "none",
+       "source": "client"
+      },
+      "usShare": {
+       "v": 0.8,
+       "state": "known",
+       "source": "client"
+      },
+      "beneficiary": {
+       "v": false,
+       "state": "known",
+       "source": "client"
+      }
+     }
+    }
+   ]
+  },
+  "taxes": {
+   "rows": []
+  },
+  "life": {
+   "rows": []
+  }
+ },
+ "journal": [],
+ "scenarios": [],
+ "sessions": [],
+ "coachNotes": [],
+ "quickNotes": [],
+ "myPlate": {
+  "done": {},
+  "snoozed": {}
+ },
+ "theirPlate": {
+  "done": {},
+  "snoozed": {}
+ },
+ "anchors": {
+  "gut": {},
+  "dream": {},
+  "history": []
+ },
+ "household": {
+  "roommates": [],
+  "lease": "none",
+  "unitSize": null,
+  "partner": null,
+  "basis": "together"
+ },
+ "colTier": null,
+ "sessionMode": "standard",
+ "discovery": null,
+ "targets": {},
+ "callProgress": {},
+ "goals": {
+  "mode": "deadlines-first",
+  "order": [],
+  "overrides": {},
+  "splits": {},
+  "extras": [],
+  "hidden": [],
+  "links": {},
+  "cushion": {},
+  "celebrated": {},
+  "lastFinish": null
+ }
+}

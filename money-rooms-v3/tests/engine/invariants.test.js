@@ -46,10 +46,12 @@ function randomHousehold(seed) {
     else add('debt', t, { balance: [cents(500, 60000), state()], rate: [rnd() * 0.12, 'known'], [t === 'student' ? 'minimum' : 'payment']: [cents(20, 900), state(), 'client', 'month'] });
   }
   const nAcc = Math.floor(rnd() * 7);
-  const types = ['401k', 'rothIra', 'hsa', 'taxable', 'hysa', 'checking', 'tradIra', 'realEstate', 'crypto', 'cd'];
+  const types = ['401k', 'rothIra', 'hsa', 'taxable', 'tradIra', 'realEstate', 'crypto', 'ibonds'];
+  const bankTypes = ['hysa', 'checking', 'cd', 'savings'];
   for (let i = 0; i < nAcc; i++) {
     const st = rnd(); const bonds = rnd() * (1 - st);
-    add('invest', 'account', { accountType: [pick(types), 'known'], accountBalance: [cents(0, 400000), state()], contribAmount: [cents(0, 800), state(), 'client', 'month'], allocStocks: [st, 'known'], allocBonds: [bonds, 'known'], allocCash: [1 - st - bonds, 'known'] });
+    if (rnd() < 0.35) add('invest', 'bank', { bankType: [pick(bankTypes), 'known'], accountBalance: [cents(0, 400000), state()], contribAmount: [cents(0, 800), state(), 'client', 'month'] });
+    else add('invest', 'account', { accountType: [pick(types), 'known'], accountBalance: [cents(0, 400000), state()], contribAmount: [cents(0, 800), state(), 'client', 'month'], allocStocks: [st, 'known'], allocBonds: [bonds, 'known'], allocCash: [1 - st - bonds, 'known'] });
   }
   if (rnd() < 0.4) add('safety', 'insurance', { insuranceType: ['health', 'known'], premium: [cents(50, 900), state(), 'client', pick(['month', 'paycheck'])] });
   if (rnd() < 0.5) add('life', 'retirement', { retirementAge: [45 + Math.floor(rnd() * 25), 'known'] });
@@ -87,7 +89,7 @@ function checkInvariants(name, rec) {
       if (i > 0 && !p.working) assert.equal(p.cash, Math.round(R.projection.likely.path[i - 1].cash * (1 + R.asm.cashRealReturn)), name + ': retired cash grows at the cash return only (' + p.year + ')');
     });
     /* raising the savings rate never moves FI later */
-    const more = JSON.parse(JSON.stringify(rec)); const acc = more.planets.invest.rows.find(r => r.type === 'account' && r.f.accountType.v !== 'checking');
+    const more = JSON.parse(JSON.stringify(rec)); const acc = more.planets.invest.rows.find(r => r.type === 'account');
     if (acc) { acc.f.contribAmount = { v: (acc.f.contribAmount && typeof acc.f.contribAmount.v === 'number' ? acc.f.contribAmount.v : 0) + 50000, state: 'known', source: 'client', cad: 'month' }; const R2 = compute(more, data, { today: TODAY }); if (R2.projection && R.projection.likely.fiAge !== null) assert.ok(R2.projection.likely.fiAge === null ? false : R2.projection.likely.fiAge <= R.projection.likely.fiAge, name + ': more saving never moves FI later'); }
   }
   /* 401k and match live in savings, never in spending */

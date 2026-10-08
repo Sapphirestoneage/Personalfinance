@@ -1117,7 +1117,7 @@
    "id": "annualInterest",
    "name": "Annual interest cost",
    "clientLabel": "Interest over the next year",
-   "definition": "Interest on today's balances over the next 12 months, promo rate until the promo ends; a card on full autopay carries none.",
+   "definition": "Interest on today's balances over the next 12 months, promo rate until the promo ends; a card on statement or full autopay carries none.",
    "formula": "sum(balance x rate x months/12)",
    "inputs": [
     "debt.annualInterest"

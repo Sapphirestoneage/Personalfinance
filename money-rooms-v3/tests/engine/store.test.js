@@ -80,6 +80,14 @@ test('every schema version has a migration and each fixture lifts to the current
   assert.ok(two.anchors && two.anchors.gut && two.anchors.dream && Array.isArray(two.anchors.history));
   assert.deepEqual(two.anchors.dream, {}, 'no dream backfill');
   Object.values(two.anchors.gut).forEach(a => assert.ok(a.backfilled && a.cents >= 0));
+  /* MR-071: a schema-4 record's cash accounts become bank rows; the investing row is untouched */
+  const four = migrate(fixture('schema-4.json'));
+  assert.equal(four.schemaVersion, SCHEMA_VERSION);
+  const hysa = four.planets.invest.rows.find(r => r.id === 'o4-hysa'); const chk = four.planets.invest.rows.find(r => r.id === 'o4-chk'); const roth = four.planets.invest.rows.find(r => r.id === 'o4-roth');
+  assert.equal(hysa.type, 'bank'); assert.equal(hysa.f.bankType.v, 'hysa'); assert.equal(hysa.f.accountType, undefined); assert.equal(hysa.f.accountBalance.v, 500000); assert.equal(hysa.f.contribAmount.v, 20000);
+  ['allocStocks', 'allocBonds', 'allocCash', 'allocOther', 'usShare', 'beneficiary'].forEach(k => assert.equal(hysa.f[k], undefined, k + ' dropped from a bank row'));
+  assert.equal(chk.type, 'bank'); assert.equal(chk.f.bankType.v, 'checking');
+  assert.equal(roth.type, 'account'); assert.equal(roth.f.accountType.v, 'rothIra'); assert.equal(roth.f.beneficiary.v, false);
 });
 
 test('a record from a newer app is refused, not mangled', () => {

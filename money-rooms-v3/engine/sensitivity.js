@@ -124,7 +124,7 @@ export function sensitivity(ctx) {
     out.items.push({ id: 'barista|' + d, rootId: 'baristaIncome', rowId: ret ? ret.id : null, planet: 'life', label: 'Part-time income at FI ' + label, row: 'Life plan', kind: 'money', family: 'earn', impact: null, impactLabel: 'rungs only', askRange: null, direction: 0, shocks: [Object.assign({ id: 'barista', label, standard: true }, r)], sign: -1, barista: true });
   });
   /* a $1,000 windfall invested today */
-  const inv = record.planets.invest.rows.filter(r => r.type === 'account' && r.f.accountBalance && hasValue(r.f.accountBalance)).sort((a, b) => numberOf(b.f.accountBalance) - numberOf(a.f.accountBalance))[0];
+  const inv = record.planets.invest.rows.filter(r => (r.type === 'account' || r.type === 'bank') && r.f.accountBalance && hasValue(r.f.accountBalance)).sort((a, b) => numberOf(b.f.accountBalance) - numberOf(a.f.accountBalance))[0];
   if (inv) { const r = run(c => { const row = findRow(c, inv.id); setValue(row.f.accountBalance, numberOf(row.f.accountBalance) + 100000); }); out.items.push({ id: 'windfall|1000', rootId: 'accountBalance', rowId: inv.id, planet: 'invest', label: 'A $1,000 windfall invested today', row: inv.nickname || 'Account', kind: 'money', family: 'grow', impact: r.months === null ? null : Math.abs(r.months), impactLabel: 'per $1,000', askRange: null, direction: r.months === null ? 0 : Math.sign(r.months), shocks: [Object.assign({ id: 'windfall', label: '+$1,000 today', standard: true }, r)], sign: -1, windfall: true }); }
   out.ms = Math.round(((typeof performance !== 'undefined' ? performance.now() : Date.now()) - t0) * 10) / 10;
   out.ranked = rank(out);

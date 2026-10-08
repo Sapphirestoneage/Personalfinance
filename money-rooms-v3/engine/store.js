@@ -88,6 +88,22 @@ export const MIGRATIONS = [
       return rec;
     },
   },
+  {
+    from: 4, to: 5,
+    note: 'MR-071: bank accounts (checking, savings, high-yield savings, CDs) are their own row type beside investing accounts; the type moves to bankType and the allocation and beneficiary fields, which a bank account does not have, are dropped',
+    up(rec) {
+      const BANK = ['checking', 'hysa', 'cd', 'savings'];
+      ((rec.planets && rec.planets.invest && rec.planets.invest.rows) || []).forEach(r => {
+        if (r.type !== 'account') return;
+        const t = r.f && r.f.accountType && r.f.accountType.v;
+        if (!BANK.includes(t)) return;
+        r.type = 'bank';
+        r.f.bankType = r.f.accountType; delete r.f.accountType;
+        ['allocStocks', 'allocBonds', 'allocCash', 'allocOther', 'usShare', 'beneficiary'].forEach(k => { delete r.f[k]; });
+      });
+      return rec;
+    },
+  },
 ];
 
 /* Level 8 (MR-046): anchors backfilled from the earliest journal value whose source is not a guess; household and tier defaults; discovery slots. */

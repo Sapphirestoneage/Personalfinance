@@ -122,7 +122,7 @@ export function bucketOf(line, record, snapTs) {
   if (line.why === 'correction') return 'learned';
   if (line.why === 'move') {
     if (line.planet === 'invest' && line.field === 'accountBalance') {
-      const row = findRow(record, line.rowId); const type = row && row.f.accountType && row.f.accountType.v;
+      const row = findRow(record, line.rowId); const type = row && ((row.f.accountType && row.f.accountType.v) || (row.f.bankType && row.f.bankType.v));
       if (CASH_TYPES.includes(type)) return 'did'; /* cash moves by hand, never by the market */
       const sp = splitMove(line, record, snapTs);
       if (!sp) return 'market'; /* an investment with no contribution figure of its own moves with the market */

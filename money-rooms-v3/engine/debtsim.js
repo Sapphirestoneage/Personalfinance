@@ -1,7 +1,7 @@
 /* Debt payoff simulation, month by month. Interest = balance x rate / 12
    (promo rate while it runs); each debt gets its minimum; a paid-off debt's
    minimum rolls to the next in order; an overpayment rolls the same month;
-   a card on full autopay is paid in month 1 with no interest. One function
+   a card on statement or full autopay is paid in month 1 with no interest. One function
    for avalanche, snowball and stress order. */
 
 export function addMonths(ym, n) {

@@ -36,7 +36,7 @@
  "totalDebt": 1241000,
  "debtServiceMonthly": 16600,
  "weightedApr": 0.059956,
- "annualInterest": 74406,
+ "annualInterest": 58732,
  "utilizationTotal": 0.053333,
  "utilizationPerCard": {
   "m-csp": 0.053333
@@ -59,11 +59,11 @@
    "m-bilt"
   ]
  },
- "debtFreeDate": "2034-05",
+ "debtFreeDate": "2033-11",
  "payoffInterest": {
-  "avalanche": 264497,
-  "snowball": 264497,
-  "stress": 265087
+  "avalanche": 222093,
+  "snowball": 222093,
+  "stress": 222093
  },
  "freedCashByMonth": [
   {
@@ -71,11 +71,11 @@
    "cents": 0
   },
   {
-   "month": "2028-06",
+   "month": "2026-11",
    "cents": 4000
   },
   {
-   "month": "2034-05",
+   "month": "2033-11",
    "cents": 16600
   }
  ],
@@ -232,49 +232,49 @@
      "age": 27,
      "invested": 7718742,
      "cash": 1922652,
-     "debt": 1087005,
-     "netWorth": 8554389
+     "debt": 1012837,
+     "netWorth": 8628557
     },
     {
      "year": 2028,
      "age": 28,
      "invested": 10179671,
      "cash": 3101031,
-     "debt": 939867,
-     "netWorth": 12340835
+     "debt": 860730,
+     "netWorth": 12419972
     },
     {
      "year": 2029,
      "age": 29,
      "invested": 12763647,
      "cash": 4291193,
-     "debt": 784035,
-     "netWorth": 16270805
+     "debt": 700857,
+     "netWorth": 16353983
     },
     {
      "year": 2030,
      "age": 30,
      "invested": 15476821,
      "cash": 5493257,
-     "debt": 620246,
-     "netWorth": 20349832
+     "debt": 532819,
+     "netWorth": 20437259
     },
     {
      "year": 2031,
      "age": 31,
      "invested": 18325654,
      "cash": 6707342,
-     "debt": 448095,
-     "netWorth": 24584901
+     "debt": 356204,
+     "netWorth": 24676792
     }
    ],
    "at95": {
     "year": 2095,
     "age": 95,
     "invested": 438964490,
-    "cash": 41639274,
+    "cash": 42008431,
     "debt": 0,
-    "netWorth": 480603764
+    "netWorth": 480972921
    }
   },
   "best": {
@@ -286,49 +286,49 @@
      "age": 27,
      "invested": 7826242,
      "cash": 1922652,
-     "debt": 1087005,
-     "netWorth": 8661889
+     "debt": 1012837,
+     "netWorth": 8736057
     },
     {
      "year": 2028,
      "age": 28,
      "invested": 10449071,
      "cash": 3101031,
-     "debt": 939867,
-     "netWorth": 12610235
+     "debt": 860730,
+     "netWorth": 12689372
     },
     {
      "year": 2029,
      "age": 29,
      "invested": 13255498,
      "cash": 4291193,
-     "debt": 784035,
-     "netWorth": 16762656
+     "debt": 700857,
+     "netWorth": 16845834
     },
     {
      "year": 2030,
      "age": 30,
      "invested": 16258375,
      "cash": 5493257,
-     "debt": 620246,
-     "netWorth": 21131386
+     "debt": 532819,
+     "netWorth": 21218813
     },
     {
      "year": 2031,
      "age": 31,
      "invested": 19471453,
      "cash": 6707342,
-     "debt": 448095,
-     "netWorth": 25730700
+     "debt": 356204,
+     "netWorth": 25822591
     }
    ],
    "at95": {
     "year": 2095,
     "age": 95,
     "invested": 1525094820,
-    "cash": 35198604,
+    "cash": 35567765,
     "debt": 0,
-    "netWorth": 1560293424
+    "netWorth": 1560662585
    }
   },
   "worst": {
@@ -340,49 +340,49 @@
      "age": 27,
      "invested": 7611242,
      "cash": 1922652,
-     "debt": 1087005,
-     "netWorth": 8446889
+     "debt": 1012837,
+     "netWorth": 8521057
     },
     {
      "year": 2028,
      "age": 28,
      "invested": 9914571,
      "cash": 3101031,
-     "debt": 939867,
-     "netWorth": 12075735
+     "debt": 860730,
+     "netWorth": 12154872
     },
     {
      "year": 2029,
      "age": 29,
      "invested": 12287000,
      "cash": 4291193,
-     "debt": 784035,
-     "netWorth": 15794158
+     "debt": 700857,
+     "netWorth": 15877336
     },
     {
      "year": 2030,
      "age": 30,
      "invested": 14730602,
      "cash": 5493257,
-     "debt": 620246,
-     "netWorth": 19603613
+     "debt": 532819,
+     "netWorth": 19691040
     },
     {
      "year": 2031,
      "age": 31,
      "invested": 17247512,
      "cash": 6707342,
-     "debt": 448095,
-     "netWorth": 23506759
+     "debt": 356204,
+     "netWorth": 23598650
     }
    ],
    "at95": {
     "year": 2095,
     "age": 95,
     "invested": 140234873,
-    "cash": 49933152,
+    "cash": 50302310,
     "debt": 0,
-    "netWorth": 190168025
+    "netWorth": 190537183
    }
   }
  },

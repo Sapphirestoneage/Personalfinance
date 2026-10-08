@@ -196,9 +196,9 @@ def main(name):
         if bal is None: continue
         if r['type'] == 'card':
             rate = val(r['f']['apr']); promo = val(r['f'].get('promoApr')); pend = val(r['f'].get('promoEnd')); mn = monthly(r, 'minimum') or 0
-            autopay = val(r['f'].get('autopay'))
+            autopay = val(r['f'].get('autopay'))  # MR-071: statement and full autopay both clear the balance before interest
             limit = val(r['f'].get('creditLimit'))
-            debts.append(dict(id=r['id'], name=r['nickname'], kind='card', bal=bal, rate=rate, promo=promo, promoEnd=pend, min=mn, full=(autopay == 'full'), limit=limit, stress=r.get('stress'), lib=r.get('lib'), fee=val(r['f'].get('annualFee')) or 0, credits=val(r['f'].get('creditsUsed'))))
+            debts.append(dict(id=r['id'], name=r['nickname'], kind='card', bal=bal, rate=rate, promo=promo, promoEnd=pend, min=mn, full=(autopay in ('full', 'statement')), limit=limit, stress=r.get('stress'), lib=r.get('lib'), fee=val(r['f'].get('annualFee')) or 0, credits=val(r['f'].get('creditsUsed'))))
         else:
             rate = val(r['f'].get('rate')) or 0; mn = monthly(r, 'minimum') if 'minimum' in r['f'] else (monthly(r, 'principalInterest') if r['type'] == 'mortgage' else monthly(r, 'payment'))
             debts.append(dict(id=r['id'], name=r['nickname'], kind=r['type'], bal=bal, rate=rate, promo=None, promoEnd=None, min=mn or 0, full=False, limit=None, stress=r.get('stress')))
@@ -262,10 +262,14 @@ def main(name):
     sims = {k: simulate(o) for k, o in (('avalanche', aval), ('snowball', snow), ('stress', stress))}
     E['payoffOrders'] = {'avalanche': aval, 'snowball': snow, 'stress': stress}
     E['debtFreeDate'] = sims['avalanche']['debtFree']; E['payoffInterest'] = {k: v['interest'] for k, v in sims.items()}
-    line('- Payoff simulation (monthly from %s; interest = balance x rate / 12, promo rate while it runs; a paid-off debt\'s minimum rolls to the next in order; a full-autopay card is paid in month 1):' % add_months(this_month, 1))
+    line('- Payoff simulation (monthly from %s; interest = balance x rate / 12, promo rate while it runs; a paid-off debt\'s minimum rolls to the next in order; a statement- or full-autopay card is paid in month 1):' % add_months(this_month, 1))
     for k, v in sims.items():
         line('  - %s order %s: debt-free %s after %s payments, total interest %s. %s' % (k, ' > '.join(next(d['name'] for d in debts if d['id'] == i) for i in E['payoffOrders'][k]), v['debtFree'], v['months'], dollars(v['interest']), '; '.join(v['log'])))
-    E['freedCashByMonth'] = [{'month': m, 'cents': sum(d['min'] for d in debts if sims['avalanche']['paid'].get(d['id']) and sims['avalanche']['paid'][d['id']] <= m)} for m in sorted(set(sims['avalanche']['paid'].values()))]
+    # one milestone per paid-off debt in payoff order (two cards paid in the same month are two milestones), the freed minimums cumulative
+    freed_rows = []; freed_cum = 0
+    for did in sorted(sims['avalanche']['paid'], key=lambda i: (sims['avalanche']['paid'][i], aval.index(i))):
+        freed_cum += next(d for d in debts if d['id'] == did)['min']; freed_rows.append({'month': sims['avalanche']['paid'][did], 'cents': freed_cum})
+    E['freedCashByMonth'] = freed_rows
     # wallet (every card, with or without a limit)
     import re as _re
     def earn_cat(cat, nick):
@@ -320,16 +324,19 @@ def main(name):
     buckets = {'pretax': 0, 'roth': 0, 'taxable': 0, 'hsa': 0, 'cash': 0, 'other': 0}; liq = {'liquid': 0, 'semi': 0, 'locked': 0}
     total_assets = 0; invested = 0; cash = 0; alloc = {'stocks': 0, 'bonds': 0, 'cash': 0, 'other': 0}; us = 0; contrib_employee_annual = 0
     accounts = {}
-    for r in rows('invest', 'account'):
-        t = val(r['f']['accountType']); b = val(r['f']['accountBalance'])
+    BUCKET['savings'] = 'cash'; LIQ['savings'] = 'liquid'
+    for r in rows('invest', 'account') + rows('invest', 'bank'):  # MR-071: a bank row carries bankType and is all cash
+        t = val(r['f']['bankType']) if r['type'] == 'bank' else val(r['f']['accountType']); b = val(r['f']['accountBalance'])
         if b is None: continue
         bucket = BUCKET[t]; tier = LIQ.get(t, 'locked')
         buckets[bucket] += b; liq[tier] += b; total_assets += b
         if t in INVESTED: invested += b
         if bucket == 'cash': cash += b
-        for k, fid in (('stocks', 'allocStocks'), ('bonds', 'allocBonds'), ('cash', 'allocCash'), ('other', 'allocOther')):
-            sh = val(r['f'].get(fid)) or 0; alloc[k] += R(b * sh)
-        us += R(b * (val(r['f'].get('allocStocks')) or 0) * (val(r['f'].get('usShare')) or 0))
+        if r['type'] == 'bank': alloc['cash'] += b
+        else:
+            for k, fid in (('stocks', 'allocStocks'), ('bonds', 'allocBonds'), ('cash', 'allocCash'), ('other', 'allocOther')):
+                sh = val(r['f'].get(fid)) or 0; alloc[k] += R(b * sh)
+            us += R(b * (val(r['f'].get('allocStocks')) or 0) * (val(r['f'].get('usShare')) or 0))
         ca = monthly(r, 'contribAmount') or 0; contrib_employee_annual += ca * 12
         accounts[r['nickname']] = dict(type=t, balance=b, er=None)
         line('- %s (%s): %s, bucket %s, tier %s, %s' % (r['nickname'], t, dollars(b), bucket, tier, 'market returns' if t in INVESTED else 'cash'))

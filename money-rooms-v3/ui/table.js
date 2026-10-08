@@ -420,7 +420,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
       showFieldBar(r.id, d.id);
     };
     if (d.kind === 'choice') {
-      const sel = h('select', { class: 'select' + (!f || !hasValue(f) ? ' is-empty' : '') + (d.id === 'category' || d.id === 'accountType' || d.id === 'loanType' || d.id === 'repaymentPlan' ? ' wide' : ''), 'aria-label': d.label, dataset: { col: d.id }, onChange: e => {
+      const sel = h('select', { class: 'select' + (!f || !hasValue(f) ? ' is-empty' : '') + (d.id === 'category' || d.id === 'accountType' || d.id === 'bankType' || d.id === 'loanType' || d.id === 'repaymentPlan' ? ' wide' : ''), 'aria-label': d.label, dataset: { col: d.id }, onChange: e => {
         const v = e.target.value;
         const cur = r.f[d.id] || {};
         if (v === '') app.setField(r.id, d.id, null, 'unknown', cur.source || 'client'); else app.setField(r.id, d.id, v, 'known', cur.source || 'client');

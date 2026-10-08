@@ -47,7 +47,7 @@ Age at 2026-10-05: born 1999-03-14, so 27. Filing status single.
 - Interest over the next 12 months on today's balances: Freedom Unlimited: $2,840 x 0.0% x 5/12 + $2,840 x 25.0% x 7/12 = $414; Gold Card: paid in full, 0; Direct unsubsidized: $18,400 x 0.0% x 0/12 + $18,400 x 5.5% x 12/12 = $1,012. Total $1,426.
 - Utilization: total $3,250 / $16,500 = 19.7%; per card Freedom Unlimited 43.7%, Gold Card 4.1%.
 - Promo cliff: Freedom Unlimited goes from 0.0% to 25.0% in 5 months (2027-03); $2,840 x 25.0% = $709.72 a year after.
-- Payoff simulation (monthly from 2026-11; interest = balance x rate / 12, promo rate while it runs; a paid-off debt's minimum rolls to the next in order; a full-autopay card is paid in month 1):
+- Payoff simulation (monthly from 2026-11; interest = balance x rate / 12, promo rate while it runs; a paid-off debt's minimum rolls to the next in order; a statement- or full-autopay card is paid in month 1):
   - avalanche order Gold Card > Freedom Unlimited > Direct unsubsidized: debt-free 2033-09 after 83 payments, total interest $4,935.63. 2026-11: Gold Card paid off (1 payments); 2029-05: Freedom Unlimited paid off (31 payments); 2033-09: Direct unsubsidized paid off (83 payments)
   - snowball order Gold Card > Freedom Unlimited > Direct unsubsidized: debt-free 2033-09 after 83 payments, total interest $4,935.63. 2026-11: Gold Card paid off (1 payments); 2029-05: Freedom Unlimited paid off (31 payments); 2033-09: Direct unsubsidized paid off (83 payments)
   - stress order Freedom Unlimited > Direct unsubsidized > Gold Card: debt-free 2033-09 after 83 payments, total interest $4,935.63. 2026-11: Gold Card paid off (1 payments); 2029-05: Freedom Unlimited paid off (31 payments); 2033-09: Direct unsubsidized paid off (83 payments)

@@ -305,15 +305,18 @@
   ],
   "invest.balancesByBucket": [
    "accountBalance",
-   "accountType"
+   "accountType",
+   "bankType"
   ],
   "invest.balancesByLiquidity": [
    "accountBalance",
-   "accountType"
+   "accountType",
+   "bankType"
   ],
   "invest.cashBalances": [
    "accountBalance",
-   "accountType"
+   "accountType",
+   "bankType"
   ],
   "invest.totalAssets": [
    "accountBalance",

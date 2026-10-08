@@ -39,7 +39,7 @@ export function buildVariance() {
   V.lines.forEach(([nick, cat, cents]) => add('spending', 'line', nick, { category: [cat], amount: [cents, 'known', 'month'], needWant: [cat === 'wants' ? 'want' : 'need'], mistake: ['unavoidable'], fatFloor: [['accommodation', 'food', 'transportation'].includes(cat)] }));
   add('debt', 'summary', 'No debt', { debtSummaryTotal: [0, 'none'] });
   add('invest', 'account', 'Brokerage', { accountType: ['taxable'], accountBalance: [V.invested, 'known'], contribAmount: [100000, 'known', 'month'] });
-  add('invest', 'account', 'Savings', { accountType: ['hysa'], accountBalance: [V.cash, 'known'], contribAmount: [0, 'none', 'month'] });
+  add('invest', 'bank', 'Savings', { bankType: ['hysa'], accountBalance: [V.cash, 'known'], contribAmount: [0, 'none', 'month'] });
   return rec;
 }
 

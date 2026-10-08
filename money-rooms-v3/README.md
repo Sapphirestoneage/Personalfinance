@@ -56,6 +56,20 @@ repository root, `npx playwright install chromium`).
 | `CONTRACTS.md` | What each planet publishes, written before the code |
 | `DECISIONS.md`, `QUESTIONS.md`, `PROGRESS.md`, `BOARD.md`, `SPEC-COVERAGE.md`, `DONE.md` | The run's own records |
 
+## Bank accounts beside investing accounts (MR-071)
+
+The Investments planet has two account moons. Investing holds the accounts
+that take market returns or sit in a tax bucket (401(k), Roth and
+traditional IRA, HSA, 529, brokerage, I bonds, crypto, real estate equity,
+pension). Bank accounts holds checking, savings, high-yield savings and CDs,
+all cash, with a balance and a monthly deposit and nothing else. The
+cushion, the calendar and safe to spend read the bank rows; the tax
+buckets, the allocation and fees read the investing rows. Older records
+move their cash rows over on load (schema 5). A card on statement autopay
+is now a no-interest mode in the debt calculation like full autopay (the
+calendar still tells them apart: statement pays the statement, full pays
+everything owed).
+
 ## Level 13: Calculators (MR-067)
 
 `#/calculators` is the hub: a card per calculator with one live number from

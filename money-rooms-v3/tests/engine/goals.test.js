@@ -144,11 +144,14 @@ test('long-term goals read the FI ladder', () => {
 test('the order of operations is the default priority; the two floors are fixed first; step 3 moves like any goal', () => {
   const rec = loadHousehold('maya'); const R = compute(rec, data, { today: TODAY }); const G = goalsOf(rec, R);
   assert.deepEqual(G.items.slice(0, 2).map(i => i.id), ['lean', 'fullmonth']); assert.ok(G.items[0].locked && G.items[1].locked);
-  assert.equal(G.items[2].type, 'debt'); assert.ok(G.items[2].highInterest);
-  assert.equal(G.items[3].id, 'full');
-  setGoals(rec, { order: ['full', 'debt:m-csp'] }, { now: TODAY + 'T00:00:00Z' });
+  /* MR-071: Maya's Sapphire is on statement autopay, so it is no debt goal; with no high-interest debt the full cushion comes right after the floors, then the dated goals, then the student loan */
+  assert.ok(!G.items.some(i => i.id === 'debt:m-csp'), 'a card paid by autopay is not a debt to pay down');
+  assert.equal(G.items[2].id, 'full');
+  assert.equal(G.items[3].type, 'dated'); assert.equal(G.items[4].type, 'dated');
+  assert.equal(G.items[5].id, 'debt:m-loan'); assert.ok(!G.items[5].highInterest);
+  setGoals(rec, { order: ['life:m-goal2', 'full'] }, { now: TODAY + 'T00:00:00Z' });
   const G2 = goalsOf(rec, compute(rec, data, { today: TODAY }));
-  assert.equal(G2.items[2].id, 'full'); assert.deepEqual(G2.items.slice(0, 2).map(i => i.id), ['lean', 'fullmonth']);
+  assert.equal(G2.items[2].id, 'life:m-goal2'); assert.equal(G2.items[3].id, 'full'); assert.deepEqual(G2.items.slice(0, 2).map(i => i.id), ['lean', 'fullmonth']);
   setGoals(rec, { order: ['lean', 'full'] }, { now: TODAY + 'T00:00:00Z' });
   assert.deepEqual(goalsOf(rec, compute(rec, data, { today: TODAY })).items.slice(0, 2).map(i => i.id), ['lean', 'fullmonth'], 'nothing goes above the floors');
   assert.equal(rec.journal.filter(l => l.kind === 'goals').length, 2);
@@ -249,6 +252,6 @@ test('Maya: the headline FI date carries her two Life plan goals; a goal moved i
   assert.equal(U.input.items.find(i => i.id === 'life:m-goal1').type, 'amount');
   assert.equal(rec.planets.life.rows.find(x => x.id === 'm-goal1').f.goalCost.v, 8000000); assert.equal(rec.journal.length, loadHousehold('maya').journal.length);
   /* a cushion step or a debt never moves this way */
-  const N = planGoals(rec, r, { goals: { full: { targetCents: 1 }, 'debt:m-csp': { targetDate: '2030-01' } } });
-  assert.ok(N.input.items.find(i => i.id === 'full').targetCents > 1); assert.equal(N.input.items.find(i => i.id === 'debt:m-csp').targetDate, null);
+  const N = planGoals(rec, r, { goals: { full: { targetCents: 1 }, 'debt:m-loan': { targetDate: '2030-01' } } });
+  assert.ok(N.input.items.find(i => i.id === 'full').targetCents > 1); assert.equal(N.input.items.find(i => i.id === 'debt:m-loan').targetDate, null);
 });

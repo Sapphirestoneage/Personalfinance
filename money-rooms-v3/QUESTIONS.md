@@ -200,9 +200,9 @@ Collected during the run; none blocked the build. Answer whenever.
     when the cushion already sits in a savings account (Maya's case), because
     the cushion account is excluded from safe to spend and a floor on checking
     would count it twice. Right call, or always keep a floor on checking?
-60. A card with autopay set to "full balance" pays everything owed on the due
-    date, including charges after the statement; "statement" pays the statement.
-    Both avoid interest. Keep both options, or collapse to one?
+60. Answered 8 Oct: keep both, and both are no-interest modes in the debt
+    calculation (MR-071). The calendar keeps them apart: statement pays the
+    statement balance, full pays everything owed on the due date.
 61. Cash flow calendar bills the Ledger does not date: accommodation lands on
     the 1st, utilities on the 15th, therapy and insurance on the 1st, and every
     other line is spread evenly across the month until a due day is set in
@@ -246,3 +246,8 @@ Collected during the run; none blocked the build. Answer whenever.
     projection has no home line yet, so today it counts as spent for good and
     the FI date moves more than it should. Build the home equity line next
     (one of the six FI-date gaps), or leave down payments as spent until then?
+74. A bank account's monthly deposit counts as an investing contribution in
+    the projection today (it always did, when the deposit sat on an account
+    row). Jordan's $400 a month into savings grows at the market rate there.
+    Should a bank deposit grow at the cash rate instead, or drop out because
+    the surplus already lands in cash?

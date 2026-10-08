@@ -2,7 +2,7 @@
  "app": "money-rooms-v3",
  "exportedAt": "2026-10-03T16:00:21.000Z",
  "record": {
-  "schemaVersion": 4,
+  "schemaVersion": 5,
   "id": "maya",
   "createdAt": "2026-09-10T15:00:00.000Z",
   "updatedAt": "2026-10-03T16:00:21.000Z",
@@ -1781,7 +1781,7 @@
      {
       "id": "m-hysa",
       "planet": "invest",
-      "type": "account",
+      "type": "bank",
       "nickname": "Savings",
       "institution": "Marcus",
       "asOf": "2026-09",
@@ -1791,7 +1791,7 @@
       "notesShared": "",
       "lib": null,
       "f": {
-       "accountType": {
+       "bankType": {
         "v": "hysa",
         "state": "known",
         "source": "client"
@@ -1806,43 +1806,13 @@
         "state": "verified",
         "source": "client",
         "cad": "month"
-       },
-       "allocStocks": {
-        "v": 0,
-        "state": "none",
-        "source": "client"
-       },
-       "allocBonds": {
-        "v": 0,
-        "state": "none",
-        "source": "client"
-       },
-       "allocCash": {
-        "v": 1,
-        "state": "known",
-        "source": "client"
-       },
-       "allocOther": {
-        "v": 0,
-        "state": "none",
-        "source": "client"
-       },
-       "usShare": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "beneficiary": {
-        "v": true,
-        "state": "known",
-        "source": "client"
        }
       }
      },
      {
       "id": "m-chk",
       "planet": "invest",
-      "type": "account",
+      "type": "bank",
       "nickname": "Checking",
       "institution": "Chase",
       "asOf": "2026-09",
@@ -1852,7 +1822,7 @@
       "notesShared": "",
       "lib": null,
       "f": {
-       "accountType": {
+       "bankType": {
         "v": "checking",
         "state": "known",
         "source": "client"
@@ -1867,36 +1837,6 @@
         "state": "not-applicable",
         "source": "client",
         "cad": "month"
-       },
-       "allocStocks": {
-        "v": 0,
-        "state": "none",
-        "source": "client"
-       },
-       "allocBonds": {
-        "v": 0,
-        "state": "none",
-        "source": "client"
-       },
-       "allocCash": {
-        "v": 1,
-        "state": "known",
-        "source": "client"
-       },
-       "allocOther": {
-        "v": 0,
-        "state": "none",
-        "source": "client"
-       },
-       "usShare": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
-       },
-       "beneficiary": {
-        "v": null,
-        "state": "not-applicable",
-        "source": "client"
        }
       }
      },
@@ -3150,9 +3090,9 @@
        "source": "client"
       },
       "apr": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
+       "v": 0.2,
+       "state": "rough",
+       "source": "estimated"
       },
       "promoApr": {
        "v": null,
@@ -3171,9 +3111,9 @@
        "cad": "month"
       },
       "creditLimit": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
+       "v": 500000,
+       "state": "rough",
+       "source": "estimated"
       },
       "annualFee": {
        "v": null,
@@ -3251,9 +3191,9 @@
     "field": "apr",
     "owner": "debt",
     "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
+     "v": 0.2,
+     "state": "rough",
+     "source": "estimated"
     },
     "new": {
      "v": 0.2449,
@@ -3345,9 +3285,9 @@
     "field": "creditLimit",
     "owner": "debt",
     "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
+     "v": 500000,
+     "state": "rough",
+     "source": "estimated"
     },
     "new": {
      "v": 1200000,
@@ -3464,9 +3404,9 @@
        "source": "client"
       },
       "apr": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
+       "v": 0.2,
+       "state": "rough",
+       "source": "estimated"
       },
       "promoApr": {
        "v": null,
@@ -3485,9 +3425,9 @@
        "cad": "month"
       },
       "creditLimit": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
+       "v": 500000,
+       "state": "rough",
+       "source": "estimated"
       },
       "annualFee": {
        "v": null,
@@ -3565,9 +3505,9 @@
     "field": "apr",
     "owner": "debt",
     "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
+     "v": 0.2,
+     "state": "rough",
+     "source": "estimated"
     },
     "new": {
      "v": 0.2474,
@@ -3652,6 +3592,29 @@
    },
    {
     "seq": 51,
+    "ts": "2026-09-10T15:06:32.000Z",
+    "kind": "set",
+    "planet": "debt",
+    "rowId": "m-bilt",
+    "field": "creditLimit",
+    "owner": "debt",
+    "old": {
+     "v": 500000,
+     "state": "rough",
+     "source": "estimated"
+    },
+    "new": {
+     "v": null,
+     "state": "unknown",
+     "source": "client"
+    },
+    "source": "client",
+    "state": "unknown",
+    "session": "s1",
+    "why": "correction"
+   },
+   {
+    "seq": 52,
     "ts": "2026-09-10T15:06:39.000Z",
     "kind": "set",
     "planet": "debt",
@@ -3675,7 +3638,7 @@
     "why": "correction"
    },
    {
-    "seq": 52,
+    "seq": 53,
     "ts": "2026-09-10T15:06:46.000Z",
     "kind": "set",
     "planet": "debt",
@@ -3698,7 +3661,7 @@
     "why": "correction"
    },
    {
-    "seq": 53,
+    "seq": 54,
     "ts": "2026-09-10T15:06:53.000Z",
     "kind": "set",
     "planet": "debt",
@@ -3721,7 +3684,7 @@
     "why": "move"
    },
    {
-    "seq": 54,
+    "seq": 55,
     "ts": "2026-09-10T15:07:00.000Z",
     "kind": "add-row",
     "planet": "debt",
@@ -3765,7 +3728,7 @@
     "session": "s1"
    },
    {
-    "seq": 55,
+    "seq": 56,
     "ts": "2026-09-10T15:07:07.000Z",
     "kind": "set",
     "planet": "debt",
@@ -3788,7 +3751,7 @@
     "why": "correction"
    },
    {
-    "seq": 56,
+    "seq": 57,
     "ts": "2026-09-10T15:07:14.000Z",
     "kind": "set",
     "planet": "debt",
@@ -3811,7 +3774,7 @@
     "why": "correction"
    },
    {
-    "seq": 57,
+    "seq": 58,
     "ts": "2026-09-10T15:07:21.000Z",
     "kind": "set",
     "planet": "debt",
@@ -3836,7 +3799,7 @@
     "why": "correction"
    },
    {
-    "seq": 58,
+    "seq": 59,
     "ts": "2026-09-10T15:07:28.000Z",
     "kind": "add-row",
     "planet": "debt",
@@ -3874,7 +3837,7 @@
     "session": "s1"
    },
    {
-    "seq": 59,
+    "seq": 60,
     "ts": "2026-09-10T15:07:35.000Z",
     "kind": "set",
     "planet": "debt",
@@ -3897,7 +3860,7 @@
     "why": "correction"
    },
    {
-    "seq": 60,
+    "seq": 61,
     "ts": "2026-09-10T15:07:42.000Z",
     "kind": "set",
     "planet": "debt",
@@ -3920,7 +3883,7 @@
     "why": "correction"
    },
    {
-    "seq": 61,
+    "seq": 62,
     "ts": "2026-09-10T15:07:49.000Z",
     "kind": "session",
     "planet": "sun",
@@ -3934,7 +3897,7 @@
     "session": "s1"
    },
    {
-    "seq": 62,
+    "seq": 63,
     "ts": "2026-09-17T16:00:07.000Z",
     "kind": "add-row",
     "planet": "spending",
@@ -4008,7 +3971,7 @@
     "session": "s2"
    },
    {
-    "seq": 63,
+    "seq": 64,
     "ts": "2026-09-17T16:00:14.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4031,7 +3994,7 @@
     "why": "correction"
    },
    {
-    "seq": 64,
+    "seq": 65,
     "ts": "2026-09-17T16:00:21.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4056,7 +4019,7 @@
     "why": "correction"
    },
    {
-    "seq": 65,
+    "seq": 66,
     "ts": "2026-09-17T16:00:42.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4079,7 +4042,7 @@
     "why": "correction"
    },
    {
-    "seq": 66,
+    "seq": 67,
     "ts": "2026-09-17T16:00:49.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4102,7 +4065,7 @@
     "why": "correction"
    },
    {
-    "seq": 67,
+    "seq": 68,
     "ts": "2026-09-17T16:00:56.000Z",
     "kind": "add-row",
     "planet": "spending",
@@ -4176,7 +4139,7 @@
     "session": "s2"
    },
    {
-    "seq": 68,
+    "seq": 69,
     "ts": "2026-09-17T16:01:03.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4199,7 +4162,7 @@
     "why": "correction"
    },
    {
-    "seq": 69,
+    "seq": 70,
     "ts": "2026-09-17T16:01:10.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4224,7 +4187,7 @@
     "why": "correction"
    },
    {
-    "seq": 70,
+    "seq": 71,
     "ts": "2026-09-17T16:01:31.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4247,7 +4210,7 @@
     "why": "correction"
    },
    {
-    "seq": 71,
+    "seq": 72,
     "ts": "2026-09-17T16:01:38.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4270,7 +4233,7 @@
     "why": "correction"
    },
    {
-    "seq": 72,
+    "seq": 73,
     "ts": "2026-09-17T16:01:45.000Z",
     "kind": "add-row",
     "planet": "spending",
@@ -4344,7 +4307,7 @@
     "session": "s2"
    },
    {
-    "seq": 73,
+    "seq": 74,
     "ts": "2026-09-17T16:01:52.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4367,7 +4330,7 @@
     "why": "correction"
    },
    {
-    "seq": 74,
+    "seq": 75,
     "ts": "2026-09-17T16:01:59.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4392,7 +4355,7 @@
     "why": "correction"
    },
    {
-    "seq": 75,
+    "seq": 76,
     "ts": "2026-09-17T16:02:20.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4415,7 +4378,7 @@
     "why": "correction"
    },
    {
-    "seq": 76,
+    "seq": 77,
     "ts": "2026-09-17T16:02:27.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4438,7 +4401,7 @@
     "why": "correction"
    },
    {
-    "seq": 77,
+    "seq": 78,
     "ts": "2026-09-17T16:02:34.000Z",
     "kind": "add-row",
     "planet": "spending",
@@ -4512,7 +4475,7 @@
     "session": "s2"
    },
    {
-    "seq": 78,
+    "seq": 79,
     "ts": "2026-09-17T16:02:41.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4535,7 +4498,7 @@
     "why": "correction"
    },
    {
-    "seq": 79,
+    "seq": 80,
     "ts": "2026-09-17T16:02:48.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4563,7 +4526,7 @@
     "why": "correction"
    },
    {
-    "seq": 80,
+    "seq": 81,
     "ts": "2026-09-17T16:02:55.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4586,7 +4549,7 @@
     "why": "move"
    },
    {
-    "seq": 81,
+    "seq": 82,
     "ts": "2026-09-17T16:03:09.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4609,7 +4572,7 @@
     "why": "correction"
    },
    {
-    "seq": 82,
+    "seq": 83,
     "ts": "2026-09-17T16:03:16.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4632,7 +4595,7 @@
     "why": "correction"
    },
    {
-    "seq": 83,
+    "seq": 84,
     "ts": "2026-09-17T16:03:23.000Z",
     "kind": "add-row",
     "planet": "spending",
@@ -4706,7 +4669,7 @@
     "session": "s2"
    },
    {
-    "seq": 84,
+    "seq": 85,
     "ts": "2026-09-17T16:03:30.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4729,7 +4692,7 @@
     "why": "correction"
    },
    {
-    "seq": 85,
+    "seq": 86,
     "ts": "2026-09-17T16:03:37.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4754,7 +4717,7 @@
     "why": "correction"
    },
    {
-    "seq": 86,
+    "seq": 87,
     "ts": "2026-09-17T16:03:58.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4777,7 +4740,7 @@
     "why": "correction"
    },
    {
-    "seq": 87,
+    "seq": 88,
     "ts": "2026-09-17T16:04:05.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4800,7 +4763,7 @@
     "why": "correction"
    },
    {
-    "seq": 88,
+    "seq": 89,
     "ts": "2026-09-17T16:04:12.000Z",
     "kind": "add-row",
     "planet": "spending",
@@ -4874,7 +4837,7 @@
     "session": "s2"
    },
    {
-    "seq": 89,
+    "seq": 90,
     "ts": "2026-09-17T16:04:19.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4897,7 +4860,7 @@
     "why": "correction"
    },
    {
-    "seq": 90,
+    "seq": 91,
     "ts": "2026-09-17T16:04:26.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4922,7 +4885,7 @@
     "why": "correction"
    },
    {
-    "seq": 91,
+    "seq": 92,
     "ts": "2026-09-17T16:04:47.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4945,7 +4908,7 @@
     "why": "correction"
    },
    {
-    "seq": 92,
+    "seq": 93,
     "ts": "2026-09-17T16:04:54.000Z",
     "kind": "set",
     "planet": "spending",
@@ -4968,7 +4931,7 @@
     "why": "correction"
    },
    {
-    "seq": 93,
+    "seq": 94,
     "ts": "2026-09-17T16:05:01.000Z",
     "kind": "add-row",
     "planet": "spending",
@@ -5042,7 +5005,7 @@
     "session": "s2"
    },
    {
-    "seq": 94,
+    "seq": 95,
     "ts": "2026-09-17T16:05:08.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5065,7 +5028,7 @@
     "why": "correction"
    },
    {
-    "seq": 95,
+    "seq": 96,
     "ts": "2026-09-17T16:05:15.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5090,7 +5053,7 @@
     "why": "correction"
    },
    {
-    "seq": 96,
+    "seq": 97,
     "ts": "2026-09-17T16:05:22.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5113,7 +5076,7 @@
     "why": "move"
    },
    {
-    "seq": 97,
+    "seq": 98,
     "ts": "2026-09-17T16:05:36.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5136,7 +5099,7 @@
     "why": "correction"
    },
    {
-    "seq": 98,
+    "seq": 99,
     "ts": "2026-09-17T16:05:43.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5159,7 +5122,7 @@
     "why": "correction"
    },
    {
-    "seq": 99,
+    "seq": 100,
     "ts": "2026-09-17T16:05:50.000Z",
     "kind": "add-row",
     "planet": "spending",
@@ -5233,7 +5196,7 @@
     "session": "s2"
    },
    {
-    "seq": 100,
+    "seq": 101,
     "ts": "2026-09-17T16:05:57.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5256,7 +5219,7 @@
     "why": "correction"
    },
    {
-    "seq": 101,
+    "seq": 102,
     "ts": "2026-09-17T16:06:04.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5281,7 +5244,7 @@
     "why": "correction"
    },
    {
-    "seq": 102,
+    "seq": 103,
     "ts": "2026-09-17T16:06:11.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5304,7 +5267,7 @@
     "why": "move"
    },
    {
-    "seq": 103,
+    "seq": 104,
     "ts": "2026-09-17T16:06:25.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5327,7 +5290,7 @@
     "why": "correction"
    },
    {
-    "seq": 104,
+    "seq": 105,
     "ts": "2026-09-17T16:06:32.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5350,7 +5313,7 @@
     "why": "correction"
    },
    {
-    "seq": 105,
+    "seq": 106,
     "ts": "2026-09-17T16:06:39.000Z",
     "kind": "add-row",
     "planet": "spending",
@@ -5424,7 +5387,7 @@
     "session": "s2"
    },
    {
-    "seq": 106,
+    "seq": 107,
     "ts": "2026-09-17T16:06:46.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5447,7 +5410,7 @@
     "why": "correction"
    },
    {
-    "seq": 107,
+    "seq": 108,
     "ts": "2026-09-17T16:06:53.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5472,7 +5435,7 @@
     "why": "correction"
    },
    {
-    "seq": 108,
+    "seq": 109,
     "ts": "2026-09-17T16:07:14.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5495,7 +5458,7 @@
     "why": "correction"
    },
    {
-    "seq": 109,
+    "seq": 110,
     "ts": "2026-09-17T16:07:21.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5518,7 +5481,7 @@
     "why": null
    },
    {
-    "seq": 110,
+    "seq": 111,
     "ts": "2026-09-17T16:07:28.000Z",
     "kind": "add-row",
     "planet": "spending",
@@ -5592,7 +5555,7 @@
     "session": "s2"
    },
    {
-    "seq": 111,
+    "seq": 112,
     "ts": "2026-09-17T16:07:35.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5615,7 +5578,7 @@
     "why": "correction"
    },
    {
-    "seq": 112,
+    "seq": 113,
     "ts": "2026-09-17T16:07:42.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5640,7 +5603,7 @@
     "why": "correction"
    },
    {
-    "seq": 113,
+    "seq": 114,
     "ts": "2026-09-17T16:07:49.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5663,7 +5626,7 @@
     "why": "move"
    },
    {
-    "seq": 114,
+    "seq": 115,
     "ts": "2026-09-17T16:08:03.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5686,7 +5649,7 @@
     "why": "correction"
    },
    {
-    "seq": 115,
+    "seq": 116,
     "ts": "2026-09-17T16:08:10.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5709,7 +5672,7 @@
     "why": "correction"
    },
    {
-    "seq": 116,
+    "seq": 117,
     "ts": "2026-09-17T16:08:17.000Z",
     "kind": "add-row",
     "planet": "spending",
@@ -5783,7 +5746,7 @@
     "session": "s2"
    },
    {
-    "seq": 117,
+    "seq": 118,
     "ts": "2026-09-17T16:08:24.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5806,7 +5769,7 @@
     "why": "correction"
    },
    {
-    "seq": 118,
+    "seq": 119,
     "ts": "2026-09-17T16:08:31.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5831,7 +5794,7 @@
     "why": "correction"
    },
    {
-    "seq": 119,
+    "seq": 120,
     "ts": "2026-09-17T16:08:38.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5854,7 +5817,7 @@
     "why": "move"
    },
    {
-    "seq": 120,
+    "seq": 121,
     "ts": "2026-09-17T16:08:52.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5877,7 +5840,7 @@
     "why": "correction"
    },
    {
-    "seq": 121,
+    "seq": 122,
     "ts": "2026-09-17T16:08:59.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5900,7 +5863,7 @@
     "why": "correction"
    },
    {
-    "seq": 122,
+    "seq": 123,
     "ts": "2026-09-17T16:09:06.000Z",
     "kind": "add-row",
     "planet": "spending",
@@ -5974,7 +5937,7 @@
     "session": "s2"
    },
    {
-    "seq": 123,
+    "seq": 124,
     "ts": "2026-09-17T16:09:13.000Z",
     "kind": "set",
     "planet": "spending",
@@ -5997,7 +5960,7 @@
     "why": "correction"
    },
    {
-    "seq": 124,
+    "seq": 125,
     "ts": "2026-09-17T16:09:20.000Z",
     "kind": "set",
     "planet": "spending",
@@ -6022,7 +5985,7 @@
     "why": "correction"
    },
    {
-    "seq": 125,
+    "seq": 126,
     "ts": "2026-09-17T16:09:27.000Z",
     "kind": "set",
     "planet": "spending",
@@ -6045,7 +6008,7 @@
     "why": "move"
    },
    {
-    "seq": 126,
+    "seq": 127,
     "ts": "2026-09-17T16:09:41.000Z",
     "kind": "set",
     "planet": "spending",
@@ -6068,7 +6031,7 @@
     "why": "correction"
    },
    {
-    "seq": 127,
+    "seq": 128,
     "ts": "2026-09-17T16:09:48.000Z",
     "kind": "set",
     "planet": "spending",
@@ -6091,7 +6054,7 @@
     "why": "correction"
    },
    {
-    "seq": 128,
+    "seq": 129,
     "ts": "2026-09-17T16:09:55.000Z",
     "kind": "add-row",
     "planet": "spending",
@@ -6165,7 +6128,7 @@
     "session": "s2"
    },
    {
-    "seq": 129,
+    "seq": 130,
     "ts": "2026-09-17T16:10:02.000Z",
     "kind": "set",
     "planet": "spending",
@@ -6188,7 +6151,7 @@
     "why": "correction"
    },
    {
-    "seq": 130,
+    "seq": 131,
     "ts": "2026-09-17T16:10:09.000Z",
     "kind": "set",
     "planet": "spending",
@@ -6213,7 +6176,7 @@
     "why": "correction"
    },
    {
-    "seq": 131,
+    "seq": 132,
     "ts": "2026-09-17T16:10:16.000Z",
     "kind": "set",
     "planet": "spending",
@@ -6236,7 +6199,7 @@
     "why": "move"
    },
    {
-    "seq": 132,
+    "seq": 133,
     "ts": "2026-09-17T16:10:23.000Z",
     "kind": "set",
     "planet": "spending",
@@ -6259,7 +6222,7 @@
     "why": "move"
    },
    {
-    "seq": 133,
+    "seq": 134,
     "ts": "2026-09-17T16:10:30.000Z",
     "kind": "set",
     "planet": "spending",
@@ -6282,7 +6245,7 @@
     "why": "correction"
    },
    {
-    "seq": 134,
+    "seq": 135,
     "ts": "2026-09-17T16:10:37.000Z",
     "kind": "set",
     "planet": "spending",
@@ -6305,7 +6268,7 @@
     "why": null
    },
    {
-    "seq": 135,
+    "seq": 136,
     "ts": "2026-09-17T16:10:44.000Z",
     "kind": "add-row",
     "planet": "spending",
@@ -6339,7 +6302,7 @@
     "session": "s2"
    },
    {
-    "seq": 136,
+    "seq": 137,
     "ts": "2026-09-17T16:10:51.000Z",
     "kind": "set",
     "planet": "spending",
@@ -6364,7 +6327,7 @@
     "why": "correction"
    },
    {
-    "seq": 137,
+    "seq": 138,
     "ts": "2026-09-17T16:10:58.000Z",
     "kind": "add-row",
     "planet": "spending",
@@ -6398,7 +6361,7 @@
     "session": "s2"
    },
    {
-    "seq": 138,
+    "seq": 139,
     "ts": "2026-09-17T16:11:05.000Z",
     "kind": "set",
     "planet": "spending",
@@ -6423,7 +6386,7 @@
     "why": "correction"
    },
    {
-    "seq": 139,
+    "seq": 140,
     "ts": "2026-09-17T16:11:12.000Z",
     "kind": "add-row",
     "planet": "spending",
@@ -6457,7 +6420,7 @@
     "session": "s2"
    },
    {
-    "seq": 140,
+    "seq": 141,
     "ts": "2026-09-17T16:11:19.000Z",
     "kind": "set",
     "planet": "spending",
@@ -6482,7 +6445,7 @@
     "why": "correction"
    },
    {
-    "seq": 141,
+    "seq": 142,
     "ts": "2026-09-17T16:11:26.000Z",
     "kind": "add-row",
     "planet": "safety",
@@ -6531,7 +6494,7 @@
     "session": "s2"
    },
    {
-    "seq": 142,
+    "seq": 143,
     "ts": "2026-09-17T16:11:33.000Z",
     "kind": "set",
     "planet": "safety",
@@ -6554,7 +6517,7 @@
     "why": "correction"
    },
    {
-    "seq": 143,
+    "seq": 144,
     "ts": "2026-09-17T16:11:40.000Z",
     "kind": "set",
     "planet": "safety",
@@ -6577,7 +6540,7 @@
     "why": "correction"
    },
    {
-    "seq": 144,
+    "seq": 145,
     "ts": "2026-09-17T16:11:47.000Z",
     "kind": "set",
     "planet": "safety",
@@ -6602,7 +6565,7 @@
     "why": "correction"
    },
    {
-    "seq": 145,
+    "seq": 146,
     "ts": "2026-09-17T16:11:54.000Z",
     "kind": "set",
     "planet": "safety",
@@ -6625,7 +6588,7 @@
     "why": "correction"
    },
    {
-    "seq": 146,
+    "seq": 147,
     "ts": "2026-09-17T16:12:01.000Z",
     "kind": "add-row",
     "planet": "safety",
@@ -6674,7 +6637,7 @@
     "session": "s2"
    },
    {
-    "seq": 147,
+    "seq": 148,
     "ts": "2026-09-17T16:12:08.000Z",
     "kind": "set",
     "planet": "safety",
@@ -6697,7 +6660,7 @@
     "why": "correction"
    },
    {
-    "seq": 148,
+    "seq": 149,
     "ts": "2026-09-17T16:12:22.000Z",
     "kind": "set",
     "planet": "safety",
@@ -6722,7 +6685,7 @@
     "why": "correction"
    },
    {
-    "seq": 149,
+    "seq": 150,
     "ts": "2026-09-17T16:12:29.000Z",
     "kind": "set",
     "planet": "safety",
@@ -6745,7 +6708,7 @@
     "why": "correction"
    },
    {
-    "seq": 150,
+    "seq": 151,
     "ts": "2026-09-17T16:12:36.000Z",
     "kind": "add-row",
     "planet": "safety",
@@ -6794,7 +6757,7 @@
     "session": "s2"
    },
    {
-    "seq": 151,
+    "seq": 152,
     "ts": "2026-09-17T16:12:43.000Z",
     "kind": "set",
     "planet": "safety",
@@ -6817,7 +6780,7 @@
     "why": "correction"
    },
    {
-    "seq": 152,
+    "seq": 153,
     "ts": "2026-09-17T16:12:50.000Z",
     "kind": "set",
     "planet": "safety",
@@ -6840,7 +6803,7 @@
     "why": null
    },
    {
-    "seq": 153,
+    "seq": 154,
     "ts": "2026-09-17T16:12:57.000Z",
     "kind": "set",
     "planet": "safety",
@@ -6865,7 +6828,7 @@
     "why": "correction"
    },
    {
-    "seq": 154,
+    "seq": 155,
     "ts": "2026-09-17T16:13:04.000Z",
     "kind": "set",
     "planet": "safety",
@@ -6888,7 +6851,7 @@
     "why": null
    },
    {
-    "seq": 155,
+    "seq": 156,
     "ts": "2026-09-17T16:13:11.000Z",
     "kind": "add-row",
     "planet": "safety",
@@ -6921,7 +6884,7 @@
     "session": "s2"
    },
    {
-    "seq": 156,
+    "seq": 157,
     "ts": "2026-09-17T16:13:18.000Z",
     "kind": "set",
     "planet": "safety",
@@ -6944,7 +6907,7 @@
     "why": "correction"
    },
    {
-    "seq": 157,
+    "seq": 158,
     "ts": "2026-09-17T16:13:25.000Z",
     "kind": "add-row",
     "planet": "safety",
@@ -6978,7 +6941,7 @@
     "session": "s2"
    },
    {
-    "seq": 158,
+    "seq": 159,
     "ts": "2026-09-17T16:13:32.000Z",
     "kind": "set",
     "planet": "safety",
@@ -7003,7 +6966,7 @@
     "why": "correction"
    },
    {
-    "seq": 159,
+    "seq": 160,
     "ts": "2026-09-17T16:13:39.000Z",
     "kind": "add-row",
     "planet": "invest",
@@ -7077,7 +7040,7 @@
     "session": "s2"
    },
    {
-    "seq": 160,
+    "seq": 161,
     "ts": "2026-09-17T16:13:46.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7100,7 +7063,7 @@
     "why": "correction"
    },
    {
-    "seq": 161,
+    "seq": 162,
     "ts": "2026-09-17T16:13:53.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7123,7 +7086,7 @@
     "why": "correction"
    },
    {
-    "seq": 162,
+    "seq": 163,
     "ts": "2026-09-17T16:14:00.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7148,7 +7111,7 @@
     "why": null
    },
    {
-    "seq": 163,
+    "seq": 164,
     "ts": "2026-09-17T16:14:07.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7171,7 +7134,7 @@
     "why": "correction"
    },
    {
-    "seq": 164,
+    "seq": 165,
     "ts": "2026-09-17T16:14:14.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7194,7 +7157,7 @@
     "why": "correction"
    },
    {
-    "seq": 165,
+    "seq": 166,
     "ts": "2026-09-17T16:14:21.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7217,7 +7180,7 @@
     "why": "correction"
    },
    {
-    "seq": 166,
+    "seq": 167,
     "ts": "2026-09-17T16:14:28.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7240,7 +7203,7 @@
     "why": "correction"
    },
    {
-    "seq": 167,
+    "seq": 168,
     "ts": "2026-09-17T16:14:35.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7263,7 +7226,7 @@
     "why": "correction"
    },
    {
-    "seq": 168,
+    "seq": 169,
     "ts": "2026-09-17T16:14:42.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7286,7 +7249,7 @@
     "why": "correction"
    },
    {
-    "seq": 169,
+    "seq": 170,
     "ts": "2026-09-17T16:14:49.000Z",
     "kind": "add-row",
     "planet": "invest",
@@ -7360,7 +7323,7 @@
     "session": "s2"
    },
    {
-    "seq": 170,
+    "seq": 171,
     "ts": "2026-09-17T16:14:56.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7383,7 +7346,7 @@
     "why": "correction"
    },
    {
-    "seq": 171,
+    "seq": 172,
     "ts": "2026-09-17T16:15:03.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7406,7 +7369,7 @@
     "why": "correction"
    },
    {
-    "seq": 172,
+    "seq": 173,
     "ts": "2026-09-17T16:15:10.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7431,7 +7394,7 @@
     "why": "correction"
    },
    {
-    "seq": 173,
+    "seq": 174,
     "ts": "2026-09-17T16:15:17.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7454,7 +7417,7 @@
     "why": "correction"
    },
    {
-    "seq": 174,
+    "seq": 175,
     "ts": "2026-09-17T16:15:24.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7477,7 +7440,7 @@
     "why": "correction"
    },
    {
-    "seq": 175,
+    "seq": 176,
     "ts": "2026-09-17T16:15:31.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7500,7 +7463,7 @@
     "why": "correction"
    },
    {
-    "seq": 176,
+    "seq": 177,
     "ts": "2026-09-17T16:15:38.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7523,7 +7486,7 @@
     "why": "correction"
    },
    {
-    "seq": 177,
+    "seq": 178,
     "ts": "2026-09-17T16:15:45.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7546,7 +7509,7 @@
     "why": "correction"
    },
    {
-    "seq": 178,
+    "seq": 179,
     "ts": "2026-09-17T16:15:52.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7569,7 +7532,7 @@
     "why": "correction"
    },
    {
-    "seq": 179,
+    "seq": 180,
     "ts": "2026-09-17T16:15:59.000Z",
     "kind": "add-row",
     "planet": "invest",
@@ -7643,7 +7606,7 @@
     "session": "s2"
    },
    {
-    "seq": 180,
+    "seq": 181,
     "ts": "2026-09-17T16:16:06.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7666,7 +7629,7 @@
     "why": "correction"
    },
    {
-    "seq": 181,
+    "seq": 182,
     "ts": "2026-09-17T16:16:13.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7689,7 +7652,7 @@
     "why": "correction"
    },
    {
-    "seq": 182,
+    "seq": 183,
     "ts": "2026-09-17T16:16:20.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7714,7 +7677,7 @@
     "why": null
    },
    {
-    "seq": 183,
+    "seq": 184,
     "ts": "2026-09-17T16:16:27.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7737,7 +7700,7 @@
     "why": "correction"
    },
    {
-    "seq": 184,
+    "seq": 185,
     "ts": "2026-09-17T16:16:34.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7760,7 +7723,7 @@
     "why": "correction"
    },
    {
-    "seq": 185,
+    "seq": 186,
     "ts": "2026-09-17T16:16:41.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7783,7 +7746,7 @@
     "why": "correction"
    },
    {
-    "seq": 186,
+    "seq": 187,
     "ts": "2026-09-17T16:16:48.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7806,7 +7769,7 @@
     "why": "correction"
    },
    {
-    "seq": 187,
+    "seq": 188,
     "ts": "2026-09-17T16:16:55.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7829,7 +7792,7 @@
     "why": "correction"
    },
    {
-    "seq": 188,
+    "seq": 189,
     "ts": "2026-09-17T16:17:02.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7852,7 +7815,7 @@
     "why": "correction"
    },
    {
-    "seq": 189,
+    "seq": 190,
     "ts": "2026-09-17T16:17:09.000Z",
     "kind": "add-row",
     "planet": "invest",
@@ -7926,7 +7889,7 @@
     "session": "s2"
    },
    {
-    "seq": 190,
+    "seq": 191,
     "ts": "2026-09-17T16:17:16.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7949,7 +7912,7 @@
     "why": "correction"
    },
    {
-    "seq": 191,
+    "seq": 192,
     "ts": "2026-09-17T16:17:23.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7972,7 +7935,7 @@
     "why": "correction"
    },
    {
-    "seq": 192,
+    "seq": 193,
     "ts": "2026-09-17T16:17:30.000Z",
     "kind": "set",
     "planet": "invest",
@@ -7997,7 +7960,7 @@
     "why": "correction"
    },
    {
-    "seq": 193,
+    "seq": 194,
     "ts": "2026-09-17T16:17:37.000Z",
     "kind": "set",
     "planet": "invest",
@@ -8020,7 +7983,7 @@
     "why": "correction"
    },
    {
-    "seq": 194,
+    "seq": 195,
     "ts": "2026-09-17T16:17:44.000Z",
     "kind": "set",
     "planet": "invest",
@@ -8043,7 +8006,7 @@
     "why": "correction"
    },
    {
-    "seq": 195,
+    "seq": 196,
     "ts": "2026-09-17T16:17:51.000Z",
     "kind": "set",
     "planet": "invest",
@@ -8066,7 +8029,7 @@
     "why": "correction"
    },
    {
-    "seq": 196,
+    "seq": 197,
     "ts": "2026-09-17T16:17:58.000Z",
     "kind": "set",
     "planet": "invest",
@@ -8089,7 +8052,7 @@
     "why": "correction"
    },
    {
-    "seq": 197,
+    "seq": 198,
     "ts": "2026-09-17T16:18:05.000Z",
     "kind": "set",
     "planet": "invest",
@@ -8112,7 +8075,7 @@
     "why": "correction"
    },
    {
-    "seq": 198,
+    "seq": 199,
     "ts": "2026-09-17T16:18:12.000Z",
     "kind": "set",
     "planet": "invest",
@@ -8135,7 +8098,7 @@
     "why": null
    },
    {
-    "seq": 199,
+    "seq": 200,
     "ts": "2026-09-17T16:18:19.000Z",
     "kind": "add-row",
     "planet": "invest",
@@ -8146,7 +8109,7 @@
     "new": {
      "id": "m-hysa",
      "planet": "invest",
-     "type": "account",
+     "type": "bank",
      "nickname": "Savings",
      "institution": "Marcus",
      "asOf": "2026-09",
@@ -8156,7 +8119,7 @@
      "notesShared": "",
      "lib": null,
      "f": {
-      "accountType": {
+      "bankType": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -8171,36 +8134,6 @@
        "state": "unknown",
        "source": "client",
        "cad": "month"
-      },
-      "allocStocks": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "allocBonds": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "allocCash": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "allocOther": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "usShare": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "beneficiary": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
       }
      }
     },
@@ -8209,12 +8142,12 @@
     "session": "s2"
    },
    {
-    "seq": 200,
+    "seq": 201,
     "ts": "2026-09-17T16:18:26.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "m-hysa",
-    "field": "accountType",
+    "field": "bankType",
     "owner": "invest",
     "old": {
      "v": null,
@@ -8232,7 +8165,7 @@
     "why": "correction"
    },
    {
-    "seq": 201,
+    "seq": 202,
     "ts": "2026-09-17T16:18:33.000Z",
     "kind": "set",
     "planet": "invest",
@@ -8255,7 +8188,7 @@
     "why": "correction"
    },
    {
-    "seq": 202,
+    "seq": 203,
     "ts": "2026-09-17T16:18:40.000Z",
     "kind": "set",
     "planet": "invest",
@@ -8280,146 +8213,8 @@
     "why": "correction"
    },
    {
-    "seq": 203,
-    "ts": "2026-09-17T16:18:47.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "m-hysa",
-    "field": "allocStocks",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 0,
-     "state": "none",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "none",
-    "session": "s2",
-    "why": "correction"
-   },
-   {
     "seq": 204,
-    "ts": "2026-09-17T16:18:54.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "m-hysa",
-    "field": "allocBonds",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 0,
-     "state": "none",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "none",
-    "session": "s2",
-    "why": "correction"
-   },
-   {
-    "seq": 205,
-    "ts": "2026-09-17T16:19:01.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "m-hysa",
-    "field": "allocCash",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 1,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s2",
-    "why": "correction"
-   },
-   {
-    "seq": 206,
-    "ts": "2026-09-17T16:19:08.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "m-hysa",
-    "field": "allocOther",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 0,
-     "state": "none",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "none",
-    "session": "s2",
-    "why": "correction"
-   },
-   {
-    "seq": 207,
-    "ts": "2026-09-17T16:19:15.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "m-hysa",
-    "field": "usShare",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s2",
-    "why": null
-   },
-   {
-    "seq": 208,
-    "ts": "2026-09-17T16:19:22.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "m-hysa",
-    "field": "beneficiary",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": true,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s2",
-    "why": "correction"
-   },
-   {
-    "seq": 209,
-    "ts": "2026-09-17T16:19:29.000Z",
+    "ts": "2026-09-17T16:18:47.000Z",
     "kind": "add-row",
     "planet": "invest",
     "rowId": "m-chk",
@@ -8429,7 +8224,7 @@
     "new": {
      "id": "m-chk",
      "planet": "invest",
-     "type": "account",
+     "type": "bank",
      "nickname": "Checking",
      "institution": "Chase",
      "asOf": "2026-09",
@@ -8439,7 +8234,7 @@
      "notesShared": "",
      "lib": null,
      "f": {
-      "accountType": {
+      "bankType": {
        "v": null,
        "state": "unknown",
        "source": "client"
@@ -8454,36 +8249,6 @@
        "state": "unknown",
        "source": "client",
        "cad": "month"
-      },
-      "allocStocks": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "allocBonds": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "allocCash": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "allocOther": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "usShare": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
-      },
-      "beneficiary": {
-       "v": null,
-       "state": "unknown",
-       "source": "client"
       }
      }
     },
@@ -8492,12 +8257,12 @@
     "session": "s2"
    },
    {
-    "seq": 210,
-    "ts": "2026-09-17T16:19:36.000Z",
+    "seq": 205,
+    "ts": "2026-09-17T16:18:54.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "m-chk",
-    "field": "accountType",
+    "field": "bankType",
     "owner": "invest",
     "old": {
      "v": null,
@@ -8515,8 +8280,8 @@
     "why": "correction"
    },
    {
-    "seq": 211,
-    "ts": "2026-09-17T16:19:43.000Z",
+    "seq": 206,
+    "ts": "2026-09-17T16:19:01.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "m-chk",
@@ -8538,8 +8303,8 @@
     "why": "correction"
    },
    {
-    "seq": 212,
-    "ts": "2026-09-17T16:19:50.000Z",
+    "seq": 207,
+    "ts": "2026-09-17T16:19:08.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "m-chk",
@@ -8563,146 +8328,8 @@
     "why": null
    },
    {
-    "seq": 213,
-    "ts": "2026-09-17T16:19:57.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "m-chk",
-    "field": "allocStocks",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 0,
-     "state": "none",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "none",
-    "session": "s2",
-    "why": "correction"
-   },
-   {
-    "seq": 214,
-    "ts": "2026-09-17T16:20:04.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "m-chk",
-    "field": "allocBonds",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 0,
-     "state": "none",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "none",
-    "session": "s2",
-    "why": "correction"
-   },
-   {
-    "seq": 215,
-    "ts": "2026-09-17T16:20:11.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "m-chk",
-    "field": "allocCash",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 1,
-     "state": "known",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "known",
-    "session": "s2",
-    "why": "correction"
-   },
-   {
-    "seq": 216,
-    "ts": "2026-09-17T16:20:18.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "m-chk",
-    "field": "allocOther",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": 0,
-     "state": "none",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "none",
-    "session": "s2",
-    "why": "correction"
-   },
-   {
-    "seq": 217,
-    "ts": "2026-09-17T16:20:25.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "m-chk",
-    "field": "usShare",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s2",
-    "why": null
-   },
-   {
-    "seq": 218,
-    "ts": "2026-09-17T16:20:32.000Z",
-    "kind": "set",
-    "planet": "invest",
-    "rowId": "m-chk",
-    "field": "beneficiary",
-    "owner": "invest",
-    "old": {
-     "v": null,
-     "state": "unknown",
-     "source": "client"
-    },
-    "new": {
-     "v": null,
-     "state": "not-applicable",
-     "source": "client"
-    },
-    "source": "client",
-    "state": "not-applicable",
-    "session": "s2",
-    "why": null
-   },
-   {
-    "seq": 219,
-    "ts": "2026-09-17T16:20:39.000Z",
+    "seq": 208,
+    "ts": "2026-09-17T16:19:15.000Z",
     "kind": "add-row",
     "planet": "invest",
     "rowId": "m-fxaix",
@@ -8749,8 +8376,8 @@
     "session": "s2"
    },
    {
-    "seq": 220,
-    "ts": "2026-09-17T16:20:46.000Z",
+    "seq": 209,
+    "ts": "2026-09-17T16:19:22.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "m-fxaix",
@@ -8772,8 +8399,8 @@
     "why": "correction"
    },
    {
-    "seq": 221,
-    "ts": "2026-09-17T16:20:53.000Z",
+    "seq": 210,
+    "ts": "2026-09-17T16:19:29.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "m-fxaix",
@@ -8795,8 +8422,8 @@
     "why": "correction"
    },
    {
-    "seq": 222,
-    "ts": "2026-09-17T16:21:00.000Z",
+    "seq": 211,
+    "ts": "2026-09-17T16:19:36.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "m-fxaix",
@@ -8818,8 +8445,8 @@
     "why": "correction"
    },
    {
-    "seq": 223,
-    "ts": "2026-09-17T16:21:07.000Z",
+    "seq": 212,
+    "ts": "2026-09-17T16:19:43.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "m-fxaix",
@@ -8841,8 +8468,8 @@
     "why": "correction"
    },
    {
-    "seq": 224,
-    "ts": "2026-09-17T16:21:14.000Z",
+    "seq": 213,
+    "ts": "2026-09-17T16:19:50.000Z",
     "kind": "add-row",
     "planet": "invest",
     "rowId": "m-vttsx",
@@ -8889,8 +8516,8 @@
     "session": "s2"
    },
    {
-    "seq": 225,
-    "ts": "2026-09-17T16:21:21.000Z",
+    "seq": 214,
+    "ts": "2026-09-17T16:19:57.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "m-vttsx",
@@ -8912,8 +8539,8 @@
     "why": "correction"
    },
    {
-    "seq": 226,
-    "ts": "2026-09-17T16:21:28.000Z",
+    "seq": 215,
+    "ts": "2026-09-17T16:20:04.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "m-vttsx",
@@ -8935,8 +8562,8 @@
     "why": "correction"
    },
    {
-    "seq": 227,
-    "ts": "2026-09-17T16:21:35.000Z",
+    "seq": 216,
+    "ts": "2026-09-17T16:20:11.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "m-vttsx",
@@ -8958,8 +8585,8 @@
     "why": "correction"
    },
    {
-    "seq": 228,
-    "ts": "2026-09-17T16:21:42.000Z",
+    "seq": 217,
+    "ts": "2026-09-17T16:20:18.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "m-vttsx",
@@ -8981,8 +8608,8 @@
     "why": "correction"
    },
    {
-    "seq": 229,
-    "ts": "2026-09-17T16:21:49.000Z",
+    "seq": 218,
+    "ts": "2026-09-17T16:20:25.000Z",
     "kind": "add-row",
     "planet": "invest",
     "rowId": "m-vtsax",
@@ -9029,8 +8656,8 @@
     "session": "s2"
    },
    {
-    "seq": 230,
-    "ts": "2026-09-17T16:21:56.000Z",
+    "seq": 219,
+    "ts": "2026-09-17T16:20:32.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "m-vtsax",
@@ -9052,8 +8679,8 @@
     "why": "correction"
    },
    {
-    "seq": 231,
-    "ts": "2026-09-17T16:22:03.000Z",
+    "seq": 220,
+    "ts": "2026-09-17T16:20:39.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "m-vtsax",
@@ -9075,8 +8702,8 @@
     "why": "correction"
    },
    {
-    "seq": 232,
-    "ts": "2026-09-17T16:22:10.000Z",
+    "seq": 221,
+    "ts": "2026-09-17T16:20:46.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "m-vtsax",
@@ -9098,8 +8725,8 @@
     "why": "correction"
    },
    {
-    "seq": 233,
-    "ts": "2026-09-17T16:22:17.000Z",
+    "seq": 222,
+    "ts": "2026-09-17T16:20:53.000Z",
     "kind": "set",
     "planet": "invest",
     "rowId": "m-vtsax",
@@ -9121,8 +8748,8 @@
     "why": "correction"
    },
    {
-    "seq": 234,
-    "ts": "2026-09-17T16:22:24.000Z",
+    "seq": 223,
+    "ts": "2026-09-17T16:21:00.000Z",
     "kind": "add-row",
     "planet": "taxes",
     "rowId": "m-est",
@@ -9155,8 +8782,8 @@
     "session": "s2"
    },
    {
-    "seq": 235,
-    "ts": "2026-09-17T16:22:31.000Z",
+    "seq": 224,
+    "ts": "2026-09-17T16:21:07.000Z",
     "kind": "set",
     "planet": "taxes",
     "rowId": "m-est",
@@ -9180,8 +8807,8 @@
     "why": "correction"
    },
    {
-    "seq": 236,
-    "ts": "2026-09-17T16:22:38.000Z",
+    "seq": 225,
+    "ts": "2026-09-17T16:21:14.000Z",
     "kind": "add-row",
     "planet": "taxes",
     "rowId": "m-njest",
@@ -9214,8 +8841,8 @@
     "session": "s2"
    },
    {
-    "seq": 237,
-    "ts": "2026-09-17T16:22:45.000Z",
+    "seq": 226,
+    "ts": "2026-09-17T16:21:21.000Z",
     "kind": "set",
     "planet": "taxes",
     "rowId": "m-njest",
@@ -9239,8 +8866,8 @@
     "why": "correction"
    },
    {
-    "seq": 238,
-    "ts": "2026-09-17T16:22:52.000Z",
+    "seq": 227,
+    "ts": "2026-09-17T16:21:28.000Z",
     "kind": "add-row",
     "planet": "life",
     "rowId": "m-goal1",
@@ -9282,8 +8909,8 @@
     "session": "s2"
    },
    {
-    "seq": 239,
-    "ts": "2026-09-17T16:22:59.000Z",
+    "seq": 228,
+    "ts": "2026-09-17T16:21:35.000Z",
     "kind": "set",
     "planet": "life",
     "rowId": "m-goal1",
@@ -9305,8 +8932,8 @@
     "why": "correction"
    },
    {
-    "seq": 240,
-    "ts": "2026-09-17T16:23:06.000Z",
+    "seq": 229,
+    "ts": "2026-09-17T16:21:42.000Z",
     "kind": "set",
     "planet": "life",
     "rowId": "m-goal1",
@@ -9328,8 +8955,8 @@
     "why": "correction"
    },
    {
-    "seq": 241,
-    "ts": "2026-09-17T16:23:13.000Z",
+    "seq": 230,
+    "ts": "2026-09-17T16:21:49.000Z",
     "kind": "set",
     "planet": "life",
     "rowId": "m-goal1",
@@ -9351,8 +8978,8 @@
     "why": "move"
    },
    {
-    "seq": 242,
-    "ts": "2026-09-17T16:23:20.000Z",
+    "seq": 231,
+    "ts": "2026-09-17T16:21:56.000Z",
     "kind": "add-row",
     "planet": "life",
     "rowId": "m-goal2",
@@ -9394,8 +9021,8 @@
     "session": "s2"
    },
    {
-    "seq": 243,
-    "ts": "2026-09-17T16:23:27.000Z",
+    "seq": 232,
+    "ts": "2026-09-17T16:22:03.000Z",
     "kind": "set",
     "planet": "life",
     "rowId": "m-goal2",
@@ -9417,8 +9044,8 @@
     "why": "correction"
    },
    {
-    "seq": 244,
-    "ts": "2026-09-17T16:23:34.000Z",
+    "seq": 233,
+    "ts": "2026-09-17T16:22:10.000Z",
     "kind": "set",
     "planet": "life",
     "rowId": "m-goal2",
@@ -9440,8 +9067,8 @@
     "why": "correction"
    },
    {
-    "seq": 245,
-    "ts": "2026-09-17T16:23:41.000Z",
+    "seq": 234,
+    "ts": "2026-09-17T16:22:17.000Z",
     "kind": "set",
     "planet": "life",
     "rowId": "m-goal2",
@@ -9463,8 +9090,8 @@
     "why": "move"
    },
    {
-    "seq": 246,
-    "ts": "2026-09-17T16:23:48.000Z",
+    "seq": 235,
+    "ts": "2026-09-17T16:22:24.000Z",
     "kind": "add-row",
     "planet": "life",
     "rowId": "m-ret",
@@ -9534,8 +9161,8 @@
     "session": "s2"
    },
    {
-    "seq": 247,
-    "ts": "2026-09-17T16:23:55.000Z",
+    "seq": 236,
+    "ts": "2026-09-17T16:22:31.000Z",
     "kind": "set",
     "planet": "life",
     "rowId": "m-ret",
@@ -9557,8 +9184,8 @@
     "why": "correction"
    },
    {
-    "seq": 248,
-    "ts": "2026-09-17T16:24:23.000Z",
+    "seq": 237,
+    "ts": "2026-09-17T16:22:59.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "m-csp",
@@ -9580,8 +9207,8 @@
     "why": "move"
    },
    {
-    "seq": 249,
-    "ts": "2026-09-17T16:24:30.000Z",
+    "seq": 238,
+    "ts": "2026-09-17T16:23:06.000Z",
     "kind": "set",
     "planet": "debt",
     "rowId": "m-loan",
@@ -9603,8 +9230,8 @@
     "why": "move"
    },
    {
-    "seq": 250,
-    "ts": "2026-09-17T16:24:37.000Z",
+    "seq": 239,
+    "ts": "2026-09-17T16:23:13.000Z",
     "kind": "session",
     "planet": "sun",
     "rowId": "sun",
@@ -9617,7 +9244,7 @@
     "session": "s2"
    },
    {
-    "seq": 251,
+    "seq": 240,
     "ts": "2026-10-03T16:00:07.000Z",
     "kind": "set",
     "planet": "debt",
@@ -9640,7 +9267,7 @@
     "why": "move"
    },
    {
-    "seq": 252,
+    "seq": 241,
     "ts": "2026-10-03T16:00:14.000Z",
     "kind": "set",
     "planet": "invest",
@@ -9663,7 +9290,7 @@
     "why": "move"
    },
    {
-    "seq": 253,
+    "seq": 242,
     "ts": "2026-10-03T16:00:21.000Z",
     "kind": "set",
     "planet": "spending",
@@ -9736,7 +9363,7 @@
    {
     "id": "s2",
     "label": "Session 2",
-    "at": "2026-09-17T16:24:37.000Z",
+    "at": "2026-09-17T16:23:13.000Z",
     "note": "Spending detail replaced the rough total. Accounts and safety net in."
    }
   ],
@@ -9804,6 +9431,9 @@
   "discovery": null,
   "targets": {},
   "callProgress": {},
+  "snapshots": [],
+  "celebrations": [],
+  "scoreboard": null,
   "calendar": {
    "version": 1,
    "anchor": {

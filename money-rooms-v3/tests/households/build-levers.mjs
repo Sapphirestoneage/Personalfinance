@@ -15,7 +15,7 @@ export function buildLevers(spec, id, data, opts) {
   add('spending', 'savings', 'To brokerage', { savingsLanding: [surplus, 'known', 'client', 'month'] });
   add('debt', 'summary', 'No debt', { debtSummaryTotal: [0, 'none'] });
   const brokerage = add('invest', 'account', 'Brokerage', { accountType: ['taxable'], accountBalance: [spec.invested, 'known'], contribAmount: [surplus, 'known', 'client', 'month'] });
-  if (spec.cash) add('invest', 'account', 'Checking', { accountType: ['checking'], accountBalance: [spec.cash, 'known'], contribAmount: [0, 'none', 'client', 'month'] });
+  if (spec.cash) add('invest', 'bank', 'Checking', { bankType: ['checking'], accountBalance: [spec.cash, 'known'], contribAmount: [0, 'none', 'client', 'month'] });
   if (spec.baristaIncome) add('life', 'retirement', 'Retirement', { baristaIncome: [spec.baristaIncome, 'known', 'client', 'month'] });
   rec.brokerageId = brokerage.id;
   return rec;
