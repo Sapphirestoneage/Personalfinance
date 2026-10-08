@@ -38,6 +38,7 @@ export const app = {
     const rec = store.load(id);
     if (!rec) return false;
     this.record = rec;
+    if (this.data) Rec.ensureProfileRows(rec, this.data.fields, { session: this.session }); /* MR-064: the profile forms have their rows before any screen draws */
     settings.lastClient = id;
     store.saveSettings(settings);
     this.recompute();

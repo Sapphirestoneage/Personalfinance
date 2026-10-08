@@ -6,6 +6,7 @@ import { createSun, PLANETS, SUN_FIELDS } from './sun.js';
 import { append, undoTarget, redoTarget } from './journal.js';
 import { field as mkField, isState, isSource } from './states.js';
 
+import { freshFacts } from './fields.js';
 export const SCHEMA_VERSION = 4;
 
 export function newId() {
@@ -47,6 +48,19 @@ export function createRecord(opts) {
 }
 
 /* A universal row. Type-specific facts live in `f`. */
+/* The profile forms (MR-060, MR-064): every single-row type flagged `form` has its one row from the moment a client opens, so no screen creates rows while it draws. */
+export function ensureProfileRows(record, fields, meta) {
+  const made = [];
+  Object.keys(fields.planets).forEach(planet => Object.keys(fields.planets[planet].types).forEach(type => {
+    const t = fields.planets[planet].types[type]; if (!t.form) return;
+    if (record.planets[planet].rows.some(r => r.type === type)) return;
+    const f = freshFacts(fields, planet, type); t.fields.forEach(id => { const d = fields.fields[id]; if (d.cadence) f[id].cad = d.defaultCadence; });
+    const row = createRow(planet, type, { f });
+    addRow(record, row, meta); made.push(row.id);
+  }));
+  return made;
+}
+
 export function createRow(planet, type, opts) {
   const o = opts || {};
   return {

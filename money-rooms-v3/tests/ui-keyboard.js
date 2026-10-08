@@ -18,7 +18,7 @@ async function active(page) {
 }
 async function tabTo(page, pred, max) {
   let a = null;
-  for (let i = 0; i < (max || 120); i++) { /* a details drawer with a date picker and three chips per field needs more than 80 stops */
+  for (let i = 0; i < (max || 240); i++) { /* a details drawer with a date picker and three chips per field needs more than 80 stops; Home with its two profile forms wraps past 120 (MR-064) */
     a = await active(page);
     if (a && pred(a)) return a;
     await page.keyboard.press('Tab');
@@ -208,8 +208,9 @@ export async function enterHousehold(page, spec, check) {
           await press(source === 'estimated' ? 'e' : source === 'lookup-verify' ? 'y' : source === 'lookup-confirmed' ? 'l' : 'c');
         }
       }
-      if (r.asOf) { await details(); await tabTo(page, a => a.row === rowId && a.col === 'asOf'); await type(dateKeys(r.asOf)); await press('Tab'); }
-      if (r.stress !== undefined && r.stress !== null) { await details(); await tabTo(page, a => a.row === rowId && a.col === 'stress'); await type(String(r.stress)); }
+      /* a form (Retirement and FI, the credit score) keeps no as-of date or stress rating on screen (MR-060, MR-064) */
+      if (r.asOf && !tdef.form) { await details(); await tabTo(page, a => a.row === rowId && a.col === 'asOf'); await type(dateKeys(r.asOf)); await press('Tab'); }
+      if (r.stress !== undefined && r.stress !== null && !tdef.form) { await details(); await tabTo(page, a => a.row === rowId && a.col === 'stress'); await type(String(r.stress)); }
       /* credits drawer */
       const creditsField = tdef.fields.find(f => fields.fields[f].kind === 'credits');
       if (creditsField && r.f[creditsField] && Array.isArray(r.f[creditsField]) && r.f[creditsField][0] && typeof r.f[creditsField][0] === 'object') {

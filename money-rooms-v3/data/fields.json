@@ -364,9 +364,11 @@
      ],
      "single": true,
      "nicknameLabel": "Label",
-     "stress": true,
+     "stress": false,
      "plural": "Credit score",
-     "tableFields": []
+     "tableFields": [],
+     "form": true,
+     "explain": "Part of the household profile: the latest credit score and which bureau or app it came from. Not a debt, not a balance; it changes how a card or a loan would be priced. The same form sits on Home under Household facts."
     },
     "other": {
      "label": "Other",
@@ -1256,11 +1258,11 @@
   },
   "score": {
    "id": "score",
-   "label": "Score",
+   "label": "Credit score",
    "kind": "int",
    "owner": "debt",
    "weight": 5,
-   "hint": "300 to 850",
+   "hint": "300 to 850, from Credit Karma, the card app or a bureau",
    "defaultSource": "client",
    "primary": true
   },

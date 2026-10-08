@@ -511,3 +511,9 @@ Compatibility: `record.snapshots`, `record.celebrations` and `record.scoreboard`
 Why: the Level 12 brief: one number per screen, read-aloud sentences, six numbers and the rest one tap away, every metric with its graph and what opens it, momentum the client can feel.
 Alternative: store trends as numbers (the journal already holds the history; recomputing from it keeps one source of truth).
 
+## MR-064 2026-10-08 The credit score is a profile fact, not a row
+Decision: `debt/score` is a `form` type like Retirement and FI (MR-060): one form under Household facts on Home (Coach: "Credit score", Client: "Your credit score"), the same form in the Debt room instead of a one-row table with a Label column, the field labelled "Credit score" with where to find it, no stress rating on it. Home's profile renders every `form` type through one function, and the one row of every `form` type is made when a client opens (`engine/record.js` `ensureProfileRows`), never while a screen draws. The details drawer is tighter at desktop widths too: shorter rows, number boxes no wider than a figure needs, the state and source line beside the box.
+Compatibility: none stored; an existing score row keeps its facts; a client that opens gains an empty Retirement and FI row and an empty credit score row (both unknown) if it had none.
+Why: the owner's screenshot: a credit score typed as "ccs 666" into a transactional-looking table. It is a fact about the person, like a birth date.
+Alternative: a Sun field (one owner per shared field: the Debt planet already owns and reads it, so it stays there and only moves on screen).
+

@@ -9,6 +9,7 @@ export const SCREENS = [
   { id: 'income-w2', route: 'ledger/income/w2' },
   { id: 'spending-lines', route: 'ledger/spending/line' },
   { id: 'debt-cards', route: 'ledger/debt/card' },
+  { id: 'debt-score', route: 'ledger/debt/score' },
   { id: 'invest-accounts', route: 'ledger/invest/account' },
   { id: 'life-goals', route: 'ledger/life/goal' },
   { id: 'taxes', route: 'ledger/taxes' },
