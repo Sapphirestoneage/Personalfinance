@@ -14,6 +14,8 @@
 | 9 | What Moves the FI Date | FROZEN | Level 9: What Moves the FI Date; reopened for MR-057 (one FI story, levers skeleton) |
 | 10 | The Program (session curricula, account setup, transactions, outcomes) | FROZEN | Level 10: The Program; reopened for MR-057 (runner strip legend) |
 | 11 | Goal Timeline (when each goal happens, all at once) | FROZEN | Level 11: Goal Timeline; reopened for MR-052 (the cushion in three steps) |
+| 12 | The unlock loop (demo brief Part B) | OPEN | MR-059: reveal panel, deep links, Next unlock, Unlock Map |
+| 13 | Charts first (demo brief Part C) | OPEN | Measure as Overview, Charts, Numbers, Lenses, Unlocks; 22 new charts |
 
 A frozen level reopens only for a failing test or a decision logged in
 DECISIONS.md.

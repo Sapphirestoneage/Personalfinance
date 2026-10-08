@@ -8,6 +8,21 @@ import * as Charts from '../charts.js';
 import { translator, metricLabel } from '../glossary.js';
 import { PLANET_LABELS } from '../../engine/sun.js';
 import { registerMath, openMetric } from '../metricdrawer.js';
+import { renderUnlockMap, renderFocusedChart, highlight, clientCharts } from '../unlocks.js';
+
+/* MR-059: Measure is tabs with stable deep links: #/measure/numbers/<metric>, #/measure/lenses/<lens>, #/measure/charts/<chart>, #/measure/unlocks */
+const TABS = [['numbers', 'Numbers'], ['lenses', 'Lenses'], ['charts', 'Charts'], ['unlocks', 'Unlocks']];
+export function tabOf(app) { const id = app.route.params.id; return TABS.some(t => t[0] === id) ? id : 'numbers'; }
+function tabBar(app, current) {
+  return h('nav', { class: 'mtabs', 'aria-label': 'Measure sections' }, TABS.map(([id, label]) => h('a', { href: '#/measure/' + id, 'aria-current': id === current ? 'page' : null }, label)));
+}
+/* scroll to the item a deep link names and light it up; opens any fold that hides it */
+function revealItem(host, sel) {
+  const el = host.querySelector(sel); if (!el) return false;
+  let p = el; while (p && p !== host) { if (p.style && p.style.display === 'none') p.style.display = ''; p = p.parentElement; }
+  setTimeout(() => highlight(el), 60);
+  return true;
+}
 
 const SHARE_LABELS = { debt: 'Debt', retirement: 'Retirement', accommodation: 'Accommodation', food: 'Food', transportation: 'Transportation', therapy: 'Therapy', pretax: 'Pre-tax', roth: 'Roth', taxable: 'Taxable', hsa: 'HSA', cash: 'Cash', other: 'Other', stocks: 'Stocks', bonds: 'Bonds' };
 const KEY_METRICS = ['takeHome', 'spending', 'surplus', 'savingsRateTakeHome', 'netWorth', 'totalDebt', 'runway', 'pctToFi'];
@@ -16,21 +31,30 @@ const STAGE_PLANETS = { 1: ['income', 'spending'], 2: ['debt'], 3: ['safety', 'i
 
 export function mount(host, app) {
   const t = translator(app);
+  const tab = tabOf(app); const sub = app.route.params.sub || null;
   host.appendChild(h('header', null, h('h1', null, t('Measure')), h('span', { class: 'sub' }, app.view === 'coach' ? 'Every number opens its math.' : '')));
+  host.appendChild(tabBar(app, tab));
   const stage = h('div', { class: 'stage-row' });
   const kpis = h('div');
   const lenses = h('section', { class: 'panel' });
   const charts = h('section');
-  host.appendChild(stage); host.appendChild(kpis); host.appendChild(lenses); host.appendChild(charts);
+  const unlocks = h('section', { class: 'unlock-map' });
+  if (tab === 'numbers') { host.appendChild(stage); host.appendChild(kpis); }
+  if (tab === 'lenses') host.appendChild(lenses);
+  if (tab === 'charts') host.appendChild(charts);
+  if (tab === 'unlocks') host.appendChild(unlocks);
   function draw() {
-    clear(stage); clear(kpis); clear(lenses); clear(charts);
+    clear(stage); clear(kpis); clear(lenses); clear(charts); clear(unlocks);
     const R = app.result; const M = R.metrics; const phone = isPhone(host);
-    if (!M) { kpis.appendChild(h('div', { class: 'empty' }, h('h2', null, 'Nothing to measure yet'), h('p', null, 'Enter income first, then spending. Numbers appear as their inputs arrive.'))); return; }
+    if (tab === 'unlocks') { if (!M) { unlocks.appendChild(h('div', { class: 'empty' }, h('h2', null, 'Nothing to map yet'), h('p', null, 'Enter income first, then spending. The map fills as numbers open.'))); return; } renderUnlockMap(unlocks, app); return; }
+    if (tab === 'charts' && sub) { if (!M) { charts.appendChild(h('div', { class: 'empty' }, h('h2', null, 'Nothing to chart yet'), h('p', null, 'Enter income first, then spending.'))); return; } renderFocusedChart(charts, app, sub, app.unlockBack); return; }
+    if (!M) { (tab === 'numbers' ? kpis : tab === 'lenses' ? lenses : charts).appendChild(h('div', { class: 'empty' }, h('h2', null, 'Nothing to measure yet'), h('p', null, 'Enter income first, then spending. Numbers appear as their inputs arrive.'))); return; }
     if (app.view === 'coach') Object.keys(STAGE_PLANETS).forEach(s => {
       const planets = STAGE_PLANETS[s]; const filled = planets.every(p => R.rowCounts[p] > 0);
       stage.appendChild(h('span', { class: 'chip stage' + (filled ? '' : ' waiting') }, 'Stage ' + s + ': ' + planets.map(p => PLANET_LABELS[p].toLowerCase()).join(' and ') + (filled ? ', has rows' : ', needs rows')));
     });
     if (app.view === 'coach') { const filledStages = Object.keys(STAGE_PLANETS).filter(s => STAGE_PLANETS[s].every(p => R.rowCounts[p] > 0)); stage.appendChild(h('span', { class: 'chip stage stage-summary' }, filledStages.length === 5 ? 'Stages 1 to 5 have rows' : filledStages.length + ' of 5 stages have rows')); }
+    if (tab !== 'numbers') { if (tab === 'lenses') { drawLenses(lenses, app, t, phone); if (sub) revealItem(lenses, '.lens[data-lens="' + sub + '"]'); } if (tab === 'charts') drawCharts(charts, app, t, phone); return; }
     if (app.view === 'client') {
       /* Client view starts from the key numbers; the rest sits behind one switch */
       const grid = h('div', { class: 'kpis' });
@@ -56,8 +80,9 @@ export function mount(host, app) {
       defs.forEach(def => grid.appendChild(kpi(app, M[def.id], def, t)));
       host2.appendChild(collapsible(h('div', { class: 'metric-group' }), t(label), grid, phone, { count: defs.length, word: 'numbers' }));
     }
-    drawLenses(lenses, app, t, phone);
-    drawCharts(charts, app, t, phone);
+    if (tab === 'lenses') { drawLenses(lenses, app, t, phone); if (sub) revealItem(lenses, '.lens[data-lens="' + sub + '"]'); }
+    if (tab === 'charts') drawCharts(charts, app, t, phone);
+    if (tab === 'numbers' && sub) revealItem(kpis, '.kpi[data-metric="' + sub + '"]');
   }
   draw();
   return { update() { draw(); } };
@@ -81,7 +106,7 @@ export function kpi(app, m, def, t) {
   const label = metricLabel(app, def);
   if (!m || m.status !== 'ok') {
     const needsList = (m && m.needs && m.needs.length) ? m.needs : ['inputs'];
-    const tile = h('div', { class: 'kpi', role: 'button', tabindex: '0' }, h('div', { class: 'label', title: def.definition }, label), h('div', { class: 'value needs' }, 'Needs ' + needsList.slice(0, 2).join(', ') + (needsList.length > 2 ? ' and more' : '')));
+    const tile = h('div', { class: 'kpi', role: 'button', tabindex: '0', dataset: { metric: def.id } }, h('div', { class: 'label', title: def.definition }, label), h('div', { class: 'value needs' }, 'Needs ' + needsList.slice(0, 2).join(', ') + (needsList.length > 2 ? ' and more' : '')));
     tile.addEventListener('click', () => openMath(app, m, def));
     return tile;
   }
@@ -99,7 +124,7 @@ export function kpi(app, m, def, t) {
   if (def.id === 'emergencyGap' && m.monthlyToClose && m.monthlyToClose.cents) range = F.dollarsWhole(m.monthlyToClose.cents) + ' a month to close';
   if (def.id === 'coastFi' && m.coastPct !== null) range = F.percent(m.coastPct) + ' there';
   const isList = v.kind === 'shares' || v.kind === 'list';
-  const tile = h('div', { class: 'kpi', role: 'button', tabindex: '0', 'aria-label': label + ' ' + text }, h('div', { class: 'label', title: def.definition }, label), h('div', { class: 'value' + (v.rough ? ' rough' : '') + (isList ? ' list' : ''), title: text }, node || text), range ? h('div', { class: 'range', title: range }, range) : null);
+  const tile = h('div', { class: 'kpi', role: 'button', tabindex: '0', 'aria-label': label + ' ' + text, dataset: { metric: def.id } }, h('div', { class: 'label', title: def.definition }, label), h('div', { class: 'value' + (v.rough ? ' rough' : '') + (isList ? ' list' : ''), title: text }, node || text), range ? h('div', { class: 'range', title: range }, range) : null);
   tile.addEventListener('click', () => openMath(app, m, def));
   tile.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openMath(app, m, def); } });
   return tile;
@@ -172,9 +197,11 @@ export function drawCharts(host, app, t, phone) {
   const onPage = app.record.sun.onepager.charts || [];
   const grid = h('div', { class: 'grid grid-2' });
   let foldOpen = !phone;
+  const visible = clientCharts(app);
   CHARTS.forEach(c => {
+    if (!coach && !visible.includes(c.id)) return; /* MR-059: the client sees the charts the coach marked */
     const data = c.build(app.result);
-    const panel = h('section', { class: 'panel chart-panel', dataset: { chart: c.id } }, h('header', null, h('h3', null, coach ? c.name : c.client), coach ? h('label', { class: 'small muted', style: { display: 'inline-flex', gap: '4px' } }, h('input', { type: 'checkbox', checked: onPage.includes(c.id), onChange: e => { app.mutate(rec => { const set = new Set(rec.sun.onepager.charts || []); if (e.target.checked) set.add(c.id); else set.delete(c.id); rec.sun.onepager.charts = Array.from(set); }, 'picks'); } }), 'On the one-pager') : null));
+    const panel = h('section', { class: 'panel chart-panel', dataset: { chart: c.id } }, h('header', null, h('h3', null, h('a', { href: '#/measure/charts/' + c.id, class: 'chart-link', title: 'Open this chart on its own' }, coach ? c.name : c.client)), coach ? h('label', { class: 'small muted', style: { display: 'inline-flex', gap: '4px' } }, h('input', { type: 'checkbox', checked: visible.includes(c.id), 'aria-label': 'Client sees ' + c.name, onChange: e => { app.mutate(rec => { const set = new Set(clientCharts(app)); if (e.target.checked) set.add(c.id); else set.delete(c.id); rec.sun.clientCharts = Array.from(set); }, 'picks'); } }), 'Client sees') : null, coach ? h('label', { class: 'small muted', style: { display: 'inline-flex', gap: '4px' } }, h('input', { type: 'checkbox', checked: onPage.includes(c.id), onChange: e => { app.mutate(rec => { const set = new Set(rec.sun.onepager.charts || []); if (e.target.checked) set.add(c.id); else set.delete(c.id); rec.sun.onepager.charts = Array.from(set); }, 'picks'); } }), 'On the one-pager') : null));
     const body = h('div', { dataset: { chartBody: c.id } });
     panel.appendChild(body);
     grid.appendChild(panel);

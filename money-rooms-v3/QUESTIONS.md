@@ -150,3 +150,12 @@ Collected during the run; none blocked the build. Answer whenever.
 45. Retirement and FI now sits under Household facts on Home. Should the
     goals (Condo, Japan) move into the profile the same way, or stay on the
     Life plan planet and the Goal timeline?
+46. The next-unlock ranking weighs a chart at two, a solid number at one, a
+    rough number at 0.6 and a lens at one. On an empty client that puts a
+    first spending line (13 items) ahead of the first job (fewer numbers
+    until spending exists). Keep the engine's answer, or pin Income first?
+47. The client sees every chart until the coach unticks "Client sees" on a
+    chart. Start with none visible instead, like the lenses?
+48. The copy lint bans "unlock" as a marketing word; the brief names the
+    feature with it (Unlock Map, Next unlock). The files that draw it are now
+    exempt; data copy is still checked. Fine, or pick another word?

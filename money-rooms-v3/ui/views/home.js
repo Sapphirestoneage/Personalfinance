@@ -18,6 +18,7 @@ import { createRow } from '../../engine/record.js';
 import { freshFacts, fieldDef } from '../../engine/fields.js';
 import { ledgerTable } from '../table.js';
 import { sessionCount } from '../../engine/curriculum.js';
+import { renderHomeUnlockCard } from '../unlocks.js';
 
 /* One line under the shelf (Level 11, MR-051): the next win, with the timeline a tap away. */
 function goalsLine(app) {
@@ -71,9 +72,10 @@ export function mount(host, app) {
   const mapHost = h('div', { class: 'maphost' });
   const bar = h('div', { class: 'mapbar-host' });
   const shelf = h('section', { class: 'panel shelf-panel' });
+  const unlockCard = h('section', { class: 'panel unlock-card' });
   host.appendChild(header);
-  host.appendChild(h('div', { class: 'grid home-grid' }, h('div', { class: 'stack' }, app.record ? mapHost : null, app.record ? bar : null, sun, app.record ? shelf : null), h('div', { class: 'stack coach-only' }, clients, history)));
-  if (app.record) { renderShelf(shelf, app, { compact: true }); shelf.appendChild(goalsLine(app)); }
+  host.appendChild(h('div', { class: 'grid home-grid' }, h('div', { class: 'stack' }, app.record ? mapHost : null, app.record ? bar : null, sun, app.record ? shelf : null, app.record ? unlockCard : null), h('div', { class: 'stack coach-only' }, clients, history)));
+  if (app.record) { renderShelf(shelf, app, { compact: true }); shelf.appendChild(goalsLine(app)); renderHomeUnlockCard(unlockCard, app); }
   renderClients(clients, app);
   renderMap(mapHost, bar, app);
   renderSun(sun, app);
@@ -84,7 +86,7 @@ export function mount(host, app) {
       renderMap(mapHost, bar, app);
       renderHistory(history, app);
       updateSunValues(sun, app);
-      if (app.record) { renderShelf(shelf, app, { compact: true }); shelf.appendChild(goalsLine(app)); }
+      if (app.record) { renderShelf(shelf, app, { compact: true }); shelf.appendChild(goalsLine(app)); renderHomeUnlockCard(unlockCard, app); }
       if (reason === 'clients') renderClients(clients, app);
     },
   };

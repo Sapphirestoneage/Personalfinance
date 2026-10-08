@@ -579,8 +579,8 @@ flows.push({
     await page.click('text=Load demo client');
     await page.waitForSelector('.orbit');
     check('demo loads Maya', (await page.textContent('#topbar-client')) === 'Maya Lindqvist');
-    await page.goto(base + 'index.html#/measure');
-    await page.waitForSelector('.kpis');
+    await page.goto(base + 'index.html#/measure/lenses'); /* MR-059: lenses live on their own tab */
+    await page.waitForSelector('.lens');
     const lensCount = await page.locator('.lens').count();
     check('coach view shows every firing lens', lensCount >= 5, String(lensCount));
     await page.click('#view-client');
@@ -589,6 +589,8 @@ flows.push({
     check('client view shows only the picked lenses', clientLenses < lensCount && clientLenses >= 1, String(clientLenses));
     const text = await page.evaluate(() => document.body.innerText);
     check('client view hides private notes and my plate', text.indexOf('Private note') === -1);
+    await page.goto(base + 'index.html#/measure');
+    await page.waitForSelector('.kpis');
     await page.click('.kpi');
     await page.waitForSelector('.drawer');
     check('a number opens its math', (await page.textContent('.drawer')).indexOf('Formula') !== -1);
@@ -738,5 +740,108 @@ flows.push({
     check('the one-pager still prints to one page after the session', pages === 1, pages + ' pages');
     const op = await page.textContent('.onepager');
     check('the one-pager carries no private notes', op.indexOf('HSA statement to come') === -1);
+  },
+});
+
+/* Demo brief Part B (MR-059): the unlock loop from "Start demo from zero". Enter numbers one at a time, see what each
+   opens, tap into a chart, follow Next unlock into the right Ledger field, and walk the Unlock Map. */
+flows.push({
+  name: 'partB-unlock-loop-from-zero',
+  async run(page, { base, check }) {
+    await page.goto(base + 'index.html#/home');
+    await page.waitForSelector('text=No clients yet');
+    await page.click('text=Start demo from zero');
+    await page.waitForSelector('.orbit');
+    await page.waitForTimeout(300);
+    const card0 = await page.textContent('.unlock-card');
+    check('a blank Maya starts with nothing open', /0 of 74/.test(card0) && /Next unlock/.test(card0), card0.slice(0, 120));
+    /* the Home card's Go lands in the field that opens the most */
+    await page.click('.unlock-card .linklike');
+    await page.waitForTimeout(700);
+    const where1 = await page.evaluate(() => ({ hash: location.hash, col: document.activeElement && document.activeElement.dataset.col, tag: document.activeElement && document.activeElement.tagName }));
+    check('Next unlock opens a Ledger row with the cursor in the field', /^#\/ledger\//.test(where1.hash) && !!where1.col, JSON.stringify(where1));
+    await page.keyboard.type('2250');
+    await page.keyboard.press('Tab');
+    await page.waitForTimeout(800);
+    /* a save while typing announces itself in a toast; the toast opens the panel */
+    const toast = await page.locator('.toast').count();
+    check('the first number announces what it opened', toast === 1, String(toast));
+    if (toast) await page.click('.toast button');
+    await page.waitForSelector('.unlock-panel');
+    let panel = await page.textContent('.unlock-panel');
+    check('the reveal lists the numbers the first spending line opened', /Monthly spending/.test(panel) && /FI number/.test(panel), panel.slice(0, 160));
+    check('every item carries a takeaway', (await page.locator('.unlock-panel .reveal-take').count()) >= 3);
+    /* tap a number: Measure scrolls to it and lights it up */
+    await page.click('.unlock-panel .reveal-item.kind-metric:has-text("FI number")');
+    await page.waitForSelector('.kpi.highlight');
+    const lit = await page.$$eval('.kpi.highlight', e => e.map(x => x.dataset.metric));
+    check('a tapped number is highlighted on Measure', lit.includes('fiNumber') || lit.includes('regularFi'), lit.join(','));
+    check('the deep link is stable', /^#\/measure\/numbers\//.test(await page.evaluate(() => location.hash)));
+    /* keep following Next unlock until a chart opens (at most six inputs) */
+    let chartItem = null;
+    for (let i = 0; i < 6 && !chartItem; i++) {
+      await page.goto(base + 'index.html#/measure/unlocks');
+      await page.waitForSelector('.best-next');
+      await page.click('.best-next .linklike');
+      await page.waitForTimeout(700);
+      const a = await page.evaluate(() => { const el = document.activeElement; return el ? { tag: el.tagName, col: el.dataset.col || null, type: el.type || null, hash: location.hash } : null; });
+      check('best next input ' + (i + 1) + ' lands in a field', !!(a && (a.tag === 'INPUT' || a.tag === 'SELECT')), JSON.stringify(a));
+      if (!a || !(a.tag === 'INPUT' || a.tag === 'SELECT')) break;
+      if (a.tag === 'SELECT') { await page.keyboard.press('ArrowDown'); }
+      else if (a.type === 'date') { await page.keyboard.type('02112000'); }
+      else { await page.keyboard.type(a.col === 'birthDate' ? '2000-02-11' : a.col === 'retirementAge' ? '55' : '4500'); }
+      await page.keyboard.press('Tab');
+      await page.waitForTimeout(900);
+      const hasPanel = await page.locator('.unlock-panel').count();
+      const hasToast = await page.locator('.toast button').count();
+      if (!hasPanel && hasToast) { await page.click('.toast button'); await page.waitForTimeout(400); }
+      if (await page.locator('.unlock-panel').count()) {
+        if (await page.locator('.unlock-panel .reveal-item.kind-chart').count()) chartItem = await page.textContent('.unlock-panel .reveal-item.kind-chart .reveal-name');
+        else await page.click('.drawer .btn:has-text("Close")');
+      }
+    }
+    check('a chart opens within six inputs', !!chartItem, String(chartItem));
+    if (chartItem) {
+      await page.click('.unlock-panel .reveal-item.kind-chart');
+      await page.waitForSelector('.chart-panel.focused');
+      const focused = await page.textContent('#main');
+      check('the focused view shows the chart, its inputs and the next unlock', /focused|Inputs that fed it|What this is built from/.test(focused) && /Next unlock/.test(focused), focused.slice(0, 200));
+      check('the focused view links back', (await page.locator('a:has-text("Back to where I was")').count()) >= 1);
+      /* Next unlock from the focused view puts the cursor in the right Ledger field */
+      await page.click('.next-unlock .btn.primary');
+      await page.waitForTimeout(700);
+      const a2 = await page.evaluate(() => { const el = document.activeElement; return el ? { tag: el.tagName, col: el.dataset.col || null, hash: location.hash } : null; });
+      check('Next unlock from the focused view focuses the field', !!(a2 && (a2.tag === 'INPUT' || a2.tag === 'SELECT') && a2.col), JSON.stringify(a2));
+      const back = await page.locator('.toast button:has-text("Back to where I was")').count();
+      check('a way back is offered', back === 1);
+      if (back) { await page.click('.toast button'); await page.waitForTimeout(400); check('Back to where I was returns to the chart', /^#\/measure\/charts\//.test(await page.evaluate(() => location.hash))); }
+    }
+    /* the Unlock Map: tiles, rings, a locked tile opens its input, an open tile opens its view */
+    await page.goto(base + 'index.html#/measure/unlocks');
+    await page.waitForSelector('.utile');
+    const tiles = await page.locator('.utile').count();
+    check('the map has a tile for every metric, lens and chart', tiles >= 120, String(tiles));
+    check('three completion rings and a separate FI ring', (await page.locator('.ring.completion').count()) === 3 && (await page.locator('.ring.fi').count()) === 1);
+    const lockedTile = page.locator('.utile.locked').first();
+    const lockedNeed = await lockedTile.textContent();
+    check('a locked tile names the exact input', /Needs /.test(lockedNeed), lockedNeed);
+    await lockedTile.click();
+    await page.waitForTimeout(700);
+    const a3 = await page.evaluate(() => ({ hash: location.hash, tag: document.activeElement && document.activeElement.tagName }));
+    check('a locked tile opens the Ledger row (or a household fact)', /^#\/(ledger|home|callpath)/.test(a3.hash), JSON.stringify(a3));
+    await page.goto(base + 'index.html#/measure/unlocks');
+    await page.waitForSelector('.utile');
+    const openTile = page.locator('.utile.solid, .utile.rough').first();
+    const href = await openTile.getAttribute('href');
+    await openTile.click();
+    await page.waitForTimeout(600);
+    check('an open tile opens its visualization', (await page.evaluate(() => location.hash)) === href, href);
+    /* tabs */
+    for (const t of ['numbers', 'lenses', 'charts', 'unlocks']) {
+      await page.goto(base + 'index.html#/measure/' + t);
+      await page.waitForTimeout(300);
+      const cur = await page.getAttribute('.mtabs a[aria-current="page"]', 'href');
+      check('tab ' + t + ' is marked current', cur === '#/measure/' + t, String(cur));
+    }
   },
 });

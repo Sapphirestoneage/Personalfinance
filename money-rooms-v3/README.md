@@ -54,6 +54,18 @@ repository root, `npx playwright install chromium`).
 | `CONTRACTS.md` | What each planet publishes, written before the code |
 | `DECISIONS.md`, `QUESTIONS.md`, `PROGRESS.md`, `BOARD.md`, `SPEC-COVERAGE.md`, `DONE.md` | The run's own records |
 
+## The unlock loop (MR-059)
+
+Every save is compared before and after. What moved from locked to rough or
+solid shows in a panel (a sheet on a phone) grouped Charts, Numbers, Lenses,
+each with its value and one plain takeaway; small unlocks fold to a toast.
+Measure is tabs with stable links: `#/measure/numbers/<metric>`,
+`#/measure/lenses/<lens>`, `#/measure/charts/<chart>` (the focused view) and
+`#/measure/unlocks` (the map: every metric, lens and chart by stage, locked
+tiles naming their input, rings for completion and a separate ring for FI
+progress). The Next unlock card names the one input that opens the most and
+puts the cursor in it. Engine: `engine/unlocks.js`, data: `data/unlocks.json`.
+
 ## The demo (MR-057)
 
 A first visit shows one line on Money Rooms and three ways in: **Load demo

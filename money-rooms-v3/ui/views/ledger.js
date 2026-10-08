@@ -157,6 +157,17 @@ function mountTable(host, app, planet, typeId) {
   const soonHost = h('div', { style: { marginTop: '16px' } });
   host.appendChild(soonHost);
   const soon = mountStartingSoon(soonHost, app, planet);
+  /* MR-059: the Next unlock button adds the first row and puts the cursor in the field that opens the most */
+  if (app.addRowAfterRender && app.addRowAfterRender.planet === planet && app.addRowAfterRender.type === typeId && app.view === 'coach') {
+    const a = app.addRowAfterRender; app.addRowAfterRender = null;
+    setTimeout(() => {
+      const existing = tdef.single ? app.record.planets[planet].rows.find(r => r.type === typeId) : null;
+      const row = existing || table.addRow(a.field);
+      if (!row || !a.field) return;
+      const el = host.querySelector('tr[data-row="' + row.id + '"] [data-col="' + a.field + '"], .row-details[data-row="' + row.id + '"] [data-col="' + a.field + '"]');
+      if (el) { el.focus(); if (el.scrollIntoView) el.scrollIntoView({ block: 'center' }); } else table.openDetails(row.id, a.field);
+    }, 0);
+  }
   function note() {
     clear(summaryNote);
     const s = app.result.summaries[planet];

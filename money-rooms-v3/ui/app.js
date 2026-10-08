@@ -7,6 +7,7 @@ import { createStore } from '../engine/store.js';
 import * as Rec from '../engine/record.js';
 import { h, clear, qs, debounce, download, readFile } from './dom.js';
 import { getSensitivity } from './levers-bridge.js';
+import { installUnlockWatch } from './unlocks.js';
 import { routes, navItems } from './routes.js';
 import { renderTracker } from './tracker.js';
 import { applyDiscovery, applyGuesses } from '../engine/discovery.js';
@@ -235,7 +236,7 @@ export const app = {
     const o = opts || {};
     const before = document.activeElement;
     overlayOnClose = () => { if (o.onClose) o.onClose(); else if (before && before.isConnected && before.focus) before.focus(); };
-    const d = h('aside', { class: 'drawer', role: 'dialog', 'aria-label': o.label || 'Details' },
+    const d = h('aside', { class: 'drawer' + (o.cls ? ' ' + o.cls : ''), role: 'dialog', 'aria-label': o.label || 'Details' },
       h('div', { class: 'row', style: { justifyContent: 'flex-end' } }, h('button', { class: 'btn small', onClick: closeOverlay }, 'Close')),
       node);
     qs('#overlay').appendChild(d);
@@ -301,6 +302,7 @@ function inInput(e) {
 }
 
 function boot() {
+  installUnlockWatch(app); /* MR-059: every save is compared before and after for what it opened up */
   document.body.dataset.view = app.view;
   qs('#view-coach').setAttribute('aria-pressed', String(app.view === 'coach'));
   qs('#view-client').setAttribute('aria-pressed', String(app.view === 'client'));

@@ -48,11 +48,15 @@ text.forEach(f => {
 
 /* 3. Copy rules: no exclamation marks or marketing words in UI strings */
 const MARKETING = /\b(unlock|empower|journey|supercharge|seamless|take control|financial freedom awaits|dive in)\b/i;
+/* MR-059: "unlock" is the name of the unlock loop (Unlock Map, Next unlock, what you unlocked), so the UI files that draw it may say it; data copy still may not. */
+const UNLOCK_FILES = ['ui/unlocks.js', 'ui/unlocks.css', 'ui/views/measure.js', 'ui/views/home.js', 'ui/app.js'];
+const MARKETING_NO_UNLOCK = /\b(empower|journey|supercharge|seamless|take control|financial freedom awaits|dive in)\b/i;
 shipped.filter(f => f.startsWith('ui/') || f === 'index.html' || f.startsWith('data/')).forEach(f => {
   const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
   const strings = src.match(/'[^'\n]*'|"[^"\n]*"/g) || [];
+  const marketing = UNLOCK_FILES.includes(f) ? MARKETING_NO_UNLOCK : MARKETING;
   /* Card names are proper nouns from the issuers, not our copy. */
-  const bad = strings.filter(s => (MARKETING.test(s) && f !== 'data/cards.json') || (/!/.test(s) && !/^['"][^a-zA-Z]*['"]$/.test(s) && !/!==|!=|!\[|!important|\\!/.test(s) && !/^["']!/.test(s) && !/<[^>]*>/.test(s) && /[a-zA-Z]{3,} ?!/.test(s)));
+  const bad = strings.filter(s => (marketing.test(s) && f !== 'data/cards.json') || (/!/.test(s) && !/^['"][^a-zA-Z]*['"]$/.test(s) && !/!==|!=|!\[|!important|\\!/.test(s) && !/^["']!/.test(s) && !/<[^>]*>/.test(s) && /[a-zA-Z]{3,} ?!/.test(s)));
   check(f + ' copy has no marketing words or exclamation marks', bad.length === 0, bad.slice(0, 3).join(' | '));
   const emoji = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(src);
   check(f + ' has no emoji', !emoji);

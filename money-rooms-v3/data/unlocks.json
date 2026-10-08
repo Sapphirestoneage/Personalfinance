@@ -338,6 +338,30 @@
     null,
     "filingStatus"
    ]
+  ],
+  "income, account balances and a birth date": [
+   [
+    "income",
+    "w2",
+    "grossPay"
+   ],
+   [
+    "invest",
+    "account",
+    "accountBalance"
+   ],
+   [
+    "sun",
+    null,
+    "birthDate"
+   ]
+  ],
+  "the sensitivity run (a moment)": [
+   [
+    "spending",
+    "line",
+    "amount"
+   ]
   ]
  },
  "probeTypes": [
