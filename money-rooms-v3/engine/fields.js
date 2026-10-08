@@ -43,7 +43,9 @@ export function freshFacts(fields, planet, typeId) {
   t.fields.forEach(id => {
     const d = fieldDef(fields, id);
     const dv = t.defaults && t.defaults[id];
+    const ev = t.estimates && t.estimates[id];
     if (dv !== undefined) f[id] = mkField(dv, 'known', d.defaultSource === 'estimated' ? 'estimated' : 'client');
+    else if (ev !== undefined) f[id] = mkField(ev, 'rough', 'estimated'); /* MR-060: a standard stand-in (a card at 20% APR with a $5,000 limit) until the real figure arrives */
     else f[id] = mkField(null, 'unknown', d.defaultSource || 'client');
   });
   return f;

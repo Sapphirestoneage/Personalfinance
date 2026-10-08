@@ -135,14 +135,24 @@ function mountTable(host, app, planet, typeId) {
       const row = app.record.planets[planet].rows.find(r => r.id === e.rowId);
       if (row && isNoneRow(fields, row)) return;
       const WORDS = { pretax: 'pre-tax', roth: 'Roth', hsa: 'HSA', taxable: 'taxable', cash: 'cash', now: 'reachable now', semi: 'reachable with care', locked: 'locked until 59.5' };
-      const what = e.field === 'takeHome' ? 'take-home a month' : e.field === 'matchMonthly' ? 'employer match a month' : e.field === 'taxBucket' ? 'tax bucket' : e.field === 'liquidity' ? 'reach' : e.field === 'weeksLeft' ? 'weeks left' : e.field;
+      const what = e.field === 'takeHome' ? 'take-home a month' : e.field === 'unemploymentWeekly' ? 'weekly benefit if work stopped' : e.field === 'cutAbility' ? 'could cut a month' : e.field === 'matchMonthly' ? 'employer match a month' : e.field === 'taxBucket' ? 'tax bucket' : e.field === 'liquidity' ? 'reach' : e.field === 'weeksLeft' ? 'weeks left' : e.field;
       const shown = e.field === 'weeksLeft' ? String(e.value) + (e.endsOn ? ' (benefit ends ' + F.date(e.endsOn) + ')' : '') : typeof e.value === 'number' ? F.dollarsWhole(e.value) : typeof e.value === 'string' ? (WORDS[e.value] || e.value) : (e.value && e.value.cents !== undefined ? F.dollarsWhole(e.value.cents, { rough: e.value.rough || e.value.confidence < 0.7 }) : F.value(e.value));
-      inferredNote.appendChild(h('p', { class: 'hint', style: { marginBottom: '8px' }, title: e.note || '' }, 'Inferred, not stored: ' + (row ? row.nickname + ', ' : '') + what + ' ' + shown + (e.field === 'takeHome' ? ' (before state tax)' : '') + '.'));
+      inferredNote.appendChild(h('p', { class: 'hint', style: { marginBottom: '8px' }, title: e.note || '' }, 'Inferred, not stored: ' + (row && row.nickname ? row.nickname + ', ' : '') + what + ' ' + shown + (e.field === 'takeHome' ? ' (before state tax)' : '') + ((e.field === 'unemploymentWeekly' || e.field === 'cutAbility') && e.note ? ' (' + e.note + ')' : '') + '.'));
     });
   }
   inferred();
   const tableHost = h('div');
   host.appendChild(tableHost);
+  /* MR-060: a single row flagged `form` (Retirement and FI) shows as a form, not a one-row table */
+  const formHost = tdef.form ? h('section', { class: 'panel single-form' }) : null;
+  if (formHost) { host.appendChild(formHost); tableHost.style.display = 'none'; }
+  function drawForm() {
+    if (!formHost) return; clear(formHost);
+    const row = app.record.planets[planet].rows.find(r => r.type === typeId);
+    if (tdef.explain) formHost.appendChild(h('p', { class: 'hint', style: { marginBottom: '12px' } }, tdef.explain));
+    if (!row) { formHost.appendChild(h('p', { class: 'muted' }, 'Nothing entered yet.')); return; }
+    formHost.appendChild(table.detailsBody(row, { inline: true }));
+  }
   const table = ledgerTable(tableHost, app, planet, typeId, { emptyActions: planet === 'spending' && typeId === 'line' && app.view === 'coach' ? [h('button', { class: 'btn', onClick: () => useDefaults(app) }, 'Use national averages')].concat(presetButtons(app)) : [] });
   const soonHost = h('div', { style: { marginTop: '16px' } });
   host.appendChild(soonHost);
@@ -157,8 +167,8 @@ function mountTable(host, app, planet, typeId) {
       summaryNote.appendChild(h('p', { class: 'hint', style: { marginBottom: '16px' } }, 'Lines add up to ' + F.dollarsWhole(s.detailCents) + ', ' + (s.detailCents === s.totalCents ? 'the same as' : F.dollarsWhole(Math.abs(s.detailCents - s.totalCents)) + (s.detailCents > s.totalCents ? ' more than' : ' less than')) + ' the rough total of ' + F.dollarsWhole(s.totalCents) + '.'));
     }
   }
-  note();
-  return { update(reason) { note(); inferred(); soon.update(); if (reason === 'rows') table.render(); else table.refreshTotals(); }, addRow: () => table.addRow(), openDetails: (id, col) => table.openDetails(id, col) };
+  note(); drawForm();
+  return { update(reason) { note(); inferred(); soon.update(); if (reason === 'rows') { table.render(); drawForm(); } else table.refreshTotals(); }, addRow: () => table.addRow(), openDetails: (id, col) => table.openDetails(id, col) };
 }
 
 function extraActions(app, planet, typeId) {

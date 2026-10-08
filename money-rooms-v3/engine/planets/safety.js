@@ -46,8 +46,22 @@ export function run(ctx) {
   };
   const gap = !isNeeds(target) && cashCents !== null ? q(Math.max(0, target.cents - cashCents), U.oneoff, { confidence: target.confidence, rough: target.rough }) : needs(isNeeds(target) ? target.needs : ['cash accounts']);
   const unemp = rows.find(r => r.type === 'unemployment');
-  const weekly = unemp ? fieldQ(unemp, 'unemploymentWeekly', U.oneoff, asm) : null;
+  const typed = unemp ? fieldQ(unemp, 'unemploymentWeekly', U.oneoff, asm) : null;
+  /* MR-060: the estimate is computed from gross pay and the state's formula in data/unemployment-2026.json; a typed figure from the state overrides it */
+  const est = unemploymentEstimate(reader, ctx.data);
+  const weekly = typed && !isNeeds(typed) ? typed : (est ? est.weekly : null);
+  const enriched = [];
+  if (est && unemp && !(typed && !isNeeds(typed))) enriched.push({ rowId: unemp.id, field: 'unemploymentWeekly', value: est.weekly, note: est.note });
   const cut = rows.find(r => r.type === 'cut');
+  /* MR-060: the ability to cut is computed from the spending lines (what sits above the FAT floor, or above the lines marked need); a figure the client names overrides it */
+  const typedCut = cut ? fieldQ(cut, 'cutAbility', U.monthlyAfter, asm) : null;
+  let cutEst = null;
+  if (spending && !isNeeds(spending)) {
+    const floor = fat && !isNeeds(fat) && fat.cents > 0 ? fat : (fixed && !isNeeds(fixed) && fixed.cents > 0 ? fixed : null);
+    if (floor) cutEst = { value: q(Math.max(0, spending.cents - floor.cents), U.monthlyAfter, { confidence: Math.min(spending.confidence, floor.confidence, 0.7), rough: true }), note: floor === fat ? 'spending above the FAT floor' : 'spending above the lines marked need' };
+  }
+  const cutMonthly = typedCut && !isNeeds(typedCut) ? typedCut : (cutEst ? cutEst.value : null);
+  if (cutEst && cut && !(typedCut && !isNeeds(typedCut))) enriched.push({ rowId: cut.id, field: 'cutAbility', value: cutEst.value, note: cutEst.note });
   return {
     outputs: {
       ruleOf5Months: months,
@@ -58,10 +72,23 @@ export function run(ctx) {
       insurance,
       premiumsMonthly: premiums,
       unemploymentMonthly: weekly ? q(Math.round(weekly.cents * 52 / 12), U.monthlyAfter, { confidence: weekly.confidence, rough: weekly.rough }) : null,
-      cutAbilityMonthly: cut ? fieldQ(cut, 'cutAbility', U.monthlyAfter, asm) : null,
+      cutAbilityMonthly: cutMonthly,
       spendingWithPremiums: fullSpend,
       roommateGap,
+      unemploymentEstimate: est ? { weeklyCents: est.weekly.cents, maxWeeklyCents: est.maxWeeklyCents, maxWeeks: est.maxWeeks, rate: est.rate, state: est.state, typed: !!(typed && !isNeeds(typed)), confirmed: est.confirmed } : null,
     },
-    enriched: [],
+    enriched,
   };
+}
+
+/* weekly = min(state cap, gross weekly wage x the state's replacement share); null without gross pay or a state table */
+export function unemploymentEstimate(reader, data) {
+  const table = data && data.unemployment2026; if (!table) return null;
+  const gross = reader.slot('income.grossMonthly'); if (!gross || isNeeds(gross) || !gross.cents) return null;
+  const stateF = reader.fact('state'); const state = stateF && stateF.v ? stateF.v : null;
+  const row = state ? table.states[state] : null; if (!row) return null;
+  const weeklyWage = gross.cents * 12 / 52;
+  const cents = Math.min(row.maxWeeklyCents, Math.round(weeklyWage * row.replacementRate));
+  const confirmed = (table.confirmed || []).includes(state);
+  return { weekly: q(cents, U.oneoff, { confidence: Math.min(gross.confidence, confirmed ? 0.8 : 0.6), rough: true }), maxWeeklyCents: row.maxWeeklyCents, maxWeeks: row.maxWeeks, rate: row.replacementRate, state, confirmed, note: state + ': ' + Math.round(row.replacementRate * 100) + '% of the weekly wage up to $' + Math.round(row.maxWeeklyCents / 100) + ' for ' + row.maxWeeks + ' weeks' + (confirmed ? '' : ' (2026 table, verify)') };
 }

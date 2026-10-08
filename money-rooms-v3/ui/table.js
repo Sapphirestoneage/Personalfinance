@@ -27,7 +27,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
   const coach = app.view === 'coach';
   const state = { sortKey: null, sortDir: 1, filters: { state: '', source: '', institution: '', category: '' }, selected: new Set() };
   const wrap = h('div', { class: 'ledger', dataset: { planet, type: typeId } });
-  host.appendChild(wrap);
+  if (!opts.formOnly) host.appendChild(wrap); /* MR-060: formOnly builds the details form for a host of its own and shows no table */
 
   function rows() {
     let list = app.record.planets[planet].rows.filter(r => r.type === typeId);
@@ -188,9 +188,9 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     return cols;
   }
   /* Everything else about a row lives behind Details (MR-029): no sideways scrolling to reach a fact. */
-  function detailColumns() {
+  function detailColumns(all) {
     const cols = [];
-    const shown = [primary.id].concat(tdef.tableFields || [], nameField ? [nameField] : []);
+    const shown = all ? [] : [primary.id].concat(tdef.tableFields || [], nameField ? [nameField] : []);
     const pushField = id => {
       const d = fieldDef(fields, id);
       cols.push({ key: id, label: d.label, sortable: false, kind: 'field', def: d, num: ['money', 'percent', 'int', 'hours'].includes(d.kind), hint: d.hint });
@@ -205,14 +205,15 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     cols.push({ key: 'notesShared', label: 'Shared note', sortable: false, kind: 'column' });
     return cols;
   }
-  function openDetails(rowId, focusCol) {
-    const r = app.record.planets[planet].rows.find(x => x.id === rowId); if (!r) return;
-    const body = h('div', { class: 'row-details', dataset: { row: r.id } });
-    body.appendChild(h('h2', null, r.nickname || (tdef.nicknameLabel || 'Row'), h('span', { class: 'tag' }, tdef.label)));
+  /* The row as a form (MR-060): the drawer body, or inline for a single row type flagged `form` (Retirement and FI on Home). */
+  function detailsBody(r, o) {
+    o = o || {};
+    const body = h('div', { class: 'row-details' + (o.inline ? ' inline' : ''), dataset: { row: r.id } });
+    if (!o.inline) body.appendChild(h('h2', null, r.nickname || tdef.label, r.nickname ? h('span', { class: 'tag' }, tdef.label) : null));
     const live = () => app.record.planets[planet].rows.find(x => x.id === r.id) || r;
     const facts = h('div', { class: 'detail-group' }), optional = h('div', { class: 'detail-group' }), about = h('div', { class: 'detail-group' });
     let anyFact = false, anyOptional = false;
-    detailColumns().forEach(c => {
+    detailColumns(!!o.inline).forEach(c => {
       if (c.kind === 'field' && !askedOnRow(fields, r, c.def.id)) return; /* not asked in this cadence (MR-032) */
       const td = renderCell(r, c); if (!td) return;
       const control = h('div', { class: 'control' }); while (td.firstChild) control.appendChild(td.firstChild);
@@ -236,10 +237,15 @@ export function ledgerTable(host, app, planet, typeId, opts) {
       } else if (c.kind === 'field') { if (c.def.optional || c.def.tag) { optional.appendChild(row); anyOptional = true; } else { facts.appendChild(row); anyFact = true; } }
       else about.appendChild(row);
     });
-    if (anyFact) { body.appendChild(h('h3', null, 'Needed')); body.appendChild(facts); }
+    if (anyFact) { body.appendChild(h('h3', null, o.inline ? 'Needed' : 'Needed')); body.appendChild(facts); }
     if (anyOptional) { body.appendChild(h('h3', null, 'Optional', h('span', { class: 'small muted', style: { fontWeight: 400, marginLeft: '6px' } }, 'sharpens a number when known; never holds anything up'))); body.appendChild(optional); }
-    body.appendChild(h('h3', null, 'About this row')); body.appendChild(about);
-    if (coach) body.appendChild(h('div', { class: 'row', style: { marginTop: '16px' } }, h('button', { class: 'btn quiet', onClick: () => { app.removeRow(r.id); closeOverlay(); render(); } }, 'Remove this row')));
+    if (!o.inline) { body.appendChild(h('h3', null, 'About this row')); body.appendChild(about); }
+    if (coach && !o.inline) body.appendChild(h('div', { class: 'row', style: { marginTop: '16px' } }, h('button', { class: 'btn quiet', onClick: () => { app.removeRow(r.id); closeOverlay(); render(); } }, 'Remove this row')));
+    return body;
+  }
+  function openDetails(rowId, focusCol) {
+    const r = app.record.planets[planet].rows.find(x => x.id === rowId); if (!r) return;
+    const body = detailsBody(r);
     const back = wrap.querySelector('tr[data-row="' + r.id + '"] [data-col="details"]');
     app.openDrawer(body, { label: 'Details for ' + (r.nickname || tdef.label), onClose: () => { if (back && back.isConnected) back.focus(); } });
     const target = focusCol ? body.querySelector('[data-col="' + focusCol + '"]') : body.querySelector('input, select, button');
@@ -402,7 +408,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
       try { parsed = parseTyped(d.kind, text); } catch (e) { app.toast(e.message); el.value = display(d, r.f[d.id]); return; }
       const cur = r.f[d.id] || { source: d.defaultSource || 'client' };
       if (!parsed) { app.setField(r.id, d.id, null, 'unknown', cur.source || 'client'); }
-      else app.setField(r.id, d.id, parsed.v, parsed.state, cur.source || d.defaultSource || 'client');
+      else app.setField(r.id, d.id, parsed.v, parsed.state, cur.source === 'estimated' ? 'client' : (cur.source || d.defaultSource || 'client')); /* a typed figure replaces a stand-in: the source becomes the client (MR-060) */
       el.value = display(d, r.f[d.id]);
       refreshDerived(r.id);
       showFieldBar(r.id, d.id);
@@ -609,7 +615,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     if (old && fresh) old.replaceWith(fresh); else if (old) old.remove(); else if (fresh) table.appendChild(fresh);
   }
 
-  return { render, addRow, refreshTotals, openDetails };
+  return { render, addRow, refreshTotals, openDetails, detailsBody };
 }
 
 /* A text input shows "Not entered" while empty (no browser hint text). */

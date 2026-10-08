@@ -1,0 +1,528 @@
+{
+ "asOf": "2026-10-08",
+ "source": "Hand-written map from the engine's needs phrases to the Ledger input that fills each one (MR-059); the probe values are stand-ins the engine tries, never shown",
+ "verify": false,
+ "needsMap": {
+  "account balances": [
+   [
+    "invest",
+    "account",
+    "accountBalance"
+   ]
+  ],
+  "invested balances": [
+   [
+    "invest",
+    "account",
+    "accountBalance"
+   ]
+  ],
+  "cash accounts": [
+   [
+    "invest",
+    "account",
+    "accountBalance"
+   ]
+  ],
+  "cash accounts and monthly spending": [
+   [
+    "invest",
+    "account",
+    "accountBalance"
+   ],
+   [
+    "spending",
+    "line",
+    "amount"
+   ]
+  ],
+  "account balances with stock, bond and cash shares": [
+   [
+    "invest",
+    "account",
+    "allocStocks"
+   ]
+  ],
+  "a retirement or HSA account": [
+   [
+    "invest",
+    "account",
+    "accountType"
+   ]
+  ],
+  "holdings with expense ratios": [
+   [
+    "invest",
+    "holding",
+    "expenseRatio"
+   ]
+  ],
+  "take-home pay": [
+   [
+    "income",
+    "w2",
+    "takeHome"
+   ]
+  ],
+  "gross pay": [
+   [
+    "income",
+    "w2",
+    "grossPay"
+   ]
+  ],
+  "income": [
+   [
+    "income",
+    "w2",
+    "grossPay"
+   ]
+  ],
+  "gross pay and a filing status": [
+   [
+    "income",
+    "w2",
+    "grossPay"
+   ],
+   [
+    "sun",
+    null,
+    "filingStatus"
+   ]
+  ],
+  "paid hours a week": [
+   [
+    "income",
+    "w2",
+    "hoursPaid"
+   ]
+  ],
+  "a match formula and the pre-tax deferral (Benefits and match row)": [
+   [
+    "income",
+    "benefits",
+    "matchRate"
+   ],
+   [
+    "income",
+    "w2",
+    "pretaxRetirement"
+   ]
+  ],
+  "contributions that reach $100,000 before 95": [
+   [
+    "income",
+    "w2",
+    "pretaxRetirement"
+   ],
+   [
+    "invest",
+    "account",
+    "contribAmount"
+   ]
+  ],
+  "contributions that growth can overtake before retirement": [
+   [
+    "income",
+    "w2",
+    "pretaxRetirement"
+   ],
+   [
+    "invest",
+    "account",
+    "contribAmount"
+   ]
+  ],
+  "contributions or a return above zero": [
+   [
+    "income",
+    "w2",
+    "pretaxRetirement"
+   ],
+   [
+    "invest",
+    "account",
+    "contribAmount"
+   ]
+  ],
+  "birth date": [
+   [
+    "sun",
+    null,
+    "birthDate"
+   ]
+  ],
+  "monthly spending": [
+   [
+    "spending",
+    "line",
+    "amount"
+   ]
+  ],
+  "spending lines flagged in the FAT floor": [
+   [
+    "spending",
+    "line",
+    "fatFloor"
+   ]
+  ],
+  "spending lines marked need": [
+   [
+    "spending",
+    "line",
+    "needWant"
+   ]
+  ],
+  "spending lines that name a card": [
+   [
+    "spending",
+    "line",
+    "primaryCard"
+   ]
+  ],
+  "a spending line marked shared": [
+   [
+    "spending",
+    "line",
+    "shared"
+   ]
+  ],
+  "income, spending and account balances": [
+   [
+    "income",
+    "w2",
+    "grossPay"
+   ],
+   [
+    "spending",
+    "line",
+    "amount"
+   ],
+   [
+    "invest",
+    "account",
+    "accountBalance"
+   ]
+  ],
+  "income, spending, account balances and a birth date": [
+   [
+    "income",
+    "w2",
+    "grossPay"
+   ],
+   [
+    "spending",
+    "line",
+    "amount"
+   ],
+   [
+    "invest",
+    "account",
+    "accountBalance"
+   ],
+   [
+    "sun",
+    null,
+    "birthDate"
+   ]
+  ],
+  "take-home, spending and debt minimums": [
+   [
+    "income",
+    "w2",
+    "takeHome"
+   ],
+   [
+    "spending",
+    "line",
+    "amount"
+   ],
+   [
+    "debt",
+    "card",
+    "minimum"
+   ]
+  ],
+  "a savings rate that reaches the FI number before 95": [
+   [
+    "spending",
+    "line",
+    "amount"
+   ]
+  ],
+  "an FI date": [
+   [
+    "spending",
+    "line",
+    "amount"
+   ]
+  ],
+  "debts, or a rough total (0 if none)": [
+   [
+    "debt",
+    "card",
+    "balance"
+   ]
+  ],
+  "debt rows": [
+   [
+    "debt",
+    "card",
+    "balance"
+   ]
+  ],
+  "debt balances with rates": [
+   [
+    "debt",
+    "card",
+    "apr"
+   ]
+  ],
+  "debt balances, rates and minimums": [
+   [
+    "debt",
+    "card",
+    "minimum"
+   ]
+  ],
+  "card balances and credit limits": [
+   [
+    "debt",
+    "card",
+    "creditLimit"
+   ]
+  ],
+  "a card with a promo rate and end date": [
+   [
+    "debt",
+    "card",
+    "promoApr"
+   ]
+  ],
+  "a credit card row from the library and spending lines that name it": [
+   [
+    "debt",
+    "card",
+    "balance"
+   ],
+   [
+    "spending",
+    "line",
+    "primaryCard"
+   ]
+  ],
+  "gut spending on the Life plan": [
+   [
+    "call",
+    null,
+    "gut"
+   ]
+  ],
+  "dream spending on the Life plan": [
+   [
+    "call",
+    null,
+    "dream"
+   ]
+  ],
+  "filing status": [
+   [
+    "sun",
+    null,
+    "filingStatus"
+   ]
+  ],
+  "a filing status": [
+   [
+    "sun",
+    null,
+    "filingStatus"
+   ]
+  ]
+ },
+ "probeTypes": [
+  [
+   "income",
+   "w2"
+  ],
+  [
+   "income",
+   "c1099"
+  ],
+  [
+   "income",
+   "side"
+  ],
+  [
+   "income",
+   "unemployment"
+  ],
+  [
+   "income",
+   "benefits"
+  ],
+  [
+   "spending",
+   "summary"
+  ],
+  [
+   "spending",
+   "line"
+  ],
+  [
+   "spending",
+   "savings"
+  ],
+  [
+   "debt",
+   "card"
+  ],
+  [
+   "debt",
+   "student"
+  ],
+  [
+   "debt",
+   "auto"
+  ],
+  [
+   "debt",
+   "mortgage"
+  ],
+  [
+   "debt",
+   "personal"
+  ],
+  [
+   "safety",
+   "insurance"
+  ],
+  [
+   "safety",
+   "unemployment"
+  ],
+  [
+   "safety",
+   "cut"
+  ],
+  [
+   "invest",
+   "account"
+  ],
+  [
+   "life",
+   "goal"
+  ],
+  [
+   "life",
+   "retirement"
+  ]
+ ],
+ "probeValues": {
+  "money": 150000,
+  "percent": 0.05,
+  "int": 24,
+  "hours": 40,
+  "bool": true,
+  "text": "x",
+  "byField": {
+   "retirementAge": 65,
+   "score": 720,
+   "weeksLeft": 10,
+   "monthsLeft": 24,
+   "allocStocks": 0.7,
+   "allocBonds": 0.2,
+   "allocCash": 0.1,
+   "matchRate": 0.5,
+   "matchUpTo": 0.06,
+   "expenseRatio": 0.001,
+   "pctOfAccount": 1,
+   "accountType": "401k",
+   "apr": 0.22,
+   "rate": 0.06,
+   "promoApr": 0.0,
+   "goalCost": 500000,
+   "accountBalance": 1500000,
+   "balance": 400000
+  },
+  "sun": {
+   "birthDate": "1996-05-01",
+   "state": "NJ",
+   "workSituation": "employed",
+   "filingStatus": "single"
+  }
+ },
+ "charts": {
+  "sankey": {
+   "stage": 1,
+   "metrics": [
+    "takeHome",
+    "spending",
+    "surplus"
+   ]
+  },
+  "draftt": {
+   "stage": 1,
+   "metrics": [
+    "draftt"
+   ]
+  },
+  "waterfall": {
+   "stage": 1,
+   "metrics": [
+    "surplus",
+    "matchCapture"
+   ]
+  },
+  "debtRace": {
+   "stage": 2,
+   "metrics": [
+    "totalDebt",
+    "annualInterest",
+    "debtFree"
+   ]
+  },
+  "balanceSheet": {
+   "stage": 3,
+   "metrics": [
+    "netWorth",
+    "liquidityRate"
+   ]
+  },
+  "runway": {
+   "stage": 3,
+   "metrics": [
+    "runway",
+    "ruleOf5Target"
+   ]
+  },
+  "taxes": {
+   "stage": 4,
+   "metrics": [
+    "federalRates",
+    "fica"
+   ]
+  },
+  "netWorth": {
+   "stage": 5,
+   "metrics": [
+    "fiDate",
+    "fiNumber"
+   ]
+  },
+  "fiGauge": {
+   "stage": 5,
+   "metrics": [
+    "pctToFi",
+    "fiNumber"
+   ]
+  }
+ },
+ "stages": {
+  "1": "Cash flow",
+  "2": "Debt and credit",
+  "3": "Balance sheet and safety",
+  "4": "Taxes",
+  "5": "Financial independence"
+ }
+}

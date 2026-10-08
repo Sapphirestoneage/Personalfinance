@@ -139,3 +139,14 @@ Collected during the run; none blocked the build. Answer whenever.
     240px) and native select boxes. Both are rare with real names. Leave them?
 42. "The flip" is now labelled "(invested only)". Prefer a client label like
     "When growth beats what you add to investments"?
+43. The unemployment table (`data/unemployment-2026.json`) has five states
+    checked against 2026 reporting (NJ $905, NY $869, MS $235, CT $721,
+    WA $1,152); the other 46 are from the Department of Labor tables as
+    remembered and marked verify. Worth a pass against the DOL January 2026
+    "Significant Provisions" PDF before a client outside those five states?
+44. New cards start at 20% APR and a $5,000 limit, shown rough with a Guess
+    chip until a real figure is typed. Should the balance also start at a
+    stand-in, or stay empty so the card reads as unknown?
+45. Retirement and FI now sits under Household facts on Home. Should the
+    goals (Condo, Japan) move into the profile the same way, or stay on the
+    Life plan planet and the Goal timeline?

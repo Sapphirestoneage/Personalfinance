@@ -1,0 +1,270 @@
+{
+ "asOf": "2026-10-08",
+ "source": "Maximum weekly benefit, weeks and the share of the weekly wage replaced before the cap, by state. NJ (905, nj.gov press release of 29 Dec 2025), NY (869, the October 2025 budget increase), MS (235), CT (721, base) and WA (1152, Jan 2026) checked against 2026 reporting; every other state from the US DOL Significant Provisions of State UI Laws tables as remembered, 2025 to 2026 editions. Most states pay about half of the weekly wage (1/26 of high-quarter wages); NJ pays 60%, OR 65%, HI 58%, CO 55%, NM 53.5%, IL and IN about 47%. Dependent add-ons are left out.",
+ "verify": true,
+ "confirmed": [
+  "NJ",
+  "NY",
+  "MS",
+  "CT",
+  "WA"
+ ],
+ "method": "weekly = min(maxWeeklyCents, round(grossAnnual / 52 x replacementRate)); monthly = weekly x 52 / 12",
+ "states": {
+  "AL": {
+   "maxWeeklyCents": 27500,
+   "maxWeeks": 14,
+   "replacementRate": 0.5
+  },
+  "AK": {
+   "maxWeeklyCents": 37000,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "AZ": {
+   "maxWeeklyCents": 32000,
+   "maxWeeks": 24,
+   "replacementRate": 0.5
+  },
+  "AR": {
+   "maxWeeklyCents": 45100,
+   "maxWeeks": 16,
+   "replacementRate": 0.5
+  },
+  "CA": {
+   "maxWeeklyCents": 45000,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "CO": {
+   "maxWeeklyCents": 78100,
+   "maxWeeks": 26,
+   "replacementRate": 0.55
+  },
+  "CT": {
+   "maxWeeklyCents": 72100,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "DE": {
+   "maxWeeklyCents": 45000,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "DC": {
+   "maxWeeklyCents": 44400,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "FL": {
+   "maxWeeklyCents": 27500,
+   "maxWeeks": 12,
+   "replacementRate": 0.5
+  },
+  "GA": {
+   "maxWeeklyCents": 36500,
+   "maxWeeks": 14,
+   "replacementRate": 0.5
+  },
+  "HI": {
+   "maxWeeklyCents": 79600,
+   "maxWeeks": 26,
+   "replacementRate": 0.58
+  },
+  "ID": {
+   "maxWeeklyCents": 57800,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "IL": {
+   "maxWeeklyCents": 60100,
+   "maxWeeks": 26,
+   "replacementRate": 0.47
+  },
+  "IN": {
+   "maxWeeklyCents": 39000,
+   "maxWeeks": 26,
+   "replacementRate": 0.47
+  },
+  "IA": {
+   "maxWeeklyCents": 73900,
+   "maxWeeks": 16,
+   "replacementRate": 0.5
+  },
+  "KS": {
+   "maxWeeklyCents": 64000,
+   "maxWeeks": 16,
+   "replacementRate": 0.55
+  },
+  "KY": {
+   "maxWeeklyCents": 70200,
+   "maxWeeks": 24,
+   "replacementRate": 0.5
+  },
+  "LA": {
+   "maxWeeklyCents": 27500,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "ME": {
+   "maxWeeklyCents": 60300,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "MD": {
+   "maxWeeklyCents": 43000,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "MA": {
+   "maxWeeklyCents": 103300,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "MI": {
+   "maxWeeklyCents": 44600,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "MN": {
+   "maxWeeklyCents": 91400,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "MS": {
+   "maxWeeklyCents": 23500,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "MO": {
+   "maxWeeklyCents": 32000,
+   "maxWeeks": 20,
+   "replacementRate": 0.5
+  },
+  "MT": {
+   "maxWeeklyCents": 73700,
+   "maxWeeks": 28,
+   "replacementRate": 0.5
+  },
+  "NE": {
+   "maxWeeklyCents": 51400,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "NV": {
+   "maxWeeklyCents": 58300,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "NH": {
+   "maxWeeklyCents": 42700,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "NJ": {
+   "maxWeeklyCents": 90500,
+   "maxWeeks": 26,
+   "replacementRate": 0.6
+  },
+  "NM": {
+   "maxWeeklyCents": 59800,
+   "maxWeeks": 26,
+   "replacementRate": 0.535
+  },
+  "NY": {
+   "maxWeeklyCents": 86900,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "NC": {
+   "maxWeeklyCents": 35000,
+   "maxWeeks": 12,
+   "replacementRate": 0.5
+  },
+  "ND": {
+   "maxWeeklyCents": 74800,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "OH": {
+   "maxWeeklyCents": 58300,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "OK": {
+   "maxWeeklyCents": 53900,
+   "maxWeeks": 16,
+   "replacementRate": 0.5
+  },
+  "OR": {
+   "maxWeeklyCents": 83600,
+   "maxWeeks": 26,
+   "replacementRate": 0.65
+  },
+  "PA": {
+   "maxWeeklyCents": 60500,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "RI": {
+   "maxWeeklyCents": 70500,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "SC": {
+   "maxWeeklyCents": 32600,
+   "maxWeeks": 20,
+   "replacementRate": 0.5
+  },
+  "SD": {
+   "maxWeeklyCents": 51400,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "TN": {
+   "maxWeeklyCents": 27500,
+   "maxWeeks": 12,
+   "replacementRate": 0.5
+  },
+  "TX": {
+   "maxWeeklyCents": 59100,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "UT": {
+   "maxWeeklyCents": 77700,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "VT": {
+   "maxWeeklyCents": 70500,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "VA": {
+   "maxWeeklyCents": 37800,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "WA": {
+   "maxWeeklyCents": 115200,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "WV": {
+   "maxWeeklyCents": 66200,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "WI": {
+   "maxWeeklyCents": 37000,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  },
+  "WY": {
+   "maxWeeklyCents": 59500,
+   "maxWeeks": 26,
+   "replacementRate": 0.5
+  }
+ }
+}

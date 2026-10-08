@@ -14,6 +14,9 @@ import { overallConfidence } from './onepager.js';
 import { nextWins } from './goals.js';
 import { programOf, nextSessionNumber } from '../../engine/program.js';
 import * as Rec from '../../engine/record.js';
+import { createRow } from '../../engine/record.js';
+import { freshFacts, fieldDef } from '../../engine/fields.js';
+import { ledgerTable } from '../table.js';
 import { sessionCount } from '../../engine/curriculum.js';
 
 /* One line under the shelf (Level 11, MR-051): the next win, with the timeline a tap away. */
@@ -290,10 +293,28 @@ function renderSun(panel, app) {
   });
   if (!readOnly) panel.appendChild(moreBtn);
   panel.appendChild(moreHost);
+  /* MR-060: Retirement and FI is part of the profile; the same form as the Life plan page */
+  renderRetirement(panel, app);
   const fill = app.result ? app.result.fills.sun : 0;
   const withRows = PLANETS.filter(p => app.result.rowCounts[p] > 0).length;
   const asked = SUN_ASKED.filter(id => rec.sun.f[id] && rec.sun.f[id].v !== null && rec.sun.f[id].v !== undefined && rec.sun.f[id].v !== '').length;
   panel.appendChild(h('p', { class: 'hint coach-only sun-confidence', style: { marginTop: '8px' } }, asked + ' of ' + SUN_ASKED.length + ' facts in. ' + withRows + ' of 7 planets have rows.'));
+}
+
+function renderRetirement(panel, app) {
+  const fields = app.data.fields; const tdef = fields.planets.life.types.retirement;
+  let row = app.record.planets.life.rows.find(r => r.type === 'retirement');
+  if (!row && app.view === 'coach') {
+    row = createRow('life', 'retirement', { f: freshFacts(fields, 'life', 'retirement') });
+    tdef.fields.forEach(id => { const d = fieldDef(fields, id); if (d.cadence) row.f[id].cad = d.defaultCadence; });
+    app.addRow(row);
+    row = app.record.planets.life.rows.find(r => r.type === 'retirement');
+  }
+  if (!row) return;
+  const sec = h('div', { class: 'retire-form' }, h('h3', { class: 'facts-sub' }, app.view === 'coach' ? 'Retirement and FI' : 'When work becomes a choice', h('a', { class: 'small', href: '#/ledger/life/retirement', style: { marginLeft: '8px' } }, 'Life plan')));
+  const table = ledgerTable(h('div'), app, 'life', 'retirement', { formOnly: true });
+  sec.appendChild(table.detailsBody(row, { inline: true }));
+  panel.appendChild(sec);
 }
 
 function updateSunValues(panel, app) {

@@ -286,6 +286,10 @@
      "defaults": {
       "autopay": "none"
      },
+     "estimates": {
+      "apr": 0.2,
+      "creditLimit": 500000
+     },
      "nicknameLabel": "Nickname",
      "stress": true,
      "plural": "Credit cards",
@@ -400,6 +404,8 @@
     "unemployment": {
      "label": "Unemployment estimate",
      "moon": "If work stopped",
+     "optionalType": true,
+     "explain": "The weekly benefit is computed from gross pay with the state's current formula (most states pay about half of the weekly wage up to a cap; New Jersey pays 60% up to $905). Nothing to enter unless the state has sent a real figure.",
      "fields": [
       "unemploymentWeekly"
      ],
@@ -412,6 +418,8 @@
     "cut": {
      "label": "Ability to cut",
      "moon": "Ability to cut",
+     "optionalType": true,
+     "explain": "How much could stop in a pinch is computed from the spending lines: everything above the FAT floor (food, accommodation, transportation and the lines flagged as the floor), or above the lines marked need when no floor is flagged. Type a figure only when the client names one herself.",
      "fields": [
       "cutAbility"
      ],
@@ -540,6 +548,8 @@
     "retirement": {
      "label": "Retirement and FI",
      "moon": "Retirement",
+     "form": true,
+     "explain": "Part of the household profile: the age she wants to stop needing to work, the go-go, slow-go and no-go shares of spending after that, and the dream and gut figures from the call. The same form sits on Home under Household facts.",
      "fields": [
       "retirementAge",
       "gogo",
@@ -1384,24 +1394,26 @@
   },
   "unemploymentWeekly": {
    "id": "unemploymentWeekly",
-   "label": "Weekly benefit estimate",
+   "label": "Weekly benefit, if known",
    "kind": "money",
    "owner": "safety",
    "weight": 6,
-   "hint": "Your state's weekly unemployment benefit if work stopped",
+   "hint": "Computed from gross pay and the state's formula; type a figure only if the state gave one",
    "defaultSource": "lookup-verify",
-   "primary": true
+   "primary": true,
+   "optional": true
   },
   "cutAbility": {
    "id": "cutAbility",
-   "label": "Could cut per month",
+   "label": "Could cut, if she says",
    "kind": "money",
    "owner": "safety",
    "weight": 6,
-   "hint": "What the client says they could stop spending in a pinch",
+   "hint": "Computed as spending above the FAT floor; type a figure only when the client names one",
    "defaultSource": "client",
    "cadence": true,
    "primary": true,
+   "optional": true,
    "defaultCadence": "month"
   },
   "otherSafety": {

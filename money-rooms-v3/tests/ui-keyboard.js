@@ -103,25 +103,27 @@ export async function enterHousehold(page, spec, check) {
     await page.waitForSelector('.orbit');
     await tabTo(page, a => a.dataId === typeId);
     await press('Enter');
-    await page.waitForSelector('.ledger[data-type="' + typeId + '"]');
+    await page.waitForSelector(tdef.form ? '.single-form .row-details' : '.ledger[data-type="' + typeId + '"]');
     for (const r of byType[key]) {
+      const firstField = tdef.fields.find(f => fields.fields[f].primary) || tdef.fields[0];
       if (!tdef.single) { await press('Alt+n'); }
+      else if (tdef.form) { await tabTo(page, a => a.col === firstField && a.row); } /* MR-060: a single row flagged form is a form, not a table */
       else { await tabTo(page, a => a.col === 'nickname'); }
       let a0 = null;
-      const nameCol = tdef.nameField || 'nickname'; /* MR-058: a type can name its rows by a field (accounts: the type select) */
+      const nameCol = tdef.form ? firstField : (tdef.nameField || 'nickname'); /* MR-058: a type can name its rows by a field (accounts: the type select) */
       for (let i = 0; i < 40; i++) { a0 = await active(page); if (a0 && a0.col === nameCol) break; await page.waitForTimeout(50); }
       if (!a0 || a0.col !== nameCol) throw new Error('after Alt+N the focus is on ' + JSON.stringify(a0) + ' at ' + await page.evaluate(() => location.hash + ' rows=' + mr3.record.planets[location.hash.split('/')[2]].rows.map(x => x.type).join(',') + ' mounted=' + Object.keys(mr3.mounted || {}).join('/') + ' ledgers=' + document.querySelectorAll('.ledger').length + ' overlay=' + document.querySelector('#overlay').children.length) + ' for ' + key + ' row ' + r.id);
       const rowId = a0.row;
       rowIds[r.id] = rowId;
-      if (!tdef.nameField) { if (r.nickname) { await type(r.nickname); } await press('Tab'); }
-      /* fields in table order: primary, per, state, source, institution, rest */
+      if (!tdef.nameField && !tdef.form) { if (r.nickname) { await type(r.nickname); } await press('Tab'); }
+      /* fields in table order: primary, per, state, source, institution, rest; a form shows every field inline */
       const prim = tdef.fields.find(f => fields.fields[f].primary) || tdef.fields.find(f => fields.fields[f].kind === 'money') || tdef.fields[0];
-      const inTable = (tdef.nameField ? [tdef.nameField] : []).concat([prim], tdef.tableFields || []);
+      const inTable = tdef.form ? tdef.fields.slice() : (tdef.nameField ? [tdef.nameField] : []).concat([prim], tdef.tableFields || []);
       /* the drawer lists the facts first, then the row's own columns; the flow follows that order */
       const rest = tdef.fields.filter(f => !inTable.includes(f));
       const isOptional = f => fields.fields[f].optional || fields.fields[f].tag;
       /* Needed facts come first in the drawer, then Optional and tags (MR-037), then the row's own columns */
-      const order = inTable.concat(rest.filter(f => !isOptional(f))).concat(rest.filter(isOptional)).concat(tdef.nameField ? ['nickname', 'institution'] : ['institution']);
+      const order = inTable.concat(rest.filter(f => !isOptional(f))).concat(rest.filter(isOptional)).concat(tdef.form ? [] : tdef.nameField ? ['nickname', 'institution'] : ['institution']);
       /* facts outside the table live behind the row's Details button (MR-029) */
       const details = async () => {
         const open = await page.$('.drawer .row-details[data-row="' + rowId + '"]');
@@ -243,7 +245,8 @@ export function compareToSpec(record, spec, rowIds, check, label) {
   spec.rows.forEach(r => {
     const row = Object.values(record.planets).flatMap(p => p.rows).find(x => x.id === rowIds[r.id]);
     if (!row) { check(label + ' row ' + r.id + ' exists', false); return; }
-    check(label + ' row ' + r.id + ' columns', row.nickname === (r.nickname || '') && row.institution === (r.institution || '') && (row.asOf || null) === (r.asOf || null) && (row.stress === undefined ? null : row.stress) === (r.stress === undefined ? null : r.stress), JSON.stringify([row.nickname, row.institution, row.asOf, row.stress]));
+    const formType = !!(fields.planets[r.planet] && fields.planets[r.planet].types[r.type] && fields.planets[r.planet].types[r.type].form); /* a form keeps no nickname or institution (MR-060) */
+    if (!formType) check(label + ' row ' + r.id + ' columns', row.nickname === (r.nickname || '') && row.institution === (r.institution || '') && (row.asOf || null) === (r.asOf || null) && (row.stress === undefined ? null : row.stress) === (r.stress === undefined ? null : r.stress), JSON.stringify([row.nickname, row.institution, row.asOf, row.stress]));
     Object.keys(r.f || {}).forEach(fid => {
       const arr = Array.isArray(r.f[fid]) ? r.f[fid] : [r.f[fid], 'known', 'client'];
       const [v, state, source, cad] = arr;

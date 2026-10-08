@@ -85,7 +85,7 @@ Publishes:
 
 ## 4. Safety Net
 
-Reads: `baselineMonthly`, `fatFloorMonthly`, `fixedMonthly`, `byCategory`, `sharedFullMonthly`, `sharedShareMonthly` (Spending slot),
+Reads: `baselineMonthly`, `fatFloorMonthly`, `fixedMonthly`, `byCategory`, `sharedFullMonthly`, `sharedShareMonthly` (Spending slot), `grossMonthly` (Income slot, for the unemployment estimate), `state` (Sun),
 `cashBalances` (Investments slot), `birthDate`, `takeHomeMonthly`, `workSituation`.
 Publishes:
 
@@ -98,10 +98,11 @@ Publishes:
 | `monthlyToClose` | monthly | gap / 12 |
 | `insurance` | list | typed coverage rows |
 | `premiumsMonthly` | monthly, aftertax | premiums paid from the bank (paycheck premiums are already out of take-home) |
-| `unemploymentMonthly` | monthly | state estimate if typed |
-| `cutAbilityMonthly` | monthly | what the client says they could cut |
+| `unemploymentMonthly` | monthly | the state estimate from gross pay and the state formula, or a typed figure (MR-060) |
+| `cutAbilityMonthly` | monthly | spending above the FAT floor (or above the lines marked need), or the figure the client names (MR-060) |
 | `spendingWithPremiums` | monthly, aftertax | baseline spending plus bank-paid premiums: the month the metrics use |
 | `roommateGap` | oneoff | (full shared bills minus the client's share) x months until a roommate is replaced; a line of the Rule of 5 target (MR-047) |
+| `unemploymentEstimate` | object | `{ weeklyCents, maxWeeklyCents, maxWeeks, rate, state, typed, confirmed }` or null |
 
 ## 5. Investments and Accounts
 

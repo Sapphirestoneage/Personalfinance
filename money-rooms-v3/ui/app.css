@@ -230,10 +230,10 @@ table.data tfoot td { background: var(--paper-2); font-weight: var(--w-semibold)
 .drawer { width: 520px; container-type: inline-size; }
 .drawer .row-details h2 { margin-bottom: var(--s-1); }
 .drawer .row-details h2 .tag { font-size: var(--fs-12); color: var(--slate); font-weight: var(--w-regular); margin-left: var(--s-2); }
-.drawer .row-details h3 { font-size: var(--fs-12); font-weight: var(--w-semibold); color: var(--sapphire-900); text-transform: none; margin: var(--s-3) 0 var(--s-1); }
-.drawer .row-details .fieldrow.detail { grid-template-columns: 136px minmax(0, 1fr) auto auto; grid-template-areas: "label input state src"; min-height: 44px; gap: 0 var(--s-2); }
-.drawer .row-details .fieldrow.detail .control { display: flex; align-items: center; gap: var(--s-1); min-width: 0; }
-.drawer .row-details .fieldrow.detail .control > * { flex: 1 1 auto; min-width: 0; }
+.row-details h3 { font-size: var(--fs-12); font-weight: var(--w-semibold); color: var(--sapphire-900); text-transform: none; margin: var(--s-3) 0 var(--s-1); }
+.row-details .fieldrow.detail { grid-template-columns: 136px minmax(0, 1fr) auto auto; grid-template-areas: "label input state src"; min-height: 44px; gap: 0 var(--s-2); }
+.row-details .fieldrow.detail .control { display: flex; align-items: center; gap: var(--s-1); min-width: 0; }
+.row-details .fieldrow.detail .control > * { flex: 1 1 auto; min-width: 0; }
 .drawer .row-details .fieldrow.detail .control > .chip, .drawer .row-details .fieldrow.detail .control > .btn { flex: 0 0 auto; }
 .drawer .row-details .fieldrow.detail .input, .drawer .row-details .fieldrow.detail .select { height: var(--field-h); border: 1px solid var(--line); border-radius: var(--r-field); background: var(--paper); padding: 0 var(--s-2); width: 100%; margin: 0; flex: 1 1 auto; min-width: 0; }
 .drawer .row-details .fieldrow.detail .select { padding-right: 24px; }
@@ -244,8 +244,8 @@ table.data tfoot td { background: var(--paper-2); font-weight: var(--w-semibold)
 .drawer .row-details .fieldrow.detail .empty-token { padding: 0; }
 .drawer .row-details .fieldrow.detail .control .input.wide, .drawer .row-details .fieldrow.detail .control .input.num { max-width: none; width: 100%; }
 @container (max-width: 480px) {
-  .drawer .row-details .fieldrow.detail { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "label state src" "input input input"; padding: var(--s-1) 0 var(--s-2); row-gap: var(--s-1); }
-  .drawer .row-details .fieldrow.detail .control { grid-area: input; }
+  .row-details .fieldrow.detail { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "label state src" "input input input"; padding: var(--s-1) 0 var(--s-2); row-gap: var(--s-1); }
+  .row-details .fieldrow.detail .control { grid-area: input; }
 }
 .cell-details .btn { white-space: nowrap; }
 .drawer .formula { font-family: var(--mono); font-size: var(--fs-12); background: var(--paper-2); border: 1px solid var(--line); border-radius: var(--r-field); padding: var(--s-2); white-space: pre-wrap; }
@@ -909,3 +909,28 @@ table.program tr.urgent-row td { background: var(--paper-2); }
 table.data.clients-table td { white-space: normal; overflow-wrap: break-word; height: auto; padding-top: 6px; padding-bottom: 6px; }
 table.data.clients-table td.num { white-space: nowrap; }
 @media (max-width: 1500px) { table.data.clients-table td.num .btn { display: block; margin: 2px 0 2px auto; } }
+/* MR-060: the fill queue drawer */
+.tracker .count.linklike { background: none; border: 0; padding: 0; font: inherit; font-weight: var(--w-semibold); color: var(--sapphire-700); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.queue section { margin-top: var(--s-3); } .queue h3 { font-size: var(--fs-13); color: var(--sapphire-900); margin-bottom: var(--s-1); }
+.queue-list { list-style: none; padding: 0; margin: 0; } .queue-list li { display: flex; gap: var(--s-2); align-items: center; border-bottom: 1px solid var(--line-soft); }
+.queue-item { flex: 1; display: flex; justify-content: space-between; gap: var(--s-2); padding: 6px 0; color: var(--ink); text-decoration: none; min-width: 0; }
+.queue-item:hover .queue-label { text-decoration: underline; } .queue-label { overflow-wrap: anywhere; }
+/* MR-060: Retirement and FI as a form, on Home and on the Life plan page */
+.retire-form { margin-top: var(--s-3); border-top: 1px solid var(--line-soft); padding-top: var(--s-2); }
+.facts-sub { font-size: var(--fs-13); font-weight: var(--w-semibold); color: var(--sapphire-900); margin-bottom: var(--s-1); }
+.row-details.inline h3 { margin-top: var(--s-2); }
+.single-form .row-details.inline { max-width: 720px; }
+/* MR-060: on a phone the words and the cell sit side by side; state and source go under the cell */
+@media (max-width: 720px) {
+  .row-details .fieldrow.detail { grid-template-columns: minmax(96px, 34%) minmax(0, 1fr) auto; grid-template-areas: "label input input" "label state src"; min-height: 0; row-gap: 4px; column-gap: var(--s-2); padding: var(--s-2) 0; align-items: start; }
+  .row-details .fieldrow.detail label { padding-top: 8px; font-size: var(--fs-13); line-height: 18px; overflow-wrap: anywhere; }
+  .row-details .fieldrow.detail .state { grid-area: state; justify-self: start; } .row-details .fieldrow.detail .src { grid-area: src; justify-self: end; }
+  .row-details .fieldrow.detail .control .input, .row-details .fieldrow.detail .control .select { min-width: 0; }
+  .row-details .fieldrow.detail .control .picker { flex-wrap: wrap; }
+}
+.drawer > .row:first-child { position: sticky; top: 0; background: var(--paper); z-index: 1; margin: calc(-1 * var(--s-3)) calc(-1 * var(--s-4)) var(--s-2); padding: var(--s-2) var(--s-4); border-bottom: 1px solid var(--line-soft); }
+.row-details h2 { margin-top: var(--s-2); } .row-details h2 .tag { display: inline-block; }
+.row-details .detail-group { border: 1px solid var(--line-soft); border-radius: var(--r-panel); padding: 0 var(--s-2); }
+.row-details .detail-group .fieldrow.detail:last-child { border-bottom: 0; }
+.row-details h3 { margin-top: var(--s-3); }
+

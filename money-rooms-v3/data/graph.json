@@ -283,10 +283,20 @@
   ],
   "safety.unemploymentMonthly": [
    "unemploymentWeekly",
-   "income.takeHomeMonthly"
+   "income.takeHomeMonthly",
+   "income.grossMonthly",
+   "sun.state"
   ],
   "safety.cutAbilityMonthly": [
-   "cutAbility"
+   "cutAbility",
+   "spending.baselineMonthly",
+   "spending.fatFloorMonthly",
+   "spending.fixedMonthly"
+  ],
+  "safety.unemploymentEstimate": [
+   "unemploymentWeekly",
+   "income.grossMonthly",
+   "sun.state"
   ],
   "safety.spendingWithPremiums": [
    "spending.baselineMonthly",
