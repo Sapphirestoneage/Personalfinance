@@ -4,6 +4,31 @@ import { h, clear } from './dom.js';
 import { trackerSteps } from '../engine/tracker.js';
 import { markTypeNone } from './table.js';
 import { closeOverlay } from './app.js';
+import { stateOf, unlocksBetween, applyProbe } from '../engine/unlocks.js';
+import { primaryFieldOf } from '../engine/fields.js';
+
+/* What the next fact opens (owner feedback, MR-062): the engine is run once with a stand-in value in that one
+   field, after the card is drawn, and the answer is remembered until the record changes. */
+const opensCache = { key: null, text: null };
+function probeOf(app, next) {
+  if (next.kind === 'sun') return { kind: 'sun', field: next.field };
+  if (next.kind === 'rows') { const prim = primaryFieldOf(app.data.fields, next.planet, next.typeId); return { kind: 'type', planet: next.planet, type: next.typeId, field: prim ? prim.id : null, addRow: true }; }
+  if (next.rowId && next.field) { const row = Object.values(app.record.planets).flatMap(p => p.rows).find(r => r.id === next.rowId); return row ? { kind: 'field', planet: row.planet, type: row.type, field: next.field, rowId: next.rowId } : null; }
+  return null;
+}
+function opensText(app, next) {
+  const key = app.record.id + ':' + app.record.journal.length + ':' + (next.rowId || '') + ':' + (next.field || next.typeId || '');
+  if (opensCache.key === key) return opensCache.text;
+  let text = null;
+  try {
+    const probe = probeOf(app, next);
+    if (probe) { const R = app.compute(applyProbe(app.record, probe, app.data), app.data); const u = unlocksBetween(stateOf(app.result, app.data), stateOf(R, app.data), R, app.data); const parts = [];
+      if (u.metrics.length) parts.push(u.metrics.length + (u.metrics.length === 1 ? ' number' : ' numbers')); if (u.charts.length) parts.push(u.charts.length + (u.charts.length === 1 ? ' chart' : ' charts')); if (u.lenses.length) parts.push(u.lenses.length + (u.lenses.length === 1 ? ' reading' : ' readings'));
+      text = parts.length ? 'Opens ' + parts.join(', ') : 'Sharpens what is already there'; }
+  } catch (e) { text = null; }
+  opensCache.key = key; opensCache.text = text;
+  return text;
+}
 
 /* MR-060: the whole queue in a drawer. Grouped by where it lives; every line lands in its field. */
 function openQueue(app, t) {
@@ -21,6 +46,8 @@ function openQueue(app, t) {
 }
 
 export function renderTracker(host, app) {
+  const fillOpens = () => { const el = host.querySelector('.opens'); if (!el || !app.record) return; const tt = trackerSteps(app.record, app.data.fields); if (!tt.next) return; const txt = opensText(app, tt.next); if (txt) el.textContent = txt; else el.remove(); };
+  setTimeout(fillOpens, 0);
   clear(host);
   if (!app.record || app.view !== 'coach') return;
   const t = trackerSteps(app.record, app.data.fields);
@@ -29,10 +56,11 @@ export function renderTracker(host, app) {
   host.appendChild(h('div', { class: 'tracker' + (t.next ? '' : ' complete'), role: 'status' },
     h('div', { class: 'bar', 'aria-hidden': 'true' }, h('div', { class: 'fill', style: { width: pct + '%' } })),
     h('div', { class: 'row tracker-row' },
-      h('button', { class: 'count linklike', title: 'See everything still to enter', 'aria-label': t.done + ' of ' + t.total + ' in, see the whole list', onClick: () => openQueue(app, t) }, t.done + ' of ' + t.total + ' in'),
-      t.next ? h('span', { class: 'next' }, h('span', { class: 'muted' }, 'Now: '), t.next.label, h('span', { class: 'muted small' }, ' (' + t.next.where + ')')) : h('span', { class: 'next' }, 'Everything the numbers need is in.'),
+      h('button', { class: 'count linklike', title: 'See everything still to enter', 'aria-label': t.done + ' of ' + t.total + ' facts in, see the whole list', onClick: () => openQueue(app, t) }, t.done + ' of ' + t.total + ' facts in'),
+      t.next ? h('span', { class: 'next' }, h('span', { class: 'muted' }, 'Next: '), t.next.label, h('span', { class: 'muted small' }, ' (' + t.next.where + ')')) : h('span', { class: 'next' }, 'Everything the numbers need is in.'),
       t.next ? h('a', { class: 'btn small primary', href: t.next.href, onClick: () => { if (t.next.rowId && t.next.field) app.focusAfterRender = { rowId: t.next.rowId, field: t.next.field }; } }, 'Go') : null,
       t.next && t.next.kind === 'rows' ? h('button', { class: 'btn small', title: 'None of these for this household', onClick: () => markTypeNone(app, t.next.planet, t.next.typeId) }, 'None') : null,
-      t.next ? h('button', { class: 'btn small quiet', onClick: () => openQueue(app, t) }, 'All ' + left + ' left') : null,
+      t.next ? h('button', { class: 'btn small quiet', onClick: () => openQueue(app, t) }, 'See all ' + left + ' left') : null,
+      t.next ? h('a', { class: 'small opens', href: '#/measure/unlocks', title: 'What this fact opens up on Measure' }) : null,
       t.next && t.headlineOpen + t.detailOpen ? h('span', { class: 'small muted hide-narrow' }, (t.headlineOpen ? t.headlineOpen + ' headline' + (t.headlineOpen === 1 ? '' : 's') : '') + (t.headlineOpen && t.detailOpen ? ', ' : '') + (t.detailOpen ? t.detailOpen + ' detail' + (t.detailOpen === 1 ? '' : 's') : '') + ' left') : null)));
 }

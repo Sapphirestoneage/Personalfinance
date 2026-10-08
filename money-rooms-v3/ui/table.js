@@ -232,24 +232,28 @@ export function ledgerTable(host, app, planet, typeId, opts) {
         };
         paint();
         control.querySelectorAll('input, select').forEach(el => el.addEventListener('change', () => setTimeout(paint, 0)));
-        row.appendChild(st); row.appendChild(so);
+        row.appendChild(h('span', { class: 'meta' }, st, h('span', { class: 'meta-sep', 'aria-hidden': 'true' }, '\u00b7'), so)); /* one quiet line: how sure, and where it came from */
         if (c.def.optional || c.def.tag) { optional.appendChild(row); anyOptional = true; } else { facts.appendChild(row); anyFact = true; }
       } else if (c.kind === 'field') { if (c.def.optional || c.def.tag) { optional.appendChild(row); anyOptional = true; } else { facts.appendChild(row); anyFact = true; } }
       else about.appendChild(row);
     });
-    if (anyFact) { body.appendChild(h('h3', null, o.inline ? 'Needed' : 'Needed')); body.appendChild(facts); }
-    if (anyOptional) { body.appendChild(h('h3', null, 'Optional', h('span', { class: 'small muted', style: { fontWeight: 400, marginLeft: '6px' } }, 'sharpens a number when known; never holds anything up'))); body.appendChild(optional); }
-    if (!o.inline) { body.appendChild(h('h3', null, 'About this row')); body.appendChild(about); }
-    if (coach && !o.inline) body.appendChild(h('div', { class: 'row', style: { marginTop: '16px' } }, h('button', { class: 'btn quiet', onClick: () => { app.removeRow(r.id); closeOverlay(); render(); } }, 'Remove this row')));
+    /* a group that folds on a phone (open on a desktop): the heading is the switch */
+    const fold = (title, sub, group, open) => { group.classList.add('fold'); group.dataset.open = open ? 'true' : 'false'; const head = h('h3', { class: 'fold-head', dataset: { fold: '' } }, h('button', { class: 'linklike fold-btn', 'aria-expanded': open ? 'true' : 'false', onClick: () => { const now = group.dataset.open !== 'true'; group.dataset.open = now ? 'true' : 'false'; head.querySelector('button').setAttribute('aria-expanded', String(now)); } }, title), sub ? h('span', { class: 'small muted fold-sub' }, sub) : null); body.appendChild(head); body.appendChild(group); };
+    if (anyFact) { body.appendChild(h('h3', null, 'Needed')); body.appendChild(facts); }
+    const nOpt = optional.children.length;
+    if (anyOptional) fold(o.inline ? 'Optional' : 'More details (' + nOpt + ')', 'sharpens a number when known; never holds anything up', optional, false);
+    if (!o.inline) fold('About this row', [r.institution, r.asOf ? 'as of ' + r.asOf : null].filter(Boolean).join(', ') || null, about, !r.institution);
+    if (coach && !o.inline) body.appendChild(h('div', { class: 'row drawer-foot' }, h('button', { class: 'btn primary', onClick: () => closeOverlay() }, 'Done'), h('span', { class: 'spacer' }), h('button', { class: 'btn quiet', onClick: () => { app.removeRow(r.id); closeOverlay(); render(); } }, 'Remove this row')));
+    else if (!o.inline) body.appendChild(h('div', { class: 'row drawer-foot' }, h('button', { class: 'btn primary', onClick: () => closeOverlay() }, 'Done')));
     return body;
   }
   function openDetails(rowId, focusCol) {
     const r = app.record.planets[planet].rows.find(x => x.id === rowId); if (!r) return;
     const body = detailsBody(r);
     const back = wrap.querySelector('tr[data-row="' + r.id + '"] [data-col="details"]');
-    app.openDrawer(body, { label: 'Details for ' + (r.nickname || tdef.label), onClose: () => { if (back && back.isConnected) back.focus(); } });
+    app.openDrawer(body, { label: 'Details for ' + (r.nickname || tdef.label), title: r.nickname || tdef.label, onClose: () => { if (back && back.isConnected) back.focus(); } });
     const target = focusCol ? body.querySelector('[data-col="' + focusCol + '"]') : body.querySelector('input, select, button');
-    if (target) target.focus();
+    if (target) { const grp = target.closest('.fold'); if (grp) { grp.dataset.open = 'true'; const btn = grp.previousElementSibling && grp.previousElementSibling.querySelector('button'); if (btn) btn.setAttribute('aria-expanded', 'true'); } target.focus(); }
   }
 
   function renderRow(r, cols) {
@@ -466,8 +470,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
       if (f && isRough(f)) input.classList.add('rough');
       input.addEventListener('change', e => commitTyped(input, e.target.value));
     }
-    if (d.kind === 'text') return emptyWrap(input, keyFlow(input, r, d.id));
-    return keyFlow(input, r, d.id);
+    return emptyWrap(input, keyFlow(input, r, d.id));
   }
 
   /* Issuer first, then the card (MR-034): two hundred cards are too many for one list. Personal and business cards sit in two groups. "Other" takes a typed name. */

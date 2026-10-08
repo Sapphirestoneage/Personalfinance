@@ -231,7 +231,19 @@ table.data tfoot td { background: var(--paper-2); font-weight: var(--w-semibold)
 .drawer .row-details h2 { margin-bottom: var(--s-1); }
 .drawer .row-details h2 .tag { font-size: var(--fs-12); color: var(--slate); font-weight: var(--w-regular); margin-left: var(--s-2); }
 .row-details h3 { font-size: var(--fs-12); font-weight: var(--w-semibold); color: var(--sapphire-900); text-transform: none; margin: var(--s-3) 0 var(--s-1); }
-.row-details .fieldrow.detail { grid-template-columns: 136px minmax(0, 1fr) auto auto; grid-template-areas: "label input state src"; min-height: 44px; gap: 0 var(--s-2); }
+.row-details .fieldrow.detail { grid-template-columns: 136px minmax(0, 1fr) auto; grid-template-areas: "label input meta"; min-height: 44px; gap: 0 var(--s-2); }
+.row-details .fieldrow.detail > .meta { grid-area: meta; display: inline-flex; align-items: center; gap: var(--s-1); white-space: nowrap; }
+.row-details .fieldrow.detail .meta .chip { height: 20px; }
+.row-details .fieldrow.detail .meta .chip.src, .row-details .fieldrow.detail .meta .chip.state-known, .row-details .fieldrow.detail .meta .chip.state-verified { text-decoration: underline dotted; text-underline-offset: 3px; }
+.row-details .meta-sep { color: var(--slate); }
+.drawer-title { font-size: var(--fs-14); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.drawer-foot { margin-top: var(--s-4); padding-top: var(--s-3); border-top: 1px solid var(--line-soft); }
+.row-details .fold-head .fold-btn { font: inherit; font-weight: var(--w-semibold); color: var(--sapphire-900); padding: 0; }
+.row-details .fold-head .fold-btn::before { content: "\25BE"; display: inline-block; width: 14px; color: var(--slate); }
+.row-details .fold-head .fold-btn[aria-expanded="false"]::before { content: "\25B8"; }
+.row-details .fold-head .fold-sub { margin-left: var(--s-2); font-weight: var(--w-regular); }
+@media (min-width: 721px) { .row-details .fold-head .fold-btn::before { display: none; } .row-details .fold-head .fold-btn { pointer-events: none; } }
+@media (max-width: 720px) { .row-details .fold[data-open="false"] { display: none; } }
 .row-details .fieldrow.detail .control { display: flex; align-items: center; gap: var(--s-1); min-width: 0; }
 .row-details .fieldrow.detail .control > * { flex: 1 1 auto; min-width: 0; }
 .drawer .row-details .fieldrow.detail .control > .chip, .drawer .row-details .fieldrow.detail .control > .btn { flex: 0 0 auto; }
@@ -243,9 +255,6 @@ table.data tfoot td { background: var(--paper-2); font-weight: var(--w-semibold)
 .drawer .row-details .fieldrow.detail .state .chip, .drawer .row-details .fieldrow.detail .src .chip { height: var(--field-h); }
 .drawer .row-details .fieldrow.detail .empty-token { padding: 0; }
 .drawer .row-details .fieldrow.detail .control .input.wide, .drawer .row-details .fieldrow.detail .control .input.num { max-width: none; width: 100%; }
-@container (max-width: 480px) {
-  .row-details .fieldrow.detail { grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: "label state src" "input input input"; padding: var(--s-1) 0 var(--s-2); row-gap: var(--s-1); }
-  .row-details .fieldrow.detail .control { grid-area: input; }
 }
 .cell-details .btn { white-space: nowrap; }
 .drawer .formula { font-family: var(--mono); font-size: var(--fs-12); background: var(--paper-2); border: 1px solid var(--line); border-radius: var(--r-field); padding: var(--s-2); white-space: pre-wrap; }
@@ -369,6 +378,11 @@ body[data-view="client"] .kpi .value.list, body[data-view="client"] .kpi .value.
 table.data.history td.when { white-space: normal; min-width: 96px; }
 .cell-money { display: flex; align-items: center; gap: 0; width: 100%; }
 .cell-money .input { flex: 1 1 auto; min-width: 72px; }
+.cell-money .cellwrap { flex: 1 1 auto; min-width: 72px; display: block; }
+.cell-money .cellwrap .input { width: 100%; }
+.ledger-table .cellwrap.is-empty .input, .row-details .control.is-empty .input { border: 1px dashed var(--line); border-radius: var(--r-field); }
+.ledger-table .cellwrap.is-empty::after { left: 9px; }
+.ledger-table .cell-money .cellwrap.is-empty::after { content: 'Amount'; }
 .cell-money .cad-text { padding-right: var(--s-2); }
 .ledger-table td + td, .ledger-table th + th { border-left: 1px solid var(--line-soft); }
 .ledger-table tbody td { padding: 0; }
@@ -922,9 +936,14 @@ table.data.clients-table td.num { white-space: nowrap; }
 .single-form .row-details.inline { max-width: 720px; }
 /* MR-060: on a phone the words and the cell sit side by side; state and source go under the cell */
 @media (max-width: 720px) {
-  .row-details .fieldrow.detail { grid-template-columns: minmax(96px, 34%) minmax(0, 1fr) auto; grid-template-areas: "label input input" "label state src"; min-height: 0; row-gap: 4px; column-gap: var(--s-2); padding: var(--s-2) 0; align-items: start; }
-  .row-details .fieldrow.detail label { padding-top: 8px; font-size: var(--fs-13); line-height: 18px; overflow-wrap: anywhere; }
-  .row-details .fieldrow.detail .state { grid-area: state; justify-self: start; } .row-details .fieldrow.detail .src { grid-area: src; justify-self: end; }
+  .row-details .fieldrow.detail { grid-template-columns: minmax(96px, 34%) minmax(0, 1fr); grid-template-areas: "label input" "label meta"; min-height: 0; row-gap: 4px; column-gap: var(--s-2); padding: var(--s-2) 0; align-items: start; }
+  .row-details .fieldrow.detail label { padding-top: 12px; font-size: var(--fs-13); line-height: 18px; overflow-wrap: anywhere; font-weight: var(--w-semibold); }
+  .row-details .fieldrow.detail > .meta { grid-area: meta; justify-self: start; font-size: var(--fs-12); }
+  .row-details .fieldrow.detail .control { width: 100%; }
+  .row-details .fieldrow.detail .control > .cell-money, .row-details .fieldrow.detail .control > .cellwrap { width: 100%; }
+  .drawer .row-details .fieldrow.detail .input, .drawer .row-details .fieldrow.detail .select, .drawer .row-details .fieldrow.detail .chip.toggle, .drawer .row-details .fieldrow.detail .btn { height: 44px; font-size: var(--fs-16); }
+  .drawer .row-details .fieldrow.detail .cell-money .select.cad { width: 64px; }
+  .row-details h2 { display: none; }
   .row-details .fieldrow.detail .control .input, .row-details .fieldrow.detail .control .select { min-width: 0; }
   .row-details .fieldrow.detail .control .picker { flex-wrap: wrap; }
 }

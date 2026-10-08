@@ -237,7 +237,7 @@ export const app = {
     const before = document.activeElement;
     overlayOnClose = () => { if (o.onClose) o.onClose(); else if (before && before.isConnected && before.focus) before.focus(); };
     const d = h('aside', { class: 'drawer' + (o.cls ? ' ' + o.cls : ''), role: 'dialog', 'aria-label': o.label || 'Details' },
-      h('div', { class: 'row', style: { justifyContent: 'flex-end' } }, h('button', { class: 'btn small', onClick: closeOverlay }, 'Close')),
+      h('div', { class: 'row drawer-top' }, o.title ? h('strong', { class: 'drawer-title' }, o.title) : null, h('span', { class: 'spacer' }), h('button', { class: 'btn small', onClick: closeOverlay }, 'Close')),
       node);
     qs('#overlay').appendChild(d);
     d.querySelector('button').focus();

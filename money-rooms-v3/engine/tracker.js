@@ -40,6 +40,7 @@ export function trackerSteps(record, fields) {
     record.planets[p].rows.forEach(r => {
       if (isNoneRow(fields, r)) return;
       const tdef = fields.planets[p].types[r.type]; if (!tdef) return;
+      if (r.type === 'summary' && record.planets[p].rows.some(x => x.type !== 'summary' && !isNoneRow(fields, x))) return; /* detail rows override a rough total, so it is never a step */
       const prim = primaryFieldOf(fields, p, r.type);
       const name = r.nickname || tdef.label;
       tdef.fields.forEach(id => {

@@ -499,3 +499,9 @@ Decision: Measure is five sticky tabs, Overview first: Overview (a grid of up to
 Compatibility: none stored; `sun.onepager.charts` and `sun.clientCharts` may now name any of the 31 ids.
 Why: the demo brief Part C; a chart answers a question in the time a tile takes to read.
 Alternative: more tiles (a wall of numbers nobody reads aloud).
+## MR-062 2026-10-08 Phone feedback: the row drawer reads as a form, empty numbers say so, the tracker says what a fact opens
+Decision: The row details drawer is a form a non-coder can fill on a phone: a sticky top bar with the row's name and Close; each fact as a label beside a full-width box with one quiet line under it ("Known · Client") that still changes the state and source with a tap; the optional facts folded under "More details (n)" and the row's own details under "About this row" on a phone (open on a desktop, open when the row has no institution yet, and opened automatically when a deep link targets a field inside); a Done button at the end. Every empty typed cell says so, numbers included, inside a dashed box ("Amount" in a money cell), because an empty number box was invisible in the dark theme and a rough total got typed into the label. The fill tracker says "N of M facts in", "Next:" and "See all N left", and under Go it says what the fact opens ("Opens 3 numbers, 1 chart"), from one engine run with a stand-in value after the card is drawn, remembered until the record changes. The tracker never asks for a rough total once detail lines exist. The Home orbit carries a one-line caption: each circle is a room, the number its rows, the ring how sure the numbers are.
+Compatibility: none stored.
+Why: the owner's phone walk (three screenshots): the details drawer was a wall of chips, Go kept landing on an invisible box, and the orbit did not explain itself.
+Alternative: hide the state and source on a phone (loses the coach's one-tap correction).
+
