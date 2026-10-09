@@ -17,7 +17,7 @@ export const flows = [
     check('no internal words on the hub', !/registry|\bnode\b|\bedge\b|\bband\b|lever family|decomposition/i.test(hub));
     /* the calendar: the headline, the tabs, a day drawer, can I spend this, the bill timing fixer */
     await page.click('.calc-card[data-calc="calendar"]'); await page.waitForSelector('.calc-answer');
-    const head = await page.textContent('.calc-answer'); check('safe to spend and the tightest day read aloud', /Safe to spend today/.test(head) && /tightest day is the 8th/.test(head), head.slice(0, 120));
+    const head = await page.textContent('.calc-answer'); check('safe to spend and the tightest day read aloud', /Safe to spend today/.test(head) && /tightest day is the \d+(st|nd|rd|th)/.test(head), head.slice(0, 120)); /* the day moves with the real calendar date */
     check('the month grid draws with a low day marked', (await page.locator('.cal-cell.is-low').count()) >= 1 && (await page.locator('.cal-cell:not(.blank):not(.past)').count()) >= 60);
     await page.click('.cal-cell.is-low'); await page.waitForSelector('.drawer .cal-day'); const dd = await page.textContent('.drawer'); check('the day drawer lists what lands and the balance after', /Balance after this day/.test(dd)); await page.keyboard.press('Escape');
     await page.click('.calc-tabs .tab:has-text("Weeks")'); await page.waitForSelector('table.calc-table'); check('weeks: in, out, ending balance', /Ending balance/.test(await page.textContent('#main')));
@@ -343,17 +343,21 @@ export const flows = [
     await page.waitForSelector('[aria-label="Lease"]');
     await page.click('[aria-label="Lease"] button:has-text("Both")');
     /* a partner (MR-050): their take-home joins the picture */
-    await page.click('[aria-label="Partner"] button:has-text("Yes")');
-    await page.waitForSelector('input[aria-label="Partner nickname, optional"]');
-    await page.fill('input[aria-label="Partner nickname, optional"]', 'Sam');
-    await page.press('input[aria-label="Partner nickname, optional"]', 'Tab');
+    await page.click('[aria-label="Partners"] button:has-text("1")'); /* MR-073: any number of partners */
+    await page.waitForSelector('input[aria-label="Partner 1 name"]');
+    await page.fill('input[aria-label="Partner 1 name"]', 'Sam');
+    await page.press('input[aria-label="Partner 1 name"]', 'Tab');
+    await page.waitForSelector('input[aria-label="Partner 1 take-home"]');
+    await page.click('[aria-label="Pay type"] button:has-text("Salary")'); /* MR-073: hourly or salary first */
+    await page.waitForSelector('input[aria-label="Salary before tax"]');
+    check('the salary field says its unit', (await page.textContent('.disc-field:has(input[aria-label="Salary before tax"]) .unit')) === '$ a year');
     await page.fill('input[aria-label="Take-home"]', '1900 every two weeks');
     await page.press('input[aria-label="Take-home"]', 'Tab');
     check('the take-home hint converts a paycheck to a month', (await page.textContent('.disc-q:has(input[aria-label="Take-home"]) .heard')).indexOf('a month') !== -1);
-    await page.fill('input[aria-label="Partner\'s take-home"]', '2000 every two weeks');
-    await page.press('input[aria-label="Partner\'s take-home"]', 'Tab');
-    await page.fill('input[aria-label="Pay before tax"]', '68k');
-    await page.press('input[aria-label="Pay before tax"]', 'Tab');
+    await page.fill('input[aria-label="Partner 1 take-home"]', '2000 every two weeks');
+    await page.press('input[aria-label="Partner 1 take-home"]', 'Tab');
+    await page.fill('input[aria-label="Salary before tax"]', '68k');
+    await page.press('input[aria-label="Salary before tax"]', 'Tab');
     await page.fill('input[aria-label="Spending a month, their guess"]', '2,500ish');
     await page.press('input[aria-label="Spending a month, their guess"]', 'Tab');
     check('2,500ish is rough', (await page.textContent('.disc-q:has(input[aria-label="Spending a month, their guess"]) .heard')).indexOf('rough') !== -1);
@@ -411,7 +415,8 @@ export const flows = [
     await page.fill('.answer input.input.big', '350');
     await page.press('.answer input.input.big', 'Enter');
     await page.waitForTimeout(200);
-    /* your targets */
+    /* your targets: the unlock sheet that a save opens (MR-059) sits over the right end of the stop row, so put it away first */
+    await page.keyboard.press('Escape'); await page.waitForTimeout(100);
     await page.click('.callpath .stop:has-text("targets")');
     await page.waitForSelector('.targets-table');
     const tt = await page.textContent('.targets');

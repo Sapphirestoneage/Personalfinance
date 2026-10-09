@@ -1,8 +1,11 @@
 # Progress
 
-Updated: 2026-10-08
+Updated: 2026-10-09
 
 ## Done
+- Discovery call rewrite (MR-073): hourly or salary first, any number of roommates and partners (schema 6,
+  household.partners), every field labelled with its unit and an example, the why-now and fit questions;
+  the summary shows pay, partners and context.
 - Level 14 Don't Make Me Think (MR-072): the 35-fix usability pass. Today and the client Home, six navigation
   groups with search and a trunk test, Progress as one place, Presenting mode, ledger read mode, one label per
   number, US dates, the Leah rename, levers by realistic movement, segmented controls, confirmed big actions,

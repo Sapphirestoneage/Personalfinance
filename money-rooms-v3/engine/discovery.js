@@ -39,33 +39,53 @@ export function applyDiscovery(record, form, data, meta) {
   if (snap.filingStatus) set('sun', 'filingStatus', snap.filingStatus, 'known'); else if (!hasValue(record.sun.f.filingStatus)) set('sun', 'filingStatus', 'single', 'rough', undefined, 'inferred');
   if (snap.dependents !== undefined && snap.dependents !== null && snap.dependents !== '') set('sun', 'dependents', parseInt(snap.dependents, 10) || 0, 'known');
   /* ---- household */
-  const n = parseInt(snap.roommates, 10) || 0;
+  const n = Math.max(0, parseInt(snap.roommates, 10) || 0);
   const names = snap.roommateNames || [];
-  setHousehold(record, { roommates: Array.from({ length: n }, (_, i) => ({ id: 'rm' + (i + 1), nickname: names[i] || '' })), lease: snap.lease || (n ? 'both' : 'none'), unitSize: snap.unitSize || null, partner: snap.partner ? { nickname: snap.partnerName || '' } : null, basis: 'together' }, { session: m.session, now, why: null });
+  /* MR-073: partners is a list; an older form with partner: true and partnerName still reads */
+  const partners = Array.isArray(snap.partners) ? snap.partners.filter(Boolean) : (snap.partner ? [{ name: snap.partnerName || '', takeHome: (form.money || {}).partnerTakeHome || '' }] : []);
+  setHousehold(record, { roommates: Array.from({ length: n }, (_, i) => ({ id: 'rm' + (i + 1), nickname: names[i] || '' })), lease: snap.lease || (n ? 'both' : 'none'), unitSize: snap.unitSize || null, partners: partners.map(p => ({ nickname: p.name || '' })), basis: 'together' }, { session: m.session, now, why: null });
   /* ---- tier: an override is the coach's word */
   if (form.tierOverride) setColTier(record, { tier: form.tierOverride, source: 'client', basis: 'override', allItems: tiers.tierAverages[form.tierOverride].allItems, housing: tiers.tierAverages[form.tierOverride].housing }, { session: m.session, now });
   const tier = colTierOf(record, tiers);
   /* ---- money */
   const money = form.money || {};
-  /* a partner's pay (MR-050): one W-2 row marked Partner's, counted with the client's under "together" */
-  const pt = snap.partner ? parseSaid(money.partnerTakeHome, { kind: 'income' }) : null;
-  if (pt && pt.cents !== null) {
-    const prow = createRow('income', 'w2', { nickname: (snap.partnerName || 'Partner') + "'s job", institution: '', f: freshFacts(fields, 'income', 'w2') });
+  /* a partner's pay (MR-050, MR-073): one W-2 row per partner marked Partner's, counted with the client's under "together" */
+  partners.forEach((p, i) => {
+    const varies = p.payType === 'varies';
+    const pt = parseSaid(p.takeHome, { kind: 'income', defaultCadence: varies ? 'month' : 'paycheck' });
+    if (!pt || pt.cents === null) return;
+    const who = p.name || (partners.length > 1 ? 'Partner ' + (i + 1) : 'Partner');
+    const prow = createRow('income', 'w2', { nickname: who + "'s job", institution: '', f: freshFacts(fields, 'income', 'w2') });
     addRow(record, prow, { session: m.session, now });
     set(prow.id, 'whose', 'partner', 'known', undefined, 'client');
     set(prow.id, 'takeHome', pt.cents, stateOf(pt, false), pt.cadence);
-    if (pt.cadence === 'paycheck') set(prow.id, 'payFrequency', pt.payFrequency || 'biweekly', 'known', undefined, 'inferred');
-  }
+    if (pt.cadence === 'paycheck') set(prow.id, 'payFrequency', p.payFrequency || pt.payFrequency || 'biweekly', p.payFrequency ? 'known' : 'known', undefined, p.payFrequency ? DISC : 'inferred');
+    if (p.payType === 'hourly') set(prow.id, 'stability', 'variable', 'rough', undefined, 'inferred');
+  });
   const selfEmployed = snap.workSituation === 'self-employed';
   const jobType = selfEmployed ? 'c1099' : 'w2';
   let job = record.planets.income.rows.find(r => r.type === jobType && !(r.f.whose && r.f.whose.v === 'partner'));
-  const gross = parseSaid(money.gross, { kind: 'income' }); const take = parseSaid(money.takeHome, { kind: 'income' });
+  /* MR-073: the pay type decides how "before tax" was asked. Salary: a yearly figure. Hourly: rate times hours a week,
+     fifty-two weeks, as a rough monthly gross. It varies: a typical month. No pay type (older forms): whatever was said. */
+  const payType = money.payType || null;
+  let gross = null; let hourly = null;
+  if (payType === 'hourly') {
+    const rate = parseSaid(money.hourlyRate); const hrs = parseFloat(String(money.hoursPerWeek || '').replace(/[^0-9.]/g, ''));
+    if (rate && rate.cents !== null && hrs > 0) { hourly = { rateCents: rate.cents, hours: hrs }; gross = { cents: Math.round(rate.cents * hrs * 52 / 12), cadence: 'month', payFrequency: null, state: 'rough', raw: money.hourlyRate + ' x ' + hrs }; }
+  } else if (payType === 'salary') gross = parseSaid(money.gross, { kind: 'income', defaultCadence: 'year' });
+  else if (payType === 'varies') { gross = parseSaid(money.gross, { kind: 'income', defaultCadence: 'month' }); if (gross) gross.state = 'rough'; }
+  else gross = parseSaid(money.gross, { kind: 'income' });
+  const take = parseSaid(money.takeHome, { kind: 'income', defaultCadence: payType === 'varies' ? 'month' : (payType ? 'paycheck' : undefined) });
   if ((gross && gross.cents !== null) || (take && take.cents !== null)) {
     if (!job) { job = createRow('income', jobType, { nickname: snap.employer || 'Job', institution: snap.employer || '', f: freshFacts(fields, 'income', jobType) }); addRow(record, job, { session: m.session, now }); }
-    const pf = (take && take.payFrequency) || (gross && gross.payFrequency) || 'biweekly';
+    const pf = money.payFrequency || (take && take.payFrequency) || (gross && gross.payFrequency) || 'biweekly';
     if (gross && gross.cents !== null) { set(job.id, 'grossPay', gross.cents, stateOf(gross, money.grossKnown), gross.cadence); out.anchors.push(setAnchor(record, 'gut', 'income:gross', toMonthly(gross.cents, gross.cadence, pf), { cadence: 'month', source: DISC, session: m.session, now })); }
+    if (hourly && job.f.hoursPaid) set(job.id, 'hoursPaid', hourly.hours, 'rough');
+    if (money.payFrequency) set(job.id, 'payFrequency', money.payFrequency, 'known');
+    if (money.steadiness && job.f.stability) set(job.id, 'stability', money.steadiness, 'known');
+    else if (payType === 'hourly' && job.f.stability) set(job.id, 'stability', 'variable', 'rough', undefined, 'inferred');
     if (take && take.cents !== null) { set(job.id, 'takeHome', take.cents, stateOf(take, money.takeHomeKnown), take.cadence); out.anchors.push(setAnchor(record, 'gut', 'income:takeHome', toMonthly(take.cents, take.cadence, pf), { cadence: 'month', source: DISC, session: m.session, now })); }
-    if (take && take.cadence === 'paycheck' || gross && gross.cadence === 'paycheck') set(job.id, 'payFrequency', pf, 'known', undefined, 'inferred');
+    if (!money.payFrequency && (take && take.cadence === 'paycheck' || gross && gross.cadence === 'paycheck')) set(job.id, 'payFrequency', pf, 'known', undefined, 'inferred');
     /* the cross-check: take-home said against take-home inferred from gross, silent under 10% */
     if (gross && gross.cents !== null && take && take.cents !== null) {
       const gm = toMonthly(gross.cents, gross.cadence, pf), tm = toMonthly(take.cents, take.cadence, pf);
@@ -112,7 +132,11 @@ export function applyDiscovery(record, form, data, meta) {
   (form.goals || []).forEach(g => { if (!g || !g.text) return; const row = createRow('life', 'goal', { nickname: g.text, f: freshFacts(fields, 'life', 'goal') }); addRow(record, row, { session: m.session, now }); if (g.amount) { const p = parseSaid(g.amount, { defaultCadence: 'oneoff' }); if (p && p.cents !== null) set(row.id, 'goalCost', p.cents, stateOf(p, false), undefined); } if (g.when) { const w = parseWhen(g.when, today); if (w) set(row.id, 'targetDate', w, 'rough'); } });
   /* ---- mindset, words, mode */
   const mind = form.mindset || {};
-  record.discovery = { at: now || new Date().toISOString(), form: JSON.parse(JSON.stringify(form)), whyNow: form.whyNow || '', words: (form.words || []).filter(Boolean), mindset: { stuck: mind.stuck || [], avoidsAccounts: !!mind.avoidsAccounts, struggles: mind.struggles || [] }, goals: (form.goals || []).filter(g => g && g.text), checks: out.checks, notes: out.notes, confirmed: {}, applied: true };
+  const ctx = form.context || {};
+  record.discovery = { at: now || new Date().toISOString(), form: JSON.parse(JSON.stringify(form)), whyNow: form.whyNow || '', words: (form.words || []).filter(Boolean), mindset: { stuck: mind.stuck || [], avoidsAccounts: !!mind.avoidsAccounts, struggles: mind.struggles || [] }, goals: (form.goals || []).filter(g => g && g.text), checks: out.checks, notes: out.notes, confirmed: {}, applied: true,
+    /* MR-073: the fit and context answers, kept as said; nothing downstream computes with them */
+    context: { tried: ctx.tried || '', ifNothing: ctx.ifNothing || '', bigComing: ctx.bigComing || '', workStyle: ctx.workStyle || null, decisionMakers: ctx.decisionMakers || '', worthIt: ctx.worthIt || '' },
+    pay: { type: payType, hourly: hourly ? { rateCents: hourly.rateCents, hoursPerWeek: hourly.hours } : null, frequency: money.payFrequency || null, steadiness: money.steadiness || null } };
   const gentle = !!mind.avoidsAccounts || (mind.struggles || []).includes('avoiding');
   record.sessionMode = gentle ? 'gentle' : (record.sessionMode === 'gentle' ? 'gentle' : 'standard');
   /* ---- guesses for every gap */
@@ -167,7 +191,7 @@ export function discoverySummary(record, result, data) {
   const roommate = hh.roommates.length ? roommateOutcome(result, { answers: { monthsToReplace: result.asm.roommateMonthsToReplace || 2, oneTime: 0, keepAlone: 0, yearsAlone: 30 } }, data.scenarioBlocks.types.roommate) : null;
   const agenda = session1Agenda(record, result, data);
   const open = (D.words || []).filter(w => /\?/.test(w));
-  return { snapshot: { name: record.sun.f.name && record.sun.f.name.v, age: result.age, city: record.sun.f.city && record.sun.f.city.v, state: record.sun.f.state && record.sun.f.state.v, work: record.sun.f.workSituation && record.sun.f.workSituation.v, employerType: D.form && D.form.snapshot ? D.form.snapshot.employerType : null, tier, tierWord: tierLabel(tier.tier, 'client', data.colTiers), household: hh }, whyNow: D.whyNow, words: D.words || [], numbers, goals: (D.goals || []).map(g => ({ goal: g.text, when: g.when || '', measure: g.amount ? 'Balance reaches ' + g.amount : /card|debt|owe/i.test(g.text) ? 'Balance goes down each month' : /know|spend/i.test(g.text) ? 'Every area has a real number' : /cushion|emergency/i.test(g.text) ? 'Cash reaches the cushion target' : 'A date and a dollar figure', needs: g.amount ? 'A date' : 'A dollar figure and a date' })), howToRun: { mode: record.sessionMode || 'standard', struggles: D.mindset ? D.mindset.struggles : [], stuck: D.mindset ? D.mindset.stuck : [], avoidsAccounts: !!(D.mindset && D.mindset.avoidsAccounts), openQuestions: open }, firstDraft: first, roommate, agenda, checks: D.checks || {}, notes: D.notes || [] };
+  return { context: D.context || null, pay: D.pay || null, partners: Array.isArray(hh.partners) ? hh.partners : (hh.partner ? [hh.partner] : []), snapshot: { name: record.sun.f.name && record.sun.f.name.v, age: result.age, city: record.sun.f.city && record.sun.f.city.v, state: record.sun.f.state && record.sun.f.state.v, work: record.sun.f.workSituation && record.sun.f.workSituation.v, employerType: D.form && D.form.snapshot ? D.form.snapshot.employerType : null, tier, tierWord: tierLabel(tier.tier, 'client', data.colTiers), household: hh }, whyNow: D.whyNow, words: D.words || [], numbers, goals: (D.goals || []).map(g => ({ goal: g.text, when: g.when || '', measure: g.amount ? 'Balance reaches ' + g.amount : /card|debt|owe/i.test(g.text) ? 'Balance goes down each month' : /know|spend/i.test(g.text) ? 'Every area has a real number' : /cushion|emergency/i.test(g.text) ? 'Cash reaches the cushion target' : 'A date and a dollar figure', needs: g.amount ? 'A date' : 'A dollar figure and a date' })), howToRun: { mode: record.sessionMode || 'standard', struggles: D.mindset ? D.mindset.struggles : [], stuck: D.mindset ? D.mindset.stuck : [], avoidsAccounts: !!(D.mindset && D.mindset.avoidsAccounts), openQuestions: open }, firstDraft: first, roommate, agenda, checks: D.checks || {}, notes: D.notes || [] };
 }
 
 /* The proposed Session 1 agenda from the gaps: unknown and avoided items first, gently, then the largest guesses, rent first when there is a roommate. */

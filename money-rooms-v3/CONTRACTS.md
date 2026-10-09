@@ -18,6 +18,9 @@ zero.
 Facts: `name`, `birthDate`, `state`, `city`, `workSituation`
 (employed, self-employed, between-jobs, student, retired, mixed),
 `dependents`, `filingStatus` (single, mfj, hoh; MR-008), `bigGoal`.
+Household (MR-047, MR-050, MR-073): `household.roommates[]`, `household.lease`,
+`household.partners[]` (any number; `household.partner` is the first of them for
+older readers), `household.basis` (together or mine).
 Sessions: `sessions[]` (snapshots). Slots: `outputs.<planet>`.
 
 ## 1. Income

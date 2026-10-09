@@ -273,3 +273,37 @@ test('a saved target is a to-do for next session; keep it as is takes it off', (
   setTarget(rec, 'food', 'keep', 79100, { now: NOW, actualAt: 79100, label: 'Food' });
   assert.equal(rec.sun.onepager.todos.filter(t => t.target).length, 0);
 });
+
+/* ---- MR-073: hourly or salary, any number of partners ---- */
+test('hourly pay: rate times hours a week makes a rough monthly gross, the hours land on the row, and the frequency is the one asked', () => {
+  const rec = createRecord({ id: 'h1' });
+  applyDiscovery(rec, { snapshot: { name: 'Ana', city: 'Austin', roommates: 0, partners: [] }, money: { payType: 'hourly', hourlyRate: '24.50', hoursPerWeek: '35', payFrequency: 'weekly', takeHome: '720', steadiness: 'variable' }, mindset: {} }, data, { now: NOW, today: TODAY });
+  const job = rec.planets.income.rows.find(r => r.type === 'w2');
+  assert.ok(job, 'a job row');
+  assert.equal(job.f.grossPay.v, Math.round(2450 * 35 * 52 / 12)); assert.equal(job.f.grossPay.cad, 'month'); assert.equal(job.f.grossPay.state, 'rough');
+  assert.equal(job.f.hoursPaid.v, 35); assert.equal(job.f.payFrequency.v, 'weekly'); assert.equal(job.f.stability.v, 'variable');
+  assert.equal(job.f.takeHome.v, 72000); assert.equal(job.f.takeHome.cad, 'paycheck');
+  assert.equal(rec.discovery.pay.type, 'hourly'); assert.equal(rec.discovery.pay.hourly.hoursPerWeek, 35);
+});
+test('salary pay: a bare number is a year; it varies: a bare number is a rough month', () => {
+  const a = createRecord({ id: 's1' }); applyDiscovery(a, { snapshot: { name: 'Bea', partners: [] }, money: { payType: 'salary', gross: '68,000', takeHome: '1900', payFrequency: 'biweekly' }, mindset: {} }, data, { now: NOW, today: TODAY });
+  const ja = a.planets.income.rows.find(r => r.type === 'w2'); assert.equal(ja.f.grossPay.v, 6800000); assert.equal(ja.f.grossPay.cad, 'year'); assert.equal(ja.f.takeHome.cad, 'paycheck'); assert.equal(ja.f.payFrequency.v, 'biweekly');
+  const v = createRecord({ id: 'v1' }); applyDiscovery(v, { snapshot: { name: 'Cal', partners: [] }, money: { payType: 'varies', gross: '5000', takeHome: '3800' }, mindset: {} }, data, { now: NOW, today: TODAY });
+  const jv = v.planets.income.rows.find(r => r.type === 'w2'); assert.equal(jv.f.grossPay.cad, 'month'); assert.equal(jv.f.grossPay.state, 'rough'); assert.equal(jv.f.takeHome.cad, 'month');
+});
+test('two partners: one income row each, both in the household, the first also as partner for older readers, and everyone counted in people', () => {
+  const rec = createRecord({ id: 'p2' });
+  applyDiscovery(rec, { snapshot: { name: 'Dee', roommates: 1, roommateNames: ['Kim'], lease: 'both', partners: [{ name: 'Sam', payType: 'salary', takeHome: '2000 every two weeks', payFrequency: 'biweekly' }, { name: 'Alex', payType: 'varies', takeHome: '3000' }] }, money: { payType: 'salary', gross: '68k', takeHome: '1900 every two weeks' }, mindset: {}, context: { tried: 'YNAB for a month', workStyle: 'biweekly' } }, data, { now: NOW, today: TODAY });
+  assert.deepEqual(rec.household.partners.map(p => p.nickname), ['Sam', 'Alex']); assert.deepEqual(rec.household.partner, { nickname: 'Sam' });
+  assert.equal(peopleOf(rec.household), 4);
+  const theirs = rec.planets.income.rows.filter(r => r.f.whose && r.f.whose.v === 'partner').map(r => r.nickname).sort(); assert.deepEqual(theirs, ["Alex's job", "Sam's job"]);
+  const alex = rec.planets.income.rows.find(r => r.nickname === "Alex's job"); assert.equal(alex.f.takeHome.cad, 'month');
+  assert.equal(rec.discovery.context.tried, 'YNAB for a month'); assert.equal(rec.discovery.context.workStyle, 'biweekly');
+  const s = discoverySummary(rec, compute(rec, data, { today: TODAY }), data); assert.equal(s.partners.length, 2); assert.equal(s.context.tried, 'YNAB for a month');
+});
+test('an older form with partner: true still reads as one partner', () => {
+  const rec = createRecord({ id: 'old' });
+  applyDiscovery(rec, { snapshot: { name: 'Eve', partner: true, partnerName: 'Jo', roommates: 0 }, money: { gross: '68k', takeHome: '1900 every two weeks', partnerTakeHome: '2000 every two weeks' }, mindset: {} }, data, { now: NOW, today: TODAY });
+  assert.deepEqual(rec.household.partners, [{ id: 'pt1', nickname: 'Jo' }]); assert.equal(peopleOf(rec.household), 2);
+  assert.ok(rec.planets.income.rows.find(r => r.nickname === "Jo's job"));
+});

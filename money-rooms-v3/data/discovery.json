@@ -1,6 +1,6 @@
 {
- "asOf": "2026-10-07",
- "source": "Money Rooms v3 Level 8 spec: the discovery call",
+ "asOf": "2026-10-09",
+ "source": "Money Rooms v3 Level 8 spec: the discovery call; MR-073 rewrote the script (hourly or salary, any number of roommates and partners, labelled fields, the fit questions)",
  "verify": false,
  "chips": [
   {
@@ -25,6 +25,20 @@
    }
   },
   {
+   "id": "hourly",
+   "label": "Paid hourly",
+   "writes": {
+    "income.payType": "hourly"
+   }
+  },
+  {
+   "id": "salary",
+   "label": "Salaried",
+   "writes": {
+    "income.payType": "salary"
+   }
+  },
+  {
    "id": "single",
    "label": "Single",
    "writes": {
@@ -35,7 +49,7 @@
    "id": "partnered",
    "label": "Partner",
    "writes": {
-    "household.partner": true
+    "household.partners": 1
    }
   },
   {
@@ -240,40 +254,300 @@
   ]
  ],
  "sections": {
-  "snapshot": "Snapshot",
+  "snapshot": "Getting to know you",
   "why": "Why now",
-  "money": "Money",
+  "money": "Your money, in your words",
   "spending": "Spending",
   "goals": "Goals",
   "mindset": "Mindset",
+  "fit": "How we would work together",
   "words": "Their words"
  },
  "questions": {
   "name": "What should I call you?",
   "birth": "When were you born, or how old are you?",
   "city": "Where do you live?",
+  "dependents": "Does anyone depend on your income, kids or family?",
   "work": "How would you describe work right now?",
-  "employerType": "What kind of employer is it?",
-  "roommates": "Do you live with anyone, roommates I mean?",
+  "employerType": "What kind of place do you work for?",
+  "roommates": "Do you live with roommates? How many?",
   "lease": "Whose name is on the lease?",
+  "partners": "Is there a partner, or partners, whose money is part of this picture?",
   "whyNow": "What made you reach out now?",
-  "gross": "What do you make before tax, roughly?",
-  "takeHome": "And what lands in your account each time you are paid?",
+  "tried": "What have you tried so far, apps, budgets, advice from anyone?",
+  "ifNothing": "If nothing changes over the next year, what does that look like?",
+  "payType": "Are you paid hourly, or on a salary?",
+  "salary": "What is your salary before tax?",
+  "hourlyRate": "What is your hourly rate?",
+  "hoursPerWeek": "About how many hours a week do you work?",
+  "variesGross": "In a typical month, what comes in before tax?",
+  "payFrequency": "How often do you get paid?",
+  "takeHome": "What lands in your account each time you are paid, after taxes and deductions?",
+  "takeHomeMonth": "What lands in your account in a typical month?",
+  "steadiness": "How steady is that, month to month?",
+  "contrib": "Do you put anything into a 401k or similar, and does your employer match it?",
   "cash": "Any cash or savings accounts? Rough balances are fine.",
   "invest": "Any retirement or investment accounts?",
   "debt": "Anything you owe: cards, loans?",
-  "contrib": "Do you put anything into a 401k, and does your employer match it?",
+  "bigComing": "Anything big coming in the next year or two, a move, a wedding, a car?",
   "gutTotal": "If you had to guess, what goes out in a normal month?",
-  "goals": "What would you like to be different a year from now?",
+  "goals": "If we were talking a year from now and things had gone well, what would be different?",
   "stuck": "Where do you feel most stuck?",
   "struggle": "What is the biggest struggle with money right now?",
   "avoids": "Do you tend to avoid looking at your accounts?",
-  "partner": "Is there a partner whose money is part of this picture?",
+  "stress": "On a scale of one to ten, how stressed do you feel about money right now?",
+  "workStyle": "How do you like to work: a quick weekly check-in, or a longer sit-down less often?",
+  "decisionMakers": "Who else weighs in on money decisions?",
+  "worthIt": "Three months from now, what would make this worth it for you?",
+  "partnerName": "What should I call them?",
+  "partnerPayType": "Are they paid hourly, or on a salary?",
   "partnerTakeHome": "And what lands in their account each time they are paid?"
  },
  "gentleWords": {
   "reveal": "We will look at how the real numbers compare once you have gathered them yourself.",
   "guess": "These are averages for your area, not your numbers. Want to swap any for yours?",
   "homework": "Before next time, a photo of each statement is plenty. No logins needed on the call."
- }
+ },
+ "intros": {
+  "snapshot": "Rapport first. Nothing here is a test.",
+  "why": "The reason they called is the reason they will stay. Get it in their words.",
+  "money": "Rough numbers are fine. Anything they do not know goes on their plate, not yours.",
+  "spending": "Only what they volunteer. Anything left blank gets an average for their cost area.",
+  "goals": "What would be different a year from now, and by when.",
+  "mindset": "How they feel about money decides how the sessions run.",
+  "fit": "Cadence, who else is involved, and what would make this worth it.",
+  "words": "Verbatim, one line each. Saved as said."
+ },
+ "fields": {
+  "name": {
+   "label": "Name",
+   "unit": "first name is enough",
+   "example": "Maya"
+  },
+  "birth": {
+   "label": "Birth date or age",
+   "unit": "a date or an age",
+   "example": "27, 1999, or 3/14/1999"
+  },
+  "city": {
+   "label": "City",
+   "unit": "city, state if you know it",
+   "example": "Jersey City"
+  },
+  "dependents": {
+   "label": "People depending on you",
+   "unit": "a number",
+   "example": "0"
+  },
+  "employer": {
+   "label": "Employer name",
+   "unit": "optional",
+   "example": "Acme"
+  },
+  "roommates": {
+   "label": "Number of roommates",
+   "unit": "a number",
+   "example": "2"
+  },
+  "roommateName": {
+   "label": "Roommate name",
+   "unit": "optional",
+   "example": "Dani"
+  },
+  "partners": {
+   "label": "Number of partners",
+   "unit": "a number",
+   "example": "1"
+  },
+  "partnerName": {
+   "label": "Partner name",
+   "unit": "optional",
+   "example": "Sam"
+  },
+  "whyNow": {
+   "label": "Why now",
+   "unit": "their words",
+   "example": ""
+  },
+  "tried": {
+   "label": "What they have tried",
+   "unit": "their words",
+   "example": ""
+  },
+  "ifNothing": {
+   "label": "If nothing changes",
+   "unit": "their words",
+   "example": ""
+  },
+  "salary": {
+   "label": "Salary before tax",
+   "unit": "$ a year",
+   "example": "68,000 or 68k"
+  },
+  "hourlyRate": {
+   "label": "Hourly rate",
+   "unit": "$ an hour",
+   "example": "24.50"
+  },
+  "hoursPerWeek": {
+   "label": "Hours a week",
+   "unit": "hours",
+   "example": "35"
+  },
+  "variesGross": {
+   "label": "Income before tax, typical month",
+   "unit": "$ a month, rough is fine",
+   "example": "about 5,000"
+  },
+  "takeHome": {
+   "label": "Take-home",
+   "unit": "$ per paycheck",
+   "example": "1,900"
+  },
+  "takeHomeMonth": {
+   "label": "Take-home, typical month",
+   "unit": "$ a month",
+   "example": "3,800"
+  },
+  "partnerTakeHome": {
+   "label": "Take-home",
+   "unit": "$ per paycheck",
+   "example": "2,000"
+  },
+  "contribPct": {
+   "label": "Your contribution",
+   "unit": "% of pay",
+   "example": "4%"
+  },
+  "match": {
+   "label": "The match",
+   "unit": "as they say it",
+   "example": "100% up to 4%"
+  },
+  "accountName": {
+   "label": "Account",
+   "unit": "name or nickname",
+   "example": "Ally savings"
+  },
+  "balance": {
+   "label": "Balance",
+   "unit": "$ rough balance",
+   "example": "about 3,000"
+  },
+  "debtName": {
+   "label": "Debt",
+   "unit": "name or nickname",
+   "example": "Chase card"
+  },
+  "debtBalance": {
+   "label": "Balance",
+   "unit": "$ rough, or not given",
+   "example": "4,200"
+  },
+  "bigComing": {
+   "label": "Coming up",
+   "unit": "their words",
+   "example": "moving in June, maybe a car"
+  },
+  "gutTotal": {
+   "label": "Spending a month, their guess",
+   "unit": "$ a month",
+   "example": "2,500ish"
+  },
+  "area": {
+   "label": "",
+   "unit": "$ a month",
+   "example": ""
+  },
+  "goal": {
+   "label": "Goal",
+   "unit": "in their words",
+   "example": "A trip paid in cash"
+  },
+  "goalWhen": {
+   "label": "When",
+   "unit": "a month or a year",
+   "example": "next September"
+  },
+  "goalAmount": {
+   "label": "Amount",
+   "unit": "$ in total",
+   "example": "3,000"
+  },
+  "decisionMakers": {
+   "label": "Who else",
+   "unit": "names or roles",
+   "example": "my mom, my partner"
+  },
+  "worthIt": {
+   "label": "Worth it when",
+   "unit": "their words",
+   "example": ""
+  },
+  "quote": {
+   "label": "Their words",
+   "unit": "verbatim",
+   "example": ""
+  }
+ },
+ "payTypes": [
+  [
+   "salary",
+   "Salary"
+  ],
+  [
+   "hourly",
+   "Hourly"
+  ],
+  [
+   "varies",
+   "It varies"
+  ]
+ ],
+ "payFrequencies": [
+  [
+   "weekly",
+   "Weekly"
+  ],
+  [
+   "biweekly",
+   "Every two weeks"
+  ],
+  [
+   "semimonthly",
+   "Twice a month"
+  ],
+  [
+   "monthly",
+   "Monthly"
+  ]
+ ],
+ "steadiness": [
+  [
+   "steady",
+   "Steady"
+  ],
+  [
+   "variable",
+   "Up and down"
+  ],
+  [
+   "at-risk",
+   "At risk"
+  ]
+ ],
+ "workStyles": [
+  [
+   "weekly",
+   "Weekly check-in"
+  ],
+  [
+   "biweekly",
+   "Every two weeks"
+  ],
+  [
+   "monthly",
+   "Monthly sit-down"
+  ]
+ ]
 }

@@ -265,3 +265,16 @@ Collected during the run; none blocked the build. Answer whenever.
 78. The old Home shelf of ten headline tiles is gone; Session notes shows four
     (savings rate, net worth, FI date, FI progress) and the Scoreboard shows
     the six. Is four the right number there?
+79. The discovery script now follows a general sales-discovery shape (situation,
+    why now, cost of inaction, desired outcome, fit, next step). The VIS sales
+    copy blueprint itself was not reachable from this session (the Drive
+    connector would not open). Paste its question list or structure and the
+    script can be matched to it line by line.
+80. A partner's pay is asked as take-home only (plus hourly or salary and how
+    often). Should the partner also get the before-tax question, so the tax
+    picture is complete for a couple filing together?
+81. The fit answers (cadence, who else weighs in, what would make it worth it)
+    sit on the record and the summary only. Should the cadence pick set the
+    program's session spacing, and should "who else" become a reminder to
+    invite them to session 1?
+

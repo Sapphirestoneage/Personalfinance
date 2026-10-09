@@ -104,6 +104,14 @@ export const MIGRATIONS = [
       return rec;
     },
   },
+  {
+    from: 5, to: 6,
+    note: 'MR-073: the household holds any number of partners in `partners`; `partner` stays the first of them for every reader that knows only one',
+    up(rec) {
+      if (rec.household && !Array.isArray(rec.household.partners)) rec.household.partners = rec.household.partner ? [{ id: 'pt1', nickname: (rec.household.partner.nickname || '').trim() }] : [];
+      return rec;
+    },
+  },
 ];
 
 /* Level 8 (MR-046): anchors backfilled from the earliest journal value whose source is not a guess; household and tier defaults; discovery slots. */

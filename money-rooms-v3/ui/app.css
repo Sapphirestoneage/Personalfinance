@@ -812,10 +812,24 @@ body[data-view="client"] .top-card .headline { font-size: var(--fs-24); line-hei
 .chipbar .chip.toggle[aria-pressed="true"] { background: var(--sapphire-700); color: var(--paper); border-color: var(--sapphire-700); }
 .disc-section { margin-top: var(--s-3); }
 .disc-section h2 { font-size: var(--fs-16); margin-bottom: var(--s-1); }
-.disc-q { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: var(--s-1) var(--s-2); align-items: start; padding: 6px 0; border-bottom: 1px solid var(--line-soft); }
+.disc-q { display: block; padding: var(--s-2) 0 var(--s-3); border-bottom: 1px solid var(--line-soft); }
 .disc-q label, .disc-q .q { font-size: var(--fs-14); color: var(--ink); }
 .disc-q .q .small { display: block; color: var(--slate); }
-.disc-row { display: flex; gap: var(--s-1); flex-wrap: wrap; align-items: center; }
+.disc-row { display: flex; gap: var(--s-2); flex-wrap: wrap; align-items: flex-end; }
+/* MR-073: a question to read aloud, then labelled fields that say what to type and in what unit */
+.disc-q .readaloud { font-size: var(--fs-16); line-height: 24px; margin: 0 0 var(--s-1); max-width: 60ch; }
+.disc-answer { display: flex; flex-direction: column; gap: var(--s-2); align-items: flex-start; }
+.disc-answer > .disc-field, .disc-answer > .disc-row, .disc-answer > .disc-list, .disc-answer > div { align-self: stretch; }
+.disc-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.disc-label { font-size: var(--fs-13); color: var(--ink); font-weight: var(--w-semibold); display: flex; gap: var(--s-2); align-items: baseline; flex-wrap: wrap; }
+.disc-label .unit { font-weight: var(--w-regular); color: var(--slate); font-size: var(--fs-13); }
+.disc-field .example { font-size: var(--fs-13); }
+.disc-field .saidbox { display: flex; flex-direction: column; gap: 2px; }
+.disc-intro { margin: 0 0 var(--s-2); }
+.disc-sub { border-left: 2px solid var(--line); padding: var(--s-2) var(--s-3); margin: var(--s-2) 0; display: flex; flex-direction: column; gap: var(--s-2); }
+.disc-sub h4 { margin: 0; font-size: var(--fs-14); }
+.disc-areas { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--s-2) var(--s-3); }
+.disc-q label.check { display: inline-flex; gap: 6px; align-items: center; font-size: var(--fs-13); color: var(--ink); }
 .disc-list { list-style: none; padding-left: 0; }
 .disc-list li { display: flex; gap: var(--s-1); align-items: center; padding: 4px 0; }
 .goal-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--s-2); }

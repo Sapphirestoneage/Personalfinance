@@ -7,7 +7,7 @@ import { append, undoTarget, redoTarget } from './journal.js';
 import { field as mkField, isState, isSource } from './states.js';
 
 import { freshFacts } from './fields.js';
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 export function newId() {
   return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -239,7 +239,10 @@ export function fileQuickNote(record, noteId, meta) {
 export function setHousehold(record, household, meta) {
   const m = meta || {};
   const old = record.household ? JSON.parse(JSON.stringify(record.household)) : null;
-  const next = { roommates: (household.roommates || []).map((r, i) => ({ id: r.id || ('rm' + (i + 1)), nickname: r.nickname || '', shareDefault: typeof r.shareDefault === 'number' ? r.shareDefault : Math.round(10000 / ((household.roommates || []).length + 1)) / 10000 })), lease: household.lease || 'none', unitSize: household.unitSize || null , partner: household.partner ? { nickname: (household.partner.nickname || '').trim() } : null, basis: household.basis === 'mine' ? 'mine' : 'together' };
+  const next = { roommates: (household.roommates || []).map((r, i) => ({ id: r.id || ('rm' + (i + 1)), nickname: r.nickname || '', shareDefault: typeof r.shareDefault === 'number' ? r.shareDefault : Math.round(10000 / ((household.roommates || []).length + 1)) / 10000 })), lease: household.lease || 'none', unitSize: household.unitSize || null , partner: null, partners: [], basis: household.basis === 'mine' ? 'mine' : 'together' };
+  /* MR-073: any number of partners; the first is also `partner` for every reader that knows only one */
+  next.partners = (Array.isArray(household.partners) ? household.partners : (household.partner ? [household.partner] : [])).filter(Boolean).map((p, i) => ({ id: p.id || ('pt' + (i + 1)), nickname: (p.nickname || '').trim() }));
+  next.partner = next.partners.length ? { nickname: next.partners[0].nickname } : null;
   if (JSON.stringify(old) === JSON.stringify(next)) return null;
   record.household = next;
   const line = append(record.journal, { kind: 'household', planet: 'sun', rowId: 'household', field: 'household', owner: 'sun', old, new: JSON.parse(JSON.stringify(next)), source: 'client', state: 'known', session: m.session || null, why: m.why === undefined ? null : m.why }, m.now);
