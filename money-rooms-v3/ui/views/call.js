@@ -58,28 +58,41 @@ function build(host, app, opts) {
     return wrap;
   }
 
-  /* ---- Confirm ---- */
+  /* ---- Confirm (MR-074): one table, not a script. The coach reads the intro once; each row is an item, what was given, its state, and three actions. */
+  const PLANET_GROUPS = [['sun', 'Facts'], ['income', 'Income'], ['invest', 'Accounts'], ['debt', 'Debts'], ['spending', 'Spending'], ['safety', 'Safety net'], ['taxes', 'Taxes'], ['life', 'Goals']];
+  const cap = t => t ? t.charAt(0).toUpperCase() + t.slice(1) : '';
   function drawConfirm(def) {
     const c = confirmQuestions(app.record, app.result, app.data); const hh = app.record.household; const tier = app.result.colTier; const tiers = app.data.colTiers;
     body.appendChild(say(gentle() ? 'Let us start with what you told me. Nothing to look up; just whether it still feels right.' : def.intro));
-    const said = h('div', { class: 'confirm-list' });
-    if (!c.tierConfirmed) said.appendChild(confirmLine('You live in ' + (app.record.sun.f.city && app.record.sun.f.city.v || 'your city') + ', a ' + tierLabel(tier.tier, 'client', tiers) + '.', [['Still right', () => app.confirmDiscovery('tier')]], h('span', { class: 'row tierchips' }, ['HCOL', 'MCOL', 'LCOL'].map(tt => h('button', { class: 'chip toggle' + (tier.tier === tt ? ' on' : ''), 'aria-pressed': String(tier.tier === tt), onClick: () => { app.colTier({ tier: tt, source: 'client' }); app.confirmDiscovery('tier'); } }, tt)))));
-    if (!c.householdConfirmed) said.appendChild(confirmLine(householdSentence(hh), [['Still right', () => app.confirmDiscovery('household')], ['Change it', () => app.openDrawer(householdEditor(app))]]));
-    c.said.forEach(i => said.appendChild(confirmLine(i.sentence, [['Still right', () => { if (i.rowId !== 'sun') app.setFieldWhy(i.rowId, i.field, i.value, i.state === 'unknown' ? 'unknown' : i.state === 'will-send' ? 'will-send' : 'known', 'client', i.cad || undefined, null); app.confirmDiscovery(i.rowId + '|' + i.field); }], ['Change it', () => editInline(i)], ["Don't know", () => { if (i.rowId !== 'sun') app.setFieldWhy(i.rowId, i.field, null, 'unknown', 'client', undefined, 'correction'); app.confirmDiscovery(i.rowId + '|' + i.field); }]])));
-    body.appendChild(h('h3', null, 'What you told me', h('span', { class: 'tag' }, said.children.length ? said.children.length + ' to confirm' : 'all confirmed')));
-    body.appendChild(said.children.length ? said : h('p', { class: 'muted small' }, 'Everything from the first call is confirmed.'));
-    /* my guesses */
-    body.appendChild(h('h3', null, 'My guesses', h('span', { class: 'tag' }, c.guesses.length + (c.guesses.length === 1 ? ' guess' : ' guesses'))));
+    const rows = [];
+    if (!c.tierConfirmed) rows.push({ group: 'Household', label: 'Where you live', given: (app.record.sun.f.city && app.record.sun.f.city.v || 'your city') + ', ' + tierLabel(tier.tier, 'client', tiers), state: 'as said', taps: [['Confirm', () => { app.confirmDiscovery('tier'); draw(); }]], extra: h('span', { class: 'row tierchips' }, ['HCOL', 'MCOL', 'LCOL'].map(tt => h('button', { class: 'chip toggle' + (tier.tier === tt ? ' on' : ''), 'aria-pressed': String(tier.tier === tt), onClick: () => { app.colTier({ tier: tt, source: 'client' }); app.confirmDiscovery('tier'); draw(); } }, tt))) });
+    if (!c.householdConfirmed) rows.push({ group: 'Household', label: 'Who lives there', given: householdSentence(hh), state: 'as said', taps: [['Confirm', () => { app.confirmDiscovery('household'); draw(); }], ['Change', () => app.openDrawer(householdEditor(app))]] });
+    c.said.forEach(i => rows.push({ group: (PLANET_GROUPS.find(g => g[0] === i.planet) || [null, 'Other'])[1], label: cap(i.label), given: i.given, state: i.stateWord,
+      taps: [['Confirm', () => { if (i.rowId !== 'sun') app.setFieldWhy(i.rowId, i.field, i.value, i.state === 'unknown' ? 'unknown' : i.state === 'will-send' ? 'will-send' : 'known', 'client', i.cad || undefined, null); app.confirmDiscovery(i.rowId + '|' + i.field); draw(); }], ['Change', () => editInline(i)], ["Don't know", () => { if (i.rowId !== 'sun') app.setFieldWhy(i.rowId, i.field, null, 'unknown', 'client', undefined, 'correction'); app.confirmDiscovery(i.rowId + '|' + i.field); draw(); }]] }));
+    body.appendChild(h('h3', null, 'From the first call', h('span', { class: 'tag' }, rows.length ? rows.length + ' to confirm' : 'all confirmed')));
+    if (rows.length) {
+      const tbl = h('table', { class: 'data confirm-list' }, h('thead', null, h('tr', null, h('th', null, 'Item'), h('th', null, 'What they gave'), h('th', null, 'State'), h('th', null, ''))));
+      const tb = h('tbody'); let lastGroup = null;
+      rows.forEach(r => {
+        if (r.group !== lastGroup) { tb.appendChild(h('tr', { class: 'confirm-group' }, h('th', { colspan: '4' }, r.group))); lastGroup = r.group; }
+        tb.appendChild(h('tr', { class: 'confirm-line' }, h('td', { class: 'confirm-item' }, r.label), h('td', null, r.given, r.extra ? h('div', null, r.extra) : null), h('td', null, h('span', { class: 'chip state-' + (r.state === 'rough' ? 'rough' : r.state === 'open' ? 'unknown' : 'known') }, r.state)),
+          h('td', { class: 'confirm-acts' }, h('div', { class: 'row taps' }, r.taps.map(([l, fn]) => h('button', { class: 'btn small' + (l === 'Confirm' ? ' primary' : ''), onClick: fn }, l))))));
+      });
+      tbl.appendChild(tb); body.appendChild(h('div', { class: 'tablewrap' }, tbl));
+    } else body.appendChild(h('p', { class: 'muted small' }, 'Everything from the first call is confirmed.'));
+    /* the averages standing in for her numbers */
+    body.appendChild(h('h3', null, 'Averages standing in', h('span', { class: 'tag' }, c.guesses.length + (c.guesses.length === 1 ? ' area' : ' areas'))));
     if (c.guesses.length) {
       body.appendChild(say(def.guessIntro));
-      const list = h('div', { class: 'confirm-list' });
-      c.guesses.forEach(g => list.appendChild(confirmLine(g.sentence, [['Use mine', () => useMine(g)], ['Keep the guess for now', () => app.confirmDiscovery('guess|' + g.rowId)], ['Not for me', () => { app.setFieldWhy(g.rowId, 'amount', null, 'not-for-me', 'client', undefined, 'correction'); app.mutate(rec => { const r = rec.planets.spending.rows.find(x => x.id === g.rowId); if (r) r.guess = false; }, 'rows'); }]], h('span', { class: 'chip src src-estimated' }, 'Guess, ' + g.tier))));
-      body.appendChild(list);
-    } else body.appendChild(h('p', { class: 'muted small' }, 'No guesses left. Every area has their number.'));
+      const tbl = h('table', { class: 'data confirm-list guess-list' }, h('thead', null, h('tr', null, h('th', null, 'Area'), h('th', { class: 'num' }, 'Average, ' + (c.guesses[0].tier || tier.tier)), h('th', { class: 'num' }, 'Their share'), h('th', null, ''))));
+      const tb = h('tbody');
+      c.guesses.forEach(g => tb.appendChild(h('tr', { class: 'confirm-line guess-row' }, h('td', { class: 'confirm-item' }, cap(g.label)), h('td', { class: 'num' }, money(g.cents) + ' a month'), h('td', { class: 'num small muted' }, g.shared ? money(Math.round(g.cents * (g.share || 0.5))) : ''),
+        h('td', { class: 'confirm-acts' }, h('div', { class: 'row taps' }, h('button', { class: 'btn small primary', onClick: () => useMine(g) }, 'Use theirs'), h('button', { class: 'btn small', onClick: () => { app.confirmDiscovery('guess|' + g.rowId); draw(); } }, 'Keep for now'), h('button', { class: 'btn small', onClick: () => { app.setFieldWhy(g.rowId, 'amount', null, 'not-for-me', 'client', undefined, 'correction'); app.mutate(rec => { const r = rec.planets.spending.rows.find(x => x.id === g.rowId); if (r) r.guess = false; }, 'rows'); draw(); } }, 'Not for them'))))));
+      tbl.appendChild(tb); body.appendChild(h('div', { class: 'tablewrap' }, tbl));
+    } else body.appendChild(h('p', { class: 'muted small' }, 'No averages left. Every area has their number.'));
     body.appendChild(soFarCard());
     body.appendChild(h('div', { class: 'row', style: { marginTop: '12px' } }, h('button', { class: 'btn primary', onClick: () => { done(c.said.length || c.guesses.length ? 'partly' : 'done'); stop = 'gut'; qi = 0; draw(); } }, 'On to what you spend')));
   }
-  function confirmLine(sentence, taps, extra) { return h('div', { class: 'confirm-line' }, h('p', { class: 'readaloud' }, sentence), h('div', { class: 'row taps' }, taps.map(([l, fn]) => h('button', { class: 'btn small' + (l === 'Still right' || l === 'Use mine' ? ' primary' : ''), onClick: fn }, l)), extra || null)); }
   function editInline(i) {
     const box = answerBox('New value for ' + i.label, p => { if (!p) return; if (p.unknown) { app.setFieldWhy(i.rowId, i.field, null, 'unknown', 'client', undefined, 'correction'); } else if (i.rowId === 'sun') { app.setFieldWhy('sun', i.field, i.field === 'birthDate' ? (parseBirthLike(p.raw) || p.raw) : p.raw, 'known', 'client', undefined, 'correction'); } else { app.setFieldWhy(i.rowId, i.field, p.none ? 0 : p.cents, p.none ? 'none' : (p.state === 'rough' ? 'rough' : 'known'), 'client', i.kind === 'money' ? p.cadence : undefined, 'correction'); } app.confirmDiscovery(i.rowId + '|' + i.field); closeOverlay(); draw(); }, { defaultCadence: i.cad || 'month', noNone: i.kind !== 'money' });
     app.openDrawer(h('div', null, h('h2', null, 'Change it'), h('p', { class: 'small muted' }, i.label), box), { label: 'Change it' });

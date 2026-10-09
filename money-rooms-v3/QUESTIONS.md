@@ -277,4 +277,8 @@ Collected during the run; none blocked the build. Answer whenever.
     sit on the record and the summary only. Should the cadence pick set the
     program's session spacing, and should "who else" become a reminder to
     invite them to session 1?
+82. The Confirm stop now shows every first-call item as a table row with
+    Confirm, Change and Don't know. With twenty or more rows, should there be
+    one "Confirm all that are unchanged" button at the top, leaving the coach
+    to tap only the rows that moved?
 

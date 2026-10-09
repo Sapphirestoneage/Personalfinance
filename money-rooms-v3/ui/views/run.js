@@ -22,6 +22,10 @@ import { programOf, nextSessionNumber, startSession, blockStatus, moveBlock, clo
 import { snapshotValues, beforeAfter, testimonialPrompt, blindGuessTest } from '../../engine/outcomes.js';
 import { parseSaid, toMonthly } from '../../engine/parse.js';
 import { getAnchor } from '../../engine/anchors.js';
+import { planBrief, planOpens } from '../../engine/planbrief.js';
+import { versionKey } from '../../engine/sensitivity.js';
+let opensCache = { key: null, value: null };
+const cap1 = t => t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
 import { roommateOutcome } from '../../engine/scenarios.js';
 import { mountStop, householdEditor, householdSentence, variancePanel, targetsPanel } from './call.js';
 import { nextWins } from './goals.js';
@@ -66,15 +70,15 @@ export function mount(host, app) {
   }
   function drawTimeline() {
     clear(tl); const m = minute(); const blocks = plan.blocks; const tot = blocks.reduce((s, b) => s + b.minutes.target, 0) || 1;
-    const bar = h('div', { class: 'tl-bar' });
-    blocks.forEach((b, k) => { const done = doneIds().includes(b.id); bar.appendChild(h('div', { class: 'tl-seg' + (k === idx ? ' current' : '') + (done ? ' done' : '') + ' prio-' + b.priority, style: { flex: String(b.minutes.target) }, title: b.name + ', about ' + b.minutes.target + ' minutes', role: 'button', tabindex: '0', 'aria-label': b.name, onClick: () => { idx = k; blockStartedAt = Date.now(); draw(); }, onKeydown: e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); idx = k; blockStartedAt = Date.now(); draw(); } } }, h('span', { class: 'tl-num' }, String(k + 1)), h('span', { class: 'tl-name' }, b.name))); });
-    /* MR-057: a name that does not fit its segment is never cut short; the segment shows its number and the legend below carries the names */
-    /* MR-072: every segment carries a short label; the full name sits on hover and in the current block card */
-    requestAnimationFrame(() => { bar.querySelectorAll('.tl-seg').forEach(seg => { const nm = seg.querySelector('.tl-name'); if (nm && (nm.offsetWidth === 0 || nm.scrollWidth > nm.clientWidth + 1)) { seg.classList.add('tight'); if (seg.clientWidth < 28) seg.classList.add('narrow'); } if (seg.clientWidth < 16) seg.classList.add('micro'); /* too thin even for a number; the title still names it */ }); });
-    const pct = v => Math.min(100, v / Math.max(tot, plan.markers.closeAt + 7) * 100) + '%';
-    const marks = h('div', { class: 'tl-marks' }, h('span', { class: 'tl-mark', style: { left: pct(plan.markers.behindAt) }, title: 'Minute ' + plan.markers.behindAt }), h('span', { class: 'tl-mark close', style: { left: pct(plan.markers.closeAt) }, title: 'Minute ' + plan.markers.closeAt }), h('span', { class: 'tl-now', style: { left: pct(m) } }));
-    tl.appendChild(h('div', { class: 'tl-head row' }, h('span', { class: 'tl-clock', 'aria-live': 'polite' }, 'Minute ' + Math.floor(m) + (paused ? ', paused' : '')), h('span', { class: 'small muted' }, 'Part ' + (idx + 1) + ' of ' + blocks.length + ': ' + (blocks[idx] ? blocks[idx].name : ''))));
-    tl.appendChild(bar); tl.appendChild(marks);
+    const span = Math.max(tot, plan.markers.closeAt + 7); const pct = v => Math.max(0, Math.min(100, v / span * 100)) + '%';
+    tl.appendChild(h('div', { class: 'tl-head row' }, h('span', { class: 'tl-clock', 'aria-live': 'polite' }, 'Minute ' + Math.floor(m) + (paused ? ', paused' : '')), h('span', { class: 'small muted' }, 'Part ' + (idx + 1) + ' of ' + blocks.length + (blocks[idx] ? ': ' + blocks[idx].name : '') + '. ' + tot + ' minutes planned, close by minute ' + plan.markers.closeAt + '.')));
+    /* the clock track: how far into the hour, with the behind and close marks */
+    tl.appendChild(h('div', { class: 'tl-track', role: 'img', 'aria-label': 'Minute ' + Math.floor(m) + ' of ' + span }, h('div', { class: 'tl-fill', style: { width: pct(m) } }), h('span', { class: 'tl-mark', style: { left: pct(plan.markers.behindAt) }, title: 'Behind after minute ' + plan.markers.behindAt }), h('span', { class: 'tl-mark close', style: { left: pct(plan.markers.closeAt) }, title: 'Close by minute ' + plan.markers.closeAt }), h('span', { class: 'tl-now', style: { left: pct(m) } })));
+    /* MR-074: the parts as a stepper, every name in full; the row scrolls sideways when it must */
+    const bar = h('div', { class: 'tl-bar', role: 'list' });
+    blocks.forEach((b, k) => { const done = doneIds().includes(b.id); bar.appendChild(h('button', { type: 'button', class: 'tl-seg' + (k === idx ? ' current' : '') + (done ? ' done' : '') + ' prio-' + b.priority, role: 'listitem', 'aria-current': k === idx ? 'step' : null, title: b.name + ', about ' + b.minutes.target + ' minutes' + (done ? ', done' : ''), onClick: () => { idx = k; blockStartedAt = Date.now(); draw(); } }, h('span', { class: 'tl-num' }, String(k + 1)), h('span', { class: 'tl-text' }, h('span', { class: 'tl-name' }, b.name), h('span', { class: 'tl-min' }, b.minutes.target + ' min' + (b.priority === 'could' ? ', if ahead' : b.priority === 'should' ? ', if time' : ''))))); });
+    tl.appendChild(bar);
+    requestAnimationFrame(() => { const cur = bar.querySelector('.tl-seg.current'); if (cur && cur.scrollIntoView) cur.scrollIntoView({ block: 'nearest', inline: 'nearest' }); });
   }
   function applyBend() {
     if (!plan.blocks[idx]) return;
@@ -146,12 +150,26 @@ export function mount(host, app) {
     foot.appendChild(nextBtn());
   }
   function drawPlan() {
+    const brief = planBrief(plan, app.record, app.result, app.data);
     body.appendChild(say(plan.goal));
-    body.appendChild(h('ol', { class: 'plan-list' }, plan.blocks.filter(x => !['checkin', 'loops', 'plan'].includes(x.id)).map(x => h('li', null, x.name))));
+    const shown = brief.blocks.filter(x => !['checkin', 'loops', 'plan'].includes(x.id));
+    body.appendChild(h('p', { class: 'small muted plan-sum' }, shown.length + ' parts, ' + brief.totalMinutes + ' minutes planned, close by minute ' + brief.closeAt + '. Each part says what is already on file and what filling it would open.'));
+    const list = h('ol', { class: 'plan-list' });
+    shown.forEach(x => list.appendChild(h('li', { class: 'prio-' + x.priority + (x.movedIn ? ' moved-in' : ''), dataset: { block: x.id } },
+      h('span', { class: 'plan-n' }, String(shown.indexOf(x) + 1)),
+      h('div', { class: 'plan-main' }, h('span', { class: 'plan-name' }, x.name, x.movedIn ? h('span', { class: 'chip' }, 'from session ' + x.from) : null), h('span', { class: 'plan-meta small muted' }, x.minutes + ' min, ' + x.priorityWord.toLowerCase()), x.outputs ? h('div', { class: 'plan-out small' }, cap1(x.outputs)) : null),
+      h('div', { class: 'plan-have small' }, h('span', { class: 'plan-k' }, 'On file'), x.have ? cap1(x.have) : 'Nothing yet'),
+      h('div', { class: 'plan-opens small', dataset: { opens: x.id } }, h('span', { class: 'plan-k' }, 'Opens'), h('span', { class: 'muted' }, 'checking')))));
+    body.appendChild(list);
+    /* the "opens" column runs the unlock probes once per part, after the card has painted; the answer is kept per record version */
+    const key = versionKey(app.record, app.result.today) + ':' + plan.n;
+    const paint = opens => shown.forEach(x => { const cell = list.querySelector('[data-opens="' + x.id + '"]'); if (!cell || !cell.isConnected) return; const o = opens[x.id] || { count: 0, items: [] }; clear(cell); cell.appendChild(h('span', { class: 'plan-k' }, 'Opens')); if (!o.count) { cell.appendChild(h('span', { class: 'muted' }, 'Nothing new opens here')); return; } const names = o.items.slice(0, 4).map(it => it.name); cell.appendChild(h('span', null, names.join(', ') + (o.items.length > 4 ? ' and ' + (o.items.length - 4) + ' more' : ''))); });
+    if (opensCache.key === key) paint(opensCache.value);
+    else setTimeout(() => { const value = planOpens(plan, app.record, app.result, app.data); opensCache = { key, value }; paint(value); }, 0);
     foot.appendChild(nextBtn("Let's go"));
   }
   function drawHousing(b) {
-    body.appendChild(say(householdSentence(app.record.household) + ' Still right?'));
+    body.appendChild(say(householdSentence(app.record.household) + ' Has anything changed?'));
     body.appendChild(householdEditor(app));
     body.appendChild(say(b.questions[0].text));
     body.appendChild(saidInput('Rent, their words', p => { const people = 1 + (app.record.household.roommates || []).length; const monthly = toMonthly(p.cents, p.cadence, p.payFrequency); const share = p.isShare || (p.split && p.share !== null) ? toMonthly(p.share, p.cadence, p.payFrequency) : (app.record.household.roommates.length ? Math.round(monthly / people) : monthly); if (getAnchor(app.record, 'gut', 'spending:accommodation')) app.reanchor('gut', 'spending:accommodation', share, { shared: people > 1 }); else app.anchor('gut', 'spending:accommodation', share, { shared: people > 1 }); app.toast('Rent noted: ' + money(share) + ' a month, your part'); }));

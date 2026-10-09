@@ -20,13 +20,13 @@ export function gutQuestions(record, result, data) {
   if (!hasValue(record.sun.f.city)) qs.push({ id: 'sun:city', kind: 'text', sentence: 'Where do you live?', target: { rowId: 'sun', field: 'city' } });
   const take = S && S.income.takeHomeMonthly && S.income.takeHomeMonthly.status === 'ok';
   if (!take) qs.push({ id: 'income:takeHome', kind: 'money', sentence: 'What lands in your account each time you are paid?', anchor: 'income:takeHome', defaultCadence: 'paycheck' });
-  qs.push(gut['spending:total'] ? { id: 'gut:total', kind: 'confirm', sentence: 'You said about ' + dollars(gut['spending:total'].cents) + ' goes out in a normal month. Still feel right?', anchor: 'spending:total', current: gut['spending:total'].cents } : { id: 'gut:total', kind: 'money', sentence: data.callpath.stops.find(s => s.id === 'gut').intro, anchor: 'spending:total' });
+  qs.push(gut['spending:total'] ? { id: 'gut:total', kind: 'confirm', sentence: 'Earlier you put a normal month at about ' + dollars(gut['spending:total'].cents) + '. Does that still feel right?', anchor: 'spending:total', current: gut['spending:total'].cents } : { id: 'gut:total', kind: 'money', sentence: data.callpath.stops.find(s => s.id === 'gut').intro, anchor: 'spending:total' });
   const standIns = (S && S.spending.standIns) || {};
   const ordered = areas.slice().sort((a, b) => (standIns[b] === 'guess' ? 1 : 0) - (standIns[a] === 'guess' ? 1 : 0));
   ordered.forEach((cat, i) => {
     const a = gut['spending:' + cat]; const label = areaLabel(data, cat);
     const shared = (cat === 'accommodation' || cat === 'utilities') && record.household && record.household.roommates.length;
-    if (a) qs.push({ id: 'gut:' + cat, kind: 'confirm', area: cat, areaIndex: i + 1, areaCount: ordered.length, sentence: 'For ' + label + ' you said about ' + dollars(a.cents) + ' a month' + (a.shared ? ', your part' : '') + '. Still feel right?', anchor: 'spending:' + cat, current: a.cents, shared });
+    if (a) qs.push({ id: 'gut:' + cat, kind: 'confirm', area: cat, areaIndex: i + 1, areaCount: ordered.length, sentence: 'For ' + label + ' you had about ' + dollars(a.cents) + ' a month' + (a.shared ? ', your part' : '') + '. Still feel right?', anchor: 'spending:' + cat, current: a.cents, shared });
     else qs.push({ id: 'gut:' + cat, kind: 'money', area: cat, areaIndex: i + 1, areaCount: ordered.length, sentence: data.callpath.stops.find(s => s.id === 'gut').areaPrompt.replace('{area}', label) + (standIns[cat] === 'guess' ? ' (a guess fills it today)' : ''), anchor: 'spending:' + cat, shared, sharedPrompt: shared ? data.callpath.stops.find(s => s.id === 'gut').sharedPrompt : null, guess: standIns[cat] === 'guess' });
   });
   const debt = S && S.debt.totalDebt && S.debt.totalDebt.status === 'ok';
@@ -44,10 +44,10 @@ export function dreamQuestions(record, result, data) {
   const areas = data.callpath.areas; const stop = data.callpath.stops.find(s => s.id === 'dream');
   areas.forEach(([cat, label], i) => {
     const a = dream['spending:' + cat];
-    qs.push({ id: 'dream:' + cat, kind: a ? 'confirm' : 'money', area: cat, areaIndex: i + 1, areaCount: areas.length, sentence: a ? 'For ' + label + ' you said what you would want is ' + dollars(a.cents) + ' a month. Still?' : stop.areaPrompt.replace('{area}', label), anchor: 'spending:' + cat, current: a ? a.cents : null, gut: getAnchor(record, 'gut', 'spending:' + cat), housingChoice: cat === 'accommodation' && record.household && record.household.roommates.length ? stop.housingChoice : null });
+    qs.push({ id: 'dream:' + cat, kind: a ? 'confirm' : 'money', area: cat, areaIndex: i + 1, areaCount: areas.length, sentence: a ? 'For ' + label + ' you pictured what you would want is ' + dollars(a.cents) + ' a month. Still?' : stop.areaPrompt.replace('{area}', label), anchor: 'spending:' + cat, current: a ? a.cents : null, gut: getAnchor(record, 'gut', 'spending:' + cat), housingChoice: cat === 'accommodation' && record.household && record.household.roommates.length ? stop.housingChoice : null });
   });
   const fi = dream['life:fiAge'];
-  qs.push({ id: 'dream:fiAge', kind: fi ? 'confirm' : 'age', sentence: fi ? 'You said you would want work to be optional at ' + fi.value + '. Still?' : stop.fiAge, anchor: 'life:fiAge', current: fi ? fi.value : null });
+  qs.push({ id: 'dream:fiAge', kind: fi ? 'confirm' : 'age', sentence: fi ? 'You pictured work being optional at ' + fi.value + '. Still the age?' : stop.fiAge, anchor: 'life:fiAge', current: fi ? fi.value : null });
   qs.push({ id: 'dreamCard', kind: 'card', sentence: 'Today against the dream.' });
   return qs;
 }
@@ -60,9 +60,20 @@ export function actualItems(record, result, data, leverageItems) {
   return first.concat(rest);
 }
 
+/* MR-074: the Confirm stop is a table, not a script. Each item carries what it is, what was given and a state word. */
+export function givenText(i) {
+  if (i.state === 'unknown') return 'not given';
+  if (i.state === 'will-send') return 'they will send it';
+  if (i.state === 'none') return 'none';
+  if (i.kind === 'money') return dollars(numberOf({ v: i.value, state: i.state, source: 'discovery' }) || 0) + (i.cad && i.cad !== 'month' ? (i.cad === 'paycheck' ? ' per paycheck' : i.cad === 'year' ? ' a year' : i.cad === 'week' ? ' a week' : i.cad === 'oneoff' ? '' : ' per ' + i.cad) : ' a month');
+  if (i.kind === 'percent') return (Math.round((i.value || 0) * 1000) / 10) + '%';
+  if (i.rowId === 'sun' && i.field === 'birthDate') return String(i.value);
+  return i.value === null || i.value === undefined ? 'not given' : String(i.value);
+}
+export function stateWord(i) { return i.state === 'rough' ? 'rough' : i.state === 'unknown' ? 'open' : i.state === 'will-send' ? 'waiting' : i.state === 'known' ? 'as said' : i.state || ''; }
 export function confirmQuestions(record, result, data) {
   const c = confirmItems(record, result, data);
-  return { said: c.said.map(i => Object.assign({}, i, { sentence: sayLine(i, data) })), guesses: c.guesses.map(g => Object.assign({}, g, { sentence: 'For ' + g.label.toLowerCase() + ' I guessed ' + dollars(g.cents) + ' a month' + (g.shared ? ' for the whole place, so about ' + dollars(Math.round(g.cents * (g.share || 0.5))) + ' as your share' : '') + '. Is yours close?' })), tierConfirmed: c.tierConfirmed, householdConfirmed: c.householdConfirmed };
+  return { said: c.said.map(i => Object.assign({}, i, { sentence: sayLine(i, data), given: givenText(i), stateWord: stateWord(i) })), guesses: c.guesses.map(g => Object.assign({}, g, { sentence: 'For ' + g.label.toLowerCase() + ' I guessed ' + dollars(g.cents) + ' a month' + (g.shared ? ' for the whole place, so about ' + dollars(Math.round(g.cents * (g.share || 0.5))) + ' as your share' : '') + '. Is yours close?' })), tierConfirmed: c.tierConfirmed, householdConfirmed: c.householdConfirmed };
 }
 function sayLine(i, data) {
   if (i.kind === 'money') return 'You said ' + (i.state === 'unknown' ? 'you did not know ' + i.label : i.state === 'will-send' ? 'you would send ' + i.label : (dollars(numberOf({ v: i.value, state: i.state, source: 'discovery' }) || 0) + (i.cad && i.cad !== 'month' ? ' per ' + (i.cad === 'paycheck' ? 'paycheck' : i.cad) : ' a month') + ' for ' + i.label)) + '. Still right?';

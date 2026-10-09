@@ -3,6 +3,8 @@
 Updated: 2026-10-09
 
 ## Done
+- Call runner polish (MR-074): a stepper timeline with full names, a plan brief that shows what is on file
+  and what each part opens, Confirm as two tables with buttons that respond.
 - Discovery call rewrite (MR-073): hourly or salary first, any number of roommates and partners (schema 6,
   household.partners), every field labelled with its unit and an example, the why-now and fit questions;
   the summary shows pay, partners and context.

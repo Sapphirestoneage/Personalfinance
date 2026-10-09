@@ -381,10 +381,10 @@ export const flows = [
     await page.waitForSelector('.callpath .stop');
     check('the call path has six stops and opens on Confirm', (await page.$$('.callpath .stop')).length === 6 && (await page.textContent('.callpath .stop.current')).indexOf('Confirm') !== -1);
     const confirmText = await page.textContent('.call-body');
-    check('Confirm reads back what they said and the guesses', confirmText.indexOf('Still right?') !== -1 && confirmText.indexOf('Is yours close?') !== -1 && confirmText.indexOf('Guess, HCOL') !== -1);
+    check('Confirm lists what they gave and the averages as tables', /From the first call/.test(confirmText) && /Averages standing in/.test(confirmText) && /Average, HCOL/.test(confirmText) && (await page.locator('table.confirm-list tr.confirm-line').count()) >= 10 && !/Still right\?/.test(confirmText)); /* MR-074 */
     check('Confirm shows the roommate worst case', confirmText.indexOf('If it all falls on you') !== -1);
     /* rent is the first guess for a household with a roommate; their half replaces it */
-    await page.click('.confirm-list .confirm-line:has-text("rent") button:has-text("Use mine")');
+    await page.click('.confirm-list .confirm-line:has-text("rent") button:has-text("Use theirs")');
     await page.waitForSelector('.drawer input.input.big');
     await page.fill('.drawer input.input.big', 'my half is 1,650');
     await page.press('.drawer input.input.big', 'Enter');

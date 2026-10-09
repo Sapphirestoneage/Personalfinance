@@ -6,7 +6,7 @@
   {
    "id": "confirm",
    "label": "Confirm",
-   "title": "What you told me",
+   "title": "Confirm the first call",
    "intro": "Let us start with what you told me on our first call. Still right, or has anything changed?",
    "guessIntro": "These are averages for your area, not your numbers. Want to swap any for yours?"
   },
