@@ -1,8 +1,10 @@
 # Progress
 
-Updated: 2026-10-09
+Updated: 2026-10-11
 
 ## Done
+- Discovery follow-ups (MR-075): unemployment and retirement branches, a retirement-plan question, None / Not
+  applicable / Don't know on every typed box, and the planets view back on the Plan screen.
 - Call runner polish (MR-074): a stepper timeline with full names, a plan brief that shows what is on file
   and what each part opens, Confirm as two tables with buttons that respond.
 - Discovery call rewrite (MR-073): hourly or salary first, any number of roommates and partners (schema 6,

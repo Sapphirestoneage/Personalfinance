@@ -19,7 +19,7 @@ const BANK_TYPE = t => (['checking', 'savings', 'hysa', 'cd'].includes(t) ? t : 
 const ACCOUNT_TYPE = name => { const n = String(name || '').toLowerCase(); if (/venmo|cash app|paypal|checking|chase|bank|credit union|debit/.test(n)) return 'checking'; if (/hysa|savings|ally|marcus|save/.test(n)) return 'hysa'; if (/401|403|tsp|457/.test(n)) return '401k'; if (/roth/.test(n)) return 'rothIra'; if (/ira/.test(n)) return 'tradIra'; if (/brokerage|robinhood|fidelity|vanguard|schwab|etf|stock/.test(n)) return 'taxable'; if (/hsa/.test(n)) return 'hsa'; return 'taxable'; };
 const DEBT_TYPE = name => { const n = String(name || '').toLowerCase(); if (/student|loan.*school|sallie|navient|mohela/.test(n)) return 'student'; if (/car|auto/.test(n)) return 'auto'; if (/mortgage|heloc/.test(n)) return 'mortgage'; if (/card|visa|amex|mastercard|discover|credit/.test(n)) return 'card'; return 'personal'; };
 
-function stateOf(parsed, markedKnown) { if (!parsed) return 'unknown'; if (parsed.unknown) return 'unknown'; if (parsed.none) return 'none'; return markedKnown ? 'known' : (parsed.state === 'rough' ? 'rough' : 'rough'); }
+function stateOf(parsed, markedKnown) { if (!parsed) return 'unknown'; if (parsed.unknown) return 'unknown'; if (parsed.na) return 'not-applicable'; if (parsed.none) return 'none'; return markedKnown ? 'known' : (parsed.state === 'rough' ? 'rough' : 'rough'); }
 
 /* applyDiscovery(record, form, data, meta) -> { checks, anchors, guesses } */
 export function applyDiscovery(record, form, data, meta) {
@@ -67,7 +67,9 @@ export function applyDiscovery(record, form, data, meta) {
   let job = record.planets.income.rows.find(r => r.type === jobType && !(r.f.whose && r.f.whose.v === 'partner'));
   /* MR-073: the pay type decides how "before tax" was asked. Salary: a yearly figure. Hourly: rate times hours a week,
      fifty-two weeks, as a rough monthly gross. It varies: a typical month. No pay type (older forms): whatever was said. */
-  const payType = money.payType || null;
+  const noJob = snap.workSituation === 'between-jobs' || snap.workSituation === 'retired';
+  const payType = money.payType || (noJob && money.gross ? 'varies' : null); /* MR-075: no pay type is asked without a job; anything else coming in is a typical month */
+  const pfAsked = money.payFrequency && money.payFrequency !== 'na' ? money.payFrequency : null;
   let gross = null; let hourly = null;
   if (payType === 'hourly') {
     const rate = parseSaid(money.hourlyRate); const hrs = parseFloat(String(money.hoursPerWeek || '').replace(/[^0-9.]/g, ''));
@@ -78,14 +80,14 @@ export function applyDiscovery(record, form, data, meta) {
   const take = parseSaid(money.takeHome, { kind: 'income', defaultCadence: payType === 'varies' ? 'month' : (payType ? 'paycheck' : undefined) });
   if ((gross && gross.cents !== null) || (take && take.cents !== null)) {
     if (!job) { job = createRow('income', jobType, { nickname: snap.employer || 'Job', institution: snap.employer || '', f: freshFacts(fields, 'income', jobType) }); addRow(record, job, { session: m.session, now }); }
-    const pf = money.payFrequency || (take && take.payFrequency) || (gross && gross.payFrequency) || 'biweekly';
+    const pf = pfAsked || (take && take.payFrequency) || (gross && gross.payFrequency) || 'biweekly';
     if (gross && gross.cents !== null) { set(job.id, 'grossPay', gross.cents, stateOf(gross, money.grossKnown), gross.cadence); out.anchors.push(setAnchor(record, 'gut', 'income:gross', toMonthly(gross.cents, gross.cadence, pf), { cadence: 'month', source: DISC, session: m.session, now })); }
     if (hourly && job.f.hoursPaid) set(job.id, 'hoursPaid', hourly.hours, 'rough');
-    if (money.payFrequency) set(job.id, 'payFrequency', money.payFrequency, 'known');
+    if (pfAsked) set(job.id, 'payFrequency', pfAsked, 'known');
     if (money.steadiness && job.f.stability) set(job.id, 'stability', money.steadiness, 'known');
     else if (payType === 'hourly' && job.f.stability) set(job.id, 'stability', 'variable', 'rough', undefined, 'inferred');
     if (take && take.cents !== null) { set(job.id, 'takeHome', take.cents, stateOf(take, money.takeHomeKnown), take.cadence); out.anchors.push(setAnchor(record, 'gut', 'income:takeHome', toMonthly(take.cents, take.cadence, pf), { cadence: 'month', source: DISC, session: m.session, now })); }
-    if (!money.payFrequency && (take && take.cadence === 'paycheck' || gross && gross.cadence === 'paycheck')) set(job.id, 'payFrequency', pf, 'known', undefined, 'inferred');
+    if (!pfAsked && (take && take.cadence === 'paycheck' || gross && gross.cadence === 'paycheck')) set(job.id, 'payFrequency', pf, 'known', undefined, 'inferred');
     /* the cross-check: take-home said against take-home inferred from gross, silent under 10% */
     if (gross && gross.cents !== null && take && take.cents !== null) {
       const gm = toMonthly(gross.cents, gross.cadence, pf), tm = toMonthly(take.cents, take.cadence, pf);
@@ -98,7 +100,22 @@ export function applyDiscovery(record, form, data, meta) {
       if (contribPct) set(job.id, 'pretaxRetirement', Math.round(gross.cents * contribPct), 'rough', gross.cadence);
     }
   }
-  if (money.matchKnown === true || (money.match && String(money.match).trim())) {
+  /* MR-075: between jobs with unemployment benefits; retired with what comes in each month */
+  const un = money.unemployment || {};
+  if (snap.workSituation === 'between-jobs' && (un.getting === 'yes' || un.getting === 'applied')) {
+    let urow = record.planets.income.rows.find(r => r.type === 'unemployment');
+    if (!urow) { urow = createRow('income', 'unemployment', { nickname: 'Unemployment', institution: '', f: freshFacts(fields, 'income', 'unemployment') }); addRow(record, urow, { session: m.session, now }); }
+    const b = un.getting === 'yes' ? parseSaid(un.benefit, { defaultCadence: 'week' }) : null;
+    if (b && b.cents !== null) set(urow.id, 'benefitAmount', b.cents, stateOf(b, false), b.cadence);
+    else { set(urow.id, 'benefitAmount', null, un.getting === 'applied' ? 'will-send' : 'unknown'); out.notes.push(un.getting === 'applied' ? 'Unemployment applied for; the benefit amount is pending.' : 'Unemployment benefit amount not given.'); }
+    const weeks = parseInt(String(un.weeksLeft || '').replace(/[^0-9]/g, ''), 10); if (weeks > 0) set(urow.id, 'weeksLeft', weeks, 'rough');
+  }
+  if (snap.workSituation === 'retired' && money.retirementIncome) {
+    const p = parseSaid(money.retirementIncome, { kind: 'income', defaultCadence: 'month' });
+    if (p && p.cents !== null) { const orow = createRow('income', 'other', { nickname: 'Retirement income', institution: '', f: freshFacts(fields, 'income', 'other') }); addRow(record, orow, { session: m.session, now }); set(orow.id, 'otherIncome', p.cents, stateOf(p, false), p.cadence); }
+  }
+  const noPlan = money.hasPlan === 'none' || money.hasPlan === 'na' || noJob;
+  if (!noPlan && (money.matchKnown === true || (money.match && String(money.match).trim()))) {
     let ben = record.planets.income.rows.find(r => r.type === 'benefits');
     if (!ben) { ben = createRow('income', 'benefits', { nickname: 'Employer match', institution: snap.employer || '', f: freshFacts(fields, 'income', 'benefits') }); addRow(record, ben, { session: m.session, now }); }
     const mt = money.match ? parseSaid(money.match) : null;

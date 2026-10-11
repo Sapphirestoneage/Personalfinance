@@ -25,6 +25,14 @@
    }
   },
   {
+   "id": "on-unemployment",
+   "label": "On unemployment",
+   "writes": {
+    "sun.workSituation": "between-jobs",
+    "income.unemployment": "yes"
+   }
+  },
+  {
    "id": "hourly",
    "label": "Paid hourly",
    "writes": {
@@ -301,7 +309,13 @@
   "worthIt": "Three months from now, what would make this worth it for you?",
   "partnerName": "What should I call them?",
   "partnerPayType": "Are they paid hourly, or on a salary?",
-  "partnerTakeHome": "And what lands in their account each time they are paid?"
+  "partnerTakeHome": "And what lands in their account each time they are paid?",
+  "unemployment": "Are you getting unemployment benefits right now?",
+  "unemploymentBenefit": "How much is the benefit?",
+  "weeksLeft": "About how many weeks of benefit are left?",
+  "otherIn": "Anything else coming in: side work, severance, help from family?",
+  "retirementIncome": "What comes in each month: Social Security, a pension, withdrawals?",
+  "hasPlan": "Is there a retirement plan at work, a 401k or similar?"
  },
  "gentleWords": {
   "reveal": "We will look at how the real numbers compare once you have gathered them yourself.",
@@ -488,6 +502,26 @@
    "label": "Their words",
    "unit": "verbatim",
    "example": ""
+  },
+  "unemploymentBenefit": {
+   "label": "Benefit",
+   "unit": "$ a week",
+   "example": "504"
+  },
+  "weeksLeft": {
+   "label": "Weeks left",
+   "unit": "a number",
+   "example": "14"
+  },
+  "otherIn": {
+   "label": "Other income, typical month",
+   "unit": "$ a month, or none",
+   "example": "about 600, or none"
+  },
+  "retirementIncome": {
+   "label": "Monthly income in retirement",
+   "unit": "$ a month",
+   "example": "2,400"
   }
  },
  "payTypes": [
@@ -520,6 +554,10 @@
   [
    "monthly",
    "Monthly"
+  ],
+  [
+   "na",
+   "Not applicable"
   ]
  ],
  "steadiness": [
@@ -548,6 +586,34 @@
   [
    "monthly",
    "Monthly sit-down"
+  ]
+ ],
+ "unemploymentOptions": [
+  [
+   "yes",
+   "Yes"
+  ],
+  [
+   "applied",
+   "Applied, waiting"
+  ],
+  [
+   "no",
+   "No"
+  ]
+ ],
+ "planOptions": [
+  [
+   "yes",
+   "Yes"
+  ],
+  [
+   "none",
+   "No plan at work"
+  ],
+  [
+   "na",
+   "Not applicable"
   ]
  ]
 }

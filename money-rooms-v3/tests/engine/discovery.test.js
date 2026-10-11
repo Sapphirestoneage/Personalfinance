@@ -307,3 +307,20 @@ test('an older form with partner: true still reads as one partner', () => {
   assert.deepEqual(rec.household.partners, [{ id: 'pt1', nickname: 'Jo' }]); assert.equal(peopleOf(rec.household), 2);
   assert.ok(rec.planets.income.rows.find(r => r.nickname === "Jo's job"));
 });
+
+/* ---- MR-075: between jobs, retired, not applicable ---- */
+test('between jobs on unemployment: a benefit row by the week with the weeks left; no job row without pay', () => {
+  const rec = createRecord({ id: 'u1' });
+  applyDiscovery(rec, { snapshot: { name: 'Uma', workSituation: 'between-jobs', partners: [] }, money: { unemployment: { getting: 'yes', benefit: '504', weeksLeft: '14' } }, mindset: {} }, data, { now: NOW, today: TODAY });
+  const u = rec.planets.income.rows.find(r => r.type === 'unemployment'); assert.ok(u, 'an unemployment row');
+  assert.equal(u.f.benefitAmount.v, 50400); assert.equal(u.f.benefitAmount.cad, 'week'); assert.equal(u.f.weeksLeft.v, 14);
+  assert.ok(!rec.planets.income.rows.find(r => r.type === 'w2'), 'no job row');
+  const applied = createRecord({ id: 'u2' }); applyDiscovery(applied, { snapshot: { name: 'Vic', workSituation: 'between-jobs', partners: [] }, money: { unemployment: { getting: 'applied' } }, mindset: {} }, data, { now: NOW, today: TODAY });
+  assert.equal(applied.planets.income.rows.find(r => r.type === 'unemployment').f.benefitAmount.state, 'will-send');
+});
+test('retired: what comes in each month is an other-income row; n/a reads as not applicable', () => {
+  const rec = createRecord({ id: 'r1' });
+  applyDiscovery(rec, { snapshot: { name: 'Rae', workSituation: 'retired', partners: [] }, money: { retirementIncome: '2,400' }, spending: { gutTotal: 'n/a' }, mindset: {} }, data, { now: NOW, today: TODAY });
+  const o = rec.planets.income.rows.find(r => r.type === 'other'); assert.ok(o); assert.equal(o.f.otherIncome.v, 240000); assert.equal(o.f.otherIncome.cad, 'month');
+  assert.equal(parseSaid('n/a').state, 'not-applicable'); assert.equal(parseSaid('not applicable').na, true);
+});

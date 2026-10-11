@@ -826,6 +826,9 @@ div.confirm-line { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0
 .disc-field .example { font-size: var(--fs-13); }
 .disc-field .saidbox { display: flex; flex-direction: column; gap: 2px; }
 .disc-intro { margin: 0 0 var(--s-2); }
+.said-quick { gap: 4px; margin-top: 4px; } .said-quick .chip { font-size: var(--fs-13); }
+.rooms-head { justify-content: space-between; align-items: baseline; margin-bottom: var(--s-2); } .rooms-head h2 { margin: 0; }
+@media (max-width: 1100px) { .plan-grid { grid-template-columns: minmax(0, 1fr); } } /* the facts form needs the width; the planets sit under it */
 .disc-sub { border-left: 2px solid var(--line); padding: var(--s-2) var(--s-3); margin: var(--s-2) 0; display: flex; flex-direction: column; gap: var(--s-2); }
 .disc-sub h4 { margin: 0; font-size: var(--fs-14); }
 .disc-areas { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--s-2) var(--s-3); }

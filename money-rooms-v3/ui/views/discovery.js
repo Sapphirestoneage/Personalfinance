@@ -22,14 +22,15 @@ const MAX_NAMES = 6; /* names are asked for the first few people; past that only
 const COUNTS = [[0, 'None'], [1, '1'], [2, '2'], [3, '3']];
 
 function blankPartner() { return { name: '', payType: null, takeHome: '', payFrequency: '' }; }
-function blankForm() { return { snapshot: { name: '', birth: '', city: '', dependents: '', workSituation: 'employed', employerType: 'company', employer: '', roommates: 0, roommateNames: [], lease: 'none', partners: [] }, whyNow: '', context: { tried: '', ifNothing: '', bigComing: '', workStyle: null, decisionMakers: '', worthIt: '' }, money: { payType: null, gross: '', hourlyRate: '', hoursPerWeek: '', payFrequency: '', takeHome: '', steadiness: null, contribPct: '', matchKnown: false, match: '', cash: [], invest: [], debt: [] }, spending: { gutTotal: '', areas: {}, phoneFamilyPlan: false }, goals: [], mindset: { stuck: [], avoidsAccounts: false, struggles: [], stress: null }, words: [], tierOverride: null }; }
+function blankForm() { return { snapshot: { name: '', birth: '', city: '', dependents: '', workSituation: 'employed', employerType: 'company', employer: '', roommates: 0, roommateNames: [], lease: 'none', partners: [] }, whyNow: '', context: { tried: '', ifNothing: '', bigComing: '', workStyle: null, decisionMakers: '', worthIt: '' }, money: { payType: null, gross: '', hourlyRate: '', hoursPerWeek: '', payFrequency: '', takeHome: '', steadiness: null, hasPlan: null, contribPct: '', matchKnown: false, match: '', unemployment: { getting: null, benefit: '', weeksLeft: '' }, retirementIncome: '', cash: [], invest: [], debt: [] }, spending: { gutTotal: '', areas: {}, phoneFamilyPlan: false }, goals: [], mindset: { stuck: [], avoidsAccounts: false, struggles: [], stress: null }, words: [], tierOverride: null }; }
 /* A form saved before MR-073 had one partner as a yes or no and no pay type; it still opens. */
 function upgrade(form) {
   const s = form.snapshot; const m = form.money;
   if (!Array.isArray(s.partners)) s.partners = s.partner ? [Object.assign(blankPartner(), { name: s.partnerName || '', takeHome: m.partnerTakeHome || '' })] : [];
   if (s.dependents === undefined || s.dependents === null) s.dependents = '';
   form.context = Object.assign({ tried: '', ifNothing: '', bigComing: '', workStyle: null, decisionMakers: '', worthIt: '' }, form.context || {});
-  ['payType', 'steadiness'].forEach(k => { if (m[k] === undefined) m[k] = null; });
+  ['payType', 'steadiness', 'hasPlan'].forEach(k => { if (m[k] === undefined) m[k] = null; });
+  if (!m.unemployment) m.unemployment = { getting: null, benefit: '', weeksLeft: '' }; if (m.retirementIncome === undefined) m.retirementIncome = '';
   ['hourlyRate', 'hoursPerWeek', 'payFrequency'].forEach(k => { if (m[k] === undefined) m[k] = ''; });
   return form;
 }
@@ -73,19 +74,25 @@ export function mount(host, app) {
       ask('tried', field('tried', area('context.tried'))),
       ask('ifNothing', field('ifNothing', area('context.ifNothing'))),
     ]);
-    /* 3. money: the pay type first, then the questions that fit it */
-    const varies = m.payType === 'varies';
+    /* 3. money: the work situation decides the questions (MR-075); with a job, the pay type first, then what fits it */
+    const varies = m.payType === 'varies'; const unemployed = s.workSituation === 'between-jobs'; const retired = s.workSituation === 'retired'; const noJob = unemployed || retired;
     sec('money', [
-      ask('payType', segmented(D.payTypes, m.payType, v => { m.payType = v; draw(); }, { label: 'Pay type' })),
-      m.payType === 'salary' ? ask('salary', said('money.gross', 'salary', { kind: 'income', defaultCadence: 'year' })) : null,
-      m.payType === 'hourly' ? ask('hourlyRate', said('money.hourlyRate', 'hourlyRate', { defaultCadence: 'oneoff' })) : null,
-      m.payType === 'hourly' ? ask('hoursPerWeek', field('hoursPerWeek', number('money.hoursPerWeek'))) : null,
-      varies ? ask('variesGross', said('money.gross', 'variesGross', { kind: 'income', defaultCadence: 'month' })) : null,
-      !m.payType ? ask('salary', said('money.gross', 'salary', { kind: 'income' })) : null,
-      m.payType && !varies ? ask('payFrequency', labelled('Pay frequency', 'choose one', select('money.payFrequency', [['', 'Not asked yet']].concat(D.payFrequencies), 'Pay frequency'))) : null,
-      varies ? ask('takeHomeMonth', said('money.takeHome', 'takeHomeMonth', { kind: 'income', defaultCadence: 'month' })) : ask('takeHome', said('money.takeHome', 'takeHome', { kind: 'income', defaultCadence: 'paycheck' })),
-      ask('steadiness', segmented(D.steadiness, m.steadiness, v => { m.steadiness = v; draw(); }, { label: 'Steadiness' })),
-      ask('contrib', h('div', { class: 'disc-row' }, field('contribPct', text('money.contribPct')), h('label', { class: 'small check' }, h('input', { type: 'checkbox', checked: m.matchKnown, onChange: e => { m.matchKnown = e.target.checked; } }), ' There is a match'), field('match', text('money.match')))),
+      unemployed ? ask('unemployment', segmented(D.unemploymentOptions, m.unemployment.getting, v => { m.unemployment.getting = v; draw(); }, { label: 'Unemployment benefits' })) : null,
+      unemployed && m.unemployment.getting === 'yes' ? ask('unemploymentBenefit', said('money.unemployment.benefit', 'unemploymentBenefit', { defaultCadence: 'week' })) : null,
+      unemployed && m.unemployment.getting === 'yes' ? ask('weeksLeft', field('weeksLeft', number('money.unemployment.weeksLeft'))) : null,
+      retired ? ask('retirementIncome', said('money.retirementIncome', 'retirementIncome', { kind: 'income', defaultCadence: 'month' })) : null,
+      noJob ? ask('otherIn', said('money.gross', 'otherIn', { kind: 'income', defaultCadence: 'month' })) : null,
+      noJob ? null : ask('payType', segmented(D.payTypes, m.payType, v => { m.payType = v; draw(); }, { label: 'Pay type' })),
+      !noJob && m.payType === 'salary' ? ask('salary', said('money.gross', 'salary', { kind: 'income', defaultCadence: 'year' })) : null,
+      !noJob && m.payType === 'hourly' ? ask('hourlyRate', said('money.hourlyRate', 'hourlyRate', { defaultCadence: 'oneoff' })) : null,
+      !noJob && m.payType === 'hourly' ? ask('hoursPerWeek', field('hoursPerWeek', number('money.hoursPerWeek'))) : null,
+      !noJob && varies ? ask('variesGross', said('money.gross', 'variesGross', { kind: 'income', defaultCadence: 'month' })) : null,
+      !noJob && !m.payType ? ask('salary', said('money.gross', 'salary', { kind: 'income' })) : null,
+      !noJob && m.payType && !varies ? ask('payFrequency', labelled('Pay frequency', 'choose one', select('money.payFrequency', [['', 'Not asked yet']].concat(D.payFrequencies), 'Pay frequency'))) : null,
+      noJob ? null : (varies ? ask('takeHomeMonth', said('money.takeHome', 'takeHomeMonth', { kind: 'income', defaultCadence: 'month' })) : ask('takeHome', said('money.takeHome', 'takeHome', { kind: 'income', defaultCadence: 'paycheck' }))),
+      noJob ? null : ask('steadiness', segmented(D.steadiness, m.steadiness, v => { m.steadiness = v; draw(); }, { label: 'Steadiness' })),
+      noJob ? null : ask('hasPlan', segmented(D.planOptions, m.hasPlan, v => { m.hasPlan = v; draw(); }, { label: 'Retirement plan at work' })),
+      !noJob && m.hasPlan === 'yes' ? ask('contrib', h('div', { class: 'disc-row' }, field('contribPct', text('money.contribPct')), h('label', { class: 'small check' }, h('input', { type: 'checkbox', checked: m.matchKnown, onChange: e => { m.matchKnown = e.target.checked; } }), ' There is a match'), field('match', text('money.match')))) : null,
       ask('cash', listRows('Cash and savings accounts', 'money.cash', 'accountName', 'balance', 'Add an account')),
       ask('invest', listRows('Investment and retirement accounts', 'money.invest', 'accountName', 'balance', 'Add an account')),
       ask('debt', listRows('Debts', 'money.debt', 'debtName', 'debtBalance', 'Add a debt')),
@@ -165,9 +172,11 @@ export function mount(host, app) {
     const wrap = h('span', { class: 'saidbox' });
     const input = h('input', { class: 'input wide', type: 'text', 'aria-label': label, value: value || '' });
     const hint = h('span', { class: 'small muted heard' });
-    const show = v => { const p = parseSaid(v, opts); hint.textContent = !v ? '' : !p ? 'Did not catch a number' : p.unknown ? 'Unknown, goes on their plate' : p.none ? 'None' : F.dollarsWhole(p.cents) + (p.cadence === 'paycheck' ? ' a paycheck (' + F.dollarsWhole(toMonthly(p.cents, 'paycheck', p.payFrequency)) + ' a month)' : p.cadence === 'week' ? ' a week' : p.cadence === 'year' ? ' a year' : p.cadence === 'oneoff' ? '' : ' a month') + (p.state === 'rough' ? ', rough' : '') + (p.split ? ', your share ' + F.dollarsWhole(p.share) : ''); };
+    const show = v => { const p = parseSaid(v, opts); hint.textContent = !v ? '' : !p ? 'Did not catch a number' : p.unknown ? 'Unknown, goes on their plate' : p.na ? 'Not applicable' : p.none ? 'None' : F.dollarsWhole(p.cents) + (p.cadence === 'paycheck' ? ' a paycheck (' + F.dollarsWhole(toMonthly(p.cents, 'paycheck', p.payFrequency)) + ' a month)' : p.cadence === 'week' ? ' a week' : p.cadence === 'year' ? ' a year' : p.cadence === 'oneoff' ? '' : ' a month') + (p.state === 'rough' ? ', rough' : '') + (p.split ? ', your share ' + F.dollarsWhole(p.share) : ''); };
     input.addEventListener('input', () => show(input.value)); input.addEventListener('change', e => { onSet(e.target.value.trim()); show(e.target.value); });
-    show(value); wrap.appendChild(input); wrap.appendChild(hint); return wrap;
+    /* MR-075: the three answers that are not a number, one tap each */
+    const quick = h('div', { class: 'said-quick row' }, [['None', 'none'], ['Not applicable', 'n/a'], ["Don't know", "don't know"]].map(([l, t]) => h('button', { type: 'button', class: 'chip toggle' + (String(value || '').toLowerCase() === t ? ' on' : ''), onClick: () => { input.value = t; onSet(t); show(t); quick.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.textContent === l)); } }, l)));
+    show(value); wrap.appendChild(input); wrap.appendChild(hint); wrap.appendChild(quick); return wrap;
   }
   function said(path, fkey, opts) { return field(fkey, saidBox(v => put(path, v), get(path), D.fields[fkey].label, opts || {})); }
   function listRows(title, path, nameKey, balanceKey, addLabel) {
@@ -191,8 +200,8 @@ export function mount(host, app) {
   return { update() {} };
 }
 
-function chipOn(form, c) { return Object.keys(c.writes).every(k => { const v = c.writes[k]; if (k === 'sun.workSituation') return form.snapshot.workSituation === v; if (k === 'sun.filingStatus') return form.snapshot.filingStatus === v; if (k === 'sun.dependents') return String(form.snapshot.dependents) === String(v); if (k === 'household.roommates') return form.snapshot.roommates === v; if (k === 'household.partners') return form.snapshot.partners.length >= v; if (k === 'household.lease') return form.snapshot.lease === v; if (k === 'spending.phone') return form.spending.phoneFamilyPlan === true; if (k === 'income.matchKnown') return form.money.matchKnown === true; if (k === 'income.payType') return form.money.payType === v; if (k === 'mindset.avoidsAccounts') return form.mindset.avoidsAccounts === true; if (k === 'goal') return form.goals.some(g => g.text === v); return false; }); }
-function applyChip(form, c, on) { Object.keys(c.writes).forEach(k => { const v = c.writes[k]; if (k === 'sun.workSituation') form.snapshot.workSituation = on ? v : 'employed'; else if (k === 'sun.filingStatus') form.snapshot.filingStatus = on ? v : undefined; else if (k === 'sun.dependents') form.snapshot.dependents = on ? String(v) : ''; else if (k === 'household.roommates') form.snapshot.roommates = on ? v : 0; else if (k === 'household.partners') { if (on) { while (form.snapshot.partners.length < v) form.snapshot.partners.push(blankPartner()); } else form.snapshot.partners.length = 0; } else if (k === 'household.lease') form.snapshot.lease = on ? v : 'none'; else if (k === 'spending.phone') form.spending.phoneFamilyPlan = on; else if (k === 'income.matchKnown') form.money.matchKnown = on; else if (k === 'income.payType') form.money.payType = on ? v : null; else if (k === 'mindset.avoidsAccounts') form.mindset.avoidsAccounts = on; else if (k === 'goal') { if (on) form.goals.push({ text: v, when: '', amount: '' }); else form.goals = form.goals.filter(g => g.text !== v); } }); }
+function chipOn(form, c) { return Object.keys(c.writes).every(k => { const v = c.writes[k]; if (k === 'sun.workSituation') return form.snapshot.workSituation === v; if (k === 'sun.filingStatus') return form.snapshot.filingStatus === v; if (k === 'sun.dependents') return String(form.snapshot.dependents) === String(v); if (k === 'household.roommates') return form.snapshot.roommates === v; if (k === 'household.partners') return form.snapshot.partners.length >= v; if (k === 'household.lease') return form.snapshot.lease === v; if (k === 'spending.phone') return form.spending.phoneFamilyPlan === true; if (k === 'income.matchKnown') return form.money.matchKnown === true; if (k === 'income.payType') return form.money.payType === v; if (k === 'income.unemployment') return form.money.unemployment.getting === v; if (k === 'mindset.avoidsAccounts') return form.mindset.avoidsAccounts === true; if (k === 'goal') return form.goals.some(g => g.text === v); return false; }); }
+function applyChip(form, c, on) { Object.keys(c.writes).forEach(k => { const v = c.writes[k]; if (k === 'sun.workSituation') form.snapshot.workSituation = on ? v : 'employed'; else if (k === 'sun.filingStatus') form.snapshot.filingStatus = on ? v : undefined; else if (k === 'sun.dependents') form.snapshot.dependents = on ? String(v) : ''; else if (k === 'household.roommates') form.snapshot.roommates = on ? v : 0; else if (k === 'household.partners') { if (on) { while (form.snapshot.partners.length < v) form.snapshot.partners.push(blankPartner()); } else form.snapshot.partners.length = 0; } else if (k === 'household.lease') form.snapshot.lease = on ? v : 'none'; else if (k === 'spending.phone') form.spending.phoneFamilyPlan = on; else if (k === 'income.matchKnown') form.money.matchKnown = on; else if (k === 'income.payType') form.money.payType = on ? v : null; else if (k === 'income.unemployment') form.money.unemployment.getting = on ? v : null; else if (k === 'mindset.avoidsAccounts') form.mindset.avoidsAccounts = on; else if (k === 'goal') { if (on) form.goals.push({ text: v, when: '', amount: '' }); else form.goals = form.goals.filter(g => g.text !== v); } }); }
 
 /* ---- the summary sheet ---- */
 function mountSummary(host, app) {

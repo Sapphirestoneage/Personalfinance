@@ -5,6 +5,7 @@ export const WIDTHS = [1440, 1024, 390];
 
 export const SCREENS = [
   { id: 'home', route: 'home' },
+  { id: 'plan', route: 'ledger' },
   { id: 'income', route: 'ledger/income' },
   { id: 'income-w2', route: 'ledger/income/w2' },
   { id: 'spending-lines', route: 'ledger/spending/line' },

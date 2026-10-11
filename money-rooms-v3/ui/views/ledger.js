@@ -13,6 +13,9 @@ import { createRow } from '../../engine/record.js';
 import { hasValue } from '../../engine/states.js';
 import * as F from '../../engine/format.js';
 import { renderSun, updateSunValues } from '../sunpanel.js';
+import { segmented } from '../seg.js';
+import { clientName } from '../app.js';
+import { overallConfidence } from './onepager.js';
 
 export function crumbs(parts) {
   const out = h('nav', { class: 'crumbs', 'aria-label': 'Where you are' });
@@ -29,8 +32,30 @@ export function mount(host, app) {
   if (!planet || PLANETS.indexOf(planet) === -1) {
     /* MR-072: the Plan overview carries the household facts (moved from Home) and the seven rooms */
     host.appendChild(h('header', null, h('h1', null, app.view === 'client' ? 'Your numbers' : 'Plan'), h('span', { class: 'sub' }, 'The facts behind every number, one room each.')));
-    const grid = h('div', { class: 'grid grid-2' }); const sun = h('section', { class: 'panel sun-panel' }); const rooms = h('section', { class: 'panel' }); grid.appendChild(sun); grid.appendChild(rooms); host.appendChild(grid);
-    const drawRooms = () => { clear(rooms); rooms.appendChild(h('h2', null, 'Rooms')); rooms.appendChild(h('ul', { class: 'rooms-list' }, PLANETS.map(p => { const R = app.result; const n = R.rowCounts[p]; const fill = R.fills[p]; return h('li', null, h('a', { href: '#/ledger/' + p }, PLANET_LABELS[p]), h('span', { class: 'small muted' }, ' ' + (n ? n + (n === 1 ? ' row' : ' rows') + (fill !== null ? ', ' + Math.round(fill * 100) + '% in' : '') : 'nothing yet'))); }))); };
+    const grid = h('div', { class: 'grid grid-2 plan-grid' }); const sun = h('section', { class: 'panel sun-panel' }); const rooms = h('section', { class: 'panel' }); grid.appendChild(sun); grid.appendChild(rooms); host.appendChild(grid);
+    /* MR-075: the planet view is back, on the Plan; the list stays one tap away and the choice is remembered on this device */
+    let planView = 'planets'; try { planView = localStorage.getItem('mr3.planView') || 'planets'; } catch (e) { /* no storage: planets */ }
+    const client = () => app.view === 'client'; const countWord = (n, one, many) => n + ' ' + (n === 1 ? one : many);
+    const derived = p => !!(app.data.fields.planets[p] && app.data.fields.planets[p].derived);
+    const computes = p => { const M = app.result.metrics; return !!M && app.data.metrics.metrics.some(x => x.group === p && M[x.id] && M[x.id].status === 'ok'); };
+    const describePlanet = (bar, id) => {
+      clear(bar); const R = app.result;
+      if (!id) { const total = PLANETS.reduce((t, p) => t + R.rowCounts[p], 0); if (!total) { bar.appendChild(mapPanel({ title: 'Nothing entered yet', status: 'Income first: open Income and add the first job.', actions: [h('a', { class: 'btn primary coach-only', href: '#/ledger/income' }, 'Open Income')] })); return; } const score = p => (R.fills[p] === null ? (derived(p) && computes(p) ? 2 : -1) : R.fills[p]); id = PLANETS.slice().sort((a, b) => score(a) - score(b))[0]; }
+      const needs = R.needs[id] || []; const n = R.rowCounts[id];
+      if (!n && derived(id)) { const ok = computes(id); bar.appendChild(mapPanel({ title: PLANET_LABELS[id] + (ok ? ' is computed' : ' waits on Income'), status: ok ? 'Federal tax and FICA come from the Income rows. Add a row only for tax paid outside a paycheck.' : 'Federal tax and FICA come from the Income rows once gross pay and the filing status are in.', actions: [h('a', { class: 'btn primary', href: '#/ledger/' + id }, 'Open ' + lowerFirst(PLANET_LABELS[id]))] })); return; }
+      bar.appendChild(mapPanel({ title: PLANET_LABELS[id] + (n ? ' is at ' + Math.round((R.fills[id] || 0) * 100) + '%' : ' is empty'), status: n ? countWord(n, client() ? 'item' : 'row', client() ? 'items' : 'rows') + '. ' + (needs.length ? 'Needs ' + needs.slice(0, 3).map(x => lowerFirst(x.label)).join(', ') + (needs.length > 3 ? ' and ' + (needs.length - 3) + ' more' : '') + '.' : 'Everything it needs is in.') : (client() ? 'Nothing here yet.' : 'No rows yet.'), actions: [h('a', { class: 'btn primary', href: '#/ledger/' + id }, 'Open ' + lowerFirst(PLANET_LABELS[id]))] }));
+    };
+    const drawRooms = () => {
+      clear(rooms); const R = app.result;
+      rooms.appendChild(h('div', { class: 'row rooms-head' }, h('h2', null, 'Rooms'), segmented([['planets', 'Planets'], ['list', 'List']], planView, v => { planView = v; try { localStorage.setItem('mr3.planView', v); } catch (e) { /* the pick lives for this screen only */ } drawRooms(); }, { label: 'How to show the rooms', small: true })));
+      if (planView === 'planets') {
+        const items = PLANETS.map(p => ({ id: p, label: PLANET_LABELS[p], count: R.rowCounts[p], fill: R.fills[p] === null ? 0 : R.fills[p], attention: (R.needs[p] || []).length > 0, badge: R.fills[p] === null ? (derived(p) && computes(p) ? 'computed' : 'nothing yet') : countWord(R.rowCounts[p], client() ? 'item' : 'row', client() ? 'items' : 'rows') + ', ' + Math.round(R.fills[p] * 100) + '%' }));
+        const mapHost = h('div', { class: 'maphost' }); const bar = h('div', { class: 'mapbar-host' }); rooms.appendChild(mapHost); rooms.appendChild(bar);
+        mapHost.appendChild(orbitMap({ compact: rooms.clientWidth > 0 && rooms.clientWidth < 560, ariaLabel: 'The household and its seven rooms', center: { title: clientName(app.record) || 'Household', sub: Math.round(overallConfidence(R) * 100) + '% in', fill: R.fills.sun }, items, onOpen: id => { location.hash = '#/ledger/' + id; }, onFocus: id => describePlanet(bar, id) }));
+        mapHost.appendChild(h('p', { class: 'small muted orbit-caption' }, 'Each circle is a room. The number is how much it holds, the ring is how sure those numbers are. Tap one to open it.'));
+        describePlanet(bar, null);
+      } else rooms.appendChild(h('ul', { class: 'rooms-list' }, PLANETS.map(p => { const n = R.rowCounts[p]; const fill = R.fills[p]; return h('li', null, h('a', { href: '#/ledger/' + p }, PLANET_LABELS[p]), h('span', { class: 'small muted' }, ' ' + (n ? countWord(n, client() ? 'item' : 'row', client() ? 'items' : 'rows') + (fill !== null ? ', ' + Math.round(fill * 100) + '% in' : '') : 'nothing yet'))); })));
+    };
     renderSun(sun, app); drawRooms();
     return { update(reason) { if (reason === 'rows' || reason === 'clients') renderSun(sun, app); else updateSunValues(sun, app); drawRooms(); } };
   }

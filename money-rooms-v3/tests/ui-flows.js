@@ -415,8 +415,9 @@ export const flows = [
     await page.fill('.answer input.input.big', '350');
     await page.press('.answer input.input.big', 'Enter');
     await page.waitForTimeout(200);
-    /* your targets: the unlock sheet that a save opens (MR-059) sits over the right end of the stop row, so put it away first */
-    await page.keyboard.press('Escape'); await page.waitForTimeout(100);
+    /* your targets: the unlock sheet that a save opens (MR-059) sits over the right end of the stop row, so wait for it and put it away first */
+    await page.waitForSelector('#overlay .unlock-sheet', { timeout: 4000 }).catch(() => null);
+    await page.keyboard.press('Escape'); await page.waitForFunction(() => !document.querySelector('#overlay .unlock-sheet'));
     await page.click('.callpath .stop:has-text("targets")');
     await page.waitForSelector('.targets-table');
     const tt = await page.textContent('.targets');

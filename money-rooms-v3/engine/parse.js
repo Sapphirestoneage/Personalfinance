@@ -33,6 +33,7 @@ export function parseSaid(text, opts) {
   const lower = raw.toLowerCase();
   const out = { raw, cents: null, cadence: null, payFrequency: null, state: 'known', share: null, split: null, isShare: false, full: null, none: false, unknown: false };
   if (/^(none|no|nothing|zero|nope)\b/.test(lower) || /\$?0\b(?!\d)/.test(lower) && !/\d\d/.test(lower)) { out.none = true; out.cents = 0; out.state = 'none'; return out; }
+  if (/^(n\/?a|not applicable|does ?n'?t apply|no such thing)\b/.test(lower)) { out.none = true; out.na = true; out.cents = 0; out.state = 'not-applicable'; return out; } /* MR-075 */
   if (/don'?t know|dunno|no idea|not sure|\?$/.test(lower)) { out.unknown = true; out.state = 'unknown'; return out; }
   if (ROUGH.test(lower)) out.state = 'rough';
   for (const [re, cad, pf] of CADENCE) { if (re.test(lower)) { out.cadence = cad; out.payFrequency = pf; break; } }
