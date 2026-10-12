@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#16264d"/>
+      <stop offset="1" stop-color="#060b18"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.22" r="0.6">
+      <stop offset="0" stop-color="#2f6bff" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#2f6bff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="bulb" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff3c4"/>
+      <stop offset="0.45" stop-color="#ffc94d"/>
+      <stop offset="1" stop-color="#ffc94d" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="112" fill="url(#glow)"/>
+  <!-- marquee bulbs across the top -->
+  <g>
+    <circle cx="96" cy="92" r="16" fill="url(#bulb)"/>
+    <circle cx="176" cy="92" r="16" fill="url(#bulb)"/>
+    <circle cx="256" cy="92" r="16" fill="url(#bulb)"/>
+    <circle cx="336" cy="92" r="16" fill="url(#bulb)"/>
+    <circle cx="416" cy="92" r="16" fill="url(#bulb)"/>
+  </g>
+  <!-- a theatre curtain, parted -->
+  <path d="M72 150 Q110 300 150 452 L72 452 Z" fill="#2f6bff" opacity="0.85"/>
+  <path d="M440 150 Q402 300 362 452 L440 452 Z" fill="#2f6bff" opacity="0.85"/>
+  <path d="M72 150 L440 150 L440 172 Q256 230 72 172 Z" fill="#5b8cff"/>
+  <!-- the letters -->
+  <text x="256" y="372" text-anchor="middle" font-family="'Bebas Neue','Oswald','Arial Narrow',Impact,sans-serif" font-size="196" font-weight="700" letter-spacing="6" fill="#ffffff">HL</text>
+  <!-- stage edge -->
+  <rect x="120" y="440" width="272" height="14" rx="7" fill="#ffc94d"/>
+</svg>

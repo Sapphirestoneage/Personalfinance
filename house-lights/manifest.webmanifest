@@ -1,0 +1,25 @@
+{
+  "name": "House Lights — Broadway Logbook",
+  "short_name": "House Lights",
+  "description": "Broadway ticket playbook, show logbook, cup shelf and stats. Everything stays on your phone.",
+  "id": "./",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#060b18",
+  "theme_color": "#0a1226",
+  "lang": "en",
+  "categories": ["entertainment", "lifestyle"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Log a show", "url": "./index.html#log", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "Cup shelf", "url": "./index.html#merch", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] },
+    { "name": "Results", "url": "./index.html#results", "icons": [{ "src": "icon-192.png", "sizes": "192x192" }] }
+  ]
+}

@@ -17396,6 +17396,29 @@ SPARKS device backup neither carries nor removes `mr3:` keys.
 **Verified.** `node test/run.js`; `node money-rooms-v3/tests/run.js`;
 `node money-rooms-v3/tests/ui.js`.
 
+## D-342 — House Lights is its own app in house-lights/, a lane beside SPARKS like coach/
+
+**Why.** The owner's Broadway ticket playbook and show logbook, built
+elsewhere, asked into this repo and then onto a phone. It is a full app, not
+a room, and the freeze holds.
+
+**Decision.** `house-lights/` is a separate app (one static HTML file, a web
+app manifest, a service worker, icons), its own storage (`house-lights-*`
+keys in localStorage, never `slaf.`, `coach.`, `mkt.` or `mr3:`), its own
+test (`node house-lights/tests/smoke.js`), its own README and its own log
+(`house-lights/DECISIONS.md`, `HL-###`). Nothing in `rooms/`, `shared/`,
+`engines/` or `data/` changes for it. Money there is dollars as typed, not
+cents: the app arrived that way with backups already in the wild (HL-001).
+
+**Replaces or removes.** Nothing in SPARKS. The app is the owner's theatre
+life; SPARKS stays the household's money.
+
+**Stored shape.** No change to `slaf.household.v2` or any SPARKS key. The
+SPARKS device backup neither carries nor removes `house-lights-*` keys.
+
+**Verified.** `node test/run.js`; `node house-lights/tests/smoke.js`;
+`node tools/context/build.js --check`.
+
 ---
 
 # The Dungeons & Dividends entries

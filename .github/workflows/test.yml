@@ -22,6 +22,7 @@ jobs:
           node coach/test/run.js
           node money-rooms-v3/tests/run.js
           node marketing/test/run.js
+          node house-lights/tests/smoke.js
           node test/export.js
           node test/xlsx.js
       - name: Lane 2 (corpus, properties, data, glossary, migration, QR)
