@@ -13,7 +13,7 @@ async function active(page) {
   return page.evaluate(() => {
     const a = document.activeElement; if (!a) return null;
     const tr = a.closest('[data-row]');
-    return { tag: a.tagName, col: a.dataset.col || null, aria: a.getAttribute('aria-label'), row: tr ? tr.dataset.row : null, field: a.closest('.fieldrow') ? a.closest('.fieldrow').dataset.field : null, id: a.id || null, dataId: a.getAttribute('data-id') };
+    return { tag: a.tagName, text: (a.textContent || '').trim().slice(0, 40), col: a.dataset.col || null, aria: a.getAttribute('aria-label'), row: tr ? tr.dataset.row : null, field: a.closest('.fieldrow') ? a.closest('.fieldrow').dataset.field : null, id: a.id || null, dataId: a.getAttribute('data-id') };
   });
 }
 async function tabTo(page, pred, max) {
@@ -63,6 +63,9 @@ export async function enterHousehold(page, spec, check) {
   await press('Enter');
   await page.waitForFunction(() => document.activeElement && document.activeElement.getAttribute('aria-label') === 'New client name'); /* the drawer focuses its name box on the next tick */
   await type(spec.sun.name[0]); await press('Enter');
+  /* MR-080: a new client starts on the quick start; this entry works the Plan, reached by keyboard through its own link */
+  await page.waitForSelector('.qs-form');
+  await tabTo(page, a => a.text === 'Open the Plan'); await press('Enter');
   await page.waitForSelector('.fieldrow[data-field="birthDate"]');
   const SUN_TYPES = { birthDate: 'text', state: 'select', city: 'text', workSituation: 'select', dependents: 'int', filingStatus: 'select', bigGoal: 'text' };
   const SUN_OPTIONS = { state: { NY: 'New York' }, workSituation: { employed: 'Employed', 'self-employed': 'Self-employed' }, filingStatus: { single: 'Single', mfj: 'Married', hoh: 'Head' } };
