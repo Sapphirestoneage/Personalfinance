@@ -3,6 +3,11 @@
 Updated: 2026-10-12
 
 ## Done
+- One rhythm (MR-079): every screen measured at two widths in both views; one control height, grid
+  panels as tall as their content, tags that keep their distance, a reading measure, number keyboards on
+  every numeric box, Backspace as back; per-screen fixes on Today, the rooms, Levers, Goals, the calendar,
+  Map, Scoreboard, Session notes, the Plan, Program, Transactions, Assumptions, four charts and phone
+  ledger rows. The sweep now checks the rhythm on every screen. Findings: audit/POLISH.md.
 - The checklist takes entries (MR-078): the room's own control on every line, the state chip as the
   state cell, Enter to the next line, counts that move the moment a value lands, no rebuild under the cursor.
 - The checklist (MR-077): one coach screen with every fact the numbers need for a client, what is on

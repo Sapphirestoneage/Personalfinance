@@ -136,3 +136,6 @@ body[data-view="client"] .chart .bar-tight, body[data-view="client"] .chart .dot
   .card-panel .kpi .value { font-size: var(--fs-16); line-height: 22px; }
   .card-panel .kpi .label { min-height: 0; }
 }
+
+/* MR-079: a day already gone keeps its box, only quieter; a blank cell stays blank */
+.cal-cell.past { border-color: var(--line-soft); background: var(--paper-2); }

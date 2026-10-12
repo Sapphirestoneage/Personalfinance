@@ -33,8 +33,11 @@ export function mount(host, app) {
     const paste = h('textarea', { class: 'input', 'aria-label': 'Or paste the CSV', style: { minHeight: '64px' } });
     upload.appendChild(h('h2', null, 'Bring in the export'));
     upload.appendChild(h('p', { class: 'small muted' }, 'Rocket Money: Settings, Export transactions. A bank: download the CSV from the account page. The export should cover the history the app pulled plus everything since.'));
-    upload.appendChild(h('div', { class: 'row' }, h('label', { class: 'small' }, 'From'), inst, file, h('button', { class: 'btn', onClick: () => { if (paste.value.trim()) load(paste.value); } }, 'Use the pasted text')));
+    inst.style.maxWidth = '280px'; file.style.maxWidth = '360px'; inst.id = 'tx-inst'; file.id = 'tx-file';
+    upload.appendChild(h('div', { class: 'row tx-row' }, h('label', { class: 'small', for: 'tx-inst' }, 'From'), inst, h('label', { class: 'small', for: 'tx-file' }, 'File'), file));
+    upload.appendChild(h('p', { class: 'small muted', style: { marginTop: '12px' } }, 'Or paste the CSV text here.'));
     upload.appendChild(paste);
+    upload.appendChild(h('div', { class: 'row', style: { marginTop: '8px' } }, h('button', { class: 'btn', onClick: () => { if (paste.value.trim()) load(paste.value); } }, 'Use the pasted text')));
     const T = P().transactions;
     if (T && T.importedAt) upload.appendChild(h('p', { class: 'small' }, 'Last import ' + F.dateTimeLocal(T.importedAt) + ': ' + T.count + ' transactions over ' + Math.round(T.spanDays / 7) + ' weeks' + (T.blindSpotPct !== null && T.blindSpotPct !== undefined ? '; blind spot ' + Math.round(T.blindSpotPct * 100) + '%' : '') + '.'));
   }

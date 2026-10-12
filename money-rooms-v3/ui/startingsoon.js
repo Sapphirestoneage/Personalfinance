@@ -13,7 +13,7 @@ export function questionField(app, b, qd) {
   const cur = () => (app.record.scenarios || []).find(x => x.id === b.id);
   const show = v => qd.kind === 'money' ? F.dollarsWhole(v) : qd.kind === 'percent' ? F.percent(v) : String(v);
   const v0 = b.answers && b.answers[qd.id] !== undefined ? b.answers[qd.id] : qd.default;
-  const input = h('input', { class: 'input' + (qd.kind === 'text' ? '' : ' num'), value: show(v0), 'aria-label': qd.label + ' for ' + b.name, title: qd.hint || '' });
+  const input = h('input', { class: 'input' + (qd.kind === 'text' ? '' : ' num'), inputmode: qd.kind === 'text' ? null : 'decimal', value: show(v0), 'aria-label': qd.label + ' for ' + b.name, title: qd.hint || '' });
   input.addEventListener('focus', () => { const c = cur(); const v = c ? c.answers[qd.id] : v0; input.value = qd.kind === 'money' ? String(v / 100) : qd.kind === 'percent' ? String(Math.round(v * 10000) / 100) : String(v); input.select(); });
   input.addEventListener('change', e => { try { const p = parseTyped(qd.kind === 'int' ? 'int' : qd.kind, e.target.value); if (p && p.v !== null) app.mutate(rec => { rec.scenarios.find(x => x.id === b.id).answers[qd.id] = p.v; }, 'scenarios'); } catch (err) { app.toast(err.message); } });
   input.addEventListener('blur', () => { const c = cur(); if (c) input.value = show(c.answers[qd.id] !== undefined ? c.answers[qd.id] : qd.default); });

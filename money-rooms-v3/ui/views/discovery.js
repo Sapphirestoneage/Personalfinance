@@ -147,7 +147,7 @@ export function mount(host, app) {
   function labelled(label, unit, control) { const id = idFor(control); return h('div', { class: 'disc-field' }, h('label', { class: 'disc-label', for: id }, label, unit ? h('span', { class: 'unit' }, unit) : null), control); }
   /* None, 1, 2, 3, or any number typed */
   function countControl(label, current, onPick, fkey) {
-    const input = h('input', { class: 'input num', type: 'number', min: '0', max: '20', step: '1', style: { width: '90px' }, 'aria-label': D.fields[fkey].label, value: current ? String(current) : '', onChange: e => { const n = Math.max(0, Math.min(20, parseInt(e.target.value, 10) || 0)); onPick(n); } });
+    const input = h('input', { class: 'input num', type: 'text', inputmode: 'numeric', pattern: '[0-9]*', style: { width: '90px' }, 'aria-label': D.fields[fkey].label, value: current ? String(current) : '', onChange: e => { const n = Math.max(0, Math.min(20, parseInt(e.target.value, 10) || 0)); onPick(n); } });
     return h('div', { class: 'disc-row' }, segmented(COUNTS, current, onPick, { label }), h('span', { class: 'small muted' }, 'or'), labelled(D.fields[fkey].label, D.fields[fkey].unit, input));
   }
   function partnerBlock(p, i) {
@@ -165,12 +165,12 @@ export function mount(host, app) {
   function get(path) { return path.split('.').reduce((o, k) => (o || {})[k], form); }
   function put(path, v) { const ks = path.split('.'); let o = form; ks.slice(0, -1).forEach(k => { o = o[k]; }); o[ks[ks.length - 1]] = v; }
   function text(path, after) { return h('input', { class: 'input wide', type: 'text', value: get(path) || '', onChange: e => { put(path, e.target.value.trim()); if (after) after(); } }); }
-  function number(path) { return h('input', { class: 'input num', type: 'number', min: '0', step: '1', style: { width: '110px' }, value: get(path) === null || get(path) === undefined ? '' : String(get(path)), onChange: e => put(path, e.target.value.trim()) }); }
+  function number(path) { return h('input', { class: 'input num', type: 'text', inputmode: 'numeric', pattern: '[0-9]*', style: { width: '110px' }, value: get(path) === null || get(path) === undefined ? '' : String(get(path)), onChange: e => put(path, e.target.value.trim()) }); }
   function area(path) { return h('textarea', { class: 'input wide', value: get(path) || '', onChange: e => put(path, e.target.value.trim()) }); }
   function select(path, options, label, after) { return h('select', { class: 'select', 'aria-label': label, onChange: e => { put(path, e.target.value); if (after) after(); } }, options.map(o => h('option', { value: o[0], selected: (get(path) || '') === o[0] }, o[1]))); }
   function saidBox(onSet, value, label, opts) {
     const wrap = h('span', { class: 'saidbox' });
-    const input = h('input', { class: 'input wide', type: 'text', 'aria-label': label, value: value || '' });
+    const input = h('input', { class: 'input wide', type: 'text', inputmode: 'decimal', 'aria-label': label, value: value || '' }); /* MR-079: a money box opens the number keyboard; words like none and n/a still type */
     const hint = h('span', { class: 'small muted heard' });
     const show = v => { const p = parseSaid(v, opts); hint.textContent = !v ? '' : !p ? 'Did not catch a number' : p.unknown ? 'Unknown, goes on their plate' : p.na ? 'Not applicable' : p.none ? 'None' : F.dollarsWhole(p.cents) + (p.cadence === 'paycheck' ? ' a paycheck (' + F.dollarsWhole(toMonthly(p.cents, 'paycheck', p.payFrequency)) + ' a month)' : p.cadence === 'week' ? ' a week' : p.cadence === 'year' ? ' a year' : p.cadence === 'oneoff' ? '' : ' a month') + (p.state === 'rough' ? ', rough' : '') + (p.split ? ', your share ' + F.dollarsWhole(p.share) : ''); };
     input.addEventListener('input', () => show(input.value)); input.addEventListener('change', e => { onSet(e.target.value.trim()); show(e.target.value); });

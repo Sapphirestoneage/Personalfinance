@@ -357,7 +357,8 @@ const SHORTCUTS = [
   ['Alt+N', 'Add a row to the open table'],
   ['Alt+S / Alt+O', 'In a cell: set its state / its source with one more key'],
   ['Alt+Delete', 'Remove the row you are in (undoable)'],
-  ['Esc', 'Close a drawer or note bar'],
+  ['Backspace', 'Outside a field: back to the previous screen (the browser\'s Back works too)'],
+  ['Esc', 'Close a drawer or note bar; in a cell, put the old value back'],
   ['?', 'This panel'],
 ];
 
@@ -411,6 +412,7 @@ function boot() {
   window.addEventListener('keydown', e => {
     const mod = e.ctrlKey || e.metaKey;
     if (mod && !e.shiftKey && e.key.toLowerCase() === 'z' && !inInput(e)) { e.preventDefault(); app.undo(); return; }
+    if (e.key === 'Backspace' && !inInput(e) && !mod && !e.altKey && !document.querySelector('#overlay .drawer, #overlay .sheet')) { e.preventDefault(); history.back(); return; } /* MR-079: Backspace outside a field is the back button */
     if (mod && e.shiftKey && e.key.toLowerCase() === 'z') { e.preventDefault(); app.redo(); return; }
     if (mod && e.key === '.') { e.preventDefault(); app.quickNoteBar(); return; }
     if (e.key === 'Escape') { closeOverlay(); app.toggleNav(false); return; }

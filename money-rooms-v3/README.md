@@ -238,6 +238,9 @@ progress) and Progress vs paperwork.
 Program in the side nav shows one row per session, discovery first, with
 status, date, targets met, accounts opened, homework done and the stress
 score where it was asked; urgent sessions sit between the numbered ones.
+A polish pass (MR-079) measured every screen and evened it out: one control
+height, panels as tall as their content, number keyboards on every numeric box,
+Backspace as back. The findings table is `audit/POLISH.md`.
 Checklist (Plan group) lists every fact the numbers need for a client with
 what is on file, a still-needed filter and a door into each cell (MR-077);
 every line is entered right there with the room's own control, Enter moves

@@ -181,8 +181,7 @@ export function ringsRow(app, map) {
   row.appendChild(ring(t.lenses.open / t.lenses.total, 'Lenses', t.lenses.open + ' of ' + t.lenses.total + (t.lenses.firing ? ', ' + t.lenses.firing + ' firing' : ''), 'completion'));
   row.appendChild(ring(t.charts.open / t.charts.total, 'Charts', t.charts.open + ' of ' + t.charts.total, 'completion'));
   const fi = M && M.pctToFi && M.pctToFi.status === 'ok' ? M.pctToFi.value.value : null;
-  row.appendChild(h('div', { class: 'ring-sep', 'aria-hidden': 'true' }));
-  row.appendChild(fi === null ? h('div', { class: 'ring fi locked' }, h('div', { class: 'ring-empty' }, 'FI'), h('div', { class: 'ring-label' }, app.view === 'coach' ? 'FI progress' : 'How far along'), h('div', { class: 'small muted' }, 'needs spending and balances')) : ring(fi, app.view === 'coach' ? 'FI progress' : 'How far along', F.percent(fi, { places: 1 }) + ' of the FI number, a different thing from completion', 'fi'));
+  row.appendChild(fi === null ? h('div', { class: 'ring fi locked' }, h('div', { class: 'ring-empty' }, 'FI'), h('div', { class: 'ring-label' }, app.view === 'coach' ? 'FI progress' : 'How far along'), h('div', { class: 'small muted' }, 'needs spending and balances')) : ring(fi, app.view === 'coach' ? 'FI progress' : 'How far along', F.percent(fi, { places: 1 }) + ' of the FI number', 'fi'));
   return row;
 }
 

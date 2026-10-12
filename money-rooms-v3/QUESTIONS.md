@@ -289,4 +289,13 @@ Collected during the run; none blocked the build. Answer whenever.
     beside it. Should a session be allowed to close while a headline figure
     (gross pay, a balance) is still rough, or should the Prepare screen
     carry the rough count as a fourth thing?
+85. The one-pager's ten key-number boxes carry sub-lines of different
+    lengths (none, one, two), so their baselines wander. Should every box
+    carry exactly one sub-line, even when it is only the unit?
+86. Client Home at 1440px is three wide, calm panels with a lot of page
+    around them. Should the client's screens sit in a narrower reading
+    column (about 880px) the way the one-pager does?
+87. On the discovery form a name, a city or a count is as wide as a text
+    area. Should field widths follow the kind (a name 320px, a number 130px,
+    a money box 160px) the way the rooms do?
 

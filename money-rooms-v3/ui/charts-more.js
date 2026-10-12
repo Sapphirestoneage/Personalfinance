@@ -23,7 +23,7 @@ export function caption(host, text) { host.appendChild(h('p', { class: 'chart-no
 function hbars(host, rows, o) {
   const d3 = d3g(); const W = o.width, rowH = o.rowH || 28;
   const labelChars = Math.max(...rows.map(r => cut(r.label, 24).length), 4), textChars = Math.max(...rows.map(r => String(r.text || '').length), 4);
-  const m = { t: 8, r: Math.min(Math.round(W * 0.34), 12 + textChars * 6.6), b: 24, l: Math.min(Math.round(W * 0.4), 12 + labelChars * 6.6) };
+  const m = { t: 8, r: Math.min(Math.round(W * 0.45), 12 + textChars * 6.8), b: 24, l: Math.min(Math.round(W * 0.4), 12 + labelChars * 6.6) }; /* MR-079: the value text always has room */
   const H = m.t + rows.length * rowH + m.b; const svg = svgIn(host, W, H);
   const max = Math.max(d3.max(rows, r => r.max !== undefined ? r.max : r.value) || 1, 1e-9);
   const x = d3.scaleLinear().domain([0, max]).range([m.l, W - m.r]);
@@ -95,11 +95,11 @@ function milestones(host, d, o) {
   svg.append('g').attr('transform', 'translate(0,' + (H - m.b) + ')').attr('class', 'axis').call(d3.axisBottom(x).ticks(8).tickFormat(v => String(v)));
   svg.append('line').attr('class', 'grid').attr('x1', m.l).attr('x2', W - m.r).attr('y1', H - m.b - 20).attr('y2', H - m.b - 20);
   /* labels take the first lane (two above, two below) where they do not touch the previous label in that lane */
-  const lanes = [cy => cy - 14, cy => cy - 28, cy => cy + 24, cy => cy + 38].map(fn => ({ fn, right: -Infinity }));
-  d.items.forEach(it => {
+  const lanes = [cy => cy - 14, cy => cy - 28, cy => cy - 42, cy => cy + 24].map(fn => ({ fn, right: -Infinity })); /* MR-079: three lanes above, one below; the axis keeps its own line */
+  d.items.slice().sort((a, b) => a.age - b.age).forEach(it => { /* in age order, so a lane's right edge means something */
     const cx = x(Math.min(x.domain()[1], Math.max(d.age, it.age))); const cy = H - m.b - 20;
     svg.append('circle').attr('class', 'dot' + (it.big ? ' you' : it.reached ? ' done' : it.fixed ? ' fixed' : '')).attr('cx', cx).attr('cy', cy).attr('r', it.big ? 8 : 5).append('title').text(it.label + ' at ' + it.age);
-    const text = /\d$/.test(it.label) ? it.label : it.label + ' ' + Math.round(it.age); const w = text.length * 6.2;
+    const text = /\d$/.test(it.label) ? it.label : it.label + ' ' + Math.round(it.age); const w = text.length * (it.big ? 7.4 : 6.6);
     let tx = cx, anchor = 'middle'; if (cx - w / 2 < m.l) { tx = m.l; anchor = 'start'; } else if (cx + w / 2 > W - m.r) { tx = W - m.r; anchor = 'end'; }
     const left = anchor === 'middle' ? tx - w / 2 : anchor === 'start' ? tx : tx - w;
     let lane = lanes.find(l => left > l.right + 6) || lanes.reduce((a, b) => (a.right < b.right ? a : b)); lane.right = left + w;
@@ -123,7 +123,7 @@ function paycheckWaterfall(host, d, o) {
   const SHORT = { gross: 'Gross', federal: 'Federal', fica: 'FICA', se: 'SE tax', pretax: 'Pre-tax', take: 'Take-home', spend: 'Spending', left: 'Left' };
   const narrow = x.bandwidth() < 64;
   svg.selectAll('.wfl').data(bars).join('text').attr('class', 'chart-label wfl').attr('x', b => x(b.key) + x.bandwidth() / 2).attr('y', (b, i) => H - m.b + 14 + (narrow && i % 2 ? 24 : 0)).attr('text-anchor', 'middle').text(b => narrow ? (SHORT[b.key] || cut(b.label, 10)) : cut(b.label, 16));
-  svg.selectAll('.wfv').data(bars).join('text').attr('class', 'chart-label muted wfv').attr('x', b => x(b.key) + x.bandwidth() / 2).attr('y', (b, i) => H - m.b + 26 + (narrow && i % 2 ? 24 : 0)).attr('text-anchor', 'middle').text(b => F.dollarsCompact(Math.abs(b.cents)));
+  svg.selectAll('.wfv').data(narrow ? [] : bars).join('text').attr('class', 'chart-label muted wfv') /* MR-079: narrow bars keep their amounts in the tooltip, so the two label rows never crowd */.attr('x', b => x(b.key) + x.bandwidth() / 2).attr('y', (b, i) => H - m.b + 26 + (narrow && i % 2 ? 24 : 0)).attr('text-anchor', 'middle').text(b => F.dollarsCompact(Math.abs(b.cents)));
   note(svg, W, H, m, 'A year of pay' + (d.rough ? ', rough' : '') + '.');
 }
 /* g */
@@ -133,8 +133,10 @@ function spendingTreemap(host, d, o) {
   d3.treemap().size([W, H]).paddingInner(3)(root);
   const g = svg.selectAll('g').data(root.leaves()).join('g').attr('transform', l => 'translate(' + l.x0 + ',' + l.y0 + ')');
   g.append('rect').attr('class', l => 'bar ' + (l.data.kind === 'want' ? 'shade-1' : 'shade-0')).attr('width', l => Math.max(0, l.x1 - l.x0)).attr('height', l => Math.max(0, l.y1 - l.y0)).attr('rx', 3).append('title').text(l => l.data.label + (l.data.kind === 'want' ? ' (wants)' : ' (needs)') + ': ' + F.dollarsWhole(l.data.cents) + ' a month');
-  g.filter(l => l.x1 - l.x0 > 56 && l.y1 - l.y0 > 28).append('text').attr('class', 'chart-label on-bar').attr('x', 6).attr('y', 14).text(l => cut(l.data.label, Math.floor((l.x1 - l.x0) / 7)));
-  g.filter(l => l.x1 - l.x0 > 56 && l.y1 - l.y0 > 40).append('text').attr('class', 'chart-label on-bar').attr('x', 6).attr('y', 28).text(l => F.dollarsCompact(l.data.cents));
+  /* MR-079: a tile shows its name only when the whole name fits; one too small for the name shows the amount alone; one too small for either stays plain */
+  const fits = l => l.data.label.length * 7 <= l.x1 - l.x0 - 10;
+  g.filter(l => l.x1 - l.x0 > 44 && l.y1 - l.y0 > 24).append('text').attr('class', 'chart-label on-bar').attr('x', 6).attr('y', 14).text(l => fits(l) ? l.data.label : F.dollarsCompact(l.data.cents));
+  g.filter(l => fits(l) && l.y1 - l.y0 > 40).append('text').attr('class', 'chart-label on-bar').attr('x', 6).attr('y', 28).text(l => F.dollarsCompact(l.data.cents));
   legend(host, [{ label: 'Needs', text: F.dollarsWhole(d.needs_), cls: 'shade-0' }, { label: 'Wants', text: F.dollarsWhole(d.wants), cls: 'shade-1' }].concat(d.fatFloor ? [{ label: (o.client ? 'Lean month' : 'FAT floor'), text: F.dollarsWhole(d.fatFloor), cls: 'none' }] : []));
 }
 /* h */
@@ -152,7 +154,7 @@ function drafttBullets(host, d, o) {
 }
 /* i */
 function debtCompared(host, d, o) {
-  const rows = d.orders.filter(x => x.months !== null).map(x => ({ label: x.label, value: x.months, text: x.months + ' months, ' + F.dollarsWhole(x.interest) + ' interest', cls: x.key === d.best ? 'shade-0' : 'shade-2' }));
+  const rows = d.orders.filter(x => x.months !== null).map(x => ({ label: x.label, value: x.months, text: x.months + ' mo, ' + F.dollarsWhole(x.interest), cls: x.key === d.best ? 'shade-0' : 'shade-2' }));
   if (!rows.length) { host.appendChild(h('div', { class: 'chart-needs' }, 'No order clears the debts within fifty years at the minimums.')); return; }
   hbars(host, rows, Object.assign({}, o, { rowH: 36 }));
   const best = d.orders.find(x => x.key === d.best);

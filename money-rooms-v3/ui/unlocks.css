@@ -30,15 +30,17 @@
 .next-unlock.compact { margin-top: var(--s-3); }
 .linklike { background: none; border: 0; padding: 0; color: var(--sapphire-700); cursor: pointer; font: inherit; text-decoration: underline; text-underline-offset: 3px; text-align: left; }
 
-.rings { display: flex; gap: var(--s-3); align-items: flex-start; flex-wrap: wrap; margin: var(--s-2) 0 var(--s-3); }
-.ring { width: 120px; text-align: center; font-size: var(--fs-12); color: var(--slate); }
+.rings { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--s-3); align-items: start; margin: var(--s-2) 0 var(--s-3); } /* MR-079: four rings across the whole panel */
+.ring { width: auto; text-align: center; font-size: var(--fs-12); color: var(--slate); }
+.ring.fi { border-left: 1px solid var(--line); }
+@media (max-width: 720px) { .rings { grid-template-columns: repeat(2, minmax(0, 1fr)); } .ring.fi { border-left: 0; } }
 .ring svg { width: 72px; height: 72px; display: block; margin: 0 auto 4px; }
 .ring-track { fill: none; stroke: var(--line-soft); stroke-width: 6; }
 .ring-fill { fill: none; stroke: var(--sapphire-700); stroke-width: 6; stroke-linecap: round; transition: stroke-dashoffset 400ms; }
 .ring.fi .ring-fill { stroke: var(--sapphire-900); }
 .ring-text { font-size: 14px; font-weight: 600; fill: var(--ink); }
 .ring-label { color: var(--ink); font-weight: var(--w-semibold); }
-.ring-sep { width: 1px; align-self: stretch; background: var(--line); margin: 0 var(--s-1); }
+.ring-sep { display: none; }
 .ring-empty { width: 72px; height: 72px; border-radius: 50%; border: 6px dashed var(--line); margin: 0 auto 4px; display: flex; align-items: center; justify-content: center; color: var(--slate); font-weight: var(--w-semibold); }
 @media (prefers-reduced-motion: reduce) { .ring-fill { transition: none; } }
 
@@ -72,7 +74,7 @@
   .drawer.unlock-sheet { top: auto; bottom: 0; left: 0; right: 0; width: 100vw; max-height: 82vh; border-left: 0; border-top: 1px solid var(--line); border-radius: 16px 16px 0 0; animation: slide-up 300ms ease both; }
   @keyframes slide-up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
   .reveal-item.kind-chart { grid-template-columns: 96px minmax(0, 1fr); }
-  .rings { gap: var(--s-2); } .ring { width: 84px; } .ring svg, .ring-empty { width: 60px; height: 60px; }
+  .rings { gap: var(--s-2); } .ring svg, .ring-empty { width: 60px; height: 60px; }
 }
 @media (prefers-reduced-motion: reduce) { .drawer.unlock-sheet { animation: none; } }
 

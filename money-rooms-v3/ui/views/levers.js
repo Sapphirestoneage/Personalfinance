@@ -135,7 +135,7 @@ function drawList(panel, app, sens, st) {
   families.forEach(fam => {
     const items = fam ? shown.filter(i => i.family === fam) : shown;
     const group = h('div', { class: 'lever-group' });
-    if (fam) group.appendChild(h('h3', null, familyLabel(fam), app.data.graph.families[fam] !== familyLabel(fam) ? h('span', { class: 'tag' }, app.data.graph.families[fam]) : null));
+    if (fam) { const long = app.data.graph.families[fam] || ''; const extra = long.replace(familyLabel(fam), '').trim(); group.appendChild(h('h3', null, familyLabel(fam), extra ? h('span', { class: 'tag' }, extra) : null)); } /* MR-079: the tag never repeats the heading */
     items.forEach(i => {
       const months = monthsOf(i); const real = st.mode !== 'ask' && i.realistic && i.realistic.months !== null && i.realistic.months !== undefined ? i.realistic : null;
       const row = h('button', { class: 'lever-row', 'aria-label': leverLabel(app, i) + ', ' + fmtMonths(months), onClick: () => openLever(app, i, sens) },

@@ -85,7 +85,7 @@ main > header .actions .session-note { width: 240px; }
 .home-grid { grid-template-columns: minmax(0, 760px) minmax(0, 1fr); align-items: start; }
 table.data.history td.now, table.data.history td.what { max-width: 240px; white-space: normal; overflow-wrap: break-word; height: auto; padding-top: 4px; padding-bottom: 4px; }
 .history td.what .chip { margin-right: 2px; }
-.grid { display: grid; gap: var(--s-3); }
+.grid { display: grid; gap: var(--s-3); align-items: start; } /* MR-079: a panel is as tall as its content, never as tall as its neighbour */
 .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -109,7 +109,7 @@ table.data th.num { font-variant-numeric: normal; }
 .btn.quiet { border-color: transparent; background: transparent; color: var(--slate); padding: 0 var(--s-2); }
 .btn.quiet:hover { background: var(--sapphire-100); }
 .btn:disabled { color: var(--slate); background: var(--paper-2); cursor: default; }
-.btn.small { height: 24px; font-size: var(--fs-12); padding: 0 var(--s-2); }
+.btn.small { height: var(--field-h); font-size: var(--fs-12); padding: 0 var(--s-2); } /* MR-079: one control height; small means a smaller word, not a shorter button */
 
 /* Fields */
 .field { display: flex; flex-direction: column; gap: var(--s-1); }
@@ -220,7 +220,7 @@ table.data td .input:focus, table.data td .select:focus { outline: 0; }
 table.data tfoot td { background: var(--paper-2); font-weight: var(--w-semibold); border-top: 1px solid var(--line); }
 .toolbar { display: flex; gap: var(--s-2); align-items: center; padding: var(--s-2) var(--s-3); border-bottom: 1px solid var(--line); flex-wrap: wrap; background: var(--paper); }
 .toolbar .filter { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-12); color: var(--slate); }
-.toolbar .filter .select { height: 24px; width: auto; font-size: var(--fs-12); }
+.toolbar .filter .select { height: var(--field-h); width: auto; font-size: var(--fs-12); }
 
 /* Key numbers */
 .kpis { display: grid; grid-template-columns: repeat(auto-fill, minmax(168px, 1fr)); gap: var(--s-2); }
@@ -427,7 +427,7 @@ table.data.history td.when { white-space: normal; min-width: 96px; }
 .toolbar .filter .select { width: 144px; }
 
 .chip.toggle { cursor: pointer; }
-.planet-grid { display: grid; grid-template-columns: minmax(0, 760px) minmax(0, 1fr); gap: var(--s-3); align-items: start; }
+.planet-grid { display: grid; grid-template-columns: minmax(0, 640px) minmax(280px, 1fr); gap: var(--s-3); align-items: start; }
 .history td.where { white-space: nowrap; }
 .ledger-table td:last-child, .ledger-table th:last-child { padding-right: var(--s-2); }
 .ledger-table th { white-space: nowrap; }
@@ -481,6 +481,7 @@ body[data-view="client"] .lens .text { font-size: var(--fs-16); line-height: 24p
 
 /* One-pager */
 .onepager { background: var(--paper); border: 1px solid var(--line); border-radius: var(--r-panel); padding: var(--s-4); max-width: 816px; }
+.onepager.beforeafter { max-width: none; } /* MR-079: on the Program screen the sheet is as wide as the table above it */
 .onepager header.op-head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid var(--ink); padding-bottom: var(--s-2); margin-bottom: var(--s-3); }
 .onepager header.op-head h2 { font-size: var(--fs-20); line-height: 28px; margin: 0; color: var(--sapphire-900); }
 .onepager .op-meta { color: var(--slate); font-size: var(--fs-12); text-align: right; }
@@ -607,8 +608,8 @@ main > header:has(+ .onepager) { max-width: 816px; }
   .topbar .view-toggle button { padding: 0 6px; }
   .op-numbers .kpi:has(.shares) { grid-column: 1 / -1; }
 }
-.row-types-list { display: none; }
-@media (max-width: 1279px) { .row-types-list { display: block; margin-top: var(--s-3); } }
+.row-types-list { display: block; } /* MR-079: the list beside the orbit at every width, so the second column is never empty */
+@media (max-width: 1279px) { .row-types-list { margin-top: var(--s-3); } }
 
 /* Cells are the fields: the grid lines separate facts, the field fills its cell, focus is an inset ring. */
 .ledger-table th.num, .ledger-table td.num { min-width: 128px; }
@@ -721,13 +722,13 @@ body[data-view="client"] .top-card .headline { font-size: var(--fs-24); line-hei
 .levers-head h2 { margin: 0; }
 .lever-group { margin-top: var(--s-2); }
 .lever-group h3 .tag { font-size: var(--fs-12); color: var(--slate); font-weight: var(--w-regular); margin-left: var(--s-2); }
-.lever-row { all: unset; display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) 150px; grid-template-areas: "name bar months" "why why why"; gap: 2px var(--s-2); align-items: center; width: 100%; box-sizing: border-box; padding: 6px 0; border-bottom: 1px solid var(--line-soft); cursor: pointer; }
+.lever-row { all: unset; display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr) minmax(190px, auto); grid-template-areas: "name bar months" "why why why"; gap: 2px var(--s-2); align-items: center; width: 100%; box-sizing: border-box; padding: 6px 0; border-bottom: 1px solid var(--line-soft); cursor: pointer; }
 .lever-row:hover .lever-name strong { color: var(--sapphire-700); }
 .lever-name { grid-area: name; min-width: 0; overflow-wrap: anywhere; font-size: var(--fs-13); }
 .lever-bar { grid-area: bar; height: 10px; border-radius: 5px; background: var(--line-soft); overflow: hidden; }
 .lever-bar .fill { display: block; height: 100%; background: var(--sapphire-500); min-width: 2px; }
 .lever-bar .fill.fam-spend { background: var(--chart-1); } .lever-bar .fill.fam-earn { background: var(--chart-2); } .lever-bar .fill.fam-keep { background: var(--chart-3); } .lever-bar .fill.fam-grow { background: var(--sapphire-300); } .lever-bar .fill.fam-protect { background: var(--slate); } .lever-bar .fill.fam-assume { background: var(--chart-4); }
-.lever-months { grid-area: months; text-align: right; font-size: var(--fs-13); overflow-wrap: anywhere; }
+.lever-months { grid-area: months; text-align: right; font-size: var(--fs-13); white-space: nowrap; }
 .lever-why { grid-area: why; overflow-wrap: anywhere; }
 .chip.fam-spend, .chip.fam-earn, .chip.fam-keep, .chip.fam-grow, .chip.fam-protect, .chip.fam-assume { background: var(--sapphire-50, var(--line-soft)); color: var(--sapphire-900); }
 .levers-list { padding-left: 0; list-style: none; }
@@ -768,7 +769,7 @@ body[data-view="client"] .top-card .headline { font-size: var(--fs-24); line-hei
 .meter-value { font-size: var(--fs-20); font-weight: var(--w-semibold); }
 .meter-track { height: 8px; border-radius: 4px; background: var(--line-soft); overflow: hidden; margin: 6px 0; }
 .meter-fill { height: 100%; background: var(--sapphire-500); border-radius: 4px; min-width: 2px; }
-.move-list { list-style: none; padding-left: 0; } .move-list li { padding: 3px 0; border-bottom: 1px solid var(--line-soft); }
+.move-list { list-style: none; padding-left: 0; } .move-list li { padding: 4px 0; border-bottom: 1px solid var(--line-soft); }
 .callpath { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: var(--s-2); }
 .callpath .stop { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--r-field); background: var(--paper); font-size: var(--fs-13); }
 .callpath .stop:focus-visible { outline: 2px solid var(--sapphire-500); outline-offset: 2px; }
@@ -949,7 +950,7 @@ table.compare tr.current td { font-weight: var(--w-semibold); }
 .stress-scale { flex-wrap: wrap; gap: 4px; }
 .steps-list li { padding: 4px 0; } .steps-list li.done { color: var(--slate); }
 .steps-list .chip { margin-left: 8px; }
-.plan-list li { padding: 3px 0; }
+.plan-list li { padding: 4px 0; }
 .plan-list li.prio-could { color: var(--slate); }
 .plan-list li.moved-in .plan-name { font-weight: var(--w-semibold); }
 /* MR-074: the runner's plan brief (on file, opens) */
@@ -968,7 +969,7 @@ table.confirm-list td.confirm-item { font-weight: var(--w-semibold); }
 table.confirm-list tr.confirm-group th { background: var(--paper-2); color: var(--slate); font-weight: var(--w-semibold); text-transform: uppercase; letter-spacing: 0.04em; font-size: var(--fs-13); }
 table.confirm-list td .taps { margin-top: 0; flex-wrap: nowrap; }
 table.confirm-list td, table.confirm-list th { height: auto; padding: 6px var(--s-2); white-space: normal; }
-.readiness li { padding: 3px 0; }
+.readiness li { padding: 4px 0; }
 table.program tr.urgent-row td { background: var(--paper-2); }
 .map-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: var(--s-1) var(--s-3); }
 .blind-spot { margin: var(--s-2) 0; }
@@ -991,7 +992,7 @@ table.program tr.urgent-row td { background: var(--paper-2); }
 /* MR-057: the Clients table fits its card; cells wrap and the buttons stack when the card is narrow */
 table.data.clients-table td { white-space: normal; overflow-wrap: break-word; height: auto; padding-top: 6px; padding-bottom: 6px; }
 table.data.clients-table td.num { white-space: nowrap; }
-@media (max-width: 1500px) { table.data.clients-table td.num .btn { display: block; margin: 2px 0 2px auto; } }
+table.data.clients-table td.num { width: 1%; } table.data.clients-table td.num .btn { display: inline-flex; margin: 0; }
 /* MR-060: the fill queue drawer */
 .tracker .count.linklike { background: none; border: 0; padding: 0; font: inherit; font-weight: var(--w-semibold); color: var(--sapphire-700); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .queue section { margin-top: var(--s-3); } .queue h3 { font-size: var(--fs-13); color: var(--sapphire-900); margin-bottom: var(--s-1); }
@@ -1042,7 +1043,7 @@ h3.fold-head { cursor: default; } button.fold-head { cursor: pointer; }
 .seg .seg-btn:last-child { border-right: 0; }
 .seg .seg-btn:hover { background: var(--paper-2); color: var(--ink); }
 .seg .seg-btn.on, .seg .seg-btn[aria-pressed="true"] { background: var(--sapphire-700); color: var(--paper); font-weight: var(--w-semibold); }
-.seg.small .seg-btn { height: 24px; padding: 0 var(--s-2); font-size: var(--fs-12); }
+.seg.small .seg-btn { height: var(--field-h); padding: 0 var(--s-2); font-size: var(--fs-12); } /* MR-079: one control height; small is the word size */
 main .view-toggle { display: inline-flex; border: 1px solid var(--line); border-radius: var(--r-field); overflow: hidden; background: var(--paper); }
 main .view-toggle button, main .view-toggle .btn.small { background: transparent; border: 0; border-right: 1px solid var(--line); border-radius: 0; padding: 0 var(--s-3); height: 28px; font: inherit; font-size: var(--fs-13); color: var(--slate); cursor: pointer; }
 main .view-toggle button:last-child, main .view-toggle .btn.small:last-child { border-right: 0; }
@@ -1133,7 +1134,7 @@ tr.s-optional td { color: var(--slate); }
 .chk-hint { flex: 1 1 240px; min-width: 0; }
 table.data.checklist td.chk-value { white-space: nowrap; }
 table.data.checklist td.chk-value .cellwrap { display: inline-flex; align-items: center; gap: 6px; }
-table.data.checklist td.chk-value .input, table.data.checklist td.chk-value .select, table.data.checklist td.chk-value .picker .input { height: 30px; border: 1px solid var(--line); border-radius: var(--r-field); background: var(--paper); padding: 0 var(--s-2); width: auto; min-width: 120px; max-width: 260px; margin: 0; }
+table.data.checklist td.chk-value .input, table.data.checklist td.chk-value .select, table.data.checklist td.chk-value .picker .input { height: var(--field-h); border: 1px solid var(--line); border-radius: var(--r-field); background: var(--paper); padding: 0 var(--s-2); width: auto; min-width: 120px; max-width: 260px; margin: 0; }
 table.data.checklist td.chk-value .input.num { width: 130px; }
 table.data.checklist td.chk-value .input.wide { width: 240px; }
 table.data.checklist td.chk-value .select.cad { min-width: 0; width: auto; margin-left: 4px; }
@@ -1157,3 +1158,57 @@ table.data.checklist td.chk-fact { cursor: pointer; }
   table.data.checklist tr.chk-item td:first-child { grid-column: 1 / -1; }
   table.data.checklist tr.chk-item td:nth-child(3) { text-align: right; }
 }
+
+/* MR-079: one rhythm. Tags after any heading, prose at a reading measure, empty panels gone, side tabs that read as tabs */
+h2 .tag, h3 .tag { font-size: var(--fs-12); color: var(--slate); font-weight: var(--w-regular); margin-left: var(--s-2); }
+.panel > p, main > header .sub, p.chart-note, p.hint, .orbit-caption, .chk-locked p, .suggest { max-width: 72ch; }
+section.panel:empty { display: none; }
+p.chart-note { margin-top: var(--s-2); }
+.side-tabs .mtabs { position: static; flex-wrap: wrap; padding: 0; margin-bottom: var(--s-3); }
+.mtabs button.tab { padding: 6px 12px; border-radius: var(--r-field); color: var(--ink); text-decoration: none; font-size: var(--fs-13); white-space: nowrap; }
+.mtabs button.tab.active { background: var(--sapphire-100); color: var(--sapphire-900); font-weight: var(--w-semibold); }
+/* Assumptions: two columns on a wide screen instead of one narrow one */
+@media (min-width: 1100px) {
+  .assumptions { max-width: none; column-count: 2; column-gap: var(--s-6); }
+  .assumptions > h3 { break-after: avoid-column; }
+  .assumptions .fieldrow { break-inside: avoid; }
+  .assumptions > h3:first-child { margin-top: 0; }
+}
+/* Scoreboard: the coach's seventh tile is a wide low strip, not an orphan */
+.score-tile.coach-tile { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: var(--s-2) var(--s-3); }
+/* Calendar: a day already gone keeps its box, only quieter */
+.cal-cell.past { border-color: var(--line-soft); background: var(--paper-2); }
+/* Phones: a stacked ledger row is name and amount, then the details link; state and source live behind Details */
+@media (max-width: 500px) {
+  table.data.ledger-table.stack .cell-state, table.data.ledger-table.stack .cell-source { display: none; }
+  table.data.ledger-table.stack td.cell-details { display: block; text-align: right; padding-top: 4px; }
+  table.data.ledger-table.stack td.cell-details::before { display: none; }
+  table.data.ledger-table.stack .details-btn { width: auto; padding: 0 var(--s-2); }
+  table.data.ledger-table.stack .details-btn .word { display: inline; }
+}
+/* One page: the calendar lines and the decisions line keep the same beat as the sections around them */
+.onepager p.op-cal { margin: var(--s-2) 0; }
+.onepager p.op-cal + h3, .onepager p.op-cal + section { margin-top: var(--s-3); }
+/* Goals: the allocation table gets the wider column and may wrap; the ways-to-split panel the narrower one */
+.goals-bottom { grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); }
+.goals-bottom table.data td { white-space: normal; overflow-wrap: anywhere; }
+@media (max-width: 1100px) { .goals-bottom { grid-template-columns: minmax(0, 1fr); } }
+/* Session notes: the unsure table fits its panel; long facts wrap instead of pushing the state off the edge */
+table.data.plates { table-layout: auto; }
+table.data.plates td { white-space: normal; overflow-wrap: anywhere; }
+table.data.plates td:last-child, table.data.plates th:last-child { white-space: nowrap; }
+/* Phones: a stacked ledger row leads with its name, no label on it */
+@media (max-width: 500px) {
+  table.data.ledger-table.stack td.sticky { grid-template-columns: minmax(0, 1fr); text-align: left; font-weight: var(--w-semibold); padding-bottom: 4px; }
+  table.data.ledger-table.stack td.sticky::before { display: none; }
+}
+/* MR-079: a fact at rest in a form reads as a field of the one height, filled or not */
+.row-details .cell-read { display: inline-flex; align-items: center; height: var(--field-h); min-width: 120px; padding: 0 var(--s-2); border: 1px dashed var(--line); border-radius: var(--r-field); background: var(--paper); font: inherit; font-size: var(--fs-13); color: var(--ink); cursor: text; text-align: left; }
+.row-details .cell-read.empty { color: var(--slate); }
+.row-details .cell-read:not(.empty) { border-style: solid; }
+.row-details .cell-read:hover, .row-details .cell-read:focus-visible { border-color: var(--sapphire-500); background: var(--paper-2); outline: none; }
+.row-details .cellwrap.readhost { display: inline-block; }
+/* MR-079: a table in a narrow panel drops its "where" column rather than breaking words; numbers never wrap */
+.goals-bottom table.data td:first-child, table.data.plates td.num, table.data.plates th.num { white-space: nowrap; overflow-wrap: normal; }
+table.data.plates td { overflow-wrap: normal; }
+@container (max-width: 720px) { table.data.plates td:nth-child(3), table.data.plates th:nth-child(3) { display: none; } }

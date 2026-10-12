@@ -47,7 +47,7 @@ export function mount(host, app) {
           panel.appendChild(h('div', { class: 'fieldrow', dataset: { field: k } }, h('label', null, labels[k] || k), h('div', { class: 'control' }, sel), h('span', { class: 'src small muted' }, set ? ['Default ' + (opts.find(o => o[0] === String(defaults[k])) || [])[1] + ' ', h('button', { class: 'btn quiet small', onClick: () => commit(null) }, 'Use default')] : '')));
           return;
         }
-        const control = h('input', { class: 'input num', value: fmt(kind, v), 'aria-label': labels[k] || k });
+        const control = h('input', { class: 'input num', inputmode: 'decimal', value: fmt(kind, v), 'aria-label': labels[k] || k });
         control.addEventListener('focus', () => { control.value = raw(kind, v); control.select(); });
         control.addEventListener('change', e => { try { const p = parseTyped(kind === 'multiple' ? 'hours' : kind, e.target.value); commit(p ? p.v : null); } catch (err) { app.toast(err.message); } });
         control.addEventListener('blur', () => { const cur = (app.record.sun.assumptions || {})[k]; control.value = fmt(kind, cur !== undefined ? cur : defaults[k]); });

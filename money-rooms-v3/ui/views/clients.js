@@ -57,7 +57,7 @@ export function renderList(panel, app) {
     h('tbody', null, list.map(c => {
       const open = app.record && app.record.id === c.id;
       return h('tr', { class: open ? 'selected' : null },
-        h('td', null, h('a', { href: '#/clients/' + c.id, onClick: e => { e.preventDefault(); app.open(c.id); location.hash = '#/clients/' + c.id; } }, c.name || 'Unnamed client'), open ? h('span', { class: 'chip src', style: { marginLeft: '8px' } }, 'Open') : null, h('div', { class: 'muted small' }, 'Saved ' + F.dateLocal(c.updatedAt))),
+        h('td', null, h('a', { href: '#/clients/' + c.id, onClick: e => { e.preventDefault(); app.open(c.id); location.hash = '#/clients/' + c.id; } }, c.name || 'Unnamed client'), open ? h('span', { class: 'chip src', style: { marginLeft: '8px' } }, 'Current') : null, h('div', { class: 'muted small' }, 'Saved ' + F.dateLocal(c.updatedAt))),
         h('td', { class: 'small' }, sessionCell(app, c)),
         h('td', { class: 'num' }, h('a', { class: 'btn small primary', href: '#/home', onClick: () => { app.open(c.id); } }, 'Open')));
     })));

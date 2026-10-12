@@ -35,7 +35,7 @@ export function mount(host, app) {
   const cheer = h('div', { class: 'cheer-host' }); host.appendChild(cheer);
   const whatifPanel = h('section', { class: 'panel whatif' }); host.appendChild(whatifPanel);
   const tlPanel = h('section', { class: 'panel' }); host.appendChild(tlPanel);
-  const grid = h('div', { class: 'grid grid-2' }); const allocPanel = h('section', { class: 'panel' }); const cmpPanel = h('section', { class: 'panel' }); grid.appendChild(allocPanel); grid.appendChild(cmpPanel); host.appendChild(grid);
+  const grid = h('div', { class: 'grid goals-bottom' }); const allocPanel = h('section', { class: 'panel' }); const cmpPanel = h('section', { class: 'panel' }); grid.appendChild(allocPanel); grid.appendChild(cmpPanel); host.appendChild(grid);
 
   const isWhatIf = () => whatIf.surplusDelta !== 0 || whatIf.events.length > 0 || whatIf.order !== null || whatIf.mode !== null || whatIf.splits !== null || whatIf.overrides !== null || whatIf.goals !== null;
   const adjustable = i => !FLOOR_IDS.includes(i.id) && typeof i.step !== 'number' && i.type !== 'debt' && i.type !== 'long-term';
@@ -107,13 +107,13 @@ export function mount(host, app) {
       const fiWords = whatIf.goals ? (dm ? 'The FI date moves ' + monthsWord(dm) + (dm > 0 ? ' later' : ' sooner') : 'The FI date does not move') : null;
       whatifPanel.appendChild(h('p', { class: 'small whatif-moves' }, tries.concat(ch.slice(0, 4).map(c => c.text), fiWords ? [fiWords] : []).join('. ') + (tries.length || ch.length || fiWords ? '.' : 'No date moves.')));
     }
-    if (coach() && app.result.asm.cushionStep1 === 'fixed') { const cur = (app.record.goals.cushion || {}).step1Cents; whatifPanel.appendChild(h('div', { class: 'row small' }, h('label', null, 'Lean month, fixed amount'), h('input', { class: 'input num', style: { width: '110px' }, 'aria-label': 'Lean month fixed amount', value: cur ? money(cur) : '', onChange: e => { const p = parseSaid(e.target.value); app.goals({ cushion: Object.assign({}, app.record.goals.cushion || {}, { step1Cents: p && p.cents > 0 ? p.cents : null }) }); draw(); } }), h('span', { class: 'muted' }, 'Assumptions says a fixed amount; blank falls back to one month of food, housing and getting around.'))); }
+    if (coach() && app.result.asm.cushionStep1 === 'fixed') { const cur = (app.record.goals.cushion || {}).step1Cents; whatifPanel.appendChild(h('div', { class: 'row small' }, h('label', null, 'Lean month, fixed amount'), h('input', { class: 'input num', inputmode: 'decimal', style: { width: '110px' }, 'aria-label': 'Lean month fixed amount', value: cur ? money(cur) : '', onChange: e => { const p = parseSaid(e.target.value); app.goals({ cushion: Object.assign({}, app.record.goals.cushion || {}, { step1Cents: p && p.cents > 0 ? p.cents : null }) }); draw(); } }), h('span', { class: 'muted' }, 'Assumptions says a fixed amount; blank falls back to one month of food, housing and getting around.'))); }
     whatifPanel.appendChild(h('p', { class: 'small muted' }, coach() ? 'Surplus, windfall and cushion what-ifs stay here. Confirm saves a new order, mode, split, locked amount, or a goal moved or resized, to the record.' : 'Nothing here changes your plan until your coach confirms it.'));
   }
   function eventControl(kind, label, amountLabel, go) {
     const months = Array.from({ length: 24 }, (_, k) => addMonths((app.result.today || new Date().toISOString()).slice(0, 7), k));
     const sel = h('select', { class: 'select', 'aria-label': label + ' month' }, months.map(m => h('option', { value: m }, monthWord(m))));
-    const amt = h('input', { class: 'input num', style: { width: '96px' }, 'aria-label': amountLabel, title: 'like 2,000' });
+    const amt = h('input', { class: 'input num', inputmode: 'decimal', style: { width: '96px' }, 'aria-label': amountLabel, title: 'like 2,000' });
     const add = () => { const p = parseSaid(amt.value); if (!p || !(p.cents > 0)) { app.toast('A number first, like 2,000.'); return; } whatIf.events.push({ kind, month: sel.value, cents: p.cents }); draw(); };
     amt.addEventListener('keydown', e => { if (e.key === 'Enter') add(); });
     return h('span', { class: 'row whatif-event' }, h('span', { class: 'small muted' }, label), sel, amt, h('button', { class: 'btn small', onClick: add }, go));
@@ -222,7 +222,7 @@ export function mount(host, app) {
     return out;
   }
   function adjustGoal(i) {
-    const amount = h('input', { class: 'input num', 'aria-label': 'Amount', title: 'like 20,000', value: money(i.targetCents) });
+    const amount = h('input', { class: 'input num', inputmode: 'decimal', 'aria-label': 'Amount', title: 'like 20,000', value: money(i.targetCents) });
     const when = h('input', { class: 'input', 'aria-label': 'By when (YYYY-MM)', title: '2028-06', value: i.targetDate || '' });
     const tryIt = () => {
       const p = parseSaid(amount.value); if (!p || !(p.cents > 0)) { app.toast('An amount first, like 20,000.'); return; }
@@ -265,8 +265,8 @@ export function mount(host, app) {
     const tb = h('tbody');
     P.input.items.forEach(i => {
       const g = P.run.goals[i.id]; const a = P.assessment[i.id];
-      const lock = showLock && i.type !== 'long-term' && !FLOOR_IDS.includes(i.id) && typeof i.targetCents === 'number' ? h('input', { class: 'input num', style: { width: '84px' }, 'aria-label': 'Lock a monthly amount for ' + nameOf(i), title: 'A fixed amount each month; the rest flows around it', value: (P.input.overrides || {})[i.id] ? money((P.input.overrides || {})[i.id]) : '', onChange: e => { const p = parseSaid(e.target.value); const o = Object.assign({}, P.input.overrides || {}); if (p && p.cents > 0) o[i.id] = p.cents; else delete o[i.id]; whatIf.overrides = o; draw(); } }) : null;
-      const split = showSplit && i.type !== 'long-term' && !FLOOR_IDS.includes(i.id) && typeof i.targetCents === 'number' ? h('input', { class: 'input num', style: { width: '64px' }, 'aria-label': 'Share for ' + nameOf(i), value: (P.input.splits || {})[i.id] !== undefined ? Math.round(P.input.splits[i.id] * 100) + '%' : '', title: 'Percent of the monthly money; blank means an even share', onChange: e => { const v = parseFloat(String(e.target.value).replace('%', '')); const sp = Object.assign({}, P.input.splits || {}); if (v > 0) sp[i.id] = v / 100; else delete sp[i.id]; whatIf.splits = sp; draw(); } }) : null;
+      const lock = showLock && i.type !== 'long-term' && !FLOOR_IDS.includes(i.id) && typeof i.targetCents === 'number' ? h('input', { class: 'input num', inputmode: 'decimal', style: { width: '84px' }, 'aria-label': 'Lock a monthly amount for ' + nameOf(i), title: 'A fixed amount each month; the rest flows around it', value: (P.input.overrides || {})[i.id] ? money((P.input.overrides || {})[i.id]) : '', onChange: e => { const p = parseSaid(e.target.value); const o = Object.assign({}, P.input.overrides || {}); if (p && p.cents > 0) o[i.id] = p.cents; else delete o[i.id]; whatIf.overrides = o; draw(); } }) : null;
+      const split = showSplit && i.type !== 'long-term' && !FLOOR_IDS.includes(i.id) && typeof i.targetCents === 'number' ? h('input', { class: 'input num', inputmode: 'decimal', style: { width: '64px' }, 'aria-label': 'Share for ' + nameOf(i), value: (P.input.splits || {})[i.id] !== undefined ? Math.round(P.input.splits[i.id] * 100) + '%' : '', title: 'Percent of the monthly money; blank means an even share', onChange: e => { const v = parseFloat(String(e.target.value).replace('%', '')); const sp = Object.assign({}, P.input.splits || {}); if (v > 0) sp[i.id] = v / 100; else delete sp[i.id]; whatIf.splits = sp; draw(); } }) : null;
       tb.appendChild(h('tr', { dataset: Object.assign({ goal: i.id }, /^life:/.test(i.id) && cellDoor(app, i.id.slice(5), 'goalCost') ? { cell: cellDoor(app, i.id.slice(5), 'goalCost') } : {}) }, h('td', null, nameOf(i)), h('td', { class: 'num' }, g ? money(g.monthlyNow) : ''), h('td', null, a && a.finishMonth ? monthWord(a.finishMonth) : ''), h('td', { class: 'wrap small' }, statusText(i, a)), showLock ? h('td', null, lock) : null, showSplit ? h('td', null, split) : null));
     });
     allocPanel.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data alloc' }, h('thead', null, h('tr', null, h('th', null, 'Goal'), h('th', { class: 'num' }, 'A month now'), h('th', null, 'Lands'), h('th', null, 'Where it stands'), showLock ? h('th', null, 'Locked') : null, showSplit ? h('th', null, 'Share') : null)), tb)));
@@ -285,7 +285,7 @@ export function mount(host, app) {
   /* ---- add a goal, add to calendar ---- */
   function addGoal() {
     const name = h('input', { class: 'input wide', 'aria-label': 'Goal, in their words' });
-    const amount = h('input', { class: 'input num', 'aria-label': 'Amount', title: 'like 1,500' });
+    const amount = h('input', { class: 'input num', inputmode: 'decimal', 'aria-label': 'Amount', title: 'like 1,500' });
     const when = h('input', { class: 'input', 'aria-label': 'By when, optional (YYYY-MM)', title: '2027-04' });
     const save = () => { const p = parseSaid(amount.value); if (!name.value.trim() || !p || !(p.cents > 0)) { app.toast('A name and an amount first.'); return; } const extras = (app.record.goals.extras || []).concat([{ id: 'x' + Date.now().toString(36), name: name.value.trim(), targetCents: p.cents, targetDate: /^\d{4}-\d{2}$/.test(when.value.trim()) ? when.value.trim() : null }]); app.goals({ extras }); closeOverlay(); app.toast('Goal added'); draw(); };
     app.openDrawer(h('div', null, h('h2', null, 'Add a goal'), h('div', { class: 'stack' }, name, h('div', { class: 'row' }, amount, when), h('div', { class: 'row' }, h('button', { class: 'btn primary', onClick: save }, 'Add'), h('button', { class: 'btn', onClick: closeOverlay }, 'Cancel')))), { label: 'Add a goal' });
