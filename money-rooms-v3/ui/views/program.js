@@ -27,7 +27,7 @@ export function mount(host, app) {
     const sessionRows = rows.filter(r => !r.moneyDate);
     table.appendChild(h('h2', null, 'Sessions', h('span', { class: 'tag' }, sessionRows.filter(r => r.n && r.status === 'closed').length + ' of ' + total + ' closed')));
     table.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data program' }, h('thead', null, h('tr', null, h('th', null, 'Session'), h('th', null, 'Name'), h('th', null, 'Status'), h('th', { class: 'hide-narrow' }, 'Date'), h('th', null, 'Targets met'), h('th', { class: 'hide-narrow' }, 'Accounts'), h('th', { class: 'hide-narrow' }, 'Homework done'), h('th', { class: 'num' }, 'Stress'))),
-      h('tbody', null, sessionRows.map(r => h('tr', { class: (r.n === null ? 'urgent-row' : '') + (r.status === 'running' ? ' selected' : ''), dataset: { session: r.key } },
+      h('tbody', null, sessionRows.map(r => h('tr', { class: (r.n === null ? 'urgent-row' : '') + (r.status === 'running' ? ' selected' : ''), dataset: { session: r.key, go: r.n === null ? '#/call' : r.status === 'running' ? '#/call/' + r.n : '#/prep/' + r.n } },
         h('td', null, r.label), h('td', { class: 'wrap' }, r.name, r.absorbed && r.absorbed.length ? h('div', { class: 'small muted' }, 'Absorbed: ' + r.absorbed.map(a => a.blockId + ' from session ' + a.from).join(', ')) : null, r.urgent ? h('div', { class: 'small muted' }, r.urgent.notes || '') : null),
         h('td', null, h('span', { class: 'chip ' + (r.status === 'closed' ? 'state-known' : r.status === 'running' ? 'amber' : 'src') }, r.status === 'closed' ? 'Done' : r.status === 'running' ? 'In progress' : 'Planned')),
         h('td', { class: 'small muted hide-narrow' }, r.date ? F.dateLong(r.date) : ''),

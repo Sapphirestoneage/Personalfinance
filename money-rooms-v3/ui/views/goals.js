@@ -16,6 +16,7 @@ import { goalFi, fiMonthOf } from '../../engine/fieffect.js';
 import { parseSaid } from '../../engine/parse.js';
 import { clientName, closeOverlay } from '../app.js';
 import { segmented } from '../seg.js';
+import { cellDoor } from '../doors.js';
 import { cheerSentence } from './session.js';
 
 const ZOOMS = [['24', '2 years', 24], ['60', '5 years', 60], ['fi', 'Until FI', null]];
@@ -266,7 +267,7 @@ export function mount(host, app) {
       const g = P.run.goals[i.id]; const a = P.assessment[i.id];
       const lock = showLock && i.type !== 'long-term' && !FLOOR_IDS.includes(i.id) && typeof i.targetCents === 'number' ? h('input', { class: 'input num', style: { width: '84px' }, 'aria-label': 'Lock a monthly amount for ' + nameOf(i), title: 'A fixed amount each month; the rest flows around it', value: (P.input.overrides || {})[i.id] ? money((P.input.overrides || {})[i.id]) : '', onChange: e => { const p = parseSaid(e.target.value); const o = Object.assign({}, P.input.overrides || {}); if (p && p.cents > 0) o[i.id] = p.cents; else delete o[i.id]; whatIf.overrides = o; draw(); } }) : null;
       const split = showSplit && i.type !== 'long-term' && !FLOOR_IDS.includes(i.id) && typeof i.targetCents === 'number' ? h('input', { class: 'input num', style: { width: '64px' }, 'aria-label': 'Share for ' + nameOf(i), value: (P.input.splits || {})[i.id] !== undefined ? Math.round(P.input.splits[i.id] * 100) + '%' : '', title: 'Percent of the monthly money; blank means an even share', onChange: e => { const v = parseFloat(String(e.target.value).replace('%', '')); const sp = Object.assign({}, P.input.splits || {}); if (v > 0) sp[i.id] = v / 100; else delete sp[i.id]; whatIf.splits = sp; draw(); } }) : null;
-      tb.appendChild(h('tr', { dataset: { goal: i.id } }, h('td', null, nameOf(i)), h('td', { class: 'num' }, g ? money(g.monthlyNow) : ''), h('td', null, a && a.finishMonth ? monthWord(a.finishMonth) : ''), h('td', { class: 'wrap small' }, statusText(i, a)), showLock ? h('td', null, lock) : null, showSplit ? h('td', null, split) : null));
+      tb.appendChild(h('tr', { dataset: Object.assign({ goal: i.id }, /^life:/.test(i.id) && cellDoor(app, i.id.slice(5), 'goalCost') ? { cell: cellDoor(app, i.id.slice(5), 'goalCost') } : {}) }, h('td', null, nameOf(i)), h('td', { class: 'num' }, g ? money(g.monthlyNow) : ''), h('td', null, a && a.finishMonth ? monthWord(a.finishMonth) : ''), h('td', { class: 'wrap small' }, statusText(i, a)), showLock ? h('td', null, lock) : null, showSplit ? h('td', null, split) : null));
     });
     allocPanel.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data alloc' }, h('thead', null, h('tr', null, h('th', null, 'Goal'), h('th', { class: 'num' }, 'A month now'), h('th', null, 'Lands'), h('th', null, 'Where it stands'), showLock ? h('th', null, 'Locked') : null, showSplit ? h('th', null, 'Share') : null)), tb)));
   }

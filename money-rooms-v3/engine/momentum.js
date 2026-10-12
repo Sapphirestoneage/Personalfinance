@@ -242,13 +242,13 @@ export function personalBests(record, result, data) {
   const snaps = snapshotsOf(record); const M = result.metrics;
   const best = (id, pick) => { const now = numOf(M[id]); const past = snaps.length > 1 && snaps[snaps.length - 1].values[id] === now ? snaps.slice(0, -1) : snaps; const vals = past.map(s => s.values[id]).filter(v => typeof v === 'number'); const prev = vals.length ? vals.reduce(pick) : null; const isNew = now !== null && (prev === null || pick(now, prev) === now && now !== prev); return { id, now, prev, isNew }; };
   const out = [];
-  const sr = best('savingsRateTakeHome', (a, b) => (a >= b ? a : b)); if (sr.now !== null) out.push({ key: 'savingsRate', label: 'Best savings rate', value: F.percent(sr.now, { places: 1 }), isNew: sr.isNew && snaps.length > 0 });
-  const sp = best('spending', (a, b) => (a <= b ? a : b)); if (sp.now !== null) out.push({ key: 'lowestSpending', label: 'Lowest month of spending', value: F.dollarsWhole(sp.now), isNew: sp.isNew && snaps.length > 0 });
+  const sr = best('savingsRateTakeHome', (a, b) => (a >= b ? a : b)); if (sr.now !== null) out.push({ metric: 'savingsRateTakeHome', key: 'savingsRate', label: 'Best savings rate', value: F.percent(sr.now, { places: 1 }), isNew: sr.isNew && snaps.length > 0 });
+  const sp = best('spending', (a, b) => (a <= b ? a : b)); if (sp.now !== null) out.push({ metric: 'spending', key: 'lowestSpending', label: 'Lowest month of spending', value: F.dollarsWhole(sp.now), isNew: sp.isNew && snaps.length > 0 });
   /* the largest single debt payoff, read from the journal */
   let payoff = null; record.journal.forEach(l => { if (l.kind === 'set' && l.planet === 'debt' && l.field === 'balance' && l.why === 'move') { const d = (num(l.old) || 0) - (num(l.new) || 0); if (d > 0 && (!payoff || d > payoff.cents)) payoff = { cents: d, ts: l.ts }; } });
   if (payoff) out.push({ key: 'payoff', label: 'Largest debt payment', value: F.dollarsWhole(payoff.cents), isNew: snaps.length > 0 && payoff.ts > (lastSnapshot(record) || { ts: '' }).ts });
   /* the highest satisfaction score */
-  const sat = best('satisfaction', (a, b) => (a >= b ? a : b)); if (sat.now !== null) out.push({ key: 'satisfaction', label: 'Highest satisfaction', value: sat.now + ' of 10', isNew: sat.isNew && snaps.length > 0 });
+  const sat = best('satisfaction', (a, b) => (a >= b ? a : b)); if (sat.now !== null) out.push({ metric: 'satisfaction', key: 'satisfaction', label: 'Highest satisfaction', value: sat.now + ' of 10', isNew: sat.isNew && snaps.length > 0 });
   /* months without a fee: snapshots where the mistakes line is zero */
   const streak = snaps.reduce((acc, s) => { const v = s.values.leak; return v === 0 ? acc + 1 : 0; }, 0);
   if (snaps.length) out.push({ key: 'noFee', label: 'Snapshots in a row with no leak', value: String(streak), isNew: false });

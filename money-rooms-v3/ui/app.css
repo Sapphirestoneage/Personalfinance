@@ -826,6 +826,16 @@ div.confirm-line { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0
 .disc-field .example { font-size: var(--fs-13); }
 .disc-field .saidbox { display: flex; flex-direction: column; gap: 2px; }
 .disc-intro { margin: 0 0 var(--s-2); }
+/* MR-076: a door is any value or name that opens where it lives; it looks and feels the same everywhere */
+.door { cursor: pointer; border-radius: 4px; transition: background-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease; }
+.door:hover { background: var(--sapphire-100); color: var(--sapphire-900); box-shadow: 0 0 0 3px var(--sapphire-100); }
+.door:focus-visible { outline: 2px solid var(--sapphire-500); outline-offset: 2px; }
+.door:active { transform: translateY(1px); }
+tr.door:hover td, tr.door:hover th { background: var(--sapphire-100); }
+tr.door:hover { box-shadow: none; }
+.btn, .seg-btn, .chip.toggle, .tl-seg, .stair-box, .kpi[role="button"] { transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease, transform 0.08s ease; }
+.btn:active, .seg-btn:active, .tl-seg:active, .kpi[role="button"]:active { transform: translateY(1px); }
+@media (prefers-reduced-motion: reduce) { .door, .btn, .seg-btn, .chip.toggle, .tl-seg, .stair-box, .kpi[role="button"] { transition: none; } .door:active, .btn:active, .seg-btn:active, .tl-seg:active { transform: none; } }
 .said-quick { gap: 4px; margin-top: 4px; } .said-quick .chip { font-size: var(--fs-13); }
 .rooms-head { justify-content: space-between; align-items: baseline; margin-bottom: var(--s-2); } .rooms-head h2 { margin: 0; }
 @media (max-width: 1100px) { .plan-grid { grid-template-columns: minmax(0, 1fr); } } /* the facts form needs the width; the planets sit under it */
@@ -939,16 +949,20 @@ table.compare tr.current td { font-weight: var(--w-semibold); }
 .stress-scale { flex-wrap: wrap; gap: 4px; }
 .steps-list li { padding: 4px 0; } .steps-list li.done { color: var(--slate); }
 .steps-list .chip { margin-left: 8px; }
-.plan-list { list-style: none; padding-left: 0; margin: var(--s-2) 0 0; }
-.plan-list li { display: grid; grid-template-columns: 28px minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: var(--s-1) var(--s-3); align-items: start; padding: var(--s-2) 0; border-bottom: 1px solid var(--line-soft); }
-.plan-list li.prio-could .plan-name { color: var(--slate); }
-.plan-list .plan-n { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: var(--sapphire-100); color: var(--sapphire-900); font-size: var(--fs-13); font-weight: var(--w-semibold); }
-.plan-list .plan-name { font-weight: var(--w-semibold); font-size: var(--fs-14); display: inline-flex; gap: 8px; align-items: center; }
-.plan-list .plan-meta { display: block; }
-.plan-list .plan-out { color: var(--slate); margin-top: 2px; }
-.plan-list .plan-k { display: block; font-size: var(--fs-13); color: var(--slate); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+.plan-list li { padding: 3px 0; }
+.plan-list li.prio-could { color: var(--slate); }
+.plan-list li.moved-in .plan-name { font-weight: var(--w-semibold); }
+/* MR-074: the runner's plan brief (on file, opens) */
+.plan-brief { list-style: none; padding-left: 0; margin: var(--s-2) 0 0; }
+.plan-brief li { display: grid; grid-template-columns: 28px minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr); gap: var(--s-1) var(--s-3); align-items: start; padding: var(--s-2) 0; border-bottom: 1px solid var(--line-soft); }
+.plan-brief li.prio-could .plan-name { color: var(--slate); }
+.plan-brief .plan-n { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: var(--sapphire-100); color: var(--sapphire-900); font-size: var(--fs-13); font-weight: var(--w-semibold); }
+.plan-brief .plan-name { font-weight: var(--w-semibold); font-size: var(--fs-14); display: inline-flex; gap: 8px; align-items: center; }
+.plan-brief .plan-meta { display: block; }
+.plan-brief .plan-out { color: var(--slate); margin-top: 2px; }
+.plan-brief .plan-k { display: block; font-size: var(--fs-13); color: var(--slate); text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
 .plan-sum { margin: 0 0 var(--s-1); }
-@media (max-width: 720px) { .plan-list li { grid-template-columns: 28px minmax(0, 1fr); } .plan-list .plan-have, .plan-list .plan-opens { grid-column: 2; } }
+@media (max-width: 720px) { .plan-brief li { grid-template-columns: 28px minmax(0, 1fr); } .plan-brief .plan-have, .plan-brief .plan-opens { grid-column: 2; } }
 .call-body h3 .tag { margin-left: 8px; }
 table.confirm-list td.confirm-item { font-weight: var(--w-semibold); }
 table.confirm-list tr.confirm-group th { background: var(--paper-2); color: var(--slate); font-weight: var(--w-semibold); text-transform: uppercase; letter-spacing: 0.04em; font-size: var(--fs-13); }

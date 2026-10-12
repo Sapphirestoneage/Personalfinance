@@ -5,6 +5,7 @@
 import { h, clear } from '../dom.js';
 import * as F from '../../engine/format.js';
 import { exportClient, importFile, clientName, closeOverlay } from '../app.js';
+import { cellDoor } from '../doors.js';
 import { PLANET_SHORT } from '../../engine/sun.js';
 import { programOf, nextSessionNumber } from '../../engine/program.js';
 import { sessionCount } from '../../engine/curriculum.js';
@@ -137,7 +138,7 @@ function renderHistory(panel, app, rec) {
   const fieldsData = app.data.fields;
   panel.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data history' },
     h('thead', null, h('tr', null, h('th', null, 'When'), h('th', null, 'What'), h('th', null, 'Now'))),
-    h('tbody', null, lines.map(l => h('tr', null,
+    h('tbody', null, lines.map(l => h('tr', { dataset: app.record && app.record.id === rec.id && l.rowId && l.field && l.field !== 'household' ? (cellDoor(app, l.rowId, l.field) ? { cell: cellDoor(app, l.rowId, l.field) } : {}) : {} },
       h('td', { class: 'muted small when' }, F.dateTimeLocal(l.ts)),
       h('td', { class: 'what' }, whereChip(l), ' ', describe(l, fieldsData)),
       h('td', { class: 'small now' }, side(l.new, l, fieldsData))))))));

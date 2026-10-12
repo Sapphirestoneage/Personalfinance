@@ -133,7 +133,7 @@ export function describeProbe(app, probe) {
 export function goToProbe(app, probe, from) {
   app.unlockBack = from || location.hash;
   closeOverlay();
-  if (probe.kind === 'sun') { app.focusAfterRender = { rowId: 'sun', field: probe.field }; location.hash = '#/home'; return; }
+  if (probe.kind === 'sun') { app.focusAfterRender = { rowId: 'sun', field: probe.field }; location.hash = '#/ledger'; return; } /* the household facts live on the Plan (MR-072) */
   if (probe.addRow) app.addRowAfterRender = { planet: probe.planet, type: probe.type, field: probe.firstField || probe.field };
   else app.focusAfterRender = { rowId: probe.rowId, field: probe.field, details: true };
   location.hash = probe.href;
@@ -261,7 +261,7 @@ export function chartInputs(app, chartId) {
     if (m && m.status !== 'ok' && m.needs) m.needs.forEach(n => { if (!seen.has('need:' + n)) { seen.add('need:' + n); sharpen.push({ text: 'Needs ' + n, target: U.targetFor(n, app.record, app.data) }); } });
     rootsOf(g, 'm.' + mid).forEach(node => {
       if (node.kind !== 'field' && node.kind !== 'sun') return;
-      if (node.kind === 'sun') { const id = node.id.replace('sun.', ''); const f = app.record.sun.f[id]; if (f && f.v !== null && f.v !== undefined && !seen.has(node.id)) { seen.add(node.id); fed.push({ label: node.label, value: id === 'birthDate' && /^\d{4}-\d{2}-\d{2}$/.test(String(f.v)) ? F.dateLong(f.v) : String(f.v), href: '#/home', rowId: 'sun', field: id, rough: f.state === 'rough' }); } return; }
+      if (node.kind === 'sun') { const id = node.id.replace('sun.', ''); const f = app.record.sun.f[id]; if (f && f.v !== null && f.v !== undefined && !seen.has(node.id)) { seen.add(node.id); fed.push({ label: node.label, value: id === 'birthDate' && /^\d{4}-\d{2}-\d{2}$/.test(String(f.v)) ? F.dateLong(f.v) : String(f.v), href: '#/ledger', rowId: 'sun', field: id, rough: f.state === 'rough' }); } return; }
       app.record.planets[node.planet] && app.record.planets[node.planet].rows.forEach(r => {
         const f = r.f[node.id]; if (!f || f.v === null || f.v === undefined || f.state === 'unknown') return;
         const key = r.id + ':' + node.id; if (seen.has(key)) return; seen.add(key);
@@ -279,9 +279,12 @@ export function chartInputs(app, chartId) {
 export function chartTakeawayParts(app, chartId) {
   const def = CHARTS.find(c => c.id === chartId); const meta = chartMeta(chartId, app.data);
   const parts = [];
-  (meta ? meta.metrics : []).forEach(mid => { const m = app.result.metrics[mid]; const d = app.data.metrics.metrics.find(x => x.id === mid); if (m && m.status === 'ok' && d) { const v = U.valueText(m); if (v) parts.push((app.view === 'client' ? d.clientLabel : d.name) + ': ' + v); } });
-  return { title: app.view === 'client' ? def.client : def.name, line: parts.slice(0, 2).join(' \u00b7 ') };
+  const spans = [];
+  (meta ? meta.metrics : []).forEach(mid => { const m = app.result.metrics[mid]; const d = app.data.metrics.metrics.find(x => x.id === mid); if (m && m.status === 'ok' && d) { const v = U.valueText(m); if (v) { parts.push((app.view === 'client' ? d.clientLabel : d.name) + ': ' + v); spans.push({ id: mid, text: (app.view === 'client' ? d.clientLabel : d.name) + ': ' + v }); } } });
+  return { title: app.view === 'client' ? def.client : def.name, line: parts.slice(0, 2).join(' \u00b7 '), spans: spans.slice(0, 2) };
 }
+/* MR-076: the takeaway line as doors, one per number */
+export function takeawayNode(tk) { return h('p', { class: 'takeaway' }, tk.spans.map((sp, i) => [i ? ' \u00b7 ' : null, h('span', { dataset: { metric: sp.id } }, sp.text)])); }
 export function chartTakeaway(app, chartId) {
   const def = CHARTS.find(c => c.id === chartId); const meta = chartMeta(chartId, app.data);
   const parts = [];
@@ -299,7 +302,7 @@ export function renderFocusedChart(host, app, chartId, back) {
   const panel = h('section', { class: 'panel chart-panel focused', dataset: { chart: chartId } });
   const tk = chartTakeawayParts(app, chartId);
   panel.appendChild(h('header', null, h('h2', null, tk.title)));
-  if (data && !data.needs && tk.line) panel.appendChild(h('p', { class: 'takeaway' }, tk.line));
+  if (data && !data.needs && tk.line) panel.appendChild(takeawayNode(tk));
   const body = h('div', { class: 'chart-big', dataset: { chartBody: chartId } });
   panel.appendChild(body);
   host.appendChild(panel);
@@ -310,7 +313,7 @@ export function renderFocusedChart(host, app, chartId, back) {
     if (t) panel.appendChild(h('button', { class: 'btn primary small', onClick: () => goToProbe(app, Object.assign({ kind: t.planet === 'sun' ? 'sun' : 'field' }, t), '#/measure/charts/' + chartId) }, 'Add ' + t.label.toLowerCase()));
   } else {
     const inputs = chartInputs(app, chartId);
-    if (inputs.fed.length) host.appendChild(h('section', { class: 'panel' }, h('h3', null, coach ? 'Inputs that fed it' : 'What this is built from'), h('ul', { class: 'fed-list' }, inputs.fed.map(i => h('li', null, h('a', { href: i.href, onClick: () => { app.focusAfterRender = { rowId: i.rowId, field: i.field, details: i.rowId !== 'sun' }; } }, i.label), h('span', { class: 'num' + (i.rough ? ' rough' : '') }, i.value))))));
+    if (inputs.fed.length) host.appendChild(h('section', { class: 'panel' }, h('h3', null, coach ? 'Inputs that fed it' : 'What this is built from'), h('ul', { class: 'fed-list' }, inputs.fed.map(i => h('li', { dataset: { cell: i.rowId + '|' + i.field + '|' + i.href } }, h('span', { class: 'fed-label' }, i.label), h('span', { class: 'num' + (i.rough ? ' rough' : '') }, i.value))))));
     if (inputs.sharpen.length) host.appendChild(h('section', { class: 'panel' }, h('h3', null, coach ? 'What would sharpen it' : 'What would make this more exact'), h('ul', { class: 'sharpen-list' }, inputs.sharpen.map(sx => h('li', null, sx.target ? h('button', { class: 'linklike', onClick: () => goToProbe(app, Object.assign({ kind: sx.target.rowId === 'sun' ? 'sun' : 'field', addRow: !sx.target.rowId || sx.target.addRow }, sx.target), '#/measure/charts/' + chartId) }, sx.text) : sx.text)))));
   }
   host.appendChild(nextUnlockCard(app, { from: '#/measure/charts/' + chartId }));

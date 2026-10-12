@@ -1,8 +1,11 @@
 # Progress
 
-Updated: 2026-10-11
+Updated: 2026-10-12
 
 ## Done
+- Every number is a door (MR-076): one doors layer (metric, screen, cell) with one hover and keyboard feel;
+  values on charts, lenses, the scoreboard, calculators, the calendar, plates, the program, goals and history
+  open where they live. Dead values on every screen: 938 before, 431 after (reference tables and chart legends).
 - Discovery follow-ups (MR-075): unemployment and retirement branches, a retirement-plan question, None / Not
   applicable / Don't know on every typed box, and the planets view back on the Plan screen.
 - Call runner polish (MR-074): a stepper timeline with full names, a plan brief that shows what is on file

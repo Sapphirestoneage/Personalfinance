@@ -154,7 +154,7 @@ export function mount(host, app) {
     body.appendChild(say(plan.goal));
     const shown = brief.blocks.filter(x => !['checkin', 'loops', 'plan'].includes(x.id));
     body.appendChild(h('p', { class: 'small muted plan-sum' }, shown.length + ' parts, ' + brief.totalMinutes + ' minutes planned, close by minute ' + brief.closeAt + '. Each part says what is already on file and what filling it would open.'));
-    const list = h('ol', { class: 'plan-list' });
+    const list = h('ol', { class: 'plan-list plan-brief' });
     shown.forEach(x => list.appendChild(h('li', { class: 'prio-' + x.priority + (x.movedIn ? ' moved-in' : ''), dataset: { block: x.id } },
       h('span', { class: 'plan-n' }, String(shown.indexOf(x) + 1)),
       h('div', { class: 'plan-main' }, h('span', { class: 'plan-name' }, x.name, x.movedIn ? h('span', { class: 'chip' }, 'from session ' + x.from) : null), h('span', { class: 'plan-meta small muted' }, x.minutes + ' min, ' + x.priorityWord.toLowerCase()), x.outputs ? h('div', { class: 'plan-out small' }, cap1(x.outputs)) : null),

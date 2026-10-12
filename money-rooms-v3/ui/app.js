@@ -10,6 +10,7 @@ import { getSensitivity } from './levers-bridge.js';
 import { installUnlockWatch } from './unlocks.js';
 import { routes, navItems, searchTargets } from './routes.js';
 import { progressTabs } from './progress.js';
+import { linkify, installDoors } from './doors.js';
 import { renderTracker } from './tracker.js';
 import { applyDiscovery, applyGuesses } from '../engine/discovery.js';
 import { setAnchor as anchorSet, reanchor as anchorAgain } from '../engine/anchors.js';
@@ -221,6 +222,7 @@ export const app = {
     }
     this.lastRenderMs = performance.now() - t0;
     stackTables(main);
+    linkify(main); /* MR-076: every marked value is a door */
     if (this.route.name === 'call' && this.view === 'client' && !this.presenting) this.setPresenting(true, { quiet: true });
     this.renderNav();
     if (this.focusAfterRender) { const f = this.focusAfterRender; this.focusAfterRender = null; const el = main.querySelector('tr[data-row="' + f.rowId + '"] [data-col="' + f.field + '"], .fieldrow[data-field="' + f.field + '"] .control input, .fieldrow[data-field="' + f.field + '"] .control select'); if (el) { el.focus(); if (el.scrollIntoView) el.scrollIntoView({ block: 'center' }); } else if (this.mounted && this.mounted.openDetails) this.mounted.openDetails(f.rowId, f.field); }
@@ -230,6 +232,7 @@ export const app = {
   rerender() { this.render(); },
   update(reason) {
     if (this.mounted && this.mounted.update) this.mounted.update(reason);
+    linkify(qs('#main'));
     stackTables(qs('#main'));
     const tr = qs('#tracker'); if (tr) renderTracker(tr, this);
     this.renderNav();
@@ -304,6 +307,7 @@ export const app = {
       h('div', { class: 'row drawer-top' }, o.title ? h('strong', { class: 'drawer-title' }, o.title) : null, h('span', { class: 'spacer' }), h('button', { class: 'btn small', onClick: closeOverlay }, 'Close')),
       node);
     qs('#overlay').appendChild(d);
+    linkify(d);
     d.querySelector('button').focus();
   },
   quickNoteBar() {
@@ -394,6 +398,7 @@ function boot() {
   qs('#view-client').addEventListener('click', () => app.setView('client'));
   qs('#theme-btn').addEventListener('click', () => app.toggleTheme());
   qs('#present-btn').addEventListener('click', () => app.setPresenting(!app.presenting));
+  installDoors(app);
   document.body.dataset.presenting = String(app.presenting);
   qs('#nav-btn').addEventListener('click', () => app.toggleNav());
   document.addEventListener('click', e => { if (document.body.classList.contains('nav-open') && !e.target.closest('#sidenav') && !e.target.closest('#nav-btn')) app.toggleNav(false); });

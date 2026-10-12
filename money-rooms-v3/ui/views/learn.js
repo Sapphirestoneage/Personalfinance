@@ -31,7 +31,7 @@ export function mount(host, app) {
       const rows = [];
       groups.forEach(g => {
         rows.push(h('tr', { class: 'group' }, h('td', { colspan: 2 }, g.reading.title)));
-        g.lenses.forEach(l => rows.push(h('tr', null, h('td', { class: 'wrap' }, l.text), h('td', { class: 'num' }, l.impactAnnual !== null ? F.dollarsWhole(l.impactAnnual, { rough: l.rough }) : '-'))));
+        g.lenses.forEach(l => rows.push(h('tr', { dataset: l.metric ? { metric: l.metric } : { go: '#/measure/lenses' } }, h('td', { class: 'wrap' }, l.text), h('td', { class: 'num' }, l.impactAnnual !== null ? F.dollarsWhole(l.impactAnnual, { rough: l.rough }) : '-'))));
       });
       body.appendChild(h('section', { class: 'panel' },
         h('h2', null, 'Readings', h('span', { class: 'tag' }, groups.length + (groups.length === 1 ? ' title, ' : ' titles, ') + lenses.length + (lenses.length === 1 ? ' finding' : ' findings'))),

@@ -1097,3 +1097,39 @@ flows.push({
     check('nothing is clipped on the phone', (await page.evaluate(() => document.documentElement.scrollWidth)) <= 390);
   },
 });
+
+/* MR-076: every number is a door. A takeaway value opens its drawer, a feeding input opens its cell, a lens opens its
+   number, a calendar week opens its tightest day, a personal best opens its number; each door is a real link to the keyboard. */
+flows.push({
+  name: 'level15-every-number-a-door',
+  async run(page, { base, check, APP }) {
+    await page.goto(base + 'index.html#/home'); await page.waitForSelector('#main h1, #main .empty');
+    await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', 'leah.json')); await page.waitForSelector('.today-card');
+    /* a chart takeaway: each number is a span that opens the metric drawer */
+    await page.goto(base + 'index.html#/measure/charts'); await page.waitForSelector('.takeaway .door');
+    check('takeaway values are doors with a role and a tab stop', (await page.locator('.takeaway .door[role="link"][tabindex="0"]').count()) >= 4);
+    await page.click('.takeaway .door >> nth=0'); await page.waitForSelector('.drawer .metric-drawer');
+    check('a takeaway value opens its drawer', (await page.locator('.drawer .metric-drawer').count()) === 1);
+    await page.keyboard.press('Escape'); await page.waitForFunction(() => !document.querySelector('.drawer'));
+    /* a feeding input opens the ledger with the cursor in that cell */
+    await page.goto(base + 'index.html#/measure/charts/fiLadderLines'); await page.waitForSelector('.fed-list li.door');
+    const cell = await page.getAttribute('.fed-list li.door >> nth=0', 'data-cell');
+    await page.click('.fed-list li.door >> nth=0 >> .num'); await page.waitForTimeout(400);
+    check('a feeding input lands in its room with the cursor in the cell', (await page.evaluate(() => location.hash)) === cell.split('|')[2] && (await page.evaluate(() => { const a = document.activeElement; return !!a && (a.tagName === 'INPUT' || a.tagName === 'SELECT' || a.classList.contains('cell-read')); })), cell);
+    /* a lens opens its number; a personal best opens its number */
+    await page.goto(base + 'index.html#/measure/lenses'); await page.waitForSelector('.lens .impact.door');
+    await page.click('.lens .impact.door >> nth=0'); await page.waitForSelector('.drawer .metric-drawer');
+    check('a lens figure opens the number it reads', true);
+    await page.keyboard.press('Escape'); await page.waitForFunction(() => !document.querySelector('.drawer'));
+    /* a calendar week row opens its tightest day */
+    await page.goto(base + 'index.html#/calendar/weeks'); await page.waitForSelector('table.calc-table tr.door');
+    check('week rows are buttons to the keyboard', (await page.getAttribute('table.calc-table tbody tr.door >> nth=0', 'role')) === 'button');
+    await page.click('table.calc-table tbody tr.door >> nth=0'); await page.waitForSelector('.drawer');
+    check('a week row opens a day', /Day/.test(await page.getAttribute('.drawer', 'aria-label')));
+    await page.keyboard.press('Escape');
+    /* the keyboard: Enter on a door works the same as a tap */
+    await page.goto(base + 'index.html#/measure/charts'); await page.waitForSelector('.takeaway .door');
+    await page.focus('.takeaway .door >> nth=0'); await page.keyboard.press('Enter'); await page.waitForSelector('.drawer .metric-drawer');
+    check('Enter on a door opens it', true);
+  },
+});

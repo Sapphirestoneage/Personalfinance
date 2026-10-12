@@ -16,7 +16,7 @@ export const STATE_WORDS = { hers: 'Hers', known: 'Known', rough: 'Rough', guess
 export function stateChip(state, name) { const w = state === 'hers' && name ? name + '’s' : STATE_WORDS[state] || state; return h('span', { class: 'chip calc-state state-' + state }, w); }
 
 /* The answer at the top: one big number, one read-aloud sentence. */
-export function answer(host, big, sentence, opts) { const o = opts || {}; clear(host); host.appendChild(h('div', { class: 'calc-answer' }, h('div', { class: 'calc-answer-label' }, o.label || ''), h('div', { class: 'calc-answer-big' + (o.small ? ' small' : '') }, big), sentence ? h('p', { class: 'read-aloud' }, sentence) : null)); return host; }
+export function answer(host, big, sentence, opts) { const o = opts || {}; clear(host); host.appendChild(h('div', { class: 'calc-answer' }, h('div', { class: 'calc-answer-label' }, o.label || ''), h('div', { class: 'calc-answer-big' + (o.small ? ' small' : ''), dataset: o.metric ? { metric: o.metric } : {} }, big), sentence ? h('p', { class: 'read-aloud' }, sentence) : null)); return host; }
 /* A missing-inputs card: what is needed, each a link into the room. */
 export function needsCard(app, needs, hrefs) { return h('section', { class: 'panel calc-needs' }, h('h2', null, app.view === 'client' ? 'A few facts first' : 'Needs'), h('ul', null, needs.map(n => h('li', null, h('a', { href: (hrefs && hrefs[n]) || '#/ledger/income' }, n))))); }
 
@@ -52,7 +52,9 @@ export function inputPanel(app, calcId, fields, groups, opts) {
   return panel;
 }
 /* A detail table from rows of [label, value, ...]. */
-export function detailTable(head, rows, opts) { const o = opts || {}; return h('div', { class: 'tablewrap' }, h('table', { class: 'data calc-table' }, h('thead', null, h('tr', null, head.map((c, i) => h('th', { class: i ? 'num' : '' }, c)))), h('tbody', null, rows.map(r => h('tr', { class: r.cls || '' }, r.cells.map((c, i) => h('td', { class: i ? 'num' : 'wrap' }, c))))), o.foot ? h('tfoot', null, h('tr', null, o.foot.map((c, i) => h('td', { class: i ? 'num' : '' }, c)))) : null)); }
+export function detailTable(head, rows, opts) { const o = opts || {}; return h('div', { class: 'tablewrap' }, h('table', { class: 'data calc-table' }, h('thead', null, h('tr', null, head.map((c, i) => h('th', { class: i ? 'num' : '' }, c)))), h('tbody', null, rows.map(r => h('tr', rowAttrs(r), r.cells.map((c, i) => h('td', { class: i ? 'num' : 'wrap' }, c))))), o.foot ? h('tfoot', null, h('tr', rowAttrs({ onOpen: o.footOpen, title: o.footTitle }), o.foot.map((c, i) => h('td', { class: i ? 'num' : '' }, c)))) : null));
+/* MR-076: a row with onOpen is a door (a real button to the keyboard); a row with go or cell is one through the doors layer */
+function rowAttrs(r) { const a = { class: (r.cls || '') + (r.onOpen ? ' door' : ''), dataset: r.go ? { go: r.go } : (r.cell ? { cell: r.cell } : {}) }; if (r.onOpen) { a.role = 'button'; a.tabindex = '0'; a.title = r.title || 'Open'; a.onClick = r.onOpen; a.onKeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); r.onOpen(); } }; } return a; } }
 /* A chart card: name as heading, takeaway line, the drawing. */
 export function chartCard(title, line, draw) { const body = h('div', { class: 'calc-chart-body' }); const card = h('section', { class: 'panel chart-panel calc-chart' }, h('header', null, h('h3', null, title)), line ? h('p', { class: 'takeaway' }, line) : null, body); setTimeout(() => draw(body), 0); return card; }
 /* Add this to my plan: a scenario block (and a goal when asked), through the record API. */
