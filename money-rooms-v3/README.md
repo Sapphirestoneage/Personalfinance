@@ -238,6 +238,10 @@ progress) and Progress vs paperwork.
 Program in the side nav shows one row per session, discovery first, with
 status, date, targets met, accounts opened, homework done and the stress
 score where it was asked; urgent sessions sit between the numbered ones.
+Quick start (Clients group, MR-080) is the first sitting: a birth year, then
+income, debt, expenses and assets, each "any, which kinds, about how much";
+every rough answer lands in its room at once and six headline numbers light
+as they can. A new client without a call starts there.
 A polish pass (MR-079) measured every screen and evened it out: one control
 height, panels as tall as their content, number keyboards on every numeric box,
 Backspace as back. The findings table is `audit/POLISH.md`.

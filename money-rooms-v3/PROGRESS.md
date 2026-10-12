@@ -3,6 +3,9 @@
 Updated: 2026-10-12
 
 ## Done
+- The quick start (MR-080): four questions on one page (income, debt, expenses, assets) plus a birth
+  year; every rough answer lands in its room at once; a strip of six headline numbers lights as it can;
+  No marks a room None; the hand-off is the Checklist on Still needed. A new client starts here.
 - One rhythm (MR-079): every screen measured at two widths in both views; one control height, grid
   panels as tall as their content, tags that keep their distance, a reading measure, number keyboards on
   every numeric box, Backspace as back; per-screen fixes on Today, the rooms, Levers, Goals, the calendar,

@@ -66,9 +66,9 @@ export function renderList(panel, app) {
 
 function newClientDrawer(app) {
   const name = h('input', { class: 'input', type: 'text', 'aria-label': 'New client name' });
-  const make = () => { const n = name.value.trim(); if (!n) { name.focus(); return; } closeOverlay(); app.newClient(n); location.hash = '#/ledger'; /* the household facts live on the Plan screen (MR-072) */ };
+  const make = () => { const n = name.value.trim(); if (!n) { name.focus(); return; } closeOverlay(); app.newClient(n); location.hash = '#/start'; /* MR-080: a new client starts with the four questions */ };
   name.addEventListener('keydown', e => { if (e.key === 'Enter') make(); });
-  app.openDrawer(h('div', null, h('h2', null, 'New client'), h('p', { class: 'small muted' }, 'A first name is enough. The discovery call is the usual way in; this skips it.'), h('div', { class: 'row', style: { marginTop: '8px' } }, name, h('button', { class: 'btn primary', onClick: make }, 'Create'))), { label: 'New client' });
+  app.openDrawer(h('div', null, h('h2', null, 'New client'), h('p', { class: 'small muted' }, 'A first name is enough. Four quick questions come next; the discovery call is the longer way in.'), h('div', { class: 'row', style: { marginTop: '8px' } }, name, h('button', { class: 'btn primary', onClick: make }, 'Create'))), { label: 'New client' });
   setTimeout(() => name.focus(), 0);
 }
 

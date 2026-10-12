@@ -1212,3 +1212,20 @@ table.data.plates td:last-child, table.data.plates th:last-child { white-space: 
 .goals-bottom table.data td:first-child, table.data.plates td.num, table.data.plates th.num { white-space: nowrap; overflow-wrap: normal; }
 table.data.plates td { overflow-wrap: normal; }
 @container (max-width: 720px) { table.data.plates td:nth-child(3), table.data.plates th:nth-child(3) { display: none; } }
+/* The quick start (MR-080): four questions on one screen, the numbers lighting up on top */
+.qs-strip-head { align-items: baseline; gap: var(--s-2); margin-bottom: var(--s-2); } .qs-strip-head h2 { margin: 0; }
+.qs-kpis .kpi.dim { background: var(--paper-2); } .qs-kpis .kpi.dim .label { color: var(--slate); }
+.qs-kpis .kpi.lit .value { color: var(--sapphire-900); }
+.qs-step h2 { margin-bottom: var(--s-2); }
+.qs-row { gap: var(--s-2) var(--s-3); align-items: center; flex-wrap: wrap; padding: 4px 0; }
+.qs-label { flex: 0 0 200px; font-size: var(--fs-13); color: var(--ink); }
+.qs-amountwrap { display: inline-flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
+.qs-amount { width: 220px; text-align: left; }
+.qs-heard { min-width: 120px; }
+.qs-kinds { gap: 6px; flex-wrap: wrap; margin: var(--s-2) 0; }
+.qs-lines { margin-top: var(--s-1); border-top: 1px solid var(--line-soft); padding-top: var(--s-1); }
+.qs-extra { display: inline-flex; align-items: center; gap: 6px; }
+.qs-done p { max-width: 72ch; }
+@media (max-width: 720px) { .qs-label { flex-basis: 100%; } .qs-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .qs-amount { width: 160px; } }
+.qs-kpis .kpi.lit .value { overflow-wrap: normal; white-space: nowrap; font-variant-numeric: tabular-nums; }
+@media (max-width: 720px) { .qs-kpis .kpi .value { font-size: var(--fs-16); line-height: 24px; } }

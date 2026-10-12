@@ -59,6 +59,7 @@ export const SCREENS = [
   { id: 'program', route: 'program' },
   { id: 'prep', route: 'prep' },
   { id: 'checklist', route: 'checklist' },
+  { id: 'start', route: 'start' },
   { id: 'transactions', route: 'transactions' },
   /* Level 12 (MR-063): the scoreboard, its drawer deep link, the map (index and one number), the money date */
   { id: 'scoreboard', route: 'scoreboard' },
@@ -117,7 +118,7 @@ export const HOUSEHOLDS = [
       await page.click('.more-list button:has-text("New client without a call")');
       await page.fill('input[aria-label="New client name"]', 'Example household');
       await page.press('input[aria-label="New client name"]', 'Enter');
-      await page.waitForSelector('.sun-panel .fieldrow'); /* a client without a call opens on the Plan, where the household facts live */
+      await page.waitForSelector('.qs-form'); /* MR-080: a client without a call starts with the four questions */
     },
   },
   { id: 'jordan', async load(page, { APP }) { await importHousehold(page, APP, 'jordan'); } },

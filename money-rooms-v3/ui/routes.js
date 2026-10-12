@@ -20,6 +20,7 @@ import * as Run from './views/run.js';
 import * as Program from './views/program.js';
 import * as Prep from './views/prep.js';
 import * as Checklist from './views/checklist.js';
+import * as QuickStart from './views/quickstart.js';
 import * as Transactions from './views/transactions.js';
 import * as Scoreboard from './views/scoreboard.js';
 import * as MapView from './views/map.js';
@@ -48,6 +49,7 @@ export const routes = {
   callpath: { title: 'Call path', mount: Call.mount, needsClient: true, coachOnly: true, section: 'Call', help: 'The six stops of the first calls: what they said, what it really is, what they would want, and the targets that come out of the gap.' },
   program: { title: 'Program', mount: Program.mount, needsClient: true, coachOnly: true, section: 'Call', help: 'The twelve sessions and the money dates after them, each with its status, and the before-and-after sheet.' },
   prep: { title: 'Prepare', mount: Prep.mount, needsClient: true, coachOnly: true, section: 'Call', help: 'Three things before the call: what they owe you, what is still missing for today\'s targets, and the open loop to answer first. Start the call begins the session.' },
+  start: { title: 'Quick start', mount: QuickStart.mount, needsClient: false, coachOnly: true, section: 'Clients', help: 'Four questions for a first sitting: income, debt, expenses, assets. Each rough answer lands in its room at once and the numbers on top light up as they can. No marks a kind as none. See what is still needed opens the Checklist.' },
   checklist: { title: 'Checklist', mount: Checklist.mount, needsClient: true, coachOnly: true, section: 'Plan', help: 'Every piece of information the numbers need for this client, with what is on file and whether it counts as in. Filter to what is still needed or to the rough figures. Tap a line to open where it lives.' },
   transactions: { title: 'Transactions', mount: Transactions.mount, needsClient: true, coachOnly: true, section: 'Call', help: 'A bank or card export, cleaned and categorized, becomes real monthly actuals with one click per line.' },
   scoreboard: { title: 'Scoreboard', mount: Scoreboard.mount, needsClient: true, section: 'Progress', help: 'The six numbers that matter, each with how it moved since last time, and the one next action. Every other number is a tap away by group.' },
@@ -73,6 +75,7 @@ export function navItems(app) {
   const items = [];
   items.push({ group: 'Today', label: 'Today', href: '#/home', active: r => r.name === 'home', key: 'Alt+1' });
   items.push({ group: 'Clients', label: 'Clients', href: '#/clients', active: r => r.name === 'clients', key: null });
+  items.push({ group: 'Clients', label: 'Quick start', href: '#/start', active: r => r.name === 'start', key: null });
   items.push({ group: 'Clients', label: 'Discovery call', href: '#/discovery', active: r => r.name === 'discovery', key: null });
   items.push({ group: 'Call', label: 'Start the call', href: '#/call', active: r => r.name === 'call' || r.name === 'callpath', key: null });
   items.push({ group: 'Call', label: 'Prepare', href: '#/prep', active: r => r.name === 'prep', key: null });

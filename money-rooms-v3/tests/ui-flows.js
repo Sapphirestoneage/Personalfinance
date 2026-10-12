@@ -1179,3 +1179,43 @@ flows.push({
     await page.click('.chk-controls .seg-btn:has-text("Everything")'); await page.waitForTimeout(200);
   },
 });
+
+/* MR-080: the quick start: four questions, rough rows at once, the numbers lighting up, then the Checklist */
+flows.push({
+  name: 'level17-quick-start',
+  async run(page, { base, check }) {
+    await page.goto(base + 'index.html#/clients'); await page.waitForSelector('.more-menu summary');
+    await page.click('.more-menu summary'); await page.click('.more-list button:has-text("New client without a call")');
+    await page.fill('input[aria-label="New client name"]', 'Quick household'); await page.press('input[aria-label="New client name"]', 'Enter');
+    await page.waitForSelector('.qs-form');
+    check('a new client lands on the quick start', (await page.evaluate(() => location.hash)) === '#/start');
+    const litAt = async () => (await page.textContent('.qs-strip .tag')).trim();
+    check('nothing is lit before an answer', /^0 of 6/.test(await litAt()));
+    await page.fill('input[aria-label="Birth year or age"]', '1996'); await page.press('input[aria-label="Birth year or age"]', 'Tab');
+    /* income: yes, a job, about 3,600 a paycheck */
+    await page.click('#qs-income .seg-btn:has-text("Yes")'); await page.click('#qs-income .chip:has-text("A job (W-2)")');
+    await page.fill('#qs-income [data-kind="w2"] input.qs-amount', '3600 a paycheck'); await page.press('#qs-income [data-kind="w2"] input.qs-amount', 'Tab'); await page.waitForTimeout(300);
+    check('a rough income lights take-home', /Take-home|take-home/.test(await page.textContent('.qs-kpis')) && (await page.locator('.qs-kpis .kpi.lit').count()) >= 1);
+    /* debt: no */
+    await page.click('#qs-debt .seg-btn:has-text("No, none")'); await page.waitForTimeout(300);
+    check('no debt reads as none and lights total debt', (await page.locator('.qs-kpis .kpi.lit').count()) >= 2);
+    /* expenses: about 4,000 a month */
+    await page.fill('#qs-expenses input.qs-amount >> nth=0', '4000'); await page.press('#qs-expenses input.qs-amount >> nth=0', 'Tab'); await page.waitForTimeout(400);
+    const strip = await page.textContent('.qs-kpis');
+    check('a rough spending total lights the FI number and the surplus', (await page.locator('.qs-kpis .kpi.lit').count()) >= 4 && /\$1,[0-9]{3},[0-9]{3}|\$[0-9]{3},[0-9]{3}/.test(strip));
+    /* assets: yes, savings about 8,000 */
+    await page.click('#qs-assets .seg-btn:has-text("Yes")'); await page.click('#qs-assets .chip:has-text("Savings")');
+    await page.fill('#qs-assets [data-kind="bank:savings"] input.qs-amount', '8000'); await page.press('#qs-assets [data-kind="bank:savings"] input.qs-amount', 'Tab'); await page.waitForTimeout(400);
+    check('every headline number is lit after four rough answers', /^6 of 6/.test(await litAt()));
+    /* the rows are rough rows in their rooms */
+    const rows = await page.evaluate(() => { const r = mr3.record; const pick = (p, t) => r.planets[p].rows.filter(x => x.type === t); return { w2: pick('income', 'w2').map(x => x.f.grossPay && x.f.grossPay.state), cards: pick('debt', 'card').map(x => x.nickname), sum: pick('spending', 'summary').map(x => x.f.summaryTotal && x.f.summaryTotal.state), bank: pick('invest', 'bank').map(x => [x.f.bankType.v, x.f.accountBalance.state]) }; });
+    check('the answers are rough rows in their rooms, and No is a None row', rows.w2[0] === 'rough' && rows.cards[0] === 'None' && rows.sum[0] === 'rough' && rows.bank[0][0] === 'savings' && rows.bank[0][1] === 'rough');
+    /* reopening the screen reads the answers back */
+    await page.goto(base + 'index.html#/home'); await page.waitForSelector('#main h1'); await page.goto(base + 'index.html#/start'); await page.waitForSelector('.qs-form');
+    check('the quick start reopens with its answers', (await page.inputValue('#qs-income [data-kind="w2"] input.qs-amount')).length > 0 && (await page.getAttribute('#qs-debt .seg-btn:has-text("No, none")', 'aria-pressed')) === 'true');
+    /* the hand-off: the Checklist on Still needed */
+    await page.click('.qs-done a:has-text("See what is still needed")'); await page.waitForSelector('.chk-strip .tracker');
+    check('See what is still needed opens the Checklist on Still needed', (await page.getAttribute('.chk-controls .seg-btn:has-text("Still needed")', 'aria-pressed')) === 'true');
+    await page.click('.chk-controls .seg-btn:has-text("Everything")');
+  },
+});

@@ -298,4 +298,10 @@ Collected during the run; none blocked the build. Answer whenever.
 87. On the discovery form a name, a city or a count is as wide as a text
     area. Should field widths follow the kind (a name 320px, a number 130px,
     a money box 160px) the way the rooms do?
+88. The quick start assumes New York for the state (the MR-025 default) and
+    asks no filing status, so the tax numbers are rough. Should it carry one
+    more question, "where do you live?", or is that firmly a Checklist line?
+89. The quick start's asset kinds are checking, savings, 401(k), Roth IRA,
+    traditional IRA, brokerage and HSA. Should a car or a home count as an
+    asset here, with a rough value, or do they stay out of a first sitting?
 
