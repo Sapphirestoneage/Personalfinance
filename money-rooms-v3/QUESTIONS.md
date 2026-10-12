@@ -281,4 +281,13 @@ Collected during the run; none blocked the build. Answer whenever.
     Confirm, Change and Don't know. With twenty or more rows, should there be
     one "Confirm all that are unchanged" button at the top, leaving the coach
     to tap only the rows that moved?
+83. The checklist shows every fact with its state but has no "checked" mark
+    of its own. Should a tap on a line that is already In be able to mark it
+    Verified (the coach has seen the statement), so a full walk-through
+    leaves the record at verified rather than known? That would change
+    states from the checklist, which today only reads.
+84. The checklist counts a rough figure as in and reports the rough count
+    beside it. Should a session be allowed to close while a headline figure
+    (gross pay, a balance) is still rough, or should the Prepare screen
+    carry the rough count as a fourth thing?
 

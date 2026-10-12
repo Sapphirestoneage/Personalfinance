@@ -57,5 +57,6 @@ export function renderTracker(host, app) {
       t.next ? h('span', { class: 'next' }, 'Next: ' + t.next.label + ' (' + t.next.where + ').') : h('span', { class: 'next' }, 'Everything the numbers need is in.'),
       t.next ? h('a', { class: 'btn small primary', href: t.next.href, onClick: () => { if (t.next.rowId && t.next.field) app.focusAfterRender = { rowId: t.next.rowId, field: t.next.field }; } }, 'Go') : null,
       h('span', { class: 'spacer' }),
-      left ? h('button', { class: 'linklike small count', title: t.done + ' of ' + t.total + ' facts in; see everything still to enter', 'aria-label': left + ' left, see the whole list', onClick: () => openQueue(app, t) }, left + ' left') : null)));
+      left ? h('button', { class: 'linklike small count', title: t.done + ' of ' + t.total + ' facts in; see everything still to enter', 'aria-label': left + ' left, see the whole list', onClick: () => openQueue(app, t) }, left + ' left') : null,
+      h('a', { class: 'small chk-link', href: '#/checklist', title: 'Every fact the numbers need, with what is on file' }, 'Full checklist'))));
 }

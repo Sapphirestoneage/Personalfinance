@@ -58,6 +58,7 @@ export const SCREENS = [
   { id: 'clients', route: 'clients' },
   { id: 'program', route: 'program' },
   { id: 'prep', route: 'prep' },
+  { id: 'checklist', route: 'checklist' },
   { id: 'transactions', route: 'transactions' },
   /* Level 12 (MR-063): the scoreboard, its drawer deep link, the map (index and one number), the money date */
   { id: 'scoreboard', route: 'scoreboard' },

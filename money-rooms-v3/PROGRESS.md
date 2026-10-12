@@ -3,6 +3,10 @@
 Updated: 2026-10-12
 
 ## Done
+- The checklist (MR-077): one coach screen with every fact the numbers need for a client, what is on
+  file, and one state word per line; a count strip, a still-needed filter, an optional-facts toggle, and
+  every line a door into its cell, and a closing panel of what is still locked and the fact that opens it.
+  The Plan's tracker links to it.
 - Every number is a door (MR-076): one doors layer (metric, screen, cell) with one hover and keyboard feel;
   values on charts, lenses, the scoreboard, calculators, the calendar, plates, the program, goals and history
   open where they live. Dead values on every screen: 938 before, 431 after (reference tables and chart legends).

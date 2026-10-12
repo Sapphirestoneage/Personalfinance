@@ -19,6 +19,7 @@ import * as Goals from './views/goals.js';
 import * as Run from './views/run.js';
 import * as Program from './views/program.js';
 import * as Prep from './views/prep.js';
+import * as Checklist from './views/checklist.js';
 import * as Transactions from './views/transactions.js';
 import * as Scoreboard from './views/scoreboard.js';
 import * as MapView from './views/map.js';
@@ -47,6 +48,7 @@ export const routes = {
   callpath: { title: 'Call path', mount: Call.mount, needsClient: true, coachOnly: true, section: 'Call', help: 'The six stops of the first calls: what they said, what it really is, what they would want, and the targets that come out of the gap.' },
   program: { title: 'Program', mount: Program.mount, needsClient: true, coachOnly: true, section: 'Call', help: 'The twelve sessions and the money dates after them, each with its status, and the before-and-after sheet.' },
   prep: { title: 'Prepare', mount: Prep.mount, needsClient: true, coachOnly: true, section: 'Call', help: 'Three things before the call: what they owe you, what is still missing for today\'s targets, and the open loop to answer first. Start the call begins the session.' },
+  checklist: { title: 'Checklist', mount: Checklist.mount, needsClient: true, coachOnly: true, section: 'Plan', help: 'Every piece of information the numbers need for this client, with what is on file and whether it counts as in. Filter to what is still needed or to the rough figures. Tap a line to open where it lives.' },
   transactions: { title: 'Transactions', mount: Transactions.mount, needsClient: true, coachOnly: true, section: 'Call', help: 'A bank or card export, cleaned and categorized, becomes real monthly actuals with one click per line.' },
   scoreboard: { title: 'Scoreboard', mount: Scoreboard.mount, needsClient: true, section: 'Progress', help: 'The six numbers that matter, each with how it moved since last time, and the one next action. Every other number is a tap away by group.' },
   map: { title: 'Map', mount: MapView.mount, needsClient: true, section: 'Progress', help: 'How the numbers connect: pick one and see what feeds it, what it feeds, and its path to the FI date.' },
@@ -82,6 +84,7 @@ export function navItems(app) {
   PLANETS.forEach((p, i) => {
     items.push({ group: 'Plan', label: t(PLANET_LABELS[p]) === PLANET_LABELS[p] ? PLANET_SHORT[p] : t(PLANET_LABELS[p]), href: '#/ledger/' + p, active: r => r.name === 'ledger' && r.params.id === p, key: 'Alt+' + (i + 2), fill: app.result && app.result.fills[p] !== null ? app.result.fills[p] : null });
   });
+  items.push({ group: 'Plan', label: 'Checklist', href: '#/checklist', active: r => r.name === 'checklist', key: null });
   items.push({ group: 'Progress', label: 'Progress', href: '#/scoreboard', active: r => ['scoreboard', 'measure', 'map', 'onepager'].includes(r.name), key: 'Alt+9' });
   items.push({ group: 'Tools', label: 'Calculators', href: '#/calculators', active: r => r.name === 'calculators' || r.name === 'calc', key: null });
   items.push({ group: 'Tools', label: 'Cash flow calendar', href: '#/calendar', active: r => r.name === 'calendar', key: null });

@@ -1107,3 +1107,35 @@ body[data-presenting="true"] .coach-only, body[data-presenting="true"] .clients-
 .help-keys[hidden] { display: none; }
 /* Rough values read as "about" for the client and a quiet marker for the coach */
 body[data-view="client"] .tilde { display: none; }
+
+/* The checklist (MR-077): every fact with its state; a row is a door into its cell */
+.chk-strip .tracker { margin-bottom: var(--s-2); }
+.chk-controls { gap: var(--s-2) var(--s-3); flex-wrap: wrap; align-items: center; }
+.chk-optional { display: inline-flex; align-items: center; gap: 6px; color: var(--slate); cursor: pointer; }
+.chk-head { align-items: baseline; gap: var(--s-2); }
+.chk-head h2 { margin: 0; }
+.chk-head h2 .tag { font-size: var(--fs-12); color: var(--slate); font-weight: var(--w-regular); margin-left: var(--s-2); }
+table.data.checklist tr.chk-group th { background: var(--paper-2); color: var(--sapphire-900); font-size: var(--fs-13); font-weight: var(--w-semibold); text-align: left; padding: 6px 8px; }
+table.data.checklist tr.chk-group th .btn { margin-left: var(--s-2); }
+.chk-group-count { margin-left: var(--s-2); font-weight: var(--w-regular); }
+table.data.checklist td { vertical-align: top; overflow-wrap: anywhere; white-space: normal; height: auto; padding-top: 5px; padding-bottom: 5px; }
+table.data.checklist td:last-child { width: 1%; }
+table.data.checklist tr.chk-item.primary td:first-child { font-weight: var(--w-semibold); }
+.chk-sub { display: block; color: var(--slate); font-size: var(--fs-12); font-weight: var(--w-regular); }
+.chk-state { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-size: var(--fs-13); }
+.chk-state::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 4px; background: var(--slate); flex: 0 0 auto; }
+tr.s-in .chk-state::before { background: var(--sapphire-700); }
+tr.s-rough .chk-state::before, tr.s-send .chk-state::before { background: var(--gold); }
+tr.s-missing .chk-state::before, tr.s-add .chk-state::before { background: var(--amber); }
+tr.s-optional td { color: var(--slate); }
+.chk-link { white-space: nowrap; }
+/* Phones: each checklist line is the fact on one line, the value and state on the next */
+@media (max-width: 500px) {
+  table.data.checklist, table.data.checklist tbody, table.data.checklist tr, table.data.checklist td, table.data.checklist tr.chk-group th { display: block; width: 100%; }
+  table.data.checklist thead { display: none; }
+  table.data.checklist tr.chk-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px var(--s-2); align-items: baseline; border-bottom: 1px solid var(--line); padding: 6px var(--s-2); }
+  table.data.checklist tr.chk-item td { border: 0; padding: 0; height: auto; white-space: normal; }
+  table.data.checklist td:last-child { width: auto; }
+  table.data.checklist tr.chk-item td:first-child { grid-column: 1 / -1; }
+  table.data.checklist tr.chk-item td:nth-child(3) { text-align: right; }
+}

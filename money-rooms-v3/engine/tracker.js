@@ -15,7 +15,7 @@ export function trackerSteps(record, fields) {
   const SUN_LABELS = { birthDate: 'Birth date', state: 'State', workSituation: 'Work situation', filingStatus: 'Filing status' };
   SUN_ASKED.forEach(id => {
     const f = record.sun.f[id];
-    steps.push({ kind: 'sun', label: SUN_LABELS[id] || id, where: 'Household', href: '#/home', field: id, rowId: 'sun', done: !!(f && f.v !== null && f.v !== undefined && f.v !== '') });
+    steps.push({ kind: 'sun', label: SUN_LABELS[id] || id, where: 'Household', href: '#/ledger', field: id, rowId: 'sun', done: !!(f && f.v !== null && f.v !== undefined && f.v !== '') });
   });
   const work = record.sun.f.workSituation ? record.sun.f.workSituation.v : null;
   /* stage 1: every planet has its rows (or a rough total, or none) */

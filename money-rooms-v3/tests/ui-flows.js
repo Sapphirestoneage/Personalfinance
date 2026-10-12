@@ -1133,3 +1133,40 @@ flows.push({
     check('Enter on a door opens it', true);
   },
 });
+
+/* MR-077: the checklist lists every fact with its state; a line is a door into its cell; the filter narrows to what is still needed */
+flows.push({
+  name: 'level16-checklist',
+  async run(page, { base, check, APP }) {
+    await page.goto(base + 'index.html#/home'); await page.waitForSelector('#main h1, #main .empty');
+    await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', 'leah.json')); await page.waitForSelector('.today-card');
+    /* the Plan's tracker strip links to the full list */
+    await page.goto(base + 'index.html#/ledger'); await page.waitForSelector('.tracker .chk-link');
+    await page.click('.tracker .chk-link'); await page.waitForSelector('.chk-strip .tracker');
+    check('the checklist opens from the Plan with a count strip', /^\d+ of \d+ in/.test((await page.textContent('.chk-strip .count')).trim()));
+    const sections = await page.locator('.chk-section').count();
+    check('household facts, the rooms and the first call each have a section', sections >= 8);
+    const rows = await page.locator('table.checklist tr.chk-item').count();
+    check('every fact is a row', rows > 100);
+    check('rows are doors with a role and a tab stop', (await page.locator('table.checklist tr.chk-item.door[role="link"][tabindex="0"]').count()) === rows);
+    check('optional facts are listed and marked', (await page.locator('table.checklist tr.s-optional').count()) > 0);
+    await page.uncheck('.chk-optional input'); await page.waitForTimeout(200);
+    check('the toggle hides them', (await page.locator('table.checklist tr.s-optional').count()) === 0);
+    await page.check('.chk-optional input'); await page.waitForTimeout(200);
+    /* the filter narrows to what is still needed */
+    await page.click('.chk-controls .seg-btn:has-text("Still needed")'); await page.waitForTimeout(200);
+    const open = await page.locator('table.checklist tr.chk-item').count();
+    check('Still needed shows only open lines', open > 0 && open < rows && (await page.locator('table.checklist tr.s-in').count()) === 0);
+    /* a line lands in its cell */
+    const cell = await page.getAttribute('table.checklist tr.chk-item[data-cell] >> nth=0', 'data-cell');
+    await page.click('table.checklist tr.chk-item[data-cell] >> nth=0 >> td >> nth=0'); await page.waitForTimeout(500);
+    check('a line opens the room with the cursor in that cell', (await page.evaluate(() => location.hash)) === cell.split('|')[2] && (await page.evaluate(() => { const a = document.activeElement; return !!(a && a.closest('tr[data-row], .fieldrow')); })));
+    /* what the facts feed: the locked numbers and the fact that opens each */
+    await page.goto(base + 'index.html#/checklist'); await page.waitForSelector('.chk-locked');
+    check('the checklist ends with what is still locked and the fact that opens it', /numbers, .* charts and .* readings are open/.test(await page.textContent('.chk-locked p')));
+    /* the filter is remembered; a new client reads as all missing */
+    await page.goto(base + 'index.html#/checklist'); await page.waitForSelector('.chk-strip .tracker');
+    check('the filter pick is remembered on this device', (await page.getAttribute('.chk-controls .seg-btn:has-text("Still needed")', 'aria-pressed')) === 'true');
+    await page.click('.chk-controls .seg-btn:has-text("Everything")'); await page.waitForTimeout(200);
+  },
+});
