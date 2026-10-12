@@ -281,11 +281,10 @@ Collected during the run; none blocked the build. Answer whenever.
     Confirm, Change and Don't know. With twenty or more rows, should there be
     one "Confirm all that are unchanged" button at the top, leaving the coach
     to tap only the rows that moved?
-83. The checklist shows every fact with its state but has no "checked" mark
-    of its own. Should a tap on a line that is already In be able to mark it
-    Verified (the coach has seen the statement), so a full walk-through
-    leaves the record at verified rather than known? That would change
-    states from the checklist, which today only reads.
+83. Answered by MR-078: the checklist's state cell is the state chip, so a
+    line can be marked Verified in place (or typed with the v prefix). Open
+    part: should "Verified" need a note of what was seen (a statement, a
+    paystub), or is the state alone enough for the record?
 84. The checklist counts a rough figure as in and reports the rough count
     beside it. Should a session be allowed to close while a headline figure
     (gross pay, a balance) is still rough, or should the Prepare screen

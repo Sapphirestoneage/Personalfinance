@@ -3,6 +3,8 @@
 Updated: 2026-10-12
 
 ## Done
+- The checklist takes entries (MR-078): the room's own control on every line, the state chip as the
+  state cell, Enter to the next line, counts that move the moment a value lands, no rebuild under the cursor.
 - The checklist (MR-077): one coach screen with every fact the numbers need for a client, what is on
   file, and one state word per line; a count strip, a still-needed filter, an optional-facts toggle, and
   every line a door into its cell, and a closing panel of what is still locked and the fact that opens it.

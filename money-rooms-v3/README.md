@@ -239,8 +239,9 @@ Program in the side nav shows one row per session, discovery first, with
 status, date, targets met, accounts opened, homework done and the stress
 score where it was asked; urgent sessions sit between the numbered ones.
 Checklist (Plan group) lists every fact the numbers need for a client with
-what is on file and one state word per line, a still-needed filter and a
-door into each cell (MR-077).
+what is on file, a still-needed filter and a door into each cell (MR-077);
+every line is entered right there with the room's own control, Enter moves
+to the next line and the counts move at once (MR-078).
 Prepare the next session shows her words, parked items, open loops, the
 account steps, what the session should leave known and the plan. Run session
 runs it one part at a time with the clock on top: the app moves parts to next

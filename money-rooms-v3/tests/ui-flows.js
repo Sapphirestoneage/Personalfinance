@@ -1146,20 +1146,29 @@ flows.push({
     check('the checklist opens from the Plan with a count strip', /^\d+ of \d+ in/.test((await page.textContent('.chk-strip .count')).trim()));
     const sections = await page.locator('.chk-section').count();
     check('household facts, the rooms and the first call each have a section', sections >= 8);
-    const rows = await page.locator('table.checklist tr.chk-item').count();
+    const rows = await page.locator('table.checklist tr.chk-item:has(td.chk-fact)').count();
     check('every fact is a row', rows > 100);
-    check('rows are doors with a role and a tab stop', (await page.locator('table.checklist tr.chk-item.door[role="link"][tabindex="0"]').count()) === rows);
-    check('optional facts are listed and marked', (await page.locator('table.checklist tr.s-optional').count()) > 0);
-    await page.uncheck('.chk-optional input'); await page.waitForTimeout(200);
-    check('the toggle hides them', (await page.locator('table.checklist tr.s-optional').count()) === 0);
+    check('every fact name is a door with a role and a tab stop', (await page.locator('table.checklist td.chk-fact.door[role="link"][tabindex="0"]').count()) === rows);
+    check('every fact on a row is entered on the checklist itself', (await page.locator('table.checklist tr.chk-item .chk-value input, table.checklist tr.chk-item .chk-value select').count()) > 100);
+    check('optional facts sit behind the toggle', (await page.locator('table.checklist tr.s-optional').count()) === 0);
     await page.check('.chk-optional input'); await page.waitForTimeout(200);
+    check('the toggle shows them', (await page.locator('table.checklist tr.s-optional').count()) > 0);
+    await page.uncheck('.chk-optional input'); await page.waitForTimeout(200);
     /* the filter narrows to what is still needed */
     await page.click('.chk-controls .seg-btn:has-text("Still needed")'); await page.waitForTimeout(200);
     const open = await page.locator('table.checklist tr.chk-item').count();
     check('Still needed shows only open lines', open > 0 && open < rows && (await page.locator('table.checklist tr.s-in').count()) === 0);
-    /* a line lands in its cell */
-    const cell = await page.getAttribute('table.checklist tr.chk-item[data-cell] >> nth=0', 'data-cell');
-    await page.click('table.checklist tr.chk-item[data-cell] >> nth=0 >> td >> nth=0'); await page.waitForTimeout(500);
+    /* MR-078: a value typed on the checklist lands at once: the line turns In, the counts move, Enter goes to the next line */
+    const before = (await page.textContent('.chk-strip .count')).trim();
+    const line = page.locator('table.checklist tr.chk-item.s-missing:has(.chk-value input.num)').first();
+    const lineId = await line.getAttribute('data-id');
+    await line.locator('.chk-value input.num').fill('4000'); await line.locator('.chk-value input.num').press('Enter'); await page.waitForTimeout(300);
+    check('the typed value lands and the line reads In without a rebuild', (await page.getAttribute('tr[data-id="' + lineId + '"]', 'class')).indexOf('s-in') !== -1 && (await page.inputValue('tr[data-id="' + lineId + '"] .chk-value input.num')) === '$4,000');
+    check('the counts move the moment a value lands', (await page.textContent('.chk-strip .count')).trim() !== before);
+    check('Enter moves to the next line', await page.evaluate(id => { const a = document.activeElement; return !!(a && a.closest('tr.chk-item') && a.closest('tr.chk-item').dataset.id !== id); }, lineId));
+    /* a fact's name lands in its cell in the room */
+    const cell = await page.getAttribute('table.checklist td.chk-fact[data-cell] >> nth=0', 'data-cell');
+    await page.click('table.checklist td.chk-fact[data-cell] >> nth=0'); await page.waitForTimeout(500);
     check('a line opens the room with the cursor in that cell', (await page.evaluate(() => location.hash)) === cell.split('|')[2] && (await page.evaluate(() => { const a = document.activeElement; return !!(a && a.closest('tr[data-row], .fieldrow')); })));
     /* what the facts feed: the locked numbers and the fact that opens each */
     await page.goto(base + 'index.html#/checklist'); await page.waitForSelector('.chk-locked');

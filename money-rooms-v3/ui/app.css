@@ -1129,6 +1129,24 @@ tr.s-rough .chk-state::before, tr.s-send .chk-state::before { background: var(--
 tr.s-missing .chk-state::before, tr.s-add .chk-state::before { background: var(--amber); }
 tr.s-optional td { color: var(--slate); }
 .chk-link { white-space: nowrap; }
+/* MR-078: the value cell holds the room's own control; it reads as a field, not a bare cell */
+.chk-hint { flex: 1 1 240px; min-width: 0; }
+table.data.checklist td.chk-value { white-space: nowrap; }
+table.data.checklist td.chk-value .cellwrap { display: inline-flex; align-items: center; gap: 6px; }
+table.data.checklist td.chk-value .input, table.data.checklist td.chk-value .select, table.data.checklist td.chk-value .picker .input { height: 30px; border: 1px solid var(--line); border-radius: var(--r-field); background: var(--paper); padding: 0 var(--s-2); width: auto; min-width: 120px; max-width: 260px; margin: 0; }
+table.data.checklist td.chk-value .input.num { width: 130px; }
+table.data.checklist td.chk-value .input.wide { width: 240px; }
+table.data.checklist td.chk-value .select.cad { min-width: 0; width: auto; margin-left: 4px; }
+table.data.checklist td.chk-value .picker.birth { display: inline-flex; align-items: center; gap: 6px; width: auto; }
+table.data.checklist td.chk-value .picker.birth .input.date { flex: 0 0 auto; width: 170px; min-width: 0; }
+table.data.checklist td.chk-value .picker.birth .or { margin-left: 0; }
+table.data.checklist td.chk-value .input.age { width: 72px; min-width: 0; }
+table.data.checklist td.chk-value .btn + .btn { margin-left: var(--s-2); }
+table.data.checklist td.chk-fact { cursor: pointer; }
+@media (max-width: 500px) {
+  table.data.checklist td.chk-value { white-space: normal; }
+  table.data.checklist td.chk-value .input, table.data.checklist td.chk-value .select { max-width: 100%; }
+}
 /* Phones: each checklist line is the fact on one line, the value and state on the next */
 @media (max-width: 500px) {
   table.data.checklist, table.data.checklist tbody, table.data.checklist tr, table.data.checklist td, table.data.checklist tr.chk-group th { display: block; width: 100%; }

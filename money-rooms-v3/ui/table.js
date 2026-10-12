@@ -590,7 +590,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
         const i = trs.findIndex(t => t.dataset.row === r.id);
         const next = trs[i + 1];
         if (next) { const t = next.querySelector('[data-col="' + colKey + '"]'); if (t) t.focus(); }
-        else if (!tdef.single) addRow(colKey);
+        else if (!tdef.single && !opts.formOnly) addRow(colKey); /* a form elsewhere (the checklist, MR-078) moves its own cursor and never adds a row on Enter */
       }
       if (e.altKey && (e.key === 'n' || e.key === 'N')) { e.preventDefault(); addRow(); }
       if (e.altKey && (e.key === 'd' || e.key === 'D')) { e.preventDefault(); openDetails(r.id); }
@@ -640,7 +640,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     if (old && fresh) old.replaceWith(fresh); else if (old) old.remove(); else if (fresh) table.appendChild(fresh);
   }
 
-  return { render, addRow, refreshTotals, openDetails, detailsBody };
+  return { render, addRow, refreshTotals, openDetails, detailsBody, editor, cadenceControl }; /* MR-078: the one cell editor, for forms elsewhere */
 }
 
 /* Read mode (Level 14, MR-072): a cell is plain text until it is tapped or focused; then the live control takes its
