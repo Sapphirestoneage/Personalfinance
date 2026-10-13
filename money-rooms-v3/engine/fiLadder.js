@@ -5,9 +5,9 @@
    One formula each; the views only draw. */
 import { isQ } from './units.js';
 
-export const RUNGS = Object.freeze(['leanFi', 'baristaLeanFi', 'baristaRegularFi', 'regularFi', 'fatFi']);
-export const RUNG_LABELS = Object.freeze({ leanFi: 'Lean FI', baristaLeanFi: 'Barista Lean FI', baristaRegularFi: 'Barista FI', regularFi: 'FI', fatFi: 'Fat FI', coastFi: 'Coast FI' });
-export const RUNG_CLIENT = Object.freeze({ leanFi: 'The floor', baristaLeanFi: 'The floor, with part-time work', baristaRegularFi: 'Enough, with part-time work', regularFi: 'Enough', fatFi: 'The dream', coastFi: 'Coast' });
+export const RUNGS = Object.freeze(['leanFi', 'baristaLeanFi', 'baristaRegularFi', 'regularFi', 'fatFi', 'paycheckFi']); /* MR-082: the paycheck rung, built on take-home instead of spending */
+export const RUNG_LABELS = Object.freeze({ leanFi: 'Lean FI', baristaLeanFi: 'Barista Lean FI', baristaRegularFi: 'Barista FI', regularFi: 'FI', fatFi: 'Fat FI', paycheckFi: 'Paycheck FI', coastFi: 'Coast FI' });
+export const RUNG_CLIENT = Object.freeze({ leanFi: 'The floor', baristaLeanFi: 'The floor, with part-time work', baristaRegularFi: 'Enough, with part-time work', regularFi: 'Enough', fatFi: 'The dream', coastFi: 'Coast', paycheckFi: 'The paycheck, without the job' });
 
 const Q = v => (isQ(v) ? v : null);
 
@@ -40,12 +40,13 @@ export function monthsToReach(target, now, series) {
   return null;
 }
 
-/* inp: { spending, fatFloor, byCategory, gut, dream, barista, invested, netWorth, asm, age, retirementAge, dreamFiAge, path, today } */
+/* inp: { spending, takeHome, gross, fatFloor, byCategory, gut, dream, barista, invested, netWorth, asm, age, retirementAge, dreamFiAge, path, today } */
 export function fiLadder(inp) {
   const asm = inp.asm; const wr = asm.withdrawalRate; const r = asm.returnLikely;
   const basisKey = asm.fiProgressBasis === 'netWorth' ? 'netWorth' : 'invested';
   const basisQ = basisKey === 'netWorth' ? Q(inp.netWorth) : Q(inp.invested);
   const needs = [];
+  const takeHome = Q(inp.takeHome); const gross = Q(inp.gross);
   const actual = Q(inp.spending);
   if (!actual) needs.push('monthly spending');
   /* the Level 8 spending basis switch: actual lines, the gut guess, or the dream; falls back to actual and says so */
@@ -90,6 +91,8 @@ export function fiLadder(inp) {
     rung('baristaRegularFi', base ? base.cents - baristaMonthly : null, (base && base.rough) || baristaRough),
     rung('regularFi', base ? base.cents : null, base && base.rough),
     rung('fatFi', fatCents === null ? null : Math.round(fatCents), (base && base.rough) || fatRough, { source: dream ? 'dream' : 'multiplier', number: fatNumber }),
+    /* MR-082: the portfolio that pays what the job pays: take-home a year over the withdrawal rate, the same formula fed income; the gross figure rides beside it */
+    rung('paycheckFi', takeHome ? takeHome.cents : null, takeHome && takeHome.rough, { source: 'takeHome', needs: ['take-home pay'], gross: gross ? Math.round(gross.cents * 12 / wr) : null, takeHomeMonthly: takeHome ? takeHome.cents : null, grossMonthly: gross ? gross.cents : null }),
   ];
   /* coast: the regular number discounted to today over the years to retirement age */
   let coast = { number: null, pct: null, months: null, years: null, rough: true, needs: [] };

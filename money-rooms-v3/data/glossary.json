@@ -404,6 +404,10 @@
   "carCostShare": {
    "coach": "Car and transport share of gross",
    "client": "Getting around, share of pay"
+  },
+  "paycheckFi": {
+   "coach": "Paycheck FI number",
+   "client": "Paycheck without the job"
   }
  }
 }

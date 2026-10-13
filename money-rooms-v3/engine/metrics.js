@@ -198,17 +198,18 @@ function levelNine(ctx, out, put, v) {
   const wr = asm.withdrawalRate, r = asm.returnLikely;
   const todayYear = parseInt(ctx.today.slice(0, 4), 10);
   const monthDate = months => { if (months === null) return null; const m0 = todayYear * 12 + parseInt(ctx.today.slice(5, 7), 10) - 1 + Math.round(months); return String(Math.floor(m0 / 12)) + '-' + String(m0 % 12 + 1).padStart(2, '0'); };
-  const L = fiLadder({ spending, fatFloor: fat, byCategory: sp && sp.byCategory, gut: lf && lf.gutSpendingMonthly, dream: lf && lf.dreamSpendingMonthly, barista: lf && lf.baristaIncomeMonthly, invested, netWorth: nw, asm, age: ctx.age, retirementAge: retAge, dreamFiAge: lf && lf.dreamFiAge, path, today: ctx.today });
+  const L = fiLadder({ spending, takeHome: take, gross, fatFloor: fat, byCategory: sp && sp.byCategory, gut: lf && lf.gutSpendingMonthly, dream: lf && lf.dreamSpendingMonthly, barista: lf && lf.baristaIncomeMonthly, invested, netWorth: nw, asm, age: ctx.age, retirementAge: retAge, dreamFiAge: lf && lf.dreamFiAge, path, today: ctx.today });
   ctx.ladderOut = L;
   const baseNeeds = spending ? [] : ['monthly spending'];
   /* the five rungs */
   L.rungs.forEach(rg => {
     if (rg.number === null) { put(need(rg.id, rg.needs || baseNeeds)); return; }
     const val = q(rg.number, U.oneoff, { confidence: spending ? spending.confidence : 0.6, rough: rg.rough });
-    const inputs = [inputOf('Spending a month on this rung', q(rg.monthlySpend, U.monthlyAfter)), inputOf('Withdrawal rate', pct(wr)), inputOf(L.basis === 'netWorth' ? 'Net worth' : 'Invested assets', L.basisCents === null ? null : q(L.basisCents, U.oneoff))];
+    const inputs = [inputOf(rg.id === 'paycheckFi' ? 'Take-home a month' : 'Spending a month on this rung', q(rg.monthlySpend, U.monthlyAfter)), inputOf('Withdrawal rate', pct(wr)), inputOf(L.basis === 'netWorth' ? 'Net worth' : 'Invested assets', L.basisCents === null ? null : q(L.basisCents, U.oneoff))];
     if (rg.id === 'baristaLeanFi' || rg.id === 'baristaRegularFi') inputs.push(inputOf('Part-time income a month' + (L.barista.typed ? '' : ' (assumption)'), q(L.barista.monthly, U.monthlyAfter)));
+    if (rg.id === 'paycheckFi' && rg.grossMonthly !== null) inputs.push(inputOf('Pay before deductions a month', q(rg.grossMonthly, U.monthlyAfter)));
     if (rg.id === 'fatFi') inputs.push(inputOf(rg.source === 'dream' ? 'Dream spending' : 'Fat multiplier', rg.source === 'dream' ? q(rg.monthlySpend, U.monthlyAfter) : count(asm.fatFiMultiplier, 'x')));
-    put(ok(rg.id, val, { formula: (ctx.data.metrics.metrics.find(m => m.id === rg.id) || {}).formula, inputs, result: val }, { pct: rg.pct, months: rg.months, reachedYear: rg.reachedYear, reachedAge: rg.reachedAge, requiredMonthly: rg.requiredMonthly, targetAge: L.targetAge, source: rg.source || null, date: monthDate(rg.months), rungLabel: RUNG_LABELS[rg.id] }));
+    put(ok(rg.id, val, { formula: (ctx.data.metrics.metrics.find(m => m.id === rg.id) || {}).formula, inputs, result: val }, { pct: rg.pct, months: rg.months, reachedYear: rg.reachedYear, reachedAge: rg.reachedAge, requiredMonthly: rg.requiredMonthly, targetAge: L.targetAge, source: rg.source || null, date: monthDate(rg.months), gross: rg.gross === undefined ? null : rg.gross, rungLabel: RUNG_LABELS[rg.id] }));
   });
   /* the rule of thumb and the reverse */
   if (spending) put(ok('baristaRule', q(L.baristaRule, U.oneoff), { formula: '$100 x 12 / withdrawal rate', inputs: [inputOf('Withdrawal rate', pct(wr))], result: q(L.baristaRule, U.oneoff) }, { perHundred: L.baristaRule, at35: baristaRule(0.035) }));

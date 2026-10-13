@@ -103,7 +103,7 @@ export function layerOf(n) {
   if (isRoot(n)) return 0;
   if (n.kind === 'slot') return 1;
   if (n.kind === 'projection' || n.kind === 'sink') return 2;
-  if (n.kind === 'metric') { if (n.id === 'm.fiDate') return 5; if (['m.leanFi', 'm.baristaLeanFi', 'm.baristaRegularFi', 'm.regularFi', 'm.fatFi', 'm.coastFi', 'm.fiNumber'].indexOf(n.id) !== -1) return 4; return 3; }
+  if (n.kind === 'metric') { if (n.id === 'm.fiDate') return 5; if (['m.leanFi', 'm.baristaLeanFi', 'm.baristaRegularFi', 'm.regularFi', 'm.fatFi', 'm.paycheckFi', 'm.coastFi', 'm.fiNumber'].indexOf(n.id) !== -1) return 4; return 3; }
   return 3;
 }
 

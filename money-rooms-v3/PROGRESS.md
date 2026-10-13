@@ -3,6 +3,9 @@
 Updated: 2026-10-12
 
 ## Done
+- The paycheck rung (MR-082): Paycheck FI on the FI ladder, take-home a year over the withdrawal rate,
+  with the gross figure beside it; on the ladder cards, the ladder chart, the Scoreboard, Levers and the
+  one-pager shelf through the registry.
 - This year (MR-081): the Goals horizon is twelve months by default; one goal can be the focus; the year
   panel gives where she is, the number for now, three in-year moves and the year strip; a buffer focus can
   be typed as lean months.

@@ -484,9 +484,9 @@ export const flows = [
     /* the levers page */
     await page.goto(base + 'index.html#/levers');
     await page.waitForSelector('.stairs .stair');
-    check('the ladder has five rungs', (await page.$$('.stairs .stair')).length === 5);
+    check('the ladder has six rungs', (await page.$$('.stairs .stair')).length === 6); /* MR-082 added the paycheck rung */
     const ladderText = await page.textContent('.ladder-panel');
-    check('the rungs run Lean, Barista Lean, Barista, FI, Fat with Coast as a line', ['Lean FI', 'Barista Lean FI', 'Barista FI', 'Fat FI', 'Coast FI'].every(w => ladderText.indexOf(w) !== -1));
+    check('the rungs run Lean, Barista Lean, Barista, FI, Fat, Paycheck with Coast as a line', ['Lean FI', 'Barista Lean FI', 'Barista FI', 'Fat FI', 'Paycheck FI', 'Coast FI'].every(w => ladderText.indexOf(w) !== -1));
     check('the barista rule is live and not hard-coded', ladderText.indexOf('$30,000 at 4.0%') !== -1 && ladderText.indexOf('$34,286 at 3.5%') !== -1);
     check('the reverse barista line is there', ladderText.indexOf('Barista FI today') !== -1);
     await page.waitForSelector('.top-card .headline', { timeout: 15000 });
@@ -921,7 +921,7 @@ flows.push({
     await page.waitForSelector('.today-card, .client-home');
     await page.waitForTimeout(300);
     const card0 = await page.textContent('.unlock-card');
-    check('a blank Maya starts with nothing open', /0 of 88/.test(card0) && /Next unlock/.test(card0), card0.slice(0, 120));
+    check('a blank Maya starts with nothing open', /0 of \d+/.test(card0) && /Next unlock/.test(card0), card0.slice(0, 120));
     /* the Home card's Go lands in the field that opens the most */
     await page.click('.unlock-card .linklike');
     await page.waitForTimeout(700);

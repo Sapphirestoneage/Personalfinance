@@ -238,6 +238,9 @@ progress) and Progress vs paperwork.
 Program in the side nav shows one row per session, discovery first, with
 status, date, targets met, accounts opened, homework done and the stress
 score where it was asked; urgent sessions sit between the numbered ones.
+The FI ladder has a paycheck rung (MR-082): the portfolio that pays what the
+job pays, so the two sides of enough sit on one ladder: enough to live on,
+and enough to replace the paycheck.
 Goals opens on This year (MR-081): mark one goal as the focus and the screen
 gives where she is, the number to set aside each month, the three moves that
 pay inside the year and the year strip; a buffer can be typed as lean months.

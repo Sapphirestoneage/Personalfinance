@@ -308,4 +308,7 @@ Collected during the run; none blocked the build. Answer whenever.
     how far each moves the FI date. For a one-year goal the better ranking
     may be plain dollars a month. Should the year panel rank by cents, or
     keep the FI ranking so the two screens agree?
+91. The paycheck rung is built on take-home, with the gross figure shown
+    beside it. Should Levers and the Scoreboard quote the gross version as
+    the rung instead, since clients quote their salary before deductions?
 

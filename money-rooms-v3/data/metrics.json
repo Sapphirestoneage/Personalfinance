@@ -5220,6 +5220,70 @@
    "gentleCopy": "Your getting around, share of pay: {value}.",
    "firstSession": 3,
    "headline": false
+  },
+  {
+   "n": 89,
+   "id": "paycheckFi",
+   "name": "Paycheck FI number",
+   "clientLabel": "Paycheck without the job",
+   "definition": "Take-home pay a year over the withdrawal rate: the portfolio that pays what the job pays, so not working would earn more than working. The FI number is enough to live on; this rung is enough to replace the paycheck. The figure on pay before deductions rides beside it (MR-082).",
+   "formula": "takeHome x 12 / withdrawalRate",
+   "inputs": [
+    "m.takeHome",
+    "asm.withdrawalRate",
+    "invest.investedAssets",
+    "projection"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "oneoff",
+    "basis": "real",
+    "tax": "na"
+   },
+   "owner": "engine",
+   "group": "FI",
+   "stage": 5,
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "grossPay",
+     "sign": 1,
+     "text": "A raise lifts this rung: the paycheck to replace grows with it."
+    },
+    {
+     "root": "asm.withdrawalRate",
+     "sign": -1,
+     "text": "A higher withdrawal rate lowers every number and raises the risk."
+    },
+    {
+     "root": "accountBalance",
+     "sign": 1,
+     "text": "Invested balances count toward every rung."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "accountBalance",
+     "grossPay",
+     "withdrawalRate"
+    ]
+   },
+   "level": 17,
+   "scoreGroup": "fi",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "fiLadderLines",
+   "unlock": [
+    "accountBalance",
+    "grossPay",
+    "asm.withdrawalRate"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Your paycheck without the job: {value}. Past this point, not working pays more than working.",
+   "firstSession": 4,
+   "headline": false
   }
  ],
  "stages": {

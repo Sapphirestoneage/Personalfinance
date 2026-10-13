@@ -50,13 +50,14 @@ function drawLadder(panel, app) {
   order.forEach((id, i) => {
     const m = M[id]; const r = L.rungs.find(x => x.id === id); const ok = m && m.status === 'ok';
     const label = coach ? RUNG_LABELS[id] : RUNG_CLIENT[id];
-    const step = h('div', { class: 'stair' + (ok && r.pct >= 1 ? ' reached' : ''), role: 'listitem', dataset: { rung: id }, style: { paddingTop: (8 + (4 - i) * 14) + 'px' } });
+    const step = h('div', { class: 'stair' + (ok && r.pct >= 1 ? ' reached' : ''), role: 'listitem', dataset: { rung: id }, style: { paddingTop: (8 + (RUNGS.length - 1 - i) * 14) + 'px' } });
     const box = h('button', { class: 'stair-box', 'aria-label': label + (ok ? ' ' + F.dollarsWhole(m.value.cents) : ''), onClick: () => openMetric(app, id) },
       h('div', { class: 'stair-label' }, label),
       ok ? h('div', { class: 'stair-number' + (m.value.rough ? ' rough' : '') }, F.dollarsCompact(m.value.cents)) : h('div', { class: 'stair-number needs' }, 'Needs ' + ((m && m.needs) || ['inputs'])[0]),
       ok ? h('div', { class: 'stair-bar' }, h('span', { style: { width: Math.round(Math.min(1, r.pct) * 100) + '%' } })) : null,
       ok ? h('div', { class: 'stair-meta' }, F.percent(r.pct, { places: 0 }) + ' there' + (r.months === 0 ? ', reached' : r.date ? ', ' + F.date(r.date) : r.months === null ? ', past 95' : '')) : null,
-      ok && r.requiredMonthly !== null && r.pct < 1 && coach ? h('div', { class: 'stair-meta' }, F.dollarsWhole(r.requiredMonthly) + ' a month by ' + L.targetAge) : null);
+      ok && r.requiredMonthly !== null && r.pct < 1 && coach ? h('div', { class: 'stair-meta' }, F.dollarsWhole(r.requiredMonthly) + ' a month by ' + L.targetAge) : null,
+      ok && id === 'paycheckFi' && r.gross ? h('div', { class: 'stair-meta' }, (coach ? 'on pay before deductions: ' : 'before deductions: ') + F.dollarsCompact(r.gross)) : null);
     step.appendChild(box); stairs.appendChild(step);
   });
   panel.appendChild(stairs);
