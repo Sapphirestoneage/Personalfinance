@@ -540,7 +540,7 @@ export const flows = [
     async run(page, { base, check, APP }) {
       await page.goto(base + 'index.html#/home');
       await page.waitForSelector('text=No clients yet');
-      await page.click('.more-menu summary'); await page.click('button[aria-label="New client"]');
+      await page.click('button[aria-label="Add a client"]');
       await page.fill('input[aria-label="New client name"]', 'Jordan');
       await page.press('input[aria-label="New client name"]', 'Enter');
       await page.waitForSelector('.qs-form'); await page.goto(base + 'index.html#/ledger'); /* MR-080: a new client starts on the quick start; these flows work the Plan */

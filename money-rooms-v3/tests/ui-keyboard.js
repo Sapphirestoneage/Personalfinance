@@ -59,7 +59,7 @@ export async function enterHousehold(page, spec, check) {
   /* Sun facts */
   await tabTo(page, a => a.aria === 'More client actions'); /* MR-072: New client sits under More on the client list */
   await press('Enter');
-  await tabTo(page, a => a.aria === 'New client');
+  await tabTo(page, a => a.aria === 'Add a client');
   await press('Enter');
   await page.waitForFunction(() => document.activeElement && document.activeElement.getAttribute('aria-label') === 'New client name'); /* the drawer focuses its name box on the next tick */
   await type(spec.sun.name[0]); await press('Enter');
