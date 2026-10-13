@@ -3,6 +3,9 @@
 Updated: 2026-10-13
 
 ## Done
+- It sticks (MR-087): a discovery call in progress is a draft that survives leaving the screen and a
+  reload, shown on Clients with Continue; a storage probe; the phone's More menu is a bottom sheet; a sweep
+  check that nothing sits off screen at phone width.
 - Controls that feel good (MR-086): rounded, lifted buttons; a raised segmented control; pill chips;
   focus rings; 40px controls and rows on a phone; shadows from the navy at low alpha.
 - The quick start one step at a time (MR-085): a phone gets Back and Next with one question per screen,

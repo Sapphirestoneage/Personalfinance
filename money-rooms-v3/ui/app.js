@@ -3,7 +3,7 @@
    keyboard shortcuts. Views mount into <main> and get update() calls;
    they never do math. */
 
-import { createStore } from '../engine/store.js';
+import { createStore, storageWorks, memoryStorage } from '../engine/store.js';
 import * as Rec from '../engine/record.js';
 import { h, clear, qs, debounce, download, readFile } from './dom.js';
 import { getSensitivity } from './levers-bridge.js';
@@ -21,11 +21,13 @@ import { snapshotValues } from '../engine/outcomes.js';
 import { takeSnapshot, seedCelebrations } from '../engine/momentum.js';
 import { setRough } from '../engine/format.js';
 
-const store = createStore();
+const STORAGE_OK = storageWorks(); /* MR-087: a sandboxed frame keeps nothing; the app still runs, and says so */
+const store = createStore(STORAGE_OK ? undefined : memoryStorage());
 const settings = store.settings();
 
 export const app = {
   store,
+  storageOk: STORAGE_OK,
   record: null,
   result: null,
   view: settings.presenting || settings.view === 'client' ? 'client' : 'coach',
@@ -411,6 +413,7 @@ function boot() {
   qs('#quicknote-btn').addEventListener('click', () => app.quickNoteBar());
   qs('#help-btn').addEventListener('click', () => app.helpPanel());
   window.addEventListener('hashchange', () => app.render());
+  if (!STORAGE_OK) setTimeout(() => app.toast('This window keeps nothing after it closes. Open the app at its own link to keep clients.', { ms: 12000 }), 800);
   window.addEventListener('keydown', e => {
     const mod = e.ctrlKey || e.metaKey;
     if (mod && !e.shiftKey && e.key.toLowerCase() === 'z' && !inInput(e)) { e.preventDefault(); app.undo(); return; }

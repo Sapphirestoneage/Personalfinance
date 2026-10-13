@@ -45,6 +45,8 @@ export function renderList(panel, app) {
       h('button', { class: 'btn', title: 'A copy of Maya with nothing filled in', onClick: () => { more.removeAttribute('open'); startFromZero(app); } }, 'Start demo from zero'),
       list.some(c => DEMO_IDS.includes(c.id)) ? h('button', { class: 'btn quiet', onClick: () => { more.removeAttribute('open'); resetDemo(app); } }, 'Reset the demo clients') : null,
       fileInput));
+  const draft = app.store.loadDraft('discovery'); /* MR-087: a discovery call in progress is not lost; it waits here */
+  if (draft && draft.form && draft.form.snapshot && draft.form.snapshot.name) panel.appendChild(h('p', { class: 'small disc-resume', dataset: { draft: 'discovery' } }, 'A discovery call in progress: ' + draft.form.snapshot.name + '. ', h('a', { class: 'btn small primary', href: '#/discovery' }, 'Continue the call'), ' ', h('button', { class: 'btn small quiet', onClick: () => { app.store.clearDraft('discovery'); renderList(panel, app); } }, 'Discard')));
   panel.appendChild(h('div', { class: 'row clients-actions' }, h('a', { class: 'btn primary', href: '#/discovery' }, 'Start a discovery call'), openSel, more));
   if (!list.length) {
     panel.appendChild(h('div', { class: 'empty first-visit' }, h('h3', null, 'No clients yet'),

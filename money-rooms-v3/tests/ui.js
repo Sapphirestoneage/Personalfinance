@@ -162,6 +162,22 @@ async function main() {
               return out.slice(0, 4);
             });
             check(label + ' one rhythm: control heights, number keyboards, heading tags', rhythm.length === 0, rhythm.join(' | '));
+            /* ---- MR-087: nothing off screen on a phone; a strip that scrolls on purpose is the one exception ---- */
+            if (width <= 720) {
+              const off = await page.evaluate(() => {
+                const W = window.innerWidth; const out = [];
+                const sel = el => el.tagName.toLowerCase() + (typeof el.className === 'string' && el.className.trim() ? '.' + el.className.trim().split(/\s+/).slice(0, 2).join('.') : '');
+                const SCROLLS = '.tablewrap, .tl-bar, .calc-tabs, .mtabs, .group-chips, .gallery-filter, svg';
+                document.querySelectorAll('#main *').forEach(el => {
+                  const b = el.getBoundingClientRect(); if (b.width === 0 || b.height === 0) return;
+                  const strip = el.closest(SCROLLS); if (strip && strip !== el) return;
+                  if (b.right > W + 1 || b.left < -1) out.push(sel(el) + ' ' + Math.round(b.left) + '..' + Math.round(b.right));
+                });
+                if (document.documentElement.scrollWidth > W) out.unshift('page scrolls sideways ' + document.documentElement.scrollWidth);
+                return out.slice(0, 4);
+              });
+              check(label + ' nothing off screen', off.length === 0, off.join(' | '));
+            }
             /* ---- Level 14 (MR-072) ---- */
             /* the trunk test: a page name, the section it belongs to, and the current place lit in the navigation */
             const trunk = await page.evaluate(() => ({ h1: (document.querySelector('#main h1') || {}).textContent || '', lit: document.querySelectorAll('#sidenav a[aria-current="page"]').length, section: document.body.dataset.section || '', title: document.title }));

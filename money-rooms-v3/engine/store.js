@@ -11,6 +11,7 @@ import { PLANETS } from './sun.js';
 export const KEY_PREFIX = 'mr3:client:';
 export const SNAPSHOT_PREFIX = 'mr3:snapshot:';
 export const SETTINGS_KEY = 'mr3:settings';
+export const DRAFT_PREFIX = 'mr3:draft:'; /* MR-087: a form in progress (the discovery call) survives leaving the screen */
 
 export function memoryStorage() {
   const m = new Map();
@@ -22,6 +23,10 @@ export function memoryStorage() {
   };
 }
 
+/* MR-087: true when the browser keeps what is written (a sandboxed frame or a private window may not) */
+export function storageWorks(ls) {
+  try { const s = ls || globalThis.localStorage; if (!s) return false; const k = 'mr3:probe'; s.setItem(k, '1'); const ok = s.getItem(k) === '1'; s.removeItem(k); return ok; } catch (e) { return false; }
+}
 export function browserStorage(ls) {
   const s = ls || globalThis.localStorage;
   return {
@@ -167,6 +172,10 @@ export function createStore(adapter) {
       return rec;
     },
     remove(id) { s.removeItem(key(id)); },
+    /* drafts (MR-087): a form in progress under its own name; null when there is none or it cannot be read */
+    saveDraft(name, obj, now) { s.setItem(DRAFT_PREFIX + name, JSON.stringify({ at: now || new Date().toISOString(), form: obj })); },
+    loadDraft(name) { const raw = s.getItem(DRAFT_PREFIX + name); if (!raw) return null; try { const d = JSON.parse(raw); return d && d.form ? d : null; } catch (e) { return null; } },
+    clearDraft(name) { s.removeItem(DRAFT_PREFIX + name); },
     list() {
       return s.keys().filter(k => k.indexOf(KEY_PREFIX) === 0).map(k => {
         const r = JSON.parse(s.getItem(k));

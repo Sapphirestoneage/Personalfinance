@@ -1328,3 +1328,28 @@ flows.push({
   },
 });
 
+flows.push({
+  name: 'level22-it-sticks',
+  async run(page, { base, check }) {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(base + 'index.html#/discovery'); await page.waitForSelector('.chipbar');
+    await page.fill('input[aria-label="Name"]', 'Tal'); await page.press('input[aria-label="Name"]', 'Tab');
+    await page.fill('input[aria-label="City"]', 'Austin'); await page.press('input[aria-label="City"]', 'Tab'); await page.waitForTimeout(500);
+    await page.goto(base + 'index.html#/clients'); await page.waitForSelector('.clients-actions');
+    check('leaving the call mid-way, Clients shows the call in progress by name', /A discovery call in progress: Tal/.test(await page.textContent('#main')) && (await page.locator('[data-draft="discovery"] a:has-text("Continue the call")').count()) === 1);
+    await page.click('.more-menu summary'); await page.waitForTimeout(200);
+    check('the More menu opens inside the phone screen', await page.evaluate(() => { const r = document.querySelector('.more-list').getBoundingClientRect(); return r.left >= 0 && r.right <= window.innerWidth && r.bottom <= window.innerHeight && r.width > 200; }));
+    await page.keyboard.press('Escape'); await page.evaluate(() => document.querySelector('.more-menu').removeAttribute('open'));
+    await page.click('[data-draft="discovery"] a:has-text("Continue the call")'); await page.waitForSelector('.chipbar');
+    check('Continue reopens the call with what was typed, and says so', (await page.inputValue('input[aria-label="Name"]')) === 'Tal' && (await page.inputValue('input[aria-label="City"]')) === 'Austin' && /Picking up the call with Tal/.test(await page.textContent('.disc-resume')));
+    await page.reload(); await page.waitForSelector('.chipbar');
+    check('a reload keeps it too', (await page.inputValue('input[aria-label="Name"]')) === 'Tal');
+    await page.click('button[aria-label="Save the discovery call"]'); await page.waitForSelector('.discovery-summary');
+    await page.goto(base + 'index.html#/clients'); await page.waitForSelector('.clients-actions');
+    check('Save makes the client and the draft is gone', !/A discovery call in progress/.test(await page.textContent('#main')) && /Tal/.test(await page.textContent('.clients-table')));
+    await page.goto(base + 'index.html#/discovery'); await page.waitForSelector('.chipbar');
+    check('Start fresh is there only while a draft exists', (await page.locator('.disc-resume').count()) === 0);
+    await page.setViewportSize({ width: 1440, height: 900 });
+  },
+});
+

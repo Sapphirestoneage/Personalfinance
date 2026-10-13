@@ -238,6 +238,9 @@ progress) and Progress vs paperwork.
 Program in the side nav shows one row per session, discovery first, with
 status, date, targets met, accounts opened, homework done and the stress
 score where it was asked; urgent sessions sit between the numbered ones.
+A discovery call in progress is kept as a draft (MR-087) until Save makes the
+file; Clients shows it with Continue. On a phone nothing sits off screen, and
+the sweep checks that on every screen.
 Every control shares one feel (MR-086): rounded, lifted buttons, a raised
 segmented control, pill chips, focus rings, and 40px controls on a phone.
 On a phone the quick start runs one step at a time (MR-085), Back and Next,

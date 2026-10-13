@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { createStore, memoryStorage, migrate, MIGRATIONS, KEY_PREFIX } from '../../engine/store.js';
+import { storageWorks, createStore, memoryStorage, migrate, MIGRATIONS, KEY_PREFIX } from '../../engine/store.js';
 import { createRecord, createRow, addRow, setField, SCHEMA_VERSION, undo, findRow, defaultGoals } from '../../engine/record.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -103,4 +103,16 @@ test('a loaded record still undoes', () => {
   const back = store.load('u');
   undo(back);
   assert.equal(back.sun.f.name.v, 'A');
+});
+
+test('drafts (MR-087): a form in progress is kept under its name until it is cleared; a broken store reads as not working', () => {
+  const st = createStore(memoryStorage());
+  assert.equal(st.loadDraft('discovery'), null);
+  st.saveDraft('discovery', { snapshot: { name: 'Tal' } }, '2026-10-13T15:00:00.000Z');
+  const d = st.loadDraft('discovery'); assert.equal(d.form.snapshot.name, 'Tal'); assert.equal(d.at, '2026-10-13T15:00:00.000Z');
+  assert.ok(!st.list().length, 'a draft is not a client');
+  st.clearDraft('discovery'); assert.equal(st.loadDraft('discovery'), null);
+  assert.equal(storageWorks(memoryStorage()), true);
+  assert.equal(storageWorks({ setItem() { throw new Error('denied'); }, getItem() { return null; }, removeItem() {} }), false);
+  assert.equal(storageWorks(null) === true || storageWorks(null) === false, true);
 });

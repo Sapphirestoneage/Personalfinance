@@ -327,4 +327,8 @@ Collected during the run; none blocked the build. Answer whenever.
 95. The control pass keeps the chosen segment of a segmented control raised
     in white on a quiet track. The old look filled it solid sapphire. Which
     reads better to a client across the table on a phone?
+96. The discovery draft is one per browser: a second call started before
+    the first is saved replaces it (the screen offers Start fresh). Should
+    the app keep several drafts, one per name, or is one call at a time the
+    rule?
 

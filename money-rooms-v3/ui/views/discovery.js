@@ -39,16 +39,24 @@ function upgrade(form) {
 export function mount(host, app) {
   const D = app.data.discovery; const tiers = app.data.colTiers;
   if (app.route.params.id === 'summary') return mountSummary(host, app);
-  const form = upgrade((app.record && app.record.discovery && app.record.discovery.form && !app.record.discovery.applied) ? app.record.discovery.form : blankForm());
   const applied = !!(app.record && app.record.discovery && app.record.discovery.applied);
+  /* MR-087: a call in progress for a client who has no file yet lives in a draft, saved as it is typed, until Save makes the file */
+  const fromRecord = app.record && app.record.discovery && app.record.discovery.form && !applied ? app.record.discovery.form : null;
+  const draft = !fromRecord ? app.store.loadDraft('discovery') : null;
+  const form = upgrade(fromRecord || (draft ? draft.form : blankForm()));
+  let persistTimer = null;
+  const persist = () => { if (fromRecord) return; if (persistTimer) clearTimeout(persistTimer); persistTimer = setTimeout(() => { persistTimer = null; try { app.store.saveDraft('discovery', form); } catch (e) { /* storage full or gone: the form is still on screen */ } }, 250); };
   host.appendChild(h('header', null, h('h1', null, 'Discovery call'), h('span', { class: 'sub' }, applied ? 'This client already had a discovery call. Open the summary, or start a fresh form for a new client.' : 'Read each question aloud. Type what they say, in their words. Tap the chips while they talk. Save when the call ends.'),
     h('div', { class: 'actions' }, applied ? h('a', { class: 'btn', href: '#/discovery/summary' }, 'Summary') : null, h('button', { class: 'btn primary', 'aria-label': 'Save the discovery call', onClick: save }, applied ? 'Save as a new client' : 'Save and build the first draft'))));
   const chips = h('section', { class: 'panel chipbar-panel' });
   const table = h('section', { class: 'panel discovery' });
+  if (draft && !fromRecord) host.appendChild(h('p', { class: 'small disc-resume' }, 'Picking up the call' + (form.snapshot.name ? ' with ' + form.snapshot.name : '') + ' where it was left. ', h('button', { class: 'btn small quiet', onClick: () => { app.store.clearDraft('discovery'); app.render(); } }, 'Start fresh')));
   host.appendChild(chips); host.appendChild(table);
+  table.addEventListener('input', persist); table.addEventListener('change', persist); chips.addEventListener('click', persist);
   let uid = 0;
   function tierPreview() { return form.tierOverride ? { tier: form.tierOverride, basis: 'override' } : tierFor(form.snapshot.city, null, tiers); }
   function draw() {
+    persist();
     clear(chips); clear(table); uid = 0;
     /* listening mode */
     chips.appendChild(h('h2', null, 'Listening', h('span', { class: 'tag' }, 'tap what you hear, in any order')));
@@ -199,6 +207,7 @@ export function mount(host, app) {
     if (!form.snapshot.name) { app.toast('A name first, so the file has one.'); return; }
     if (!app.record || applied) app.newClient(form.snapshot.name);
     app.discovery(form);
+    if (persistTimer) { clearTimeout(persistTimer); persistTimer = null; } app.store.clearDraft('discovery');
     app.toast('Saved. The first draft is built.');
     location.hash = '#/discovery/summary';
   }
