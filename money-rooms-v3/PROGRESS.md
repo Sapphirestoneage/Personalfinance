@@ -3,6 +3,8 @@
 Updated: 2026-10-13
 
 ## Done
+- Controls that feel good (MR-086): rounded, lifted buttons; a raised segmented control; pill chips;
+  focus rings; 40px controls and rows on a phone; shadows from the navy at low alpha.
 - The quick start one step at a time (MR-085): a phone gets Back and Next with one question per screen,
   an optional birth year, and the picture at the end: runway and the month a buffer is full; a redraw
   never moves the page; on a phone an unlock is a toast.

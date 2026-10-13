@@ -62,7 +62,7 @@ table.data.calc-table tr.is-under td { background: var(--sapphire-100); }
 .calc-card p { margin: 0; color: var(--slate); }
 /* the calendar */
 .calc-tabs { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: var(--s-1); margin-top: var(--s-3); border-bottom: 1px solid var(--line); padding-bottom: var(--s-2); }
-.calc-tabs .tab { height: 28px; padding: 0 var(--s-3); border-radius: var(--r-field); border: 1px solid transparent; background: transparent; color: var(--slate); cursor: pointer; font-size: var(--fs-13); }
+.calc-tabs .tab { height: var(--field-h); padding: 0 var(--s-3); border-radius: var(--r-field); border: 1px solid transparent; background: transparent; color: var(--slate); cursor: pointer; font-size: var(--fs-13); }
 .calc-tabs .tab.active { background: var(--sapphire-900); color: var(--on-bar); }
 .calc-tabs .tab:hover:not(.active) { background: var(--sapphire-100); color: var(--ink); }
 .cal-body { margin-top: var(--s-3); }

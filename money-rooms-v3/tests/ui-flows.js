@@ -1080,7 +1080,7 @@ flows.push({
     check('the celebration is one sentence', !cheer || (/already covered\.$/.test(cheer.trim()) && cheer.trim().split('. ').length === 1), cheer);
     await page.goto(base + 'index.html#/levers'); await page.waitForSelector('.ladder-panel');
     check('the levers ranking is a segmented control', (await page.locator('.levers-head .seg').count()) === 1);
-    check('the ladder climbs smallest to largest', await page.evaluate(() => { const nums = Array.from(document.querySelectorAll('.stair-number')).map(e => e.textContent.replace(/[^0-9.KM]/g, '')); return nums.length === 5; }));
+    check('the ladder climbs smallest to largest', await page.evaluate(() => { const nums = Array.from(document.querySelectorAll('.stair-number')).map(e => e.textContent.replace(/[^0-9.KM]/g, '')); const R = window.mr3.result.ladder.rungs.filter(r => typeof r.number === 'number'); const shown = Array.from(document.querySelectorAll('.stair[data-rung]')).map(e => e.dataset.rung); const byNumber = R.slice().sort((a, b) => a.number - b.number).map(r => r.id); return nums.length === 6 && JSON.stringify(shown) === JSON.stringify(byNumber); })); /* MR-082: six rungs, in order of size */
     check('no run counts or timings on the levers screen', !/re-runs|\d+ ms/.test(await page.textContent('#main')));
     /* calculators answer their question */
     await page.goto(base + 'index.html#/calculators'); await page.waitForSelector('.calc-card');

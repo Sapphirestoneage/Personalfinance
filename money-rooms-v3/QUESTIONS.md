@@ -324,4 +324,7 @@ Collected during the run; none blocked the build. Answer whenever.
     count months of a lean month instead (food, housing, getting around), as
     Goals does, once the spending has lines, or stay on full spending so the
     first sitting and the Goals screen never disagree?
+95. The control pass keeps the chosen segment of a segmented control raised
+    in white on a quiet track. The old look filled it solid sapphire. Which
+    reads better to a client across the table on a phone?
 

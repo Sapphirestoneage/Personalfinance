@@ -144,11 +144,12 @@ async function main() {
               const out = [];
               const vis = el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0; };
               const sel = el => el.tagName.toLowerCase() + (typeof el.className === 'string' && el.className.trim() ? '.' + el.className.trim().split(/\s+/).slice(0, 2).join('.') : '');
-              /* every control outside a table cell, the top bar and a chart is 28px (a field) or 32px (a table row): no 24px buttons beside 28px inputs */
+              /* every control outside a table cell, the top bar and a chart is a field (--field-h) or a table row (--row-h) tall: no 24px buttons beside 28px inputs; a phone sets both to 40 (MR-086) */
+              const tok = getComputedStyle(document.documentElement); const fieldH = Math.round(parseFloat(tok.getPropertyValue('--field-h'))); const rowH = Math.round(parseFloat(tok.getPropertyValue('--row-h')));
               document.querySelectorAll('#main .btn, #main .input, #main .select, #main .seg-btn').forEach(el => {
                 if (!vis(el) || el.tagName === 'TEXTAREA' || el.closest('svg, td, th, .chipselect, .topbar, .calc-tabs, .cal-cell') || el.classList.contains('linklike')) return;
                 const hgt = Math.round(el.getBoundingClientRect().height);
-                if (hgt !== 28 && hgt !== 32) out.push(sel(el) + ' is ' + hgt + 'px');
+                if (hgt !== fieldH && hgt !== rowH) out.push(sel(el) + ' is ' + hgt + 'px');
               });
               /* a number box opens a number keyboard; no spinner inputs anywhere */
               document.querySelectorAll('#main input').forEach(el => {

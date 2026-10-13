@@ -46,8 +46,15 @@
   --s-5: 32px;
   --s-6: 48px;
 
-  --r-field: 4px;
-  --r-panel: 8px;
+  --r-field: 8px;
+  --r-panel: 12px;
+  --r-pill: 999px;
+  /* MR-086: depth comes from the navy at low alpha, never a new hue */
+  --shadow-1: 0 1px 2px rgba(11, 31, 77, 0.06), 0 1px 1px rgba(11, 31, 77, 0.04);
+  --shadow-2: 0 4px 12px rgba(11, 31, 77, 0.10);
+  --shadow-primary: 0 2px 8px rgba(15, 82, 186, 0.28);
+  --ring: 0 0 0 3px var(--sapphire-100);
+  --sheen: rgba(255, 255, 255, 0.18);
 
   --field-w: 112px;          /* same width for every field in a column */
   --field-w-wide: 160px;
@@ -79,6 +86,10 @@
   --on-bar-muted: #8FB3EE;
   --sun: #1E3F80;
   --on-sun: #FFFFFF;
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.45);
+  --shadow-primary: 0 2px 8px rgba(0, 0, 0, 0.45);
+  --sheen: rgba(255, 255, 255, 0.08);
   --chart-1: #7FAEF5;
   --chart-2: #5B8FEA;
   --chart-3: #4F74B8;
@@ -105,6 +116,10 @@
     --on-bar-muted: #8FB3EE;
     --sun: #1E3F80;
     --on-sun: #FFFFFF;
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --shadow-2: 0 4px 12px rgba(0, 0, 0, 0.45);
+    --shadow-primary: 0 2px 8px rgba(0, 0, 0, 0.45);
+    --sheen: rgba(255, 255, 255, 0.08);
     --chart-1: #7FAEF5;
     --chart-2: #5B8FEA;
     --chart-3: #4F74B8;
@@ -112,3 +127,5 @@
     --chart-node: #5F6C85;
   }
 }
+/* MR-086: a thumb needs more than a pointer; on a phone every control is 40px and a row is 40px */
+@media (max-width: 720px) { :root { --field-h: 40px; --row-h: 40px; --r-field: 10px; } }
