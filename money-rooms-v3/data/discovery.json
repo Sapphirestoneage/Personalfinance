@@ -522,6 +522,16 @@
    "label": "Monthly income in retirement",
    "unit": "$ a month",
    "example": "2,400"
+  },
+  "goalFor": {
+   "label": "For whom",
+   "unit": "who it is really for",
+   "example": "my partner, my kids, me later"
+  },
+  "goalKind": {
+   "label": "Kind",
+   "unit": "promise, expected, wish, coming",
+   "example": "a promise I made"
   }
  },
  "payTypes": [

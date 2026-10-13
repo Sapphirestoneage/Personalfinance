@@ -311,4 +311,7 @@ Collected during the run; none blocked the build. Answer whenever.
 91. The paycheck rung is built on take-home, with the gross figure shown
     beside it. Should Levers and the Scoreboard quote the gross version as
     the rung instead, since clients quote their salary before deductions?
-
+92. The invisible balance sheet tags each goal with a person and a kind. The
+    debts are obligations too (to a lender, or to a past self). Should a debt
+    be taggable the same way, so the sheet can carry "owed to my parents"
+    beside the goals, or do debts stay in their own room?

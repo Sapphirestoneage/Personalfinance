@@ -1239,3 +1239,15 @@ table.data.plates td { overflow-wrap: normal; }
 .year-move-list .move-why { grid-column: 1 / -1; }
 .focus-cell { margin-left: var(--s-2); }
 .year-strip { margin-top: var(--s-2); }
+/* The invisible balance sheet (MR-083): goals grouped by who they are for */
+.sheet-plan { border-color: var(--sapphire-100); }
+.sheet-groups { display: grid; gap: var(--s-2); }
+.sheet-group { margin: 0; }
+.sheet-tags { display: flex; gap: var(--s-1); flex-wrap: wrap; }
+table.data.sheet td.sheet-tags .select { width: auto; flex: 1 1 150px; max-width: 220px; }
+.sheet-name { display: inline-flex; flex-direction: column; gap: 2px; }
+.sheet-who { display: none; margin: var(--s-2) var(--s-2) 0; font-size: var(--fs-14); color: var(--sapphire-900); }
+@media (max-width: 500px) { .sheet-who { display: block; } }
+@media (max-width: 500px) { table.data.sheet.stack td.sheet-tags { grid-template-columns: minmax(0, 1fr); } table.data.sheet.stack td.sheet-tags .select { max-width: none; width: 100%; } table.data.sheet.stack td .sheet-name { align-items: flex-end; } }
+table.data.sheet tfoot td { font-weight: var(--w-semibold); border-top: 1px solid var(--line); }
+.sheet-total { max-width: 72ch; margin: var(--s-2) 0 0; }

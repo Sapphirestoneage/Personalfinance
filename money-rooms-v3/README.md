@@ -238,6 +238,10 @@ progress) and Progress vs paperwork.
 Program in the side nav shows one row per session, discovery first, with
 status, date, targets met, accounts opened, homework done and the stress
 score where it was asked; urgent sessions sit between the numbered ones.
+Goals carries the invisible balance sheet (MR-083): every goal is tagged with
+who it is for and whether it is a promise, expected, a wish or coming either
+way; the sheet groups the goals by person with totals and the monthly figure
+from the plan, and the discovery call asks both tags.
 The FI ladder has a paycheck rung (MR-082): the portfolio that pays what the
 job pays, so the two sides of enough sit on one ladder: enough to live on,
 and enough to replace the paycheck.

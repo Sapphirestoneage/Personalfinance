@@ -324,3 +324,11 @@ test('retired: what comes in each month is an other-income row; n/a reads as not
   const o = rec.planets.income.rows.find(r => r.type === 'other'); assert.ok(o); assert.equal(o.f.otherIncome.v, 240000); assert.equal(o.f.otherIncome.cad, 'month');
   assert.equal(parseSaid('n/a').state, 'not-applicable'); assert.equal(parseSaid('not applicable').na, true);
 });
+
+test('a discovery goal said for someone lands with its for-whom and kind tags; an unknown word is left off', () => {
+  const rec = createRecord({ id: 'g3' });
+  applyDiscovery(rec, { snapshot: { name: 'Cy', city: 'Austin' }, goals: [{ text: 'Help mom with the roof', amount: '4,000', forWhom: 'parents', kind: 'promise' }, { text: 'A trip', forWhom: 'nobody', kind: 'maybe' }] }, data, { now: NOW, today: TODAY });
+  const goals = rec.planets.life.rows.filter(r => r.type === 'goal');
+  assert.equal(goals[0].f.forWhom.v, 'parents'); assert.equal(goals[0].f.goalKind.v, 'promise'); assert.equal(goals[0].f.goalCost.v, 400000);
+  assert.ok(!goals[1].f.forWhom || goals[1].f.forWhom.v === null); assert.ok(!goals[1].f.goalKind || goals[1].f.goalKind.v === null);
+});

@@ -82,7 +82,7 @@ export function goalsOf(record, result) {
   });
   ((S && S.life.goals) || []).forEach(g => {
     const td = g.targetDate ? String(g.targetDate).slice(0, 7) : null;
-    items.push({ id: 'life:' + g.id, type: td ? 'dated' : 'amount', name: g.name || 'Goal', targetCents: g.cents, balanceCents: links['life:' + g.id] ? balanceOfRow(links['life:' + g.id]) : 0, targetDate: td, rowId: g.id, needs: g.cents === null ? ['a cost'] : [] });
+    items.push({ id: 'life:' + g.id, type: td ? 'dated' : 'amount', name: g.name || 'Goal', targetCents: g.cents, balanceCents: links['life:' + g.id] ? balanceOfRow(links['life:' + g.id]) : 0, targetDate: td, rowId: g.id, forWhom: g.forWhom || null, goalKind: g.goalKind || null, needs: g.cents === null ? ['a cost'] : [] });
   });
   (G.extras || []).forEach(x => items.push({ id: x.id, type: x.targetDate ? 'dated' : 'amount', name: x.name, targetCents: x.targetCents, balanceCents: links[x.id] ? balanceOfRow(links[x.id]) : (x.balanceCents || 0), targetDate: x.targetDate ? String(x.targetDate).slice(0, 7) : null, extra: true, needs: typeof x.targetCents === 'number' ? [] : ['a cost'] }));
   const L = result.ladder;

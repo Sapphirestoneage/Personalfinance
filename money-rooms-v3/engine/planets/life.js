@@ -7,7 +7,7 @@ export function run(ctx) {
   const { rows, asm } = ctx;
   const goals = rows.filter(r => r.type === 'goal').map(r => {
     const cost = fieldQ(r, 'goalCost', U.oneoff, asm);
-    return { id: r.id, name: r.nickname, cents: cost ? cost.cents : null, costQ: cost, targetDate: val(r, 'targetDate'), priority: val(r, 'priority') || '2', notesShared: r.notesShared };
+    return { id: r.id, name: r.nickname, cents: cost ? cost.cents : null, costQ: cost, targetDate: val(r, 'targetDate'), priority: val(r, 'priority') || '2', forWhom: val(r, 'forWhom') || null, goalKind: val(r, 'goalKind') || null, notesShared: r.notesShared };
   }).sort((a, b) => (a.targetDate || '9999') < (b.targetDate || '9999') ? -1 : 1);
   const ret = rows.find(r => r.type === 'retirement');
   const retirementAge = ret ? num(ret, 'retirementAge') : null;

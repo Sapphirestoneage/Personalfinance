@@ -1,8 +1,11 @@
 # Progress
 
-Updated: 2026-10-12
+Updated: 2026-10-13
 
 ## Done
+- The invisible balance sheet (MR-083): two tags on every goal (for whom, what kind), a sheet on Goals
+  grouped by person with totals and the monthly figure from the plan, edited in place; the discovery
+  call asks both; untagged goals wait under Not yet sorted.
 - The paycheck rung (MR-082): Paycheck FI on the FI ladder, take-home a year over the withdrawal rate,
   with the gross figure beside it; on the ladder cards, the ladder chart, the Scoreboard, Levers and the
   one-pager shelf through the registry.

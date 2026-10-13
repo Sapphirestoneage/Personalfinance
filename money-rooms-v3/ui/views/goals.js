@@ -21,6 +21,9 @@ import { parseSaid } from '../../engine/parse.js';
 import { clientName, closeOverlay } from '../app.js';
 import { segmented } from '../seg.js';
 import { cellDoor, linkify } from '../doors.js';
+import { invisibleSheet, kindLabel } from '../../engine/carrying.js';
+import { ledgerTable } from '../table.js';
+import { fieldDef } from '../../engine/fields.js';
 import { cheerSentence } from './session.js';
 
 const ZOOMS = [['12', 'This year', 12], ['60', '5 years', 60], ['fi', 'Until FI', null]]; /* MR-081: the near view is one year */
@@ -37,6 +40,8 @@ export function mount(host, app) {
   const sentence = h('p', { class: 'gtl-sentence big' }); host.appendChild(sentence);
   const fiLine = h('p', { class: 'gtl-fi' }); host.appendChild(fiLine);
   const yearPanel = h('section', { class: 'panel year-plan', hidden: true }); host.appendChild(yearPanel);
+  const sheetPanel = h('section', { class: 'panel sheet-plan', hidden: true }); host.appendChild(sheetPanel);
+  let goalTable = null; const goalEditor = (rowId, fid) => { if (!goalTable) goalTable = ledgerTable(h('div'), app, 'life', 'goal', { formOnly: true }); const r = app.record.planets.life.rows.find(x => x.id === rowId); return r ? goalTable.editor(r, fieldDef(app.data.fields, fid)) : null; };
   const cheer = h('div', { class: 'cheer-host' }); host.appendChild(cheer);
   const whatifPanel = h('section', { class: 'panel whatif' }); host.appendChild(whatifPanel);
   const tlPanel = h('section', { class: 'panel' }); host.appendChild(tlPanel);
@@ -55,7 +60,7 @@ export function mount(host, app) {
     header.querySelectorAll('.seg .seg-btn').forEach((b, k) => { b.setAttribute('aria-pressed', String(ZOOMS[k][0] === zoom)); b.classList.toggle('on', ZOOMS[k][0] === zoom); });
     const P = plan(); const base = app.result.goalPlan;
     fiNow = isWhatIf() ? goalFi(app.result, P.draws) : app.result.goalFi;
-    drawSentence(P); drawFi(P); drawYear(P); drawCheer(base); drawWhatIf(P, base); drawTimeline(P); drawAlloc(P); drawCompare(P);
+    drawSentence(P); drawFi(P); drawYear(P); drawSheet(P); drawCheer(base); drawWhatIf(P, base); drawTimeline(P); drawAlloc(P); drawCompare(P);
   }
   function drawSentence(P) {
     clear(sentence);
@@ -130,6 +135,45 @@ export function mount(host, app) {
     linkify(yearPanel);
   }
   /* already met (MR-052): a step the pot already covers gets its card once; Got it writes the celebration */
+  /* the invisible balance sheet (MR-083): the goals grouped by who they are for */
+  function drawSheet(P) {
+    clear(sheetPanel);
+    const S = invisibleSheet(app.record, isWhatIf() ? P : app.result);
+    if (!S || !S.count) { sheetPanel.hidden = true; return; }
+    sheetPanel.hidden = false;
+    const yes = coach();
+    sheetPanel.appendChild(h('div', { class: 'row chk-head' }, h('h2', null, yes ? 'Who you are carrying' : 'Who each goal is for', h('span', { class: 'tag' }, S.sorted + ' of ' + S.count + (S.count === 1 ? ' goal' : ' goals') + ' sorted')), h('span', { class: 'spacer' }),
+      yes ? h('span', { class: 'small muted' }, 'Two tags on each goal: who it is really for, and whether it is a promise, expected, a wish or coming either way.') : null));
+    const words = it => [it.goalKind ? kindLabel(it.goalKind, true) : null, it.targetDate ? 'by ' + monthWord(it.targetDate) : null].filter(Boolean).join(', ');
+    const landsText = it => it.status === 'done' ? 'Done' : it.finishMonth ? monthWord(it.finishMonth) : (it.needs.length ? 'Needs ' + it.needs.join(', ') : 'Not reached');
+    const groupBlock = (g, unsorted) => {
+      const tb = h('tbody');
+      g.items.forEach(it => {
+        const door = cellDoor(app, it.rowId, 'goalCost');
+        tb.appendChild(h('tr', { dataset: Object.assign({ goal: it.id }, door ? { cell: door } : {}) },
+          h('td', { 'data-label': 'Goal' }, h('span', { class: 'sheet-name' }, it.name, !yes && words(it) ? h('span', { class: 'small muted' }, words(it)) : null)),
+          yes ? h('td', { class: 'sheet-tags', 'data-label': unsorted ? 'For whom, kind' : 'Kind' }, unsorted ? goalEditor(it.rowId, 'forWhom') : null, goalEditor(it.rowId, 'goalKind')) : null,
+          h('td', { class: 'num' }, it.targetCents === null ? h('span', { class: 'muted' }, 'needs a cost') : money(it.targetCents)),
+          h('td', { class: 'num' }, it.monthlyNow ? money(it.monthlyNow) : h('span', { class: 'muted' }, '0')),
+          h('td', { class: 'small' }, landsText(it))));
+      });
+      const head = h('tr', null, h('th', null, unsorted ? (yes ? 'Not yet sorted' : 'Not yet sorted') : (yes ? g.label : 'For ' + g.clientLabel)), yes ? h('th', null, unsorted ? 'For whom, and kind' : 'Kind') : null, h('th', { class: 'num' }, 'In total'), h('th', { class: 'num' }, 'A month now'), h('th', null, 'Lands'));
+      const foot = !unsorted && g.items.length > 1 ? h('tfoot', null, h('tr', null, h('td', null, 'Together'), yes ? h('td') : null, h('td', { class: 'num' }, g.targetKnown ? money(g.targetCents) : 'needs a cost'), h('td', { class: 'num' }, money(g.monthlyNow)), h('td'))) : null;
+      return h('div', { class: 'tablewrap sheet-group', dataset: { whom: g.id } }, h('h3', { class: 'sheet-who' }, unsorted ? 'Not yet sorted' : (yes ? g.label : 'For ' + g.clientLabel)), h('table', { class: 'data sheet' }, h('thead', null, head), tb, foot));
+    };
+    const body = h('div', { class: 'sheet-groups' });
+    S.groups.forEach(g => body.appendChild(groupBlock(g, false)));
+    if (S.unsorted) body.appendChild(groupBlock(S.unsorted, true));
+    sheetPanel.appendChild(body);
+    if (S.sorted) {
+      const T = S.totals;
+      sheetPanel.appendChild(h('p', { class: 'small sheet-total' }, (yes ? 'Sorted goals come to ' : 'Together these come to ') + money(T.targetCents) + ', ' + money(T.monthlyNow) + ' a month on the current plan'
+        + (T.surplusMonthly !== null ? ' of ' + money(T.surplusMonthly) + ' left over' : '') + '. '
+        + (T.forOthersCents ? (yes ? 'For other people: ' : 'For the people around you: ') + money(T.forOthersCents) + ', ' + money(T.forOthersMonthly) + ' a month.' : (yes ? 'Every sorted goal is for the client.' : 'Every goal here is for you.'))));
+    }
+    if (!yes) sheetPanel.appendChild(h('p', { class: 'small muted' }, 'A goal can be a promise you made, something expected of you, something you want, or something coming either way. Naming it changes no number; it says who the money is for.'));
+    linkify(sheetPanel);
+  }
   function drawCheer(base) {
     clear(cheer);
     const won = celebrations(base, app.record); if (!won.length) return;

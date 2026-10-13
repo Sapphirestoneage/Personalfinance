@@ -1248,3 +1248,26 @@ flows.push({
     check('Clear the focus hides the year panel', await page.evaluate(() => document.querySelector('.year-plan').hidden));
   },
 });
+
+flows.push({
+  name: 'level19-invisible-sheet',
+  async run(page, { base, check, APP }) {
+    await page.goto(base + 'index.html#/home'); await page.waitForSelector('#main h1, #main .empty');
+    await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', 'leah.json')); await page.waitForSelector('.today-card');
+    await page.goto(base + 'index.html#/goals'); await page.waitForSelector('.sheet-plan:not([hidden])');
+    check('both goals start under Not yet sorted with a For whom and a Kind control each', (await page.locator('.sheet-group[data-whom="unsorted"] tbody tr').count()) === 2 && (await page.locator('.sheet-group[data-whom="unsorted"] select[aria-label="For whom"]').count()) === 2 && /0 of 2 goals sorted/.test(await page.textContent('.sheet-plan .tag')));
+    await page.selectOption('.sheet-group[data-whom="unsorted"] tr:has-text("Japan with my sister") select[aria-label="For whom"]', 'family'); await page.waitForSelector('.sheet-group[data-whom="family"]');
+    await page.selectOption('.sheet-group[data-whom="family"] tr:has-text("Japan with my sister") select[aria-label="Kind"]', 'promise'); await page.waitForTimeout(300);
+    const fam = await page.textContent('.sheet-group[data-whom="family"]');
+    check('the trip moves under Family with its total, its monthly figure and when it lands', /Family/.test(fam) && /\$6,000/.test(fam) && /Oct 2027|20\d\d/.test(fam) && /1 of 2 goals sorted/.test(await page.textContent('.sheet-plan .tag')));
+    check('the sorted total names what is for other people', /For other people: \$6,000/.test(await page.textContent('.sheet-plan .sheet-total')));
+    check('the goal row is a door into its cost cell', (await page.locator('.sheet-group[data-whom="family"] tbody tr.door').count()) === 1);
+    await page.selectOption('.sheet-group[data-whom="unsorted"] tr:has-text("Condo down payment") select[aria-label="For whom"]', 'me-later'); await page.waitForSelector('.sheet-group[data-whom="me-later"]');
+    check('once every goal is sorted the unsorted block goes', (await page.locator('.sheet-group[data-whom="unsorted"]').count()) === 0 && /2 of 2 goals sorted/.test(await page.textContent('.sheet-plan .tag')));
+    check('the tags change no number', /\$1,295,901|\$1,29\d,\d{3}/.test(await page.evaluate(() => { const m = window.mr3.result.metrics.fiNumber; return '$' + Math.round(m.value.cents / 100).toLocaleString('en-US'); })));
+    await page.click('#view-client'); await page.waitForTimeout(400); await page.waitForSelector('.sheet-plan:not([hidden])');
+    const client = await page.textContent('.sheet-plan');
+    check('the client view reads the sheet in words, with no controls', /Who each goal is for/.test(client) && /For family/.test(client) && /a promise/.test(client) && (await page.locator('.sheet-plan select').count()) === 0);
+    check('the tags survive a reload', await (async () => { await page.goto(base + 'index.html#/home'); await page.waitForSelector('#main h1'); await page.goto(base + 'index.html#/goals'); await page.waitForSelector('.sheet-plan:not([hidden])'); return /2 of 2 goals sorted/.test(await page.textContent('.sheet-plan .tag')); })());
+  },
+});

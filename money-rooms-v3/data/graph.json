@@ -414,7 +414,9 @@
   "life.goals": [
    "goalCost",
    "targetDate",
-   "priority"
+   "priority",
+   "forWhom",
+   "goalKind"
   ],
   "life.events": [],
   "life.retirementMultipliers": [
@@ -563,6 +565,8 @@
   "stability": "a label",
   "bureau": "a label",
   "priority": "a label",
+  "forWhom": "a label",
+  "goalKind": "a label",
   "beneficiary": "a label",
   "insuranceType": "a label",
   "fundName": "a label",

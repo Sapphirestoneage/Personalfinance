@@ -553,7 +553,9 @@
      "fields": [
       "goalCost",
       "targetDate",
-      "priority"
+      "priority",
+      "forWhom",
+      "goalKind"
      ],
      "defaults": {
       "priority": "2"
@@ -1904,6 +1906,78 @@
      "Partner's"
     ]
    ]
+  },
+  "forWhom": {
+   "id": "forWhom",
+   "label": "For whom",
+   "kind": "choice",
+   "owner": "life",
+   "weight": 4,
+   "hint": "Who this goal is really for: it labels and groups, it changes no number",
+   "defaultSource": "client",
+   "options": [
+    [
+     "me-now",
+     "Me, now"
+    ],
+    [
+     "me-later",
+     "Me, later"
+    ],
+    [
+     "partner",
+     "My partner"
+    ],
+    [
+     "kids",
+     "My kids"
+    ],
+    [
+     "parents",
+     "My parents"
+    ],
+    [
+     "family",
+     "Family"
+    ],
+    [
+     "friends",
+     "Friends"
+    ],
+    [
+     "other",
+     "Someone else"
+    ]
+   ],
+   "tag": true
+  },
+  "goalKind": {
+   "id": "goalKind",
+   "label": "Kind",
+   "kind": "choice",
+   "owner": "life",
+   "weight": 4,
+   "hint": "A promise made, something expected of you, something wanted, or something coming whether planned or not",
+   "defaultSource": "client",
+   "options": [
+    [
+     "promise",
+     "A promise I made"
+    ],
+    [
+     "expected",
+     "Expected of me"
+    ],
+    [
+     "wish",
+     "Something I want"
+    ],
+    [
+     "coming",
+     "Coming either way"
+    ]
+   ],
+   "tag": true
   }
  }
 }
