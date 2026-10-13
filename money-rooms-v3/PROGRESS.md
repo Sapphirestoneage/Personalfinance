@@ -3,6 +3,9 @@
 Updated: 2026-10-13
 
 ## Done
+- The quick start one step at a time (MR-085): a phone gets Back and Next with one question per screen,
+  an optional birth year, and the picture at the end: runway and the month a buffer is full; a redraw
+  never moves the page; on a phone an unlock is a toast.
 - Living with family (MR-084): a household flag asked on the discovery call; no rent and no utilities
   bill in the guesses, food lower and getting around higher; the summary says what a place of their own
   would cost and when they are able; a Moving out scenario block.

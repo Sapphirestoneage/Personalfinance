@@ -66,7 +66,8 @@ export function reveal(app, allItems, o) {
   const typing = !!(active && /^(INPUT|SELECT|TEXTAREA)$/.test(active.tagName));
   const otherDrawer = !!document.querySelector('#overlay .drawer:not(.unlock-sheet)');
   const answering = !!(app.route && app.route.name === 'start'); /* MR-080: on the quick start the coach is mid-questions; the news waits in a toast */
-  if (!big || otherDrawer || o.moved || answering || (typing && !charts.length)) { /* moved: the screen changed since the save, so the news waits in a toast */
+  const narrow = window.innerWidth <= 720; /* MR-085: on a phone the news never takes the screen; a toast opens the panel on tap */
+  if (!big || otherDrawer || o.moved || answering || narrow || (typing && !charts.length)) { /* moved: the screen changed since the save, so the news waits in a toast */
     const first = items[0];
     app.toast((app.view === 'coach' ? 'Unlocked: ' : 'New: ') + nameOf(app, first) + (items.length > 1 ? ' and ' + (items.length - 1) + ' more' : ''), { label: 'See what you unlocked', ms: 7000, action: () => openPanel(app, items) });
     return;

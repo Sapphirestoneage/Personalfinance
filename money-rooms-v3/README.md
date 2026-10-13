@@ -238,6 +238,9 @@ progress) and Progress vs paperwork.
 Program in the side nav shows one row per session, discovery first, with
 status, date, targets met, accounts opened, homework done and the stress
 score where it was asked; urgent sessions sit between the numbered ones.
+On a phone the quick start runs one step at a time (MR-085), Back and Next,
+the birth year optional, and ends on the picture: what comes in, what goes
+out, what is left, the runway, and the month a buffer is full.
 The discovery call asks where they live (MR-084): with family means no rent
 for now, lower food and higher getting around in the guesses, and a Moving
 out section in the summary with the number that makes them able.

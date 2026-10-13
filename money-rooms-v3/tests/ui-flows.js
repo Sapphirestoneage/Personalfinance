@@ -1291,3 +1291,40 @@ flows.push({
   },
 });
 
+flows.push({
+  name: 'level21-quick-steps',
+  async run(page, { base, check }) {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(base + 'index.html#/clients'); await page.waitForSelector('.more-menu summary');
+    await page.click('.more-menu summary'); await page.click('.more-list button:has-text("New client without a call")');
+    await page.fill('input[aria-label="New client name"]', 'Tal'); await page.press('input[aria-label="New client name"]', 'Enter');
+    await page.waitForSelector('.qs-form.qs-steps');
+    const shown = async () => (await page.locator('.qs-form > section:not([hidden])').count());
+    check('on a phone the quick start is one step at a time: one section, a progress line, Back and Next', (await shown()) === 1 && /Income, 1 of 6/.test(await page.textContent('.qs-progress')) && (await page.locator('.qs-nav button:has-text("Skip for now")').count()) === 1 && (await page.locator('.qs-strip').isHidden()));
+    await page.click('#qs-income .seg-btn:has-text("Yes")'); await page.click('#qs-income .chip:has-text("A job (W-2)")');
+    await page.fill('#qs-income [data-kind="w2"] input.qs-amount', '4000 a month'); await page.waitForTimeout(100);
+    check('an answer turns Skip into Next', (await page.locator('.qs-nav button:has-text("Next")').count()) === 1);
+    await page.press('#qs-income [data-kind="w2"] input.qs-amount', 'Enter'); await page.waitForTimeout(300);
+    check('Enter moves to the next step', /Debt, 2 of 6/.test(await page.textContent('.qs-progress')) && (await page.locator('#qs-debt').isVisible()));
+    await page.click('#qs-debt .seg-btn:has-text("No, none")'); await page.click('.qs-nav button:has-text("Next")'); await page.waitForTimeout(200);
+    await page.fill('#qs-expenses input.qs-amount >> nth=0', '3000'); await page.press('#qs-expenses input.qs-amount >> nth=0', 'Enter'); await page.waitForTimeout(300);
+    await page.click('#qs-assets .seg-btn:has-text("Yes")'); await page.click('#qs-assets .chip:has-text("Savings")');
+    await page.fill('#qs-assets [data-kind="bank:savings"] input.qs-amount', '6000'); await page.press('#qs-assets [data-kind="bank:savings"] input.qs-amount', 'Enter'); await page.waitForTimeout(300);
+    check('the birth year is an optional step with Skip for now', /Birth year, 5 of 6/.test(await page.textContent('.qs-progress')) && (await page.locator('.qs-nav button:has-text("Skip for now")').count()) === 1);
+    await page.click('.qs-nav button:has-text("Skip for now")'); await page.waitForTimeout(300);
+    const pic = await page.textContent('.qs-picture');
+    check('the picture: take-home, out the door, left over, cash with its runway, and the month a 3-month buffer is full', /The picture, 6 of 6/.test(await page.textContent('.qs-progress')) && /2 months of runway/.test(pic) && /short of a 3-month buffer/.test(pic) && /full by [A-Z][a-z]{2} 20\d\d, the earliest the job could be left/.test(pic));
+    check('the strip and the hand-off show on the last step', (await page.locator('.qs-strip').isVisible()) && /6 of 6 numbers lit/.test(await page.textContent('.qs-strip .tag')) && (await page.locator('.qs-nav a:has-text("See what is still needed")').count()) === 1);
+    await page.fill('input[aria-label="Buffer in months of spending"]', '6'); await page.press('input[aria-label="Buffer in months of spending"]', 'Tab'); await page.waitForTimeout(200);
+    check('the buffer months retype the target', /short of a 6-month buffer/.test(await page.textContent('.qs-picture')));
+    await page.click('.qs-nav button:has-text("Back")'); await page.waitForTimeout(200);
+    check('Back goes to the step before', /Birth year, 5 of 6/.test(await page.textContent('.qs-progress')));
+    await page.click('header .seg .seg-btn:has-text("All on one page")'); await page.waitForTimeout(200);
+    check('All on one page shows every step and no nav', (await shown()) === 7 && (await page.locator('.qs-nav').isHidden()) && (await page.locator('.qs-progress').isHidden()));
+    await page.click('header .seg .seg-btn:has-text("One at a time")'); await page.waitForTimeout(200);
+    check('and back again', (await shown()) === 1);
+    await page.evaluate(() => { try { localStorage.removeItem('mr3.quickMode'); } catch (e) { /* no storage */ } });
+    await page.setViewportSize({ width: 1440, height: 900 });
+  },
+});
+

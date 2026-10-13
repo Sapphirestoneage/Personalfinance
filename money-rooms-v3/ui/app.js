@@ -231,12 +231,14 @@ export const app = {
   },
   rerender() { this.render(); },
   update(reason) {
+    const y = window.scrollY; /* MR-085: a redraw never moves the page under the reader's thumb */
     if (this.mounted && this.mounted.update) this.mounted.update(reason);
     linkify(qs('#main'));
     stackTables(qs('#main'));
     const tr = qs('#tracker'); if (tr) renderTracker(tr, this);
     this.renderNav();
     this.renderChrome();
+    if (Math.abs(window.scrollY - y) > 1) window.scrollTo(0, y);
   },
   renderNav() {
     const nav = qs('#sidenav');

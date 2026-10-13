@@ -319,3 +319,9 @@ Collected during the run; none blocked the build. Answer whenever.
     raises getting around to 125% of the guess. Are those the right stand-ins,
     and should a client who pays their family something (a token rent, the
     groceries) type that as the rent line, or get its own question?
+94. The picture at the end of the quick start reads the job-leaving date as
+    the month a buffer of N months of spending is full. Should the buffer
+    count months of a lean month instead (food, housing, getting around), as
+    Goals does, once the spending has lines, or stay on full spending so the
+    first sitting and the Goals screen never disagree?
+

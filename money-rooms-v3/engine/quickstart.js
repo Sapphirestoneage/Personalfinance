@@ -11,6 +11,7 @@ import { createRow, addRow, setField, removeRow } from './record.js';
 import { freshFacts, noneRow, isNoneRow, primaryFieldOf, typeDef } from './fields.js';
 import { parseSaid, parseBirth } from './parse.js';
 import { hasValue } from './states.js';
+import { addMonths } from './debtsim.js';
 
 export const QUICK_LIB = 'quick';
 
@@ -121,3 +122,21 @@ export function readQuick(record, data) {
 
 /* The numbers a quick start lights, in order, each with what it still waits on. Reads the result; no math. */
 export const HEADLINE = Object.freeze(['takeHome', 'spending', 'surplus', 'fiNumber', 'totalDebt', 'netWorth']);
+
+/* The picture (MR-085): the short-term read a first sitting gives. Take-home, spending and what is left over from the metrics; cash on hand; the runway now; a buffer of N months of spending as the target; and the month the buffer is full at the current pace, which is the earliest the job could be left. One division and one addition; null for whatever is not known yet, with the words for what it waits on. */
+export function picture(result, bufferMonths) {
+  const S = result && result.sun && result.sun.outputs; const M = (result && result.metrics) || {};
+  const okq = q => q && q.status === 'ok' ? q.cents : null; const mv = id => M[id] && M[id].status === 'ok' ? M[id].value.cents : null;
+  const takeHome = mv('takeHome'), spending = mv('spending'), surplus = mv('surplus'); const cash = S ? okq(S.invest.cashBalances) : null;
+  const months = typeof bufferMonths === 'number' && bufferMonths > 0 ? bufferMonths : 3;
+  const runway = cash !== null && spending ? Math.round(cash / spending * 10) / 10 : null;
+  const target = spending !== null ? Math.round(spending * months) : null;
+  const shortBy = target !== null && cash !== null ? Math.max(0, target - cash) : null;
+  const from = String((result && result.today) || '').slice(0, 7);
+  const monthsTo = shortBy === null ? null : shortBy === 0 ? 0 : surplus !== null && surplus > 0 ? Math.ceil(shortBy / surplus) : null;
+  const by = monthsTo === null || !from ? null : addMonths(from, monthsTo);
+  const needs = [];
+  if (takeHome === null) needs.push('income'); if (spending === null) needs.push('monthly expenses'); if (cash === null) needs.push('cash on hand');
+  if (surplus === null && takeHome !== null && spending !== null) needs.push(M.surplus && M.surplus.needs && M.surplus.needs.length ? M.surplus.needs[0] : 'what is left over');
+  return { takeHome, spending, surplus, cash, runway, months, target, shortBy, monthsTo, by, there: shortBy === 0, stuck: shortBy !== null && shortBy > 0 && surplus !== null && surplus <= 0, needs };
+}

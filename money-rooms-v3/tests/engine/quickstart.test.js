@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { applyQuick, readQuick, quickRow, QUESTIONS, HEADLINE, QUICK_LIB } from '../../engine/quickstart.js';
+import { applyQuick, readQuick, quickRow, picture, QUESTIONS, HEADLINE, QUICK_LIB } from '../../engine/quickstart.js';
+import { addMonths } from '../../engine/debtsim.js';
 import { compute } from '../../engine/compute.js';
 import { createRecord } from '../../engine/record.js';
 import { isNoneRow } from '../../engine/fields.js';
@@ -72,4 +73,20 @@ test('words still work: none, n/a and don\'t know land as their states', () => {
   applyQuick(rec, { income: { has: true, kinds: { side: { picked: true, said: "don't know" }, other: { picked: true, said: 'none' } } } }, data, { today: TODAY });
   assert.equal(rows(rec, 'income', 'side')[0].f.grossPay.state, 'unknown');
   assert.equal(rows(rec, 'income', 'other')[0].f.otherIncome.state, 'none');
+});
+
+test('the picture (MR-085): runway, the buffer target, and the month it is full at the current pace', () => {
+  const rec = fresh();
+  assert.deepEqual(picture(compute(rec, data, { today: TODAY }), 3).needs, ['income', 'monthly expenses', 'cash on hand']);
+  applyQuick(rec, { income: { has: true, kinds: { w2: { picked: true, said: '4000 a month' } } }, expenses: { said: '3000' }, assets: { has: true, kinds: { 'bank:savings': { picked: true, said: '6000' } } } }, data, { today: TODAY });
+  const P0 = picture(compute(rec, data, { today: TODAY }), 3); assert.equal(P0.surplus, null); assert.equal(P0.needs.length, 1, 'what is left over waits on the debt answer: ' + P0.needs.join(', ')); assert.ok(!P0.stuck && P0.by === null);
+  applyQuick(rec, { debt: { has: false } }, data, { today: TODAY });
+  const R = compute(rec, data, { today: TODAY }); const P = picture(R, 3);
+  assert.deepEqual(P.needs, []); assert.equal(P.spending, 300000); assert.equal(P.cash, 600000); assert.equal(P.runway, 2); assert.equal(P.target, 900000); assert.equal(P.shortBy, 300000);
+  assert.ok(P.surplus > 0 && P.surplus < 100000, 'take-home on 4,000 gross leaves under 1,000 after 3,000 out');
+  assert.equal(P.monthsTo, Math.ceil(300000 / P.surplus)); assert.equal(P.by, addMonths('2026-10', P.monthsTo)); assert.ok(!P.there && !P.stuck);
+  const P6 = picture(R, 6); assert.equal(P6.target, 1800000); assert.ok(P6.monthsTo > P.monthsTo);
+  const P1 = picture(R, 1); assert.ok(P1.there && P1.shortBy === 0 && P1.monthsTo === 0);
+  applyQuick(rec, { expenses: { said: '4500' } }, data, { today: TODAY });
+  const Ps = picture(compute(rec, data, { today: TODAY }), 3); assert.ok(Ps.stuck && Ps.by === null, 'spending above take-home: the buffer never grows');
 });
