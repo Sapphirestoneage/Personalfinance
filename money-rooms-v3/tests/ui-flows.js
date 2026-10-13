@@ -1304,7 +1304,7 @@ flows.push({
     await page.click('#qs-income .seg-btn:has-text("Yes")'); await page.click('#qs-income .chip:has-text("A job (W-2)")');
     await page.fill('#qs-income [data-kind="w2"] input.qs-amount', '4000'); await page.waitForTimeout(100);
     check('an answer turns Skip into Next', (await page.locator('.qs-nav button:has-text("Next")').count()) === 1);
-    check('the amount has an interval picker beside it, on a month by default', (await page.inputValue('#qs-income [data-kind="w2"] select.qs-cad')) === 'month' && /\$4,000 a month, rough/.test(await page.textContent('#qs-income [data-kind="w2"] .qs-heard')));
+    check('the amount has an interval picker beside it, on a month by default, and no hours box', (await page.inputValue('#qs-income [data-kind="w2"] select.qs-cad')) === 'month' && /\$4,000 a month, rough/.test(await page.textContent('#qs-income [data-kind="w2"] .qs-heard')) && !(await page.locator('#qs-income [data-kind="w2"] .qs-hours').isVisible()));
     await page.selectOption('#qs-income [data-kind="w2"] select.qs-cad', 'biweekly'); await page.waitForTimeout(400);
     check('every two weeks lands as the cadence on the row', await page.evaluate(() => { const r = window.mr3.record.planets.income.rows.find(x => x.type === 'w2'); return r.f.grossPay.v === 400000 && r.f.grossPay.cad === 'biweekly'; }) && /every two weeks/.test(await page.textContent('#qs-income [data-kind="w2"] .qs-heard')));
     await page.click('#qs-income .chip:has-text("Side income")'); await page.waitForTimeout(100);
