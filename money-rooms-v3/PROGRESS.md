@@ -3,6 +3,8 @@
 Updated: 2026-10-13
 
 ## Done
+- Benefits, the common ones (MR-092): a kind on every benefit row with how to add it, what to collect
+  and how it counts; one-tap picks in the room; Benefits worth and Total compensation on the registry.
 - A date you can type on a phone (MR-091): mm/dd/yyyy with a number keyboard; one parser; desktops keep
   the calendar.
 - A cleaner Clients screen (MR-090): one line per client; Sessions and History fold under a caret.

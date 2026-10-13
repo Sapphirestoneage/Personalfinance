@@ -1,0 +1,129 @@
+{
+ "asOf": "2026-10-13",
+ "source": "Common US employer benefits as the builder knows them; verify the figures with each employer's own summary",
+ "verify": true,
+ "counts": {
+  "match": "the match row computes it from the W-2 deferral",
+  "worth": "counted as benefits worth and in total compensation, never as cash",
+  "cash": "counted as cash income under Benefits"
+ },
+ "kinds": [
+  {
+   "id": "match",
+   "label": "401(k) match",
+   "counts": "match",
+   "add": "The plan summary or HR: the match formula, usually \"50% of the first 6%\".",
+   "details": "The rate, the cap as a share of pay, and the vesting schedule.",
+   "quantify": "Rate times cap times gross pay, counted only on what you defer; the match row computes it from the W-2 deferral.",
+   "cadence": "month"
+  },
+  {
+   "id": "hsa",
+   "label": "HSA deposit from the employer",
+   "counts": "worth",
+   "add": "The benefits summary or the HSA statement: the yearly employer deposit.",
+   "details": "The yearly amount, and whether it is single or family coverage.",
+   "quantify": "The yearly deposit over twelve; it is money in your account, not pay.",
+   "cadence": "year"
+  },
+  {
+   "id": "health",
+   "label": "Health insurance premium the employer pays",
+   "counts": "worth",
+   "add": "The open enrollment summary or a pay stub: the employer share per paycheck.",
+   "details": "The plan, who is covered, and the employer share.",
+   "quantify": "The employer share times paychecks a year over twelve: what the same cover would cost you.",
+   "cadence": "month"
+  },
+  {
+   "id": "dental",
+   "label": "Dental and vision the employer pays",
+   "counts": "worth",
+   "add": "The open enrollment summary: the employer share.",
+   "details": "Who is covered.",
+   "quantify": "The employer share a month.",
+   "cadence": "month"
+  },
+  {
+   "id": "life",
+   "label": "Life insurance the employer pays",
+   "counts": "worth",
+   "add": "The benefits summary: the cover amount and any premium you pay.",
+   "details": "The cover as a multiple of salary; whether it goes with the job.",
+   "quantify": "What the same term cover would cost you a month; small for most, not nothing.",
+   "cadence": "month"
+  },
+  {
+   "id": "disability",
+   "label": "Disability insurance the employer pays",
+   "counts": "worth",
+   "add": "The benefits summary: short and long term, and the share of pay replaced.",
+   "details": "Share of pay replaced, waiting period, whether the premium is pre-tax.",
+   "quantify": "What the same cover would cost you a month.",
+   "cadence": "month"
+  },
+  {
+   "id": "commuter",
+   "label": "Commuter or parking",
+   "counts": "cash",
+   "add": "The benefits portal: the monthly allowance or the pre-tax election.",
+   "details": "The monthly amount and whether it is a subsidy or your own pre-tax money.",
+   "quantify": "The subsidy a month; a pre-tax election is your money and counts as spending instead.",
+   "cadence": "month"
+  },
+  {
+   "id": "phone",
+   "label": "Phone or internet stipend",
+   "counts": "cash",
+   "add": "The expense policy or a pay stub line.",
+   "details": "The monthly amount.",
+   "quantify": "The stipend a month, as cash income.",
+   "cadence": "month"
+  },
+  {
+   "id": "tuition",
+   "label": "Tuition or learning budget",
+   "counts": "cash",
+   "add": "The learning policy: the yearly cap and what counts.",
+   "details": "The yearly cap, what qualifies, whether it must be repaid on leaving.",
+   "quantify": "What you will actually use a year, over twelve.",
+   "cadence": "year"
+  },
+  {
+   "id": "studentloan",
+   "label": "Student loan payment help",
+   "counts": "cash",
+   "add": "The benefits summary: the monthly payment the employer makes.",
+   "details": "The monthly amount and the lifetime cap.",
+   "quantify": "The payment a month, as cash toward the loan.",
+   "cadence": "month"
+  },
+  {
+   "id": "espp",
+   "label": "Stock purchase discount",
+   "counts": "worth",
+   "add": "The plan document: the discount and the purchase period.",
+   "details": "The discount, the look-back, the yearly limit, whether you sell at once.",
+   "quantify": "The discount times what you buy a year, over twelve.",
+   "cadence": "year"
+  },
+  {
+   "id": "pension",
+   "label": "Pension or employer retirement credit",
+   "counts": "worth",
+   "add": "The plan statement: the yearly employer credit or the formula.",
+   "details": "The credit, vesting, whether it is a cash balance or a formula.",
+   "quantify": "The yearly employer credit over twelve.",
+   "cadence": "year"
+  },
+  {
+   "id": "other",
+   "label": "Something else",
+   "counts": "cash",
+   "add": "Wherever it is written down.",
+   "details": "What it is and what it is worth.",
+   "quantify": "A dollar figure a month or a year.",
+   "cadence": "month"
+  }
+ ]
+}

@@ -96,7 +96,13 @@ export function isNoneRow(fields, row) {
 
 /* A field tied to a cadence (pay frequency) is asked only while the row's headline figure is typed in that cadence (MR-032). */
 export function askedOnRow(fields, row, fieldId) {
-  const def = fields.fields[fieldId]; if (!def || !def.onlyWhenCadence) return true;
+  const def = fields.fields[fieldId]; if (!def) return true;
+  if (def.onlyWhen) { /* MR-092: asked only for some kinds; null in the list means "no kind picked yet" */
+    const kf = row.f[def.onlyWhen.field]; const v = kf && kf.v !== undefined && kf.v !== '' ? kf.v : null;
+    if (def.onlyWhen.in) return def.onlyWhen.in.includes(v);
+    if (def.onlyWhen.notIn) return !def.onlyWhen.notIn.includes(v);
+  }
+  if (!def.onlyWhenCadence) return true;
   const headId = Object.keys(row.f).find(k => fields.fields[k] && fields.fields[k].cadence);
   if (!headId) return true;
   const hf = row.f[headId]; const cad = (hf && hf.cad) || fields.fields[headId].defaultCadence || 'month';

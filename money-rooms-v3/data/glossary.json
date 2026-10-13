@@ -408,6 +408,14 @@
   "paycheckFi": {
    "coach": "Paycheck FI number",
    "client": "Paycheck without the job"
+  },
+  "benefitsWorth": {
+   "coach": "Benefits worth",
+   "client": "What your employer pays for you"
+  },
+  "totalComp": {
+   "coach": "Total compensation",
+   "client": "Pay plus everything on top"
   }
  }
 }

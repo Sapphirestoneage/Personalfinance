@@ -35,6 +35,9 @@ export function computeMetrics(ctx) {
   const take = inc && Q(inc.takeHomeMonthly), gross = inc && Q(inc.grossMonthly);
   put(take ? ok('takeHome', take, { formula: 'sum of take-home per income row, to a month', inputs: [inputOf('Take-home rows', take)], result: take }) : fromNeeds('takeHome', 'sum of take-home', inc ? inc.takeHomeMonthly : null));
   put(gross ? ok('gross', gross, { formula: 'sum of gross pay, bonus and equity, to a month', inputs: [inputOf('Gross rows', gross)], result: gross }) : fromNeeds('gross', 'sum of gross', inc ? inc.grossMonthly : null));
+  const worth = inc && Q(inc.benefitsWorthMonthly), comp = inc && Q(inc.totalCompMonthly); /* MR-092 */
+  put(worth ? ok('benefitsWorth', worth, { formula: 'sum of what the employer pays for you that is not cash, to a month', inputs: [inputOf('Benefit rows', worth)], result: worth }) : fromNeeds('benefitsWorth', 'sum of benefits worth', inc ? inc.benefitsWorthMonthly : null));
+  put(comp ? ok('totalComp', comp, { formula: 'gross pay + employer match + benefits worth, to a month', inputs: [inputOf('Gross pay', gross), inputOf('Employer match', Q(inc.matchMonthly)), inputOf('Benefits worth', worth)], result: comp }) : fromNeeds('totalComp', 'gross + match + benefits worth', inc ? inc.totalCompMonthly : null));
   const spending = sf && Q(sf.spendingWithPremiums);
   put(spending ? ok('spending', spending, { formula: 'spending lines (detail overrides a rough total) + premiums paid from the bank', inputs: [inputOf('Spending lines', Q(sp.baselineMonthly)), inputOf('Bank-paid premiums', Q(sf.premiumsMonthly))], result: spending }) : fromNeeds('spending', 'spending lines + bank premiums', sp ? sp.baselineMonthly : null));
   /* 13, 14 */

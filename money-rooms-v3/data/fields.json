@@ -163,6 +163,8 @@
      "label": "Benefits and match",
      "moon": "Benefits",
      "fields": [
+      "benefitKind",
+      "benefitValue",
       "matchRate",
       "matchUpTo",
       "otherBenefit",
@@ -174,10 +176,14 @@
       "student",
       "retired"
      ],
-     "nicknameLabel": "Employer",
+     "nicknameLabel": "Benefit",
      "stress": false,
      "plural": "Benefits and match",
-     "tableFields": []
+     "tableFields": [
+      "benefitKind"
+     ],
+     "nameField": "benefitKind",
+     "picks": "benefits"
     },
     "other": {
      "label": "Other",
@@ -867,7 +873,14 @@
    "owner": "income",
    "weight": 9,
    "hint": "Cents matched per dollar, as a percent: 100 means dollar for dollar, 50 means half",
-   "defaultSource": "client"
+   "defaultSource": "client",
+   "onlyWhen": {
+    "field": "benefitKind",
+    "in": [
+     "match",
+     null
+    ]
+   }
   },
   "matchUpTo": {
    "id": "matchUpTo",
@@ -876,7 +889,14 @@
    "owner": "income",
    "weight": 9,
    "hint": "Percent of pay the employer matches up to",
-   "defaultSource": "client"
+   "defaultSource": "client",
+   "onlyWhen": {
+    "field": "benefitKind",
+    "in": [
+     "match",
+     null
+    ]
+   }
   },
   "otherBenefit": {
    "id": "otherBenefit",
@@ -884,11 +904,17 @@
    "kind": "money",
    "owner": "income",
    "weight": 3,
-   "hint": "Stipends or reimbursements per month",
+   "hint": "Older rows: a stipend a month, counted as cash; a new row says its kind and what the employer pays",
    "defaultSource": "client",
    "cadence": true,
    "defaultCadence": "month",
-   "optional": true
+   "optional": true,
+   "onlyWhen": {
+    "field": "benefitKind",
+    "in": [
+     null
+    ]
+   }
   },
   "otherIncome": {
    "id": "otherIncome",
@@ -1986,6 +2012,87 @@
     ]
    ],
    "tag": true
+  },
+  "benefitKind": {
+   "id": "benefitKind",
+   "label": "Benefit kind",
+   "kind": "choice",
+   "owner": "income",
+   "weight": 7,
+   "hint": "Which benefit this row is; the Benefits room lists the common ones",
+   "defaultSource": "client",
+   "options": [
+    [
+     "match",
+     "401(k) match"
+    ],
+    [
+     "hsa",
+     "HSA deposit from the employer"
+    ],
+    [
+     "health",
+     "Health insurance premium the employer pays"
+    ],
+    [
+     "dental",
+     "Dental and vision the employer pays"
+    ],
+    [
+     "life",
+     "Life insurance the employer pays"
+    ],
+    [
+     "disability",
+     "Disability insurance the employer pays"
+    ],
+    [
+     "commuter",
+     "Commuter or parking"
+    ],
+    [
+     "phone",
+     "Phone or internet stipend"
+    ],
+    [
+     "tuition",
+     "Tuition or learning budget"
+    ],
+    [
+     "studentloan",
+     "Student loan payment help"
+    ],
+    [
+     "espp",
+     "Stock purchase discount"
+    ],
+    [
+     "pension",
+     "Pension or employer retirement credit"
+    ],
+    [
+     "other",
+     "Something else"
+    ]
+   ]
+  },
+  "benefitValue": {
+   "id": "benefitValue",
+   "label": "Employer pays",
+   "kind": "money",
+   "owner": "income",
+   "weight": 7,
+   "hint": "What the employer pays or puts in for you; the room says how to count each kind",
+   "defaultSource": "client",
+   "cadence": true,
+   "defaultCadence": "month",
+   "primary": true,
+   "onlyWhen": {
+    "field": "benefitKind",
+    "notIn": [
+     "match"
+    ]
+   }
   }
  }
 }

@@ -5284,6 +5284,117 @@
    "gentleCopy": "Your paycheck without the job: {value}. Past this point, not working pays more than working.",
    "firstSession": 4,
    "headline": false
+  },
+  {
+   "n": 90,
+   "id": "benefitsWorth",
+   "name": "Benefits worth",
+   "clientLabel": "What your employer pays for you",
+   "definition": "What the employer pays or puts in for you that is not cash: health, dental and vision premiums, HSA deposits, life and disability cover, pension credits, a stock discount. Cash benefits (a commuter subsidy, a stipend) count as income instead (MR-092).",
+   "formula": "sum(benefit rows whose kind counts as worth, monthly)",
+   "inputs": [
+    "income.benefitsWorthMonthly"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "monthly",
+    "basis": "real",
+    "tax": "pretax"
+   },
+   "owner": "income",
+   "group": "cash flow",
+   "stage": 1,
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "benefitValue",
+     "sign": 1,
+     "text": "Use what is already offered: the HSA deposit, the premium share, the discount."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "benefitValue",
+     "benefitKind"
+    ]
+   },
+   "scoreGroup": "cashflow",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": null,
+   "unlock": [
+    "benefitValue",
+    "benefitKind"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "What your employer pays for you: {value} a month on top of pay.",
+   "firstSession": 2,
+   "headline": false
+  },
+  {
+   "n": 91,
+   "id": "totalComp",
+   "name": "Total compensation",
+   "clientLabel": "Pay plus everything on top",
+   "definition": "Gross pay plus the employer match plus benefits worth, a month: what the job pays all in (MR-092).",
+   "formula": "gross + matchMonthly + benefitsWorth",
+   "inputs": [
+    "income.grossMonthly",
+    "income.matchMonthly",
+    "income.benefitsWorthMonthly"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "monthly",
+    "basis": "real",
+    "tax": "pretax"
+   },
+   "owner": "income",
+   "group": "cash flow",
+   "stage": 1,
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "grossPay",
+     "sign": 1,
+     "text": "A raise lifts it."
+    },
+    {
+     "root": "matchRate",
+     "sign": 1,
+     "text": "Defer enough to take the whole match."
+    },
+    {
+     "root": "benefitValue",
+     "sign": 1,
+     "text": "Count every benefit the employer pays for."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "grossPay",
+     "matchRate",
+     "matchUpTo",
+     "benefitValue",
+     "benefitKind"
+    ]
+   },
+   "scoreGroup": "cashflow",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": null,
+   "unlock": [
+    "benefitValue",
+    "benefitKind"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Pay plus everything on top: {value} a month.",
+   "firstSession": 2,
+   "headline": false
   }
  ],
  "stages": {

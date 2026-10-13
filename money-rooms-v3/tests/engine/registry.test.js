@@ -31,7 +31,7 @@ test('the headline six exist, are client visible, and the groups all have member
   six.forEach(id => { const m = M.find(x => x.id === id); assert.ok(m, id); assert.equal(m.clientVisible, true, id + ' client visible'); assert.ok(m.headline, id + ' flagged headline'); });
   assert.deepEqual(M.filter(m => m.headline).map(m => m.id).sort(), six.slice().sort());
   Object.keys(data.metrics.scoreGroups).forEach(gid => assert.ok(M.some(m => m.scoreGroup === gid), 'group ' + gid + ' has a metric'));
-  assert.equal(M.length, 89); /* MR-082 added the paycheck rung */
+  assert.equal(M.length, 91); /* MR-082 added the paycheck rung; MR-092 benefits worth and total compensation */
 });
 
 test('the chart catalog names every built chart with its question and first session; the unbuilt ones carry a route', () => {

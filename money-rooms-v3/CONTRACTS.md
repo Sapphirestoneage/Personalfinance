@@ -43,6 +43,8 @@ Publishes:
 | `workHoursMonthly` | hours | paid + commute + prep hours, monthly (for real hourly wage) |
 | `workCostsMonthly` | monthly, aftertax | costs of working as stated on income rows |
 | `partnerTakeHomeMonthly` | monthly, aftertax | take-home on rows marked Partner's (MR-050); counted in `takeHomeMonthly` when the household counts together, left out under just mine |
+| `benefitsWorthMonthly` | monthly, pretax | what the employer pays for you that is not cash: premiums, HSA deposits, pension credits (MR-092) |
+| `totalCompMonthly` | monthly, pretax | gross pay + match + benefits worth (MR-092) |
 
 ## 2. Spending
 

@@ -8,12 +8,15 @@ import { federalTax, taxableIncome, fica, selfEmploymentTax } from '../tax.js';
 import { confidenceOf, hasValue } from '../states.js';
 import { hasPartner, countsTogether } from '../household.js';
 
+let BENEFIT_KINDS = null;
 export function run(ctx) {
+  BENEFIT_KINDS = ctx.data && ctx.data.benefits ? ctx.data.benefits.kinds : null;
   const { rows, reader, data, asm } = ctx;
   const out = {};
   const enriched = [];
   const byType = { w2: 0, c1099: 0, side: 0, unemployment: 0, rental: 0, benefits: 0, other: 0, paystub: 0 };
   let gross = q(0, U.monthlyPre), take = q(0, U.monthlyAfter);
+  let worth = q(0, U.monthlyPre), anyWorth = false; /* MR-092: benefits worth */
   let pretax = q(0, U.monthlyPre), roth = q(0, U.monthlyAfter), hsa = q(0, U.monthlyPre), other = q(0, U.monthlyPre);
   let hours = 0, workCosts = q(0, U.monthlyAfter), anyTake = false, anyGross = false;
   const stabilities = [];
@@ -101,6 +104,10 @@ export function run(ctx) {
     if (t === 'benefits') {
       const ob = fieldQ(r, 'otherBenefit', U.monthlyPre, asm);
       if (ob) { byType.benefits += ob.cents; }
+      /* MR-092: a kind says how the figure counts; cash kinds are income under Benefits, worth kinds are benefits worth */
+      const kind = val(r, 'benefitKind'); const kdef = kind && BENEFIT_KINDS ? BENEFIT_KINDS.find(k => k.id === kind) : null;
+      const bv = kind && kind !== 'match' ? fieldQ(r, 'benefitValue', U.monthlyPre, asm) : null;
+      if (bv) { if (kdef && kdef.counts === 'cash') { byType.benefits += bv.cents; gross = add(gross, bv); take = add(take, asTax(bv, 'aftertax')); anyGross = true; anyTake = true; } else { worth = add(worth, bv); anyWorth = true; } }
     }
     if (t === 'other') {
       const o = fieldQ(r, 'otherIncome', U.monthlyPre, asm);
@@ -108,9 +115,9 @@ export function run(ctx) {
     }
   });
 
-  /* Match: the benefits row's formula against the W-2 deferral share. */
+  /* Match: the benefits row's formula against the W-2 deferral share. The match row is the one that says so, or an older row with a rate (MR-092). */
   let matchMonthly = q(0, U.monthlyPre), matchFormula = null, matchMax = 0;
-  const ben = rows.find(r => r.type === 'benefits');
+  const ben = rows.find(r => r.type === 'benefits' && val(r, 'benefitKind') === 'match') || rows.find(r => r.type === 'benefits' && !val(r, 'benefitKind') && num(r, 'matchRate') !== null);
   if (ben) {
     const rate = num(ben, 'matchRate'), upTo = num(ben, 'matchUpTo');
     if (rate !== null && upTo !== null) {
@@ -138,6 +145,8 @@ export function run(ctx) {
   out.hsaPayrollMonthly = hsa;
   out.pretaxOtherMonthly = other;
   out.matchMonthly = matchMonthly;
+  out.benefitsWorthMonthly = anyWorth ? worth : (rows.some(r => r.type === 'benefits') ? q(0, U.monthlyPre) : needs(['a benefit row'])); /* MR-092: a zero only once a benefit row exists */
+  out.totalCompMonthly = anyGross ? add(add(gross, matchMonthly), anyWorth ? worth : q(0, U.monthlyPre)) : needs(['gross pay']);
   out.matchFormula = matchFormula ? Object.assign({ maxMonthly: matchMax }, matchFormula) : null;
   out.byType = byType;
   out.stability = stability;

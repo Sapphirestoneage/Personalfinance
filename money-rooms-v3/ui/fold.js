@@ -11,7 +11,7 @@ function remember(key, open) { try { localStorage.setItem('mr3.fold.' + key, ope
 export function fold(key, label, body, opts) {
   const o = opts || {}; const saved = recall(key);
   const open = saved === null ? !!o.open : saved === '1';
-  const el = h('details', { class: 'fold' + (o.cls ? ' ' + o.cls : ''), open: open ? '' : null, dataset: { fold: key } },
+  const el = h('details', { class: 'disclose' + (o.cls ? ' ' + o.cls : ''), open: open ? '' : null, dataset: { fold: key } },
     h('summary', null, h('span', { class: 'fold-caret' }), h('span', { class: 'fold-label' }, label), o.count !== undefined && o.count !== null ? h('span', { class: 'tag' }, String(o.count)) : null),
     h('div', { class: 'fold-body' }, body));
   el.addEventListener('toggle', () => remember(key, el.open));

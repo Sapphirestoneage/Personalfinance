@@ -1378,3 +1378,22 @@ flows.push({
   },
 });
 
+flows.push({
+  name: 'level24-benefits',
+  async run(page, { base, check, APP }) {
+    await page.goto(base + 'index.html#/home'); await page.waitForSelector('#main h1, #main .empty');
+    await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', 'leah.json')); await page.waitForSelector('.today-card');
+    await page.goto(base + 'index.html#/ledger/income/benefits'); await page.waitForSelector('.type-picks');
+    check('the Benefits room lists the common ones as one-tap picks', (await page.locator('.type-picks .chip').count()) >= 12 && (await page.locator('.type-picks .chip:has-text("Health insurance premium")').count()) === 1);
+    await page.click('.type-picks .chip:has-text("Health insurance premium")'); await page.waitForSelector('.row-details .kind-notes');
+    const notes = await page.textContent('.row-details .kind-notes');
+    check('one tap adds the row with its kind, and the details say where to find it, what to collect and how it counts', /Where to find it/.test(notes) && /What to collect/.test(notes) && /How it counts/.test(notes) && await page.evaluate(() => { const r = window.mr3.record.planets.income.rows.find(x => x.type === 'benefits' && x.f.benefitKind && x.f.benefitKind.v === 'health'); return !!r && r.nickname === 'Health insurance premium the employer pays'; }));
+    check('a worth kind asks what the employer pays in the row and never the match formula', /Employer pays/.test(await page.textContent('.ledger-table thead')) && (await page.locator('.row-details .fieldrow[data-field="matchRate"]').count()) === 0 && (await page.locator('.row-details .fieldrow[data-field="otherBenefit"]').count()) === 0);
+    await page.keyboard.press('Escape'); await page.waitForTimeout(200);
+    await page.click('.ledger-table tr:has-text("Health insurance premium") button.cell-read[data-col="benefitValue"]'); /* a cell reads as text until it is opened */
+    const cell = '.ledger-table tr:has-text("Health insurance premium") input[data-col="benefitValue"]'; await page.waitForSelector(cell);
+    await page.fill(cell, '400'); await page.press(cell, 'Tab'); await page.waitForTimeout(400);
+    check('the figure lands as benefits worth and in total compensation, not as pay', await page.evaluate(() => { const M = window.mr3.result.metrics; return M.benefitsWorth.value.cents === 40000 && M.totalComp.value.cents === M.gross.value.cents + window.mr3.result.sun.outputs.income.matchMonthly.cents + 40000; }));
+  },
+});
+

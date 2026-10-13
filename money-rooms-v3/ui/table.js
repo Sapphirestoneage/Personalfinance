@@ -98,6 +98,14 @@ export function ledgerTable(host, app, planet, typeId, opts) {
       coach && all.length && !(tdef.single && all.length) ? h('span', { class: 'row' }, h('button', { class: 'btn small primary', onClick: () => addRow() }, 'Add row'), h('span', { class: 'kbd' }, 'Alt+N')) : null);
     const cols = columns();
     const pickAll = coach && state.selecting && !tdef.single && list.length ? selectAllBox(list) : null;
+    /* MR-092: a type with picks lists the common kinds as chips; one tap adds the row with its kind set and named */
+    const pickDefs = coach && tdef.picks === 'benefits' && app.data.benefits ? app.data.benefits.kinds : null;
+    const picks = pickDefs ? h('div', { class: 'row type-picks', role: 'group', 'aria-label': 'Add a common benefit' }, h('span', { class: 'small muted' }, 'Add:'), pickDefs.map(k => h('button', { type: 'button', class: 'chip toggle', title: k.add, onClick: () => {
+      const row = createRow(planet, typeId, { nickname: k.label, f: freshFacts(fields, planet, typeId) });
+      row.f[tdef.nameField] = { v: k.id, state: 'known', source: 'client' };
+      if (k.cadence && row.f.benefitValue) row.f.benefitValue.cad = k.cadence;
+      app.addRow(row); openDetails(row.id);
+    } }, k.label))) : null;
     const thead = h('thead', null, h('tr', null, cols.map(c => h('th', {
       class: (c.num ? 'num' : '') + (c.sticky ? ' sticky' : '') + (c.sticky && pickAll ? ' with-pick' : ''), 'aria-sort': state.sortKey === c.key ? (state.sortDir === 1 ? 'ascending' : 'descending') : (c.sortable ? 'none' : null),
       onClick: e => { if (!c.sortable || e.target.classList.contains('pick')) return; if (state.sortKey === c.key) state.sortDir = -state.sortDir; else { state.sortKey = c.key; state.sortDir = 1; } render(); },
@@ -115,7 +123,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
           h('button', { class: 'btn small quiet', onClick: () => { app.removeRows(all.map(r => r.id)); render(); } }, 'Undo')) : null));
       return;
     }
-    wrap.appendChild(h('div', { class: 'panel ledger-panel', style: { padding: 0, overflow: 'hidden' } }, toolbar, list.length ? tableWrap : emptyState(all.length)));
+    wrap.appendChild(h('div', { class: 'panel ledger-panel', style: { padding: 0, overflow: 'hidden' } }, toolbar, picks, list.length ? tableWrap : emptyState(all.length)));
     if (coach && all.length) wrap.appendChild(fieldBar());
   }
 
@@ -211,6 +219,11 @@ export function ledgerTable(host, app, planet, typeId, opts) {
     o = o || {};
     const body = h('div', { class: 'row-details' + (o.inline ? ' inline' : ''), dataset: { row: r.id } });
     if (!o.inline) body.appendChild(h('h2', null, r.nickname || tdef.label, r.nickname ? h('span', { class: 'tag' }, tdef.label) : null));
+    /* MR-092: the kind's own notes: where to find it, what to collect, how it counts */
+    if (tdef.picks === 'benefits' && app.data.benefits && r.f.benefitKind && r.f.benefitKind.v) {
+      const k = app.data.benefits.kinds.find(x => x.id === r.f.benefitKind.v);
+      if (k) body.appendChild(h('div', { class: 'kind-notes' }, h('p', { class: 'small' }, h('strong', null, 'Where to find it. '), k.add), h('p', { class: 'small' }, h('strong', null, 'What to collect. '), k.details), h('p', { class: 'small' }, h('strong', null, 'How it counts. '), k.quantify + ' ' + ({ match: 'The match row computes it from the W-2 deferral.', worth: 'Counted as benefits worth and in total compensation, never as cash.', cash: 'Counted as cash income under Benefits.' }[k.counts] || ''))));
+    }
     const live = () => app.record.planets[planet].rows.find(x => x.id === r.id) || r;
     const facts = h('div', { class: 'detail-group' }), optional = h('div', { class: 'detail-group' }), about = h('div', { class: 'detail-group' });
     let anyFact = false, anyOptional = false;

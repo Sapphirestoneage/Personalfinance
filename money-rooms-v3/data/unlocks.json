@@ -539,6 +539,13 @@
     null,
     "birthDate"
    ]
+  ],
+  "a benefit row": [
+   [
+    "income",
+    "benefits",
+    "benefitValue"
+   ]
   ]
  },
  "probeTypes": [

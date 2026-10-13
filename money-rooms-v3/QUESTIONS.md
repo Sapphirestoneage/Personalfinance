@@ -339,4 +339,8 @@ Collected during the run; none blocked the build. Answer whenever.
     the assumptions, the unsure table?
 99. On a phone every date is typed as mm/dd/yyyy. Should desktops type too,
     for one habit everywhere, or keep the calendar?
+100. Benefits worth counts what the employer pays for you at face value. Is
+    an employer's health premium share worth its full dollar figure to a
+    client who would otherwise go without cover, or should the room discount
+    it?
 

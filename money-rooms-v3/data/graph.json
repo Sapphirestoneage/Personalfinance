@@ -71,7 +71,9 @@
    "rentCollected",
    "benefitAmount",
    "weeksLeft",
-   "sun.workSituation"
+   "sun.workSituation",
+   "benefitKind",
+   "benefitValue"
   ],
   "income.takeHomeMonthly": [
    "takeHome",
@@ -88,7 +90,9 @@
    "benefitAmount",
    "weeksLeft",
    "sun.filingStatus",
-   "sun.workSituation"
+   "sun.workSituation",
+   "benefitKind",
+   "benefitValue"
   ],
   "income.pretaxContribMonthly": [
    "pretaxRetirement",
@@ -122,7 +126,9 @@
    "otherIncome",
    "rentCollected",
    "benefitAmount",
-   "businessExpenses"
+   "businessExpenses",
+   "benefitKind",
+   "benefitValue"
   ],
   "income.stability": [
    "stability"
@@ -465,6 +471,15 @@
    "takeHome",
    "grossPay",
    "whose"
+  ],
+  "income.benefitsWorthMonthly": [
+   "benefitKind",
+   "benefitValue"
+  ],
+  "income.totalCompMonthly": [
+   "income.grossMonthly",
+   "income.matchMonthly",
+   "income.benefitsWorthMonthly"
   ]
  },
  "projectionInputs": [
