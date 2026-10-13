@@ -9,17 +9,29 @@
    the refining from here. */
 import { createRow, addRow, setField, removeRow } from './record.js';
 import { freshFacts, noneRow, isNoneRow, primaryFieldOf, typeDef } from './fields.js';
-import { parseSaid, parseBirth } from './parse.js';
+import { parseSaid, parseBirth, hourlyToMonthly } from './parse.js';
 import { hasValue } from './states.js';
 import { addMonths } from './debtsim.js';
 
 export const QUICK_LIB = 'quick';
 
+/* The intervals an amount can be said in (MR-089). The coach picks one beside the amount; the words typed can still name one. Hourly is for pay only and needs hours a week. */
+export const INTERVALS = Object.freeze([['month', 'a month'], ['year', 'a year'], ['biweekly', 'every two weeks'], ['week', 'a week'], ['day', 'a day'], ['hour', 'an hour']]);
+export const INCOME_INTERVALS = Object.freeze(['month', 'year', 'biweekly', 'week', 'day', 'hour']);
+export const SPEND_INTERVALS = Object.freeze(['month', 'year', 'biweekly', 'week', 'day']);
+export const DEFAULT_HOURS = 40;
+export function intervalLabel(id) { const x = INTERVALS.find(i => i[0] === id); return x ? x[1] : ''; }
+/* the stored cadence and cents for an amount said in an interval: hourly becomes a month through hourlyToMonthly */
+export function intervalToStored(cents, interval, hours) {
+  if (interval === 'hour') { const hrs = typeof hours === 'number' && hours > 0 ? hours : DEFAULT_HOURS; return { cents: hourlyToMonthly(cents, hrs), cad: 'month', hours: hrs }; }
+  return { cents, cad: interval || 'month', hours: null };
+}
+
 /* The four questions, in the order the coach asks them. kinds: [typeId, label, extra fields the row can take right here]. */
 export const QUESTIONS = Object.freeze([
-  { id: 'income', planet: 'income', label: 'Income', ask: 'Any income coming in?', kinds: [['w2', 'A job (W-2)'], ['c1099', '1099 or contract work'], ['side', 'Side income'], ['unemployment', 'Unemployment'], ['other', 'Something else']], noneTypes: ['w2', 'c1099', 'side', 'unemployment', 'benefits'], amountHint: 'about 3,600 a paycheck, or 68k a year' },
+  { id: 'income', planet: 'income', label: 'Income', ask: 'Any income coming in?', kinds: [['w2', 'A job (W-2)'], ['c1099', '1099 or contract work'], ['side', 'Side income'], ['unemployment', 'Unemployment'], ['other', 'Something else']], noneTypes: ['w2', 'c1099', 'side', 'unemployment', 'benefits'], amountHint: 'about 3,600, then pick the interval', intervals: INCOME_INTERVALS },
   { id: 'debt', planet: 'debt', label: 'Debt', ask: 'Owe anything?', kinds: [['card', 'Credit cards'], ['student', 'Student loans'], ['auto', 'A car loan'], ['mortgage', 'A mortgage or HELOC'], ['personal', 'Personal, family, medical, BNPL']], noneTypes: ['card', 'student', 'auto', 'mortgage', 'personal'], amountHint: 'the balance, about', extras: { card: [['apr', 'Rate'], ['minimum', 'Minimum a month']], student: [['rate', 'Rate'], ['minimum', 'Minimum a month']], auto: [['rate', 'Rate'], ['payment', 'Payment a month']], mortgage: [['rate', 'Rate'], ['principalInterest', 'Payment a month']], personal: [['rate', 'Rate'], ['payment', 'Payment a month']] } },
-  { id: 'expenses', planet: 'spending', label: 'Expenses', ask: 'About how much goes out a month, all in?', total: ['summary', 'summaryTotal'], kinds: [['accommodation', 'Housing'], ['food', 'Food'], ['transportation', 'Getting around'], ['utilities', 'Phone, internet, subscriptions'], ['wants', 'Fun and wants']], amountHint: 'about 4,000 a month' },
+  { id: 'expenses', planet: 'spending', label: 'Expenses', ask: 'About how much goes out a month, all in?', total: ['summary', 'summaryTotal'], kinds: [['accommodation', 'Housing'], ['food', 'Food'], ['transportation', 'Getting around'], ['utilities', 'Phone, internet, subscriptions'], ['wants', 'Fun and wants']], amountHint: 'about 4,000', intervals: SPEND_INTERVALS },
   { id: 'assets', planet: 'invest', label: 'Assets', ask: 'Anything saved or invested?', kinds: [['bank:checking', 'Checking'], ['bank:savings', 'Savings'], ['account:401k', '401(k) or 403(b)'], ['account:rothIra', 'Roth IRA'], ['account:tradIra', 'Traditional IRA'], ['account:taxable', 'Brokerage'], ['account:hsa', 'HSA']], noneTypes: ['account', 'bank'], amountHint: 'the balance, about' },
 ]);
 
@@ -54,8 +66,8 @@ export function applyQuick(record, answers, data, meta) {
     /* the rough total for expenses */
     if (q.total) {
       const [type, fid] = q.total; let sum = rows().find(r => r.type === type);
-      const p = parseSaid(ans.said || '', { kind: 'spending', defaultCadence: 'month' });
-      if (p && p.cents !== null) { if (!sum) { sum = createRow(q.planet, type, { nickname: 'Rough total', f: freshFacts(fields, q.planet, type) }); addRow(record, sum, { session: m.session, now: m.now }); } set(sum.id, fid, p.cents, stateOf(p), p.cadence); }
+      const p = parseSaid(ans.said || '', { kind: 'spending', defaultCadence: ans.cad || 'month' });
+      if (p && p.cents !== null) { if (!sum) { sum = createRow(q.planet, type, { nickname: 'Rough total', f: freshFacts(fields, q.planet, type) }); addRow(record, sum, { session: m.session, now: m.now }); } const st = intervalToStored(p.cents, ans.cad || p.cadence, null); set(sum.id, fid, st.cents, stateOf(p), st.cad); }
       else if (p && p.unknown && sum) set(sum.id, fid, null, 'unknown');
     }
     /* "no": each kind None while the room has nothing of that type */
@@ -80,8 +92,15 @@ export function applyQuick(record, answers, data, meta) {
         if (q.id === 'expenses') { set(row.id, 'needWant', kind === 'wants' ? 'want' : 'need', 'known'); }
       }
       const prim = p.field || primaryFieldOf(fields, p.planet, p.type).id; const def = fields.fields[prim];
-      const parsed = parseSaid(k.said || '', { kind: q.id === 'income' ? 'income' : 'money', defaultCadence: def.cadence ? (def.defaultCadence || 'month') : undefined });
-      if (parsed && (parsed.cents !== null || parsed.unknown)) set(row.id, prim, parsed.unknown ? null : parsed.cents, stateOf(parsed), def.cadence ? parsed.cadence : undefined);
+      const parsed = parseSaid(k.said || '', { kind: q.id === 'income' ? 'income' : 'money', defaultCadence: def.cadence ? (k.cad || 'month') : undefined });
+      if (parsed && (parsed.cents !== null || parsed.unknown)) {
+        if (def.cadence && parsed.cents !== null) {
+          const st = intervalToStored(parsed.cents, k.cad || parsed.cadence, typeof k.hours === 'number' ? k.hours : parseFloat(k.hours));
+          set(row.id, prim, st.cents, stateOf(parsed), st.cad);
+          if (st.hours && typeDef(fields, p.planet, p.type).fields.includes('hoursPaid')) set(row.id, 'hoursPaid', st.hours, 'rough');
+          row.quick = { cad: k.cad || parsed.cadence, rateCents: st.hours ? parsed.cents : null, hours: st.hours }; /* so the screen can read the interval back */
+        } else set(row.id, prim, parsed.unknown ? null : parsed.cents, stateOf(parsed), def.cadence ? parsed.cadence : undefined);
+      }
       else if (!parsed && String(k.said || '').trim() === '' && row.f[prim] && hasValue(row.f[prim]) && row.f[prim].state === 'rough') set(row.id, prim, null, 'unknown');
       /* the optional extras (a rate, a minimum) land as typed; a rate typed as 24 means 24% */
       Object.keys(k.extras || {}).forEach(fid => {
@@ -102,13 +121,14 @@ export function readQuick(record, data) {
   const b = record.sun.f.birthDate; if (b && b.v) out.birth = b.state === 'rough' ? String(b.v).slice(0, 4) : String(b.v);
   QUESTIONS.forEach(q => {
     const rows = record.planets[q.planet].rows; const ans = { has: null, said: '', kinds: {} };
-    if (q.total) { const sum = rows.find(r => r.type === q.total[0]); const f = sum && sum.f[q.total[1]]; if (f && hasValue(f)) ans.said = String(Math.round(f.v / 100)); }
+    if (q.total) { const sum = rows.find(r => r.type === q.total[0]); const f = sum && sum.f[q.total[1]]; if (f && hasValue(f)) { ans.said = String(Math.round(f.v / 100)); ans.cad = f.cad || 'month'; } }
     q.kinds.forEach(([kind]) => {
       const r = quickRow(record, q, kind, fields); if (!r) return;
       const p = kindParts(q, kind); const prim = p.field || primaryFieldOf(fields, p.planet, p.type).id; const f = r.f[prim];
-      const said = f && hasValue(f) && f.state !== 'none' ? String(Math.round(f.v / 100)) : (f && f.state === 'none' ? 'none' : '');
+      const qk = r.quick || null; const hourly = qk && qk.cad === 'hour' && qk.rateCents !== null;
+      const said = f && hasValue(f) && f.state !== 'none' ? String(Math.round((hourly ? qk.rateCents : f.v) / 100)) : (f && f.state === 'none' ? 'none' : '');
       const extras = {}; ((q.extras || {})[kind] || []).forEach(([fid]) => { const ef = r.f[fid]; if (ef && hasValue(ef)) extras[fid] = fields.fields[fid].kind === 'percent' ? String(Math.round(ef.v * 10000) / 100) : String(Math.round(ef.v / 100)); });
-      ans.kinds[kind] = { picked: true, said, extras };
+      ans.kinds[kind] = { picked: true, said, extras, cad: q.intervals ? (hourly ? 'hour' : (f && f.cad) || (qk && qk.cad) || 'month') : undefined, hours: hourly ? qk.hours : undefined };
     });
     if (q.noneTypes) {
       const anyKind = Object.keys(ans.kinds).length > 0;

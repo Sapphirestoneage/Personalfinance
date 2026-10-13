@@ -8,8 +8,16 @@
    "per paycheck"
   ],
   [
+   "day",
+   "per day"
+  ],
+  [
    "week",
    "per week"
+  ],
+  [
+   "biweekly",
+   "every two weeks"
   ],
   [
    "month",

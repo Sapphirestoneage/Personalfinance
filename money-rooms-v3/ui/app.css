@@ -1244,6 +1244,8 @@ table.data.plates td { overflow-wrap: normal; }
 .qs-amountwrap { display: inline-flex; align-items: center; gap: var(--s-2); flex-wrap: wrap; }
 .qs-amount { width: 220px; text-align: left; }
 .qs-heard { min-width: 120px; }
+.qs-cad { width: auto; min-width: 128px; } .qs-hours { display: inline-flex; align-items: center; gap: 6px; } /* MR-089: an amount and its interval */
+@media (max-width: 720px) { .qs-amount { width: 130px; } .qs-cad { min-width: 150px; } .qs-heard { flex-basis: 100%; } }
 .qs-kinds { gap: 6px; flex-wrap: wrap; margin: var(--s-2) 0; }
 .qs-lines { margin-top: var(--s-1); border-top: 1px solid var(--line-soft); padding-top: var(--s-1); }
 .qs-extra { display: inline-flex; align-items: center; gap: 6px; }

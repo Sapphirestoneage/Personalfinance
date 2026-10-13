@@ -6,6 +6,7 @@
 
 import { SCHEMA_VERSION, createRecord, defaultGoals } from './record.js';
 import { append } from './journal.js';
+import { toMonthly } from './parse.js';
 import { PLANETS } from './sun.js';
 
 export const KEY_PREFIX = 'mr3:client:';
@@ -125,7 +126,7 @@ function backfillAnchors(rec) {
   if (!rec.anchors.history) rec.anchors.history = [];
   const first = {}; /* key -> earliest set line */
   const rows = {}; PLANETS.forEach(p => (rec.planets[p] ? rec.planets[p].rows : []).forEach(r => { rows[r.id] = r; }));
-  const monthly = (line) => { const v = line.new && line.new.v; const n = typeof v === 'number' ? v : (v && typeof v === 'object' && 'low' in v ? Math.round((v.low + v.high) / 2) : null); if (n === null) return null; const cad = line.new.cad || 'month'; const pf = (rows[line.rowId] && rows[line.rowId].f.payFrequency && rows[line.rowId].f.payFrequency.v) || 'biweekly'; const n26 = { weekly: 52, biweekly: 26, semimonthly: 24, monthly: 12 }[pf] || 26; return cad === 'month' ? n : cad === 'week' ? Math.round(n * 52 / 12) : cad === 'quarter' ? Math.round(n / 3) : cad === 'year' ? Math.round(n / 12) : cad === 'paycheck' ? Math.round(n * n26 / 12) : cad === 'oneoff' ? 0 : n; };
+  const monthly = (line) => { const v = line.new && line.new.v; const n = typeof v === 'number' ? v : (v && typeof v === 'object' && 'low' in v ? Math.round((v.low + v.high) / 2) : null); if (n === null) return null; const cad = line.new.cad || 'month'; const pf = (rows[line.rowId] && rows[line.rowId].f.payFrequency && rows[line.rowId].f.payFrequency.v) || 'biweekly'; const n26 = { weekly: 52, biweekly: 26, semimonthly: 24, monthly: 12 }[pf] || 26; return cad === 'paycheck' ? Math.round(n * n26 / 12) : toMonthly(n, cad, pf); };
   (rec.journal || []).forEach(l => {
     if (l.kind !== 'set' || l.column || !l.new || l.new.source === 'estimated' || l.new.v === null || l.new.v === undefined) return;
     const row = rows[l.rowId]; if (!row) return;

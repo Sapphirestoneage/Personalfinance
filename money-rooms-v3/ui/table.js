@@ -17,7 +17,7 @@ import { createRow } from '../engine/record.js';
 import { monthlyOf } from '../engine/compute.js';
 import { isGuessRow } from '../engine/guesses.js';
 
-const CADENCE_SHORT = { paycheck: 'pay', week: 'wk', month: 'mo', quarter: 'qtr', year: 'yr', oneoff: 'once' };
+const CADENCE_SHORT = { paycheck: 'pay', day: 'day', week: 'wk', biweekly: '2 wk', month: 'mo', quarter: 'qtr', year: 'yr', oneoff: 'once' }; /* MR-089: a day and every two weeks */
 
 export function ledgerTable(host, app, planet, typeId, opts) {
   opts = opts || {};

@@ -1302,8 +1302,16 @@ flows.push({
     const shown = async () => (await page.locator('.qs-form > section:not([hidden])').count());
     check('on a phone the quick start is one step at a time: one section, a progress line, Back and Next', (await shown()) === 1 && /Income, 1 of 6/.test(await page.textContent('.qs-progress')) && (await page.locator('.qs-nav button:has-text("Skip for now")').count()) === 1 && (await page.locator('.qs-strip').isHidden()));
     await page.click('#qs-income .seg-btn:has-text("Yes")'); await page.click('#qs-income .chip:has-text("A job (W-2)")');
-    await page.fill('#qs-income [data-kind="w2"] input.qs-amount', '4000 a month'); await page.waitForTimeout(100);
+    await page.fill('#qs-income [data-kind="w2"] input.qs-amount', '4000'); await page.waitForTimeout(100);
     check('an answer turns Skip into Next', (await page.locator('.qs-nav button:has-text("Next")').count()) === 1);
+    check('the amount has an interval picker beside it, on a month by default', (await page.inputValue('#qs-income [data-kind="w2"] select.qs-cad')) === 'month' && /\$4,000 a month, rough/.test(await page.textContent('#qs-income [data-kind="w2"] .qs-heard')));
+    await page.selectOption('#qs-income [data-kind="w2"] select.qs-cad', 'biweekly'); await page.waitForTimeout(400);
+    check('every two weeks lands as the cadence on the row', await page.evaluate(() => { const r = window.mr3.record.planets.income.rows.find(x => x.type === 'w2'); return r.f.grossPay.v === 400000 && r.f.grossPay.cad === 'biweekly'; }) && /every two weeks/.test(await page.textContent('#qs-income [data-kind="w2"] .qs-heard')));
+    await page.click('#qs-income .chip:has-text("Side income")'); await page.waitForTimeout(100);
+    await page.fill('#qs-income [data-kind="side"] input.qs-amount', '25'); await page.selectOption('#qs-income [data-kind="side"] select.qs-cad', 'hour'); await page.waitForTimeout(400);
+    check('an hour shows hours a week and lands as a month', (await page.locator('#qs-income [data-kind="side"] .qs-hours:not([hidden])').count()) === 1 && /\$25 an hour, 40 hours a week/.test(await page.textContent('#qs-income [data-kind="side"] .qs-heard')) && await page.evaluate(() => { const r = window.mr3.record.planets.income.rows.find(x => x.type === 'side'); return r.f.grossPay.cad === 'month' && r.f.grossPay.v === Math.round(2500 * 40 * 52 / 12); }));
+    await page.click('#qs-income .chip:has-text("Side income")'); await page.waitForTimeout(300); /* off again: the quick row goes */
+    await page.selectOption('#qs-income [data-kind="w2"] select.qs-cad', 'month'); await page.waitForTimeout(400);
     await page.press('#qs-income [data-kind="w2"] input.qs-amount', 'Enter'); await page.waitForTimeout(300);
     check('Enter moves to the next step', /Debt, 2 of 6/.test(await page.textContent('.qs-progress')) && (await page.locator('#qs-debt').isVisible()));
     await page.click('#qs-debt .seg-btn:has-text("No, none")'); await page.click('.qs-nav button:has-text("Next")'); await page.waitForTimeout(200);

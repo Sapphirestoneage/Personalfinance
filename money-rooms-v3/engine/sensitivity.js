@@ -35,7 +35,7 @@ function rungNumbers(result) { const out = {}; RUNGS.forEach(id => { const m = r
 function lightClone(record) { return Object.assign({}, record, { planets: structuredClone(record.planets), sun: structuredClone(record.sun), journal: [] }); }
 function cadenceCents(row, f, monthlyCents) {
   const cad = f.cad || 'month'; const n = PAYCHECKS[row.f.payFrequency && hasValue(row.f.payFrequency) ? row.f.payFrequency.v : 'biweekly'] || 26;
-  switch (cad) { case 'month': return monthlyCents; case 'week': return Math.round(monthlyCents * 12 / 52); case 'quarter': return monthlyCents * 3; case 'year': return monthlyCents * 12; case 'paycheck': return Math.round(monthlyCents * 12 / n); default: return monthlyCents; }
+  switch (cad) { case 'month': return monthlyCents; case 'week': return Math.round(monthlyCents * 12 / 52); case 'biweekly': return Math.round(monthlyCents * 12 / 26); case 'day': return Math.round(monthlyCents * 12 / 365); case 'quarter': return monthlyCents * 3; case 'year': return monthlyCents * 12; case 'paycheck': return Math.round(monthlyCents * 12 / n); default: return monthlyCents; }
 }
 function setValue(f, v) { if (f.v && typeof f.v === 'object' && 'low' in f.v) { const mid = (f.v.low + f.v.high) / 2; const k = mid ? v / mid : 1; f.v = { low: Math.round(f.v.low * k), high: Math.round(f.v.high * k) }; } else f.v = v; if (f.state === 'unknown' || f.state === 'will-send') f.state = 'rough'; }
 

@@ -5,7 +5,7 @@
    agenda. The engine does the deriving; the view only renders. */
 import { setField, setColumn, addRow, removeRow, createRow, setHousehold, setColTier } from './record.js';
 import { freshFacts } from './fields.js';
-import { parseSaid, toMonthly, shareMath, crossCheck, parseBirth } from './parse.js';
+import { parseSaid, toMonthly, shareMath, crossCheck, parseBirth, hourlyToMonthly } from './parse.js';
 import { setAnchor, AREAS } from './anchors.js';
 import { tierFor, colTierOf, tierLabel } from './col.js';
 import { buildGuesses, guessRows, isGuessRow } from './guesses.js';
@@ -74,7 +74,7 @@ export function applyDiscovery(record, form, data, meta) {
   let gross = null; let hourly = null;
   if (payType === 'hourly') {
     const rate = parseSaid(money.hourlyRate); const hrs = parseFloat(String(money.hoursPerWeek || '').replace(/[^0-9.]/g, ''));
-    if (rate && rate.cents !== null && hrs > 0) { hourly = { rateCents: rate.cents, hours: hrs }; gross = { cents: Math.round(rate.cents * hrs * 52 / 12), cadence: 'month', payFrequency: null, state: 'rough', raw: money.hourlyRate + ' x ' + hrs }; }
+    if (rate && rate.cents !== null && hrs > 0) { hourly = { rateCents: rate.cents, hours: hrs }; gross = { cents: hourlyToMonthly(rate.cents, hrs), cadence: 'month', payFrequency: null, state: 'rough', raw: money.hourlyRate + ' x ' + hrs }; }
   } else if (payType === 'salary') gross = parseSaid(money.gross, { kind: 'income', defaultCadence: 'year' });
   else if (payType === 'varies') { gross = parseSaid(money.gross, { kind: 'income', defaultCadence: 'month' }); if (gross) gross.state = 'rough'; }
   else gross = parseSaid(money.gross, { kind: 'income' });

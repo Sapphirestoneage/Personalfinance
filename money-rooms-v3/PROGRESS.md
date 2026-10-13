@@ -3,6 +3,8 @@
 Updated: 2026-10-13
 
 ## Done
+- An amount and its interval (MR-089): every quick start amount has a picker (month, year, every two
+  weeks, week, day, hour for pay); two new cadences in the data model; one hourly formula.
 - Add a client is the first button on Clients (MR-088); the discovery call sits beside it.
 - It sticks (MR-087): a discovery call in progress is a draft that survives leaving the screen and a
   reload, shown on Clients with Continue; a storage probe; the phone's More menu is a bottom sheet; a sweep

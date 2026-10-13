@@ -331,4 +331,7 @@ Collected during the run; none blocked the build. Answer whenever.
     the first is saved replaces it (the screen offers Start fresh). Should
     the app keep several drafts, one per name, or is one call at a time the
     rule?
+97. The quick start's interval picker offers an hour for pay only, with
+    hours a week beside it. Should the ledger's own cadence pill offer an
+    hour as well, or does hourly pay stay a quick-start convenience?
 

@@ -11,7 +11,7 @@
    only the strip and the picture redraw on an update. Coach view only. The
    engine decides what each answer becomes and does every sum. */
 import { h, clear } from '../dom.js';
-import { QUESTIONS, HEADLINE, applyQuick, readQuick, kindLabel, picture } from '../../engine/quickstart.js';
+import { QUESTIONS, HEADLINE, applyQuick, readQuick, kindLabel, picture, INTERVALS, intervalLabel, DEFAULT_HOURS } from '../../engine/quickstart.js';
 import { valueText } from '../../engine/unlocks.js';
 import { parseSaid } from '../../engine/parse.js';
 import { segmented } from '../seg.js';
@@ -59,24 +59,39 @@ export function mount(host, app) {
     sec.appendChild(body);
     form.appendChild(sec); sections[q.id] = sec;
     steps.push({ id: q.id, label: q.label, el: sec, answered: () => ans.has === false || !!ans.said || Object.keys(ans.kinds).some(k => ans.kinds[k].picked && ans.kinds[k].said) });
+    /* an amount box: the number, and beside it the interval the coach picks (MR-089); the words typed can still name one and the pick follows */
     function amountBox(label, value, hint, onSet, opts) {
+      const o = opts || {}; const holder = o.holder || null; const intervals = o.intervals || null;
       const input = h('input', { class: 'input num qs-amount', type: 'text', inputmode: 'decimal', enterkeyhint: 'next', 'aria-label': label, value: value || '', title: hint || '' });
       const heard = h('span', { class: 'small muted qs-heard' });
-      const show = v => { const p = parseSaid(v, opts || {}); heard.textContent = !v ? '' : !p ? 'Did not catch a number' : p.unknown ? 'Unknown for now' : p.na ? 'Not applicable' : p.none ? 'None' : F.dollarsWhole(p.cents) + (p.cadence && p.cadence !== 'oneoff' && opts && opts.cadence ? ' ' + ({ paycheck: 'a paycheck', week: 'a week', month: 'a month', quarter: 'a quarter', year: 'a year' }[p.cadence] || '') : '') + ', rough'; };
+      let cadSel = null; let hoursBox = null;
+      const cadOf = () => (holder && holder.cad) || 'month';
+      if (intervals) {
+        cadSel = h('select', { class: 'select qs-cad', 'aria-label': label + ' interval' }, intervals.map(id => h('option', { value: id, selected: cadOf() === id }, intervalLabel(id))));
+        cadSel.addEventListener('change', () => { holder.cad = cadSel.value; if (cadSel.value === 'hour' && !(parseFloat(holder.hours) > 0)) holder.hours = DEFAULT_HOURS; hoursRow(); show(input.value); flush(); });
+        hoursBox = h('span', { class: 'qs-hours', hidden: true }, h('label', { class: 'small muted' }, 'hours a week'), h('input', { class: 'input num', type: 'text', inputmode: 'decimal', style: { width: '64px' }, 'aria-label': label + ' hours a week', value: holder.hours || DEFAULT_HOURS, onChange: e => { const n = parseFloat(e.target.value); holder.hours = Number.isFinite(n) && n > 0 ? n : DEFAULT_HOURS; e.target.value = holder.hours; show(input.value); flush(); } }));
+      }
+      const hoursRow = () => { if (hoursBox) hoursBox.hidden = cadOf() !== 'hour'; };
+      const show = v => {
+        const p = parseSaid(v, Object.assign({}, o, { defaultCadence: cadOf() }));
+        if (p && p.cadence && intervals && intervals.includes(p.cadence) && /\b(a|per|an|every|each)\b|ly\b|\//i.test(v) && p.cadence !== cadOf()) { holder.cad = p.cadence; cadSel.value = p.cadence; hoursRow(); } /* "2000 a week" moves the pick to a week */
+        const cad = cadOf(); const hrs = holder && parseFloat(holder.hours) > 0 ? parseFloat(holder.hours) : DEFAULT_HOURS;
+        heard.textContent = !v ? '' : !p ? 'Did not catch a number' : p.unknown ? 'Unknown for now' : p.na ? 'Not applicable' : p.none ? 'None' : F.dollarsWhole(p.cents) + (intervals ? ' ' + intervalLabel(cad) + (cad === 'hour' ? ', ' + hrs + ' hours a week' : '') : '') + ', rough';
+      };
       input.addEventListener('input', () => { show(input.value); onSet(input.value.trim()); if (mode === 'steps') layout(); if (pending) clearTimeout(pending); pending = setTimeout(() => { pending = null; commit(); }, 500); });
       input.addEventListener('change', () => { onSet(input.value.trim()); flush(); });
-      show(value);
-      return h('span', { class: 'qs-amountwrap' }, input, heard);
+      show(value); hoursRow();
+      return h('span', { class: 'qs-amountwrap' }, input, cadSel, hoursBox, heard);
     }
     function drawBody() {
       clear(body);
       if (q.total) {
-        body.appendChild(h('div', { class: 'row qs-row' }, h('span', { class: 'qs-label' }, 'All in, a month'), amountBox(q.label + ' a month', ans.said, q.amountHint, v => { ans.said = v; }, { kind: 'spending', defaultCadence: 'month', cadence: true })));
+        body.appendChild(h('div', { class: 'row qs-row' }, h('span', { class: 'qs-label' }, 'All in'), amountBox(q.label + ' total', ans.said, q.amountHint, v => { ans.said = v; }, { kind: 'spending', holder: ans, intervals: q.intervals })));
         body.appendChild(h('p', { class: 'small muted' }, 'Then, if it is easy, the big pieces. Anything left blank stays inside the total.'));
       } else if (ans.has !== true) { body.appendChild(h('p', { class: 'small muted' }, ans.has === false ? 'Marked as none. Change the answer above if that changes.' : 'Pick Yes or No to go on.')); return; }
       const chips = h('div', { class: 'row qs-kinds', role: 'group', 'aria-label': q.label + ' kinds' }, q.kinds.map(([kind, label]) => {
         const on = !!(ans.kinds[kind] && ans.kinds[kind].picked);
-        return h('button', { type: 'button', class: 'chip toggle' + (on ? ' on' : ''), 'aria-pressed': String(on), onClick: () => { ans.kinds[kind] = ans.kinds[kind] || { picked: false, said: '', extras: {} }; ans.kinds[kind].picked = !ans.kinds[kind].picked; if (q.total) ans.has = true; drawBody(); commit(); const box = body.querySelector('[data-kind="' + kind + '"] input'); if (box) box.focus({ preventScroll: true }); } }, label);
+        return h('button', { type: 'button', class: 'chip toggle' + (on ? ' on' : ''), 'aria-pressed': String(on), onClick: () => { ans.kinds[kind] = ans.kinds[kind] || { picked: false, said: '', extras: {}, cad: q.intervals ? 'month' : undefined }; ans.kinds[kind].picked = !ans.kinds[kind].picked; if (q.total) ans.has = true; drawBody(); commit(); const box = body.querySelector('[data-kind="' + kind + '"] input'); if (box) box.focus({ preventScroll: true }); } }, label);
       }));
       body.appendChild(chips);
       const picked = q.kinds.filter(([kind]) => ans.kinds[kind] && ans.kinds[kind].picked);
@@ -85,7 +100,7 @@ export function mount(host, app) {
       picked.forEach(([kind]) => {
         const k = ans.kinds[kind]; const extras = (q.extras || {})[kind] || [];
         const line = h('div', { class: 'row qs-row', dataset: { kind } }, h('span', { class: 'qs-label' }, kindLabel(q, kind)),
-          amountBox(kindLabel(q, kind) + ' amount', k.said, q.amountHint, v => { k.said = v; }, q.id === 'income' ? { kind: 'income', cadence: true, defaultCadence: kind === 'w2' ? 'paycheck' : 'month' } : { kind: 'money' }),
+          amountBox(kindLabel(q, kind) + ' amount', k.said, q.amountHint, v => { k.said = v; }, q.intervals ? { kind: q.id === 'income' ? 'income' : 'money', holder: k, intervals: q.intervals } : { kind: 'money' }),
           extras.map(([fid, label]) => h('span', { class: 'qs-extra' }, h('label', { class: 'small muted' }, label), h('input', { class: 'input num', type: 'text', inputmode: 'decimal', enterkeyhint: 'next', style: { width: '96px' }, 'aria-label': kindLabel(q, kind) + ' ' + label.toLowerCase(), value: (k.extras || {})[fid] || '', onChange: e => { k.extras = k.extras || {}; k.extras[fid] = e.target.value.trim(); flush(); } }))));
         lines.appendChild(line);
       });

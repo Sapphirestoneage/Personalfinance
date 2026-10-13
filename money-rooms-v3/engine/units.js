@@ -153,7 +153,9 @@ export function cadenceToMonthly(cents, cadence, paychecksPerYear) {
   if (!isInt(cents)) throw new UnitError('cents must be an integer');
   switch (cadence) {
     case 'month': return cents;
+    case 'day': return Math.round(cents * 365 / 12); /* MR-089 */
     case 'week': return Math.round(cents * 52 / 12);
+    case 'biweekly': return Math.round(cents * 26 / 12); /* MR-089: every two weeks, no paycheck implied */
     case 'quarter': return Math.round(cents / 3);
     case 'year': return Math.round(cents / 12);
     case 'paycheck': {

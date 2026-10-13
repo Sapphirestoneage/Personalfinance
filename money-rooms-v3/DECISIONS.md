@@ -562,6 +562,12 @@ Compatibility: schema 5. On load, an `account` row whose type is checking, hysa,
 Why: the owner: "separate them into investing and bank accounts ... very clearly be bank accounts with checking, savings, high yield savings and CDs", and on question 60: "keep both but make sure that they both are modes for the debt calculation".
 Alternative: one account type grouped on screen by bucket (the list stayed one long select, which is what the owner wanted gone).
 
+## MR-089 2026-10-13 An amount and its interval
+Decision: Every amount on the quick start that has a cadence carries an interval picker beside the box: a month, a year, every two weeks, a week, a day, and for pay an hour. The pick is the cadence stored on the row; words typed in the box ("2000 a week") move the pick. An hour shows an hours-a-week box (40 by default) and lands as a month through one formula, `hourlyToMonthly`, which the discovery call now uses too; the hours land in Paid hours. Two intervals join the data model: `biweekly` (every two weeks, 26 a year, no paycheck implied) and `day` (365 a year), in `data/fields.json cadences`, both monthly conversions, the sensitivity reverse conversion, the store's anchor backfill and the ledger's cadence pill. A quick row remembers its interval (`row.quick`) so the screen reads it back.
+Compatibility: two new cadence values a row may carry; older records never hold them. Quick rows gain an optional `quick` object.
+Why: the owner, on a phone, after "2000" on a job read as a paycheck: "update this to be an amount and then I determine the interval: monthly, annually, biweekly, weekly, daily and hourly."
+Alternative: keep guessing the interval from the words (rejected: a bare number has no interval, and the guess was wrong on the first try).
+
 ## MR-088 2026-10-13 Add a client is the first button on Clients
 Decision: Clients opens with Add a client (a name, then the four quick questions) as the primary button, Start a discovery call beside it, then Open a client and More. The line "New client without a call" leaves the More menu. The empty state and the Home panel without a client say the same two ways in.
 Compatibility: none.

@@ -8,6 +8,7 @@ const CADENCE = [
   [/twice\s+a\s+month|semi-?monthly|1st\s+and\s+15th|15th\s+and\s+(30th|last)/i, 'paycheck', 'semimonthly'],
   [/every\s+week|a\s+week|per\s+week|weekly|\/\s*wk|\/\s*week/i, 'week', null],
   [/a\s+month|per\s+month|monthly|\/\s*mo\b|\/\s*month|each\s+month|every\s+month/i, 'month', null],
+  [/a\s+day|per\s+day|daily|\/\s*day/i, 'day', null],
   [/a\s+quarter|quarterly|per\s+quarter/i, 'quarter', null],
   [/a\s+year|per\s+year|yearly|annual|annually|\/\s*yr|\/\s*year|each\s+year|every\s+year|salary/i, 'year', null],
   [/one[- ]?off|once|one\s+time|lump/i, 'oneoff', null],
@@ -55,11 +56,16 @@ export function parseSaid(text, opts) {
 }
 
 const PAYCHECKS = { weekly: 52, biweekly: 26, semimonthly: 24, monthly: 12 };
+/* Hourly pay to a month (MR-089): rate times hours a week times 52 weeks over 12 months. The discovery call and the quick start both use it. */
+export function hourlyToMonthly(rateCents, hoursPerWeek) { return Math.round(rateCents * hoursPerWeek * 52 / 12); }
+
 /* To a month, the same arithmetic as units.cadenceToMonthly. */
 export function toMonthly(cents, cadence, payFrequency) {
   switch (cadence) {
     case 'month': return cents;
+    case 'day': return Math.round(cents * 365 / 12);
     case 'week': return Math.round(cents * 52 / 12);
+    case 'biweekly': return Math.round(cents * 26 / 12);
     case 'quarter': return Math.round(cents / 3);
     case 'year': return Math.round(cents / 12);
     case 'paycheck': return Math.round(cents * (PAYCHECKS[payFrequency || 'biweekly'] || 26) / 12);

@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { applyQuick, readQuick, quickRow, picture, QUESTIONS, HEADLINE, QUICK_LIB } from '../../engine/quickstart.js';
+import { applyQuick, readQuick, quickRow, picture, intervalToStored, INTERVALS, INCOME_INTERVALS, SPEND_INTERVALS, QUESTIONS, HEADLINE, QUICK_LIB } from '../../engine/quickstart.js';
+import { toMonthly, hourlyToMonthly } from '../../engine/parse.js';
 import { addMonths } from '../../engine/debtsim.js';
 import { compute } from '../../engine/compute.js';
 import { createRecord } from '../../engine/record.js';
@@ -89,4 +90,30 @@ test('the picture (MR-085): runway, the buffer target, and the month it is full 
   const P1 = picture(R, 1); assert.ok(P1.there && P1.shortBy === 0 && P1.monthsTo === 0);
   applyQuick(rec, { expenses: { said: '4500' } }, data, { today: TODAY });
   const Ps = picture(compute(rec, data, { today: TODAY }), 3); assert.ok(Ps.stuck && Ps.by === null, 'spending above take-home: the buffer never grows');
+});
+
+test('an amount and its interval (MR-089): the pick beside the box is the cadence; hourly pay becomes a month through one formula', () => {
+  assert.deepEqual(INTERVALS.map(i => i[0]), ['month', 'year', 'biweekly', 'week', 'day', 'hour']);
+  assert.ok(INCOME_INTERVALS.includes('hour') && !SPEND_INTERVALS.includes('hour'));
+  QUESTIONS.forEach(q => { if (q.intervals) q.intervals.forEach(i => assert.ok(INTERVALS.some(x => x[0] === i), q.id + ' ' + i)); });
+  assert.deepEqual(intervalToStored(200000, 'biweekly', null), { cents: 200000, cad: 'biweekly', hours: null });
+  assert.deepEqual(intervalToStored(2000, 'hour', 35), { cents: hourlyToMonthly(2000, 35), cad: 'month', hours: 35 });
+  assert.equal(intervalToStored(2000, 'hour', null).hours, 40);
+  assert.equal(toMonthly(100000, 'biweekly'), Math.round(100000 * 26 / 12)); assert.equal(toMonthly(1000, 'day'), Math.round(1000 * 365 / 12));
+  const rec = fresh();
+  applyQuick(rec, {
+    income: { has: true, kinds: { w2: { picked: true, said: '2000', cad: 'biweekly' }, side: { picked: true, said: '20', cad: 'hour', hours: 10 } } },
+    expenses: { said: '3000', cad: 'month', kinds: { food: { picked: true, said: '150', cad: 'week' } } },
+  }, data, { today: TODAY });
+  const job = rows(rec, 'income', 'w2')[0]; assert.equal(job.f.grossPay.v, 200000); assert.equal(job.f.grossPay.cad, 'biweekly');
+  const side = rows(rec, 'income', 'side')[0]; assert.equal(side.f.grossPay.v, hourlyToMonthly(2000, 10)); assert.equal(side.f.grossPay.cad, 'month'); assert.equal(side.f.hoursPaid.v, 10);
+  const food = rows(rec, 'spending', 'line').find(l => l.f.category.v === 'food'); assert.equal(food.f.amount.v, 15000); assert.equal(food.f.amount.cad, 'week');
+  const R = compute(rec, data, { today: TODAY });
+  assert.equal(R.sun.outputs.income.grossMonthly.cents, Math.round(200000 * 26 / 12) + hourlyToMonthly(2000, 10), 'every two weeks and hourly both land as months');
+  const back = readQuick(rec, data);
+  assert.equal(back.income.kinds.w2.cad, 'biweekly'); assert.equal(back.income.kinds.side.cad, 'hour'); assert.equal(back.income.kinds.side.said, '20'); assert.equal(back.income.kinds.side.hours, 10);
+  assert.equal(back.expenses.cad, 'month'); assert.equal(back.expenses.kinds.food.cad, 'week');
+  /* the words typed still name an interval when no pick is given */
+  applyQuick(rec, { income: { has: true, kinds: { w2: { picked: true, said: '52k a year' } } } }, data, { today: TODAY });
+  assert.equal(rows(rec, 'income', 'w2')[0].f.grossPay.cad, 'year');
 });
