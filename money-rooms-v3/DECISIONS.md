@@ -562,6 +562,12 @@ Compatibility: schema 5. On load, an `account` row whose type is checking, hysa,
 Why: the owner: "separate them into investing and bank accounts ... very clearly be bank accounts with checking, savings, high yield savings and CDs", and on question 60: "keep both but make sure that they both are modes for the debt calculation".
 Alternative: one account type grouped on screen by bucket (the list stayed one long select, which is what the owner wanted gone).
 
+## MR-088 2026-10-13 Add a client is the first button on Clients
+Decision: Clients opens with Add a client (a name, then the four quick questions) as the primary button, Start a discovery call beside it, then Open a client and More. The line "New client without a call" leaves the More menu. The empty state and the Home panel without a client say the same two ways in.
+Compatibility: none.
+Why: the owner, on a phone: "where is an add new client thing?" The most common action was a line under a menu.
+Alternative: a plus button in the top bar (rejected: Clients is the screen for clients; one place).
+
 ## MR-087 2026-10-13 It sticks, and it fits the phone: the discovery draft, the storage probe, nothing off screen
 Decision: A discovery call in progress for a client who has no file yet is a draft (`store.saveDraft('discovery', form)`), saved as it is typed and on every redraw, read back when the screen opens ("Picking up the call with Tal where it was left", with Start fresh), shown on Clients as "A discovery call in progress: Tal" with Continue the call and Discard, and cleared by Save. The app probes storage at start (`storageWorks`); where the browser keeps nothing (a sandboxed frame, some private windows) it runs on memory and says so once in a toast. On a phone the More menu is a sheet pinned to the bottom of the screen, never off an edge, and the progress tabs wrap instead of running off the right. The sweep gains a check at the phone width: no element outside the viewport and no sideways page scroll, with a strip that scrolls on purpose the one exception.
 Compatibility: drafts live under `mr3:draft:<name>`; nothing in a client record changes.

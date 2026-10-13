@@ -1,5 +1,5 @@
 /* Clients (Level 14, MR-072): every client in this browser, two visible
-   buttons (Start a discovery call, Open a client), the rest under More, and
+   buttons (Add a client, Start a discovery call, Open a client), the rest under More, and
    the open client's details with the history journal that used to sit on
    Home. Coach view only. Views never do math. */
 import { h, clear } from '../dom.js';
@@ -38,7 +38,6 @@ export function renderList(panel, app) {
   const openSel = list.length ? h('select', { class: 'select', 'aria-label': 'Open a client', onChange: e => { if (e.target.value) { app.open(e.target.value); location.hash = '#/home'; } } }, h('option', { value: '' }, 'Open a client'), list.map(c => h('option', { value: c.id }, c.name || 'Unnamed client'))) : null;
   const more = h('details', { class: 'more-menu' }, h('summary', { class: 'btn', 'aria-label': 'More client actions' }, 'More'),
     h('div', { class: 'more-list' },
-      h('button', { class: 'btn', 'aria-label': 'New client', onClick: () => { more.removeAttribute('open'); newClientDrawer(app); } }, 'New client without a call'),
       h('button', { class: 'btn', onClick: () => { more.removeAttribute('open'); fileInput.click(); } }, 'Import a client file'),
       h('button', { class: 'btn', title: 'Maya, the Jersey City client, as she stood after her first call', onClick: () => { more.removeAttribute('open'); loadDemo(app, 'maya-discovery'); } }, 'Load demo client (Maya)'),
       h('button', { class: 'btn', title: 'Leah, Oakland: a full example household with every room filled', onClick: () => { more.removeAttribute('open'); loadDemo(app, 'leah'); } }, 'Load the full example (Leah)'),
@@ -47,10 +46,10 @@ export function renderList(panel, app) {
       fileInput));
   const draft = app.store.loadDraft('discovery'); /* MR-087: a discovery call in progress is not lost; it waits here */
   if (draft && draft.form && draft.form.snapshot && draft.form.snapshot.name) panel.appendChild(h('p', { class: 'small disc-resume', dataset: { draft: 'discovery' } }, 'A discovery call in progress: ' + draft.form.snapshot.name + '. ', h('a', { class: 'btn small primary', href: '#/discovery' }, 'Continue the call'), ' ', h('button', { class: 'btn small quiet', onClick: () => { app.store.clearDraft('discovery'); renderList(panel, app); } }, 'Discard')));
-  panel.appendChild(h('div', { class: 'row clients-actions' }, h('a', { class: 'btn primary', href: '#/discovery' }, 'Start a discovery call'), openSel, more));
+  panel.appendChild(h('div', { class: 'row clients-actions' }, h('button', { class: 'btn primary', 'aria-label': 'Add a client', onClick: () => newClientDrawer(app) }, 'Add a client'), h('a', { class: 'btn', href: '#/discovery' }, 'Start a discovery call'), openSel, more)); /* MR-088: adding a client is the first button, not a line under More */
   if (!list.length) {
     panel.appendChild(h('div', { class: 'empty first-visit' }, h('h3', null, 'No clients yet'),
-      h('p', null, 'The first call makes the client: start a discovery call and type what you hear. Or load Maya to look around.'),
+      h('p', null, 'Add a client with a name and four quick questions, or start a discovery call and type what you hear. Or load Maya to look around.'),
       h('div', { class: 'row', style: { marginTop: '12px' } }, h('button', { class: 'btn', onClick: () => loadDemo(app, 'maya-discovery') }, 'Load demo client (Maya)'))));
     return;
   }

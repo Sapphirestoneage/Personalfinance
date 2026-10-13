@@ -3,6 +3,7 @@
 Updated: 2026-10-13
 
 ## Done
+- Add a client is the first button on Clients (MR-088); the discovery call sits beside it.
 - It sticks (MR-087): a discovery call in progress is a draft that survives leaving the screen and a
   reload, shown on Clients with Continue; a storage probe; the phone's More menu is a bottom sheet; a sweep
   check that nothing sits off screen at phone width.

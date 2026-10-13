@@ -38,7 +38,7 @@ function mountToday(host, app) {
           h('div', { class: 'row', style: { marginTop: '12px' } }, h('a', { class: 'btn primary', href: '#/discovery' }, 'Start the discovery call'), h('button', { class: 'btn', onClick: () => loadDemo(app, 'maya-discovery') }, 'Or look around with Maya'))));
         const panel = h('section', { class: 'panel' }); below.appendChild(panel); renderList(panel, app);
       } else {
-        hero.appendChild(h('section', { class: 'panel today-empty' }, h('h2', null, 'No client open'), h('p', { class: 'big' }, 'Open a client to see the next session and start the call.'), h('div', { class: 'row', style: { marginTop: '12px' } }, h('a', { class: 'btn primary', href: '#/clients' }, 'Open a client'), h('a', { class: 'btn', href: '#/discovery' }, 'Start a discovery call'))));
+        hero.appendChild(h('section', { class: 'panel today-empty' }, h('h2', null, 'No client open'), h('p', { class: 'big' }, 'Open a client to see the next session and start the call.'), h('div', { class: 'row', style: { marginTop: '12px' } }, h('a', { class: 'btn primary', href: '#/clients' }, 'Open a client'), h('a', { class: 'btn', href: '#/start' }, 'Add a client'), h('a', { class: 'btn', href: '#/discovery' }, 'Start a discovery call'))));
         const panel = h('section', { class: 'panel' }); below.appendChild(panel); renderList(panel, app);
       }
       return;

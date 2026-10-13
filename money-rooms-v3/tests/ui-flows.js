@@ -1186,7 +1186,7 @@ flows.push({
   name: 'level17-quick-start',
   async run(page, { base, check }) {
     await page.goto(base + 'index.html#/clients'); await page.waitForSelector('.more-menu summary');
-    await page.click('.more-menu summary'); await page.click('.more-list button:has-text("New client without a call")');
+    await page.click('button[aria-label="Add a client"]');
     await page.fill('input[aria-label="New client name"]', 'Quick household'); await page.press('input[aria-label="New client name"]', 'Enter');
     await page.waitForSelector('.qs-form');
     check('a new client lands on the quick start', (await page.evaluate(() => location.hash)) === '#/start');
@@ -1296,7 +1296,7 @@ flows.push({
   async run(page, { base, check }) {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(base + 'index.html#/clients'); await page.waitForSelector('.more-menu summary');
-    await page.click('.more-menu summary'); await page.click('.more-list button:has-text("New client without a call")');
+    await page.click('button[aria-label="Add a client"]');
     await page.fill('input[aria-label="New client name"]', 'Tal'); await page.press('input[aria-label="New client name"]', 'Enter');
     await page.waitForSelector('.qs-form.qs-steps');
     const shown = async () => (await page.locator('.qs-form > section:not([hidden])').count());

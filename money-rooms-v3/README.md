@@ -238,6 +238,7 @@ progress) and Progress vs paperwork.
 Program in the side nav shows one row per session, discovery first, with
 status, date, targets met, accounts opened, homework done and the stress
 score where it was asked; urgent sessions sit between the numbered ones.
+Clients opens with Add a client (MR-088): a name, then the four quick questions.
 A discovery call in progress is kept as a draft (MR-087) until Save makes the
 file; Clients shows it with Continue. On a phone nothing sits off screen, and
 the sweep checks that on every screen.

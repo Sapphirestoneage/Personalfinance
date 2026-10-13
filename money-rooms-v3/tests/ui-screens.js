@@ -114,8 +114,7 @@ export const HOUSEHOLDS = [
     async load(page, { base }) {
       /* MR-072: a client without a call lives under More on the Clients screen */
       await page.goto(base + 'index.html#/clients'); await page.waitForSelector('.more-menu summary');
-      await page.click('.more-menu summary');
-      await page.click('.more-list button:has-text("New client without a call")');
+      await page.click('button[aria-label="Add a client"]');
       await page.fill('input[aria-label="New client name"]', 'Example household');
       await page.press('input[aria-label="New client name"]', 'Enter');
       await page.waitForSelector('.qs-form'); /* MR-080: a client without a call starts with the four questions */
