@@ -334,4 +334,9 @@ Collected during the run; none blocked the build. Answer whenever.
 97. The quick start's interval picker offers an hour for pay only, with
     hours a week beside it. Should the ledger's own cadence pill offer an
     hour as well, or does hourly pay stay a quick-start convenience?
+98. The fold (one caret for the long part of a panel) sits on Clients first.
+    Which other panels should fold by default: the history on Session notes,
+    the assumptions, the unsure table?
+99. On a phone every date is typed as mm/dd/yyyy. Should desktops type too,
+    for one habit everywhere, or keep the calendar?
 

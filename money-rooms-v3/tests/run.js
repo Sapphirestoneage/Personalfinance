@@ -34,7 +34,7 @@ const all = walk('', []);
 const shipped = all.filter(f => /\.(js|html|css|json)$/.test(f) && !f.startsWith('tests/'));
 const text = all.filter(f => /\.(js|html|css|json|md)$/.test(f));
 
-const BANNED = [/\bTODO\b/, /\bFIXME\b/, /placeholder/i, /lorem/i, /coming soon/i, /not implemented/i, /console\.log\(/];
+const BANNED = [/\bTODO\b/, /\bFIXME\b/, /placeholder(?!: )/i, /lorem/i, /coming soon/i, /not implemented/i, /console\.log\(/]; /* the word is a stub smell; the HTML attribute (`placeholder: `) on a typed date box is not (MR-091) */
 shipped.forEach(f => {
   const src = fs.readFileSync(path.join(ROOT, f), 'utf8');
   BANNED.forEach(re => check(f + ' has no ' + re.source, !re.test(src)));

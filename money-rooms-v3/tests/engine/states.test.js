@@ -52,3 +52,13 @@ test('follow-up and plates', () => {
   assert.equal(isRough(field(1, 'known', 'estimated')), true);
   assert.equal(isRough(field(1, 'known', 'lookup-verify')), false);
 });
+
+test('a typed date (MR-091): slashes, dashes, digits only, two-digit years, and a month on its own', async () => {
+  const { parseTypedDate, formatTypedDate } = await import('../../engine/parse.js');
+  const T = '2026-10-13';
+  ['7/1/2001', '07/01/2001', '7-1-2001', '07012001', '2001-07-01', '2001/7/1', '7/1/01', '070101'].forEach(x => assert.equal(parseTypedDate(x, 'day', T), '2001-07-01', x));
+  assert.equal(parseTypedDate('7/1/30', 'day', T), '1930-07-01', 'a two-digit year never lands in the future');
+  ['7/2027', '07/2027', '072027', '2027-07', '7/27', '7/1/2027'].forEach(x => assert.equal(parseTypedDate(x, 'month', T), '2027-07', x));
+  ['', 'soon', '13/40/2001', '2001', '7/'].forEach(x => assert.equal(parseTypedDate(x, 'day', T), null, x));
+  assert.equal(formatTypedDate('2001-07-01', 'day'), '07/01/2001'); assert.equal(formatTypedDate('2027-07', 'month'), '07/2027'); assert.equal(formatTypedDate(null, 'day'), '');
+});

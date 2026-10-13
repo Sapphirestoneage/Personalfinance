@@ -204,7 +204,7 @@ export async function enterHousehold(page, spec, check) {
         if (d.cadence && cad && cad !== d.defaultCadence) {
           const a = await active(page);
           if (a.col !== fid + ':cad') await tabTo(page, x => x.row === rowId && x.col === fid + ':cad');
-          const order2 = ['paycheck', 'week', 'month', 'quarter', 'year', 'oneoff'];
+          const order2 = ['paycheck', 'day', 'week', 'biweekly', 'month', 'quarter', 'year', 'oneoff']; /* the ledger's cadence pill, in its own order (MR-089 added a day and every two weeks) */
           const from = order2.indexOf(d.defaultCadence), to = order2.indexOf(cad);
           for (let i = 0; i < Math.abs(to - from); i++) await press(to > from ? 'ArrowDown' : 'ArrowUp');
         }

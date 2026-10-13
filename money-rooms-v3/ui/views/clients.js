@@ -10,6 +10,7 @@ import { PLANET_SHORT } from '../../engine/sun.js';
 import { programOf, nextSessionNumber } from '../../engine/program.js';
 import { sessionCount } from '../../engine/curriculum.js';
 import * as Rec from '../../engine/record.js';
+import { fold } from '../fold.js';
 
 export const DEMO_IDS = ['maya-discovery', 'leah', 'maya-zero'];
 
@@ -58,8 +59,8 @@ export function renderList(panel, app) {
     h('tbody', null, list.map(c => {
       const open = app.record && app.record.id === c.id;
       return h('tr', { class: open ? 'selected' : null },
-        h('td', null, h('a', { href: '#/clients/' + c.id, onClick: e => { e.preventDefault(); app.open(c.id); location.hash = '#/clients/' + c.id; } }, c.name || 'Unnamed client'), open ? h('span', { class: 'chip src', style: { marginLeft: '8px' } }, 'Current') : null, h('div', { class: 'muted small' }, 'Saved ' + F.dateLocal(c.updatedAt))),
-        h('td', { class: 'small' }, sessionCell(app, c)),
+        h('td', { class: 'client-name' }, h('a', { href: '#/clients/' + c.id, onClick: e => { e.preventDefault(); app.open(c.id); location.hash = '#/clients/' + c.id; } }, c.name || 'Unnamed client'), open ? h('span', { class: 'chip src' }, 'Current') : null),
+        h('td', { class: 'small' }, sessionCell(app, c), h('span', { class: 'muted client-saved' }, ' Saved ' + F.dateLocal(c.updatedAt))),
         h('td', { class: 'num' }, h('a', { class: 'btn small primary', href: '#/home', onClick: () => { app.open(c.id); } }, 'Open')));
     })));
   panel.appendChild(h('div', { class: 'tablewrap' }, tbl));
@@ -126,16 +127,16 @@ function renderDetails(panel, app, sub) {
     h('button', { class: 'btn', onClick: () => exportClient(rec) }, 'Export'),
     h('button', { class: 'btn quiet', onClick: () => confirmRemove(app, { id: rec.id, name }) }, 'Delete')));
   const sessions = rec.sessions || [];
-  panel.appendChild(h('h3', null, 'Sessions'));
-  panel.appendChild(sessions.length ? h('div', { class: 'tablewrap' }, h('table', { class: 'data' }, h('tbody', null, sessions.slice().reverse().map(sn => h('tr', null, h('td', null, sn.label), h('td', { class: 'small muted' }, F.dateLong(sn.at.slice(0, 10))), h('td', { class: 'small' }, sn.note || '')))))) : h('p', { class: 'muted small' }, 'No session closed yet.'));
-  renderHistory(panel, app, rec);
+  /* MR-090: the long parts fold under a caret; a closed fold is one line */
+  panel.appendChild(fold('clients.sessions', 'Sessions', sessions.length ? h('div', { class: 'tablewrap' }, h('table', { class: 'data' }, h('tbody', null, sessions.slice().reverse().map(sn => h('tr', null, h('td', null, sn.label), h('td', { class: 'small muted' }, F.dateLong(sn.at.slice(0, 10))), h('td', { class: 'small' }, sn.note || '')))))) : h('p', { class: 'muted small' }, 'No session closed yet.'), { count: sessions.length, open: false }));
+  panel.appendChild(fold('clients.history', 'History', renderHistory(app, rec), { count: rec.journal.length, open: false }));
 }
 
-/* The journal (moved here from Home, MR-072): the last twelve changes, then the count. */
-function renderHistory(panel, app, rec) {
-  panel.appendChild(h('h3', { style: { marginTop: '12px' } }, 'History'));
+/* The journal (moved here from Home, MR-072): the last twelve changes, then the count. Returns the body for its fold (MR-090). */
+function renderHistory(app, rec) {
+  const panel = h('div');
   const lines = rec.journal.slice().reverse().slice(0, 12);
-  if (!lines.length) { panel.appendChild(h('p', { class: 'muted small' }, 'No changes yet.')); return; }
+  if (!lines.length) { panel.appendChild(h('p', { class: 'muted small' }, 'No changes yet.')); return panel; }
   const fieldsData = app.data.fields;
   panel.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data history' },
     h('thead', null, h('tr', null, h('th', null, 'When'), h('th', null, 'What'), h('th', null, 'Now'))),
@@ -144,7 +145,8 @@ function renderHistory(panel, app, rec) {
       h('td', { class: 'what' }, whereChip(l), ' ', describe(l, fieldsData)),
       h('td', { class: 'small now' }, side(l.new, l, fieldsData))))))));
   const n = rec.journal.length;
-  panel.appendChild(h('p', { class: 'hint', style: { marginTop: '8px' } }, n + (n === 1 ? ' change' : ' changes') + ' in all. Export carries every one.'));
+  if (n > lines.length) panel.appendChild(h('p', { class: 'hint', style: { marginTop: '8px' } }, 'The latest ' + lines.length + ' of ' + n + '. Export carries every one.'));
+  return panel;
 }
 
 const SUN_LABELS = { name: 'Name', birthDate: 'Birth date', state: 'State', city: 'City', workSituation: 'Work situation', dependents: 'Dependents', filingStatus: 'Filing status', bigGoal: 'Big goal' };

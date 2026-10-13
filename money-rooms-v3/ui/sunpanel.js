@@ -6,7 +6,7 @@ import { stateChip, sourceChip } from './chips.js';
 import { SUN_FIELDS, SUN_ASKED, SUN_MORE, WORK_SITUATIONS, PLANETS, FILING_STATUSES } from '../engine/sun.js';
 import * as F from '../engine/format.js';
 import { hasValue } from '../engine/states.js';
-import { datePicker } from './datepicker.js';
+import { setDateValue, datePicker } from './datepicker.js';
 import { ledgerTable } from './table.js';
 
 export function parseDateText(t) {
@@ -97,7 +97,7 @@ export function sunControl(app, id) {
       const p = parseBirthText(t, todayIso());
       if (!p) { app.toast('An age (27) or a birth year (1999) is enough here.'); e.target.value = ''; return; }
       picker.value = ''; e.target.value = p.state === 'rough' ? String(F.ageAt(p.iso, todayIso())) : ''; commit(p.iso, p.state);
-      if (p.state === 'known') picker.value = p.iso;
+      if (p.state === 'known') setDateValue(picker, p.iso);
     } });
     control = h('span', { class: 'picker birth' }, picker, h('span', { class: 'or' }, 'or age'), age);
   } else if (id === 'state') {

@@ -146,6 +146,7 @@ textarea.input { height: auto; min-height: 56px; padding: var(--s-1) var(--s-2);
 .control.is-empty::after { content: 'Not entered'; position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--slate); font-size: var(--fs-13); pointer-events: none; line-height: 1; }
 .control.is-empty:focus-within::after { display: none; }
 .control.is-empty input[type="date"] { color: transparent; }
+.input.date.typed { width: 150px; text-align: left; } .input.date.typed.is-wrong { border-color: var(--amber); box-shadow: 0 0 0 3px rgba(217, 142, 4, 0.18); } /* MR-091 */
 .control.is-empty input[type="date"]:focus { color: var(--ink); }
 .fieldrow > label { color: var(--ink); font-size: var(--fs-13); grid-area: label; }
 .fieldrow > .control { grid-area: input; min-width: 0; }
@@ -1006,6 +1007,18 @@ table.program tr.urgent-row td { background: var(--paper-2); }
 .compare-note { max-width: 72ch; }
 /* MR-057: the Clients table fits its card; cells wrap and the buttons stack when the card is narrow */
 table.data.clients-table td { white-space: normal; overflow-wrap: break-word; height: auto; padding-top: 6px; padding-bottom: 6px; }
+table.data.clients-table td.client-name { white-space: nowrap; } table.data.clients-table td.client-name .chip { margin-left: var(--s-2); }
+.client-saved { font-size: var(--fs-12); white-space: nowrap; }
+@media (max-width: 720px) { .client-saved { display: block; } }
+/* MR-090: a fold is one line until opened */
+.fold { border-top: 1px solid var(--line-soft); margin-top: var(--s-2); }
+.fold > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: var(--s-2); min-height: 36px; font-size: var(--fs-14); font-weight: var(--w-semibold); color: var(--sapphire-900); user-select: none; -webkit-tap-highlight-color: transparent; }
+.fold > summary::-webkit-details-marker { display: none; }
+.fold > summary .tag { font-size: var(--fs-12); color: var(--slate); font-weight: var(--w-regular); }
+.fold-caret { width: 8px; height: 8px; border-right: 2px solid var(--slate); border-bottom: 2px solid var(--slate); transform: rotate(-45deg); transition: transform 0.12s ease; margin: 0 4px 2px 2px; }
+.fold[open] > .fold-caret, .fold[open] > summary .fold-caret { transform: rotate(45deg); margin-bottom: 6px; }
+.fold-body { padding: 0 0 var(--s-2); }
+table.data.history td.when { font-size: var(--fs-12); }
 table.data.clients-table td.num { white-space: nowrap; }
 table.data.clients-table td.num { width: 1%; } table.data.clients-table td.num .btn { display: inline-flex; margin: 0; }
 /* MR-060: the fill queue drawer */

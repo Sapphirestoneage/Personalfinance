@@ -238,6 +238,8 @@ progress) and Progress vs paperwork.
 Program in the side nav shows one row per session, discovery first, with
 status, date, targets met, accounts opened, homework done and the stress
 score where it was asked; urgent sessions sit between the numbered ones.
+On a phone a date is typed, mm/dd/yyyy, with a number keyboard (MR-091).
+Clients is one line per client, with Sessions and History under a caret (MR-090).
 Every quick start amount has an interval picker (MR-089): a month, a year,
 every two weeks, a week, a day, and an hour for pay with hours a week.
 Clients opens with Add a client (MR-088): a name, then the four quick questions.

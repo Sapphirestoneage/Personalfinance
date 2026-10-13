@@ -3,6 +3,9 @@
 Updated: 2026-10-13
 
 ## Done
+- A date you can type on a phone (MR-091): mm/dd/yyyy with a number keyboard; one parser; desktops keep
+  the calendar.
+- A cleaner Clients screen (MR-090): one line per client; Sessions and History fold under a caret.
 - An amount and its interval (MR-089): every quick start amount has a picker (month, year, every two
   weeks, week, day, hour for pay); two new cadences in the data model; one hourly formula.
 - Add a client is the first button on Clients (MR-088); the discovery call sits beside it.

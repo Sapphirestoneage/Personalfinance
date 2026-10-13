@@ -1361,3 +1361,20 @@ flows.push({
   },
 });
 
+flows.push({
+  name: 'level23-typed-dates',
+  async run(page, { base, check }) {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(base + 'index.html#/clients'); await page.waitForSelector('.clients-actions');
+    await page.click('button[aria-label="Add a client"]'); await page.fill('input[aria-label="New client name"]', 'Dov'); await page.press('input[aria-label="New client name"]', 'Enter'); await page.waitForSelector('.qs-form');
+    await page.goto(base + 'index.html#/ledger'); await page.waitForSelector('input[aria-label="Birth date"]');
+    check('on a phone the birth date is a box with a number keyboard, not a calendar dialog', (await page.getAttribute('input[aria-label="Birth date"]', 'type')) === 'text' && (await page.getAttribute('input[aria-label="Birth date"]', 'inputmode')) === 'numeric' && (await page.getAttribute('input[aria-label="Birth date"]', 'placeholder')) === 'mm/dd/yyyy');
+    await page.fill('input[aria-label="Birth date"]', '7/1/2001'); await page.press('input[aria-label="Birth date"]', 'Tab'); await page.waitForTimeout(300);
+    check('a typed date lands as the birth date and reads back as mm/dd/yyyy', await page.evaluate(() => window.mr3.record.sun.f.birthDate.v === '2001-07-01' && window.mr3.record.sun.f.birthDate.state === 'known') && (await page.inputValue('input[aria-label="Birth date"]')) === '07/01/2001');
+    await page.fill('input[aria-label="Birth date"]', 'next week'); await page.press('input[aria-label="Birth date"]', 'Tab'); await page.waitForTimeout(200);
+    check('words are not a change; the box says so and the date stays', await page.evaluate(() => window.mr3.record.sun.f.birthDate.v === '2001-07-01') && (await page.locator('input[aria-label="Birth date"].is-wrong').count()) === 1);
+    await page.setViewportSize({ width: 1440, height: 900 }); await page.goto(base + 'index.html#/home'); await page.waitForSelector('#main h1'); await page.goto(base + 'index.html#/ledger'); await page.waitForSelector('input[aria-label="Birth date"]');
+    check('on a desktop the calendar stays', (await page.getAttribute('input[aria-label="Birth date"]', 'type')) === 'date');
+  },
+});
+

@@ -92,6 +92,36 @@ export function crossCheck(saidMonthly, inferredMonthly, tolerance) {
 }
 
 /* An age ("27"), a year ("1999") or a date, to an ISO birth date; the first of July for a year or an age. */
+/* parseTypedDate(text, precision, todayIso) -> 'YYYY-MM-DD' (day) or 'YYYY-MM' (month), or null (MR-091).
+   Accepts 7/1/2001, 07-01-2001, 07012001, 2001-07-01, 7/1/01 and, for a month, 7/2001, 072001, 2001-07. A two-digit year lands in this century unless that would be in the future. */
+export function parseTypedDate(text, precision, todayIso) {
+  const t = String(text || '').trim(); if (!t) return null;
+  const today = String(todayIso || new Date().toISOString().slice(0, 10)); const yNow = parseInt(today.slice(0, 4), 10);
+  const year2 = yy => { const n = parseInt(yy, 10); const full = 2000 + n; return precision === 'month' ? full : (full > yNow ? 1900 + n : full); }; /* a day is a birth or a statement date, so the past; a month is a target, so this century */
+  const pad = n => String(parseInt(n, 10)).padStart(2, '0');
+  const ok = (y, m, d) => { const Y = parseInt(y, 10), M = parseInt(m, 10), D = d === null ? 1 : parseInt(d, 10); if (!(Y >= 1900 && Y <= 2100 && M >= 1 && M <= 12 && D >= 1 && D <= 31)) return null; return precision === 'month' ? y + '-' + pad(m) : y + '-' + pad(m) + '-' + pad(D); };
+  let m;
+  if ((m = /^(\d{4})[-\/.](\d{1,2})(?:[-\/.](\d{1,2}))?$/.exec(t))) return ok(m[1], m[2], precision === 'month' ? null : (m[3] || null));
+  if (precision === 'month') {
+    if ((m = /^(\d{1,2})[-\/.](\d{4})$/.exec(t))) return ok(m[2], m[1], null);
+    if ((m = /^(\d{1,2})[-\/.](\d{2})$/.exec(t))) return ok(String(year2(m[2])), m[1], null);
+    if ((m = /^(\d{2})(\d{4})$/.exec(t))) return ok(m[2], m[1], null);
+    if ((m = /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})$/.exec(t))) return ok(m[3].length === 2 ? String(year2(m[3])) : m[3], m[1], null);
+    return null;
+  }
+  if ((m = /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/.exec(t))) return ok(m[3], m[1], m[2]);
+  if ((m = /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2})$/.exec(t))) return ok(String(year2(m[3])), m[1], m[2]);
+  if ((m = /^(\d{2})(\d{2})(\d{4})$/.exec(t))) return ok(m[3], m[1], m[2]);
+  if ((m = /^(\d{2})(\d{2})(\d{2})$/.exec(t))) return ok(String(year2(m[3])), m[1], m[2]);
+  return null;
+}
+/* the typed date back in the box: mm/dd/yyyy for a day, mm/yyyy for a month */
+export function formatTypedDate(iso, precision) {
+  if (!iso) return ''; const s = String(iso);
+  if (precision === 'month') return /^\d{4}-\d{2}/.test(s) ? s.slice(5, 7) + '/' + s.slice(0, 4) : '';
+  return /^\d{4}-\d{2}-\d{2}/.test(s) ? s.slice(5, 7) + '/' + s.slice(8, 10) + '/' + s.slice(0, 4) : (/^\d{4}-\d{2}$/.test(s) ? '01/' + s.slice(5, 7) + '/' + s.slice(0, 4) : '');
+}
+
 export function parseBirth(text, todayIso) {
   const t = String(text || '').trim(); const y = parseInt(todayIso.slice(0, 4), 10);
   let m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(t); if (m) return { iso: m[1] + '-' + m[2].padStart(2, '0') + '-' + m[3].padStart(2, '0'), state: 'known' };

@@ -562,6 +562,18 @@ Compatibility: schema 5. On load, an `account` row whose type is checking, hysa,
 Why: the owner: "separate them into investing and bank accounts ... very clearly be bank accounts with checking, savings, high yield savings and CDs", and on question 60: "keep both but make sure that they both are modes for the debt calculation".
 Alternative: one account type grouped on screen by bucket (the list stayed one long select, which is what the owner wanted gone).
 
+## MR-091 2026-10-13 A date you can type on a phone
+Decision: On a phone (720px and under, or a coarse pointer) every date picker is a text box with a number keyboard: mm/dd/yyyy for a day, mm/yyyy for a month. One parser (`engine/parse.js parseTypedDate`) reads slashes, dashes, digits only, two-digit years and a month on its own; what it reads is written back in one shape (`formatTypedDate`). Words are not a change: the box shows an amber edge and the date stays. Desktops keep the browser's calendar. The birth date's "or age" box stays beside it.
+Compatibility: none stored; the same ISO strings land in the record.
+Why: the owner, on a phone: "I try to click in birthday but no screen or keyboard pops up." The native date dialog cannot be counted on inside every phone browser; a number keyboard can.
+Alternative: a calendar of the app's own (rejected: more to tap than to type; a date is eight digits).
+
+## MR-090 2026-10-13 A cleaner Clients screen: one line per client, the long parts under a caret
+Decision: A client row is one line: the name with its Current chip, the session, the saved date beside it, Open. Under the client's details, Sessions and History fold under a caret (`ui/fold.js`), closed until opened, each summary carrying its count; the open state is remembered per fold. History shows the latest twelve and says so only when there are more. The fold is one reusable element for any long part of any panel.
+Compatibility: none stored; a fold's open state lives in the browser.
+Why: the owner, on a phone: "make things a bit more compressed; if there can be a caret to see excessive info, great, but try to make it look as clean as possible."
+Alternative: a separate History screen (rejected: the history belongs with the client; it only needs to be quiet).
+
 ## MR-089 2026-10-13 An amount and its interval
 Decision: Every amount on the quick start that has a cadence carries an interval picker beside the box: a month, a year, every two weeks, a week, a day, and for pay an hour. The pick is the cadence stored on the row; words typed in the box ("2000 a week") move the pick. An hour shows an hours-a-week box (40 by default) and lands as a month through one formula, `hourlyToMonthly`, which the discovery call now uses too; the hours land in Paid hours. Two intervals join the data model: `biweekly` (every two weeks, 26 a year, no paycheck implied) and `day` (365 a year), in `data/fields.json cadences`, both monthly conversions, the sensitivity reverse conversion, the store's anchor backfill and the ledger's cadence pill. A quick row remembers its interval (`row.quick`) so the screen reads it back.
 Compatibility: two new cadence values a row may carry; older records never hold them. Quick rows gain an optional `quick` object.
