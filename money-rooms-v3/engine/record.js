@@ -33,7 +33,7 @@ export function createRecord(opts) {
     myPlate: { done: {}, snoozed: {} },
     theirPlate: { done: {}, snoozed: {} },
     anchors: { gut: {}, dream: {}, history: [] },
-    household: { roommates: [], lease: 'none', unitSize: null, partner: null, basis: 'together' },
+    household: { roommates: [], lease: 'none', unitSize: null, partner: null, basis: 'together', living: 'own' },
     goals: defaultGoals(),
     program: null,
     colTier: null,
@@ -239,7 +239,7 @@ export function fileQuickNote(record, noteId, meta) {
 export function setHousehold(record, household, meta) {
   const m = meta || {};
   const old = record.household ? JSON.parse(JSON.stringify(record.household)) : null;
-  const next = { roommates: (household.roommates || []).map((r, i) => ({ id: r.id || ('rm' + (i + 1)), nickname: r.nickname || '', shareDefault: typeof r.shareDefault === 'number' ? r.shareDefault : Math.round(10000 / ((household.roommates || []).length + 1)) / 10000 })), lease: household.lease || 'none', unitSize: household.unitSize || null , partner: null, partners: [], basis: household.basis === 'mine' ? 'mine' : 'together' };
+  const next = { roommates: (household.roommates || []).map((r, i) => ({ id: r.id || ('rm' + (i + 1)), nickname: r.nickname || '', shareDefault: typeof r.shareDefault === 'number' ? r.shareDefault : Math.round(10000 / ((household.roommates || []).length + 1)) / 10000 })), lease: household.lease || 'none', unitSize: household.unitSize || null , partner: null, partners: [], basis: household.basis === 'mine' ? 'mine' : 'together', living: household.living === 'family' ? 'family' : 'own' };
   /* MR-073: any number of partners; the first is also `partner` for every reader that knows only one */
   next.partners = (Array.isArray(household.partners) ? household.partners : (household.partner ? [household.partner] : [])).filter(Boolean).map((p, i) => ({ id: p.id || ('pt' + (i + 1)), nickname: (p.nickname || '').trim() }));
   next.partner = next.partners.length ? { nickname: next.partners[0].nickname } : null;

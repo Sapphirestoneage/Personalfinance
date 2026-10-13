@@ -315,3 +315,7 @@ Collected during the run; none blocked the build. Answer whenever.
     debts are obligations too (to a lender, or to a past self). Should a debt
     be taggable the same way, so the sheet can carry "owed to my parents"
     beside the goals, or do debts stay in their own room?
+93. Living with family covers rent and utilities, lowers food to 70% and
+    raises getting around to 125% of the guess. Are those the right stand-ins,
+    and should a client who pays their family something (a token rent, the
+    groceries) type that as the rent line, or get its own question?

@@ -1271,3 +1271,23 @@ flows.push({
     check('the tags survive a reload', await (async () => { await page.goto(base + 'index.html#/home'); await page.waitForSelector('#main h1'); await page.goto(base + 'index.html#/goals'); await page.waitForSelector('.sheet-plan:not([hidden])'); return /2 of 2 goals sorted/.test(await page.textContent('.sheet-plan .tag')); })());
   },
 });
+
+flows.push({
+  name: 'level20-living-with-family',
+  async run(page, { base, check, APP }) {
+    await page.goto(base + 'index.html#/home'); await page.waitForSelector('#main h1, #main .empty');
+    await page.goto(base + 'index.html#/discovery'); await page.waitForSelector('.chipbar');
+    check('the living question comes before roommates, with a place of their own as the default', (await page.getAttribute('[aria-label="Living situation"] button:has-text("My own place")', 'aria-pressed')) === 'true' && (await page.locator('[aria-label="Roommates"]').count()) === 1);
+    await page.click('.chipbar .chip:has-text("Lives with family")'); await page.waitForTimeout(200);
+    check('the Lives with family chip presses the With family answer and the roommates question steps aside', (await page.getAttribute('[aria-label="Living situation"] button:has-text("With family")', 'aria-pressed')) === 'true' && (await page.locator('[aria-label="Roommates"]').count()) === 0);
+    await page.fill('input[aria-label="Name"]', 'Noa'); await page.press('input[aria-label="Name"]', 'Tab');
+    await page.fill('input[aria-label="City"]', 'Columbus'); await page.press('input[aria-label="City"]', 'Tab'); await page.waitForTimeout(300);
+    await page.click('button[aria-label="Save the discovery call"]'); await page.waitForSelector('.discovery-summary');
+    const sum = await page.textContent('.discovery-summary');
+    check('the summary says they live with family and what a place of their own would cost', /lives with family, no rent/.test(sum) && /Moving out, when ready/.test(sum) && /a month plus \$[\d,]+ utilities/.test(sum) && /moving out costs about \$[\d,]+ a month more/.test(sum));
+    check('without take-home the summary says what decides it', /Take-home pay says when they are able/.test(sum));
+    check('the guesses carry no rent', await page.evaluate(() => window.mr3.result.guesses.rows.some(g => /Rent \(living with family\)/.test(g.name) && g.cents === 0)));
+    check('Moving out on my own is a block the Simulate screen offers', await page.evaluate(() => { const t = window.mr3.data.scenarioBlocks.types.moveout; return !!t && t.label === 'Moving out on my own'; }));
+  },
+});
+

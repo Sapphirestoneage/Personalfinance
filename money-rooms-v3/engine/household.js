@@ -6,6 +6,8 @@
 /* MR-073: partners is a list (one, two or more); partner stays the first of them for older readers */
 export function partnersOf(hh) { const h = hh || {}; return Array.isArray(h.partners) ? h.partners : (h.partner ? [h.partner] : []); }
 export function peopleOf(hh) { const h = hh || {}; return 1 + (h.roommates || []).length + partnersOf(h).length; }
+/* MR-084: living with family, no rent; older records without the flag read as a place of their own */
+export function livesWithFamily(hh) { return !!hh && hh.living === 'family'; }
 export function hasPartner(hh) { return partnersOf(hh).length > 0; }
 export function countsTogether(hh) { return hasPartner(hh) && (hh.basis || 'together') === 'together'; }
 export function partnerName(hh) { const ps = partnersOf(hh); const names = ps.map(p => p.nickname).filter(Boolean); if (ps.length > 1) return names.length === ps.length ? names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1] : 'your partners'; return names[0] || 'your partner'; }

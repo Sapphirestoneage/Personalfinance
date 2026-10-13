@@ -7,6 +7,8 @@ import { project } from './projection.js';
 import * as F from './format.js';
 
 /* Evaluate a block's cost formula from its answers and the household's live figures. */
+import { livesWithFamily, countsTogether } from './household.js';
+import { multiplierFor, colTierOf } from './col.js';
 export function evalFormula(expr, answers, live) {
   if (typeof expr === 'number') return expr;
   const scope = Object.assign({}, live, answers);
@@ -32,7 +34,7 @@ export function blockCosts(def, block, live) {
   const monthly = evalFormula(def.monthly, answers, live);
   const duration = typeof def.duration === 'number' ? def.duration : (answers[def.duration] || 0);
   if (oneOff === null || monthly === null) {
-    const LIVE_WORDS = { takeHomeMonthly: 'take-home pay', spendingMonthly: 'monthly spending', grossMonthly: 'gross pay', sharedGapMonthly: 'a shared bill with a roommate' };
+    const LIVE_WORDS = { takeHomeMonthly: 'take-home pay', spendingMonthly: 'monthly spending', grossMonthly: 'gross pay', sharedGapMonthly: 'a shared bill with a roommate', moveOutRentMonthly: 'living with family, so a rent figure for a place of their own', moveOutGapMonthly: 'living with family, so the monthly cost of moving out' };
     const names = Object.keys(LIVE_WORDS).filter(k => (live[k] === null || live[k] === undefined) && (String(def.oneOff) + ' ' + String(def.monthly)).indexOf(k) !== -1).map(k => LIVE_WORDS[k]);
     return { oneOff: null, monthly: null, duration, answers, needs: names.length ? names : ['take-home pay'] };
   }
@@ -175,4 +177,34 @@ export function roommateOutcome(result, block, def) {
   const out = { newSharedMonthly: full.cents, jumpMonthly: jump, months, bridge: jump * months + oneTime, oneTime, cushionMonthsNow: cash !== null && spend ? Math.round(cash / spend * 10) / 10 : null, cushionMonthsAtNewCost: cash !== null && spend ? Math.round(cash / (spend + jump) * 10) / 10 : null, permanent, leaseNote, lease };
   if (permanent && spend && take) { out.newSavingsRate = Math.round((take - (spend + jump)) / take * 1000) / 1000; out.oldSavingsRate = Math.round((take - spend) / take * 1000) / 1000; out.newFiNumber = Math.round((spend + jump) * 12 / wr); out.oldFiNumber = Math.round(spend * 12 / wr); }
   return out;
+}
+
+/* Moving out (MR-084): for a household living with family, what a place of their own would cost at their tier, and when they are able. Rent and utilities for the unit (one bed unless the household says otherwise), food back to a full budget, getting around a little lower; the usual line is housing within a share of take-home. Never writes. */
+export function moveOutOutcome(record, result, data) {
+  const hh = record.household; if (!livesWithFamily(hh)) return null;
+  const S = result.sun && result.sun.outputs; if (!S || !data.defaults || !data.defaults.housingByUnit) return null;
+  const d = data.defaults; const LF = d.livingWithFamily || {}; const tiers = data.colTiers; const info = result.colTier || colTierOf(record, tiers);
+  const unit = hh.unitSize || '1bed'; const u = d.housingByUnit[unit] || d.housingByUnit['1bed'];
+  const dep = record.sun.f.dependents && typeof record.sun.f.dependents.v === 'number' ? record.sun.f.dependents.v : 0;
+  const size = String(Math.min(4, Math.max(1, 1 + dep + (countsTogether(hh) ? 1 : 0))));
+  const sum = cat => (d.categories[cat] && d.categories[cat].lines[size] ? d.categories[cat].lines[size] : []).reduce((a, l) => a + l[1], 0);
+  const rent = Math.round(u.rent * multiplierFor(info, 'accommodation', tiers)); const utilities = Math.round(u.utilities * multiplierFor(info, 'utilities', tiers));
+  const foodBack = Math.round(sum('food') * multiplierFor(info, 'food', tiers) * (1 - (typeof LF.foodFactor === 'number' ? LF.foodFactor : 1)));
+  const transportSaved = Math.round(sum('transportation') * multiplierFor(info, 'transportation', tiers) * ((typeof LF.transportationFactor === 'number' ? LF.transportationFactor : 1) - 1));
+  const gap = rent + utilities + foodBack - transportSaved;
+  const ok = q => q && q.status === 'ok' ? q.cents : null;
+  const take = ok(S.income.takeHomeMonthly); const spend = ok(S.safety.spendingWithPremiums); const cash = ok(S.invest.cashBalances);
+  const line = typeof LF.affordableHousingShare === 'number' ? LF.affordableHousingShare : 0.3;
+  const housing = rent + utilities;
+  const depositMonths = (data.scenarioBlocks && data.scenarioBlocks.types.moveout ? data.scenarioBlocks.types.moveout.questions.find(q => q.id === 'depositMonths') : null);
+  const moveInCash = rent * (1 + (depositMonths ? depositMonths.default : 1));
+  const wr = result.asm.withdrawalRate;
+  return {
+    unit, tier: info.tier, rent, utilities, housing, foodBack, transportSaved, gap, line,
+    takeHome: take, housingShare: take ? Math.round(housing / take * 1000) / 1000 : null, takeHomeNeeded: Math.round(housing / line), ableNow: take !== null ? housing <= take * line : null,
+    moveInCash, cash, cashCoversMoveIn: cash !== null ? cash >= moveInCash : null,
+    spendingNow: spend, spendingOut: spend !== null ? spend + gap : null,
+    savingsRateNow: take && spend !== null ? Math.round((take - spend) / take * 1000) / 1000 : null, savingsRateOut: take && spend !== null ? Math.round((take - spend - gap) / take * 1000) / 1000 : null,
+    fiNumberNow: spend !== null && wr ? Math.round(spend * 12 / wr) : null, fiNumberOut: spend !== null && wr ? Math.round((spend + gap) * 12 / wr) : null,
+  };
 }

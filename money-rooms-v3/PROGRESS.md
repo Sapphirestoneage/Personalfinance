@@ -3,6 +3,9 @@
 Updated: 2026-10-13
 
 ## Done
+- Living with family (MR-084): a household flag asked on the discovery call; no rent and no utilities
+  bill in the guesses, food lower and getting around higher; the summary says what a place of their own
+  would cost and when they are able; a Moving out scenario block.
 - The invisible balance sheet (MR-083): two tags on every goal (for whom, what kind), a sheet on Goals
   grouped by person with totals and the monthly figure from the plan, edited in place; the discovery
   call asks both; untagged goals wait under Not yet sorted.

@@ -82,6 +82,13 @@
    }
   },
   {
+   "id": "with-family",
+   "label": "Lives with family",
+   "writes": {
+    "household.living": "family"
+   }
+  },
+  {
    "id": "lease-mine",
    "label": "Lease in my name",
    "writes": {
@@ -170,6 +177,13 @@
    "label": "Goal: a wedding",
    "writes": {
     "goal": "A wedding"
+   }
+  },
+  {
+   "id": "move-out",
+   "label": "Move out one day",
+   "writes": {
+    "goal": "Move out on my own"
    }
   }
  ],
@@ -278,6 +292,7 @@
   "dependents": "Does anyone depend on your income, kids or family?",
   "work": "How would you describe work right now?",
   "employerType": "What kind of place do you work for?",
+  "living": "Where are you living right now: your own place, or with family?",
   "roommates": "Do you live with roommates? How many?",
   "lease": "Whose name is on the lease?",
   "partners": "Is there a partner, or partners, whose money is part of this picture?",
@@ -624,6 +639,16 @@
   [
    "na",
    "Not applicable"
+  ]
+ ],
+ "living": [
+  [
+   "own",
+   "My own place"
+  ],
+  [
+   "family",
+   "With family, no rent"
   ]
  ]
 }

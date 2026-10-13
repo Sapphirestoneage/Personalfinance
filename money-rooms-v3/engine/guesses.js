@@ -6,7 +6,7 @@
    "Guess", never an anchor, never counted as complete. Rows carry
    guess: true so a tier or household change can recompute the ones still
    untouched. Pure builders; the record API applies them. */
-import { peopleOf, countsTogether } from './household.js';
+import { peopleOf, countsTogether, livesWithFamily } from './household.js';
 import { createRow } from './record.js';
 import { freshFacts } from './fields.js';
 import { multiplierFor } from './col.js';
@@ -33,6 +33,8 @@ export function unitFor(record) {
 export function buildGuesses(record, data, tierInfo) {
   const d = data.defaults; const tiers = data.colTiers; const fields = data.fields;
   const hh = record.household || { roommates: [] }; const people = peopleOf(hh);
+  const fam = livesWithFamily(hh); const LF = d.livingWithFamily || {}; /* MR-084: with family, housing is covered; food runs lower, getting around higher */
+  const famFactor = cat => !fam ? 1 : cat === 'food' ? (typeof LF.foodFactor === 'number' ? LF.foodFactor : 1) : cat === 'transportation' ? (typeof LF.transportationFactor === 'number' ? LF.transportationFactor : 1) : 1;
   const dep = record.sun.f.dependents && hasValue(record.sun.f.dependents) ? record.sun.f.dependents.v : 0;
   /* a partner counted together is one more mouth in every area; a roommate is not (their food is theirs) */
   const size = String(Math.min(4, Math.max(1, 1 + (dep || 0) + (countsTogether(hh) ? 1 : 0))));
@@ -45,12 +47,12 @@ export function buildGuesses(record, data, tierInfo) {
     if (given[cat]) return;
     if (gut['spending:' + cat]) return;
     const mult = multiplierFor(tierInfo, cat, tiers);
-    const mk = (name, full, shared) => {
+    const mk = (name, full, shared, state) => {
       if (names.has(name.toLowerCase())) return; /* a real line with this name already exists (a phone on the family plan) */
       const row = createRow('spending', 'line', { nickname: name, f: freshFacts(fields, 'spending', 'line') });
       row.guess = true; row.guessTier = tierInfo.tier; row.guessUnit = (cat === 'accommodation' || cat === 'utilities') ? unitFor(record) : null;
       row.f.category = { v: cat, state: 'known', source: 'estimated' };
-      row.f.amount = { v: full, state: 'rough', source: 'estimated', cad: 'month' };
+      row.f.amount = { v: full, state: state || 'rough', source: 'estimated', cad: 'month' };
       row.f.needWant = { v: ['wants', 'irregular'].includes(cat) ? 'want' : 'need', state: 'known', source: 'estimated' };
       row.f.fatFloor = { v: ['accommodation', 'food', 'transportation'].includes(cat), state: 'known', source: 'estimated' };
       row.f.mistake = { v: 'unavoidable', state: 'known', source: 'estimated' };
@@ -61,11 +63,12 @@ export function buildGuesses(record, data, tierInfo) {
       const unit = d.housingByUnit[unitFor(record)] || d.housingByUnit['1bed'];
       const base = cat === 'accommodation' ? unit.rent : unit.utilities;
       const full = Math.round(base * mult);
-      mk(cat === 'accommodation' ? 'Rent (' + unitFor(record).replace('bed', ' bed') + ')' : 'Utilities and internet', full, people > 1);
+      if (fam) mk(cat === 'accommodation' ? 'Rent (living with family)' : 'Utilities (living with family)', 0, false, 'none'); /* covered, as a zero line so the area reads as answered */
+      else mk(cat === 'accommodation' ? 'Rent (' + unitFor(record).replace('bed', ' bed') + ')' : 'Utilities and internet', full, people > 1);
       if (cat === 'utilities') { const other = (d.categories.utilities.lines[size] || []).filter(l => !/utilit/i.test(l[0])); other.forEach(([name, cents]) => { if (names.has(name.toLowerCase())) return; const r2 = createRow('spending', 'line', { nickname: name, f: freshFacts(fields, 'spending', 'line') }); r2.guess = true; r2.guessTier = tierInfo.tier; r2.f.category = { v: cat, state: 'known', source: 'estimated' }; r2.f.amount = { v: Math.round(cents * mult), state: 'rough', source: 'estimated', cad: 'month' }; r2.f.needWant = { v: 'need', state: 'known', source: 'estimated' }; r2.f.fatFloor = { v: false, state: 'known', source: 'estimated' }; r2.f.mistake = { v: 'unavoidable', state: 'known', source: 'estimated' }; out.push(r2); }); }
       return;
     }
-    (d.categories[cat] ? d.categories[cat].lines[size] : []).forEach(([name, cents]) => mk(name, Math.round(cents * mult), false));
+    (d.categories[cat] ? d.categories[cat].lines[size] : []).forEach(([name, cents]) => mk(name, Math.round(cents * mult * famFactor(cat)), false));
   });
   return out;
 }

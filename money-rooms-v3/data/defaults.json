@@ -323,5 +323,14 @@
    "rent": 215000,
    "utilities": 30000
   }
+ },
+ "livingWithFamily": {
+  "note": "Living with family, no rent: housing and utilities are covered, food runs lower and getting around often higher (a longer commute). Factors are the builder's stand-ins; verify. affordableHousingShare is the usual line: rent and utilities within 30% of take-home.",
+  "verify": true,
+  "rentShare": 0,
+  "utilitiesShare": 0,
+  "foodFactor": 0.7,
+  "transportationFactor": 1.25,
+  "affordableHousingShare": 0.3
  }
 }

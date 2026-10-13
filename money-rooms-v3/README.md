@@ -238,6 +238,9 @@ progress) and Progress vs paperwork.
 Program in the side nav shows one row per session, discovery first, with
 status, date, targets met, accounts opened, homework done and the stress
 score where it was asked; urgent sessions sit between the numbered ones.
+The discovery call asks where they live (MR-084): with family means no rent
+for now, lower food and higher getting around in the guesses, and a Moving
+out section in the summary with the number that makes them able.
 Goals carries the invisible balance sheet (MR-083): every goal is tagged with
 who it is for and whether it is a promise, expected, a wish or coming either
 way; the sheet groups the goals by person with totals and the monthly figure

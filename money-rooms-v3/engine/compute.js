@@ -25,6 +25,7 @@ import { isGuessRow, guessRows, realCategories } from './guesses.js';
 import { colTierOf } from './col.js';
 import { planGoals, quickDraws } from './goals.js';
 import { goalFi } from './fieffect.js';
+import { moveOutOutcome } from './scenarios.js';
 
 export function fillOf(fields) {
   const list = fields.filter(f => f && f.state !== 'not-applicable' && f.state !== 'not-for-me');
@@ -172,6 +173,7 @@ export function compute(record, data, opts) {
   /* Level 8: the cost-of-living tier, the household, the guesses and the two meters */
   result.colTier = data.colTiers ? colTierOf(record, data.colTiers) : null;
   result.household = record.household || { roommates: [], lease: 'none', partner: null, basis: 'together' };
+  result.moveOut = moveOutOutcome(record, result, data); /* MR-084: null unless living with family */
   const gRows = guessRows(record);
   const given = realCategories(record);
   result.guesses = { on: asm.fillGapsWithGuesses !== false, count: asm.fillGapsWithGuesses === false ? 0 : gRows.filter(r => { const c = r.f.category && r.f.category.v; return !(record.anchors && record.anchors.gut && record.anchors.gut['spending:' + c]) && !given[c]; }).length, rows: gRows.map(r => ({ rowId: r.id, name: r.nickname, category: r.f.category ? r.f.category.v : null, cents: r.f.amount ? r.f.amount.v : null, shared: !!(r.f.shared && r.f.shared.v), tier: r.guessTier || null })) };

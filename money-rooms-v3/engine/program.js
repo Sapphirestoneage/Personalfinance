@@ -151,7 +151,7 @@ export function readiness(record, result, data, n) {
       case 'areas': met = AREAS.every(c => (S && S.spending.byCategory[c] && S.spending.byCategory[c].cents > 0) || anchorsFor(R, 'gut').includes(c)); break;
       case 'goals': met = R.planets.life.rows.some(r => r.type === 'goal') || !!(R.discovery && (R.discovery.goals || []).length); break;
       case 'crosscheck': met = !!(S && S.income.takeHomeMonthly.status === 'ok' && S.income.grossMonthly.status === 'ok'); break;
-      case 'household': met = !!(R.household && (R.household.roommates.length || R.household.lease === 'none' || R.household.partner || (R.discovery && R.discovery.confirmed && R.discovery.confirmed.household))); break;
+      case 'household': met = !!(R.household && (R.household.roommates.length || R.household.living === 'family' || R.household.lease === 'none' || R.household.partner || (R.discovery && R.discovery.confirmed && R.discovery.confirmed.household))); break;
       case 'anchors': met = anchorsFor(R, t.set).length >= AREAS.length; break;
       case 'anchorOrSlot': met = !!(R.anchors && R.anchors.gut && R.anchors.gut[t.anchor]) || !!(S && S.debt.totalDebt.status === 'ok'); break;
       case 'checklist': met = t.status.includes((P.checklist[t.item] || {}).status); break;
