@@ -11,19 +11,23 @@ import { h, clear, download } from '../dom.js';
 import * as F from '../../engine/format.js';
 import { planGoals, finishChanges, finishMonths, celebrations, MODES, MODE_LABELS, MODE_HELP, FLOOR_IDS } from '../../engine/goals.js';
 import { addMonths, monthsBetween } from '../../engine/debtsim.js';
+import { yearPlan, setFocus, canFocus, focusOf } from '../../engine/thisyear.js';
+import { getSensitivity } from '../levers-bridge.js';
+import { ALL_CHARTS as CHARTS } from '../../engine/charts-all.js';
+import * as Charts from '../charts.js';
 import { icsOf, goalEvents } from '../../engine/ics.js';
 import { goalFi, fiMonthOf } from '../../engine/fieffect.js';
 import { parseSaid } from '../../engine/parse.js';
 import { clientName, closeOverlay } from '../app.js';
 import { segmented } from '../seg.js';
-import { cellDoor } from '../doors.js';
+import { cellDoor, linkify } from '../doors.js';
 import { cheerSentence } from './session.js';
 
-const ZOOMS = [['24', '2 years', 24], ['60', '5 years', 60], ['fi', 'Until FI', null]];
+const ZOOMS = [['12', 'This year', 12], ['60', '5 years', 60], ['fi', 'Until FI', null]]; /* MR-081: the near view is one year */
 
 export function mount(host, app) {
   const coach = () => app.view === 'coach'; const gentle = () => (app.record.sessionMode || 'standard') === 'gentle';
-  let zoom = '24'; let whatIf = { surplusDelta: 0, events: [], order: null, mode: null, splits: null, overrides: null, goals: null };
+  let zoom = '12'; let sens = null; let whatIf = { surplusDelta: 0, events: [], order: null, mode: null, splits: null, overrides: null, goals: null };
   let fiNow = null; /* goalFi for the plan being drawn */
   const header = h('header', null, h('h1', null, coach() ? 'Goals' : 'Your goals'), h('span', { class: 'sub' }, coach() ? 'Every goal funded at once from the monthly surplus; the lean month and the full month always first.' : 'Everything you are saving for, all at the same time.'), h('div', { class: 'actions' },
     segmented(ZOOMS.map(([id, label]) => [id, label]), zoom, id => { zoom = id; draw(); }, { label: 'How far to look' }),
@@ -32,6 +36,7 @@ export function mount(host, app) {
   host.appendChild(header);
   const sentence = h('p', { class: 'gtl-sentence big' }); host.appendChild(sentence);
   const fiLine = h('p', { class: 'gtl-fi' }); host.appendChild(fiLine);
+  const yearPanel = h('section', { class: 'panel year-plan', hidden: true }); host.appendChild(yearPanel);
   const cheer = h('div', { class: 'cheer-host' }); host.appendChild(cheer);
   const whatifPanel = h('section', { class: 'panel whatif' }); host.appendChild(whatifPanel);
   const tlPanel = h('section', { class: 'panel' }); host.appendChild(tlPanel);
@@ -50,7 +55,7 @@ export function mount(host, app) {
     header.querySelectorAll('.seg .seg-btn').forEach((b, k) => { b.setAttribute('aria-pressed', String(ZOOMS[k][0] === zoom)); b.classList.toggle('on', ZOOMS[k][0] === zoom); });
     const P = plan(); const base = app.result.goalPlan;
     fiNow = isWhatIf() ? goalFi(app.result, P.draws) : app.result.goalFi;
-    drawSentence(P); drawFi(P); drawCheer(base); drawWhatIf(P, base); drawTimeline(P); drawAlloc(P); drawCompare(P);
+    drawSentence(P); drawFi(P); drawYear(P); drawCheer(base); drawWhatIf(P, base); drawTimeline(P); drawAlloc(P); drawCompare(P);
   }
   function drawSentence(P) {
     clear(sentence);
@@ -74,6 +79,55 @@ export function mount(host, app) {
     const base = app.result.goalFi;
     if (isWhatIf() && base && base.withMonths !== null && fi.withMonths !== null && Math.round(fi.withMonths - base.withMonths) !== 0) { const dm = Math.round(fi.withMonths - base.withMonths); text += ' This try moves it ' + monthsWord(dm) + (dm > 0 ? ' later.' : ' sooner.'); }
     fiLine.textContent = text;
+  }
+  /* MR-081: the year around one focus goal: where she is, the number for now, three in-year moves, when it lands */
+  function drawYear(P) {
+    clear(yearPanel);
+    const Y = yearPlan(app.record, app.result, sens);
+    if (!Y) { yearPanel.hidden = true; return; }
+    yearPanel.hidden = false;
+    if (!sens) getSensitivity(app, r => { if (r && r !== sens) { sens = r; drawYear(plan()); } });
+    const yes = coach();
+    yearPanel.appendChild(h('div', { class: 'row chk-head' }, h('h2', null, yes ? 'This year' : 'Your year', h('span', { class: 'tag' }, nameOf(Y.item) + ' by ' + monthWord(Y.by))), h('span', { class: 'spacer' }),
+      yes ? h('button', { class: 'btn small quiet', onClick: () => app.change(rec => { setFocus(rec, null, { session: app.session }); return 'goals.focus'; }, { reason: 'goals' }) }, 'Clear the focus') : null));
+    /* where she is */
+    const kpi = (label, value, sub) => h('div', { class: 'kpi' }, h('div', { class: 'label' }, label), h('div', { class: 'value' + (value === null ? ' needs' : '') }, value === null ? 'not yet' : value), sub ? h('div', { class: 'small muted' }, sub) : null);
+    const W = Y.where;
+    yearPanel.appendChild(h('div', { class: 'grid grid-4 year-kpis' },
+      kpi('Cash on hand', W.cash === null ? null : money(W.cash), W.cashLeanMonths !== null ? W.cashLeanMonths + ' lean months' : null),
+      kpi('The lean month', W.lean === null ? null : (W.leanRough ? '~' : '') + money(W.lean), yes ? 'food, housing, getting around' : null),
+      kpi('Left over a month', W.surplus === null ? null : money(W.surplus), null),
+      kpi('The target', Y.target === null ? null : money(Y.target), Y.leanMonths !== null ? Y.leanMonths + ' lean months' + (Y.targetFromMonths ? ', typed as months' : '') : null)));
+    /* the number for now */
+    const now = h('div', { class: 'year-now' });
+    if (Y.perMonth === null) now.appendChild(h('p', { class: 'big' }, 'This goal needs a cost first.'));
+    else if (Y.gap === 0) now.appendChild(h('p', { class: 'big' }, 'Already there: the money is on hand.'));
+    else {
+      now.appendChild(h('p', { class: 'big' }, h('span', { class: 'year-num' }, money(Y.perMonth)), ' a month, for ' + Y.monthsLeft + (Y.monthsLeft === 1 ? ' month' : ' months') + ', lands it by ' + monthWord(Y.by) + '.'));
+      now.appendChild(h('p', { class: 'small muted' }, (Y.gap !== null ? money(Y.gap) + ' still to find. ' : '') + (Y.lands === 'done' ? 'On the current plan it is done.' : Y.lands ? 'On the current plan it lands ' + monthWord(Y.lands) + '.' : 'On the current plan it is not reached in view.')
+        + (Y.enough === 'surplus' ? ' What is left over each month already covers it.' : Y.enough === 'with-moves' ? ' Left-over money plus the three moves cover it.' : Y.enough === 'short' ? ' Even with the three moves it is short by ' + money(Y.shortBy) + ' a month.' : '')));
+    }
+    if (yes && typeof Y.item.step === 'number' || yes && Y.item.id === 'full') {
+      const months = h('input', { class: 'input num', inputmode: 'decimal', style: { width: '80px' }, 'aria-label': 'Target as lean months', value: Y.focus.months || '', title: 'like 6' });
+      months.addEventListener('change', () => { const n = parseFloat(months.value); app.change(rec => { setFocus(rec, { id: Y.focus.id, months: Number.isFinite(n) && n > 0 ? n : null }, { session: app.session }); return 'goals.focus'; }, { reason: 'goals' }); });
+      now.appendChild(h('div', { class: 'row', style: { marginTop: '8px' } }, h('label', { class: 'small' }, 'Or type the target as lean months'), months));
+    }
+    yearPanel.appendChild(now);
+    /* the three moves */
+    const mv = h('div', { class: 'year-moves' });
+    mv.appendChild(h('h3', null, yes ? 'Three moves that pay inside the year' : 'Three things that help most'));
+    if (!Y.moves) mv.appendChild(h('p', { class: 'small muted' }, 'Working out which moves help most.'));
+    else if (!Y.moves.length) mv.appendChild(h('p', { class: 'small muted' }, 'No in-year move measured yet; the picture needs spending lines or an income figure.'));
+    else {
+      mv.appendChild(h('ol', { class: 'year-move-list' }, Y.moves.map(m => h('li', { dataset: m.rowId && m.field && cellDoor(app, m.rowId, m.field) ? { cell: cellDoor(app, m.rowId, m.field) } : {} },
+        h('span', { class: 'move-name' }, (m.row && m.row !== m.label ? m.row + ': ' : '') + m.label.toLowerCase()), h('span', { class: 'move-amt num' }, '+' + money(m.cents) + ' a month'), m.why ? h('span', { class: 'small muted move-why' }, m.why) : null))));
+      mv.appendChild(h('p', { class: 'small' }, 'Together ' + money(Y.movesTotal) + ' a month' + (Y.perMonth !== null ? (Y.withMoves >= Y.perMonth ? ', enough with what is left over.' : ', still ' + money(Y.shortBy) + ' a month short.') : '.')));
+    }
+    yearPanel.appendChild(mv);
+    /* the year, month by month: the calendar's own strip */
+    const c = CHARTS.find(x => x.id === 'yearStrip'); const built = c && c.build(app.result);
+    if (built && !built.needs) { const host = h('div', { class: 'year-strip' }); yearPanel.appendChild(h('h3', null, yes ? 'The year, month by month' : 'Your year, month by month')); yearPanel.appendChild(host); Charts.render('yearStrip', host, built, { client: !yes }); }
+    linkify(yearPanel);
   }
   /* already met (MR-052): a step the pot already covers gets its card once; Got it writes the celebration */
   function drawCheer(base) {
@@ -149,7 +203,7 @@ export function mount(host, app) {
     const from = P.input.from; const months = P.run.months;
     const lastFinite = Object.values(P.run.goals).map(g => g.finishMonth).filter(Boolean).sort().pop();
     const lastLong = P.input.items.filter(i => i.type === 'long-term').map(i => (P.assessment[i.id] || {}).finishMonth).filter(Boolean).sort().pop();
-    const want = zoom === '24' ? 24 : zoom === '60' ? 60 : Math.max(24, (lastLong ? monthsBetween(from, lastLong) : lastFinite ? monthsBetween(from, lastFinite) : 23) + 1);
+    const want = zoom === '12' ? 12 : zoom === '60' ? 60 : Math.max(24, (lastLong ? monthsBetween(from, lastLong) : lastFinite ? monthsBetween(from, lastFinite) : 23) + 1);
     const n = Math.min(want, 600);
     const step = n <= 24 ? 1 : n <= 60 ? 3 : 12;
     tlPanel.appendChild(h('h2', null, coach() ? 'Timeline' : 'When each one lands', h('span', { class: 'tag' }, F.date(from) + ' to ' + F.date(addMonths(from, n - 1)))));
@@ -267,7 +321,9 @@ export function mount(host, app) {
       const g = P.run.goals[i.id]; const a = P.assessment[i.id];
       const lock = showLock && i.type !== 'long-term' && !FLOOR_IDS.includes(i.id) && typeof i.targetCents === 'number' ? h('input', { class: 'input num', inputmode: 'decimal', style: { width: '84px' }, 'aria-label': 'Lock a monthly amount for ' + nameOf(i), title: 'A fixed amount each month; the rest flows around it', value: (P.input.overrides || {})[i.id] ? money((P.input.overrides || {})[i.id]) : '', onChange: e => { const p = parseSaid(e.target.value); const o = Object.assign({}, P.input.overrides || {}); if (p && p.cents > 0) o[i.id] = p.cents; else delete o[i.id]; whatIf.overrides = o; draw(); } }) : null;
       const split = showSplit && i.type !== 'long-term' && !FLOOR_IDS.includes(i.id) && typeof i.targetCents === 'number' ? h('input', { class: 'input num', inputmode: 'decimal', style: { width: '64px' }, 'aria-label': 'Share for ' + nameOf(i), value: (P.input.splits || {})[i.id] !== undefined ? Math.round(P.input.splits[i.id] * 100) + '%' : '', title: 'Percent of the monthly money; blank means an even share', onChange: e => { const v = parseFloat(String(e.target.value).replace('%', '')); const sp = Object.assign({}, P.input.splits || {}); if (v > 0) sp[i.id] = v / 100; else delete sp[i.id]; whatIf.splits = sp; draw(); } }) : null;
-      tb.appendChild(h('tr', { dataset: Object.assign({ goal: i.id }, /^life:/.test(i.id) && cellDoor(app, i.id.slice(5), 'goalCost') ? { cell: cellDoor(app, i.id.slice(5), 'goalCost') } : {}) }, h('td', null, nameOf(i)), h('td', { class: 'num' }, g ? money(g.monthlyNow) : ''), h('td', null, a && a.finishMonth ? monthWord(a.finishMonth) : ''), h('td', { class: 'wrap small' }, statusText(i, a)), showLock ? h('td', null, lock) : null, showSplit ? h('td', null, split) : null));
+      const isFocus = !!(focusOf(app.record) && focusOf(app.record).id === i.id);
+      const focusBtn = showLock && canFocus(i) ? h('button', { class: 'btn small' + (isFocus ? ' primary' : ' quiet'), 'aria-pressed': String(isFocus), 'aria-label': (isFocus ? 'The focus this year: ' : 'Make this the focus this year: ') + nameOf(i), onClick: e => { e.stopPropagation(); app.change(rec => { setFocus(rec, isFocus ? null : { id: i.id, months: null }, { session: app.session }); return 'goals.focus'; }, { reason: 'goals' }); } }, isFocus ? 'Focus' : 'Focus') : null;
+      tb.appendChild(h('tr', { dataset: Object.assign({ goal: i.id }, /^life:/.test(i.id) && cellDoor(app, i.id.slice(5), 'goalCost') ? { cell: cellDoor(app, i.id.slice(5), 'goalCost') } : {}) }, h('td', null, nameOf(i), focusBtn ? h('span', { class: 'focus-cell' }, focusBtn) : null), h('td', { class: 'num' }, g ? money(g.monthlyNow) : ''), h('td', null, a && a.finishMonth ? monthWord(a.finishMonth) : ''), h('td', { class: 'wrap small' }, statusText(i, a)), showLock ? h('td', null, lock) : null, showSplit ? h('td', null, split) : null));
     });
     allocPanel.appendChild(h('div', { class: 'tablewrap' }, h('table', { class: 'data alloc' }, h('thead', null, h('tr', null, h('th', null, 'Goal'), h('th', { class: 'num' }, 'A month now'), h('th', null, 'Lands'), h('th', null, 'Where it stands'), showLock ? h('th', null, 'Locked') : null, showSplit ? h('th', null, 'Share') : null)), tb)));
   }

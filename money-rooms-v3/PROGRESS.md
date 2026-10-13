@@ -3,6 +3,9 @@
 Updated: 2026-10-12
 
 ## Done
+- This year (MR-081): the Goals horizon is twelve months by default; one goal can be the focus; the year
+  panel gives where she is, the number for now, three in-year moves and the year strip; a buffer focus can
+  be typed as lean months.
 - The quick start (MR-080): four questions on one page (income, debt, expenses, assets) plus a birth
   year; every rough answer lands in its room at once; a strip of six headline numbers lights as it can;
   No marks a room None; the hand-off is the Checklist on Still needed. A new client starts here.

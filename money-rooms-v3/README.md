@@ -238,6 +238,9 @@ progress) and Progress vs paperwork.
 Program in the side nav shows one row per session, discovery first, with
 status, date, targets met, accounts opened, homework done and the stress
 score where it was asked; urgent sessions sit between the numbered ones.
+Goals opens on This year (MR-081): mark one goal as the focus and the screen
+gives where she is, the number to set aside each month, the three moves that
+pay inside the year and the year strip; a buffer can be typed as lean months.
 Quick start (Clients group, MR-080) is the first sitting: a birth year, then
 income, debt, expenses and assets, each "any, which kinds, about how much";
 every rough answer lands in its room at once and six headline numbers light

@@ -304,4 +304,8 @@ Collected during the run; none blocked the build. Answer whenever.
 89. The quick start's asset kinds are checking, savings, 401(k), Roth IRA,
     traditional IRA, brokerage and HSA. Should a car or a home count as an
     asset here, with a rough value, or do they stay out of a first sitting?
+90. The year panel's three moves come from the sensitivity run, ranked by
+    how far each moves the FI date. For a one-year goal the better ranking
+    may be plain dollars a month. Should the year panel rank by cents, or
+    keep the FI ranking so the two screens agree?
 

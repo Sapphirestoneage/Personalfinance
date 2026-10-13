@@ -1220,3 +1220,31 @@ flows.push({
     await page.click('.chk-controls .seg-btn:has-text("Everything")');
   },
 });
+
+/* MR-081: This year: the one-year horizon, one focus goal, the number for now, three moves */
+flows.push({
+  name: 'level18-this-year',
+  async run(page, { base, check, APP }) {
+    await page.goto(base + 'index.html#/home'); await page.waitForSelector('#main h1, #main .empty');
+    await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', 'leah.json')); await page.waitForSelector('.today-card');
+    await page.goto(base + 'index.html#/goals'); await page.waitForSelector('table.alloc');
+    check('the near horizon is This year and it is the default', (await page.getAttribute('header .seg .seg-btn:has-text("This year")', 'aria-pressed')) === 'true' && (await page.locator('header .seg .seg-btn').count()) === 3);
+    check('no focus yet, so no year panel', await page.evaluate(() => document.querySelector('.year-plan').hidden));
+    /* make Japan the focus */
+    await page.click('table.alloc tr:has-text("Japan with my sister") button[aria-label^="Make this the focus"]'); await page.waitForSelector('.year-plan:not([hidden])');
+    const text = await page.textContent('.year-plan');
+    check('the year panel names the focus and its date, and gives the number for now', /Japan with my sister by Oct 2027/.test(text) && /a month, for \d+ months, lands it by Oct 2027/.test(text));
+    check('where she is: cash, the lean month, what is left over, the target', (await page.locator('.year-kpis .kpi').count()) === 4 && /Cash on hand/.test(text) && /The target/.test(text));
+    await page.waitForFunction(() => /Together \$/.test(document.querySelector('.year-plan').textContent), null, { timeout: 20000 });
+    const moves = await page.locator('.year-move-list li').count();
+    check('three in-year moves, each a door into its cell', moves === 3 && (await page.locator('.year-move-list li.door').count()) === 3);
+    check('the year strip is on the panel', (await page.locator('.year-plan .year-strip svg').count()) === 1);
+    check('the focus survives a reload', await (async () => { await page.goto(base + 'index.html#/home'); await page.waitForSelector('#main h1'); await page.goto(base + 'index.html#/goals'); await page.waitForSelector('.year-plan:not([hidden])'); return /Japan with my sister/.test(await page.textContent('.year-plan')); })());
+    /* the cushion as a buffer typed in lean months */
+    await page.click('table.alloc tr:has-text("Full cushion") button[aria-label^="Make this the focus"]'); await page.waitForTimeout(300);
+    await page.fill('.year-plan input[aria-label="Target as lean months"]', '6'); await page.press('.year-plan input[aria-label="Target as lean months"]', 'Tab'); await page.waitForTimeout(300);
+    check('a buffer typed as lean months becomes a dollar target with the months beside it', /6 lean months, typed as months/.test(await page.textContent('.year-plan')));
+    await page.click('.year-plan button:has-text("Clear the focus")'); await page.waitForTimeout(300);
+    check('Clear the focus hides the year panel', await page.evaluate(() => document.querySelector('.year-plan').hidden));
+  },
+});
