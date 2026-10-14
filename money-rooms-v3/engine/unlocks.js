@@ -85,6 +85,7 @@ export function targetFor(needText, record, data) {
   const has = ([planet, type, field]) => {
     if (planet === 'call') return !!(record.anchors && record.anchors[field] && Object.keys(record.anchors[field]).length);
     if (planet === 'transactions' || planet === 'discovery') return false;
+    if (planet === 'matters') { const Mx = record.matters || {}; return field === 'rank' ? !!(Mx.priorities && Mx.priorities.length) : field === 'tag' ? !!(Mx.tags && Mx.tags.length) : !!(Mx.priorities && Mx.priorities.some(p => p.cost && ((p.cost.monthly && p.cost.monthly.v !== null) || (p.cost.annual && p.cost.annual.v !== null)))); }
     if (planet === 'session') { const P = record.program || {}; return field === 'satisfaction' ? !!(P.satisfaction && P.satisfaction.length) : field === 'worthIt' ? !!(P.worthIt && P.worthIt.length) : !!(record.snapshots && record.snapshots.length); }
     if (field === 'stress' && !data.fields.fields.stress) return record.planets[planet].rows.some(r => r.type === type && typeof r.stress === 'number');
     if (planet === 'sun') { const f = record.sun.f[field]; return !!(f && f.v !== null && f.v !== undefined && f.state !== 'unknown'); }
@@ -95,6 +96,7 @@ export function targetFor(needText, record, data) {
 }
 function describeTarget(planet, type, field, record, data) {
   if (planet === 'call') return { planet: 'call', type: null, field, rowId: null, label: field === 'gut' ? 'Her gut number per area' : 'Her dream spending per area', where: 'Call path', href: '#/callpath', addRow: false };
+  if (planet === 'matters') return { planet: 'matters', type: null, field, rowId: null, label: field === 'rank' ? 'A ranked priority' : field === 'tag' ? 'Spending tied to a priority' : 'A price on a priority', where: 'What matters', href: '#/matters/list', addRow: false };
   if (planet === 'transactions') return { planet: 'transactions', type: null, field, rowId: null, label: 'A transactions import', where: 'Transactions', href: '#/transactions', addRow: false };
   if (planet === 'discovery') return { planet: 'discovery', type: null, field, rowId: null, label: 'The stress score', where: 'Discovery form or a session', href: '#/discovery', addRow: false };
   if (planet === 'session') return { planet: 'session', type: null, field, rowId: null, label: field === 'snapshot' ? 'A closed session or a money date' : field === 'satisfaction' ? 'A satisfaction score' : field === 'worthIt' ? 'Worth-it scores per area' : 'A session close', where: 'Session or money date', href: '#/money-date', addRow: false };

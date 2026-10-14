@@ -546,6 +546,48 @@
     "benefits",
     "benefitValue"
    ]
+  ],
+  "ranked priorities": [
+   [
+    "matters",
+    null,
+    "rank"
+   ]
+  ],
+  "spending tagged to a priority": [
+   [
+    "matters",
+    null,
+    "tag"
+   ]
+  ],
+  "a cost on a priority": [
+   [
+    "matters",
+    null,
+    "cost"
+   ]
+  ],
+  "spending tagged to this priority": [
+   [
+    "matters",
+    null,
+    "tag"
+   ]
+  ],
+  "hours a week on a priority": [
+   [
+    "matters",
+    null,
+    "cost"
+   ]
+  ],
+  "a priority": [
+   [
+    "matters",
+    null,
+    "rank"
+   ]
   ]
  },
  "probeTypes": [

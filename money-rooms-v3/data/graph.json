@@ -805,6 +805,16 @@
    "label": "Worth-it scores per area",
    "family": "value",
    "noFiEffect": "what it is worth to her, not a flow"
+  },
+  "matters.rank": {
+   "label": "Priority ranking",
+   "family": "value",
+   "noFiEffect": "what she says matters, not a flow"
+  },
+  "matters.tag": {
+   "label": "Spending tied to a priority",
+   "family": "value",
+   "noFiEffect": "which priority a dollar serves, not how many dollars"
   }
  }
 }

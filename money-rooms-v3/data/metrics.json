@@ -5454,6 +5454,157 @@
    "gentleCopy": "Every tax together takes {value} of your pay. The room shows the ways to lower it.",
    "firstSession": 6,
    "headline": false
+  },
+  {
+   "n": 93,
+   "id": "alignmentTop5",
+   "name": "Alignment score",
+   "clientLabel": "Spending on your top five",
+   "definition": "The share of monthly spending tied to the top five priorities on the What matters list (MR-098).",
+   "formula": "spending tied to the top 5 priorities / total spending",
+   "inputs": [
+    "m.spending",
+    "matters.tag",
+    "matters.rank"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "engine",
+   "group": "spending",
+   "stage": 1,
+   "range": null,
+   "direction": "higher",
+   "levers": [
+    {
+     "root": "matters.tag",
+     "sign": 1,
+     "text": "Tie each spending line to the priority it serves."
+    },
+    {
+     "root": "amount",
+     "sign": -1,
+     "text": "Cut what serves nothing on the list."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "matters.tag",
+     "matters.rank"
+    ]
+   },
+   "scoreGroup": "awareness",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "priorityBars",
+   "unlock": [
+    "matters.rank",
+    "matters.tag"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "{value} of your spending goes to your top five. The rest is worth a look.",
+   "firstSession": 3,
+   "headline": false
+  },
+  {
+   "n": 94,
+   "id": "untiedSpending",
+   "name": "Not tied to a priority",
+   "clientLabel": "Spending tied to nothing you named",
+   "definition": "Monthly spending no priority claims, once every tag is counted (MR-098).",
+   "formula": "total spending - spending tied to any priority",
+   "inputs": [
+    "m.spending",
+    "matters.tag"
+   ],
+   "units": {
+    "kind": "money",
+    "period": "monthly",
+    "basis": "nominal",
+    "tax": "aftertax"
+   },
+   "owner": "engine",
+   "group": "spending",
+   "stage": 1,
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "matters.tag",
+     "sign": -1,
+     "text": "Tie the lines that do serve a priority."
+    },
+    {
+     "root": "amount",
+     "sign": 1,
+     "text": "What serves nothing named is the first place to cut."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "matters.tag"
+    ]
+   },
+   "scoreGroup": "awareness",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "prioritySankey",
+   "unlock": [
+    "matters.tag"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "{value} a month goes to nothing you named. That is the reveal, not a verdict.",
+   "firstSession": 3,
+   "headline": false
+  },
+  {
+   "n": 95,
+   "id": "untiedShare",
+   "name": "Share not tied to a priority",
+   "clientLabel": "Share tied to nothing named",
+   "definition": "The untied spending as a share of total spending (MR-098).",
+   "formula": "untied spending / total spending",
+   "inputs": [
+    "m.untiedSpending",
+    "m.spending"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "engine",
+   "group": "spending",
+   "stage": 1,
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "matters.tag",
+     "sign": -1,
+     "text": "Tie the lines that do serve a priority."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "amount",
+     "matters.tag"
+    ]
+   },
+   "scoreGroup": "awareness",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "prioritySankey",
+   "unlock": [
+    "matters.tag"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "{value} of your spending is tied to nothing you named.",
+   "firstSession": 3,
+   "headline": false
   }
  ],
  "stages": {

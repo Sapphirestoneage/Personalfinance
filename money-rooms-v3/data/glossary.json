@@ -420,6 +420,18 @@
   "totalTaxRate": {
    "coach": "All-in tax rate",
    "client": "Every tax, as a share of pay"
+  },
+  "alignmentTop5": {
+   "coach": "Alignment score",
+   "client": "Spending on your top five"
+  },
+  "untiedSpending": {
+   "coach": "Not tied to a priority",
+   "client": "Spending tied to nothing you named"
+  },
+  "untiedShare": {
+   "coach": "Share not tied to a priority",
+   "client": "Share tied to nothing named"
   }
  }
 }
