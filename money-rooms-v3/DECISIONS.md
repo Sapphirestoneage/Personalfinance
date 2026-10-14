@@ -562,6 +562,54 @@ Compatibility: schema 5. On load, an `account` row whose type is checking, hysa,
 Why: the owner: "separate them into investing and bank accounts ... very clearly be bank accounts with checking, savings, high yield savings and CDs", and on question 60: "keep both but make sure that they both are modes for the debt calculation".
 Alternative: one account type grouped on screen by bucket (the list stayed one long select, which is what the owner wanted gone).
 
+## MR-115 2026-10-14 Six synthetic households run through both parts
+Decision: `tests/engine/snapshot.test.js` builds a snapshot-only household (the projection runs on it alone), a half-itemized one with an over-gut expense, a between-jobs one (no wage, the lens off, nothing breaks with blanks), a self-employed one (the trailing rung), an hourly worker with a main job at 30 to 33 hours, seven unpaid weeks and an on-call job at six hours a month, and a fully filled one (coverage full, nothing left, the wage on the real rung and equal to the registry metric). Plus the resolver's unit cases and the formatter's units. Flow level30 runs the screens and the toggle through a reload; the sweep covers the snapshot, a deep dive and what's left at three widths.
+Compatibility: none.
+Why: the owner's section 10.
+Alternative: none.
+
+## MR-114 2026-10-14 The one-pager's Hours of work
+Decision: the client one-pager gains Hours of work: the three biggest expenses in hours a year, the real hourly wage and the rung it stands on, the stated against the real rate for each hourly earner, coverage with the count of base numbers in, and the top five of what's left.
+Compatibility: none.
+Why: the owner's section 9.
+Alternative: none considered.
+
+## MR-113 2026-10-14 Hours Everywhere: one toggle, one formatter
+Decision: a Dollars, Hours, Both toggle in the top bar, remembered per viewer in the settings. `toHours(cents, wage, weeklyHours)` in engine/hours.js returns minutes under an hour, hours under a week, work-weeks under fifty, then work-years at the client's real weekly hours, never NaN or Infinity. The one money formatter in engine/format.js applies the lens, so every dollar figure that describes a cost or a sum follows it everywhere (rows, base numbers, debts, goals, blocks, calculators, the lists, metrics, the one-pager); rates, percentages and ratios never change; an input box asks for plain dollars. With no wage the toggle says Add income to see hours and dollars stay. In Hours mode a balance reads as hours bought back.
+Compatibility: `F.dollars` and `F.dollarsWhole` take `{ plain: true }`; three input boxes pass it.
+Why: any dollar amount in the app can be shown as hours of work, without a view ever dividing.
+Alternative: a per-view switch (rejected: it would be the same division in sixty places).
+
+## MR-112 2026-10-14 The real hourly wage, one source of truth, with a fallback chain that says its rung
+Decision: `realHourlyWage(record, result)` in engine/hours.js keeps the registry metric's formula (take-home less the costs of working, over paid plus commute plus unpaid job hours) and reads each pay row's take-home from the finished result, typed or inferred. Rungs, each labeled: real (every hour on file), basic take-home hourly (hours partly on file), a guess from income and a 40-hour week (a snapshot alone), a trailing average for self-employed or variable income (the figures on file, hours as given), and none for a household between jobs or with no income (Add income to see hours; no wage is ever invented). Several incomes blend by hours and each source shows its own wage. Differences from the metric: the metric needs paid hours from the rooms and has no fallback; the lens falls back and says so.
+Compatibility: none.
+Why: a global lens needs one wage and a reason to trust it.
+Alternative: asking for hours a week once more on the lens (rejected: the 1b and pay-row hours already hold them).
+
+## MR-111 2026-10-14 What's left: one live list, the materiality line, the dashboard ring
+Decision: `engine/whatsleft.js` lists every Not yet row (its primary fact unknown or will email; a detail fact only when promised by email; an untouched profile form and an engine-worked figure are not questions), every base number still on a guess or rough with no rows, and every unitemized remainder, each with the dollars still uncertain (the remainder, the typed range width, or the state's spread on the figure) and its leverage (the sensitivity run's months of FI date when there is one, else the leverage engine's score), sorted by leverage times dollars. Items under the materiality line, where the dollars at stake fall under the real hourly wage times the minutes to find it, go to Small wins. Grouped by room, by who supplies it, or by session; fillable inline or a tap to the deep dive. Will-email items are on the one-pager's to-dos through the plates as before. The dashboard carries a coverage ring (how much of the picture is itemized, never FI progress) and the top three.
+Compatibility: none stored.
+Why: one place for what is still unsure, ordered by what it moves.
+Alternative: a new ranked card beside the Session next card (rejected: the Session card keeps the leverage engine's ranking; What's left adds the snapshot's items on top of the same list).
+
+## MR-110 2026-10-14 Hourly income entry, and the deep dive with four states
+Decision: a pay row can be hourly: rate, hours (a single number or a range like 30-33) per week, month or year, weeks worked a year with an unpaid time off helper (holidays, sick days, vacation, slow weeks), overtime hours at a multiplier, tips or commission, and the pay frequency. `engine/hours.js` turns it into gross a year and, with the one tax function, take-home; a range of hours gives a range of income into the band. The conversion is on screen term by term and every term is editable in place; a salary reads back as a basic hourly figure. Each hourly source is an income row, so the four states and the remainder logic apply. Any base number opens its rows at `#/snapshot/<base>`: each row takes Known, Estimated, N/A or Not yet (with Will email or Doesn't know), any subset can be filled, leaving never loses work, and Back to snapshot stays in view (the full room shows it too when the deep dive sent the coach there). Gut against actual draws once the rows cover 60% of the total.
+Compatibility: `hoursPer`, `weeksPerYear`, `overtimeHours`, `overtimeMultiplier`, `tips`, `hoursUnpaid` join the pay rows as optional facts; the MR-096 hourly formula now runs through engine/hours.js (rate x hours x weeks, not x 52 / 12 flat).
+Why: anyone not salaried, and the hours feed the real hourly wage without being asked twice.
+Alternative: a separate hourly row type (rejected: one pay row, more facts).
+
+## MR-109 2026-10-14 The quick snapshot: every base number on one screen
+Decision: `#/snapshot` lists the nine base numbers grouped by DAITE where they fit: debts (itemized from the start, with No debt as the answer), cash, retirement and investments, everything else, regular take-home a month, irregular income a year, fixed a month, variable a month, annual and irregular a year. Each takes a number or a range, a confidence (Knows, Roughly, Will email, Doesn't know), Not for me, or Don't know yet; a field is complete with any value, a range, a guess or a not-for-me; blank is the only incomplete state. A stacked bar under each shows known, estimated, unitemized and the overflow past the gut number. The guess the rooms already hold shows beside a blank field. The new snapshot fields are optional in the fill tracker so the checklist does not demand them; the snapshot screen keeps its own count.
+Compatibility: `data/fields.json` gains fixedMonthly, variableMonthly, annualIrregular (spending snapshot), cashSnapshot, retirementSnapshot, otherAssetsSnapshot (assets snapshot) and an income snapshot row with takeHomeSnapshot and irregularAnnual; older records have none and read as blank.
+Why: fifteen minutes in session to a whole picture.
+Alternative: reusing the quick start screen (rejected: the quick start asks kinds, the snapshot asks totals; the quick start stays).
+
+## MR-108 2026-10-14 One resolver for every base number: itemized plus the unitemized remainder
+Decision: `engine/resolve.js` resolves a base number from its snapshot (the room's rough total row, grown into the snapshot row) and its moon rows: itemized is the sum of Known and Estimated rows, N/A rows count as zero and as covered, the remainder is what the snapshot says is still unitemized, the resolved total is itemized plus remainder. Rows past the snapshot win and the gap is flagged in dollars and percent; the snapshot is kept, never overwritten. A range snapshot resolves at its midpoint and carries the range into the band. Coverage is itemized over the total, with the counts by state. Every planet calls it; no view does. The mapping of the four row states onto the stored states: Known is verified or known; Estimated is rough, or a guess or discovery figure; N/A is not applicable, not for me, or none; Not yet is will-send (will email) or unknown (does not know), kept apart in the stored state. The old rule, detail overrides the total, is gone: lines plus the remainder is the truth everywhere.
+Compatibility: Leah, Jordan and Dev read the same (their rows exceed or stand alone); a quick start with a total and lines now reads the total, not the lines alone. The random-household invariant learned the rule.
+Why: a complete picture from incomplete information: a fast snapshot of every base number, partial deep dives, and one list of what is left.
+Alternative: a second store for the snapshot (rejected: the rough total rows already exist; they grew fields).
+
 ## MR-107 2026-10-14 Three synthetic households test every metric against hand-computed numbers
 Decision: `tests/engine/matters.test.js` builds three households through the record API: A, single in her twenties with most spending untagged and cheap top priorities; B, a couple with diverging lists and a location conflict; C, an entrepreneurship block with a scenario list. Each metric is checked by hand: tied and untied money, the alignment score, spend ranks and gaps, hours of work, months gained on the FI date, cheap wins, the payback on a problem, the money conflict, the compare rows, the scenario delta the simulator spends. Split shares clamp to 100, every field at Does not know breaks nothing, and the unlock loop names what opens. Flow `level29-what-matters` runs the screen end to end; the sweep covers the room, its money and its pictures at three widths.
 Compatibility: none.

@@ -371,4 +371,22 @@ Collected during the run; none blocked the build. Answer whenever.
 108. A planned move is stored but not spent by the report or the simulator.
     Should an applied move change the picture (as a scenario), or stay a note
     for the session and the one-pager, as it does now?
+109. The snapshot's expense split is fixed, variable and annual, read from a
+    line's Need or Want (a fresh line defaults to need) and its category
+    (irregular is annual). Is that the split you say in session, or do you
+    want the split typed per line?
+110. A self-employed wage reads as a trailing average of the figures on file,
+    hours as given. The record keeps no income history, so it is the current
+    figure under that label. Should imported transactions feed a real trailing
+    average of 1099 deposits?
+111. Gut against actual draws once the rows cover 60% of a base number. Too
+    early, too late?
+112. The materiality line uses five minutes for a client fact and fifteen for
+    a coach lookup. Are those the right minutes?
+113. In Hours mode a balance reads as hours bought back only in words; the
+    figure is the same conversion. Should savings use a different rate (the
+    withdrawal rate, hours of life rather than hours of work)?
+114. The debt remainder (a rough total beyond the rows) carries no rate, so
+    the payoff plan runs on the rows alone. Should the remainder take the
+    weighted rate as a stand-in?
 

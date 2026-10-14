@@ -3,6 +3,9 @@
 Updated: 2026-10-13
 
 ## Done
+- Level 15, Snapshot and Sharpen plus Hours Everywhere (MR-108 to MR-115): one resolver for every base
+  number, the quick snapshot and the deep dive with four states, hourly income entry, what's left, the real
+  hourly wage with its rungs, the Dollars, Hours, Both toggle, the one-pager's Hours of work, six households.
 - What matters (MR-098 to MR-107): a values audit in the Sun; list, rank, price, tag and connect;
   the money per priority and for the list; conflicts declared, flagged and suggested; move money;
   partner, future and scenario lists; the simulator link; four pictures; the one-pager section;
