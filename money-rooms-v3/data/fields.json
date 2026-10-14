@@ -223,8 +223,8 @@
      "tableFields": []
     },
     "summary": {
-     "label": "Snapshot",
-     "moon": "Snapshot",
+     "label": "Totals",
+     "moon": "Totals",
      "fields": [
       "takeHomeSnapshot",
       "irregularAnnual"
@@ -232,7 +232,7 @@
      "single": true,
      "nicknameLabel": "Label",
      "stress": false,
-     "plural": "Snapshot",
+     "plural": "Totals",
      "tableFields": [],
      "optional": true
     }
@@ -243,8 +243,8 @@
    "label": "Spending",
    "types": {
     "summary": {
-     "label": "Snapshot",
-     "moon": "Total",
+     "label": "Totals",
+     "moon": "Totals",
      "fields": [
       "summaryTotal",
       "fixedMonthly",
@@ -254,7 +254,7 @@
      "single": true,
      "nicknameLabel": "Label",
      "stress": false,
-     "plural": "Snapshot",
+     "plural": "Totals",
      "tableFields": []
     },
     "line": {
@@ -501,8 +501,8 @@
    "label": "Investments and Accounts",
    "types": {
     "summary": {
-     "label": "Snapshot",
-     "moon": "Total",
+     "label": "Totals",
+     "moon": "Totals",
      "fields": [
       "investSummaryTotal",
       "cashSnapshot",
@@ -512,7 +512,7 @@
      "single": true,
      "nicknameLabel": "Label",
      "stress": true,
-     "plural": "Snapshot",
+     "plural": "Totals",
      "tableFields": []
     },
     "account": {

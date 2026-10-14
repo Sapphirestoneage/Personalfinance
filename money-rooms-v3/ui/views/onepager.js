@@ -192,15 +192,17 @@ function mattersSection(R) {
 /* Hours of work (MR-114): the top three expenses in hours a year, the real hourly wage and which rung it stands on, the stated against the real rate for hourly earners, coverage and the top five of what's left. */
 function hoursSection(app, R) {
   const H = R.hours; const S = R.sun && R.sun.outputs; const snap = R.snapshot; const sec = h('section', { class: 'op-hours' }, h('h3', null, 'Hours of work'));
+  const parts = [];
   if (H && H.wage) {
-    const CAT = { accommodation: 'Housing', utilities: 'Utilities and subscriptions', food: 'Food', transportation: 'Transportation', therapy: 'Health and therapy', wants: 'Wants', irregular: 'Irregular and annual', mistakes: 'Mistakes', other: 'Other' };
+    const CAT = { accommodation: 'housing', utilities: 'utilities', food: 'food', transportation: 'transportation', therapy: 'health', wants: 'wants', irregular: 'irregular', mistakes: 'mistakes', other: 'other' };
     const top = S && S.spending.byCategory ? Object.keys(S.spending.byCategory).map(c => ({ c, cents: S.spending.byCategory[c].cents })).filter(x => x.cents > 0).sort((a, b) => b.cents - a.cents).slice(0, 3) : [];
-    if (top.length) sec.appendChild(h('p', null, h('strong', null, 'Your three biggest expenses in hours a year: '), top.map(x => (CAT[x.c] || x.c) + ' ' + toHours(x.cents * 12, H.wage, H.weeklyHours).text).join(', ') + '.'));
-    else if (S && S.spending.baselineMonthly && S.spending.baselineMonthly.status === 'ok') sec.appendChild(h('p', null, h('strong', null, 'Your spending in hours a year: '), toHours(S.spending.baselineMonthly.cents * 12, H.wage, H.weeklyHours).text + '.'));
-    sec.appendChild(h('p', null, h('strong', null, 'Real hourly wage: '), F.dollars(H.wage, { plain: true }) + ' an hour (' + (WAGE_METHODS_CLIENT[H.method] || H.label.toLowerCase()) + ').'));
-    const hourly = (S && S.income.hourlySources) || [];
-    hourly.forEach(src => { const own = (H.sources || []).find(x => x.rowId === src.rowId); if (own) sec.appendChild(h('p', null, src.name + ': stated ' + F.dollars(src.rate, { plain: true }) + ' an hour, real ' + F.dollars(own.wage, { plain: true }) + ' an hour after tax, costs and unpaid hours.')); });
-  } else sec.appendChild(h('p', { class: 'muted small' }, 'Add income to see hours.'));
-  if (snap) { const WL = whatsLeftOf(app); sec.appendChild(h('p', null, h('strong', null, 'Coverage: '), Math.round(snap.coverage * 100) + '% of the picture is itemized; ' + snap.complete + ' of ' + snap.total + ' base numbers are in.')); if (WL.items.length) sec.appendChild(h('ul', null, WL.items.slice(0, 5).map(i => h('li', null, (i.question || i.label) + (i.supplier === 'client' ? '' : ' (coach looks it up)'))))); }
+    parts.push('Real hourly wage ' + F.dollars(H.wage, { plain: true }) + ' an hour (' + (WAGE_METHODS_CLIENT[H.method] || H.label.toLowerCase()) + ').');
+    ((S && S.income.hourlySources) || []).forEach(src => { const own = (H.sources || []).find(x => x.rowId === src.rowId); if (own) parts.push(src.name + ': stated ' + F.dollars(src.rate, { plain: true }) + ' an hour, real ' + F.dollars(own.wage, { plain: true }) + '.'); });
+    if (top.length) parts.push('Biggest expenses in hours a year: ' + top.map(x => (CAT[x.c] || x.c) + ' ' + toHours(x.cents * 12, H.wage, H.weeklyHours).text).join(', ') + '.');
+    else if (S && S.spending.baselineMonthly && S.spending.baselineMonthly.status === 'ok') parts.push('Spending in hours a year: ' + toHours(S.spending.baselineMonthly.cents * 12, H.wage, H.weeklyHours).text + '.');
+  } else parts.push('Add income to see hours.');
+  let left = null;
+  if (snap) { const WL = whatsLeftOf(app); parts.push('Coverage: ' + Math.round(snap.coverage * 100) + '% of the picture is itemized, ' + snap.complete + ' of ' + snap.total + ' base numbers in.'); if (WL.items.length) left = h('span', { class: 'op-left' }, ' Still to pin down: ' + WL.items.slice(0, 5).map(i => (i.question || i.label).replace(/[?.]$/, '')).join('; ') + '.'); }
+  sec.appendChild(h('p', { class: 'small' }, parts.join(' '), left));
   return sec;
 }

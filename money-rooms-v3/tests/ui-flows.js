@@ -1494,7 +1494,7 @@ flows.push({
     check('the dashboard carries the coverage ring and the top of what\'s left, apart from FI progress', (await page.locator('.snapshot-card .cov-ring').count()) === 1 && (await page.locator('.snapshot-card .wl-mini li').count()) >= 1);
     await page.goto(base + 'index.html#/onepager'); await page.waitForSelector('.op-hours');
     const op = await page.textContent('.op-hours');
-    check('the one-pager carries the wage with its rung, the stated against the real rate, the spending in hours, coverage and what\'s left', /Real hourly wage: \$[\d.]+ an hour \(your real hourly wage\)/.test(op) && /stated \$22\.00 an hour, real/.test(op) && /Coverage: /.test(op) && /hours a year/.test(op));
+    check('the one-pager carries the wage with its rung, the stated against the real rate, the spending in hours, coverage and what\'s left', /Real hourly wage \$[\d.]+ an hour \(your real hourly wage\)/.test(op) && /stated \$22\.00 an hour, real/.test(op) && /Coverage: /.test(op) && /hours a year/.test(op));
     await page.click('#lens-dollars'); await page.waitForTimeout(300);
   },
 });
