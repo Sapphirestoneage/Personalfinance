@@ -2,7 +2,7 @@
    buttons (Add a client, Start a discovery call, Open a client), the rest under More, and
    the open client's details with the history journal that used to sit on
    Home. Coach view only. Views never do math. */
-import { h, clear } from '../dom.js';
+import { h, clear, download } from '../dom.js';
 import * as F from '../../engine/format.js';
 import { exportClient, importFile, clientName, closeOverlay } from '../app.js';
 import { cellDoor } from '../doors.js';
@@ -11,6 +11,12 @@ import { programOf, nextSessionNumber } from '../../engine/program.js';
 import { sessionCount } from '../../engine/curriculum.js';
 import * as Rec from '../../engine/record.js';
 import { fold } from '../fold.js';
+import { segmented } from '../seg.js';
+
+/* MR-093: the list's search and filters live across redraws */
+const view = { q: '', status: 'all', tag: null };
+function statusLabel(app, id) { const st = (app.data.pipeline ? app.data.pipeline.statuses : []).find(x => x.id === id); return st ? st.label : id; }
+function matches(c, q) { const t = (c.name + ' ' + (c.tags || []).join(' ')).toLowerCase(); return q.split(/\s+/).filter(Boolean).every(w => t.includes(w)); }
 
 export const DEMO_IDS = ['maya-discovery', 'leah', 'maya-zero'];
 
@@ -33,13 +39,14 @@ function sessionCell(app, c) {
 
 export function renderList(panel, app) {
   clear(panel);
-  const list = app.store.list();
+  const list = app.store.list().map(c => app.record && app.record.id === c.id ? Object.assign({}, c, Rec.clientMetaOf(app.record)) : c); /* MR-093: the open client's status and tags are read live, ahead of the autosave */
   panel.appendChild(h('h2', null, 'Clients', h('span', { class: 'tag' }, list.length + (list.length === 1 ? ' client' : ' clients'))));
   const fileInput = h('input', { type: 'file', accept: 'application/json,.json', class: 'sr-only', 'aria-label': 'Import a client file', onChange: async e => { const f = e.target.files[0]; if (!f) return; try { await importFile(f); } catch (err) { app.toast(err.message); } e.target.value = ''; } });
   const openSel = list.length ? h('select', { class: 'select', 'aria-label': 'Open a client', onChange: e => { if (e.target.value) { app.open(e.target.value); location.hash = '#/home'; } } }, h('option', { value: '' }, 'Open a client'), list.map(c => h('option', { value: c.id }, c.name || 'Unnamed client'))) : null;
   const more = h('details', { class: 'more-menu' }, h('summary', { class: 'btn', 'aria-label': 'More client actions' }, 'More'),
     h('div', { class: 'more-list' },
       h('button', { class: 'btn', onClick: () => { more.removeAttribute('open'); fileInput.click(); } }, 'Import a client file'),
+      list.length ? h('button', { class: 'btn', title: 'Every client in one file: the way to move them to another phone or laptop', onClick: () => { more.removeAttribute('open'); download('money-rooms-all-clients-' + new Date().toISOString().slice(0, 10) + '.json', app.store.exportAll(), 'application/json'); app.toast('Every client is in the file'); } }, 'Export every client') : null,
       h('button', { class: 'btn', title: 'Maya, the Jersey City client, as she stood after her first call', onClick: () => { more.removeAttribute('open'); loadDemo(app, 'maya-discovery'); } }, 'Load demo client (Maya)'),
       h('button', { class: 'btn', title: 'Leah, Oakland: a full example household with every room filled', onClick: () => { more.removeAttribute('open'); loadDemo(app, 'leah'); } }, 'Load the full example (Leah)'),
       h('button', { class: 'btn', title: 'A copy of Maya with nothing filled in', onClick: () => { more.removeAttribute('open'); startFromZero(app); } }, 'Start demo from zero'),
@@ -48,22 +55,38 @@ export function renderList(panel, app) {
   const draft = app.store.loadDraft('discovery'); /* MR-087: a discovery call in progress is not lost; it waits here */
   if (draft && draft.form && draft.form.snapshot && draft.form.snapshot.name) panel.appendChild(h('p', { class: 'small disc-resume', dataset: { draft: 'discovery' } }, 'A discovery call in progress: ' + draft.form.snapshot.name + '. ', h('a', { class: 'btn small primary', href: '#/discovery' }, 'Continue the call'), ' ', h('button', { class: 'btn small quiet', onClick: () => { app.store.clearDraft('discovery'); renderList(panel, app); } }, 'Discard')));
   panel.appendChild(h('div', { class: 'row clients-actions' }, h('button', { class: 'btn primary', 'aria-label': 'Add a client', onClick: () => newClientDrawer(app) }, 'Add a client'), h('a', { class: 'btn', href: '#/discovery' }, 'Start a discovery call'), openSel, more)); /* MR-088: adding a client is the first button, not a line under More */
+  /* MR-093: find one among a hundred: a search box, the pipeline statuses with counts, and the tags in use */
+  if (list.length > 1 || view.q || view.status !== 'all' || view.tag) {
+    const statuses = (app.data.pipeline ? app.data.pipeline.statuses : []); const counts = {}; list.forEach(c => { counts[c.status] = (counts[c.status] || 0) + 1; });
+    const q = h('input', { class: 'input client-search', type: 'search', 'aria-label': 'Find a client', value: view.q, title: 'A name or a tag' });
+    q.addEventListener('input', () => { view.q = q.value.trim().toLowerCase(); redrawRows(); });
+    const segs = [['all', 'All ' + list.length]].concat(statuses.filter(st => counts[st.id]).map(st => [st.id, st.label + ' ' + counts[st.id]]));
+    const tags = Array.from(new Set(list.flatMap(c => c.tags || []))).sort();
+    panel.appendChild(h('div', { class: 'row clients-find' }, q, segmented(segs, view.status, id => { view.status = id; renderList(panel, app); }, { label: 'Pipeline status', small: true, repick: true })));
+    if (tags.length) panel.appendChild(h('div', { class: 'row clients-tags', role: 'group', 'aria-label': 'Filter by tag' }, tags.map(t => h('button', { type: 'button', class: 'chip toggle' + (view.tag === t ? ' on' : ''), 'aria-pressed': String(view.tag === t), onClick: () => { view.tag = view.tag === t ? null : t; renderList(panel, app); } }, t))));
+  }
+  function redrawRows() { const tb = panel.querySelector('.clients-table tbody'); if (!tb) return; clear(tb); rowsOf().forEach(tr => tb.appendChild(tr)); const n = panel.querySelector('.clients-count'); if (n) n.textContent = countText(); }
+  const shown = () => list.filter(c => (view.status === 'all' || c.status === view.status) && (!view.tag || (c.tags || []).includes(view.tag)) && (!view.q || matches(c, view.q)));
+  const countText = () => { const k = shown().length; return k === list.length ? '' : k + ' of ' + list.length + ' shown'; };
   if (!list.length) {
     panel.appendChild(h('div', { class: 'empty first-visit' }, h('h3', null, 'No clients yet'),
       h('p', null, 'Add a client with a name and four quick questions, or start a discovery call and type what you hear. Or load Maya to look around.'),
       h('div', { class: 'row', style: { marginTop: '12px' } }, h('button', { class: 'btn', onClick: () => loadDemo(app, 'maya-discovery') }, 'Load demo client (Maya)'))));
     return;
   }
-  const tbl = h('table', { class: 'data clients-table' },
-    h('thead', null, h('tr', null, h('th', null, 'Client'), h('th', null, 'Session'), h('th', null, ''))),
-    h('tbody', null, list.map(c => {
+  const rowsOf = () => shown().map(c => {
       const open = app.record && app.record.id === c.id;
-      return h('tr', { class: open ? 'selected' : null },
-        h('td', { class: 'client-name' }, h('a', { href: '#/clients/' + c.id, onClick: e => { e.preventDefault(); app.open(c.id); location.hash = '#/clients/' + c.id; } }, c.name || 'Unnamed client'), open ? h('span', { class: 'chip src' }, 'Current') : null),
+      return h('tr', { class: open ? 'selected' : null, dataset: { client: c.id } },
+        h('td', { class: 'client-name' }, h('a', { href: '#/clients/' + c.id, onClick: e => { e.preventDefault(); app.open(c.id); location.hash = '#/clients/' + c.id; } }, c.name || 'Unnamed client'), open ? h('span', { class: 'chip src' }, 'Current') : null,
+          h('span', { class: 'client-meta' }, c.status !== 'active' ? h('span', { class: 'chip status-' + c.status }, statusLabel(app, c.status)) : null, (c.tags || []).map(t => h('span', { class: 'chip tag-chip' }, t)))),
         h('td', { class: 'small' }, sessionCell(app, c), h('span', { class: 'muted client-saved' }, ' Saved ' + F.dateLocal(c.updatedAt))),
         h('td', { class: 'num' }, h('a', { class: 'btn small primary', href: '#/home', onClick: () => { app.open(c.id); } }, 'Open')));
-    })));
+    });
+  const tbl = h('table', { class: 'data clients-table' },
+    h('thead', null, h('tr', null, h('th', null, 'Client'), h('th', null, 'Session'), h('th', null, ''))),
+    h('tbody', null, rowsOf()));
   panel.appendChild(h('div', { class: 'tablewrap' }, tbl));
+  panel.appendChild(h('p', { class: 'small muted clients-count' }, countText()));
 }
 
 function newClientDrawer(app) {
@@ -126,6 +149,15 @@ function renderDetails(panel, app, sub) {
     app.record && app.record.id === rec.id ? h('a', { class: 'btn primary', href: '#/home' }, 'Today') : h('button', { class: 'btn primary', onClick: () => { app.open(rec.id); location.hash = '#/clients/' + rec.id; } }, 'Open'),
     h('button', { class: 'btn', onClick: () => exportClient(rec) }, 'Export'),
     h('button', { class: 'btn quiet', onClick: () => confirmRemove(app, { id: rec.id, name }) }, 'Delete')));
+  /* MR-093: where this client sits in the pipeline, and the coach's own tags */
+  const meta = Rec.clientMetaOf(rec); const statuses = app.data.pipeline ? app.data.pipeline.statuses : []; const suggested = app.data.pipeline ? app.data.pipeline.tags : [];
+  const setMeta = patch => { if (app.record && app.record.id === rec.id) app.change(r => { Rec.setClientMeta(r, patch, { session: app.session }); return 'client.meta'; }, { reason: 'client' }); else { Rec.setClientMeta(rec, patch, { session: null }); app.store.save(rec); } const list = panel.closest('.clients-grid') ? panel.closest('.clients-grid').querySelector('.panel') : null; if (list) renderList(list, app); renderDetails(panel, app, sub); };
+  panel.appendChild(h('div', { class: 'row client-status' }, h('span', { class: 'small muted' }, 'Status'), segmented(statuses.map(st => [st.id, st.label, st.hint]), meta.status, id => setMeta({ status: id }), { label: 'Client status', small: true })));
+  const tagBox = h('input', { class: 'input', type: 'text', 'aria-label': 'Add a tag', title: 'A word of your own, like friend', style: { width: '120px' } });
+  tagBox.addEventListener('keydown', e => { if (e.key === 'Enter' && tagBox.value.trim()) { setMeta({ tags: meta.tags.concat([tagBox.value.trim()]) }); } });
+  panel.appendChild(h('div', { class: 'row client-tags', role: 'group', 'aria-label': 'Tags' }, h('span', { class: 'small muted' }, 'Tags'),
+    Array.from(new Set(suggested.concat(meta.tags))).map(t => { const on = meta.tags.includes(t); return h('button', { type: 'button', class: 'chip toggle' + (on ? ' on' : ''), 'aria-pressed': String(on), onClick: () => setMeta({ tags: on ? meta.tags.filter(x => x !== t) : meta.tags.concat([t]) }) }, t); }),
+    tagBox));
   const sessions = rec.sessions || [];
   /* MR-090: the long parts fold under a caret; a closed fold is one line */
   panel.appendChild(fold('clients.sessions', 'Sessions', sessions.length ? h('div', { class: 'tablewrap' }, h('table', { class: 'data' }, h('tbody', null, sessions.slice().reverse().map(sn => h('tr', null, h('td', null, sn.label), h('td', { class: 'small muted' }, F.dateLong(sn.at.slice(0, 10))), h('td', { class: 'small' }, sn.note || '')))))) : h('p', { class: 'muted small' }, 'No session closed yet.'), { count: sessions.length, open: false }));

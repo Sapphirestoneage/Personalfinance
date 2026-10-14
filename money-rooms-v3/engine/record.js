@@ -34,6 +34,7 @@ export function createRecord(opts) {
     theirPlate: { done: {}, snoozed: {} },
     anchors: { gut: {}, dream: {}, history: [] },
     household: { roommates: [], lease: 'none', unitSize: null, partner: null, basis: 'together', living: 'own' },
+    client: { status: 'active', tags: [] }, /* MR-093: where the client sits in the pipeline, and the coach's own labels */
     goals: defaultGoals(),
     program: null,
     colTier: null,
@@ -281,4 +282,15 @@ export function setColTier(record, tier, meta) {
   const line = append(record.journal, { kind: 'set', planet: 'sun', rowId: 'sun', field: 'colTier', owner: 'sun', old, new: next ? Object.assign({}, next) : null, source: next ? next.source : 'client', state: 'known', session: m.session || null, column: true, why: null }, m.now);
   touch(record, m.now);
   return line;
+}
+
+/* The pipeline (MR-093): a status and the coach's own tags, on the record, journaled. Older records read as active with no tags. */
+export const CLIENT_STATUSES = Object.freeze(['lead', 'active', 'paused', 'inactive', 'done']);
+export function clientMetaOf(record) { const c = (record && record.client) || {}; return { status: CLIENT_STATUSES.includes(c.status) ? c.status : 'active', tags: Array.isArray(c.tags) ? c.tags.slice() : [] }; }
+export function setClientMeta(record, patch, meta) {
+  const m = meta || {}; const old = clientMetaOf(record); const p = patch || {};
+  const next = { status: p.status !== undefined ? (CLIENT_STATUSES.includes(p.status) ? p.status : old.status) : old.status, tags: p.tags !== undefined ? Array.from(new Set(p.tags.map(t => String(t).trim().toLowerCase()).filter(Boolean))) : old.tags };
+  if (JSON.stringify(old) === JSON.stringify(next)) return null;
+  record.client = next;
+  return append(record.journal, { kind: 'client', planet: 'sun', rowId: 'client', field: Object.keys(p).join(','), owner: 'sun', old, new: JSON.parse(JSON.stringify(next)), source: 'client', state: 'known', session: m.session || null, why: m.why === undefined ? null : m.why }, m.now);
 }

@@ -1012,6 +1012,14 @@ table.data.clients-table td.client-name { white-space: nowrap; } table.data.clie
 @media (max-width: 720px) { .client-saved { display: block; } }
 .type-picks { gap: 6px; flex-wrap: wrap; margin: var(--s-2) 0; align-items: center; } /* MR-092 */
 .kind-notes { background: var(--paper-2); border-radius: var(--r-field); padding: var(--s-2) var(--s-3); margin: 0 0 var(--s-2); max-width: 72ch; } .kind-notes p { margin: 2px 0; }
+/* MR-093: find a client among a hundred */
+.clients-find { gap: var(--s-2); flex-wrap: wrap; margin: var(--s-2) 0; } .client-search { max-width: 260px; flex: 1 1 160px; }
+.clients-tags { gap: 6px; flex-wrap: wrap; margin: 0 0 var(--s-2); }
+.client-meta { display: inline-flex; gap: 4px; flex-wrap: wrap; margin-left: var(--s-2); vertical-align: middle; }
+.chip.tag-chip { border-color: var(--sapphire-300); color: var(--sapphire-900); background: var(--sapphire-100); }
+.chip.status-lead { border-color: var(--sapphire-500); color: var(--sapphire-700); } .chip.status-paused, .chip.status-inactive { border-style: dashed; color: var(--slate); } .chip.status-done { border-color: var(--gold); color: var(--ink); }
+.client-status, .client-tags { gap: var(--s-2); flex-wrap: wrap; align-items: center; margin: 0 0 var(--s-2); }
+@media (max-width: 720px) { .client-search { max-width: none; } table.data.clients-table td.client-name { white-space: normal; } }
 /* MR-090: a fold is one line until opened */
 .disclose { border-top: 1px solid var(--line-soft); margin-top: var(--s-2); }
 .disclose > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: var(--s-2); min-height: 36px; font-size: var(--fs-14); font-weight: var(--w-semibold); color: var(--sapphire-900); user-select: none; -webkit-tap-highlight-color: transparent; }

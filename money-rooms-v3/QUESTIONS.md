@@ -343,4 +343,7 @@ Collected during the run; none blocked the build. Answer whenever.
     an employer's health premium share worth its full dollar figure to a
     client who would otherwise go without cover, or should the room discount
     it?
+101. Clients live in each browser on its own, and the everything file moves
+    them. At a hundred clients across a phone and a laptop that becomes a
+    chore. Is it time for a shared store with a sign-in, and if so, whose?
 

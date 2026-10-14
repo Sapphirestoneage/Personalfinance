@@ -449,6 +449,10 @@ export function exportClient(rec) {
 }
 export async function importFile(file) {
   const text = await readFile(file);
+  let parsed = null; try { parsed = JSON.parse(text); } catch (e) { /* importJson says what is wrong */ }
+  if (parsed && Array.isArray(parsed.records)) { /* MR-093: every client in one file */
+    const r = store.importAll(text); app.toast('Imported ' + r.imported + (r.imported === 1 ? ' client' : ' clients') + (r.replaced ? ', ' + r.replaced + ' replaced' : '')); app.render(); return;
+  }
   const { record, snapshotKey } = store.importJson(text);
   app.open(record.id);
   if (location.hash !== '#/home') location.hash = '#/home'; /* MR-072: an import opens the client's Today */

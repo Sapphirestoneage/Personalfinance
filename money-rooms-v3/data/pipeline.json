@@ -1,0 +1,41 @@
+{
+ "asOf": "2026-10-14",
+ "source": "The coaching pipeline as the owner runs it; statuses are the app's own words",
+ "verify": false,
+ "statuses": [
+  {
+   "id": "lead",
+   "label": "Lead",
+   "hint": "Talked, not started"
+  },
+  {
+   "id": "active",
+   "label": "Active",
+   "hint": "In sessions now"
+  },
+  {
+   "id": "paused",
+   "label": "Paused",
+   "hint": "Taking a break, coming back"
+  },
+  {
+   "id": "inactive",
+   "label": "Inactive",
+   "hint": "Went quiet"
+  },
+  {
+   "id": "done",
+   "label": "Done",
+   "hint": "Graduated or finished"
+  }
+ ],
+ "tags": [
+  "friend",
+  "family",
+  "referral",
+  "paying",
+  "pro bono",
+  "workshop",
+  "waitlist"
+ ]
+}

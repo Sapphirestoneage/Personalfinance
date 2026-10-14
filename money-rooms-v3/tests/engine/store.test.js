@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { storageWorks, createStore, memoryStorage, migrate, MIGRATIONS, KEY_PREFIX } from '../../engine/store.js';
-import { createRecord, createRow, addRow, setField, SCHEMA_VERSION, undo, findRow, defaultGoals } from '../../engine/record.js';
+import { createRecord, createRow, addRow, setField, SCHEMA_VERSION, undo, findRow, defaultGoals, setClientMeta, clientMetaOf, CLIENT_STATUSES } from '../../engine/record.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fixture = n => JSON.parse(fs.readFileSync(path.join(here, '..', 'fixtures', n), 'utf8'));
@@ -115,4 +115,33 @@ test('drafts (MR-087): a form in progress is kept under its name until it is cle
   assert.equal(storageWorks(memoryStorage()), true);
   assert.equal(storageWorks({ setItem() { throw new Error('denied'); }, getItem() { return null; }, removeItem() {} }), false);
   assert.equal(storageWorks(null) === true || storageWorks(null) === false, true);
+});
+
+test('the pipeline (MR-093): a status and tags on the record, journaled; an older record reads as active with no tags', () => {
+  const rec = createRecord({ id: 'p1' });
+  assert.deepEqual(clientMetaOf(rec), { status: 'active', tags: [] });
+  const n = rec.journal.length;
+  setClientMeta(rec, { status: 'lead', tags: ['Friend', 'friend', ' referral '] }, { session: null });
+  assert.deepEqual(clientMetaOf(rec), { status: 'lead', tags: ['friend', 'referral'] }, 'tags are lowercased, trimmed and unique');
+  assert.equal(rec.journal.length, n + 1); assert.equal(rec.journal[n].kind, 'client');
+  assert.equal(setClientMeta(rec, { status: 'lead' }), null, 'no change, no line');
+  assert.equal(setClientMeta(rec, { status: 'nonsense' }), null, 'an unknown status is ignored');
+  assert.ok(CLIENT_STATUSES.includes('paused') && CLIENT_STATUSES.includes('inactive') && CLIENT_STATUSES.includes('done'));
+  const old = createRecord({ id: 'p0' }); delete old.client; assert.deepEqual(clientMetaOf(old), { status: 'active', tags: [] });
+  const st = createStore(memoryStorage()); st.save(rec); st.save(old);
+  const row = st.list().find(c => c.id === 'p1'); assert.equal(row.status, 'lead'); assert.deepEqual(row.tags, ['friend', 'referral']);
+  assert.equal(st.list().find(c => c.id === 'p0').status, 'active');
+});
+
+test('every client in one file and back (MR-093): export all, import all, and a one-client file still imports', () => {
+  const st = createStore(memoryStorage());
+  const a = createRecord({ id: 'a1' }); setField(a, 'sun', 'name', 'Tal', 'known', 'client'); const b = createRecord({ id: 'b1' }); setField(b, 'sun', 'name', 'Eli', 'known', 'client');
+  st.save(a); st.save(b);
+  const text = st.exportAll(); const parsed = JSON.parse(text);
+  assert.equal(parsed.app, 'money-rooms-v3'); assert.equal(parsed.records.length, 2);
+  const st2 = createStore(memoryStorage()); const r = st2.importAll(text);
+  assert.equal(r.imported, 2); assert.equal(r.replaced, 0); assert.deepEqual(st2.list().map(c => c.name).sort(), ['Eli', 'Tal']);
+  const again = st2.importAll(text); assert.equal(again.replaced, 2, 'the same file again replaces, never duplicates');
+  const one = st2.importAll(st.exportJson(a)); assert.equal(one.imported, 1);
+  assert.throws(() => st2.importAll('{"nope": true}'), /not a Money Rooms/);
 });

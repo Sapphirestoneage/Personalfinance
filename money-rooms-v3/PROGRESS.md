@@ -3,6 +3,8 @@
 Updated: 2026-10-13
 
 ## Done
+- Clients you can find (MR-093): a pipeline status and tags on every client; search, status and tag
+  filters on the list; Export every client and import of the everything file.
 - Benefits, the common ones (MR-092): a kind on every benefit row with how to add it, what to collect
   and how it counts; one-tap picks in the room; Benefits worth and Total compensation on the registry.
 - A date you can type on a phone (MR-091): mm/dd/yyyy with a number keyboard; one parser; desktops keep

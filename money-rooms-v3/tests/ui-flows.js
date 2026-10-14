@@ -1397,3 +1397,33 @@ flows.push({
   },
 });
 
+flows.push({
+  name: 'level25-find-clients',
+  async run(page, { base, check }) {
+    await page.setViewportSize({ width: 390, height: 844 });
+    const add = async name => { await page.goto(base + 'index.html#/clients'); await page.waitForSelector('button[aria-label="Add a client"]'); await page.click('button[aria-label="Add a client"]'); await page.fill('input[aria-label="New client name"]', name); await page.press('input[aria-label="New client name"]', 'Enter'); await page.waitForSelector('.qs-form'); };
+    await add('Tal'); await add('Eli');
+    await page.goto(base + 'index.html#/clients'); await page.waitForSelector('.clients-table');
+    check('both clients are in the list', (await page.locator('.clients-table tbody tr').count()) >= 2 && /Tal/.test(await page.textContent('.clients-table')) && /Eli/.test(await page.textContent('.clients-table')));
+    check('the list has a search box and the statuses with counts', (await page.locator('input[aria-label="Find a client"]').count()) === 1 && /All \d+/.test(await page.textContent('.clients-find')));
+    /* tag Tal a friend and make her a lead from her details (she is current) */
+    await page.click('.clients-table tr:has-text("Tal") a:has-text("Tal")'); await page.waitForSelector('.client-tags');
+    await page.click('.client-tags .chip:has-text("friend")'); await page.waitForTimeout(300);
+    await page.click('[aria-label="Client status"] .seg-btn:has-text("Lead")'); await page.waitForTimeout(300);
+    check('the status and the tag land on the record and the row', await page.evaluate(() => { const c = window.mr3.record.client; return c.status === 'lead' && c.tags.includes('friend'); }) && /friend/.test(await page.textContent('.clients-table tr:has-text("Tal")')) && /Lead/.test(await page.textContent('.clients-table tr:has-text("Tal")')));
+    await page.fill('input[aria-label="Find a client"]', 'el'); await page.waitForTimeout(200);
+    check('search narrows the list', (await page.locator('.clients-table tbody tr').count()) === 1 && /Eli/.test(await page.textContent('.clients-table tbody')));
+    await page.fill('input[aria-label="Find a client"]', ''); await page.waitForTimeout(200);
+    await page.click('[aria-label="Pipeline status"] .seg-btn:has-text("Lead")'); await page.waitForSelector('.clients-table');
+    check('the status filter keeps only the leads', (await page.locator('.clients-table tbody tr').count()) === 1 && /Tal/.test(await page.textContent('.clients-table tbody')));
+    await page.click('[aria-label="Pipeline status"] .seg-btn:has-text("All")'); await page.waitForSelector('.clients-table');
+    await page.click('.clients-tags .chip:has-text("friend")'); await page.waitForSelector('.clients-table');
+    check('the tag filter does the same', (await page.locator('.clients-table tbody tr').count()) === 1);
+    await page.click('.clients-tags .chip:has-text("friend")'); await page.waitForSelector('.clients-table');
+    /* every client in one file, and back into an empty browser */
+    const moved = await page.evaluate(() => { const text = window.mr3.store.exportAll(); const n = JSON.parse(text).records.length; Object.keys(localStorage).filter(k => k.startsWith('mr3:client:')).forEach(k => localStorage.removeItem(k)); const r = window.mr3.store.importAll(text); return { n, imported: r.imported, back: window.mr3.store.list().map(c => c.name).sort().join(',') }; });
+    check('export every client, clear the browser, import: all of them are back', moved.n >= 2 && moved.imported === moved.n && /Eli,.*Tal/.test(moved.back));
+    await page.setViewportSize({ width: 1440, height: 900 });
+  },
+});
+

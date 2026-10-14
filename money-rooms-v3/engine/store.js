@@ -4,7 +4,7 @@
    tests run against a Map. Every record that comes out of here has been
    migrated to the current schema. */
 
-import { SCHEMA_VERSION, createRecord, defaultGoals } from './record.js';
+import { SCHEMA_VERSION, createRecord, defaultGoals, clientMetaOf } from './record.js';
 import { append } from './journal.js';
 import { toMonthly } from './parse.js';
 import { PLANETS } from './sun.js';
@@ -181,8 +181,22 @@ export function createStore(adapter) {
       return s.keys().filter(k => k.indexOf(KEY_PREFIX) === 0).map(k => {
         const r = JSON.parse(s.getItem(k));
         const name = r.sun && r.sun.f && r.sun.f.name && r.sun.f.name.v;
-        return { id: r.id, name: name || '', updatedAt: r.updatedAt, schemaVersion: r.schemaVersion };
+        const cm = clientMetaOf(r);
+        return { id: r.id, name: name || '', updatedAt: r.updatedAt, schemaVersion: r.schemaVersion, status: cm.status, tags: cm.tags };
       }).sort((a, b) => (a.updatedAt < b.updatedAt ? 1 : -1));
+    },
+    /* MR-093: every client in one file, and back; a browser keeps its own clients, so this is how they move between a phone and a laptop */
+    exportAll() {
+      const records = this.list().map(c => JSON.parse(s.getItem(key(c.id))));
+      return JSON.stringify({ app: 'money-rooms-v3', exportedAt: new Date().toISOString(), records }, null, 2);
+    },
+    importAll(text, now) {
+      let parsed; try { parsed = JSON.parse(text); } catch (e) { throw new Error('that file is not JSON'); }
+      const list = parsed && Array.isArray(parsed.records) ? parsed.records : (parsed && parsed.record ? [parsed.record] : (parsed && parsed.id && parsed.planets ? [parsed] : null));
+      if (!list) throw new Error('that file is not a Money Rooms v3 export');
+      const out = { imported: 0, replaced: 0, ids: [] };
+      list.forEach(rec => { if (!rec || !rec.id || !rec.sun || !rec.planets) return; const existed = !!s.getItem(key(rec.id)); this.save(migrate(rec), now); out.imported += 1; if (existed) out.replaced += 1; out.ids.push(rec.id); });
+      return out;
     },
     exportJson(record) {
       return JSON.stringify({ app: 'money-rooms-v3', exportedAt: new Date().toISOString(), record }, null, 2);
