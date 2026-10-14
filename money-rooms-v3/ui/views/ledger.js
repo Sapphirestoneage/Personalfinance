@@ -190,6 +190,8 @@ export function holdsBack(app, planet, typeId) {
 
 function mountTable(host, app, planet, typeId) {
   const fields = app.data.fields;
+  let fromSnapshot = false; try { fromSnapshot = sessionStorage.getItem('mr3.fromSnapshot') === '1'; } catch (e) { /* no storage */ }
+  if (fromSnapshot) host.appendChild(h('div', { class: 'dive-bar' }, h('a', { class: 'btn primary', href: '#/snapshot' }, 'Back to snapshot'), h('span', { class: 'small muted' }, 'Fill any of it and leave whenever.'))); /* MR-110 */
   let tdef;
   try { tdef = typeDef(fields, planet, typeId); } catch (e) { location.hash = '#/ledger/' + planet; return null; }
   host.appendChild(crumbs([{ label: 'Plan', href: '#/ledger' }, { label: PLANET_LABELS[planet], href: '#/ledger/' + planet }]));

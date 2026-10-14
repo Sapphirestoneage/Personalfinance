@@ -8,6 +8,8 @@ import { h, clear } from '../dom.js';
 import { clientName } from '../app.js';
 import * as F from '../../engine/format.js';
 import { PLANETS, PLANET_LABELS } from '../../engine/sun.js';
+import { coverageRing } from './snapshot.js';
+import { listOf as whatsLeftOf } from './whatsleft.js';
 import { nextWins } from './goals.js';
 import { programOf, nextSessionNumber, readiness, homework, programMode } from '../../engine/program.js';
 import { sessionCount, sessionDef, planSession, threeSteps } from '../../engine/curriculum.js';
@@ -60,6 +62,7 @@ function mountToday(host, app) {
     /* a small meter, not the hero */
     const conf = R ? overallConfidence(R) : 0;
     const weakest = R ? PLANETS.slice().sort((a, b) => score(R, a) - score(R, b))[0] : null;
+    below.appendChild(snapshotCard(app)); /* Level 15 (MR-111): coverage and what's left, kept apart from FI progress */
     below.appendChild(h('section', { class: 'panel' }, h('h2', null, 'The picture'),
       h('div', { class: 'meter-mini', role: 'group', 'aria-label': 'Picture completeness ' + Math.round(conf * 100) + '%' }, h('div', { class: 'meter-track' }, h('div', { class: 'meter-fill', style: { width: Math.round(conf * 100) + '%' } })), h('span', { class: 'small' }, Math.round(conf * 100) + '% in')),
       h('p', { class: 'small', style: { marginTop: '8px' } }, weakest && R.rowCounts[weakest] === 0 ? PLANET_LABELS[weakest] + ' has nothing in it yet. ' : weakest ? lowerFirst(PLANET_LABELS[weakest]).charAt(0).toUpperCase() + lowerFirst(PLANET_LABELS[weakest]).slice(1) + ' is the thinnest part. ' : '', h('a', { href: weakest ? '#/ledger/' + weakest : '#/ledger' }, 'Open the plan'))));
@@ -126,4 +129,16 @@ export function stepsFor(app) {
   const wins = nextWins(app, 1); if (wins[0]) cands.push({ text: wins[0].text, kind: 'win' });
   if (Object.keys(rec.targets || {}).length) cands.push({ text: 'Keep to your targets this month', kind: 'targets' });
   return threeSteps({ doneToday: [], candidates: cands });
+}
+
+/* Coverage and what's left (MR-111): the coverage ring (how much of the picture is itemized, never FI progress) and the top three of what is still unsure. */
+function snapshotCard(app) {
+  const R = app.result; const snap = R.snapshot; const WL = whatsLeftOf(app);
+  const card = h('section', { class: 'panel snapshot-card' });
+  card.appendChild(h('h2', null, 'Snapshot and what\'s left', h('a', { class: 'small', href: '#/snapshot' }, 'Open the snapshot')));
+  card.appendChild(h('div', { class: 'row' }, coverageRing(snap.coverage, 56), h('div', null, h('div', null, h('strong', null, snap.complete + ' of ' + snap.total), ' base numbers in; ' + Math.round(snap.coverage * 100) + '% itemized.'), h('div', { class: 'small muted' }, R.hours && R.hours.wage ? 'Real hourly wage ' + F.dollars(R.hours.wage, { plain: true }) + ' an hour, ' + R.hours.label.toLowerCase() + '.' : 'Add income to see hours.'))));
+  if (WL.items.length) card.appendChild(h('ol', { class: 'wl-mini' }, WL.next.map(i => h('li', null, h('a', { href: i.href }, i.question || i.label), h('span', { class: 'small muted' }, ' ' + i.planetLabel + (i.dollars ? ', ' + F.dollarsWhole(i.dollars) + ' a year uncertain' : ''))))));
+  else card.appendChild(h('p', { class: 'small muted' }, 'Nothing left above the line.'));
+  card.appendChild(h('p', { class: 'small' }, h('a', { href: '#/whatsleft' }, WL.items.length + ' on the list'), WL.small.length ? h('span', { class: 'muted' }, ', ' + WL.small.length + ' in Small wins') : null));
+  return card;
 }

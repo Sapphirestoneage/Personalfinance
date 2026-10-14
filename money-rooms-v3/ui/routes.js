@@ -29,6 +29,8 @@ import * as Calculators from './views/calculators.js';
 import * as Calendar from './views/calendar.js';
 import * as Calc from './views/calc.js';
 import * as Matters from './views/matters.js';
+import * as Snapshot from './views/snapshot.js';
+import * as WhatsLeft from './views/whatsleft.js';
 import { PLANETS, PLANET_LABELS, PLANET_SHORT } from '../engine/sun.js';
 import { translator } from './glossary.js';
 
@@ -51,6 +53,8 @@ export const routes = {
   program: { title: 'Program', mount: Program.mount, needsClient: true, coachOnly: true, section: 'Call', help: 'The twelve sessions and the money dates after them, each with its status, and the before-and-after sheet.' },
   prep: { title: 'Prepare', mount: Prep.mount, needsClient: true, coachOnly: true, section: 'Call', help: 'Three things before the call: what they owe you, what is still missing for today\'s targets, and the open loop to answer first. Start the call begins the session.' },
   start: { title: 'Quick start', mount: QuickStart.mount, needsClient: false, coachOnly: true, section: 'Clients', help: 'Four questions for a first sitting: income, debt, expenses, assets. Each rough answer lands in its room at once and the numbers on top light up as they can. No marks a kind as none. See what is still needed opens the Checklist.' },
+  snapshot: { title: 'Quick snapshot', mount: Snapshot.mount, needsClient: true, coachOnly: true, section: 'Plan', help: 'Every base number on one screen: income, expenses, assets, debt. A number, a range, Not for me or Don\'t know yet. Any one opens its rows for a partial deep dive; Back to snapshot is always there.' },
+  whatsleft: { title: 'What\'s left', mount: WhatsLeft.mount, needsClient: true, coachOnly: true, section: 'Plan', help: 'Every number still unsure across every room, ranked by what it moves times what is still uncertain. Fill it here or open where it lives. Small items sit in Small wins.' },
   matters: { title: 'What matters', mount: Matters.mount, needsClient: true, section: 'Plan', help: 'A values audit with a price tag on every line. The client lists what matters, ranks it, prices it, and ties the spending to it; the screen shows where the money goes against what they say matters, the conflicts, and a panel to move money as a preview.' },
   checklist: { title: 'Checklist', mount: Checklist.mount, needsClient: true, coachOnly: true, section: 'Plan', help: 'Every piece of information the numbers need for this client, with what is on file and whether it counts as in. Filter to what is still needed or to the rough figures. Tap a line to open where it lives.' },
   transactions: { title: 'Transactions', mount: Transactions.mount, needsClient: true, coachOnly: true, section: 'Call', help: 'A bank or card export, cleaned and categorized, becomes real monthly actuals with one click per line.' },
@@ -86,6 +90,8 @@ export function navItems(app) {
   items.push({ group: 'Call', label: 'Money date', href: '#/money-date', active: r => r.name === 'money-date', key: null });
   items.push({ group: 'Call', label: 'Transactions', href: '#/transactions', active: r => r.name === 'transactions', key: null });
   items.push({ group: 'Plan', label: 'Household facts', href: '#/ledger', active: r => r.name === 'ledger' && !r.params.id, key: null });
+  items.push({ group: 'Plan', label: 'Quick snapshot', href: '#/snapshot', active: r => r.name === 'snapshot', key: null });
+  items.push({ group: 'Plan', label: 'What\'s left', href: '#/whatsleft', active: r => r.name === 'whatsleft', key: null });
   items.push({ group: 'Plan', label: 'What matters', href: '#/matters', active: r => r.name === 'matters', key: null });
   PLANETS.forEach((p, i) => {
     items.push({ group: 'Plan', label: t(PLANET_LABELS[p]) === PLANET_LABELS[p] ? PLANET_SHORT[p] : t(PLANET_LABELS[p]), href: '#/ledger/' + p, active: r => r.name === 'ledger' && r.params.id === p, key: 'Alt+' + (i + 2), fill: app.result && app.result.fills[p] !== null ? app.result.fills[p] : null });
