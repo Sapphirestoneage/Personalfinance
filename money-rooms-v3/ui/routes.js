@@ -28,6 +28,7 @@ import * as MoneyDate from './views/moneydate.js';
 import * as Calculators from './views/calculators.js';
 import * as Calendar from './views/calendar.js';
 import * as Calc from './views/calc.js';
+import * as Matters from './views/matters.js';
 import { PLANETS, PLANET_LABELS, PLANET_SHORT } from '../engine/sun.js';
 import { translator } from './glossary.js';
 
@@ -50,6 +51,7 @@ export const routes = {
   program: { title: 'Program', mount: Program.mount, needsClient: true, coachOnly: true, section: 'Call', help: 'The twelve sessions and the money dates after them, each with its status, and the before-and-after sheet.' },
   prep: { title: 'Prepare', mount: Prep.mount, needsClient: true, coachOnly: true, section: 'Call', help: 'Three things before the call: what they owe you, what is still missing for today\'s targets, and the open loop to answer first. Start the call begins the session.' },
   start: { title: 'Quick start', mount: QuickStart.mount, needsClient: false, coachOnly: true, section: 'Clients', help: 'Four questions for a first sitting: income, debt, expenses, assets. Each rough answer lands in its room at once and the numbers on top light up as they can. No marks a kind as none. See what is still needed opens the Checklist.' },
+  matters: { title: 'What matters', mount: Matters.mount, needsClient: true, section: 'Plan', help: 'A values audit with a price tag on every line. The client lists what matters, ranks it, prices it, and ties the spending to it; the screen shows where the money goes against what they say matters, the conflicts, and a panel to move money as a preview.' },
   checklist: { title: 'Checklist', mount: Checklist.mount, needsClient: true, coachOnly: true, section: 'Plan', help: 'Every piece of information the numbers need for this client, with what is on file and whether it counts as in. Filter to what is still needed or to the rough figures. Tap a line to open where it lives.' },
   transactions: { title: 'Transactions', mount: Transactions.mount, needsClient: true, coachOnly: true, section: 'Call', help: 'A bank or card export, cleaned and categorized, becomes real monthly actuals with one click per line.' },
   scoreboard: { title: 'Scoreboard', mount: Scoreboard.mount, needsClient: true, section: 'Progress', help: 'The six numbers that matter, each with how it moved since last time, and the one next action. Every other number is a tap away by group.' },
@@ -62,7 +64,7 @@ export const routes = {
 
 /* The client's five items (MR-072) */
 const CLIENT_ITEMS = [
-  { label: 'Home', href: '#/home', active: r => ['home', 'ledger', 'clients', 'learn', 'scenarios', 'assumptions', 'discovery'].includes(r.name) },
+  { label: 'Home', href: '#/home', active: r => ['home', 'ledger', 'clients', 'learn', 'scenarios', 'assumptions', 'discovery', 'matters'].includes(r.name) },
   { label: 'Your progress', href: '#/scoreboard', active: r => ['scoreboard', 'measure', 'map', 'levers', 'calculators', 'calc'].includes(r.name) },
   { label: 'Your calendar', href: '#/calendar', active: r => r.name === 'calendar' },
   { label: 'Your goals', href: '#/goals', active: r => r.name === 'goals' },
@@ -84,6 +86,7 @@ export function navItems(app) {
   items.push({ group: 'Call', label: 'Money date', href: '#/money-date', active: r => r.name === 'money-date', key: null });
   items.push({ group: 'Call', label: 'Transactions', href: '#/transactions', active: r => r.name === 'transactions', key: null });
   items.push({ group: 'Plan', label: 'Household facts', href: '#/ledger', active: r => r.name === 'ledger' && !r.params.id, key: null });
+  items.push({ group: 'Plan', label: 'What matters', href: '#/matters', active: r => r.name === 'matters', key: null });
   PLANETS.forEach((p, i) => {
     items.push({ group: 'Plan', label: t(PLANET_LABELS[p]) === PLANET_LABELS[p] ? PLANET_SHORT[p] : t(PLANET_LABELS[p]), href: '#/ledger/' + p, active: r => r.name === 'ledger' && r.params.id === p, key: 'Alt+' + (i + 2), fill: app.result && app.result.fills[p] !== null ? app.result.fills[p] : null });
   });

@@ -1344,3 +1344,39 @@ table.data.sheet td.sheet-tags .select { width: auto; flex: 1 1 150px; max-width
 @media (max-width: 500px) { table.data.sheet.stack td.sheet-tags { grid-template-columns: minmax(0, 1fr); } table.data.sheet.stack td.sheet-tags .select { max-width: none; width: 100%; } table.data.sheet.stack td .sheet-name { align-items: flex-end; } }
 table.data.sheet tfoot td { font-weight: var(--w-semibold); border-top: 1px solid var(--line); }
 .sheet-total { max-width: 72ch; margin: var(--s-2) 0 0; }
+/* What matters (MR-098): the values audit in the Sun */
+.matters-card { border-top: 1px solid var(--line-soft); margin-top: var(--s-3); padding-top: var(--s-2); cursor: pointer; }
+.matters-card h3 { display: flex; justify-content: space-between; align-items: baseline; font-size: var(--fs-14); color: var(--sapphire-900); margin: 0 0 var(--s-1); }
+.matters-top { margin: 0; padding-left: 20px; } .matters-top li { display: flex; justify-content: space-between; gap: var(--s-2); padding: 2px 0; }
+.matters-top .p-title { overflow-wrap: anywhere; } .matters-score { margin: var(--s-1) 0; } .matters-links a { margin-right: 2px; }
+.matters-tabs { margin-bottom: var(--s-3); } .matters-listpick { margin-bottom: var(--s-2); }
+.matters .panel + .panel { margin-top: var(--s-3); }
+.matters textarea.dump { width: 100%; min-height: 110px; font: inherit; padding: var(--s-2); border: 1px solid var(--line); border-radius: var(--r-field); background: var(--paper, transparent); color: var(--ink); }
+.matters-sort { list-style: none; padding: 0; margin: var(--s-2) 0 0; } .matters-sort li { display: flex; justify-content: space-between; align-items: center; gap: var(--s-2); padding: 6px 0; border-bottom: 1px solid var(--line-soft); }
+.matters-sort .p-title, .matters-rank .p-title { min-width: 0; overflow-wrap: anywhere; flex: 1; }
+.matters-rank { list-style: none; padding: 0; margin: 0; } .matters-rank li { display: flex; align-items: center; gap: var(--s-2); padding: 6px 0; border-bottom: 1px solid var(--line-soft); }
+.matters-rank li.negative .p-title { color: var(--slate); } .matters-rank li.dragging { opacity: 0.5; } .matters-rank li.over { border-top: 2px solid var(--sapphire-500); }
+.matters-rank .rank-num { width: 24px; height: 24px; border-radius: 50%; background: var(--sapphire-100); color: var(--sapphire-900); font-weight: var(--w-semibold); display: inline-flex; align-items: center; justify-content: center; font-size: var(--fs-12); flex: none; }
+.matters-rank .rank-btns { display: flex; gap: 4px; flex: none; } .matters-rank .p-title .chip { margin-left: var(--s-1); }
+.matters-price .price-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--s-1) var(--s-3); padding: var(--s-1) 0; }
+.amount-box { display: inline-flex; gap: 4px; align-items: center; max-width: 100%; } .amount-box .input { width: 110px; } .amount-box .select.conf { width: auto; max-width: 120px; }
+.matters-tag .tag-cat { padding: var(--s-2) 0; border-bottom: 1px solid var(--line-soft); } .tag-head { justify-content: space-between; } .tag-line { padding: 4px 0 4px var(--s-2); border-left: 2px solid var(--line-soft); margin: 4px 0; }
+.tag-chips { margin-top: 4px; } .tag-chips .chip-pct { color: var(--sapphire-700); font-weight: var(--w-semibold); }
+.split-row { flex-basis: 100%; width: 100%; padding: var(--s-1) 0; } .split-row .row { flex-wrap: wrap; gap: 4px; align-items: center; } .split-row .input.pct { width: 56px; }
+.matters-connect .connect-form { flex-wrap: wrap; gap: var(--s-1); } .connect-list { list-style: none; padding: 0; margin: var(--s-2) 0; } .connect-list li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--s-2); padding: 6px 0; border-bottom: 1px solid var(--line-soft); }
+.matters-kpis { margin: var(--s-2) 0; } .kpi.dim .value { color: var(--slate); font-size: var(--fs-14); } .kpi.headline { border-color: var(--sapphire-300); }
+.matters-table tr.mismatch td.what { box-shadow: inset 3px 0 0 var(--amber); padding-left: 10px; } .matters-table tr.underfunded td.what { box-shadow: inset 3px 0 0 var(--sapphire-300); padding-left: 10px; }
+.matters-list { padding-left: 20px; margin: 0; } .matters-list li { padding: 4px 0; } .matters-list.moves li { display: flex; justify-content: space-between; gap: var(--s-2); flex-wrap: wrap; }
+.hours-form .fieldrow { max-width: 360px; }
+.conflict-card { border: 1px solid var(--line); border-radius: var(--r-panel, 12px); padding: var(--s-2) var(--s-3); margin: var(--s-2) 0; } .conflict-card .row { justify-content: space-between; flex-wrap: wrap; gap: var(--s-1); } .conflict-card.suggested { border-style: dashed; }
+.resolve { margin-top: var(--s-1); display: grid; gap: var(--s-1); } .resolve .row { flex-wrap: wrap; gap: var(--s-1); align-items: center; } .input.num.year { width: 70px; }
+.move-form .fieldrow { max-width: 520px; } .move-form .slider { flex: 1; min-width: 120px; accent-color: var(--sapphire-700); } .move-preview table.preview { margin: var(--s-2) 0; }
+.matters-lists .add-list { flex-wrap: wrap; gap: var(--s-1); margin: var(--s-2) 0; }
+table.compare tr.v-agree td.what { box-shadow: inset 3px 0 0 var(--sapphire-300); padding-left: 10px; } table.compare tr.v-disagree td.what { box-shadow: inset 3px 0 0 var(--amber); padding-left: 10px; }
+.chart-panel .chart-body { min-height: 120px; }
+svg .bar.rank { fill: var(--sapphire-700); } svg .bar.spend { fill: var(--sapphire-300); } svg .bar.spend.mismatch { fill: var(--amber); }
+svg .quad.cheap { fill: var(--sapphire-100); } svg .grid-line { stroke: var(--line); stroke-dasharray: 3 3; } svg .dot { fill: var(--sapphire-500); } svg .dot.cheap { fill: var(--sapphire-700); } svg .dot.mismatch { fill: var(--amber); } svg .dot.rough { fill-opacity: 0.5; }
+svg .map-link { stroke: var(--sapphire-300); stroke-width: 2; } svg .map-link.requires { stroke: var(--sapphire-700); } svg .map-link.conflict { stroke: var(--amber); stroke-dasharray: 6 4; stroke-width: 2.5; }
+svg .map-node { fill: var(--sapphire-100); stroke: var(--sapphire-300); stroke-width: 1.5; } svg .map-node.top { fill: var(--sapphire-300); stroke: var(--sapphire-700); } svg .map-node.negative { fill: var(--paper, #fff); stroke: var(--slate); stroke-dasharray: 3 2; }
+svg .map-rank { font-size: 12px; font-weight: 600; fill: var(--sapphire-900); } svg .chart-label.small { font-size: 11px; }
+@media (max-width: 720px) { .matters-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .matters-rank .rank-btns .btn { padding-left: 6px; padding-right: 6px; } .matters-price .price-grid { grid-template-columns: 1fr; } }

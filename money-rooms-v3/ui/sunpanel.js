@@ -8,6 +8,7 @@ import * as F from '../engine/format.js';
 import { hasValue } from '../engine/states.js';
 import { setDateValue, datePicker } from './datepicker.js';
 import { ledgerTable } from './table.js';
+import { UNTIED } from '../engine/matters.js';
 
 export function parseDateText(t) {
   let m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(t);
@@ -73,6 +74,7 @@ export function renderSun(panel, app) {
   });
   if (!readOnly) panel.appendChild(moreBtn);
   panel.appendChild(moreHost);
+  renderMattersCard(panel, app); /* MR-098: what matters sits in the Sun */
   renderProfileForm(panel, app, 'life', 'retirement', app.view === 'coach' ? 'Retirement and FI' : 'When work becomes a choice', 'Life plan');
   renderProfileForm(panel, app, 'debt', 'score', app.view === 'coach' ? 'Credit score' : 'Your credit score', 'Debt and credit');
 }
@@ -160,3 +162,16 @@ function displayValue(id, f, states) {
   return h('span', { class: 'value' }, String(v));
 }
 export { PLANETS };
+
+/* What matters on the sun card (MR-098): the top five and the alignment score once filled; one tap opens the room or any of its pictures. */
+export function renderMattersCard(panel, app) {
+  const R = app.result && app.result.matters; const coach = app.view === 'coach';
+  const card = h('section', { class: 'matters-card', dataset: { go: '#/matters' } });
+  card.appendChild(h('h3', null, coach ? 'What matters' : 'What matters to you', h('a', { class: 'small', href: '#/matters' }, coach ? 'Open' : 'See it')));
+  if (!R || !R.priorities.length) { card.appendChild(h('p', { class: 'muted small' }, coach ? 'The values audit: list, rank, price, tie the spending. Not started.' : 'Your coach writes these down with you.')); panel.appendChild(card); return; }
+  card.appendChild(h('ol', { class: 'matters-top' }, R.positives.slice(0, 5).map(l => h('li', null, h('span', { class: 'p-title' }, l.title), l.tied.cents ? h('span', { class: 'num small muted' }, F.dollarsWhole(l.tied.cents)) : null))));
+  const a = R.alignment; const u = R.untied;
+  card.appendChild(h('p', { class: 'small matters-score' }, a.top5 === null ? h('span', { class: 'muted' }, 'Alignment opens when ' + a.needs.join(' and ') + '.') : [h('strong', { dataset: { metric: 'alignmentTop5' } }, F.percent(a.top5, { places: 0 })), ' of spending goes to the top five', u.cents !== null ? [h('span', null, '; '), h('strong', { dataset: { metric: 'untiedSpending' } }, F.dollarsWhole(u.cents)), ' a month is ' + UNTIED.toLowerCase()] : null, '.']));
+  card.appendChild(h('p', { class: 'small matters-links' }, [['prioritySankey', 'Flow'], ['priorityBars', 'Ranks'], ['priorityQuadrant', 'Quadrant'], ['priorityMap', 'Map']].flatMap(([id, lab], i) => [i ? ' ' : null, h('a', { href: '#/measure/charts/' + id }, lab)])));
+  panel.appendChild(card);
+}
