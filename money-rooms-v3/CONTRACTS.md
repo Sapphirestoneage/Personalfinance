@@ -133,7 +133,7 @@ Publishes:
 
 ## 6. Taxes (v1: federal brackets and FICA only)
 
-Reads: `grossMonthly`, `pretaxContribMonthly`, `hsaPayrollMonthly`, `pretaxOtherMonthly`, `byType`, `takeHomeMonthly` (Income slot), `interestByType` (Debt slot), `roomLeft` (Investments slot), `filingStatus`, `state`, `city`, `dependents` (Sun).
+Reads: `grossMonthly`, `pretaxContribMonthly`, `hsaPayrollMonthly`, `pretaxOtherMonthly`, `byType`, `takeHomeMonthly`, `rothContribMonthly` (Income slot), `interestByType` (Debt slot), `roomLeft` (Investments slot), `filingStatus`, `state`, `city`, `dependents` (Sun).
 Publishes:
 
 | key | units | meaning |
@@ -155,6 +155,7 @@ Publishes:
 | `breakdown` | annual | every tax and what is left: federal after credits, state, local, Social Security, Medicare, self-employment, total, take-home (MR-094) |
 | `totalRate` | ratio | every tax over gross (MR-094) |
 | `levers` | list | the ways to lower it, each with what it saves a year or what it needs (MR-094) |
+| `lines` | list | the return line by line: `{ id, kind, label, amount, base, rate, note }`; income, each deduction, each federal bracket, each credit, each payroll tax, the total and what is left (MR-097) |
 
 ## 7. Life Plan
 

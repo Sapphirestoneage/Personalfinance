@@ -3,6 +3,8 @@
 Updated: 2026-10-13
 
 ## Done
+- The return line by line and the questions a return asks (MR-097): each line with its base and rate,
+  thirteen yes-or-no questions that point at the rooms, the saver's credit.
 - An hourly wage on the pay rows (MR-096): gross pay worked out from the wage and paid hours; dark-mode
   read cells keep the theme.
 - Pay before tax or after tax on the quick start (MR-095): after tax lands in Take-home.

@@ -1453,6 +1453,30 @@ flows.push({
 });
 
 flows.push({
+  name: 'level28-tax-lines-and-questions',
+  async run(page, { base, check, APP }) {
+    await page.goto(base + 'index.html#/home'); await page.waitForSelector('#main h1, #main .empty');
+    await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', 'leah.json')); await page.waitForSelector('.today-card');
+    await page.goto(base + 'index.html#/ledger/taxes'); await page.waitForSelector('.tax-lines');
+    const lines = await page.textContent('.tax-lines');
+    check('the return is listed line by line: gross, the deduction, each federal bracket with its rate, state, Social Security and Medicare, every tax and what is left', (await page.locator('.tax-lines tbody tr').count()) >= 12 && /Standard deduction/.test(lines) && /Federal at 10 percent/.test(lines) && /Federal at 12 percent/.test(lines) && /Social Security/.test(lines) && /Medicare/.test(lines) && /Every tax/.test(lines) && /Left after every tax/.test(lines));
+    check('a bracket line shows what it taxed, at what rate, and the figure', await page.evaluate(() => { const tr = document.querySelector('.tax-lines tr[data-line="federal1"]'); const tds = Array.from(tr.querySelectorAll('td')).map(td => td.textContent.trim()); return tds.length === 4 && /\$/.test(tds[1]) && /12%/.test(tds[2]) && /\$/.test(tds[3]); }));
+    check('the questions a return asks are listed with Yes and No, and the facts the rooms already hold read as counted', (await page.locator('.tax-quiz li').count()) >= 10 && (await page.locator('.tax-quiz li[data-question="studentLoan"].counted').count()) === 1 && (await page.locator('.tax-quiz li[data-question="studentLoan"] .seg-btn.on:has-text("Yes")').count()) === 1);
+    await page.click('.tax-quiz li[data-question="charity"] .seg-btn:has-text("Yes")'); await page.waitForTimeout(400);
+    check('a yes without the fact offers to add it, and the answer is journaled as a section', (await page.locator('.tax-quiz li[data-question="charity"] .quiz-next button').count()) === 1 && await page.evaluate(() => window.mr3.record.tax.answers.charity === true && window.mr3.record.journal[window.mr3.record.journal.length - 1].kind === 'section'));
+    await page.click('.tax-quiz li[data-question="charity"] .quiz-next button'); await page.waitForSelector('.ledger-table'); await page.waitForTimeout(300);
+    check('Add it lands in the deductions room with a charity row already picked', /taxes\/deduction/.test(await page.evaluate(() => location.hash)) && await page.evaluate(() => window.mr3.record.planets.taxes.rows.some(r => r.type === 'deduction' && r.f.deductionKind.v === 'charity')));
+    await page.goto(base + 'index.html#/ledger/taxes'); await page.waitForSelector('.tax-quiz');
+    check('back in the room the charity question reads counted and the offer is gone', (await page.locator('.tax-quiz li[data-question="charity"].counted').count()) === 1 && (await page.locator('.tax-quiz li[data-question="charity"] .quiz-next').count()) === 0);
+    await page.click('.tax-quiz li[data-question="marketplace"] .seg-btn:has-text("Yes")'); await page.waitForTimeout(400);
+    check('a marketplace plan adds the premium tax credit to the ways to lower it, as something to bring', /premium tax credit/i.test(await page.textContent('.tax-levers')) && /1095-A/.test(await page.textContent('.tax-quiz li[data-question="marketplace"]')));
+    await page.click('#view-client'); await page.waitForTimeout(400);
+    check('the client reads the questions in the second person', /Did you give to charity/.test(await page.textContent('.tax-quiz')) && /Line by line/.test(await page.textContent('.tax-room')));
+    await page.click('#view-coach'); await page.waitForTimeout(300);
+  },
+});
+
+flows.push({
   name: 'level27-hourly-and-dark',
   async run(page, { base, check }) {
     await page.setViewportSize({ width: 390, height: 844 }); await page.emulateMedia({ colorScheme: 'dark' });

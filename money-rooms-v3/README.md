@@ -238,6 +238,9 @@ progress) and Progress vs paperwork.
 Program in the side nav shows one row per session, discovery first, with
 status, date, targets met, accounts opened, homework done and the stress
 score where it was asked; urgent sessions sit between the numbered ones.
+The Taxes room lists the return line by line, each line with what it taxed and
+at what rate, and asks the thirteen yes-or-no questions a return asks, each
+pointing at the room that holds the fact (MR-097); the saver's credit counts.
 The Taxes room is computed (MR-094): every tax a year as one picture, the
 all-in rate, standard against itemized, and the ways to lower it with a figure
 each; deductions and credits paid go in as rows.

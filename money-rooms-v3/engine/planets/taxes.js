@@ -5,13 +5,14 @@
    the household paid for. federalAnnual stays the plain bracket figure (what Income
    uses to infer take-home); breakdown carries the full picture. */
 import { q, U, needs, isNeeds } from '../units.js';
-import { federalTax, taxableIncome, fica, standardDeduction, selfEmploymentTax, stateTax, localTax, childTaxCredit, eitc, creditFor, studentLoanDeduction, itemized } from '../tax.js';
+import { federalTax, federalBrackets, taxableIncome, fica, standardDeduction, selfEmploymentTax, stateTax, localTax, childTaxCredit, eitc, creditFor, studentLoanDeduction, itemized, saversCredit } from '../tax.js';
+import { taxAnswersOf } from '../taxquiz.js';
 import { fieldQ, val } from './common.js';
 
 const KINDS_D = ['charity', 'medical', 'propertyTax', 'stateTaxPaid', 'other'];
 
 export function run(ctx) {
-  const { reader, data, rows, asm } = ctx;
+  const { reader, data, rows, asm, record } = ctx;
   const status = reader.fact('filingStatus');
   const gross = reader.slot('income.grossMonthly');
   const pretax = reader.slot('income.pretaxContribMonthly');
@@ -25,7 +26,7 @@ export function run(ctx) {
   else if (gross.cents === 0) need.push('gross pay');
   if (need.length) {
     const n = needs(need);
-    return { outputs: { federalAnnual: n, ficaAnnual: n, effectiveRate: n, marginalRate: n, savedPer1000Pretax: n, impliedRate: take && !isNeeds(take) && gross && !isNeeds(gross) ? impliedRate(gross, take, pretax, hsa, other, byType) : n, taxable: n, standardDeduction: null, ficaParts: null, selfEmployment: null, stateAnnual: n, localAnnual: n, creditsAnnual: n, deductionChoice: null, breakdown: null, totalRate: n, levers: [] }, enriched: [] };
+    return { outputs: { federalAnnual: n, ficaAnnual: n, effectiveRate: n, marginalRate: n, savedPer1000Pretax: n, impliedRate: take && !isNeeds(take) && gross && !isNeeds(gross) ? impliedRate(gross, take, pretax, hsa, other, byType) : n, taxable: n, standardDeduction: null, ficaParts: null, selfEmployment: null, stateAnnual: n, localAnnual: n, creditsAnnual: n, deductionChoice: null, breakdown: null, totalRate: n, levers: [], lines: [] }, enriched: [] };
   }
   const table = data.tax2026; const st = status.v;
   const grossAnnual = gross.cents * 12;
@@ -64,7 +65,11 @@ export function run(ctx) {
   const earned = Math.max(0, wageAnnual) + Math.max(0, selfAnnual - se.deductibleHalf);
   const eitcCents = eitc(table, st, children, earned, agi);
   const typedTotal = typedCredits.reduce((s2, x) => s2 + x.credit, 0);
-  const nonRefundable = Math.min(fedFull.tax, Math.max(0, ctc.total - ctc.refundable) + typedTotal);
+  /* MR-097: the saver's credit on what went into retirement this year, payroll and IRA alike */
+  const roth = reader.slot('income.rothContribMonthly'); const iraRoom = roomLeft.find(r => r.limitId === 'ira');
+  const retireContrib = ((pretax ? pretax.cents : 0) + (roth ? roth.cents : 0)) * 12 + (iraRoom ? iraRoom.used : 0);
+  const saver = saversCredit(table, st, agi, retireContrib);
+  const nonRefundable = Math.min(fedFull.tax, Math.max(0, ctc.total - ctc.refundable) + typedTotal + saver.credit);
   const refundable = ctc.refundable + eitcCents;
   const credits = nonRefundable + refundable;
   const federalAfter = fedFull.tax - credits; /* can go below zero: a refund */
@@ -96,8 +101,39 @@ export function run(ctx) {
   const gap = std - items.total;
   if (usesItemized) levers.push({ id: 'itemize', label: 'Itemizing', savesAnnual: Math.round((items.total - std) * fedFull.marginal), counted: true, how: 'Counted: charity, medical, mortgage interest and state and local taxes come to more than the standard deduction.', href: '#/ledger/taxes/deduction', field: 'deductionAmount' });
   else levers.push({ id: 'itemize', label: 'Itemizing', savesAnnual: 0, gapCents: gap, how: 'The standard deduction wins by ' + Math.round(gap / 100).toLocaleString('en-US') + '. Charity, medical bills, mortgage interest and property tax count toward itemizing; past the gap each 1,000 saves ' + Math.round(1000 * fedFull.marginal) + '.', href: '#/ledger/taxes/deduction', field: 'deductionAmount' });
+  if (saver.credit > 0) levers.push({ id: 'saver', label: "The saver's credit", savesAnnual: saver.credit, counted: true, how: 'Counted: ' + Math.round(saver.share * 100) + ' percent of what went into retirement this year, at this income.', href: '#/ledger/income/w2', field: 'pretaxRetirement' });
+  else if (retireContrib > 0 && saver.share > 0) levers.push({ id: 'saver', label: "The saver's credit", savesAnnual: 0, how: 'In range at this income, but the federal tax is already covered by other credits.', href: '#/ledger/income/w2', field: 'pretaxRetirement' });
+  const answers = taxAnswersOf(record);
+  if (answers.marketplace === true) levers.push({ id: 'premium', label: 'The premium tax credit', savesAnnual: null, needs: 'the 1095-A at the return', how: 'A marketplace health plan carries a credit the return settles from the 1095-A; the room cannot work it out.', href: '#/ledger/taxes', field: null });
   if (typedCredits.length) typedCredits.forEach(x => levers.push({ id: 'credit:' + x.rowId, label: (table.credits.rules[x.kind] || {}).label || 'A credit', savesAnnual: x.credit, counted: true, how: 'Counted from what was paid.', href: '#/ledger/taxes/credit', field: 'creditAmount' }));
   levers.sort((a, b) => (b.savesAnnual || 0) - (a.savesAnnual || 0));
+
+  /* MR-097: the return, line by line: what was taxed, at what rate, and what each deduction and credit took off */
+  const pc = r => Math.round(r * 1000) / 10 + ' percent';
+  const lines = [];
+  const line = (id, kind, label, amount, o) => lines.push(Object.assign({ id, kind, label, amount, base: null, rate: null, note: null }, o || {}));
+  line('gross', 'income', 'Gross pay', grossAnnual);
+  if (pretaxAnnual > 0) line('pretax', 'less', 'Saved before tax', -pretaxAnnual, { note: '401(k), HSA and other payroll deductions' });
+  if (se.deductibleHalf > 0) line('seHalf', 'less', 'Half of self-employment tax', -se.deductibleHalf);
+  if (slDed > 0) line('studentLoan', 'less', 'Student loan interest', -slDed, { note: 'up to the cap, while income allows' });
+  line('agi', 'subtotal', 'Adjusted gross income', agi);
+  line('deduction', 'less', usesItemized ? 'Itemized deductions' : 'Standard deduction', -deduction, { note: usesItemized ? 'charity, medical, mortgage interest, state and local taxes' : (items.total > 0 ? 'beats itemizing at ' + Math.round(items.total / 100).toLocaleString('en-US') : null) });
+  line('taxable', 'subtotal', 'Taxable income', taxableFull);
+  federalBrackets(table, taxableFull, st).forEach((b, i) => line('federal' + i, 'tax', 'Federal at ' + pc(b.rate), b.tax, { base: b.base, rate: b.rate, note: 'on the slice from ' + Math.round(b.from / 100).toLocaleString('en-US') + (b.to === null ? ' up' : ' to ' + Math.round(Math.min(b.to, taxableFull) / 100).toLocaleString('en-US')) }));
+  if (!taxableFull) line('federal0', 'tax', 'Federal income tax', 0, { base: 0, rate: 0, note: 'nothing taxable after the deduction' });
+  line('federalBefore', 'subtotal', 'Federal before credits', fedFull.tax);
+  if (ctc.total > 0) line('ctc', 'credit', 'Child tax credit', -Math.min(ctc.total, fedFull.tax + ctc.refundable), { note: children + (children === 1 ? ' child' : ' children') + (ctc.refundable ? '; ' + Math.round(ctc.refundable / 100).toLocaleString('en-US') + ' of it refundable' : '') });
+  if (eitcCents > 0) line('eitc', 'credit', 'Earned income credit', -eitcCents, { note: 'refundable' });
+  if (saver.credit > 0) line('saver', 'credit', "Saver's credit", -saver.credit, { base: Math.min(retireContrib, table.credits.saversCredit.capPerPerson * (st === 'mfj' ? 2 : 1)), rate: saver.share });
+  typedCredits.forEach(x => line('credit:' + x.rowId, 'credit', (table.credits.rules[x.kind] || {}).label || 'A credit', -x.credit, { base: x.paid }));
+  line('federal', 'subtotal', federalAfter < 0 ? 'Federal, a refund' : 'Federal after credits', federalAfter);
+  if (stateCode) line('state', 'tax', 'State income tax' + (stateFull.rate === null ? '' : ', ' + stateCode), stateFull.tax, { base: taxableFull, rate: stateFull.rate === null ? null : stateFull.rate, note: stateFull.rate === 0 ? 'no state income tax' : 'a flat stand-in on taxable income' });
+  else line('state', 'tax', 'State income tax', 0, { note: 'needs a state in Household facts' });
+  if (local.tax > 0) line('local', 'tax', local.city + ' wage tax', local.tax, { base: Math.max(0, wageAnnual), rate: local.rate });
+  if (wageAnnual > 0) { line('ss', 'tax', 'Social Security', f.socialSecurity, { base: Math.min(wageAnnual, table.fica.socialSecurityWageBase), rate: table.fica.socialSecurityRate, note: wageAnnual > table.fica.socialSecurityWageBase ? 'up to the wage base' : null }); line('medicare', 'tax', 'Medicare', f.medicare, { base: wageAnnual, rate: table.fica.medicareRate }); }
+  if (se.tax > 0) line('se', 'tax', 'Self-employment tax', se.tax, { base: Math.round(selfAnnual * table.fica.selfEmploymentNetFactor), rate: 2 * (table.fica.socialSecurityRate + table.fica.medicareRate), note: 'both halves, on ' + Math.round(table.fica.selfEmploymentNetFactor * 1000) / 10 + ' percent of net' });
+  line('total', 'total', 'Every tax', total, { base: grossAnnual, rate: totalRate, note: 'as a share of gross pay' });
+  line('takeHome', 'result', 'Left after every tax', breakdown.takeHome, { note: 'after the pre-tax savings too' });
 
   return {
     outputs: {
@@ -113,7 +149,7 @@ export function run(ctx) {
       localAnnual: q(local.tax, U.annualNa, { confidence: Math.min(conf, 0.6), rough: true }),
       creditsAnnual: q(credits, U.annualNa, { confidence: Math.min(conf, 0.7), rough: true }),
       deductionChoice: { standard: std, itemized: items, used: deduction, usesItemized, studentLoanInterest: slDed },
-      breakdown, totalRate, levers,
+      breakdown, totalRate, levers, lines,
     },
     enriched: [],
   };

@@ -293,6 +293,54 @@
     "share": 1.0,
     "note": "the credit itself"
    }
+  },
+  "saversCredit": {
+   "note": "2026 as remembered; verify. Tiers: AGI up to each ceiling earns that share of retirement contributions, capped per person",
+   "capPerPerson": 200000,
+   "tiers": {
+    "single": [
+     [
+      2450000,
+      0.5
+     ],
+     [
+      2650000,
+      0.2
+     ],
+     [
+      4100000,
+      0.1
+     ]
+    ],
+    "hoh": [
+     [
+      3675000,
+      0.5
+     ],
+     [
+      3975000,
+      0.2
+     ],
+     [
+      6150000,
+      0.1
+     ]
+    ],
+    "mfj": [
+     [
+      4900000,
+      0.5
+     ],
+     [
+      5300000,
+      0.2
+     ],
+     [
+      8200000,
+      0.1
+     ]
+    ]
+   }
   }
  },
  "deductions": {

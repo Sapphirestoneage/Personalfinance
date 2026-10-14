@@ -26,7 +26,7 @@ export const CONTRACT = Object.freeze({
   debt: Object.freeze(['totalDebt', 'debtServiceMonthly', 'weightedApr', 'annualInterest', 'utilization', 'promoCliffs', 'payoffOrders', 'debtFreeDate', 'freedCashByMonth', 'wallet', 'creditScore', 'byType', 'interestByType']),
   safety: Object.freeze(['ruleOf5Months', 'ruleOf5Target', 'runway', 'gap', 'monthlyToClose', 'insurance', 'premiumsMonthly', 'unemploymentMonthly', 'cutAbilityMonthly', 'spendingWithPremiums', 'roommateGap', 'unemploymentEstimate']),
   invest: Object.freeze(['balancesByBucket', 'balancesByLiquidity', 'cashBalances', 'totalAssets', 'investedAssets', 'annualContributions', 'roomLeft', 'allocation', 'weightedExpenseRatio', 'feeDragAnnual', 'matchCapture', 'beneficiariesMissing']),
-  taxes: Object.freeze(['federalAnnual', 'ficaAnnual', 'effectiveRate', 'marginalRate', 'savedPer1000Pretax', 'impliedRate', 'taxable', 'standardDeduction', 'ficaParts', 'selfEmployment', 'stateAnnual', 'localAnnual', 'creditsAnnual', 'deductionChoice', 'breakdown', 'totalRate', 'levers']),
+  taxes: Object.freeze(['federalAnnual', 'ficaAnnual', 'effectiveRate', 'marginalRate', 'savedPer1000Pretax', 'impliedRate', 'taxable', 'standardDeduction', 'ficaParts', 'selfEmployment', 'stateAnnual', 'localAnnual', 'creditsAnnual', 'deductionChoice', 'breakdown', 'totalRate', 'levers', 'lines']),
   life: Object.freeze(['goals', 'events', 'retirementMultipliers', 'retirementAge', 'baristaIncomeMonthly', 'dreamFiAge', 'dreamSpendingMonthly', 'gutSpendingMonthly']),
 });
 
@@ -38,7 +38,7 @@ export const READS = Object.freeze({
   debt: Object.freeze({ sun: [], slots: ['income.takeHomeMonthly', 'income.grossMonthly', 'spending.cardSpendByCategory'] }),
   invest: Object.freeze({ sun: ['birthDate'], slots: ['income.grossMonthly', 'income.matchMonthly', 'income.matchFormula', 'income.pretaxContribMonthly', 'income.rothContribMonthly', 'income.hsaPayrollMonthly'] }),
   safety: Object.freeze({ sun: ['birthDate', 'workSituation', 'state'], slots: ['spending.baselineMonthly', 'spending.fatFloorMonthly', 'spending.fixedMonthly', 'spending.byCategory', 'invest.cashBalances', 'income.takeHomeMonthly', 'income.grossMonthly', 'spending.sharedFullMonthly', 'spending.sharedShareMonthly'] }),
-  taxes: Object.freeze({ sun: ['filingStatus', 'state', 'city', 'dependents'], slots: ['income.grossMonthly', 'income.pretaxContribMonthly', 'income.hsaPayrollMonthly', 'income.pretaxOtherMonthly', 'income.byType', 'income.takeHomeMonthly', 'debt.interestByType', 'invest.roomLeft'] }),
+  taxes: Object.freeze({ sun: ['filingStatus', 'state', 'city', 'dependents'], slots: ['income.grossMonthly', 'income.pretaxContribMonthly', 'income.hsaPayrollMonthly', 'income.pretaxOtherMonthly', 'income.byType', 'income.takeHomeMonthly', 'income.rothContribMonthly', 'debt.interestByType', 'invest.roomLeft'] }),
   life: Object.freeze({ sun: ['birthDate'], slots: ['spending.baselineMonthly'] }),
 });
 

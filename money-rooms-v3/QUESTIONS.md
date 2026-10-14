@@ -351,3 +351,8 @@ Collected during the run; none blocked the build. Answer whenever.
 102. State tax is a flat stand-in by state and the credits are 2026 figures
     as remembered, all marked verify. Should the room carry the real state
     bracket tables, and who checks the credit figures each year?
+103. The saver's credit tiers and the thirteen tax questions are the common
+    case, not every case: no adoption, no foreign tax, no casualty loss, no
+    premium tax credit figure. Which less common credits do your clients
+    actually hit, and should the questions grow one at a time as they do?
+

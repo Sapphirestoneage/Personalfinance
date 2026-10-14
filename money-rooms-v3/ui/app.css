@@ -1018,6 +1018,34 @@ table.data.clients-table td.client-name { white-space: nowrap; } table.data.clie
 .tax-levers { padding-left: 20px; margin: 0; } .tax-levers li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px var(--s-3); padding: 6px 0; border-bottom: 1px solid var(--line-soft); align-items: baseline; }
 .tax-levers li.door { display: grid; } .tax-levers .lever-how { grid-column: 1 / -1; white-space: normal; overflow-wrap: anywhere; min-width: 0; } .tax-levers li.counted .lever-saves { color: var(--slate); } .tax-levers .lever-name .chip { margin-left: var(--s-2); }
 @media (max-width: 720px) { .tax-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* MR-097: the return line by line, and the questions */
+.tax-room .disclose { margin-top: var(--s-3); }
+table.data.tax-lines td.what { white-space: normal; overflow-wrap: anywhere; height: auto; padding-top: 5px; padding-bottom: 5px; }
+table.data.tax-lines tr.k-less td, table.data.tax-lines tr.k-credit td { color: var(--slate); }
+table.data.tax-lines tr.k-credit .line-label { color: var(--sapphire-700); }
+table.data.tax-lines tr.k-subtotal td, table.data.tax-lines tr.k-total td, table.data.tax-lines tr.k-result td { font-weight: var(--w-semibold); border-top: 1px solid var(--line); }
+table.data.tax-lines tr.k-total td { border-top: 2px solid var(--sapphire-300); }
+.tax-quiz { padding-left: 20px; margin: 0; }
+.tax-quiz li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px var(--s-3); padding: 8px 0; border-bottom: 1px solid var(--line-soft); align-items: center; }
+.tax-quiz .quiz-why, .tax-quiz .quiz-next { grid-column: 1 / -1; min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+.tax-quiz .quiz-why .chip { margin-right: var(--s-1); }
+.tax-quiz .quiz-next { margin-top: 2px; }
+/* phones: each line is the label with its amount, and the base and rate as a small second line */
+@media (max-width: 500px) {
+  .tax-room table.data.tax-lines, .tax-room table.data.tax-lines tbody { display: block; width: 100%; } .tax-room table.data.tax-lines thead { display: none; }
+  .tax-room table.data.tax-lines tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: var(--s-2); padding: 6px 0; border-bottom: 1px solid var(--line-soft); }
+  .tax-room table.data.tax-lines td { display: block; border: 0; padding: 0; height: auto; white-space: normal; }
+  .tax-room table.data.tax-lines td.what { grid-column: 1; grid-row: 1; text-align: left; display: block; }
+  .tax-room table.data.tax-lines td.num:last-child { grid-column: 2; grid-row: 1; text-align: right; white-space: nowrap; }
+  .tax-room table.data.tax-lines td[data-label="On"], .tax-room table.data.tax-lines td[data-label="Rate"] { grid-row: 2; font-size: var(--fs-12); color: var(--slate); font-weight: var(--w-regular); }
+  .tax-room table.data.tax-lines td[data-label="On"] { grid-column: 1; text-align: left; } .tax-room table.data.tax-lines td[data-label="Rate"] { grid-column: 2; }
+  .tax-room table.data.tax-lines td::before { content: none; }
+  .tax-room table.data.tax-lines td:empty { display: none; }
+  .tax-room table.data.tax-lines td[data-label="On"]:not(:empty)::before { content: 'on '; } .tax-room table.data.tax-lines td[data-label="Rate"]:not(:empty)::before { content: 'at '; }
+  .tax-room table.data.tax-lines tr.k-subtotal td, .tax-room table.data.tax-lines tr.k-total td, .tax-room table.data.tax-lines tr.k-result td { border-top: 0; }
+  .tax-room table.data.tax-lines tr.k-subtotal, .tax-room table.data.tax-lines tr.k-total, .tax-room table.data.tax-lines tr.k-result { border-top: 1px solid var(--line); }
+  .tax-room table.data.tax-lines tr.k-total { border-top: 2px solid var(--sapphire-300); }
+}
 /* MR-093: find a client among a hundred */
 .clients-find { gap: var(--s-2); flex-wrap: wrap; margin: var(--s-2) 0; } .client-search { max-width: 260px; flex: 1 1 160px; }
 .clients-tags { gap: 6px; flex-wrap: wrap; margin: 0 0 var(--s-2); }

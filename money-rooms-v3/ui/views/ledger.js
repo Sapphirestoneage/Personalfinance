@@ -16,6 +16,8 @@ import { renderSun, updateSunValues } from '../sunpanel.js';
 import { segmented } from '../seg.js';
 import { clientName } from '../app.js';
 import { overallConfidence } from './onepager.js';
+import { fold } from '../fold.js';
+import { taxQuiz, setTaxAnswer, quizCounts } from '../../engine/taxquiz.js';
 
 export function crumbs(parts) {
   const out = h('nav', { class: 'crumbs', 'aria-label': 'Where you are' });
@@ -91,6 +93,27 @@ export function mount(host, app) {
       kpi('Social Security and Medicare', money(B.socialSecurity + B.medicare + B.selfEmployment), B.selfEmployment ? 'both halves on 1099 pay' : null)));
     const flow = CHARTS.find(x => x.id === 'taxFlow'); const built = flow.build(app.result);
     if (built && !built.needs) { const body = h('div', { class: 'tax-flow' }); taxHost.appendChild(body); Charts.render('taxFlow', body, built, { client }); }
+    /* MR-097: the return line by line: what was taxed, at what rate, what each deduction and credit took off */
+    const places = r => (Math.round(r * 10000) % 100 ? 2 : (Math.round(r * 1000) % 10 ? 1 : 0));
+    const rate = r => r === null || r === undefined ? '' : F.percent(r, { places: places(r) });
+    const cell = (label, cls, child) => h('td', { class: cls, dataset: { label } }, child);
+    const linesBody = h('div', { class: 'tablewrap' }, h('table', { class: 'data tax-lines' },
+      h('thead', null, h('tr', null, h('th', null, 'Line'), h('th', { class: 'num' }, 'On'), h('th', { class: 'num' }, 'Rate'), h('th', { class: 'num' }, 'A year'))),
+      h('tbody', null, (T.lines || []).map(l => h('tr', { class: 'k-' + l.kind, dataset: { line: l.id } },
+        cell('Line', 'what', h('span', { class: 'line-label' }, l.label), l.note ? h('span', { class: 'small muted line-note' }, ' ' + l.note) : null),
+        cell('On', 'num', l.base === null ? '' : money(l.base)),
+        cell('Rate', 'num', rate(l.rate)),
+        cell('A year', 'num', (l.amount < 0 ? '-' : '') + money(Math.abs(l.amount))))))));
+    taxHost.appendChild(fold('taxes.lines', client ? 'Line by line' : 'The return, line by line', linesBody, { count: (T.lines || []).length, open: true }));
+    /* MR-097: the questions a return asks; each yes points at the room that holds the fact */
+    const quiz = taxQuiz(app.record, app.data); const qc = quizCounts(quiz);
+    const addIt = qn => { const a = qn.next.add; if (a) { const row = createRow(a.planet, a.type, { f: freshFacts(app.data.fields, a.planet, a.type) }); app.addRow(row); if (a.field && a.value !== null) app.setField(row.id, a.field, a.value, 'known', 'client'); } if (qn.next.href) app.go(qn.next.href); };
+    const quizBody = h('ol', { class: 'tax-quiz' }, quiz.map(qn => h('li', { dataset: { question: qn.id }, class: qn.done ? 'counted' : null },
+      h('span', { class: 'quiz-ask' }, client ? qn.client : qn.ask),
+      segmented([[true, 'Yes'], [false, 'No']], qn.answer, v => app.change(rec => setTaxAnswer(rec, qn.id, v, { session: app.session }), { reason: 'section' }), { label: qn.ask, small: true }),
+      h('span', { class: 'small muted quiz-why' }, qn.done ? h('span', { class: 'chip src' }, 'counted') : null, qn.done ? ' ' : '', qn.why),
+      qn.next ? h('span', { class: 'quiz-next' }, qn.note ? h('span', { class: 'small' }, qn.next.label) : h('button', { type: 'button', class: 'btn small primary', onClick: () => addIt(qn) }, qn.next.label)) : null)));
+    taxHost.appendChild(fold('taxes.quiz', client ? 'A few questions a tax return asks' : 'The questions a return asks', quizBody, { count: qc.answered + ' of ' + qc.total + (qc.open ? ', ' + qc.open + ' to add' : ''), open: qc.answered < qc.total }));
     const D = T.deductionChoice;
     taxHost.appendChild(h('p', { class: 'small muted' }, (D.usesItemized ? 'Itemizing: ' + money(D.itemized.total) + ' against a standard deduction of ' + money(D.standard) + '.' : 'The standard deduction, ' + money(D.standard) + ', beats itemizing at ' + money(D.itemized.total) + '.') + (D.studentLoanInterest ? ' Student loan interest deducted: ' + money(D.studentLoanInterest) + '.' : '') + ' The marginal rate is ' + pct(B.marginal) + '.'));
     /* the ways to lower it */

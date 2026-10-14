@@ -505,7 +505,10 @@
    "sun.dependents",
    "creditAmount",
    "creditKind",
-   "sun.filingStatus"
+   "sun.filingStatus",
+   "income.pretaxContribMonthly",
+   "income.rothContribMonthly",
+   "invest.roomLeft"
   ],
   "taxes.deductionChoice": [
    "deductionAmount",
@@ -530,6 +533,12 @@
    "invest.roomLeft",
    "sun.dependents",
    "sun.filingStatus"
+  ],
+  "taxes.lines": [
+   "taxes.breakdown",
+   "taxes.deductionChoice",
+   "taxes.creditsAnnual",
+   "income.rothContribMonthly"
   ]
  },
  "projectionInputs": [

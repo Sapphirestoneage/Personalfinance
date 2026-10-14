@@ -8,20 +8,24 @@ export function standardDeduction(table, status) {
   return d;
 }
 
-/* Federal income tax on taxable income (cents). Returns { tax, marginal }. */
-export function federalTax(table, taxableCents, status) {
+/* The federal brackets the taxable income reaches (MR-097): one line per bracket, { rate, from, to, base, tax }. */
+export function federalBrackets(table, taxableCents, status) {
   const brackets = table.brackets[status];
   if (!brackets) throw new Error('unknown filing status ' + status);
-  let tax = 0, lower = 0, marginal = 0;
+  const lines = []; let lower = 0;
   for (const [rate, upper] of brackets) {
     if (taxableCents <= lower) break;
     const top = upper === null ? taxableCents : Math.min(taxableCents, upper);
-    tax += (top - lower) * rate;
-    marginal = rate;
+    lines.push({ rate, from: lower, to: upper, base: top - lower, tax: Math.round((top - lower) * rate) });
     lower = upper;
     if (upper === null || taxableCents <= upper) break;
   }
-  return { tax: Math.round(tax), marginal };
+  return lines;
+}
+/* Federal income tax on taxable income (cents). Returns { tax, marginal }. The bracket lines are the formula. */
+export function federalTax(table, taxableCents, status) {
+  const lines = federalBrackets(table, taxableCents, status);
+  return { tax: lines.reduce((s, l) => s + l.tax, 0), marginal: lines.length ? lines[lines.length - 1].rate : 0 };
 }
 
 /* Taxable income from gross and pre-tax deductions, floored at zero. */
@@ -107,4 +111,12 @@ export function itemized(table, parts, agiCents) {
   const salt = Math.min(d.saltCap, Math.max(0, (parts.stateIncomeTax || 0) + (parts.propertyTax || 0) + (parts.stateTaxPaid || 0)));
   const other = Math.max(0, parts.other || 0);
   return { charity, medical, mortgageInterest: mortgage, salt, other, total: charity + medical + mortgage + salt + other };
+}
+/* The saver's credit (MR-097): a share of retirement contributions, capped per person, by AGI tier; nothing above the last tier. { credit, share } */
+export function saversCredit(table, status, agiCents, contribCents) {
+  const c = table.credits && table.credits.saversCredit; if (!c) return { credit: 0, share: 0 };
+  const tiers = c.tiers[status] || c.tiers.single; const people = status === 'mfj' ? 2 : 1;
+  const tier = tiers.find(([ceiling]) => agiCents <= ceiling); const share = tier ? tier[1] : 0;
+  const base = Math.min(Math.max(0, contribCents || 0), c.capPerPerson * people);
+  return { credit: Math.round(base * share), share };
 }
