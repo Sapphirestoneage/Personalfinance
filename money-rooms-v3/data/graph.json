@@ -480,6 +480,54 @@
    "income.grossMonthly",
    "income.matchMonthly",
    "income.benefitsWorthMonthly"
+  ],
+  "debt.interestByType": [
+   "balance",
+   "apr",
+   "rate",
+   "promoApr",
+   "promoEnd"
+  ],
+  "taxes.stateAnnual": [
+   "taxes.taxable",
+   "sun.state",
+   "deductionAmount",
+   "deductionKind"
+  ],
+  "taxes.localAnnual": [
+   "income.grossMonthly",
+   "sun.city"
+  ],
+  "taxes.creditsAnnual": [
+   "taxes.taxable",
+   "sun.dependents",
+   "creditAmount",
+   "creditKind",
+   "sun.filingStatus"
+  ],
+  "taxes.deductionChoice": [
+   "deductionAmount",
+   "deductionKind",
+   "debt.interestByType",
+   "taxes.standardDeduction"
+  ],
+  "taxes.breakdown": [
+   "taxes.federalAnnual",
+   "taxes.stateAnnual",
+   "taxes.localAnnual",
+   "taxes.creditsAnnual",
+   "taxes.ficaAnnual",
+   "taxes.deductionChoice"
+  ],
+  "taxes.totalRate": [
+   "taxes.breakdown",
+   "income.grossMonthly"
+  ],
+  "taxes.levers": [
+   "taxes.breakdown",
+   "invest.roomLeft",
+   "sun.dependents",
+   "sun.filingStatus"
   ]
  },
  "projectionInputs": [
@@ -660,7 +708,11 @@
   "asm.roommateMonthsToReplace": "the cushion target and the roommate scenario only",
   "whose": "a label for whose pay a row is; the household basis decides what counts",
   "asm.cushionStep1": "sets the first cushion step on the timeline, not the FI date",
-  "asm.cushionStep2Months": "sets the second cushion step on the timeline, not the FI date"
+  "asm.cushionStep2Months": "sets the second cushion step on the timeline, not the FI date",
+  "deductionAmount": "changes the tax picture, not the FI date",
+  "deductionKind": "changes the tax picture, not the FI date",
+  "creditAmount": "changes the tax picture, not the FI date",
+  "creditKind": "changes the tax picture, not the FI date"
  },
  "signNote": "An edge sign is the derivative: +1 when the upstream value rising raises the downstream value, -1 when it lowers it. The projection node stands for the FI date, so a later date is higher.",
  "extraEdges": {

@@ -98,6 +98,7 @@ export function run(ctx) {
     outputs: {
       totalDebt, debtServiceMonthly: service,
       weightedApr: debts.length ? weightedApr : null,
+      interestByType: (() => { const by = {}; debts.forEach((x, i) => { const part = interestParts[i]; by[x.type] = (by[x.type] || 0) + (part ? part.cents : 0); }); return by; })(), /* MR-094: the taxes planet reads mortgage and student loan interest from here */
       annualInterest: nothingTyped ? needs(['debt rows']) : q(interest, U.annualAfter, { confidence: debts.length ? Math.min(...debts.map(d => d.rateKnown ? d.balanceQ.confidence : 0.3)) : 1 }),
       utilization: { total: utilTotal, perCard },
       promoCliffs: cliffs,

@@ -729,6 +729,14 @@
     "pctToFi",
     "fiNumber"
    ]
+  },
+  "taxFlow": {
+   "stage": 4,
+   "metrics": [
+    "federalRates",
+    "fica",
+    "totalTaxRate"
+   ]
   }
  },
  "stages": {

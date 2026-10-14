@@ -117,3 +117,17 @@ test('an amount and its interval (MR-089): the pick beside the box is the cadenc
   applyQuick(rec, { income: { has: true, kinds: { w2: { picked: true, said: '52k a year' } } } }, data, { today: TODAY });
   assert.equal(rows(rec, 'income', 'w2')[0].f.grossPay.cad, 'year');
 });
+
+test('before tax or after tax (MR-095): after-tax pay lands in Take-home and the gross side goes back to unknown; the screen reads the basis back', () => {
+  const rec = fresh();
+  applyQuick(rec, { income: { has: true, kinds: { w2: { picked: true, said: '4000', cad: 'biweekly', basis: 'net' } } } }, data, { today: TODAY });
+  const job = rows(rec, 'income', 'w2')[0];
+  assert.equal(job.f.takeHome.v, 400000); assert.equal(job.f.takeHome.cad, 'biweekly'); assert.equal(job.f.takeHome.state, 'rough');
+  assert.ok(!job.f.grossPay || job.f.grossPay.v === null, 'gross stays unknown');
+  const R = compute(rec, data, { today: TODAY });
+  assert.equal(R.metrics.takeHome.value.cents, Math.round(400000 * 26 / 12), 'the typed take-home is the take-home');
+  assert.equal(readQuick(rec, data).income.kinds.w2.basis, 'net'); assert.equal(readQuick(rec, data).income.kinds.w2.said, '4000');
+  applyQuick(rec, { income: { has: true, kinds: { w2: { picked: true, said: '5000', cad: 'biweekly', basis: 'gross' } } } }, data, { today: TODAY });
+  assert.equal(job.f.grossPay.v, 500000); assert.equal(job.f.takeHome.v, null, 'switching back clears the quick take-home');
+  assert.equal(readQuick(rec, data).income.kinds.w2.basis, 'gross');
+});

@@ -347,3 +347,7 @@ Collected during the run; none blocked the build. Answer whenever.
     them. At a hundred clients across a phone and a laptop that becomes a
     chore. Is it time for a shared store with a sign-in, and if so, whose?
 
+
+102. State tax is a flat stand-in by state and the credits are 2026 figures
+    as remembered, all marked verify. Should the room carry the real state
+    bracket tables, and who checks the credit figures each year?

@@ -1304,13 +1304,17 @@ flows.push({
     await page.click('#qs-income .seg-btn:has-text("Yes")'); await page.click('#qs-income .chip:has-text("A job (W-2)")');
     await page.fill('#qs-income [data-kind="w2"] input.qs-amount', '4000'); await page.waitForTimeout(100);
     check('an answer turns Skip into Next', (await page.locator('.qs-nav button:has-text("Next")').count()) === 1);
-    check('the amount has an interval picker beside it, on a month by default, and no hours box', (await page.inputValue('#qs-income [data-kind="w2"] select.qs-cad')) === 'month' && /\$4,000 a month, rough/.test(await page.textContent('#qs-income [data-kind="w2"] .qs-heard')) && !(await page.locator('#qs-income [data-kind="w2"] .qs-hours').isVisible()));
+    check('the amount has an interval picker beside it, on a month by default, and no hours box', (await page.inputValue('#qs-income [data-kind="w2"] select.qs-cad')) === 'month' && /\$4,000 a month, before tax, rough/.test(await page.textContent('#qs-income [data-kind="w2"] .qs-heard')) && !(await page.locator('#qs-income [data-kind="w2"] .qs-hours').isVisible()));
     await page.selectOption('#qs-income [data-kind="w2"] select.qs-cad', 'biweekly'); await page.waitForTimeout(400);
     check('every two weeks lands as the cadence on the row', await page.evaluate(() => { const r = window.mr3.record.planets.income.rows.find(x => x.type === 'w2'); return r.f.grossPay.v === 400000 && r.f.grossPay.cad === 'biweekly'; }) && /every two weeks/.test(await page.textContent('#qs-income [data-kind="w2"] .qs-heard')));
     await page.click('#qs-income .chip:has-text("Side income")'); await page.waitForTimeout(100);
     await page.fill('#qs-income [data-kind="side"] input.qs-amount', '25'); await page.selectOption('#qs-income [data-kind="side"] select.qs-cad', 'hour'); await page.waitForTimeout(400);
     check('an hour shows hours a week and lands as a month', (await page.locator('#qs-income [data-kind="side"] .qs-hours:not([hidden])').count()) === 1 && /\$25 an hour, 40 hours a week/.test(await page.textContent('#qs-income [data-kind="side"] .qs-heard')) && await page.evaluate(() => { const r = window.mr3.record.planets.income.rows.find(x => x.type === 'side'); return r.f.grossPay.cad === 'month' && r.f.grossPay.v === Math.round(2500 * 40 * 52 / 12); }));
     await page.click('#qs-income .chip:has-text("Side income")'); await page.waitForTimeout(300); /* off again: the quick row goes */
+    /* MR-095: pay said after tax lands in Take-home */
+    await page.click('#qs-income [data-kind="w2"] [aria-label$="before or after tax"] .seg-btn:has-text("After tax")'); await page.waitForTimeout(400);
+    check('After tax moves the figure to Take-home and the gross side goes unknown', /after tax/.test(await page.textContent('#qs-income [data-kind="w2"] .qs-heard')) && await page.evaluate(() => { const r = window.mr3.record.planets.income.rows.find(x => x.type === 'w2'); return r.f.takeHome.v === 400000 && r.f.takeHome.cad === 'biweekly' && (!r.f.grossPay || r.f.grossPay.v === null); }));
+    await page.click('#qs-income [data-kind="w2"] [aria-label$="before or after tax"] .seg-btn:has-text("Before tax")'); await page.waitForTimeout(400);
     await page.selectOption('#qs-income [data-kind="w2"] select.qs-cad', 'month'); await page.waitForTimeout(400);
     await page.press('#qs-income [data-kind="w2"] input.qs-amount', 'Enter'); await page.waitForTimeout(300);
     check('Enter moves to the next step', /Debt, 2 of 6/.test(await page.textContent('.qs-progress')) && (await page.locator('#qs-debt').isVisible()));
@@ -1427,3 +1431,23 @@ flows.push({
   },
 });
 
+
+
+flows.push({
+  name: 'level26-taxes-computed',
+  async run(page, { base, check, APP }) {
+    await page.goto(base + 'index.html#/home'); await page.waitForSelector('#main h1, #main .empty');
+    await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', 'leah.json')); await page.waitForSelector('.today-card');
+    await page.goto(base + 'index.html#/ledger/taxes'); await page.waitForSelector('.tax-room');
+    const t = await page.textContent('.tax-room');
+    check('the Taxes room opens on the computed picture: every tax a year, federal after credits, state and local, FICA', (await page.locator('.tax-kpis .kpi').count()) === 4 && /of gross/.test(t) && /State and local/.test(t));
+    check('every tax dollar is one picture', (await page.locator('.tax-flow svg').count()) === 1);
+    check('the ways to lower it are listed largest first with a figure or what each needs', (await page.locator('.tax-levers li').count()) >= 3 && /Itemizing/.test(t) && /Student loan interest/.test(t));
+    check('the ladder below carries state tax and what is left after every tax', /State income tax/.test(await page.textContent('.tax-ladder')) && /Left after every tax/.test(await page.textContent('.tax-ladder')));
+    await page.click('#view-client'); await page.waitForTimeout(400);
+    check('the client reads it in words', /Where your pay goes before you see it/.test(await page.textContent('.tax-room')) && (await page.locator('.tax-levers li').count()) >= 3);
+    await page.click('#view-coach'); await page.waitForTimeout(300);
+    await page.goto(base + 'index.html#/ledger/taxes/deduction'); await page.waitForSelector('.ledger');
+    check('the room takes deductions and credits as rows', (await page.locator('.ledger').count()) === 1);
+  },
+});

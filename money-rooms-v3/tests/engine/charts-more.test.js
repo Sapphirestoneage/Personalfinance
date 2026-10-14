@@ -15,8 +15,8 @@ const walk = (o, seen) => { seen = seen || new Set(); if (o === null || typeof o
 test('22 new charts, each with a coach name, a client sentence, a planet, a stage, its metrics and a builder; 49 in all with no duplicate ids', () => {
   assert.equal(MORE_CHARTS.length, 22);
   MORE_CHARTS.forEach(c => { assert.ok(c.id && c.name && c.client && c.planet && c.stage >= 1 && c.stage <= 5 && Array.isArray(c.metrics) && typeof c.build === 'function', c.id); c.metrics.forEach(m => assert.ok(data.metrics.metrics.some(x => x.id === m), c.id + ' metric ' + m)); });
-  assert.equal(ALL_CHARTS.length, 49);
-  assert.equal(new Set(ALL_CHARTS.map(c => c.id)).size, 49);
+  assert.equal(ALL_CHARTS.length, 50); /* MR-094: every tax dollar */
+  assert.equal(new Set(ALL_CHARTS.map(c => c.id)).size, 50);
   HERO_ORDER.forEach(id => assert.ok(ALL_CHARTS.some(c => c.id === id), 'hero ' + id));
   assert.equal(chartMeta('sankey', data).stage, 1); assert.equal(chartMeta('coastCurve', data).stage, 5);
 });

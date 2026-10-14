@@ -11,7 +11,7 @@
    only the strip and the picture redraw on an update. Coach view only. The
    engine decides what each answer becomes and does every sum. */
 import { h, clear } from '../dom.js';
-import { QUESTIONS, HEADLINE, applyQuick, readQuick, kindLabel, picture, INTERVALS, intervalLabel, DEFAULT_HOURS } from '../../engine/quickstart.js';
+import { QUESTIONS, HEADLINE, applyQuick, readQuick, kindLabel, picture, INTERVALS, intervalLabel, DEFAULT_HOURS, BASES, basisField } from '../../engine/quickstart.js';
 import { valueText } from '../../engine/unlocks.js';
 import { parseSaid } from '../../engine/parse.js';
 import { segmented } from '../seg.js';
@@ -64,7 +64,8 @@ export function mount(host, app) {
       const o = opts || {}; const holder = o.holder || null; const intervals = o.intervals || null;
       const input = h('input', { class: 'input num qs-amount', type: 'text', inputmode: 'decimal', enterkeyhint: 'next', 'aria-label': label, value: value || '', title: hint || '' });
       const heard = h('span', { class: 'small muted qs-heard' });
-      let cadSel = null; let hoursBox = null;
+      let cadSel = null; let hoursBox = null; let basisSeg = null;
+      if (o.basis && holder) { holder.basis = holder.basis || 'gross'; basisSeg = segmented(BASES, holder.basis, b => { holder.basis = b; show(input.value); flush(); }, { label: label + ' before or after tax', small: true, repick: true }); }
       const cadOf = () => (holder && holder.cad) || 'month';
       if (intervals) {
         cadSel = h('select', { class: 'select qs-cad', 'aria-label': label + ' interval' }, intervals.map(id => h('option', { value: id, selected: cadOf() === id }, intervalLabel(id))));
@@ -76,12 +77,12 @@ export function mount(host, app) {
         const p = parseSaid(v, Object.assign({}, o, { defaultCadence: cadOf() }));
         if (p && p.cadence && intervals && intervals.includes(p.cadence) && /\b(a|per|an|every|each)\b|ly\b|\//i.test(v) && p.cadence !== cadOf()) { holder.cad = p.cadence; cadSel.value = p.cadence; hoursRow(); } /* "2000 a week" moves the pick to a week */
         const cad = cadOf(); const hrs = holder && parseFloat(holder.hours) > 0 ? parseFloat(holder.hours) : DEFAULT_HOURS;
-        heard.textContent = !v ? '' : !p ? 'Did not catch a number' : p.unknown ? 'Unknown for now' : p.na ? 'Not applicable' : p.none ? 'None' : F.dollarsWhole(p.cents) + (intervals ? ' ' + intervalLabel(cad) + (cad === 'hour' ? ', ' + hrs + ' hours a week' : '') : '') + ', rough';
+        heard.textContent = !v ? '' : !p ? 'Did not catch a number' : p.unknown ? 'Unknown for now' : p.na ? 'Not applicable' : p.none ? 'None' : F.dollarsWhole(p.cents) + (intervals ? ' ' + intervalLabel(cad) + (cad === 'hour' ? ', ' + hrs + ' hours a week' : '') : '') + (basisSeg ? (holder.basis === 'net' ? ', after tax' : ', before tax') : '') + ', rough';
       };
       input.addEventListener('input', () => { show(input.value); onSet(input.value.trim()); if (mode === 'steps') layout(); if (pending) clearTimeout(pending); pending = setTimeout(() => { pending = null; commit(); }, 500); });
       input.addEventListener('change', () => { onSet(input.value.trim()); flush(); });
       show(value); hoursRow();
-      return h('span', { class: 'qs-amountwrap' }, input, cadSel, hoursBox, heard);
+      return h('span', { class: 'qs-amountwrap' }, input, cadSel, basisSeg, hoursBox, heard);
     }
     function drawBody() {
       clear(body);
@@ -100,7 +101,7 @@ export function mount(host, app) {
       picked.forEach(([kind]) => {
         const k = ans.kinds[kind]; const extras = (q.extras || {})[kind] || [];
         const line = h('div', { class: 'row qs-row', dataset: { kind } }, h('span', { class: 'qs-label' }, kindLabel(q, kind)),
-          amountBox(kindLabel(q, kind) + ' amount', k.said, q.amountHint, v => { k.said = v; }, q.intervals ? { kind: q.id === 'income' ? 'income' : 'money', holder: k, intervals: q.intervals } : { kind: 'money' }),
+          amountBox(kindLabel(q, kind) + ' amount', k.said, q.amountHint, v => { k.said = v; }, q.intervals ? { kind: q.id === 'income' ? 'income' : 'money', holder: k, intervals: q.intervals, basis: q.id === 'income' && !!basisField(app.data.fields, 'income', kind, 'net') } : { kind: 'money' }),
           extras.map(([fid, label]) => h('span', { class: 'qs-extra' }, h('label', { class: 'small muted' }, label), h('input', { class: 'input num', type: 'text', inputmode: 'decimal', enterkeyhint: 'next', style: { width: '96px' }, 'aria-label': kindLabel(q, kind) + ' ' + label.toLowerCase(), value: (k.extras || {})[fid] || '', onChange: e => { k.extras = k.extras || {}; k.extras[fid] = e.target.value.trim(); flush(); } }))));
         lines.appendChild(line);
       });

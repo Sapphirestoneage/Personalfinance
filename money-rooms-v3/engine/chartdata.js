@@ -126,11 +126,32 @@ export function taxLadder(result) {
   const fed = steps.reduce((s, b) => s + b.tax, 0);
   const fica = T.ficaParts || { socialSecurity: 0, medicare: 0, total: 0 };
   const se = T.selfEmployment ? T.selfEmployment.tax : 0;
-  return { gross, pretax, standardDeduction: std, taxable, brackets: steps, federal: fed, fica, selfEmployment: se, takeHome: gross - pretax - fed - fica.total - se, marginal: T.marginalRate, effective: T.effectiveRate, rough: !!I.grossMonthly.rough };
+  const B = T.breakdown || null;
+  return { gross, pretax, standardDeduction: std, taxable, brackets: steps, federal: fed, fica, selfEmployment: se, state: B ? B.state : 0, local: B ? B.local : 0, credits: B ? B.credits : 0, takeHome: B ? B.takeHome : gross - pretax - fed - fica.total - se, marginal: T.marginalRate, effective: T.effectiveRate, totalRate: T.totalRate, rough: !!I.grossMonthly.rough };
+}
+
+/* MR-094: where the pay goes before it is seen: pre-tax savings, each tax, the credits back, and what reaches the household */
+export function taxFlow(result) {
+  const S = result.sun && result.sun.outputs; const T = S && S.taxes; const B = T && T.breakdown;
+  if (!B) return { needs: ['gross pay and a filing status'] };
+  const nodes = []; const links = [];
+  const id = name => { let i = nodes.findIndex(n => n.name === name); if (i === -1) { nodes.push({ name }); i = nodes.length - 1; } return i; };
+  const link = (a, b, v, kind) => { if (v > 0) links.push({ source: id(a), target: id(b), value: v, kind }); };
+  link('Gross pay', 'Saved before tax', B.pretax, 'saving');
+  link('Gross pay', 'Federal tax', B.federalBeforeCredits, 'tax');
+  link('Gross pay', 'State tax', B.state, 'tax');
+  link('Gross pay', 'Local tax', B.local, 'tax');
+  link('Gross pay', 'Social Security', B.socialSecurity, 'tax');
+  link('Gross pay', 'Medicare', B.medicare, 'tax');
+  link('Gross pay', 'Self-employment tax', B.selfEmployment, 'tax');
+  link('Gross pay', 'What reaches you', Math.max(0, B.gross - B.pretax - B.federalBeforeCredits - B.state - B.local - B.socialSecurity - B.medicare - B.selfEmployment), 'flow');
+  if (B.credits > 0) link('Credits back', 'What reaches you', B.credits, 'flow');
+  return { nodes, links, total: B.total, rate: T.totalRate, rough: true };
 }
 
 export const CHARTS = [
   { id: 'sankey', name: 'Cash flow', client: 'Where the money goes each month', build: sankey },
+  { id: 'taxFlow', name: 'Every tax dollar', client: 'Where your pay goes before you see it, in one picture', build: taxFlow },
   { id: 'netWorth', name: 'Net worth to 95', client: 'What you could have over time', build: netWorthProjection },
   { id: 'balanceSheet', name: 'Balance sheet', client: 'What you own and owe', build: balanceSheet },
   { id: 'debtRace', name: 'Debt payoff', client: 'When each debt is gone', build: debtRace },

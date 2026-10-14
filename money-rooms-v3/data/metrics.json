@@ -5395,6 +5395,65 @@
    "gentleCopy": "Pay plus everything on top: {value} a month.",
    "firstSession": 2,
    "headline": false
+  },
+  {
+   "n": 92,
+   "id": "totalTaxRate",
+   "name": "All-in tax rate",
+   "clientLabel": "Every tax, as a share of pay",
+   "definition": "Every tax over gross pay: federal after credits, state and local stand-ins, Social Security, Medicare and self-employment tax (MR-094).",
+   "formula": "(federal after credits + state + local + FICA + SE) / gross",
+   "inputs": [
+    "taxes.totalRate"
+   ],
+   "units": {
+    "kind": "ratio"
+   },
+   "owner": "taxes",
+   "group": "taxes",
+   "stage": 4,
+   "range": null,
+   "direction": "lower",
+   "levers": [
+    {
+     "root": "pretaxRetirement",
+     "sign": -1,
+     "text": "Pre-tax deferrals lower federal and state tax now."
+    },
+    {
+     "root": "deductionAmount",
+     "sign": -1,
+     "text": "Charity, medical bills and property tax count toward itemizing."
+    },
+    {
+     "root": "creditAmount",
+     "sign": -1,
+     "text": "Child care, tuition and home energy paid give a credit back."
+    }
+   ],
+   "graph": {
+    "roots": [
+     "grossPay",
+     "pretaxRetirement",
+     "deductionAmount",
+     "creditAmount",
+     "dependents",
+     "state"
+    ]
+   },
+   "scoreGroup": "tax",
+   "bands": null,
+   "milestones": null,
+   "lens": null,
+   "chart": "taxFlow",
+   "unlock": [
+    "grossPay",
+    "sun.filingStatus"
+   ],
+   "clientVisible": true,
+   "gentleCopy": "Every tax together takes {value} of your pay. The room shows the ways to lower it.",
+   "firstSession": 6,
+   "headline": false
   }
  ],
  "stages": {

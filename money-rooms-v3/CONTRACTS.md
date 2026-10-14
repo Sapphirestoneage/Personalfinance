@@ -87,6 +87,7 @@ Publishes:
 | `wallet` | list | per card: earn rates, fee, credits used value, net value, rewards left |
 | `creditScore` | int | latest score with asOf |
 | `byType` | oneoff | balances by moon |
+| `interestByType` | annual | interest a year by moon, for the taxes planet (MR-094) |
 
 ## 4. Safety Net
 
@@ -132,7 +133,7 @@ Publishes:
 
 ## 6. Taxes (v1: federal brackets and FICA only)
 
-Reads: `grossMonthly`, `pretaxContribMonthly`, `hsaPayrollMonthly`, `pretaxOtherMonthly`, `byType`, `takeHomeMonthly` (Income slot), `filingStatus` (Sun).
+Reads: `grossMonthly`, `pretaxContribMonthly`, `hsaPayrollMonthly`, `pretaxOtherMonthly`, `byType`, `takeHomeMonthly` (Income slot), `interestByType` (Debt slot), `roomLeft` (Investments slot), `filingStatus`, `state`, `city`, `dependents` (Sun).
 Publishes:
 
 | key | units | meaning |
@@ -147,6 +148,13 @@ Publishes:
 | `standardDeduction` | oneoff | the standard deduction used |
 | `ficaParts` | parts | Social Security and Medicare split |
 | `selfEmployment` | parts | self-employment tax and its deductible half |
+| `stateAnnual` | annual | state income tax, a flat stand-in by state (MR-094) |
+| `localAnnual` | annual | city wage tax where one exists (MR-094) |
+| `creditsAnnual` | annual | child tax credit, EITC and the typed credits (MR-094) |
+| `deductionChoice` | parts | standard vs itemized: the parts, the totals and which one is used (MR-094) |
+| `breakdown` | annual | every tax and what is left: federal after credits, state, local, Social Security, Medicare, self-employment, total, take-home (MR-094) |
+| `totalRate` | ratio | every tax over gross (MR-094) |
+| `levers` | list | the ways to lower it, each with what it saves a year or what it needs (MR-094) |
 
 ## 7. Life Plan
 

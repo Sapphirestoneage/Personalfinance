@@ -416,6 +416,10 @@
   "totalComp": {
    "coach": "Total compensation",
    "client": "Pay plus everything on top"
+  },
+  "totalTaxRate": {
+   "coach": "All-in tax rate",
+   "client": "Every tax, as a share of pay"
   }
  }
 }

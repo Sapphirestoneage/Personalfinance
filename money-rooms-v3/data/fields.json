@@ -543,6 +543,38 @@
   "taxes": {
    "label": "Taxes",
    "types": {
+    "deduction": {
+     "label": "Deduction",
+     "moon": "Deductions",
+     "fields": [
+      "deductionKind",
+      "deductionAmount"
+     ],
+     "nicknameLabel": "What it is",
+     "nameField": "deductionKind",
+     "stress": false,
+     "plural": "Deductions",
+     "tableFields": [
+      "deductionKind"
+     ],
+     "optional": true
+    },
+    "credit": {
+     "label": "Credit",
+     "moon": "Credits",
+     "fields": [
+      "creditKind",
+      "creditAmount"
+     ],
+     "nicknameLabel": "What it is",
+     "nameField": "creditKind",
+     "stress": false,
+     "plural": "Credits",
+     "tableFields": [
+      "creditKind"
+     ],
+     "optional": true
+    },
     "other": {
      "label": "Other",
      "moon": "Other",
@@ -2093,6 +2125,88 @@
      "match"
     ]
    }
+  },
+  "deductionKind": {
+   "id": "deductionKind",
+   "label": "Deduction kind",
+   "kind": "choice",
+   "owner": "taxes",
+   "weight": 5,
+   "hint": "What was paid this year that can be itemized",
+   "defaultSource": "client",
+   "options": [
+    [
+     "charity",
+     "Charity given"
+    ],
+    [
+     "medical",
+     "Medical bills paid"
+    ],
+    [
+     "propertyTax",
+     "Property tax paid"
+    ],
+    [
+     "stateTaxPaid",
+     "State and local tax paid"
+    ],
+    [
+     "other",
+     "Something else deductible"
+    ]
+   ]
+  },
+  "deductionAmount": {
+   "id": "deductionAmount",
+   "label": "Paid this year",
+   "kind": "money",
+   "owner": "taxes",
+   "weight": 5,
+   "hint": "What was actually paid, a year",
+   "defaultSource": "client",
+   "cadence": true,
+   "primary": true,
+   "defaultCadence": "year"
+  },
+  "creditKind": {
+   "id": "creditKind",
+   "label": "Credit kind",
+   "kind": "choice",
+   "owner": "taxes",
+   "weight": 5,
+   "hint": "What was paid that a credit gives back a share of; the child tax credit and the EITC are computed on their own",
+   "defaultSource": "client",
+   "options": [
+    [
+     "childcare",
+     "Child and dependent care paid"
+    ],
+    [
+     "education",
+     "Tuition paid"
+    ],
+    [
+     "energy",
+     "Home energy or an electric car"
+    ],
+    [
+     "other",
+     "A credit you already know"
+    ]
+   ]
+  },
+  "creditAmount": {
+   "id": "creditAmount",
+   "label": "Spent this year",
+   "kind": "money",
+   "owner": "taxes",
+   "weight": 5,
+   "hint": "What was paid; the room works out the credit",
+   "defaultSource": "client",
+   "cadence": true,
+   "primary": true,
+   "defaultCadence": "year"
   }
  }
 }

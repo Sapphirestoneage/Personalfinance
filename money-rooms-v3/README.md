@@ -238,6 +238,9 @@ progress) and Progress vs paperwork.
 Program in the side nav shows one row per session, discovery first, with
 status, date, targets met, accounts opened, homework done and the stress
 score where it was asked; urgent sessions sit between the numbered ones.
+The Taxes room is computed (MR-094): every tax a year as one picture, the
+all-in rate, standard against itemized, and the ways to lower it with a figure
+each; deductions and credits paid go in as rows.
 Every client has a pipeline status and tags (MR-093); the Clients list searches
 and filters by them, and Export every client moves them all to another browser.
 The Benefits room lists the common benefits as one-tap picks, each with how
@@ -245,6 +248,7 @@ to find it, what to collect and how it counts (MR-092); Benefits worth and
 Total compensation join the registry.
 On a phone a date is typed, mm/dd/yyyy, with a number keyboard (MR-091).
 Clients is one line per client, with Sessions and History under a caret (MR-090).
+A job's pay on the quick start can be said before or after tax (MR-095).
 Every quick start amount has an interval picker (MR-089): a month, a year,
 every two weeks, a week, a day, and an hour for pay with hours a week.
 Clients opens with Add a client (MR-088): a name, then the four quick questions.

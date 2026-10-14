@@ -50,7 +50,7 @@ function needsNote(host, needs) {
 export function render(id, host, data, opts) {
   host.innerHTML = '';
   if (!data || data.needs) { needsNote(host, (data && data.needs) || ['data']); if (data && data.waiting) host.lastChild.classList.add('waiting'); return; }
-  const fn = Object.assign({ sankey, netWorth, balanceSheet, debtRace, runway, draftt, fiGauge, waterfall, paths, taxes, markers }, MORE_RENDERERS, SCORE_RENDERERS, CALC_RENDERERS)[id];
+  const fn = Object.assign({ sankey, taxFlow: sankey, netWorth, balanceSheet, debtRace, runway, draftt, fiGauge, waterfall, paths, taxes, markers }, MORE_RENDERERS, SCORE_RENDERERS, CALC_RENDERERS)[id];
   const o = Object.assign({}, opts || {}, { width: Math.max(320, host.clientWidth || 720) });
   if (fn) fn(host, data, o);
   requestAnimationFrame(() => host.querySelectorAll('svg').forEach(decollide));
@@ -134,7 +134,10 @@ function taxes(host, d, o) {
   d.brackets.forEach(b => rows.push({ label: pct(b.rate) + ' on ' + F.dollarsCompact(b.amount) + (o.client ? '' : ' (' + F.dollarsCompact(b.from) + ' to ' + F.dollarsCompact(b.to) + ')'), value: b.tax, cls: 'shade-2', kind: 'tax', share: b.amount / Math.max(1, d.taxable) }));
   rows.push({ label: o.client ? 'Federal income tax' : 'Federal tax (' + pct(d.effective) + ' of gross, ' + pct(d.marginal) + ' on the next dollar)', value: d.federal, cls: 'shade-3', kind: 'total' });
   rows.push({ label: 'Social Security and Medicare' + (d.selfEmployment ? ', both halves on self-employment' : ''), value: d.fica.total + d.selfEmployment, cls: 'shade-3', kind: 'tax' });
-  rows.push({ label: o.client ? 'What reaches you (before state tax)' : 'Left after federal tax and FICA (before state tax)', value: d.takeHome, cls: 'shade-1', kind: 'total' });
+  if (d.state) rows.push({ label: o.client ? 'State income tax' : 'State income tax (a flat stand-in)', value: d.state, cls: 'shade-3', kind: 'tax' });
+  if (d.local) rows.push({ label: 'City tax', value: d.local, cls: 'shade-3', kind: 'tax' });
+  if (d.credits) rows.push({ label: o.client ? 'Credits back to you' : 'Credits (child, earned income, typed)', value: d.credits, cls: 'shade-1', kind: 'tax' });
+  rows.push({ label: o.client ? 'What reaches you' : 'Left after every tax', value: d.takeHome, cls: 'shade-1', kind: 'total' });
   const H = rows.length * (rowH + gap) + 12; const svg = svgIn(host, W, H);
   const x = d3.scaleLinear().domain([0, Math.max(1, d.gross)]).range([labelW, W - valueW]);
   let cursor = d.gross;

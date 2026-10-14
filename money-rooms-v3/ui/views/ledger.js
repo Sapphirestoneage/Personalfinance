@@ -71,15 +71,40 @@ export function mount(host, app) {
   const soonHost = h('div', { style: { marginTop: '16px' } });
   host.appendChild(h('div', { class: 'planet-grid' }, h('div', null, mapHost, bar, soonHost), side));
   const soon = mountStartingSoon(soonHost, app, planet);
+  /* MR-094: the Taxes room is computed; the picture and the ways to lower it sit on top, the rows it can take below */
+  const taxHost = planet === 'taxes' ? h('section', { class: 'panel tax-room' }) : null;
+  if (taxHost) host.insertBefore(taxHost, host.querySelector('.planet-grid'));
   const chartHost = planet === 'taxes' ? h('section', { class: 'panel tax-ladder', style: { marginTop: '16px' } }) : null;
   if (chartHost) host.appendChild(chartHost);
   function drawTaxes() {
     if (!chartHost) return;
-    clear(chartHost);
+    clear(chartHost); clear(taxHost);
+    const client = app.view === 'client'; const S = app.result.sun && app.result.sun.outputs; const T = S && S.taxes; const B = T && T.breakdown;
+    const money = c => F.dollarsWhole(c); const pct = r => F.percent(r, { places: 0 });
+    taxHost.appendChild(h('h2', null, client ? 'Where your pay goes before you see it' : 'Your taxes, computed', h('span', { class: 'tag' }, B ? 'a year, from the rooms' : 'needs gross pay and a filing status')));
+    if (!B) { taxHost.appendChild(h('p', { class: 'small muted' }, 'Gross pay on the Income room and a filing status in Household facts light this up. State and city come from Household facts too; dependents open the credits.')); return; }
+    const kpi = (label, value, sub) => h('div', { class: 'kpi lit' }, h('div', { class: 'label' }, label), h('div', { class: 'value' }, value), sub ? h('div', { class: 'small muted' }, sub) : null);
+    taxHost.appendChild(h('div', { class: 'grid grid-4 tax-kpis' },
+      kpi(client ? 'Every tax, a year' : 'All taxes a year', money(B.total), pct(T.totalRate) + ' of gross'),
+      kpi(client ? 'Federal, after credits' : 'Federal after credits', money(B.federal), B.credits ? money(B.credits) + ' in credits' : null),
+      kpi(client ? 'State and city' : 'State and local', money(B.state + B.local), B.stateRate === null ? 'needs a state' : (B.localCity ? B.localCity + ' included' : 'a flat stand-in')),
+      kpi('Social Security and Medicare', money(B.socialSecurity + B.medicare + B.selfEmployment), B.selfEmployment ? 'both halves on 1099 pay' : null)));
+    const flow = CHARTS.find(x => x.id === 'taxFlow'); const built = flow.build(app.result);
+    if (built && !built.needs) { const body = h('div', { class: 'tax-flow' }); taxHost.appendChild(body); Charts.render('taxFlow', body, built, { client }); }
+    const D = T.deductionChoice;
+    taxHost.appendChild(h('p', { class: 'small muted' }, (D.usesItemized ? 'Itemizing: ' + money(D.itemized.total) + ' against a standard deduction of ' + money(D.standard) + '.' : 'The standard deduction, ' + money(D.standard) + ', beats itemizing at ' + money(D.itemized.total) + '.') + (D.studentLoanInterest ? ' Student loan interest deducted: ' + money(D.studentLoanInterest) + '.' : '') + ' The marginal rate is ' + pct(B.marginal) + '.'));
+    /* the ways to lower it */
+    const lv = T.levers || [];
+    taxHost.appendChild(h('h3', null, client ? 'Ways to lower it' : 'Ways to lower it, largest first'));
+    taxHost.appendChild(h('ol', { class: 'tax-levers' }, lv.map(l => h('li', { dataset: l.field && l.href ? { go: l.href } : {}, class: l.counted ? 'counted' : null },
+      h('span', { class: 'lever-name' }, l.label, l.counted ? h('span', { class: 'chip src' }, 'counted') : null),
+      h('span', { class: 'lever-saves num' }, l.savesAnnual === null ? (client ? 'needs ' + l.needs : 'needs ' + l.needs) : l.per1000 ? money(l.savesAnnual) + ' per 1,000' : (l.savesAnnual > 0 ? money(l.savesAnnual) + ' a year' : (l.gapCents ? money(l.gapCents) + ' to go' : 'not now'))),
+      h('span', { class: 'small muted lever-how' }, l.how)))));
+    if (!client) taxHost.appendChild(h('p', { class: 'small muted' }, 'Deductions and credits paid this year go in the rows below; mortgage and student loan interest come from the Debt room; contribution room from Investments.'));
     const c = CHARTS.find(x => x.id === 'taxes');
-    chartHost.appendChild(h('h2', null, app.view === 'client' ? c.client : c.name, h('span', { class: 'tag' }, 'a year, federal only')));
+    chartHost.appendChild(h('h2', null, client ? c.client : c.name, h('span', { class: 'tag' }, 'a year, step by step')));
     const body = h('div'); chartHost.appendChild(body);
-    Charts.render('taxes', body, c.build(app.result), { client: app.view === 'client' });
+    Charts.render('taxes', body, c.build(app.result), { client });
   }
   function draw() {
     clear(mapHost); clear(bar); clear(side);

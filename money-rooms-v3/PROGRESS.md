@@ -3,6 +3,9 @@
 Updated: 2026-10-13
 
 ## Done
+- Pay before tax or after tax on the quick start (MR-095): after tax lands in Take-home.
+- Taxes, computed (MR-094): the breakdown as a sankey, the all-in rate, standard against itemized, and
+  the ways to lower it with a figure each; deductions and credits as rows; state and local stand-ins.
 - Clients you can find (MR-093): a pipeline status and tags on every client; search, status and tag
   filters on the list; Export every client and import of the everything file.
 - Benefits, the common ones (MR-092): a kind on every benefit row with how to add it, what to collect

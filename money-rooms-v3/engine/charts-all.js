@@ -7,7 +7,7 @@ import { MORE_CHARTS } from './chartdata-more.js';
 import { SCORE_CHARTS } from './chartdata-score.js';
 import { CALC_CHARTS } from './chartdata-calc.js';
 
-const PLANET_OF = { sankey: 'income', netWorth: 'invest', balanceSheet: 'invest', debtRace: 'debt', runway: 'safety', fiGauge: 'life', draftt: 'spending', waterfall: 'invest', taxes: 'taxes' };
+const PLANET_OF = { sankey: 'income', netWorth: 'invest', balanceSheet: 'invest', debtRace: 'debt', runway: 'safety', fiGauge: 'life', draftt: 'spending', waterfall: 'invest', taxes: 'taxes', taxFlow: 'taxes' };
 export const ALL_CHARTS = CHARTS.map(c => Object.assign({ planet: PLANET_OF[c.id] || 'life' }, c)).concat(MORE_CHARTS, SCORE_CHARTS, CALC_CHARTS); /* Level 13 (MR-067): the ten calculator charts */
 export function chartDef(id) { return ALL_CHARTS.find(c => c.id === id) || null; }
 /* the stage and the metrics behind a chart: the registry entry, or the Level 2 map in data/unlocks.json */

@@ -20,6 +20,8 @@ export const INTERVALS = Object.freeze([['month', 'a month'], ['year', 'a year']
 export const INCOME_INTERVALS = Object.freeze(['month', 'year', 'biweekly', 'week', 'day', 'hour']);
 export const SPEND_INTERVALS = Object.freeze(['month', 'year', 'biweekly', 'week', 'day']);
 export const DEFAULT_HOURS = 40;
+export const BASES = Object.freeze([['gross', 'Before tax'], ['net', 'After tax']]); /* MR-095: a job's pay can be said either way; after tax lands in Take-home */
+export function basisField(fields, planet, type, basis) { const t = typeDef(fields, planet, type); return basis === 'net' && t.fields.includes('takeHome') ? 'takeHome' : null; }
 export function intervalLabel(id) { const x = INTERVALS.find(i => i[0] === id); return x ? x[1] : ''; }
 /* the stored cadence and cents for an amount said in an interval: hourly becomes a month through hourlyToMonthly */
 export function intervalToStored(cents, interval, hours) {
@@ -91,14 +93,19 @@ export function applyQuick(record, answers, data, meta) {
         if (p.sub && p.subField) set(row.id, p.subField, p.sub, 'known');
         if (q.id === 'expenses') { set(row.id, 'needWant', kind === 'wants' ? 'want' : 'need', 'known'); }
       }
-      const prim = p.field || primaryFieldOf(fields, p.planet, p.type).id; const def = fields.fields[prim];
+      const prim0 = p.field || primaryFieldOf(fields, p.planet, p.type).id;
+      const netField = q.id === 'income' ? basisField(fields, p.planet, p.type, k.basis) : null;
+      const prim = netField || prim0; const def = fields.fields[prim];
+      /* the other side of the pay goes back to unknown when it was the quick start's own rough figure */
+      const otherSide = netField ? prim0 : (q.id === 'income' && basisField(fields, p.planet, p.type, 'net') ? 'takeHome' : null);
+      if (otherSide && row.f[otherSide] && hasValue(row.f[otherSide]) && row.f[otherSide].state === 'rough' && row.f[otherSide].source === 'client') set(row.id, otherSide, null, 'unknown');
       const parsed = parseSaid(k.said || '', { kind: q.id === 'income' ? 'income' : 'money', defaultCadence: def.cadence ? (k.cad || 'month') : undefined });
       if (parsed && (parsed.cents !== null || parsed.unknown)) {
         if (def.cadence && parsed.cents !== null) {
           const st = intervalToStored(parsed.cents, k.cad || parsed.cadence, typeof k.hours === 'number' ? k.hours : parseFloat(k.hours));
           set(row.id, prim, st.cents, stateOf(parsed), st.cad);
           if (st.hours && typeDef(fields, p.planet, p.type).fields.includes('hoursPaid')) set(row.id, 'hoursPaid', st.hours, 'rough');
-          row.quick = { cad: k.cad || parsed.cadence, rateCents: st.hours ? parsed.cents : null, hours: st.hours }; /* so the screen can read the interval back */
+          row.quick = { cad: k.cad || parsed.cadence, rateCents: st.hours ? parsed.cents : null, hours: st.hours, basis: netField ? 'net' : 'gross' }; /* so the screen can read the interval and the basis back */
         } else set(row.id, prim, parsed.unknown ? null : parsed.cents, stateOf(parsed), def.cadence ? parsed.cadence : undefined);
       }
       else if (!parsed && String(k.said || '').trim() === '' && row.f[prim] && hasValue(row.f[prim]) && row.f[prim].state === 'rough') set(row.id, prim, null, 'unknown');
@@ -124,11 +131,13 @@ export function readQuick(record, data) {
     if (q.total) { const sum = rows.find(r => r.type === q.total[0]); const f = sum && sum.f[q.total[1]]; if (f && hasValue(f)) { ans.said = String(Math.round(f.v / 100)); ans.cad = f.cad || 'month'; } }
     q.kinds.forEach(([kind]) => {
       const r = quickRow(record, q, kind, fields); if (!r) return;
-      const p = kindParts(q, kind); const prim = p.field || primaryFieldOf(fields, p.planet, p.type).id; const f = r.f[prim];
-      const qk = r.quick || null; const hourly = qk && qk.cad === 'hour' && qk.rateCents !== null;
+      const p = kindParts(q, kind); const qk = r.quick || null;
+      const netF = q.id === 'income' ? basisField(fields, p.planet, p.type, 'net') : null; const basis = qk && qk.basis ? qk.basis : (netF && r.f[netF] && hasValue(r.f[netF]) && !(r.f[p.field || primaryFieldOf(fields, p.planet, p.type).id] && hasValue(r.f[p.field || primaryFieldOf(fields, p.planet, p.type).id])) ? 'net' : 'gross');
+      const prim = basis === 'net' && netF ? netF : (p.field || primaryFieldOf(fields, p.planet, p.type).id); const f = r.f[prim];
+      const hourly = qk && qk.cad === 'hour' && qk.rateCents !== null;
       const said = f && hasValue(f) && f.state !== 'none' ? String(Math.round((hourly ? qk.rateCents : f.v) / 100)) : (f && f.state === 'none' ? 'none' : '');
       const extras = {}; ((q.extras || {})[kind] || []).forEach(([fid]) => { const ef = r.f[fid]; if (ef && hasValue(ef)) extras[fid] = fields.fields[fid].kind === 'percent' ? String(Math.round(ef.v * 10000) / 100) : String(Math.round(ef.v / 100)); });
-      ans.kinds[kind] = { picked: true, said, extras, cad: q.intervals ? (hourly ? 'hour' : (f && f.cad) || (qk && qk.cad) || 'month') : undefined, hours: hourly ? qk.hours : undefined };
+      ans.kinds[kind] = { picked: true, said, extras, cad: q.intervals ? (hourly ? 'hour' : (f && f.cad) || (qk && qk.cad) || 'month') : undefined, hours: hourly ? qk.hours : undefined, basis: netF ? basis : undefined };
     });
     if (q.noneTypes) {
       const anyKind = Object.keys(ans.kinds).length > 0;

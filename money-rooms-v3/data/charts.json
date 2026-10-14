@@ -303,6 +303,12 @@
    "firstSession": 7,
    "clientVisible": true,
    "gentle": "What your investing becomes"
+  },
+  "taxFlow": {
+   "question": "Where does every tax dollar go?",
+   "firstSession": 6,
+   "clientVisible": true,
+   "gentle": "Where your pay goes before you see it, in one picture"
   }
  }
 }
