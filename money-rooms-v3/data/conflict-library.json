@@ -1,0 +1,19 @@
+{
+ "asOf": "2026-10-14",
+ "source": "A small editable library of priorities that pull against each other (MR-098). A pair fires when one priority's title carries a word from `a` and another's a word from `b`; the client confirms before it counts.",
+ "verify": false,
+ "pairs": [
+  { "a": ["beach", "ocean", "coast", "surf", "island"], "b": ["ski", "mountain", "slopes", "snow", "alpine"], "kind": "location", "why": "A beach house and a place by the slopes are two addresses; the same money and the same weekends cannot be in both." },
+  { "a": ["city", "downtown", "urban", "walkable", "nightlife"], "b": ["land", "acre", "farm", "homestead", "rural", "countryside"], "kind": "location", "why": "City life and lots of land sit in different places; one home cannot be both." },
+  { "a": ["travel", "trips", "abroad", "backpack", "nomad", "see the world"], "b": ["dog", "puppy", "pet", "cat", "horse"], "kind": "energy", "why": "A lot of travel and a pet with no sitter pull on the same weeks; the pet needs someone home." },
+  { "a": ["travel", "trips", "abroad", "nomad"], "b": ["garden", "homestead", "farm", "chickens"], "kind": "energy", "why": "Long trips and a garden or animals both want the same months of attention." },
+  { "a": ["early retirement", "retire early", "financial independence", "quit", "stop working"], "b": ["bigger house", "new car", "luxury", "designer", "boat"], "kind": "money", "why": "Stopping work early and the big-ticket wants draw on the same savings; each year of one delays the other." },
+  { "a": ["kids", "children", "baby", "family"], "b": ["sabbatical", "nomad", "van life", "travel full time"], "kind": "energy", "why": "A growing family and a year on the road ask for different kinds of stability." },
+  { "a": ["business", "startup", "entrepreneur", "own company", "freelance"], "b": ["security", "stable job", "steady paycheck", "safe"], "kind": "values", "why": "Starting something and keeping the steady paycheck pull in opposite directions; the runway has to come from somewhere." },
+  { "a": ["minimal", "simple life", "declutter", "less stuff"], "b": ["collect", "collection", "gadgets", "latest", "upgrade"], "kind": "values", "why": "A simpler life and a growing collection are two answers to the same question." },
+  { "a": ["health", "fitness", "gym", "sleep", "rest"], "b": ["side hustle", "second job", "overtime", "grind", "hustle"], "kind": "time", "why": "Rest and a second job both want the hours after work." },
+  { "a": ["time with", "family time", "friends", "be present", "evenings"], "b": ["career", "promotion", "climb", "ambition", "overtime"], "kind": "time", "why": "Evenings with people and a climb at work both ask for the same hours." },
+  { "a": ["pay off", "debt free", "no debt"], "b": ["invest", "stocks", "crypto", "real estate", "rental"], "kind": "money", "why": "Paying debt down and buying assets split the same surplus; one usually comes first." },
+  { "a": ["near family", "close to parents", "hometown"], "b": ["move abroad", "new city", "relocate", "move away"], "kind": "location", "why": "Staying near family and moving away cannot both be true at once." }
+ ]
+}

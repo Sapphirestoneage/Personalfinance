@@ -26,6 +26,7 @@ import { colTierOf } from './col.js';
 import { planGoals, quickDraws } from './goals.js';
 import { goalFi } from './fieffect.js';
 import { moveOutOutcome } from './scenarios.js';
+import { mattersReport, mattersMetrics } from './matters.js';
 
 export function fillOf(fields) {
   const list = fields.filter(f => f && f.state !== 'not-applicable' && f.state !== 'not-for-me');
@@ -181,6 +182,9 @@ export function compute(record, data, opts) {
   /* Level 12 (MR-063): the eight scoreboard metrics read the finished result */
   Object.assign(result.metrics, scoreMetrics(record, result, data));
   result.lenses = result.lenses.concat(worthItLenses(result.metrics, data)); /* MR-065: reads the second pass */
+  /* MR-098: what matters reads the finished picture; its three registry numbers join the metrics */
+  result.matters = opts && opts.light ? null : mattersReport(record, result, data);
+  if (result.matters) Object.assign(result.metrics, mattersMetrics(result.matters, data));
   if (result.firstDraft) result.firstDraft.guesses = result.guesses.count;
   result.sessionMode = record.sessionMode || 'standard';
   return Object.freeze(result);
