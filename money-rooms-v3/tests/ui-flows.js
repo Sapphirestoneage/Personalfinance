@@ -1453,6 +1453,53 @@ flows.push({
 });
 
 flows.push({
+  name: 'level30-snapshot-and-hours',
+  async run(page, { base, check }) {
+    const quiet = async () => page.evaluate(() => { const o = document.querySelector('#overlay'); if (o) o.innerHTML = ''; document.querySelectorAll('.toast').forEach(t => t.remove()); });
+    await page.goto(base + 'index.html#/clients'); await page.waitForSelector('button[aria-label="Add a client"]');
+    await page.click('button[aria-label="Add a client"]'); await page.fill('input[aria-label="New client name"]', 'Noor'); await page.press('input[aria-label="New client name"]', 'Enter'); await page.waitForSelector('.qs-form');
+    await page.goto(base + 'index.html#/snapshot'); await page.waitForSelector('.snapshot');
+    check('the snapshot shows every base number at once, grouped by DAITE', (await page.locator('.snap-base').count()) === 9 && JSON.stringify(await page.evaluate(() => Array.from(document.querySelectorAll('.snap-group h2')).map(e => e.textContent))) === JSON.stringify(['Debt', 'Assets', 'Income', 'Expenses']));
+    await page.fill('input[aria-label="Fixed a month"]', '1500-2000'); await page.press('input[aria-label="Fixed a month"]', 'Tab'); await page.waitForTimeout(600); await quiet();
+    await page.click('.snap-base[data-base="assetsOther"] .chip:has-text("Not for me")'); await page.waitForTimeout(500); await quiet();
+    await page.click('.snap-base[data-base="debt"] .chip:has-text("No debt")'); await page.waitForTimeout(500); await quiet();
+    check('a range, a not-for-me and a no-debt answer each complete a base number; blank is the only incomplete state', await page.evaluate(() => { const s = window.mr3.result.snapshot; const by = id => s.list.find(b => b.id === id); return s.complete === 3 && by('expensesFixed').complete && by('assetsOther').complete && by('debt').complete && !by('assetsCash').complete && typeof by('expensesFixed').field.v === 'object'; }));
+    await page.click('.income-mode .seg-btn:has-text("Hourly")'); await page.waitForTimeout(300); await page.click('button:has-text("Add an hourly job")'); await page.waitForTimeout(600); await quiet();
+    await page.fill('input[aria-label="Main job rate, gross"]', '22'); await page.press('input[aria-label="Main job rate, gross"]', 'Tab'); await page.waitForTimeout(500); await quiet();
+    await page.fill('input[aria-label="Main job hours"]', '30-33'); await page.press('input[aria-label="Main job hours"]', 'Tab'); await page.waitForTimeout(600); await quiet();
+    await page.fill('input[aria-label="holidays days a year"]', '10'); await page.fill('input[aria-label="vacation days a year"]', '10'); await page.click('button:has-text("Work out the weeks")'); await page.waitForTimeout(600); await quiet();
+    const conv = await page.textContent('.conv');
+    check('hourly entry shows the conversion in the open and an hours range gives an income range', /\$22\.00 an hour x 30 to 33 hours a week x 48 weeks/.test(conv) && /a year gross/.test(conv) && /Unpaid time off: 4 weeks/.test(conv) && (await page.locator('.hours-chart[data-chart="hoursRange"]').count()) === 1 && await page.evaluate(() => { const t = window.mr3.result.sun.outputs.income.takeHomeMonthly; return t.range && t.range.low < t.range.high; }));
+    check('the real hourly wage stands on the real rung from the hourly inputs, not asked twice', await page.evaluate(() => window.mr3.result.hours.method === 'real' && window.mr3.result.hours.wage > 0 && window.mr3.result.hours.wage < 2200));
+    await page.click('#lens-hours'); await page.waitForTimeout(500);
+    check('the Hours lens turns every money figure into hours of work', await page.evaluate(() => document.body.dataset.lens === 'hours') && /work-week|\bh\b|min/.test(await page.textContent('.snap-base[data-base="incomeRegular"] .snap-read')) && !/\$/.test(await page.textContent('.snap-base[data-base="incomeRegular"] .snap-read')));
+    await page.reload(); await page.waitForSelector('.snapshot'); await page.waitForTimeout(400);
+    check('the lens survives a reload', await page.evaluate(() => document.body.dataset.lens === 'hours' && document.querySelector('#lens-hours').getAttribute('aria-pressed') === 'true'));
+    await page.click('#lens-both'); await page.waitForTimeout(300);
+    check('Both shows dollars and hours side by side, and never NaN or Infinity', /\$[\d,]+ \(.+\)/.test(await page.textContent('.snap-base[data-base="incomeRegular"] .snap-read')) && !/NaN|Infinity/.test(await page.textContent('#main')));
+    await page.goto(base + 'index.html#/snapshot/expensesVariable'); await page.waitForSelector('.dive');
+    await page.selectOption('select[aria-label="Add a row to Variable a month"]', 'line'); await page.waitForTimeout(600); await quiet();
+    await page.fill('.dive-row input[type="text"]', '400'); await page.press('.dive-row input[type="text"]', 'Tab'); await page.waitForTimeout(600); await quiet();
+    await page.click('.dive-row .seg-btn:has-text("Not yet")'); await page.waitForTimeout(500); await quiet();
+    check('a deep dive row takes one of four states and Back to snapshot stays in view', (await page.locator('.dive-bar a:has-text("Back to snapshot")').count()) === 1 && await page.evaluate(() => { const r = window.mr3.record.planets.spending.rows.find(x => x.type === 'line'); return r && r.f.amount.state === 'unknown'; }) && (await page.locator('.dive-row .seg-btn:has-text("Will email")').count()) === 1);
+    await page.click('.dive-row .seg-btn:has-text("Will email")'); await page.waitForTimeout(500); await quiet();
+    await page.goto(base + 'index.html#/snapshot'); await page.waitForSelector('.snapshot');
+    await page.fill('input[aria-label="Variable a month"]', '1200'); await page.press('input[aria-label="Variable a month"]', 'Tab'); await page.waitForTimeout(600); await quiet();
+    await page.goto(base + 'index.html#/whatsleft'); await page.waitForSelector('.whatsleft');
+    const left = await page.textContent('.whatsleft');
+    check('what\'s left lists the will-email row, the unitemized remainder and the rough snapshots, ranked, with inline fills and group toggles', (await page.locator('.wl-item').count()) >= 3 && /What makes up the other/.test(left) && (await page.locator('.wl-item[data-kind="row"] input').count()) >= 0 && (await page.locator('.seg-btn:has-text("By who supplies it")').count()) === 1 && /will-email/.test(left));
+    await page.click('.seg-btn:has-text("By room")'); await page.waitForTimeout(300);
+    check('grouping by room works', (await page.locator('.whatsleft h3').count()) >= 1);
+    await page.goto(base + 'index.html#/home'); await page.waitForSelector('.snapshot-card');
+    check('the dashboard carries the coverage ring and the top of what\'s left, apart from FI progress', (await page.locator('.snapshot-card .cov-ring').count()) === 1 && (await page.locator('.snapshot-card .wl-mini li').count()) >= 1);
+    await page.goto(base + 'index.html#/onepager'); await page.waitForSelector('.op-hours');
+    const op = await page.textContent('.op-hours');
+    check('the one-pager carries the wage with its rung, the stated against the real rate, the spending in hours, coverage and what\'s left', /Real hourly wage: \$[\d.]+ an hour \(your real hourly wage\)/.test(op) && /stated \$22\.00 an hour, real/.test(op) && /Coverage: /.test(op) && /hours a year/.test(op));
+    await page.click('#lens-dollars'); await page.waitForTimeout(300);
+  },
+});
+
+flows.push({
   name: 'level29-what-matters',
   async run(page, { base, check, APP }) {
     const quiet = async () => page.evaluate(() => { const o = document.querySelector('#overlay'); if (o) o.innerHTML = ''; document.querySelectorAll('.toast').forEach(t => t.remove()); });

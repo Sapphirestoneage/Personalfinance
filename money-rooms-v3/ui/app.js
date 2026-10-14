@@ -19,7 +19,7 @@ import { setTarget as targetSet } from '../engine/targets.js';
 import { recordStress, captureBaseline } from '../engine/program.js';
 import { snapshotValues } from '../engine/outcomes.js';
 import { takeSnapshot, seedCelebrations } from '../engine/momentum.js';
-import { setRough } from '../engine/format.js';
+import { setRough, setHoursLens, dollars } from '../engine/format.js';
 
 const STORAGE_OK = storageWorks(); /* MR-087: a sandboxed frame keeps nothing; the app still runs, and says so */
 const store = createStore(STORAGE_OK ? undefined : memoryStorage());
@@ -121,12 +121,22 @@ export const app = {
   goals(patch) { return this.change(rec => Rec.setGoals(rec, patch, { session: this.session }), { reason: 'goals' }); },
 
   recompute() {
-    if (!this.record) { this.result = null; return; }
+    if (!this.record) { this.result = null; this.applyLens(); return; }
     const t0 = performance.now();
     this.result = this.compute ? this.compute(this.record, this.data) : null;
+    this.applyLens(); /* MR-113: the hours lens follows the real hourly wage of the open client */
     this.lastComputeMs = performance.now() - t0;
   },
   compute: null,
+  /* Hours Everywhere (MR-113): one toggle in the top bar, remembered per viewer; the formatter does the rest */
+  lens() { return ['dollars', 'hours', 'both'].includes(settings.lens) ? settings.lens : 'dollars'; },
+  applyLens() {
+    const H = this.result && this.result.hours; const wage = H && H.wage ? H.wage : null;
+    setHoursLens({ mode: this.lens(), wage, weeklyHours: H && H.weeklyHours ? H.weeklyHours : null });
+    document.body.dataset.lens = this.lens(); document.body.dataset.wage = wage ? 'on' : 'off';
+    ['dollars', 'hours', 'both'].forEach(m => { const b = qs('#lens-' + m); if (b) { b.setAttribute('aria-pressed', String(this.lens() === m)); if (m !== 'dollars') b.title = wage ? (m === 'hours' ? 'Hours of work at the real hourly wage, ' + dollars(wage, { plain: true }) + ' an hour' : 'Dollars and hours side by side') : 'Add income to see hours'; } });
+  },
+  setLens(mode) { settings.lens = ['dollars', 'hours', 'both'].includes(mode) ? mode : 'dollars'; store.saveSettings(settings); this.applyLens(); if (this.record) this.render(); if (mode !== 'dollars' && !(this.result && this.result.hours && this.result.hours.wage)) this.toast('Add income to see hours. Dollars stay until then.'); },
 
   /* ---- saving ---- */
   markUnsaved() { this.saveState = 'unsaved'; this.renderSaved(); },
@@ -401,6 +411,8 @@ function boot() {
   qs('#view-client').setAttribute('aria-pressed', String(app.view === 'client'));
   qs('#view-coach').addEventListener('click', () => app.setView('coach'));
   qs('#view-client').addEventListener('click', () => app.setView('client'));
+  ['dollars', 'hours', 'both'].forEach(m => { const b = qs('#lens-' + m); if (b) b.addEventListener('click', () => app.setLens(m)); });
+  app.applyLens();
   qs('#theme-btn').addEventListener('click', () => app.toggleTheme());
   qs('#present-btn').addEventListener('click', () => app.setPresenting(!app.presenting));
   installDoors(app);

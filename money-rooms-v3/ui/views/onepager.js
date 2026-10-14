@@ -23,6 +23,8 @@ import { cachedSensitivity } from '../levers-bridge.js';
 import { ARROWS } from '../scorebits.js';
 import { blockCosts } from '../../engine/scenarios.js';
 import { UNTIED } from '../../engine/matters.js';
+import { toHours, WAGE_METHODS_CLIENT } from '../../engine/hours.js';
+import { listOf as whatsLeftOf } from './whatsleft.js';
 import { liveFigures } from '../startingsoon.js';
 const blockCostsFor = (def, b, app) => { try { return blockCosts(def, b, liveFigures(app)); } catch (e) { return null; } };
 
@@ -87,6 +89,7 @@ export function mount(host, app) {
     /* goals */
     const goals = R.sun ? R.sun.outputs.life.goals : [];
     if (R.matters && R.matters.priorities.length) page.appendChild(mattersSection(R.matters)); /* MR-107 */
+    page.appendChild(hoursSection(app, R)); /* MR-114 */
     page.appendChild(h('section', null, h('h3', null, 'Goals'), goals.length ? h('ul', null, goals.map(g => h('li', null, g.name + ': ' + (g.cents !== null ? F.dollarsWhole(g.cents, { rough: g.costQ && g.costQ.rough }) : 'cost not entered') + (g.targetDate ? ' by ' + F.date(g.targetDate) : '')))) : h('p', { class: 'muted small' }, 'No goals entered.')));
     /* bring next time */
     const theirs = byInstitution(theirPlate(rec, app.data.fields));
@@ -183,5 +186,21 @@ function mattersSection(R) {
   const open = R.conflicts.declared.concat(R.conflicts.flagged).find(c => !c.resolution);
   if (open) lines.push('One conflict to resolve: ' + (open.titles ? open.titles.join(' and ') : open.aTitle + ' and ' + open.bTitle) + ' (' + open.kind + ').');
   lines.forEach(t => sec.appendChild(h('p', null, t)));
+  return sec;
+}
+
+/* Hours of work (MR-114): the top three expenses in hours a year, the real hourly wage and which rung it stands on, the stated against the real rate for hourly earners, coverage and the top five of what's left. */
+function hoursSection(app, R) {
+  const H = R.hours; const S = R.sun && R.sun.outputs; const snap = R.snapshot; const sec = h('section', { class: 'op-hours' }, h('h3', null, 'Hours of work'));
+  if (H && H.wage) {
+    const CAT = { accommodation: 'Housing', utilities: 'Utilities and subscriptions', food: 'Food', transportation: 'Transportation', therapy: 'Health and therapy', wants: 'Wants', irregular: 'Irregular and annual', mistakes: 'Mistakes', other: 'Other' };
+    const top = S && S.spending.byCategory ? Object.keys(S.spending.byCategory).map(c => ({ c, cents: S.spending.byCategory[c].cents })).filter(x => x.cents > 0).sort((a, b) => b.cents - a.cents).slice(0, 3) : [];
+    if (top.length) sec.appendChild(h('p', null, h('strong', null, 'Your three biggest expenses in hours a year: '), top.map(x => (CAT[x.c] || x.c) + ' ' + toHours(x.cents * 12, H.wage, H.weeklyHours).text).join(', ') + '.'));
+    else if (S && S.spending.baselineMonthly && S.spending.baselineMonthly.status === 'ok') sec.appendChild(h('p', null, h('strong', null, 'Your spending in hours a year: '), toHours(S.spending.baselineMonthly.cents * 12, H.wage, H.weeklyHours).text + '.'));
+    sec.appendChild(h('p', null, h('strong', null, 'Real hourly wage: '), F.dollars(H.wage, { plain: true }) + ' an hour (' + (WAGE_METHODS_CLIENT[H.method] || H.label.toLowerCase()) + ').'));
+    const hourly = (S && S.income.hourlySources) || [];
+    hourly.forEach(src => { const own = (H.sources || []).find(x => x.rowId === src.rowId); if (own) sec.appendChild(h('p', null, src.name + ': stated ' + F.dollars(src.rate, { plain: true }) + ' an hour, real ' + F.dollars(own.wage, { plain: true }) + ' an hour after tax, costs and unpaid hours.')); });
+  } else sec.appendChild(h('p', { class: 'muted small' }, 'Add income to see hours.'));
+  if (snap) { const WL = whatsLeftOf(app); sec.appendChild(h('p', null, h('strong', null, 'Coverage: '), Math.round(snap.coverage * 100) + '% of the picture is itemized; ' + snap.complete + ' of ' + snap.total + ' base numbers are in.')); if (WL.items.length) sec.appendChild(h('ul', null, WL.items.slice(0, 5).map(i => h('li', null, (i.question || i.label) + (i.supplier === 'client' ? '' : ' (coach looks it up)'))))); }
   return sec;
 }
