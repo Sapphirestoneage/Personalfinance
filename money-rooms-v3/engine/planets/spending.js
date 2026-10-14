@@ -9,6 +9,7 @@ import { isGuessRow, realCategories } from '../guesses.js';
 import { shareOf, peopleOf } from '../household.js';
 import { AREAS } from '../anchors.js';
 import { scale } from '../units.js';
+import { resolveTotal, snapshotFromField, rowFromField, rowStateOf } from '../resolve.js';
 
 export const CATEGORIES = ['accommodation', 'food', 'transportation', 'therapy', 'utilities', 'wants', 'irregular', 'mistakes', 'other'];
 
@@ -33,6 +34,8 @@ export function run(ctx) {
   const guessesOn = !(asm && asm.fillGapsWithGuesses === false);
   const hh = (ctx.record && ctx.record.household) || {};
   const realIn = ctx.record ? realCategories(ctx.record) : {};
+  const items = []; /* MR-108: every counted line as a resolver row, with the split it belongs to */
+  const splitOf = (r, cat) => { const nw = val(r, 'needWant'); if (cat === 'irregular') return 'annual'; if (nw === 'need') return 'fixed'; if (nw === 'want') return 'variable'; return ['accommodation', 'utilities', 'transportation', 'therapy'].includes(cat) ? 'fixed' : 'variable'; };
   let sharedFull = q(0, U.monthlyAfter), sharedShare = q(0, U.monthlyAfter);
   const standIns = {}; const anchorGap = {};
   rows.forEach(r => {
@@ -41,12 +44,13 @@ export function run(ctx) {
       /* a guess stays out of the math when guesses are off, or when the area already has the client's own figure or anchor */
       if (isGuessRow(r) && (!guessesOn || realIn[cat0] || gut['spending:' + cat0])) return;
       const full = fieldQ(r, 'amount', U.monthlyAfter, asm);
-      if (!full) return;
+      if (!full) { if (r.f.amount && rowStateOf(r.f.amount) === 'notYet' && !isGuessRow(r)) items.push(Object.assign(rowFromField(r.id, r.nickname || cat0, r.f.amount, null, null), { split: splitOf(r, cat0), category: cat0 })); return; } /* a Not yet line counts in the coverage read, not the money */
       const shared = val(r, 'shared') === true;
       const share = shared ? shareOf(hh, num(r, 'myShare')) : 1;
       const a = shared ? scale(full, share) : full;
       if (shared) { sharedFull = add(sharedFull, full); sharedShare = add(sharedShare, a); }
       lines++;
+      items.push(Object.assign(rowFromField(r.id, r.nickname || cat0, r.f.amount, a.cents, a.range), { split: splitOf(r, cat0), guess: isGuessRow(r), category: cat0 }));
       if (isGuessRow(r)) standIns[cat0] = 'guess';
       const cat = cat0;
       byCategory[cat] = add(byCategory[cat] || q(0, U.monthlyAfter), a);
@@ -67,7 +71,7 @@ export function run(ctx) {
     }
     if (r.type === 'other') {
       const o = fieldQ(r, 'otherSpending', U.monthlyAfter, asm);
-      if (o) { lines++; byCategory.other = add(byCategory.other, o); total = add(total, o); }
+      if (o) { lines++; byCategory.other = add(byCategory.other, o); total = add(total, o); items.push(Object.assign(rowFromField(r.id, r.nickname || 'Other', r.f.otherSpending, o.cents, o.range), { split: 'variable', category: 'other' })); }
     }
   });
   /* stand-ins: an area with no real lines takes its gut anchor as a rough figure (never a guess once an anchor exists) */
@@ -77,13 +81,29 @@ export function run(ctx) {
     if (!a || typeof a.cents !== 'number') return;
     const sq = q(a.cents, U.monthlyAfter, { confidence: 0.6, rough: true });
     byCategory[cat] = add(byCategory[cat] || q(0, U.monthlyAfter), sq); total = add(total, sq); lines++;
+    items.push({ id: 'anchor:' + cat, label: cat + ' (what you said)', cents: a.cents, range: null, state: 'rough', source: 'discovery', rowState: 'estimated', split: splitOf({ f: {} }, cat), category: cat });
     if (['accommodation', 'food', 'transportation'].includes(cat)) fat = add(fat, sq);
     if (cat !== 'wants' && cat !== 'irregular') fixed = add(fixed, sq);
     standIns[cat] = 'anchor';
   });
   const summaryRow = rows.find(r => r.type === 'summary');
   const summaryQ = summaryRow ? fieldQ(summaryRow, 'summaryTotal', U.monthlyAfter, asm) : null;
-  const baseline = lines ? total : (summaryQ || needs(['monthly spending']));
+  /* MR-108: the snapshot (all in, or fixed, variable and annual) resolves against the lines: itemized plus the unitemized remainder, never one or the other */
+  const W = ctx.data && ctx.data.weights; const snapOf = (fid, units) => { if (!summaryRow) return null; const fq = fieldQ(summaryRow, fid, units, asm); return fq ? snapshotFromField(summaryRow.f[fid], fq.cents) : null; };
+  const annualRows = items.filter(i => i.split === 'annual').map(i => Object.assign({}, i, { cents: i.cents === null ? null : i.cents * 12, range: i.range ? { low: i.range.low * 12, high: i.range.high * 12 } : null }));
+  const resolved = {
+    expenses: resolveTotal({ snapshot: snapOf('summaryTotal', U.monthlyAfter), rows: items }, { weights: W }),
+    expensesFixed: resolveTotal({ snapshot: snapOf('fixedMonthly', U.monthlyAfter), rows: items.filter(i => i.split === 'fixed') }, { weights: W }),
+    expensesVariable: resolveTotal({ snapshot: snapOf('variableMonthly', U.monthlyAfter), rows: items.filter(i => i.split === 'variable') }, { weights: W }),
+    expensesAnnual: resolveTotal({ snapshot: snapOf('annualIrregular', U.annualAfter), rows: annualRows }, { weights: W }),
+  };
+  const splitSnap = ['expensesFixed', 'expensesVariable', 'expensesAnnual'].some(k => resolved[k].hasSnapshot);
+  /* the lines keep their own figure and band; only what the snapshot says is still unitemized is added on top, as a rough figure with the snapshot's band */
+  const remQ = (r, perYear) => { if (r.status !== 'ok' || r.remainder <= 0) return null; const k = perYear ? 12 : 1; const low = Math.max(0, r.range.low - r.itemized), high = Math.max(0, r.range.high - r.itemized); return q(Math.round(r.remainder / k), U.monthlyAfter, { confidence: 0.6, rough: true, range: { low: Math.round(low / k), high: Math.round(high / k) } }); };
+  let baseline; let remainderMonthly = 0;
+  const rems = splitSnap ? [remQ(resolved.expensesFixed), remQ(resolved.expensesVariable), remQ(resolved.expensesAnnual, true)].filter(Boolean) : [remQ(resolved.expenses)].filter(Boolean);
+  if (rems.length) { let b = lines ? total : q(0, U.monthlyAfter); rems.forEach(r => { b = add(b, r); remainderMonthly += r.cents; }); baseline = b; }
+  else baseline = lines ? total : (summaryQ || needs(['monthly spending']));
   const take = reader.slot('income.takeHomeMonthly');
   const shares = {};
   ['accommodation', 'food', 'transportation', 'therapy'].forEach(c => {
@@ -93,6 +113,7 @@ export function run(ctx) {
   return {
     outputs: {
       baselineMonthly: baseline,
+      resolved, remainderMonthly: q(remainderMonthly, U.monthlyAfter, { rough: remainderMonthly > 0, confidence: remainderMonthly > 0 ? 0.6 : 1 }),
       summaryTotalMonthly: summaryQ || null,
       detailGapMonthly: summaryQ && lines ? q(total.cents - summaryQ.cents, U.monthlyAfter) : null,
       byCategory,

@@ -47,6 +47,11 @@
       "grossPay",
       "hourlyRate",
       "hoursPaid",
+      "hoursPer",
+      "weeksPerYear",
+      "overtimeHours",
+      "overtimeMultiplier",
+      "tips",
       "takeHome",
       "payFrequency",
       "stability",
@@ -58,6 +63,7 @@
       "equity",
       "startDate",
       "hoursCommute",
+      "hoursUnpaid",
       "workCosts",
       "whose"
      ],
@@ -84,6 +90,11 @@
       "grossPay",
       "hourlyRate",
       "hoursPaid",
+      "hoursPer",
+      "weeksPerYear",
+      "overtimeHours",
+      "overtimeMultiplier",
+      "tips",
       "takeHome",
       "payFrequency",
       "stability",
@@ -91,6 +102,7 @@
       "hsaPayroll",
       "startDate",
       "hoursCommute",
+      "hoursUnpaid",
       "workCosts",
       "whose"
      ],
@@ -116,9 +128,15 @@
       "grossPay",
       "hourlyRate",
       "hoursPaid",
+      "hoursPer",
+      "weeksPerYear",
+      "overtimeHours",
+      "overtimeMultiplier",
+      "tips",
       "payFrequency",
       "stability",
-      "whose"
+      "whose",
+      "hoursUnpaid"
      ],
      "defaults": {
       "payFrequency": "monthly",
@@ -203,6 +221,20 @@
      "stress": false,
      "plural": "Other",
      "tableFields": []
+    },
+    "summary": {
+     "label": "Snapshot",
+     "moon": "Snapshot",
+     "fields": [
+      "takeHomeSnapshot",
+      "irregularAnnual"
+     ],
+     "single": true,
+     "nicknameLabel": "Label",
+     "stress": false,
+     "plural": "Snapshot",
+     "tableFields": [],
+     "optional": true
     }
    },
    "institutionLabel": "Employer or payer"
@@ -211,15 +243,18 @@
    "label": "Spending",
    "types": {
     "summary": {
-     "label": "Rough total",
+     "label": "Snapshot",
      "moon": "Total",
      "fields": [
-      "summaryTotal"
+      "summaryTotal",
+      "fixedMonthly",
+      "variableMonthly",
+      "annualIrregular"
      ],
      "single": true,
      "nicknameLabel": "Label",
      "stress": false,
-     "plural": "Rough total",
+     "plural": "Snapshot",
      "tableFields": []
     },
     "line": {
@@ -466,15 +501,18 @@
    "label": "Investments and Accounts",
    "types": {
     "summary": {
-     "label": "Rough total",
+     "label": "Snapshot",
      "moon": "Total",
      "fields": [
-      "investSummaryTotal"
+      "investSummaryTotal",
+      "cashSnapshot",
+      "retirementSnapshot",
+      "otherAssetsSnapshot"
      ],
      "single": true,
      "nicknameLabel": "Label",
      "stress": true,
-     "plural": "Rough total",
+     "plural": "Snapshot",
      "tableFields": []
     },
     "account": {
@@ -2222,6 +2260,197 @@
    "defaultSource": "client",
    "optional": true,
    "liftWhenEmpty": "grossPay"
+  },
+  "fixedMonthly": {
+   "id": "fixedMonthly",
+   "label": "Fixed a month",
+   "kind": "money",
+   "weight": 5,
+   "hint": "Rent or mortgage, utilities, insurance, minimums: what does not move. A range like 1500-2000 is fine",
+   "defaultSource": "client",
+   "optional": true,
+   "cadence": true,
+   "defaultCadence": "month",
+   "owner": "spending",
+   "snapshot": "expensesFixed"
+  },
+  "variableMonthly": {
+   "id": "variableMonthly",
+   "label": "Variable a month",
+   "kind": "money",
+   "weight": 5,
+   "hint": "Food, fun, getting around, the rest: what moves. A range is fine",
+   "defaultSource": "client",
+   "optional": true,
+   "cadence": true,
+   "defaultCadence": "month",
+   "owner": "spending",
+   "snapshot": "expensesVariable"
+  },
+  "annualIrregular": {
+   "id": "annualIrregular",
+   "label": "Annual and irregular a year",
+   "kind": "money",
+   "weight": 5,
+   "hint": "Travel, gifts, car repairs, the once-a-year things",
+   "defaultSource": "client",
+   "optional": true,
+   "cadence": true,
+   "defaultCadence": "year",
+   "owner": "spending",
+   "snapshot": "expensesAnnual"
+  },
+  "cashSnapshot": {
+   "id": "cashSnapshot",
+   "label": "Cash",
+   "kind": "money",
+   "weight": 5,
+   "hint": "Checking, savings, cash on hand, all together",
+   "defaultSource": "client",
+   "optional": true,
+   "owner": "invest",
+   "snapshot": "assetsCash"
+  },
+  "retirementSnapshot": {
+   "id": "retirementSnapshot",
+   "label": "Retirement and investments",
+   "kind": "money",
+   "weight": 5,
+   "hint": "401(k), IRAs, brokerage, all together",
+   "defaultSource": "client",
+   "optional": true,
+   "owner": "invest",
+   "snapshot": "assetsRetirement"
+  },
+  "otherAssetsSnapshot": {
+   "id": "otherAssetsSnapshot",
+   "label": "Everything else",
+   "kind": "money",
+   "weight": 5,
+   "hint": "Home equity, a car worth selling, anything else of value",
+   "defaultSource": "client",
+   "optional": true,
+   "owner": "invest",
+   "snapshot": "assetsOther"
+  },
+  "takeHomeSnapshot": {
+   "id": "takeHomeSnapshot",
+   "label": "Regular take-home a month",
+   "kind": "money",
+   "weight": 5,
+   "hint": "What lands in the bank each month from work, after tax. Per paycheck or per year is fine; the cadence pill says which",
+   "defaultSource": "client",
+   "optional": true,
+   "cadence": true,
+   "defaultCadence": "month",
+   "owner": "income",
+   "snapshot": "incomeRegular",
+   "primary": true
+  },
+  "irregularAnnual": {
+   "id": "irregularAnnual",
+   "label": "Irregular income a year",
+   "kind": "money",
+   "weight": 5,
+   "hint": "Bonus, gifts, side money that comes and goes",
+   "defaultSource": "client",
+   "optional": true,
+   "cadence": true,
+   "defaultCadence": "year",
+   "owner": "income",
+   "snapshot": "incomeIrregular"
+  },
+  "hoursPer": {
+   "id": "hoursPer",
+   "label": "Hours are per",
+   "kind": "choice",
+   "owner": "income",
+   "weight": 3,
+   "hint": "A week for a regular job; a month or a year for on-call or low-volume work",
+   "defaultSource": "client",
+   "optional": true,
+   "options": [
+    [
+     "week",
+     "Week"
+    ],
+    [
+     "month",
+     "Month"
+    ],
+    [
+     "year",
+     "Year"
+    ]
+   ],
+   "liftWhenEmpty": "grossPay"
+  },
+  "weeksPerYear": {
+   "id": "weeksPerYear",
+   "label": "Weeks worked a year",
+   "kind": "int",
+   "owner": "income",
+   "weight": 4,
+   "hint": "52 less holidays, sick days, vacation and slow weeks; the unpaid time off helper works it out",
+   "defaultSource": "client",
+   "optional": true,
+   "liftWhenEmpty": "grossPay"
+  },
+  "overtimeHours": {
+   "id": "overtimeHours",
+   "label": "Overtime hours",
+   "kind": "hours",
+   "owner": "income",
+   "weight": 3,
+   "hint": "A week, at the overtime multiplier",
+   "defaultSource": "client",
+   "optional": true
+  },
+  "overtimeMultiplier": {
+   "id": "overtimeMultiplier",
+   "label": "Overtime multiplier",
+   "kind": "choice",
+   "owner": "income",
+   "weight": 2,
+   "hint": "Time and a half by default",
+   "defaultSource": "client",
+   "optional": true,
+   "options": [
+    [
+     "1.5",
+     "Time and a half"
+    ],
+    [
+     "2",
+     "Double time"
+    ],
+    [
+     "1",
+     "Straight time"
+    ]
+   ]
+  },
+  "tips": {
+   "id": "tips",
+   "label": "Tips or commission",
+   "kind": "money",
+   "weight": 5,
+   "hint": "A week or a month, before tax",
+   "defaultSource": "client",
+   "optional": true,
+   "cadence": true,
+   "defaultCadence": "week",
+   "owner": "income"
+  },
+  "hoursUnpaid": {
+   "id": "hoursUnpaid",
+   "label": "Unpaid job hours",
+   "kind": "hours",
+   "owner": "income",
+   "weight": 3,
+   "hint": "A week: unpaid prep, answering messages, the hour you stay late. For the real hourly wage lens",
+   "defaultSource": "client",
+   "optional": true
   }
  }
 }

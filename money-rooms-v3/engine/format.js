@@ -5,6 +5,17 @@
 
 let TILDE = '~';
 /* MR-072: the client reads "about $4,320"; the coach keeps the tilde. The views set this with the view. */
+/* Hours Everywhere (MR-113): the one money formatter can say a figure in hours of work. The app sets the lens (Dollars, Hours, Both) with the client's real hourly wage; a view never divides. { plain: true } keeps a figure in dollars for an input box. */
+import { toHours } from './hours.js';
+let LENS = { mode: 'dollars', wage: null, weeklyHours: null };
+export function setHoursLens(lens) { const l = lens || {}; LENS = { mode: ['dollars', 'hours', 'both'].includes(l.mode) ? l.mode : 'dollars', wage: typeof l.wage === 'number' && l.wage > 0 ? l.wage : null, weeklyHours: typeof l.weeklyHours === 'number' && l.weeklyHours > 0 ? l.weeklyHours : null }; }
+export function hoursLens() { return LENS; }
+function withHours(text, cents, o) {
+  if (!LENS.wage || LENS.mode === 'dollars' || (o && o.plain)) return text;
+  const hv = toHours(cents, LENS.wage, LENS.weeklyHours); if (!hv) return text;
+  if (LENS.mode === 'hours') return (o && o.rough && cents !== 0 ? TILDE : '') + hv.text;
+  return text + ' (' + hv.text + ')';
+}
 export function setRough(mode) { TILDE = mode === 'about' ? 'about ' : '~'; }
 export function roughMarker() { return TILDE; }
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -37,7 +48,7 @@ export function dollars(cents, opts) {
   }
   if (abs === 0) body = '$0';
   const sign = neg ? '-' : '';
-  return (o.rough && abs !== 0 ? TILDE : '') + sign + body;
+  return withHours((o.rough && abs !== 0 ? TILDE : '') + sign + body, cents, o);
 }
 
 /* Whole dollars only, for dense tables and chart axes. */
@@ -50,6 +61,7 @@ export function dollarsCompact(cents) {
   if (!guard(cents, 'dollarsCompact')) return '';
   const neg = cents < 0 ? '-' : '';
   const d = Math.abs(cents) / 100;
+  if (LENS.wage && LENS.mode === 'hours') { const hv = toHours(cents, LENS.wage, LENS.weeklyHours); if (hv) return hv.text; }
   if (d >= 1e6) return neg + '$' + trimZero((d / 1e6).toFixed(d >= 1e7 ? 0 : 1)) + 'M';
   if (d >= 1e3) return neg + '$' + trimZero((d / 1e3).toFixed(d >= 1e5 ? 0 : 1)) + 'k';
   return neg + '$' + Math.round(d);

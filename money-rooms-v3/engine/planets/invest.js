@@ -7,6 +7,7 @@
 import { q, U, needs, isNeeds, sum } from '../units.js';
 import { fieldQ, monthlyCents, num, val } from './common.js';
 import { ageAt } from '../format.js';
+import { resolveTotal, snapshotFromField, rowFromField } from '../resolve.js';
 
 export const BUCKET = { '401k': 'pretax', '403b': 'pretax', '457b': 'pretax', tsp: 'pretax', tradIra: 'pretax', sep: 'pretax', solo401k: 'pretax', pension: 'pretax', roth401k: 'roth', rothIra: 'roth', hsa: 'hsa', '529': 'other', taxable: 'taxable', crypto: 'taxable', hysa: 'cash', checking: 'cash', savings: 'cash', cd: 'cash', ibonds: 'cash', realEstate: 'other', other: 'other' };
 export const LIQUIDITY = { checking: 'liquid', hysa: 'liquid', savings: 'liquid', cd: 'liquid', ibonds: 'liquid', taxable: 'liquid', crypto: 'liquid', rothIra: 'semi', hsa: 'semi', '529': 'semi', realEstate: 'locked', pension: 'locked' };
@@ -24,6 +25,7 @@ export function run(ctx) {
   let us = 0, total = 0, invested = 0, cash = 0, bankContribAnnual = 0, iraAnnual = 0;
   const qs = []; const investedQs = []; const cashQs = [];
   const accounts = {}; const missingBeneficiary = [];
+  const items = { cash: [], retirement: [], other: [] }; /* MR-108 */
   const enriched = [];
   rows.forEach(r => {
     if (!isAccountRow(r)) return;
@@ -35,6 +37,7 @@ export function run(ctx) {
     buckets[bucket] += b; tiers[tier] += b; total += b; qs.push(bq);
     if (INVESTED.has(t)) { invested += b; investedQs.push(bq); }
     if (bucket === 'cash') { cash += b; cashQs.push(bq); }
+    items[bucket === 'cash' ? 'cash' : INVESTED.has(t) ? 'retirement' : 'other'].push(rowFromField(r.id, r.nickname || t, r.f.accountBalance, b, bq.range));
     if (r.type === 'bank') alloc.cash += b; /* a bank account is all cash */
     else { [['stocks', 'allocStocks'], ['bonds', 'allocBonds'], ['cash', 'allocCash'], ['other', 'allocOther']].forEach(([k, fid]) => { alloc[k] += Math.round(b * (num(r, fid) || 0)); }); us += Math.round(b * (num(r, 'allocStocks') || 0) * (num(r, 'usShare') || 0)); }
     const ca = monthlyCents(r, 'contribAmount') || 0; bankContribAnnual += ca * 12;
@@ -68,13 +71,29 @@ export function run(ctx) {
   const anyAccount = total > 0 || rows.some(r => r.type === 'account');
   const summaryRow = rows.find(r => r.type === 'summary');
   const summaryQ = summaryRow ? fieldQ(summaryRow, 'investSummaryTotal', U.oneoff, asm) : null;
-  const totalQ = qs.length ? sum(qs, U.oneoff) : (summaryQ || needs(['account balances']));
+  /* MR-108: the three asset snapshots (or the one rough total) resolve against the accounts */
+  rows.filter(r => r.type === 'other').forEach(r => { const oq = fieldQ(r, 'otherAsset', U.oneoff, asm); items.other.push(rowFromField(r.id, r.nickname || 'Other asset', r.f.otherAsset, oq ? oq.cents : null, oq ? oq.range : null)); });
+  const W = data && data.weights; const snapOf = fid => { if (!summaryRow) return null; const fq = fieldQ(summaryRow, fid, U.oneoff, asm); return fq ? snapshotFromField(summaryRow.f[fid], fq.cents) : null; };
+  const resolved = {
+    assets: resolveTotal({ snapshot: snapOf('investSummaryTotal'), rows: items.cash.concat(items.retirement, items.other) }, { weights: W }),
+    assetsCash: resolveTotal({ snapshot: snapOf('cashSnapshot'), rows: items.cash }, { weights: W }),
+    assetsRetirement: resolveTotal({ snapshot: snapOf('retirementSnapshot'), rows: items.retirement }, { weights: W }),
+    assetsOther: resolveTotal({ snapshot: snapOf('otherAssetsSnapshot'), rows: items.other }, { weights: W }),
+  };
+  const remQ = r => { if (r.status !== 'ok' || r.remainder <= 0) return null; return q(r.remainder, U.oneoff, { confidence: 0.6, rough: true, range: { low: Math.max(0, r.range.low - r.itemized), high: Math.max(0, r.range.high - r.itemized) } }); };
+  const withRem = (base, r) => { const x = remQ(r); return x ? sum([base, x], U.oneoff) : base; };
+  const splitSnap = ['assetsCash', 'assetsRetirement', 'assetsOther'].some(k => resolved[k].hasSnapshot);
+  const totalQ = splitSnap ? withRem(withRem(withRem(qs.length ? sum(qs, U.oneoff) : q(0, U.oneoff), resolved.assetsCash), resolved.assetsRetirement), resolved.assetsOther)
+    : resolved.assets.hasSnapshot ? withRem(qs.length ? sum(qs, U.oneoff) : q(0, U.oneoff), resolved.assets) : (qs.length ? sum(qs, U.oneoff) : needs(['account balances']));
+  const cashResolved = resolved.assetsCash.hasSnapshot ? withRem(cashQs.length ? sum(cashQs, U.oneoff) : q(0, U.oneoff), resolved.assetsCash) : null;
+  const investedResolved = resolved.assetsRetirement.hasSnapshot ? withRem(investedQs.length ? sum(investedQs, U.oneoff) : q(0, U.oneoff), resolved.assetsRetirement) : null;
   return {
     outputs: {
       balancesByBucket: buckets, balancesByLiquidity: tiers,
-      cashBalances: qs.length ? (cashQs.length ? sum(cashQs, U.oneoff) : q(0, U.oneoff)) : needs(['cash accounts']),
+      cashBalances: cashResolved || (qs.length ? (cashQs.length ? sum(cashQs, U.oneoff) : q(0, U.oneoff)) : needs(['cash accounts'])),
+      resolved,
       totalAssets: totalQ,
-      investedAssets: qs.length ? (investedQs.length ? sum(investedQs, U.oneoff) : q(0, U.oneoff)) : needs(['account balances']),
+      investedAssets: investedResolved || (qs.length ? (investedQs.length ? sum(investedQs, U.oneoff) : q(0, U.oneoff)) : needs(['account balances'])),
       annualContributions: { employee, employer, total: employee + employer, payroll, bank: bankContribAnnual },
       roomLeft: room,
       allocation: total ? { stocks: alloc.stocks / total, bonds: alloc.bonds / total, cash: alloc.cash / total, other: alloc.other / total, usShare: alloc.stocks ? us / alloc.stocks : null, dollars: alloc } : null,

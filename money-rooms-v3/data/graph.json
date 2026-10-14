@@ -75,7 +75,13 @@
    "benefitKind",
    "benefitValue",
    "hourlyRate",
-   "hoursPaid"
+   "hoursPaid",
+   "hoursPer",
+   "weeksPerYear",
+   "overtimeHours",
+   "overtimeMultiplier",
+   "tips",
+   "income.hourlySources"
   ],
   "income.takeHomeMonthly": [
    "takeHome",
@@ -94,7 +100,17 @@
    "sun.filingStatus",
    "sun.workSituation",
    "benefitKind",
-   "benefitValue"
+   "benefitValue",
+   "takeHomeSnapshot",
+   "irregularAnnual",
+   "hourlyRate",
+   "hoursPaid",
+   "hoursPer",
+   "weeksPerYear",
+   "overtimeHours",
+   "overtimeMultiplier",
+   "tips",
+   "income.resolved"
   ],
   "income.pretaxContribMonthly": [
    "pretaxRetirement",
@@ -137,7 +153,10 @@
   ],
   "income.workHoursMonthly": [
    "hoursPaid",
-   "hoursCommute"
+   "hoursCommute",
+   "hoursPer",
+   "weeksPerYear",
+   "hoursUnpaid"
   ],
   "income.workCostsMonthly": [
    "workCosts"
@@ -148,7 +167,11 @@
    "summaryTotal",
    "shared",
    "myShare",
-   "asm.fillGapsWithGuesses"
+   "asm.fillGapsWithGuesses",
+   "fixedMonthly",
+   "variableMonthly",
+   "annualIrregular",
+   "spending.resolved"
   ],
   "spending.summaryTotalMonthly": [
    "summaryTotal"
@@ -194,7 +217,8 @@
   "debt.totalDebt": [
    "balance",
    "otherDebt",
-   "debtSummaryTotal"
+   "debtSummaryTotal",
+   "debt.resolved"
   ],
   "debt.debtServiceMonthly": [
    "minimum",
@@ -324,16 +348,24 @@
   "invest.cashBalances": [
    "accountBalance",
    "accountType",
-   "bankType"
+   "bankType",
+   "cashSnapshot",
+   "invest.resolved"
   ],
   "invest.totalAssets": [
    "accountBalance",
    "otherAsset",
-   "investSummaryTotal"
+   "investSummaryTotal",
+   "cashSnapshot",
+   "retirementSnapshot",
+   "otherAssetsSnapshot",
+   "invest.resolved"
   ],
   "invest.investedAssets": [
    "accountBalance",
-   "accountType"
+   "accountType",
+   "retirementSnapshot",
+   "invest.resolved"
   ],
   "invest.annualContributions": [
    "contribAmount",
@@ -539,6 +571,47 @@
    "taxes.deductionChoice",
    "taxes.creditsAnnual",
    "income.rothContribMonthly"
+  ],
+  "spending.resolved": [
+   "amount",
+   "otherSpending",
+   "summaryTotal",
+   "fixedMonthly",
+   "variableMonthly",
+   "annualIrregular"
+  ],
+  "spending.remainderMonthly": [
+   "spending.resolved"
+  ],
+  "income.resolved": [
+   "takeHome",
+   "grossPay",
+   "bonus",
+   "equity",
+   "otherIncome",
+   "takeHomeSnapshot",
+   "irregularAnnual"
+  ],
+  "income.hourlySources": [
+   "hourlyRate",
+   "hoursPaid",
+   "hoursPer",
+   "weeksPerYear",
+   "overtimeHours",
+   "overtimeMultiplier",
+   "tips",
+   "sun.filingStatus"
+  ],
+  "invest.resolved": [
+   "accountBalance",
+   "cashSnapshot",
+   "retirementSnapshot",
+   "otherAssetsSnapshot"
+  ],
+  "debt.resolved": [
+   "balance",
+   "otherDebt",
+   "debtSummaryTotal"
   ]
  },
  "projectionInputs": [
@@ -722,7 +795,8 @@
   "deductionAmount": "changes the tax picture, not the FI date",
   "deductionKind": "changes the tax picture, not the FI date",
   "creditAmount": "changes the tax picture, not the FI date",
-  "creditKind": "changes the tax picture, not the FI date"
+  "creditKind": "changes the tax picture, not the FI date",
+  "hoursUnpaid": "the real hourly wage lens only"
  },
  "signNote": "An edge sign is the derivative: +1 when the upstream value rising raises the downstream value, -1 when it lowers it. The projection node stands for the FI date, so a later date is higher.",
  "extraEdges": {

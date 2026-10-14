@@ -27,6 +27,8 @@ import { planGoals, quickDraws } from './goals.js';
 import { goalFi } from './fieffect.js';
 import { moveOutOutcome } from './scenarios.js';
 import { mattersReport, mattersMetrics } from './matters.js';
+import { snapshotOf } from './snapshot.js';
+import { realHourlyWage } from './hours.js';
 
 export function fillOf(fields) {
   const list = fields.filter(f => f && f.state !== 'not-applicable' && f.state !== 'not-for-me');
@@ -185,6 +187,9 @@ export function compute(record, data, opts) {
   /* MR-098: what matters reads the finished picture; its three registry numbers join the metrics */
   result.matters = opts && opts.light ? null : mattersReport(record, result, data);
   if (result.matters) Object.assign(result.metrics, mattersMetrics(result.matters, data));
+  /* Level 15 (MR-109, MR-112): the snapshot's coverage and the real hourly wage lens read the finished picture */
+  result.hours = realHourlyWage(record, result);
+  result.snapshot = snapshotOf(record, result, data);
   if (result.firstDraft) result.firstDraft.guesses = result.guesses.count;
   result.sessionMode = record.sessionMode || 'standard';
   return Object.freeze(result);

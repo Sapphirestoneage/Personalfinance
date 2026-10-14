@@ -5,6 +5,7 @@ import { q, U, needs, sum } from '../units.js';
 import { fieldQ, monthlyCents, num, val } from './common.js';
 import { simulate, monthsBetween } from '../debtsim.js';
 import { confidenceOf, hasValue } from '../states.js';
+import { resolveTotal, snapshotFromField, rowFromField } from '../resolve.js';
 
 const EARN_CATS = ['dining', 'groceries', 'travel', 'gas', 'streaming', 'other'];
 
@@ -36,7 +37,11 @@ export function run(ctx) {
   const summaryQ = summaryRow ? fieldQ(summaryRow, 'debtSummaryTotal', U.oneoff, asm) : null;
   /* Empty is not zero: with no debt rows at all (not even a None total) the planet says what it needs. */
   const nothingTyped = !debts.length && !summaryQ;
-  const totalDebt = debts.length ? sum(debts.map(d => d.balanceQ), U.oneoff) : (summaryQ || needs(['debts, or a rough total (0 if none)']));
+  /* MR-108: the rough total is the snapshot; the rows itemize it; what the rows do not reach stays as a remainder with no rate */
+  const items = rows.filter(r => r.type !== 'summary' && r.type !== 'score').map(r => { const d = debts.find(x => x.id === r.id); return rowFromField(r.id, r.nickname || r.type, r.f.balance || r.f.otherDebt, d ? d.balance : null, d && d.balanceQ ? d.balanceQ.range : null); });
+  const resolved = { debt: resolveTotal({ snapshot: summaryQ ? snapshotFromField(summaryRow.f.debtSummaryTotal, summaryQ.cents) : null, rows: items }, { weights: data && data.weights }) };
+  const debtRem = resolved.debt.status === 'ok' && resolved.debt.remainder > 0 ? q(resolved.debt.remainder, U.oneoff, { confidence: 0.6, rough: true, range: { low: Math.max(0, resolved.debt.range.low - resolved.debt.itemized), high: Math.max(0, resolved.debt.range.high - resolved.debt.itemized) } }) : null;
+  const totalDebt = debts.length ? (debtRem ? sum(debts.map(d => d.balanceQ).concat([debtRem]), U.oneoff) : sum(debts.map(d => d.balanceQ), U.oneoff)) : (summaryQ || needs(['debts, or a rough total (0 if none)']));
   const serviceCents = debts.reduce((s, d) => s + d.minimum, 0);
   const service = nothingTyped ? needs(['debts, or a rough total (0 if none)']) : q(serviceCents, U.monthlyAfter, { confidence: debts.length ? Math.min(...debts.map(d => d.minimumKnown ? 1 : 0.3)) : 1 });
   const total = debts.reduce((s, d) => s + d.balance, 0);
@@ -96,7 +101,7 @@ export function run(ctx) {
   const creditScore = scoreRow && hasValue(scoreRow.f.score) ? { score: scoreRow.f.score.v, bureau: val(scoreRow, 'bureau'), asOf: scoreRow.asOf, confidence: confidenceOf(scoreRow.f.score) } : null;
   return {
     outputs: {
-      totalDebt, debtServiceMonthly: service,
+      totalDebt, debtServiceMonthly: service, resolved,
       weightedApr: debts.length ? weightedApr : null,
       interestByType: (() => { const by = {}; debts.forEach((x, i) => { const part = interestParts[i]; by[x.type] = (by[x.type] || 0) + (part ? part.cents : 0); }); return by; })(), /* MR-094: the taxes planet reads mortgage and student loan interest from here */
       annualInterest: nothingTyped ? needs(['debt rows']) : q(interest, U.annualAfter, { confidence: debts.length ? Math.min(...debts.map(d => d.rateKnown ? d.balanceQ.confidence : 0.3)) : 1 }),

@@ -6,7 +6,8 @@ import { q, U, add, sum, scale, needs, asTax, isNeeds } from '../units.js';
 import { fieldQ, monthlyCents, num, val, isNa, paychecksPerYear } from './common.js';
 import { federalTax, taxableIncome, fica, selfEmploymentTax } from '../tax.js';
 import { confidenceOf, hasValue } from '../states.js';
-import { hourlyToMonthly } from '../parse.js';
+import { hourlyGrossAnnual, hourlyConversion, hoursPerYear, DEFAULT_WEEKS } from '../hours.js';
+import { resolveTotal, snapshotFromField, rowFromField } from '../resolve.js';
 import { hasPartner, countsTogether } from '../household.js';
 
 let BENEFIT_KINDS = null;
@@ -27,6 +28,7 @@ export function run(ctx) {
   /* a partner's rows (MR-050): counted with the client's under "together", left out under "mine"; their take-home is published either way */
   const hh = ctx.record && ctx.record.household; const mineOnly = hasPartner(hh) && !countsTogether(hh);
   let partnerTake = q(0, U.monthlyAfter);
+  const hourlySources = []; const takeItems = []; const irregularItems = []; /* MR-108, MR-110 */
 
   rows.forEach(r => {
     const t = r.type;
@@ -35,8 +37,8 @@ export function run(ctx) {
     if (t === 'w2' || t === 'c1099' || t === 'side') {
       let g = fieldQ(r, 'grossPay', U.monthlyPre, asm);
       if (!g && ['w2', 'c1099', 'side'].includes(t)) { /* MR-096: an hourly wage and paid hours a week give gross pay, one formula */
-        const hr = fieldQ(r, 'hourlyRate', U.oneoff, asm); const hp = num(r, 'hoursPaid');
-        if (hr && hp > 0) { g = q(hourlyToMonthly(hr.cents, hp), U.monthlyPre, { confidence: Math.min(hr.confidence, 0.8), rough: hr.rough }); enriched.push({ rowId: r.id, field: 'grossPay', value: g, note: 'From the hourly wage and paid hours: wage x hours x 52 / 12', source: 'computed' }); }
+        const hg = hourlyGrossAnnual(r); const hr = fieldQ(r, 'hourlyRate', U.oneoff, asm);
+        if (hg && hr) { g = q(Math.round(hg.cents / 12), U.monthlyPre, { confidence: Math.min(hr.confidence, 0.8), rough: hr.rough || !!hg.range, range: hg.range ? { low: Math.round(hg.range.low / 12), high: Math.round(hg.range.high / 12) } : undefined }); enriched.push({ rowId: r.id, field: 'grossPay', value: g, note: 'From the hourly pay (MR-110): rate x hours x weeks worked, plus overtime and tips, over 12', source: 'computed' }); hourlySources.push(Object.assign({ rowId: r.id, name: r.nickname || t, type: t }, hourlyConversion(r, data.tax2026, filing))); }
       }
       const bonus = fieldQ(r, 'bonus', U.monthlyPre, asm);
       const equity = fieldQ(r, 'equity', U.monthlyPre, asm);
@@ -74,9 +76,14 @@ export function run(ctx) {
         enriched.push({ rowId: r.id, field: 'takeHome', value: th, note: (t === 'w2' ? 'Inferred from gross: federal tax and FICA only, before state tax' : 'Inferred from gross: self-employment tax and federal tax on this income alone, before state tax'), source: 'inferred' });
       }
       if (th && partnerRow) partnerTake = add(partnerTake, th);
-      if (th) { take = add(take, th); anyTake = true; }
-      const hp = num(r, 'hoursPaid') || 0, hc = num(r, 'hoursCommute') || 0;
-      hours += (hp + hc) * 52 / 12;
+      if (th) { take = add(take, th); anyTake = true; takeItems.push(Object.assign(rowFromField(r.id, r.nickname || t, r.f.takeHome && hasValue(r.f.takeHome) ? r.f.takeHome : (r.f.grossPay && hasValue(r.f.grossPay) ? Object.assign({}, r.f.grossPay, { state: r.f.grossPay.state === 'known' || r.f.grossPay.state === 'verified' ? 'rough' : r.f.grossPay.state }) : r.f.hourlyRate), th.cents, th.range), { inferred: !(r.f.takeHome && hasValue(r.f.takeHome)) })); }
+      else takeItems.push(rowFromField(r.id, r.nickname || t, r.f.takeHome || r.f.grossPay, null, null));
+      if (bonus) irregularItems.push(rowFromField(r.id, (r.nickname || t) + ' bonus', r.f.bonus, bonus.cents * 12, null));
+      if (equity) irregularItems.push(rowFromField(r.id, (r.nickname || t) + ' equity', r.f.equity, equity.cents * 12, null));
+      /* hours a month: paid hours in their period over the weeks worked, plus commute and unpaid job hours (MR-110, MR-112) */
+      const hp = num(r, 'hoursPaid') || 0, hc = num(r, 'hoursCommute') || 0, hu = num(r, 'hoursUnpaid') || 0;
+      const per = val(r, 'hoursPer') || 'week'; const weeks = num(r, 'weeksPerYear') || DEFAULT_WEEKS;
+      hours += hoursPerYear(hp, per, weeks) / 12 + (hc + hu) * 52 / 12;
       if (t === 'side') byType.sideHours = (byType.sideHours || 0) + Math.round((hp + hc) * 52 / 12); /* the side hustle lens (MR-043) */
       const wc = fieldQ(r, 'workCosts', U.monthlyAfter, asm);
       if (wc) workCosts = add(workCosts, wc);
@@ -116,7 +123,7 @@ export function run(ctx) {
     }
     if (t === 'other') {
       const o = fieldQ(r, 'otherIncome', U.monthlyPre, asm);
-      if (o) { gross = add(gross, o); take = add(take, asTax(o, 'aftertax')); byType.other += o.cents; anyGross = true; anyTake = true; }
+      if (o) { gross = add(gross, o); take = add(take, asTax(o, 'aftertax')); byType.other += o.cents; anyGross = true; anyTake = true; irregularItems.push(rowFromField(r.id, r.nickname || 'Other income', r.f.otherIncome, o.cents * 12, null)); }
     }
   });
 
@@ -143,6 +150,16 @@ export function run(ctx) {
   }
 
   const stability = !stabilities.length ? (rows.length ? 'needs' : 'needs') : stabilities.includes('at-risk') ? 'at-risk' : stabilities.includes('variable') ? 'variable' : 'steady';
+  /* MR-108: the income snapshot (regular take-home a month, irregular a year after tax) resolves against the rows; a remainder counts as take-home and, with no better figure, as gross */
+  const snapRow = rows.find(r => r.type === 'summary'); const W = data && data.weights;
+  const snapTake = snapRow ? fieldQ(snapRow, 'takeHomeSnapshot', U.monthlyAfter, asm) : null; const snapIrr = snapRow ? fieldQ(snapRow, 'irregularAnnual', U.annualAfter, asm) : null;
+  const resolved = {
+    incomeRegular: resolveTotal({ snapshot: snapTake ? snapshotFromField(snapRow.f.takeHomeSnapshot, snapTake.cents) : null, rows: takeItems }, { weights: W }),
+    incomeIrregular: resolveTotal({ snapshot: snapIrr ? snapshotFromField(snapRow.f.irregularAnnual, snapIrr.cents) : null, rows: irregularItems }, { weights: W }),
+  };
+  if (resolved.incomeRegular.status === 'ok' && resolved.incomeRegular.remainder > 0) { const rq = q(resolved.incomeRegular.remainder, U.monthlyAfter, { confidence: 0.6, rough: true, range: { low: Math.max(0, resolved.incomeRegular.range.low - resolved.incomeRegular.itemized), high: Math.max(0, resolved.incomeRegular.range.high - resolved.incomeRegular.itemized) } }); take = add(take, rq); gross = add(gross, asTax(rq, 'pretax')); anyTake = true; anyGross = true; }
+  if (resolved.incomeIrregular.status === 'ok' && resolved.incomeIrregular.remainder > 0) { const rq = q(Math.round(resolved.incomeIrregular.remainder / 12), U.monthlyAfter, { confidence: 0.6, rough: true }); take = add(take, rq); gross = add(gross, asTax(rq, 'pretax')); anyTake = true; anyGross = true; }
+  out.resolved = resolved; out.hourlySources = hourlySources;
   out.grossMonthly = anyGross ? gross : needs(['gross pay']);
   out.takeHomeMonthly = anyTake ? take : needs(['take-home pay']);
   out.pretaxContribMonthly = pretax;

@@ -31,7 +31,7 @@ Publishes:
 | key | units | meaning |
 |---|---|---|
 | `grossMonthly` | monthly, pretax | sum of every income row's gross, monthly |
-| `takeHomeMonthly` | monthly, aftertax | sum of take-home, monthly |
+| `takeHomeMonthly` | monthly, aftertax | sum of take-home, monthly, plus the snapshot's unitemized remainder (MR-108) |
 | `pretaxContribMonthly` | monthly, pretax | 401k-type pre-tax deferrals from pay (MR-009) |
 | `rothContribMonthly` | monthly, aftertax | Roth 401k-type deferrals from pay |
 | `hsaPayrollMonthly` | monthly, pretax | HSA contributions from pay |
@@ -40,11 +40,13 @@ Publishes:
 | `matchFormula` | ratios | `{ rate, upTo }` cents matched per dollar and the pay share matched |
 | `byType` | monthly, pretax | `{ w2, c1099, side, unemployment, rental, benefits, other }` gross by moon |
 | `stability` | flag | steady, variable, at-risk, needs |
-| `workHoursMonthly` | hours | paid + commute + prep hours, monthly (for real hourly wage) |
+| `workHoursMonthly` | hours | paid + commute + prep + unpaid hours, monthly (for real hourly wage) |
 | `workCostsMonthly` | monthly, aftertax | costs of working as stated on income rows |
 | `partnerTakeHomeMonthly` | monthly, aftertax | take-home on rows marked Partner's (MR-050); counted in `takeHomeMonthly` when the household counts together, left out under just mine |
 | `benefitsWorthMonthly` | monthly, pretax | what the employer pays for you that is not cash: premiums, HSA deposits, pension credits (MR-092) |
 | `totalCompMonthly` | monthly, pretax | gross pay + match + benefits worth (MR-092) |
+| `resolved` | parts | the income base numbers resolved: `incomeRegular`, `incomeIrregular`, each `{ itemized, remainder, total, overGut, coverage, counts, range }` (MR-108) |
+| `hourlySources` | list | every hourly pay row's open conversion: rate x hours x weeks, overtime, tips, gross and take-home a year and a month, the hours range (MR-110) |
 
 ## 2. Spending
 
@@ -53,7 +55,7 @@ Publishes:
 
 | key | units | meaning |
 |---|---|---|
-| `baselineMonthly` | monthly, aftertax | monthly spending (detail overrides total) |
+| `baselineMonthly` | monthly, aftertax | monthly spending: the lines plus the snapshot's unitemized remainder (MR-108) |
 | `summaryTotalMonthly` | monthly, aftertax | the rough total if one was typed, else null |
 | `detailGapMonthly` | monthly, aftertax | detail minus total when both exist |
 | `byCategory` | monthly, aftertax | `{ accommodation, food, transportation, therapy, wants, irregular, mistakes, other, utilities }` |
@@ -67,6 +69,8 @@ Publishes:
 | `sharedShareMonthly` | monthly, aftertax | the client's share of those bills; every other figure uses the share |
 | `standIns` | map | per area, "anchor" when the gut anchor stands in for missing lines, "guess" when a guess does (MR-046) |
 | `anchorGapByCategory` | monthly, aftertax | per area with lines and a gut anchor: lines minus the anchor |
+| `resolved` | parts | the expense base numbers resolved: `expenses`, `expensesFixed`, `expensesVariable`, `expensesAnnual` (MR-108) |
+| `remainderMonthly` | monthly, aftertax | what the snapshot says is still unitemized (MR-108) |
 
 ## 3. Debt and Credit
 
@@ -75,7 +79,7 @@ Publishes:
 
 | key | units | meaning |
 |---|---|---|
-| `totalDebt` | oneoff | sum of balances |
+| `totalDebt` | oneoff | sum of balances, plus the rough total's unitemized remainder (MR-108) |
 | `debtServiceMonthly` | monthly, aftertax | sum of minimum payments |
 | `weightedApr` | ratio | balance-weighted APR (promo rate until promo end) |
 | `annualInterest` | annual | interest cost over the next 12 months |
@@ -88,6 +92,7 @@ Publishes:
 | `creditScore` | int | latest score with asOf |
 | `byType` | oneoff | balances by moon |
 | `interestByType` | annual | interest a year by moon, for the taxes planet (MR-094) |
+| `resolved` | parts | the debt base number resolved: `debt` (MR-108) |
 
 ## 4. Safety Net
 
@@ -121,7 +126,7 @@ Publishes:
 | `balancesByBucket` | oneoff | `{ pretax, roth, taxable, hsa, cash, other }` |
 | `balancesByLiquidity` | oneoff | `{ liquid, semi, locked }` |
 | `cashBalances` | oneoff | sum of the bank accounts (checking, savings, HYSA, CD) and I bonds |
-| `totalAssets` | oneoff | every account balance plus real estate equity |
+| `totalAssets` | oneoff | every account balance plus real estate equity, plus the snapshot's unitemized remainder (MR-108) |
 | `investedAssets` | oneoff | balances that take market returns |
 | `annualContributions` | annual | `{ employee, employer, total }` |
 | `roomLeft` | annual | per limit: `{ limitId, limit, used, left }` |
@@ -130,6 +135,7 @@ Publishes:
 | `feeDragAnnual` | annual | ER x invested |
 | `matchCapture` | ratio | match captured / match available, plus `dollarsLeft` |
 | `beneficiariesMissing` | list | account ids with no beneficiary |
+| `resolved` | parts | the asset base numbers resolved: `assets`, `assetsCash`, `assetsRetirement`, `assetsOther` (MR-108) |
 
 ## 6. Taxes (v1: federal brackets and FICA only)
 

@@ -77,7 +77,8 @@ function checkInvariants(name, rec) {
   if (M.surplus.status === 'ok') {
     const take = S.income.takeHomeMonthly.cents; const cats = Object.values(S.spending.byCategory).reduce((s, q) => s + q.cents, 0); const prem = S.safety.premiumsMonthly.cents; const service = S.debt.debtServiceMonthly.cents;
     const baseline = isQ(S.spending.baselineMonthly) ? S.spending.baselineMonthly.cents : 0;
-    const spendUsed = S.spending.summaryTotalMonthly && !rec.planets.spending.rows.some(r => r.type === 'line' || r.type === 'other') ? baseline : cats;
+    const rem = S.spending.remainderMonthly ? S.spending.remainderMonthly.cents : 0; /* MR-108: the lines plus what the snapshot says is still unitemized */
+    const spendUsed = S.spending.summaryTotalMonthly && !rec.planets.spending.rows.some(r => r.type === 'line' || r.type === 'other') ? baseline : cats + rem;
     assert.equal(spendUsed + prem + service + M.surplus.value.cents, take, name + ': categories + premiums + debt service + surplus = take-home');
   }
   if (M.savingsRateTakeHome.status === 'ok') { assert.ok(M.savingsRateTakeHome.value.value <= 1, name + ': savings rate never above 100%'); const take = S.income.takeHomeMonthly.cents; const sp = S.safety.spendingWithPremiums.cents; assert.ok(Math.abs(M.savingsRateTakeHome.value.value - (take - sp) / take) < 1e-9, name + ': take-home, not gross, feeds the savings rate'); }
