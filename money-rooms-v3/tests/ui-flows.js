@@ -588,8 +588,8 @@ export const flows = [
       check('Ctrl+Z undoes too', (await page.textContent('.fieldrow[data-field="bigGoal"] .chip')) === 'Known');
 
       /* export: the client list carries the Export button (MR-072) */
-      await page.goto(base + 'index.html#/clients'); await page.waitForSelector('.panel button:has-text("Export")');
-      const [download] = await Promise.all([page.waitForEvent('download'), page.click('.panel button:has-text("Export")')]);
+      await page.goto(base + 'index.html#/clients'); await page.waitForSelector('.panel button:text-is("Export")');
+      const [download] = await Promise.all([page.waitForEvent('download'), page.click('.panel button:text-is("Export")')]);
       const tmp = path.join(APP, 'screenshots', '.tmp-export.json');
       fs.mkdirSync(path.dirname(tmp), { recursive: true });
       await download.saveAs(tmp);
@@ -657,8 +657,8 @@ flows.push({
     fs.writeFileSync(path.join(APP, 'screenshots', '.tmp-keyboard-timing.json'), JSON.stringify({ seconds, keys, rows: Object.keys(rowIds).length }));
     /* round trip: export, wipe, import, compare again */
     await page.goto(base + 'index.html#/clients'); /* MR-072: Export sits in the open client's details on the Clients screen */
-    await page.waitForSelector('.panel button:has-text("Export")');
-    const [download] = await Promise.all([page.waitForEvent('download'), page.click('.panel button:has-text("Export")')]);
+    await page.waitForSelector('.panel button:text-is("Export")');
+    const [download] = await Promise.all([page.waitForEvent('download'), page.click('.panel button:text-is("Export")')]);
     const tmp = path.join(APP, 'screenshots', '.tmp-jordan-export.json');
     await download.saveAs(tmp);
     await page.evaluate(() => localStorage.clear());
