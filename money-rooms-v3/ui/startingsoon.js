@@ -26,7 +26,7 @@ export function liveFigures(app) {
   const q = x => x && x.cents !== undefined ? x.cents : null;
   const gap = S && S.spending.sharedFullMonthly && S.spending.sharedFullMonthly.cents !== undefined && S.spending.sharedShareMonthly ? S.spending.sharedFullMonthly.cents - S.spending.sharedShareMonthly.cents : null;
   const mo = app.result.moveOut || null;
-  return { takeHomeMonthly: q(S && S.income.takeHomeMonthly), spendingMonthly: q(S && S.safety.spendingWithPremiums), grossMonthly: q(S && S.income.grossMonthly), sharedGapMonthly: gap, moveOutRentMonthly: mo ? mo.rent : null, moveOutGapMonthly: mo ? mo.gap : null };
+  return { takeHomeMonthly: q(S && S.income.takeHomeMonthly), spendingMonthly: q(S && S.safety.spendingWithPremiums), grossMonthly: q(S && S.income.grossMonthly), sharedGapMonthly: gap, moveOutRentMonthly: mo ? mo.rent : null, moveOutGapMonthly: mo ? mo.gap : null, priorityDeltas: app.result.matters ? app.result.matters.blockDeltas : {} };
 }
 /* The start of a change is picked on a calendar (MR-036, MR-038): the year and month are stored, the day is not. */
 export function startPicker(app, b, opts) {

@@ -11,6 +11,7 @@ import { createRow } from '../../engine/record.js';
 import { freshFacts } from '../../engine/fields.js';
 import { questionField, liveFigures, startPicker } from '../startingsoon.js';
 import { setDateValue } from '../datepicker.js';
+import { changeMatters, listForBlock, mattersOf } from '../../engine/matters.js';
 
 export function mount(host, app) {
   const defs = app.data.scenarioBlocks;
@@ -48,7 +49,7 @@ export function mount(host, app) {
     if (coach && !selected && blocks.length) selected = blocks[0].id;
     headRow.appendChild(document.createTextNode('Timeline'));
     if (coach) headRow.appendChild(h('span', { class: 'tag hide-narrow' }, 'drag, or use the arrow keys'));
-    if (coach) headRow.appendChild(h('select', { class: 'select add-block', 'aria-label': 'Add a block', onChange: e => { const t = e.target.value; e.target.value = ''; if (!t) return; const b = newBlock(t, defs, year0 + 3); selected = b.id; app.mutate(rec => { rec.scenarios.push(b); }, 'scenarios'); } },
+    if (coach) headRow.appendChild(h('select', { class: 'select add-block', 'aria-label': 'Add a block', onChange: e => { const t = e.target.value; e.target.value = ''; if (!t) return; const b = newBlock(t, defs, year0 + 3); selected = b.id; app.mutate(rec => { rec.scenarios.push(b); }, 'scenarios'); if (defs.types[t].priorityTemplate || mattersOf(app.record).priorities.length) app.toast('With this in your life, re-rank: which priorities matter more or less now? Re-rank for this block is in the editor.'); } },
       h('option', { value: '' }, 'Add a block'), Object.keys(defs.types).map(t => h('option', { value: t }, defs.types[t].label))));
     laneHost.appendChild(lane(blocks, inp, year0, yearN));
     if (coach && !blocks.length) noteHost.appendChild(h('p', { class: 'muted small', style: { marginTop: '8px' } }, 'No blocks yet. Pick one from Add a block; it starts three years out.'));
@@ -125,6 +126,9 @@ export function mount(host, app) {
     setDateValue(startInput, b.startYear + '-' + String(b.startMonth || 1).padStart(2, '0'));
     clear(actionHost);
     actionHost.appendChild(b.promoted ? h('span', { class: 'chip state-known' }, 'In the Life plan') : h('button', { class: 'btn primary', onClick: () => promote(b) }, 'Add to Life plan'));
+    /* MR-105: the block's own list of what matters, with its template priorities, on top of the base list */
+    const linked = mattersOf(app.record).lists.find(l => l.kind === 'scenario' && l.linkedBlockId === b.id);
+    actionHost.appendChild(linked ? h('a', { class: 'btn', href: '#/matters/list/' + linked.id }, 'Its priorities') : h('button', { class: 'btn', title: 'With this in your life, which priorities matter more or less now?', onClick: () => { let id = null; app.change(rec => changeMatters(rec, Mx => { id = listForBlock(Mx, b, def).id; }, { session: app.session }), { reason: 'matters' }); app.go('#/matters/list/' + id); } }, 'Re-rank for this block'));
     actionHost.appendChild(h('button', { class: 'btn quiet', onClick: () => { app.mutate(rec => { rec.scenarios = rec.scenarios.filter(s => s.id !== b.id); }, 'scenarios'); selected = null; app.toast('Block removed'); } }, 'Remove block'));
   }
   function promote(b) {

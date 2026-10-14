@@ -57,9 +57,11 @@ export function adjustments(blocks, defs, live) {
     const m0 = b.startMonth && b.startMonth >= 1 && b.startMonth <= 12 ? b.startMonth : 1;
     let left = Math.max(0, c.duration) * 12;
     const key = def.income ? 'pay' : 'monthly';
+    const prio = live && live.priorityDeltas && typeof live.priorityDeltas[b.id] === 'number' ? live.priorityDeltas[b.id] : 0; /* MR-105: the block's scenario list changes spending too */
     for (let y = y0; left > 0; y++) {
       const months = Math.min(left, y === y0 ? 13 - m0 : 12);
       at(y)[key] += Math.round(c.monthly * months / 12);
+      if (prio) at(y).monthly += Math.round(prio * months / 12);
       left -= months;
     }
   });
