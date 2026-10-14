@@ -201,7 +201,15 @@
    "monthly": "-((salary / 12 - grossMonthly) * takeHomeMonthly / grossMonthly + matchChange)",
    "duration": "years",
    "note": "The salary is compared with today's gross pay; the change is scaled to take-home at today's ratio.",
-   "income": true
+   "income": true,
+   "priorityTemplate": [
+    {
+     "title": "The move to the new job",
+     "polarity": "positive",
+     "oneTime": 100000,
+     "note": "Clothes, a gap between paychecks, a commute change."
+    }
+   ]
   },
   "sabbatical": {
    "label": "Sabbatical",
@@ -235,6 +243,14 @@
    "planets": [
     "income",
     "life"
+   ],
+   "priorityTemplate": [
+    {
+     "title": "Sabbatical fund",
+     "polarity": "positive",
+     "monthly": 40000,
+     "note": "Set aside each month until the break."
+    }
    ]
   },
   "geo": {
@@ -313,7 +329,21 @@
     "taxes",
     "life"
    ],
-   "income": true
+   "income": true,
+   "priorityTemplate": [
+    {
+     "title": "Side income time",
+     "polarity": "positive",
+     "hoursPerWeek": 8,
+     "note": "The hours the side income takes."
+    },
+    {
+     "title": "Skills investment",
+     "polarity": "positive",
+     "monthly": 10000,
+     "note": "Tools and learning for the side work."
+    }
+   ]
   },
   "inheritance": {
    "label": "Inheritance or windfall",
@@ -532,6 +562,88 @@
     "safety"
    ],
    "moveout": true
+  },
+  "priority": {
+   "label": "A priority, later",
+   "glyph": "P",
+   "questions": [
+    {
+     "id": "oneOff",
+     "label": "One-time cost",
+     "kind": "money",
+     "default": 0
+    },
+    {
+     "id": "monthly",
+     "label": "Cost a month",
+     "kind": "money",
+     "default": 0
+    },
+    {
+     "id": "years",
+     "label": "Years it runs",
+     "kind": "int",
+     "default": 10,
+     "detail": true
+    }
+   ],
+   "oneOff": "oneOff",
+   "monthly": "monthly",
+   "duration": "years",
+   "note": "A priority sequenced for later (What matters, MR-100): its one-time and monthly cost from its start year.",
+   "planets": [
+    "spending",
+    "life"
+   ]
+  },
+  "business": {
+   "label": "Start a business",
+   "glyph": "B",
+   "questions": [
+    {
+     "id": "runway",
+     "label": "Runway set aside",
+     "kind": "money",
+     "default": 2000000
+    },
+    {
+     "id": "payDrop",
+     "label": "Pay given up a month",
+     "kind": "money",
+     "default": 300000
+    },
+    {
+     "id": "years",
+     "label": "Years before it pays",
+     "kind": "int",
+     "default": 2,
+     "detail": true
+    }
+   ],
+   "oneOff": "runway",
+   "monthly": "payDrop",
+   "duration": "years",
+   "income": true,
+   "note": "One-off: the runway. Ongoing: the pay given up until the business pays, as a pay change.",
+   "planets": [
+    "income",
+    "life"
+   ],
+   "priorityTemplate": [
+    {
+     "title": "Business runway",
+     "polarity": "positive",
+     "monthly": 50000,
+     "note": "Money set aside each month until the business pays."
+    },
+    {
+     "title": "Skills investment",
+     "polarity": "positive",
+     "monthly": 15000,
+     "hoursPerWeek": 5,
+     "note": "Courses, tools, time to learn."
+    }
+   ]
   }
  }
 }

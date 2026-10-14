@@ -21,7 +21,7 @@ test('every block type has 3 or 4 questions with defaults and its formulas evalu
     const c = blockCosts(def, { answers: {} }, { takeHomeMonthly: 400000, spendingMonthly: 350000, grossMonthly: 550000 });
     assert.ok(Number.isFinite(c.oneOff) && Number.isFinite(c.monthly) && Number.isFinite(c.duration), t);
   });
-  assert.equal(Object.keys(defs.types).length, 15); /* nine from the spec, New job, Income ending, New expense, Expense ending, Roommate moves out, Moving out on my own (MR-026, MR-036, MR-047, MR-084) */
+  assert.equal(Object.keys(defs.types).length, 17); /* MR-100: a priority sequenced for later; MR-105: starting a business */ /* nine from the spec, New job, Income ending, New expense, Expense ending, Roommate moves out, Moving out on my own (MR-026, MR-036, MR-047, MR-084) */
 });
 
 test('Jordan + kid + Portugal: each alone and together, baseline untouched', () => {
