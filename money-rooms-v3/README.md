@@ -238,6 +238,13 @@ progress) and Progress vs paperwork.
 Program in the side nav shows one row per session, discovery first, with
 status, date, targets met, accounts opened, homework done and the stress
 score where it was asked; urgent sessions sit between the numbered ones.
+What matters (MR-098 to MR-107) sits in the Sun: the client lists what matters,
+ranks it, prices it, and ties the spending to it; the screen shows the money
+per priority and for the list (alignment score, Not tied to a priority, cheap
+wins, expensive low ranks, the time check), the conflicts, a move-money
+preview, partner and future-self and scenario lists, four pictures, and a
+section on the one-pager. A scenario block can carry a priority template and
+its re-ranked list changes what the simulator spends.
 The Taxes room lists the return line by line, each line with what it taxed and
 at what rate, and asks the thirteen yes-or-no questions a return asks, each
 pointing at the room that holds the fact (MR-097); the saver's credit counts.

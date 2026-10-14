@@ -3,6 +3,10 @@
 Updated: 2026-10-13
 
 ## Done
+- What matters (MR-098 to MR-107): a values audit in the Sun; list, rank, price, tag and connect;
+  the money per priority and for the list; conflicts declared, flagged and suggested; move money;
+  partner, future and scenario lists; the simulator link; four pictures; the one-pager section;
+  three synthetic households tested by hand.
 - The return line by line and the questions a return asks (MR-097): each line with its base and rate,
   thirteen yes-or-no questions that point at the rooms, the saver's credit.
 - An hourly wage on the pay rows (MR-096): gross pay worked out from the wage and paid hours; dark-mode

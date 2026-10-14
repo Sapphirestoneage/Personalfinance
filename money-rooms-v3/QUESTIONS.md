@@ -355,4 +355,20 @@ Collected during the run; none blocked the build. Answer whenever.
     case, not every case: no adoption, no foreign tax, no casualty loss, no
     premium tax credit figure. Which less common credits do your clients
     actually hit, and should the questions grow one at a time as they do?
+104. What matters scores alignment as the share of spending tied to the top
+    five. Should the score weight by rank (a dollar on number one counting
+    more than a dollar on number five), or stay a plain share?
+105. The money conflict flags priorities funded in rank order past the
+    surplus. Two dated goals that cannot both be funded by their years are
+    left to the Goals timeline. Should the audit flag those too, by tying a
+    priority to a goal?
+106. The conflict library is twelve pairs of title words. Which pairs do your
+    clients actually hit, and which words fire wrongly (ski trips against a
+    dog fires through the word trips)?
+107. Transaction-level tagging drills into spending lines, because the record
+    keeps lines, not raw transactions. Should imported transactions be kept
+    on the record so a single purchase can be tied to a priority?
+108. A planned move is stored but not spent by the report or the simulator.
+    Should an applied move change the picture (as a scenario), or stay a note
+    for the session and the one-pager, as it does now?
 

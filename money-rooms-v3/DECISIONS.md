@@ -562,6 +562,66 @@ Compatibility: schema 5. On load, an `account` row whose type is checking, hysa,
 Why: the owner: "separate them into investing and bank accounts ... very clearly be bank accounts with checking, savings, high yield savings and CDs", and on question 60: "keep both but make sure that they both are modes for the debt calculation".
 Alternative: one account type grouped on screen by bucket (the list stayed one long select, which is what the owner wanted gone).
 
+## MR-107 2026-10-14 Three synthetic households test every metric against hand-computed numbers
+Decision: `tests/engine/matters.test.js` builds three households through the record API: A, single in her twenties with most spending untagged and cheap top priorities; B, a couple with diverging lists and a location conflict; C, an entrepreneurship block with a scenario list. Each metric is checked by hand: tied and untied money, the alignment score, spend ranks and gaps, hours of work, months gained on the FI date, cheap wins, the payback on a problem, the money conflict, the compare rows, the scenario delta the simulator spends. Split shares clamp to 100, every field at Does not know breaks nothing, and the unlock loop names what opens. Flow `level29-what-matters` runs the screen end to end; the sweep covers the room, its money and its pictures at three widths.
+Compatibility: none.
+Why: the owner's testing section.
+Alternative: fixture files on disk (rejected: the three households are small enough to build in the test, where the hand figures sit beside them).
+
+## MR-106 2026-10-14 Spending against priorities on the one-pager
+Decision: the client one-pager gains a section when priorities exist: the top five with money a month and share of take-home, the alignment score and what is tied to nothing named, the biggest cheap win, the biggest mismatch, one conflict to resolve, and the moves agreed in session.
+Compatibility: none.
+Why: the owner's list for the end-of-session page.
+Alternative: a separate printed sheet (rejected: one page).
+
+## MR-105 2026-10-14 The four pictures, each one tap from the sun
+Decision: spending categories to priorities as a sankey with Not tied to a priority as its own visible stream; rank against spending rank as paired bars; importance against cost as a quadrant with cheap wins top left; and the mind map of priorities with their lines, conflicts dashed in amber. Built in `engine/chartdata-matters.js` from the report, drawn in `ui/charts-matters.js`; registered in the chart list and catalog (54 built, 55 in the catalog); the sun card links to each.
+Compatibility: the chart count guards move to 54 and 55.
+Why: the owner's five visuals (the sun card is the fifth).
+Alternative: a treemap of priorities (rejected: the sankey keeps the untied stream visible).
+
+## MR-104 2026-10-14 The life simulator link: a block carries a priority template and asks for a re-rank
+Decision: a scenario block type can carry `priorityTemplate`, priorities that need money allocated (the new `business` block: business runway and skills investment; side income, sabbatical and new job carry theirs). Adding such a block, or any block when a list exists, prompts the re-rank; Re-rank for this block in the block's editor makes its scenario list once (the base list plus the template) and opens it. The simulator then folds the list's spending change (its positive priorities' monthly cost against the base list's) into the block's years, through the live figures, like the block's own cost.
+Compatibility: `data/scenario-blocks.json` grows to 17 types; `adjustments()` reads `live.priorityDeltas` when present.
+Why: the owner: career and income strategies stay as blocks; with one in your life, which priorities matter more or less, and the simulator should spend accordingly.
+Alternative: a priority list per block without the simulator reading it (rejected: then the re-rank changes nothing).
+
+## MR-103 2026-10-14 Lists: mine, a partner's, a future self, a scenario, any two side by side
+Decision: the Lists tab adds a partner list (its own ranking), a future-self list at an age (overrides on the base), or a scenario list; any two show side by side with each priority's rank on both, read as agree (within one place), close (within three), far apart, or only on one side, and the shared priorities funded by joint money (tags on shared spending lines, counted at my share).
+Compatibility: none beyond MR-098.
+Why: the owner's compare view: where we agree, where we disagree, and what joint money funds.
+Alternative: one merged household list (rejected: the disagreement is the point).
+
+## MR-102 2026-10-14 Move money: a preview that never edits the spending rows
+Decision: the Move money tab takes a from (a priority with money tied, or Not tied to a priority), a to (a priority, or Saved, not spent) and an amount by slider or exact figure, and previews both sides' money a month, share of take-home and hours of work, the alignment score, and the FI date change; money moved between two priorities leaves the FI date where it is and the preview says so, only money saved moves it. Save as a scenario list makes a scenario list carrying the move; Apply as a planned change stores it on the record as planned. Neither touches a spending row and the report ignores planned moves.
+Compatibility: none beyond MR-098.
+Why: the owner: never edit the real spending numbers; a planned change is a note of intent for the session and the one-pager.
+Alternative: writing the move into the spending lines as a what-if (rejected: the rows are facts).
+
+## MR-101 2026-10-14 Conflicts: declared, flagged by the numbers, suggested from a library the client confirms
+Decision: a declared conflict is a connection of type conflicts or cannot both happen with its kind. The numbers flag money (priorities with a cost funded in rank order until the surplus runs out; those past it are the conflict) and time (hours claimed over the hours available). `data/conflict-library.json` holds pairs of title words with a kind and a reason (beach against ski, city against land, travel against a dog); a match is only suggested, and counts once the client confirms; a dismissed one stays out. Each conflict resolves one of three ways: pick one, sequence them in time (which can become a life block of the new `priority` type from the later priority's cost and year), or keep both and accept the cost shown.
+Compatibility: `data/scenario-blocks.json` gains the `priority` block type.
+Why: the owner asked for both the client's declared conflicts and the app's flags, with the client confirming anything the app only suspects.
+Alternative: flagging two goals that cannot both be funded by their years (left to the Goals timeline, which already assesses that; see QUESTIONS 105).
+
+## MR-100 2026-10-14 The metrics: per priority and for the whole list, each open only when its inputs exist
+Decision: per priority: the money tied a month, its share of take-home and of spending, the hours of work it costs (tied over the real hourly wage), the FI date impact (the projection with that spending removed for good, in months gained), the rank by spending and the gap to the rank by importance; a negative also shows what the problem costs, what the fix costs and the payback in months. For the list: the alignment score (share of spending tied to the top five, and to the top ten), Not tied to a priority a month and as a share (the headline), the cost of the top ten against spending, cheap wins (top five, priced at five percent of take-home or less, getting less than the price), expensive low ranks (below the top five, taking a tenth of spending or more), and the time check (hours claimed against 168 less sleep, work and the commute, the Income room's hours winning until set). Three join the registry (alignment, not tied, its share) under Awareness, with record roots `matters.rank` and `matters.tag` on the graph and needs phrases the unlock loop maps to the room.
+Compatibility: the registry grows to 95 metrics; the graph gains two record roots marked as not affecting the FI date.
+Why: the owner's list, metric by metric; each opens when its inputs exist, like every other number.
+Alternative: the per-priority figures as registry metrics too (rejected: the registry is one number per name; the per-priority table lives in the report).
+
+## MR-099 2026-10-14 The entry flow: dump, rank, price, tag, connect, live in a session
+Decision: `#/matters` is one screen with six tabs; the Priorities tab is five steps under carets: a plain text box typed one per line, then one tap per line for more of it or gone; rank by drag or Up and Down, the top five first with Show all after; a price per priority with a confidence on every number and Does not know as a plain choice; tags by tapping a priority under each spending category (all, most, half, some, or an exact share), with the lines as a drill-down; and the lines between priorities (supports, requires, conflicts with its kind, cannot both happen) with the map drawn beside them. The sun card on the Plan shows the top five and the alignment score and links to the room and its pictures. Client view reads the same in words with no controls.
+Compatibility: none stored beyond MR-098.
+Why: used live with the client; nothing may stall. The dump box is built once so typing never loses it; every other part redraws from the record.
+Alternative: a wizard with one step per screen (rejected: a coach jumps between steps mid-call; carets keep every step a tap away).
+
+## MR-098 2026-10-14 What matters: a values audit in the Sun, one section of the record
+Decision: `record.matters` holds the lists, the priorities, the tags, the connections, the hours, the resolutions and the planned moves, set whole and journaled as a section (`engine/matters.js`). A priority is positive (want more of) or negative (want gone), ranked in strict order, with a cost (one time, a month, a year), a problem cost and a fix cost for negatives, hours a week, whose value it is, and a confidence on every number in the four states the rooms use (known, rough, will-send, unknown). A future or scenario list stores only overrides on its base list, never a copy. A tag ties a spending category or a spending line to a priority with a share; the shares on one source stay at 100 or less; what is left is Not tied to a priority. Every number the screen shows is read from the finished result: spending by category and line, take-home, the real hourly wage, the surplus and the FI path.
+Compatibility: a new optional section; older records read as empty. `fiEffect` gains a `permanent` flag so a saving that runs for good lowers the FI target the way a cost raises it; existing callers are unchanged.
+Why: the owner: a values audit with a price tag on every line, in the Sun, because it is one of the most important facts about the client. The reveal is that top priorities cost little and much of the spending serves nothing named.
+Alternative: priorities as Life plan goal rows (rejected: a priority is not a dated amount, and the tags need their own shape).
+
 ## MR-097 2026-10-14 The return line by line, and the questions a return asks
 Decision: The Taxes room lists the return line by line under one caret: gross pay, each pre-tax deduction, adjusted gross income, the standard or itemized deduction, taxable income, each federal bracket with the slice it taxed and its rate, each credit, state at its rate, the city wage tax, Social Security and Medicare on their bases, self-employment tax, every tax with the all-in rate, and what is left. The planet publishes it as `lines` from the same figures as the breakdown; `federalTax` now sums `federalBrackets`, so the bracket lines are the formula. Under a second caret sit the thirteen yes-or-no questions a tax-return site asks (`data/tax-questions.json`): married, dependents, child care, tuition, student loan, retirement, HSA, 1099, the home, charity, medical, energy, a marketplace plan. Each yes points at the room that already holds the fact; a yes the record does not carry yet offers one tap that adds the row with its kind picked and opens the room; a fact the rooms already hold reads as counted and answers its own question. The saver's credit joins the credits (`data/tax-2026.json`), computed from the pay-row contributions and the IRA room. Answers live in `record.tax.answers`, set whole and journaled as a section.
 Compatibility: `record.tax` is a new optional section; older records read as unanswered. The taxes planet now reads `income.rothContribMonthly`.
