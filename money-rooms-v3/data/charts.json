@@ -309,6 +309,30 @@
    "firstSession": 6,
    "clientVisible": true,
    "gentle": "Where your pay goes before you see it, in one picture"
+  },
+  "prioritySankey": {
+   "question": "Where does each spending dollar go against what matters?",
+   "firstSession": 3,
+   "clientVisible": true,
+   "gentle": "Where each dollar goes against what matters"
+  },
+  "priorityBars": {
+   "question": "What do you rank first, and what does the money rank first?",
+   "firstSession": 3,
+   "clientVisible": true,
+   "gentle": "What you rank first, and what the money ranks first"
+  },
+  "priorityQuadrant": {
+   "question": "What matters most and costs least?",
+   "firstSession": 3,
+   "clientVisible": true,
+   "gentle": "What matters most and costs least"
+  },
+  "priorityMap": {
+   "question": "How do your priorities connect, and where do they pull against each other?",
+   "firstSession": 3,
+   "clientVisible": true,
+   "gentle": "How your priorities connect"
   }
  }
 }

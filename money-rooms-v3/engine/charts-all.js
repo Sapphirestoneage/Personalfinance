@@ -6,9 +6,10 @@ import { CHARTS } from './chartdata.js';
 import { MORE_CHARTS } from './chartdata-more.js';
 import { SCORE_CHARTS } from './chartdata-score.js';
 import { CALC_CHARTS } from './chartdata-calc.js';
+import { MATTERS_CHARTS } from './chartdata-matters.js';
 
 const PLANET_OF = { sankey: 'income', netWorth: 'invest', balanceSheet: 'invest', debtRace: 'debt', runway: 'safety', fiGauge: 'life', draftt: 'spending', waterfall: 'invest', taxes: 'taxes', taxFlow: 'taxes' };
-export const ALL_CHARTS = CHARTS.map(c => Object.assign({ planet: PLANET_OF[c.id] || 'life' }, c)).concat(MORE_CHARTS, SCORE_CHARTS, CALC_CHARTS); /* Level 13 (MR-067): the ten calculator charts */
+export const ALL_CHARTS = CHARTS.map(c => Object.assign({ planet: PLANET_OF[c.id] || 'life' }, c)).concat(MORE_CHARTS, SCORE_CHARTS, CALC_CHARTS, MATTERS_CHARTS); /* Level 13 (MR-067): the ten calculator charts; MR-098: the four of What matters */
 export function chartDef(id) { return ALL_CHARTS.find(c => c.id === id) || null; }
 /* the stage and the metrics behind a chart: the registry entry, or the Level 2 map in data/unlocks.json */
 export function chartMeta(id, data) { const def = chartDef(id); if (def && def.stage) return { stage: def.stage, metrics: def.metrics || [] }; const m = data && data.unlocks && data.unlocks.charts[id]; return m || { stage: 5, metrics: [] }; }
