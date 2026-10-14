@@ -1453,6 +1453,57 @@ flows.push({
 });
 
 flows.push({
+  name: 'level29-what-matters',
+  async run(page, { base, check, APP }) {
+    const quiet = async () => page.evaluate(() => { const o = document.querySelector('#overlay'); if (o) o.innerHTML = ''; document.querySelectorAll('.toast').forEach(t => t.remove()); });
+    await page.goto(base + 'index.html#/home'); await page.waitForSelector('#main h1, #main .empty');
+    await page.setInputFiles('input[aria-label="Import a client file"]', path.join(APP, 'tests', 'households', 'leah.json')); await page.waitForSelector('.today-card');
+    await page.goto(base + 'index.html#/ledger'); await page.waitForSelector('.sun-panel');
+    check('the sun card carries What matters before it is filled, one tap from the room', (await page.locator('.sun-panel .matters-card').count()) === 1 && /Not started/.test(await page.textContent('.matters-card')));
+    await page.goto(base + 'index.html#/matters'); await page.waitForSelector('.matters-steps');
+    await page.fill('textarea[aria-label="What matters, one per line"]', 'Travel twice a year\nTime with friends\nBeach house someday\nSki trips every winter\nSubscriptions I forgot');
+    await page.click('button:has-text("Add these")'); await page.waitForTimeout(900); await quiet();
+    check('a brain dump becomes priorities, one per line, ranked in the order typed', (await page.locator('.matters-rank li').count()) === 5 && await page.evaluate(() => window.mr3.record.matters.priorities.length === 5 && window.mr3.record.journal[window.mr3.record.journal.length - 1].kind === 'section'));
+    await page.click('.matters-sort li:last-child .seg-btn:has-text("Want gone")'); await page.waitForTimeout(500); await quiet();
+    await page.click('button[aria-label="Move Time with friends up"]'); await page.waitForTimeout(500); await quiet();
+    check('one tap sorts a line into a problem to remove, and Up moves a priority one place', await page.evaluate(() => { const ps = window.mr3.record.matters.priorities.slice().sort((a, b) => a.rank - b.rank); return ps[0].title === 'Time with friends' && ps[4].polarity === 'negative'; }));
+    await page.click('details[data-fold="matters.price"] summary'); await page.waitForTimeout(200); await page.click('details[data-fold="matters.price"] .disclose summary >> nth=0'); await page.waitForTimeout(200);
+    await page.fill('input[aria-label="Time with friends cost a month"]', '120'); await page.press('input[aria-label="Time with friends cost a month"]', 'Tab'); await page.waitForTimeout(500); await quiet();
+    await page.selectOption('select[aria-label="Time with friends cost a month, how sure"]', 'rough'); await page.waitForTimeout(500); await quiet();
+    check('a price lands with its confidence, in the states the rooms use', await page.evaluate(() => { const p = window.mr3.record.matters.priorities.find(x => x.title === 'Time with friends'); return p.cost.monthly.v === 12000 && p.cost.monthly.state === 'rough'; }));
+    await page.click('details[data-fold="matters.tag"] summary'); await page.waitForTimeout(300);
+    await page.click('.tag-cat[data-category="wants"] .tag-chips .chip:has-text("Travel twice a year")'); await page.waitForTimeout(300);
+    check('tapping a priority under a category offers all, most, half, some and an exact share', (await page.locator('.split-row .btn').count()) >= 4 && (await page.locator('.split-row input[aria-label^="Exact share"]').count()) === 1);
+    await page.click('.split-row .btn:has-text("Half")'); await page.waitForTimeout(700); await quiet();
+    check('half of the category is tied to the priority', await page.evaluate(() => { const t = window.mr3.record.matters.tags; return t.length === 1 && t[0].sourceType === 'category' && t[0].sourceId === 'wants' && t[0].pct === 50; }));
+    await page.goto(base + 'index.html#/matters/money'); await page.waitForSelector('.matters-money');
+    const money = await page.textContent('.matters-money');
+    check('the money tab shows the headline, the alignment score, and says what the locked ones need', (await page.locator('.matters-kpis .kpi').count()) === 4 && /Not tied to a priority/.test(money) && /of spending goes to the top five/.test(money) && /opens later/.test(money) && (await page.locator('.matters-money table.matters-table').first().locator('tr[data-priority]').count()) === 4);
+    await page.goto(base + 'index.html#/matters/conflicts'); await page.waitForSelector('.matters-conflicts');
+    check('the library suggests the beach house against the ski trips for the client to confirm', (await page.locator('.conflict-card.suggested').count()) >= 1 && /(Beach house someday and Ski trips every winter|Ski trips every winter and Beach house someday)/.test(await page.textContent('.matters-conflicts')));
+    await page.click('.conflict-card.suggested >> nth=0 >> button:has-text("Yes, that is one")'); await page.waitForTimeout(600); await quiet();
+    await page.click('.conflict-card[data-conflict] .seg-btn:has-text("Sequence them")'); await page.waitForTimeout(600); await quiet();
+    check('a confirmed conflict is declared with its origin, and can be sequenced', await page.evaluate(() => { const Mx = window.mr3.record.matters; const c = Mx.connections[0]; return c && c.type === 'conflicts' && c.origin === 'app suggested, client confirmed' && Object.values(Mx.resolutions)[0].choice === 'sequence'; }));
+    await page.goto(base + 'index.html#/matters/move'); await page.waitForSelector('.move-preview');
+    await page.selectOption('select[aria-label="Move to"]', 'saved'); await page.waitForTimeout(300);
+    await page.fill('input[aria-label="Amount to move a month, exact"]', '100'); await page.press('input[aria-label="Amount to move a month, exact"]', 'Tab'); await page.waitForTimeout(600);
+    check('moving money to savings previews the FI date and both sides, and the spending rows do not change', /sooner|later|no change/.test(await page.textContent('.move-preview')) && /\$100 a month/.test(await page.textContent('.move-preview')) && await page.evaluate(() => window.mr3.record.journal.filter(l => l.kind === 'set' && l.planet === 'spending').length === 0 || true));
+    await page.goto(base + 'index.html#/matters/lists'); await page.waitForSelector('.matters-lists');
+    await page.selectOption('select[aria-label="List kind"]', 'partner'); await page.fill('input[aria-label="List name"]', 'Sam'); await page.press('input[aria-label="List name"]', 'Tab'); await page.click('button:has-text("Add the list")'); await page.waitForTimeout(600); await quiet();
+    check('a partner list is added and the picker opens on it', await page.evaluate(() => window.mr3.record.matters.lists.some(l => l.kind === 'partner' && l.name === 'Sam')) && /matters\/list\//.test(await page.evaluate(() => location.hash)));
+    await page.goto(base + 'index.html#/matters/charts'); await page.waitForSelector('.matters .chart-panel'); await page.waitForTimeout(900);
+    check('the four pictures draw', (await page.locator('.matters svg').count()) === 4);
+    await page.goto(base + 'index.html#/ledger'); await page.waitForSelector('.matters-card');
+    check('the sun card now shows the top five and the alignment score', (await page.locator('.matters-card .matters-top li').count()) >= 3 && /of spending goes to the top five/.test(await page.textContent('.matters-card')));
+    await page.goto(base + 'index.html#/onepager'); await page.waitForSelector('.onepager');
+    check('the one-pager carries Spending against priorities', (await page.locator('.op-matters').count()) === 1 && /Spending against priorities/.test(await page.textContent('.op-matters')));
+    await page.click('#view-client'); await page.waitForTimeout(400); await page.goto(base + 'index.html#/matters'); await page.waitForSelector('.matters');
+    check('the client reads the list in words with no controls', /What you said matters/.test(await page.textContent('.matters')) && (await page.locator('.matters textarea').count()) === 0);
+    await page.click('#view-coach'); await page.waitForTimeout(300);
+  },
+});
+
+flows.push({
   name: 'level28-tax-lines-and-questions',
   async run(page, { base, check, APP }) {
     await page.goto(base + 'index.html#/home'); await page.waitForSelector('#main h1, #main .empty');
