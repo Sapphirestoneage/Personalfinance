@@ -22,6 +22,7 @@ import { headlineIds, trend, textOf, overallNextAction, lastSnapshot } from '../
 import { cachedSensitivity } from '../levers-bridge.js';
 import { ARROWS } from '../scorebits.js';
 import { blockCosts } from '../../engine/scenarios.js';
+import { UNTIED } from '../../engine/matters.js';
 import { liveFigures } from '../startingsoon.js';
 const blockCostsFor = (def, b, app) => { try { return blockCosts(def, b, liveFigures(app)); } catch (e) { return null; } };
 
@@ -85,6 +86,7 @@ export function mount(host, app) {
         todos.map((td, i) => h('div', { class: 'row', style: { marginTop: '8px' } }, h('input', { class: 'input', style: { width: '240px' }, value: td.task, 'aria-label': 'Task', onChange: e => app.mutate(r => { r.sun.onepager.todos[i].task = e.target.value; }, 'onepager') }), h('input', { class: 'input', style: { width: '112px' }, value: td.owner, 'aria-label': 'Owner', onChange: e => app.mutate(r => { r.sun.onepager.todos[i].owner = e.target.value; }, 'onepager') }), h('input', { class: 'input', style: { width: '112px' }, value: td.due, 'aria-label': 'Due (YYYY-MM-DD)', onChange: e => app.mutate(r => { r.sun.onepager.todos[i].due = e.target.value; }, 'onepager') }), h('button', { class: 'btn small quiet', onClick: () => app.mutate(r => { r.sun.onepager.todos.splice(i, 1); }, 'onepager') }, 'Remove'))))));
     /* goals */
     const goals = R.sun ? R.sun.outputs.life.goals : [];
+    if (R.matters && R.matters.priorities.length) page.appendChild(mattersSection(R.matters)); /* MR-107 */
     page.appendChild(h('section', null, h('h3', null, 'Goals'), goals.length ? h('ul', null, goals.map(g => h('li', null, g.name + ': ' + (g.cents !== null ? F.dollarsWhole(g.cents, { rough: g.costQ && g.costQ.rough }) : 'cost not entered') + (g.targetDate ? ' by ' + F.date(g.targetDate) : '')))) : h('p', { class: 'muted small' }, 'No goals entered.')));
     /* bring next time */
     const theirs = byInstitution(theirPlate(rec, app.data.fields));
@@ -166,4 +168,20 @@ function assumptionsLine(R, rec) {
   const a = R.asm; const pct = v => F.percent(v, { places: 0 });
   const set = Object.keys(rec.sun.assumptions || {}).length > 0;
   return h('p', { class: 'small muted op-asm' }, 'Assumes ' + pct(a.returnLikely) + ' a year after inflation (' + pct(a.returnWorst) + ' to ' + pct(a.returnBest) + '), a ' + F.percent(a.withdrawalRate, { places: a.withdrawalRate * 1000 % 10 ? 2 : 1 }) + ' withdrawal rate and Social Security from ' + a.socialSecurityAge + ', in today\'s dollars.' + (set ? ' Set for this client.' : ''));
+}
+
+/* Spending against priorities (MR-107): the top five with their money, the alignment score and what is tied to nothing, the biggest cheap win, the biggest mismatch, one conflict to resolve, any move agreed in session. */
+function mattersSection(R) {
+  const money = c => F.dollarsWhole(c); const pct = r => F.percent(r, { places: 0 });
+  const sec = h('section', { class: 'op-matters' }, h('h3', null, 'Spending against priorities'));
+  sec.appendChild(h('ol', null, R.positives.slice(0, 5).map(l => h('li', null, l.title + ': ' + (l.tied.cents ? money(l.tied.cents) + ' a month' + (l.tied.shareTake !== null ? ', ' + pct(l.tied.shareTake) + ' of take-home' : '') : 'nothing tied yet')))));
+  const lines = [];
+  if (R.alignment.top5 !== null) lines.push(pct(R.alignment.top5) + ' of spending goes to the top five.');
+  if (R.untied.cents !== null) lines.push(money(R.untied.cents) + ' a month, ' + pct(R.untied.share) + ', is ' + UNTIED.toLowerCase() + '.');
+  if (R.cheapWins.length) lines.push('Biggest cheap win: ' + R.cheapWins[0].title + ', ' + money(R.cheapWins[0].declaredMonthly) + ' a month would fund it; it gets ' + money(R.cheapWins[0].tied.cents) + '.');
+  if (R.expensiveLowRanks.length) lines.push('Biggest mismatch: ' + R.expensiveLowRanks[0].title + ' is #' + R.expensiveLowRanks[0].rank + ' and takes ' + money(R.expensiveLowRanks[0].tied.cents) + ' a month.');
+  const open = R.conflicts.declared.concat(R.conflicts.flagged).find(c => !c.resolution);
+  if (open) lines.push('One conflict to resolve: ' + (open.titles ? open.titles.join(' and ') : open.aTitle + ' and ' + open.bTitle) + ' (' + open.kind + ').');
+  lines.forEach(t => sec.appendChild(h('p', null, t)));
+  return sec;
 }
