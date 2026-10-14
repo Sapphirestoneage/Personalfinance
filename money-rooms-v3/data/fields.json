@@ -45,6 +45,8 @@
      "moon": "W-2",
      "fields": [
       "grossPay",
+      "hourlyRate",
+      "hoursPaid",
       "takeHome",
       "payFrequency",
       "stability",
@@ -55,7 +57,6 @@
       "bonus",
       "equity",
       "startDate",
-      "hoursPaid",
       "hoursCommute",
       "workCosts",
       "whose"
@@ -81,13 +82,14 @@
      "moon": "1099",
      "fields": [
       "grossPay",
+      "hourlyRate",
+      "hoursPaid",
       "takeHome",
       "payFrequency",
       "stability",
       "businessExpenses",
       "hsaPayroll",
       "startDate",
-      "hoursPaid",
       "hoursCommute",
       "workCosts",
       "whose"
@@ -112,9 +114,10 @@
      "moon": "Side",
      "fields": [
       "grossPay",
+      "hourlyRate",
+      "hoursPaid",
       "payFrequency",
       "stability",
-      "hoursPaid",
       "whose"
      ],
      "defaults": {
@@ -817,9 +820,10 @@
    "kind": "hours",
    "owner": "income",
    "weight": 4,
-   "hint": "For the real hourly wage lens",
+   "hint": "Hours a week, paid. With an hourly wage, gross pay is worked out; the real hourly wage lens reads it too",
    "defaultSource": "client",
-   "optional": true
+   "optional": true,
+   "liftWhenEmpty": "grossPay"
   },
   "hoursCommute": {
    "id": "hoursCommute",
@@ -2207,6 +2211,17 @@
    "cadence": true,
    "primary": true,
    "defaultCadence": "year"
+  },
+  "hourlyRate": {
+   "id": "hourlyRate",
+   "label": "Hourly wage",
+   "kind": "money",
+   "owner": "income",
+   "weight": 6,
+   "hint": "With paid hours a week, gross pay is worked out from this",
+   "defaultSource": "client",
+   "optional": true,
+   "liftWhenEmpty": "grossPay"
   }
  }
 }

@@ -143,9 +143,11 @@ export function checklist(record, result, data) {
           const d = fields.fields[fid]; if (!d || d.tag || !askedOnRow(fields, r, fid)) return;
           const f = r.f[fid];
           const required = !d.optional && !standsDown && !optionalType;
-          let status = statusOf(f);
+          let status = statusOf(f); let text = fieldText(d, f, record);
+          const worked = status === 'missing' && result && result.enriched && (result.enriched[p] || []).find(e => e.rowId === r.id && e.field === fid && e.value && e.value.status === 'ok');
+          if (worked) { status = 'in'; text = 'Worked out: ' + F.dollarsWhole(worked.value.cents) + ' a month'; } /* MR-096: gross pay from the hourly wage and hours */
           if (!required && (status === 'missing' || status === 'add')) status = 'optional';
-          g.items.push(item({ id: 'row:' + r.id + ':' + fid, label: d.label, sub: name, text: fieldText(d, f, record), status, required, primary: !!(prim && fid === prim.id), rowId: r.id, field: fid, planet: p, type: t.id, href }));
+          g.items.push(item({ id: 'row:' + r.id + ':' + fid, label: d.label, sub: name, text, status, required, primary: !!(prim && fid === prim.id), rowId: r.id, field: fid, planet: p, type: t.id, href }));
         });
       });
       groups.push(g);

@@ -248,6 +248,8 @@ to find it, what to collect and how it counts (MR-092); Benefits worth and
 Total compensation join the registry.
 On a phone a date is typed, mm/dd/yyyy, with a number keyboard (MR-091).
 Clients is one line per client, with Sessions and History under a caret (MR-090).
+A pay row takes an hourly wage and paid hours, and gross pay is worked out
+from them (MR-096).
 A job's pay on the quick start can be said before or after tax (MR-095).
 Every quick start amount has an interval picker (MR-089): a month, a year,
 every two weeks, a week, a day, and an hour for pay with hours a week.

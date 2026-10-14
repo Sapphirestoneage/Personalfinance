@@ -105,6 +105,7 @@ export function applyQuick(record, answers, data, meta) {
           const st = intervalToStored(parsed.cents, k.cad || parsed.cadence, typeof k.hours === 'number' ? k.hours : parseFloat(k.hours));
           set(row.id, prim, st.cents, stateOf(parsed), st.cad);
           if (st.hours && typeDef(fields, p.planet, p.type).fields.includes('hoursPaid')) set(row.id, 'hoursPaid', st.hours, 'rough');
+          if (st.hours && typeDef(fields, p.planet, p.type).fields.includes('hourlyRate')) set(row.id, 'hourlyRate', parsed.cents, stateOf(parsed)); /* MR-096: the wage itself sits on the row too */
           row.quick = { cad: k.cad || parsed.cadence, rateCents: st.hours ? parsed.cents : null, hours: st.hours, basis: netField ? 'net' : 'gross' }; /* so the screen can read the interval and the basis back */
         } else set(row.id, prim, parsed.unknown ? null : parsed.cents, stateOf(parsed), def.cadence ? parsed.cadence : undefined);
       }

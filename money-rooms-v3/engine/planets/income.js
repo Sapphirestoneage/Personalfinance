@@ -6,6 +6,7 @@ import { q, U, add, sum, scale, needs, asTax, isNeeds } from '../units.js';
 import { fieldQ, monthlyCents, num, val, isNa, paychecksPerYear } from './common.js';
 import { federalTax, taxableIncome, fica, selfEmploymentTax } from '../tax.js';
 import { confidenceOf, hasValue } from '../states.js';
+import { hourlyToMonthly } from '../parse.js';
 import { hasPartner, countsTogether } from '../household.js';
 
 let BENEFIT_KINDS = null;
@@ -32,7 +33,11 @@ export function run(ctx) {
     const partnerRow = val(r, 'whose') === 'partner';
     if (partnerRow && mineOnly) { const pth = fieldQ(r, 'takeHome', U.monthlyAfter, asm); if (pth) partnerTake = add(partnerTake, pth); return; }
     if (t === 'w2' || t === 'c1099' || t === 'side') {
-      const g = fieldQ(r, 'grossPay', U.monthlyPre, asm);
+      let g = fieldQ(r, 'grossPay', U.monthlyPre, asm);
+      if (!g && ['w2', 'c1099', 'side'].includes(t)) { /* MR-096: an hourly wage and paid hours a week give gross pay, one formula */
+        const hr = fieldQ(r, 'hourlyRate', U.oneoff, asm); const hp = num(r, 'hoursPaid');
+        if (hr && hp > 0) { g = q(hourlyToMonthly(hr.cents, hp), U.monthlyPre, { confidence: Math.min(hr.confidence, 0.8), rough: hr.rough }); enriched.push({ rowId: r.id, field: 'grossPay', value: g, note: 'From the hourly wage and paid hours: wage x hours x 52 / 12', source: 'computed' }); }
+      }
       const bonus = fieldQ(r, 'bonus', U.monthlyPre, asm);
       const equity = fieldQ(r, 'equity', U.monthlyPre, asm);
       const pr = fieldQ(r, 'pretaxRetirement', U.monthlyPre, asm);

@@ -3,6 +3,8 @@
 Updated: 2026-10-13
 
 ## Done
+- An hourly wage on the pay rows (MR-096): gross pay worked out from the wage and paid hours; dark-mode
+  read cells keep the theme.
 - Pay before tax or after tax on the quick start (MR-095): after tax lands in Take-home.
 - Taxes, computed (MR-094): the breakdown as a sankey, the all-in rate, standard against itemized, and
   the ways to lower it with a figure each; deductions and credits as rows; state and local stand-ins.

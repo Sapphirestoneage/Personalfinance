@@ -98,6 +98,7 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    color-scheme: dark; /* MR-096: the browser's own controls follow the theme */
     --sapphire-900: #DCE7FA;
     --sapphire-700: #7FAEF5;
     --sapphire-500: #5B8FEA;

@@ -73,7 +73,9 @@
    "weeksLeft",
    "sun.workSituation",
    "benefitKind",
-   "benefitValue"
+   "benefitValue",
+   "hourlyRate",
+   "hoursPaid"
   ],
   "income.takeHomeMonthly": [
    "takeHome",
@@ -658,7 +660,6 @@
   "otherTax": "a note",
   "otherLife": "a note",
   "otherSafety": "a note",
-  "hoursPaid": "the real hourly wage only",
   "hoursCommute": "the real hourly wage only",
   "workCosts": "the real hourly wage only",
   "allocStocks": "allocation only",

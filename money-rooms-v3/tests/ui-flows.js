@@ -1451,3 +1451,26 @@ flows.push({
     check('the room takes deductions and credits as rows', (await page.locator('.ledger').count()) === 1);
   },
 });
+
+flows.push({
+  name: 'level27-hourly-and-dark',
+  async run(page, { base, check }) {
+    await page.setViewportSize({ width: 390, height: 844 }); await page.emulateMedia({ colorScheme: 'dark' });
+    await page.goto(base + 'index.html#/clients'); await page.waitForSelector('button[aria-label="Add a client"]');
+    await page.click('button[aria-label="Add a client"]'); await page.fill('input[aria-label="New client name"]', 'Ari'); await page.press('input[aria-label="New client name"]', 'Enter'); await page.waitForSelector('.qs-form');
+    await page.click('#qs-income .seg-btn:has-text("Yes")'); await page.click('#qs-income .chip:has-text("A job (W-2)")');
+    await page.fill('#qs-income [data-kind="w2"] input.qs-amount', '1'); await page.press('#qs-income [data-kind="w2"] input.qs-amount', 'Tab'); await page.waitForTimeout(600);
+    await page.goto(base + 'index.html#/ledger/income/w2'); await page.waitForSelector('.ledger-table');
+    check('in the dark theme a read cell keeps the page colours, not the browser button face', await page.evaluate(() => { const b = document.querySelector('.ledger-table button.cell-read'); const cs = getComputedStyle(b); return cs.backgroundColor === 'rgba(0, 0, 0, 0)' && getComputedStyle(document.documentElement).colorScheme === 'dark'; }));
+    /* clear the rough gross and type an hourly wage with paid hours in the details */
+    await page.evaluate(() => { const r = window.mr3.record.planets.income.rows.find(x => x.type === 'w2'); window.mr3.setField(r.id, 'grossPay', null, 'unknown', 'client'); });
+    await page.waitForTimeout(300); await page.click('.ledger-table .details-btn'); await page.waitForSelector('.row-details .fieldrow[data-field="hourlyRate"]');
+    const type = async (field, v) => { const row = '.row-details .fieldrow[data-field="' + field + '"]'; const read = page.locator(row + ' button.cell-read'); if (await read.count()) await read.click(); await page.fill(row + ' input', v); await page.press(row + ' input', 'Tab'); await page.waitForTimeout(300); };
+    await type('hourlyRate', '25'); await type('hoursPaid', '30');
+    check('gross pay is worked out from the wage and the hours and named as inferred', await page.evaluate(() => { const r = window.mr3.record.planets.income.rows.find(x => x.type === 'w2'); return r.f.hourlyRate.v === 2500 && r.f.hoursPaid.v === 30 && window.mr3.result.metrics.gross.status === 'ok' && window.mr3.result.metrics.gross.value.cents === Math.round(2500 * 30 * 52 / 12); }));
+    await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+    check('the room says so', /Inferred, not stored: .*gross pay a month/.test(await page.textContent('#main')));
+    await page.emulateMedia({ colorScheme: 'light' }); await page.setViewportSize({ width: 1440, height: 900 });
+  },
+});
+

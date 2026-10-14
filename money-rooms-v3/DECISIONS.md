@@ -562,6 +562,12 @@ Compatibility: schema 5. On load, an `account` row whose type is checking, hysa,
 Why: the owner: "separate them into investing and bank accounts ... very clearly be bank accounts with checking, savings, high yield savings and CDs", and on question 60: "keep both but make sure that they both are modes for the debt calculation".
 Alternative: one account type grouped on screen by bucket (the list stayed one long select, which is what the owner wanted gone).
 
+## MR-096 2026-10-14 An hourly wage on the pay rows, and read cells that keep the theme
+Decision: A W-2, 1099 or side income row takes an Hourly wage beside Paid hours a week; when Gross pay is not typed, the Income planet works it out from the two through `hourlyToMonthly` and publishes it as an inferred value, which the ledger names ("Inferred, not stored: gross pay a month") and the Checklist counts as in ("Worked out"). A typed gross pay wins. The quick start's hourly pay lands the wage on the row as well. Under the system's dark theme the page now tells the browser so (`color-scheme: dark`), and a read cell in the ledger never keeps the browser's own button face.
+Compatibility: an optional field on three income types; `hoursPaid` now reaches the FI date through gross pay.
+Why: the owner, on a phone in dark mode: "these buttons need to look better on dark mode. Also I still don't see the option to put in an hourly wage and then how many hours a week."
+Alternative: an hour as a cadence on Gross pay (rejected: a cadence converts a figure to a month on its own; an hour needs the hours, which is a second fact).
+
 ## MR-095 2026-10-14 Pay before tax or after tax on the quick start
 Decision: A job's pay on the quick start (a W-2 or 1099 kind) carries a Before tax / After tax pick beside the interval. After tax lands in the row's Take-home with the interval; before tax lands in Gross pay as before; switching clears the quick start's own figure on the other side. The engine's take-home is then the typed one, not an inference. The read-back line says which it is.
 Compatibility: none stored beyond the quick row's note of its basis.

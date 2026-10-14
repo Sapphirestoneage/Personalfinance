@@ -233,6 +233,7 @@ export function ledgerTable(host, app, planet, typeId, opts) {
       const control = h('div', { class: 'control' }); while (td.firstChild) control.appendChild(td.firstChild);
       const f0 = c.kind === 'field' ? r.f[c.def.id] : null;
       const needed = c.kind === 'field' && !c.def.tag && !c.def.optional && (!f0 || f0.state === 'unknown' || f0.state === 'will-send');
+      const lifted = c.kind === 'field' && c.def.liftWhenEmpty && !(r.f[c.def.liftWhenEmpty] && hasValue(r.f[c.def.liftWhenEmpty])); /* MR-096: an optional fact that stands in for an empty one sits with the facts */
       const row = h('div', { class: 'fieldrow detail' + (c.kind === 'field' && c.def.tag ? ' is-tag' : '') + (needed ? ' needed' : ''), dataset: { field: c.key } },
         h('label', { title: c.def && c.def.tag ? 'A tag: it filters and labels, it changes no number' : (c.hint || '') }, c.label, c.kind === 'field' && c.def.tag ? h('span', { class: 'small muted' }, ' tag') : null), control);
       if (c.kind === 'field' && coach) {
@@ -247,8 +248,8 @@ export function ledgerTable(host, app, planet, typeId, opts) {
         paint();
         control.querySelectorAll('input, select').forEach(el => el.addEventListener('change', () => setTimeout(() => { paint(); refreshDerived(r.id); }, 0)));
         row.appendChild(h('span', { class: 'meta' }, st, h('span', { class: 'meta-sep', 'aria-hidden': 'true' }, '\u00b7'), so)); /* one quiet line: how sure, and where it came from */
-        if (c.def.optional || c.def.tag) { optional.appendChild(row); anyOptional = true; } else { facts.appendChild(row); anyFact = true; }
-      } else if (c.kind === 'field') { if (c.def.optional || c.def.tag) { optional.appendChild(row); anyOptional = true; } else { facts.appendChild(row); anyFact = true; } }
+        if ((c.def.optional && !lifted) || c.def.tag) { optional.appendChild(row); anyOptional = true; } else { facts.appendChild(row); anyFact = true; }
+      } else if (c.kind === 'field') { if ((c.def.optional && !lifted) || c.def.tag) { optional.appendChild(row); anyOptional = true; } else { facts.appendChild(row); anyFact = true; } }
       else about.appendChild(row);
     });
     /* a group that folds on a phone (open on a desktop): the heading is the switch */
