@@ -26,7 +26,7 @@ function lineDetail(ctx, cat, line, catHasAnswer) {
       h('input', { type: 'text', value: line.name, 'data-key': 'line:' + line.id + ':name', onchange: (e) => ctx.update('Rename line', (d) => { findLine(d, line.id).line.name = e.target.value || 'Line'; }) })),
     lineSelect(ctx, line, 'kind', [['fixed', 'Fixed'], ['variable', 'Variable']], 'Fixed or variable'),
     h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: line.need, 'data-key': 'line:' + line.id + ':need',
-      onchange: (e) => ctx.update('Need or want', (d) => { findLine(d, line.id).line.need = e.target.checked; }) }), 'Need (food, housing, transportation)'),
+      onchange: (e) => ctx.update('Need or want', (d) => { findLine(d, line.id).line.need = e.target.checked; }) }), 'Need (your call; FAT is counted by category)'),
     lineSelect(ctx, line, 'path', [['personal', 'Personal'], ['linked', 'Linked to an income source'], ['reimbursable', 'Someone pays me back']], 'Path'),
     line.path === 'linked' ? lineSelect(ctx, line, 'linkedIncomeId', [['', 'Pick income'], ...doc.income.map((i) => [i.id, i.label])], 'Linked income') : null,
     line.path === 'reimbursable' ? h('div', {}, question(ctx, 'Owed back to you', null, ['line', line.id, 'owedBack'], line.owedBack),

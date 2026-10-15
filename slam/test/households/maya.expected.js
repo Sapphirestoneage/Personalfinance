@@ -79,7 +79,10 @@
 // NEXT: only one weak item: Housing / Utilities actual (roughly).
 // ROUGH LIST: exactly one entry, Housing / Utilities: actual.
 
+// FAT (strict, by category, whatever lines are labeled): Food + Housing + Transportation = 1,750 + 840 + 132 = 2,722; 2,722 / 3,900 = 0.697949
+
 export default {
+  fat: 2722, fatShare: 0.697949,
   takeHome: 3900, pretax: 260, hourly: 22.5,
   categories: {
     housing: [1720, 1720, 1750], food: [550, 430, 840], transport: [132, 132, 132], debt: [300, 300, 300],

@@ -76,7 +76,7 @@ export function nwsCard(ctx, s, asPie) {
   const f = (p) => (u === 'percent' ? pct(p.share) : money(p.amount));
   const r = (id) => d.parts.find((p) => p.id === id) || {};
   const reading = d.takeHome === null ? 'Needs take-home pay first.'
-    : 'Needs take ' + pct(r('needs').share) + ' of take-home (target 50%), wants ' + pct(r('wants').share) + ' (30%), savings ' + pct(r('savings').share) + ' (20%).';
+    : 'Needs (as labeled) take ' + pct(r('needs').share) + ' of take-home (target 50%), wants ' + pct(r('wants').share) + ' (30%), savings ' + pct(r('savings').share) + ' (20%). FAT (food, accommodation, transportation) is ' + pct(s.totals.fatShare) + '.';
   return card(ctx, {
     id: 'nws', title: 'Needs, wants, savings', unitToggle: true,
     svg: asPie ? donut({ slices: parts, size: 170, inner: 0, fmt: money, label: 'Needs, wants, savings' })

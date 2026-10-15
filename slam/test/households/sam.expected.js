@@ -29,7 +29,10 @@
 // debts: none 3 (done). Total 26, done 24 -> 24 / 26 = 0.923077
 // NEXT: shopping actual (1 x 1), Everything else dream (1 x 1), Everything else estimate (3 x 0.3 = 0.9)
 
+// FAT (strict, by category, whatever lines are labeled): Food + Housing + Transportation = 0 + 250 + 0 = 250; 250 / 1,733.333333 = 0.144231
+
 export default {
+  fat: 250, fatShare: 0.144231,
   takeHome: 1733.333333,
   categories: {
     housing: [0, 0, 0], food: [null, null, 250], transport: [0, 0, 0], debt: [0, 0, 0], health: [0, 0, 0],

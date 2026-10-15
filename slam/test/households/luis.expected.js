@@ -63,7 +63,10 @@
 // tie broken by order: premiums, out of pocket, bills line.
 // SMALL STUFF: ATM actual (roughly, 5 a month = 60 a year, under the 100 floor).
 
+// FAT (strict, by category, whatever lines are labeled): Food + Housing + Transportation = 1,110 + 830 + 540 = 2,480; 2,480 / 4,600 = 0.539130
+
 export default {
+  fat: 2480, fatShare: 0.539130,
   takeHome: 4600, pretax: 200, hourly: 21.230769,
   categories: {
     housing: [1100, 1000, 1110], food: [600, 500, 830], transport: [350, 300, 540], debt: [685, 685, 685],

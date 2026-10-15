@@ -58,6 +58,8 @@ for (const name of ['maya', 'luis', 'tasha', 'sam']) {
     money(t.fixed, exp.fixed, 'fixed');
     money(t.variable, exp.variable, 'variable');
     share(t.fixedPct, exp.fixedPct, 'fixed %');
+    money(t.fat, exp.fat, 'FAT');
+    share(t.fatShare, exp.fatShare, 'FAT share');
     money(t.needs, exp.needs, 'needs');
     money(t.wants, exp.wants, 'wants');
     share(t.needsPct, exp.needsPct, 'needs %');

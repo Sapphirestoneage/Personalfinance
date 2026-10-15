@@ -6,6 +6,8 @@
 import { sumKnown, ratio, minus } from './money.js';
 import { toMonthly } from './normalize.js';
 
+export const FAT_CATEGORIES = ['food', 'housing', 'transport'];
+
 function part(src, amount, cat) {
   return {
     lineId: src === cat ? null : src.id, name: src.name, amount,
@@ -62,6 +64,9 @@ export function budgetTotals(model, income, doc, housingBand = 0.35) {
   const wants = addUp(spendParts, (p) => !p.need);
   const savings = savingsBasis === null ? 0 : savingsBasis;
 
+  // FAT is strict: Food + Accommodation (Housing) + Transportation, by category.
+  const fat = sumKnown(cats.filter((x) => FAT_CATEGORIES.includes(x.cat.id)).map((x) => x.basis.amount)).total;
+
   const housing = cats.find((x) => x.cat.id === 'housing');
   const housingBasis = housing ? housing.basis.amount : null;
   // Your share of the rent is the rent line itself (never asked twice).
@@ -95,6 +100,7 @@ export function budgetTotals(model, income, doc, housingBand = 0.35) {
     fixed, variable,
     fixedPct: ratio(fixed, spendingBasis), variablePct: ratio(variable, spendingBasis),
     needs, wants, savingsAmount: savings,
+    fat, fatShare: ratio(fat, takeHome),
     needsPct: ratio(needs, takeHome), wantsPct: ratio(wants, takeHome), savingsPct: ratio(savings, takeHome),
     savingsRate: ratio(savings + income.pretax, takeHome === null ? null : takeHome + income.pretax),
     housing: housingBasis,

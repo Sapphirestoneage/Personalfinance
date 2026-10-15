@@ -43,7 +43,10 @@
 // blanks ranked before the Health estimate (which has a 400 guess): groceries actual first by order.
 // ROUGH LIST: 10 values. GUESSES offered: Health 400, Personal and fun 300, Annual 100 (MCOL x1.0, household of 1).
 
+// FAT (strict, by category, whatever lines are labeled): Food + Housing + Transportation = 1,400 + 500 + 400 = 2,300; 27,600 / 50,390 = 0.547728
+
 export default {
+  fat: 2300, fatShare: 0.547728,
   takeHome: 4199.166667, takeHomeStatus: 'guess', taxMonthly: 800.833333, incomeTaxMonthly: 418.333333, ficaMonthly: 382.5,
   categories: {
     housing: [1400, null, null], food: [500, null, null], transport: [400, null, null], debt: [195, 195, 195],

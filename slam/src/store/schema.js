@@ -18,8 +18,9 @@ export const DEBT_TYPES = ['credit-card', 'student-loan', 'car-loan', 'personal-
 export const COL_TIERS = ['HCOL', 'MCOL', 'LCOL'];
 
 // [id, name, kind, need, savings, tag, lines[[id, name, kind, need]]]
-// need = FAT (food, accommodation, transportation) plus debt minimums and health
-// care, which most coaches treat as needs (see DECISIONS.md S-006).
+// need = whatever the line is labeled; these are only starting labels, editable per line.
+// FAT is separate and strict: the Food, Housing (accommodation), and Transportation
+// categories, whatever their lines are labeled (see DECISIONS.md S-048).
 const TREE = [
   ['housing', 'Housing', 'fixed', true, false, 'planned', [
     ['rent', 'Rent or mortgage', 'fixed', true], ['utilities', 'Utilities', 'variable', true],
