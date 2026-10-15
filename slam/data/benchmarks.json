@@ -1,0 +1,60 @@
+{
+  "year": 2026,
+  "note": "Healthy bands for the DRAFTT lens, as shares of take-home pay (taxes: share of gross). Every source is marked placeholder until Eli confirms the exact numbers.",
+  "fiftyThirtyTwenty": { "needs": 0.5, "wants": 0.3, "savings": 0.2, "source": "Elizabeth Warren and Amelia Warren Tyagi, All Your Worth (2005)" },
+  "housingBand": 0.35,
+  "sources": {
+    "eli": {
+      "label": "Eli's default",
+      "placeholder": true,
+      "bands": {
+        "debt": { "max": 0.10 },
+        "retirement": { "min": 0.15 },
+        "accommodation": { "max": 0.35 },
+        "food": { "max": 0.15 },
+        "transportation": { "max": 0.15 },
+        "taxes": { "max": 0.30 },
+        "therapy": { "max": 0.05 }
+      }
+    },
+    "scott-trench": {
+      "label": "Scott Trench",
+      "placeholder": true,
+      "bands": {
+        "debt": { "max": 0.05 },
+        "retirement": { "min": 0.25 },
+        "accommodation": { "max": 0.25 },
+        "food": { "max": 0.10 },
+        "transportation": { "max": 0.10 },
+        "taxes": { "max": 0.30 },
+        "therapy": { "max": 0.05 }
+      }
+    },
+    "money-guy": {
+      "label": "Money Guy",
+      "placeholder": true,
+      "bands": {
+        "debt": { "max": 0.10 },
+        "retirement": { "min": 0.25 },
+        "accommodation": { "max": 0.25 },
+        "food": { "max": 0.12 },
+        "transportation": { "max": 0.10 },
+        "taxes": { "max": 0.30 },
+        "therapy": { "max": 0.05 }
+      }
+    },
+    "50-30-20": {
+      "label": "50/30/20",
+      "placeholder": true,
+      "bands": {
+        "debt": { "max": 0.10 },
+        "retirement": { "min": 0.20 },
+        "accommodation": { "max": 0.30 },
+        "food": { "max": 0.15 },
+        "transportation": { "max": 0.15 },
+        "taxes": { "max": 0.30 },
+        "therapy": { "max": 0.05 }
+      }
+    }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "id": "hh-luis",
+  "profile": { "name": "Luis (demo)", "birthYear": 1993, "state": "OH", "zip": "43215" },
+  "situation": ["employed", "self-employed"],
+  "household": { "filingStatus": "single", "dependents": { "count": 0, "ages": [] }, "roommates": { "count": 0 } },
+  "income": [
+    { "id": "inc-warehouse", "type": "w2", "label": "Warehouse", "payFrequency": "semimonthly", "hoursPerWeek": 40,
+      "takeHome": { "amount": 2000, "cadence": "paycheck" },
+      "gross": { "amount": 62400, "cadence": "year" },
+      "pretaxRetirement": { "amount": 100, "cadence": "paycheck" } },
+    { "id": "inc-driving", "type": "side", "label": "Delivery driving", "payFrequency": "monthly", "hoursPerWeek": 10,
+      "takeHome": { "amount": 600, "cadence": "month", "status": "roughly" } }
+  ],
+  "gut": { "amount": 3000, "status": "roughly" },
+  "debts": [
+    { "id": "debt-car", "label": "Car loan", "type": "car-loan", "balance": { "amount": 18000 }, "apr": { "amount": 6.9 }, "minimum": { "amount": 425 }, "dueDay": { "amount": 5 } },
+    { "id": "debt-chase", "label": "Chase Freedom", "type": "credit-card", "balance": { "amount": 4200 }, "apr": { "amount": 24.99 }, "minimum": { "amount": 120 }, "dueDay": { "amount": 20 } },
+    { "id": "debt-discover", "label": "Discover", "type": "credit-card", "balance": { "amount": 1100 }, "apr": { "amount": 22.9 }, "minimum": { "amount": 40, "status": "roughly" }, "dueDay": { "amount": 12 } },
+    { "id": "debt-affirm", "label": "Affirm (couch)", "type": "bnpl", "balance": { "amount": 600 }, "apr": { "amount": 0 }, "minimum": { "amount": 100 }, "dueDay": { "amount": 1 } }
+  ],
+  "currentMonth": "2026-09",
+  "categories": [
+    { "id": "housing", "name": "Housing", "kind": "fixed", "need": true,
+      "estimate": { "amount": 1100 }, "dream": { "amount": 1000 }, "lines": [
+      { "id": "rent", "name": "Rent", "kind": "fixed", "need": true, "actual": { "amount": 950 } },
+      { "id": "utilities", "name": "Utilities", "need": true, "actual": { "amount": 160 } } ] },
+    { "id": "food", "name": "Food", "need": true, "estimate": { "amount": 600 }, "dream": { "amount": 500 }, "lines": [
+      { "id": "groceries", "name": "Groceries", "need": true, "actual": { "amount": 520 } },
+      { "id": "eating-out", "name": "Eating out", "actual": { "amount": 310 } } ] },
+    { "id": "transport", "name": "Transportation", "need": true, "estimate": { "amount": 350 }, "dream": { "amount": 300 }, "lines": [
+      { "id": "car-insurance", "name": "Car insurance", "kind": "fixed", "need": true, "actual": { "amount": 140 } },
+      { "id": "gas", "name": "Gas", "need": true, "actual": { "amount": 220 } },
+      { "id": "maintenance", "name": "Maintenance", "need": true },
+      { "id": "ticket", "name": "Speeding ticket", "tag": "mistake", "actual": { "amount": 180 } } ] },
+    { "id": "debt", "name": "Debt payments", "kind": "fixed", "need": true, "lines": [] },
+    { "id": "health", "name": "Health", "kind": "fixed", "need": true, "estimate": { "amount": 150 }, "dream": { "amount": 150 }, "lines": [
+      { "id": "premiums", "name": "Premiums", "kind": "fixed", "need": true },
+      { "id": "out-of-pocket", "name": "Out of pocket", "need": true } ] },
+    { "id": "bills", "name": "Bills and subscriptions", "kind": "fixed", "estimate": { "amount": 120 }, "dream": { "amount": 100 }, "lines": [
+      { "id": "subscriptions", "name": "Phone and streaming", "kind": "fixed" } ] },
+    { "id": "fun", "name": "Personal and fun", "estimate": { "amount": 300 }, "dream": { "amount": 400 }, "lines": [
+      { "id": "shopping", "name": "Shopping" }, { "id": "entertainment", "name": "Entertainment" } ] },
+    { "id": "annual", "name": "Annual and irregular", "estimate": { "amount": 1200, "cadence": "year" }, "dream": { "amount": 1200, "cadence": "year" }, "lines": [
+      { "id": "yearly", "name": "Yearly costs" } ] },
+    { "id": "fees", "name": "Fees", "tag": "mistake", "estimate": { "amount": 0 }, "dream": { "amount": 0 }, "lines": [
+      { "id": "fee-interest", "name": "Interest charged", "actual": { "amount": 45 } },
+      { "id": "fee-atm", "name": "ATM", "actual": { "amount": 5, "status": "roughly" } } ] },
+    { "id": "giving", "name": "Giving", "estimate": { "amount": null, "status": "not-for-me" }, "lines": [
+      { "id": "giving-line", "name": "Giving" } ] },
+    { "id": "savings", "name": "Savings", "kind": "fixed", "savings": true, "estimate": { "amount": 300 }, "dream": { "amount": 500 }, "lines": [
+      { "id": "emergency-fund", "name": "Emergency fund", "kind": "fixed", "actual": { "amount": 200 } },
+      { "id": "retirement", "name": "Retirement (after tax)", "kind": "fixed" } ] }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "taxYear": 2026,
+  "source": "IRS Rev. Proc. 2025-32 (2026 inflation adjustments, including One Big Beautiful Bill Act changes) https://www.irs.gov/newsroom/irs-releases-tax-inflation-adjustments-for-tax-year-2026-including-amendments-from-the-one-big-beautiful-bill ; SSA 2026 wage base https://www.ssa.gov/oact/cola/cbb.html",
+  "verified": "Standard deductions and the 10%, 12%, 22% and 24% thresholds for single and joint filers were checked against published summaries on 2026-10-15. Higher brackets, head of household brackets, and the wage base are from memory of the same release and are listed as a question for Eli.",
+  "standardDeduction": {
+    "single": 16100,
+    "married-joint": 32200,
+    "married-separate": 16100,
+    "head-of-household": 24150
+  },
+  "brackets": {
+    "single": [[12400, 0.10], [50400, 0.12], [105700, 0.22], [201775, 0.24], [256225, 0.32], [640600, 0.35], [null, 0.37]],
+    "married-joint": [[24800, 0.10], [100800, 0.12], [211400, 0.22], [403550, 0.24], [512450, 0.32], [768700, 0.35], [null, 0.37]],
+    "married-separate": [[12400, 0.10], [50400, 0.12], [105700, 0.22], [201775, 0.24], [256225, 0.32], [384350, 0.35], [null, 0.37]],
+    "head-of-household": [[17700, 0.10], [67450, 0.12], [105700, 0.22], [201750, 0.24], [256200, 0.32], [640600, 0.35], [null, 0.37]]
+  },
+  "fica": {
+    "socialSecurityRate": 0.062,
+    "socialSecurityWageBase": 184500,
+    "medicareRate": 0.0145
+  },
+  "selfEmployment": {
+    "netEarningsFactor": 0.9235,
+    "socialSecurityRate": 0.124,
+    "medicareRate": 0.029
+  },
+  "notIncluded": "State and local tax, the 0.9% additional Medicare tax, credits (child tax credit and others), the qualified business income deduction, and itemized deductions."
+}
