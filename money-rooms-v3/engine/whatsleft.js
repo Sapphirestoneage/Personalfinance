@@ -28,7 +28,7 @@ export function whatsLeft(record, result, data, opts) {
   const o = opts || {}; const fields = data.fields; const weights = data.weights; const S = result && result.sun && result.sun.outputs;
   const wage = o.wage !== undefined ? o.wage : (result && result.hours ? result.hours.wage : null);
   const ranked = rankLeverage({ record, fields, weights }); const byKey = {}; ranked.forEach(i => { byKey[i.rowId + '|' + i.field] = i; });
-  const sens = o.sensitivity && o.sensitivity.hasFiDate ? o.sensitivity : null; const months = {}; if (sens) sens.items.forEach(it => { if (it.rowId) months[it.rowId + '|' + it.field] = it.askRange; });
+  const sens = o.sensitivity && o.sensitivity.hasFiDate ? o.sensitivity : null; const months = {}; if (sens) sens.items.forEach(it => { if (it.rowId && it.id && it.id.indexOf('|') !== -1 && !it.windfall) months[it.id] = it.askRange; }); /* the run keys a field item by rowId|field in its id */
   const items = []; const enriched = (result && result.enriched) || {}; const isEnriched = (p, rowId, fid) => (enriched[p] || []).some(e => e.rowId === rowId && e.field === fid);
   const push = x => { const lev = x.leverage === null || x.leverage === undefined ? 1 : x.leverage; const dollars = Math.max(0, x.dollars || 0); const score = lev * (dollars || 1); const minutes = MINUTES[x.supplier === 'coach' ? 'lookup-verify' : 'client'] || 5; items.push(Object.assign({}, x, { score, small: belowMateriality(dollars, wage, minutes), minutes })); };
   /* every Not yet row, and every row still rough or guessed, in the words the leverage engine already uses */
@@ -38,7 +38,8 @@ export function whatsLeft(record, result, data, opts) {
     tdef.fields.forEach(fid => {
       const def = fields.fields[fid]; const f = r.f[fid]; if (!f || def.tag) return;
       const st = rowStateOf(f); if (st !== 'notYet' && st !== 'estimated') return;
-      if (!def.primary && f.state !== 'will-send') return; /* a row's question is its primary fact; a detail fact counts only once it is promised by email */
+      const mKey = months[r.id + '|' + fid]; /* a detail fact counts when it is promised by email or when the sensitivity run says it moves the FI date */
+      if (!def.primary && f.state !== 'will-send' && (mKey === undefined || mKey === null)) return;
       if (st === 'notYet' && f.state === 'unknown' && (tdef.form || isEnriched(p, r.id, fid))) return; /* an untouched profile form is not a question yet; a figure the engine works out (hourly pay) is not missing */
       const lv = byKey[r.id + '|' + fid]; const m = months[r.id + '|' + fid];
       const dollars = st === 'notYet' ? (lv && lv.dollarsAnnual ? lv.dollarsAnnual : 0) : widthOf(f, def, r, weights);
@@ -52,7 +53,8 @@ export function whatsLeft(record, result, data, opts) {
     if (r && r.status === 'ok' && r.remainder > 0 && r.hasRows) push({ id: 'remainder|' + b.id, kind: 'remainder', planet: b.planet, rowId: b.rowId, field: b.field, label: REMAINDER_LABEL, where: b.label, planetLabel: PLANET_LABELS[b.planet], state: 'rough', source: b.supplier || 'client', rowState: 'estimated', willEmail: false, supplier: 'client', session: b.session, dollars: r.remainder * periodK(b), leverage: 1, months: null, reason: REASONS.remainder, question: 'What makes up the other ' + Math.round(r.remainder / 100).toLocaleString('en-US') + ' of ' + b.label.toLowerCase() + '?', href: '#/snapshot/' + b.id, inline: false, base: b.id });
     else if (b.field && (b.guess || b.rough || (r && r.status === 'ok' && r.remainder > 0)) && !(r && r.hasRows)) push({ id: 'base|' + b.id, kind: 'base', planet: b.planet, rowId: b.rowId, field: b.field, label: b.label, where: 'Snapshot', planetLabel: PLANET_LABELS[b.planet], state: b.field.state, source: b.field.source, rowState: 'estimated', willEmail: b.field.state === 'will-send', supplier: plateOf(b.field) === 'mine' ? 'coach' : 'client', session: b.session, dollars: r && r.status === 'ok' && r.remainder > 0 ? r.remainder * periodK(b) : widthOf(b.field, { kind: 'money', cadence: b.period !== 'oneoff', id: b.fieldId }, b.rowId ? record.planets[b.planet].rows.find(x => x.id === b.rowId) : null, weights), leverage: 1, months: null, reason: b.guess ? REASONS.guess : REASONS.rough, question: b.ask, href: '#/snapshot', inline: true, base: b.id });
   });
-  items.sort((a, b) => b.score - a.score);
+  /* with a sensitivity run the months of FI date rank first (the Session card's own order), then leverage times dollars; without one, leverage times dollars */
+  items.sort((a, b) => (sens ? ((b.months === null || b.months === undefined ? -1 : b.months) - (a.months === null || a.months === undefined ? -1 : a.months)) : 0) || b.score - a.score);
   const big = items.filter(i => !i.small); const small = items.filter(i => i.small);
   return { items: big, small, all: items, next: big.slice(0, 3), willEmail: items.filter(i => i.willEmail), wage, groups: { planet: groupBy(big, i => i.planetLabel), supplier: groupBy(big, i => i.supplier === 'coach' ? 'Coach looks up' : 'Client supplies'), session: groupBy(big, i => i.session ? 'Session ' + String(i.session).replace(/^s/, '') : 'No session yet') } };
 }

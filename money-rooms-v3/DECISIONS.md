@@ -564,7 +564,7 @@ Alternative: one account type grouped on screen by bucket (the list stayed one l
 
 ## MR-116 2026-10-15 Level 15 closes the gaps in its own brief
 Decision: four small hooks the audit of the Level 15 brief found missing. The regular take-home base number is said per paycheck, a month or a year, and can be typed as gross instead: gross lands on the first salaried W-2 row (made on first use) and the engine solves the take-home with the one tax function; the snapshot says so. A salaried job's hours a week (a range allowed) is editable on the snapshot, so the real hourly wage never asks for it twice. A blank expense base number beside discovery-call figures reads What you said, beside the rooms' averages Guess. The Session screen's next-3 card draws its three from What's left (the leverage items plus the snapshot's remainders and rough snapshots), falling back to the leverage ranking when the list is empty. In Hours mode the Investments room says a balance reads as hours bought back.
-Compatibility: none stored.
+Compatibility: none stored. Fix the same day: What's left keys a sensitivity item by its id (rowId|field), the run's own key, so the months of FI date reach the Session card; the calendar's shortfall events mark with an amber edge, not amber text.
 Why: the owner re-sent the brief; the audit against its sections found these five lines short of the words.
 Alternative: a second ranked card beside the old one (rejected: one card, one list).
 
