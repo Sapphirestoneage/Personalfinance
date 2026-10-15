@@ -46,7 +46,7 @@ export function mount(host, app) {
   const coach = app.view === 'coach';
   host.appendChild(h('header', null, h('h1', null, 'Quick snapshot'), h('span', { class: 'sub' }, 'Every base number on one screen. A number, a range like 1500-2000, Not for me, or Don\'t know yet. Fifteen minutes, then sharpen any one of them.')));
   const body = h('div', { class: 'snapshot' }); host.appendChild(body);
-  let incomeMode = null;
+  let incomeMode = null; let incomeCad = 'month';
   function draw() {
     clear(body); const R = app.result; const snap = R.snapshot; const S = R.sun && R.sun.outputs;
     const top = h('section', { class: 'panel snap-top' });
@@ -68,30 +68,45 @@ export function mount(host, app) {
     app.change(rec => setBase(rec, app.data.fields, b, v, st === 'unknown' ? 'rough' : st, 'client', { session: app.session }), { reason: 'rows' });
   }
   function baseRow(b, R, extra) {
-    const r = b.resolved; const guess = guessFor(b, R); const f = b.field;
-    const input = h('input', { class: 'input num snap-input' + (!f || f.v === null ? ' is-empty' : ''), type: 'text', inputmode: 'decimal', 'aria-label': b.label, value: rangeText(f), placeholder: guess ? 'Guess ' + F.dollars(guess.cents, { plain: true }).replace('$', '') : '', onChange: e => commitBase(b, e.target.value) });
+    const r = b.resolved; const guess = guessFor(b, R, app.record); const f = b.field;
+    const input = h('input', { class: 'input num snap-input' + (!f || f.v === null ? ' is-empty' : ''), type: 'text', inputmode: 'decimal', 'aria-label': b.label, value: rangeText(f), placeholder: guess ? guess.label + ' ' + F.dollars(guess.cents, { plain: true }).replace('$', '') : '', onChange: e => commitBase(b, e.target.value) });
     const conf = h('select', { class: 'select small conf', 'aria-label': b.label + ', how sure', onChange: e => { const st = e.target.value; if (st === 'unknown') { input.value = ''; commitBase(b, '', 'unknown'); } else commitBase(b, input.value, st); } }, CONF.map(([id, lab]) => h('option', { value: id, selected: f ? f.state === id || (id === 'unknown' && !f) : id === 'rough' }, lab)));
     const notMe = h('button', { type: 'button', class: 'chip toggle' + (f && f.state === 'not-for-me' ? ' on' : ''), 'aria-pressed': String(!!(f && f.state === 'not-for-me')), onClick: () => { if (f && f.state === 'not-for-me') commitBase(b, '', 'unknown'); else { input.value = ''; commitBase(b, '', 'not-for-me'); } } }, 'Not for me');
     const dunno = h('button', { type: 'button', class: 'chip toggle' + (f && f.state === 'unknown' && f.v === null ? ' on' : ''), 'aria-pressed': String(!!(f && f.state === 'unknown')), onClick: () => { input.value = ''; commitBase(b, '', 'unknown'); } }, 'Don\'t know yet');
-    const read = r && r.status === 'ok' ? h('div', { class: 'small muted snap-read' }, r.hasRows ? ('Itemized ' + money(r.itemized) + (r.remainder ? ' + ' + money(r.remainder) + ' unitemized' : '') + ' = ' + money(r.total) + (PERIOD_WORD[b.period] ? ' ' + PERIOD_WORD[b.period] : '') + ', ' + pct(r.coverage) + ' covered') : (f && f.state === 'not-for-me' ? 'Not for me' : 'From the snapshot; nothing itemized yet'), r.overGut ? h('span', { class: 'chip warn' }, 'over your gut number by ' + money(r.overGut.gap) + (r.overGut.pct !== null ? ' (' + pct(r.overGut.pct) + ')' : '')) : null) : h('div', { class: 'small muted snap-read' }, f && f.state === 'not-for-me' ? 'Not for me' : guess ? 'Blank. The rooms hold a guess for this area: ' + money(guess.cents) + '.' : 'Blank is the only incomplete state.');
+    const read = r && r.status === 'ok' ? h('div', { class: 'small muted snap-read' }, r.hasRows ? ('Itemized ' + money(r.itemized) + (r.remainder ? ' + ' + money(r.remainder) + ' unitemized' : '') + ' = ' + money(r.total) + (PERIOD_WORD[b.period] ? ' ' + PERIOD_WORD[b.period] : '') + ', ' + pct(r.coverage) + ' covered') : (f && f.state === 'not-for-me' ? 'Not for me' : 'From the snapshot; nothing itemized yet'), r.overGut ? h('span', { class: 'chip warn' }, 'over your gut number by ' + money(r.overGut.gap) + (r.overGut.pct !== null ? ' (' + pct(r.overGut.pct) + ')' : '')) : null) : h('div', { class: 'small muted snap-read' }, f && f.state === 'not-for-me' ? 'Not for me' : guess ? 'Blank. ' + (guess.label === 'What you said' ? 'The discovery call said ' : 'The rooms hold a guess for this area: ') + money(guess.cents) + '.' : 'Blank is the only incomplete state.');
     return h('div', { class: 'snap-base' + (b.complete ? ' complete' : ''), dataset: { base: b.id } },
       h('div', { class: 'snap-label' }, h('strong', null, b.label), h('span', { class: 'small muted' }, ' ' + b.ask), b.asOf ? h('span', { class: 'small muted' }, ' As of ' + F.dateLocal(b.asOf) + (b.supplier ? ', from ' + (b.supplier === 'client' ? 'the client' : b.supplier === 'discovery' ? 'the discovery call' : b.supplier) : '') + '.') : null),
       h('div', { class: 'snap-controls row' }, h('span', { class: 'amount-box' }, h('span', { class: 'muted small' }, '$'), input, b.period !== 'oneoff' ? h('span', { class: 'small muted' }, PERIOD_WORD[b.period]) : null), conf, dunno, notMe, h('a', { class: 'btn small', href: '#/snapshot/' + b.id, 'aria-label': 'Open the rows of ' + b.label }, r && r.hasRows ? 'Rows (' + b.rowCount + ')' : 'Itemize')),
       coverageBar(r), read, extra || null);
+  }
+  /* a salaried pay row the snapshot can write gross pay and hours a week to: the first W-2 row, made on first use (MR-116) */
+  function salariedRow(make) {
+    const have = app.record.planets.income.rows.find(r => r.type === 'w2' && !r.hourly && !(r.f.hourlyRate && hasValue(r.f.hourlyRate)));
+    if (have || !make) return have || null;
+    const row = createRow('income', 'w2', { nickname: 'Main job', f: freshFacts(app.data.fields, 'income', 'w2') }); row.f.grossPay.cad = 'month'; app.addRow(row); return row;
   }
   function incomeBlock(b, R) {
     const S = R.sun.outputs; const rows = app.record.planets.income.rows.filter(r => ['w2', 'c1099', 'side'].includes(r.type));
     const hourlyRows = rows.filter(r => r.hourly || (r.f.hourlyRate && hasValue(r.f.hourlyRate))); /* a row added as hourly stays in the hourly list while its rate is still blank */
     if (incomeMode === null) incomeMode = hourlyRows.length ? 'hourly' : 'salary';
     const seg = segmented([['salary', 'Salary'], ['hourly', 'Hourly']], incomeMode, v => { incomeMode = v; draw(); }, { label: 'Income is paid as', small: true });
-    const wrap = h('div', { class: 'income-mode' }, h('div', { class: 'row' }, h('span', { class: 'small muted' }, 'Paid as'), seg));
+    /* said per paycheck, a month or a year; as gross or as take-home (MR-116): take-home lands on the snapshot, gross on the pay row and the engine solves the rest */
+    const CADS = [['paycheck', 'a paycheck'], ['month', 'a month'], ['year', 'a year']]; const sal = salariedRow(false);
+    const cadSel = h('select', { class: 'select small', 'aria-label': 'Regular take-home is said per', onChange: e => { const cad = e.target.value; incomeCad = cad; if (b.field && b.field.v !== null) app.change(rec => setBase(rec, app.data.fields, b, b.field.v, b.field.state, 'client', { session: app.session, cad }), { reason: 'rows' }); } }, CADS.map(([id, lab]) => h('option', { value: id, selected: (b.field && b.field.cad ? b.field.cad : incomeCad) === id }, lab)));
+    const grossBox = h('input', { class: 'input num snap-input', type: 'text', inputmode: 'decimal', 'aria-label': 'Gross pay, before tax', value: sal && sal.f.grossPay && hasValue(sal.f.grossPay) ? rangeText(sal.f.grossPay) : '', onChange: e => { const t = e.target.value.trim(); if (!t) return; let v; try { v = F.parseMoney(t); } catch (err) { app.toast('A number, or a range like 4000-4500.'); return; } const row = salariedRow(true); app.setField(row.id, 'grossPay', v, 'known', 'client', b.field && b.field.cad ? b.field.cad : incomeCad); } });
+    const solved = S.income.takeHomeMonthly && S.income.takeHomeMonthly.status === 'ok' && sal && !(b.field && hasValue(b.field)) ? h('span', { class: 'small muted' }, 'Solved: about ' + F.dollarsWhole(S.income.takeHomeMonthly.cents) + ' a month take-home, from the gross with the one tax function.') : null;
+    const wrap = h('div', { class: 'income-mode' }, h('div', { class: 'row' }, h('span', { class: 'small muted' }, 'Said per'), cadSel, h('span', { class: 'small muted' }, 'or as gross'), h('span', { class: 'amount-box' }, h('span', { class: 'muted small' }, '$'), grossBox), solved), h('div', { class: 'row' }, h('span', { class: 'small muted' }, 'Paid as'), seg));
     if (incomeMode === 'hourly') {
       wrap.appendChild(h('p', { class: 'small muted' }, 'Each job is its own row with its own rate and hours. A range like 30-33 hours gives a range of income.'));
       hourlyRows.forEach(r => wrap.appendChild(hourlyRow(r, R)));
       wrap.appendChild(h('button', { class: 'btn small', onClick: () => { const row = createRow('income', 'w2', { nickname: hourlyRows.length ? 'Second job' : 'Main job', f: freshFacts(app.data.fields, 'income', 'w2') }); row.f.grossPay.cad = 'paycheck'; row.hourly = true; app.addRow(row); } }, hourlyRows.length ? 'Add another job' : 'Add an hourly job'));
     } else {
       const salaried = rows.filter(r => !r.hourly && !(r.f.hourlyRate && hasValue(r.f.hourlyRate)) && r.f.grossPay && hasValue(r.f.grossPay));
-      if (salaried.length && S.income.grossMonthly && S.income.grossMonthly.status === 'ok') { const hp = salaried.reduce((s, r) => s + ((r.f.hoursPaid && hasValue(r.f.hoursPaid) ? Number(r.f.hoursPaid.v) : 0) || 0), 0) || 40; wrap.appendChild(h('p', { class: 'small muted' }, 'The salary reads back as about ' + F.dollars(salaryAsHourly(S.income.grossMonthly.cents, hp, DEFAULT_WEEKS), { plain: true }) + ' an hour gross at ' + hp + ' hours a week.')); }
+      if (salaried.length && S.income.grossMonthly && S.income.grossMonthly.status === 'ok') {
+        const first = salaried[0]; const hpf = first.f.hoursPaid; const hp = salaried.reduce((s2, r) => s2 + ((r.f.hoursPaid && hasValue(r.f.hoursPaid) ? Number(r.f.hoursPaid.v) : 0) || 0), 0) || 40;
+        /* the salaried hours a week feed the real hourly wage (MR-116): editable here, a range allowed */
+        wrap.appendChild(h('div', { class: 'row' }, h('span', { class: 'small muted' }, 'Hours a week'), h('input', { class: 'input num snap-input', type: 'text', inputmode: 'decimal', 'aria-label': 'Hours a week on the salaried job', placeholder: '40', value: hpf && hasValue(hpf) ? (typeof hpf.v === 'object' ? hpf.v.low + '-' + hpf.v.high : String(hpf.v)) : '', onChange: e => { const t = e.target.value.trim(); if (!t) { app.setField(first.id, 'hoursPaid', null, 'unknown', 'client'); return; } const m = /^(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)$/.exec(t); const v = m ? { low: Math.min(+m[1], +m[2]), high: Math.max(+m[1], +m[2]) } : Number(t); if (typeof v === 'number' && !Number.isFinite(v)) { app.toast('A number, or a range like 38-42.'); return; } app.setField(first.id, 'hoursPaid', v, 'known', 'client'); } }), h('span', { class: 'small muted' }, 'The salary reads back as about ' + F.dollars(salaryAsHourly(S.income.grossMonthly.cents, hp, DEFAULT_WEEKS), { plain: true }) + ' an hour gross at ' + hp + ' hours a week.')));
+      } else if (!salaried.length) wrap.appendChild(h('p', { class: 'small muted' }, 'Type the gross pay above, or the take-home, and the app solves the other.'));
     }
     return baseRow(b, R, wrap);
   }

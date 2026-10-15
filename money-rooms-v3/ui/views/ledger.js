@@ -66,7 +66,7 @@ export function mount(host, app) {
   if (typeId) return mountTable(host, app, planet, typeId);
 
   host.appendChild(crumbs([{ label: 'Plan', href: '#/ledger' }]));
-  host.appendChild(h('header', null, h('h1', null, PLANET_LABELS[planet])));
+  host.appendChild(h('header', null, h('h1', null, PLANET_LABELS[planet]), planet === 'invest' && F.hoursLens().mode !== 'dollars' && F.hoursLens().wage ? h('span', { class: 'sub lens-note' }, 'In hours, a balance reads as hours bought back: work you will not have to do.') : null)); /* MR-116 */
   const mapHost = h('div', { class: 'maphost' });
   const bar = h('div');
   const side = h('div');

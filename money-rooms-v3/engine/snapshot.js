@@ -61,9 +61,9 @@ export function snapshotOf(record, result, data) {
   return { list, allIn, coverage: overallCoverage(list), complete, total: list.length, done: complete === list.length, hours: result ? result.hours || null : null };
 }
 /* The guess the screen shows beside a blank base number (MR-109): the discovery or guess rows already in the rooms, summed into the base number's split. Null when the rooms hold nothing. */
-export function guessFor(def, result) {
+export function guessFor(def, result, record) {
   const S = result && result.sun && result.sun.outputs; if (!S) return null;
-  if (def.planet === 'spending' && S.spending.resolved) { const r = S.spending.resolved[def.slot]; if (r && r.status === 'ok' && r.itemized > 0 && r.counts.estimated > 0 && !r.hasSnapshot) return { cents: r.itemized, label: 'Guess' }; }
+  if (def.planet === 'spending' && S.spending.resolved) { const r = S.spending.resolved[def.slot]; if (r && r.status === 'ok' && r.itemized > 0 && r.counts.estimated > 0 && !r.hasSnapshot) { const gut = record && record.anchors && record.anchors.gut ? Object.keys(record.anchors.gut).some(k => k.indexOf('spending:') === 0) : false; return { cents: r.itemized, label: gut ? 'What you said' : 'Guess' }; } }
   return null;
 }
 /* The four-state read of every row in a base number's deep dive, for the screen: the primary field's state mapped to Known, Estimated, N/A or Not yet. */

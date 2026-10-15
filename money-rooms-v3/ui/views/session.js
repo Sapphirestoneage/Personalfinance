@@ -24,6 +24,7 @@ import { nextWins } from './goals.js';
 import { takeSnapshot, celebrate, seedCelebrations, overallNextAction } from '../../engine/momentum.js';
 import { recordSatisfaction, programOf } from '../../engine/program.js';
 import { cachedSensitivity } from '../levers-bridge.js';
+import { whatsLeft } from '../../engine/whatsleft.js';
 
 export function mount(host, app) {
   const noteInput = h('input', { class: 'input session-note', type: 'text', 'aria-label': 'Session note' });
@@ -44,8 +45,12 @@ export function mount(host, app) {
     clear(left); clear(right);
     getSensitivity(app, r => { if (r !== sens) { sens = r; setTimeout(draw, 0); } }); /* redraw on the next tick, never inside this draw */
     const s = leverage({ record: app.record, fields: app.data.fields, weights: app.data.weights, sensitivity: sens });
+    /* MR-116: the ranked next-3 card draws from What's left (the leverage items plus the snapshot's), in the card's own shape */
+    const WL = whatsLeft(app.record, app.result, app.data, { sensitivity: sens });
+    const fromLeft = WL.next.map(i => ({ question: i.question, planet: i.planet, rowId: i.rowId, field: i.field, state: i.state, source: i.source, monthsAtStake: i.months === undefined ? null : i.months, why: i.reason, moneyFact: !!i.dollars, dollarsAnnual: i.dollars || null, note: false }));
+    const s2 = Object.assign({}, s, { next: fromLeft.length ? fromLeft : s.next });
     /* order: the next question (big), the two meters, four headline tiles, then the rest behind one switch */
-    left.appendChild(nextCard(app, s));
+    left.appendChild(nextCard(app, s2));
     left.appendChild(meterRow(app));
     const shelf = h('section', { class: 'panel shelf-panel' }); renderShelf(shelf, app, { compact: true, ladder: false, ids: ['savingsRateTakeHome', 'netWorth', 'fiDate', 'pctToFi'], more: '#/scoreboard' }); left.appendChild(shelf);
     left.appendChild(cheerPanel(app));

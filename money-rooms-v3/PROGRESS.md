@@ -3,6 +3,8 @@
 Updated: 2026-10-13
 
 ## Done
+- Level 15 audit (MR-116): take-home said per paycheck, month or year, or typed as gross; salaried hours a week
+  on the snapshot; What you said beside blank base numbers; the next-3 card draws from What's left; hours bought back.
 - Level 15, Snapshot and Sharpen plus Hours Everywhere (MR-108 to MR-115): one resolver for every base
   number, the quick snapshot and the deep dive with four states, hourly income entry, what's left, the real
   hourly wage with its rungs, the Dollars, Hours, Both toggle, the one-pager's Hours of work, six households.

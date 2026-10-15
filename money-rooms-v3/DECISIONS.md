@@ -562,6 +562,12 @@ Compatibility: schema 5. On load, an `account` row whose type is checking, hysa,
 Why: the owner: "separate them into investing and bank accounts ... very clearly be bank accounts with checking, savings, high yield savings and CDs", and on question 60: "keep both but make sure that they both are modes for the debt calculation".
 Alternative: one account type grouped on screen by bucket (the list stayed one long select, which is what the owner wanted gone).
 
+## MR-116 2026-10-15 Level 15 closes the gaps in its own brief
+Decision: four small hooks the audit of the Level 15 brief found missing. The regular take-home base number is said per paycheck, a month or a year, and can be typed as gross instead: gross lands on the first salaried W-2 row (made on first use) and the engine solves the take-home with the one tax function; the snapshot says so. A salaried job's hours a week (a range allowed) is editable on the snapshot, so the real hourly wage never asks for it twice. A blank expense base number beside discovery-call figures reads What you said, beside the rooms' averages Guess. The Session screen's next-3 card draws its three from What's left (the leverage items plus the snapshot's remainders and rough snapshots), falling back to the leverage ranking when the list is empty. In Hours mode the Investments room says a balance reads as hours bought back.
+Compatibility: none stored.
+Why: the owner re-sent the brief; the audit against its sections found these five lines short of the words.
+Alternative: a second ranked card beside the old one (rejected: one card, one list).
+
 ## MR-115 2026-10-14 Six synthetic households run through both parts
 Decision: `tests/engine/snapshot.test.js` builds a snapshot-only household (the projection runs on it alone), a half-itemized one with an over-gut expense, a between-jobs one (no wage, the lens off, nothing breaks with blanks), a self-employed one (the trailing rung), an hourly worker with a main job at 30 to 33 hours, seven unpaid weeks and an on-call job at six hours a month, and a fully filled one (coverage full, nothing left, the wage on the real rung and equal to the registry metric). Plus the resolver's unit cases and the formatter's units. Flow level30 runs the screens and the toggle through a reload; the sweep covers the snapshot, a deep dive and what's left at three widths.
 Compatibility: none.
