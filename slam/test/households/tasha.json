@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "hh-tasha",
+  "profile": { "name": "Tasha (demo)", "birthYear": 1997, "state": "TX", "zip": "78701" },
+  "situation": ["employed"],
+  "household": { "filingStatus": "single", "dependents": { "count": 0, "ages": [] }, "roommates": { "count": 0 } },
+  "income": [
+    { "id": "inc-hospital", "type": "w2", "label": "Hospital admin", "payFrequency": "biweekly",
+      "gross": { "amount": 60000, "cadence": "year" } }
+  ],
+  "gut": { "amount": 2500 },
+  "debts": [
+    { "id": "debt-capone", "label": "Capital One card", "type": "credit-card",
+      "balance": { "amount": 6500, "status": "roughly" }, "apr": { "amount": null, "status": "dont-know" }, "minimum": { "amount": 195 } }
+  ],
+  "currentMonth": "2026-09",
+  "categories": [
+    { "id": "housing", "name": "Housing", "kind": "fixed", "need": true, "estimate": { "amount": 1400, "status": "roughly" }, "lines": [
+      { "id": "rent", "name": "Rent", "kind": "fixed", "need": true } ] },
+    { "id": "food", "name": "Food", "need": true, "estimate": { "amount": 500, "status": "roughly" }, "lines": [
+      { "id": "groceries", "name": "Groceries", "need": true } ] },
+    { "id": "transport", "name": "Transportation", "need": true, "estimate": { "amount": 400, "status": "roughly" }, "lines": [
+      { "id": "gas", "name": "Gas", "need": true } ] },
+    { "id": "debt", "name": "Debt payments", "kind": "fixed", "need": true, "lines": [] },
+    { "id": "health", "name": "Health", "kind": "fixed", "need": true, "estimate": { "amount": null, "status": "dont-know" }, "lines": [
+      { "id": "premiums", "name": "Premiums", "kind": "fixed", "need": true } ] },
+    { "id": "bills", "name": "Bills and subscriptions", "kind": "fixed", "estimate": { "amount": 150, "status": "roughly" }, "lines": [
+      { "id": "subscriptions", "name": "Bills and subscriptions", "kind": "fixed" } ] },
+    { "id": "fun", "name": "Personal and fun", "estimate": { "amount": null, "status": "dont-know" }, "lines": [
+      { "id": "shopping", "name": "Shopping" } ] },
+    { "id": "annual", "name": "Annual and irregular", "estimate": { "amount": null, "status": "will-email" }, "lines": [
+      { "id": "yearly", "name": "Yearly costs" } ] },
+    { "id": "fees", "name": "Fees", "tag": "mistake", "lines": [
+      { "id": "fee-late", "name": "Late fees" } ] },
+    { "id": "giving", "name": "Giving", "estimate": { "amount": null, "status": "not-for-me" }, "lines": [
+      { "id": "giving-line", "name": "Giving" } ] },
+    { "id": "savings", "name": "Savings", "kind": "fixed", "savings": true, "estimate": { "amount": 100, "status": "roughly" }, "lines": [
+      { "id": "emergency-fund", "name": "Emergency fund", "kind": "fixed" } ] }
+  ]
+}

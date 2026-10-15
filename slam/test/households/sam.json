@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "hh-sam",
+  "profile": { "name": "Sam (demo)", "birthYear": 2002, "state": "MI", "zip": "48104" },
+  "situation": ["between-jobs", "student"],
+  "household": { "filingStatus": "single", "dependents": { "count": 0, "ages": [] }, "roommates": { "count": 0 } },
+  "income": [
+    { "id": "inc-ui", "type": "unemployment", "label": "Unemployment benefits", "payFrequency": "weekly",
+      "takeHome": { "amount": 400, "cadence": "week" } }
+  ],
+  "gut": { "amount": 900, "status": "roughly" },
+  "debts": [],
+  "noDebts": true,
+  "currentMonth": "2026-09",
+  "settings": { "singleTotal": true },
+  "categories": [
+    { "id": "housing", "name": "Housing", "kind": "fixed", "need": true, "estimate": { "amount": null, "status": "not-for-me", "note": "Lives with parents" }, "lines": [] },
+    { "id": "food", "name": "Food", "need": true, "lines": [
+      { "id": "groceries", "name": "Groceries", "need": true, "actual": { "amount": null, "status": "not-for-me", "note": "Parents buy groceries" } },
+      { "id": "eating-out", "name": "Eating out", "actual": { "amount": 250 } } ] },
+    { "id": "transport", "name": "Transportation", "need": true, "estimate": { "amount": null, "status": "not-for-me" }, "lines": [] },
+    { "id": "debt", "name": "Debt payments", "kind": "fixed", "need": true, "lines": [] },
+    { "id": "health", "name": "Health", "kind": "fixed", "need": true, "estimate": { "amount": null, "status": "not-for-me", "note": "On a parent's plan" }, "lines": [] },
+    { "id": "bills", "name": "Bills and subscriptions", "kind": "fixed", "lines": [
+      { "id": "subscriptions", "name": "Phone and streaming", "kind": "fixed", "actual": { "amount": 40 } } ] },
+    { "id": "fun", "name": "Personal and fun", "lines": [
+      { "id": "shopping", "name": "Shopping", "actual": { "amount": null, "status": "dont-know" } } ] },
+    { "id": "annual", "name": "Annual and irregular", "estimate": { "amount": null, "status": "not-for-me" }, "lines": [] },
+    { "id": "fees", "name": "Fees", "tag": "mistake", "estimate": { "amount": null, "status": "not-for-me" }, "lines": [] },
+    { "id": "giving", "name": "Giving", "estimate": { "amount": null, "status": "not-for-me" }, "lines": [] },
+    { "id": "savings", "name": "Savings", "kind": "fixed", "savings": true, "estimate": { "amount": null, "status": "not-for-me" }, "lines": [] },
+    { "id": "everything", "name": "Everything else", "estimate": { "amount": 800, "status": "roughly", "note": "Gave one total instead of categories" }, "lines": [] }
+  ]
+}

@@ -1,0 +1,82 @@
+/* tokens.css: every color, font, size, and radius in SLAM comes from here.
+   Charts read the same variables, so dark mode works everywhere at once. */
+
+:root {
+  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-num: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+  --text-xs: 0.75rem; --text-sm: 0.875rem; --text-md: 1rem; --text-lg: 1.25rem; --text-xl: 1.6rem; --text-xxl: 2.2rem;
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px;
+  --radius-sm: 6px; --radius-md: 10px; --radius-lg: 16px; --radius-pill: 999px;
+  --tap: 40px;
+  --max-width: 1180px;
+
+  --sapphire: #0f52ba;
+  --bg: #f5f7fb;
+  --surface: #ffffff;
+  --surface-2: #eef2f9;
+  --text: #182134;
+  --text-muted: #5a6478;
+  --border: #d9dfeb;
+  --accent: var(--sapphire);
+  --accent-text: #ffffff;
+  --accent-soft: #e2ebfa;
+  --focus: #3b7bff;
+
+  --good: #23855a;
+  --bad: #c0392b;
+  --warn: #b7791f;
+  --good-soft: #e3f4ec;
+  --bad-soft: #fbe9e7;
+  --warn-soft: #fbf1df;
+
+  /* status chips */
+  --st-known: #23855a;
+  --st-roughly: #b7791f;
+  --st-will-email: #2f6fcf;
+  --st-dont-know: #c0392b;
+  --st-not-for-me: #6b7385;
+  --st-guess: #7b4fb0;
+  --st-computed: #1f8a8a;
+  --st-blank: #8a93a6;
+
+  /* charts: validated with the dataviz palette checker (CVD and normal-vision
+     separation, light surface). Categories use slots in this fixed order. */
+  --series-gut: #6250d6;
+  --series-estimate: #eb6834;
+  --series-dream: #1baf7a;
+  --series-actual: #1f63c9;
+  --chart-grid: #e3e8f1;
+  --chart-axis: #8a93a6;
+  --chart-1: #1f63c9; --chart-2: #eb6834; --chart-3: #1baf7a; --chart-4: #eda100;
+  --chart-5: #e87ba4; --chart-6: #008300; --chart-7: #6250d6; --chart-8: #e34948;
+  --chart-other: #8a93a6;
+  --need: #1f63c9; --want: #eb6834; --save: #1baf7a; --unassigned: #c9d2e3;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c1220; --surface: #141c2d; --surface-2: #1b2539; --text: #e6eaf2; --text-muted: #9aa4b8;
+    --border: #2a3550; --accent: #5b8def; --accent-text: #0c1220; --accent-soft: #1d2c4c; --focus: #8fb1ff;
+    --good: #4cc38a; --bad: #ef6b5b; --warn: #e2a64a; --good-soft: #15302a; --bad-soft: #3a1d1d; --warn-soft: #3a2d15;
+    --st-known: #4cc38a; --st-roughly: #e2a64a; --st-will-email: #6fa0f0; --st-dont-know: #ef6b5b;
+    --st-not-for-me: #9aa4b8; --st-guess: #b38be6; --st-computed: #4fc3c3; --st-blank: #7d879b;
+    --series-gut: #9085e9; --series-estimate: #d95926; --series-dream: #199e70; --series-actual: #3987e5;
+    --chart-grid: #26314a; --chart-axis: #7d879b;
+    --chart-1: #3987e5; --chart-2: #d95926; --chart-3: #199e70; --chart-4: #c98500; --chart-5: #d55181; --chart-6: #008300;
+    --chart-7: #9085e9; --chart-8: #e66767; --chart-other: #7d879b;
+    --need: #3987e5; --want: #d95926; --save: #199e70; --unassigned: #34405c;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0c1220; --surface: #141c2d; --surface-2: #1b2539; --text: #e6eaf2; --text-muted: #9aa4b8;
+  --border: #2a3550; --accent: #5b8def; --accent-text: #0c1220; --accent-soft: #1d2c4c; --focus: #8fb1ff;
+  --good: #4cc38a; --bad: #ef6b5b; --warn: #e2a64a; --good-soft: #15302a; --bad-soft: #3a1d1d; --warn-soft: #3a2d15;
+  --st-known: #4cc38a; --st-roughly: #e2a64a; --st-will-email: #6fa0f0; --st-dont-know: #ef6b5b;
+  --st-not-for-me: #9aa4b8; --st-guess: #b38be6; --st-computed: #4fc3c3; --st-blank: #7d879b;
+  --series-gut: #9085e9; --series-estimate: #d95926; --series-dream: #199e70; --series-actual: #3987e5;
+  --chart-grid: #26314a; --chart-axis: #7d879b;
+  --chart-1: #3987e5; --chart-2: #d95926; --chart-3: #199e70; --chart-4: #c98500; --chart-5: #d55181; --chart-6: #008300;
+  --chart-7: #9085e9; --chart-8: #e66767; --chart-other: #7d879b;
+  --need: #3987e5; --want: #d95926; --save: #199e70; --unassigned: #34405c;
+}
