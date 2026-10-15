@@ -33,7 +33,7 @@ function tableRows(model, totals) {
     return {
       id: c.id, name: c.name, savings: c.savings, isDebt: c.isDebt, isEverything: c.isEverything, notForMe: c.notForMe, state: c.state,
       estimate: c.estimate.amount, dream: c.dream.amount, actual: c.actual.amount, partial: c.actual.partial,
-      estimateFrom: c.estimate.from, carved: c.estimate.carved, total: c.estimate.total, overSplit: !!c.estimate.overSplit,
+      estimateFrom: c.estimate.from, dreamFrom: c.dream.from, carved: c.estimate.carved, total: c.estimate.total, overSplit: !!c.estimate.overSplit,
       basis: basis.amount, basisFrom: basis.from,
       status: { estimate: c.estimate.status, dream: c.dream.status, actual: c.actual.status },
       gaps: gaps(c.estimate.amount, c.dream.amount, c.actual.amount),

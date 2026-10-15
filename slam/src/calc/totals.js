@@ -64,9 +64,11 @@ export function budgetTotals(model, income, doc, housingBand = 0.35) {
 
   const housing = cats.find((x) => x.cat.id === 'housing');
   const housingBasis = housing ? housing.basis.amount : null;
+  // Your share of the rent is the rent line itself (never asked twice).
   const rm = doc.household.roommates;
   const totalRent = toMonthly(rm.totalRent, 'monthly');
-  const yourShare = toMonthly(rm.yourShare, 'monthly');
+  const rentLine = housing ? housing.cat.lines.find((l) => l.id === 'rent') : null;
+  const yourShare = rentLine ? (rentLine.actual !== null ? rentLine.actual : rentLine.estimate) : null;
   const roommateWorstCase = rm.count > 0 && housingBasis !== null && totalRent !== null && yourShare !== null
     ? housingBasis - yourShare + totalRent : null;
 

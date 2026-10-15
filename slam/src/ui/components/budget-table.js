@@ -47,14 +47,15 @@ function cells(row, unit, summary, isLine, savings) {
     h('td', { class: 'num wide ' + gapClass(g.actualMinusEstimatePct, savings) }, signedPct(g.actualMinusEstimatePct)),
     h('td', { class: 'num wide' }, times(row.accuracy)),
     h('td', { class: 'num wide' }, pct(row.pctTakeHome.basis)),
-    h('td', { class: 'wide' }, statusChip(row.status.estimate), ' ', statusChip(row.status.actual))
+    h('td', { class: 'wide', title: 'Estimate, dream, actual' }, statusChip(row.status.estimate), ' ', statusChip(row.status.dream), ' ', statusChip(row.status.actual))
   ];
 }
 
 export function budgetTable(ctx, summary) {
   const { ui } = ctx;
   const unit = ui.lens;
-  const rows = [...summary.rows];
+  // "Doesn't apply" categories get no row (lesson 12); they are named once under the table.
+  const rows = summary.rows.filter((r) => !r.notForMe);
   if (ui.sort.key) {
     rows.sort((a, b) => {
       const x = sortValue(a, ui.sort.key);
@@ -79,7 +80,6 @@ export function budgetTable(ctx, summary) {
         if (open) ui.expanded.delete('cat:' + r.id); else ui.expanded.add('cat:' + r.id);
         ctx.rerender();
       } }, (open ? '▾ ' : '▸ ') + r.name) : r.name,
-      r.notForMe ? h('span', { class: 'muted xs' }, " (doesn't apply)") : null,
       r.basisFrom === 'estimate' ? h('span', { class: 'muted xs' }, ' (no actual yet)') : null),
       cells(r, unit, summary, false, r.savings)));
     if (open) {
@@ -96,7 +96,10 @@ export function budgetTable(ctx, summary) {
   body.push(h('tr', { class: 'total' }, h('td', {}, 'Spending'), h('td', { class: 'num' }, L(t.estimateTotal)), h('td', { class: 'num wide' }, L(t.dreamTotal)),
     h('td', { class: 'num' }, L(t.actualTotal)), h('td', {}), h('td', { class: 'wide' }), h('td', { class: 'wide' }), h('td', { class: 'num wide' }, pct(t.spendingShare)), h('td', { class: 'wide' })));
 
-  return h('div', { class: 'table-wrap' }, h('table', { class: 'budget' }, h('thead', {}, head), h('tbody', {}, body)));
+  const skipped = summary.rows.filter((r) => r.notForMe).map((r) => r.name);
+  return h('div', {},
+    h('div', { class: 'table-wrap' }, h('table', { class: 'budget' }, h('thead', {}, head), h('tbody', {}, body))),
+    skipped.length ? h('p', { class: 'muted xs' }, "Doesn't apply: " + skipped.join(', ') + '.') : null);
 }
 
 // A closed month, read-only except late entries (stored as revisions).

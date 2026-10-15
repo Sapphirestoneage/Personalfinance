@@ -106,9 +106,10 @@ export function threeColumnCard(ctx, s, half) {
   const t = s.totals;
   return card(ctx, {
     id: 'eda', title: 'Estimate, dream, actual', unitToggle: true,
-    svg: hbars({ rows: rows.map((r) => ({ label: r.name, values: ['estimate', 'dream', 'actual'].map((k) => ({ v: pick(r, k), color: SERIES[k], tip: r.name + ' ' + k + ': ' + money(r[k]) })) })), width: chartWidth(half), fmt }),
+    svg: hbars({ rows: rows.map((r) => ({ label: r.name, values: ['estimate', 'dream', 'actual'].map((k) => ({ v: pick(r, k), name: k, color: SERIES[k], tip: r.name + ' ' + k + ': ' + money(r[k]) })) })), width: chartWidth(half), fmt }),
     legendItems: [['Estimate', SERIES.estimate], ['Dream', SERIES.dream], ['Actual', SERIES.actual]],
-    reading: 'Spending: ' + money(t.estimateTotal) + ' estimated, ' + money(t.dreamTotal) + ' dreamed, ' + money(t.actualTotal) + ' actual so far.'
+    reading: 'Spending: ' + [[t.estimateTotal, 'estimated'], [t.dreamTotal, 'dreamed'], [t.actualTotal, 'actual so far']]
+      .map(([v, w]) => (v === null ? 'nothing ' + w.replace(' so far', '') + ' yet' : money(v) + ' ' + w)).join(', ') + '.'
   });
 }
 

@@ -93,7 +93,11 @@ export function correctionFactors(model, history) {
     if (now !== null) ratios.push(now);
     if (!ratios.length || c.estimate.amount === null) continue;
     const avg = ratios.reduce((a, r) => a + r, 0) / ratios.length;
-    out.push({ id: c.id, name: c.name, estimate: c.estimate.amount, factor: avg, suggested: c.estimate.amount * avg, months: ratios.length });
+    const suggested = c.estimate.amount * avg;
+    out.push({
+      id: c.id, name: c.name, estimate: c.estimate.amount, factor: avg, suggested, months: ratios.length,
+      suggestedWhole: Math.round(suggested), worthOffering: Math.round(suggested) !== Math.round(c.estimate.amount)
+    });
   }
   return out;
 }

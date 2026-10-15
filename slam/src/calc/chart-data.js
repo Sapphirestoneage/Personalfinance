@@ -73,7 +73,7 @@ export function threeColumns(summary) {
 // Actual minus estimate per category, biggest overage first.
 export function variance(summary) {
   return summary.rows
-    .filter((r) => r.gaps.actualMinusEstimate !== null && !r.isDebt)
+    .filter((r) => r.gaps.actualMinusEstimate !== null && !r.isDebt && !r.notForMe)
     .map((r) => ({ id: r.id, name: r.name, amount: r.gaps.actualMinusEstimate, share: r.gaps.actualMinusEstimatePct, savings: r.savings }))
     .sort((a, b) => b.amount - a.amount);
 }

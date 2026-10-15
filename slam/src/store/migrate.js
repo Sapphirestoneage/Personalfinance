@@ -37,7 +37,9 @@ export function normalizeHousehold(doc) {
   out.profile = { ...base.profile, ...(doc.profile || {}) };
   out.household = { ...base.household, ...(doc.household || {}) };
   out.household.dependents = { ...base.household.dependents, ...(out.household.dependents || {}) };
-  out.household.roommates = withDefaults(base.household.roommates, out.household.roommates || {}, ['totalRent', 'yourShare']);
+  // Compatibility: an old separate "yourShare" is dropped; the rent line is your share.
+  const { yourShare, ...rm } = out.household.roommates || {};
+  out.household.roommates = withDefaults(base.household.roommates, rm, ['totalRent']);
   out.gut = normalizeValue(doc.gut);
   out.income = (doc.income || []).map((i) => withDefaults(newIncome({ id: i.id }), i, ['takeHome', 'gross', 'pretaxRetirement']));
   out.debts = (doc.debts || []).map((d) => withDefaults(newDebt({ id: d.id }), d, ['balance', 'apr', 'minimum', 'dueDay']));

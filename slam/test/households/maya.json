@@ -6,7 +6,7 @@
   "household": {
     "filingStatus": "single",
     "dependents": { "count": 0, "ages": [] },
-    "roommates": { "count": 1, "totalRent": { "amount": 3200 }, "yourShare": { "amount": 1600 } }
+    "roommates": { "count": 1, "totalRent": { "amount": 3200 } }
   },
   "income": [
     { "id": "inc-studio", "type": "w2", "label": "Design studio", "payFrequency": "biweekly", "hoursPerWeek": 40,

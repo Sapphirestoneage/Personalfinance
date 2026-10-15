@@ -99,8 +99,7 @@ export function renderBasics(ctx, summary) {
           { set: (d, v) => { d.household.dependents.ages = (v || '').split(',').map((x) => Number(x.trim())).filter((n) => Number.isFinite(n) && n >= 0); } }) : null,
         textField(ctx, 'Roommates (0 if none)', ['household', 'roommates', 'count'], rm.count, { numeric: true, width: '6em', set: (d, v) => { d.household.roommates.count = v; } })),
       rm.count > 0 ? h('div', {},
-        question(ctx, 'Total rent for the place', 'What everyone pays together', ['household', 'roommates', 'totalRent'], rm.totalRent),
-        question(ctx, 'Your share of the rent', null, ['household', 'roommates', 'yourShare'], rm.yourShare)) : null),
+        question(ctx, 'Total rent for the place', 'What everyone pays together. Your share is the Rent line in the Actual pass.', ['household', 'roommates', 'totalRent'], rm.totalRent)) : null),
 
     h('h2', {}, 'Income'),
     doc.income.length ? null : h('p', { class: 'muted' }, 'No income yet. Add each source of money coming in.'),

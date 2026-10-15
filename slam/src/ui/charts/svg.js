@@ -32,7 +32,7 @@ function line(x1, y1, x2, y2, cls, dash) {
 // mode: 'grouped' | 'overlay' (first value is the outline, second the fill) | 'diverging'
 // ref: a value to draw a dashed reference line at (e.g. 1.0x, or 35%).
 export function hbars({ rows, width, fmt, mode = 'grouped', ref = null, refLabel = '', label = 'Bar chart' }) {
-  const barH = mode === 'overlay' || mode === 'diverging' ? 14 : 10;
+  const barH = mode === 'overlay' || mode === 'diverging' ? 14 : 11;
   // Leave room on the right for the longest value label so nothing is clipped.
   const labelOf = (r, v) => (mode === 'overlay' ? r.values.map((q) => (q.v === null || q.v === undefined ? 'none' : fmt(q.v))).join(' / ') : fmt(v.v));
   const longest = Math.max(4, ...rows.flatMap((r) => r.values.filter((v) => v.v !== null && v.v !== undefined).map((v) => labelOf(r, v).length)));
@@ -58,7 +58,7 @@ export function hbars({ rows, width, fmt, mode = 'grouped', ref = null, refLabel
     }
     r.values.forEach((v, i) => {
       if (v.v === null || v.v === undefined) {
-        if (mode === 'grouped') { body += t(zeroX + 2, y + barH - 1, 'not given', { cls: 'muted' }); y += barH + 2; }
+        if (mode === 'grouped') { body += t(zeroX + 2, y + barH - 1, (v.name ? v.name + ': ' : '') + 'not given', { cls: 'muted tiny' }); y += barH + 2; }
         return;
       }
       const w = Math.abs(v.v) * scale;
@@ -165,9 +165,13 @@ export function sankey({ left, right, width, fmt, label = 'Where the money goes'
   for (const n of lefts) {
     body += rect(lx, n.y, nodeW, n.h, n.shortfall ? 'var(--bad)' : 'var(--series-actual)', { tip: n.name + ': ' + fmt(n.amount) });
   }
+  const maxChars = Math.floor((labelW - 8) / 6.6);
   for (const n of rights) {
     body += rect(rx, n.y, nodeW, n.h, n.color, { tip: n.name + ': ' + fmt(n.amount) });
-    body += t(rx + nodeW + 6, n.y + Math.min(n.h, 20) / 2 + 4, n.name + ' ' + fmt(n.amount), { weight: n.surplus ? 700 : null });
+    const amt = ' ' + fmt(n.amount);
+    const room = Math.max(4, maxChars - amt.length);
+    const name = n.name.length > room ? n.name.slice(0, room - 1) + '…' : n.name;
+    body += t(rx + nodeW + 6, n.y + Math.min(n.h, 20) / 2 + 4, name + amt, { weight: n.surplus ? 700 : null });
   }
   const first = lefts[0];
   body += t(lx + nodeW + 6, first.y + 14, first.name, { weight: 700 });

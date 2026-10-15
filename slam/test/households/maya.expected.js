@@ -26,7 +26,7 @@
 // Outflow = 3,814 + savings 150 = 3,964. Surplus = 3,900 - 3,964 = -64 (a shortfall).
 // Savings rate = (150 + 260) / (3,900 + 260) = 410 / 4,160 = 0.098558
 // Housing share = 1,750 / 3,900 = 0.448718 (over the 35% band)
-// Roommate worst case = 1,750 - your share 1,600 + full rent 3,200 = 3,350; 3,350 / 3,900 = 0.858974
+// Roommate worst case = 1,750 - your share (the rent line, 1,600) + full rent 3,200 = 3,350; 3,350 / 3,900 = 0.858974
 
 // BLIND SPOT: overage per category where actual > estimate
 // housing 30, food 290, bills 23, fun 270, annual 20, fees 39 (all others 0) = 672

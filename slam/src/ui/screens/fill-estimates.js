@@ -24,9 +24,9 @@ function extrasFor(ctx, summary, row) {
       useAs(ctx, row.id, 'estimate', makeValue(last.amount, { source: 'coach', note: 'From ' + monthLabel(last.key) + ' actual' }), "Use last month's actual")));
   }
   const corr = summary.corrections.find((c) => c.id === row.id);
-  if (corr && Math.round(corr.suggested) !== Math.round(corr.estimate)) {
+  if (corr && corr.worthOffering) {
     out.push(h('span', { class: 'xs muted' }, 'Your usual miss here: ' + corr.factor.toFixed(2) + 'x. Suggested ' + money(corr.suggested) + ' ',
-      useAs(ctx, row.id, 'estimate', makeValue(Math.round(corr.suggested), { source: 'coach', note: 'Personal correction ' + corr.factor.toFixed(2) + 'x' }), 'Apply')));
+      useAs(ctx, row.id, 'estimate', makeValue(corr.suggestedWhole, { source: 'coach', note: 'Personal correction ' + corr.factor.toFixed(2) + 'x' }), 'Apply')));
   }
   return out.length ? h('div', { class: 'row' }, out) : null;
 }
@@ -97,8 +97,14 @@ export function renderEstimates(ctx, summary, key) {
         statusPicker(cat.estimate.status, (st) => ctx.update(r.name, (d) => { findCategory(d, r.id).estimate = makeValue(null, { status: st }); }), JSON.stringify(['categories', r.id, 'estimate'])));
     }
     const hint = isRough
-      ? (r.estimateFrom === 'lines' ? 'Lines add up to ' + money(r.estimate) : null)
+      ? null
       : (r.estimate !== null ? 'Estimate ' + money(r.estimate) + (r.pctTakeHome.estimate !== null ? ' (' + pct(r.pctTakeHome.estimate) + ' of take-home)' : '') : null);
+    const fromLines = (isRough ? r.estimateFrom : r.dreamFrom) === 'lines';
+    if (fromLines) {
+      // Already given line by line: show it, never ask it a second time.
+      return h('div', { class: 'qa' }, h('div', { class: 'q' }, r.name, h('div', { class: 'hint' }, 'Adds up from its lines (Actual pass, Details).')),
+        h('span', {}, statusChip(r.status[key]), ' ', h('b', { class: 'num' }, money(r[key]))));
+    }
     return h('div', {},
       question(ctx, r.name, hint, ['categories', r.id, key], cat[key]),
       isRough ? extrasFor(ctx, summary, r) : null);

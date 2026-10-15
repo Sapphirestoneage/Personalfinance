@@ -139,7 +139,7 @@ export function newHousehold(name, now = new Date()) {
     household: {
       filingStatus: 'single',
       dependents: { count: null, ages: [] },
-      roommates: { count: null, totalRent: makeValue(), yourShare: makeValue() }
+      roommates: { count: null, totalRent: makeValue() }
     },
     income: [],
     gut: makeValue(),

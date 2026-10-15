@@ -158,6 +158,7 @@ ul.plain li:last-child { border-bottom: none; }
 .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
 .chart text { fill: var(--text); font-family: var(--font-ui); font-size: 12px; }
 .chart text.muted { fill: var(--text-muted); }
+.chart text.tiny { font-size: 10px; }
 .chart .grid-line { stroke: var(--chart-grid); }
 .chart .axis { stroke: var(--chart-axis); }
 .legend { display: flex; flex-wrap: wrap; gap: var(--space-3); font-size: var(--text-xs); color: var(--text-muted); margin-top: var(--space-2); }
