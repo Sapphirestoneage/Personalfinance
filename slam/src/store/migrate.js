@@ -1,0 +1,60 @@
+// Brings any saved or imported household up to the current schema version,
+// then fills missing keys with defaults so every screen can trust the shape.
+// To change the stored shape: bump SCHEMA_VERSION, add a step to STEPS, and
+// write a compatibility note in DECISIONS.md.
+
+import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt } from './schema.js';
+import { normalizeValue } from './value.js';
+
+// STEPS[n] turns a version n document into version n + 1.
+const STEPS = {
+  // Version 0 = a document saved before versioning existed (no schemaVersion key).
+  0: (doc) => ({ ...doc, schemaVersion: 1 })
+};
+
+export function migrate(raw) {
+  if (!raw || typeof raw !== 'object') throw new Error('Not a household document');
+  let doc = JSON.parse(JSON.stringify(raw));
+  let v = doc.schemaVersion || 0;
+  if (v > SCHEMA_VERSION) throw new Error('This file is from a newer version of SLAM (schema ' + v + ')');
+  while (v < SCHEMA_VERSION) {
+    doc = STEPS[v](doc);
+    v = doc.schemaVersion;
+  }
+  return normalizeHousehold(doc);
+}
+
+function withDefaults(base, given, valueKeys) {
+  const out = { ...base, ...given };
+  for (const k of valueKeys) out[k] = normalizeValue(given[k] === undefined ? base[k] : given[k]);
+  return out;
+}
+
+export function normalizeHousehold(doc) {
+  const base = newHousehold(doc.profile && doc.profile.name);
+  const out = { ...base, ...doc };
+  out.id = doc.id || base.id;
+  out.profile = { ...base.profile, ...(doc.profile || {}) };
+  out.household = { ...base.household, ...(doc.household || {}) };
+  out.household.dependents = { ...base.household.dependents, ...(out.household.dependents || {}) };
+  out.household.roommates = withDefaults(base.household.roommates, out.household.roommates || {}, ['totalRent', 'yourShare']);
+  out.gut = normalizeValue(doc.gut);
+  out.income = (doc.income || []).map((i) => withDefaults(newIncome({ id: i.id }), i, ['takeHome', 'gross', 'pretaxRetirement']));
+  out.debts = (doc.debts || []).map((d) => withDefaults(newDebt({ id: d.id }), d, ['balance', 'apr', 'minimum', 'dueDay']));
+  out.categories = (doc.categories || base.categories).map((c) => {
+    const cat = withDefaults(newCategory({ id: c.id }), c, ['estimate', 'dream']);
+    cat.lines = (c.lines || []).map((l) => {
+      const line = withDefaults(newLine({ id: l.id, savings: cat.savings, tag: cat.tag }), l, ['estimate', 'dream', 'actual', 'owedBack']);
+      return line;
+    });
+    return cat;
+  });
+  out.settings = { ...base.settings, ...(doc.settings || {}) };
+  out.months = doc.months || [];
+  out.transactions = doc.transactions || [];
+  out.merchantMemory = doc.merchantMemory || {};
+  out.snapshots = doc.snapshots || [];
+  out.passesSeen = doc.passesSeen || [];
+  out.schemaVersion = SCHEMA_VERSION;
+  return out;
+}
