@@ -2,8 +2,8 @@
 
 ## Tests
 
-- `node --test`: 84 tests, all passing (store, math, chart data, four households, and the Jordan transaction household added in Phase 6).
-- `node test/browser/screens.check.mjs` (needs a local server and Playwright): loads each test
+- `node --test`: 83 tests, all passing (store, math, chart data, four households, and the Jordan transaction household added in Phase 6).
+- `node tools/screens-check.mjs` (needs a local server and Playwright): loads each test
   household in Chromium and compares what the Budget and Analyze screens show against the
   hand-computed expected files. 149 on-screen checks (tiles, table totals, every category's
   estimate and actual, culprits, completion, proof of cash flag, gut check reading, income

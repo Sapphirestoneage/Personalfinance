@@ -4,12 +4,12 @@
 //
 // Run from the slam folder:
 //   python3 -m http.server 8765 &
-//   node test/browser/screens.check.mjs
+//   node tools/screens-check.mjs
 // Needs Playwright (npm i -g playwright) and a Chromium it can find.
 
 import { createRequire } from 'node:module';
 import { execSync } from 'node:child_process';
-import { money, pct, signedMoney, times } from '../../src/ui/format.js';
+import { money, pct, signedMoney, times } from '../src/ui/format.js';
 
 const require = createRequire(import.meta.url);
 let playwright;
@@ -27,7 +27,7 @@ function check(name, label, shown, expected) {
 
 const browser = await playwright.chromium.launch();
 for (const [name, button] of Object.entries(DEMOS)) {
-  const { default: exp } = await import('../households/' + name + '.expected.js');
+  const { default: exp } = await import('../test/households/' + name + '.expected.js');
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));

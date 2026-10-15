@@ -38,7 +38,7 @@ To also check that the screens show the same numbers as the hand-computed answer
 
 ```
 python3 -m http.server 8765 &
-node test/browser/screens.check.mjs
+node tools/screens-check.mjs
 ```
 
 ## Bank and card files
