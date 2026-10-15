@@ -50,7 +50,8 @@
   "fillGapsWithGuesses": true,
   "roommateMonthsToReplace": 2,
   "cushionStep1": "fatMonth",
-  "cushionStep2Months": 1
+  "cushionStep2Months": 1,
+  "materialityShare": 0.005
  },
  "labels": {
   "returnLikely": "Return after inflation, likely",
@@ -87,7 +88,8 @@
   "fillGapsWithGuesses": "Fill gaps with averages for the cost area",
   "roommateMonthsToReplace": "Months until a roommate is replaced (cushion and worst case)",
   "cushionStep1": "Cushion step 1, the lean month: one month of food, housing and getting around, or a fixed amount set on the Goals screen",
-  "cushionStep2Months": "Cushion step 2, the full month: months of all spending"
+  "cushionStep2Months": "Cushion step 2, the full month: months of all spending",
+  "materialityShare": "Materiality line, share of a year's spending"
  },
  "options": {
   "fiProgressBasis": [

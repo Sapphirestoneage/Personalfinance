@@ -1403,3 +1403,5 @@ body[data-wage="off"] .lens-toggle button:not(#lens-dollars) { opacity: 0.6; }
 .wl-head { justify-content: space-between; flex-wrap: wrap; gap: var(--s-1); } .wl-list { padding-left: 20px; margin: 0; } .wl-item { padding: 6px 0; border-bottom: 1px solid var(--line-soft); } .wl-ctl { flex-wrap: wrap; gap: var(--s-1); align-items: center; margin-top: 4px; } .wl-ctl .input { width: 140px; }
 .wl-mini { padding-left: 20px; margin: var(--s-1) 0; } .snapshot-card h2 { display: flex; justify-content: space-between; align-items: baseline; }
 @media (max-width: 720px) { .hbar { grid-template-columns: 60px minmax(0, 1fr) 80px; } .snap-wage { margin-left: 0; } }
+/* MR-117: the split pick on a deep-dive row and the by-split, by-feeling bars on the spending lines */
+.split-pick { display: inline-flex; align-items: center; gap: var(--s-2); } .tag-bars .hbar { grid-template-columns: 90px minmax(0, 1fr) 120px; max-width: 560px; }

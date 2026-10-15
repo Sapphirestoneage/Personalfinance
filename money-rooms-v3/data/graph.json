@@ -578,7 +578,9 @@
    "summaryTotal",
    "fixedMonthly",
    "variableMonthly",
-   "annualIrregular"
+   "annualIrregular",
+   "splitKind",
+   "fixedShare"
   ],
   "spending.remainderMonthly": [
    "spending.resolved"
@@ -612,6 +614,22 @@
    "balance",
    "otherDebt",
    "debtSummaryTotal"
+  ],
+  "spending.bySplit": [
+   "amount",
+   "splitKind",
+   "fixedShare",
+   "needWant",
+   "category",
+   "shared",
+   "myShare",
+   "otherSpending"
+  ],
+  "spending.byFeeling": [
+   "amount",
+   "feeling",
+   "shared",
+   "myShare"
   ]
  },
  "projectionInputs": [
@@ -796,7 +814,9 @@
   "deductionKind": "changes the tax picture, not the FI date",
   "creditAmount": "changes the tax picture, not the FI date",
   "creditKind": "changes the tax picture, not the FI date",
-  "hoursUnpaid": "the real hourly wage lens only"
+  "hoursUnpaid": "the real hourly wage lens only",
+  "feeling": "a tag on the line, feeds the by-feeling read only",
+  "asm.materialityShare": "the What's left materiality line, which files questions, not a flow"
  },
  "signNote": "An edge sign is the derivative: +1 when the upstream value rising raises the downstream value, -1 when it lowers it. The projection node stands for the FI date, so a later date is higher.",
  "extraEdges": {
@@ -816,7 +836,8 @@
    "life.events",
    "asm.callTargetRoomFraction",
    "asm.cushionStep1",
-   "asm.cushionStep2Months"
+   "asm.cushionStep2Months",
+   "asm.materialityShare"
   ],
   "m.shelterRate": [
    "asm.housingShareOfTakeHome"

@@ -71,6 +71,8 @@ Publishes:
 | `anchorGapByCategory` | monthly, aftertax | per area with lines and a gut anchor: lines minus the anchor |
 | `resolved` | parts | the expense base numbers resolved: `expenses`, `expensesFixed`, `expensesVariable`, `expensesAnnual` (MR-108) |
 | `remainderMonthly` | monthly, aftertax | what the snapshot says is still unitemized (MR-108) |
+| `bySplit` | monthly, aftertax | the lines by selected split: `{ fixed, variable, annual }`, annual spread over twelve; a part-fixed line counts in two by its fixed share (MR-117) |
+| `byFeeling` | monthly, aftertax | the lines by their feeling tag: `{ joy, calm, pride, obligation, guilt, dread, untagged }` (MR-117) |
 
 ## 3. Debt and Credit
 

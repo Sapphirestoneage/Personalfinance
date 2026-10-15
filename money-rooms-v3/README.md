@@ -246,6 +246,9 @@ What's left (#/whatsleft) ranks every unsure item by leverage times dollars.
 Hours Everywhere (MR-112 to MR-114): the real hourly wage with its rung, a
 Dollars, Hours, Both toggle in the top bar, and hourly pay entry with weeks,
 overtime and tips.
+The split is selected on the line (MR-117): Fixed, Variable, Annual or Part
+fixed with a share, a feeling tag, by-split and by-feeling bars on the
+spending ledger, and a materiality line as a share of a year's spending.
 What matters (MR-098 to MR-107) sits in the Sun: the client lists what matters,
 ranks it, prices it, and ties the spending to it; the screen shows the money
 per priority and for the list (alignment score, Not tied to a priority, cheap

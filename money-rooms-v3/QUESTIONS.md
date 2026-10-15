@@ -389,4 +389,12 @@ Collected during the run; none blocked the build. Answer whenever.
 114. The debt remainder (a rough total beyond the rows) carries no rate, so
     the payoff plan runs on the rows alone. Should the remainder take the
     weighted rate as a stand-in?
+115. The feeling presets are Joy, Calm, Pride, Obligation, Guilt, Dread. Are
+    those the six you say in session, or should some be swapped (Fear, Shame,
+    Freedom)?
+116. The materiality share defaults to 0.5% of a year's spending (about $300
+    on $60,000) and falls back to take-home when no spending is known; the
+    wage times the minutes is the floor. Is 0.5% the instinct, or nearer 1%?
+117. Part fixed takes one percent per line. Should a line also split three
+    ways (part annual), or is fixed against variable enough?
 

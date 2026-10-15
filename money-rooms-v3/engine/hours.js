@@ -106,5 +106,7 @@ export function toHours(cents, wage, weeklyHours) {
   const years = weeks / 50;
   return { hours, text: one(years, years >= 1.95 ? 'work-years' : 'work-year'), unit: 'years' };
 }
-/* The materiality line (MR-111): knowing a fact is worth less than the time to find it when its dollars a year times its uncertainty fall under the wage times the minutes. */
-export function belowMateriality(dollarsAtStakeAnnual, wage, minutes) { if (typeof wage !== 'number' || wage <= 0) return false; return Math.abs(dollarsAtStakeAnnual || 0) < wage * ((minutes || 5) / 60); }
+/* The materiality line (MR-111, MR-117): knowing a fact is worth less than the time to find it when its dollars a year still uncertain fall under the line.
+   The line is the higher of the wage times the minutes to find it and a share of a year's spending (the assumption materialityShare, passed in as cents); with neither, nothing is small. */
+export function materialityLine(wage, minutes, shareCents) { const w = typeof wage === 'number' && wage > 0 ? wage * ((minutes || 5) / 60) : 0; const s = typeof shareCents === 'number' && shareCents > 0 ? shareCents : 0; return Math.max(w, s); }
+export function belowMateriality(dollarsAtStakeAnnual, wage, minutes, shareCents) { const line = materialityLine(wage, minutes, shareCents); if (line <= 0) return false; return Math.abs(dollarsAtStakeAnnual || 0) < line; }

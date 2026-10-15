@@ -264,6 +264,9 @@
       "category",
       "amount",
       "needWant",
+      "splitKind",
+      "fixedShare",
+      "feeling",
       "mistake",
       "fatFloor",
       "primaryCard",
@@ -1077,6 +1080,86 @@
     [
      "want",
      "Want"
+    ]
+   ]
+  },
+  "splitKind": {
+   "id": "splitKind",
+   "label": "Split",
+   "kind": "choice",
+   "owner": "spending",
+   "weight": 4,
+   "hint": "Which base number this line belongs to. Blank lets Need or Want and the category decide: a need or a housing, utilities, transport or health line is fixed, a want is variable, an irregular line is annual.",
+   "defaultSource": "client",
+   "optional": true,
+   "options": [
+    [
+     "fixed",
+     "Fixed"
+    ],
+    [
+     "variable",
+     "Variable"
+    ],
+    [
+     "annual",
+     "Annual"
+    ],
+    [
+     "mixed",
+     "Part fixed"
+    ]
+   ]
+  },
+  "fixedShare": {
+   "id": "fixedShare",
+   "label": "Fixed share",
+   "kind": "percent",
+   "owner": "spending",
+   "weight": 3,
+   "hint": "The part of a part-fixed line that does not move; the rest counts as variable. A phone plan with a base and overage might be 70%.",
+   "defaultSource": "client",
+   "optional": true,
+   "onlyWhen": {
+    "field": "splitKind",
+    "in": [
+     "mixed"
+    ]
+   }
+  },
+  "feeling": {
+   "id": "feeling",
+   "label": "Feeling",
+   "kind": "choice",
+   "owner": "spending",
+   "weight": 2,
+   "hint": "How this line feels when it goes out. A tag, not a number; the room sums spending by feeling.",
+   "defaultSource": "client",
+   "optional": true,
+   "options": [
+    [
+     "joy",
+     "Joy"
+    ],
+    [
+     "calm",
+     "Calm"
+    ],
+    [
+     "pride",
+     "Pride"
+    ],
+    [
+     "obligation",
+     "Obligation"
+    ],
+    [
+     "guilt",
+     "Guilt"
+    ],
+    [
+     "dread",
+     "Dread"
     ]
    ]
   },

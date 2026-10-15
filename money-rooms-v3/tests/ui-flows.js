@@ -1487,7 +1487,7 @@ flows.push({
     await page.fill('input[aria-label="Variable a month"]', '1200'); await page.press('input[aria-label="Variable a month"]', 'Tab'); await page.waitForTimeout(600); await quiet();
     await page.goto(base + 'index.html#/whatsleft'); await page.waitForSelector('.whatsleft');
     const left = await page.textContent('.whatsleft');
-    check('what\'s left lists the will-email row, the unitemized remainder and the rough snapshots, ranked, with inline fills and group toggles', (await page.locator('.wl-item').count()) >= 3 && /What makes up the other/.test(left) && (await page.locator('.wl-item[data-kind="row"] input').count()) >= 0 && (await page.locator('.seg-btn:has-text("By who supplies it")').count()) === 1 && /will-email/.test(left));
+    check('what\'s left lists the unitemized remainder and the rough snapshots, ranked, with inline fills and group toggles; the $100 will-email row sits under the share line in Small wins (MR-117)', (await page.locator('.wl-item').count()) >= 2 && /What makes up the other/.test(left) && /small item sits in/.test(left) && (await page.locator('.wl-item[data-kind="row"] input').count()) >= 0 && (await page.locator('.seg-btn:has-text("By who supplies it")').count()) === 1 && /will-email/.test(left));
     await page.click('.seg-btn:has-text("By room")'); await page.waitForTimeout(300);
     check('grouping by room works', (await page.locator('.whatsleft h3').count()) >= 1);
     await page.goto(base + 'index.html#/home'); await page.waitForSelector('.snapshot-card');
@@ -1596,3 +1596,39 @@ flows.push({
   },
 });
 
+flows.push({
+  name: 'level31-split-select-and-feeling',
+  async run(page, { base, check, APP }) {
+    const quiet = async () => page.evaluate(() => { const o = document.querySelector('#overlay'); if (o) o.innerHTML = ''; document.querySelectorAll('.toast').forEach(t => t.remove()); });
+    await page.goto(base + 'index.html#/home'); await page.waitForSelector('#main h1, #main .empty');
+    await importFixture(page, APP, 'leah'); await quiet();
+    const fixedOf = () => page.evaluate(() => { const r = window.mr3.result.sun.outputs.spending.resolved; return { fixed: r.expensesFixed.itemized, variable: r.expensesVariable.itemized, all: r.expenses.itemized }; });
+    const before = await fixedOf();
+    /* the deep dive lists every line with a split select; automatic follows Need or Want */
+    await page.goto(base + 'index.html#/snapshot/expensesFixed'); await page.waitForSelector('.dive-row');
+    check('every line in the expense deep dive carries a split select, Automatic by default', (await page.locator('select[aria-label$=" split"]').count()) >= 10 && (await page.inputValue('select[aria-label="Rent split"]')) === '');
+    /* Rent is a need (fixed by the rule); selecting Variable moves its 2,250 a month across */
+    await page.selectOption('select[aria-label="Rent split"]', 'variable'); await page.waitForTimeout(500); await quiet();
+    const moved = await fixedOf();
+    check('selecting Variable on a line moves it from the fixed to the variable base number and leaves the all-in total alone', moved.fixed === before.fixed - 225000 && moved.variable === before.variable + 225000 && moved.all === before.all);
+    /* Part fixed asks for the share and counts the line in two */
+    await page.selectOption('select[aria-label="Rent split"]', 'mixed'); await page.waitForTimeout(400); await quiet();
+    await page.waitForSelector('input[aria-label="Rent fixed share"]');
+    await page.fill('input[aria-label="Rent fixed share"]', '40'); await page.press('input[aria-label="Rent fixed share"]', 'Tab'); await page.waitForTimeout(500); await quiet();
+    const mixed = await fixedOf();
+    check('Part fixed at 40% counts 900 as fixed and 1,350 as variable', mixed.fixed === before.fixed - 225000 + 90000 && mixed.variable === before.variable + 135000 && mixed.all === before.all);
+    /* the spending ledger reads the lines by split and by feeling; a feeling tag on a line moves the bars */
+    await page.goto(base + 'index.html#/ledger/spending/line'); await page.waitForSelector('.tag-bars');
+    const bars = await page.textContent('.tag-bars');
+    check('the spending ledger shows the lines by split, annual spread over twelve', /By split/.test(bars) && /Fixed/.test(bars) && /Variable/.test(bars) && /Annual/.test(bars));
+    await page.click('button[aria-label^="Details for Rent"]'); const fr = '.row-details .fieldrow[data-field="feeling"]'; await page.waitForSelector(fr);
+    const read = page.locator(fr + ' button.cell-read'); if (await read.count()) await read.click(); /* a read cell opens to its select on tap */
+    await page.selectOption(fr + ' select[data-col="feeling"]', 'calm'); await page.waitForTimeout(500); await quiet();
+    const feel = await page.evaluate(() => { const b = window.mr3.result.sun.outputs.spending.byFeeling; return { calm: b.calm.cents, text: document.querySelector('.tag-bars:last-child') ? document.querySelector('.tag-bars:last-child').textContent : '' }; });
+    check('a feeling tag on a line sums into By feeling and the bar appears', feel.calm === 225000 && /By feeling/.test(await page.textContent('#main')) && /Calm/.test(await page.textContent('#main')));
+    /* the materiality line names both legs */
+    await page.goto(base + 'index.html#/whatsleft'); await page.waitForSelector('.whatsleft');
+    const wl = await page.textContent('.whatsleft');
+    check('What\'s left says the materiality line is the higher of the wage leg and 0.5% of a year\'s spending', /the higher of the real hourly wage/.test(wl) && /0\.5% of a year's spending/.test(wl));
+  },
+});

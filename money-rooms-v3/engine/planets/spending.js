@@ -35,7 +35,12 @@ export function run(ctx) {
   const hh = (ctx.record && ctx.record.household) || {};
   const realIn = ctx.record ? realCategories(ctx.record) : {};
   const items = []; /* MR-108: every counted line as a resolver row, with the split it belongs to */
-  const splitOf = (r, cat) => { const nw = val(r, 'needWant'); if (cat === 'irregular') return 'annual'; if (nw === 'need') return 'fixed'; if (nw === 'want') return 'variable'; return ['accommodation', 'utilities', 'transportation', 'therapy'].includes(cat) ? 'fixed' : 'variable'; };
+  /* MR-117: the split is selected on the line (Fixed, Variable, Annual, or Part fixed with a fixed share); blank lets Need or Want and the category decide */
+  const ruleSplit = (r, cat) => { const nw = val(r, 'needWant'); if (cat === 'irregular') return 'annual'; if (nw === 'need') return 'fixed'; if (nw === 'want') return 'variable'; return ['accommodation', 'utilities', 'transportation', 'therapy'].includes(cat) ? 'fixed' : 'variable'; };
+  const splitOf = (r, cat) => { const sk = val(r, 'splitKind'); if (sk === 'fixed' || sk === 'variable' || sk === 'annual') return sk; if (sk === 'mixed') { const sh = num(r, 'fixedShare'); return typeof sh === 'number' ? 'mixed' : ruleSplit(r, cat); } return ruleSplit(r, cat); };
+  const fixedShareOf = r => { const sh = num(r, 'fixedShare'); return typeof sh === 'number' ? Math.min(1, Math.max(0, sh)) : null; };
+  const feelingKeys = ((ctx.data && ctx.data.fields && ctx.data.fields.fields.feeling && ctx.data.fields.fields.feeling.options) || []).map(o => o[0]);
+  const byFeeling = {}; feelingKeys.concat(['untagged']).forEach(k => { byFeeling[k] = q(0, U.monthlyAfter); });
   let sharedFull = q(0, U.monthlyAfter), sharedShare = q(0, U.monthlyAfter);
   const standIns = {}; const anchorGap = {};
   rows.forEach(r => {
@@ -50,8 +55,9 @@ export function run(ctx) {
       const a = shared ? scale(full, share) : full;
       if (shared) { sharedFull = add(sharedFull, full); sharedShare = add(sharedShare, a); }
       lines++;
-      items.push(Object.assign(rowFromField(r.id, r.nickname || cat0, r.f.amount, a.cents, a.range), { split: splitOf(r, cat0), guess: isGuessRow(r), category: cat0 }));
+      items.push(Object.assign(rowFromField(r.id, r.nickname || cat0, r.f.amount, a.cents, a.range), { split: splitOf(r, cat0), fixedShare: splitOf(r, cat0) === 'mixed' ? fixedShareOf(r) : null, guess: isGuessRow(r), category: cat0, feeling: val(r, 'feeling') || null }));
       if (isGuessRow(r)) standIns[cat0] = 'guess';
+      { const fe = val(r, 'feeling'); const fk = fe && byFeeling[fe] ? fe : 'untagged'; byFeeling[fk] = add(byFeeling[fk], a); }
       const cat = cat0;
       byCategory[cat] = add(byCategory[cat] || q(0, U.monthlyAfter), a);
       total = add(total, a);
@@ -71,7 +77,7 @@ export function run(ctx) {
     }
     if (r.type === 'other') {
       const o = fieldQ(r, 'otherSpending', U.monthlyAfter, asm);
-      if (o) { lines++; byCategory.other = add(byCategory.other, o); total = add(total, o); items.push(Object.assign(rowFromField(r.id, r.nickname || 'Other', r.f.otherSpending, o.cents, o.range), { split: 'variable', category: 'other' })); }
+      if (o) { lines++; byCategory.other = add(byCategory.other, o); total = add(total, o); items.push(Object.assign(rowFromField(r.id, r.nickname || 'Other', r.f.otherSpending, o.cents, o.range), { split: 'variable', category: 'other' })); byFeeling.untagged = add(byFeeling.untagged, o); }
     }
   });
   /* stand-ins: an area with no real lines takes its gut anchor as a rough figure (never a guess once an anchor exists) */
@@ -90,13 +96,18 @@ export function run(ctx) {
   const summaryQ = summaryRow ? fieldQ(summaryRow, 'summaryTotal', U.monthlyAfter, asm) : null;
   /* MR-108: the snapshot (all in, or fixed, variable and annual) resolves against the lines: itemized plus the unitemized remainder, never one or the other */
   const W = ctx.data && ctx.data.weights; const snapOf = (fid, units) => { if (!summaryRow) return null; const fq = fieldQ(summaryRow, fid, units, asm); return fq ? snapshotFromField(summaryRow.f[fid], fq.cents) : null; };
-  const annualRows = items.filter(i => i.split === 'annual').map(i => Object.assign({}, i, { cents: i.cents === null ? null : i.cents * 12, range: i.range ? { low: i.range.low * 12, high: i.range.high * 12 } : null }));
+  /* a part-fixed line is two resolver rows, its fixed share and the rest; the all-in total still counts it once */
+  const scaled = (i, k, suffix, split) => Object.assign({}, i, { id: i.id + suffix, split, cents: i.cents === null ? null : Math.round(i.cents * k), range: i.range ? { low: Math.round(i.range.low * k), high: Math.round(i.range.high * k) } : null });
+  const parts = items.flatMap(i => i.split === 'mixed' ? [scaled(i, i.fixedShare, ':fixed', 'fixed'), scaled(i, 1 - i.fixedShare, ':variable', 'variable')] : [i]);
+  const annualRows = parts.filter(i => i.split === 'annual').map(i => Object.assign({}, i, { cents: i.cents === null ? null : i.cents * 12, range: i.range ? { low: i.range.low * 12, high: i.range.high * 12 } : null }));
   const resolved = {
     expenses: resolveTotal({ snapshot: snapOf('summaryTotal', U.monthlyAfter), rows: items }, { weights: W }),
-    expensesFixed: resolveTotal({ snapshot: snapOf('fixedMonthly', U.monthlyAfter), rows: items.filter(i => i.split === 'fixed') }, { weights: W }),
-    expensesVariable: resolveTotal({ snapshot: snapOf('variableMonthly', U.monthlyAfter), rows: items.filter(i => i.split === 'variable') }, { weights: W }),
+    expensesFixed: resolveTotal({ snapshot: snapOf('fixedMonthly', U.monthlyAfter), rows: parts.filter(i => i.split === 'fixed') }, { weights: W }),
+    expensesVariable: resolveTotal({ snapshot: snapOf('variableMonthly', U.monthlyAfter), rows: parts.filter(i => i.split === 'variable') }, { weights: W }),
     expensesAnnual: resolveTotal({ snapshot: snapOf('annualIrregular', U.annualAfter), rows: annualRows }, { weights: W }),
   };
+  /* MR-117: the lines by split (a month each, the annual ones spread over twelve) and by feeling, the itemized figures only */
+  const bySplit = { fixed: q(resolved.expensesFixed.itemized, U.monthlyAfter), variable: q(resolved.expensesVariable.itemized, U.monthlyAfter), annual: q(Math.round(resolved.expensesAnnual.itemized / 12), U.monthlyAfter) };
   const splitSnap = ['expensesFixed', 'expensesVariable', 'expensesAnnual'].some(k => resolved[k].hasSnapshot);
   /* the lines keep their own figure and band; only what the snapshot says is still unitemized is added on top, as a rough figure with the snapshot's band */
   const remQ = (r, perYear) => { if (r.status !== 'ok' || r.remainder <= 0) return null; const k = perYear ? 12 : 1; const low = Math.max(0, r.range.low - r.itemized), high = Math.max(0, r.range.high - r.itemized); return q(Math.round(r.remainder / k), U.monthlyAfter, { confidence: 0.6, rough: true, range: { low: Math.round(low / k), high: Math.round(high / k) } }); };
@@ -124,6 +135,7 @@ export function run(ctx) {
       savingsLandingMonthly: landing,
       cardSpendByCategory: cardSpend,
       sharedFullMonthly: sharedFull, sharedShareMonthly: sharedShare, standIns, anchorGapByCategory: anchorGap,
+      bySplit, byFeeling,
     },
     enriched: [],
   };

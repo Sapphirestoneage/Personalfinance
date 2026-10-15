@@ -236,6 +236,16 @@ function mountTable(host, app, planet, typeId) {
   const soonHost = h('div', { style: { marginTop: '16px' } });
   host.appendChild(soonHost);
   const soon = mountStartingSoon(soonHost, app, planet);
+  const tagsHost = planet === 'spending' && typeId === 'line' ? h('div', { style: { marginTop: '16px' } }) : null; if (tagsHost) host.appendChild(tagsHost);
+  /* MR-117: the lines by split and by feeling, read from the planet; a bar each, no math here */
+  function drawTags() {
+    if (!tagsHost) return; clear(tagsHost); const S = app.result.sun && app.result.sun.outputs; const sp = S && S.spending; if (!sp || !sp.bySplit) return;
+    const feelDef = app.data.fields.fields.feeling; const labelOf = k => k === 'untagged' ? 'Untagged' : ((feelDef.options.find(o => o[0] === k) || [k, k])[1]);
+    const bars = (title, entries, hint) => { const live = entries.filter(e => e.cents > 0); if (!live.length) return null; const max = Math.max.apply(null, live.map(e => e.cents)); const sec = h('section', { class: 'panel tag-bars' }); sec.appendChild(h('h2', null, title)); live.forEach(e => sec.appendChild(h('div', { class: 'hbar' }, h('span', { class: 'small muted' }, e.label), h('span', { class: 'hbar-track' }, h('span', { class: 'hbar-fill likely', style: { width: Math.round(e.cents / max * 100) + '%' } })), h('span', { class: 'small num' }, F.dollarsWhole(e.cents) + ' a month')))); if (hint) sec.appendChild(h('p', { class: 'small muted' }, hint)); return sec; };
+    const bs = bars('By split', [['fixed', 'Fixed'], ['variable', 'Variable'], ['annual', 'Annual']].map(([k, l]) => ({ label: l, cents: sp.bySplit[k] ? sp.bySplit[k].cents : 0 })), 'The split each line selects; blank lines follow Need or Want and the category. Annual lines are spread over twelve months.');
+    const bf = bars('By feeling', Object.keys(sp.byFeeling || {}).map(k => ({ label: labelOf(k), cents: sp.byFeeling[k].cents })), 'The feeling tag on each line. Untagged lines have no tag yet.');
+    if (bs) tagsHost.appendChild(bs); if (bf) tagsHost.appendChild(bf);
+  }
   /* MR-059: the Next unlock button adds the first row and puts the cursor in the field that opens the most */
   if (app.addRowAfterRender && app.addRowAfterRender.planet === planet && app.addRowAfterRender.type === typeId && app.view === 'coach') {
     const a = app.addRowAfterRender; app.addRowAfterRender = null;
@@ -257,8 +267,8 @@ function mountTable(host, app, planet, typeId) {
       summaryNote.appendChild(h('p', { class: 'hint', style: { marginBottom: '16px' } }, 'Lines add up to ' + F.dollarsWhole(s.detailCents) + ', ' + (s.detailCents === s.totalCents ? 'the same as' : F.dollarsWhole(Math.abs(s.detailCents - s.totalCents)) + (s.detailCents > s.totalCents ? ' more than' : ' less than')) + ' the rough total of ' + F.dollarsWhole(s.totalCents) + '.'));
     }
   }
-  note(); drawForm();
-  return { update(reason) { note(); inferred(); soon.update(); if (reason === 'rows') { table.render(); drawForm(); } else table.refreshTotals(); }, addRow: () => table.addRow(), openDetails: (id, col) => table.openDetails(id, col) };
+  note(); drawForm(); drawTags();
+  return { update(reason) { note(); inferred(); soon.update(); drawTags(); if (reason === 'rows') { table.render(); drawForm(); } else table.refreshTotals(); }, addRow: () => table.addRow(), openDetails: (id, col) => table.openDetails(id, col) };
 }
 
 function extraActions(app, planet, typeId) {

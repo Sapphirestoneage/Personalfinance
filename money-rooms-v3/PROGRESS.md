@@ -3,6 +3,8 @@
 Updated: 2026-10-13
 
 ## Done
+- The split is selected on the line (MR-117): Fixed, Variable, Annual or Part fixed with a share; a feeling tag;
+  by-split and by-feeling bars on the spending ledger; the materiality line as a share of a year's spending.
 - Level 15 audit (MR-116): take-home said per paycheck, month or year, or typed as gross; salaried hours a week
   on the snapshot; What you said beside blank base numbers; the next-3 card draws from What's left; hours bought back.
 - Level 15, Snapshot and Sharpen plus Hours Everywhere (MR-108 to MR-115): one resolver for every base

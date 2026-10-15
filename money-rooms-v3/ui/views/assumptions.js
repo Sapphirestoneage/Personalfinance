@@ -11,6 +11,7 @@ const GROUPS = [
   ['Financial independence (Level 9)', ['fiProgressBasis', 'fiSpendingBasis', 'healthcarePremiumMonthlyCents', 'inflation', 'guardrailsBand', 'ssBridgeFromPortfolio', 'benchmarkSource', 'showBenchmarksToClient']],
   ['Discovery and the call (Level 8)', ['fillGapsWithGuesses', 'callTargetRoomFraction', 'roommateMonthsToReplace']],
   ['Goal timeline (Level 11)', ['cushionStep1', 'cushionStep2Months']],
+  ['What\'s left (Level 15)', ['materialityShare']],
   ['Flags', ['housingShareOfTakeHome', 'hiddenLeakShare', 'utilizationCardMax', 'utilizationTotalMax', 'feeDragEr', 'thinRunwayMonths', 'lockedLiquidityShare', 'realWageShare', 'noFeeBaselineRate']],
 ];
 const KIND = k => /Cents$/.test(k) ? 'money' : /Age$|Months$|AgeDefault$|EndAge$|MonthsToReplace$|Step2Months$/.test(k) ? 'int' : k === 'fatFiMultiplier' ? 'multiple' : 'percent';

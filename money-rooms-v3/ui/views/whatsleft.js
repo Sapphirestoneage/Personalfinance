@@ -14,6 +14,15 @@ import { BASE_NUMBERS, setBase } from '../../engine/snapshot.js';
 const GROUPINGS = [['rank', 'Ranked'], ['planet', 'By room'], ['supplier', 'By who supplies it'], ['session', 'By session']];
 const money = c => F.dollarsWhole(c);
 
+/* MR-117: the materiality line in words: the higher of the wage times the minutes and a share of a year's spending (or take-home). */
+function matWords(WL) {
+  const M = WL.materiality || { shareLine: 0, wageLine: 0, line: 0 }; const pct = Math.round((M.share || 0) * 1000) / 10;
+  const legs = [];
+  if (WL.wage) legs.push('the real hourly wage, ' + F.dollars(WL.wage, { plain: true }) + ' an hour, times the minutes to find a fact');
+  if (M.shareLine > 0) legs.push(pct + '% of a year\'s ' + (M.base === 'income' ? 'take-home' : 'spending') + ', ' + F.dollars(M.shareLine, { plain: true }) + ' a year');
+  if (!legs.length) return 'Without an income or any spending the line is off and everything shows here. ';
+  return 'The materiality line is ' + (legs.length === 2 ? 'the higher of ' + legs[0] + ' and ' + legs[1] : legs[0]) + '. ';
+}
 export function listOf(app) { return whatsLeft(app.record, app.result, app.data, { sensitivity: cachedSensitivity(app) }); }
 
 export function mount(host, app) {
@@ -24,7 +33,7 @@ export function mount(host, app) {
     clear(body); const WL = listOf(app);
     const panel = h('section', { class: 'panel' }); body.appendChild(panel);
     panel.appendChild(h('div', { class: 'row wl-head' }, h('h2', null, WL.items.length + (WL.items.length === 1 ? ' item' : ' items') + ' above the line'), segmented(GROUPINGS, grouping, v => { grouping = v; try { localStorage.setItem('mr3.whatsLeftGroup', v); } catch (e) { /* no storage */ } draw(); }, { label: 'Group the list', small: true })));
-    panel.appendChild(h('p', { class: 'small muted' }, (WL.wage ? 'The materiality line is the real hourly wage, ' + F.dollars(WL.wage, { plain: true }) + ' an hour, times the minutes to find a fact. ' : 'Without an income the line is off and everything shows here. ') + (WL.small.length ? WL.small.length + ' small ' + (WL.small.length === 1 ? 'item sits' : 'items sit') + ' in ' : '') + (WL.small.length ? '' : ''), WL.small.length ? h('a', { href: '#/session' }, 'Small wins') : null, WL.small.length ? '.' : '', WL.willEmail.length ? ' ' + WL.willEmail.length + ' will-email ' + (WL.willEmail.length === 1 ? 'item rolls' : 'items roll') + ' into the one-pager to-dos.' : ''));
+    panel.appendChild(h('p', { class: 'small muted' }, (matWords(WL)) + (WL.small.length ? WL.small.length + ' small ' + (WL.small.length === 1 ? 'item sits' : 'items sit') + ' in ' : '') + (WL.small.length ? '' : ''), WL.small.length ? h('a', { href: '#/session' }, 'Small wins') : null, WL.small.length ? '.' : '', WL.willEmail.length ? ' ' + WL.willEmail.length + ' will-email ' + (WL.willEmail.length === 1 ? 'item rolls' : 'items roll') + ' into the one-pager to-dos.' : ''));
     if (!WL.items.length) { panel.appendChild(h('p', { class: 'muted' }, 'Nothing left above the line. The picture stands on known rows.')); return; }
     const groups = grouping === 'rank' ? [{ key: null, items: WL.items }] : WL.groups[grouping];
     groups.forEach(g => { if (g.key) panel.appendChild(h('h3', null, g.key)); panel.appendChild(h('ol', { class: 'wl-list' }, g.items.map(i => item(i)))); });
