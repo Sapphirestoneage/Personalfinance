@@ -117,3 +117,26 @@ export function proofOfCash(totals, threshold = 0.15) {
   };
 }
 
+
+// Blind guess vs the original estimate, measured against the actual.
+// closer = which guess landed nearer the actual ('blind', 'original', 'tie').
+export function blindCompare(doc, model, roundId) {
+  const round = doc.blindRounds.find((r) => r.id === roundId);
+  if (!round) return null;
+  const rows = [];
+  for (const c of model.categories) {
+    const v = round.estimates[c.id];
+    if (!v || c.isDebt) continue;
+    const blind = toMonthly(v, model.payFrequency);
+    if (blind === null) continue;
+    const orig = c.estimate.amount;
+    const act = c.actual.amount;
+    const dBlind = act === null ? null : Math.abs(act - blind);
+    const dOrig = act === null || orig === null ? null : Math.abs(act - orig);
+    rows.push({
+      id: c.id, name: c.name, original: orig, blind, actual: act, change: minus(blind, orig),
+      closer: dBlind === null || dOrig === null ? null : dBlind < dOrig ? 'blind' : dBlind > dOrig ? 'original' : 'tie'
+    });
+  }
+  return { id: round.id, date: round.date, rows };
+}

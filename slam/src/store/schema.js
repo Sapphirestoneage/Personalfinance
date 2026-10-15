@@ -151,6 +151,7 @@ export function newHousehold(name, now = new Date()) {
     transactions: [],
     merchantMemory: {},
     snapshots: [],
+    blindRounds: [],
     settings: { singleTotal: false, benchmarkSource: 'eli', lens: 'dollars' },
     passesSeen: []
   };

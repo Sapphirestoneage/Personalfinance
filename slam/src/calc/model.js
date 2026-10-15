@@ -85,18 +85,19 @@ export function budgetModel(doc) {
       const t = doc.noDebts && !lines.length ? 0 : sumKnown(lines.map((l) => l.actual)).total;
       row.estimate = { amount: t, from: 'debts', status: 'computed' };
       row.dream = { amount: t, from: 'debts', status: 'computed' };
-      row.actual = { amount: t, partial: lines.some((l) => l.actual === null) };
+      row.actual = { amount: t, partial: lines.some((l) => l.actual === null), status: 'computed' };
     } else if (notForMe) {
       row.estimate = { amount: 0, from: 'category', status: 'not-for-me' };
       row.dream = { amount: 0, from: 'category', status: 'not-for-me' };
-      row.actual = { amount: 0, partial: false };
+      row.actual = { amount: 0, partial: false, status: 'not-for-me' };
     } else {
       row.estimate = resolveTop(cat, lines, 'estimate', freq);
       row.dream = resolveTop(cat, lines, 'dream', freq);
       const withActual = lines.filter((l) => l.actual !== null);
       row.actual = {
         amount: withActual.length ? sumKnown(withActual.map((l) => l.actual)).total : null,
-        partial: withActual.length > 0 && withActual.length < lines.length
+        partial: withActual.length > 0 && withActual.length < lines.length,
+        status: lines.length ? weakestStatus(lines.map((l) => l.status.actual)) : null
       };
     }
     cats.push(row);

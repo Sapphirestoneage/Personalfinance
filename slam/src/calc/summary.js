@@ -4,7 +4,7 @@
 import { incomeSummary } from './income.js';
 import { budgetModel } from './model.js';
 import { budgetTotals } from './totals.js';
-import { gaps, accuracy, blindSpot, culprits, gutCheck, correctionFactors, proofOfCash } from './compare.js';
+import { gaps, accuracy, blindSpot, culprits, gutCheck, correctionFactors, proofOfCash, blindCompare } from './compare.js';
 import { monthHistory, monthSnapshot } from './history.js';
 import { fiftyThirtyTwenty, draftt, incomeStatement, joyLens } from './lenses.js';
 import { questionItems, completion, nextSteps, roughList } from './completion.js';
@@ -35,7 +35,7 @@ function tableRows(model, totals) {
       estimate: c.estimate.amount, dream: c.dream.amount, actual: c.actual.amount, partial: c.actual.partial,
       estimateFrom: c.estimate.from, carved: c.estimate.carved, total: c.estimate.total, overSplit: !!c.estimate.overSplit,
       basis: basis.amount, basisFrom: basis.from,
-      status: { estimate: c.estimate.status, dream: c.dream.status },
+      status: { estimate: c.estimate.status, dream: c.dream.status, actual: c.actual.status },
       gaps: gaps(c.estimate.amount, c.dream.amount, c.actual.amount),
       accuracy: accuracy(c.estimate.amount, c.actual.amount),
       pctTakeHome: pctBlock(c.estimate.amount, c.dream.amount, c.actual.amount, basis.amount, th),
@@ -79,7 +79,8 @@ export function buildSummary(doc, refs) {
     moreSteps: steps.more,
     smallStuff: steps.small,
     rough: roughList(doc),
-    guesses: availableGuesses(doc, refs)
+    guesses: availableGuesses(doc, refs),
+    blind: doc.blindRounds.length ? blindCompare(doc, model, doc.blindRounds[doc.blindRounds.length - 1].id) : null
   };
   summary.sinceLast = sinceLast(doc, summary);
   return summary;

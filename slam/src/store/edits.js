@@ -83,3 +83,10 @@ export function setField(doc, path, value) {
   if (path[0] === 'line') { findLine(doc, path[1]).line[path[2]] = value; return; }
   setAt(doc, path, value);
 }
+
+// Blind guess: a fresh round of rough estimates asked without showing the old ones.
+export function startBlindRound(doc, dateIso) {
+  const round = { id: 'blind-' + dateIso.replace(/[^0-9]/g, '').slice(0, 14), date: dateIso, estimates: {} };
+  doc.blindRounds.push(round);
+  return round;
+}

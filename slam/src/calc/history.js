@@ -1,7 +1,7 @@
 // Closed months: the snapshot taken at close, late revisions applied on top,
 // variance per month, the trend, and the snapshot builder used at close.
 
-import { ratio, sumKnown } from './money.js';
+import { ratio, sumKnown, minus } from './money.js';
 
 // Category actual for a closed month, with any revised line actuals applied.
 function revisedCategoryActual(rec, catId) {
@@ -70,4 +70,25 @@ export function monthSnapshot(model, income) {
     for (const l of c.lines) lines[l.id] = { name: l.name, categoryId: c.id, estimate: l.estimate, actual: l.actual };
   }
   return { takeHome: income.takeHome, categories, lines };
+}
+
+// One closed month as table rows: categories with their lines, revisions applied.
+export function monthRows(doc, history, key) {
+  const rec = doc.months.find((m) => m.key === key);
+  if (!rec) return [];
+  return Object.entries(rec.snapshot.categories).map(([catId, c]) => {
+    const pt = history.byCategory[catId].find((p) => p.key === key);
+    const lines = Object.entries(rec.snapshot.lines)
+      .filter(([, l]) => l.categoryId === catId)
+      .map(([lineId, l]) => {
+        const rev = rec.revised.lines[lineId];
+        const actual = rev ? rev.amount : l.actual;
+        return { id: lineId, name: l.name, estimate: l.estimate, actual, original: l.actual, revised: !!rev, gap: minus(actual, l.estimate), accuracy: ratio(actual, l.estimate) };
+      });
+    return {
+      id: catId, name: c.name, savings: !!c.savings, estimate: c.estimate, dream: c.dream === undefined ? null : c.dream,
+      actual: pt.actual, original: c.actual, revised: pt.revised, gap: minus(pt.actual, c.estimate),
+      gapPct: pt.variancePct, accuracy: ratio(pt.actual, c.estimate), lines
+    };
+  });
 }

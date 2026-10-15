@@ -56,6 +56,10 @@ export function validateHousehold(doc) {
       for (const k of ['estimate', 'dream', 'actual', 'owedBack']) errs.push(...valueErrors(l[k], lw + '.' + k));
     });
   });
+  (doc.blindRounds || []).forEach((r, i) => {
+    if (!r.id) errs.push('blindRounds[' + i + '].id is missing');
+    for (const [k, v] of Object.entries(r.estimates || {})) errs.push(...valueErrors(v, 'blindRounds[' + i + '].' + k));
+  });
   if (!/^\d{4}-\d{2}$/.test(doc.currentMonth || '')) errs.push('currentMonth must be YYYY-MM');
   (doc.months || []).forEach((m, i) => {
     if (!/^\d{4}-\d{2}$/.test(m.key || '')) errs.push('months[' + i + '].key must be YYYY-MM');

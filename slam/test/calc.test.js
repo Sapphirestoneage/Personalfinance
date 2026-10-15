@@ -180,3 +180,28 @@ test('since last time compares with the latest stored snapshot', () => {
   assert.equal(s.sinceLast.takeHome, 500);
   assert.equal(s.sinceLast.spending, null);
 });
+
+test('blind guess round compares against the original estimate and the actual', async () => {
+  const { blindCompare } = await import('../src/calc/compare.js');
+  const { startBlindRound } = await import('../src/store/edits.js');
+  const d = newHousehold('Blind');
+  findCategory(d, 'food').estimate = v(500);
+  findLine(d, 'groceries').line.actual = v(800);
+  const r = startBlindRound(d, '2026-10-15T10:00:00.000Z');
+  r.estimates.food = v(700);
+  const cmp = blindCompare(d, budgetModel(d), r.id);
+  // original misses by 300, blind misses by 100 -> blind is closer; change = +200
+  assert.deepEqual(cmp.rows.map((x) => [x.id, x.original, x.blind, x.actual, x.change, x.closer]), [['food', 500, 700, 800, 200, 'blind']]);
+});
+
+test('estimate and dream "left over" for the running total', () => {
+  const d = newHousehold('Left');
+  d.income.push({ id: 'a', type: 'w2', label: 'Job', payFrequency: 'monthly', takeHome: v(3000), gross: makeValue(), pretaxRetirement: makeValue(), hoursPerWeek: null, state: 'active' });
+  d.noDebts = true;
+  findCategory(d, 'housing').estimate = v(1200);
+  findCategory(d, 'savings').estimate = v(300);
+  findCategory(d, 'food').dream = v(400);
+  const t = buildSummary(d, refs).totals;
+  assert.equal(t.estimateLeft, 1500); // 3,000 - (1,200 + 0 debt) - 300
+  assert.equal(t.dreamLeft, 2600); // 3,000 - (400 + 0 debt); no savings dream
+});

@@ -55,6 +55,9 @@ export function normalizeHousehold(doc) {
   out.merchantMemory = doc.merchantMemory || {};
   out.snapshots = doc.snapshots || [];
   out.passesSeen = doc.passesSeen || [];
+  out.blindRounds = (doc.blindRounds || []).map((r) => ({
+    ...r, estimates: Object.fromEntries(Object.entries(r.estimates || {}).map(([k, v]) => [k, normalizeValue(v)]))
+  }));
   out.schemaVersion = SCHEMA_VERSION;
   return out;
 }

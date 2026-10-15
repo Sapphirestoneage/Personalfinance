@@ -73,7 +73,7 @@ export function budgetTotals(model, income, doc, housingBand = 0.35) {
   const mistakeMonthly = addUp(allParts, (p) => p.tag === 'mistake');
   const owedBack = model.categories.reduce((a, c) => a + c.lines.reduce((b, l) => b + l.owedOutstanding, 0), 0);
 
-  return {
+  const totals = {
     takeHome,
     estimateTotal: answeredTotal(spending, 'estimate'),
     dreamTotal: answeredTotal(spending, 'dream'),
@@ -81,9 +81,13 @@ export function budgetTotals(model, income, doc, housingBand = 0.35) {
     savingsEstimate: sumKnown(saving.map((x) => x.cat.estimate.amount)).total,
     savingsDream: sumKnown(saving.map((x) => x.cat.dream.amount)).total,
     spending: spendingBasis,
+    spendingShare: ratio(spendingBasis, takeHome),
     savings: savingsBasis,
     outflow,
     surplus: minus(takeHome, outflow),
+    // The estimate and dream columns as a whole budget, and what each would leave.
+    estimateOutflow: sumKnown([answeredTotal(spending, 'estimate'), sumKnown(saving.map((x) => x.cat.estimate.amount)).total]).total,
+    dreamOutflow: sumKnown([answeredTotal(spending, 'dream'), sumKnown(saving.map((x) => x.cat.dream.amount)).total]).total,
     basisUsesEstimate: cats.filter((x) => x.basis.from === 'estimate').map((x) => x.cat.name),
     basisMissing: cats.filter((x) => x.basis.from === null).map((x) => x.cat.name),
     fixed, variable,
@@ -101,4 +105,7 @@ export function budgetTotals(model, income, doc, housingBand = 0.35) {
     owedBack,
     bases: Object.fromEntries(cats.map((x) => [x.cat.id, x.basis]))
   };
+  totals.estimateLeft = minus(takeHome, totals.estimateOutflow);
+  totals.dreamLeft = minus(takeHome, totals.dreamOutflow);
+  return totals;
 }
