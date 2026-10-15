@@ -111,11 +111,12 @@ export function incomeStatement(model, totals, income) {
     net: revenue - taxes - deductions - expenses
   };
   const annual = {
+    revenueByType: Object.fromEntries(Object.entries(byType).map(([k, v]) => [k, v * 12])),
     revenue: monthly.revenue * 12, taxes: monthly.taxes * 12, deductions: monthly.deductions * 12,
     takeHome: monthly.takeHome * 12, totalExpenses: expenses * 12, net: monthly.net * 12,
     expenses: monthly.expenses.map((e) => ({ ...e, amount: e.amount * 12 }))
   };
-  return { monthly, annual, revenueIncludesTakeHomeOnly: income.sources.some((s) => s.grossMonthly === null && s.takeHomeMonthly !== null) };
+  return { monthly, annual, hasGross: income.sources.some((s) => s.grossMonthly !== null), revenueIncludesTakeHomeOnly: income.sources.some((s) => s.grossMonthly === null && s.takeHomeMonthly !== null) };
 }
 
 // Joy vs spend per category (spend-weighted joy of rated lines), and the

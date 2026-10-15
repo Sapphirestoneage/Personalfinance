@@ -54,3 +54,9 @@ export function monthLabel(key) {
   const [y, m] = key.split('-').map(Number);
   return new Date(Date.UTC(y, m - 1, 1)).toLocaleString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 }
+
+// Accounting style for amounts taken away: (1,000).
+export function less(x) {
+  if (x === null || x === undefined) return EMPTY;
+  return '(' + money(x) + ')';
+}

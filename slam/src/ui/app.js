@@ -141,6 +141,9 @@ document.addEventListener('keydown', (e) => {
   if (e.shiftKey) store.redo(); else store.undo();
 });
 
+let resizeTimer = null;
+window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(queueRender, 150); });
+
 window.addEventListener('popstate', () => {
   const s = location.hash.slice(1);
   if (SCREENS.some(([id]) => id === s)) { ui.screen = s; queueRender(); }
