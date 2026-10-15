@@ -18,6 +18,7 @@ export function passForPath(path) {
   if (a === 'income' || a === 'profile' || a === 'household') return 'basics';
   if (a === 'categories') return c === 'dream' ? 'dream' : 'rough';
   if (a === 'line' || a === 'debts') return 'actual';
+  if (a === 'transactions') return 'transactions';
   return 'rough';
 }
 
@@ -34,6 +35,7 @@ function runningBar(ctx, summary, pass) {
   const take = h('b', {});
   const col = h('b', {});
   const left = h('b', {});
+  if (pass === 'transactions') pass = 'actual';
   const colLabel = pass === 'dream' ? 'Dreams' : pass === 'actual' ? 'Spending + savings' : 'Estimates';
   const fill = (s) => {
     const t = s.totals;

@@ -2,7 +2,7 @@
 
 ## Tests
 
-- `node --test`: 71 tests, all passing (store, math, chart data, four households).
+- `node --test`: 84 tests, all passing (store, math, chart data, four households, and the Jordan transaction household added in Phase 6).
 - `node test/browser/screens.check.mjs` (needs a local server and Playwright): loads each test
   household in Chromium and compares what the Budget and Analyze screens show against the
   hand-computed expected files. 149 on-screen checks (tiles, table totals, every category's
@@ -23,7 +23,7 @@
 | 8 | Always a Next card | Pass. #1 big with a Go button, #2 and #3 smaller, each opens the exact field. |
 | 9 | Versioned export and import, snapshot before import | Pass. Export envelope has `format` and `exportVersion`; every import backs up all clients first; backups can be restored. |
 | 10 | One token file | Pass. `app.css` and every chart use only variables from `tokens.css`. The one exception is the tiny favicon in `index.html`, which cannot read CSS variables. |
-| 11 | Hand-computed tie-outs | Pass. Four households (five after Phase 6) with every expected number worked by hand in comments. |
+| 11 | Hand-computed tie-outs | Pass. Four households plus Jordan (transactions) with every expected number worked by hand in comments. |
 | 12 | Fields that don't apply are absent | Pass after fix. Roommate, dependent-age, pre-tax, and hours fields appear only when they apply. "Doesn't apply" categories collapse to one line in the passes and are now left out of the table (named once underneath). "No debts" counts as complete. |
 | 13 | Any cadence, normalized to monthly | Pass. Paycheck, week, month, year, one-off on every amount; one-offs listed separately. |
 | 14 | Completion separate from progress | Pass. The completion meter says it measures the data, not the client. |

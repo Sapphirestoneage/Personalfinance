@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "hh-jordan",
+  "profile": { "name": "Jordan (demo, transactions)", "birthYear": 1995, "state": "IL", "zip": "60614" },
+  "situation": ["employed"],
+  "household": { "filingStatus": "single", "dependents": { "count": 0, "ages": [] }, "roommates": { "count": 0 } },
+  "income": [
+    { "id": "inc-acme", "type": "w2", "label": "Acme Corp", "payFrequency": "semimonthly",
+      "takeHome": { "amount": 2400, "cadence": "paycheck" } }
+  ],
+  "gut": { "amount": 2500, "status": "roughly" },
+  "noDebts": true,
+  "currentMonth": "2026-09",
+  "merchantMemory": { "VENMO FROM ALEX": "eating-out" },
+  "categories": [
+    { "id": "housing", "name": "Housing", "kind": "fixed", "need": true, "estimate": { "amount": 1500 }, "lines": [
+      { "id": "rent", "name": "Rent", "kind": "fixed", "need": true, "actual": { "amount": 1500 } } ] },
+    { "id": "food", "name": "Food", "need": true, "estimate": { "amount": 450 }, "lines": [
+      { "id": "groceries", "name": "Groceries", "need": true, "actual": { "amount": 300 } },
+      { "id": "eating-out", "name": "Eating out" } ] },
+    { "id": "transport", "name": "Transportation", "need": true, "estimate": { "amount": 100 }, "lines": [
+      { "id": "gas", "name": "Gas", "need": true } ] },
+    { "id": "debt", "name": "Debt payments", "kind": "fixed", "need": true, "lines": [] },
+    { "id": "bills", "name": "Bills and subscriptions", "kind": "fixed", "estimate": { "amount": 25 }, "lines": [
+      { "id": "subscriptions", "name": "Subscriptions", "kind": "fixed" } ] },
+    { "id": "fun", "name": "Personal and fun", "estimate": { "amount": 100 }, "lines": [
+      { "id": "shopping", "name": "Shopping" } ] },
+    { "id": "fees", "name": "Fees", "tag": "mistake", "estimate": { "amount": 0 }, "lines": [
+      { "id": "fee-late", "name": "Late fees" }, { "id": "fee-atm", "name": "ATM" } ] },
+    { "id": "savings", "name": "Savings", "kind": "fixed", "savings": true, "estimate": { "amount": 300 }, "lines": [
+      { "id": "emergency-fund", "name": "Emergency fund", "kind": "fixed" } ] }
+  ]
+}

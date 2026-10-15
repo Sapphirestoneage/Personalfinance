@@ -1,7 +1,9 @@
 // Screen 1, Clients: list, new client, open, export, import, demo households.
 
 import { h } from '../dom.js';
-import { DEMO_HOUSEHOLDS, loadDemo } from '../refs.js';
+import { DEMO_HOUSEHOLDS, DEMO_CSVS, loadDemo, loadDemoCSV } from '../refs.js';
+import { importCSV } from '../../calc/tx-import.js';
+import { addTransactions } from '../../store/edits.js';
 
 function download(filename, text) {
   const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
@@ -78,6 +80,13 @@ export function renderClients(ctx) {
       h('h3', {}, 'Try with example numbers'),
       h('p', { class: 'muted small' }, 'Made-up households for practice and demos. No real data.'),
       h('div', { class: 'row' }, DEMO_HOUSEHOLDS.map(([id, label]) => h('button', { class: 'btn small', onclick: async () => {
-        try { store.add(await loadDemo(id)); ctx.go('budget'); } catch (e) { ctx.toast(e.message); }
+        try {
+          store.add(await loadDemo(id));
+          for (const [file, account] of DEMO_CSVS[id] || []) {
+            const res = importCSV(await loadDemoCSV(file), { account, rulesData: ctx.refs.merchantRules, memory: store.doc.merchantMemory });
+            store.update('Import ' + file, (d) => addTransactions(d, res.transactions));
+          }
+          ctx.go('budget');
+        } catch (e) { ctx.toast(e.message); }
       } }, label)))));
 }

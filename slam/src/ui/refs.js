@@ -21,8 +21,18 @@ export const DEMO_HOUSEHOLDS = [
   ['maya', 'Maya, 26, NYC renter with a roommate'],
   ['luis', 'Luis, 33, Ohio, W-2 plus side hustle'],
   ['tasha', 'Tasha, 29, Texas, gross pay only'],
-  ['sam', 'Sam, 24, between jobs, one total']
+  ['sam', 'Sam, 24, between jobs, one total'],
+  ['jordan', 'Jordan, 31, with two imported CSV files']
 ];
+
+// Demo households that come with sample bank files to import.
+export const DEMO_CSVS = { jordan: [['jordan-chase.csv', 'Chase card'], ['jordan-checking.csv', 'Checking']] };
+
+export async function loadDemoCSV(file) {
+  const res = await fetch('test/households/' + file);
+  if (!res.ok) throw new Error('Could not load ' + file);
+  return res.text();
+}
 
 export async function loadDemo(name) {
   const res = await fetch('test/households/' + name + '.json');

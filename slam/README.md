@@ -33,6 +33,20 @@ node --test
 
 Run it from this folder. Needs Node 20 or newer. The math library runs in Node with no browser.
 
+To also check that the screens show the same numbers as the hand-computed answers
+(needs Playwright and the local server running on port 8765):
+
+```
+python3 -m http.server 8765 &
+node test/browser/screens.check.mjs
+```
+
+## Bank and card files
+
+Fill in, pass 6 imports CSV files exported from Chase (credit card or checking),
+American Express, Capital One, or any file with date, description, and amount
+columns. Nothing leaves the browser. The Jordan demo comes with two sample files.
+
 ## Folder layout
 
 | Folder | What lives there |
@@ -46,7 +60,7 @@ Run it from this folder. Needs Node 20 or newer. The math library runs in Node w
 ## The four screens
 
 1. **Clients**: client list, new client, open, export, import.
-2. **Fill in**: guided passes (Gut, Basics, Rough, Dream, Actual, Transactions).
+2. **Fill in**: guided passes (Gut, Basics, Rough, Dream, Actual, Transactions import and review).
 3. **Budget**: the main view. Everything important without clicking.
 4. **Analyze**: every chart and lens, each with a one-line reading.
 

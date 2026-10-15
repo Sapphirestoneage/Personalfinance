@@ -60,6 +60,12 @@ export function validateHousehold(doc) {
     if (!r.id) errs.push('blindRounds[' + i + '].id is missing');
     for (const [k, v] of Object.entries(r.estimates || {})) errs.push(...valueErrors(v, 'blindRounds[' + i + '].' + k));
   });
+  const KINDS = ['spend', 'transfer', 'card-payment', 'refund', 'reimbursement', 'income', 'fee'];
+  (doc.transactions || []).forEach((t, i) => {
+    const w = 'transactions[' + i + ']';
+    if (!t.id || !/^\d{4}-\d{2}-\d{2}$/.test(t.date || '') || typeof t.amount !== 'number') errs.push(w + ': needs id, date, and amount');
+    if (!KINDS.includes(t.kind)) errs.push(w + '.kind: "' + t.kind + '" is not one of ' + KINDS.join(', '));
+  });
   if (!/^\d{4}-\d{2}$/.test(doc.currentMonth || '')) errs.push('currentMonth must be YYYY-MM');
   (doc.months || []).forEach((m, i) => {
     if (!/^\d{4}-\d{2}$/.test(m.key || '')) errs.push('months[' + i + '].key must be YYYY-MM');

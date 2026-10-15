@@ -90,3 +90,44 @@ export function startBlindRound(doc, dateIso) {
   doc.blindRounds.push(round);
   return round;
 }
+
+// Transactions: add new ones (skipping any already imported), re-map one
+// (optionally remembering the merchant), and replace line actuals for a month
+// after the client confirms.
+export function addTransactions(doc, txs) {
+  const have = new Set(doc.transactions.map((t) => t.id));
+  const fresh = txs.filter((t) => !have.has(t.id));
+  doc.transactions.push(...fresh);
+  doc.transactions.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  return fresh.length;
+}
+
+export function setTransactionLine(doc, txId, lineId, remember) {
+  const t = doc.transactions.find((x) => x.id === txId);
+  t.lineId = lineId || null;
+  if (!remember) return;
+  if (lineId) doc.merchantMemory[t.merchant] = lineId;
+  else delete doc.merchantMemory[t.merchant];
+  // apply the learned mapping to the merchant's other unmapped transactions too
+  for (const o of doc.transactions) if (o.merchant === t.merchant && !o.lineId && lineId) o.lineId = lineId;
+}
+
+export function setTransactionKind(doc, txId, kind) {
+  doc.transactions.find((x) => x.id === txId).kind = kind;
+}
+
+export function removeTransaction(doc, txId) {
+  doc.transactions = doc.transactions.filter((x) => x.id !== txId);
+}
+
+// rows: [{ lineId, fromTransactions, count }] from calc's actualsProposal.
+export function applyTransactionActuals(doc, rows, monthLabel) {
+  for (const r of rows) {
+    const found = findLine(doc, r.lineId);
+    if (!found) continue;
+    found.line.actual = {
+      amount: r.fromTransactions, cadence: 'month', status: 'known', source: 'lookup',
+      asOf: new Date().toISOString().slice(0, 10), note: 'From ' + r.count + ' transactions, ' + monthLabel
+    };
+  }
+}

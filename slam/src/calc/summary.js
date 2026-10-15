@@ -10,6 +10,7 @@ import { fiftyThirtyTwenty, draftt, incomeStatement, joyLens } from './lenses.js
 import { questionItems, completion, nextSteps, roughList } from './completion.js';
 import { availableGuesses, colTierFor, householdSize } from './guesses.js';
 import { ratio, minus } from './money.js';
+import { txMonths, detect, topMerchants, weekdaySpending, sizeVsCount } from './tx-analysis.js';
 
 function pctBlock(e, d, a, b, takeHome) {
   return { estimate: ratio(e, takeHome), dream: ratio(d, takeHome), actual: ratio(a, takeHome), basis: ratio(b, takeHome) };
@@ -83,6 +84,10 @@ export function buildSummary(doc, refs) {
     blind: doc.blindRounds.length ? blindCompare(doc, model, doc.blindRounds[doc.blindRounds.length - 1].id) : null
   };
   summary.sinceLast = sinceLast(doc, summary);
+  summary.transactions = doc.transactions.length ? {
+    count: doc.transactions.length, months: txMonths(doc.transactions), detections: detect(doc.transactions),
+    top: topMerchants(doc.transactions), weekdays: weekdaySpending(doc.transactions), sizeVsCount: sizeVsCount(doc.transactions)
+  } : null;
   return summary;
 }
 

@@ -12,6 +12,8 @@ import { renderClients } from './screens/clients.js';
 import { renderFill, passForPath } from './screens/fill.js';
 import { renderBudget } from './screens/budget.js';
 import { renderAnalyze } from './screens/analyze.js';
+import { renderTransactions } from './screens/fill-transactions.js';
+import { transactionCards } from './charts/tx-charts.js';
 
 const SCREENS = [['clients', 'Clients'], ['fill', 'Fill in'], ['budget', 'Budget'], ['analyze', 'Analyze']];
 const root = document.getElementById('app');
@@ -63,10 +65,17 @@ const ctx = {
     queueRender();
     setTimeout(() => { if (ui.toast === msg) { ui.toast = null; queueRender(); } }, 2600);
   },
-  rerender: () => queueRender()
+  rerender: () => queueRender(),
+  // Transactions live inside Fill in and Analyze, so there are still four screens.
+  fillExtras: [{ id: 'transactions', label: '6 Transactions', render: renderTransactions }],
+  analyzeExtras: [['transactions', 'Transactions', (c, s) => transactionCards(c, s)]]
 };
 
-store.subscribe(() => queueRender());
+store.subscribe((doc, label) => {
+  // A different client: drop per-client screen state (open drawers, pending imports, closed-month view).
+  if (label === 'open' || label === 'close') { ui.txImport = null; ui.expanded = new Set(); ui.monthView = 'current'; ui.blind = false; ui.txMonth = null; }
+  queueRender();
+});
 
 // Render after the browser has moved focus, then put focus back on the same field.
 function queueRender() {
