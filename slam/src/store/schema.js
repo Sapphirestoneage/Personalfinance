@@ -209,6 +209,8 @@ export function newHousehold(name, now = new Date()) {
     merchantMemory: {},
     snapshots: [],
     blindRounds: [],
+    // Actuals for open months other than the one being worked on: { 'YYYY-MM': { lineId: Value } }.
+    monthActuals: {},
     nextStage: null,
     settings: { singleTotal: false, benchmarkSource: 'eli', lens: 'dollars' },
     passesSeen: []

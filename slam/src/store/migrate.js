@@ -64,6 +64,8 @@ export function normalizeHousehold(doc) {
   });
   out.settings = { ...base.settings, ...(doc.settings || {}) };
   out.months = doc.months || [];
+  // Compatibility: files before per-month actuals have none stored.
+  out.monthActuals = Object.fromEntries(Object.entries(doc.monthActuals || {}).map(([k, lines]) => [k, Object.fromEntries(Object.entries(lines).map(([id, v]) => [id, normalizeValue(v)]))]));
   out.transactions = doc.transactions || [];
   out.merchantMemory = doc.merchantMemory || {};
   out.snapshots = doc.snapshots || [];

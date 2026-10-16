@@ -6,6 +6,7 @@ import { money } from '../format.js';
 import { valueInput, question } from '../components/value-input.js';
 import { statusChip } from '../components/status.js';
 import { addLine, addDebt, findLine, findCategory } from '../../store/edits.js';
+import { monthPicker } from '../components/month-picker.js';
 
 const DEBT_TYPES = [['credit-card', 'Credit card'], ['student-loan', 'Student loan'], ['car-loan', 'Car loan'], ['personal-loan', 'Personal loan'], ['medical', 'Medical'], ['bnpl', 'Buy now, pay later'], ['mortgage', 'Mortgage'], ['other', 'Other']];
 const STATES = [['active', 'Active'], ['hidden', 'Hidden (still counts)'], ['archived', 'Archived (stops counting)']];
@@ -92,7 +93,8 @@ export function renderActual(ctx, summary) {
   const cats = doc.categories.filter((c) => c.state !== 'archived' && c.id !== 'debt' && c.id !== 'everything');
   return h('div', {},
     h('div', { class: 'card' }, h('h2', {}, 'Actual: the line-by-line lap'),
-      h('p', { class: 'muted small' }, 'What really went out in a typical month. Use any cadence; it becomes monthly. Open Details for fixed or variable, need, path, tag, and joy.')),
+      h('p', { class: 'muted small' }, 'What really went out in the month picked below. Use any cadence; it becomes monthly. Open Details for fixed or variable, need, path, tag, and joy.')),
+    monthPicker(ctx, summary, { copyFixed: true }),
     cats.map((c) => categoryCard(ctx, summary, c)),
     h('h2', {}, 'Debts'),
     h('label', { class: 'check', 'data-path': JSON.stringify(['debts']) }, h('input', { type: 'checkbox', checked: doc.noDebts && !doc.debts.length, disabled: doc.debts.length > 0, 'data-key': 'no-debts',

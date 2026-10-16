@@ -2,6 +2,7 @@
 // variance per month, the trend, and the snapshot builder used at close.
 
 import { ratio, sumKnown, minus } from './money.js';
+import { budgetModel } from './model.js';
 
 // Category actual for a closed month, with any revised line actuals applied.
 function revisedCategoryActual(rec, catId) {
@@ -30,8 +31,19 @@ function trendOf(points) {
   return 'flat';
 }
 
+// Open months (not closed, not the one being worked on) as snapshot-shaped
+// records, so trends use every month that has actuals.
+export function openMonthRecords(doc) {
+  const closed = new Set(doc.months.map((m) => m.key));
+  const blank = { amount: null, cadence: 'month', status: null, source: 'client', asOf: null, note: '' };
+  return Object.entries(doc.monthActuals || {}).filter(([k]) => !closed.has(k) && k !== doc.currentMonth).map(([key, actuals]) => {
+    const copy = { ...doc, categories: doc.categories.map((c) => ({ ...c, lines: c.lines.map((l) => ({ ...l, actual: actuals[l.id] || blank })) })) };
+    return { key, open: true, snapshot: monthSnapshot(budgetModel(copy), { takeHome: null }), revised: { lines: {} } };
+  });
+}
+
 export function monthHistory(doc) {
-  const months = [...doc.months].sort((a, b) => (a.key < b.key ? -1 : 1));
+  const months = [...doc.months, ...openMonthRecords(doc)].sort((a, b) => (a.key < b.key ? -1 : 1));
   const byCategory = {};
   const totals = [];
   for (const rec of months) {
@@ -40,18 +52,18 @@ export function monthHistory(doc) {
     for (const [catId, c] of Object.entries(rec.snapshot.categories)) {
       const actual = revisedCategoryActual(rec, catId);
       (byCategory[catId] = byCategory[catId] || []).push({
-        key: rec.key, name: c.name, estimate: c.estimate, actual,
+        key: rec.key, open: !!rec.open, name: c.name, estimate: c.estimate, actual,
         revised: actual !== c.actual, variancePct: ratio(actual === null || c.estimate === null ? null : actual - c.estimate, c.estimate)
       });
       if (!c.savings) { estSum.push(c.estimate); actSum.push(actual); }
     }
     const e = sumKnown(estSum).total;
     const a = sumKnown(actSum).total;
-    totals.push({ key: rec.key, estimate: e, actual: a, variancePct: ratio(a === null || e === null ? null : a - e, e) });
+    totals.push({ key: rec.key, open: !!rec.open, estimate: e, actual: a, variancePct: ratio(a === null || e === null ? null : a - e, e) });
   }
   const trends = {};
   for (const [catId, pts] of Object.entries(byCategory)) trends[catId] = trendOf(pts);
-  return { keys: months.map((m) => m.key), byCategory, totals, trends };
+  return { keys: months.filter((m) => !m.open).map((m) => m.key), openKeys: months.filter((m) => m.open).map((m) => m.key), allKeys: months.map((m) => m.key), byCategory, totals, trends };
 }
 
 // Last closed month's actual for one category (for "use last month's actual").
