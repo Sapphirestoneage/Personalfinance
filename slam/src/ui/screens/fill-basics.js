@@ -7,6 +7,7 @@ import { question } from '../components/value-input.js';
 import { statusChip } from '../components/status.js';
 import { addIncome, addDeduction, removeDeduction } from '../../store/edits.js';
 import { DEDUCTION_KINDS } from '../../calc/deductions.js';
+import { makeValue } from '../../store/value.js';
 
 const STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
 const SITUATIONS = [['employed', 'Employed'], ['self-employed', 'Self-employed'], ['between-jobs', 'Between jobs'], ['student', 'Student']];
@@ -118,7 +119,10 @@ function deductionsBlock(ctx, inc, row) {
     add(POST_KINDS, '+ Add a post-tax deduction'));
 }
 
-const WITHHELD_LABELS = [['federal', 'Federal income tax'], ['socialSecurity', 'Social Security (OASDI)'], ['medicare', 'Medicare'], ['state', 'State income tax'], ['local', 'Local or city tax'], ['other', 'Other (SDI, paid leave)']];
+const WITHHELD_LABELS = [['federal', 'Federal income tax'], ['socialSecurity', 'Social Security (OASDI)'], ['medicare', 'Medicare'], ['state', 'State income tax'], ['local', 'Local or city tax'],
+  ['sdi', 'State disability insurance (SDI)'], ['pfl', 'Paid family or medical leave'], ['sui', 'State unemployment (employee share)'], ['other', 'Other tax']];
+// The three federal lines are on every W-2 paystub; the rest show only once added (S-080).
+const CORE_TAX = ['federal', 'socialSecurity', 'medicare'];
 
 // Taxes withheld: copied from the paystub, then checked against the year's estimate.
 function withheldBlock(ctx, inc, row) {
@@ -147,8 +151,19 @@ function withheldBlock(ctx, inc, row) {
     h('details', { open: entered || ctx.ui.expanded.has('withheld:' + inc.id) ? true : null,
       ontoggle: (e) => { if (e.target.open) ctx.ui.expanded.add('withheld:' + inc.id); else ctx.ui.expanded.delete('withheld:' + inc.id); } },
       h('summary', { class: 'field-label' }, 'Taxes withheld (copy from the paystub, optional)'),
-      h('p', { class: 'muted xs' }, 'Each tax line on the paystub, per paycheck. With the first three, take-home is worked out if it is blank. Use "Doesn\'t apply" for none (like no state tax).'),
-      WITHHELD_LABELS.map(([k, label]) => question(ctx, label, null, ['income', inc.id, 'withheld', k], inc.withheld[k]))),
+      h('p', { class: 'muted xs' }, 'Each tax line on the paystub, per paycheck. With the first three, take-home is worked out if it is blank. Add any other line the paystub shows (state, local, SDI, paid leave); remove any that is not there.'),
+      WITHHELD_LABELS.filter(([k]) => CORE_TAX.includes(k) || inc.withheld[k].status !== null || ctx.ui.expanded.has('tax:' + inc.id + ':' + k)).map(([k, label]) =>
+        h('div', { class: 'tax-line' }, question(ctx, label, null, ['income', inc.id, 'withheld', k], inc.withheld[k]),
+          CORE_TAX.includes(k) ? null : h('button', { class: 'btn small ghost danger', 'aria-label': 'Remove ' + label, onclick: () => {
+            ctx.ui.expanded.delete('tax:' + inc.id + ':' + k);
+            ctx.update('Remove ' + label, (d) => { d.income.find((x) => x.id === inc.id).withheld[k] = makeValue(null, { cadence: 'paycheck' }); });
+          } }, 'Remove'))),
+      (() => {
+        const more = WITHHELD_LABELS.filter(([k]) => !CORE_TAX.includes(k) && inc.withheld[k].status === null && !ctx.ui.expanded.has('tax:' + inc.id + ':' + k));
+        return more.length ? h('select', { class: 'add-select', 'aria-label': 'Add a tax line', 'data-key': 'add-tax:' + inc.id,
+          onchange: (e) => { if (e.target.value) { ctx.ui.expanded.add('tax:' + inc.id + ':' + e.target.value); ctx.ui.focusPath = ['income', inc.id, 'withheld', e.target.value]; ctx.rerender(); } } },
+          options([['', '+ Add a tax line'], ...more], '')) : null;
+      })()),
     check);
 }
 

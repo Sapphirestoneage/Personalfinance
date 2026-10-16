@@ -88,12 +88,12 @@ test('post-tax deductions: union dues and Roth come after taxes', () => {
   assert.deepEqual(validateHousehold(d), []);
 });
 
-test('compat: incomes before paystub taxes load with all six blank', () => {
+test('compat: incomes before paystub taxes, or before the extra tax lines, load with every line blank', () => {
   const { d } = tal();
   const raw = JSON.parse(JSON.stringify(d));
   delete raw.income[0].withheld;
   const m = migrate(raw);
-  assert.deepEqual(Object.keys(m.income[0].withheld), ['federal', 'socialSecurity', 'medicare', 'state', 'local', 'other']);
+  assert.deepEqual(Object.keys(m.income[0].withheld), ['federal', 'socialSecurity', 'medicare', 'state', 'local', 'sdi', 'pfl', 'sui', 'other']);
   assert.equal(m.income[0].withheld.state.amount, null);
 });
 
@@ -116,4 +116,16 @@ test('hourly: an estimated paycheck is worked out, and a typed actual paycheck s
   assert.equal(r.estimatedFrom, 'paystub lines');
   assert.ok(near(r.estimatedTakeHomePerPaycheck, 1726.35));
   assert.ok(near(r.paycheckGapPerPaycheck, 273.65)); // 2,000 - 1,726.35
+});
+
+test('extra tax lines (SDI, paid leave) count with the state and local lines, outside the federal comparison', () => {
+  const { d, inc } = tal();
+  Object.assign(inc.withheld, { federal: pc(150), socialSecurity: pc(130.2), medicare: pc(30.45), state: pc(80), sdi: pc(18.9), pfl: pc(10) });
+  const r = incomeSummary(d, refs.tax).sources[0];
+  // take-home = 2,100 - 63 - (150 + 130.20 + 30.45 + 80 + 18.90 + 10) = 2,037 - 419.55 = 1,617.45 a paycheck
+  assert.ok(near(r.takeHomePerPaycheck, 1617.45));
+  // the federal comparison still uses only the federal three: 310.65 x 26 = 8,076.90 - 8,352.34 = -275.44
+  assert.ok(near(r.taxCheck.gapAnnual, -275.44));
+  // state and local side: (80 + 18.90 + 10) x 26 / 12 = 108.90 x 26 / 12 = 235.95 a month
+  assert.ok(near(r.taxCheck.stateWithheldMonthly, 235.95));
 });

@@ -3,6 +3,7 @@
 
 import { toMonthly, hasAnswer, PAYCHECKS_PER_YEAR } from './normalize.js';
 import { estimateAnnualTax } from './tax.js';
+import { WITHHELD_KEYS } from '../store/schema.js';
 import { sumKnown, ratio } from './money.js';
 import { deductionRows, deductionTotals } from './deductions.js';
 
@@ -19,16 +20,18 @@ export function hourlyGross(inc) {
 // Taxes withheld, from the paystub: monthly per line, the federal part
 // (income tax, Social Security, Medicare), and the rest (state, local, other).
 // Take-home is only worked out from these once the three federal lines are answered.
+const FEDERAL_KEYS = ['federal', 'socialSecurity', 'medicare'];
+
 export function withheldFromStub(inc) {
   const w = inc.withheld || {};
   const m = (k) => toMonthly(w[k], inc.payFrequency);
-  const lines = { federal: m('federal'), socialSecurity: m('socialSecurity'), medicare: m('medicare'), state: m('state'), local: m('local'), other: m('other') };
+  const lines = Object.fromEntries(WITHHELD_KEYS.map((k) => [k, m(k)]));
   const any = Object.values(lines).some((x) => x !== null);
   const federalDone = ['federal', 'socialSecurity', 'medicare'].every((k) => hasAnswer(w[k]));
   return {
     lines, any, federalDone,
     federal: sumKnown([lines.federal, lines.socialSecurity, lines.medicare]).total,
-    stateLocal: sumKnown([lines.state, lines.local, lines.other]).total,
+    stateLocal: sumKnown(WITHHELD_KEYS.filter((k) => !FEDERAL_KEYS.includes(k)).map((k) => lines[k])).total,
     total: sumKnown(Object.values(lines)).total
   };
 }
