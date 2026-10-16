@@ -9,9 +9,9 @@ const COMPLETE = new Set(['known', 'roughly', 'not-for-me', 'computed']);
 const WEAKNESS = { null: 1, 'dont-know': 1, 'will-email': 0.8, guess: 0.7, roughly: 0.3 };
 export const MATERIALITY_FLOOR_YEARLY = 100;
 
-function tierWeight(catId) {
-  if (catId === 'housing' || catId === 'everything') return WEIGHTS.heavy;
-  if (catId === 'food' || catId === 'transport' || catId === 'health') return WEIGHTS.medium;
+function tierWeight(c) {
+  if (c.type === 'housing' || c.isEverything) return WEIGHTS.heavy;
+  if (c.type === 'food' || c.type === 'transport' || c.type === 'health') return WEIGHTS.medium;
   return WEIGHTS.light;
 }
 
@@ -30,7 +30,7 @@ export function questionItems(doc, model, income) {
 
   for (const c of model.categories) {
     if (c.isDebt) continue;
-    const w = tierWeight(c.id);
+    const w = tierWeight(c);
     if (c.notForMe) { add('est:' + c.id, c.name + ': estimate', ['categories', c.id, 'estimate'], w, 'not-for-me', 0); continue; }
     const coveredByTotal = doc.settings.singleTotal && !c.isEverything && c.estimate.amount === null;
     if (!coveredByTotal) {
@@ -78,7 +78,8 @@ export function nextSteps(items, doc, refs) {
     if (!weakness) return;
     let amount = it.amount;
     if (amount === null && it.key.startsWith('est:') && refs) {
-      const g = guessFor(doc, it.path[1], refs);
+      const cat = doc.categories.find((x) => x.id === it.path[1]);
+      const g = cat ? guessFor(doc, cat.id === 'everything' ? 'everything' : cat.type, refs) : null;
       if (g) amount = g.amount;
     }
     const row = { ...it, weakness, score: it.weight * weakness, amountForRanking: amount, index };

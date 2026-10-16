@@ -7,8 +7,10 @@ import { money, pct, monthLabel } from '../format.js';
 import { question } from '../components/value-input.js';
 import { statusChip, statusPicker } from '../components/status.js';
 import { makeValue } from '../../store/value.js';
-import { useSingleTotal, findCategory, findLine, startBlindRound, addCategory, addLine, addDebt, breakDown, useOneNumber } from '../../store/edits.js';
+import { useSingleTotal, findCategory, renameLine, startBlindRound, addCategory, addLine, addDebt, breakDown, useOneNumber } from '../../store/edits.js';
 import { nameEdit } from '../components/name-edit.js';
+import { categoryTypeSelect, lineTypeSelect, typeHint } from '../components/type-select.js';
+import { categoryTypeLabel, lineTypeLabel } from '../../store/types.js';
 import { debtQuick, debtTypeTotals } from '../components/debt-quick.js';
 import { lastActual } from '../../calc/history.js';
 
@@ -117,7 +119,9 @@ export function renderEstimates(ctx, summary, key) {
           doc.debts.length || doc.noDebts ? null : h('button', { class: 'btn small ghost', onclick: () => ctx.goToField(['debts']) }, 'Add debts')));
     }
     const cat = findCategory(doc, r.id);
-    const name = nameEdit(ctx, cat.name, 'cat:' + cat.id + ':name', (d, v) => { findCategory(d, r.id).name = v; }, 'Category name');
+    // A category not yet typed asks what it counts as, so FAT and guesses add up right.
+    const name = h('div', {}, nameEdit(ctx, cat.name, 'cat:' + cat.id + ':name', (d, v) => { findCategory(d, r.id).name = v; }, 'Category name'),
+      cat.type === 'other' ? categoryTypeSelect(ctx, cat, { label: 'Counts as (so it adds up right)' }) : typeHint(categoryTypeLabel(cat.type), cat.name));
     if (r.notForMe) {
       // Doesn't apply: no amount box (lesson 12), just the answer and a way to change it.
       return h('div', { class: 'qa' }, h('div', { class: 'q' }, name),
@@ -136,7 +140,8 @@ export function renderEstimates(ctx, summary, key) {
       return h('div', { class: 'sub-lines' },
         h('div', { class: 'qa' }, h('div', { class: 'q' }, name, h('div', { class: 'hint' }, [hint, 'Adds up from its sub-categories.', first].filter(Boolean).join(' '))),
           h('span', {}, statusChip(r.status[key]), ' ', h('b', { class: 'num' }, money(r[key])))),
-        live.map((l) => question(ctx, nameEdit(ctx, l.name, 'line:' + l.id + ':name', (d, v) => { findLine(d, l.id).line.name = v; }, 'Sub-category name'),
+        live.map((l) => question(ctx, h('div', {}, nameEdit(ctx, l.name, 'line:' + l.id + ':name', (d, v) => renameLine(d, l.id, v), 'Sub-category name'),
+          l.type === 'other' ? lineTypeSelect(ctx, l, { label: 'Type' }) : typeHint(lineTypeLabel(l.type), l.name)),
           null, ['line', l.id, key], l[key], { label: l.name, parts: true })),
         ideas.length ? h('div', { class: 'tags' }, h('span', { class: 'xs muted' }, 'Ideas:'), ideas.map((n) => h('button', { class: 'tag-chip', onclick: () => {
           let id;
@@ -146,8 +151,8 @@ export function renderEstimates(ctx, summary, key) {
         h('div', { class: 'row' }, addLineButton(ctx, cat.id),
           isRough ? h('button', { class: 'btn small ghost', onclick: () => ctx.update('Use one number', (d) => useOneNumber(d, cat.id, r.estimate)) }, 'Use one number instead') : null));
     }
-    const fromPay = r.id === 'health' ? (summary.income.deductionsByKind.health || 0) + (summary.income.deductionsByKind.hsa || 0)
-      : r.id === 'transport' ? summary.income.deductionsByKind.transportation : null;
+    const fromPay = r.type === 'health' ? (summary.income.deductionsByKind.health || 0) + (summary.income.deductionsByKind.hsa || 0)
+      : r.type === 'transport' ? summary.income.deductionsByKind.transportation : null;
     const payNote = fromPay ? 'Already taken out of the paycheck: ' + money(fromPay) + ' a month. Only count what is paid on top.' : null;
     return h('div', {},
       question(ctx, name, [hint, payNote].filter(Boolean).join(' ') || null, ['categories', r.id, key], cat[key], { label: r.name, parts: true }),

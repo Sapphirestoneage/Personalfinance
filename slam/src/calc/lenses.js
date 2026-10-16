@@ -24,12 +24,10 @@ function judge(share, band) {
   return 'healthy';
 }
 
-function lineBasis(model, lineId) {
-  for (const c of model.categories) {
-    const l = c.lines.find((x) => x.id === lineId);
-    if (l) return l.actual !== null ? l.actual : l.estimate;
-  }
-  return null;
+// Every line of one type (Retirement, Therapy), whatever the lines are called.
+function lineBasis(model, type) {
+  const vals = model.categories.flatMap((c) => c.lines.filter((l) => l.type === type)).map((l) => (l.actual !== null ? l.actual : l.estimate));
+  return sumKnown(vals).total;
 }
 
 // DRAFTT: Debt, Retirement, Accommodation, Food, Transportation (shares of
@@ -38,6 +36,7 @@ export function draftt(model, totals, income, benchmarks, sourceId) {
   const src = benchmarks.sources[sourceId] || benchmarks.sources.eli;
   const th = totals.takeHome;
   const b = totals.bases;
+  const tb = totals.typeBases;
   const retireLine = lineBasis(model, 'retirement');
   const retirement = (retireLine === null ? 0 : retireLine) + income.retirementDeductions;
   const therapy = lineBasis(model, 'therapy');
@@ -45,9 +44,9 @@ export function draftt(model, totals, income, benchmarks, sourceId) {
   const rows = [
     ['debt', 'Debt', b.debt ? b.debt.amount : null, th],
     ['retirement', 'Retirement', retirement, th],
-    ['accommodation', 'Accommodation', b.housing ? b.housing.amount : null, th],
-    ['food', 'Food', b.food ? b.food.amount : null, th],
-    ['transportation', 'Transportation', b.transport ? b.transport.amount : null, th],
+    ['accommodation', 'Accommodation', tb.housing === undefined ? null : tb.housing, th],
+    ['food', 'Food', tb.food === undefined ? null : tb.food, th],
+    ['transportation', 'Transportation', tb.transport === undefined ? null : tb.transport, th],
     ['taxes', 'Taxes (of gross)', taxes, income.gross],
     ['therapy', 'Therapy', therapy, th]
   ].map(([key, label, amount, base]) => {

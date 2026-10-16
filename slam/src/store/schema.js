@@ -2,6 +2,7 @@
 // newHousehold() builds a fresh, empty client.
 
 import { makeValue } from './value.js';
+import { DEFAULT_LINE_TYPES } from './types.js';
 import { newId } from './ids.js';
 
 export const SCHEMA_VERSION = 1;
@@ -47,7 +48,7 @@ const TREE = [
     ['gifts', 'Gifts', 'variable', false]]],
   ['annual', 'Annual and irregular', 'variable', false, false, 'planned', [
     ['yearly', 'Yearly and irregular costs', 'variable', false]]],
-  ['fees', 'Fees', 'variable', false, false, 'mistake', [
+  ['fees', 'Fees', 'variable', false, false, 'planned', [
     ['fee-overdraft', 'Overdraft', 'variable', false], ['fee-late', 'Late fees', 'variable', false],
     ['fee-atm', 'ATM', 'variable', false], ['fee-foreign', 'Foreign transaction', 'variable', false],
     ['fee-interest', 'Interest charged', 'variable', false]]],
@@ -67,6 +68,8 @@ export function newLine(fields = {}) {
   return {
     id: fields.id || newId('line'),
     name: fields.name || 'New line',
+    // What the line is, whatever it is called (S-068). Calculations and tracking follow this.
+    type: fields.type || 'other',
     kind: fields.kind || 'variable',
     need: fields.need || false,
     savings: fields.savings || false,
@@ -86,6 +89,8 @@ export function newCategory(fields = {}) {
   return {
     id: fields.id || newId('cat'),
     name: fields.name || 'New category',
+    // What the category counts as (FAT, housing share, guesses), whatever it is called.
+    type: fields.type || 'other',
     kind: fields.kind || 'variable',
     need: fields.need || false,
     savings: fields.savings || false,
@@ -100,9 +105,9 @@ export function newCategory(fields = {}) {
 
 export function defaultCategories() {
   return TREE.map(([id, name, kind, need, savings, tag, lines]) => {
-    const cat = newCategory({ id, name, kind, need, savings, tag });
+    const cat = newCategory({ id, name, type: id, kind, need, savings, tag });
     cat.lines = lines.map(([lid, lname, lkind, lneed]) =>
-      newLine({ id: lid, name: lname, kind: lkind, need: lneed, savings, tag }));
+      newLine({ id: lid, name: lname, type: DEFAULT_LINE_TYPES[lid], kind: lkind, need: lneed, savings, tag }));
     return cat;
   });
 }

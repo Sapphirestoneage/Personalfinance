@@ -21,12 +21,12 @@ test('a new household is valid and carries the schema version', () => {
   assert.deepEqual(validateHousehold(d), []);
 });
 
-test('default tree has the 11 categories in order, with Fees tagged mistake', () => {
+test('default tree has the 11 categories in order; nothing is a mistake until the client says so (S-069)', () => {
   const cats = defaultCategories();
   assert.deepEqual(cats.map((c) => c.name), ['Housing', 'Food', 'Transportation', 'Debt payments', 'Health',
     'Bills and subscriptions', 'Personal and fun', 'Annual and irregular', 'Fees', 'Giving', 'Savings']);
   const fees = cats.find((c) => c.id === 'fees');
-  assert.ok(fees.lines.every((l) => l.tag === 'mistake'));
+  assert.ok(fees.lines.every((l) => l.tag === 'planned'));
   assert.ok(cats.find((c) => c.id === 'savings').lines.every((l) => l.savings));
   assert.equal(cats.find((c) => c.id === 'debt').lines.length, 0, 'debt lines come from debts[]');
 });

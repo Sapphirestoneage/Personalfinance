@@ -5,6 +5,8 @@
 import { h } from '../dom.js';
 import { money, pct, times, signedMoney, signedPct, monthLabel, less } from '../format.js';
 import * as cd from '../../calc/chart-data.js';
+import { categoryTypeLabel, lineTypeLabel } from '../../store/types.js';
+import { findLine } from '../../store/edits.js';
 import { hbars, donut, sankey, gauge, ring, lines, scatter, stack } from './svg.js';
 
 const SERIES = { gut: 'var(--series-gut)', estimate: 'var(--series-estimate)', dream: 'var(--series-dream)', actual: 'var(--series-actual)' };
@@ -232,12 +234,41 @@ export function joyCard(ctx, s) {
   });
 }
 
+// Mistakes are self-selected here (S-069): tick what was a mistake (a late fee,
+// a ticket, an impulse buy). Nothing is a mistake until the client says so.
 export function mistakeCard(ctx, s) {
   const m = cd.mistakeData(s);
+  const lines = s.rows.filter((r) => !r.savings && !r.isDebt).flatMap((r) => r.lines.filter((l) => !l.computed && l.basis !== null && l.basis > 0).map((l) => ({ ...l, category: r.name })))
+    .sort((a, b) => (b.tag === 'mistake') - (a.tag === 'mistake'));
+  const pick = h('div', { class: 'mistake-pick' },
+    h('div', { class: 'field-label' }, 'Which of these were mistakes?'),
+    lines.length ? lines.map((l) => h('label', { class: 'check spread' },
+      h('span', {}, h('input', { type: 'checkbox', checked: l.tag === 'mistake', 'data-key': 'mistake:' + l.id,
+        onchange: (e) => ctx.update(e.target.checked ? 'Mark as a mistake' : 'Not a mistake', (d) => { findLine(d, l.id).line.tag = e.target.checked ? 'mistake' : 'planned'; }) }),
+        ' ' + l.name, h('span', { class: 'xs muted' }, ' ' + l.category)),
+      h('span', { class: 'num small' }, money(l.basis)))) : h('p', { class: 'small muted' }, 'No spending lines with amounts yet.'));
   return card(ctx, {
     id: 'mistake', title: 'Mistake cost',
-    svg: hbars({ rows: [{ label: 'A month', values: [{ v: m.monthly, color: 'var(--bad)', tip: money(m.monthly) }] }, { label: 'A year', values: [{ v: m.yearly, color: 'var(--bad)', tip: money(m.yearly) }] }], width: chartWidth(true), fmt: money }),
-    reading: m.monthly > 0 ? 'Mistakes (fees, tickets, anything marked a mistake) cost ' + money(m.monthly) + ' a month, ' + money(m.yearly) + ' a year.' : 'Nothing tagged as a mistake.'
+    svg: m.monthly > 0 ? hbars({ rows: [{ label: 'A month', values: [{ v: m.monthly, color: 'var(--bad)', tip: money(m.monthly) }] }, { label: 'A year', values: [{ v: m.yearly, color: 'var(--bad)', tip: money(m.yearly) }] }], width: chartWidth(true), fmt: money }) : null,
+    extra: pick,
+    reading: m.monthly > 0 ? 'What you marked as mistakes costs ' + money(m.monthly) + ' a month, ' + money(m.yearly) + ' a year.' : 'Nothing marked as a mistake. Tick any line above that was one.'
+  });
+}
+
+// Spending by standard type (like Rocket Money's categories), whatever the lines are called.
+export function typesCard(ctx, s) {
+  const rows = s.totals.spendByType;
+  const label = (t) => (t.startsWith('cat:') ? categoryTypeLabel(t.slice(4)) + ' (one number)' : lineTypeLabel(t));
+  const top = rows[0];
+  return card(ctx, {
+    id: 'types', title: 'Spending by type',
+    extra: rows.length ? h('div', { class: 'table-wrap' }, h('table', { class: 'budget' },
+      h('thead', {}, h('tr', {}, ['Type', 'A month', 'Share'].map((x) => h('th', {}, x)))),
+      h('tbody', {}, rows.map((t) => h('tr', {},
+        h('td', {}, label(t.type), h('div', { class: 'xs muted' }, [...new Set(t.names)].join(', '))),
+        h('td', { class: 'num' }, money(t.amount)), h('td', { class: 'num' }, pct(t.share))))))) : null,
+    reading: top ? label(top.type) + ' is the biggest type at ' + money(top.amount) + ' a month (' + pct(top.share) + ' of spending). Names are yours; types stay the same so months and clients compare.'
+      : 'Nothing spent yet.'
   });
 }
 
