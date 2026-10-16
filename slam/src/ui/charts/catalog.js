@@ -164,7 +164,7 @@ export function gutCard(ctx, s) {
 // Over time
 export function trendCard(ctx, s) {
   const cats = cd.trendCategories(s);
-  if (!cats.length) return card(ctx, { id: 'trend', title: 'Estimate vs actual over time', reading: 'Shows up after the first month is closed.' });
+  if (!cats.length) return card(ctx, { id: 'trend', title: 'Estimate vs actual over time', reading: 'Shows up once a second month has actuals (pick another month in Fill in, Actual).' });
   const pick = ctx.ui.trendCat && cats.some((c) => c.id === ctx.ui.trendCat) ? ctx.ui.trendCat : (s.culprits[0] && cats.some((c) => c.id === s.culprits[0].id) ? s.culprits[0].id : cats[0].id);
   const d = cd.trendData(s, pick);
   const xs = d.points.map((p) => monthLabel(p.key).slice(0, 3) + (p.current ? ' (now)' : ''));
@@ -177,13 +177,13 @@ export function trendCard(ctx, s) {
       { name: 'Estimate', color: SERIES.estimate, values: d.points.map((p) => p.estimate), dashed: true },
       { name: 'Actual', color: SERIES.actual, values: d.points.map((p) => p.actual) }], xs, width: chartWidth(true), fmt: money }),
     legendItems: [['Estimate', SERIES.estimate], ['Actual', SERIES.actual]],
-    reading: d.name + ' actuals across closed months: trend is ' + trend + '.'
+    reading: d.name + ' actuals across the months entered: trend is ' + trend + '.'
   });
 }
 
 export function varianceByMonthCard(ctx, s) {
   const d = cd.varianceByMonth(s);
-  if (!d.length) return card(ctx, { id: 'vbm', title: 'Variance by month', reading: 'Shows up after the first month is closed.' });
+  if (!d.length) return card(ctx, { id: 'vbm', title: 'Variance by month', reading: 'Shows up once a second month has actuals (pick another month in Fill in, Actual).' });
   const last = d[d.length - 1];
   return card(ctx, {
     id: 'vbm', title: 'Variance by month',

@@ -7,6 +7,7 @@ import { h, options } from '../dom.js';
 import { money, monthLabel } from '../format.js';
 import { importCSV, FORMATS } from '../../calc/tx-import.js';
 import { actualsProposal } from '../../calc/tx-analysis.js';
+import { switchMonth } from '../../store/months.js';
 import { addTransactions, setTransactionLine, setTransactionKind, removeTransaction, applyTransactionActuals } from '../../store/edits.js';
 
 const KINDS = [['spend', 'Spending'], ['fee', 'Fee'], ['refund', 'Refund'], ['reimbursement', 'Reimbursement'], ['card-payment', 'Card payment'], ['transfer', 'Transfer'], ['income', 'Income']];
@@ -88,6 +89,11 @@ function reviewCard(ctx, summary, month) {
 }
 
 function fillCard(ctx, summary, month) {
+  if (month !== ctx.doc.currentMonth) {
+    return h('div', { class: 'card' }, h('h2', {}, 'Fill ' + monthLabel(month) + ' actuals from transactions'),
+      h('p', { class: 'muted small' }, 'You are working on ' + monthLabel(ctx.doc.currentMonth) + '. Switch to ' + monthLabel(month) + ' to fill its actuals; nothing entered for other months is lost.'),
+      h('button', { class: 'btn primary', onclick: () => ctx.update('Work on ' + monthLabel(month), (d) => switchMonth(d, month)) }, 'Work on ' + monthLabel(month)));
+  }
   const p = actualsProposal(summary.model, ctx.doc.transactions, month);
   const changing = p.rows.filter((r) => r.changes);
   return h('div', { class: 'card' },

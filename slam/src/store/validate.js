@@ -88,6 +88,11 @@ export function validateHousehold(doc) {
     if (!KINDS.includes(t.kind)) errs.push(w + '.kind: "' + t.kind + '" is not one of ' + KINDS.join(', '));
   });
   if (!/^\d{4}-\d{2}$/.test(doc.currentMonth || '')) errs.push('currentMonth must be YYYY-MM');
+  for (const [k, lines] of Object.entries(doc.monthActuals || {})) {
+    if (!/^\d{4}-\d{2}$/.test(k)) errs.push('monthActuals key ' + k + ' must be YYYY-MM');
+    if (k === doc.currentMonth) errs.push('monthActuals must not hold the month being worked on (' + k + ')');
+    for (const [id, v] of Object.entries(lines)) errs.push(...valueErrors(v, 'monthActuals.' + k + '.' + id));
+  }
   (doc.months || []).forEach((m, i) => {
     if (!/^\d{4}-\d{2}$/.test(m.key || '')) errs.push('months[' + i + '].key must be YYYY-MM');
     if (!m.snapshot) errs.push('months[' + i + '].snapshot is missing');

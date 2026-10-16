@@ -101,6 +101,7 @@ export function trendData(summary, catId) {
   const pts = (summary.history.byCategory[catId] || []).map((p) => ({ key: p.key, estimate: p.estimate, actual: p.actual }));
   const row = summary.rows.find((r) => r.id === catId);
   if (row) pts.push({ key: summary.month, estimate: row.estimate, actual: row.actual, current: true });
+  pts.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
   return { id: catId, name: row ? row.name : catId, points: pts };
 }
 
