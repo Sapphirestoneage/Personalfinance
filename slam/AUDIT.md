@@ -28,7 +28,7 @@
 | 13 | Any cadence, normalized to monthly | Pass. Paycheck, week, month, year, one-off on every amount; one-offs listed separately. |
 | 14 | Completion separate from progress | Pass. The completion meter says it measures the data, not the client. |
 | 15 | Averages labeled Guess with their source | Pass. Guess chip plus a note naming the national average, household size, and source. The table is marked placeholder. |
-| 16 | Percentages on take-home | Pass. Only DRAFTT Taxes uses gross, and it is labeled "of gross". |
+| 16 | Percentages on take-home | Pass. DRAFTT uses take-home plus pre-tax retirement as its base (so its parts add to 100%), and says so on screen; with no pre-tax retirement the base is take-home. DRAFTT taxes are shown on their own, labeled "of gross". |
 
 ## Nothing asked twice
 

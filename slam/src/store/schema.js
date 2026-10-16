@@ -5,7 +5,7 @@ import { makeValue } from './value.js';
 import { DEFAULT_LINE_TYPES } from './types.js';
 import { newId } from './ids.js';
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export const SITUATIONS = ['employed', 'self-employed', 'between-jobs', 'student'];
 export const FILING_STATUSES = ['single', 'married-joint', 'married-separate', 'head-of-household'];
@@ -254,7 +254,7 @@ export function newHousehold(name, now = new Date()) {
     eras: newEras(),
     // Tags the client made: [{ id, name }]. Lines carry their ids.
     tags: [],
-    settings: { singleTotal: false, benchmarkSource: 'eli', lens: 'dollars' },
+    settings: { singleTotal: false, lens: 'dollars' },
     passesSeen: []
   };
 }

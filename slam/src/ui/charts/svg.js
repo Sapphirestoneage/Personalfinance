@@ -28,7 +28,7 @@ function line(x1, y1, x2, y2, cls, dash) {
 }
 
 // Horizontal bars, one row per item, label above the bars (fits a phone).
-// rows: [{ label, values: [{ v, color, tip }], band: {min,max} }]
+// rows: [{ label, values: [{ v, color, tip }] }]
 // mode: 'grouped' | 'overlay' (first value is the outline, second the fill) | 'diverging'
 // ref: a value to draw a dashed reference line at (e.g. 1.0x, or 35%).
 export function hbars({ rows, width, fmt, mode = 'grouped', ref = null, refLabel = '', label = 'Bar chart' }) {
@@ -38,8 +38,7 @@ export function hbars({ rows, width, fmt, mode = 'grouped', ref = null, refLabel
   const longest = Math.max(4, ...rows.flatMap((r) => r.values.filter((v) => v.v !== null && v.v !== undefined).map((v) => labelOf(r, v).length)));
   const padR = Math.min(width * 0.45, longest * 7 + 10);
   const vals = rows.flatMap((r) => r.values.map((v) => v.v).filter((v) => v !== null && v !== undefined));
-  const bandVals = rows.flatMap((r) => (r.band ? [r.band.min, r.band.max].filter((x) => x !== undefined && x !== null) : []));
-  let max = Math.max(0, ...vals.map(Math.abs), ...bandVals, ref === null ? 0 : ref);
+  let max = Math.max(0, ...vals.map(Math.abs), ref === null ? 0 : ref);
   if (max === 0) max = 1;
   const plotW = width - padR - 4 - (mode === 'diverging' ? padR : 0);
   const zeroX = mode === 'diverging' ? 4 + padR + plotW / 2 : 4;
@@ -49,13 +48,7 @@ export function hbars({ rows, width, fmt, mode = 'grouped', ref = null, refLabel
   for (const r of rows) {
     body += t(4, y + F, r.label, { cls: 'muted' });
     y += F + 6;
-    const n = mode === 'grouped' ? r.values.length : 1;
     const rowTop = y;
-    if (r.band) {
-      const x1 = zeroX + (r.band.min !== undefined ? r.band.min : 0) * scale;
-      const x2 = zeroX + (r.band.max !== undefined ? r.band.max : max) * scale;
-      body += '<rect x="' + x1.toFixed(1) + '" y="' + (y - 2).toFixed(1) + '" width="' + Math.max(0, x2 - x1).toFixed(1) + '" height="' + (n * (barH + 2) + 2) + '" style="fill:var(--good);fill-opacity:0.14"><title>Healthy band</title></rect>';
-    }
     r.values.forEach((v, i) => {
       if (v.v === null || v.v === undefined) {
         if (mode === 'grouped') { body += t(zeroX + 2, y + barH - 1, (v.name ? v.name + ': ' : '') + 'not given', { cls: 'muted tiny' }); y += barH + 2; }
@@ -326,4 +319,32 @@ export function heatRow({ cells, width, fmt, label = 'Heatmap' }) {
     body += t(x + (cw - 3) / 2, 82, fmt(c.amount), { anchor: 'middle' });
   });
   return svgWrap(width, 90, body, label);
+}
+
+// One 100% bar: parts as shares of a base, each labeled with its % when it fits.
+// A shortfall (spending past the base) shows as a dashed segment past the 100% mark.
+export function shareBar({ parts, shortfall = 0, width, label = '100% bar' }) {
+  const barY = 20;
+  const barH = 30;
+  const w = width - 8;
+  const span = 1 + Math.max(0, shortfall);
+  const at = (share) => 4 + (share / span) * w;
+  let x = 0;
+  let body = '';
+  for (const p of parts) {
+    const s = Math.max(0, p.share || 0);
+    const x0 = at(x);
+    const pw = at(x + s) - x0;
+    body += rect(x0, barY, Math.max(0, pw - 1.5), barH, p.color, { tip: p.name + ': ' + Math.round(s * 100) + '%' });
+    if (pw > 34) body += t(x0 + pw / 2, barY + 19, p.short || p.name, { anchor: 'middle', weight: 700, cls: 'on-fill' });
+    x += s;
+  }
+  const end = at(1);
+  if (shortfall > 0) {
+    body += rect(end, barY, at(span) - end - 1.5, barH, 'var(--chart-axis)', { outline: true, tip: 'Shortfall: ' + Math.round(shortfall * 100) + '%' });
+    body += t(Math.min(end + 4, width - 4), barY + barH + 14, 'Short ' + Math.round(shortfall * 100) + '%', { anchor: end > width - 60 ? 'end' : 'start', cls: 'muted' });
+  }
+  body += line(end, barY - 6, end, barY + barH + 4, 'axis');
+  body += t(Math.min(end, width - 4), 12, '100%', { anchor: 'end', cls: 'muted' });
+  return svgWrap(width, barY + barH + 20, body, label);
 }

@@ -74,7 +74,7 @@ export function buildSummary(doc, refs) {
     history,
     lenses: {
       fiftyThirtyTwenty: fiftyThirtyTwenty(totals, refs.benchmarks.fiftyThirtyTwenty),
-      draftt: draftt(model, totals, income, refs.benchmarks, doc.settings.benchmarkSource),
+      draftt: draftt(model, totals, income),
       incomeStatement: incomeStatement(model, totals, income),
       joy: joyLens(model, totals)
     },

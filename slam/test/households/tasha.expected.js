@@ -28,9 +28,21 @@
 // 1,745 / 2,645 = 0.659735
 // NEEDS: 1,400 + 500 + 400 + 195 = 2,495 -> 29,940 / 50,390 = 0.594166; WANTS: bills 150 -> 1,800/50,390 = 0.035721
 
-// DRAFTT (Eli's default): debt 2,340/50,390 = 0.046438 healthy; retirement 0 low;
-// accommodation 0.333399 healthy; food 6,000/50,390 = 0.119071 healthy; transport 4,800/50,390 = 0.095257 healthy;
-// taxes 800.833333 / gross 5,000 = 0.160167 healthy; therapy (no line) null
+// DRAFTT (descriptive, S-072). No pre-tax retirement, so base = take-home 4,199.166667 = 50,390 / 12 ("take-home").
+//   Every share of the base = amount x 12 / 50,390.
+// D debt 195 (computed); R = 0 (Savings is one number, 100, not a retirement line; no pre-tax)
+// A housing 1,400, F food 500, T transport 400: all estimates standing in (no actuals); therapy has no amount, so no Th
+// DRAFTT total = 195 + 0 + 1,400 + 500 + 400 = 2,495
+// % of base:  D 2,340/50,390 = 0.04643779 -> 0.046438; R 0; A 16,800/50,390 = 0.33339948 -> 0.333399
+//   F 6,000/50,390 = 0.11907124 -> 0.119071; T 4,800/50,390 = 0.09525700 -> 0.095257; DRAFTT 29,940/50,390 = 0.59416551 -> 0.594166
+// % of DRAFTT: D 195/2,495 = 39/499 = 0.07815631 -> 0.078156; R 0; A 1,400/2,495 = 280/499 = 0.56112224 -> 0.561122
+//   F 500/2,495 = 100/499 = 0.20040080 -> 0.200401; T 400/2,495 = 80/499 = 0.16032064 -> 0.160321 (sum 1)
+// Everything else = outflow 2,745 - 2,495 = 250 (bills 150 + savings 100); 3,000/50,390 = 0.05953562 -> 0.059536
+// Left over = surplus 1,454.166667; 17,450/50,390 = 0.34629887 -> 0.346299. Check: 29,940 + 3,000 + 17,450 = 50,390.
+// Estimate % = actual % (no actuals yet), so every change is 0.
+// Taxes: 800.833333 / gross 5,000 = 0.16016667 -> 0.160167, shown on its own "of gross".
+// READING: 59.4% -> 59%; biggest letter A at 56.1% -> 56%; no actuals to compare, so the estimates note;
+//   everything else 6.0% -> 6%; left over 34.6% -> 35%; taxes 16.0% -> 16%.
 
 // INCOME STATEMENT: revenue 5,000; taxes 800.833333; deductions 0; needs other than debt 2,300;
 // debt 195; wants 150; savings 100; net 1,454.166667
@@ -65,7 +77,17 @@ export default {
   fixed: 1745, variable: 900, fixedPct: 0.659735,
   needs: 2495, wants: 150, needsPct: 0.594166, wantsPct: 0.035721, savingsPct: 0.023814,
   mistakeMonthly: 0, mistakeYearly: 0, owedBack: 0,
-  draftt: { debt: [0.046438, 'healthy'], retirement: [0, 'low'], accommodation: [0.333399, 'healthy'], food: [0.119071, 'healthy'], transportation: [0.095257, 'healthy'], taxes: [0.160167, 'healthy'], therapy: [null, null] },
+  draftt: {
+    base: 4199.166667, baseLabel: 'take-home', total: 2495, totalShare: 0.594166,
+    everythingElse: 250, everythingElseShare: 0.059536, leftOver: 1454.166667, leftOverShare: 0.346299, taxes: 0.160167,
+    // letter: [amount, % of base, % of DRAFTT, estimate % of base, change, uses estimate]; no therapy amount
+    letters: {
+      debt: [195, 0.046438, 0.078156, 0.046438, 0, false], retirement: [0, 0, 0, 0, 0, false],
+      accommodation: [1400, 0.333399, 0.561122, 0.333399, 0, true], food: [500, 0.119071, 0.200401, 0.119071, 0, true],
+      transportation: [400, 0.095257, 0.160321, 0.095257, 0, true]
+    },
+    reading: 'DRAFTT is 59% of take-home. Accommodation is the biggest letter at 56% of DRAFTT. Estimates stand in where actuals are missing (Accommodation, Food, Transportation). Everything else is 6% and left over is 35%. Taxes are 16% of gross, outside this picture.'
+  },
   incomeStatement: { revenue: 5000, taxes: 800.833333, deductions: 0, needs: 2300, debt: 195, wants: 150, savings: 100, net: 1454.166667 },
   completion: 0.319149,
   next: ['Housing / Rent: actual', 'Take-home: Hospital admin', 'Food / Groceries: actual'],

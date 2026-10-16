@@ -174,7 +174,7 @@ test('migration to schema 2 removes ZIP and the cost-of-living tier, and changes
   v1.schemaVersion = 1;
   v1.profile = { name: 'Old file', birthYear: 1990, state: 'NY', zip: '10001', colTier: 'HCOL', colTierSetBy: 'coach' };
   const m = migrate(v1);
-  assert.equal(m.schemaVersion, 2);
+  assert.equal(m.schemaVersion, SCHEMA_VERSION);
   assert.deepEqual(m.profile, { name: 'Old file', birthYear: 1990, state: 'NY' });
   for (const k of ['zip', 'colTier', 'colTierSetBy']) assert.ok(!(k in m.profile), k + ' is gone');
   // everything outside the profile is untouched
@@ -183,5 +183,19 @@ test('migration to schema 2 removes ZIP and the cost-of-living tier, and changes
   assert.deepEqual(rest(m), rest(v1));
   assert.deepEqual(validateHousehold(m), []);
   // and it exports and loads again the same
+  assert.deepEqual(migrate(JSON.parse(JSON.stringify(m))), m);
+});
+
+test('migration to schema 3 removes the DRAFTT benchmark source and changes nothing else (S-072)', () => {
+  const v2 = JSON.parse(JSON.stringify(newHousehold('Bands')));
+  v2.schemaVersion = 2;
+  v2.settings = { singleTotal: true, benchmarkSource: 'money-guy', lens: 'dollars' };
+  const m = migrate(v2);
+  assert.equal(m.schemaVersion, 3);
+  assert.ok(!('benchmarkSource' in m.settings));
+  assert.deepEqual(m.settings, { singleTotal: true, lens: 'dollars' });
+  const rest = (d) => { const { settings, schemaVersion, ...x } = d; return x; };
+  assert.deepEqual(rest(m), rest(v2));
+  assert.deepEqual(validateHousehold(m), []);
   assert.deepEqual(migrate(JSON.parse(JSON.stringify(m))), m);
 });

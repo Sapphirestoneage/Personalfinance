@@ -5,6 +5,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildSummary } from '../src/calc/summary.js';
 import { lastActual } from '../src/calc/history.js';
+import { drafttReading } from '../src/calc/lenses.js';
 import { loadRefs, loadHousehold, near } from './helpers.js';
 
 const refs = loadRefs();
@@ -100,12 +101,38 @@ for (const name of ['maya', 'luis', 'tasha', 'sam']) {
     assert.equal(p.flagged, exp.proofOfCash.flagged, 'proof of cash flag');
   });
 
-  if (exp.draftt) test(name + ': DRAFTT lens', () => {
-    for (const [key, [sh, verdict]] of Object.entries(exp.draftt)) {
-      const row = s.lenses.draftt.rows.find((r) => r.key === key);
-      share(row.share, sh, 'DRAFTT ' + key);
-      assert.equal(row.verdict, verdict, 'DRAFTT verdict ' + key);
+  if (exp.draftt) test(name + ': DRAFTT lens (proportions, no bands)', () => {
+    const d = s.lenses.draftt;
+    const e = exp.draftt;
+    money(d.base.amount, e.base, 'DRAFTT base');
+    assert.equal(d.base.label, e.baseLabel);
+    money(d.total, e.total, 'DRAFTT total');
+    share(d.totalShare, e.totalShare, 'DRAFTT share of base');
+    money(d.everythingElse, e.everythingElse, 'everything else');
+    share(d.everythingElseShare, e.everythingElseShare, 'everything else share');
+    money(d.leftOver, e.leftOver, 'left over');
+    share(d.leftOverShare, e.leftOverShare, 'left over share');
+    share(d.taxes ? d.taxes.shareOfGross : null, e.taxes, 'taxes of gross');
+    assert.deepEqual(d.rows.map((r) => r.key), Object.keys(e.letters), 'letters shown');
+    for (const [key, [amount, sh, ofD, est, change, usesEst]] of Object.entries(e.letters)) {
+      const r = d.rows.find((x) => x.key === key);
+      money(r.amount, amount, key + ' amount');
+      share(r.share, sh, key + ' % of base');
+      share(r.shareOfDraftt, ofD, key + ' % of DRAFTT');
+      share(r.estimateShare, est, key + ' estimate %');
+      share(r.change, change, key + ' change');
+      assert.equal(r.usesEstimate, usesEst, key + ' uses estimate');
+      assert.equal('verdict' in r || 'band' in r, false, 'no verdicts or bands');
     }
+    assert.equal(drafttReading(d), e.reading);
+  });
+
+  test(name + ': DRAFTT + everything else + left over = 100% of the base', () => {
+    const d = s.lenses.draftt;
+    if (d.base.amount === null) return;
+    money(d.total + d.everythingElse + d.leftOver, d.base.amount, 'parts add to the base');
+    share(d.totalShare + d.everythingElseShare + d.leftOverShare, 1, 'shares add to 100%');
+    if (d.total) share(d.rows.reduce((a, r) => a + (r.shareOfDraftt || 0), 0), 1, 'letters add to 100% of DRAFTT');
   });
 
   if (exp.incomeStatement) test(name + ': income statement', () => {

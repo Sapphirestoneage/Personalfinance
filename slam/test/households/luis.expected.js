@@ -46,9 +46,25 @@
 //   2,825/4,600 = 0.614130; 1,060/4,600 = 0.230435; savings 200/4,600 = 0.043478; unassigned 515/4,600 = 0.111957
 // MISTAKES: ticket 180 + interest 45 + ATM 5 = 230 a month, 2,760 a year
 
-// DRAFTT (Eli's default): debt 685/4,600 = 0.148913 high; retirement (0 + 200)/4,600 = 0.043478 low
-//   accommodation 0.241304 healthy; food 830/4,600 = 0.180435 high; transport 540/4,600 = 0.117391 healthy
-//   taxes: side gig has no gross, so household gross is unknown -> null; therapy: no line -> null
+// DRAFTT (descriptive, S-072). Base = take-home 4,600 + pre-tax retirement 200 = 4,800
+//   ("take-home plus pre-tax retirement"). Letters use the actual where there is one.
+// D debt 685 (computed); R = after-tax line (blank, not in the Savings actual) 0 + pre-tax 200 = 200
+// A housing actual 1,110; F food actual 830; T transport actual 540; no therapy line, so no Th
+// DRAFTT total = 685 + 200 + 1,110 + 830 + 540 = 3,365
+// % of base:  D 685/4,800 = 0.14270833 -> 0.142708; R 200/4,800 = 0.04166667 -> 0.041667; A 1,110/4,800 = 0.23125
+//   F 830/4,800 = 0.17291667 -> 0.172917; T 540/4,800 = 0.1125; DRAFTT 3,365/4,800 = 0.70104167 -> 0.701042
+// % of DRAFTT: D 685/3,365 = 137/673 = 0.20356612 -> 0.203566; R 200/3,365 = 40/673 = 0.05943536 -> 0.059435
+//   A 1,110/3,365 = 222/673 = 0.32986627 -> 0.329866; F 830/3,365 = 166/673 = 0.24665676 -> 0.246657
+//   T 540/3,365 = 108/673 = 0.16047548 -> 0.160475 (sum 1)
+// Everything else = outflow 4,085 - (685 + 1,110 + 830 + 540 + 0) = 4,085 - 3,165 = 920
+//   (= health 150 + bills 120 + fun 300 + annual 100 + fees 50 + giving 0 + emergency fund 200); 920/4,800 = 0.19166667 -> 0.191667
+// Left over = surplus 515; 515/4,800 = 0.10729167 -> 0.107292. Check: 3,365 + 920 + 515 = 4,800.
+// Estimate % of base: D 685 -> 0.142708; R 0 + 200 (Savings estimate is one number, 300, not the line) -> 0.041667
+//   A 1,100/4,800 = 0.22916667 -> 0.229167; F 600/4,800 = 0.125; T 350/4,800 = 0.07291667 -> 0.072917
+// Change: A 10/4,800 = 0.00208333 -> 0.002083; F 230/4,800 = 0.04791667 -> 0.047917; T 190/4,800 = 0.03958333 -> 0.039583
+// Taxes: the side gig has no gross, so household gross is unknown -> not shown.
+// READING: 70.1% -> 70%; biggest letter A at 33.0% -> 33%; biggest change Food 12.5% -> 13% to 17.3% -> 17%;
+//   everything else 19.2% -> 19%; left over 10.7% -> 11%.
 
 // INCOME STATEMENT: revenue w2 5,200 + side 600 = 5,800; taxes 1,000; deductions 200; take-home 4,600
 //   needs other than debt 2,825 - 685 = 2,140; debt 685; wants 1,060; savings 200; net 515 (6,180 a year)
@@ -84,7 +100,17 @@ export default {
   fixed: 2045, variable: 1840, fixedPct: 0.526384,
   needs: 2825, wants: 1060, needsPct: 0.614130, wantsPct: 0.230435, savingsPct: 0.043478, unassignedShare: 0.111957,
   mistakeMonthly: 230, mistakeYearly: 2760, owedBack: 0,
-  draftt: { debt: [0.148913, 'high'], retirement: [0.043478, 'low'], accommodation: [0.241304, 'healthy'], food: [0.180435, 'high'], transportation: [0.117391, 'healthy'], taxes: [null, null], therapy: [null, null] },
+  draftt: {
+    base: 4800, baseLabel: 'take-home plus pre-tax retirement', total: 3365, totalShare: 0.701042,
+    everythingElse: 920, everythingElseShare: 0.191667, leftOver: 515, leftOverShare: 0.107292, taxes: null,
+    // letter: [amount, % of base, % of DRAFTT, estimate % of base, change, uses estimate]; no therapy line
+    letters: {
+      debt: [685, 0.142708, 0.203566, 0.142708, 0, false], retirement: [200, 0.041667, 0.059435, 0.041667, 0, false],
+      accommodation: [1110, 0.23125, 0.329866, 0.229167, 0.002083, false], food: [830, 0.172917, 0.246657, 0.125, 0.047917, false],
+      transportation: [540, 0.1125, 0.160475, 0.072917, 0.039583, false]
+    },
+    reading: "DRAFTT is 70% of take-home plus pre-tax retirement. Accommodation is the biggest letter at 33% of DRAFTT. Food's share went from 13% estimated to 17% actual. Everything else is 19% and left over is 11%."
+  },
   incomeStatement: { revenue: 5800, taxes: 1000, deductions: 200, needs: 2140, debt: 685, wants: 1060, savings: 200, net: 515 },
   completion: 0.907692,
   next: ['Health / Premiums: actual', 'Health / Out of pocket: actual', 'Bills and subscriptions / Phone and streaming: actual'],

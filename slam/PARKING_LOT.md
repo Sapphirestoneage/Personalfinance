@@ -36,3 +36,4 @@ theming beyond the tokens.
 - Revenue ramp: months until the venture covers the bare-bones number, in each lens.
 - Kill criteria: a coach-set line ("if cash falls below X or revenue is under Y by month Z, go back to a job") shown on the stay-vs-change chart.
 - Odds per lens (e.g. 20% disaster, 60% likely, 20% dream) for a weighted expected value.
+- Optional DRAFTT comparison to someone else's proportions (Trench, Money Guy, a peer group), shown as a reference, never a grade.

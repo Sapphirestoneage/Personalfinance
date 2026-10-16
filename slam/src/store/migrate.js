@@ -16,6 +16,11 @@ const STEPS = {
   1: (doc) => {
     const { zip, colTier, colTierSetBy, ...profile } = doc.profile || {};
     return { ...doc, profile, schemaVersion: 2 };
+  },
+  // Version 2 to 3 (S-072): DRAFTT has no bands, so there is no benchmark source to pick.
+  2: (doc) => {
+    const { benchmarkSource, ...settings } = doc.settings || {};
+    return { ...doc, settings, schemaVersion: 3 };
   }
 };
 

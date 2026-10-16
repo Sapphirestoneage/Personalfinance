@@ -200,3 +200,8 @@ ul.plain li:last-child { border-bottom: none; }
 .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: middle; }
 .mistake-pick { max-height: 22em; overflow-y: auto; margin-top: var(--space-2); }
 .mistake-pick .check { gap: var(--space-2); }
+.chart text.on-fill { fill: #fff; paint-order: stroke; stroke: rgba(0, 0, 0, 0.45); stroke-width: 2px; font-size: 11px; }
+.draftt > * + * { margin-top: var(--space-4); }
+.draftt-letters { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: center; }
+.draftt-letters ul { flex: 1 1 12em; min-width: 0; }
+.draftt-letters li { display: flex; justify-content: space-between; gap: var(--space-2); }

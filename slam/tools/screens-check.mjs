@@ -88,6 +88,15 @@ for (const [name, button] of Object.entries(DEMOS)) {
     const net = await page.$$eval('#chart-statement tr.total td', (tds) => tds.map((td) => td.textContent.trim()));
     check(name, 'Income statement net', net[net.length - 2], signedMoney(exp.incomeStatement.net));
   }
+  if (exp.draftt) {
+    // DRAFTT is descriptive (S-072): the reading names proportions, never a verdict.
+    const dr = await page.$eval('#chart-draftt .reading', (p) => p.textContent);
+    check(name, 'DRAFTT reading', dr, exp.draftt.reading);
+    const words = await page.$eval('#chart-draftt', (c) => c.textContent.toLowerCase());
+    check(name, 'DRAFTT has no grades', /healthy|outside the|band|\(high\)|\(low\)/.test(words) ? 'graded' : 'none', 'none');
+    const totalRow = await page.$$eval('#chart-draftt tr.cat td', (tds) => tds.map((td) => td.textContent.trim()));
+    check(name, 'DRAFTT total % of base', totalRow[2], pct(exp.draftt.totalShare));
+  }
   check(name, 'Console errors', String(errors.length), '0');
   await page.close();
 }
