@@ -105,8 +105,11 @@ export function renderEstimates(ctx, summary, key) {
       return h('div', { class: 'qa' }, h('div', { class: 'q' }, r.name, h('div', { class: 'hint' }, 'Adds up from its lines (Actual pass, Details).')),
         h('span', {}, statusChip(r.status[key]), ' ', h('b', { class: 'num' }, money(r[key]))));
     }
+    const fromPay = r.id === 'health' ? (summary.income.deductionsByKind.health || 0) + (summary.income.deductionsByKind.hsa || 0)
+      : r.id === 'transport' ? summary.income.deductionsByKind.transportation : null;
+    const payNote = fromPay ? 'Already taken out of the paycheck: ' + money(fromPay) + ' a month. Only count what is paid on top.' : null;
     return h('div', {},
-      question(ctx, r.name, hint, ['categories', r.id, key], cat[key]),
+      question(ctx, r.name, [hint, payNote].filter(Boolean).join(' ') || null, ['categories', r.id, key], cat[key]),
       isRough ? extrasFor(ctx, summary, r) : null);
   }));
 

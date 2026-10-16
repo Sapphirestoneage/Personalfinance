@@ -3,8 +3,8 @@
 // To change the stored shape: bump SCHEMA_VERSION, add a step to STEPS, and
 // write a compatibility note in DECISIONS.md.
 
-import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt } from './schema.js';
-import { normalizeValue } from './value.js';
+import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt, newDeduction } from './schema.js';
+import { normalizeValue, isBlank } from './value.js';
 
 // STEPS[n] turns a version n document into version n + 1.
 const STEPS = {
@@ -41,7 +41,15 @@ export function normalizeHousehold(doc) {
   const { yourShare, ...rm } = out.household.roommates || {};
   out.household.roommates = withDefaults(base.household.roommates, rm, ['totalRent']);
   out.gut = normalizeValue(doc.gut);
-  out.income = (doc.income || []).map((i) => withDefaults(newIncome({ id: i.id }), i, ['takeHome', 'gross', 'pretaxRetirement']));
+  out.income = (doc.income || []).map((raw) => {
+    // Compatibility: the old single "pretaxRetirement" amount becomes a retirement deduction.
+    const { pretaxRetirement, ...i } = raw;
+    const inc = withDefaults(newIncome({ id: i.id }), i, ['takeHome', 'gross', 'hourlyRate']);
+    inc.deductions = (i.deductions || []).map((d) => ({ ...newDeduction({ id: d.id, kind: d.kind }), ...d, amount: normalizeValue(d.amount) }));
+    const old = pretaxRetirement === undefined ? null : normalizeValue(pretaxRetirement);
+    if (old && !isBlank(old)) inc.deductions.unshift({ ...newDeduction({ id: 'ded-' + inc.id + '-ret', kind: 'retirement', mode: 'amount' }), amount: old });
+    return inc;
+  });
   out.debts = (doc.debts || []).map((d) => withDefaults(newDebt({ id: d.id }), d, ['balance', 'apr', 'minimum', 'dueDay']));
   out.categories = (doc.categories || base.categories).map((c) => {
     const cat = withDefaults(newCategory({ id: c.id }), c, ['estimate', 'dream']);

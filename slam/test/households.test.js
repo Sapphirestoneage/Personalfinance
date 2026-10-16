@@ -19,7 +19,7 @@ for (const name of ['maya', 'luis', 'tasha', 'sam']) {
 
   test(name + ': income', () => {
     money(s.income.takeHome, exp.takeHome, 'take-home');
-    if (exp.pretax !== undefined) money(s.income.pretax, exp.pretax, 'pre-tax');
+    if (exp.pretax !== undefined) money(s.income.retirementDeductions, exp.pretax, 'retirement deductions');
     if (exp.hourly !== undefined) share(s.income.hourlyTakeHome, exp.hourly, 'hourly');
     if (exp.takeHomeStatus) {
       const src = s.income.sources[0];

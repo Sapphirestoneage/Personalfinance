@@ -102,7 +102,8 @@ export function budgetTotals(model, income, doc, housingBand = 0.35) {
     needs, wants, savingsAmount: savings,
     fat, fatShare: ratio(fat, takeHome),
     needsPct: ratio(needs, takeHome), wantsPct: ratio(wants, takeHome), savingsPct: ratio(savings, takeHome),
-    savingsRate: ratio(savings + income.pretax, takeHome === null ? null : takeHome + income.pretax),
+    // Retirement taken out of the paycheck counts as saving.
+    savingsRate: ratio(savings + income.retirementDeductions, takeHome === null ? null : takeHome + income.retirementDeductions),
     housing: housingBasis,
     housingShare: ratio(housingBasis, takeHome),
     housingBand,

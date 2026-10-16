@@ -1,7 +1,7 @@
 // Small structural changes to a household draft (used inside store.update).
 // No math here: just finding things and adding or moving them.
 
-import { newLine, newCategory, newIncome, newDebt, EVERYTHING_CATEGORY_ID } from './schema.js';
+import { newLine, newCategory, newIncome, newDebt, newDeduction, EVERYTHING_CATEGORY_ID } from './schema.js';
 
 export function findCategory(doc, catId) {
   return doc.categories.find((c) => c.id === catId) || null;
@@ -130,4 +130,16 @@ export function applyTransactionActuals(doc, rows, monthLabel) {
       asOf: new Date().toISOString().slice(0, 10), note: 'From ' + r.count + ' transactions, ' + monthLabel
     };
   }
+}
+
+export function addDeduction(doc, incomeId, kind) {
+  const inc = doc.income.find((i) => i.id === incomeId);
+  const d = newDeduction({ kind });
+  inc.deductions.push(d);
+  return d;
+}
+
+export function removeDeduction(doc, incomeId, deductionId) {
+  const inc = doc.income.find((i) => i.id === incomeId);
+  inc.deductions = inc.deductions.filter((d) => d.id !== deductionId);
 }

@@ -252,7 +252,7 @@ export function completionCard(ctx, s) {
 export function incomeStatementCard(ctx, s) {
   const st = s.lenses.incomeStatement;
   const row = (label, m, a, cls, fmt = money) => h('tr', { class: cls || '' }, h('td', {}, label), h('td', { class: 'num' }, fmt(m)), h('td', { class: 'num' }, fmt(a)));
-  const typeNames = { w2: 'W-2 pay', '1099': '1099 pay', side: 'Side income', unemployment: 'Unemployment', 'not-taxable': 'Not taxable' };
+  const typeNames = { w2: 'W-2 pay', '1099': '1099 pay', side: 'Side income', unemployment: 'Unemployment', family: 'Family support', 'not-taxable': 'Not taxable' };
   return card(ctx, {
     id: 'statement', title: 'Personal income statement',
     extra: h('div', { class: 'table-wrap' }, h('table', { class: 'budget' },

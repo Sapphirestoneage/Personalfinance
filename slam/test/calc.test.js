@@ -49,7 +49,7 @@ test('1099 estimate: self-employment tax, half deducted, nothing withheld', () =
   // gross 40,000: SE base 36,940; SE tax 36,940 x 15.3% = 5,651.82
   // AGI 40,000 - 2,825.91 = 37,174.09; taxable 21,074.09
   // income tax 1,240 + 8,674.09 x 12% = 2,280.8908; take-home 40,000 - 2,280.8908 - 5,651.82 = 32,067.2892
-  const r = estimateAnnualTax({ gross: 40000, pretax: 0, type: '1099', filingStatus: 'single', stdDeduction: 16100 }, refs.tax);
+  const r = estimateAnnualTax({ gross: 40000, type: '1099', filingStatus: 'single', stdDeduction: 16100 }, refs.tax);
   assert.ok(near(r.seTax, 5651.82));
   assert.ok(near(r.incomeTax, 2280.89));
   assert.ok(near(r.takeHome, 32067.29));
@@ -59,17 +59,17 @@ test('1099 estimate: self-employment tax, half deducted, nothing withheld', () =
 
 test('unemployment: income tax but no FICA; not-taxable: none', () => {
   // 20,000 - 16,100 = 3,900 taxable x 10% = 390
-  const u = estimateAnnualTax({ gross: 20000, pretax: 0, type: 'unemployment', filingStatus: 'single', stdDeduction: 16100 }, refs.tax);
+  const u = estimateAnnualTax({ gross: 20000, type: 'unemployment', filingStatus: 'single', stdDeduction: 16100 }, refs.tax);
   assert.equal(u.takeHome, 19610);
   assert.equal(u.fica + u.seTax, 0);
-  const n = estimateAnnualTax({ gross: 12000, pretax: 0, type: 'not-taxable', filingStatus: 'single', stdDeduction: 16100 }, refs.tax);
+  const n = estimateAnnualTax({ gross: 12000, type: 'not-taxable', filingStatus: 'single', stdDeduction: 16100 }, refs.tax);
   assert.equal(n.takeHome, 12000);
 });
 
 test('standard deduction is used once: a known paycheck uses it before a gross-only source', () => {
   const d = newHousehold('Two jobs');
-  d.income.push({ id: 'a', type: 'w2', label: 'Main', payFrequency: 'monthly', takeHome: v(3000), gross: makeValue(), pretaxRetirement: makeValue(), hoursPerWeek: null, state: 'active' });
-  d.income.push({ id: 'b', type: 'unemployment', label: 'Second', payFrequency: 'monthly', takeHome: makeValue(), gross: v(12000, 'year'), pretaxRetirement: makeValue(), hoursPerWeek: null, state: 'active' });
+  d.income.push({ id: 'a', type: 'w2', label: 'Main', payFrequency: 'monthly', takeHome: v(3000), gross: makeValue(), deductions: [], hoursPerWeek: null, state: 'active' });
+  d.income.push({ id: 'b', type: 'unemployment', label: 'Second', payFrequency: 'monthly', takeHome: makeValue(), gross: v(12000, 'year'), deductions: [], hoursPerWeek: null, state: 'active' });
   const inc = incomeSummary(d, refs.tax);
   // second source gets no deduction: 12,000 x 10% = 1,200 tax -> 10,800 a year = 900 a month
   assert.equal(inc.sources[1].takeHomeMonthly, 900);
@@ -174,7 +174,7 @@ test('a brand new household computes without errors and points at take-home firs
 
 test('since last time compares with the latest stored snapshot', () => {
   const d = newHousehold('Since');
-  d.income.push({ id: 'a', type: 'w2', label: 'Job', payFrequency: 'monthly', takeHome: v(3000), gross: makeValue(), pretaxRetirement: makeValue(), hoursPerWeek: null, state: 'active' });
+  d.income.push({ id: 'a', type: 'w2', label: 'Job', payFrequency: 'monthly', takeHome: v(3000), gross: makeValue(), deductions: [], hoursPerWeek: null, state: 'active' });
   d.snapshots.push({ date: '2026-08-01', takeHome: 2500, spending: null, surplus: null, savingsRate: null, blindSpot: null, completion: 0 });
   const s = buildSummary(d, refs);
   assert.equal(s.sinceLast.takeHome, 500);
@@ -196,7 +196,7 @@ test('blind guess round compares against the original estimate and the actual', 
 
 test('estimate and dream "left over" for the running total', () => {
   const d = newHousehold('Left');
-  d.income.push({ id: 'a', type: 'w2', label: 'Job', payFrequency: 'monthly', takeHome: v(3000), gross: makeValue(), pretaxRetirement: makeValue(), hoursPerWeek: null, state: 'active' });
+  d.income.push({ id: 'a', type: 'w2', label: 'Job', payFrequency: 'monthly', takeHome: v(3000), gross: makeValue(), deductions: [], hoursPerWeek: null, state: 'active' });
   d.noDebts = true;
   findCategory(d, 'housing').estimate = v(1200);
   findCategory(d, 'savings').estimate = v(300);
@@ -204,4 +204,78 @@ test('estimate and dream "left over" for the running total', () => {
   const t = buildSummary(d, refs).totals;
   assert.equal(t.estimateLeft, 1500); // 3,000 - (1,200 + 0 debt) - 300
   assert.equal(t.dreamLeft, 2600); // 3,000 - (400 + 0 debt); no savings dream
+});
+
+test('hourly pay: gross from rate x hours, take-home guess, and pay in every unit', () => {
+  // $25 an hour x 35 hours x 52 weeks = 45,500 a year = 3,791.666667 a month; biweekly paycheck 45,500 / 26 = 1,750.00
+  // tax: 45,500 - 16,100 = 29,400 taxable -> 1,240 + 17,000 x 12% = 2,040 -> 3,280; FICA 45,500 x 7.65% = 3,480.75
+  // take-home 45,500 - 3,280 - 3,480.75 = 38,739.25 a year = 3,228.270833 a month; paycheck 38,739.25 / 26 = 1,489.971154
+  // hours 35 x 52 = 1,820 a year -> take-home per hour 38,739.25 / 1,820 = 21.285302; gross per hour 25
+  const d = newHousehold('Hourly');
+  d.income.push({ id: 'h', type: 'w2', label: 'Yedei Chesed', payFrequency: 'biweekly', payBasis: 'hourly', hourlyRate: v(25), takeHome: makeValue(), gross: makeValue(), deductions: [], hoursPerWeek: 35, state: 'active' });
+  const s = incomeSummary(d, refs.tax).sources[0];
+  assert.equal(s.grossFrom, 'hourly');
+  assert.ok(near(s.grossAnnual, 45500));
+  assert.ok(near(s.grossMonthly, 3791.67));
+  assert.ok(near(s.grossPerPaycheck, 1750));
+  assert.equal(s.grossPerHour, 25);
+  assert.equal(s.takeHomeStatus, 'guess');
+  assert.ok(near(s.takeHomeAnnual, 38739.25));
+  assert.ok(near(s.takeHomeMonthly, 3228.27));
+  assert.ok(near(s.takeHomePerPaycheck, 1489.97));
+  assert.ok(near(s.takeHomePerHour, 21.285302, 6));
+});
+
+test('hourly pay without hours gives no gross (empty, not zero)', () => {
+  const d = newHousehold('No hours');
+  d.income.push({ id: 'h', type: 'w2', label: 'Job', payFrequency: 'weekly', payBasis: 'hourly', hourlyRate: v(20), takeHome: makeValue(), gross: makeValue(), deductions: [], hoursPerWeek: null, state: 'active' });
+  assert.equal(incomeSummary(d, refs.tax).sources[0].grossMonthly, null);
+});
+
+test('family support is not taxed: gross 3,600 a year -> take-home 300 a month', () => {
+  const d = newHousehold('Family');
+  d.income.push({ id: 'f', type: 'family', label: 'Parents', payFrequency: 'monthly', takeHome: makeValue(), gross: v(3600, 'year'), deductions: [], hoursPerWeek: null, state: 'active' });
+  const s = incomeSummary(d, refs.tax).sources[0];
+  assert.equal(s.takeHomeMonthly, 300);
+  assert.equal(s.taxMonthly, 0);
+});
+
+test('paycheck deductions: 401(k) as 5% of gross, health per paycheck, transit per month', () => {
+  // gross: $25 x 35 h x 52 = 45,500 a year (3,791.666667 a month), paid every two weeks (26 paychecks)
+  // 401(k) 5% = 2,275 a year = 189.583333 a month = 87.50 a paycheck (lowers income tax only)
+  // health 80 a paycheck = 2,080 a year (lowers income tax and FICA)
+  // transit 60 a month = 720 a year = 27.692308 a paycheck (lowers income tax and FICA)
+  // all deductions 2,275 + 2,080 + 720 = 5,075
+  // income tax: 45,500 - 5,075 = 40,425; - 16,100 = 24,325 taxable -> 1,240 + 11,925 x 12% = 2,671
+  // FICA: (45,500 - 2,080 - 720) = 42,700 x 7.65% = 3,266.55
+  // take-home: 45,500 - 5,075 - 2,671 - 3,266.55 = 34,487.45 a year = 2,873.954167 a month = 1,326.440385 a paycheck
+  // take-home per hour: 34,487.45 / 1,820 = 18.949148
+  const d = newHousehold('Deductions');
+  d.income.push({ id: 'h', type: 'w2', label: 'Yedei Chesed', payFrequency: 'biweekly', payBasis: 'hourly', hourlyRate: v(25), takeHome: makeValue(), gross: makeValue(), hoursPerWeek: 35, state: 'active',
+    deductions: [
+      { id: 'r', kind: 'retirement', label: '', mode: 'percent', percent: 5, amount: makeValue(), pretax: true },
+      { id: 'hl', kind: 'health', label: '', mode: 'amount', percent: null, amount: v(80, 'paycheck'), pretax: true },
+      { id: 't', kind: 'transportation', label: '', mode: 'amount', percent: null, amount: v(60, 'month'), pretax: true }] });
+  const s = incomeSummary(d, refs.tax).sources[0];
+  const ret = s.deductions.find((x) => x.id === 'r');
+  assert.ok(near(ret.annual, 2275));
+  assert.ok(near(ret.monthly, 189.58));
+  assert.ok(near(ret.perPaycheck, 87.5));
+  assert.equal(ret.status, 'computed');
+  assert.ok(near(s.deductions.find((x) => x.id === 't').perPaycheck, 27.69));
+  assert.ok(near(s.deductionsAnnual, 5075));
+  assert.ok(near(s.takeHomeAnnual, 34487.45));
+  assert.ok(near(s.takeHomeMonthly, 2873.95));
+  assert.ok(near(s.takeHomePerPaycheck, 1326.44));
+  assert.ok(near(s.takeHomePerHour, 18.949148, 6));
+  assert.ok(near(incomeSummary(d, refs.tax).retirementDeductions, 189.58));
+});
+
+test('a % deduction with no gross pay stays empty, not zero', () => {
+  const d = newHousehold('No gross');
+  d.income.push({ id: 'a', type: 'w2', label: 'Job', payFrequency: 'monthly', takeHome: v(3000), gross: makeValue(), hoursPerWeek: null, state: 'active',
+    deductions: [{ id: 'r', kind: 'retirement', label: '', mode: 'percent', percent: 6, amount: makeValue(), pretax: true }] });
+  const s = incomeSummary(d, refs.tax).sources[0];
+  assert.equal(s.deductions[0].monthly, null);
+  assert.equal(s.deductionsMissing, 1);
 });

@@ -101,7 +101,7 @@ export function roughList(doc) {
     if (i.state === 'archived') continue;
     check(i.label + ': take-home', ['income', i.id, 'takeHome'], i.takeHome);
     check(i.label + ': gross', ['income', i.id, 'gross'], i.gross);
-    check(i.label + ': pre-tax retirement', ['income', i.id, 'pretaxRetirement'], i.pretaxRetirement);
+    for (const d of i.deductions || []) if (d.mode === 'amount') check(i.label + ': ' + (d.label || d.kind) + ' deduction', ['income', i.id, 'deductions', d.id, 'amount'], d.amount);
   }
   for (const c of doc.categories) {
     if (c.state === 'archived') continue;
