@@ -14,6 +14,8 @@ import { renderBudget } from './screens/budget.js';
 import { renderAnalyze } from './screens/analyze.js';
 import { renderTransactions } from './screens/fill-transactions.js';
 import { transactionCards } from './charts/tx-charts.js';
+import { renderNextStage } from './screens/fill-next-stage.js';
+import { nextStageCards } from './charts/next-charts.js';
 
 const SCREENS = [['clients', 'Clients'], ['fill', 'Fill in'], ['budget', 'Budget'], ['analyze', 'Analyze']];
 const root = document.getElementById('app');
@@ -67,8 +69,8 @@ const ctx = {
   },
   rerender: () => queueRender(),
   // Transactions live inside Fill in and Analyze, so there are still four screens.
-  fillExtras: [{ id: 'transactions', label: '6 Transactions', render: renderTransactions }],
-  analyzeExtras: [['transactions', 'Transactions', (c, s) => transactionCards(c, s)]]
+  fillExtras: [{ id: 'transactions', label: '6 Transactions', render: renderTransactions }, { id: 'next', label: '7 Next stage', render: renderNextStage }],
+  analyzeExtras: [['transactions', 'Transactions', (c, s) => transactionCards(c, s)], ['next', 'Next stage', (c, s) => nextStageCards(c, s)]]
 };
 
 store.subscribe((doc, label) => {

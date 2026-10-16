@@ -1,7 +1,7 @@
 // Small structural changes to a household draft (used inside store.update).
 // No math here: just finding things and adding or moving them.
 
-import { newLine, newCategory, newIncome, newDebt, newDeduction, EVERYTHING_CATEGORY_ID } from './schema.js';
+import { newLine, newCategory, newIncome, newDebt, newDeduction, newNextStage, newNextStageItem, EVERYTHING_CATEGORY_ID } from './schema.js';
 
 export function findCategory(doc, catId) {
   return doc.categories.find((c) => c.id === catId) || null;
@@ -142,4 +142,22 @@ export function addDeduction(doc, incomeId, kind) {
 export function removeDeduction(doc, incomeId, deductionId) {
   const inc = doc.income.find((i) => i.id === incomeId);
   inc.deductions = inc.deductions.filter((d) => d.id !== deductionId);
+}
+
+// Next stage: start one, add or remove one-off costs, cost changes, and measures.
+export function startNextStage(doc, metrics) {
+  doc.nextStage = newNextStage(metrics);
+  return doc.nextStage;
+}
+
+export function addNextStageItem(doc, list, label) {
+  const item = list === 'metrics'
+    ? { id: newNextStageItem().id, label: label || 'New measure', now: null, next: null, better: 'higher' }
+    : newNextStageItem(label);
+  doc.nextStage[list].push(item);
+  return item;
+}
+
+export function removeNextStageItem(doc, list, id) {
+  doc.nextStage[list] = doc.nextStage[list].filter((x) => x.id !== id);
 }

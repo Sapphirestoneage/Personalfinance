@@ -135,6 +135,27 @@ export function newDeduction(fields = {}) {
   };
 }
 
+// Next stage: one drastic change (new job, school, a move), its costs, and the
+// measures it should improve. Metrics are [label, better] pairs ('higher' or 'lower').
+export function newNextStage(metrics = []) {
+  return {
+    name: '',
+    takeHome: makeValue(null, { cadence: 'month' }),
+    hoursPerWeek: null,
+    transitionMonths: null,
+    transitionTakeHome: makeValue(null, { cadence: 'month' }),
+    oneOffCosts: [],
+    costChanges: [],
+    laterTakeHome: makeValue(null, { cadence: 'month' }),
+    laterAfterMonths: null,
+    metrics: metrics.map(([label, better]) => ({ id: newId('met'), label, now: null, next: null, better }))
+  };
+}
+
+export function newNextStageItem(label) {
+  return { id: newId('ns'), label: label || '', amount: makeValue(null, { cadence: 'month' }) };
+}
+
 export function newDebt(fields = {}) {
   return {
     id: fields.id || newId('debt'),
@@ -177,6 +198,7 @@ export function newHousehold(name, now = new Date()) {
     merchantMemory: {},
     snapshots: [],
     blindRounds: [],
+    nextStage: null,
     settings: { singleTotal: false, benchmarkSource: 'eli', lens: 'dollars' },
     passesSeen: []
   };
