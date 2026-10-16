@@ -62,7 +62,7 @@ columns. Nothing leaves the browser. The Jordan demo comes with two sample files
 1. **Clients**: client list, new client, open, export, import.
 2. **Fill in**: guided passes (Gut, Basics, Rough, Dream, Actual, Transactions import and review).
 3. **Budget**: the main view. Everything important without clicking.
-4. **Analyze**: every chart and lens, each with a one-line reading, and **Review and plan**: a month's actuals next to next month's plan, line by line, with % of income, % of spending, and happiness. Adjust, keep, cut, or change each line, tick it off, and carry the plan into the next month.
+4. **Analyze**: every chart and lens, each with a one-line reading, and **Review and plan**: a month's actuals next to next month's plan, line by line, with % of income, % of spending, and happiness. Adjust, keep, cut, or change each line, tick it off, and carry the plan into the next month. A Satisfaction and stress card (joy or purpose next to stress) says what to keep more of and what to look at first.
 
 ## House rules
 

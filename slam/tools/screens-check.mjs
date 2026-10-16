@@ -100,6 +100,7 @@ for (const [name, button] of Object.entries(DEMOS)) {
     const net = await page.$$eval('#chart-statement tr.total td', (tds) => tds.map((td) => td.textContent.trim()));
     check(name, 'Income statement net', net[net.length - 2], signedMoney(exp.incomeStatement.net));
   }
+  if (exp.stress) check(name, 'Stress reading', await page.$eval('#chart-stress .reading', (p) => p.textContent), exp.stress.reading);
   if (exp.review) {
     // Review and plan: the live totals and the reading for the month reviewed.
     const rv = await page.$$eval('.review-top .tile', (ts) => ts.map((t) => t.querySelector('.value').textContent.trim()));

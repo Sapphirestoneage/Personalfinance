@@ -157,7 +157,27 @@
 // Checklist: 18 lines to plan (housing 3, food 3, transport 1, health 2, bills 1, fun 3, annual 1, fees 1, giving 1, savings 2); 12 reviewed.
 // READING: frees 227. Cuts held (120 + 68 + 39) / 3,814 = 227 / 3,814 = 0.0595 -> 6% of spending and (3 + 4) / 38 = 0.184 -> 18% of happiness.
 
+// SATISFACTION AND STRESS (S-082). Stress ratings: rent 8, eating out 4, delivery 7, therapy 2, streaming 6, shopping 6, concert 1.
+// Stress points = 8 + 4 + 7 + 2 + 6 + 6 + 1 = 34. % of stress: delivery 7/34 = 0.20588235 -> 0.205882; rent 8/34 = 0.23529412 -> 0.235294;
+//   eating out 4/34 = 0.11764706 -> 0.117647
+// Stress per $100: delivery 7 / 1.20 = 5.83333333 -> 5.833333; rent 8 / 16.00 = 0.5; eating out 4 / 3.40 = 1.17647059 -> 1.176471
+// Net (joy - stress) and lean (3 or more apart): eating out 8 - 4 = +4 more of; delivery 3 - 7 = -4 less of;
+//   streaming 4 - 6 = -2 about even; shopping 5 - 6 = -1 about even; therapy 9 - 2 = +7 more of; concert 9 - 1 = +8 more of;
+//   rent has no joy or purpose rating, so no lean (asked to rate it).
+// Look at first = (stress - joy) x (amount / 100), only where stress is higher:
+//   delivery (7 - 3) x 1.20 = 4.8; shopping (6 - 5) x 2.10 = 2.1; streaming (6 - 4) x 0.68 = 1.36 -> order delivery, shopping, streaming
+// Worth more of, by joy per $100: therapy 7.5, concert 5.625, eating out 2.352941.
+
 export default {
+  stress: {
+    points: 34,
+    // line: [stress, % of stress, stress per $100, net, lean]
+    lines: { delivery: [7, 0.205882, 5.833333, -4, 'less'], rent: [8, 0.235294, 0.5, null, null], 'eating-out': [4, 0.117647, 1.176471, 4, 'more'],
+      subscriptions: [6, null, null, -2, 'even'], therapy: [2, null, null, 7, 'more'], concert: [1, null, null, 8, 'more'] },
+    lookFirst: [['delivery', 4.8], ['shopping', 2.1], ['subscriptions', 1.36]],
+    moreOf: ['therapy', 'concert', 'eating-out'],
+    reading: 'Look at Delivery first: $120 a month that drains more than it gives (stress 7, joy or purpose 3). Then Shopping and Streaming and apps. Worth more of: Therapy, Concert tickets (split with Jo), and Eating out. Rate joy or purpose for Rent to compare.'
+  },
   shares: {
     // category: [% of income (basis), % of spending (basis)]
     categories: { housing: [0.448718, 0.458836], food: [0.215385, 0.220241], transport: [0.033846, 0.034609], debt: [0.076923, 0.078658],

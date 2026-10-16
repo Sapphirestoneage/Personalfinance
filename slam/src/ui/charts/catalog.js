@@ -9,6 +9,7 @@ import { categoryTypeLabel, lineTypeLabel } from '../../store/types.js';
 import { findLine } from '../../store/edits.js';
 import { hbars, donut, sankey, gauge, ring, lines, scatter, stack, shareBar } from './svg.js';
 import { drafttReading } from '../../calc/lenses.js';
+import { stressReading } from '../../calc/happiness.js';
 
 const SERIES = { gut: 'var(--series-gut)', estimate: 'var(--series-estimate)', dream: 'var(--series-dream)', actual: 'var(--series-actual)' };
 const NWS = { needs: 'var(--need)', wants: 'var(--want)', savings: 'var(--save)', unassigned: 'var(--unassigned)' };
@@ -252,6 +253,31 @@ export function gaugesCard(ctx, s) {
       h('div', { class: 'chart', style: 'width:auto', html: gauge({ value: g.housing.value, band: g.housing.band, fmt: pct, caption: 'Housing, band ' + pct(g.housing.band), label: 'Housing share' }) }),
       h('div', { class: 'chart', style: 'width:auto', html: gauge({ value: g.savings.value, band: g.savings.target, good: 'over', fmt: pct, caption: 'Savings rate, target ' + pct(g.savings.target), label: 'Savings rate' }) })),
     reading: 'Housing is ' + pct(g.housing.value) + ' of take-home' + (g.housing.over ? ', above' : ', within') + ' the ' + pct(g.housing.band) + ' band. Saving ' + pct(g.savings.value) + ' including pre-tax' + (g.savings.under ? ', under' : ', at or above') + ' the ' + pct(g.savings.target) + ' target.'
+  });
+}
+
+// Satisfaction and stress (S-082): what to keep more of, what drains, and what to look at first.
+const LEAN = { more: 'More of', less: 'Less of', even: 'About even' };
+export function stressCard(ctx, s) {
+  const st = s.stress;
+  const lines = s.rows.flatMap((r) => r.lines).filter((l) => st.byId[l.id]);
+  const rows = lines.map((l) => ({ l, x: st.byId[l.id] })).sort((a, b) => (b.x.drain || 0) - (a.x.drain || 0) || b.x.stress - a.x.stress);
+  const first = st.lookFirst.slice(0, 3);
+  return card(ctx, {
+    id: 'stress', title: 'Satisfaction and stress',
+    extra: st.ratedCount ? h('div', {},
+      first.length ? h('div', {}, h('div', { class: 'field-label' }, 'Look at first'),
+        h('ol', { class: 'small' }, first.map((x) => h('li', {}, h('b', {}, x.name), ' ', money(x.amount) + ' a month, stress ' + x.stress + ', joy or purpose ' + x.joy)))) : null,
+      st.moreOf.length ? h('div', {}, h('div', { class: 'field-label' }, 'Worth more of'),
+        h('ul', { class: 'plain small' }, st.moreOf.slice(0, 5).map((x) => h('li', {}, h('span', {}, x.name), h('span', { class: 'num' }, x.joyPer100 === null ? 'no cost' : x.joyPer100.toFixed(2) + ' joy per $100'))))) : null,
+      h('div', { class: 'table-wrap' }, h('table', { class: 'budget' },
+        h('thead', {}, h('tr', {}, ['Line', 'Joy or purpose', 'Stress', 'Lean', 'A month', '% of stress', 'Stress per $100'].map((x) => h('th', {}, x)))),
+        h('tbody', {}, rows.map(({ l, x }) => h('tr', {},
+          h('td', {}, l.name), h('td', { class: 'num' }, l.joy === null ? h('span', { class: 'xs muted' }, 'not rated') : String(l.joy)),
+          h('td', { class: 'num' }, String(x.stress)), h('td', {}, x.lean ? LEAN[x.lean] : h('span', { class: 'xs muted' }, 'rate joy too')),
+          h('td', { class: 'num' }, money(l.basis)), h('td', { class: 'num' }, pct(x.share)),
+          h('td', { class: 'num' }, x.per100 === null ? (l.basis === 0 ? 'no cost' : '\u00b7') : x.per100.toFixed(2)))))))) : null,
+    reading: stressReading(st)
   });
 }
 

@@ -55,7 +55,7 @@ function lineSelect(ctx, line, field, list, label) {
   return h('label', { class: 'field' }, h('span', { class: 'lbl' }, label),
     h('select', { 'data-key': 'line:' + line.id + ':' + field, onchange: (e) => ctx.update(label, (d) => {
       let v = e.target.value;
-      if (field === 'joy') v = v === '' ? null : Number(v);
+      if (field === 'joy' || field === 'stress') v = v === '' ? null : Number(v);
       findLine(d, line.id).line[field] = v;
     }) }, options(list, line[field] === null ? '' : String(line[field]))));
 }
@@ -72,7 +72,8 @@ function lineDetail(ctx, cat, line, catHasAnswer) {
     line.path === 'reimbursable' ? h('div', {}, question(ctx, 'Owed back to you', null, ['line', line.id, 'owedBack'], line.owedBack),
       h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: line.owedBackReceived, 'data-key': 'line:' + line.id + ':recv',
         onchange: (e) => ctx.update('Owed back received', (d) => { findLine(d, line.id).line.owedBackReceived = e.target.checked; }) }), 'Received')) : null,
-    lineSelect(ctx, line, 'joy', [['', 'Not rated'], ...Array.from({ length: 10 }, (_, i) => [String(i + 1), String(i + 1)])], 'Joy, 1 to 10: how much does this add to your life?'),
+    lineSelect(ctx, line, 'joy', [['', 'Not rated'], ...Array.from({ length: 10 }, (_, i) => [String(i + 1), String(i + 1)])], 'Joy or purpose, 1 to 10: how much does this add to your life?'),
+    lineSelect(ctx, line, 'stress', [['', 'Not rated'], ...Array.from({ length: 10 }, (_, i) => [String(i + 1), String(i + 1)])], 'Stress, 1 to 10: how much does this drain you?'),
     lineSelect(ctx, line, 'state', STATES, 'State'),
     catHasAnswer ? h('p', { class: 'muted xs' }, 'Estimate and dream for this category were given as one number in the Rough pass.')
       : h('div', {}, question(ctx, 'Line estimate', null, ['line', line.id, 'estimate'], line.estimate, { parts: true }),

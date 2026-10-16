@@ -57,7 +57,8 @@ function joyText(hp, isLine) {
   if (!hp) return h('span', { class: 'muted xs' }, 'not rated');
   const per = hp.per100 === null || hp.per100 === undefined ? (hp.noCost ? 'no cost' : '\u00b7') : hp.per100.toFixed(2) + ' per $100';
   const rating = hp.rating === null || hp.rating === undefined ? '' : (isLine ? hp.rating + '/10' : hp.rating.toFixed(1) + ' avg');
-  return h('span', { title: rating + ', ' + per }, pct(hp.share), isLine ? h('div', { class: 'xs muted' }, rating + ', ' + per) : null);
+  const st = isLine && hp.stressRating ? ', stress ' + hp.stressRating + '/10' : '';
+  return h('span', { title: rating + ', ' + per + st }, pct(hp.share), isLine ? h('div', { class: 'xs muted' }, rating + ', ' + per + st) : null);
 }
 
 function cells(row, unit, summary, isLine, savings) {
@@ -73,7 +74,7 @@ function cells(row, unit, summary, isLine, savings) {
     h('td', { class: 'num' }, L(row.actual), !isLine && row.partial ? h('span', { class: 'muted xs' }, ' partial') : null),
     h('td', { class: 'num' }, pct(row.pct.income.basis)),
     h('td', { class: 'num wide' }, pct(row.pct.spending.basis)),
-    h('td', { class: 'num' }, joyText(row.happiness, isLine)),
+    h('td', { class: 'num' }, joyText(row.happiness && row.stressInfo ? { ...row.happiness, stressRating: row.stressInfo.stress } : row.happiness, isLine)),
     h('td', { class: 'num wide ' + gapClass(g.actualMinusEstimate, savings) }, unit === 'dollars' ? signedMoney(g.actualMinusEstimate) : L(g.actualMinusEstimate)),
     h('td', { class: 'num wide ' + gapClass(g.actualMinusEstimatePct, savings) }, signedPct(g.actualMinusEstimatePct)),
     plan ? h('td', { class: 'num wide' }, unit === 'dollars' ? signedMoney(g.actualMinusPlan) : L(g.actualMinusPlan)) : null,

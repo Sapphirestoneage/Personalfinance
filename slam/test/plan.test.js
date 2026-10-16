@@ -141,3 +141,20 @@ test('migration to schema 4: older files load with no plans', () => {
   assert.equal(Object.keys(maya.plans).length, 2, 'Maya keeps both plans through migration');
   assert.deepEqual(validateHousehold(maya), []);
 });
+
+test('joy or purpose counts savings lines too (the positives); stress is rated on its own', () => {
+  const d = base();
+  findLine(d, 'groceries').line.joy = 6;
+  findLine(d, 'emergency-fund').line.joy = 9;
+  findLine(d, 'emergency-fund').line.actual = makeValue(200);
+  findLine(d, 'eating-out').line.joy = 5;
+  findLine(d, 'eating-out').line.stress = 9;
+  const s = buildSummary(d, refs);
+  // points = 6 + 9 + 5 = 20; emergency fund 9 / 20 = 0.45 of happiness
+  assert.equal(s.happinessPoints, 20);
+  const ef = s.rows.find((r) => r.id === 'savings').lines.find((l) => l.id === 'emergency-fund');
+  assert.equal(ef.happiness.share, 0.45);
+  // eating out: 5 - 9 = -4, less of; drain (9 - 5) x (340 / 100) = 13.6
+  assert.deepEqual([s.stress.byId['eating-out'].lean, s.stress.lookFirst[0].id], ['less', 'eating-out']);
+  assert.ok(Math.abs(s.stress.lookFirst[0].drain - 13.6) < 1e-9);
+});
