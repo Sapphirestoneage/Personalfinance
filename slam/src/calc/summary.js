@@ -11,6 +11,7 @@ import { questionItems, completion, nextSteps, roughList } from './completion.js
 import { availableGuesses, colTierFor, householdSize, guessFor } from './guesses.js';
 import { ratio, minus } from './money.js';
 import { txMonths, detect, topMerchants, weekdaySpending, sizeVsCount } from './tx-analysis.js';
+import { nextStage } from './next-stage.js';
 
 function pctBlock(e, d, a, b, takeHome) {
   return { estimate: ratio(e, takeHome), dream: ratio(d, takeHome), actual: ratio(a, takeHome), basis: ratio(b, takeHome) };
@@ -84,6 +85,7 @@ export function buildSummary(doc, refs) {
     blind: doc.blindRounds.length ? blindCompare(doc, model, doc.blindRounds[doc.blindRounds.length - 1].id) : null
   };
   summary.sinceLast = sinceLast(doc, summary);
+  summary.nextStage = nextStage(doc, income, totals, summary.culprits);
   // Living with family: what housing might cost on your own (an average, labeled guess).
   summary.moveOut = doc.household.livingWith === 'family' ? { guess: guessFor(doc, 'housing', refs), now: totals.housing } : null;
   summary.transactions = doc.transactions.length ? {

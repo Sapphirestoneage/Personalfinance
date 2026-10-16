@@ -70,6 +70,12 @@ export function validateHousehold(doc) {
     if (!r.id) errs.push('blindRounds[' + i + '].id is missing');
     for (const [k, v] of Object.entries(r.estimates || {})) errs.push(...valueErrors(v, 'blindRounds[' + i + '].' + k));
   });
+  if (doc.nextStage) {
+    const ns = doc.nextStage;
+    for (const k of ['takeHome', 'transitionTakeHome', 'laterTakeHome']) errs.push(...valueErrors(ns[k], 'nextStage.' + k));
+    for (const list of ['oneOffCosts', 'costChanges']) (ns[list] || []).forEach((c, i) => errs.push(...valueErrors(c.amount, 'nextStage.' + list + '[' + i + ']')));
+    for (const k of ['hoursPerWeek', 'transitionMonths', 'laterAfterMonths']) if (ns[k] !== null && !(typeof ns[k] === 'number' && ns[k] >= 0)) errs.push('nextStage.' + k + ' must be a number 0 or more, or empty');
+  }
   const KINDS = ['spend', 'transfer', 'card-payment', 'refund', 'reimbursement', 'income', 'fee'];
   (doc.transactions || []).forEach((t, i) => {
     const w = 'transactions[' + i + ']';

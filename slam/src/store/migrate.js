@@ -71,6 +71,14 @@ export function normalizeHousehold(doc) {
   out.blindRounds = (doc.blindRounds || []).map((r) => ({
     ...r, estimates: Object.fromEntries(Object.entries(r.estimates || {}).map(([k, v]) => [k, normalizeValue(v)]))
   }));
+  out.nextStage = doc.nextStage ? {
+    ...doc.nextStage,
+    takeHome: normalizeValue(doc.nextStage.takeHome), transitionTakeHome: normalizeValue(doc.nextStage.transitionTakeHome),
+    laterTakeHome: normalizeValue(doc.nextStage.laterTakeHome),
+    oneOffCosts: (doc.nextStage.oneOffCosts || []).map((c) => ({ ...c, amount: normalizeValue(c.amount) })),
+    costChanges: (doc.nextStage.costChanges || []).map((c) => ({ ...c, amount: normalizeValue(c.amount) })),
+    metrics: doc.nextStage.metrics || []
+  } : null;
   out.schemaVersion = SCHEMA_VERSION;
   return out;
 }

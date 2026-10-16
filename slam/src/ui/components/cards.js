@@ -85,6 +85,10 @@ export function extrasCard(summary) {
   if (summary.moveOut && summary.moveOut.guess) {
     items.push(['If you moved out of the family home', 'about ' + money(summary.moveOut.guess.amount) + ' a month for housing (Guess) vs ' + money(summary.moveOut.now) + ' now']);
   }
+  if (summary.nextStage && summary.nextStage.cashNeeded !== null) {
+    const n = summary.nextStage;
+    items.push(['Next stage: ' + n.name, money(n.cashNeeded) + ' to make the switch' + (n.monthsToSaveWhole !== null ? ', about ' + n.monthsToSaveWhole + ' months of today\'s surplus' : '')]);
+  }
   if (t.roommateWorstCase !== null) items.push(['If you paid the full rent', money(t.roommateWorstCase) + ' housing (' + pct(t.roommateWorstCaseShare) + ' of take-home)']);
   for (const o of summary.oneOffs) items.push(['One-off: ' + o.name + ' (' + o.which + ')', money(o.amount) + ', not in monthly totals']);
   if (summary.sinceLast) {
