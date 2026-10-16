@@ -192,6 +192,25 @@ export function newDebt(fields = {}) {
   };
 }
 
+// Eras: cash that could go toward them, and the chapters in order. Each era
+// starts after the one before it, plus gapMonths of regular life.
+export function newEras() {
+  return { cashNow: makeValue(null, { cadence: 'month' }), list: [] };
+}
+
+export function newEra(fields = {}) {
+  return {
+    id: fields.id || newId('era'),
+    template: fields.template || 'custom',
+    name: fields.name || 'My own era',
+    months: fields.months === undefined ? 6 : fields.months,
+    gapMonths: fields.gapMonths || 0,
+    takeHome: makeValue(), spending: makeValue(),
+    oneTime: makeValue(null, { cadence: 'month' }),
+    note: ''
+  };
+}
+
 export function monthKey(date) {
   return date.toISOString().slice(0, 7);
 }
@@ -227,6 +246,8 @@ export function newHousehold(name, now = new Date()) {
     // Actuals for open months other than the one being worked on: { 'YYYY-MM': { lineId: Value } }.
     monthActuals: {},
     nextStage: null,
+    // Eras: life chapters laid end to end after today's budget (S-067).
+    eras: newEras(),
     // Tags the client made: [{ id, name }]. Lines carry their ids.
     tags: [],
     settings: { singleTotal: false, benchmarkSource: 'eli', lens: 'dollars' },

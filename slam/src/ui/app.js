@@ -16,6 +16,8 @@ import { renderTransactions } from './screens/fill-transactions.js';
 import { transactionCards } from './charts/tx-charts.js';
 import { renderNextStage } from './screens/fill-next-stage.js';
 import { nextStageCards } from './charts/next-charts.js';
+import { eraCards } from './charts/era-charts.js';
+import { renderEras } from './screens/fill-eras.js';
 
 const SCREENS = [['clients', 'Clients'], ['fill', 'Fill in'], ['budget', 'Budget'], ['analyze', 'Analyze']];
 const root = document.getElementById('app');
@@ -69,8 +71,8 @@ const ctx = {
   },
   rerender: () => queueRender(),
   // Transactions live inside Fill in and Analyze, so there are still four screens.
-  fillExtras: [{ id: 'transactions', label: '6 Transactions', render: renderTransactions }, { id: 'next', label: '7 Next stage', render: renderNextStage }],
-  analyzeExtras: [['transactions', 'Transactions', (c, s) => transactionCards(c, s)], ['next', 'Next stage', (c, s) => nextStageCards(c, s)]]
+  fillExtras: [{ id: 'transactions', label: '6 Transactions', render: renderTransactions }, { id: 'next', label: '7 Next stage', render: renderNextStage }, { id: 'eras', label: '8 Eras', render: renderEras }],
+  analyzeExtras: [['transactions', 'Transactions', (c, s) => transactionCards(c, s)], ['next', 'Next stage', (c, s) => nextStageCards(c, s)], ['eras', 'Eras', (c, s) => eraCards(c, s)]]
 };
 
 store.subscribe((doc, label) => {

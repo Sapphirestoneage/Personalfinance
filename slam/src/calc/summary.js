@@ -4,6 +4,7 @@
 import { incomeSummary } from './income.js';
 import { tagTotals } from './tags.js';
 import { lineIdeas, debtsByType } from './breakdown.js';
+import { eraTimeline } from './eras.js';
 import { budgetModel } from './model.js';
 import { budgetTotals } from './totals.js';
 import { gaps, accuracy, blindSpot, culprits, gutCheck, correctionFactors, proofOfCash, blindCompare } from './compare.js';
@@ -89,6 +90,7 @@ export function buildSummary(doc, refs) {
   summary.tags = tagTotals(doc, model);
   summary.lineIdeas = lineIdeas(doc, refs);
   summary.debtsByType = debtsByType(doc);
+  summary.eras = eraTimeline(doc, totals, refs);
   summary.sinceLast = sinceLast(doc, summary);
   summary.nextStage = nextStage(doc, income, totals, summary.culprits);
   // Living with family: what housing might cost on your own (an average, labeled guess).

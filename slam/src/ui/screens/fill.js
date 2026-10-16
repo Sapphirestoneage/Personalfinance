@@ -20,6 +20,7 @@ export function passForPath(path) {
   if (a === 'line' || a === 'debts') return 'actual';
   if (a === 'transactions') return 'transactions';
   if (a === 'nextStage') return 'next';
+  if (a === 'eras') return 'eras';
   return 'rough';
 }
 
@@ -36,7 +37,7 @@ function runningBar(ctx, summary, pass) {
   const take = h('b', {});
   const col = h('b', {});
   const left = h('b', {});
-  if (pass === 'transactions' || pass === 'next') pass = 'actual';
+  if (pass === 'transactions' || pass === 'next' || pass === 'eras') pass = 'actual';
   const colLabel = pass === 'dream' ? 'Dreams' : pass === 'actual' ? 'Spending + savings' : 'Estimates';
   const fill = (s) => {
     const t = s.totals;

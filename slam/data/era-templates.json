@@ -1,0 +1,15 @@
+{
+  "_about": "Ready-made eras (life chapters) for the Eras pass. income and spending are starting points as a share of today's take-home and spending; the client's own numbers replace them. oneTimeHint names typical one-time costs (no amounts). Version 2026.",
+  "version": 2026,
+  "templates": [
+    { "id": "school-abroad", "name": "School in another country", "months": 24, "income": 0, "spending": 0.7, "oneTimeHint": "Tuition, visa, flights, moving" },
+    { "id": "geo-arbitrage", "name": "Geo arbitrage", "months": 12, "income": 1, "spending": 0.55, "oneTimeHint": "Flights, deposits, visa", "about": "Same work, cheaper place" },
+    { "id": "nomad", "name": "Nomading", "months": 6, "income": 0.9, "spending": 0.9, "oneTimeHint": "Gear, flights, travel insurance" },
+    { "id": "long-travel", "name": "Long travel", "months": 3, "income": 0, "spending": 1.1, "oneTimeHint": "Flights, gear, travel insurance" },
+    { "id": "honeymoon", "name": "Honeymoon", "months": 1, "income": 1, "spending": 1, "oneTimeHint": "The trip itself" },
+    { "id": "sabbatical", "name": "Sabbatical", "months": 6, "income": 0, "spending": 0.8, "oneTimeHint": "Health insurance gap, a course" },
+    { "id": "seasonal-work", "name": "Seasonal work", "months": 4, "income": 0.8, "spending": 0.5, "oneTimeHint": "Travel to the job, gear", "about": "Ski resort, farm, park, summer camp; housing is often included" },
+    { "id": "cruises", "name": "Cruises", "months": 1, "income": 1, "spending": 1, "oneTimeHint": "Fares, excursions, flights to port" },
+    { "id": "custom", "name": "My own era", "months": 6, "income": 1, "spending": 1, "oneTimeHint": "Anything paid once" }
+  ]
+}

@@ -3,7 +3,7 @@
 // To change the stored shape: bump SCHEMA_VERSION, add a step to STEPS, and
 // write a compatibility note in DECISIONS.md.
 
-import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt, newDeduction, newCaseOverrides, newWithheld, WITHHELD_KEYS } from './schema.js';
+import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt, newDeduction, newCaseOverrides, newWithheld, WITHHELD_KEYS, newEra } from './schema.js';
 import { normalizeValue, isBlank } from './value.js';
 
 // STEPS[n] turns a version n document into version n + 1.
@@ -91,6 +91,9 @@ export function normalizeHousehold(doc) {
   out.months = doc.months || [];
   // Compatibility: files before per-month actuals have none stored.
   out.monthActuals = Object.fromEntries(Object.entries(doc.monthActuals || {}).map(([k, lines]) => [k, Object.fromEntries(Object.entries(lines).map(([id, v]) => [id, normalizeValue(v)]))]));
+  // Compatibility (S-067): files before eras load with none.
+  const er = doc.eras || {};
+  out.eras = { cashNow: normalizeValue(er.cashNow), list: (er.list || []).map((e) => ({ ...newEra({ id: e.id }), ...e, takeHome: normalizeValue(e.takeHome), spending: normalizeValue(e.spending), oneTime: normalizeValue(e.oneTime) })) };
   // Compatibility: files before tags have none.
   out.tags = (doc.tags || []).map((t) => ({ id: t.id, name: t.name }));
   out.transactions = doc.transactions || [];
