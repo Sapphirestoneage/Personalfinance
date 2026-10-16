@@ -77,7 +77,8 @@ export function newLine(fields = {}) {
     tag: fields.tag || 'planned',
     joy: fields.joy === undefined ? null : fields.joy,
     state: fields.state || 'active',
-    estimate: makeValue(), dream: makeValue(), actual: makeValue(),
+    // dream = short term (this year, or the next step); dreamLong = long term (S-075).
+    estimate: makeValue(), dream: makeValue(), dreamLong: makeValue(), actual: makeValue(),
     owedBack: makeValue(), owedBackReceived: false,
     // The client's own tags (ids from doc.tags), like Subscription or Travel.
     tags: fields.tags || []
@@ -95,7 +96,7 @@ export function newCategory(fields = {}) {
     savings: fields.savings || false,
     tag: fields.tag || 'planned',
     state: fields.state || 'active',
-    estimate: makeValue(), dream: makeValue(),
+    estimate: makeValue(), dream: makeValue(), dreamLong: makeValue(),
     // Broken down in the Rough pass: the estimate comes from the sub-categories (lines).
     split: fields.split || false,
     lines: []

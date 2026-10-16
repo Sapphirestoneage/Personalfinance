@@ -76,7 +76,8 @@ function lineDetail(ctx, cat, line, catHasAnswer) {
     lineSelect(ctx, line, 'state', STATES, 'State'),
     catHasAnswer ? h('p', { class: 'muted xs' }, 'Estimate and dream for this category were given as one number in the Rough pass.')
       : h('div', {}, question(ctx, 'Line estimate', null, ['line', line.id, 'estimate'], line.estimate, { parts: true }),
-        question(ctx, 'Line dream', null, ['line', line.id, 'dream'], line.dream, { parts: true })));
+        question(ctx, 'Line dream, short term', null, ['line', line.id, 'dream'], line.dream, { parts: true }),
+        question(ctx, 'Line dream, long term', null, ['line', line.id, 'dreamLong'], line.dreamLong, { parts: true })));
 }
 
 function categoryCard(ctx, summary, cat) {
@@ -86,7 +87,7 @@ function categoryCard(ctx, summary, cat) {
     return h('div', { class: 'card' }, h('div', { class: 'spread' }, h('h3', {}, catName(ctx, cat)), statusChip('not-for-me')),
       h('button', { class: 'btn small ghost', onclick: () => ctx.goToField(['categories', cat.id, 'estimate']) }, 'Change in Rough pass'));
   }
-  const catHasAnswer = cat.estimate.status !== null || cat.dream.status !== null;
+  const catHasAnswer = cat.estimate.status !== null || cat.dream.status !== null || cat.dreamLong.status !== null;
   const live = cat.lines.filter((l) => l.state !== 'archived');
   const archived = cat.lines.filter((l) => l.state === 'archived');
   return h('div', { class: 'card' },

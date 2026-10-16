@@ -27,7 +27,7 @@ let refs = null;
 let renderQueued = false;
 
 const ui = {
-  screen: 'clients', pass: 'gut', focusPath: null, focusKey: null, expanded: new Set(), sort: { key: null, dir: -1 },
+  screen: 'clients', pass: 'gut', focusPath: null, focusKey: null, dreamTerm: 'short', expanded: new Set(), sort: { key: null, dir: -1 },
   lens: 'dollars', monthView: 'current', blind: false, units: {}, previewHandler: null, toast: null,
   section: null
 };
@@ -48,6 +48,8 @@ const ctx = {
   },
   goToField(path) {
     ui.pass = passForPath(path);
+    if (path.includes('dreamLong')) ui.dreamTerm = 'long';
+    else if (path.includes('dream')) ui.dreamTerm = 'short';
     ui.focusPath = path;
     ctx.go('fill');
   },

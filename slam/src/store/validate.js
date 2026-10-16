@@ -67,6 +67,7 @@ export function validateHousehold(doc) {
     if (c.split !== undefined && typeof c.split !== 'boolean') errs.push(w + '.split must be true or false');
     if (c.type !== undefined) oneOf(errs, CATEGORY_TYPE_IDS, c.type, w + '.type');
     errs.push(...valueErrors(c.estimate, w + '.estimate'), ...valueErrors(c.dream, w + '.dream'));
+    if (c.dreamLong !== undefined) errs.push(...valueErrors(c.dreamLong, w + '.dreamLong'));
     (c.lines || []).forEach((l, j) => {
       const lw = w + '.lines[' + j + '] ' + l.id;
       seen(l.id, lw);
@@ -77,6 +78,7 @@ export function validateHousehold(doc) {
       oneOf(errs, ITEM_STATES, l.state, lw + '.state');
       if (l.joy !== null && !(Number.isInteger(l.joy) && l.joy >= 1 && l.joy <= 10)) errs.push(lw + '.joy must be 1 to 10 or empty');
       for (const k of ['estimate', 'dream', 'actual', 'owedBack']) errs.push(...valueErrors(l[k], lw + '.' + k));
+      if (l.dreamLong !== undefined) errs.push(...valueErrors(l.dreamLong, lw + '.dreamLong'));
       (l.tags || []).forEach((t) => { if (!tagIds.has(t)) errs.push(lw + '.tags: unknown tag ' + t); });
     });
   });

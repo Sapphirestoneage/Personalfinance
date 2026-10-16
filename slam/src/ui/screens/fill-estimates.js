@@ -94,7 +94,12 @@ export function renderEstimates(ctx, summary, key) {
           ctx.rerender();
         } }, 'Blind guess (revisit)')))
     : h('div', { class: 'card' }, h('h2', {}, 'Dream: what would you like to spend?'),
-      h('p', { class: 'muted small' }, 'No judgment. What would feel right for each?'));
+      h('div', { class: 'toggle', role: 'group', 'aria-label': 'Dream term' },
+        h('button', { 'aria-pressed': key === 'dream' ? 'true' : 'false', 'data-key': 'dream-short', onclick: () => { ctx.ui.dreamTerm = 'short'; ctx.rerender(); } }, 'Short term'),
+        h('button', { 'aria-pressed': key === 'dreamLong' ? 'true' : 'false', 'data-key': 'dream-long', onclick: () => { ctx.ui.dreamTerm = 'long'; ctx.rerender(); } }, 'Long term')),
+      h('p', { class: 'muted small' }, key === 'dream'
+        ? 'Short term: this year, or the next step. No judgment. What would feel right for each?'
+        : 'Long term: everything after the next step. The life you are building toward. No judgment.'));
 
   const total = ev && doc.settings.singleTotal ? h('div', { class: 'card' },
     question(ctx, 'One total for everything', ev.carved ? 'Split so far: ' + money(ev.carved) + '. Left in the total: ' + money(ev.estimate) + (ev.overSplit ? '. The split is bigger than the total.' : '') : 'Split into categories below any time; the total is kept.',
@@ -133,8 +138,11 @@ export function renderEstimates(ctx, summary, key) {
     }
     const hint = isRough
       ? null
-      : (r.estimate !== null ? 'Estimate ' + money(r.estimate) + (r.pctTakeHome.estimate !== null ? ' (' + pct(r.pctTakeHome.estimate) + ' of take-home)' : '') : null);
-    const fromLines = (isRough ? r.estimateFrom : r.dreamFrom) === 'lines' || (isRough && cat.split && cat.estimate.amount === null && cat.estimate.status !== 'not-for-me');
+      : [r.estimate !== null ? 'Estimate ' + money(r.estimate) + (r.pctTakeHome.estimate !== null ? ' (' + pct(r.pctTakeHome.estimate) + ' of take-home)' : '') : null,
+        key === 'dreamLong' && r.dream !== null ? 'Short-term dream ' + money(r.dream) : null].filter(Boolean).join('. ') || null;
+    // Long term follows how the category is already given: line by line if its estimate or short-term dream is.
+    const longByLines = key === 'dreamLong' && cat.dreamLong.amount === null && cat.dreamLong.status !== 'not-for-me' && (r.estimateFrom === 'lines' || r.dreamFrom === 'lines');
+    const fromLines = longByLines || (isRough ? r.estimateFrom : r[key + 'From']) === 'lines' || (isRough && cat.split && cat.estimate.amount === null && cat.estimate.status !== 'not-for-me');
     if (fromLines) {
       // Already given line by line: show it, never ask it a second time.
       // Given line by line: each line is asked here (never a second category number).

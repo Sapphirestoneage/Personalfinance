@@ -16,7 +16,7 @@ export function passForPath(path) {
   const [a, , c] = path;
   if (a === 'gut') return 'gut';
   if (a === 'income' || a === 'profile' || a === 'household') return 'basics';
-  if (a === 'categories') return c === 'dream' ? 'dream' : 'rough';
+  if (a === 'categories') return c === 'dream' || c === 'dreamLong' ? 'dream' : 'rough';
   if (a === 'line' || a === 'debts') return 'actual';
   if (a === 'transactions') return 'transactions';
   if (a === 'nextStage') return 'next';
@@ -38,11 +38,12 @@ function runningBar(ctx, summary, pass) {
   const col = h('b', {});
   const left = h('b', {});
   if (pass === 'transactions' || pass === 'next' || pass === 'eras') pass = 'actual';
-  const colLabel = pass === 'dream' ? 'Dreams' : pass === 'actual' ? 'Spending + savings' : 'Estimates';
+  const colLabel = pass === 'dream' ? (ctx.ui.dreamTerm === 'long' ? 'Long-term dreams' : 'Short-term dreams') : pass === 'actual' ? 'Spending + savings' : 'Estimates';
   const fill = (s) => {
     const t = s.totals;
     take.textContent = money(t.takeHome);
-    if (pass === 'dream') { col.textContent = money(t.dreamOutflow); left.textContent = money(t.dreamLeft); }
+    if (pass === 'dream' && ctx.ui.dreamTerm === 'long') { col.textContent = money(t.dreamLongOutflow); left.textContent = money(t.dreamLongLeft); }
+    else if (pass === 'dream') { col.textContent = money(t.dreamOutflow); left.textContent = money(t.dreamLeft); }
     else if (pass === 'actual') { col.textContent = money(t.outflow); left.textContent = money(t.surplus); }
     else { col.textContent = money(t.estimateOutflow); left.textContent = money(t.estimateLeft); }
   };
@@ -64,7 +65,7 @@ export function renderFill(ctx, summary) {
     gut: () => renderGut(ctx),
     basics: () => renderBasics(ctx, summary),
     rough: () => renderEstimates(ctx, summary, 'estimate'),
-    dream: () => renderEstimates(ctx, summary, 'dream'),
+    dream: () => renderEstimates(ctx, summary, ctx.ui.dreamTerm === 'long' ? 'dreamLong' : 'dream'),
     actual: () => renderActual(ctx, summary)
   }[pass] || (() => extra.find((x) => x.id === pass).render(ctx, summary));
 

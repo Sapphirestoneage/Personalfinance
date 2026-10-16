@@ -92,11 +92,11 @@ export function normalizeHousehold(doc) {
   });
   out.debts = (doc.debts || []).map((d) => withDefaults(newDebt({ id: d.id }), d, ['balance', 'apr', 'minimum', 'dueDay']));
   out.categories = (doc.categories || base.categories).map((c) => {
-    const cat = withDefaults(newCategory({ id: c.id }), c, ['estimate', 'dream']);
+    const cat = withDefaults(newCategory({ id: c.id }), c, ['estimate', 'dream', 'dreamLong']);
     // Compatibility (S-068): files before types get them from the default ids, else from the name.
     if (!c.type) cat.type = CATEGORY_TYPE_IDS.includes(c.id) ? c.id : 'other';
     cat.lines = (c.lines || []).map((l) => {
-      const line = withDefaults(newLine({ id: l.id, savings: cat.savings, tag: cat.tag }), l, ['estimate', 'dream', 'actual', 'owedBack']);
+      const line = withDefaults(newLine({ id: l.id, savings: cat.savings, tag: cat.tag }), l, ['estimate', 'dream', 'dreamLong', 'actual', 'owedBack']);
       if (!l.type) line.type = DEFAULT_LINE_TYPES[l.id] || guessLineType(line.name, cat.type);
       return line;
     });
