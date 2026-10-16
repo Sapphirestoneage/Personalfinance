@@ -148,12 +148,23 @@ export function newNextStage(metrics = []) {
     costChanges: [],
     laterTakeHome: makeValue(null, { cadence: 'month' }),
     laterAfterMonths: null,
-    metrics: metrics.map(([label, better]) => ({ id: newId('met'), label, now: null, next: null, better }))
+    metrics: metrics.map(([label, better]) => ({ id: newId('met'), label, now: null, next: null, better })),
+    // Savings the client could put toward the switch (for runway).
+    cashOnHand: makeValue(null, { cadence: 'one-off' }),
+    // Disaster and dream lenses: only what differs from likely; blanks follow likely.
+    cases: { disaster: newCaseOverrides(), dream: newCaseOverrides() }
+  };
+}
+
+export function newCaseOverrides() {
+  return {
+    takeHome: makeValue(null, { cadence: 'month' }), transitionTakeHome: makeValue(null, { cadence: 'month' }),
+    laterTakeHome: makeValue(null, { cadence: 'month' }), hoursPerWeek: null, transitionMonths: null, laterAfterMonths: null
   };
 }
 
 export function newNextStageItem(label) {
-  return { id: newId('ns'), label: label || '', amount: makeValue(null, { cadence: 'month' }) };
+  return { id: newId('ns'), label: label || '', amount: makeValue(null, { cadence: 'month' }), disaster: makeValue(null, { cadence: 'month' }), dream: makeValue(null, { cadence: 'month' }) };
 }
 
 export function newDebt(fields = {}) {

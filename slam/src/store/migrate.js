@@ -3,7 +3,7 @@
 // To change the stored shape: bump SCHEMA_VERSION, add a step to STEPS, and
 // write a compatibility note in DECISIONS.md.
 
-import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt, newDeduction } from './schema.js';
+import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt, newDeduction, newCaseOverrides } from './schema.js';
 import { normalizeValue, isBlank } from './value.js';
 
 // STEPS[n] turns a version n document into version n + 1.
@@ -71,14 +71,26 @@ export function normalizeHousehold(doc) {
   out.blindRounds = (doc.blindRounds || []).map((r) => ({
     ...r, estimates: Object.fromEntries(Object.entries(r.estimates || {}).map(([k, v]) => [k, normalizeValue(v)]))
   }));
-  out.nextStage = doc.nextStage ? {
-    ...doc.nextStage,
-    takeHome: normalizeValue(doc.nextStage.takeHome), transitionTakeHome: normalizeValue(doc.nextStage.transitionTakeHome),
-    laterTakeHome: normalizeValue(doc.nextStage.laterTakeHome),
-    oneOffCosts: (doc.nextStage.oneOffCosts || []).map((c) => ({ ...c, amount: normalizeValue(c.amount) })),
-    costChanges: (doc.nextStage.costChanges || []).map((c) => ({ ...c, amount: normalizeValue(c.amount) })),
-    metrics: doc.nextStage.metrics || []
-  } : null;
+  out.nextStage = doc.nextStage ? normalizeNextStage(doc.nextStage) : null;
   out.schemaVersion = SCHEMA_VERSION;
   return out;
+}
+
+// Compatibility: plans saved before the three lenses load with empty disaster
+// and dream overrides (so both follow likely) and no cash on hand.
+function normalizeNextStage(ns) {
+  const item = (c) => ({ ...c, amount: normalizeValue(c.amount), disaster: normalizeValue(c.disaster), dream: normalizeValue(c.dream) });
+  const cases = {};
+  for (const id of ['disaster', 'dream']) {
+    const given = (ns.cases && ns.cases[id]) || {};
+    const base = newCaseOverrides();
+    cases[id] = { ...base, ...given, takeHome: normalizeValue(given.takeHome), transitionTakeHome: normalizeValue(given.transitionTakeHome), laterTakeHome: normalizeValue(given.laterTakeHome) };
+  }
+  return {
+    ...ns,
+    takeHome: normalizeValue(ns.takeHome), transitionTakeHome: normalizeValue(ns.transitionTakeHome), laterTakeHome: normalizeValue(ns.laterTakeHome),
+    cashOnHand: ns.cashOnHand ? normalizeValue(ns.cashOnHand) : { ...normalizeValue(null), cadence: 'one-off' },
+    oneOffCosts: (ns.oneOffCosts || []).map(item), costChanges: (ns.costChanges || []).map(item),
+    metrics: ns.metrics || [], cases
+  };
 }

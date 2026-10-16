@@ -16,18 +16,31 @@ function yearsMonths(m) {
 export function nextStageCards(ctx, s) {
   const n = s.nextStage;
   if (!n) return [card(ctx, { id: 'next-none', title: 'Next stage', reading: 'Plan a big change in Fill in, pass 7, to see what it would take.' })];
+  const C = n.cases;
+  const LENSES = [['disaster', 'Disaster'], ['likely', 'Likely'], ['dream', 'Dream']];
+  const row = (label, f, cls) => h('tr', {}, h('td', {}, label), LENSES.map(([k]) => {
+    const [text, tone] = f(C[k]);
+    return h('td', { class: 'num ' + (tone || '') + (cls ? ' ' + cls : '') }, text);
+  }));
+  const hasCash = C.likely.cash !== null;
   const need = card(ctx, {
     id: 'next-need', title: 'What you would need: ' + n.name,
-    extra: h('ul', { class: 'plain' },
-      h('li', {}, h('span', {}, 'One-time costs'), h('b', { class: 'num' }, money(n.oneOffs))),
-      n.transitionMonths ? h('li', {}, h('span', {}, n.transitionMonths + ' months of lower pay (' + signedMoney(n.transitionGap) + ' a month)'), h('b', { class: 'num' }, money(n.transitionBurn))) : null,
-      h('li', {}, h('b', {}, 'Cash to make the switch'), h('b', { class: 'num' }, money(n.cashNeeded))),
-      h('li', {}, h('span', {}, 'Each month after the switch'), h('b', { class: 'num ' + (n.next.surplus < 0 ? 'bad' : 'good') }, signedMoney(n.next.surplus))),
-      n.cutNeeded > 0 ? h('li', {}, h('span', {}, 'Cut needed to break even each month'), h('b', { class: 'num bad' }, money(n.cutNeeded))) : null),
-    reading: (n.cashNeeded === null ? 'Fill in take-home after the change (and during the switch) to see the cash needed. '
-      : n.monthsToSaveWhole !== null ? 'Saving today\'s surplus of ' + money(n.now.surplus) + ' a month, you would have it in ' + yearsMonths(n.monthsToSaveWhole) + '. '
-        : 'There is no surplus today to save toward it, so the cash has to come from savings or cuts. ') +
-      (n.cutNeeded > 0 ? (n.ownWordsCovers ? 'Getting back to your own estimates would free ' + money(n.ownWords) + ' a month, enough to cover it.' : 'Getting back to your own estimates frees ' + money(n.ownWords) + ' a month; the rest needs other cuts.') : '')
+    extra: h('div', { class: 'table-wrap' }, h('table', { class: 'budget' },
+      h('thead', {}, h('tr', {}, h('th', {}, ''), LENSES.map(([, l]) => h('th', {}, l)))),
+      h('tbody', {},
+        row('One-time costs', (x) => [money(x.oneOffs)]),
+        row('Lower-pay months', (x) => [x.transitionMonths ? x.transitionMonths + ' x ' + money(Math.max(0, -(x.transitionGap || 0))) : 'none']),
+        row('Cash to make the switch', (x) => [money(x.cashNeeded)]),
+        hasCash ? row('Cash on hand covers it?', (x) => (x.cash.gap === null ? ['\u00b7'] : x.cash.covers ? ['yes, ' + money(x.cash.gap) + ' spare', 'good'] : ['short ' + money(-x.cash.gap), 'bad'])) : null,
+        hasCash ? row('Runway on that cash', (x) => (x.cash.runwayMonths === null ? ['no lean months'] : [x.cash.runwayMonths.toFixed(1) + ' of ' + x.transitionMonths + (x.transitionMonths === 1 ? ' month' : ' months'), x.cash.runwayMonths >= x.transitionMonths ? 'good' : 'bad'])) : null,
+        row('Saving today\'s surplus', (x) => [x.monthsToSaveWhole === null ? 'no surplus' : yearsMonths(x.monthsToSaveWhole)]),
+        row('Each month after', (x) => [signedMoney(x.next.surplus), x.next.surplus < 0 ? 'bad' : 'good']),
+        row('Catches up on money', (x) => [x.path ? (x.path.breakEven ? yearsMonths(x.path.breakEven) : 'not in 10 years') : '\u00b7'])))),
+    reading: (C.disaster.cashNeeded === null || C.likely.cashNeeded === null)
+      ? 'Fill in take-home after the change (and during the switch) to see the cash needed.'
+      : 'Likely needs ' + money(C.likely.cashNeeded) + '; plan for the disaster case of ' + money(C.disaster.cashNeeded) +
+        (hasCash ? (C.disaster.cash.covers ? ', which the cash on hand covers.' : ', ' + money(-C.disaster.cash.gap) + ' more than the cash on hand.') : '.') +
+        (n.cutNeeded > 0 ? ' Likely runs ' + money(n.cutNeeded) + ' short a month' + (n.ownWordsCovers ? '; getting back to your own estimates covers it.' : '.') : '')
   });
 
   const rows = [['Take-home', 'takeHome'], ['Spending and savings', 'outflow'], ['Left over', 'surplus']];
@@ -43,21 +56,23 @@ export function nextStageCards(ctx, s) {
   });
 
   let path = null;
-  if (n.path) {
-    const horizon = n.path.breakEven ? Math.min(120, n.path.breakEven + 12) : 60;
+  if (C.likely.path) {
+    const be = [C.disaster, C.likely, C.dream].map((x) => (x.path ? x.path.breakEven : null)).filter((x) => x !== null);
+    const horizon = be.length ? Math.min(120, Math.max(...be) + 12) : 60;
     const step = horizon > 36 ? 12 : 6;
     const idx = [];
     for (let m = 0; m <= horizon; m += step) idx.push(m);
-    if (n.path.breakEven && !idx.includes(n.path.breakEven)) { idx.push(n.path.breakEven); idx.sort((a, b) => a - b); }
+    const series = [{ name: 'Stay', color: 'var(--chart-1)', values: idx.map((m) => C.likely.path.stay[m]) }];
+    for (const [k, label, color, dashed] of [['disaster', 'Disaster', 'var(--chart-8)', true], ['likely', 'Likely', 'var(--chart-3)', false], ['dream', 'Dream', 'var(--chart-7)', true]]) {
+      if (C[k].path) series.push({ name: label, color, dashed, values: idx.map((m) => C[k].path.change[m]) });
+    }
     path = card(ctx, {
       id: 'next-path', title: 'Stay vs change, money only',
-      svg: lines({ series: [
-        { name: 'Stay', color: 'var(--chart-1)', values: idx.map((m) => n.path.stay[m]) },
-        { name: 'Change', color: 'var(--chart-3)', values: idx.map((m) => n.path.change[m]) }], xs: idx.map((m, i) => (i % 2 && idx.length > 7 && m !== n.path.breakEven ? '' : m === 0 ? 'now' : m % 12 === 0 ? m / 12 + 'y' : m + 'mo')), width: chartWidth(true), fmt: money }),
-      legendItems: [['Stay put', 'var(--chart-1)'], ['Make the change', 'var(--chart-3)']],
-      reading: 'Total saved over time on each path (starting from today\'s numbers). ' + (n.path.breakEven
-        ? 'The change catches up on money after ' + yearsMonths(n.path.breakEven) + '.'
-        : 'On money alone it does not catch up within 10 years, so the other measures have to carry it.')
+      svg: lines({ series, xs: idx.map((m, i) => (i % 2 && idx.length > 7 ? '' : m === 0 ? 'now' : m % 12 === 0 ? m / 12 + 'y' : m + 'mo')), width: chartWidth(true), fmt: money }),
+      legendItems: [['Stay put', 'var(--chart-1)'], ['Disaster', 'var(--chart-8)'], ['Likely', 'var(--chart-3)'], ['Dream', 'var(--chart-7)']],
+      reading: 'Total saved over time on each path, from today\'s numbers. ' + (C.likely.path.breakEven
+        ? 'Likely catches up after ' + yearsMonths(C.likely.path.breakEven) + (C.dream.path && C.dream.path.breakEven ? ', dream after ' + yearsMonths(C.dream.path.breakEven) : '') + (C.disaster.path && !C.disaster.path.breakEven ? '; disaster does not within 10 years.' : '.')
+        : 'Likely does not catch up on money within 10 years, so the other measures have to carry it.')
     });
   }
 

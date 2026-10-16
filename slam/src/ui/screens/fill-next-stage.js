@@ -4,6 +4,8 @@
 
 import { h, options } from '../dom.js';
 import { money } from '../format.js';
+import { makeValue } from '../../store/value.js';
+import { parseAmount } from '../components/value-input.js';
 import { question } from '../components/value-input.js';
 import { startNextStage, addNextStageItem, removeNextStageItem } from '../../store/edits.js';
 import { DEFAULT_METRICS } from '../../calc/next-stage.js';
@@ -19,6 +21,41 @@ function numberField(ctx, label, value, set, key) {
       } }));
 }
 
+// A compact box for the disaster or dream lens. Blank means "same as likely".
+function lensBox(ctx, label, value, likelyText, onSet, key) {
+  const isValue = value && typeof value === 'object';
+  const shown = isValue ? value.amount : value;
+  return h('input', {
+    type: 'text', inputmode: 'decimal', class: 'amount lens', 'aria-label': label + (likelyText ? ' (likely ' + likelyText + ')' : ''), 'data-key': key,
+    placeholder: 'same',
+    value: shown === null || shown === undefined ? '' : String(shown),
+    onchange: (e) => {
+      const n = parseAmount(e.target.value);
+      if (n === undefined) return ctx.toast('That needs a number');
+      ctx.update(label, (d) => onSet(d.nextStage, isValue ? (n === null ? makeValue(null, { cadence: value.cadence }) : makeValue(n, { cadence: value.cadence })) : n));
+    }
+  });
+}
+
+function lensesCard(ctx, ns) {
+  const fmt = (v) => (v && typeof v === 'object' ? (v.amount === null ? '' : money(v.amount)) : v === null || v === undefined ? '' : String(v));
+  const rows = [
+    ['Take-home after the change', 'takeHome'],
+    ['Hours worked a week', 'hoursPerWeek'],
+    ['Months of lower pay', 'transitionMonths'],
+    ['Take-home during those months', 'transitionTakeHome'],
+    ['Later pay could rise to', 'laterTakeHome'],
+    ['...after this many months', 'laterAfterMonths']
+  ];
+  const cell = (c, k, label) => h('td', {}, lensBox(ctx, label + ' (' + c + ')', ns.cases[c][k], fmt(ns[k]), (s, v) => { s.cases[c][k] = v; }, 'lens-' + c + '-' + k));
+  return h('div', { class: 'card' },
+    h('h3', {}, 'Three views: disaster, likely, dream'),
+    h('p', { class: 'muted xs' }, 'Likely is what you entered above, the directionally correct middle. Fill in only what would be different if it goes badly or great; blanks follow likely.'),
+    h('div', { class: 'table-wrap' }, h('table', { class: 'budget lenses' },
+      h('thead', {}, h('tr', {}, ['', 'Disaster', 'Likely', 'Dream'].map((x) => h('th', {}, x)))),
+      h('tbody', {}, rows.map(([label, k]) => h('tr', {}, h('td', {}, label), cell('disaster', k, label), h('td', { class: 'num' }, fmt(ns[k]) || '\u00b7'), cell('dream', k, label)))))));
+}
+
 function itemList(ctx, ns, list, title, hint, addLabel, amountLabel) {
   return h('div', { class: 'card' },
     h('h3', {}, title), h('p', { class: 'muted xs' }, hint),
@@ -26,6 +63,8 @@ function itemList(ctx, ns, list, title, hint, addLabel, amountLabel) {
       h('div', { class: 'q' }, h('input', { type: 'text', value: it.label, placeholder: 'What is it?', 'data-key': 'ns-' + it.id + ':label',
         onchange: (e) => ctx.update('Rename', (d) => { d.nextStage[list].find((x) => x.id === it.id).label = e.target.value; }) })),
       question(ctx, amountLabel, null, ['nextStage', list, it.id, 'amount'], it.amount, { cadence: list !== 'oneOffCosts' }).lastChild,
+      h('div', { class: 'row xs muted' }, 'Disaster', lensBox(ctx, (it.label || 'Item') + ' disaster', it.disaster, it.amount.amount === null ? '' : money(it.amount.amount), (s, v) => { s[list].find((x) => x.id === it.id).disaster = v; }, 'lens-disaster-' + it.id),
+        'Dream', lensBox(ctx, (it.label || 'Item') + ' dream', it.dream, it.amount.amount === null ? '' : money(it.amount.amount), (s, v) => { s[list].find((x) => x.id === it.id).dream = v; }, 'lens-dream-' + it.id)),
       h('button', { class: 'btn small ghost danger', onclick: () => ctx.update('Remove', (d) => removeNextStageItem(d, list, it.id)) }, 'Remove'))),
     h('button', { class: 'btn small', onclick: () => ctx.update('Add', (d) => { addNextStageItem(d, list); }) }, addLabel));
 }
@@ -71,11 +110,13 @@ export function renderNextStage(ctx, summary) {
       numberField(ctx, 'Months of lower pay while switching (0 if none)', ns.transitionMonths, (s, v) => { s.transitionMonths = v; }, 'ns-tmonths'),
       ns.transitionMonths > 0 ? question(ctx, 'Take-home during those months', '0 if nothing comes in', ['nextStage', 'transitionTakeHome'], ns.transitionTakeHome) : null,
       question(ctx, 'Later, pay could rise to (optional)', 'Take-home once the new path pays off', ['nextStage', 'laterTakeHome'], ns.laterTakeHome),
-      ns.laterTakeHome.amount !== null ? numberField(ctx, '...after this many months', ns.laterAfterMonths, (s, v) => { s.laterAfterMonths = v; }, 'ns-later') : null),
+      ns.laterTakeHome.amount !== null ? numberField(ctx, '...after this many months', ns.laterAfterMonths, (s, v) => { s.laterAfterMonths = v; }, 'ns-later') : null,
+      question(ctx, 'Cash you could put toward the switch', 'Savings set aside for this. Used for runway: how long the money lasts.', ['nextStage', 'cashOnHand'], ns.cashOnHand, { cadence: false })),
+    lensesCard(ctx, ns),
     itemList(ctx, ns, 'oneOffCosts', 'One-time costs to make the change', 'Courses, licenses, moving, a gap in benefits.', '+ Add a one-time cost', 'Amount'),
     itemList(ctx, ns, 'costChanges', 'Monthly costs that change', 'More (childcare, a loan) or less (commute, lunches out). Use a minus sign for costs that go down.', '+ Add a cost change', 'Change'),
     metricsCard(ctx, ns, summary),
-    n ? h('p', { class: 'small' }, 'So far: needs ', h('b', { class: 'num' }, money(n.cashNeeded)), ' to make the switch. ',
+    n ? h('p', { class: 'small' }, 'So far: needs ', h('b', { class: 'num' }, money(n.cases.disaster.cashNeeded) + ' / ' + money(n.cashNeeded) + ' / ' + money(n.cases.dream.cashNeeded)), ' (disaster / likely / dream) to make the switch. ',
       h('a', { href: '#analyze', onclick: (e) => { e.preventDefault(); ctx.go('analyze'); setTimeout(() => { const el = document.getElementById('sec-next'); if (el) el.scrollIntoView(); }, 60); } }, 'See the full picture on Analyze')) : null,
     h('button', { class: 'btn small ghost danger', onclick: () => { if (confirm('Clear the next stage plan? (Undo works.)')) ctx.update('Clear next stage', (d) => { d.nextStage = null; }); } }, 'Clear this plan'));
 }
