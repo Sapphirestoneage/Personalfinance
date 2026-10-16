@@ -152,6 +152,13 @@ function withheldBlock(ctx, inc, row) {
     check);
 }
 
+// An archived income is skipped by every calculation, so say so plainly, with a way back.
+function archivedNote(ctx, inc) {
+  if (inc.state !== 'archived') return null;
+  return h('p', { class: 'small warn' }, 'Archived: this income does not count anywhere (take-home, deductions, taxes). ',
+    h('button', { class: 'btn small', onclick: () => ctx.update('Count income again', (d) => { d.income.find((x) => x.id === inc.id).state = 'active'; }) }, 'Count it again'));
+}
+
 // Unemployment asks one number. The rest (what lands, tax to plan for, when it ends) is worked out.
 function benefitCard(ctx, inc, row) {
   const p = (k) => ['income', inc.id, k];
@@ -175,6 +182,7 @@ function benefitCard(ctx, inc, row) {
   }
   return h('div', { class: 'card' },
     h('div', { class: 'spread' }, h('h3', {}, inc.label), inc.state !== 'active' ? statusChip(null, inc.state) : null),
+    archivedNote(ctx, inc),
     h('p', { class: 'muted small' }, 'Benefits are there for exactly this. They count as income for tax, so a little planning now keeps things calm later.'),
     h('div', { class: 'grid two' },
       textField(ctx, 'Name', p('label'), inc.label, { set: set('label') }),
@@ -203,6 +211,7 @@ family: 'Help from family. A gift, so it is not taxed as income.', 'not-taxable'
   const hourly = isWork && inc.payBasis === 'hourly';
   return h('div', { class: 'card' },
     h('div', { class: 'spread' }, h('h3', {}, inc.label), inc.state !== 'active' ? statusChip(null, inc.state) : null),
+    archivedNote(ctx, inc),
     h('div', { class: 'grid two' },
       textField(ctx, 'Name', p('label'), inc.label, { set: set('label') }),
       selectField(ctx, 'Type', inc.type, INCOME_TYPES, (d, v) => setIncomeType(d.income.find((x) => x.id === inc.id), v), JSON.stringify(p('type'))),
