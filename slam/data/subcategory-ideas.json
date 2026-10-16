@@ -1,0 +1,16 @@
+{
+  "_about": "Suggested sub-categories (lines) per category, offered as one-tap ideas in the Rough pass. Names only, no amounts. Version 2026.",
+  "version": 2026,
+  "ideas": {
+    "housing": ["Rent or mortgage", "Renters or home insurance", "Electric", "Gas or heat", "Water and trash", "Internet", "Phone", "Repairs", "HOA or building fees"],
+    "food": ["Groceries", "Eating out", "Delivery", "Coffee", "Work lunches", "Alcohol"],
+    "transport": ["Car insurance", "Gas", "Maintenance", "Car payment", "Public transportation", "Rideshare", "Parking", "Tolls", "Tickets", "Registration and inspection"],
+    "health": ["Premiums", "Copays", "Prescriptions", "Therapy", "Dental", "Vision", "Gym"],
+    "bills": ["Phone", "Streaming", "Apps", "Software", "Cloud storage"],
+    "fun": ["Shopping", "Clothes", "Hobbies", "Going out", "Personal care", "Travel", "Gifts"],
+    "annual": ["Yearly subscriptions", "Holidays", "Birthdays", "Car registration", "Memberships"],
+    "fees": ["Overdraft", "ATM", "Interest charged", "Late fees"],
+    "giving": ["Charity", "Religious giving", "Helping family"],
+    "savings": ["Emergency fund", "Retirement", "Big purchase", "Travel fund"]
+  }
+}

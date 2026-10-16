@@ -43,6 +43,7 @@ export function validateHousehold(doc) {
     if (inc.withholding !== undefined) oneOf(errs, WITHHOLDING, inc.withholding, w + '.withholding');
     if (inc.benefitWeeksLeft !== undefined && inc.benefitWeeksLeft !== null && !(typeof inc.benefitWeeksLeft === 'number' && inc.benefitWeeksLeft >= 0)) errs.push(w + '.benefitWeeksLeft must be 0 or more, or empty');
     for (const k of ['takeHome', 'gross', 'hourlyRate']) errs.push(...valueErrors(inc[k], w + '.' + k));
+    for (const [k, v] of Object.entries(inc.withheld || {})) errs.push(...valueErrors(v, w + '.withheld.' + k));
     (inc.deductions || []).forEach((d, j) => {
       const dw = w + '.deductions[' + j + ']';
       seen(d.id, dw);
@@ -62,6 +63,7 @@ export function validateHousehold(doc) {
     const w = 'categories[' + i + '] ' + c.id;
     seen(c.id, w);
     oneOf(errs, ITEM_STATES, c.state, w + '.state');
+    if (c.split !== undefined && typeof c.split !== 'boolean') errs.push(w + '.split must be true or false');
     errs.push(...valueErrors(c.estimate, w + '.estimate'), ...valueErrors(c.dream, w + '.dream'));
     (c.lines || []).forEach((l, j) => {
       const lw = w + '.lines[' + j + '] ' + l.id;

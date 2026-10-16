@@ -16,6 +16,23 @@ export function hourlyGross(inc) {
   return { rate: inc.hourlyRate.amount, annual, monthly: annual / 12 };
 }
 
+// Taxes withheld, from the paystub: monthly per line, the federal part
+// (income tax, Social Security, Medicare), and the rest (state, local, other).
+// Take-home is only worked out from these once the three federal lines are answered.
+export function withheldFromStub(inc) {
+  const w = inc.withheld || {};
+  const m = (k) => toMonthly(w[k], inc.payFrequency);
+  const lines = { federal: m('federal'), socialSecurity: m('socialSecurity'), medicare: m('medicare'), state: m('state'), local: m('local'), other: m('other') };
+  const any = Object.values(lines).some((x) => x !== null);
+  const federalDone = ['federal', 'socialSecurity', 'medicare'].every((k) => hasAnswer(w[k]));
+  return {
+    lines, any, federalDone,
+    federal: sumKnown([lines.federal, lines.socialSecurity, lines.medicare]).total,
+    stateLocal: sumKnown([lines.state, lines.local, lines.other]).total,
+    total: sumKnown(Object.values(lines)).total
+  };
+}
+
 // The same pay in every unit: per paycheck, month, year, and hour.
 function payBreakdown(row, freq) {
   const perYear = (m) => (m === null ? null : m * 12);
@@ -27,6 +44,9 @@ function payBreakdown(row, freq) {
     grossPerHour: row.hourlyRate !== null ? row.hourlyRate : ratio(row.grossMonthly, row.hoursMonthly),
     deductionsAnnual: perYear(row.deductionsMonthly),
     deductionsPerPaycheck: perCheck(row.deductionsMonthly),
+    preTaxPerPaycheck: perCheck(row.preTaxMonthly), preTaxAnnual: perYear(row.preTaxMonthly),
+    postTaxPerPaycheck: perCheck(row.postTaxMonthly), postTaxAnnual: perYear(row.postTaxMonthly),
+    withheldPerPaycheck: perCheck(row.withheldMonthly), withheldAnnual: perYear(row.withheldMonthly),
     takeHomeAnnual: perYear(row.takeHomeMonthly),
     takeHomePerPaycheck: perCheck(row.takeHomeMonthly),
     takeHomePerHour: ratio(row.takeHomeMonthly, row.hoursMonthly)
@@ -69,6 +89,39 @@ function unemploymentRow(doc, inc, row, tax, stdLeft) {
   return { stdUsed: est.stdUsed };
 }
 
+// Withheld (paystub, or gross minus deductions minus take-home) against the
+// estimate of what the year's federal income tax and FICA will really be.
+// State tax is not estimated, so it is kept out of the comparison when known.
+export function taxCheck(inc, row, dt, grossMonthly, tax, filing, stdLeft) {
+  const est = estimateAnnualTax({
+    gross: grossMonthly * 12, deductions: dt.all * 12, incomeTaxFree: dt.incomeTaxFree * 12, ficaFree: dt.ficaFree * 12, type: inc.type,
+    filingStatus: filing, stdDeduction: stdLeft
+  }, tax);
+  const stub = withheldFromStub(inc);
+  const fromStub = stub.federalDone;
+  const withheldMonthly = fromStub ? stub.total : (row.takeHomeMonthly === null ? null : grossMonthly - dt.all - row.takeHomeMonthly);
+  const federalMonthly = fromStub ? stub.federal : withheldMonthly;
+  row.withheldMonthly = withheldMonthly;
+  row.withheldFrom = fromStub ? 'paystub' : 'take-home';
+  const typedTake = hasAnswer(inc.takeHome) ? toMonthly(inc.takeHome, inc.payFrequency) : null;
+  return {
+    stdUsed: est.stdUsed,
+    withheldFrom: row.withheldFrom,
+    withheldMonthly, federalWithheldMonthly: federalMonthly,
+    stateWithheldMonthly: fromStub ? stub.stateLocal : null,
+    lines: stub.lines,
+    estIncomeTaxAnnual: est.incomeTax, estFicaAnnual: est.fica, estTotalAnnual: est.totalTax,
+    estRate: ratio(est.totalTax, grossMonthly * 12),
+    withheldRate: ratio(withheldMonthly, grossMonthly),
+    // Positive: more withheld than the estimate (refund likely). Negative: likely owed at tax time.
+    gapAnnual: federalMonthly === null ? null : federalMonthly * 12 - est.totalTax,
+    includesState: !fromStub,
+    // Typed take-home and paystub lines both given: what the lines leave vs the take-home typed.
+    stubMismatchMonthly: fromStub && typedTake !== null ? typedTake - (grossMonthly - dt.all - stub.total) : null,
+    taxYear: tax.taxYear
+  };
+}
+
 export function incomeSummary(doc, tax) {
   const filing = doc.household.filingStatus;
   let stdLeft = tax.standardDeduction[filing] || tax.standardDeduction.single;
@@ -88,6 +141,10 @@ export function incomeSummary(doc, tax) {
       hourlyRate: hourly ? hourly.rate : null,
       takeHomeMonthly: null, takeHomeStatus: inc.takeHome.status, takeHomeNote: '',
       taxMonthly: null,
+      // Paystub order: gross, pre-tax deductions, taxes, post-tax deductions, take-home.
+      preTaxMonthly: deductions.length ? deductions.filter((x) => x.lowersIncomeTax && x.monthly !== null).reduce((a, x) => a + x.monthly, 0) : null,
+      postTaxMonthly: deductions.length ? deductions.filter((x) => !x.lowersIncomeTax && x.monthly !== null).reduce((a, x) => a + x.monthly, 0) : null,
+      withheldMonthly: null, withheldFrom: null,
       hoursMonthly: inc.hoursPerWeek ? inc.hoursPerWeek * HOURS_PER_MONTH_PER_WEEKLY_HOUR : null
     };
 
@@ -97,8 +154,18 @@ export function incomeSummary(doc, tax) {
       row.takeHomeMonthly = toMonthly(inc.takeHome, freq);
       // A source with known take-home is assumed to use the standard deduction first.
       const used = grossMonthly === null ? stdLeft : Math.min(stdLeft, Math.max(0, (grossMonthly - dt.incomeTaxFree) * 12));
+      if (inc.type === 'w2' && grossMonthly !== null) row.taxCheck = taxCheck(inc, row, dt, grossMonthly, tax, filing, stdLeft);
       stdLeft -= used;
       if (grossMonthly !== null) row.taxMonthly = grossMonthly - dt.all - row.takeHomeMonthly;
+    } else if (inc.type === 'w2' && grossMonthly !== null && withheldFromStub(inc).federalDone) {
+      // Copied from the paystub: take-home is what the lines leave.
+      const stub = withheldFromStub(inc);
+      row.takeHomeMonthly = grossMonthly - dt.all - stub.total;
+      row.takeHomeStatus = 'computed';
+      row.takeHomeNote = 'From the paystub lines';
+      row.taxCheck = taxCheck(inc, row, dt, grossMonthly, tax, filing, stdLeft);
+      stdLeft -= row.taxCheck.stdUsed;
+      row.taxMonthly = stub.total;
     } else if (grossMonthly !== null) {
       const est = estimateAnnualTax({
         gross: grossMonthly * 12, deductions: dt.all * 12, incomeTaxFree: dt.incomeTaxFree * 12, ficaFree: dt.ficaFree * 12, type: inc.type,

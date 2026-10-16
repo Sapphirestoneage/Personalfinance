@@ -103,6 +103,7 @@ input.big { font-size: var(--text-xl); min-height: 56px; width: 9em; }
 .value-input { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
 .value-input .monthly { font-size: var(--text-xs); color: var(--text-muted); }
 .value-input select.cadence { min-height: var(--tap); }
+.add-select { margin-top: var(--space-2); max-width: 100%; }
 .value-input .parts { flex-basis: 100%; display: grid; gap: var(--space-2); padding-left: var(--space-3); border-left: 2px solid var(--border); }
 .value-input .part { display: grid; grid-template-columns: minmax(0, 1fr) 5.5em auto; gap: var(--space-2); align-items: center; }
 .value-input .part input { width: 100%; min-width: 0; }

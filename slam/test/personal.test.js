@@ -86,3 +86,44 @@ test('compat: files before tags load with none, and lines with no tags', () => {
   assert.deepEqual(m.tags, []);
   assert.deepEqual(findLine(m, 'transit').line.tags, []);
 });
+
+test('Rough break down: the first guess is kept as a note, sub-categories carry the estimate', async () => {
+  const { breakDown, useOneNumber } = await import('../src/store/edits.js');
+  const d = newHousehold('Split');
+  const t = d.categories.find((c) => c.id === 'transport');
+  t.estimate = makeValue(300);
+  breakDown(d, 'transport');
+  assert.equal(t.split, true);
+  assert.equal(t.estimate.amount, null);
+  assert.equal(t.estimate.note, 'First guess 300 / month');
+  findLine(d, 'gas').line.estimate = makeValue(120);
+  const ins = addLine(d, 'transport', 'Car insurance');
+  ins.estimate = makeValue(1200, { cadence: 'year' });
+  let s = buildSummary(d, refs);
+  // 120 + 1,200 / 12 = 220 a month, from the lines
+  const row = s.rows.find((r) => r.id === 'transport');
+  assert.equal(row.estimate, 220);
+  assert.ok(!s.lineIdeas.transport.includes('Car insurance'), 'an idea already used is not offered again');
+  assert.ok(s.lineIdeas.transport.includes('Tolls'));
+  useOneNumber(d, 'transport', row.estimate);
+  assert.deepEqual([t.split, t.estimate.amount, t.estimate.status], [false, 220, 'roughly']);
+  assert.deepEqual(validateHousehold(d), []);
+});
+
+test('Rough debts: per card, bank, or person, totals by type', async () => {
+  const { addDebt } = await import('../src/store/edits.js');
+  const d = newHousehold('Debts');
+  const a = addDebt(d, { label: 'Chase card', type: 'credit-card' });
+  a.minimum = makeValue(60, { status: 'roughly' });
+  a.balance = makeValue(2400, { cadence: 'month' });
+  const b = addDebt(d, { label: 'Amex', type: 'credit-card' });
+  b.minimum = makeValue(40);
+  const c = addDebt(d, { label: 'Mom', type: 'family-friend' });
+  c.minimum = makeValue(100);
+  const s = buildSummary(d, refs);
+  const cards = s.debtsByType.find((g) => g.type === 'credit-card');
+  // cards: 60 + 40 = 100 a month; balance known only for Chase: 2,400 (one missing)
+  assert.deepEqual([cards.count, cards.monthly, cards.balance, cards.balanceMissing], [2, 100, 2400, 1]);
+  assert.equal(s.rows.find((r) => r.id === 'debt').estimate, 200); // 100 + 100
+  assert.deepEqual(validateHousehold(d), []);
+});

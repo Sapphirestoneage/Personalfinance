@@ -16,7 +16,7 @@ export const ITEM_STATES = ['active', 'hidden', 'archived'];
 export const LINE_KINDS = ['fixed', 'variable'];
 export const LINE_PATHS = ['personal', 'linked', 'reimbursable'];
 export const LINE_TAGS = ['planned', 'unavoidable', 'mistake'];
-export const DEBT_TYPES = ['credit-card', 'student-loan', 'car-loan', 'personal-loan', 'medical', 'bnpl', 'mortgage', 'other'];
+export const DEBT_TYPES = ['credit-card', 'line-of-credit', 'student-loan', 'car-loan', 'personal-loan', 'medical', 'bnpl', 'mortgage', 'family-friend', 'other'];
 export const COL_TIERS = ['HCOL', 'MCOL', 'LCOL'];
 export const LIVING_WITH = ['alone', 'partner', 'roommates', 'family'];
 
@@ -92,6 +92,8 @@ export function newCategory(fields = {}) {
     tag: fields.tag || 'planned',
     state: fields.state || 'active',
     estimate: makeValue(), dream: makeValue(),
+    // Broken down in the Rough pass: the estimate comes from the sub-categories (lines).
+    split: fields.split || false,
     lines: []
   };
 }
@@ -117,6 +119,7 @@ export function newIncome(fields = {}) {
     payBasis: fields.payBasis || 'salary',
     hourlyRate: makeValue(null, { cadence: 'month' }),
     deductions: [],
+    withheld: newWithheld(),
     hoursPerWeek: null,
     // Unemployment only: federal withholding ('ten-percent', 'none', or null = not sure) and weeks left.
     withholding: null,
@@ -125,7 +128,13 @@ export function newIncome(fields = {}) {
   };
 }
 
-export const DEDUCTION_KIND_IDS = ['retirement', 'roth', 'health', 'hsa', 'transportation', 'other'];
+export const DEDUCTION_KIND_IDS = ['retirement', 'roth', 'health', 'hsa', 'transportation', 'dental', 'vision', 'life', 'disability', 'union', 'garnishment', 'other'];
+
+// Taxes withheld, copied line by line from a paystub (W-2 pay). Each is a Value, per paycheck by default.
+export const WITHHELD_KEYS = ['federal', 'socialSecurity', 'medicare', 'state', 'local', 'other'];
+export function newWithheld() {
+  return Object.fromEntries(WITHHELD_KEYS.map((k) => [k, makeValue(null, { cadence: 'paycheck' })]));
+}
 
 // A paycheck deduction: a % of gross pay, or an amount in any cadence.
 export function newDeduction(fields = {}) {

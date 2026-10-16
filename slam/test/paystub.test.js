@@ -1,0 +1,98 @@
+// Paystub order: gross, pre-tax deductions, taxes withheld, post-tax deductions,
+// take-home. Withheld is checked against the estimate of the real tax.
+//
+// Hand numbers (the same pay as Tal's screen): $35/hour x 30 hours x 52 = 54,600 a year,
+// paid every two weeks: 2,100 a paycheck, 4,550 a month. Retirement 3% = 63 a paycheck, 1,638 a year.
+// Estimate: 54,600 - 1,638 = 52,962; - 16,100 = 36,862 taxable;
+//   income tax 1,240 + (36,862 - 12,400) x 12% = 1,240 + 2,935.44 = 4,175.44
+//   FICA (retirement does not lower it) 54,600 x 7.65% = 4,176.90
+//   total 8,352.34 = 321.243846 a paycheck; rate 8,352.34 / 54,600 = 15.297%
+
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { newHousehold, newIncome, newDeduction } from '../src/store/schema.js';
+import { makeValue } from '../src/store/value.js';
+import { incomeSummary } from '../src/calc/income.js';
+import { validateHousehold } from '../src/store/validate.js';
+import { migrate } from '../src/store/migrate.js';
+import { loadRefs, near } from './helpers.js';
+
+const refs = loadRefs();
+const pc = (n) => makeValue(n, { cadence: 'paycheck' });
+
+function tal() {
+  const d = newHousehold('Tal (demo)');
+  const inc = newIncome({ id: 'job', type: 'w2', payFrequency: 'biweekly', payBasis: 'hourly' });
+  inc.hourlyRate = makeValue(35);
+  inc.hoursPerWeek = 30;
+  inc.deductions.push({ ...newDeduction({ id: 'ret', kind: 'retirement' }), percent: 3 });
+  d.income.push(inc);
+  return { d, inc };
+}
+
+test('typed take-home: withheld is worked out and checked against the estimate', () => {
+  const { d, inc } = tal();
+  inc.takeHome = pc(2000);
+  const r = incomeSummary(d, refs.tax).sources[0];
+  const t = r.taxCheck;
+  // withheld = 2,100 - 63 - 2,000 = 37 a paycheck = 962 a year
+  assert.ok(near(r.withheldPerPaycheck, 37));
+  assert.equal(t.withheldFrom, 'take-home');
+  assert.ok(near(t.estTotalAnnual, 8352.34));
+  assert.ok(near(t.estRate, 0.152973, 5));
+  // 962 - 8,352.34 = -7,390.34: likely owed, or the take-home is too high
+  assert.ok(near(t.gapAnnual, -7390.34));
+});
+
+test('paystub lines: take-home is what they leave, and the gap leaves state out', () => {
+  const { d, inc } = tal();
+  Object.assign(inc.withheld, { federal: pc(150), socialSecurity: pc(130.2), medicare: pc(30.45), state: pc(80) });
+  const r = incomeSummary(d, refs.tax).sources[0];
+  // 2,100 - 63 - 150 - 130.20 - 30.45 - 80 = 1,646.35 a paycheck; x 26 / 12 = 3,567.091667 a month
+  assert.ok(near(r.takeHomePerPaycheck, 1646.35));
+  assert.ok(near(r.takeHomeMonthly, 3567.091667));
+  assert.equal(r.takeHomeStatus, 'computed');
+  assert.ok(near(r.withheldPerPaycheck, 390.65));
+  // federal part 310.65 x 26 = 8,076.90; - 8,352.34 = -275.44 likely owed
+  assert.ok(near(r.taxCheck.gapAnnual, -275.44));
+  assert.ok(near(r.preTaxPerPaycheck, 63));
+  assert.equal(r.postTaxMonthly, 0);
+  assert.deepEqual(validateHousehold(d), []);
+});
+
+test('paystub lines need the three federal lines before take-home is worked out', () => {
+  const { d, inc } = tal();
+  inc.withheld.federal = pc(150);
+  const r = incomeSummary(d, refs.tax).sources[0];
+  assert.equal(r.takeHomeStatus, 'guess', 'Social Security and Medicare still blank: back to the estimate');
+});
+
+test('typed take-home and paystub lines that do not add up are flagged', () => {
+  const { d, inc } = tal();
+  inc.takeHome = pc(1650);
+  Object.assign(inc.withheld, { federal: pc(150), socialSecurity: pc(130.2), medicare: pc(30.45), state: pc(80) });
+  const r = incomeSummary(d, refs.tax).sources[0];
+  // 1,650 - 1,646.35 = 3.65 a paycheck more than the lines leave; x 26 / 12 = 7.908333 a month
+  assert.ok(near(r.taxCheck.stubMismatchMonthly, 7.908333));
+});
+
+test('post-tax deductions: union dues and Roth come after taxes', () => {
+  const { d, inc } = tal();
+  inc.deductions.push({ ...newDeduction({ id: 'u', kind: 'union' }), amount: pc(20) });
+  inc.deductions.push({ ...newDeduction({ id: 'r', kind: 'roth' }), percent: 2 });
+  inc.deductions.push({ ...newDeduction({ id: 'dn', kind: 'dental' }), amount: pc(10) });
+  const r = incomeSummary(d, refs.tax).sources[0];
+  // pre-tax 63 + 10 = 73; post-tax 20 + 2% of 2,100 = 42 -> 62 a paycheck
+  assert.ok(near(r.preTaxPerPaycheck, 73));
+  assert.ok(near(r.postTaxPerPaycheck, 62));
+  assert.deepEqual(validateHousehold(d), []);
+});
+
+test('compat: incomes before paystub taxes load with all six blank', () => {
+  const { d } = tal();
+  const raw = JSON.parse(JSON.stringify(d));
+  delete raw.income[0].withheld;
+  const m = migrate(raw);
+  assert.deepEqual(Object.keys(m.income[0].withheld), ['federal', 'socialSecurity', 'medicare', 'state', 'local', 'other']);
+  assert.equal(m.income[0].withheld.state.amount, null);
+});
