@@ -76,7 +76,9 @@ export function newLine(fields = {}) {
     joy: fields.joy === undefined ? null : fields.joy,
     state: fields.state || 'active',
     estimate: makeValue(), dream: makeValue(), actual: makeValue(),
-    owedBack: makeValue(), owedBackReceived: false
+    owedBack: makeValue(), owedBackReceived: false,
+    // The client's own tags (ids from doc.tags), like Subscription or Travel.
+    tags: fields.tags || []
   };
 }
 
@@ -216,6 +218,8 @@ export function newHousehold(name, now = new Date()) {
     // Actuals for open months other than the one being worked on: { 'YYYY-MM': { lineId: Value } }.
     monthActuals: {},
     nextStage: null,
+    // Tags the client made: [{ id, name }]. Lines carry their ids.
+    tags: [],
     settings: { singleTotal: false, benchmarkSource: 'eli', lens: 'dollars' },
     passesSeen: []
   };

@@ -2,6 +2,7 @@
 // No math here: just finding things and adding or moving them.
 
 import { newLine, newCategory, newIncome, newDebt, newDeduction, newNextStage, newNextStageItem, EVERYTHING_CATEGORY_ID } from './schema.js';
+import { newId } from './ids.js';
 
 export function findCategory(doc, catId) {
   return doc.categories.find((c) => c.id === catId) || null;
@@ -20,6 +21,41 @@ export function addLine(doc, catId, name) {
   const line = newLine({ name, kind: cat.kind, need: cat.need, savings: cat.savings, tag: cat.tag });
   cat.lines.push(line);
   return line;
+}
+
+// A new category goes last among spending: before Savings and the one total.
+export function addCategory(doc, name) {
+  const cat = newCategory({ name: name || 'New category' });
+  const at = doc.categories.findIndex((c) => ['savings', EVERYTHING_CATEGORY_ID].includes(c.id));
+  doc.categories.splice(at === -1 ? doc.categories.length : at, 0, cat);
+  return cat;
+}
+
+// Tags: reuse one with the same name (any case) instead of making a twin.
+export function addTag(doc, name) {
+  const clean = String(name || '').trim();
+  if (!clean) throw new Error('A tag needs a name');
+  const same = doc.tags.find((t) => t.name.toLowerCase() === clean.toLowerCase());
+  if (same) return same;
+  const tag = { id: newId('tag'), name: clean };
+  doc.tags.push(tag);
+  return tag;
+}
+
+export function toggleLineTag(doc, lineId, tagId) {
+  const { line } = findLine(doc, lineId);
+  line.tags = line.tags.includes(tagId) ? line.tags.filter((t) => t !== tagId) : [...line.tags, tagId];
+}
+
+export function renameTag(doc, tagId, name) {
+  const clean = String(name || '').trim();
+  if (!clean) throw new Error('A tag needs a name');
+  doc.tags.find((t) => t.id === tagId).name = clean;
+}
+
+export function removeTag(doc, tagId) {
+  doc.tags = doc.tags.filter((t) => t.id !== tagId);
+  for (const c of doc.categories) for (const l of c.lines) l.tags = l.tags.filter((t) => t !== tagId);
 }
 
 export function addIncome(doc, fields) {
