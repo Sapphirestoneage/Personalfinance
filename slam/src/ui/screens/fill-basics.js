@@ -7,6 +7,7 @@ import { question } from '../components/value-input.js';
 import { statusChip } from '../components/status.js';
 import { addIncome, addDeduction, removeDeduction } from '../../store/edits.js';
 import { DEDUCTION_KINDS } from '../../calc/deductions.js';
+import { makeValue } from '../../store/value.js';
 
 const STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
 const SITUATIONS = [['employed', 'Employed'], ['self-employed', 'Self-employed'], ['between-jobs', 'Between jobs'], ['student', 'Student']];
@@ -14,7 +15,6 @@ const LIVING_WITH = [['', 'Pick one'], ['alone', 'On my own'], ['partner', 'With
 const FILING = [['single', 'Single'], ['married-joint', 'Married, filing jointly'], ['married-separate', 'Married, filing separately'], ['head-of-household', 'Head of household']];
 const INCOME_TYPES = [['w2', 'W-2 paycheck (tax withheld)'], ['1099', '1099 contractor (nothing withheld)'], ['side', 'Side income (nothing withheld)'], ['unemployment', 'Unemployment benefits'], ['family', 'Family support (gift, not taxed)'], ['not-taxable', 'Not taxable']];
 const FREQS = [['weekly', 'Weekly'], ['biweekly', 'Every two weeks'], ['semimonthly', 'Twice a month'], ['monthly', 'Monthly']];
-const STATES_OF_ITEM = [['active', 'Counts, shown'], ['hidden', 'Counts, hidden'], ['archived', 'Archived (stops counting)']];
 const WITHHOLDING = [['', 'Not sure yet'], ['ten-percent', 'Yes, 10% federal'], ['none', 'No']];
 
 // Picking a type sets kind defaults: unemployment arrives weekly and gets a real name.
@@ -118,7 +118,10 @@ function deductionsBlock(ctx, inc, row) {
     add(POST_KINDS, '+ Add a post-tax deduction'));
 }
 
-const WITHHELD_LABELS = [['federal', 'Federal income tax'], ['socialSecurity', 'Social Security (OASDI)'], ['medicare', 'Medicare'], ['state', 'State income tax'], ['local', 'Local or city tax'], ['other', 'Other (SDI, paid leave)']];
+const WITHHELD_LABELS = [['federal', 'Federal income tax'], ['socialSecurity', 'Social Security (OASDI)'], ['medicare', 'Medicare'], ['state', 'State income tax'], ['local', 'Local or city tax'],
+  ['sdi', 'State disability insurance (SDI)'], ['pfl', 'Paid family or medical leave'], ['sui', 'State unemployment (employee share)'], ['other', 'Other tax']];
+// The three federal lines are on every W-2 paystub; the rest show only once added (S-080).
+const CORE_TAX = ['federal', 'socialSecurity', 'medicare'];
 
 // Taxes withheld: copied from the paystub, then checked against the year's estimate.
 function withheldBlock(ctx, inc, row) {
@@ -147,9 +150,29 @@ function withheldBlock(ctx, inc, row) {
     h('details', { open: entered || ctx.ui.expanded.has('withheld:' + inc.id) ? true : null,
       ontoggle: (e) => { if (e.target.open) ctx.ui.expanded.add('withheld:' + inc.id); else ctx.ui.expanded.delete('withheld:' + inc.id); } },
       h('summary', { class: 'field-label' }, 'Taxes withheld (copy from the paystub, optional)'),
-      h('p', { class: 'muted xs' }, 'Each tax line on the paystub, per paycheck. With the first three, take-home is worked out if it is blank. Use "Doesn\'t apply" for none (like no state tax).'),
-      WITHHELD_LABELS.map(([k, label]) => question(ctx, label, null, ['income', inc.id, 'withheld', k], inc.withheld[k]))),
+      h('p', { class: 'muted xs' }, 'Each tax line on the paystub, per paycheck. With the first three, take-home is worked out if it is blank. Add any other line the paystub shows (state, local, SDI, paid leave); remove any that is not there.'),
+      WITHHELD_LABELS.filter(([k]) => CORE_TAX.includes(k) || inc.withheld[k].status !== null || ctx.ui.expanded.has('tax:' + inc.id + ':' + k)).map(([k, label]) =>
+        h('div', { class: 'tax-line' }, question(ctx, label, null, ['income', inc.id, 'withheld', k], inc.withheld[k]),
+          CORE_TAX.includes(k) ? null : h('button', { class: 'btn small ghost danger', 'aria-label': 'Remove ' + label, onclick: () => {
+            ctx.ui.expanded.delete('tax:' + inc.id + ':' + k);
+            ctx.update('Remove ' + label, (d) => { d.income.find((x) => x.id === inc.id).withheld[k] = makeValue(null, { cadence: 'paycheck' }); });
+          } }, 'Remove'))),
+      (() => {
+        const more = WITHHELD_LABELS.filter(([k]) => !CORE_TAX.includes(k) && inc.withheld[k].status === null && !ctx.ui.expanded.has('tax:' + inc.id + ':' + k));
+        return more.length ? h('select', { class: 'add-select', 'aria-label': 'Add a tax line', 'data-key': 'add-tax:' + inc.id,
+          onchange: (e) => { if (e.target.value) { ctx.ui.expanded.add('tax:' + inc.id + ':' + e.target.value); ctx.ui.focusPath = ['income', inc.id, 'withheld', e.target.value]; ctx.rerender(); } } },
+          options([['', '+ Add a tax line'], ...more], '')) : null;
+      })()),
     check);
+}
+
+// One plain choice instead of a state dropdown (S-081): an income counts, or it is
+// set aside (archived, kept for the record). An old "hidden" state still counts.
+function countButton(ctx, inc) {
+  if (inc.state === 'archived') return null;
+  return h('div', { class: 'row' },
+    inc.state === 'hidden' ? h('button', { class: 'btn small ghost', onclick: () => ctx.update('Show income', (d) => { d.income.find((x) => x.id === inc.id).state = 'active'; }) }, 'Hidden (still counts): show it') : null,
+    h('button', { class: 'btn small ghost', 'data-key': 'stop-income:' + inc.id, onclick: () => ctx.update('Stop counting income', (d) => { d.income.find((x) => x.id === inc.id).state = 'archived'; }) }, 'Stop counting this income'));
 }
 
 // An archived income is skipped by every calculation, so say so plainly, with a way back.
@@ -181,14 +204,13 @@ function benefitCard(ctx, inc, row) {
       u.endsAround ? h('p', { class: 'small' }, 'Benefits end around ' + u.endsAround + ', with about ' + money(u.stillToCome) + ' still to come.') : null);
   }
   return h('div', { class: 'card' },
-    h('div', { class: 'spread' }, h('h3', {}, inc.label), inc.state !== 'active' ? statusChip(null, inc.state) : null),
+    h('div', { class: 'spread' }, h('h3', {}, inc.label), countButton(ctx, inc)),
     archivedNote(ctx, inc),
     h('p', { class: 'muted small' }, 'Benefits are there for exactly this. They count as income for tax, so a little planning now keeps things calm later.'),
     h('div', { class: 'grid two' },
       textField(ctx, 'Name', p('label'), inc.label, { set: set('label') }),
       selectField(ctx, 'Type', inc.type, INCOME_TYPES, (d, v) => setIncomeType(d.income.find((x) => x.id === inc.id), v), JSON.stringify(p('type'))),
-      selectField(ctx, 'Arrives', inc.payFrequency, FREQS, set('payFrequency'), JSON.stringify(p('payFrequency'))),
-      selectField(ctx, 'In the budget', inc.state, STATES_OF_ITEM, set('state'), JSON.stringify(p('state')))),
+      selectField(ctx, 'Arrives', inc.payFrequency, FREQS, set('payFrequency'), JSON.stringify(p('payFrequency')))),
     question(ctx, 'Benefit amount', 'The amount on your benefit notice, before any tax', p('gross'), inc.gross),
     h('div', { class: 'grid two' },
       selectField(ctx, 'Is federal tax withheld? (optional)', inc.withholding || '', WITHHOLDING, (d, v) => set('withholding')(d, v || null), JSON.stringify(p('withholding'))),
@@ -197,6 +219,34 @@ function benefitCard(ctx, inc, row) {
         set('benefitWeeksLeft')(d, v);
       } })),
     plan);
+}
+
+// Hourly (and any W-2 pay with gross known): the estimated paycheck is worked out,
+// never asked; the actual paycheck is optional, and a difference is laid out step by step.
+function paycheckBlock(ctx, inc, row, askActual) {
+  const exact = (x) => money(x, true);
+  const est = row ? row.estimatedTakeHomePerPaycheck : null;
+  const gap = row ? row.paycheckGapPerPaycheck : null;
+  const steps = row && est !== null ? [
+    ['Gross' + (row.grossFrom === 'hourly' ? ' (rate x hours)' : ''), exact(row.grossPerPaycheck)],
+    row.preTaxPerPaycheck ? ['Pre-tax deductions', '-' + exact(row.preTaxPerPaycheck)] : null,
+    [row.estimatedFrom === 'paystub lines' ? 'Taxes (from the paystub lines)' : 'Taxes (estimated federal income tax and FICA)', '-' + exact(row.estimatedTaxPerPaycheck)],
+    row.postTaxPerPaycheck ? ['Post-tax deductions', '-' + exact(row.postTaxPerPaycheck)] : null,
+    ['Estimated paycheck', exact(est)]
+  ].filter(Boolean) : [];
+  return h('div', { class: 'card', style: 'margin:8px 0' },
+    h('div', { class: 'field-label' }, 'Paycheck'),
+    est === null ? h('p', { class: 'small muted' }, 'Add the pay above to work out the paycheck.')
+      : h('table', { class: 'budget' }, h('tbody', {}, steps.map(([k, v], i) => h('tr', { class: i === steps.length - 1 ? 'total' : '' }, h('td', {}, k), h('td', { class: 'num' }, v))))),
+    askActual ? question(ctx, 'Actual paycheck (optional)', 'From a real paystub, to check the estimate. Leave blank to budget with the estimate', ['income', inc.id, 'takeHome'], inc.takeHome) : null,
+    gap === null ? null : Math.abs(gap) < 1 ? h('p', { class: 'small' }, 'The actual paycheck matches the estimate.')
+      : h('div', { class: 'small' },
+        h('p', { class: 'warn' }, 'Doesn\'t add up: the actual paycheck is ' + exact(Math.abs(gap)) + ' ' + (gap > 0 ? 'more' : 'less') + ' than the estimate.'),
+        h('p', { class: 'muted' }, 'Worth checking: ' + (gap < 0
+          ? 'a deduction or tax not listed yet (health insurance, state or local tax), fewer hours than usual, or unpaid time off.'
+          : 'more hours or overtime, a different rate, a deduction listed here that is not on the paystub, or tax withheld at a lower rate than the estimate.') +
+          (row.estimatedFrom === 'tax estimate' ? ' Copying the tax lines from the paystub above makes the estimate exact.' : '')),
+        h('p', { class: 'muted xs' }, 'The budget uses the actual paycheck.')));
 }
 
 function incomeCard(ctx, inc, row) {
@@ -210,17 +260,16 @@ family: 'Help from family. A gift, so it is not taxed as income.', 'not-taxable'
   const isWork = inc.type !== 'unemployment' && inc.type !== 'not-taxable' && inc.type !== 'family';
   const hourly = isWork && inc.payBasis === 'hourly';
   return h('div', { class: 'card' },
-    h('div', { class: 'spread' }, h('h3', {}, inc.label), inc.state !== 'active' ? statusChip(null, inc.state) : null),
+    h('div', { class: 'spread' }, h('h3', {}, inc.label), countButton(ctx, inc)),
     archivedNote(ctx, inc),
     h('div', { class: 'grid two' },
       textField(ctx, 'Name', p('label'), inc.label, { set: set('label') }),
       selectField(ctx, 'Type', inc.type, INCOME_TYPES, (d, v) => setIncomeType(d.income.find((x) => x.id === inc.id), v), JSON.stringify(p('type'))),
       selectField(ctx, 'Paid', inc.payFrequency, FREQS, set('payFrequency'), JSON.stringify(p('payFrequency'))),
-      isWork ? selectField(ctx, 'Pay basis', inc.payBasis, [['salary', 'Salary'], ['hourly', 'Hourly']], set('payBasis'), JSON.stringify(p('payBasis'))) : null,
-      selectField(ctx, 'In the budget', inc.state, STATES_OF_ITEM, set('state'), JSON.stringify(p('state')))),
+      isWork ? selectField(ctx, 'Pay basis', inc.payBasis, [['salary', 'Salary'], ['hourly', 'Hourly']], set('payBasis'), JSON.stringify(p('payBasis'))) : null),
     h('p', { class: 'muted xs' }, withheldNote),
-    question(ctx, 'Take-home pay', 'What lands in the bank account (net pay). Blank is fine if the paystub lines are copied below', p('takeHome'), inc.takeHome),
-    row && row.takeHomeStatus === 'guess'
+    hourly ? null : question(ctx, 'Take-home pay', 'What lands in the bank account (net pay). Blank is fine if the paystub lines are copied below', p('takeHome'), inc.takeHome),
+    hourly ? null : row && row.takeHomeStatus === 'guess'
       ? h('p', { class: 'small' }, statusChip('guess'), ' Estimated take-home from gross: ', h('b', { class: 'num' }, money(row.takeHomeMonthly)), ' / month. ' + row.takeHomeNote + '. Tax year ' + row.estimate.taxYear + '.')
       : row && row.takeHomeStatus === 'computed'
         ? h('p', { class: 'small' }, statusChip('computed'), ' Take-home from the paystub lines: ', h('b', { class: 'num' }, money(row.takeHomePerPaycheck, true)), ' a paycheck, ', h('b', { class: 'num' }, money(row.takeHomeMonthly)), ' a month.')
@@ -232,6 +281,7 @@ family: 'Help from family. A gift, so it is not taxed as income.', 'not-taxable'
     hourly && (inc.hourlyRate.amount === null || !inc.hoursPerWeek) ? h('p', { class: 'small warn' }, 'Add the hourly rate and the hours per week to work out gross pay.') : null,
     isWork ? deductionsBlock(ctx, inc, row) : null,
     inc.type === 'w2' ? withheldBlock(ctx, inc, row) : null,
+    hourly || (row && row.paycheckGapMonthly !== null && row.paycheckGapMonthly !== undefined) ? paycheckBlock(ctx, inc, row, hourly) : null,
     row && (row.grossMonthly !== null || row.takeHomeMonthly !== null) ? payTable(row) : null);
 }
 

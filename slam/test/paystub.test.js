@@ -88,11 +88,44 @@ test('post-tax deductions: union dues and Roth come after taxes', () => {
   assert.deepEqual(validateHousehold(d), []);
 });
 
-test('compat: incomes before paystub taxes load with all six blank', () => {
+test('compat: incomes before paystub taxes, or before the extra tax lines, load with every line blank', () => {
   const { d } = tal();
   const raw = JSON.parse(JSON.stringify(d));
   delete raw.income[0].withheld;
   const m = migrate(raw);
-  assert.deepEqual(Object.keys(m.income[0].withheld), ['federal', 'socialSecurity', 'medicare', 'state', 'local', 'other']);
+  assert.deepEqual(Object.keys(m.income[0].withheld), ['federal', 'socialSecurity', 'medicare', 'state', 'local', 'sdi', 'pfl', 'sui', 'other']);
   assert.equal(m.income[0].withheld.state.amount, null);
+});
+
+test('hourly: an estimated paycheck is worked out, and a typed actual paycheck shows what does not add up', () => {
+  const { d, inc } = tal();
+  let r = incomeSummary(d, refs.tax).sources[0];
+  // no take-home typed: estimate = 2,100 - 63 - 321.243846 (8,352.34 / 26) = 1,715.756154 a paycheck
+  assert.ok(near(r.estimatedTakeHomePerPaycheck, 1715.756154));
+  assert.equal(r.estimatedFrom, 'tax estimate');
+  assert.equal(r.paycheckGapMonthly, null, 'nothing to compare yet');
+  inc.takeHome = pc(2000);
+  r = incomeSummary(d, refs.tax).sources[0];
+  // actual 2,000 - estimate 1,715.756154 = 284.243846 a paycheck more than the estimate; x 26 / 12 = 615.861667 a month
+  assert.ok(near(r.paycheckGapPerPaycheck, 284.243846));
+  assert.ok(near(r.paycheckGapMonthly, 615.861667));
+  assert.ok(near(r.estimatedTaxPerPaycheck, 321.243846));
+  // with the three federal paystub lines, the estimate uses them: 2,100 - 63 - (150 + 130.20 + 30.45) = 2,037 - 310.65 = 1,726.35
+  Object.assign(inc.withheld, { federal: pc(150), socialSecurity: pc(130.2), medicare: pc(30.45) });
+  r = incomeSummary(d, refs.tax).sources[0];
+  assert.equal(r.estimatedFrom, 'paystub lines');
+  assert.ok(near(r.estimatedTakeHomePerPaycheck, 1726.35));
+  assert.ok(near(r.paycheckGapPerPaycheck, 273.65)); // 2,000 - 1,726.35
+});
+
+test('extra tax lines (SDI, paid leave) count with the state and local lines, outside the federal comparison', () => {
+  const { d, inc } = tal();
+  Object.assign(inc.withheld, { federal: pc(150), socialSecurity: pc(130.2), medicare: pc(30.45), state: pc(80), sdi: pc(18.9), pfl: pc(10) });
+  const r = incomeSummary(d, refs.tax).sources[0];
+  // take-home = 2,100 - 63 - (150 + 130.20 + 30.45 + 80 + 18.90 + 10) = 2,037 - 419.55 = 1,617.45 a paycheck
+  assert.ok(near(r.takeHomePerPaycheck, 1617.45));
+  // the federal comparison still uses only the federal three: 310.65 x 26 = 8,076.90 - 8,352.34 = -275.44
+  assert.ok(near(r.taxCheck.gapAnnual, -275.44));
+  // state and local side: (80 + 18.90 + 10) x 26 / 12 = 108.90 x 26 / 12 = 235.95 a month
+  assert.ok(near(r.taxCheck.stateWithheldMonthly, 235.95));
 });

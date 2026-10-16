@@ -138,7 +138,8 @@ export function newIncome(fields = {}) {
 export const DEDUCTION_KIND_IDS = ['retirement', 'roth', 'health', 'hsa', 'transportation', 'dental', 'vision', 'life', 'disability', 'union', 'garnishment', 'other'];
 
 // Taxes withheld, copied line by line from a paystub (W-2 pay). Each is a Value, per paycheck by default.
-export const WITHHELD_KEYS = ['federal', 'socialSecurity', 'medicare', 'state', 'local', 'other'];
+// sdi = state disability insurance; pfl = paid family or medical leave; sui = state unemployment (employee share) (S-080).
+export const WITHHELD_KEYS = ['federal', 'socialSecurity', 'medicare', 'state', 'local', 'sdi', 'pfl', 'sui', 'other'];
 export function newWithheld() {
   return Object.fromEntries(WITHHELD_KEYS.map((k) => [k, makeValue(null, { cadence: 'paycheck' })]));
 }

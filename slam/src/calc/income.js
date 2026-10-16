@@ -3,6 +3,7 @@
 
 import { toMonthly, hasAnswer, PAYCHECKS_PER_YEAR } from './normalize.js';
 import { estimateAnnualTax } from './tax.js';
+import { WITHHELD_KEYS } from '../store/schema.js';
 import { sumKnown, ratio } from './money.js';
 import { deductionRows, deductionTotals } from './deductions.js';
 
@@ -19,16 +20,18 @@ export function hourlyGross(inc) {
 // Taxes withheld, from the paystub: monthly per line, the federal part
 // (income tax, Social Security, Medicare), and the rest (state, local, other).
 // Take-home is only worked out from these once the three federal lines are answered.
+const FEDERAL_KEYS = ['federal', 'socialSecurity', 'medicare'];
+
 export function withheldFromStub(inc) {
   const w = inc.withheld || {};
   const m = (k) => toMonthly(w[k], inc.payFrequency);
-  const lines = { federal: m('federal'), socialSecurity: m('socialSecurity'), medicare: m('medicare'), state: m('state'), local: m('local'), other: m('other') };
+  const lines = Object.fromEntries(WITHHELD_KEYS.map((k) => [k, m(k)]));
   const any = Object.values(lines).some((x) => x !== null);
   const federalDone = ['federal', 'socialSecurity', 'medicare'].every((k) => hasAnswer(w[k]));
   return {
     lines, any, federalDone,
     federal: sumKnown([lines.federal, lines.socialSecurity, lines.medicare]).total,
-    stateLocal: sumKnown([lines.state, lines.local, lines.other]).total,
+    stateLocal: sumKnown(WITHHELD_KEYS.filter((k) => !FEDERAL_KEYS.includes(k)).map((k) => lines[k])).total,
     total: sumKnown(Object.values(lines)).total
   };
 }
@@ -47,6 +50,9 @@ function payBreakdown(row, freq) {
     preTaxPerPaycheck: perCheck(row.preTaxMonthly), preTaxAnnual: perYear(row.preTaxMonthly),
     postTaxPerPaycheck: perCheck(row.postTaxMonthly), postTaxAnnual: perYear(row.postTaxMonthly),
     withheldPerPaycheck: perCheck(row.withheldMonthly), withheldAnnual: perYear(row.withheldMonthly),
+    estimatedTakeHomePerPaycheck: perCheck(row.estimatedTakeHomeMonthly === undefined ? null : row.estimatedTakeHomeMonthly),
+    estimatedTaxPerPaycheck: perCheck(row.estimatedTaxMonthly === undefined ? null : row.estimatedTaxMonthly),
+    paycheckGapPerPaycheck: perCheck(row.paycheckGapMonthly === undefined ? null : row.paycheckGapMonthly),
     takeHomeAnnual: perYear(row.takeHomeMonthly),
     takeHomePerPaycheck: perCheck(row.takeHomeMonthly),
     takeHomePerHour: ratio(row.takeHomeMonthly, row.hoursMonthly)
@@ -177,6 +183,17 @@ export function incomeSummary(doc, tax) {
       row.takeHomeStatus = 'guess';
       row.takeHomeNote = 'State tax not included' + (est.withheld ? '' : '. Nothing is withheld, so set this aside');
       row.estimate = { incomeTax: est.incomeTax / 12, fica: est.fica / 12, seTax: est.seTax / 12, taxYear: tax.taxYear };
+    }
+    // Estimated paycheck (W-2): gross - deductions - taxes, from the paystub lines when the
+    // three federal lines are there, else the federal tax and FICA estimate (state tax not included).
+    // With an actual paycheck typed too, the gap shows what does not add up.
+    if (inc.type === 'w2' && grossMonthly !== null) {
+      const stub = withheldFromStub(inc);
+      const taxM = stub.federalDone ? stub.total : row.taxCheck ? row.taxCheck.estTotalAnnual / 12 : row.takeHomeStatus === 'guess' ? row.taxMonthly : null;
+      row.estimatedTakeHomeMonthly = taxM === null ? null : grossMonthly - dt.all - taxM;
+      row.estimatedTaxMonthly = taxM;
+      row.estimatedFrom = stub.federalDone ? 'paystub lines' : 'tax estimate';
+      row.paycheckGapMonthly = hasAnswer(inc.takeHome) && row.estimatedTakeHomeMonthly !== null ? row.takeHomeMonthly - row.estimatedTakeHomeMonthly : null;
     }
     Object.assign(row, payBreakdown(row, freq));
     sources.push(row);
