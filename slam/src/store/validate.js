@@ -2,6 +2,7 @@
 // The store refuses to save a document that fails validation.
 
 import { valueErrors } from './value.js';
+import { CATEGORY_TYPE_IDS, LINE_TYPE_IDS } from './types.js';
 import {
   SCHEMA_VERSION, LIVING_WITH, SITUATIONS, FILING_STATUSES, INCOME_TYPES, PAY_FREQUENCIES, PAY_BASES, WITHHOLDING, DEDUCTION_KIND_IDS,
   ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES, COL_TIERS
@@ -64,11 +65,13 @@ export function validateHousehold(doc) {
     seen(c.id, w);
     oneOf(errs, ITEM_STATES, c.state, w + '.state');
     if (c.split !== undefined && typeof c.split !== 'boolean') errs.push(w + '.split must be true or false');
+    if (c.type !== undefined) oneOf(errs, CATEGORY_TYPE_IDS, c.type, w + '.type');
     errs.push(...valueErrors(c.estimate, w + '.estimate'), ...valueErrors(c.dream, w + '.dream'));
     (c.lines || []).forEach((l, j) => {
       const lw = w + '.lines[' + j + '] ' + l.id;
       seen(l.id, lw);
       oneOf(errs, LINE_KINDS, l.kind, lw + '.kind');
+      if (l.type !== undefined) oneOf(errs, LINE_TYPE_IDS, l.type, lw + '.type');
       oneOf(errs, LINE_PATHS, l.path, lw + '.path');
       oneOf(errs, LINE_TAGS, l.tag, lw + '.tag');
       oneOf(errs, ITEM_STATES, l.state, lw + '.state');

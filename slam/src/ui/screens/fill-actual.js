@@ -5,8 +5,10 @@ import { h, options } from '../dom.js';
 import { money } from '../format.js';
 import { valueInput, question } from '../components/value-input.js';
 import { statusChip } from '../components/status.js';
-import { addLine, addDebt, findLine, findCategory, addCategory, addTag, toggleLineTag, renameTag, removeTag } from '../../store/edits.js';
+import { addLine, addDebt, findLine, findCategory, renameLine, addCategory, addTag, toggleLineTag, renameTag, removeTag } from '../../store/edits.js';
 import { nameEdit } from '../components/name-edit.js';
+import { categoryTypeSelect, lineTypeSelect, typeHint } from '../components/type-select.js';
+import { lineTypeLabel } from '../../store/types.js';
 import { DEBT_TYPE_OPTIONS } from '../components/debt-quick.js';
 import { monthPicker } from '../components/month-picker.js';
 
@@ -60,6 +62,7 @@ function lineSelect(ctx, line, field, list, label) {
 function lineDetail(ctx, cat, line, catHasAnswer) {
   const doc = ctx.doc;
   return h('div', { class: 'line-detail' },
+    lineTypeSelect(ctx, line),
     lineSelect(ctx, line, 'kind', [['fixed', 'Fixed'], ['variable', 'Variable']], 'Fixed or variable'),
     h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: line.need, 'data-key': 'line:' + line.id + ':need',
       onchange: (e) => ctx.update('Need or want', (d) => { findLine(d, line.id).line.need = e.target.checked; }) }), 'Need (your call; FAT is counted by category)'),
@@ -68,7 +71,6 @@ function lineDetail(ctx, cat, line, catHasAnswer) {
     line.path === 'reimbursable' ? h('div', {}, question(ctx, 'Owed back to you', null, ['line', line.id, 'owedBack'], line.owedBack),
       h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: line.owedBackReceived, 'data-key': 'line:' + line.id + ':recv',
         onchange: (e) => ctx.update('Owed back received', (d) => { findLine(d, line.id).line.owedBackReceived = e.target.checked; }) }), 'Received')) : null,
-    lineSelect(ctx, line, 'tag', [['planned', 'Planned'], ['unavoidable', 'Unavoidable'], ['mistake', 'Mistake (late fee, ticket)']], 'Planned or not'),
     lineSelect(ctx, line, 'joy', [['', 'Not rated'], ...Array.from({ length: 10 }, (_, i) => [String(i + 1), String(i + 1)])], 'Joy, 1 to 10: how much does this add to your life?'),
     lineSelect(ctx, line, 'state', STATES, 'State'),
     catHasAnswer ? h('p', { class: 'muted xs' }, 'Estimate and dream for this category were given as one number in the Rough pass.')
@@ -88,12 +90,14 @@ function categoryCard(ctx, summary, cat) {
   const archived = cat.lines.filter((l) => l.state === 'archived');
   return h('div', { class: 'card' },
     h('div', { class: 'spread' }, h('h3', {}, catName(ctx, cat)),
+      categoryTypeSelect(ctx, cat),
       h('span', { class: 'small muted num' }, 'estimate ' + money(row.estimate) + ' / actual ' + money(row.actual) + (row.partial ? ' (partial)' : ''))),
     live.map((line) => {
       const open = ctx.ui.expanded.has('line:' + line.id);
       return h('div', { class: 'qa' },
-        h('div', { class: 'q' }, h('div', {}, nameEdit(ctx, line.name, 'line:' + line.id + ':name', (d, v) => { findLine(d, line.id).line.name = v; }, 'Line name'),
-          line.state === 'hidden' ? ' (hidden)' : '', line.tag === 'mistake' ? h('span', { class: 'chip st-dont-know', style: 'margin-left:6px' }, 'Mistake') : null),
+        h('div', { class: 'q' }, h('div', {}, nameEdit(ctx, line.name, 'line:' + line.id + ':name', (d, v) => renameLine(d, line.id, v), 'Line name'),
+          typeHint(lineTypeLabel(line.type), line.name),
+          line.state === 'hidden' ? ' (hidden)' : ''),
           h('button', { class: 'btn small ghost', 'aria-expanded': open ? 'true' : 'false', onclick: () => {
             if (open) ctx.ui.expanded.delete('line:' + line.id); else ctx.ui.expanded.add('line:' + line.id);
             ctx.rerender();

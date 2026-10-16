@@ -5,7 +5,7 @@ import { h } from '../dom.js';
 import * as c from '../charts/catalog.js';
 
 const SECTIONS = [
-  ['where', 'Where it goes', (ctx, s) => [c.sankeyCard(ctx, s, true), c.donutCard(ctx, s), c.nwsCard(ctx, s, true), c.fixedVariableCard(ctx, s), c.tagsCard(ctx, s)]],
+  ['where', 'Where it goes', (ctx, s) => [c.sankeyCard(ctx, s, true), c.donutCard(ctx, s), c.nwsCard(ctx, s, true), c.fixedVariableCard(ctx, s), c.typesCard(ctx, s), c.tagsCard(ctx, s)]],
   ['eva', 'Estimate vs actual', (ctx, s) => [c.threeColumnCard(ctx, s, true), c.overlapCard(ctx, s), c.varianceCard(ctx, s), c.accuracyCard(ctx, s), c.gutCard(ctx, s)]],
   ['time', 'Over time', (ctx, s) => [c.trendCard(ctx, s), c.varianceByMonthCard(ctx, s)]],
   ['lenses', 'Lenses', (ctx, s) => [c.nwsCard(ctx, s, false), c.draftCard(ctx, s), c.gaugesCard(ctx, s), c.joyCard(ctx, s), c.mistakeCard(ctx, s), c.completionCard(ctx, s), c.incomeStatementCard(ctx, s)]]

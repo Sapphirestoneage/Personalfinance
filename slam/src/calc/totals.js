@@ -11,6 +11,8 @@ export const FAT_CATEGORIES = ['food', 'housing', 'transport'];
 function part(src, amount, cat) {
   return {
     lineId: src === cat ? null : src.id, name: src.name, amount,
+    // A category-level answer (no lines) is tracked by what the category counts as.
+    type: src === cat ? 'cat:' + (cat.type || 'other') : (src.type || 'other'),
     kind: src.kind, need: src.need, savings: cat.savings, tag: src.tag, joy: src.joy === undefined ? null : src.joy
   };
 }
@@ -64,15 +66,23 @@ export function budgetTotals(model, income, doc, housingBand = 0.35) {
   const wants = addUp(spendParts, (p) => !p.need);
   const savings = savingsBasis === null ? 0 : savingsBasis;
 
-  // FAT is strict: Food + Accommodation (Housing) + Transportation, by category.
-  const fat = sumKnown(cats.filter((x) => FAT_CATEGORIES.includes(x.cat.id)).map((x) => x.basis.amount)).total;
+  // FAT is strict: Food + Accommodation (Housing) + Transportation, by what each
+  // category counts as (its type), whatever it is called (S-068).
+  const fat = sumKnown(cats.filter((x) => FAT_CATEGORIES.includes(x.cat.type)).map((x) => x.basis.amount)).total;
+  // Totals by category type: several categories can count as the same thing.
+  const typeBases = {};
+  for (const x of cats) {
+    const k = x.cat.type;
+    if (x.basis.amount === null) { if (!(k in typeBases)) typeBases[k] = null; continue; }
+    typeBases[k] = (typeBases[k] || 0) + x.basis.amount;
+  }
 
-  const housing = cats.find((x) => x.cat.id === 'housing');
-  const housingBasis = housing ? housing.basis.amount : null;
+  const housingCats = cats.filter((x) => x.cat.type === 'housing');
+  const housingBasis = housingCats.length ? typeBases.housing : null;
   // Your share of the rent is the rent line itself (never asked twice).
   const rm = doc.household.roommates;
   const totalRent = toMonthly(rm.totalRent, 'monthly');
-  const rentLine = housing ? housing.cat.lines.find((l) => l.id === 'rent') : null;
+  const rentLine = housingCats.flatMap((x) => x.cat.lines).find((l) => l.type === 'rent') || null;
   const yourShare = rentLine ? (rentLine.actual !== null ? rentLine.actual : rentLine.estimate) : null;
   const roommateWorstCase = doc.household.livingWith === 'roommates' && rm.count > 0 && housingBasis !== null && totalRent !== null && yourShare !== null
     ? housingBasis - yourShare + totalRent : null;
@@ -112,7 +122,13 @@ export function budgetTotals(model, income, doc, housingBand = 0.35) {
     roommateWorstCaseShare: ratio(roommateWorstCase, takeHome),
     mistakeMonthly, mistakeYearly: mistakeMonthly * 12,
     owedBack,
-    bases: Object.fromEntries(cats.map((x) => [x.cat.id, x.basis]))
+    bases: Object.fromEntries(cats.map((x) => [x.cat.id, x.basis])),
+    typeBases,
+    // Spending by standard type, like Rocket Money's categories: line types, or
+    // the category's type where a category was answered as one number.
+    spendByType: Object.entries(spendParts.reduce((acc, p) => { acc[p.type] = acc[p.type] || { amount: 0, names: [] }; acc[p.type].amount += p.amount; acc[p.type].names.push(p.name); return acc; }, {}))
+      .map(([type, x]) => ({ type, amount: x.amount, names: x.names, share: ratio(x.amount, spendingBasis) }))
+      .filter((x) => x.amount > 0).sort((a, b) => b.amount - a.amount)
   };
   totals.estimateLeft = minus(takeHome, totals.estimateOutflow);
   totals.dreamLeft = minus(takeHome, totals.dreamOutflow);

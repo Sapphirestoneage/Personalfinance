@@ -9,7 +9,7 @@ export function lineIdeas(doc, refs) {
   const out = {};
   for (const c of doc.categories) {
     const have = new Set(c.lines.filter((l) => l.state !== 'archived').map((l) => l.name.toLowerCase()));
-    out[c.id] = (ideas[c.id] || []).filter((n) => !have.has(n.toLowerCase()));
+    out[c.id] = (ideas[c.type] || []).filter((n) => !have.has(n.toLowerCase()));
   }
   return out;
 }

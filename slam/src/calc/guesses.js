@@ -37,10 +37,15 @@ export function guessFor(doc, catId, refs) {
 export function availableGuesses(doc, refs) {
   if (doc.settings.singleTotal) return [];
   const out = [];
+  // Guesses follow what a category counts as (S-068), once per type: a second
+  // Food category gets none, and none if another category of that type has an answer.
+  const answered = (c) => hasAnswer(c.estimate) || c.lines.some((l) => l.state !== 'archived' && hasAnswer(l.estimate));
+  const offered = new Set();
   for (const c of doc.categories) {
-    if (c.state === 'archived' || hasAnswer(c.estimate)) continue;
-    if (c.lines.some((l) => l.state !== 'archived' && hasAnswer(l.estimate))) continue;
-    const g = guessFor(doc, c.id, refs);
+    if (c.state === 'archived' || answered(c) || c.id === 'everything' || offered.has(c.type)) continue;
+    if (doc.categories.some((o) => o !== c && o.state !== 'archived' && o.type === c.type && answered(o))) continue;
+    offered.add(c.type);
+    const g = guessFor(doc, c.type, refs);
     if (g) out.push({ categoryId: c.id, name: c.name, value: g });
   }
   return out;

@@ -3,6 +3,7 @@
 
 import { newLine, newCategory, newIncome, newDebt, newDeduction, newNextStage, newNextStageItem, newEra, EVERYTHING_CATEGORY_ID } from './schema.js';
 import { newId } from './ids.js';
+import { guessLineType } from './types.js';
 
 export function findCategory(doc, catId) {
   return doc.categories.find((c) => c.id === catId) || null;
@@ -18,14 +19,14 @@ export function findLine(doc, lineId) {
 
 export function addLine(doc, catId, name) {
   const cat = findCategory(doc, catId);
-  const line = newLine({ name, kind: cat.kind, need: cat.need, savings: cat.savings, tag: cat.tag });
+  const line = newLine({ name, type: guessLineType(name, cat.type), kind: cat.kind, need: cat.need, savings: cat.savings, tag: cat.tag });
   cat.lines.push(line);
   return line;
 }
 
 // A new category goes last among spending: before Savings and the one total.
-export function addCategory(doc, name) {
-  const cat = newCategory({ name: name || 'New category' });
+export function addCategory(doc, name, type) {
+  const cat = newCategory({ name: name || 'New category', type: type || 'other' });
   const at = doc.categories.findIndex((c) => ['savings', EVERYTHING_CATEGORY_ID].includes(c.id));
   doc.categories.splice(at === -1 ? doc.categories.length : at, 0, cat);
   return cat;
@@ -96,6 +97,17 @@ export function removeEra(doc, eraId) {
   doc.eras.list = doc.eras.list.filter((e) => e.id !== eraId);
 }
 
+// Renaming keeps the type; a line still typed "Other" gets one guessed from its new name.
+export function renameLine(doc, lineId, name) {
+  const { category, line } = findLine(doc, lineId);
+  line.name = name;
+  if (line.type === 'other') line.type = guessLineType(name, category.type);
+}
+
+export function setLineType(doc, lineId, type) {
+  findLine(doc, lineId).line.type = type;
+}
+
 export function addIncome(doc, fields) {
   const inc = newIncome(fields);
   doc.income.push(inc);
@@ -115,7 +127,7 @@ export function addDebt(doc, fields) {
 export function useSingleTotal(doc) {
   doc.settings.singleTotal = true;
   if (!findCategory(doc, EVERYTHING_CATEGORY_ID)) {
-    const cat = newCategory({ id: EVERYTHING_CATEGORY_ID, name: 'Everything else', kind: 'variable' });
+    const cat = newCategory({ id: EVERYTHING_CATEGORY_ID, name: 'Everything else', type: 'other', kind: 'variable' });
     doc.categories.push(cat);
   }
   return findCategory(doc, EVERYTHING_CATEGORY_ID);

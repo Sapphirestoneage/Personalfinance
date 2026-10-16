@@ -34,7 +34,7 @@ function lineRow(line, freq) {
   if (actual !== null && owed !== null && line.owedBackReceived) actual -= owed;
   return {
     id: line.id, name: line.name, kind: line.kind, need: line.need, savings: line.savings,
-    path: line.path, tag: line.tag, tags: line.tags || [], joy: line.joy, state: line.state, computed: false,
+    path: line.path, tag: line.tag, tags: line.tags || [], type: line.type || 'other', joy: line.joy, state: line.state, computed: false,
     estimate: toMonthly(line.estimate, freq), dream: toMonthly(line.dream, freq), actual,
     status: { estimate: line.estimate.status, dream: line.dream.status, actual: line.actual.status },
     owedOutstanding: owed !== null && !line.owedBackReceived ? owed : 0,
@@ -46,7 +46,7 @@ function debtRows(doc) {
   return doc.debts.filter((d) => d.state !== 'archived').map((d) => {
     const min = toMonthly(d.minimum, 'monthly');
     return {
-      id: 'debt:' + d.id, debtId: d.id, name: d.label, kind: 'fixed', need: true, savings: false,
+      id: 'debt:' + d.id, debtId: d.id, name: d.label, type: 'loan', kind: 'fixed', need: true, savings: false,
       path: 'personal', tag: 'planned', joy: null, state: d.state, computed: true,
       estimate: min, dream: min, actual: min,
       status: { estimate: 'computed', dream: 'computed', actual: 'computed' },
@@ -78,7 +78,7 @@ export function budgetModel(doc) {
     const lines = isDebt ? debtRows(doc) : cat.lines.filter((l) => l.state !== 'archived').map((l) => lineRow(l, freq));
     const notForMe = cat.estimate.status === 'not-for-me' && !isDebt;
     const row = {
-      id: cat.id, name: cat.name, kind: cat.kind, need: cat.need, savings: cat.savings, tag: cat.tag,
+      id: cat.id, name: cat.name, type: isDebt ? 'debt' : (cat.type || 'other'), kind: cat.kind, need: cat.need, savings: cat.savings, tag: cat.tag,
       state: cat.state, isDebt, isEverything: cat.id === 'everything', notForMe, lines
     };
     if (isDebt) {
