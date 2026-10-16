@@ -15,7 +15,6 @@ const LIVING_WITH = [['', 'Pick one'], ['alone', 'On my own'], ['partner', 'With
 const FILING = [['single', 'Single'], ['married-joint', 'Married, filing jointly'], ['married-separate', 'Married, filing separately'], ['head-of-household', 'Head of household']];
 const INCOME_TYPES = [['w2', 'W-2 paycheck (tax withheld)'], ['1099', '1099 contractor (nothing withheld)'], ['side', 'Side income (nothing withheld)'], ['unemployment', 'Unemployment benefits'], ['family', 'Family support (gift, not taxed)'], ['not-taxable', 'Not taxable']];
 const FREQS = [['weekly', 'Weekly'], ['biweekly', 'Every two weeks'], ['semimonthly', 'Twice a month'], ['monthly', 'Monthly']];
-const STATES_OF_ITEM = [['active', 'Counts, shown'], ['hidden', 'Counts, hidden'], ['archived', 'Archived (stops counting)']];
 const WITHHOLDING = [['', 'Not sure yet'], ['ten-percent', 'Yes, 10% federal'], ['none', 'No']];
 
 // Picking a type sets kind defaults: unemployment arrives weekly and gets a real name.
@@ -167,6 +166,15 @@ function withheldBlock(ctx, inc, row) {
     check);
 }
 
+// One plain choice instead of a state dropdown (S-081): an income counts, or it is
+// set aside (archived, kept for the record). An old "hidden" state still counts.
+function countButton(ctx, inc) {
+  if (inc.state === 'archived') return null;
+  return h('div', { class: 'row' },
+    inc.state === 'hidden' ? h('button', { class: 'btn small ghost', onclick: () => ctx.update('Show income', (d) => { d.income.find((x) => x.id === inc.id).state = 'active'; }) }, 'Hidden (still counts): show it') : null,
+    h('button', { class: 'btn small ghost', 'data-key': 'stop-income:' + inc.id, onclick: () => ctx.update('Stop counting income', (d) => { d.income.find((x) => x.id === inc.id).state = 'archived'; }) }, 'Stop counting this income'));
+}
+
 // An archived income is skipped by every calculation, so say so plainly, with a way back.
 function archivedNote(ctx, inc) {
   if (inc.state !== 'archived') return null;
@@ -196,14 +204,13 @@ function benefitCard(ctx, inc, row) {
       u.endsAround ? h('p', { class: 'small' }, 'Benefits end around ' + u.endsAround + ', with about ' + money(u.stillToCome) + ' still to come.') : null);
   }
   return h('div', { class: 'card' },
-    h('div', { class: 'spread' }, h('h3', {}, inc.label), inc.state !== 'active' ? statusChip(null, inc.state) : null),
+    h('div', { class: 'spread' }, h('h3', {}, inc.label), countButton(ctx, inc)),
     archivedNote(ctx, inc),
     h('p', { class: 'muted small' }, 'Benefits are there for exactly this. They count as income for tax, so a little planning now keeps things calm later.'),
     h('div', { class: 'grid two' },
       textField(ctx, 'Name', p('label'), inc.label, { set: set('label') }),
       selectField(ctx, 'Type', inc.type, INCOME_TYPES, (d, v) => setIncomeType(d.income.find((x) => x.id === inc.id), v), JSON.stringify(p('type'))),
-      selectField(ctx, 'Arrives', inc.payFrequency, FREQS, set('payFrequency'), JSON.stringify(p('payFrequency'))),
-      selectField(ctx, 'In the budget', inc.state, STATES_OF_ITEM, set('state'), JSON.stringify(p('state')))),
+      selectField(ctx, 'Arrives', inc.payFrequency, FREQS, set('payFrequency'), JSON.stringify(p('payFrequency')))),
     question(ctx, 'Benefit amount', 'The amount on your benefit notice, before any tax', p('gross'), inc.gross),
     h('div', { class: 'grid two' },
       selectField(ctx, 'Is federal tax withheld? (optional)', inc.withholding || '', WITHHOLDING, (d, v) => set('withholding')(d, v || null), JSON.stringify(p('withholding'))),
@@ -253,14 +260,13 @@ family: 'Help from family. A gift, so it is not taxed as income.', 'not-taxable'
   const isWork = inc.type !== 'unemployment' && inc.type !== 'not-taxable' && inc.type !== 'family';
   const hourly = isWork && inc.payBasis === 'hourly';
   return h('div', { class: 'card' },
-    h('div', { class: 'spread' }, h('h3', {}, inc.label), inc.state !== 'active' ? statusChip(null, inc.state) : null),
+    h('div', { class: 'spread' }, h('h3', {}, inc.label), countButton(ctx, inc)),
     archivedNote(ctx, inc),
     h('div', { class: 'grid two' },
       textField(ctx, 'Name', p('label'), inc.label, { set: set('label') }),
       selectField(ctx, 'Type', inc.type, INCOME_TYPES, (d, v) => setIncomeType(d.income.find((x) => x.id === inc.id), v), JSON.stringify(p('type'))),
       selectField(ctx, 'Paid', inc.payFrequency, FREQS, set('payFrequency'), JSON.stringify(p('payFrequency'))),
-      isWork ? selectField(ctx, 'Pay basis', inc.payBasis, [['salary', 'Salary'], ['hourly', 'Hourly']], set('payBasis'), JSON.stringify(p('payBasis'))) : null,
-      selectField(ctx, 'In the budget', inc.state, STATES_OF_ITEM, set('state'), JSON.stringify(p('state')))),
+      isWork ? selectField(ctx, 'Pay basis', inc.payBasis, [['salary', 'Salary'], ['hourly', 'Hourly']], set('payBasis'), JSON.stringify(p('payBasis'))) : null),
     h('p', { class: 'muted xs' }, withheldNote),
     hourly ? null : question(ctx, 'Take-home pay', 'What lands in the bank account (net pay). Blank is fine if the paystub lines are copied below', p('takeHome'), inc.takeHome),
     hourly ? null : row && row.takeHomeStatus === 'guess'
