@@ -13,7 +13,8 @@ export function loadRefs() {
     averages: readJson('data/spending-averages.json'),
     colTiers: readJson('data/col-tiers.json'),
     merchantRules: readJson('data/merchant-rules.json'),
-    subcategoryIdeas: readJson('data/subcategory-ideas.json')
+    subcategoryIdeas: readJson('data/subcategory-ideas.json'),
+    eraTemplates: readJson('data/era-templates.json')
   };
 }
 

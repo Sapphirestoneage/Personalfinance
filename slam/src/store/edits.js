@@ -1,7 +1,7 @@
 // Small structural changes to a household draft (used inside store.update).
 // No math here: just finding things and adding or moving them.
 
-import { newLine, newCategory, newIncome, newDebt, newDeduction, newNextStage, newNextStageItem, EVERYTHING_CATEGORY_ID } from './schema.js';
+import { newLine, newCategory, newIncome, newDebt, newDeduction, newNextStage, newNextStageItem, newEra, EVERYTHING_CATEGORY_ID } from './schema.js';
 import { newId } from './ids.js';
 
 export function findCategory(doc, catId) {
@@ -74,6 +74,26 @@ export function useOneNumber(doc, catId, monthly) {
   const cat = findCategory(doc, catId);
   cat.split = false;
   cat.estimate = { amount: monthly === null ? null : Math.round(monthly * 100) / 100, cadence: 'month', status: monthly === null ? null : 'roughly', source: 'client', asOf: null, note: '' };
+}
+
+// Eras: add from a ready-made template, move earlier or later, remove.
+export function addEra(doc, template) {
+  const t = template || {};
+  const era = newEra({ template: t.id, name: t.name, months: t.months });
+  doc.eras.list.push(era);
+  return era;
+}
+
+export function moveEra(doc, eraId, step) {
+  const list = doc.eras.list;
+  const i = list.findIndex((e) => e.id === eraId);
+  const j = i + step;
+  if (i < 0 || j < 0 || j >= list.length) return;
+  [list[i], list[j]] = [list[j], list[i]];
+}
+
+export function removeEra(doc, eraId) {
+  doc.eras.list = doc.eras.list.filter((e) => e.id !== eraId);
 }
 
 export function addIncome(doc, fields) {

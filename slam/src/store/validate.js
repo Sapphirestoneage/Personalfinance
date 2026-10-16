@@ -81,6 +81,16 @@ export function validateHousehold(doc) {
     if (!r.id) errs.push('blindRounds[' + i + '].id is missing');
     for (const [k, v] of Object.entries(r.estimates || {})) errs.push(...valueErrors(v, 'blindRounds[' + i + '].' + k));
   });
+  if (doc.eras) {
+    errs.push(...valueErrors(doc.eras.cashNow, 'eras.cashNow'));
+    (doc.eras.list || []).forEach((e, i) => {
+      const w = 'eras[' + i + ']';
+      seen(e.id, w);
+      if (!(Number.isInteger(e.months) && e.months >= 1 && e.months <= 600)) errs.push(w + '.months must be 1 to 600');
+      if (!(Number.isInteger(e.gapMonths) && e.gapMonths >= 0 && e.gapMonths <= 600)) errs.push(w + '.gapMonths must be 0 to 600');
+      for (const k of ['takeHome', 'spending', 'oneTime']) errs.push(...valueErrors(e[k], w + '.' + k));
+    });
+  }
   if (doc.nextStage) {
     const ns = doc.nextStage;
     for (const k of ['takeHome', 'transitionTakeHome', 'laterTakeHome', 'cashOnHand']) errs.push(...valueErrors(ns[k], 'nextStage.' + k));
