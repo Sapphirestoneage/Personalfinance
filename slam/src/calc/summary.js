@@ -8,7 +8,7 @@ import { gaps, accuracy, blindSpot, culprits, gutCheck, correctionFactors, proof
 import { monthHistory, monthSnapshot } from './history.js';
 import { fiftyThirtyTwenty, draftt, incomeStatement, joyLens } from './lenses.js';
 import { questionItems, completion, nextSteps, roughList } from './completion.js';
-import { availableGuesses, colTierFor, householdSize } from './guesses.js';
+import { availableGuesses, colTierFor, householdSize, guessFor } from './guesses.js';
 import { ratio, minus } from './money.js';
 import { txMonths, detect, topMerchants, weekdaySpending, sizeVsCount } from './tx-analysis.js';
 
@@ -84,6 +84,8 @@ export function buildSummary(doc, refs) {
     blind: doc.blindRounds.length ? blindCompare(doc, model, doc.blindRounds[doc.blindRounds.length - 1].id) : null
   };
   summary.sinceLast = sinceLast(doc, summary);
+  // Living with family: what housing might cost on your own (an average, labeled guess).
+  summary.moveOut = doc.household.livingWith === 'family' ? { guess: guessFor(doc, 'housing', refs), now: totals.housing } : null;
   summary.transactions = doc.transactions.length ? {
     count: doc.transactions.length, months: txMonths(doc.transactions), detections: detect(doc.transactions),
     top: topMerchants(doc.transactions), weekdays: weekdaySpending(doc.transactions), sizeVsCount: sizeVsCount(doc.transactions)

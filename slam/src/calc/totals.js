@@ -74,7 +74,7 @@ export function budgetTotals(model, income, doc, housingBand = 0.35) {
   const totalRent = toMonthly(rm.totalRent, 'monthly');
   const rentLine = housing ? housing.cat.lines.find((l) => l.id === 'rent') : null;
   const yourShare = rentLine ? (rentLine.actual !== null ? rentLine.actual : rentLine.estimate) : null;
-  const roommateWorstCase = rm.count > 0 && housingBasis !== null && totalRent !== null && yourShare !== null
+  const roommateWorstCase = doc.household.livingWith === 'roommates' && rm.count > 0 && housingBasis !== null && totalRent !== null && yourShare !== null
     ? housingBasis - yourShare + totalRent : null;
 
   const mistakeMonthly = addUp(allParts, (p) => p.tag === 'mistake');
