@@ -27,6 +27,7 @@ export function validateHousehold(doc) {
   const ids = new Set();
   const seen = (id, where) => { if (ids.has(id)) errs.push(where + ': duplicate id ' + id); ids.add(id); };
 
+  if (doc.household && doc.household.parentsPlan !== undefined && typeof doc.household.parentsPlan !== 'boolean') errs.push('household.parentsPlan must be true or false');
   const tagIds = new Set();
   (doc.tags || []).forEach((t, i) => {
     if (!t.id || tagIds.has(t.id)) errs.push('tags[' + i + ']: missing or duplicate id');

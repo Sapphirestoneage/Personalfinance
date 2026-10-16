@@ -233,6 +233,8 @@ export function newHousehold(name, now = new Date()) {
       dependents: { count: null, ages: [] },
       // Who the client lives with: 'alone', 'partner', 'roommates', or 'family' (null = not asked yet).
       livingWith: null,
+      // On a parent's health plan (only counts while 25 or younger, S-073).
+      parentsPlan: false,
       family: { count: null },
       roommates: { count: null, totalRent: makeValue() }
     },

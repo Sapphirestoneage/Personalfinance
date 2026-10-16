@@ -9,10 +9,14 @@ import { statusChip, statusPicker } from '../components/status.js';
 import { makeValue } from '../../store/value.js';
 import { useSingleTotal, findCategory, renameLine, startBlindRound, addCategory, addLine, addDebt, breakDown, useOneNumber } from '../../store/edits.js';
 import { nameEdit } from '../components/name-edit.js';
+import { parentsPlanToggle, coveredByParents, coveredNote } from '../components/parents-plan.js';
+import { parentsPlan } from '../../calc/coverage.js';
 import { categoryTypeSelect, lineTypeSelect, typeHint } from '../components/type-select.js';
 import { categoryTypeLabel, lineTypeLabel } from '../../store/types.js';
 import { debtQuick, debtTypeTotals } from '../components/debt-quick.js';
 import { lastActual } from '../../calc/history.js';
+
+const parentsPlanOn = (doc) => parentsPlan(doc).on;
 
 function addLineButton(ctx, catId) {
   return h('button', { class: 'btn small ghost', onclick: () => {
@@ -140,9 +144,13 @@ export function renderEstimates(ctx, summary, key) {
       return h('div', { class: 'sub-lines' },
         h('div', { class: 'qa' }, h('div', { class: 'q' }, name, h('div', { class: 'hint' }, [hint, 'Adds up from its sub-categories.', first].filter(Boolean).join(' '))),
           h('span', {}, statusChip(r.status[key]), ' ', h('b', { class: 'num' }, money(r[key])))),
-        live.map((l) => question(ctx, h('div', {}, nameEdit(ctx, l.name, 'line:' + l.id + ':name', (d, v) => renameLine(d, l.id, v), 'Sub-category name'),
-          l.type === 'other' ? lineTypeSelect(ctx, l, { label: 'Type' }) : typeHint(lineTypeLabel(l.type), l.name)),
-          null, ['line', l.id, key], l[key], { label: l.name, parts: true })),
+        cat.type === 'health' ? parentsPlanToggle(ctx) : null,
+        live.map((l) => {
+          const nm = h('div', {}, nameEdit(ctx, l.name, 'line:' + l.id + ':name', (d, v) => renameLine(d, l.id, v), 'Sub-category name'),
+            l.type === 'other' ? lineTypeSelect(ctx, l, { label: 'Type' }) : typeHint(lineTypeLabel(l.type), l.name));
+          return coveredByParents(doc, l) ? h('div', { class: 'qa' }, h('div', { class: 'q' }, nm), coveredNote())
+            : question(ctx, nm, null, ['line', l.id, key], l[key], { label: l.name, parts: true });
+        }),
         ideas.length ? h('div', { class: 'tags' }, h('span', { class: 'xs muted' }, 'Ideas:'), ideas.map((n) => h('button', { class: 'tag-chip', onclick: () => {
           let id;
           ctx.update('Add ' + n, (d) => { id = addLine(d, cat.id, n).id; });
@@ -154,8 +162,10 @@ export function renderEstimates(ctx, summary, key) {
     const fromPay = r.type === 'health' ? (summary.income.deductionsByKind.health || 0) + (summary.income.deductionsByKind.hsa || 0)
       : r.type === 'transport' ? summary.income.deductionsByKind.transportation : null;
     const payNote = fromPay ? 'Already taken out of the paycheck: ' + money(fromPay) + ' a month. Only count what is paid on top.' : null;
+    const planNote = r.type === 'health' && parentsPlanOn(doc) ? 'On a parent\'s plan: count only what is paid out of pocket.' : null;
     return h('div', {},
-      question(ctx, name, [hint, payNote].filter(Boolean).join(' ') || null, ['categories', r.id, key], cat[key], { label: r.name, parts: true }),
+      question(ctx, name, [hint, payNote, planNote].filter(Boolean).join(' ') || null, ['categories', r.id, key], cat[key], { label: r.name, parts: true }),
+      r.type === 'health' ? parentsPlanToggle(ctx) : null,
       isRough && !r.isEverything ? h('div', { class: 'row' }, h('button', { class: 'btn small ghost', 'data-key': 'break:' + r.id, onclick: () => ctx.update('Break down ' + r.name, (d) => breakDown(d, r.id)) }, 'Break down into sub-categories')) : null,
       isRough ? extrasFor(ctx, summary, r) : null);
   }));

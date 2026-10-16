@@ -4,6 +4,7 @@
 
 import { toMonthly, hasAnswer, isOneOff } from './normalize.js';
 import { sumKnown } from './money.js';
+import { parentsPlan, PARENTS_PLAN_LINE_TYPES } from './coverage.js';
 
 const WEAKNESS_ORDER = ['dont-know', 'will-email', null, 'guess', 'roughly', 'known', 'computed', 'not-for-me'];
 
@@ -22,6 +23,13 @@ export function primaryPayFrequency(doc) {
   const inc = doc.income.find((i) => i.state !== 'archived');
   return inc ? inc.payFrequency : null;
 }
+
+// A line a parent's plan pays for counts as "doesn't apply": 0, and complete.
+function coveredRow(line, freq) {
+  const zero = { ...line, estimate: NOT_FOR_ME, dream: NOT_FOR_ME, actual: NOT_FOR_ME };
+  return { ...lineRow(zero, freq), covered: 'parents-plan' };
+}
+const NOT_FOR_ME = { amount: null, cadence: 'month', status: 'not-for-me', source: 'client', asOf: null, note: '' };
 
 function lineRow(line, freq) {
   const oneOffs = [];
@@ -71,11 +79,13 @@ function resolveTop(cat, lines, key, freq) {
 
 export function budgetModel(doc) {
   const freq = primaryPayFrequency(doc);
+  const plan = parentsPlan(doc);
   const cats = [];
   for (const cat of doc.categories) {
     if (cat.state === 'archived') continue;
     const isDebt = cat.id === 'debt';
-    const lines = isDebt ? debtRows(doc) : cat.lines.filter((l) => l.state !== 'archived').map((l) => lineRow(l, freq));
+    const lines = isDebt ? debtRows(doc) : cat.lines.filter((l) => l.state !== 'archived')
+      .map((l) => (plan.on && PARENTS_PLAN_LINE_TYPES.includes(l.type) ? coveredRow(l, freq) : lineRow(l, freq)));
     const notForMe = cat.estimate.status === 'not-for-me' && !isDebt;
     const row = {
       id: cat.id, name: cat.name, type: isDebt ? 'debt' : (cat.type || 'other'), kind: cat.kind, need: cat.need, savings: cat.savings, tag: cat.tag,

@@ -7,6 +7,7 @@ import { valueInput, question } from '../components/value-input.js';
 import { statusChip } from '../components/status.js';
 import { addLine, addDebt, findLine, findCategory, renameLine, addCategory, addTag, toggleLineTag, renameTag, removeTag } from '../../store/edits.js';
 import { nameEdit } from '../components/name-edit.js';
+import { parentsPlanToggle, coveredByParents, coveredNote } from '../components/parents-plan.js';
 import { categoryTypeSelect, lineTypeSelect, typeHint } from '../components/type-select.js';
 import { lineTypeLabel } from '../../store/types.js';
 import { DEBT_TYPE_OPTIONS } from '../components/debt-quick.js';
@@ -92,6 +93,7 @@ function categoryCard(ctx, summary, cat) {
     h('div', { class: 'spread' }, h('h3', {}, catName(ctx, cat)),
       categoryTypeSelect(ctx, cat),
       h('span', { class: 'small muted num' }, 'estimate ' + money(row.estimate) + ' / actual ' + money(row.actual) + (row.partial ? ' (partial)' : ''))),
+    cat.type === 'health' ? parentsPlanToggle(ctx) : null,
     live.map((line) => {
       const open = ctx.ui.expanded.has('line:' + line.id);
       return h('div', { class: 'qa' },
@@ -102,7 +104,7 @@ function categoryCard(ctx, summary, cat) {
             if (open) ctx.ui.expanded.delete('line:' + line.id); else ctx.ui.expanded.add('line:' + line.id);
             ctx.rerender();
           } }, open ? 'Less' : 'Details')),
-        valueInput(ctx, ['line', line.id, 'actual'], line.actual, { label: line.name + ' actual', parts: true }),
+        coveredByParents(ctx.doc, line) ? coveredNote() : valueInput(ctx, ['line', line.id, 'actual'], line.actual, { label: line.name + ' actual', parts: true }),
         tagRow(ctx, line),
         open ? h('div', { style: 'flex-basis:100%' }, lineDetail(ctx, cat, line, catHasAnswer)) : null);
     }),
