@@ -32,10 +32,11 @@
 // FAT (strict, by category, whatever lines are labeled): Food + Housing + Transportation = 0 + 250 + 0 = 250; 250 / 1,733.333333 = 0.144231
 
 // LIVING WITH FAMILY: if Sam moved out, housing guess = household of 1 (family members are not
-// counted in Sam's own budget), Michigan = LCOL: 1,500 x 0.85 = 1,275 a month (Guess). Housing now: 0.
+// counted in Sam's own budget). The guess is the national average for that size, used as is (S-070):
+// spending-averages.json, household of 1, housing = 1,500 a month (Guess). Housing now: 0.
 
 export default {
-  moveOut: [1275, 0],
+  moveOut: [1500, 0],
   fat: 250, fatShare: 0.144231,
   takeHome: 1733.333333,
   categories: {

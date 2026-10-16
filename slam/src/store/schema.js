@@ -5,7 +5,7 @@ import { makeValue } from './value.js';
 import { DEFAULT_LINE_TYPES } from './types.js';
 import { newId } from './ids.js';
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export const SITUATIONS = ['employed', 'self-employed', 'between-jobs', 'student'];
 export const FILING_STATUSES = ['single', 'married-joint', 'married-separate', 'head-of-household'];
@@ -18,7 +18,6 @@ export const LINE_KINDS = ['fixed', 'variable'];
 export const LINE_PATHS = ['personal', 'linked', 'reimbursable'];
 export const LINE_TAGS = ['planned', 'unavoidable', 'mistake'];
 export const DEBT_TYPES = ['credit-card', 'line-of-credit', 'student-loan', 'car-loan', 'personal-loan', 'medical', 'bnpl', 'mortgage', 'family-friend', 'other'];
-export const COL_TIERS = ['HCOL', 'MCOL', 'LCOL'];
 export const LIVING_WITH = ['alone', 'partner', 'roommates', 'family'];
 
 // [id, name, kind, need, savings, tag, lines[[id, name, kind, need]]]
@@ -227,7 +226,7 @@ export function newHousehold(name, now = new Date()) {
     id: newId('hh'),
     createdAt: iso,
     updatedAt: iso,
-    profile: { name: name || 'New client', birthYear: null, state: null, zip: null, colTier: null, colTierSetBy: 'derived' },
+    profile: { name: name || 'New client', birthYear: null, state: null },
     situation: [],
     household: {
       filingStatus: 'single',

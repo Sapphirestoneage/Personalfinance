@@ -10,7 +10,13 @@ import { CATEGORY_TYPE_IDS, DEFAULT_LINE_TYPES, guessLineType } from './types.js
 // STEPS[n] turns a version n document into version n + 1.
 const STEPS = {
   // Version 0 = a document saved before versioning existed (no schemaVersion key).
-  0: (doc) => ({ ...doc, schemaVersion: 1 })
+  0: (doc) => ({ ...doc, schemaVersion: 1 }),
+  // Version 1 to 2 (S-070): ZIP and the cost-of-living tier are gone; nothing read ZIP,
+  // and the tier only scaled placeholder averages.
+  1: (doc) => {
+    const { zip, colTier, colTierSetBy, ...profile } = doc.profile || {};
+    return { ...doc, profile, schemaVersion: 2 };
+  }
 };
 
 export function migrate(raw) {

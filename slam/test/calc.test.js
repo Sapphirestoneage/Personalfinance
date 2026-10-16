@@ -8,7 +8,7 @@ import { bracketTax, estimateAnnualTax } from '../src/calc/tax.js';
 import { incomeSummary } from '../src/calc/income.js';
 import { budgetModel } from '../src/calc/model.js';
 import { buildSummary } from '../src/calc/summary.js';
-import { guessFor, colTierFor } from '../src/calc/guesses.js';
+import { guessFor } from '../src/calc/guesses.js';
 import { hoursOfWork, inUnit } from '../src/calc/lenses.js';
 import { gaps } from '../src/calc/compare.js';
 import { sumKnown, ratio } from '../src/calc/money.js';
@@ -169,18 +169,19 @@ test('debt minimums flow into Debt payments as computed lines', () => {
   assert.equal(debt.lines.length, 1);
 });
 
-test('guesses: HCOL household of 3 (married, 1 dependent) scales by 1.25 and says so', () => {
+test('guesses: the national average for the household size, labeled Guess with its source', () => {
   const d = newHousehold('Guess');
   d.profile.state = 'CA';
   d.household.filingStatus = 'married-joint';
   d.household.dependents.count = 1;
+  // household of 3 = you + spouse + 1 dependent; spending-averages.json size 3 food = 1,000, used as is
   const g = guessFor(d, 'food', refs);
-  assert.equal(g.amount, 1250); // 1,000 x 1.25
+  assert.equal(g.amount, 1000);
   assert.equal(g.status, 'guess');
-  assert.match(g.note, /HCOL x1.25/);
+  assert.match(g.note, /^Guess: national average, household of 3, source .*BLS Consumer Expenditure Survey 2023$/);
   assert.equal(guessFor(d, 'savings', refs), null);
-  assert.equal(colTierFor({ state: null, colTier: null }, refs.colTiers).tier, 'MCOL');
-  assert.equal(colTierFor({ state: 'CA', colTier: 'LCOL' }, refs.colTiers).tier, 'LCOL', 'coach override wins');
+  d.profile.state = 'MI';
+  assert.equal(guessFor(d, 'food', refs).amount, 1000, 'the state does not change a guess');
 });
 
 test('hours of work and the lens toggle', () => {

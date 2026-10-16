@@ -20,7 +20,8 @@ theming beyond the tokens.
 - Let "per paycheck" expense amounts pick which income's pay schedule they follow (today: the first income).
 - Tax guess that stacks several gross-only incomes into one bracket calculation.
 - A correction factor per line, not just per category.
-- Replace the placeholder BLS averages and cost-of-living tiers with verified figures each year.
+- Replace the placeholder BLS averages with verified figures each year.
+- Cost-of-living scaling for Guess averages (by state or metro), once the averages themselves are verified. ZIP only if a calculation needs it.
 - Client-facing read-only view of the Budget screen (logins are out of scope for now).
 - Next stage: compare two or more plans side by side; include taxes for the new job from gross pay.
 

@@ -11,7 +11,7 @@ import { gaps, accuracy, blindSpot, culprits, gutCheck, correctionFactors, proof
 import { monthHistory, monthSnapshot } from './history.js';
 import { fiftyThirtyTwenty, draftt, incomeStatement, joyLens } from './lenses.js';
 import { questionItems, completion, nextSteps, roughList } from './completion.js';
-import { availableGuesses, colTierFor, householdSize, guessFor } from './guesses.js';
+import { availableGuesses, householdSize, guessFor } from './guesses.js';
 import { ratio, minus } from './money.js';
 import { txMonths, detect, topMerchants, weekdaySpending, sizeVsCount } from './tx-analysis.js';
 import { nextStage } from './next-stage.js';
@@ -62,7 +62,7 @@ export function buildSummary(doc, refs) {
   const summary = {
     householdId: doc.id,
     month: doc.currentMonth,
-    profile: { ...doc.profile, colTier: colTierFor(doc.profile, refs.colTiers), householdSize: householdSize(doc) },
+    profile: { ...doc.profile, householdSize: householdSize(doc) },
     income, model, totals,
     rows: tableRows(model, totals),
     oneOffs: model.oneOffs,

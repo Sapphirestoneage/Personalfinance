@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "hh-jordan",
-  "profile": { "name": "Jordan (demo, transactions)", "birthYear": 1995, "state": "IL", "zip": "60614" },
+  "profile": { "name": "Jordan (demo, transactions)", "birthYear": 1995, "state": "IL" },
   "situation": ["employed"],
   "household": { "filingStatus": "single", "dependents": { "count": 0, "ages": [] }, "roommates": { "count": 0 } },
   "income": [

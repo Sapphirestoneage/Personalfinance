@@ -230,7 +230,6 @@ export function renderBasics(ctx, summary) {
   const doc = ctx.doc;
   const pr = doc.profile;
   const hh = doc.household;
-  const col = summary.profile.colTier;
   const rm = hh.roommates;
   const setProfile = (k) => (d, v) => { d.profile[k] = v; };
 
@@ -239,11 +238,7 @@ export function renderBasics(ctx, summary) {
       h('div', { class: 'grid two' },
         textField(ctx, 'Name', ['profile', 'name'], pr.name, { set: (d, v) => { d.profile.name = v || 'Client'; } }),
         textField(ctx, 'Birth year', ['profile', 'birthYear'], pr.birthYear, { numeric: true, width: '7em', set: setProfile('birthYear') }),
-        selectField(ctx, 'State', pr.state || '', [['', 'Pick a state'], ...STATES.map((s) => [s, s])], (d, v) => { d.profile.state = v || null; }, 'profile-state'),
-        textField(ctx, 'ZIP', ['profile', 'zip'], pr.zip, { width: '7em', set: setProfile('zip') }),
-        selectField(ctx, 'Cost of living (for guesses): ' + col.tier + ', ' + col.from, pr.colTier || '',
-          [['', 'Use the state'], ['HCOL', 'High (HCOL)'], ['MCOL', 'Medium (MCOL)'], ['LCOL', 'Low (LCOL)']],
-          (d, v) => { d.profile.colTier = v || null; }, 'profile-col'))),
+        selectField(ctx, 'State', pr.state || '', [['', 'Pick a state'], ...STATES.map((s) => [s, s])], (d, v) => { d.profile.state = v || null; }, 'profile-state'))),
 
     h('div', { class: 'card' }, h('h2', {}, 'Situation'),
       h('p', { class: 'muted small' }, 'Pick all that apply.'),

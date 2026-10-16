@@ -4,7 +4,6 @@ const FILES = {
   tax: 'data/tax-constants.json',
   benchmarks: 'data/benchmarks.json',
   averages: 'data/spending-averages.json',
-  colTiers: 'data/col-tiers.json',
   merchantRules: 'data/merchant-rules.json',
   subcategoryIdeas: 'data/subcategory-ideas.json',
   eraTemplates: 'data/era-templates.json'

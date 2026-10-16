@@ -54,7 +54,7 @@ columns. Nothing leaves the browser. The Jordan demo comes with two sample files
 | `src/store/` | number store: schema, validation, migrations, save and load, client list, export and import, undo and redo, month close |
 | `src/calc/` | pure math functions. Every number on every screen comes from here |
 | `src/ui/` | the four screens, components, SVG charts, and `tokens.css` (every color and font) |
-| `data/` | reference tables (tax constants, averages, benchmark bands, cost-of-living tiers, merchant rules), each with source and year |
+| `data/` | reference tables (tax constants, averages, benchmark bands, merchant rules), each with source and year |
 | `test/` | unit tests, plus `test/households/` with synthetic households and hand-computed expected answers |
 
 ## The four screens

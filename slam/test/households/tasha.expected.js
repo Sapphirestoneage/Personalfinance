@@ -41,7 +41,8 @@
 // debt minimum 3, debt balance 1 = 15. 15 / 47 = 0.319149
 // NEXT: rent actual (3 x 1 = 3), take-home guess (3 x 0.7 = 2.1), then four items at 2.0 with
 // blanks ranked before the Health estimate (which has a 400 guess): groceries actual first by order.
-// ROUGH LIST: 10 values. GUESSES offered: Health 400, Personal and fun 300, Annual 100 (MCOL x1.0, household of 1).
+// ROUGH LIST: 10 values. GUESSES offered: the national average for a household of 1, used as is (S-070):
+// spending-averages.json, household of 1: Health 400, Personal and fun 300, Annual 100.
 
 // FAT (strict, by category, whatever lines are labeled): Food + Housing + Transportation = 1,400 + 500 + 400 = 2,300; 27,600 / 50,390 = 0.547728
 

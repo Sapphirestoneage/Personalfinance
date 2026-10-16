@@ -5,7 +5,7 @@ import { valueErrors } from './value.js';
 import { CATEGORY_TYPE_IDS, LINE_TYPE_IDS } from './types.js';
 import {
   SCHEMA_VERSION, LIVING_WITH, SITUATIONS, FILING_STATUSES, INCOME_TYPES, PAY_FREQUENCIES, PAY_BASES, WITHHOLDING, DEDUCTION_KIND_IDS,
-  ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES, COL_TIERS
+  ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES
 } from './schema.js';
 
 function oneOf(errs, list, val, where, allowNull = false) {
@@ -19,7 +19,6 @@ export function validateHousehold(doc) {
   if (doc.schemaVersion !== SCHEMA_VERSION) errs.push('schemaVersion must be ' + SCHEMA_VERSION);
   if (!doc.id) errs.push('id is missing');
   if (!doc.profile || typeof doc.profile.name !== 'string') errs.push('profile.name is missing');
-  oneOf(errs, COL_TIERS, doc.profile && doc.profile.colTier, 'profile.colTier', true);
   for (const s of doc.situation || []) oneOf(errs, SITUATIONS, s, 'situation');
   oneOf(errs, FILING_STATUSES, doc.household && doc.household.filingStatus, 'household.filingStatus');
   oneOf(errs, LIVING_WITH, doc.household && doc.household.livingWith, 'household.livingWith', true);
