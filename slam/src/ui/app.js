@@ -25,7 +25,7 @@ let refs = null;
 let renderQueued = false;
 
 const ui = {
-  screen: 'clients', pass: 'gut', focusPath: null, expanded: new Set(), sort: { key: null, dir: -1 },
+  screen: 'clients', pass: 'gut', focusPath: null, focusKey: null, expanded: new Set(), sort: { key: null, dir: -1 },
   lens: 'dollars', monthView: 'current', blind: false, units: {}, previewHandler: null, toast: null,
   section: null
 };
@@ -103,7 +103,11 @@ function render() {
   root.replaceChildren(...parts);
   window.scrollTo(0, scroll);
 
-  if (ui.focusPath) {
+  if (ui.focusKey) {
+    const el = root.querySelector('[data-key="' + CSS.escape(ui.focusKey) + '"]');
+    ui.focusKey = null;
+    if (el) { el.scrollIntoView({ block: 'center' }); el.focus(); if (el.select) el.select(); }
+  } else if (ui.focusPath) {
     const el = root.querySelector('[data-path="' + CSS.escape(JSON.stringify(ui.focusPath)) + '"]');
     ui.focusPath = null;
     if (el) { el.scrollIntoView({ block: 'center' }); el.focus(); }

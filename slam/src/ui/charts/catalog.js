@@ -237,7 +237,25 @@ export function mistakeCard(ctx, s) {
   return card(ctx, {
     id: 'mistake', title: 'Mistake cost',
     svg: hbars({ rows: [{ label: 'A month', values: [{ v: m.monthly, color: 'var(--bad)', tip: money(m.monthly) }] }, { label: 'A year', values: [{ v: m.yearly, color: 'var(--bad)', tip: money(m.yearly) }] }], width: chartWidth(true), fmt: money }),
-    reading: m.monthly > 0 ? 'Mistakes (fees, tickets, anything tagged) cost ' + money(m.monthly) + ' a month, ' + money(m.yearly) + ' a year.' : 'Nothing tagged as a mistake.'
+    reading: m.monthly > 0 ? 'Mistakes (fees, tickets, anything marked a mistake) cost ' + money(m.monthly) + ' a month, ' + money(m.yearly) + ' a year.' : 'Nothing tagged as a mistake.'
+  });
+}
+
+// The client's own tags: what each tag adds up to this month.
+export function tagsCard(ctx, s) {
+  const rows = s.tags.filter((t) => t.count);
+  const exact = (x) => (x === null ? 'Blank' : money(x));
+  const top = rows.filter((t) => t.actual !== null).sort((a, b) => b.actual - a.actual)[0];
+  return card(ctx, {
+    id: 'tags', title: 'By tag',
+    extra: rows.length ? h('div', { class: 'table-wrap' }, h('table', { class: 'budget' },
+      h('thead', {}, h('tr', {}, ['Tag', 'Lines', 'Estimate', 'Actual'].map((x) => h('th', {}, x)))),
+      h('tbody', {}, rows.map((t) => h('tr', {}, h('td', {}, '#' + t.name, h('div', { class: 'xs muted' }, t.lines.join(', '))),
+        h('td', { class: 'num' }, String(t.count)), h('td', { class: 'num' }, exact(t.estimate)),
+        h('td', { class: 'num' }, exact(t.actual) + (t.actualMissing && t.actual !== null ? ' (partial)' : ''))))))) : null,
+    reading: !s.tags.length ? 'No tags yet. Add them on any line in the Actual pass (Subscription, Travel, anything you like).'
+      : !rows.length ? 'Tags are made but not on any line yet.'
+        : top ? '#' + top.name + ' is the biggest tag this month at ' + money(top.actual) + '. A line can carry more than one tag, so tags can overlap.' : 'No actuals on tagged lines yet.'
   });
 }
 

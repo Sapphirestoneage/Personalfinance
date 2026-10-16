@@ -24,6 +24,28 @@ export function migrate(raw) {
   return normalizeHousehold(doc);
 }
 
+// Compatibility (S-060): unemployment asks one number, the benefit, stored as gross.
+// An old take-home moves to gross; if both were given, gross stays and take-home
+// tells us about withholding (about 90% of gross = 10% withheld, equal = none).
+function unemploymentCompat(inc) {
+  const g = inc.gross;
+  const t = inc.takeHome;
+  if (isBlank(t)) return;
+  if (isBlank(g)) {
+    inc.gross = { ...t, cadence: t.cadence === 'paycheck' ? cadenceOf(inc.payFrequency) : t.cadence };
+  } else if (inc.withholding === null && t.amount !== null && g.amount) {
+    const per = (v) => (v.cadence === 'paycheck' ? v.amount * ({ weekly: 52, biweekly: 26, semimonthly: 24, monthly: 12 }[inc.payFrequency] || 0) : v.amount * ({ week: 52, month: 12, year: 1 }[v.cadence] || 0));
+    const r = per(t) / per(g);
+    if (Math.abs(r - 0.9) < 0.01) inc.withholding = 'ten-percent';
+    else if (Math.abs(r - 1) < 0.005) inc.withholding = 'none';
+  }
+  inc.takeHome = { ...t, amount: null, status: null, cadence: 'paycheck' };
+}
+
+function cadenceOf(freq) {
+  return freq === 'weekly' ? 'week' : freq === 'monthly' ? 'month' : 'paycheck';
+}
+
 function withDefaults(base, given, valueKeys) {
   const out = { ...base, ...given };
   for (const k of valueKeys) out[k] = normalizeValue(given[k] === undefined ? base[k] : given[k]);
@@ -51,6 +73,7 @@ export function normalizeHousehold(doc) {
     inc.deductions = (i.deductions || []).map((d) => ({ ...newDeduction({ id: d.id, kind: d.kind }), ...d, amount: normalizeValue(d.amount) }));
     const old = pretaxRetirement === undefined ? null : normalizeValue(pretaxRetirement);
     if (old && !isBlank(old)) inc.deductions.unshift({ ...newDeduction({ id: 'ded-' + inc.id + '-ret', kind: 'retirement', mode: 'amount' }), amount: old });
+    if (inc.type === 'unemployment') unemploymentCompat(inc);
     return inc;
   });
   out.debts = (doc.debts || []).map((d) => withDefaults(newDebt({ id: d.id }), d, ['balance', 'apr', 'minimum', 'dueDay']));
@@ -66,6 +89,8 @@ export function normalizeHousehold(doc) {
   out.months = doc.months || [];
   // Compatibility: files before per-month actuals have none stored.
   out.monthActuals = Object.fromEntries(Object.entries(doc.monthActuals || {}).map(([k, lines]) => [k, Object.fromEntries(Object.entries(lines).map(([id, v]) => [id, normalizeValue(v)]))]));
+  // Compatibility: files before tags have none.
+  out.tags = (doc.tags || []).map((t) => ({ id: t.id, name: t.name }));
   out.transactions = doc.transactions || [];
   out.merchantMemory = doc.merchantMemory || {};
   out.snapshots = doc.snapshots || [];

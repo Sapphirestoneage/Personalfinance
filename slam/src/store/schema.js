@@ -8,6 +8,7 @@ export const SCHEMA_VERSION = 1;
 
 export const SITUATIONS = ['employed', 'self-employed', 'between-jobs', 'student'];
 export const FILING_STATUSES = ['single', 'married-joint', 'married-separate', 'head-of-household'];
+export const WITHHOLDING = [null, 'ten-percent', 'none'];
 export const INCOME_TYPES = ['w2', '1099', 'side', 'unemployment', 'family', 'not-taxable'];
 export const PAY_BASES = ['salary', 'hourly'];
 export const PAY_FREQUENCIES = ['weekly', 'biweekly', 'semimonthly', 'monthly'];
@@ -75,7 +76,9 @@ export function newLine(fields = {}) {
     joy: fields.joy === undefined ? null : fields.joy,
     state: fields.state || 'active',
     estimate: makeValue(), dream: makeValue(), actual: makeValue(),
-    owedBack: makeValue(), owedBackReceived: false
+    owedBack: makeValue(), owedBackReceived: false,
+    // The client's own tags (ids from doc.tags), like Subscription or Travel.
+    tags: fields.tags || []
   };
 }
 
@@ -115,6 +118,9 @@ export function newIncome(fields = {}) {
     hourlyRate: makeValue(null, { cadence: 'month' }),
     deductions: [],
     hoursPerWeek: null,
+    // Unemployment only: federal withholding ('ten-percent', 'none', or null = not sure) and weeks left.
+    withholding: null,
+    benefitWeeksLeft: null,
     state: 'active'
   };
 }
@@ -212,6 +218,8 @@ export function newHousehold(name, now = new Date()) {
     // Actuals for open months other than the one being worked on: { 'YYYY-MM': { lineId: Value } }.
     monthActuals: {},
     nextStage: null,
+    // Tags the client made: [{ id, name }]. Lines carry their ids.
+    tags: [],
     settings: { singleTotal: false, benchmarkSource: 'eli', lens: 'dollars' },
     passesSeen: []
   };

@@ -7,8 +7,17 @@ import { money, pct, monthLabel } from '../format.js';
 import { question } from '../components/value-input.js';
 import { statusChip, statusPicker } from '../components/status.js';
 import { makeValue } from '../../store/value.js';
-import { useSingleTotal, findCategory, startBlindRound } from '../../store/edits.js';
+import { useSingleTotal, findCategory, findLine, startBlindRound, addCategory, addLine } from '../../store/edits.js';
+import { nameEdit } from '../components/name-edit.js';
 import { lastActual } from '../../calc/history.js';
+
+function addLineButton(ctx, catId) {
+  return h('button', { class: 'btn small ghost', onclick: () => {
+    let id;
+    ctx.update('Add line', (d) => { id = addLine(d, catId, 'New line').id; });
+    if (id) { ctx.ui.focusKey = 'line:' + id + ':name'; ctx.rerender(); }
+  } }, '+ Add line');
+}
 
 function useAs(ctx, catId, key, value, label) {
   return h('button', { class: 'btn small ghost', onclick: () => ctx.update(label, (d) => { findCategory(d, catId)[key] = value; }) }, label);
@@ -91,9 +100,10 @@ export function renderEstimates(ctx, summary, key) {
           doc.debts.length || doc.noDebts ? null : h('button', { class: 'btn small ghost', onclick: () => ctx.goToField(['debts']) }, 'Add debts')));
     }
     const cat = findCategory(doc, r.id);
+    const name = nameEdit(ctx, cat.name, 'cat:' + cat.id + ':name', (d, v) => { findCategory(d, r.id).name = v; }, 'Category name');
     if (r.notForMe) {
       // Doesn't apply: no amount box (lesson 12), just the answer and a way to change it.
-      return h('div', { class: 'qa' }, h('div', { class: 'q' }, r.name),
+      return h('div', { class: 'qa' }, h('div', { class: 'q' }, name),
         statusPicker(cat.estimate.status, (st) => ctx.update(r.name, (d) => { findCategory(d, r.id).estimate = makeValue(null, { status: st }); }), JSON.stringify(['categories', r.id, 'estimate'])));
     }
     const hint = isRough
@@ -102,16 +112,28 @@ export function renderEstimates(ctx, summary, key) {
     const fromLines = (isRough ? r.estimateFrom : r.dreamFrom) === 'lines';
     if (fromLines) {
       // Already given line by line: show it, never ask it a second time.
-      return h('div', { class: 'qa' }, h('div', { class: 'q' }, r.name, h('div', { class: 'hint' }, 'Adds up from its lines (Actual pass, Details).')),
-        h('span', {}, statusChip(r.status[key]), ' ', h('b', { class: 'num' }, money(r[key]))));
+      // Given line by line: each line is asked here (never a second category number).
+      const live = cat.lines.filter((l) => l.state !== 'archived');
+      return h('div', { class: 'sub-lines' },
+        h('div', { class: 'qa' }, h('div', { class: 'q' }, name, h('div', { class: 'hint' }, hint ? hint + '. Adds up from its lines.' : 'Adds up from its lines.')),
+          h('span', {}, statusChip(r.status[key]), ' ', h('b', { class: 'num' }, money(r[key])))),
+        live.map((l) => question(ctx, nameEdit(ctx, l.name, 'line:' + l.id + ':name', (d, v) => { findLine(d, l.id).line.name = v; }, 'Line name'),
+          null, ['line', l.id, key], l[key], { label: l.name, parts: true })),
+        addLineButton(ctx, cat.id));
     }
     const fromPay = r.id === 'health' ? (summary.income.deductionsByKind.health || 0) + (summary.income.deductionsByKind.hsa || 0)
       : r.id === 'transport' ? summary.income.deductionsByKind.transportation : null;
     const payNote = fromPay ? 'Already taken out of the paycheck: ' + money(fromPay) + ' a month. Only count what is paid on top.' : null;
     return h('div', {},
-      question(ctx, r.name, [hint, payNote].filter(Boolean).join(' ') || null, ['categories', r.id, key], cat[key]),
+      question(ctx, name, [hint, payNote].filter(Boolean).join(' ') || null, ['categories', r.id, key], cat[key], { label: r.name, parts: true }),
       isRough ? extrasFor(ctx, summary, r) : null);
   }));
 
-  return h('div', {}, header, isRough ? blindResult(summary) : null, total, list);
+  const add = h('button', { class: 'btn', onclick: () => {
+    let id;
+    ctx.update('Add category', (d) => { id = addCategory(d, 'New category').id; });
+    if (id) { ctx.ui.focusKey = 'cat:' + id + ':name'; ctx.rerender(); }
+  } }, '+ Add category');
+  return h('div', {}, header, isRough ? blindResult(summary) : null, total, list, add,
+    h('p', { class: 'muted xs' }, 'Tap any name to rename it. "+ Items" splits one amount into named pieces that add up.'));
 }

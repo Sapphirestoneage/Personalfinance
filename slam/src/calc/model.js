@@ -34,7 +34,7 @@ function lineRow(line, freq) {
   if (actual !== null && owed !== null && line.owedBackReceived) actual -= owed;
   return {
     id: line.id, name: line.name, kind: line.kind, need: line.need, savings: line.savings,
-    path: line.path, tag: line.tag, joy: line.joy, state: line.state, computed: false,
+    path: line.path, tag: line.tag, tags: line.tags || [], joy: line.joy, state: line.state, computed: false,
     estimate: toMonthly(line.estimate, freq), dream: toMonthly(line.dream, freq), actual,
     status: { estimate: line.estimate.status, dream: line.dream.status, actual: line.actual.status },
     owedOutstanding: owed !== null && !line.owedBackReceived ? owed : 0,

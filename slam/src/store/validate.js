@@ -3,7 +3,7 @@
 
 import { valueErrors } from './value.js';
 import {
-  SCHEMA_VERSION, LIVING_WITH, SITUATIONS, FILING_STATUSES, INCOME_TYPES, PAY_FREQUENCIES, PAY_BASES, DEDUCTION_KIND_IDS,
+  SCHEMA_VERSION, LIVING_WITH, SITUATIONS, FILING_STATUSES, INCOME_TYPES, PAY_FREQUENCIES, PAY_BASES, WITHHOLDING, DEDUCTION_KIND_IDS,
   ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES, COL_TIERS
 } from './schema.js';
 
@@ -27,6 +27,12 @@ export function validateHousehold(doc) {
   const ids = new Set();
   const seen = (id, where) => { if (ids.has(id)) errs.push(where + ': duplicate id ' + id); ids.add(id); };
 
+  const tagIds = new Set();
+  (doc.tags || []).forEach((t, i) => {
+    if (!t.id || tagIds.has(t.id)) errs.push('tags[' + i + ']: missing or duplicate id');
+    if (typeof t.name !== 'string' || !t.name.trim()) errs.push('tags[' + i + ']: name is empty');
+    tagIds.add(t.id);
+  });
   (doc.income || []).forEach((inc, i) => {
     const w = 'income[' + i + ']';
     seen(inc.id, w);
@@ -34,6 +40,8 @@ export function validateHousehold(doc) {
     oneOf(errs, PAY_FREQUENCIES, inc.payFrequency, w + '.payFrequency');
     oneOf(errs, ITEM_STATES, inc.state, w + '.state');
     oneOf(errs, PAY_BASES, inc.payBasis, w + '.payBasis');
+    if (inc.withholding !== undefined) oneOf(errs, WITHHOLDING, inc.withholding, w + '.withholding');
+    if (inc.benefitWeeksLeft !== undefined && inc.benefitWeeksLeft !== null && !(typeof inc.benefitWeeksLeft === 'number' && inc.benefitWeeksLeft >= 0)) errs.push(w + '.benefitWeeksLeft must be 0 or more, or empty');
     for (const k of ['takeHome', 'gross', 'hourlyRate']) errs.push(...valueErrors(inc[k], w + '.' + k));
     (inc.deductions || []).forEach((d, j) => {
       const dw = w + '.deductions[' + j + ']';
@@ -64,6 +72,7 @@ export function validateHousehold(doc) {
       oneOf(errs, ITEM_STATES, l.state, lw + '.state');
       if (l.joy !== null && !(Number.isInteger(l.joy) && l.joy >= 1 && l.joy <= 10)) errs.push(lw + '.joy must be 1 to 10 or empty');
       for (const k of ['estimate', 'dream', 'actual', 'owedBack']) errs.push(...valueErrors(l[k], lw + '.' + k));
+      (l.tags || []).forEach((t) => { if (!tagIds.has(t)) errs.push(lw + '.tags: unknown tag ' + t); });
     });
   });
   (doc.blindRounds || []).forEach((r, i) => {

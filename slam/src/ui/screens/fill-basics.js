@@ -12,9 +12,18 @@ const STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA'
 const SITUATIONS = [['employed', 'Employed'], ['self-employed', 'Self-employed'], ['between-jobs', 'Between jobs'], ['student', 'Student']];
 const LIVING_WITH = [['', 'Pick one'], ['alone', 'On my own'], ['partner', 'With a partner or spouse'], ['roommates', 'With roommates'], ['family', 'With family (parents or relatives)']];
 const FILING = [['single', 'Single'], ['married-joint', 'Married, filing jointly'], ['married-separate', 'Married, filing separately'], ['head-of-household', 'Head of household']];
-const INCOME_TYPES = [['w2', 'W-2 paycheck (tax withheld)'], ['1099', '1099 contractor (nothing withheld)'], ['side', 'Side income (nothing withheld)'], ['unemployment', 'Unemployment (income tax owed, not withheld)'], ['family', 'Family support (gift, not taxed)'], ['not-taxable', 'Not taxable']];
+const INCOME_TYPES = [['w2', 'W-2 paycheck (tax withheld)'], ['1099', '1099 contractor (nothing withheld)'], ['side', 'Side income (nothing withheld)'], ['unemployment', 'Unemployment benefits'], ['family', 'Family support (gift, not taxed)'], ['not-taxable', 'Not taxable']];
 const FREQS = [['weekly', 'Weekly'], ['biweekly', 'Every two weeks'], ['semimonthly', 'Twice a month'], ['monthly', 'Monthly']];
-const STATES_OF_ITEM = [['active', 'Active'], ['hidden', 'Hidden (still counts)'], ['archived', 'Archived (stops counting)']];
+const STATES_OF_ITEM = [['active', 'Counts, shown'], ['hidden', 'Counts, hidden'], ['archived', 'Archived (stops counting)']];
+const WITHHOLDING = [['', 'Not sure yet'], ['ten-percent', 'Yes, 10% federal'], ['none', 'No']];
+
+// Picking a type sets kind defaults: unemployment arrives weekly and gets a real name.
+function setIncomeType(inc, type) {
+  inc.type = type;
+  if (type !== 'unemployment') return;
+  if (/^Income \d+$/.test(inc.label) || inc.label === 'Paycheck') inc.label = 'Unemployment benefits';
+  if (inc.gross.amount === null && inc.gross.status === null) inc.gross.cadence = 'week';
+}
 
 function textField(ctx, label, path, value, opts = {}) {
   const key = JSON.stringify(path);
@@ -95,12 +104,52 @@ function deductionsBlock(ctx, inc, row) {
       .map(([k, label]) => h('button', { class: 'btn small', onclick: () => ctx.update('Add deduction', (doc) => { addDeduction(doc, inc.id, k); }) }, label))));
 }
 
+// Unemployment asks one number. The rest (what lands, tax to plan for, when it ends) is worked out.
+function benefitCard(ctx, inc, row) {
+  const p = (k) => ['income', inc.id, k];
+  const set = (k) => (d, v) => { d.income.find((x) => x.id === inc.id)[k] = v; };
+  const u = row && row.unemployment;
+  const exact = (x) => money(x, true);
+  let plan = null;
+  if (u) {
+    const lands = u.withholding === 'ten-percent'
+      ? [exact(u.benefitWeekly * 0.9) + ' a week lands after the 10%, about ' + money(u.takeHomeMonthly) + ' a month.']
+      : [exact(u.benefitWeekly) + ' a week, about ' + money(u.takeHomeMonthly) + ' a month.'];
+    const taxLine = u.estTaxAnnual === 0
+      ? 'At this amount, no federal income tax is likely.'
+      : u.withholding === 'ten-percent'
+        ? (u.owedAtTaxTime > 0 ? 'The 10% may not cover it all. Setting aside about ' + exact(u.setAsideWeekly) + ' more a week avoids a surprise.' : 'The 10% likely covers the federal tax' + (u.refundLikely > 1 ? ', with maybe ' + money(u.refundLikely) + ' back.' : '.'))
+        : 'To avoid a surprise at tax time, set aside about ' + exact(u.setAsideWeekly) + ' a week (' + money(u.estTaxAnnual) + ' for a full year of benefits).';
+    plan = h('div', { class: 'card', style: 'margin:8px 0' },
+      h('p', { class: 'small' }, h('b', {}, lands[0])),
+      h('p', { class: 'small' }, taxLine, h('span', { class: 'muted xs' }, ' Federal only, tax year ' + u.taxYear + '.')),
+      u.endsAround ? h('p', { class: 'small' }, 'Benefits end around ' + u.endsAround + ', with about ' + money(u.stillToCome) + ' still to come.') : null);
+  }
+  return h('div', { class: 'card' },
+    h('div', { class: 'spread' }, h('h3', {}, inc.label), inc.state !== 'active' ? statusChip(null, inc.state) : null),
+    h('p', { class: 'muted small' }, 'Benefits are there for exactly this. They count as income for tax, so a little planning now keeps things calm later.'),
+    h('div', { class: 'grid two' },
+      textField(ctx, 'Name', p('label'), inc.label, { set: set('label') }),
+      selectField(ctx, 'Type', inc.type, INCOME_TYPES, (d, v) => setIncomeType(d.income.find((x) => x.id === inc.id), v), JSON.stringify(p('type'))),
+      selectField(ctx, 'Arrives', inc.payFrequency, FREQS, set('payFrequency'), JSON.stringify(p('payFrequency'))),
+      selectField(ctx, 'In the budget', inc.state, STATES_OF_ITEM, set('state'), JSON.stringify(p('state')))),
+    question(ctx, 'Benefit amount', 'The amount on your benefit notice, before any tax', p('gross'), inc.gross),
+    h('div', { class: 'grid two' },
+      selectField(ctx, 'Is federal tax withheld? (optional)', inc.withholding || '', WITHHOLDING, (d, v) => set('withholding')(d, v || null), JSON.stringify(p('withholding'))),
+      textField(ctx, 'Weeks of benefits left (optional)', p('benefitWeeksLeft'), inc.benefitWeeksLeft, { numeric: true, width: '6em', set: (d, v) => {
+        if (v !== null && v < 0) throw new Error('Use 0 or more weeks');
+        set('benefitWeeksLeft')(d, v);
+      } })),
+    plan);
+}
+
 function incomeCard(ctx, inc, row) {
+  if (inc.type === 'unemployment') return benefitCard(ctx, inc, row);
   const p = (k) => ['income', inc.id, k];
   const set = (k) => (d, v) => { d.income.find((x) => x.id === inc.id)[k] = v; };
   const withheldNote = {
     w2: 'Tax is withheld from this pay.', '1099': 'Nothing is withheld; self-employment tax applies.', side: 'Nothing is withheld; self-employment tax applies.',
-    unemployment: 'Income tax is owed but not withheld. No self-employment tax.', family: 'Help from family. A gift, so it is not taxed as income.', 'not-taxable': 'No tax.'
+family: 'Help from family. A gift, so it is not taxed as income.', 'not-taxable': 'No tax.'
   }[inc.type];
   const isWork = inc.type !== 'unemployment' && inc.type !== 'not-taxable' && inc.type !== 'family';
   const hourly = isWork && inc.payBasis === 'hourly';
@@ -108,10 +157,10 @@ function incomeCard(ctx, inc, row) {
     h('div', { class: 'spread' }, h('h3', {}, inc.label), inc.state !== 'active' ? statusChip(null, inc.state) : null),
     h('div', { class: 'grid two' },
       textField(ctx, 'Name', p('label'), inc.label, { set: set('label') }),
-      selectField(ctx, 'Type', inc.type, INCOME_TYPES, set('type'), JSON.stringify(p('type'))),
+      selectField(ctx, 'Type', inc.type, INCOME_TYPES, (d, v) => setIncomeType(d.income.find((x) => x.id === inc.id), v), JSON.stringify(p('type'))),
       selectField(ctx, 'Paid', inc.payFrequency, FREQS, set('payFrequency'), JSON.stringify(p('payFrequency'))),
       isWork ? selectField(ctx, 'Pay basis', inc.payBasis, [['salary', 'Salary'], ['hourly', 'Hourly']], set('payBasis'), JSON.stringify(p('payBasis'))) : null,
-      selectField(ctx, 'State', inc.state, STATES_OF_ITEM, set('state'), JSON.stringify(p('state')))),
+      selectField(ctx, 'In the budget', inc.state, STATES_OF_ITEM, set('state'), JSON.stringify(p('state')))),
     h('p', { class: 'muted xs' }, withheldNote),
     question(ctx, 'Take-home pay', 'What lands in the bank account', p('takeHome'), inc.takeHome),
     row && row.takeHomeStatus === 'guess'
@@ -173,6 +222,7 @@ export function renderBasics(ctx, summary) {
     doc.income.length ? null : h('p', { class: 'muted' }, 'No income yet. Add each source of money coming in.'),
     doc.income.map((inc) => incomeCard(ctx, inc, summary.income.sources.find((s) => s.id === inc.id))),
     h('button', { class: 'btn', 'data-path': JSON.stringify(['income']), onclick: () => ctx.update('Add income', (d) => {
-      addIncome(d, { type: defaultIncomeType(d.situation), label: 'Income ' + (d.income.length + 1) });
+      const inc = addIncome(d, { type: 'w2', label: 'Income ' + (d.income.length + 1) });
+      setIncomeType(inc, defaultIncomeType(d.situation));
     }) }, '+ Add income source'));
 }

@@ -12,7 +12,8 @@ import { guessFor, colTierFor } from '../src/calc/guesses.js';
 import { hoursOfWork, inUnit } from '../src/calc/lenses.js';
 import { gaps } from '../src/calc/compare.js';
 import { sumKnown, ratio } from '../src/calc/money.js';
-import { newHousehold } from '../src/store/schema.js';
+import { newHousehold, newIncome } from '../src/store/schema.js';
+import { migrate } from '../src/store/migrate.js';
 import { makeValue } from '../src/store/value.js';
 import { useSingleTotal, findLine, findCategory } from '../src/store/edits.js';
 import { loadRefs, near } from './helpers.js';
@@ -71,10 +72,47 @@ test('standard deduction is used once: a known paycheck uses it before a gross-o
   d.income.push({ id: 'a', type: 'w2', label: 'Main', payFrequency: 'monthly', takeHome: v(3000), gross: makeValue(), deductions: [], hoursPerWeek: null, state: 'active' });
   d.income.push({ id: 'b', type: 'unemployment', label: 'Second', payFrequency: 'monthly', takeHome: makeValue(), gross: v(12000, 'year'), deductions: [], hoursPerWeek: null, state: 'active' });
   const inc = incomeSummary(d, refs.tax);
-  // second source gets no deduction: 12,000 x 10% = 1,200 tax -> 10,800 a year = 900 a month
-  assert.equal(inc.sources[1].takeHomeMonthly, 900);
-  assert.equal(inc.sources[1].takeHomeStatus, 'guess');
-  assert.equal(inc.takeHome, 3900);
+  // Unemployment lands in full (nothing withheld): 12,000 / 12 = 1,000 a month.
+  // It gets no standard deduction: 12,000 x 10% = 1,200 tax, set aside 1,200 / 52 = 23.076923 a week.
+  assert.equal(inc.sources[1].takeHomeMonthly, 1000);
+  assert.notEqual(inc.sources[1].takeHomeStatus, 'guess');
+  assert.equal(inc.sources[1].unemployment.owedAtTaxTime, 1200);
+  assert.ok(near(inc.sources[1].unemployment.setAsideWeekly, 23.076923));
+  assert.equal(inc.takeHome, 4000);
+});
+
+test('unemployment: one benefit number, set-aside when not withheld, 10% option', () => {
+  const d = newHousehold('Benefits');
+  d.currentMonth = '2026-10';
+  d.income.push({ ...newIncome({ id: 'u', type: 'unemployment', payFrequency: 'weekly' }), gross: v(869, 'week'), benefitWeeksLeft: 10 });
+  let u = incomeSummary(d, refs.tax).sources[0];
+  // 869 x 52 = 45,188 a year = 3,765.666667 a month, all of it lands.
+  assert.ok(near(u.takeHomeMonthly, 3765.666667));
+  // 45,188 - 16,100 = 29,088 taxable: 1,240 + (29,088 - 12,400) x 12% = 3,242.56; / 52 = 62.356923 a week.
+  assert.ok(near(u.unemployment.estTaxAnnual, 3242.56));
+  assert.ok(near(u.unemployment.setAsideWeekly, 62.356923));
+  // 10 weeks from Oct 15 is Dec 24: ends around December 2026; 8,690 still to come.
+  assert.equal(u.unemployment.endsAround, 'December 2026');
+  assert.ok(near(u.unemployment.stillToCome, 8690));
+  d.income[0].withholding = 'ten-percent';
+  u = incomeSummary(d, refs.tax).sources[0];
+  // 10% withheld: 3,765.666667 x 0.9 = 3,389.10 lands; 4,518.80 withheld >= 3,242.56 owed, refund about 1,276.24.
+  assert.ok(near(u.takeHomeMonthly, 3389.1));
+  assert.equal(u.unemployment.owedAtTaxTime, 0);
+  assert.ok(near(u.unemployment.refundLikely, 1276.24));
+});
+
+test('unemployment compat: old take-home moves to the benefit; equal take-home and gross means none withheld', () => {
+  const old = newHousehold('Old');
+  old.income.push({ ...newIncome({ id: 'a', type: 'unemployment', payFrequency: 'weekly' }), takeHome: v(869, 'paycheck'), gross: v(869, 'week') });
+  old.income.push({ ...newIncome({ id: 'b', type: 'unemployment', payFrequency: 'weekly' }), takeHome: v(400, 'paycheck') });
+  old.income.push({ ...newIncome({ id: 'c', type: 'unemployment', payFrequency: 'weekly' }), takeHome: v(450, 'week'), gross: v(500, 'week') });
+  const m = migrate(JSON.parse(JSON.stringify(old)));
+  assert.equal(m.income[0].gross.amount, 869);
+  assert.equal(m.income[0].takeHome.amount, null);
+  assert.equal(m.income[0].withholding, 'none');
+  assert.deepEqual([m.income[1].gross.amount, m.income[1].gross.cadence], [400, 'week']);
+  assert.equal(m.income[2].withholding, 'ten-percent');
 });
 
 test('reimbursable lines count fully until received, then only your share', () => {
