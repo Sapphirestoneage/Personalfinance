@@ -3,7 +3,7 @@
   "id": "hh-sam",
   "profile": { "name": "Sam (demo)", "birthYear": 2002, "state": "MI", "zip": "48104" },
   "situation": ["between-jobs", "student"],
-  "household": { "filingStatus": "single", "dependents": { "count": 0, "ages": [] }, "roommates": { "count": 0 } },
+  "household": { "filingStatus": "single", "dependents": { "count": 0, "ages": [] }, "livingWith": "family", "family": { "count": 3 }, "roommates": { "count": 0 } },
   "income": [
     { "id": "inc-ui", "type": "unemployment", "label": "Unemployment benefits", "payFrequency": "weekly",
       "takeHome": { "amount": 400, "cadence": "week" } }

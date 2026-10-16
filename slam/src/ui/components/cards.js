@@ -82,6 +82,9 @@ export function extrasCard(summary) {
   const items = [];
   if (t.owedBack > 0) items.push(['Owed back to you (not yet received)', money(t.owedBack)]);
   if (t.mistakeMonthly > 0) items.push(['Mistakes (tagged)', money(t.mistakeMonthly) + ' / mo, ' + money(t.mistakeYearly) + ' / yr']);
+  if (summary.moveOut && summary.moveOut.guess) {
+    items.push(['If you moved out of the family home', 'about ' + money(summary.moveOut.guess.amount) + ' a month for housing (Guess) vs ' + money(summary.moveOut.now) + ' now']);
+  }
   if (t.roommateWorstCase !== null) items.push(['If you paid the full rent', money(t.roommateWorstCase) + ' housing (' + pct(t.roommateWorstCaseShare) + ' of take-home)']);
   for (const o of summary.oneOffs) items.push(['One-off: ' + o.name + ' (' + o.which + ')', money(o.amount) + ', not in monthly totals']);
   if (summary.sinceLast) {

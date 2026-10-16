@@ -68,6 +68,11 @@ for (const name of ['maya', 'luis', 'tasha', 'sam']) {
     money(t.mistakeMonthly, exp.mistakeMonthly, 'mistakes monthly');
     money(t.mistakeYearly, exp.mistakeYearly, 'mistakes yearly');
     money(t.owedBack, exp.owedBack, 'owed back');
+    if (exp.moveOut) {
+      assert.equal(s.moveOut.guess.amount, exp.moveOut[0]);
+      assert.equal(s.moveOut.guess.status, 'guess');
+      money(s.moveOut.now, exp.moveOut[1], 'housing now');
+    } else assert.equal(s.moveOut, null);
     if (exp.unassignedShare !== undefined) share(s.lenses.fiftyThirtyTwenty.unassignedShare, exp.unassignedShare, 'unassigned');
   });
 

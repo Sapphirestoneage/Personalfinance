@@ -17,6 +17,7 @@ export const LINE_PATHS = ['personal', 'linked', 'reimbursable'];
 export const LINE_TAGS = ['planned', 'unavoidable', 'mistake'];
 export const DEBT_TYPES = ['credit-card', 'student-loan', 'car-loan', 'personal-loan', 'medical', 'bnpl', 'mortgage', 'other'];
 export const COL_TIERS = ['HCOL', 'MCOL', 'LCOL'];
+export const LIVING_WITH = ['alone', 'partner', 'roommates', 'family'];
 
 // [id, name, kind, need, savings, tag, lines[[id, name, kind, need]]]
 // need = whatever the line is labeled; these are only starting labels, editable per line.
@@ -160,6 +161,9 @@ export function newHousehold(name, now = new Date()) {
     household: {
       filingStatus: 'single',
       dependents: { count: null, ages: [] },
+      // Who the client lives with: 'alone', 'partner', 'roommates', or 'family' (null = not asked yet).
+      livingWith: null,
+      family: { count: null },
       roommates: { count: null, totalRent: makeValue() }
     },
     income: [],

@@ -1,5 +1,5 @@
 // Fill in, pass 2 Basics: profile, situation, household, income.
-// Only the fields that apply are shown (no roommates = no roommate fields).
+// Only the fields that apply are shown (no roommates = no roommate fields; family only when living with family).
 
 import { h, options } from '../dom.js';
 import { money } from '../format.js';
@@ -10,6 +10,7 @@ import { DEDUCTION_KINDS } from '../../calc/deductions.js';
 
 const STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
 const SITUATIONS = [['employed', 'Employed'], ['self-employed', 'Self-employed'], ['between-jobs', 'Between jobs'], ['student', 'Student']];
+const LIVING_WITH = [['', 'Pick one'], ['alone', 'On my own'], ['partner', 'With a partner or spouse'], ['roommates', 'With roommates'], ['family', 'With family (parents or relatives)']];
 const FILING = [['single', 'Single'], ['married-joint', 'Married, filing jointly'], ['married-separate', 'Married, filing separately'], ['head-of-household', 'Head of household']];
 const INCOME_TYPES = [['w2', 'W-2 paycheck (tax withheld)'], ['1099', '1099 contractor (nothing withheld)'], ['side', 'Side income (nothing withheld)'], ['unemployment', 'Unemployment (income tax owed, not withheld)'], ['family', 'Family support (gift, not taxed)'], ['not-taxable', 'Not taxable']];
 const FREQS = [['weekly', 'Weekly'], ['biweekly', 'Every two weeks'], ['semimonthly', 'Twice a month'], ['monthly', 'Monthly']];
@@ -158,9 +159,15 @@ export function renderBasics(ctx, summary) {
         textField(ctx, 'Dependents (0 if none)', ['household', 'dependents', 'count'], hh.dependents.count, { numeric: true, width: '6em', set: (d, v) => { d.household.dependents.count = v; } }),
         hh.dependents.count > 0 ? textField(ctx, 'Dependent ages (comma separated)', ['household', 'dependents', 'ages'], hh.dependents.ages.join(', '),
           { set: (d, v) => { d.household.dependents.ages = (v || '').split(',').map((x) => Number(x.trim())).filter((n) => Number.isFinite(n) && n >= 0); } }) : null,
-        textField(ctx, 'Roommates (0 if none)', ['household', 'roommates', 'count'], rm.count, { numeric: true, width: '6em', set: (d, v) => { d.household.roommates.count = v; } })),
-      rm.count > 0 ? h('div', {},
-        question(ctx, 'Total rent for the place', 'What everyone pays together. Your share is the Rent line in the Actual pass.', ['household', 'roommates', 'totalRent'], rm.totalRent)) : null),
+        selectField(ctx, 'Who do you live with?', hh.livingWith || '', LIVING_WITH, (d, v) => {
+          d.household.livingWith = v || null;
+          if (v !== 'roommates') d.household.roommates.count = 0;
+        }, 'living-with'),
+        hh.livingWith === 'roommates' ? textField(ctx, 'How many roommates', ['household', 'roommates', 'count'], rm.count, { numeric: true, width: '6em', set: (d, v) => { d.household.roommates.count = v; } }) : null,
+        hh.livingWith === 'family' ? textField(ctx, 'People in the home besides you', ['household', 'family', 'count'], hh.family.count, { numeric: true, width: '6em', set: (d, v) => { d.household.family.count = v; } }) : null),
+      hh.livingWith === 'roommates' && rm.count > 0 ? h('div', {},
+        question(ctx, 'Total rent for the place', 'What everyone pays together. Your share is the Rent line in the Actual pass.', ['household', 'roommates', 'totalRent'], rm.totalRent)) : null,
+      hh.livingWith === 'family' ? h('p', { class: 'small muted' }, 'Anything you pay your family for rent or bills goes on the Housing lines in the Actual pass. If you pay nothing, mark Housing "Doesn\'t apply" in the Rough pass.') : null),
 
     h('h2', {}, 'Income'),
     doc.income.length ? null : h('p', { class: 'muted' }, 'No income yet. Add each source of money coming in.'),

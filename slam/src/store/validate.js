@@ -3,7 +3,7 @@
 
 import { valueErrors } from './value.js';
 import {
-  SCHEMA_VERSION, SITUATIONS, FILING_STATUSES, INCOME_TYPES, PAY_FREQUENCIES, PAY_BASES, DEDUCTION_KIND_IDS,
+  SCHEMA_VERSION, LIVING_WITH, SITUATIONS, FILING_STATUSES, INCOME_TYPES, PAY_FREQUENCIES, PAY_BASES, DEDUCTION_KIND_IDS,
   ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES, COL_TIERS
 } from './schema.js';
 
@@ -21,6 +21,7 @@ export function validateHousehold(doc) {
   oneOf(errs, COL_TIERS, doc.profile && doc.profile.colTier, 'profile.colTier', true);
   for (const s of doc.situation || []) oneOf(errs, SITUATIONS, s, 'situation');
   oneOf(errs, FILING_STATUSES, doc.household && doc.household.filingStatus, 'household.filingStatus');
+  oneOf(errs, LIVING_WITH, doc.household && doc.household.livingWith, 'household.livingWith', true);
   errs.push(...valueErrors(doc.gut, 'gut'));
 
   const ids = new Set();

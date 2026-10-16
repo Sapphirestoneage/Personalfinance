@@ -40,6 +40,9 @@ export function normalizeHousehold(doc) {
   // Compatibility: an old separate "yourShare" is dropped; the rent line is your share.
   const { yourShare, ...rm } = out.household.roommates || {};
   out.household.roommates = withDefaults(base.household.roommates, rm, ['totalRent']);
+  out.household.family = { ...base.household.family, ...(out.household.family || {}) };
+  // Compatibility: older files only had a roommate count.
+  if (out.household.livingWith === undefined || out.household.livingWith === null) out.household.livingWith = rm.count > 0 ? 'roommates' : null;
   out.gut = normalizeValue(doc.gut);
   out.income = (doc.income || []).map((raw) => {
     // Compatibility: the old single "pretaxRetirement" amount becomes a retirement deduction.
