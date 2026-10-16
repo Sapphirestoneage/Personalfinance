@@ -21,7 +21,9 @@ const STEPS = {
   2: (doc) => {
     const { benchmarkSource, ...settings } = doc.settings || {};
     return { ...doc, settings, schemaVersion: 3 };
-  }
+  },
+  // Version 3 to 4 (S-076): monthly plans. Older files have none.
+  3: (doc) => ({ ...doc, plans: doc.plans || {}, schemaVersion: 4 })
 };
 
 export function migrate(raw) {
@@ -109,6 +111,14 @@ export function normalizeHousehold(doc) {
   // Compatibility (S-067): files before eras load with none.
   const er = doc.eras || {};
   out.eras = { cashNow: normalizeValue(er.cashNow), list: (er.list || []).map((e) => ({ ...newEra({ id: e.id }), ...e, takeHome: normalizeValue(e.takeHome), spending: normalizeValue(e.spending), oneTime: normalizeValue(e.oneTime) })) };
+  const nv = (v) => normalizeValue(v);
+  out.plans = Object.fromEntries(Object.entries(doc.plans || {}).map(([m, p]) => [m, {
+    createdFrom: p.createdFrom || 'manual',
+    lines: Object.fromEntries(Object.entries(p.lines || {}).map(([k, e]) => [k, {
+      amount: nv(e.amount), start: nv(e.start === undefined ? e.amount : e.start), decision: e.decision || 'keep',
+      reviewed: !!e.reviewed, note: e.note || '', stop: !!e.stop
+    }]))
+  }]));
   // Compatibility: files before tags have none.
   out.tags = (doc.tags || []).map((t) => ({ id: t.id, name: t.name }));
   out.transactions = doc.transactions || [];

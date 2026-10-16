@@ -59,22 +59,20 @@ export function removeTag(doc, tagId) {
   for (const c of doc.categories) for (const l of c.lines) l.tags = l.tags.filter((t) => t !== tagId);
 }
 
-// Break a one-number Rough answer into sub-categories: the number is kept as
-// a note ("First guess") and the lines below it carry the estimate from now on.
+// Break a one-number Rough answer into sub-categories. The client's number stays
+// exactly as they said it (lesson 17); while split, the lines carry the estimate.
 export function breakDown(doc, catId) {
-  const cat = findCategory(doc, catId);
-  const v = cat.estimate;
-  const first = v.amount === null ? '' : 'First guess ' + v.amount + ' / ' + v.cadence;
-  cat.estimate = { ...v, amount: null, status: null, note: first };
-  delete cat.estimate.parts;
-  cat.split = true;
+  findCategory(doc, catId).split = true;
 }
 
-// Back to one number: the lines' total becomes the category's own answer.
+// Back to one number: the client's own first number again. Only when there never
+// was one does the lines' total fill the blank (marked roughly).
 export function useOneNumber(doc, catId, monthly) {
   const cat = findCategory(doc, catId);
   cat.split = false;
-  cat.estimate = { amount: monthly === null ? null : Math.round(monthly * 100) / 100, cadence: 'month', status: monthly === null ? null : 'roughly', source: 'client', asOf: null, note: '' };
+  if (cat.estimate.amount !== null || cat.estimate.status !== null) return;
+  if (monthly === null) return;
+  cat.estimate = { amount: Math.round(monthly * 100) / 100, cadence: 'month', status: 'roughly', source: 'client', asOf: null, note: 'Total of the sub-categories' };
 }
 
 // Eras: add from a ready-made template, move earlier or later, remove.

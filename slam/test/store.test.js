@@ -191,7 +191,7 @@ test('migration to schema 3 removes the DRAFTT benchmark source and changes noth
   v2.schemaVersion = 2;
   v2.settings = { singleTotal: true, benchmarkSource: 'money-guy', lens: 'dollars' };
   const m = migrate(v2);
-  assert.equal(m.schemaVersion, 3);
+  assert.equal(m.schemaVersion, SCHEMA_VERSION);
   assert.ok(!('benchmarkSource' in m.settings));
   assert.deepEqual(m.settings, { singleTotal: true, lens: 'dollars' });
   const rest = (d) => { const { settings, schemaVersion, ...x } = d; return x; };

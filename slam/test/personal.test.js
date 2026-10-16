@@ -94,8 +94,7 @@ test('Rough break down: the first guess is kept as a note, sub-categories carry 
   t.estimate = makeValue(300);
   breakDown(d, 'transport');
   assert.equal(t.split, true);
-  assert.equal(t.estimate.amount, null);
-  assert.equal(t.estimate.note, 'First guess 300 / month');
+  assert.equal(t.estimate.amount, 300, "the client's first number is never overwritten (lesson 17)");
   findLine(d, 'gas').line.estimate = makeValue(120);
   const ins = addLine(d, 'transport', 'Car insurance');
   ins.estimate = makeValue(1200, { cadence: 'year' });
@@ -106,7 +105,15 @@ test('Rough break down: the first guess is kept as a note, sub-categories carry 
   assert.ok(!s.lineIdeas.transport.includes('Car insurance'), 'an idea already used is not offered again');
   assert.ok(s.lineIdeas.transport.includes('Tolls'));
   useOneNumber(d, 'transport', row.estimate);
-  assert.deepEqual([t.split, t.estimate.amount, t.estimate.status], [false, 220, 'roughly']);
+  // back to one number: the client's own 300 again, not the lines' 220
+  assert.deepEqual([t.split, t.estimate.amount, t.estimate.status], [false, 300, 'known']);
+  assert.equal(buildSummary(d, refs).rows.find((r) => r.id === 'transport').estimate, 300);
+  // with no first number, the lines' total fills the blank
+  const f = d.categories.find((c) => c.id === 'food');
+  breakDown(d, 'food');
+  findLine(d, 'groceries').line.estimate = makeValue(400);
+  useOneNumber(d, 'food', 400);
+  assert.deepEqual([f.estimate.amount, f.estimate.status], [400, 'roughly']);
   assert.deepEqual(validateHousehold(d), []);
 });
 

@@ -88,7 +88,7 @@ function categoryCard(ctx, summary, cat) {
       h('button', { class: 'btn small ghost', onclick: () => ctx.goToField(['categories', cat.id, 'estimate']) }, 'Change in Rough pass'));
   }
   const catHasAnswer = cat.estimate.status !== null || cat.dream.status !== null || cat.dreamLong.status !== null;
-  const live = cat.lines.filter((l) => l.state !== 'archived');
+  const live = cat.lines.filter((l) => l.state !== 'archived' && !(l.addedFor && l.addedFor > ctx.doc.currentMonth));
   const archived = cat.lines.filter((l) => l.state === 'archived');
   return h('div', { class: 'card' },
     h('div', { class: 'spread' }, h('h3', {}, catName(ctx, cat)),

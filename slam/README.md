@@ -62,10 +62,14 @@ columns. Nothing leaves the browser. The Jordan demo comes with two sample files
 1. **Clients**: client list, new client, open, export, import.
 2. **Fill in**: guided passes (Gut, Basics, Rough, Dream, Actual, Transactions import and review).
 3. **Budget**: the main view. Everything important without clicking.
-4. **Analyze**: every chart and lens, each with a one-line reading.
+4. **Analyze**: every chart and lens, each with a one-line reading, and **Review and plan**: a month's actuals next to next month's plan, line by line, with % of income, % of spending, and happiness. Adjust, keep, cut, or change each line, tick it off, and carry the plan into the next month.
 
 ## House rules
 
 - Read `LESSONS.md` before changing anything.
 - Decisions go in `DECISIONS.md`. Ideas that are out of scope go in `PARKING_LOT.md`.
 - No em dashes in copy or docs.
+
+## Estimates are never overwritten
+
+The estimate is the client's own words; estimate vs actual measures how well they knew themselves. The app never writes over it. Adjustments (last month's actual, the personal correction, decisions in review) go into a monthly plan (`doc.plans`), which the Budget table shows as its own Plan column with actual vs plan gaps.

@@ -51,5 +51,19 @@
     { "id": "savings", "name": "Savings", "kind": "fixed", "savings": true, "estimate": { "amount": 300 }, "dream": { "amount": 500 }, "lines": [
       { "id": "emergency-fund", "name": "Emergency fund", "kind": "fixed", "actual": { "amount": 200 } },
       { "id": "retirement", "name": "Retirement (after tax)", "kind": "fixed" } ] }
-  ]
+  ],
+  "plans": {
+    "2026-10": { "createdFrom": "actuals", "lines": {
+        "rent": { "amount": { "amount": 950, "cadence": "month", "status": "known" }, "start": { "amount": 950, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": false },
+        "utilities": { "amount": { "amount": 160, "cadence": "month", "status": "known" }, "start": { "amount": 160, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": false },
+        "groceries": { "amount": { "amount": 520, "cadence": "month", "status": "known" }, "start": { "amount": 520, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": false },
+        "eating-out": { "amount": { "amount": 310, "cadence": "month", "status": "known" }, "start": { "amount": 310, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": false },
+        "car-insurance": { "amount": { "amount": 140, "cadence": "month", "status": "known" }, "start": { "amount": 140, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": false },
+        "gas": { "amount": { "amount": 220, "cadence": "month", "status": "known" }, "start": { "amount": 220, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": false },
+        "ticket": { "amount": { "amount": 180, "cadence": "month", "status": "known" }, "start": { "amount": 180, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": false },
+        "fee-interest": { "amount": { "amount": 45, "cadence": "month", "status": "known" }, "start": { "amount": 45, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": false },
+        "fee-atm": { "amount": { "amount": 5, "cadence": "month", "status": "roughly" }, "start": { "amount": 5, "cadence": "month", "status": "roughly" }, "decision": "keep", "reviewed": false },
+        "emergency-fund": { "amount": { "amount": 200, "cadence": "month", "status": "known" }, "start": { "amount": 200, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": false }
+      } }
+  }
 }

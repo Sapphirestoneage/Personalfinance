@@ -210,3 +210,15 @@ ul.plain li:last-child { border-bottom: none; }
   .value-input .part { grid-template-columns: minmax(0, 1fr) 4.6em auto; }
   .value-input .part .part-name { grid-column: 1 / -1; }
 }
+@media (min-width: 760px) { table.budget .narrow-only { display: none; } }
+table.budget tr.detail td { padding-top: 0; border-bottom-style: dashed; }
+.review-group + .review-group { margin-top: var(--space-5); }
+table.review td { vertical-align: top; }
+table.review tr.done td { opacity: 0.72; }
+table.review .toggle button { padding: 4px 8px; }
+.review-top > * + * { margin-top: var(--space-3); }
+@media (max-width: 759px) {
+  table.budget th, table.budget td { padding: var(--space-2) 6px; }
+  table.budget th:first-child, table.budget td:first-child { min-width: 104px; }
+  table.budget th { letter-spacing: 0; }
+}
