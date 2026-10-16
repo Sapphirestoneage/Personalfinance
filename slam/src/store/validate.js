@@ -63,6 +63,7 @@ export function validateHousehold(doc) {
     const w = 'categories[' + i + '] ' + c.id;
     seen(c.id, w);
     oneOf(errs, ITEM_STATES, c.state, w + '.state');
+    if (c.split !== undefined && typeof c.split !== 'boolean') errs.push(w + '.split must be true or false');
     errs.push(...valueErrors(c.estimate, w + '.estimate'), ...valueErrors(c.dream, w + '.dream'));
     (c.lines || []).forEach((l, j) => {
       const lw = w + '.lines[' + j + '] ' + l.id;

@@ -58,6 +58,24 @@ export function removeTag(doc, tagId) {
   for (const c of doc.categories) for (const l of c.lines) l.tags = l.tags.filter((t) => t !== tagId);
 }
 
+// Break a one-number Rough answer into sub-categories: the number is kept as
+// a note ("First guess") and the lines below it carry the estimate from now on.
+export function breakDown(doc, catId) {
+  const cat = findCategory(doc, catId);
+  const v = cat.estimate;
+  const first = v.amount === null ? '' : 'First guess ' + v.amount + ' / ' + v.cadence;
+  cat.estimate = { ...v, amount: null, status: null, note: first };
+  delete cat.estimate.parts;
+  cat.split = true;
+}
+
+// Back to one number: the lines' total becomes the category's own answer.
+export function useOneNumber(doc, catId, monthly) {
+  const cat = findCategory(doc, catId);
+  cat.split = false;
+  cat.estimate = { amount: monthly === null ? null : Math.round(monthly * 100) / 100, cadence: 'month', status: monthly === null ? null : 'roughly', source: 'client', asOf: null, note: '' };
+}
+
 export function addIncome(doc, fields) {
   const inc = newIncome(fields);
   doc.income.push(inc);

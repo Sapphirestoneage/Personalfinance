@@ -7,8 +7,9 @@ import { money, pct, monthLabel } from '../format.js';
 import { question } from '../components/value-input.js';
 import { statusChip, statusPicker } from '../components/status.js';
 import { makeValue } from '../../store/value.js';
-import { useSingleTotal, findCategory, findLine, startBlindRound, addCategory, addLine } from '../../store/edits.js';
+import { useSingleTotal, findCategory, findLine, startBlindRound, addCategory, addLine, addDebt, breakDown, useOneNumber } from '../../store/edits.js';
 import { nameEdit } from '../components/name-edit.js';
+import { debtQuick, debtTypeTotals } from '../components/debt-quick.js';
 import { lastActual } from '../../calc/history.js';
 
 function addLineButton(ctx, catId) {
@@ -94,6 +95,22 @@ export function renderEstimates(ctx, summary, key) {
       ['categories', 'everything', key], findCategory(doc, 'everything')[key])) : null;
 
   const list = h('div', { class: 'card' }, rows.filter((r) => !r.isEverything).map((r) => {
+    if (r.isDebt && isRough) {
+      // Rough debts: one row per debt, by who or where it is owed.
+      return h('div', { class: 'sub-lines' },
+        h('div', { class: 'qa' }, h('div', { class: 'q' }, r.name, h('div', { class: 'hint' }, 'One row per debt: per card, bank, person, or line of credit. Adds up here and in the Actual pass.')),
+          h('span', {}, statusChip('computed'), ' ', h('b', { class: 'num' }, money(r.estimate)))),
+        doc.debts.filter((x) => x.state !== 'archived').map((x) => debtQuick(ctx, x)),
+        debtTypeTotals(summary),
+        h('div', { class: 'row' },
+          h('button', { class: 'btn small ghost', onclick: () => {
+            let id;
+            ctx.update('Add debt', (d) => { id = addDebt(d, { label: 'Debt ' + (d.debts.length + 1) }).id; });
+            if (id) { ctx.ui.focusKey = 'debt:' + id + ':label'; ctx.rerender(); }
+          } }, '+ Add a debt'),
+          doc.debts.length ? null : h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: doc.noDebts, 'data-key': 'rough-no-debts',
+            onchange: (e) => ctx.update('No debts', (d) => { d.noDebts = e.target.checked; }) }), 'No debts')));
+    }
     if (r.isDebt) {
       return h('div', { class: 'qa' }, h('div', { class: 'q' }, r.name, h('div', { class: 'hint' }, 'Comes from the debts list. Never asked twice.')),
         h('span', {}, statusChip('computed'), ' ', h('b', { class: 'num' }, money(r.estimate)),
@@ -109,23 +126,32 @@ export function renderEstimates(ctx, summary, key) {
     const hint = isRough
       ? null
       : (r.estimate !== null ? 'Estimate ' + money(r.estimate) + (r.pctTakeHome.estimate !== null ? ' (' + pct(r.pctTakeHome.estimate) + ' of take-home)' : '') : null);
-    const fromLines = (isRough ? r.estimateFrom : r.dreamFrom) === 'lines';
+    const fromLines = (isRough ? r.estimateFrom : r.dreamFrom) === 'lines' || (isRough && cat.split && cat.estimate.amount === null && cat.estimate.status !== 'not-for-me');
     if (fromLines) {
       // Already given line by line: show it, never ask it a second time.
       // Given line by line: each line is asked here (never a second category number).
       const live = cat.lines.filter((l) => l.state !== 'archived');
+      const first = isRough && cat.estimate.note && cat.estimate.note.startsWith('First guess') ? cat.estimate.note.replace(' / month', ' a month') + '.' : '';
+      const ideas = isRough ? summary.lineIdeas[cat.id] || [] : [];
       return h('div', { class: 'sub-lines' },
-        h('div', { class: 'qa' }, h('div', { class: 'q' }, name, h('div', { class: 'hint' }, hint ? hint + '. Adds up from its lines.' : 'Adds up from its lines.')),
+        h('div', { class: 'qa' }, h('div', { class: 'q' }, name, h('div', { class: 'hint' }, [hint, 'Adds up from its sub-categories.', first].filter(Boolean).join(' '))),
           h('span', {}, statusChip(r.status[key]), ' ', h('b', { class: 'num' }, money(r[key])))),
-        live.map((l) => question(ctx, nameEdit(ctx, l.name, 'line:' + l.id + ':name', (d, v) => { findLine(d, l.id).line.name = v; }, 'Line name'),
+        live.map((l) => question(ctx, nameEdit(ctx, l.name, 'line:' + l.id + ':name', (d, v) => { findLine(d, l.id).line.name = v; }, 'Sub-category name'),
           null, ['line', l.id, key], l[key], { label: l.name, parts: true })),
-        addLineButton(ctx, cat.id));
+        ideas.length ? h('div', { class: 'tags' }, h('span', { class: 'xs muted' }, 'Ideas:'), ideas.map((n) => h('button', { class: 'tag-chip', onclick: () => {
+          let id;
+          ctx.update('Add ' + n, (d) => { id = addLine(d, cat.id, n).id; });
+          if (id) { ctx.ui.focusPath = ['line', id, key]; ctx.rerender(); }
+        } }, '+ ' + n))) : null,
+        h('div', { class: 'row' }, addLineButton(ctx, cat.id),
+          isRough ? h('button', { class: 'btn small ghost', onclick: () => ctx.update('Use one number', (d) => useOneNumber(d, cat.id, r.estimate)) }, 'Use one number instead') : null));
     }
     const fromPay = r.id === 'health' ? (summary.income.deductionsByKind.health || 0) + (summary.income.deductionsByKind.hsa || 0)
       : r.id === 'transport' ? summary.income.deductionsByKind.transportation : null;
     const payNote = fromPay ? 'Already taken out of the paycheck: ' + money(fromPay) + ' a month. Only count what is paid on top.' : null;
     return h('div', {},
       question(ctx, name, [hint, payNote].filter(Boolean).join(' ') || null, ['categories', r.id, key], cat[key], { label: r.name, parts: true }),
+      isRough && !r.isEverything ? h('div', { class: 'row' }, h('button', { class: 'btn small ghost', 'data-key': 'break:' + r.id, onclick: () => ctx.update('Break down ' + r.name, (d) => breakDown(d, r.id)) }, 'Break down into sub-categories')) : null,
       isRough ? extrasFor(ctx, summary, r) : null);
   }));
 
@@ -135,5 +161,5 @@ export function renderEstimates(ctx, summary, key) {
     if (id) { ctx.ui.focusKey = 'cat:' + id + ':name'; ctx.rerender(); }
   } }, '+ Add category');
   return h('div', {}, header, isRough ? blindResult(summary) : null, total, list, add,
-    h('p', { class: 'muted xs' }, 'Tap any name to rename it. "+ Items" splits one amount into named pieces that add up.'));
+    h('p', { class: 'muted xs' }, 'Tap any name to rename it. "Break down" turns a category into sub-categories that carry into the Actual pass. Mark any guess "Roughly".'));
 }

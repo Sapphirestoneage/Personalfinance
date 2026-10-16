@@ -7,9 +7,9 @@ import { valueInput, question } from '../components/value-input.js';
 import { statusChip } from '../components/status.js';
 import { addLine, addDebt, findLine, findCategory, addCategory, addTag, toggleLineTag, renameTag, removeTag } from '../../store/edits.js';
 import { nameEdit } from '../components/name-edit.js';
+import { DEBT_TYPE_OPTIONS } from '../components/debt-quick.js';
 import { monthPicker } from '../components/month-picker.js';
 
-const DEBT_TYPES = [['credit-card', 'Credit card'], ['student-loan', 'Student loan'], ['car-loan', 'Car loan'], ['personal-loan', 'Personal loan'], ['medical', 'Medical'], ['bnpl', 'Buy now, pay later'], ['mortgage', 'Mortgage'], ['other', 'Other']];
 const STATES = [['active', 'Counts, shown'], ['hidden', 'Counts, hidden'], ['archived', 'Archived (stops counting)']];
 const TAG_IDEAS = ['Subscription', 'Travel', 'Gifts', 'Work', 'Self-care', 'Kids', 'Pets', 'Date night'];
 
@@ -117,7 +117,7 @@ function debtCard(ctx, debt) {
   return h('div', { class: 'card' },
     h('div', { class: 'grid two' },
       h('label', { class: 'field' }, h('span', { class: 'lbl' }, 'Name'), h('input', { type: 'text', value: debt.label, 'data-key': JSON.stringify(p('label')), onchange: set('label') })),
-      h('label', { class: 'field' }, h('span', { class: 'lbl' }, 'Type'), h('select', { 'data-key': JSON.stringify(p('type')), onchange: set('type') }, options(DEBT_TYPES, debt.type))),
+      h('label', { class: 'field' }, h('span', { class: 'lbl' }, 'Type'), h('select', { 'data-key': JSON.stringify(p('type')), onchange: set('type') }, options(DEBT_TYPE_OPTIONS, debt.type))),
       h('label', { class: 'field' }, h('span', { class: 'lbl' }, 'State'), h('select', { 'data-key': JSON.stringify(p('state')), onchange: set('state') }, options(STATES, debt.state)))),
     question(ctx, 'Minimum payment', 'Flows into Debt payments automatically', p('minimum'), debt.minimum),
     question(ctx, 'Balance', null, p('balance'), debt.balance, { cadence: false }),

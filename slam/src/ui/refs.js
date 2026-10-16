@@ -5,7 +5,8 @@ const FILES = {
   benchmarks: 'data/benchmarks.json',
   averages: 'data/spending-averages.json',
   colTiers: 'data/col-tiers.json',
-  merchantRules: 'data/merchant-rules.json'
+  merchantRules: 'data/merchant-rules.json',
+  subcategoryIdeas: 'data/subcategory-ideas.json'
 };
 
 export async function loadRefs() {

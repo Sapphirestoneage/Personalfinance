@@ -3,6 +3,7 @@
 
 import { incomeSummary } from './income.js';
 import { tagTotals } from './tags.js';
+import { lineIdeas, debtsByType } from './breakdown.js';
 import { budgetModel } from './model.js';
 import { budgetTotals } from './totals.js';
 import { gaps, accuracy, blindSpot, culprits, gutCheck, correctionFactors, proofOfCash, blindCompare } from './compare.js';
@@ -86,6 +87,8 @@ export function buildSummary(doc, refs) {
     blind: doc.blindRounds.length ? blindCompare(doc, model, doc.blindRounds[doc.blindRounds.length - 1].id) : null
   };
   summary.tags = tagTotals(doc, model);
+  summary.lineIdeas = lineIdeas(doc, refs);
+  summary.debtsByType = debtsByType(doc);
   summary.sinceLast = sinceLast(doc, summary);
   summary.nextStage = nextStage(doc, income, totals, summary.culprits);
   // Living with family: what housing might cost on your own (an average, labeled guess).

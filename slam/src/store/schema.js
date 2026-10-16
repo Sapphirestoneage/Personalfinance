@@ -16,7 +16,7 @@ export const ITEM_STATES = ['active', 'hidden', 'archived'];
 export const LINE_KINDS = ['fixed', 'variable'];
 export const LINE_PATHS = ['personal', 'linked', 'reimbursable'];
 export const LINE_TAGS = ['planned', 'unavoidable', 'mistake'];
-export const DEBT_TYPES = ['credit-card', 'student-loan', 'car-loan', 'personal-loan', 'medical', 'bnpl', 'mortgage', 'other'];
+export const DEBT_TYPES = ['credit-card', 'line-of-credit', 'student-loan', 'car-loan', 'personal-loan', 'medical', 'bnpl', 'mortgage', 'family-friend', 'other'];
 export const COL_TIERS = ['HCOL', 'MCOL', 'LCOL'];
 export const LIVING_WITH = ['alone', 'partner', 'roommates', 'family'];
 
@@ -92,6 +92,8 @@ export function newCategory(fields = {}) {
     tag: fields.tag || 'planned',
     state: fields.state || 'active',
     estimate: makeValue(), dream: makeValue(),
+    // Broken down in the Rough pass: the estimate comes from the sub-categories (lines).
+    split: fields.split || false,
     lines: []
   };
 }
