@@ -117,6 +117,7 @@ export function newIncome(fields = {}) {
     payBasis: fields.payBasis || 'salary',
     hourlyRate: makeValue(null, { cadence: 'month' }),
     deductions: [],
+    withheld: newWithheld(),
     hoursPerWeek: null,
     // Unemployment only: federal withholding ('ten-percent', 'none', or null = not sure) and weeks left.
     withholding: null,
@@ -125,7 +126,13 @@ export function newIncome(fields = {}) {
   };
 }
 
-export const DEDUCTION_KIND_IDS = ['retirement', 'roth', 'health', 'hsa', 'transportation', 'other'];
+export const DEDUCTION_KIND_IDS = ['retirement', 'roth', 'health', 'hsa', 'transportation', 'dental', 'vision', 'life', 'disability', 'union', 'garnishment', 'other'];
+
+// Taxes withheld, copied line by line from a paystub (W-2 pay). Each is a Value, per paycheck by default.
+export const WITHHELD_KEYS = ['federal', 'socialSecurity', 'medicare', 'state', 'local', 'other'];
+export function newWithheld() {
+  return Object.fromEntries(WITHHELD_KEYS.map((k) => [k, makeValue(null, { cadence: 'paycheck' })]));
+}
 
 // A paycheck deduction: a % of gross pay, or an amount in any cadence.
 export function newDeduction(fields = {}) {

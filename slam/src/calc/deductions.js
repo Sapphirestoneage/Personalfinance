@@ -11,6 +11,12 @@ export const DEDUCTION_KINDS = {
   health: { label: 'Health insurance', incomeTax: true, fica: true, retirement: false },
   hsa: { label: 'HSA or FSA', incomeTax: true, fica: true, retirement: false },
   transportation: { label: 'Transportation or transit', incomeTax: true, fica: true, retirement: false },
+  dental: { label: 'Dental insurance', incomeTax: true, fica: true, retirement: false },
+  vision: { label: 'Vision insurance', incomeTax: true, fica: true, retirement: false },
+  life: { label: 'Life insurance', incomeTax: false, fica: false, retirement: false },
+  disability: { label: 'Disability insurance', incomeTax: false, fica: false, retirement: false },
+  union: { label: 'Union dues', incomeTax: false, fica: false, retirement: false },
+  garnishment: { label: 'Garnishment or child support', incomeTax: false, fica: false, retirement: false },
   other: { label: 'Other', incomeTax: null, fica: null, retirement: false }
 };
 

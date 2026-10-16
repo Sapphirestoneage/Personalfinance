@@ -3,7 +3,7 @@
 // To change the stored shape: bump SCHEMA_VERSION, add a step to STEPS, and
 // write a compatibility note in DECISIONS.md.
 
-import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt, newDeduction, newCaseOverrides } from './schema.js';
+import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt, newDeduction, newCaseOverrides, newWithheld, WITHHELD_KEYS } from './schema.js';
 import { normalizeValue, isBlank } from './value.js';
 
 // STEPS[n] turns a version n document into version n + 1.
@@ -73,6 +73,8 @@ export function normalizeHousehold(doc) {
     inc.deductions = (i.deductions || []).map((d) => ({ ...newDeduction({ id: d.id, kind: d.kind }), ...d, amount: normalizeValue(d.amount) }));
     const old = pretaxRetirement === undefined ? null : normalizeValue(pretaxRetirement);
     if (old && !isBlank(old)) inc.deductions.unshift({ ...newDeduction({ id: 'ded-' + inc.id + '-ret', kind: 'retirement', mode: 'amount' }), amount: old });
+    // Compatibility (S-064): files before paystub taxes load with them all blank.
+    inc.withheld = { ...newWithheld(), ...Object.fromEntries(Object.entries(i.withheld || {}).filter(([k]) => WITHHELD_KEYS.includes(k)).map(([k, v]) => [k, normalizeValue(v)])) };
     if (inc.type === 'unemployment') unemploymentCompat(inc);
     return inc;
   });
