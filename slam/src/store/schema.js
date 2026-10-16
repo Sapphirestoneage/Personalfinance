@@ -5,7 +5,7 @@ import { makeValue } from './value.js';
 import { DEFAULT_LINE_TYPES } from './types.js';
 import { newId } from './ids.js';
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 3;
 
 export const SITUATIONS = ['employed', 'self-employed', 'between-jobs', 'student'];
 export const FILING_STATUSES = ['single', 'married-joint', 'married-separate', 'head-of-household'];
@@ -18,7 +18,6 @@ export const LINE_KINDS = ['fixed', 'variable'];
 export const LINE_PATHS = ['personal', 'linked', 'reimbursable'];
 export const LINE_TAGS = ['planned', 'unavoidable', 'mistake'];
 export const DEBT_TYPES = ['credit-card', 'line-of-credit', 'student-loan', 'car-loan', 'personal-loan', 'medical', 'bnpl', 'mortgage', 'family-friend', 'other'];
-export const COL_TIERS = ['HCOL', 'MCOL', 'LCOL'];
 export const LIVING_WITH = ['alone', 'partner', 'roommates', 'family'];
 
 // [id, name, kind, need, savings, tag, lines[[id, name, kind, need]]]
@@ -78,7 +77,8 @@ export function newLine(fields = {}) {
     tag: fields.tag || 'planned',
     joy: fields.joy === undefined ? null : fields.joy,
     state: fields.state || 'active',
-    estimate: makeValue(), dream: makeValue(), actual: makeValue(),
+    // dream = short term (this year, or the next step); dreamLong = long term (S-075).
+    estimate: makeValue(), dream: makeValue(), dreamLong: makeValue(), actual: makeValue(),
     owedBack: makeValue(), owedBackReceived: false,
     // The client's own tags (ids from doc.tags), like Subscription or Travel.
     tags: fields.tags || []
@@ -96,7 +96,7 @@ export function newCategory(fields = {}) {
     savings: fields.savings || false,
     tag: fields.tag || 'planned',
     state: fields.state || 'active',
-    estimate: makeValue(), dream: makeValue(),
+    estimate: makeValue(), dream: makeValue(), dreamLong: makeValue(),
     // Broken down in the Rough pass: the estimate comes from the sub-categories (lines).
     split: fields.split || false,
     lines: []
@@ -227,13 +227,15 @@ export function newHousehold(name, now = new Date()) {
     id: newId('hh'),
     createdAt: iso,
     updatedAt: iso,
-    profile: { name: name || 'New client', birthYear: null, state: null, zip: null, colTier: null, colTierSetBy: 'derived' },
+    profile: { name: name || 'New client', birthYear: null, state: null },
     situation: [],
     household: {
       filingStatus: 'single',
       dependents: { count: null, ages: [] },
       // Who the client lives with: 'alone', 'partner', 'roommates', or 'family' (null = not asked yet).
       livingWith: null,
+      // On a parent's health plan (only counts while 25 or younger, S-073).
+      parentsPlan: false,
       family: { count: null },
       roommates: { count: null, totalRent: makeValue() }
     },
@@ -255,7 +257,7 @@ export function newHousehold(name, now = new Date()) {
     eras: newEras(),
     // Tags the client made: [{ id, name }]. Lines carry their ids.
     tags: [],
-    settings: { singleTotal: false, benchmarkSource: 'eli', lens: 'dollars' },
+    settings: { singleTotal: false, lens: 'dollars' },
     passesSeen: []
   };
 }

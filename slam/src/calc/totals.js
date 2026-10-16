@@ -97,6 +97,9 @@ export function budgetTotals(model, income, doc, housingBand = 0.35) {
     actualTotal: answeredTotal(spending, 'actual'),
     savingsEstimate: sumKnown(saving.map((x) => x.cat.estimate.amount)).total,
     savingsDream: sumKnown(saving.map((x) => x.cat.dream.amount)).total,
+    // Long-term dream (S-075): the same shape as the short-term dream column.
+    dreamLongTotal: answeredTotal(spending, 'dreamLong'),
+    dreamLongOutflow: sumKnown([answeredTotal(spending, 'dreamLong'), sumKnown(saving.map((x) => x.cat.dreamLong.amount)).total]).total,
     spending: spendingBasis,
     spendingShare: ratio(spendingBasis, takeHome),
     savings: savingsBasis,
@@ -132,5 +135,6 @@ export function budgetTotals(model, income, doc, housingBand = 0.35) {
   };
   totals.estimateLeft = minus(takeHome, totals.estimateOutflow);
   totals.dreamLeft = minus(takeHome, totals.dreamOutflow);
+  totals.dreamLongLeft = minus(takeHome, totals.dreamLongOutflow);
   return totals;
 }

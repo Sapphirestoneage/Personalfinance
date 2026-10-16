@@ -54,7 +54,7 @@ test('validation catches bad enums, joy out of range, and duplicate ids', () => 
 test('migration upgrades an unversioned document and fills defaults', () => {
   const old = { id: 'hh-old', profile: { name: 'Old' }, gut: { amount: 2000 }, categories: [{ id: 'food', name: 'Food', lines: [{ id: 'g', actual: 300 }] }] };
   const d = migrate(old);
-  assert.equal(d.schemaVersion, 1);
+  assert.equal(d.schemaVersion, SCHEMA_VERSION); // 2 since S-070
   assert.equal(d.gut.cadence, 'month');
   assert.equal(d.categories[0].lines[0].actual.amount, 300);
   assert.equal(d.categories[0].lines[0].estimate.amount, null);
@@ -167,4 +167,35 @@ test('field paths reach category, line, and income values', () => {
   setField(d, ['line', 'groceries', 'actual'], makeValue(300));
   assert.equal(getField(d, ['categories', 'food', 'estimate']).amount, 450);
   assert.equal(findLine(d, 'groceries').line.actual.amount, 300);
+});
+
+test('migration to schema 2 removes ZIP and the cost-of-living tier, and changes nothing else (S-070)', () => {
+  const v1 = JSON.parse(JSON.stringify(newHousehold('Old file')));
+  v1.schemaVersion = 1;
+  v1.profile = { name: 'Old file', birthYear: 1990, state: 'NY', zip: '10001', colTier: 'HCOL', colTierSetBy: 'coach' };
+  const m = migrate(v1);
+  assert.equal(m.schemaVersion, SCHEMA_VERSION);
+  assert.deepEqual(m.profile, { name: 'Old file', birthYear: 1990, state: 'NY' });
+  for (const k of ['zip', 'colTier', 'colTierSetBy']) assert.ok(!(k in m.profile), k + ' is gone');
+  // everything outside the profile is untouched
+  const rest = (d) => { const { profile, schemaVersion, ...x } = d; return x; };
+  assert.deepEqual(rest(m), rest(migrate({ ...v1, profile: { name: 'Old file', birthYear: 1990, state: 'NY' } })));
+  assert.deepEqual(rest(m), rest(v1));
+  assert.deepEqual(validateHousehold(m), []);
+  // and it exports and loads again the same
+  assert.deepEqual(migrate(JSON.parse(JSON.stringify(m))), m);
+});
+
+test('migration to schema 3 removes the DRAFTT benchmark source and changes nothing else (S-072)', () => {
+  const v2 = JSON.parse(JSON.stringify(newHousehold('Bands')));
+  v2.schemaVersion = 2;
+  v2.settings = { singleTotal: true, benchmarkSource: 'money-guy', lens: 'dollars' };
+  const m = migrate(v2);
+  assert.equal(m.schemaVersion, 3);
+  assert.ok(!('benchmarkSource' in m.settings));
+  assert.deepEqual(m.settings, { singleTotal: true, lens: 'dollars' });
+  const rest = (d) => { const { settings, schemaVersion, ...x } = d; return x; };
+  assert.deepEqual(rest(m), rest(v2));
+  assert.deepEqual(validateHousehold(m), []);
+  assert.deepEqual(migrate(JSON.parse(JSON.stringify(m))), m);
 });

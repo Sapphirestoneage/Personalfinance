@@ -10,7 +10,18 @@ import { CATEGORY_TYPE_IDS, DEFAULT_LINE_TYPES, guessLineType } from './types.js
 // STEPS[n] turns a version n document into version n + 1.
 const STEPS = {
   // Version 0 = a document saved before versioning existed (no schemaVersion key).
-  0: (doc) => ({ ...doc, schemaVersion: 1 })
+  0: (doc) => ({ ...doc, schemaVersion: 1 }),
+  // Version 1 to 2 (S-070): ZIP and the cost-of-living tier are gone; nothing read ZIP,
+  // and the tier only scaled placeholder averages.
+  1: (doc) => {
+    const { zip, colTier, colTierSetBy, ...profile } = doc.profile || {};
+    return { ...doc, profile, schemaVersion: 2 };
+  },
+  // Version 2 to 3 (S-072): DRAFTT has no bands, so there is no benchmark source to pick.
+  2: (doc) => {
+    const { benchmarkSource, ...settings } = doc.settings || {};
+    return { ...doc, settings, schemaVersion: 3 };
+  }
 };
 
 export function migrate(raw) {
@@ -81,11 +92,11 @@ export function normalizeHousehold(doc) {
   });
   out.debts = (doc.debts || []).map((d) => withDefaults(newDebt({ id: d.id }), d, ['balance', 'apr', 'minimum', 'dueDay']));
   out.categories = (doc.categories || base.categories).map((c) => {
-    const cat = withDefaults(newCategory({ id: c.id }), c, ['estimate', 'dream']);
+    const cat = withDefaults(newCategory({ id: c.id }), c, ['estimate', 'dream', 'dreamLong']);
     // Compatibility (S-068): files before types get them from the default ids, else from the name.
     if (!c.type) cat.type = CATEGORY_TYPE_IDS.includes(c.id) ? c.id : 'other';
     cat.lines = (c.lines || []).map((l) => {
-      const line = withDefaults(newLine({ id: l.id, savings: cat.savings, tag: cat.tag }), l, ['estimate', 'dream', 'actual', 'owedBack']);
+      const line = withDefaults(newLine({ id: l.id, savings: cat.savings, tag: cat.tag }), l, ['estimate', 'dream', 'dreamLong', 'actual', 'owedBack']);
       if (!l.type) line.type = DEFAULT_LINE_TYPES[l.id] || guessLineType(line.name, cat.type);
       return line;
     });

@@ -7,7 +7,7 @@ The first tool is the **Budget**. It holds a client to their own words: they gue
 first (the estimate), say what they would like (the dream), then we find the truth
 (the actual) and measure how far off they were, and where.
 
-Every later tool (FIRE, emergency fund, debt payoff, DRAFTT scorecard) will read the
+Every later tool (FIRE, emergency fund, debt payoff, DRAFTT proportions) will read the
 numbers the Budget collects, so the number store and the math library are built for
 the whole suite.
 
@@ -54,7 +54,7 @@ columns. Nothing leaves the browser. The Jordan demo comes with two sample files
 | `src/store/` | number store: schema, validation, migrations, save and load, client list, export and import, undo and redo, month close |
 | `src/calc/` | pure math functions. Every number on every screen comes from here |
 | `src/ui/` | the four screens, components, SVG charts, and `tokens.css` (every color and font) |
-| `data/` | reference tables (tax constants, averages, benchmark bands, cost-of-living tiers, merchant rules), each with source and year |
+| `data/` | reference tables (tax constants, averages, the 50/30/20 and housing reference lines, merchant rules), each with source and year |
 | `test/` | unit tests, plus `test/households/` with synthetic households and hand-computed expected answers |
 
 ## The four screens

@@ -5,7 +5,7 @@ import { h, options } from '../dom.js';
 import { statusPicker } from './status.js';
 import { toMonthly } from '../../calc/normalize.js';
 import { money, CADENCE_LABELS } from '../format.js';
-import { sumParts } from '../../store/value.js';
+import { sumParts, PART_CADENCES } from '../../store/value.js';
 
 const CADENCES = ['month', 'week', 'paycheck', 'year', 'one-off'];
 const CLEARS_AMOUNT = new Set(['not-for-me', 'dont-know']);
@@ -23,7 +23,17 @@ export function editValue(prev, change) {
   }
   if ('parts' in change) {
     if (!change.parts || !change.parts.length) delete next.parts;
-    else return editValue({ ...prev, parts: change.parts }, { amount: sumParts(change.parts) });
+    else {
+      // Mixed item cadences need a week, month, or year total; anything else becomes a month.
+      const mixed = change.parts.some((p) => p.cadence && p.cadence !== prev.cadence);
+      const cadence = mixed && !PART_CADENCES[prev.cadence] ? 'month' : prev.cadence;
+      return editValue({ ...prev, cadence, parts: change.parts }, { amount: sumParts(change.parts, cadence) });
+    }
+  }
+  if ('cadence' in change && prev.parts && prev.parts.length && PART_CADENCES[change.cadence]) {
+    // Items keep what they meant: an item with no cadence of its own was in the old one.
+    const parts = prev.parts.map((p) => (p.cadence || !PART_CADENCES[prev.cadence] ? p : { ...p, cadence: prev.cadence }));
+    return { ...next, parts, amount: sumParts(parts, change.cadence) };
   }
   if ('status' in change && CLEARS_AMOUNT.has(change.status)) { next.amount = null; delete next.parts; }
   return next;
@@ -57,6 +67,9 @@ function partsEditor(ctx, path, value, label) {
           if (a === undefined) { e.target.value = p.amount === null ? '' : p.amount; return; }
           commit(parts.map((x, j) => (j === i ? { ...x, amount: a } : x)), label + ' item amount');
         } }),
+      h('select', { class: 'part-cadence', 'aria-label': label + ' item ' + (i + 1) + ' cadence', 'data-key': key + ':part:' + i + ':cadence',
+        onchange: (e) => commit(parts.map((x, j) => (j === i ? { ...x, cadence: e.target.value } : x)), label + ' item cadence') },
+        options([['month', '/ mo'], ['year', '/ yr'], ['week', '/ wk']], p.cadence || (PART_CADENCES[value.cadence] ? value.cadence : 'month'))),
       h('button', { class: 'btn small ghost', 'aria-label': 'Remove item ' + (p.name || i + 1), title: 'Remove', onclick: () => commit(parts.filter((x, j) => j !== i), 'Remove item') }, '\u00d7'))),
     h('button', { class: 'btn small ghost', 'data-key': key + ':add-part', onclick: () => commit([...parts, { name: '', amount: null }], 'Add item') }, '+ Add item'));
 }
@@ -97,7 +110,7 @@ export function valueInput(ctx, path, value, opts = {}) {
     parts.push(h('select', {
       class: 'cadence', 'aria-label': label + ' cadence', 'data-key': key + ':cadence',
       onchange: (e) => ctx.commit(path, editValue(value, { cadence: e.target.value }), label)
-    }, options(CADENCES.map((c) => [c, CADENCE_LABELS[c]]), value.cadence)));
+    }, options((split ? CADENCES.filter((c) => PART_CADENCES[c]) : CADENCES).map((c) => [c, CADENCE_LABELS[c]]), value.cadence)));
   }
   parts.push(statusPicker(value.status, (s) => ctx.commit(path, editValue(value, { status: s }), label), key));
   parts.push(monthly);

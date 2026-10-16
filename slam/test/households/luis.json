@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "hh-luis",
-  "profile": { "name": "Luis (demo)", "birthYear": 1993, "state": "OH", "zip": "43215" },
+  "profile": { "name": "Luis (demo)", "birthYear": 1993, "state": "OH" },
   "situation": ["employed", "self-employed"],
   "household": { "filingStatus": "single", "dependents": { "count": 0, "ages": [] }, "roommates": { "count": 0 } },
   "income": [

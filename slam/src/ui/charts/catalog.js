@@ -7,7 +7,8 @@ import { money, pct, times, signedMoney, signedPct, monthLabel, less } from '../
 import * as cd from '../../calc/chart-data.js';
 import { categoryTypeLabel, lineTypeLabel } from '../../store/types.js';
 import { findLine } from '../../store/edits.js';
-import { hbars, donut, sankey, gauge, ring, lines, scatter, stack } from './svg.js';
+import { hbars, donut, sankey, gauge, ring, lines, scatter, stack, shareBar } from './svg.js';
+import { drafttReading } from '../../calc/lenses.js';
 
 const SERIES = { gut: 'var(--series-gut)', estimate: 'var(--series-estimate)', dream: 'var(--series-dream)', actual: 'var(--series-actual)' };
 const NWS = { needs: 'var(--need)', wants: 'var(--want)', savings: 'var(--save)', unassigned: 'var(--unassigned)' };
@@ -195,19 +196,51 @@ export function varianceByMonthCard(ctx, s) {
 }
 
 // Lenses
+// DRAFTT, descriptive (S-072): proportions only. Neutral categorical colors,
+// never good or bad colors, no bands, no verdicts.
+const LETTER_COLORS = { debt: 'var(--chart-1)', retirement: 'var(--chart-2)', accommodation: 'var(--chart-3)', food: 'var(--chart-4)', transportation: 'var(--chart-5)', therapy: 'var(--chart-7)' };
+const DRAFTT_COLS = [['label', 'Letter'], ['amount', 'Amount'], ['share', '% of base'], ['shareOfDraftt', '% of DRAFTT'], ['estimateShare', 'Estimate %'], ['actualShare', 'Actual %'], ['change', 'Change']];
+const pts = (x) => (x === null || x === undefined ? '\u00b7' : (x > 0 ? '+' : '') + (x * 100).toFixed(1) + ' pts');
+
 export function draftCard(ctx, s) {
   const d = s.lenses.draftt;
-  const rows = d.rows.filter((r) => !r.optional || r.share !== null);
-  const off = rows.filter((r) => r.verdict === 'high' || r.verdict === 'low');
-  const sources = Object.entries(ctx.refs.benchmarks.sources);
+  const rows = d.rows.filter((r) => r.amount !== null);
+  const pct0 = (x) => pct(x);
+  const parts = [
+    ...rows.map((r) => ({ name: r.label, short: r.letter + ' ' + pct0(r.share), share: r.share, color: LETTER_COLORS[r.key] })),
+    { name: 'Everything else', short: 'Else ' + pct0(d.everythingElseShare), share: d.everythingElseShare, color: 'var(--chart-other)' },
+    d.leftOverShare !== null && d.leftOverShare > 0 ? { name: 'Left over', short: 'Left ' + pct0(d.leftOverShare), share: d.leftOverShare, color: 'var(--unassigned)' } : null
+  ].filter(Boolean);
+  const shortfall = d.leftOverShare !== null && d.leftOverShare < 0 ? -d.leftOverShare : 0;
+  const bar = d.base.amount === null ? null : h('div', {},
+    h('div', { class: 'field-label' }, 'Where ' + d.base.label + ' goes'),
+    h('div', { class: 'chart', html: shareBar({ parts, shortfall, width: chartWidth(false), label: 'Where ' + d.base.label + ' goes' }) }),
+    h('div', { class: 'legend' }, [...parts.map((x) => [x.name + ' ' + pct(x.share), x.color]), ...(shortfall ? [['Shortfall ' + pct(shortfall), 'transparent']] : [])]
+      .map(([l, c]) => h('span', {}, h('i', { style: 'background:' + c + (c === 'transparent' ? ';outline:1.5px dashed var(--chart-axis)' : '') }), l))));
+  const letters = h('div', {},
+    h('div', { class: 'field-label' }, 'DRAFTT letters'),
+    h('div', { class: 'draftt-letters' },
+      h('div', { class: 'chart', style: 'width:auto', html: donut({ slices: rows.map((r) => ({ name: r.label, amount: Math.max(0, r.amount), color: LETTER_COLORS[r.key] })), size: 160, center: money(d.total), centerSub: 'a month', fmt: money, label: 'DRAFTT letters' }) }),
+      h('ul', { class: 'plain small' }, rows.map((r) => h('li', {}, h('span', {}, h('i', { class: 'swatch', style: 'background:' + LETTER_COLORS[r.key] }), ' ' + r.label),
+        h('span', { class: 'num' }, pct(r.shareOfDraftt) + ', ' + money(r.amount)))))));
+  const sort = ctx.ui.drafttSort || { key: null, dir: -1 };
+  const sorted = rows.slice();
+  if (sort.key) sorted.sort((a, b) => { const x = a[sort.key]; const y = b[sort.key]; if (x === y) return 0; if (x === null) return 1; if (y === null) return -1; return (x < y ? -1 : 1) * sort.dir; });
+  const cell = (r, k) => (k === 'label' ? r.label + (r.usesEstimate ? ' (estimate)' : '') : k === 'amount' ? money(r.amount) : k === 'change' ? pts(r.change) : pct(r[k]));
+  const table = h('div', { class: 'table-wrap' }, h('table', { class: 'budget' },
+    h('thead', {}, h('tr', {}, DRAFTT_COLS.map(([k, l]) => h('th', { scope: 'col', 'aria-sort': sort.key === k ? (sort.dir > 0 ? 'ascending' : 'descending') : null,
+      onclick: () => { ctx.ui.drafttSort = { key: k, dir: sort.key === k ? -sort.dir : (k === 'label' ? 1 : -1) }; ctx.rerender(); } }, l)))),
+    h('tbody', {},
+      sorted.map((r) => h('tr', {}, DRAFTT_COLS.map(([k]) => h('td', { class: k === 'label' ? '' : 'num' }, cell(r, k))))),
+      h('tr', { class: 'cat' }, h('td', {}, 'DRAFTT total'), h('td', { class: 'num' }, money(d.total)), h('td', { class: 'num' }, pct(d.totalShare)), h('td', { class: 'num' }, rows.length ? '100%' : '\u00b7'), h('td', {}), h('td', {}), h('td', {})),
+      h('tr', { class: 'line' }, h('td', {}, 'Everything else'), h('td', { class: 'num' }, money(d.everythingElse)), h('td', { class: 'num' }, pct(d.everythingElseShare)), h('td', {}), h('td', {}), h('td', {}), h('td', {})),
+      h('tr', { class: 'line' }, h('td', {}, d.leftOver !== null && d.leftOver < 0 ? 'Shortfall' : 'Left over'), h('td', { class: 'num' }, money(d.leftOver)), h('td', { class: 'num' }, pct(d.leftOverShare)), h('td', {}), h('td', {}), h('td', {}), h('td', {})),
+      h('tr', { class: 'cat' }, h('td', {}, 'Base: ' + d.base.label), h('td', { class: 'num' }, money(d.base.amount)), h('td', { class: 'num' }, d.base.amount === null ? '\u00b7' : '100%'), h('td', {}), h('td', {}), h('td', {}), h('td', {})))));
   return card(ctx, {
     id: 'draftt', title: 'DRAFTT',
-    extra: h('div', {}, h('select', { 'aria-label': 'Benchmark source', 'data-key': 'draftt-source', onchange: (e) => ctx.update('Benchmark source', (doc) => { doc.settings.benchmarkSource = e.target.value; }) },
-      sources.map(([id, src]) => h('option', { value: id, selected: id === d.source }, src.label))),
-      d.placeholder ? h('div', { class: 'placeholder-note' }, 'Placeholder bands until Eli confirms the numbers for this source.') : null),
-    svg: hbars({ rows: rows.map((r) => ({ label: r.label + (r.verdict ? ' (' + r.verdict + ')' : ''), band: r.band, values: [{ v: r.share, color: r.verdict === 'healthy' ? 'var(--series-actual)' : 'var(--bad)', tip: r.label + ': ' + pct(r.share) }] })), width: chartWidth(true), fmt: (x) => pct(x) }),
-    legendItems: [['Healthy band', 'var(--good)']],
-    reading: off.length ? off.map((r) => r.label).join(' and ') + (off.length > 1 ? ' are' : ' is') + ' outside the healthy band (' + d.sourceLabel + ').' : 'Everything measured sits inside the healthy bands (' + d.sourceLabel + ').'
+    extra: h('div', { class: 'draftt' }, bar, letters, table,
+      d.taxes ? h('p', { class: 'small' }, 'Taxes: ' + money(d.taxes.amount) + ' a month, ' + pct(d.taxes.shareOfGross) + ' of gross (not part of the base).') : null),
+    reading: drafttReading(d)
   });
 }
 

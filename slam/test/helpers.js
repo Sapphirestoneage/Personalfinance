@@ -11,7 +11,6 @@ export function loadRefs() {
     tax: readJson('data/tax-constants.json'),
     benchmarks: readJson('data/benchmarks.json'),
     averages: readJson('data/spending-averages.json'),
-    colTiers: readJson('data/col-tiers.json'),
     merchantRules: readJson('data/merchant-rules.json'),
     subcategoryIdeas: readJson('data/subcategory-ideas.json'),
     eraTemplates: readJson('data/era-templates.json')

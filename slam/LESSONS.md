@@ -16,5 +16,5 @@ These rules come from earlier attempts. Every change to SLAM is checked against 
 12. Fields that don't apply cluttered screens. RULE: if something doesn't apply (no debt, no roommates, no side income), its fields are absent, and "none" counts as complete.
 13. People give numbers in different ways. RULE: every amount can be entered per paycheck, week, month, or year, or as a one-off. The app normalizes to monthly. Annual costs are spread evenly (accrual, not cash).
 14. Completion got confused with progress. RULE: "how filled in is the picture" and "how is the client doing" are separate and shown separately.
-15. Averages were presented like facts. RULE: app-supplied averages are always labeled "Guess" with their source, scaled by cost-of-living tier (HCOL / MCOL / LCOL).
+15. Averages were presented like facts. RULE: app-supplied averages are always labeled "Guess" with their source.
 16. Budgets got calculated on gross pay. RULE: every percentage of income uses take-home unless the label explicitly says gross.

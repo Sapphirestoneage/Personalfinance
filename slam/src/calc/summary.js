@@ -11,7 +11,7 @@ import { gaps, accuracy, blindSpot, culprits, gutCheck, correctionFactors, proof
 import { monthHistory, monthSnapshot } from './history.js';
 import { fiftyThirtyTwenty, draftt, incomeStatement, joyLens } from './lenses.js';
 import { questionItems, completion, nextSteps, roughList } from './completion.js';
-import { availableGuesses, colTierFor, householdSize, guessFor } from './guesses.js';
+import { availableGuesses, householdSize, guessFor } from './guesses.js';
 import { ratio, minus } from './money.js';
 import { txMonths, detect, topMerchants, weekdaySpending, sizeVsCount } from './tx-analysis.js';
 import { nextStage } from './next-stage.js';
@@ -28,7 +28,7 @@ function tableRows(model, totals) {
       const lb = l.actual !== null ? l.actual : l.estimate;
       return {
         id: l.id, name: l.name, computed: l.computed, kind: l.kind, need: l.need, tag: l.tag, path: l.path, joy: l.joy, state: l.state,
-        estimate: l.estimate, dream: l.dream, actual: l.actual, basis: lb, status: l.status, sourceStatus: l.sourceStatus || null,
+        estimate: l.estimate, dream: l.dream, dreamLong: l.dreamLong, actual: l.actual, basis: lb, status: l.status, sourceStatus: l.sourceStatus || null,
         gaps: gaps(l.estimate, l.dream, l.actual), accuracy: accuracy(l.estimate, l.actual),
         pctTakeHome: pctBlock(l.estimate, l.dream, l.actual, lb, th),
         pctSpending: c.savings ? null : ratio(lb, totals.spending),
@@ -37,10 +37,10 @@ function tableRows(model, totals) {
     });
     return {
       id: c.id, name: c.name, savings: c.savings, isDebt: c.isDebt, isEverything: c.isEverything, notForMe: c.notForMe, state: c.state,
-      estimate: c.estimate.amount, dream: c.dream.amount, actual: c.actual.amount, partial: c.actual.partial,
-      estimateFrom: c.estimate.from, dreamFrom: c.dream.from, carved: c.estimate.carved, total: c.estimate.total, overSplit: !!c.estimate.overSplit,
+      estimate: c.estimate.amount, dream: c.dream.amount, dreamLong: c.dreamLong.amount, actual: c.actual.amount, partial: c.actual.partial,
+      estimateFrom: c.estimate.from, dreamFrom: c.dream.from, dreamLongFrom: c.dreamLong.from, carved: c.estimate.carved, total: c.estimate.total, overSplit: !!c.estimate.overSplit,
       basis: basis.amount, basisFrom: basis.from,
-      status: { estimate: c.estimate.status, dream: c.dream.status, actual: c.actual.status },
+      status: { estimate: c.estimate.status, dream: c.dream.status, dreamLong: c.dreamLong.status, actual: c.actual.status },
       gaps: gaps(c.estimate.amount, c.dream.amount, c.actual.amount),
       accuracy: accuracy(c.estimate.amount, c.actual.amount),
       pctTakeHome: pctBlock(c.estimate.amount, c.dream.amount, c.actual.amount, basis.amount, th),
@@ -62,7 +62,7 @@ export function buildSummary(doc, refs) {
   const summary = {
     householdId: doc.id,
     month: doc.currentMonth,
-    profile: { ...doc.profile, colTier: colTierFor(doc.profile, refs.colTiers), householdSize: householdSize(doc) },
+    profile: { ...doc.profile, householdSize: householdSize(doc) },
     income, model, totals,
     rows: tableRows(model, totals),
     oneOffs: model.oneOffs,
@@ -74,7 +74,7 @@ export function buildSummary(doc, refs) {
     history,
     lenses: {
       fiftyThirtyTwenty: fiftyThirtyTwenty(totals, refs.benchmarks.fiftyThirtyTwenty),
-      draftt: draftt(model, totals, income, refs.benchmarks, doc.settings.benchmarkSource),
+      draftt: draftt(model, totals, income),
       incomeStatement: incomeStatement(model, totals, income),
       joy: joyLens(model, totals)
     },

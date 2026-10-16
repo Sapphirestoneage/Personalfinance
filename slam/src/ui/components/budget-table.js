@@ -36,12 +36,16 @@ function gapClass(x, savings) {
   return (x > 0) !== !!savings ? 'bad' : 'good';
 }
 
+// The long-term dream column shows only once a long-term dream is given (S-075).
+const hasLong = (summary) => summary.totals.dreamLongTotal !== null;
+
 function cells(row, unit, summary, isLine, savings) {
   const L = (x) => inLens(inUnit(x, unit, summary.totals, summary.income), unit);
   const g = row.gaps;
   return [
     h('td', { class: 'num' }, L(row.estimate)),
     h('td', { class: 'num wide' }, L(row.dream)),
+    hasLong(summary) ? h('td', { class: 'num wide' }, L(row.dreamLong)) : null,
     h('td', { class: 'num' }, L(row.actual), !isLine && row.partial ? h('span', { class: 'muted xs' }, ' partial') : null),
     h('td', { class: 'num ' + gapClass(g.actualMinusEstimate, savings) }, unit === 'dollars' ? signedMoney(g.actualMinusEstimate) : L(g.actualMinusEstimate)),
     h('td', { class: 'num wide ' + gapClass(g.actualMinusEstimatePct, savings) }, signedPct(g.actualMinusEstimatePct)),
@@ -66,7 +70,10 @@ export function budgetTable(ctx, summary) {
       return (x < y ? -1 : 1) * ui.sort.dir;
     });
   }
-  const head = h('tr', {}, COLUMNS.map(([key, label, cls]) => h('th', {
+  const cols = hasLong(summary)
+    ? COLUMNS.flatMap((c) => (c[0] === 'dream' ? [['dream', 'Dream, short', 'wide'], ['dreamLong', 'Dream, long', 'wide']] : [c]))
+    : COLUMNS;
+  const head = h('tr', {}, cols.map(([key, label, cls]) => h('th', {
     class: cls, scope: 'col', 'aria-sort': ui.sort.key === key ? (ui.sort.dir > 0 ? 'ascending' : 'descending') : null,
     onclick: () => { ui.sort = { key, dir: ui.sort.key === key ? -ui.sort.dir : (key === 'name' ? 1 : -1) }; ctx.rerender(); }
   }, label, ui.sort.key === key ? (ui.sort.dir > 0 ? ' ▴' : ' ▾') : '')));
@@ -94,6 +101,7 @@ export function budgetTable(ctx, summary) {
   const t = summary.totals;
   const L = (x) => inLens(inUnit(x, unit, t, summary.income), unit);
   body.push(h('tr', { class: 'total' }, h('td', {}, 'Spending'), h('td', { class: 'num' }, L(t.estimateTotal)), h('td', { class: 'num wide' }, L(t.dreamTotal)),
+    hasLong(summary) ? h('td', { class: 'num wide' }, L(t.dreamLongTotal)) : null,
     h('td', { class: 'num' }, L(t.actualTotal)), h('td', {}), h('td', { class: 'wide' }), h('td', { class: 'wide' }), h('td', { class: 'num wide' }, pct(t.spendingShare)), h('td', { class: 'wide' })));
 
   const skipped = summary.rows.filter((r) => r.notForMe).map((r) => r.name);

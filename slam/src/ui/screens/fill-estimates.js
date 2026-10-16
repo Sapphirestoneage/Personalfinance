@@ -9,10 +9,14 @@ import { statusChip, statusPicker } from '../components/status.js';
 import { makeValue } from '../../store/value.js';
 import { useSingleTotal, findCategory, renameLine, startBlindRound, addCategory, addLine, addDebt, breakDown, useOneNumber } from '../../store/edits.js';
 import { nameEdit } from '../components/name-edit.js';
+import { parentsPlanToggle, coveredByParents, coveredNote } from '../components/parents-plan.js';
+import { parentsPlan } from '../../calc/coverage.js';
 import { categoryTypeSelect, lineTypeSelect, typeHint } from '../components/type-select.js';
 import { categoryTypeLabel, lineTypeLabel } from '../../store/types.js';
 import { debtQuick, debtTypeTotals } from '../components/debt-quick.js';
 import { lastActual } from '../../calc/history.js';
+
+const parentsPlanOn = (doc) => parentsPlan(doc).on;
 
 function addLineButton(ctx, catId) {
   return h('button', { class: 'btn small ghost', onclick: () => {
@@ -90,7 +94,12 @@ export function renderEstimates(ctx, summary, key) {
           ctx.rerender();
         } }, 'Blind guess (revisit)')))
     : h('div', { class: 'card' }, h('h2', {}, 'Dream: what would you like to spend?'),
-      h('p', { class: 'muted small' }, 'No judgment. What would feel right for each?'));
+      h('div', { class: 'toggle', role: 'group', 'aria-label': 'Dream term' },
+        h('button', { 'aria-pressed': key === 'dream' ? 'true' : 'false', 'data-key': 'dream-short', onclick: () => { ctx.ui.dreamTerm = 'short'; ctx.rerender(); } }, 'Short term'),
+        h('button', { 'aria-pressed': key === 'dreamLong' ? 'true' : 'false', 'data-key': 'dream-long', onclick: () => { ctx.ui.dreamTerm = 'long'; ctx.rerender(); } }, 'Long term')),
+      h('p', { class: 'muted small' }, key === 'dream'
+        ? 'Short term: this year, or the next step. No judgment. What would feel right for each?'
+        : 'Long term: everything after the next step. The life you are building toward. No judgment.'));
 
   const total = ev && doc.settings.singleTotal ? h('div', { class: 'card' },
     question(ctx, 'One total for everything', ev.carved ? 'Split so far: ' + money(ev.carved) + '. Left in the total: ' + money(ev.estimate) + (ev.overSplit ? '. The split is bigger than the total.' : '') : 'Split into categories below any time; the total is kept.',
@@ -129,8 +138,11 @@ export function renderEstimates(ctx, summary, key) {
     }
     const hint = isRough
       ? null
-      : (r.estimate !== null ? 'Estimate ' + money(r.estimate) + (r.pctTakeHome.estimate !== null ? ' (' + pct(r.pctTakeHome.estimate) + ' of take-home)' : '') : null);
-    const fromLines = (isRough ? r.estimateFrom : r.dreamFrom) === 'lines' || (isRough && cat.split && cat.estimate.amount === null && cat.estimate.status !== 'not-for-me');
+      : [r.estimate !== null ? 'Estimate ' + money(r.estimate) + (r.pctTakeHome.estimate !== null ? ' (' + pct(r.pctTakeHome.estimate) + ' of take-home)' : '') : null,
+        key === 'dreamLong' && r.dream !== null ? 'Short-term dream ' + money(r.dream) : null].filter(Boolean).join('. ') || null;
+    // Long term follows how the category is already given: line by line if its estimate or short-term dream is.
+    const longByLines = key === 'dreamLong' && cat.dreamLong.amount === null && cat.dreamLong.status !== 'not-for-me' && (r.estimateFrom === 'lines' || r.dreamFrom === 'lines');
+    const fromLines = longByLines || (isRough ? r.estimateFrom : r[key + 'From']) === 'lines' || (isRough && cat.split && cat.estimate.amount === null && cat.estimate.status !== 'not-for-me');
     if (fromLines) {
       // Already given line by line: show it, never ask it a second time.
       // Given line by line: each line is asked here (never a second category number).
@@ -140,9 +152,13 @@ export function renderEstimates(ctx, summary, key) {
       return h('div', { class: 'sub-lines' },
         h('div', { class: 'qa' }, h('div', { class: 'q' }, name, h('div', { class: 'hint' }, [hint, 'Adds up from its sub-categories.', first].filter(Boolean).join(' '))),
           h('span', {}, statusChip(r.status[key]), ' ', h('b', { class: 'num' }, money(r[key])))),
-        live.map((l) => question(ctx, h('div', {}, nameEdit(ctx, l.name, 'line:' + l.id + ':name', (d, v) => renameLine(d, l.id, v), 'Sub-category name'),
-          l.type === 'other' ? lineTypeSelect(ctx, l, { label: 'Type' }) : typeHint(lineTypeLabel(l.type), l.name)),
-          null, ['line', l.id, key], l[key], { label: l.name, parts: true })),
+        cat.type === 'health' ? parentsPlanToggle(ctx) : null,
+        live.map((l) => {
+          const nm = h('div', {}, nameEdit(ctx, l.name, 'line:' + l.id + ':name', (d, v) => renameLine(d, l.id, v), 'Sub-category name'),
+            l.type === 'other' ? lineTypeSelect(ctx, l, { label: 'Type' }) : typeHint(lineTypeLabel(l.type), l.name));
+          return coveredByParents(doc, l) ? h('div', { class: 'qa' }, h('div', { class: 'q' }, nm), coveredNote())
+            : question(ctx, nm, null, ['line', l.id, key], l[key], { label: l.name, parts: true });
+        }),
         ideas.length ? h('div', { class: 'tags' }, h('span', { class: 'xs muted' }, 'Ideas:'), ideas.map((n) => h('button', { class: 'tag-chip', onclick: () => {
           let id;
           ctx.update('Add ' + n, (d) => { id = addLine(d, cat.id, n).id; });
@@ -154,8 +170,10 @@ export function renderEstimates(ctx, summary, key) {
     const fromPay = r.type === 'health' ? (summary.income.deductionsByKind.health || 0) + (summary.income.deductionsByKind.hsa || 0)
       : r.type === 'transport' ? summary.income.deductionsByKind.transportation : null;
     const payNote = fromPay ? 'Already taken out of the paycheck: ' + money(fromPay) + ' a month. Only count what is paid on top.' : null;
+    const planNote = r.type === 'health' && parentsPlanOn(doc) ? 'On a parent\'s plan: count only what is paid out of pocket.' : null;
     return h('div', {},
-      question(ctx, name, [hint, payNote].filter(Boolean).join(' ') || null, ['categories', r.id, key], cat[key], { label: r.name, parts: true }),
+      question(ctx, name, [hint, payNote, planNote].filter(Boolean).join(' ') || null, ['categories', r.id, key], cat[key], { label: r.name, parts: true }),
+      r.type === 'health' ? parentsPlanToggle(ctx) : null,
       isRough && !r.isEverything ? h('div', { class: 'row' }, h('button', { class: 'btn small ghost', 'data-key': 'break:' + r.id, onclick: () => ctx.update('Break down ' + r.name, (d) => breakDown(d, r.id)) }, 'Break down into sub-categories')) : null,
       isRough ? extrasFor(ctx, summary, r) : null);
   }));

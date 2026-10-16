@@ -1,15 +1,9 @@
 // App-supplied averages for blank category estimates. Always status "guess",
-// always labeled with their source, scaled by cost-of-living tier.
+// always labeled with their source: the national average for the household size.
 
 import { hasAnswer } from './normalize.js';
 
 const NO_GUESS = new Set(['debt', 'savings', 'fees', 'everything']);
-
-export function colTierFor(profile, colTiers) {
-  if (profile.colTier) return { tier: profile.colTier, from: 'set by coach' };
-  const t = profile.state ? colTiers.byState[String(profile.state).toUpperCase()] : null;
-  return t ? { tier: t, from: 'from state ' + profile.state } : { tier: 'MCOL', from: 'no state given, assumed MCOL' };
-}
 
 // You, a spouse on a joint return, and dependents. Roommates keep their own budgets.
 export function householdSize(doc) {
@@ -23,13 +17,10 @@ export function guessFor(doc, catId, refs) {
   const size = householdSize(doc);
   const row = refs.averages.byHouseholdSize[String(size)];
   if (!row || row[catId] === undefined) return null;
-  const { tier } = colTierFor(doc.profile, refs.colTiers);
-  const mult = refs.colTiers.multipliers[tier];
-  const amount = Math.round(row[catId] * mult);
   return {
-    amount, cadence: 'month', status: 'guess', source: 'app', asOf: null,
-    note: 'Guess: ' + (refs.averages.placeholder ? 'placeholder ' : '') + 'BLS Consumer Expenditure Survey ' + refs.averages.year +
-      ', household of ' + size + ', ' + tier + ' x' + mult
+    amount: Math.round(row[catId]), cadence: 'month', status: 'guess', source: 'app', asOf: null,
+    note: 'Guess: national average, household of ' + size + ', source ' + (refs.averages.placeholder ? 'placeholder ' : '') +
+      'BLS Consumer Expenditure Survey ' + refs.averages.year
   };
 }
 

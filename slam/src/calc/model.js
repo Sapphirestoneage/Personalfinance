@@ -4,6 +4,7 @@
 
 import { toMonthly, hasAnswer, isOneOff } from './normalize.js';
 import { sumKnown } from './money.js';
+import { parentsPlan, PARENTS_PLAN_LINE_TYPES } from './coverage.js';
 
 const WEAKNESS_ORDER = ['dont-know', 'will-email', null, 'guess', 'roughly', 'known', 'computed', 'not-for-me'];
 
@@ -23,9 +24,16 @@ export function primaryPayFrequency(doc) {
   return inc ? inc.payFrequency : null;
 }
 
+// A line a parent's plan pays for counts as "doesn't apply": 0, and complete.
+function coveredRow(line, freq) {
+  const zero = { ...line, estimate: NOT_FOR_ME, dream: NOT_FOR_ME, dreamLong: NOT_FOR_ME, actual: NOT_FOR_ME };
+  return { ...lineRow(zero, freq), covered: 'parents-plan' };
+}
+const NOT_FOR_ME = { amount: null, cadence: 'month', status: 'not-for-me', source: 'client', asOf: null, note: '' };
+
 function lineRow(line, freq) {
   const oneOffs = [];
-  for (const k of ['estimate', 'dream', 'actual']) {
+  for (const k of ['estimate', 'dream', 'dreamLong', 'actual']) {
     if (isOneOff(line[k])) oneOffs.push({ which: k, amount: line[k].amount });
   }
   const owed = line.path === 'reimbursable' ? toMonthly(line.owedBack, freq) : null;
@@ -35,8 +43,8 @@ function lineRow(line, freq) {
   return {
     id: line.id, name: line.name, kind: line.kind, need: line.need, savings: line.savings,
     path: line.path, tag: line.tag, tags: line.tags || [], type: line.type || 'other', joy: line.joy, state: line.state, computed: false,
-    estimate: toMonthly(line.estimate, freq), dream: toMonthly(line.dream, freq), actual,
-    status: { estimate: line.estimate.status, dream: line.dream.status, actual: line.actual.status },
+    estimate: toMonthly(line.estimate, freq), dream: toMonthly(line.dream, freq), dreamLong: toMonthly(line.dreamLong, freq), actual,
+    status: { estimate: line.estimate.status, dream: line.dream.status, dreamLong: line.dreamLong ? line.dreamLong.status : null, actual: line.actual.status },
     owedOutstanding: owed !== null && !line.owedBackReceived ? owed : 0,
     oneOffs
   };
@@ -48,8 +56,8 @@ function debtRows(doc) {
     return {
       id: 'debt:' + d.id, debtId: d.id, name: d.label, type: 'loan', kind: 'fixed', need: true, savings: false,
       path: 'personal', tag: 'planned', joy: null, state: d.state, computed: true,
-      estimate: min, dream: min, actual: min,
-      status: { estimate: 'computed', dream: 'computed', actual: 'computed' },
+      estimate: min, dream: min, dreamLong: min, actual: min,
+      status: { estimate: 'computed', dream: 'computed', dreamLong: 'computed', actual: 'computed' },
       sourceStatus: d.minimum.status, owedOutstanding: 0, oneOffs: []
     };
   });
@@ -71,11 +79,13 @@ function resolveTop(cat, lines, key, freq) {
 
 export function budgetModel(doc) {
   const freq = primaryPayFrequency(doc);
+  const plan = parentsPlan(doc);
   const cats = [];
   for (const cat of doc.categories) {
     if (cat.state === 'archived') continue;
     const isDebt = cat.id === 'debt';
-    const lines = isDebt ? debtRows(doc) : cat.lines.filter((l) => l.state !== 'archived').map((l) => lineRow(l, freq));
+    const lines = isDebt ? debtRows(doc) : cat.lines.filter((l) => l.state !== 'archived')
+      .map((l) => (plan.on && PARENTS_PLAN_LINE_TYPES.includes(l.type) ? coveredRow(l, freq) : lineRow(l, freq)));
     const notForMe = cat.estimate.status === 'not-for-me' && !isDebt;
     const row = {
       id: cat.id, name: cat.name, type: isDebt ? 'debt' : (cat.type || 'other'), kind: cat.kind, need: cat.need, savings: cat.savings, tag: cat.tag,
@@ -85,14 +95,17 @@ export function budgetModel(doc) {
       const t = doc.noDebts && !lines.length ? 0 : sumKnown(lines.map((l) => l.actual)).total;
       row.estimate = { amount: t, from: 'debts', status: 'computed' };
       row.dream = { amount: t, from: 'debts', status: 'computed' };
+      row.dreamLong = { amount: t, from: 'debts', status: 'computed' };
       row.actual = { amount: t, partial: lines.some((l) => l.actual === null), status: 'computed' };
     } else if (notForMe) {
       row.estimate = { amount: 0, from: 'category', status: 'not-for-me' };
       row.dream = { amount: 0, from: 'category', status: 'not-for-me' };
+      row.dreamLong = { amount: 0, from: 'category', status: 'not-for-me' };
       row.actual = { amount: 0, partial: false, status: 'not-for-me' };
     } else {
       row.estimate = resolveTop(cat, lines, 'estimate', freq);
       row.dream = resolveTop(cat, lines, 'dream', freq);
+      row.dreamLong = resolveTop(cat, lines, 'dreamLong', freq);
       const withActual = lines.filter((l) => l.actual !== null);
       row.actual = {
         amount: withActual.length ? sumKnown(withActual.map((l) => l.actual)).total : null,

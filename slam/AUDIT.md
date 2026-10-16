@@ -27,8 +27,8 @@
 | 12 | Fields that don't apply are absent | Pass after fix. Roommate, dependent-age, pre-tax, and hours fields appear only when they apply. "Doesn't apply" categories collapse to one line in the passes and are now left out of the table (named once underneath). "No debts" counts as complete. |
 | 13 | Any cadence, normalized to monthly | Pass. Paycheck, week, month, year, one-off on every amount; one-offs listed separately. |
 | 14 | Completion separate from progress | Pass. The completion meter says it measures the data, not the client. |
-| 15 | Averages labeled Guess with source and COL tier | Pass. Guess chip plus a note naming the source, household size, tier, and multiplier. The table is marked placeholder. |
-| 16 | Percentages on take-home | Pass. Only DRAFTT Taxes uses gross, and it is labeled "of gross". |
+| 15 | Averages labeled Guess with their source | Pass. Guess chip plus a note naming the national average, household size, and source. The table is marked placeholder. |
+| 16 | Percentages on take-home | Pass. DRAFTT uses take-home plus pre-tax retirement as its base (so its parts add to 100%), and says so on screen; with no pre-tax retirement the base is take-home. DRAFTT taxes are shown on their own, labeled "of gross". |
 
 ## Nothing asked twice
 

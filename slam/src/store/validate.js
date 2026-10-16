@@ -5,7 +5,7 @@ import { valueErrors } from './value.js';
 import { CATEGORY_TYPE_IDS, LINE_TYPE_IDS } from './types.js';
 import {
   SCHEMA_VERSION, LIVING_WITH, SITUATIONS, FILING_STATUSES, INCOME_TYPES, PAY_FREQUENCIES, PAY_BASES, WITHHOLDING, DEDUCTION_KIND_IDS,
-  ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES, COL_TIERS
+  ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES
 } from './schema.js';
 
 function oneOf(errs, list, val, where, allowNull = false) {
@@ -19,7 +19,6 @@ export function validateHousehold(doc) {
   if (doc.schemaVersion !== SCHEMA_VERSION) errs.push('schemaVersion must be ' + SCHEMA_VERSION);
   if (!doc.id) errs.push('id is missing');
   if (!doc.profile || typeof doc.profile.name !== 'string') errs.push('profile.name is missing');
-  oneOf(errs, COL_TIERS, doc.profile && doc.profile.colTier, 'profile.colTier', true);
   for (const s of doc.situation || []) oneOf(errs, SITUATIONS, s, 'situation');
   oneOf(errs, FILING_STATUSES, doc.household && doc.household.filingStatus, 'household.filingStatus');
   oneOf(errs, LIVING_WITH, doc.household && doc.household.livingWith, 'household.livingWith', true);
@@ -28,6 +27,7 @@ export function validateHousehold(doc) {
   const ids = new Set();
   const seen = (id, where) => { if (ids.has(id)) errs.push(where + ': duplicate id ' + id); ids.add(id); };
 
+  if (doc.household && doc.household.parentsPlan !== undefined && typeof doc.household.parentsPlan !== 'boolean') errs.push('household.parentsPlan must be true or false');
   const tagIds = new Set();
   (doc.tags || []).forEach((t, i) => {
     if (!t.id || tagIds.has(t.id)) errs.push('tags[' + i + ']: missing or duplicate id');
@@ -67,6 +67,7 @@ export function validateHousehold(doc) {
     if (c.split !== undefined && typeof c.split !== 'boolean') errs.push(w + '.split must be true or false');
     if (c.type !== undefined) oneOf(errs, CATEGORY_TYPE_IDS, c.type, w + '.type');
     errs.push(...valueErrors(c.estimate, w + '.estimate'), ...valueErrors(c.dream, w + '.dream'));
+    if (c.dreamLong !== undefined) errs.push(...valueErrors(c.dreamLong, w + '.dreamLong'));
     (c.lines || []).forEach((l, j) => {
       const lw = w + '.lines[' + j + '] ' + l.id;
       seen(l.id, lw);
@@ -77,6 +78,7 @@ export function validateHousehold(doc) {
       oneOf(errs, ITEM_STATES, l.state, lw + '.state');
       if (l.joy !== null && !(Number.isInteger(l.joy) && l.joy >= 1 && l.joy <= 10)) errs.push(lw + '.joy must be 1 to 10 or empty');
       for (const k of ['estimate', 'dream', 'actual', 'owedBack']) errs.push(...valueErrors(l[k], lw + '.' + k));
+      if (l.dreamLong !== undefined) errs.push(...valueErrors(l.dreamLong, lw + '.dreamLong'));
       (l.tags || []).forEach((t) => { if (!tagIds.has(t)) errs.push(lw + '.tags: unknown tag ' + t); });
     });
   });

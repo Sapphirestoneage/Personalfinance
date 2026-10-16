@@ -7,6 +7,7 @@ import { valueInput, question } from '../components/value-input.js';
 import { statusChip } from '../components/status.js';
 import { addLine, addDebt, findLine, findCategory, renameLine, addCategory, addTag, toggleLineTag, renameTag, removeTag } from '../../store/edits.js';
 import { nameEdit } from '../components/name-edit.js';
+import { parentsPlanToggle, coveredByParents, coveredNote } from '../components/parents-plan.js';
 import { categoryTypeSelect, lineTypeSelect, typeHint } from '../components/type-select.js';
 import { lineTypeLabel } from '../../store/types.js';
 import { DEBT_TYPE_OPTIONS } from '../components/debt-quick.js';
@@ -75,7 +76,8 @@ function lineDetail(ctx, cat, line, catHasAnswer) {
     lineSelect(ctx, line, 'state', STATES, 'State'),
     catHasAnswer ? h('p', { class: 'muted xs' }, 'Estimate and dream for this category were given as one number in the Rough pass.')
       : h('div', {}, question(ctx, 'Line estimate', null, ['line', line.id, 'estimate'], line.estimate, { parts: true }),
-        question(ctx, 'Line dream', null, ['line', line.id, 'dream'], line.dream, { parts: true })));
+        question(ctx, 'Line dream, short term', null, ['line', line.id, 'dream'], line.dream, { parts: true }),
+        question(ctx, 'Line dream, long term', null, ['line', line.id, 'dreamLong'], line.dreamLong, { parts: true })));
 }
 
 function categoryCard(ctx, summary, cat) {
@@ -85,13 +87,14 @@ function categoryCard(ctx, summary, cat) {
     return h('div', { class: 'card' }, h('div', { class: 'spread' }, h('h3', {}, catName(ctx, cat)), statusChip('not-for-me')),
       h('button', { class: 'btn small ghost', onclick: () => ctx.goToField(['categories', cat.id, 'estimate']) }, 'Change in Rough pass'));
   }
-  const catHasAnswer = cat.estimate.status !== null || cat.dream.status !== null;
+  const catHasAnswer = cat.estimate.status !== null || cat.dream.status !== null || cat.dreamLong.status !== null;
   const live = cat.lines.filter((l) => l.state !== 'archived');
   const archived = cat.lines.filter((l) => l.state === 'archived');
   return h('div', { class: 'card' },
     h('div', { class: 'spread' }, h('h3', {}, catName(ctx, cat)),
       categoryTypeSelect(ctx, cat),
       h('span', { class: 'small muted num' }, 'estimate ' + money(row.estimate) + ' / actual ' + money(row.actual) + (row.partial ? ' (partial)' : ''))),
+    cat.type === 'health' ? parentsPlanToggle(ctx) : null,
     live.map((line) => {
       const open = ctx.ui.expanded.has('line:' + line.id);
       return h('div', { class: 'qa' },
@@ -102,7 +105,7 @@ function categoryCard(ctx, summary, cat) {
             if (open) ctx.ui.expanded.delete('line:' + line.id); else ctx.ui.expanded.add('line:' + line.id);
             ctx.rerender();
           } }, open ? 'Less' : 'Details')),
-        valueInput(ctx, ['line', line.id, 'actual'], line.actual, { label: line.name + ' actual', parts: true }),
+        coveredByParents(ctx.doc, line) ? coveredNote() : valueInput(ctx, ['line', line.id, 'actual'], line.actual, { label: line.name + ' actual', parts: true }),
         tagRow(ctx, line),
         open ? h('div', { style: 'flex-basis:100%' }, lineDetail(ctx, cat, line, catHasAnswer)) : null);
     }),

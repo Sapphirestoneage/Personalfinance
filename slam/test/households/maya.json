@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "hh-maya",
-  "profile": { "name": "Maya (demo)", "birthYear": 2000, "state": "NY", "zip": "10001", "colTier": null },
+  "profile": { "name": "Maya (demo)", "birthYear": 2000, "state": "NY" },
   "situation": ["employed"],
   "household": {
     "filingStatus": "single",

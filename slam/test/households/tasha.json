@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "hh-tasha",
-  "profile": { "name": "Tasha (demo)", "birthYear": 1997, "state": "TX", "zip": "78701" },
+  "profile": { "name": "Tasha (demo)", "birthYear": 1997, "state": "TX" },
   "situation": ["employed"],
   "household": { "filingStatus": "single", "dependents": { "count": 0, "ages": [] }, "roommates": { "count": 0 } },
   "income": [
