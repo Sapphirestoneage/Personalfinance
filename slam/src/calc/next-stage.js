@@ -2,7 +2,7 @@
 // in the short term but is better on other measures. What the client would
 // need to make it work, now vs next, and stay vs change over time.
 
-import { toMonthly } from './normalize.js';
+import { toMonthly, hasAnswer } from './normalize.js';
 import { ratio, sumKnown } from './money.js';
 
 const HOURS_A_MONTH = 52 / 12;
@@ -16,9 +16,45 @@ function oneOff(v) {
   return v.amount;
 }
 
+export const CASES = ['disaster', 'likely', 'dream'];
+const VALUE_FIELDS = ['takeHome', 'transitionTakeHome', 'laterTakeHome'];
+const NUMBER_FIELDS = ['hoursPerWeek', 'transitionMonths', 'laterAfterMonths'];
+
+// The plan as seen through one lens. Likely is what was typed; disaster and
+// dream only hold what differs, and anything left blank follows likely.
+export function resolveCase(ns, caseId) {
+  if (caseId === 'likely') return ns;
+  const o = (ns.cases && ns.cases[caseId]) || {};
+  const out = { ...ns };
+  for (const k of VALUE_FIELDS) if (o[k] && hasAnswer(o[k])) out[k] = o[k];
+  for (const k of NUMBER_FIELDS) if (o[k] !== null && o[k] !== undefined) out[k] = o[k];
+  const pick = (it) => ({ ...it, amount: it[caseId] && hasAnswer(it[caseId]) ? it[caseId] : it.amount });
+  out.oneOffCosts = ns.oneOffCosts.map(pick);
+  out.costChanges = ns.costChanges.map(pick);
+  return out;
+}
+
+// All three lenses, plus cash on hand and runway (how long savings last through the switch).
 export function nextStage(doc, income, totals, culprits) {
-  const ns = doc.nextStage;
-  if (!ns) return null;
+  if (!doc.nextStage) return null;
+  const cash = doc.nextStage.cashOnHand ? oneOff(doc.nextStage.cashOnHand) : null;
+  const cases = {};
+  for (const c of CASES) {
+    const r = nextStageCase(resolveCase(doc.nextStage, c), income, totals, culprits);
+    const burn = r.transitionGap !== null && r.transitionGap < 0 ? -r.transitionGap : 0;
+    r.cash = cash === null ? null : {
+      onHand: cash,
+      gap: r.cashNeeded === null ? null : cash - r.cashNeeded,
+      covers: r.cashNeeded === null ? null : cash >= r.cashNeeded,
+      // Months of the lower-pay stretch the cash lasts after the one-time costs.
+      runwayMonths: burn > 0 ? Math.max(0, cash - r.oneOffs) / burn : null
+    };
+    cases[c] = r;
+  }
+  return { ...cases.likely, cases };
+}
+
+function nextStageCase(ns, income, totals, culprits) {
   const nowTakeHome = totals.takeHome;
   const nowOutflow = totals.outflow;
   const nowSurplus = totals.surplus;

@@ -72,7 +72,12 @@ export function validateHousehold(doc) {
   });
   if (doc.nextStage) {
     const ns = doc.nextStage;
-    for (const k of ['takeHome', 'transitionTakeHome', 'laterTakeHome']) errs.push(...valueErrors(ns[k], 'nextStage.' + k));
+    for (const k of ['takeHome', 'transitionTakeHome', 'laterTakeHome', 'cashOnHand']) errs.push(...valueErrors(ns[k], 'nextStage.' + k));
+    for (const c of ['disaster', 'dream']) {
+      const o = (ns.cases || {})[c] || {};
+      for (const k of ['takeHome', 'transitionTakeHome', 'laterTakeHome']) errs.push(...valueErrors(o[k], 'nextStage.cases.' + c + '.' + k));
+      for (const k of ['hoursPerWeek', 'transitionMonths', 'laterAfterMonths']) if (o[k] !== null && o[k] !== undefined && !(typeof o[k] === 'number' && o[k] >= 0)) errs.push('nextStage.cases.' + c + '.' + k + ' must be a number 0 or more, or empty');
+    }
     for (const list of ['oneOffCosts', 'costChanges']) (ns[list] || []).forEach((c, i) => errs.push(...valueErrors(c.amount, 'nextStage.' + list + '[' + i + ']')));
     for (const k of ['hoursPerWeek', 'transitionMonths', 'laterAfterMonths']) if (ns[k] !== null && !(typeof ns[k] === 'number' && ns[k] >= 0)) errs.push('nextStage.' + k + ' must be a number 0 or more, or empty');
   }

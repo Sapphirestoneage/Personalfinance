@@ -23,3 +23,15 @@ theming beyond the tokens.
 - Replace the placeholder BLS averages and cost-of-living tiers with verified figures each year.
 - Client-facing read-only view of the Budget screen (logins are out of scope for now).
 - Next stage: compare two or more plans side by side; include taxes for the new job from gross pay.
+
+## Entrepreneur ideas (suggested 2026-10-16, not built)
+
+- Lumpy income: average the last 12 months of variable income and "pay yourself a salary" from it; show the floor (worst 3 months) next to the average.
+- Quarterly estimated tax set-aside for 1099 and side income: the % to move each payment, and the four due dates.
+- Bare-bones number: needs only (FAT, debt minimums, insurance), used as the disaster lens's spending and as the runway denominator.
+- Business vs personal split: mark lines as business (the "linked" path), keep them out of the personal budget, and show the owner draw.
+- Health insurance after leaving a W-2 job: COBRA or marketplace premium as a one-click cost change in Next stage.
+- Solo 401(k) or SEP-IRA room for self-employed income, feeding the deductions list.
+- Revenue ramp: months until the venture covers the bare-bones number, in each lens.
+- Kill criteria: a coach-set line ("if cash falls below X or revenue is under Y by month Z, go back to a job") shown on the stay-vs-change chart.
+- Odds per lens (e.g. 20% disaster, 60% likely, 20% dream) for a weighted expected value.

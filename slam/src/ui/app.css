@@ -143,6 +143,9 @@ table.budget tr.line td { color: var(--text-muted); }
 table.budget tr.line td:first-child { padding-left: var(--space-5); }
 table.budget tr.total td { font-weight: 700; border-top: 2px solid var(--border); }
 @media (max-width: 759px) { table.budget .wide { display: none; } }
+input.amount.lens { width: 5em; min-height: 34px; padding: 0 6px; }
+table.lenses th, table.lenses td { padding: 6px 4px; }
+table.lenses td:first-child, table.lenses th:first-child { min-width: 92px; font-size: var(--text-xs); }
 
 /* bars inside cards */
 .meter { height: 10px; background: var(--surface-2); border-radius: var(--radius-pill); overflow: hidden; }

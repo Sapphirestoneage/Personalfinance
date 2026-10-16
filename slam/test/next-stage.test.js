@@ -77,3 +77,49 @@ test('next stage: other measures, and a shortfall that needs a cut', () => {
   // from month 25: +400 a month -> 56,400 / 400 = 141 more months -> month 165, past the 10-year (120 month) window
   assert.equal(n2.path.breakEven, null);
 });
+
+test('three lenses: disaster, likely, dream, with cash on hand and runway', () => {
+  const d = household();
+  const ns = d.nextStage;
+  ns.cashOnHand = v(10000, 'one-off');
+  // DISASTER: take-home 2,500; 6 months with no pay; course costs 4,000 (moving stays 500). Later pay follows likely (4,500 after 24).
+  Object.assign(ns.cases.disaster, { takeHome: v(2500), transitionMonths: 6, transitionTakeHome: v(0) });
+  ns.oneOffCosts[0].disaster = v(4000, 'one-off');
+  // DREAM: take-home 3,500; 1 month switching (at likely's 1,000); pay rises to 5,000 after 12 months.
+  Object.assign(ns.cases.dream, { takeHome: v(3500), transitionMonths: 1, laterTakeHome: v(5000), laterAfterMonths: 12 });
+  const { cases } = buildSummary(migrate(d), refs).nextStage;
+
+  // DISASTER: outflow 2,400; after the switch 2,500 - 2,400 = +100
+  // switching: 0 - 2,400 = -2,400 x 6 = 14,400; one-offs 4,000 + 500 = 4,500; cash needed 18,900
+  // months to save: 18,900 / 1,700 = 11.12 -> 12. Cash 10,000 is 8,900 short.
+  // runway: (10,000 - 4,500) / 2,400 = 2.291667 months of the 6
+  // break-even: -4,500; months 1-6: -4,100 each -> -29,100; months 7-24: -1,600 x 18 -> -57,900;
+  // then +400 a month -> 145 more months -> month 169, past 120 -> none
+  const x = cases.disaster;
+  assert.equal(x.next.surplus, 100);
+  assert.equal(x.cashNeeded, 18900);
+  assert.equal(x.monthsToSaveWhole, 12);
+  assert.equal(x.cash.gap, -8900);
+  assert.equal(x.cash.covers, false);
+  assert.ok(near(x.cash.runwayMonths, 2.291667, 6));
+  assert.equal(x.path.breakEven, null);
+
+  // LIKELY (unchanged): 7,200 needed; cash covers it with 2,800 to spare; runway (10,000 - 3,000) / 1,400 = 5 months
+  const l = cases.likely;
+  assert.equal(l.cashNeeded, 7200);
+  assert.equal(l.cash.gap, 2800);
+  assert.equal(l.cash.runwayMonths, 5);
+  assert.equal(l.path.breakEven, 113);
+
+  // DREAM: after the switch 3,500 - 2,400 = +1,100; switching 1 x 1,400 = 1,400; one-offs 3,000; needs 4,400
+  // months to save 4,400 / 1,700 = 2.59 -> 3; cash gap 10,000 - 4,400 = 5,600
+  // break-even: -3,000; month 1: -3,100 -> -6,100; months 2-12: -600 x 11 -> -12,700;
+  // from month 13: 5,000 - 2,400 = 2,600 -> +900 a month; 12,700 / 900 = 14.1 -> 15 months -> month 27
+  const r = cases.dream;
+  assert.equal(r.next.surplus, 1100);
+  assert.equal(r.cashNeeded, 4400);
+  assert.equal(r.monthsToSaveWhole, 3);
+  assert.equal(r.cash.gap, 5600);
+  assert.equal(r.path.breakEven, 27);
+  assert.equal(r.path.change[27] - r.path.stay[27], 800);
+});
