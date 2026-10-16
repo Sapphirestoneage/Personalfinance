@@ -8,7 +8,8 @@ export const SCHEMA_VERSION = 1;
 
 export const SITUATIONS = ['employed', 'self-employed', 'between-jobs', 'student'];
 export const FILING_STATUSES = ['single', 'married-joint', 'married-separate', 'head-of-household'];
-export const INCOME_TYPES = ['w2', '1099', 'side', 'unemployment', 'not-taxable'];
+export const INCOME_TYPES = ['w2', '1099', 'side', 'unemployment', 'family', 'not-taxable'];
+export const PAY_BASES = ['salary', 'hourly'];
 export const PAY_FREQUENCIES = ['weekly', 'biweekly', 'semimonthly', 'monthly'];
 export const ITEM_STATES = ['active', 'hidden', 'archived'];
 export const LINE_KINDS = ['fixed', 'variable'];
@@ -108,9 +109,28 @@ export function newIncome(fields = {}) {
     takeHome: makeValue(null, { cadence: 'paycheck' }),
     gross: makeValue(null, { cadence: 'year' }),
     payFrequency: fields.payFrequency || 'biweekly',
-    pretaxRetirement: makeValue(null, { cadence: 'paycheck' }),
+    // Hourly pay: gross is computed from the rate and hours, never asked twice.
+    payBasis: fields.payBasis || 'salary',
+    hourlyRate: makeValue(null, { cadence: 'month' }),
+    deductions: [],
     hoursPerWeek: null,
     state: 'active'
+  };
+}
+
+export const DEDUCTION_KIND_IDS = ['retirement', 'roth', 'health', 'hsa', 'transportation', 'other'];
+
+// A paycheck deduction: a % of gross pay, or an amount in any cadence.
+export function newDeduction(fields = {}) {
+  const kind = fields.kind || 'retirement';
+  return {
+    id: fields.id || newId('ded'),
+    kind,
+    label: fields.label || '',
+    mode: fields.mode || (kind === 'retirement' || kind === 'roth' ? 'percent' : 'amount'),
+    percent: fields.percent === undefined ? null : fields.percent,
+    amount: makeValue(null, { cadence: 'paycheck' }),
+    pretax: fields.pretax === undefined ? true : fields.pretax
   };
 }
 

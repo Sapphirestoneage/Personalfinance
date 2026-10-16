@@ -65,6 +65,8 @@ h3 { font-size: var(--text-md); margin: 0 0 var(--space-2); }
 .grid { display: grid; gap: var(--space-3); grid-template-columns: 1fr; }
 @media (min-width: 760px) { .grid.two { grid-template-columns: 1fr 1fr; } .grid.three { grid-template-columns: repeat(3, 1fr); } }
 .grid > .card + .card, .charts-key > .card + .card { margin-top: 0; }
+.grid > *, label.field { min-width: 0; }
+label.field select { width: 100%; }
 .reading { margin: var(--space-2) 0 0; color: var(--text-muted); font-size: var(--text-sm); }
 .placeholder-note { color: var(--warn); font-size: var(--text-xs); }
 

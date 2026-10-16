@@ -3,7 +3,7 @@
 
 import { valueErrors } from './value.js';
 import {
-  SCHEMA_VERSION, SITUATIONS, FILING_STATUSES, INCOME_TYPES, PAY_FREQUENCIES,
+  SCHEMA_VERSION, SITUATIONS, FILING_STATUSES, INCOME_TYPES, PAY_FREQUENCIES, PAY_BASES, DEDUCTION_KIND_IDS,
   ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES, COL_TIERS
 } from './schema.js';
 
@@ -32,7 +32,16 @@ export function validateHousehold(doc) {
     oneOf(errs, INCOME_TYPES, inc.type, w + '.type');
     oneOf(errs, PAY_FREQUENCIES, inc.payFrequency, w + '.payFrequency');
     oneOf(errs, ITEM_STATES, inc.state, w + '.state');
-    for (const k of ['takeHome', 'gross', 'pretaxRetirement']) errs.push(...valueErrors(inc[k], w + '.' + k));
+    oneOf(errs, PAY_BASES, inc.payBasis, w + '.payBasis');
+    for (const k of ['takeHome', 'gross', 'hourlyRate']) errs.push(...valueErrors(inc[k], w + '.' + k));
+    (inc.deductions || []).forEach((d, j) => {
+      const dw = w + '.deductions[' + j + ']';
+      seen(d.id, dw);
+      oneOf(errs, DEDUCTION_KIND_IDS, d.kind, dw + '.kind');
+      oneOf(errs, ['percent', 'amount'], d.mode, dw + '.mode');
+      if (d.percent !== null && !(typeof d.percent === 'number' && d.percent >= 0 && d.percent <= 100)) errs.push(dw + '.percent must be 0 to 100 or empty');
+      errs.push(...valueErrors(d.amount, dw + '.amount'));
+    });
   });
   (doc.debts || []).forEach((d, i) => {
     const w = 'debts[' + i + ']';

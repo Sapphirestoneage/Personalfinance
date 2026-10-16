@@ -39,9 +39,9 @@ export function draftt(model, totals, income, benchmarks, sourceId) {
   const th = totals.takeHome;
   const b = totals.bases;
   const retireLine = lineBasis(model, 'retirement');
-  const retirement = (retireLine === null ? 0 : retireLine) + income.pretax;
+  const retirement = (retireLine === null ? 0 : retireLine) + income.retirementDeductions;
   const therapy = lineBasis(model, 'therapy');
-  const taxes = income.gross !== null && th !== null ? income.gross - income.pretax - th : null;
+  const taxes = income.gross !== null && th !== null ? income.gross - income.deductions - th : null;
   const rows = [
     ['debt', 'Debt', b.debt ? b.debt.amount : null, th],
     ['retirement', 'Retirement', retirement, th],
@@ -87,8 +87,8 @@ export function incomeStatement(model, totals, income) {
     const revenue = s.grossMonthly !== null ? s.grossMonthly : s.takeHomeMonthly;
     byType[s.type] = (byType[s.type] || 0) + revenue;
     if (s.grossMonthly !== null) {
-      deductions += s.pretaxMonthly;
-      taxes += s.grossMonthly - s.pretaxMonthly - s.takeHomeMonthly;
+      deductions += s.deductionsMonthly;
+      taxes += s.grossMonthly - s.deductionsMonthly - s.takeHomeMonthly;
     }
   }
   const revenue = Object.values(byType).reduce((a, x) => a + x, 0);
