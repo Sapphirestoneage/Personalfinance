@@ -33,6 +33,42 @@ function payBreakdown(row, freq) {
   };
 }
 
+const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+// Roughly when benefits run out, counted from the middle of the month being worked on.
+export function benefitsEndAround(monthKey, weeksLeft) {
+  if (!monthKey || weeksLeft === null || weeksLeft === undefined) return null;
+  const [y, m] = monthKey.split('-').map(Number);
+  const d = new Date(Date.UTC(y, m - 1, 15 + weeksLeft * 7));
+  return MONTHS[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
+}
+
+// Unemployment: one number (the benefit). What lands is the benefit, less 10%
+// if the client chose federal withholding. The tax is shown as a set-aside.
+function unemploymentRow(doc, inc, row, tax, stdLeft) {
+  const freq = inc.payFrequency;
+  const benefit = hasAnswer(inc.gross) ? inc.gross : inc.takeHome;
+  const benefitMonthly = toMonthly(benefit, freq);
+  row.grossMonthly = benefitMonthly;
+  row.grossFrom = benefitMonthly === null ? null : 'typed';
+  row.takeHomeStatus = benefit.status;
+  if (benefitMonthly === null) return { stdUsed: 0 };
+  const withheldMonthly = inc.withholding === 'ten-percent' ? benefitMonthly * 0.1 : 0;
+  row.takeHomeMonthly = benefitMonthly - withheldMonthly;
+  const est = estimateAnnualTax({ gross: benefitMonthly * 12, type: 'unemployment', filingStatus: doc.household.filingStatus, stdDeduction: stdLeft }, tax);
+  const owed = Math.max(0, est.incomeTax - withheldMonthly * 12);
+  row.taxMonthly = est.incomeTax / 12;
+  const weeksLeft = inc.benefitWeeksLeft === null || inc.benefitWeeksLeft === undefined ? null : inc.benefitWeeksLeft;
+  row.unemployment = {
+    benefitMonthly, benefitWeekly: (benefitMonthly * 12) / 52, withheldMonthly, takeHomeMonthly: row.takeHomeMonthly,
+    estTaxAnnual: est.incomeTax, owedAtTaxTime: owed, setAsideWeekly: owed / 52, refundLikely: Math.max(0, withheldMonthly * 12 - est.incomeTax),
+    withholding: inc.withholding || null, weeksLeft,
+    stillToCome: weeksLeft === null ? null : ((benefitMonthly * 12) / 52) * weeksLeft,
+    endsAround: benefitsEndAround(doc.currentMonth, weeksLeft), taxYear: tax.taxYear
+  };
+  return { stdUsed: est.stdUsed };
+}
+
 export function incomeSummary(doc, tax) {
   const filing = doc.household.filingStatus;
   let stdLeft = tax.standardDeduction[filing] || tax.standardDeduction.single;
@@ -55,7 +91,9 @@ export function incomeSummary(doc, tax) {
       hoursMonthly: inc.hoursPerWeek ? inc.hoursPerWeek * HOURS_PER_MONTH_PER_WEEKLY_HOUR : null
     };
 
-    if (hasAnswer(inc.takeHome)) {
+    if (inc.type === 'unemployment') {
+      stdLeft -= unemploymentRow(doc, inc, row, tax, stdLeft).stdUsed;
+    } else if (hasAnswer(inc.takeHome)) {
       row.takeHomeMonthly = toMonthly(inc.takeHome, freq);
       // A source with known take-home is assumed to use the standard deduction first.
       const used = grossMonthly === null ? stdLeft : Math.min(stdLeft, Math.max(0, (grossMonthly - dt.incomeTaxFree) * 12));

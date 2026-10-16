@@ -8,6 +8,7 @@ export const SCHEMA_VERSION = 1;
 
 export const SITUATIONS = ['employed', 'self-employed', 'between-jobs', 'student'];
 export const FILING_STATUSES = ['single', 'married-joint', 'married-separate', 'head-of-household'];
+export const WITHHOLDING = [null, 'ten-percent', 'none'];
 export const INCOME_TYPES = ['w2', '1099', 'side', 'unemployment', 'family', 'not-taxable'];
 export const PAY_BASES = ['salary', 'hourly'];
 export const PAY_FREQUENCIES = ['weekly', 'biweekly', 'semimonthly', 'monthly'];
@@ -115,6 +116,9 @@ export function newIncome(fields = {}) {
     hourlyRate: makeValue(null, { cadence: 'month' }),
     deductions: [],
     hoursPerWeek: null,
+    // Unemployment only: federal withholding ('ten-percent', 'none', or null = not sure) and weeks left.
+    withholding: null,
+    benefitWeeksLeft: null,
     state: 'active'
   };
 }

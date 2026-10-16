@@ -3,7 +3,7 @@
 
 import { valueErrors } from './value.js';
 import {
-  SCHEMA_VERSION, LIVING_WITH, SITUATIONS, FILING_STATUSES, INCOME_TYPES, PAY_FREQUENCIES, PAY_BASES, DEDUCTION_KIND_IDS,
+  SCHEMA_VERSION, LIVING_WITH, SITUATIONS, FILING_STATUSES, INCOME_TYPES, PAY_FREQUENCIES, PAY_BASES, WITHHOLDING, DEDUCTION_KIND_IDS,
   ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES, COL_TIERS
 } from './schema.js';
 
@@ -34,6 +34,8 @@ export function validateHousehold(doc) {
     oneOf(errs, PAY_FREQUENCIES, inc.payFrequency, w + '.payFrequency');
     oneOf(errs, ITEM_STATES, inc.state, w + '.state');
     oneOf(errs, PAY_BASES, inc.payBasis, w + '.payBasis');
+    if (inc.withholding !== undefined) oneOf(errs, WITHHOLDING, inc.withholding, w + '.withholding');
+    if (inc.benefitWeeksLeft !== undefined && inc.benefitWeeksLeft !== null && !(typeof inc.benefitWeeksLeft === 'number' && inc.benefitWeeksLeft >= 0)) errs.push(w + '.benefitWeeksLeft must be 0 or more, or empty');
     for (const k of ['takeHome', 'gross', 'hourlyRate']) errs.push(...valueErrors(inc[k], w + '.' + k));
     (inc.deductions || []).forEach((d, j) => {
       const dw = w + '.deductions[' + j + ']';
