@@ -107,7 +107,8 @@ input.big { font-size: var(--text-xl); min-height: 56px; width: 9em; }
 .type-field { min-width: 0; max-width: 16em; }
 .type-field select { width: 100%; }
 .value-input .parts { flex-basis: 100%; display: grid; gap: var(--space-2); padding-left: var(--space-3); border-left: 2px solid var(--border); }
-.value-input .part { display: grid; grid-template-columns: minmax(0, 1fr) 5.5em auto; gap: var(--space-2); align-items: center; }
+.value-input .part { display: grid; grid-template-columns: minmax(0, 1fr) 5.5em 4.6em auto; gap: var(--space-2); align-items: center; }
+.value-input .part select { min-width: 0; width: 100%; padding-inline: 4px; }
 .value-input .part input { width: 100%; min-width: 0; }
 .value-input .part .btn { padding-inline: var(--space-2); }
 input.name-edit { font: inherit; color: inherit; background: transparent; border: 1px solid transparent; border-bottom: 1px dashed var(--border); border-radius: 0; padding: 2px 0; min-height: 0; width: 100%; max-width: 22em; }
@@ -205,3 +206,7 @@ ul.plain li:last-child { border-bottom: none; }
 .draftt-letters { display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: center; }
 .draftt-letters ul { flex: 1 1 12em; min-width: 0; }
 .draftt-letters li { display: flex; justify-content: space-between; gap: var(--space-2); }
+@media (max-width: 480px) {
+  .value-input .part { grid-template-columns: minmax(0, 1fr) 4.6em auto; }
+  .value-input .part .part-name { grid-column: 1 / -1; }
+}

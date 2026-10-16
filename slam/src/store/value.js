@@ -16,15 +16,25 @@ export function makeValue(amount = null, opts = {}) {
     note: opts.note || ''
   };
   // Optional items inside one amount (Uber, bus, subway); the amount is their sum.
-  if (Array.isArray(opts.parts) && opts.parts.length) v.parts = opts.parts.map((p) => ({ name: String(p.name || ''), amount: p.amount === undefined ? null : p.amount }));
+  if (Array.isArray(opts.parts) && opts.parts.length) v.parts = opts.parts.map((p) => ({ name: String(p.name || ''), amount: p.amount === undefined ? null : p.amount, ...(p.cadence ? { cadence: p.cadence } : {}) }));
   return v;
 }
 
 // The amount of a split value: the sum of the items that have a number, or
 // null when none do (empty is not zero).
-export function sumParts(parts) {
+// Items can each have their own cadence (S-074): week, month, or year. An item
+// with none is in the value's own cadence. Mixed items are added up a year at a
+// time and turned into the value's cadence, to the cent.
+export const PART_CADENCES = { week: 52, month: 12, year: 1 };
+
+export function sumParts(parts, cadence) {
   const known = parts.filter((p) => p.amount !== null);
-  return known.length ? Math.round(known.reduce((a, p) => a + p.amount, 0) * 100) / 100 : null;
+  if (!known.length) return null;
+  const mixed = known.some((p) => p.cadence && p.cadence !== cadence);
+  const total = mixed && PART_CADENCES[cadence]
+    ? known.reduce((a, p) => a + p.amount * PART_CADENCES[p.cadence || cadence], 0) / PART_CADENCES[cadence]
+    : known.reduce((a, p) => a + p.amount, 0);
+  return Math.round(total * 100) / 100;
 }
 
 // Fill in missing keys so compact test files and older exports load cleanly.
@@ -52,8 +62,9 @@ export function valueErrors(v, where) {
       v.parts.forEach((p, i) => {
         if (typeof p.name !== 'string') errs.push(where + '.parts[' + i + ']: name must be text');
         if (p.amount !== null && (typeof p.amount !== 'number' || !Number.isFinite(p.amount))) errs.push(where + '.parts[' + i + ']: amount must be a number or empty');
+        if (p.cadence !== undefined && !PART_CADENCES[p.cadence]) errs.push(where + '.parts[' + i + ']: cadence must be week, month, or year');
       });
-      const sum = errs.length ? null : sumParts(v.parts);
+      const sum = errs.length ? null : sumParts(v.parts, v.cadence);
       if (!errs.length && v.amount !== null && sum !== null && Math.abs(sum - v.amount) > 0.005) errs.push(where + ': amount must equal the sum of its items');
     }
   }
