@@ -78,6 +78,7 @@ export function validateHousehold(doc) {
       oneOf(errs, LINE_TAGS, l.tag, lw + '.tag');
       oneOf(errs, ITEM_STATES, l.state, lw + '.state');
       if (l.joy !== null && !(Number.isInteger(l.joy) && l.joy >= 1 && l.joy <= 10)) errs.push(lw + '.joy must be 1 to 10 or empty');
+      if (l.stress !== undefined && l.stress !== null && !(Number.isInteger(l.stress) && l.stress >= 1 && l.stress <= 10)) errs.push(lw + '.stress must be 1 to 10 or empty');
       for (const k of ['estimate', 'dream', 'actual', 'owedBack']) errs.push(...valueErrors(l[k], lw + '.' + k));
       if (l.dreamLong !== undefined) errs.push(...valueErrors(l.dreamLong, lw + '.dreamLong'));
       (l.tags || []).forEach((t) => { if (!tagIds.has(t)) errs.push(lw + '.tags: unknown tag ' + t); });

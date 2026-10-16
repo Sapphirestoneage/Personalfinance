@@ -43,7 +43,7 @@ function lineRow(line, freq) {
   return {
     id: line.id, name: line.name, kind: line.kind, need: line.need, savings: line.savings,
     addedFor: line.addedFor || null,
-    path: line.path, tag: line.tag, tags: line.tags || [], type: line.type || 'other', joy: line.joy, state: line.state, computed: false,
+    path: line.path, tag: line.tag, tags: line.tags || [], type: line.type || 'other', joy: line.joy, stress: line.stress === undefined ? null : line.stress, state: line.state, computed: false,
     estimate: toMonthly(line.estimate, freq), dream: toMonthly(line.dream, freq), dreamLong: toMonthly(line.dreamLong, freq), actual,
     status: { estimate: line.estimate.status, dream: line.dream.status, dreamLong: line.dreamLong ? line.dreamLong.status : null, actual: line.actual.status },
     owedOutstanding: owed !== null && !line.owedBackReceived ? owed : 0,
@@ -56,7 +56,7 @@ function debtRows(doc) {
     const min = toMonthly(d.minimum, 'monthly');
     return {
       id: 'debt:' + d.id, debtId: d.id, name: d.label, type: 'loan', kind: 'fixed', need: true, savings: false,
-      path: 'personal', tag: 'planned', joy: null, state: d.state, computed: true,
+      path: 'personal', tag: 'planned', joy: null, stress: null, state: d.state, computed: true,
       estimate: min, dream: min, dreamLong: min, actual: min,
       status: { estimate: 'computed', dream: 'computed', dreamLong: 'computed', actual: 'computed' },
       sourceStatus: d.minimum.status, owedOutstanding: 0, oneOffs: []

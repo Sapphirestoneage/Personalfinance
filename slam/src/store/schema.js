@@ -76,6 +76,8 @@ export function newLine(fields = {}) {
     linkedIncomeId: fields.linkedIncomeId || null,
     tag: fields.tag || 'planned',
     joy: fields.joy === undefined ? null : fields.joy,
+    // How much this drains the client, 1 to 10 (S-082). null = not rated, never 0.
+    stress: fields.stress === undefined ? null : fields.stress,
     state: fields.state || 'active',
     // dream = short term (this year, or the next step); dreamLong = long term (S-075).
     estimate: makeValue(), dream: makeValue(), dreamLong: makeValue(), actual: makeValue(),

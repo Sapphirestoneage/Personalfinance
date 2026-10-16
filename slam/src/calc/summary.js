@@ -16,7 +16,7 @@ import { ratio, minus } from './money.js';
 import { txMonths, detect, topMerchants, weekdaySpending, sizeVsCount } from './tx-analysis.js';
 import { nextStage } from './next-stage.js';
 import { planView } from './plan.js';
-import { happinessOf } from './happiness.js';
+import { happinessOf, stressOf } from './happiness.js';
 
 function pctBlock(e, d, a, b, takeHome) {
   return { estimate: ratio(e, takeHome), dream: ratio(d, takeHome), actual: ratio(a, takeHome), basis: ratio(b, takeHome) };
@@ -113,9 +113,11 @@ function addPlanAndShares(summary, doc, model, totals) {
   summary.plan = plan;
   const th = totals.takeHome;
   const colTotal = { estimate: totals.estimateTotal, dream: totals.dreamTotal, actual: totals.actualTotal, basis: totals.spending, plan: plan ? plan.spending : null };
-  const spendLines = model.categories.filter((c) => !c.savings && !c.isDebt).flatMap((c) => c.lines);
-  const joy = happinessOf(spendLines.map((l) => ({ id: l.id, joy: l.joy, amount: l.actual !== null ? l.actual : l.estimate })));
+  // Joy or purpose counts savings lines too (the positives); debt lines are computed, never rated.
+  const ratedLines = model.categories.filter((c) => !c.isDebt).flatMap((c) => c.lines).map((l) => ({ id: l.id, name: l.name, joy: l.joy, stress: l.stress, amount: l.actual !== null ? l.actual : l.estimate }));
+  const joy = happinessOf(ratedLines);
   summary.happinessPoints = joy.points;
+  summary.stress = stressOf(ratedLines);
   const shares = (x, savings) => {
     const amt = { estimate: x.estimate, dream: x.dream, actual: x.actual, basis: x.basis, plan: x.plan };
     return {
@@ -137,6 +139,7 @@ function addPlanAndShares(summary, doc, model, totals) {
       l.gaps.actualMinusPlanPct = ratio(l.gaps.actualMinusPlan, l.plan);
       l.pct = shares(l, r.savings);
       l.happiness = joy.byId[l.id] || null;
+      l.stressInfo = summary.stress.byId[l.id] || null;
     }
     // Category happiness: % of happiness adds its lines; rating and joy per $100 stay spend-weighted (joy lens).
     const rated = r.lines.filter((l) => l.happiness);

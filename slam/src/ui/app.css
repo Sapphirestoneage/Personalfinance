@@ -225,3 +225,12 @@ table.review .toggle button { padding: 4px 8px; }
 .tax-line { display: flex; align-items: flex-start; gap: var(--space-2); }
 .tax-line > .qa { flex: 1 1 auto; min-width: 0; }
 .tax-line > .btn { margin-top: var(--space-2); }
+.review-narrow { display: none; }
+@media (max-width: 759px) {
+  .review-wide { display: none; }
+  .review-narrow { display: grid; gap: var(--space-3); margin-top: var(--space-2); }
+}
+.review-card { border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-3); display: grid; gap: var(--space-2); }
+.review-card.done { opacity: 0.75; }
+.review-card-name { flex: 1 1 auto; min-width: 0; font-weight: 600; }
+.review-card-plan { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }

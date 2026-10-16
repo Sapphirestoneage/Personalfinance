@@ -7,6 +7,7 @@ import { buildSummary } from '../src/calc/summary.js';
 import { lastActual } from '../src/calc/history.js';
 import { drafttReading } from '../src/calc/lenses.js';
 import { reviewSummary } from '../src/calc/plan.js';
+import { stressReading } from '../src/calc/happiness.js';
 import { loadRefs, loadHousehold, near } from './helpers.js';
 
 const refs = loadRefs();
@@ -204,6 +205,24 @@ for (const name of ['maya', 'luis', 'tasha', 'sam']) {
       if (x.stop !== undefined) assert.equal(r.stop, x.stop);
     }
     assert.equal(rv.reading, e.reading);
+  });
+
+  if (exp.stress) test(name + ': satisfaction and stress', () => {
+    const st = s.stress;
+    assert.equal(st.points, exp.stress.points);
+    for (const [id, [stress, sh, per, net, lean]] of Object.entries(exp.stress.lines)) {
+      const x = st.byId[id];
+      assert.equal(x.stress, stress, id + ' stress');
+      if (sh !== null) share(x.share, sh, id + ' % of stress');
+      if (per !== null) share(x.per100, per, id + ' stress per $100');
+      assert.equal(x.net, net, id + ' net');
+      assert.equal(x.lean, lean, id + ' lean');
+    }
+    assert.deepEqual(st.lookFirst.map((x) => x.id), exp.stress.lookFirst.map(([id]) => id));
+    exp.stress.lookFirst.forEach(([, drain], i) => share(st.lookFirst[i].drain, drain, 'drain ' + i));
+    assert.deepEqual(st.moreOf.map((x) => x.id), exp.stress.moreOf);
+    assert.equal(stressReading(st), exp.stress.reading);
+    share(Object.values(st.byId).reduce((a, x) => a + x.share, 0), 1, '% of stress adds to 100%');
   });
 
   test(name + ': % of spending adds to 100% per column, % of happiness adds to 100%', () => {

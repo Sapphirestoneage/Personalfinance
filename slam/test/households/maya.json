@@ -21,24 +21,24 @@
   "currentMonth": "2026-09",
   "categories": [
     { "id": "housing", "name": "Housing", "kind": "fixed", "need": true, "lines": [
-      { "id": "rent", "name": "Rent", "kind": "fixed", "need": true, "estimate": { "amount": 1600 }, "dream": { "amount": 1600 }, "actual": { "amount": 1600 } },
+      { "id": "rent", "stress": 8, "name": "Rent", "kind": "fixed", "need": true, "estimate": { "amount": 1600 }, "dream": { "amount": 1600 }, "actual": { "amount": 1600 } },
       { "id": "utilities", "name": "Utilities", "kind": "variable", "need": true, "estimate": { "amount": 80 }, "dream": { "amount": 80 }, "actual": { "amount": 110, "status": "roughly" } },
       { "id": "internet", "name": "Internet", "kind": "fixed", "need": true, "estimate": { "amount": 40 }, "dream": { "amount": 40 }, "actual": { "amount": 40 } } ] },
     { "id": "food", "name": "Food", "kind": "variable", "need": true, "lines": [
       { "id": "groceries", "name": "Groceries", "need": true, "estimate": { "amount": 300 }, "dream": { "amount": 280 }, "actual": { "amount": 380 } },
-      { "id": "eating-out", "name": "Eating out", "joy": 8, "estimate": { "amount": 200 }, "dream": { "amount": 150 }, "actual": { "amount": 340 } },
-      { "id": "delivery", "name": "Delivery", "joy": 3, "estimate": { "amount": 50 }, "dream": { "amount": 0 }, "actual": { "amount": 120 } } ] },
+      { "id": "eating-out", "stress": 4, "name": "Eating out", "joy": 8, "estimate": { "amount": 200 }, "dream": { "amount": 150 }, "actual": { "amount": 340 } },
+      { "id": "delivery", "stress": 7, "name": "Delivery", "joy": 3, "estimate": { "amount": 50 }, "dream": { "amount": 0 }, "actual": { "amount": 120 } } ] },
     { "id": "transport", "name": "Transportation", "need": true, "lines": [
       { "id": "transit", "name": "MetroCard", "kind": "fixed", "need": true, "estimate": { "amount": 132 }, "dream": { "amount": 132 }, "actual": { "amount": 132 } } ] },
     { "id": "debt", "name": "Debt payments", "kind": "fixed", "need": true, "lines": [] },
     { "id": "health", "name": "Health", "kind": "fixed", "need": true, "lines": [
       { "id": "out-of-pocket", "name": "Out of pocket", "need": true, "estimate": { "amount": 40 }, "dream": { "amount": 40 }, "actual": { "amount": 25 } },
-      { "id": "therapy", "name": "Therapy", "kind": "fixed", "need": true, "joy": 9, "estimate": { "amount": 120 }, "dream": { "amount": 120 }, "actual": { "amount": 120 } } ] },
+      { "id": "therapy", "stress": 2, "name": "Therapy", "kind": "fixed", "need": true, "joy": 9, "estimate": { "amount": 120 }, "dream": { "amount": 120 }, "actual": { "amount": 120 } } ] },
     { "id": "bills", "name": "Bills and subscriptions", "kind": "fixed", "lines": [
-      { "id": "subscriptions", "name": "Streaming and apps", "kind": "fixed", "joy": 4, "estimate": { "amount": 45 }, "dream": { "amount": 30 }, "actual": { "amount": 68 } } ] },
+      { "id": "subscriptions", "stress": 6, "name": "Streaming and apps", "kind": "fixed", "joy": 4, "estimate": { "amount": 45 }, "dream": { "amount": 30 }, "actual": { "amount": 68 } } ] },
     { "id": "fun", "name": "Personal and fun", "lines": [
-      { "id": "shopping", "name": "Shopping", "joy": 5, "estimate": { "amount": 100 }, "dream": { "amount": 80 }, "actual": { "amount": 210 } },
-      { "id": "concert", "name": "Concert tickets (split with Jo)", "joy": 9, "path": "reimbursable",
+      { "id": "shopping", "stress": 6, "name": "Shopping", "joy": 5, "estimate": { "amount": 100 }, "dream": { "amount": 80 }, "actual": { "amount": 210 } },
+      { "id": "concert", "stress": 1, "name": "Concert tickets (split with Jo)", "joy": 9, "path": "reimbursable",
         "actual": { "amount": 160 }, "owedBack": { "amount": 80 }, "owedBackReceived": false },
       { "id": "cooking-class", "name": "Cooking class", "addedFor": "2026-10" } ] },
     { "id": "annual", "name": "Annual and irregular", "lines": [

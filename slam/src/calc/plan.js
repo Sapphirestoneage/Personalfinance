@@ -5,7 +5,7 @@
 import { budgetModel, primaryPayFrequency } from './model.js';
 import { toMonthly, hasAnswer } from './normalize.js';
 import { sumKnown, ratio, minus } from './money.js';
-import { happinessOf, happySpendShare } from './happiness.js';
+import { happinessOf, happySpendShare, stressOf } from './happiness.js';
 
 const blank = { amount: null, cadence: 'month', status: null, source: 'client', asOf: null, note: '' };
 const copy = (v) => JSON.parse(JSON.stringify(v));
@@ -128,7 +128,9 @@ export function reviewSummary(doc, summary, reviewMonth, planMonth) {
   const entries = ((doc.plans || {})[planMonth] || { lines: {} }).lines;
   const pm = modelForMonth(doc, planMonth);
   const spendLines = pm.categories.filter((c) => !c.savings && !c.isDebt).flatMap((c) => c.lines);
-  const joy = happinessOf(spendLines.map((l) => ({ id: l.id, joy: l.joy, amount: act.lines[l.id] === undefined ? null : act.lines[l.id] })));
+  const allLines = pm.categories.filter((c) => !c.isDebt).flatMap((c) => c.lines).map((l) => ({ id: l.id, name: l.name, joy: l.joy, stress: l.stress, amount: act.lines[l.id] === undefined ? null : act.lines[l.id] }));
+  const joy = happinessOf(allLines);
+  const strain = stressOf(allLines);
   const groups = [];
   for (const c of pm.categories) {
     if (c.notForMe) continue;
@@ -145,6 +147,7 @@ export function reviewSummary(doc, summary, reviewMonth, planMonth) {
         pctIncome: { actual: ratio(actual, th), plan: ratio(planAmt, th), estimate: ratio(est, th) },
         pctSpending: c.savings ? { actual: null, plan: null } : { actual: ratio(actual, act.spending), plan: ratio(planAmt, plan ? plan.spending : null) },
         happiness: key.startsWith('cat:') ? null : joy.byId[src.id] || null,
+        stress: key.startsWith('cat:') || c.isDebt ? null : strain.byId[src.id] || null,
         gapFromEstimate: minus(actual, est),
         addedInReview: !!(src && src.addedFor) || (e && e.decision === 'new'),
         decision: e ? e.decision : null, reviewed: e ? e.reviewed : false, stop: e ? e.stop : false, note: e ? e.note : '',
