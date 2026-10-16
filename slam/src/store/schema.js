@@ -5,7 +5,7 @@ import { makeValue } from './value.js';
 import { DEFAULT_LINE_TYPES } from './types.js';
 import { newId } from './ids.js';
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export const SITUATIONS = ['employed', 'self-employed', 'between-jobs', 'student'];
 export const FILING_STATUSES = ['single', 'married-joint', 'married-separate', 'head-of-household'];
@@ -81,7 +81,9 @@ export function newLine(fields = {}) {
     estimate: makeValue(), dream: makeValue(), dreamLong: makeValue(), actual: makeValue(),
     owedBack: makeValue(), owedBackReceived: false,
     // The client's own tags (ids from doc.tags), like Subscription or Travel.
-    tags: fields.tags || []
+    tags: fields.tags || [],
+    // Added during a monthly review for this month ('YYYY-MM'); not part of earlier months (S-076).
+    addedFor: fields.addedFor || null
   };
 }
 
@@ -257,6 +259,8 @@ export function newHousehold(name, now = new Date()) {
     eras: newEras(),
     // Tags the client made: [{ id, name }]. Lines carry their ids.
     tags: [],
+    // Monthly plans, separate from estimate, dream, and actual (S-076). See store/plans.js.
+    plans: {},
     settings: { singleTotal: false, lens: 'dollars' },
     passesSeen: []
   };

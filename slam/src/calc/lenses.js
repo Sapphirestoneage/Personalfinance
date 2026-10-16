@@ -2,6 +2,7 @@
 // 50/30/20, DRAFTT, hours of work, the personal income statement, and joy.
 
 import { ratio, sumKnown } from './money.js';
+import { joyPer100 } from './happiness.js';
 
 export function fiftyThirtyTwenty(totals, targets) {
   const row = (key, amount, target) => ({ key, amount, share: ratio(amount, totals.takeHome), target });
@@ -165,7 +166,7 @@ export function joyLens(model, totals) {
     if (!parts.length) continue;
     const spend = sumKnown(parts.map((p) => p.amount)).total;
     const joy = parts.reduce((a, p) => a + p.joy * p.amount, 0) / spend;
-    rows.push({ id: c.id, name: c.name, joy, spend, joyPer100: joy / (spend / 100) });
+    rows.push({ id: c.id, name: c.name, joy, spend, joyPer100: joyPer100(joy, spend) });
   }
   const lowest = [...rows].sort((a, b) => a.joyPer100 - b.joyPer100).slice(0, 3);
   return { rows, lowest };

@@ -39,7 +39,8 @@
     { "id": "fun", "name": "Personal and fun", "lines": [
       { "id": "shopping", "name": "Shopping", "joy": 5, "estimate": { "amount": 100 }, "dream": { "amount": 80 }, "actual": { "amount": 210 } },
       { "id": "concert", "name": "Concert tickets (split with Jo)", "joy": 9, "path": "reimbursable",
-        "actual": { "amount": 160 }, "owedBack": { "amount": 80 }, "owedBackReceived": false } ] },
+        "actual": { "amount": 160 }, "owedBack": { "amount": 80 }, "owedBackReceived": false },
+      { "id": "cooking-class", "name": "Cooking class", "addedFor": "2026-10" } ] },
     { "id": "annual", "name": "Annual and irregular", "lines": [
       { "id": "yearly", "name": "Yearly costs", "estimate": { "amount": 1200, "cadence": "year" }, "dream": { "amount": 1200, "cadence": "year" }, "actual": { "amount": 1440, "cadence": "year" } } ] },
     { "id": "fees", "name": "Fees", "tag": "mistake", "lines": [
@@ -69,5 +70,45 @@
           "fun": { "name": "Personal and fun", "savings": false, "estimate": 100, "dream": 80, "actual": 300 } },
         "lines": {
           "groceries": { "name": "Groceries", "categoryId": "food", "estimate": 300, "actual": 330 } } } }
-  ]
+  ],
+  "plans": {
+    "2026-09": { "createdFrom": "estimates", "lines": {
+        "rent": { "amount": { "amount": 1600, "cadence": "month", "status": "known" }, "start": { "amount": 1600, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": true },
+        "utilities": { "amount": { "amount": 80, "cadence": "month", "status": "known" }, "start": { "amount": 80, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": true },
+        "internet": { "amount": { "amount": 40, "cadence": "month", "status": "known" }, "start": { "amount": 40, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": true },
+        "groceries": { "amount": { "amount": 350, "cadence": "month", "status": "known" }, "start": { "amount": 300, "cadence": "month", "status": "known" }, "decision": "change", "reviewed": true },
+        "eating-out": { "amount": { "amount": 200, "cadence": "month", "status": "known" }, "start": { "amount": 200, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": true },
+        "delivery": { "amount": { "amount": 50, "cadence": "month", "status": "known" }, "start": { "amount": 50, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": true },
+        "transit": { "amount": { "amount": 132, "cadence": "month", "status": "known" }, "start": { "amount": 132, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": true },
+        "out-of-pocket": { "amount": { "amount": 40, "cadence": "month", "status": "known" }, "start": { "amount": 40, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": true },
+        "therapy": { "amount": { "amount": 120, "cadence": "month", "status": "known" }, "start": { "amount": 120, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": true },
+        "subscriptions": { "amount": { "amount": 45, "cadence": "month", "status": "known" }, "start": { "amount": 45, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": true },
+        "shopping": { "amount": { "amount": 150, "cadence": "month", "status": "known" }, "start": { "amount": 100, "cadence": "month", "status": "known" }, "decision": "change", "reviewed": true },
+        "yearly": { "amount": { "amount": 1200, "cadence": "year", "status": "known" }, "start": { "amount": 1200, "cadence": "year", "status": "known" }, "decision": "keep", "reviewed": true },
+        "fee-late": { "amount": { "amount": 0, "cadence": "month", "status": "known" }, "start": { "amount": 0, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": true },
+        "giving-line": { "amount": { "amount": 50, "cadence": "month", "status": "known" }, "start": { "amount": 50, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": true },
+        "emergency-fund": { "amount": { "amount": 200, "cadence": "month", "status": "known" }, "start": { "amount": 200, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": true },
+        "retirement": { "amount": { "amount": null, "cadence": "month", "status": "not-for-me" }, "start": { "amount": null, "cadence": "month", "status": "not-for-me" }, "decision": "keep", "reviewed": true }
+      } },
+    "2026-10": { "createdFrom": "actuals", "lines": {
+        "rent": { "amount": { "amount": 1600, "cadence": "month", "status": "known" }, "start": { "amount": 1600, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": true },
+        "utilities": { "amount": { "amount": 110, "cadence": "month", "status": "roughly" }, "start": { "amount": 110, "cadence": "month", "status": "roughly" }, "decision": "keep", "reviewed": true },
+        "internet": { "amount": { "amount": 40, "cadence": "month", "status": "known" }, "start": { "amount": 40, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": true },
+        "groceries": { "amount": { "amount": 380, "cadence": "month", "status": "known" }, "start": { "amount": 380, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": true },
+        "eating-out": { "amount": { "amount": 280, "cadence": "month", "status": "known" }, "start": { "amount": 340, "cadence": "month", "status": "known" }, "decision": "change", "reviewed": true },
+        "delivery": { "amount": { "amount": 0, "cadence": "month", "status": "known" }, "start": { "amount": 120, "cadence": "month", "status": "known" }, "decision": "cut", "reviewed": true },
+        "transit": { "amount": { "amount": 132, "cadence": "month", "status": "known" }, "start": { "amount": 132, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": true },
+        "out-of-pocket": { "amount": { "amount": 25, "cadence": "month", "status": "known" }, "start": { "amount": 25, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": true },
+        "therapy": { "amount": { "amount": 120, "cadence": "month", "status": "known" }, "start": { "amount": 120, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": true },
+        "subscriptions": { "amount": { "amount": 0, "cadence": "month", "status": "known" }, "start": { "amount": 68, "cadence": "month", "status": "known" }, "decision": "cut", "reviewed": true },
+        "shopping": { "amount": { "amount": 210, "cadence": "month", "status": "known" }, "start": { "amount": 210, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": true },
+        "concert": { "amount": { "amount": 160, "cadence": "month", "status": "known" }, "start": { "amount": 160, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": true },
+        "yearly": { "amount": { "amount": 1440, "cadence": "year", "status": "known" }, "start": { "amount": 1440, "cadence": "year", "status": "known" }, "decision": "keep", "reviewed": false },
+        "fee-late": { "amount": { "amount": 0, "cadence": "month", "status": "known" }, "start": { "amount": 39, "cadence": "month", "status": "known" }, "decision": "cut", "reviewed": false, "stop": true },
+        "giving-line": { "amount": { "amount": 50, "cadence": "month", "status": "known" }, "start": { "amount": 50, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": false },
+        "emergency-fund": { "amount": { "amount": 150, "cadence": "month", "status": "known" }, "start": { "amount": 150, "cadence": "month", "status": "known" }, "decision": "keep", "reviewed": false },
+        "retirement": { "amount": { "amount": null, "cadence": "month", "status": "not-for-me" }, "start": { "amount": null, "cadence": "month", "status": "not-for-me" }, "decision": "keep", "reviewed": false },
+        "cooking-class": { "amount": { "amount": 60, "cadence": "month", "status": "known" }, "start": { "amount": 60, "cadence": "month", "status": "known" }, "decision": "new", "reviewed": false }
+      } }
+  }
 }

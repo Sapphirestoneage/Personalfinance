@@ -81,7 +81,26 @@
 
 // FAT (strict, by category, whatever lines are labeled): Food + Housing + Transportation = 1,110 + 830 + 540 = 2,480; 2,480 / 4,600 = 0.539130
 
+// REVIEW SEPTEMBER, PLAN OCTOBER 2026, started from September actuals (S-076). Every line with an actual is
+// planned at it; lines with no actual stay blank (not 0), and Giving doesn't apply, so it is left out.
+//   housing rent 950 + utilities 160 = 1,110; food 520 + 310 = 830; transport 140 + 220 + 180 = 540 (maintenance blank)
+//   debt 685 (minimums); health, bills, fun, annual: no actuals, so no plan yet; fees 45 + 5 = 50; savings emergency 200
+// Plan spending = 1,110 + 830 + 540 + 685 + 50 = 3,215; plan outflow = 3,215 + 200 = 3,415
+// Plan vs take-home: 4,600 - 3,415 = 1,185 left over. This month's actual outflow = 3,215 + 200 = 3,415.
+// Frees up: 3,415 - 3,415 = 0 (the plan matches this month's actual). Plan % of income = 3,415 / 4,600 = 0.74239130 -> 0.742391
+// No lines are rated, so happiness spend is not rated (null), never 0.
+// Checklist: 18 lines (housing 2, food 2, transport 4, health 2, bills 1, fun 2, annual 1, fees 2, savings 2); 0 reviewed.
+// Rent: plan 950 / 4,600 = 0.20652174 -> 0.206522 of income; 950 / 3,215 = 0.29548989 -> 0.295490 of spending
+
 export default {
+  review: {
+    reviewMonth: '2026-09', planMonth: '2026-10',
+    plan: 3415, planSpending: 3215, planLeft: 1185, actual: 3415, frees: 0, planPctIncome: 0.742391,
+    happyNow: null, happyPlan: null, happyChange: null,
+    checklist: [0, 18],
+    rows: { rent: { plan: 950, decision: 'keep', planPctIncome: 0.206522, planPctSpending: 0.29549 }, maintenance: { plan: null, decision: null } },
+    reading: "Next month's plan matches this month's actual. The plan leaves $1,185 of take-home."
+  },
   fat: 2480, fatShare: 0.539130,
   takeHome: 4600, pretax: 200, hourly: 21.230769,
   categories: {

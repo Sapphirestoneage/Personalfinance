@@ -99,7 +99,95 @@
 
 // FAT (strict, by category, whatever lines are labeled): Food + Housing + Transportation = 1,750 + 840 + 132 = 2,722; 2,722 / 3,900 = 0.697949
 
+// PERCENTAGES (S-076). Every Maya category has an actual, so the basis is the actual.
+// % of income = actual / take-home 3,900. % of spending = actual / actual spending 3,814.
+//   housing 1,750: 0.44871795 -> 0.448718 | 1,750/3,814 = 0.45883587 -> 0.458836
+//   food 840: 0.21538462 -> 0.215385 | 840/3,814 = 0.22024122 -> 0.220241
+//   transport 132: 0.03384615 -> 0.033846 | 132/3,814 = 0.03460933 -> 0.034609
+//   debt 300: 0.07692308 -> 0.076923 | 300/3,814 = 0.07865758 -> 0.078658
+//   health 145: 0.03717949 -> 0.037179 | 145/3,814 = 0.03801783 -> 0.038018
+//   bills 68: 0.01743590 -> 0.017436 | 68/3,814 = 0.01782905 -> 0.017829
+//   fun 370: 0.09487179 -> 0.094872 | 370/3,814 = 0.09701101 -> 0.097011
+//   annual 120: 0.03076923 -> 0.030769 | 120/3,814 = 0.03146303 -> 0.031463
+//   fees 39: 39/3,900 = 0.01 | 39/3,814 = 0.01022549 -> 0.010225
+//   giving 50: 0.01282051 -> 0.012821 | 50/3,814 = 0.01310959 -> 0.013110
+//   savings 150: 0.03846154 -> 0.038462 | not spending, so no % of spending
+//   (the ten spending shares add to 3,814/3,814 = 100%)
+// Estimate % of spending, food: 550 / estimate total 3,157 = 0.17421603 -> 0.174216
+// Lines: eating out 340: 340/3,900 = 0.08717949 -> 0.087179 | 340/3,814 = 0.08914525 -> 0.089145
+//        delivery 120: 120/3,900 = 0.03076923 -> 0.030769 | 120/3,814 = 0.03146303 -> 0.031463
+
+// HAPPINESS: six rated lines: eating out 8, delivery 3, therapy 9, streaming 4, shopping 5, concert 9.
+// Joy points = 8 + 3 + 9 + 4 + 5 + 9 = 38. % of happiness = rating / 38:
+//   eating out 8/38 = 0.21052632 -> 0.210526; delivery 3/38 = 0.07894737 -> 0.078947; therapy 9/38 = 0.23684211 -> 0.236842
+//   streaming 4/38 = 0.10526316 -> 0.105263; shopping 5/38 = 0.13157895 -> 0.131579; concert 9/38 -> 0.236842 (sum 38/38 = 1)
+// Joy per $100 = rating / (actual / 100):
+//   eating out 8 / 3.40 = 2.35294118 -> 2.352941; delivery 3 / 1.20 = 2.5; therapy 9 / 1.20 = 7.5
+//   streaming 4 / 0.68 = 5.88235294 -> 5.882353; shopping 5 / 2.10 = 2.38095238 -> 2.380952; concert 9 / 1.60 = 5.625
+// Food as a category: % of happiness = (8 + 3) / 38 = 0.28947368 -> 0.289474; rating and per $100 stay spend-weighted (joy lens above).
+
+// PLAN FOR SEPTEMBER 2026 (the month on screen), started from estimates, two changes: groceries 300 -> 350, shopping 100 -> 150.
+// Category plans: housing 1,600 + 80 + 40 = 1,720; food 350 + 200 + 50 = 600; transport 132; debt 300 (minimums);
+//   health 40 + 120 = 160; bills 45; fun shopping 150 (concert has no plan line) = 150; annual 1,200 a year = 100; fees 0; giving 50
+//   savings 200 + retirement 0 (doesn't apply) = 200
+// Plan spending = 1,720 + 600 + 132 + 300 + 160 + 45 + 150 + 100 + 0 + 50 = 3,257. Plan outflow = 3,257 + 200 = 3,457.
+// Plan % of income, food 600/3,900 = 0.15384615 -> 0.153846; plan % of spending, food 600/3,257 = 0.18421861 -> 0.184219
+//   housing 1,720/3,257 = 0.52809334 -> 0.528093
+// ACTUAL VS PLAN (September has both): housing 1,750 - 1,720 = +30, 30/1,720 = 0.01744186 -> 0.017442
+//   food 840 - 600 = +240, 240/600 = 0.4; health 145 - 160 = -15, -15/160 = -0.09375; bills 68 - 45 = +23, 23/45 = 0.51111111 -> 0.511111
+//   fun 370 - 150 = +220, 220/150 = 1.46666667 -> 1.466667; annual 120 - 100 = +20, 0.2; fees 39 - 0 = +39 (no % of a zero plan)
+//   savings 150 - 200 = -50, -0.25; transport, debt, giving 0
+// Culprits stay measured against the estimate (unchanged above).
+
+// REVIEW SEPTEMBER, PLAN OCTOBER 2026 (started from September actuals):
+//   keep: rent 1,600, utilities 110, internet 40, groceries 380, transit 132, out of pocket 25, therapy 120, shopping 210,
+//         concert 160, yearly 1,440 a year (= 120), giving 50, emergency fund 150, retirement (doesn't apply, 0)
+//   change: eating out 340 -> 280. cut: delivery 120 -> 0, streaming 68 -> 0, late fee 39 -> 0 (stop tracking from October).
+//   new: Cooking class 60 (added in review for October; no estimate, not rated).
+// Plan by category: housing 1,750; food 380 + 280 + 0 = 660; transport 132; debt 300; health 145; bills 0;
+//   fun 210 + 160 + 60 = 430; annual 120; fees 0; giving 50; savings 150 + 0 = 150
+// Plan spending = 1,750 + 660 + 132 + 300 + 145 + 0 + 430 + 120 + 0 + 50 = 3,587; plan outflow = 3,587 + 150 = 3,737
+// Plan vs take-home: 3,900 - 3,737 = 163 left over. This month's actual outflow = 3,814 + 150 = 3,964.
+// Frees up: 3,964 - 3,737 = 227. Plan % of income = 3,737 / 3,900 = 0.95820513 -> 0.958205
+// Happiness spend (lines rated 7 or above: eating out 8, therapy 9, concert 9):
+//   September actual: (340 + 120 + 160) / 3,814 = 620 / 3,814 = 0.16255899 -> 0.162559
+//   October plan: (280 + 120 + 160) / 3,587 = 560 / 3,587 = 0.15611932 -> 0.156119; change -0.00643967 -> -0.006440
+// Eating out plan: 280/3,900 = 0.07179487 -> 0.071795 of income; 280/3,587 = 0.07805966 -> 0.078060 of spending
+// Cooking class plan: 60/3,900 = 0.01538462 -> 0.015385 of income
+// Checklist: 18 lines to plan (housing 3, food 3, transport 1, health 2, bills 1, fun 3, annual 1, fees 1, giving 1, savings 2); 12 reviewed.
+// READING: frees 227. Cuts held (120 + 68 + 39) / 3,814 = 227 / 3,814 = 0.0595 -> 6% of spending and (3 + 4) / 38 = 0.184 -> 18% of happiness.
+
 export default {
+  shares: {
+    // category: [% of income (basis), % of spending (basis)]
+    categories: { housing: [0.448718, 0.458836], food: [0.215385, 0.220241], transport: [0.033846, 0.034609], debt: [0.076923, 0.078658],
+      health: [0.037179, 0.038018], bills: [0.017436, 0.017829], fun: [0.094872, 0.097011], annual: [0.030769, 0.031463],
+      fees: [0.01, 0.010225], giving: [0.012821, 0.013110], savings: [0.038462, null] },
+    foodEstimateOfSpending: 0.174216,
+    lines: { 'eating-out': [0.087179, 0.089145], delivery: [0.030769, 0.031463] }
+  },
+  happiness: {
+    // line: [rating, % of happiness, joy per $100]
+    lines: { 'eating-out': [8, 0.210526, 2.352941], delivery: [3, 0.078947, 2.5], therapy: [9, 0.236842, 7.5],
+      subscriptions: [4, 0.105263, 5.882353], shopping: [5, 0.131579, 2.380952], concert: [9, 0.236842, 5.625] },
+    foodShare: 0.289474, points: 38
+  },
+  plan: {
+    spending: 3257, outflow: 3457,
+    categories: { housing: [1720, 30, 0.017442], food: [600, 240, 0.4], health: [160, -15, -0.09375], bills: [45, 23, 0.511111],
+      fun: [150, 220, 1.466667], annual: [100, 20, 0.2], fees: [0, 39, null], savings: [200, -50, -0.25], transport: [132, 0, 0], debt: [300, 0, 0], giving: [50, 0, 0] },
+    foodPctIncome: 0.153846, foodPctSpending: 0.184219, housingPctSpending: 0.528093
+  },
+  review: {
+    reviewMonth: '2026-09', planMonth: '2026-10',
+    plan: 3737, planSpending: 3587, planLeft: 163, actual: 3964, frees: 227, planPctIncome: 0.958205,
+    happyNow: 0.162559, happyPlan: 0.156119, happyChange: -0.00644,
+    checklist: [12, 18],
+    rows: { 'eating-out': { plan: 280, decision: 'change', planPctIncome: 0.071795, planPctSpending: 0.07806 },
+      'cooking-class': { plan: 60, decision: 'new', planPctIncome: 0.015385, estimate: null, addedInReview: true },
+      delivery: { plan: 0, decision: 'cut' }, subscriptions: { plan: 0, decision: 'cut' }, 'fee-late': { plan: 0, decision: 'cut', stop: true } },
+    reading: "Next month's plan frees $227. The cuts were in Delivery, Streaming and apps, and Late fee, which held 6% of spending and 18% of happiness. Eating out changes from $340 to $280. Added: Cooking class at $60. The plan leaves $163 of take-home."
+  },
   fat: 2722, fatShare: 0.697949,
   takeHome: 3900, pretax: 260, hourly: 22.5,
   categories: {

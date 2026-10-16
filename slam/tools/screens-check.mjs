@@ -45,10 +45,16 @@ for (const [name, button] of Object.entries(DEMOS)) {
   check(name, 'Housing tile', tiles.Housing, pct(exp.housingShare));
   check(name, 'Blind spot tile', tiles['Blind spot'], pct(exp.blindSpot));
 
+  // Columns are found by their header, since Plan and long-term dream columns come and go.
+  const heads = await page.$$eval('table.budget thead th', (ths) => ths.map((th) => th.textContent.replace(/[▴▾]/g, '').trim()));
+  const col = (label) => heads.findIndex((x) => x === label);
   const total = await page.$$eval('tr.total td', (tds) => tds.map((td) => td.textContent.trim()));
-  check(name, 'Table estimate total', total[1], money(exp.estimateTotal));
-  check(name, 'Table dream total', total[2], money(exp.dreamTotal));
-  check(name, 'Table actual total', total[3], money(exp.actualTotal));
+  check(name, 'Table estimate total', total[col('Estimate')], money(exp.estimateTotal));
+  check(name, 'Table dream total', total[col('Dream')], money(exp.dreamTotal));
+  check(name, 'Table actual total', total[col('Actual')], money(exp.actualTotal));
+  check(name, 'Table % of income total', total[col('% of income')], pct(exp.spending / exp.takeHome));
+  check(name, 'Plan column shown', String(col('Plan') >= 0), String(!!exp.plan));
+  if (exp.plan) check(name, 'Table plan total', total[col('Plan')], money(exp.plan.spending));
 
   for (const [id, [e, d, a]] of Object.entries(exp.categories)) {
     const row = await page.$$eval('tr.cat', (trs) => trs.map((tr) => [...tr.querySelectorAll('td')].map((td) => td.textContent.trim())));
@@ -61,8 +67,14 @@ for (const [name, button] of Object.entries(DEMOS)) {
       check(name, id + ' listed as doesn\'t apply', na.includes(word) && e === 0 && a === 0 ? 'listed' : 'missing', 'listed');
       continue;
     }
-    check(name, id + ' estimate', row[idx][1], money(e));
-    check(name, id + ' actual', row[idx][3].replace(' partial', ''), money(a));
+    check(name, id + ' estimate', row[idx][col('Estimate')], money(e));
+    check(name, id + ' actual', row[idx][col('Actual')].replace(' partial', ''), money(a));
+    if (exp.shares && exp.shares.categories[id]) {
+      check(name, id + ' % of income', row[idx][col('% of income')], pct(exp.shares.categories[id][0]));
+      if (exp.shares.categories[id][1] !== null) check(name, id + ' % of spending', row[idx][col('% of spending')], pct(exp.shares.categories[id][1]));
+    }
+    if (exp.plan && exp.plan.categories[id]) check(name, id + ' plan', row[idx][col('Plan')], money(exp.plan.categories[id][0]));
+    if (id === 'food' && exp.happiness) check(name, 'food happiness', row[idx][col('Happiness')], pct(exp.happiness.foodShare));
   }
 
   const culprits = await page.$$eval('.card', (cards) => {
@@ -87,6 +99,16 @@ for (const [name, button] of Object.entries(DEMOS)) {
   if (exp.incomeStatement) {
     const net = await page.$$eval('#chart-statement tr.total td', (tds) => tds.map((td) => td.textContent.trim()));
     check(name, 'Income statement net', net[net.length - 2], signedMoney(exp.incomeStatement.net));
+  }
+  if (exp.review) {
+    // Review and plan: the live totals and the reading for the month reviewed.
+    const rv = await page.$$eval('.review-top .tile', (ts) => ts.map((t) => t.querySelector('.value').textContent.trim()));
+    check(name, 'Review plan total', rv[0], money(exp.review.plan));
+    check(name, 'Review plan vs take-home', rv[1], signedMoney(exp.review.planLeft));
+    check(name, 'Review frees up', rv[2], signedMoney(exp.review.frees));
+    check(name, 'Review plan % of income', rv[3], pct(exp.review.planPctIncome));
+    check(name, 'Review checklist', await page.$eval('.review-count', (b) => b.textContent), exp.review.checklist[0] + ' of ' + exp.review.checklist[1] + ' lines reviewed');
+    check(name, 'Review reading', await page.$eval('[data-key="review-reading"]', (p) => p.textContent), exp.review.reading);
   }
   if (exp.draftt) {
     // DRAFTT is descriptive (S-072): the reading names proportions, never a verdict.

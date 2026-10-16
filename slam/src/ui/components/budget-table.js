@@ -8,24 +8,41 @@ import { statusChip } from './status.js';
 import { inUnit } from '../../calc/lenses.js';
 import { parseAmount } from './value-input.js';
 
-const COLUMNS = [
-  ['name', 'Category', ''],
-  ['estimate', 'Estimate', ''],
-  ['dream', 'Dream', 'wide'],
-  ['actual', 'Actual', ''],
-  ['gap', 'Gap $', ''],
-  ['gapPct', 'Gap %', 'wide'],
-  ['accuracy', 'Accuracy', 'wide'],
-  ['share', '% take-home', 'wide'],
-  ['status', 'Status', 'wide']
-];
+// Columns: amounts, then % of income (take-home) and % of spending for the
+// basis (actual, else estimate), then happiness. 'wide' columns hide on phones;
+// the expanded row repeats them there.
+function columns(summary) {
+  const long = summary.totals.dreamLongTotal !== null;
+  const plan = !!summary.plan;
+  return [
+    ['name', 'Category', ''],
+    ['estimate', 'Estimate', 'wide'],
+    ['dream', long ? 'Dream, short' : 'Dream', 'wide'],
+    long ? ['dreamLong', 'Dream, long', 'wide'] : null,
+    plan ? ['plan', 'Plan', 'wide'] : null,
+    ['actual', 'Actual', ''],
+    ['pctIncome', '% of income', ''],
+    ['pctSpending', '% of spending', 'wide'],
+    ['happy', 'Happiness', ''],
+    ['gap', 'Gap $', 'wide'],
+    ['gapPct', 'Gap %', 'wide'],
+    plan ? ['planGap', 'Vs plan $', 'wide'] : null,
+    plan ? ['planGapPct', 'Vs plan %', 'wide'] : null,
+    ['accuracy', 'Accuracy', 'wide'],
+    ['status', 'Status', 'wide']
+  ].filter(Boolean);
+}
 
 function sortValue(row, key) {
   if (key === 'name') return row.name;
   if (key === 'gap') return row.gaps.actualMinusEstimate;
   if (key === 'gapPct') return row.gaps.actualMinusEstimatePct;
+  if (key === 'planGap') return row.gaps.actualMinusPlan;
+  if (key === 'planGapPct') return row.gaps.actualMinusPlanPct;
   if (key === 'accuracy') return row.accuracy;
-  if (key === 'share') return row.pctTakeHome.basis;
+  if (key === 'pctIncome') return row.pct.income.basis;
+  if (key === 'pctSpending') return row.pct.spending.basis;
+  if (key === 'happy') return row.happiness ? row.happiness.share : null;
   if (key === 'status') return row.status.actual || '';
   return row[key];
 }
@@ -36,23 +53,41 @@ function gapClass(x, savings) {
   return (x > 0) !== !!savings ? 'bad' : 'good';
 }
 
-// The long-term dream column shows only once a long-term dream is given (S-075).
-const hasLong = (summary) => summary.totals.dreamLongTotal !== null;
+function joyText(hp, isLine) {
+  if (!hp) return h('span', { class: 'muted xs' }, 'not rated');
+  const per = hp.per100 === null || hp.per100 === undefined ? (hp.noCost ? 'no cost' : '\u00b7') : hp.per100.toFixed(2) + ' per $100';
+  const rating = hp.rating === null || hp.rating === undefined ? '' : (isLine ? hp.rating + '/10' : hp.rating.toFixed(1) + ' avg');
+  return h('span', { title: rating + ', ' + per }, pct(hp.share), isLine ? h('div', { class: 'xs muted' }, rating + ', ' + per) : null);
+}
 
 function cells(row, unit, summary, isLine, savings) {
   const L = (x) => inLens(inUnit(x, unit, summary.totals, summary.income), unit);
   const g = row.gaps;
+  const long = summary.totals.dreamLongTotal !== null;
+  const plan = !!summary.plan;
   return [
-    h('td', { class: 'num' }, L(row.estimate)),
+    h('td', { class: 'num wide' }, isLine && row.estimate === null && row.addedInReview ? h('span', { class: 'xs muted' }, 'added in review') : L(row.estimate)),
     h('td', { class: 'num wide' }, L(row.dream)),
-    hasLong(summary) ? h('td', { class: 'num wide' }, L(row.dreamLong)) : null,
+    long ? h('td', { class: 'num wide' }, L(row.dreamLong)) : null,
+    plan ? h('td', { class: 'num wide' }, L(row.plan)) : null,
     h('td', { class: 'num' }, L(row.actual), !isLine && row.partial ? h('span', { class: 'muted xs' }, ' partial') : null),
-    h('td', { class: 'num ' + gapClass(g.actualMinusEstimate, savings) }, unit === 'dollars' ? signedMoney(g.actualMinusEstimate) : L(g.actualMinusEstimate)),
+    h('td', { class: 'num' }, pct(row.pct.income.basis)),
+    h('td', { class: 'num wide' }, pct(row.pct.spending.basis)),
+    h('td', { class: 'num' }, joyText(row.happiness, isLine)),
+    h('td', { class: 'num wide ' + gapClass(g.actualMinusEstimate, savings) }, unit === 'dollars' ? signedMoney(g.actualMinusEstimate) : L(g.actualMinusEstimate)),
     h('td', { class: 'num wide ' + gapClass(g.actualMinusEstimatePct, savings) }, signedPct(g.actualMinusEstimatePct)),
+    plan ? h('td', { class: 'num wide' }, unit === 'dollars' ? signedMoney(g.actualMinusPlan) : L(g.actualMinusPlan)) : null,
+    plan ? h('td', { class: 'num wide' }, signedPct(g.actualMinusPlanPct)) : null,
     h('td', { class: 'num wide' }, times(row.accuracy)),
-    h('td', { class: 'num wide' }, pct(row.pctTakeHome.basis)),
     h('td', { class: 'wide', title: 'Estimate, dream, actual' }, statusChip(row.status.estimate), ' ', statusChip(row.status.dream), ' ', statusChip(row.status.actual))
   ];
+}
+
+// On phones the wide columns hide; an open row shows them as one line instead.
+function narrowDetail(row, summary, span) {
+  const bits = [['Estimate', money(row.estimate)], ['Dream', money(row.dream)], summary.plan ? ['Plan', money(row.plan)] : null,
+    ['% of spending', pct(row.pct.spending.basis)], ['Gap', signedMoney(row.gaps.actualMinusEstimate)], summary.plan ? ['Vs plan', signedMoney(row.gaps.actualMinusPlan)] : null].filter(Boolean);
+  return h('tr', { class: 'narrow-only detail' }, h('td', { colspan: String(span) }, h('span', { class: 'xs muted' }, bits.map(([k, v]) => k + ' ' + v).join(' \u00b7 '))));
 }
 
 export function budgetTable(ctx, summary) {
@@ -70,9 +105,8 @@ export function budgetTable(ctx, summary) {
       return (x < y ? -1 : 1) * ui.sort.dir;
     });
   }
-  const cols = hasLong(summary)
-    ? COLUMNS.flatMap((c) => (c[0] === 'dream' ? [['dream', 'Dream, short', 'wide'], ['dreamLong', 'Dream, long', 'wide']] : [c]))
-    : COLUMNS;
+  const COLUMNS = columns(summary);
+  const cols = COLUMNS;
   const head = h('tr', {}, cols.map(([key, label, cls]) => h('th', {
     class: cls, scope: 'col', 'aria-sort': ui.sort.key === key ? (ui.sort.dir > 0 ? 'ascending' : 'descending') : null,
     onclick: () => { ui.sort = { key, dir: ui.sort.key === key ? -ui.sort.dir : (key === 'name' ? 1 : -1) }; ctx.rerender(); }
@@ -89,20 +123,22 @@ export function budgetTable(ctx, summary) {
       } }, (open ? '▾ ' : '▸ ') + r.name) : r.name,
       r.basisFrom === 'estimate' ? h('span', { class: 'muted xs' }, ' (no actual yet)') : null),
       cells(r, unit, summary, false, r.savings)));
+    if (open) body.push(narrowDetail(r, summary, COLUMNS.length));
     if (open) {
       for (const l of r.lines) {
         body.push(h('tr', { class: 'line' },
           h('td', {}, h('a', { href: '#fill', onclick: (e) => { e.preventDefault(); if (!l.computed) ctx.goToField(['line', l.id, 'actual']); } }, l.name),
             l.state === 'hidden' ? h('span', { class: 'xs' }, ' (hidden)') : null),
           cells(l, unit, summary, true, r.savings)));
+        body.push(narrowDetail(l, summary, COLUMNS.length));
       }
     }
   }
   const t = summary.totals;
   const L = (x) => inLens(inUnit(x, unit, t, summary.income), unit);
-  body.push(h('tr', { class: 'total' }, h('td', {}, 'Spending'), h('td', { class: 'num' }, L(t.estimateTotal)), h('td', { class: 'num wide' }, L(t.dreamTotal)),
-    hasLong(summary) ? h('td', { class: 'num wide' }, L(t.dreamLongTotal)) : null,
-    h('td', { class: 'num' }, L(t.actualTotal)), h('td', {}), h('td', { class: 'wide' }), h('td', { class: 'wide' }), h('td', { class: 'num wide' }, pct(t.spendingShare)), h('td', { class: 'wide' })));
+  const tot = { estimate: L(t.estimateTotal), dream: L(t.dreamTotal), dreamLong: L(t.dreamLongTotal), plan: L(t.planSpending), actual: L(t.actualTotal),
+    pctIncome: pct(t.spendingShare), pctSpending: t.spending ? '100%' : pct(null) };
+  body.push(h('tr', { class: 'total' }, COLUMNS.map(([key, , cls]) => (key === 'name' ? h('td', {}, 'Spending') : h('td', { class: ('num ' + cls).trim() }, tot[key] || '')))));
 
   const skipped = summary.rows.filter((r) => r.notForMe).map((r) => r.name);
   return h('div', {},

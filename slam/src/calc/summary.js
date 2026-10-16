@@ -15,6 +15,8 @@ import { availableGuesses, householdSize, guessFor } from './guesses.js';
 import { ratio, minus } from './money.js';
 import { txMonths, detect, topMerchants, weekdaySpending, sizeVsCount } from './tx-analysis.js';
 import { nextStage } from './next-stage.js';
+import { planView } from './plan.js';
+import { happinessOf } from './happiness.js';
 
 function pctBlock(e, d, a, b, takeHome) {
   return { estimate: ratio(e, takeHome), dream: ratio(d, takeHome), actual: ratio(a, takeHome), basis: ratio(b, takeHome) };
@@ -27,7 +29,7 @@ function tableRows(model, totals) {
     const lines = c.lines.map((l) => {
       const lb = l.actual !== null ? l.actual : l.estimate;
       return {
-        id: l.id, name: l.name, computed: l.computed, kind: l.kind, need: l.need, tag: l.tag, path: l.path, joy: l.joy, state: l.state,
+        id: l.id, name: l.name, addedInReview: !!l.addedFor, computed: l.computed, kind: l.kind, need: l.need, tag: l.tag, path: l.path, joy: l.joy, state: l.state,
         estimate: l.estimate, dream: l.dream, dreamLong: l.dreamLong, actual: l.actual, basis: lb, status: l.status, sourceStatus: l.sourceStatus || null,
         gaps: gaps(l.estimate, l.dream, l.actual), accuracy: accuracy(l.estimate, l.actual),
         pctTakeHome: pctBlock(l.estimate, l.dream, l.actual, lb, th),
@@ -88,6 +90,7 @@ export function buildSummary(doc, refs) {
     blind: doc.blindRounds.length ? blindCompare(doc, model, doc.blindRounds[doc.blindRounds.length - 1].id) : null
   };
   summary.tags = tagTotals(doc, model);
+  addPlanAndShares(summary, doc, model, totals);
   summary.lineIdeas = lineIdeas(doc, refs);
   summary.debtsByType = debtsByType(doc);
   summary.eras = eraTimeline(doc, totals, refs);
@@ -100,6 +103,48 @@ export function buildSummary(doc, refs) {
     top: topMerchants(doc.transactions), weekdays: weekdaySpending(doc.transactions), sizeVsCount: sizeVsCount(doc.transactions)
   } : null;
   return summary;
+}
+
+// Percentages and happiness for every category and line (S-076), and the plan
+// for the month on screen when there is one. % of income is of take-home;
+// % of spending is of total spending in that same column.
+function addPlanAndShares(summary, doc, model, totals) {
+  const plan = planView(doc, doc.currentMonth);
+  summary.plan = plan;
+  const th = totals.takeHome;
+  const colTotal = { estimate: totals.estimateTotal, dream: totals.dreamTotal, actual: totals.actualTotal, basis: totals.spending, plan: plan ? plan.spending : null };
+  const spendLines = model.categories.filter((c) => !c.savings && !c.isDebt).flatMap((c) => c.lines);
+  const joy = happinessOf(spendLines.map((l) => ({ id: l.id, joy: l.joy, amount: l.actual !== null ? l.actual : l.estimate })));
+  summary.happinessPoints = joy.points;
+  const shares = (x, savings) => {
+    const amt = { estimate: x.estimate, dream: x.dream, actual: x.actual, basis: x.basis, plan: x.plan };
+    return {
+      income: Object.fromEntries(Object.entries(amt).map(([k, v]) => [k, ratio(v, th)])),
+      spending: Object.fromEntries(Object.entries(amt).map(([k, v]) => [k, savings ? null : ratio(v, colTotal[k])]))
+    };
+  };
+  const lensRow = (id) => summary.lenses.joy.rows.find((r) => r.id === id) || null;
+  for (const r of summary.rows) {
+    const pc = plan ? plan.cats[r.id] : null;
+    r.plan = pc ? pc.amount : null;
+    r.basis = totals.bases[r.id] ? totals.bases[r.id].amount : null;
+    r.gaps.actualMinusPlan = minus(r.actual, r.plan);
+    r.gaps.actualMinusPlanPct = ratio(r.gaps.actualMinusPlan, r.plan);
+    r.pct = shares(r, r.savings);
+    for (const l of r.lines) {
+      l.plan = pc && !pc.byCategory ? (pc.lines[l.id] === undefined ? null : pc.lines[l.id]) : null;
+      l.gaps.actualMinusPlan = minus(l.actual, l.plan);
+      l.gaps.actualMinusPlanPct = ratio(l.gaps.actualMinusPlan, l.plan);
+      l.pct = shares(l, r.savings);
+      l.happiness = joy.byId[l.id] || null;
+    }
+    // Category happiness: % of happiness adds its lines; rating and joy per $100 stay spend-weighted (joy lens).
+    const rated = r.lines.filter((l) => l.happiness);
+    const lr = lensRow(r.id);
+    r.happiness = rated.length ? { share: rated.reduce((a, l) => a + (l.happiness.share || 0), 0), rating: lr ? lr.joy : null, per100: lr ? lr.joyPer100 : null } : null;
+  }
+  summary.totals.planSpending = plan ? plan.spending : null;
+  summary.totals.planOutflow = plan ? plan.outflow : null;
 }
 
 // The small set of numbers kept in doc.snapshots for "since last time".

@@ -15,6 +15,9 @@ import { categoryTypeSelect, lineTypeSelect, typeHint } from '../components/type
 import { categoryTypeLabel, lineTypeLabel } from '../../store/types.js';
 import { debtQuick, debtTypeTotals } from '../components/debt-quick.js';
 import { lastActual } from '../../calc/history.js';
+import { toMonthly } from '../../calc/normalize.js';
+import { setPlanAmount } from '../../store/plans.js';
+import { nextMonthKey } from '../../store/months.js';
 
 const parentsPlanOn = (doc) => parentsPlan(doc).on;
 
@@ -26,8 +29,19 @@ function addLineButton(ctx, catId) {
   } }, '+ Add line');
 }
 
+// Only for a blank estimate (an app guess, labeled Guess): never over the client's own words.
 function useAs(ctx, catId, key, value, label) {
-  return h('button', { class: 'btn small ghost', onclick: () => ctx.update(label, (d) => { findCategory(d, catId)[key] = value; }) }, label);
+  return h('button', { class: 'btn small ghost', onclick: () => ctx.update(label, (d) => {
+    const cat = findCategory(d, catId);
+    if (cat[key].amount !== null || cat[key].status !== null) throw new Error('That estimate is the client\'s own; it is never overwritten');
+    cat[key] = value;
+  }) }, label);
+}
+
+// Last month's actual and the personal correction go into next month's plan (S-076), not the estimate.
+function planAs(ctx, catId, value, label) {
+  const next = nextMonthKey(ctx.doc.currentMonth);
+  return h('button', { class: 'btn small ghost', onclick: () => ctx.update(label, (d) => setPlanAmount(d, next, 'cat:' + catId, value)) }, label + ' (' + monthLabel(next) + ' plan)');
 }
 
 function extrasFor(ctx, summary, row) {
@@ -37,12 +51,12 @@ function extrasFor(ctx, summary, row) {
   const last = lastActual(summary.history, row.id);
   if (last) {
     out.push(h('span', { class: 'xs muted' }, monthLabel(last.key) + ' actual ' + money(last.amount) + ' ',
-      useAs(ctx, row.id, 'estimate', makeValue(last.amount, { source: 'coach', note: 'From ' + monthLabel(last.key) + ' actual' }), "Use last month's actual")));
+      planAs(ctx, row.id, makeValue(last.amount, { source: 'coach', note: 'From ' + monthLabel(last.key) + ' actual' }), "Plan at last month's actual")));
   }
   const corr = summary.corrections.find((c) => c.id === row.id);
   if (corr && corr.worthOffering) {
     out.push(h('span', { class: 'xs muted' }, 'Your usual miss here: ' + corr.factor.toFixed(2) + 'x. Suggested ' + money(corr.suggested) + ' ',
-      useAs(ctx, row.id, 'estimate', makeValue(corr.suggestedWhole, { source: 'coach', note: 'Personal correction ' + corr.factor.toFixed(2) + 'x' }), 'Apply')));
+      planAs(ctx, row.id, makeValue(corr.suggestedWhole, { source: 'coach', note: 'Personal correction ' + corr.factor.toFixed(2) + 'x' }), 'Use in the plan')));
   }
   return out.length ? h('div', { class: 'row' }, out) : null;
 }
@@ -85,7 +99,8 @@ export function renderEstimates(ctx, summary, key) {
           ? h('button', { class: 'btn small', onclick: () => ctx.update('Back to categories', (d) => { d.settings.singleTotal = false; findCategory(d, 'everything').state = 'archived'; }) }, 'Use categories instead of one total')
           : h('button', { class: 'btn small', onclick: () => ctx.update('One total instead', (d) => { useSingleTotal(d).state = 'active'; }) }, 'Give one total instead'),
         summary.guesses.length ? h('button', { class: 'btn small', onclick: () => ctx.update('Fill blanks with guesses', (d) => {
-          for (const g of summary.guesses) findCategory(d, g.categoryId).estimate = g.value;
+          // Guesses only ever fill blank estimates (availableGuesses skips answered ones).
+          for (const g of summary.guesses) { const c = findCategory(d, g.categoryId); if (c.estimate.amount === null && c.estimate.status === null) c.estimate = g.value; }
         }) }, 'Fill ' + summary.guesses.length + ' blanks with guesses') : null,
         h('button', { class: 'btn small', onclick: () => {
           ctx.update('Start blind guess', (d) => startBlindRound(d, new Date().toISOString()));
@@ -142,12 +157,14 @@ export function renderEstimates(ctx, summary, key) {
         key === 'dreamLong' && r.dream !== null ? 'Short-term dream ' + money(r.dream) : null].filter(Boolean).join('. ') || null;
     // Long term follows how the category is already given: line by line if its estimate or short-term dream is.
     const longByLines = key === 'dreamLong' && cat.dreamLong.amount === null && cat.dreamLong.status !== 'not-for-me' && (r.estimateFrom === 'lines' || r.dreamFrom === 'lines');
-    const fromLines = longByLines || (isRough ? r.estimateFrom : r[key + 'From']) === 'lines' || (isRough && cat.split && cat.estimate.amount === null && cat.estimate.status !== 'not-for-me');
+    const fromLines = longByLines || (isRough ? r.estimateFrom : r[key + 'From']) === 'lines' || (isRough && cat.split && cat.estimate.status !== 'not-for-me');
     if (fromLines) {
       // Already given line by line: show it, never ask it a second time.
       // Given line by line: each line is asked here (never a second category number).
-      const live = cat.lines.filter((l) => l.state !== 'archived');
-      const first = isRough && cat.estimate.note && cat.estimate.note.startsWith('First guess') ? cat.estimate.note.replace(' / month', ' a month') + '.' : '';
+      const live = cat.lines.filter((l) => l.state !== 'archived' && !(l.addedFor && l.addedFor > doc.currentMonth));
+      // The client's own first number, kept as they said it (older files kept it as a note).
+      const first = !isRough || !cat.split ? '' : cat.estimate.amount !== null ? 'First guess ' + money(toMonthly(cat.estimate, ctx.payFrequency)) + ' a month.'
+        : cat.estimate.note && cat.estimate.note.startsWith('First guess') ? cat.estimate.note.replace(' / month', ' a month') + '.' : '';
       const ideas = isRough ? summary.lineIdeas[cat.id] || [] : [];
       return h('div', { class: 'sub-lines' },
         h('div', { class: 'qa' }, h('div', { class: 'q' }, name, h('div', { class: 'hint' }, [hint, 'Adds up from its sub-categories.', first].filter(Boolean).join(' '))),

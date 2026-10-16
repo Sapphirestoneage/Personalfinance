@@ -3,6 +3,7 @@
 
 import { valueErrors } from './value.js';
 import { CATEGORY_TYPE_IDS, LINE_TYPE_IDS } from './types.js';
+import { PLAN_DECISIONS } from './plans.js';
 import {
   SCHEMA_VERSION, LIVING_WITH, SITUATIONS, FILING_STATUSES, INCOME_TYPES, PAY_FREQUENCIES, PAY_BASES, WITHHOLDING, DEDUCTION_KIND_IDS,
   ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES
@@ -95,6 +96,19 @@ export function validateHousehold(doc) {
       if (!(Number.isInteger(e.gapMonths) && e.gapMonths >= 0 && e.gapMonths <= 600)) errs.push(w + '.gapMonths must be 0 to 600');
       for (const k of ['takeHome', 'spending', 'oneTime']) errs.push(...valueErrors(e[k], w + '.' + k));
     });
+  }
+  const lineIds = new Set((doc.categories || []).flatMap((c) => (c.lines || []).map((l) => l.id)));
+  const catIds = new Set((doc.categories || []).map((c) => c.id));
+  for (const [m, p] of Object.entries(doc.plans || {})) {
+    const w = 'plans.' + m;
+    if (!/^\d{4}-\d{2}$/.test(m)) errs.push(w + ': the month must be YYYY-MM');
+    for (const [k, e] of Object.entries(p.lines || {})) {
+      const known = k.startsWith('cat:') ? catIds.has(k.slice(4)) : lineIds.has(k);
+      if (!known) errs.push(w + ': unknown line ' + k);
+      oneOf(errs, PLAN_DECISIONS, e.decision, w + '.' + k + '.decision');
+      errs.push(...valueErrors(e.amount, w + '.' + k + '.amount'), ...valueErrors(e.start, w + '.' + k + '.start'));
+      if (typeof e.reviewed !== 'boolean') errs.push(w + '.' + k + '.reviewed must be true or false');
+    }
   }
   if (doc.nextStage) {
     const ns = doc.nextStage;

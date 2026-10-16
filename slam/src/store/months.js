@@ -4,6 +4,8 @@
 // category. The snapshot is never edited; late entries go into a separate
 // "revised" record next to it.
 
+import { applyPlanStops } from './plans.js';
+
 const blank = () => ({ amount: null, cadence: 'month', status: null, source: 'client', asOf: null, note: '' });
 const isBlankValue = (v) => !v || (v.amount === null && v.status === null);
 
@@ -24,6 +26,7 @@ function loadMonth(doc, key) {
   for (const l of allLines(doc)) l.actual = saved[l.id] || blank();
   delete doc.monthActuals[key];
   doc.currentMonth = key;
+  applyPlanStops(doc, key);
 }
 
 // Work on a different month. What was entered for the month you leave is kept.
@@ -69,7 +72,7 @@ export function closeMonth(doc, snapshot, nowIso) {
   // If the next month already has its own actuals, load them; otherwise the
   // closed month's numbers carry forward as a starting point (S-007).
   if (doc.monthActuals[next]) loadMonth(doc, next);
-  else doc.currentMonth = next;
+  else { doc.currentMonth = next; applyPlanStops(doc, next); }
   return key;
 }
 

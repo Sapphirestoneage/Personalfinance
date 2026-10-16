@@ -18,3 +18,4 @@ These rules come from earlier attempts. Every change to SLAM is checked against 
 14. Completion got confused with progress. RULE: "how filled in is the picture" and "how is the client doing" are separate and shown separately.
 15. Averages were presented like facts. RULE: app-supplied averages are always labeled "Guess" with their source.
 16. Budgets got calculated on gross pay. RULE: every percentage of income uses take-home unless the label explicitly says gross.
+17. Adjustments overwrote what the client originally said. RULE: estimates are the client's own words and are never overwritten by the app. Changes go into a monthly plan.

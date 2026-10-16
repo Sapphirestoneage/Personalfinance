@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { buildSummary } from '../src/calc/summary.js';
 import { lastActual } from '../src/calc/history.js';
 import { drafttReading } from '../src/calc/lenses.js';
+import { reviewSummary } from '../src/calc/plan.js';
 import { loadRefs, loadHousehold, near } from './helpers.js';
 
 const refs = loadRefs();
@@ -133,6 +134,85 @@ for (const name of ['maya', 'luis', 'tasha', 'sam']) {
     money(d.total + d.everythingElse + d.leftOver, d.base.amount, 'parts add to the base');
     share(d.totalShare + d.everythingElseShare + d.leftOverShare, 1, 'shares add to 100%');
     if (d.total) share(d.rows.reduce((a, r) => a + (r.shareOfDraftt || 0), 0), 1, 'letters add to 100% of DRAFTT');
+  });
+
+  if (exp.shares) test(name + ': % of income and % of spending (S-076)', () => {
+    for (const [id, [inc, sp]] of Object.entries(exp.shares.categories)) {
+      const r = s.rows.find((x) => x.id === id);
+      share(r.pct.income.basis, inc, id + ' % of income');
+      share(r.pct.spending.basis, sp, id + ' % of spending');
+    }
+    share(s.rows.find((x) => x.id === 'food').pct.spending.estimate, exp.shares.foodEstimateOfSpending, 'food estimate % of spending');
+    for (const [id, [inc, sp]] of Object.entries(exp.shares.lines)) {
+      const l = s.rows.flatMap((r) => r.lines).find((x) => x.id === id);
+      share(l.pct.income.basis, inc, id + ' % of income');
+      share(l.pct.spending.basis, sp, id + ' % of spending');
+    }
+  });
+
+  if (exp.happiness) test(name + ': happiness three ways', () => {
+    assert.equal(s.happinessPoints, exp.happiness.points);
+    for (const [id, [rating, sh, per]] of Object.entries(exp.happiness.lines)) {
+      const l = s.rows.flatMap((r) => r.lines).find((x) => x.id === id);
+      assert.equal(l.happiness.rating, rating, id + ' rating');
+      share(l.happiness.share, sh, id + ' % of happiness');
+      share(l.happiness.per100, per, id + ' joy per $100');
+    }
+    share(s.rows.find((x) => x.id === 'food').happiness.share, exp.happiness.foodShare, 'food % of happiness');
+    const unrated = s.rows.flatMap((r) => r.lines).filter((l) => l.joy === null);
+    assert.ok(unrated.every((l) => l.happiness === null), 'no rating is not rated, never 0');
+  });
+
+  if (exp.plan) test(name + ': plan for the month on screen, and actual vs plan', () => {
+    money(s.plan.spending, exp.plan.spending, 'plan spending');
+    money(s.plan.outflow, exp.plan.outflow, 'plan outflow');
+    for (const [id, [planAmt, gap, gapPct]] of Object.entries(exp.plan.categories)) {
+      const r = s.rows.find((x) => x.id === id);
+      money(r.plan, planAmt, id + ' plan');
+      money(r.gaps.actualMinusPlan, gap, id + ' actual vs plan');
+      share(r.gaps.actualMinusPlanPct, gapPct, id + ' actual vs plan %');
+    }
+    share(s.rows.find((x) => x.id === 'food').pct.income.plan, exp.plan.foodPctIncome, 'food plan % of income');
+    share(s.rows.find((x) => x.id === 'food').pct.spending.plan, exp.plan.foodPctSpending, 'food plan % of spending');
+    share(s.rows.find((x) => x.id === 'housing').pct.spending.plan, exp.plan.housingPctSpending, 'housing plan % of spending');
+  });
+
+  if (exp.review) test(name + ': review and plan', () => {
+    const e = exp.review;
+    const rv = reviewSummary(doc, s, e.reviewMonth, e.planMonth);
+    const t = rv.totals;
+    money(t.plan, e.plan, 'plan total');
+    money(t.planSpending, e.planSpending, 'plan spending');
+    money(t.planLeft, e.planLeft, 'plan vs take-home');
+    money(t.actual, e.actual, 'this month actual');
+    money(t.frees, e.frees, 'frees up');
+    share(t.planPctIncome, e.planPctIncome, 'plan % of income');
+    share(t.happyNow, e.happyNow, 'happiness spend now');
+    share(t.happyPlan, e.happyPlan, 'happiness spend plan');
+    share(t.happyChange, e.happyChange, 'happiness spend change');
+    assert.deepEqual([rv.checklist.reviewed, rv.checklist.total], e.checklist);
+    const rows = rv.groups.flatMap((g) => g.rows);
+    for (const [key, x] of Object.entries(e.rows)) {
+      const r = rows.find((y) => y.key === key);
+      assert.ok(r, 'row ' + key);
+      money(r.plan, x.plan, key + ' plan');
+      assert.equal(r.decision, x.decision, key + ' decision');
+      if (x.planPctIncome !== undefined) share(r.pctIncome.plan, x.planPctIncome, key + ' plan % of income');
+      if (x.planPctSpending !== undefined) share(r.pctSpending.plan, x.planPctSpending, key + ' plan % of spending');
+      if (x.estimate !== undefined) assert.equal(r.estimate, x.estimate, key + ' estimate stays blank');
+      if (x.addedInReview !== undefined) assert.equal(r.addedInReview, x.addedInReview);
+      if (x.stop !== undefined) assert.equal(r.stop, x.stop);
+    }
+    assert.equal(rv.reading, e.reading);
+  });
+
+  test(name + ': % of spending adds to 100% per column, % of happiness adds to 100%', () => {
+    for (const col of ['estimate', 'dream', 'actual', 'basis', 'plan']) {
+      const cats = s.rows.filter((r) => !r.savings && r.pct.spending[col] !== null);
+      if (cats.length) share(cats.reduce((a, r) => a + r.pct.spending[col], 0), 1, col + ' % of spending adds to 100%');
+    }
+    const rated = s.rows.flatMap((r) => r.lines).filter((l) => l.happiness);
+    if (rated.length) share(rated.reduce((a, l) => a + l.happiness.share, 0), 1, '% of happiness adds to 100%');
   });
 
   if (exp.incomeStatement) test(name + ': income statement', () => {

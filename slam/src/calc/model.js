@@ -42,6 +42,7 @@ function lineRow(line, freq) {
   if (actual !== null && owed !== null && line.owedBackReceived) actual -= owed;
   return {
     id: line.id, name: line.name, kind: line.kind, need: line.need, savings: line.savings,
+    addedFor: line.addedFor || null,
     path: line.path, tag: line.tag, tags: line.tags || [], type: line.type || 'other', joy: line.joy, state: line.state, computed: false,
     estimate: toMonthly(line.estimate, freq), dream: toMonthly(line.dream, freq), dreamLong: toMonthly(line.dreamLong, freq), actual,
     status: { estimate: line.estimate.status, dream: line.dream.status, dreamLong: line.dreamLong ? line.dreamLong.status : null, actual: line.actual.status },
@@ -65,7 +66,8 @@ function debtRows(doc) {
 
 // Category-level answer first (the client's own words), then the sum of its lines.
 function resolveTop(cat, lines, key, freq) {
-  if (hasAnswer(cat[key])) {
+  // Broken down in Rough: the lines carry the estimate; the category's own first number stays stored, untouched.
+  if (hasAnswer(cat[key]) && !(cat.split && key === 'estimate')) {
     return { amount: toMonthly(cat[key], freq), from: 'category', status: cat[key].status };
   }
   const answered = lines.filter((l) => l[key] !== null);
@@ -84,7 +86,8 @@ export function budgetModel(doc) {
   for (const cat of doc.categories) {
     if (cat.state === 'archived') continue;
     const isDebt = cat.id === 'debt';
-    const lines = isDebt ? debtRows(doc) : cat.lines.filter((l) => l.state !== 'archived')
+    // A line added in review for a later month is not part of this month (S-076).
+    const lines = isDebt ? debtRows(doc) : cat.lines.filter((l) => l.state !== 'archived' && !(l.addedFor && l.addedFor > doc.currentMonth))
       .map((l) => (plan.on && PARENTS_PLAN_LINE_TYPES.includes(l.type) ? coveredRow(l, freq) : lineRow(l, freq)));
     const notForMe = cat.estimate.status === 'not-for-me' && !isDebt;
     const row = {

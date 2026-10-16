@@ -28,7 +28,8 @@
 | 13 | Any cadence, normalized to monthly | Pass. Paycheck, week, month, year, one-off on every amount; one-offs listed separately. |
 | 14 | Completion separate from progress | Pass. The completion meter says it measures the data, not the client. |
 | 15 | Averages labeled Guess with their source | Pass. Guess chip plus a note naming the national average, household size, and source. The table is marked placeholder. |
-| 16 | Percentages on take-home | Pass. DRAFTT uses take-home plus pre-tax retirement as its base (so its parts add to 100%), and says so on screen; with no pre-tax retirement the base is take-home. DRAFTT taxes are shown on their own, labeled "of gross". |
+| 16 | Percentages on take-home | Pass. DRAFTT uses take-home plus pre-tax retirement as its base (so its parts add to 100%), and says so on screen; with no pre-tax retirement the base is take-home. DRAFTT taxes are shown on their own, labeled "of gross". The Budget table's % of income and the review view's % of income are of take-home. |
+| 17 | Estimates never overwritten | Pass. No action writes over an estimate: last month's actual and the personal correction go into next month's plan; Break down keeps the client's number and lets the lines carry it; guesses only ever fill blank estimates and are labeled Guess. Tested: no review action changes any estimate. |
 
 ## Nothing asked twice
 
