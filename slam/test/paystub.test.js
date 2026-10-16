@@ -96,3 +96,24 @@ test('compat: incomes before paystub taxes load with all six blank', () => {
   assert.deepEqual(Object.keys(m.income[0].withheld), ['federal', 'socialSecurity', 'medicare', 'state', 'local', 'other']);
   assert.equal(m.income[0].withheld.state.amount, null);
 });
+
+test('hourly: an estimated paycheck is worked out, and a typed actual paycheck shows what does not add up', () => {
+  const { d, inc } = tal();
+  let r = incomeSummary(d, refs.tax).sources[0];
+  // no take-home typed: estimate = 2,100 - 63 - 321.243846 (8,352.34 / 26) = 1,715.756154 a paycheck
+  assert.ok(near(r.estimatedTakeHomePerPaycheck, 1715.756154));
+  assert.equal(r.estimatedFrom, 'tax estimate');
+  assert.equal(r.paycheckGapMonthly, null, 'nothing to compare yet');
+  inc.takeHome = pc(2000);
+  r = incomeSummary(d, refs.tax).sources[0];
+  // actual 2,000 - estimate 1,715.756154 = 284.243846 a paycheck more than the estimate; x 26 / 12 = 615.861667 a month
+  assert.ok(near(r.paycheckGapPerPaycheck, 284.243846));
+  assert.ok(near(r.paycheckGapMonthly, 615.861667));
+  assert.ok(near(r.estimatedTaxPerPaycheck, 321.243846));
+  // with the three federal paystub lines, the estimate uses them: 2,100 - 63 - (150 + 130.20 + 30.45) = 2,037 - 310.65 = 1,726.35
+  Object.assign(inc.withheld, { federal: pc(150), socialSecurity: pc(130.2), medicare: pc(30.45) });
+  r = incomeSummary(d, refs.tax).sources[0];
+  assert.equal(r.estimatedFrom, 'paystub lines');
+  assert.ok(near(r.estimatedTakeHomePerPaycheck, 1726.35));
+  assert.ok(near(r.paycheckGapPerPaycheck, 273.65)); // 2,000 - 1,726.35
+});

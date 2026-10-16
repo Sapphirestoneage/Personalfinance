@@ -199,6 +199,34 @@ function benefitCard(ctx, inc, row) {
     plan);
 }
 
+// Hourly (and any W-2 pay with gross known): the estimated paycheck is worked out,
+// never asked; the actual paycheck is optional, and a difference is laid out step by step.
+function paycheckBlock(ctx, inc, row, askActual) {
+  const exact = (x) => money(x, true);
+  const est = row ? row.estimatedTakeHomePerPaycheck : null;
+  const gap = row ? row.paycheckGapPerPaycheck : null;
+  const steps = row && est !== null ? [
+    ['Gross' + (row.grossFrom === 'hourly' ? ' (rate x hours)' : ''), exact(row.grossPerPaycheck)],
+    row.preTaxPerPaycheck ? ['Pre-tax deductions', '-' + exact(row.preTaxPerPaycheck)] : null,
+    [row.estimatedFrom === 'paystub lines' ? 'Taxes (from the paystub lines)' : 'Taxes (estimated federal income tax and FICA)', '-' + exact(row.estimatedTaxPerPaycheck)],
+    row.postTaxPerPaycheck ? ['Post-tax deductions', '-' + exact(row.postTaxPerPaycheck)] : null,
+    ['Estimated paycheck', exact(est)]
+  ].filter(Boolean) : [];
+  return h('div', { class: 'card', style: 'margin:8px 0' },
+    h('div', { class: 'field-label' }, 'Paycheck'),
+    est === null ? h('p', { class: 'small muted' }, 'Add the pay above to work out the paycheck.')
+      : h('table', { class: 'budget' }, h('tbody', {}, steps.map(([k, v], i) => h('tr', { class: i === steps.length - 1 ? 'total' : '' }, h('td', {}, k), h('td', { class: 'num' }, v))))),
+    askActual ? question(ctx, 'Actual paycheck (optional)', 'From a real paystub, to check the estimate. Leave blank to budget with the estimate', ['income', inc.id, 'takeHome'], inc.takeHome) : null,
+    gap === null ? null : Math.abs(gap) < 1 ? h('p', { class: 'small' }, 'The actual paycheck matches the estimate.')
+      : h('div', { class: 'small' },
+        h('p', { class: 'warn' }, 'Doesn\'t add up: the actual paycheck is ' + exact(Math.abs(gap)) + ' ' + (gap > 0 ? 'more' : 'less') + ' than the estimate.'),
+        h('p', { class: 'muted' }, 'Worth checking: ' + (gap < 0
+          ? 'a deduction or tax not listed yet (health insurance, state or local tax), fewer hours than usual, or unpaid time off.'
+          : 'more hours or overtime, a different rate, a deduction listed here that is not on the paystub, or tax withheld at a lower rate than the estimate.') +
+          (row.estimatedFrom === 'tax estimate' ? ' Copying the tax lines from the paystub above makes the estimate exact.' : '')),
+        h('p', { class: 'muted xs' }, 'The budget uses the actual paycheck.')));
+}
+
 function incomeCard(ctx, inc, row) {
   if (inc.type === 'unemployment') return benefitCard(ctx, inc, row);
   const p = (k) => ['income', inc.id, k];
@@ -219,8 +247,8 @@ family: 'Help from family. A gift, so it is not taxed as income.', 'not-taxable'
       isWork ? selectField(ctx, 'Pay basis', inc.payBasis, [['salary', 'Salary'], ['hourly', 'Hourly']], set('payBasis'), JSON.stringify(p('payBasis'))) : null,
       selectField(ctx, 'In the budget', inc.state, STATES_OF_ITEM, set('state'), JSON.stringify(p('state')))),
     h('p', { class: 'muted xs' }, withheldNote),
-    question(ctx, 'Take-home pay', 'What lands in the bank account (net pay). Blank is fine if the paystub lines are copied below', p('takeHome'), inc.takeHome),
-    row && row.takeHomeStatus === 'guess'
+    hourly ? null : question(ctx, 'Take-home pay', 'What lands in the bank account (net pay). Blank is fine if the paystub lines are copied below', p('takeHome'), inc.takeHome),
+    hourly ? null : row && row.takeHomeStatus === 'guess'
       ? h('p', { class: 'small' }, statusChip('guess'), ' Estimated take-home from gross: ', h('b', { class: 'num' }, money(row.takeHomeMonthly)), ' / month. ' + row.takeHomeNote + '. Tax year ' + row.estimate.taxYear + '.')
       : row && row.takeHomeStatus === 'computed'
         ? h('p', { class: 'small' }, statusChip('computed'), ' Take-home from the paystub lines: ', h('b', { class: 'num' }, money(row.takeHomePerPaycheck, true)), ' a paycheck, ', h('b', { class: 'num' }, money(row.takeHomeMonthly)), ' a month.')
@@ -232,6 +260,7 @@ family: 'Help from family. A gift, so it is not taxed as income.', 'not-taxable'
     hourly && (inc.hourlyRate.amount === null || !inc.hoursPerWeek) ? h('p', { class: 'small warn' }, 'Add the hourly rate and the hours per week to work out gross pay.') : null,
     isWork ? deductionsBlock(ctx, inc, row) : null,
     inc.type === 'w2' ? withheldBlock(ctx, inc, row) : null,
+    hourly || (row && row.paycheckGapMonthly !== null && row.paycheckGapMonthly !== undefined) ? paycheckBlock(ctx, inc, row, hourly) : null,
     row && (row.grossMonthly !== null || row.takeHomeMonthly !== null) ? payTable(row) : null);
 }
 
