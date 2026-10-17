@@ -62,8 +62,9 @@ export function scheduleCard(ctx) {
         debt.type === 'credit-card' ? h('select', { 'aria-label': debt.label + ' pays', 'data-key': 'paywith:' + debt.id, onchange: (e) => ctx.update('Card payment', (d) => setDebtPayWith(d, debt.id, e.target.value)) },
           options([['minimum', 'Pays the minimum'], ['statement', 'Pays the statement balance']], debt.payWith || 'minimum')) : null,
         accountSelect(ctx, 'acct-debt:' + debt.id, debt.payFrom, (v) => ctx.update('Paid from', (d) => setItemAccount(d, 'debt', debt.id, v)), debt.label + ' account')))),
-    h('h3', {}, 'Cushion'),
-    h('div', { class: 'qa' }, h('div', { class: 'q' }, h('div', {}, 'Keep at least this much in cash'), h('div', { class: 'hint' }, 'Days under it are shaded. Blank means $0.')),
+    // The cushion is the coach's setting (S-096): the calendar uses it in both views, only the coach edits it.
+    ctx.role === 'client' ? null : h('h3', {}, 'Cushion'),
+    ctx.role === 'client' ? null : h('div', { class: 'qa', 'data-key': 'cushion-row' }, h('div', { class: 'q' }, h('div', {}, 'Keep at least this much in cash'), h('div', { class: 'hint' }, 'Days under it are shaded. Blank means $0.')),
       valueInput({ ...ctx, preview: null }, ['cashflow', 'cushion'], doc.cashflow.cushion, { label: 'Cushion', cadence: false })));
 }
 

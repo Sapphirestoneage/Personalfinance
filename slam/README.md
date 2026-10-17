@@ -80,7 +80,7 @@ against the log first. The Jordan demo comes with two sample files; Riley's year
 
 Still four. The monthly loop lives inside them.
 
-1. **Clients**: client list, new client, open, export, import, and the demo households.
+1. **Clients**: client list, new client, open, export, import (a file for a client already here is merged record by record; changes made on both copies wait for the coach to pick), and the demo households.
 2. **Fill in**: guided passes (Gut, Basics, Rough, Dream, Actual, Cash flow, Next stage, Eras). Actual is
    "review and fill gaps": lines filled from the log are collapsed, empty lines come first. Cash flow holds
    accounts and month balances, paydays and bill dates, scheduled items waiting on "It happened", the log,
@@ -92,6 +92,13 @@ Still four. The monthly loop lives inside them.
    **Review and plan** (a month's actuals next to next month's plan, line by line), **Months** (any closed
    month's saved review, its bridge, estimate history, and 80/20), and **Trends** (by merchant, category or
    line, and period, plus one-line stats).
+
+## Shared-version groundwork
+
+Every record has an id, timestamps, author, and version; nothing is hard-deleted;
+storage goes through one async interface (`src/store/storage.js`); who sees what is
+one map (`src/store/visibility.js`). **View as client** in the header shows what the
+client would see. See HOSTING.md for what a hosted version would add.
 
 ## House rules
 

@@ -45,3 +45,7 @@ theming beyond the tokens.
 - Next year's spending forecast by category (recent averages plus same month last year for annual costs), in Disaster, Likely, Best case. Spending and surplus only, no investment growth (that belongs to the future projection engine, lesson 3).
 - Calendar what-ifs: move a paycheck, add a one-time purchase ("Can I afford this?"), skip a bill.
 - Joining the calendar (days) and Eras (months and years) into one timeline, once the projection engine exists.
+
+## Hosted version (parked 2026-10-17, groundwork in S-096)
+
+- Hosted version: sign-in for coach and client, server storage, live sync, client entries from their own phone (see HOSTING.md).

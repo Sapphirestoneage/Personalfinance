@@ -22,7 +22,9 @@ import { counted } from './log.js';
 const COUNTS = new Set(['spend', 'fee', 'refund', 'reimbursement']);
 const r2 = (x) => Math.round(x * 100) / 100 + 0;
 const monthOf = (d) => d.slice(0, 7);
+// The coach's materiality (settings.materiality, coach-only); 25 when not set.
 export const TIES_WITHIN = 25;
+const within = (doc) => (doc.settings && typeof doc.settings.materiality === 'number' ? doc.settings.materiality : TIES_WITHIN);
 const SHORT = { yearly: 'Yearly costs', 'set-aside': 'Set aside', cards: 'Card balances', 'card-min': 'Card minimums', owed: 'Owed to you', received: 'Paid back', 'one-off': 'One-off', income: 'Income vs take-home' };
 
 // The budget side of one month: from the locked snapshot when closed, else live.
@@ -107,7 +109,8 @@ export function bridgeFor(doc, income, month) {
   const out = {
     month, closed: b.closed, takeHome: b.takeHome, surplus: b.surplus, steps, explained,
     cashStart: bal.cashStart, cashEnd: bal.cashEnd, actual, unexplained, missing,
-    ties: unexplained === null ? null : Math.abs(unexplained) < TIES_WITHIN
+    within: within(doc),
+    ties: unexplained === null ? null : Math.abs(unexplained) < within(doc)
   };
   out.reading = bridgeReading(out);
   return out;
@@ -126,7 +129,7 @@ export function bridgeReading(br) {
     const names = [...new Set(br.missing.map((m) => m.name + ' ' + m.which))];
     return left + '. The change in cash needs ' + names.join(', ') + ' balance' + (names.length === 1 ? '' : 's') + '.';
   }
-  const moved = (Math.abs(br.actual - br.surplus) >= TIES_WITHIN ? 'but ' : 'and ') + (br.actual >= 0 ? 'cash went up ' + whole(br.actual) : 'cash went down ' + whole(br.actual));
+  const moved = (Math.abs(br.actual - br.surplus) >= (br.within === undefined ? TIES_WITHIN : br.within) ? 'but ' : 'and ') + (br.actual >= 0 ? 'cash went up ' + whole(br.actual) : 'cash went down ' + whole(br.actual));
   const top = br.steps.slice().sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))[0];
   const why = top ? ' ' + topSentence(top) : '';
   const tail = br.ties ? '' : ' ' + whole(br.unexplained) + ' is not explained yet.';

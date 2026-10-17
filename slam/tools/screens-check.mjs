@@ -320,6 +320,81 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('riley', 'Console errors', String(errors.length), '0');
   await page.close();
 }
+// View as client and the merge conflict screen (S-096), on Riley at phone width.
+{
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await page.clock.setFixedTime(new Date('2026-10-17T12:00:00'));
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  await page.goto(URL + '#clients');
+  console.log('view as client and merge (phone width)');
+  await page.getByText('Riley, 31').click();
+  await page.waitForSelector('#cash-strip');
+  // The coach writes a note, tags Shopping as a mistake (not shared), and sees the coach-only settings.
+  await page.click('nav a[href="#fill"]');
+  await page.getByRole('button', { name: '2 Basics' }).click();
+  await page.fill('[data-key="coach-notes"]', 'Ask about the Visa.');
+  await page.press('[data-key="coach-notes"]', 'Tab');
+  await page.waitForTimeout(150);
+  await page.getByRole('button', { name: '6 Cash flow' }).click();
+  await page.waitForSelector('#tx-file', { state: 'attached' });
+  check('client view', 'Coach sees the cushion', String(await page.$$eval('[data-key="cushion-row"]', (x) => x.length)), '1');
+  await page.click('nav a[href="#analyze"]');
+  await page.waitForSelector('#chart-mistake');
+  await page.check('[data-key="mistake:shopping"]');
+  await page.waitForSelector('[data-key="mistake-share:shopping"]');
+  check('client view', 'Coach sees the mistake tag', String(await page.isChecked('[data-key="mistake:shopping"]')), 'true');
+  check('client view', 'Coach sees materiality', String(await page.$$eval('[data-key="materiality"]', (x) => x.length)), '1');
+  // View as client: every coach-only thing is hidden, coach wording swapped.
+  await page.click('[data-key="view-as-client"]');
+  await page.waitForTimeout(150);
+  check('client view', 'Toggle wording', (await page.$eval('[data-key="view-as-client"]', (b) => b.textContent)), 'Back to the coach view');
+  check('client view', 'No Clients tab', String(await page.$$eval('nav a[href="#clients"]', (x) => x.length)), '0');
+  check('client view', 'Mistake tag hidden', String(await page.isChecked('[data-key="mistake:shopping"]')), 'false');
+  check('client view', 'No share box', String(await page.$$eval('[data-key="mistake-share:shopping"]', (x) => x.length)), '0');
+  check('client view', 'No materiality', String(await page.$$eval('[data-key="materiality"]', (x) => x.length)), '0');
+  check('client view', 'Completion wording', String((await page.$eval('#chart-completion .reading', (p) => p.textContent)).endsWith('not how you are doing.')), 'true');
+  await page.click('nav a[href="#fill"]');
+  await page.getByRole('button', { name: '2 Basics' }).click();
+  check('client view', 'No coach notes', String(await page.$$eval('[data-key="coach-notes"]', (x) => x.length)), '0');
+  await page.getByRole('button', { name: '6 Cash flow' }).click();
+  await page.waitForSelector('#tx-file', { state: 'attached' });
+  check('client view', 'No cushion input', String(await page.$$eval('[data-key="cushion-row"]', (x) => x.length)), '0');
+  await page.click('nav a[href="#budget"]');
+  await page.waitForSelector('#cash-strip');
+  // The calendar still uses the cushion: the same $0 and message as the coach sees.
+  check('client view', 'Safe to spend', await page.$eval('[data-key="safe-to-spend"]', (b) => b.textContent), money(0));
+  await page.click('[data-key="view-as-client"]');
+  await page.waitForTimeout(150);
+  check('client view', 'Back to coach', (await page.$eval('[data-key="view-as-client"]', (b) => b.textContent)), 'View as client');
+  // A file from Riley's copy, shared before the coach's edit, where Riley set the Shopping estimate to 80:
+  // Shopping was changed on both copies, so the coach picks.
+  const { migrate } = await import('../src/store/migrate.js');
+  const { versionsOf } = await import('../src/store/merge.js');
+  const { exportHousehold } = await import('../src/store/transfer.js');
+  const { readFileSync } = await import('node:fs');
+  const theirs = migrate(JSON.parse(readFileSync(new globalThis.URL('../test/households/riley.json', import.meta.url), 'utf8')));
+  theirs.sync = { versions: versionsOf(theirs), at: '2026-10-17T18:00:00.000Z' };
+  const shop = theirs.categories.flatMap((c) => c.lines).find((l) => l.id === 'shopping');
+  Object.assign(shop, { estimate: { ...shop.estimate, amount: 80, status: 'known' }, updatedAt: '2026-10-17T19:00:00.000Z', updatedBy: 'client', version: 2 });
+  await page.click('nav a[href="#clients"]');
+  await page.setInputFiles('#import-file', { name: 'riley.json', mimeType: 'application/json', buffer: Buffer.from(exportHousehold(theirs, '2026-10-17T19:00:00.000Z')) });
+  await page.waitForSelector('#merge-conflicts');
+  check('merge', 'Conflict heading', await page.$eval('#merge-conflicts h2', (x) => x.textContent), 'Merging Riley (demo, a year of the loop): 1 to pick');
+  const mine = await page.$eval('[data-key="side:local:line:shopping"]', (x) => x.textContent);
+  const file = await page.$eval('[data-key="side:incoming:line:shopping"]', (x) => x.textContent);
+  check('merge', 'This copy', String(/^This copy: Shopping, .*tag mistake.* \(coach, /.test(mine)), 'true');
+  check('merge', 'The file', String(/^The file: Shopping, .*estimate \$80.* \(client, /.test(file)), 'true');
+  await page.check('[data-key="pick:incoming:line:shopping"]');
+  await page.click('[data-key="finish-merge"]');
+  await page.waitForSelector('#cash-strip');
+  await page.click('nav a[href="#analyze"]');
+  await page.waitForSelector('#chart-mistake');
+  check('merge', 'Picked the file', String(await page.isChecked('[data-key="mistake:shopping"]')), 'false');
+  check('merge', 'Console errors', String(errors.length), '0');
+  await page.close();
+}
 await browser.close();
 console.log(failures ? failures + ' FAILED' : 'All screen numbers match the expected files.');
 process.exit(failures ? 1 : 0);

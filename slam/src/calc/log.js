@@ -17,8 +17,9 @@ export function isPending(t) {
   return Array.isArray(t.possible) && t.possible.length > 0;
 }
 
+// Deleted entries (S-096) never count, even if a caller passes the full file.
 export function counted(txs) {
-  return txs.filter((t) => !isPending(t));
+  return txs.filter((t) => !isPending(t) && !t.deleted);
 }
 
 export function sourceOf(t) {

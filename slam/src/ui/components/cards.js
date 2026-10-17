@@ -59,12 +59,12 @@ export function proofCard(summary) {
     h('p', { class: 'small muted' }, p.diff < 0 ? 'Is money building up in the account, or is some spending missing? Which one is right?' : 'Is savings or a card balance covering the gap? Which one is right?'));
 }
 
-export function completionCard(summary) {
+export function completionCard(ctx, summary) {
   const c = summary.completion;
   return h('div', { class: 'card' },
     h('div', { class: 'spread' }, h('h3', {}, 'How filled in is the picture'), h('b', { class: 'num' }, pct(c.pct))),
     h('div', { class: 'meter', role: 'progressbar', 'aria-valuenow': Math.round(c.pct * 100), 'aria-valuemin': 0, 'aria-valuemax': 100 }, h('span', { style: 'width:' + (c.pct * 100).toFixed(1) + '%' })),
-    h('p', { class: 'muted xs' }, c.answered + ' of ' + c.count + ' questions answered, heavy numbers weighted more. This is about the data, not how the client is doing.'));
+    h('p', { class: 'muted xs' }, c.answered + ' of ' + c.count + ' questions answered, heavy numbers weighted more. ' + ctx.say('completion-note')));
 }
 
 export function roughCard(ctx, summary) {

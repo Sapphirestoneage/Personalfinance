@@ -33,7 +33,7 @@ function addLineButton(ctx, catId) {
 function useAs(ctx, catId, key, value, label) {
   return h('button', { class: 'btn small ghost', onclick: () => ctx.update(label, (d) => {
     const cat = findCategory(d, catId);
-    if (cat[key].amount !== null || cat[key].status !== null) throw new Error('That estimate is the client\'s own; it is never overwritten');
+    if (cat[key].amount !== null || cat[key].status !== null) throw new Error(ctx.say('estimate-own'));
     cat[key] = value;
   }) }, label);
 }

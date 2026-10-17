@@ -329,5 +329,15 @@ export function renderBasics(ctx, summary) {
     h('button', { class: 'btn', 'data-path': JSON.stringify(['income']), onclick: () => ctx.update('Add income', (d) => {
       const inc = addIncome(d, { type: 'w2', label: 'Income ' + (d.income.length + 1) });
       setIncomeType(inc, defaultIncomeType(d.situation));
-    }) }, '+ Add income source'));
+    }) }, '+ Add income source'),
+    coachNotesCard(ctx));
+}
+
+// The coach's own notes about the client (S-096): coach-only, so the client view leaves the card out.
+function coachNotesCard(ctx) {
+  if (ctx.role === 'client') return null;
+  return h('div', { class: 'card', id: 'coach-notes' }, h('h2', {}, 'Coach notes'),
+    h('p', { class: 'muted small' }, 'Only you see these. The client view hides them.'),
+    h('textarea', { 'data-key': 'coach-notes', 'aria-label': 'Coach notes', value: ctx.doc.coachNotes || '',
+      onchange: (e) => ctx.update('Coach notes', (d) => { d.coachNotes = e.target.value; }) }));
 }

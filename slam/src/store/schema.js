@@ -5,7 +5,7 @@ import { makeValue } from './value.js';
 import { DEFAULT_LINE_TYPES } from './types.js';
 import { newId } from './ids.js';
 
-export const SCHEMA_VERSION = 9;
+export const SCHEMA_VERSION = 10;
 
 export const SITUATIONS = ['employed', 'self-employed', 'between-jobs', 'student'];
 export const FILING_STATUSES = ['single', 'married-joint', 'married-separate', 'head-of-household'];
@@ -92,7 +92,9 @@ export function newLine(fields = {}) {
     // The client's own tags (ids from doc.tags), like Subscription or Travel.
     tags: fields.tags || [],
     // Added during a monthly review for this month ('YYYY-MM'); not part of earlier months (S-076).
-    addedFor: fields.addedFor || null
+    addedFor: fields.addedFor || null,
+    // A mistake tag stays coach-only until the coach shares it (S-096).
+    mistakeShared: false
   };
 }
 
@@ -303,6 +305,8 @@ export function newHousehold(name, now = new Date()) {
     cashflow: newCashflow(),
     // Estimate history (S-090): append-only, written by the store.
     estimateLog: [],
+    // The last shared version of each record (S-096): written on export and merge, read on import.
+    sync: { versions: {}, at: null },
     nextStage: null,
     // Eras: life chapters laid end to end after today's budget (S-067).
     eras: newEras(),
@@ -310,7 +314,10 @@ export function newHousehold(name, now = new Date()) {
     tags: [],
     // Monthly plans, separate from estimate, dream, and actual (S-076). See store/plans.js.
     plans: {},
-    settings: { singleTotal: false, lens: 'dollars' },
+    // materiality: the bridge "ties" when not explained is under this many dollars (coach-only, S-096).
+    settings: { singleTotal: false, lens: 'dollars', materiality: 25 },
+    // The coach's own notes about the client; coach-only (S-096).
+    coachNotes: '',
     passesSeen: []
   };
 }
