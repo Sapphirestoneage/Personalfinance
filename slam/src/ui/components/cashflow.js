@@ -8,7 +8,7 @@ import { money, todayIso, dayLabel } from '../format.js';
 import { valueInput, parseAmount } from './value-input.js';
 import { dayLine } from '../charts/svg.js';
 import { quickEntryButton } from './quick-entry.js';
-import { cashCalendar, calendarReading } from '../../calc/calendar.js';
+import { cashCalendar, calendarReading, safeReading } from '../../calc/calendar.js';
 import { setNextPayDate, setPayDays, setItemAccount, setDebtPayWith, moveItem, clearMove, addBalanceCheck, confirmScheduled } from '../../store/cashflow.js';
 import { makeValue } from '../../store/value.js';
 
@@ -129,11 +129,13 @@ export function budgetCashStrip(ctx, summary) {
   const w = Math.min(560, Math.max(260, document.documentElement.clientWidth - 70));
   return h('div', { class: 'card cash-strip', id: 'cash-strip' },
     h('div', { class: 'spread' }, h('b', {}, 'Cash, next 30 days'), quickEntryButton(ctx)),
-    h('div', { class: 'chart', html: dayLine({ days: days.map((x) => ({ date: x.date, v: x.cash })), width: w, height: 90, fmt: money, todayIndex: 0, cushion: cal.cushion || null, markers, compact: true, label: 'Cash for the next 30 days' }) }),
+    h('div', { class: 'chart', html: dayLine({ days: days.map((x) => ({ date: x.date, v: x.cash, s: x.savings })), width: w, height: 90, fmt: money, todayIndex: 0, cushion: cal.cushion || null, markers, compact: true, label: 'Cash for the next 30 days' }) }),
     h('div', { class: 'strip three' },
       h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Today'), h('div', { class: 'value', 'data-key': 'cash-today' }, money(cal.todayCash))),
       h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Lowest point'), h('div', { class: 'value', 'data-key': 'cash-lowest' }, money(cal.lowest.amount)), h('div', { class: 'sub' }, dayLabel(cal.lowest.date))),
-      h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Safe to spend until payday'), h('div', { class: 'value', 'data-key': 'safe-to-spend' }, money(cal.safeToSpend)), h('div', { class: 'sub' }, cal.nextPayday ? 'payday ' + dayLabel(cal.nextPayday) : 'no payday in 30 days'))),
+      h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Safe to spend'), h('div', { class: 'value', 'data-key': 'safe-to-spend' }, money(cal.safeToSpend)),
+        h('div', { class: 'sub' }, cal.untilPayday !== null ? 'until payday ' + money(cal.untilPayday) : 'through ' + dayLabel(cal.end)))),
+    cal.shortfall ? h('p', { class: 'small warn', 'data-key': 'safe-short' }, safeReading(cal)) : null,
     h('p', { class: 'reading', 'data-key': 'cash-reading' }, calendarReading(cal), ' ', h('a', { href: '#analyze', onclick: (e) => { e.preventDefault(); go(); } }, 'See the calendar')));
 }
 

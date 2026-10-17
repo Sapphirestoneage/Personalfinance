@@ -29,7 +29,7 @@ import { removeTransaction } from '../src/store/edits.js';
 import { newNextStage } from '../src/store/schema.js';
 import { buildSummary } from '../src/calc/summary.js';
 import { bridgeFor } from '../src/calc/bridge.js';
-import { cashCalendar } from '../src/calc/calendar.js';
+import { cashCalendar, safeReading } from '../src/calc/calendar.js';
 import { paretoLevels, paretoCut, entryItems, lineItems, merchantItems } from '../src/calc/pareto.js';
 import { monthOverMonth, fixedFloor, volatility, categoryGrid } from '../src/calc/trends.js';
 import { budgetTotals } from '../src/calc/totals.js';
@@ -181,12 +181,14 @@ test('March: the 80/20 at all three levels', () => {
   assert.deepEqual([p.entries.count, p.entries.of, p.entries.amount, p.entries.total], [3, 23, 3050, 3767.59]);
   assert.ok(near(p.entries.amountShare, 0.809536, 6));
   assert.equal(p.entries.reading, '13% of your entries (3 of 23) made up 80% of your spending.');
-  // MERCHANTS: the scheduled rent, car payment, and phone have no merchant: "No merchant" 2,155; GEICO 960;
-  //   TRADER JOE S 156.65; SAFEWAY 96.10; SHELL OIL 93.30; WHOLE FOODS MKT 61.80; WALMART 54; THAI BASIL 42;
-  //   TARGET T- 38.99; CORNER COFFEE 28.50; AMC 28; AMAZON MKTPL 24.50; SWEETGREEN 15.25; CHIPOTLE 13.50: 14.
-  //   2,155 + 960 = 3,115 reaches 3,014.07: 2 of 14 (14%).
-  assert.deepEqual([p.merchants.items.map((i) => i.label), p.merchants.of], [['No merchant', 'GEICO'], 14]);
-  assert.equal(p.merchants.reading, '14% of your merchants (2 of 14) made up 80% of your spending.');
+  // MERCHANTS: the scheduled rent, car payment, and phone have no merchant, so each is grouped by its line
+  //   (S-095): Rent 1,750; GEICO 960; Car payment 340; TRADER JOE S 156.65; SAFEWAY 96.10; SHELL OIL 93.30;
+  //   Phone 65; WHOLE FOODS MKT 61.80; WALMART 54; THAI BASIL 42; TARGET T- 38.99; CORNER COFFEE 28.50; AMC 28;
+  //   AMAZON MKTPL 24.50; SWEETGREEN 15.25; CHIPOTLE 13.50: 16, total 3,767.59, 80% is 3,014.07.
+  //   1,750 + 960 = 2,710 is short; + 340 = 3,050 reaches it: 3 of 16 (18.75%).
+  assert.deepEqual([p.merchants.items.map((i) => i.label), p.merchants.of], [['Rent (no merchant, by line)', 'GEICO', 'Car payment (no merchant, by line)'], 16]);
+  assert.equal(p.merchants.amount, 3050);
+  assert.equal(p.merchants.reading, '19% of your merchants (3 of 16) made up 80% of your spending.');
   // LINES (actuals; gifts at 0 takes no part): rent 1,750, car payment 340, groceries 314.55, shopping 117.49,
   //   eating out 99.25, gas 93.30, utilities 84.30, car insurance 80, phone 65, Visa 35, entertainment 28,
   //   registration 15: 12 lines, 3,021.89. 80% is 2,417.51.
@@ -331,9 +333,12 @@ test('October: every scheduled item, five days, the lowest point, safe to spend,
   // Nov 5: 71.20 - 4 x 2.80 = 60.00, the day before the Nov 6 paycheck
   money(at('2026-11-05'), 60, 'Nov 5');
   assert.deepEqual(cal.lowest, { date: '2026-11-05', amount: 60 });
-  // Safe to spend until payday (Oct 23): lowest before it is Oct 22, 3,196.03, less the 100 cushion = 3,096.03,
-  // under today's 3,291.03.
-  money(cal.safeToSpend, 3096.03, 'safe to spend');
+  // Safe to spend (S-095), checking only: the lowest point anywhere ahead is Nov 5, 60.00; less the 100 cushion
+  // = -40.00, below 0, so safe to spend is 0 and the shortfall is $40 on Nov 5. Until payday (Oct 23) the lowest
+  // is Oct 22, 3,196.03 - 100 = 3,096.03: higher than 0, so it is not shown.
+  assert.equal(cal.safeToSpend, 0);
+  assert.deepEqual([cal.shortfall, cal.untilPayday], [{ amount: 40, date: '2026-11-05' }, null]);
+  assert.equal(safeReading(cal), "Nothing safe to spend right now. You'll be $40 under your cushion on Nov 5.");
   assert.ok(cal.safeToSpend <= cal.todayCash);
   // Rent on Nov 1 leaves 71.20, under the cushion; the paycheck that covers it is Nov 6.
   assert.deepEqual(cal.payLater.map((f) => [f.name, f.due, f.paidBy, f.gap]), [['Rent', '2026-11-01', '2026-11-06', 5]]);

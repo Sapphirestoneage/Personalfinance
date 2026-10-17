@@ -10,7 +10,7 @@ import { card, chartWidth } from './catalog.js';
 import { calendarFor, waitingCard, checkBalancesCard } from '../components/cashflow.js';
 import { quickEntryButton } from '../components/quick-entry.js';
 import { bridgeCards } from './bridge-charts.js';
-import { cashCalendar, calendarReading, monthSoFar, daysInMonth, forecastCheck } from '../../calc/calendar.js';
+import { cashCalendar, calendarReading, safeReading, monthSoFar, daysInMonth, forecastCheck } from '../../calc/calendar.js';
 import { findLine } from '../../store/edits.js';
 import { makeValue } from '../../store/value.js';
 
@@ -36,12 +36,13 @@ function chartCard(ctx, cal, id, title, extraReading) {
   const horizon = ctx.ui.cfHorizon || 30;
   return card(ctx, {
     id, title,
-    svg: dayLine({ days: days.map((x) => ({ date: x.date, v: x.cash })), width: chartWidth(false), fmt: money, todayIndex: ti >= 0 ? ti : null, cushion: cal.cushion || null, markers: markersOf(cal, days), height: 220, label: title }),
+    svg: dayLine({ days: days.map((x) => ({ date: x.date, v: x.cash, s: x.savings })), width: chartWidth(false), fmt: money, todayIndex: ti >= 0 ? ti : null, cushion: cal.cushion || null, markers: markersOf(cal, days), height: 220, label: title }),
     extra: h('div', { class: 'row' },
       h('div', { class: 'toggle', role: 'group', 'aria-label': 'Days ahead' }, [30, 60, 90].map((n) => h('button', { 'aria-pressed': horizon === n ? 'true' : 'false', 'data-key': 'horizon-' + n, onclick: () => { ctx.ui.cfHorizon = n; ctx.rerender(); } }, n + ' days'))),
       cal.start < from ? h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: whole, 'data-key': 'cf-whole', onchange: (e) => { ctx.ui.cfWhole = e.target.checked; ctx.rerender(); } }), 'Back to ' + cal.start.slice(0, 7)) : null,
       quickEntryButton(ctx)),
-    reading: calendarReading(cal) + (extraReading || '') + (cal.unknownStart.length ? ' No starting balance for ' + cal.unknownStart.join(', ') + ' (counted from $0).' : '')
+    legendItems: [['Checking (the cash line)', 'var(--series-actual)'], ['Savings, shown apart', 'var(--series-dream)']],
+    reading: calendarReading(cal) + ' ' + safeReading(cal) + (extraReading || '') + (cal.unknownStart.length ? ' No starting balance for ' + cal.unknownStart.join(', ') + ' (counted from $0).' : '')
   });
 }
 

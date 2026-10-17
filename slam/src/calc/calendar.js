@@ -277,9 +277,11 @@ export function cashCalendar(doc, income, opts) {
     for (const c of checks) if (c.date === d) bal[c.accountId] = c.amount.amount;
     const cash = accts.filter(inCalendar).reduce((a, x) => a + bal[x.id], 0);
     const cards = accts.filter((x) => x.type === 'credit-card').reduce((a, x) => a + bal[x.id], 0);
+    // Savings is shown as its own line, never added into cash (S-095).
+    const savings = accts.filter((x) => x.type === 'savings').reduce((a, x) => a + bal[x.id], 0);
     const cashItems = items.filter((i) => i.cash && !i.mirror);
     days.push({
-      date: d, past: d < today, today: d === today, cash: r2(cash), cards: r2(cards), perAccount: Object.fromEntries(Object.entries(bal).map(([k, v]) => [k, r2(v)])), items,
+      date: d, past: d < today, today: d === today, cash: r2(cash), savings: r2(savings), cards: r2(cards), perAccount: Object.fromEntries(Object.entries(bal).map(([k, v]) => [k, r2(v)])), items,
       in: r2(cashItems.filter((i) => i.flow > 0).reduce((a, i) => a + i.flow, 0)), out: r2(-cashItems.filter((i) => i.flow < 0).reduce((a, i) => a + i.flow, 0))
     });
   }
@@ -289,7 +291,15 @@ export function cashCalendar(doc, income, opts) {
   const nextPay = future.filter((i) => i.kind === 'paycheck' && i.amount !== null).map((i) => i.date).sort()[0] || null;
   const window = ahead.filter((x) => nextPay === null || x.date < nextPay);
   const lowBefore = window.length ? Math.min(...window.map((x) => x.cash)) : null;
-  const safe = lowBefore === null || !todayRow ? null : r2(Math.min(lowBefore - cushion, todayRow.cash));
+  // Safe to spend (S-095): money spent today lowers every day after it, so the limit is the lowest
+  // point anywhere ahead (through the horizon) less the cushion, never more than today's checking,
+  // and never below $0. Below 0, the shortfall and its day are given instead.
+  const raw = lowest && todayRow ? r2(Math.min(lowest.cash - cushion, todayRow.cash)) : null;
+  const safe = raw === null ? null : Math.max(0, raw);
+  const shortfall = raw !== null && raw < 0 ? { amount: r2(cushion - lowest.cash), date: lowest.date } : null;
+  // Until the next payday, shown only when it is lower than the full limit (it can never be higher).
+  const rawPay = lowBefore === null || !todayRow ? null : Math.max(0, r2(Math.min(lowBefore - cushion, todayRow.cash)));
+  const untilPayday = rawPay !== null && safe !== null && rawPay < safe ? rawPay : null;
   return {
     today, horizon, start, end, cushion, days, unknownStart,
     todayCash: todayRow ? todayRow.cash : null,
@@ -299,6 +309,8 @@ export function cashCalendar(doc, income, opts) {
     nextPayday: nextPay,
     paydays: future.filter((i) => i.kind === 'paycheck' && i.amount !== null).map((i) => i.date).sort(),
     safeToSpend: safe,
+    shortfall,
+    untilPayday,
     waiting, scheduled: allItems.filter((i) => monthOf(i.planned) >= openFrom),
     spreads,
     payLater: payLaterFlags(days, future, cushion)
@@ -367,6 +379,15 @@ export function monthSoFar(doc, month, today) {
 
 const dollars = (x) => '$' + Math.round(Math.abs(x)).toLocaleString('en-US');
 const nth = (iso) => { const d = Number(iso.slice(8)); const s = d % 10 === 1 && d !== 11 ? 'st' : d % 10 === 2 && d !== 12 ? 'nd' : d % 10 === 3 && d !== 13 ? 'rd' : 'th'; return 'the ' + d + s; };
+
+const shortDay = (iso) => ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(iso.slice(5, 7)) - 1] + ' ' + Number(iso.slice(8));
+
+// The safe-to-spend line for the screens (S-095).
+export function safeReading(cal) {
+  if (cal.safeToSpend === null) return '';
+  if (cal.shortfall) return 'Nothing safe to spend right now. You\'ll be ' + dollars(cal.shortfall.amount) + ' under your cushion on ' + shortDay(cal.shortfall.date) + '.';
+  return dollars(cal.safeToSpend) + ' is safe to spend: the lowest point ahead stays at or above your cushion.';
+}
 
 // One or two plain sentences, no verdicts.
 export function calendarReading(cal) {

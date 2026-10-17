@@ -4071,21 +4071,25 @@
        "reading": "21% of your entries (4 of 19) made up 80% of your spending."
       },
       "merchants": {
-       "count": 2,
-       "of": 10,
-       "amount": 2353.43,
-       "amountShare": 0.8485354351149441,
+       "count": 3,
+       "of": 12,
+       "amount": 2288.43,
+       "amountShare": 0.8250995125328102,
        "items": [
         {
-         "label": "No merchant",
-         "amount": 2155
+         "label": "Rent (no merchant, by line)",
+         "amount": 1750
+        },
+        {
+         "label": "Car payment (no merchant, by line)",
+         "amount": 340
         },
         {
          "label": "TRADER JOE'S",
          "amount": 198.43
         }
        ],
-       "reading": "20% of your merchants (2 of 10) made up 80% of your spending."
+       "reading": "25% of your merchants (3 of 12) made up 80% of your spending."
       },
       "lines": {
        "count": 3,
@@ -5190,21 +5194,25 @@
        "reading": "21% of your entries (4 of 19) made up 80% of your spending."
       },
       "merchants": {
-       "count": 2,
-       "of": 9,
-       "amount": 2332.83,
-       "amountShare": 0.8396065474648009,
+       "count": 3,
+       "of": 11,
+       "amount": 2267.83,
+       "amountShare": 0.8162124614897354,
        "items": [
         {
-         "label": "No merchant",
-         "amount": 2155
+         "label": "Rent (no merchant, by line)",
+         "amount": 1750
+        },
+        {
+         "label": "Car payment (no merchant, by line)",
+         "amount": 340
         },
         {
          "label": "SAFEWAY",
          "amount": 177.83
         }
        ],
-       "reading": "22% of your merchants (2 of 9) made up 80% of your spending."
+       "reading": "27% of your merchants (3 of 11) made up 80% of your spending."
       },
       "lines": {
        "count": 3,
@@ -6326,14 +6334,18 @@
        "reading": "33% of your entries (6 of 18) made up 80% of your spending."
       },
       "merchants": {
-       "count": 4,
-       "of": 12,
-       "amount": 2653.95,
-       "amountShare": 0.8284791159393144,
+       "count": 5,
+       "of": 14,
+       "amount": 2588.95,
+       "amountShare": 0.8081881750639944,
        "items": [
         {
-         "label": "No merchant",
-         "amount": 2155
+         "label": "Rent (no merchant, by line)",
+         "amount": 1750
+        },
+        {
+         "label": "Car payment (no merchant, by line)",
+         "amount": 340
         },
         {
          "label": "ETSY",
@@ -6348,7 +6360,7 @@
          "amount": 140
         }
        ],
-       "reading": "33% of your merchants (4 of 12) made up 80% of your spending."
+       "reading": "36% of your merchants (5 of 14) made up 80% of your spending."
       },
       "lines": {
        "count": 4,
@@ -7451,21 +7463,25 @@
        "reading": "20% of your entries (4 of 20) made up 80% of your spending."
       },
       "merchants": {
-       "count": 2,
-       "of": 10,
-       "amount": 2342.58,
-       "amountShare": 0.8454495255899899,
+       "count": 3,
+       "of": 12,
+       "amount": 2277.58,
+       "amountShare": 0.8219906814252872,
        "items": [
         {
-         "label": "No merchant",
-         "amount": 2155
+         "label": "Rent (no merchant, by line)",
+         "amount": 1750
+        },
+        {
+         "label": "Car payment (no merchant, by line)",
+         "amount": 340
         },
         {
          "label": "SAFEWAY",
          "amount": 187.58
         }
        ],
-       "reading": "20% of your merchants (2 of 10) made up 80% of your spending."
+       "reading": "25% of your merchants (3 of 12) made up 80% of your spending."
       },
       "lines": {
        "count": 3,
@@ -8570,21 +8586,25 @@
        "reading": "25% of your entries (4 of 16) made up 80% of your spending."
       },
       "merchants": {
-       "count": 2,
-       "of": 9,
-       "amount": 2319.4,
-       "amountShare": 0.8460794863844456,
+       "count": 3,
+       "of": 11,
+       "amount": 2254.4,
+       "amountShare": 0.8223685410472943,
        "items": [
         {
-         "label": "No merchant",
-         "amount": 2155
+         "label": "Rent (no merchant, by line)",
+         "amount": 1750
+        },
+        {
+         "label": "Car payment (no merchant, by line)",
+         "amount": 340
         },
         {
          "label": "TRADER JOE'S",
          "amount": 164.4
         }
        ],
-       "reading": "22% of your merchants (2 of 9) made up 80% of your spending."
+       "reading": "27% of your merchants (3 of 11) made up 80% of your spending."
       },
       "lines": {
        "count": 3,
@@ -9687,21 +9707,25 @@
        "reading": "13% of your entries (3 of 23) made up 80% of your spending."
       },
       "merchants": {
-       "count": 2,
-       "of": 14,
-       "amount": 3115,
-       "amountShare": 0.8267884775148039,
+       "count": 3,
+       "of": 16,
+       "amount": 3050,
+       "amountShare": 0.8095360694767743,
        "items": [
         {
-         "label": "No merchant",
-         "amount": 2155
+         "label": "Rent (no merchant, by line)",
+         "amount": 1750
         },
         {
          "label": "GEICO",
          "amount": 960
+        },
+        {
+         "label": "Car payment (no merchant, by line)",
+         "amount": 340
         }
        ],
-       "reading": "14% of your merchants (2 of 14) made up 80% of your spending."
+       "reading": "19% of your merchants (3 of 16) made up 80% of your spending."
       },
       "lines": {
        "count": 4,
@@ -10813,21 +10837,25 @@
        "reading": "20% of your entries (4 of 20) made up 80% of your spending."
       },
       "merchants": {
-       "count": 2,
-       "of": 10,
-       "amount": 2317.64,
-       "amountShare": 0.8238535175620385,
+       "count": 3,
+       "of": 12,
+       "amount": 2252.64,
+       "amountShare": 0.8007479107199351,
        "items": [
         {
-         "label": "No merchant",
-         "amount": 2155
+         "label": "Rent (no merchant, by line)",
+         "amount": 1750
+        },
+        {
+         "label": "Car payment (no merchant, by line)",
+         "amount": 340
         },
         {
          "label": "SAFEWAY",
          "amount": 162.64
         }
        ],
-       "reading": "20% of your merchants (2 of 10) made up 80% of your spending."
+       "reading": "25% of your merchants (3 of 12) made up 80% of your spending."
       },
       "lines": {
        "count": 3,
@@ -11940,21 +11968,25 @@
        "reading": "22% of your entries (4 of 18) made up 80% of your spending."
       },
       "merchants": {
-       "count": 2,
-       "of": 10,
-       "amount": 2334.9,
-       "amountShare": 0.8331133011253756,
+       "count": 3,
+       "of": 12,
+       "amount": 2269.9,
+       "amountShare": 0.8099207170433381,
        "items": [
         {
-         "label": "No merchant",
-         "amount": 2155
+         "label": "Rent (no merchant, by line)",
+         "amount": 1750
+        },
+        {
+         "label": "Car payment (no merchant, by line)",
+         "amount": 340
         },
         {
          "label": "WHOLE FOODS",
          "amount": 179.9
         }
        ],
-       "reading": "20% of your merchants (2 of 10) made up 80% of your spending."
+       "reading": "25% of your merchants (3 of 12) made up 80% of your spending."
       },
       "lines": {
        "count": 3,
@@ -14181,21 +14213,29 @@
        "reading": "24% of your entries (4 of 17) made up 80% of your spending."
       },
       "merchants": {
-       "count": 2,
-       "of": 11,
-       "amount": 2335,
-       "amountShare": 0.8164935187548736,
+       "count": 4,
+       "of": 13,
+       "amount": 2404.5,
+       "amountShare": 0.8407960025036804,
        "items": [
         {
-         "label": "No merchant",
-         "amount": 2155
+         "label": "Rent (no merchant, by line)",
+         "amount": 1750
+        },
+        {
+         "label": "Car payment (no merchant, by line)",
+         "amount": 340
         },
         {
          "label": "OREGON DMV",
          "amount": 180
+        },
+        {
+         "label": "WHOLE FOODS",
+         "amount": 134.5
         }
        ],
-       "reading": "18% of your merchants (2 of 11) made up 80% of your spending."
+       "reading": "31% of your merchants (4 of 13) made up 80% of your spending."
       },
       "lines": {
        "count": 3,
@@ -15296,21 +15336,25 @@
        "reading": "17% of your entries (3 of 18) made up 80% of your spending."
       },
       "merchants": {
-       "count": 2,
-       "of": 8,
-       "amount": 2401.05,
-       "amountShare": 0.8816304499489612,
+       "count": 3,
+       "of": 10,
+       "amount": 2336.05,
+       "amountShare": 0.8577634004303413,
        "items": [
         {
-         "label": "No merchant",
-         "amount": 2155
+         "label": "Rent (no merchant, by line)",
+         "amount": 1750
+        },
+        {
+         "label": "Car payment (no merchant, by line)",
+         "amount": 340
         },
         {
          "label": "SAFEWAY",
          "amount": 246.05
         }
        ],
-       "reading": "25% of your merchants (2 of 8) made up 80% of your spending."
+       "reading": "30% of your merchants (3 of 10) made up 80% of your spending."
       },
       "lines": {
        "count": 3,
@@ -16421,21 +16465,25 @@
        "reading": "14% of your entries (3 of 21) made up 80% of your spending."
       },
       "merchants": {
-       "count": 2,
-       "of": 10,
-       "amount": 4334.23,
-       "amountShare": 0.8715471251932926,
+       "count": 3,
+       "of": 12,
+       "amount": 4269.23,
+       "amountShare": 0.8584766229039438,
        "items": [
         {
          "label": "BRAKE AND TIRE",
          "amount": 2179.23
         },
         {
-         "label": "No merchant",
-         "amount": 2155
+         "label": "Rent (no merchant, by line)",
+         "amount": 1750
+        },
+        {
+         "label": "Car payment (no merchant, by line)",
+         "amount": 340
         }
        ],
-       "reading": "20% of your merchants (2 of 10) made up 80% of your spending."
+       "reading": "25% of your merchants (3 of 12) made up 80% of your spending."
       },
       "lines": {
        "count": 3,

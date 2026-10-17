@@ -39,9 +39,9 @@ test('three levels for October', () => {
   assert.deepEqual([p.entries.count, p.entries.of, p.entries.amount, p.entries.total], [3, 6, 1750, 1970]);
   assert.ok(near(p.entries.amountShare, 0.888325, 6));
   assert.equal(p.entries.reading, '50% of your entries (3 of 6) made up 80% of your spending.');
-  // Merchants: GEICO 1,200, No merchant (both groceries) 400, COUCH 250, TICKETMASTER 60, ATM WITHDRAWAL 60.
+  // Merchants: GEICO 1,200, Groceries (no merchant, by line) 400, COUCH 250, TICKETMASTER 60, ATM WITHDRAWAL 60.
   // 1,200 + 400 = 1,600 reaches 1,576: 2 of 5.
-  assert.deepEqual([p.merchants.items.map((i) => i.label), p.merchants.of], [['GEICO', 'No merchant'], 5]);
+  assert.deepEqual([p.merchants.items.map((i) => i.label), p.merchants.of], [['GEICO', 'Groceries (no merchant, by line)'], 5]);
   assert.equal(p.merchants.reading, '40% of your merchants (2 of 5) made up 80% of your spending.');
   // Lines: rent 1,500, groceries 400, car insurance 100 (its share), shopping 60, Visa minimum 40. Total 2,100; 80% is 1,680.
   // 1,500 is short; + 400 = 1,900: 2 lines.

@@ -295,7 +295,9 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.waitForSelector('#cash-strip');
   check('riley', 'Cash today', await page.$eval('[data-key="cash-today"]', (b) => b.textContent), money(3291.03));
   check('riley', 'Lowest point', await page.$eval('[data-key="cash-lowest"]', (b) => b.textContent), money(60));
-  check('riley', 'Safe to spend', await page.$eval('[data-key="safe-to-spend"]', (b) => b.textContent), money(3096.03));
+  // Safe to spend (S-095): the lowest point ahead is 60.00 on Nov 5, 40 under the 100 cushion, so $0 and a message.
+  check('riley', 'Safe to spend', await page.$eval('[data-key="safe-to-spend"]', (b) => b.textContent), money(0));
+  check('riley', 'Shortfall message', await page.$eval('[data-key="safe-short"]', (p) => p.textContent), "Nothing safe to spend right now. You'll be $40 under your cushion on Nov 5.");
   check('riley', 'Calendar reading', await page.$eval('[data-key="cash-reading"]', (p) => p.childNodes[0].textContent), 'Your lowest point is $60 on the 5th, the day before payday. Rent lands 5 days before the paycheck that covers it.');
   check('riley', 'Track step', await page.$eval('[data-key="loop-track"] .small', (d) => d.textContent), '12 entries, last Oct 15, scheduled 3 of 6 confirmed');
   await page.click('nav a[href="#analyze"]');
