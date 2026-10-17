@@ -30,6 +30,20 @@ export function bridgeRows(br) {
   return rows;
 }
 
+// How close counts as "ties" is the coach's setting (S-096), so the client view does not show it.
+function materialityInput(ctx) {
+  if (ctx.role === 'client') return null;
+  const v = ctx.doc.settings.materiality;
+  return h('label', { class: 'field small' }, h('span', { class: 'lbl' }, 'Ties when within (coach only)'),
+    h('input', { type: 'text', inputmode: 'decimal', style: 'width:6em', 'data-key': 'materiality', value: v === undefined || v === null ? '' : String(v),
+      onchange: (e) => {
+        const t = e.target.value.trim().replace(/[$,]/g, '');
+        const n = t === '' ? 25 : Number(t);
+        if (!Number.isFinite(n) || n < 0) return ctx.toast('That needs a dollar amount, 0 or more');
+        ctx.update('Materiality', (d) => { d.settings.materiality = n; });
+      } }));
+}
+
 export function bridgeCard(ctx, s, month, opts = {}) {
   const br = bridgeFor(ctx.doc, s.income, month);
   const months = bridgeMonths(ctx.doc);
@@ -41,11 +55,11 @@ export function bridgeCard(ctx, s, month, opts = {}) {
     h('li', { class: 'small' }, h('b', {}, 'Explained change in cash'), h('b', { class: 'num', 'data-key': 'bridge-explained' }, signedMoney(br.explained))),
     br.actual === null ? h('li', { class: 'small' }, h('span', {}, 'Actual change in cash: missing ', br.missing.map((m) => m.name + ' ' + m.which).join(', '), ' ', linkTo(ctx, 'balances')), h('b', {}, '·'))
       : [h('li', { class: 'small' }, h('span', {}, 'Actual change in cash', h('div', { class: 'xs muted' }, 'Checking, savings, and cash: ' + money(br.cashStart) + ' to ' + money(br.cashEnd))), h('b', { class: 'num', 'data-key': 'bridge-actual' }, signedMoney(br.actual))),
-        h('li', { class: 'small' }, h('span', {}, 'Not explained yet', h('div', { class: 'xs muted' }, br.ties ? 'Ties: within $25' : 'Off by ' + money(Math.abs(br.unexplained), true))), h('b', { class: 'num', 'data-key': 'bridge-unexplained' }, signedMoney(br.unexplained)))]);
+        h('li', { class: 'small' }, h('span', {}, 'Not explained yet', h('div', { class: 'xs muted' }, br.ties ? 'Ties: within ' + money(br.within) : 'Off by ' + money(Math.abs(br.unexplained), true))), h('b', { class: 'num', 'data-key': 'bridge-unexplained' }, signedMoney(br.unexplained)))]);
   return card(ctx, {
     id: opts.id || 'bridge', title: opts.title || 'Budget to cash, ' + monthLabel(month),
     svg: waterfall({ rows: bridgeRows(br), width: chartWidth(opts.half !== false), fmt: money, label: 'From budget surplus to change in cash' }),
-    extra: h('div', {}, picker, list),
+    extra: h('div', {}, picker, list, opts.id ? null : materialityInput(ctx)),
     reading: br.reading
   });
 }

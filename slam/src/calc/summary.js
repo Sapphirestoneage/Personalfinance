@@ -17,6 +17,7 @@ import { txMonths, detect, topMerchants, weekdaySpending, sizeVsCount } from './
 import { nextStage } from './next-stage.js';
 import { planView } from './plan.js';
 import { happinessOf, stressOf } from './happiness.js';
+import { liveView, hasDeleted } from '../store/records.js';
 
 function pctBlock(e, d, a, b, takeHome) {
   return { estimate: ratio(e, takeHome), dream: ratio(d, takeHome), actual: ratio(a, takeHome), basis: ratio(b, takeHome) };
@@ -52,7 +53,9 @@ function tableRows(model, totals) {
   });
 }
 
-export function buildSummary(doc, refs) {
+export function buildSummary(full, refs) {
+  // The store hands calc the live view already; a full file with deleted records is trimmed here too (S-096).
+  const doc = hasDeleted(full) ? liveView(full) : full;
   const income = incomeSummary(doc, refs.tax);
   const model = budgetModel(doc);
   const totals = budgetTotals(model, income, doc, refs.benchmarks.housingBand);

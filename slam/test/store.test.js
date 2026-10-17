@@ -4,6 +4,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createStore } from '../src/store/store.js';
+import { stripMeta } from '../src/store/records.js';
 import { createStorage, memoryBackend } from '../src/store/storage.js';
 import { newHousehold, SCHEMA_VERSION, defaultCategories } from '../src/store/schema.js';
 import { validateHousehold } from '../src/store/validate.js';
@@ -62,25 +63,27 @@ test('migration upgrades an unversioned document and fills defaults', () => {
   assert.throws(() => migrate({ schemaVersion: 99 }), /newer version/);
 });
 
-test('client list: create, open, rename via update, remove', () => {
+test('client list: create, open, rename via update, remove', async () => {
   const s = fresh();
   const a = s.create('Zed');
   const b = s.create('Amy');
   assert.deepEqual(s.list().map((e) => e.name), ['Amy', 'Zed']);
-  s.open(a);
+  await s.open(a);
   s.update('Rename', (d) => { d.profile.name = 'Zara'; });
   assert.deepEqual(s.list().map((e) => e.name), ['Amy', 'Zara']);
-  s.remove(b);
+  await s.remove(b);
   assert.deepEqual(s.list().map((e) => e.name), ['Zara']);
 });
 
-test('save and load round trip through storage', () => {
+test('save and load round trip through the async storage interface', async () => {
   const backend = memoryBackend();
   const s1 = createStore(createStorage(backend), fixedClock);
   const id = s1.create('Round');
   s1.update('Gut', (d) => { d.gut = makeValue(3100); });
+  await s1.flush();
   const s2 = createStore(createStorage(backend), fixedClock);
-  assert.equal(s2.open(id).gut.amount, 3100);
+  assert.deepEqual((await s2.load()).map((e) => e.name), ['Round']);
+  assert.equal((await s2.open(id)).gut.amount, 3100);
 });
 
 test('invalid changes are refused and leave the document untouched', () => {
@@ -108,29 +111,32 @@ test('undo and redo walk every change', () => {
   assert.equal(s.canRedo(), false, 'a new change clears redo');
 });
 
-test('export then import restores the household, with a backup taken first', () => {
+test('export, then import of the same client merges by record (S-096), with a backup taken first', async () => {
   const s = fresh();
   const id = s.create('Exported');
-  s.update('Gut', (d) => { d.gut = makeValue(2500, { status: 'roughly' }); });
+  s.update('Rent', (d) => { d.categories[0].lines[0].estimate = makeValue(1500); });
   const text = s.exportCurrent();
   const env = JSON.parse(text);
   assert.equal(env.format, 'slam-household');
   assert.equal(env.exportVersion, 1);
-  s.update('Change after export', (d) => { d.gut = makeValue(9999); });
-  const res = s.importText(text);
-  assert.equal(res.id, id);
-  assert.equal(s.doc.gut.amount, 2500);
+  s.update('Change after export', (d) => { d.categories[0].lines[0].estimate = makeValue(1600); });
+  // The file is older than this copy: the change made here is kept, nothing is lost.
+  const res = await s.importText(text);
+  assert.deepEqual([res.id, res.merged, res.conflicts.length], [id, true, 0]);
+  assert.equal(s.doc.categories[0].lines[0].estimate.amount, 1600);
+  // A new client from a file is added whole
+  await s.remove(id);
+  await s.importText(text);
+  assert.equal(s.doc.categories[0].lines[0].estimate.amount, 1500);
   const backups = s.listBackups();
-  assert.equal(backups.length, 1);
+  assert.equal(backups.length, 2);
   assert.match(backups[0].reason, /Before import/);
-  s.restoreBackup(backups[0].id);
-  assert.equal(s.doc.gut.amount, 9999, 'the backup holds the pre-import state');
 });
 
-test('import rejects junk with a plain message', () => {
+test('import rejects junk with a plain message', async () => {
   const s = fresh();
-  assert.throws(() => s.importText('not json'), /not valid JSON/);
-  assert.throws(() => s.importText('{"format":"slam-household","exportVersion":5,"household":{}}'), /newer version/);
+  await assert.rejects(() => s.importText('not json'), /not valid JSON/);
+  await assert.rejects(() => s.importText('{"format":"slam-household","exportVersion":5,"household":{}}'), /newer version/);
 });
 
 test('month close locks a snapshot, advances the month, and keeps revisions separate', () => {
@@ -178,7 +184,8 @@ test('migration to schema 2 removes ZIP and the cost-of-living tier, and changes
   assert.deepEqual(m.profile, { name: 'Old file', birthYear: 1990, state: 'NY' });
   for (const k of ['zip', 'colTier', 'colTierSetBy']) assert.ok(!(k in m.profile), k + ' is gone');
   // everything outside the profile is untouched
-  const rest = (d) => { const { profile, schemaVersion, ...x } = d; return x; };
+  // Bookkeeping added by schema 10 (S-096) is left out of the comparison
+  const rest = (d) => { const { profile, schemaVersion, sync, ...x } = stripMeta(d); return x; };
   assert.deepEqual(rest(m), rest(migrate({ ...v1, profile: { name: 'Old file', birthYear: 1990, state: 'NY' } })));
   assert.deepEqual(rest(m), rest(v1));
   assert.deepEqual(validateHousehold(m), []);
@@ -193,8 +200,8 @@ test('migration to schema 3 removes the DRAFTT benchmark source and changes noth
   const m = migrate(v2);
   assert.equal(m.schemaVersion, SCHEMA_VERSION);
   assert.ok(!('benchmarkSource' in m.settings));
-  assert.deepEqual(m.settings, { singleTotal: true, lens: 'dollars' });
-  const rest = (d) => { const { settings, schemaVersion, ...x } = d; return x; };
+  assert.deepEqual(m.settings, { singleTotal: true, lens: 'dollars', materiality: 25 }); // materiality is added by schema 10 (S-096)
+  const rest = (d) => { const { settings, schemaVersion, sync, ...x } = stripMeta(d); return x; };
   assert.deepEqual(rest(m), rest(v2));
   assert.deepEqual(validateHousehold(m), []);
   assert.deepEqual(migrate(JSON.parse(JSON.stringify(m))), m);

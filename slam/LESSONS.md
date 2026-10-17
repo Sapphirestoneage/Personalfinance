@@ -22,3 +22,4 @@ These rules come from earlier attempts. Every change to SLAM is checked against 
 18. Budget surplus and cash in the bank disagreed and nobody could say why. RULE: every closed month has a bridge from the budget surplus to the actual change in cash, and anything unexplained is shown, never hidden.
 19. Cash crunches showed up as surprises. RULE: the calendar shows the lowest point before it happens, and every month checks the forecast against what actually happened.
 20. Month-end meant typing everything from memory. RULE: the log owns the money and actuals are computed from it. Month-end only fills gaps.
+21. Single-user shortcuts would have blocked sharing later. RULE: every record has an id, timestamps, author, and version, nothing is hard-deleted, storage goes through one async interface, and visibility is decided in one map.

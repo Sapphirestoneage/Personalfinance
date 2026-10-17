@@ -73,7 +73,7 @@ export function renderBudget(ctx, summary) {
       culpritsCard(summary),
       gutCard(summary),
       proofCard(summary),
-      completionCard(summary),
+      completionCard(ctx, summary),
       roughCard(ctx, summary),
       extrasCard(summary)));
 }

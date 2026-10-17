@@ -183,6 +183,8 @@ export function validateHousehold(doc) {
     if (t.settles !== undefined && !txIds.has(t.settles)) errs.push(w + '.settles: unknown entry ' + t.settles);
   });
   if (!/^\d{4}-\d{2}$/.test(doc.currentMonth || '')) errs.push('currentMonth must be YYYY-MM');
+  if (doc.settings && doc.settings.materiality !== undefined && !(typeof doc.settings.materiality === 'number' && doc.settings.materiality >= 0)) errs.push('settings.materiality must be 0 or more');
+  if (doc.coachNotes !== undefined && typeof doc.coachNotes !== 'string') errs.push('coachNotes must be text');
   (doc.estimateLog || []).forEach((e, i) => {
     const w = 'estimateLog[' + i + ']';
     if (!e.lineId === !e.categoryId) errs.push(w + ': needs a lineId or a categoryId');

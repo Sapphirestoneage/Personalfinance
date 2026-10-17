@@ -6,12 +6,12 @@ import { existsSync, readFileSync } from 'node:fs';
 const root = new URL('../', import.meta.url);
 
 test('required docs exist', () => {
-  for (const f of ['README.md', 'LESSONS.md', 'DECISIONS.md', 'PARKING_LOT.md']) {
+  for (const f of ['README.md', 'LESSONS.md', 'DECISIONS.md', 'PARKING_LOT.md', 'HOSTING.md']) {
     assert.ok(existsSync(new URL(f, root)), f + ' is missing');
   }
 });
 
-test('LESSONS.md lists all 16 lessons', () => {
+test('LESSONS.md lists all 21 lessons', () => {
   const text = readFileSync(new URL('LESSONS.md', root), 'utf8');
-  for (let i = 1; i <= 16; i++) assert.match(text, new RegExp('^' + i + '\\. ', 'm'));
+  for (let i = 1; i <= 21; i++) assert.match(text, new RegExp('^' + i + '\\. ', 'm'));
 });

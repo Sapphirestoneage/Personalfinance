@@ -55,7 +55,7 @@ export function checklistCard(ctx, summary) {
   return h('div', { class: 'card', id: 'checklist' },
     h('div', { class: 'spread' }, h('h2', { style: 'margin:0' }, 'Before closing ' + monthLabel(c.month)), h('button', { class: 'btn small ghost', onclick: () => { ctx.ui.closing = false; ctx.rerender(); } }, 'Not now')),
     h('ul', { class: 'plain' }, c.items.map((i) => h('li', { class: 'small', 'data-key': 'check-' + i.key },
-      h('span', { style: 'flex:1 1 220px' }, h('span', { class: 'chip ' + (i.open ? 'st-dont-know' : 'st-known') }, i.open ? 'Open' : 'Done'), ' ', i.label,
+      h('span', { style: 'flex:1 1 220px' }, h('span', { class: 'chip ' + (i.open ? 'st-dont-know' : 'st-known') }, i.open ? 'Open' : 'Done'), ' ', i.key === 'owed' ? ctx.say('owed-label') : i.label,
         i.names && i.names.length ? h('div', { class: 'xs muted' }, i.names.slice(0, 6).join(', ') + (i.names.length > 6 ? ', and more' : '')) : null),
       h('span', { class: 'row' }, h('b', { class: 'num' }, i.state || (i.amount ? i.count + ', ' + money(i.amount, true) : String(i.count))), link(ctx, i.fix, 'Fix'))))),
     h('p', { class: 'small', 'data-key': 'close-summary' }, c.summary + '.'),

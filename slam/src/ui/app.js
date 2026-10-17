@@ -4,6 +4,8 @@
 import { createStore } from '../store/store.js';
 import { createStorage, localStorageBackend } from '../store/storage.js';
 import { setField } from '../store/edits.js';
+import { viewFor, say } from '../store/visibility.js';
+import { displayRole, setDisplayRole } from '../store/session.js';
 import { buildSummary } from '../calc/summary.js';
 import { primaryPayFrequency } from '../calc/model.js';
 import { loadRefs } from './refs.js';
@@ -39,10 +41,21 @@ const ui = {
 
 function summaryOf(doc) { return doc ? buildSummary(doc, refs) : null; }
 
+// What the person on screen sees (S-096): the coach sees everything; "View as client" hides coach-only fields.
+let viewCache = { doc: null, role: null, view: null };
+function viewed() {
+  const doc = store.doc;
+  const role = displayRole();
+  if (viewCache.doc !== doc || viewCache.role !== role) viewCache = { doc, role, view: viewFor(doc, role) };
+  return viewCache.view;
+}
+
 const ctx = {
   store, ui,
   get refs() { return refs; },
-  get doc() { return store.doc; },
+  get doc() { return viewed(); },
+  get role() { return displayRole(); },
+  say: (key) => say(key, displayRole()),
   get payFrequency() { return store.doc ? primaryPayFrequency(store.doc) : null; },
   go(screen, opts = {}) {
     Object.assign(ui, opts);
@@ -67,7 +80,7 @@ const ctx = {
   // Live running totals while typing: compute on a scratch copy, never saved.
   preview(path, value) {
     if (!ui.previewHandler || !store.doc) return;
-    const draft = JSON.parse(JSON.stringify(store.doc));
+    const draft = JSON.parse(JSON.stringify(viewed()));
     try { setField(draft, path, value); } catch (e) { return; }
     ui.previewHandler(summaryOf(draft));
   },
@@ -102,7 +115,11 @@ function render() {
   const scroll = window.scrollY;
 
   if (!store.doc && ui.screen !== 'clients') ui.screen = 'clients';
-  const summary = summaryOf(store.doc);
+  // The client list is the coach's; a client never sees it.
+  if (displayRole() === 'client' && ui.screen === 'clients') ui.screen = store.doc ? 'budget' : 'clients';
+  if (!store.doc && displayRole() === 'client') setDisplayRole('coach');
+  document.documentElement.setAttribute('data-view', displayRole());
+  const summary = summaryOf(viewed());
   ui.previewHandler = null;
   const screen = { clients: renderClients, fill: renderFill, budget: renderBudget, analyze: renderAnalyze }[ui.screen];
   const body = screen(ctx, summary);
@@ -134,13 +151,18 @@ function render() {
 
 function topbar() {
   const doc = store.doc;
+  const asClient = displayRole() === 'client';
+  const screens = asClient ? SCREENS.filter(([id]) => id !== 'clients') : SCREENS;
   return h('header', { class: 'topbar' }, h('div', { class: 'topbar-inner' },
     h('span', { class: 'brand' }, 'SLAM'),
     h('span', { class: 'client-name' }, doc ? doc.profile.name : 'No client open'),
-    h('nav', { class: 'nav', 'aria-label': 'Screens' }, SCREENS.map(([id, label]) =>
+    h('nav', { class: 'nav', 'aria-label': 'Screens' }, screens.map(([id, label]) =>
       h('a', { href: '#' + id, 'aria-current': ui.screen === id ? 'page' : null,
         onclick: (e) => { e.preventDefault(); if (id !== 'clients' && !doc) return ctx.toast('Open or create a client first'); ctx.go(id); } }, label))),
     h('div', { class: 'row' },
+      doc ? h('button', { class: 'btn small' + (asClient ? ' primary' : ''), 'data-key': 'view-as-client', 'aria-pressed': asClient ? 'true' : 'false',
+        title: asClient ? 'You are seeing what the client sees. Changes are still saved as the coach.' : 'See the budget the way the client sees it',
+        onclick: () => { setDisplayRole(asClient ? 'coach' : 'client'); queueRender(); } }, say('view-toggle', displayRole())) : null,
       h('button', { class: 'btn small icon-btn', title: store.canUndo() ? 'Undo: ' + store.undoLabel() : 'Nothing to undo', 'aria-label': 'Undo', disabled: !store.canUndo(), onclick: () => store.undo() }, '↶'),
       h('button', { class: 'btn small icon-btn', title: store.canRedo() ? 'Redo: ' + store.redoLabel() : 'Nothing to redo', 'aria-label': 'Redo', disabled: !store.canRedo(), onclick: () => store.redo() }, '↷'),
       h('button', { class: 'btn small icon-btn', title: 'Light or dark', 'aria-label': 'Switch light or dark', onclick: cycleTheme }, '◐'))));
@@ -185,8 +207,9 @@ async function boot() {
     root.textContent = 'SLAM could not load its reference data. Serve this folder with a local web server (see README). ' + e.message;
     return;
   }
+  await store.load();
   const last = storage.getSetting('lastOpen');
-  if (last && store.list().some((c) => c.id === last)) store.open(last);
+  if (last && store.list().some((c) => c.id === last)) await store.open(last);
   const s = location.hash.slice(1);
   ui.screen = SCREENS.some(([id]) => id === s) && store.doc ? s : (store.doc ? 'budget' : 'clients');
   render();

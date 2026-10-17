@@ -295,7 +295,11 @@ export function joyCard(ctx, s) {
 
 // Mistakes are self-selected here (S-069): tick what was a mistake (a late fee,
 // a ticket, an impulse buy). Nothing is a mistake until the client says so.
+// A mistake the coach tags stays coach-only until the coach shares it (S-096);
+// one the client ticks is theirs, so it is shared from the start.
 export function mistakeCard(ctx, s) {
+  const asClient = ctx.role === 'client';
+  const shared = (id) => { const f = findLine(ctx.doc, id); return !!(f && f.line.mistakeShared); };
   const m = cd.mistakeData(s);
   const lines = s.rows.filter((r) => !r.savings && !r.isDebt).flatMap((r) => r.lines.filter((l) => !l.computed && l.basis !== null && l.basis > 0).map((l) => ({ ...l, category: r.name })))
     .sort((a, b) => (b.tag === 'mistake') - (a.tag === 'mistake'));
@@ -303,8 +307,14 @@ export function mistakeCard(ctx, s) {
     h('div', { class: 'field-label' }, 'Which of these were mistakes?'),
     lines.length ? lines.map((l) => h('label', { class: 'check spread' },
       h('span', {}, h('input', { type: 'checkbox', checked: l.tag === 'mistake', 'data-key': 'mistake:' + l.id,
-        onchange: (e) => ctx.update(e.target.checked ? 'Mark as a mistake' : 'Not a mistake', (d) => { findLine(d, l.id).line.tag = e.target.checked ? 'mistake' : 'planned'; }) }),
-        ' ' + l.name, h('span', { class: 'xs muted' }, ' ' + l.category)),
+        onchange: (e) => ctx.update(e.target.checked ? 'Mark as a mistake' : 'Not a mistake', (d) => {
+          const line = findLine(d, l.id).line;
+          line.tag = e.target.checked ? 'mistake' : 'planned';
+          line.mistakeShared = e.target.checked && (asClient || line.mistakeShared);
+        }) }),
+        ' ' + l.name, h('span', { class: 'xs muted' }, ' ' + l.category),
+        !asClient && l.tag === 'mistake' ? h('label', { class: 'xs check-inline' }, h('input', { type: 'checkbox', checked: shared(l.id), 'data-key': 'mistake-share:' + l.id,
+          onchange: (e) => ctx.update(e.target.checked ? 'Share the mistake tag' : 'Keep the mistake tag to the coach', (d) => { findLine(d, l.id).line.mistakeShared = e.target.checked; }) }), ' Shared with client') : null),
       h('span', { class: 'num small' }, money(l.basis)))) : h('p', { class: 'small muted' }, 'No spending lines with amounts yet.'));
   return card(ctx, {
     id: 'mistake', title: 'Mistake cost',
@@ -353,7 +363,7 @@ export function completionCard(ctx, s) {
   return card(ctx, {
     id: 'completion', title: 'How filled in is the picture',
     extra: h('div', { class: 'chart', style: 'width:auto', html: ring({ value: s.completion.pct }) }),
-    reading: s.completion.answered + ' of ' + s.completion.count + ' questions answered. This measures the data, not how the client is doing.'
+    reading: s.completion.answered + ' of ' + s.completion.count + ' questions answered. ' + ctx.say('completion-note')
   });
 }
 

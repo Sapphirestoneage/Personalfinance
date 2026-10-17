@@ -7,6 +7,7 @@ import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt,
 import { normalizeValue, isBlank } from './value.js';
 import { CATEGORY_TYPE_IDS, DEFAULT_LINE_TYPES, guessLineType } from './types.js';
 import { toMonthly } from '../calc/normalize.js';
+import { stampAll, META } from './records.js';
 
 // STEPS[n] turns a version n document into version n + 1.
 const STEPS = {
@@ -42,7 +43,10 @@ const STEPS = {
   // then the typed number is cleared (the log owns it now). No month's actual changes.
   7: (doc) => logOwnsActuals(doc),
   // Version 8 to 9 (S-090): estimate history. Older files load with an empty log.
-  8: (doc) => ({ ...doc, estimateLog: doc.estimateLog || [], schemaVersion: 9 })
+  8: (doc) => ({ ...doc, estimateLog: doc.estimateLog || [], schemaVersion: 9 }),
+  // Version 9 to 10 (S-096): every record gets an id (existing ids kept), createdAt and updatedAt
+  // from the file's last saved time, createdBy and updatedBy "coach", and version 1. Nothing else changes.
+  9: (doc) => ({ ...doc, schemaVersion: 10, sync: doc.sync || { versions: {}, at: null } })
 };
 
 const LOGGED = new Set(['spend', 'fee', 'refund', 'reimbursement']);
@@ -208,6 +212,7 @@ export function normalizeHousehold(doc) {
     return cat;
   });
   out.settings = { ...base.settings, ...(doc.settings || {}) };
+  out.coachNotes = typeof doc.coachNotes === 'string' ? doc.coachNotes : '';
   out.months = doc.months || [];
   // Compatibility: files before per-month actuals have none stored.
   out.monthActuals = Object.fromEntries(Object.entries(doc.monthActuals || {}).map(([k, lines]) => [k, Object.fromEntries(Object.entries(lines).map(([id, v]) => [id, normalizeValue(v)]))]));
@@ -218,13 +223,15 @@ export function normalizeHousehold(doc) {
   out.plans = Object.fromEntries(Object.entries(doc.plans || {}).map(([m, p]) => [m, {
     createdFrom: p.createdFrom || 'manual',
     lines: Object.fromEntries(Object.entries(p.lines || {}).map(([k, e]) => [k, {
+      ...meta(e),
       amount: nv(e.amount), start: nv(e.start === undefined ? e.amount : e.start), decision: e.decision || 'keep',
       reviewed: !!e.reviewed, note: e.note || '', stop: !!e.stop
     }]))
   }]));
   // Compatibility: files before tags have none.
-  out.tags = (doc.tags || []).map((t) => ({ id: t.id, name: t.name }));
+  out.tags = (doc.tags || []).map((t) => ({ ...meta(t), id: t.id, name: t.name }));
   out.estimateLog = (doc.estimateLog || []).map((e) => ({ ...e }));
+  out.sync = doc.sync || { versions: {}, at: null };
   out.transactions = doc.transactions || [];
   out.merchantMemory = doc.merchantMemory || {};
   out.snapshots = doc.snapshots || [];
@@ -235,10 +242,18 @@ export function normalizeHousehold(doc) {
   out.nextStage = doc.nextStage ? normalizeNextStage(doc.nextStage) : null;
   out.accounts = (doc.accounts || []).map((a) => ({ ...newAccount({ id: a.id }), ...a }));
   out.balances = Object.fromEntries(Object.entries(doc.balances || {}).map(([m, accts]) => [m, Object.fromEntries(Object.entries(accts).map(([id, b]) => [id, {
+    ...meta(b || {}),
     start: { ...normalizeValue(b && b.start), cadence: 'one-off' }, end: { ...normalizeValue(b && b.end), cadence: 'one-off' }
   }]))]));
   out.schemaVersion = SCHEMA_VERSION;
+  // Any record still without bookkeeping gets it now (S-096).
+  stampAll(out, doc.updatedAt || doc.createdAt || '2026-01-01T00:00:00.000Z');
   return out;
+}
+
+// A record's bookkeeping, kept through normalizing (S-096).
+function meta(r) {
+  return Object.fromEntries(META.filter((k) => r[k] !== undefined).map((k) => [k, r[k]]));
 }
 
 // Compatibility: plans saved before the three lenses load with empty disaster
