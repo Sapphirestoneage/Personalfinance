@@ -442,3 +442,36 @@ export function waterfall({ rows, width, fmt, label = 'Waterfall' }) {
   if (lo < 0) body += line(x(0), 0, x(0), y, 'axis');
   return svgWrap(width, y, body, label);
 }
+
+// 80/20 (S-091): bars largest first, the cumulative % line over them, a
+// dashed line at the share (80%), and a marker where the cut ends.
+export function paretoChart({ cumulative, count, share = 0.8, width, fmt, label = 'Cumulative share of spending' }) {
+  const h = 200;
+  const padL = 44;
+  const padR = 36;
+  const padB = 20;
+  const n = cumulative.length;
+  const max = Math.max(1, ...cumulative.map((c) => c.amount));
+  const bw = (width - padL - padR) / Math.max(1, n);
+  const y = (v) => 8 + (1 - v) * (h - padB - 8);
+  let body = '';
+  cumulative.forEach((c, i) => {
+    const bh = (c.amount / max) * (h - padB - 8);
+    body += '<rect x="' + (padL + i * bw).toFixed(1) + '" y="' + (h - padB - bh).toFixed(1) + '" width="' + Math.max(1, bw - (bw > 4 ? 1 : 0)).toFixed(1) + '" height="' + bh.toFixed(1) + '" style="fill:' + (i < count ? 'var(--series-actual)' : 'var(--chart-other)') + ';fill-opacity:0.75"><title>' + esc(c.label + ': ' + fmt(c.amount) + ', ' + Math.round(c.cumShare * 100) + '% so far') + '</title></rect>';
+  });
+  let d = '';
+  cumulative.forEach((c, i) => { d += (d ? ' L ' : 'M ') + (padL + (i + 0.5) * bw).toFixed(1) + ' ' + y(c.cumShare).toFixed(1); });
+  body += '<path d="' + d + '" style="fill:none;stroke:var(--chart-2);stroke-width:2"/>';
+  body += line(padL, y(share), width - padR, y(share), 'axis', true);
+  body += t(width - padR + 4, y(share) + 4, Math.round(share * 100) + '%', { cls: 'muted' });
+  body += t(width - padR + 4, y(1) + 4, '100%', { cls: 'muted' });
+  body += t(padL - 6, h - padB, fmt(0), { anchor: 'end', cls: 'muted' });
+  body += t(padL - 6, 18, fmt(max), { anchor: 'end', cls: 'muted' });
+  if (count) {
+    const cx = padL + count * bw;
+    body += line(cx, 8, cx, h - padB, 'grid-line', true);
+    body += t(Math.min(cx + 4, width - padR - 60), h - 4, count + ' of ' + n, { cls: 'muted' });
+  }
+  body += t(padL, h - 4, 'Largest first', { cls: 'muted' });
+  return svgWrap(width, h, body, label);
+}

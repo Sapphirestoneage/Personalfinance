@@ -10,6 +10,7 @@ import { bridgeFor } from './bridge.js';
 import { detect, topMerchants } from './tx-analysis.js';
 import { happySpendShare } from './happiness.js';
 import { ratio, minus } from './money.js';
+import { paretoLevels } from './pareto.js';
 
 const r2 = (x) => (x === null || x === undefined ? null : Math.round(x * 100) / 100 + 0);
 const monthOf = (d) => d.slice(0, 7);
@@ -158,7 +159,7 @@ export function monthReview(doc, summary, today) {
     tracking: { fromLog, typed, share: ratio(fromLog, fromLog + typed) },
     changes,
     topMerchants: topMerchants(inMonth).top.map((m) => ({ merchant: m.merchant, amount: m.amount })),
-    pareto: null,
+    pareto: reviewPareto(doc, summary, month),
     mistakes: t.mistakeMonthly,
     happyShare: happy,
     accuracy: { now: accThis, last: lastAcc, lastMonth: lastClosed ? lastClosed.key : null },
@@ -166,6 +167,13 @@ export function monthReview(doc, summary, today) {
   };
   out.readings = reviewReadings(out);
   return out;
+}
+
+// The month's 80/20 at all three levels, small enough to keep in the snapshot (S-091).
+function reviewPareto(doc, summary, month) {
+  const p = paretoLevels(doc, summary.history, [month]);
+  const keep = (c) => ({ count: c.count, of: c.of, amount: c.amount, amountShare: c.amountShare, items: c.items.map((i) => ({ label: i.label, amount: i.amount })), reading: c.reading });
+  return { noEntries: p.noEntries, entries: keep(p.entries), merchants: keep(p.merchants), lines: keep(p.lines), reading: p.noEntries ? p.lines.reading + ' (No log entries, so lines only.)' : p.entries.reading };
 }
 
 // Factual sentences, no verdicts.

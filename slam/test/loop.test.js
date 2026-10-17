@@ -77,6 +77,8 @@ test('the month in review, saved at close, never changes after', () => {
   assert.equal(r.readings[0], 'Personal and fun came in $140 under plan.');
   assert.equal(r.readings[1], 'Groceries was $50 over.');
   assert.equal(r.readings[2], 'Income came in $300 more than planned.');
+  // The 80/20 saved with the review (worked out in test/pareto.test.js)
+  assert.equal(r.pareto.reading, '50% of your entries (3 of 6) made up 80% of your spending.');
   assert.equal(r.openItems.summary, 'Closed with 3 open items: off by $60, 1 reimbursement owed, next month\'s plan not started');
 
   const estimates = JSON.stringify(d.categories.map((c) => [c.estimate, c.lines.map((l) => l.estimate)]));

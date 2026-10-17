@@ -6,7 +6,8 @@ import { monthLabel } from '../format.js';
 import { card } from './catalog.js';
 import { reviewCard } from '../components/loop.js';
 import { bridgeCard } from './bridge-charts.js';
-import { lines } from './svg.js';
+import { lines, paretoChart } from './svg.js';
+import { paretoLevels, rangeMonths } from '../../calc/pareto.js';
 import { chartWidth } from './catalog.js';
 import { money, dayLabel } from '../format.js';
 import { estimateHistory } from '../../calc/estimates.js';
@@ -33,6 +34,25 @@ function estimateCard(ctx, s) {
   });
 }
 
+const RANGES = [['month', 'This month'], ['3', 'Last 3'], ['12', 'Last 12'], ['all', 'All']];
+const LEVELS = [['entries', 'Entries'], ['merchants', 'Merchants'], ['lines', 'Lines']];
+
+// 80/20 for a range, at the level picked; lines only when there is no log (S-091).
+export function paretoCard(ctx, s, anchor) {
+  const range = ctx.ui.paretoRange || 'month';
+  const p = paretoLevels(ctx.doc, s.history, rangeMonths(ctx.doc, s.history, range, anchor));
+  const level = p.noEntries ? 'lines' : ctx.ui.paretoLevel || 'entries';
+  const cut = p[level];
+  const tog = (opts, cur, set, key) => h('div', { class: 'toggle', role: 'group' }, opts.map(([id, label]) => h('button', { 'aria-pressed': cur === id ? 'true' : 'false', 'data-key': key + '-' + id, onclick: () => { set(id); ctx.rerender(); } }, label)));
+  return card(ctx, {
+    id: 'pareto', title: '80/20',
+    svg: cut.of ? paretoChart({ cumulative: cut.cumulative, count: cut.count, width: chartWidth(true), fmt: money, label: '80/20 by ' + level }) : null,
+    extra: h('div', {}, h('div', { class: 'row' }, tog(RANGES, range, (v) => { ctx.ui.paretoRange = v; }, 'pareto-range'), p.noEntries ? null : tog(LEVELS, level, (v) => { ctx.ui.paretoLevel = v; }, 'pareto-level')),
+      cut.count ? h('ul', { class: 'plain' }, cut.items.slice(0, 10).map((i) => h('li', { class: 'xs' }, h('span', {}, i.label), h('b', { class: 'num' }, money(i.amount, true))))) : null),
+    reading: (p.noEntries ? 'No entries in the log for this period, so this is by budget line. ' : '') + cut.reading
+  });
+}
+
 export function monthsCards(ctx, s) {
   const closed = ctx.doc.months.slice().reverse();
   if (!closed.length) return [card(ctx, { id: 'months-none', title: 'Months', reading: 'Close a month (Budget, Close month) to see its review here.' })];
@@ -40,5 +60,5 @@ export function monthsCards(ctx, s) {
   const rec = closed.find((m) => m.key === key);
   const picker = h('div', { class: 'card' }, h('label', { class: 'row' }, h('b', {}, 'Closed month'),
     h('select', { 'data-key': 'months-pick', onchange: (e) => { ctx.ui.monthsPick = e.target.value; ctx.rerender(); } }, options(closed.map((m) => [m.key, monthLabel(m.key)]), key))));
-  return [picker, reviewCard(ctx, rec, { id: 'months-review' }), bridgeCard(ctx, s, key, { picker: false, id: 'months-bridge' }), estimateCard(ctx, s)];
+  return [picker, reviewCard(ctx, rec, { id: 'months-review' }), bridgeCard(ctx, s, key, { picker: false, id: 'months-bridge' }), estimateCard(ctx, s), paretoCard(ctx, s, key)];
 }
