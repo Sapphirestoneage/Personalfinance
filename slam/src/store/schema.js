@@ -5,7 +5,7 @@ import { makeValue } from './value.js';
 import { DEFAULT_LINE_TYPES } from './types.js';
 import { newId } from './ids.js';
 
-export const SCHEMA_VERSION = 8;
+export const SCHEMA_VERSION = 9;
 
 export const SITUATIONS = ['employed', 'self-employed', 'between-jobs', 'student'];
 export const FILING_STATUSES = ['single', 'married-joint', 'married-separate', 'head-of-household'];
@@ -301,6 +301,8 @@ export function newHousehold(name, now = new Date()) {
     accounts: [],
     balances: {},
     cashflow: newCashflow(),
+    // Estimate history (S-090): append-only, written by the store.
+    estimateLog: [],
     nextStage: null,
     // Eras: life chapters laid end to end after today's budget (S-067).
     eras: newEras(),

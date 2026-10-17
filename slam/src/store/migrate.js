@@ -40,7 +40,9 @@ const STEPS = {
   // for a line and month that also has entries is kept as it was: when the entries
   // add up to something else, a "kept your typed actual" entry makes up the difference,
   // then the typed number is cleared (the log owns it now). No month's actual changes.
-  7: (doc) => logOwnsActuals(doc)
+  7: (doc) => logOwnsActuals(doc),
+  // Version 8 to 9 (S-090): estimate history. Older files load with an empty log.
+  8: (doc) => ({ ...doc, estimateLog: doc.estimateLog || [], schemaVersion: 9 })
 };
 
 const LOGGED = new Set(['spend', 'fee', 'refund', 'reimbursement']);
@@ -222,6 +224,7 @@ export function normalizeHousehold(doc) {
   }]));
   // Compatibility: files before tags have none.
   out.tags = (doc.tags || []).map((t) => ({ id: t.id, name: t.name }));
+  out.estimateLog = (doc.estimateLog || []).map((e) => ({ ...e }));
   out.transactions = doc.transactions || [];
   out.merchantMemory = doc.merchantMemory || {};
   out.snapshots = doc.snapshots || [];

@@ -267,6 +267,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('review', 'Tracking', await page.$eval('#just-closed [data-key="review-tracking"]', (b) => b.textContent), '23% ($460 logged, $1,500 typed)');
   await page.click('nav a[href="#analyze"]');
   await page.waitForSelector('#months-review');
+  check('months', 'Estimate history chart', String(await page.$$eval('#chart-estimate-history svg path', (p) => p.length > 0)), 'true');
   check('months', 'Saved review shown', await page.$eval('#months-review [data-key="review-open"]', (b) => b.textContent), want);
   check('bridge', 'Console errors', String(errors.length), '0');
   await page.close();

@@ -8,6 +8,7 @@ import { validateHousehold } from './validate.js';
 import { createHistory } from './history.js';
 import { exportHousehold, parseImport } from './transfer.js';
 import { closeMonth, reviseMonth } from './months.js';
+import { recordEstimates, checkAppendOnly } from './estimate-log.js';
 
 const BACKUP_LIMIT = 10;
 
@@ -76,6 +77,9 @@ export function createStore(storage, clock = () => new Date()) {
       if (!doc) throw new Error('No client is open');
       const draft = JSON.parse(JSON.stringify(doc));
       mutator(draft);
+      // Estimate history (S-090): written here for every change, and never rewritten.
+      checkAppendOnly(doc, draft);
+      recordEstimates(doc, draft, nowIso());
       draft.updatedAt = nowIso();
       persist(draft);
       history.record(doc, label);

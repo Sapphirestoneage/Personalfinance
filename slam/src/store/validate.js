@@ -183,6 +183,13 @@ export function validateHousehold(doc) {
     if (t.settles !== undefined && !txIds.has(t.settles)) errs.push(w + '.settles: unknown entry ' + t.settles);
   });
   if (!/^\d{4}-\d{2}$/.test(doc.currentMonth || '')) errs.push('currentMonth must be YYYY-MM');
+  (doc.estimateLog || []).forEach((e, i) => {
+    const w = 'estimateLog[' + i + ']';
+    if (!e.lineId === !e.categoryId) errs.push(w + ': needs a lineId or a categoryId');
+    if (!e.at || !/^\d{4}-\d{2}$/.test(e.month || '')) errs.push(w + ': needs at and month');
+    if (e.to) errs.push(...valueErrors(e.to, w + '.to'));
+    if (e.from) errs.push(...valueErrors(e.from, w + '.from'));
+  });
   for (const [k, lines] of Object.entries(doc.monthActuals || {})) {
     if (!/^\d{4}-\d{2}$/.test(k)) errs.push('monthActuals key ' + k + ' must be YYYY-MM');
     if (k === doc.currentMonth) errs.push('monthActuals must not hold the month being worked on (' + k + ')');
