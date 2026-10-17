@@ -337,7 +337,7 @@ test('October: every scheduled item, five days, the lowest point, safe to spend,
   // = -40.00, below 0, so safe to spend is 0 and the shortfall is $40 on Nov 5. Until payday (Oct 23) the lowest
   // is Oct 22, 3,196.03 - 100 = 3,096.03: higher than 0, so it is not shown.
   assert.equal(cal.safeToSpend, 0);
-  assert.deepEqual([cal.shortfall, cal.untilPayday], [{ amount: 40, date: '2026-11-05' }, null]);
+  assert.deepEqual(cal.shortfall, { amount: 40, date: '2026-11-05' });
   assert.equal(safeReading(cal), "Nothing safe to spend right now. You'll be $40 under your cushion on Nov 5.");
   assert.ok(cal.safeToSpend <= cal.todayCash);
   // Rent on Nov 1 leaves 71.20, under the cushion; the paycheck that covers it is Nov 6.

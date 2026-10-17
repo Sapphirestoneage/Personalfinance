@@ -43,10 +43,6 @@ export function addBalanceCheck(doc, accountId, date, value) {
   return c;
 }
 
-export function removeBalanceCheck(doc, id) {
-  doc.cashflow.checks = doc.cashflow.checks.filter((c) => c.id !== id);
-}
-
 export function saveForecast(doc, month, predicted, nowIso) {
   if (predicted === null || predicted === undefined) return;
   doc.cashflow.forecasts[month] = { predicted, at: nowIso };

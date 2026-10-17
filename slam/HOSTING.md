@@ -16,6 +16,8 @@ this public repo.
   local `YYYY-MM-DD`.
 - **No hard deletes.** A removed record stays in the file with `deleted`,
   `deletedAt`, and `deletedBy`. Calc and screens only see the live view.
+  A removed client is kept the same way: its file is marked deleted and it
+  leaves the client list (S-098).
 - **Who is working.** `src/store/session.js` holds the role. Today it is
   always the coach. A sign-in would set it, and nothing else decides it.
 - **Who sees what.** `src/store/visibility.js` is the one map. Coach-only
@@ -24,7 +26,7 @@ this public repo.
   same map to show what the client would see.
 - **One storage interface.** `src/store/storage.js` is async and is the only
   code that touches where data lives: `listClients()`, `loadClient(id)`,
-  `saveClient(doc)`, `deleteClient(id)`, `loadBackups()`, `saveBackups(list)`,
+  `saveClient(doc)`, `loadBackups()`, `saveBackups(list)`,
   and `subscribe(fn)` for changes made somewhere else.
 - **Merge, not replace.** `src/store/merge.js` merges two copies record by
   record. A record changed on both sides since the last shared version

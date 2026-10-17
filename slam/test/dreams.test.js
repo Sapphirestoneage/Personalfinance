@@ -84,9 +84,9 @@ test('compat: files before long-term dreams load with them blank, short-term dre
 // Short minus today: housing -30, food -410, health +15, bills -38, fun -290, annual -20, fees -39,
 //   giving +50 (sum -762). Biggest decreases: Food, then Personal and fun.
 // % of take-home: housing today 1,750 / 3,900 = 0.448718; short 1,720 / 3,900 = 0.441026; long 2,300 / 3,900 = 0.589744.
-// WHAT IT TAKES: today's savings share 150 / 3,900 = 0.038462; 1 - 0.038462 = 3,750 / 3,900.
-//   long 3,852 x 3,900 / 3,750 = 3,852 x 1.04 = 4,006.08, which is 106.08 more than 3,900.
-//   short 3,052 x 1.04 = 3,174.08, which is 725.92 less than 3,900.
+// THE PAY THIS DREAM NEEDS (worked out for the long-term dream): today's savings share
+//   150 / 3,900 = 0.038462; 1 - 0.038462 = 3,750 / 3,900.
+//   3,852 x 3,900 / 3,750 = 3,852 x 1.04 = 4,006.08, which is 106.08 more than the 3,900 she brings home.
 function mayaDreams() {
   const d = loadHousehold('maya');
   findCategory(d, 'housing').dreamLong = makeValue(2300);
@@ -124,13 +124,11 @@ test('Maya: today vs short-term vs long-term dream, by hand', () => {
   assert.equal(dl.readings.long, 'Your long-term dream costs $38 a month more than today, mostly Housing and Giving.');
   assert.equal(dl.readings.short, 'Your short-term dream costs $762 a month less than today, mostly Food and Personal and fun.');
   assert.ok(near(dl.savingsShare, 0.038462, 6));
-  money(dl.takes.long, 4006.08, 'what the long-term dream takes');
-  money(dl.takes.longMore, 106.08, 'more than now');
-  money(dl.takes.short, 3174.08, 'what the short-term dream takes');
-  money(dl.takes.shortMore, -725.92, 'less than now');
+  money(dl.pay.needed, 4006.08, 'the pay the long-term dream needs');
+  money(dl.pay.short, 106.08, 'short of what she brings home now');
 });
 
-test('what it takes: spending / (1 - savings share), and blanks stay blank', () => {
+test('the pay a dream needs: spending / (1 - savings share), and blanks stay blank', () => {
   // 3,000 a month spent, saving 25% of take-home: 3,000 / 0.75 = 4,000
   assert.equal(takeHomeFor(3000, 0.25), 4000);
   assert.equal(takeHomeFor(3000, 0), 3000);

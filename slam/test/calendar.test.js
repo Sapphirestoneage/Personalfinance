@@ -116,7 +116,7 @@ test('past days show the log, today takes the waiting paycheck, the future is sc
   money(cal.lowest.amount, 1153.33, 'lowest');
   assert.equal(cal.nextPayday, '2026-10-16');
   money(cal.safeToSpend, 1153.33, 'safe to spend');
-  assert.deepEqual([cal.shortfall, cal.untilPayday], [null, null]);
+  assert.equal(cal.shortfall, null);
   assert.deepEqual([cal.belowZero, cal.belowCushion, cal.payLater.length], [0, 0, 0]);
   assert.equal(calendarReading(cal), 'Your lowest point is $1,153 on the 15th, the day before payday.');
 });

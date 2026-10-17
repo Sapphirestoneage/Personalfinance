@@ -5,10 +5,13 @@ on:
   push:
   pull_request:
   workflow_call:
+# Three jobs run side by side, so the slow browser sweeps never push the
+# fast checks past a time limit: unit and data checks, the SPARKS browser
+# gates, and the Money Rooms v3 browser sweep (about an hour on its own).
 jobs:
   suite:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,11 +27,22 @@ jobs:
           node marketing/test/run.js
           node test/export.js
           node test/xlsx.js
+      - name: SLAM (its own unit tests; slam/README.md)
+        working-directory: slam
+        run: node --test
       - name: Lane 2 (corpus, properties, data, glossary, migration, QR)
         working-directory: tests
         run: |
           npm ci
           npm test
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Browser gates
         run: |
           npm install --no-save playwright@1.49.0
@@ -48,4 +62,17 @@ jobs:
           node test/xss.js
           node test/comeback.js
           node test/alignment.js
+  money-rooms-ui:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Money Rooms v3 browser sweep (serves its own copy of the site)
+        run: |
+          npm install --no-save playwright@1.49.0
+          npx playwright install --with-deps chromium
+          export NODE_PATH="$PWD/node_modules"
           node money-rooms-v3/tests/ui.js

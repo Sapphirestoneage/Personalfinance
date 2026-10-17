@@ -49,7 +49,7 @@ export function eraTimeline(doc, totals, refs, dreams = null) {
     for (let i = 0; i < e.gapMonths; i++) step(baseNet, null);
     const income = eraMoney(e.takeHome, baseIncome, t.income);
     const spendFrom = e.spendFrom || 'template';
-    const startAt = dreams ? eraSpendBase(dreams, spendFrom, baseSpend) : spendFrom === 'today' ? baseSpend : null;
+    const startAt = eraSpendBase(dreams, spendFrom, baseSpend);
     const spend = eraMoney(e.spending, baseSpend, t.spending, startAt);
     const net = minus(income.amount, spend.amount);
     const oneTime = e.oneTime.amount;

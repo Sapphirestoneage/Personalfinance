@@ -18,7 +18,7 @@ import { createStore } from '../src/store/store.js';
 import { createStorage, memoryBackend } from '../src/store/storage.js';
 import { makeValue } from '../src/store/value.js';
 import { makeDate } from '../src/store/schema.js';
-import { addIncome, addDebt, findLine, findCategory, setField, setTransactionLine } from '../src/store/edits.js';
+import { addIncome, addDebt, findLine, setField, setTransactionLine } from '../src/store/edits.js';
 import { addAccount, setBalance } from '../src/store/accounts.js';
 import { addEntry, editEntry, mergeImport, confirmMatch } from '../src/store/log.js';
 import { confirmScheduled, saveForecast } from '../src/store/cashflow.js';

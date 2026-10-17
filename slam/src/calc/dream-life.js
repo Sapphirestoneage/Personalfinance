@@ -14,7 +14,7 @@ import { ratio, minus, sumKnown } from './money.js';
 
 const r2 = (x) => (x === null ? null : Math.round(x * 100) / 100);
 
-// "What it takes": the monthly take-home that pays for this spending and still
+// "The pay this dream needs": the monthly take-home that pays for this spending and still
 // saves the same share of take-home as today. spending / (1 - savingsShare).
 export function takeHomeFor(spending, savingsShare) {
   if (spending === null || savingsShare === null || savingsShare >= 1) return null;
@@ -72,24 +72,22 @@ export function dreamLife(doc, summary) {
   const longTotal = sum('long');
   // Today's share of take-home saved (the budget's savings over take-home).
   const savingsShare = ratio(summary.totals.savings, th);
-  const takesShort = takeHomeFor(shortTotal, savingsShare);
-  const takesLong = takeHomeFor(longTotal, savingsShare);
+  // The dream the pay is worked out for: long term (which copies short term where it is blank).
+  const payNeeded = takeHomeFor(longTotal, savingsShare);
   return {
     any, hasShort, hasLong, rows, takeHome: th,
     today, shortTotal, longTotal,
     shortDiff: minus(shortTotal, today), longDiff: minus(longTotal, today),
     todayUsesEstimate: rows.filter((r) => r.todayFrom === 'estimate').map((r) => r.name),
-    followsToday: rows.filter((r) => r.shortFrom === 'today' && !r.isDebt && !r.notForMe).map((r) => r.name),
     savingsShare,
-    takes: { short: takesShort, long: takesLong, shortMore: minus(takesShort, th), longMore: minus(takesLong, th) },
+    pay: { needed: payNeeded, short: minus(payNeeded, th) },
     // With no long-term dream at all, long follows short, so only the short-term sentence is said.
     readings: {
       short: hasShort ? dreamReading('short-term dream', shortTotal, today, spend.map((r) => ({ name: r.name, diff: r.shortDiff }))) : null,
       long: hasLong ? dreamReading('long-term dream', longTotal, today, spend.map((r) => ({ name: r.name, diff: r.longDiff }))) : null
     },
     // For the dream entry screen (moved from the budget as it was): each column as given, and what it leaves.
-    entry: entryOf(summary, short, columnModel(doc, 'dreamLong'), th),
-    columns: { dream: short, dreamLong: long }
+    entry: entryOf(summary, short, columnModel(doc, 'dreamLong'), th)
   };
 }
 
@@ -115,12 +113,13 @@ function entryOf(summary, short, long, th) {
   return { rows, dream: column(short), dreamLong: column(long) };
 }
 
-// Where an era's blank spending starts (S-097): today's budget, a dream, or the
-// template's share of today (the default).
-export const SPEND_FROM = ['template', 'today', 'dream', 'dreamLong'];
+// Where an era's blank spending starts (S-097, ERA_SPEND_FROM): today's budget, a dream,
+// or null for the template's share of today (the default).
+// With no dream life (or none passed in), a dream start falls back to the template's share.
 export function eraSpendBase(dl, from, baseSpend) {
   if (from === 'today') return baseSpend;
-  if (from === 'dream') return dl.any ? dl.shortTotal : null;
-  if (from === 'dreamLong') return dl.any ? dl.longTotal : null;
+  if (!dl || !dl.any) return null;
+  if (from === 'dream') return dl.shortTotal;
+  if (from === 'dreamLong') return dl.longTotal;
   return null;
 }

@@ -56,8 +56,8 @@ Every month runs the same three steps, like an ice cream sandwich:
    than planned, what went worse, and how the budget ties to the cash (the bridge).
 
 The log owns the money: a line with entries has its actual computed from them and is not typed over.
-The Budget screen shows the three steps at the top, and a 30-day cash strip (lowest point, safe to spend
-until payday). Riley's demo is a full year of the loop.
+The Budget screen shows the three steps at the top, and a 30-day cash strip (lowest point, and safe to
+spend: what can go out today without any day ahead dropping under the cushion). Riley's demo is a full year of the loop.
 
 ## Bank and card files
 
@@ -84,7 +84,7 @@ Still four. The monthly loop lives inside them.
 1. **Clients**: client list, new client, open, export, import (a file for a client already here is merged record by record; changes made on both copies wait for the coach to pick), and the demo households.
 2. **Fill in**: guided passes, numbered: 1 Gut, 2 Basics, 3 Rough, 4 Actual, 5 Cash flow, 6 Next stage,
    7 Eras. Eras opens with Your dream life (short and long term, then today next to each dream and what it
-   would take), then the eras themselves, each of which can start its spending from today, a dream, or
+   needs in pay), then the eras themselves, each of which can start its spending from today, a dream, or
    the template's share. Next stage has three lenses: Disaster, Likely, Best case. Actual is
    "review and fill gaps": lines filled from the log are collapsed, empty lines come first. Cash flow holds
    accounts and month balances, paydays and bill dates, scheduled items waiting on "It happened", the log,

@@ -1,11 +1,6 @@
 // Tiny helpers for adding and dividing amounts where empty is not zero.
 // null means "not entered"; these helpers never turn null into 0 silently.
 
-export function round2(x) {
-  if (x === null || x === undefined) return null;
-  return Math.round((x + Math.sign(x) * Number.EPSILON) * 100) / 100;
-}
-
 // Adds the numbers that exist. total is null when nothing was entered.
 export function sumKnown(list) {
   let total = null;

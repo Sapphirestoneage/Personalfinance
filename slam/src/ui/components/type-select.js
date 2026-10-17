@@ -3,7 +3,7 @@
 
 import { h, options } from '../dom.js';
 import { CATEGORY_TYPES, LINE_TYPES } from '../../store/types.js';
-import { findCategory, findLine, setLineType } from '../../store/edits.js';
+import { findCategory, setLineType } from '../../store/edits.js';
 
 export function categoryTypeSelect(ctx, cat, opts = {}) {
   return h('label', { class: 'field type-field' }, h('span', { class: 'lbl' }, opts.label || 'Counts as'),

@@ -62,9 +62,6 @@ const TREE = [
     ['other-goals', 'Other goals', 'fixed', false]]]
 ];
 
-export const DEBT_CATEGORY_ID = 'debt';
-export const SAVINGS_CATEGORY_ID = 'savings';
-export const HOUSING_CATEGORY_ID = 'housing';
 export const EVERYTHING_CATEGORY_ID = 'everything';
 
 export function newLine(fields = {}) {
@@ -249,6 +246,9 @@ export function newCashflow() {
 export function newBalance() {
   return { start: makeValue(null, { cadence: 'one-off' }), end: makeValue(null, { cadence: 'one-off' }) };
 }
+
+// Where an era's blank spending starts (S-097). Not stored on new eras: absent means 'template'.
+export const ERA_SPEND_FROM = ['template', 'today', 'dream', 'dreamLong'];
 
 export function newEra(fields = {}) {
   return {

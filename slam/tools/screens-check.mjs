@@ -161,12 +161,11 @@ for (const [name, button] of Object.entries(DEMOS)) {
     // Maya by hand (test/dreams.test.js): short-term dream spending 3,052, today 3,814, so 762 less; biggest
     // decreases Food (-410) and Personal and fun (-290). No long-term dreams, so long follows short (3,052)
     // and only the short-term sentence is said.
-    // What it takes: 3,052 / (1 - 150 / 3,900) = 3,052 x 1.04 = 3,174.08, which is 725.92 less than 3,900.
-    check(name, 'Dream short total', await page.$eval('#dream-compare [data-key="dream-short-total"]', (x) => x.textContent), money(3052));
-    check(name, 'Dream long total', await page.$eval('#dream-compare [data-key="dream-long-total"]', (x) => x.textContent), money(3052));
-    check(name, 'Dream reading', await page.$eval('#dream-compare [data-key="dream-reading"]', (x) => x.textContent), 'Your short-term dream costs $762 a month less than today, mostly Food and Personal and fun.');
-    check(name, 'What it takes', await page.$eval('#dream-compare [data-key="dream-takes"]', (x) => x.textContent),
-      'What it takes: to live the short-term dream and still save 4% of take-home like today, you would need about ' + money(3174.08) + ' a month take-home, ' + money(725.92) + ' less than now.');
+    // The pay this dream needs: 3,052 / (1 - 150 / 3,900) = 3,052 x 1.04 = 3,174.08; she brings home 3,900, 725.92 more.
+    check(name, 'Pay this dream needs', await page.$eval('#dream-compare [data-key="dream-takes"]', (x) => x.textContent),
+      'The pay this dream needs' +
+      'Your short-term dream spends ' + money(3052) + ' a month. Today you save 4% of what you bring home. To spend ' + money(3052) + ' and still save 4%, you would need to bring home about ' + money(3174.08) + ' a month.' +
+      'You bring home ' + money(3900) + ' now, ' + money(725.92) + ' more than it needs.');
   } else if (exp.dreamNone) check(name, 'No dream life yet', String(await page.$$eval('[data-key="dream-none"]', (x) => x.length)), '1');
   check(name, 'Console errors', String(errors.length), '0');
   await page.close();
