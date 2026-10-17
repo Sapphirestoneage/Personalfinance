@@ -9,7 +9,8 @@ import { scheduleCard, waitingCard, checkBalancesCard } from '../components/cash
 import { money, monthLabel } from '../format.js';
 import { importCSV, FORMATS } from '../../calc/tx-import.js';
 import { setTransactionLine, setTransactionKind, removeTransaction } from '../../store/edits.js';
-import { mergeImport, confirmMatch, rejectMatch, markNotDuplicate } from '../../store/log.js';
+import { mergeImport, confirmMatch, rejectMatch, markNotDuplicate, editEntry } from '../../store/log.js';
+import { parseAmount } from '../components/value-input.js';
 import { matchImport, matchSummary, isPending, sourceOf } from '../../calc/log.js';
 import { quickEntryButton } from '../components/quick-entry.js';
 import { dayLabel } from '../format.js';
@@ -31,6 +32,22 @@ function possibleCard(ctx) {
         t.possible.map((id) => byId[id] ? h('div', { class: 'row small' }, 'Logged: ' + (byId[id].description || byId[id].note || 'entry') + ' ' + money(Math.abs(byId[id].amount), true) + ', ' + dayLabel(byId[id].date),
           h('button', { class: 'btn small', 'data-key': 'same-' + t.id + '-' + id, onclick: () => ctx.update('Same entry', (d) => confirmMatch(d, t.id, id)) }, 'Same, merge')) : null)),
       h('button', { class: 'btn small ghost', 'data-key': 'different-' + t.id, onclick: () => ctx.update('Different entries', (d) => rejectMatch(d, t.id)) }, 'Different')))));
+}
+
+// Owed back by someone, a one-off, or which purchase a reimbursement pays back (S-088).
+function entryMore(ctx, t) {
+  const key = 'more:' + t.id;
+  const open = ctx.ui.expanded.has(key);
+  const toggle = h('button', { class: 'btn small ghost', 'data-key': key, 'aria-expanded': open ? 'true' : 'false', onclick: () => { if (open) ctx.ui.expanded.delete(key); else ctx.ui.expanded.add(key); ctx.rerender(); } },
+    (t.owed ? 'Owed ' + money(t.owed, true) + ', ' : '') + (t.oneOff ? 'One-off, ' : '') + (open ? 'Less' : 'More'));
+  if (!open) return toggle;
+  const purchases = ctx.doc.transactions.filter((x) => x.owed && x.id !== t.id);
+  return h('div', { class: 'row small', style: 'flex-basis:100%' }, toggle,
+    t.amount > 0 ? h('label', { class: 'row' }, 'Someone owes me back', h('input', { type: 'text', inputmode: 'decimal', class: 'amount', style: 'width:6em', 'data-key': 'owed:' + t.id, value: t.owed ? String(t.owed) : '',
+      onchange: (e) => { const a = parseAmount(e.target.value); ctx.update('Owed back', (d) => editEntry(d, t.id, { owed: a || null })); } })) : null,
+    t.amount > 0 ? h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: !!t.oneOff, 'data-key': 'oneoff:' + t.id, onchange: (e) => ctx.update('One-off', (d) => editEntry(d, t.id, { oneOff: e.target.checked })) }), 'One-off (kept out of the monthly budget)') : null,
+    t.kind === 'reimbursement' ? h('label', { class: 'row' }, 'Pays back', h('select', { 'data-key': 'settles:' + t.id, onchange: (e) => ctx.update('Pays back', (d) => editEntry(d, t.id, { settles: e.target.value || null })) },
+      options([['', 'Nothing in particular'], ...purchases.map((x) => [x.id, dayLabel(x.date) + ' ' + (x.description || x.note || 'purchase') + ', owed ' + money(x.owed, true)])], t.settles || ''))) : null);
 }
 
 const KINDS = [['spend', 'Spending'], ['fee', 'Fee'], ['refund', 'Refund'], ['reimbursement', 'Reimbursement'], ['card-payment', 'Card payment'], ['transfer', 'Transfer'], ['income', 'Income']];
@@ -116,7 +133,8 @@ function reviewCard(ctx, summary, month) {
       h('b', { class: 'num' }, money(t.amount, true)),
       h('select', { 'aria-label': 'Kind', 'data-key': 'tx-kind-' + t.id, onchange: (e) => ctx.update('Transaction kind', (d) => setTransactionKind(d, t.id, e.target.value)) }, options(KINDS, t.kind)),
       h('select', { 'aria-label': 'Budget line', 'data-key': 'tx-line-' + t.id, onchange: (e) => ctx.update('Map transaction', (d) => setTransactionLine(d, t.id, e.target.value, remember)) }, options(lines, t.lineId || '')),
-      h('button', { class: 'btn small ghost danger', onclick: () => ctx.update('Remove transaction', (d) => removeTransaction(d, t.id)) }, 'Remove'))))
+      h('button', { class: 'btn small ghost danger', onclick: () => ctx.update('Remove transaction', (d) => removeTransaction(d, t.id)) }, 'Remove'),
+      entryMore(ctx, t))))
       : h('p', { class: 'muted small' }, showAll ? 'No transactions this month.' : 'Everything this month has a line.'));
 }
 

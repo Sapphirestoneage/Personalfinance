@@ -179,6 +179,8 @@ export function validateHousehold(doc) {
     if (t.account && !acctIds.has(t.account)) errs.push(w + '.account: unknown account ' + t.account);
     if (t.lineId && !lineIds.has(t.lineId)) errs.push(w + '.lineId: unknown line ' + t.lineId);
     (t.possible || []).forEach((id) => { if (!txIds.has(id)) errs.push(w + '.possible: unknown entry ' + id); });
+    if (t.owed !== undefined && !(typeof t.owed === 'number' && t.owed > 0 && t.owed <= Math.abs(t.amount))) errs.push(w + '.owed must be more than 0 and no more than the amount');
+    if (t.settles !== undefined && !txIds.has(t.settles)) errs.push(w + '.settles: unknown entry ' + t.settles);
   });
   if (!/^\d{4}-\d{2}$/.test(doc.currentMonth || '')) errs.push('currentMonth must be YYYY-MM');
   for (const [k, lines] of Object.entries(doc.monthActuals || {})) {

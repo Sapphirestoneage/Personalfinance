@@ -9,6 +9,7 @@ import { dayLine, hbars } from './svg.js';
 import { card, chartWidth } from './catalog.js';
 import { calendarFor, waitingCard, checkBalancesCard } from '../components/cashflow.js';
 import { quickEntryButton } from '../components/quick-entry.js';
+import { bridgeCards } from './bridge-charts.js';
 import { cashCalendar, calendarReading, monthSoFar, daysInMonth, forecastCheck } from '../../calc/calendar.js';
 import { findLine } from '../../store/edits.js';
 import { makeValue } from '../../store/value.js';
@@ -141,5 +142,5 @@ function forecastCard(ctx) {
 export function cashflowCards(ctx, s) {
   const cal = calendarFor(ctx, s, ctx.ui.cfHorizon || 30);
   if (!ctx.doc.accounts.some((a) => a.state !== 'archived')) return [card(ctx, { id: 'cf-none', title: 'Cash flow', reading: 'Add accounts and balances in Fill in, Cash flow, to see cash by day.' })];
-  return [chartCard(ctx, cal, 'cf-chart', 'Cash by day'), waitingCard(ctx, s), payLaterCard(ctx, cal), listCard(ctx, cal), gridCard(ctx, cal), soFarCard(ctx, cal), whatIfCard(ctx, s, cal), forecastCard(ctx), checkBalancesCard(ctx)].filter(Boolean);
+  return [chartCard(ctx, cal, 'cf-chart', 'Cash by day'), ...bridgeCards(ctx, s), waitingCard(ctx, s), payLaterCard(ctx, cal), listCard(ctx, cal), gridCard(ctx, cal), soFarCard(ctx, cal), whatIfCard(ctx, s, cal), forecastCard(ctx), checkBalancesCard(ctx)].filter(Boolean);
 }

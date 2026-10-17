@@ -406,3 +406,39 @@ export function dayLine({ days, width, fmt, todayIndex = null, cushion = null, m
   days.forEach((d, i) => { body += '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(d.v === null ? lo : d.v).toFixed(1) + '" r="5" style="fill:transparent"><title>' + esc(d.date + ': ' + (d.v === null ? 'no balance' : fmt(d.v))) + '</title></circle>'; });
   return svgWrap(width, height, body, label);
 }
+
+// A sideways waterfall (S-088): one row per step, each bar from the running
+// total before it to the one after. Totals start at zero; an "unexplained" step
+// is drawn as an outline so it reads differently. rows: [{ label, from, to, kind }]
+export function waterfall({ rows, width, fmt, label = 'Waterfall' }) {
+  const barH = 16;
+  const vals = rows.flatMap((r) => [r.from, r.to]);
+  let lo = Math.min(0, ...vals);
+  let hi = Math.max(0, ...vals);
+  if (hi === lo) hi = lo + 1;
+  const amtOf = (r) => (r.kind === 'total' ? fmt(r.to) : (r.to >= r.from ? '+' : '-') + fmt(Math.abs(r.to - r.from)));
+  // Room on both sides for the amount labels, so nothing is clipped on a phone.
+  const pad = Math.min(width * 0.3, Math.max(...rows.map((r) => amtOf(r).length)) * 7 + 10);
+  const x = (v) => pad + ((v - lo) / (hi - lo)) * (width - 2 * pad);
+  let y = 4;
+  let body = '';
+  let prevX = null;
+  for (const r of rows) {
+    body += t(4, y + F, r.label, { cls: 'muted' });
+    y += F + 5;
+    const a = x(Math.min(r.from, r.to));
+    const b = x(Math.max(r.from, r.to));
+    const color = r.kind === 'total' ? 'var(--series-actual)' : r.to >= r.from ? 'var(--chart-3)' : 'var(--chart-2)';
+    const tip = r.label + ': ' + fmt(r.to - r.from);
+    if (r.kind === 'unexplained') body += '<rect x="' + a.toFixed(1) + '" y="' + y + '" width="' + Math.max(2, b - a).toFixed(1) + '" height="' + barH + '" rx="3" style="fill:none;stroke:var(--chart-axis);stroke-width:2" stroke-dasharray="4 3"><title>' + esc(tip) + '</title></rect>';
+    else body += rect(a, y, Math.max(2, b - a), barH, color, { tip });
+    if (prevX !== null && r.kind !== 'total') body += line(prevX, y - F - 7, prevX, y + barH, 'grid-line', true);
+    const amt = amtOf(r);
+    const right = r.to >= r.from || r.kind === 'total' ? b + 6 + amt.length * 7 <= width : a - 6 - amt.length * 7 < 0;
+    body += t(right ? b + 5 : a - 5, y + barH - 3, amt, { anchor: right ? null : 'end', weight: r.kind === 'total' ? 700 : null });
+    prevX = x(r.to);
+    y += barH + 10;
+  }
+  if (lo < 0) body += line(x(0), 0, x(0), y, 'axis');
+  return svgWrap(width, y, body, label);
+}

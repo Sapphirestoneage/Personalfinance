@@ -17,19 +17,21 @@ export function txMonths(txs) {
 
 // Card payments, transfers, and income are not spending. Refunds and
 // reimbursements (Venmo, Zelle, work) reduce the line they are mapped to;
-// unmapped ones change nothing.
+// unmapped ones change nothing. A purchase someone will pay back counts only
+// the client's share (amount - owed); the reimbursement that settles it then
+// changes nothing. A one-off entry is listed apart, like a one-off actual (S-088).
 export function actualsFromTransactions(txs, month) {
   const byLine = {};
   const counts = {};
   let unmapped = 0;
   let unmappedCount = 0;
   for (const t of counted(txs)) {
-    if (monthOf(t.date) !== month || !COUNTS.has(t.kind)) continue;
+    if (monthOf(t.date) !== month || !COUNTS.has(t.kind) || t.oneOff || (t.kind === 'reimbursement' && t.settles)) continue;
     if (!t.lineId) {
       if (PURCHASE.has(t.kind)) { unmapped += t.amount; unmappedCount += 1; }
       continue;
     }
-    byLine[t.lineId] = (byLine[t.lineId] || 0) + t.amount;
+    byLine[t.lineId] = (byLine[t.lineId] || 0) + t.amount - (t.owed || 0);
     counts[t.lineId] = (counts[t.lineId] || 0) + 1;
   }
   for (const k of Object.keys(byLine)) byLine[k] = r2(byLine[k]);

@@ -35,6 +35,8 @@ export function editEntry(doc, id, change) {
   const t = doc.transactions.find((x) => x.id === id);
   if (!t) throw new Error('No entry ' + id);
   for (const k of ['date', 'amount', 'kind', 'lineId', 'incomeId', 'note', 'account']) if (k in change) t[k] = change[k];
+  // Owed back by someone else, a one-off, and which purchase a reimbursement settles (S-088).
+  for (const k of ['owed', 'oneOff', 'settles']) if (k in change) { if (change[k] === null || change[k] === false || change[k] === 0) delete t[k]; else t[k] = change[k]; }
   if ('merchant' in change) { t.description = change.merchant; t.merchant = change.merchant ? merchantKey(change.merchant) : ''; }
   sortLog(doc);
 }

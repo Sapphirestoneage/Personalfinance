@@ -19,6 +19,37 @@ const URL = process.env.SLAM_URL || 'http://localhost:8765/';
 const DEMOS = { maya: 'Maya, 26', luis: 'Luis, 33', tasha: 'Tasha, 29', sam: 'Sam, 24' };
 let failures = 0;
 
+// The October household from test/bridge.test.js, plus 60 of ATM cash, as an export file.
+async function buildBridgeDoc() {
+  const { newHousehold } = await import('../src/store/schema.js');
+  const { makeValue } = await import('../src/store/value.js');
+  const { addAccount, setBalance } = await import('../src/store/accounts.js');
+  const { addDebt, findLine } = await import('../src/store/edits.js');
+  const { addEntry, editEntry } = await import('../src/store/log.js');
+  const { migrate } = await import('../src/store/migrate.js');
+  const { exportHousehold } = await import('../src/store/transfer.js');
+  const one = (a) => makeValue(a, { cadence: 'one-off' });
+  const raw = newHousehold('Bridge check');
+  raw.currentMonth = '2026-10';
+  raw.income.push({ id: 'job', type: 'w2', label: 'Job', payFrequency: 'monthly', takeHome: makeValue(4000), gross: makeValue(), deductions: [], state: 'active' });
+  const d = migrate(raw);
+  addDebt(d, { label: 'Visa', type: 'credit-card' }).minimum = makeValue(40);
+  for (const [id, name, type, start, end] of [['chk', 'Checking', 'checking', 2000, 2420], ['sav', 'Savings', 'savings', 5000, 5200], ['visa', 'Visa', 'credit-card', 500, 350]]) {
+    addAccount(d, { id, name, type });
+    setBalance(d, '2026-10', id, 'start', one(start));
+    setBalance(d, '2026-10', id, 'end', one(end));
+  }
+  findLine(d, 'rent').line.actual = makeValue(1500);
+  findLine(d, 'emergency-fund').line.actual = makeValue(200);
+  Object.assign(findLine(d, 'car-insurance').line, { estimate: makeValue(1200, { cadence: 'year' }), dueMonth: one(10), dueDay: one(14) });
+  for (const [date, amount, more] of [['2026-10-01', -2000, { kind: 'income' }], ['2026-10-15', -2000, { kind: 'income' }], ['2026-10-20', -300, { kind: 'income' }],
+    ['2026-10-05', 300, { lineId: 'groceries', account: 'visa' }], ['2026-10-06', 100, { lineId: 'groceries' }], ['2026-10-14', 1200, { lineId: 'car-insurance' }],
+    ['2026-10-25', 450, { kind: 'card-payment' }], ['2026-10-28', 60, { merchant: 'ATM withdrawal' }]]) addEntry(d, { date, amount, account: 'chk', ...more });
+  editEntry(d, addEntry(d, { date: '2026-10-10', amount: 120, lineId: 'shopping', account: 'chk', merchant: 'Ticketmaster' }).id, { owed: 60 });
+  editEntry(d, addEntry(d, { date: '2026-10-12', amount: 250, lineId: 'shopping', account: 'chk', merchant: 'Couch' }).id, { oneOff: true });
+  return exportHousehold(d, '2026-11-01T00:00:00Z');
+}
+
 function check(name, label, shown, expected) {
   const ok = shown === expected;
   if (!ok) failures += 1;
@@ -197,6 +228,26 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.waitForFunction(() => { const t = document.querySelector('.toast'); return t && t.textContent.startsWith('This comes'); }, null, { timeout: 3000 }).catch(() => null);
   check('loop', 'Typing over a logged line', await page.$eval('.toast', (t) => t.textContent), 'This comes from 2 entries. Add one, or edit an entry.');
   check('loop', 'Console errors', String(errors.length), '0');
+  await page.close();
+}
+// The budget-to-cash bridge (S-088): the October household from test/bridge.test.js
+// with $60 of ATM cash unmapped. By hand: explained +680, cash 7,000 -> 7,620 = +620, not explained -60.
+{
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto(URL + '#clients');
+  console.log('bridge (phone width)');
+  const doc = await buildBridgeDoc();
+  await page.setInputFiles('#import-file', { name: 'bridge.json', mimeType: 'application/json', buffer: Buffer.from(doc) });
+  await page.waitForTimeout(300);
+  await page.click('nav a[href="#analyze"]');
+  await page.waitForSelector('#chart-bridge');
+  check('bridge', 'Explained', await page.$eval('[data-key="bridge-explained"]', (b) => b.textContent), signedMoney(680));
+  check('bridge', 'Actual change', await page.$eval('[data-key="bridge-actual"]', (b) => b.textContent), signedMoney(620));
+  check('bridge', 'Not explained yet', await page.$eval('[data-key="bridge-unexplained"]', (b) => b.textContent), signedMoney(-60));
+  check('bridge', 'Waterfall drawn', String(await page.$$eval('#chart-bridge svg rect', (r) => r.length >= 8)), 'true');
+  check('bridge', 'Console errors', String(errors.length), '0');
   await page.close();
 }
 await browser.close();
