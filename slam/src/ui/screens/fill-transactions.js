@@ -1,4 +1,4 @@
-// Fill in, pass 6 Cash flow: accounts and balances, import a bank or card CSV, review and fix the
+// Fill in, pass 5 Cash flow: accounts and balances, import a bank or card CSV, review and fix the
 // mapping (remembered per merchant), and see what the transactions reveal.
 // Line actuals come from the log on their own (S-087); there is no confirm step. Lives inside Fill in so the
 // app keeps four screens.

@@ -11,7 +11,8 @@ import { hbars, donut, sankey, gauge, ring, lines, scatter, stack, shareBar } fr
 import { drafttReading } from '../../calc/lenses.js';
 import { stressReading } from '../../calc/happiness.js';
 
-const SERIES = { gut: 'var(--series-gut)', estimate: 'var(--series-estimate)', dream: 'var(--series-dream)', actual: 'var(--series-actual)' };
+// --series-dream is the third series color; it draws the plan here (the dream life has its own card in Eras).
+const SERIES = { gut: 'var(--series-gut)', estimate: 'var(--series-estimate)', plan: 'var(--series-dream)', actual: 'var(--series-actual)' };
 const NWS = { needs: 'var(--need)', wants: 'var(--want)', savings: 'var(--save)', unassigned: 'var(--unassigned)' };
 
 export function chartWidth(half) {
@@ -108,11 +109,13 @@ export function threeColumnCard(ctx, s, half) {
   const fmt = u === 'percent' ? (x) => pct(x, 0) : money;
   const pick = (r, k) => (u === 'percent' ? r[k + 'Share'] : r[k]);
   const t = s.totals;
+  const cols = s.plan ? ['estimate', 'plan', 'actual'] : ['estimate', 'actual'];
+  const NAME = { estimate: 'Estimate', plan: 'Plan', actual: 'Actual' };
   return card(ctx, {
-    id: 'eda', title: 'Estimate, dream, actual', unitToggle: true,
-    svg: hbars({ rows: rows.map((r) => ({ label: r.name, values: ['estimate', 'dream', 'actual'].map((k) => ({ v: pick(r, k), name: k, color: SERIES[k], tip: r.name + ' ' + k + ': ' + money(r[k]) })) })), width: chartWidth(half), fmt }),
-    legendItems: [['Estimate', SERIES.estimate], ['Dream', SERIES.dream], ['Actual', SERIES.actual]],
-    reading: 'Spending: ' + [[t.estimateTotal, 'estimated'], [t.dreamTotal, 'dreamed'], [t.actualTotal, 'actual so far']]
+    id: 'eda', title: s.plan ? 'Estimate, plan, actual' : 'Estimate vs actual', unitToggle: true,
+    svg: hbars({ rows: rows.map((r) => ({ label: r.name, values: cols.map((k) => ({ v: pick(r, k), name: k, color: SERIES[k], tip: r.name + ' ' + k + ': ' + money(r[k]) })) })), width: chartWidth(half), fmt }),
+    legendItems: cols.map((k) => [NAME[k], SERIES[k]]),
+    reading: 'Spending: ' + [[t.estimateTotal, 'estimated'], ...(s.plan ? [[s.plan.spending, 'planned']] : []), [t.actualTotal, 'actual so far']]
       .map(([v, w]) => (v === null ? 'nothing ' + w.replace(' so far', '') + ' yet' : money(v) + ' ' + w)).join(', ') + '.'
   });
 }
@@ -156,7 +159,7 @@ export function accuracyCard(ctx, s) {
 export function gutCard(ctx, s) {
   const d = cd.gutBars(s);
   const u = unitOf(ctx, 'gut');
-  const colors = [SERIES.gut, SERIES.estimate, SERIES.dream, SERIES.actual];
+  const colors = [SERIES.gut, SERIES.estimate, SERIES.actual];
   const g = s.gutCheck;
   return card(ctx, {
     id: 'gut', title: 'Gut check', unitToggle: true,

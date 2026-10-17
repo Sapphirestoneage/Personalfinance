@@ -1,12 +1,15 @@
 // Eras: life chapters laid end to end after today's budget ("regular life").
 // Each era starts after the one before it, plus its months of regular life.
 // Cash is followed month by month through every era, next to staying in
-// regular life the whole time. Blank take-home or spending in an era uses the
-// template's share of today's numbers, labeled a guess.
+// regular life the whole time. Blank take-home in an era uses the template's
+// share of today's, labeled a guess. Blank spending starts from what the era
+// says (spendFrom, S-097): today's budget, the short- or long-term dream, or
+// the template's share of today (the default, labeled a guess).
 
 import { hasAnswer, toMonthly } from './normalize.js';
 import { minus } from './money.js';
 import { cashOnHand } from './balances.js';
+import { eraSpendBase } from './dream-life.js';
 
 export function addMonths(key, n) {
   const [y, m] = key.split('-').map(Number);
@@ -14,13 +17,14 @@ export function addMonths(key, n) {
   return Math.floor(t / 12) + '-' + String((t % 12) + 1).padStart(2, '0');
 }
 
-function eraMoney(value, base, share) {
+function eraMoney(value, base, share, start = null) {
   if (hasAnswer(value)) return { amount: toMonthly(value, 'monthly'), guess: false };
+  if (start !== null) return { amount: start, guess: false };
   if (base === null || share === undefined) return { amount: null, guess: false };
   return { amount: Math.round(base * share * 100) / 100, guess: true };
 }
 
-export function eraTimeline(doc, totals, refs) {
+export function eraTimeline(doc, totals, refs, dreams = null) {
   const eras = doc.eras || { list: [] };
   const templates = Object.fromEntries(((refs.eraTemplates && refs.eraTemplates.templates) || []).map((t) => [t.id, t]));
   const baseIncome = totals.takeHome;
@@ -44,7 +48,9 @@ export function eraTimeline(doc, totals, refs) {
     const t = templates[e.template] || templates.custom || {};
     for (let i = 0; i < e.gapMonths; i++) step(baseNet, null);
     const income = eraMoney(e.takeHome, baseIncome, t.income);
-    const spend = eraMoney(e.spending, baseSpend, t.spending);
+    const spendFrom = e.spendFrom || 'template';
+    const startAt = dreams ? eraSpendBase(dreams, spendFrom, baseSpend) : spendFrom === 'today' ? baseSpend : null;
+    const spend = eraMoney(e.spending, baseSpend, t.spending, startAt);
     const net = minus(income.amount, spend.amount);
     const oneTime = e.oneTime.amount;
     const start = key;
@@ -62,6 +68,7 @@ export function eraTimeline(doc, totals, refs) {
       id: e.id, name: e.name, template: e.template, oneTimeHint: t.oneTimeHint || '', about: t.about || '',
       start, end: addMonths(start, e.months - 1), months: e.months, gapMonths: e.gapMonths,
       income: income.amount, incomeGuess: income.guess, spend: spend.amount, spendGuess: spend.guess,
+      spendFrom, spendTyped: hasAnswer(e.spending), spendStart: startAt,
       net, oneTime, oneTimeBlank: oneTime === null,
       total: net === null ? null : net * e.months - (oneTime || 0),
       cashStart, cashEnd: net === null ? null : cash,

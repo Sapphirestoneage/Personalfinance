@@ -80,7 +80,7 @@ export function monthSnapshot(model, income) {
   const categories = {};
   const lines = {};
   for (const c of model.categories) {
-    categories[c.id] = { name: c.name, savings: c.savings, estimate: c.estimate.amount, dream: c.dream.amount, actual: c.actual.amount };
+    categories[c.id] = { name: c.name, savings: c.savings, estimate: c.estimate.amount, actual: c.actual.amount };
     for (const l of c.lines) lines[l.id] = { name: l.name, categoryId: c.id, estimate: l.estimate, actual: l.actual };
   }
   return { takeHome: income.takeHome, categories, lines };
@@ -100,7 +100,7 @@ export function monthRows(doc, history, key) {
         return { id: lineId, name: l.name, estimate: l.estimate, actual, original: l.actual, revised: !!rev, gap: minus(actual, l.estimate), accuracy: ratio(actual, l.estimate) };
       });
     return {
-      id: catId, name: c.name, savings: !!c.savings, estimate: c.estimate, dream: c.dream === undefined ? null : c.dream,
+      id: catId, name: c.name, savings: !!c.savings, estimate: c.estimate,
       actual: pt.actual, original: c.actual, revised: pt.revised, gap: minus(pt.actual, c.estimate),
       gapPct: pt.variancePct, accuracy: ratio(pt.actual, c.estimate), lines
     };

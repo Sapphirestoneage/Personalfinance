@@ -13,10 +13,11 @@ import { startPlan, setPlanAmount, setPlanDecision, setPlanReviewed, setPlanStop
 import { nextMonthKey } from '../../store/months.js';
 import { findCategory, renameLine } from '../../store/edits.js';
 
-const SOURCES = [['last-plan', "Last month's plan"], ['actuals', "This month's actuals"], ['estimates', 'Estimates'], ['dreams', 'Dreams']];
+// Start options (S-097): the dream life lives in Eras, so a plan never starts from it.
+const SOURCES = [['last-plan', "Last month's plan"], ['actuals', "This month's actuals"], ['estimates', 'Estimates']];
 const COLS = [
   ['name', 'Line'], ['actual', 'Actual'], ['pctIncome', '% of income'], ['pctSpending', '% of spending'], ['happy', 'Happiness'],
-  ['estimate', 'Estimate'], ['dream', 'Dream'], ['plan', 'Plan'], ['decision', 'Keep / cut / change'], ['reviewed', 'Reviewed']
+  ['estimate', 'Estimate'], ['plan', 'Plan'], ['decision', 'Keep / cut / change'], ['reviewed', 'Reviewed']
 ];
 const narrow = () => typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 759px)').matches;
 const QUICK = [['drain', -1, 'Look at first (stress)'], ['pctIncome', -1, 'Biggest % of income'], ['per100', 1, 'Lowest joy per $100'], ['gap', -1, 'Biggest gap from estimate']];
@@ -92,7 +93,6 @@ function row(ctx, pm, r) {
     h('td', { class: 'num' }, r.savings ? h('span', { class: 'xs muted' }, 'saving') : pct(r.pctSpending.actual)),
     h('td', { class: 'num' }, joyCell(r.happiness, r.stress)),
     h('td', { class: 'num' }, r.estimate === null && r.addedInReview ? h('span', { class: 'xs muted' }, 'added in review') : money(r.estimate)),
-    h('td', { class: 'num' }, money(r.dream)),
     h('td', { class: 'num' }, planInput(ctx, pm, r), r.plan !== null ? h('div', { class: 'xs muted' }, pct(r.pctIncome.plan) + ' of income') : null),
     h('td', {}, decisionCell(ctx, pm, r)),
     h('td', {}, reviewedBox(ctx, pm, r)));
@@ -107,7 +107,7 @@ function lineCard(ctx, pm, r) {
     h('div', { class: 'small' }, 'Actual ', h('b', { class: 'num' }, money(r.actual)), ', ', pct(r.pctIncome.actual), ' of income',
       r.savings ? ', saving' : ', ' + pct(r.pctSpending.actual) + ' of spending'),
     h('div', { class: 'small' }, 'Happiness ', joyCell(r.happiness, r.stress)),
-    h('div', { class: 'small muted' }, r.estimate === null && r.addedInReview ? 'Estimate: added in review' : 'Estimate ' + money(r.estimate), ', dream ' + money(r.dream)),
+    h('div', { class: 'small muted' }, r.estimate === null && r.addedInReview ? 'Estimate: added in review' : 'Estimate ' + money(r.estimate)),
     h('div', { class: 'review-card-plan' }, h('span', { class: 'small' }, 'Plan'), planInput(ctx, pm, r, sfx),
       r.plan !== null ? h('span', { class: 'xs muted' }, pct(r.pctIncome.plan) + ' of income') : null),
     decisionCell(ctx, pm, r, sfx));

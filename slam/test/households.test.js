@@ -34,19 +34,20 @@ for (const name of ['maya', 'luis', 'tasha', 'sam']) {
     }
   });
 
-  test(name + ': category estimate / dream / actual', () => {
-    for (const [id, [e, d, a]] of Object.entries(exp.categories)) {
+  // The budget is estimate vs actual (and the plan); the dream life is in Eras (S-097).
+  test(name + ': category estimate / actual', () => {
+    for (const [id, [e, a]] of Object.entries(exp.categories)) {
       const row = s.rows.find((r) => r.id === id);
       assert.ok(row, 'missing category ' + id);
       money(row.estimate, e, id + ' estimate');
-      money(row.dream, d, id + ' dream');
       money(row.actual, a, id + ' actual');
+      assert.ok(!('dream' in row) && !('dreamLong' in row), id + ': no dream column in the budget');
     }
   });
 
   test(name + ': totals and shares', () => {
     money(t.estimateTotal, exp.estimateTotal, 'estimate total');
-    money(t.dreamTotal, exp.dreamTotal, 'dream total');
+    assert.ok(!Object.keys(t).some((k) => /dream/i.test(k)), 'no dream totals in the budget');
     money(t.actualTotal, exp.actualTotal, 'actual total');
     money(t.spending, exp.spending, 'spending');
     money(t.savings, exp.savings, 'savings');
@@ -92,7 +93,7 @@ for (const name of ['maya', 'luis', 'tasha', 'sam']) {
     const g = s.gutCheck;
     money(g.gut, exp.gut.gut, 'gut');
     money(g.estimates, exp.gut.estimates, 'gut estimates');
-    money(g.dreams, exp.gut.dreams, 'gut dreams');
+    assert.ok(!('dreams' in g), 'the gut check is gut vs estimates vs actual');
     money(g.actual, exp.gut.actual, 'gut actual');
     money(g.actualVsGut, exp.gut.actualVsGut, 'actual vs gut');
     share(g.actualVsGutRatio, exp.gut.ratio, 'actual / gut');
@@ -226,7 +227,7 @@ for (const name of ['maya', 'luis', 'tasha', 'sam']) {
   });
 
   test(name + ': % of spending adds to 100% per column, % of happiness adds to 100%', () => {
-    for (const col of ['estimate', 'dream', 'actual', 'basis', 'plan']) {
+    for (const col of ['estimate', 'actual', 'basis', 'plan']) {
       const cats = s.rows.filter((r) => !r.savings && r.pct.spending[col] !== null);
       if (cats.length) share(cats.reduce((a, r) => a + r.pct.spending[col], 0), 1, col + ' % of spending adds to 100%');
     }

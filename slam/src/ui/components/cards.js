@@ -44,7 +44,6 @@ export function gutCard(summary) {
     h('ul', { class: 'plain' },
       row('Gut number', g.gut),
       row('Sum of estimates', g.estimates),
-      row('Sum of dreams', g.dreams),
       row('Actual', g.actual, g.actualUsesEstimateFor.length ? '(estimates for ' + g.actualUsesEstimateFor.length + ' categories)' : null)),
     g.actualVsGutRatio !== null ? h('p', { class: 'reading' }, 'Actual spending is ' + times(g.actualVsGutRatio) + ' your gut number (' + signedMoney(g.actualVsGut) + ' a month).') : null);
 }

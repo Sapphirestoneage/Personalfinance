@@ -20,7 +20,7 @@ export function getPlan(doc, month) {
   return (doc.plans || {})[month] || null;
 }
 
-// Start a month's plan from a set of Values (from calc: last plan, actuals, estimates, or dreams).
+// Start a month's plan from a set of Values (from calc: last plan, actuals, or estimates; older plans may say they came from dreams).
 export function startPlan(doc, month, createdFrom, values) {
   if (getPlan(doc, month)) throw new Error('There is already a plan for ' + month);
   doc.plans[month] = { createdFrom, lines: Object.fromEntries(Object.entries(values).map(([k, v]) => [k, entry(v)])) };

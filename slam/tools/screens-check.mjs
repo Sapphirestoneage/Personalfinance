@@ -76,18 +76,18 @@ for (const [name, button] of Object.entries(DEMOS)) {
   check(name, 'Housing tile', tiles.Housing, pct(exp.housingShare));
   check(name, 'Blind spot tile', tiles['Blind spot'], pct(exp.blindSpot));
 
-  // Columns are found by their header, since Plan and long-term dream columns come and go.
+  // Columns are found by their header, since the Plan column comes and goes. No dream column (S-097).
   const heads = await page.$$eval('table.budget thead th', (ths) => ths.map((th) => th.textContent.replace(/[▴▾]/g, '').trim()));
   const col = (label) => heads.findIndex((x) => x === label);
   const total = await page.$$eval('tr.total td', (tds) => tds.map((td) => td.textContent.trim()));
   check(name, 'Table estimate total', total[col('Estimate')], money(exp.estimateTotal));
-  check(name, 'Table dream total', total[col('Dream')], money(exp.dreamTotal));
+  check(name, 'No dream column', String(heads.some((x) => /dream/i.test(x))), 'false');
   check(name, 'Table actual total', total[col('Actual')], money(exp.actualTotal));
   check(name, 'Table % of income total', total[col('% of income')], pct(exp.spending / exp.takeHome));
   check(name, 'Plan column shown', String(col('Plan') >= 0), String(!!exp.plan));
   if (exp.plan) check(name, 'Table plan total', total[col('Plan')], money(exp.plan.spending));
 
-  for (const [id, [e, d, a]] of Object.entries(exp.categories)) {
+  for (const [id, [e, a]] of Object.entries(exp.categories)) {
     const row = await page.$$eval('tr.cat', (trs) => trs.map((tr) => [...tr.querySelectorAll('td')].map((td) => td.textContent.trim())));
     const name2 = (await page.$$eval('tr.cat td:first-child', (tds) => tds.map((td) => td.textContent)));
     const idx = name2.findIndex((n) => n.replace(/[▸▾]/g, '').trim().toLowerCase().startsWith(id === 'debt' ? 'debt' : id === 'fun' ? 'personal' : id === 'transport' ? 'transport' : id === 'bills' ? 'bills' : id === 'annual' ? 'annual' : id === 'everything' ? 'everything' : id));
@@ -151,6 +151,23 @@ for (const [name, button] of Object.entries(DEMOS)) {
     const totalRow = await page.$$eval('#chart-draftt tr.cat td', (tds) => tds.map((td) => td.textContent.trim()));
     check(name, 'DRAFTT total % of base', totalRow[2], pct(exp.draftt.totalShare));
   }
+  // The Fill in passes (S-097): no Dream pass; the dream life opens Eras.
+  await page.click('nav a[href="#fill"]');
+  await page.waitForFunction(() => { const b = document.querySelector('.passes button'); return b && b.textContent === '1 Gut'; });
+  check(name, 'Fill in passes', (await page.$$eval('.passes button', (bs) => bs.map((b) => b.textContent))).join(', '), '1 Gut, 2 Basics, 3 Rough, 4 Actual, 5 Cash flow, 6 Next stage, 7 Eras');
+  await page.getByRole('button', { name: '7 Eras' }).click();
+  await page.waitForSelector('#dream-entry');
+  if (name === 'maya') {
+    // Maya by hand (test/dreams.test.js): short-term dream spending 3,052, today 3,814, so 762 less; biggest
+    // decreases Food (-410) and Personal and fun (-290). No long-term dreams, so long follows short (3,052)
+    // and only the short-term sentence is said.
+    // What it takes: 3,052 / (1 - 150 / 3,900) = 3,052 x 1.04 = 3,174.08, which is 725.92 less than 3,900.
+    check(name, 'Dream short total', await page.$eval('#dream-compare [data-key="dream-short-total"]', (x) => x.textContent), money(3052));
+    check(name, 'Dream long total', await page.$eval('#dream-compare [data-key="dream-long-total"]', (x) => x.textContent), money(3052));
+    check(name, 'Dream reading', await page.$eval('#dream-compare [data-key="dream-reading"]', (x) => x.textContent), 'Your short-term dream costs $762 a month less than today, mostly Food and Personal and fun.');
+    check(name, 'What it takes', await page.$eval('#dream-compare [data-key="dream-takes"]', (x) => x.textContent),
+      'What it takes: to live the short-term dream and still save 4% of take-home like today, you would need about ' + money(3174.08) + ' a month take-home, ' + money(725.92) + ' less than now.');
+  } else if (exp.dreamNone) check(name, 'No dream life yet', String(await page.$$eval('[data-key="dream-none"]', (x) => x.length)), '1');
   check(name, 'Console errors', String(errors.length), '0');
   await page.close();
 }
@@ -167,21 +184,24 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.fill('[data-key="new-client"]', 'Loop check');
   await page.press('[data-key="new-client"]', 'Enter');
   await page.waitForSelector('.passes');
-  await page.getByRole('button', { name: '6 Cash flow' }).click();
+  await page.getByRole('button', { name: '5 Cash flow' }).click();
   await page.click('[data-key="add-acct-checking"]');
   const startBox = page.locator('#accounts-card input.amount').first();
   await startBox.fill('2500');
   await startBox.press('Tab');
   await page.waitForTimeout(100);
   check('loop', 'Cash start shown', await page.$eval('#accounts-card p.small b', (b) => b.textContent), money(2500));
-  await page.getByRole('button', { name: '7 Next stage' }).click();
+  await page.getByRole('button', { name: '6 Next stage' }).click();
   await page.waitForTimeout(100);
   const startNs = page.getByRole('button', { name: 'Plan a next stage' });
   if (await startNs.count()) await startNs.click();
   await page.waitForSelector('[data-key="cash-on-hand"]', { timeout: 3000 }).catch(() => null);
   const note = await page.$eval('[data-key="cash-on-hand"]', (p) => p.textContent).catch(() => 'missing');
   check('loop', 'Next stage reads cash from balances', note.includes(money(2500)) ? 'reads ' + money(2500) : note, 'reads ' + money(2500));
-  await page.getByRole('button', { name: '8 Eras' }).click();
+  // The third lens is Best case (S-097), in the order Disaster, Likely, Best case.
+  check('loop', 'Next stage lenses', (await page.$$eval('table.lenses thead th', (ths) => ths.map((t) => t.textContent).filter(Boolean))).join(', '), 'Disaster, Likely, Best case');
+  check('loop', 'No Dream on Next stage', String(/dream/i.test(await page.$eval('#main', (m) => m.textContent))), 'false');
+  await page.getByRole('button', { name: '7 Eras' }).click();
   await page.waitForSelector('[data-key="cash-on-hand"]', { timeout: 3000 }).catch(() => null);
   const eraNote = await page.$eval('[data-key="cash-on-hand"]', (p) => p.textContent).catch(() => 'missing');
   check('loop', 'Eras reads cash from balances', eraNote.includes(money(2500)) ? 'reads ' + money(2500) : eraNote, 'reads ' + money(2500));
@@ -198,7 +218,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.waitForSelector('.toast');
   check('loop', 'Quick entry saved', await page.$eval('.toast', (t) => t.textContent), 'Logged $54.20 to Groceries');
   await page.click('nav a[href="#fill"]');
-  await page.getByRole('button', { name: '6 Cash flow' }).click();
+  await page.getByRole('button', { name: '5 Cash flow' }).click();
   const mdy = (d) => YM.slice(5) + '/' + d + '/' + YM.slice(0, 4);
   await page.setInputFiles('#tx-file', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from('Date,Description,Amount\n' + mdy('04') + ',TRADER JOE S #552,-54.20\n' + mdy('05') + ',WHOLE FOODS MKT,-80.10\n') });
   await page.waitForSelector('[data-key="match-summary"]');
@@ -221,7 +241,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('loop', 'Month grid drawn', String(await page.$$eval('#chart-cf-grid td', (t) => t.length >= 28)), 'true');
   // Actuals from the log (S-087): groceries = 54.20 + 80.10 = 134.30, from 2 entries, not typed over.
   await page.click('nav a[href="#fill"]');
-  await page.getByRole('button', { name: '5 Actual' }).click();
+  await page.getByRole('button', { name: '4 Actual' }).click();
   await page.waitForSelector('[data-key="from-log:groceries"]');
   check('loop', 'Groceries from the log', await page.$eval('[data-key="from-log:groceries"]', (b) => b.textContent), money(134.3, true));
   await page.click('[data-key="from-log:groceries"]');
@@ -337,7 +357,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.fill('[data-key="coach-notes"]', 'Ask about the Visa.');
   await page.press('[data-key="coach-notes"]', 'Tab');
   await page.waitForTimeout(150);
-  await page.getByRole('button', { name: '6 Cash flow' }).click();
+  await page.getByRole('button', { name: '5 Cash flow' }).click();
   await page.waitForSelector('#tx-file', { state: 'attached' });
   check('client view', 'Coach sees the cushion', String(await page.$$eval('[data-key="cushion-row"]', (x) => x.length)), '1');
   await page.click('nav a[href="#analyze"]');
@@ -358,7 +378,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.click('nav a[href="#fill"]');
   await page.getByRole('button', { name: '2 Basics' }).click();
   check('client view', 'No coach notes', String(await page.$$eval('[data-key="coach-notes"]', (x) => x.length)), '0');
-  await page.getByRole('button', { name: '6 Cash flow' }).click();
+  await page.getByRole('button', { name: '5 Cash flow' }).click();
   await page.waitForSelector('#tx-file', { state: 'attached' });
   check('client view', 'No cushion input', String(await page.$$eval('[data-key="cushion-row"]', (x) => x.length)), '0');
   await page.click('nav a[href="#budget"]');

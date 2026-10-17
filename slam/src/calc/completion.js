@@ -35,7 +35,6 @@ export function questionItems(doc, model, income) {
     const coveredByTotal = doc.settings.singleTotal && !c.isEverything && c.estimate.amount === null;
     if (!coveredByTotal) {
       add('est:' + c.id, c.name + ': estimate', ['categories', c.id, 'estimate'], w, c.estimate.status, c.estimate.amount);
-      add('dream:' + c.id, c.name + ': dream', ['categories', c.id, 'dream'], WEIGHTS.light, c.dream.status, c.dream.amount);
     }
     const lines = c.lines;
     for (const l of lines) {
@@ -108,10 +107,9 @@ export function roughList(doc) {
   for (const c of doc.categories) {
     if (c.state === 'archived') continue;
     check(c.name + ': estimate', ['categories', c.id, 'estimate'], c.estimate);
-    check(c.name + ': dream', ['categories', c.id, 'dream'], c.dream);
     for (const l of c.lines) {
       if (l.state === 'archived') continue;
-      for (const k of ['estimate', 'dream', 'actual']) check(c.name + ' / ' + l.name + ': ' + k, ['line', l.id, k], l[k]);
+      for (const k of ['estimate', 'actual']) check(c.name + ' / ' + l.name + ': ' + k, ['line', l.id, k], l[k]);
     }
   }
   for (const d of doc.debts) {

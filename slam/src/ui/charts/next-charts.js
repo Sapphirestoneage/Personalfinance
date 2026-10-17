@@ -15,9 +15,10 @@ function yearsMonths(m) {
 
 export function nextStageCards(ctx, s) {
   const n = s.nextStage;
-  if (!n) return [card(ctx, { id: 'next-none', title: 'Next stage', reading: 'Plan a big change in Fill in, pass 7, to see what it would take.' })];
+  if (!n) return [card(ctx, { id: 'next-none', title: 'Next stage', reading: 'Plan a big change in Fill in, pass 6, to see what it would take.' })];
   const C = n.cases;
-  const LENSES = [['disaster', 'Disaster'], ['likely', 'Likely'], ['dream', 'Dream']];
+  // The best case is stored as cases.dream, the old name kept so files load unchanged (S-097).
+  const LENSES = [['disaster', 'Disaster'], ['likely', 'Likely'], ['dream', 'Best case']];
   const row = (label, f, cls) => h('tr', {}, h('td', {}, label), LENSES.map(([k]) => {
     const [text, tone] = f(C[k]);
     return h('td', { class: 'num ' + (tone || '') + (cls ? ' ' + cls : '') }, text);
@@ -63,15 +64,15 @@ export function nextStageCards(ctx, s) {
     const idx = [];
     for (let m = 0; m <= horizon; m += step) idx.push(m);
     const series = [{ name: 'Stay', color: 'var(--chart-1)', values: idx.map((m) => C.likely.path.stay[m]) }];
-    for (const [k, label, color, dashed] of [['disaster', 'Disaster', 'var(--chart-8)', true], ['likely', 'Likely', 'var(--chart-3)', false], ['dream', 'Dream', 'var(--chart-7)', true]]) {
+    for (const [k, label, color, dashed] of [['disaster', 'Disaster', 'var(--chart-8)', true], ['likely', 'Likely', 'var(--chart-3)', false], ['dream', 'Best case', 'var(--chart-7)', true]]) {
       if (C[k].path) series.push({ name: label, color, dashed, values: idx.map((m) => C[k].path.change[m]) });
     }
     path = card(ctx, {
       id: 'next-path', title: 'Stay vs change, money only',
       svg: lines({ series, xs: idx.map((m, i) => (i % 2 && idx.length > 7 ? '' : m === 0 ? 'now' : m % 12 === 0 ? m / 12 + 'y' : m + 'mo')), width: chartWidth(true), fmt: money }),
-      legendItems: [['Stay put', 'var(--chart-1)'], ['Disaster', 'var(--chart-8)'], ['Likely', 'var(--chart-3)'], ['Dream', 'var(--chart-7)']],
+      legendItems: [['Stay put', 'var(--chart-1)'], ['Disaster', 'var(--chart-8)'], ['Likely', 'var(--chart-3)'], ['Best case', 'var(--chart-7)']],
       reading: 'Total saved over time on each path, from today\'s numbers. ' + (C.likely.path.breakEven
-        ? 'Likely catches up after ' + yearsMonths(C.likely.path.breakEven) + (C.dream.path && C.dream.path.breakEven ? ', dream after ' + yearsMonths(C.dream.path.breakEven) : '') + (C.disaster.path && !C.disaster.path.breakEven ? '; disaster does not within 10 years.' : '.')
+        ? 'Likely catches up after ' + yearsMonths(C.likely.path.breakEven) + (C.dream.path && C.dream.path.breakEven ? ', the best case after ' + yearsMonths(C.dream.path.breakEven) : '') + (C.disaster.path && !C.disaster.path.breakEven ? '; disaster does not within 10 years.' : '.')
         : 'Likely does not catch up on money within 10 years, so the other measures have to carry it.')
     });
   }

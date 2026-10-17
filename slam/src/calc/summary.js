@@ -5,6 +5,7 @@ import { incomeSummary } from './income.js';
 import { tagTotals } from './tags.js';
 import { lineIdeas, debtsByType } from './breakdown.js';
 import { eraTimeline } from './eras.js';
+import { dreamLife } from './dream-life.js';
 import { budgetModel } from './model.js';
 import { budgetTotals } from './totals.js';
 import { gaps, accuracy, blindSpot, culprits, gutCheck, correctionFactors, proofOfCash, blindCompare } from './compare.js';
@@ -19,8 +20,8 @@ import { planView } from './plan.js';
 import { happinessOf, stressOf } from './happiness.js';
 import { liveView, hasDeleted } from '../store/records.js';
 
-function pctBlock(e, d, a, b, takeHome) {
-  return { estimate: ratio(e, takeHome), dream: ratio(d, takeHome), actual: ratio(a, takeHome), basis: ratio(b, takeHome) };
+function pctBlock(e, a, b, takeHome) {
+  return { estimate: ratio(e, takeHome), actual: ratio(a, takeHome), basis: ratio(b, takeHome) };
 }
 
 function tableRows(model, totals) {
@@ -31,22 +32,22 @@ function tableRows(model, totals) {
       const lb = l.actual !== null ? l.actual : l.estimate;
       return {
         id: l.id, name: l.name, addedInReview: !!l.addedFor, computed: l.computed, kind: l.kind, need: l.need, tag: l.tag, path: l.path, joy: l.joy, state: l.state,
-        estimate: l.estimate, dream: l.dream, dreamLong: l.dreamLong, actual: l.actual, basis: lb, status: l.status, sourceStatus: l.sourceStatus || null,
-        gaps: gaps(l.estimate, l.dream, l.actual), accuracy: accuracy(l.estimate, l.actual),
-        pctTakeHome: pctBlock(l.estimate, l.dream, l.actual, lb, th),
+        estimate: l.estimate, actual: l.actual, basis: lb, status: l.status, sourceStatus: l.sourceStatus || null,
+        gaps: gaps(l.estimate, l.actual), accuracy: accuracy(l.estimate, l.actual),
+        pctTakeHome: pctBlock(l.estimate, l.actual, lb, th),
         pctSpending: c.savings ? null : ratio(lb, totals.spending),
         owedOutstanding: l.owedOutstanding
       };
     });
     return {
       id: c.id, name: c.name, savings: c.savings, isDebt: c.isDebt, isEverything: c.isEverything, notForMe: c.notForMe, state: c.state,
-      estimate: c.estimate.amount, dream: c.dream.amount, dreamLong: c.dreamLong.amount, actual: c.actual.amount, partial: c.actual.partial,
-      estimateFrom: c.estimate.from, dreamFrom: c.dream.from, dreamLongFrom: c.dreamLong.from, carved: c.estimate.carved, total: c.estimate.total, overSplit: !!c.estimate.overSplit,
+      estimate: c.estimate.amount, actual: c.actual.amount, partial: c.actual.partial,
+      estimateFrom: c.estimate.from, carved: c.estimate.carved, total: c.estimate.total, overSplit: !!c.estimate.overSplit,
       basis: basis.amount, basisFrom: basis.from,
-      status: { estimate: c.estimate.status, dream: c.dream.status, dreamLong: c.dreamLong.status, actual: c.actual.status },
-      gaps: gaps(c.estimate.amount, c.dream.amount, c.actual.amount),
+      status: { estimate: c.estimate.status, actual: c.actual.status },
+      gaps: gaps(c.estimate.amount, c.actual.amount),
       accuracy: accuracy(c.estimate.amount, c.actual.amount),
-      pctTakeHome: pctBlock(c.estimate.amount, c.dream.amount, c.actual.amount, basis.amount, th),
+      pctTakeHome: pctBlock(c.estimate.amount, c.actual.amount, basis.amount, th),
       pctSpending: c.savings ? null : ratio(basis.amount, totals.spending),
       lines
     };
@@ -96,7 +97,9 @@ export function buildSummary(full, refs) {
   addPlanAndShares(summary, doc, model, totals);
   summary.lineIdeas = lineIdeas(doc, refs);
   summary.debtsByType = debtsByType(doc);
-  summary.eras = eraTimeline(doc, totals, refs);
+  // Eras opens with the dream life (S-097); it reads the budget, the budget never reads it.
+  summary.dreamLife = dreamLife(doc, summary);
+  summary.eras = eraTimeline(doc, totals, refs, summary.dreamLife);
   summary.sinceLast = sinceLast(doc, summary);
   summary.nextStage = nextStage(doc, income, totals, summary.culprits);
   // Living with family: what housing might cost on your own (an average, labeled guess).
@@ -115,14 +118,14 @@ function addPlanAndShares(summary, doc, model, totals) {
   const plan = planView(doc, doc.currentMonth);
   summary.plan = plan;
   const th = totals.takeHome;
-  const colTotal = { estimate: totals.estimateTotal, dream: totals.dreamTotal, actual: totals.actualTotal, basis: totals.spending, plan: plan ? plan.spending : null };
+  const colTotal = { estimate: totals.estimateTotal, actual: totals.actualTotal, basis: totals.spending, plan: plan ? plan.spending : null };
   // Joy or purpose counts savings lines too (the positives); debt lines are computed, never rated.
   const ratedLines = model.categories.filter((c) => !c.isDebt).flatMap((c) => c.lines).map((l) => ({ id: l.id, name: l.name, joy: l.joy, stress: l.stress, amount: l.actual !== null ? l.actual : l.estimate }));
   const joy = happinessOf(ratedLines);
   summary.happinessPoints = joy.points;
   summary.stress = stressOf(ratedLines);
   const shares = (x, savings) => {
-    const amt = { estimate: x.estimate, dream: x.dream, actual: x.actual, basis: x.basis, plan: x.plan };
+    const amt = { estimate: x.estimate, actual: x.actual, basis: x.basis, plan: x.plan };
     return {
       income: Object.fromEntries(Object.entries(amt).map(([k, v]) => [k, ratio(v, th)])),
       spending: Object.fromEntries(Object.entries(amt).map(([k, v]) => [k, savings ? null : ratio(v, colTotal[k])]))

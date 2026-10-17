@@ -17,6 +17,7 @@ function oneOff(v) {
   return v.amount;
 }
 
+// "dream" is the stored key of the lens shown as Best case (S-097); the old name is kept so files load unchanged.
 export const CASES = ['disaster', 'likely', 'dream'];
 const VALUE_FIELDS = ['takeHome', 'transitionTakeHome', 'laterTakeHome'];
 const NUMBER_FIELDS = ['hoursPerWeek', 'transitionMonths', 'laterAfterMonths'];

@@ -51,6 +51,10 @@
 // health 2+1+2, bills 1+1+1, fun 1+1+1, annual 1+1+1, fees 1+1+1, giving 1, savings 1+1+1, debt 3+1+1)
 // answered: gut 1, housing est 3, food est 2, transport est 2, bills est 1, giving 1, savings est 1,
 // debt minimum 3, debt balance 1 = 15. 15 / 47 = 0.319149
+// S-097: the dream questions leave completion. Each category's middle number above is its dream (weight 1):
+// housing, food, transport, health, bills, fun, annual, fees, savings = 9, none answered (no dreams given;
+// Giving doesn't apply). Total 47 - 9 = 38, done still 15. 15 / 38 = 0.39473684 -> 0.394737
+// NEXT: unchanged. A blank dream scored 1 x 1.0 = 1, below every item in the top three.
 // NEXT: rent actual (3 x 1 = 3), take-home guess (3 x 0.7 = 2.1), then four items at 2.0 with
 // blanks ranked before the Health estimate (which has a 400 guess): groceries actual first by order.
 // ROUGH LIST: 10 values. GUESSES offered: the national average for a household of 1, used as is (S-070):
@@ -62,17 +66,18 @@ export default {
   fat: 2300, fatShare: 0.547728,
   takeHome: 4199.166667, takeHomeStatus: 'guess', taxMonthly: 800.833333, incomeTaxMonthly: 418.333333, ficaMonthly: 382.5,
   categories: {
-    housing: [1400, null, null], food: [500, null, null], transport: [400, null, null], debt: [195, 195, 195],
-    health: [null, null, null], bills: [150, null, null], fun: [null, null, null], annual: [null, null, null],
-    fees: [null, null, null], giving: [0, 0, 0], savings: [100, null, null]
+    // [estimate, actual]
+    housing: [1400, null], food: [500, null], transport: [400, null], debt: [195, 195],
+    health: [null, null], bills: [150, null], fun: [null, null], annual: [null, null],
+    fees: [null, null], giving: [0, 0], savings: [100, null]
   },
-  estimateTotal: 2645, dreamTotal: null, actualTotal: null, spending: 2645, savings: 100,
+  estimateTotal: 2645, actualTotal: null, spending: 2645, savings: 100,
   surplus: 1454.166667, savingsRate: 0.023814, housingShare: 0.333399, housingOver: false,
   roommateWorstCase: null,
   basisMissing: ['Health', 'Personal and fun', 'Annual and irregular', 'Fees'],
   blindSpot: null,
   culprits: [],
-  gut: { gut: 2500, estimates: 2645, dreams: null, actual: 2645, actualVsGut: 145, ratio: 1.058 },
+  gut: { gut: 2500, estimates: 2645, actual: 2645, actualVsGut: 145, ratio: 1.058 },
   proofOfCash: { implied: 3904.166667, entered: 2450, pct: 0.372465, flagged: true },
   fixed: 1745, variable: 900, fixedPct: 0.659735,
   needs: 2495, wants: 150, needsPct: 0.594166, wantsPct: 0.035721, savingsPct: 0.023814,
@@ -89,7 +94,7 @@ export default {
     reading: 'DRAFTT is 59% of take-home. Accommodation is the biggest letter at 56% of DRAFTT. Estimates stand in where actuals are missing (Accommodation, Food, Transportation). Everything else is 6% and left over is 35%. Taxes are 16% of gross, outside this picture.'
   },
   incomeStatement: { revenue: 5000, taxes: 800.833333, deductions: 0, needs: 2300, debt: 195, wants: 150, savings: 100, net: 1454.166667 },
-  completion: 0.319149,
+  completion: 0.394737,
   next: ['Housing / Rent: actual', 'Take-home: Hospital admin', 'Food / Groceries: actual'],
   roughCount: 10,
   guesses: { health: 400, fun: 300, annual: 100 }

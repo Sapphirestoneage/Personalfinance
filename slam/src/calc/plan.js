@@ -76,8 +76,8 @@ export function planView(doc, month) {
   };
 }
 
-// Where a new plan can start: last month's plan, this month's actuals, the
-// estimates, or the dreams. Returns { key: Value } for store/plans.js startPlan.
+// Where a new plan can start: last month's plan, this month's actuals, or the
+// estimates (the dream life lives in Eras, S-097). Returns { key: Value } for store/plans.js startPlan.
 export function planStartValues(doc, history, source, reviewMonth, planMonth) {
   const out = {};
   const pm = modelForMonth(doc, planMonth);
@@ -101,7 +101,7 @@ export function planStartValues(doc, history, source, reviewMonth, planMonth) {
     }
     return out;
   }
-  const col = source === 'dreams' ? 'dream' : 'estimate';
+  const col = 'estimate';
   for (const c of pm.categories) {
     if (c.isDebt || c.notForMe) continue;
     const stored = live(c);
@@ -143,7 +143,7 @@ export function reviewSummary(doc, summary, reviewMonth, planMonth) {
       const e = entries[key] || null;
       return {
         key, name, catId: c.id, savings: c.savings, computed: !!c.isDebt,
-        actual, estimate: est, dream: key.startsWith('cat:') ? c.dream.amount : src.dream, plan: planAmt,
+        actual, estimate: est, plan: planAmt,
         pctIncome: { actual: ratio(actual, th), plan: ratio(planAmt, th), estimate: ratio(est, th) },
         pctSpending: c.savings ? { actual: null, plan: null } : { actual: ratio(actual, act.spending), plan: ratio(planAmt, plan ? plan.spending : null) },
         happiness: key.startsWith('cat:') ? null : joy.byId[src.id] || null,

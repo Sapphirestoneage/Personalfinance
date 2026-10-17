@@ -14,7 +14,7 @@
 | # | Rule | Result |
 | --- | --- | --- |
 | 1 | Every number in one place | Pass after fixes. Found and fixed: roommate "your share" duplicated the rent line (removed, S-035); the Rough pass offered a category box when line estimates already existed (now read-only, S-036). Debt minimums are only asked in Debts. |
-| 2 | Status always visible | Pass after fix. Every amount input has a status picker; the table now shows estimate, dream, and actual chips (dream was missing); guesses and computed lines are labeled. |
+| 2 | Status always visible | Pass after fix. Every amount input has a status picker; the table shows estimate and actual chips (S-097 moved the dream to Eras; it was the missing chip here); guesses and computed lines are labeled. |
 | 3 | Math only in `src/calc/` | Pass after fix. A scan of `src/ui/` for arithmetic found only layout and pixel math, plus one rounding of the correction suggestion, now moved into calc. Chart data comes from `src/calc/chart-data.js`. |
 | 4 | First pass asks little; every question has an out | Pass. The Gut pass is one question. Every amount has "Don't know" and "Doesn't apply". Every pass can be skipped. |
 | 5 | At most 4 screens | Pass. Clients, Fill in, Budget, Analyze. Transaction review lives inside Fill in. |

@@ -143,6 +143,8 @@ export function validateHousehold(doc) {
       if (!(Number.isInteger(e.months) && e.months >= 1 && e.months <= 600)) errs.push(w + '.months must be 1 to 600');
       if (!(Number.isInteger(e.gapMonths) && e.gapMonths >= 0 && e.gapMonths <= 600)) errs.push(w + '.gapMonths must be 0 to 600');
       for (const k of ['takeHome', 'spending', 'oneTime']) errs.push(...valueErrors(e[k], w + '.' + k));
+      // Where blank spending starts (S-097); absent means the template's share.
+      if (e.spendFrom !== undefined && !['template', 'today', 'dream', 'dreamLong'].includes(e.spendFrom)) errs.push(w + '.spendFrom is unknown');
     });
   }
   const lineIds = new Set((doc.categories || []).flatMap((c) => (c.lines || []).map((l) => l.id)));

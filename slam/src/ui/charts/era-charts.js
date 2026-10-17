@@ -1,18 +1,33 @@
-// Analyze, Eras: the blocks, cash month by month through every era next to
+// Analyze, Eras: your dream life next to today (S-097), then the blocks, cash month by month through every era next to
 // staying in regular life, and each era's money. Numbers from src/calc/eras.js.
 
 import { h } from '../dom.js';
 import { money, signedMoney, monthLabel } from '../format.js';
-import { lines } from './svg.js';
+import { lines, hbars } from './svg.js';
 import { card, chartWidth } from './catalog.js';
-import { eraStrip, eraColor } from '../screens/fill-eras.js';
+import { eraStrip, eraColor, dreamCompare } from '../screens/fill-eras.js';
 
 const SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const short = (key) => SHORT[Number(key.slice(5)) - 1] + ' ' + key.slice(2, 4);
 
+// Today, short-term, and long-term dream per spending category.
+function dreamCard(ctx, s) {
+  const dl = s.dreamLife;
+  const SER = [['today', 'Today', 'var(--series-actual)'], ['short', 'Short-term dream', 'var(--series-estimate)'], ['long', 'Long-term dream', 'var(--series-dream)']];
+  const rows = dl.rows.filter((r) => !r.savings && !r.notForMe && (r.today || r.short || r.long));
+  return card(ctx, {
+    id: 'dream-life', title: 'Your dream life',
+    svg: dl.any ? hbars({ rows: rows.map((r) => ({ label: r.name, values: SER.map(([k, n, color]) => ({ v: r[k], name: n, color, tip: r.name + ' ' + n.toLowerCase() + ': ' + money(r[k]) })) })), width: chartWidth(false), fmt: money }) : null,
+    legendItems: dl.any ? SER.map(([, n, c]) => [n, c]) : null,
+    extra: dreamCompare(ctx, dl, { id: 'dream-compare-analyze' }),
+    reading: dl.any ? dl.readings.long || dl.readings.short : 'Type your dream life at the top of Fill in, pass 7 Eras, to see it next to today.'
+  });
+}
+
 export function eraCards(ctx, s) {
   const t = s.eras;
-  if (!t.eras.length) return [card(ctx, { id: 'eras-none', title: 'Eras', reading: 'Add eras (school abroad, a sabbatical, nomading...) in Fill in, pass 8, to see life in chapters.' })];
+  const dream = dreamCard(ctx, s);
+  if (!t.eras.length) return [dream, card(ctx, { id: 'eras-none', title: 'Eras', reading: 'Add eras (school abroad, a sabbatical, nomading...) in Fill in, pass 7, to see life in chapters.' })];
   const every = Math.max(1, Math.ceil(t.path.length / 6));
   const n = t.path.length;
   // A label every few months, and the last month unless it would crowd the one before.
@@ -42,5 +57,5 @@ export function eraCards(ctx, s) {
         h('td', { class: 'num' + (e.total < 0 ? ' bad' : '') }, signedMoney(e.total) + (e.oneTimeBlank ? '*' : ''))))))),
     reading: t.eras.some((e) => e.oneTimeBlank) ? '* One-time costs not entered yet.' : 'Whole era includes its one-time costs.'
   });
-  return [chart, table];
+  return [dream, chart, table];
 }

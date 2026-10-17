@@ -1,4 +1,4 @@
-// The three-column table: Estimate | Dream | Actual per category, expandable to
+// The budget table: Estimate | Plan | Actual per category (the dream life is in Eras, S-097), expandable to
 // lines, with gaps, accuracy, share of take-home, and status chips. Sortable.
 // Every number comes from the summary (or calc's inUnit for the lens toggle).
 
@@ -12,13 +12,10 @@ import { parseAmount } from './value-input.js';
 // basis (actual, else estimate), then happiness. 'wide' columns hide on phones;
 // the expanded row repeats them there.
 function columns(summary) {
-  const long = summary.totals.dreamLongTotal !== null;
   const plan = !!summary.plan;
   return [
     ['name', 'Category', ''],
     ['estimate', 'Estimate', 'wide'],
-    ['dream', long ? 'Dream, short' : 'Dream', 'wide'],
-    long ? ['dreamLong', 'Dream, long', 'wide'] : null,
     plan ? ['plan', 'Plan', 'wide'] : null,
     ['actual', 'Actual', ''],
     ['pctIncome', '% of income', ''],
@@ -64,12 +61,9 @@ function joyText(hp, isLine) {
 function cells(row, unit, summary, isLine, savings) {
   const L = (x) => inLens(inUnit(x, unit, summary.totals, summary.income), unit);
   const g = row.gaps;
-  const long = summary.totals.dreamLongTotal !== null;
   const plan = !!summary.plan;
   return [
     h('td', { class: 'num wide' }, isLine && row.estimate === null && row.addedInReview ? h('span', { class: 'xs muted' }, 'added in review') : L(row.estimate)),
-    h('td', { class: 'num wide' }, L(row.dream)),
-    long ? h('td', { class: 'num wide' }, L(row.dreamLong)) : null,
     plan ? h('td', { class: 'num wide' }, L(row.plan)) : null,
     h('td', { class: 'num' }, L(row.actual), !isLine && row.partial ? h('span', { class: 'muted xs' }, ' partial') : null),
     h('td', { class: 'num' }, pct(row.pct.income.basis)),
@@ -80,13 +74,13 @@ function cells(row, unit, summary, isLine, savings) {
     plan ? h('td', { class: 'num wide' }, unit === 'dollars' ? signedMoney(g.actualMinusPlan) : L(g.actualMinusPlan)) : null,
     plan ? h('td', { class: 'num wide' }, signedPct(g.actualMinusPlanPct)) : null,
     h('td', { class: 'num wide' }, times(row.accuracy)),
-    h('td', { class: 'wide', title: 'Estimate, dream, actual' }, statusChip(row.status.estimate), ' ', statusChip(row.status.dream), ' ', statusChip(row.status.actual))
+    h('td', { class: 'wide', title: 'Estimate, actual' }, statusChip(row.status.estimate), ' ', statusChip(row.status.actual))
   ];
 }
 
 // On phones the wide columns hide; an open row shows them as one line instead.
 function narrowDetail(row, summary, span) {
-  const bits = [['Estimate', money(row.estimate)], ['Dream', money(row.dream)], summary.plan ? ['Plan', money(row.plan)] : null,
+  const bits = [['Estimate', money(row.estimate)], summary.plan ? ['Plan', money(row.plan)] : null,
     ['% of spending', pct(row.pct.spending.basis)], ['Gap', signedMoney(row.gaps.actualMinusEstimate)], summary.plan ? ['Vs plan', signedMoney(row.gaps.actualMinusPlan)] : null].filter(Boolean);
   return h('tr', { class: 'narrow-only detail' }, h('td', { colspan: String(span) }, h('span', { class: 'xs muted' }, bits.map(([k, v]) => k + ' ' + v).join(' \u00b7 '))));
 }
@@ -137,7 +131,7 @@ export function budgetTable(ctx, summary) {
   }
   const t = summary.totals;
   const L = (x) => inLens(inUnit(x, unit, t, summary.income), unit);
-  const tot = { estimate: L(t.estimateTotal), dream: L(t.dreamTotal), dreamLong: L(t.dreamLongTotal), plan: L(t.planSpending), actual: L(t.actualTotal),
+  const tot = { estimate: L(t.estimateTotal), plan: L(t.planSpending), actual: L(t.actualTotal),
     pctIncome: pct(t.spendingShare), pctSpending: t.spending ? '100%' : pct(null) };
   body.push(h('tr', { class: 'total' }, COLUMNS.map(([key, , cls]) => (key === 'name' ? h('td', {}, 'Spending') : h('td', { class: ('num ' + cls).trim() }, tot[key] || '')))));
 

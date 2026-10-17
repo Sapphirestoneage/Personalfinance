@@ -6,7 +6,8 @@
 // Pre-tax retirement 120 per paycheck: 120 x 26 / 12 = 260.00 a month.
 // Hours: 40 a week x 52 / 12 = 173.333 hours a month. Hourly = 3,900 / 173.333 = 22.50.
 
-// CATEGORY TOTALS (estimate / dream / actual), all from lines
+// CATEGORY TOTALS (estimate / dream / actual), all from lines. The budget checks estimate and
+// actual only (S-097); the dream column is checked in Eras (test/dream-life.test.js).
 // Housing:   rent 1600/1600/1600 + utilities 80/80/110 + internet 40/40/40 = 1720 / 1720 / 1750
 // Food:      groceries 300/280/380 + eating out 200/150/340 + delivery 50/0/120 = 550 / 430 / 840
 // Transport: MetroCard 132/132/132 = 132 / 132 / 132
@@ -35,7 +36,7 @@
 // CULPRITS: food +290 (840/550 = 1.527273), fun +270 (370/100 = 3.7), fees +39 (estimate 0, no ratio)
 // Back to your own words, yearly: 290x12 = 3,480; 270x12 = 3,240; 39x12 = 468
 
-// GUT CHECK: gut 2,800 / estimates 3,157 / dreams 3,052 / actual 3,814
+// GUT CHECK (S-097: gut vs sum of estimates vs actual): gut 2,800 / estimates 3,157 / actual 3,814
 // actual - gut = 1,014; actual / gut = 1.362143
 
 // PROOF OF CASH: implied = 3,900 - savings 150 - debt 300 = 3,450
@@ -93,7 +94,8 @@
 // Correction factor, Food: ratios 700/550, 810/550, 840/550 -> average = 2,350 / 1,650 = 1.424242
 // Suggested next estimate = 550 x 1.424242 = 783.33. Last month's actual for Food = 810 (Aug, revised).
 
-// COMPLETION: every item answered (utilities actual is "roughly", which counts) -> 1.0
+// COMPLETION: every item answered (utilities actual is "roughly", which counts) -> 1.0.
+// S-097 drops the 10 dream questions (all answered, weight 1 each): still every item answered -> 1.0.
 // NEXT: only one weak item: Housing / Utilities actual (roughly).
 // ROUGH LIST: exactly one entry, Housing / Utilities: actual.
 
@@ -211,16 +213,17 @@ export default {
   fat: 2722, fatShare: 0.697949,
   takeHome: 3900, pretax: 260, hourly: 22.5,
   categories: {
-    housing: [1720, 1720, 1750], food: [550, 430, 840], transport: [132, 132, 132], debt: [300, 300, 300],
-    health: [160, 160, 145], bills: [45, 30, 68], fun: [100, 80, 370], annual: [100, 100, 120],
-    fees: [0, 0, 39], giving: [50, 100, 50], savings: [200, 400, 150]
+    // [estimate, actual]
+    housing: [1720, 1750], food: [550, 840], transport: [132, 132], debt: [300, 300],
+    health: [160, 145], bills: [45, 68], fun: [100, 370], annual: [100, 120],
+    fees: [0, 39], giving: [50, 50], savings: [200, 150]
   },
-  estimateTotal: 3157, dreamTotal: 3052, actualTotal: 3814, spending: 3814, savings: 150,
+  estimateTotal: 3157, actualTotal: 3814, spending: 3814, savings: 150,
   surplus: -64, savingsRate: 0.098558, housingShare: 0.448718, housingOver: true,
   roommateWorstCase: 3350, roommateWorstCaseShare: 0.858974,
   blindSpot: 0.176193,
   culprits: [['Food', 290, 1.527273, 3480], ['Personal and fun', 270, 3.7, 3240], ['Fees', 39, null, 468]],
-  gut: { gut: 2800, estimates: 3157, dreams: 3052, actual: 3814, actualVsGut: 1014, ratio: 1.362143 },
+  gut: { gut: 2800, estimates: 3157, actual: 3814, actualVsGut: 1014, ratio: 1.362143 },
   proofOfCash: { implied: 3450, entered: 3514, pct: 0.018551, flagged: false },
   fixed: 2260, variable: 1554, fixedPct: 0.592554,
   needs: 2707, wants: 1107, needsPct: 0.694103, wantsPct: 0.283846, savingsPct: 0.038462, unassignedShare: -0.016410,

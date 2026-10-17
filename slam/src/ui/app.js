@@ -91,7 +91,7 @@ const ctx = {
   },
   rerender: () => queueRender(),
   // Cash flow (accounts, the log, imports) lives inside Fill in and Analyze, so there are still four screens.
-  fillExtras: [{ id: 'cashflow', label: '6 Cash flow', render: renderTransactions }, { id: 'next', label: '7 Next stage', render: renderNextStage }, { id: 'eras', label: '8 Eras', render: renderEras }],
+  fillExtras: [{ id: 'cashflow', label: '5 Cash flow', render: renderTransactions }, { id: 'next', label: '6 Next stage', render: renderNextStage }, { id: 'eras', label: '7 Eras', render: renderEras }],
   analyzeExtras: [['cashflow', 'Cash flow', (c, s) => cashflowCards(c, s)], ['transactions', 'Transactions', (c, s) => transactionCards(c, s)], ['next', 'Next stage', (c, s) => nextStageCards(c, s)], ['eras', 'Eras', (c, s) => eraCards(c, s)], ['plan', 'Review and plan', (c, s) => reviewCards(c, s)], ['months', 'Months', (c, s) => monthsCards(c, s)], ['trends', 'Trends', (c, s) => trendCards(c, s)]]
 };
 
