@@ -6,13 +6,11 @@ import { money, pct, signedMoney, monthLabel } from '../format.js';
 import { statusChip } from '../components/status.js';
 import { budgetTable, closedMonthTable } from '../components/budget-table.js';
 import { nextCard, culpritsCard, gutCard, proofCard, completionCard, roughCard, extrasCard } from '../components/cards.js';
-import { closeMonthSnapshot, snapshotOf } from '../../calc/summary.js';
 import { monthRows } from '../../calc/history.js';
 import { keyCharts } from '../charts/key-charts.js';
 import { monthPicker } from '../components/month-picker.js';
 import { budgetCashStrip } from '../components/cashflow.js';
-import { saveForecast } from '../../store/cashflow.js';
-import { forecastFor } from '../../calc/calendar.js';
+import { loopStripCard, checklistCard, reviewCard } from '../components/loop.js';
 
 function tile(label, value, sub, cls) {
   return h('div', { class: 'tile' }, h('div', { class: 'label' }, label), h('div', { class: 'value ' + (cls || '') }, value), sub ? h('div', { class: 'sub' }, sub) : null);
@@ -45,15 +43,9 @@ function monthBar(ctx, summary) {
       h('b', {}, 'Working on ' + monthLabel(doc.currentMonth)),
       keys.length ? h('select', { 'aria-label': 'View a closed month', 'data-key': 'month-pick', onchange: (e) => { ctx.ui.monthView = e.target.value; ctx.rerender(); } },
         options([['current', 'View a closed month'], ...keys.slice().reverse().map((k) => [k, monthLabel(k) + ' (closed)'])], 'current')) : null),
-    ctx.ui.monthView === 'current' ? h('button', { class: 'btn small', onclick: () => {
-      if (!confirm('Close ' + monthLabel(doc.currentMonth) + '? Its numbers get locked as a snapshot. Late entries can still be added as revisions.')) return;
-      ctx.store.closeMonth(closeMonthSnapshot(summary));
-      ctx.update('Save snapshot', (d) => { d.snapshots.push(snapshotOf(summary, new Date().toISOString())); });
-      // The new month's predicted end cash, as of its 1st (S-086).
-      const next = ctx.doc.currentMonth;
-      ctx.update('Save forecast', (d) => saveForecast(d, next, forecastFor(d, summary.income, next), new Date().toISOString()));
-      ctx.toast(monthLabel(doc.currentMonth) + ' closed');
-    } }, 'Close ' + monthLabel(doc.currentMonth)) : null));
+    // Close month opens the month-end checklist first (S-089).
+    ctx.ui.monthView === 'current' ? h('button', { class: 'btn small', 'data-key': 'open-checklist', onclick: () => { ctx.ui.closing = true; ctx.rerender(); } }, 'Close ' + monthLabel(doc.currentMonth)) : null),
+    ctx.ui.closing ? checklistCard(ctx, summary) : null);
 }
 
 function lensToggle(ctx) {
@@ -65,8 +57,11 @@ function lensToggle(ctx) {
 export function renderBudget(ctx, summary) {
   const closed = ctx.ui.monthView !== 'current' && summary.history.keys.includes(ctx.ui.monthView);
   const hoursMissing = ctx.ui.lens === 'hours' && summary.income.hourlyTakeHome === null;
+  const justClosed = ctx.ui.justClosed ? ctx.doc.months.find((m) => m.key === ctx.ui.justClosed) : null;
   return h('div', {},
     h('h1', {}, 'Budget'),
+    closed ? null : loopStripCard(ctx, summary),
+    justClosed ? reviewCard(ctx, justClosed, { id: 'just-closed', dismiss: () => { ctx.ui.justClosed = null; ctx.rerender(); } }) : null,
     strip(summary),
     monthBar(ctx, summary),
     nextCard(ctx, summary),

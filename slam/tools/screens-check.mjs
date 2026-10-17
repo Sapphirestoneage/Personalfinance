@@ -247,6 +247,27 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('bridge', 'Actual change', await page.$eval('[data-key="bridge-actual"]', (b) => b.textContent), signedMoney(620));
   check('bridge', 'Not explained yet', await page.$eval('[data-key="bridge-unexplained"]', (b) => b.textContent), signedMoney(-60));
   check('bridge', 'Waterfall drawn', String(await page.$$eval('#chart-bridge svg rect', (r) => r.length >= 8)), 'true');
+  // The loop (S-089). By hand: 10 entries (3 paychecks, 2 groceries, Geico, the card payment, ATM, the concert, the couch),
+  // the yearly car insurance confirmed by its entry, every balance in (3 accounts x start and end), the bridge off by 60.
+  await page.click('nav a[href="#budget"]');
+  await page.waitForSelector('#loop-strip');
+  check('loop strip', 'Review step', await page.$eval('[data-key="loop-review"] .small', (d) => d.textContent), '0 lines still empty, 6 of 6 balances in, bridge off by $60');
+  check('loop strip', 'Track step', await page.$eval('[data-key="loop-track"] .small', (d) => d.textContent), '10 entries, last Oct 28, scheduled 1 of 1 confirmed');
+  page.on('dialog', (dl) => dl.accept());
+  await page.click('[data-key="open-checklist"]');
+  await page.waitForSelector('#checklist');
+  const want = "Closed with 3 open items: off by $60, 1 reimbursement owed, next month's plan not started";
+  check('checklist', 'Summary', await page.$eval('[data-key="close-summary"]', (p) => p.textContent), want + '.');
+  check('checklist', 'Close button', await page.$eval('[data-key="close-month"]', (b) => b.textContent), 'Close with 3 open items');
+  await page.click('[data-key="close-month"]');
+  await page.waitForSelector('#just-closed');
+  check('review', 'Open at close', await page.$eval('#just-closed [data-key="review-open"]', (b) => b.textContent), want);
+  check('review', 'Bridge tile', await page.$eval('#just-closed [data-key="review-bridge"]', (b) => b.textContent), 'Off by $60');
+  // 460 logged (groceries 400 + shopping 60) of 1,960 (+ rent 1,500 typed) = 23%
+  check('review', 'Tracking', await page.$eval('#just-closed [data-key="review-tracking"]', (b) => b.textContent), '23% ($460 logged, $1,500 typed)');
+  await page.click('nav a[href="#analyze"]');
+  await page.waitForSelector('#months-review');
+  check('months', 'Saved review shown', await page.$eval('#months-review [data-key="review-open"]', (b) => b.textContent), want);
   check('bridge', 'Console errors', String(errors.length), '0');
   await page.close();
 }

@@ -109,7 +109,7 @@ export function detect(all) {
 export function topMerchants(txs, n = 5) {
   const totals = {};
   for (const t of counted(txs)) {
-    if (!(PURCHASE.has(t.kind) || t.kind === 'refund')) continue;
+    if (!(PURCHASE.has(t.kind) || t.kind === 'refund') || !t.merchant || t.adjust) continue;
     totals[t.merchant] = (totals[t.merchant] || 0) + t.amount;
   }
   const total = Object.values(totals).reduce((a, x) => a + x, 0);

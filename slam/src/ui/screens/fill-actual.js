@@ -17,6 +17,7 @@ import { DEBT_TYPE_OPTIONS } from '../components/debt-quick.js';
 import { monthPicker } from '../components/month-picker.js';
 import { linkedCardBalance } from '../../calc/balances.js';
 import { openQuickEntry } from '../components/quick-entry.js';
+import { gapLines } from '../../calc/loop.js';
 import { logEntriesFor, removeTransaction } from '../../store/edits.js';
 import { editEntry } from '../../store/log.js';
 import { makeValue } from '../../store/value.js';
@@ -133,14 +134,8 @@ function noneButton(ctx, line) {
 
 // Lines in the plan or with an estimate that have nothing yet this month: on top.
 function gapsCard(ctx, summary) {
-  const gaps = [];
-  for (const c of summary.model.categories) {
-    if (c.isDebt || c.notForMe || c.isEverything) continue;
-    const pc = summary.plan ? summary.plan.cats[c.id] : null;
-    // A gap: nothing this month, on a line (or in a category) that has a plan or an estimate.
-    const expected = (l) => l.estimate !== null || c.estimate.amount !== null || (pc && (pc.byCategory ? pc.amount !== null : pc.lines[l.id] !== null && pc.lines[l.id] !== undefined));
-    for (const l of c.lines) if (l.actual === null && l.status.actual === null && !l.covered && expected(l)) gaps.push({ c, l });
-  }
+  // A gap: nothing this month, on a line (or in a category) that has a plan or an estimate (calc/loop.js).
+  const gaps = gapLines(summary).map((g) => ({ c: summary.model.categories.find((x) => x.id === g.catId), l: modelLine(summary, g.id) }));
   const done = summary.model.categories.flatMap((c) => c.lines).filter((l) => l.actualFrom === 'log').length;
   return h('div', { class: 'card' + (gaps.length ? ' flag' : ''), id: 'gaps-card' },
     h('h2', {}, gaps.length ? 'Still empty (' + gaps.length + ')' : 'Nothing left to fill'),

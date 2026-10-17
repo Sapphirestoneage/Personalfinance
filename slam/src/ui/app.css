@@ -264,3 +264,9 @@ table.review .toggle button { padding: 4px 8px; }
 .month-grid .in { color: var(--text); }
 .month-grid .out { color: var(--text-muted); }
 .cf-row.today-row { background: var(--accent-soft); }
+
+/* The monthly loop (S-089) */
+.loop-steps { display: grid; grid-template-columns: 1fr; gap: var(--space-2); margin-top: var(--space-2); }
+@media (min-width: 760px) { .loop-steps { grid-template-columns: repeat(3, 1fr); } }
+.loop-step { display: flex; gap: var(--space-2); align-items: flex-start; border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); background: var(--surface-2); }
+.loop-n { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-text); display: flex; align-items: center; justify-content: center; font-weight: 700; flex: none; }
