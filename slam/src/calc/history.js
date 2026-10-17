@@ -36,8 +36,10 @@ function trendOf(points) {
 export function openMonthRecords(doc) {
   const closed = new Set(doc.months.map((m) => m.key));
   const blank = { amount: null, cadence: 'month', status: null, source: 'client', asOf: null, note: '' };
-  return Object.entries(doc.monthActuals || {}).filter(([k]) => !closed.has(k) && k !== doc.currentMonth).map(([key, actuals]) => {
-    const copy = { ...doc, categories: doc.categories.map((c) => ({ ...c, lines: c.lines.map((l) => ({ ...l, actual: actuals[l.id] || blank })) })) };
+  // A month with only log entries is open too (S-087): its actuals come from the log.
+  const keys = new Set([...Object.keys(doc.monthActuals || {}), ...(doc.transactions || []).map((t) => t.date.slice(0, 7))]);
+  return [...keys].filter((k) => !closed.has(k) && k !== doc.currentMonth).sort().map((key) => [key, (doc.monthActuals || {})[key] || {}]).map(([key, actuals]) => {
+    const copy = { ...doc, currentMonth: key, categories: doc.categories.map((c) => ({ ...c, lines: c.lines.map((l) => ({ ...l, actual: actuals[l.id] || blank })) })) };
     return { key, open: true, snapshot: monthSnapshot(budgetModel(copy), { takeHome: null }), revised: { lines: {} } };
   });
 }

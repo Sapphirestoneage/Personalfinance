@@ -3,7 +3,9 @@
 import { h } from '../dom.js';
 import { DEMO_HOUSEHOLDS, DEMO_CSVS, loadDemo, loadDemoCSV } from '../refs.js';
 import { importCSV } from '../../calc/tx-import.js';
-import { addTransactions } from '../../store/edits.js';
+import { addAccount } from '../../store/accounts.js';
+import { mergeImport } from '../../store/log.js';
+import { matchImport } from '../../calc/log.js';
 
 function download(filename, text) {
   const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
@@ -82,9 +84,11 @@ export function renderClients(ctx) {
       h('div', { class: 'row' }, DEMO_HOUSEHOLDS.map(([id, label]) => h('button', { class: 'btn small', onclick: async () => {
         try {
           store.add(await loadDemo(id));
-          for (const [file, account] of DEMO_CSVS[id] || []) {
+          for (const [file, name, type] of DEMO_CSVS[id] || []) {
+            let account = (store.doc.accounts.find((a) => a.name === name) || {}).id;
+            if (!account) store.update('Add account', (d) => { account = addAccount(d, { name, type }).id; });
             const res = importCSV(await loadDemoCSV(file), { account, rulesData: ctx.refs.merchantRules, memory: store.doc.merchantMemory });
-            store.update('Import ' + file, (d) => addTransactions(d, res.transactions));
+            store.update('Import ' + file, (d) => mergeImport(d, matchImport(d.transactions, res.transactions)));
           }
           ctx.go('budget');
         } catch (e) { ctx.toast(e.message); }

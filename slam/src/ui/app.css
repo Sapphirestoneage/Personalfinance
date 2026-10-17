@@ -234,3 +234,45 @@ table.review .toggle button { padding: 4px 8px; }
 .review-card.done { opacity: 0.75; }
 .review-card-name { flex: 1 1 auto; min-width: 0; font-weight: 600; }
 .review-card-plan { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+
+/* Accounts and balances (S-084) */
+.account-row .balance-pair { display: grid; grid-template-columns: 1fr; gap: var(--space-2); flex: 1 1 260px; }
+@media (min-width: 760px) { .account-row .balance-pair { grid-template-columns: 1fr 1fr; } }
+
+/* Quick entry sheet (S-085): a bottom sheet on phones, a centered panel on wide screens */
+.sheet-backdrop { position: fixed; inset: 0; background: rgb(0 0 0 / 0.35); z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
+.sheet { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: var(--space-4); width: 100%; max-width: 520px; max-height: 92vh; overflow-y: auto; display: grid; gap: var(--space-3); }
+@media (min-width: 760px) { .sheet-backdrop { align-items: center; } .sheet { border-radius: var(--radius-lg); } }
+.sheet input.amount.big { width: 100%; font-size: var(--text-xl); }
+.sheet input[type="search"], .sheet input[type="text"]:not(.amount) { width: 100%; }
+.qe-lines { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.qe-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+.qe-row .field { margin: 0; }
+.qe-row input, .qe-row select { width: 100%; }
+.src-chip { font-size: var(--text-xs); color: var(--text-muted); border: 1px solid var(--border); border-radius: var(--radius-pill); padding: 0 6px; margin-left: 6px; }
+
+/* Cash flow (S-086) */
+.day-box { width: 4.5em; }
+.strip.three { grid-template-columns: repeat(3, 1fr); }
+@media (max-width: 420px) { .strip.three .tile .value { font-size: var(--text-md); } }
+.month-grid { width: 100%; border-collapse: collapse; table-layout: fixed; font-variant-numeric: tabular-nums; }
+.month-grid th { font-size: var(--text-xs); color: var(--text-muted); font-weight: 600; padding: 2px; }
+.month-grid td { border: 1px solid var(--border); vertical-align: top; padding: 2px 3px; height: 3.4em; font-size: 10px; overflow: hidden; }
+.month-grid td .d { font-weight: 700; font-size: var(--text-xs); }
+.month-grid td.today { outline: 2px solid var(--accent); outline-offset: -2px; }
+.month-grid td.low { background: var(--warn-soft); }
+.month-grid .in { color: var(--text); }
+.month-grid .out { color: var(--text-muted); }
+.cf-row.today-row { background: var(--accent-soft); }
+
+/* The monthly loop (S-089) */
+.loop-steps { display: grid; grid-template-columns: 1fr; gap: var(--space-2); margin-top: var(--space-2); }
+@media (min-width: 760px) { .loop-steps { grid-template-columns: repeat(3, 1fr); } }
+.loop-step { display: flex; gap: var(--space-2); align-items: flex-start; border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); background: var(--surface-2); }
+.loop-n { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-text); display: flex; align-items: center; justify-content: center; font-weight: 700; flex: none; }
+
+/* Trends (S-092) */
+.sparks { display: grid; gap: 2px; margin-top: var(--space-2); }
+.spark-row { display: grid; grid-template-columns: minmax(5em, 8em) 1fr auto; align-items: center; gap: var(--space-2); border-bottom: 1px solid var(--border); padding: 2px 0; }
+.spark-row svg { display: block; }
+.card.stat { padding: var(--space-3); }

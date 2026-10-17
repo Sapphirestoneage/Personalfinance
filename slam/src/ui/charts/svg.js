@@ -227,7 +227,9 @@ export function lines({ series, xs, width, fmt, zero = true, label = 'Line chart
     body += t(padL - 6, y(g) + 4, fmt(g), { anchor: 'end', cls: 'muted' });
   }
   if (lo < 0 && hi > 0) body += line(padL, y(0), width - 4, y(0), 'axis');
-  xs.forEach((lab, i) => { body += t(x(i), h - 4, lab, { anchor: 'middle', cls: 'muted' }); });
+  // Fewer labels when they would run into each other (twelve months on a phone).
+  const every = Math.max(1, Math.ceil((xs.length * 52) / Math.max(1, width - padL - padR)));
+  xs.forEach((lab, i) => { if (i % every === 0 || i === xs.length - 1 && (xs.length - 1) % every >= every / 2) body += t(x(i), h - 4, lab, { anchor: 'middle', cls: 'muted' }); });
   for (const s of series) {
     let d = '';
     s.values.forEach((v, i) => {
@@ -347,4 +349,179 @@ export function shareBar({ parts, shortfall = 0, width, label = '100% bar' }) {
   body += line(end, barY - 6, end, barY + barH + 4, 'axis');
   body += t(Math.min(end, width - 4), 12, '100%', { anchor: 'end', cls: 'muted' });
   return svgWrap(width, barY + barH + 20, body, label);
+}
+
+// Cash by day (S-086): one line for past and future, a dashed "today" line,
+// days under the cushion shaded, and labeled markers (paydays, big bills).
+// days: [{ date, v }], markers: [{ i, label }], todayIndex, cushion.
+export function dayLine({ days, width, fmt, todayIndex = null, cushion = null, markers = [], height = 200, compact = false, label = 'Cash by day' }) {
+  const padL = compact ? 4 : 56;
+  const padB = compact ? 16 : 22;
+  const padT = compact ? 14 : 18;
+  const vals = days.map((d) => d.v).filter((v) => v !== null);
+  // Fit the values (and the cushion), with a little room; zero shows only when the line gets near it.
+  let lo = Math.min(...vals, cushion === null ? Infinity : cushion);
+  let hi = Math.max(...vals, cushion === null ? -Infinity : cushion);
+  if (!vals.length) { lo = 0; hi = 1; }
+  if (hi === lo) hi = lo + 1;
+  const pad = (hi - lo) * 0.08;
+  lo = lo >= 0 && lo - pad * 3 <= 0 ? 0 : lo - pad;
+  hi += pad;
+  const n = days.length;
+  const x = (i) => padL + (n <= 1 ? 0 : (i * (width - padL - 6)) / (n - 1));
+  const y = (v) => padT + (1 - (v - lo) / (hi - lo)) * (height - padB - padT);
+  let body = '';
+  // Shade days under the cushion (or under zero when there is no cushion).
+  const floor = cushion === null ? 0 : cushion;
+  const bw = n > 1 ? (width - padL - 6) / (n - 1) : 4;
+  days.forEach((d, i) => { if (d.v !== null && d.v < floor) body += '<rect x="' + (x(i) - bw / 2).toFixed(1) + '" y="' + padT + '" width="' + bw.toFixed(1) + '" height="' + (height - padB - padT).toFixed(1) + '" style="fill:var(--chart-4);fill-opacity:0.18"><title>' + esc(d.date + ': under ' + fmt(floor)) + '</title></rect>'; });
+  if (!compact) {
+    for (const g of [lo, (lo + hi) / 2, hi]) {
+      body += line(padL, y(g), width - 4, y(g), 'grid-line');
+      body += t(padL - 6, y(g) + 4, fmt(g), { anchor: 'end', cls: 'muted' });
+    }
+  }
+  if (lo < 0) body += line(padL, y(0), width - 4, y(0), 'axis');
+  if (cushion) body += line(padL, y(cushion), width - 4, y(cushion), 'axis', true);
+  let path = '';
+  days.forEach((d, i) => { if (d.v !== null) path += (path ? ' L ' : 'M ') + x(i).toFixed(1) + ' ' + y(d.v).toFixed(1); });
+  body += '<path d="' + path + '" style="fill:none;stroke:var(--series-actual);stroke-width:2"/>';
+  // Past solid, future dashed on top so the line reads as "projected" after today.
+  if (todayIndex !== null && todayIndex < n - 1) {
+    let fut = '';
+    days.forEach((d, i) => { if (i >= todayIndex && d.v !== null) fut += (fut ? ' L ' : 'M ') + x(i).toFixed(1) + ' ' + y(d.v).toFixed(1); });
+    body += '<path d="' + fut + '" style="fill:none;stroke:var(--surface);stroke-width:2" stroke-dasharray="3 5"/>';
+  }
+  if (todayIndex !== null) {
+    body += line(x(todayIndex), padT - 4, x(todayIndex), height - padB, 'axis', true);
+    body += t(x(todayIndex), padT - 4, 'Today', { anchor: x(todayIndex) > width - 40 ? 'end' : 'middle', cls: 'muted' });
+  }
+  const placed = [];
+  for (const m of markers) {
+    const mx = x(m.i);
+    const my = y(days[m.i].v);
+    body += '<circle cx="' + mx.toFixed(1) + '" cy="' + my.toFixed(1) + '" r="4" style="fill:var(--surface);stroke:var(--chart-2);stroke-width:2"><title>' + esc(m.label + ', ' + days[m.i].date + ': ' + fmt(days[m.i].v)) + '</title></circle>';
+    if (compact || placed.some((p) => Math.abs(p - mx) < 70)) continue;
+    placed.push(mx);
+    body += t(Math.min(Math.max(mx, padL + 20), width - 30), height - 4, m.label, { anchor: 'middle', cls: 'muted' });
+  }
+  days.forEach((d, i) => { body += '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(d.v === null ? lo : d.v).toFixed(1) + '" r="5" style="fill:transparent"><title>' + esc(d.date + ': ' + (d.v === null ? 'no balance' : fmt(d.v))) + '</title></circle>'; });
+  return svgWrap(width, height, body, label);
+}
+
+// A sideways waterfall (S-088): one row per step, each bar from the running
+// total before it to the one after. Totals start at zero; an "unexplained" step
+// is drawn as an outline so it reads differently. rows: [{ label, from, to, kind }]
+export function waterfall({ rows, width, fmt, label = 'Waterfall' }) {
+  const barH = 16;
+  const vals = rows.flatMap((r) => [r.from, r.to]);
+  let lo = Math.min(0, ...vals);
+  let hi = Math.max(0, ...vals);
+  if (hi === lo) hi = lo + 1;
+  const amtOf = (r) => (r.kind === 'total' ? fmt(r.to) : (r.to >= r.from ? '+' : '-') + fmt(Math.abs(r.to - r.from)));
+  // Room on both sides for the amount labels, so nothing is clipped on a phone.
+  const pad = Math.min(width * 0.3, Math.max(...rows.map((r) => amtOf(r).length)) * 7 + 10);
+  const x = (v) => pad + ((v - lo) / (hi - lo)) * (width - 2 * pad);
+  let y = 4;
+  let body = '';
+  let prevX = null;
+  for (const r of rows) {
+    body += t(4, y + F, r.label, { cls: 'muted' });
+    y += F + 5;
+    const a = x(Math.min(r.from, r.to));
+    const b = x(Math.max(r.from, r.to));
+    const color = r.kind === 'total' ? 'var(--series-actual)' : r.to >= r.from ? 'var(--chart-3)' : 'var(--chart-2)';
+    const tip = r.label + ': ' + fmt(r.to - r.from);
+    if (r.kind === 'unexplained') body += '<rect x="' + a.toFixed(1) + '" y="' + y + '" width="' + Math.max(2, b - a).toFixed(1) + '" height="' + barH + '" rx="3" style="fill:none;stroke:var(--chart-axis);stroke-width:2" stroke-dasharray="4 3"><title>' + esc(tip) + '</title></rect>';
+    else body += rect(a, y, Math.max(2, b - a), barH, color, { tip });
+    if (prevX !== null && r.kind !== 'total') body += line(prevX, y - F - 7, prevX, y + barH, 'grid-line', true);
+    const amt = amtOf(r);
+    const right = r.to >= r.from || r.kind === 'total' ? b + 6 + amt.length * 7 <= width : a - 6 - amt.length * 7 < 0;
+    body += t(right ? b + 5 : a - 5, y + barH - 3, amt, { anchor: right ? null : 'end', weight: r.kind === 'total' ? 700 : null });
+    prevX = x(r.to);
+    y += barH + 10;
+  }
+  if (lo < 0) body += line(x(0), 0, x(0), y, 'axis');
+  return svgWrap(width, y, body, label);
+}
+
+// 80/20 (S-091): bars largest first, the cumulative % line over them, a
+// dashed line at the share (80%), and a marker where the cut ends.
+export function paretoChart({ cumulative, count, share = 0.8, width, fmt, label = 'Cumulative share of spending' }) {
+  const h = 200;
+  const padL = 44;
+  const padR = 36;
+  const padB = 20;
+  const n = cumulative.length;
+  const max = Math.max(1, ...cumulative.map((c) => c.amount));
+  const bw = (width - padL - padR) / Math.max(1, n);
+  const y = (v) => 8 + (1 - v) * (h - padB - 8);
+  let body = '';
+  cumulative.forEach((c, i) => {
+    const bh = (c.amount / max) * (h - padB - 8);
+    body += '<rect x="' + (padL + i * bw).toFixed(1) + '" y="' + (h - padB - bh).toFixed(1) + '" width="' + Math.max(1, bw - (bw > 4 ? 1 : 0)).toFixed(1) + '" height="' + bh.toFixed(1) + '" style="fill:' + (i < count ? 'var(--series-actual)' : 'var(--chart-other)') + ';fill-opacity:0.75"><title>' + esc(c.label + ': ' + fmt(c.amount) + ', ' + Math.round(c.cumShare * 100) + '% so far') + '</title></rect>';
+  });
+  let d = '';
+  cumulative.forEach((c, i) => { d += (d ? ' L ' : 'M ') + (padL + (i + 0.5) * bw).toFixed(1) + ' ' + y(c.cumShare).toFixed(1); });
+  body += '<path d="' + d + '" style="fill:none;stroke:var(--chart-2);stroke-width:2"/>';
+  body += line(padL, y(share), width - padR, y(share), 'axis', true);
+  body += t(width - padR + 4, y(share) + 4, Math.round(share * 100) + '%', { cls: 'muted' });
+  body += t(width - padR + 4, y(1) + 4, '100%', { cls: 'muted' });
+  body += t(padL - 6, h - padB, fmt(0), { anchor: 'end', cls: 'muted' });
+  body += t(padL - 6, 18, fmt(max), { anchor: 'end', cls: 'muted' });
+  if (count) {
+    const cx = padL + count * bw;
+    body += line(cx, 8, cx, h - padB, 'grid-line', true);
+    body += t(Math.min(cx + 4, width - padR - 60), h - 4, count + ' of ' + n, { cls: 'muted' });
+  }
+  body += t(padL, h - 4, 'Largest first', { cls: 'muted' });
+  return svgWrap(width, h, body, label);
+}
+
+// Category by month heatmap (S-092). rows: [{ label, values }], cols: labels.
+export function heatGrid({ rows, cols, width, fmt, max, label = 'Heatmap by month' }) {
+  const labW = Math.min(110, width * 0.3);
+  const cw = (width - labW - 4) / Math.max(1, cols.length);
+  const rh = 22;
+  let body = '';
+  const every = Math.max(1, Math.ceil((cols.length * 48) / Math.max(1, width - labW)));
+  cols.forEach((c, j) => { if (j % every === 0) body += t(labW + j * cw + cw / 2, 12, c, { anchor: 'middle', cls: 'muted' }); });
+  rows.forEach((r, i) => {
+    const y = 18 + i * rh;
+    body += t(4, y + 15, r.label.length > 14 ? r.label.slice(0, 13) + '.' : r.label, { cls: 'muted' });
+    r.values.forEach((v, j) => {
+      const op = v === null || !max ? 0 : 0.08 + 0.85 * (v / max);
+      body += '<rect x="' + (labW + j * cw).toFixed(1) + '" y="' + y + '" width="' + Math.max(1, cw - 2).toFixed(1) + '" height="' + (rh - 3) + '" rx="3" style="fill:var(--series-actual);fill-opacity:' + op.toFixed(2) + ';stroke:var(--chart-grid)"><title>' + esc(r.label + ', ' + cols[j] + ': ' + (v === null ? 'none' : fmt(v))) + '</title></rect>';
+    });
+  });
+  return svgWrap(width, 22 + rows.length * rh, body, label);
+}
+
+// One small line (S-092). max: a shared scale, or null for its own.
+export function spark({ values, width, height = 28, max = null, label = 'Sparkline' }) {
+  const vals = values.filter((v) => v !== null);
+  const hi = max !== null ? max : Math.max(1, ...vals);
+  const n = values.length;
+  const x = (i) => 2 + (n <= 1 ? 0 : (i * (width - 4)) / (n - 1));
+  const y = (v) => height - 2 - (v / (hi || 1)) * (height - 4);
+  let d = '';
+  let dots = '';
+  values.forEach((v, i) => { if (v !== null) { d += (d ? ' L ' : 'M ') + x(i).toFixed(1) + ' ' + y(v).toFixed(1); dots += '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(v).toFixed(1) + '" r="1.8" style="fill:var(--series-actual)"/>'; } });
+  return svgWrap(width, height, '<path d="' + d + '" style="fill:none;stroke:var(--series-actual);stroke-width:1.5"/>' + dots, label);
+}
+
+// Vertical bars with a few labels, for many points (days of a month). values: [{ label, v }]
+export function columns({ values, width, fmt, every = 5, label = 'Columns' }) {
+  const h = 150;
+  const padL = 44;
+  const padB = 18;
+  const max = Math.max(1, ...values.map((x) => x.v || 0));
+  const bw = (width - padL - 4) / Math.max(1, values.length);
+  let body = t(padL - 6, 14, fmt(max), { anchor: 'end', cls: 'muted' }) + t(padL - 6, h - padB, fmt(0), { anchor: 'end', cls: 'muted' });
+  values.forEach((x, i) => {
+    const bh = ((x.v || 0) / max) * (h - padB - 10);
+    body += rect(padL + i * bw, h - padB - bh, Math.max(1, bw - 1), bh, 'var(--series-actual)', { tip: x.label + ': ' + fmt(x.v || 0) });
+    if (i % every === 0) body += t(padL + i * bw + bw / 2, h - 4, x.label, { anchor: 'middle', cls: 'muted' });
+  });
+  return svgWrap(width, h, body, label);
 }

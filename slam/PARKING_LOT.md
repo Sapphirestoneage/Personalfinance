@@ -5,7 +5,7 @@ Ideas that are out of scope for the Budget. Nothing here is in the code.
 ## Out of scope by design (from the brief)
 
 FIRE calculator, projections, investing, net worth, emergency fund and the Rule of 5,
-debt payoff strategies, stress tests, cash flow calendar, "Can I afford this?", state
+debt payoff strategies, stress tests, "Can I afford this?", state
 tax, couples, cloud sync, client-facing logins, bank sync, the life simulator, the full
 What Matters priorities feature, hypothetical mode (beyond the single Next stage plan, S-054), the one-pager, gamification,
 theming beyond the tokens.
@@ -37,3 +37,11 @@ theming beyond the tokens.
 - Kill criteria: a coach-set line ("if cash falls below X or revenue is under Y by month Z, go back to a job") shown on the stay-vs-change chart.
 - Odds per lens (e.g. 20% disaster, 60% likely, 20% dream) for a weighted expected value.
 - Optional DRAFTT comparison to someone else's proportions (Trench, Money Guy, a peer group), shown as a reference, never a grade.
+
+## Monthly loop ideas (parked 2026-10-17, not built)
+
+- Client-side logging: the client enters their own entries on their phone, synced to the coach's file (needs logins and sync).
+- Year in review, Wrapped style: top category, biggest month, most-visited merchant, months under plan, estimate accuracy over the year, your 20%, happiest dollars, mistake total, a shareable card with no balances.
+- Next year's spending forecast by category (recent averages plus same month last year for annual costs), in Disaster, Likely, Best case. Spending and surplus only, no investment growth (that belongs to the future projection engine, lesson 3).
+- Calendar what-ifs: move a paycheck, add a one-time purchase ("Can I afford this?"), skip a bill.
+- Joining the calendar (days) and Eras (months and years) into one timeline, once the projection engine exists.

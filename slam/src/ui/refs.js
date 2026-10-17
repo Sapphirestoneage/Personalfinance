@@ -23,11 +23,13 @@ export const DEMO_HOUSEHOLDS = [
   ['luis', 'Luis, 33, Ohio, W-2 plus side hustle'],
   ['tasha', 'Tasha, 29, Texas, gross pay only'],
   ['sam', 'Sam, 24, between jobs, one total'],
-  ['jordan', 'Jordan, 31, with two imported CSV files']
+  ['jordan', 'Jordan, 31, with two imported CSV files'],
+  ['riley', 'Riley, 31, a year of the monthly loop']
 ];
 
 // Demo households that come with sample bank files to import.
-export const DEMO_CSVS = { jordan: [['jordan-chase.csv', 'Chase card'], ['jordan-checking.csv', 'Checking']] };
+// [file, account name, account type]: the account is made first, and the file goes into it (S-085).
+export const DEMO_CSVS = { jordan: [['jordan-chase.csv', 'Chase card', 'credit-card'], ['jordan-checking.csv', 'Checking', 'checking']] };
 
 export async function loadDemoCSV(file) {
   const res = await fetch('test/households/' + file);

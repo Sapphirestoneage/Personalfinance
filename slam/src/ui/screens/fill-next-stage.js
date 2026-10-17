@@ -2,6 +2,8 @@
 // that costs money in the short term but is better on other measures.
 // Results are on Analyze, under Next stage.
 
+import { cashOnHandNote } from '../components/accounts.js';
+import { cashOnHand } from '../../calc/balances.js';
 import { h, options } from '../dom.js';
 import { money } from '../format.js';
 import { makeValue } from '../../store/value.js';
@@ -111,7 +113,7 @@ export function renderNextStage(ctx, summary) {
       ns.transitionMonths > 0 ? question(ctx, 'Take-home during those months', '0 if nothing comes in', ['nextStage', 'transitionTakeHome'], ns.transitionTakeHome) : null,
       question(ctx, 'Later, pay could rise to (optional)', 'Take-home once the new path pays off', ['nextStage', 'laterTakeHome'], ns.laterTakeHome),
       ns.laterTakeHome.amount !== null ? numberField(ctx, '...after this many months', ns.laterAfterMonths, (s, v) => { s.laterAfterMonths = v; }, 'ns-later') : null,
-      question(ctx, 'Cash you could put toward the switch', 'Savings set aside for this. Used for runway: how long the money lasts.', ['nextStage', 'cashOnHand'], ns.cashOnHand, { cadence: false })),
+      cashOnHandNote(ctx, cashOnHand(ctx.doc))),
     lensesCard(ctx, ns),
     itemList(ctx, ns, 'oneOffCosts', 'One-time costs to make the change', 'Courses, licenses, moving, a gap in benefits.', '+ Add a one-time cost', 'Amount'),
     itemList(ctx, ns, 'costChanges', 'Monthly costs that change', 'More (childcare, a loan) or less (commute, lunches out). Use a minus sign for costs that go down.', '+ Add a cost change', 'Change'),

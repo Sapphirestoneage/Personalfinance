@@ -1,5 +1,8 @@
-// Fill in, pass 5 Actual: the line-by-line lap. Each line has its actual, and
-// a detail drawer (kind, need, path, tag, joy, state). Debts live here too.
+// Fill in, pass 5 Actual: review and fill gaps (S-087). A line with log entries
+// this month has its actual from the log (collapsed, with "see entries"); a
+// yearly line shows its monthly share; anything still empty is listed first
+// with three answers: add an entry, type an amount, or none this month.
+// Each line also has a detail drawer (kind, need, path, tag, joy, state). Debts live here too.
 
 import { h, options } from '../dom.js';
 import { money } from '../format.js';
@@ -12,6 +15,14 @@ import { categoryTypeSelect, lineTypeSelect, typeHint } from '../components/type
 import { lineTypeLabel } from '../../store/types.js';
 import { DEBT_TYPE_OPTIONS } from '../components/debt-quick.js';
 import { monthPicker } from '../components/month-picker.js';
+import { linkedCardBalance } from '../../calc/balances.js';
+import { openQuickEntry } from '../components/quick-entry.js';
+import { gapLines } from '../../calc/loop.js';
+import { logEntriesFor, removeTransaction } from '../../store/edits.js';
+import { editEntry } from '../../store/log.js';
+import { makeValue } from '../../store/value.js';
+import { parseAmount } from '../components/value-input.js';
+import { dayLabel, todayIso } from '../format.js';
 
 const STATES = [['active', 'Counts, shown'], ['hidden', 'Counts, hidden'], ['archived', 'Archived (stops counting)']];
 const TAG_IDEAS = ['Subscription', 'Travel', 'Gifts', 'Work', 'Self-care', 'Kids', 'Pets', 'Date night'];
@@ -81,6 +92,62 @@ function lineDetail(ctx, cat, line, catHasAnswer) {
         question(ctx, 'Line dream, long term', null, ['line', line.id, 'dreamLong'], line.dreamLong, { parts: true })));
 }
 
+const modelLine = (summary, id) => summary.model.categories.flatMap((c) => c.lines).find((l) => l.id === id) || null;
+
+// Entries for one line this month: amount editable, removable.
+function entriesList(ctx, line) {
+  const doc = ctx.doc;
+  const list = logEntriesFor(doc, line.id, doc.currentMonth);
+  return h('ul', { class: 'plain entries' }, list.map((t) => h('li', { class: 'small' },
+    h('span', {}, dayLabel(t.date) + (t.description ? ', ' + t.description : '') + (t.note ? ' (' + t.note + ')' : ''), h('span', { class: 'src-chip' }, { manual: 'Logged', scheduled: 'Scheduled', import: 'Bank' }[t.source || 'import'])),
+    h('span', { class: 'row' },
+      h('input', { type: 'text', inputmode: 'decimal', class: 'amount', style: 'width:6.5em', 'aria-label': 'Entry amount', 'data-key': 'entry-amt:' + t.id, value: String(t.amount),
+        onchange: (e) => { const a = parseAmount(e.target.value); if (a === null || a === undefined) { e.target.value = t.amount; return; } ctx.update('Edit entry', (d) => editEntry(d, t.id, { amount: a })); } }),
+      h('button', { class: 'btn small ghost danger', 'aria-label': 'Remove entry', onclick: () => ctx.update('Remove entry', (d) => removeTransaction(d, t.id)) }, 'Remove')))));
+}
+
+// One line's actual: from the log, a yearly share, or typed (with none this month).
+function actualCell(ctx, summary, line) {
+  const m = modelLine(summary, line.id);
+  const open = ctx.ui.expanded.has('entries:' + line.id);
+  const toggle = () => { if (open) ctx.ui.expanded.delete('entries:' + line.id); else ctx.ui.expanded.add('entries:' + line.id); ctx.rerender(); };
+  const add = h('button', { class: 'btn small ghost', 'data-key': 'add-entry:' + line.id, onclick: () => openQuickEntry(ctx, { lineId: line.id }) }, '+ Add entry');
+  if (m && m.actualFrom === 'share') {
+    return h('div', { class: 'value-input' }, h('b', { class: 'num' }, money(m.actual)), statusChip('computed'), h('span', { class: 'xs muted' }, 'monthly share of a yearly cost' + (m.logCount ? '; paid this month, see the bridge' : '')), add);
+  }
+  if (m && m.actualFrom === 'log') {
+    const n = m.logCount;
+    return h('div', { style: 'flex-basis:100%' }, h('div', { class: 'value-input' },
+      h('b', { class: 'num', 'data-key': 'from-log:' + line.id, title: 'This comes from ' + n + (n === 1 ? ' entry' : ' entries') + '. Add one, or edit an entry.',
+        onclick: () => ctx.toast('This comes from ' + n + (n === 1 ? ' entry' : ' entries') + '. Add one, or edit an entry.') }, money(m.actual, true)),
+      statusChip('computed'), h('span', { class: 'xs muted' }, 'from your log, ' + n + (n === 1 ? ' entry' : ' entries')),
+      h('button', { class: 'btn small ghost', 'data-key': 'see-entries:' + line.id, 'aria-expanded': open ? 'true' : 'false', onclick: toggle }, open ? 'Hide entries' : 'See entries'), add),
+    open ? entriesList(ctx, line) : null);
+  }
+  return h('div', { class: 'value-input' }, valueInput(ctx, ['line', line.id, 'actual'], line.actual, { label: line.name + ' actual', parts: true }),
+    line.actual.status === null ? noneButton(ctx, line) : null, add);
+}
+
+function noneButton(ctx, line) {
+  return h('button', { class: 'btn small ghost', 'data-key': 'none:' + line.id, onclick: () => ctx.commit(['line', line.id, 'actual'], makeValue(0, { note: 'None this month', asOf: todayIso() }), 'None this month') }, 'None this month');
+}
+
+// Lines in the plan or with an estimate that have nothing yet this month: on top.
+function gapsCard(ctx, summary) {
+  // A gap: nothing this month, on a line (or in a category) that has a plan or an estimate (calc/loop.js).
+  const gaps = gapLines(summary).map((g) => ({ c: summary.model.categories.find((x) => x.id === g.catId), l: modelLine(summary, g.id) }));
+  const done = summary.model.categories.flatMap((c) => c.lines).filter((l) => l.actualFrom === 'log').length;
+  return h('div', { class: 'card' + (gaps.length ? ' flag' : ''), id: 'gaps-card' },
+    h('h2', {}, gaps.length ? 'Still empty (' + gaps.length + ')' : 'Nothing left to fill'),
+    h('p', { class: 'muted small' }, done + ' line' + (done === 1 ? ' is' : 's are') + ' already filled from the log. ' + (gaps.length ? 'For each line below: add an entry, type an amount, or none this month.' : 'Every line with a plan or an estimate has an actual.')),
+    gaps.map(({ c, l }) => {
+      const line = ctx.doc.categories.find((x) => x.id === c.id).lines.find((x) => x.id === l.id);
+      return h('div', { class: 'qa' }, h('div', { class: 'q' }, h('div', {}, l.name), h('div', { class: 'hint' }, c.name + (l.estimate !== null ? ', estimate ' + money(l.estimate) : ''))),
+        h('div', { class: 'row' }, h('button', { class: 'btn small primary', 'data-key': 'gap-entry:' + l.id, onclick: () => openQuickEntry(ctx, { lineId: l.id }) }, 'Add an entry'),
+          h('button', { class: 'btn small', 'data-key': 'gap-type:' + l.id, onclick: () => { ctx.ui.focusPath = ['line', l.id, 'actual']; ctx.rerender(); } }, 'Type an amount'), noneButton(ctx, line)));
+    }));
+}
+
 function categoryCard(ctx, summary, cat) {
   const row = summary.rows.find((r) => r.id === cat.id);
   if (!row) return null;
@@ -106,7 +173,7 @@ function categoryCard(ctx, summary, cat) {
             if (open) ctx.ui.expanded.delete('line:' + line.id); else ctx.ui.expanded.add('line:' + line.id);
             ctx.rerender();
           } }, open ? 'Less' : 'Details')),
-        coveredByParents(ctx.doc, line) ? coveredNote() : valueInput(ctx, ['line', line.id, 'actual'], line.actual, { label: line.name + ' actual', parts: true }),
+        coveredByParents(ctx.doc, line) ? coveredNote() : actualCell(ctx, summary, line),
         tagRow(ctx, line),
         open ? h('div', { style: 'flex-basis:100%' }, lineDetail(ctx, cat, line, catHasAnswer)) : null);
     }),
@@ -120,6 +187,7 @@ function categoryCard(ctx, summary, cat) {
 }
 
 function debtCard(ctx, debt) {
+  const linked = linkedCardBalance(ctx.doc, debt.id);
   const p = (k) => ['debts', debt.id, k];
   const set = (k) => (e) => ctx.update('Debt ' + k, (d) => { d.debts.find((x) => x.id === debt.id)[k] = e.target.value; });
   return h('div', { class: 'card' },
@@ -130,7 +198,8 @@ function debtCard(ctx, debt) {
         ? h('p', { class: 'small warn' }, 'Not counting (paid off or set aside). ', h('button', { class: 'btn small', onclick: () => ctx.update('Count debt again', (d) => { d.debts.find((x) => x.id === debt.id).state = 'active'; }) }, 'Count it again'))
         : h('button', { class: 'btn small ghost', 'data-key': 'stop-debt:' + debt.id, onclick: () => ctx.update('Stop counting debt', (d) => { d.debts.find((x) => x.id === debt.id).state = 'archived'; }) }, 'Paid off, stop counting'))),
     question(ctx, 'Minimum payment', 'Flows into Debt payments automatically', p('minimum'), debt.minimum),
-    question(ctx, 'Balance', null, p('balance'), debt.balance, { cadence: false }),
+    linked ? h('p', { class: 'small', 'data-key': 'debt-linked:' + debt.id }, 'Balance: ' + money(linked.amount) + ', from the account "' + linked.name + '" (Cash flow).')
+      : question(ctx, 'Balance', null, p('balance'), debt.balance, { cadence: false }),
     question(ctx, 'APR (%)', null, p('apr'), debt.apr, { cadence: false, placeholder: '%' }),
     question(ctx, 'Due day of the month', null, p('dueDay'), debt.dueDay, { cadence: false, placeholder: 'day' }));
 }
@@ -139,9 +208,10 @@ export function renderActual(ctx, summary) {
   const doc = ctx.doc;
   const cats = doc.categories.filter((c) => c.state !== 'archived' && c.id !== 'debt' && c.id !== 'everything');
   return h('div', {},
-    h('div', { class: 'card' }, h('h2', {}, 'Actual: the line-by-line lap'),
-      h('p', { class: 'muted small' }, 'What really went out in the month picked below. Use any cadence; it becomes monthly. Tap a name to rename it. "+ Items" splits one amount (Uber, bus, subway) and 12+30+8 adds up. Open Details for fixed or variable, need, path, and joy.')),
+    h('div', { class: 'card' }, h('h2', {}, 'Actual: review and fill gaps'),
+      h('p', { class: 'muted small' }, 'Lines with entries in the log are already filled (tap See entries). Only what is missing needs an answer. Typed amounts can use any cadence; it becomes monthly. Tap a name to rename it. Open Details for fixed or variable, need, path, and joy.')),
     monthPicker(ctx, summary, { copyFixed: true }),
+    gapsCard(ctx, summary),
     tagManager(ctx),
     cats.map((c) => categoryCard(ctx, summary, c)),
     h('button', { class: 'btn', onclick: () => {

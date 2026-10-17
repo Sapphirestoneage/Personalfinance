@@ -8,7 +8,7 @@ import { makeValue } from '../src/store/value.js';
 import { findCategory } from '../src/store/edits.js';
 import { migrate } from '../src/store/migrate.js';
 import { validateHousehold } from '../src/store/validate.js';
-import { loadRefs, near } from './helpers.js';
+import { loadRefs, near, withCashOnHand } from './helpers.js';
 
 const refs = loadRefs();
 const v = (a, cadence = 'month') => makeValue(a, { cadence });
@@ -81,7 +81,7 @@ test('next stage: other measures, and a shortfall that needs a cut', () => {
 test('three lenses: disaster, likely, dream, with cash on hand and runway', () => {
   const d = household();
   const ns = d.nextStage;
-  ns.cashOnHand = v(10000, 'one-off');
+  withCashOnHand(d, 10000);
   // DISASTER: take-home 2,500; 6 months with no pay; course costs 4,000 (moving stays 500). Later pay follows likely (4,500 after 24).
   Object.assign(ns.cases.disaster, { takeHome: v(2500), transitionMonths: 6, transitionTakeHome: v(0) });
   ns.oneOffCosts[0].disaster = v(4000, 'one-off');

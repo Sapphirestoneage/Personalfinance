@@ -5,6 +5,7 @@
 import { toMonthly, hasAnswer, isOneOff } from './normalize.js';
 import { sumKnown } from './money.js';
 import { parentsPlan, PARENTS_PLAN_LINE_TYPES } from './coverage.js';
+import { actualsFromTransactions } from './tx-analysis.js';
 
 const WEAKNESS_ORDER = ['dont-know', 'will-email', null, 'guess', 'roughly', 'known', 'computed', 'not-for-me'];
 
@@ -27,25 +28,49 @@ export function primaryPayFrequency(doc) {
 // A line a parent's plan pays for counts as "doesn't apply": 0, and complete.
 function coveredRow(line, freq) {
   const zero = { ...line, estimate: NOT_FOR_ME, dream: NOT_FOR_ME, dreamLong: NOT_FOR_ME, actual: NOT_FOR_ME };
-  return { ...lineRow(zero, freq), covered: 'parents-plan' };
+  return { ...lineRow(zero, freq, null), covered: 'parents-plan' };
+}
+
+// A line with a due month is a yearly cost (S-086). Its monthly actual is its
+// share (the month's plan, else the estimate); the payment itself is in the log
+// and shows in the budget-to-cash bridge (S-087).
+export function isYearlyLine(line) {
+  return !!(line.dueMonth && line.dueMonth.amount !== null && line.dueMonth.amount !== undefined);
+}
+
+// The log owns the money (S-087): a line with entries this month has its actual
+// computed from them and is not typed over. A line with none keeps a typed actual.
+function actualOf(line, freq, src) {
+  if (src && isYearlyLine(line)) {
+    const p = src.plan && src.plan.lines[line.id] ? toMonthly(src.plan.lines[line.id].amount, freq) : null;
+    const share = p !== null ? p : toMonthly(line.estimate, freq);
+    if (share !== null) return { amount: share, status: 'computed', from: 'share', count: src.log.counts[line.id] || 0 };
+  }
+  if (src && src.log.counts[line.id]) return { amount: src.log.byLine[line.id], status: 'computed', from: 'log', count: src.log.counts[line.id] };
+  const typed = toMonthly(line.actual, freq);
+  return { amount: typed, status: line.actual.status, from: typed === null && line.actual.status === null ? null : 'typed', count: 0 };
 }
 const NOT_FOR_ME = { amount: null, cadence: 'month', status: 'not-for-me', source: 'client', asOf: null, note: '' };
 
-function lineRow(line, freq) {
+function lineRow(line, freq, src) {
   const oneOffs = [];
+  const a = actualOf(line, freq, src);
   for (const k of ['estimate', 'dream', 'dreamLong', 'actual']) {
+    if (k === 'actual' && a.from !== 'typed') continue;
     if (isOneOff(line[k])) oneOffs.push({ which: k, amount: line[k].amount });
   }
   const owed = line.path === 'reimbursable' ? toMonthly(line.owedBack, freq) : null;
-  let actual = toMonthly(line.actual, freq);
-  // Reimbursable: counts fully until marked received, then only your share counts.
-  if (actual !== null && owed !== null && line.owedBackReceived) actual -= owed;
+  let actual = a.amount;
+  // Reimbursable (typed actuals): counts fully until marked received, then only your share counts.
+  // From the log, reimbursements are entries that already reduce the line.
+  if (a.from === 'typed' && actual !== null && owed !== null && line.owedBackReceived) actual -= owed;
   return {
     id: line.id, name: line.name, kind: line.kind, need: line.need, savings: line.savings,
     addedFor: line.addedFor || null,
     path: line.path, tag: line.tag, tags: line.tags || [], type: line.type || 'other', joy: line.joy, stress: line.stress === undefined ? null : line.stress, state: line.state, computed: false,
     estimate: toMonthly(line.estimate, freq), dream: toMonthly(line.dream, freq), dreamLong: toMonthly(line.dreamLong, freq), actual,
-    status: { estimate: line.estimate.status, dream: line.dream.status, dreamLong: line.dreamLong ? line.dreamLong.status : null, actual: line.actual.status },
+    status: { estimate: line.estimate.status, dream: line.dream.status, dreamLong: line.dreamLong ? line.dreamLong.status : null, actual: a.status },
+    actualFrom: a.from, logCount: a.count, yearly: isYearlyLine(line),
     owedOutstanding: owed !== null && !line.owedBackReceived ? owed : 0,
     oneOffs
   };
@@ -82,13 +107,15 @@ function resolveTop(cat, lines, key, freq) {
 export function budgetModel(doc) {
   const freq = primaryPayFrequency(doc);
   const plan = parentsPlan(doc);
+  // The month's log, once, for every line (S-087).
+  const src = { log: actualsFromTransactions(doc.transactions || [], doc.currentMonth), plan: (doc.plans || {})[doc.currentMonth] || null };
   const cats = [];
   for (const cat of doc.categories) {
     if (cat.state === 'archived') continue;
     const isDebt = cat.id === 'debt';
     // A line added in review for a later month is not part of this month (S-076).
     const lines = isDebt ? debtRows(doc) : cat.lines.filter((l) => l.state !== 'archived' && !(l.addedFor && l.addedFor > doc.currentMonth))
-      .map((l) => (plan.on && PARENTS_PLAN_LINE_TYPES.includes(l.type) ? coveredRow(l, freq) : lineRow(l, freq)));
+      .map((l) => (plan.on && PARENTS_PLAN_LINE_TYPES.includes(l.type) ? coveredRow(l, freq) : lineRow(l, freq, src)));
     const notForMe = cat.estimate.status === 'not-for-me' && !isDebt;
     const row = {
       id: cat.id, name: cat.name, type: isDebt ? 'debt' : (cat.type || 'other'), kind: cat.kind, need: cat.need, savings: cat.savings, tag: cat.tag,

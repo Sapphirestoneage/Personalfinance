@@ -1,13 +1,28 @@
 // Checks a household document and returns a list of problems (empty = valid).
 // The store refuses to save a document that fails validation.
 
-import { valueErrors } from './value.js';
+import { valueErrors, STATUSES } from './value.js';
 import { CATEGORY_TYPE_IDS, LINE_TYPE_IDS } from './types.js';
 import { PLAN_DECISIONS } from './plans.js';
+import { ENTRY_KINDS, ENTRY_SOURCES } from './log.js';
 import {
   SCHEMA_VERSION, LIVING_WITH, SITUATIONS, FILING_STATUSES, INCOME_TYPES, PAY_FREQUENCIES, PAY_BASES, WITHHOLDING, DEDUCTION_KIND_IDS,
-  ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES
+  ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES, ACCOUNT_TYPES, ACCOUNT_STATES
 } from './schema.js';
+
+// A date with a status (S-086).
+function dateErrors(v, where) {
+  const errs = [];
+  if (v.date !== null && !/^\d{4}-\d{2}-\d{2}$/.test(v.date || '')) errs.push(where + ': date must be YYYY-MM-DD or empty');
+  if (v.status !== null && !STATUSES.includes(v.status)) errs.push(where + ': unknown status ' + v.status);
+  return errs;
+}
+
+function dayErrors(errs, v, max, where) {
+  if (!v) return;
+  errs.push(...valueErrors(v, where));
+  if (v.amount !== null && !(Number.isInteger(v.amount) && v.amount >= 1 && v.amount <= max)) errs.push(where + ' must be a whole number, 1 to ' + max);
+}
 
 function oneOf(errs, list, val, where, allowNull = false) {
   if (allowNull && (val === null || val === undefined)) return;
@@ -45,6 +60,8 @@ export function validateHousehold(doc) {
     if (inc.withholding !== undefined) oneOf(errs, WITHHOLDING, inc.withholding, w + '.withholding');
     if (inc.benefitWeeksLeft !== undefined && inc.benefitWeeksLeft !== null && !(typeof inc.benefitWeeksLeft === 'number' && inc.benefitWeeksLeft >= 0)) errs.push(w + '.benefitWeeksLeft must be 0 or more, or empty');
     for (const k of ['takeHome', 'gross', 'hourlyRate']) errs.push(...valueErrors(inc[k], w + '.' + k));
+    if (inc.nextPayDate) errs.push(...dateErrors(inc.nextPayDate, w + '.nextPayDate'));
+    if (inc.payDays !== undefined && !(Array.isArray(inc.payDays) && inc.payDays.length === 2 && inc.payDays.every((d) => Number.isInteger(d) && d >= 1 && d <= 31))) errs.push(w + '.payDays must be two days, 1 to 31');
     for (const [k, v] of Object.entries(inc.withheld || {})) errs.push(...valueErrors(v, w + '.withheld.' + k));
     (inc.deductions || []).forEach((d, j) => {
       const dw = w + '.deductions[' + j + ']';
@@ -60,6 +77,7 @@ export function validateHousehold(doc) {
     seen(d.id, w);
     oneOf(errs, DEBT_TYPES, d.type, w + '.type');
     for (const k of ['balance', 'apr', 'minimum', 'dueDay']) errs.push(...valueErrors(d[k], w + '.' + k));
+    if (d.payWith !== undefined) oneOf(errs, ['minimum', 'statement'], d.payWith, w + '.payWith');
   });
   (doc.categories || []).forEach((c, i) => {
     const w = 'categories[' + i + '] ' + c.id;
@@ -81,6 +99,8 @@ export function validateHousehold(doc) {
       if (l.stress !== undefined && l.stress !== null && !(Number.isInteger(l.stress) && l.stress >= 1 && l.stress <= 10)) errs.push(lw + '.stress must be 1 to 10 or empty');
       for (const k of ['estimate', 'dream', 'actual', 'owedBack']) errs.push(...valueErrors(l[k], lw + '.' + k));
       if (l.dreamLong !== undefined) errs.push(...valueErrors(l.dreamLong, lw + '.dreamLong'));
+      dayErrors(errs, l.dueDay, 31, lw + '.dueDay');
+      dayErrors(errs, l.dueMonth, 12, lw + '.dueMonth');
       (l.tags || []).forEach((t) => { if (!tagIds.has(t)) errs.push(lw + '.tags: unknown tag ' + t); });
     });
   });
@@ -88,8 +108,35 @@ export function validateHousehold(doc) {
     if (!r.id) errs.push('blindRounds[' + i + '].id is missing');
     for (const [k, v] of Object.entries(r.estimates || {})) errs.push(...valueErrors(v, 'blindRounds[' + i + '].' + k));
   });
+  const acctIds = new Set();
+  (doc.accounts || []).forEach((a, i) => {
+    const w = 'accounts[' + i + ']';
+    seen(a.id, w);
+    acctIds.add(a.id);
+    if (typeof a.name !== 'string' || !a.name.trim()) errs.push(w + ': name is empty');
+    oneOf(errs, ACCOUNT_TYPES, a.type, w + '.type');
+    oneOf(errs, ACCOUNT_STATES, a.state, w + '.state');
+    if (a.debtId && !(doc.debts || []).some((d) => d.id === a.debtId)) errs.push(w + '.debtId: unknown debt ' + a.debtId);
+  });
+  for (const [m, accts] of Object.entries(doc.balances || {})) {
+    if (!/^\d{4}-\d{2}$/.test(m)) errs.push('balances key ' + m + ' must be YYYY-MM');
+    for (const [id, b] of Object.entries(accts)) {
+      if (!acctIds.has(id)) errs.push('balances.' + m + ': unknown account ' + id);
+      errs.push(...valueErrors(b.start, 'balances.' + m + '.' + id + '.start'), ...valueErrors(b.end, 'balances.' + m + '.' + id + '.end'));
+    }
+  }
+  if (doc.cashflow) {
+    const cf = doc.cashflow;
+    errs.push(...valueErrors(cf.cushion, 'cashflow.cushion'));
+    for (const [k, mv] of Object.entries(cf.moves || {})) if (mv.to !== null && !/^\d{4}-\d{2}-\d{2}$/.test(mv.to || '')) errs.push('cashflow.moves.' + k + ': the new date must be YYYY-MM-DD, or none to skip');
+    (cf.checks || []).forEach((c, i) => {
+      if (!acctIds.has(c.accountId)) errs.push('cashflow.checks[' + i + ']: unknown account ' + c.accountId);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(c.date || '')) errs.push('cashflow.checks[' + i + ']: needs a date');
+      errs.push(...valueErrors(c.amount, 'cashflow.checks[' + i + '].amount'));
+    });
+    for (const [m, f] of Object.entries(cf.forecasts || {})) if (!/^\d{4}-\d{2}$/.test(m) || typeof f.predicted !== 'number') errs.push('cashflow.forecasts.' + m + ' needs a month and a number');
+  }
   if (doc.eras) {
-    errs.push(...valueErrors(doc.eras.cashNow, 'eras.cashNow'));
     (doc.eras.list || []).forEach((e, i) => {
       const w = 'eras[' + i + ']';
       seen(e.id, w);
@@ -113,7 +160,7 @@ export function validateHousehold(doc) {
   }
   if (doc.nextStage) {
     const ns = doc.nextStage;
-    for (const k of ['takeHome', 'transitionTakeHome', 'laterTakeHome', 'cashOnHand']) errs.push(...valueErrors(ns[k], 'nextStage.' + k));
+    for (const k of ['takeHome', 'transitionTakeHome', 'laterTakeHome']) errs.push(...valueErrors(ns[k], 'nextStage.' + k));
     for (const c of ['disaster', 'dream']) {
       const o = (ns.cases || {})[c] || {};
       for (const k of ['takeHome', 'transitionTakeHome', 'laterTakeHome']) errs.push(...valueErrors(o[k], 'nextStage.cases.' + c + '.' + k));
@@ -122,13 +169,27 @@ export function validateHousehold(doc) {
     for (const list of ['oneOffCosts', 'costChanges']) (ns[list] || []).forEach((c, i) => errs.push(...valueErrors(c.amount, 'nextStage.' + list + '[' + i + ']')));
     for (const k of ['hoursPerWeek', 'transitionMonths', 'laterAfterMonths']) if (ns[k] !== null && !(typeof ns[k] === 'number' && ns[k] >= 0)) errs.push('nextStage.' + k + ' must be a number 0 or more, or empty');
   }
-  const KINDS = ['spend', 'transfer', 'card-payment', 'refund', 'reimbursement', 'income', 'fee'];
+  const txIds = new Set((doc.transactions || []).map((t) => t.id));
+  if (txIds.size !== (doc.transactions || []).length) errs.push('transactions: duplicate id');
   (doc.transactions || []).forEach((t, i) => {
     const w = 'transactions[' + i + ']';
-    if (!t.id || !/^\d{4}-\d{2}-\d{2}$/.test(t.date || '') || typeof t.amount !== 'number') errs.push(w + ': needs id, date, and amount');
-    if (!KINDS.includes(t.kind)) errs.push(w + '.kind: "' + t.kind + '" is not one of ' + KINDS.join(', '));
+    if (!t.id || !/^\d{4}-\d{2}-\d{2}$/.test(t.date || '') || typeof t.amount !== 'number' || !Number.isFinite(t.amount)) errs.push(w + ': needs id, date, and amount');
+    oneOf(errs, ENTRY_KINDS, t.kind, w + '.kind');
+    oneOf(errs, ENTRY_SOURCES, t.source, w + '.source');
+    if (t.account && !acctIds.has(t.account)) errs.push(w + '.account: unknown account ' + t.account);
+    if (t.lineId && !lineIds.has(t.lineId)) errs.push(w + '.lineId: unknown line ' + t.lineId);
+    (t.possible || []).forEach((id) => { if (!txIds.has(id)) errs.push(w + '.possible: unknown entry ' + id); });
+    if (t.owed !== undefined && !(typeof t.owed === 'number' && t.owed > 0 && t.owed <= Math.abs(t.amount))) errs.push(w + '.owed must be more than 0 and no more than the amount');
+    if (t.settles !== undefined && !txIds.has(t.settles)) errs.push(w + '.settles: unknown entry ' + t.settles);
   });
   if (!/^\d{4}-\d{2}$/.test(doc.currentMonth || '')) errs.push('currentMonth must be YYYY-MM');
+  (doc.estimateLog || []).forEach((e, i) => {
+    const w = 'estimateLog[' + i + ']';
+    if (!e.lineId === !e.categoryId) errs.push(w + ': needs a lineId or a categoryId');
+    if (!e.at || !/^\d{4}-\d{2}$/.test(e.month || '')) errs.push(w + ': needs at and month');
+    if (e.to) errs.push(...valueErrors(e.to, w + '.to'));
+    if (e.from) errs.push(...valueErrors(e.from, w + '.from'));
+  });
   for (const [k, lines] of Object.entries(doc.monthActuals || {})) {
     if (!/^\d{4}-\d{2}$/.test(k)) errs.push('monthActuals key ' + k + ' must be YYYY-MM');
     if (k === doc.currentMonth) errs.push('monthActuals must not hold the month being worked on (' + k + ')');

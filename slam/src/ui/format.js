@@ -60,3 +60,14 @@ export function less(x) {
   if (x === null || x === undefined) return EMPTY;
   return '(' + money(x) + ')';
 }
+
+// Today as YYYY-MM-DD in the viewer's own time zone (dates in the log are local days).
+export function todayIso(now = new Date()) {
+  return now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+}
+
+export function dayLabel(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-').map(Number);
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+}

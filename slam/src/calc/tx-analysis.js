@@ -3,6 +3,7 @@
 // converted, price creep, fees, buy now pay later), and chart data.
 
 import { ratio } from './money.js';
+import { counted } from './log.js';
 
 const COUNTS = new Set(['spend', 'fee', 'refund', 'reimbursement']);
 const PURCHASE = new Set(['spend', 'fee']);
@@ -16,36 +17,25 @@ export function txMonths(txs) {
 
 // Card payments, transfers, and income are not spending. Refunds and
 // reimbursements (Venmo, Zelle, work) reduce the line they are mapped to;
-// unmapped ones change nothing.
+// unmapped ones change nothing. A purchase someone will pay back counts only
+// the client's share (amount - owed); the reimbursement that settles it then
+// changes nothing. A one-off entry is listed apart, like a one-off actual (S-088).
 export function actualsFromTransactions(txs, month) {
   const byLine = {};
   const counts = {};
   let unmapped = 0;
   let unmappedCount = 0;
-  for (const t of txs) {
-    if (monthOf(t.date) !== month || !COUNTS.has(t.kind)) continue;
+  for (const t of counted(txs)) {
+    if (monthOf(t.date) !== month || !COUNTS.has(t.kind) || t.oneOff || (t.kind === 'reimbursement' && t.settles)) continue;
     if (!t.lineId) {
       if (PURCHASE.has(t.kind)) { unmapped += t.amount; unmappedCount += 1; }
       continue;
     }
-    byLine[t.lineId] = (byLine[t.lineId] || 0) + t.amount;
+    byLine[t.lineId] = (byLine[t.lineId] || 0) + t.amount - (t.owed || 0);
     counts[t.lineId] = (counts[t.lineId] || 0) + 1;
   }
   for (const k of Object.keys(byLine)) byLine[k] = r2(byLine[k]);
   return { month, byLine, counts, unmapped: r2(unmapped), unmappedCount };
-}
-
-// Compare with what was typed, so the client can confirm before anything is replaced.
-export function actualsProposal(model, txs, month) {
-  const a = actualsFromTransactions(txs, month);
-  const rows = [];
-  for (const c of model.categories) {
-    for (const l of c.lines) {
-      if (a.byLine[l.id] === undefined) continue;
-      rows.push({ lineId: l.id, name: l.name, category: c.name, typed: l.actual, fromTransactions: a.byLine[l.id], count: a.counts[l.id], changes: l.actual !== a.byLine[l.id] });
-    }
-  }
-  return { ...a, rows };
 }
 
 function groupByMerchant(txs) {
@@ -61,7 +51,8 @@ const SUB_TOLERANCE = 0.2;
 // Monthly subscriptions: in 2+ months, at most one charge a month, 25 to 35
 // days apart, amounts within 20% of each other. BNPL payments are excluded
 // (they are flagged separately). Trials of $1 or less are ignored here.
-export function detect(txs) {
+export function detect(all) {
+  const txs = counted(all);
   const purchases = txs.filter((t) => t.kind === 'spend');
   const groups = groupByMerchant(purchases);
   const subscriptions = [];
@@ -73,7 +64,7 @@ export function detect(txs) {
     for (let i = 1; i < list.length; i++) {
       const a = list[i - 1];
       const b = list[i];
-      if (a.amount === b.amount && a.amount > 0 && Math.abs(daysBetween(a.date, b.date)) <= 1) duplicates.push({ merchant, date: b.date, amount: b.amount, ids: [a.id, b.id] });
+      if (a.amount === b.amount && a.amount > 0 && Math.abs(daysBetween(a.date, b.date)) <= 1 && !(a.notDuplicate && b.notDuplicate)) duplicates.push({ merchant, date: b.date, amount: b.amount, ids: [a.id, b.id] });
     }
     // free trial that converted
     const first = list[0];
@@ -117,8 +108,8 @@ export function detect(txs) {
 // Spending by merchant, net of refunds. Top 5 and their share.
 export function topMerchants(txs, n = 5) {
   const totals = {};
-  for (const t of txs) {
-    if (!(PURCHASE.has(t.kind) || t.kind === 'refund')) continue;
+  for (const t of counted(txs)) {
+    if (!(PURCHASE.has(t.kind) || t.kind === 'refund') || !t.merchant || t.adjust) continue;
     totals[t.merchant] = (totals[t.merchant] || 0) + t.amount;
   }
   const total = Object.values(totals).reduce((a, x) => a + x, 0);
@@ -133,7 +124,7 @@ const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 // Purchases (not refunds) by day of week, Monday first, plus the weekend split.
 export function weekdaySpending(txs) {
   const sums = [0, 0, 0, 0, 0, 0, 0];
-  for (const t of txs) {
+  for (const t of counted(txs)) {
     if (!PURCHASE.has(t.kind)) continue;
     const [y, m, d] = t.date.split('-').map(Number);
     sums[new Date(Date.UTC(y, m - 1, d)).getUTCDay()] += t.amount;
@@ -153,7 +144,7 @@ export function weekdaySpending(txs) {
 // Per merchant: how often and how big (small-and-frequent vs big-and-rare).
 export function sizeVsCount(txs) {
   const g = {};
-  for (const t of txs) {
+  for (const t of counted(txs)) {
     if (!PURCHASE.has(t.kind) || t.amount <= 0) continue;
     const x = (g[t.merchant] = g[t.merchant] || { merchant: t.merchant, count: 0, total: 0 });
     x.count += 1;

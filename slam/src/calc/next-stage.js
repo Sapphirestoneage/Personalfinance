@@ -2,6 +2,7 @@
 // in the short term but is better on other measures. What the client would
 // need to make it work, now vs next, and stay vs change over time.
 
+import { cashOnHand } from './balances.js';
 import { toMonthly, hasAnswer } from './normalize.js';
 import { ratio, sumKnown } from './money.js';
 
@@ -37,7 +38,8 @@ export function resolveCase(ns, caseId) {
 // All three lenses, plus cash on hand and runway (how long savings last through the switch).
 export function nextStage(doc, income, totals, culprits) {
   if (!doc.nextStage) return null;
-  const cash = doc.nextStage.cashOnHand ? oneOff(doc.nextStage.cashOnHand) : null;
+  // Cash on hand is read from the account balances (S-084), never asked here.
+  const cash = cashOnHand(doc).amount;
   const cases = {};
   for (const c of CASES) {
     const r = nextStageCase(resolveCase(doc.nextStage, c), income, totals, culprits);

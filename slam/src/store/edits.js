@@ -164,8 +164,22 @@ export function getField(doc, path) {
 }
 
 export function setField(doc, path, value) {
-  if (path[0] === 'line') { findLine(doc, path[1]).line[path[2]] = value; return; }
+  if (path[0] === 'line') {
+    if (path[2] === 'actual') refuseTypingOverLog(doc, path[1]);
+    findLine(doc, path[1]).line[path[2]] = value;
+    return;
+  }
   setAt(doc, path, value);
+}
+
+// The log owns the money (S-087): a line with entries this month is not typed over.
+const LOGGED_KINDS = new Set(['spend', 'fee', 'refund', 'reimbursement']);
+export function logEntriesFor(doc, lineId, month) {
+  return (doc.transactions || []).filter((t) => t.lineId === lineId && t.date.startsWith(month) && LOGGED_KINDS.has(t.kind) && !(t.possible && t.possible.length));
+}
+function refuseTypingOverLog(doc, lineId) {
+  const n = logEntriesFor(doc, lineId, doc.currentMonth).length;
+  if (n) throw new Error('This comes from ' + n + (n === 1 ? ' entry' : ' entries') + '. Add one, or edit an entry.');
 }
 
 // Blind guess: a fresh round of rough estimates asked without showing the old ones.
@@ -175,12 +189,11 @@ export function startBlindRound(doc, dateIso) {
   return round;
 }
 
-// Transactions: add new ones (skipping any already imported), re-map one
-// (optionally remembering the merchant), and replace line actuals for a month
-// after the client confirms.
+// Transactions: add new ones (skipping any already imported) and re-map one
+// (optionally remembering the merchant). Actuals come from the log in calc (S-087).
 export function addTransactions(doc, txs) {
   const have = new Set(doc.transactions.map((t) => t.id));
-  const fresh = txs.filter((t) => !have.has(t.id));
+  const fresh = txs.filter((t) => !have.has(t.id)).map((t) => ({ source: 'import', note: '', ...t }));
   doc.transactions.push(...fresh);
   doc.transactions.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   return fresh.length;
@@ -202,18 +215,6 @@ export function setTransactionKind(doc, txId, kind) {
 
 export function removeTransaction(doc, txId) {
   doc.transactions = doc.transactions.filter((x) => x.id !== txId);
-}
-
-// rows: [{ lineId, fromTransactions, count }] from calc's actualsProposal.
-export function applyTransactionActuals(doc, rows, monthLabel) {
-  for (const r of rows) {
-    const found = findLine(doc, r.lineId);
-    if (!found) continue;
-    found.line.actual = {
-      amount: r.fromTransactions, cadence: 'month', status: 'known', source: 'lookup',
-      asOf: new Date().toISOString().slice(0, 10), note: 'From ' + r.count + ' transactions, ' + monthLabel
-    };
-  }
 }
 
 export function addDeduction(doc, incomeId, kind) {

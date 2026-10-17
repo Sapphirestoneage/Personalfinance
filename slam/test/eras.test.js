@@ -9,7 +9,7 @@ import { eraTimeline, addMonths } from '../src/calc/eras.js';
 import { addEra, moveEra, removeEra } from '../src/store/edits.js';
 import { validateHousehold } from '../src/store/validate.js';
 import { migrate } from '../src/store/migrate.js';
-import { loadRefs } from './helpers.js';
+import { loadRefs, withCashOnHand } from './helpers.js';
 
 const refs = loadRefs();
 const T = Object.fromEntries(refs.eraTemplates.templates.map((t) => [t.id, t]));
@@ -18,7 +18,7 @@ const totals = { takeHome: 4000, spending: 3000 };
 function plan() {
   const d = newHousehold('Eras');
   d.currentMonth = '2026-11';
-  d.eras.cashNow = makeValue(10000);
+  withCashOnHand(d, 10000);
   const geo = addEra(d, T['geo-arbitrage']);
   geo.oneTime = makeValue(2000);
   const sab = addEra(d, T.sabbatical);
@@ -51,7 +51,7 @@ test('two eras end to end, template shares as guesses, against regular life', ()
 test('typed numbers replace the guess; cash running out says when and how long to save first', () => {
   const d = newHousehold('Trip');
   d.currentMonth = '2026-11';
-  d.eras.cashNow = makeValue(1000);
+  withCashOnHand(d, 1000);
   const trip = addEra(d, T['long-travel']);
   trip.spending = makeValue(5000);
   const e = eraTimeline(d, totals, refs).eras[0];
@@ -75,7 +75,8 @@ test('blocks move earlier and later; dates follow the order', () => {
 
 test('no cash entered: the path shows change from today, no run-out claims', () => {
   const { d } = plan();
-  d.eras.cashNow = makeValue();
+  d.accounts = [];
+  d.balances = {};
   const r = eraTimeline(d, totals, refs);
   assert.equal(r.cashKnown, false);
   assert.equal(r.eras[0].runsOut, null);

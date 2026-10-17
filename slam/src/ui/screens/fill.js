@@ -18,7 +18,7 @@ export function passForPath(path) {
   if (a === 'income' || a === 'profile' || a === 'household') return 'basics';
   if (a === 'categories') return c === 'dream' || c === 'dreamLong' ? 'dream' : 'rough';
   if (a === 'line' || a === 'debts') return 'actual';
-  if (a === 'transactions') return 'transactions';
+  if (a === 'transactions' || a === 'balances') return 'cashflow';
   if (a === 'nextStage') return 'next';
   if (a === 'eras') return 'eras';
   return 'rough';
@@ -37,7 +37,7 @@ function runningBar(ctx, summary, pass) {
   const take = h('b', {});
   const col = h('b', {});
   const left = h('b', {});
-  if (pass === 'transactions' || pass === 'next' || pass === 'eras') pass = 'actual';
+  if (pass === 'cashflow' || pass === 'next' || pass === 'eras') pass = 'actual';
   const colLabel = pass === 'dream' ? (ctx.ui.dreamTerm === 'long' ? 'Long-term dreams' : 'Short-term dreams') : pass === 'actual' ? 'Spending + savings' : 'Estimates';
   const fill = (s) => {
     const t = s.totals;

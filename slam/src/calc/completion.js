@@ -51,7 +51,8 @@ export function questionItems(doc, model, income) {
     for (const d of doc.debts) {
       if (d.state === 'archived') continue;
       add('min:' + d.id, d.label + ': minimum payment', ['debts', d.id, 'minimum'], WEIGHTS.heavy, d.minimum.status, d.minimum.amount);
-      add('bal:' + d.id, d.label + ': balance', ['debts', d.id, 'balance'], WEIGHTS.light, d.balance.status, null);
+      // A card linked to an account keeps its balance there (S-084), so it is not asked here.
+      if (!(doc.accounts || []).some((a) => a.debtId === d.id && a.state !== 'archived')) add('bal:' + d.id, d.label + ': balance', ['debts', d.id, 'balance'], WEIGHTS.light, d.balance.status, null);
       add('apr:' + d.id, d.label + ': APR', ['debts', d.id, 'apr'], WEIGHTS.light, d.apr.status, null);
     }
   }

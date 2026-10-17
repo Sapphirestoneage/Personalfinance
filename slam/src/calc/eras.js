@@ -6,6 +6,7 @@
 
 import { hasAnswer, toMonthly } from './normalize.js';
 import { minus } from './money.js';
+import { cashOnHand } from './balances.js';
 
 export function addMonths(key, n) {
   const [y, m] = key.split('-').map(Number);
@@ -20,13 +21,15 @@ function eraMoney(value, base, share) {
 }
 
 export function eraTimeline(doc, totals, refs) {
-  const eras = doc.eras || { cashNow: null, list: [] };
+  const eras = doc.eras || { list: [] };
   const templates = Object.fromEntries(((refs.eraTemplates && refs.eraTemplates.templates) || []).map((t) => [t.id, t]));
   const baseIncome = totals.takeHome;
   const baseSpend = totals.spending;
   const baseNet = minus(baseIncome, baseSpend);
-  const cashKnown = !!eras.cashNow && eras.cashNow.amount !== null;
-  let cash = cashKnown ? eras.cashNow.amount : 0;
+  // Cash now is read from the account balances (S-084), never asked here.
+  const cashNow = cashOnHand(doc).amount;
+  const cashKnown = cashNow !== null;
+  let cash = cashKnown ? cashNow : 0;
   let regular = cash;
   let key = doc.currentMonth;
   const path = [];
