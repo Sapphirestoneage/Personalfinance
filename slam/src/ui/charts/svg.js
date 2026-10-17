@@ -348,3 +348,61 @@ export function shareBar({ parts, shortfall = 0, width, label = '100% bar' }) {
   body += t(Math.min(end, width - 4), 12, '100%', { anchor: 'end', cls: 'muted' });
   return svgWrap(width, barY + barH + 20, body, label);
 }
+
+// Cash by day (S-086): one line for past and future, a dashed "today" line,
+// days under the cushion shaded, and labeled markers (paydays, big bills).
+// days: [{ date, v }], markers: [{ i, label }], todayIndex, cushion.
+export function dayLine({ days, width, fmt, todayIndex = null, cushion = null, markers = [], height = 200, compact = false, label = 'Cash by day' }) {
+  const padL = compact ? 4 : 56;
+  const padB = compact ? 16 : 22;
+  const padT = compact ? 14 : 18;
+  const vals = days.map((d) => d.v).filter((v) => v !== null);
+  // Fit the values (and the cushion), with a little room; zero shows only when the line gets near it.
+  let lo = Math.min(...vals, cushion === null ? Infinity : cushion);
+  let hi = Math.max(...vals, cushion === null ? -Infinity : cushion);
+  if (!vals.length) { lo = 0; hi = 1; }
+  if (hi === lo) hi = lo + 1;
+  const pad = (hi - lo) * 0.08;
+  lo = lo >= 0 && lo - pad * 3 <= 0 ? 0 : lo - pad;
+  hi += pad;
+  const n = days.length;
+  const x = (i) => padL + (n <= 1 ? 0 : (i * (width - padL - 6)) / (n - 1));
+  const y = (v) => padT + (1 - (v - lo) / (hi - lo)) * (height - padB - padT);
+  let body = '';
+  // Shade days under the cushion (or under zero when there is no cushion).
+  const floor = cushion === null ? 0 : cushion;
+  const bw = n > 1 ? (width - padL - 6) / (n - 1) : 4;
+  days.forEach((d, i) => { if (d.v !== null && d.v < floor) body += '<rect x="' + (x(i) - bw / 2).toFixed(1) + '" y="' + padT + '" width="' + bw.toFixed(1) + '" height="' + (height - padB - padT).toFixed(1) + '" style="fill:var(--chart-4);fill-opacity:0.18"><title>' + esc(d.date + ': under ' + fmt(floor)) + '</title></rect>'; });
+  if (!compact) {
+    for (const g of [lo, (lo + hi) / 2, hi]) {
+      body += line(padL, y(g), width - 4, y(g), 'grid-line');
+      body += t(padL - 6, y(g) + 4, fmt(g), { anchor: 'end', cls: 'muted' });
+    }
+  }
+  if (lo < 0) body += line(padL, y(0), width - 4, y(0), 'axis');
+  if (cushion) body += line(padL, y(cushion), width - 4, y(cushion), 'axis', true);
+  let path = '';
+  days.forEach((d, i) => { if (d.v !== null) path += (path ? ' L ' : 'M ') + x(i).toFixed(1) + ' ' + y(d.v).toFixed(1); });
+  body += '<path d="' + path + '" style="fill:none;stroke:var(--series-actual);stroke-width:2"/>';
+  // Past solid, future dashed on top so the line reads as "projected" after today.
+  if (todayIndex !== null && todayIndex < n - 1) {
+    let fut = '';
+    days.forEach((d, i) => { if (i >= todayIndex && d.v !== null) fut += (fut ? ' L ' : 'M ') + x(i).toFixed(1) + ' ' + y(d.v).toFixed(1); });
+    body += '<path d="' + fut + '" style="fill:none;stroke:var(--surface);stroke-width:2" stroke-dasharray="3 5"/>';
+  }
+  if (todayIndex !== null) {
+    body += line(x(todayIndex), padT - 4, x(todayIndex), height - padB, 'axis', true);
+    body += t(x(todayIndex), padT - 4, 'Today', { anchor: x(todayIndex) > width - 40 ? 'end' : 'middle', cls: 'muted' });
+  }
+  const placed = [];
+  for (const m of markers) {
+    const mx = x(m.i);
+    const my = y(days[m.i].v);
+    body += '<circle cx="' + mx.toFixed(1) + '" cy="' + my.toFixed(1) + '" r="4" style="fill:var(--surface);stroke:var(--chart-2);stroke-width:2"><title>' + esc(m.label + ', ' + days[m.i].date + ': ' + fmt(days[m.i].v)) + '</title></circle>';
+    if (compact || placed.some((p) => Math.abs(p - mx) < 70)) continue;
+    placed.push(mx);
+    body += t(Math.min(Math.max(mx, padL + 20), width - 30), height - 4, m.label, { anchor: 'middle', cls: 'muted' });
+  }
+  days.forEach((d, i) => { body += '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(d.v === null ? lo : d.v).toFixed(1) + '" r="5" style="fill:transparent"><title>' + esc(d.date + ': ' + (d.v === null ? 'no balance' : fmt(d.v))) + '</title></circle>'; });
+  return svgWrap(width, height, body, label);
+}

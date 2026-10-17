@@ -5,7 +5,7 @@ import { makeValue } from './value.js';
 import { DEFAULT_LINE_TYPES } from './types.js';
 import { newId } from './ids.js';
 
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
 
 export const SITUATIONS = ['employed', 'self-employed', 'between-jobs', 'student'];
 export const FILING_STATUSES = ['single', 'married-joint', 'married-separate', 'head-of-household'];
@@ -86,6 +86,9 @@ export function newLine(fields = {}) {
     // dream = short term (this year, or the next step); dreamLong = long term (S-075).
     estimate: makeValue(), dream: makeValue(), dreamLong: makeValue(), actual: makeValue(),
     owedBack: makeValue(), owedBackReceived: false,
+    // Cash flow (S-086): an optional due day (1 to 31); with a due month (1 to 12) it is
+    // once a year. The account it is paid from (null = the first checking account).
+    dueDay: makeValue(null, { cadence: 'one-off' }), dueMonth: makeValue(null, { cadence: 'one-off' }), accountId: null,
     // The client's own tags (ids from doc.tags), like Subscription or Travel.
     tags: fields.tags || [],
     // Added during a monthly review for this month ('YYYY-MM'); not part of earlier months (S-076).
@@ -137,6 +140,9 @@ export function newIncome(fields = {}) {
     // Unemployment only: federal withholding ('ten-percent', 'none', or null = not sure) and weeks left.
     withholding: null,
     benefitWeeksLeft: null,
+    // Cash flow (S-086): the next pay date schedules every paycheck with the pay frequency;
+    // semimonthly pays on two days of the month. accountId null = the first checking account.
+    nextPayDate: makeDate(), payDays: [1, 15], accountId: null,
     state: 'active'
   };
 }
@@ -200,6 +206,8 @@ export function newDebt(fields = {}) {
     label: fields.label || 'Debt',
     type: fields.type || 'credit-card',
     balance: makeValue(), apr: makeValue(), minimum: makeValue(), dueDay: makeValue(),
+    // Cash flow (S-086): paid from this account (null = checking), the minimum or the statement balance.
+    payFrom: null, payWith: 'minimum',
     state: 'active'
   };
 }
@@ -221,6 +229,18 @@ export function newAccount(fields = {}) {
     state: fields.state || 'active',
     debtId: fields.debtId || null
   };
+}
+
+// A date with a status, like a Value without an amount (S-086).
+export function makeDate(date = null, opts = {}) {
+  return { date, status: opts.status !== undefined ? opts.status : (date ? 'known' : null), source: opts.source || 'client', asOf: opts.asOf || null, note: opts.note || '' };
+}
+
+// Cash flow settings and records (S-086): the coach's cushion, scheduled items
+// moved or skipped (moves[key] = { to: date or null, at }), real balances checked
+// on a day, and each month's predicted end cash saved on the 1st.
+export function newCashflow() {
+  return { cushion: makeValue(null, { cadence: 'one-off' }), moves: {}, checks: [], forecasts: {} };
 }
 
 // One account's balances for one month. A card's balance is what is owed (positive).
@@ -280,6 +300,7 @@ export function newHousehold(name, now = new Date()) {
     // Accounts and their month balances: balances['YYYY-MM'][accountId] = { start, end } (S-084).
     accounts: [],
     balances: {},
+    cashflow: newCashflow(),
     nextStage: null,
     // Eras: life chapters laid end to end after today's budget (S-067).
     eras: newEras(),

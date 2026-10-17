@@ -10,7 +10,9 @@ import { closeMonthSnapshot, snapshotOf } from '../../calc/summary.js';
 import { monthRows } from '../../calc/history.js';
 import { keyCharts } from '../charts/key-charts.js';
 import { monthPicker } from '../components/month-picker.js';
-import { quickEntryButton } from '../components/quick-entry.js';
+import { budgetCashStrip } from '../components/cashflow.js';
+import { saveForecast } from '../../store/cashflow.js';
+import { forecastFor } from '../../calc/calendar.js';
 
 function tile(label, value, sub, cls) {
   return h('div', { class: 'tile' }, h('div', { class: 'label' }, label), h('div', { class: 'value ' + (cls || '') }, value), sub ? h('div', { class: 'sub' }, sub) : null);
@@ -38,7 +40,7 @@ function monthBar(ctx, summary) {
       h('b', {}, monthLabel(ctx.ui.monthView) + ' (closed, view only)'),
       h('button', { class: 'btn small', onclick: () => { ctx.ui.monthView = 'current'; ctx.rerender(); } }, 'Back to ' + monthLabel(doc.currentMonth)));
   }
-  return h('div', {}, monthPicker(ctx, summary), h('div', { class: 'row', style: 'margin-bottom:12px' }, quickEntryButton(ctx)), h('div', { class: 'card spread' },
+  return h('div', {}, monthPicker(ctx, summary), budgetCashStrip(ctx, summary), h('div', { class: 'card spread' },
     h('div', { class: 'row' },
       h('b', {}, 'Working on ' + monthLabel(doc.currentMonth)),
       keys.length ? h('select', { 'aria-label': 'View a closed month', 'data-key': 'month-pick', onchange: (e) => { ctx.ui.monthView = e.target.value; ctx.rerender(); } },
@@ -47,6 +49,9 @@ function monthBar(ctx, summary) {
       if (!confirm('Close ' + monthLabel(doc.currentMonth) + '? Its numbers get locked as a snapshot. Late entries can still be added as revisions.')) return;
       ctx.store.closeMonth(closeMonthSnapshot(summary));
       ctx.update('Save snapshot', (d) => { d.snapshots.push(snapshotOf(summary, new Date().toISOString())); });
+      // The new month's predicted end cash, as of its 1st (S-086).
+      const next = ctx.doc.currentMonth;
+      ctx.update('Save forecast', (d) => saveForecast(d, next, forecastFor(d, summary.income, next), new Date().toISOString()));
       ctx.toast(monthLabel(doc.currentMonth) + ' closed');
     } }, 'Close ' + monthLabel(doc.currentMonth)) : null));
 }

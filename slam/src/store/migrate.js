@@ -3,7 +3,7 @@
 // To change the stored shape: bump SCHEMA_VERSION, add a step to STEPS, and
 // write a compatibility note in DECISIONS.md.
 
-import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt, newDeduction, newCaseOverrides, newWithheld, WITHHELD_KEYS, newEra, newAccount } from './schema.js';
+import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt, newDeduction, newCaseOverrides, newWithheld, WITHHELD_KEYS, newEra, newAccount, newCashflow, makeDate } from './schema.js';
 import { normalizeValue, isBlank } from './value.js';
 import { CATEGORY_TYPE_IDS, DEFAULT_LINE_TYPES, guessLineType } from './types.js';
 
@@ -31,7 +31,10 @@ const STEPS = {
   // Version 5 to 6 (S-085): transactions are the log. Every entry has a source
   // (old ones were imported) and an account id; an account name used by old
   // imports becomes an account.
-  5: (doc) => logWithAccounts(doc)
+  5: (doc) => logWithAccounts(doc),
+  // Version 6 to 7 (S-086): cash flow dates. Every new field starts blank (pay dates,
+  // due days, accounts, cushion); nothing is guessed.
+  6: (doc) => ({ ...doc, cashflow: doc.cashflow || newCashflow(), schemaVersion: 7 })
 };
 
 const guessAccountType = (name) => (/card|visa|amex|master|discover|credit/i.test(name) ? 'credit-card' : /saving/i.test(name) ? 'savings' : /cash|wallet/i.test(name) ? 'cash' : 'checking');
@@ -131,6 +134,7 @@ export function normalizeHousehold(doc) {
     // Compatibility: the old single "pretaxRetirement" amount becomes a retirement deduction.
     const { pretaxRetirement, ...i } = raw;
     const inc = withDefaults(newIncome({ id: i.id }), i, ['takeHome', 'gross', 'hourlyRate']);
+    inc.nextPayDate = { ...makeDate(), ...(i.nextPayDate || {}) };
     inc.deductions = (i.deductions || []).map((d) => ({ ...newDeduction({ id: d.id, kind: d.kind }), ...d, amount: normalizeValue(d.amount) }));
     const old = pretaxRetirement === undefined ? null : normalizeValue(pretaxRetirement);
     if (old && !isBlank(old)) inc.deductions.unshift({ ...newDeduction({ id: 'ded-' + inc.id + '-ret', kind: 'retirement', mode: 'amount' }), amount: old });
@@ -140,12 +144,15 @@ export function normalizeHousehold(doc) {
     return inc;
   });
   out.debts = (doc.debts || []).map((d) => withDefaults(newDebt({ id: d.id }), d, ['balance', 'apr', 'minimum', 'dueDay']));
+  const cf = doc.cashflow || {};
+  out.cashflow = { ...newCashflow(), ...cf, cushion: { ...normalizeValue(cf.cushion), cadence: 'one-off' }, moves: cf.moves || {}, forecasts: cf.forecasts || {},
+    checks: (cf.checks || []).map((c) => ({ ...c, amount: { ...normalizeValue(c.amount), cadence: 'one-off' } })) };
   out.categories = (doc.categories || base.categories).map((c) => {
     const cat = withDefaults(newCategory({ id: c.id }), c, ['estimate', 'dream', 'dreamLong']);
     // Compatibility (S-068): files before types get them from the default ids, else from the name.
     if (!c.type) cat.type = CATEGORY_TYPE_IDS.includes(c.id) ? c.id : 'other';
     cat.lines = (c.lines || []).map((l) => {
-      const line = withDefaults(newLine({ id: l.id, savings: cat.savings, tag: cat.tag }), l, ['estimate', 'dream', 'dreamLong', 'actual', 'owedBack']);
+      const line = withDefaults(newLine({ id: l.id, savings: cat.savings, tag: cat.tag }), l, ['estimate', 'dream', 'dreamLong', 'actual', 'owedBack', 'dueDay', 'dueMonth']);
       if (!l.type) line.type = DEFAULT_LINE_TYPES[l.id] || guessLineType(line.name, cat.type);
       return line;
     });

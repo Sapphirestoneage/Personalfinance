@@ -5,6 +5,7 @@
 
 import { h, options } from '../dom.js';
 import { accountsCard } from '../components/accounts.js';
+import { scheduleCard, waitingCard, checkBalancesCard } from '../components/cashflow.js';
 import { money, monthLabel } from '../format.js';
 import { importCSV, FORMATS } from '../../calc/tx-import.js';
 import { actualsProposal } from '../../calc/tx-analysis.js';
@@ -164,6 +165,9 @@ export function renderTransactions(ctx, summary) {
   const month = months.includes(ctx.ui.txMonth) ? ctx.ui.txMonth : ctx.doc.currentMonth;
   return h('div', {},
     accountsCard(ctx, ctx.doc.currentMonth),
+    waitingCard(ctx, summary),
+    scheduleCard(ctx),
+    checkBalancesCard(ctx),
     h('div', { class: 'row', style: 'margin:12px 0' }, h('b', {}, 'Month'),
       h('select', { 'data-key': 'tx-month', onchange: (e) => { ctx.ui.txMonth = e.target.value; ctx.rerender(); } }, options(months.map((m) => [m, monthLabel(m)]), month))),
     reviewCard(ctx, summary, month),

@@ -20,6 +20,7 @@ import { eraCards } from './charts/era-charts.js';
 import { renderEras } from './screens/fill-eras.js';
 import { reviewCards } from './screens/review.js';
 import { quickEntrySheet } from './components/quick-entry.js';
+import { cashflowCards } from './charts/cash-charts.js';
 
 const SCREENS = [['clients', 'Clients'], ['fill', 'Fill in'], ['budget', 'Budget'], ['analyze', 'Analyze']];
 const root = document.getElementById('app');
@@ -76,7 +77,7 @@ const ctx = {
   rerender: () => queueRender(),
   // Cash flow (accounts, the log, imports) lives inside Fill in and Analyze, so there are still four screens.
   fillExtras: [{ id: 'cashflow', label: '6 Cash flow', render: renderTransactions }, { id: 'next', label: '7 Next stage', render: renderNextStage }, { id: 'eras', label: '8 Eras', render: renderEras }],
-  analyzeExtras: [['transactions', 'Transactions', (c, s) => transactionCards(c, s)], ['next', 'Next stage', (c, s) => nextStageCards(c, s)], ['eras', 'Eras', (c, s) => eraCards(c, s)], ['plan', 'Review and plan', (c, s) => reviewCards(c, s)]]
+  analyzeExtras: [['cashflow', 'Cash flow', (c, s) => cashflowCards(c, s)], ['transactions', 'Transactions', (c, s) => transactionCards(c, s)], ['next', 'Next stage', (c, s) => nextStageCards(c, s)], ['eras', 'Eras', (c, s) => eraCards(c, s)], ['plan', 'Review and plan', (c, s) => reviewCards(c, s)]]
 };
 
 store.subscribe((doc, label) => {

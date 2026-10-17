@@ -124,6 +124,8 @@ for (const [name, button] of Object.entries(DEMOS)) {
   await page.close();
 }
 // The monthly loop (S-084 on): accounts, balances, and the screens built on them.
+// Dates are in this month (a new client works on the month it was made).
+const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0'); })();
 {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
   const errors = [];
@@ -160,20 +162,32 @@ for (const [name, button] of Object.entries(DEMOS)) {
   await page.fill('[data-key="qe-search"]', 'groc');
   await page.click('[data-key="qe-line:groceries"]');
   await page.fill('[data-key="qe-merchant"]', "Trader Joe's");
-  await page.fill('[data-key="qe-date"]', '2026-10-03');
+  await page.fill('[data-key="qe-date"]', YM + '-03');
   await page.click('[data-key="qe-save"]');
   await page.waitForSelector('.toast');
   check('loop', 'Quick entry saved', await page.$eval('.toast', (t) => t.textContent), 'Logged $54.20 to Groceries');
   await page.click('nav a[href="#fill"]');
   await page.getByRole('button', { name: '6 Cash flow' }).click();
-  await page.selectOption('[data-key="tx-month"]', '2026-10').catch(() => null);
-  await page.setInputFiles('#tx-file', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from('Date,Description,Amount\n10/04/2026,TRADER JOE S #552,-54.20\n10/05/2026,WHOLE FOODS MKT,-80.10\n') });
+  const mdy = (d) => YM.slice(5) + '/' + d + '/' + YM.slice(0, 4);
+  await page.setInputFiles('#tx-file', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from('Date,Description,Amount\n' + mdy('04') + ',TRADER JOE S #552,-54.20\n' + mdy('05') + ',WHOLE FOODS MKT,-80.10\n') });
   await page.waitForSelector('[data-key="match-summary"]');
   check('loop', 'Import match summary', (await page.$eval('[data-key="match-summary"] b', (b) => b.textContent)), 'Matched 1, new 1, possible matches 0 to confirm.');
   await page.click('[data-key="tx-add"]');
   await page.waitForTimeout(150);
   const srcs = await page.$$eval('.src-chip', (cs) => cs.map((c) => c.textContent));
   check('loop', 'Log sources after merge', srcs.join(', '), 'Bank, merged, Bank');
+  // Cash by day (S-086). By hand: checking starts at 2,500; Trader Joe's 54.20 and Whole Foods 80.10
+  // are in the log; no income or plan yet. Today 2,500 - 54.20 - 80.10 = 2,365.70, also the lowest
+  // point and safe to spend (no payday ahead).
+  await page.click('nav a[href="#budget"]');
+  await page.waitForSelector('#cash-strip');
+  check('loop', 'Cash today', await page.$eval('[data-key="cash-today"]', (b) => b.textContent), money(2365.7));
+  check('loop', 'Lowest point', await page.$eval('[data-key="cash-lowest"]', (b) => b.textContent), money(2365.7));
+  check('loop', 'Safe to spend', await page.$eval('[data-key="safe-to-spend"]', (b) => b.textContent), money(2365.7));
+  await page.click('nav a[href="#analyze"]');
+  await page.waitForSelector('#chart-cf-chart svg');
+  check('loop', 'Calendar chart drawn', String(await page.$$eval('#chart-cf-chart svg path', (p) => p.length > 0)), 'true');
+  check('loop', 'Month grid drawn', String(await page.$$eval('#chart-cf-grid td', (t) => t.length >= 28)), 'true');
   check('loop', 'Console errors', String(errors.length), '0');
   await page.close();
 }
