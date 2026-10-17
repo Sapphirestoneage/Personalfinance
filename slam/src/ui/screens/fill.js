@@ -1,5 +1,6 @@
 // Screen 2, Fill in: the guided passes in the order used on calls.
-// Gut, Basics, Rough, Dream, Actual (and Transactions). Every pass is skippable.
+// Gut, Basics, Rough, Actual (then Cash flow, Next stage, Eras). Every pass is skippable.
+// The dream life moved to Eras (S-097).
 
 import { h } from '../dom.js';
 import { money } from '../format.js';
@@ -9,14 +10,16 @@ import { renderEstimates } from './fill-estimates.js';
 import { renderActual } from './fill-actual.js';
 
 export const PASSES = [
-  ['gut', '1 Gut'], ['basics', '2 Basics'], ['rough', '3 Rough'], ['dream', '4 Dream'], ['actual', '5 Actual']
+  ['gut', '1 Gut'], ['basics', '2 Basics'], ['rough', '3 Rough'], ['actual', '4 Actual']
 ];
 
 export function passForPath(path) {
   const [a, , c] = path;
   if (a === 'gut') return 'gut';
   if (a === 'income' || a === 'profile' || a === 'household') return 'basics';
-  if (a === 'categories') return c === 'dream' || c === 'dreamLong' ? 'dream' : 'rough';
+  // A dream (category or line) is typed in Eras, Your dream life (S-097).
+  if ((a === 'categories' || a === 'line') && (c === 'dream' || c === 'dreamLong')) return 'eras';
+  if (a === 'categories') return 'rough';
   if (a === 'line' || a === 'debts') return 'actual';
   if (a === 'transactions' || a === 'balances') return 'cashflow';
   if (a === 'nextStage') return 'next';
@@ -37,13 +40,14 @@ function runningBar(ctx, summary, pass) {
   const take = h('b', {});
   const col = h('b', {});
   const left = h('b', {});
-  if (pass === 'cashflow' || pass === 'next' || pass === 'eras') pass = 'actual';
-  const colLabel = pass === 'dream' ? (ctx.ui.dreamTerm === 'long' ? 'Long-term dreams' : 'Short-term dreams') : pass === 'actual' ? 'Spending + savings' : 'Estimates';
+  // Eras opens with the dream life, so its bar follows the dream being typed (S-097).
+  if (pass === 'eras') pass = 'dream';
+  if (pass === 'cashflow' || pass === 'next') pass = 'actual';
+  const colLabel = pass === 'dream' ? (ctx.ui.dreamTerm === 'long' ? 'Long-term dream' : 'Short-term dream') : pass === 'actual' ? 'Spending + savings' : 'Estimates';
   const fill = (s) => {
     const t = s.totals;
     take.textContent = money(t.takeHome);
-    if (pass === 'dream' && ctx.ui.dreamTerm === 'long') { col.textContent = money(t.dreamLongOutflow); left.textContent = money(t.dreamLongLeft); }
-    else if (pass === 'dream') { col.textContent = money(t.dreamOutflow); left.textContent = money(t.dreamLeft); }
+    if (pass === 'dream') { const e = s.dreamLife.entry[ctx.ui.dreamTerm === 'long' ? 'dreamLong' : 'dream']; col.textContent = money(e.outflow); left.textContent = money(e.left); }
     else if (pass === 'actual') { col.textContent = money(t.outflow); left.textContent = money(t.surplus); }
     else { col.textContent = money(t.estimateOutflow); left.textContent = money(t.estimateLeft); }
   };
@@ -65,7 +69,6 @@ export function renderFill(ctx, summary) {
     gut: () => renderGut(ctx),
     basics: () => renderBasics(ctx, summary),
     rough: () => renderEstimates(ctx, summary, 'estimate'),
-    dream: () => renderEstimates(ctx, summary, ctx.ui.dreamTerm === 'long' ? 'dreamLong' : 'dream'),
     actual: () => renderActual(ctx, summary)
   }[pass] || (() => extra.find((x) => x.id === pass).render(ctx, summary));
 

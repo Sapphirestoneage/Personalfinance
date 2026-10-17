@@ -58,15 +58,15 @@ export function fixedVariable(summary) {
   ];
 }
 
-const hasAny = (r) => r.estimate !== null || r.dream !== null || r.actual !== null;
+const hasAny = (r) => r.estimate !== null || r.actual !== null;
 
-// Estimate, dream, actual per category (also used for the overlap chart).
+// Estimate and actual per category (also used for the overlap chart).
 export function threeColumns(summary) {
   const th = summary.totals.takeHome;
-  return summary.rows.filter((r) => !r.notForMe && hasAny(r) && !(r.estimate === 0 && r.actual === 0 && !r.dream)).map((r) => ({
+  return summary.rows.filter((r) => !r.notForMe && hasAny(r) && !(r.estimate === 0 && r.actual === 0)).map((r) => ({
     id: r.id, name: r.name, savings: r.savings,
-    estimate: r.estimate, dream: r.dream, actual: r.actual,
-    estimateShare: ratio(r.estimate, th), dreamShare: ratio(r.dream, th), actualShare: ratio(r.actual, th)
+    estimate: r.estimate, plan: r.plan === undefined ? null : r.plan, actual: r.actual,
+    estimateShare: ratio(r.estimate, th), planShare: ratio(r.plan === undefined ? null : r.plan, th), actualShare: ratio(r.actual, th)
   }));
 }
 
@@ -91,7 +91,6 @@ export function gutBars(summary) {
   return [
     { id: 'gut', name: 'Gut number', amount: g.gut, share: ratio(g.gut, th) },
     { id: 'estimates', name: 'Sum of estimates', amount: g.estimates, share: ratio(g.estimates, th) },
-    { id: 'dreams', name: 'Sum of dreams', amount: g.dreams, share: ratio(g.dreams, th) },
     { id: 'actual', name: 'Actual', amount: g.actual, share: ratio(g.actual, th) }
   ];
 }

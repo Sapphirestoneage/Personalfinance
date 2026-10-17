@@ -1,5 +1,6 @@
-// Turns the stored category tree into monthly numbers: estimate, dream, and
-// actual per line and per category. Adds the computed Debt payments lines and
+// Turns the stored category tree into monthly numbers: estimate and actual
+// per line and per category (the dream life is not part of the budget, S-097;
+// columnModel serves it to Eras). Adds the computed Debt payments lines and
 // carves the single "Everything else" total. Archived items drop out here.
 
 import { toMonthly, hasAnswer, isOneOff } from './normalize.js';
@@ -27,7 +28,7 @@ export function primaryPayFrequency(doc) {
 
 // A line a parent's plan pays for counts as "doesn't apply": 0, and complete.
 function coveredRow(line, freq) {
-  const zero = { ...line, estimate: NOT_FOR_ME, dream: NOT_FOR_ME, dreamLong: NOT_FOR_ME, actual: NOT_FOR_ME };
+  const zero = { ...line, estimate: NOT_FOR_ME, actual: NOT_FOR_ME };
   return { ...lineRow(zero, freq, null), covered: 'parents-plan' };
 }
 
@@ -55,7 +56,7 @@ const NOT_FOR_ME = { amount: null, cadence: 'month', status: 'not-for-me', sourc
 function lineRow(line, freq, src) {
   const oneOffs = [];
   const a = actualOf(line, freq, src);
-  for (const k of ['estimate', 'dream', 'dreamLong', 'actual']) {
+  for (const k of ['estimate', 'actual']) {
     if (k === 'actual' && a.from !== 'typed') continue;
     if (isOneOff(line[k])) oneOffs.push({ which: k, amount: line[k].amount });
   }
@@ -68,8 +69,8 @@ function lineRow(line, freq, src) {
     id: line.id, name: line.name, kind: line.kind, need: line.need, savings: line.savings,
     addedFor: line.addedFor || null,
     path: line.path, tag: line.tag, tags: line.tags || [], type: line.type || 'other', joy: line.joy, stress: line.stress === undefined ? null : line.stress, state: line.state, computed: false,
-    estimate: toMonthly(line.estimate, freq), dream: toMonthly(line.dream, freq), dreamLong: toMonthly(line.dreamLong, freq), actual,
-    status: { estimate: line.estimate.status, dream: line.dream.status, dreamLong: line.dreamLong ? line.dreamLong.status : null, actual: a.status },
+    estimate: toMonthly(line.estimate, freq), actual,
+    status: { estimate: line.estimate.status, actual: a.status },
     actualFrom: a.from, logCount: a.count, yearly: isYearlyLine(line),
     owedOutstanding: owed !== null && !line.owedBackReceived ? owed : 0,
     oneOffs
@@ -82,8 +83,8 @@ function debtRows(doc) {
     return {
       id: 'debt:' + d.id, debtId: d.id, name: d.label, type: 'loan', kind: 'fixed', need: true, savings: false,
       path: 'personal', tag: 'planned', joy: null, stress: null, state: d.state, computed: true,
-      estimate: min, dream: min, dreamLong: min, actual: min,
-      status: { estimate: 'computed', dream: 'computed', dreamLong: 'computed', actual: 'computed' },
+      estimate: min, actual: min,
+      status: { estimate: 'computed', actual: 'computed' },
       sourceStatus: d.minimum.status, owedOutstanding: 0, oneOffs: []
     };
   });
@@ -124,18 +125,12 @@ export function budgetModel(doc) {
     if (isDebt) {
       const t = doc.noDebts && !lines.length ? 0 : sumKnown(lines.map((l) => l.actual)).total;
       row.estimate = { amount: t, from: 'debts', status: 'computed' };
-      row.dream = { amount: t, from: 'debts', status: 'computed' };
-      row.dreamLong = { amount: t, from: 'debts', status: 'computed' };
       row.actual = { amount: t, partial: lines.some((l) => l.actual === null), status: 'computed' };
     } else if (notForMe) {
       row.estimate = { amount: 0, from: 'category', status: 'not-for-me' };
-      row.dream = { amount: 0, from: 'category', status: 'not-for-me' };
-      row.dreamLong = { amount: 0, from: 'category', status: 'not-for-me' };
       row.actual = { amount: 0, partial: false, status: 'not-for-me' };
     } else {
       row.estimate = resolveTop(cat, lines, 'estimate', freq);
-      row.dream = resolveTop(cat, lines, 'dream', freq);
-      row.dreamLong = resolveTop(cat, lines, 'dreamLong', freq);
       const withActual = lines.filter((l) => l.actual !== null);
       row.actual = {
         amount: withActual.length ? sumKnown(withActual.map((l) => l.actual)).total : null,
@@ -151,6 +146,35 @@ export function budgetModel(doc) {
     categories: cats,
     oneOffs: cats.flatMap((c) => c.lines.flatMap((l) => l.oneOffs.map((o) => ({ lineId: l.id, name: l.name, category: c.name, ...o }))))
   };
+}
+
+// One stored column per category, by the same rules as the budget's estimate: the
+// category's own answer first, else the sum of its lines; debts are their minimums;
+// "doesn't apply" is 0; archived and parents'-plan lines drop out. A blank line
+// follows its fallback column when one is given. own: the column itself has an
+// answer in this category. Eras reads the dream life through this (S-097), so no
+// budget number ever reads it.
+export function columnModel(doc, key, fallback = null) {
+  const freq = primaryPayFrequency(doc);
+  const plan = parentsPlan(doc);
+  const valueOf = (x) => (hasAnswer(x[key]) || !fallback ? x[key] || NOT_FOR_ME : x[fallback] || NOT_FOR_ME);
+  const lineOf = (l) => {
+    const covered = plan.on && PARENTS_PLAN_LINE_TYPES.includes(l.type);
+    const v = covered ? NOT_FOR_ME : valueOf(l);
+    return { id: l.id, name: l.name, [key]: covered ? null : toMonthly(v, freq), status: { [key]: v.status } };
+  };
+  return doc.categories.filter((c) => c.state !== 'archived').map((cat) => {
+    const base = { id: cat.id, name: cat.name, type: cat.id === 'debt' ? 'debt' : (cat.type || 'other'), savings: !!cat.savings, isDebt: cat.id === 'debt', isEverything: cat.id === 'everything' };
+    if (base.isDebt) {
+      const debts = debtRows(doc);
+      return { ...base, amount: doc.noDebts && !debts.length ? 0 : sumKnown(debts.map((l) => l.actual)).total, from: 'debts', status: 'computed', own: true, notForMe: false, lines: [] };
+    }
+    if (cat.estimate.status === 'not-for-me') return { ...base, amount: 0, from: 'category', status: 'not-for-me', own: true, notForMe: true, lines: [] };
+    const live = cat.lines.filter((l) => l.state !== 'archived' && !(l.addedFor && l.addedFor > doc.currentMonth));
+    const own = hasAnswer(cat[key] || NOT_FOR_ME) || live.some((l) => hasAnswer(l[key] || NOT_FOR_ME));
+    const top = resolveTop({ ...cat, [key]: cat[key] || NOT_FOR_ME }, live.map(lineOf), key, freq);
+    return { ...base, ...top, own, notForMe: false, lines: live.map(lineOf) };
+  });
 }
 
 // Single-total households: Everything else = the total minus estimates given

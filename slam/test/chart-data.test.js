@@ -27,6 +27,7 @@ test('sankey: a shortfall becomes a second source on the left', () => {
 });
 
 test('gut bars and variance order', () => {
-  assert.deepEqual(gutBars(s).map((x) => x.amount), [2800, 3157, 3052, 3814]);
+  // Gut 2,800 vs sum of estimates 3,157 vs actual 3,814 (S-097: no dreams in the gut check).
+  assert.deepEqual(gutBars(s).map((x) => x.amount), [2800, 3157, 3814]);
   assert.deepEqual(variance(s).slice(0, 2).map((x) => [x.id, x.amount]), [['food', 290], ['fun', 270]]);
 });

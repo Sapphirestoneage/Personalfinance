@@ -4,8 +4,9 @@ Coach-operated financial planning software. A coach runs it live on a call with 
 client, one household at a time, on a laptop or a phone.
 
 The first tool is the **Budget**. It holds a client to their own words: they guess
-first (the estimate), say what they would like (the dream), then we find the truth
-(the actual) and measure how far off they were, and where.
+first (the estimate), then we find the truth (the actual, and the plan for the month)
+and measure how far off they were, and where. What they would like to spend (the
+dream life, short and long term) lives in **Eras**, next to today.
 
 Every later tool (FIRE, emergency fund, debt payoff, DRAFTT proportions) will read the
 numbers the Budget collects, so the number store and the math library are built for
@@ -60,7 +61,7 @@ until payday). Riley's demo is a full year of the loop.
 
 ## Bank and card files
 
-Fill in, pass 6 Cash flow imports CSV files exported from Chase (credit card or checking),
+Fill in, pass 5 Cash flow imports CSV files exported from Chase (credit card or checking),
 American Express, Capital One, or any file with date, description, and amount
 columns. Nothing leaves the browser. Each file goes into an account; its rows are matched
 against the log first. The Jordan demo comes with two sample files; Riley's year has five.
@@ -81,7 +82,10 @@ against the log first. The Jordan demo comes with two sample files; Riley's year
 Still four. The monthly loop lives inside them.
 
 1. **Clients**: client list, new client, open, export, import (a file for a client already here is merged record by record; changes made on both copies wait for the coach to pick), and the demo households.
-2. **Fill in**: guided passes (Gut, Basics, Rough, Dream, Actual, Cash flow, Next stage, Eras). Actual is
+2. **Fill in**: guided passes, numbered: 1 Gut, 2 Basics, 3 Rough, 4 Actual, 5 Cash flow, 6 Next stage,
+   7 Eras. Eras opens with Your dream life (short and long term, then today next to each dream and what it
+   would take), then the eras themselves, each of which can start its spending from today, a dream, or
+   the template's share. Next stage has three lenses: Disaster, Likely, Best case. Actual is
    "review and fill gaps": lines filled from the log are collapsed, empty lines come first. Cash flow holds
    accounts and month balances, paydays and bill dates, scheduled items waiting on "It happened", the log,
    possible matches to confirm, and CSV import.

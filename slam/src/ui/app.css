@@ -158,6 +158,8 @@ table.budget tr.cat td:first-child button { background: none; border: none; padd
 table.budget tr.line td { color: var(--text-muted); }
 table.budget tr.line td:first-child { padding-left: var(--space-5); }
 table.budget tr.total td { font-weight: 700; border-top: 2px solid var(--border); }
+/* A narrow comparison table (the dream life, S-097) fits a phone without sideways scrolling. */
+@media (max-width: 759px) { table.budget.tight th, table.budget.tight td { padding: var(--space-2) var(--space-1); } table.budget.tight th:first-child, table.budget.tight td:first-child { min-width: 92px; } }
 @media (max-width: 759px) { table.budget .wide { display: none; } }
 input.amount.lens { width: 5em; min-height: 34px; padding: 0 6px; }
 table.lenses th, table.lenses td { padding: 6px 4px; }

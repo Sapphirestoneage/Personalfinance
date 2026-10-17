@@ -1,4 +1,4 @@
-// Fill in, pass 5 Actual: review and fill gaps (S-087). A line with log entries
+// Fill in, pass 4 Actual: review and fill gaps (S-087). A line with log entries
 // this month has its actual from the log (collapsed, with "see entries"); a
 // yearly line shows its monthly share; anything still empty is listed first
 // with three answers: add an entry, type an amount, or none this month.
@@ -86,10 +86,9 @@ function lineDetail(ctx, cat, line, catHasAnswer) {
     lineSelect(ctx, line, 'joy', [['', 'Not rated'], ...Array.from({ length: 10 }, (_, i) => [String(i + 1), String(i + 1)])], 'Joy or purpose, 1 to 10: how much does this add to your life?'),
     lineSelect(ctx, line, 'stress', [['', 'Not rated'], ...Array.from({ length: 10 }, (_, i) => [String(i + 1), String(i + 1)])], 'Stress, 1 to 10: how much does this drain you?'),
     lineSelect(ctx, line, 'state', STATES, 'State'),
-    catHasAnswer ? h('p', { class: 'muted xs' }, 'Estimate and dream for this category were given as one number in the Rough pass.')
-      : h('div', {}, question(ctx, 'Line estimate', null, ['line', line.id, 'estimate'], line.estimate, { parts: true }),
-        question(ctx, 'Line dream, short term', null, ['line', line.id, 'dream'], line.dream, { parts: true }),
-        question(ctx, 'Line dream, long term', null, ['line', line.id, 'dreamLong'], line.dreamLong, { parts: true })));
+    // Dreams are typed in Eras, Your dream life (S-097).
+    catHasAnswer ? h('p', { class: 'muted xs' }, 'The estimate for this category was given as one number in the Rough pass.')
+      : question(ctx, 'Line estimate', null, ['line', line.id, 'estimate'], line.estimate, { parts: true }));
 }
 
 const modelLine = (summary, id) => summary.model.categories.flatMap((c) => c.lines).find((l) => l.id === id) || null;
@@ -155,7 +154,7 @@ function categoryCard(ctx, summary, cat) {
     return h('div', { class: 'card' }, h('div', { class: 'spread' }, h('h3', {}, catName(ctx, cat)), statusChip('not-for-me')),
       h('button', { class: 'btn small ghost', onclick: () => ctx.goToField(['categories', cat.id, 'estimate']) }, 'Change in Rough pass'));
   }
-  const catHasAnswer = cat.estimate.status !== null || cat.dream.status !== null || cat.dreamLong.status !== null;
+  const catHasAnswer = cat.estimate.status !== null;
   const live = cat.lines.filter((l) => l.state !== 'archived' && !(l.addedFor && l.addedFor > ctx.doc.currentMonth));
   const archived = cat.lines.filter((l) => l.state === 'archived');
   return h('div', { class: 'card' },

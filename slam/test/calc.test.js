@@ -192,15 +192,12 @@ test('hours of work and the lens toggle', () => {
   assert.equal(inUnit(400, 'hours', totals, { hourlyTakeHome: null }), null);
 });
 
+// Gaps are actual vs estimate (S-097; actual vs plan is in the plan view).
 test('gaps in dollars and percent', () => {
-  const g = gaps(500, 400, 800);
-  assert.equal(g.actualMinusEstimate, 300);
-  assert.equal(g.actualMinusEstimatePct, 0.6);
-  assert.equal(g.actualMinusDream, 400);
-  assert.equal(g.actualMinusDreamPct, 1);
-  assert.equal(g.dreamMinusEstimate, -100);
-  assert.equal(g.dreamMinusEstimatePct, -0.2);
-  assert.equal(gaps(null, 400, 800).actualMinusEstimate, null);
+  const g = gaps(500, 800);
+  // 800 - 500 = 300; 300 / 500 = 0.6
+  assert.deepEqual(g, { actualMinusEstimate: 300, actualMinusEstimatePct: 0.6 });
+  assert.equal(gaps(null, 800).actualMinusEstimate, null);
 });
 
 test('a brand new household computes without errors and points at take-home first', () => {
@@ -233,16 +230,16 @@ test('blind guess round compares against the original estimate and the actual', 
   assert.deepEqual(cmp.rows.map((x) => [x.id, x.original, x.blind, x.actual, x.change, x.closer]), [['food', 500, 700, 800, 200, 'blind']]);
 });
 
-test('estimate and dream "left over" for the running total', () => {
+test('estimate "left over" for the running total (dreams have their own, in Eras)', () => {
   const d = newHousehold('Left');
   d.income.push({ id: 'a', type: 'w2', label: 'Job', payFrequency: 'monthly', takeHome: v(3000), gross: makeValue(), deductions: [], hoursPerWeek: null, state: 'active' });
   d.noDebts = true;
   findCategory(d, 'housing').estimate = v(1200);
   findCategory(d, 'savings').estimate = v(300);
   findCategory(d, 'food').dream = v(400);
-  const t = buildSummary(d, refs).totals;
-  assert.equal(t.estimateLeft, 1500); // 3,000 - (1,200 + 0 debt) - 300
-  assert.equal(t.dreamLeft, 2600); // 3,000 - (400 + 0 debt); no savings dream
+  const s = buildSummary(d, refs);
+  assert.equal(s.totals.estimateLeft, 1500); // 3,000 - (1,200 + 0 debt) - 300
+  assert.equal(s.dreamLife.entry.dream.left, 2600); // 3,000 - (400 + 0 debt); no savings dream
 });
 
 test('hourly pay: gross from rate x hours, take-home guess, and pay in every unit', () => {

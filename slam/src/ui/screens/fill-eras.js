@@ -1,6 +1,8 @@
-// Fill in, pass 8 Eras: potential budgets as life chapters (school abroad,
-// geo arbitrage, a sabbatical...) laid end to end like blocks after regular
-// life. Numbers come from calc (summary.eras); this screen only asks and words it.
+// Fill in, pass 7 Eras: it opens with Your dream life (S-097: the dream entry
+// moved here from the budget as it was, then today vs each dream), then
+// potential budgets as life chapters (school abroad, geo arbitrage, a
+// sabbatical...) laid end to end like blocks after regular life. Numbers come
+// from calc (summary.dreamLife, summary.eras); this screen only asks and words it.
 
 import { cashOnHandNote } from '../components/accounts.js';
 import { cashOnHand } from '../../calc/balances.js';
@@ -10,6 +12,8 @@ import { question } from '../components/value-input.js';
 import { statusChip } from '../components/status.js';
 import { nameEdit } from '../components/name-edit.js';
 import { addEra, moveEra, removeEra } from '../../store/edits.js';
+import { renderEstimates } from './fill-estimates.js';
+import { pct } from '../format.js';
 
 const findEra = (d, id) => d.eras.list.find((e) => e.id === id);
 export const eraColor = (i) => 'var(--chart-' + ((i % 7) + 1) + ')';
@@ -62,13 +66,47 @@ function eraCard(ctx, s, e, i, count) {
       monthsField(ctx, 'How long (months)', era, 'months', 1),
       monthsField(ctx, i === 0 ? 'Starts in (months from now)' : 'Regular life before it (months)', era, 'gapMonths', 0)),
     question(ctx, 'Take-home a month during it', guessHint(e.income, e.incomeGuess, 'a share'), ['eras', 'list', e.id, 'takeHome'], era.takeHome),
-    question(ctx, 'Spending a month during it', guessHint(e.spend, e.spendGuess, 'a share'), ['eras', 'list', e.id, 'spending'], era.spending),
+    spendFromField(ctx, era, e, s.dreamLife),
+    question(ctx, 'Spending a month during it', e.spendGuess ? guessHint(e.spend, true, 'a share') : !e.spendTyped && e.spend !== null ? 'Blank starts from ' + SPEND_LABEL[e.spendFrom].toLowerCase() + ': ' + money(e.spend) + '. Type your own.' : null,
+      ['eras', 'list', e.id, 'spending'], era.spending),
     question(ctx, 'One-time costs', e.oneTimeHint || null, ['eras', 'list', e.id, 'oneTime'], era.oneTime, { cadence: false, parts: true }),
     e.net !== null ? h('p', { class: 'small' },
       (e.incomeGuess || e.spendGuess) ? statusChip('guess') : null, ' ',
       h('b', { class: 'num' }, signedMoney(e.net)), ' a month, ', h('b', { class: 'num' }, signedMoney(e.total)), ' for the whole era' + (e.oneTimeBlank ? ' (one-time costs not entered yet)' : ' with one-time costs') + '. ',
       t.cashKnown ? 'Cash ' + money(e.cashStart) + ' at the start, ' + money(e.cashEnd) + ' at the end.' : 'Cash changes by ' + signedMoney(e.cashEnd - e.cashStart) + ' over it.') : null,
     warn.map((w) => h('p', { class: 'small warn' }, w)));
+}
+
+const SPEND_LABEL = { template: "The template's share of today", today: "Today's budget", dream: 'Your short-term dream', dreamLong: 'Your long-term dream' };
+
+// Where the era's blank spending starts (S-097). The template's share is the default.
+function spendFromField(ctx, era, e, dl) {
+  const opts = Object.entries(SPEND_LABEL).filter(([k]) => dl.any || (k !== 'dream' && k !== 'dreamLong'));
+  return h('label', { class: 'field' }, h('span', { class: 'lbl' }, 'Start spending from'),
+    h('select', { 'data-key': 'era:' + era.id + ':spendFrom', onchange: (ev) => ctx.update('Start spending from', (d) => { findEra(d, era.id).spendFrom = ev.target.value; }) },
+      opts.map(([k, label]) => h('option', { value: k, selected: (era.spendFrom || 'template') === k }, label))));
+}
+
+// Today (actual, else the estimate) next to each dream, per category, in dollars and % of take-home.
+export function dreamCompare(ctx, dl, opts = {}) {
+  if (!dl.any) return h('p', { class: 'muted small', 'data-key': 'dream-none' }, 'No dream life yet. Type what you would like to spend above.');
+  const cell = (amt, share) => h('td', { class: 'num' }, money(amt), share !== null ? h('div', { class: 'xs muted' }, pct(share)) : null);
+  const diff = (x) => h('td', { class: 'num wide' + (x > 0 ? ' bad' : '') }, x === null ? '\u00b7' : signedMoney(x));
+  return h('div', { id: opts.id || 'dream-compare' },
+    h('div', { class: 'table-wrap' }, h('table', { class: 'budget tight' },
+      h('thead', {}, h('tr', {}, ['Category', 'Today', 'Short term', 'Long term', 'Long vs today'].map((x, i) => h('th', { class: i === 4 ? 'wide' : null }, x)))),
+      h('tbody', {}, dl.rows.filter((r) => !r.notForMe).map((r) => h('tr', { 'data-key': 'dream-row:' + r.id },
+        h('td', {}, r.name, r.savings ? h('div', { class: 'xs muted' }, 'savings, not added in') : null, r.todayFrom === 'estimate' ? h('div', { class: 'xs st-guess' }, 'today is the estimate') : null),
+        cell(r.today, r.todayShare), cell(r.short, r.shortShare), cell(r.long, r.longShare), r.savings ? h('td', { class: 'wide' }, '') : diff(r.longDiff)))),
+      h('tfoot', {}, h('tr', {}, h('td', {}, 'Spending'), h('td', { class: 'num' }, money(dl.today)), h('td', { class: 'num', 'data-key': 'dream-short-total' }, money(dl.shortTotal)),
+        h('td', { class: 'num', 'data-key': 'dream-long-total' }, money(dl.longTotal)), diff(dl.longDiff))))),
+    [dl.readings.long, dl.readings.short].filter(Boolean).map((t, i) => h('p', { class: 'small', 'data-key': i === 0 ? 'dream-reading' : null }, t)),
+    dl.hasLong ? null : h('p', { class: 'xs muted' }, 'No long-term dream yet, so it follows the short-term one. Switch to Long term above to add it.'),
+    dl.todayUsesEstimate.length ? h('p', { class: 'xs muted' }, 'Today uses the estimate where there is no actual yet: ' + dl.todayUsesEstimate.join(', ') + '.') : null,
+    dl.followsToday.length ? h('p', { class: 'xs muted' }, 'No dream given, so it follows today: ' + dl.followsToday.join(', ') + '. A blank long-term dream follows the short-term one.') : null,
+    dl.takes.long !== null ? h('p', { class: 'small', 'data-key': 'dream-takes' }, h('b', {}, 'What it takes: '),
+      'to live the ' + (dl.hasLong ? 'long' : 'short') + '-term dream and still save ' + pct(dl.savingsShare) + ' of take-home like today, you would need about ' + money(dl.takes.long) + ' a month take-home, ' +
+      (dl.takes.longMore >= 0 ? money(dl.takes.longMore) + ' more than now.' : money(-dl.takes.longMore) + ' less than now.')) : null);
 }
 
 export function renderEras(ctx, summary) {
@@ -80,10 +118,13 @@ export function renderEras(ctx, summary) {
     ctx.update('Add ' + tpl.name, (d) => { id = addEra(d, tpl).id; });
     if (id) { ctx.ui.focusKey = 'era:' + id + ':name'; ctx.rerender(); }
   };
+  const dl = summary.dreamLife;
   return h('div', {},
+    renderEstimates(ctx, summary, ctx.ui.dreamTerm === 'long' ? 'dreamLong' : 'dream'),
+    h('div', { class: 'card' }, h('h2', {}, 'Your dream life next to today'), dreamCompare(ctx, dl)),
     h('div', { class: 'card' }, h('h2', {}, 'Eras: potential budgets'),
       h('p', { class: 'muted small' }, 'Life in chapters. Today\'s budget is regular life (' + money(t.baseIncome) + ' in, ' + money(t.baseSpend) + ' spent, ' + signedMoney(t.baseNet) +
-        ' a month). Add eras, set how long and when, and move them like blocks. Each era\'s blanks start from a share of today\'s numbers, marked as guesses.'),
+        ' a month). Add eras, set how long and when, and move them like blocks. Each era\'s blanks start from a share of today\'s numbers, marked as guesses, or spending can start from today or your dream.'),
       cashOnHandNote(ctx, cashOnHand(doc)),
       eraStrip(ctx, summary, { jump: true }),
       t.eras.length && t.costVsRegular !== null ? h('p', { class: 'small' },

@@ -75,6 +75,11 @@
 // debts 4 x (3+1+1) = 20. Total = 65.
 // Not answered: maintenance 0.5, premiums 1, out of pocket 1, bills line 1, shopping 0.5,
 // entertainment 0.5, yearly 1, retirement 0.5 = 6. Done 59 / 65 = 0.907692
+// S-097: the dream questions leave completion. Each category above lists estimate, then dream (the
+// second number, weight 1): housing, food, transport, health, bills, fun, annual, fees, savings = 9
+// questions, all answered (Giving doesn't apply, so it never had one). Total 65 - 9 = 56,
+// done 59 - 9 = 50. 50 / 56 = 0.89285714 -> 0.892857
+// NEXT: unchanged. The dreams were answered, so none was ever ranked.
 // NEXT: score = weight x weakness. Four blanks at 1.0 (premiums, out of pocket, bills line, yearly),
 // tie broken by order: premiums, out of pocket, bills line.
 // SMALL STUFF: ATM actual (roughly, 5 a month = 60 a year, under the 100 floor).
@@ -104,17 +109,18 @@ export default {
   fat: 2480, fatShare: 0.539130,
   takeHome: 4600, pretax: 200, hourly: 21.230769,
   categories: {
-    housing: [1100, 1000, 1110], food: [600, 500, 830], transport: [350, 300, 540], debt: [685, 685, 685],
-    health: [150, 150, null], bills: [120, 100, null], fun: [300, 400, null], annual: [100, 100, null],
-    fees: [0, 0, 50], giving: [0, 0, 0], savings: [300, 500, 200]
+    // [estimate, actual]
+    housing: [1100, 1110], food: [600, 830], transport: [350, 540], debt: [685, 685],
+    health: [150, null], bills: [120, null], fun: [300, null], annual: [100, null],
+    fees: [0, 50], giving: [0, 0], savings: [300, 200]
   },
-  estimateTotal: 3405, dreamTotal: 3235, actualTotal: 3215, spending: 3885, savings: 200,
+  estimateTotal: 3405, actualTotal: 3215, spending: 3885, savings: 200,
   surplus: 515, savingsRate: 0.083333, housingShare: 0.241304, housingOver: false,
   roommateWorstCase: null,
   basisUsesEstimate: ['Health', 'Bills and subscriptions', 'Personal and fun', 'Annual and irregular'],
   blindSpot: 0.149300,
   culprits: [['Food', 230, 1.383333, 2760], ['Transportation', 190, 1.542857, 2280], ['Fees', 50, null, 600]],
-  gut: { gut: 3000, estimates: 3405, dreams: 3235, actual: 3885, actualVsGut: 885, ratio: 1.295 },
+  gut: { gut: 3000, estimates: 3405, actual: 3885, actualVsGut: 885, ratio: 1.295 },
   proofOfCash: { implied: 3715, entered: 3200, pct: 0.138627, flagged: false },
   fixed: 2045, variable: 1840, fixedPct: 0.526384,
   needs: 2825, wants: 1060, needsPct: 0.614130, wantsPct: 0.230435, savingsPct: 0.043478, unassignedShare: 0.111957,
@@ -131,7 +137,7 @@ export default {
     reading: "DRAFTT is 70% of take-home plus pre-tax retirement. Accommodation is the biggest letter at 33% of DRAFTT. Food's share went from 13% estimated to 17% actual. Everything else is 19% and left over is 11%."
   },
   incomeStatement: { revenue: 5800, taxes: 1000, deductions: 200, needs: 2140, debt: 685, wants: 1060, savings: 200, net: 515 },
-  completion: 0.907692,
+  completion: 0.892857,
   next: ['Health / Premiums: actual', 'Health / Out of pocket: actual', 'Bills and subscriptions / Phone and streaming: actual'],
   small: ['Fees / ATM: actual']
 };

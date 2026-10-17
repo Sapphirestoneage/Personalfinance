@@ -93,21 +93,15 @@ export function budgetTotals(model, income, doc, housingBand = 0.35) {
   const totals = {
     takeHome,
     estimateTotal: answeredTotal(spending, 'estimate'),
-    dreamTotal: answeredTotal(spending, 'dream'),
     actualTotal: answeredTotal(spending, 'actual'),
     savingsEstimate: sumKnown(saving.map((x) => x.cat.estimate.amount)).total,
-    savingsDream: sumKnown(saving.map((x) => x.cat.dream.amount)).total,
-    // Long-term dream (S-075): the same shape as the short-term dream column.
-    dreamLongTotal: answeredTotal(spending, 'dreamLong'),
-    dreamLongOutflow: sumKnown([answeredTotal(spending, 'dreamLong'), sumKnown(saving.map((x) => x.cat.dreamLong.amount)).total]).total,
     spending: spendingBasis,
     spendingShare: ratio(spendingBasis, takeHome),
     savings: savingsBasis,
     outflow,
     surplus: minus(takeHome, outflow),
-    // The estimate and dream columns as a whole budget, and what each would leave.
+    // The estimate column as a whole budget, and what it would leave.
     estimateOutflow: sumKnown([answeredTotal(spending, 'estimate'), sumKnown(saving.map((x) => x.cat.estimate.amount)).total]).total,
-    dreamOutflow: sumKnown([answeredTotal(spending, 'dream'), sumKnown(saving.map((x) => x.cat.dream.amount)).total]).total,
     basisUsesEstimate: cats.filter((x) => x.basis.from === 'estimate').map((x) => x.cat.name),
     basisMissing: cats.filter((x) => x.basis.from === null).map((x) => x.cat.name),
     fixed, variable,
@@ -134,7 +128,5 @@ export function budgetTotals(model, income, doc, housingBand = 0.35) {
       .filter((x) => x.amount > 0).sort((a, b) => b.amount - a.amount)
   };
   totals.estimateLeft = minus(takeHome, totals.estimateOutflow);
-  totals.dreamLeft = minus(takeHome, totals.dreamOutflow);
-  totals.dreamLongLeft = minus(takeHome, totals.dreamLongOutflow);
   return totals;
 }

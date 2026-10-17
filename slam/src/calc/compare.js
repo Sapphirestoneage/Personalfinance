@@ -1,19 +1,13 @@
-// The heart of the tool: estimate vs dream vs actual. Gaps, accuracy ratios,
+// The heart of the tool: estimate vs actual (and the plan). Gaps, accuracy ratios,
 // blind spot, biggest culprits, back to your own words, gut check, the
 // personal correction factor, and proof of cash.
 
 import { ratio, minus } from './money.js';
 import { toMonthly } from './normalize.js';
 
-export function gaps(estimate, dream, actual) {
+export function gaps(estimate, actual) {
   const vsEst = minus(actual, estimate);
-  const vsDream = minus(actual, dream);
-  const dreamVsEst = minus(dream, estimate);
-  return {
-    actualMinusEstimate: vsEst, actualMinusEstimatePct: ratio(vsEst, estimate),
-    actualMinusDream: vsDream, actualMinusDreamPct: ratio(vsDream, dream),
-    dreamMinusEstimate: dreamVsEst, dreamMinusEstimatePct: ratio(dreamVsEst, estimate)
-  };
+  return { actualMinusEstimate: vsEst, actualMinusEstimatePct: ratio(vsEst, estimate) };
 }
 
 export function accuracy(estimate, actual) {
@@ -70,7 +64,6 @@ export function gutCheck(doc, totals) {
   return {
     gut,
     estimates: totals.estimateTotal,
-    dreams: totals.dreamTotal,
     actual: totals.spending,
     actualUsesEstimateFor: totals.basisUsesEstimate,
     actualVsGut: minus(totals.spending, gut),

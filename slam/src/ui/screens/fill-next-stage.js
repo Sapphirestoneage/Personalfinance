@@ -1,4 +1,4 @@
-// Fill in, pass 7 Next stage: one drastic change (a new job, school, a move)
+// Fill in, pass 6 Next stage: one drastic change (a new job, school, a move)
 // that costs money in the short term but is better on other measures.
 // Results are on Analyze, under Next stage.
 
@@ -23,7 +23,9 @@ function numberField(ctx, label, value, set, key) {
       } }));
 }
 
-// A compact box for the disaster or dream lens. Blank means "same as likely".
+// A compact box for the disaster or best case lens. Blank means "same as likely".
+// The best case is stored under the key "dream" (cases.dream, item.dream): the old
+// name, kept so files load unchanged (S-097). On screen "Dream" means only the dream life in Eras.
 function lensBox(ctx, label, value, likelyText, onSet, key) {
   const isValue = value && typeof value === 'object';
   const shown = isValue ? value.amount : value;
@@ -49,12 +51,12 @@ function lensesCard(ctx, ns) {
     ['Later pay could rise to', 'laterTakeHome'],
     ['...after this many months', 'laterAfterMonths']
   ];
-  const cell = (c, k, label) => h('td', {}, lensBox(ctx, label + ' (' + c + ')', ns.cases[c][k], fmt(ns[k]), (s, v) => { s.cases[c][k] = v; }, 'lens-' + c + '-' + k));
+  const cell = (c, k, label) => h('td', {}, lensBox(ctx, label + ' (' + (c === 'dream' ? 'best case' : c) + ')', ns.cases[c][k], fmt(ns[k]), (s, v) => { s.cases[c][k] = v; }, 'lens-' + c + '-' + k));
   return h('div', { class: 'card' },
-    h('h3', {}, 'Three views: disaster, likely, dream'),
+    h('h3', {}, 'Three views: disaster, likely, best case'),
     h('p', { class: 'muted xs' }, 'Likely is what you entered above, the directionally correct middle. Fill in only what would be different if it goes badly or great; blanks follow likely.'),
     h('div', { class: 'table-wrap' }, h('table', { class: 'budget lenses' },
-      h('thead', {}, h('tr', {}, ['', 'Disaster', 'Likely', 'Dream'].map((x) => h('th', {}, x)))),
+      h('thead', {}, h('tr', {}, ['', 'Disaster', 'Likely', 'Best case'].map((x) => h('th', {}, x)))),
       h('tbody', {}, rows.map(([label, k]) => h('tr', {}, h('td', {}, label), cell('disaster', k, label), h('td', { class: 'num' }, fmt(ns[k]) || '\u00b7'), cell('dream', k, label)))))));
 }
 
@@ -66,7 +68,7 @@ function itemList(ctx, ns, list, title, hint, addLabel, amountLabel) {
         onchange: (e) => ctx.update('Rename', (d) => { d.nextStage[list].find((x) => x.id === it.id).label = e.target.value; }) })),
       question(ctx, amountLabel, null, ['nextStage', list, it.id, 'amount'], it.amount, { cadence: list !== 'oneOffCosts' }).lastChild,
       h('div', { class: 'row xs muted' }, 'Disaster', lensBox(ctx, (it.label || 'Item') + ' disaster', it.disaster, it.amount.amount === null ? '' : money(it.amount.amount), (s, v) => { s[list].find((x) => x.id === it.id).disaster = v; }, 'lens-disaster-' + it.id),
-        'Dream', lensBox(ctx, (it.label || 'Item') + ' dream', it.dream, it.amount.amount === null ? '' : money(it.amount.amount), (s, v) => { s[list].find((x) => x.id === it.id).dream = v; }, 'lens-dream-' + it.id)),
+        'Best case', lensBox(ctx, (it.label || 'Item') + ' best case', it.dream, it.amount.amount === null ? '' : money(it.amount.amount), (s, v) => { s[list].find((x) => x.id === it.id).dream = v; }, 'lens-dream-' + it.id)),
       h('button', { class: 'btn small ghost danger', onclick: () => ctx.update('Remove', (d) => removeNextStageItem(d, list, it.id)) }, 'Remove'))),
     h('button', { class: 'btn small', onclick: () => ctx.update('Add', (d) => { addNextStageItem(d, list); }) }, addLabel));
 }
@@ -118,7 +120,7 @@ export function renderNextStage(ctx, summary) {
     itemList(ctx, ns, 'oneOffCosts', 'One-time costs to make the change', 'Courses, licenses, moving, a gap in benefits.', '+ Add a one-time cost', 'Amount'),
     itemList(ctx, ns, 'costChanges', 'Monthly costs that change', 'More (childcare, a loan) or less (commute, lunches out). Use a minus sign for costs that go down.', '+ Add a cost change', 'Change'),
     metricsCard(ctx, ns, summary),
-    n ? h('p', { class: 'small' }, 'So far: needs ', h('b', { class: 'num' }, money(n.cases.disaster.cashNeeded) + ' / ' + money(n.cashNeeded) + ' / ' + money(n.cases.dream.cashNeeded)), ' (disaster / likely / dream) to make the switch. ',
+    n ? h('p', { class: 'small' }, 'So far: needs ', h('b', { class: 'num' }, money(n.cases.disaster.cashNeeded) + ' / ' + money(n.cashNeeded) + ' / ' + money(n.cases.dream.cashNeeded)), ' (disaster / likely / best case) to make the switch. ',
       h('a', { href: '#analyze', onclick: (e) => { e.preventDefault(); ctx.go('analyze'); setTimeout(() => { const el = document.getElementById('sec-next'); if (el) el.scrollIntoView(); }, 60); } }, 'See the full picture on Analyze')) : null,
     h('button', { class: 'btn small ghost danger', onclick: () => { if (confirm('Clear the next stage plan? (Undo works.)')) ctx.update('Clear next stage', (d) => { d.nextStage = null; }); } }, 'Clear this plan'));
 }

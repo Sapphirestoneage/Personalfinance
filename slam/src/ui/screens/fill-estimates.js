@@ -1,4 +1,4 @@
-// Fill in, passes 3 Rough and 4 Dream: one number per top-level category.
+// Fill in, pass 3 Rough, and Your dream life at the top of Eras (S-097): one number per top-level category.
 // Rough also offers: one total instead, labeled guesses, last month's actual,
 // the personal correction, and a blind-guess round for revisit sessions.
 
@@ -88,7 +88,8 @@ export function renderEstimates(ctx, summary, key) {
   const doc = ctx.doc;
   const isRough = key === 'estimate';
   if (isRough && ctx.ui.blind) return blindSection(ctx, summary);
-  const rows = summary.rows;
+  // The dream entry reads its rows from the dream life (calc/dream-life.js), never from the budget.
+  const rows = isRough ? summary.rows : summary.dreamLife.entry.rows;
   const ev = rows.find((r) => r.isEverything);
 
   const header = isRough
@@ -108,7 +109,7 @@ export function renderEstimates(ctx, summary, key) {
           ctx.ui.blind = true;
           ctx.rerender();
         } }, 'Blind guess (revisit)')))
-    : h('div', { class: 'card' }, h('h2', {}, 'Dream: what would you like to spend?'),
+    : h('div', { class: 'card', id: 'dream-entry' }, h('h2', {}, 'Your dream life: what would you like to spend?'),
       h('div', { class: 'toggle', role: 'group', 'aria-label': 'Dream term' },
         h('button', { 'aria-pressed': key === 'dream' ? 'true' : 'false', 'data-key': 'dream-short', onclick: () => { ctx.ui.dreamTerm = 'short'; ctx.rerender(); } }, 'Short term'),
         h('button', { 'aria-pressed': key === 'dreamLong' ? 'true' : 'false', 'data-key': 'dream-long', onclick: () => { ctx.ui.dreamTerm = 'long'; ctx.rerender(); } }, 'Long term')),
