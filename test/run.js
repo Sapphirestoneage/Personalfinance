@@ -9326,7 +9326,9 @@ section('What hits your account, and when: the month as turns, in Cash Flow and 
     filingStatus: 'single', state: 'NC', meta: { hasDebt: false },
     calendar: { cadence: 'fortnightly', nextPaydayDay: 5 }
   });
-  const r = Cal.month(h, T, {});
+  /* A fixed day, so the 31-day window holds the same paydays on any run date:
+     from Sep 1, paydays fall on Sep 5, Sep 19, and Oct 3. */
+  const r = Cal.month(h, T, { now: '2026-09-01' });
   checkTrue('the month runs', Money.isOk(r), r.reason);
   const turns = Cal.turns(r);
   checkTrue('a fortnightly pay gives two or three paydays as turns, money in', turns.length >= 2 && turns.every(t => t.direction === 'in' && t.cents > 0 && t.kind === 'payday'));
@@ -14285,7 +14287,9 @@ section('G3: hostile files, the policy, attribution, January 1, the error log, t
   const h = Demo.build();
   h.meta.notSure = { healthMonthly: { at: '2026-09-01T00:00:00Z', expectedBy: '2027-01' } };
   h.meta.fields = h.meta.fields || {};
-  h.meta.fields.cashSavings = { asOf: '2026-09-02T10:00:00Z', source: 'typed', confidence: 'sure', room: 'start' };
+  /* Confirmed yesterday, so it is never past its 30-day review on the day the suite runs. */
+  const confirmedAt = new Date(Date.now() - 86400000).toISOString();
+  h.meta.fields.cashSavings = { asOf: confirmedAt, source: 'typed', confidence: 'sure', room: 'start' };
   const files = Csv.files(h, T);
   check('one CSV a door plus the readme', Object.keys(files).sort().join(','), 'A.csv,D.csv,E.csv,I.csv,README.txt,T.csv,you.csv');
   const all = [].concat.apply([], ['D', 'A', 'I', 'T', 'E', 'you'].map(d => Csv.parse(files[d + '.csv'])));
@@ -14300,7 +14304,8 @@ section('G3: hostile files, the policy, attribution, January 1, the error log, t
   checkTrue('every money value matches the app to the cent (' + all.filter(l => l.unit === 'cents' && l.value !== '').length + ' values)', mismatch.length === 0, mismatch.join('; '));
   const cashLine = all.filter(l => l.row === 'cashSavings')[0];
   check('cash reads 9500.00 from 950000 cents', cashLine.value, '9500.00');
-  check('with its as-of day and source', cashLine.as_of + ' ' + cashLine.source + ' ' + cashLine.state, '2026-09-02 typed confirmed');
+  check('with its source and state', cashLine.source + ' ' + cashLine.state, 'typed confirmed');
+  checkTrue('...and the day it was confirmed', [confirmedAt.slice(0, 10), Schema.localDay(confirmedAt)].indexOf(cashLine.as_of) >= 0, cashLine.as_of);
   const hm = all.filter(l => l.row === 'healthMonthly')[0];
   check('not sure yet shows as words with the month', hm.state, 'not sure yet (by 2027-01)');
   check('and its value is blank, never 0', hm.value, '');

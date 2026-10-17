@@ -898,7 +898,7 @@ tr.door:hover { box-shadow: none; }
 .gtl-sub { overflow-wrap: anywhere; }
 .gtl-move { display: flex; gap: 2px; }
 .gtl-move .btn.small { padding: 0 6px; min-height: 20px; line-height: 20px; }
-.gtl-bar { display: grid; grid-template-columns: repeat(var(--cols), 26px); grid-auto-flow: column; align-items: stretch; border-bottom: 1px solid var(--line-soft); position: relative; min-height: 34px; }
+.gtl-bar { display: grid; grid-template-columns: repeat(var(--cols, 1), 26px); grid-auto-flow: column; align-items: stretch; border-bottom: 1px solid var(--line-soft); position: relative; min-height: 34px; }
 .gtl-head .gtl-bar { min-height: 20px; border-bottom: 1px solid var(--line); }
 .gtl-head .gtl-label { border-bottom: 1px solid var(--line); }
 .gtl-cell { position: relative; border-left: 1px solid var(--line-soft); min-height: 34px; background: var(--paper); }

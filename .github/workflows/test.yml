@@ -24,6 +24,9 @@ jobs:
           node marketing/test/run.js
           node test/export.js
           node test/xlsx.js
+      - name: SLAM (its own unit tests; slam/README.md)
+        working-directory: slam
+        run: node --test
       - name: Lane 2 (corpus, properties, data, glossary, migration, QR)
         working-directory: tests
         run: |
