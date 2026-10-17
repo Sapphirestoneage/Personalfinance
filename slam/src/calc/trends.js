@@ -28,7 +28,12 @@ export function trendMonths(doc, history, range) {
   return out;
 }
 
-const spendEntries = (doc, months) => { const set = new Set(months); return counted(doc.transactions).filter((t) => set.has(monthOf(t.date)) && !t.adjust); };
+const spendEntries = (doc, months) => {
+  const set = new Set(months);
+  // Money moved to savings (a Roth IRA, say) is not spending.
+  const sav = new Set(doc.categories.filter((c) => c.savings).flatMap((c) => c.lines.map((l) => l.id)));
+  return counted(doc.transactions).filter((t) => set.has(monthOf(t.date)) && !t.adjust && !sav.has(t.lineId));
+};
 
 // ---- By entry or merchant ----
 
@@ -113,7 +118,7 @@ export function monthOverMonth(doc, history, month) {
   const cats = doc.categories.filter((c) => !c.savings);
   const steps = cats.map((c) => ({ id: c.id, name: c.name, change: r2((b.cats[c.id] || 0) - (a.cats[c.id] || 0)) })).filter((x) => Math.abs(x.change) >= 0.005)
     .sort((x, y) => Math.abs(y.change) - Math.abs(x.change));
-  return { from: prev, to: month, before: a.spending, after: b.spending, steps, change: r2((b.spending || 0) - (a.spending || 0)) };
+  return { from: prev, to: month, before: r2(a.spending), after: r2(b.spending), steps, change: r2((b.spending || 0) - (a.spending || 0)) };
 }
 
 // Cumulative spending by day this month vs the same day last month, and vs the plan spread evenly.

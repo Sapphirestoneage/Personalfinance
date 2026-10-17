@@ -294,6 +294,7 @@ export function cashCalendar(doc, income, opts) {
     belowZero: ahead.filter((x) => x.cash < 0).length,
     belowCushion: ahead.filter((x) => x.cash < cushion).length,
     nextPayday: nextPay,
+    paydays: future.filter((i) => i.kind === 'paycheck' && i.amount !== null).map((i) => i.date).sort(),
     safeToSpend: safe,
     waiting, scheduled: allItems.filter((i) => monthOf(i.planned) >= openFrom),
     spreads,
@@ -369,7 +370,7 @@ export function calendarReading(cal) {
   if (!cal.lowest) return 'Add a balance for an account to see cash by day.';
   const out = [];
   const lo = cal.lowest;
-  const before = cal.nextPayday && daysBetween(lo.date, cal.nextPayday) === 1 ? ', the day before payday' : '';
+  const before = (cal.paydays || []).includes(addDays(lo.date, 1)) ? ', the day before payday' : '';
   out.push('Your lowest point is ' + (lo.amount < 0 ? 'minus ' : '') + dollars(lo.amount) + ' on ' + nth(lo.date) + before + '.');
   for (const f of cal.payLater.slice(0, 2)) out.push(f.name + ' lands ' + f.gap + ' day' + (f.gap === 1 ? '' : 's') + ' before the paycheck that covers it.');
   return out.join(' ');

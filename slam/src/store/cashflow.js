@@ -57,6 +57,7 @@ export function confirmScheduled(doc, item, amount, date) {
   const out = item.dir === 'in' ? -Math.abs(amount) : Math.abs(amount);
   return addEntry(doc, {
     date: date || item.date, amount: out, kind: item.kind === 'paycheck' ? 'income' : item.kind === 'debt' ? 'card-payment' : 'spend',
-    lineId: item.lineId || null, incomeId: item.incomeId || null, merchant: item.name, account: item.account, scheduleKey: item.key
+    // No merchant: the bank's own description matches it on import by amount and date.
+    lineId: item.lineId || null, incomeId: item.incomeId || null, note: item.name, account: item.account, scheduleKey: item.key
   }, 'scheduled');
 }

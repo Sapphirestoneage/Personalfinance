@@ -52,6 +52,8 @@ export function bridgeCard(ctx, s, month, opts = {}) {
 
 export function bridgeCards(ctx, s) {
   const months = bridgeMonths(ctx.doc);
-  const month = months.includes(ctx.ui.bridgeMonth) ? ctx.ui.bridgeMonth : ctx.doc.currentMonth;
+  // Default: the latest month with every balance in (a month still running has no end yet).
+  const complete = months.find((m) => bridgeFor(ctx.doc, s.income, m).actual !== null);
+  const month = months.includes(ctx.ui.bridgeMonth) ? ctx.ui.bridgeMonth : complete || ctx.doc.currentMonth;
   return [bridgeCard(ctx, s, month)];
 }

@@ -35,19 +35,23 @@ export function paretoReading(cut, level) {
 }
 
 const inRange = (months) => { const set = new Set(months); return (t) => set.has(t.date.slice(0, 7)); };
+// Money moved to savings (a Roth IRA, say) is not spending.
+const savingsLines = (doc) => new Set(doc.categories.filter((c) => c.savings).flatMap((c) => c.lines.map((l) => l.id)));
 
 // Purchases and fees, one item each.
 export function entryItems(doc, months) {
   const lineName = Object.fromEntries(doc.categories.flatMap((c) => c.lines.map((l) => [l.id, l.name])));
-  return counted(doc.transactions).filter(inRange(months)).filter((t) => !t.adjust && (t.kind === 'spend' || t.kind === 'fee') && t.amount > 0)
+  const sav = savingsLines(doc);
+  return counted(doc.transactions).filter(inRange(months)).filter((t) => !t.adjust && !sav.has(t.lineId) && (t.kind === 'spend' || t.kind === 'fee') && t.amount > 0)
     .map((t) => ({ key: t.id, label: (t.description || t.note || lineName[t.lineId] || 'Entry') + ', ' + t.date.slice(5), amount: t.amount - (t.owed || 0) }));
 }
 
 // Merchants, net of refunds. Entries with no merchant count as one "No merchant".
 export function merchantItems(doc, months) {
   const g = {};
+  const sav = savingsLines(doc);
   for (const t of counted(doc.transactions).filter(inRange(months))) {
-    if (t.adjust || !(t.kind === 'spend' || t.kind === 'fee' || t.kind === 'refund')) continue;
+    if (t.adjust || sav.has(t.lineId) || !(t.kind === 'spend' || t.kind === 'fee' || t.kind === 'refund')) continue;
     const k = t.merchant || 'No merchant';
     g[k] = (g[k] || 0) + t.amount - (t.owed || 0);
   }

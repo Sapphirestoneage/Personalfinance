@@ -279,6 +279,44 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('bridge', 'Console errors', String(errors.length), '0');
   await page.close();
 }
+// Riley, a year of the loop (Part 10), with the clock on October 17, 2026. Numbers by hand in test/riley.test.js.
+{
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await page.clock.setFixedTime(new Date('2026-10-17T12:00:00'));
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  await page.goto(URL + '#clients');
+  console.log('riley (phone width, October 17, 2026)');
+  // October by hand: 4 checking entries (rent, paycheck, dog walking, car payment) and 6 on the Visa = 10;
+  // scheduled in October: rent, two paychecks, car payment, phone, Visa = 6, of which 3 are done so far.
+  await page.getByText('Riley, 31').click();
+  await page.waitForSelector('#cash-strip');
+  check('riley', 'Cash today', await page.$eval('[data-key="cash-today"]', (b) => b.textContent), money(3691.03));
+  check('riley', 'Lowest point', await page.$eval('[data-key="cash-lowest"]', (b) => b.textContent), money(60));
+  check('riley', 'Safe to spend', await page.$eval('[data-key="safe-to-spend"]', (b) => b.textContent), money(3496.03));
+  check('riley', 'Calendar reading', await page.$eval('[data-key="cash-reading"]', (p) => p.childNodes[0].textContent), 'Your lowest point is $60 on the 5th, the day before payday. Rent lands 5 days before the paycheck that covers it.');
+  check('riley', 'Track step', await page.$eval('[data-key="loop-track"] .small', (d) => d.textContent), '10 entries, last Oct 15, scheduled 3 of 6 confirmed');
+  await page.click('nav a[href="#analyze"]');
+  await page.waitForSelector('#months-review');
+  await page.selectOption('[data-key="months-pick"]', '2026-03');
+  await page.waitForTimeout(150);
+  check('riley', 'March review readings', await page.$eval('#months-review [data-key="review-readings"]', (p) => p.textContent), 'Food came in $136 under plan. Shopping was $57 over. Income came in $280 less than planned. 1.07x off this month, down from 1.09x.');
+  check('riley', 'March bridge ties', await page.$eval('#months-review [data-key="review-bridge"]', (b) => b.textContent), 'Ties');
+  check('riley', 'March bridge reading', await page.$eval('#chart-months-bridge .reading', (p) => p.textContent), 'Your budget showed $172 over, but cash went down $966. The car insurance bill ($960) came due this month.');
+  check('riley', 'March 80/20', await page.$eval('#chart-pareto .reading', (p) => p.textContent), '13% of your entries (3 of 23) made up 80% of your spending.');
+  await page.click('[data-key="pareto-level-lines"]');
+  await page.waitForTimeout(100);
+  check('riley', 'March 80/20 lines', await page.$eval('#chart-pareto .reading', (p) => p.textContent), '4 lines, Rent, Car payment, Groceries, and Shopping, made up 80%.');
+  await page.selectOption('[data-key="months-pick"]', '2026-06');
+  await page.waitForTimeout(150);
+  check('riley', 'June open items', await page.$eval('#months-review [data-key="review-open"]', (b) => b.textContent), 'Closed with 2 open items: off by $60, 1 unmapped, 0 possible matches');
+  check('riley', 'June not explained', await page.$eval('#chart-months-bridge [data-key="bridge-unexplained"]', (b) => b.textContent), signedMoney(-60));
+  check('riley', 'Pay-later flag', await page.$eval('#chart-cf-paylater li', (li) => li.querySelector('span').textContent + ' (' + li.querySelector('b').textContent + ')'), 'Rent is due Nov 1, paid Nov 6 (5 days)');
+  for (const id of ['trend-series', 'trend-heat', 'trend-mom', 'trend-pacing', 'trend-dom', 'estimate-history', 'cf-chart', 'bridge']) check('riley', id + ' drawn', String(await page.$$eval('#chart-' + id + ' svg', (x) => x.length >= 1)), 'true');
+  check('riley', 'Console errors', String(errors.length), '0');
+  await page.close();
+}
 await browser.close();
 console.log(failures ? failures + ' FAILED' : 'All screen numbers match the expected files.');
 process.exit(failures ? 1 : 0);

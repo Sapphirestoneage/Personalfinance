@@ -187,7 +187,13 @@ export function reviewReadings(r) {
   if (r.totals.plan === null) out.push('There was no plan this month, so lines are compared with your estimates.');
   const inc = r.income.better[0] || r.income.worse[0];
   if (inc) out.push('Income came in ' + whole(inc.diff) + (inc.diff > 0 ? ' more' : ' less') + ' than planned.');
-  if (r.accuracy.now !== null) out.push(r.accuracy.now.toFixed(1) + 'x off this month' + (r.accuracy.last !== null ? (r.accuracy.now < r.accuracy.last ? ', down from ' : r.accuracy.now > r.accuracy.last ? ', up from ' : ', same as ') + r.accuracy.last.toFixed(1) + 'x' : '') + '.');
+  if (r.accuracy.now !== null) {
+    const a = r.accuracy.now;
+    const b = r.accuracy.last;
+    // One decimal, unless that would make two different months look the same.
+    const d = b !== null && a !== b && a.toFixed(1) === b.toFixed(1) ? 2 : 1;
+    out.push(a.toFixed(d) + 'x off this month' + (b !== null ? (a < b ? ', down from ' : a > b ? ', up from ' : ', same as ') + b.toFixed(d) + 'x' : '') + '.');
+  }
   return out;
 }
 

@@ -64,9 +64,9 @@ export function bridgeFor(doc, income, month) {
       (paidLines.length ? paidLines.map((x) => x.name + ' ' + money(x.paid) + ' paid').join(', ') + '; ' : 'Nothing yearly paid; ') + money(share) + ' a month is in the budget', { to: 'actual' }, { paid: paidLines });
   }
   // Set-asides: savings lines counted in the budget but still in the client's own accounts.
-  const sav = b.lines.filter((l) => l.savings && l.actual);
-  const setAside = sav.reduce((a, l) => a + (l.actual - byLine(new Set([l.id]))), 0);
-  step('set-aside', 'Set aside (counted in the budget, still in your accounts)', setAside, sav.map((l) => l.name + ' ' + money(l.actual)).join(', '), { to: 'actual' });
+  const sav = b.lines.filter((l) => l.savings && l.actual).map((l) => ({ name: l.name, kept: r2(l.actual - byLine(new Set([l.id]))) })).filter((l) => l.kept);
+  const setAside = sav.reduce((a, l) => a + l.kept, 0);
+  step('set-aside', 'Set aside (counted in the budget, still in your accounts)', setAside, sav.map((l) => l.name + ' ' + money(l.kept)).join(', '), { to: 'actual' });
 
   const bal = balancesFor(doc, month);
   const missing = bal.missing.slice();

@@ -45,3 +45,45 @@ Every Analyze chart was screenshotted at 390px wide in light and dark mode for a
 households. Fixed: clipped value labels, a clipped month label, colliding scatter labels,
 a clipped Sankey label, overlapping "not given" notes, $0 variance rows for categories
 that don't apply, and "($0)" tax rows when no gross pay was given. No horizontal page scroll.
+
+# Monthly loop audit (2026-10-17)
+
+## Tests
+
+- `node --test`: 229 tests, all passing. New: accounts and balances, the log and matching, the
+  cash flow calendar, actuals from the log (with the migration checked on every test household),
+  the budget-to-cash bridge, the loop strip, checklist, and saved review, estimate history, 80/20,
+  trends, and Riley's year (`test/riley.test.js`: March start to finish, two more bridges, the 80/20
+  at three levels, February to March, and October's calendar, every number worked out by hand).
+- `node tools/screens-check.mjs`: 264 on-screen checks, all matching, no console errors. New blocks
+  at phone width: accounts and cash on hand, quick entry and an import that merges, the cash strip and
+  calendar, actuals from the log, the bridge, the loop strip, checklist, review card, Months, Trends,
+  and Riley with the clock set to October 17, 2026.
+
+## Lessons 18 to 20
+
+| # | Rule | Result |
+| --- | --- | --- |
+| 18 | Every closed month has a bridge; nothing unexplained is hidden | Pass. Analyze, Cash flow and Months show the bridge for any month with balances; "Not explained yet" is its own step, drawn as an outline. The checklist says "ties" or "off by $X" and the saved review keeps it. Tested: explained + not explained = the change in cash, every Riley month. |
+| 19 | The lowest point shows before it happens; the forecast is checked | Pass. The Budget strip shows the lowest point and safe to spend until payday; Analyze shows the full calendar and pay-later flags. A forecast is saved for each new month at close and compared with the real end balance. |
+| 20 | The log owns the money; month-end only fills gaps | Pass. Actuals come from the log; a line with entries cannot be typed over (the store refuses it). The Actual pass lists only the gaps first. Riley's March: 97% of spending came from the log. |
+
+## Still four screens
+
+Clients, Fill in, Budget, Analyze. Quick entry and the month-end checklist are a sheet and a card,
+not screens. Cash flow is Fill in pass 6 (it replaced Transactions); Cash flow, Months, and Trends are
+sections of Analyze.
+
+## Nothing asked twice
+
+Cash on hand was asked in Next stage and in Eras; both now read the account balances, and the old
+answers moved into a "Cash on hand" account. A card's balance lives on its account, not its debt.
+Due days for debts were already asked; the calendar reuses them. A line with log entries is never typed.
+
+## Charts at phone width, light and dark
+
+The Budget strip and loop strip, the calendar, the bridge waterfall, the review card, the 80/20 chart,
+estimate history, and every Trends card were screenshotted at 390px in light and dark. Fixed: clipped
+waterfall amounts, crowded month labels on line charts and the heatmap, a sparkline layout that wrapped,
+the year-long calendar squeezed into a phone (it now starts at this month, with "Back to" for the rest),
+and a by-date table too wide for a phone (now a list).

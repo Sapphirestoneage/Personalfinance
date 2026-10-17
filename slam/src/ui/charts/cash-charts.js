@@ -28,7 +28,10 @@ function markersOf(cal, days) {
 }
 
 function chartCard(ctx, cal, id, title, extraReading) {
-  const days = cal.days;
+  // From the 1st of this month by default; the whole history (back to the first month with balances) on request.
+  const whole = !!ctx.ui.cfWhole;
+  const from = cal.today.slice(0, 7) + '-01';
+  const days = whole ? cal.days : cal.days.filter((x) => x.date >= from);
   const ti = days.findIndex((x) => x.today);
   const horizon = ctx.ui.cfHorizon || 30;
   return card(ctx, {
@@ -36,6 +39,7 @@ function chartCard(ctx, cal, id, title, extraReading) {
     svg: dayLine({ days: days.map((x) => ({ date: x.date, v: x.cash })), width: chartWidth(false), fmt: money, todayIndex: ti >= 0 ? ti : null, cushion: cal.cushion || null, markers: markersOf(cal, days), height: 220, label: title }),
     extra: h('div', { class: 'row' },
       h('div', { class: 'toggle', role: 'group', 'aria-label': 'Days ahead' }, [30, 60, 90].map((n) => h('button', { 'aria-pressed': horizon === n ? 'true' : 'false', 'data-key': 'horizon-' + n, onclick: () => { ctx.ui.cfHorizon = n; ctx.rerender(); } }, n + ' days'))),
+      cal.start < from ? h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: whole, 'data-key': 'cf-whole', onchange: (e) => { ctx.ui.cfWhole = e.target.checked; ctx.rerender(); } }), 'Back to ' + cal.start.slice(0, 7)) : null,
       quickEntryButton(ctx)),
     reading: calendarReading(cal) + (extraReading || '') + (cal.unknownStart.length ? ' No starting balance for ' + cal.unknownStart.join(', ') + ' (counted from $0).' : '')
   });

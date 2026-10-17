@@ -59,7 +59,8 @@ export function mergeImport(doc, match) {
 
 function mergeInto(doc, imported, entryId) {
   const e = doc.transactions.find((x) => x.id === entryId);
-  const merged = { ...imported, lineId: e.lineId || imported.lineId, note: e.note || imported.note || '',
+  // The logged entry's line, note, and kind win (the coach said what it was); the bank's date, amount, and merchant win.
+  const merged = { ...imported, kind: e.kind || imported.kind, lineId: e.lineId || imported.lineId, note: e.note || imported.note || '',
     incomeId: e.incomeId || imported.incomeId || null,
     mergedFrom: { id: e.id, source: e.source, date: e.date, amount: e.amount, merchant: e.description || '' } };
   if (e.scheduleKey) merged.scheduleKey = e.scheduleKey;

@@ -23,7 +23,8 @@ export const DEMO_HOUSEHOLDS = [
   ['luis', 'Luis, 33, Ohio, W-2 plus side hustle'],
   ['tasha', 'Tasha, 29, Texas, gross pay only'],
   ['sam', 'Sam, 24, between jobs, one total'],
-  ['jordan', 'Jordan, 31, with two imported CSV files']
+  ['jordan', 'Jordan, 31, with two imported CSV files'],
+  ['riley', 'Riley, 31, a year of the monthly loop']
 ];
 
 // Demo households that come with sample bank files to import.

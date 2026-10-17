@@ -41,11 +41,30 @@ python3 -m http.server 8765 &
 node tools/screens-check.mjs
 ```
 
+## The monthly loop
+
+Every month runs the same three steps, like an ice cream sandwich:
+
+1. **Plan** (top cookie): before the month, make its plan in Analyze, Review and plan, starting from last
+   month's plan or the estimates. The client's original estimate is never overwritten.
+2. **Track** (the ice cream): during the month, everything goes in one log in Fill in, Cash flow: quick
+   entries (the Quick entry button on Budget), scheduled bills and paychecks confirmed with one tap
+   ("It happened"), and bank CSVs, which are matched against what was already logged so nothing counts twice.
+3. **Review** (bottom cookie): at month-end the Actual pass is already filled from the log; only the gaps
+   need an answer. "Close month" opens a checklist, then saves the month in review: what went better
+   than planned, what went worse, and how the budget ties to the cash (the bridge).
+
+The log owns the money: a line with entries has its actual computed from them and is not typed over.
+The Budget screen shows the three steps at the top, and a 30-day cash strip (lowest point, safe to spend
+until payday). Riley's demo is a full year of the loop.
+
 ## Bank and card files
 
-Fill in, pass 6 imports CSV files exported from Chase (credit card or checking),
+Fill in, pass 6 Cash flow imports CSV files exported from Chase (credit card or checking),
 American Express, Capital One, or any file with date, description, and amount
-columns. Nothing leaves the browser. The Jordan demo comes with two sample files.
+columns. Nothing leaves the browser. Each file goes into an account; its rows are matched
+against the log first. The Jordan demo comes with two sample files; Riley's year has five.
+`node tools/riley.mjs` rebuilds Riley's year and files (fixed seed).
 
 ## Folder layout
 
@@ -59,10 +78,20 @@ columns. Nothing leaves the browser. The Jordan demo comes with two sample files
 
 ## The four screens
 
-1. **Clients**: client list, new client, open, export, import.
-2. **Fill in**: guided passes (Gut, Basics, Rough, Dream, Actual, Transactions import and review).
-3. **Budget**: the main view. Everything important without clicking.
-4. **Analyze**: every chart and lens, each with a one-line reading, and **Review and plan**: a month's actuals next to next month's plan, line by line, with % of income, % of spending, and happiness. Adjust, keep, cut, or change each line, tick it off, and carry the plan into the next month. A Satisfaction and stress card (joy or purpose next to stress) says what to keep more of and what to look at first.
+Still four. The monthly loop lives inside them.
+
+1. **Clients**: client list, new client, open, export, import, and the demo households.
+2. **Fill in**: guided passes (Gut, Basics, Rough, Dream, Actual, Cash flow, Next stage, Eras). Actual is
+   "review and fill gaps": lines filled from the log are collapsed, empty lines come first. Cash flow holds
+   accounts and month balances, paydays and bill dates, scheduled items waiting on "It happened", the log,
+   possible matches to confirm, and CSV import.
+3. **Budget**: the main view. Plan, Track, Review for the month at the top, the 30-day cash strip with Quick
+   entry, the key numbers and charts, and Close month (with the month-end checklist and the review card).
+4. **Analyze**: every chart and lens, each with a one-line reading. **Cash flow** (cash by day, the
+   budget-to-cash bridge, pay-later flags, the month grid, this month so far, a due-day what-if),
+   **Review and plan** (a month's actuals next to next month's plan, line by line), **Months** (any closed
+   month's saved review, its bridge, estimate history, and 80/20), and **Trends** (by merchant, category or
+   line, and period, plus one-line stats).
 
 ## House rules
 

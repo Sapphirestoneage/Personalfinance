@@ -36,7 +36,7 @@ export function balancesFor(doc, month) {
   const rows = (doc.accounts || []).filter((a) => a.state !== 'archived').map((a) => ({ id: a.id, name: a.name, type: a.type, cash: isCashAccount(a), card: a.type === 'credit-card', ...monthBalance(doc, month, a.id) }));
   const cash = rows.filter((r) => r.cash);
   const cards = rows.filter((r) => r.card);
-  const total = (list, k) => (list.length && list.every((r) => r[k].amount !== null) ? sumKnown(list.map((r) => r[k].amount)).total : null);
+  const total = (list, k) => (list.length && list.every((r) => r[k].amount !== null) ? Math.round(sumKnown(list.map((r) => r[k].amount)).total * 100) / 100 : null);
   return {
     month, rows,
     cashStart: total(cash, 'start'), cashEnd: total(cash, 'end'),
