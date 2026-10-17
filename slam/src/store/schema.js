@@ -5,7 +5,7 @@ import { makeValue } from './value.js';
 import { DEFAULT_LINE_TYPES } from './types.js';
 import { newId } from './ids.js';
 
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 export const SITUATIONS = ['employed', 'self-employed', 'between-jobs', 'student'];
 export const FILING_STATUSES = ['single', 'married-joint', 'married-separate', 'head-of-household'];
@@ -19,6 +19,10 @@ export const LINE_PATHS = ['personal', 'linked', 'reimbursable'];
 export const LINE_TAGS = ['planned', 'unavoidable', 'mistake'];
 export const DEBT_TYPES = ['credit-card', 'line-of-credit', 'student-loan', 'car-loan', 'personal-loan', 'medical', 'bnpl', 'mortgage', 'family-friend', 'other'];
 export const LIVING_WITH = ['alone', 'partner', 'roommates', 'family'];
+export const ACCOUNT_TYPES = ['checking', 'savings', 'credit-card', 'cash', 'other'];
+// Cash on hand counts these; cards are money owed, shown separately.
+export const CASH_ACCOUNT_TYPES = ['checking', 'savings', 'cash'];
+export const ACCOUNT_STATES = ['active', 'archived'];
 
 // [id, name, kind, need, savings, tag, lines[[id, name, kind, need]]]
 // need = whatever the line is labeled; these are only starting labels, editable per line.
@@ -174,8 +178,6 @@ export function newNextStage(metrics = []) {
     laterTakeHome: makeValue(null, { cadence: 'month' }),
     laterAfterMonths: null,
     metrics: metrics.map(([label, better]) => ({ id: newId('met'), label, now: null, next: null, better })),
-    // Savings the client could put toward the switch (for runway).
-    cashOnHand: makeValue(null, { cadence: 'one-off' }),
     // Disaster and dream lenses: only what differs from likely; blanks follow likely.
     cases: { disaster: newCaseOverrides(), dream: newCaseOverrides() }
   };
@@ -202,10 +204,28 @@ export function newDebt(fields = {}) {
   };
 }
 
-// Eras: cash that could go toward them, and the chapters in order. Each era
-// starts after the one before it, plus gapMonths of regular life.
+// Eras: the chapters in order. Each era starts after the one before it, plus
+// gapMonths of regular life. Cash comes from account balances (S-084).
 export function newEras() {
-  return { cashNow: makeValue(null, { cadence: 'month' }), list: [] };
+  return { list: [] };
+}
+
+// A bank account, card, or cash. A card links to its debt (doc.debts), which
+// keeps the APR, minimum, and due day; the account keeps the balances (S-084).
+export function newAccount(fields = {}) {
+  return {
+    id: fields.id || newId('acct'),
+    name: fields.name || 'Account',
+    type: fields.type || 'checking',
+    institution: fields.institution || '',
+    state: fields.state || 'active',
+    debtId: fields.debtId || null
+  };
+}
+
+// One account's balances for one month. A card's balance is what is owed (positive).
+export function newBalance() {
+  return { start: makeValue(null, { cadence: 'one-off' }), end: makeValue(null, { cadence: 'one-off' }) };
 }
 
 export function newEra(fields = {}) {
@@ -257,6 +277,9 @@ export function newHousehold(name, now = new Date()) {
     blindRounds: [],
     // Actuals for open months other than the one being worked on: { 'YYYY-MM': { lineId: Value } }.
     monthActuals: {},
+    // Accounts and their month balances: balances['YYYY-MM'][accountId] = { start, end } (S-084).
+    accounts: [],
+    balances: {},
     nextStage: null,
     // Eras: life chapters laid end to end after today's budget (S-067).
     eras: newEras(),

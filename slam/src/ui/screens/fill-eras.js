@@ -2,6 +2,8 @@
 // geo arbitrage, a sabbatical...) laid end to end like blocks after regular
 // life. Numbers come from calc (summary.eras); this screen only asks and words it.
 
+import { cashOnHandNote } from '../components/accounts.js';
+import { cashOnHand } from '../../calc/balances.js';
 import { h } from '../dom.js';
 import { money, signedMoney, monthLabel } from '../format.js';
 import { question } from '../components/value-input.js';
@@ -82,7 +84,7 @@ export function renderEras(ctx, summary) {
     h('div', { class: 'card' }, h('h2', {}, 'Eras: potential budgets'),
       h('p', { class: 'muted small' }, 'Life in chapters. Today\'s budget is regular life (' + money(t.baseIncome) + ' in, ' + money(t.baseSpend) + ' spent, ' + signedMoney(t.baseNet) +
         ' a month). Add eras, set how long and when, and move them like blocks. Each era\'s blanks start from a share of today\'s numbers, marked as guesses.'),
-      question(ctx, 'Cash you could put toward these', 'Savings and anything you would use. Followed month by month through every era.', ['eras', 'cashNow'], doc.eras.cashNow, { cadence: false }),
+      cashOnHandNote(ctx, cashOnHand(doc)),
       eraStrip(ctx, summary, { jump: true }),
       t.eras.length && t.costVsRegular !== null ? h('p', { class: 'small' },
         'By ' + monthLabel(t.endKey) + ' (' + span(t.totalMonths) + '): ' + (t.cashKnown ? 'cash ' + money(t.cashEnd) : signedMoney(t.cashEnd) + ' in cash') +

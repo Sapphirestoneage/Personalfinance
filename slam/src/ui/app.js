@@ -73,8 +73,8 @@ const ctx = {
     setTimeout(() => { if (ui.toast === msg) { ui.toast = null; queueRender(); } }, 2600);
   },
   rerender: () => queueRender(),
-  // Transactions live inside Fill in and Analyze, so there are still four screens.
-  fillExtras: [{ id: 'transactions', label: '6 Transactions', render: renderTransactions }, { id: 'next', label: '7 Next stage', render: renderNextStage }, { id: 'eras', label: '8 Eras', render: renderEras }],
+  // Cash flow (accounts, the log, imports) lives inside Fill in and Analyze, so there are still four screens.
+  fillExtras: [{ id: 'cashflow', label: '6 Cash flow', render: renderTransactions }, { id: 'next', label: '7 Next stage', render: renderNextStage }, { id: 'eras', label: '8 Eras', render: renderEras }],
   analyzeExtras: [['transactions', 'Transactions', (c, s) => transactionCards(c, s)], ['next', 'Next stage', (c, s) => nextStageCards(c, s)], ['eras', 'Eras', (c, s) => eraCards(c, s)], ['plan', 'Review and plan', (c, s) => reviewCards(c, s)]]
 };
 

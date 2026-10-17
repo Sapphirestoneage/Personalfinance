@@ -123,6 +123,38 @@ for (const [name, button] of Object.entries(DEMOS)) {
   check(name, 'Console errors', String(errors.length), '0');
   await page.close();
 }
+// The monthly loop (S-084 on): accounts, balances, and the screens built on them.
+{
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  await page.goto(URL + '#clients');
+  console.log('loop (phone width)');
+  await page.fill('[data-key="new-client"]', 'Loop check');
+  await page.press('[data-key="new-client"]', 'Enter');
+  await page.waitForSelector('.passes');
+  await page.getByRole('button', { name: '6 Cash flow' }).click();
+  await page.click('[data-key="add-acct-checking"]');
+  const startBox = page.locator('#accounts-card input.amount').first();
+  await startBox.fill('2500');
+  await startBox.press('Tab');
+  await page.waitForTimeout(100);
+  check('loop', 'Cash start shown', await page.$eval('#accounts-card p.small b', (b) => b.textContent), money(2500));
+  await page.getByRole('button', { name: '7 Next stage' }).click();
+  await page.waitForTimeout(100);
+  const startNs = page.getByRole('button', { name: 'Plan a next stage' });
+  if (await startNs.count()) await startNs.click();
+  await page.waitForSelector('[data-key="cash-on-hand"]', { timeout: 3000 }).catch(() => null);
+  const note = await page.$eval('[data-key="cash-on-hand"]', (p) => p.textContent).catch(() => 'missing');
+  check('loop', 'Next stage reads cash from balances', note.includes(money(2500)) ? 'reads ' + money(2500) : note, 'reads ' + money(2500));
+  await page.getByRole('button', { name: '8 Eras' }).click();
+  await page.waitForSelector('[data-key="cash-on-hand"]', { timeout: 3000 }).catch(() => null);
+  const eraNote = await page.$eval('[data-key="cash-on-hand"]', (p) => p.textContent).catch(() => 'missing');
+  check('loop', 'Eras reads cash from balances', eraNote.includes(money(2500)) ? 'reads ' + money(2500) : eraNote, 'reads ' + money(2500));
+  check('loop', 'Console errors', String(errors.length), '0');
+  await page.close();
+}
 await browser.close();
 console.log(failures ? failures + ' FAILED' : 'All screen numbers match the expected files.');
 process.exit(failures ? 1 : 0);

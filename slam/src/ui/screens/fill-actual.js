@@ -12,6 +12,7 @@ import { categoryTypeSelect, lineTypeSelect, typeHint } from '../components/type
 import { lineTypeLabel } from '../../store/types.js';
 import { DEBT_TYPE_OPTIONS } from '../components/debt-quick.js';
 import { monthPicker } from '../components/month-picker.js';
+import { linkedCardBalance } from '../../calc/balances.js';
 
 const STATES = [['active', 'Counts, shown'], ['hidden', 'Counts, hidden'], ['archived', 'Archived (stops counting)']];
 const TAG_IDEAS = ['Subscription', 'Travel', 'Gifts', 'Work', 'Self-care', 'Kids', 'Pets', 'Date night'];
@@ -120,6 +121,7 @@ function categoryCard(ctx, summary, cat) {
 }
 
 function debtCard(ctx, debt) {
+  const linked = linkedCardBalance(ctx.doc, debt.id);
   const p = (k) => ['debts', debt.id, k];
   const set = (k) => (e) => ctx.update('Debt ' + k, (d) => { d.debts.find((x) => x.id === debt.id)[k] = e.target.value; });
   return h('div', { class: 'card' },
@@ -130,7 +132,8 @@ function debtCard(ctx, debt) {
         ? h('p', { class: 'small warn' }, 'Not counting (paid off or set aside). ', h('button', { class: 'btn small', onclick: () => ctx.update('Count debt again', (d) => { d.debts.find((x) => x.id === debt.id).state = 'active'; }) }, 'Count it again'))
         : h('button', { class: 'btn small ghost', 'data-key': 'stop-debt:' + debt.id, onclick: () => ctx.update('Stop counting debt', (d) => { d.debts.find((x) => x.id === debt.id).state = 'archived'; }) }, 'Paid off, stop counting'))),
     question(ctx, 'Minimum payment', 'Flows into Debt payments automatically', p('minimum'), debt.minimum),
-    question(ctx, 'Balance', null, p('balance'), debt.balance, { cadence: false }),
+    linked ? h('p', { class: 'small', 'data-key': 'debt-linked:' + debt.id }, 'Balance: ' + money(linked.amount) + ', from the account "' + linked.name + '" (Cash flow).')
+      : question(ctx, 'Balance', null, p('balance'), debt.balance, { cadence: false }),
     question(ctx, 'APR (%)', null, p('apr'), debt.apr, { cadence: false, placeholder: '%' }),
     question(ctx, 'Due day of the month', null, p('dueDay'), debt.dueDay, { cadence: false, placeholder: 'day' }));
 }

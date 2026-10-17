@@ -1,9 +1,10 @@
-// Fill in, pass 6 Transactions: import a bank or card CSV, review and fix the
+// Fill in, pass 6 Cash flow: accounts and balances, import a bank or card CSV, review and fix the
 // mapping (remembered per merchant), fill a month's actuals after the client
 // confirms, and see what the transactions reveal. Lives inside Fill in so the
 // app keeps four screens.
 
 import { h, options } from '../dom.js';
+import { accountsCard } from '../components/accounts.js';
 import { money, monthLabel } from '../format.js';
 import { importCSV, FORMATS } from '../../calc/tx-import.js';
 import { actualsProposal } from '../../calc/tx-analysis.js';
@@ -130,6 +131,7 @@ export function renderTransactions(ctx, summary) {
   const months = tx ? tx.months : [];
   const month = months.includes(ctx.ui.txMonth) ? ctx.ui.txMonth : months[months.length - 1];
   return h('div', {},
+    accountsCard(ctx, ctx.doc.currentMonth),
     importCard(ctx),
     tx ? h('div', { class: 'row', style: 'margin:12px 0' }, h('b', {}, 'Month'),
       h('select', { 'data-key': 'tx-month', onchange: (e) => { ctx.ui.txMonth = e.target.value; ctx.rerender(); } }, options(months.map((m) => [m, monthLabel(m)]), month))) : null,

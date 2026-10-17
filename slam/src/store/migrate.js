@@ -3,7 +3,7 @@
 // To change the stored shape: bump SCHEMA_VERSION, add a step to STEPS, and
 // write a compatibility note in DECISIONS.md.
 
-import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt, newDeduction, newCaseOverrides, newWithheld, WITHHELD_KEYS, newEra } from './schema.js';
+import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt, newDeduction, newCaseOverrides, newWithheld, WITHHELD_KEYS, newEra, newAccount } from './schema.js';
 import { normalizeValue, isBlank } from './value.js';
 import { CATEGORY_TYPE_IDS, DEFAULT_LINE_TYPES, guessLineType } from './types.js';
 
@@ -23,8 +23,33 @@ const STEPS = {
     return { ...doc, settings, schemaVersion: 3 };
   },
   // Version 3 to 4 (S-076): monthly plans. Older files have none.
-  3: (doc) => ({ ...doc, plans: doc.plans || {}, schemaVersion: 4 })
+  3: (doc) => ({ ...doc, plans: doc.plans || {}, schemaVersion: 4 }),
+  // Version 4 to 5 (S-084): accounts and month balances. Next stage cash on hand and
+  // Eras cash now are no longer asked; they read the balances. A typed amount moves
+  // into a "Cash on hand" account as the start of the month being worked on.
+  4: (doc) => cashIntoAccounts(doc)
 };
+
+function cashIntoAccounts(doc) {
+  const { cashOnHand, ...ns } = doc.nextStage || {};
+  const { cashNow, ...eras } = doc.eras || {};
+  const out = { ...doc, accounts: doc.accounts || [], balances: doc.balances || {}, schemaVersion: 5 };
+  if (doc.nextStage) out.nextStage = ns;
+  if (doc.eras) out.eras = eras;
+  const typed = (v) => (v && typeof v === 'object' && v.amount !== null && v.amount !== undefined ? v : typeof v === 'number' ? { amount: v } : null);
+  const found = [[typed(cashOnHand), 'Next stage cash on hand'], [typed(cashNow), 'Eras cash now']].filter(([v]) => v);
+  if (!found.length || !/^\d{4}-\d{2}$/.test(doc.currentMonth || '')) return out;
+  out.balances = { ...out.balances, [doc.currentMonth]: { ...(out.balances[doc.currentMonth] || {}) } };
+  // Two different answers: the first counts, the other is kept on an archived account so nothing is lost.
+  const kept = found[1] && found[1][0].amount === found[0][0].amount ? [found[0]] : found;
+  kept.forEach(([v, from], i) => {
+    const acct = newAccount({ id: 'acct-cash-on-hand' + (i ? '-2' : ''), name: i ? 'Cash on hand (' + from + ')' : 'Cash on hand', type: 'cash', state: i ? 'archived' : 'active' });
+    out.accounts = [...out.accounts, acct];
+    const start = { amount: v.amount, cadence: 'one-off', status: v.status || 'known', source: v.source || 'client', asOf: v.asOf || null, note: 'Moved from ' + from };
+    out.balances[doc.currentMonth][acct.id] = { start, end: null };
+  });
+  return out;
+}
 
 export function migrate(raw) {
   if (!raw || typeof raw !== 'object') throw new Error('Not a household document');
@@ -110,7 +135,7 @@ export function normalizeHousehold(doc) {
   out.monthActuals = Object.fromEntries(Object.entries(doc.monthActuals || {}).map(([k, lines]) => [k, Object.fromEntries(Object.entries(lines).map(([id, v]) => [id, normalizeValue(v)]))]));
   // Compatibility (S-067): files before eras load with none.
   const er = doc.eras || {};
-  out.eras = { cashNow: normalizeValue(er.cashNow), list: (er.list || []).map((e) => ({ ...newEra({ id: e.id }), ...e, takeHome: normalizeValue(e.takeHome), spending: normalizeValue(e.spending), oneTime: normalizeValue(e.oneTime) })) };
+  out.eras = { list: (er.list || []).map((e) => ({ ...newEra({ id: e.id }), ...e, takeHome: normalizeValue(e.takeHome), spending: normalizeValue(e.spending), oneTime: normalizeValue(e.oneTime) })) };
   const nv = (v) => normalizeValue(v);
   out.plans = Object.fromEntries(Object.entries(doc.plans || {}).map(([m, p]) => [m, {
     createdFrom: p.createdFrom || 'manual',
@@ -129,12 +154,16 @@ export function normalizeHousehold(doc) {
     ...r, estimates: Object.fromEntries(Object.entries(r.estimates || {}).map(([k, v]) => [k, normalizeValue(v)]))
   }));
   out.nextStage = doc.nextStage ? normalizeNextStage(doc.nextStage) : null;
+  out.accounts = (doc.accounts || []).map((a) => ({ ...newAccount({ id: a.id }), ...a }));
+  out.balances = Object.fromEntries(Object.entries(doc.balances || {}).map(([m, accts]) => [m, Object.fromEntries(Object.entries(accts).map(([id, b]) => [id, {
+    start: { ...normalizeValue(b && b.start), cadence: 'one-off' }, end: { ...normalizeValue(b && b.end), cadence: 'one-off' }
+  }]))]));
   out.schemaVersion = SCHEMA_VERSION;
   return out;
 }
 
 // Compatibility: plans saved before the three lenses load with empty disaster
-// and dream overrides (so both follow likely) and no cash on hand.
+// and dream overrides (so both follow likely).
 function normalizeNextStage(ns) {
   const item = (c) => ({ ...c, amount: normalizeValue(c.amount), disaster: normalizeValue(c.disaster), dream: normalizeValue(c.dream) });
   const cases = {};
@@ -146,7 +175,6 @@ function normalizeNextStage(ns) {
   return {
     ...ns,
     takeHome: normalizeValue(ns.takeHome), transitionTakeHome: normalizeValue(ns.transitionTakeHome), laterTakeHome: normalizeValue(ns.laterTakeHome),
-    cashOnHand: ns.cashOnHand ? normalizeValue(ns.cashOnHand) : { ...normalizeValue(null), cadence: 'one-off' },
     oneOffCosts: (ns.oneOffCosts || []).map(item), costChanges: (ns.costChanges || []).map(item),
     metrics: ns.metrics || [], cases
   };

@@ -234,3 +234,7 @@ table.review .toggle button { padding: 4px 8px; }
 .review-card.done { opacity: 0.75; }
 .review-card-name { flex: 1 1 auto; min-width: 0; font-weight: 600; }
 .review-card-plan { display: flex; align-items: center; gap: var(--space-2); flex-wrap: wrap; }
+
+/* Accounts and balances (S-084) */
+.account-row .balance-pair { display: grid; grid-template-columns: 1fr; gap: var(--space-2); flex: 1 1 260px; }
+@media (min-width: 760px) { .account-row .balance-pair { grid-template-columns: 1fr 1fr; } }

@@ -6,7 +6,7 @@ import { CATEGORY_TYPE_IDS, LINE_TYPE_IDS } from './types.js';
 import { PLAN_DECISIONS } from './plans.js';
 import {
   SCHEMA_VERSION, LIVING_WITH, SITUATIONS, FILING_STATUSES, INCOME_TYPES, PAY_FREQUENCIES, PAY_BASES, WITHHOLDING, DEDUCTION_KIND_IDS,
-  ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES
+  ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES, ACCOUNT_TYPES, ACCOUNT_STATES
 } from './schema.js';
 
 function oneOf(errs, list, val, where, allowNull = false) {
@@ -88,8 +88,24 @@ export function validateHousehold(doc) {
     if (!r.id) errs.push('blindRounds[' + i + '].id is missing');
     for (const [k, v] of Object.entries(r.estimates || {})) errs.push(...valueErrors(v, 'blindRounds[' + i + '].' + k));
   });
+  const acctIds = new Set();
+  (doc.accounts || []).forEach((a, i) => {
+    const w = 'accounts[' + i + ']';
+    seen(a.id, w);
+    acctIds.add(a.id);
+    if (typeof a.name !== 'string' || !a.name.trim()) errs.push(w + ': name is empty');
+    oneOf(errs, ACCOUNT_TYPES, a.type, w + '.type');
+    oneOf(errs, ACCOUNT_STATES, a.state, w + '.state');
+    if (a.debtId && !(doc.debts || []).some((d) => d.id === a.debtId)) errs.push(w + '.debtId: unknown debt ' + a.debtId);
+  });
+  for (const [m, accts] of Object.entries(doc.balances || {})) {
+    if (!/^\d{4}-\d{2}$/.test(m)) errs.push('balances key ' + m + ' must be YYYY-MM');
+    for (const [id, b] of Object.entries(accts)) {
+      if (!acctIds.has(id)) errs.push('balances.' + m + ': unknown account ' + id);
+      errs.push(...valueErrors(b.start, 'balances.' + m + '.' + id + '.start'), ...valueErrors(b.end, 'balances.' + m + '.' + id + '.end'));
+    }
+  }
   if (doc.eras) {
-    errs.push(...valueErrors(doc.eras.cashNow, 'eras.cashNow'));
     (doc.eras.list || []).forEach((e, i) => {
       const w = 'eras[' + i + ']';
       seen(e.id, w);
@@ -113,7 +129,7 @@ export function validateHousehold(doc) {
   }
   if (doc.nextStage) {
     const ns = doc.nextStage;
-    for (const k of ['takeHome', 'transitionTakeHome', 'laterTakeHome', 'cashOnHand']) errs.push(...valueErrors(ns[k], 'nextStage.' + k));
+    for (const k of ['takeHome', 'transitionTakeHome', 'laterTakeHome']) errs.push(...valueErrors(ns[k], 'nextStage.' + k));
     for (const c of ['disaster', 'dream']) {
       const o = (ns.cases || {})[c] || {};
       for (const k of ['takeHome', 'transitionTakeHome', 'laterTakeHome']) errs.push(...valueErrors(o[k], 'nextStage.cases.' + c + '.' + k));
