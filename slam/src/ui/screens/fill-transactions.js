@@ -1,6 +1,6 @@
 // Fill in, pass 6 Cash flow: accounts and balances, import a bank or card CSV, review and fix the
-// mapping (remembered per merchant), fill a month's actuals after the client
-// confirms, and see what the transactions reveal. Lives inside Fill in so the
+// mapping (remembered per merchant), and see what the transactions reveal.
+// Line actuals come from the log on their own (S-087); there is no confirm step. Lives inside Fill in so the
 // app keeps four screens.
 
 import { h, options } from '../dom.js';
@@ -8,9 +8,7 @@ import { accountsCard } from '../components/accounts.js';
 import { scheduleCard, waitingCard, checkBalancesCard } from '../components/cashflow.js';
 import { money, monthLabel } from '../format.js';
 import { importCSV, FORMATS } from '../../calc/tx-import.js';
-import { actualsProposal } from '../../calc/tx-analysis.js';
-import { switchMonth } from '../../store/months.js';
-import { setTransactionLine, setTransactionKind, removeTransaction, applyTransactionActuals } from '../../store/edits.js';
+import { setTransactionLine, setTransactionKind, removeTransaction } from '../../store/edits.js';
 import { mergeImport, confirmMatch, rejectMatch, markNotDuplicate } from '../../store/log.js';
 import { matchImport, matchSummary, isPending, sourceOf } from '../../calc/log.js';
 import { quickEntryButton } from '../components/quick-entry.js';
@@ -122,29 +120,6 @@ function reviewCard(ctx, summary, month) {
       : h('p', { class: 'muted small' }, showAll ? 'No transactions this month.' : 'Everything this month has a line.'));
 }
 
-function fillCard(ctx, summary, month) {
-  if (month !== ctx.doc.currentMonth) {
-    return h('div', { class: 'card' }, h('h2', {}, 'Fill ' + monthLabel(month) + ' actuals from transactions'),
-      h('p', { class: 'muted small' }, 'You are working on ' + monthLabel(ctx.doc.currentMonth) + '. Switch to ' + monthLabel(month) + ' to fill its actuals; nothing entered for other months is lost.'),
-      h('button', { class: 'btn primary', onclick: () => ctx.update('Work on ' + monthLabel(month), (d) => switchMonth(d, month)) }, 'Work on ' + monthLabel(month)));
-  }
-  const p = actualsProposal(summary.model, ctx.doc.transactions, month);
-  const changing = p.rows.filter((r) => r.changes);
-  return h('div', { class: 'card' },
-    h('h2', {}, 'Fill ' + monthLabel(month) + ' actuals from transactions'),
-    h('p', { class: 'muted small' }, 'Card payments, transfers, and income are left out. Refunds and Venmo or Zelle paybacks reduce the line they are mapped to. Check with the client before replacing what was typed.'),
-    p.rows.length ? h('div', { class: 'table-wrap' }, h('table', { class: 'budget' },
-      h('thead', {}, h('tr', {}, ['Line', 'Typed', 'From bank', ''].map((x) => h('th', {}, x)))),
-      h('tbody', {}, p.rows.map((r) => h('tr', {}, h('td', {}, r.category + ' / ' + r.name), h('td', { class: 'num' }, money(r.typed, true)),
-        h('td', { class: 'num' }, money(r.fromTransactions, true) + ' (' + r.count + ')'), h('td', { class: 'small' }, r.changes ? 'will change' : 'same')))))) : h('p', { class: 'muted small' }, 'No mapped transactions this month.'),
-    p.unmappedCount ? h('p', { class: 'small warn' }, p.unmappedCount + (p.unmappedCount === 1 ? ' purchase (' : ' purchases (') + money(p.unmapped, true) + (p.unmappedCount === 1 ? ') has' : ') have') + ' no line yet and ' + (p.unmappedCount === 1 ? 'is' : 'are') + ' not included.') : null,
-    changing.length ? h('button', { class: 'btn primary', style: 'margin-top:8px', onclick: () => {
-      if (!confirm('Replace ' + changing.length + ' actuals with the transaction totals? (Undo works.)')) return;
-      ctx.update('Fill actuals from transactions', (d) => applyTransactionActuals(d, changing, monthLabel(month)));
-      ctx.toast(changing.length + ' actuals updated');
-    } }, 'Client confirmed: replace ' + changing.length + ' actuals') : null);
-}
-
 function findingsCard(summary) {
   const d = summary.transactions.detections;
   const li = (a, b) => h('li', { class: 'small' }, h('span', {}, a), h('b', { class: 'num' }, b));
@@ -173,6 +148,5 @@ export function renderTransactions(ctx, summary) {
     reviewCard(ctx, summary, month),
     possibleCard(ctx),
     importCard(ctx),
-    tx ? fillCard(ctx, summary, month) : null,
     tx ? findingsCard(summary) : h('p', { class: 'muted' }, 'Nothing logged yet. Use Quick entry, or import a bank CSV.'));
 }

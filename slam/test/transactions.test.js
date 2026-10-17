@@ -6,9 +6,9 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { importCSV, detectFormat, merchantKey, parseDate, parseMoney } from '../src/calc/tx-import.js';
 import { parseCSV } from '../src/calc/csv.js';
-import { actualsFromTransactions, actualsProposal, detect, topMerchants, weekdaySpending, sizeVsCount } from '../src/calc/tx-analysis.js';
+import { actualsFromTransactions, detect, topMerchants, weekdaySpending, sizeVsCount } from '../src/calc/tx-analysis.js';
 import { budgetModel } from '../src/calc/model.js';
-import { addTransactions, applyTransactionActuals, setTransactionLine } from '../src/store/edits.js';
+import { addTransactions, setTransactionLine } from '../src/store/edits.js';
 import { validateHousehold } from '../src/store/validate.js';
 import { addAccount } from '../src/store/accounts.js';
 import { loadRefs, loadHousehold, readText, near } from './helpers.js';
@@ -95,17 +95,17 @@ test('Jordan: September and August actuals, double counting removed', () => {
   for (const [k, v] of Object.entries(exp.august)) money(aug.byLine[k], v, 'Aug ' + k);
 });
 
-test('Jordan: the client confirms before typed actuals are replaced', () => {
+test('Jordan: actuals come from the log, with no confirm step (S-087)', () => {
   const { doc } = loadJordan();
-  const p = actualsProposal(budgetModel(doc), doc.transactions, '2026-09');
-  const g = p.rows.find((r) => r.lineId === 'groceries');
-  assert.equal(g.typed, 300);
-  money(g.fromTransactions, 218.2, 'groceries');
-  assert.equal(g.changes, true);
-  applyTransactionActuals(doc, p.rows, 'September 2026');
+  // Groceries was typed as 300, but September has 3 grocery entries: the log owns it, 218.20.
   const food = budgetModel(doc).categories.find((c) => c.id === 'food');
+  const g = food.lines.find((l) => l.id === 'groceries');
+  money(g.actual, 218.2, 'groceries');
+  assert.deepEqual([g.actualFrom, g.logCount, g.status.actual], ['log', 3, 'computed']);
   money(food.actual.amount, exp.foodActualAfterApplying, 'food actual');
-  assert.match(doc.categories.find((c) => c.id === 'food').lines[0].actual.note, /From 3 transactions/);
+  // Rent has no entries: the typed 1,500 stays
+  const rent = budgetModel(doc).categories.find((c) => c.id === 'housing').lines[0];
+  assert.deepEqual([rent.actual, rent.actualFrom], [1500, 'typed']);
 });
 
 test('Jordan: detections', () => {

@@ -36,19 +36,6 @@ export function actualsFromTransactions(txs, month) {
   return { month, byLine, counts, unmapped: r2(unmapped), unmappedCount };
 }
 
-// Compare with what was typed, so the client can confirm before anything is replaced.
-export function actualsProposal(model, txs, month) {
-  const a = actualsFromTransactions(txs, month);
-  const rows = [];
-  for (const c of model.categories) {
-    for (const l of c.lines) {
-      if (a.byLine[l.id] === undefined) continue;
-      rows.push({ lineId: l.id, name: l.name, category: c.name, typed: l.actual, fromTransactions: a.byLine[l.id], count: a.counts[l.id], changes: l.actual !== a.byLine[l.id] });
-    }
-  }
-  return { ...a, rows };
-}
-
 function groupByMerchant(txs) {
   const g = {};
   for (const t of txs) (g[t.merchant] = g[t.merchant] || []).push(t);

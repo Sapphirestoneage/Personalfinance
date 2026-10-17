@@ -44,7 +44,7 @@ export function amountClose(a, b) {
 }
 
 function isCandidate(imp, e) {
-  if (sourceOf(e) === 'import') return false;
+  if (sourceOf(e) === 'import' || e.adjust) return false;
   if (Math.sign(imp.amount) !== Math.sign(e.amount)) return false;
   if (imp.account && e.account && imp.account !== e.account) return false;
   if (!amountClose(imp.amount, e.amount)) return false;

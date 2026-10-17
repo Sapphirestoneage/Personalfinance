@@ -188,6 +188,14 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.waitForSelector('#chart-cf-chart svg');
   check('loop', 'Calendar chart drawn', String(await page.$$eval('#chart-cf-chart svg path', (p) => p.length > 0)), 'true');
   check('loop', 'Month grid drawn', String(await page.$$eval('#chart-cf-grid td', (t) => t.length >= 28)), 'true');
+  // Actuals from the log (S-087): groceries = 54.20 + 80.10 = 134.30, from 2 entries, not typed over.
+  await page.click('nav a[href="#fill"]');
+  await page.getByRole('button', { name: '5 Actual' }).click();
+  await page.waitForSelector('[data-key="from-log:groceries"]');
+  check('loop', 'Groceries from the log', await page.$eval('[data-key="from-log:groceries"]', (b) => b.textContent), money(134.3, true));
+  await page.click('[data-key="from-log:groceries"]');
+  await page.waitForFunction(() => { const t = document.querySelector('.toast'); return t && t.textContent.startsWith('This comes'); }, null, { timeout: 3000 }).catch(() => null);
+  check('loop', 'Typing over a logged line', await page.$eval('.toast', (t) => t.textContent), 'This comes from 2 entries. Add one, or edit an entry.');
   check('loop', 'Console errors', String(errors.length), '0');
   await page.close();
 }

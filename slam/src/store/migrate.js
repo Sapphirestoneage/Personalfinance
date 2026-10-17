@@ -6,6 +6,7 @@
 import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt, newDeduction, newCaseOverrides, newWithheld, WITHHELD_KEYS, newEra, newAccount, newCashflow, makeDate } from './schema.js';
 import { normalizeValue, isBlank } from './value.js';
 import { CATEGORY_TYPE_IDS, DEFAULT_LINE_TYPES, guessLineType } from './types.js';
+import { toMonthly } from '../calc/normalize.js';
 
 // STEPS[n] turns a version n document into version n + 1.
 const STEPS = {
@@ -34,8 +35,54 @@ const STEPS = {
   5: (doc) => logWithAccounts(doc),
   // Version 6 to 7 (S-086): cash flow dates. Every new field starts blank (pay dates,
   // due days, accounts, cushion); nothing is guessed.
-  6: (doc) => ({ ...doc, cashflow: doc.cashflow || newCashflow(), schemaVersion: 7 })
+  6: (doc) => ({ ...doc, cashflow: doc.cashflow || newCashflow(), schemaVersion: 7 }),
+  // Version 7 to 8 (S-087): a line's actual comes from its log entries. A typed actual
+  // for a line and month that also has entries is kept as it was: when the entries
+  // add up to something else, a "kept your typed actual" entry makes up the difference,
+  // then the typed number is cleared (the log owns it now). No month's actual changes.
+  7: (doc) => logOwnsActuals(doc)
 };
+
+const LOGGED = new Set(['spend', 'fee', 'refund', 'reimbursement']);
+
+function logOwnsActuals(doc) {
+  const out = { ...doc, schemaVersion: 8 };
+  const txs = (doc.transactions || []).map((t) => ({ ...t }));
+  const first = (doc.income || []).find((i) => i.state !== 'archived');
+  const freq = first ? first.payFrequency || 'biweekly' : null;
+  const closed = new Set((doc.months || []).map((m) => m.key));
+  const sumFor = (lineId, month) => {
+    const list = txs.filter((t) => t.lineId === lineId && t.date && t.date.startsWith(month) && LOGGED.has(t.kind) && !(t.possible && t.possible.length));
+    return { n: list.length, total: Math.round(list.reduce((a, t) => a + t.amount, 0) * 100) / 100 };
+  };
+  const keep = (line, month, typed) => {
+    const lineId = line.id;
+    const s = sumFor(lineId, month);
+    if (!s.n || closed.has(month)) return typed;
+    let monthly = toMonthly(normalizeValue(typed), freq);
+    if (monthly === null) return typed;
+    // A typed reimbursable line marked received counted only the client's share.
+    const owed = line.path === 'reimbursable' && line.owedBackReceived ? toMonthly(normalizeValue(line.owedBack), freq) : null;
+    if (owed !== null) monthly -= owed;
+    const diff = Math.round((monthly - s.total) * 100) / 100;
+    if (diff !== 0) {
+      const [y, m] = month.split('-').map(Number);
+      const last = month + '-' + String(new Date(Date.UTC(y, m, 0)).getUTCDate()).padStart(2, '0');
+      txs.push({ id: 'tx-kept-' + lineId + '-' + month, date: last, amount: diff, description: '', account: null, kind: diff > 0 ? 'spend' : 'refund',
+        merchant: '', lineId, bnpl: false, source: 'manual', note: 'Kept your typed actual when the log took over', adjust: true });
+    }
+    return null;
+  };
+  out.categories = (doc.categories || []).map((c) => ({ ...c, lines: (c.lines || []).map((l) => {
+    if (!l.actual || l.actual.amount === null || l.actual.amount === undefined) return l;
+    return keep(l, doc.currentMonth, l.actual) ? l : { ...l, actual: null };
+  }) }));
+  const lineById = Object.fromEntries((doc.categories || []).flatMap((c) => (c.lines || []).map((l) => [l.id, l])));
+  out.monthActuals = Object.fromEntries(Object.entries(doc.monthActuals || {}).map(([month, lines]) => [month,
+    Object.fromEntries(Object.entries(lines).filter(([id, v]) => !(v && v.amount !== null && v.amount !== undefined) || !lineById[id] || keep(lineById[id], month, v)))]).filter(([, lines]) => Object.keys(lines).length));
+  out.transactions = txs.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
+  return out;
+}
 
 const guessAccountType = (name) => (/card|visa|amex|master|discover|credit/i.test(name) ? 'credit-card' : /saving/i.test(name) ? 'savings' : /cash|wallet/i.test(name) ? 'cash' : 'checking');
 

@@ -217,7 +217,8 @@ export function cashCalendar(doc, income, opts) {
   const firstMonth = balMonths.length && balMonths[0] < monthOf(today) ? balMonths[0] : monthOf(today);
   const start = firstMonth + '-01';
   const end = addDays(today, horizon);
-  const entries = counted(doc.transactions);
+  // "Kept your typed actual" entries (S-087) are bookkeeping, not money that moved.
+  const entries = counted(doc.transactions).filter((e) => !e.adjust);
   const months = monthsBetween(firstMonth, monthOf(end));
   const allItems = [];
   const spreads = {};
