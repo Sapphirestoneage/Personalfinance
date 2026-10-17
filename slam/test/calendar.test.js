@@ -2,7 +2,8 @@
 // household worked out by hand, day by day.
 //
 // Today is Sat 2026-10-10. Accounts at the start of October: checking 1,000,
-// savings 2,000, Visa (a card) 300 owed.
+// savings 2,000, Visa (a card) 300 owed. The calendar's cash is checking only (S-094),
+// so savings never moves the line.
 // Pay: biweekly, 1,500 a paycheck, next pay date Oct 16, so paychecks land
 // Oct 2, Oct 16, Oct 30 (and Nov 13, past the 30-day horizon of Nov 9).
 // Bills: rent 1,200 due the 1st; phone 60 due the 18th; Visa minimum 35 due the 25th, from checking.
@@ -85,44 +86,44 @@ test('past days show the log, today takes the waiting paycheck, the future is sc
   const cal = cashCalendar(doc, inc, { today: TODAY, horizon: 30 });
   // Range: Oct 1 (first month with balances) to Nov 9 (today + 30)
   assert.deepEqual([cal.start, cal.end, cal.days.length], ['2026-10-01', '2026-11-09', 40]);
-  // Oct 1: checking 1,000 - 1,200 rent = -200; cash -200 + 2,000 savings = 1,800
-  money(cashOn(cal, '2026-10-01'), 1800, 'Oct 1');
-  // Oct 4: -80 groceries from checking: 1,720. Oct 8: groceries on the Visa, cash stays 1,720, the card goes 300 -> 340
-  money(cashOn(cal, '2026-10-08'), 1720, 'Oct 8');
+  // Oct 1: checking 1,000 - 1,200 rent = -200
+  money(cashOn(cal, '2026-10-01'), -200, 'Oct 1');
+  // Oct 4: -80 groceries from checking: -280. Oct 8: groceries on the Visa, checking stays -280, the card goes 300 -> 340
+  money(cashOn(cal, '2026-10-08'), -280, 'Oct 8');
   assert.equal(cal.days.find((x) => x.date === '2026-10-08').cards, 340);
-  // Waiting: only the Oct 2 paycheck (rent was confirmed). It lands today: 1,720 + 1,500 = 3,220
+  // Waiting: only the Oct 2 paycheck (rent was confirmed). It lands today: -280 + 1,500 = 1,220
   assert.deepEqual(cal.waiting.map((i) => [i.date, i.kind]), [['2026-10-02', 'paycheck']]);
-  money(cal.todayCash, 3220, 'today');
+  money(cal.todayCash, 1220, 'today');
   // Groceries: 400 planned, 80 + 40 = 120 logged, 280 left over Oct 11 to Oct 31 (21 days) = 13.333 a day
   const g = cal.spreads['2026-10'].units.find((u) => u.name === 'Groceries');
   assert.deepEqual([g.plan, g.logged, g.left], [400, 120, 280]);
   money(g.perDay, 13.333333, 'per day');
-  // Oct 15: 3,220 - 5 x 13.333 = 3,153.33
-  money(cashOn(cal, '2026-10-15'), 3153.33, 'Oct 15');
-  // Oct 16: 3,220 - 6 x 13.333 (80) + 1,500 = 4,640
-  money(cashOn(cal, '2026-10-16'), 4640, 'Oct 16');
-  // Oct 25: 3,220 - 15 x 13.333 (200) + 1,500 - 60 - 35 = 4,425; the Visa owes 340 - 35 = 305
-  money(cashOn(cal, '2026-10-25'), 4425, 'Oct 25');
+  // Oct 15: 1,220 - 5 x 13.333 = 1,153.33
+  money(cashOn(cal, '2026-10-15'), 1153.33, 'Oct 15');
+  // Oct 16: 1,220 - 6 x 13.333 (80) + 1,500 = 2,640
+  money(cashOn(cal, '2026-10-16'), 2640, 'Oct 16');
+  // Oct 25: 1,220 - 15 x 13.333 (200) + 1,500 - 60 - 35 = 2,425; the Visa owes 340 - 35 = 305
+  money(cashOn(cal, '2026-10-25'), 2425, 'Oct 25');
   assert.equal(cal.days.find((x) => x.date === '2026-10-25').cards, 305);
-  // Oct 31: all 280 spread: 3,220 - 280 + 1,500 - 60 - 35 + 1,500 = 5,845
-  money(cashOn(cal, '2026-10-31'), 5845, 'Oct 31');
-  // November: 400 over 30 days = 13.333 a day. Nov 1: 5,845 - 1,200 rent - 13.333 = 4,631.67; Nov 9: 5,845 - 1,200 - 9 x 13.333 (120) = 4,525
-  money(cashOn(cal, '2026-11-01'), 4631.67, 'Nov 1');
-  money(cashOn(cal, '2026-11-09'), 4525, 'Nov 9');
-  // Lowest from today on: Oct 15, the day before payday. Safe to spend until payday: 3,153.33 - 0 cushion,
-  // under today's 3,220, so 3,153.33
+  // Oct 31: all 280 spread: 1,220 - 280 + 1,500 - 60 - 35 + 1,500 = 3,845
+  money(cashOn(cal, '2026-10-31'), 3845, 'Oct 31');
+  // November: 400 over 30 days = 13.333 a day. Nov 1: 3,845 - 1,200 rent - 13.333 = 2,631.67; Nov 9: 3,845 - 1,200 - 9 x 13.333 (120) = 2,525
+  money(cashOn(cal, '2026-11-01'), 2631.67, 'Nov 1');
+  money(cashOn(cal, '2026-11-09'), 2525, 'Nov 9');
+  // Lowest from today on: Oct 15, the day before payday. Safe to spend until payday: 1,153.33 - 0 cushion,
+  // under today's 1,220, so 1,153.33
   assert.equal(cal.lowest.date, '2026-10-15');
-  money(cal.lowest.amount, 3153.33, 'lowest');
+  money(cal.lowest.amount, 1153.33, 'lowest');
   assert.equal(cal.nextPayday, '2026-10-16');
-  money(cal.safeToSpend, 3153.33, 'safe to spend');
+  money(cal.safeToSpend, 1153.33, 'safe to spend');
   assert.deepEqual([cal.belowZero, cal.belowCushion, cal.payLater.length], [0, 0, 0]);
-  assert.equal(calendarReading(cal), 'Your lowest point is $3,153 on the 15th, the day before payday.');
+  assert.equal(calendarReading(cal), 'Your lowest point is $1,153 on the 15th, the day before payday.');
 });
 
 test('the projected balance on any day is the start plus every item up to that day', () => {
   const doc = household();
   const cal = cashCalendar(doc, logged(doc), { today: TODAY, horizon: 60 });
-  let cash = 3000; // checking 1,000 + savings 2,000 on Oct 1
+  let cash = 1000; // checking on Oct 1
   for (const day of cal.days) {
     cash += day.items.filter((i) => i.cash && !i.mirror).reduce((a, i) => a + i.flow, 0);
     // each day is rounded to the cent for display, so allow a cent
@@ -133,16 +134,16 @@ test('the projected balance on any day is the start plus every item up to that d
 
 test('a cushion: days below it, a pay-later flag, and safe to spend below zero', () => {
   const doc = household();
-  doc.cashflow.cushion = one(4450);
+  doc.cashflow.cushion = one(2450);
   const cal = cashCalendar(doc, logged(doc), { today: TODAY, horizon: 30 });
-  // Below 4,450: Oct 10 to Oct 15 (6 days, 3,220 down to 3,153.33) and Oct 25 to Oct 29
-  // (4,425, 4,411.67, 4,398.33, 4,385, 4,371.67): 11 days
+  // Below 2,450: Oct 10 to Oct 15 (6 days, 1,220 down to 1,153.33) and Oct 25 to Oct 29
+  // (2,425, 2,411.67, 2,398.33, 2,385, 2,371.67): 11 days
   assert.equal(cal.belowCushion, 11);
-  // The Visa payment on the 25th leaves 4,425, under the cushion; the next paycheck is Oct 30, 5 days later
+  // The Visa payment on the 25th leaves 2,425, under the cushion; the next paycheck is Oct 30, 5 days later
   assert.deepEqual(cal.payLater.map((f) => [f.name, f.due, f.paidBy, f.gap]), [['Visa', '2026-10-25', '2026-10-30', 5]]);
-  // 3,153.33 - 4,450 = -1,296.67 (never more than today's 3,220)
+  // 1,153.33 - 2,450 = -1,296.67 (never more than today's 1,220)
   money(cal.safeToSpend, -1296.67, 'safe');
-  assert.equal(calendarReading(cal), 'Your lowest point is $3,153 on the 15th, the day before payday. Visa lands 5 days before the paycheck that covers it.');
+  assert.equal(calendarReading(cal), 'Your lowest point is $1,153 on the 15th, the day before payday. Visa lands 5 days before the paycheck that covers it.');
 });
 
 test('It happened, moved, skipped, and a real balance resets the projection', () => {
@@ -151,39 +152,39 @@ test('It happened, moved, skipped, and a real balance resets the projection', ()
   const pay = scheduledItems(doc, '2026-10', inc).items.find((i) => i.date === '2026-10-02');
   confirmScheduled(doc, pay, 1500);
   let cal = cashCalendar(doc, inc, { today: TODAY, horizon: 30 });
-  // Now in the log on Oct 2: 1,000 - 1,200 + 1,500 = 1,300 checking, 3,300 cash; nothing waiting; today still 3,220
+  // Now in the log on Oct 2: 1,000 - 1,200 + 1,500 = 1,300 checking; nothing waiting; today still 1,220
   assert.equal(cal.waiting.length, 0);
-  money(cashOn(cal, '2026-10-02'), 3300, 'Oct 2');
-  money(cal.todayCash, 3220, 'today');
+  money(cashOn(cal, '2026-10-02'), 1300, 'Oct 2');
+  money(cal.todayCash, 1220, 'today');
   assert.equal(doc.transactions.find((t) => t.scheduleKey === pay.key).source, 'scheduled');
-  // Skip the phone this month: Oct 31 is 5,845 + 60 = 5,905
+  // Skip the phone this month: Oct 31 is 3,845 + 60 = 3,905
   const phone = cal.scheduled.find((i) => i.lineId === 'subscriptions' && i.planned === '2026-10-18');
   moveItem(doc, phone.key, null, '2026-10-10T12:00:00Z');
   cal = cashCalendar(doc, inc, { today: TODAY, horizon: 30 });
-  money(cashOn(cal, '2026-10-31'), 5905, 'skipped phone');
-  // Move it to Nov 2 instead: Oct 31 still 5,905; Nov 2 = 5,905 - 1,200 - 2 x 13.333 - 60 = 4,618.33
+  money(cashOn(cal, '2026-10-31'), 3905, 'skipped phone');
+  // Move it to Nov 2 instead: Oct 31 still 3,905; Nov 2 = 3,905 - 1,200 - 2 x 13.333 - 60 = 2,618.33
   moveItem(doc, phone.key, '2026-11-02', '2026-10-10T12:00:00Z');
   cal = cashCalendar(doc, inc, { today: TODAY, horizon: 30 });
-  money(cashOn(cal, '2026-11-02'), 4618.33, 'moved phone');
-  // A real checking balance of 1,000 on Oct 12 resets it: cash that day 1,000 + 2,000 = 3,000
+  money(cashOn(cal, '2026-11-02'), 2618.33, 'moved phone');
+  // A real checking balance of 1,000 on Oct 12 resets it: cash that day 1,000
   addBalanceCheck(doc, 'chk', '2026-10-12', one(1000));
   cal = cashCalendar(doc, inc, { today: TODAY, horizon: 30 });
-  money(cashOn(cal, '2026-10-12'), 3000, 'checked');
-  // Oct 13: 3,000 - 13.333 = 2,986.67
-  money(cashOn(cal, '2026-10-13'), 2986.67, 'after check');
+  money(cashOn(cal, '2026-10-12'), 1000, 'checked');
+  // Oct 13: 1,000 - 13.333 = 986.67
+  money(cashOn(cal, '2026-10-13'), 986.67, 'after check');
   assert.deepEqual(validateHousehold(doc), []);
 });
 
 test('the forecast saved on the 1st against the real end', () => {
   const doc = household();
   const inc = incomeSummary(doc, refs.tax);
-  // 3,000 start + 3 paychecks 4,500 - rent 1,200 - phone 60 - Visa 35 - groceries 400 = 5,805
-  assert.equal(forecastFor(doc, inc, '2026-10'), 5805);
-  saveForecast(doc, '2026-10', 5805, '2026-10-01T09:00:00Z');
+  // Checking 1,000 + 3 paychecks 4,500 - rent 1,200 - phone 60 - Visa 35 - groceries 400 = 3,805
+  assert.equal(forecastFor(doc, inc, '2026-10'), 3805);
+  saveForecast(doc, '2026-10', 3805, '2026-10-01T09:00:00Z');
   setBalance(doc, '2026-10', 'chk', 'end', one(3900));
   setBalance(doc, '2026-10', 'sav', 'end', one(2000));
-  // actual 3,900 + 2,000 = 5,900; 95 better than predicted
-  assert.deepEqual(forecastCheck(doc, '2026-10'), { month: '2026-10', predicted: 5805, actual: 5900, diff: 95 });
+  // checking ended 3,900: 95 better than predicted
+  assert.deepEqual(forecastCheck(doc, '2026-10'), { month: '2026-10', predicted: 3805, actual: 3900, diff: 95 });
 });
 
 test('this month so far: plan vs logged per category', () => {

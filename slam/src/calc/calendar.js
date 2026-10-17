@@ -5,13 +5,16 @@
 // rest of each month's plan spread evenly over the days left ("spread across
 // the month"), shrinking as real entries for those lines come in.
 // A typed month start, month end, or balance check resets an account to that
-// real number. Cash = checking + savings + cash; cards are what is owed.
+// real number. Cash here is checking only (S-094); cards are what is owed.
 // Short range only (days). Eras is the long view (months and years).
 
 import { modelForMonth, planView } from './plan.js';
 import { counted } from './log.js';
 import { amountClose } from './log.js';
 import { isCashAccount } from './balances.js';
+
+// The calendar's cash is checking only (S-094): savings is not spending money day to day.
+const inCalendar = (a) => a.type === 'checking';
 import { toMonthly } from './normalize.js';
 
 const DAY = 86400000;
@@ -254,7 +257,7 @@ export function cashCalendar(doc, income, opts) {
     const add = (it, accountId, flow) => {
       const a = byId[accountId] || byId[def];
       if (a) bal[a.id] = bal[a.id] + effect(a, flow);
-      items.push({ ...it, account: a ? a.id : null, flow, cash: a ? isCashAccount(a) : false });
+      items.push({ ...it, account: a ? a.id : null, flow, cash: a ? inCalendar(a) : false });
     };
     if (d <= today) {
       for (const e of entries) if (e.date === d) add({ type: 'entry', id: e.id, name: e.description || e.note || e.kind, kind: e.kind, source: e.source || 'import', lineId: e.lineId }, e.account || def, -e.amount);
@@ -272,7 +275,7 @@ export function cashCalendar(doc, income, opts) {
     // Real numbers reset the projection: a typed month end, then any balance check that day.
     if (d === dateIn(m, 31)) for (const a of accts) { const e = ((doc.balances[m] || {})[a.id] || {}).end; if (e && e.amount !== null && d <= today) bal[a.id] = e.amount; }
     for (const c of checks) if (c.date === d) bal[c.accountId] = c.amount.amount;
-    const cash = accts.filter(isCashAccount).reduce((a, x) => a + bal[x.id], 0);
+    const cash = accts.filter(inCalendar).reduce((a, x) => a + bal[x.id], 0);
     const cards = accts.filter((x) => x.type === 'credit-card').reduce((a, x) => a + bal[x.id], 0);
     const cashItems = items.filter((i) => i.cash && !i.mirror);
     days.push({
@@ -325,7 +328,7 @@ export function forecastFor(doc, income, month) {
   const byId = Object.fromEntries(accts.map((a) => [a.id, a]));
   const def = defaultAccount(doc);
   let startCash = 0;
-  for (const a of accts.filter(isCashAccount)) {
+  for (const a of accts.filter(inCalendar)) {
     const b = ((doc.balances[month] || {})[a.id] || {}).start;
     const prev = (((doc.balances[monthOf(addDays(month + '-01', -1))]) || {})[a.id] || {}).end;
     const s = b && b.amount !== null ? b.amount : prev && prev.amount !== null ? prev.amount : null;
@@ -334,7 +337,7 @@ export function forecastFor(doc, income, month) {
   }
   const s = scheduledItems(doc, month, income);
   const sp = spreadFor(doc, month, addDays(month + '-01', -1), s, []);
-  const cashOf = (id) => { const a = byId[id] || byId[def]; return !!a && isCashAccount(a); };
+  const cashOf = (id) => { const a = byId[id] || byId[def]; return !!a && inCalendar(a); };
   let net = 0;
   for (const it of s.items) if (!it.skipped && it.amount !== null && cashOf(it.account)) net += it.dir === 'in' ? it.amount : -it.amount;
   for (const u of sp.units) if (cashOf(u.account)) net -= u.left;
@@ -344,7 +347,7 @@ export function forecastFor(doc, income, month) {
 // Predicted on the 1st (saved) against the real end balance.
 export function forecastCheck(doc, month) {
   const saved = ((doc.cashflow || {}).forecasts || {})[month];
-  const accts = (doc.accounts || []).filter((a) => a.state !== 'archived' && isCashAccount(a));
+  const accts = (doc.accounts || []).filter((a) => a.state !== 'archived' && inCalendar(a));
   const ends = accts.map((a) => (((doc.balances[month] || {})[a.id] || {}).end || {}).amount);
   const actual = accts.length && ends.every((x) => x !== null && x !== undefined) ? r2(ends.reduce((a, x) => a + x, 0)) : null;
   const predicted = saved ? saved.predicted : null;

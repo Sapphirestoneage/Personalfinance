@@ -388,19 +388,20 @@ function septemberWithRepair(month) {
   const side = [[9, between(60, 160)]];
   const vf = visaFiller(month, 'csv');
   const ev = [...checkingEvents(month, { utilities, side }), ...vf.ev];
-  // Cash at the end of September does not depend on the repair (it is on the card).
-  let cash = bank.chk + bank.sav;
-  for (const e of ev) if (e.acct !== 'visa') cash -= e.amt;
-  const purchases = vf.ev.reduce((a, e) => a + e.amt, 0);
-  // October by hand: today's cash X = Sep-end cash - 1,750 rent + 1,500 pay + 130 side - 340 car = cash - 460,
-  // and Nov 1 = X - V - 401.80 where V is September's Visa statement. For Nov 1 to be $71.20, V = cash - 933.
-  const repair = cents(cash - 933 - purchases);
-  console.log('  cash before repair ' + cents(cash) + ', purchases ' + cents(purchases) + ', repair ' + repair);
-  if (repair < 400 || repair > 3000) throw new Error('Car repair out of range: ' + repair + ' (tune START)');
-  ev.push({ date: day(month, 12), acct: 'visa', amt: repair, how: 'both', desc: 'BRAKE AND TIRE CO', merchant: 'Brake and Tire Co', lineId: 'maintenance', note: 'Brakes and tires' });
   // Most of savings moves to checking on the 29th to cover the repair bill and rent (an internal move).
   const move = cents(Math.max(0, bank.sav + 250 - 150));
   ev.push({ date: day(month, 29), acct: 'sav', amt: move, how: 'bank' }, { date: day(month, 29), acct: 'chk', amt: -move, how: 'bank' });
+  // Checking at the end of September does not depend on the repair (it is on the card).
+  let checking = bank.chk;
+  for (const e of ev) if (e.acct === 'chk') checking -= e.amt;
+  const purchases = vf.ev.reduce((a, e) => a + e.amt, 0);
+  // October by hand (the calendar counts checking only, S-094): today X = Sep-end checking - 1,750 rent
+  // - 250 to savings + 1,500 pay + 130 side - 340 car = checking - 710, and Nov 1 = X - V - 401.80 where
+  // V is September's Visa statement. For Nov 1 to be $71.20, V = checking - 1,183.
+  const repair = cents(checking - 1183 - purchases);
+  console.log('  checking before repair ' + cents(checking) + ', purchases ' + cents(purchases) + ', repair ' + repair);
+  if (repair < 400 || repair > 3000) throw new Error('Car repair out of range: ' + repair + ' (tune START)');
+  ev.push({ date: day(month, 12), acct: 'visa', amt: repair, how: 'both', desc: 'BRAKE AND TIRE CO', merchant: 'Brake and Tire Co', lineId: 'maintenance', note: 'Brakes and tires' });
   importRows(month, applyEvents(month, ev, ['visa']));
   const typed = [['utilities', utilities], ...SAVINGS_TYPED];
   if (!vf.gift) typed.push(['gifts', 0, 'None this month']);
@@ -412,7 +413,9 @@ console.log('-- ' + OPEN + ' (open)');
 const octV = ends['2026-09'].visa;
 const oct = [
   { date: '2026-10-01', acct: 'chk', amt: 1750, how: 'scheduled', key: 'bill:rent' },
-  { date: '2026-10-03', acct: 'chk', amt: 250, how: 'bank' }, { date: '2026-10-03', acct: 'sav', amt: -250, how: 'bank' },
+  // The move to savings is logged this month (both sides), so the checking calendar is right.
+  { date: '2026-10-03', acct: 'chk', amt: 250, how: 'manual', kind: 'transfer', note: 'To savings' },
+  { date: '2026-10-03', acct: 'sav', amt: -250, how: 'manual', kind: 'transfer', note: 'From checking' },
   { date: '2026-10-09', acct: 'chk', amt: -1500, how: 'scheduled', key: 'pay:job' },
   { date: '2026-10-12', acct: 'chk', amt: -130, how: 'manual', kind: 'income', incomeId: 'side', note: 'Dog walking' },
   { date: '2026-10-15', acct: 'chk', amt: 340, how: 'scheduled', key: 'bill:car-payment' },
@@ -430,5 +433,5 @@ upd('Next pay date', (d) => { d.income.find((i) => i.id === 'job').nextPayDate =
 const doc = store.doc;
 writeFileSync(new URL('test/households/riley.json', root), JSON.stringify(doc, null, 1) + '\n');
 console.log('Wrote riley.json: ' + doc.transactions.length + ' log entries, ' + doc.months.length + ' closed months, ' + doc.estimateLog.length + ' estimate changes, CSVs ' + csvFiles.join(', '));
-console.log('Lowest checking: ' + lowChecking.amount + ' on ' + lowChecking.date + '; September Visa statement ' + octV + '; Sep-end cash ' + cents(ends['2026-09'].chk + ends['2026-09'].sav));
+console.log('Lowest checking: ' + lowChecking.amount + ' on ' + lowChecking.date + '; September Visa statement ' + octV + '; Sep-end checking ' + ends['2026-09'].chk);
 console.log('Balances at each month end: ' + JSON.stringify(ends));

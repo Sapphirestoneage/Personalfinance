@@ -4004,7 +4004,7 @@
      "forecast": {
       "month": "2025-10",
       "predicted": null,
-      "actual": 3618.79,
+      "actual": 2668.79,
       "diff": null
      },
      "tracking": {
@@ -5108,9 +5108,9 @@
      },
      "forecast": {
       "month": "2025-11",
-      "predicted": 3761.27,
-      "actual": 3440.04,
-      "diff": -321.23
+      "predicted": 2811.27,
+      "actual": 2240.04,
+      "diff": -571.23
      },
      "tracking": {
       "fromLog": 2778.48,
@@ -6236,9 +6236,9 @@
      },
      "forecast": {
       "month": "2025-12",
-      "predicted": 3577.56,
-      "actual": 3309.16,
-      "diff": -268.4
+      "predicted": 2377.56,
+      "actual": 1859.16,
+      "diff": -518.4
      },
      "tracking": {
       "fromLog": 3203.4,
@@ -7369,9 +7369,9 @@
      },
      "forecast": {
       "month": "2026-01",
-      "predicted": 4521.76,
-      "actual": 4392.02,
-      "diff": -129.74
+      "predicted": 3071.76,
+      "actual": 2692.02,
+      "diff": -379.74
      },
      "tracking": {
       "fromLog": 2770.81,
@@ -8488,9 +8488,9 @@
      },
      "forecast": {
       "month": "2026-02",
-      "predicted": 4537.21,
-      "actual": 4243.11,
-      "diff": -294.1
+      "predicted": 2837.21,
+      "actual": 3793.11,
+      "diff": 955.9
      },
      "tracking": {
       "fromLog": 2741.35,
@@ -9609,9 +9609,9 @@
      },
      "forecast": {
       "month": "2026-03",
-      "predicted": 3457.76,
-      "actual": 3277.46,
-      "diff": -180.3
+      "predicted": 3007.76,
+      "actual": 2577.46,
+      "diff": -430.3
      },
      "tracking": {
       "fromLog": 2807.59,
@@ -10731,9 +10731,9 @@
      },
      "forecast": {
       "month": "2026-04",
-      "predicted": 3385.87,
-      "actual": 3119.87,
-      "diff": -266
+      "predicted": 2685.87,
+      "actual": 2169.87,
+      "diff": -516
      },
      "tracking": {
       "fromLog": 2813.17,
@@ -11858,9 +11858,9 @@
      },
      "forecast": {
       "month": "2026-05",
-      "predicted": 3222.7,
-      "actual": 3022.03,
-      "diff": -200.67
+      "predicted": 2272.7,
+      "actual": 2822.03,
+      "diff": 549.33
      },
      "tracking": {
       "fromLog": 2802.62,
@@ -12973,9 +12973,9 @@
      },
      "forecast": {
       "month": "2026-06",
-      "predicted": 3075.41,
-      "actual": 2829.81,
-      "diff": -245.6
+      "predicted": 2875.41,
+      "actual": 2379.81,
+      "diff": -495.6
      },
      "tracking": {
       "fromLog": 2746.35,
@@ -14099,9 +14099,9 @@
      },
      "forecast": {
       "month": "2026-07",
-      "predicted": 4399.06,
-      "actual": 4224.23,
-      "diff": -174.83
+      "predicted": 3949.06,
+      "actual": 3524.23,
+      "diff": -424.83
      },
      "tracking": {
       "fromLog": 2679.79,
@@ -15218,9 +15218,9 @@
      },
      "forecast": {
       "month": "2026-08",
-      "predicted": 4460.44,
-      "actual": 4247.75,
-      "diff": -212.69
+      "predicted": 3760.44,
+      "actual": 3297.75,
+      "diff": -462.69
      },
      "tracking": {
       "fromLog": 2723.42,
@@ -15383,7 +15383,7 @@
       "savings": false,
       "estimate": 540,
       "dream": null,
-      "actual": 3083.14
+      "actual": 2683.14
      },
      "debt": {
       "name": "Debt payments",
@@ -15513,7 +15513,7 @@
       "name": "Maintenance",
       "categoryId": "transport",
       "estimate": null,
-      "actual": 2579.23
+      "actual": 2179.23
      },
      "debt:debt-visa": {
       "name": "Visa",
@@ -15794,7 +15794,7 @@
          "category": "Transportation",
          "plan": null,
          "estimate": null,
-         "actual": 2579.23
+         "actual": 2179.23
         },
         {
          "id": "premiums",
@@ -15937,8 +15937,8 @@
          "name": "Transportation",
          "plan": 540,
          "estimate": 540,
-         "actual": 3083.14,
-         "diff": 2543.14
+         "actual": 2683.14,
+         "diff": 2143.14
         }
        ],
        "notCompared": [
@@ -16121,7 +16121,7 @@
          "category": "Transportation",
          "plan": null,
          "estimate": null,
-         "actual": 2579.23
+         "actual": 2179.23
         },
         {
          "id": "premiums",
@@ -16264,8 +16264,8 @@
          "name": "Transportation",
          "plan": 540,
          "estimate": 540,
-         "actual": 3083.14,
-         "diff": 2543.14
+         "actual": 2683.14,
+         "diff": 2143.14
         }
        ],
        "notCompared": [
@@ -16296,8 +16296,8 @@
        {
         "name": "Transportation",
         "estimate": 540,
-        "actual": 3083.14,
-        "gap": 2543.14
+        "actual": 2683.14,
+        "gap": 2143.14
        },
        {
         "name": "Housing",
@@ -16322,10 +16322,10 @@
       "notCompared": []
      },
      "totals": {
-      "spent": 5598.51,
+      "spent": 5198.51,
       "plan": 3259,
       "estimate": 3259,
-      "surplus": -2748.51,
+      "surplus": -2348.51,
       "savingsRate": 0.18571428571428572,
       "takeHome": 3500
      },
@@ -16337,28 +16337,28 @@
       "top": {
        "label": "Card balances went up (charged, not paid yet)",
        "short": "Card balances",
-       "amount": 2649.61
+       "amount": 2249.61
       },
-      "reading": "Your budget showed $2,749 over, but cash went down $97. Card balances went up $2,650."
+      "reading": "Your budget showed $2,349 over, but cash went down $97. Card balances went up $2,250."
      },
      "forecast": {
       "month": "2026-09",
-      "predicted": 4440.33,
-      "actual": 4151.03,
-      "diff": -289.3
+      "predicted": 3490.33,
+      "actual": 4001.03,
+      "diff": 510.7
      },
      "tracking": {
-      "fromLog": 5373.03,
+      "fromLog": 4973.03,
       "typed": 95.48,
-      "share": 0.9825400337569101
+      "share": 0.9811621166772879
      },
      "changes": [
       {
        "id": "transport",
        "name": "Transportation",
-       "now": 3083.14,
+       "now": 2683.14,
        "before": 520.25,
-       "change": 2562.89
+       "change": 2162.89
       },
       {
        "id": "fun",
@@ -16378,7 +16378,7 @@
      "topMerchants": [
       {
        "merchant": "BRAKE AND TIRE",
-       "amount": 2579.23
+       "amount": 2179.23
       },
       {
        "merchant": "VANGUARD",
@@ -16400,31 +16400,35 @@
      "pareto": {
       "noEntries": false,
       "entries": {
-       "count": 2,
+       "count": 3,
        "of": 21,
-       "amount": 4329.23,
-       "amountShare": 0.8057334502133805,
+       "amount": 4269.23,
+       "amountShare": 0.8584766229039438,
        "items": [
         {
          "label": "BRAKE AND TIRE CO, 09-12",
-         "amount": 2579.23
+         "amount": 2179.23
         },
         {
          "label": "Rent, 09-01",
          "amount": 1750
+        },
+        {
+         "label": "Car payment, 09-15",
+         "amount": 340
         }
        ],
-       "reading": "10% of your entries (2 of 21) made up 80% of your spending."
+       "reading": "14% of your entries (3 of 21) made up 80% of your spending."
       },
       "merchants": {
        "count": 2,
        "of": 10,
-       "amount": 4734.23,
-       "amountShare": 0.8811099137730479,
+       "amount": 4334.23,
+       "amountShare": 0.8715471251932926,
        "items": [
         {
          "label": "BRAKE AND TIRE",
-         "amount": 2579.23
+         "amount": 2179.23
         },
         {
          "label": "No merchant",
@@ -16436,12 +16440,12 @@
       "lines": {
        "count": 3,
        "of": 14,
-       "amount": 4692.78,
-       "amountShare": 0.8382194548192287,
+       "amount": 4292.78,
+       "amountShare": 0.8257712306026149,
        "items": [
         {
          "label": "Maintenance",
-         "amount": 2579.23
+         "amount": 2179.23
         },
         {
          "label": "Rent",
@@ -16454,12 +16458,12 @@
        ],
        "reading": "3 lines, Maintenance, Rent, and Groceries, made up 80%."
       },
-      "reading": "10% of your entries (2 of 21) made up 80% of your spending."
+      "reading": "14% of your entries (3 of 21) made up 80% of your spending."
      },
      "mistakes": 0,
-     "happyShare": 0.024506520484914734,
+     "happyShare": 0.026392177758626987,
      "accuracy": {
-      "now": 1.72,
+      "now": 1.6,
       "last": 1.11,
       "lastMonth": "2026-08"
      },
@@ -16472,7 +16476,7 @@
       "Food came in $113 under plan.",
       "Utilities was $11 over.",
       "Income came in $378 less than planned.",
-      "1.7x off this month, up from 1.1x."
+      "1.6x off this month, up from 1.1x."
      ]
     }
    },
@@ -20557,14 +20561,14 @@
   },
   {
    "date": "2026-09-12",
-   "amount": 2579.23,
+   "amount": 2179.23,
    "description": "BRAKE AND TIRE CO",
    "account": "visa",
    "kind": "spend",
    "merchant": "BRAKE AND TIRE",
    "lineId": "maintenance",
    "bnpl": false,
-   "id": "tx-1wjic69",
+   "id": "tx-qiie1x",
    "source": "import",
    "note": "Brakes and tires",
    "incomeId": null,
@@ -20572,7 +20576,7 @@
     "id": "tx-a2881xq",
     "source": "manual",
     "date": "2026-09-12",
-    "amount": 2579.23,
+    "amount": 2179.23,
     "merchant": "Brake and Tire Co"
    }
   },
@@ -20797,6 +20801,34 @@
   },
   {
    "id": "tx-ha32hde",
+   "date": "2026-10-03",
+   "amount": 250,
+   "description": "",
+   "account": "chk",
+   "kind": "transfer",
+   "merchant": "",
+   "lineId": null,
+   "bnpl": false,
+   "source": "manual",
+   "note": "To savings",
+   "incomeId": null
+  },
+  {
+   "id": "tx-t4yxai8",
+   "date": "2026-10-03",
+   "amount": -250,
+   "description": "",
+   "account": "sav",
+   "kind": "transfer",
+   "merchant": "",
+   "lineId": null,
+   "bnpl": false,
+   "source": "manual",
+   "note": "From checking",
+   "incomeId": null
+  },
+  {
+   "id": "tx-0yb9sdc",
    "date": "2026-10-04",
    "amount": 88.2,
    "description": "Trader Joe's",
@@ -20810,7 +20842,7 @@
    "incomeId": null
   },
   {
-   "id": "tx-t4yxai8",
+   "id": "tx-t0lfvsd",
    "date": "2026-10-06",
    "amount": 4.75,
    "description": "Corner Coffee",
@@ -20824,7 +20856,7 @@
    "incomeId": null
   },
   {
-   "id": "tx-0yb9sdc",
+   "id": "tx-qtbp5mx",
    "date": "2026-10-07",
    "amount": 46,
    "description": "Shell",
@@ -20838,7 +20870,7 @@
    "incomeId": null
   },
   {
-   "id": "tx-t0lfvsd",
+   "id": "tx-lpmaxm9",
    "date": "2026-10-09",
    "amount": -1500,
    "description": "",
@@ -20853,7 +20885,7 @@
    "scheduleKey": "pay:job:2026-10-09"
   },
   {
-   "id": "tx-qtbp5mx",
+   "id": "tx-j1uomh6",
    "date": "2026-10-11",
    "amount": 121.8,
    "description": "Safeway",
@@ -20867,7 +20899,7 @@
    "incomeId": null
   },
   {
-   "id": "tx-lpmaxm9",
+   "id": "tx-abs68sq",
    "date": "2026-10-12",
    "amount": -130,
    "description": "",
@@ -20881,7 +20913,7 @@
    "incomeId": "side"
   },
   {
-   "id": "tx-j1uomh6",
+   "id": "tx-mj0ukxy",
    "date": "2026-10-13",
    "amount": 4.75,
    "description": "Corner Coffee",
@@ -20895,7 +20927,7 @@
    "incomeId": null
   },
   {
-   "id": "tx-abs68sq",
+   "id": "tx-xnmgvjq",
    "date": "2026-10-15",
    "amount": 340,
    "description": "",
@@ -20910,7 +20942,7 @@
    "scheduleKey": "bill:car-payment:2026-10-15"
   },
   {
-   "id": "tx-mj0ukxy",
+   "id": "tx-mcjhuru",
    "date": "2026-10-15",
    "amount": 13.75,
    "description": "Chipotle",
@@ -21053,10 +21085,10 @@
   {
    "date": "2026-10-01T08:00:00.000Z",
    "takeHome": 3500,
-   "spending": 5598.51,
-   "surplus": -2748.51,
+   "spending": 5198.51,
+   "surplus": -2348.51,
    "savingsRate": 0.18571428571428572,
-   "blindSpot": 0.4563035521951376,
+   "blindSpot": 0.41446876124120174,
    "completion": 0.5888888888888882
   }
  ],
@@ -21752,7 +21784,7 @@
      "note": ""
     },
     "end": {
-     "amount": 3218.03,
+     "amount": 2818.03,
      "cadence": "one-off",
      "status": "known",
      "source": "client",
@@ -21775,51 +21807,51 @@
   "checks": [],
   "forecasts": {
    "2025-11": {
-    "predicted": 3761.27,
+    "predicted": 2811.27,
     "at": "2025-11-01T08:00:00.000Z"
    },
    "2025-12": {
-    "predicted": 3577.56,
+    "predicted": 2377.56,
     "at": "2025-12-01T08:00:00.000Z"
    },
    "2026-01": {
-    "predicted": 4521.76,
+    "predicted": 3071.76,
     "at": "2026-01-01T08:00:00.000Z"
    },
    "2026-02": {
-    "predicted": 4537.21,
+    "predicted": 2837.21,
     "at": "2026-02-01T08:00:00.000Z"
    },
    "2026-03": {
-    "predicted": 3457.76,
+    "predicted": 3007.76,
     "at": "2026-03-01T08:00:00.000Z"
    },
    "2026-04": {
-    "predicted": 3385.87,
+    "predicted": 2685.87,
     "at": "2026-04-01T08:00:00.000Z"
    },
    "2026-05": {
-    "predicted": 3222.7,
+    "predicted": 2272.7,
     "at": "2026-05-01T08:00:00.000Z"
    },
    "2026-06": {
-    "predicted": 3075.41,
+    "predicted": 2875.41,
     "at": "2026-06-01T08:00:00.000Z"
    },
    "2026-07": {
-    "predicted": 4399.06,
+    "predicted": 3949.06,
     "at": "2026-07-01T08:00:00.000Z"
    },
    "2026-08": {
-    "predicted": 4460.44,
+    "predicted": 3760.44,
     "at": "2026-08-01T08:00:00.000Z"
    },
    "2026-09": {
-    "predicted": 4440.33,
+    "predicted": 3490.33,
     "at": "2026-09-01T08:00:00.000Z"
    },
    "2026-10": {
-    "predicted": 1694,
+    "predicted": 1944,
     "at": "2026-10-01T08:00:00.000Z"
    }
   }

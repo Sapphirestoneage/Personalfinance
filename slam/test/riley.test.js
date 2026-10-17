@@ -298,9 +298,10 @@ test('February to March: month over month, fixed floor, volatility', () => {
 
 // ---------------------------------------------------------------------------
 // OCTOBER 2026, the open month, today the 17th.
-// September ended with checking 4,001.03, savings 150, and the Visa at 3,218.03 (the car repair).
-// October so far: rent 1,750 (Oct 1), paycheck +1,500 (Oct 9), dog walking +130 (Oct 12), car payment 340
-// (Oct 15), all logged; on the Visa: Trader Joe's 88.20, Corner Coffee 4.75 (twice), Shell 46, Safeway 121.80,
+// September ended with checking 4,001.03, savings 150, and the Visa at 2,818.03 (the car repair).
+// The calendar's cash is checking only (S-094).
+// October so far: rent 1,750 (Oct 1), 250 moved to savings (Oct 3), paycheck +1,500 (Oct 9), dog walking +130
+// (Oct 12), car payment 340 (Oct 15), all logged; on the Visa: Trader Joe's 88.20, Corner Coffee 4.75 (twice), Shell 46, Safeway 121.80,
 // Chipotle 13.75. Utilities (84 planned) is not in yet, so it is spread: 84 over Oct 18 to 31 (14 days) = 6 a day;
 // November 84 / 30 = 2.80 a day. Every other line with no due day is paid on the Visa, so its spread moves
 // the card, not cash.
@@ -316,23 +317,23 @@ test('October: every scheduled item, five days, the lowest point, safe to spend,
     ['2026-10-15', 'bill', 'Car payment', 340, true],
     ['2026-10-18', 'bill', 'Phone', 65, false],
     ['2026-10-23', 'paycheck', 'Northwind Labs', 1500, false],
-    ['2026-10-25', 'debt', 'Visa', 3218.03, false]
+    ['2026-10-25', 'debt', 'Visa', 2818.03, false]
   ]);
   const at = (date) => cal.days.find((x) => x.date === date).cash;
-  // Today: September's end 4,001.03 + 150 = 4,151.03, - 1,750 + 1,500 + 130 - 340 = 3,691.03
-  money(at('2026-10-17'), 3691.03, 'Oct 17');
-  // Oct 22: - phone 65 - 5 days x 6 = 3,596.03
-  money(at('2026-10-22'), 3596.03, 'Oct 22');
-  // Oct 25: 3,691.03 - 65 - 8 x 6 + 1,500 (Oct 23) - 3,218.03 (Visa) = 1,860.00
+  // Today: checking at September's end 4,001.03 - 1,750 - 250 + 1,500 + 130 - 340 = 3,291.03
+  money(at('2026-10-17'), 3291.03, 'Oct 17');
+  // Oct 22: - phone 65 - 5 days x 6 = 3,196.03
+  money(at('2026-10-22'), 3196.03, 'Oct 22');
+  // Oct 25: 3,291.03 - 65 - 8 x 6 + 1,500 (Oct 23) - 2,818.03 (Visa) = 1,860.00
   money(at('2026-10-25'), 1860, 'Oct 25');
   // Nov 1: 1,860 - 6 x 6 (Oct 26 to 31) - 1,750 rent - 2.80 = 71.20
   money(at('2026-11-01'), 71.2, 'Nov 1');
   // Nov 5: 71.20 - 4 x 2.80 = 60.00, the day before the Nov 6 paycheck
   money(at('2026-11-05'), 60, 'Nov 5');
   assert.deepEqual(cal.lowest, { date: '2026-11-05', amount: 60 });
-  // Safe to spend until payday (Oct 23): lowest before it is Oct 22, 3,596.03, less the 100 cushion = 3,496.03,
-  // under today's 3,691.03.
-  money(cal.safeToSpend, 3496.03, 'safe to spend');
+  // Safe to spend until payday (Oct 23): lowest before it is Oct 22, 3,196.03, less the 100 cushion = 3,096.03,
+  // under today's 3,291.03.
+  money(cal.safeToSpend, 3096.03, 'safe to spend');
   assert.ok(cal.safeToSpend <= cal.todayCash);
   // Rent on Nov 1 leaves 71.20, under the cushion; the paycheck that covers it is Nov 6.
   assert.deepEqual(cal.payLater.map((f) => [f.name, f.due, f.paidBy, f.gap]), [['Rent', '2026-11-01', '2026-11-06', 5]]);
@@ -359,16 +360,16 @@ test('October: the spread for groceries shrinks as entries come in', () => {
 test('October: the projected balance on any day is the start plus every item up to that day', () => {
   const d = riley();
   const cal = cashCalendar(d, buildSummary(d, refs).income, { today: '2026-10-17', horizon: 90 });
-  // From the first month with balances (October 2025: checking 2,900 + savings 700 = 3,600), real month
+  // From the first month with balances (October 2025: checking 2,900), real month
   // starts and ends reset it; between resets it is the last real number plus every item since.
   let cash = null;
   for (const day of cal.days) {
     const flow = day.items.filter((i) => i.cash && !i.mirror).reduce((a, i) => a + i.flow, 0);
-    if (cash === null) cash = 3600 + flow;
+    if (cash === null) cash = 2900 + flow;
     else cash += flow;
     const m = day.date.slice(0, 7);
     const end = d.balances[m] && day.date <= '2026-10-17' && day.date === m + '-' + String(new Date(Date.UTC(Number(m.slice(0, 4)), Number(m.slice(5)), 0)).getUTCDate()).padStart(2, '0');
-    if (end && d.balances[m].chk.end.amount !== null) cash = d.balances[m].chk.end.amount + d.balances[m].sav.end.amount;
+    if (end && d.balances[m].chk.end.amount !== null) cash = d.balances[m].chk.end.amount;
     assert.ok(Math.abs(day.cash - cash) <= 0.011, day.date + ': ' + day.cash + ' vs ' + cash);
   }
 });

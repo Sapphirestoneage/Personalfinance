@@ -288,15 +288,16 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   await page.goto(URL + '#clients');
   console.log('riley (phone width, October 17, 2026)');
-  // October by hand: 4 checking entries (rent, paycheck, dog walking, car payment) and 6 on the Visa = 10;
+  // October by hand: 6 checking and savings entries (rent, the move to savings both sides, paycheck, dog walking,
+  // car payment) and 6 on the Visa = 12;
   // scheduled in October: rent, two paychecks, car payment, phone, Visa = 6, of which 3 are done so far.
   await page.getByText('Riley, 31').click();
   await page.waitForSelector('#cash-strip');
-  check('riley', 'Cash today', await page.$eval('[data-key="cash-today"]', (b) => b.textContent), money(3691.03));
+  check('riley', 'Cash today', await page.$eval('[data-key="cash-today"]', (b) => b.textContent), money(3291.03));
   check('riley', 'Lowest point', await page.$eval('[data-key="cash-lowest"]', (b) => b.textContent), money(60));
-  check('riley', 'Safe to spend', await page.$eval('[data-key="safe-to-spend"]', (b) => b.textContent), money(3496.03));
+  check('riley', 'Safe to spend', await page.$eval('[data-key="safe-to-spend"]', (b) => b.textContent), money(3096.03));
   check('riley', 'Calendar reading', await page.$eval('[data-key="cash-reading"]', (p) => p.childNodes[0].textContent), 'Your lowest point is $60 on the 5th, the day before payday. Rent lands 5 days before the paycheck that covers it.');
-  check('riley', 'Track step', await page.$eval('[data-key="loop-track"] .small', (d) => d.textContent), '10 entries, last Oct 15, scheduled 3 of 6 confirmed');
+  check('riley', 'Track step', await page.$eval('[data-key="loop-track"] .small', (d) => d.textContent), '12 entries, last Oct 15, scheduled 3 of 6 confirmed');
   await page.click('nav a[href="#analyze"]');
   await page.waitForSelector('#months-review');
   await page.selectOption('[data-key="months-pick"]', '2026-03');
