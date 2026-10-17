@@ -227,7 +227,9 @@ export function lines({ series, xs, width, fmt, zero = true, label = 'Line chart
     body += t(padL - 6, y(g) + 4, fmt(g), { anchor: 'end', cls: 'muted' });
   }
   if (lo < 0 && hi > 0) body += line(padL, y(0), width - 4, y(0), 'axis');
-  xs.forEach((lab, i) => { body += t(x(i), h - 4, lab, { anchor: 'middle', cls: 'muted' }); });
+  // Fewer labels when they would run into each other (twelve months on a phone).
+  const every = Math.max(1, Math.ceil((xs.length * 52) / Math.max(1, width - padL - padR)));
+  xs.forEach((lab, i) => { if (i % every === 0 || i === xs.length - 1 && (xs.length - 1) % every >= every / 2) body += t(x(i), h - 4, lab, { anchor: 'middle', cls: 'muted' }); });
   for (const s of series) {
     let d = '';
     s.values.forEach((v, i) => {
@@ -473,5 +475,53 @@ export function paretoChart({ cumulative, count, share = 0.8, width, fmt, label 
     body += t(Math.min(cx + 4, width - padR - 60), h - 4, count + ' of ' + n, { cls: 'muted' });
   }
   body += t(padL, h - 4, 'Largest first', { cls: 'muted' });
+  return svgWrap(width, h, body, label);
+}
+
+// Category by month heatmap (S-092). rows: [{ label, values }], cols: labels.
+export function heatGrid({ rows, cols, width, fmt, max, label = 'Heatmap by month' }) {
+  const labW = Math.min(110, width * 0.3);
+  const cw = (width - labW - 4) / Math.max(1, cols.length);
+  const rh = 22;
+  let body = '';
+  const every = Math.max(1, Math.ceil((cols.length * 48) / Math.max(1, width - labW)));
+  cols.forEach((c, j) => { if (j % every === 0) body += t(labW + j * cw + cw / 2, 12, c, { anchor: 'middle', cls: 'muted' }); });
+  rows.forEach((r, i) => {
+    const y = 18 + i * rh;
+    body += t(4, y + 15, r.label.length > 14 ? r.label.slice(0, 13) + '.' : r.label, { cls: 'muted' });
+    r.values.forEach((v, j) => {
+      const op = v === null || !max ? 0 : 0.08 + 0.85 * (v / max);
+      body += '<rect x="' + (labW + j * cw).toFixed(1) + '" y="' + y + '" width="' + Math.max(1, cw - 2).toFixed(1) + '" height="' + (rh - 3) + '" rx="3" style="fill:var(--series-actual);fill-opacity:' + op.toFixed(2) + ';stroke:var(--chart-grid)"><title>' + esc(r.label + ', ' + cols[j] + ': ' + (v === null ? 'none' : fmt(v))) + '</title></rect>';
+    });
+  });
+  return svgWrap(width, 22 + rows.length * rh, body, label);
+}
+
+// One small line (S-092). max: a shared scale, or null for its own.
+export function spark({ values, width, height = 28, max = null, label = 'Sparkline' }) {
+  const vals = values.filter((v) => v !== null);
+  const hi = max !== null ? max : Math.max(1, ...vals);
+  const n = values.length;
+  const x = (i) => 2 + (n <= 1 ? 0 : (i * (width - 4)) / (n - 1));
+  const y = (v) => height - 2 - (v / (hi || 1)) * (height - 4);
+  let d = '';
+  let dots = '';
+  values.forEach((v, i) => { if (v !== null) { d += (d ? ' L ' : 'M ') + x(i).toFixed(1) + ' ' + y(v).toFixed(1); dots += '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(v).toFixed(1) + '" r="1.8" style="fill:var(--series-actual)"/>'; } });
+  return svgWrap(width, height, '<path d="' + d + '" style="fill:none;stroke:var(--series-actual);stroke-width:1.5"/>' + dots, label);
+}
+
+// Vertical bars with a few labels, for many points (days of a month). values: [{ label, v }]
+export function columns({ values, width, fmt, every = 5, label = 'Columns' }) {
+  const h = 150;
+  const padL = 44;
+  const padB = 18;
+  const max = Math.max(1, ...values.map((x) => x.v || 0));
+  const bw = (width - padL - 4) / Math.max(1, values.length);
+  let body = t(padL - 6, 14, fmt(max), { anchor: 'end', cls: 'muted' }) + t(padL - 6, h - padB, fmt(0), { anchor: 'end', cls: 'muted' });
+  values.forEach((x, i) => {
+    const bh = ((x.v || 0) / max) * (h - padB - 10);
+    body += rect(padL + i * bw, h - padB - bh, Math.max(1, bw - 1), bh, 'var(--series-actual)', { tip: x.label + ': ' + fmt(x.v || 0) });
+    if (i % every === 0) body += t(padL + i * bw + bw / 2, h - 4, x.label, { anchor: 'middle', cls: 'muted' });
+  });
   return svgWrap(width, h, body, label);
 }

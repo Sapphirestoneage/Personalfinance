@@ -270,3 +270,9 @@ table.review .toggle button { padding: 4px 8px; }
 @media (min-width: 760px) { .loop-steps { grid-template-columns: repeat(3, 1fr); } }
 .loop-step { display: flex; gap: var(--space-2); align-items: flex-start; border: 1px solid var(--border); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3); background: var(--surface-2); }
 .loop-n { width: 26px; height: 26px; border-radius: 50%; background: var(--accent); color: var(--accent-text); display: flex; align-items: center; justify-content: center; font-weight: 700; flex: none; }
+
+/* Trends (S-092) */
+.sparks { display: grid; gap: 2px; margin-top: var(--space-2); }
+.spark-row { display: grid; grid-template-columns: minmax(5em, 8em) 1fr auto; align-items: center; gap: var(--space-2); border-bottom: 1px solid var(--border); padding: 2px 0; }
+.spark-row svg { display: block; }
+.card.stat { padding: var(--space-3); }

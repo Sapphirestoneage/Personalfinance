@@ -270,6 +270,11 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('months', 'Estimate history chart', String(await page.$$eval('#chart-estimate-history svg path', (p) => p.length > 0)), 'true');
   check('months', '80/20 reading', await page.$eval('#chart-pareto .reading', (p) => p.textContent), '50% of your entries (3 of 6) made up 80% of your spending.');
   check('months', '80/20 chart', String(await page.$$eval('#chart-pareto svg rect', (r) => r.length === 6)), 'true');
+  // Trends (S-092): every card drawn, and two of the one-line stats by hand.
+  await page.waitForSelector('#chart-trend-heat');
+  for (const id of ['trend-series', 'trend-charges', 'trend-heat', 'trend-mom', 'trend-pacing', 'trend-dom']) check('trends', id + ' drawn', String(await page.$$eval('#chart-' + id + ' svg', (x) => x.length === 1)), 'true');
+  check('trends', 'Card float', await page.$eval('#stat-float .reading', (p) => p.textContent), "Oct '26 charged $300, paid $450.");
+  check('trends', 'Not explained yet', await page.$eval('#stat-unexplained .reading', (p) => p.textContent), '-$60 over 1 bridged month; ATM cash $60; Venmo or Zelle with no line $0.');
   check('months', 'Saved review shown', await page.$eval('#months-review [data-key="review-open"]', (b) => b.textContent), want);
   check('bridge', 'Console errors', String(errors.length), '0');
   await page.close();
