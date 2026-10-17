@@ -22,7 +22,7 @@ import { addDebt, findLine } from '../src/store/edits.js';
 import { addEntry } from '../src/store/log.js';
 import { setNextPayDate, moveItem, confirmScheduled, addBalanceCheck, saveForecast } from '../src/store/cashflow.js';
 import { incomeSummary } from '../src/calc/income.js';
-import { cashCalendar, scheduledItems, forecastFor, forecastCheck, monthSoFar, calendarReading, addDays } from '../src/calc/calendar.js';
+import { cashCalendar, scheduledItems, forecastFor, forecastCheck, monthSoFar, calendarReading, safeReading, addDays } from '../src/calc/calendar.js';
 import { loadRefs, near } from './helpers.js';
 
 const refs = loadRefs();
@@ -110,12 +110,13 @@ test('past days show the log, today takes the waiting paycheck, the future is sc
   // November: 400 over 30 days = 13.333 a day. Nov 1: 3,845 - 1,200 rent - 13.333 = 2,631.67; Nov 9: 3,845 - 1,200 - 9 x 13.333 (120) = 2,525
   money(cashOn(cal, '2026-11-01'), 2631.67, 'Nov 1');
   money(cashOn(cal, '2026-11-09'), 2525, 'Nov 9');
-  // Lowest from today on: Oct 15, the day before payday. Safe to spend until payday: 1,153.33 - 0 cushion,
-  // under today's 1,220, so 1,153.33
+  // Lowest from today to the horizon (S-095): Oct 15, the day before payday. Safe to spend: 1,153.33 - 0 cushion,
+  // under today's 1,220, so 1,153.33. Until payday the lowest is the same day, so no second number.
   assert.equal(cal.lowest.date, '2026-10-15');
   money(cal.lowest.amount, 1153.33, 'lowest');
   assert.equal(cal.nextPayday, '2026-10-16');
   money(cal.safeToSpend, 1153.33, 'safe to spend');
+  assert.deepEqual([cal.shortfall, cal.untilPayday], [null, null]);
   assert.deepEqual([cal.belowZero, cal.belowCushion, cal.payLater.length], [0, 0, 0]);
   assert.equal(calendarReading(cal), 'Your lowest point is $1,153 on the 15th, the day before payday.');
 });
@@ -141,9 +142,25 @@ test('a cushion: days below it, a pay-later flag, and safe to spend below zero',
   assert.equal(cal.belowCushion, 11);
   // The Visa payment on the 25th leaves 2,425, under the cushion; the next paycheck is Oct 30, 5 days later
   assert.deepEqual(cal.payLater.map((f) => [f.name, f.due, f.paidBy, f.gap]), [['Visa', '2026-10-25', '2026-10-30', 5]]);
-  // 1,153.33 - 2,450 = -1,296.67 (never more than today's 1,220)
-  money(cal.safeToSpend, -1296.67, 'safe');
+  // 1,153.33 - 2,450 = -1,296.67, below 0: safe to spend is 0, and the shortfall is 1,296.67 on Oct 15
+  assert.equal(cal.safeToSpend, 0);
+  assert.deepEqual(cal.shortfall, { amount: 1296.67, date: '2026-10-15' });
+  assert.equal(safeReading(cal), "Nothing safe to spend right now. You'll be $1,297 under your cushion on Oct 15.");
   assert.equal(calendarReading(cal), 'Your lowest point is $1,153 on the 15th, the day before payday. Visa lands 5 days before the paycheck that covers it.');
+});
+
+test('spending the safe-to-spend amount today never takes a projected day below the cushion', () => {
+  for (const c of [0, 500, 1100]) {
+    const doc = household();
+    doc.cashflow.cushion = one(c);
+    const inc = logged(doc);
+    const cal = cashCalendar(doc, inc, { today: TODAY, horizon: 60 });
+    // cushion 0: 1,153.33; 500: 653.33; 1,100: 53.33 (lowest 1,153.33 less the cushion)
+    money(cal.safeToSpend, 1153.33 - c, 'cushion ' + c);
+    addEntry(doc, { date: TODAY, amount: cal.safeToSpend, lineId: 'shopping', account: 'chk' });
+    const after = cashCalendar(doc, inc, { today: TODAY, horizon: 60 });
+    for (const day of after.days.filter((x) => x.date >= TODAY)) assert.ok(day.cash >= c - 0.01, c + ' ' + day.date + ': ' + day.cash);
+  }
 });
 
 test('It happened, moved, skipped, and a real balance resets the projection', () => {

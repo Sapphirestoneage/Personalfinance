@@ -354,11 +354,12 @@ export function shareBar({ parts, shortfall = 0, width, label = '100% bar' }) {
 // Cash by day (S-086): one line for past and future, a dashed "today" line,
 // days under the cushion shaded, and labeled markers (paydays, big bills).
 // days: [{ date, v }], markers: [{ i, label }], todayIndex, cushion.
+// A day may carry s, a second value (savings) drawn as its own thin line, never added in (S-095).
 export function dayLine({ days, width, fmt, todayIndex = null, cushion = null, markers = [], height = 200, compact = false, label = 'Cash by day' }) {
   const padL = compact ? 4 : 56;
   const padB = compact ? 16 : 22;
   const padT = compact ? 14 : 18;
-  const vals = days.map((d) => d.v).filter((v) => v !== null);
+  const vals = days.flatMap((d) => [d.v, d.s === undefined ? null : d.s]).filter((v) => v !== null && v !== undefined);
   // Fit the values (and the cushion), with a little room; zero shows only when the line gets near it.
   let lo = Math.min(...vals, cushion === null ? Infinity : cushion);
   let hi = Math.max(...vals, cushion === null ? -Infinity : cushion);
@@ -383,6 +384,9 @@ export function dayLine({ days, width, fmt, todayIndex = null, cushion = null, m
   }
   if (lo < 0) body += line(padL, y(0), width - 4, y(0), 'axis');
   if (cushion) body += line(padL, y(cushion), width - 4, y(cushion), 'axis', true);
+  let sav = '';
+  days.forEach((d, i) => { if (d.s !== undefined && d.s !== null) sav += (sav ? ' L ' : 'M ') + x(i).toFixed(1) + ' ' + y(d.s).toFixed(1); });
+  if (sav) body += '<path d="' + sav + '" style="fill:none;stroke:var(--series-dream);stroke-width:1.5;stroke-opacity:0.8"><title>Savings (not counted in cash)</title></path>';
   let path = '';
   days.forEach((d, i) => { if (d.v !== null) path += (path ? ' L ' : 'M ') + x(i).toFixed(1) + ' ' + y(d.v).toFixed(1); });
   body += '<path d="' + path + '" style="fill:none;stroke:var(--series-actual);stroke-width:2"/>';

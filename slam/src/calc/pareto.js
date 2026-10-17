@@ -46,13 +46,15 @@ export function entryItems(doc, months) {
     .map((t) => ({ key: t.id, label: (t.description || t.note || lineName[t.lineId] || 'Entry') + ', ' + t.date.slice(5), amount: t.amount - (t.owed || 0) }));
 }
 
-// Merchants, net of refunds. Entries with no merchant count as one "No merchant".
+// Merchants, net of refunds. Entries with no merchant are grouped by their line (S-095),
+// "Rent (no merchant, by line)", never pooled into one bucket.
 export function merchantItems(doc, months) {
   const g = {};
   const sav = savingsLines(doc);
+  const lineName = Object.fromEntries(doc.categories.flatMap((c) => c.lines.map((l) => [l.id, l.name])));
   for (const t of counted(doc.transactions).filter(inRange(months))) {
     if (t.adjust || sav.has(t.lineId) || !(t.kind === 'spend' || t.kind === 'fee' || t.kind === 'refund')) continue;
-    const k = t.merchant || 'No merchant';
+    const k = t.merchant || (lineName[t.lineId] ? lineName[t.lineId] + ' (no merchant, by line)' : 'No merchant, no line');
     g[k] = (g[k] || 0) + t.amount - (t.owed || 0);
   }
   return Object.entries(g).map(([k, v]) => ({ key: k, label: k, amount: r2(v) }));
