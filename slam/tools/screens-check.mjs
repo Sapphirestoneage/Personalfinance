@@ -152,6 +152,28 @@ for (const [name, button] of Object.entries(DEMOS)) {
   await page.waitForSelector('[data-key="cash-on-hand"]', { timeout: 3000 }).catch(() => null);
   const eraNote = await page.$eval('[data-key="cash-on-hand"]', (p) => p.textContent).catch(() => 'missing');
   check('loop', 'Eras reads cash from balances', eraNote.includes(money(2500)) ? 'reads ' + money(2500) : eraNote, 'reads ' + money(2500));
+
+  // Quick entry from the Budget screen, then a bank file that matches it (S-085).
+  await page.click('nav a[href="#budget"]');
+  await page.click('[data-key="open-quick-entry"]');
+  await page.fill('[data-key="qe-amount"]', '54.20');
+  await page.fill('[data-key="qe-search"]', 'groc');
+  await page.click('[data-key="qe-line:groceries"]');
+  await page.fill('[data-key="qe-merchant"]', "Trader Joe's");
+  await page.fill('[data-key="qe-date"]', '2026-10-03');
+  await page.click('[data-key="qe-save"]');
+  await page.waitForSelector('.toast');
+  check('loop', 'Quick entry saved', await page.$eval('.toast', (t) => t.textContent), 'Logged $54.20 to Groceries');
+  await page.click('nav a[href="#fill"]');
+  await page.getByRole('button', { name: '6 Cash flow' }).click();
+  await page.selectOption('[data-key="tx-month"]', '2026-10').catch(() => null);
+  await page.setInputFiles('#tx-file', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from('Date,Description,Amount\n10/04/2026,TRADER JOE S #552,-54.20\n10/05/2026,WHOLE FOODS MKT,-80.10\n') });
+  await page.waitForSelector('[data-key="match-summary"]');
+  check('loop', 'Import match summary', (await page.$eval('[data-key="match-summary"] b', (b) => b.textContent)), 'Matched 1, new 1, possible matches 0 to confirm.');
+  await page.click('[data-key="tx-add"]');
+  await page.waitForTimeout(150);
+  const srcs = await page.$$eval('.src-chip', (cs) => cs.map((c) => c.textContent));
+  check('loop', 'Log sources after merge', srcs.join(', '), 'Bank, merged, Bank');
   check('loop', 'Console errors', String(errors.length), '0');
   await page.close();
 }

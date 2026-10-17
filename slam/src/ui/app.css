@@ -238,3 +238,15 @@ table.review .toggle button { padding: 4px 8px; }
 /* Accounts and balances (S-084) */
 .account-row .balance-pair { display: grid; grid-template-columns: 1fr; gap: var(--space-2); flex: 1 1 260px; }
 @media (min-width: 760px) { .account-row .balance-pair { grid-template-columns: 1fr 1fr; } }
+
+/* Quick entry sheet (S-085): a bottom sheet on phones, a centered panel on wide screens */
+.sheet-backdrop { position: fixed; inset: 0; background: rgb(0 0 0 / 0.35); z-index: 50; display: flex; align-items: flex-end; justify-content: center; }
+.sheet { background: var(--surface); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-lg) var(--radius-lg) 0 0; padding: var(--space-4); width: 100%; max-width: 520px; max-height: 92vh; overflow-y: auto; display: grid; gap: var(--space-3); }
+@media (min-width: 760px) { .sheet-backdrop { align-items: center; } .sheet { border-radius: var(--radius-lg); } }
+.sheet input.amount.big { width: 100%; font-size: var(--text-xl); }
+.sheet input[type="search"], .sheet input[type="text"]:not(.amount) { width: 100%; }
+.qe-lines { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.qe-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-2); }
+.qe-row .field { margin: 0; }
+.qe-row input, .qe-row select { width: 100%; }
+.src-chip { font-size: var(--text-xs); color: var(--text-muted); border: 1px solid var(--border); border-radius: var(--radius-pill); padding: 0 6px; margin-left: 6px; }

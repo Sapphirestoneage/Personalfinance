@@ -4,6 +4,7 @@
 import { valueErrors } from './value.js';
 import { CATEGORY_TYPE_IDS, LINE_TYPE_IDS } from './types.js';
 import { PLAN_DECISIONS } from './plans.js';
+import { ENTRY_KINDS, ENTRY_SOURCES } from './log.js';
 import {
   SCHEMA_VERSION, LIVING_WITH, SITUATIONS, FILING_STATUSES, INCOME_TYPES, PAY_FREQUENCIES, PAY_BASES, WITHHOLDING, DEDUCTION_KIND_IDS,
   ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES, ACCOUNT_TYPES, ACCOUNT_STATES
@@ -138,11 +139,16 @@ export function validateHousehold(doc) {
     for (const list of ['oneOffCosts', 'costChanges']) (ns[list] || []).forEach((c, i) => errs.push(...valueErrors(c.amount, 'nextStage.' + list + '[' + i + ']')));
     for (const k of ['hoursPerWeek', 'transitionMonths', 'laterAfterMonths']) if (ns[k] !== null && !(typeof ns[k] === 'number' && ns[k] >= 0)) errs.push('nextStage.' + k + ' must be a number 0 or more, or empty');
   }
-  const KINDS = ['spend', 'transfer', 'card-payment', 'refund', 'reimbursement', 'income', 'fee'];
+  const txIds = new Set((doc.transactions || []).map((t) => t.id));
+  if (txIds.size !== (doc.transactions || []).length) errs.push('transactions: duplicate id');
   (doc.transactions || []).forEach((t, i) => {
     const w = 'transactions[' + i + ']';
-    if (!t.id || !/^\d{4}-\d{2}-\d{2}$/.test(t.date || '') || typeof t.amount !== 'number') errs.push(w + ': needs id, date, and amount');
-    if (!KINDS.includes(t.kind)) errs.push(w + '.kind: "' + t.kind + '" is not one of ' + KINDS.join(', '));
+    if (!t.id || !/^\d{4}-\d{2}-\d{2}$/.test(t.date || '') || typeof t.amount !== 'number' || !Number.isFinite(t.amount)) errs.push(w + ': needs id, date, and amount');
+    oneOf(errs, ENTRY_KINDS, t.kind, w + '.kind');
+    oneOf(errs, ENTRY_SOURCES, t.source, w + '.source');
+    if (t.account && !acctIds.has(t.account)) errs.push(w + '.account: unknown account ' + t.account);
+    if (t.lineId && !lineIds.has(t.lineId)) errs.push(w + '.lineId: unknown line ' + t.lineId);
+    (t.possible || []).forEach((id) => { if (!txIds.has(id)) errs.push(w + '.possible: unknown entry ' + id); });
   });
   if (!/^\d{4}-\d{2}$/.test(doc.currentMonth || '')) errs.push('currentMonth must be YYYY-MM');
   for (const [k, lines] of Object.entries(doc.monthActuals || {})) {

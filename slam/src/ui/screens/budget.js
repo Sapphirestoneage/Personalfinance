@@ -10,6 +10,7 @@ import { closeMonthSnapshot, snapshotOf } from '../../calc/summary.js';
 import { monthRows } from '../../calc/history.js';
 import { keyCharts } from '../charts/key-charts.js';
 import { monthPicker } from '../components/month-picker.js';
+import { quickEntryButton } from '../components/quick-entry.js';
 
 function tile(label, value, sub, cls) {
   return h('div', { class: 'tile' }, h('div', { class: 'label' }, label), h('div', { class: 'value ' + (cls || '') }, value), sub ? h('div', { class: 'sub' }, sub) : null);
@@ -37,7 +38,7 @@ function monthBar(ctx, summary) {
       h('b', {}, monthLabel(ctx.ui.monthView) + ' (closed, view only)'),
       h('button', { class: 'btn small', onclick: () => { ctx.ui.monthView = 'current'; ctx.rerender(); } }, 'Back to ' + monthLabel(doc.currentMonth)));
   }
-  return h('div', {}, monthPicker(ctx, summary), h('div', { class: 'card spread' },
+  return h('div', {}, monthPicker(ctx, summary), h('div', { class: 'row', style: 'margin-bottom:12px' }, quickEntryButton(ctx)), h('div', { class: 'card spread' },
     h('div', { class: 'row' },
       h('b', {}, 'Working on ' + monthLabel(doc.currentMonth)),
       keys.length ? h('select', { 'aria-label': 'View a closed month', 'data-key': 'month-pick', onchange: (e) => { ctx.ui.monthView = e.target.value; ctx.rerender(); } },

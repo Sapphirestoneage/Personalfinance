@@ -10,6 +10,7 @@ import { actualsFromTransactions, actualsProposal, detect, topMerchants, weekday
 import { budgetModel } from '../src/calc/model.js';
 import { addTransactions, applyTransactionActuals, setTransactionLine } from '../src/store/edits.js';
 import { validateHousehold } from '../src/store/validate.js';
+import { addAccount } from '../src/store/accounts.js';
 import { loadRefs, loadHousehold, readText, near } from './helpers.js';
 import exp from './households/jordan.expected.js';
 
@@ -18,8 +19,11 @@ const refs = loadRefs();
 function loadJordan() {
   const doc = loadHousehold('jordan');
   const opts = { rulesData: refs.merchantRules, memory: doc.merchantMemory };
-  const card = importCSV(readText('test/households/jordan-chase.csv'), { ...opts, account: 'Chase card' });
-  const bank = importCSV(readText('test/households/jordan-checking.csv'), { ...opts, account: 'Checking' });
+  // Accounts first (S-084): imports carry the account id.
+  addAccount(doc, { id: 'acct-chase', name: 'Chase card', type: 'credit-card' });
+  addAccount(doc, { id: 'acct-checking', name: 'Checking', type: 'checking' });
+  const card = importCSV(readText('test/households/jordan-chase.csv'), { ...opts, account: 'acct-chase' });
+  const bank = importCSV(readText('test/households/jordan-checking.csv'), { ...opts, account: 'acct-checking' });
   addTransactions(doc, card.transactions);
   addTransactions(doc, bank.transactions);
   return { doc, card, bank };
@@ -74,7 +78,7 @@ test('Jordan: every row imported and classified', () => {
 
 test('Jordan: importing the same file again adds nothing (but real same-day repeats were kept)', () => {
   const { doc } = loadJordan();
-  const again = importCSV(readText('test/households/jordan-chase.csv'), { account: 'Chase card', rulesData: refs.merchantRules, memory: doc.merchantMemory });
+  const again = importCSV(readText('test/households/jordan-chase.csv'), { account: 'acct-chase', rulesData: refs.merchantRules, memory: doc.merchantMemory });
   assert.equal(addTransactions(doc, again.transactions), 0);
   assert.equal(doc.transactions.filter((t) => t.merchant === 'TRADER JOE S').length, 2);
 });

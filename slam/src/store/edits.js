@@ -180,7 +180,7 @@ export function startBlindRound(doc, dateIso) {
 // after the client confirms.
 export function addTransactions(doc, txs) {
   const have = new Set(doc.transactions.map((t) => t.id));
-  const fresh = txs.filter((t) => !have.has(t.id));
+  const fresh = txs.filter((t) => !have.has(t.id)).map((t) => ({ source: 'import', note: '', ...t }));
   doc.transactions.push(...fresh);
   doc.transactions.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
   return fresh.length;

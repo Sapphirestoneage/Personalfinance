@@ -19,6 +19,7 @@ import { nextStageCards } from './charts/next-charts.js';
 import { eraCards } from './charts/era-charts.js';
 import { renderEras } from './screens/fill-eras.js';
 import { reviewCards } from './screens/review.js';
+import { quickEntrySheet } from './components/quick-entry.js';
 
 const SCREENS = [['clients', 'Clients'], ['fill', 'Fill in'], ['budget', 'Budget'], ['analyze', 'Analyze']];
 const root = document.getElementById('app');
@@ -80,7 +81,7 @@ const ctx = {
 
 store.subscribe((doc, label) => {
   // A different client: drop per-client screen state (open drawers, pending imports, closed-month view).
-  if (label === 'open' || label === 'close') { ui.txImport = null; ui.expanded = new Set(); ui.monthView = 'current'; ui.blind = false; ui.txMonth = null; }
+  if (label === 'open' || label === 'close') { ui.qe = null; ui.txImport = null; ui.expanded = new Set(); ui.monthView = 'current'; ui.blind = false; ui.txMonth = null; }
   queueRender();
 });
 
@@ -104,6 +105,9 @@ function render() {
   const body = screen(ctx, summary);
 
   const parts = [topbar(), h('main', { id: 'main' }, body)];
+  // Quick entry floats over any screen (S-085); it is a sheet, not a fifth screen.
+  const qe = quickEntrySheet(ctx);
+  if (qe) parts.push(qe);
   if (ui.toast) parts.push(h('div', { class: 'toast', role: 'status' }, ui.toast));
   root.replaceChildren(...parts);
   window.scrollTo(0, scroll);
@@ -155,6 +159,7 @@ function applyTheme() {
 }
 
 document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && ui.qe) { ui.qe = null; queueRender(); return; }
   const inField = /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName);
   if (inField || !(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'z') return;
   e.preventDefault();

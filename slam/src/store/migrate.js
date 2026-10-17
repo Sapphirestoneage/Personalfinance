@@ -27,8 +27,30 @@ const STEPS = {
   // Version 4 to 5 (S-084): accounts and month balances. Next stage cash on hand and
   // Eras cash now are no longer asked; they read the balances. A typed amount moves
   // into a "Cash on hand" account as the start of the month being worked on.
-  4: (doc) => cashIntoAccounts(doc)
+  4: (doc) => cashIntoAccounts(doc),
+  // Version 5 to 6 (S-085): transactions are the log. Every entry has a source
+  // (old ones were imported) and an account id; an account name used by old
+  // imports becomes an account.
+  5: (doc) => logWithAccounts(doc)
 };
+
+const guessAccountType = (name) => (/card|visa|amex|master|discover|credit/i.test(name) ? 'credit-card' : /saving/i.test(name) ? 'savings' : /cash|wallet/i.test(name) ? 'cash' : 'checking');
+
+function logWithAccounts(doc) {
+  const accounts = [...(doc.accounts || [])];
+  const idFor = (name) => {
+    if (!name) return null;
+    if (accounts.some((a) => a.id === name)) return name;
+    let a = accounts.find((x) => x.name.toLowerCase() === String(name).toLowerCase());
+    if (!a) {
+      a = newAccount({ id: 'acct-' + String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), name: String(name), type: guessAccountType(name) });
+      accounts.push(a);
+    }
+    return a.id;
+  };
+  const transactions = (doc.transactions || []).map((t) => ({ ...t, source: t.source || 'import', note: t.note || '', account: idFor(t.account) }));
+  return { ...doc, accounts, transactions, schemaVersion: 6 };
+}
 
 function cashIntoAccounts(doc) {
   const { cashOnHand, ...ns } = doc.nextStage || {};

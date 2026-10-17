@@ -9,7 +9,30 @@ import { money, monthLabel } from '../format.js';
 import { importCSV, FORMATS } from '../../calc/tx-import.js';
 import { actualsProposal } from '../../calc/tx-analysis.js';
 import { switchMonth } from '../../store/months.js';
-import { addTransactions, setTransactionLine, setTransactionKind, removeTransaction, applyTransactionActuals } from '../../store/edits.js';
+import { setTransactionLine, setTransactionKind, removeTransaction, applyTransactionActuals } from '../../store/edits.js';
+import { mergeImport, confirmMatch, rejectMatch, markNotDuplicate } from '../../store/log.js';
+import { matchImport, matchSummary, isPending, sourceOf } from '../../calc/log.js';
+import { quickEntryButton } from '../components/quick-entry.js';
+import { dayLabel } from '../format.js';
+
+const SOURCE_LABELS = { manual: 'Logged', scheduled: 'Scheduled', import: 'Bank' };
+const acctName = (doc, id) => (doc.accounts.find((a) => a.id === id) || { name: 'Unknown account' }).name;
+
+// Imported entries that may be something already logged: same, or different?
+function possibleCard(ctx) {
+  const doc = ctx.doc;
+  const waiting = doc.transactions.filter(isPending);
+  if (!waiting.length) return null;
+  const byId = Object.fromEntries(doc.transactions.map((t) => [t.id, t]));
+  return h('div', { class: 'card flag', id: 'possible-matches' },
+    h('h2', {}, 'Possible matches to confirm (' + waiting.length + ')'),
+    h('p', { class: 'muted small' }, 'These bank entries look like something already logged, but not clearly. Until you answer, only the logged one counts.'),
+    h('ul', { class: 'plain' }, waiting.map((t) => h('li', {},
+      h('div', { style: 'flex:1 1 220px' }, h('b', {}, 'Bank: ' + t.description + ' ' + money(Math.abs(t.amount), true) + ', ' + dayLabel(t.date)),
+        t.possible.map((id) => byId[id] ? h('div', { class: 'row small' }, 'Logged: ' + (byId[id].description || byId[id].note || 'entry') + ' ' + money(Math.abs(byId[id].amount), true) + ', ' + dayLabel(byId[id].date),
+          h('button', { class: 'btn small', 'data-key': 'same-' + t.id + '-' + id, onclick: () => ctx.update('Same entry', (d) => confirmMatch(d, t.id, id)) }, 'Same, merge')) : null)),
+      h('button', { class: 'btn small ghost', 'data-key': 'different-' + t.id, onclick: () => ctx.update('Different entries', (d) => rejectMatch(d, t.id)) }, 'Different')))));
+}
 
 const KINDS = [['spend', 'Spending'], ['fee', 'Fee'], ['refund', 'Refund'], ['reimbursement', 'Reimbursement'], ['card-payment', 'Card payment'], ['transfer', 'Transfer'], ['income', 'Income']];
 
@@ -24,15 +47,16 @@ function lineOptions(doc) {
 
 function importCard(ctx) {
   const ui = ctx.ui;
-  ui.txImport = ui.txImport || { account: 'Checking', format: 'auto', flip: false, pending: null, error: null };
+  const live = ctx.doc.accounts.filter((a) => a.state !== 'archived');
+  ui.txImport = ui.txImport || { account: (live.find((a) => a.type === 'checking') || live[0] || {}).id || '', format: 'auto', flip: false, pending: null, error: null };
   const st = ui.txImport;
   const file = h('input', { type: 'file', accept: '.csv,text/csv', class: 'sr-only', id: 'tx-file', onchange: async (e) => {
     const f = e.target.files[0];
     if (!f) return;
     try {
-      st.pending = importCSV(await f.text(), { account: st.account, format: st.format, flip: st.flip, rulesData: ctx.refs.merchantRules, memory: ctx.doc.merchantMemory });
-      const have = new Set(ctx.doc.transactions.map((t) => t.id));
-      st.pending.fresh = st.pending.transactions.filter((t) => !have.has(t.id)).length;
+      st.pending = importCSV(await f.text(), { account: st.account || null, format: st.format, flip: st.flip, rulesData: ctx.refs.merchantRules, memory: ctx.doc.merchantMemory });
+      // Line the file up with what was already logged (calc decides; nothing is saved yet).
+      st.pending.match = matchImport(ctx.doc.transactions, st.pending.transactions);
       st.error = null;
     } catch (err) { st.error = err.message; st.pending = null; }
     ctx.rerender();
@@ -42,7 +66,8 @@ function importCard(ctx) {
     h('h2', {}, 'Import transactions'),
     h('p', { class: 'muted small' }, 'Download a CSV from the bank or card website. Supported: ' + Object.values(FORMATS).map((f) => f.label).join(', ') + '. Nothing is sent anywhere.'),
     h('div', { class: 'grid two' },
-      h('label', { class: 'field' }, h('span', { class: 'lbl' }, 'Account name'), h('input', { type: 'text', value: st.account, 'data-key': 'tx-account', onchange: (e) => { st.account = e.target.value || 'Account'; } })),
+      h('label', { class: 'field' }, h('span', { class: 'lbl' }, 'Which account is this file?'), h('select', { 'data-key': 'tx-account', onchange: (e) => { st.account = e.target.value; } },
+        options([['', 'Not set'], ...live.map((a) => [a.id, a.name])], st.account))),
       h('label', { class: 'field' }, h('span', { class: 'lbl' }, 'Format'), h('select', { 'data-key': 'tx-format', onchange: (e) => { st.format = e.target.value; ctx.rerender(); } },
         options([['auto', 'Detect automatically'], ...Object.entries(FORMATS).map(([k, f]) => [k, f.label])], st.format)))),
     st.format === 'generic' || st.format === 'auto' ? h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: st.flip, 'data-key': 'tx-flip', onchange: (e) => { st.flip = e.target.checked; } }),
@@ -50,14 +75,14 @@ function importCard(ctx) {
     file, h('label', { for: 'tx-file', class: 'btn' }, 'Choose CSV file'),
     st.error ? h('p', { class: 'bad small' }, st.error) : null,
     p ? h('div', { class: 'card flag', style: 'margin-top:12px' },
-      h('p', { class: 'small' }, 'Read as ' + p.formatLabel + ': ' + p.transactions.length + ' rows, ' + p.fresh + ' new' + (p.skippedRows.length ? ', ' + p.skippedRows.length + ' rows skipped (no date or amount)' : '') + '.'),
+      h('p', { class: 'small' }, 'Read as ' + p.formatLabel + ': ' + p.transactions.length + ' rows' + (p.skippedRows.length ? ', ' + p.skippedRows.length + ' rows skipped (no date or amount)' : '') + '.'),
+      h('p', { class: 'small', 'data-key': 'match-summary' }, h('b', {}, matchSummary(p.match)), ' Matches merge into one entry: the bank\'s date and merchant, your line and note. Possible matches wait for you to say same or different.'),
       h('div', { class: 'row' },
-        h('button', { class: 'btn primary', disabled: !p.fresh, onclick: () => {
-          let n = 0;
-          ctx.update('Import ' + p.fresh + ' transactions', (d) => { n = addTransactions(d, p.transactions); });
+        h('button', { class: 'btn primary', 'data-key': 'tx-add', disabled: p.match.same === p.transactions.length, onclick: () => {
+          ctx.update('Import ' + p.formatLabel, (d) => { mergeImport(d, p.match); });
+          ctx.toast(matchSummary(p.match));
           st.pending = null;
-          ctx.toast(n + ' transactions added');
-        } }, 'Add ' + p.fresh + ' transactions'),
+        } }, 'Add to the log'),
         h('button', { class: 'btn', onclick: () => { st.pending = null; ctx.rerender(); } }, 'Cancel'))) : null);
 }
 
@@ -65,23 +90,30 @@ function reviewCard(ctx, summary, month) {
   const doc = ctx.doc;
   const ui = ctx.ui;
   const lines = lineOptions(doc);
-  const dupIds = new Set((summary.transactions ? summary.transactions.detections.duplicates : []).flatMap((x) => x.ids.slice(1)));
-  const showAll = ui.txShowAll;
+  const dups = summary.transactions ? summary.transactions.detections.duplicates : [];
+  const dupIds = new Set(dups.flatMap((x) => x.ids.slice(1)));
+  const dupPairs = Object.fromEntries(dups.map((x) => [x.ids[1], x.ids]));
+  const showAll = ui.txShowAll !== false;
   const remember = ui.txRemember !== false;
   const inMonth = doc.transactions.filter((t) => t.date.startsWith(month));
-  const needs = inMonth.filter((t) => !t.lineId && (t.kind === 'spend' || t.kind === 'fee' || t.kind === 'refund'));
+  const needs = inMonth.filter((t) => !isPending(t) && !t.lineId && (t.kind === 'spend' || t.kind === 'fee' || t.kind === 'refund'));
   const list = (showAll ? inMonth : needs).slice(0, 300);
   return h('div', { class: 'card' },
-    h('div', { class: 'spread' }, h('h2', { style: 'margin:0' }, 'Review'),
+    h('div', { class: 'spread' }, h('h2', { style: 'margin:0' }, 'The log, ' + monthLabel(month)), quickEntryButton(ctx)),
+    h('p', { class: 'muted small' }, 'Everything logged this month: quick entries, confirmed bills and paychecks, and bank imports. Pick a line for anything that needs one.'),
+    h('div', { class: 'spread' },
       h('div', { class: 'toggle' },
         h('button', { 'aria-pressed': !showAll ? 'true' : 'false', onclick: () => { ui.txShowAll = false; ctx.rerender(); } }, 'Needs a line (' + needs.length + ')'),
         h('button', { 'aria-pressed': showAll ? 'true' : 'false', onclick: () => { ui.txShowAll = true; ctx.rerender(); } }, 'All (' + inMonth.length + ')'))),
     h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: remember, 'data-key': 'tx-remember', onchange: (e) => { ui.txRemember = e.target.checked; } }), 'Remember my fixes for each merchant'),
     list.length ? h('ul', { class: 'plain' }, list.map((t) => h('li', {},
       h('div', { style: 'flex:1 1 220px;min-width:0' },
-        h('div', {}, h('b', {}, t.description), dupIds.has(t.id) ? h('span', { class: 'chip st-dont-know', style: 'margin-left:6px' }, 'Likely duplicate') : null,
+        h('div', {}, h('b', {}, t.description || '(no merchant)'), h('span', { class: 'src-chip' }, SOURCE_LABELS[sourceOf(t)] + (t.mergedFrom ? ', merged' : '')),
+          isPending(t) ? h('span', { class: 'chip st-will-email', style: 'margin-left:6px' }, 'Possible match') : null,
+          dupIds.has(t.id) ? h('span', { class: 'chip st-dont-know', style: 'margin-left:6px' }, 'Likely duplicate') : null,
+          dupIds.has(t.id) ? h('button', { class: 'btn small ghost', 'data-key': 'not-dup-' + t.id, onclick: () => ctx.update('Both charges are real', (d) => markNotDuplicate(d, dupPairs[t.id])) }, 'Both are real') : null,
           t.bnpl ? h('span', { class: 'chip st-will-email', style: 'margin-left:6px' }, 'Buy now, pay later') : null),
-        h('div', { class: 'xs muted' }, t.date + ', ' + t.account)),
+        h('div', { class: 'xs muted' }, dayLabel(t.date) + (t.account ? ', ' + acctName(doc, t.account) : '') + (t.note ? ', ' + t.note : ''))),
       h('b', { class: 'num' }, money(t.amount, true)),
       h('select', { 'aria-label': 'Kind', 'data-key': 'tx-kind-' + t.id, onchange: (e) => ctx.update('Transaction kind', (d) => setTransactionKind(d, t.id, e.target.value)) }, options(KINDS, t.kind)),
       h('select', { 'aria-label': 'Budget line', 'data-key': 'tx-line-' + t.id, onchange: (e) => ctx.update('Map transaction', (d) => setTransactionLine(d, t.id, e.target.value, remember)) }, options(lines, t.lineId || '')),
@@ -128,14 +160,15 @@ function findingsCard(summary) {
 
 export function renderTransactions(ctx, summary) {
   const tx = summary.transactions;
-  const months = tx ? tx.months : [];
-  const month = months.includes(ctx.ui.txMonth) ? ctx.ui.txMonth : months[months.length - 1];
+  const months = [...new Set([...(tx ? tx.months : []), ctx.doc.currentMonth])].sort();
+  const month = months.includes(ctx.ui.txMonth) ? ctx.ui.txMonth : ctx.doc.currentMonth;
   return h('div', {},
     accountsCard(ctx, ctx.doc.currentMonth),
+    h('div', { class: 'row', style: 'margin:12px 0' }, h('b', {}, 'Month'),
+      h('select', { 'data-key': 'tx-month', onchange: (e) => { ctx.ui.txMonth = e.target.value; ctx.rerender(); } }, options(months.map((m) => [m, monthLabel(m)]), month))),
+    reviewCard(ctx, summary, month),
+    possibleCard(ctx),
     importCard(ctx),
-    tx ? h('div', { class: 'row', style: 'margin:12px 0' }, h('b', {}, 'Month'),
-      h('select', { 'data-key': 'tx-month', onchange: (e) => { ctx.ui.txMonth = e.target.value; ctx.rerender(); } }, options(months.map((m) => [m, monthLabel(m)]), month))) : null,
-    tx ? reviewCard(ctx, summary, month) : null,
     tx ? fillCard(ctx, summary, month) : null,
-    tx ? findingsCard(summary) : h('p', { class: 'muted' }, 'No transactions yet. This pass is optional.'));
+    tx ? findingsCard(summary) : h('p', { class: 'muted' }, 'Nothing logged yet. Use Quick entry, or import a bank CSV.'));
 }
