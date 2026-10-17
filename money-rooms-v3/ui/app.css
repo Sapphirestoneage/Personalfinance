@@ -41,7 +41,7 @@ input:focus, select:focus, textarea:focus, [contenteditable]:focus { outline: 2p
 }
 .topbar .brand { font-weight: var(--w-semibold); font-size: var(--fs-14); color: var(--on-bar); letter-spacing: 0.01em; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; }
 .topbar .view-toggle, .topbar .ghost, .topbar .nav-btn { flex: 0 0 auto; } /* MR-086: on a phone the brand gives way, never the controls */
-@media (max-width: 500px) { .topbar .brand { display: none; } }
+@media (max-width: 500px) { .topbar .brand { display: none; } .topbar { flex-wrap: wrap; row-gap: 4px; height: auto; min-height: 48px; padding: 4px var(--s-3); } .topbar .lens-toggle { flex: 0 0 auto; } } /* on a phone the controls wrap to a second row rather than spill past the edge */
 .topbar .client { color: var(--on-bar-muted); font-size: var(--fs-13); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 240px; }
 .topbar .spacer { flex: 1; }
 .topbar .saved { font-size: var(--fs-12); color: var(--on-bar-muted); min-width: 56px; text-align: right; }
