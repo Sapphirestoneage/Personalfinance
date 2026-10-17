@@ -115,7 +115,7 @@ export function checkBalancesCard(ctx) {
 }
 
 // The Budget screen's compact strip: the next 30 days, today, the lowest point,
-// the next payday, and safe to spend until payday.
+// the next payday, and safe to spend.
 export function budgetCashStrip(ctx, summary) {
   const cal = calendarFor(ctx, summary, 30);
   const go = () => { ctx.go('analyze'); setTimeout(() => { const el = document.getElementById('sec-cashflow'); if (el) el.scrollIntoView(); }, 60); };
@@ -135,7 +135,7 @@ export function budgetCashStrip(ctx, summary) {
       h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Today'), h('div', { class: 'value', 'data-key': 'cash-today' }, money(cal.todayCash))),
       h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Lowest point'), h('div', { class: 'value', 'data-key': 'cash-lowest' }, money(cal.lowest.amount)), h('div', { class: 'sub' }, dayLabel(cal.lowest.date))),
       h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Safe to spend'), h('div', { class: 'value', 'data-key': 'safe-to-spend' }, money(cal.safeToSpend)),
-        h('div', { class: 'sub' }, cal.untilPayday !== null ? 'until payday ' + money(cal.untilPayday) : 'through ' + dayLabel(cal.end)))),
+        h('div', { class: 'sub' }, 'through ' + dayLabel(cal.end)))),
     cal.shortfall ? h('p', { class: 'small warn', 'data-key': 'safe-short' }, safeReading(cal)) : null,
     h('p', { class: 'reading', 'data-key': 'cash-reading' }, calendarReading(cal), ' ', h('a', { href: '#analyze', onclick: (e) => { e.preventDefault(); go(); } }, 'See the calendar')));
 }

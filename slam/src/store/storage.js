@@ -2,8 +2,8 @@
 // and writes through this async interface:
 //   listClients()      -> [{ id, name, updatedAt }]
 //   loadClient(id)     -> the client's full document (with deleted records), or null
-//   saveClient(doc)    -> saves it and updates the client list
-//   deleteClient(id)
+//   saveClient(doc)    -> saves it and updates the client list (a client marked deleted leaves the list;
+//                         nothing is ever erased, S-098)
 //   loadBackups(), saveBackups(list)
 //   subscribe(fn)      -> fn(clientId) when a client changes somewhere else (another tab today)
 // Device preferences (theme, last client opened) stay on this device: getSetting, setSetting.
@@ -60,13 +60,9 @@ export function createStorage(backend) {
     async saveClient(doc) {
       write('hh:' + doc.id, doc);
       const list = index().filter((e) => e.id !== doc.id);
-      list.push({ id: doc.id, name: doc.profile.name, updatedAt: doc.updatedAt });
+      if (!doc.deleted) list.push({ id: doc.id, name: doc.profile.name, updatedAt: doc.updatedAt });
       list.sort((a, b) => a.name.localeCompare(b.name));
       write('index', list);
-    },
-    async deleteClient(id) {
-      backend.removeItem(PREFIX + 'hh:' + id);
-      write('index', index().filter((e) => e.id !== id));
     },
     async loadBackups() { return read('backups') || []; },
     async saveBackups(list) { write('backups', list); },

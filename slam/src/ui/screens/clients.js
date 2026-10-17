@@ -106,7 +106,7 @@ export function renderClients(ctx) {
           h('button', { class: 'btn small primary', onclick: () => store.open(c.id).then(() => ctx.go('budget')) }, store.doc && store.doc.id === c.id ? 'Open (current)' : 'Open'),
           h('button', { class: 'btn small', onclick: () => store.open(c.id).then(() => exportClient(ctx)) }, 'Export'),
           h('button', { class: 'btn small danger', onclick: () => {
-            if (confirm('Delete ' + c.name + ' from this browser? Export first if you want a copy.')) store.backupAll('Before deleting ' + c.name).then(() => store.remove(c.id)).then(() => ctx.rerender());
+            if (confirm('Remove ' + c.name + ' from the list? The file is kept, marked deleted, and a backup is taken first.')) store.backupAll('Before deleting ' + c.name).then(() => store.remove(c.id)).then(() => ctx.rerender());
           } }, 'Delete')))))
         : h('p', { class: 'muted' }, 'No clients yet. Start one above, or try a demo below.')),
     h('div', { class: 'card' },

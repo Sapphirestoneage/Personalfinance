@@ -90,23 +90,37 @@ function spendFromField(ctx, era, e, dl) {
 // Today (actual, else the estimate) next to each dream, per category, in dollars and % of take-home.
 export function dreamCompare(ctx, dl, opts = {}) {
   if (!dl.any) return h('p', { class: 'muted small', 'data-key': 'dream-none' }, 'No dream life yet. Type what you would like to spend above.');
-  const cell = (amt, share) => h('td', { class: 'num' }, money(amt), share !== null ? h('div', { class: 'xs muted' }, pct(share)) : null);
+  // A dream left blank copies today (a long-term one copies the short term); the cell says "copied" in grey.
+  const cell = (amt, share, from) => {
+    const copied = from === 'today' || from === 'short';
+    return h('td', { class: 'num' + (copied ? ' muted' : '') }, money(amt), h('div', { class: 'xs muted' }, copied ? 'copied' : share !== null ? pct(share) : ''));
+  };
   const diff = (x) => h('td', { class: 'num wide' + (x > 0 ? ' bad' : '') }, x === null ? '\u00b7' : signedMoney(x));
   return h('div', { id: opts.id || 'dream-compare' },
     h('div', { class: 'table-wrap' }, h('table', { class: 'budget tight' },
       h('thead', {}, h('tr', {}, ['Category', 'Today', 'Short term', 'Long term', 'Long vs today'].map((x, i) => h('th', { class: i === 4 ? 'wide' : null }, x)))),
       h('tbody', {}, dl.rows.filter((r) => !r.notForMe).map((r) => h('tr', { 'data-key': 'dream-row:' + r.id },
         h('td', {}, r.name, r.savings ? h('div', { class: 'xs muted' }, 'savings, not added in') : null, r.todayFrom === 'estimate' ? h('div', { class: 'xs st-guess' }, 'today is the estimate') : null),
-        cell(r.today, r.todayShare), cell(r.short, r.shortShare), cell(r.long, r.longShare), r.savings ? h('td', { class: 'wide' }, '') : diff(r.longDiff)))),
+        cell(r.today, r.todayShare), cell(r.short, r.shortShare, r.shortFrom), cell(r.long, r.longShare, r.longFrom), r.savings ? h('td', { class: 'wide' }, '') : diff(r.longDiff)))),
       h('tfoot', {}, h('tr', {}, h('td', {}, 'Spending'), h('td', { class: 'num' }, money(dl.today)), h('td', { class: 'num', 'data-key': 'dream-short-total' }, money(dl.shortTotal)),
         h('td', { class: 'num', 'data-key': 'dream-long-total' }, money(dl.longTotal)), diff(dl.longDiff))))),
     [dl.readings.long, dl.readings.short].filter(Boolean).map((t, i) => h('p', { class: 'small', 'data-key': i === 0 ? 'dream-reading' : null }, t)),
-    dl.hasLong ? null : h('p', { class: 'xs muted' }, 'No long-term dream yet, so it follows the short-term one. Switch to Long term above to add it.'),
     dl.todayUsesEstimate.length ? h('p', { class: 'xs muted' }, 'Today uses the estimate where there is no actual yet: ' + dl.todayUsesEstimate.join(', ') + '.') : null,
-    dl.followsToday.length ? h('p', { class: 'xs muted' }, 'No dream given, so it follows today: ' + dl.followsToday.join(', ') + '. A blank long-term dream follows the short-term one.') : null,
-    dl.takes.long !== null ? h('p', { class: 'small', 'data-key': 'dream-takes' }, h('b', {}, 'What it takes: '),
-      'to live the ' + (dl.hasLong ? 'long' : 'short') + '-term dream and still save ' + pct(dl.savingsShare) + ' of take-home like today, you would need about ' + money(dl.takes.long) + ' a month take-home, ' +
-      (dl.takes.longMore >= 0 ? money(dl.takes.longMore) + ' more than now.' : money(-dl.takes.longMore) + ' less than now.')) : null);
+    h('p', { class: 'xs muted' }, 'Grey "copied" numbers were left blank: a blank short-term dream copies today, and a blank long-term dream copies the short term.' + (dl.hasLong ? '' : ' Switch to Long term above to add a long-term dream.')),
+    takesNote(dl));
+}
+
+// The pay this dream needs, in short plain sentences: what it spends, what you save today,
+// the take-home that covers both, and how that compares with now.
+function takesNote(dl) {
+  if (dl.pay.needed === null) return null;
+  const which = dl.hasLong ? 'long-term' : 'short-term';
+  const gap = dl.pay.short;
+  return h('div', { class: 'small', 'data-key': 'dream-takes' },
+    h('b', {}, 'The pay this dream needs'),
+    h('p', {}, 'Your ' + which + ' dream spends ' + money(dl.longTotal) + ' a month. Today you save ' + pct(dl.savingsShare) + ' of what you bring home. ' +
+      'To spend ' + money(dl.longTotal) + ' and still save ' + pct(dl.savingsShare) + ', you would need to bring home about ' + money(dl.pay.needed) + ' a month.'),
+    h('p', {}, 'You bring home ' + money(dl.takeHome) + ' now, ' + (gap > 0 ? money(gap) + ' short of that.' : gap < 0 ? money(-gap) + ' more than it needs.' : 'exactly that.')));
 }
 
 export function renderEras(ctx, summary) {

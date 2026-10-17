@@ -147,6 +147,25 @@ test('Riley: a deleted log entry never reaches the calendar or the month totals'
   assert.deepEqual(cashCalendar(full, income, opts).lowest, cashCalendar(trimmed, income, opts).lowest);
 });
 
+test('removing a client keeps its file, marked deleted; it leaves the list and an import brings it back (S-098)', async () => {
+  const backend = memoryBackend();
+  const s = createStore(createStorage(backend), ticking('2026-10-17T12:00:00.000Z'));
+  const id = s.create('Gone for now');
+  s.update('Gut', (d) => { d.gut.amount = 2000; d.gut.status = 'known'; });
+  const file = s.exportCurrent();
+  await s.remove(id);
+  await s.flush();
+  assert.deepEqual(s.list(), []);
+  const kept = JSON.parse(backend.getItem('slam:hh:' + id));
+  assert.deepEqual([kept.deleted, kept.deletedBy, kept.gut.amount], [true, 'coach', 2000]);
+  assert.ok(kept.deletedAt);
+  const again = createStore(createStorage(backend));
+  assert.deepEqual(await again.load(), [], 'a fresh load does not list it either');
+  const res = await s.importText(file);
+  assert.equal(res.merged, false, 'a removed client comes back whole');
+  assert.deepEqual(s.list().map((e) => e.name), ['Gone for now']);
+});
+
 // ---------------------------------------------------------------- storage
 
 function filesUnder(dir) {

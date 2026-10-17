@@ -100,12 +100,15 @@ export function createStore(storage, clock = () => new Date()) {
 
     close() { setFull(null); history.clear(); notify('close'); },
 
+    // Removing a client keeps its file, marked deleted (S-098), like any record. It leaves the
+    // list; importing the same client again brings it back.
     async remove(id) {
+      await pending;
+      const doc = cache.get(id) || await storage.loadClient(id);
       cache.delete(id);
       clients = clients.filter((e) => e.id !== id);
       if (full && full.id === id) store.close();
-      await pending;
-      await storage.deleteClient(id);
+      if (doc) await storage.saveClient({ ...doc, deleted: true, deletedAt: nowIso(), deletedBy: currentRole() });
     },
 
     // mutator receives a draft copy of the live view and changes it in place.
@@ -145,7 +148,8 @@ export function createStore(storage, clock = () => new Date()) {
     async importText(text) {
       const incoming = parseImport(text);
       const backup = await store.backupAll('Before import of ' + incoming.profile.name);
-      const here = cache.get(incoming.id) || await storage.loadClient(incoming.id);
+      const found = cache.get(incoming.id) || await storage.loadClient(incoming.id);
+      const here = found && !found.deleted ? found : null;
       if (!here) {
         persist(incoming);
         await store.open(incoming.id);

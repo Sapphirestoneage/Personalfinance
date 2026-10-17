@@ -154,10 +154,6 @@ export function setAt(doc, path, value) {
 }
 
 // Line paths are written as ['line', lineId, field] for convenience.
-export function linePath(lineId, field) {
-  return ['line', lineId, field];
-}
-
 export function getField(doc, path) {
   if (path[0] === 'line') return findLine(doc, path[1]).line[path[2]];
   return getAt(doc, path);

@@ -7,7 +7,7 @@ import { PLAN_DECISIONS } from './plans.js';
 import { ENTRY_KINDS, ENTRY_SOURCES } from './log.js';
 import {
   SCHEMA_VERSION, LIVING_WITH, SITUATIONS, FILING_STATUSES, INCOME_TYPES, PAY_FREQUENCIES, PAY_BASES, WITHHOLDING, DEDUCTION_KIND_IDS,
-  ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES, ACCOUNT_TYPES, ACCOUNT_STATES
+  ITEM_STATES, LINE_KINDS, LINE_PATHS, LINE_TAGS, DEBT_TYPES, ACCOUNT_TYPES, ACCOUNT_STATES, ERA_SPEND_FROM
 } from './schema.js';
 
 // A date with a status (S-086).
@@ -144,7 +144,7 @@ export function validateHousehold(doc) {
       if (!(Number.isInteger(e.gapMonths) && e.gapMonths >= 0 && e.gapMonths <= 600)) errs.push(w + '.gapMonths must be 0 to 600');
       for (const k of ['takeHome', 'spending', 'oneTime']) errs.push(...valueErrors(e[k], w + '.' + k));
       // Where blank spending starts (S-097); absent means the template's share.
-      if (e.spendFrom !== undefined && !['template', 'today', 'dream', 'dreamLong'].includes(e.spendFrom)) errs.push(w + '.spendFrom is unknown');
+      if (e.spendFrom !== undefined && !ERA_SPEND_FROM.includes(e.spendFrom)) errs.push(w + '.spendFrom is unknown');
     });
   }
   const lineIds = new Set((doc.categories || []).flatMap((c) => (c.lines || []).map((l) => l.id)));
