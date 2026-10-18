@@ -16,17 +16,17 @@ import { renderBudget } from './screens/budget.js';
 import { renderAnalyze } from './screens/analyze.js';
 import { renderTransactions } from './screens/fill-transactions.js';
 import { transactionCards } from './charts/tx-charts.js';
-import { renderNextStage } from './screens/fill-next-stage.js';
-import { nextStageCards } from './charts/next-charts.js';
-import { eraCards } from './charts/era-charts.js';
-import { renderEras } from './screens/fill-eras.js';
+import { renderFuture } from './screens/future.js';
 import { reviewCards } from './screens/review.js';
 import { quickEntrySheet } from './components/quick-entry.js';
 import { cashflowCards } from './charts/cash-charts.js';
 import { monthsCards } from './charts/months-charts.js';
 import { trendCards } from './charts/trend-charts.js';
 
-const SCREENS = [['clients', 'Clients'], ['fill', 'Fill in'], ['budget', 'Budget'], ['analyze', 'Analyze']];
+const BASE_SCREENS = [['clients', 'Clients'], ['fill', 'Fill in'], ['budget', 'Budget'], ['analyze', 'Analyze']];
+// Future tools (S-105): parked behind a setting on this device, off by default.
+const futureOn = () => storage.getSetting('futureTools') === 'on';
+const screensNow = () => (futureOn() ? [...BASE_SCREENS, ['future', 'Future']] : BASE_SCREENS);
 const root = document.getElementById('app');
 const storage = createStorage(localStorageBackend());
 const store = createStore(storage);
@@ -64,8 +64,21 @@ const ctx = {
     queueRender();
     window.scrollTo(0, 0);
   },
+  get future() { return futureOn(); },
+  setFuture(on) {
+    storage.setSetting('futureTools', on ? 'on' : 'off');
+    ctx.toast(on ? 'Future tools are on: see the Future screen' : 'Future tools are parked');
+  },
   goToField(path) {
-    ui.pass = passForPath(path);
+    const pass = passForPath(path);
+    if (pass === 'eras' || pass === 'next') {
+      if (!futureOn()) return ctx.toast('That is a parked Future tool. Turn it on in Setup.');
+      if (path.includes('dreamLong')) ui.dreamTerm = 'long';
+      else if (path.includes('dream')) ui.dreamTerm = 'short';
+      ui.focusPath = path;
+      return ctx.go('future', { futureTab: pass });
+    }
+    ui.pass = pass;
     if (path.includes('dreamLong')) ui.dreamTerm = 'long';
     else if (path.includes('dream')) ui.dreamTerm = 'short';
     ui.focusPath = path;
@@ -90,9 +103,9 @@ const ctx = {
     setTimeout(() => { if (ui.toast === msg) { ui.toast = null; queueRender(); } }, 2600);
   },
   rerender: () => queueRender(),
-  // Cash flow (accounts, the log, imports) lives inside Fill in and Analyze, so there are still four screens.
-  fillExtras: [{ id: 'cashflow', label: '5 Cash flow', render: renderTransactions }, { id: 'next', label: '6 Next stage', render: renderNextStage }, { id: 'eras', label: '7 Eras', render: renderEras }],
-  analyzeExtras: [['cashflow', 'Cash flow', (c, s) => cashflowCards(c, s)], ['transactions', 'Transactions', (c, s) => transactionCards(c, s)], ['next', 'Next stage', (c, s) => nextStageCards(c, s)], ['eras', 'Eras', (c, s) => eraCards(c, s)], ['plan', 'Review and plan', (c, s) => reviewCards(c, s)], ['months', 'Months', (c, s) => monthsCards(c, s)], ['trends', 'Trends', (c, s) => trendCards(c, s)]]
+  // Cash flow (accounts, the log, imports) lives inside Fill in and Analyze. Next stage and Eras are parked (S-105).
+  fillExtras: [{ id: 'cashflow', label: '5 Cash flow', render: renderTransactions }],
+  analyzeExtras: [['cashflow', 'Cash flow', (c, s) => cashflowCards(c, s)], ['transactions', 'Transactions', (c, s) => transactionCards(c, s)], ['plan', 'Review and plan', (c, s) => reviewCards(c, s)], ['months', 'Months', (c, s) => monthsCards(c, s)], ['trends', 'Trends', (c, s) => trendCards(c, s)]]
 };
 
 store.subscribe((doc, label) => {
@@ -115,13 +128,14 @@ function render() {
   const scroll = window.scrollY;
 
   if (!store.doc && ui.screen !== 'clients') ui.screen = 'clients';
+  if (ui.screen === 'future' && !futureOn()) ui.screen = 'budget';
   // The client list is the coach's; a client never sees it.
   if (displayRole() === 'client' && ui.screen === 'clients') ui.screen = store.doc ? 'budget' : 'clients';
   if (!store.doc && displayRole() === 'client') setDisplayRole('coach');
   document.documentElement.setAttribute('data-view', displayRole());
   const summary = summaryOf(viewed());
   ui.previewHandler = null;
-  const screen = { clients: renderClients, fill: renderFill, budget: renderBudget, analyze: renderAnalyze }[ui.screen];
+  const screen = { clients: renderClients, fill: renderFill, budget: renderBudget, analyze: renderAnalyze, future: renderFuture }[ui.screen];
   const body = screen(ctx, summary);
 
   const parts = [topbar(), h('main', { id: 'main' }, body)];
@@ -152,7 +166,7 @@ function render() {
 function topbar() {
   const doc = store.doc;
   const asClient = displayRole() === 'client';
-  const screens = asClient ? SCREENS.filter(([id]) => id !== 'clients') : SCREENS;
+  const screens = asClient ? screensNow().filter(([id]) => id !== 'clients') : screensNow();
   return h('header', { class: 'topbar' }, h('div', { class: 'topbar-inner' },
     h('span', { class: 'brand' }, 'SLAM'),
     h('span', { class: 'client-name' }, doc ? doc.profile.name : 'No client open'),
@@ -196,7 +210,7 @@ window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer
 
 window.addEventListener('popstate', () => {
   const s = location.hash.slice(1);
-  if (SCREENS.some(([id]) => id === s)) { ui.screen = s; queueRender(); }
+  if (screensNow().some(([id]) => id === s)) { ui.screen = s; queueRender(); }
 });
 
 async function boot() {
@@ -211,7 +225,7 @@ async function boot() {
   const last = storage.getSetting('lastOpen');
   if (last && store.list().some((c) => c.id === last)) await store.open(last);
   const s = location.hash.slice(1);
-  ui.screen = SCREENS.some(([id]) => id === s) && store.doc ? s : (store.doc ? 'budget' : 'clients');
+  ui.screen = screensNow().some(([id]) => id === s) && store.doc ? s : (store.doc ? 'budget' : 'clients');
   render();
 }
 

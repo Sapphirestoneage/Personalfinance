@@ -75,5 +75,5 @@ export function renderBudget(ctx, summary) {
       proofCard(summary),
       completionCard(ctx, summary),
       roughCard(ctx, summary),
-      extrasCard(summary)));
+      extrasCard(summary, ctx.future)));
 }

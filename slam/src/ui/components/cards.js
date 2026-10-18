@@ -76,7 +76,8 @@ export function roughCard(ctx, summary) {
       : h('p', { class: 'muted small' }, 'Nothing marked roughly, will email, or don\'t know.'));
 }
 
-export function extrasCard(summary) {
+// Next stage is a parked Future tool (S-105): named here only when Future tools are on.
+export function extrasCard(summary, future) {
   const t = summary.totals;
   const items = [];
   if (t.owedBack > 0) items.push(['Owed back to you (not yet received)', money(t.owedBack)]);
@@ -84,7 +85,7 @@ export function extrasCard(summary) {
   if (summary.moveOut && summary.moveOut.guess) {
     items.push(['If you moved out of the family home', 'about ' + money(summary.moveOut.guess.amount) + ' a month for housing (Guess) vs ' + money(summary.moveOut.now) + ' now']);
   }
-  if (summary.nextStage && summary.nextStage.cashNeeded !== null) {
+  if (future && summary.nextStage && summary.nextStage.cashNeeded !== null) {
     const n = summary.nextStage;
     items.push(['Next stage: ' + n.name, money(n.cashNeeded) + ' to make the switch' + (n.monthsToSaveWhole !== null ? ', about ' + n.monthsToSaveWhole + ' months of today\'s surplus' : '')]);
   }

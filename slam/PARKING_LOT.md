@@ -49,3 +49,7 @@ theming beyond the tokens.
 ## Hosted version (parked 2026-10-17, groundwork in S-096)
 
 - Hosted version: sign-in for coach and client, server storage, live sync, client entries from their own phone (see HOSTING.md).
+
+## Future tools (parked 2026-10-18, S-105)
+
+- Future tools (dream life, Eras, Next stage) are parked behind a setting. Open question for later: merge Next stage into Eras as one era with Disaster, Likely, and Best case.

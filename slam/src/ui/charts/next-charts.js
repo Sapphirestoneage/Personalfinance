@@ -15,7 +15,7 @@ function yearsMonths(m) {
 
 export function nextStageCards(ctx, s) {
   const n = s.nextStage;
-  if (!n) return [card(ctx, { id: 'next-none', title: 'Next stage', reading: 'Plan a big change in Fill in, pass 6, to see what it would take.' })];
+  if (!n) return [card(ctx, { id: 'next-none', title: 'Next stage', reading: 'Plan a big change above to see what it would take.' })];
   const C = n.cases;
   // The best case is stored as cases.dream, the old name kept so files load unchanged (S-097).
   const LENSES = [['disaster', 'Disaster'], ['likely', 'Likely'], ['dream', 'Best case']];

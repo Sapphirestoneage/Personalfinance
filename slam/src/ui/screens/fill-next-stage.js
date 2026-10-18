@@ -1,4 +1,4 @@
-// Fill in, pass 6 Next stage: one drastic change (a new job, school, a move)
+// Future, Next stage (parked, S-105): one drastic change (a new job, school, a move)
 // that costs money in the short term but is better on other measures.
 // Results are on Analyze, under Next stage.
 
@@ -120,7 +120,6 @@ export function renderNextStage(ctx, summary) {
     itemList(ctx, ns, 'oneOffCosts', 'One-time costs to make the change', 'Courses, licenses, moving, a gap in benefits.', '+ Add a one-time cost', 'Amount'),
     itemList(ctx, ns, 'costChanges', 'Monthly costs that change', 'More (childcare, a loan) or less (commute, lunches out). Use a minus sign for costs that go down.', '+ Add a cost change', 'Change'),
     metricsCard(ctx, ns, summary),
-    n ? h('p', { class: 'small' }, 'So far: needs ', h('b', { class: 'num' }, money(n.cases.disaster.cashNeeded) + ' / ' + money(n.cashNeeded) + ' / ' + money(n.cases.dream.cashNeeded)), ' (disaster / likely / best case) to make the switch. ',
-      h('a', { href: '#analyze', onclick: (e) => { e.preventDefault(); ctx.go('analyze'); setTimeout(() => { const el = document.getElementById('sec-next'); if (el) el.scrollIntoView(); }, 60); } }, 'See the full picture on Analyze')) : null,
+    n ? h('p', { class: 'small' }, 'So far: needs ', h('b', { class: 'num' }, money(n.cases.disaster.cashNeeded) + ' / ' + money(n.cashNeeded) + ' / ' + money(n.cases.dream.cashNeeded)), ' (disaster / likely / best case) to make the switch. The full picture is in the charts below.') : null,
     h('button', { class: 'btn small ghost danger', onclick: () => { if (confirm('Clear the next stage plan? (Undo works.)')) ctx.update('Clear next stage', (d) => { d.nextStage = null; }); } }, 'Clear this plan'));
 }

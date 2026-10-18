@@ -355,7 +355,16 @@ export function renderProfile(ctx, summary) {
 
     accountsOverviewCard(ctx),
     accountsCard(ctx, doc.currentMonth),
-    coachNotesCard(ctx));
+    coachNotesCard(ctx),
+    futureToolsCard(ctx));
+}
+
+// Future tools (S-105): the dream life, Eras, and Next stage are parked. One switch brings them back.
+export function futureToolsCard(ctx) {
+  return h('div', { class: 'card', id: 'future-tools' }, h('h2', {}, 'Future tools (parked)'),
+    h('p', { class: 'muted small' }, 'The dream life, Eras, and Next stage answer "what could life look like". They are parked so the monthly loop stays simple. Nothing is deleted.'),
+    h('label', { class: 'check' }, h('input', { type: 'checkbox', checked: ctx.future, 'data-key': 'future-tools',
+      onchange: (e) => ctx.setFuture(e.target.checked) }), 'Show the Future screen (this device, every client)'));
 }
 
 // Income in two passes (S-104), one number each: Rough asks what each paycheck brings home (the

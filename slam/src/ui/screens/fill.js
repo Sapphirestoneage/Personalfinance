@@ -1,6 +1,6 @@
 // Screen 2, Fill in: the guided passes in the order used on calls.
-// Gut, Profile, Rough, Actual (then Cash flow, Next stage, Eras). Every pass is skippable.
-// The dream life moved to Eras (S-097).
+// Gut, Profile, Rough, Actual, then Cash flow. Every pass is skippable.
+// The dream life, Eras, and Next stage are parked on the Future screen (S-105).
 
 import { h } from '../dom.js';
 import { money } from '../format.js';
@@ -25,6 +25,7 @@ export function passForPath(path) {
   if (a === 'line' || a === 'debts') return 'actual';
   if (a === 'balances') return 'profile';
   if (a === 'transactions') return 'cashflow';
+  // Parked (S-105): only reached when Future tools are on.
   if (a === 'nextStage') return 'next';
   if (a === 'eras') return 'eras';
   return 'rough';
@@ -39,7 +40,7 @@ function renderGut(ctx) {
 }
 
 // Sticky bar with live totals for the current pass. Updated while typing.
-function runningBar(ctx, summary, pass) {
+export function runningBar(ctx, summary, pass) {
   const take = h('b', {});
   const col = h('b', {});
   const left = h('b', {});

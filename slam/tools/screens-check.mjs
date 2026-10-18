@@ -151,11 +151,15 @@ for (const [name, button] of Object.entries(DEMOS)) {
     const totalRow = await page.$$eval('#chart-draftt tr.cat td', (tds) => tds.map((td) => td.textContent.trim()));
     check(name, 'DRAFTT total % of base', totalRow[2], pct(exp.draftt.totalShare));
   }
-  // The Fill in passes (S-097): no Dream pass; the dream life opens Eras.
+  // The Fill in passes: no Dream pass (S-097); Next stage and Eras are parked (S-105).
   await page.click('nav a[href="#fill"]');
   await page.waitForFunction(() => { const b = document.querySelector('.passes button'); return b && b.textContent === '1 Gut'; });
-  check(name, 'Fill in passes', (await page.$$eval('.passes button', (bs) => bs.map((b) => b.textContent))).join(', '), '1 Gut, 2 Profile, 3 Rough, 4 Actual, 5 Cash flow, 6 Next stage, 7 Eras');
-  await page.getByRole('button', { name: '7 Eras' }).click();
+  check(name, 'Fill in passes', (await page.$$eval('.passes button', (bs) => bs.map((b) => b.textContent))).join(', '), '1 Gut, 2 Profile, 3 Rough, 4 Actual, 5 Cash flow');
+  check(name, 'No Future screen while parked', String(await page.$$eval('nav a[href="#future"]', (x) => x.length)), '0');
+  // Turn the parked tools on (Setup), then the dream life opens Future, Eras.
+  await page.getByRole('button', { name: '2 Profile' }).click();
+  await page.check('[data-key="future-tools"]');
+  await page.click('nav a[href="#future"]');
   await page.waitForSelector('#dream-entry');
   if (name === 'maya') {
     // Maya by hand (test/dreams.test.js): short-term dream spending 3,052, today 3,814, so 762 less; biggest
@@ -193,7 +197,10 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   // Accounts (S-103): with only a checking start of 2,500 typed, you have 2,500, owe 0 on cards, net 2,500.
   check('loop', 'Accounts: you have', await page.$eval('[data-key="acct-have"] .value', (b) => b.textContent), money(2500));
   check('loop', 'Accounts: net', await page.$eval('[data-key="acct-net"] .value', (b) => b.textContent), money(2500));
-  await page.getByRole('button', { name: '6 Next stage' }).click();
+  // Next stage and Eras are parked (S-105): checked with Future tools on.
+  await page.check('[data-key="future-tools"]');
+  await page.click('nav a[href="#future"]');
+  await page.click('[data-key="future-tab-next"]');
   await page.waitForTimeout(100);
   const startNs = page.getByRole('button', { name: 'Plan a next stage' });
   if (await startNs.count()) await startNs.click();
@@ -202,8 +209,8 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('loop', 'Next stage reads cash from balances', note.includes(money(2500)) ? 'reads ' + money(2500) : note, 'reads ' + money(2500));
   // The third lens is Best case (S-097), in the order Disaster, Likely, Best case.
   check('loop', 'Next stage lenses', (await page.$$eval('table.lenses thead th', (ths) => ths.map((t) => t.textContent).filter(Boolean))).join(', '), 'Disaster, Likely, Best case');
-  check('loop', 'No Dream on Next stage', String(/dream/i.test(await page.$eval('#main', (m) => m.textContent))), 'false');
-  await page.getByRole('button', { name: '7 Eras' }).click();
+  check('loop', 'No Dream on Next stage', String(await page.$eval('#main', (m) => [...m.children[0].children].filter((c) => !c.matches('.passes, p, h1')).some((c) => /dream/i.test(c.textContent)))), 'false');
+  await page.click('[data-key="future-tab-eras"]');
   await page.waitForSelector('[data-key="cash-on-hand"]', { timeout: 3000 }).catch(() => null);
   const eraNote = await page.$eval('[data-key="cash-on-hand"]', (p) => p.textContent).catch(() => 'missing');
   check('loop', 'Eras reads cash from balances', eraNote.includes(money(2500)) ? 'reads ' + money(2500) : eraNote, 'reads ' + money(2500));
