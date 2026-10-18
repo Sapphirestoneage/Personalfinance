@@ -98,6 +98,15 @@ export function netWorthByMonth(doc) {
   });
 }
 
+// From the first month end with both net worths to the last: how much each changed.
+export function seriesChange(series) {
+  const known = series.filter((x) => x.total !== null && x.fi !== null);
+  if (known.length < 2) return null;
+  const a = known[0];
+  const b = known[known.length - 1];
+  return { from: a.month, to: b.month, total: r2(b.total - a.total), fi: r2(b.fi - a.fi) };
+}
+
 // Milestones (S-111): events with dates, never grades. Each is the first month end where it is true
 // after a month end where it was not (a series that starts past a line has no event for it: we do
 // not know when it happened).

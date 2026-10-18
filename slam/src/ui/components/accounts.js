@@ -4,12 +4,13 @@
 // month-end (Setup, Accounts). Numbers come from calc/balances.js; this file only lays them out.
 
 import { h, options } from '../dom.js';
-import { money, monthLabel, todayIso } from '../format.js';
+import { money, monthLabel, todayIso, dayLabel } from '../format.js';
 import { valueInput } from './value-input.js';
 import { nameEdit } from './name-edit.js';
 import { addAccount, setBalance, setAccountField, setBalanceDate, addCardAccounts, setPurchase, setAlternative, setAccountNotes } from '../../store/accounts.js';
-import { balancesFor, cardMap, ACCOUNT_GROUPS, liabilities, monthBalance, kindOf } from '../../calc/balances.js';
-import { netWorthAt, LABELS as NW_LABELS, EXPLAIN as NW_EXPLAIN } from '../../calc/networth.js';
+import { balancesFor, cardMap, ACCOUNT_GROUPS, liabilities, monthBalance, kindOf, balanceAt } from '../../calc/balances.js';
+import { netWorthAt, LABELS as NW_LABELS } from '../../calc/networth.js';
+import { jumpLink } from './jump.js';
 import { ACCOUNT_TYPE_INFO, ACCOUNT_TYPES, SECURED_TYPES, ALTERNATIVES } from '../../store/schema.js';
 
 export const ACCOUNT_TYPE_OPTIONS = ACCOUNT_TYPES.map((t) => [t, ACCOUNT_TYPE_INFO[t].label]);
@@ -42,6 +43,7 @@ function accountRow(ctx, month, r, stored) {
   return h('div', { class: 'qa account-row' },
     h('div', { class: 'q' },
       h('div', {}, nameEdit(ctx, a.name, 'acct:' + a.id + ':name', (d, v) => setAccountField(d, a.id, 'name', v), 'Account name')),
+      latestLine(ctx, a.id),
       h('input', { type: 'text', class: 'institution', placeholder: 'Bank or card company', 'aria-label': a.name + ' bank or card company', 'data-key': 'acct:' + a.id + ':institution', value: a.institution || '',
         onchange: (e) => ctx.update('Bank or card company', (d) => setAccountField(d, a.id, 'institution', e.target.value.trim())) }),
       h('div', { class: 'row' },
@@ -97,7 +99,7 @@ function debtRow(ctx, month, l, stored) {
   const r = monthBalance(ctx.doc, month, l.key);
   const fake = { id: l.key, name: l.name };
   return h('div', { class: 'qa account-row', 'data-key': 'debt-row:' + l.key },
-    h('div', { class: 'q' }, h('div', {}, l.name), h('div', { class: 'hint' }, 'What is owed. APR and payment are in Setup, Debts.')),
+    h('div', { class: 'q' }, h('div', {}, l.name), latestLine(ctx, l.key), h('div', { class: 'hint' }, 'What is owed. APR and payment are in Setup, Debts.')),
     h('div', { class: 'balance-pair' },
       h('div', {}, h('div', { class: 'xs muted' }, 'Start balance'), balanceInput(ctx, month, fake, 'start', stored(l.key, 'start'), l.name + ' start'), balanceDate(ctx, month, fake, 'start'),
         r.start.from === 'carried' ? h('div', { class: 'xs muted' }, 'Carried from last month: ' + money(r.start.amount, true)) : null),
@@ -157,19 +159,19 @@ function cardsBlock(ctx, month) {
         'Add ' + (m.noAccount.length === 1 ? 'an account for it' : 'an account for each (' + m.noAccount.length + ')'))) : null);
 }
 
-// The two net worths (S-111), at the top of Setup, Accounts: everything, what can fund your life,
-// and what is locked in things you use. Today's balances (the latest dated one for each).
+// One line at the top of Setup, Accounts (S-114): the two net worths, which live in Insights, Net worth.
 export function netWorthCard(ctx) {
   if (!ctx.doc.accounts.length && !ctx.doc.debts.length) return null;
   const nw = netWorthAt(ctx.doc, todayIso());
-  const tile = (label, value, key, sub) => h('div', { class: 'tile', 'data-key': key }, h('div', { class: 'label' }, label), h('div', { class: 'value' }, money(value)), h('div', { class: 'sub' }, sub));
-  return h('div', { class: 'card', id: 'networth-card' },
-    h('h2', {}, 'What you have and what you owe'),
-    h('div', { class: 'tiles' },
-      tile(NW_LABELS.total, nw.total, 'nw-total', NW_EXPLAIN.total),
-      tile(NW_LABELS.fi, nw.fi, 'nw-fi', NW_EXPLAIN.fi),
-      tile(NW_LABELS.locked, nw.locked, 'nw-locked', NW_EXPLAIN.locked)),
-    nw.missing.length ? h('p', { class: 'xs muted' }, 'No balance yet for ' + nw.missing.join(', ') + ', so the totals that need it wait for it.') : null);
+  return h('div', { class: 'card spread', id: 'networth-line' },
+    h('span', { class: 'small' }, NW_LABELS.total + ': ', h('b', { class: 'num', 'data-key': 'nw-line-total' }, money(nw.total)), '. ', NW_LABELS.fi + ': ', h('b', { class: 'num', 'data-key': 'nw-line-fi' }, money(nw.fi)), '.'),
+    jumpLink(ctx, 'insights:networth', 'See Net worth in Insights', 'nw-line-go'));
+}
+
+// The latest balance and the day it was read (S-114), for every account and debt.
+function latestLine(ctx, key) {
+  const b = balanceAt(ctx.doc, key, todayIso());
+  return h('div', { class: 'xs muted', 'data-key': 'latest:' + key }, b ? 'Latest: ' + money(b.amount, true) + (b.date ? ' on ' + dayLabel(b.date) : ' (as given on the debt)') : 'No balance yet');
 }
 
 // One line for Next stage and Eras: cash on hand, read-only, with a link to where it is typed.

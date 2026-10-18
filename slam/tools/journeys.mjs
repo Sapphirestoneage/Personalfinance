@@ -38,7 +38,7 @@ function counter(page, phone) {
     const direct = phone ? '.bottom-bar > a[href="#' + screen + '"]' : 'header nav a[href="#' + screen + '"]';
     if (await page.locator(direct).count()) return t.tap(direct);
     await t.tap('[data-key="more"]');
-    await t.tap('.more-menu a[href="#' + screen + '"]');
+    await t.tap('.more-menu a[data-nav="' + screen + '"]');
   };
   t.step = (name, limit) => { t.steps.push({ name, taps: t.n - t.at, limit: limit === undefined ? null : limit }); t.at = t.n; };
   return t;

@@ -58,7 +58,7 @@ async function go(page, screen) {
   const bottom = page.locator('.bottom-bar > a[href="#' + screen + '"]');
   if (await bottom.count()) return bottom.click();
   await page.click('[data-key="more"]');
-  await page.click('.more-menu a[href="#' + screen + '"]');
+  await page.click('.more-menu a[data-nav="' + screen + '"]');
 }
 async function insights(page, tab) { await go(page, 'insights'); await page.click('[data-key="tab-' + tab + '"]'); await page.waitForSelector('#tab-' + tab); }
 async function setup(page, section) { await go(page, 'setup'); await page.click('[data-key="setup-' + section + '"]'); await page.waitForSelector('#setup-' + section); }
@@ -218,6 +218,9 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.waitForTimeout(100);
   check('loop', 'Cash start shown', await page.$eval('#accounts-card p.small b', (b) => b.textContent), money(2500));
   // Net worth (S-111): with only a checking start of 2,500 typed, both net worths are 2,500 and nothing is locked in.
+  // Setup shows the one-line summary; the tiles live in Insights, Net worth (S-114).
+  check('loop', 'Setup net worth line', await settled(page, '[data-key="nw-line-total"]', money(2500)), money(2500));
+  await insights(page, 'networth');
   check('loop', 'Net worth (everything)', await settled(page, '[data-key="nw-total"] .value', money(2500)), money(2500));
   check('loop', 'FI net worth', await settled(page, '[data-key="nw-fi"] .value', money(2500)), money(2500));
   check('loop', 'Locked in', await settled(page, '[data-key="nw-locked"] .value', money(0)), money(0));
@@ -414,7 +417,12 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.fill('[data-key="search"]', 'eras');
   await page.waitForTimeout(150);
   check('search', 'No parked results', String(await page.$$eval('.search-head', (hs) => hs.some((x) => x.textContent === 'Future'))), 'false');
-  await page.press('[data-key="search"]', 'Escape');
+  // A net worth number (S-114): "fi net" finds FI net worth; Enter opens how it was worked out.
+  await page.fill('[data-key="search"]', 'fi net');
+  check('search', 'FI net worth found', await settled(page, '.search-head', 'Net worth'), 'Net worth');
+  await page.press('[data-key="search"]', 'Enter');
+  await page.waitForSelector('#nw-tiles #how-panel', { timeout: 3000 }).catch(() => null);
+  check('search', 'FI net worth panel matches the tile', await page.$eval('[data-key="how-result"]', (b) => b.textContent.replace(/\.\d\d$/, '')).catch(() => 'missing'), await page.$eval('[data-key="nw-fi"] .value button', (b) => b.textContent).catch(() => 'missing tile'));
   // How a computed number was worked out: the panel ends on the same number as the tile.
   await go(page, 'today');
   await page.waitForSelector('[data-key="how:surplus"]');

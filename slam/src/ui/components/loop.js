@@ -10,6 +10,8 @@ import { loopStrip, loopStep, monthEndChecklist, monthReview } from '../../calc/
 import { closeMonthSnapshot, snapshotOf } from '../../calc/summary.js';
 import { forecastFor } from '../../calc/calendar.js';
 import { saveForecast } from '../../store/cashflow.js';
+import { netWorthBridge } from '../../calc/networth-bridge.js';
+import { milestones, netWorthByMonth } from '../../calc/networth.js';
 
 const link = (ctx, where, text) => h('a', { href: '#', 'data-key': 'go-' + where, onclick: (e) => { e.preventDefault(); ctx.jump(where); } }, text);
 
@@ -82,6 +84,7 @@ export function reviewCard(ctx, rec, opts = {}) {
       : h('div', { class: 'grid three', 'data-key': 'review-vs-plan' }, groupList('Better than planned', r.vsPlan.lines.better, diff), groupList('On plan', r.vsPlan.lines.onPlan, (x) => money(x.actual)), groupList('Worse than planned', r.vsPlan.lines.worse, diff)),
     h('h3', {}, 'Vs your own first guess'),
     h('div', { class: 'grid three' }, groupList('Under your estimate', r.vsEstimate.categories.better, diff), groupList('About right', r.vsEstimate.categories.onPlan, (x) => money(x.actual)), groupList('Over your estimate', r.vsEstimate.categories.worse, diff)),
+    netWorthBlock(ctx, rec.key, opts.summary),
     h('ul', { class: 'plain' },
       h('li', { class: 'small' }, h('span', {}, 'Forecast check: predicted on the 1st'), h('b', { class: 'num' }, r.forecast.predicted === null ? 'not saved' : money(r.forecast.predicted) + ', ended ' + money(r.forecast.actual))),
       h('li', { class: 'small' }, h('span', {}, 'Tracking: spending from the log'), h('b', { class: 'num', 'data-key': 'review-tracking' }, pct(r.tracking.share) + ' (' + money(r.tracking.fromLog) + ' logged, ' + money(r.tracking.typed) + ' typed)')),
@@ -93,4 +96,19 @@ export function reviewCard(ctx, rec, opts = {}) {
       h('li', { class: 'small' }, h('span', {}, 'Open at close'), h('b', { 'data-key': 'review-open' }, r.openItems.summary))),
     revised.length ? h('div', { class: 'card flag', 'data-key': 'review-revisions' }, h('b', {}, 'Revised after close (not part of the saved review)'),
       h('ul', { class: 'plain' }, revised.map(([id, v]) => h('li', { class: 'small' }, h('span', {}, (rec.snapshot.lines[id] || { name: id }).name + ', ' + dayLabel(v.at.slice(0, 10))), h('b', { class: 'num' }, money(v.amount) + ' (was ' + money(rec.snapshot.lines[id] ? rec.snapshot.lines[id].actual : null) + ')'))))) : null);
+}
+
+// Net worth in the month in review (S-114): both net worths at the month's end, the change in each,
+// and the bridge's top line. Worked out from the balances (they can be updated after close).
+// The month FI net worth (or net worth) crosses $0 gets its own card; it stays in the milestones.
+function netWorthBlock(ctx, month, summary) {
+  if (!summary) return null;
+  const b = netWorthBridge(ctx.doc, summary.income, month);
+  if (b.total.actual === null && b.fi.actual === null) return null;
+  const crossed = milestones(netWorthByMonth(ctx.doc)).filter((m) => m.celebrate && m.month === month);
+  const tile = (label, end, change, key) => h('div', { class: 'tile' }, h('div', { class: 'label' }, label), h('div', { class: 'value', 'data-key': key }, money(end)), h('div', { class: 'sub' }, change === null ? '' : signedMoney(change) + ' this month'));
+  return h('div', { 'data-key': 'review-networth' },
+    crossed.map((m) => h('div', { class: 'card celebrate', 'data-key': 'celebrate-' + m.key }, h('b', {}, m.label + ' in ' + monthLabel(month) + '.'), h('div', { class: 'small' }, 'It stays in your milestones (Insights, Net worth).'))),
+    h('div', { class: 'strip' }, tile('Net worth', b.total.actual, b.total.change, 'review-nw-total'), tile('FI net worth', b.fi.actual, b.fi.change, 'review-nw-fi')),
+    h('p', { class: 'reading', 'data-key': 'review-nw-reading' }, b.reading));
 }

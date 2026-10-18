@@ -1,14 +1,16 @@
 // Search (S-108): one box in the header ("/" jumps to it). It finds lines,
-// categories, merchants, entries, accounts, debts, charts, settings, months,
+// categories, merchants, entries, net worth numbers, accounts (with the latest balance), debts, charts, settings, months,
 // and screens by name, grouped by type, and each result jumps to its one home
 // (nav.js). Keyboard: arrows move, Enter opens, Escape closes. Results are big
 // enough to tap. Parked tools only show when Future tools are on.
 
 import { h } from '../dom.js';
-import { money, monthLabel, dayLabel } from '../format.js';
+import { money, monthLabel, dayLabel, todayIso } from '../format.js';
 import { SCREENS, INSIGHT_TABS, SETUP_SECTIONS, CHARTS } from '../nav.js';
+import { netWorthAt, LABELS, typeLabel } from '../../calc/networth.js';
+import { balanceAt } from '../../calc/balances.js';
 
-const GROUPS = ['Lines', 'Categories', 'Merchants', 'Entries', 'Accounts', 'Debts', 'Charts', 'Settings', 'Months', 'Screens', 'Future'];
+const GROUPS = ['Lines', 'Categories', 'Merchants', 'Entries', 'Net worth', 'Accounts', 'Debts', 'Charts', 'Settings', 'Months', 'Screens', 'Future'];
 const PER_GROUP = 5;
 
 // Everything findable, built from the household on screen: [group, name, detail, target].
@@ -33,7 +35,13 @@ function index(ctx) {
     const name = t.description || t.note || 'Entry';
     out.push(['Entries', name, dayLabel(t.date) + ', ' + money(Math.abs(t.amount), true), { where: 'log', ui: { txMonth: t.date.slice(0, 7) }, open: 'entry:' + t.id, item: name + ', ' + dayLabel(t.date), extra: money(Math.abs(t.amount), true) }]);
   }
-  for (const a of live(doc.accounts)) out.push(['Accounts', a.name, a.institution || a.type, { where: 'balances', item: a.name }]);
+  // Net worth numbers (S-114): each opens how it was worked out, in Insights, Net worth.
+  const nw = netWorthAt(doc, todayIso());
+  for (const [key, how, label] of [['total', 'nwTotal', LABELS.total], ['fi', 'nwFI', LABELS.fi], ['locked', 'nwLocked', LABELS.locked]]) {
+    out.push(['Net worth', label, nw[key] === null ? 'Needs balances' : money(nw[key]), { where: 'insights:networth', ui: { how }, anchor: 'nw-tiles', item: label }]);
+  }
+  const latest = (key) => { const b = balanceAt(doc, key, todayIso()); return b ? money(b.amount) + ' on ' + dayLabel(b.date) : 'No balance yet'; };
+  for (const a of live(doc.accounts)) out.push(['Accounts', a.name, (a.institution || typeLabel(a.type)) + ', ' + latest(a.id), { where: 'balances', item: a.name }]);
   for (const d of live(doc.debts)) out.push(['Debts', d.label, 'Debt', { where: 'setup:debts', item: d.label }]);
   for (const [anchor, name, where] of CHARTS) out.push(['Charts', name, where.replace('insights:', 'Insights, ').replace('setup:', 'Setup, '), { where, anchor, item: name }]);
   for (const [id, name] of SETUP_SECTIONS) out.push(['Settings', name, 'Setup', { where: 'setup:' + id, item: name }]);

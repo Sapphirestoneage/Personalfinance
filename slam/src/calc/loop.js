@@ -5,7 +5,7 @@
 import { planView, actualsFor, prevMonthKey, reviewSummary } from './plan.js';
 import { counted, isPending, monthLog } from './log.js';
 import { cashCalendar, forecastCheck } from './calendar.js';
-import { balancesFor } from './balances.js';
+import { balancesFor, kindOf, lastUpdated } from './balances.js';
 import { bridgeFor } from './bridge.js';
 import { detect, topMerchants } from './tx-analysis.js';
 import { happySpendShare } from './happiness.js';
@@ -69,6 +69,15 @@ export function reviewRows(summary) {
       empty
     };
   });
+}
+
+// Balances that have not been updated for a while (S-114), for the Next card at month end: every
+// investment and thing you own last given a balance more than 35 days before today (or never).
+export function staleBalances(doc, today, days = 35) {
+  const cutoff = new Date(Date.parse(today + 'T00:00:00Z') - days * 86400000).toISOString().slice(0, 10);
+  return (doc.accounts || []).filter((a) => a.state !== 'archived' && (kindOf(a) === 'invested' || kindOf(a) === 'valued'))
+    .map((a) => ({ id: a.id, name: a.name, last: lastUpdated(doc, a.id, today) }))
+    .filter((x) => x.last === null || x.last < cutoff);
 }
 
 // Which step of the loop is now (S-106), for the strip on Today: Review from the month's
