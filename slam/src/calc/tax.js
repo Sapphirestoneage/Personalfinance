@@ -1,6 +1,13 @@
 // Federal income tax and FICA estimate, used only when a client gives gross pay
 // but not take-home. The result is always a "guess". State tax is not included.
 
+// The rate on the last dollar of taxable income (the bracket someone is "in").
+export function marginalRate(taxable, brackets) {
+  if (taxable <= 0) return 0;
+  for (const [upTo, rate] of brackets) if (upTo === null || taxable <= upTo) return rate;
+  return null;
+}
+
 export function bracketTax(taxable, brackets) {
   let tax = 0;
   let lower = 0;
@@ -19,21 +26,25 @@ export function bracketTax(taxable, brackets) {
 // that lowers income tax; ficaFree = the part that also lowers FICA.
 export function estimateAnnualTax({ gross, deductions = 0, incomeTaxFree = 0, ficaFree = 0, type, filingStatus, stdDeduction }, tax) {
   const brackets = tax.brackets[filingStatus] || tax.brackets.single;
-  const out = { incomeTax: 0, fica: 0, seTax: 0, stdUsed: 0, withheld: type === 'w2' };
+  const out = { incomeTax: 0, fica: 0, socialSecurity: 0, medicare: 0, seTax: 0, stdUsed: 0, taxable: 0, bracket: null, withheld: type === 'w2' };
   // Family support is a gift to the client, not taxable income.
   if (type === 'not-taxable' || type === 'family') return finish(out, gross, deductions);
 
   let agi = gross - incomeTaxFree;
   if (type === 'w2') {
     const ficaBase = gross - ficaFree;
-    out.fica = Math.min(ficaBase, tax.fica.socialSecurityWageBase) * tax.fica.socialSecurityRate + ficaBase * tax.fica.medicareRate;
+    out.socialSecurity = Math.min(ficaBase, tax.fica.socialSecurityWageBase) * tax.fica.socialSecurityRate;
+    out.medicare = ficaBase * tax.fica.medicareRate;
+    out.fica = out.socialSecurity + out.medicare;
   } else if (type === '1099' || type === 'side') {
     const se = gross * tax.selfEmployment.netEarningsFactor;
     out.seTax = Math.min(se, tax.fica.socialSecurityWageBase) * tax.selfEmployment.socialSecurityRate + se * tax.selfEmployment.medicareRate;
     agi -= out.seTax / 2;
   }
   out.stdUsed = Math.min(Math.max(agi, 0), stdDeduction);
-  out.incomeTax = bracketTax(Math.max(0, agi - stdDeduction), brackets);
+  out.taxable = Math.max(0, agi - stdDeduction);
+  out.incomeTax = bracketTax(out.taxable, brackets);
+  out.bracket = marginalRate(out.taxable, brackets);
   return finish(out, gross, deductions);
 }
 
