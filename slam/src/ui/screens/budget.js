@@ -67,7 +67,7 @@ export function renderBudget(ctx, summary) {
     nextCard(ctx, summary),
     closed ? null : keyCharts(ctx, summary),
     h('div', { class: 'spread', style: 'margin:16px 0 8px' }, h('h2', { style: 'margin:0' }, closed ? 'Closed month' : (summary.plan ? 'Estimate, plan, actual' : 'Estimate and actual')), closed ? null : lensToggle(ctx)),
-    hoursMissing ? h('p', { class: 'small warn' }, 'Add hours worked per week to an income source (Basics) to see hours of work.') : null,
+    hoursMissing ? h('p', { class: 'small warn' }, 'Add hours worked per week to an income source (Fill in, Actual) to see hours of work.') : null,
     closed ? closedMonthTable(ctx, monthRows(ctx.doc, summary.history, ctx.ui.monthView), ctx.ui.monthView) : budgetTable(ctx, summary),
     h('div', { class: 'grid two', style: 'margin-top:12px' },
       culpritsCard(summary),

@@ -61,7 +61,7 @@ spend: what can go out today without any day ahead dropping under the cushion). 
 
 ## Bank and card files
 
-Fill in, pass 6 Cash flow imports CSV files exported from Chase (credit card or checking),
+Fill in, pass 5 Cash flow imports CSV files exported from Chase (credit card or checking),
 American Express, Capital One, or any file with date, description, and amount
 columns. Nothing leaves the browser. Each file goes into an account; its rows are matched
 against the log first. The Jordan demo comes with two sample files; Riley's year has five.
@@ -82,9 +82,10 @@ against the log first. The Jordan demo comes with two sample files; Riley's year
 Still four. The monthly loop lives inside them.
 
 1. **Clients**: client list, new client, open, export, import (a file for a client already here is merged record by record; changes made on both copies wait for the coach to pick), and the demo households.
-2. **Fill in**: guided passes, numbered: 1 Gut, 2 Basics, 3 Rough, 4 Actual, 5 Accounts, 6 Cash flow,
-   7 Next stage, 8 Eras. Accounts holds every account (bank and cash, credit cards, investments and
-   retirement, other) with its balances, and what you have against what you owe. Eras opens with Your dream life (short and long term, then today next to each dream and what it
+2. **Fill in**: guided passes, numbered: 1 Gut, 2 Profile, 3 Rough, 4 Actual, 5 Cash flow, 6 Next stage,
+   7 Eras. Profile holds who the client is and every account (bank and cash, credit cards, investments
+   and retirement, other) with its balances, and what you have against what you owe. Income is asked
+   roughly in Rough (take-home a paycheck) and worked out in Actual (gross, deductions, taxes). Eras opens with Your dream life (short and long term, then today next to each dream and what it
    needs in pay), then the eras themselves, each of which can start its spending from today, a dream, or
    the template's share. Next stage has three lenses: Disaster, Likely, Best case. Actual is
    "review and fill gaps": lines filled from the log are collapsed, empty lines come first. Cash flow holds

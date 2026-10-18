@@ -1,27 +1,29 @@
 // Screen 2, Fill in: the guided passes in the order used on calls.
-// Gut, Basics, Rough, Actual (then Accounts, Cash flow, Next stage, Eras). Every pass is skippable.
+// Gut, Profile, Rough, Actual (then Cash flow, Next stage, Eras). Every pass is skippable.
 // The dream life moved to Eras (S-097).
 
 import { h } from '../dom.js';
 import { money } from '../format.js';
 import { question } from '../components/value-input.js';
-import { renderBasics } from './fill-basics.js';
+import { renderProfile, incomeSection } from './fill-basics.js';
 import { renderEstimates } from './fill-estimates.js';
 import { renderActual } from './fill-actual.js';
 
 export const PASSES = [
-  ['gut', '1 Gut'], ['basics', '2 Basics'], ['rough', '3 Rough'], ['actual', '4 Actual']
+  ['gut', '1 Gut'], ['profile', '2 Profile'], ['rough', '3 Rough'], ['actual', '4 Actual']
 ];
 
 export function passForPath(path) {
   const [a, , c] = path;
   if (a === 'gut') return 'gut';
-  if (a === 'income' || a === 'profile' || a === 'household') return 'basics';
+  // Income (S-104): take-home is asked in Rough; the rest of the paycheck is worked out in Actual.
+  if (a === 'income') return c === undefined || path[2] === 'takeHome' ? 'rough' : 'actual';
+  if (a === 'profile' || a === 'household') return 'profile';
   // A dream (category or line) is typed in Eras, Your dream life (S-097).
   if ((a === 'categories' || a === 'line') && (c === 'dream' || c === 'dreamLong')) return 'eras';
   if (a === 'categories') return 'rough';
   if (a === 'line' || a === 'debts') return 'actual';
-  if (a === 'balances') return 'accounts';
+  if (a === 'balances') return 'profile';
   if (a === 'transactions') return 'cashflow';
   if (a === 'nextStage') return 'next';
   if (a === 'eras') return 'eras';
@@ -68,9 +70,10 @@ export function renderFill(ctx, summary) {
   const idx = passes.findIndex(([id]) => id === pass);
   const body = {
     gut: () => renderGut(ctx),
-    basics: () => renderBasics(ctx, summary),
-    rough: () => renderEstimates(ctx, summary, 'estimate'),
-    actual: () => renderActual(ctx, summary)
+    profile: () => renderProfile(ctx, summary),
+    // Income first in both money passes (S-104): a rough take-home in Rough, the full paycheck in Actual.
+    rough: () => h('div', {}, ctx.ui.blind ? null : incomeSection(ctx, summary, 'rough'), renderEstimates(ctx, summary, 'estimate')),
+    actual: () => h('div', {}, incomeSection(ctx, summary, 'actual'), renderActual(ctx, summary))
   }[pass] || (() => extra.find((x) => x.id === pass).render(ctx, summary));
 
   return h('div', {},

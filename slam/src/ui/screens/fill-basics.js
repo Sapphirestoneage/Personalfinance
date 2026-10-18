@@ -1,4 +1,6 @@
-// Fill in, pass 2 Basics: profile, situation, household, income.
+// Fill in, pass 2 Profile: profile, situation, household, accounts, coach notes (S-104).
+// Income is asked in Rough (what each paycheck brings home) and worked out in Actual
+// (gross, deductions, taxes, the paycheck check): incomeSection, below.
 // Only the fields that apply are shown (no roommates = no roommate fields; family only when living with family).
 
 import { h, options } from '../dom.js';
@@ -9,6 +11,7 @@ import { addIncome, addDeduction, removeDeduction } from '../../store/edits.js';
 import { DEDUCTION_KINDS } from '../../calc/deductions.js';
 import { makeValue } from '../../store/value.js';
 import { taxWalkView } from '../components/tax-walk.js';
+import { accountsCard, accountsOverviewCard } from '../components/accounts.js';
 
 const STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
 const SITUATIONS = [['employed', 'Employed'], ['self-employed', 'Self-employed'], ['between-jobs', 'Between jobs'], ['student', 'Student']];
@@ -312,7 +315,7 @@ family: 'Help from family. A gift, so it is not taxed as income.', 'not-taxable'
     row && (row.grossMonthly !== null || row.takeHomeMonthly !== null) ? payTable(ctx, row) : null);
 }
 
-export function renderBasics(ctx, summary) {
+export function renderProfile(ctx, summary) {
   const doc = ctx.doc;
   const pr = doc.profile;
   const hh = doc.household;
@@ -350,14 +353,45 @@ export function renderBasics(ctx, summary) {
         question(ctx, 'Total rent for the place', 'What everyone pays together. Your share is the Rent line in the Actual pass.', ['household', 'roommates', 'totalRent'], rm.totalRent)) : null,
       hh.livingWith === 'family' ? h('p', { class: 'small muted' }, 'Anything you pay your family for rent or bills goes on the Housing lines in the Actual pass. If you pay nothing, mark Housing "Doesn\'t apply" in the Rough pass.') : null),
 
-    h('h2', {}, 'Income'),
-    doc.income.length ? null : h('p', { class: 'muted' }, 'No income yet. Add each source of money coming in.'),
-    doc.income.map((inc) => incomeCard(ctx, inc, summary.income.sources.find((s) => s.id === inc.id))),
-    h('button', { class: 'btn', 'data-path': JSON.stringify(['income']), onclick: () => ctx.update('Add income', (d) => {
-      const inc = addIncome(d, { type: 'w2', label: 'Income ' + (d.income.length + 1) });
-      setIncomeType(inc, defaultIncomeType(d.situation));
-    }) }, '+ Add income source'),
+    accountsOverviewCard(ctx),
+    accountsCard(ctx, doc.currentMonth),
     coachNotesCard(ctx));
+}
+
+// Income in two passes (S-104), one number each: Rough asks what each paycheck brings home (the
+// same take-home the Actual paycheck check uses); Actual works the paycheck out in full.
+function roughIncomeCard(ctx, inc, row) {
+  const p = (k) => ['income', inc.id, k];
+  const paid = ((FREQS.find(([k]) => k === inc.payFrequency) || [0, inc.payFrequency])[1] || '').toLowerCase();
+  if (inc.type === 'unemployment') {
+    return h('div', { class: 'qa', 'data-key': 'rough-income:' + inc.id }, h('div', { class: 'q' }, h('div', {}, inc.label), h('div', { class: 'hint' }, 'Benefits: the amount and withholding are in Actual.')),
+      h('b', { class: 'num' }, row && row.takeHomeMonthly !== null ? money(row.takeHomeMonthly) + ' a month' : '\u00b7'));
+  }
+  // The same take-home that Actual checks against the paystub: one number, asked here first.
+  return question(ctx, h('div', {}, inc.label, h('div', { class: 'hint' }, 'Take-home a paycheck, paid ' + paid + '. Gross, deductions, and taxes are in Actual.')),
+    null, p('takeHome'), inc.takeHome, { label: inc.label + ' take-home' });
+}
+
+function addIncomeButton(ctx) {
+  return h('button', { class: 'btn small', 'data-path': JSON.stringify(['income']), onclick: () => ctx.update('Add income', (d) => {
+    const inc = addIncome(d, { type: 'w2', label: 'Income ' + (d.income.length + 1) });
+    setIncomeType(inc, defaultIncomeType(d.situation));
+  }) }, '+ Add income source');
+}
+
+export function incomeSection(ctx, summary, mode) {
+  const doc = ctx.doc;
+  const rowOf = (inc) => summary.income.sources.find((s) => s.id === inc.id);
+  if (mode === 'rough') {
+    return h('div', { class: 'card', id: 'rough-income' }, h('h2', {}, 'Income: about how much comes in?'),
+      doc.income.length ? null : h('p', { class: 'muted small' }, 'No income yet. Add each source of money coming in.'),
+      doc.income.filter((i) => i.state !== 'archived').map((inc) => roughIncomeCard(ctx, inc, rowOf(inc))),
+      addIncomeButton(ctx));
+  }
+  return h('div', { id: 'actual-income' }, h('h2', {}, 'Income: the paycheck in full'),
+    doc.income.length ? null : h('p', { class: 'muted' }, 'No income yet. Add each source of money coming in.'),
+    doc.income.map((inc) => incomeCard(ctx, inc, rowOf(inc))),
+    addIncomeButton(ctx));
 }
 
 // The coach's own notes about the client (S-096): coach-only, so the client view leaves the card out.

@@ -100,13 +100,30 @@ function cardsBlock(ctx, month) {
         'Add ' + (m.noAccount.length === 1 ? 'an account for it' : 'an account for each (' + m.noAccount.length + ')'))) : null);
 }
 
+// What you have against what you owe (S-103), at the top of the accounts in Profile.
+export function accountsOverviewCard(ctx) {
+  const o = accountsOverview(ctx.doc, ctx.doc.currentMonth);
+  if (!o.count) return null;
+  const tile = (label, value, key, sub) => h('div', { class: 'tile', 'data-key': key }, h('div', { class: 'label' }, label), h('div', { class: 'value' }, money(value)), sub ? h('div', { class: 'sub' }, sub) : null);
+  return h('div', { class: 'card', id: 'accounts-overview' },
+    h('h2', {}, 'What you have and what you owe, ' + monthLabel(o.month)),
+    h('div', { class: 'tiles' },
+      tile('You have', o.have, 'acct-have', 'bank, cash, investments, other'),
+      tile('You owe on cards', o.owe, 'acct-owe', null),
+      tile('Net', o.net, 'acct-net', 'have minus cards')),
+    h('ul', { class: 'plain' }, o.groups.filter((g) => g.rows.length).map((g) => h('li', { class: 'small' },
+      h('span', {}, g.label, h('span', { class: 'xs muted' }, ' (' + g.rows.map((r) => r.name).join(', ') + ')')), h('b', { class: 'num' }, money(g.total))))),
+    o.missing.length ? h('p', { class: 'xs muted' }, 'No balance yet for ' + o.missing.join(', ') + ', so those totals wait for it.') : null,
+    h('p', { class: 'xs muted' }, 'Other debts (loans and the rest) are in Rough and Actual. Latest balance: the month\'s end, or its start until the end is in.'));
+}
+
 // One line for Next stage and Eras: cash on hand, read-only, with a link to where it is typed.
 export function cashOnHandNote(ctx, coh) {
-  const go = (e) => { e.preventDefault(); ctx.go('fill', { pass: 'accounts' }); setTimeout(() => { const el = document.getElementById('accounts-card'); if (el) el.scrollIntoView(); }, 60); };
+  const go = (e) => { e.preventDefault(); ctx.go('fill', { pass: 'profile' }); setTimeout(() => { const el = document.getElementById('accounts-card'); if (el) el.scrollIntoView(); }, 60); };
   if (coh.amount === null) {
-    return h('p', { class: 'small', 'data-key': 'cash-on-hand' }, 'Cash on hand: not entered yet. It comes from account balances. ', h('a', { href: '#fill', onclick: go }, 'Enter balances in Accounts'));
+    return h('p', { class: 'small', 'data-key': 'cash-on-hand' }, 'Cash on hand: not entered yet. It comes from account balances. ', h('a', { href: '#fill', onclick: go }, 'Enter balances in Profile'));
   }
   return h('p', { class: 'small', 'data-key': 'cash-on-hand' }, 'Cash on hand: ', h('b', { class: 'num' }, money(coh.amount)),
     ' from your balances (' + coh.parts.filter((p) => p.amount !== null).map((p) => p.name + ' ' + money(p.amount)).join(', ') + ')' + (coh.missing.length ? '; missing ' + coh.missing.join(', ') : '') + '. ',
-    h('a', { href: '#fill', onclick: go }, 'Change in Accounts'));
+    h('a', { href: '#fill', onclick: go }, 'Change in Profile'));
 }

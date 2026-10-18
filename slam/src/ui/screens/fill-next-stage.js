@@ -1,4 +1,4 @@
-// Fill in, pass 7 Next stage: one drastic change (a new job, school, a move)
+// Fill in, pass 6 Next stage: one drastic change (a new job, school, a move)
 // that costs money in the short term but is better on other measures.
 // Results are on Analyze, under Next stage.
 
@@ -77,7 +77,7 @@ function metricsCard(ctx, ns, summary) {
   const rows = summary.nextStage ? summary.nextStage.metrics : [];
   return h('div', { class: 'card' },
     h('h3', {}, 'The other measures'), h('p', { class: 'muted xs' }, 'Why the change is worth it. Now vs after the change. Add your own.'),
-    h('p', { class: 'small muted' }, 'Hours worked come from Basics and the hours above.'),
+    h('p', { class: 'small muted' }, 'Hours worked come from your income (Actual) and the hours above.'),
     ns.metrics.map((m) => {
       const r = rows.find((x) => x.id === m.id) || {};
       const set = (k) => (doc, v) => { doc.metrics.find((x) => x.id === m.id)[k] = v; };

@@ -154,8 +154,8 @@ for (const [name, button] of Object.entries(DEMOS)) {
   // The Fill in passes (S-097): no Dream pass; the dream life opens Eras.
   await page.click('nav a[href="#fill"]');
   await page.waitForFunction(() => { const b = document.querySelector('.passes button'); return b && b.textContent === '1 Gut'; });
-  check(name, 'Fill in passes', (await page.$$eval('.passes button', (bs) => bs.map((b) => b.textContent))).join(', '), '1 Gut, 2 Basics, 3 Rough, 4 Actual, 5 Accounts, 6 Cash flow, 7 Next stage, 8 Eras');
-  await page.getByRole('button', { name: '8 Eras' }).click();
+  check(name, 'Fill in passes', (await page.$$eval('.passes button', (bs) => bs.map((b) => b.textContent))).join(', '), '1 Gut, 2 Profile, 3 Rough, 4 Actual, 5 Cash flow, 6 Next stage, 7 Eras');
+  await page.getByRole('button', { name: '7 Eras' }).click();
   await page.waitForSelector('#dream-entry');
   if (name === 'maya') {
     // Maya by hand (test/dreams.test.js): short-term dream spending 3,052, today 3,814, so 762 less; biggest
@@ -183,7 +183,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.fill('[data-key="new-client"]', 'Loop check');
   await page.press('[data-key="new-client"]', 'Enter');
   await page.waitForSelector('.passes');
-  await page.getByRole('button', { name: '5 Accounts' }).click();
+  await page.getByRole('button', { name: '2 Profile' }).click();
   await page.click('[data-key="add-acct-checking"]');
   const startBox = page.locator('#accounts-card input.amount').first();
   await startBox.fill('2500');
@@ -193,7 +193,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   // Accounts (S-103): with only a checking start of 2,500 typed, you have 2,500, owe 0 on cards, net 2,500.
   check('loop', 'Accounts: you have', await page.$eval('[data-key="acct-have"] .value', (b) => b.textContent), money(2500));
   check('loop', 'Accounts: net', await page.$eval('[data-key="acct-net"] .value', (b) => b.textContent), money(2500));
-  await page.getByRole('button', { name: '7 Next stage' }).click();
+  await page.getByRole('button', { name: '6 Next stage' }).click();
   await page.waitForTimeout(100);
   const startNs = page.getByRole('button', { name: 'Plan a next stage' });
   if (await startNs.count()) await startNs.click();
@@ -203,7 +203,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   // The third lens is Best case (S-097), in the order Disaster, Likely, Best case.
   check('loop', 'Next stage lenses', (await page.$$eval('table.lenses thead th', (ths) => ths.map((t) => t.textContent).filter(Boolean))).join(', '), 'Disaster, Likely, Best case');
   check('loop', 'No Dream on Next stage', String(/dream/i.test(await page.$eval('#main', (m) => m.textContent))), 'false');
-  await page.getByRole('button', { name: '8 Eras' }).click();
+  await page.getByRole('button', { name: '7 Eras' }).click();
   await page.waitForSelector('[data-key="cash-on-hand"]', { timeout: 3000 }).catch(() => null);
   const eraNote = await page.$eval('[data-key="cash-on-hand"]', (p) => p.textContent).catch(() => 'missing');
   check('loop', 'Eras reads cash from balances', eraNote.includes(money(2500)) ? 'reads ' + money(2500) : eraNote, 'reads ' + money(2500));
@@ -220,7 +220,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.waitForSelector('.toast');
   check('loop', 'Quick entry saved', await page.$eval('.toast', (t) => t.textContent), 'Logged $54.20 to Groceries');
   await page.click('nav a[href="#fill"]');
-  await page.getByRole('button', { name: '6 Cash flow' }).click();
+  await page.getByRole('button', { name: '5 Cash flow' }).click();
   const mdy = (d) => YM.slice(5) + '/' + d + '/' + YM.slice(0, 4);
   await page.setInputFiles('#tx-file', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from('Date,Description,Amount\n' + mdy('04') + ',TRADER JOE S #552,-54.20\n' + mdy('05') + ',WHOLE FOODS MKT,-80.10\n') });
   await page.waitForSelector('[data-key="match-summary"]');
@@ -355,11 +355,11 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.waitForSelector('#cash-strip');
   // The coach writes a note, tags Shopping as a mistake (not shared), and sees the coach-only settings.
   await page.click('nav a[href="#fill"]');
-  await page.getByRole('button', { name: '2 Basics' }).click();
+  await page.getByRole('button', { name: '2 Profile' }).click();
   await page.fill('[data-key="coach-notes"]', 'Ask about the Visa.');
   await page.press('[data-key="coach-notes"]', 'Tab');
   await page.waitForTimeout(150);
-  await page.getByRole('button', { name: '6 Cash flow' }).click();
+  await page.getByRole('button', { name: '5 Cash flow' }).click();
   await page.waitForSelector('#tx-file', { state: 'attached' });
   check('client view', 'Coach sees the cushion', String(await page.$$eval('[data-key="cushion-row"]', (x) => x.length)), '1');
   await page.click('nav a[href="#analyze"]');
@@ -378,9 +378,9 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('client view', 'No materiality', String(await page.$$eval('[data-key="materiality"]', (x) => x.length)), '0');
   check('client view', 'Completion wording', String((await page.$eval('#chart-completion .reading', (p) => p.textContent)).endsWith('not how you are doing.')), 'true');
   await page.click('nav a[href="#fill"]');
-  await page.getByRole('button', { name: '2 Basics' }).click();
+  await page.getByRole('button', { name: '2 Profile' }).click();
   check('client view', 'No coach notes', String(await page.$$eval('[data-key="coach-notes"]', (x) => x.length)), '0');
-  await page.getByRole('button', { name: '6 Cash flow' }).click();
+  await page.getByRole('button', { name: '5 Cash flow' }).click();
   await page.waitForSelector('#tx-file', { state: 'attached' });
   check('client view', 'No cushion input', String(await page.$$eval('[data-key="cushion-row"]', (x) => x.length)), '0');
   await page.click('nav a[href="#budget"]');

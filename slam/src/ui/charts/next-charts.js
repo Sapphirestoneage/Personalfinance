@@ -15,7 +15,7 @@ function yearsMonths(m) {
 
 export function nextStageCards(ctx, s) {
   const n = s.nextStage;
-  if (!n) return [card(ctx, { id: 'next-none', title: 'Next stage', reading: 'Plan a big change in Fill in, pass 7, to see what it would take.' })];
+  if (!n) return [card(ctx, { id: 'next-none', title: 'Next stage', reading: 'Plan a big change in Fill in, pass 6, to see what it would take.' })];
   const C = n.cases;
   // The best case is stored as cases.dream, the old name kept so files load unchanged (S-097).
   const LENSES = [['disaster', 'Disaster'], ['likely', 'Likely'], ['dream', 'Best case']];
@@ -53,7 +53,7 @@ export function nextStageCards(ctx, s) {
     legendItems: [['Now', 'var(--chart-1)'], ['After the change', 'var(--chart-3)']],
     reading: n.next.perHour !== null && n.now.perHour !== null
       ? 'Take-home per hour worked: ' + money(n.now.perHour, true) + ' now, ' + money(n.next.perHour, true) + ' after.'
-      : 'Add hours worked now (Basics) and after the change to compare pay per hour.'
+      : 'Add hours worked now (Fill in, Actual) and after the change to compare pay per hour.'
   });
 
   let path = null;
