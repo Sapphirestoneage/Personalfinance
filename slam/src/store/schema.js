@@ -120,6 +120,8 @@ export function newLine(fields = {}) {
     // dream = short term (this year, or the next step); dreamLong = long term (S-075).
     estimate: makeValue(), dream: makeValue(), dreamLong: makeValue(), actual: makeValue(),
     owedBack: makeValue(), owedBackReceived: false,
+    // Split with someone (S-122): a mark the client sets; the amount is still what they pay.
+    shared: false,
     // Cash flow (S-086): an optional due day (1 to 31); with a due month (1 to 12) it is
     // once a year. The account it is paid from (null = the first checking account).
     dueDay: makeValue(null, { cadence: 'one-off' }), dueMonth: makeValue(null, { cadence: 'one-off' }), accountId: null,

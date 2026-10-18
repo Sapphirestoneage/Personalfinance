@@ -4,6 +4,7 @@
 import { newLine, newCategory, newIncome, newDebt, newDeduction, newNextStage, newNextStageItem, newEra, EVERYTHING_CATEGORY_ID } from './schema.js';
 import { newId } from './ids.js';
 import { guessLineType } from './types.js';
+import { makeValue } from './value.js';
 
 export function findCategory(doc, catId) {
   return doc.categories.find((c) => c.id === catId) || null;
@@ -22,6 +23,17 @@ export function addLine(doc, catId, name) {
   const line = newLine({ name, type: guessLineType(name, cat.type), kind: cat.kind, need: cat.need, savings: cat.savings, tag: cat.tag });
   cat.lines.push(line);
   return line;
+}
+
+// Several lines at once (S-122), from calc/quick-lines.js: each a name and an amount a month (or blank),
+// "roughly" in Your estimates, and marked split with someone when the client said so.
+export function addLines(doc, catId, items, status = 'roughly') {
+  return items.map((it) => {
+    const line = addLine(doc, catId, it.name);
+    if (it.amount !== null && it.amount !== undefined) line.estimate = makeValue(it.amount, { status });
+    if (it.shared) line.shared = true;
+    return line;
+  });
 }
 
 // A new category goes last among spending: before Savings and the one total.

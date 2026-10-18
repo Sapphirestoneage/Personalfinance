@@ -360,3 +360,4 @@ main [id] { scroll-margin-top: 150px; }
 /* Net worth (S-114) */
 .card.celebrate, li.celebrate { border-color: var(--good); }
 .card.celebrate { background: var(--accent-soft); }
+input.quick-lines { flex: 1 1 260px; min-width: 0; }

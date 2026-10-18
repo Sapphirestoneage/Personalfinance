@@ -7,7 +7,8 @@ import { money, pct, monthLabel } from '../format.js';
 import { question } from '../components/value-input.js';
 import { statusChip, statusPicker } from '../components/status.js';
 import { makeValue } from '../../store/value.js';
-import { useSingleTotal, findCategory, renameLine, startBlindRound, addCategory, addLine, breakDown, useOneNumber } from '../../store/edits.js';
+import { useSingleTotal, findCategory, findLine, renameLine, startBlindRound, addCategory, addLine, addLines, breakDown, useOneNumber } from '../../store/edits.js';
+import { parseQuickLines } from '../../calc/quick-lines.js';
 import { nameEdit } from '../components/name-edit.js';
 import { coverageNote } from '../components/coverage.js';
 import { parentsPlan, PREMIUM_LINE_TYPES } from '../../calc/coverage.js';
@@ -20,6 +21,22 @@ import { setPlanAmount } from '../../store/plans.js';
 import { nextMonthKey } from '../../store/months.js';
 
 const parentsPlanOn = (doc) => parentsPlan(doc).on;
+
+// Several sub-categories at once (S-122): "claude 216 spotify 21 youtube 27", with "split" after an
+// amount for one split with someone. Parsed in calc/quick-lines.js.
+function quickLines(ctx, catId) {
+  const add = (input) => {
+    const items = parseQuickLines(input.value);
+    if (!items.length) return ctx.toast('Type a name and an amount, like Spotify 12');
+    ctx.update('Add ' + items.length + (items.length === 1 ? ' line' : ' lines'), (d) => addLines(d, catId, items));
+    input.value = '';
+    ctx.toast('Added ' + items.map((x) => x.name + (x.amount === null ? '' : ' ' + money(x.amount, true)) + (x.shared ? ' (split)' : '')).join(', '));
+  };
+  const box = h('input', { type: 'text', class: 'quick-lines', 'data-key': 'quick-lines:' + catId, 'aria-label': 'Add sub-categories: name and amount',
+    placeholder: 'Add: claude 216 spotify 21 youtube 27', onkeydown: (e) => { if (e.key === 'Enter') add(e.target); } });
+  return h('div', { class: 'row' }, box, h('button', { class: 'btn small', 'data-key': 'quick-lines-add:' + catId, onclick: () => add(box) }, 'Add'),
+    h('span', { class: 'xs muted' }, 'Name, then amount a month. Add "split" after one shared with someone.'));
+}
 
 function addLineButton(ctx, catId) {
   return h('button', { class: 'btn small ghost', onclick: () => {
@@ -171,7 +188,12 @@ export function renderEstimates(ctx, summary, key) {
           h('span', {}, statusChip(r.status[key]), ' ', h('b', { class: 'num' }, money(r[key])), isRough ? h('button', { class: 'btn small ghost more-ctl', 'data-key': 'rough-more:' + r.id, 'aria-expanded': open ? 'true' : 'false', onclick: toggle }, open ? 'less' : 'more') : null)),
         open && cat.type === 'health' ? coverageNote(ctx, 'coverage-summary-plan') : null,
         live.map((l) => {
-          const nm = isRough ? h('div', {}, l.name, open && l.type === 'other' ? lineTypeSelect(ctx, l, { label: 'Type' }) : null)
+          const lineOpen = ctx.ui.expanded.has('rough-line:' + l.id);
+          // The name is editable once the line is open ("more"), so a closed row stays one line tall.
+          const nm = isRough ? h('div', {}, lineOpen ? nameEdit(ctx, l.name, 'line:' + l.id + ':name', (d, v) => renameLine(d, l.id, v), 'Sub-category name') : h('span', { 'data-key': 'line-name:' + l.id }, l.name),
+            l.shared ? h('span', { class: 'tag-chip', 'data-key': 'split-tag:' + l.id }, 'split') : null,
+            lineOpen ? h('label', { class: 'check xs' }, h('input', { type: 'checkbox', checked: !!l.shared, 'data-key': 'split:' + l.id, onchange: (e) => ctx.update('Split with someone', (d) => { findLine(d, l.id).line.shared = e.target.checked; }) }), 'Split with someone') : null,
+            open && l.type === 'other' ? lineTypeSelect(ctx, l, { label: 'Type' }) : null)
             : h('div', {}, nameEdit(ctx, l.name, 'line:' + l.id + ':name', (d, v) => renameLine(d, l.id, v), 'Sub-category name'),
               l.type === 'other' ? lineTypeSelect(ctx, l, { label: 'Type' }) : typeHint(lineTypeLabel(l.type), l.name));
           // A premium line is owned by health coverage (S-117): its summary, never a question.
@@ -183,7 +205,8 @@ export function renderEstimates(ctx, summary, key) {
           ctx.update('Add ' + n, (d) => { id = addLine(d, cat.id, n).id; });
           if (id) { ctx.ui.focusPath = ['line', id, key]; ctx.rerender(); }
         } }, '+ ' + n))) : null,
-        !open ? null : h('div', { class: 'row' }, addLineButton(ctx, cat.id),
+        !open ? null : isRough ? quickLines(ctx, cat.id) : null,
+        !open ? null : h('div', { class: 'row' }, isRough ? null : addLineButton(ctx, cat.id),
           isRough ? h('button', { class: 'btn small ghost', onclick: () => ctx.update('Use one number', (d) => useOneNumber(d, cat.id, r.estimate)) }, 'Use one number instead') : null));
     }
     const fromPay = r.type === 'health' ? (summary.income.deductionsByKind.health || 0) + (summary.income.deductionsByKind.hsa || 0)

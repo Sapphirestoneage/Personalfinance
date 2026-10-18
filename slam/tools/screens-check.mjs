@@ -451,6 +451,16 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.click('[data-key="rv-cat:health"]');
   check('coverage', 'Summary in Review', await settled(page, '[data-key="coverage-summary-rv:premiums-text"]', want), want);
   check('coverage', 'No premium question in Review', String(await page.$$eval('[data-path=\'["line","premiums","actual"]\']', (x) => x.length)), '0');
+  // Quick lines (S-122): several sub-categories at once in Your estimates, one marked split.
+  await plan(page, 'estimates');
+  await page.click('[data-key=\'["categories","bills","estimate"]:more\']');
+  await page.click('[data-key="break:bills"]');
+  await page.fill('[data-key="quick-lines:bills"]', 'claude 216 spotify 21 split youtube 27');
+  await page.press('[data-key="quick-lines:bills"]', 'Enter');
+  await page.waitForTimeout(200);
+  const names = await page.$$eval('#est-bills [data-key^="line-name:"]', (xs) => xs.map((x) => x.textContent));
+  check('coverage', 'Quick lines added', String(['Claude', 'Spotify', 'Youtube'].every((n) => names.includes(n))), 'true');
+  check('coverage', 'Split mark shown', String(await page.$$eval('#est-bills [data-key^="split-tag:"]', (x) => x.length)), '1');
   check('coverage', 'Console errors', String(errors.length), '0');
   await page.close();
 }
