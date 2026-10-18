@@ -3,6 +3,7 @@
 // Every number comes from the summary (or calc's inUnit for the lens toggle).
 
 import { h } from '../dom.js';
+import { outlookLine } from './outlook.js';
 import { money, pct, signedMoney, signedPct, times, inLens } from '../format.js';
 import { statusChip } from './status.js';
 import { inUnit } from '../../calc/lenses.js';
@@ -151,6 +152,7 @@ export function budgetTable(ctx, summary) {
   const skipped = summary.rows.filter((r) => r.notForMe).map((r) => r.name);
   return h('div', {},
     h('div', { class: 'table-wrap' }, h('table', { class: 'budget' }, h('thead', {}, head), h('tbody', {}, body))),
+    outlookLine(ctx, summary, 'table-outlook'),
     skipped.length ? h('p', { class: 'muted xs' }, "Doesn't apply: " + skipped.join(', ') + '.') : null);
 }
 

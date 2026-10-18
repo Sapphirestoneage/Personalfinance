@@ -420,3 +420,34 @@ export function calendarReading(cal) {
   for (const f of cal.payLater.slice(0, 2)) out.push(f.name + ' lands ' + f.gap + ' day' + (f.gap === 1 ? '' : 's') + ' before the paycheck that covers it.');
   return out.join(' ');
 }
+
+// So far and expected by month end (S-128), for the open month only. Never counts money that has not
+// arrived as actual:
+//   so far   = income logged up to today - spending logged up to today (spending lines, not savings)
+//   expected = so far + paychecks still to come this month - bills and loan payments still to come
+//              - the rest of the plan for each spread line (plan - logged, never below 0)
+// "Still to come" is the calendar's own projection (cashCalendar): its waiting and scheduled items and
+// its spread, never a second engine. A card payment is left out: the charges were spending when logged.
+// A closed month, or a day outside the open month, gives null (one number, as before).
+export function monthOutlook(doc, income, today) {
+  const month = monthOf(today);
+  if (month !== doc.currentMonth || (doc.months || []).some((m) => m.key === month)) return null;
+  const savingsLines = new Set((doc.categories || []).filter((c) => c.savings).flatMap((c) => c.lines.map((l) => l.id)));
+  const entries = counted(doc.transactions || []).filter((e) => !e.adjust && monthOf(e.date) === month && e.date <= today);
+  const incomeSoFar = r2(entries.filter((e) => e.kind === 'income').reduce((a, e) => a - e.amount, 0));
+  const spentSoFar = r2(entries.filter((e) => COUNTS.has(e.kind) && e.lineId && !savingsLines.has(e.lineId)).reduce((a, e) => a + e.amount, 0));
+  const soFar = r2(incomeSoFar - spentSoFar);
+  const cal = cashCalendar(doc, income, { today, horizon: Math.max(1, daysBetween(today, dateIn(month, 31))) });
+  const toCome = [...cal.waiting, ...cal.scheduled.filter((i) => !i.skipped && !i.confirmed && i.date > today)]
+    .filter((i) => monthOf(i.date) === month && i.amount !== null && !(i.kind === 'debt' && i.card) && !(i.lineId && savingsLines.has(i.lineId)));
+  const seen = new Set();
+  const items = toCome.filter((i) => (seen.has(i.key) ? false : seen.add(i.key))).map((i) => ({ date: i.date, name: i.name, kind: i.kind, amount: i.dir === 'in' ? i.amount : -i.amount }));
+  const sp = cal.spreads[month];
+  const rest = sp ? sp.units.filter((u) => !u.lineIds.some((id) => savingsLines.has(id))).map((u) => ({ name: u.name, plan: u.plan, logged: u.logged, left: u.left })) : [];
+  const paychecks = r2(items.filter((i) => i.amount > 0).reduce((a, i) => a + i.amount, 0));
+  const bills = r2(-items.filter((i) => i.amount < 0).reduce((a, i) => a + i.amount, 0));
+  const planLeft = r2(rest.reduce((a, u) => a + u.left, 0));
+  // An income with no pay date has no paychecks on the calendar, so none are expected: named, not guessed.
+  const noPayDate = (doc.income || []).filter((i) => i.state !== 'archived' && payDates(i, month) === null).map((i) => i.label);
+  return { month, today, incomeSoFar, spentSoFar, soFar, paychecks, bills, planLeft, items, rest, noPayDate, expected: r2(soFar + paychecks - bills - planLeft) };
+}

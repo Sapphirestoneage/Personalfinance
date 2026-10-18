@@ -528,12 +528,15 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.waitForSelector('#nw-tiles #how-panel', { timeout: 3000 }).catch(() => null);
   check('search', 'FI net worth panel matches the tile', await page.$eval('[data-key="how-result"]', (b) => b.textContent.replace(/\.\d\d$/, '')).catch(() => 'missing'), await page.$eval('[data-key="nw-fi"] .value button', (b) => b.textContent).catch(() => 'missing tile'));
   // How a computed number was worked out: the panel ends on the same number as the tile.
+  // October is open (S-128): so far and expected by month end, by hand in test/outlook.test.js:
+  // so far 1,630 - 2,369.25 = -739.25; expected -739.25 + 1,500 - 65 - 694.75 = 1.00.
   await go(page, 'today');
-  await page.waitForSelector('[data-key="how:surplus"]');
-  const surplusTile = await page.$eval('[data-key="how:surplus"]', (b) => b.textContent);
-  await page.click('[data-key="how:surplus"]');
+  await page.waitForSelector('[data-key="how:soFar"]');
+  check('sources', 'So far tile', await page.$eval('[data-key="how:soFar"]', (b) => b.textContent), signedMoney(-739.25));
+  check('sources', 'Expected by month end', await page.$eval('[data-key="how:expected"]', (b) => b.textContent), signedMoney(1));
+  await page.click('[data-key="how:expected"]');
   await page.waitForSelector('#how-panel');
-  check('sources', 'Surplus panel matches the tile', (await page.$eval('[data-key="how-result"]', (b) => b.textContent)).replace(/\.\d\d$/, ''), surplusTile.replace(/\.\d\d$/, ''));
+  check('sources', 'Expected panel matches the tile', (await page.$eval('[data-key="how-result"]', (b) => b.textContent)).replace(/\.\d\d$/, ''), signedMoney(1));
   // Safe to spend (S-095 by hand): 0, because the lowest point (60) is 40 under the 100 cushion.
   await page.click('[data-key="how:safeToSpend"]');
   check('sources', 'Safe to spend panel', await settled(page, '[data-key="how-result"]', money(0, true)), money(0, true));

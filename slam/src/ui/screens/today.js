@@ -14,6 +14,7 @@ import { jumpLink } from '../components/jump.js';
 import { INSIGHT_TABS } from '../nav.js';
 import { firstSession, staleBalances, loopStep, loopStrip, accountTypeNudges } from '../../calc/loop.js';
 import { promoWarnings } from '../../calc/debts.js';
+import { monthOutlook } from '../../calc/calendar.js';
 import { explain } from '../../calc/explain.js';
 import { howButton, howPanel } from '../components/how.js';
 
@@ -28,15 +29,18 @@ export function headlineTiles(ctx, summary) {
   const inc = summary.income;
   const since = summary.sinceLast;
   const hb = (key, text) => howButton(ctx, key, text);
-  const open = ['takeHome', 'spending', 'surplus', 'savingsRate'].includes(ctx.ui.how) ? ctx.ui.how : null;
+  // An open month (S-128): so far and expected by month end, never money that has not arrived as actual.
+  const o = monthOutlook(ctx.doc, inc, todayIso());
+  const open = ['takeHome', 'spending', 'surplus', 'savingsRate', ...(o ? ['soFar', 'expected'] : [])].includes(ctx.ui.how) ? ctx.ui.how : null;
   return h('div', {},
     h('div', { class: 'strip four', id: 'headline' },
       tile('Take-home', hb('takeHome', money(t.takeHome)), inc.takeHomeIsGuess ? h('span', {}, statusChip('guess'), ' state tax not included') : 'per month'),
       tile('Spending', hb('spending', money(t.spending)), t.basisUsesEstimate.length ? 'uses estimates for ' + t.basisUsesEstimate.length : 'actuals'),
-      tile(t.surplus !== null && t.surplus < 0 ? 'Shortfall' : 'Surplus', hb('surplus', signedMoney(t.surplus)), since && since.surplus !== null ? signedMoney(since.surplus) + ' since last time' : 'per month',
-        t.surplus === null ? '' : t.surplus < 0 ? 'bad' : 'good'),
+      o ? tile('So far this month', hb('soFar', signedMoney(o.soFar)), h('span', {}, 'Expected by month end ', hb('expected', signedMoney(o.expected))), o.soFar < 0 ? 'bad' : 'good')
+        : tile(t.surplus !== null && t.surplus < 0 ? 'Shortfall' : 'Surplus', hb('surplus', signedMoney(t.surplus)), since && since.surplus !== null ? signedMoney(since.surplus) + ' since last time' : 'per month',
+          t.surplus === null ? '' : t.surplus < 0 ? 'bad' : 'good'),
       tile('Savings rate', hb('savingsRate', pct(t.savingsRate)), 'incl. pre-tax')),
-    open ? howPanel(ctx, explain(summary, open)) : null);
+    open ? howPanel(ctx, explain(summary, open, o)) : null);
 }
 
 function firstSessionCard(ctx, summary) {

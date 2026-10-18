@@ -73,9 +73,11 @@ function report(journey, view, t, limit) {
 // a. First session. By hand: take-home 1,200 a paycheck, every two weeks = 1,200 x 26 / 12 = 2,600 a month,
 // typed in Your estimates (S-123). Estimates a month: Housing (the rent) 1,000, Food 400, Transportation 150,
 // Health 100, Bills 80, Personal and fun 200, Annual 50, Giving 20 = spending 2,000. No Fees (S-123).
-// Savings is what is left over, never typed: 2,600 - 2,000 = 600. With no actuals yet, the month counts
-// the estimate, so surplus 2,600 - 2,000 - 600 = 0, and the savings rate is 600 / 2,600 = 23.1%, shown 23%.
-// Checking starts at 2,500.
+// Savings is what is left over, never typed: 2,600 - 2,000 = 600; the savings rate is 600 / 2,600 = 23.1%,
+// shown 23%. October is open, so Today shows so far and expected by month end (S-128) instead of one
+// surplus: nothing is logged, so so far is 0 - 0 = 0. The paycheck has no pay date yet, so none is
+// scheduled, and no bill has a due day; the rest of the plan is every estimate, 2,000 (the month's plan is
+// not started, so the estimates stand in). Expected 0 + 0 - 0 - 2,000 = -2,000. Checking starts at 2,500.
 async function firstSession(browser, view, size) {
   const page = await browser.newPage({ viewport: size });
   await page.clock.setFixedTime(new Date('2026-10-17T12:00:00'));
@@ -122,7 +124,8 @@ async function firstSession(browser, view, size) {
   check(J, 'First session done', String(await page.$$eval('#first-session', (x) => x.length)), '0');
   check(J, 'Take-home', await text(page, '[data-key="how:takeHome"]'), money(2600));
   check(J, 'Spending', await text(page, '[data-key="how:spending"]'), money(2000));
-  check(J, 'Surplus', await text(page, '[data-key="how:surplus"]'), signedMoney(0));
+  check(J, 'So far', await text(page, '[data-key="how:soFar"]'), signedMoney(0));
+  check(J, 'Expected by month end', await text(page, '[data-key="how:expected"]'), signedMoney(-2000));
   check(J, 'Savings rate', await text(page, '[data-key="how:savingsRate"]'), pct(600 / 2600));
   check(J, 'Cash today', await text(page, '[data-key="cash-today"]'), money(2500));
   report('a. First session', view, t, 60);
