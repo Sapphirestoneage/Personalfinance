@@ -12,6 +12,7 @@ import { forecastFor } from '../../calc/calendar.js';
 import { saveForecast } from '../../store/cashflow.js';
 import { netWorthBridge } from '../../calc/networth-bridge.js';
 import { milestones, netWorthByMonth } from '../../calc/networth.js';
+import { incomeRowsList } from './income-month.js';
 
 const link = (ctx, where, text) => h('a', { href: '#', 'data-key': 'go-' + where, onclick: (e) => { e.preventDefault(); ctx.jump(where); } }, text);
 
@@ -79,6 +80,8 @@ export function reviewCard(ctx, rec, opts = {}) {
       h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Spent'), h('div', { class: 'value' }, money(t.spent)), h('div', { class: 'sub' }, 'plan ' + money(t.plan) + ', estimate ' + money(t.estimate))),
       h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Surplus'), h('div', { class: 'value' }, signedMoney(t.surplus)), h('div', { class: 'sub' }, 'savings rate ' + pct(t.savingsRate))),
       h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Bridge'), h('div', { class: 'value', 'data-key': 'review-bridge' }, r.bridge.ties === null ? 'no balances' : r.bridge.ties ? 'Ties' : 'Off by ' + money(Math.abs(r.bridge.unexplained))), h('div', { class: 'sub' }, r.bridge.top ? (r.bridge.top.short || r.bridge.top.label) + ' ' + signedMoney(r.bridge.top.amount) : ''))),
+    // Income first (S-118): saved with the month from then on.
+    r.incomeRows ? incomeRowsList(r.incomeRows, t.income, 'review-income') : null,
     h('h3', {}, 'Vs your plan'),
     t.plan === null ? h('p', { class: 'small muted' }, 'No plan this month.')
       : h('div', { class: 'grid three', 'data-key': 'review-vs-plan' }, groupList('Better than planned', r.vsPlan.lines.better, diff), groupList('On plan', r.vsPlan.lines.onPlan, (x) => money(x.actual)), groupList('Worse than planned', r.vsPlan.lines.worse, diff)),

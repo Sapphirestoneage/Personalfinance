@@ -42,7 +42,7 @@ async function buildBridgeDoc() {
   findLine(d, 'rent').line.actual = makeValue(1500);
   findLine(d, 'emergency-fund').line.actual = makeValue(200);
   Object.assign(findLine(d, 'car-insurance').line, { estimate: makeValue(1200, { cadence: 'year' }), dueMonth: one(10), dueDay: one(14) });
-  for (const [date, amount, more] of [['2026-10-01', -2000, { kind: 'income' }], ['2026-10-15', -2000, { kind: 'income' }], ['2026-10-20', -300, { kind: 'income' }],
+  for (const [date, amount, more] of [['2026-10-01', -2000, { kind: 'income', incomeId: 'job' }], ['2026-10-15', -2000, { kind: 'income', incomeId: 'job' }], ['2026-10-20', -300, { kind: 'income', incomeId: 'job' }],
     ['2026-10-05', 300, { lineId: 'groceries', account: 'visa' }], ['2026-10-06', 100, { lineId: 'groceries' }], ['2026-10-14', 1200, { lineId: 'car-insurance' }],
     ['2026-10-25', 450, { kind: 'card-payment' }], ['2026-10-28', 60, { merchant: 'ATM withdrawal' }]]) addEntry(d, { date, amount, account: 'chk', ...more });
   editEntry(d, addEntry(d, { date: '2026-10-10', amount: 120, lineId: 'shopping', account: 'chk', merchant: 'Ticketmaster' }).id, { owed: 60 });
@@ -366,12 +366,12 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.waitForSelector('#months-review');
   await page.selectOption('[data-key="months-pick"]', '2026-03');
   await page.waitForTimeout(150);
-  check('riley', 'March review readings', await settled(page, '#months-review [data-key="review-readings"]', 'Food came in $136 under plan. Shopping was $57 over. Income came in $280 less than planned. 1.07x off this month, down from 1.09x.'), 'Food came in $136 under plan. Shopping was $57 over. Income came in $280 less than planned. 1.07x off this month, down from 1.09x.');
+  check('riley', 'March review readings', await settled(page, '#months-review [data-key="review-readings"]', 'Food came in $136 under plan. Shopping was $57 over. 1.07x off this month, down from 1.09x.'), 'Food came in $136 under plan. Shopping was $57 over. 1.07x off this month, down from 1.09x.');
   check('riley', 'March bridge ties', await settled(page, '#months-review [data-key="review-bridge"]', 'Ties'), 'Ties');
   await insights(page, 'cash');
   await page.selectOption('[data-key="bridge-month"]', '2026-03');
   await page.waitForTimeout(150);
-  check('riley', 'March bridge reading', await settled(page, '#chart-bridge .reading', 'Your budget showed $172 over, but cash went down $966. The car insurance bill ($960) came due this month.'), 'Your budget showed $172 over, but cash went down $966. The car insurance bill ($960) came due this month.');
+  check('riley', 'March bridge reading', await settled(page, '#chart-bridge .reading', 'Your budget showed $452 over, but cash went down $966. The car insurance bill ($960) came due this month.'), 'Your budget showed $452 over, but cash went down $966. The car insurance bill ($960) came due this month.');
   await insights(page, 'time');
   check('riley', 'March 80/20', await settled(page, '#chart-pareto .reading', '13% of your entries (3 of 23) made up 80% of your spending.'), '13% of your entries (3 of 23) made up 80% of your spending.');
   await page.click('[data-key="pareto-level-lines"]');
@@ -405,6 +405,13 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('riley', 'Visa interest', await settled(page, '[data-key="debt-interest:debt-visa"]', 'Interest (computed) this month: $0.00. Paid in full each month: no interest. It is in Debt payments, never typed.'), 'Interest (computed) this month: $0.00. Paid in full each month: no interest. It is in Debt payments, never typed.');
   await insights(page, 'networth');
   check('riley', 'Net worth charts drawn', String(await page.$$eval('#chart-nw-time svg, #chart-nw-assets-debts svg, #chart-nw-mix svg, #chart-nw-bridge svg', (x) => x.length)), '4');
+  // Income from the log (S-118): October so far, the Oct 9 paycheck 1,500 and dog walking 130 (Oct 12).
+  await go(page, 'review');
+  check('riley', 'October paycheck from the log', await settled(page, '[data-key="income-actual:job"]', '$1,500.00'), '$1,500.00');
+  check('riley', 'October dog walking from the log', await settled(page, '[data-key="income-actual:side"]', '$130.00'), '$130.00');
+  // November's plan: paydays Nov 6 and Nov 20, 2 x 1,500 = 3,000, and dog walking 250: 3,250.
+  await plan(page, 'plan');
+  check('riley', 'November planned income', await settled(page, '[data-key="plan-income-total"]', '$3,250'), '$3,250');
   await go(page, 'track');
   await page.waitForSelector('#chart-cf-paylater');
   check('riley', 'Pay-later flag', await page.$eval('#chart-cf-paylater li', (li) => li.querySelector('span').textContent + ' (' + li.querySelector('b').textContent + ')'), 'Rent is due Nov 1, paid Nov 6 (5 days)');

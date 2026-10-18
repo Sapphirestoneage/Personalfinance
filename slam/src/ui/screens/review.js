@@ -12,6 +12,7 @@ import { valueInput } from '../components/value-input.js';
 import { statusChip } from '../components/status.js';
 import { findCategory } from '../../store/edits.js';
 import { coverageNote } from '../components/coverage.js';
+import { incomeFillCard } from '../components/income-month.js';
 import { PREMIUM_LINE_TYPES } from '../../calc/coverage.js';
 import { checklistCard, reviewCard } from '../components/loop.js';
 import { closedMonthTable } from '../components/budget-table.js';
@@ -161,6 +162,8 @@ export function renderReview(ctx, summary) {
     h('h1', {}, 'Review'),
     justClosed ? reviewCard(ctx, justClosed, { id: 'just-closed', summary, dismiss: () => { ctx.ui.justClosed = null; ctx.rerender(); } }) : null,
     h('section', { id: 'fill-gaps' }, h('h2', {}, 'Fill gaps, ' + monthLabel(doc.currentMonth)),
+      // Income first (S-118), then the spending lines still empty.
+      incomeFillCard(ctx, summary),
       gapsCard(ctx, summary),
       h('div', { class: 'card', id: 'rv-rows' }, h('p', { class: 'muted small', style: 'margin-top:0' }, 'Already filled from the log or answered. Tap a category to see its lines.'),
         reviewRows(summary).map((r) => categoryRow(ctx, summary, r))),

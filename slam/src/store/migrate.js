@@ -69,7 +69,10 @@ const STEPS = {
   13: (doc) => {
     const { parentsPlan, ...household } = doc.household || {};
     return { ...doc, schemaVersion: 14, household, coverage: doc.coverage || coverageFrom(doc, !!parentsPlan) };
-  }
+  },
+  // Version 14 to 15 (S-118): typed income actuals (none yet) and a month's plan for side income (none
+  // yet). A closed month saved before this has no income in its snapshot; its income is read from the log.
+  14: (doc) => ({ ...doc, schemaVersion: 15, incomeActuals: doc.incomeActuals || {} })
 };
 
 const LOGGED = new Set(['spend', 'fee', 'refund', 'reimbursement']);
@@ -131,6 +134,7 @@ function logOwnsActuals(doc) {
     return keep(l, doc.currentMonth, l.actual) ? l : { ...l, actual: null };
   }) }));
   const lineById = Object.fromEntries((doc.categories || []).flatMap((c) => (c.lines || []).map((l) => [l.id, l])));
+  out.incomeActuals = Object.fromEntries(Object.entries(doc.incomeActuals || {}).map(([k, src]) => [k, Object.fromEntries(Object.entries(src).map(([id, v]) => [id, normalizeValue(v)]))]));
   out.monthActuals = Object.fromEntries(Object.entries(doc.monthActuals || {}).map(([month, lines]) => [month,
     Object.fromEntries(Object.entries(lines).filter(([id, v]) => !(v && v.amount !== null && v.amount !== undefined) || !lineById[id] || keep(lineById[id], month, v)))]).filter(([, lines]) => Object.keys(lines).length));
   out.transactions = txs.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0));
@@ -277,6 +281,7 @@ export function normalizeHousehold(doc) {
   const nv = (v) => normalizeValue(v);
   out.plans = Object.fromEntries(Object.entries(doc.plans || {}).map(([m, p]) => [m, {
     createdFrom: p.createdFrom || 'manual',
+    ...(p.income ? { income: Object.fromEntries(Object.entries(p.income).map(([k, v]) => [k, nv(v)])) } : {}),
     lines: Object.fromEntries(Object.entries(p.lines || {}).map(([k, e]) => [k, {
       ...meta(e),
       amount: nv(e.amount), start: nv(e.start === undefined ? e.amount : e.start), decision: e.decision || 'keep',

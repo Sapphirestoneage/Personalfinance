@@ -29,9 +29,9 @@ export function october(opts = {}) {
   ins.estimate = makeValue(1200, { cadence: 'year' });
   ins.dueMonth = one(10);
   ins.dueDay = one(14);
-  addEntry(d, { date: '2026-10-01', amount: -2000, kind: 'income', account: 'chk' });
-  addEntry(d, { date: '2026-10-15', amount: -2000, kind: 'income', account: 'chk' });
-  addEntry(d, { date: '2026-10-20', amount: -300, kind: 'income', account: 'chk', note: 'bonus' });
+  addEntry(d, { date: '2026-10-01', amount: -2000, kind: 'income', incomeId: 'job', account: 'chk' });
+  addEntry(d, { date: '2026-10-15', amount: -2000, kind: 'income', incomeId: 'job', account: 'chk' });
+  addEntry(d, { date: '2026-10-20', amount: -300, kind: 'income', incomeId: 'job', account: 'chk', note: 'bonus' });
   addEntry(d, { date: '2026-10-05', amount: 300, lineId: 'groceries', account: 'visa' });
   addEntry(d, { date: '2026-10-06', amount: 100, lineId: 'groceries', account: 'chk' });
   addEntry(d, { date: '2026-10-14', amount: 1200, lineId: 'car-insurance', account: 'chk', merchant: 'Geico' });

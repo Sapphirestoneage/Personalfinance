@@ -51,19 +51,20 @@ test('Riley: March\'s net worth bridge, line by line (it ties)', () => {
   const b = netWorthBridge(d, buildSummary(d, refs).income, '2026-03');
   // Start (February 28): checking 3,793.11 + savings 450 + 401(k) 13,465 + Roth 7,910 + car 9,100 = 34,718.11,
   // less the Visa 586.35 and the loan 5,459.67: 28,672.09.
-  // Surplus -171.89 and timing -865 (yearly) - 280 (income) = -1,145, from the cash bridge (test/riley.test.js).
+  // Surplus -451.89 (the actual income 3,220, S-118) and timing -865 (yearly), from the cash bridge
+  // (test/riley.test.js). Before S-118 these were -171.89 and -1,145 (with -280 of income vs take-home): the same sum.
   // Saved: the savings lines 200 + 400 + 50 = 650, + the 401(k) from the paycheck 150 x 26 / 12 = 325: 975.
   // Debt paid down: the Visa minimum 35 + the loan 5,459.67 - 5,146.97 = 312.70: 347.70.
   // Market: 401(k) 14,065 - 13,465 - 325 = 275; Roth 8,450 - 7,910 - 400 moved in on the 28th = 140: 415.
   // Values: the car 9,100 -> 9,000: -100.
-  assert.deepEqual(lines(b.total), { surplus: -171.89, timing: -1145, saved: 975, 'paid-down': 347.7, market: 415, value: -100 });
-  // 28,672.09 - 171.89 - 1,145 + 975 + 347.70 + 415 - 100 = 28,992.90 = March's end: nothing left over.
+  assert.deepEqual(lines(b.total), { surplus: -451.89, timing: -865, saved: 975, 'paid-down': 347.7, market: 415, value: -100 });
+  // 28,672.09 - 451.89 - 865 + 975 + 347.70 + 415 - 100 = 28,992.90 = March's end: nothing left over.
   assert.deepEqual([b.total.start, b.total.explained, b.total.actual, b.total.unexplained, b.total.change], [28672.09, 28992.9, 28992.9, 0, 320.81]);
-  // In words: saved -171.89 - 1,145 + 975 = -341.89, so more went out than came in.
+  // In words: saved -451.89 - 865 + 975 = -341.89, so more went out than came in.
   assert.equal(b.reading, 'Net worth rose $321. $342 more went out than came in, $415 the market added, $348 of debt paid down, $100 of value lost on things you own.');
   // FI: start 25,618.11 - 586.35 = 25,031.76; lines without the loan and the car:
-  // -171.89 - 1,145 + 975 + 35 + 415 = 108.11; 25,031.76 + 108.11 = 25,139.87 = March's FI.
-  assert.deepEqual(lines(b.fi), { surplus: -171.89, timing: -1145, saved: 975, 'paid-down': 35, market: 415 });
+  // -451.89 - 865 + 975 + 35 + 415 = 108.11; 25,031.76 + 108.11 = 25,139.87 = March's FI.
+  assert.deepEqual(lines(b.fi), { surplus: -451.89, timing: -865, saved: 975, 'paid-down': 35, market: 415 });
   assert.deepEqual([b.fi.start, b.fi.explained, b.fi.unexplained], [25031.76, 25139.87, 0]);
 });
 
@@ -71,14 +72,14 @@ test('Riley: June\'s net worth bridge, with the $60 of ATM cash not explained', 
   const d = loadHousehold('riley');
   const b = netWorthBridge(d, buildSummary(d, refs).income, '2026-06');
   // Start (May 31): 2,822.03 + 200 + 15,165 + 9,475 + 8,800 = 36,462.03, less 707.62 and 4,516.86: 31,237.55.
-  // Surplus -26.35; timing: yearly +95, paid back +60, income -350 = -195 (test/riley.test.js).
+  // Surplus -376.35 (the actual income 3,150, S-118); timing: yearly +95, paid back +60 = 155 (test/riley.test.js).
   // Saved 650 + 325 = 975. Paid down 35 + (4,516.86 - 4,199.44 = 317.42) = 352.42.
   // Market: 401(k) 15,340 - 15,165 - 325 = -150; Roth 9,800 - 9,475 - 400 = -75: -225. The car 8,800 -> 8,700: -100.
-  assert.deepEqual(lines(b.total), { surplus: -26.35, timing: -195, saved: 975, 'paid-down': 352.42, market: -225, value: -100 });
-  // Explained 31,237.55 - 26.35 - 195 + 975 + 352.42 - 225 - 100 = 32,018.62; actual 31,958.62; -60 not explained.
+  assert.deepEqual(lines(b.total), { surplus: -376.35, timing: 155, saved: 975, 'paid-down': 352.42, market: -225, value: -100 });
+  // Explained 31,237.55 - 376.35 + 155 + 975 + 352.42 - 225 - 100 = 32,018.62; actual 31,958.62; -60 not explained.
   assert.deepEqual([b.total.start, b.total.explained, b.total.actual, b.total.unexplained, b.total.ties], [31237.55, 32018.62, 31958.62, -60, false]);
   assert.equal(b.parts.cash, -60);
-  // Saved -26.35 - 195 + 975 = 753.65; the change 31,958.62 - 31,237.55 = 721.07.
+  // Saved -376.35 + 155 + 975 = 753.65; the change 31,958.62 - 31,237.55 = 721.07.
   assert.equal(b.reading, 'Net worth rose $721. $754 you saved, $225 the market took, $352 of debt paid down, $100 of value lost on things you own. $60 is not explained yet.');
 });
 

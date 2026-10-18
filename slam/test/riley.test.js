@@ -94,7 +94,13 @@ test('Riley loads, validates, and has the year as the loop ran it', () => {
 //   phone 65 (log, 1)            shopping 38.99 + 24.50 + 54.00 = 117.49 (log, 3)
 //   entertainment 28 (log, 1)    gifts 0 (typed)    car registration 15 (share)    Visa minimum 35
 //   Spending: 1,750 + 84.30 + 314.55 + 99.25 + 340 + 80 + 93.30 + 65 + 117.49 + 28 + 0 + 15 + 35 = 3,021.89
-//   Savings: 200 + 400 (log) + 50 = 650. Surplus: 3,500 - 3,021.89 - 650 = -171.89.
+//   Savings: 200 + 400 (log) + 50 = 650.
+// INCOME (S-118): estimate 3,250 (1,500 a paycheck x 26 / 12) + dog walking 250 = 3,500.
+//   Plan: paydays from the biweekly schedule (Fridays from October 10, 2025: ... Feb 27, Mar 13, Mar 27,
+//   Apr 10): 2 paychecks this month, 2 x 1,500 = 3,000; dog walking 250 (its estimate): 3,250.
+//   Actual from the log: paychecks 1,500 (Mar 13) + 1,500 (Mar 27) = 3,000 (2 entries); dog walking
+//   120 (Mar 9) + 100 (Mar 23) = 220 (2 entries). 3,220.
+//   Surplus: the actual income 3,220 - 3,021.89 - 650 = -451.89.
 // ---------------------------------------------------------------------------
 
 test('March: the log after matching, and nothing counted twice', () => {
@@ -124,7 +130,10 @@ test('March: prefilled actuals, better / on plan / worse', () => {
   for (const [id, v] of Object.entries(want)) money(lines[id].actual, v, id);
   money(r.totals.spent, 3021.89, 'spent');
   money(r.totals.plan, 3199, 'plan');
-  money(r.totals.surplus, -171.89, 'surplus');
+  money(r.totals.surplus, -451.89, 'surplus');
+  assert.deepEqual(r.totals.income, { estimate: 3500, plan: 3250, actual: 3220, tracked: true, unassigned: 0 });
+  assert.deepEqual(r.incomeRows.map((x) => [x.name, x.estimate, x.plan, x.planNote, x.actual, x.count]),
+    [['Northwind Labs', 3250, 3000, '2 paychecks this month', 3000, 2], ['Dog walking', 250, 250, '', 220, 2]]);
   // Lines vs plan (more than 5% and $10 counts):
   //   better: groceries -85.45 (21%), eating out -50.75, gifts -40, entertainment -32 (53%), gas -26.70 (22%)
   //   on plan: rent, utilities (+0.30), car payment, car insurance, phone, car registration
@@ -136,13 +145,13 @@ test('March: prefilled actuals, better / on plan / worse', () => {
   // Categories: Food 413.80 vs 550 = -136.20 better; Personal and fun 145.49 vs 160 = -14.51 (9%) better;
   // Transportation 513.30 vs 540 = -26.70 is 4.9%, so on plan.
   assert.deepEqual(g(r.vsPlan.categories.better), ['Food -136.2', 'Personal and fun -14.51']);
-  // Income: 1,500 + 1,500 + 120 + 100 = 3,220 vs 3,500 planned: 280 less
-  assert.deepEqual(r.income.worse.map((x) => x.diff), [-280]);
+  // Income: 3,220 vs the plan's 3,250 (its real 2 paychecks): 30 less, under 5% (162.50), so on plan.
+  assert.deepEqual([r.income.worse.length, r.income.onPlan.map((x) => x.diff)], [0, [-30]]);
   // Accuracy: estimates 3,239 a month (rent 1,750, utilities 84, groceries 400, eating out 150, car payment 340,
   // insurance 80, gas 120, phone 65, shopping 100, entertainment 60, gifts 40, registration 15, Visa 35).
   // March 3,021.89 / 3,239 = 0.93297, 1.07x off. February 2,959.45 / 3,239 = 0.91369, 1.09x off.
   assert.deepEqual([r.accuracy.now, r.accuracy.last], [1.07, 1.09]);
-  assert.deepEqual(r.readings, ['Food came in $136 under plan.', 'Shopping was $57 over.', 'Income came in $280 less than planned.', '1.07x off this month, down from 1.09x.']);
+  assert.deepEqual(r.readings, ['Food came in $136 under plan.', 'Shopping was $57 over.', '1.07x off this month, down from 1.09x.']);
   // Tracking: from the log 1,750 + 314.55 + 99.25 + 340 + 93.30 + 65 + 117.49 + 28 = 2,807.59;
   // typed: utilities 84.30 + gifts 0. Share 2,807.59 / 2,891.89 = 0.9708495 (2,891.89 x 0.97085 = 2,807.5914, a hair over).
   assert.deepEqual([r.tracking.fromLog, r.tracking.typed], [2807.59, 84.3]);
@@ -152,18 +161,18 @@ test('March: prefilled actuals, better / on plan / worse', () => {
 test('March: the bridge ties, and the checklist closed with nothing open', () => {
   const d = riley();
   const br = bridgeFor(d, buildSummary(d, refs).income, '2026-03');
-  // surplus -171.89
+  // surplus -451.89 (the actual income 3,220, S-118)
   // yearly: share 80 + 15 = 95, paid 960 (Geico): 95 - 960 = -865
   // set aside: emergency fund 200 + car repair fund 50 (the Roth's 400 left with its entry): +250
   // Visa: 586.35 (February's end) to 652.59: +66.24. Card minimum in the budget: +35.
-  // income: 3,220 - 3,500 = -280
-  assert.deepEqual(steps(br), { yearly: -865, 'set-aside': 250, cards: 66.24, 'card-min': 35, income: -280 });
-  // explained: -171.89 - 865 + 250 + 66.24 + 35 - 280 = -965.65
+  // No income step: the surplus already uses the 3,220 that landed.
+  assert.deepEqual(steps(br), { yearly: -865, 'set-aside': 250, cards: 66.24, 'card-min': 35 });
+  // explained: -451.89 - 865 + 250 + 66.24 + 35 = -965.65
   money(br.explained, -965.65, 'explained');
   // cash: February's end 3,793.11 + 450 = 4,243.11; March's end 2,577.46 + 700 = 3,277.46: -965.65.
   // By the flows: +1,500 +1,500 +120 +100 -1,750 -960 -340 -65 -586.35 -400 -84.30 = -965.65 (the savings move is inside).
   assert.deepEqual([br.cashStart, br.cashEnd, br.actual, br.unexplained, br.ties], [4243.11, 3277.46, -965.65, 0, true]);
-  assert.equal(br.reading, 'Your budget showed $172 over, but cash went down $966. The car insurance bill ($960) came due this month.');
+  assert.equal(br.reading, 'Your budget showed $452 over, but cash went down $966. The car insurance bill ($960) came due this month.');
   // The checklist at close: every line filled, scheduled items confirmed, balances in, ties,
   // nothing unmapped or waiting, no duplicates, nothing owed, April's plan started.
   assert.equal(rec(d, '2026-03').snapshot.review.openItems.summary, 'Closed with nothing open');
@@ -220,18 +229,18 @@ test('December 2025: a holiday month that ties', () => {
   // Spending: rent 1,750 + utilities 92.40 + groceries (91.30 + 104.20 + 87.65 + 118.90 = 402.05)
   //   + eating out (3 x 4.75 + 56 = 70.25) + car payment 340 + insurance 80 + gas (48.10 + 44.60 = 92.70)
   //   + phone 65 + shopping 32.40 + entertainment 31 + gifts (140 + 180 + 100 = 420) + registration 15 + Visa 35
-  //   = 3,425.80. Savings 650. Surplus 3,500 - 3,425.80 - 650 = -575.80.
+  //   = 3,425.80. Savings 650. Income from the log (S-118): paychecks Dec 5 and Dec 19, 1,500 + 1,500, and
+  //   dog walking 140 = 3,140. Surplus 3,140 - 3,425.80 - 650 = -935.80.
   // Visa purchases 402.05 + 70.25 + 92.70 + 32.40 + 31 + 420 = 1,048.40; November's statement 623.48 was paid.
   const br = bridgeFor(d, buildSummary(d, refs).income, '2025-12');
-  money(br.surplus, -575.8, 'surplus');
-  // yearly +95 (nothing paid), set aside +250, Visa 623.48 to 1,048.40 = +424.92, minimum +35,
-  // income 1,500 + 1,500 + 140 = 3,140 - 3,500 = -360
-  assert.deepEqual(steps(br), { yearly: 95, 'set-aside': 250, cards: 424.92, 'card-min': 35, income: -360 });
-  // explained -575.80 + 95 + 250 + 424.92 + 35 - 360 = -130.88
+  money(br.surplus, -935.8, 'surplus');
+  // yearly +95 (nothing paid), set aside +250, Visa 623.48 to 1,048.40 = +424.92, minimum +35; no income step.
+  assert.deepEqual(steps(br), { yearly: 95, 'set-aside': 250, cards: 424.92, 'card-min': 35 });
+  // explained -935.80 + 95 + 250 + 424.92 + 35 = -130.88
   // cash: November's end 2,240.04 + 1,200 = 3,440.04; December's end 1,859.16 + 1,450 = 3,309.16: -130.88
   // flows: +3,140 - 1,750 - 92.40 - 340 - 65 - 623.48 - 400 = -130.88
   assert.deepEqual([br.explained, br.actual, br.unexplained, br.ties], [-130.88, -130.88, 0, true]);
-  assert.equal(br.reading, 'Your budget showed $576 over, but cash went down $131. Card balances went up $425.');
+  assert.equal(br.reading, 'Your budget showed $936 over, but cash went down $131. Card balances went up $425.');
 });
 
 test('June 2026: $60 of ATM cash is not explained, and the month closed with open items', () => {
@@ -239,18 +248,20 @@ test('June 2026: $60 of ATM cash is not explained, and the month closed with ope
   // Spending: rent 1,750 + utilities 79.60 (from the bank file) + groceries (93.40 + 88.75 + 81.20 + 77.35 = 340.70)
   //   + eating out (4 x 4.75 + 14.25 = 33.25) + car payment 340 + insurance 80 + gas (49.90 + 46.10 = 96)
   //   + phone 65 + shopping 41.80 + entertainment 0 + gifts 0 + registration 15 + Visa 35 = 2,876.35.
-  //   Surplus 3,500 - 2,876.35 - 650 = -26.35.
+  //   Income from the log (S-118): paychecks Jun 5 and Jun 19, 1,500 + 1,500, and dog walking 150 = 3,150.
+  //   Surplus 3,150 - 2,876.35 - 650 = -376.35.
   const br = bridgeFor(d, buildSummary(d, refs).income, '2026-06');
-  money(br.surplus, -26.35, 'surplus');
+  money(br.surplus, -376.35, 'surplus');
   // yearly +95, set aside +250, Visa 707.62 to 511.75 = -195.87, minimum +35,
-  // Sam paid back his half of May's concert: +60, income 1,500 + 1,500 + 150 = 3,150 - 3,500 = -350
-  assert.deepEqual(steps(br), { yearly: 95, 'set-aside': 250, cards: -195.87, 'card-min': 35, received: 60, income: -350 });
-  // explained -26.35 + 95 + 250 - 195.87 + 35 + 60 - 350 = -132.22
+  // Sam paid back his half of May's concert: +60; no income step.
+  assert.deepEqual(steps(br), { yearly: 95, 'set-aside': 250, cards: -195.87, 'card-min': 35, received: 60 });
+  // explained -376.35 + 95 + 250 - 195.87 + 35 + 60 = -132.22
   // cash: May's end 2,822.03 + 200 = 3,022.03; June's end 2,379.81 + 450 = 2,829.81: -192.22
   // flows: +1,500 + 1,500 + 150 + 60 - 1,750 - 79.60 - 340 - 65 - 707.62 - 400 - 60 (ATM) = -192.22
   // not explained yet: -192.22 - (-132.22) = -60, the ATM withdrawal with no line
   assert.deepEqual([br.explained, br.actual, br.unexplained, br.ties], [-132.22, -192.22, -60, false]);
-  assert.equal(br.reading, 'Your budget showed $26 over, but cash went down $192. $350 less income landed than the take-home. $60 is not explained yet.');
+  // The biggest step is now the set-aside, 250.
+  assert.equal(br.reading, 'Your budget showed $376 over, but cash went down $192. $250 was set aside and is still in your accounts. $60 is not explained yet.');
   assert.equal(rec(d, '2026-06').snapshot.review.openItems.summary, 'Closed with 2 open items: off by $60, 1 unmapped, 0 possible matches');
   // May closed with the concert money still owed
   assert.equal(rec(d, '2026-05').snapshot.review.openItems.summary, 'Closed with 1 open item: 1 reimbursement owed');

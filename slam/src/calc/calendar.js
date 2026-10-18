@@ -70,6 +70,35 @@ function lineAmounts(doc, month) {
   return { units, byLine };
 }
 
+// The paydays of one income in a month, from its pay schedule (S-117: a biweekly month can have 3).
+// Null when the schedule is not known yet (no next pay date).
+export function payDates(inc, month) {
+  const first = month + '-01';
+  const last = dateIn(month, 31);
+  const dates = [];
+  if (inc.payFrequency === 'semimonthly') {
+    const days = inc.payDays && inc.payDays.length === 2 ? inc.payDays : [1, 15];
+    for (const d of days) dates.push(dateIn(month, d));
+    return dates.sort();
+  }
+  const d0 = inc.nextPayDate && inc.nextPayDate.date;
+  if (!d0) return null;
+  if (inc.payFrequency === 'monthly') dates.push(dateIn(month, Number(d0.slice(8))));
+  else {
+    const step = STEP_DAYS[inc.payFrequency];
+    if (!step) return null;
+    let d = addDays(d0, -step * Math.ceil(Math.max(0, daysBetween(first, d0)) / step));
+    while (d < first) d = addDays(d, step);
+    for (; d <= last; d = addDays(d, step)) dates.push(d);
+  }
+  // Unemployment stops when the weeks left run out, counted from the next pay date.
+  if (inc.type === 'unemployment' && inc.benefitWeeksLeft !== null && inc.benefitWeeksLeft !== undefined) {
+    const end = addDays(d0, inc.benefitWeeksLeft * 7);
+    for (let i = dates.length - 1; i >= 0; i--) if (dates[i] >= end) dates.splice(i, 1);
+  }
+  return dates.sort();
+}
+
 // Every scheduled item in one month: paychecks, bills, debt payments.
 // key = kind:id:original date. A move (doc.cashflow.moves[key]) changes the date or skips it.
 export function scheduledItems(doc, month, income) {
@@ -89,27 +118,9 @@ export function scheduledItems(doc, month, income) {
     const src = (income.sources || []).find((s) => s.id === inc.id);
     const per = src && src.takeHomeMonthly !== null && PER_YEAR[inc.payFrequency] ? r2((src.takeHomeMonthly * 12) / PER_YEAR[inc.payFrequency]) : null;
     const acct = inc.accountId || def;
-    const dates = [];
-    if (inc.payFrequency === 'semimonthly') {
-      const days = inc.payDays && inc.payDays.length === 2 ? inc.payDays : [1, 15];
-      for (const d of days) dates.push(dateIn(month, d));
-    } else {
-      const d0 = inc.nextPayDate && inc.nextPayDate.date;
-      if (!d0) continue;
-      if (inc.payFrequency === 'monthly') dates.push(dateIn(month, Number(d0.slice(8))));
-      else {
-        const step = STEP_DAYS[inc.payFrequency];
-        let d = addDays(d0, -step * Math.ceil(Math.max(0, daysBetween(first, d0)) / step));
-        while (d < first) d = addDays(d, step);
-        for (; d <= last; d = addDays(d, step)) dates.push(d);
-      }
-      // Unemployment stops when the weeks left run out, counted from the next pay date.
-      if (inc.type === 'unemployment' && inc.benefitWeeksLeft !== null && inc.benefitWeeksLeft !== undefined) {
-        const end = addDays(d0, inc.benefitWeeksLeft * 7);
-        for (let i = dates.length - 1; i >= 0; i--) if (dates[i] >= end) dates.splice(i, 1);
-      }
-    }
-    for (const d of dates.sort()) push({ key: 'pay:' + inc.id + ':' + d, kind: 'paycheck', dir: 'in', name: inc.label, incomeId: inc.id, amount: per, account: acct, planned: d });
+    const dates = payDates(inc, month);
+    if (dates === null) continue;
+    for (const d of dates) push({ key: 'pay:' + inc.id + ':' + d, kind: 'paycheck', dir: 'in', name: inc.label, incomeId: inc.id, amount: per, account: acct, planned: d });
   }
   // Bills: a due day every month, or a due month and day once a year.
   const amts = lineAmounts(doc, month);

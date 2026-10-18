@@ -5,7 +5,7 @@ import { makeValue } from './value.js';
 import { DEFAULT_LINE_TYPES } from './types.js';
 import { newId } from './ids.js';
 
-export const SCHEMA_VERSION = 14;
+export const SCHEMA_VERSION = 15;
 
 export const SITUATIONS = ['employed', 'self-employed', 'between-jobs', 'student'];
 export const FILING_STATUSES = ['single', 'married-joint', 'married-separate', 'head-of-household'];
@@ -376,6 +376,9 @@ export function newHousehold(name, now = new Date()) {
     blindRounds: [],
     // Actuals for open months other than the one being worked on: { 'YYYY-MM': { lineId: Value } }.
     monthActuals: {},
+    // Income typed for a month where a source has no log entries (S-118): { 'YYYY-MM': { incomeId: Value } };
+    // "none this month" is status not-for-me.
+    incomeActuals: {},
     // Health coverage (S-117): the one place every coverage fact is kept.
     coverage: newCoverage(),
     // Accounts and their month balances: balances['YYYY-MM'][accountId] = { start, end } (S-084).

@@ -41,6 +41,19 @@ export function setPlanAmount(doc, month, key, value) {
   if (e.decision !== 'new') e.decision = 'change';
 }
 
+// S-118: a side or variable income changed for one month (null to go back to its estimate). Scheduled
+// pay is never typed: it is the paydays x the take-home a paycheck.
+export function setPlanIncome(doc, month, incomeId, value) {
+  const inc = (doc.income || []).find((i) => i.id === incomeId);
+  if (!inc) throw new Error('No income ' + incomeId);
+  if (['w2', 'unemployment'].includes(inc.type)) throw new Error('Scheduled pay comes from the paydays; change the take-home in Setup, Income');
+  if (!doc.plans[month]) doc.plans[month] = { createdFrom: 'manual', lines: {} };
+  const p = doc.plans[month];
+  p.income = p.income || {};
+  if (value === null) delete p.income[incomeId];
+  else p.income[incomeId] = copy(value);
+}
+
 // Keep: back to the starting amount. Cut: 0, the line stays so a comeback shows.
 export function setPlanDecision(doc, month, key, decision) {
   if (!PLAN_DECISIONS.includes(decision)) throw new Error('Unknown decision ' + decision);

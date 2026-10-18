@@ -222,6 +222,13 @@ export function validateHousehold(doc) {
     if (e.to) errs.push(...valueErrors(e.to, w + '.to'));
     if (e.from) errs.push(...valueErrors(e.from, w + '.from'));
   });
+  for (const [k, src] of Object.entries(doc.incomeActuals || {})) {
+    if (!/^\d{4}-\d{2}$/.test(k)) errs.push('incomeActuals key ' + k + ' must be YYYY-MM');
+    for (const [id, v] of Object.entries(src)) {
+      if (!(doc.income || []).some((i) => i.id === id)) errs.push('incomeActuals.' + k + ': unknown income ' + id);
+      errs.push(...valueErrors(v, 'incomeActuals.' + k + '.' + id));
+    }
+  }
   for (const [k, lines] of Object.entries(doc.monthActuals || {})) {
     if (!/^\d{4}-\d{2}$/.test(k)) errs.push('monthActuals key ' + k + ' must be YYYY-MM');
     if (k === doc.currentMonth) errs.push('monthActuals must not hold the month being worked on (' + k + ')');

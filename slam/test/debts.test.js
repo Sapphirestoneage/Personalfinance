@@ -87,14 +87,14 @@ test('card interest: computed from the balance going into the month, and both br
   setBalance(d, '2026-10', 'visa', 'end', one(360));
   assert.deepEqual(debtLines(d), [['debt:' + visa.id, 40], ['interest:' + visa.id, 10]]);
   const s = buildSummary(d, refs);
-  // Spending 2,100 + 10 = 2,110; surplus 4,000 - 2,110 - 200 = 1,690.
+  // Spending 2,100 + 10 = 2,110; surplus: the 4,300 of income in the log (S-118) - 2,110 - 200 = 1,990.
   const br = bridgeFor(d, s.income, '2026-10');
-  assert.equal(br.surplus, 1690);
-  // Cards: 500 -> 360 = -140. Explained 1,690 - 1,100 + 200 - 140 + 40 - 60 - 250 + 300 = 680 = the
+  assert.equal(br.surplus, 1990);
+  // Cards: 500 -> 360 = -140. Explained 1,990 - 1,100 + 200 - 140 + 40 - 60 - 250 = 680 = the
   // change in cash, so it ties. (Without the interest line it would be 690, and 10 not explained.)
   assert.deepEqual([br.explained, br.actual, br.unexplained], [680, 680, 0]);
   // Net worth: 2,000 + 5,000 - 500 = 6,500 -> 2,480 + 5,200 - 360 = 7,320, up 820.
-  // 1,690 + timing (-1,100 - 60 - 250 + 300 = -1,110) + saved 200 + the card minimum 40 = 820.
+  // 1,990 + timing (-1,100 - 60 - 250 = -1,410) + saved 200 + the card minimum 40 = 820.
   const nb = netWorthBridge(d, s.income, '2026-10');
   assert.deepEqual([nb.total.start, nb.total.explained, nb.total.actual, nb.total.unexplained], [6500, 7320, 7320, 0]);
 });

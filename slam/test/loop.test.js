@@ -48,6 +48,7 @@ test('the month-end checklist: three open items', () => {
   const by = Object.fromEntries(c.items.map((i) => [i.key, [i.count, i.open]]));
   assert.deepEqual(by, {
     gaps: [0, false], waiting: [0, false], balances: [0, false], bridge: [1, true], unmapped: [0, false], duplicates: [0, false],
+    'income-source': [0, false], // every income entry names the job (S-118)
     owed: [1, true],          // the friend's 60 for the concert
     'next-plan': [1, true]    // no November plan yet
   });
@@ -68,7 +69,11 @@ test('the month in review, saved at close, never changes after', () => {
   assert.deepEqual(r.income.better.map((x) => x.diff), [300]);
   // Plan spending: 1,500 + 350 + 200 + 100 = 2,150, plus Debt payments, which a plan takes as the minimums (40): 2,190.
   // Estimate: car insurance 1,200 a year = 100, plus the Visa minimum 40: 140.
-  assert.deepEqual(r.totals, { spent: 2100, plan: 2190, estimate: 140, surplus: 1700, savingsRate: r.totals.savingsRate, takeHome: 4000 });
+  // Surplus (S-118): the 4,300 of income in the log - 2,100 spent - 200 saved = 2,000. Income: estimate and
+  // plan 4,000 (a monthly job with no pay date yet, so its plan is the estimate), actual 4,300.
+  assert.deepEqual(r.totals, { spent: 2100, plan: 2190, estimate: 140, surplus: 2000, savingsRate: r.totals.savingsRate, takeHome: 4000,
+    income: { estimate: 4000, plan: 4000, actual: 4300, tracked: true, unassigned: 0 } });
+  assert.deepEqual(r.incomeRows.map((x) => [x.name, x.estimate, x.plan, x.actual, x.from, x.count]), [['Job', 4000, 4000, 4300, 'log', 3]]);
   assert.deepEqual([r.bridge.ties, r.bridge.unexplained], [false, -60]);
   // From the log: groceries 400 + shopping 60 = 460; typed: rent 1,500. 460 / 1,960 = 0.234694
   assert.deepEqual([r.tracking.fromLog, r.tracking.typed], [460, 1500]);

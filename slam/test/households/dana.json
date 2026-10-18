@@ -1,5 +1,5 @@
 {
- "schemaVersion": 13,
+ "schemaVersion": 15,
  "id": "hh-lugw37i",
  "createdAt": "2025-10-01T09:00:00.000Z",
  "updatedAt": "2026-10-17T18:00:00.000Z",
@@ -18,7 +18,6 @@
    "ages": []
   },
   "livingWith": "alone",
-  "parentsPlan": false,
   "family": {
    "count": null
   },
@@ -3617,6 +3616,38 @@
       "actual": null
      }
     },
+    "income": {
+     "month": "2025-10",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Juniper Health",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "paydays": 1,
+       "actual": null,
+       "from": null,
+       "status": null,
+       "count": 0
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": false,
+     "estimate": 4000,
+     "plan": 4000,
+     "actual": null,
+     "empty": [
+      "Juniper Health"
+     ],
+     "logged": 0
+    },
     "review": {
      "month": "2025-10",
      "closedOn": "2025-10-31",
@@ -4292,13 +4323,32 @@
        }
       ]
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Juniper Health",
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "actual": null,
+       "from": null,
+       "count": 0
+      }
+     ],
      "totals": {
       "spent": 3510,
       "plan": 3510,
       "estimate": 3510,
       "surplus": 190,
       "savingsRate": 0.1590909090909091,
-      "takeHome": 4000
+      "takeHome": 4000,
+      "income": {
+       "estimate": 4000,
+       "plan": 4000,
+       "actual": null,
+       "tracked": false,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": true,
@@ -4686,6 +4736,38 @@
       "estimate": null,
       "actual": null
      }
+    },
+    "income": {
+     "month": "2025-11",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Juniper Health",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "paydays": 1,
+       "actual": null,
+       "from": null,
+       "status": null,
+       "count": 0
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": false,
+     "estimate": 4000,
+     "plan": 4000,
+     "actual": null,
+     "empty": [
+      "Juniper Health"
+     ],
+     "logged": 0
     },
     "review": {
      "month": "2025-11",
@@ -5362,13 +5444,32 @@
        }
       ]
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Juniper Health",
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "actual": null,
+       "from": null,
+       "count": 0
+      }
+     ],
      "totals": {
       "spent": 3510,
       "plan": 3510,
       "estimate": 3510,
       "surplus": 190,
       "savingsRate": 0.1590909090909091,
-      "takeHome": 4000
+      "takeHome": 4000,
+      "income": {
+       "estimate": 4000,
+       "plan": 4000,
+       "actual": null,
+       "tracked": false,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": true,
@@ -5756,6 +5857,38 @@
       "estimate": null,
       "actual": null
      }
+    },
+    "income": {
+     "month": "2025-12",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Juniper Health",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "paydays": 1,
+       "actual": null,
+       "from": null,
+       "status": null,
+       "count": 0
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": false,
+     "estimate": 4000,
+     "plan": 4000,
+     "actual": null,
+     "empty": [
+      "Juniper Health"
+     ],
+     "logged": 0
     },
     "review": {
      "month": "2025-12",
@@ -6432,13 +6565,32 @@
        }
       ]
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Juniper Health",
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "actual": null,
+       "from": null,
+       "count": 0
+      }
+     ],
      "totals": {
       "spent": 3510,
       "plan": 3510,
       "estimate": 3510,
       "surplus": 190,
       "savingsRate": 0.1590909090909091,
-      "takeHome": 4000
+      "takeHome": 4000,
+      "income": {
+       "estimate": 4000,
+       "plan": 4000,
+       "actual": null,
+       "tracked": false,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": true,
@@ -6826,6 +6978,38 @@
       "estimate": null,
       "actual": null
      }
+    },
+    "income": {
+     "month": "2026-01",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Juniper Health",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "paydays": 1,
+       "actual": null,
+       "from": null,
+       "status": null,
+       "count": 0
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": false,
+     "estimate": 4000,
+     "plan": 4000,
+     "actual": null,
+     "empty": [
+      "Juniper Health"
+     ],
+     "logged": 0
     },
     "review": {
      "month": "2026-01",
@@ -7502,13 +7686,32 @@
        }
       ]
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Juniper Health",
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "actual": null,
+       "from": null,
+       "count": 0
+      }
+     ],
      "totals": {
       "spent": 3510,
       "plan": 3510,
       "estimate": 3510,
       "surplus": 190,
       "savingsRate": 0.1590909090909091,
-      "takeHome": 4000
+      "takeHome": 4000,
+      "income": {
+       "estimate": 4000,
+       "plan": 4000,
+       "actual": null,
+       "tracked": false,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": true,
@@ -7896,6 +8099,38 @@
       "estimate": null,
       "actual": null
      }
+    },
+    "income": {
+     "month": "2026-02",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Juniper Health",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "paydays": 1,
+       "actual": null,
+       "from": null,
+       "status": null,
+       "count": 0
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": false,
+     "estimate": 4000,
+     "plan": 4000,
+     "actual": null,
+     "empty": [
+      "Juniper Health"
+     ],
+     "logged": 0
     },
     "review": {
      "month": "2026-02",
@@ -8572,13 +8807,32 @@
        }
       ]
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Juniper Health",
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "actual": null,
+       "from": null,
+       "count": 0
+      }
+     ],
      "totals": {
       "spent": 3510,
       "plan": 3510,
       "estimate": 3510,
       "surplus": 190,
       "savingsRate": 0.1590909090909091,
-      "takeHome": 4000
+      "takeHome": 4000,
+      "income": {
+       "estimate": 4000,
+       "plan": 4000,
+       "actual": null,
+       "tracked": false,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": false,
@@ -8967,6 +9221,38 @@
       "estimate": null,
       "actual": null
      }
+    },
+    "income": {
+     "month": "2026-03",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Juniper Health",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "paydays": 1,
+       "actual": null,
+       "from": null,
+       "status": null,
+       "count": 0
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": false,
+     "estimate": 4000,
+     "plan": 4000,
+     "actual": null,
+     "empty": [
+      "Juniper Health"
+     ],
+     "logged": 0
     },
     "review": {
      "month": "2026-03",
@@ -9643,13 +9929,32 @@
        }
       ]
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Juniper Health",
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "actual": null,
+       "from": null,
+       "count": 0
+      }
+     ],
      "totals": {
       "spent": 3510,
       "plan": 3510,
       "estimate": 3510,
       "surplus": 190,
       "savingsRate": 0.1590909090909091,
-      "takeHome": 4000
+      "takeHome": 4000,
+      "income": {
+       "estimate": 4000,
+       "plan": 4000,
+       "actual": null,
+       "tracked": false,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": true,
@@ -10037,6 +10342,38 @@
       "estimate": null,
       "actual": null
      }
+    },
+    "income": {
+     "month": "2026-04",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Juniper Health",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "paydays": 1,
+       "actual": null,
+       "from": null,
+       "status": null,
+       "count": 0
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": false,
+     "estimate": 4000,
+     "plan": 4000,
+     "actual": null,
+     "empty": [
+      "Juniper Health"
+     ],
+     "logged": 0
     },
     "review": {
      "month": "2026-04",
@@ -10713,13 +11050,32 @@
        }
       ]
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Juniper Health",
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "actual": null,
+       "from": null,
+       "count": 0
+      }
+     ],
      "totals": {
       "spent": 3510,
       "plan": 3510,
       "estimate": 3510,
       "surplus": 190,
       "savingsRate": 0.1590909090909091,
-      "takeHome": 4000
+      "takeHome": 4000,
+      "income": {
+       "estimate": 4000,
+       "plan": 4000,
+       "actual": null,
+       "tracked": false,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": true,
@@ -11107,6 +11463,38 @@
       "estimate": null,
       "actual": null
      }
+    },
+    "income": {
+     "month": "2026-05",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Juniper Health",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "paydays": 1,
+       "actual": null,
+       "from": null,
+       "status": null,
+       "count": 0
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": false,
+     "estimate": 4000,
+     "plan": 4000,
+     "actual": null,
+     "empty": [
+      "Juniper Health"
+     ],
+     "logged": 0
     },
     "review": {
      "month": "2026-05",
@@ -11783,13 +12171,32 @@
        }
       ]
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Juniper Health",
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "actual": null,
+       "from": null,
+       "count": 0
+      }
+     ],
      "totals": {
       "spent": 3510,
       "plan": 3510,
       "estimate": 3510,
       "surplus": 190,
       "savingsRate": 0.1590909090909091,
-      "takeHome": 4000
+      "takeHome": 4000,
+      "income": {
+       "estimate": 4000,
+       "plan": 4000,
+       "actual": null,
+       "tracked": false,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": true,
@@ -12177,6 +12584,38 @@
       "estimate": null,
       "actual": null
      }
+    },
+    "income": {
+     "month": "2026-06",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Juniper Health",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "paydays": 1,
+       "actual": null,
+       "from": null,
+       "status": null,
+       "count": 0
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": false,
+     "estimate": 4000,
+     "plan": 4000,
+     "actual": null,
+     "empty": [
+      "Juniper Health"
+     ],
+     "logged": 0
     },
     "review": {
      "month": "2026-06",
@@ -12853,13 +13292,32 @@
        }
       ]
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Juniper Health",
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "actual": null,
+       "from": null,
+       "count": 0
+      }
+     ],
      "totals": {
       "spent": 3510,
       "plan": 3510,
       "estimate": 3510,
       "surplus": 190,
       "savingsRate": 0.1590909090909091,
-      "takeHome": 4000
+      "takeHome": 4000,
+      "income": {
+       "estimate": 4000,
+       "plan": 4000,
+       "actual": null,
+       "tracked": false,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": true,
@@ -13247,6 +13705,38 @@
       "estimate": null,
       "actual": null
      }
+    },
+    "income": {
+     "month": "2026-07",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Juniper Health",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "paydays": 1,
+       "actual": null,
+       "from": null,
+       "status": null,
+       "count": 0
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": false,
+     "estimate": 4000,
+     "plan": 4000,
+     "actual": null,
+     "empty": [
+      "Juniper Health"
+     ],
+     "logged": 0
     },
     "review": {
      "month": "2026-07",
@@ -13923,13 +14413,32 @@
        }
       ]
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Juniper Health",
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "actual": null,
+       "from": null,
+       "count": 0
+      }
+     ],
      "totals": {
       "spent": 3510,
       "plan": 3510,
       "estimate": 3510,
       "surplus": 190,
       "savingsRate": 0.1590909090909091,
-      "takeHome": 4000
+      "takeHome": 4000,
+      "income": {
+       "estimate": 4000,
+       "plan": 4000,
+       "actual": null,
+       "tracked": false,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": true,
@@ -14317,6 +14826,38 @@
       "estimate": null,
       "actual": null
      }
+    },
+    "income": {
+     "month": "2026-08",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Juniper Health",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "paydays": 1,
+       "actual": null,
+       "from": null,
+       "status": null,
+       "count": 0
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": false,
+     "estimate": 4000,
+     "plan": 4000,
+     "actual": null,
+     "empty": [
+      "Juniper Health"
+     ],
+     "logged": 0
     },
     "review": {
      "month": "2026-08",
@@ -14993,13 +15534,32 @@
        }
       ]
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Juniper Health",
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "actual": null,
+       "from": null,
+       "count": 0
+      }
+     ],
      "totals": {
       "spent": 3510,
       "plan": 3510,
       "estimate": 3510,
       "surplus": 190,
       "savingsRate": 0.1590909090909091,
-      "takeHome": 4000
+      "takeHome": 4000,
+      "income": {
+       "estimate": 4000,
+       "plan": 4000,
+       "actual": null,
+       "tracked": false,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": true,
@@ -15387,6 +15947,38 @@
       "estimate": null,
       "actual": null
      }
+    },
+    "income": {
+     "month": "2026-09",
+     "sources": [
+      {
+       "id": "job",
+       "label": "Juniper Health",
+       "type": "w2",
+       "scheduled": true,
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "paydays": 1,
+       "actual": null,
+       "from": null,
+       "status": null,
+       "count": 0
+      }
+     ],
+     "unassigned": {
+      "count": 0,
+      "amount": 0,
+      "ids": []
+     },
+     "tracked": false,
+     "estimate": 4000,
+     "plan": 4000,
+     "actual": null,
+     "empty": [
+      "Juniper Health"
+     ],
+     "logged": 0
     },
     "review": {
      "month": "2026-09",
@@ -16063,13 +16655,32 @@
        }
       ]
      },
+     "incomeRows": [
+      {
+       "id": "job",
+       "name": "Juniper Health",
+       "estimate": 4000,
+       "plan": 4000,
+       "planNote": "1 paycheck this month",
+       "actual": null,
+       "from": null,
+       "count": 0
+      }
+     ],
      "totals": {
       "spent": 3510,
       "plan": 3510,
       "estimate": 3510,
       "surplus": 190,
       "savingsRate": 0.1590909090909091,
-      "takeHome": 4000
+      "takeHome": 4000,
+      "income": {
+       "estimate": 4000,
+       "plan": 4000,
+       "actual": null,
+       "tracked": false,
+       "unassigned": 0
+      }
      },
      "bridge": {
       "ties": true,
@@ -16179,6 +16790,38 @@
  "snapshots": [],
  "blindRounds": [],
  "monthActuals": {},
+ "incomeActuals": {},
+ "coverage": {
+  "how": null,
+  "premiumFrom": null,
+  "premiumIncomeId": null,
+  "premium": {
+   "amount": null,
+   "cadence": "month",
+   "status": null,
+   "source": "client",
+   "asOf": null,
+   "note": ""
+  },
+  "deductible": {
+   "amount": null,
+   "cadence": "year",
+   "status": null,
+   "source": "client",
+   "asOf": null,
+   "note": ""
+  },
+  "outOfPocketMax": {
+   "amount": null,
+   "cadence": "year",
+   "status": null,
+   "source": "client",
+   "asOf": null,
+   "note": ""
+  },
+  "hsa": null,
+  "hsaFrom": null
+ },
  "accounts": [
   {
    "id": "chk",

@@ -11,6 +11,7 @@ import { detect, topMerchants } from './tx-analysis.js';
 import { happySpendShare } from './happiness.js';
 import { ratio, minus } from './money.js';
 import { paretoLevels } from './pareto.js';
+import { incomeMonth } from './income-month.js';
 
 const r2 = (x) => (x === null || x === undefined ? null : Math.round(x * 100) / 100 + 0);
 const monthOf = (d) => d.slice(0, 7);
@@ -137,6 +138,7 @@ export function monthEndChecklist(doc, summary, today) {
   const possible = inMonth.filter(isPending);
   const dups = detect(inMonth).duplicates;
   const owed = owedToClient(doc, month);
+  const incomeLoose = incomeMonth(doc, summary.income, month).unassigned;
   const next = planState(doc, summary, nextKey(month));
   const items = [
     { key: 'gaps', label: 'Lines in the plan with no actual and no entries', count: gaps.length, open: gaps.length > 0, short: gaps.length + ' line' + (gaps.length === 1 ? '' : 's') + ' empty', fix: 'actual', names: gaps.map((g) => g.name) },
@@ -145,6 +147,8 @@ export function monthEndChecklist(doc, summary, today) {
       // Investments and things you own are optional at month-end (S-110): listed with their last update, never open items.
       stale: bal.stale },
     { key: 'bridge', label: 'Bridge from budget to cash', count: br.ties ? 0 : 1, open: br.ties !== true, state: br.ties === null ? 'needs balances' : br.ties ? 'ties' : 'off by ' + whole(br.unexplained), short: br.ties === null ? 'bridge needs balances' : 'off by ' + whole(br.unexplained || 0), fix: 'bridge' },
+    // Income entries with no source (S-118): the money counts, but it should say whose it is.
+    { key: 'income-source', label: 'Income entries with no source', count: incomeLoose.count, open: incomeLoose.count > 0, short: incomeLoose.count + ' income entr' + (incomeLoose.count === 1 ? 'y' : 'ies') + ' with no source', fix: 'actual' },
     { key: 'unmapped', label: 'Imported entries with no line, and possible matches to confirm', count: unmapped.length + possible.length, open: unmapped.length + possible.length > 0, short: unmapped.length + ' unmapped, ' + possible.length + ' possible match' + (possible.length === 1 ? '' : 'es'), fix: 'cashflow' },
     { key: 'duplicates', label: 'Likely duplicates not resolved', count: dups.length, open: dups.length > 0, short: dups.length + ' likely duplicate' + (dups.length === 1 ? '' : 's'), fix: 'cashflow' },
     { key: 'owed', label: 'Reimbursements still owed to the client', count: owed.count, open: owed.count > 0, short: owed.count + ' reimbursement' + (owed.count === 1 ? '' : 's') + ' owed', amount: owed.amount, fix: 'cashflow', names: owed.list.map((o) => o.name) },
@@ -184,9 +188,10 @@ export function monthReview(doc, summary, today) {
   const vsEstimate = { lines: sortByPlan(lineRows.map((r) => ({ ...r, plan: r.estimate }))), categories: sortByPlan(catRows.map((r) => ({ ...r, plan: r.estimate }))), culprits: summary.culprits.map((c) => ({ name: c.name, estimate: c.estimate, actual: c.actual, gap: c.gap })) };
   const t = summary.totals;
   const inMonth = counted(doc.transactions).filter((x) => monthOf(x.date) === month && !x.adjust);
-  const pay = inMonth.filter((x) => x.kind === 'income');
-  const landed = pay.length ? r2(-pay.reduce((a, x) => a + x.amount, 0)) : null;
-  const income = sortByPlan([{ id: 'income', name: 'Income', plan: t.takeHome, actual: landed }], true);
+  // Income first (S-118): each source's estimate, plan (its real paydays), and actual from the log.
+  const im = t.income;
+  const income = sortByPlan([{ id: 'income', name: 'Income', plan: im.plan, actual: im.actual }], true);
+  const incomeRows = im.sources.map((x) => ({ id: x.id, name: x.label, estimate: x.estimate, plan: x.plan, planNote: x.planNote, actual: x.actual, from: x.from, count: x.count }));
   const br = bridgeFor(doc, summary.income, month);
   const topStep = br.steps.slice().sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))[0] || null;
   const lines = summary.model.categories.filter((c) => !c.isDebt && !c.savings).flatMap((c) => c.lines);
@@ -207,8 +212,9 @@ export function monthReview(doc, summary, today) {
   const checklist = monthEndChecklist(doc, summary, today);
   const out = {
     month, closedOn: today,
-    vsPlan, vsEstimate, income,
-    totals: { spent: t.actualTotal, plan: plan ? plan.spending : null, estimate: t.estimateTotal, surplus: t.surplus, savingsRate: t.savingsRate, takeHome: t.takeHome },
+    vsPlan, vsEstimate, income, incomeRows,
+    totals: { spent: t.actualTotal, plan: plan ? plan.spending : null, estimate: t.estimateTotal, surplus: t.surplus, savingsRate: t.savingsRate, takeHome: t.takeHome,
+      income: { estimate: im.estimate, plan: im.plan, actual: im.actual, tracked: im.tracked, unassigned: im.unassigned.amount } },
     bridge: { ties: br.ties, unexplained: br.unexplained, explained: br.explained, actual: br.actual, top: topStep ? { label: topStep.label, short: topStep.short, amount: topStep.amount } : null, reading: br.reading },
     forecast: forecastCheck(doc, month),
     tracking: { fromLog, typed, share: ratio(fromLog, fromLog + typed) },
