@@ -4,7 +4,7 @@
 // write a compatibility note in DECISIONS.md.
 
 import { SCHEMA_VERSION, newHousehold, newCategory, newLine, newIncome, newDebt, newDeduction, newCaseOverrides, newWithheld, WITHHELD_KEYS, newEra, newAccount, newCashflow, makeDate } from './schema.js';
-import { normalizeValue, isBlank } from './value.js';
+import { normalizeValue, isBlank, makeValue } from './value.js';
 import { CATEGORY_TYPE_IDS, DEFAULT_LINE_TYPES, guessLineType } from './types.js';
 import { toMonthly } from '../calc/normalize.js';
 import { stampAll, META } from './records.js';
@@ -193,6 +193,8 @@ export function normalizeHousehold(doc) {
     if (old && !isBlank(old)) inc.deductions.unshift({ ...newDeduction({ id: 'ded-' + inc.id + '-ret', kind: 'retirement', mode: 'amount' }), amount: old });
     // Compatibility (S-064): files before paystub taxes load with them all blank.
     inc.withheld = { ...newWithheld(), ...Object.fromEntries(Object.entries(i.withheld || {}).filter(([k]) => WITHHELD_KEYS.includes(k)).map(([k, v]) => [k, normalizeValue(v)])) };
+    // Additional withholding (S-101) is optional: only files that have it carry it.
+    if (i.extraWithholding !== undefined) inc.extraWithholding = { ...makeValue(null, { cadence: 'paycheck' }), ...normalizeValue(i.extraWithholding) };
     if (inc.type === 'unemployment') unemploymentCompat(inc);
     return inc;
   });

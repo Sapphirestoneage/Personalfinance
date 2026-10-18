@@ -281,3 +281,10 @@ table.review .toggle button { padding: 4px 8px; }
 .spark-row { display: grid; grid-template-columns: minmax(5em, 8em) 1fr auto; align-items: center; gap: var(--space-2); border-bottom: 1px solid var(--border); padding: 2px 0; }
 .spark-row svg { display: block; }
 .card.stat { padding: var(--space-3); }
+/* The federal tax line opens to show how it is worked out (S-101). */
+.link-btn { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; cursor: pointer; text-align: left; }
+.link-btn:hover { text-decoration: underline; }
+.tax-walk { padding: var(--space-2) 0; white-space: normal; text-align: left; }
+.tax-walk svg { max-width: 100%; height: auto; display: block; margin: var(--space-2) 0; }
+table.budget.tax-steps { max-width: 520px; margin: var(--space-2) 0; }
+table.budget.tax-steps td:first-child { position: static; min-width: 0; }

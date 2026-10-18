@@ -36,6 +36,23 @@ export function withheldFromStub(inc) {
   };
 }
 
+// How the federal estimate is worked out, step by step (S-101), all for a year: gross, less pre-tax
+// deductions (and half the self-employment tax) = adjusted gross; less the standard deduction =
+// taxable; taxable cut into brackets; Social Security and Medicare on wages.
+export function taxWalk(est, grossAnnual, pretaxAnnual, tax) {
+  return {
+    gross: grossAnnual, pretax: pretaxAnnual, seHalf: est.seTax / 2, agi: est.agi, std: est.stdUsed, taxable: est.taxable,
+    slices: est.slices, incomeTax: est.incomeTax, bracket: est.bracket, effectiveRate: ratio(est.incomeTax, grossAnnual),
+    ficaBase: est.ficaBase, ssBase: Math.min(est.ficaBase, tax.fica.socialSecurityWageBase), wageBase: tax.fica.socialSecurityWageBase, ssRate: tax.fica.socialSecurityRate, socialSecurity: est.socialSecurity,
+    medicareRate: tax.fica.medicareRate, medicare: est.medicare, seTax: est.seTax, taxYear: tax.taxYear
+  };
+}
+
+// Additional withholding the client asked for on the W-4 (step 4c), monthly; W-2 pay only (S-101).
+export function extraWithholding(inc) {
+  return inc.type === 'w2' ? toMonthly(inc.extraWithholding, inc.payFrequency) : null;
+}
+
 // The taxes on a paycheck, one line per tax (S-099). Copied paystub lines are used as they are.
 // Otherwise the federal estimate: income tax (with the bracket the last dollar falls in), Social
 // Security, and Medicare (self-employment tax for 1099 pay). With an actual paycheck typed, what is
@@ -51,13 +68,14 @@ export function taxBreakdown(inc, row) {
     return WITHHELD_KEYS.filter((k) => stub.lines[k] !== null).map((k) => ({ key: k, label: TAX_LABELS[k], monthly: stub.lines[k], from: 'paystub' }));
   }
   const tc = row.taxCheck;
-  const est = tc ? { incomeTax: tc.estIncomeTaxAnnual / 12, socialSecurity: tc.estSocialSecurityAnnual / 12, medicare: tc.estMedicareAnnual / 12, seTax: 0, bracket: tc.bracket } : row.estimate;
+  const est = tc ? { incomeTax: tc.estIncomeTaxAnnual / 12, socialSecurity: tc.estSocialSecurityAnnual / 12, medicare: tc.estMedicareAnnual / 12, seTax: 0, bracket: tc.bracket, walk: tc.walk } : row.estimate;
   if (!est) return null;
   const lines = [
-    { key: 'federal', label: TAX_LABELS.federal, monthly: est.incomeTax, from: 'estimate', bracket: est.bracket },
+    { key: 'federal', label: TAX_LABELS.federal, monthly: est.incomeTax, from: 'estimate', bracket: est.bracket, walk: est.walk },
     est.socialSecurity ? { key: 'socialSecurity', label: TAX_LABELS.socialSecurity, monthly: est.socialSecurity, from: 'estimate' } : null,
     est.medicare ? { key: 'medicare', label: TAX_LABELS.medicare, monthly: est.medicare, from: 'estimate' } : null,
-    est.seTax ? { key: 'seTax', label: 'Self-employment tax (Social Security and Medicare)', monthly: est.seTax, from: 'estimate' } : null
+    est.seTax ? { key: 'seTax', label: 'Self-employment tax (Social Security and Medicare)', monthly: est.seTax, from: 'estimate' } : null,
+    extraWithholding(inc) ? { key: 'extra', label: 'Additional withholding', monthly: extraWithholding(inc), from: 'W-4' } : null
   ].filter(Boolean);
   if (row.withheldMonthly === null) return [...lines, { key: 'state', label: TAX_LABELS.state, monthly: null, from: 'not estimated' }];
   const rest = row.withheldMonthly - sumKnown(lines.map((l) => l.monthly)).total;
@@ -151,6 +169,7 @@ export function taxCheck(inc, row, dt, grossMonthly, tax, filing, stdLeft) {
     lines: stub.lines,
     estIncomeTaxAnnual: est.incomeTax, estFicaAnnual: est.fica, estTotalAnnual: est.totalTax,
     estSocialSecurityAnnual: est.socialSecurity, estMedicareAnnual: est.medicare, bracket: est.bracket,
+    walk: taxWalk(est, grossMonthly * 12, dt.incomeTaxFree * 12, tax),
     estRate: ratio(est.totalTax, grossMonthly * 12),
     withheldRate: ratio(withheldMonthly, grossMonthly),
     // Positive: more withheld than the estimate (refund likely). Negative: likely owed at tax time.
@@ -216,14 +235,19 @@ export function incomeSummary(doc, tax) {
       row.taxMonthly = est.totalTax / 12;
       row.takeHomeStatus = 'guess';
       row.takeHomeNote = 'State tax not included' + (est.withheld ? '' : '. Nothing is withheld, so set this aside');
-      row.estimate = { incomeTax: est.incomeTax / 12, fica: est.fica / 12, socialSecurity: est.socialSecurity / 12, medicare: est.medicare / 12, seTax: est.seTax / 12, bracket: est.bracket, taxYear: tax.taxYear };
+      row.estimate = { incomeTax: est.incomeTax / 12, fica: est.fica / 12, socialSecurity: est.socialSecurity / 12, medicare: est.medicare / 12, seTax: est.seTax / 12, bracket: est.bracket, taxYear: tax.taxYear,
+        walk: taxWalk(est, grossMonthly * 12, dt.incomeTaxFree * 12, tax) };
+      // Additional withholding is taken out of each paycheck too (it is a prepayment, not more tax).
+      const extra = extraWithholding(inc);
+      if (extra) { row.takeHomeMonthly -= extra; row.taxMonthly += extra; }
     }
     // Estimated paycheck (W-2): gross - deductions - taxes, from the paystub lines when the
     // three federal lines are there, else the federal tax and FICA estimate (state tax not included).
     // With an actual paycheck typed too, the gap shows what does not add up.
     if (inc.type === 'w2' && grossMonthly !== null) {
       const stub = withheldFromStub(inc);
-      const taxM = stub.federalDone ? stub.total : row.taxCheck ? row.taxCheck.estTotalAnnual / 12 : row.takeHomeStatus === 'guess' ? row.taxMonthly : null;
+      const extra = stub.federalDone ? 0 : extraWithholding(inc) || 0;
+      const taxM = stub.federalDone ? stub.total : row.taxCheck ? row.taxCheck.estTotalAnnual / 12 + extra : row.takeHomeStatus === 'guess' ? row.taxMonthly : null;
       row.estimatedTakeHomeMonthly = taxM === null ? null : grossMonthly - dt.all - taxM;
       row.estimatedTaxMonthly = taxM;
       row.estimatedFrom = stub.federalDone ? 'paystub lines' : 'tax estimate';

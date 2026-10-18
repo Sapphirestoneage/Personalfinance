@@ -63,6 +63,7 @@ export function validateHousehold(doc) {
     if (inc.nextPayDate) errs.push(...dateErrors(inc.nextPayDate, w + '.nextPayDate'));
     if (inc.payDays !== undefined && !(Array.isArray(inc.payDays) && inc.payDays.length === 2 && inc.payDays.every((d) => Number.isInteger(d) && d >= 1 && d <= 31))) errs.push(w + '.payDays must be two days, 1 to 31');
     for (const [k, v] of Object.entries(inc.withheld || {})) errs.push(...valueErrors(v, w + '.withheld.' + k));
+    if (inc.extraWithholding !== undefined) errs.push(...valueErrors(inc.extraWithholding, w + '.extraWithholding'));
     (inc.deductions || []).forEach((d, j) => {
       const dw = w + '.deductions[' + j + ']';
       seen(d.id, dw);

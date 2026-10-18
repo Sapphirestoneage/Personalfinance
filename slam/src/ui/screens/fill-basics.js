@@ -8,6 +8,7 @@ import { statusChip } from '../components/status.js';
 import { addIncome, addDeduction, removeDeduction } from '../../store/edits.js';
 import { DEDUCTION_KINDS } from '../../calc/deductions.js';
 import { makeValue } from '../../store/value.js';
+import { taxWalkView } from '../components/tax-walk.js';
 
 const STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
 const SITUATIONS = [['employed', 'Employed'], ['self-employed', 'Self-employed'], ['between-jobs', 'Between jobs'], ['student', 'Student']];
@@ -55,14 +56,18 @@ function defaultIncomeType(situation) {
 function taxNote(l) {
   if (l.from === 'paystub') return 'paystub';
   if (l.from === 'not estimated') return 'not estimated yet';
+  if (l.from === 'W-4') return 'W-4, step 4c';
   if (l.from === 'the rest') return l.monthly > 0 ? 'what is left' : 'vs the estimate';
   return 'estimate' + (l.bracket !== undefined && l.bracket !== null ? ', ' + pct(l.bracket, 0) + ' bracket' : '');
 }
 
-function payTable(row) {
+function payTable(ctx, row) {
   const cell = (x, money2) => h('td', { class: 'num' }, money2(x));
   const exact = (x) => money(x, true);
-  return h('div', { class: 'table-wrap', style: 'margin-top:8px' }, h('table', { class: 'budget' },
+  // The federal estimate's steps open below the table (S-101), so a phone can read them without scrolling sideways.
+  const federal = (row.taxLines || []).find((l) => l.walk);
+  const walk = federal && ctx.ui.expanded.has('taxwalk:' + row.id) ? h('div', { class: 'card', style: 'margin-top:8px' }, taxWalkView(ctx, federal.walk)) : null;
+  return [h('div', { class: 'table-wrap', style: 'margin-top:8px' }, h('table', { class: 'budget' },
     h('thead', {}, h('tr', {}, ['', 'Paycheck', 'Month', 'Year', 'Hour'].map((x) => h('th', {}, x)))),
     h('tbody', {},
       h('tr', {}, h('td', {}, 'Gross', row.grossFrom === 'hourly' ? h('span', { class: 'xs muted' }, ' (rate x hours)') : null),
@@ -72,14 +77,21 @@ function payTable(row) {
       row.taxMonthly !== null ? h('tr', {}, h('td', {}, 'Taxes', h('span', { class: 'xs muted' }, row.withheldFrom === 'paystub' ? ' (paystub)' : row.withheldFrom ? ' (withheld)' : ' (estimate)')),
         cell(-row.taxPerPaycheck, exact), cell(-row.taxMonthly, exact), cell(-row.taxAnnual, exact), h('td', {})) : null,
       // One row per tax under it (S-099): federal income tax and its bracket, Social Security, Medicare, state, and the rest.
-      row.taxMonthly !== null && row.taxLines ? row.taxLines.map((l) => h('tr', { class: 'line', 'data-key': 'tax-line:' + l.key },
-        h('td', {}, l.label, h('span', { class: 'xs muted' }, ' (' + taxNote(l) + ')')),
-        ...(l.monthly === null ? [h('td', { class: 'num muted' }, '\u00b7'), h('td', { class: 'num muted' }, '\u00b7'), h('td', { class: 'num muted' }, '\u00b7')]
-          : [cell(-l.perPaycheck, exact), cell(-l.monthly, exact), cell(-l.annual, exact)]), h('td', {}))) : null,
+      row.taxMonthly !== null && row.taxLines ? row.taxLines.map((l) => {
+        // The federal estimate opens to show how it is worked out (S-101).
+        const key = 'taxwalk:' + row.id;
+        const open = !!l.walk && ctx.ui.expanded.has(key);
+        const name = l.walk ? h('button', { class: 'link-btn', 'aria-expanded': open ? 'true' : 'false', 'data-key': 'open-tax-walk:' + row.id,
+          onclick: () => { if (open) ctx.ui.expanded.delete(key); else ctx.ui.expanded.add(key); ctx.rerender(); } }, (open ? '\u25be ' : '\u25b8 ') + l.label) : l.label;
+        return h('tr', { class: 'line', 'data-key': 'tax-line:' + l.key },
+          h('td', {}, name, h('span', { class: 'xs muted' }, ' (' + taxNote(l) + ')')),
+          ...(l.monthly === null ? [h('td', { class: 'num muted' }, '\u00b7'), h('td', { class: 'num muted' }, '\u00b7'), h('td', { class: 'num muted' }, '\u00b7')]
+            : [cell(-l.perPaycheck, exact), cell(-l.monthly, exact), cell(-l.annual, exact)]), h('td', {}));
+      }) : null,
       row.postTaxMonthly ? h('tr', {}, h('td', {}, 'Post-tax deductions'),
         cell(-row.postTaxPerPaycheck, exact), cell(-row.postTaxMonthly, exact), cell(-row.postTaxAnnual, exact), h('td', {})) : null,
       h('tr', {}, h('td', {}, 'Take-home', row.takeHomeStatus === 'guess' ? h('span', { class: 'xs st-guess' }, ' (guess)') : null),
-        cell(row.takeHomePerPaycheck, exact), cell(row.takeHomeMonthly, exact), cell(row.takeHomeAnnual, exact), cell(row.takeHomePerHour, exact)))));
+        cell(row.takeHomePerPaycheck, exact), cell(row.takeHomeMonthly, exact), cell(row.takeHomeAnnual, exact), cell(row.takeHomePerHour, exact))))), walk];
 }
 
 // Paycheck deductions: retirement as a % of gross or an amount, plus health,
@@ -159,6 +171,9 @@ function withheldBlock(ctx, inc, row) {
         'The paystub lines leave ' + money(Math.abs(t.stubMismatchMonthly)) + ' a month ' + (t.stubMismatchMonthly > 0 ? 'less' : 'more') + ' than the take-home typed. Something may be missing (another deduction or tax).') : null);
   }
   return h('div', { style: 'margin-top:12px' },
+    // Extra federal tax the client asked for on the W-4 (S-101); a paystub's federal line already includes it.
+    question(ctx, 'Additional withholding (W-4, step 4c)', 'Extra federal tax asked for on the W-4, taken out of each paycheck. Blank if none.',
+      ['income', inc.id, 'extraWithholding'], inc.extraWithholding || makeValue(null, { cadence: 'paycheck' })),
     h('details', { open: entered || ctx.ui.expanded.has('withheld:' + inc.id) ? true : null,
       ontoggle: (e) => { if (e.target.open) ctx.ui.expanded.add('withheld:' + inc.id); else ctx.ui.expanded.delete('withheld:' + inc.id); } },
       h('summary', { class: 'field-label' }, 'Taxes withheld (copy from the paystub, optional)'),
@@ -294,7 +309,7 @@ family: 'Help from family. A gift, so it is not taxed as income.', 'not-taxable'
     isWork ? deductionsBlock(ctx, inc, row) : null,
     inc.type === 'w2' ? withheldBlock(ctx, inc, row) : null,
     hourly || (row && row.paycheckGapMonthly !== null && row.paycheckGapMonthly !== undefined) ? paycheckBlock(ctx, inc, row, hourly) : null,
-    row && (row.grossMonthly !== null || row.takeHomeMonthly !== null) ? payTable(row) : null);
+    row && (row.grossMonthly !== null || row.takeHomeMonthly !== null) ? payTable(ctx, row) : null);
 }
 
 export function renderBasics(ctx, summary) {

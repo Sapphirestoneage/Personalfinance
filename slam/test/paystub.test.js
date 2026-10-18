@@ -180,3 +180,41 @@ test('taxes break down: with only gross pay, the estimate is listed and state ta
   // taxes row = the estimate, 321.243846 a paycheck
   assert.ok(near(r.taxPerPaycheck, 321.243846, 5));
 });
+
+// How the federal estimate is worked out (S-101), Tal by hand (top of this file), for the year:
+//   gross 54,600 - pre-tax 1,638 = adjusted gross 52,962; - standard deduction 16,100 = taxable 36,862
+//   10% on the first 12,400 = 1,240; 12% on the next 36,862 - 12,400 = 24,462 = 2,935.44; total 4,175.44
+//   4,175.44 / 54,600 = 0.0764732 of gross; Social Security on 54,600 (under the 184,500 wage base)
+test('the federal estimate, step by step, for the Sankey', () => {
+  const { d, inc } = tal();
+  inc.takeHome = pc(2000);
+  const w = incomeSummary(d, refs.tax).sources[0].taxLines.find((l) => l.key === 'federal').walk;
+  assert.deepEqual([w.gross, w.pretax, w.agi, w.std, w.taxable].map((x) => Math.round(x * 100) / 100), [54600, 1638, 52962, 16100, 36862]);
+  assert.deepEqual(w.slices.map((s) => [s.rate, Math.round(s.amount * 100) / 100, Math.round(s.tax * 100) / 100]), [[0.1, 12400, 1240], [0.12, 24462, 2935.44]]);
+  assert.ok(near(w.incomeTax, 4175.44));
+  assert.ok(near(w.effectiveRate, 0.0764732, 6));
+  assert.equal(w.bracket, 0.12);
+  assert.ok(near(w.ssBase, 54600));
+  // The Sankey's parts add back to gross: 1,638 + 16,100 + 12,400 + 24,462 = 54,600
+  assert.ok(near(w.pretax + w.std + w.slices.reduce((a, s) => a + s.amount, 0), w.gross));
+});
+
+// Additional withholding of 50 a paycheck (W-4 step 4c), by hand:
+//   with only gross pay: taxes 321.243846 + 50 = 371.243846; take-home 2,100 - 63 - 371.243846 = 1,665.756154
+//   with the 2,000 paycheck typed: withheld is still 37, so not taken out = 37 - 321.243846 - 50 = -334.243846
+test('additional withholding comes out of each paycheck and shows as its own tax line', () => {
+  const { d, inc } = tal();
+  inc.extraWithholding = pc(50);
+  let r = incomeSummary(d, refs.tax).sources[0];
+  assert.ok(near(r.taxPerPaycheck, 371.243846, 5));
+  assert.ok(near(r.takeHomePerPaycheck, 1665.756154, 5));
+  assert.ok(near(r.taxLines.find((l) => l.key === 'extra').perPaycheck, 50));
+  assert.deepEqual(validateHousehold(d), []);
+  inc.takeHome = pc(2000);
+  r = incomeSummary(d, refs.tax).sources[0];
+  assert.ok(near(r.taxLines.find((l) => l.key === 'short').perPaycheck, -334.243846, 5));
+  assert.ok(near(r.estimatedTakeHomePerPaycheck, 1665.756154, 5));
+  // Kept on save and load; files without it load without it.
+  assert.ok(near(migrate(JSON.parse(JSON.stringify(d))).income[0].extraWithholding.amount, 50));
+  assert.equal('extraWithholding' in migrate(JSON.parse(JSON.stringify(tal().d))).income[0], false);
+});
