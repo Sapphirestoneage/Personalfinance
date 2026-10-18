@@ -79,3 +79,27 @@ export function linkedCardBalance(doc, debtId) {
   const s = monthBalance(doc, doc.currentMonth, a.id).start;
   return { accountId: a.id, name: a.name, amount: s.amount, month: doc.currentMonth };
 }
+
+// Every credit card, both ways (S-102): each card account with the debt it pays down, what it owes,
+// the lines set to be paid on it, and what was logged on it this month; and the card debts that
+// have no account yet. Month = the month being worked on.
+export function cardMap(doc, month) {
+  const cards = (doc.accounts || []).filter((a) => a.state !== 'archived' && a.type === 'credit-card');
+  const lines = (doc.categories || []).flatMap((c) => c.state === 'archived' ? [] : c.lines.filter((l) => l.state !== 'archived'));
+  const entries = (doc.transactions || []).filter((t) => !t.deleted && t.date.startsWith(month) && (t.kind || 'spend') === 'spend');
+  const rows = cards.map((a) => {
+    const debt = a.debtId ? (doc.debts || []).find((d) => d.id === a.debtId) || null : null;
+    const logged = entries.filter((t) => t.account === a.id);
+    return {
+      id: a.id, name: a.name, institution: a.institution || '',
+      debt: debt ? { id: debt.id, label: debt.label } : null,
+      owed: monthBalance(doc, month, a.id).end.amount,
+      paidOn: lines.filter((l) => l.accountId === a.id).map((l) => l.name),
+      loggedCount: logged.length,
+      loggedAmount: logged.length ? Math.round(sumKnown(logged.map((t) => t.amount)).total * 100) / 100 : 0
+    };
+  });
+  const linked = new Set(cards.map((a) => a.debtId).filter(Boolean));
+  const noAccount = (doc.debts || []).filter((d) => d.state !== 'archived' && d.type === 'credit-card' && !linked.has(d.id)).map((d) => ({ id: d.id, label: d.label }));
+  return { rows, noAccount };
+}

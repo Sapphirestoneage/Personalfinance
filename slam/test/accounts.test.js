@@ -144,3 +144,33 @@ test('checks: unknown account types and balances for unknown accounts are refuse
   assert.throws(() => setBalance(d, '2026-10', 'acct-nope', 'start', one(1)), /No account/);
   assert.ok(chk);
 });
+
+// Every card, both ways (S-102). By hand: three debts, two of them credit cards (Amex, Chase), and a car loan.
+// "Add an account for each" makes two card accounts, named and linked; the car loan gets none.
+// Groceries are set to be paid on the Amex; in October, 40 (Oct 3) and 30 (Oct 5) are logged on it = 70 from
+// 2 entries, and a 15 entry on Sep 30 is another month. The Chase has nothing set or logged.
+test('every credit card: which debt it pays down, and what goes on it', async () => {
+  const { addCardAccounts } = await import('../src/store/accounts.js');
+  const { cardMap } = await import('../src/calc/balances.js');
+  const { addDebt, findLine } = await import('../src/store/edits.js');
+  const { addEntry } = await import('../src/store/log.js');
+  const { newHousehold } = await import('../src/store/schema.js');
+  const d = newHousehold('Cards');
+  d.currentMonth = '2026-10';
+  const amex = addDebt(d, { label: 'Amex', type: 'credit-card' });
+  addDebt(d, { label: 'Chase', type: 'credit-card' });
+  addDebt(d, { label: 'Car', type: 'car-loan' });
+  assert.deepEqual(cardMap(d, '2026-10').noAccount.map((x) => x.label), ['Amex', 'Chase']);
+  assert.equal(addCardAccounts(d), 2);
+  assert.deepEqual(d.accounts.map((a) => [a.name, a.type, a.debtId === amex.id]), [['Amex', 'credit-card', true], ['Chase', 'credit-card', false]]);
+  assert.equal(addCardAccounts(d), 0, 'running it again adds nothing');
+  const amexAcct = d.accounts[0].id;
+  findLine(d, 'groceries').line.accountId = amexAcct;
+  addEntry(d, { date: '2026-10-03', amount: 40, lineId: 'groceries', account: amexAcct });
+  addEntry(d, { date: '2026-10-05', amount: 30, lineId: 'gas', account: amexAcct });
+  addEntry(d, { date: '2026-09-30', amount: 15, lineId: 'gas', account: amexAcct });
+  const m = cardMap(d, '2026-10');
+  assert.deepEqual(m.noAccount, []);
+  assert.deepEqual(m.rows.map((r) => [r.name, r.debt && r.debt.label, r.paidOn, r.loggedCount, r.loggedAmount]),
+    [['Amex', 'Amex', ['Groceries'], 2, 70], ['Chase', 'Chase', [], 0, 0]]);
+});

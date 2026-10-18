@@ -7,8 +7,8 @@ import { h, options } from '../dom.js';
 import { money, monthLabel } from '../format.js';
 import { valueInput } from './value-input.js';
 import { nameEdit } from './name-edit.js';
-import { addAccount, setBalance, setAccountField, setBalanceDate } from '../../store/accounts.js';
-import { balancesFor } from '../../calc/balances.js';
+import { addAccount, setBalance, setAccountField, setBalanceDate, addCardAccounts } from '../../store/accounts.js';
+import { balancesFor, cardMap } from '../../calc/balances.js';
 
 export const ACCOUNT_TYPE_OPTIONS = [['checking', 'Checking'], ['savings', 'Savings'], ['credit-card', 'Credit card'], ['cash', 'Cash'], ['other', 'Other']];
 
@@ -47,7 +47,10 @@ export function accountsCard(ctx, month, opts = {}) {
           h('div', { class: 'row' },
             h('select', { 'aria-label': 'Account type', 'data-key': 'acct:' + a.id + ':type', onchange: (e) => ctx.update('Account type', (d) => setAccountField(d, a.id, 'type', e.target.value)) }, options(ACCOUNT_TYPE_OPTIONS, a.type)),
             a.type === 'credit-card' ? h('select', { 'aria-label': 'Linked debt', 'data-key': 'acct:' + a.id + ':debt', onchange: (e) => ctx.update('Link card to debt', (d) => setAccountField(d, a.id, 'debtId', e.target.value)) },
-              options([['', 'Not linked to a debt'], ...doc.debts.filter((x) => x.state !== 'archived').map((x) => [x.id, 'Debt: ' + x.label])], a.debtId || '')) : null,
+              options([['', 'Not linked to a debt'], ...doc.debts.filter((x) => x.state !== 'archived').map((x) => {
+                const other = doc.accounts.find((o) => o.id !== a.id && o.debtId === x.id && o.state !== 'archived');
+                return [x.id, 'Debt: ' + x.label + (other ? ' (on ' + other.name + ')' : '')];
+              })], a.debtId || '')) : null,
             h('button', { class: 'btn small ghost', 'data-key': 'acct:' + a.id + ':archive', onclick: () => ctx.update('Archive account', (d) => setAccountField(d, a.id, 'state', 'archived')) }, 'Archive')),
           linked ? h('div', { class: 'hint' }, 'APR, minimum, and due day stay on the debt "' + linked.label + '".') : null),
         h('div', { class: 'balance-pair' },
@@ -57,6 +60,7 @@ export function accountsCard(ctx, month, opts = {}) {
     }),
     b.rows.length ? h('p', { class: 'small' }, 'Cash (checking, savings, cash): start ', h('b', { class: 'num' }, money(b.cashStart)), ', end ', h('b', { class: 'num' }, money(b.cashEnd)),
       b.rows.some((r) => r.card) ? h('span', {}, '. Cards owed: start ', h('b', { class: 'num' }, money(b.cardsStart)), ', end ', h('b', { class: 'num' }, money(b.cardsEnd))) : null) : h('p', { class: 'muted small' }, 'No accounts yet.'),
+    cardsBlock(ctx, month),
     h('div', { class: 'row' }, ACCOUNT_TYPE_OPTIONS.slice(0, 4).map(([type, label]) => h('button', { class: 'btn small', 'data-key': 'add-acct-' + type, onclick: () => {
       let id;
       ctx.update('Add account', (d) => { id = addAccount(d, { name: label, type }).id; });
@@ -64,6 +68,27 @@ export function accountsCard(ctx, month, opts = {}) {
     } }, '+ ' + label))),
     archived.length ? h('details', {}, h('summary', { class: 'xs muted' }, 'Archived accounts (' + archived.length + ')'),
       archived.map((a) => h('div', { class: 'spread small' }, a.name, h('button', { class: 'btn small ghost', onclick: () => ctx.update('Restore account', (d) => setAccountField(d, a.id, 'state', 'active')) }, 'Restore')))) : null);
+}
+
+// Every credit card, both ways (S-102): which debt each card pays down, what it owes, what is
+// set to be paid on it, and what was logged on it; card debts with no account get one tap.
+function cardsBlock(ctx, month) {
+  const m = cardMap(ctx.doc, month);
+  if (!m.rows.length && !m.noAccount.length) return null;
+  return h('div', { class: 'cards-map', 'data-key': 'cards-map' },
+    h('h3', {}, 'Credit cards'),
+    m.rows.length ? h('ul', { class: 'plain' }, m.rows.map((r) => h('li', { class: 'small', 'data-key': 'card:' + r.id },
+      h('div', { style: 'flex:1 1 100%' },
+        h('b', {}, r.name + (r.institution ? ' (' + r.institution + ')' : '')), ' ',
+        r.debt ? h('span', {}, 'pays down the debt "' + r.debt.label + '"') : h('span', { class: 'warn' }, 'is not linked to a debt yet: pick one above'),
+        r.owed !== null ? h('span', { class: 'muted' }, '. Owes ' + money(r.owed, true) + ' at the end of the month') : null, '.'),
+      h('div', { class: 'xs muted', style: 'flex:1 1 100%' },
+        (r.paidOn.length ? 'Paid on it: ' + r.paidOn.join(', ') + '. ' : 'No bills set to be paid on it. ') +
+        (r.loggedCount ? 'Logged on it this month: ' + r.loggedCount + (r.loggedCount === 1 ? ' entry, ' : ' entries, ') + money(r.loggedAmount, true) + '.' : 'Nothing logged on it this month.'))))) : null,
+    m.noAccount.length ? h('div', { class: 'row' },
+      h('span', { class: 'small' }, 'Card debts with no account yet: ' + m.noAccount.map((d) => d.label).join(', ') + '.'),
+      h('button', { class: 'btn small', 'data-key': 'add-card-accounts', onclick: () => ctx.update('Add card accounts', (d) => addCardAccounts(d)) },
+        'Add ' + (m.noAccount.length === 1 ? 'an account for it' : 'an account for each (' + m.noAccount.length + ')'))) : null);
 }
 
 // One line for Next stage and Eras: cash on hand, read-only, with a link to where it is typed.

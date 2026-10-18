@@ -19,6 +19,14 @@ export function addAccount(doc, fields = {}) {
   return acct;
 }
 
+// One card account for each card debt that has none yet, named and linked to it (S-102). Returns how many.
+export function addCardAccounts(doc) {
+  const taken = new Set(doc.accounts.filter((a) => a.state !== 'archived').map((a) => a.debtId).filter(Boolean));
+  const free = doc.debts.filter((d) => d.type === 'credit-card' && d.state !== 'archived' && !taken.has(d.id));
+  for (const d of free) doc.accounts.push(newAccount({ name: d.label, type: 'credit-card', debtId: d.id }));
+  return free.length;
+}
+
 export function findAccount(doc, id) {
   return doc.accounts.find((a) => a.id === id) || null;
 }
