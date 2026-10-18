@@ -60,7 +60,7 @@ export function billsCard(ctx) {
     bills.length ? bills.map(({ l, annual }) => h('div', { class: 'qa' },
       h('div', { class: 'q' }, h('div', {}, l.name), h('div', { class: 'hint' }, annual ? 'Once a year: due month (1 to 12) and day' : 'Due day of the month (1 to 31)')),
       h('div', { class: 'row' }, annual ? dayBox(l, 'dueMonth', 12, l.name + ' due month') : null, dayBox(l, 'dueDay', 31, l.name + ' due day'),
-        accountSelect(ctx, 'acct-line:' + l.id, l.accountId, (v) => ctx.update('Paid from', (d) => setItemAccount(d, 'line', l.id, v)), l.name + ' account')))) : h('p', { class: 'muted small' }, 'No fixed or yearly lines yet. Mark a line fixed in Categories and lines.'),
+        accountSelect(ctx, 'acct-line:' + l.id, l.accountId, (v) => ctx.update('Paid from', (d) => setItemAccount(d, 'line', l.id, v)), l.name + ' account')))) : emptyState(ctx, 'No fixed or yearly lines yet. Mark a line fixed to give it a due date.', 'setup:categories', 'Categories and lines', 'bills-empty'),
     debts.length ? h('h3', {}, 'Debt payments') : null,
     debts.map((debt) => h('div', { class: 'qa' },
       h('div', { class: 'q' }, h('div', {}, debt.label), h('div', { class: 'hint' }, 'Due day ' + (debt.dueDay.amount || 'not set yet (Debts)'))),

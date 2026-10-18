@@ -19,7 +19,7 @@ import { mistakePicker } from '../charts/catalog.js';
 import { jumpLink } from '../components/jump.js';
 import { monthLabel } from '../format.js';
 import { openQuickEntry } from '../components/quick-entry.js';
-import { gapLines } from '../../calc/loop.js';
+import { gapLines, reviewRows } from '../../calc/loop.js';
 import { logEntriesFor, removeTransaction } from '../../store/edits.js';
 import { editEntry } from '../../store/log.js';
 import { makeValue } from '../../store/value.js';
@@ -72,8 +72,10 @@ function gapsCard(ctx, summary) {
   const gaps = gapLines(summary).map((g) => ({ c: summary.model.categories.find((x) => x.id === g.catId), l: modelLine(summary, g.id) }));
   const done = summary.model.categories.flatMap((c) => c.lines).filter((l) => l.actualFrom === 'log').length;
   return h('div', { class: 'card' + (gaps.length ? ' flag' : ''), id: 'gaps-card' },
-    h('h2', {}, gaps.length ? 'Still empty (' + gaps.length + ')' : 'Nothing left to fill'),
-    h('p', { class: 'muted small' }, done + ' line' + (done === 1 ? ' is' : 's are') + ' already filled from the log. ' + (gaps.length ? 'For each line below: add an entry, type an amount, or none this month.' : 'Every line with a plan or an estimate has an actual.')),
+    h('h3', {}, gaps.length ? 'Still empty (' + gaps.length + ')' : 'Nothing left to fill'),
+    gaps.length ? h('p', { class: 'muted small' }, done + ' line' + (done === 1 ? ' is' : 's are') + ' already filled from the log. For each line below: add an entry, type an amount, or none this month.')
+      : h('div', { class: 'empty-state row' }, h('span', { class: 'small' }, 'Every line with a plan or an estimate has an actual. Close the month when it ends.'),
+        h('button', { class: 'btn small', 'data-key': 'gaps-close', onclick: () => { ctx.ui.closing = true; ctx.ui.anchor = 'checklist'; ctx.rerender(); } }, 'Close the month')),
     gaps.map(({ c, l }) => {
       const line = ctx.doc.categories.find((x) => x.id === c.id).lines.find((x) => x.id === l.id);
       return h('div', { class: 'qa' }, h('div', { class: 'q' }, h('div', {}, l.name), h('div', { class: 'hint' }, c.name + (l.estimate !== null ? ', estimate ' + money(l.estimate) : ''))),
@@ -82,29 +84,37 @@ function gapsCard(ctx, summary) {
     }));
 }
 
-// One category's actuals: each line from the log, a yearly share, or typed. Names,
-// types, and details are changed in Setup, Categories and lines (S-106).
-function categoryCard(ctx, summary, cat) {
-  const row = summary.rows.find((r) => r.id === cat.id);
-  if (!row || row.notForMe) return null;
+// One summary row per category ("Food: $412 from 18 entries", S-106) that opens on a tap
+// to each line's actual: from the log, a yearly share, or typed. Names, types, and
+// details are changed in Setup, Categories and lines.
+function summaryText(r) {
+  const bits = [];
+  if (r.entries) bits.push('from ' + r.entries + ' entr' + (r.entries === 1 ? 'y' : 'ies'));
+  if (r.typed) bits.push(r.typed + ' typed');
+  if (r.shares) bits.push(r.shares + ' yearly share' + (r.shares === 1 ? '' : 's'));
+  if (r.empty) bits.push(r.empty + ' still empty');
+  return r.name + ': ' + (r.actual === null ? 'nothing yet' : money(r.actual)) + (bits.length ? ' ' + bits.join(', ') : '');
+}
+
+function categoryRow(ctx, summary, r) {
+  const key = 'rv-cat:' + r.id;
+  const open = ctx.ui.expanded.has(key);
+  const toggle = () => { if (open) ctx.ui.expanded.delete(key); else ctx.ui.expanded.add(key); ctx.rerender(); };
+  const head = h('button', { class: 'rv-row', 'data-key': key, 'aria-expanded': open ? 'true' : 'false', onclick: toggle },
+    h('span', {}, (open ? '\u25be ' : '\u25b8 ') + summaryText(r)));
+  if (!open) return h('div', { class: 'rv-cat', id: 'rv-cat-' + r.id }, head);
+  if (r.isDebt) {
+    const debts = ctx.doc.debts.filter((d) => d.state !== 'archived');
+    return h('div', { class: 'rv-cat open', id: 'rv-cat-' + r.id }, head,
+      h('ul', { class: 'plain' }, debts.map((d) => h('li', { class: 'small' }, h('span', {}, d.label), h('b', { class: 'num' }, money(d.minimum.amount) + ' minimum')))),
+      h('p', { class: 'xs' }, jumpLink(ctx, 'setup:debts', 'Change debts in Setup')));
+  }
+  const cat = ctx.doc.categories.find((c) => c.id === r.id);
   const live = cat.lines.filter((l) => l.state !== 'archived' && !(l.addedFor && l.addedFor > ctx.doc.currentMonth));
-  return h('div', { class: 'card', id: 'rv-cat-' + cat.id },
-    h('div', { class: 'spread' }, h('h3', {}, cat.name),
-      h('span', { class: 'small muted num' }, 'estimate ' + money(row.estimate) + ' / actual ' + money(row.actual) + (row.partial ? ' (partial)' : ''))),
+  return h('div', { class: 'rv-cat open', id: 'rv-cat-' + r.id }, head,
     live.map((line) => h('div', { class: 'qa' },
       h('div', { class: 'q' }, h('div', {}, line.name, line.state === 'hidden' ? ' (hidden)' : '')),
       coveredByParents(ctx.doc, line) ? coveredNote() : actualCell(ctx, summary, line))));
-}
-
-// Debts on Review: what the payments come to this month. Each debt is set up in Setup, Debts.
-function debtsCard(ctx, summary) {
-  const row = summary.rows.find((r) => r.isDebt);
-  if (!row) return null;
-  const debts = ctx.doc.debts.filter((d) => d.state !== 'archived');
-  return h('div', { class: 'card', id: 'rv-debts' },
-    h('div', { class: 'spread' }, h('h3', {}, row.name), h('span', { class: 'small muted num' }, money(row.actual) + ' from ' + debts.length + ' debt' + (debts.length === 1 ? '' : 's'))),
-    debts.length ? h('ul', { class: 'plain' }, debts.map((d) => h('li', { class: 'small' }, h('span', {}, d.label), h('b', { class: 'num' }, money(d.minimum.amount) + ' minimum')))) : null,
-    h('p', { class: 'xs' }, jumpLink(ctx, 'setup:debts', 'Change debts in Setup')));
 }
 
 // Month end: close the month (the checklist first), with the bridge in one line.
@@ -127,7 +137,10 @@ function mistakesSection(ctx, summary) {
 // Closed months: the saved review (never recomputed), and the lines with late entries.
 function pastMonths(ctx, summary) {
   const closed = ctx.doc.months.slice().reverse();
-  if (!closed.length) return h('section', { id: 'past-months' }, h('h2', {}, 'Past months'), h('div', { class: 'card' }, h('p', { class: 'small muted' }, 'Close a month to see its review here.')));
+  if (!closed.length) {
+    return h('section', { id: 'past-months' }, h('h2', {}, 'Past months'), h('div', { class: 'card empty-state row' }, h('span', { class: 'small' }, 'Close a month to see its review here.'),
+      h('button', { class: 'btn small', 'data-key': 'past-close', onclick: () => { ctx.ui.closing = true; ctx.ui.anchor = 'checklist'; ctx.rerender(); } }, 'Close ' + monthLabel(ctx.doc.currentMonth))));
+  }
   const key = closed.some((m) => m.key === ctx.ui.monthsPick) ? ctx.ui.monthsPick : closed[0].key;
   const rec = closed.find((m) => m.key === key);
   return h('section', { id: 'past-months' }, h('h2', {}, 'Past months'),
@@ -140,16 +153,14 @@ function pastMonths(ctx, summary) {
 
 export function renderReview(ctx, summary) {
   const doc = ctx.doc;
-  const cats = doc.categories.filter((c) => c.state !== 'archived' && c.id !== 'debt' && c.id !== 'everything');
   const justClosed = ctx.ui.justClosed ? doc.months.find((m) => m.key === ctx.ui.justClosed) : null;
   return h('div', {},
     h('h1', {}, 'Review'),
     justClosed ? reviewCard(ctx, justClosed, { id: 'just-closed', dismiss: () => { ctx.ui.justClosed = null; ctx.rerender(); } }) : null,
     h('section', { id: 'fill-gaps' }, h('h2', {}, 'Fill gaps, ' + monthLabel(doc.currentMonth)),
-      h('p', { class: 'muted small' }, 'Lines with entries in the log are already filled. Only what is missing needs an answer.'),
       gapsCard(ctx, summary),
-      cats.map((c) => categoryCard(ctx, summary, c)),
-      debtsCard(ctx, summary),
+      h('div', { class: 'card', id: 'rv-rows' }, h('p', { class: 'muted small', style: 'margin-top:0' }, 'Already filled from the log or answered. Tap a category to see its lines.'),
+        reviewRows(summary).map((r) => categoryRow(ctx, summary, r))),
       findCategory(doc, 'everything') && doc.settings.singleTotal ? h('p', { class: 'muted small' }, 'Categories with no estimate of their own sit inside the one total. Their actuals draw it down.') : null),
     monthEnd(ctx, summary),
     mistakesSection(ctx, summary),

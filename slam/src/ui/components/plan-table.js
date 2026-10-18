@@ -120,10 +120,16 @@ function groupTable(ctx, rv, g) {
   if (!rows.length && ctx.ui.reviewFilter) return null;
   const head = h('tr', {}, COLS.map(([k, l]) => h('th', { scope: 'col', 'aria-sort': sort.key === k ? (sort.dir > 0 ? 'ascending' : 'descending') : null,
     onclick: () => { ctx.ui.reviewSort = { key: k, dir: sort.key === k ? -sort.dir : (k === 'name' ? 1 : -1) }; ctx.rerender(); } }, l)));
-  return h('div', { class: 'review-group' },
-    h('div', { class: 'spread' },
-      h('h3', { style: 'margin:0' }, g.isDebt ? g.name : nameEdit(ctx, g.name, 'cat:' + g.id + ':name', (d, v) => { findCategory(d, g.id).name = v; }, 'Category name')),
-      h('span', { class: 'small muted num' }, 'actual ' + money(g.actual) + ', plan ' + money(g.plan))),
+  // One row per category until tapped (S-106), saying how far its review is.
+  const key = 'plan-cat:' + g.id;
+  const open = ctx.ui.expanded.has(key) || ctx.ui.reviewFilter;
+  const toggle = () => { if (ctx.ui.expanded.has(key)) ctx.ui.expanded.delete(key); else ctx.ui.expanded.add(key); ctx.rerender(); };
+  const bar = h('button', { class: 'rv-row', 'data-key': key, 'aria-expanded': open ? 'true' : 'false', onclick: toggle },
+    h('span', {}, (open ? '\u25be ' : '\u25b8 ') + g.name + ': actual ' + money(g.actual) + ', plan ' + money(g.plan) + (g.isDebt ? '' : ', ' + g.reviewed + ' of ' + g.rows.length + ' reviewed')));
+  if (!open) return h('div', { class: 'review-group rv-cat' }, bar);
+  return h('div', { class: 'review-group rv-cat open' },
+    bar,
+    g.isDebt ? null : h('div', { class: 'row' }, nameEdit(ctx, g.name, 'cat:' + g.id + ':name', (d, v) => { findCategory(d, g.id).name = v; }, 'Category name')),
     h('div', { class: 'table-wrap review-wide' }, h('table', { class: 'budget review' }, h('thead', {}, head), h('tbody', {}, rows.map((r) => row(ctx, pm, r))))),
     h('div', { class: 'review-narrow' }, rows.map((r) => lineCard(ctx, pm, r))),
     g.isDebt || !rv.exists ? null : h('div', { class: 'row' },

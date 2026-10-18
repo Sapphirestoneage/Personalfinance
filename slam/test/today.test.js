@@ -65,3 +65,35 @@ test('the first session: five things, each done by an answer, not a number', () 
   assert.equal(fs().done, true);
   assert.equal(fs().left, 0);
 });
+
+test('review rows: one line per category, from the October household', async () => {
+  const { october } = await import('./fixtures/october.js');
+  const { reviewRows } = await import('../src/calc/loop.js');
+  const { findLine } = await import('../src/store/edits.js');
+  const d = october({ atm: true });
+  // Eating out gets an estimate of 50 and nothing this month: one empty line in Food.
+  findLine(d, 'eating-out').line.estimate = makeValue(50);
+  const rows = Object.fromEntries(reviewRows(buildSummary(d, refs)).map((r) => [r.id, r]));
+  const pick = (r) => [r.actual, r.entries, r.fromLog, r.shares, r.typed, r.empty, r.lines];
+  // Food: groceries 300 + 100 from 2 entries = 400; eating out empty; delivery has nothing asked.
+  assert.deepEqual(pick(rows.food), [400, 2, 1, 0, 0, 1, 3]);
+  // Housing: rent typed 1,500; utilities, internet, insurance have no estimate, so not empty.
+  assert.deepEqual(pick(rows.housing), [1500, 0, 0, 0, 1, 0, 4]);
+  // Transportation: car insurance is yearly (due in October), so its monthly share 1,200 / 12 = 100,
+  // and the Geico entry is 1 entry.
+  assert.deepEqual(pick(rows.transport), [100, 1, 0, 1, 0, 0, 5]);
+  // Personal and fun: the concert 120 less 60 owed back = 60 from 1 entry; the couch is a one-off, not counted.
+  assert.deepEqual(pick(rows.fun), [60, 1, 1, 0, 0, 0, 5]);
+  // Debt payments: the Visa minimum, 40, from 1 debt.
+  assert.equal(rows.debt.isDebt, true);
+  assert.deepEqual([rows.debt.actual, rows.debt.lines], [40, 1]);
+});
+
+test('a first number typed in the Rough pass is "roughly"; a later one keeps the status', async () => {
+  const { editValue } = await import('../src/ui/components/value-input.js');
+  const v = editValue(makeValue(), { amount: 300 }, 'roughly');
+  assert.deepEqual([v.amount, v.status, v.cadence], [300, 'roughly', 'month']);
+  // Typing again keeps "roughly"; elsewhere (no typed status) a first number is known.
+  assert.equal(editValue(v, { amount: 320 }, 'roughly').status, 'roughly');
+  assert.equal(editValue(makeValue(), { amount: 300 }).status, 'known');
+});

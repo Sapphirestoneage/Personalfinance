@@ -248,8 +248,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.fill('[data-key="qe-merchant"]', "Trader Joe's");
   await page.fill('[data-key="qe-date"]', YM + '-03');
   await page.click('[data-key="qe-save"]');
-  await page.waitForSelector('.toast');
-  check('loop', 'Quick entry saved', await page.$eval('.toast', (t) => t.textContent), 'Logged $54.20 to Groceries');
+  check('loop', 'Quick entry saved', await settled(page, '.toast', 'Logged $54.20 to Groceries'), 'Logged $54.20 to Groceries');
   await go(page, 'track');
   const mdy = (d) => YM.slice(5) + '/' + d + '/' + YM.slice(0, 4);
   await page.setInputFiles('#tx-file', { name: 'bank.csv', mimeType: 'text/csv', buffer: Buffer.from('Date,Description,Amount\n' + mdy('04') + ',TRADER JOE S #552,-54.20\n' + mdy('05') + ',WHOLE FOODS MKT,-80.10\n') });
@@ -273,6 +272,9 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('loop', 'Month grid drawn', String(await page.$$eval('#chart-cf-grid td', (t) => t.length >= 28)), 'true');
   // Actuals from the log (S-087): groceries = 54.20 + 80.10 = 134.30, from 2 entries, not typed over.
   await go(page, 'review');
+  // Filled categories are one row each until tapped (S-106).
+  check('loop', 'Food summary row', await settled(page, '[data-key="rv-cat:food"]', '\u25b8 Food: ' + money(134.3) + ' from 2 entries'), '\u25b8 Food: ' + money(134.3) + ' from 2 entries');
+  await page.click('[data-key="rv-cat:food"]');
   await page.waitForSelector('[data-key="from-log:groceries"]');
   check('loop', 'Groceries from the log', await page.$eval('[data-key="from-log:groceries"]', (b) => b.textContent), money(134.3, true));
   await page.click('[data-key="from-log:groceries"]');
@@ -318,7 +320,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   // 460 logged (groceries 400 + shopping 60) of 1,960 (+ rent 1,500 typed) = 23%
   check('review', 'Tracking', await settled(page, '#just-closed [data-key="review-tracking"]', '23% ($460 logged, $1,500 typed)'), '23% ($460 logged, $1,500 typed)');
   await insights(page, 'time');
-  check('months', 'Estimate history chart', String(await page.$$eval('#chart-estimate-history svg path', (p) => p.length > 0)), 'true');
+  check('months', 'Estimate, plan, actual by month drawn', String(await page.$$eval('#chart-trend-series svg path', (p) => p.length > 0)), 'true');
   check('months', '80/20 reading', await settled(page, '#chart-pareto .reading', '50% of your entries (3 of 6) made up 80% of your spending.'), '50% of your entries (3 of 6) made up 80% of your spending.');
   check('months', '80/20 chart', String(await page.$$eval('#chart-pareto svg rect', (r) => r.length === 6)), 'true');
   // Trends (S-092): every card drawn, and two of the one-line stats by hand.
@@ -384,7 +386,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await insights(page, 'cash');
   check('riley', 'bridge drawn', String(await page.$$eval('#chart-bridge svg', (x) => x.length >= 1)), 'true');
   await insights(page, 'time');
-  for (const id of ['trend-series', 'trend-heat', 'trend-mom', 'trend-pacing', 'trend-dom', 'estimate-history']) check('riley', id + ' drawn', String(await page.$$eval('#chart-' + id + ' svg', (x) => x.length >= 1)), 'true');
+  for (const id of ['trend-series', 'trend-heat', 'trend-mom', 'trend-pacing', 'trend-dom']) check('riley', id + ' drawn', String(await page.$$eval('#chart-' + id + ' svg', (x) => x.length >= 1)), 'true');
   check('riley', 'Console errors', String(errors.length), '0');
   await page.close();
 }
@@ -447,6 +449,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   const shop = theirs.categories.flatMap((c) => c.lines).find((l) => l.id === 'shopping');
   Object.assign(shop, { estimate: { ...shop.estimate, amount: 80, status: 'known' }, updatedAt: '2026-10-17T19:00:00.000Z', updatedBy: 'client', version: 2 });
   await page.click('[data-key="client-name"]');
+  await page.click('[data-key="menu-clients"]');
   await page.setInputFiles('#import-file', { name: 'riley.json', mimeType: 'application/json', buffer: Buffer.from(exportHousehold(theirs, '2026-10-17T19:00:00.000Z')) });
   await page.waitForSelector('#merge-conflicts');
   check('merge', 'Conflict heading', await page.$eval('#merge-conflicts h2', (x) => x.textContent), 'Merging Riley (demo, a year of the loop): 1 to pick');

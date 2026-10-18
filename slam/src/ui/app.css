@@ -290,8 +290,6 @@ table.budget.tax-steps { max-width: 520px; margin: var(--space-2) 0; }
 table.budget.tax-steps td:first-child { position: static; min-width: 0; }
 
 /* The menu follows the monthly loop (S-106): top links on wide screens, a bottom bar on phones. */
-a.client-name { color: var(--text); text-decoration: none; }
-a.client-name:hover { text-decoration: underline; }
 .bottom-bar { display: none; }
 @media (max-width: 759px) {
   .topbar .nav { display: none; }
@@ -319,3 +317,15 @@ a.client-name:hover { text-decoration: underline; }
 .empty-state { justify-content: space-between; padding: var(--space-2) 0; }
 .empty-state + .empty-state { border-top: 1px solid var(--border); }
 .change-in { margin: var(--space-2) 0 0; }
+.row-tap { cursor: pointer; }
+.more-ctl { min-height: 28px; padding: 0 var(--space-2); }
+.more-ways summary { cursor: pointer; color: var(--accent); margin: var(--space-2) 0; }
+.rv-cat { border-bottom: 1px solid var(--border); }
+.rv-cat:last-child { border-bottom: none; }
+.rv-row { width: 100%; text-align: left; background: none; border: none; padding: var(--space-3) 0; min-height: var(--tap); cursor: pointer; font-weight: 600; }
+.rv-cat.open { padding-bottom: var(--space-2); }
+.client-wrap { position: relative; flex: 1; min-width: 0; }
+button.client-name { background: none; border: none; padding: var(--space-1) 0; cursor: pointer; max-width: 100%; text-align: left; font-size: var(--text-md); }
+.name-menu { position: absolute; left: 0; top: 100%; z-index: 12; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-md); display: flex; flex-direction: column; min-width: 180px; padding: var(--space-1); }
+.name-menu a { padding: var(--space-3); text-decoration: none; color: var(--text); font-weight: 600; border-radius: var(--radius-sm); }
+.name-menu a:hover { background: var(--accent-soft); }

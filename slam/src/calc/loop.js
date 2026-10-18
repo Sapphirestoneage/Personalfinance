@@ -54,6 +54,23 @@ export function loopStrip(doc, summary, today) {
   };
 }
 
+// Review, fill gaps (S-106): one summary row per category (debts too). Its actual, how
+// many log entries it came from, and how many of its lines are from the log, a yearly
+// share, typed, covered, or still empty. A category with an empty line opens by itself.
+export function reviewRows(summary) {
+  const gaps = gapLines(summary);
+  return summary.model.categories.filter((c) => !c.isEverything && !c.notForMe).map((c) => {
+    const by = (from) => c.lines.filter((l) => l.actualFrom === from).length;
+    const empty = gaps.filter((g) => g.catId === c.id).length;
+    return {
+      id: c.id, name: c.name, isDebt: c.isDebt, actual: c.actual.amount, lines: c.lines.length,
+      entries: c.lines.reduce((n, l) => n + (l.logCount || 0), 0),
+      fromLog: by('log'), shares: by('share'), typed: by('typed'), covered: c.lines.filter((l) => l.covered).length,
+      empty
+    };
+  });
+}
+
 // Which step of the loop is now (S-106), for the strip on Today: Review from the month's
 // third-to-last day (or once the month is over), Plan while the month has no plan and
 // nothing logged, otherwise Track.

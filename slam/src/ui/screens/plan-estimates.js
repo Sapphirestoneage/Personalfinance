@@ -93,9 +93,10 @@ export function renderEstimates(ctx, summary, key) {
   const ev = rows.find((r) => r.isEverything);
 
   const header = isRough
-    ? h('div', { class: 'card' }, h('h2', {}, 'Rough: about how much a month for each?'),
-      h('p', { class: 'muted small' }, 'About ten quick questions, not line by line. "Roughly" is fine. "Don\'t know" and "Doesn\'t apply" are answers too.'),
-      h('div', { class: 'row' },
+    ? h('div', { class: 'card' }, h('h2', {}, 'Your estimates: about how much a month?'),
+      h('p', { class: 'muted small' }, 'About ten quick questions. One rough number each, a month. Tap a row (or "more") for "don\'t know", "doesn\'t apply", another cadence, or items.'),
+      // Other ways to answer wait behind one tap (S-106).
+      h('details', { class: 'more-ways' }, h('summary', { class: 'small' }, 'Other ways to answer'), h('div', { class: 'row' },
         doc.settings.singleTotal
           ? h('button', { class: 'btn small', onclick: () => ctx.update('Back to categories', (d) => { d.settings.singleTotal = false; findCategory(d, 'everything').state = 'archived'; }) }, 'Use categories instead of one total')
           : h('button', { class: 'btn small', onclick: () => ctx.update('One total instead', (d) => { useSingleTotal(d).state = 'active'; }) }, 'Give one total instead'),
@@ -108,7 +109,7 @@ export function renderEstimates(ctx, summary, key) {
           ctx.ui.blindRoundId = ctx.store.doc.blindRounds[ctx.store.doc.blindRounds.length - 1].id;
           ctx.ui.blind = true;
           ctx.rerender();
-        } }, 'Blind guess (revisit)')))
+        } }, 'Blind guess (revisit)'))))
     : h('div', { class: 'card', id: 'dream-entry' }, h('h2', {}, 'Your dream life: what would you like to spend?'),
       h('div', { class: 'toggle', role: 'group', 'aria-label': 'Dream term' },
         h('button', { 'aria-pressed': key === 'dream' ? 'true' : 'false', 'data-key': 'dream-short', onclick: () => { ctx.ui.dreamTerm = 'short'; ctx.rerender(); } }, 'Short term'),
@@ -128,16 +129,24 @@ export function renderEstimates(ctx, summary, key) {
         h('span', { class: 'row' }, statusChip('computed'), ' ', h('b', { class: 'num' }, money(r.estimate)), jumpLink(ctx, 'setup:debts', doc.debts.length ? 'Change in Setup' : 'Add debts in Setup', 'rough-debts-go')));
     }
     const cat = findCategory(doc, r.id);
+    // Rough (S-106): one amount box per row; the rest opens on a tap of the row or "more".
+    const moreKey = 'rough:' + r.id;
+    const open = !isRough || ctx.ui.expanded.has(moreKey);
+    const toggle = () => { if (ctx.ui.expanded.has(moreKey)) ctx.ui.expanded.delete(moreKey); else ctx.ui.expanded.add(moreKey); ctx.rerender(); };
+    const compact = isRough ? { compact: true, open, onMore: toggle, typed: 'roughly' } : {};
     // A category not yet typed asks what it counts as, so FAT and guesses add up right.
-    const name = h('div', {}, nameEdit(ctx, cat.name, 'cat:' + cat.id + ':name', (d, v) => { findCategory(d, r.id).name = v; }, 'Category name'),
-      cat.type === 'other' ? categoryTypeSelect(ctx, cat, { label: 'Counts as (so it adds up right)' }) : typeHint(categoryTypeLabel(cat.type), cat.name));
+    const name = isRough
+      ? h('div', { class: 'row-tap', 'data-key': 'rough-name:' + r.id, onclick: toggle }, cat.name,
+        open && cat.type === 'other' ? categoryTypeSelect(ctx, cat, { label: 'Counts as (so it adds up right)' }) : null)
+      : h('div', {}, nameEdit(ctx, cat.name, 'cat:' + cat.id + ':name', (d, v) => { findCategory(d, r.id).name = v; }, 'Category name'),
+        cat.type === 'other' ? categoryTypeSelect(ctx, cat, { label: 'Counts as (so it adds up right)' }) : typeHint(categoryTypeLabel(cat.type), cat.name));
     if (r.notForMe) {
       // Doesn't apply: no amount box (lesson 12), just the answer and a way to change it.
-      return h('div', { class: 'qa' }, h('div', { class: 'q' }, name),
+      return h('div', { class: 'qa', 'data-key': isRough ? 'rough-row:' + r.id : null }, h('div', { class: 'q' }, name),
         statusPicker(cat.estimate.status, (st) => ctx.update(r.name, (d) => { findCategory(d, r.id).estimate = makeValue(null, { status: st }); }), JSON.stringify(['categories', r.id, 'estimate'])));
     }
     const hint = isRough
-      ? null
+      ? (r.pctTakeHome.estimate !== null ? pct(r.pctTakeHome.estimate) + ' of take-home.' : null)
       : [r.estimate !== null ? 'Estimate ' + money(r.estimate) + (r.pctTakeHome.estimate !== null ? ' (' + pct(r.pctTakeHome.estimate) + ' of take-home)' : '') : null,
         key === 'dreamLong' && r.dream !== null ? 'Short-term dream ' + money(r.dream) : null].filter(Boolean).join('. ') || null;
     // Long term follows how the category is already given: line by line if its estimate or short-term dream is.
@@ -151,33 +160,38 @@ export function renderEstimates(ctx, summary, key) {
       const first = !isRough || !cat.split ? '' : cat.estimate.amount !== null ? 'First guess ' + money(toMonthly(cat.estimate, ctx.payFrequency)) + ' a month.'
         : cat.estimate.note && cat.estimate.note.startsWith('First guess') ? cat.estimate.note.replace(' / month', ' a month') + '.' : '';
       const ideas = isRough ? summary.lineIdeas[cat.id] || [] : [];
+      const lineMore = (l) => {
+        const k = 'rough-line:' + l.id;
+        return isRough ? { compact: true, open: ctx.ui.expanded.has(k), typed: 'roughly', onMore: () => { if (ctx.ui.expanded.has(k)) ctx.ui.expanded.delete(k); else ctx.ui.expanded.add(k); ctx.rerender(); } } : {};
+      };
       return h('div', { class: 'sub-lines' },
         h('div', { class: 'qa' }, h('div', { class: 'q' }, name, h('div', { class: 'hint' }, [hint, 'Adds up from its sub-categories.', first].filter(Boolean).join(' '))),
-          h('span', {}, statusChip(r.status[key]), ' ', h('b', { class: 'num' }, money(r[key])))),
-        cat.type === 'health' ? parentsPlanToggle(ctx) : null,
+          h('span', {}, statusChip(r.status[key]), ' ', h('b', { class: 'num' }, money(r[key])), isRough ? h('button', { class: 'btn small ghost more-ctl', 'data-key': 'rough-more:' + r.id, 'aria-expanded': open ? 'true' : 'false', onclick: toggle }, open ? 'less' : 'more') : null)),
+        open && cat.type === 'health' ? parentsPlanToggle(ctx) : null,
         live.map((l) => {
-          const nm = h('div', {}, nameEdit(ctx, l.name, 'line:' + l.id + ':name', (d, v) => renameLine(d, l.id, v), 'Sub-category name'),
-            l.type === 'other' ? lineTypeSelect(ctx, l, { label: 'Type' }) : typeHint(lineTypeLabel(l.type), l.name));
+          const nm = isRough ? h('div', {}, l.name, open && l.type === 'other' ? lineTypeSelect(ctx, l, { label: 'Type' }) : null)
+            : h('div', {}, nameEdit(ctx, l.name, 'line:' + l.id + ':name', (d, v) => renameLine(d, l.id, v), 'Sub-category name'),
+              l.type === 'other' ? lineTypeSelect(ctx, l, { label: 'Type' }) : typeHint(lineTypeLabel(l.type), l.name));
           return coveredByParents(doc, l) ? h('div', { class: 'qa' }, h('div', { class: 'q' }, nm), coveredNote())
-            : question(ctx, nm, null, ['line', l.id, key], l[key], { label: l.name, parts: true });
+            : question(ctx, nm, null, ['line', l.id, key], l[key], { label: l.name, parts: true, ...lineMore(l) });
         }),
-        ideas.length ? h('div', { class: 'tags' }, h('span', { class: 'xs muted' }, 'Ideas:'), ideas.map((n) => h('button', { class: 'tag-chip', onclick: () => {
+        !open ? null : ideas.length ? h('div', { class: 'tags' }, h('span', { class: 'xs muted' }, 'Ideas:'), ideas.map((n) => h('button', { class: 'tag-chip', onclick: () => {
           let id;
           ctx.update('Add ' + n, (d) => { id = addLine(d, cat.id, n).id; });
           if (id) { ctx.ui.focusPath = ['line', id, key]; ctx.rerender(); }
         } }, '+ ' + n))) : null,
-        h('div', { class: 'row' }, addLineButton(ctx, cat.id),
+        !open ? null : h('div', { class: 'row' }, addLineButton(ctx, cat.id),
           isRough ? h('button', { class: 'btn small ghost', onclick: () => ctx.update('Use one number', (d) => useOneNumber(d, cat.id, r.estimate)) }, 'Use one number instead') : null));
     }
     const fromPay = r.type === 'health' ? (summary.income.deductionsByKind.health || 0) + (summary.income.deductionsByKind.hsa || 0)
       : r.type === 'transport' ? summary.income.deductionsByKind.transportation : null;
     const payNote = fromPay ? 'Already taken out of the paycheck: ' + money(fromPay) + ' a month. Only count what is paid on top.' : null;
     const planNote = r.type === 'health' && parentsPlanOn(doc) ? 'On a parent\'s plan: count only what is paid out of pocket.' : null;
-    return h('div', {},
-      question(ctx, name, [hint, payNote, planNote].filter(Boolean).join(' ') || null, ['categories', r.id, key], cat[key], { label: r.name, parts: true }),
-      r.type === 'health' ? parentsPlanToggle(ctx) : null,
-      isRough && !r.isEverything ? h('div', { class: 'row' }, h('button', { class: 'btn small ghost', 'data-key': 'break:' + r.id, onclick: () => ctx.update('Break down ' + r.name, (d) => breakDown(d, r.id)) }, 'Break down into sub-categories')) : null,
-      isRough ? extrasFor(ctx, summary, r) : null);
+    return h('div', { 'data-key': isRough ? 'rough-row:' + r.id : null },
+      question(ctx, name, [hint, payNote, planNote].filter(Boolean).join(' ') || null, ['categories', r.id, key], cat[key], { label: r.name, parts: true, ...compact }),
+      open && r.type === 'health' ? parentsPlanToggle(ctx) : null,
+      open && isRough && !r.isEverything ? h('div', { class: 'row' }, h('button', { class: 'btn small ghost', 'data-key': 'break:' + r.id, onclick: () => ctx.update('Break down ' + r.name, (d) => breakDown(d, r.id)) }, 'Break down into sub-categories')) : null,
+      open && isRough ? extrasFor(ctx, summary, r) : null);
   }));
 
   // Categories are added and renamed in Setup, Categories and lines (S-106); the dream entry keeps its own button.
@@ -187,5 +201,5 @@ export function renderEstimates(ctx, summary, key) {
     if (id) { ctx.ui.focusKey = 'cat:' + id + ':name'; ctx.rerender(); }
   } }, '+ Add category');
   return h('div', {}, header, isRough ? blindResult(summary) : null, total, list, add,
-    h('p', { class: 'muted xs' }, 'Tap any name to rename it. "Break down" turns a category into sub-categories that carry into Review. Mark any guess "Roughly".'));
+    isRough ? null : h('p', { class: 'muted xs' }, 'Tap any name to rename it. Mark any guess "Roughly".'));
 }

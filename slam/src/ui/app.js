@@ -35,7 +35,7 @@ const known = (id) => id === 'clients' || screensNow().some(([k]) => k === id);
 const ui = {
   screen: 'clients', focusPath: null, focusKey: null, dreamTerm: 'short', expanded: new Set(), sort: { key: null, dir: -1 },
   lens: 'dollars', blind: false, units: {}, previewHandler: null, toast: null,
-  anchor: null, more: false
+  anchor: null, more: false, nameMenu: false
 };
 
 function summaryOf(doc) { return doc ? buildSummary(doc, refs) : null; }
@@ -60,6 +60,7 @@ const ctx = {
     Object.assign(ui, opts);
     ui.screen = screen;
     ui.more = false;
+    ui.nameMenu = false;
     if (location.hash !== '#' + screen) history.pushState(null, '', '#' + screen);
     queueRender();
     window.scrollTo(0, 0);
@@ -177,8 +178,14 @@ function topbar() {
   return h('header', { class: 'topbar' }, h('div', { class: 'topbar-inner' },
     h('span', { class: 'brand' }, 'SLAM'),
     // Clients are reached from the client name (S-106); a client never sees the list.
+    // The client name opens all clients and the coach notes (S-106); a client never sees either.
     doc && !asClient
-      ? h('a', { href: '#clients', class: 'client-name', 'data-key': 'client-name', title: 'All clients', onclick: (e) => { e.preventDefault(); ctx.go('clients'); } }, doc.profile.name)
+      ? h('span', { class: 'client-wrap' },
+        h('button', { class: 'client-name', 'data-key': 'client-name', 'aria-expanded': ui.nameMenu ? 'true' : 'false', title: 'All clients and coach notes',
+          onclick: () => { ui.nameMenu = !ui.nameMenu; ui.more = false; queueRender(); } }, doc.profile.name + ' \u25be'),
+        ui.nameMenu ? h('div', { class: 'name-menu' },
+          h('a', { href: '#clients', 'data-key': 'menu-clients', onclick: (e) => { e.preventDefault(); ui.nameMenu = false; ctx.go('clients'); } }, 'All clients'),
+          h('a', { href: '#setup', 'data-key': 'menu-notes', onclick: (e) => { e.preventDefault(); ui.nameMenu = false; ctx.jump('setup:notes'); } }, 'Coach notes')) : null)
       : h('span', { class: 'client-name' }, doc ? doc.profile.name : 'No client open'),
     doc ? h('nav', { class: 'nav', 'aria-label': 'Screens' }, navLinks(screensNow())) : null,
     h('div', { class: 'row' },

@@ -54,6 +54,7 @@ function entryMore(ctx, t) {
 }
 
 const KINDS = [['spend', 'Spending'], ['fee', 'Fee'], ['refund', 'Refund'], ['reimbursement', 'Reimbursement'], ['card-payment', 'Card payment'], ['transfer', 'Transfer'], ['income', 'Income']];
+const KIND_NAME = Object.fromEntries(KINDS);
 
 function lineOptions(doc) {
   const out = [['', 'Not mapped']];
@@ -117,6 +118,12 @@ function logCard(ctx, summary, month, months) {
   const inMonth = doc.transactions.filter((t) => t.date.startsWith(month));
   const needs = inMonth.filter((t) => !isPending(t) && !t.lineId && (t.kind === 'spend' || t.kind === 'fee' || t.kind === 'refund'));
   const list = (showAll ? inMonth : needs).slice(0, 300);
+  const needIds = new Set(needs.map((t) => t.id));
+  const needsLine = (t) => needIds.has(t.id);
+  const editing = (t) => ctx.ui.expanded.has('entry:' + t.id);
+  const toggleEdit = (t) => { if (editing(t)) ctx.ui.expanded.delete('entry:' + t.id); else ctx.ui.expanded.add('entry:' + t.id); ctx.rerender(); };
+  const names = Object.fromEntries(lines);
+  const lineName = (id) => (id ? (names[id] || '').split(' / ').pop() : '');
   return h('div', { class: 'card', id: 'log-card' },
     h('div', { class: 'spread' }, h('h2', { style: 'margin:0' }, 'The log'),
       h('select', { 'aria-label': 'Month', 'data-key': 'tx-month', onchange: (e) => { ctx.ui.txMonth = e.target.value; ctx.rerender(); } }, options(months.map((m) => [m, monthLabel(m)]), month))),
@@ -135,11 +142,16 @@ function logCard(ctx, summary, month, months) {
           t.bnpl ? h('span', { class: 'chip st-will-email', style: 'margin-left:6px' }, 'Buy now, pay later') : null),
         h('div', { class: 'xs muted' }, dayLabel(t.date) + (t.account ? ', ' + acctName(doc, t.account) : '') + (t.note ? ', ' + t.note : ''))),
       h('b', { class: 'num' }, money(t.amount, true)),
-      h('select', { 'aria-label': 'Kind', 'data-key': 'tx-kind-' + t.id, onchange: (e) => ctx.update('Transaction kind', (d) => setTransactionKind(d, t.id, e.target.value)) }, options(KINDS, t.kind)),
-      h('select', { 'aria-label': 'Budget line', 'data-key': 'tx-line-' + t.id, onchange: (e) => ctx.update('Map transaction', (d) => setTransactionLine(d, t.id, e.target.value, remember)) }, options(lines, t.lineId || '')),
-      h('button', { class: 'btn small ghost danger', onclick: () => ctx.update('Remove transaction', (d) => removeTransaction(d, t.id)) }, 'Remove'),
-      entryMore(ctx, t))))
-      : h('p', { class: 'muted small' }, showAll ? 'No transactions this month.' : 'Everything this month has a line.'));
+      // One line per entry (S-106): its line as text, and Edit for the kind, line, and the rest.
+      // An entry that needs a line shows the line picker right away.
+      editing(t) || needsLine(t) ? h('select', { 'aria-label': 'Budget line', 'data-key': 'tx-line-' + t.id, onchange: (e) => ctx.update('Map transaction', (d) => setTransactionLine(d, t.id, e.target.value, remember)) }, options(lines, t.lineId || ''))
+        : h('span', { class: 'small muted' }, lineName(t.lineId) || KIND_NAME[t.kind] || ''),
+      editing(t) ? h('select', { 'aria-label': 'Kind', 'data-key': 'tx-kind-' + t.id, onchange: (e) => ctx.update('Transaction kind', (d) => setTransactionKind(d, t.id, e.target.value)) }, options(KINDS, t.kind)) : null,
+      editing(t) ? h('button', { class: 'btn small ghost danger', onclick: () => ctx.update('Remove transaction', (d) => removeTransaction(d, t.id)) }, 'Remove') : null,
+      editing(t) ? entryMore(ctx, t) : null,
+      h('button', { class: 'btn small ghost more-ctl', 'data-key': 'edit-entry:' + t.id, 'aria-expanded': editing(t) ? 'true' : 'false', onclick: () => toggleEdit(t) }, editing(t) ? 'Done' : 'Edit'))))
+      : showAll ? h('div', { class: 'empty-state row' }, h('span', { class: 'small' }, 'Nothing logged this month yet. Log the first thing you spend.'), quickEntryButton(ctx, 'Log an entry'))
+        : h('p', { class: 'muted small' }, 'Everything this month has a line.'));
 }
 
 // What is missing for the calendar, as one-line prompts that link to Setup.

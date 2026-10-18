@@ -36,13 +36,22 @@ function categoryEditor(ctx, summary, cat) {
   const row = summary.rows.find((r) => r.id === cat.id);
   if (!row) return null;
   if (row.notForMe) {
-    return h('div', { class: 'card' }, h('div', { class: 'spread' }, h('h3', {}, catName(ctx, cat)), statusChip('not-for-me')),
+    return h('div', { class: 'rv-cat spread', id: 'cat-' + cat.id }, h('span', { class: 'small' }, cat.name, ' ', statusChip('not-for-me')),
       h('button', { class: 'btn small ghost', onclick: () => ctx.goToField(['categories', cat.id, 'estimate']) }, 'Change in Your estimates'));
   }
   const catHasAnswer = cat.estimate.status !== null;
   const live = cat.lines.filter((l) => l.state !== 'archived' && !(l.addedFor && l.addedFor > ctx.doc.currentMonth));
   const archived = cat.lines.filter((l) => l.state === 'archived');
+  // One row per category until tapped (S-106).
+  const key = 'set-cat:' + cat.id;
+  const open = ctx.ui.expanded.has(key) || live.some((l) => ctx.ui.expanded.has('line:' + l.id));
+  const bar = h('button', { class: 'rv-row', 'data-key': key, 'aria-expanded': open ? 'true' : 'false', onclick: () => {
+    if (open) { ctx.ui.expanded.delete(key); live.forEach((l) => ctx.ui.expanded.delete('line:' + l.id)); } else ctx.ui.expanded.add(key);
+    ctx.rerender();
+  } }, (open ? '\u25be ' : '\u25b8 ') + cat.name + ': ' + live.length + ' line' + (live.length === 1 ? '' : 's'));
+  if (!open) return h('div', { class: 'rv-cat', id: 'cat-' + cat.id }, bar);
   return h('div', { class: 'card', id: 'cat-' + cat.id },
+    bar,
     h('div', { class: 'spread' }, h('h3', {}, catName(ctx, cat)), categoryTypeSelect(ctx, cat)),
     cat.type === 'health' ? parentsPlanToggle(ctx) : null,
     live.map((line) => {
@@ -69,8 +78,8 @@ function categoryEditor(ctx, summary, cat) {
 function categoriesSection(ctx, summary) {
   const cats = ctx.doc.categories.filter((c) => c.state !== 'archived' && c.id !== 'debt' && c.id !== 'everything');
   return h('div', { id: 'categories-setup' },
-    h('p', { class: 'muted small' }, 'Tap a name to rename it. Open Details for fixed or variable, need, path, joy, and stress.'),
-    cats.map((c) => categoryEditor(ctx, summary, c)),
+    h('div', { class: 'card' }, h('p', { class: 'muted small', style: 'margin-top:0' }, 'Tap a category to rename it, its lines, and their details (fixed or variable, need, path, joy, stress).'),
+      cats.map((c) => categoryEditor(ctx, summary, c))),
     h('button', { class: 'btn', 'data-key': 'add-category', onclick: () => {
       let id;
       ctx.update('Add category', (d) => { id = addCategory(d, 'New category').id; });

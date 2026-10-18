@@ -51,7 +51,8 @@ export function whereFor(doc, path) {
   const catOf = (lineId) => (doc.categories.find((x) => x.lines.some((l) => l.id === lineId)) || {}).id;
   const dream = c === 'dream' || c === 'dreamLong';
   if (a === 'gut') return ['gut', []];
-  if (a === 'profile' || a === 'household') return ['setup:basics', []];
+  if (a === 'profile') return ['setup:basics', []];
+  if (a === 'household') return ['setup:basics', id === 'filingStatus' || id === 'livingWith' ? [] : ['basics-more']];
   if (a === 'income') return ['setup:income', []];
   if (a === 'debts' || a === 'noDebts') return ['setup:debts', []];
   if (a === 'balances') return ['balances', []];

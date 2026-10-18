@@ -2,7 +2,7 @@
 // monthly equivalent. Commits on change; previews on every keystroke.
 
 import { h, options } from '../dom.js';
-import { statusPicker } from './status.js';
+import { statusPicker, statusChip } from './status.js';
 import { toMonthly } from '../../calc/normalize.js';
 import { money, CADENCE_LABELS } from '../format.js';
 import { sumParts, PART_CADENCES } from '../../store/value.js';
@@ -12,13 +12,14 @@ const CLEARS_AMOUNT = new Set(['not-for-me', 'dont-know']);
 
 function today() { return new Date().toISOString().slice(0, 10); }
 
-// Builds the next Value from a user edit. Typing a number marks it known unless
-// the coach already chose "roughly"; "doesn't apply" and "don't know" clear the number.
-export function editValue(prev, change) {
+// Builds the next Value from a user edit. Typing a number marks it known (or `typed`,
+// "roughly" in the Rough pass, S-106) unless the coach already chose "roughly";
+// "doesn't apply" and "don't know" clear the number.
+export function editValue(prev, change, typed = 'known') {
   const next = { ...prev, ...change, asOf: today() };
   if ('amount' in change) {
     if (change.amount === null) next.status = prev.status === 'roughly' || prev.status === 'known' ? null : prev.status;
-    else if (!prev.status || CLEARS_AMOUNT.has(prev.status) || prev.status === 'guess' || prev.status === 'computed' || prev.status === 'will-email') next.status = 'known';
+    else if (!prev.status || CLEARS_AMOUNT.has(prev.status) || prev.status === 'guess' || prev.status === 'computed' || prev.status === 'will-email') next.status = prev.status ? 'known' : typed;
     if (prev.status === 'guess' && change.amount !== null) { next.source = 'client'; next.note = ''; }
   }
   if ('parts' in change) {
@@ -75,6 +76,8 @@ function partsEditor(ctx, path, value, label) {
 }
 
 // ctx: { commit(path, value, label), preview(path, value), payFrequency }
+// opts.compact (S-106): one amount box, its status chip, and a small "more" that
+// opens the cadence, status, and items. opts.typed: the status a first number gets.
 export function valueInput(ctx, path, value, opts = {}) {
   const key = JSON.stringify(path);
   const label = opts.label || 'Amount';
@@ -92,7 +95,7 @@ export function valueInput(ctx, path, value, opts = {}) {
     oninput: (e) => {
       const a = parseAmount(e.target.value);
       if (a === undefined) return;
-      const v = editValue(value, { amount: a });
+      const v = editValue(value, { amount: a }, opts.typed);
       showMonthly(v);
       if (ctx.preview) ctx.preview(path, v);
     },
@@ -100,12 +103,19 @@ export function valueInput(ctx, path, value, opts = {}) {
       const { amount: a, pieces } = parseAmounts(e.target.value);
       if (a === undefined) { e.target.value = value.amount === null ? '' : value.amount; return; }
       // 12+30+8 in a box that can hold items keeps each number as its own item.
-      if (opts.parts && pieces.length > 1) return ctx.commit(path, editValue(value, { parts: pieces.map((n) => ({ name: '', amount: n })) }), label);
+      if (opts.parts && pieces.length > 1) return ctx.commit(path, editValue(value, { parts: pieces.map((n) => ({ name: '', amount: n })) }, opts.typed), label);
       if (a === value.amount) return;
-      ctx.commit(path, editValue(value, { amount: a }), label);
+      ctx.commit(path, editValue(value, { amount: a }, opts.typed), label);
     }
   });
   const parts = [input];
+  if (opts.compact && !opts.open) {
+    // The status stays visible (lesson 2); everything else waits behind "more".
+    parts.push(statusChip(value.status), monthly);
+    if (split) parts.push(h('span', { class: 'xs muted' }, value.parts.length + ' items'));
+    if (opts.onMore) parts.push(h('button', { class: 'btn small ghost more-ctl', 'data-key': key + ':more', 'aria-expanded': 'false', 'aria-label': 'More for ' + label, onclick: opts.onMore }, 'more'));
+    return h('div', { class: 'value-input' }, parts);
+  }
   if (opts.cadence !== false) {
     parts.push(h('select', {
       class: 'cadence', 'aria-label': label + ' cadence', 'data-key': key + ':cadence',
@@ -120,6 +130,7 @@ export function valueInput(ctx, path, value, opts = {}) {
       onclick: () => ctx.commit(path, editValue(value, { parts: [{ name: '', amount: value.amount }, { name: '', amount: null }] }), 'Break into items') }, '+ Items'));
   }
   if (split) parts.push(partsEditor(ctx, path, value, label));
+  if (opts.compact && opts.onMore) parts.push(h('button', { class: 'btn small ghost more-ctl', 'data-key': key + ':more', 'aria-expanded': 'true', onclick: opts.onMore }, 'less'));
   return h('div', { class: 'value-input' }, parts);
 }
 

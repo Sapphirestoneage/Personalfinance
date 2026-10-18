@@ -169,26 +169,7 @@ export function gutCard(ctx, s) {
   });
 }
 
-// Over time
-export function trendCard(ctx, s) {
-  const cats = cd.trendCategories(s);
-  if (!cats.length) return card(ctx, { id: 'trend', title: 'Estimate vs actual over time', reading: 'Shows up once a second month has actuals (pick another month in Plan, Start of month).' });
-  const pick = ctx.ui.trendCat && cats.some((c) => c.id === ctx.ui.trendCat) ? ctx.ui.trendCat : (s.culprits[0] && cats.some((c) => c.id === s.culprits[0].id) ? s.culprits[0].id : cats[0].id);
-  const d = cd.trendData(s, pick);
-  const xs = d.points.map((p) => monthLabel(p.key).slice(0, 3) + (p.current ? ' (now)' : ''));
-  const trend = s.history.trends[pick];
-  return card(ctx, {
-    id: 'trend', title: 'Estimate vs actual over time',
-    extra: h('select', { 'aria-label': 'Category', 'data-key': 'trend-cat', 'data-picker': 'focus', onchange: (e) => { ctx.ui.trendCat = e.target.value; ctx.rerender(); } },
-      cats.map((c) => h('option', { value: c.id, selected: c.id === pick }, c.name))),
-    svg: lines({ series: [
-      { name: 'Estimate', color: SERIES.estimate, values: d.points.map((p) => p.estimate), dashed: true },
-      { name: 'Actual', color: SERIES.actual, values: d.points.map((p) => p.actual) }], xs, width: chartWidth(true), fmt: money }),
-    legendItems: [['Estimate', SERIES.estimate], ['Actual', SERIES.actual]],
-    reading: d.name + ' actuals across the months entered: trend is ' + trend + '.'
-  });
-}
-
+// Over time (the estimate, plan, and actual series for a category is in trend-charts.js, S-106)
 export function varianceByMonthCard(ctx, s) {
   const d = cd.varianceByMonth(s);
   if (!d.length) return card(ctx, { id: 'vbm', title: 'Variance by month', reading: 'Shows up once a second month has actuals (pick another month in Plan, Start of month).' });
@@ -318,7 +299,8 @@ export function mistakePicker(ctx, s) {
         ' ' + l.name, h('span', { class: 'xs muted' }, ' ' + l.category),
         !asClient && l.tag === 'mistake' ? h('label', { class: 'xs check-inline' }, h('input', { type: 'checkbox', checked: shared(l.id), 'data-key': 'mistake-share:' + l.id,
           onchange: (e) => ctx.update(e.target.checked ? 'Share the mistake tag' : 'Keep the mistake tag to the coach', (d) => { findLine(d, l.id).line.mistakeShared = e.target.checked; }) }), ' Shared with client') : null),
-      h('span', { class: 'num small' }, money(l.basis)))) : h('p', { class: 'small muted' }, 'No spending lines with amounts yet.'));
+      h('span', { class: 'num small' }, money(l.basis)))) : h('div', { class: 'empty-state row' }, h('span', { class: 'small' }, 'No spending this month yet. Log something first, then tick what was a mistake.'),
+        h('button', { class: 'btn small', 'data-key': 'mistakes-empty', onclick: () => ctx.jump('track') }, 'Go to Track')));
 }
 
 // The cost, read-only (Insights, S-106); which lines were mistakes is ticked on Review.

@@ -11,7 +11,8 @@ export function nextCard(ctx, summary) {
   if (!first) {
     return h('div', { class: 'card next-1' }, h('h3', {}, 'Next'),
       h('p', { class: 'big' }, 'The picture is filled in.'),
-      h('p', { class: 'muted small' }, 'Talk through the biggest culprits, then close the month when it ends.'));
+      h('div', { class: 'empty-state row' }, h('span', { class: 'small muted' }, 'Talk through the biggest culprits, then close the month when it ends.'),
+        h('button', { class: 'btn small', 'data-key': 'next-culprits', onclick: () => ctx.jump('insights:compared') }, 'See the culprits')));
   }
   const why = (it) => (it.status === null ? 'Not answered yet' : STATUS_LABELS[it.status]) + (it.weight >= 3 ? ', a heavy number' : '');
   return h('div', { class: 'card next-1' },

@@ -313,43 +313,46 @@ family: 'Help from family. A gift, so it is not taxed as income.', 'not-taxable'
     row && (row.grossMonthly !== null || row.takeHomeMonthly !== null) ? payTable(ctx, row) : null);
 }
 
+// Basics (S-106): six things open (name, birth year, state, situation, who you live with,
+// filing status); the rest sits behind "More details", which says how many are inside.
 export function renderProfile(ctx, summary) {
   const doc = ctx.doc;
   const pr = doc.profile;
   const hh = doc.household;
   const rm = hh.roommates;
   const setProfile = (k) => (d, v) => { d.profile[k] = v; };
+  const more = [
+    textField(ctx, 'Dependents (0 if none)', ['household', 'dependents', 'count'], hh.dependents.count, { numeric: true, width: '6em', set: (d, v) => { d.household.dependents.count = v; } }),
+    hh.dependents.count > 0 ? textField(ctx, 'Dependent ages (comma separated)', ['household', 'dependents', 'ages'], hh.dependents.ages.join(', '),
+      { set: (d, v) => { d.household.dependents.ages = (v || '').split(',').map((x) => Number(x.trim())).filter((n) => Number.isFinite(n) && n >= 0); } }) : null,
+    hh.livingWith === 'roommates' ? textField(ctx, 'How many roommates', ['household', 'roommates', 'count'], rm.count, { numeric: true, width: '6em', set: (d, v) => { d.household.roommates.count = v; } }) : null,
+    hh.livingWith === 'roommates' && rm.count > 0 ? question(ctx, 'Total rent for the place', 'What everyone pays together. Your share goes in Housing.', ['household', 'roommates', 'totalRent'], rm.totalRent) : null,
+    hh.livingWith === 'family' ? textField(ctx, 'People in the home besides you', ['household', 'family', 'count'], hh.family.count, { numeric: true, width: '6em', set: (d, v) => { d.household.family.count = v; } }) : null
+  ].filter(Boolean);
+  const open = ctx.ui.expanded.has('basics-more');
 
-  return h('div', {},
-    h('div', { class: 'card' }, h('h2', {}, 'Profile'),
-      h('div', { class: 'grid two' },
-        textField(ctx, 'Name', ['profile', 'name'], pr.name, { set: (d, v) => { d.profile.name = v || 'Client'; } }),
-        textField(ctx, 'Birth year', ['profile', 'birthYear'], pr.birthYear, { numeric: true, width: '7em', set: setProfile('birthYear') }),
-        selectField(ctx, 'State', pr.state || '', [['', 'Pick a state'], ...STATES.map((s) => [s, s])], (d, v) => { d.profile.state = v || null; }, 'profile-state'))),
-
-    h('div', { class: 'card' }, h('h2', {}, 'Situation'),
-      h('p', { class: 'muted small' }, 'Pick all that apply.'),
+  return h('div', { class: 'card', id: 'basics-card' },
+    h('div', { class: 'grid two' },
+      textField(ctx, 'Name', ['profile', 'name'], pr.name, { set: (d, v) => { d.profile.name = v || 'Client'; } }),
+      textField(ctx, 'Birth year', ['profile', 'birthYear'], pr.birthYear, { numeric: true, width: '7em', set: setProfile('birthYear') }),
+      selectField(ctx, 'State', pr.state || '', [['', 'Pick a state'], ...STATES.map((s) => [s, s])], (d, v) => { d.profile.state = v || null; }, 'profile-state'),
+      selectField(ctx, 'Who do you live with?', hh.livingWith || '', LIVING_WITH, (d, v) => {
+        d.household.livingWith = v || null;
+        if (v !== 'roommates') d.household.roommates.count = 0;
+      }, 'living-with'),
+      selectField(ctx, 'Filing status', hh.filingStatus, FILING, (d, v) => { d.household.filingStatus = v; }, 'filing')),
+    h('div', { class: 'field' }, h('span', { class: 'lbl' }, 'Situation (pick all that apply)'),
       h('div', {}, SITUATIONS.map(([id, label]) => h('label', { class: 'check' },
         h('input', { type: 'checkbox', checked: doc.situation.includes(id), 'data-key': 'sit-' + id,
           onchange: (e) => ctx.update('Situation', (d) => {
             d.situation = e.target.checked ? [...new Set([...d.situation, id])] : d.situation.filter((s) => s !== id);
           }) }), label)))),
-
-    h('div', { class: 'card' }, h('h2', {}, 'Household'),
-      h('div', { class: 'grid two' },
-        selectField(ctx, 'Filing status', hh.filingStatus, FILING, (d, v) => { d.household.filingStatus = v; }, 'filing'),
-        textField(ctx, 'Dependents (0 if none)', ['household', 'dependents', 'count'], hh.dependents.count, { numeric: true, width: '6em', set: (d, v) => { d.household.dependents.count = v; } }),
-        hh.dependents.count > 0 ? textField(ctx, 'Dependent ages (comma separated)', ['household', 'dependents', 'ages'], hh.dependents.ages.join(', '),
-          { set: (d, v) => { d.household.dependents.ages = (v || '').split(',').map((x) => Number(x.trim())).filter((n) => Number.isFinite(n) && n >= 0); } }) : null,
-        selectField(ctx, 'Who do you live with?', hh.livingWith || '', LIVING_WITH, (d, v) => {
-          d.household.livingWith = v || null;
-          if (v !== 'roommates') d.household.roommates.count = 0;
-        }, 'living-with'),
-        hh.livingWith === 'roommates' ? textField(ctx, 'How many roommates', ['household', 'roommates', 'count'], rm.count, { numeric: true, width: '6em', set: (d, v) => { d.household.roommates.count = v; } }) : null,
-        hh.livingWith === 'family' ? textField(ctx, 'People in the home besides you', ['household', 'family', 'count'], hh.family.count, { numeric: true, width: '6em', set: (d, v) => { d.household.family.count = v; } }) : null),
-      hh.livingWith === 'roommates' && rm.count > 0 ? h('div', {},
-        question(ctx, 'Total rent for the place', 'What everyone pays together. Your share goes in Housing.', ['household', 'roommates', 'totalRent'], rm.totalRent)) : null,
-      hh.livingWith === 'family' ? h('p', { class: 'small muted' }, 'Anything you pay your family for rent or bills goes in Housing. If you pay nothing, mark Housing "Doesn\'t apply" in Your estimates (Plan).') : null));
+    hh.livingWith === 'family' ? h('p', { class: 'small muted' }, 'Anything you pay your family for rent or bills goes in Housing. If you pay nothing, mark Housing "Doesn\'t apply" in Your estimates (Plan).') : null,
+    h('button', { class: 'btn small ghost', 'data-key': 'basics-more', 'aria-expanded': open ? 'true' : 'false', onclick: () => {
+      if (open) ctx.ui.expanded.delete('basics-more'); else ctx.ui.expanded.add('basics-more');
+      ctx.rerender();
+    } }, (open ? 'Fewer details' : 'More details') + ' (' + more.length + ')'),
+    open ? h('div', { class: 'grid two' }, more) : null);
 }
 
 // Future tools (S-105): the dream life, Eras, and Next stage are parked. One switch brings them back.
