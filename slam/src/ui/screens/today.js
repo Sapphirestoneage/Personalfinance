@@ -11,22 +11,29 @@ import { budgetCashStrip } from '../components/cashflow.js';
 import { loopStripCard } from '../components/loop.js';
 import { jumpLink } from '../components/jump.js';
 import { firstSession } from '../../calc/loop.js';
+import { explain } from '../../calc/explain.js';
+import { howButton, howPanel } from '../components/how.js';
 
 function tile(label, value, sub, cls) {
   return h('div', { class: 'tile' }, h('div', { class: 'label' }, label), h('div', { class: 'value ' + (cls || '') }, value), sub ? h('div', { class: 'sub' }, sub) : null);
 }
 
 // At most four headline numbers (S-106): take-home, spending, surplus, savings rate.
-export function headlineTiles(summary) {
+// Each one opens how it was worked out (S-108).
+export function headlineTiles(ctx, summary) {
   const t = summary.totals;
   const inc = summary.income;
   const since = summary.sinceLast;
-  return h('div', { class: 'strip four', id: 'headline' },
-    tile('Take-home', money(t.takeHome), inc.takeHomeIsGuess ? h('span', {}, statusChip('guess'), ' state tax not included') : 'per month'),
-    tile('Spending', money(t.spending), t.basisUsesEstimate.length ? 'uses estimates for ' + t.basisUsesEstimate.length : 'actuals'),
-    tile(t.surplus !== null && t.surplus < 0 ? 'Shortfall' : 'Surplus', signedMoney(t.surplus), since && since.surplus !== null ? signedMoney(since.surplus) + ' since last time' : 'per month',
-      t.surplus === null ? '' : t.surplus < 0 ? 'bad' : 'good'),
-    tile('Savings rate', pct(t.savingsRate), 'incl. pre-tax'));
+  const hb = (key, text) => howButton(ctx, key, text);
+  const open = ['takeHome', 'spending', 'surplus', 'savingsRate'].includes(ctx.ui.how) ? ctx.ui.how : null;
+  return h('div', {},
+    h('div', { class: 'strip four', id: 'headline' },
+      tile('Take-home', hb('takeHome', money(t.takeHome)), inc.takeHomeIsGuess ? h('span', {}, statusChip('guess'), ' state tax not included') : 'per month'),
+      tile('Spending', hb('spending', money(t.spending)), t.basisUsesEstimate.length ? 'uses estimates for ' + t.basisUsesEstimate.length : 'actuals'),
+      tile(t.surplus !== null && t.surplus < 0 ? 'Shortfall' : 'Surplus', hb('surplus', signedMoney(t.surplus)), since && since.surplus !== null ? signedMoney(since.surplus) + ' since last time' : 'per month',
+        t.surplus === null ? '' : t.surplus < 0 ? 'bad' : 'good'),
+      tile('Savings rate', hb('savingsRate', pct(t.savingsRate)), 'incl. pre-tax')),
+    open ? howPanel(ctx, explain(summary, open)) : null);
 }
 
 function firstSessionCard(ctx, summary) {
@@ -46,5 +53,5 @@ export function renderToday(ctx, summary) {
     firstSessionCard(ctx, summary),
     nextCard(ctx, summary),
     budgetCashStrip(ctx, summary),
-    headlineTiles(summary));
+    headlineTiles(ctx, summary));
 }

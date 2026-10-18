@@ -43,7 +43,7 @@ function paretoAnchor(ctx) {
 const TABS = {
   where: (ctx, s) => [c.sankeyCard(ctx, s, true), c.donutCard(ctx, s), c.nwsCard(ctx, s, true), c.fixedVariableCard(ctx, s), c.typesCard(ctx, s), c.tagsCard(ctx, s), c.gaugesCard(ctx, s)],
   compared: (ctx, s) => [blindSpot(s), tableCard(ctx, s), c.threeColumnCard(ctx, s, true), c.overlapCard(ctx, s), c.varianceCard(ctx, s), c.accuracyCard(ctx, s), c.gutCard(ctx, s),
-    culpritsCard(s), proofCard(s), c.completionCard(ctx, s), roughCard(ctx, s)],
+    culpritsCard(ctx, s), proofCard(s), c.completionCard(ctx, s), roughCard(ctx, s)],
   time: (ctx, s) => [c.varianceByMonthCard(ctx, s), ...trendCards(ctx, s), estimateCard(ctx, s, ctx.ui.trendFocus), paretoCard(ctx, s, paretoAnchor(ctx))],
   cash: (ctx, s) => [...bridgeCards(ctx, s), forecastCard(ctx), ...transactionCards(ctx, s)],
   you: (ctx, s) => [c.draftCard(ctx, s), c.joyCard(ctx, s), c.stressCard(ctx, s), c.mistakeCard(ctx, s), c.incomeStatementCard(ctx, s), extrasCard(s, ctx.future)]

@@ -390,6 +390,47 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('riley', 'Console errors', String(errors.length), '0');
   await page.close();
 }
+// Jump to source, search, and the breadcrumb (S-108), on Riley at phone width.
+{
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await page.clock.setFixedTime(new Date('2026-10-17T12:00:00'));
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+  await page.goto(URL + '#clients');
+  console.log('search and sources (phone width)');
+  await page.getByText('Riley, 31').click();
+  await page.waitForSelector('#headline');
+  // "/" opens search; "groceries" finds the line; Enter opens it on Review with Food open.
+  await page.keyboard.press('/');
+  await page.keyboard.type('groceries');
+  check('search', 'First result', await settled(page, '.search-hit', 'GroceriesFood'), 'GroceriesFood');
+  await page.keyboard.press('Enter');
+  check('search', 'Breadcrumb', await settled(page, '[data-key="crumbs"]', 'Riley > Review > October 2026 > Groceries'), 'Riley > Review > October 2026 > Groceries');
+  check('search', 'Food opened', await page.$eval('[data-key="rv-cat:food"]', (b) => b.getAttribute('aria-expanded')), 'true');
+  // Parked tools stay out of search while Future tools are off.
+  await page.fill('[data-key="search"]', 'eras');
+  await page.waitForTimeout(150);
+  check('search', 'No parked results', String(await page.$$eval('.search-head', (hs) => hs.some((x) => x.textContent === 'Future'))), 'false');
+  await page.press('[data-key="search"]', 'Escape');
+  // How a computed number was worked out: the panel ends on the same number as the tile.
+  await go(page, 'today');
+  await page.waitForSelector('[data-key="how:surplus"]');
+  const surplusTile = await page.$eval('[data-key="how:surplus"]', (b) => b.textContent);
+  await page.click('[data-key="how:surplus"]');
+  await page.waitForSelector('#how-panel');
+  check('sources', 'Surplus panel matches the tile', (await page.$eval('[data-key="how-result"]', (b) => b.textContent)).replace(/\.\d\d$/, ''), surplusTile.replace(/\.\d\d$/, ''));
+  // Safe to spend (S-095 by hand): 0, because the lowest point (60) is 40 under the 100 cushion.
+  await page.click('[data-key="how:safeToSpend"]');
+  check('sources', 'Safe to spend panel', await settled(page, '[data-key="how-result"]', money(0, true)), money(0, true));
+  // A number in the Insights table opens its source: Food's actual opens its row on Review.
+  await insights(page, 'compared');
+  await page.locator('tr.cat', { hasText: 'Food' }).locator('td:not(.wide) a.src-link').first().click();
+  await page.waitForSelector('[data-key="rv-cat:food"][aria-expanded="true"]', { timeout: 3000 }).catch(() => null);
+  check('sources', 'Food actual opens Review', String(await page.$$eval('[data-key="rv-cat:food"][aria-expanded="true"]', (x) => x.length)), '1');
+  check('search', 'Console errors', String(errors.length), '0');
+  await page.close();
+}
 // View as client and the merge conflict screen (S-096), on Riley at phone width.
 {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 } });

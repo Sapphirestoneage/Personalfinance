@@ -88,12 +88,12 @@ function gapsCard(ctx, summary) {
 // to each line's actual: from the log, a yearly share, or typed. Names, types, and
 // details are changed in Setup, Categories and lines.
 function summaryText(r) {
-  const bits = [];
-  if (r.entries) bits.push('from ' + r.entries + ' entr' + (r.entries === 1 ? 'y' : 'ies'));
-  if (r.typed) bits.push(r.typed + ' typed');
-  if (r.shares) bits.push(r.shares + ' yearly share' + (r.shares === 1 ? '' : 's'));
-  if (r.empty) bits.push(r.empty + ' still empty');
-  return r.name + ': ' + (r.actual === null ? 'nothing yet' : money(r.actual)) + (bits.length ? ' ' + bits.join(', ') : '');
+  const rest = [];
+  if (r.typed) rest.push(r.typed + ' typed');
+  if (r.shares) rest.push(r.shares + ' yearly share' + (r.shares === 1 ? '' : 's'));
+  if (r.empty) rest.push(r.empty + ' still empty');
+  return r.name + ': ' + (r.actual === null ? 'nothing yet' : money(r.actual)) +
+    (r.entries ? ' from ' + r.entries + ' entr' + (r.entries === 1 ? 'y' : 'ies') : '') + (rest.length ? ', ' + rest.join(', ') : '');
 }
 
 function categoryRow(ctx, summary, r) {

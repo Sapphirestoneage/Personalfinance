@@ -142,7 +142,7 @@ export function renderEstimates(ctx, summary, key) {
         cat.type === 'other' ? categoryTypeSelect(ctx, cat, { label: 'Counts as (so it adds up right)' }) : typeHint(categoryTypeLabel(cat.type), cat.name));
     if (r.notForMe) {
       // Doesn't apply: no amount box (lesson 12), just the answer and a way to change it.
-      return h('div', { class: 'qa', 'data-key': isRough ? 'rough-row:' + r.id : null }, h('div', { class: 'q' }, name),
+      return h('div', { class: 'qa', 'data-key': isRough ? 'rough-row:' + r.id : null, id: isRough ? 'est-' + r.id : null }, h('div', { class: 'q' }, name),
         statusPicker(cat.estimate.status, (st) => ctx.update(r.name, (d) => { findCategory(d, r.id).estimate = makeValue(null, { status: st }); }), JSON.stringify(['categories', r.id, 'estimate'])));
     }
     const hint = isRough
@@ -164,7 +164,7 @@ export function renderEstimates(ctx, summary, key) {
         const k = 'rough-line:' + l.id;
         return isRough ? { compact: true, open: ctx.ui.expanded.has(k), typed: 'roughly', onMore: () => { if (ctx.ui.expanded.has(k)) ctx.ui.expanded.delete(k); else ctx.ui.expanded.add(k); ctx.rerender(); } } : {};
       };
-      return h('div', { class: 'sub-lines' },
+      return h('div', { class: 'sub-lines', id: isRough ? 'est-' + r.id : null },
         h('div', { class: 'qa' }, h('div', { class: 'q' }, name, h('div', { class: 'hint' }, [hint, 'Adds up from its sub-categories.', first].filter(Boolean).join(' '))),
           h('span', {}, statusChip(r.status[key]), ' ', h('b', { class: 'num' }, money(r[key])), isRough ? h('button', { class: 'btn small ghost more-ctl', 'data-key': 'rough-more:' + r.id, 'aria-expanded': open ? 'true' : 'false', onclick: toggle }, open ? 'less' : 'more') : null)),
         open && cat.type === 'health' ? parentsPlanToggle(ctx) : null,
@@ -187,7 +187,7 @@ export function renderEstimates(ctx, summary, key) {
       : r.type === 'transport' ? summary.income.deductionsByKind.transportation : null;
     const payNote = fromPay ? 'Already taken out of the paycheck: ' + money(fromPay) + ' a month. Only count what is paid on top.' : null;
     const planNote = r.type === 'health' && parentsPlanOn(doc) ? 'On a parent\'s plan: count only what is paid out of pocket.' : null;
-    return h('div', { 'data-key': isRough ? 'rough-row:' + r.id : null },
+    return h('div', { 'data-key': isRough ? 'rough-row:' + r.id : null, id: isRough ? 'est-' + r.id : null },
       question(ctx, name, [hint, payNote, planNote].filter(Boolean).join(' ') || null, ['categories', r.id, key], cat[key], { label: r.name, parts: true, ...compact }),
       open && r.type === 'health' ? parentsPlanToggle(ctx) : null,
       open && isRough && !r.isEverything ? h('div', { class: 'row' }, h('button', { class: 'btn small ghost', 'data-key': 'break:' + r.id, onclick: () => ctx.update('Break down ' + r.name, (d) => breakDown(d, r.id)) }, 'Break down into sub-categories')) : null,

@@ -9,6 +9,8 @@ import { valueInput, parseAmount } from './value-input.js';
 import { dayLine } from '../charts/svg.js';
 import { quickEntryButton } from './quick-entry.js';
 import { jumpLink, emptyState } from './jump.js';
+import { howButton, howPanel, sourceLink } from './how.js';
+import { explain } from '../../calc/explain.js';
 import { cashCalendar, calendarReading, safeReading } from '../../calc/calendar.js';
 import { setNextPayDate, setPayDays, setItemAccount, setDebtPayWith, moveItem, clearMove, addBalanceCheck, confirmScheduled } from '../../store/cashflow.js';
 import { makeValue } from '../../store/value.js';
@@ -140,10 +142,13 @@ export function budgetCashStrip(ctx, summary) {
     h('div', { class: 'spread' }, h('b', {}, 'Cash, next 30 days'), quickEntryButton(ctx)),
     h('div', { class: 'chart', html: dayLine({ days: days.map((x) => ({ date: x.date, v: x.cash, s: x.savings })), width: w, height: 90, fmt: money, todayIndex: 0, cushion: cal.cushion || null, markers, compact: true, label: 'Cash for the next 30 days' }) }),
     h('div', { class: 'strip three' },
-      h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Today'), h('div', { class: 'value', 'data-key': 'cash-today' }, money(cal.todayCash))),
-      h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Lowest point'), h('div', { class: 'value', 'data-key': 'cash-lowest' }, money(cal.lowest.amount)), h('div', { class: 'sub' }, dayLabel(cal.lowest.date))),
-      h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Safe to spend'), h('div', { class: 'value', 'data-key': 'safe-to-spend' }, money(cal.safeToSpend)),
+      // Jump to source (S-108): today's cash opens the balance check, the lowest point the calendar,
+      // and safe to spend how it was worked out.
+      h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Today'), h('div', { class: 'value', 'data-key': 'cash-today' }, sourceLink(ctx, money(cal.todayCash), { where: 'checks' }, 'src-cash-today'))),
+      h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Lowest point'), h('div', { class: 'value', 'data-key': 'cash-lowest' }, sourceLink(ctx, money(cal.lowest.amount), { where: 'calendar' }, 'src-cash-lowest')), h('div', { class: 'sub' }, dayLabel(cal.lowest.date))),
+      h('div', { class: 'tile' }, h('div', { class: 'label' }, 'Safe to spend'), h('div', { class: 'value', 'data-key': 'safe-to-spend' }, howButton(ctx, 'safeToSpend', money(cal.safeToSpend))),
         h('div', { class: 'sub' }, 'through ' + dayLabel(cal.end)))),
+    ctx.ui.how === 'safeToSpend' ? howPanel(ctx, explain(summary, 'safeToSpend', cal)) : null,
     cal.shortfall ? h('p', { class: 'small warn', 'data-key': 'safe-short' }, safeReading(cal)) : null,
     h('p', { class: 'reading', 'data-key': 'cash-reading' }, calendarReading(cal), ' ', jumpLink(ctx, 'calendar', 'See the calendar')));
 }

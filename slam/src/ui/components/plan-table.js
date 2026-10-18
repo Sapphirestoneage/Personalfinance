@@ -8,6 +8,7 @@ import { money, signedMoney, pct, monthLabel } from '../format.js';
 import { makeValue } from '../../store/value.js';
 import { parseAmount } from './value-input.js';
 import { nameEdit } from './name-edit.js';
+import { sourceLink } from './how.js';
 import { reviewSummary, planStartValues, prevMonthKey } from '../../calc/plan.js';
 import { startPlan, setPlanAmount, setPlanDecision, setPlanReviewed, setPlanStop, addPlanLine, addPlanCategory, planLineByLine, copyPlanForward, getPlan } from '../../store/plans.js';
 import { nextMonthKey } from '../../store/months.js';
@@ -88,11 +89,12 @@ function reviewedBox(ctx, pm, r, sfx = '') {
 function row(ctx, pm, r) {
   return h('tr', { class: r.reviewed ? 'line done' : 'line' },
     h('td', {}, nameCell(ctx, r)),
-    h('td', { class: 'num' }, money(r.actual)),
+    h('td', { class: 'num' }, r.actual === null ? money(r.actual) : sourceLink(ctx, money(r.actual), r.computed ? { where: 'setup:debts' } : r.key.startsWith('cat:') ? { where: 'actual', open: 'rv-cat:' + r.key.slice(4) } : { path: ['line', r.key, 'actual'] })),
     h('td', { class: 'num' }, pct(r.pctIncome.actual)),
     h('td', { class: 'num' }, r.savings ? h('span', { class: 'xs muted' }, 'saving') : pct(r.pctSpending.actual)),
     h('td', { class: 'num' }, joyCell(r.happiness, r.stress)),
-    h('td', { class: 'num' }, r.estimate === null && r.addedInReview ? h('span', { class: 'xs muted' }, 'added in review') : money(r.estimate)),
+    h('td', { class: 'num' }, r.estimate === null && r.addedInReview ? h('span', { class: 'xs muted' }, 'added in review') : r.estimate === null || r.computed ? money(r.estimate)
+      : sourceLink(ctx, money(r.estimate), r.key.startsWith('cat:') ? { path: ['categories', r.key.slice(4), 'estimate'] } : { path: ['line', r.key, 'estimate'] })),
     h('td', { class: 'num' }, planInput(ctx, pm, r), r.plan !== null ? h('div', { class: 'xs muted' }, pct(r.pctIncome.plan) + ' of income') : null),
     h('td', {}, decisionCell(ctx, pm, r)),
     h('td', {}, reviewedBox(ctx, pm, r)));

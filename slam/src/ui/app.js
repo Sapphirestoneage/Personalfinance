@@ -11,7 +11,9 @@ import { buildSummary } from '../calc/summary.js';
 import { primaryPayFrequency } from '../calc/model.js';
 import { loadRefs } from './refs.js';
 import { h } from './dom.js';
-import { SCREENS, OLD_HASHES, destination, whereFor } from './nav.js';
+import { SCREENS, OLD_HASHES, INSIGHT_TABS, SETUP_SECTIONS, destination, whereFor, nameFor, screenLabel } from './nav.js';
+import { searchBox } from './components/search.js';
+import { monthLabel } from './format.js';
 import { renderClients } from './screens/clients.js';
 import { renderToday } from './screens/today.js';
 import { renderPlan } from './screens/plan.js';
@@ -57,6 +59,7 @@ const ctx = {
   say: (key) => say(key, displayRole()),
   get payFrequency() { return store.doc ? primaryPayFrequency(store.doc) : null; },
   go(screen, opts = {}) {
+    ui.crumbItem = null;
     Object.assign(ui, opts);
     ui.screen = screen;
     ui.more = false;
@@ -83,7 +86,7 @@ const ctx = {
     if (path.includes('dreamLong')) ui.dreamTerm = 'long';
     else if (path.includes('dream')) ui.dreamTerm = 'short';
     ui.focusPath = path;
-    ctx.jump(where);
+    ctx.jump(where, { ui: { crumbItem: nameFor(store.doc, path) } });
   },
   update(label, fn) {
     try { store.update(label, fn); } catch (e) { ctx.toast(e.message); }
@@ -136,7 +139,7 @@ function render() {
   const screen = { clients: renderClients, today: renderToday, plan: renderPlan, track: renderTrack, review: renderReview, insights: renderInsights, setup: renderSetup, future: renderFuture }[ui.screen];
   const body = screen(ctx, summary);
 
-  const parts = [topbar(), h('main', { id: 'main', 'data-screen': ui.screen }, body)];
+  const parts = [topbar(), store.doc && ui.screen !== 'clients' ? crumbs() : null, h('main', { id: 'main', 'data-screen': ui.screen }, body)].filter(Boolean);
   if (store.doc) parts.push(bottomBar());
   // Quick entry floats over any screen (S-085); it is a sheet, not a fifth screen.
   const qe = quickEntrySheet(ctx);
@@ -188,6 +191,7 @@ function topbar() {
           h('a', { href: '#setup', 'data-key': 'menu-notes', onclick: (e) => { e.preventDefault(); ui.nameMenu = false; ctx.jump('setup:notes'); } }, 'Coach notes')) : null)
       : h('span', { class: 'client-name' }, doc ? doc.profile.name : 'No client open'),
     doc ? h('nav', { class: 'nav', 'aria-label': 'Screens' }, navLinks(screensNow())) : null,
+    doc ? searchBox(ctx) : null,
     h('div', { class: 'row' },
       doc ? h('button', { class: 'btn small' + (asClient ? ' primary' : ''), 'data-key': 'view-as-client', 'aria-pressed': asClient ? 'true' : 'false',
         title: asClient ? 'You are seeing what the client sees. Changes are still saved as the coach.' : 'See the budget the way the client sees it',
@@ -195,6 +199,23 @@ function topbar() {
       h('button', { class: 'btn small icon-btn', title: store.canUndo() ? 'Undo: ' + store.undoLabel() : 'Nothing to undo', 'aria-label': 'Undo', disabled: !store.canUndo(), onclick: () => store.undo() }, '\u21b6'),
       h('button', { class: 'btn small icon-btn', title: store.canRedo() ? 'Redo: ' + store.redoLabel() : 'Nothing to redo', 'aria-label': 'Redo', disabled: !store.canRedo(), onclick: () => store.redo() }, '\u21b7'),
       h('button', { class: 'btn small icon-btn', title: 'Light or dark', 'aria-label': 'Switch light or dark', onclick: cycleTheme }, '\u25d0'))));
+}
+
+// Where you are (S-108): "Riley > Review > October 2026 > Groceries". Each step but the last opens.
+function crumbs() {
+  const doc = store.doc;
+  const name = doc.profile.name.replace(/ \(.*\)$/, '');
+  const pick = (list, id) => (list.find(([k]) => k === id) || [null, null])[1];
+  const sub = ui.screen === 'insights' ? pick(INSIGHT_TABS, ui.insightsTab || 'where')
+    : ui.screen === 'setup' ? pick(SETUP_SECTIONS, ui.setupSection || 'basics')
+      : ui.screen === 'track' ? monthLabel(ui.txMonth || doc.currentMonth)
+        : ui.screen === 'review' ? monthLabel(doc.currentMonth)
+          : ui.screen === 'plan' ? (ui.planView === 'estimates' ? 'Your estimates' : ui.planView === 'plan' ? 'Next month\'s plan' : null)
+            : ui.screen === 'future' ? (ui.futureTab === 'next' ? 'Next stage' : 'Dream life and Eras') : null;
+  const steps = [name, screenLabel(ui.screen), sub, ui.crumbItem].filter(Boolean);
+  return h('nav', { class: 'crumbs', 'aria-label': 'You are here', 'data-key': 'crumbs' }, h('div', { class: 'crumbs-inner' }, steps.map((x, i) => [
+    i ? h('span', { class: 'sep', 'aria-hidden': 'true' }, ' > ') : null,
+    i === 1 && steps.length > 2 ? h('a', { href: '#' + ui.screen, onclick: (e) => { e.preventDefault(); ctx.go(ui.screen); } }, x) : h('span', { 'aria-current': i === steps.length - 1 ? 'page' : null }, x)])));
 }
 
 // Phones (S-106): Today, Plan, Track, Review, and More (Insights, Setup, Clients, and Future when on).
@@ -227,6 +248,8 @@ function applyTheme() {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && ui.qe) { ui.qe = null; queueRender(); return; }
   const inField = /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName);
+  // "/" jumps to search (S-108), anywhere but a text box.
+  if (e.key === '/' && !inField && !ui.qe && store.doc) { const box = document.getElementById('search'); if (box) { e.preventDefault(); box.focus(); } return; }
   if (inField || !(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'z') return;
   e.preventDefault();
   if (e.shiftKey) store.redo(); else store.undo();

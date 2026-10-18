@@ -104,6 +104,11 @@ bottom bar has Today, Plan, Track, Review, and More (Insights, Setup, Clients).
    for a client already here is merged record by record; changes made on both copies wait for the
    coach to pick), and the demo households.
 
+**Finding things.** Type in the search box (or press "/") to find a line, category, merchant, entry,
+account, debt, chart, setting, or month and jump to it. A dotted number is a link: it opens where the
+number comes from, or, for a computed number, how it was worked out. The breadcrumb under the header
+says where you are.
+
 **Future tools (parked).** The dream life, Eras, and Next stage answer "what could life look like".
 They are off by default. Turn them on in Setup, Future tools (parked), and a Future screen appears
 with them exactly as they were. Old addresses (`#budget`, `#fill`, `#analyze`) open Today, Plan, and

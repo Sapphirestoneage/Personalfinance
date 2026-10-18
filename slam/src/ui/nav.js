@@ -74,3 +74,39 @@ export function screenLabel(id) {
   if (id === 'future') return 'Future';
   return (SCREENS.find(([k]) => k === id) || [id, id])[1];
 }
+
+// Every chart and card worth finding by name (S-108 search): [anchor id, name, where it lives].
+export const CHARTS = [
+  ['cash-strip', 'Cash, next 30 days', 'today'],
+  ['chart-cf-chart', 'Cash by day (the calendar)', 'track'], ['chart-cf-paylater', 'Bills that land before the paycheck', 'track'],
+  ['chart-cf-list', 'Cash by date (list)', 'track'], ['chart-cf-grid', 'Month grid', 'track'], ['chart-cf-sofar', 'This month so far', 'track'],
+  ['chart-sankey', 'Where the money goes', 'insights:where'], ['chart-donut', 'Spending by category', 'insights:where'], ['chart-nws', 'Needs, wants, savings', 'insights:where'],
+  ['chart-fv', 'Fixed vs variable', 'insights:where'], ['chart-types', 'Spending by type', 'insights:where'], ['chart-tags', 'By tag', 'insights:where'],
+  ['chart-gauges', 'Housing and savings rate', 'insights:where'],
+  ['budget-table', 'Category by category (the budget table)', 'insights:compared'], ['chart-eda', 'Estimate, plan, actual (bars)', 'insights:compared'],
+  ['chart-overlap', 'Budget vs actual', 'insights:compared'], ['chart-variance', 'Over and under the estimate', 'insights:compared'],
+  ['chart-accuracy', 'Accuracy (actual / estimate)', 'insights:compared'], ['chart-gut', 'Gut check', 'insights:compared'], ['culprits', 'Biggest culprits', 'insights:compared'],
+  ['chart-completion', 'How filled in is the picture', 'insights:compared'], ['rough-list', 'Rough and unknown', 'insights:compared'],
+  ['chart-vbm', 'Variance by month', 'insights:time'], ['chart-trend-series', 'By month (category, line, or merchant)', 'insights:time'],
+  ['chart-trend-heat', 'Categories by month', 'insights:time'], ['chart-trend-mom', 'Month over month', 'insights:time'], ['chart-trend-pacing', 'Pacing', 'insights:time'],
+  ['chart-trend-dom', 'Spending by day of the month', 'insights:time'], ['trend-stats', 'Trends in one line each', 'insights:time'],
+  ['chart-estimate-history', 'When the estimate changed', 'insights:time'], ['chart-pareto', '80/20', 'insights:time'],
+  ['chart-bridge', 'Budget to cash (the bridge)', 'insights:cash'], ['chart-cf-forecast', 'Forecast check', 'insights:cash'], ['chart-tx-top', 'Top 5 merchants', 'insights:cash'],
+  ['chart-tx-week', 'Spending by weekday', 'insights:cash'], ['chart-tx-size', 'Small and frequent vs big and rare', 'insights:cash'], ['chart-tx-subs', 'Subscriptions', 'insights:cash'],
+  ['chart-tx-findings', 'What the transactions show', 'insights:cash'],
+  ['chart-draftt', 'DRAFTT', 'insights:you'], ['chart-joy', 'Joy vs spend', 'insights:you'], ['chart-stress', 'Satisfaction and stress', 'insights:you'],
+  ['chart-mistake', 'Mistake cost', 'insights:you'], ['chart-statement', 'Personal income statement', 'insights:you'], ['extras', 'Also worth knowing', 'insights:you'],
+  ['chart-cf-whatif', 'What if a bill moved?', 'setup:bills']
+];
+
+// The name of what a field path points at, for the breadcrumb (S-108).
+export function nameFor(doc, path) {
+  const [a, id] = path;
+  const line = (x) => doc.categories.flatMap((c) => c.lines).find((l) => l.id === x);
+  if (a === 'line') return (line(id) || {}).name || null;
+  if (a === 'categories') return (doc.categories.find((c) => c.id === id) || {}).name || null;
+  if (a === 'income') return (doc.income.find((i) => i.id === id) || {}).label || null;
+  if (a === 'debts') return (doc.debts.find((d) => d.id === id) || {}).label || null;
+  if (a === 'gut') return 'Gut number';
+  return null;
+}

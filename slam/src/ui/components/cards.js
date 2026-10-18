@@ -5,6 +5,7 @@
 import { h } from '../dom.js';
 import { money, pct, times, signedMoney, STATUS_LABELS } from '../format.js';
 import { statusChip } from './status.js';
+import { sourceLink } from './how.js';
 
 export function nextCard(ctx, summary) {
   const [first, ...rest] = summary.next;
@@ -26,14 +27,14 @@ export function nextCard(ctx, summary) {
       h('ul', { class: 'plain' }, summary.smallStuff.map((it) => h('li', { class: 'small' }, it.label, statusChip(it.status))))) : null);
 }
 
-export function culpritsCard(summary) {
+export function culpritsCard(ctx, summary) {
   const c = summary.culprits;
-  return h('div', { class: 'card' },
+  return h('div', { class: 'card', id: 'culprits' },
     h('h3', {}, 'Biggest culprits'),
     c.length ? h('div', {},
       h('p', { class: 'muted small' }, 'Over your own estimate. Back to your own words means cutting this much:'),
       h('ul', { class: 'plain' }, c.map((x) => h('li', {},
-        h('span', {}, h('b', {}, x.name), ' ', h('span', { class: 'muted small' }, money(x.actual) + ' vs your ' + money(x.estimate) + (x.ratio !== null ? ' (' + times(x.ratio) + ')' : ''))),
+        h('span', {}, h('b', {}, x.name), ' ', h('span', { class: 'muted small' }, sourceLink(ctx, money(x.actual), { where: 'actual', open: 'rv-cat:' + x.id }), ' vs your ', sourceLink(ctx, money(x.estimate), { path: ['categories', x.id, 'estimate'] }), '' + (x.ratio !== null ? ' (' + times(x.ratio) + ')' : ''))),
         h('span', { class: 'num' }, 'cut ', h('b', {}, money(x.cutMonthly)), ' / mo (' + money(x.cutYearly) + ' / yr)'))))
     ) : h('p', { class: 'muted small' }, summary.blindSpot.pct === null ? 'Shows up once there are actuals to compare.' : 'Nothing came in over the estimate.'));
 }
@@ -50,7 +51,7 @@ export function proofCard(summary) {
 
 export function roughCard(ctx, summary) {
   const r = summary.rough;
-  return h('div', { class: 'card' },
+  return h('div', { class: 'card', id: 'rough-list' },
     h('h3', {}, 'Rough and unknown (' + r.length + ')'),
     r.length ? h('ul', { class: 'plain' }, r.map((x) => h('li', {},
       h('a', { href: '#', 'data-key': 'rough-go:' + x.label, onclick: (e) => { e.preventDefault(); ctx.goToField(x.path); } }, x.label),
@@ -78,7 +79,7 @@ export function extrasCard(summary, future) {
     items.push(['Since ' + new Date(s.date).toLocaleDateString(), 'surplus ' + signedMoney(s.surplus) + ', spending ' + signedMoney(s.spending)]);
   }
   if (!items.length) return null;
-  return h('div', { class: 'card' }, h('h3', {}, 'Also worth knowing'),
+  return h('div', { class: 'card', id: 'extras' }, h('h3', {}, 'Also worth knowing'),
     h('ul', { class: 'plain' }, items.map(([a, b]) => h('li', { class: 'small' }, h('span', {}, a), h('b', { class: 'num' }, b)))));
 }
 
