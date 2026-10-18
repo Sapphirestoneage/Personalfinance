@@ -4,11 +4,12 @@
 // month-end (Setup, Accounts). Numbers come from calc/balances.js; this file only lays them out.
 
 import { h, options } from '../dom.js';
-import { money, monthLabel } from '../format.js';
+import { money, monthLabel, todayIso } from '../format.js';
 import { valueInput } from './value-input.js';
 import { nameEdit } from './name-edit.js';
 import { addAccount, setBalance, setAccountField, setBalanceDate, addCardAccounts, setPurchase } from '../../store/accounts.js';
-import { balancesFor, cardMap, accountsOverview, ACCOUNT_GROUPS, liabilities, monthBalance, kindOf } from '../../calc/balances.js';
+import { balancesFor, cardMap, ACCOUNT_GROUPS, liabilities, monthBalance, kindOf } from '../../calc/balances.js';
+import { netWorthAt, LABELS as NW_LABELS, EXPLAIN as NW_EXPLAIN } from '../../calc/networth.js';
 import { ACCOUNT_TYPE_INFO, ACCOUNT_TYPES, SECURED_TYPES } from '../../store/schema.js';
 
 export const ACCOUNT_TYPE_OPTIONS = ACCOUNT_TYPES.map((t) => [t, ACCOUNT_TYPE_INFO[t].label]);
@@ -149,21 +150,19 @@ function cardsBlock(ctx, month) {
         'Add ' + (m.noAccount.length === 1 ? 'an account for it' : 'an account for each (' + m.noAccount.length + ')'))) : null);
 }
 
-// What you have against what you owe (S-103), at the top of Setup, Accounts.
-export function accountsOverviewCard(ctx) {
-  const o = accountsOverview(ctx.doc, ctx.doc.currentMonth);
-  if (!o.count) return null;
-  const tile = (label, value, key, sub) => h('div', { class: 'tile', 'data-key': key }, h('div', { class: 'label' }, label), h('div', { class: 'value' }, money(value)), sub ? h('div', { class: 'sub' }, sub) : null);
-  return h('div', { class: 'card', id: 'accounts-overview' },
-    h('h2', {}, 'What you have and what you owe, ' + monthLabel(o.month)),
+// The two net worths (S-111), at the top of Setup, Accounts: everything, what can fund your life,
+// and what is locked in things you use. Today's balances (the latest dated one for each).
+export function netWorthCard(ctx) {
+  if (!ctx.doc.accounts.length && !ctx.doc.debts.length) return null;
+  const nw = netWorthAt(ctx.doc, todayIso());
+  const tile = (label, value, key, sub) => h('div', { class: 'tile', 'data-key': key }, h('div', { class: 'label' }, label), h('div', { class: 'value' }, money(value)), h('div', { class: 'sub' }, sub));
+  return h('div', { class: 'card', id: 'networth-card' },
+    h('h2', {}, 'What you have and what you owe'),
     h('div', { class: 'tiles' },
-      tile('You have', o.have, 'acct-have', 'bank, cash, investments, other'),
-      tile('You owe on cards', o.owe, 'acct-owe', null),
-      tile('Net', o.net, 'acct-net', 'have minus cards')),
-    h('ul', { class: 'plain' }, o.groups.filter((g) => g.rows.length).map((g) => h('li', { class: 'small' },
-      h('span', {}, g.label, h('span', { class: 'xs muted' }, ' (' + g.rows.map((r) => r.name).join(', ') + ')')), h('b', { class: 'num' }, money(g.total))))),
-    o.missing.length ? h('p', { class: 'xs muted' }, 'No balance yet for ' + o.missing.join(', ') + ', so those totals wait for it.') : null,
-    h('p', { class: 'xs muted' }, 'Loans are listed with the accounts below; their APR and payments are in Setup, Debts. Latest balance: the month\'s end, or its start until the end is in.'));
+      tile(NW_LABELS.total, nw.total, 'nw-total', NW_EXPLAIN.total),
+      tile(NW_LABELS.fi, nw.fi, 'nw-fi', NW_EXPLAIN.fi),
+      tile(NW_LABELS.locked, nw.locked, 'nw-locked', NW_EXPLAIN.locked)),
+    nw.missing.length ? h('p', { class: 'xs muted' }, 'No balance yet for ' + nw.missing.join(', ') + ', so the totals that need it wait for it.') : null);
 }
 
 // One line for Next stage and Eras: cash on hand, read-only, with a link to where it is typed.

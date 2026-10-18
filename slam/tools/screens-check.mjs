@@ -217,9 +217,10 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await startBox.press('Tab');
   await page.waitForTimeout(100);
   check('loop', 'Cash start shown', await page.$eval('#accounts-card p.small b', (b) => b.textContent), money(2500));
-  // Accounts (S-103): with only a checking start of 2,500 typed, you have 2,500, owe 0 on cards, net 2,500.
-  check('loop', 'Accounts: you have', await page.$eval('[data-key="acct-have"] .value', (b) => b.textContent), money(2500));
-  check('loop', 'Accounts: net', await page.$eval('[data-key="acct-net"] .value', (b) => b.textContent), money(2500));
+  // Net worth (S-111): with only a checking start of 2,500 typed, both net worths are 2,500 and nothing is locked in.
+  check('loop', 'Net worth (everything)', await settled(page, '[data-key="nw-total"] .value', money(2500)), money(2500));
+  check('loop', 'FI net worth', await settled(page, '[data-key="nw-fi"] .value', money(2500)), money(2500));
+  check('loop', 'Locked in', await settled(page, '[data-key="nw-locked"] .value', money(0)), money(0));
   // Next stage and Eras are parked (S-105): checked with Future tools on.
   await setup(page, 'future');
   await page.check('[data-key="future-tools"]');

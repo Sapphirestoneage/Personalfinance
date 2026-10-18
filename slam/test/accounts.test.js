@@ -179,30 +179,16 @@ test('every credit card: which debt it pays down, and what goes on it', async ()
 // is its latest); Amex card end 300 owed; Fidelity brokerage end 10,000; a 401(k) with no balance yet.
 // With the 401(k) blank, investments and "you have" wait for it (blank is not 0). Once its start is 20,000:
 // investments 10,000 + 20,000 = 30,000; you have 1,000 + 2,000 + 30,000 = 33,000; you owe 300; net 32,700.
-test('accounts: what you have and what you owe, by group, blanks named', async () => {
-  const { accountsOverview } = await import('../src/calc/balances.js');
+test('investments are never cash on hand', () => {
   const d = newHousehold('Accounts');
   d.currentMonth = '2026-10';
   const one = (a) => makeValue(a, { cadence: 'one-off' });
   addAccount(d, { id: 'chk', name: 'Checking', type: 'checking' });
   addAccount(d, { id: 'sav', name: 'Savings', type: 'savings' });
-  addAccount(d, { id: 'amex', name: 'Amex', type: 'credit-card' });
   addAccount(d, { id: 'fid', name: 'Fidelity', type: 'investment', institution: 'Fidelity' });
-  addAccount(d, { id: 'k401', name: '401(k)', type: 'retirement' });
   setBalance(d, '2026-10', 'chk', 'end', one(1000));
   setBalance(d, '2026-10', 'sav', 'start', one(2000));
-  setBalance(d, '2026-10', 'amex', 'end', one(300));
   setBalance(d, '2026-10', 'fid', 'end', one(10000));
-  let o = accountsOverview(d, '2026-10');
-  // S-110 groups: investments (Fidelity 10,000) apart from retirement (the 401(k), blank), and things you own (none, $0).
-  assert.deepEqual(o.groups.map((g) => [g.id, g.total]), [['bank', 3000], ['card', 300], ['invest', 10000], ['retire', null], ['own', 0]]);
-  assert.deepEqual([o.have, o.owe, o.net, o.missing], [null, 300, null, ['401(k)']]);
-  setBalance(d, '2026-10', 'k401', 'start', one(20000));
-  o = accountsOverview(d, '2026-10');
-  // Have: 3,000 + 10,000 + 20,000 + 0 = 33,000; net 33,000 - 300 = 32,700.
-  assert.deepEqual([o.groups[3].total, o.have, o.owe, o.net, o.missing], [20000, 33000, 300, 32700, []]);
-  assert.equal(o.groups[0].rows.find((r) => r.id === 'sav').which, 'start');
-  assert.deepEqual(validateHousehold(migrate(d)), []);
-  // Investments are never cash on hand: cash is checking 1,000 + savings 2,000 only.
+  // What you have and owe is the net worth now (S-111, test/networth.test.js). Cash is checking 1,000 + savings 2,000 only.
   assert.equal(cashOnHand(migrate(d)).amount, 3000);
 });
