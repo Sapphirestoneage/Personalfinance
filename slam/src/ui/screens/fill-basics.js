@@ -52,6 +52,13 @@ function defaultIncomeType(situation) {
   return 'not-taxable';
 }
 
+function taxNote(l) {
+  if (l.from === 'paystub') return 'paystub';
+  if (l.from === 'not estimated') return 'not estimated yet';
+  if (l.from === 'the rest') return l.monthly > 0 ? 'what is left' : 'vs the estimate';
+  return 'estimate' + (l.bracket !== undefined && l.bracket !== null ? ', ' + pct(l.bracket, 0) + ' bracket' : '');
+}
+
 function payTable(row) {
   const cell = (x, money2) => h('td', { class: 'num' }, money2(x));
   const exact = (x) => money(x, true);
@@ -62,8 +69,13 @@ function payTable(row) {
         cell(row.grossPerPaycheck, exact), cell(row.grossMonthly, exact), cell(row.grossAnnual, exact), cell(row.grossPerHour, exact)),
       row.preTaxMonthly ? h('tr', {}, h('td', {}, 'Pre-tax deductions'),
         cell(-row.preTaxPerPaycheck, exact), cell(-row.preTaxMonthly, exact), cell(-row.preTaxAnnual, exact), h('td', {})) : null,
-      row.withheldMonthly !== null ? h('tr', {}, h('td', {}, 'Taxes withheld', h('span', { class: 'xs muted' }, row.withheldFrom === 'paystub' ? ' (paystub)' : ' (gross minus the rest)')),
-        cell(-row.withheldPerPaycheck, exact), cell(-row.withheldMonthly, exact), cell(-row.withheldAnnual, exact), h('td', {})) : null,
+      row.taxMonthly !== null ? h('tr', {}, h('td', {}, 'Taxes', h('span', { class: 'xs muted' }, row.withheldFrom === 'paystub' ? ' (paystub)' : row.withheldFrom ? ' (withheld)' : ' (estimate)')),
+        cell(-row.taxPerPaycheck, exact), cell(-row.taxMonthly, exact), cell(-row.taxAnnual, exact), h('td', {})) : null,
+      // One row per tax under it (S-099): federal income tax and its bracket, Social Security, Medicare, state, and the rest.
+      row.taxMonthly !== null && row.taxLines ? row.taxLines.map((l) => h('tr', { class: 'line', 'data-key': 'tax-line:' + l.key },
+        h('td', {}, l.label, h('span', { class: 'xs muted' }, ' (' + taxNote(l) + ')')),
+        ...(l.monthly === null ? [h('td', { class: 'num muted' }, '\u00b7'), h('td', { class: 'num muted' }, '\u00b7'), h('td', { class: 'num muted' }, '\u00b7')]
+          : [cell(-l.perPaycheck, exact), cell(-l.monthly, exact), cell(-l.annual, exact)]), h('td', {}))) : null,
       row.postTaxMonthly ? h('tr', {}, h('td', {}, 'Post-tax deductions'),
         cell(-row.postTaxPerPaycheck, exact), cell(-row.postTaxMonthly, exact), cell(-row.postTaxAnnual, exact), h('td', {})) : null,
       h('tr', {}, h('td', {}, 'Take-home', row.takeHomeStatus === 'guess' ? h('span', { class: 'xs st-guess' }, ' (guess)') : null),

@@ -129,3 +129,54 @@ test('extra tax lines (SDI, paid leave) count with the state and local lines, ou
   // state and local side: (80 + 18.90 + 10) x 26 / 12 = 108.90 x 26 / 12 = 235.95 a month
   assert.ok(near(r.taxCheck.stateWithheldMonthly, 235.95));
 });
+
+// Taxes one line per tax (S-099), Tal's pay by hand (see the top of this file), per paycheck (x 26 / 12 = a month):
+//   federal income tax 4,175.44 / 26 = 160.593846; taxable 36,862 is in the 12% bracket (50,400 is its top)
+//   Social Security 54,600 x 6.2% = 3,385.20 / 26 = 130.20
+//   Medicare 54,600 x 1.45% = 791.70 / 26 = 30.45
+//   estimate 160.593846 + 130.20 + 30.45 = 321.243846
+test('taxes break down: federal income tax at its bracket, Social Security, Medicare, and the rest', () => {
+  const { d, inc } = tal();
+  inc.takeHome = pc(2000);
+  const r = incomeSummary(d, refs.tax).sources[0];
+  const line = (k) => r.taxLines.find((l) => l.key === k);
+  assert.deepEqual(r.taxLines.map((l) => l.key), ['federal', 'socialSecurity', 'medicare', 'short']);
+  assert.ok(near(line('federal').perPaycheck, 160.593846, 5));
+  assert.equal(line('federal').bracket, 0.12);
+  assert.ok(near(line('socialSecurity').perPaycheck, 130.2));
+  assert.ok(near(line('medicare').perPaycheck, 30.45));
+  // Withheld 37 a paycheck: 37 - 321.243846 = -284.243846, the gap the "doesn't add up" note names.
+  assert.ok(near(line('short').perPaycheck, -284.243846, 5));
+  // The lines add up to the taxes row: 160.593846 + 130.20 + 30.45 - 284.243846 = 37
+  assert.ok(near(r.taxLines.reduce((a, l) => a + l.perPaycheck, 0), r.taxPerPaycheck));
+  assert.ok(near(r.taxPerPaycheck, 37));
+});
+
+test('taxes break down: with more withheld than the federal estimate, the rest is state and other', () => {
+  const { d, inc } = tal();
+  // 2,100 - 63 - 1,650 = 387 withheld; 387 - 321.243846 = 65.756154 left for state and other taxes
+  inc.takeHome = pc(1650);
+  const r = incomeSummary(d, refs.tax).sources[0];
+  const rest = r.taxLines.find((l) => l.key === 'rest');
+  assert.equal(rest.label, 'State and other taxes');
+  assert.ok(near(rest.perPaycheck, 65.756154, 5));
+});
+
+test('taxes break down: copied paystub lines are used as they are, one per line', () => {
+  const { d, inc } = tal();
+  Object.assign(inc.withheld, { federal: pc(150), socialSecurity: pc(130.2), medicare: pc(30.45), state: pc(80) });
+  const r = incomeSummary(d, refs.tax).sources[0];
+  assert.deepEqual(r.taxLines.map((l) => [l.key, Math.round(l.perPaycheck * 100) / 100, l.from]),
+    [['federal', 150, 'paystub'], ['socialSecurity', 130.2, 'paystub'], ['medicare', 30.45, 'paystub'], ['state', 80, 'paystub']]);
+  // 150 + 130.20 + 30.45 + 80 = 390.65, the taxes row
+  assert.ok(near(r.taxPerPaycheck, 390.65));
+});
+
+test('taxes break down: with only gross pay, the estimate is listed and state tax says it is not estimated', () => {
+  const { d } = tal();
+  const r = incomeSummary(d, refs.tax).sources[0];
+  assert.deepEqual(r.taxLines.map((l) => l.key), ['federal', 'socialSecurity', 'medicare', 'state']);
+  assert.equal(r.taxLines[3].monthly, null);
+  // taxes row = the estimate, 321.243846 a paycheck
+  assert.ok(near(r.taxPerPaycheck, 321.243846, 5));
+});

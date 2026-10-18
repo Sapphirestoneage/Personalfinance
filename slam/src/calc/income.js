@@ -36,6 +36,37 @@ export function withheldFromStub(inc) {
   };
 }
 
+// The taxes on a paycheck, one line per tax (S-099). Copied paystub lines are used as they are.
+// Otherwise the federal estimate: income tax (with the bracket the last dollar falls in), Social
+// Security, and Medicare (self-employment tax for 1099 pay). With an actual paycheck typed, what is
+// left of the withheld amount is shown as "State and other taxes" (state tax is not estimated); with
+// no actual paycheck, state tax is listed as not estimated. Monthly amounts; null = not known.
+const TAX_LABELS = {
+  federal: 'Federal income tax', socialSecurity: 'Social Security', medicare: 'Medicare', state: 'State income tax',
+  local: 'Local or city tax', sdi: 'State disability (SDI)', pfl: 'Paid family or medical leave', sui: 'State unemployment', other: 'Other tax'
+};
+export function taxBreakdown(inc, row) {
+  const stub = withheldFromStub(inc);
+  if (stub.federalDone) {
+    return WITHHELD_KEYS.filter((k) => stub.lines[k] !== null).map((k) => ({ key: k, label: TAX_LABELS[k], monthly: stub.lines[k], from: 'paystub' }));
+  }
+  const tc = row.taxCheck;
+  const est = tc ? { incomeTax: tc.estIncomeTaxAnnual / 12, socialSecurity: tc.estSocialSecurityAnnual / 12, medicare: tc.estMedicareAnnual / 12, seTax: 0, bracket: tc.bracket } : row.estimate;
+  if (!est) return null;
+  const lines = [
+    { key: 'federal', label: TAX_LABELS.federal, monthly: est.incomeTax, from: 'estimate', bracket: est.bracket },
+    est.socialSecurity ? { key: 'socialSecurity', label: TAX_LABELS.socialSecurity, monthly: est.socialSecurity, from: 'estimate' } : null,
+    est.medicare ? { key: 'medicare', label: TAX_LABELS.medicare, monthly: est.medicare, from: 'estimate' } : null,
+    est.seTax ? { key: 'seTax', label: 'Self-employment tax (Social Security and Medicare)', monthly: est.seTax, from: 'estimate' } : null
+  ].filter(Boolean);
+  if (row.withheldMonthly === null) return [...lines, { key: 'state', label: TAX_LABELS.state, monthly: null, from: 'not estimated' }];
+  const rest = row.withheldMonthly - sumKnown(lines.map((l) => l.monthly)).total;
+  if (Math.abs(rest) < 0.005) return lines;
+  return [...lines, rest > 0
+    ? { key: 'rest', label: 'State and other taxes', monthly: rest, from: 'the rest' }
+    : { key: 'short', label: 'Not taken out', monthly: rest, from: 'the rest' }];
+}
+
 // The same pay in every unit: per paycheck, month, year, and hour.
 function payBreakdown(row, freq) {
   const perYear = (m) => (m === null ? null : m * 12);
@@ -50,12 +81,14 @@ function payBreakdown(row, freq) {
     preTaxPerPaycheck: perCheck(row.preTaxMonthly), preTaxAnnual: perYear(row.preTaxMonthly),
     postTaxPerPaycheck: perCheck(row.postTaxMonthly), postTaxAnnual: perYear(row.postTaxMonthly),
     withheldPerPaycheck: perCheck(row.withheldMonthly), withheldAnnual: perYear(row.withheldMonthly),
+    taxPerPaycheck: perCheck(row.taxMonthly), taxAnnual: perYear(row.taxMonthly),
     estimatedTakeHomePerPaycheck: perCheck(row.estimatedTakeHomeMonthly === undefined ? null : row.estimatedTakeHomeMonthly),
     estimatedTaxPerPaycheck: perCheck(row.estimatedTaxMonthly === undefined ? null : row.estimatedTaxMonthly),
     paycheckGapPerPaycheck: perCheck(row.paycheckGapMonthly === undefined ? null : row.paycheckGapMonthly),
     takeHomeAnnual: perYear(row.takeHomeMonthly),
     takeHomePerPaycheck: perCheck(row.takeHomeMonthly),
-    takeHomePerHour: ratio(row.takeHomeMonthly, row.hoursMonthly)
+    takeHomePerHour: ratio(row.takeHomeMonthly, row.hoursMonthly),
+    taxLines: row.taxLines ? row.taxLines.map((l) => ({ ...l, perPaycheck: perCheck(l.monthly), annual: perYear(l.monthly) })) : null
   };
 }
 
@@ -117,6 +150,7 @@ export function taxCheck(inc, row, dt, grossMonthly, tax, filing, stdLeft) {
     stateWithheldMonthly: fromStub ? stub.stateLocal : null,
     lines: stub.lines,
     estIncomeTaxAnnual: est.incomeTax, estFicaAnnual: est.fica, estTotalAnnual: est.totalTax,
+    estSocialSecurityAnnual: est.socialSecurity, estMedicareAnnual: est.medicare, bracket: est.bracket,
     estRate: ratio(est.totalTax, grossMonthly * 12),
     withheldRate: ratio(withheldMonthly, grossMonthly),
     // Positive: more withheld than the estimate (refund likely). Negative: likely owed at tax time.
@@ -182,7 +216,7 @@ export function incomeSummary(doc, tax) {
       row.taxMonthly = est.totalTax / 12;
       row.takeHomeStatus = 'guess';
       row.takeHomeNote = 'State tax not included' + (est.withheld ? '' : '. Nothing is withheld, so set this aside');
-      row.estimate = { incomeTax: est.incomeTax / 12, fica: est.fica / 12, seTax: est.seTax / 12, taxYear: tax.taxYear };
+      row.estimate = { incomeTax: est.incomeTax / 12, fica: est.fica / 12, socialSecurity: est.socialSecurity / 12, medicare: est.medicare / 12, seTax: est.seTax / 12, bracket: est.bracket, taxYear: tax.taxYear };
     }
     // Estimated paycheck (W-2): gross - deductions - taxes, from the paystub lines when the
     // three federal lines are there, else the federal tax and FICA estimate (state tax not included).
@@ -195,6 +229,7 @@ export function incomeSummary(doc, tax) {
       row.estimatedFrom = stub.federalDone ? 'paystub lines' : 'tax estimate';
       row.paycheckGapMonthly = hasAnswer(inc.takeHome) && row.estimatedTakeHomeMonthly !== null ? row.takeHomeMonthly - row.estimatedTakeHomeMonthly : null;
     }
+    row.taxLines = taxBreakdown(inc, row);
     Object.assign(row, payBreakdown(row, freq));
     sources.push(row);
   }
