@@ -2,10 +2,10 @@
 // Categories and lines / Tags / Debts. Moved from the Actual pass, unchanged.
 
 import { h, options } from '../dom.js';
-import { money } from '../format.js';
+import { money, monthLabel, dateLabel } from '../format.js';
 import { question } from './value-input.js';
 import { findLine, findCategory, addTag, toggleLineTag, renameTag, removeTag, setDebtLine, setPromoEnds } from '../../store/edits.js';
-import { linkedLine, linkCandidates, splitPayment, cardInterest } from '../../calc/debts.js';
+import { linkedLine, linkCandidates, splitPayment, cardInterest, promoMonthsLeft } from '../../calc/debts.js';
 import { PREMIUM_LINE_TYPES } from '../../calc/coverage.js';
 import { coverageNote } from './coverage.js';
 import { nameEdit } from './name-edit.js';
@@ -101,14 +101,23 @@ function payingLine(ctx, debt, summary) {
       : 'This month: ' + money(payment, true) + ' paid, ' + money(sp.interest, true) + ' interest (spent) and ' + money(sp.principal, true) + ' principal (pays down the balance).'));
 }
 
+// "Ends May 31, 2027, 7 months from October 2026." (S-125)
+function promoWords(ctx, debt) {
+  if (!debt.promoEnds) return 'The last day of the promo rate. Blank if there is none.';
+  const n = promoMonthsLeft(debt, ctx.doc.currentMonth);
+  const when = n > 1 ? ', ' + n + ' months from ' + monthLabel(ctx.doc.currentMonth) : n === 1 ? ', next month' : n === 0 ? ', this month' : ', already ended';
+  return 'Ends ' + dateLabel(debt.promoEnds) + when + '.';
+}
+
 function cardPromo(ctx, debt) {
   if (debt.type !== 'credit-card') return null;
   const ci = cardInterest(ctx.doc, debt, ctx.doc.currentMonth);
   return h('div', {},
     question(ctx, 'Promo APR (%), if any', 'A 0% balance transfer, say', ['debts', debt.id, 'promoApr'], debt.promoApr, { cadence: false, placeholder: '%' }),
-    h('label', { class: 'field' }, h('span', { class: 'lbl' }, 'Promo ends'),
-      h('input', { type: 'date', value: debt.promoEnds || '', 'data-key': 'debt-promo-ends:' + debt.id, onchange: (e) => ctx.update('Promo ends', (d) => setPromoEnds(d, debt.id, e.target.value || null)) })),
-    ci ? h('p', { class: 'small', 'data-key': 'debt-interest:' + debt.id }, 'Interest (computed) this month: ' + (ci.amount === null ? 'not yet. ' + ci.why : money(ci.amount, true) + '. ' + ci.why + '.') + ' It is in Debt payments, never typed.') : null);
+    h('div', { class: 'qa' }, h('div', { class: 'q' }, 'Promo ends', h('div', { class: 'hint', 'data-key': 'debt-promo-words:' + debt.id }, promoWords(ctx, debt))),
+      h('input', { type: 'date', 'aria-label': 'Promo ends', value: debt.promoEnds || '', 'data-key': 'debt-promo-ends:' + debt.id, onchange: (e) => ctx.update('Promo ends', (d) => setPromoEnds(d, debt.id, e.target.value || null)) })),
+    ci ? h('p', { class: 'small', 'data-key': 'debt-interest:' + debt.id }, 'Interest (computed) this month: ' + (ci.amount === null ? 'not yet. ' + ci.why : money(ci.amount, true) + (ci.balance === null ? '. ' + ci.why
+      : ': ' + (ci.promo ? 'the promo ' + ci.apr + '% until ' + dateLabel(debt.promoEnds) : ci.apr + '% a year') + ' on a balance of ' + money(ci.balance, true)) + '.') + ' It is in Debt payments, never typed.') : null);
 }
 
 export function debtCard(ctx, debt, summary) {
@@ -126,9 +135,9 @@ export function debtCard(ctx, debt, summary) {
         : h('button', { class: 'btn small ghost', 'data-key': 'stop-debt:' + debt.id, onclick: () => ctx.update('Stop counting debt', (d) => { d.debts.find((x) => x.id === debt.id).state = 'archived'; }) }, 'Paid off, stop counting'))),
     payingLine(ctx, debt, summary),
     linkedLine(ctx.doc, debt) ? null : question(ctx, 'Minimum payment', 'Flows into Debt payments automatically', p('minimum'), debt.minimum),
-    linked ? h('p', { class: 'small', 'data-key': 'debt-linked:' + debt.id }, 'Balance: ' + money(linked.amount) + ', from the account "' + linked.name + '" (Setup, Accounts).')
+    linked ? h('p', { class: 'small', 'data-key': 'debt-linked:' + debt.id }, 'Balance: ' + money(linked.amount) + ', from the card "' + linked.name + '" (What is owed, below).')
       // Dated balances (S-110) own the balance once there is one; it is never asked twice.
-      : dated ? h('p', { class: 'small', 'data-key': 'debt-dated:' + debt.id }, 'Balance: ' + money(dated.amount) + ' on ' + dated.date + ', from the month balances (Setup, Accounts).')
+      : dated ? h('p', { class: 'small', 'data-key': 'debt-dated:' + debt.id }, 'Balance: ' + money(dated.amount) + ' on ' + dateLabel(dated.date) + ', from the month balances (What is owed, below).')
         : question(ctx, 'Balance', null, p('balance'), debt.balance, { cadence: false }),
     question(ctx, 'APR (%)', null, p('apr'), debt.apr, { cadence: false, placeholder: '%' }),
     cardPromo(ctx, debt),

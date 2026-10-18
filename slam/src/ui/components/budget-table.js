@@ -3,6 +3,7 @@
 // Every number comes from the summary (or calc's inUnit for the lens toggle).
 
 import { h } from '../dom.js';
+import { outlookLine } from './outlook.js';
 import { money, pct, signedMoney, signedPct, times, inLens } from '../format.js';
 import { statusChip } from './status.js';
 import { inUnit } from '../../calc/lenses.js';
@@ -135,7 +136,8 @@ export function budgetTable(ctx, summary) {
       for (const l of r.lines) {
         body.push(h('tr', { class: 'line' },
           h('td', {}, h('a', { href: '#fill', onclick: (e) => { e.preventDefault(); if (!l.computed) ctx.goToField(['line', l.id, 'actual']); } }, l.name),
-            l.state === 'hidden' ? h('span', { class: 'xs' }, ' (hidden)') : null),
+            l.state === 'hidden' ? h('span', { class: 'xs' }, ' (hidden)') : null,
+            l.covered === 'computed-interest' ? h('span', { class: 'xs muted' }, ' (replaced by computed interest)') : null),
           cells(ctx, l, unit, summary, true, r.savings, r.id, r.isDebt)));
         body.push(narrowDetail(l, summary, COLUMNS.length));
       }
@@ -150,6 +152,7 @@ export function budgetTable(ctx, summary) {
   const skipped = summary.rows.filter((r) => r.notForMe).map((r) => r.name);
   return h('div', {},
     h('div', { class: 'table-wrap' }, h('table', { class: 'budget' }, h('thead', {}, head), h('tbody', {}, body))),
+    outlookLine(ctx, summary, 'table-outlook'),
     skipped.length ? h('p', { class: 'muted xs' }, "Doesn't apply: " + skipped.join(', ') + '.') : null);
 }
 

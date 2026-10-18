@@ -1,5 +1,5 @@
 {
- "schemaVersion": 15,
+ "schemaVersion": 17,
  "id": "hh-odl4gz9",
  "createdAt": "2025-10-01T09:00:00.000Z",
  "updatedAt": "2026-10-17T18:00:00.000Z",
@@ -410,6 +410,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": 1,
       "cadence": "one-off",
@@ -490,6 +507,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": null,
       "cadence": "one-off",
@@ -570,6 +604,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": null,
       "cadence": "one-off",
@@ -650,6 +701,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": null,
       "cadence": "one-off",
@@ -772,6 +840,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": null,
       "cadence": "one-off",
@@ -852,6 +937,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": null,
       "cadence": "one-off",
@@ -932,6 +1034,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": null,
       "cadence": "one-off",
@@ -1054,6 +1173,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": 15,
       "cadence": "one-off",
@@ -1134,6 +1270,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": 400,
+      "cadence": "one-off",
+      "status": "roughly",
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": 5,
+      "cadence": "one-off",
+      "status": "roughly",
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": 14,
       "cadence": "one-off",
@@ -1214,6 +1367,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": null,
       "cadence": "one-off",
@@ -1294,6 +1464,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": null,
       "cadence": "one-off",
@@ -1374,6 +1561,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": null,
       "cadence": "one-off",
@@ -1537,6 +1741,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": null,
       "cadence": "one-off",
@@ -1617,6 +1838,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": null,
       "cadence": "one-off",
@@ -1697,6 +1935,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": null,
       "cadence": "one-off",
@@ -1819,6 +2074,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": 18,
       "cadence": "one-off",
@@ -1941,6 +2213,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": null,
       "cadence": "one-off",
@@ -2021,6 +2310,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": null,
       "cadence": "one-off",
@@ -2101,6 +2407,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": null,
       "cadence": "one-off",
@@ -2181,6 +2504,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": null,
       "cadence": "one-off",
@@ -2261,6 +2601,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": null,
       "cadence": "one-off",
@@ -2383,6 +2740,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": 10,
       "cadence": "one-off",
@@ -2408,448 +2782,6 @@
      "createdBy": "coach",
      "updatedBy": "coach",
      "version": 2
-    }
-   ],
-   "createdAt": "2025-10-01T09:00:00.000Z",
-   "updatedAt": "2025-10-01T09:00:00.000Z",
-   "createdBy": "coach",
-   "updatedBy": "coach",
-   "version": 1
-  },
-  {
-   "id": "fees",
-   "name": "Fees",
-   "type": "fees",
-   "kind": "variable",
-   "need": false,
-   "savings": false,
-   "tag": "planned",
-   "state": "active",
-   "estimate": {
-    "amount": null,
-    "cadence": "month",
-    "status": null,
-    "source": "client",
-    "asOf": null,
-    "note": ""
-   },
-   "dream": {
-    "amount": null,
-    "cadence": "month",
-    "status": null,
-    "source": "client",
-    "asOf": null,
-    "note": ""
-   },
-   "dreamLong": {
-    "amount": null,
-    "cadence": "month",
-    "status": null,
-    "source": "client",
-    "asOf": null,
-    "note": ""
-   },
-   "split": false,
-   "lines": [
-    {
-     "id": "fee-overdraft",
-     "name": "Overdraft",
-     "type": "bank-fees",
-     "kind": "variable",
-     "need": false,
-     "savings": false,
-     "path": "personal",
-     "linkedIncomeId": null,
-     "tag": "planned",
-     "joy": null,
-     "stress": null,
-     "state": "active",
-     "estimate": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "dream": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "dreamLong": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "actual": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "owedBack": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "owedBackReceived": false,
-     "dueDay": {
-      "amount": null,
-      "cadence": "one-off",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "dueMonth": {
-      "amount": null,
-      "cadence": "one-off",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "accountId": null,
-     "tags": [],
-     "addedFor": null,
-     "mistakeShared": false,
-     "createdAt": "2025-10-01T09:00:00.000Z",
-     "updatedAt": "2025-10-01T09:00:00.000Z",
-     "createdBy": "coach",
-     "updatedBy": "coach",
-     "version": 1
-    },
-    {
-     "id": "fee-late",
-     "name": "Late fees",
-     "type": "late-fees",
-     "kind": "variable",
-     "need": false,
-     "savings": false,
-     "path": "personal",
-     "linkedIncomeId": null,
-     "tag": "planned",
-     "joy": null,
-     "stress": null,
-     "state": "active",
-     "estimate": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "dream": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "dreamLong": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "actual": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "owedBack": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "owedBackReceived": false,
-     "dueDay": {
-      "amount": null,
-      "cadence": "one-off",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "dueMonth": {
-      "amount": null,
-      "cadence": "one-off",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "accountId": null,
-     "tags": [],
-     "addedFor": null,
-     "mistakeShared": false,
-     "createdAt": "2025-10-01T09:00:00.000Z",
-     "updatedAt": "2025-10-01T09:00:00.000Z",
-     "createdBy": "coach",
-     "updatedBy": "coach",
-     "version": 1
-    },
-    {
-     "id": "fee-atm",
-     "name": "ATM",
-     "type": "bank-fees",
-     "kind": "variable",
-     "need": false,
-     "savings": false,
-     "path": "personal",
-     "linkedIncomeId": null,
-     "tag": "planned",
-     "joy": null,
-     "stress": null,
-     "state": "active",
-     "estimate": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "dream": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "dreamLong": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "actual": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "owedBack": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "owedBackReceived": false,
-     "dueDay": {
-      "amount": null,
-      "cadence": "one-off",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "dueMonth": {
-      "amount": null,
-      "cadence": "one-off",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "accountId": null,
-     "tags": [],
-     "addedFor": null,
-     "mistakeShared": false,
-     "createdAt": "2025-10-01T09:00:00.000Z",
-     "updatedAt": "2025-10-01T09:00:00.000Z",
-     "createdBy": "coach",
-     "updatedBy": "coach",
-     "version": 1
-    },
-    {
-     "id": "fee-foreign",
-     "name": "Foreign transaction",
-     "type": "bank-fees",
-     "kind": "variable",
-     "need": false,
-     "savings": false,
-     "path": "personal",
-     "linkedIncomeId": null,
-     "tag": "planned",
-     "joy": null,
-     "stress": null,
-     "state": "active",
-     "estimate": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "dream": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "dreamLong": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "actual": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "owedBack": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "owedBackReceived": false,
-     "dueDay": {
-      "amount": null,
-      "cadence": "one-off",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "dueMonth": {
-      "amount": null,
-      "cadence": "one-off",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "accountId": null,
-     "tags": [],
-     "addedFor": null,
-     "mistakeShared": false,
-     "createdAt": "2025-10-01T09:00:00.000Z",
-     "updatedAt": "2025-10-01T09:00:00.000Z",
-     "createdBy": "coach",
-     "updatedBy": "coach",
-     "version": 1
-    },
-    {
-     "id": "fee-interest",
-     "name": "Interest charged",
-     "type": "interest",
-     "kind": "variable",
-     "need": false,
-     "savings": false,
-     "path": "personal",
-     "linkedIncomeId": null,
-     "tag": "planned",
-     "joy": null,
-     "stress": null,
-     "state": "active",
-     "estimate": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "dream": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "dreamLong": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "actual": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "owedBack": {
-      "amount": null,
-      "cadence": "month",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "owedBackReceived": false,
-     "dueDay": {
-      "amount": null,
-      "cadence": "one-off",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "dueMonth": {
-      "amount": null,
-      "cadence": "one-off",
-      "status": null,
-      "source": "client",
-      "asOf": null,
-      "note": ""
-     },
-     "accountId": null,
-     "tags": [],
-     "addedFor": null,
-     "mistakeShared": false,
-     "createdAt": "2025-10-01T09:00:00.000Z",
-     "updatedAt": "2025-10-01T09:00:00.000Z",
-     "createdBy": "coach",
-     "updatedBy": "coach",
-     "version": 1
     }
    ],
    "createdAt": "2025-10-01T09:00:00.000Z",
@@ -2947,6 +2879,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": null,
       "cadence": "one-off",
@@ -3069,6 +3018,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": null,
       "cadence": "one-off",
@@ -3149,6 +3115,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": null,
       "cadence": "one-off",
@@ -3229,6 +3212,23 @@
       "note": ""
      },
      "owedBackReceived": false,
+     "shared": false,
+     "openingAhead": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
+     "openingAheadMonths": {
+      "amount": null,
+      "cadence": "one-off",
+      "status": null,
+      "source": "client",
+      "asOf": null,
+      "note": ""
+     },
      "dueDay": {
       "amount": null,
       "cadence": "one-off",
@@ -3432,12 +3432,6 @@
       "estimate": 15,
       "actual": 15
      },
-     "fees": {
-      "name": "Fees",
-      "savings": false,
-      "estimate": null,
-      "actual": null
-     },
      "giving": {
       "name": "Giving",
       "savings": false,
@@ -3595,36 +3589,6 @@
       "categoryId": "annual",
       "estimate": 15,
       "actual": 15
-     },
-     "fee-overdraft": {
-      "name": "Overdraft",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-late": {
-      "name": "Late fees",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-atm": {
-      "name": "ATM",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-foreign": {
-      "name": "Foreign transaction",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-interest": {
-      "name": "Interest charged",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
      },
      "giving-line": {
       "name": "Giving",
@@ -3895,46 +3859,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -4002,13 +3926,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -4220,46 +4137,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -4327,13 +4204,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -4537,6 +4407,7 @@
       "summary": "Closed with nothing open",
       "items": []
      },
+     "promoEnded": [],
      "readings": [
       "Personal and fun came in $106 under plan.",
       "Income came in $187 less than planned.",
@@ -4601,12 +4472,6 @@
       "savings": false,
       "estimate": 15,
       "actual": 15
-     },
-     "fees": {
-      "name": "Fees",
-      "savings": false,
-      "estimate": null,
-      "actual": null
      },
      "giving": {
       "name": "Giving",
@@ -4765,36 +4630,6 @@
       "categoryId": "annual",
       "estimate": 15,
       "actual": 15
-     },
-     "fee-overdraft": {
-      "name": "Overdraft",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-late": {
-      "name": "Late fees",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-atm": {
-      "name": "ATM",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-foreign": {
-      "name": "Foreign transaction",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-interest": {
-      "name": "Interest charged",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
      },
      "giving-line": {
       "name": "Giving",
@@ -5065,46 +4900,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -5172,13 +4967,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -5390,46 +5178,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -5497,13 +5245,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -5728,6 +5469,7 @@
       "summary": "Closed with nothing open",
       "items": []
      },
+     "promoEnded": [],
      "readings": [
       "Personal and fun came in $92 under plan.",
       "Income came in $171 less than planned.",
@@ -5792,12 +5534,6 @@
       "savings": false,
       "estimate": 15,
       "actual": 15
-     },
-     "fees": {
-      "name": "Fees",
-      "savings": false,
-      "estimate": null,
-      "actual": null
      },
      "giving": {
       "name": "Giving",
@@ -5956,36 +5692,6 @@
       "categoryId": "annual",
       "estimate": 15,
       "actual": 15
-     },
-     "fee-overdraft": {
-      "name": "Overdraft",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-late": {
-      "name": "Late fees",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-atm": {
-      "name": "ATM",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-foreign": {
-      "name": "Foreign transaction",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-interest": {
-      "name": "Interest charged",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
      },
      "giving-line": {
       "name": "Giving",
@@ -6257,46 +5963,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -6364,13 +6030,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -6583,46 +6242,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -6691,13 +6310,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -6948,6 +6560,7 @@
       "summary": "Closed with nothing open",
       "items": []
      },
+     "promoEnded": [],
      "readings": [
       "Personal and fun came in $77 under plan.",
       "Groceries was $52 over.",
@@ -7012,12 +6625,6 @@
       "savings": false,
       "estimate": 15,
       "actual": 15
-     },
-     "fees": {
-      "name": "Fees",
-      "savings": false,
-      "estimate": null,
-      "actual": null
      },
      "giving": {
       "name": "Giving",
@@ -7176,36 +6783,6 @@
       "categoryId": "annual",
       "estimate": 15,
       "actual": 15
-     },
-     "fee-overdraft": {
-      "name": "Overdraft",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-late": {
-      "name": "Late fees",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-atm": {
-      "name": "ATM",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-foreign": {
-      "name": "Foreign transaction",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-interest": {
-      "name": "Interest charged",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
      },
      "giving-line": {
       "name": "Giving",
@@ -7476,46 +7053,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -7583,13 +7120,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -7801,46 +7331,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -7908,13 +7398,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -8132,6 +7615,7 @@
       "summary": "Closed with nothing open",
       "items": []
      },
+     "promoEnded": [],
      "readings": [
       "Food came in $131 under plan.",
       "1.09x off this month, up from 1.07x."
@@ -8195,12 +7679,6 @@
       "savings": false,
       "estimate": 15,
       "actual": 15
-     },
-     "fees": {
-      "name": "Fees",
-      "savings": false,
-      "estimate": null,
-      "actual": null
      },
      "giving": {
       "name": "Giving",
@@ -8359,36 +7837,6 @@
       "categoryId": "annual",
       "estimate": 15,
       "actual": 15
-     },
-     "fee-overdraft": {
-      "name": "Overdraft",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-late": {
-      "name": "Late fees",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-atm": {
-      "name": "ATM",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-foreign": {
-      "name": "Foreign transaction",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-interest": {
-      "name": "Interest charged",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
      },
      "giving-line": {
       "name": "Giving",
@@ -8659,46 +8107,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -8766,13 +8174,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -8984,46 +8385,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -9091,13 +8452,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -9322,6 +8676,7 @@
       "summary": "Closed with nothing open",
       "items": []
      },
+     "promoEnded": [],
      "readings": [
       "Food came in $131 under plan.",
       "1.1x off this month, same as 1.1x."
@@ -9385,12 +8740,6 @@
       "savings": false,
       "estimate": 15,
       "actual": 15
-     },
-     "fees": {
-      "name": "Fees",
-      "savings": false,
-      "estimate": null,
-      "actual": null
      },
      "giving": {
       "name": "Giving",
@@ -9549,36 +8898,6 @@
       "categoryId": "annual",
       "estimate": 15,
       "actual": 15
-     },
-     "fee-overdraft": {
-      "name": "Overdraft",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-late": {
-      "name": "Late fees",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-atm": {
-      "name": "ATM",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-foreign": {
-      "name": "Foreign transaction",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-interest": {
-      "name": "Interest charged",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
      },
      "giving-line": {
       "name": "Giving",
@@ -9850,46 +9169,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -9957,13 +9236,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -10176,46 +9448,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -10283,13 +9515,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -10514,6 +9739,7 @@
       "summary": "Closed with nothing open",
       "items": []
      },
+     "promoEnded": [],
      "readings": [
       "Food came in $136 under plan.",
       "Shopping was $57 over.",
@@ -10578,12 +9804,6 @@
       "savings": false,
       "estimate": 15,
       "actual": 15
-     },
-     "fees": {
-      "name": "Fees",
-      "savings": false,
-      "estimate": null,
-      "actual": null
      },
      "giving": {
       "name": "Giving",
@@ -10742,36 +9962,6 @@
       "categoryId": "annual",
       "estimate": 15,
       "actual": 15
-     },
-     "fee-overdraft": {
-      "name": "Overdraft",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-late": {
-      "name": "Late fees",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-atm": {
-      "name": "ATM",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-foreign": {
-      "name": "Foreign transaction",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-interest": {
-      "name": "Interest charged",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
      },
      "giving-line": {
       "name": "Giving",
@@ -11043,46 +10233,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -11150,13 +10300,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -11369,46 +10512,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -11476,13 +10579,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -11707,6 +10803,7 @@
       "summary": "Closed with nothing open",
       "items": []
      },
+     "promoEnded": [],
      "readings": [
       "Food came in $113 under plan.",
       "Utilities was $11 over.",
@@ -11776,12 +10873,6 @@
       "savings": false,
       "estimate": 15,
       "actual": 15
-     },
-     "fees": {
-      "name": "Fees",
-      "savings": false,
-      "estimate": null,
-      "actual": null
      },
      "giving": {
       "name": "Giving",
@@ -11940,36 +11031,6 @@
       "categoryId": "annual",
       "estimate": 15,
       "actual": 15
-     },
-     "fee-overdraft": {
-      "name": "Overdraft",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-late": {
-      "name": "Late fees",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-atm": {
-      "name": "ATM",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-foreign": {
-      "name": "Foreign transaction",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-interest": {
-      "name": "Interest charged",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
      },
      "giving-line": {
       "name": "Giving",
@@ -12241,46 +11302,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -12348,13 +11369,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -12567,46 +11581,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -12674,13 +11648,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -12907,6 +11874,7 @@
        "1 reimbursement owed"
       ]
      },
+     "promoEnded": [],
      "readings": [
       "Food came in $169 under plan.",
       "Entertainment was $39 over.",
@@ -12971,12 +11939,6 @@
       "savings": false,
       "estimate": 15,
       "actual": 15
-     },
-     "fees": {
-      "name": "Fees",
-      "savings": false,
-      "estimate": null,
-      "actual": null
      },
      "giving": {
       "name": "Giving",
@@ -13135,36 +12097,6 @@
       "categoryId": "annual",
       "estimate": 15,
       "actual": 15
-     },
-     "fee-overdraft": {
-      "name": "Overdraft",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-late": {
-      "name": "Late fees",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-atm": {
-      "name": "ATM",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-foreign": {
-      "name": "Foreign transaction",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-interest": {
-      "name": "Interest charged",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
      },
      "giving-line": {
       "name": "Giving",
@@ -13435,46 +12367,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -13542,13 +12434,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -13760,46 +12645,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -13867,13 +12712,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -14094,6 +12932,7 @@
        "1 unmapped, 0 possible matches"
       ]
      },
+     "promoEnded": [],
      "readings": [
       "Food came in $196 under plan.",
       "1.13x off this month, up from 1.08x."
@@ -14157,12 +12996,6 @@
       "savings": false,
       "estimate": 15,
       "actual": 15
-     },
-     "fees": {
-      "name": "Fees",
-      "savings": false,
-      "estimate": null,
-      "actual": null
      },
      "giving": {
       "name": "Giving",
@@ -14321,36 +13154,6 @@
       "categoryId": "annual",
       "estimate": 15,
       "actual": 15
-     },
-     "fee-overdraft": {
-      "name": "Overdraft",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-late": {
-      "name": "Late fees",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-atm": {
-      "name": "ATM",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-foreign": {
-      "name": "Foreign transaction",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-interest": {
-      "name": "Interest charged",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
      },
      "giving-line": {
       "name": "Giving",
@@ -14621,46 +13424,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -14728,13 +13491,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -14946,46 +13702,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -15053,13 +13769,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -15288,6 +13997,7 @@
       "summary": "Closed with nothing open",
       "items": []
      },
+     "promoEnded": [],
      "readings": [
       "Food came in $185 under plan.",
       "1.12x off this month, down from 1.13x."
@@ -15351,12 +14061,6 @@
       "savings": false,
       "estimate": 15,
       "actual": 15
-     },
-     "fees": {
-      "name": "Fees",
-      "savings": false,
-      "estimate": null,
-      "actual": null
      },
      "giving": {
       "name": "Giving",
@@ -15515,36 +14219,6 @@
       "categoryId": "annual",
       "estimate": 15,
       "actual": 15
-     },
-     "fee-overdraft": {
-      "name": "Overdraft",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-late": {
-      "name": "Late fees",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-atm": {
-      "name": "ATM",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-foreign": {
-      "name": "Foreign transaction",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-interest": {
-      "name": "Interest charged",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
      },
      "giving-line": {
       "name": "Giving",
@@ -15815,46 +14489,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -15922,13 +14556,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -16140,46 +14767,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -16247,13 +14834,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -16474,6 +15054,7 @@
       "summary": "Closed with nothing open",
       "items": []
      },
+     "promoEnded": [],
      "readings": [
       "Food came in $155 under plan.",
       "1.11x off this month, down from 1.12x."
@@ -16537,12 +15118,6 @@
       "savings": false,
       "estimate": 15,
       "actual": 15
-     },
-     "fees": {
-      "name": "Fees",
-      "savings": false,
-      "estimate": null,
-      "actual": null
      },
      "giving": {
       "name": "Giving",
@@ -16701,36 +15276,6 @@
       "categoryId": "annual",
       "estimate": 15,
       "actual": 15
-     },
-     "fee-overdraft": {
-      "name": "Overdraft",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-late": {
-      "name": "Late fees",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-atm": {
-      "name": "ATM",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-foreign": {
-      "name": "Foreign transaction",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
-     },
-     "fee-interest": {
-      "name": "Interest charged",
-      "categoryId": "fees",
-      "estimate": null,
-      "actual": null
      },
      "giving-line": {
       "name": "Giving",
@@ -17002,46 +15547,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -17110,13 +15615,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -17329,46 +15827,6 @@
          "actual": null
         },
         {
-         "id": "fee-overdraft",
-         "name": "Overdraft",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-late",
-         "name": "Late fees",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-atm",
-         "name": "ATM",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-foreign",
-         "name": "Foreign transaction",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fee-interest",
-         "name": "Interest charged",
-         "category": "Fees",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
          "id": "giving-line",
          "name": "Giving",
          "category": "Giving",
@@ -17437,13 +15895,6 @@
         {
          "id": "health",
          "name": "Health",
-         "plan": null,
-         "estimate": null,
-         "actual": null
-        },
-        {
-         "id": "fees",
-         "name": "Fees",
          "plan": null,
          "estimate": null,
          "actual": null
@@ -17670,6 +16121,7 @@
       "summary": "Closed with nothing open",
       "items": []
      },
+     "promoEnded": [],
      "readings": [
       "Food came in $113 under plan.",
       "Utilities was $11 over.",
@@ -23975,7 +22427,7 @@
    "surplus": -567.3600000000001,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0,
-   "completion": 0.7124031007751933
+   "completion": 0.7471544715447151
   },
   {
    "date": "2025-12-01T08:00:00.000Z",
@@ -23984,7 +22436,7 @@
    "surplus": -563.71,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.00005346449957231136,
-   "completion": 0.7124031007751933
+   "completion": 0.7471544715447151
   },
   {
    "date": "2026-01-01T08:00:00.000Z",
@@ -23993,7 +22445,7 @@
    "surplus": -935.8000000000006,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.08517718489112032,
-   "completion": 0.7124031007751933
+   "completion": 0.7471544715447151
   },
   {
    "date": "2026-02-01T08:00:00.000Z",
@@ -24002,7 +22454,7 @@
    "surplus": 1135.4500000000003,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0,
-   "completion": 0.7124031007751933
+   "completion": 0.7471544715447151
   },
   {
    "date": "2026-03-01T08:00:00.000Z",
@@ -24011,7 +22463,7 @@
    "surplus": -499.4499999999998,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.0013853925560492353,
-   "completion": 0.7124031007751933
+   "completion": 0.7471544715447151
   },
   {
    "date": "2026-04-01T08:00:00.000Z",
@@ -24020,7 +22472,7 @@
    "surplus": -451.8899999999994,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.00009927561890073913,
-   "completion": 0.7124031007751933
+   "completion": 0.7471544715447151
   },
   {
    "date": "2026-05-01T08:00:00.000Z",
@@ -24029,7 +22481,7 @@
    "surplus": -543.1700000000001,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.0036402773983536287,
-   "completion": 0.7124031007751933
+   "completion": 0.7471544715447151
   },
   {
    "date": "2026-06-01T08:00:00.000Z",
@@ -24038,7 +22490,7 @@
    "surplus": -467.28999999999996,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.002404187983028477,
-   "completion": 0.7124031007751933
+   "completion": 0.7471544715447151
   },
   {
    "date": "2026-07-01T08:00:00.000Z",
@@ -24047,7 +22499,7 @@
    "surplus": -376.3499999999999,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0,
-   "completion": 0.7124031007751933
+   "completion": 0.7471544715447151
   },
   {
    "date": "2026-08-01T08:00:00.000Z",
@@ -24056,7 +22508,7 @@
    "surplus": 1181.38,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.001159760454239477,
-   "completion": 0.7124031007751933
+   "completion": 0.7471544715447151
   },
   {
    "date": "2026-09-01T08:00:00.000Z",
@@ -24065,7 +22517,7 @@
    "surplus": -400.1099999999997,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.0022757224569650847,
-   "completion": 0.7124031007751933
+   "completion": 0.7471544715447151
   },
   {
    "date": "2026-10-01T08:00:00.000Z",
@@ -24074,7 +22526,7 @@
    "surplus": -2726.3300000000004,
    "savingsRate": 0.2549019607843137,
    "blindSpot": 0.41446876124120174,
-   "completion": 0.7217054263565886
+   "completion": 0.7569105691056908
   }
  ],
  "blindRounds": [],

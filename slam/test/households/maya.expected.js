@@ -13,28 +13,27 @@
 // Transport: MetroCard 132/132/132 = 132 / 132 / 132
 // Debt:      student loan minimum 300 (computed) = 300 / 300 / 300
 // Health:    out of pocket 40/40/25 + therapy 120/120/120 = 160 / 160 / 145
-// Bills:     45 / 30 / 68
+// Bills:     subscriptions 45/30/68 + late fee 0/0/39 (moved from Fees, S-123) = 45 / 30 / 107
 // Fun:       shopping 100/80/210 + concert (no estimate, no dream) 160 = 100 / 80 / 370
 // Annual:    1,200 a year = 100; 1,200 a year = 100; 1,440 a year = 120 -> 100 / 100 / 120
-// Fees:      late fee 0 / 0 / 39
 // Giving:    50 / 100 / 50
 // Savings:   emergency 200/400/150 + retirement not-for-me (0) = 200 / 400 / 150
 
 // SPENDING (everything except Savings)
-// Estimates: 1720+550+132+300+160+45+100+100+0+50 = 3,157
-// Dreams:    1720+430+132+300+160+30+80+100+0+100 = 3,052
-// Actuals:   1750+840+132+300+145+68+370+120+39+50 = 3,814 (every category has an actual)
+// Estimates: 1720+550+132+300+160+45+100+100+50 = 3,157
+// Dreams:    1720+430+132+300+160+30+80+100+100 = 3,052
+// Actuals:   1750+840+132+300+145+107+370+120+50 = 3,814 (every category has an actual)
 // Outflow = 3,814 + savings 150 = 3,964. Surplus = 3,900 - 3,964 = -64 (a shortfall).
 // Savings rate = (150 + 260) / (3,900 + 260) = 410 / 4,160 = 0.098558
 // Housing share = 1,750 / 3,900 = 0.448718 (over the 35% band)
 // Roommate worst case = 1,750 - your share (the rent line, 1,600) + full rent 3,200 = 3,350; 3,350 / 3,900 = 0.858974
 
 // BLIND SPOT: overage per category where actual > estimate
-// housing 30, food 290, bills 23, fun 270, annual 20, fees 39 (all others 0) = 672
+// housing 30, food 290, bills 62 (107 - 45), fun 270, annual 20 (all others 0) = 672
 // 672 / 3,814 = 0.176193
 
-// CULPRITS: food +290 (840/550 = 1.527273), fun +270 (370/100 = 3.7), fees +39 (estimate 0, no ratio)
-// Back to your own words, yearly: 290x12 = 3,480; 270x12 = 3,240; 39x12 = 468
+// CULPRITS: food +290 (840/550 = 1.527273), fun +270 (370/100 = 3.7), bills +62 (107/45 = 2.37777778 -> 2.377778)
+// Back to your own words, yearly: 290x12 = 3,480; 270x12 = 3,240; 62x12 = 744
 
 // GUT CHECK (S-097: gut vs sum of estimates vs actual): gut 2,800 / estimates 3,157 / actual 3,814
 // actual - gut = 1,014; actual / gut = 1.362143
@@ -66,7 +65,7 @@
 //   A 1,750/3,402 = 875/1,701 = 0.51440329 -> 0.514403; F 840/3,402 = 420/1,701 = 0.24691358 -> 0.246914
 //   T 132/3,402 = 66/1,701 = 0.03880071 -> 0.038801; Th 120/3,402 = 60/1,701 = 0.03527337 -> 0.035273 (sum 1)
 // Everything else = outflow 3,964 - (300 + 1,750 + 840 + 132 + 0 + 120) = 3,964 - 3,142 = 822
-//   (= out of pocket 25 + bills 68 + fun 370 + annual 120 + fees 39 + giving 50 + emergency fund 150)
+//   (= out of pocket 25 + bills 107 + fun 370 + annual 120 + giving 50 + emergency fund 150)
 //   822/4,160 = 0.19759615 -> 0.197596
 // Left over = surplus -64; -64/4,160 = -0.01538462 -> -0.015385
 // Check: 3,402 + 822 - 64 = 4,160 = 100% of the base.
@@ -108,13 +107,12 @@
 //   transport 132: 0.03384615 -> 0.033846 | 132/3,814 = 0.03460933 -> 0.034609
 //   debt 300: 0.07692308 -> 0.076923 | 300/3,814 = 0.07865758 -> 0.078658
 //   health 145: 0.03717949 -> 0.037179 | 145/3,814 = 0.03801783 -> 0.038018
-//   bills 68: 0.01743590 -> 0.017436 | 68/3,814 = 0.01782905 -> 0.017829
+//   bills 107: 107/3,900 = 0.02743590 -> 0.027436 | 107/3,814 = 0.02805454 -> 0.028055 (3,814 x 0.028 = 106.792; 0.208/3,814 = 0.0000545)
 //   fun 370: 0.09487179 -> 0.094872 | 370/3,814 = 0.09701101 -> 0.097011
 //   annual 120: 0.03076923 -> 0.030769 | 120/3,814 = 0.03146303 -> 0.031463
-//   fees 39: 39/3,900 = 0.01 | 39/3,814 = 0.01022549 -> 0.010225
 //   giving 50: 0.01282051 -> 0.012821 | 50/3,814 = 0.01310959 -> 0.013110
 //   savings 150: 0.03846154 -> 0.038462 | not spending, so no % of spending
-//   (the ten spending shares add to 3,814/3,814 = 100%)
+//   (the nine spending shares add to 3,814/3,814 = 100%)
 // Estimate % of spending, food: 550 / estimate total 3,157 = 0.17421603 -> 0.174216
 // Lines: eating out 340: 340/3,900 = 0.08717949 -> 0.087179 | 340/3,814 = 0.08914525 -> 0.089145
 //        delivery 120: 120/3,900 = 0.03076923 -> 0.030769 | 120/3,814 = 0.03146303 -> 0.031463
@@ -130,14 +128,14 @@
 
 // PLAN FOR SEPTEMBER 2026 (the month on screen), started from estimates, two changes: groceries 300 -> 350, shopping 100 -> 150.
 // Category plans: housing 1,600 + 80 + 40 = 1,720; food 350 + 200 + 50 = 600; transport 132; debt 300 (minimums);
-//   health 40 + 120 = 160; bills 45; fun shopping 150 (concert has no plan line) = 150; annual 1,200 a year = 100; fees 0; giving 50
+//   health 40 + 120 = 160; bills 45 + late fee 0 = 45; fun shopping 150 (concert has no plan line) = 150; annual 1,200 a year = 100; giving 50
 //   savings 200 + retirement 0 (doesn't apply) = 200
-// Plan spending = 1,720 + 600 + 132 + 300 + 160 + 45 + 150 + 100 + 0 + 50 = 3,257. Plan outflow = 3,257 + 200 = 3,457.
+// Plan spending = 1,720 + 600 + 132 + 300 + 160 + 45 + 150 + 100 + 50 = 3,257. Plan outflow = 3,257 + 200 = 3,457.
 // Plan % of income, food 600/3,900 = 0.15384615 -> 0.153846; plan % of spending, food 600/3,257 = 0.18421861 -> 0.184219
 //   housing 1,720/3,257 = 0.52809334 -> 0.528093
 // ACTUAL VS PLAN (September has both): housing 1,750 - 1,720 = +30, 30/1,720 = 0.01744186 -> 0.017442
-//   food 840 - 600 = +240, 240/600 = 0.4; health 145 - 160 = -15, -15/160 = -0.09375; bills 68 - 45 = +23, 23/45 = 0.51111111 -> 0.511111
-//   fun 370 - 150 = +220, 220/150 = 1.46666667 -> 1.466667; annual 120 - 100 = +20, 0.2; fees 39 - 0 = +39 (no % of a zero plan)
+//   food 840 - 600 = +240, 240/600 = 0.4; health 145 - 160 = -15, -15/160 = -0.09375; bills 107 - 45 = +62, 62/45 = 1.37777778 -> 1.377778
+//   fun 370 - 150 = +220, 220/150 = 1.46666667 -> 1.466667; annual 120 - 100 = +20, 0.2
 //   savings 150 - 200 = -50, -0.25; transport, debt, giving 0
 // Culprits stay measured against the estimate (unchanged above).
 
@@ -147,8 +145,8 @@
 //   change: eating out 340 -> 280. cut: delivery 120 -> 0, streaming 68 -> 0, late fee 39 -> 0 (stop tracking from October).
 //   new: Cooking class 60 (added in review for October; no estimate, not rated).
 // Plan by category: housing 1,750; food 380 + 280 + 0 = 660; transport 132; debt 300; health 145; bills 0;
-//   fun 210 + 160 + 60 = 430; annual 120; fees 0; giving 50; savings 150 + 0 = 150
-// Plan spending = 1,750 + 660 + 132 + 300 + 145 + 0 + 430 + 120 + 0 + 50 = 3,587; plan outflow = 3,587 + 150 = 3,737
+//   fun 210 + 160 + 60 = 430; annual 120; giving 50; savings 150 + 0 = 150
+// Plan spending = 1,750 + 660 + 132 + 300 + 145 + 0 + 430 + 120 + 50 = 3,587; plan outflow = 3,587 + 150 = 3,737
 // Plan vs take-home: 3,900 - 3,737 = 163 left over. This month's actual outflow = 3,814 + 150 = 3,964.
 // Frees up: 3,964 - 3,737 = 227. Plan % of income = 3,737 / 3,900 = 0.95820513 -> 0.958205
 // Happiness spend (lines rated 7 or above: eating out 8, therapy 9, concert 9):
@@ -156,7 +154,7 @@
 //   October plan: (280 + 120 + 160) / 3,587 = 560 / 3,587 = 0.15611932 -> 0.156119; change -0.00643967 -> -0.006440
 // Eating out plan: 280/3,900 = 0.07179487 -> 0.071795 of income; 280/3,587 = 0.07805966 -> 0.078060 of spending
 // Cooking class plan: 60/3,900 = 0.01538462 -> 0.015385 of income
-// Checklist: 18 lines to plan (housing 3, food 3, transport 1, health 2, bills 1, fun 3, annual 1, fees 1, giving 1, savings 2); 12 reviewed.
+// Checklist: 18 lines to plan (housing 3, food 3, transport 1, health 2, bills 2, fun 3, annual 1, giving 1, savings 2); 12 reviewed.
 // READING: frees 227. Cuts held (120 + 68 + 39) / 3,814 = 227 / 3,814 = 0.0595 -> 6% of spending and (3 + 4) / 38 = 0.184 -> 18% of happiness.
 
 // SATISFACTION AND STRESS (S-082). Stress ratings: rent 8, eating out 4, delivery 7, therapy 2, streaming 6, shopping 6, concert 1.
@@ -183,8 +181,8 @@ export default {
   shares: {
     // category: [% of income (basis), % of spending (basis)]
     categories: { housing: [0.448718, 0.458836], food: [0.215385, 0.220241], transport: [0.033846, 0.034609], debt: [0.076923, 0.078658],
-      health: [0.037179, 0.038018], bills: [0.017436, 0.017829], fun: [0.094872, 0.097011], annual: [0.030769, 0.031463],
-      fees: [0.01, 0.010225], giving: [0.012821, 0.013110], savings: [0.038462, null] },
+      health: [0.037179, 0.038018], bills: [0.027436, 0.028055], fun: [0.094872, 0.097011], annual: [0.030769, 0.031463],
+      giving: [0.012821, 0.013110], savings: [0.038462, null] },
     foodEstimateOfSpending: 0.174216,
     lines: { 'eating-out': [0.087179, 0.089145], delivery: [0.030769, 0.031463] }
   },
@@ -196,8 +194,8 @@ export default {
   },
   plan: {
     spending: 3257, outflow: 3457,
-    categories: { housing: [1720, 30, 0.017442], food: [600, 240, 0.4], health: [160, -15, -0.09375], bills: [45, 23, 0.511111],
-      fun: [150, 220, 1.466667], annual: [100, 20, 0.2], fees: [0, 39, null], savings: [200, -50, -0.25], transport: [132, 0, 0], debt: [300, 0, 0], giving: [50, 0, 0] },
+    categories: { housing: [1720, 30, 0.017442], food: [600, 240, 0.4], health: [160, -15, -0.09375], bills: [45, 62, 1.377778],
+      fun: [150, 220, 1.466667], annual: [100, 20, 0.2], savings: [200, -50, -0.25], transport: [132, 0, 0], debt: [300, 0, 0], giving: [50, 0, 0] },
     foodPctIncome: 0.153846, foodPctSpending: 0.184219, housingPctSpending: 0.528093
   },
   review: {
@@ -215,14 +213,14 @@ export default {
   categories: {
     // [estimate, actual]
     housing: [1720, 1750], food: [550, 840], transport: [132, 132], debt: [300, 300],
-    health: [160, 145], bills: [45, 68], fun: [100, 370], annual: [100, 120],
-    fees: [0, 39], giving: [50, 50], savings: [200, 150]
+    health: [160, 145], bills: [45, 107], fun: [100, 370], annual: [100, 120],
+    giving: [50, 50], savings: [200, 150]
   },
   estimateTotal: 3157, actualTotal: 3814, spending: 3814, savings: 150,
   surplus: -64, savingsRate: 0.098558, housingShare: 0.448718, housingOver: true,
   roommateWorstCase: 3350, roommateWorstCaseShare: 0.858974,
   blindSpot: 0.176193,
-  culprits: [['Food', 290, 1.527273, 3480], ['Personal and fun', 270, 3.7, 3240], ['Fees', 39, null, 468]],
+  culprits: [['Food', 290, 1.527273, 3480], ['Personal and fun', 270, 3.7, 3240], ['Bills and subscriptions', 62, 2.377778, 744]],
   gut: { gut: 2800, estimates: 3157, actual: 3814, actualVsGut: 1014, ratio: 1.362143 },
   proofOfCash: { implied: 3450, entered: 3514, pct: 0.018551, flagged: false },
   fixed: 2260, variable: 1554, fixedPct: 0.592554,

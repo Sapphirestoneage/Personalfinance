@@ -60,11 +60,15 @@ test('Riley, January: 3 paychecks, planned as 3, and both bridges tie', () => {
   // and 5,770.82: 28,485.39. Lines: saved 650 + the 401(k) 325 = 975; paid down 35 + 6,080.42 - 5,770.82
   // (= 309.60: the 340 car payment less 30.40 interest) = 344.60; market 401(k) 13,560 - 13,085 - 325 = 150,
   // Roth 7,720 - 7,250 - 400 = 70; the car 9,300 -> 9,200.
+  // Opening Paid ahead (S-130): the car insurance paid before October 2025 is 160 at December's end and 80 at
+  // January's (400 less 80 a month). Net worth adds it: start 25,815.34 + 160 = 25,975.34; end 28,485.39 + 80 =
+  // 28,565.39. Timing: the yearly shares 95, less the 80 of it used: 15.
   const nb = netWorthBridge(d, inc, '2026-01');
-  assert.deepEqual(lines(nb.total), { surplus: 1135.45, timing: 95, saved: 975, 'paid-down': 344.6, market: 220, value: -100 });
-  // 25,815.34 + 1,135.45 + 95 + 975 + 344.60 + 220 - 100 = 28,485.39: ties.
-  assert.deepEqual([nb.total.start, nb.total.explained, nb.total.actual, nb.total.unexplained], [25815.34, 28485.39, 28485.39, 0]);
-  assert.equal(nb.reading, 'Net worth rose $2,670. $2,205 you saved, $220 the market added, $345 of debt paid down, $100 of value lost on things you own.');
+  assert.deepEqual(lines(nb.total), { surplus: 1135.45, timing: 15, saved: 975, 'paid-down': 344.6, market: 220, value: -100 });
+  // 25,975.34 + 1,135.45 + 15 + 975 + 344.60 + 220 - 100 = 28,565.39: ties.
+  assert.deepEqual([nb.total.start, nb.total.explained, nb.total.actual, nb.total.unexplained], [25975.34, 28565.39, 28565.39, 0]);
+  // Rose 28,565.39 - 25,975.34 = 2,590.05; saved 1,135.45 + 15 + 975 = 2,125.45.
+  assert.equal(nb.reading, 'Net worth rose $2,590. $2,125 you saved, $220 the market added, $345 of debt paid down, $100 of value lost on things you own.');
 });
 
 test('W-2 income is never typed twice: the plan and the actual come from the paycheck and the log', () => {
@@ -85,14 +89,17 @@ test('W-2 income is never typed twice: the plan and the actual come from the pay
 test('income not tracked: the surplus uses take-home, and says so; typed or none counts as tracked', () => {
   const d = loadHousehold('dana');
   const t = () => buildSummary(d, refs).totals;
-  // Dana has no income entries: take-home 4,000 - spending 3,510 - savings 300 = 190, not tracked.
-  assert.deepEqual([t().incomeTracked, t().incomeBasis, t().surplus], [false, 4000, 190]);
-  // A typed 3,900 for October (no entries): tracked; 3,900 - 3,510 - 300 = 90.
+  // Dana has no income entries. Spending is 3,510 plus October's Visa interest, now that her promo ended in
+  // May (S-127): 11,736.78 x 24.99 / 1,200 = 244.42 (tools/dana.mjs), so 3,754.42.
+  // Take-home 4,000 - 3,754.42 - savings 300 = -54.42, not tracked.
+  const c = (x) => Math.round(x * 100) / 100;
+  assert.deepEqual([t().incomeTracked, t().incomeBasis, c(t().surplus)], [false, 4000, -54.42]);
+  // A typed 3,900 for October (no entries): tracked; 3,900 - 3,754.42 - 300 = -154.42.
   setIncomeActual(d, '2026-10', 'job', makeValue(3900));
-  assert.deepEqual([t().incomeTracked, t().surplus], [true, 90]);
-  // None this month: 0 - 3,810 = -3,810.
+  assert.deepEqual([t().incomeTracked, c(t().surplus)], [true, -154.42]);
+  // None this month: 0 - 3,754.42 - 300 = -4,054.42.
   setIncomeActual(d, '2026-10', 'job', 'none');
-  assert.deepEqual([t().income.sources[0].from, t().surplus], ['none', -3810]);
+  assert.deepEqual([t().income.sources[0].from, c(t().surplus)], ['none', -4054.42]);
 });
 
 test('an income entry with no source counts, and is a month-end checklist item', () => {

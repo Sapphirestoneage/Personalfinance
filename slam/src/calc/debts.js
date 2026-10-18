@@ -18,7 +18,7 @@
 // Missing APR or balance: the line is blank (empty is not zero).
 
 import { toMonthly } from './normalize.js';
-import { monthStartOf, lastDayOf } from './balances.js';
+import { monthStartOf, lastDayOf, balanceAt } from './balances.js';
 
 const r2 = (x) => Math.round(x * 100) / 100 + 0;
 const typed = (v) => !!v && v.amount !== null && v.amount !== undefined;
@@ -91,4 +91,45 @@ export function cardInterest(doc, debt, month) {
   if (apr === null || !start) return { amount: null, why: apr === null ? 'Needs the APR' : 'Needs the balance going into the month', apr, promo, balance: start ? start.amount : null };
   const amount = r2((start.amount * apr) / 100 / 12);
   return { amount, why: (promo ? 'Promo ' + apr + '% until ' + debt.promoEnds : apr + '% a year') + ' on ' + start.amount, apr, promo, balance: start.amount };
+}
+
+// Typed interest hands off to computed (S-120). A typed interest line (Luis's "Interest charged") counts
+// until the cards have month balances. From the first month every live card has them, the computed
+// lines count and the typed line is replaced (shown as "replaced by computed interest"). Never both in
+// one month: while any card still has no month balances, the typed line counts and no computed line does.
+export function interestHandoff(doc, month) {
+  const cards = (doc.debts || []).filter((d) => d.type === 'credit-card' && d.state !== 'archived');
+  const rows = cards.map((d) => ({ d, i: cardInterest(doc, d, month) }));
+  return { rows, computed: rows.length > 0 && rows.every((x) => x.i !== null) };
+}
+
+// Months from a working month to the month a promo ends (S-125): October 2026 to May 31, 2027 is
+//   (2027 - 2026) x 12 + (5 - 10) = 7. Below 0 once it has ended; null with no end date.
+export function promoMonthsLeft(debt, month) {
+  if (!debt.promoEnds || !month) return null;
+  const [y1, m1] = month.split('-').map(Number);
+  const [y2, m2] = debt.promoEnds.split('-').map(Number);
+  return (y2 - y1) * 12 + (m2 - m1);
+}
+
+// The first month at the card's own APR after a promo (S-127): the month whose last day is past the
+// promo's end, when the month before was still at the promo rate. Dana's 0% ends May 31, 2026, so
+// June 2026 is that month. Returns each such card with its computed interest for the month.
+export function promoEnded(doc, month) {
+  const [y, m] = month.split('-').map(Number);
+  const prev = m === 1 ? (y - 1) + '-12' : y + '-' + String(m - 1).padStart(2, '0');
+  return (doc.debts || []).filter((d) => d.type === 'credit-card' && d.state !== 'archived' && d.promoEnds && !aprFor(d, month).promo && aprFor(d, prev).promo)
+    .map((d) => ({ debt: d, promoApr: d.promoApr.amount, interest: cardInterest(doc, d, month) }));
+}
+
+// Promos ending within 60 days of a day (S-127), for the Next card: the end date and what is still on
+// the card (its latest balance on that day). Dana on April 1, 2026: May 31 is 60 days away, and the
+// Visa's latest balance is March's end, 13,360.
+export function promoWarnings(doc, today) {
+  const DAY = 86400000;
+  return (doc.debts || []).filter((d) => d.type === 'credit-card' && d.state !== 'archived' && d.promoEnds && typed(d.promoApr)).map((d) => {
+    const days = Math.round((Date.parse(d.promoEnds + 'T00:00:00Z') - Date.parse(today + 'T00:00:00Z')) / DAY);
+    const b = balanceAt(doc, cardKey(doc, d), today);
+    return { debt: d, ends: d.promoEnds, days, balance: b ? b.amount : null };
+  }).filter((x) => x.days >= 0 && x.days <= 60);
 }

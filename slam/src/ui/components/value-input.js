@@ -111,7 +111,8 @@ export function valueInput(ctx, path, value, opts = {}) {
   const parts = [input];
   if (opts.compact && !opts.open) {
     // The status stays visible (lesson 2); everything else waits behind "more".
-    parts.push(statusChip(value.status), monthly);
+    // Tap the chip to change it (S-121): the same picker as under "more".
+    parts.push(statusPicker(value.status, (s) => ctx.commit(path, editValue(value, { status: s }), label), key), monthly);
     if (split) parts.push(h('span', { class: 'xs muted' }, value.parts.length + ' items'));
     if (opts.onMore) parts.push(h('button', { class: 'btn small ghost more-ctl', 'data-key': key + ':more', 'aria-expanded': 'false', 'aria-label': 'More for ' + label, onclick: opts.onMore }, 'more'));
     return h('div', { class: 'value-input' }, parts);

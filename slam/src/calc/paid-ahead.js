@@ -8,7 +8,17 @@
 //   end of the period (month N).
 // Inside a month (any day but the last), the balance is the one at the end of the month before (and the
 // whole payment in the month it was paid, from the day it was paid).
-// It is a thing you own (tier 4) that does not count toward FI. Never typed: computed from the log.
+// It is a thing you own (tier 4) that does not count toward FI. Computed from the log, except one
+// opening amount per line (S-130).
+//
+// Opening Paid ahead (S-130): a yearly bill paid before the client's first month (Riley's car insurance,
+// paid March 2025, with 5 months left in October 2025) is typed once on its line: the amount left and the
+// months left, as of the first month. It runs down the same way:
+//   share = amount left / months left; the end of the first month: amount - one share; $0 at the end of
+//   the last month. On the last day before the first month it is the whole amount left, so the first
+//   month's net worth bridge starts with it.
+// The first month is the earliest month the file knows: a closed month, a month with balances, or the
+// working month.
 
 import { counted } from './log.js';
 import { isYearlyLine } from './model.js';
@@ -42,12 +52,33 @@ export function paidAheadSchedules(doc) {
     for (let k = 1; k <= n; k++) ends.push({ month: monthOfIndex(monthIndex(m0) + k - 1), amount: k === n ? 0 : r2(t.amount - share * k) });
     out.push({ id: t.id, lineId: hit.l.id, name: hit.l.name, paid: t.amount, date: t.date, months: n, share, from: m0, through: ends[n - 1].month, ends });
   }
+  for (const { l } of lines) {
+    const amount = typedAmount(l.openingAhead);
+    const n = typedAmount(l.openingAheadMonths);
+    if (amount === null || !(amount > 0) || !Number.isInteger(n) || n < 1) continue;
+    const m0 = firstMonth(doc);
+    const share = r2(amount / n);
+    const ends = [];
+    for (let k = 1; k <= n; k++) ends.push({ month: monthOfIndex(monthIndex(m0) + k - 1), amount: k === n ? 0 : r2(amount - share * k) });
+    out.push({ id: 'opening:' + l.id, lineId: l.id, name: l.name, paid: amount, date: prevDay(m0), months: n, share, from: m0, through: ends[n - 1].month, ends, opening: true, status: l.openingAhead.status });
+  }
   return out.sort((a, b) => (a.date < b.date ? -1 : 1));
+}
+
+const typedAmount = (v) => (v && v.amount !== null && v.amount !== undefined && v.status !== 'not-for-me' ? v.amount : null);
+const prevDay = (m) => lastDayOf(monthOfIndex(monthIndex(m) - 1));
+
+// The client's first month: the earliest closed month, month with balances, or the working month.
+export function firstMonth(doc) {
+  const all = [...(doc.months || []).map((m) => m.key), ...Object.keys(doc.balances || {}), doc.currentMonth].filter(Boolean).sort();
+  return all[0];
 }
 
 // One schedule's balance on a day.
 export function scheduleAt(s, date) {
   if (date < s.date) return 0;
+  // An opening amount is all there on the day before the first month.
+  if (s.opening && date < s.from + '-01') return s.paid;
   const m = date.slice(0, 7);
   const i = monthIndex(m) - monthIndex(s.from);
   if (date === lastDayOf(m)) return i < s.months ? s.ends[i].amount : 0;

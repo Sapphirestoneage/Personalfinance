@@ -5,7 +5,7 @@
 // every chart is one tap away, in Insights or on Track.
 
 import { h } from '../dom.js';
-import { money, pct, signedMoney, todayIso, dayLabel } from '../format.js';
+import { money, pct, signedMoney, todayIso, dayLabel, dateLabel } from '../format.js';
 import { statusChip } from '../components/status.js';
 import { nextCard } from '../components/cards.js';
 import { budgetCashStrip } from '../components/cashflow.js';
@@ -13,6 +13,8 @@ import { loopStripCard } from '../components/loop.js';
 import { jumpLink } from '../components/jump.js';
 import { INSIGHT_TABS } from '../nav.js';
 import { firstSession, staleBalances, loopStep, loopStrip, accountTypeNudges } from '../../calc/loop.js';
+import { promoWarnings } from '../../calc/debts.js';
+import { monthOutlook } from '../../calc/calendar.js';
 import { explain } from '../../calc/explain.js';
 import { howButton, howPanel } from '../components/how.js';
 
@@ -27,24 +29,27 @@ export function headlineTiles(ctx, summary) {
   const inc = summary.income;
   const since = summary.sinceLast;
   const hb = (key, text) => howButton(ctx, key, text);
-  const open = ['takeHome', 'spending', 'surplus', 'savingsRate'].includes(ctx.ui.how) ? ctx.ui.how : null;
+  // An open month (S-128): so far and expected by month end, never money that has not arrived as actual.
+  const o = monthOutlook(ctx.doc, inc, todayIso());
+  const open = ['takeHome', 'spending', 'surplus', 'savingsRate', ...(o ? ['soFar', 'expected'] : [])].includes(ctx.ui.how) ? ctx.ui.how : null;
   return h('div', {},
     h('div', { class: 'strip four', id: 'headline' },
       tile('Take-home', hb('takeHome', money(t.takeHome)), inc.takeHomeIsGuess ? h('span', {}, statusChip('guess'), ' state tax not included') : 'per month'),
       tile('Spending', hb('spending', money(t.spending)), t.basisUsesEstimate.length ? 'uses estimates for ' + t.basisUsesEstimate.length : 'actuals'),
-      tile(t.surplus !== null && t.surplus < 0 ? 'Shortfall' : 'Surplus', hb('surplus', signedMoney(t.surplus)), since && since.surplus !== null ? signedMoney(since.surplus) + ' since last time' : 'per month',
-        t.surplus === null ? '' : t.surplus < 0 ? 'bad' : 'good'),
+      o ? tile('So far this month', hb('soFar', signedMoney(o.soFar)), h('span', {}, 'Expected by month end ', hb('expected', signedMoney(o.expected))), o.soFar < 0 ? 'bad' : 'good')
+        : tile(t.surplus !== null && t.surplus < 0 ? 'Shortfall' : 'Surplus', hb('surplus', signedMoney(t.surplus)), since && since.surplus !== null ? signedMoney(since.surplus) + ' since last time' : 'per month',
+          t.surplus === null ? '' : t.surplus < 0 ? 'bad' : 'good'),
       tile('Savings rate', hb('savingsRate', pct(t.savingsRate)), 'incl. pre-tax')),
-    open ? howPanel(ctx, explain(summary, open)) : null);
+    open ? howPanel(ctx, explain(summary, open, o)) : null);
 }
 
 function firstSessionCard(ctx, summary) {
   const fs = firstSession(ctx.doc, summary);
   if (fs.done) return null;
   return h('div', { class: 'card', id: 'first-session' },
-    h('h2', { style: 'margin-top:0' }, 'First session (' + (fs.items.length - fs.left) + ' of ' + fs.items.length + ')'),
+    h('h2', { style: 'margin-top:0' }, 'First session (' + (fs.items.filter((i) => !i.optional).length - fs.left) + ' of ' + fs.items.filter((i) => !i.optional).length + ')'),
     h('ul', { class: 'plain' }, fs.items.map((i) => h('li', { class: 'small', 'data-key': 'first-' + i.key },
-      h('span', {}, h('span', { class: 'chip ' + (i.done ? 'st-known' : 'st-dont-know') }, i.done ? 'Done' : 'To do'), ' ', i.label),
+      h('span', {}, h('span', { class: 'chip ' + (i.done ? 'st-known' : i.optional ? 'st-roughly' : 'st-dont-know') }, i.done ? 'Done' : i.optional ? 'Optional' : 'To do'), ' ', i.label),
       i.done ? null : jumpLink(ctx, i.where, 'Do it', 'first-go-' + i.key)))));
 }
 
@@ -62,9 +67,16 @@ function typeExtras(ctx) {
   return accountTypeNudges(ctx.doc).map((x) => ({ key: 'type:' + x.id, label: x.label, why: x.why, where: 'balances' }));
 }
 
+// A promo ending within 60 days (S-127): "Your 0% promo on Visa ends May 31, 2026. $13,360 still on it."
+function promoExtras(ctx) {
+  return promoWarnings(ctx.doc, todayIso()).map((x) => ({ key: 'promo:' + x.debt.id,
+    label: 'Your ' + x.debt.promoApr.amount + '% promo on ' + x.debt.label + ' ends ' + dateLabel(x.ends) + '.' + (x.balance === null ? '' : ' ' + money(x.balance, !Number.isInteger(x.balance)) + ' still on it.'),
+    why: x.days === 0 ? 'today' : x.days + (x.days === 1 ? ' day' : ' days') + ' left', where: 'setup:debts' }));
+}
+
 // The Next card's extra items, numbered after the first.
 function extras(ctx, summary) {
-  return [staleExtra(ctx, summary), ...typeExtras(ctx)].filter(Boolean).map((x, i) => ({ ...x, label: (i + 2) + '. ' + x.label }));
+  return [...promoExtras(ctx), staleExtra(ctx, summary), ...typeExtras(ctx)].filter(Boolean).map((x, i) => ({ ...x, label: (i + 2) + '. ' + x.label }));
 }
 
 export function renderToday(ctx, summary) {

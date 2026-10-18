@@ -99,7 +99,8 @@ export function netWorthBridge(doc, income, month) {
     const movedOut = fiOnly ? invested.filter((x) => !countsForFI(x.a)).map((x) => ({ name: x.a.name, id: x.a.id, amount: r2(-x.c.transfers) })).filter((x) => x.amount) : [];
     const lines = [];
     const line = (key, label, amount, from, link) => { lines.push({ key, label, amount: r2(amount), from, link }); };
-    line('surplus', 'Surplus: take-home less spending and savings', br.surplus === null ? null : br.surplus, 'The budget for ' + month, { to: 'actual' });
+    line('surplus', 'Surplus: take-home less spending and savings', br.surplus === null ? null : br.surplus, 'The budget for ' + month +
+      (br.interest.length ? ', which spends card interest: ' + br.interest.map((x) => x.name + ' ' + money(x.amount)).join(', ') : ''), { to: 'actual' });
     // Net worth only (not FI): what was paid ahead this month, less what was used of it.
     const pa = fiOnly ? 0 : paChange;
     const t = r2(add(timing.map((x) => x.amount)) + pa);

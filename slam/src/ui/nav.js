@@ -10,7 +10,7 @@ export const OLD_HASHES = { budget: 'today', fill: 'plan', analyze: 'insights' }
 
 export const INSIGHT_TABS = [['where', 'Where it goes'], ['compared', 'Compared'], ['time', 'Over time'], ['cash', 'Cash'], ['networth', 'Net worth'], ['you', 'You']];
 export const SETUP_SECTIONS = [
-  ['basics', 'Basics'], ['coverage', 'Health coverage'], ['income', 'Income and paychecks'], ['accounts', 'Accounts'], ['debts', 'Debts'], ['bills', 'Bills and due dates'],
+  ['basics', 'Basics'], ['coverage', 'Health coverage'], ['income', 'Income and paychecks'], ['accounts', 'Accounts'], ['debts', 'Credit and debt'], ['bills', 'Bills and due dates'],
   ['categories', 'Categories and lines'], ['tags', 'Tags'], ['coach', 'Cushion and coach settings'], ['notes', 'Coach notes'], ['future', 'Future tools (parked)']
 ];
 
@@ -53,12 +53,15 @@ export function whereFor(doc, path) {
   if (a === 'gut') return ['gut', []];
   if (a === 'profile') return ['setup:basics', []];
   if (a === 'household') return ['setup:basics', id === 'filingStatus' || id === 'livingWith' ? [] : ['basics-more']];
+  // Take-home is asked in Your estimates (S-123), except for hourly pay (worked out in Setup).
+  if (a === 'income' && c === 'takeHome' && (doc.income.find((i) => i.id === id) || {}).payBasis !== 'hourly') return ['estimates', []];
   if (a === 'income') return ['setup:income', []];
   if (a === 'coverage') return ['setup:coverage', []];
   // A premium line is owned by health coverage (S-117).
   if (a === 'line' && (doc.categories.flatMap((x) => x.lines).find((l) => l.id === id) || {}).type === 'health-insurance') return ['setup:coverage', []];
   if (a === 'debts' || a === 'noDebts') return ['setup:debts', []];
-  if (a === 'balances') return ['balances', []];
+  // A card's or loan's month balance lives in Setup, Credit and debt (S-126).
+  if (a === 'balances') return (doc.accounts || []).some((x) => x.id === c && x.type === 'credit-card') || (doc.debts || []).some((x) => x.id === c) ? ['setup:debts', []] : ['balances', []];
   if (a === 'accounts') return ['balances', ['acct-more:' + id]];
   if (a === 'transactions') return ['log', []];
   if (a === 'cashflow') return ['setup:coach', []];
@@ -69,6 +72,7 @@ export function whereFor(doc, path) {
   if (a === 'line' && c === 'actual') return ['actual', ['rv-cat:' + catOf(id)]];
   if (a === 'line' && c === 'estimate') return ['estimates', []];
   if (a === 'line' && (c === 'dueDay' || c === 'dueMonth')) return ['setup:bills', []];
+  if (a === 'line' && (c === 'openingAhead' || c === 'openingAheadMonths')) return ['setup:bills', ['opening:' + id]];
   if (a === 'line') return ['setup:categories', ['line:' + id]];
   return ['estimates', []];
 }

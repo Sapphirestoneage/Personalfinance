@@ -4,7 +4,8 @@
 
 // INCOME: 400 a week x 52 / 12 = 1,733.333333 a month (unemployment, typed take-home)
 
-// CATEGORIES: Housing, Transport, Health, Annual, Fees, Giving, Savings are "not for me" (0 / 0 / 0).
+// CATEGORIES: Housing, Transport, Health, Annual, Giving, Savings are "not for me" (0 / 0 / 0). (Fees, also "not for me"
+//   with no lines, is gone in S-123.)
 // Debts: marked none -> Debt payments 0.
 // Single total: Everything else = 800 a month (roughly). No category estimates given since,
 // so nothing is carved out: remainder 800.
@@ -30,6 +31,7 @@
 // NEXT: shopping actual (1 x 1), Everything else dream (1 x 1), Everything else estimate (3 x 0.3 = 0.9)
 // S-097: the dream question leaves completion. Sam's only one was Everything else dream (1, NOT done).
 // Total 26 - 1 = 25, done 24. 24 / 25 = 0.96
+// S-123: Fees (not for me, 1, done) is gone: total 24, done 23. 23 / 24 = 0.95833333 -> 0.958333
 // NEXT (S-097): weak items left, score = weight x weakness: shopping actual dont-know 1 x 1 = 1;
 // Everything else estimate roughly 3 x 0.3 = 0.9; gut roughly 1 x 0.3 = 0.3 (900 a month, over the
 // $100-a-year floor). Everything else known or doesn't apply. So: shopping, Everything else estimate, gut.
@@ -47,7 +49,7 @@ export default {
   categories: {
     // [estimate, actual]
     housing: [0, 0], food: [null, 250], transport: [0, 0], debt: [0, 0], health: [0, 0],
-    bills: [null, 40], fun: [null, null], annual: [0, 0], fees: [0, 0], giving: [0, 0],
+    bills: [null, 40], fun: [null, null], annual: [0, 0], giving: [0, 0],
     savings: [0, 0], everything: [800, null]
   },
   estimateTotal: 800, actualTotal: 290, spending: 800, savings: 0,
@@ -61,6 +63,6 @@ export default {
   fixed: 40, variable: 760, fixedPct: 0.05,
   needs: 0, wants: 800, needsPct: 0, wantsPct: 0.461538, savingsPct: 0,
   mistakeMonthly: 0, mistakeYearly: 0, owedBack: 0,
-  completion: 0.96,
+  completion: 0.958333,
   next: ['Personal and fun / Shopping: actual', 'Everything else: estimate', 'Gut number: what you think you spend a month']
 };

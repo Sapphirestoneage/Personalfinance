@@ -15,6 +15,7 @@
 //   not explained yet = actual - explained
 
 import { modelForMonth } from './plan.js';
+import { withComputedSavings } from './model.js';
 import { budgetTotals } from './totals.js';
 import { balancesFor } from './balances.js';
 import { counted } from './log.js';
@@ -45,7 +46,7 @@ function budgetSide(doc, income, month) {
     const basis = im.tracked ? im.actual : rec.snapshot.takeHome;
     return { closed: true, takeHome: rec.snapshot.takeHome, incomeBasis: basis, incomeTracked: im.tracked, surplus: basis === null ? null : r2(basis - spending - saved), spending: r2(spending), savings: r2(saved), lines, oneOffs: [] };
   }
-  const model = modelForMonth(doc, month);
+  const model = withComputedSavings(modelForMonth(doc, month), income.takeHome);
   const totals = budgetTotals(model, income, doc, undefined, month);
   const lines = model.categories.flatMap((c) => c.lines.map((l) => ({ id: l.id, name: l.name, actual: l.actual, savings: c.savings, yearly: l.actualFrom === 'share', debtId: l.debtId || null })));
   return { closed: false, takeHome: totals.takeHome, incomeBasis: totals.incomeBasis, incomeTracked: totals.incomeTracked, surplus: totals.surplus, spending: totals.spending, savings: totals.savings, lines, oneOffs: model.oneOffs.filter((o) => o.which === 'actual') };
@@ -78,11 +79,15 @@ export function bridgeFor(doc, income, month) {
   const missing = bal.missing.slice();
   // Cards: charged but not paid yet adds back; paying down more than was charged takes away.
   const cards = bal.rows.filter((r) => r.card);
+  // Card interest (S-127) is spent (Debt payments) and lands on the card, so it is in both the surplus and
+  // the card's change, and the two cancel: named here so it can be seen.
+  const interest = b.lines.filter((l) => l.id.startsWith('interest:') && l.actual);
   if (cards.length) {
     if (cards.every((r) => r.start.amount !== null && r.end.amount !== null)) {
       const change = cards.reduce((a, r) => a + r.end.amount - r.start.amount, 0);
       step('cards', change >= 0 ? 'Card balances went up (charged, not paid yet)' : 'Card balances went down (paid more than was charged)', change,
-        cards.map((r) => r.name + ' ' + money(r.start.amount) + ' to ' + money(r.end.amount)).join(', '), { to: 'balances' });
+        cards.map((r) => r.name + ' ' + money(r.start.amount) + ' to ' + money(r.end.amount)).join(', ') +
+        (interest.length ? '; that includes ' + interest.map((l) => l.name.replace('Interest (computed): ', '') + ' interest ' + money(l.actual)).join(', ') + ' charged (spent, in Debt payments)' : ''), { to: 'balances' });
     }
     // A card's minimum in Debt payments is a payment of past charges, which the card's change already counts.
     const linked = new Set((doc.accounts || []).filter((a) => a.type === 'credit-card' && a.state !== 'archived' && a.debtId).map((a) => a.debtId));
@@ -116,6 +121,7 @@ export function bridgeFor(doc, income, month) {
     month, closed: b.closed, takeHome: b.takeHome, incomeBasis: b.incomeBasis, incomeTracked: b.incomeTracked, surplus: b.surplus, savings: b.savings, steps, explained,
     // Each budget line's actual this month (a loan's payment, S-116).
     lineActuals: Object.fromEntries(b.lines.map((l) => [l.id, l.actual])),
+    interest: interest.map((l) => ({ name: l.name.replace('Interest (computed): ', ''), amount: l.actual })),
     cashStart: bal.cashStart, cashEnd: bal.cashEnd, actual, unexplained, missing,
     within: within(doc),
     ties: unexplained === null ? null : Math.abs(unexplained) < within(doc)

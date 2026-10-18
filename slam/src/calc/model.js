@@ -7,7 +7,7 @@ import { toMonthly, hasAnswer, isOneOff } from './normalize.js';
 import { sumKnown } from './money.js';
 import { premiumFor, PREMIUM_LINE_TYPES } from './coverage.js';
 import { actualsFromTransactions } from './tx-analysis.js';
-import { linkedLine, cardInterest } from './debts.js';
+import { linkedLine, interestHandoff } from './debts.js';
 
 const WEAKNESS_ORDER = ['dont-know', 'will-email', null, 'guess', 'roughly', 'known', 'computed', 'not-for-me'];
 
@@ -98,7 +98,8 @@ function debtRows(doc) {
     const min = toMonthly(d.minimum, 'monthly');
     return row({ id: 'debt:' + d.id, debtId: d.id, name: d.label, state: d.state, estimate: min, actual: min, status: { estimate: 'computed', actual: 'computed' }, sourceStatus: d.minimum.status });
   });
-  const interest = live.map((d) => ({ d, i: cardInterest(doc, d, doc.currentMonth) })).filter((x) => x.i).map(({ d, i }) =>
+  const ho = interestHandoff(doc, doc.currentMonth);
+  const interest = (ho.computed ? ho.rows : []).map(({ d, i }) =>
     row({ id: 'interest:' + d.id, debtId: null, interestOf: d.id, name: 'Interest (computed): ' + d.label, state: d.state, estimate: i.amount, actual: i.amount, status: { estimate: 'computed', actual: 'computed' }, sourceStatus: 'computed', why: i.why }));
   return [...mins, ...interest];
 }
@@ -121,6 +122,7 @@ function resolveTop(cat, lines, key, freq) {
 export function budgetModel(doc) {
   const freq = primaryPayFrequency(doc);
   const prem = premiumFor(doc, freq);
+  const handoff = interestHandoff(doc, doc.currentMonth).computed;
   // The month's log, once, for every line (S-087).
   const src = { log: actualsFromTransactions(doc.transactions || [], doc.currentMonth), plan: (doc.plans || {})[doc.currentMonth] || null };
   const cats = [];
@@ -129,7 +131,10 @@ export function budgetModel(doc) {
     const isDebt = cat.id === 'debt';
     // A line added in review for a later month is not part of this month (S-076).
     const lines = isDebt ? debtRows(doc) : cat.lines.filter((l) => l.state !== 'archived' && !(l.addedFor && l.addedFor > doc.currentMonth))
-      .map((l) => (PREMIUM_LINE_TYPES.includes(l.type) ? premiumRow(l, freq, src, prem) : lineRow(l, freq, src)));
+      .map((l) => (PREMIUM_LINE_TYPES.includes(l.type) ? premiumRow(l, freq, src, prem)
+        // A typed interest line, once every card's interest is computed (S-120): replaced, never counted twice.
+        : l.type === 'interest' && handoff ? { ...lineRow({ ...l, estimate: NOT_FOR_ME, actual: NOT_FOR_ME }, freq, null), covered: 'computed-interest' }
+          : lineRow(l, freq, src)));
     const notForMe = cat.estimate.status === 'not-for-me' && !isDebt;
     const row = {
       id: cat.id, name: cat.name, type: isDebt ? 'debt' : (cat.type || 'other'), kind: cat.kind, need: cat.need, savings: cat.savings, tag: cat.tag,
@@ -208,4 +213,25 @@ function carveEverything(cats) {
   ev.estimate.carved = carved;
   ev.estimate.overSplit = carved > ev.estimate.amount;
   ev.estimate.amount = Math.max(0, ev.estimate.amount - carved);
+}
+
+// Savings is what is left over (S-123): never asked in Your estimates. While the Savings category
+// has no estimate of its own (blank, or "don't know"), its estimate is
+//   take-home - every spending estimate - any other savings category's own estimate, never below 0
+// (a shortfall shows as left over below 0, not as negative saving). Blank until take-home and at least
+// one spending estimate (not debt) are known. A savings estimate typed before S-123 is kept as typed,
+// and "doesn't apply" stays.
+export function withComputedSavings(model, takeHome) {
+  const sav = model.categories.find((c) => c.id === 'savings');
+  if (!sav || sav.estimate.amount !== null || sav.estimate.status === 'not-for-me') return model;
+  const known = model.categories.filter((c) => !c.savings && c.estimate.amount !== null);
+  const otherSaved = model.categories.filter((c) => c.savings && c.id !== 'savings' && c.estimate.amount !== null).map((c) => c.estimate.amount);
+  const left = takeHome === null || takeHome === undefined || !known.some((c) => !c.isDebt) ? null
+    : Math.max(0, takeHome - sumKnown(known.map((c) => c.estimate.amount)).total - otherSaved.reduce((a, x) => a + x, 0));
+  return {
+    ...model,
+    categories: model.categories.map((c) => (c.id === 'savings'
+      ? { ...c, estimate: { ...c.estimate, amount: left, from: 'computed', status: left === null ? c.estimate.status : 'computed' }, computedSavings: left !== null }
+      : c))
+  };
 }

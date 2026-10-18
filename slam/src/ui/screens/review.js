@@ -15,6 +15,7 @@ import { coverageNote } from '../components/coverage.js';
 import { incomeFillCard } from '../components/income-month.js';
 import { PREMIUM_LINE_TYPES } from '../../calc/coverage.js';
 import { checklistCard, reviewCard } from '../components/loop.js';
+import { outlookLine } from '../components/outlook.js';
 import { closedMonthTable } from '../components/budget-table.js';
 import { monthRows } from '../../calc/history.js';
 import { bridgeFor } from '../../calc/bridge.js';
@@ -118,7 +119,10 @@ function categoryRow(ctx, summary, r) {
     live.map((line) => h('div', { class: 'qa' },
       h('div', { class: 'q' }, h('div', {}, line.name, line.state === 'hidden' ? ' (hidden)' : '')),
       // A premium line follows health coverage (S-117): its summary, never a question.
-      PREMIUM_LINE_TYPES.includes(line.type) ? coverageNote(ctx, 'coverage-summary-rv:' + line.id) : actualCell(ctx, summary, line))));
+      PREMIUM_LINE_TYPES.includes(line.type) ? coverageNote(ctx, 'coverage-summary-rv:' + line.id)
+        // A typed interest line once every card's interest is computed (S-120).
+        : (modelLine(summary, line.id) || {}).covered === 'computed-interest' ? h('span', { class: 'small muted', 'data-key': 'interest-replaced:' + line.id }, 'Replaced by computed interest (Debt payments)')
+          : actualCell(ctx, summary, line))));
 }
 
 // Month end: close the month (the checklist first), with the bridge in one line.
@@ -131,6 +135,7 @@ function monthEnd(ctx, summary) {
       h('span', { class: 'small' }, 'Budget to cash, ' + monthLabel(doc.currentMonth) + ': ', h('b', { 'data-key': 'bridge-line' }, state), ' ',
         h('a', { href: '#insights', 'data-key': 'go-bridge', onclick: (e) => { e.preventDefault(); ctx.jump('bridge', { ui: { bridgeMonth: doc.currentMonth } }); } }, 'See the bridge')),
       h('button', { class: 'btn small primary', 'data-key': 'open-checklist', onclick: () => { ctx.ui.closing = true; ctx.rerender(); } }, 'Close ' + monthLabel(doc.currentMonth))),
+    outlookLine(ctx, summary, 'review-outlook', { short: true }),
     ctx.ui.closing ? checklistCard(ctx, summary) : null);
 }
 
@@ -150,7 +155,7 @@ function pastMonths(ctx, summary) {
   return h('section', { id: 'past-months' }, h('h2', {}, 'Past months'),
     h('div', { class: 'card' }, h('label', { class: 'row' }, h('b', {}, 'Closed month'),
       h('select', { 'data-key': 'months-pick', onchange: (e) => { ctx.ui.monthsPick = e.target.value; ctx.rerender(); } }, options(closed.map((m) => [m.key, monthLabel(m.key)]), key)))),
-    reviewCard(ctx, rec, { id: 'months-review', summary }),
+    reviewCard(ctx, rec, { id: 'months-review', summary, compact: true }),
     h('details', { class: 'card', id: 'closed-lines' }, h('summary', {}, 'Lines in ' + monthLabel(key) + ', and late entries'),
       closedMonthTable(ctx, monthRows(ctx.doc, summary.history, key), key)));
 }
@@ -160,7 +165,7 @@ export function renderReview(ctx, summary) {
   const justClosed = ctx.ui.justClosed ? doc.months.find((m) => m.key === ctx.ui.justClosed) : null;
   return h('div', {},
     h('h1', {}, 'Review'),
-    justClosed ? reviewCard(ctx, justClosed, { id: 'just-closed', summary, dismiss: () => { ctx.ui.justClosed = null; ctx.rerender(); } }) : null,
+    justClosed ? reviewCard(ctx, justClosed, { id: 'just-closed', summary, compact: true, dismiss: () => { ctx.ui.justClosed = null; ctx.rerender(); } }) : null,
     h('section', { id: 'fill-gaps' }, h('h2', {}, 'Fill gaps, ' + monthLabel(doc.currentMonth)),
       // Income first (S-118), then the spending lines still empty.
       incomeFillCard(ctx, summary),

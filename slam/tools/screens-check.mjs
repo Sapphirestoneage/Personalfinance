@@ -321,6 +321,8 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('checklist', 'Close button', await settled(page, '[data-key="close-month"]', 'Close with 3 open items'), 'Close with 3 open items');
   await page.click('[data-key="close-month"]');
   await page.waitForSelector('#just-closed');
+  // The headline numbers first (S-129); the full review is one tap.
+  await page.click('#just-closed [data-key="review-full"]');
   check('review', 'Open at close', await settled(page, '#just-closed [data-key="review-open"]', want), want);
   check('review', 'Bridge tile', await settled(page, '#just-closed [data-key="review-bridge"]', 'Off by $60'), 'Off by $60');
   // 460 logged (groceries 400 + shopping 60) of 1,960 (+ rent 1,500 typed) = 23%
@@ -336,6 +338,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('trends', 'Not explained yet', await page.$eval('#stat-unexplained .reading', (p) => p.textContent), '-$60 over 1 bridged month; ATM cash $60; Venmo or Zelle with no line $0.');
   await go(page, 'review');
   await page.waitForSelector('#months-review');
+  await page.click('#months-review [data-key="review-full"]').catch(() => null);
   check('months', 'Saved review shown', await settled(page, '#months-review [data-key="review-open"]', want), want);
   check('bridge', 'Console errors', String(errors.length), '0');
   await page.close();
@@ -380,6 +383,7 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await go(page, 'review');
   await page.selectOption('[data-key="months-pick"]', '2026-06');
   await page.waitForTimeout(150);
+  await page.click('#months-review [data-key="review-full"]');
   check('riley', 'June open items', await settled(page, '#months-review [data-key="review-open"]', 'Closed with 2 open items: off by $60, 1 unmapped, 0 possible matches'), 'Closed with 2 open items: off by $60, 1 unmapped, 0 possible matches');
   await insights(page, 'cash');
   await page.selectOption('[data-key="bridge-month"]', '2026-06');
@@ -451,6 +455,16 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.click('[data-key="rv-cat:health"]');
   check('coverage', 'Summary in Review', await settled(page, '[data-key="coverage-summary-rv:premiums-text"]', want), want);
   check('coverage', 'No premium question in Review', String(await page.$$eval('[data-path=\'["line","premiums","actual"]\']', (x) => x.length)), '0');
+  // Quick lines (S-122): several sub-categories at once in Your estimates, one marked split.
+  await plan(page, 'estimates');
+  await page.click('[data-key=\'["categories","bills","estimate"]:more\']');
+  await page.click('[data-key="break:bills"]');
+  await page.fill('[data-key="quick-lines:bills"]', 'claude 216 spotify 21 split youtube 27');
+  await page.press('[data-key="quick-lines:bills"]', 'Enter');
+  await page.waitForTimeout(200);
+  const names = await page.$$eval('#est-bills [data-key^="line-name:"]', (xs) => xs.map((x) => x.textContent));
+  check('coverage', 'Quick lines added', String(['Claude', 'Spotify', 'Youtube'].every((n) => names.includes(n))), 'true');
+  check('coverage', 'Split mark shown', String(await page.$$eval('#est-bills [data-key^="split-tag:"]', (x) => x.length)), '1');
   check('coverage', 'Console errors', String(errors.length), '0');
   await page.close();
 }
@@ -465,10 +479,11 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   console.log('dana (phone width, October 17, 2026)');
   await page.getByText('Dana, 34').click();
   await page.waitForSelector('#headline');
-  // Today: September's ends. FI 2,315 + 4,800 + 11,170 - 10,720 = 7,565; net worth 74,332.79.
+  // Today: September's ends. The Visa's promo ended in May (S-127), so it is 11,736.78 (tools/dana.mjs).
+  // FI 2,315 + 4,800 + 11,170 - 11,736.78 = 6,548.22; net worth 6,548.22 + 55,167.79 + 11,600 = 73,316.01.
   await insights(page, 'networth');
-  check('dana', 'Net worth tile', await settled(page, '[data-key="nw-total"] .value', money(74332.79)), money(74332.79));
-  check('dana', 'FI net worth tile', await settled(page, '[data-key="nw-fi"] .value', money(7565)), money(7565));
+  check('dana', 'Net worth tile', await settled(page, '[data-key="nw-total"] .value', money(73316.01)), money(73316.01));
+  check('dana', 'FI net worth tile', await settled(page, '[data-key="nw-fi"] .value', money(6548.22)), money(6548.22));
   check('dana', 'Milestones', await settled(page, '[data-key="nw-milestone-list"]', 'FI net worth crossed $0March 2026'), 'FI net worth crossed $0March 2026');
   const condoRead = 'Owning costs you about $1,950 a month you\'ll never get back. Renting a similar place would be about $1,900.';
   check('dana', 'Condo next to renting', await settled(page, '#owning-condo .reading', condoRead), condoRead);
@@ -478,9 +493,17 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await go(page, 'review');
   await page.waitForSelector('#months-review');
   await page.selectOption('[data-key="months-pick"]', '2026-03');
+  // Month in review shows its headline numbers first (S-129); the net worth tiles are in the full review.
+  // The change: March 31's 64,262.76 - February 28's 61,600.13 = 2,662.63.
+  check('dana', 'March net worth change (headline)', await settled(page, '[data-key="review-nw-change"]', signedMoney(2662.63)), signedMoney(2662.63));
+  await page.click('[data-key="review-full"]');
   check('dana', 'March celebrate card', await settled(page, '[data-key="celebrate-fi-zero"] b', 'FI net worth crossed $0 in March 2026.'), 'FI net worth crossed $0 in March 2026.');
   check('dana', 'March FI net worth', await settled(page, '[data-key="review-nw-fi"]', money(425)), money(425));
   check('dana', 'March net worth', await settled(page, '[data-key="review-nw-total"]', money(64262.76)), money(64262.76));
+  // June's review: the promo ended; interest 12,480 x 24.99 / 1,200 = 259.896, $259.90 (S-127).
+  await page.selectOption('[data-key="months-pick"]', '2026-06');
+  const promoLine = 'Your 0% promo ended. Interest this month: $259.90.';
+  check('dana', 'June promo reading', await settled(page, '[data-key="review-readings"]', promoLine).then((t) => (t || '').slice(0, promoLine.length)), promoLine);
   check('dana', 'Console errors', String(errors.length), '0');
   await page.close();
 }
@@ -513,12 +536,15 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   await page.waitForSelector('#nw-tiles #how-panel', { timeout: 3000 }).catch(() => null);
   check('search', 'FI net worth panel matches the tile', await page.$eval('[data-key="how-result"]', (b) => b.textContent.replace(/\.\d\d$/, '')).catch(() => 'missing'), await page.$eval('[data-key="nw-fi"] .value button', (b) => b.textContent).catch(() => 'missing tile'));
   // How a computed number was worked out: the panel ends on the same number as the tile.
+  // October is open (S-128): so far and expected by month end, by hand in test/outlook.test.js:
+  // so far 1,630 - 2,369.25 = -739.25; expected -739.25 + 1,500 - 65 - 694.75 = 1.00.
   await go(page, 'today');
-  await page.waitForSelector('[data-key="how:surplus"]');
-  const surplusTile = await page.$eval('[data-key="how:surplus"]', (b) => b.textContent);
-  await page.click('[data-key="how:surplus"]');
+  await page.waitForSelector('[data-key="how:soFar"]');
+  check('sources', 'So far tile', await page.$eval('[data-key="how:soFar"]', (b) => b.textContent), signedMoney(-739.25));
+  check('sources', 'Expected by month end', await page.$eval('[data-key="how:expected"]', (b) => b.textContent), signedMoney(1));
+  await page.click('[data-key="how:expected"]');
   await page.waitForSelector('#how-panel');
-  check('sources', 'Surplus panel matches the tile', (await page.$eval('[data-key="how-result"]', (b) => b.textContent)).replace(/\.\d\d$/, ''), surplusTile.replace(/\.\d\d$/, ''));
+  check('sources', 'Expected panel matches the tile', (await page.$eval('[data-key="how-result"]', (b) => b.textContent)).replace(/\.\d\d$/, ''), signedMoney(1));
   // Safe to spend (S-095 by hand): 0, because the lowest point (60) is 40 under the 100 cushion.
   await page.click('[data-key="how:safeToSpend"]');
   check('sources', 'Safe to spend panel', await settled(page, '[data-key="how-result"]', money(0, true)), money(0, true));

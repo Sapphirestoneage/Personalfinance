@@ -5,7 +5,7 @@ import { makeValue } from './value.js';
 import { DEFAULT_LINE_TYPES } from './types.js';
 import { newId } from './ids.js';
 
-export const SCHEMA_VERSION = 15;
+export const SCHEMA_VERSION = 17;
 
 export const SITUATIONS = ['employed', 'self-employed', 'between-jobs', 'student'];
 export const FILING_STATUSES = ['single', 'married-joint', 'married-separate', 'head-of-household'];
@@ -88,10 +88,6 @@ const TREE = [
     ['gifts', 'Gifts', 'variable', false]]],
   ['annual', 'Annual and irregular', 'variable', false, false, 'planned', [
     ['yearly', 'Yearly and irregular costs', 'variable', false]]],
-  ['fees', 'Fees', 'variable', false, false, 'planned', [
-    ['fee-overdraft', 'Overdraft', 'variable', false], ['fee-late', 'Late fees', 'variable', false],
-    ['fee-atm', 'ATM', 'variable', false], ['fee-foreign', 'Foreign transaction', 'variable', false],
-    ['fee-interest', 'Interest charged', 'variable', false]]],
   ['giving', 'Giving', 'variable', false, false, 'planned', [
     ['giving-line', 'Giving', 'variable', false]]],
   ['savings', 'Savings', 'fixed', false, true, 'planned', [
@@ -100,6 +96,12 @@ const TREE = [
 ];
 
 export const EVERYTHING_CATEGORY_ID = 'everything';
+
+// Fee lines (S-123): no Fees category and no fee lines up front. A fee line is made in Bills and
+// subscriptions the first time an entry is mapped to it (a bank import's "LATE FEE", say).
+export const FEE_LINES = {
+  'fee-overdraft': 'Overdraft', 'fee-late': 'Late fees', 'fee-atm': 'ATM', 'fee-foreign': 'Foreign transaction', 'fee-interest': 'Interest charged'
+};
 
 export function newLine(fields = {}) {
   return {
@@ -120,6 +122,11 @@ export function newLine(fields = {}) {
     // dream = short term (this year, or the next step); dreamLong = long term (S-075).
     estimate: makeValue(), dream: makeValue(), dreamLong: makeValue(), actual: makeValue(),
     owedBack: makeValue(), owedBackReceived: false,
+    // Split with someone (S-122): a mark the client sets; the amount is still what they pay.
+    shared: false,
+    // Opening Paid ahead (S-130): for a yearly or irregular bill paid before the client's first month, what
+    // is left of it and for how many more months, as of that first month. Blank when there is none.
+    openingAhead: makeValue(null, { cadence: 'one-off' }), openingAheadMonths: makeValue(null, { cadence: 'one-off' }),
     // Cash flow (S-086): an optional due day (1 to 31); with a due month (1 to 12) it is
     // once a year. The account it is paid from (null = the first checking account).
     dueDay: makeValue(null, { cadence: 'one-off' }), dueMonth: makeValue(null, { cadence: 'one-off' }), accountId: null,

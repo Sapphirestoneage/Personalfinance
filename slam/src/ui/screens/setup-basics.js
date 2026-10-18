@@ -6,12 +6,14 @@ import { h, options } from '../dom.js';
 import { money, pct } from '../format.js';
 import { question } from '../components/value-input.js';
 import { statusChip } from '../components/status.js';
-import { addIncome, addDeduction, removeDeduction } from '../../store/edits.js';
+import { addIncome, addDeduction, removeDeduction, findLine } from '../../store/edits.js';
 import { DEDUCTION_KINDS } from '../../calc/deductions.js';
 import { makeValue } from '../../store/value.js';
 import { taxWalkView } from '../components/tax-walk.js';
 import { setDeductionAccount } from '../../store/accounts.js';
 import { kindOf } from '../../calc/balances.js';
+import { rentShare } from '../../calc/totals.js';
+import { jumpLink } from '../components/jump.js';
 
 const STATES = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY'];
 const SITUATIONS = [['employed', 'Employed'], ['self-employed', 'Self-employed'], ['between-jobs', 'Between jobs'], ['student', 'Student']];
@@ -305,7 +307,10 @@ family: 'Help from family. A gift, so it is not taxed as income.', 'not-taxable'
       selectField(ctx, 'Paid', inc.payFrequency, FREQS, set('payFrequency'), JSON.stringify(p('payFrequency'))),
       isWork ? selectField(ctx, 'Pay basis', inc.payBasis, [['salary', 'Salary'], ['hourly', 'Hourly']], set('payBasis'), JSON.stringify(p('payBasis'))) : null),
     h('p', { class: 'muted xs' }, withheldNote),
-    hourly ? null : question(ctx, 'Take-home pay', 'What lands in the bank account (net pay). Blank is fine if the paystub lines are copied below', p('takeHome'), inc.takeHome),
+    // Take-home is asked in Plan, Your estimates (S-123); here it is shown with a link (one owner).
+    hourly ? null : h('div', { class: 'qa', 'data-key': 'setup-takehome:' + inc.id }, h('div', { class: 'q' }, 'Take-home pay', h('div', { class: 'hint' }, 'What lands in the bank account (net pay). Blank is fine if the paystub lines are copied below.')),
+      h('span', { class: 'row' }, inc.takeHome.amount === null ? h('span', { class: 'muted small' }, 'Not entered') : [statusChip(inc.takeHome.status), ' ', h('b', { class: 'num' }, money(inc.takeHome.amount, true)), inc.takeHome.cadence === 'paycheck' ? ' a paycheck' : ' a ' + inc.takeHome.cadence],
+        jumpLink(ctx, 'estimates', inc.takeHome.amount === null ? 'Enter in Your estimates' : 'Change in Your estimates', 'setup-takehome-go:' + inc.id))),
     hourly ? null : row && row.takeHomeStatus === 'guess'
       ? h('p', { class: 'small' }, statusChip('guess'), ' Estimated take-home from gross: ', h('b', { class: 'num' }, money(row.takeHomeMonthly)), ' / month. ' + row.takeHomeNote + '. Tax year ' + row.estimate.taxYear + '.')
       : row && row.takeHomeStatus === 'computed'
@@ -330,6 +335,24 @@ family: 'Help from family. A gift, so it is not taxed as income.', 'not-taxable'
 
 // Basics (S-106): six things open (name, birth year, state, situation, who you live with,
 // filing status); the rest sits behind "More details", which says how many are inside.
+// Total rent, then your share (S-123). Your share is the Rent line in Housing (its one owner), shown
+// here read-only with a link. While it is blank, an even split is offered as a rough start.
+function yourRentShare(ctx) {
+  const r = rentShare(ctx.doc);
+  const rm = ctx.doc.household.roommates;
+  const people = rm.count + 1;
+  const useEven = r.line && r.yours === null && r.even !== null ? h('button', { class: 'btn small', 'data-key': 'rent-share-even', onclick: () => ctx.update('Your share of the rent', (d) => {
+    findLine(d, r.lineId).line.estimate = makeValue(r.even, { status: 'roughly' });
+  }) }, 'Use ' + money(r.even) + ' (split ' + people + ' ways)') : null;
+  return h('div', { class: 'field', 'data-key': 'rent-share' },
+    h('span', { class: 'lbl' }, 'Your share'),
+    h('div', { class: 'row' },
+      r.yours !== null ? h('b', { class: 'num' }, money(r.yours) + ' / month') : h('span', { class: 'muted' }, r.line ? 'Not entered yet' : 'No Rent line in Housing yet'),
+      r.even !== null && r.yours === null && !useEven ? h('span', { class: 'xs muted' }, 'Split evenly ' + people + ' ways: ' + money(r.even)) : null,
+      useEven,
+      jumpLink(ctx, 'estimates', r.yours !== null ? 'Change in Plan, Housing' : 'Enter it in Plan, Housing', 'rent-share-go')));
+}
+
 export function renderProfile(ctx, summary) {
   const doc = ctx.doc;
   const pr = doc.profile;
@@ -341,7 +364,8 @@ export function renderProfile(ctx, summary) {
     hh.dependents.count > 0 ? textField(ctx, 'Dependent ages (comma separated)', ['household', 'dependents', 'ages'], hh.dependents.ages.join(', '),
       { set: (d, v) => { d.household.dependents.ages = (v || '').split(',').map((x) => Number(x.trim())).filter((n) => Number.isFinite(n) && n >= 0); } }) : null,
     hh.livingWith === 'roommates' ? textField(ctx, 'How many roommates', ['household', 'roommates', 'count'], rm.count, { numeric: true, width: '6em', set: (d, v) => { d.household.roommates.count = v; } }) : null,
-    hh.livingWith === 'roommates' && rm.count > 0 ? question(ctx, 'Total rent for the place', 'What everyone pays together. Your share goes in Housing.', ['household', 'roommates', 'totalRent'], rm.totalRent) : null,
+    hh.livingWith === 'roommates' && rm.count > 0 ? question(ctx, 'Total rent for the place', 'What everyone pays together.', ['household', 'roommates', 'totalRent'], rm.totalRent) : null,
+    hh.livingWith === 'roommates' && rm.count > 0 ? yourRentShare(ctx) : null,
     hh.livingWith === 'family' ? textField(ctx, 'People in the home besides you', ['household', 'family', 'count'], hh.family.count, { numeric: true, width: '6em', set: (d, v) => { d.household.family.count = v; } }) : null
   ].filter(Boolean);
   const open = ctx.ui.expanded.has('basics-more');

@@ -4,7 +4,8 @@
 // Every number comes from calc/calendar.js; this file only lays it out.
 
 import { h, options } from '../dom.js';
-import { money, todayIso, dayLabel } from '../format.js';
+import { money, todayIso, dayLabel, monthLabel } from '../format.js';
+import { paidAheadSchedules, firstMonth } from '../../calc/paid-ahead.js';
 import { valueInput, parseAmount } from './value-input.js';
 import { quickEntryButton } from './quick-entry.js';
 import { jumpLink, emptyState } from './jump.js';
@@ -64,10 +65,11 @@ export function billsCard(ctx) {
   const debts = doc.debts.filter((x) => x.state !== 'archived' && !linkedLine(doc, x));
   return h('div', { class: 'card', id: 'bills-card' },
     h('p', { class: 'muted small' }, 'Optional. These put bills on the calendar. Anything without a date is spread across the month.'),
-    bills.length ? bills.map(({ l, annual }) => h('div', { class: 'qa' },
+    bills.length ? bills.map(({ l, annual }) => [h('div', { class: 'qa' },
       h('div', { class: 'q' }, h('div', {}, l.name), h('div', { class: 'hint' }, annual ? 'Once a year: due month (1 to 12) and day' : 'Due day of the month (1 to 31)')),
       h('div', { class: 'row' }, annual ? dayBox(l, 'dueMonth', 12, l.name + ' due month') : null, dayBox(l, 'dueDay', 31, l.name + ' due day'),
-        accountSelect(ctx, 'acct-line:' + l.id, l.accountId, (v) => ctx.update('Paid from', (d) => setItemAccount(d, 'line', l.id, v)), l.name + ' account')))) : emptyState(ctx, 'No fixed or yearly lines yet. Mark a line fixed to give it a due date.', 'setup:categories', 'Categories and lines', 'bills-empty'),
+        accountSelect(ctx, 'acct-line:' + l.id, l.accountId, (v) => ctx.update('Paid from', (d) => setItemAccount(d, 'line', l.id, v)), l.name + ' account'))),
+    annual ? openingAheadRow(ctx, l) : null]) : emptyState(ctx, 'No fixed or yearly lines yet. Mark a line fixed to give it a due date.', 'setup:categories', 'Categories and lines', 'bills-empty'),
     debts.length ? h('h3', {}, 'Debt payments') : null,
     debts.map((debt) => h('div', { class: 'qa' },
       h('div', { class: 'q' }, h('div', {}, debt.label), h('div', { class: 'hint' }, 'Due day ' + (debt.dueDay.amount || 'not set yet (Debts)'))),
@@ -75,6 +77,23 @@ export function billsCard(ctx) {
         debt.type === 'credit-card' ? h('select', { 'aria-label': debt.label + ' pays', 'data-key': 'paywith:' + debt.id, onchange: (e) => ctx.update('Card payment', (d) => setDebtPayWith(d, debt.id, e.target.value)) },
           options([['minimum', 'Pays the minimum'], ['statement', 'Pays the statement balance']], debt.payWith || 'minimum')) : null,
         accountSelect(ctx, 'acct-debt:' + debt.id, debt.payFrom, (v) => ctx.update('Paid from', (d) => setItemAccount(d, 'debt', debt.id, v)), debt.label + ' account')))));
+}
+
+// Opening Paid ahead (S-130): a yearly bill paid before the client's first month. One tap opens it; the
+// amount left and the months left, as of the first month, both "roughly" unless said otherwise.
+function openingAheadRow(ctx, l) {
+  const key = 'opening:' + l.id;
+  const m0 = firstMonth(ctx.doc);
+  const answered = l.openingAhead.status !== null || l.openingAheadMonths.status !== null;
+  if (!answered && !ctx.ui.expanded.has(key)) {
+    return h('div', { class: 'row' }, h('button', { class: 'btn small ghost', 'data-key': key, onclick: () => { ctx.ui.expanded.add(key); ctx.rerender(); } }, 'Already paid before ' + monthLabel(m0) + '?'));
+  }
+  const sched = paidAheadSchedules(ctx.doc).find((x) => x.id === 'opening:' + l.id);
+  const box = (field, label, placeholder) => valueInput({ ...ctx, preview: null }, ['line', l.id, field], l[field], { label, cadence: false, placeholder, typed: 'roughly' });
+  return h('div', { class: 'qa', 'data-key': 'opening-row:' + l.id },
+    h('div', { class: 'q' }, h('div', { class: 'small' }, 'Paid ahead as of ' + monthLabel(m0)),
+      h('div', { class: 'hint', 'data-key': 'opening-hint:' + l.id }, sched ? money(sched.share, true) + ' a month, $0 after ' + monthLabel(sched.through) + '.' : 'What is left of it, and for how many more months.')),
+    h('div', { class: 'row' }, box('openingAhead', l.name + ' paid ahead, left', '$ left'), box('openingAheadMonths', l.name + ' paid ahead, months left', 'months')));
 }
 
 // The cushion is the coach's setting (S-096): the calendar uses it in both views, only the coach edits it.

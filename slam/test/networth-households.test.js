@@ -139,10 +139,11 @@ test('Dana: both net worths at the start and end of the year, and at two month e
   // By tier: cash 5,315; through tier 3 + the 401(k): 13,785; all + the condo and car: 314,585.
   assert.deepEqual(mar.byTier, { 1: 5315, 2: 5315, 3: 13785, 4: 314585 });
   assert.deepEqual(mar.debtsByType.map((t) => [t.type, t.amount]), [['credit-card', 13360], ['mortgage', 236962.24]]);
-  // September 30, 2026: 2,315 + 4,800 + 11,170 = 18,285 - 10,720 = FI 7,565. The condo 289,000 -
-  // 233,832.21 = 55,167.79; the car 11,600. Net worth 7,565 + 55,167.79 + 11,600 = 74,332.79.
+  // September 30, 2026: 2,315 + 4,800 + 11,170 = 18,285 - the Visa 11,736.78 (its promo ended in May, S-127:
+  // tools/dana.mjs) = FI 6,548.22. The condo 289,000 - 233,832.21 = 55,167.79; the car 11,600.
+  // Net worth 6,548.22 + 55,167.79 + 11,600 = 73,316.01 (1,016.78 of interest lower: 259.90 + 256.15 + 252.32 + 248.41).
   const end = netWorthAt(d, '2026-09-30');
-  assert.deepEqual([end.total, end.fi, end.locked], [74332.79, 7565, 66767.79]);
+  assert.deepEqual([end.total, end.fi, end.locked], [73316.01, 6548.22, 66767.79]);
 });
 
 test('Dana: FI net worth crosses $0 in March', () => {
@@ -239,13 +240,25 @@ test('the bridge ties for every month of Riley and Dana, with no surprise not-ex
 test('migration changes no existing number (Riley\'s file from before net worth)', () => {
   const raw = JSON.parse(readFileSync(new URL('./fixtures/riley-schema9.json', import.meta.url), 'utf8'));
   const doc = migrate(raw);
-  // Every number in the old file is still there, at the same place.
+  // Every number in the old file is still there, at the same place. Lists of things with ids are matched by id
+  // (S-123 took Fees out of the category list; any line of it with an answer or an entry is in Bills).
+  const byId = (list, x) => (Array.isArray(list) ? list.find((y) => y && y.id === x.id) : undefined);
   const walk = (a, b, path) => {
     if (typeof a === 'number') return assert.equal(b, a, path);
     if (!a || typeof a !== 'object') return;
-    for (const k of Object.keys(a)) if (k !== 'schemaVersion') walk(a[k], b === undefined || b === null ? undefined : b[k], path + '.' + k);
+    for (const k of Object.keys(a)) {
+      if (k === 'schemaVersion') continue;
+      const next = b === undefined || b === null ? undefined : Array.isArray(a) && a[k] && a[k].id ? byId(b, a[k]) : b[k];
+      walk(a[k], next, path + '.' + (a[k] && a[k].id ? a[k].id : k));
+    }
   };
-  walk(raw, doc, 'doc');
+  const fees = raw.categories.find((c) => c.id === 'fees');
+  const bills = doc.categories.find((c) => c.id === 'bills');
+  walk({ ...raw, categories: raw.categories.filter((c) => c !== fees) }, { ...doc, categories: doc.categories.map((c) => (c === bills ? { ...c, lines: c.lines.filter((l) => !fees.lines.some((f) => f.id === l.id)) } : c)) }, 'doc');
+  for (const l of fees.lines) {
+    const moved = bills.lines.find((x) => x.id === l.id);
+    if (moved) walk(l, moved, 'fees.' + l.id);
+  }
   // And the new fields hold no amounts: tiers and FI from the type, no balances added.
   assert.deepEqual(doc.accounts.map((a) => [a.id, a.tier, a.countsForFI]), [['chk', 1, true], ['sav', 1, true], ['visa', null, true]]);
   assert.deepEqual(Object.keys(doc.balances).sort(), Object.keys(raw.balances).sort());

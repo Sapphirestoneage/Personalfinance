@@ -23,6 +23,26 @@ export function explain(summary, which, cal, nw) {
       note: t.basisUsesEstimate.length ? 'Actuals, with estimates standing in for ' + t.basisUsesEstimate.join(', ') + '.' : 'Actuals for every category.'
     };
   }
+  // So far and expected by month end (S-128): `cal` is the month's outlook (calendar.js monthOutlook).
+  if (which === 'soFar' && cal) {
+    return {
+      title: 'So far this month',
+      steps: [{ label: 'Income logged', amount: cal.incomeSoFar, where: 'log' }, { label: 'Spending logged', amount: -cal.spentSoFar, where: 'log' }],
+      result: { label: 'So far', amount: cal.soFar, signed: true },
+      note: 'Only money that has arrived or left, from the log, up to today.'
+    };
+  }
+  if (which === 'expected' && cal) {
+    return {
+      title: 'Expected by month end',
+      steps: [{ label: 'So far', amount: cal.soFar },
+        ...cal.items.map((i) => ({ label: i.name + ' (' + i.date.slice(5) + ')', amount: i.amount, where: 'calendar' })),
+        ...cal.rest.filter((u) => u.left).map((u) => ({ label: u.name + ': rest of the plan', amount: -u.left, where: 'calendar' }))],
+      result: { label: 'Expected by month end', amount: cal.expected, signed: true },
+      note: 'So far, plus paychecks and bills still to come on the calendar, less the rest of the plan for lines not yet spent.' +
+        (cal.noPayDate.length ? ' No pay date yet for ' + cal.noPayDate.join(', ') + ', so none of its pay is counted.' : '')
+    };
+  }
   if (which === 'surplus') {
     return {
       title: t.surplus !== null && t.surplus < 0 ? 'Shortfall, a month' : 'Surplus, a month',

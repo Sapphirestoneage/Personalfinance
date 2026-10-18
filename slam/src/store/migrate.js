@@ -72,10 +72,36 @@ const STEPS = {
   },
   // Version 14 to 15 (S-118): typed income actuals (none yet) and a month's plan for side income (none
   // yet). A closed month saved before this has no income in its snapshot; its income is read from the log.
-  14: (doc) => ({ ...doc, schemaVersion: 15, incomeActuals: doc.incomeActuals || {} })
+  14: (doc) => ({ ...doc, schemaVersion: 15, incomeActuals: doc.incomeActuals || {} }),
+  // Version 15 to 16 (S-123): no Fees category. Its lines that hold anything (an amount or answer, a log
+  // entry, a month's actual, a plan amount) move to Bills and subscriptions with their ids, amounts,
+  // tags, and types; empty ones go, and so does the category (its own estimate was 0 or blank in every
+  // file). Totals do not change; Bills and subscriptions holds what Fees held.
+  15: (doc) => ({ ...doc, schemaVersion: 16, categories: withoutFees(doc) }),
+  // Version 16 to 17 (S-130): an opening Paid ahead on each line, blank (no line had one before).
+  16: (doc) => ({ ...doc, schemaVersion: 17, categories: (doc.categories || []).map((c) => ({ ...c, lines: (c.lines || []).map((l) => ({
+    ...l, openingAhead: l.openingAhead || makeValue(null, { cadence: 'one-off' }), openingAheadMonths: l.openingAheadMonths || makeValue(null, { cadence: 'one-off' }) })) })) })
 };
 
 const LOGGED = new Set(['spend', 'fee', 'refund', 'reimbursement']);
+
+// S-123: Fees folds into Bills and subscriptions (or the first spending category when there is none).
+function withoutFees(doc) {
+  const cats = (doc.categories || []).map((c) => ({ ...c, lines: [...(c.lines || [])] }));
+  const fees = cats.find((c) => c.id === 'fees');
+  if (!fees) return cats;
+  const answered = (v) => !!v && ((v.amount !== null && v.amount !== undefined) || (v.status !== null && v.status !== undefined));
+  const used = new Set([
+    ...(doc.transactions || []).map((t) => t.lineId),
+    ...Object.values(doc.monthActuals || {}).flatMap((m) => Object.keys(m)),
+    ...Object.values(doc.plans || {}).flatMap((p) => Object.keys(p.lines || {}))
+  ]);
+  const keep = fees.lines.filter((l) => answered(l.estimate) || answered(l.actual) || answered(l.dream) || used.has(l.id));
+  const to = cats.find((c) => c.id === 'bills') || cats.find((c) => !c.savings && c.id !== 'debt' && c.id !== 'fees' && c.id !== 'everything');
+  // A line keeps what it was: Fees' own tag (a mistake, say) stays on each line it held.
+  if (to) to.lines.push(...keep.map((l) => ({ ...l, tag: l.tag || fees.tag || 'planned' })));
+  return cats.filter((c) => c.id !== 'fees');
+}
 
 // S-117: the coverage answers an older file already holds.
 function coverageFrom(doc, onParentsPlan) {

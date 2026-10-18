@@ -315,3 +315,23 @@ test('a % deduction with no gross pay stays empty, not zero', () => {
   assert.equal(s.deductions[0].monthly, null);
   assert.equal(s.deductionsMissing, 1);
 });
+
+test('Total rent, then your share (S-123): an even split while your share is blank', async () => {
+  const { rentShare } = await import('../src/calc/totals.js');
+  const { october } = await import('./fixtures/october.js');
+  const { makeValue } = await import('../src/store/value.js');
+  const { findLine } = await import('../src/store/edits.js');
+  const d = october();
+  d.household.livingWith = 'roommates';
+  d.household.roommates.count = 1;
+  d.household.roommates.totalRent = makeValue(2500);
+  // By hand: 2,500 for the place, you and 1 roommate: 2,500 / 2 = 1,250. Your share (the Rent line's
+  // estimate) is blank, so it shows as null, never 0.
+  assert.deepEqual([rentShare(d).total, rentShare(d).even, rentShare(d).yours, rentShare(d).lineId], [2500, 1250, null, 'rent']);
+  // 2 roommates: 2,500 / 3 = 833.333... to the cent, 833.33.
+  d.household.roommates.count = 2;
+  assert.equal(rentShare(d).even, 833.33);
+  // Once typed in Housing, your share is the line's: 1,100.
+  findLine(d, 'rent').line.estimate = makeValue(1100);
+  assert.equal(rentShare(d).yours, 1100);
+});

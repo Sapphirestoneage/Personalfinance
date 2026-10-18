@@ -6,7 +6,7 @@ import { tagTotals } from './tags.js';
 import { lineIdeas, debtsByType } from './breakdown.js';
 import { eraTimeline } from './eras.js';
 import { dreamLife } from './dream-life.js';
-import { budgetModel } from './model.js';
+import { budgetModel, withComputedSavings } from './model.js';
 import { budgetTotals } from './totals.js';
 import { gaps, accuracy, blindSpot, culprits, gutCheck, correctionFactors, proofOfCash, blindCompare } from './compare.js';
 import { monthHistory, monthSnapshot } from './history.js';
@@ -36,7 +36,8 @@ function tableRows(model, totals) {
         gaps: gaps(l.estimate, l.actual), accuracy: accuracy(l.estimate, l.actual),
         pctTakeHome: pctBlock(l.estimate, l.actual, lb, th),
         pctSpending: c.savings ? null : ratio(lb, totals.spending),
-        owedOutstanding: l.owedOutstanding
+        owedOutstanding: l.owedOutstanding,
+        covered: l.covered || null
       };
     });
     return {
@@ -58,7 +59,7 @@ export function buildSummary(full, refs) {
   // The store hands calc the live view already; a full file with deleted records is trimmed here too (S-096).
   const doc = hasDeleted(full) ? liveView(full) : full;
   const income = incomeSummary(doc, refs.tax);
-  const model = budgetModel(doc);
+  const model = withComputedSavings(budgetModel(doc), income.takeHome);
   const totals = budgetTotals(model, income, doc, refs.benchmarks.housingBand);
   const history = monthHistory(doc);
   const items = questionItems(doc, model, income);

@@ -126,6 +126,9 @@ upd('Setup', (d) => {
   Object.assign(L('eating-out'), { estimate: makeValue(100), joy: 8 });
   Object.assign(L('car-payment'), { estimate: makeValue(340), dueDay: one(15) });
   Object.assign(L('car-insurance'), { estimate: makeValue(960, { cadence: 'year' }), dueMonth: one(3), dueDay: one(14) });
+  // Opening Paid ahead (S-130): the 960 was paid in March 2025, before Riley's first month. As of October
+  // 2025, 5 months are left (October through February) at 960 / 12 = 80 a month: 5 x 80 = 400, "roughly".
+  Object.assign(L('car-insurance'), { openingAhead: makeValue(400, { cadence: 'one-off', status: 'roughly' }), openingAheadMonths: makeValue(5, { cadence: 'one-off', status: 'roughly' }) });
   L('gas').estimate = makeValue(120);
   Object.assign(L('subscriptions'), { name: 'Phone', estimate: makeValue(65), dueDay: one(18) });
   Object.assign(L('shopping'), { estimate: makeValue(100), joy: 5 });

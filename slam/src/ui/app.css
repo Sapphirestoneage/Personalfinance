@@ -81,22 +81,32 @@ label.field select { width: 100%; }
 /* status chips */
 .chip {
   display: inline-flex; align-items: center; gap: 4px; padding: 1px 8px; border-radius: var(--radius-pill);
-  font-size: var(--text-xs); font-weight: 600; border: 1px solid currentColor; white-space: nowrap; background: transparent;
+  font-size: var(--text-xs); font-weight: 700; border: 1px solid currentColor; white-space: nowrap;
+  /* A tint of the status color behind the text, so a chip never blends into the page (S-121). */
+  background: color-mix(in srgb, currentColor 14%, var(--surface));
 }
 .chip::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .st-known { color: var(--st-known); } .st-roughly { color: var(--st-roughly); } .st-will-email { color: var(--st-will-email); }
 .st-dont-know { color: var(--st-dont-know); } .st-not-for-me { color: var(--st-not-for-me); } .st-guess { color: var(--st-guess); }
 .st-computed { color: var(--st-computed); } .st-blank { color: var(--st-blank); border-style: dashed; }
-select.chip { appearance: none; -webkit-appearance: none; padding: 4px 10px; min-height: 30px; cursor: pointer; }
+select.chip { appearance: none; -webkit-appearance: none; padding: 2px 22px 2px 9px; min-height: 26px; cursor: pointer; field-sizing: content; width: auto;
+  background: color-mix(in srgb, currentColor 14%, var(--surface)); }
 select.chip::before { display: none; }
+/* The open list: the page's own text and background, never a status color on white. */
+select.chip option { color: var(--text); background: var(--surface); font-weight: 400; }
+.chip-pick { position: relative; display: inline-flex; }
+.chip-pick::after { content: "\25be"; position: absolute; right: 9px; top: 50%; transform: translateY(-50%); font-size: 11px; pointer-events: none; color: var(--text-muted); }
 
 /* forms */
 label.field { display: block; margin-bottom: var(--space-3); }
 label.field > span.lbl, .field-label { display: block; font-size: var(--text-sm); font-weight: 600; margin-bottom: 4px; }
-input[type="text"], input[type="number"], input[type="search"], select, textarea {
+input[type="text"], input[type="number"], input[type="search"], input[type="date"], select, textarea {
   min-height: var(--tap); padding: 0 var(--space-3); border: 1px solid var(--border); border-radius: var(--radius-sm);
   background: var(--surface); max-width: 100%;
 }
+/* Dates (S-125): the same box as every other field, the text at full strength, the picker icon in the theme. */
+input[type="date"] { color: var(--text); font: inherit; font-variant-numeric: tabular-nums; }
+input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; opacity: .8; }
 textarea { padding: var(--space-2) var(--space-3); width: 100%; min-height: 90px; }
 input.amount { width: 8.5em; text-align: right; font-variant-numeric: tabular-nums; }
 input.big { font-size: var(--text-xl); min-height: 56px; width: 9em; }
@@ -353,3 +363,11 @@ main [id] { scroll-margin-top: 150px; }
 /* Net worth (S-114) */
 .card.celebrate, li.celebrate { border-color: var(--good); }
 .card.celebrate { background: var(--accent-soft); }
+input.quick-lines { flex: 1 1 260px; min-width: 0; }
+
+/* Remove a sub-category (S-123): a small x beside its name. */
+.btn.remove-line { margin-left: .4em; padding: 0 .45em; min-height: 24px; line-height: 1; color: var(--text-muted); }
+.btn.remove-line:hover, .btn.remove-line:focus-visible { color: var(--bad); }
+
+/* Your estimates (S-123): Personal and fun, Giving, Saving, and Debt payments each a section of their own. */
+.est-sections .est-section { border-top: 2px solid var(--border); margin-top: 6px; padding-top: 2px; }

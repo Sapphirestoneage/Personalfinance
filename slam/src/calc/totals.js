@@ -138,3 +138,15 @@ export function budgetTotals(model, income, doc, housingBand = 0.35, month = doc
   totals.estimateLeft = minus(takeHome, totals.estimateOutflow);
   return totals;
 }
+
+// Total rent, then your share (S-123). The total is asked in Basics; your share is the Rent line in
+// Housing (its one owner). An even split is offered while your share is blank:
+//   even split = total rent / (roommates + 1), to the cent.
+export function rentShare(doc) {
+  const rm = doc.household.roommates;
+  const total = toMonthly(rm.totalRent, 'monthly');
+  const line = (doc.categories || []).filter((c) => c.type === 'housing').flatMap((c) => c.lines).find((l) => l.type === 'rent' && l.state !== 'archived') || null;
+  const yours = line ? toMonthly(line.estimate, 'monthly') : null;
+  const even = total === null || !(rm.count > 0) ? null : Math.round((total / (rm.count + 1)) * 100) / 100;
+  return { total, line, lineId: line ? line.id : null, yours, even };
+}

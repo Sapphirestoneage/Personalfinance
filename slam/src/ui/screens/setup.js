@@ -6,11 +6,11 @@
 import { h } from '../dom.js';
 import { SETUP_SECTIONS } from '../nav.js';
 import { renderProfile, incomeSection, coachNotesCard, futureToolsCard } from './setup-basics.js';
-import { accountsCard, netWorthCard } from '../components/accounts.js';
+import { accountsCard, netWorthCard, owedCard } from '../components/accounts.js';
 import { paydaysCard, billsCard, cushionRow, calendarFor } from '../components/cashflow.js';
 import { whatIfCard } from '../charts/cash-charts.js';
 import { materialityInput } from '../charts/bridge-charts.js';
-import { setOwnReturn } from '../../store/accounts.js';
+import { setOwnReturn, addAccount } from '../../store/accounts.js';
 import { DEFAULT_OWN_RETURN } from '../../store/schema.js';
 import { debtCard, tagRow, tagManager, lineDetail, catName } from '../components/lines.js';
 import { debtTypeTotals } from '../components/debt-quick.js';
@@ -30,7 +30,14 @@ function debtsSection(ctx, summary) {
         'data-path': JSON.stringify(['debts']), onchange: (e) => ctx.update('No debts', (d) => { d.noDebts = e.target.checked; }) }), 'No debts (counts as complete)'),
       debtTypeTotals(summary)),
     doc.debts.map((d) => debtCard(ctx, d, summary)),
-    h('button', { class: 'btn', 'data-key': 'add-debt', onclick: () => ctx.update('Add debt', (d) => { addDebt(d, { label: 'Debt ' + (d.debts.length + 1) }); }) }, '+ Add debt'));
+    // A card is made with its account (S-126): the debt keeps APR, minimum, and promo; the account keeps balances.
+    h('div', { class: 'row' },
+      h('button', { class: 'btn', 'data-key': 'add-card', onclick: () => ctx.update('Add credit card', (d) => {
+        const debt = addDebt(d, { label: 'Credit card ' + (d.debts.filter((x) => x.type === 'credit-card').length + 1), type: 'credit-card' });
+        addAccount(d, { name: debt.label, type: 'credit-card', debtId: debt.id });
+      }) }, '+ Credit card'),
+      h('button', { class: 'btn', 'data-key': 'add-debt', onclick: () => ctx.update('Add debt', (d) => { addDebt(d, { label: 'Loan ' + (d.debts.length + 1), type: 'student-loan' }); }) }, '+ Loan or other debt')),
+    owedCard(ctx, doc.currentMonth));
 }
 
 // Every category and its lines: names, types, details (fixed or variable, need, path, joy, stress, state), and tags.
