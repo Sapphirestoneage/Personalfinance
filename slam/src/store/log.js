@@ -37,6 +37,12 @@ export function editEntry(doc, id, change) {
   for (const k of ['date', 'amount', 'kind', 'lineId', 'incomeId', 'note', 'account']) if (k in change) t[k] = change[k];
   // Owed back by someone else, a one-off, and which purchase a reimbursement settles (S-088).
   for (const k of ['owed', 'oneOff', 'settles']) if (k in change) { if (change[k] === null || change[k] === false || change[k] === 0) delete t[k]; else t[k] = change[k]; }
+  // The months a payment covers, for Paid ahead (S-119): 2 or more, or null for the line's own period.
+  if ('coverMonths' in change) {
+    if (change.coverMonths === null) delete t.coverMonths;
+    else if (Number.isInteger(change.coverMonths) && change.coverMonths >= 2 && change.coverMonths <= 60) t.coverMonths = change.coverMonths;
+    else throw new Error('Covers 2 to 60 months');
+  }
   if ('merchant' in change) { t.description = change.merchant; t.merchant = change.merchant ? merchantKey(change.merchant) : ''; }
   sortLog(doc);
 }

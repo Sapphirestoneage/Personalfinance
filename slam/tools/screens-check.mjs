@@ -387,18 +387,22 @@ const YM = (() => { const n = new Date(); return n.getFullYear() + '-' + String(
   check('riley', 'June not explained', await settled(page, '#chart-bridge [data-key="bridge-unexplained"]', signedMoney(-60)), signedMoney(-60));
   // Net worth (S-115, by hand in test/networth-households.test.js). Today every balance is September's end:
   // FI 4,001.03 + 150 + 16,765 + 11,225 - 2,818.03 = 29,323; the car 8,400 - its loan 3,237.64 = 5,162.36
-  // locked in; net worth 34,485.36.
+  // and paid ahead (S-119, test/paid-ahead.test.js) 400 + 135 = 535 locked in: 5,697.36; net worth 35,020.36.
   await insights(page, 'networth');
-  check('riley', 'Net worth tile', await settled(page, '[data-key="nw-total"] .value', money(34485.36)), money(34485.36));
+  check('riley', 'Net worth tile', await settled(page, '[data-key="nw-total"] .value', money(35020.36)), money(35020.36));
   check('riley', 'FI net worth tile', await settled(page, '[data-key="nw-fi"] .value', money(29323)), money(29323));
-  check('riley', 'Locked in tile', await settled(page, '[data-key="nw-locked"] .value', money(5162.36)), money(5162.36));
+  check('riley', 'Locked in tile', await settled(page, '[data-key="nw-locked"] .value', money(5697.36)), money(5697.36));
   await page.selectOption('[data-key="nw-month"]', '2026-03');
-  const marNW = 'Net worth rose $321. $342 more went out than came in, $415 the market added, $348 of debt paid down, $100 of value lost on things you own.';
+  // With the insurance paid ahead (S-119): up 1,200.81, saved -451.89 + 15 + 975 = 538.11 (test/networth-households.test.js).
+  const marNW = 'Net worth rose $1,201. $538 you saved, $415 the market added, $348 of debt paid down, $100 of value lost on things you own.';
   check('riley', 'March net worth bridge', await settled(page, '#chart-nw-bridge .reading', marNW), marNW);
   const carRead = 'The car costs about $316 a month you\'ll never get back (not counting maintenance, parking and tolls). Your trips by Uber, transit and a rental would be about $350.';
   check('riley', 'Car next to its alternative', await settled(page, '#owning-car .reading', carRead), carRead);
   // The auto loan is paid by the Car payment line (S-116, by hand in test/debts.test.js): October's 340,
   // on the loan going into October (September's end, 3,237.64): 16.19 interest, 323.81 principal.
+  // Paid ahead in Setup, Accounts: the car insurance first, 400 left today.
+  await setup(page, 'accounts');
+  check('riley', 'Paid ahead in Setup', await settled(page, '[data-key="paid-ahead"] li b', '$400.00 left'), '$400.00 left');
   await setup(page, 'debts');
   check('riley', 'Loan minimum from its line', await settled(page, '[data-key="debt-min-from:debt-car"]', 'Minimum: $340 a month, the estimate on the Car payment line. Asked once, on the line.'), 'Minimum: $340 a month, the estimate on the Car payment line. Asked once, on the line.');
   check('riley', 'Loan payment split', await settled(page, '[data-key="debt-split:debt-car"]', 'This month: $340.00 paid, $16.19 interest (spent) and $323.81 principal (pays down the balance).'), 'This month: $340.00 paid, $16.19 interest (spent) and $323.81 principal (pays down the balance).');

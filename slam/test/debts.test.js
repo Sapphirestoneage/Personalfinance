@@ -93,10 +93,10 @@ test('card interest: computed from the balance going into the month, and both br
   // Cards: 500 -> 360 = -140. Explained 1,990 - 1,100 + 200 - 140 + 40 - 60 - 250 = 680 = the
   // change in cash, so it ties. (Without the interest line it would be 690, and 10 not explained.)
   assert.deepEqual([br.explained, br.actual, br.unexplained], [680, 680, 0]);
-  // Net worth: 2,000 + 5,000 - 500 = 6,500 -> 2,480 + 5,200 - 360 = 7,320, up 820.
-  // 1,990 + timing (-1,100 - 60 - 250 = -1,410) + saved 200 + the card minimum 40 = 820.
+  // Net worth: 2,000 + 5,000 - 500 = 6,500 -> 2,480 + 5,200 + 1,100 paid ahead (S-119) - 360 = 8,420, up 1,920.
+  // 1,990 + timing (-1,100 + 1,100 paid ahead - 60 - 250 = -310) + saved 200 + the card minimum 40 = 1,920.
   const nb = netWorthBridge(d, s.income, '2026-10');
-  assert.deepEqual([nb.total.start, nb.total.explained, nb.total.actual, nb.total.unexplained], [6500, 7320, 7320, 0]);
+  assert.deepEqual([nb.total.start, nb.total.explained, nb.total.actual, nb.total.unexplained], [6500, 8420, 8420, 0]);
 });
 
 test('card interest: 0% until the promo ends, none when paid in full, none without month balances', () => {

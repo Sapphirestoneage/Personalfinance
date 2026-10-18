@@ -83,24 +83,29 @@ against the log first. The Jordan demo comes with two sample files; Riley's year
 The menu follows the monthly loop (S-106). Every section lives in exactly one place. On a phone the
 bottom bar has Today, Plan, Track, Review, and More (Insights, Setup, Clients).
 
-1. **Today**: Plan, Track, Review for the month (the step for now highlighted), the first-session
-   checklist until it is done, the Next card, the next 30 days of cash with safe to spend and Quick
-   entry, and four headline numbers (take-home, spending, surplus, savings rate).
+1. **Today**: numbers, not charts. Plan, Track, Review for the month (the step for now highlighted),
+   the first-session checklist until it is done, the Next card, the next 30 days of cash (today, the
+   lowest point, safe to spend) with Quick entry, four headline numbers (take-home, spending, surplus,
+   savings rate), and a link to each chart tab: every chart is one tap away.
 2. **Plan**: the gut number (first for a new client, then one line), the start of the month, next
-   month's plan (line by line, with % of income, % of spending, and happiness), and Your estimates
+   month's plan (income first: scheduled pay from the month's real paydays, side income changeable for
+   the month; then line by line, with % of income, % of spending, and happiness), and Your estimates
    (the Rough pass).
 3. **Track**: weekly use, no setup. Scheduled items to confirm, Quick entry, the log for the month,
    the cash calendar, CSV import and matching, and checking a balance.
-4. **Review**: fill gaps, close the month (the checklist, with the bridge in one line), mistakes this
-   month, and past months (each closed month's saved review and its lines, with late entries).
+4. **Review**: fill gaps (income first, from the log; then spending lines still empty), close the month
+   (the checklist, with the bridge in one line), mistakes this month, and past months (each closed
+   month's saved review, income rows first, and its lines, with late entries). The surplus uses the
+   month's actual income when the log has it, else take-home ("income not tracked this month").
 5. **Insights**: read only. Every chart and lens once, in six tabs: Where it goes, Compared (estimate
    vs actual vs plan, accuracy, gut check, culprits), Over time (trends, months, 80/20), Cash (the
    bridge, the forecast check, merchants and habits), Net worth (below), and You (DRAFTT, joy,
    satisfaction and stress, mistakes, the income statement). The only inputs are range, focus, unit,
    and month pickers.
-6. **Setup**: one-time setup in short sections: Basics, Income and paychecks, Accounts, Debts, Bills
-   and due dates, Categories and lines, Tags, Cushion and coach settings, Coach notes, and Future
-   tools (parked).
+6. **Setup**: one-time setup in short sections: Basics, Health coverage (every coverage fact, in one
+   place; other screens show one line with a link), Income and paychecks, Accounts, Debts (a loan can
+   be paid by a budget line; cards get computed interest), Bills and due dates, Categories and lines,
+   Tags, Cushion and coach settings, Coach notes, and Future tools (parked).
 7. **Clients** (open it from the client name): client list, new client, open, export, import (a file
    for a client already here is merged record by record; changes made on both copies wait for the
    coach to pick), and the demo households.
@@ -116,8 +121,10 @@ month (surplus, timing, saved, debt paid down, market, values: it ties to the ba
 not explained is drawn apart), what each home and vehicle costs to hold next to its alternative (rent;
 rideshare, transit, a rental), with no verdict, and milestones (like FI net worth crossing $0, which
 also gets a card in that month's review). Contributions are never typed: they come from transfers in the
-log and paycheck deductions linked to an account. Dana's demo owns a condo; Riley's has a 401(k), a Roth
-IRA, and a car with a loan.
+log and paycheck deductions linked to an account. A yearly bill paid for months to come is **Paid ahead**:
+an asset (not FI) that runs down by its monthly share, so net worth does not drop the month it is paid
+(cash shows the payment; net worth shows the cost as it is used). Dana's demo owns a condo; Riley's has
+a 401(k), a Roth IRA, and a car with a loan paid by his Car payment line.
 
 **Finding things.** Type in the search box (or press "/") to find a line, category, merchant, entry,
 net worth number, account (with its latest balance), debt, chart, setting, or month and jump to it. A dotted number is a link: it opens where the

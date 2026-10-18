@@ -34,16 +34,19 @@ test('Riley: both net worths and the locked-in part at two month ends', () => {
   // March 31: checking 2,577.46 + savings 700 + 401(k) 14,065 + Roth 8,450 + car 9,000 = 34,792.46.
   // Owed: Visa 652.59 + auto loan 5,146.97 = 5,799.56. Net worth 34,792.46 - 5,799.56 = 28,992.90.
   // FI: 2,577.46 + 700 + 14,065 + 8,450 = 25,792.46, less the Visa 652.59 = 25,139.87 (the car and its loan are out).
-  // Locked in: the car 9,000 - its loan 5,146.97 = 3,853.03 = 28,992.90 - 25,139.87.
+  // Locked in: the car 9,000 - its loan 5,146.97 = 3,853.03.
+  // Paid ahead (S-119): the 960 of car insurance paid March 14 covers 12 months, 80 a month: 880 left at
+  // March's end. It is an asset (tier 4), not FI. Net worth 28,992.90 + 880 = 29,872.90; assets 35,672.46.
   const mar = netWorthAt(d, '2026-03-31');
-  assert.deepEqual([mar.assetsTotal, mar.debtsTotal, mar.total, mar.fi, mar.locked], [34792.46, 5799.56, 28992.9, 25139.87, 3853.03]);
-  assert.deepEqual(mar.lockedRows.map((r) => [r.name, r.value, r.debt, r.equity]), [['Car', 9000, 5146.97, 3853.03]]);
-  // By tier: 1 is cash, 3,277.46; 2 the same (nothing in tier 2); 3 adds the 401(k) and Roth: 25,792.46; all 34,792.46.
-  assert.deepEqual(mar.byTier, { 1: 3277.46, 2: 3277.46, 3: 25792.46, 4: 34792.46 });
+  assert.deepEqual([mar.assetsTotal, mar.debtsTotal, mar.total, mar.fi, mar.locked], [35672.46, 5799.56, 29872.9, 25139.87, 4733.03]);
+  assert.deepEqual(mar.lockedRows.map((r) => [r.name, r.value, r.debt, r.equity]), [['Car', 9000, 5146.97, 3853.03], ['Paid ahead: Car insurance', 880, 0, 880]]);
+  // By tier: 1 is cash, 3,277.46; 2 the same (nothing in tier 2); 3 adds the 401(k) and Roth: 25,792.46; all 35,672.46.
+  assert.deepEqual(mar.byTier, { 1: 3277.46, 2: 3277.46, 3: 25792.46, 4: 35672.46 });
   // June 30: 2,379.81 + 450 + 15,340 + 9,800 = 27,969.81 in FI assets, less the Visa 511.75 = 27,458.06.
-  // The car 8,700 - its loan 4,199.44 = 4,500.56 locked in; net worth 27,458.06 + 4,500.56 = 31,958.62.
+  // The car 8,700 - its loan 4,199.44 = 4,500.56, and the insurance paid ahead 960 - 4 x 80 = 640 (its July
+  // registration not paid yet): locked in 5,140.56; net worth 27,458.06 + 5,140.56 = 32,598.62.
   const jun = netWorthAt(d, '2026-06-30');
-  assert.deepEqual([jun.total, jun.fi, jun.locked], [31958.62, 27458.06, 4500.56]);
+  assert.deepEqual([jun.total, jun.fi, jun.locked], [32598.62, 27458.06, 5140.56]);
 });
 
 test('Riley: March\'s net worth bridge, line by line (it ties)', () => {
@@ -57,11 +60,13 @@ test('Riley: March\'s net worth bridge, line by line (it ties)', () => {
   // Debt paid down: the Visa minimum 35 + the loan 5,459.67 - 5,146.97 = 312.70: 347.70.
   // Market: 401(k) 14,065 - 13,465 - 325 = 275; Roth 8,450 - 7,910 - 400 moved in on the 28th = 140: 415.
   // Values: the car 9,100 -> 9,000: -100.
-  assert.deepEqual(lines(b.total), { surplus: -451.89, timing: -865, saved: 975, 'paid-down': 347.7, market: 415, value: -100 });
-  // 28,672.09 - 451.89 - 865 + 975 + 347.70 + 415 - 100 = 28,992.90 = March's end: nothing left over.
-  assert.deepEqual([b.total.start, b.total.explained, b.total.actual, b.total.unexplained, b.total.change], [28672.09, 28992.9, 28992.9, 0, 320.81]);
-  // In words: saved -451.89 - 865 + 975 = -341.89, so more went out than came in.
-  assert.equal(b.reading, 'Net worth rose $321. $342 more went out than came in, $415 the market added, $348 of debt paid down, $100 of value lost on things you own.');
+  // Paid ahead (S-119): the 960 for car insurance is mostly still owed to Riley: 880 at March's end (none at
+  // the start). Timing: -865 + 880 = +15 (the car registration's share, not paid until July).
+  assert.deepEqual(lines(b.total), { surplus: -451.89, timing: 15, saved: 975, 'paid-down': 347.7, market: 415, value: -100 });
+  // 28,672.09 - 451.89 + 15 + 975 + 347.70 + 415 - 100 = 29,872.90 = March's end with 880 paid ahead: nothing left over.
+  assert.deepEqual([b.total.start, b.total.explained, b.total.actual, b.total.unexplained, b.total.change], [28672.09, 29872.9, 29872.9, 0, 1200.81]);
+  // In words: saved -451.89 + 15 + 975 = 538.11.
+  assert.equal(b.reading, 'Net worth rose $1,201. $538 you saved, $415 the market added, $348 of debt paid down, $100 of value lost on things you own.');
   // FI: start 25,618.11 - 586.35 = 25,031.76; lines without the loan and the car:
   // -451.89 - 865 + 975 + 35 + 415 = 108.11; 25,031.76 + 108.11 = 25,139.87 = March's FI.
   assert.deepEqual(lines(b.fi), { surplus: -451.89, timing: -865, saved: 975, 'paid-down': 35, market: 415 });
@@ -71,16 +76,19 @@ test('Riley: March\'s net worth bridge, line by line (it ties)', () => {
 test('Riley: June\'s net worth bridge, with the $60 of ATM cash not explained', () => {
   const d = loadHousehold('riley');
   const b = netWorthBridge(d, buildSummary(d, refs).income, '2026-06');
-  // Start (May 31): 2,822.03 + 200 + 15,165 + 9,475 + 8,800 = 36,462.03, less 707.62 and 4,516.86: 31,237.55.
-  // Surplus -376.35 (the actual income 3,150, S-118); timing: yearly +95, paid back +60 = 155 (test/riley.test.js).
+  // Start (May 31): 2,822.03 + 200 + 15,165 + 9,475 + 8,800 = 36,462.03, plus the insurance paid ahead
+  // 960 - 3 x 80 = 720, less 707.62 and 4,516.86: 31,957.55.
+  // Surplus -376.35 (the actual income 3,150, S-118); timing: yearly +95, paid back +60, and paid ahead
+  // 720 -> 640 = -80: 75 (test/riley.test.js).
   // Saved 650 + 325 = 975. Paid down 35 + (4,516.86 - 4,199.44 = 317.42) = 352.42.
   // Market: 401(k) 15,340 - 15,165 - 325 = -150; Roth 9,800 - 9,475 - 400 = -75: -225. The car 8,800 -> 8,700: -100.
-  assert.deepEqual(lines(b.total), { surplus: -376.35, timing: 155, saved: 975, 'paid-down': 352.42, market: -225, value: -100 });
-  // Explained 31,237.55 - 376.35 + 155 + 975 + 352.42 - 225 - 100 = 32,018.62; actual 31,958.62; -60 not explained.
-  assert.deepEqual([b.total.start, b.total.explained, b.total.actual, b.total.unexplained, b.total.ties], [31237.55, 32018.62, 31958.62, -60, false]);
+  assert.deepEqual(lines(b.total), { surplus: -376.35, timing: 75, saved: 975, 'paid-down': 352.42, market: -225, value: -100 });
+  // Explained 31,957.55 - 376.35 + 75 + 975 + 352.42 - 225 - 100 = 32,658.62; actual 31,958.62 + 640 = 32,598.62;
+  // -60 not explained.
+  assert.deepEqual([b.total.start, b.total.explained, b.total.actual, b.total.unexplained, b.total.ties], [31957.55, 32658.62, 32598.62, -60, false]);
   assert.equal(b.parts.cash, -60);
-  // Saved -376.35 + 155 + 975 = 753.65; the change 31,958.62 - 31,237.55 = 721.07.
-  assert.equal(b.reading, 'Net worth rose $721. $754 you saved, $225 the market took, $352 of debt paid down, $100 of value lost on things you own. $60 is not explained yet.');
+  // Saved -376.35 + 75 + 975 = 673.65; the change 32,598.62 - 31,957.55 = 641.07.
+  assert.equal(b.reading, 'Net worth rose $641. $674 you saved, $225 the market took, $352 of debt paid down, $100 of value lost on things you own. $60 is not explained yet.');
 });
 
 test('Riley: the car, next to getting around without it', () => {

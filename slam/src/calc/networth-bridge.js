@@ -36,8 +36,10 @@ import { netWorthAt } from './networth.js';
 import { counted } from './log.js';
 import { countsForFI } from '../store/schema.js';
 import { linkedLine, splitPayment } from './debts.js';
+import { paidAheadTotal } from './paid-ahead.js';
 
 const r2 = (x) => Math.round(x * 100) / 100 + 0;
+const prevDay = (date) => new Date(Date.parse(date + 'T00:00:00Z') - 86400000).toISOString().slice(0, 10);
 const add = (xs) => r2(xs.reduce((a, x) => a + x, 0));
 const TIMING = ['yearly', 'owed', 'received', 'one-off', 'income'];
 const COUNTS = new Set(['spend', 'fee', 'refund', 'reimbursement']);
@@ -59,7 +61,10 @@ export function netWorthBridge(doc, income, month) {
   const accts = (doc.accounts || []).filter((a) => a.state !== 'archived');
   const securedBy = {};
   for (const a of accts) if (a.securedDebtId && !securedBy[a.securedDebtId]) securedBy[a.securedDebtId] = a;
-  const startNW = netWorthAt(doc, month + '-01', (key) => monthStartOf(doc, key, month));
+  const startNW = netWorthAt(doc, month + '-01', (key) => monthStartOf(doc, key, month), prevDay(month + '-01'));
+  // Paid ahead (S-119): a yearly bill paid this month is still owed to you; its change sits with timing.
+  const paStart = paidAheadTotal(doc, prevDay(month + '-01'));
+  const paChange = r2(paidAheadTotal(doc, lastDayOf(month)) - paStart);
   const endNW = netWorthAt(doc, lastDayOf(month), (key) => monthEndOf(doc, key, month));
 
   const invested = accts.filter((a) => kindOf(a) === 'invested').map((a) => ({ a, ...span(doc, a.id, month), c: contrib.byAccount[a.id] }));
@@ -95,8 +100,10 @@ export function netWorthBridge(doc, income, month) {
     const lines = [];
     const line = (key, label, amount, from, link) => { lines.push({ key, label, amount: r2(amount), from, link }); };
     line('surplus', 'Surplus: take-home less spending and savings', br.surplus === null ? null : br.surplus, 'The budget for ' + month, { to: 'actual' });
-    const t = add(timing.map((x) => x.amount));
-    if (t) line('timing', 'Timing and one-offs', t, timing.map((x) => x.short + ' ' + money(x.amount)).join(', '), { to: 'bridge' });
+    // Net worth only (not FI): what was paid ahead this month, less what was used of it.
+    const pa = fiOnly ? 0 : paChange;
+    const t = r2(add(timing.map((x) => x.amount)) + pa);
+    if (t) line('timing', 'Timing and one-offs', t, [...timing.map((x) => x.short + ' ' + money(x.amount)), pa ? 'Paid ahead ' + signed(pa) : null].filter(Boolean).join(', '), { to: 'bridge' });
     const saved = r2((br.savings || 0) + deductions);
     if (saved) line('saved', 'Saved and invested (moved into your own accounts, not spent)', saved, 'Savings lines ' + money(br.savings || 0) + (deductions ? ', from the paycheck ' + money(deductions) : ''), { to: 'actual' });
     if (movedOut.length) line('moved-out', 'Moved into accounts that do not count toward FI', add(movedOut.map((x) => x.amount)), movedOut.map((x) => x.name + ' ' + money(-x.amount)).join(', '), { to: 'balances' });

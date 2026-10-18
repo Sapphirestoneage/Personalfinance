@@ -24,3 +24,4 @@ These rules come from earlier attempts. Every change to SLAM is checked against 
 20. Month-end meant typing everything from memory. RULE: the log owns the money and actuals are computed from it. Month-end only fills gaps.
 21. Single-user shortcuts would have blocked sharing later. RULE: every record has an id, timestamps, author, and version, nothing is hard-deleted, storage goes through one async interface, and visibility is decided in one map.
 22. A house or car felt like wealth but couldn't fund a life. RULE: show two net worths, total and FI, and what each locked-in asset costs to hold next to its alternative, without verdicts.
+23. Annual bills made net worth look like it crashed the month they were paid. RULE: what's paid ahead is an asset that runs down monthly; cash shows the payment, net worth shows the cost as it's used.
